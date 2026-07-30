@@ -46,8 +46,8 @@ export const list = query({
  */
 export const create = mutation({
   args: {
-    organizationId: v.id("organizations"),
     keyword: v.string(),
+    organizationId: v.id("organizations"),
     source: v.union(v.literal("reddit"), v.literal("web"), v.literal("both")),
     subreddit: v.optional(v.string()),
   },
@@ -88,11 +88,11 @@ export const create = mutation({
     }
 
     const keywordId = await ctx.db.insert("intelligenceKeywords", {
-      organizationId: args.organizationId,
+      createdAt: Date.now(),
       keyword: args.keyword.trim(),
+      organizationId: args.organizationId,
       source: args.source,
       subreddit: args.subreddit?.trim() || undefined,
-      createdAt: Date.now(),
     });
 
     return keywordId;

@@ -54,7 +54,7 @@ function defineTool(
   handler: ToolHandler
 ): void {
   tools.push({
-    definition: { name, description, inputSchema },
+    definition: { description, inputSchema, name },
     handler,
   });
 }
@@ -67,10 +67,23 @@ defineTool(
   "feedback_list",
   "List feedback items. Filter by status, tags, or search text. Sort by votes, newest, oldest, or comments.",
   {
-    type: "object",
     properties: {
-      status: {
+      limit: {
+        description: "Max items to return (default: 50, max: 100)",
+        type: "number",
+      },
+      offset: { description: "Pagination offset", type: "number" },
+      search: {
+        description: "Search in title and description",
         type: "string",
+      },
+      sortBy: {
+        description: "Sort order (default: votes)",
+        enum: ["votes", "newest", "oldest", "comments"],
+        type: "string",
+      },
+      status: {
+        description: "Filter by feedback status",
         enum: [
           "open",
           "under_review",
@@ -79,42 +92,21 @@ defineTool(
           "completed",
           "closed",
         ],
-        description: "Filter by feedback status",
+        type: "string",
       },
       statusId: {
-        type: "string",
         description: "Filter by organization status ID",
-      },
-      tagId: { type: "string", description: "Filter by tag ID" },
-      search: {
         type: "string",
-        description: "Search in title and description",
       },
-      sortBy: {
-        type: "string",
-        enum: ["votes", "newest", "oldest", "comments"],
-        description: "Sort order (default: votes)",
-      },
-      limit: {
-        type: "number",
-        description: "Max items to return (default: 50, max: 100)",
-      },
-      offset: { type: "number", description: "Pagination offset" },
+      tagId: { description: "Filter by tag ID", type: "string" },
     },
+    type: "object",
   },
   async (ctx, organizationId, params) =>
     ctx.runQuery(internal.feedback.api_public.listFeedbackByOrganization, {
+      limit: num(params.limit),
+      offset: num(params.offset),
       organizationId,
-      status: str(params.status) as
-        | "open"
-        | "under_review"
-        | "planned"
-        | "in_progress"
-        | "completed"
-        | "closed"
-        | undefined,
-      statusId: optionalId<"organizationStatuses">(params.statusId),
-      tagId: optionalId<"tags">(params.tagId),
       search: str(params.search),
       sortBy: str(params.sortBy) as
         | "votes"
@@ -122,170 +114,6 @@ defineTool(
         | "oldest"
         | "comments"
         | undefined,
-      limit: num(params.limit),
-      offset: num(params.offset),
-    })
-);
-
-defineTool(
-  "feedback_get",
-  "Get a single feedback item by ID with full details including tags, vote count, and status.",
-  {
-    type: "object",
-    properties: {
-      feedbackId: { type: "string", description: "The feedback item ID" },
-    },
-    required: ["feedbackId"],
-  },
-  async (ctx, organizationId, params) =>
-    ctx.runQuery(internal.feedback.api_public.getFeedbackByOrganization, {
-      organizationId,
-      feedbackId: asId<"feedback">(params.feedbackId, "feedbackId"),
-    })
-);
-
-defineTool(
-  "feedback_create",
-  "Create a new feedback item (feature request, bug report, etc.).",
-  {
-    type: "object",
-    properties: {
-      title: {
-        type: "string",
-        description: "Feedback title (max 100 chars)",
-      },
-      description: {
-        type: "string",
-        description:
-          "Feedback description (rich text or markdown, max 10000 chars)",
-      },
-      tagId: { type: "string", description: "Tag ID to assign" },
-    },
-    required: ["title", "description"],
-  },
-  async (ctx, organizationId, params) =>
-    ctx.runMutation(internal.feedback.api_public.createFeedbackByOrganization, {
-      organizationId,
-      title: requireStr(params.title, "title"),
-      description: requireStr(params.description, "description"),
-      tagId: optionalId<"tags">(params.tagId),
-    })
-);
-
-defineTool(
-  "feedback_update",
-  "Update a feedback item's title or description.",
-  {
-    type: "object",
-    properties: {
-      feedbackId: { type: "string", description: "The feedback item ID" },
-      title: { type: "string", description: "New title" },
-      description: { type: "string", description: "New description" },
-    },
-    required: ["feedbackId"],
-  },
-  async (ctx, organizationId, params) =>
-    ctx.runMutation(internal.admin_api.feedback.updateFeedback, {
-      organizationId,
-      feedbackId: asId<"feedback">(params.feedbackId, "feedbackId"),
-      title: str(params.title),
-      description: str(params.description),
-    })
-);
-
-defineTool(
-  "feedback_delete",
-  "Soft-delete a feedback item. Can be restored later.",
-  {
-    type: "object",
-    properties: {
-      feedbackId: {
-        type: "string",
-        description: "The feedback item ID to delete",
-      },
-    },
-    required: ["feedbackId"],
-  },
-  async (ctx, organizationId, params) =>
-    ctx.runMutation(internal.admin_api.feedback.deleteFeedback, {
-      organizationId,
-      feedbackId: asId<"feedback">(params.feedbackId, "feedbackId"),
-    })
-);
-
-defineTool(
-  "feedback_restore",
-  "Restore a previously deleted feedback item.",
-  {
-    type: "object",
-    properties: {
-      feedbackId: {
-        type: "string",
-        description: "The feedback item ID to restore",
-      },
-    },
-    required: ["feedbackId"],
-  },
-  async (ctx, organizationId, params) =>
-    ctx.runMutation(internal.admin_api.feedback.restoreFeedback, {
-      organizationId,
-      feedbackId: asId<"feedback">(params.feedbackId, "feedbackId"),
-    })
-);
-
-defineTool(
-  "feedback_assign",
-  "Assign a feedback item to a team member, or unassign by omitting assigneeId.",
-  {
-    type: "object",
-    properties: {
-      feedbackId: { type: "string", description: "The feedback item ID" },
-      assigneeId: {
-        type: "string",
-        description: "User ID of the assignee (omit to unassign)",
-      },
-    },
-    required: ["feedbackId"],
-  },
-  async (ctx, organizationId, params) =>
-    ctx.runMutation(internal.admin_api.feedback.assignFeedback, {
-      organizationId,
-      feedbackId: asId<"feedback">(params.feedbackId, "feedbackId"),
-      assigneeId: str(params.assigneeId),
-    })
-);
-
-defineTool(
-  "feedback_set_status",
-  "Change a feedback item's status on the roadmap. Provide either statusId (organization status) or status (generic status).",
-  {
-    type: "object",
-    properties: {
-      feedbackId: { type: "string", description: "The feedback item ID" },
-      statusId: {
-        type: "string",
-        description: "Organization status ID to set",
-      },
-      status: {
-        type: "string",
-        enum: [
-          "open",
-          "under_review",
-          "planned",
-          "in_progress",
-          "completed",
-          "closed",
-        ],
-        description: "Generic status to set",
-      },
-    },
-    required: ["feedbackId"],
-  },
-  async (ctx, organizationId, params) =>
-    ctx.runMutation(internal.admin_api.feedback.setFeedbackStatus, {
-      organizationId,
-      feedbackId: asId<"feedback">(params.feedbackId, "feedbackId"),
-      statusId: optionalId<"organizationStatuses">(params.statusId),
       status: str(params.status) as
         | "open"
         | "under_review"
@@ -294,6 +122,178 @@ defineTool(
         | "completed"
         | "closed"
         | undefined,
+      statusId: optionalId<"organizationStatuses">(params.statusId),
+      tagId: optionalId<"tags">(params.tagId),
+    })
+);
+
+defineTool(
+  "feedback_get",
+  "Get a single feedback item by ID with full details including tags, vote count, and status.",
+  {
+    properties: {
+      feedbackId: { description: "The feedback item ID", type: "string" },
+    },
+    required: ["feedbackId"],
+    type: "object",
+  },
+  async (ctx, organizationId, params) =>
+    ctx.runQuery(internal.feedback.api_public.getFeedbackByOrganization, {
+      feedbackId: asId<"feedback">(params.feedbackId, "feedbackId"),
+      organizationId,
+    })
+);
+
+defineTool(
+  "feedback_create",
+  "Create a new feedback item (feature request, bug report, etc.).",
+  {
+    properties: {
+      description: {
+        description:
+          "Feedback description (rich text or markdown, max 10000 chars)",
+        type: "string",
+      },
+      tagId: { description: "Tag ID to assign", type: "string" },
+      title: {
+        description: "Feedback title (max 100 chars)",
+        type: "string",
+      },
+    },
+    required: ["title", "description"],
+    type: "object",
+  },
+  async (ctx, organizationId, params) =>
+    ctx.runMutation(internal.feedback.api_public.createFeedbackByOrganization, {
+      description: requireStr(params.description, "description"),
+      organizationId,
+      tagId: optionalId<"tags">(params.tagId),
+      title: requireStr(params.title, "title"),
+    })
+);
+
+defineTool(
+  "feedback_update",
+  "Update a feedback item's title or description.",
+  {
+    properties: {
+      description: { description: "New description", type: "string" },
+      feedbackId: { description: "The feedback item ID", type: "string" },
+      title: { description: "New title", type: "string" },
+    },
+    required: ["feedbackId"],
+    type: "object",
+  },
+  async (ctx, organizationId, params) =>
+    ctx.runMutation(internal.admin_api.feedback.updateFeedback, {
+      description: str(params.description),
+      feedbackId: asId<"feedback">(params.feedbackId, "feedbackId"),
+      organizationId,
+      title: str(params.title),
+    })
+);
+
+defineTool(
+  "feedback_delete",
+  "Soft-delete a feedback item. Can be restored later.",
+  {
+    properties: {
+      feedbackId: {
+        description: "The feedback item ID to delete",
+        type: "string",
+      },
+    },
+    required: ["feedbackId"],
+    type: "object",
+  },
+  async (ctx, organizationId, params) =>
+    ctx.runMutation(internal.admin_api.feedback.deleteFeedback, {
+      feedbackId: asId<"feedback">(params.feedbackId, "feedbackId"),
+      organizationId,
+    })
+);
+
+defineTool(
+  "feedback_restore",
+  "Restore a previously deleted feedback item.",
+  {
+    properties: {
+      feedbackId: {
+        description: "The feedback item ID to restore",
+        type: "string",
+      },
+    },
+    required: ["feedbackId"],
+    type: "object",
+  },
+  async (ctx, organizationId, params) =>
+    ctx.runMutation(internal.admin_api.feedback.restoreFeedback, {
+      feedbackId: asId<"feedback">(params.feedbackId, "feedbackId"),
+      organizationId,
+    })
+);
+
+defineTool(
+  "feedback_assign",
+  "Assign a feedback item to a team member, or unassign by omitting assigneeId.",
+  {
+    properties: {
+      assigneeId: {
+        description: "User ID of the assignee (omit to unassign)",
+        type: "string",
+      },
+      feedbackId: { description: "The feedback item ID", type: "string" },
+    },
+    required: ["feedbackId"],
+    type: "object",
+  },
+  async (ctx, organizationId, params) =>
+    ctx.runMutation(internal.admin_api.feedback.assignFeedback, {
+      assigneeId: str(params.assigneeId),
+      feedbackId: asId<"feedback">(params.feedbackId, "feedbackId"),
+      organizationId,
+    })
+);
+
+defineTool(
+  "feedback_set_status",
+  "Change a feedback item's status on the roadmap. Provide either statusId (organization status) or status (generic status).",
+  {
+    properties: {
+      feedbackId: { description: "The feedback item ID", type: "string" },
+      status: {
+        description: "Generic status to set",
+        enum: [
+          "open",
+          "under_review",
+          "planned",
+          "in_progress",
+          "completed",
+          "closed",
+        ],
+        type: "string",
+      },
+      statusId: {
+        description: "Organization status ID to set",
+        type: "string",
+      },
+    },
+    required: ["feedbackId"],
+    type: "object",
+  },
+  async (ctx, organizationId, params) =>
+    ctx.runMutation(internal.admin_api.feedback.setFeedbackStatus, {
+      feedbackId: asId<"feedback">(params.feedbackId, "feedbackId"),
+      organizationId,
+      status: str(params.status) as
+        | "open"
+        | "under_review"
+        | "planned"
+        | "in_progress"
+        | "completed"
+        | "closed"
+        | undefined,
+      statusId: optionalId<"organizationStatuses">(params.statusId),
     })
 );
 
@@ -301,22 +301,22 @@ defineTool(
   "feedback_add_tag",
   "Add one or more tags to a feedback item.",
   {
-    type: "object",
     properties: {
-      feedbackId: { type: "string", description: "The feedback item ID" },
+      feedbackId: { description: "The feedback item ID", type: "string" },
       tagIds: {
-        type: "array",
-        items: { type: "string" },
         description: "Tag IDs to add",
+        items: { type: "string" },
+        type: "array",
       },
     },
     required: ["feedbackId", "tagIds"],
+    type: "object",
   },
   async (ctx, organizationId, params) =>
     ctx.runMutation(internal.admin_api.feedback.updateFeedbackTags, {
-      organizationId,
-      feedbackId: asId<"feedback">(params.feedbackId, "feedbackId"),
       addTagIds: strArr(params.tagIds) as Id<"tags">[] | undefined,
+      feedbackId: asId<"feedback">(params.feedbackId, "feedbackId"),
+      organizationId,
     })
 );
 
@@ -324,21 +324,21 @@ defineTool(
   "feedback_remove_tag",
   "Remove one or more tags from a feedback item.",
   {
-    type: "object",
     properties: {
-      feedbackId: { type: "string", description: "The feedback item ID" },
+      feedbackId: { description: "The feedback item ID", type: "string" },
       tagIds: {
-        type: "array",
-        items: { type: "string" },
         description: "Tag IDs to remove",
+        items: { type: "string" },
+        type: "array",
       },
     },
     required: ["feedbackId", "tagIds"],
+    type: "object",
   },
   async (ctx, organizationId, params) =>
     ctx.runMutation(internal.admin_api.feedback.updateFeedbackTags, {
-      organizationId,
       feedbackId: asId<"feedback">(params.feedbackId, "feedbackId"),
+      organizationId,
       removeTagIds: strArr(params.tagIds) as Id<"tags">[] | undefined,
     })
 );
@@ -347,21 +347,21 @@ defineTool(
   "feedback_set_priority",
   "Set the priority level of a feedback item.",
   {
-    type: "object",
     properties: {
-      feedbackId: { type: "string", description: "The feedback item ID" },
+      feedbackId: { description: "The feedback item ID", type: "string" },
       priority: {
-        type: "string",
-        enum: ["critical", "high", "medium", "low", "none"],
         description: "Priority level",
+        enum: ["critical", "high", "medium", "low", "none"],
+        type: "string",
       },
     },
     required: ["feedbackId", "priority"],
+    type: "object",
   },
   async (ctx, organizationId, params) =>
     ctx.runMutation(internal.admin_api.feedback.updateFeedbackAnalysis, {
-      organizationId,
       feedbackId: asId<"feedback">(params.feedbackId, "feedbackId"),
+      organizationId,
       priority: requireStr(params.priority, "priority") as
         | "critical"
         | "high"
@@ -375,27 +375,27 @@ defineTool(
   "feedback_set_complexity",
   "Set the complexity level of a feedback item.",
   {
-    type: "object",
     properties: {
-      feedbackId: { type: "string", description: "The feedback item ID" },
       complexity: {
-        type: "string",
-        enum: ["trivial", "simple", "moderate", "complex", "very_complex"],
         description: "Complexity level",
+        enum: ["trivial", "simple", "moderate", "complex", "very_complex"],
+        type: "string",
       },
+      feedbackId: { description: "The feedback item ID", type: "string" },
     },
     required: ["feedbackId", "complexity"],
+    type: "object",
   },
   async (ctx, organizationId, params) =>
     ctx.runMutation(internal.admin_api.feedback.updateFeedbackAnalysis, {
-      organizationId,
-      feedbackId: asId<"feedback">(params.feedbackId, "feedbackId"),
       complexity: requireStr(params.complexity, "complexity") as
         | "trivial"
         | "simple"
         | "moderate"
         | "complex"
         | "very_complex",
+      feedbackId: asId<"feedback">(params.feedbackId, "feedbackId"),
+      organizationId,
     })
 );
 
@@ -403,21 +403,21 @@ defineTool(
   "feedback_set_deadline",
   "Set a deadline for a feedback item.",
   {
-    type: "object",
     properties: {
-      feedbackId: { type: "string", description: "The feedback item ID" },
       deadline: {
-        type: "number",
         description: "Deadline as Unix timestamp in milliseconds",
+        type: "number",
       },
+      feedbackId: { description: "The feedback item ID", type: "string" },
     },
     required: ["feedbackId", "deadline"],
+    type: "object",
   },
   async (ctx, organizationId, params) =>
     ctx.runMutation(internal.admin_api.feedback.updateFeedbackAnalysis, {
-      organizationId,
-      feedbackId: asId<"feedback">(params.feedbackId, "feedbackId"),
       deadline: num(params.deadline),
+      feedbackId: asId<"feedback">(params.feedbackId, "feedbackId"),
+      organizationId,
     })
 );
 
@@ -429,21 +429,21 @@ defineTool(
   "comment_list",
   "List comments on a feedback item. Returns threaded comments with author info.",
   {
-    type: "object",
     properties: {
-      feedbackId: { type: "string", description: "The feedback item ID" },
+      feedbackId: { description: "The feedback item ID", type: "string" },
       sortBy: {
-        type: "string",
-        enum: ["newest", "oldest"],
         description: "Sort order (default: oldest)",
+        enum: ["newest", "oldest"],
+        type: "string",
       },
     },
     required: ["feedbackId"],
+    type: "object",
   },
   async (ctx, organizationId, params) =>
     ctx.runQuery(internal.feedback.api_public.listCommentsByOrganization, {
-      organizationId,
       feedbackId: asId<"feedback">(params.feedbackId, "feedbackId"),
+      organizationId,
       sortBy: str(params.sortBy) as "newest" | "oldest" | undefined,
     })
 );
@@ -452,24 +452,22 @@ defineTool(
   "comment_create",
   "Add a comment to a feedback item. Can be a reply to another comment.",
   {
-    type: "object",
     properties: {
-      feedbackId: { type: "string", description: "The feedback item ID" },
       body: {
-        type: "string",
         description: "Comment text (max 5000 chars)",
-      },
-      parentId: {
         type: "string",
+      },
+      feedbackId: { description: "The feedback item ID", type: "string" },
+      parentId: {
         description: "Parent comment ID for threaded replies",
+        type: "string",
       },
     },
     required: ["feedbackId", "body"],
+    type: "object",
   },
   async (ctx, organizationId, params) =>
     ctx.runMutation(internal.feedback.api_public.addCommentByOrganization, {
-      organizationId,
-      feedbackId: asId<"feedback">(params.feedbackId, "feedbackId"),
       body: requireStr(params.body, "body"),
       // Admin comments via MCP don't have an external user - use a placeholder
       // Note: addCommentByOrganization requires externalUserId; for admin
@@ -479,6 +477,8 @@ defineTool(
         params.externalUserId,
         "externalUserId"
       ),
+      feedbackId: asId<"feedback">(params.feedbackId, "feedbackId"),
+      organizationId,
       parentId: optionalId<"comments">(params.parentId),
     })
 );
@@ -487,18 +487,18 @@ defineTool(
   "comment_update",
   "Edit an existing comment's body text.",
   {
-    type: "object",
     properties: {
-      commentId: { type: "string", description: "The comment ID" },
-      body: { type: "string", description: "New comment text" },
+      body: { description: "New comment text", type: "string" },
+      commentId: { description: "The comment ID", type: "string" },
     },
     required: ["commentId", "body"],
+    type: "object",
   },
   async (ctx, organizationId, params) =>
     ctx.runMutation(internal.admin_api.feedback.updateComment, {
-      organizationId,
-      commentId: asId<"comments">(params.commentId, "commentId"),
       body: requireStr(params.body, "body"),
+      commentId: asId<"comments">(params.commentId, "commentId"),
+      organizationId,
     })
 );
 
@@ -506,19 +506,19 @@ defineTool(
   "comment_delete",
   "Delete a comment.",
   {
-    type: "object",
     properties: {
       commentId: {
-        type: "string",
         description: "The comment ID to delete",
+        type: "string",
       },
     },
     required: ["commentId"],
+    type: "object",
   },
   async (ctx, organizationId, params) =>
     ctx.runMutation(internal.admin_api.feedback.deleteComment, {
-      organizationId,
       commentId: asId<"comments">(params.commentId, "commentId"),
+      organizationId,
     })
 );
 
@@ -526,21 +526,21 @@ defineTool(
   "comment_mark_official",
   "Toggle a comment as an official response from the team.",
   {
-    type: "object",
     properties: {
-      commentId: { type: "string", description: "The comment ID" },
+      commentId: { description: "The comment ID", type: "string" },
       isOfficial: {
-        type: "boolean",
         description: "Whether the comment is an official response",
+        type: "boolean",
       },
     },
     required: ["commentId", "isOfficial"],
+    type: "object",
   },
   async (ctx, organizationId, params) =>
     ctx.runMutation(internal.admin_api.feedback.markCommentOfficial, {
-      organizationId,
       commentId: asId<"comments">(params.commentId, "commentId"),
       isOfficial: params.isOfficial === true,
+      organizationId,
     })
 );
 
@@ -551,7 +551,7 @@ defineTool(
 defineTool(
   "tag_list",
   "List all tags in the organization. Tags are used to categorize feedback items.",
-  { type: "object", properties: {} },
+  { properties: {}, type: "object" },
   async (ctx, organizationId) =>
     ctx.runQuery(internal.admin_api.tags.listTags, { organizationId })
 );
@@ -560,30 +560,30 @@ defineTool(
   "tag_create",
   "Create a new tag for categorizing feedback.",
   {
-    type: "object",
     properties: {
-      name: { type: "string", description: "Tag name" },
       color: {
-        type: "string",
         description: "Tag color (e.g., 'blue', 'red', 'green')",
+        type: "string",
       },
-      icon: { type: "string", description: "Emoji icon (e.g., fire, box)" },
-      description: { type: "string", description: "Tag description" },
+      description: { description: "Tag description", type: "string" },
+      icon: { description: "Emoji icon (e.g., fire, box)", type: "string" },
       isPublic: {
-        type: "boolean",
         description: "Whether the tag is visible in the public widget",
+        type: "boolean",
       },
+      name: { description: "Tag name", type: "string" },
     },
     required: ["name", "color"],
+    type: "object",
   },
   async (ctx, organizationId, params) =>
     ctx.runMutation(internal.admin_api.tags.createTag, {
-      organizationId,
-      name: requireStr(params.name, "name"),
       color: requireStr(params.color, "color"),
-      icon: str(params.icon),
       description: str(params.description),
+      icon: str(params.icon),
       isPublic: bool(params.isPublic),
+      name: requireStr(params.name, "name"),
+      organizationId,
     })
 );
 
@@ -591,29 +591,29 @@ defineTool(
   "tag_update",
   "Update an existing tag's properties.",
   {
-    type: "object",
     properties: {
-      tagId: { type: "string", description: "The tag ID" },
-      name: { type: "string", description: "New tag name" },
-      color: { type: "string", description: "New tag color" },
-      icon: { type: "string", description: "New emoji icon" },
-      description: { type: "string", description: "New description" },
+      color: { description: "New tag color", type: "string" },
+      description: { description: "New description", type: "string" },
+      icon: { description: "New emoji icon", type: "string" },
       isPublic: {
-        type: "boolean",
         description: "Whether the tag is visible in the public widget",
+        type: "boolean",
       },
+      name: { description: "New tag name", type: "string" },
+      tagId: { description: "The tag ID", type: "string" },
     },
     required: ["tagId"],
+    type: "object",
   },
   async (ctx, organizationId, params) =>
     ctx.runMutation(internal.admin_api.tags.updateTag, {
+      color: str(params.color),
+      description: str(params.description),
+      icon: str(params.icon),
+      isPublic: bool(params.isPublic),
+      name: str(params.name),
       organizationId,
       tagId: asId<"tags">(params.tagId, "tagId"),
-      name: str(params.name),
-      color: str(params.color),
-      icon: str(params.icon),
-      description: str(params.description),
-      isPublic: bool(params.isPublic),
     })
 );
 
@@ -621,11 +621,11 @@ defineTool(
   "tag_delete",
   "Delete a tag. This will remove the tag from all feedback items.",
   {
-    type: "object",
     properties: {
-      tagId: { type: "string", description: "The tag ID to delete" },
+      tagId: { description: "The tag ID to delete", type: "string" },
     },
     required: ["tagId"],
+    type: "object",
   },
   async (ctx, organizationId, params) =>
     ctx.runMutation(internal.admin_api.tags.deleteTag, {
@@ -642,23 +642,23 @@ defineTool(
   "release_list",
   "List releases (changelog entries). Filter by draft/published status.",
   {
-    type: "object",
     properties: {
+      limit: { description: "Max items to return", type: "number" },
+      offset: { description: "Pagination offset", type: "number" },
       status: {
-        type: "string",
-        enum: ["draft", "published", "all"],
         description: "Filter by publish status (default: all)",
+        enum: ["draft", "published", "all"],
+        type: "string",
       },
-      limit: { type: "number", description: "Max items to return" },
-      offset: { type: "number", description: "Pagination offset" },
     },
+    type: "object",
   },
   async (ctx, organizationId, params) =>
     ctx.runQuery(internal.admin_api.releases.listReleases, {
-      organizationId,
-      status: str(params.status) as "draft" | "published" | "all" | undefined,
       limit: num(params.limit),
       offset: num(params.offset),
+      organizationId,
+      status: str(params.status) as "draft" | "published" | "all" | undefined,
     })
 );
 
@@ -666,11 +666,11 @@ defineTool(
   "release_get",
   "Get a single release with its linked feedback items.",
   {
-    type: "object",
     properties: {
-      releaseId: { type: "string", description: "The release ID" },
+      releaseId: { description: "The release ID", type: "string" },
     },
     required: ["releaseId"],
+    type: "object",
   },
   async (ctx, organizationId, params) =>
     ctx.runQuery(internal.admin_api.releases.getRelease, {
@@ -683,25 +683,25 @@ defineTool(
   "release_create",
   "Create a new draft release (changelog entry).",
   {
-    type: "object",
     properties: {
-      title: { type: "string", description: "Release title" },
       description: {
-        type: "string",
         description: "Release description/notes (rich text or markdown)",
-      },
-      version: {
         type: "string",
+      },
+      title: { description: "Release title", type: "string" },
+      version: {
         description: "Version string (e.g., 'v1.2.0')",
+        type: "string",
       },
     },
     required: ["title"],
+    type: "object",
   },
   async (ctx, organizationId, params) =>
     ctx.runMutation(internal.admin_api.releases.createRelease, {
+      description: str(params.description),
       organizationId,
       title: requireStr(params.title, "title"),
-      description: str(params.description),
       version: str(params.version),
     })
 );
@@ -710,24 +710,24 @@ defineTool(
   "release_update",
   "Update a release's title, description, or version.",
   {
-    type: "object",
     properties: {
-      releaseId: { type: "string", description: "The release ID" },
-      title: { type: "string", description: "New title" },
       description: {
-        type: "string",
         description: "New description/notes",
+        type: "string",
       },
-      version: { type: "string", description: "New version string" },
+      releaseId: { description: "The release ID", type: "string" },
+      title: { description: "New title", type: "string" },
+      version: { description: "New version string", type: "string" },
     },
     required: ["releaseId"],
+    type: "object",
   },
   async (ctx, organizationId, params) =>
     ctx.runMutation(internal.admin_api.releases.updateRelease, {
+      description: str(params.description),
       organizationId,
       releaseId: asId<"releases">(params.releaseId, "releaseId"),
       title: str(params.title),
-      description: str(params.description),
       version: str(params.version),
     })
 );
@@ -736,14 +736,14 @@ defineTool(
   "release_publish",
   "Publish a draft release, making it visible in the public changelog.",
   {
-    type: "object",
     properties: {
       releaseId: {
-        type: "string",
         description: "The release ID to publish",
+        type: "string",
       },
     },
     required: ["releaseId"],
+    type: "object",
   },
   async (ctx, organizationId, params) =>
     ctx.runMutation(internal.admin_api.releases.publishRelease, {
@@ -756,14 +756,14 @@ defineTool(
   "release_unpublish",
   "Unpublish a release, returning it to draft status.",
   {
-    type: "object",
     properties: {
       releaseId: {
-        type: "string",
         description: "The release ID to unpublish",
+        type: "string",
       },
     },
     required: ["releaseId"],
+    type: "object",
   },
   async (ctx, organizationId, params) =>
     ctx.runMutation(internal.admin_api.releases.unpublishRelease, {
@@ -776,14 +776,14 @@ defineTool(
   "release_delete",
   "Delete a release entirely.",
   {
-    type: "object",
     properties: {
       releaseId: {
-        type: "string",
         description: "The release ID to delete",
+        type: "string",
       },
     },
     required: ["releaseId"],
+    type: "object",
   },
   async (ctx, organizationId, params) =>
     ctx.runMutation(internal.admin_api.releases.deleteRelease, {
@@ -796,24 +796,24 @@ defineTool(
   "release_link_feedback",
   "Link or unlink a feedback item to/from a release.",
   {
-    type: "object",
     properties: {
-      releaseId: { type: "string", description: "The release ID" },
-      feedbackId: { type: "string", description: "The feedback item ID" },
       action: {
-        type: "string",
-        enum: ["link", "unlink"],
         description: "Whether to link or unlink",
+        enum: ["link", "unlink"],
+        type: "string",
       },
+      feedbackId: { description: "The feedback item ID", type: "string" },
+      releaseId: { description: "The release ID", type: "string" },
     },
     required: ["releaseId", "feedbackId", "action"],
+    type: "object",
   },
   async (ctx, organizationId, params) =>
     ctx.runMutation(internal.admin_api.releases.linkReleaseFeedback, {
+      action: requireStr(params.action, "action") as "link" | "unlink",
+      feedbackId: asId<"feedback">(params.feedbackId, "feedbackId"),
       organizationId,
       releaseId: asId<"releases">(params.releaseId, "releaseId"),
-      feedbackId: asId<"feedback">(params.feedbackId, "feedbackId"),
-      action: requireStr(params.action, "action") as "link" | "unlink",
     })
 );
 
@@ -825,14 +825,14 @@ defineTool(
   "milestone_list",
   "List milestones with their progress (linked feedback count). Filter by status.",
   {
-    type: "object",
     properties: {
       status: {
-        type: "string",
-        enum: ["active", "completed", "archived", "all"],
         description: "Filter by milestone status (default: all)",
+        enum: ["active", "completed", "archived", "all"],
+        type: "string",
       },
     },
+    type: "object",
   },
   async (ctx, organizationId, params) =>
     ctx.runQuery(internal.admin_api.milestones.listMilestones, {
@@ -850,16 +850,16 @@ defineTool(
   "milestone_get",
   "Get a single milestone with its linked feedback items.",
   {
-    type: "object",
     properties: {
-      milestoneId: { type: "string", description: "The milestone ID" },
+      milestoneId: { description: "The milestone ID", type: "string" },
     },
     required: ["milestoneId"],
+    type: "object",
   },
   async (ctx, organizationId, params) =>
     ctx.runQuery(internal.admin_api.milestones.getMilestone, {
-      organizationId,
       milestoneId: asId<"milestones">(params.milestoneId, "milestoneId"),
+      organizationId,
     })
 );
 
@@ -867,14 +867,22 @@ defineTool(
   "milestone_create",
   "Create a new milestone for organizing roadmap goals.",
   {
-    type: "object",
     properties: {
-      name: { type: "string", description: "Milestone name" },
-      description: { type: "string", description: "Milestone description" },
-      emoji: { type: "string", description: "Emoji icon" },
-      color: { type: "string", description: "Milestone color" },
+      color: { description: "Milestone color", type: "string" },
+      description: { description: "Milestone description", type: "string" },
+      emoji: { description: "Emoji icon", type: "string" },
+      isPublic: {
+        description:
+          "Whether the milestone is visible publicly (default: true)",
+        type: "boolean",
+      },
+      name: { description: "Milestone name", type: "string" },
+      targetDate: {
+        description: "Target date as Unix timestamp in milliseconds",
+        type: "number",
+      },
       timeHorizon: {
-        type: "string",
+        description: "Time horizon for the milestone",
         enum: [
           "now",
           "next_month",
@@ -883,27 +891,21 @@ defineTool(
           "next_year",
           "future",
         ],
-        description: "Time horizon for the milestone",
-      },
-      targetDate: {
-        type: "number",
-        description: "Target date as Unix timestamp in milliseconds",
-      },
-      isPublic: {
-        type: "boolean",
-        description:
-          "Whether the milestone is visible publicly (default: true)",
+        type: "string",
       },
     },
     required: ["name", "color", "timeHorizon"],
+    type: "object",
   },
   async (ctx, organizationId, params) =>
     ctx.runMutation(internal.admin_api.milestones.createMilestone, {
-      organizationId,
-      name: requireStr(params.name, "name"),
+      color: requireStr(params.color, "color"),
       description: str(params.description),
       emoji: str(params.emoji),
-      color: requireStr(params.color, "color"),
+      isPublic: bool(params.isPublic),
+      name: requireStr(params.name, "name"),
+      organizationId,
+      targetDate: num(params.targetDate),
       timeHorizon: requireStr(params.timeHorizon, "timeHorizon") as
         | "now"
         | "next_month"
@@ -911,8 +913,6 @@ defineTool(
         | "half_year"
         | "next_year"
         | "future",
-      targetDate: num(params.targetDate),
-      isPublic: bool(params.isPublic),
     })
 );
 
@@ -920,15 +920,19 @@ defineTool(
   "milestone_update",
   "Update a milestone's properties.",
   {
-    type: "object",
     properties: {
-      milestoneId: { type: "string", description: "The milestone ID" },
-      name: { type: "string", description: "New name" },
-      description: { type: "string", description: "New description" },
-      emoji: { type: "string", description: "New emoji" },
-      color: { type: "string", description: "New color" },
+      color: { description: "New color", type: "string" },
+      description: { description: "New description", type: "string" },
+      emoji: { description: "New emoji", type: "string" },
+      isPublic: {
+        description: "Whether the milestone is visible publicly",
+        type: "boolean",
+      },
+      milestoneId: { description: "The milestone ID", type: "string" },
+      name: { description: "New name", type: "string" },
+      targetDate: { description: "New target date", type: "number" },
       timeHorizon: {
-        type: "string",
+        description: "New time horizon",
         enum: [
           "now",
           "next_month",
@@ -937,24 +941,22 @@ defineTool(
           "next_year",
           "future",
         ],
-        description: "New time horizon",
-      },
-      targetDate: { type: "number", description: "New target date" },
-      isPublic: {
-        type: "boolean",
-        description: "Whether the milestone is visible publicly",
+        type: "string",
       },
     },
     required: ["milestoneId"],
+    type: "object",
   },
   async (ctx, organizationId, params) =>
     ctx.runMutation(internal.admin_api.milestones.updateMilestone, {
-      organizationId,
-      milestoneId: asId<"milestones">(params.milestoneId, "milestoneId"),
-      name: str(params.name),
+      color: str(params.color),
       description: str(params.description),
       emoji: str(params.emoji),
-      color: str(params.color),
+      isPublic: bool(params.isPublic),
+      milestoneId: asId<"milestones">(params.milestoneId, "milestoneId"),
+      name: str(params.name),
+      organizationId,
+      targetDate: num(params.targetDate),
       timeHorizon: str(params.timeHorizon) as
         | "now"
         | "next_month"
@@ -963,8 +965,6 @@ defineTool(
         | "next_year"
         | "future"
         | undefined,
-      targetDate: num(params.targetDate),
-      isPublic: bool(params.isPublic),
     })
 );
 
@@ -972,19 +972,19 @@ defineTool(
   "milestone_complete",
   "Mark a milestone as completed.",
   {
-    type: "object",
     properties: {
       milestoneId: {
-        type: "string",
         description: "The milestone ID to complete",
+        type: "string",
       },
     },
     required: ["milestoneId"],
+    type: "object",
   },
   async (ctx, organizationId, params) =>
     ctx.runMutation(internal.admin_api.milestones.completeMilestone, {
-      organizationId,
       milestoneId: asId<"milestones">(params.milestoneId, "milestoneId"),
+      organizationId,
     })
 );
 
@@ -992,19 +992,19 @@ defineTool(
   "milestone_delete",
   "Delete a milestone. Linked feedback items will be unlinked.",
   {
-    type: "object",
     properties: {
       milestoneId: {
-        type: "string",
         description: "The milestone ID to delete",
+        type: "string",
       },
     },
     required: ["milestoneId"],
+    type: "object",
   },
   async (ctx, organizationId, params) =>
     ctx.runMutation(internal.admin_api.milestones.deleteMilestone, {
-      organizationId,
       milestoneId: asId<"milestones">(params.milestoneId, "milestoneId"),
+      organizationId,
     })
 );
 
@@ -1012,24 +1012,24 @@ defineTool(
   "milestone_link_feedback",
   "Link or unlink a feedback item to/from a milestone.",
   {
-    type: "object",
     properties: {
-      milestoneId: { type: "string", description: "The milestone ID" },
-      feedbackId: { type: "string", description: "The feedback item ID" },
       action: {
-        type: "string",
-        enum: ["link", "unlink"],
         description: "Whether to link or unlink",
+        enum: ["link", "unlink"],
+        type: "string",
       },
+      feedbackId: { description: "The feedback item ID", type: "string" },
+      milestoneId: { description: "The milestone ID", type: "string" },
     },
     required: ["milestoneId", "feedbackId", "action"],
+    type: "object",
   },
   async (ctx, organizationId, params) =>
     ctx.runMutation(internal.admin_api.milestones.linkMilestoneFeedback, {
-      organizationId,
-      milestoneId: asId<"milestones">(params.milestoneId, "milestoneId"),
-      feedbackId: asId<"feedback">(params.feedbackId, "feedbackId"),
       action: requireStr(params.action, "action") as "link" | "unlink",
+      feedbackId: asId<"feedback">(params.feedbackId, "feedbackId"),
+      milestoneId: asId<"milestones">(params.milestoneId, "milestoneId"),
+      organizationId,
     })
 );
 
@@ -1040,7 +1040,7 @@ defineTool(
 defineTool(
   "status_list",
   "List all organization statuses used for roadmap columns (e.g., 'Planned', 'In Progress', 'Done').",
-  { type: "object", properties: {} },
+  { properties: {}, type: "object" },
   async (ctx, organizationId) =>
     ctx.runQuery(internal.admin_api.statuses.listStatuses, {
       organizationId,
@@ -1051,23 +1051,23 @@ defineTool(
   "status_create",
   "Create a new organization status for the roadmap.",
   {
-    type: "object",
     properties: {
+      color: { description: "Status color (hex or named)", type: "string" },
+      icon: { description: "Status icon", type: "string" },
       name: {
-        type: "string",
         description: "Status name (e.g., 'In Review')",
+        type: "string",
       },
-      color: { type: "string", description: "Status color (hex or named)" },
-      icon: { type: "string", description: "Status icon" },
     },
     required: ["name", "color"],
+    type: "object",
   },
   async (ctx, organizationId, params) =>
     ctx.runMutation(internal.admin_api.statuses.createStatus, {
-      organizationId,
-      name: requireStr(params.name, "name"),
       color: requireStr(params.color, "color"),
       icon: str(params.icon),
+      name: requireStr(params.name, "name"),
+      organizationId,
     })
 );
 
@@ -1075,22 +1075,22 @@ defineTool(
   "status_update",
   "Update an organization status's name, color, or icon.",
   {
-    type: "object",
     properties: {
-      statusId: { type: "string", description: "The status ID" },
-      name: { type: "string", description: "New name" },
-      color: { type: "string", description: "New color" },
-      icon: { type: "string", description: "New icon" },
+      color: { description: "New color", type: "string" },
+      icon: { description: "New icon", type: "string" },
+      name: { description: "New name", type: "string" },
+      statusId: { description: "The status ID", type: "string" },
     },
     required: ["statusId"],
+    type: "object",
   },
   async (ctx, organizationId, params) =>
     ctx.runMutation(internal.admin_api.statuses.updateStatus, {
-      organizationId,
-      statusId: asId<"organizationStatuses">(params.statusId, "statusId"),
-      name: str(params.name),
       color: str(params.color),
       icon: str(params.icon),
+      name: str(params.name),
+      organizationId,
+      statusId: asId<"organizationStatuses">(params.statusId, "statusId"),
     })
 );
 
@@ -1098,14 +1098,14 @@ defineTool(
   "status_delete",
   "Delete an organization status. Feedback using this status will be unset.",
   {
-    type: "object",
     properties: {
       statusId: {
-        type: "string",
         description: "The status ID to delete",
+        type: "string",
       },
     },
     required: ["statusId"],
+    type: "object",
   },
   async (ctx, organizationId, params) =>
     ctx.runMutation(internal.admin_api.statuses.deleteStatus, {
@@ -1121,7 +1121,7 @@ defineTool(
 defineTool(
   "member_list",
   "List all members of the organization with their roles.",
-  { type: "object", properties: {} },
+  { properties: {}, type: "object" },
   async (ctx, organizationId) =>
     ctx.runQuery(internal.admin_api.members.listMembers, {
       organizationId,
@@ -1132,21 +1132,21 @@ defineTool(
   "invitation_create",
   "Invite a new member to the organization by email.",
   {
-    type: "object",
     properties: {
-      email: { type: "string", description: "Email address to invite" },
+      email: { description: "Email address to invite", type: "string" },
       role: {
-        type: "string",
-        enum: ["admin", "member"],
         description: "Role for the new member",
+        enum: ["admin", "member"],
+        type: "string",
       },
     },
     required: ["email", "role"],
+    type: "object",
   },
   async (ctx, organizationId, params) =>
     ctx.runMutation(internal.admin_api.members.createInvitation, {
-      organizationId,
       email: requireStr(params.email, "email"),
+      organizationId,
       role: requireStr(params.role, "role") as "admin" | "member",
     })
 );
@@ -1155,26 +1155,26 @@ defineTool(
   "invitation_cancel",
   "Cancel a pending invitation.",
   {
-    type: "object",
     properties: {
       invitationId: {
-        type: "string",
         description: "The invitation ID to cancel",
+        type: "string",
       },
     },
     required: ["invitationId"],
+    type: "object",
   },
   async (ctx, organizationId, params) =>
     ctx.runMutation(internal.admin_api.members.cancelInvitation, {
-      organizationId,
       invitationId: asId<"invitations">(params.invitationId, "invitationId"),
+      organizationId,
     })
 );
 
 defineTool(
   "invitation_list",
   "List all pending invitations for the organization.",
-  { type: "object", properties: {} },
+  { properties: {}, type: "object" },
   async (ctx, organizationId) =>
     ctx.runQuery(internal.admin_api.members.listInvitations, {
       organizationId,
@@ -1188,7 +1188,7 @@ defineTool(
 defineTool(
   "org_get",
   "Get the organization's information and settings.",
-  { type: "object", properties: {} },
+  { properties: {}, type: "object" },
   async (ctx, organizationId) =>
     ctx.runQuery(internal.admin_api.organization.getOrganization, {
       organizationId,
@@ -1199,25 +1199,25 @@ defineTool(
   "org_update",
   "Update organization settings like name, visibility, branding, or support.",
   {
-    type: "object",
     properties: {
-      name: { type: "string", description: "Organization name" },
       isPublic: {
-        type: "boolean",
         description: "Whether the feedback board is publicly accessible",
-      },
-      primaryColor: { type: "string", description: "Brand color (hex)" },
-      supportEnabled: {
         type: "boolean",
+      },
+      name: { description: "Organization name", type: "string" },
+      primaryColor: { description: "Brand color (hex)", type: "string" },
+      supportEnabled: {
         description: "Whether the support/help desk feature is enabled",
+        type: "boolean",
       },
     },
+    type: "object",
   },
   async (ctx, organizationId, params) =>
     ctx.runMutation(internal.admin_api.organization.updateOrganization, {
-      organizationId,
-      name: str(params.name),
       isPublic: bool(params.isPublic),
+      name: str(params.name),
+      organizationId,
       primaryColor: str(params.primaryColor),
       supportEnabled: bool(params.supportEnabled),
     })
@@ -1226,7 +1226,7 @@ defineTool(
 defineTool(
   "roadmap_get",
   "Get the public roadmap organized by status columns with feedback items in each.",
-  { type: "object", properties: {} },
+  { properties: {}, type: "object" },
   async (ctx, organizationId) =>
     ctx.runQuery(internal.feedback.api_public.getRoadmapByOrganization, {
       organizationId,

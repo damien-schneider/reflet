@@ -15,22 +15,22 @@ const createMockIcon = (name: string) => {
 
 const createMockItems = () => [
   {
-    title: "Heading 1",
+    command: vi.fn(),
     description: "Large section heading",
     icon: createMockIcon("heading-1"),
-    command: vi.fn(),
+    title: "Heading 1",
   },
   {
-    title: "Bullet List",
+    command: vi.fn(),
     description: "Create a bullet list",
     icon: createMockIcon("bullet-list"),
-    command: vi.fn(),
+    title: "Bullet List",
   },
   {
-    title: "Code Block",
+    command: vi.fn(),
     description: "Display code",
     icon: createMockIcon("code-block"),
-    command: vi.fn(),
+    title: "Code Block",
   },
 ];
 
@@ -231,8 +231,8 @@ describe("CommandList", () => {
       );
 
       const event = new KeyboardEvent("keydown", {
-        key: "Enter",
         cancelable: true,
+        key: "Enter",
       });
       const result = keyHandler(event);
       expect(result).toBe(true);
@@ -294,7 +294,7 @@ describe("CommandList", () => {
 
     // After items change, selection should reset to 0
     keyHandler(
-      new KeyboardEvent("keydown", { key: "Enter", cancelable: true })
+      new KeyboardEvent("keydown", { cancelable: true, key: "Enter" })
     );
     expect(command).toHaveBeenCalledWith(newItems[0]);
   });

@@ -17,9 +17,9 @@ import { validateInputLength } from "../shared/validators";
  */
 export const create = mutation({
   args: {
+    description: v.optional(v.string()),
     organizationId: v.id("organizations"),
     title: v.string(),
-    description: v.optional(v.string()),
     version: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -46,13 +46,13 @@ export const create = mutation({
 
     const now = Date.now();
     const releaseId = await ctx.db.insert("releases", {
-      organizationId: args.organizationId,
-      title: args.title,
-      description: args.description,
-      version: args.version,
-      publishedAt: undefined,
       createdAt: now,
+      description: args.description,
+      organizationId: args.organizationId,
+      publishedAt: undefined,
+      title: args.title,
       updatedAt: now,
+      version: args.version,
     });
 
     return releaseId;
@@ -64,9 +64,9 @@ export const create = mutation({
  */
 export const update = mutation({
   args: {
+    description: v.optional(v.string()),
     id: v.id("releases"),
     title: v.optional(v.string()),
-    description: v.optional(v.string()),
     version: v.optional(v.string()),
   },
   handler: async (ctx, args) => {

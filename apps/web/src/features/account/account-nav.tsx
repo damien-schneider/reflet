@@ -11,10 +11,10 @@ interface AccountNavProps {
 }
 
 const NAV_ITEMS = [
-  { id: "profile", label: "Profile", icon: User },
-  { id: "email", label: "Email", icon: Envelope },
-  { id: "password", label: "Password", icon: Envelope },
-  { id: "notifications", label: "Notifications", icon: Bell },
+  { icon: User, id: "profile", label: "Profile" },
+  { icon: Envelope, id: "email", label: "Email" },
+  { icon: Envelope, id: "password", label: "Password" },
+  { icon: Bell, id: "notifications", label: "Notifications" },
 ] as const;
 
 export function AccountNav({ activeTab, onTabChange }: AccountNavProps) {

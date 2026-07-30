@@ -12,12 +12,12 @@ const GITHUB_API_URL = "https://api.github.com";
  */
 export const createOrUpdateFile = action({
   args: {
-    installationToken: v.string(),
-    repositoryFullName: v.string(),
-    path: v.string(),
-    content: v.string(),
-    message: v.string(),
     branch: v.string(),
+    content: v.string(),
+    installationToken: v.string(),
+    message: v.string(),
+    path: v.string(),
+    repositoryFullName: v.string(),
   },
   handler: async (_ctx, args) => {
     // First, try to get the file to see if it exists (to get the SHA)
@@ -25,8 +25,8 @@ export const createOrUpdateFile = action({
       `${GITHUB_API_URL}/repos/${args.repositoryFullName}/contents/${args.path}?ref=${args.branch}`,
       {
         headers: {
-          Authorization: `Bearer ${args.installationToken}`,
           Accept: "application/vnd.github+json",
+          Authorization: `Bearer ${args.installationToken}`,
           "X-GitHub-Api-Version": "2022-11-28",
         },
       }
@@ -42,19 +42,19 @@ export const createOrUpdateFile = action({
     const response = await fetch(
       `${GITHUB_API_URL}/repos/${args.repositoryFullName}/contents/${args.path}`,
       {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${args.installationToken}`,
-          Accept: "application/vnd.github+json",
-          "X-GitHub-Api-Version": "2022-11-28",
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({
-          message: args.message,
-          content: Buffer.from(args.content).toString("base64"),
           branch: args.branch,
+          content: Buffer.from(args.content).toString("base64"),
+          message: args.message,
           ...(sha ? { sha } : {}),
         }),
+        headers: {
+          Accept: "application/vnd.github+json",
+          Authorization: `Bearer ${args.installationToken}`,
+          "Content-Type": "application/json",
+          "X-GitHub-Api-Version": "2022-11-28",
+        },
+        method: "PUT",
       }
     );
 
@@ -87,8 +87,8 @@ export const getInstallationToken = action({
     // Create JWT for GitHub App authentication
     const now = Math.floor(Date.now() / 1000);
     const payload = {
-      iat: now - 60, // Issued at time (60 seconds in the past to allow for clock drift)
       exp: now + 600, // Expiration time (10 minutes)
+      iat: now - 60, // Issued at time (60 seconds in the past to allow for clock drift)
       iss: appId,
     };
 
@@ -113,12 +113,12 @@ export const getInstallationToken = action({
     const response = await fetch(
       `${GITHUB_API_URL}/app/installations/${args.installationId}/access_tokens`,
       {
-        method: "POST",
         headers: {
-          Authorization: `Bearer ${jwt}`,
           Accept: "application/vnd.github+json",
+          Authorization: `Bearer ${jwt}`,
           "X-GitHub-Api-Version": "2022-11-28",
         },
+        method: "POST",
       }
     );
 
@@ -134,8 +134,8 @@ export const getInstallationToken = action({
       expires_at: string;
     };
     return {
-      token: data.token,
       expiresAt: data.expires_at,
+      token: data.token,
     };
   },
 });
@@ -146,8 +146,8 @@ export const getInstallationToken = action({
  */
 export const pushReleaseToGithub = internalAction({
   args: {
-    releaseId: v.id("releases"),
     manual: v.optional(v.boolean()),
+    releaseId: v.id("releases"),
   },
   handler: async (ctx, args) => {
     const release = await ctx.runQuery(
@@ -223,21 +223,21 @@ export const pushReleaseToGithub = internalAction({
     const response = await fetch(
       `${GITHUB_API_URL}/repos/${connection.repositoryFullName}/releases`,
       {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/vnd.github+json",
-          "X-GitHub-Api-Version": "2022-11-28",
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({
-          tag_name: tagName,
-          target_commitish: targetBranch,
-          name: release.title,
           body: release.description ?? "",
           draft: false,
+          name: release.title,
           prerelease: false,
+          tag_name: tagName,
+          target_commitish: targetBranch,
         }),
+        headers: {
+          Accept: "application/vnd.github+json",
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          "X-GitHub-Api-Version": "2022-11-28",
+        },
+        method: "POST",
       }
     );
 
@@ -252,10 +252,10 @@ export const pushReleaseToGithub = internalAction({
       await ctx.runMutation(
         internal.integrations.github.mutations.updateGithubPushStatus,
         {
-          releaseId: args.releaseId,
-          status: "failed",
           error: errorMessage,
           errorType,
+          releaseId: args.releaseId,
+          status: "failed",
         }
       );
       return;
@@ -270,9 +270,9 @@ export const pushReleaseToGithub = internalAction({
     await ctx.runMutation(
       internal.integrations.github.mutations.linkGithubRelease,
       {
-        releaseId: args.releaseId,
-        githubReleaseId: String(githubRelease.id),
         githubHtmlUrl: githubRelease.html_url,
+        githubReleaseId: String(githubRelease.id),
+        releaseId: args.releaseId,
       }
     );
 
@@ -303,8 +303,8 @@ export const getInstallationTokenInternal = internalAction({
 
     const now = Math.floor(Date.now() / 1000);
     const payload = {
-      iat: now - 60,
       exp: now + 600,
+      iat: now - 60,
       iss: appId,
     };
 
@@ -325,12 +325,12 @@ export const getInstallationTokenInternal = internalAction({
     const response = await fetch(
       `${GITHUB_API_URL}/app/installations/${args.installationId}/access_tokens`,
       {
-        method: "POST",
         headers: {
-          Authorization: `Bearer ${jwt}`,
           Accept: "application/vnd.github+json",
+          Authorization: `Bearer ${jwt}`,
           "X-GitHub-Api-Version": "2022-11-28",
         },
+        method: "POST",
       }
     );
 
@@ -346,8 +346,8 @@ export const getInstallationTokenInternal = internalAction({
       expires_at: string;
     };
     return {
-      token: data.token,
       expiresAt: data.expires_at,
+      token: data.token,
     };
   },
 });

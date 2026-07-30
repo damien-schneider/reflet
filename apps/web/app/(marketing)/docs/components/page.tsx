@@ -10,31 +10,31 @@ import { InlineCode } from "@/components/ui/typography";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
-  title: "Component Library",
   description:
     "Pre-made UI components for feedback boards, roadmaps, and timelines. Install via shadcn registry.",
-  path: "/docs/components",
   keywords: ["components", "shadcn", "registry", "feedback cards", "ui"],
+  path: "/docs/components",
+  title: "Component Library",
 });
 
 const CARDS = [
   {
-    title: "Sweep Corner",
     description:
       "Corner vote badge with animated up/down buttons and sweep gradient effect.",
     href: "/docs/components/feedback-cards/sweep-corner",
+    title: "Sweep Corner",
   },
   {
-    title: "Minimal Notch",
     description:
       "Side vote column with an animated glowing notch bar and status badges.",
     href: "/docs/components/feedback-cards/minimal-notch",
+    title: "Minimal Notch",
   },
   {
-    title: "Editorial Feed",
     description:
       "Stacked editorial layout with margin vote annotations and vertical rules.",
     href: "/docs/components/feedback-cards/editorial-feed",
+    title: "Editorial Feed",
   },
 ] as const;
 

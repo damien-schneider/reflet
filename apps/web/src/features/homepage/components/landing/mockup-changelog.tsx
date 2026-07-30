@@ -24,7 +24,7 @@ const EASE_OUT_EXPO = [0.16, 1, 0.3, 1] as const;
 
 export default function ChangelogMockup() {
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, amount: 0.3 });
+  const isInView = useInView(ref, { amount: 0.3, once: true });
 
   return (
     <div className="relative" ref={ref}>
@@ -102,9 +102,9 @@ export default function ChangelogMockup() {
 
       {/* Floating notification toast */}
       <motion.div
-        animate={isInView ? { opacity: 1, y: 0, x: 0 } : {}}
+        animate={isInView ? { opacity: 1, x: 0, y: 0 } : {}}
         className="absolute -right-3 -bottom-4 z-10 flex items-center gap-2.5 rounded-xl border border-border bg-card p-3 shadow-lg sm:-right-6 sm:-bottom-6 dark:shadow-[0_8px_24px_-4px_rgba(0,0,0,0.5)]"
-        initial={{ opacity: 0, y: 16, x: 8 }}
+        initial={{ opacity: 0, x: 8, y: 16 }}
         transition={{ delay: 0.8, duration: 0.6, ease: EASE_OUT_EXPO }}
       >
         <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10">

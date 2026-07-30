@@ -88,31 +88,31 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
   const workspaceNavItems = orgSlug
     ? [
         {
+          badge: undefined,
           href: "/dashboard/$orgSlug/project",
           icon: Cube,
           label: "Project",
-          badge: undefined,
         },
         {
+          badge: undefined,
           href: "/dashboard/$orgSlug",
           icon: Chat,
           label: "Feedback",
-          badge: undefined,
         },
         {
+          badge: undefined,
           href: "/dashboard/$orgSlug/changelog",
           icon: FileText,
           label: "Changelog",
-          badge: undefined,
         },
         {
-          href: "/dashboard/$orgSlug/inbox",
-          icon: ChatCircle,
-          label: "Inbox",
           badge:
             adminUnreadCount && adminUnreadCount > 0
               ? adminUnreadCount
               : undefined,
+          href: "/dashboard/$orgSlug/inbox",
+          icon: ChatCircle,
+          label: "Inbox",
         },
       ]
     : [];
@@ -120,34 +120,34 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
   const adminNavItems = orgSlug
     ? [
         {
+          badge: undefined,
           href: "/dashboard/$orgSlug/status",
           icon: Heartbeat,
           label: "Status",
-          badge: undefined,
         },
         {
+          badge: undefined,
           href: "/dashboard/$orgSlug/in-app",
           icon: Code,
           label: "In-App",
-          badge: undefined,
         },
         {
+          badge: undefined,
           href: "/dashboard/$orgSlug/surveys",
           icon: ClipboardText,
           label: "Surveys",
-          badge: undefined,
         },
         {
+          badge: undefined,
           href: "/dashboard/$orgSlug/intelligence",
           icon: Binoculars,
           label: "Intelligence",
-          badge: undefined,
         },
         {
+          badge: deletedCount && deletedCount > 0 ? deletedCount : undefined,
           href: "/dashboard/$orgSlug/trash",
           icon: Trash,
           label: "Trash",
-          badge: deletedCount && deletedCount > 0 ? deletedCount : undefined,
         },
       ]
     : [];

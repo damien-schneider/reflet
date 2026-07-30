@@ -7,9 +7,7 @@ import { internalMutation, internalQuery } from "../_generated/server";
  */
 export const get = internalQuery({
   args: { releaseId: v.id("releases") },
-  handler: async (ctx, args) => {
-    return await ctx.db.get(args.releaseId);
-  },
+  handler: async (ctx, args) => await ctx.db.get(args.releaseId),
 });
 
 /**
@@ -19,14 +17,14 @@ export const get = internalQuery({
  */
 export const linkGithubRelease = internalMutation({
   args: {
-    releaseId: v.id("releases"),
-    githubReleaseId: v.string(),
     githubHtmlUrl: v.string(),
+    githubReleaseId: v.string(),
+    releaseId: v.id("releases"),
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.releaseId, {
-      githubReleaseId: args.githubReleaseId,
       githubHtmlUrl: args.githubHtmlUrl,
+      githubReleaseId: args.githubReleaseId,
       updatedAt: Date.now(),
     });
   },

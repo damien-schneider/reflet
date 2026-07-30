@@ -3,15 +3,6 @@ import { internalMutation, internalQuery } from "../_generated/server";
 
 export const getFeedbackForComparison = internalQuery({
   args: { feedbackId: v.id("feedback") },
-  returns: v.union(
-    v.object({
-      _id: v.id("feedback"),
-      organizationId: v.id("organizations"),
-      title: v.string(),
-      description: v.string(),
-    }),
-    v.null()
-  ),
   handler: async (ctx, args) => {
     const feedback = await ctx.db.get(args.feedbackId);
     if (!feedback || feedback.isMerged || feedback.deletedAt) {
@@ -19,27 +10,29 @@ export const getFeedbackForComparison = internalQuery({
     }
     return {
       _id: feedback._id,
+      description: feedback.description,
       organizationId: feedback.organizationId,
       title: feedback.title,
-      description: feedback.description,
     };
   },
+  returns: v.union(
+    v.object({
+      _id: v.id("feedback"),
+      description: v.string(),
+      organizationId: v.id("organizations"),
+      title: v.string(),
+    }),
+    v.null()
+  ),
 });
 
 export const searchSimilarByTitle = internalQuery({
   args: {
-    organizationId: v.id("organizations"),
-    title: v.string(),
     excludeId: v.id("feedback"),
     limit: v.number(),
+    organizationId: v.id("organizations"),
+    title: v.string(),
   },
-  returns: v.array(
-    v.object({
-      _id: v.id("feedback"),
-      title: v.string(),
-      description: v.string(),
-    })
-  ),
   handler: async (ctx, args) => {
     const results = await ctx.db
       .query("feedback")
@@ -53,20 +46,26 @@ export const searchSimilarByTitle = internalQuery({
       .slice(0, args.limit)
       .map((f) => ({
         _id: f._id,
-        title: f.title,
         description: f.description,
+        title: f.title,
       }));
   },
+  returns: v.array(
+    v.object({
+      _id: v.id("feedback"),
+      description: v.string(),
+      title: v.string(),
+    })
+  ),
 });
 
 export const createDuplicatePair = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
     feedbackIdA: v.id("feedback"),
     feedbackIdB: v.id("feedback"),
+    organizationId: v.id("organizations"),
     similarityScore: v.number(),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const existingA = await ctx.db
       .query("duplicatePairs")
@@ -95,14 +94,15 @@ export const createDuplicatePair = internalMutation({
     }
 
     await ctx.db.insert("duplicatePairs", {
-      organizationId: args.organizationId,
+      detectedAt: Date.now(),
       feedbackIdA: args.feedbackIdA,
       feedbackIdB: args.feedbackIdB,
+      organizationId: args.organizationId,
       similarityScore: args.similarityScore,
       status: "pending",
-      detectedAt: Date.now(),
     });
 
     return null;
   },
+  returns: v.null(),
 });

@@ -11,10 +11,10 @@ import { getAuthUser } from "../../shared/utils";
  */
 export const selectRepository = mutation({
   args: {
-    organizationId: v.id("organizations"),
-    repositoryId: v.string(),
-    repositoryFullName: v.string(),
     defaultBranch: v.string(),
+    organizationId: v.id("organizations"),
+    repositoryFullName: v.string(),
+    repositoryId: v.string(),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -42,9 +42,9 @@ export const selectRepository = mutation({
     }
 
     await ctx.db.patch(connection._id, {
-      repositoryId: args.repositoryId,
-      repositoryFullName: args.repositoryFullName,
       repositoryDefaultBranch: args.defaultBranch,
+      repositoryFullName: args.repositoryFullName,
+      repositoryId: args.repositoryId,
       updatedAt: Date.now(),
     });
 
@@ -87,9 +87,9 @@ export const updateWebhook = mutation({
     }
 
     await ctx.db.patch(connection._id, {
+      updatedAt: Date.now(),
       webhookId: args.webhookId,
       webhookSecret: args.webhookSecret,
-      updatedAt: Date.now(),
     });
 
     return connection._id;
@@ -101,10 +101,10 @@ export const updateWebhook = mutation({
  */
 export const updateCiSettings = mutation({
   args: {
-    organizationId: v.id("organizations"),
-    ciEnabled: v.boolean(),
     ciBranch: v.optional(v.string()),
+    ciEnabled: v.boolean(),
     ciWorkflowCreated: v.optional(v.boolean()),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -132,8 +132,8 @@ export const updateCiSettings = mutation({
     }
 
     await ctx.db.patch(connection._id, {
-      ciEnabled: args.ciEnabled,
       ciBranch: args.ciBranch,
+      ciEnabled: args.ciEnabled,
       ciWorkflowCreated: args.ciWorkflowCreated,
       updatedAt: Date.now(),
     });
@@ -147,8 +147,8 @@ export const updateCiSettings = mutation({
  */
 export const toggleAutoSync = mutation({
   args: {
-    organizationId: v.id("organizations"),
     enabled: v.boolean(),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -190,19 +190,19 @@ export const toggleAutoSync = mutation({
 export const updateSyncStatus = mutation({
   args: {
     connectionId: v.id("githubConnections"),
+    error: v.optional(v.string()),
     status: v.union(
       v.literal("idle"),
       v.literal("syncing"),
       v.literal("success"),
       v.literal("error")
     ),
-    error: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.connectionId, {
-      lastSyncStatus: args.status,
-      lastSyncError: args.error,
       lastSyncAt: Date.now(),
+      lastSyncError: args.error,
+      lastSyncStatus: args.status,
       updatedAt: Date.now(),
     });
   },
@@ -216,15 +216,15 @@ export const saveSyncedReleases = mutation({
     organizationId: v.id("organizations"),
     releases: v.array(
       v.object({
-        githubReleaseId: v.string(),
-        tagName: v.string(),
-        name: v.optional(v.string()),
         body: v.optional(v.string()),
+        createdAt: v.number(),
+        githubReleaseId: v.string(),
         htmlUrl: v.string(),
         isDraft: v.boolean(),
         isPrerelease: v.boolean(),
+        name: v.optional(v.string()),
         publishedAt: v.optional(v.number()),
-        createdAt: v.number(),
+        tagName: v.string(),
       })
     ),
   },
@@ -254,29 +254,29 @@ export const saveSyncedReleases = mutation({
 
       if (existing) {
         await ctx.db.patch(existing._id, {
-          tagName: release.tagName,
-          name: release.name,
           body: release.body,
           htmlUrl: release.htmlUrl,
           isDraft: release.isDraft,
           isPrerelease: release.isPrerelease,
-          publishedAt: release.publishedAt,
           lastSyncedAt: now,
+          name: release.name,
+          publishedAt: release.publishedAt,
+          tagName: release.tagName,
         });
       } else {
         await ctx.db.insert("githubReleases", {
-          organizationId: args.organizationId,
+          body: release.body,
+          createdAt: release.createdAt,
           githubConnectionId: connection._id,
           githubReleaseId: release.githubReleaseId,
-          tagName: release.tagName,
-          name: release.name,
-          body: release.body,
           htmlUrl: release.htmlUrl,
           isDraft: release.isDraft,
           isPrerelease: release.isPrerelease,
-          publishedAt: release.publishedAt,
-          createdAt: release.createdAt,
           lastSyncedAt: now,
+          name: release.name,
+          organizationId: args.organizationId,
+          publishedAt: release.publishedAt,
+          tagName: release.tagName,
         });
       }
     }
@@ -296,8 +296,8 @@ export const saveSyncedReleases = mutation({
  */
 export const importGithubRelease = mutation({
   args: {
-    githubReleaseId: v.id("githubReleases"),
     autoPublish: v.optional(v.boolean()),
+    githubReleaseId: v.id("githubReleases"),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -336,16 +336,16 @@ export const importGithubRelease = mutation({
     const now = Date.now();
 
     const releaseId = await ctx.db.insert("releases", {
-      organizationId: githubRelease.organizationId,
-      title: githubRelease.name || githubRelease.tagName,
-      description: githubRelease.body,
-      version: githubRelease.tagName,
-      publishedAt: args.autoPublish ? now : undefined,
-      githubReleaseId: githubRelease.githubReleaseId,
-      githubHtmlUrl: githubRelease.htmlUrl,
-      syncedFromGithub: true,
       createdAt: now,
+      description: githubRelease.body,
+      githubHtmlUrl: githubRelease.htmlUrl,
+      githubReleaseId: githubRelease.githubReleaseId,
+      organizationId: githubRelease.organizationId,
+      publishedAt: args.autoPublish ? now : undefined,
+      syncedFromGithub: true,
+      title: githubRelease.name || githubRelease.tagName,
       updatedAt: now,
+      version: githubRelease.tagName,
     });
 
     await ctx.db.patch(args.githubReleaseId, {
@@ -419,20 +419,20 @@ export const disconnect = mutation({
  */
 export const logWebhookEvent = mutation({
   args: {
-    organizationId: v.id("organizations"),
+    action: v.optional(v.string()),
     connectionId: v.id("githubConnections"),
     eventType: v.string(),
-    action: v.optional(v.string()),
+    organizationId: v.id("organizations"),
     payload: v.string(),
   },
   handler: async (ctx, args) => {
     await ctx.db.insert("githubWebhookEvents", {
-      organizationId: args.organizationId,
-      githubConnectionId: args.connectionId,
-      eventType: args.eventType,
       action: args.action,
-      payload: args.payload.slice(0, 10_000),
       createdAt: Date.now(),
+      eventType: args.eventType,
+      githubConnectionId: args.connectionId,
+      organizationId: args.organizationId,
+      payload: args.payload.slice(0, 10_000),
     });
   },
 });
@@ -447,11 +447,11 @@ export const logWebhookEvent = mutation({
  */
 export const saveUserInstallation = internalMutation({
   args: {
-    userId: v.string(),
-    installationId: v.string(),
-    accountType: v.union(v.literal("user"), v.literal("organization")),
-    accountLogin: v.string(),
     accountAvatarUrl: v.optional(v.string()),
+    accountLogin: v.string(),
+    accountType: v.union(v.literal("user"), v.literal("organization")),
+    installationId: v.string(),
+    userId: v.string(),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
@@ -463,10 +463,10 @@ export const saveUserInstallation = internalMutation({
 
     if (existing) {
       await ctx.db.patch(existing._id, {
-        installationId: args.installationId,
-        accountType: args.accountType,
-        accountLogin: args.accountLogin,
         accountAvatarUrl: args.accountAvatarUrl,
+        accountLogin: args.accountLogin,
+        accountType: args.accountType,
+        installationId: args.installationId,
         status: "connected",
         updatedAt: now,
       });
@@ -474,14 +474,14 @@ export const saveUserInstallation = internalMutation({
     }
 
     return await ctx.db.insert("userGithubConnections", {
-      userId: args.userId,
-      installationId: args.installationId,
-      accountType: args.accountType,
-      accountLogin: args.accountLogin,
       accountAvatarUrl: args.accountAvatarUrl,
-      status: "connected",
+      accountLogin: args.accountLogin,
+      accountType: args.accountType,
       createdAt: now,
+      installationId: args.installationId,
+      status: "connected",
       updatedAt: now,
+      userId: args.userId,
     });
   },
 });
@@ -492,9 +492,9 @@ export const saveUserInstallation = internalMutation({
  */
 export const linkRepoToOrg = internalMutation({
   args: {
+    linkedByUserId: v.string(),
     organizationId: v.id("organizations"),
     userGithubConnectionId: v.id("userGithubConnections"),
-    linkedByUserId: v.string(),
   },
   handler: async (ctx, args) => {
     const userConnection = await ctx.db.get(args.userGithubConnectionId);
@@ -513,10 +513,10 @@ export const linkRepoToOrg = internalMutation({
 
     if (existing) {
       await ctx.db.patch(existing._id, {
-        installationId: userConnection.installationId,
-        accountType: userConnection.accountType,
-        accountLogin: userConnection.accountLogin,
         accountAvatarUrl: userConnection.accountAvatarUrl,
+        accountLogin: userConnection.accountLogin,
+        accountType: userConnection.accountType,
+        installationId: userConnection.installationId,
         linkedByUserId: args.linkedByUserId,
         status: "connected",
         updatedAt: now,
@@ -525,14 +525,14 @@ export const linkRepoToOrg = internalMutation({
     }
 
     return await ctx.db.insert("githubConnections", {
-      organizationId: args.organizationId,
-      installationId: userConnection.installationId,
-      accountType: userConnection.accountType,
-      accountLogin: userConnection.accountLogin,
       accountAvatarUrl: userConnection.accountAvatarUrl,
-      linkedByUserId: args.linkedByUserId,
-      status: "connected",
+      accountLogin: userConnection.accountLogin,
+      accountType: userConnection.accountType,
       createdAt: now,
+      installationId: userConnection.installationId,
+      linkedByUserId: args.linkedByUserId,
+      organizationId: args.organizationId,
+      status: "connected",
       updatedAt: now,
     });
   },
@@ -648,14 +648,14 @@ export const handleInstallationDeleted = internalMutation({
  */
 export const linkGithubRelease = internalMutation({
   args: {
-    releaseId: v.id("releases"),
-    githubReleaseId: v.string(),
     githubHtmlUrl: v.string(),
+    githubReleaseId: v.string(),
+    releaseId: v.id("releases"),
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.releaseId, {
-      githubReleaseId: args.githubReleaseId,
       githubHtmlUrl: args.githubHtmlUrl,
+      githubReleaseId: args.githubReleaseId,
       updatedAt: Date.now(),
     });
   },
@@ -666,20 +666,20 @@ export const linkGithubRelease = internalMutation({
  */
 export const updateGithubPushStatus = internalMutation({
   args: {
+    error: v.optional(v.string()),
+    errorType: v.optional(v.string()),
     releaseId: v.id("releases"),
     status: v.union(
       v.literal("pending"),
       v.literal("success"),
       v.literal("failed")
     ),
-    error: v.optional(v.string()),
-    errorType: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.releaseId, {
-      githubPushStatus: args.status,
       githubPushError: args.error,
       githubPushErrorType: args.errorType,
+      githubPushStatus: args.status,
       updatedAt: Date.now(),
     });
   },

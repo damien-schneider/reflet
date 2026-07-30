@@ -5,10 +5,10 @@ import { InlineCode } from "@/components/ui/typography";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
-  title: "Feedback Widget",
   description:
     "Add a floating feedback button to your website for collecting feature requests and bug reports.",
   path: "/docs/widget/feedback-widget",
+  title: "Feedback Widget",
 });
 
 export default function FeedbackWidgetPage() {

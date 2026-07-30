@@ -13,12 +13,12 @@ const createItem = (
 ) =>
   ({
     _id: overrides._id ?? "id-1",
-    title: "Test",
-    voteCount: overrides.voteCount ?? 0,
     commentCount: overrides.commentCount ?? 0,
     createdAt: overrides.createdAt ?? 1000,
     isPinned: overrides.isPinned ?? false,
     organizationId: "org-1",
+    title: "Test",
+    voteCount: overrides.voteCount ?? 0,
   }) as Parameters<typeof sortFeedback>[0][number];
 
 describe("sortFeedback", () => {
@@ -73,9 +73,9 @@ describe("sortFeedback", () => {
   describe("pinned items", () => {
     it("pinned items always come first regardless of sort", () => {
       const items = [
-        createItem({ _id: "a", voteCount: 100, isPinned: false }),
-        createItem({ _id: "b", voteCount: 1, isPinned: true }),
-        createItem({ _id: "c", voteCount: 50, isPinned: false }),
+        createItem({ _id: "a", isPinned: false, voteCount: 100 }),
+        createItem({ _id: "b", isPinned: true, voteCount: 1 }),
+        createItem({ _id: "c", isPinned: false, voteCount: 50 }),
       ];
       const sorted = sortFeedback(items, "votes");
       expect(sorted[0]._id).toBe("b");
@@ -83,9 +83,9 @@ describe("sortFeedback", () => {
 
     it("multiple pinned items are sorted among themselves", () => {
       const items = [
-        createItem({ _id: "a", voteCount: 5, isPinned: true }),
-        createItem({ _id: "b", voteCount: 10, isPinned: true }),
-        createItem({ _id: "c", voteCount: 50, isPinned: false }),
+        createItem({ _id: "a", isPinned: true, voteCount: 5 }),
+        createItem({ _id: "b", isPinned: true, voteCount: 10 }),
+        createItem({ _id: "c", isPinned: false, voteCount: 50 }),
       ];
       const sorted = sortFeedback(items, "votes");
       expect(sorted[0]._id).toBe("b");

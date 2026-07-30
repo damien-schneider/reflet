@@ -32,40 +32,40 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   {
-    id: "github",
-    label: "GitHub",
     description: "Repository and sync",
     icon: GithubLogo,
+    id: "github",
+    label: "GitHub",
   },
   {
-    id: "ai-mcp",
-    label: "AI & MCP",
     description: "Assistant and integrations",
     icon: Robot,
+    id: "ai-mcp",
+    label: "AI & MCP",
   },
   {
-    id: "general",
-    label: "Organization",
     description: "Name, branding, and visibility",
     icon: Buildings,
+    id: "general",
+    label: "Organization",
   },
   {
-    id: "domains",
-    label: "Domains",
     description: "Custom domains and subdomains",
     icon: Globe,
+    id: "domains",
+    label: "Domains",
   },
   {
-    id: "members",
-    label: "Members",
     description: "Invite and manage team",
     icon: Users,
+    id: "members",
+    label: "Members",
   },
   {
-    id: "billing",
-    label: "Billing",
     description: "Subscription and payments",
     icon: CreditCard,
+    id: "billing",
+    label: "Billing",
   },
 ];
 
@@ -99,9 +99,9 @@ export function ProjectNav({ baseUrl, variant = "sidebar" }: ProjectNavProps) {
                     className="absolute inset-0 rounded-full bg-background shadow-sm"
                     layoutId="project-tab-indicator"
                     transition={{
-                      type: "spring",
                       bounce: 0.15,
                       duration: 0.4,
+                      type: "spring",
                     }}
                   />
                 )}

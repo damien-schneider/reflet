@@ -4,10 +4,10 @@ import { H1, H2, Lead, Text } from "@/components/ui/typography";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata = generatePageMetadata({
-  title: "Terms of Service | Reflet",
   description:
     "Read the terms and conditions for using Reflet. Covers acceptable use, subscriptions, billing, open source licensing under SSPL, data ownership, and your rights.",
   path: "/terms",
+  title: "Terms of Service | Reflet",
 });
 
 export default function TermsOfService() {

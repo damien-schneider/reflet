@@ -5,18 +5,18 @@ import { H3 } from "@/components/ui/typography";
 
 const RELEASES = [
   {
-    id: "r1",
-    version: "v2.4.0",
-    title: "Public API & Webhooks",
     color: "blue" as const,
+    id: "r1",
     shipped: ["REST API with CRUD", "Webhook events"],
+    title: "Public API & Webhooks",
+    version: "v2.4.0",
   },
   {
-    id: "r2",
-    version: "v2.3.0",
-    title: "AI-Powered Triage",
     color: "purple" as const,
+    id: "r2",
     shipped: ["Auto-categorize feedback", "Duplicate detection"],
+    title: "AI-Powered Triage",
+    version: "v2.3.0",
   },
 ] as const;
 

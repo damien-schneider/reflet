@@ -62,6 +62,16 @@ vi.mock("@/components/ui/field", () => ({
     children: React.ReactNode;
     className?: string;
   }) => <div className={className}>{children}</div>,
+  FieldError: ({
+    errors,
+    className,
+  }: {
+    errors?: Array<{ message: string }>;
+    className?: string;
+  }) =>
+    errors && errors.length > 0 ? (
+      <div className={className}>{errors[0].message}</div>
+    ) : null,
   FieldLabel: ({
     children,
     className,
@@ -75,24 +85,14 @@ vi.mock("@/components/ui/field", () => ({
       {children}
     </label>
   ),
-  FieldError: ({
-    errors,
-    className,
-  }: {
-    errors?: Array<{ message: string }>;
-    className?: string;
-  }) =>
-    errors && errors.length > 0 ? (
-      <div className={className}>{errors[0].message}</div>
-    ) : null,
 }));
 
 vi.mock("@reflet/env/web", () => ({
   env: {
-    NEXT_PUBLIC_CONVEX_URL: "https://test.convex.cloud",
     NEXT_PUBLIC_CONVEX_SITE_URL: "https://test.convex.site",
-    NEXT_PUBLIC_VAPID_PUBLIC_KEY: "test-vapid-key",
+    NEXT_PUBLIC_CONVEX_URL: "https://test.convex.cloud",
     NEXT_PUBLIC_SKIP_EMAIL_VERIFICATION: undefined,
+    NEXT_PUBLIC_VAPID_PUBLIC_KEY: "test-vapid-key",
   },
 }));
 
@@ -121,8 +121,8 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("sonner", () => ({
   toast: {
-    success: vi.fn(),
     error: vi.fn(),
+    success: vi.fn(),
   },
 }));
 
@@ -133,16 +133,16 @@ const mockHandleSubmit = vi.fn(
   (cb: (data: unknown) => void) => (e?: React.BaseSyntheticEvent) => {
     e?.preventDefault?.();
     cb({
+      confirmPassword: "password123",
       email: "test@test.com",
       password: "password123",
-      confirmPassword: "password123",
     });
   }
 );
 const mockRegister = vi.fn((name: string) => ({
   name,
-  onChange: vi.fn(),
   onBlur: vi.fn(),
+  onChange: vi.fn(),
   ref: vi.fn(),
 }));
 const mockWatch = vi.fn((field: string) => {
@@ -159,21 +159,21 @@ const mockResetMode = vi.fn();
 const mockHandleEmailChange = vi.fn();
 
 const defaultHookReturn = {
-  mode: null as string | null,
   apiError: null as string | null,
-  setApiError: mockSetApiError,
+  errors: {} as Record<string, unknown>,
+  handleEmailChange: mockHandleEmailChange,
+  handleSubmit: mockHandleSubmit,
+  isCheckingEmail: false,
+  isSubmitting: false,
+  mode: null as string | null,
+  onSubmit: mockOnSubmit,
   passwordMismatchError: null as string | null,
   register: mockRegister,
-  handleSubmit: mockHandleSubmit,
-  errors: {} as Record<string, unknown>,
-  isSubmitting: false,
-  watch: mockWatch,
+  resetMode: mockResetMode,
+  setApiError: mockSetApiError,
   setValue: mockSetValue,
   trigger: mockTrigger,
-  onSubmit: mockOnSubmit,
-  handleEmailChange: mockHandleEmailChange,
-  isCheckingEmail: false,
-  resetMode: mockResetMode,
+  watch: mockWatch,
 };
 
 vi.mock("./unified-auth/hooks/use-auth-form", () => ({

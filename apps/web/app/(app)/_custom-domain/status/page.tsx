@@ -11,39 +11,38 @@ import { StatusSubscribe } from "@/features/status/components/status-subscribe";
 import { UptimeBar } from "@/features/status/components/uptime-bar";
 
 const statusMessages = {
-  operational: "All Systems Operational",
   degraded: "Some Systems Experiencing Issues",
   major_outage: "Major Service Disruption",
+  operational: "All Systems Operational",
 } as const;
 
 const statusBannerStyles = {
-  operational:
-    "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200",
   degraded:
     "bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200",
   major_outage: "bg-red-50 text-red-800 dark:bg-red-950/40 dark:text-red-200",
+  operational:
+    "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200",
 } as const;
 
 const statusLabelStyles = {
-  operational: "text-emerald-600 dark:text-emerald-400",
   degraded: "text-amber-600 dark:text-amber-400",
   major_outage: "text-red-600 dark:text-red-400",
+  operational: "text-emerald-600 dark:text-emerald-400",
 } as const;
 
 const statusLabelText = {
-  operational: "Operational",
   degraded: "Degraded",
   major_outage: "Major Outage",
+  operational: "Operational",
 } as const;
 
-const formatTime = (timestamp: number): string => {
-  return new Date(timestamp).toLocaleString(undefined, {
-    month: "short",
+const formatTime = (timestamp: number): string =>
+  new Date(timestamp).toLocaleString(undefined, {
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    month: "short",
   });
-};
 
 const formatRelativeTime = (timestamp: number): string => {
   const diffMs = Date.now() - timestamp;

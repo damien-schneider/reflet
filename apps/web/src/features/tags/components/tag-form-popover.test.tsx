@@ -150,7 +150,7 @@ vi.mock("@/components/ui/popover", () => ({
     onClick?: (e: React.MouseEvent) => void;
   }) => {
     if (render) {
-      return <>{render({ ...props, onClick, className })}</>;
+      return <>{render({ ...props, className, onClick })}</>;
     }
     return null;
   },
@@ -176,10 +176,10 @@ describe("TagFormPopover", () => {
   const mockUpdateTag = vi.fn().mockResolvedValue(undefined);
 
   const defaultProps = {
-    organizationId: ORG_ID,
-    open: true,
     onOpenChange: vi.fn(),
     onSuccess: vi.fn(),
+    open: true,
+    organizationId: ORG_ID,
   };
 
   beforeEach(() => {
@@ -231,8 +231,8 @@ describe("TagFormPopover", () => {
   it("shows Save button when editing", () => {
     const editingTag = {
       _id: "tag1" as Id<"tags">,
-      name: "Bug",
       color: "red",
+      name: "Bug",
     };
     render(<TagFormPopover {...defaultProps} editingTag={editingTag} />);
     expect(screen.getByText("Save")).toBeInTheDocument();
@@ -252,10 +252,10 @@ describe("TagFormPopover", () => {
     });
     fireEvent.click(screen.getByText("Create"));
     expect(mockCreateTag).toHaveBeenCalledWith({
-      organizationId: ORG_ID,
-      name: "Bug",
       color: "blue",
       icon: undefined,
+      name: "Bug",
+      organizationId: ORG_ID,
     });
   });
 
@@ -268,16 +268,16 @@ describe("TagFormPopover", () => {
   it("calls updateTag when editing and Save is clicked", () => {
     const editingTag = {
       _id: "tag1" as Id<"tags">,
-      name: "Bug",
       color: "red",
+      name: "Bug",
     };
     render(<TagFormPopover {...defaultProps} editingTag={editingTag} />);
     fireEvent.click(screen.getByText("Save"));
     expect(mockUpdateTag).toHaveBeenCalledWith({
-      id: "tag1",
-      name: "Bug",
       color: "red",
       icon: undefined,
+      id: "tag1",
+      name: "Bug",
     });
   });
 
@@ -307,9 +307,9 @@ describe("TagFormPopover", () => {
   it("populates form with editing tag data", () => {
     const editingTag = {
       _id: "tag1" as Id<"tags">,
-      name: "Feature",
       color: "green",
       icon: "✨",
+      name: "Feature",
     };
     render(<TagFormPopover {...defaultProps} editingTag={editingTag} />);
     expect(screen.getByTestId("tag-name-input")).toHaveValue("Feature");
@@ -322,8 +322,8 @@ describe("TagFormPopover", () => {
   it("migrates hex color for editing tag", () => {
     const editingTag = {
       _id: "tag1" as Id<"tags">,
-      name: "Bug",
       color: "#ff0000",
+      name: "Bug",
     };
     render(<TagFormPopover {...defaultProps} editingTag={editingTag} />);
     expect(screen.getByTestId("color-picker")).toHaveAttribute(
@@ -346,8 +346,8 @@ describe("TagFormPopover", () => {
   it("resets form when editingTag changes to null", () => {
     const editingTag = {
       _id: "tag1" as Id<"tags">,
-      name: "Bug",
       color: "red",
+      name: "Bug",
     };
     const { rerender } = render(
       <TagFormPopover {...defaultProps} editingTag={editingTag} />

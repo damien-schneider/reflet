@@ -93,14 +93,14 @@ export const get = query({
  */
 export const create = mutation({
   args: {
-    organizationId: v.id("organizations"),
-    name: v.string(),
-    websiteUrl: v.string(),
     changelogUrl: v.optional(v.string()),
-    pricingUrl: v.optional(v.string()),
+    description: v.optional(v.string()),
     docsUrl: v.optional(v.string()),
     featuresUrl: v.optional(v.string()),
-    description: v.optional(v.string()),
+    name: v.string(),
+    organizationId: v.id("organizations"),
+    pricingUrl: v.optional(v.string()),
+    websiteUrl: v.string(),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -134,17 +134,17 @@ export const create = mutation({
     const now = Date.now();
 
     const competitorId = await ctx.db.insert("competitors", {
-      organizationId: args.organizationId,
-      name: args.name,
-      websiteUrl,
       changelogUrl,
-      pricingUrl,
+      createdAt: now,
+      description: args.description,
       docsUrl,
       featuresUrl,
-      description: args.description,
+      name: args.name,
+      organizationId: args.organizationId,
+      pricingUrl,
       status: "active",
-      createdAt: now,
       updatedAt: now,
+      websiteUrl,
     });
 
     // Schedule a scrape
@@ -163,14 +163,14 @@ export const create = mutation({
  */
 export const update = mutation({
   args: {
-    id: v.id("competitors"),
-    name: v.optional(v.string()),
-    websiteUrl: v.optional(v.string()),
     changelogUrl: v.optional(v.string()),
-    pricingUrl: v.optional(v.string()),
+    description: v.optional(v.string()),
     docsUrl: v.optional(v.string()),
     featuresUrl: v.optional(v.string()),
-    description: v.optional(v.string()),
+    id: v.id("competitors"),
+    name: v.optional(v.string()),
+    pricingUrl: v.optional(v.string()),
+    websiteUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);

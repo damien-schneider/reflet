@@ -102,23 +102,23 @@ export const list = query({
           | undefined;
         if (sender) {
           senderInfo = {
-            id: sender._id,
-            name: sender.name || undefined,
             email: sender.email,
+            id: sender._id,
             image: sender.image || undefined,
+            name: sender.name || undefined,
           };
         } else if (conversation.guestEmail) {
           senderInfo = {
-            id: msg.senderId,
-            name: undefined,
             email: conversation.guestEmail,
+            id: msg.senderId,
             image: undefined,
+            name: undefined,
           };
         }
         return {
           ...msg,
-          sender: senderInfo,
           isOwnMessage: msg.senderId === currentUserId,
+          sender: senderInfo,
         };
       })
     );
@@ -129,8 +129,8 @@ export const list = query({
 
 export const send = mutation({
   args: {
-    conversationId: v.id("supportConversations"),
     body: v.string(),
+    conversationId: v.id("supportConversations"),
     guestId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -149,12 +149,12 @@ export const send = mutation({
     const senderType = isAdmin && !isOwner ? "admin" : "user";
 
     const messageId = await ctx.db.insert("supportMessages", {
+      body: args.body,
       conversationId: args.conversationId,
+      createdAt: now,
+      isRead: false,
       senderId,
       senderType: senderType as "user" | "admin",
-      body: args.body,
-      isRead: false,
-      createdAt: now,
     });
 
     const updateData: {
@@ -183,23 +183,23 @@ export const send = mutation({
     // Only send notifications for non-guest conversations
     if (senderType === "admin" && !conversation.guestId) {
       await ctx.db.insert("notifications", {
-        userId: conversation.userId,
-        type: "new_support_message",
-        title: "New support message",
-        message: `You have a new reply from support${conversation.subject ? `: ${conversation.subject}` : ""}`,
-        isRead: false,
         createdAt: now,
+        isRead: false,
+        message: `You have a new reply from support${conversation.subject ? `: ${conversation.subject}` : ""}`,
+        title: "New support message",
+        type: "new_support_message",
+        userId: conversation.userId,
       });
 
       await ctx.scheduler.runAfter(
         0,
         internal.notifications.push.sendPushNotification,
         {
-          userId: conversation.userId,
-          type: "new_support_message",
-          title: "New support message",
           message: `You have a new reply from support${conversation.subject ? `: ${conversation.subject}` : ""}`,
+          title: "New support message",
+          type: "new_support_message",
           url: "/dashboard",
+          userId: conversation.userId,
         }
       );
     }
@@ -267,8 +267,8 @@ export const markAsRead = mutation({
 
     if (isOwner) {
       await ctx.db.patch(args.conversationId, {
-        userUnreadCount: 0,
         updatedAt: Date.now(),
+        userUnreadCount: 0,
       });
     } else if (isAdmin) {
       await ctx.db.patch(args.conversationId, {
@@ -283,8 +283,8 @@ export const markAsRead = mutation({
 
 export const addReaction = mutation({
   args: {
-    messageId: v.id("supportMessages"),
     emoji: v.string(),
+    messageId: v.id("supportMessages"),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -325,15 +325,15 @@ export const addReaction = mutation({
 
     if (existingReaction) {
       await ctx.db.patch(existingReaction._id, {
-        emoji: args.emoji,
         createdAt: Date.now(),
+        emoji: args.emoji,
       });
     } else {
       await ctx.db.insert("messageReactions", {
+        createdAt: Date.now(),
+        emoji: args.emoji,
         messageId: args.messageId,
         userId: user._id,
-        emoji: args.emoji,
-        createdAt: Date.now(),
       });
     }
 
@@ -343,8 +343,8 @@ export const addReaction = mutation({
 
 export const removeReaction = mutation({
   args: {
-    messageId: v.id("supportMessages"),
     emoji: v.string(),
+    messageId: v.id("supportMessages"),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -420,8 +420,8 @@ export const listReactions = query({
         return {
           messageId,
           reactions: Object.entries(reactionsByEmoji).map(([emoji, data]) => ({
-            emoji,
             count: data.count,
+            emoji,
             userIds: data.userIds,
           })),
         };

@@ -45,20 +45,20 @@ export const getOrganizationContext = internalQuery({
             slug: org.slug,
           }
         : null,
-      repository: githubConnection?.repositoryFullName || null,
       repoAnalysis: repoAnalysis
         ? {
-            summary: repoAnalysis.summary,
-            techStack: repoAnalysis.techStack,
             architecture: repoAnalysis.architecture,
             features: repoAnalysis.features,
+            summary: repoAnalysis.summary,
+            techStack: repoAnalysis.techStack,
           }
         : null,
+      repository: githubConnection?.repositoryFullName || null,
       websiteReferences: websiteRefs.map((ref) => ({
-        url: ref.url,
-        title: ref.title,
-        description: ref.description,
         content: ref.scrapedContent,
+        description: ref.description,
+        title: ref.title,
+        url: ref.url,
       })),
     };
   },

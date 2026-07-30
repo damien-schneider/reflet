@@ -39,7 +39,7 @@ function useRefletMutation<TData, TVariables>(
     setError(null);
   }, []);
 
-  return { mutate, isLoading, error, data, reset };
+  return { data, error, isLoading, mutate, reset };
 }
 
 // ============================================
@@ -177,5 +177,5 @@ export function useSubscription(): {
     [client]
   );
 
-  return { subscribe, unsubscribe, isLoading, error };
+  return { error, isLoading, subscribe, unsubscribe };
 }

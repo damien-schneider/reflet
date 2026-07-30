@@ -95,9 +95,9 @@ const ORG_ID = "org123" as Id<"organizations">;
 
 describe("VersionPicker", () => {
   const defaultProps = {
+    onChange: vi.fn(),
     organizationId: ORG_ID,
     value: "",
-    onChange: vi.fn(),
   };
 
   it("renders the input field", () => {
@@ -123,12 +123,12 @@ describe("VersionPicker", () => {
 
   it("renders version suggestion buttons when data is available", () => {
     mockUseQuery.mockReturnValue({
-      patch: "1.0.1",
-      minor: "1.1.0",
-      major: "2.0.0",
-      current: "1.0.0",
       autoVersioning: true,
+      current: "1.0.0",
       defaultIncrement: "patch",
+      major: "2.0.0",
+      minor: "1.1.0",
+      patch: "1.0.1",
     });
     render(<VersionPicker {...defaultProps} value="1.0.1" />);
     expect(screen.getByText(/Patch 1.0.1/)).toBeInTheDocument();
@@ -138,12 +138,12 @@ describe("VersionPicker", () => {
 
   it("displays the latest version badge", () => {
     mockUseQuery.mockReturnValue({
-      patch: "1.0.1",
-      minor: "1.1.0",
-      major: "2.0.0",
-      current: "1.0.0",
       autoVersioning: true,
+      current: "1.0.0",
       defaultIncrement: "patch",
+      major: "2.0.0",
+      minor: "1.1.0",
+      patch: "1.0.1",
     });
     render(<VersionPicker {...defaultProps} value="1.0.1" />);
     expect(screen.getByText("latest: 1.0.0")).toBeInTheDocument();
@@ -151,9 +151,9 @@ describe("VersionPicker", () => {
 
   it("does not show latest badge when no current version", () => {
     mockUseQuery.mockReturnValue({
-      patch: "0.0.1",
       autoVersioning: true,
       defaultIncrement: "patch",
+      patch: "0.0.1",
     });
     render(<VersionPicker {...defaultProps} value="0.0.1" />);
     expect(screen.queryByText(/latest:/)).not.toBeInTheDocument();
@@ -162,11 +162,11 @@ describe("VersionPicker", () => {
   it("calls onChange when a version button is clicked", () => {
     const onChange = vi.fn();
     mockUseQuery.mockReturnValue({
-      patch: "1.0.1",
-      minor: "1.1.0",
-      major: "2.0.0",
       autoVersioning: true,
       defaultIncrement: "patch",
+      major: "2.0.0",
+      minor: "1.1.0",
+      patch: "1.0.1",
     });
     render(
       <VersionPicker {...defaultProps} onChange={onChange} value="1.1.0" />
@@ -178,11 +178,11 @@ describe("VersionPicker", () => {
   it("calls onChange when minor button is clicked", () => {
     const onChange = vi.fn();
     mockUseQuery.mockReturnValue({
-      patch: "1.0.1",
-      minor: "1.1.0",
-      major: "2.0.0",
       autoVersioning: true,
       defaultIncrement: "patch",
+      major: "2.0.0",
+      minor: "1.1.0",
+      patch: "1.0.1",
     });
     render(
       <VersionPicker {...defaultProps} onChange={onChange} value="1.0.1" />
@@ -194,11 +194,11 @@ describe("VersionPicker", () => {
   it("calls onChange when major button is clicked", () => {
     const onChange = vi.fn();
     mockUseQuery.mockReturnValue({
-      patch: "1.0.1",
-      minor: "1.1.0",
-      major: "2.0.0",
       autoVersioning: true,
       defaultIncrement: "patch",
+      major: "2.0.0",
+      minor: "1.1.0",
+      patch: "1.0.1",
     });
     render(
       <VersionPicker {...defaultProps} onChange={onChange} value="1.0.1" />
@@ -209,10 +209,10 @@ describe("VersionPicker", () => {
 
   it("does not show version buttons when disabled", () => {
     mockUseQuery.mockReturnValue({
-      patch: "1.0.1",
-      minor: "1.1.0",
-      major: "2.0.0",
       autoVersioning: true,
+      major: "2.0.0",
+      minor: "1.1.0",
+      patch: "1.0.1",
     });
     render(<VersionPicker {...defaultProps} disabled value="1.0.1" />);
     expect(screen.queryByText(/Patch/)).not.toBeInTheDocument();
@@ -256,11 +256,11 @@ describe("VersionPicker", () => {
   it("applies default patch version via useEffect for new releases", () => {
     const onChange = vi.fn();
     mockUseQuery.mockReturnValue({
-      patch: "1.0.1",
-      minor: "1.1.0",
-      major: "2.0.0",
       autoVersioning: true,
       defaultIncrement: "patch",
+      major: "2.0.0",
+      minor: "1.1.0",
+      patch: "1.0.1",
     });
     render(<VersionPicker {...defaultProps} onChange={onChange} value="" />);
     expect(onChange).toHaveBeenCalledWith("1.0.1");
@@ -269,11 +269,11 @@ describe("VersionPicker", () => {
   it("applies default minor version when defaultIncrement is minor", () => {
     const onChange = vi.fn();
     mockUseQuery.mockReturnValue({
-      patch: "1.0.1",
-      minor: "1.1.0",
-      major: "2.0.0",
       autoVersioning: true,
       defaultIncrement: "minor",
+      major: "2.0.0",
+      minor: "1.1.0",
+      patch: "1.0.1",
     });
     render(<VersionPicker {...defaultProps} onChange={onChange} value="" />);
     expect(onChange).toHaveBeenCalledWith("1.1.0");
@@ -282,9 +282,9 @@ describe("VersionPicker", () => {
   it("does not auto-apply when value already set", () => {
     const onChange = vi.fn();
     mockUseQuery.mockReturnValue({
-      patch: "1.0.1",
       autoVersioning: true,
       defaultIncrement: "patch",
+      patch: "1.0.1",
     });
     render(
       <VersionPicker {...defaultProps} onChange={onChange} value="2.0.0" />
@@ -304,10 +304,10 @@ describe("VersionPicker", () => {
 
   it("applies active variant to selected version button", () => {
     mockUseQuery.mockReturnValue({
-      patch: "1.0.1",
-      minor: "1.1.0",
-      major: "2.0.0",
       autoVersioning: true,
+      major: "2.0.0",
+      minor: "1.1.0",
+      patch: "1.0.1",
     });
     render(<VersionPicker {...defaultProps} value="1.0.1" />);
     expect(screen.getByText(/Patch 1.0.1/)).toHaveAttribute(
@@ -325,8 +325,8 @@ describe("VersionPicker", () => {
     mockUseQuery.mockReturnValue(undefined);
     render(<VersionPicker {...defaultProps} excludeReleaseId={releaseId} />);
     expect(mockUseQuery).toHaveBeenCalledWith("releases:getNextVersion", {
-      organizationId: ORG_ID,
       excludeReleaseId: releaseId,
+      organizationId: ORG_ID,
     });
   });
 

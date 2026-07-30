@@ -1,16 +1,12 @@
 import { expect, test } from "@playwright/test";
 
-// Auth form headings (French UI)
-const AUTH_SIGNUP_HEADING = "Créer un compte";
+const AUTH_SIGNUP_HEADING = "Create an account";
 
 const DASHBOARD_URL_PATTERN = /\/dashboard\/[^/]+$/;
 
-/**
- * Helper to complete sign-up flow with the new unified auth form
- */
 async function signUpNewUser(
   page: import("@playwright/test").Page,
-  user: { name: string; email: string; password: string }
+  user: { email: string; password: string }
 ) {
   await page.getByTestId("email-input").fill(user.email);
   await page.getByTestId("email-input").blur();
@@ -19,16 +15,15 @@ async function signUpNewUser(
     timeout: 10_000,
   });
 
-  await page.getByTestId("name-input").fill(user.name);
   await page.getByTestId("password-input").fill(user.password);
-  await page.getByRole("button", { name: "Créer mon compte" }).click();
+  await page.getByTestId("confirm-password-input").fill(user.password);
+  await page.getByRole("button", { name: "Create my account" }).click();
 }
 
 test.describe("Sidebar User Menu", () => {
   test("should open user menu as a submenu", async ({ page }) => {
     const timestamp = Date.now();
     const TEST_USER = {
-      name: "SidebarTest",
       email: `sidebar-test-${timestamp}@mail.com`,
       password: "password123",
     };

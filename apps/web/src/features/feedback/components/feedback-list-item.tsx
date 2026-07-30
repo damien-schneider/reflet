@@ -71,8 +71,8 @@ export function FeedbackListItem({
   const priorityBorderMap = {
     critical: "border-l-4 border-l-red-500",
     high: "border-l-4 border-l-orange-500",
-    medium: "border-l-4 border-l-yellow-500",
     low: "border-l-4 border-l-blue-300",
+    medium: "border-l-4 border-l-yellow-500",
   } as const;
   const priorityBorderClass =
     (effectivePriorityForBorder &&

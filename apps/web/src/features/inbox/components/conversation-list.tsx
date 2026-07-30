@@ -198,7 +198,7 @@ export function ConversationList({
 
   const filtered = useCallback(() => {
     if (!conversations) {
-      return undefined;
+      return;
     }
     if (!searchQuery?.trim()) {
       return conversations;

@@ -13,10 +13,10 @@ import { TrackViewPreview } from "@/components/docs/milestone-view-previews";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
-  title: "Horizontal Track - Milestone View",
   description:
     "A horizontal track layout grouped by time horizons with pinch-to-zoom support.",
   path: "/docs/components/milestone-views/track",
+  title: "Horizontal Track - Milestone View",
 });
 
 const SOURCE_CODE = readFileSync(

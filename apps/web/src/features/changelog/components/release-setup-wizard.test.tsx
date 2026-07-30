@@ -15,20 +15,20 @@ vi.mock("convex/react", () => ({
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
-    organizations: {
-      mutations: { update: "organizations.update" },
-    },
     integrations: {
       github: {
         mutations: { toggleAutoSync: "github.toggleAutoSync" },
         queries: { getConnection: "github.getConnection" },
       },
     },
+    organizations: {
+      mutations: { update: "organizations.update" },
+    },
   },
 }));
 
 vi.mock("sonner", () => ({
-  toast: { success: vi.fn(), error: vi.fn() },
+  toast: { error: vi.fn(), success: vi.fn() },
 }));
 
 vi.mock("@phosphor-icons/react", () => ({
@@ -42,20 +42,20 @@ vi.mock("@phosphor-icons/react", () => ({
 vi.mock("@/components/ui/sheet", () => ({
   Sheet: ({ children, open }: { children: React.ReactNode; open: boolean }) =>
     open ? <div data-testid="sheet">{children}</div> : null,
+  SheetClose: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="sheet-close">{children}</div>
+  ),
   SheetContent: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="sheet-content">{children}</div>
+  ),
+  SheetDescription: ({ children }: { children: React.ReactNode }) => (
+    <p>{children}</p>
   ),
   SheetHeader: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="sheet-header">{children}</div>
   ),
   SheetTitle: ({ children }: { children: React.ReactNode }) => (
     <h2>{children}</h2>
-  ),
-  SheetDescription: ({ children }: { children: React.ReactNode }) => (
-    <p>{children}</p>
-  ),
-  SheetClose: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="sheet-close">{children}</div>
   ),
 }));
 
@@ -115,8 +115,8 @@ import { ReleaseSetupWizard } from "./release-setup-wizard";
 
 const orgId = "org1" as Id<"organizations">;
 const baseProps = {
-  open: true,
   onOpenChange: vi.fn(),
+  open: true,
   organizationId: orgId,
   orgSlug: "test-org",
 };

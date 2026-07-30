@@ -8,57 +8,54 @@ import {
 import { getAuthUser } from "../shared/utils";
 
 const annotationValidator = v.object({
+  color: v.optional(v.string()),
+  endX: v.optional(v.number()),
+  endY: v.optional(v.number()),
+  height: v.optional(v.number()),
+  text: v.optional(v.string()),
   type: v.union(
     v.literal("rectangle"),
     v.literal("arrow"),
     v.literal("text"),
     v.literal("blur")
   ),
+  width: v.optional(v.number()),
   x: v.number(),
   y: v.number(),
-  width: v.optional(v.number()),
-  height: v.optional(v.number()),
-  endX: v.optional(v.number()),
-  endY: v.optional(v.number()),
-  color: v.optional(v.string()),
-  text: v.optional(v.string()),
 });
 
 export const generateUploadUrl = mutation({
   args: {},
-  returns: v.string(),
   handler: async (ctx) => {
     await getAuthUser(ctx);
     return await ctx.storage.generateUploadUrl();
   },
+  returns: v.string(),
 });
 
 export const generatePublicUploadUrl = internalMutation({
   args: {},
+  handler: async (ctx) => await ctx.storage.generateUploadUrl(),
   returns: v.string(),
-  handler: async (ctx) => {
-    return await ctx.storage.generateUploadUrl();
-  },
 });
 
 export const saveScreenshot = mutation({
   args: {
-    feedbackId: v.id("feedback"),
-    storageId: v.id("_storage"),
-    filename: v.string(),
-    mimeType: v.string(),
-    size: v.number(),
-    width: v.optional(v.number()),
-    height: v.optional(v.number()),
     annotations: v.optional(v.array(annotationValidator)),
     captureSource: v.union(
       v.literal("widget"),
       v.literal("upload"),
       v.literal("paste")
     ),
+    feedbackId: v.id("feedback"),
+    filename: v.string(),
+    height: v.optional(v.number()),
+    mimeType: v.string(),
     pageUrl: v.optional(v.string()),
+    size: v.number(),
+    storageId: v.id("_storage"),
+    width: v.optional(v.number()),
   },
-  returns: v.id("feedbackScreenshots"),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
@@ -68,42 +65,42 @@ export const saveScreenshot = mutation({
     }
 
     return await ctx.db.insert("feedbackScreenshots", {
-      feedbackId: args.feedbackId,
-      organizationId: feedback.organizationId,
-      storageId: args.storageId,
-      filename: args.filename,
-      mimeType: args.mimeType,
-      size: args.size,
-      width: args.width,
-      height: args.height,
       annotations: args.annotations,
       captureSource: args.captureSource,
-      pageUrl: args.pageUrl,
-      uploadedBy: user._id,
       createdAt: Date.now(),
+      feedbackId: args.feedbackId,
+      filename: args.filename,
+      height: args.height,
+      mimeType: args.mimeType,
+      organizationId: feedback.organizationId,
+      pageUrl: args.pageUrl,
+      size: args.size,
+      storageId: args.storageId,
+      uploadedBy: user._id,
+      width: args.width,
     });
   },
+  returns: v.id("feedbackScreenshots"),
 });
 
 export const saveScreenshotPublic = internalMutation({
   args: {
-    feedbackId: v.id("feedback"),
-    storageId: v.id("_storage"),
-    filename: v.string(),
-    mimeType: v.string(),
-    size: v.number(),
-    width: v.optional(v.number()),
-    height: v.optional(v.number()),
     annotations: v.optional(v.array(annotationValidator)),
     captureSource: v.union(
       v.literal("widget"),
       v.literal("upload"),
       v.literal("paste")
     ),
-    pageUrl: v.optional(v.string()),
     externalUserId: v.optional(v.id("externalUsers")),
+    feedbackId: v.id("feedback"),
+    filename: v.string(),
+    height: v.optional(v.number()),
+    mimeType: v.string(),
+    pageUrl: v.optional(v.string()),
+    size: v.number(),
+    storageId: v.id("_storage"),
+    width: v.optional(v.number()),
   },
-  returns: v.id("feedbackScreenshots"),
   handler: async (ctx, args) => {
     const feedback = await ctx.db.get(args.feedbackId);
     if (!feedback) {
@@ -111,30 +108,30 @@ export const saveScreenshotPublic = internalMutation({
     }
 
     return await ctx.db.insert("feedbackScreenshots", {
-      feedbackId: args.feedbackId,
-      organizationId: feedback.organizationId,
-      storageId: args.storageId,
-      filename: args.filename,
-      mimeType: args.mimeType,
-      size: args.size,
-      width: args.width,
-      height: args.height,
       annotations: args.annotations,
       captureSource: args.captureSource,
-      pageUrl: args.pageUrl,
-      externalUserId: args.externalUserId,
       createdAt: Date.now(),
+      externalUserId: args.externalUserId,
+      feedbackId: args.feedbackId,
+      filename: args.filename,
+      height: args.height,
+      mimeType: args.mimeType,
+      organizationId: feedback.organizationId,
+      pageUrl: args.pageUrl,
+      size: args.size,
+      storageId: args.storageId,
+      width: args.width,
     });
   },
+  returns: v.id("feedbackScreenshots"),
 });
 
 export const updateAnnotations = mutation({
   args: {
-    screenshotId: v.id("feedbackScreenshots"),
-    annotations: v.array(annotationValidator),
     annotatedStorageId: v.optional(v.id("_storage")),
+    annotations: v.array(annotationValidator),
+    screenshotId: v.id("feedbackScreenshots"),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     await getAuthUser(ctx);
 
@@ -144,82 +141,74 @@ export const updateAnnotations = mutation({
     }
 
     await ctx.db.patch(args.screenshotId, {
-      annotations: args.annotations,
       annotatedStorageId: args.annotatedStorageId,
+      annotations: args.annotations,
     });
 
     return null;
   },
+  returns: v.null(),
 });
 
 export const getByFeedback = query({
   args: {
     feedbackId: v.id("feedback"),
   },
+  handler: async (ctx, args) => {
+    const screenshots = await ctx.db
+      .query("feedbackScreenshots")
+      .withIndex("by_feedback", (q) => q.eq("feedbackId", args.feedbackId))
+      .collect();
+
+    return await Promise.all(
+      screenshots.map(async (s) => ({
+        _id: s._id,
+        annotatedStorageId: s.annotatedStorageId,
+        annotatedUrl: s.annotatedStorageId
+          ? await ctx.storage.getUrl(s.annotatedStorageId)
+          : null,
+        annotations: s.annotations,
+        captureSource: s.captureSource,
+        createdAt: s.createdAt,
+        filename: s.filename,
+        height: s.height,
+        mimeType: s.mimeType,
+        pageUrl: s.pageUrl,
+        size: s.size,
+        storageId: s.storageId,
+        url: await ctx.storage.getUrl(s.storageId),
+        width: s.width,
+      }))
+    );
+  },
   returns: v.array(
     v.object({
       _id: v.id("feedbackScreenshots"),
-      storageId: v.id("_storage"),
       annotatedStorageId: v.optional(v.id("_storage")),
-      filename: v.string(),
-      mimeType: v.string(),
-      size: v.number(),
-      width: v.optional(v.number()),
-      height: v.optional(v.number()),
+      annotatedUrl: v.union(v.string(), v.null()),
       annotations: v.optional(v.array(annotationValidator)),
       captureSource: v.union(
         v.literal("widget"),
         v.literal("upload"),
         v.literal("paste")
       ),
-      pageUrl: v.optional(v.string()),
-      url: v.union(v.string(), v.null()),
-      annotatedUrl: v.union(v.string(), v.null()),
       createdAt: v.number(),
+      filename: v.string(),
+      height: v.optional(v.number()),
+      mimeType: v.string(),
+      pageUrl: v.optional(v.string()),
+      size: v.number(),
+      storageId: v.id("_storage"),
+      url: v.union(v.string(), v.null()),
+      width: v.optional(v.number()),
     })
   ),
-  handler: async (ctx, args) => {
-    const screenshots = await ctx.db
-      .query("feedbackScreenshots")
-      .withIndex("by_feedback", (q) => q.eq("feedbackId", args.feedbackId))
-      .collect();
-
-    return await Promise.all(
-      screenshots.map(async (s) => ({
-        _id: s._id,
-        storageId: s.storageId,
-        annotatedStorageId: s.annotatedStorageId,
-        filename: s.filename,
-        mimeType: s.mimeType,
-        size: s.size,
-        width: s.width,
-        height: s.height,
-        annotations: s.annotations,
-        captureSource: s.captureSource,
-        pageUrl: s.pageUrl,
-        url: await ctx.storage.getUrl(s.storageId),
-        annotatedUrl: s.annotatedStorageId
-          ? await ctx.storage.getUrl(s.annotatedStorageId)
-          : null,
-        createdAt: s.createdAt,
-      }))
-    );
-  },
 });
 
 export const getByFeedbackPublic = internalQuery({
   args: {
     feedbackId: v.id("feedback"),
   },
-  returns: v.array(
-    v.object({
-      _id: v.id("feedbackScreenshots"),
-      filename: v.string(),
-      mimeType: v.string(),
-      url: v.union(v.string(), v.null()),
-      createdAt: v.number(),
-    })
-  ),
   handler: async (ctx, args) => {
     const screenshots = await ctx.db
       .query("feedbackScreenshots")
@@ -229,22 +218,30 @@ export const getByFeedbackPublic = internalQuery({
     return await Promise.all(
       screenshots.map(async (s) => ({
         _id: s._id,
+        createdAt: s.createdAt,
         filename: s.filename,
         mimeType: s.mimeType,
         url: s.annotatedStorageId
           ? await ctx.storage.getUrl(s.annotatedStorageId)
           : await ctx.storage.getUrl(s.storageId),
-        createdAt: s.createdAt,
       }))
     );
   },
+  returns: v.array(
+    v.object({
+      _id: v.id("feedbackScreenshots"),
+      createdAt: v.number(),
+      filename: v.string(),
+      mimeType: v.string(),
+      url: v.union(v.string(), v.null()),
+    })
+  ),
 });
 
 export const deleteScreenshot = mutation({
   args: {
     screenshotId: v.id("feedbackScreenshots"),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     await getAuthUser(ctx);
 
@@ -262,4 +259,5 @@ export const deleteScreenshot = mutation({
 
     return null;
   },
+  returns: v.null(),
 });

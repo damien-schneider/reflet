@@ -49,8 +49,8 @@ export function CommentItem({ comment, isReply = false }: CommentItemOwnProps) {
     setIsSubmitting(true);
     try {
       await updateComment({
-        id: comment.id,
         body: editContent.trim(),
+        id: comment.id,
       });
       setIsEditing(false);
     } finally {
@@ -69,8 +69,8 @@ export function CommentItem({ comment, isReply = false }: CommentItemOwnProps) {
     setIsSubmitting(true);
     try {
       await addReply({
-        feedbackId,
         body: replyContent.trim(),
+        feedbackId,
         parentId: comment.id,
       });
       setReplyContent("");

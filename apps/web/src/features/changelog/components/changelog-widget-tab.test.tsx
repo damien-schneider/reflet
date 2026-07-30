@@ -50,7 +50,7 @@ vi.mock("next/link", () => ({
 }));
 
 vi.mock("sonner", () => ({
-  toast: { success: vi.fn(), error: vi.fn() },
+  toast: { error: vi.fn(), success: vi.fn() },
 }));
 
 vi.mock("@/components/ui/button", () => ({
@@ -128,10 +128,10 @@ describe("ChangelogWidgetTab", () => {
   const mockGenerateKeys = vi.fn().mockResolvedValue(undefined);
 
   const defaultProps = {
-    publicKey: "pk_test_123",
     hasApiKeys: true,
     organizationId: ORG_ID,
     orgSlug: "test-org",
+    publicKey: "pk_test_123",
   };
 
   beforeEach(() => {
@@ -177,8 +177,8 @@ describe("ChangelogWidgetTab", () => {
     render(<ChangelogWidgetTab {...defaultProps} hasApiKeys={false} />);
     fireEvent.click(screen.getByText("Generate API Keys"));
     expect(mockGenerateKeys).toHaveBeenCalledWith({
-      organizationId: ORG_ID,
       name: "Default",
+      organizationId: ORG_ID,
     });
   });
 
@@ -188,8 +188,8 @@ describe("ChangelogWidgetTab", () => {
     fireEvent.change(input, { target: { value: "My Key" } });
     fireEvent.click(screen.getByText("Generate API Keys"));
     expect(mockGenerateKeys).toHaveBeenCalledWith({
-      organizationId: ORG_ID,
       name: "My Key",
+      organizationId: ORG_ID,
     });
   });
 

@@ -3,9 +3,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 
 export const getAll = query({
-  handler: async (ctx) => {
-    return await ctx.db.query("todos").collect();
-  },
+  handler: async (ctx) => await ctx.db.query("todos").collect(),
 });
 
 export const create = mutation({
@@ -14,8 +12,8 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const newTodoId = await ctx.db.insert("todos", {
-      text: args.text,
       completed: false,
+      text: args.text,
     });
     return await ctx.db.get("todos", newTodoId);
   },
@@ -23,8 +21,8 @@ export const create = mutation({
 
 export const toggle = mutation({
   args: {
-    id: v.id("todos"),
     completed: v.boolean(),
+    id: v.id("todos"),
   },
   handler: async (ctx, args) => {
     await ctx.db.patch("todos", args.id, { completed: args.completed });

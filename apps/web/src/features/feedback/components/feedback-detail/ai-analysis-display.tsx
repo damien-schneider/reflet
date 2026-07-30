@@ -47,11 +47,11 @@ export function AiAnalysisDisplay({
     return null;
   }
 
-  const isPriorityOverridden = priority != null && priority !== aiPriority;
+  const isPriorityOverridden = priority !== null && priority !== aiPriority;
   const isComplexityOverridden =
-    complexity != null && complexity !== aiComplexity;
+    complexity !== null && complexity !== aiComplexity;
   const isTimeOverridden =
-    timeEstimate != null && timeEstimate !== aiTimeEstimate;
+    timeEstimate !== null && timeEstimate !== aiTimeEstimate;
 
   return (
     <div className="flex items-center gap-1.5">
@@ -60,7 +60,7 @@ export function AiAnalysisDisplay({
           aiPriority={aiPriority}
           effectivePriority={effectivePriority}
           feedbackId={feedbackId}
-          hasHumanOverride={priority != null}
+          hasHumanOverride={priority !== null}
           isAdmin={isAdmin}
           isOverridden={isPriorityOverridden}
           reasoning={aiPriorityReasoning}
@@ -71,7 +71,7 @@ export function AiAnalysisDisplay({
           aiComplexity={aiComplexity}
           effectiveComplexity={effectiveComplexity}
           feedbackId={feedbackId}
-          hasHumanOverride={complexity != null}
+          hasHumanOverride={complexity !== null}
           isAdmin={isAdmin}
           isOverridden={isComplexityOverridden}
           reasoning={aiComplexityReasoning}
@@ -82,7 +82,7 @@ export function AiAnalysisDisplay({
           aiTimeEstimate={aiTimeEstimate}
           effectiveEstimate={effectiveTimeEstimate}
           feedbackId={feedbackId}
-          hasHumanOverride={timeEstimate != null}
+          hasHumanOverride={timeEstimate !== null}
           isAdmin={isAdmin}
           isOverridden={isTimeOverridden}
         />

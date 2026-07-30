@@ -95,15 +95,15 @@ export const getSubscribers = query({
           : null;
         return {
           id: sub._id,
-          userId: sub.userId,
           subscribedAt: sub.createdAt,
           user: userData
             ? {
-                name: userData.name ?? null,
                 email: userData.email ?? "",
                 image: userData.image ?? null,
+                name: userData.name ?? null,
               }
             : null,
+          userId: sub.userId,
         };
       })
     );
@@ -164,9 +164,9 @@ export const toggle = mutation({
 
     // Subscribe
     await ctx.db.insert("feedbackSubscriptions", {
+      createdAt: Date.now(),
       feedbackId: args.feedbackId,
       userId: user._id,
-      createdAt: Date.now(),
     });
 
     return { subscribed: true };
@@ -195,17 +195,17 @@ export const subscribe = mutation({
       .unique();
 
     if (existingSubscription) {
-      return { subscribed: true, alreadySubscribed: true };
+      return { alreadySubscribed: true, subscribed: true };
     }
 
     // Subscribe
     await ctx.db.insert("feedbackSubscriptions", {
+      createdAt: Date.now(),
       feedbackId: args.feedbackId,
       userId: user._id,
-      createdAt: Date.now(),
     });
 
-    return { subscribed: true, alreadySubscribed: false };
+    return { alreadySubscribed: false, subscribed: true };
   },
 });
 

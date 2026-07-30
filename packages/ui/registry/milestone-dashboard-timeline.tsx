@@ -43,17 +43,17 @@ function MultiSegmentBar({
         animate={{ width: `${completedPct}%` }}
         className="h-full bg-emerald-500"
         initial={{ width: 0 }}
-        transition={{ type: "spring", stiffness: 200, damping: 30 }}
+        transition={{ damping: 30, stiffness: 200, type: "spring" }}
       />
       <motion.div
         animate={{ width: `${inProgressPct}%` }}
         className="h-full bg-primary"
         initial={{ width: 0 }}
         transition={{
-          type: "spring",
-          stiffness: 200,
           damping: 30,
           delay: 0.05,
+          stiffness: 200,
+          type: "spring",
         }}
       />
     </div>
@@ -79,7 +79,7 @@ function ProgressRing({
   return (
     <div
       className="relative inline-flex items-center justify-center"
-      style={{ width: size, height: size }}
+      style={{ height: size, width: size }}
     >
       <svg
         aria-hidden="true"
@@ -107,7 +107,7 @@ function ProgressRing({
           strokeLinecap="round"
           strokeWidth={strokeWidth}
           style={{ rotate: "-90deg", transformOrigin: "center" }}
-          transition={{ type: "spring", stiffness: 120, damping: 20 }}
+          transition={{ damping: 20, stiffness: 120, type: "spring" }}
         />
       </svg>
       <span className="pointer-events-none absolute inset-0 flex items-center justify-center font-semibold text-[10px] tabular-nums">
@@ -194,10 +194,10 @@ export function MilestoneDashboardTimeline({
                 <AnimatePresence>
                   {isSweeping && (
                     <motion.div
-                      animate={{ x: "100%", opacity: 0 }}
+                      animate={{ opacity: 0, x: "100%" }}
                       className="absolute inset-0"
                       exit={{ opacity: 0 }}
-                      initial={{ x: "-100%", opacity: 0.12 }}
+                      initial={{ opacity: 0.12, x: "-100%" }}
                       style={{ backgroundColor: m.colorHex }}
                       transition={{ duration: 0.4, ease: "easeOut" }}
                     />
@@ -232,9 +232,9 @@ export function MilestoneDashboardTimeline({
                     exit={{ height: 0, opacity: 0 }}
                     initial={{ height: 0, opacity: 0 }}
                     transition={{
-                      type: "spring",
                       damping: 25,
                       stiffness: 300,
+                      type: "spring",
                     }}
                   >
                     <div className="mt-1 ml-5 rounded-lg border bg-card p-2 text-muted-foreground text-xs">

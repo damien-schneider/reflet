@@ -142,25 +142,25 @@ export function ReviewView({
     setIsApplying(true);
     try {
       await applySetupResults({
-        organizationId,
-        setupId: setup._id,
-        acceptedMonitors: monitors
-          .filter((m) => m.accepted)
-          .map(({ url, name }) => ({ url, name })),
         acceptedKeywords: keywords
           .filter((k) => k.accepted)
           .map(({ keyword }) => ({ keyword, source: "both" as const })),
+        acceptedMonitors: monitors
+          .filter((m) => m.accepted)
+          .map(({ url, name }) => ({ name, url })),
         acceptedTags: tags
           .filter((t) => t.accepted)
-          .map(({ name, color }) => ({ name, color })),
+          .map(({ name, color }) => ({ color, name })),
         changelogSettings: setup.changelogConfig
           ? {
+              autoVersioning: setup.changelogConfig.workflow !== "manual",
               syncDirection: setup.changelogConfig.syncDirection,
               targetBranch: setup.changelogConfig.targetBranch,
               versionPrefix: setup.changelogConfig.versionPrefix,
-              autoVersioning: setup.changelogConfig.workflow !== "manual",
             }
           : undefined,
+        organizationId,
+        setupId: setup._id,
       });
 
       toast.success("Project configured successfully!");

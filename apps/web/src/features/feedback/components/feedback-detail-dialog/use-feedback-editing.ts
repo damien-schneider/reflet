@@ -86,12 +86,12 @@ export function useFeedbackEditing({
   }, [feedback]);
 
   return {
-    editedTitle,
     editedDescription,
-    hasUnsavedChanges,
-    handleTitleChange,
+    editedTitle,
+    handleCancelChanges,
     handleDescriptionChange,
     handleSaveChanges,
-    handleCancelChanges,
+    handleTitleChange,
+    hasUnsavedChanges,
   } as const;
 }

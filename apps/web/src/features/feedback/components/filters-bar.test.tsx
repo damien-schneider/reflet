@@ -104,23 +104,23 @@ import { FiltersBar, type SortOption } from "./filters-bar";
 afterEach(cleanup);
 
 const defaultProps = {
-  sortBy: "votes" as SortOption,
-  onSortChange: vi.fn(),
   hideCompleted: false,
-  onHideCompletedToggle: vi.fn(),
-  statuses: [
-    { _id: "s1", name: "Open", color: "green" },
-    { _id: "s2", name: "Closed", color: "red" },
-  ],
-  selectedStatusIds: [] as string[],
-  onStatusChange: vi.fn(),
-  tags: [
-    { _id: "t1", name: "Bug", color: "red" },
-    { _id: "t2", name: "Feature", color: "blue" },
-  ],
-  selectedTagIds: [] as string[],
-  onTagChange: vi.fn(),
   onClearFilters: vi.fn(),
+  onHideCompletedToggle: vi.fn(),
+  onSortChange: vi.fn(),
+  onStatusChange: vi.fn(),
+  onTagChange: vi.fn(),
+  selectedStatusIds: [] as string[],
+  selectedTagIds: [] as string[],
+  sortBy: "votes" as SortOption,
+  statuses: [
+    { _id: "s1", color: "green", name: "Open" },
+    { _id: "s2", color: "red", name: "Closed" },
+  ],
+  tags: [
+    { _id: "t1", color: "red", name: "Bug" },
+    { _id: "t2", color: "blue", name: "Feature" },
+  ],
 };
 
 describe("FiltersBar", () => {

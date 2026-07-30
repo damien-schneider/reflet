@@ -74,7 +74,7 @@ export const list = query({
         const feedback = await Promise.all(
           links.map(async (link) => {
             const f = await ctx.db.get(link.feedbackId);
-            return f ? { _id: f._id, title: f.title, status: f.status } : null;
+            return f ? { _id: f._id, status: f.status, title: f.title } : null;
           })
         );
 
@@ -90,8 +90,8 @@ export const list = query({
 
         return {
           ...release,
-          feedback: feedback.filter(Boolean),
           commitCount,
+          feedback: feedback.filter(Boolean),
         };
       })
     );
@@ -167,9 +167,9 @@ export const get = query({
 
     return {
       ...release,
-      organization: org,
       feedbackItems: feedbackItems.filter(Boolean),
       isMember,
+      organization: org,
     };
   },
 });
@@ -291,7 +291,7 @@ export const listPublished = query({
         const feedback = await Promise.all(
           links.map(async (link) => {
             const f = await ctx.db.get(link.feedbackId);
-            return f ? { _id: f._id, title: f.title, status: f.status } : null;
+            return f ? { _id: f._id, status: f.status, title: f.title } : null;
           })
         );
 
@@ -345,19 +345,19 @@ const compareSemver = (
  */
 export const getNextVersion = query({
   args: {
-    organizationId: v.id("organizations"),
     excludeReleaseId: v.optional(v.id("releases")),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
     const org = await ctx.db.get(args.organizationId);
     if (!org) {
       return {
-        current: null,
-        patch: null,
-        minor: null,
-        major: null,
         autoVersioning: true,
+        current: null,
         defaultIncrement: "patch" as const,
+        major: null,
+        minor: null,
+        patch: null,
       };
     }
 
@@ -384,12 +384,12 @@ export const getNextVersion = query({
 
     if (publishedWithVersion.length === 0) {
       return {
-        current: null,
-        patch: `${prefix}0.0.1`,
-        minor: `${prefix}0.1.0`,
-        major: `${prefix}1.0.0`,
         autoVersioning,
+        current: null,
         defaultIncrement,
+        major: `${prefix}1.0.0`,
+        minor: `${prefix}0.1.0`,
+        patch: `${prefix}0.0.1`,
       };
     }
 
@@ -404,12 +404,12 @@ export const getNextVersion = query({
     const { major, minor, patch } = parseSemver(latestVersion);
 
     return {
-      current: latestVersion,
-      patch: `${prefix}${major}.${minor}.${patch + 1}`,
-      minor: `${prefix}${major}.${minor + 1}.0`,
-      major: `${prefix}${major + 1}.0.0`,
       autoVersioning,
+      current: latestVersion,
       defaultIncrement,
+      major: `${prefix}${major + 1}.0.0`,
+      minor: `${prefix}${major}.${minor + 1}.0`,
+      patch: `${prefix}${major}.${minor}.${patch + 1}`,
     };
   },
 });

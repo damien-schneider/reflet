@@ -14,17 +14,17 @@ interface StatusDotProps {
 }
 
 const colorMap: Record<StatusType, string> = {
-  operational: "bg-emerald-500",
   degraded: "bg-amber-500",
   major_outage: "bg-red-500",
-  paused: "bg-gray-400",
   no_monitors: "bg-gray-300",
+  operational: "bg-emerald-500",
+  paused: "bg-gray-400",
 };
 
 const sizeMap = {
-  sm: "h-2 w-2",
-  md: "h-2.5 w-2.5",
   lg: "h-3 w-3",
+  md: "h-2.5 w-2.5",
+  sm: "h-2 w-2",
 };
 
 export function StatusDot({

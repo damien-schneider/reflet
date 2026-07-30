@@ -38,10 +38,10 @@ interface PushNotificationState {
  */
 export function usePushNotifications() {
   const [state, setState] = useState<PushNotificationState>({
+    isLoading: true,
+    isSubscribed: false,
     isSupported: false,
     permissionState: "unsupported",
-    isSubscribed: false,
-    isLoading: true,
     registration: null,
   });
 
@@ -63,8 +63,8 @@ export function usePushNotifications() {
       if (!supported) {
         setState((prev) => ({
           ...prev,
-          isSupported: false,
           isLoading: false,
+          isSupported: false,
         }));
         return;
       }
@@ -76,19 +76,19 @@ export function usePushNotifications() {
         const subscription = await registration.pushManager.getSubscription();
 
         setState({
+          isLoading: false,
+          isSubscribed: !!subscription,
           isSupported: true,
           permissionState: Notification.permission,
-          isSubscribed: !!subscription,
-          isLoading: false,
           registration,
         });
       } catch (error) {
         console.error("[Push] Service worker registration failed:", error);
         setState((prev) => ({
           ...prev,
+          isLoading: false,
           isSupported: true,
           permissionState: Notification.permission,
-          isLoading: false,
         }));
       }
     };
@@ -118,10 +118,10 @@ export function usePushNotifications() {
 
       const reg = state.registration;
       const subscription = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
         applicationServerKey: new Uint8Array(
           urlBase64ToUint8Array(vapidPublicKey)
         ),
+        userVisibleOnly: true,
       });
 
       const subscriptionJson = subscription.toJSON();
@@ -136,9 +136,9 @@ export function usePushNotifications() {
 
       // Save to Convex
       await subscribeMutation({
+        auth,
         endpoint,
         p256dh,
-        auth,
         userAgent: navigator.userAgent,
       });
 
@@ -177,10 +177,10 @@ export function usePushNotifications() {
   }, [state.registration, unsubscribeMutation]);
 
   return {
+    isLoading: state.isLoading,
+    isSubscribed: state.isSubscribed,
     isSupported: state.isSupported,
     permissionState: state.permissionState,
-    isSubscribed: state.isSubscribed,
-    isLoading: state.isLoading,
     subscribe,
     unsubscribe: unsubscribeFromPush,
   };

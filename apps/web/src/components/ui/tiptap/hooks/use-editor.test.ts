@@ -7,25 +7,25 @@ const mockChainFocusSetImage = vi.fn(() => ({ run: vi.fn() }));
 const mockChainFocusInsertContent = vi.fn(() => ({ run: vi.fn() }));
 
 const mockEditor = {
-  commands: { setContent: mockSetContent },
   chain: vi.fn(() => ({
     focus: vi.fn(() => ({
-      setImage: mockChainFocusSetImage,
       insertContent: mockChainFocusInsertContent,
+      setImage: mockChainFocusSetImage,
     })),
   })),
+  commands: { setContent: mockSetContent },
+  destroy: vi.fn(),
+  off: vi.fn(),
+  on: vi.fn(),
   setEditable: mockSetEditable,
   storage: {
-    markdown: {
-      getMarkdown: vi.fn(() => ""),
-    },
     characterCount: {
       characters: vi.fn(() => 42),
     },
+    markdown: {
+      getMarkdown: vi.fn(() => ""),
+    },
   },
-  on: vi.fn(),
-  off: vi.fn(),
-  destroy: vi.fn(),
 };
 
 vi.mock("@tiptap/react", () => ({
@@ -37,16 +37,16 @@ vi.mock("@tanstack/react-pacer", () => ({
 }));
 
 vi.mock("../editor-extensions", () => ({
-  createExtensions: vi.fn(() => []),
   createEditorProps: vi.fn(() => ({})),
+  createExtensions: vi.fn(() => []),
 }));
 
 const mockUploadMedia = vi.fn();
 
 vi.mock("../use-media-upload", () => ({
   useMediaUpload: vi.fn(() => ({
-    uploadMedia: mockUploadMedia,
     isUploading: false,
+    uploadMedia: mockUploadMedia,
     uploadProgress: null,
   })),
 }));
@@ -67,14 +67,14 @@ describe("useTiptapMarkdownEditor", () => {
 
   it("returns editor instance", () => {
     const { result } = renderHook(() =>
-      useTiptapMarkdownEditor({ value: "", onChange: vi.fn() })
+      useTiptapMarkdownEditor({ onChange: vi.fn(), value: "" })
     );
     expect(result.current.editor).toBe(mockEditor);
   });
 
   it("returns imageInputRef and videoInputRef", () => {
     const { result } = renderHook(() =>
-      useTiptapMarkdownEditor({ value: "", onChange: vi.fn() })
+      useTiptapMarkdownEditor({ onChange: vi.fn(), value: "" })
     );
     expect(result.current.imageInputRef).toBeDefined();
     expect(result.current.videoInputRef).toBeDefined();
@@ -82,7 +82,7 @@ describe("useTiptapMarkdownEditor", () => {
 
   it("returns upload state", () => {
     const { result } = renderHook(() =>
-      useTiptapMarkdownEditor({ value: "", onChange: vi.fn() })
+      useTiptapMarkdownEditor({ onChange: vi.fn(), value: "" })
     );
     expect(result.current.isUploading).toBe(false);
     expect(result.current.uploadProgress).toBeNull();
@@ -90,7 +90,7 @@ describe("useTiptapMarkdownEditor", () => {
 
   it("returns character count from editor storage", () => {
     const { result } = renderHook(() =>
-      useTiptapMarkdownEditor({ value: "", onChange: vi.fn() })
+      useTiptapMarkdownEditor({ onChange: vi.fn(), value: "" })
     );
     expect(result.current.characterCount).toBe(42);
   });
@@ -99,9 +99,9 @@ describe("useTiptapMarkdownEditor", () => {
     mockEditor.storage.characterCount.characters.mockReturnValue(95);
     const { result } = renderHook(() =>
       useTiptapMarkdownEditor({
-        value: "",
-        onChange: vi.fn(),
         maxLength: 100,
+        onChange: vi.fn(),
+        value: "",
       })
     );
     expect(result.current.isNearLimit).toBe(true);
@@ -111,9 +111,9 @@ describe("useTiptapMarkdownEditor", () => {
     mockEditor.storage.characterCount.characters.mockReturnValue(50);
     const { result } = renderHook(() =>
       useTiptapMarkdownEditor({
-        value: "",
-        onChange: vi.fn(),
         maxLength: 100,
+        onChange: vi.fn(),
+        value: "",
       })
     );
     expect(result.current.isNearLimit).toBe(false);
@@ -123,9 +123,9 @@ describe("useTiptapMarkdownEditor", () => {
     mockEditor.storage.characterCount.characters.mockReturnValue(100);
     const { result } = renderHook(() =>
       useTiptapMarkdownEditor({
-        value: "",
-        onChange: vi.fn(),
         maxLength: 100,
+        onChange: vi.fn(),
+        value: "",
       })
     );
     expect(result.current.isAtLimit).toBe(true);
@@ -133,14 +133,14 @@ describe("useTiptapMarkdownEditor", () => {
 
   it("isAtLimit is false when no maxLength", () => {
     const { result } = renderHook(() =>
-      useTiptapMarkdownEditor({ value: "", onChange: vi.fn() })
+      useTiptapMarkdownEditor({ onChange: vi.fn(), value: "" })
     );
     expect(result.current.isAtLimit).toBe(false);
   });
 
   it("isNearLimit is false when no maxLength", () => {
     const { result } = renderHook(() =>
-      useTiptapMarkdownEditor({ value: "", onChange: vi.fn() })
+      useTiptapMarkdownEditor({ onChange: vi.fn(), value: "" })
     );
     expect(result.current.isNearLimit).toBe(false);
   });
@@ -149,7 +149,7 @@ describe("useTiptapMarkdownEditor", () => {
     mockEditor.storage.markdown.getMarkdown.mockReturnValue("old content");
 
     const { rerender } = renderHook(
-      ({ value }) => useTiptapMarkdownEditor({ value, onChange: vi.fn() }),
+      ({ value }) => useTiptapMarkdownEditor({ onChange: vi.fn(), value }),
       { initialProps: { value: "old content" } }
     );
 
@@ -163,7 +163,7 @@ describe("useTiptapMarkdownEditor", () => {
     mockEditor.storage.markdown.getMarkdown.mockReturnValue("same");
 
     renderHook(() =>
-      useTiptapMarkdownEditor({ value: "same", onChange: vi.fn() })
+      useTiptapMarkdownEditor({ onChange: vi.fn(), value: "same" })
     );
 
     // setContent should not be called since values match
@@ -173,7 +173,7 @@ describe("useTiptapMarkdownEditor", () => {
   it("updates editable state when disabled changes", () => {
     const { rerender } = renderHook(
       ({ disabled }) =>
-        useTiptapMarkdownEditor({ value: "", onChange: vi.fn(), disabled }),
+        useTiptapMarkdownEditor({ disabled, onChange: vi.fn(), value: "" }),
       { initialProps: { disabled: false } }
     );
 
@@ -184,7 +184,7 @@ describe("useTiptapMarkdownEditor", () => {
   it("updates editable state when editable prop changes", () => {
     const { rerender } = renderHook(
       ({ editable }) =>
-        useTiptapMarkdownEditor({ value: "", onChange: vi.fn(), editable }),
+        useTiptapMarkdownEditor({ editable, onChange: vi.fn(), value: "" }),
       { initialProps: { editable: true } }
     );
 
@@ -194,7 +194,7 @@ describe("useTiptapMarkdownEditor", () => {
 
   it("handleImageUpload triggers file input click", () => {
     const { result } = renderHook(() =>
-      useTiptapMarkdownEditor({ value: "", onChange: vi.fn() })
+      useTiptapMarkdownEditor({ onChange: vi.fn(), value: "" })
     );
 
     // Create a mock input element
@@ -210,7 +210,7 @@ describe("useTiptapMarkdownEditor", () => {
 
   it("handleVideoUpload triggers file input click", () => {
     const { result } = renderHook(() =>
-      useTiptapMarkdownEditor({ value: "", onChange: vi.fn() })
+      useTiptapMarkdownEditor({ onChange: vi.fn(), value: "" })
     );
 
     const mockClick = vi.fn();
@@ -225,7 +225,7 @@ describe("useTiptapMarkdownEditor", () => {
 
   it("handleImageChange uploads file and resets input", async () => {
     const { result } = renderHook(() =>
-      useTiptapMarkdownEditor({ value: "", onChange: vi.fn() })
+      useTiptapMarkdownEditor({ onChange: vi.fn(), value: "" })
     );
 
     const file = new File(["test"], "test.png", { type: "image/png" });
@@ -240,7 +240,7 @@ describe("useTiptapMarkdownEditor", () => {
 
   it("handleImageChange does nothing without a file", async () => {
     const { result } = renderHook(() =>
-      useTiptapMarkdownEditor({ value: "", onChange: vi.fn() })
+      useTiptapMarkdownEditor({ onChange: vi.fn(), value: "" })
     );
 
     const event = {
@@ -253,7 +253,7 @@ describe("useTiptapMarkdownEditor", () => {
 
   it("handleVideoChange uploads file and resets input", async () => {
     const { result } = renderHook(() =>
-      useTiptapMarkdownEditor({ value: "", onChange: vi.fn() })
+      useTiptapMarkdownEditor({ onChange: vi.fn(), value: "" })
     );
 
     const file = new File(["video"], "test.mp4", { type: "video/mp4" });
@@ -275,9 +275,9 @@ describe("useTiptapMarkdownEditor", () => {
     useDebouncedCallback.mockClear();
     renderHook(() =>
       useTiptapMarkdownEditor({
-        value: "",
-        onChange: vi.fn(),
         debounceMs: 300,
+        onChange: vi.fn(),
+        value: "",
       })
     );
     expect(useDebouncedCallback).toHaveBeenCalledWith(expect.any(Function), {
@@ -292,16 +292,16 @@ describe("useTiptapMarkdownEditor", () => {
     createExtensions.mockClear();
     renderHook(() =>
       useTiptapMarkdownEditor({
-        value: "",
+        maxLength: 500,
         onChange: vi.fn(),
         placeholder: "Custom placeholder",
-        maxLength: 500,
+        value: "",
       })
     );
     expect(createExtensions).toHaveBeenCalledWith(
       expect.objectContaining({
-        placeholder: "Custom placeholder",
         maxLength: 500,
+        placeholder: "Custom placeholder",
       })
     );
   });
@@ -311,7 +311,7 @@ describe("useTiptapMarkdownEditor", () => {
       createExtensions: ReturnType<typeof vi.fn>;
     };
     createExtensions.mockClear();
-    renderHook(() => useTiptapMarkdownEditor({ value: "", onChange: vi.fn() }));
+    renderHook(() => useTiptapMarkdownEditor({ onChange: vi.fn(), value: "" }));
     expect(createExtensions).toHaveBeenCalledWith(
       expect.objectContaining({
         placeholder: "Write something... Type '/' for commands",
@@ -325,7 +325,7 @@ describe("useTiptapMarkdownEditor", () => {
       markdown: { getMarkdown: vi.fn(() => "") },
     };
     const { result } = renderHook(() =>
-      useTiptapMarkdownEditor({ value: "", onChange: vi.fn() })
+      useTiptapMarkdownEditor({ onChange: vi.fn(), value: "" })
     );
     expect(result.current.characterCount).toBe(0);
     mockEditor.storage = origStorage;
@@ -335,9 +335,9 @@ describe("useTiptapMarkdownEditor", () => {
     mockEditor.storage.characterCount.characters.mockReturnValue(100);
     const { result } = renderHook(() =>
       useTiptapMarkdownEditor({
-        value: "",
-        onChange: vi.fn(),
         maxLength: 100,
+        onChange: vi.fn(),
+        value: "",
       })
     );
     expect(result.current.isAtLimit).toBe(true);

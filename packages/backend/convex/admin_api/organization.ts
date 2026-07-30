@@ -16,18 +16,18 @@ export const getOrganization = internalQuery({
     }
 
     return {
-      id: org._id,
-      name: org.name,
-      slug: org.slug,
-      logo: org.logo,
-      primaryColor: org.primaryColor,
-      isPublic: org.isPublic,
-      subscriptionTier: org.subscriptionTier,
-      subscriptionStatus: org.subscriptionStatus,
-      supportEnabled: org.supportEnabled,
-      feedbackSettings: org.feedbackSettings,
       changelogSettings: org.changelogSettings,
       createdAt: org.createdAt,
+      feedbackSettings: org.feedbackSettings,
+      id: org._id,
+      isPublic: org.isPublic,
+      logo: org.logo,
+      name: org.name,
+      primaryColor: org.primaryColor,
+      slug: org.slug,
+      subscriptionStatus: org.subscriptionStatus,
+      subscriptionTier: org.subscriptionTier,
+      supportEnabled: org.supportEnabled,
     };
   },
 });
@@ -71,23 +71,23 @@ export const getRoadmap = internalQuery({
             }
             return {
               id: f._id,
-              title: f.title,
-              status: f.status,
-              voteCount: f.voteCount,
               priority: f.priority,
+              status: f.status,
+              title: f.title,
+              voteCount: f.voteCount,
             };
           })
         );
 
         return {
-          id: m._id,
-          name: m.name,
+          color: m.color,
           description: m.description,
           emoji: m.emoji,
-          color: m.color,
-          timeHorizon: m.timeHorizon,
-          targetDate: m.targetDate,
           feedback: feedbackItems.filter(Boolean),
+          id: m._id,
+          name: m.name,
+          targetDate: m.targetDate,
+          timeHorizon: m.timeHorizon,
         };
       })
     );
@@ -95,10 +95,10 @@ export const getRoadmap = internalQuery({
     return {
       milestones: roadmapItems,
       statuses: statuses.map((s) => ({
-        id: s._id,
-        name: s.name,
         color: s.color,
         icon: s.icon,
+        id: s._id,
+        name: s.name,
       })),
     };
   },
@@ -110,13 +110,12 @@ export const getRoadmap = internalQuery({
 
 export const updateOrganization = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
-    name: v.optional(v.string()),
     isPublic: v.optional(v.boolean()),
+    name: v.optional(v.string()),
+    organizationId: v.id("organizations"),
     primaryColor: v.optional(v.string()),
     supportEnabled: v.optional(v.boolean()),
   },
-  returns: v.object({ success: v.boolean() }),
   handler: async (ctx, args) => {
     const org = await ctx.db.get(args.organizationId);
     if (!org) {
@@ -140,4 +139,5 @@ export const updateOrganization = internalMutation({
     await ctx.db.patch(args.organizationId, updates);
     return { success: true };
   },
+  returns: v.object({ success: v.boolean() }),
 });

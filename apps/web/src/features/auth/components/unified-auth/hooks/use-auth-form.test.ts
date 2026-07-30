@@ -11,8 +11,8 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("sonner", () => ({
   toast: {
-    success: vi.fn(),
     error: vi.fn(),
+    success: vi.fn(),
   },
 }));
 
@@ -46,10 +46,10 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
 
 vi.mock("@reflet/env/web", () => ({
   env: {
-    NEXT_PUBLIC_CONVEX_URL: "https://test.convex.cloud",
     NEXT_PUBLIC_CONVEX_SITE_URL: "https://test.convex.site",
-    NEXT_PUBLIC_VAPID_PUBLIC_KEY: "test-vapid-key",
+    NEXT_PUBLIC_CONVEX_URL: "https://test.convex.cloud",
     NEXT_PUBLIC_SKIP_EMAIL_VERIFICATION: undefined,
+    NEXT_PUBLIC_VAPID_PUBLIC_KEY: "test-vapid-key",
   },
 }));
 
@@ -469,9 +469,9 @@ describe("useAuthForm - onSubmit", () => {
 
     await act(async () => {
       await result.current.onSubmit({
+        confirmPassword: "",
         email: "test@example.com",
         password: "pw",
-        confirmPassword: "",
       });
     });
 
@@ -502,9 +502,9 @@ describe("useAuthForm - onSubmit", () => {
 
     await act(async () => {
       await result.current.onSubmit({
+        confirmPassword: "",
         email: "user@example.com",
         password: "pass123",
-        confirmPassword: "",
       });
     });
 
@@ -537,9 +537,9 @@ describe("useAuthForm - onSubmit", () => {
 
     await act(async () => {
       await result.current.onSubmit({
+        confirmPassword: "",
         email: "user@example.com",
         password: "wrongpw",
-        confirmPassword: "",
       });
     });
 
@@ -571,9 +571,9 @@ describe("useAuthForm - onSubmit", () => {
 
     await act(async () => {
       await result.current.onSubmit({
+        confirmPassword: "",
         email: "user@example.com",
         password: "pw",
-        confirmPassword: "",
       });
     });
 
@@ -605,9 +605,9 @@ describe("useAuthForm - onSubmit", () => {
 
     await act(async () => {
       await result.current.onSubmit({
+        confirmPassword: "password123",
         email: "new@example.com",
         password: "password123",
-        confirmPassword: "password123",
       });
     });
 
@@ -642,9 +642,9 @@ describe("useAuthForm - onSubmit", () => {
 
     await act(async () => {
       await result.current.onSubmit({
+        confirmPassword: "password123",
         email: "new@example.com",
         password: "password123",
-        confirmPassword: "password123",
       });
     });
 

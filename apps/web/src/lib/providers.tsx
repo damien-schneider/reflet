@@ -57,6 +57,7 @@ export function Providers({
 
   const inner = (
     <ConvexBetterAuthProvider
+      // @ts-expect-error @convex-dev/better-auth 0.12.5 client type rejects its supported 1.6 peer
       authClient={authClient}
       client={convex}
       initialToken={initialToken}

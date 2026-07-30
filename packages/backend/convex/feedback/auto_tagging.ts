@@ -27,22 +27,6 @@ const COMPLEXITY_LEVELS = [
 
 // Zod schema for auto-tagging response
 const autoTaggingResponseSchema = z.object({
-  selectedTagIds: z
-    .array(z.string())
-    .describe(
-      "Array of tag IDs from the provided list that match the feedback"
-    ),
-  reasoning: z
-    .string()
-    .describe("Brief explanation of why these tags were selected"),
-  priority: z
-    .enum(PRIORITY_LEVELS)
-    .describe(
-      "Priority level: critical (blocking/urgent), high (important/impactful), medium (standard), low (nice-to-have), none (informational only)"
-    ),
-  priorityReasoning: z
-    .string()
-    .describe("Brief explanation of why this priority level was assigned"),
   complexity: z
     .enum(COMPLEXITY_LEVELS)
     .describe(
@@ -51,6 +35,22 @@ const autoTaggingResponseSchema = z.object({
   complexityReasoning: z
     .string()
     .describe("Brief explanation of the complexity assessment"),
+  priority: z
+    .enum(PRIORITY_LEVELS)
+    .describe(
+      "Priority level: critical (blocking/urgent), high (important/impactful), medium (standard), low (nice-to-have), none (informational only)"
+    ),
+  priorityReasoning: z
+    .string()
+    .describe("Brief explanation of why this priority level was assigned"),
+  reasoning: z
+    .string()
+    .describe("Brief explanation of why these tags were selected"),
+  selectedTagIds: z
+    .array(z.string())
+    .describe(
+      "Array of tag IDs from the provided list that match the feedback"
+    ),
   timeEstimate: z
     .string()
     .describe(
@@ -154,18 +154,18 @@ export const getRecentlyTaggedItems = query({
             .map(async (ft) => {
               const tag = await ctx.db.get(ft.tagId);
               return tag
-                ? { _id: tag._id, name: tag.name, color: tag.color }
+                ? { _id: tag._id, color: tag.color, name: tag.name }
                 : null;
             })
         );
 
         return {
           _id: f._id,
-          title: f.title,
-          aiPriority: f.aiPriority,
           aiComplexity: f.aiComplexity,
+          aiPriority: f.aiPriority,
           aiTimeEstimate: f.aiTimeEstimate,
           tags: tags.filter(Boolean),
+          title: f.title,
         };
       })
     );
@@ -253,8 +253,8 @@ export const getFeedbackForAutoTagging = internalQuery({
  */
 export const getUntaggedFeedbackIds = internalQuery({
   args: {
-    organizationId: v.id("organizations"),
     limit: v.optional(v.number()),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args): Promise<Id<"feedback">[]> => {
     const feedbackItems = await ctx.db
@@ -327,9 +327,9 @@ export const applyAutoTags = internalMutation({
 
       if (!existing) {
         await ctx.db.insert("feedbackTags", {
+          appliedByAi: true,
           feedbackId: args.feedbackId,
           tagId,
-          appliedByAi: true,
         });
       }
     }
@@ -341,6 +341,16 @@ export const applyAutoTags = internalMutation({
  */
 export const saveAiAnalysis = internalMutation({
   args: {
+    complexity: v.optional(
+      v.union(
+        v.literal("trivial"),
+        v.literal("simple"),
+        v.literal("moderate"),
+        v.literal("complex"),
+        v.literal("very_complex")
+      )
+    ),
+    complexityReasoning: v.optional(v.string()),
     feedbackId: v.id("feedback"),
     priority: v.optional(
       v.union(
@@ -352,16 +362,6 @@ export const saveAiAnalysis = internalMutation({
       )
     ),
     priorityReasoning: v.optional(v.string()),
-    complexity: v.optional(
-      v.union(
-        v.literal("trivial"),
-        v.literal("simple"),
-        v.literal("moderate"),
-        v.literal("complex"),
-        v.literal("very_complex")
-      )
-    ),
-    complexityReasoning: v.optional(v.string()),
     timeEstimate: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -404,14 +404,14 @@ export const createJob = internalMutation({
   },
   handler: async (ctx, args) => {
     const jobId = await ctx.db.insert("autoTaggingJobs", {
-      organizationId: args.organizationId,
-      status: "pending",
-      totalItems: args.totalItems,
-      processedItems: 0,
-      successfulItems: 0,
-      failedItems: 0,
       errors: [],
+      failedItems: 0,
+      organizationId: args.organizationId,
+      processedItems: 0,
       startedAt: Date.now(),
+      status: "pending",
+      successfulItems: 0,
+      totalItems: args.totalItems,
     });
     return jobId;
   },
@@ -422,10 +422,15 @@ export const createJob = internalMutation({
  */
 export const updateJobProgress = internalMutation({
   args: {
+    error: v.optional(
+      v.object({
+        error: v.string(),
+        feedbackId: v.id("feedback"),
+      })
+    ),
+    failedItems: v.number(),
     jobId: v.id("autoTaggingJobs"),
     processedItems: v.number(),
-    successfulItems: v.number(),
-    failedItems: v.number(),
     status: v.optional(
       v.union(
         v.literal("pending"),
@@ -434,12 +439,7 @@ export const updateJobProgress = internalMutation({
         v.literal("failed")
       )
     ),
-    error: v.optional(
-      v.object({
-        feedbackId: v.id("feedback"),
-        error: v.string(),
-      })
-    ),
+    successfulItems: v.number(),
   },
   handler: async (ctx, args) => {
     const job = await ctx.db.get(args.jobId);
@@ -455,9 +455,9 @@ export const updateJobProgress = internalMutation({
       errors?: { feedbackId: Id<"feedback">; error: string }[];
       completedAt?: number;
     } = {
+      failedItems: args.failedItems,
       processedItems: args.processedItems,
       successfulItems: args.successfulItems,
-      failedItems: args.failedItems,
     };
 
     if (args.status) {
@@ -578,8 +578,8 @@ export const processAutoTagging = internalAction({
 
     if (!data?.feedback || data.tags.length === 0) {
       return {
-        success: false,
         reason: "No feedback or tags found",
+        success: false,
         tagCount: 0,
       };
     }
@@ -633,9 +633,9 @@ ${tagsDescription}`;
 
         const response = await generateObject({
           model: openrouter(modelId),
+          prompt: userPrompt,
           schema: autoTaggingResponseSchema,
           system: systemPrompt,
-          prompt: userPrompt,
         });
 
         result = response.object;
@@ -649,8 +649,8 @@ ${tagsDescription}`;
 
     if (!result) {
       return {
-        success: false,
         reason: `All AI models failed: ${lastError?.message ?? "Unknown error"}`,
+        success: false,
         tagCount: 0,
       };
     }
@@ -674,11 +674,11 @@ ${tagsDescription}`;
 
     // Save AI analysis (priority, complexity, time estimate) regardless of tag matching
     await ctx.runMutation(internal.feedback.auto_tagging.saveAiAnalysis, {
+      complexity: result.complexity,
+      complexityReasoning: result.complexityReasoning,
       feedbackId: args.feedbackId,
       priority: result.priority,
       priorityReasoning: result.priorityReasoning,
-      complexity: result.complexity,
-      complexityReasoning: result.complexityReasoning,
       timeEstimate: result.timeEstimate,
     });
 
@@ -687,10 +687,10 @@ ${tagsDescription}`;
     }
 
     return {
-      success: true,
       reason:
         result.reasoning ||
         "AI selected no matching tags but analysis was saved",
+      success: true,
       tagCount: 0,
     };
   },
@@ -714,7 +714,7 @@ export const processBulkAutoTagging = internalAction({
     );
 
     if (untaggedIds.length === 0) {
-      return { processed: 0, failed: 0 };
+      return { failed: 0, processed: 0 };
     }
 
     // Create the job
@@ -728,11 +728,11 @@ export const processBulkAutoTagging = internalAction({
 
     // Update status to processing
     await ctx.runMutation(internal.feedback.auto_tagging.updateJobProgress, {
+      failedItems: 0,
       jobId,
       processedItems: 0,
-      successfulItems: 0,
-      failedItems: 0,
       status: "processing",
+      successfulItems: 0,
     });
 
     // Process all items in parallel
@@ -758,8 +758,8 @@ export const processBulkAutoTagging = internalAction({
         } else {
           failedItems++;
           errors.push({
-            feedbackId: settled.value.feedbackId,
             error: settled.value.result.reason || "Unknown error",
+            feedbackId: settled.value.feedbackId,
           });
         }
       } else {
@@ -772,23 +772,23 @@ export const processBulkAutoTagging = internalAction({
     // Report errors
     for (const error of errors) {
       await ctx.runMutation(internal.feedback.auto_tagging.updateJobProgress, {
+        error,
+        failedItems,
         jobId,
         processedItems,
         successfulItems,
-        failedItems,
-        error,
       });
     }
 
     // Mark as completed
     await ctx.runMutation(internal.feedback.auto_tagging.updateJobProgress, {
+      failedItems,
       jobId,
       processedItems,
-      successfulItems,
-      failedItems,
       status: failedItems === untaggedIds.length ? "failed" : "completed",
+      successfulItems,
     });
 
-    return { processed: processedItems, failed: failedItems };
+    return { failed: failedItems, processed: processedItems };
   },
 });

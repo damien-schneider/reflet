@@ -31,60 +31,57 @@ export function registerAdminFeedbackRoutes(http: Router): void {
   // --- Feedback mutations ---
 
   http.route({
-    path: "/api/v1/admin/feedback/update",
-    method: "POST",
     handler: adminPost(async (ctx, { organizationId }, body) =>
       ctx.runMutation(internal.admin_api.feedback.updateFeedback, {
-        organizationId,
-        feedbackId: parseId<"feedback">(str(body.feedbackId), "feedbackId"),
-        title: str(body.title),
         description: str(body.description),
+        feedbackId: parseId<"feedback">(str(body.feedbackId), "feedbackId"),
+        organizationId,
+        title: str(body.title),
       })
     ),
+    method: "POST",
+    path: "/api/v1/admin/feedback/update",
   });
 
   http.route({
-    path: "/api/v1/admin/feedback/delete",
-    method: "POST",
     handler: adminPost(async (ctx, { organizationId }, body) =>
       ctx.runMutation(internal.admin_api.feedback.deleteFeedback, {
-        organizationId,
         feedbackId: parseId<"feedback">(str(body.feedbackId), "feedbackId"),
+        organizationId,
       })
     ),
+    method: "POST",
+    path: "/api/v1/admin/feedback/delete",
   });
 
   http.route({
-    path: "/api/v1/admin/feedback/restore",
-    method: "POST",
     handler: adminPost(async (ctx, { organizationId }, body) =>
       ctx.runMutation(internal.admin_api.feedback.restoreFeedback, {
-        organizationId,
         feedbackId: parseId<"feedback">(str(body.feedbackId), "feedbackId"),
+        organizationId,
       })
     ),
+    method: "POST",
+    path: "/api/v1/admin/feedback/restore",
   });
 
   http.route({
-    path: "/api/v1/admin/feedback/assign",
-    method: "POST",
     handler: adminPost(async (ctx, { organizationId }, body) =>
       ctx.runMutation(internal.admin_api.feedback.assignFeedback, {
-        organizationId,
-        feedbackId: parseId<"feedback">(str(body.feedbackId), "feedbackId"),
         assigneeId: str(body.assigneeId),
+        feedbackId: parseId<"feedback">(str(body.feedbackId), "feedbackId"),
+        organizationId,
       })
     ),
+    method: "POST",
+    path: "/api/v1/admin/feedback/assign",
   });
 
   http.route({
-    path: "/api/v1/admin/feedback/set-status",
-    method: "POST",
     handler: adminPost(async (ctx, { organizationId }, body) =>
       ctx.runMutation(internal.admin_api.feedback.setFeedbackStatus, {
-        organizationId,
         feedbackId: parseId<"feedback">(str(body.feedbackId), "feedbackId"),
-        statusId: optionalId<"organizationStatuses">(body.statusId),
+        organizationId,
         status: str(body.status) as
           | "open"
           | "under_review"
@@ -93,37 +90,29 @@ export function registerAdminFeedbackRoutes(http: Router): void {
           | "completed"
           | "closed"
           | undefined,
+        statusId: optionalId<"organizationStatuses">(body.statusId),
       })
     ),
+    method: "POST",
+    path: "/api/v1/admin/feedback/set-status",
   });
 
   http.route({
-    path: "/api/v1/admin/feedback/update-tags",
-    method: "POST",
     handler: adminPost(async (ctx, { organizationId }, body) =>
       ctx.runMutation(internal.admin_api.feedback.updateFeedbackTags, {
-        organizationId,
-        feedbackId: parseId<"feedback">(str(body.feedbackId), "feedbackId"),
         addTagIds: strArr(body.addTagIds) as Id<"tags">[] | undefined,
+        feedbackId: parseId<"feedback">(str(body.feedbackId), "feedbackId"),
+        organizationId,
         removeTagIds: strArr(body.removeTagIds) as Id<"tags">[] | undefined,
       })
     ),
+    method: "POST",
+    path: "/api/v1/admin/feedback/update-tags",
   });
 
   http.route({
-    path: "/api/v1/admin/feedback/update-analysis",
-    method: "POST",
     handler: adminPost(async (ctx, { organizationId }, body) =>
       ctx.runMutation(internal.admin_api.feedback.updateFeedbackAnalysis, {
-        organizationId,
-        feedbackId: parseId<"feedback">(str(body.feedbackId), "feedbackId"),
-        priority: str(body.priority) as
-          | "critical"
-          | "high"
-          | "medium"
-          | "low"
-          | "none"
-          | undefined,
         complexity: str(body.complexity) as
           | "trivial"
           | "simple"
@@ -131,51 +120,62 @@ export function registerAdminFeedbackRoutes(http: Router): void {
           | "complex"
           | "very_complex"
           | undefined,
-        timeEstimate: str(body.timeEstimate),
         deadline: num(body.deadline),
+        feedbackId: parseId<"feedback">(str(body.feedbackId), "feedbackId"),
+        organizationId,
+        priority: str(body.priority) as
+          | "critical"
+          | "high"
+          | "medium"
+          | "low"
+          | "none"
+          | undefined,
+        timeEstimate: str(body.timeEstimate),
       })
     ),
+    method: "POST",
+    path: "/api/v1/admin/feedback/update-analysis",
   });
 
   // --- Comment mutations ---
 
   http.route({
-    path: "/api/v1/admin/comment/update",
-    method: "POST",
     handler: adminPost(async (ctx, { organizationId }, body) =>
       ctx.runMutation(internal.admin_api.feedback.updateComment, {
-        organizationId,
-        commentId: parseId<"comments">(str(body.commentId), "commentId"),
         body: requireStr(body.body, "body"),
+        commentId: parseId<"comments">(str(body.commentId), "commentId"),
+        organizationId,
       })
     ),
+    method: "POST",
+    path: "/api/v1/admin/comment/update",
   });
 
   http.route({
-    path: "/api/v1/admin/comment/delete",
-    method: "POST",
     handler: adminPost(async (ctx, { organizationId }, body) =>
       ctx.runMutation(internal.admin_api.feedback.deleteComment, {
-        organizationId,
         commentId: parseId<"comments">(str(body.commentId), "commentId"),
+        organizationId,
       })
     ),
+    method: "POST",
+    path: "/api/v1/admin/comment/delete",
   });
 
   http.route({
-    path: "/api/v1/admin/comment/mark-official",
-    method: "POST",
     handler: adminPost(async (ctx, { organizationId }, body) =>
       ctx.runMutation(internal.admin_api.feedback.markCommentOfficial, {
-        organizationId,
         commentId: parseId<"comments">(str(body.commentId), "commentId"),
         isOfficial: body.isOfficial === true,
+        organizationId,
       })
     ),
+    method: "POST",
+    path: "/api/v1/admin/comment/mark-official",
   });
 
   // --- CORS preflight for all admin feedback/comment routes ---
   for (const path of ADMIN_FEEDBACK_PATHS) {
-    http.route({ path, method: "OPTIONS", handler: corsOptionsHandler() });
+    http.route({ handler: corsOptionsHandler(), method: "OPTIONS", path });
   }
 }

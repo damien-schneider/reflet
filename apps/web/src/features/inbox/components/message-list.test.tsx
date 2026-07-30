@@ -2,8 +2,8 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 vi.mock("convex/react", () => ({
-  useQuery: vi.fn(() => []),
   useMutation: vi.fn(() => vi.fn()),
+  useQuery: vi.fn(() => []),
 }));
 
 vi.mock("@/lib/auth-client", () => ({
@@ -59,8 +59,8 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
     support: {
       messages: {
-        listReactions: "support.messages.listReactions",
         addReaction: "support.messages.addReaction",
+        listReactions: "support.messages.listReactions",
         removeReaction: "support.messages.removeReaction",
       },
     },
@@ -77,12 +77,12 @@ afterEach(cleanup);
 
 const createMessage = (overrides = {}) => ({
   _id: "msg1" as never,
-  senderId: "user1",
-  senderType: "user" as const,
   body: "Test message",
-  isRead: false,
   createdAt: Date.now(),
   isOwnMessage: false,
+  isRead: false,
+  senderId: "user1",
+  senderType: "user" as const,
   ...overrides,
 });
 

@@ -15,14 +15,13 @@ const openrouter = createOpenRouter({ apiKey: process.env.OPENROUTER_API_KEY });
 const LLM_CHECK_MODEL = "anthropic/claude-sonnet-4";
 
 const visibilitySchema = z.object({
-  mentionsProduct: z.boolean(),
-  mentionedCompetitors: z.array(z.string()),
-  sentiment: z.enum(["positive", "negative", "neutral"]),
   context: z
     .string()
     .describe(
       "Brief description of how the product was mentioned or why it was not"
     ),
+  mentionedCompetitors: z.array(z.string()),
+  mentionsProduct: z.boolean(),
   recommendationStrength: z
     .number()
     .min(0)
@@ -30,6 +29,7 @@ const visibilitySchema = z.object({
     .describe(
       "How strongly the LLM recommends this product (0=not mentioned, 10=top recommendation)"
     ),
+  sentiment: z.enum(["positive", "negative", "neutral"]),
 });
 
 // ============================================
@@ -90,11 +90,11 @@ export const getOrgForVisibility = internalQuery({
       .collect();
 
     return {
-      orgName: org.name,
       competitors: competitors.map((c) => ({
         id: c._id,
         name: c.name,
       })),
+      orgName: org.name,
     };
   },
 });
@@ -108,19 +108,19 @@ export const getOrgForVisibility = internalQuery({
  */
 export const storeVisibilityResult = internalMutation({
   args: {
+    checkedAt: v.number(),
+    context: v.string(),
+    mentionedCompetitors: v.array(v.string()),
+    mentionsProduct: v.boolean(),
+    model: v.string(),
     organizationId: v.id("organizations"),
     prompt: v.string(),
-    model: v.string(),
-    mentionsProduct: v.boolean(),
-    mentionedCompetitors: v.array(v.string()),
+    recommendationStrength: v.number(),
     sentiment: v.union(
       v.literal("positive"),
       v.literal("negative"),
       v.literal("neutral")
     ),
-    context: v.string(),
-    recommendationStrength: v.number(),
-    checkedAt: v.number(),
   },
   handler: async (ctx, args) => {
     await ctx.db.insert("llmVisibilityChecks", args);
@@ -163,6 +163,7 @@ export const runVisibilityCheck = internalAction({
       try {
         const response = await generateObject({
           model: openrouter(LLM_CHECK_MODEL),
+          prompt,
           schema: visibilitySchema,
           system: `You are simulating how a large language model would respond to a user query.
 The product we're checking visibility for is: ${orgData.orgName}
@@ -173,21 +174,20 @@ Answer the user's question naturally, then analyze your own response to determin
 - Which competitors you mentioned
 - The sentiment of any mention
 - How strongly you recommended ${orgData.orgName} (0 if not mentioned)`,
-          prompt,
         });
 
         await ctx.runMutation(
           internal.intelligence.llm_visibility.storeVisibilityResult,
           {
+            checkedAt: Date.now(),
+            context: response.object.context,
+            mentionedCompetitors: response.object.mentionedCompetitors,
+            mentionsProduct: response.object.mentionsProduct,
+            model: LLM_CHECK_MODEL,
             organizationId: args.organizationId,
             prompt,
-            model: LLM_CHECK_MODEL,
-            mentionsProduct: response.object.mentionsProduct,
-            mentionedCompetitors: response.object.mentionedCompetitors,
-            sentiment: response.object.sentiment,
-            context: response.object.context,
             recommendationStrength: response.object.recommendationStrength,
-            checkedAt: Date.now(),
+            sentiment: response.object.sentiment,
           }
         );
       } catch {

@@ -69,8 +69,8 @@ export function WidgetCard({ widget }: WidgetCardProps) {
       : "Widget activated";
     try {
       await updateWidget({
-        widgetId: widget._id,
         isActive: !widget.isActive,
+        widgetId: widget._id,
       });
       toast.success(successMessage);
     } catch {

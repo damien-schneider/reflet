@@ -9,11 +9,11 @@ import { cn } from "@/lib/utils";
 import type { TriggerType } from "@/store/surveys";
 
 const TRIGGER_ICON_MAP = {
+  exit_intent: SignOut,
+  feedback_submitted: Cursor,
   manual: Code,
   page_visit: Eye,
   time_delay: Timer,
-  exit_intent: SignOut,
-  feedback_submitted: Cursor,
 } as const;
 
 const TRIGGER_ORDER: TriggerType[] = [

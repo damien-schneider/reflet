@@ -12,8 +12,8 @@ import { authComponent } from "../auth/auth";
  */
 export const list = query({
   args: {
-    unreadOnly: v.optional(v.boolean()),
     limit: v.optional(v.number()),
+    unreadOnly: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const user = await authComponent.safeGetAuthUser(ctx);
@@ -49,15 +49,15 @@ export const list = query({
         const org = await ctx.db.get(invitation.organizationId);
         if (org) {
           invitationNotifications.push({
-            _id: `invitation-${invitation._id}` as (typeof notifications)[0]["_id"],
             _creationTime: invitation.createdAt,
-            userId: user._id,
-            type: "invitation" as const,
-            title: `Invitation à rejoindre ${org.name}`,
-            message: `Vous avez été invité à rejoindre ${org.name} en tant que ${invitation.role === "admin" ? "administrateur" : "membre"}.`,
+            _id: `invitation-${invitation._id}` as (typeof notifications)[0]["_id"],
+            createdAt: invitation.createdAt,
             invitationToken: invitation.token,
             isRead: false,
-            createdAt: invitation.createdAt,
+            message: `Vous avez été invité à rejoindre ${org.name} en tant que ${invitation.role === "admin" ? "administrateur" : "membre"}.`,
+            title: `Invitation à rejoindre ${org.name}`,
+            type: "invitation" as const,
+            userId: user._id,
           });
         }
       }

@@ -97,9 +97,9 @@ function TagEditButton({ tag }: TagEditButtonProps) {
 
     if (hasNameChanged || hasColorChanged) {
       await updateTag({
+        color: editedColor,
         id: tag._id,
         name: trimmedName,
-        color: editedColor,
       });
     }
     setOpen(false);
@@ -219,9 +219,9 @@ export function TagFilterDropdown({
     setIsCreating(true);
     try {
       await createTag({
-        organizationId,
-        name: searchValue.trim(),
         color: getRandomTagColor(),
+        name: searchValue.trim(),
+        organizationId,
       });
       setSearchValue("");
     } finally {

@@ -41,11 +41,11 @@ export const getShippedNotificationData = internalQuery({
       (subscription.status === "active" || subscription.status === "trialing");
 
     return {
-      releaseTitle: release.title,
+      feedbackItems,
+      isPro: Boolean(isPro),
       orgName: org.name,
       orgSlug: org.slug,
-      isPro: Boolean(isPro),
-      feedbackItems,
+      releaseTitle: release.title,
     };
   },
 });

@@ -39,110 +39,110 @@ interface MockMilestone {
 
 const MOCK_MILESTONES: MockMilestone[] = [
   {
-    id: "m1",
-    name: "Public Beta Launch",
-    emoji: "\u{1F680}",
     color: "blue",
     colorHex: "#0b6e99",
-    timeHorizon: "now",
+    daysUntil: 22,
+    emoji: "\u{1F680}",
+    feedbackItems: [
+      { status: "completed", title: "Fix onboarding flow", votes: 42 },
+      { status: "in_progress", title: "Add SSO support", votes: 38 },
+      { status: "in_progress", title: "Dashboard redesign", votes: 31 },
+      { status: "completed", title: "Export to CSV", votes: 24 },
+    ],
     horizonLabel: "Now",
     horizonShort: "Now",
-    targetDate: "Mar 15",
-    daysUntil: 22,
+    id: "m1",
+    name: "Public Beta Launch",
+    progress: { completed: 5, inProgress: 2, percentage: 63, total: 8 },
     status: "active",
-    progress: { total: 8, completed: 5, inProgress: 2, percentage: 63 },
-    feedbackItems: [
-      { title: "Fix onboarding flow", votes: 42, status: "completed" },
-      { title: "Add SSO support", votes: 38, status: "in_progress" },
-      { title: "Dashboard redesign", votes: 31, status: "in_progress" },
-      { title: "Export to CSV", votes: 24, status: "completed" },
-    ],
+    targetDate: "Mar 15",
+    timeHorizon: "now",
   },
   {
-    id: "m2",
-    name: "API v2",
-    emoji: "\u{26A1}",
     color: "purple",
     colorHex: "#6940a5",
-    timeHorizon: "now",
+    daysUntil: 35,
+    emoji: "\u{26A1}",
+    feedbackItems: [
+      { status: "in_progress", title: "Rate limiting", votes: 18 },
+      { status: "completed", title: "Webhook events", votes: 15 },
+    ],
     horizonLabel: "Now",
     horizonShort: "Now",
-    targetDate: "Mar 28",
-    daysUntil: 35,
+    id: "m2",
+    name: "API v2",
+    progress: { completed: 1, inProgress: 2, percentage: 20, total: 5 },
     status: "active",
-    progress: { total: 5, completed: 1, inProgress: 2, percentage: 20 },
-    feedbackItems: [
-      { title: "Rate limiting", votes: 18, status: "in_progress" },
-      { title: "Webhook events", votes: 15, status: "completed" },
-    ],
+    targetDate: "Mar 28",
+    timeHorizon: "now",
   },
   {
-    id: "m3",
-    name: "Mobile App",
-    emoji: "\u{1F4F1}",
     color: "green",
     colorHex: "#0f7b6c",
-    timeHorizon: "next_quarter",
+    daysUntil: 100,
+    emoji: "\u{1F4F1}",
+    feedbackItems: [
+      { status: "planned", title: "Push notifications", votes: 67 },
+      { status: "in_progress", title: "Offline mode", votes: 45 },
+    ],
     horizonLabel: "Next Quarter",
     horizonShort: "3mo",
-    targetDate: "Jun 1",
-    daysUntil: 100,
+    id: "m3",
+    name: "Mobile App",
+    progress: { completed: 0, inProgress: 1, percentage: 0, total: 12 },
     status: "active",
-    progress: { total: 12, completed: 0, inProgress: 1, percentage: 0 },
-    feedbackItems: [
-      { title: "Push notifications", votes: 67, status: "planned" },
-      { title: "Offline mode", votes: 45, status: "in_progress" },
-    ],
+    targetDate: "Jun 1",
+    timeHorizon: "next_quarter",
   },
   {
-    id: "m4",
-    name: "Enterprise Features",
-    emoji: "\u{1F3E2}",
     color: "orange",
     colorHex: "#d9730d",
-    timeHorizon: "half_year",
+    daysUntil: null,
+    emoji: "\u{1F3E2}",
+    feedbackItems: [
+      { status: "planned", title: "SAML SSO", votes: 89 },
+      { status: "planned", title: "Audit logs", votes: 56 },
+    ],
     horizonLabel: "6 Months",
     horizonShort: "6mo",
-    targetDate: null,
-    daysUntil: null,
+    id: "m4",
+    name: "Enterprise Features",
+    progress: { completed: 0, inProgress: 0, percentage: 0, total: 6 },
     status: "active",
-    progress: { total: 6, completed: 0, inProgress: 0, percentage: 0 },
-    feedbackItems: [
-      { title: "SAML SSO", votes: 89, status: "planned" },
-      { title: "Audit logs", votes: 56, status: "planned" },
-    ],
+    targetDate: null,
+    timeHorizon: "half_year",
   },
   {
-    id: "m5",
-    name: "Analytics Dashboard",
-    emoji: "\u{1F4CA}",
     color: "pink",
     colorHex: "#ad1a72",
-    timeHorizon: "next_year",
+    daysUntil: null,
+    emoji: "\u{1F4CA}",
+    feedbackItems: [{ status: "planned", title: "Custom reports", votes: 34 }],
     horizonLabel: "Next Year",
     horizonShort: "1yr",
-    targetDate: null,
-    daysUntil: null,
+    id: "m5",
+    name: "Analytics Dashboard",
+    progress: { completed: 0, inProgress: 0, percentage: 0, total: 4 },
     status: "active",
-    progress: { total: 4, completed: 0, inProgress: 0, percentage: 0 },
-    feedbackItems: [{ title: "Custom reports", votes: 34, status: "planned" }],
+    targetDate: null,
+    timeHorizon: "next_year",
   },
   {
-    id: "m6",
-    name: "Widget SDK",
-    emoji: "\u{1F9E9}",
     color: "red",
     colorHex: "#e03e3e",
-    timeHorizon: "future",
+    daysUntil: null,
+    emoji: "\u{1F9E9}",
+    feedbackItems: [
+      { status: "planned", title: "Embeddable components", votes: 22 },
+    ],
     horizonLabel: "Future",
     horizonShort: "Future",
-    targetDate: null,
-    daysUntil: null,
+    id: "m6",
+    name: "Widget SDK",
+    progress: { completed: 0, inProgress: 0, percentage: 0, total: 3 },
     status: "active",
-    progress: { total: 3, completed: 0, inProgress: 0, percentage: 0 },
-    feedbackItems: [
-      { title: "Embeddable components", votes: 22, status: "planned" },
-    ],
+    targetDate: null,
+    timeHorizon: "future",
   },
 ];
 
@@ -183,7 +183,7 @@ function ProgressBar({
         className="h-full rounded-full"
         initial={{ width: 0 }}
         style={{ backgroundColor: color }}
-        transition={{ type: "spring", stiffness: 200, damping: 30 }}
+        transition={{ damping: 30, stiffness: 200, type: "spring" }}
       />
     </div>
   );
@@ -214,17 +214,17 @@ function MultiSegmentBar({
         animate={{ width: `${completedPct}%` }}
         className="h-full bg-emerald-500"
         initial={{ width: 0 }}
-        transition={{ type: "spring", stiffness: 200, damping: 30 }}
+        transition={{ damping: 30, stiffness: 200, type: "spring" }}
       />
       <motion.div
         animate={{ width: `${inProgressPct}%` }}
         className="h-full bg-primary"
         initial={{ width: 0 }}
         transition={{
-          type: "spring",
-          stiffness: 200,
           damping: 30,
           delay: 0.05,
+          stiffness: 200,
+          type: "spring",
         }}
       />
     </div>
@@ -250,7 +250,7 @@ function ProgressRing({
   return (
     <div
       className="relative inline-flex items-center justify-center"
-      style={{ width: size, height: size }}
+      style={{ height: size, width: size }}
     >
       <svg
         aria-hidden="true"
@@ -278,7 +278,7 @@ function ProgressRing({
           strokeLinecap="round"
           strokeWidth={strokeWidth}
           style={{ rotate: "-90deg", transformOrigin: "center" }}
-          transition={{ type: "spring", stiffness: 120, damping: 20 }}
+          transition={{ damping: 20, stiffness: 120, type: "spring" }}
         />
       </svg>
       <span className="pointer-events-none absolute inset-0 flex items-center justify-center font-semibold text-[10px] tabular-nums">
@@ -406,9 +406,9 @@ function DesignVerticalTimeline() {
                       exit={{ height: 0, opacity: 0 }}
                       initial={{ height: 0, opacity: 0 }}
                       transition={{
-                        type: "spring",
                         damping: 25,
                         stiffness: 300,
+                        type: "spring",
                       }}
                     >
                       <div className="mt-2 border-t pt-2">
@@ -462,8 +462,8 @@ function DesignStackedCards() {
         return (
           <motion.button
             animate={{
-              y: isExpanded ? 0 : -i * 2,
               scale: isExpanded ? 1 : 1 - i * 0.01,
+              y: isExpanded ? 0 : -i * 2,
             }}
             className={cn(
               "relative w-full rounded-xl border bg-card p-4 text-left transition-shadow",
@@ -508,7 +508,7 @@ function DesignStackedCards() {
                   className="overflow-hidden"
                   exit={{ height: 0, opacity: 0 }}
                   initial={{ height: 0, opacity: 0 }}
-                  transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                  transition={{ damping: 25, stiffness: 300, type: "spring" }}
                 >
                   <div className="mt-3 flex items-start gap-4 border-t pt-3">
                     <ProgressRing
@@ -711,10 +711,10 @@ function DesignSweepTrack() {
             <AnimatePresence>
               {isSweeping && (
                 <motion.div
-                  animate={{ x: "100%", opacity: 0 }}
+                  animate={{ opacity: 0, x: "100%" }}
                   className="absolute inset-0 rounded-lg"
                   exit={{ opacity: 0 }}
-                  initial={{ x: "-100%", opacity: 0.3 }}
+                  initial={{ opacity: 0.3, x: "-100%" }}
                   style={{ backgroundColor: m.colorHex }}
                   transition={{ duration: 0.5, ease: "easeOut" }}
                 />
@@ -811,7 +811,7 @@ function DesignAccordionRows() {
                   className="overflow-hidden"
                   exit={{ height: 0, opacity: 0 }}
                   initial={{ height: 0, opacity: 0 }}
-                  transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                  transition={{ damping: 25, stiffness: 300, type: "spring" }}
                 >
                   <div
                     className="flex gap-4 border-t px-3 pt-3 pb-3"
@@ -892,7 +892,7 @@ function DesignCompactStrip() {
                   animate={{ width: `${m.progress.percentage}%` }}
                   className="absolute inset-y-0 left-0 bg-white/20"
                   initial={false}
-                  transition={{ type: "spring", stiffness: 200, damping: 30 }}
+                  transition={{ damping: 30, stiffness: 200, type: "spring" }}
                 />
                 <span className="relative z-10 flex h-full items-center justify-center text-[10px] text-white">
                   {m.emoji}
@@ -1036,9 +1036,9 @@ function DesignEditorialTimeline() {
                             exit={{ height: 0, opacity: 0 }}
                             initial={{ height: 0, opacity: 0 }}
                             transition={{
-                              type: "spring",
                               damping: 25,
                               stiffness: 300,
+                              type: "spring",
                             }}
                           >
                             <div className="mt-3 flex gap-4 border-border/30 border-t pt-3">
@@ -1123,10 +1123,10 @@ function DesignSweepAccordion() {
               <AnimatePresence>
                 {isSweeping && (
                   <motion.div
-                    animate={{ x: "100%", opacity: 0 }}
+                    animate={{ opacity: 0, x: "100%" }}
                     className="absolute inset-0"
                     exit={{ opacity: 0 }}
-                    initial={{ x: "-100%", opacity: 0.15 }}
+                    initial={{ opacity: 0.15, x: "-100%" }}
                     style={{ backgroundColor: m.colorHex }}
                     transition={{ duration: 0.45, ease: "easeOut" }}
                   />
@@ -1135,7 +1135,7 @@ function DesignSweepAccordion() {
               <div className="relative z-10 flex w-full items-center gap-3">
                 <motion.div
                   animate={{ rotate: isOpen ? 90 : 0 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  transition={{ damping: 20, stiffness: 300, type: "spring" }}
                 >
                   <CaretRightIcon
                     className="h-3.5 w-3.5 text-muted-foreground"
@@ -1173,7 +1173,7 @@ function DesignSweepAccordion() {
                   className="overflow-hidden"
                   exit={{ height: 0, opacity: 0 }}
                   initial={{ height: 0, opacity: 0 }}
-                  transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                  transition={{ damping: 25, stiffness: 300, type: "spring" }}
                 >
                   <div
                     className="border-t px-3 pt-3 pb-3"
@@ -1323,7 +1323,7 @@ function DesignDashboardTimeline() {
                     className="overflow-hidden"
                     exit={{ height: 0, opacity: 0 }}
                     initial={{ height: 0, opacity: 0 }}
-                    transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                    transition={{ damping: 25, stiffness: 300, type: "spring" }}
                   >
                     <div className="mt-1 ml-6 rounded-lg border bg-card p-3">
                       <div className="flex items-center gap-3 text-muted-foreground text-xs">
@@ -1389,14 +1389,14 @@ function DesignStripAccordion() {
               )}
               key={m.id}
               onClick={() => setOpenId(isOpen ? null : m.id)}
-              style={{ width: `${widthPercent}%`, backgroundColor: m.colorHex }}
+              style={{ backgroundColor: m.colorHex, width: `${widthPercent}%` }}
               type="button"
             >
               <motion.div
                 animate={{ width: `${m.progress.percentage}%` }}
                 className="absolute inset-y-0 left-0 bg-white/15"
                 initial={false}
-                transition={{ type: "spring", stiffness: 200, damping: 30 }}
+                transition={{ damping: 30, stiffness: 200, type: "spring" }}
               />
               <span className="relative z-10 flex h-full items-center justify-center gap-1 px-1">
                 <span>{m.emoji}</span>
@@ -1424,7 +1424,7 @@ function DesignStripAccordion() {
                 initial={{ height: 0, opacity: 0 }}
                 key={openId}
                 style={{ borderColor: `${m.colorHex}30` }}
-                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                transition={{ damping: 25, stiffness: 300, type: "spring" }}
               >
                 <div
                   className="p-4"
@@ -1514,10 +1514,10 @@ function DesignProductionList() {
               <AnimatePresence>
                 {isSweeping && (
                   <motion.div
-                    animate={{ x: "100%", opacity: 0 }}
+                    animate={{ opacity: 0, x: "100%" }}
                     className="absolute inset-0"
                     exit={{ opacity: 0 }}
-                    initial={{ x: "-100%", opacity: 0.12 }}
+                    initial={{ opacity: 0.12, x: "-100%" }}
                     style={{ backgroundColor: m.colorHex }}
                     transition={{ duration: 0.4, ease: "easeOut" }}
                   />
@@ -1564,7 +1564,7 @@ function DesignProductionList() {
                   className="overflow-hidden border-border/40 border-b"
                   exit={{ height: 0, opacity: 0 }}
                   initial={{ height: 0, opacity: 0 }}
-                  transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                  transition={{ damping: 25, stiffness: 300, type: "spring" }}
                 >
                   <div className="flex gap-4 bg-accent/10 px-4 py-3 pl-12">
                     <ProgressRing
@@ -1684,7 +1684,7 @@ function DesignWaterfallTimeline() {
                     className="overflow-hidden"
                     exit={{ height: 0, opacity: 0 }}
                     initial={{ height: 0, opacity: 0 }}
-                    transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                    transition={{ damping: 25, stiffness: 300, type: "spring" }}
                   >
                     <div className="mt-3 space-y-1 border-t pt-3">
                       {m.feedbackItems.map((fb, i) => (
@@ -1794,7 +1794,7 @@ function DesignKPITiles() {
                 exit={{ height: 0, opacity: 0 }}
                 initial={{ height: 0, opacity: 0 }}
                 key={selectedId}
-                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                transition={{ damping: 25, stiffness: 300, type: "spring" }}
               >
                 <div className="flex gap-4 p-4">
                   <ProgressRing
@@ -1858,11 +1858,11 @@ function DesignStackedTimeline() {
             />
             <motion.button
               animate={{
-                y: isExpanded ? 0 : -i * 1,
-                scale: isExpanded ? 1 : 1 - i * 0.005,
                 boxShadow: isExpanded
                   ? `0 4px 20px ${m.colorHex}15`
                   : "0 1px 3px rgba(0,0,0,0.05)",
+                scale: isExpanded ? 1 : 1 - i * 0.005,
+                y: isExpanded ? 0 : -i * 1,
               }}
               className={cn(
                 "relative w-full rounded-xl border bg-card p-3.5 text-left transition-colors",
@@ -1897,7 +1897,7 @@ function DesignStackedTimeline() {
                     className="overflow-hidden"
                     exit={{ height: 0, opacity: 0 }}
                     initial={{ height: 0, opacity: 0 }}
-                    transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                    transition={{ damping: 25, stiffness: 300, type: "spring" }}
                   >
                     <div className="mt-3 flex gap-3 border-t pt-3">
                       <ProgressRing
@@ -2004,7 +2004,7 @@ function DesignEditorialAccordion() {
                   className="overflow-hidden"
                   exit={{ height: 0, opacity: 0 }}
                   initial={{ height: 0, opacity: 0 }}
-                  transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                  transition={{ damping: 25, stiffness: 300, type: "spring" }}
                 >
                   <div className="flex gap-6 px-4 pb-4 pl-24">
                     <ProgressRing
@@ -2067,8 +2067,8 @@ function DesignCompactRail() {
               key={m.id}
               onClick={() => setSelectedId(isSelected ? null : m.id)}
               style={{
-                borderColor: isSelected ? m.colorHex : undefined,
                 backgroundColor: isSelected ? `${m.colorHex}08` : undefined,
+                borderColor: isSelected ? m.colorHex : undefined,
               }}
               type="button"
             >
@@ -2101,7 +2101,7 @@ function DesignCompactRail() {
                 initial={{ height: 0, opacity: 0 }}
                 key={selectedId}
                 style={{ borderColor: `${m.colorHex}25` }}
-                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                transition={{ damping: 25, stiffness: 300, type: "spring" }}
               >
                 <div className="p-4">
                   <div className="flex items-start gap-4">
@@ -2180,177 +2180,177 @@ interface DesignEntry {
 const DESIGNS: DesignEntry[] = [
   // Favorites
   {
-    id: "f1",
-    name: "Vertical Timeline",
-    description:
-      "Classic timeline with node markers and progressive disclosure. Click to expand details inline.",
-    question: "Should milestones feel like a chronological story?",
-    traits: ["Vertical", "Timeline"],
     category: "favorite",
     component: DesignVerticalTimeline,
+    description:
+      "Classic timeline with node markers and progressive disclosure. Click to expand details inline.",
+    id: "f1",
+    name: "Vertical Timeline",
+    question: "Should milestones feel like a chronological story?",
+    traits: ["Vertical", "Timeline"],
   },
   {
-    id: "f2",
-    name: "Stacked Cards",
-    description:
-      "Overlapping cards with depth. Click to expand and bring to focus with full details.",
-    question: "Can depth and layering communicate priority better?",
-    traits: ["Stacked", "Depth"],
     category: "favorite",
     component: DesignStackedCards,
+    description:
+      "Overlapping cards with depth. Click to expand and bring to focus with full details.",
+    id: "f2",
+    name: "Stacked Cards",
+    question: "Can depth and layering communicate priority better?",
+    traits: ["Stacked", "Depth"],
   },
   {
-    id: "f3",
-    name: "Dashboard Metrics",
-    description:
-      "Milestone data IS the hero. Summary KPIs up top, milestones as data rows with big numbers.",
-    question: "What if the milestone view was a dashboard?",
-    traits: ["Data-first", "KPI"],
     category: "favorite",
     component: DesignDashboardMetrics,
+    description:
+      "Milestone data IS the hero. Summary KPIs up top, milestones as data rows with big numbers.",
+    id: "f3",
+    name: "Dashboard Metrics",
+    question: "What if the milestone view was a dashboard?",
+    traits: ["Data-first", "KPI"],
   },
   {
-    id: "f4",
-    name: "Editorial Margin",
-    description:
-      "Serif typography, newspaper-style margin annotations. Time horizon and progress live in the gutter.",
-    question: "What if the roadmap felt like reading a magazine?",
-    traits: ["Editorial", "Serif"],
     category: "favorite",
     component: DesignEditorialMargin,
+    description:
+      "Serif typography, newspaper-style margin annotations. Time horizon and progress live in the gutter.",
+    id: "f4",
+    name: "Editorial Margin",
+    question: "What if the roadmap felt like reading a magazine?",
+    traits: ["Editorial", "Serif"],
   },
   {
-    id: "f5",
-    name: "Sweep Track",
-    description:
-      "List items with a horizontal sweep animation on click for satisfying selection feedback.",
-    question: "Can sweep animation make milestone selection more tactile?",
-    traits: ["Animated", "Sweep"],
     category: "favorite",
     component: DesignSweepTrack,
+    description:
+      "List items with a horizontal sweep animation on click for satisfying selection feedback.",
+    id: "f5",
+    name: "Sweep Track",
+    question: "Can sweep animation make milestone selection more tactile?",
+    traits: ["Animated", "Sweep"],
   },
   {
-    id: "f6",
-    name: "Accordion Rows",
-    description:
-      "Bordered rows that expand in-place with color wash background. Full detail including feedback status.",
-    question: "Does in-place expansion with color wash create better context?",
-    traits: ["Accordion", "Color-wash"],
     category: "favorite",
     component: DesignAccordionRows,
+    description:
+      "Bordered rows that expand in-place with color wash background. Full detail including feedback status.",
+    id: "f6",
+    name: "Accordion Rows",
+    question: "Does in-place expansion with color wash create better context?",
+    traits: ["Accordion", "Color-wash"],
   },
   {
-    id: "f7",
-    name: "Compact Strip",
-    description:
-      "Ultra-minimal horizontal strip. Each milestone is a colored pill. Hover for floating detail card.",
-    question: "Can the entire roadmap fit in a single horizontal strip?",
-    traits: ["Ultra-compact", "Strip"],
     category: "favorite",
     component: DesignCompactStrip,
+    description:
+      "Ultra-minimal horizontal strip. Each milestone is a colored pill. Hover for floating detail card.",
+    id: "f7",
+    name: "Compact Strip",
+    question: "Can the entire roadmap fit in a single horizontal strip?",
+    traits: ["Ultra-compact", "Strip"],
   },
   // Hybrids
   {
-    id: "h1",
-    name: "Editorial Timeline",
+    category: "hybrid",
+    component: DesignEditorialTimeline,
     description:
       "Vertical timeline with serif typography and horizon grouping. Margin branches connect to expandable editorial cards.",
+    id: "h1",
+    name: "Editorial Timeline",
     question:
       "What happens when editorial refinement meets chronological structure?",
     traits: ["Editorial + Timeline", "Grouped"],
-    category: "hybrid",
-    component: DesignEditorialTimeline,
   },
   {
-    id: "h2",
-    name: "Sweep Accordion",
+    category: "hybrid",
+    component: DesignSweepAccordion,
     description:
       "Accordion expansion with sweep confirmation animation, momentum labels, and caret rotation. Tactile and detailed.",
+    id: "h2",
+    name: "Sweep Accordion",
     question:
       "Can sweep feedback make accordion expansion feel more intentional?",
     traits: ["Sweep + Accordion", "Tactile"],
-    category: "hybrid",
-    component: DesignSweepAccordion,
   },
   {
-    id: "h3",
-    name: "Dashboard Timeline",
-    description:
-      "KPI summary bar up top with overall progress, then a vertical timeline with multi-segment progress and expandable details.",
-    question: "Does a KPI header add context to the timeline narrative?",
-    traits: ["Dashboard + Timeline", "Overview"],
     category: "hybrid",
     component: DesignDashboardTimeline,
+    description:
+      "KPI summary bar up top with overall progress, then a vertical timeline with multi-segment progress and expandable details.",
+    id: "h3",
+    name: "Dashboard Timeline",
+    question: "Does a KPI header add context to the timeline narrative?",
+    traits: ["Dashboard + Timeline", "Overview"],
   },
   {
-    id: "h4",
-    name: "Strip + Accordion",
-    description:
-      "Compact colored strip overview header. Click any segment to expand a rich detail panel below with progress ring and feedback.",
-    question: "Can a strip overview drive the detail view?",
-    traits: ["Strip + Detail", "Two-layer"],
     category: "hybrid",
     component: DesignStripAccordion,
+    description:
+      "Compact colored strip overview header. Click any segment to expand a rich detail panel below with progress ring and feedback.",
+    id: "h4",
+    name: "Strip + Accordion",
+    question: "Can a strip overview drive the detail view?",
+    traits: ["Strip + Detail", "Two-layer"],
   },
   {
-    id: "h5",
-    name: "Production List",
-    description:
-      "Polished Linear-style list with all metadata inline: momentum, deadline, horizon, multi-segment bar, sweep animation, and expand.",
-    question: "What does a truly production-ready milestone list look like?",
-    traits: ["Production", "Linear-style"],
     category: "hybrid",
     component: DesignProductionList,
+    description:
+      "Polished Linear-style list with all metadata inline: momentum, deadline, horizon, multi-segment bar, sweep animation, and expand.",
+    id: "h5",
+    name: "Production List",
+    question: "What does a truly production-ready milestone list look like?",
+    traits: ["Production", "Linear-style"],
   },
   {
-    id: "h6",
-    name: "Waterfall Timeline",
-    description:
-      "Vertical timeline with large colored nodes. Expand to see feedback items cascade in with staggered animation and checkmark states.",
-    question: "Can staggered reveal of items create a waterfall effect?",
-    traits: ["Timeline + Waterfall", "Staggered"],
     category: "hybrid",
     component: DesignWaterfallTimeline,
+    description:
+      "Vertical timeline with large colored nodes. Expand to see feedback items cascade in with staggered animation and checkmark states.",
+    id: "h6",
+    name: "Waterfall Timeline",
+    question: "Can staggered reveal of items create a waterfall effect?",
+    traits: ["Timeline + Waterfall", "Staggered"],
   },
   {
-    id: "h7",
-    name: "KPI Tiles + Detail",
-    description:
-      "Dashboard metric tiles in a grid. Click any tile to expand a detail panel below with progress ring and linked feedback.",
-    question: "Can metric tiles serve as both overview and navigation?",
-    traits: ["KPI + Expand", "Grid"],
     category: "hybrid",
     component: DesignKPITiles,
+    description:
+      "Dashboard metric tiles in a grid. Click any tile to expand a detail panel below with progress ring and linked feedback.",
+    id: "h7",
+    name: "KPI Tiles + Detail",
+    question: "Can metric tiles serve as both overview and navigation?",
+    traits: ["KPI + Expand", "Grid"],
   },
   {
-    id: "h8",
-    name: "Stacked Timeline",
-    description:
-      "Stacked depth cards along a vertical timeline spine. Cards have subtle depth layering and expand with color shadow.",
-    question: "Can depth stacking work along a timeline axis?",
-    traits: ["Stacked + Timeline", "Layered"],
     category: "hybrid",
     component: DesignStackedTimeline,
+    description:
+      "Stacked depth cards along a vertical timeline spine. Cards have subtle depth layering and expand with color shadow.",
+    id: "h8",
+    name: "Stacked Timeline",
+    question: "Can depth stacking work along a timeline axis?",
+    traits: ["Stacked + Timeline", "Layered"],
   },
   {
-    id: "h9",
-    name: "Editorial Accordion",
-    description:
-      "Serif typography with big percentage numbers in a left column, editorial names, and color-wash accordion expansion.",
-    question: "Can editorial refinement and accordion detail coexist?",
-    traits: ["Editorial + Accordion", "Typography"],
     category: "hybrid",
     component: DesignEditorialAccordion,
+    description:
+      "Serif typography with big percentage numbers in a left column, editorial names, and color-wash accordion expansion.",
+    id: "h9",
+    name: "Editorial Accordion",
+    question: "Can editorial refinement and accordion detail coexist?",
+    traits: ["Editorial + Accordion", "Typography"],
   },
   {
-    id: "h10",
-    name: "Compact Rail",
-    description:
-      "Horizontal scrollable pill rail for quick scanning. Click any pill to show a rich detail card below with multi-segment progress.",
-    question: "Can a scrollable rail replace a full timeline view?",
-    traits: ["Rail + Detail", "Scrollable"],
     category: "hybrid",
     component: DesignCompactRail,
+    description:
+      "Horizontal scrollable pill rail for quick scanning. Click any pill to show a rich detail card below with multi-segment progress.",
+    id: "h10",
+    name: "Compact Rail",
+    question: "Can a scrollable rail replace a full timeline view?",
+    traits: ["Rail + Detail", "Scrollable"],
   },
 ];
 

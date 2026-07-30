@@ -26,7 +26,7 @@ function OverallProgressRing({ percentage }: { percentage: number }) {
   return (
     <div
       className="relative inline-flex items-center justify-center"
-      style={{ width: size, height: size }}
+      style={{ height: size, width: size }}
     >
       <svg
         aria-hidden="true"
@@ -54,7 +54,7 @@ function OverallProgressRing({ percentage }: { percentage: number }) {
           strokeLinecap="round"
           strokeWidth={strokeWidth}
           style={{ rotate: "-90deg", transformOrigin: "center" }}
-          transition={{ type: "spring", stiffness: 120, damping: 20 }}
+          transition={{ damping: 20, stiffness: 120, type: "spring" }}
         />
       </svg>
       <span className="pointer-events-none absolute inset-0 flex items-center justify-center font-semibold text-[10px] tabular-nums">
@@ -82,17 +82,17 @@ function MultiSegmentBar({
         animate={{ width: `${completedPct}%` }}
         className="h-full bg-emerald-500"
         initial={{ width: 0 }}
-        transition={{ type: "spring", stiffness: 200, damping: 30 }}
+        transition={{ damping: 30, stiffness: 200, type: "spring" }}
       />
       <motion.div
         animate={{ width: `${inProgressPct}%` }}
         className="h-full bg-primary"
         initial={{ width: 0 }}
         transition={{
-          type: "spring",
-          stiffness: 200,
           damping: 30,
           delay: 0.05,
+          stiffness: 200,
+          type: "spring",
         }}
       />
     </div>
@@ -114,7 +114,7 @@ export function DashboardTimelineView({
 
   const totals = useMemo(() => {
     if (!milestones) {
-      return { total: 0, completed: 0, inProgress: 0, percentage: 0 };
+      return { completed: 0, inProgress: 0, percentage: 0, total: 0 };
     }
 
     let total = 0;
@@ -129,7 +129,7 @@ export function DashboardTimelineView({
 
     const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
 
-    return { total, completed, inProgress, percentage };
+    return { completed, inProgress, percentage, total };
   }, [milestones]);
 
   const handleMilestoneClick = useCallback((milestoneId: Id<"milestones">) => {
@@ -278,8 +278,8 @@ export function DashboardTimelineView({
                       {new Date(milestone.targetDate).toLocaleDateString(
                         "en-US",
                         {
-                          month: "short",
                           day: "numeric",
+                          month: "short",
                         }
                       )}
                     </span>
@@ -297,9 +297,9 @@ export function DashboardTimelineView({
                     initial={{ height: 0, opacity: 0 }}
                     key={`panel-${milestone._id}`}
                     transition={{
-                      type: "spring",
                       damping: 25,
                       stiffness: 300,
+                      type: "spring",
                     }}
                   >
                     <div className="ml-6 rounded-lg border bg-card p-3">

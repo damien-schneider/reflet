@@ -165,8 +165,8 @@ const status1: {
   color: string;
 } = {
   _id: "status1" as Id<"organizationStatuses">,
-  name: "Open",
   color: "blue",
+  name: "Open",
 };
 
 const status2: {
@@ -175,34 +175,34 @@ const status2: {
   color: string;
 } = {
   _id: "status2" as Id<"organizationStatuses">,
-  name: "Closed",
   color: "green",
+  name: "Closed",
 };
 
 const baseFeedback = {
-  hasVoted: false,
-  voteCount: 5,
-  isPinned: false,
-  organizationStatusId: "status1" as Id<"organizationStatuses">,
   commentCount: 3,
   createdAt: Date.now() - 3_600_000,
+  hasVoted: false,
+  isPinned: false,
+  organizationStatusId: "status1" as Id<"organizationStatuses">,
+  voteCount: 5,
 };
 
 const defaultProps = {
-  feedback: baseFeedback,
   canEdit: true,
-  effectiveIsAdmin: true,
-  hasUnsavedChanges: false,
-  editedTitle: "Test Feedback",
-  effectiveStatuses: [status1, status2],
   currentStatus: status1,
-  onTitleChange: vi.fn(),
-  onSaveChanges: vi.fn(),
+  editedTitle: "Test Feedback",
+  effectiveIsAdmin: true,
+  effectiveStatuses: [status1, status2],
+  feedback: baseFeedback,
+  hasUnsavedChanges: false,
   onCancelChanges: vi.fn(),
-  onVote: vi.fn(),
-  onStatusChange: vi.fn(),
-  onTogglePin: vi.fn(),
   onDeleteClick: vi.fn(),
+  onSaveChanges: vi.fn(),
+  onStatusChange: vi.fn(),
+  onTitleChange: vi.fn(),
+  onTogglePin: vi.fn(),
+  onVote: vi.fn(),
 };
 
 describe("FeedbackHeader", () => {

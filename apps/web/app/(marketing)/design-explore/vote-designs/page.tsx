@@ -87,7 +87,7 @@ function DesignLeftColumn() {
               : "text-muted-foreground/40 hover:text-primary/70"
           )}
           onClick={() => vote("upvote")}
-          transition={{ type: "spring", stiffness: 400, damping: 15 }}
+          transition={{ damping: 15, stiffness: 400, type: "spring" }}
           type="button"
           whileTap={{ scale: 0.8, y: -3 }}
         >
@@ -98,17 +98,17 @@ function DesignLeftColumn() {
         </m.button>
         <AnimatePresence mode="popLayout">
           <m.span
-            animate={{ y: 0, opacity: 1 }}
+            animate={{ opacity: 1, y: 0 }}
             className={cn(
               "relative z-10 font-bold text-base tabular-nums",
               voteType === "upvote" && "text-primary",
               voteType === "downvote" && "text-destructive",
               !voteType && "text-foreground"
             )}
-            exit={{ y: -10, opacity: 0 }}
-            initial={{ y: 10, opacity: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            initial={{ opacity: 0, y: 10 }}
             key={net}
-            transition={{ type: "spring", stiffness: 400, damping: 20 }}
+            transition={{ damping: 20, stiffness: 400, type: "spring" }}
           >
             {net}
           </m.span>
@@ -121,7 +121,7 @@ function DesignLeftColumn() {
               : "text-muted-foreground/40 hover:text-destructive/70"
           )}
           onClick={() => vote("downvote")}
-          transition={{ type: "spring", stiffness: 400, damping: 15 }}
+          transition={{ damping: 15, stiffness: 400, type: "spring" }}
           type="button"
           whileTap={{ scale: 0.8, y: 3 }}
         >
@@ -157,7 +157,7 @@ function DesignBottomBar() {
         <AnimatePresence>
           {voteType && (
             <m.div
-              animate={{ x: "100%", opacity: 0 }}
+              animate={{ opacity: 0, x: "100%" }}
               className={cn(
                 "absolute inset-0",
                 voteType === "upvote"
@@ -165,7 +165,7 @@ function DesignBottomBar() {
                   : "bg-gradient-to-r from-transparent via-destructive/12 to-transparent"
               )}
               exit={{ opacity: 0 }}
-              initial={{ x: "-100%", opacity: 1 }}
+              initial={{ opacity: 1, x: "-100%" }}
               key={voteType}
               transition={{ duration: 0.6, ease: "easeOut" }}
             />
@@ -248,7 +248,7 @@ function DesignFloatingStrip() {
       </FullCard>
       <m.div
         className="absolute right-3 -bottom-1 flex items-center gap-0.5 rounded-full border border-border/40 bg-card/80 px-1.5 py-1 shadow-lg backdrop-blur-md"
-        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+        transition={{ damping: 20, stiffness: 300, type: "spring" }}
       >
         <m.button
           className={cn(
@@ -338,8 +338,8 @@ function DesignEdgeGutter() {
         <m.div
           animate={{
             background: gutterGradient,
-            width: voteType ? 3 : 2,
             opacity: voteType ? 1 : 0.4,
+            width: voteType ? 3 : 2,
           }}
           className="absolute top-2 bottom-2 left-0 rounded-r-full"
           transition={{ duration: 0.3 }}
@@ -418,7 +418,7 @@ function DesignCornerBadge() {
           borderRadius: voteType ? "0 12px 0 16px" : "0 12px 0 12px",
         }}
         className="absolute top-0 right-0 flex items-center gap-0 overflow-hidden border-border/30 border-b border-l bg-card shadow-sm"
-        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+        transition={{ damping: 20, stiffness: 300, type: "spring" }}
       >
         <m.button
           animate={{
@@ -442,17 +442,17 @@ function DesignCornerBadge() {
         </m.button>
         <AnimatePresence mode="popLayout">
           <m.span
-            animate={{ y: 0, opacity: 1 }}
+            animate={{ opacity: 1, y: 0 }}
             className={cn(
               "px-2 py-1.5 font-bold text-xs tabular-nums",
               voteType === "upvote" && "text-primary",
               voteType === "downvote" && "text-destructive",
               !voteType && "text-foreground"
             )}
-            exit={{ y: -6, opacity: 0 }}
-            initial={{ y: 6, opacity: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            initial={{ opacity: 0, y: 6 }}
             key={net}
-            transition={{ type: "spring", stiffness: 400, damping: 20 }}
+            transition={{ damping: 20, stiffness: 400, type: "spring" }}
           >
             {net}
           </m.span>
@@ -591,17 +591,17 @@ function DesignTugOfWar() {
             <m.div
               animate={{ width: `${upPercent}%` }}
               className="absolute inset-y-0 left-0 rounded-full bg-primary"
-              transition={{ type: "spring", stiffness: 180, damping: 22 }}
+              transition={{ damping: 22, stiffness: 180, type: "spring" }}
             />
             <m.div
               animate={{ width: `${100 - upPercent}%` }}
               className="absolute inset-y-0 right-0 rounded-full bg-destructive/50"
-              transition={{ type: "spring", stiffness: 180, damping: 22 }}
+              transition={{ damping: 22, stiffness: 180, type: "spring" }}
             />
             <m.div
               animate={{ left: `${upPercent}%` }}
               className="absolute top-1/2 z-10 h-4 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground shadow-sm"
-              transition={{ type: "spring", stiffness: 200, damping: 20 }}
+              transition={{ damping: 20, stiffness: 200, type: "spring" }}
             />
           </div>
           <m.button
@@ -669,7 +669,7 @@ function DesignHoverReveal() {
         style={{
           x: hasVoted ? 0 : "100%",
         }}
-        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+        transition={{ damping: 30, stiffness: 400, type: "spring" }}
       >
         <div className="flex translate-x-full flex-col items-center gap-0 transition-transform duration-200 group-hover:translate-x-0">
           <m.button
@@ -903,9 +903,9 @@ function DesignSocialProof() {
         <div className="flex -space-x-2">
           {MOCK_VOTERS.slice(0, displayCount).map((initials, i) => (
             <m.div
-              animate={{ scale: 1, opacity: 1 }}
+              animate={{ opacity: 1, scale: 1 }}
               className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-card bg-muted font-bold text-[8px] text-muted-foreground"
-              initial={{ scale: 0.5, opacity: 0 }}
+              initial={{ opacity: 0, scale: 0.5 }}
               key={initials}
               transition={{ delay: i * 0.05 }}
             >
@@ -914,10 +914,10 @@ function DesignSocialProof() {
           ))}
           {voteType === "upvote" && (
             <m.div
-              animate={{ scale: 1, opacity: 1 }}
+              animate={{ opacity: 1, scale: 1 }}
               className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-primary/30 bg-primary/10 font-bold text-[8px] text-primary"
-              initial={{ scale: 0.95, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 400, damping: 15 }}
+              initial={{ opacity: 0, scale: 0.95 }}
+              transition={{ damping: 15, stiffness: 400, type: "spring" }}
             >
               <UserIcon className="h-3 w-3" weight="fill" />
             </m.div>
@@ -1001,7 +1001,7 @@ function DesignDrawerExpand() {
             className="overflow-hidden border-border/30 border-t"
             exit={{ height: 0, opacity: 0 }}
             initial={{ height: 0, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            transition={{ damping: 25, stiffness: 300, type: "spring" }}
           >
             <div className="flex items-center gap-3 px-4 py-3">
               <m.button
@@ -1026,7 +1026,7 @@ function DesignDrawerExpand() {
                 <m.div
                   animate={{ width: `${upPercent}%` }}
                   className="absolute inset-y-0 left-0 rounded-full bg-primary"
-                  transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                  transition={{ damping: 20, stiffness: 200, type: "spring" }}
                 />
               </div>
               <m.button
@@ -1088,7 +1088,7 @@ function DesignSingleUpvote() {
       >
         <m.div
           animate={{ y: voteType === "upvote" ? -2 : 0 }}
-          transition={{ type: "spring", stiffness: 400, damping: 15 }}
+          transition={{ damping: 15, stiffness: 400, type: "spring" }}
         >
           <CaretUpIcon
             className="h-6 w-6"
@@ -1134,7 +1134,7 @@ function DesignMagneticTilt() {
         animate={{ rotateX, rotateY }}
         className="relative overflow-hidden rounded-xl border border-border/50 bg-card transition-shadow hover:shadow-md"
         style={{ transformStyle: "preserve-3d" }}
-        transition={{ type: "spring", stiffness: 150, damping: 20 }}
+        transition={{ damping: 20, stiffness: 150, type: "spring" }}
       >
         {voteType && (
           <m.div
@@ -1174,17 +1174,17 @@ function DesignMagneticTilt() {
           </m.button>
           <AnimatePresence mode="popLayout">
             <m.span
-              animate={{ y: 0, opacity: 1 }}
+              animate={{ opacity: 1, y: 0 }}
               className={cn(
                 "font-bold text-lg tabular-nums",
                 voteType === "upvote" && "text-primary",
                 voteType === "downvote" && "text-destructive",
                 !voteType && "text-muted-foreground"
               )}
-              exit={{ y: -12, opacity: 0 }}
-              initial={{ y: 12, opacity: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              initial={{ opacity: 0, y: 12 }}
               key={net}
-              transition={{ type: "spring", stiffness: 400, damping: 20 }}
+              transition={{ damping: 20, stiffness: 400, type: "spring" }}
             >
               {net > 0 ? `+${net}` : net}
             </m.span>
@@ -1245,10 +1245,10 @@ function DesignInkBlot() {
       <AnimatePresence mode="sync">
         {voteType && (
           <m.div
-            animate={{ scale: 4, opacity: 0.06 }}
+            animate={{ opacity: 0.06, scale: 4 }}
             className="absolute z-0 h-32 w-32 rounded-full"
             exit={{ opacity: 0 }}
-            initial={{ scale: 0.95, opacity: 0.15 }}
+            initial={{ opacity: 0.15, scale: 0.95 }}
             key={blotKey}
             style={{
               backgroundColor: blotColor,
@@ -1375,7 +1375,7 @@ function DesignMetricActionBar() {
         <AnimatePresence>
           {voteType && (
             <m.div
-              animate={{ x: "100%", opacity: 0 }}
+              animate={{ opacity: 0, x: "100%" }}
               className={cn(
                 "absolute inset-0",
                 voteType === "upvote"
@@ -1383,7 +1383,7 @@ function DesignMetricActionBar() {
                   : "bg-gradient-to-r from-transparent via-destructive/12 to-transparent"
               )}
               exit={{ opacity: 0 }}
-              initial={{ x: "-100%", opacity: 1 }}
+              initial={{ opacity: 1, x: "-100%" }}
               key={voteType}
               transition={{ duration: 0.6, ease: "easeOut" }}
             />
@@ -1597,15 +1597,15 @@ function DesignNotchPercentage() {
           </button>
           <m.div
             animate={{
-              height: voteType ? 4 : 3,
               backgroundColor: notchColor,
-              width: voteType ? 24 : 12,
               boxShadow: voteType
                 ? `0 0 8px 1px ${notchColor}`
                 : "0 0 0px 0px transparent",
+              height: voteType ? 4 : 3,
+              width: voteType ? 24 : 12,
             }}
             className="rounded-full"
-            transition={{ type: "spring", stiffness: 400, damping: 20 }}
+            transition={{ damping: 20, stiffness: 400, type: "spring" }}
           />
           <span
             className={cn(
@@ -1676,7 +1676,7 @@ function DesignSweepSplit() {
         <AnimatePresence>
           {voteType && (
             <m.div
-              animate={{ y: "100%", opacity: 0 }}
+              animate={{ opacity: 0, y: "100%" }}
               className={cn(
                 "absolute inset-0",
                 voteType === "upvote"
@@ -1684,7 +1684,7 @@ function DesignSweepSplit() {
                   : "bg-gradient-to-b from-transparent via-destructive/12 to-transparent"
               )}
               exit={{ opacity: 0 }}
-              initial={{ y: "-100%", opacity: 1 }}
+              initial={{ opacity: 1, y: "-100%" }}
               key={voteType}
               transition={{ duration: 0.6, ease: "easeOut" }}
             />
@@ -1740,7 +1740,7 @@ function DesignSweepSplit() {
             <m.div
               animate={{ width: `${upPercent}%` }}
               className="h-full rounded-full bg-primary/50"
-              transition={{ type: "spring", stiffness: 200, damping: 20 }}
+              transition={{ damping: 20, stiffness: 200, type: "spring" }}
             />
           </div>
           <span className="text-[9px] text-muted-foreground/40 tabular-nums">
@@ -1918,15 +1918,15 @@ function DesignEditorialNotch() {
         </button>
         <m.div
           animate={{
-            height: voteType ? 4 : 3,
             backgroundColor: notchColor,
-            width: voteType ? 24 : 12,
             boxShadow: voteType
               ? `0 0 8px 1px ${notchColor}`
               : "0 0 0px 0px transparent",
+            height: voteType ? 4 : 3,
+            width: voteType ? 24 : 12,
           }}
           className="rounded-full"
-          transition={{ type: "spring", stiffness: 400, damping: 20 }}
+          transition={{ damping: 20, stiffness: 400, type: "spring" }}
         />
         <button
           className={cn(
@@ -1955,238 +1955,238 @@ function DesignEditorialNotch() {
 const DESIGNS = [
   // Section A — Layout explorations
   {
-    id: "left-column",
-    name: "Left Column",
+    category: "layout",
+    component: DesignLeftColumn,
     description:
       "Reddit-inspired. Vote column on the left gives it primary visual weight. Score is the first thing you see.",
-    component: DesignLeftColumn,
+    id: "left-column",
+    name: "Left Column",
     traits: ["Classic", "Vote-first"],
-    category: "layout",
   },
   {
-    id: "bottom-bar",
-    name: "Bottom Bar",
+    category: "layout",
+    component: DesignBottomBar,
     description:
       "Vote inline with metadata. Content stays dominant. Voting feels like a secondary action.",
-    component: DesignBottomBar,
+    id: "bottom-bar",
+    name: "Bottom Bar",
     traits: ["Inline", "Content-first"],
-    category: "layout",
   },
   {
-    id: "floating-strip",
-    name: "Floating Strip",
+    category: "layout",
+    component: DesignFloatingStrip,
     description:
       "Detached from card edge. Creates visual separation between content and action. Glassmorphic.",
-    component: DesignFloatingStrip,
+    id: "floating-strip",
+    name: "Floating Strip",
     traits: ["Floating", "Separated"],
-    category: "layout",
   },
   {
-    id: "edge-gutter",
-    name: "Edge Gutter",
+    category: "layout",
+    component: DesignEdgeGutter,
     description:
       "Vote lives in the card's border itself. Minimal space cost. Colored strip communicates direction.",
-    component: DesignEdgeGutter,
+    id: "edge-gutter",
+    name: "Edge Gutter",
     traits: ["Integrated", "Space-efficient"],
-    category: "layout",
   },
   {
-    id: "corner-badge",
-    name: "Corner Badge",
+    category: "layout",
+    component: DesignCornerBadge,
     description:
       "Tucked into top-right corner. Out of the way until needed. Active state fills the button with color.",
-    component: DesignCornerBadge,
+    id: "corner-badge",
+    name: "Corner Badge",
     traits: ["Corner", "Discrete"],
-    category: "layout",
   },
   {
-    id: "hacker-news",
-    name: "Hacker News",
+    category: "layout",
+    component: DesignHackerNews,
     description:
       "Inline with title. Maximum density. Monospace aesthetic signals a technical, data-driven product.",
-    component: DesignHackerNews,
+    id: "hacker-news",
+    name: "Hacker News",
     traits: ["Dense", "Technical"],
-    category: "layout",
   },
   {
-    id: "minimal-notch",
-    name: "Minimal Notch",
+    category: "layout",
+    component: MinimalNotchPreview,
     description:
       "Right column, but ultra-minimal. A single glowing notch communicates direction without clutter.",
-    component: MinimalNotchPreview,
+    id: "minimal-notch",
+    name: "Minimal Notch",
     traits: ["Minimal", "Elegant"],
-    category: "layout",
   },
   {
-    id: "tug-of-war",
-    name: "Tug of War",
+    category: "layout",
+    component: DesignTugOfWar,
     description:
       "Full-width ratio bar. Vote is a visual competition. The marker position tells the story at a glance.",
-    component: DesignTugOfWar,
+    id: "tug-of-war",
+    name: "Tug of War",
     traits: ["Visual", "Competitive"],
-    category: "layout",
   },
   // Section B — UX model explorations
   {
-    id: "hover-reveal",
-    name: "Hover Reveal",
+    category: "ux",
+    component: DesignHoverReveal,
     description:
       "Content-first. Votes only appear on hover. Reduces visual noise in lists. Score always visible.",
-    component: DesignHoverReveal,
-    traits: ["Progressive", "Clean"],
-    category: "ux",
+    id: "hover-reveal",
+    name: "Hover Reveal",
     question: "Should votes always be visible?",
+    traits: ["Progressive", "Clean"],
   },
   {
-    id: "compact-row",
-    name: "Compact Row",
+    category: "ux",
+    component: DesignCompactRow,
     description:
       "Dense list item, not a card. One line: vote + title + status + meta. For power users scanning fast.",
-    component: DesignCompactRow,
-    traits: ["Dense", "Scannable"],
-    category: "ux",
+    id: "compact-row",
+    name: "Compact Row",
     question: "Can voting work in a dense list?",
+    traits: ["Dense", "Scannable"],
   },
   {
-    id: "action-bar",
-    name: "Action Bar",
+    category: "ux",
+    component: DesignActionBar,
     description:
       "Vote alongside comment, bookmark, share. Contextualizes voting as one of many interactions.",
-    component: DesignActionBar,
-    traits: ["Social", "Multi-action"],
-    category: "ux",
+    id: "action-bar",
+    name: "Action Bar",
     question: "Should voting be isolated?",
+    traits: ["Social", "Multi-action"],
   },
   {
-    id: "social-proof",
-    name: "Social Proof",
+    category: "ux",
+    component: DesignSocialProof,
     description:
       "'24 people want this' with avatars. Makes voting feel human and social, not just numeric.",
-    component: DesignSocialProof,
-    traits: ["Human", "Social"],
-    category: "ux",
+    id: "social-proof",
+    name: "Social Proof",
     question: "Should votes feel personal?",
+    traits: ["Human", "Social"],
   },
   {
-    id: "drawer-expand",
-    name: "Drawer Expand",
+    category: "ux",
+    component: DesignDrawerExpand,
     description:
       "Compact +21 badge expands into a vote drawer with ratio bar. Details on demand.",
-    component: DesignDrawerExpand,
-    traits: ["Progressive", "Detailed"],
-    category: "ux",
+    id: "drawer-expand",
+    name: "Drawer Expand",
     question: "Can vote details be hidden?",
+    traits: ["Progressive", "Detailed"],
   },
   {
-    id: "single-upvote",
-    name: "Single Upvote",
+    category: "ux",
+    component: DesignSingleUpvote,
     description:
       "No downvote. Just a confident upvote badge. Like ProductHunt. Simplifies the mental model.",
-    component: DesignSingleUpvote,
-    traits: ["Simple", "Decisive"],
-    category: "ux",
+    id: "single-upvote",
+    name: "Single Upvote",
     question: "Do we even need downvotes?",
+    traits: ["Simple", "Decisive"],
   },
   {
-    id: "magnetic-tilt",
-    name: "Magnetic Tilt",
+    category: "ux",
+    component: DesignMagneticTilt,
     description:
       "Card tilts in 3D toward your vote. Spatial feedback replaces color-only states. Directional light shifts.",
-    component: DesignMagneticTilt,
-    traits: ["3D", "Spatial"],
-    category: "ux",
+    id: "magnetic-tilt",
+    name: "Magnetic Tilt",
     question: "Can spatial feedback replace states?",
+    traits: ["3D", "Spatial"],
   },
   {
-    id: "ink-blot",
-    name: "Ink Blot",
+    category: "ux",
+    component: DesignInkBlot,
     description:
       "Vote click triggers an expanding color wash from the button. Organic, satisfying confirmation.",
-    component: DesignInkBlot,
-    traits: ["Organic", "Satisfying"],
-    category: "ux",
+    id: "ink-blot",
+    name: "Ink Blot",
     question: "Can feedback feel organic?",
+    traits: ["Organic", "Satisfying"],
   },
   // Section C — Refined Hybrids
   {
-    id: "editorial-feed",
-    name: "Editorial Feed",
+    category: "beyond",
+    component: EditorialFeedPreview,
     description:
       "Serif titles with margin votes and stacked list. Combines Magazine Editorial serif + Pill Cluster `24↑ 4↓` breakdown.",
-    component: EditorialFeedPreview,
-    traits: ["Editorial", "List"],
-    category: "beyond",
+    id: "editorial-feed",
+    name: "Editorial Feed",
     question: "What if feedback felt like reading a curated editorial feed?",
+    traits: ["Editorial", "List"],
   },
   {
-    id: "metric-action-bar",
-    name: "Metric Action Bar",
+    category: "beyond",
+    component: DesignMetricActionBar,
     description:
       "Hero number + condensed content + sweep action bar. Combines Dashboard Metric hero + Action Bar footer + Bottom Bar sweep.",
-    component: DesignMetricActionBar,
-    traits: ["Data-first", "Multi-action"],
-    category: "beyond",
+    id: "metric-action-bar",
+    name: "Metric Action Bar",
     question: "What if the metric was hero and actions were social?",
+    traits: ["Data-first", "Multi-action"],
   },
   {
-    id: "corner-percentage",
-    name: "Corner Percentage",
+    category: "beyond",
+    component: DesignCornerPercentage,
     description:
       "Corner badge showing % positive instead of raw count. Combines Corner Badge creative placement + Split Panel percentage.",
-    component: DesignCornerPercentage,
-    traits: ["Corner", "Percentage"],
-    category: "beyond",
+    id: "corner-percentage",
+    name: "Corner Percentage",
     question: "What if the corner badge showed approval rate?",
+    traits: ["Corner", "Percentage"],
   },
   {
-    id: "notch-percentage",
-    name: "Notch Percentage",
+    category: "beyond",
+    component: DesignNotchPercentage,
     description:
       "Minimal out-of-card vote with glowing notch and percentage. Combines Minimal Notch + Split Panel percentage.",
-    component: DesignNotchPercentage,
-    traits: ["Minimal", "Glowing"],
-    category: "beyond",
+    id: "notch-percentage",
+    name: "Notch Percentage",
     question: "What if a notch showed the approval percentage?",
+    traits: ["Minimal", "Glowing"],
   },
   {
-    id: "sweep-split",
-    name: "Sweep Split",
+    category: "beyond",
+    component: DesignSweepSplit,
     description:
       "Split panel with sweep animation on vote and percentage bar. Combines Split Panel + Bottom Bar sweep.",
-    component: DesignSweepSplit,
-    traits: ["Spatial", "Animated"],
-    category: "beyond",
+    id: "sweep-split",
+    name: "Sweep Split",
     question: "What if the split panel had satisfying sweep feedback?",
+    traits: ["Spatial", "Animated"],
   },
   {
-    id: "condensed-pill-row",
-    name: "Condensed Pill Row",
+    category: "beyond",
+    component: DesignCondensedPillRow,
     description:
       "Pill cluster with condensed dashboard info and percentage. Combines Pill Cluster `24↑ 4↓` + Dashboard Metric condensed.",
-    component: DesignCondensedPillRow,
-    traits: ["Flat", "Condensed"],
-    category: "beyond",
+    id: "condensed-pill-row",
+    name: "Condensed Pill Row",
     question: "What if pills showed both breakdown and percentage?",
+    traits: ["Flat", "Condensed"],
   },
   {
-    id: "editorial-notch",
-    name: "Editorial Notch",
+    category: "beyond",
+    component: DesignEditorialNotch,
     description:
       "Serif title with out-of-card glowing notch vote. Combines Magazine Editorial serif + Minimal Notch + pill breakdown.",
-    component: DesignEditorialNotch,
-    traits: ["Editorial", "Minimal"],
-    category: "beyond",
+    id: "editorial-notch",
+    name: "Editorial Notch",
     question: "What if editorial style met a minimal notch vote?",
+    traits: ["Editorial", "Minimal"],
   },
   {
-    id: "sweep-corner",
-    name: "Sweep Corner",
+    category: "beyond",
+    component: SweepCornerPreview,
     description:
       "Corner badge with sweep animation and pill details in footer. Combines Corner Badge + Bottom Bar sweep + Pill Cluster.",
-    component: SweepCornerPreview,
-    traits: ["Corner", "Animated"],
-    category: "beyond",
+    id: "sweep-corner",
+    name: "Sweep Corner",
     question: "What if the corner badge had sweep feedback?",
+    traits: ["Corner", "Animated"],
   },
 ] as const;
 
@@ -2325,7 +2325,7 @@ function DesignCell({
       animate={{ opacity: 1, y: 0 }}
       className="space-y-3"
       initial={{ opacity: 0, y: 16 }}
-      transition={{ duration: 0.4, ease: "easeOut", delay: index * 0.04 }}
+      transition={{ delay: index * 0.04, duration: 0.4, ease: "easeOut" }}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">

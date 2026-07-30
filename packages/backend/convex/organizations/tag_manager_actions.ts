@@ -3,12 +3,11 @@ import { mutation } from "../_generated/server";
 import { getAuthUser } from "../shared/utils";
 
 // Helper to generate slug from name
-const generateSlug = (name: string): string => {
-  return name
+const generateSlug = (name: string): string =>
+  name
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
-};
 
 // ============================================
 // MUTATIONS
@@ -19,11 +18,11 @@ const generateSlug = (name: string): string => {
  */
 export const create = mutation({
   args: {
-    organizationId: v.id("organizations"),
-    name: v.string(),
     color: v.string(),
-    icon: v.optional(v.string()),
     description: v.optional(v.string()),
+    icon: v.optional(v.string()),
+    name: v.string(),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -57,13 +56,13 @@ export const create = mutation({
 
     const now = Date.now();
     const tagId = await ctx.db.insert("tags", {
-      organizationId: args.organizationId,
-      name: args.name,
-      slug,
       color: args.color,
-      icon: args.icon,
-      description: args.description,
       createdAt: now,
+      description: args.description,
+      icon: args.icon,
+      name: args.name,
+      organizationId: args.organizationId,
+      slug,
       updatedAt: now,
     });
 
@@ -76,11 +75,11 @@ export const create = mutation({
  */
 export const update = mutation({
   args: {
+    color: v.optional(v.string()),
+    description: v.optional(v.string()),
+    icon: v.optional(v.string()),
     id: v.id("tags"),
     name: v.optional(v.string()),
-    color: v.optional(v.string()),
-    icon: v.optional(v.string()),
-    description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);

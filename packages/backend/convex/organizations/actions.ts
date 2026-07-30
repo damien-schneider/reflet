@@ -7,10 +7,10 @@ import { getAuthUser } from "../shared/utils";
  */
 export const update = mutation({
   args: {
-    organizationId: v.id("organizations"),
-    name: v.string(),
-    slug: v.optional(v.string()),
     isPublic: v.optional(v.boolean()),
+    name: v.string(),
+    organizationId: v.id("organizations"),
+    slug: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -46,9 +46,9 @@ export const update = mutation({
     }
 
     await ctx.db.patch(args.organizationId, {
+      isPublic: args.isPublic ?? false,
       name: args.name,
       slug: newSlug ?? org.slug,
-      isPublic: args.isPublic ?? false,
     });
 
     return args.organizationId;
@@ -103,9 +103,9 @@ export const getStats = query({
       .collect();
 
     return {
-      tagsCount: tags.length,
-      membersCount: members.length,
       feedbackCount: feedback.length,
+      membersCount: members.length,
+      tagsCount: tags.length,
     };
   },
 });
@@ -126,7 +126,7 @@ export const remove = mutation({
       )
       .unique();
 
-    if (!membership || membership.role !== "owner") {
+    if (membership?.role !== "owner") {
       throw new Error("Only the owner can delete an organization");
     }
 

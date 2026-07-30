@@ -2,14 +2,14 @@ import path from "node:path";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      "@": path.resolve(import.meta.dirname, "./src"),
+      "@app": path.resolve(import.meta.dirname, "./app"),
+    },
+  },
   test: {
-    environment: "jsdom",
-    setupFiles: ["./vitest.setup.ts"],
-    include: ["src/**/*.test.{ts,tsx}", "**/*.test.{ts,tsx}"],
-    exclude: ["node_modules", ".next", "e2e"],
     coverage: {
-      provider: "v8",
-      include: ["src/**/*.{ts,tsx}"],
       exclude: [
         "src/components/ui/**",
         "src/**/*.test.{ts,tsx}",
@@ -22,14 +22,14 @@ export default defineConfig({
         "src/env.ts",
         "src/middleware.ts",
       ],
+      include: ["src/**/*.{ts,tsx}"],
+      provider: "v8",
       reporter: ["text", "text-summary", "html"],
       reportsDirectory: "./coverage",
     },
-  },
-  resolve: {
-    alias: {
-      "@": path.resolve(import.meta.dirname, "./src"),
-      "@app": path.resolve(import.meta.dirname, "./app"),
-    },
+    environment: "jsdom",
+    exclude: ["node_modules", ".next", "e2e"],
+    include: ["src/**/*.test.{ts,tsx}", "**/*.test.{ts,tsx}"],
+    setupFiles: ["./vitest.setup.ts"],
   },
 });

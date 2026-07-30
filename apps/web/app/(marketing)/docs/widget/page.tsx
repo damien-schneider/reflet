@@ -4,11 +4,11 @@ import Link from "next/link";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
-  title: "Widgets Overview",
   description:
     "Drop-in feedback and changelog widgets for your website. Embed with a single script tag.",
-  path: "/docs/widget",
   keywords: ["widget", "feedback widget", "changelog widget", "embed"],
+  path: "/docs/widget",
+  title: "Widgets Overview",
 });
 
 export default function WidgetOverviewPage() {

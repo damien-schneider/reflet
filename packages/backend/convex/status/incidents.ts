@@ -32,10 +32,10 @@ export const getActiveIncidents = query({
 
         return {
           ...incident,
-          updates: updates.sort((a, b) => b.createdAt - a.createdAt),
           affectedMonitors: monitors
             .filter((m): m is NonNullable<typeof m> => m !== null)
             .map((m) => ({ _id: m._id, name: m.name, url: m.url })),
+          updates: updates.sort((a, b) => b.createdAt - a.createdAt),
         };
       })
     );
@@ -46,8 +46,8 @@ export const getActiveIncidents = query({
 
 export const getIncidentHistory = query({
   args: {
-    organizationId: v.id("organizations"),
     days: v.optional(v.number()),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
     const daysBack = args.days ?? 14;
@@ -73,11 +73,11 @@ export const getIncidentHistory = query({
 
         return {
           ...incident,
-          updates: updates.sort((a, b) => a.createdAt - b.createdAt),
           affectedMonitors: monitors
             .filter(Boolean)
             .filter((m): m is NonNullable<typeof m> => m !== null)
             .map((m) => ({ _id: m._id, name: m.name })),
+          updates: updates.sort((a, b) => a.createdAt - b.createdAt),
         };
       })
     );
@@ -105,10 +105,10 @@ export const getIncidentWithUpdates = query({
 
     return {
       ...incident,
-      updates: updates.sort((a, b) => a.createdAt - b.createdAt),
       affectedMonitors: monitors
         .filter((m): m is NonNullable<typeof m> => m !== null)
         .map((m) => ({ _id: m._id, name: m.name, url: m.url })),
+      updates: updates.sort((a, b) => a.createdAt - b.createdAt),
     };
   },
 });
@@ -119,33 +119,33 @@ export const getIncidentWithUpdates = query({
 
 export const createIncident = mutation({
   args: {
-    organizationId: v.id("organizations"),
-    title: v.string(),
-    severity: incidentSeverity,
     affectedMonitorIds: v.array(v.id("statusMonitors")),
     message: v.string(),
+    organizationId: v.id("organizations"),
+    severity: incidentSeverity,
+    title: v.string(),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
 
     const incidentId = await ctx.db.insert("statusIncidents", {
-      organizationId: args.organizationId,
-      title: args.title,
-      severity: args.severity,
-      status: "investigating",
       affectedMonitorIds: args.affectedMonitorIds,
       autoDetected: false,
-      startedAt: now,
       createdAt: now,
+      organizationId: args.organizationId,
+      severity: args.severity,
+      startedAt: now,
+      status: "investigating",
+      title: args.title,
       updatedAt: now,
     });
 
     await ctx.db.insert("statusIncidentUpdates", {
+      createdAt: now,
       incidentId,
+      message: args.message,
       organizationId: args.organizationId,
       status: "investigating",
-      message: args.message,
-      createdAt: now,
     });
 
     return incidentId;
@@ -155,8 +155,8 @@ export const createIncident = mutation({
 export const postIncidentUpdate = mutation({
   args: {
     incidentId: v.id("statusIncidents"),
-    status: incidentStatus,
     message: v.string(),
+    status: incidentStatus,
   },
   handler: async (ctx, args) => {
     const incident = await ctx.db.get(args.incidentId);
@@ -173,11 +173,11 @@ export const postIncidentUpdate = mutation({
     });
 
     await ctx.db.insert("statusIncidentUpdates", {
+      createdAt: now,
       incidentId: args.incidentId,
+      message: args.message,
       organizationId: incident.organizationId,
       status: args.status,
-      message: args.message,
-      createdAt: now,
     });
   },
 });
@@ -196,17 +196,17 @@ export const resolveIncident = mutation({
     const now = Date.now();
 
     await ctx.db.patch(args.incidentId, {
-      status: "resolved",
       resolvedAt: now,
+      status: "resolved",
       updatedAt: now,
     });
 
     await ctx.db.insert("statusIncidentUpdates", {
+      createdAt: now,
       incidentId: args.incidentId,
+      message: args.message ?? "This incident has been resolved.",
       organizationId: incident.organizationId,
       status: "resolved",
-      message: args.message ?? "This incident has been resolved.",
-      createdAt: now,
     });
   },
 });

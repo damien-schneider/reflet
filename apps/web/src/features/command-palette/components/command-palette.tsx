@@ -40,8 +40,8 @@ function filterCommandItems(
 
 export function CommandPalette({ orgSlug, isAdmin }: CommandPaletteProps) {
   const { isOpen, setIsOpen, filteredItems, handleSelect } = useCommandPalette({
-    orgSlug,
     isAdmin,
+    orgSlug,
   });
 
   const groupedItems = filteredItems.reduce<Record<string, CommandItemType[]>>(

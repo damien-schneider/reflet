@@ -16,7 +16,7 @@
 // Top-level regex patterns for base64url encoding
 const PLUS_REGEX = /\+/g;
 const SLASH_REGEX = /\//g;
-const PADDING_REGEX = /=+$/;
+const PADDING_REGEX = /[=]+$/;
 const DASH_REGEX = /-/g;
 const UNDERSCORE_REGEX = /_/g;
 
@@ -62,14 +62,14 @@ export async function signUser(
 
   const header = { alg: "HS256", typ: "JWT" };
   const payload = {
-    sub: user.id,
-    id: user.id,
-    email: user.email,
-    name: user.name,
     avatar: user.avatar,
-    metadata: user.metadata,
-    iat: now,
+    email: user.email,
     exp,
+    iat: now,
+    id: user.id,
+    metadata: user.metadata,
+    name: user.name,
+    sub: user.id,
   };
 
   const headerB64 = base64UrlEncode(JSON.stringify(header));
@@ -82,8 +82,8 @@ export async function signUser(
   );
 
   return {
-    token: `${headerB64}.${payloadB64}.${signature}`,
     expiresAt: exp * 1000,
+    token: `${headerB64}.${payloadB64}.${signature}`,
   };
 }
 
@@ -141,11 +141,11 @@ export async function verifyUser(
     }
 
     return {
-      id: userId,
-      email: payload.email,
-      name: payload.name,
       avatar: payload.avatar,
+      email: payload.email,
+      id: userId,
       metadata: payload.metadata,
+      name: payload.name,
     };
   } catch {
     return null;
@@ -205,7 +205,7 @@ async function createHmacSha256Signature(
   const cryptoKey = await crypto.subtle.importKey(
     "raw",
     keyData,
-    { name: "HMAC", hash: "SHA-256" },
+    { hash: "SHA-256", name: "HMAC" },
     false,
     ["sign"]
   );

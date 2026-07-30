@@ -9,10 +9,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 const STATUS_LABELS = {
-  operational: "All Operational",
   degraded: "Degraded",
   major_outage: "Major Outage",
   no_monitors: "No Monitors",
+  operational: "All Operational",
 } as const;
 
 type StatusKey = keyof typeof STATUS_LABELS;
@@ -21,10 +21,10 @@ const BADGE_VARIANTS: Record<
   StatusKey,
   "secondary" | "outline" | "destructive"
 > = {
-  operational: "secondary",
   degraded: "destructive",
   major_outage: "destructive",
   no_monitors: "outline",
+  operational: "secondary",
 } as const;
 
 interface StatusSummarySectionProps {

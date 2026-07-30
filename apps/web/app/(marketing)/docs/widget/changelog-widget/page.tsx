@@ -4,10 +4,10 @@ import { InlineCode } from "@/components/ui/typography";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
-  title: "Changelog Widget",
   description:
     "Display recent changelog entries in a popover with unread notification badges.",
   path: "/docs/widget/changelog-widget",
+  title: "Changelog Widget",
 });
 
 export default function ChangelogWidgetPage() {

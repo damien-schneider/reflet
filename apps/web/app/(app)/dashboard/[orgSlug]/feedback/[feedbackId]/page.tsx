@@ -76,9 +76,9 @@ export default function FeedbackDetailPage({
         return;
       }
       await assignFeedback({
-        feedbackId,
         assigneeId:
           !assigneeId || assigneeId === "unassigned" ? undefined : assigneeId,
+        feedbackId,
       });
     },
     [feedbackId, assignFeedback]
@@ -268,8 +268,8 @@ function FeedbackHeader({
           style={
             hasVoted
               ? {
-                  borderColor: primaryColor,
                   backgroundColor: `${primaryColor}15`,
+                  borderColor: primaryColor,
                   color: primaryColor,
                 }
               : undefined
@@ -297,8 +297,8 @@ function FeedbackHeader({
                 className="font-normal"
                 style={{
                   backgroundColor: `${status.color}15`,
-                  color: status.color,
                   borderColor: `${status.color}30`,
+                  color: status.color,
                 }}
                 variant="outline"
               >
@@ -313,8 +313,8 @@ function FeedbackHeader({
                     key={tag._id}
                     style={{
                       backgroundColor: `${tag.color}15`,
-                      color: tag.color,
                       borderColor: `${tag.color}30`,
+                      color: tag.color,
                     }}
                     variant="outline"
                   >

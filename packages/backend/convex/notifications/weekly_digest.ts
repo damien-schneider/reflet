@@ -79,10 +79,11 @@ async function sendDigestForOrg(ctx: ActionCtx, orgId: string): Promise<void> {
         }
 
         await ctx.runAction(internal.email.renderer.sendWeeklyDigestEmail, {
-          to: member.email,
-          organizationName: digest.orgName,
+          dashboardUrl: `${siteUrl}/dashboard/${digest.orgSlug}`,
           newFeedbackCount: digest.newFeedbackCount,
-          totalVotes: digest.totalVotes,
+          organizationName: digest.orgName,
+          statusChanges: digest.statusChanges,
+          to: member.email,
           topFeedback: digest.topFeedback.map(
             (f: {
               title: string;
@@ -95,8 +96,7 @@ async function sendDigestForOrg(ctx: ActionCtx, orgId: string): Promise<void> {
               url: `${siteUrl}/${digest.orgSlug}/feedback/${f.feedbackId}`,
             })
           ),
-          statusChanges: digest.statusChanges,
-          dashboardUrl: `${siteUrl}/dashboard/${digest.orgSlug}`,
+          totalVotes: digest.totalVotes,
           unsubscribeUrl: `${siteUrl}/settings/notifications`,
         });
       } catch (error) {

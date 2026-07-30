@@ -42,7 +42,7 @@ export async function getAllBlogPosts(): Promise<BlogPost[]> {
   for (const slug of slugs) {
     const meta = await getBlogPostMeta(slug);
     if (meta) {
-      posts.push({ slug, meta });
+      posts.push({ meta, slug });
     }
   }
 
@@ -75,19 +75,19 @@ export async function getBlogPostMeta(
 
 export function formatDate(dateString: string): string {
   return new Date(dateString).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
     day: "numeric",
+    month: "long",
+    year: "numeric",
   });
 }
 
 export function getCategoryLabel(category: BlogPostMeta["category"]): string {
   const labels: Record<BlogPostMeta["category"], string> = {
-    guide: "Guide",
-    tutorial: "Tutorial",
+    "best-practices": "Best Practices",
     "case-study": "Case Study",
     comparison: "Comparison",
-    "best-practices": "Best Practices",
+    guide: "Guide",
+    tutorial: "Tutorial",
   };
   return labels[category];
 }

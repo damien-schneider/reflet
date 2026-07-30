@@ -83,9 +83,9 @@ describe("ConversationComposer", () => {
     await user.click(screen.getByText("Send"));
 
     expect(onSubmit).toHaveBeenCalledWith({
-      subject: "Billing issue",
-      message: "I need help",
       email: undefined,
+      message: "I need help",
+      subject: "Billing issue",
     });
   });
 
@@ -152,9 +152,9 @@ describe("ConversationComposer", () => {
     await user.click(screen.getByText("Send"));
 
     expect(onSubmit).toHaveBeenCalledWith({
-      subject: "",
-      message: "I need help",
       email: "test@example.com",
+      message: "I need help",
+      subject: "",
     });
   });
 });

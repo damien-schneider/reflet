@@ -7,11 +7,11 @@ const feedbackId = (id: string) => id as Id<"feedback">;
 
 const makeCandidate = (id: string, status = "open") => ({
   _id: feedbackId(id),
-  title: `Feedback ${id}`,
   description: `Description for ${id}`,
   status,
-  voteCount: 0,
   tags: [] as Array<{ _id: Id<"tags">; name: string }>,
+  title: `Feedback ${id}`,
+  voteCount: 0,
 });
 
 const makeApiResponse = (
@@ -60,10 +60,10 @@ describe("useFeedbackMatching", () => {
 
   it("clears old matches when starting a new match", async () => {
     const firstResponse = makeApiResponse([
-      { feedbackId: "f1", confidence: "high", reason: "first match" },
+      { confidence: "high", feedbackId: "f1", reason: "first match" },
     ]);
     const secondResponse = makeApiResponse([
-      { feedbackId: "f2", confidence: "medium", reason: "second match" },
+      { confidence: "medium", feedbackId: "f2", reason: "second match" },
     ]);
 
     let callCount = 0;
@@ -166,7 +166,7 @@ describe("useFeedbackMatching", () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
       Response.json(
         makeApiResponse([
-          { feedbackId: "f1", confidence: "high", reason: "match" },
+          { confidence: "high", feedbackId: "f1", reason: "match" },
         ])
       )
     );
@@ -203,48 +203,48 @@ describe("useFeedbackMatching", () => {
         "Added dark mode",
         [
           {
-            sha: "abc123",
-            message: "feat: dark mode",
-            fullMessage: "feat: dark mode support",
             author: "dev",
+            fullMessage: "feat: dark mode support",
+            message: "feat: dark mode",
+            sha: "abc123",
           },
         ],
         [
           {
             _id: feedbackId("f1"),
-            title: "Dark mode please",
             description: "Would love dark theme",
             status: "open",
-            voteCount: 5,
             tags: [{ _id: "t1" as Id<"tags">, name: "ui" }],
+            title: "Dark mode please",
+            voteCount: 5,
           },
         ]
       );
     });
 
     expect(fetchSpy).toHaveBeenCalledWith("/api/ai/match-release-feedback", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        releaseNotes: "Added dark mode",
         commits: [
           {
-            sha: "abc123",
-            message: "feat: dark mode",
-            fullMessage: "feat: dark mode support",
             author: "dev",
+            fullMessage: "feat: dark mode support",
+            message: "feat: dark mode",
+            sha: "abc123",
           },
         ],
         feedbackItems: [
           {
-            id: "f1",
-            title: "Dark mode please",
             description: "Would love dark theme",
+            id: "f1",
             status: "open",
             tags: ["ui"],
+            title: "Dark mode please",
           },
         ],
+        releaseNotes: "Added dark mode",
       }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
     });
   });
 
@@ -252,9 +252,9 @@ describe("useFeedbackMatching", () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
       Response.json(
         makeApiResponse([
-          { feedbackId: "f1", confidence: "high", reason: "direct fix" },
-          { feedbackId: "f2", confidence: "medium", reason: "related change" },
-          { feedbackId: "f3", confidence: "low", reason: "might be related" },
+          { confidence: "high", feedbackId: "f1", reason: "direct fix" },
+          { confidence: "medium", feedbackId: "f2", reason: "related change" },
+          { confidence: "low", feedbackId: "f3", reason: "might be related" },
         ])
       )
     );
@@ -270,9 +270,9 @@ describe("useFeedbackMatching", () => {
     });
 
     expect(result.current.matches).toEqual([
-      { feedbackId: "f1", confidence: "high", reason: "direct fix" },
-      { feedbackId: "f2", confidence: "medium", reason: "related change" },
-      { feedbackId: "f3", confidence: "low", reason: "might be related" },
+      { confidence: "high", feedbackId: "f1", reason: "direct fix" },
+      { confidence: "medium", feedbackId: "f2", reason: "related change" },
+      { confidence: "low", feedbackId: "f3", reason: "might be related" },
     ]);
   });
 

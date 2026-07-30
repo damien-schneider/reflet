@@ -37,11 +37,11 @@ export async function generateMetadata({
       }
 
       return generatePageMetadata({
-        title: `Shipped: ${meta.title} | ${meta.orgName}`,
         description,
-        path: `/${orgSlug}/shipped/${feedbackId}`,
         keywords: [meta.orgName, "shipped", "feature request", "changelog"],
         ogImage: ogUrl.toString(),
+        path: `/${orgSlug}/shipped/${feedbackId}`,
+        title: `Shipped: ${meta.title} | ${meta.orgName}`,
       });
     }
   } catch {
@@ -49,10 +49,10 @@ export async function generateMetadata({
   }
 
   return generatePageMetadata({
-    title: `Shipped | ${orgSlug}`,
     description: "See what was shipped based on your feedback.",
-    path: `/${orgSlug}/shipped/${feedbackId}`,
     keywords: ["shipped", "feedback", orgSlug],
+    path: `/${orgSlug}/shipped/${feedbackId}`,
+    title: `Shipped | ${orgSlug}`,
   });
 }
 

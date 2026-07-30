@@ -9,32 +9,32 @@ const mockUseQuery = vi.fn();
 const mockUseMutation = vi.fn(() => vi.fn());
 
 vi.mock("convex/react", () => ({
-  useQuery: (...args: unknown[]) => mockUseQuery(...args),
   useMutation: () => mockUseMutation(),
+  useQuery: (...args: unknown[]) => mockUseQuery(...args),
 }));
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
-    organizations: {
-      statuses: { list: "organization_statuses.list" },
-      members: { list: "members.list" },
-    },
     feedback: {
-      tags: {
-        list: "tags.list",
-        addToFeedback: "tags.addToFeedback",
-        removeFromFeedback: "tags.removeFromFeedback",
+      actions: {
+        assign: "feedback_actions.assign",
+        updateAnalysis: "feedback_actions.updateAnalysis",
+        updateOrganizationStatus: "feedback_actions.updateOrganizationStatus",
       },
       subscriptions: {
         isSubscribed: "feedback_subscriptions.isSubscribed",
         toggle: "feedback_subscriptions.toggle",
       },
-      votes: { toggle: "votes.toggle" },
-      actions: {
-        updateOrganizationStatus: "feedback_actions.updateOrganizationStatus",
-        assign: "feedback_actions.assign",
-        updateAnalysis: "feedback_actions.updateAnalysis",
+      tags: {
+        addToFeedback: "tags.addToFeedback",
+        list: "tags.list",
+        removeFromFeedback: "tags.removeFromFeedback",
       },
+      votes: { toggle: "votes.toggle" },
+    },
+    organizations: {
+      members: { list: "members.list" },
+      statuses: { list: "organization_statuses.list" },
     },
   },
 }));
@@ -207,14 +207,14 @@ const feedbackId = "f1" as Id<"feedback">;
 const organizationId = "org1" as Id<"organizations">;
 
 const baseProps = {
-  feedbackId,
-  organizationId,
-  voteCount: 10,
-  userVoteType: null as "upvote" | "downvote" | null,
   createdAt: Date.now(),
-  isAdmin: true,
-  title: "Test",
   description: "Test desc",
+  feedbackId,
+  isAdmin: true,
+  organizationId,
+  title: "Test",
+  userVoteType: null as "upvote" | "downvote" | null,
+  voteCount: 10,
 };
 
 describe("FeedbackMetadataBar", () => {
@@ -253,36 +253,29 @@ describe("FeedbackMetadataBar", () => {
     expect(screen.queryByTestId("copy-for-agents")).not.toBeInTheDocument();
   });
 
-  it("shows Details toggle when admin", () => {
+  it("renders AI analysis inline for admins", () => {
     render(<FeedbackMetadataBar {...baseProps} isAdmin />);
-    expect(screen.getByText("Details")).toBeInTheDocument();
+    expect(screen.getByTestId("ai-analysis")).toBeInTheDocument();
   });
 
-  it("shows Details toggle when AI fields are present (non-admin)", () => {
+  it("renders AI analysis inline for non-admins", () => {
     render(
       <FeedbackMetadataBar {...baseProps} aiPriority="high" isAdmin={false} />
     );
-    expect(screen.getByText("Details")).toBeInTheDocument();
+    expect(screen.getByTestId("ai-analysis")).toBeInTheDocument();
   });
 
-  it("does not show Details toggle when non-admin and no AI fields", () => {
-    render(<FeedbackMetadataBar {...baseProps} isAdmin={false} />);
-    expect(screen.queryByText("Details")).not.toBeInTheDocument();
-  });
-
-  it("renders expanded details with AI analysis when Details is clicked", () => {
+  it("renders admin metadata controls inline", () => {
     render(<FeedbackMetadataBar {...baseProps} isAdmin />);
-    fireEvent.click(screen.getByText("Details"));
     expect(screen.getByTestId("ai-analysis")).toBeInTheDocument();
     expect(screen.getByTestId("assignee-display")).toBeInTheDocument();
     expect(screen.getByTestId("deadline-display")).toBeInTheDocument();
   });
 
-  it("does not show deadline inside details for non-admin", () => {
+  it("does not render the deadline for non-admins", () => {
     render(
       <FeedbackMetadataBar {...baseProps} aiPriority="medium" isAdmin={false} />
     );
-    fireEvent.click(screen.getByText("Details"));
     expect(screen.queryByTestId("deadline-display")).not.toBeInTheDocument();
   });
 
@@ -290,7 +283,7 @@ describe("FeedbackMetadataBar", () => {
     render(
       <FeedbackMetadataBar
         {...baseProps}
-        tags={[{ _id: "t1" as never, name: "Bug", color: "red" }, null]}
+        tags={[{ _id: "t1" as never, color: "red", name: "Bug" }, null]}
       />
     );
     expect(screen.getByTestId("tag-display")).toBeInTheDocument();
@@ -317,8 +310,7 @@ describe("FeedbackMetadataBar", () => {
         timeEstimate="2 hours"
       />
     );
-    // Should render and show Details toggle
-    expect(screen.getByText("Details")).toBeInTheDocument();
+    expect(screen.getByTestId("ai-analysis")).toBeInTheDocument();
   });
 
   it("renders with assignee data", () => {
@@ -326,16 +318,14 @@ describe("FeedbackMetadataBar", () => {
       <FeedbackMetadataBar
         {...baseProps}
         assignee={{
-          id: "user1",
-          name: "John Doe",
           email: "john@test.com",
+          id: "user1",
           image: "/avatar.png",
+          name: "John Doe",
         }}
         isAdmin
       />
     );
-    // Expand details section to show assignee
-    fireEvent.click(screen.getByText("Details"));
     expect(screen.getByTestId("assignee-display")).toBeInTheDocument();
   });
 
@@ -343,7 +333,7 @@ describe("FeedbackMetadataBar", () => {
     render(
       <FeedbackMetadataBar {...baseProps} deadline={Date.now() + 86_400_000} />
     );
-    expect(screen.getByText("Details")).toBeInTheDocument();
+    expect(screen.getByTestId("deadline-display")).toBeInTheDocument();
   });
 
   it("renders with user vote type", () => {
@@ -356,7 +346,7 @@ describe("FeedbackMetadataBar", () => {
     expect(screen.getByTestId("vote-buttons")).toBeInTheDocument();
   });
 
-  it("hides deadline-display inside details for non-admin with AI fields", () => {
+  it("hides the deadline for non-admins with AI fields", () => {
     render(
       <FeedbackMetadataBar
         {...baseProps}
@@ -365,31 +355,13 @@ describe("FeedbackMetadataBar", () => {
         isAdmin={false}
       />
     );
-    fireEvent.click(screen.getByText("Details"));
     expect(screen.getByTestId("ai-analysis")).toBeInTheDocument();
     expect(screen.queryByTestId("deadline-display")).not.toBeInTheDocument();
   });
 
-  it("shows deadline-display inside details for admin", () => {
+  it("shows the deadline for admins", () => {
     render(<FeedbackMetadataBar {...baseProps} isAdmin />);
-    fireEvent.click(screen.getByText("Details"));
     expect(screen.getByTestId("deadline-display")).toBeInTheDocument();
-  });
-
-  it("does not render Details when non-admin and no AI/manual fields", () => {
-    render(
-      <FeedbackMetadataBar
-        {...baseProps}
-        aiComplexity={undefined}
-        aiPriority={undefined}
-        aiTimeEstimate={undefined}
-        complexity={undefined}
-        isAdmin={false}
-        priority={undefined}
-        timeEstimate={undefined}
-      />
-    );
-    expect(screen.queryByText("Details")).not.toBeInTheDocument();
   });
 
   it("renders with empty tags array", () => {
@@ -460,7 +432,6 @@ describe("FeedbackMetadataBar", () => {
     mockUseMutation.mockReturnValue(updateStatusMock);
     render(<FeedbackMetadataBar {...baseProps} isAdmin />);
     fireEvent.click(screen.getByText("clear-status"));
-    // null statusId should be a no-op due to the if (statusId) guard
     expect(updateStatusMock).not.toHaveBeenCalled();
   });
 
@@ -468,7 +439,6 @@ describe("FeedbackMetadataBar", () => {
     const assignMock = vi.fn();
     mockUseMutation.mockReturnValue(assignMock);
     render(<FeedbackMetadataBar {...baseProps} isAdmin />);
-    fireEvent.click(screen.getByText("Details"));
     fireEvent.click(screen.getByText("assign"));
     expect(assignMock).toHaveBeenCalled();
   });
@@ -477,7 +447,6 @@ describe("FeedbackMetadataBar", () => {
     const assignMock = vi.fn();
     mockUseMutation.mockReturnValue(assignMock);
     render(<FeedbackMetadataBar {...baseProps} isAdmin />);
-    fireEvent.click(screen.getByText("Details"));
     fireEvent.click(screen.getByText("unassign"));
     expect(assignMock).toHaveBeenCalled();
   });
@@ -510,7 +479,6 @@ describe("FeedbackMetadataBar", () => {
     const updateAnalysisMock = vi.fn();
     mockUseMutation.mockReturnValue(updateAnalysisMock);
     render(<FeedbackMetadataBar {...baseProps} isAdmin />);
-    fireEvent.click(screen.getByText("Details"));
     fireEvent.click(screen.getByText("set-deadline"));
     expect(updateAnalysisMock).toHaveBeenCalled();
   });
@@ -519,7 +487,6 @@ describe("FeedbackMetadataBar", () => {
     const updateAnalysisMock = vi.fn();
     mockUseMutation.mockReturnValue(updateAnalysisMock);
     render(<FeedbackMetadataBar {...baseProps} isAdmin />);
-    fireEvent.click(screen.getByText("Details"));
     fireEvent.click(screen.getByText("clear-deadline"));
     expect(updateAnalysisMock).toHaveBeenCalled();
   });

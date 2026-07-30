@@ -4,10 +4,10 @@ import { ArrowsClockwise, GithubLogo } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 
 const SYNC_DIRECTION_LABELS = {
-  github_first: "GitHub → Reflet",
-  reflet_first: "Reflet → GitHub",
   bidirectional: "Bidirectional",
+  github_first: "GitHub → Reflet",
   none: "Manual only",
+  reflet_first: "Reflet → GitHub",
 } as const;
 
 export type SyncDirectionKey = keyof typeof SYNC_DIRECTION_LABELS;

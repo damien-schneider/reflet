@@ -10,8 +10,8 @@ export function DraggableFeedbackCard({
   onFeedbackClick,
 }: DraggableFeedbackCardProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: item._id,
     disabled: !isAdmin,
+    id: item._id,
   });
 
   const handleClick = () => {
@@ -38,7 +38,7 @@ export function DraggableFeedbackCard({
       ref={setNodeRef}
       role="button"
       tabIndex={0}
-      transition={{ type: "spring", damping: 25, stiffness: 300 }}
+      transition={{ damping: 25, stiffness: 300, type: "spring" }}
     >
       {/* On mobile, apply touch listeners to the whole card for long press */}
       <div

@@ -24,12 +24,12 @@ const duplicateCheckSchema = z.object({
   duplicates: z.array(
     z.object({
       feedbackId: z.string(),
+      reasoning: z.string().describe("Brief explanation of the similarity"),
       similarityScore: z
         .number()
         .min(0)
         .max(1)
         .describe("How similar this is to the new feedback (0-1)"),
-      reasoning: z.string().describe("Brief explanation of the similarity"),
     })
   ),
 });
@@ -51,10 +51,10 @@ export const findSimilarFeedback = internalAction({
     const candidates = await ctx.runQuery(
       internal.duplicates.queries.searchSimilarByTitle,
       {
-        organizationId: feedback.organizationId,
-        title: feedback.title,
         excludeId: args.feedbackId,
         limit: MAX_CANDIDATES,
+        organizationId: feedback.organizationId,
+        title: feedback.title,
       }
     );
 
@@ -75,7 +75,6 @@ export const findSimilarFeedback = internalAction({
       try {
         const response = await generateObject({
           model: openrouter(model),
-          schema: duplicateCheckSchema,
           prompt: `Compare this new feedback with the existing items below. Return items that are genuine duplicates or very similar (score > ${SIMILARITY_THRESHOLD}).
 
 NEW FEEDBACK:
@@ -86,6 +85,7 @@ EXISTING ITEMS:
 ${candidateDescriptions}
 
 Only include items that discuss the same problem or feature request. Score 0.9+ for exact duplicates, 0.7-0.9 for very similar.`,
+          schema: duplicateCheckSchema,
         });
         result = response.object;
         break;
@@ -101,9 +101,9 @@ Only include items that discuss the same problem or feature request. Score 0.9+ 
     for (const dup of result.duplicates) {
       if (dup.similarityScore >= SIMILARITY_THRESHOLD) {
         await ctx.runMutation(internal.duplicates.queries.createDuplicatePair, {
-          organizationId: feedback.organizationId,
           feedbackIdA: args.feedbackId,
           feedbackIdB: dup.feedbackId as Id<"feedback">,
+          organizationId: feedback.organizationId,
           similarityScore: dup.similarityScore,
         });
       }

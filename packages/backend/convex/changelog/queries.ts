@@ -128,9 +128,9 @@ export const get = query({
 
     return {
       ...release,
-      organization: org,
       feedbackItems: feedbackItems.filter(Boolean),
       isMember,
+      organization: org,
     };
   },
 });
@@ -171,7 +171,7 @@ export const listPublished = query({
         const feedback = await Promise.all(
           links.map(async (link) => {
             const f = await ctx.db.get(link.feedbackId);
-            return f ? { _id: f._id, title: f.title, status: f.status } : null;
+            return f ? { _id: f._id, status: f.status, title: f.title } : null;
           })
         );
 

@@ -21,36 +21,36 @@ interface Step {
 
 const STEPS: Step[] = [
   {
-    id: "collect",
-    number: 1,
-    icon: ChatCircleDots,
-    title: "Collect feedback",
     description:
       "Users submit feature requests and vote on existing ideas through your embedded widget, public board, or API.",
+    icon: ChatCircleDots,
+    id: "collect",
+    number: 1,
+    title: "Collect feedback",
   },
   {
-    id: "prioritize",
-    number: 2,
-    icon: FunnelSimple,
-    title: "Prioritize with data",
     description:
       "AI auto-tags, detects duplicates, and estimates complexity. Sort by votes, filter by status, and see what matters most.",
+    icon: FunnelSimple,
+    id: "prioritize",
+    number: 2,
+    title: "Prioritize with data",
   },
   {
-    id: "build",
-    number: 3,
-    icon: Code,
-    title: "Ship the right features",
     description:
       "Move items through your roadmap. Connect to GitHub to sync issues and track progress from feedback to release.",
+    icon: Code,
+    id: "build",
+    number: 3,
+    title: "Ship the right features",
   },
   {
-    id: "close-loop",
-    number: 4,
-    icon: ArrowsClockwise,
-    title: "Close the loop",
     description:
       "Publish changelog entries linked to the features users requested. They get notified automatically.",
+    icon: ArrowsClockwise,
+    id: "close-loop",
+    number: 4,
+    title: "Close the loop",
   },
 ];
 

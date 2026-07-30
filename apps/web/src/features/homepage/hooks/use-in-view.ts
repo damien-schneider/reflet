@@ -26,5 +26,5 @@ export function useInView(threshold = 0.15) {
     return () => observer.unobserve(el);
   }, [threshold]);
 
-  return { ref, isInView };
+  return { isInView, ref };
 }

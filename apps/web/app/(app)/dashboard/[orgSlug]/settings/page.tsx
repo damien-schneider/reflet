@@ -19,12 +19,11 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { H1, H2, H3, Muted, Text } from "@/components/ui/typography";
 
-const generateSlug = (text: string): string => {
-  return text
+const generateSlug = (text: string): string =>
+  text
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
-};
 
 export default function GeneralSettingsPage({
   params,
@@ -92,10 +91,10 @@ export default function GeneralSettingsPage({
     try {
       const trimmedSlug = slug.trim();
       await updateOrg({
-        organizationId: org._id,
-        name: name.trim(),
-        slug: trimmedSlug,
         isPublic,
+        name: name.trim(),
+        organizationId: org._id,
+        slug: trimmedSlug,
       });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);

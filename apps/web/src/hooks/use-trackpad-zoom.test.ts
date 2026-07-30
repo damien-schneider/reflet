@@ -5,14 +5,14 @@ import { useTrackpadZoom } from "./use-trackpad-zoom";
 describe("useTrackpadZoom", () => {
   it("returns default zoom value", () => {
     const { result } = renderHook(() =>
-      useTrackpadZoom({ min: 0, max: 100, defaultValue: 50 })
+      useTrackpadZoom({ defaultValue: 50, max: 100, min: 0 })
     );
     expect(result.current.zoom).toBe(50);
   });
 
   it("returns a ref", () => {
     const { result } = renderHook(() =>
-      useTrackpadZoom({ min: 0, max: 100, defaultValue: 50 })
+      useTrackpadZoom({ defaultValue: 50, max: 100, min: 0 })
     );
     expect(result.current.ref).toBeDefined();
     expect(result.current.ref.current).toBeNull();
@@ -24,25 +24,25 @@ describe("useTrackpadZoom", () => {
 
     const { result } = renderHook(() =>
       useTrackpadZoom({
-        min: 0,
-        max: 100,
         defaultValue: 50,
+        max: 100,
+        min: 0,
         sensitivity: 1,
       })
     );
 
     // Manually set the ref
     Object.defineProperty(result.current.ref, "current", {
-      writable: true,
       value: div,
+      writable: true,
     });
 
     // Re-render to attach listeners
     const { result: result2 } = renderHook(() =>
       useTrackpadZoom({
-        min: 0,
-        max: 100,
         defaultValue: 50,
+        max: 100,
+        min: 0,
         sensitivity: 1,
       })
     );
@@ -55,10 +55,10 @@ describe("useTrackpadZoom", () => {
   it("does not attach listeners when disabled", () => {
     const { result } = renderHook(() =>
       useTrackpadZoom({
-        min: 0,
-        max: 100,
         defaultValue: 50,
         enabled: false,
+        max: 100,
+        min: 0,
       })
     );
     expect(result.current.zoom).toBe(50);
@@ -66,14 +66,14 @@ describe("useTrackpadZoom", () => {
 
   it("uses default sensitivity of 0.5", () => {
     const { result } = renderHook(() =>
-      useTrackpadZoom({ min: 0, max: 100, defaultValue: 50 })
+      useTrackpadZoom({ defaultValue: 50, max: 100, min: 0 })
     );
     expect(result.current.zoom).toBe(50);
   });
 
   it("respects min and max clamp boundaries", () => {
     const { result } = renderHook(() =>
-      useTrackpadZoom({ min: 10, max: 90, defaultValue: 50 })
+      useTrackpadZoom({ defaultValue: 50, max: 90, min: 10 })
     );
     expect(result.current.zoom).toBe(50);
   });
@@ -82,10 +82,10 @@ describe("useTrackpadZoom", () => {
     const { result, rerender } = renderHook(
       ({ enabled }) =>
         useTrackpadZoom({
-          min: 0,
-          max: 100,
           defaultValue: 50,
           enabled,
+          max: 100,
+          min: 0,
         }),
       { initialProps: { enabled: false } }
     );
@@ -102,9 +102,9 @@ describe("useTrackpadZoom", () => {
 
     const { result } = renderHook(() =>
       useTrackpadZoom({
-        min: 0,
-        max: 100,
         defaultValue: 50,
+        max: 100,
+        min: 0,
         sensitivity: 1,
       })
     );
@@ -116,9 +116,9 @@ describe("useTrackpadZoom", () => {
 
     const { result: result2 } = renderHook(() =>
       useTrackpadZoom({
-        min: 0,
-        max: 100,
         defaultValue: 50,
+        max: 100,
+        min: 0,
         sensitivity: 1,
       })
     );
@@ -127,10 +127,10 @@ describe("useTrackpadZoom", () => {
     act(() => {
       div.dispatchEvent(
         new WheelEvent("wheel", {
-          ctrlKey: true,
-          deltaY: -10,
           bubbles: true,
           cancelable: true,
+          ctrlKey: true,
+          deltaY: -10,
         })
       );
     });
@@ -146,9 +146,9 @@ describe("useTrackpadZoom", () => {
 
     const { result } = renderHook(() =>
       useTrackpadZoom({
-        min: 0,
-        max: 100,
         defaultValue: 50,
+        max: 100,
+        min: 0,
         sensitivity: 1,
       })
     );
@@ -157,9 +157,9 @@ describe("useTrackpadZoom", () => {
     act(() => {
       div.dispatchEvent(
         new WheelEvent("wheel", {
+          bubbles: true,
           ctrlKey: false,
           deltaY: -10,
-          bubbles: true,
         })
       );
     });
@@ -170,7 +170,7 @@ describe("useTrackpadZoom", () => {
 
   it("clamps defaultValue within min/max range", () => {
     const { result } = renderHook(() =>
-      useTrackpadZoom({ min: 20, max: 80, defaultValue: 50 })
+      useTrackpadZoom({ defaultValue: 50, max: 80, min: 20 })
     );
     expect(result.current.zoom).toBeGreaterThanOrEqual(20);
     expect(result.current.zoom).toBeLessThanOrEqual(80);
@@ -182,9 +182,9 @@ describe("useTrackpadZoom", () => {
 
     const { result } = renderHook(() =>
       useTrackpadZoom({
-        min: 0,
-        max: 100,
         defaultValue: 50,
+        max: 100,
+        min: 0,
         sensitivity: 1,
       })
     );
@@ -195,9 +195,9 @@ describe("useTrackpadZoom", () => {
 
     const { rerender } = renderHook(() =>
       useTrackpadZoom({
-        min: 0,
-        max: 100,
         defaultValue: 50,
+        max: 100,
+        min: 0,
         sensitivity: 1,
       })
     );
@@ -210,10 +210,10 @@ describe("useTrackpadZoom", () => {
   it("does not change zoom when enabled is false", () => {
     const { result } = renderHook(() =>
       useTrackpadZoom({
-        min: 0,
-        max: 100,
         defaultValue: 50,
         enabled: false,
+        max: 100,
+        min: 0,
       })
     );
 
@@ -223,7 +223,7 @@ describe("useTrackpadZoom", () => {
 
   it("uses default sensitivity of 0.5", () => {
     const { result } = renderHook(() =>
-      useTrackpadZoom({ min: 0, max: 100, defaultValue: 50 })
+      useTrackpadZoom({ defaultValue: 50, max: 100, min: 0 })
     );
     expect(result.current.zoom).toBe(50);
     expect(result.current.ref).toBeDefined();
@@ -231,7 +231,7 @@ describe("useTrackpadZoom", () => {
 
   it("returns ref object", () => {
     const { result } = renderHook(() =>
-      useTrackpadZoom({ min: 0, max: 100, defaultValue: 50 })
+      useTrackpadZoom({ defaultValue: 50, max: 100, min: 0 })
     );
     expect(result.current.ref).toBeDefined();
     expect(result.current.ref.current).toBeNull();
@@ -240,9 +240,9 @@ describe("useTrackpadZoom", () => {
   it("clamps zoom at max boundary", () => {
     const { result } = renderHook(() =>
       useTrackpadZoom({
-        min: 0,
-        max: 100,
         defaultValue: 100,
+        max: 100,
+        min: 0,
         sensitivity: 1,
       })
     );
@@ -252,9 +252,9 @@ describe("useTrackpadZoom", () => {
   it("clamps zoom at min boundary", () => {
     const { result } = renderHook(() =>
       useTrackpadZoom({
-        min: 0,
-        max: 100,
         defaultValue: 0,
+        max: 100,
+        min: 0,
         sensitivity: 1,
       })
     );
@@ -279,7 +279,7 @@ describe("useTrackpadZoom", () => {
 
   it("cleans up event listeners on unmount", () => {
     const { unmount, result } = renderHook(() =>
-      useTrackpadZoom({ min: 0, max: 100, defaultValue: 50, sensitivity: 1 })
+      useTrackpadZoom({ defaultValue: 50, max: 100, min: 0, sensitivity: 1 })
     );
 
     expect(result.current.zoom).toBe(50);
@@ -289,14 +289,14 @@ describe("useTrackpadZoom", () => {
 
   it("enabled defaults to true", () => {
     const { result } = renderHook(() =>
-      useTrackpadZoom({ min: 0, max: 100, defaultValue: 75 })
+      useTrackpadZoom({ defaultValue: 75, max: 100, min: 0 })
     );
     expect(result.current.zoom).toBe(75);
   });
 
   it("returns consistent ref across re-renders", () => {
     const { result, rerender } = renderHook(() =>
-      useTrackpadZoom({ min: 0, max: 100, defaultValue: 50 })
+      useTrackpadZoom({ defaultValue: 50, max: 100, min: 0 })
     );
     const initialRef = result.current.ref;
     rerender();
@@ -310,11 +310,11 @@ describe("useTrackpadZoom", () => {
     const { result, rerender } = renderHook(
       ({ enabled }: { enabled: boolean }) =>
         useTrackpadZoom({
-          min: 0,
-          max: 100,
           defaultValue: 50,
-          sensitivity: 1,
           enabled,
+          max: 100,
+          min: 0,
+          sensitivity: 1,
         }),
       { initialProps: { enabled: false } }
     );
@@ -326,10 +326,10 @@ describe("useTrackpadZoom", () => {
     act(() => {
       div.dispatchEvent(
         new WheelEvent("wheel", {
-          ctrlKey: true,
-          deltaY: -10,
           bubbles: true,
           cancelable: true,
+          ctrlKey: true,
+          deltaY: -10,
         })
       );
     });
@@ -345,11 +345,11 @@ describe("useTrackpadZoom", () => {
     const { result, rerender } = renderHook(
       ({ enabled }: { enabled: boolean }) =>
         useTrackpadZoom({
-          min: 0,
-          max: 100,
           defaultValue: 50,
-          sensitivity: 1,
           enabled,
+          max: 100,
+          min: 0,
+          sensitivity: 1,
         }),
       { initialProps: { enabled: false } }
     );
@@ -360,10 +360,10 @@ describe("useTrackpadZoom", () => {
     act(() => {
       div.dispatchEvent(
         new WheelEvent("wheel", {
-          ctrlKey: true,
-          deltaY: 20,
           bubbles: true,
           cancelable: true,
+          ctrlKey: true,
+          deltaY: 20,
         })
       );
     });
@@ -379,11 +379,11 @@ describe("useTrackpadZoom", () => {
     const { result, rerender } = renderHook(
       ({ enabled }: { enabled: boolean }) =>
         useTrackpadZoom({
-          min: 0,
-          max: 100,
           defaultValue: 95,
-          sensitivity: 1,
           enabled,
+          max: 100,
+          min: 0,
+          sensitivity: 1,
         }),
       { initialProps: { enabled: false } }
     );
@@ -394,10 +394,10 @@ describe("useTrackpadZoom", () => {
     act(() => {
       div.dispatchEvent(
         new WheelEvent("wheel", {
-          ctrlKey: true,
-          deltaY: -50,
           bubbles: true,
           cancelable: true,
+          ctrlKey: true,
+          deltaY: -50,
         })
       );
     });
@@ -413,11 +413,11 @@ describe("useTrackpadZoom", () => {
     const { result, rerender } = renderHook(
       ({ enabled }: { enabled: boolean }) =>
         useTrackpadZoom({
-          min: 0,
-          max: 100,
           defaultValue: 5,
-          sensitivity: 1,
           enabled,
+          max: 100,
+          min: 0,
+          sensitivity: 1,
         }),
       { initialProps: { enabled: false } }
     );
@@ -428,10 +428,10 @@ describe("useTrackpadZoom", () => {
     act(() => {
       div.dispatchEvent(
         new WheelEvent("wheel", {
-          ctrlKey: true,
-          deltaY: 50,
           bubbles: true,
           cancelable: true,
+          ctrlKey: true,
+          deltaY: 50,
         })
       );
     });
@@ -450,11 +450,11 @@ describe("useTrackpadZoom", () => {
     const { result, rerender } = renderHook(
       ({ enabled }: { enabled: boolean }) =>
         useTrackpadZoom({
-          min: 0,
-          max: 100,
           defaultValue: 50,
-          sensitivity: 1,
           enabled,
+          max: 100,
+          min: 0,
+          sensitivity: 1,
         }),
       { initialProps: { enabled: false } }
     );
@@ -465,10 +465,10 @@ describe("useTrackpadZoom", () => {
     act(() => {
       viewport.dispatchEvent(
         new WheelEvent("wheel", {
-          ctrlKey: true,
-          deltaY: -10,
           bubbles: true,
           cancelable: true,
+          ctrlKey: true,
+          deltaY: -10,
         })
       );
     });
@@ -484,11 +484,11 @@ describe("useTrackpadZoom", () => {
     const { result, rerender } = renderHook(
       ({ enabled }: { enabled: boolean }) =>
         useTrackpadZoom({
-          min: 0,
-          max: 100,
           defaultValue: 50,
-          sensitivity: 1,
           enabled,
+          max: 100,
+          min: 0,
+          sensitivity: 1,
         }),
       { initialProps: { enabled: false } }
     );
@@ -499,9 +499,9 @@ describe("useTrackpadZoom", () => {
     act(() => {
       div.dispatchEvent(
         new WheelEvent("wheel", {
+          bubbles: true,
           ctrlKey: false,
           deltaY: -10,
-          bubbles: true,
         })
       );
     });
@@ -517,11 +517,11 @@ describe("useTrackpadZoom", () => {
     const { result, rerender, unmount } = renderHook(
       ({ enabled }: { enabled: boolean }) =>
         useTrackpadZoom({
-          min: 0,
-          max: 100,
           defaultValue: 50,
-          sensitivity: 1,
           enabled,
+          max: 100,
+          min: 0,
+          sensitivity: 1,
         }),
       { initialProps: { enabled: false } }
     );
@@ -534,10 +534,10 @@ describe("useTrackpadZoom", () => {
     act(() => {
       div.dispatchEvent(
         new WheelEvent("wheel", {
-          ctrlKey: true,
-          deltaY: -10,
           bubbles: true,
           cancelable: true,
+          ctrlKey: true,
+          deltaY: -10,
         })
       );
     });
@@ -552,11 +552,11 @@ describe("useTrackpadZoom", () => {
     const { result, rerender } = renderHook(
       ({ enabled }: { enabled: boolean }) =>
         useTrackpadZoom({
-          min: 0,
-          max: 100,
           defaultValue: 50,
-          sensitivity: 1,
           enabled,
+          max: 100,
+          min: 0,
+          sensitivity: 1,
         }),
       { initialProps: { enabled: false } }
     );
@@ -586,11 +586,11 @@ describe("useTrackpadZoom", () => {
     const { result, rerender } = renderHook(
       ({ enabled }: { enabled: boolean }) =>
         useTrackpadZoom({
-          min: 0,
-          max: 200,
           defaultValue: 100,
-          sensitivity: 1,
           enabled,
+          max: 200,
+          min: 0,
+          sensitivity: 1,
         }),
       { initialProps: { enabled: false } }
     );
@@ -631,11 +631,11 @@ describe("useTrackpadZoom", () => {
     const { result, rerender } = renderHook(
       ({ enabled }: { enabled: boolean }) =>
         useTrackpadZoom({
-          min: 0,
-          max: 100,
           defaultValue: 50,
-          sensitivity: 0.5,
           enabled,
+          max: 100,
+          min: 0,
+          sensitivity: 0.5,
         }),
       { initialProps: { enabled: false } }
     );
@@ -646,10 +646,10 @@ describe("useTrackpadZoom", () => {
     act(() => {
       div.dispatchEvent(
         new WheelEvent("wheel", {
-          ctrlKey: true,
-          deltaY: -10,
           bubbles: true,
           cancelable: true,
+          ctrlKey: true,
+          deltaY: -10,
         })
       );
     });

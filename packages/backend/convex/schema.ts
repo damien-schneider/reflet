@@ -33,7 +33,7 @@ export default defineSchema({
 
   // Standalone tables
   todos: defineTable({
-    text: v.string(),
     completed: v.boolean(),
+    text: v.string(),
   }),
 });

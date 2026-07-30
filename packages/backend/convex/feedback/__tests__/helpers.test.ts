@@ -3,7 +3,7 @@ import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { internal } from "../../_generated/api";
 import schema from "../../schema";
-import { modules } from "../../test.helpers";
+import { modules, setupTest } from "../../test.helpers";
 
 describe("weekly_digest_helpers", () => {
   test("getAllOrganizationIds returns org IDs", async () => {
@@ -11,12 +11,12 @@ describe("weekly_digest_helpers", () => {
 
     await t.run(async (ctx) => {
       await ctx.db.insert("organizations", {
+        createdAt: Date.now(),
+        isPublic: false,
         name: "Active Org",
         slug: "active-org",
-        isPublic: false,
-        subscriptionTier: "free",
         subscriptionStatus: "none",
-        createdAt: Date.now(),
+        subscriptionTier: "free",
       });
     });
 
@@ -32,12 +32,12 @@ describe("weekly_digest_helpers", () => {
 
     const orgId = await t.run(async (ctx) => {
       const id = await ctx.db.insert("organizations", {
+        createdAt: Date.now(),
+        isPublic: false,
         name: "Temp Org",
         slug: "temp-org",
-        isPublic: false,
-        subscriptionTier: "free",
         subscriptionStatus: "none",
-        createdAt: Date.now(),
+        subscriptionTier: "free",
       });
       await ctx.db.delete(id);
       return id;
@@ -57,26 +57,26 @@ describe("weekly_digest_helpers", () => {
 
     const orgId = await t.run(async (ctx) => {
       const id = await ctx.db.insert("organizations", {
+        createdAt: Date.now(),
+        isPublic: false,
         name: "Test Org",
         slug: "test-org",
-        isPublic: false,
-        subscriptionTier: "free",
         subscriptionStatus: "none",
-        createdAt: Date.now(),
+        subscriptionTier: "free",
       });
 
       // Insert recent feedback
       await ctx.db.insert("feedback", {
-        organizationId: id,
-        title: "New feedback",
-        description: "Created this week",
-        status: "open",
-        voteCount: 5,
         commentCount: 0,
+        createdAt: Date.now(),
+        description: "Created this week",
         isApproved: true,
         isPinned: false,
-        createdAt: Date.now(),
+        organizationId: id,
+        status: "open",
+        title: "New feedback",
         updatedAt: Date.now(),
+        voteCount: 5,
       });
 
       return id;
@@ -102,17 +102,17 @@ describe("shipped_notifications_helpers", () => {
 
     const fakeReleaseId = await t.run(async (ctx) => {
       const orgId = await ctx.db.insert("organizations", {
+        createdAt: Date.now(),
+        isPublic: false,
         name: "Test",
         slug: "test",
-        isPublic: false,
-        subscriptionTier: "free",
         subscriptionStatus: "none",
-        createdAt: Date.now(),
+        subscriptionTier: "free",
       });
       const id = await ctx.db.insert("releases", {
+        createdAt: Date.now(),
         organizationId: orgId,
         title: "Release",
-        createdAt: Date.now(),
         updatedAt: Date.now(),
       });
       await ctx.db.delete(id);
@@ -127,42 +127,42 @@ describe("shipped_notifications_helpers", () => {
   });
 
   test("getShippedNotificationData returns linked feedback items", async () => {
-    const t = convexTest(schema, modules);
+    const t = setupTest({ stripeSubscriptionStatus: "active" });
 
     const releaseId = await t.run(async (ctx) => {
       const orgId = await ctx.db.insert("organizations", {
+        createdAt: Date.now(),
+        isPublic: true,
         name: "Pro Org",
         slug: "pro-org",
-        isPublic: true,
-        subscriptionTier: "pro",
         subscriptionStatus: "active",
-        createdAt: Date.now(),
+        subscriptionTier: "pro",
       });
 
       const feedbackId = await ctx.db.insert("feedback", {
-        organizationId: orgId,
-        title: "Feature request",
-        description: "Please add this",
-        status: "completed",
-        voteCount: 10,
         commentCount: 0,
+        createdAt: Date.now(),
+        description: "Please add this",
         isApproved: true,
         isPinned: false,
-        createdAt: Date.now(),
+        organizationId: orgId,
+        status: "completed",
+        title: "Feature request",
         updatedAt: Date.now(),
+        voteCount: 10,
       });
 
       const rId = await ctx.db.insert("releases", {
+        createdAt: Date.now(),
         organizationId: orgId,
         title: "v1.0.0",
-        createdAt: Date.now(),
         updatedAt: Date.now(),
       });
 
       await ctx.db.insert("releaseFeedback", {
-        releaseId: rId,
-        feedbackId,
         createdAt: Date.now(),
+        feedbackId,
+        releaseId: rId,
       });
 
       return rId;
@@ -185,38 +185,38 @@ describe("shipped_notifications_helpers", () => {
     // Verify the data layer: votes and subscriptions are stored properly
     await t.run(async (ctx) => {
       const orgId = await ctx.db.insert("organizations", {
+        createdAt: Date.now(),
+        isPublic: false,
         name: "Test",
         slug: "test",
-        isPublic: false,
-        subscriptionTier: "free",
         subscriptionStatus: "none",
-        createdAt: Date.now(),
+        subscriptionTier: "free",
       });
 
       const fId = await ctx.db.insert("feedback", {
-        organizationId: orgId,
-        title: "Test feedback",
-        description: "Test",
-        status: "open",
-        voteCount: 1,
         commentCount: 0,
+        createdAt: Date.now(),
+        description: "Test",
         isApproved: true,
         isPinned: false,
-        createdAt: Date.now(),
+        organizationId: orgId,
+        status: "open",
+        title: "Test feedback",
         updatedAt: Date.now(),
+        voteCount: 1,
       });
 
       await ctx.db.insert("feedbackVotes", {
+        createdAt: Date.now(),
         feedbackId: fId,
         userId: "user_voter",
         voteType: "upvote",
-        createdAt: Date.now(),
       });
 
       await ctx.db.insert("feedbackSubscriptions", {
+        createdAt: Date.now(),
         feedbackId: fId,
         userId: "user_subscriber",
-        createdAt: Date.now(),
       });
 
       // Verify the data is stored correctly
@@ -239,17 +239,17 @@ describe("release_ai_matching_helpers", () => {
 
     const fakeId = await t.run(async (ctx) => {
       const orgId = await ctx.db.insert("organizations", {
+        createdAt: Date.now(),
+        isPublic: false,
         name: "Test",
         slug: "test",
-        isPublic: false,
-        subscriptionTier: "free",
         subscriptionStatus: "none",
-        createdAt: Date.now(),
+        subscriptionTier: "free",
       });
       const id = await ctx.db.insert("releases", {
+        createdAt: Date.now(),
         organizationId: orgId,
         title: "Release",
-        createdAt: Date.now(),
         updatedAt: Date.now(),
       });
       await ctx.db.delete(id);
@@ -268,51 +268,51 @@ describe("release_ai_matching_helpers", () => {
 
     const releaseId = await t.run(async (ctx) => {
       const orgId = await ctx.db.insert("organizations", {
+        createdAt: Date.now(),
+        isPublic: false,
         name: "Test",
         slug: "test",
-        isPublic: false,
-        subscriptionTier: "free",
         subscriptionStatus: "none",
-        createdAt: Date.now(),
+        subscriptionTier: "free",
       });
 
       const linkedFeedback = await ctx.db.insert("feedback", {
-        organizationId: orgId,
-        title: "Already linked",
-        description: "Already linked to release",
-        status: "open",
-        voteCount: 0,
         commentCount: 0,
+        createdAt: Date.now(),
+        description: "Already linked to release",
         isApproved: true,
         isPinned: false,
-        createdAt: Date.now(),
+        organizationId: orgId,
+        status: "open",
+        title: "Already linked",
         updatedAt: Date.now(),
+        voteCount: 0,
       });
 
       await ctx.db.insert("feedback", {
-        organizationId: orgId,
-        title: "Unlinked feedback",
-        description: "Not linked yet",
-        status: "open",
-        voteCount: 0,
         commentCount: 0,
+        createdAt: Date.now(),
+        description: "Not linked yet",
         isApproved: true,
         isPinned: false,
-        createdAt: Date.now(),
+        organizationId: orgId,
+        status: "open",
+        title: "Unlinked feedback",
         updatedAt: Date.now(),
+        voteCount: 0,
       });
 
       const rId = await ctx.db.insert("releases", {
+        createdAt: Date.now(),
         organizationId: orgId,
         title: "Release",
-        createdAt: Date.now(),
         updatedAt: Date.now(),
       });
 
       await ctx.db.insert("releaseFeedback", {
-        releaseId: rId,
-        feedbackId: linkedFeedback,
         createdAt: Date.now(),
+        feedbackId: linkedFeedback,
+        releaseId: rId,
       });
 
       return rId;

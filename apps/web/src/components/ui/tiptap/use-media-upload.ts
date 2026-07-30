@@ -75,11 +75,11 @@ export function useMediaUpload({
         const uploadUrl = await generateUploadUrl();
 
         const response = await fetch(uploadUrl, {
-          method: "POST",
+          body: file,
           headers: {
             "Content-Type": file.type,
           },
-          body: file,
+          method: "POST",
         });
 
         if (!response.ok) {
@@ -97,7 +97,7 @@ export function useMediaUpload({
           throw new Error("Failed to get storage URL");
         }
 
-        const result: MediaUploadResult = { url, type: mediaType };
+        const result: MediaUploadResult = { type: mediaType, url };
         onSuccess?.(result);
         return result;
       } catch (err) {
@@ -159,9 +159,9 @@ export function useMediaUpload({
   );
 
   return {
-    uploadMedia,
-    openFilePicker,
     isUploading,
+    openFilePicker,
+    uploadMedia,
     uploadProgress,
   };
 }

@@ -25,10 +25,10 @@ interface UptimeData {
 }
 
 const CHECK_INTERVALS = [
-  { value: 1, label: "1 min" },
-  { value: 5, label: "5 min" },
-  { value: 10, label: "10 min" },
-  { value: 30, label: "30 min" },
+  { label: "1 min", value: 1 },
+  { label: "5 min", value: 5 },
+  { label: "10 min", value: 10 },
+  { label: "30 min", value: 30 },
 ] as const;
 
 interface MonitorCardProps {
@@ -54,16 +54,16 @@ interface MonitorCardProps {
 }
 
 const statusLabels = {
-  operational: "Operational",
   degraded: "Degraded",
   major_outage: "Major Outage",
+  operational: "Operational",
   paused: "Paused",
 } as const;
 
 const statusLabelStyles = {
-  operational: "text-emerald-600 dark:text-emerald-400",
   degraded: "text-amber-600 dark:text-amber-400",
   major_outage: "text-red-600 dark:text-red-400",
+  operational: "text-emerald-600 dark:text-emerald-400",
   paused: "text-muted-foreground",
 } as const;
 

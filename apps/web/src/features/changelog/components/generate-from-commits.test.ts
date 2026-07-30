@@ -31,9 +31,8 @@ const findPreviousTag = (
   return tags[0]?.name ?? null;
 };
 
-const tagExists = (tags: Array<{ name: string }>, tagName: string): boolean => {
-  return tags.some((t) => t.name === tagName || t.name === `v${tagName}`);
-};
+const tagExists = (tags: Array<{ name: string }>, tagName: string): boolean =>
+  tags.some((t) => t.name === tagName || t.name === `v${tagName}`);
 
 describe("findPreviousTag", () => {
   test("should return null when tags array is empty", () => {

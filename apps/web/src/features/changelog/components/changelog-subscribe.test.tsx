@@ -7,8 +7,8 @@ const mockUseQuery = vi.fn();
 const mockUseMutation = vi.fn();
 
 vi.mock("convex/react", () => ({
-  useQuery: (...args: unknown[]) => mockUseQuery(...args),
   useMutation: (...args: unknown[]) => mockUseMutation(...args),
+  useQuery: (...args: unknown[]) => mockUseQuery(...args),
 }));
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
@@ -17,8 +17,8 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
       subscriptions: {
         isSubscribed: "changelog.subscriptions:isSubscribed",
         subscribe: "changelog.subscriptions:subscribe",
-        unsubscribe: "changelog.subscriptions:unsubscribe",
         subscribeByEmail: "changelog.subscriptions:subscribeByEmail",
+        unsubscribe: "changelog.subscriptions:unsubscribe",
       },
     },
   },
@@ -37,7 +37,7 @@ vi.mock("@phosphor-icons/react", () => ({
 }));
 
 vi.mock("sonner", () => ({
-  toast: { success: vi.fn(), error: vi.fn() },
+  toast: { error: vi.fn(), success: vi.fn() },
 }));
 
 vi.mock("@/components/ui/button", () => ({
@@ -207,8 +207,8 @@ describe("ChangelogSubscribe", () => {
       const form = input.closest("form")!;
       fireEvent.submit(form);
       expect(mockSubscribeByEmail).toHaveBeenCalledWith({
-        organizationId: ORG_ID,
         email: "user@test.com",
+        organizationId: ORG_ID,
       });
     });
 

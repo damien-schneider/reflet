@@ -75,24 +75,24 @@ export function FeedbackDetailDrawer({
     (listItem && feedbackId
       ? {
           _id: feedbackId,
-          title: listItem.title,
+          assignee: null, // Will load from full details
+          author: null, // Will load from full details
+          commentCount: listItem.commentCount,
+          createdAt: listItem.createdAt,
           description: listItem.description ?? null,
+          hasVoted: listItem.hasVoted,
+          organizationId: listItem.organizationId,
+          organizationStatusId: listItem.organizationStatusId,
           tags: listItem.tags
             ?.filter((t): t is NonNullable<typeof t> => t !== null)
             .map((t) => ({
               _id: t._id,
-              name: t.name,
               color: t.color,
+              name: t.name,
             })),
-          hasVoted: listItem.hasVoted,
+          title: listItem.title,
           userVoteType: listItem.userVoteType,
           voteCount: listItem.voteCount,
-          commentCount: listItem.commentCount,
-          organizationStatusId: listItem.organizationStatusId,
-          createdAt: listItem.createdAt,
-          author: null, // Will load from full details
-          assignee: null, // Will load from full details
-          organizationId: listItem.organizationId,
         }
       : null);
 
@@ -199,11 +199,11 @@ export function FeedbackDetailDrawer({
                 </TooltipTrigger>
                 <TooltipContent>
                   {new Date(feedback.createdAt).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "long",
                     day: "numeric",
                     hour: "numeric",
                     minute: "2-digit",
+                    month: "long",
+                    year: "numeric",
                   })}
                 </TooltipContent>
               </Tooltip>

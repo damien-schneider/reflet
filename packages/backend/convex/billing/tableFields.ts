@@ -3,10 +3,11 @@ import { v } from "convex/values";
 
 export const billingTables = {
   subscriptions: defineTable({
+    cancelAtPeriodEnd: v.boolean(),
+    createdAt: v.number(),
+    currentPeriodEnd: v.optional(v.number()),
+    currentPeriodStart: v.optional(v.number()),
     organizationId: v.id("organizations"),
-    stripeCustomerId: v.string(),
-    stripeSubscriptionId: v.string(),
-    stripePriceId: v.optional(v.string()),
     status: v.union(
       v.literal("active"),
       v.literal("trialing"),
@@ -16,10 +17,9 @@ export const billingTables = {
       v.literal("incomplete"),
       v.literal("incomplete_expired")
     ),
-    currentPeriodStart: v.optional(v.number()),
-    currentPeriodEnd: v.optional(v.number()),
-    cancelAtPeriodEnd: v.boolean(),
-    createdAt: v.number(),
+    stripeCustomerId: v.string(),
+    stripePriceId: v.optional(v.string()),
+    stripeSubscriptionId: v.string(),
     updatedAt: v.number(),
   })
     .index("by_organization", ["organizationId"])

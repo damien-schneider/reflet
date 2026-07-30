@@ -9,12 +9,12 @@ import { getAuthUser } from "../shared/utils";
  */
 export const startRetroactiveChangelog = mutation({
   args: {
-    organizationId: v.id("organizations"),
     groupingStrategy: v.union(
       v.literal("tags"),
       v.literal("weekly"),
       v.literal("auto")
     ),
+    organizationId: v.id("organizations"),
     skipExistingVersions: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
@@ -69,12 +69,12 @@ export const startRetroactiveChangelog = mutation({
 
     const now = Date.now();
     const jobId = await ctx.db.insert("retroactiveJobs", {
-      organizationId: args.organizationId,
-      status: "pending",
-      groupingStrategy: args.groupingStrategy,
-      targetBranch,
-      skipExistingVersions: skipExisting,
       createdAt: now,
+      groupingStrategy: args.groupingStrategy,
+      organizationId: args.organizationId,
+      skipExistingVersions: skipExisting,
+      status: "pending",
+      targetBranch,
       updatedAt: now,
     });
 

@@ -50,10 +50,9 @@ const sortFeedback = <
  */
 export const listByOrganization = query({
   args: {
-    organizationId: v.id("organizations"),
-    statusIds: v.optional(v.array(v.id("organizationStatuses"))),
     hideCompleted: v.optional(v.boolean()),
-    tagIds: v.optional(v.array(v.id("tags"))),
+    limit: v.optional(v.number()),
+    organizationId: v.id("organizations"),
     search: v.optional(v.string()),
     sortBy: v.optional(
       v.union(
@@ -63,7 +62,8 @@ export const listByOrganization = query({
         v.literal("comments")
       )
     ),
-    limit: v.optional(v.number()),
+    statusIds: v.optional(v.array(v.id("organizationStatuses"))),
+    tagIds: v.optional(v.array(v.id("tags"))),
   },
   handler: async (ctx, args) => {
     const org = await ctx.db.get(args.organizationId);
@@ -228,18 +228,18 @@ export const listByOrganization = query({
 
       return {
         ...f,
-        hasVoted,
-        userVoteType,
-        upvoteCount,
         downvoteCount,
-        tags: tags.filter(Boolean),
+        hasVoted,
         organizationStatus: orgStatus
           ? {
-              name: orgStatus.name,
               color: orgStatus.color,
               icon: orgStatus.icon,
+              name: orgStatus.name,
             }
           : null,
+        tags: tags.filter(Boolean),
+        upvoteCount,
+        userVoteType,
       };
     };
 
@@ -365,23 +365,23 @@ export const listForRoadmapByOrganization = query({
 
         return {
           ...f,
-          tags: tags.filter(Boolean),
-          organizationStatus: orgStatus
-            ? {
-                name: orgStatus.name,
-                color: orgStatus.color,
-                icon: orgStatus.icon,
-              }
-            : null,
-          hasVoted,
-          userVoteType,
-          upvoteCount,
           downvoteCount,
+          hasVoted,
           milestones: milestones.map((m) => ({
             _id: m._id,
-            name: m.name,
             emoji: m.emoji,
+            name: m.name,
           })),
+          organizationStatus: orgStatus
+            ? {
+                color: orgStatus.color,
+                icon: orgStatus.icon,
+                name: orgStatus.name,
+              }
+            : null,
+          tags: tags.filter(Boolean),
+          upvoteCount,
+          userVoteType,
         };
       })
     );

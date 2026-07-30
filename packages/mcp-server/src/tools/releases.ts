@@ -11,12 +11,12 @@ export function registerReleaseTools(
     "release_list",
     "List releases (changelog entries). Filter by draft/published status.",
     {
+      limit: z.number().optional().describe("Max items to return"),
+      offset: z.number().optional().describe("Pagination offset"),
       status: z
         .enum(["draft", "published", "all"])
         .optional()
         .describe("Filter by publish status (default: all)"),
-      limit: z.number().optional().describe("Max items to return"),
-      offset: z.number().optional().describe("Pagination offset"),
     },
     async (params) => textResult(await client.listReleases(params))
   );
@@ -34,11 +34,11 @@ export function registerReleaseTools(
     "release_create",
     "Create a new draft release (changelog entry).",
     {
-      title: z.string().describe("Release title"),
       description: z
         .string()
         .optional()
         .describe("Release description/notes (rich text or markdown)"),
+      title: z.string().describe("Release title"),
       version: z
         .string()
         .optional()
@@ -51,9 +51,9 @@ export function registerReleaseTools(
     "release_update",
     "Update a release's title, description, or version.",
     {
+      description: z.string().optional().describe("New description/notes"),
       releaseId: z.string().describe("The release ID"),
       title: z.string().optional().describe("New title"),
-      description: z.string().optional().describe("New description/notes"),
       version: z.string().optional().describe("New version string"),
     },
     async (params) => textResult(await client.updateRelease(params))
@@ -91,9 +91,9 @@ export function registerReleaseTools(
     "release_link_feedback",
     "Link or unlink a feedback item to/from a release.",
     {
-      releaseId: z.string().describe("The release ID"),
-      feedbackId: z.string().describe("The feedback item ID"),
       action: z.enum(["link", "unlink"]).describe("Whether to link or unlink"),
+      feedbackId: z.string().describe("The feedback item ID"),
+      releaseId: z.string().describe("The release ID"),
     },
     async ({ releaseId, feedbackId, action }) =>
       textResult(
@@ -105,10 +105,6 @@ export function registerReleaseTools(
     "release_schedule",
     "Schedule a draft release for future publication. Provide a Unix timestamp (milliseconds) for the publish time.",
     {
-      releaseId: z.string().describe("The release ID to schedule"),
-      scheduledPublishAt: z
-        .number()
-        .describe("Unix timestamp in milliseconds for when to publish"),
       feedbackStatus: z
         .enum([
           "open",
@@ -122,6 +118,10 @@ export function registerReleaseTools(
         .describe(
           "Status to set on linked feedback items when the release publishes"
         ),
+      releaseId: z.string().describe("The release ID to schedule"),
+      scheduledPublishAt: z
+        .number()
+        .describe("Unix timestamp in milliseconds for when to publish"),
     },
     async (params) => textResult(await client.scheduleRelease(params))
   );

@@ -11,12 +11,12 @@ const testSchema = schema as any;
 const createOrg = async (t: ReturnType<typeof convexTest>, slug = "test-org") =>
   t.run(async (ctx) =>
     ctx.db.insert("organizations", {
+      createdAt: Date.now(),
+      isPublic: false,
       name: "Test Org",
       slug,
-      isPublic: false,
-      subscriptionTier: "free",
       subscriptionStatus: "none",
-      createdAt: Date.now(),
+      subscriptionTier: "free",
     })
   );
 
@@ -28,10 +28,10 @@ const createMember = async (
 ) =>
   t.run(async (ctx) =>
     ctx.db.insert("organizationMembers", {
-      organizationId: orgId,
-      userId,
-      role,
       createdAt: Date.now(),
+      organizationId: orgId,
+      role,
+      userId,
     })
   );
 
@@ -46,11 +46,11 @@ describe("saveUserInstallation", () => {
     const connectionId = await t.mutation(
       internal.integrations.github.mutations.saveUserInstallation,
       {
-        userId: "user_123",
-        installationId: "inst_456",
-        accountType: "user",
-        accountLogin: "octocat",
         accountAvatarUrl: "https://github.com/octocat.png",
+        accountLogin: "octocat",
+        accountType: "user",
+        installationId: "inst_456",
+        userId: "user_123",
       }
     );
 
@@ -70,20 +70,20 @@ describe("saveUserInstallation", () => {
     const firstId = await t.mutation(
       internal.integrations.github.mutations.saveUserInstallation,
       {
-        userId: "user_123",
-        installationId: "inst_old",
-        accountType: "user",
         accountLogin: "old-user",
+        accountType: "user",
+        installationId: "inst_old",
+        userId: "user_123",
       }
     );
 
     const secondId = await t.mutation(
       internal.integrations.github.mutations.saveUserInstallation,
       {
-        userId: "user_123",
-        installationId: "inst_new",
-        accountType: "organization",
         accountLogin: "new-org",
+        accountType: "organization",
+        installationId: "inst_new",
+        userId: "user_123",
       }
     );
 
@@ -112,10 +112,10 @@ describe("getOrgAvailableInstallations", () => {
     await t.mutation(
       internal.integrations.github.mutations.saveUserInstallation,
       {
-        userId: "user_A",
-        installationId: "inst_A",
-        accountType: "user",
         accountLogin: "user-a-github",
+        accountType: "user",
+        installationId: "inst_A",
+        userId: "user_A",
       }
     );
 
@@ -138,20 +138,20 @@ describe("getOrgAvailableInstallations", () => {
     await t.mutation(
       internal.integrations.github.mutations.saveUserInstallation,
       {
-        userId: "user_A",
-        installationId: "inst_A",
-        accountType: "user",
         accountLogin: "user-a-github",
+        accountType: "user",
+        installationId: "inst_A",
+        userId: "user_A",
       }
     );
 
     await t.mutation(
       internal.integrations.github.mutations.saveUserInstallation,
       {
-        userId: "user_B",
-        installationId: "inst_B",
-        accountType: "organization",
         accountLogin: "org-beta",
+        accountType: "organization",
+        installationId: "inst_B",
+        userId: "user_B",
       }
     );
 
@@ -176,10 +176,10 @@ describe("getOrgAvailableInstallations", () => {
     const connectionId = await t.mutation(
       internal.integrations.github.mutations.saveUserInstallation,
       {
-        userId: "user_A",
-        installationId: "inst_A",
-        accountType: "user",
         accountLogin: "user-a-github",
+        accountType: "user",
+        installationId: "inst_A",
+        userId: "user_A",
       }
     );
 
@@ -223,20 +223,20 @@ describe("linkRepoToOrg", () => {
     const userConnectionId = await t.mutation(
       internal.integrations.github.mutations.saveUserInstallation,
       {
-        userId: "user_A",
-        installationId: "inst_A",
-        accountType: "user",
-        accountLogin: "octocat",
         accountAvatarUrl: "https://github.com/octocat.png",
+        accountLogin: "octocat",
+        accountType: "user",
+        installationId: "inst_A",
+        userId: "user_A",
       }
     );
 
     const connectionId = await t.mutation(
       internal.integrations.github.mutations.linkRepoToOrg,
       {
+        linkedByUserId: "user_A",
         organizationId: orgId,
         userGithubConnectionId: userConnectionId,
-        linkedByUserId: "user_A",
       }
     );
 
@@ -259,10 +259,10 @@ describe("linkRepoToOrg", () => {
     const userConnA = await t.mutation(
       internal.integrations.github.mutations.saveUserInstallation,
       {
-        userId: "user_A",
-        installationId: "inst_A",
-        accountType: "user",
         accountLogin: "user-a",
+        accountType: "user",
+        installationId: "inst_A",
+        userId: "user_A",
       }
     );
 
@@ -270,19 +270,19 @@ describe("linkRepoToOrg", () => {
     const firstConnectionId = await t.mutation(
       internal.integrations.github.mutations.linkRepoToOrg,
       {
+        linkedByUserId: "user_A",
         organizationId: orgId,
         userGithubConnectionId: userConnA,
-        linkedByUserId: "user_A",
       }
     );
 
     const userConnB = await t.mutation(
       internal.integrations.github.mutations.saveUserInstallation,
       {
-        userId: "user_B",
-        installationId: "inst_B",
-        accountType: "organization",
         accountLogin: "org-beta",
+        accountType: "organization",
+        installationId: "inst_B",
+        userId: "user_B",
       }
     );
 
@@ -290,9 +290,9 @@ describe("linkRepoToOrg", () => {
     const secondConnectionId = await t.mutation(
       internal.integrations.github.mutations.linkRepoToOrg,
       {
+        linkedByUserId: "user_B",
         organizationId: orgId,
         userGithubConnectionId: userConnB,
-        linkedByUserId: "user_B",
       }
     );
 
@@ -313,13 +313,13 @@ describe("linkRepoToOrg", () => {
     // Create a fake ID that doesn't exist
     const fakeId = await t.run(async (ctx) => {
       const id = await ctx.db.insert("userGithubConnections", {
-        userId: "temp",
-        installationId: "temp",
-        accountType: "user",
         accountLogin: "temp",
-        status: "connected",
+        accountType: "user",
         createdAt: Date.now(),
+        installationId: "temp",
+        status: "connected",
         updatedAt: Date.now(),
+        userId: "temp",
       });
       await ctx.db.delete(id);
       return id;
@@ -327,9 +327,9 @@ describe("linkRepoToOrg", () => {
 
     await expect(
       t.mutation(internal.integrations.github.mutations.linkRepoToOrg, {
+        linkedByUserId: "user_A",
         organizationId: orgId,
         userGithubConnectionId: fakeId,
-        linkedByUserId: "user_A",
       })
     ).rejects.toThrow("User GitHub connection not found");
   });
@@ -348,19 +348,19 @@ describe("handleMemberRemoved", () => {
     const userConn = await t.mutation(
       internal.integrations.github.mutations.saveUserInstallation,
       {
-        userId: "user_A",
-        installationId: "inst_A",
-        accountType: "user",
         accountLogin: "octocat",
+        accountType: "user",
+        installationId: "inst_A",
+        userId: "user_A",
       }
     );
 
     const connectionId = await t.mutation(
       internal.integrations.github.mutations.linkRepoToOrg,
       {
+        linkedByUserId: "user_A",
         organizationId: orgId,
         userGithubConnectionId: userConn,
-        linkedByUserId: "user_A",
       }
     );
 
@@ -385,19 +385,19 @@ describe("handleMemberRemoved", () => {
     const userConnB = await t.mutation(
       internal.integrations.github.mutations.saveUserInstallation,
       {
-        userId: "user_B",
-        installationId: "inst_B",
-        accountType: "user",
         accountLogin: "user-b",
+        accountType: "user",
+        installationId: "inst_B",
+        userId: "user_B",
       }
     );
 
     const connectionId = await t.mutation(
       internal.integrations.github.mutations.linkRepoToOrg,
       {
+        linkedByUserId: "user_B",
         organizationId: orgId,
         userGithubConnectionId: userConnB,
-        linkedByUserId: "user_B",
       }
     );
 
@@ -428,19 +428,19 @@ describe("handleInstallationDeleted (updated)", () => {
     const userConnId = await t.mutation(
       internal.integrations.github.mutations.saveUserInstallation,
       {
-        userId: "user_A",
-        installationId: "inst_A",
-        accountType: "user",
         accountLogin: "octocat",
+        accountType: "user",
+        installationId: "inst_A",
+        userId: "user_A",
       }
     );
 
     const orgConnectionId = await t.mutation(
       internal.integrations.github.mutations.linkRepoToOrg,
       {
+        linkedByUserId: "user_A",
         organizationId: orgId,
         userGithubConnectionId: userConnId,
-        linkedByUserId: "user_A",
       }
     );
 
@@ -470,28 +470,28 @@ describe("handleInstallationDeleted (updated)", () => {
     const userConnId = await t.mutation(
       internal.integrations.github.mutations.saveUserInstallation,
       {
-        userId: "user_A",
-        installationId: "inst_A",
-        accountType: "user",
         accountLogin: "octocat",
+        accountType: "user",
+        installationId: "inst_A",
+        userId: "user_A",
       }
     );
 
     const connId1 = await t.mutation(
       internal.integrations.github.mutations.linkRepoToOrg,
       {
+        linkedByUserId: "user_A",
         organizationId: orgId1,
         userGithubConnectionId: userConnId,
-        linkedByUserId: "user_A",
       }
     );
 
     const connId2 = await t.mutation(
       internal.integrations.github.mutations.linkRepoToOrg,
       {
+        linkedByUserId: "user_A",
         organizationId: orgId2,
         userGithubConnectionId: userConnId,
-        linkedByUserId: "user_A",
       }
     );
 
@@ -519,10 +519,10 @@ describe("getUserGithubConnection", () => {
     await t.mutation(
       internal.integrations.github.mutations.saveUserInstallation,
       {
-        userId: "user_123",
-        installationId: "inst_456",
-        accountType: "user",
         accountLogin: "octocat",
+        accountType: "user",
+        installationId: "inst_456",
+        userId: "user_123",
       }
     );
 

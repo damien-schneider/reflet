@@ -161,11 +161,11 @@ describe("TagFormDialog", () => {
   const mockUpdateTag = vi.fn().mockResolvedValue(undefined);
 
   const defaultProps = {
-    organizationId: ORG_ID,
     editingTag: null,
-    open: true,
     onOpenChange: vi.fn(),
     onSuccess: vi.fn(),
+    open: true,
+    organizationId: ORG_ID,
   };
 
   beforeEach(() => {
@@ -198,8 +198,8 @@ describe("TagFormDialog", () => {
   it("shows 'Edit tag' title when editing", () => {
     const editingTag = {
       _id: "tag1" as Id<"tags">,
-      name: "Bug",
       color: "red",
+      name: "Bug",
     };
     render(<TagFormDialog {...defaultProps} editingTag={editingTag} />);
     expect(screen.getByTestId("dialog-title")).toHaveTextContent("Edit tag");
@@ -215,8 +215,8 @@ describe("TagFormDialog", () => {
   it("shows edit description when editing", () => {
     const editingTag = {
       _id: "tag1" as Id<"tags">,
-      name: "Bug",
       color: "red",
+      name: "Bug",
     };
     render(<TagFormDialog {...defaultProps} editingTag={editingTag} />);
     expect(screen.getByTestId("dialog-description")).toHaveTextContent(
@@ -227,9 +227,9 @@ describe("TagFormDialog", () => {
   it("populates form with editing tag data", () => {
     const editingTag = {
       _id: "tag1" as Id<"tags">,
-      name: "Bug",
       color: "red",
       icon: "🐛",
+      name: "Bug",
     };
     render(<TagFormDialog {...defaultProps} editingTag={editingTag} />);
     expect(screen.getByTestId("tag-name-input")).toHaveValue("Bug");
@@ -273,8 +273,8 @@ describe("TagFormDialog", () => {
   it("shows Save button when editing", () => {
     const editingTag = {
       _id: "tag1" as Id<"tags">,
-      name: "Bug",
       color: "red",
+      name: "Bug",
     };
     render(<TagFormDialog {...defaultProps} editingTag={editingTag} />);
     expect(screen.getByText("Save")).toBeInTheDocument();
@@ -287,10 +287,10 @@ describe("TagFormDialog", () => {
     fireEvent.change(input, { target: { value: "Bug" } });
     fireEvent.click(screen.getByText("Create"));
     expect(mockCreateTag).toHaveBeenCalledWith({
-      organizationId: ORG_ID,
-      name: "Bug",
       color: "blue",
       icon: undefined,
+      name: "Bug",
+      organizationId: ORG_ID,
     });
   });
 
@@ -311,16 +311,16 @@ describe("TagFormDialog", () => {
   it("calls updateTag when Save is clicked in edit mode", async () => {
     const editingTag = {
       _id: "tag1" as Id<"tags">,
-      name: "Bug",
       color: "red",
+      name: "Bug",
     };
     render(<TagFormDialog {...defaultProps} editingTag={editingTag} />);
     fireEvent.click(screen.getByText("Save"));
     expect(mockUpdateTag).toHaveBeenCalledWith({
-      id: "tag1",
-      name: "Bug",
       color: "red",
       icon: undefined,
+      id: "tag1",
+      name: "Bug",
     });
   });
 
@@ -353,8 +353,8 @@ describe("TagFormDialog", () => {
   it("migrates hex color for editing tag", () => {
     const editingTag = {
       _id: "tag1" as Id<"tags">,
-      name: "Bug",
       color: "#ff0000",
+      name: "Bug",
     };
     render(<TagFormDialog {...defaultProps} editingTag={editingTag} />);
     // Should migrate to "blue" based on our mock

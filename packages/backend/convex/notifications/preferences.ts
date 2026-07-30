@@ -3,12 +3,12 @@ import { mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
 
 const DEFAULT_PREFERENCES = {
-  pushEnabled: false,
-  notifyOnStatusChange: true,
-  notifyOnNewComment: true,
-  notifyOnVoteMilestone: true,
-  notifyOnNewSupportMessage: true,
   notifyOnInvitation: true,
+  notifyOnNewComment: true,
+  notifyOnNewSupportMessage: true,
+  notifyOnStatusChange: true,
+  notifyOnVoteMilestone: true,
+  pushEnabled: false,
   pushPromptDismissed: false,
 } as const;
 
@@ -34,12 +34,12 @@ export const getPreferences = query({
     }
 
     return {
-      pushEnabled: preferences.pushEnabled,
-      notifyOnStatusChange: preferences.notifyOnStatusChange,
-      notifyOnNewComment: preferences.notifyOnNewComment,
-      notifyOnVoteMilestone: preferences.notifyOnVoteMilestone,
-      notifyOnNewSupportMessage: preferences.notifyOnNewSupportMessage,
       notifyOnInvitation: preferences.notifyOnInvitation,
+      notifyOnNewComment: preferences.notifyOnNewComment,
+      notifyOnNewSupportMessage: preferences.notifyOnNewSupportMessage,
+      notifyOnStatusChange: preferences.notifyOnStatusChange,
+      notifyOnVoteMilestone: preferences.notifyOnVoteMilestone,
+      pushEnabled: preferences.pushEnabled,
       pushPromptDismissed: preferences.pushPromptDismissed,
     };
   },
@@ -51,12 +51,12 @@ export const getPreferences = query({
  */
 export const updatePreferences = mutation({
   args: {
-    pushEnabled: v.optional(v.boolean()),
-    notifyOnStatusChange: v.optional(v.boolean()),
-    notifyOnNewComment: v.optional(v.boolean()),
-    notifyOnVoteMilestone: v.optional(v.boolean()),
-    notifyOnNewSupportMessage: v.optional(v.boolean()),
     notifyOnInvitation: v.optional(v.boolean()),
+    notifyOnNewComment: v.optional(v.boolean()),
+    notifyOnNewSupportMessage: v.optional(v.boolean()),
+    notifyOnStatusChange: v.optional(v.boolean()),
+    notifyOnVoteMilestone: v.optional(v.boolean()),
+    pushEnabled: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const user = await authComponent.safeGetAuthUser(ctx);
@@ -96,22 +96,22 @@ export const updatePreferences = mutation({
     }
 
     return await ctx.db.insert("userNotificationPreferences", {
-      userId: user._id,
-      pushEnabled: args.pushEnabled ?? DEFAULT_PREFERENCES.pushEnabled,
-      notifyOnStatusChange:
-        args.notifyOnStatusChange ?? DEFAULT_PREFERENCES.notifyOnStatusChange,
+      createdAt: now,
+      notifyOnInvitation:
+        args.notifyOnInvitation ?? DEFAULT_PREFERENCES.notifyOnInvitation,
       notifyOnNewComment:
         args.notifyOnNewComment ?? DEFAULT_PREFERENCES.notifyOnNewComment,
-      notifyOnVoteMilestone:
-        args.notifyOnVoteMilestone ?? DEFAULT_PREFERENCES.notifyOnVoteMilestone,
       notifyOnNewSupportMessage:
         args.notifyOnNewSupportMessage ??
         DEFAULT_PREFERENCES.notifyOnNewSupportMessage,
-      notifyOnInvitation:
-        args.notifyOnInvitation ?? DEFAULT_PREFERENCES.notifyOnInvitation,
+      notifyOnStatusChange:
+        args.notifyOnStatusChange ?? DEFAULT_PREFERENCES.notifyOnStatusChange,
+      notifyOnVoteMilestone:
+        args.notifyOnVoteMilestone ?? DEFAULT_PREFERENCES.notifyOnVoteMilestone,
+      pushEnabled: args.pushEnabled ?? DEFAULT_PREFERENCES.pushEnabled,
       pushPromptDismissed: false,
-      createdAt: now,
       updatedAt: now,
+      userId: user._id,
     });
   },
 });
@@ -145,8 +145,8 @@ export const dismissPushPrompt = mutation({
     return await ctx.db.insert("userNotificationPreferences", {
       userId: user._id,
       ...DEFAULT_PREFERENCES,
-      pushPromptDismissed: true,
       createdAt: now,
+      pushPromptDismissed: true,
       updatedAt: now,
     });
   },

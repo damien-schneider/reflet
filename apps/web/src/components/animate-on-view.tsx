@@ -25,7 +25,7 @@ export function AnimateOnView({
   y?: number;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, amount });
+  const isInView = useInView(ref, { amount, once: true });
 
   return (
     <motion.div

@@ -86,7 +86,7 @@ export function DuplicateReviewPanel({
 
   const handleReject = async (pairId: Id<"duplicatePairs">) => {
     try {
-      await resolveDuplicate({ pairId, action: "reject" });
+      await resolveDuplicate({ action: "reject", pairId });
       toast.success("Duplicate pair dismissed");
     } catch {
       toast.error("Failed to dismiss duplicate pair");
@@ -99,7 +99,7 @@ export function DuplicateReviewPanel({
     pairId: Id<"duplicatePairs">
   ) => {
     try {
-      await mergeFeedback({ sourceFeedbackId, targetFeedbackId, pairId });
+      await mergeFeedback({ pairId, sourceFeedbackId, targetFeedbackId });
       toast.success("Feedback merged successfully");
     } catch {
       toast.error("Failed to merge feedback");

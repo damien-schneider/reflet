@@ -51,17 +51,17 @@ export function useAutoSaveRelease({
     try {
       if (releaseId) {
         await updateRelease({
+          description: description.trim() || undefined,
           id: releaseId,
           title: title.trim() || "Untitled Release",
           version: version.trim() || undefined,
-          description: description.trim() || undefined,
         });
       } else {
         const newId = await createRelease({
+          description: description.trim() || undefined,
           organizationId,
           title: title.trim() || "Untitled Release",
           version: version.trim() || undefined,
-          description: description.trim() || undefined,
         });
         setReleaseId(newId);
       }

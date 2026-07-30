@@ -21,12 +21,11 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { BrandingSection } from "./branding-section";
 
-const generateSlug = (text: string): string => {
-  return text
+const generateSlug = (text: string): string =>
+  text
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
-};
 
 function SaveButtonContent({
   isSaving,
@@ -108,9 +107,9 @@ export function OrganizationSection({
       const trimmedSlug = slug.trim();
       await updateOrg({
         id: organizationId,
+        isPublic,
         name: name.trim(),
         slug: trimmedSlug,
-        isPublic,
       });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);

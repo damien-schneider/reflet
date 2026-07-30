@@ -14,19 +14,6 @@ export const listSurveys = internalQuery({
     organizationId: v.id("organizations"),
     status: v.optional(surveyStatusValidator),
   },
-  returns: v.array(
-    v.object({
-      _id: v.id("surveys"),
-      title: v.string(),
-      description: v.optional(v.string()),
-      status: surveyStatusValidator,
-      triggerType: triggerTypeValidator,
-      responseCount: v.number(),
-      completionRate: v.number(),
-      questionCount: v.number(),
-      createdAt: v.number(),
-    })
-  ),
   handler: async (ctx, args) => {
     const surveysQuery = args.status
       ? ctx.db
@@ -53,54 +40,37 @@ export const listSurveys = internalQuery({
 
         return {
           _id: survey._id,
-          title: survey.title,
-          description: survey.description,
-          status: survey.status,
-          triggerType: survey.triggerType,
-          responseCount: survey.responseCount,
           completionRate: survey.completionRate,
-          questionCount: questions.length,
           createdAt: survey.createdAt,
+          description: survey.description,
+          questionCount: questions.length,
+          responseCount: survey.responseCount,
+          status: survey.status,
+          title: survey.title,
+          triggerType: survey.triggerType,
         };
       })
     );
   },
+  returns: v.array(
+    v.object({
+      _id: v.id("surveys"),
+      completionRate: v.number(),
+      createdAt: v.number(),
+      description: v.optional(v.string()),
+      questionCount: v.number(),
+      responseCount: v.number(),
+      status: surveyStatusValidator,
+      title: v.string(),
+      triggerType: triggerTypeValidator,
+    })
+  ),
 });
 
 export const getSurvey = internalQuery({
   args: {
     surveyId: v.id("surveys"),
   },
-  returns: v.union(
-    v.object({
-      _id: v.id("surveys"),
-      organizationId: v.id("organizations"),
-      title: v.string(),
-      description: v.optional(v.string()),
-      status: surveyStatusValidator,
-      triggerType: triggerTypeValidator,
-      triggerConfig: triggerConfigValidator,
-      startsAt: v.optional(v.number()),
-      endsAt: v.optional(v.number()),
-      maxResponses: v.optional(v.number()),
-      responseCount: v.number(),
-      completionRate: v.number(),
-      questions: v.array(
-        v.object({
-          _id: v.id("surveyQuestions"),
-          type: questionTypeValidator,
-          title: v.string(),
-          description: v.optional(v.string()),
-          required: v.boolean(),
-          order: v.number(),
-          config: questionConfigValidator,
-          conditionalLogic: conditionalLogicValidator,
-        })
-      ),
-      createdAt: v.number(),
-    }),
-    v.null()
-  ),
   handler: async (ctx, args) => {
     const survey = await ctx.db.get(args.surveyId);
     if (!survey) {
@@ -116,89 +86,118 @@ export const getSurvey = internalQuery({
 
     return {
       _id: survey._id,
-      organizationId: survey.organizationId,
-      title: survey.title,
+      completionRate: survey.completionRate,
+      createdAt: survey.createdAt,
       description: survey.description,
-      status: survey.status,
-      triggerType: survey.triggerType,
-      triggerConfig: survey.triggerConfig,
-      startsAt: survey.startsAt,
       endsAt: survey.endsAt,
       maxResponses: survey.maxResponses,
-      responseCount: survey.responseCount,
-      completionRate: survey.completionRate,
+      organizationId: survey.organizationId,
       questions: sortedQuestions.map((q) => ({
         _id: q._id,
-        type: q.type,
-        title: q.title,
-        description: q.description,
-        required: q.required,
-        order: q.order,
-        config: q.config,
         conditionalLogic: q.conditionalLogic,
+        config: q.config,
+        description: q.description,
+        order: q.order,
+        required: q.required,
+        title: q.title,
+        type: q.type,
       })),
-      createdAt: survey.createdAt,
+      responseCount: survey.responseCount,
+      startsAt: survey.startsAt,
+      status: survey.status,
+      title: survey.title,
+      triggerConfig: survey.triggerConfig,
+      triggerType: survey.triggerType,
     };
   },
+  returns: v.union(
+    v.object({
+      _id: v.id("surveys"),
+      completionRate: v.number(),
+      createdAt: v.number(),
+      description: v.optional(v.string()),
+      endsAt: v.optional(v.number()),
+      maxResponses: v.optional(v.number()),
+      organizationId: v.id("organizations"),
+      questions: v.array(
+        v.object({
+          _id: v.id("surveyQuestions"),
+          conditionalLogic: conditionalLogicValidator,
+          config: questionConfigValidator,
+          description: v.optional(v.string()),
+          order: v.number(),
+          required: v.boolean(),
+          title: v.string(),
+          type: questionTypeValidator,
+        })
+      ),
+      responseCount: v.number(),
+      startsAt: v.optional(v.number()),
+      status: surveyStatusValidator,
+      title: v.string(),
+      triggerConfig: triggerConfigValidator,
+      triggerType: triggerTypeValidator,
+    }),
+    v.null()
+  ),
 });
 
 export const createSurvey = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
-    title: v.string(),
     description: v.optional(v.string()),
-    triggerType: triggerTypeValidator,
-    triggerConfig: triggerConfigValidator,
+    organizationId: v.id("organizations"),
     questions: v.array(
       v.object({
-        type: questionTypeValidator,
-        title: v.string(),
-        description: v.optional(v.string()),
-        required: v.boolean(),
-        order: v.number(),
         config: questionConfigValidator,
+        description: v.optional(v.string()),
+        order: v.number(),
+        required: v.boolean(),
+        title: v.string(),
+        type: questionTypeValidator,
       })
     ),
+    title: v.string(),
+    triggerConfig: triggerConfigValidator,
+    triggerType: triggerTypeValidator,
   },
-  returns: v.id("surveys"),
   handler: async (ctx, args) => {
     const surveyId = await ctx.db.insert("surveys", {
-      organizationId: args.organizationId,
-      title: args.title,
-      description: args.description,
-      status: "draft",
-      createdBy: "api-admin",
-      triggerType: args.triggerType,
-      triggerConfig: args.triggerConfig,
-      responseCount: 0,
       completionRate: 0,
       createdAt: Date.now(),
+      createdBy: "api-admin",
+      description: args.description,
+      organizationId: args.organizationId,
+      responseCount: 0,
+      status: "draft",
+      title: args.title,
+      triggerConfig: args.triggerConfig,
+      triggerType: args.triggerType,
       updatedAt: Date.now(),
     });
 
     for (const question of args.questions) {
       await ctx.db.insert("surveyQuestions", {
-        surveyId,
-        organizationId: args.organizationId,
-        type: question.type,
-        title: question.title,
-        description: question.description,
-        required: question.required,
-        order: question.order,
         config: question.config,
+        description: question.description,
+        order: question.order,
+        organizationId: args.organizationId,
+        required: question.required,
+        surveyId,
+        title: question.title,
+        type: question.type,
       });
     }
 
     return surveyId;
   },
+  returns: v.id("surveys"),
 });
 
 export const updateSurveyStatus = internalMutation({
   args: {
-    surveyId: v.id("surveys"),
     status: surveyStatusValidator,
+    surveyId: v.id("surveys"),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const survey = await ctx.db.get(args.surveyId);
     if (!survey) {
@@ -212,13 +211,13 @@ export const updateSurveyStatus = internalMutation({
 
     return null;
   },
+  returns: v.null(),
 });
 
 export const deleteSurvey = internalMutation({
   args: {
     surveyId: v.id("surveys"),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const survey = await ctx.db.get(args.surveyId);
     if (!survey) {
@@ -252,6 +251,7 @@ export const deleteSurvey = internalMutation({
 
     return null;
   },
+  returns: v.null(),
 });
 
 function computeNumericDistribution(
@@ -267,7 +267,7 @@ function computeNumericDistribution(
     counts.set(key, (counts.get(key) ?? 0) + 1);
   }
   return Array.from(counts.entries())
-    .map(([label, count]) => ({ label, count }))
+    .map(([label, count]) => ({ count, label }))
     .sort((a, b) => Number(a.label) - Number(b.label));
 }
 
@@ -288,7 +288,7 @@ function computeChoiceDistribution(
     }
   }
   return Array.from(counts.entries())
-    .map(([label, count]) => ({ label, count }))
+    .map(([label, count]) => ({ count, label }))
     .sort((a, b) => b.count - a.count);
 }
 
@@ -301,8 +301,8 @@ function computeBooleanDistribution(
     counts.set(key, (counts.get(key) ?? 0) + 1);
   }
   return Array.from(counts.entries()).map(([label, count]) => ({
-    label,
     count,
+    label,
   }));
 }
 
@@ -322,7 +322,6 @@ function computeDistribution(
   if (question.type === "boolean") {
     return computeBooleanDistribution(answers);
   }
-  return undefined;
 }
 
 function computeAverage(
@@ -330,7 +329,7 @@ function computeAverage(
   answers: Array<{ value: string | number | boolean | string[] }>
 ): number | undefined {
   if (question.type !== "rating" && question.type !== "nps") {
-    return undefined;
+    return;
   }
 
   const numericValues = answers
@@ -338,7 +337,7 @@ function computeAverage(
     .filter((v): v is number => typeof v === "number");
 
   if (numericValues.length === 0) {
-    return undefined;
+    return;
   }
 
   return (
@@ -352,28 +351,6 @@ export const getAnalytics = internalQuery({
   args: {
     surveyId: v.id("surveys"),
   },
-  returns: v.object({
-    totalResponses: v.number(),
-    completedResponses: v.number(),
-    completionRate: v.number(),
-    questionStats: v.array(
-      v.object({
-        questionId: v.id("surveyQuestions"),
-        title: v.string(),
-        type: questionTypeValidator,
-        totalAnswers: v.number(),
-        averageValue: v.optional(v.number()),
-        distribution: v.optional(
-          v.array(
-            v.object({
-              label: v.string(),
-              count: v.number(),
-            })
-          )
-        ),
-      })
-    ),
-  }),
   handler: async (ctx, args) => {
     const responses = await ctx.db
       .query("surveyResponses")
@@ -397,26 +374,48 @@ export const getAnalytics = internalQuery({
           .collect();
 
         return {
-          questionId: question._id,
-          title: question.title,
-          type: question.type,
-          totalAnswers: answers.length,
           averageValue: computeAverage(question, answers),
           distribution: computeDistribution(question, answers),
+          questionId: question._id,
+          title: question.title,
+          totalAnswers: answers.length,
+          type: question.type,
         };
       })
     );
 
     return {
-      totalResponses: responses.length,
       completedResponses: completed.length,
       completionRate:
         responses.length > 0
           ? Math.round((completed.length / responses.length) * 100)
           : 0,
       questionStats,
+      totalResponses: responses.length,
     };
   },
+  returns: v.object({
+    completedResponses: v.number(),
+    completionRate: v.number(),
+    questionStats: v.array(
+      v.object({
+        averageValue: v.optional(v.number()),
+        distribution: v.optional(
+          v.array(
+            v.object({
+              count: v.number(),
+              label: v.string(),
+            })
+          )
+        ),
+        questionId: v.id("surveyQuestions"),
+        title: v.string(),
+        totalAnswers: v.number(),
+        type: questionTypeValidator,
+      })
+    ),
+    totalResponses: v.number(),
+  }),
 });
 
 export const duplicateSurvey = internalMutation({
@@ -424,7 +423,6 @@ export const duplicateSurvey = internalMutation({
     surveyId: v.id("surveys"),
     title: v.optional(v.string()),
   },
-  returns: v.id("surveys"),
   handler: async (ctx, args) => {
     const survey = await ctx.db.get(args.surveyId);
     if (!survey) {
@@ -432,16 +430,16 @@ export const duplicateSurvey = internalMutation({
     }
 
     const newSurveyId = await ctx.db.insert("surveys", {
-      organizationId: survey.organizationId,
-      title: args.title ?? `${survey.title} (copy)`,
-      description: survey.description,
-      status: "draft",
-      createdBy: "api-admin",
-      triggerType: survey.triggerType,
-      triggerConfig: survey.triggerConfig,
-      responseCount: 0,
       completionRate: 0,
       createdAt: Date.now(),
+      createdBy: "api-admin",
+      description: survey.description,
+      organizationId: survey.organizationId,
+      responseCount: 0,
+      status: "draft",
+      title: args.title ?? `${survey.title} (copy)`,
+      triggerConfig: survey.triggerConfig,
+      triggerType: survey.triggerType,
       updatedAt: Date.now(),
     });
 
@@ -454,25 +452,26 @@ export const duplicateSurvey = internalMutation({
 
     for (const question of sortedQuestions) {
       await ctx.db.insert("surveyQuestions", {
-        surveyId: newSurveyId,
-        organizationId: survey.organizationId,
-        type: question.type,
-        title: question.title,
-        description: question.description,
-        required: question.required,
-        order: question.order,
-        config: question.config,
         conditionalLogic: question.conditionalLogic,
+        config: question.config,
+        description: question.description,
+        order: question.order,
+        organizationId: survey.organizationId,
+        required: question.required,
+        surveyId: newSurveyId,
+        title: question.title,
+        type: question.type,
       });
     }
 
     return newSurveyId;
   },
+  returns: v.id("surveys"),
 });
 
 export const listResponses = internalQuery({
   args: {
-    surveyId: v.id("surveys"),
+    limit: v.optional(v.number()),
     status: v.optional(
       v.union(
         v.literal("in_progress"),
@@ -480,23 +479,8 @@ export const listResponses = internalQuery({
         v.literal("abandoned")
       )
     ),
-    limit: v.optional(v.number()),
+    surveyId: v.id("surveys"),
   },
-  returns: v.array(
-    v.object({
-      _id: v.id("surveyResponses"),
-      status: v.union(
-        v.literal("in_progress"),
-        v.literal("completed"),
-        v.literal("abandoned")
-      ),
-      respondentId: v.optional(v.string()),
-      pageUrl: v.optional(v.string()),
-      startedAt: v.number(),
-      completedAt: v.optional(v.number()),
-      answerCount: v.number(),
-    })
-  ),
   handler: async (ctx, args) => {
     const pageSize = Math.min(args.limit ?? 50, 100);
 
@@ -521,30 +505,44 @@ export const listResponses = internalQuery({
 
         return {
           _id: response._id,
-          status: response.status,
-          respondentId: response.respondentId,
-          pageUrl: response.metadata?.pageUrl,
-          startedAt: response.startedAt,
-          completedAt: response.completedAt,
           answerCount: answers.length,
+          completedAt: response.completedAt,
+          pageUrl: response.metadata?.pageUrl,
+          respondentId: response.respondentId,
+          startedAt: response.startedAt,
+          status: response.status,
         };
       })
     );
 
     return responses;
   },
+  returns: v.array(
+    v.object({
+      _id: v.id("surveyResponses"),
+      answerCount: v.number(),
+      completedAt: v.optional(v.number()),
+      pageUrl: v.optional(v.string()),
+      respondentId: v.optional(v.string()),
+      startedAt: v.number(),
+      status: v.union(
+        v.literal("in_progress"),
+        v.literal("completed"),
+        v.literal("abandoned")
+      ),
+    })
+  ),
 });
 
 export const updateSurvey = internalMutation({
   args: {
+    description: v.optional(v.string()),
+    maxResponses: v.optional(v.number()),
     surveyId: v.id("surveys"),
     title: v.optional(v.string()),
-    description: v.optional(v.string()),
-    triggerType: v.optional(triggerTypeValidator),
     triggerConfig: triggerConfigValidator,
-    maxResponses: v.optional(v.number()),
+    triggerType: v.optional(triggerTypeValidator),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const survey = await ctx.db.get(args.surveyId);
     if (!survey) {
@@ -566,4 +564,5 @@ export const updateSurvey = internalMutation({
 
     return null;
   },
+  returns: v.null(),
 });

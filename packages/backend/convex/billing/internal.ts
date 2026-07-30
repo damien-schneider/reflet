@@ -11,14 +11,13 @@ export const getMembershipForOrg = internalQuery({
     organizationId: v.id("organizations"),
     userId: v.string(),
   },
-  handler: async (ctx, args) => {
-    return await ctx.db
+  handler: async (ctx, args) =>
+    await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>
         q.eq("organizationId", args.organizationId).eq("userId", args.userId)
       )
-      .unique();
-  },
+      .unique(),
 });
 
 /**
@@ -29,9 +28,7 @@ export const getOrg = internalQuery({
   args: {
     organizationId: v.id("organizations"),
   },
-  handler: async (ctx, args) => {
-    return await ctx.db.get(args.organizationId);
-  },
+  handler: async (ctx, args) => await ctx.db.get(args.organizationId),
 });
 
 /**
@@ -57,7 +54,7 @@ export const setOrgStripeCustomer = internalMutation({
 export const updateOrgSubscriptionStatus = internalMutation({
   args: {
     organizationId: v.id("organizations"),
-    subscriptionTier: v.union(v.literal("free"), v.literal("pro")),
+    stripeSubscriptionId: v.optional(v.string()),
     subscriptionStatus: v.union(
       v.literal("active"),
       v.literal("trialing"),
@@ -65,13 +62,13 @@ export const updateOrgSubscriptionStatus = internalMutation({
       v.literal("canceled"),
       v.literal("none")
     ),
-    stripeSubscriptionId: v.optional(v.string()),
+    subscriptionTier: v.union(v.literal("free"), v.literal("pro")),
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.organizationId, {
-      subscriptionTier: args.subscriptionTier,
-      subscriptionStatus: args.subscriptionStatus,
       stripeSubscriptionId: args.stripeSubscriptionId,
+      subscriptionStatus: args.subscriptionStatus,
+      subscriptionTier: args.subscriptionTier,
     });
   },
 });
@@ -82,7 +79,6 @@ export const updateOrgSubscriptionStatus = internalMutation({
  */
 export const getOrgEffectiveTier = internalQuery({
   args: { organizationId: v.id("organizations") },
-  returns: v.union(v.literal("free"), v.literal("pro")),
   handler: async (ctx, args) => {
     const subscription = await ctx.runQuery(
       components.stripe.public.getSubscriptionByOrgId,
@@ -93,4 +89,5 @@ export const getOrgEffectiveTier = internalQuery({
       (subscription.status === "active" || subscription.status === "trialing");
     return hasActiveSubscription ? "pro" : "free";
   },
+  returns: v.union(v.literal("free"), v.literal("pro")),
 });

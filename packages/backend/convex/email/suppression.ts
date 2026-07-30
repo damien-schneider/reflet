@@ -4,7 +4,6 @@ import { getAuthUser } from "../shared/utils";
 
 export const isEmailSuppressed = internalQuery({
   args: { email: v.string() },
-  returns: v.boolean(),
   handler: async (ctx, args) => {
     const suppression = await ctx.db
       .query("emailSuppressions")
@@ -13,6 +12,7 @@ export const isEmailSuppressed = internalQuery({
 
     return suppression !== null;
   },
+  returns: v.boolean(),
 });
 
 export const listSuppressions = query({
@@ -39,8 +39,8 @@ export const listSuppressions = query({
 
 export const addSuppression = mutation({
   args: {
-    organizationId: v.id("organizations"),
     email: v.string(),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -69,8 +69,8 @@ export const addSuppression = mutation({
 
     return await ctx.db.insert("emailSuppressions", {
       email: normalizedEmail,
-      reason: "manual",
       originalEventType: "manual",
+      reason: "manual",
       suppressedAt: Date.now(),
     });
   },

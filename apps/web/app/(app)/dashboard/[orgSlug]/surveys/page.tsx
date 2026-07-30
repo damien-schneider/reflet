@@ -33,7 +33,7 @@ export default function SurveysPage({
     status: SurveyStatus
   ) => {
     try {
-      await updateStatus({ surveyId, status });
+      await updateStatus({ status, surveyId });
       toast.success(`Survey ${status}`);
     } catch {
       toast.error("Failed to update status");

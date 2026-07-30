@@ -154,7 +154,7 @@ export const ManualSyncSection = ({
   const handleImport = async (githubReleaseId: Id<"githubReleases">) => {
     setImportingId(githubReleaseId);
     try {
-      await importRelease({ githubReleaseId, autoPublish: true });
+      await importRelease({ autoPublish: true, githubReleaseId });
       toast.success("Release imported");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to import");
@@ -298,9 +298,9 @@ export const ManualSyncSection = ({
                           className="shrink-0 font-medium text-primary text-xs hover:underline"
                           href={
                             buildGitHubInstallUrl({
-                              userId: session?.user?.id,
                               organizationId,
                               orgSlug,
+                              userId: session?.user?.id,
                             }) ?? "#"
                           }
                         >

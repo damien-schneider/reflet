@@ -124,7 +124,7 @@ export async function fetchRepoData(
     fetchPackageJson(repositoryFullName),
   ]);
 
-  return { rootContents, fileTree, readme, packageJson };
+  return { fileTree, packageJson, readme, rootContents };
 }
 
 /**

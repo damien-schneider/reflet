@@ -14,9 +14,9 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
   const config = isFeedbackStatus(status)
     ? STATUS_CONFIG[status]
     : {
+        className: "",
         label: status,
         variant: "outline" as const,
-        className: "",
       };
 
   return (

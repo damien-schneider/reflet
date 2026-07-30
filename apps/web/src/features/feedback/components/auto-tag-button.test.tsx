@@ -11,100 +11,44 @@ import {
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+const { mockDismissJob, mockStartBulkAutoTagging, mockToast } = vi.hoisted(
+  () => ({
+    mockDismissJob: vi.fn().mockResolvedValue(undefined),
+    mockStartBulkAutoTagging: vi.fn().mockResolvedValue(undefined),
+    mockToast: {
+      error: vi.fn(),
+      success: vi.fn(),
+      warning: vi.fn(),
+    },
+  })
+);
 const mockUseQuery = vi.fn();
-const mockUseMutation = vi.fn(() => vi.fn());
 
 vi.mock("convex/react", () => ({
+  useMutation: (reference: string) =>
+    reference === "feedback_auto_tagging.startBulkAutoTagging"
+      ? mockStartBulkAutoTagging
+      : mockDismissJob,
   useQuery: (...args: unknown[]) => mockUseQuery(...args),
-  useMutation: () => mockUseMutation(),
 }));
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
     feedback: {
       auto_tagging: {
+        dismissJob: "feedback_auto_tagging.dismissJob",
+        getActiveJob: "feedback_auto_tagging.getActiveJob",
         getUntaggedFeedbackCount:
           "feedback_auto_tagging.getUntaggedFeedbackCount",
-        getActiveJob: "feedback_auto_tagging.getActiveJob",
         startBulkAutoTagging: "feedback_auto_tagging.startBulkAutoTagging",
-        dismissJob: "feedback_auto_tagging.dismissJob",
       },
     },
   },
 }));
 
 vi.mock("sonner", () => ({
-  toast: {
-    success: vi.fn(),
-    warning: vi.fn(),
-    error: vi.fn(),
-  },
+  toast: mockToast,
 }));
-
-vi.mock("@/components/ui/alert-dialog", () => {
-  let dialogOnOpenChange: ((open: boolean) => void) | undefined;
-  return {
-    AlertDialog: ({
-      children,
-      open,
-      onOpenChange,
-    }: {
-      children: React.ReactNode;
-      open?: boolean;
-      onOpenChange?: (open: boolean) => void;
-    }) => {
-      dialogOnOpenChange = onOpenChange;
-      return (
-        <div data-open={open} data-testid="alert-dialog">
-          {children}
-        </div>
-      );
-    },
-    AlertDialogTrigger: ({
-      render: renderProp,
-      children,
-    }: {
-      render?: React.ReactElement;
-      children?: React.ReactNode;
-    }) => (
-      <div onClick={() => dialogOnOpenChange?.(true)}>
-        {renderProp ?? children}
-      </div>
-    ),
-    AlertDialogContent: ({ children }: { children: React.ReactNode }) => (
-      <div>{children}</div>
-    ),
-    AlertDialogHeader: ({ children }: { children: React.ReactNode }) => (
-      <div>{children}</div>
-    ),
-    AlertDialogFooter: ({ children }: { children: React.ReactNode }) => (
-      <div>{children}</div>
-    ),
-    AlertDialogTitle: ({ children }: { children: React.ReactNode }) => (
-      <h2>{children}</h2>
-    ),
-    AlertDialogDescription: ({ children }: { children: React.ReactNode }) => (
-      <p>{children}</p>
-    ),
-    AlertDialogAction: ({
-      children,
-      onClick,
-      ...props
-    }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
-      <button onClick={onClick} type="button" {...props}>
-        {children}
-      </button>
-    ),
-    AlertDialogCancel: ({
-      children,
-      ...props
-    }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
-      <button type="button" {...props}>
-        {children}
-      </button>
-    ),
-  };
-});
 
 import { AutoTagButton } from "./auto-tag-button";
 
@@ -129,9 +73,9 @@ describe("AutoTagButton", () => {
     mockUseQuery.mockImplementation(() => {
       callIndex++;
       if (callIndex === 1) {
-        return 0; // untaggedCount
+        return 0;
       }
-      return null; // job
+      return null;
     });
     const { container } = render(
       <AutoTagButton organizationId={organizationId} />
@@ -144,9 +88,9 @@ describe("AutoTagButton", () => {
     mockUseQuery.mockImplementation(() => {
       callIndex++;
       if (callIndex === 1) {
-        return 15; // untaggedCount
+        return 15;
       }
-      return null; // no job
+      return null;
     });
     render(<AutoTagButton organizationId={organizationId} />);
     expect(screen.getByText("Auto-tag 15")).toBeInTheDocument();
@@ -161,103 +105,78 @@ describe("AutoTagButton", () => {
       }
       return {
         _id: "job1",
-        status: "processing",
-        processedItems: 3,
-        totalItems: 10,
-        successfulItems: 3,
-        failedItems: 0,
         errors: [],
+        failedItems: 0,
+        processedItems: 3,
+        status: "processing",
+        successfulItems: 3,
+        totalItems: 10,
       };
     });
     render(<AutoTagButton organizationId={organizationId} />);
-    // Processing button should be disabled
     expect(screen.getByRole("button")).toBeDisabled();
   });
 
-  it("renders completed state with check icon", () => {
-    let callIndex = 0;
-    mockUseQuery.mockImplementation(() => {
-      callIndex++;
-      if (callIndex === 1) {
-        return 0;
-      }
-      return {
-        _id: "job1",
-        status: "completed",
-        processedItems: 10,
-        totalItems: 10,
-        successfulItems: 10,
-        failedItems: 0,
-        errors: [],
-      };
-    });
-    render(<AutoTagButton organizationId={organizationId} />);
-    expect(screen.getByRole("button")).toBeInTheDocument();
-  });
-
-  it("renders failed state button", () => {
-    let callIndex = 0;
-    mockUseQuery.mockImplementation(() => {
-      callIndex++;
-      if (callIndex === 1) {
-        return 0;
-      }
-      return {
-        _id: "job1",
-        status: "failed",
-        processedItems: 5,
-        totalItems: 10,
-        successfulItems: 3,
-        failedItems: 2,
-        errors: [{ feedbackId: "f1", error: "timeout" }],
-      };
-    });
-    render(<AutoTagButton organizationId={organizationId} />);
-    expect(screen.getByRole("button")).toBeInTheDocument();
-  });
-
-  it("shows confirmation dialog when auto-tag button is clicked", () => {
-    mockUseQuery.mockImplementation((ref: string) => {
-      if (ref === "feedback_auto_tagging.getUntaggedFeedbackCount") {
-        return 5;
-      }
-      return null;
-    });
-    render(<AutoTagButton organizationId={organizationId} />);
-    fireEvent.click(screen.getByText("Auto-tag 5"));
-    expect(screen.getByText("Auto-tag feedback items?")).toBeInTheDocument();
-    expect(
-      screen.getByText(/AI will analyze 5 untagged feedback/)
-    ).toBeInTheDocument();
-  });
-
-  it("shows singular 'item' when untaggedCount is 1", () => {
-    mockUseQuery.mockImplementation((ref: string) => {
-      if (ref === "feedback_auto_tagging.getUntaggedFeedbackCount") {
+  it("toasts and dismisses a completed job", async () => {
+    let jobStatus: "completed" | "processing" = "processing";
+    mockUseQuery.mockImplementation((reference: string) => {
+      if (reference === "feedback_auto_tagging.getUntaggedFeedbackCount") {
         return 1;
       }
-      return null;
+      return {
+        _id: "job1",
+        errors: [],
+        failedItems: 0,
+        processedItems: 10,
+        status: jobStatus,
+        successfulItems: 10,
+        totalItems: 10,
+      };
     });
-    render(<AutoTagButton organizationId={organizationId} />);
-    fireEvent.click(screen.getByText("Auto-tag 1"));
-    expect(
-      screen.getByText(/1 untagged feedback item and/)
-    ).toBeInTheDocument();
+    const { rerender } = render(
+      <AutoTagButton organizationId={organizationId} />
+    );
+
+    jobStatus = "completed";
+    rerender(<AutoTagButton organizationId={organizationId} />);
+
+    await waitFor(() => {
+      expect(mockToast.success).toHaveBeenCalledWith("Auto-tagging complete", {
+        description: "10 feedback items tagged",
+      });
+      expect(mockDismissJob).toHaveBeenCalledWith({ jobId: "job1" });
+    });
   });
 
-  it("has Cancel button in confirmation dialog", () => {
-    let callIndex = 0;
-    mockUseQuery.mockImplementation(() => {
-      callIndex++;
-      if (callIndex === 1) {
-        return 5;
+  it("toasts and dismisses a failed job", async () => {
+    let jobStatus: "failed" | "processing" = "processing";
+    mockUseQuery.mockImplementation((reference: string) => {
+      if (reference === "feedback_auto_tagging.getUntaggedFeedbackCount") {
+        return 1;
       }
-      return null;
+      return {
+        _id: "job1",
+        errors: [{ error: "timeout", feedbackId: "f1" }],
+        failedItems: 2,
+        processedItems: 5,
+        status: jobStatus,
+        successfulItems: 3,
+        totalItems: 10,
+      };
     });
-    render(<AutoTagButton organizationId={organizationId} />);
-    fireEvent.click(screen.getByText("Auto-tag 5"));
-    expect(screen.getByText("Cancel")).toBeInTheDocument();
-    expect(screen.getByText("Start Auto-tagging")).toBeInTheDocument();
+    const { rerender } = render(
+      <AutoTagButton organizationId={organizationId} />
+    );
+
+    jobStatus = "failed";
+    rerender(<AutoTagButton organizationId={organizationId} />);
+
+    await waitFor(() => {
+      expect(mockToast.error).toHaveBeenCalledWith("Auto-tagging failed", {
+        description: "3 tagged, 2 failed",
+      });
+      expect(mockDismissJob).toHaveBeenCalledWith({ jobId: "job1" });
+    });
   });
 
   it("renders singular item text when count is 1", () => {
@@ -286,9 +205,7 @@ describe("AutoTagButton", () => {
     expect(screen.getByText("Auto-tag 7")).toBeInTheDocument();
   });
 
-  it("calls startBulkAutoTagging when confirmed", async () => {
-    const mockStart = vi.fn().mockResolvedValue(undefined);
-    mockUseMutation.mockReturnValue(mockStart);
+  it("calls startBulkAutoTagging when clicked", async () => {
     let callIndex = 0;
     mockUseQuery.mockImplementation(() => {
       callIndex++;
@@ -299,9 +216,8 @@ describe("AutoTagButton", () => {
     });
     render(<AutoTagButton organizationId={organizationId} />);
     fireEvent.click(screen.getByText("Auto-tag 3"));
-    fireEvent.click(screen.getByText("Start Auto-tagging"));
     await waitFor(() => {
-      expect(mockStart).toHaveBeenCalledWith({ organizationId });
+      expect(mockStartBulkAutoTagging).toHaveBeenCalledWith({ organizationId });
     });
   });
 
@@ -314,12 +230,12 @@ describe("AutoTagButton", () => {
       }
       return {
         _id: "job1",
-        status: "pending",
-        processedItems: 0,
-        totalItems: 10,
-        successfulItems: 0,
-        failedItems: 0,
         errors: [],
+        failedItems: 0,
+        processedItems: 0,
+        status: "pending",
+        successfulItems: 0,
+        totalItems: 10,
       };
     });
     render(<AutoTagButton organizationId={organizationId} />);
@@ -335,16 +251,15 @@ describe("AutoTagButton", () => {
       }
       return {
         _id: "job1",
-        status: "processing",
-        processedItems: 15, // exceeds totalItems
-        totalItems: 10,
-        successfulItems: 10,
-        failedItems: 0,
         errors: [],
+        failedItems: 0,
+        processedItems: 15,
+        status: "processing",
+        successfulItems: 10,
+        totalItems: 10,
       };
     });
     render(<AutoTagButton organizationId={organizationId} />);
-    // Should still render without crashing
     expect(screen.getByRole("button")).toBeDisabled();
   });
 });

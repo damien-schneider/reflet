@@ -30,12 +30,12 @@ function parseShortcut(key: string): {
   const parts = key.toLowerCase().split("+");
   const mainKey = parts.pop() ?? "";
   const modifiers = {
+    alt: parts.includes("alt"),
     meta: parts.includes("meta"),
     shift: parts.includes("shift"),
-    alt: parts.includes("alt"),
   };
   const hasModifier = modifiers.meta || modifiers.shift || modifiers.alt;
-  return { modifiers, key: mainKey, hasModifier };
+  return { hasModifier, key: mainKey, modifiers };
 }
 
 export function useKeyboardShortcuts(

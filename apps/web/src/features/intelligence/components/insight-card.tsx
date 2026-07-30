@@ -8,20 +8,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 const PRIORITY_VARIANT: Record<string, "red" | "orange" | "yellow" | "gray"> = {
   critical: "red",
   high: "orange",
-  medium: "yellow",
   low: "gray",
+  medium: "yellow",
 };
 
 const TYPE_VARIANT: Record<string, "blue" | "red" | "green" | "orange"> = {
-  feature_suggestion: "blue",
   competitive_alert: "red",
+  feature_suggestion: "blue",
   market_opportunity: "green",
   risk_warning: "orange",
 };
 
 const TYPE_LABEL: Record<string, string> = {
-  feature_suggestion: "Feature Suggestion",
   competitive_alert: "Competitive Alert",
+  feature_suggestion: "Feature Suggestion",
   market_opportunity: "Market Opportunity",
   risk_warning: "Risk Warning",
 };

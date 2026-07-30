@@ -11,6 +11,7 @@ import { mapStatusNameToEnum } from "./status_utils";
  */
 export const listPublic = query({
   args: {
+    limit: v.optional(v.number()),
     organizationId: v.id("organizations"),
     sortBy: v.optional(
       v.union(
@@ -20,7 +21,6 @@ export const listPublic = query({
         v.literal("comments")
       )
     ),
-    limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const org = await ctx.db.get(args.organizationId);
@@ -103,8 +103,8 @@ export const listPublic = query({
 
         return {
           ...f,
-          tags: tags.filter(Boolean),
           hasVoted,
+          tags: tags.filter(Boolean),
         };
       })
     );
@@ -118,11 +118,11 @@ export const listPublic = query({
  */
 export const createPublicOrg = mutation({
   args: {
-    organizationId: v.id("organizations"),
-    title: v.string(),
+    attachments: v.optional(v.array(v.string())),
     description: v.optional(v.string()),
     email: v.optional(v.string()),
-    attachments: v.optional(v.array(v.string())),
+    organizationId: v.id("organizations"),
+    title: v.string(),
   },
   handler: async (ctx, args) => {
     const org = await ctx.db.get(args.organizationId);
@@ -159,19 +159,19 @@ export const createPublicOrg = mutation({
     const defaultOrgStatus = orgStatuses.sort((a, b) => a.order - b.order)[0];
 
     const feedbackId = await ctx.db.insert("feedback", {
-      organizationId: args.organizationId,
-      title: args.title,
-      description: args.description || "",
-      status: org.feedbackSettings?.defaultStatus || "open",
-      organizationStatusId: defaultOrgStatus?._id,
+      attachments: args.attachments,
       authorId: user?._id || `anonymous:${args.email || "unknown"}`,
-      voteCount: 0,
       commentCount: 0,
+      createdAt: now,
+      description: args.description || "",
       isApproved: !org.feedbackSettings?.requireApproval,
       isPinned: false,
-      attachments: args.attachments,
-      createdAt: now,
+      organizationId: args.organizationId,
+      organizationStatusId: defaultOrgStatus?._id,
+      status: org.feedbackSettings?.defaultStatus || "open",
+      title: args.title,
       updatedAt: now,
+      voteCount: 0,
     });
 
     // Schedule duplicate detection
@@ -472,8 +472,8 @@ export const updateOrganizationStatus = mutation({
  */
 export const assign = mutation({
   args: {
-    feedbackId: v.id("feedback"),
     assigneeId: v.optional(v.string()), // User ID or null/undefined to unassign
+    feedbackId: v.id("feedback"),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -527,6 +527,20 @@ export const assign = mutation({
  */
 export const updateAnalysis = mutation({
   args: {
+    clearComplexity: v.optional(v.boolean()),
+    clearDeadline: v.optional(v.boolean()),
+    clearPriority: v.optional(v.boolean()),
+    clearTimeEstimate: v.optional(v.boolean()),
+    complexity: v.optional(
+      v.union(
+        v.literal("trivial"),
+        v.literal("simple"),
+        v.literal("moderate"),
+        v.literal("complex"),
+        v.literal("very_complex")
+      )
+    ),
+    deadline: v.optional(v.number()),
     feedbackId: v.id("feedback"),
     priority: v.optional(
       v.union(
@@ -537,21 +551,7 @@ export const updateAnalysis = mutation({
         v.literal("none")
       )
     ),
-    complexity: v.optional(
-      v.union(
-        v.literal("trivial"),
-        v.literal("simple"),
-        v.literal("moderate"),
-        v.literal("complex"),
-        v.literal("very_complex")
-      )
-    ),
     timeEstimate: v.optional(v.string()),
-    deadline: v.optional(v.number()),
-    clearPriority: v.optional(v.boolean()),
-    clearComplexity: v.optional(v.boolean()),
-    clearTimeEstimate: v.optional(v.boolean()),
-    clearDeadline: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);

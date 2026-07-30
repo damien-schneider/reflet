@@ -21,6 +21,14 @@ const styles: Record<
     icon: <Info className="h-5 w-5 text-blue-600 dark:text-blue-400" />,
     title: "Note",
   },
+  success: {
+    bg: "bg-emerald-500/5",
+    border: "border-emerald-500/15",
+    icon: (
+      <CircleCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+    ),
+    title: "Success",
+  },
   tip: {
     bg: "bg-amber-500/5",
     border: "border-amber-500/15",
@@ -32,14 +40,6 @@ const styles: Record<
     border: "border-red-500/15",
     icon: <CircleAlert className="h-5 w-5 text-red-600 dark:text-red-400" />,
     title: "Warning",
-  },
-  success: {
-    bg: "bg-emerald-500/5",
-    border: "border-emerald-500/15",
-    icon: (
-      <CircleCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-    ),
-    title: "Success",
   },
 };
 

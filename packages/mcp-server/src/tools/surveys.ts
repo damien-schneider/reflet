@@ -37,8 +37,45 @@ export function registerSurveyTools(
     "survey_create",
     "Create a new survey with questions. Supports question types: rating, nps, text, single_choice, multiple_choice, boolean. Survey starts in draft status.",
     {
-      title: z.string().describe("Survey title"),
       description: z.string().optional().describe("Survey description"),
+      questions: z
+        .array(
+          z.object({
+            config: z
+              .object({
+                choices: z.array(z.string()).optional(),
+                maxLabel: z.string().optional(),
+                maxLength: z.number().optional(),
+                maxValue: z.number().optional(),
+                minLabel: z.string().optional(),
+                minValue: z.number().optional(),
+                placeholder: z.string().optional(),
+              })
+              .optional(),
+            description: z.string().optional(),
+            order: z.number().optional(),
+            required: z.boolean().optional().default(true),
+            title: z.string(),
+            type: z.enum([
+              "rating",
+              "nps",
+              "text",
+              "single_choice",
+              "multiple_choice",
+              "boolean",
+            ]),
+          })
+        )
+        .describe("Array of survey questions"),
+      title: z.string().describe("Survey title"),
+      triggerConfig: z
+        .object({
+          delayMs: z.number().optional(),
+          pageUrl: z.string().optional(),
+          sampleRate: z.number().optional(),
+        })
+        .optional()
+        .describe("Trigger-specific configuration"),
       triggerType: z
         .enum([
           "manual",
@@ -48,43 +85,6 @@ export function registerSurveyTools(
           "feedback_submitted",
         ])
         .describe("When the survey should be triggered"),
-      triggerConfig: z
-        .object({
-          pageUrl: z.string().optional(),
-          delayMs: z.number().optional(),
-          sampleRate: z.number().optional(),
-        })
-        .optional()
-        .describe("Trigger-specific configuration"),
-      questions: z
-        .array(
-          z.object({
-            type: z.enum([
-              "rating",
-              "nps",
-              "text",
-              "single_choice",
-              "multiple_choice",
-              "boolean",
-            ]),
-            title: z.string(),
-            description: z.string().optional(),
-            required: z.boolean().optional().default(true),
-            order: z.number().optional(),
-            config: z
-              .object({
-                minValue: z.number().optional(),
-                maxValue: z.number().optional(),
-                minLabel: z.string().optional(),
-                maxLabel: z.string().optional(),
-                choices: z.array(z.string()).optional(),
-                placeholder: z.string().optional(),
-                maxLength: z.number().optional(),
-              })
-              .optional(),
-          })
-        )
-        .describe("Array of survey questions"),
     },
     async (params) => textResult(await client.createSurvey(params))
   );
@@ -93,10 +93,10 @@ export function registerSurveyTools(
     "survey_update_status",
     "Update a survey's status. Valid transitions: draft→active, active→paused, paused→active, any→closed.",
     {
-      surveyId: z.string().describe("The survey ID to update"),
       status: z
         .enum(["draft", "active", "paused", "closed"])
         .describe("The new status"),
+      surveyId: z.string().describe("The survey ID to update"),
     },
     async (params) =>
       textResult(
@@ -143,9 +143,21 @@ export function registerSurveyTools(
     "survey_update",
     "Update a survey's settings (title, description, trigger, max responses). Does not change status — use survey_update_status for that.",
     {
+      description: z.string().optional().describe("New description"),
+      maxResponses: z
+        .number()
+        .optional()
+        .describe("Maximum number of responses to collect"),
       surveyId: z.string().describe("The survey ID to update"),
       title: z.string().optional().describe("New title"),
-      description: z.string().optional().describe("New description"),
+      triggerConfig: z
+        .object({
+          delayMs: z.number().optional(),
+          pageUrl: z.string().optional(),
+          sampleRate: z.number().optional(),
+        })
+        .optional()
+        .describe("New trigger-specific configuration"),
       triggerType: z
         .enum([
           "manual",
@@ -156,18 +168,6 @@ export function registerSurveyTools(
         ])
         .optional()
         .describe("New trigger type"),
-      triggerConfig: z
-        .object({
-          pageUrl: z.string().optional(),
-          delayMs: z.number().optional(),
-          sampleRate: z.number().optional(),
-        })
-        .optional()
-        .describe("New trigger-specific configuration"),
-      maxResponses: z
-        .number()
-        .optional()
-        .describe("Maximum number of responses to collect"),
     },
     async (params) => textResult(await client.updateSurvey(params))
   );
@@ -176,21 +176,21 @@ export function registerSurveyTools(
     "survey_responses",
     "List responses for a survey. Optionally filter by status (started, completed, abandoned).",
     {
-      surveyId: z.string().describe("The survey ID to list responses for"),
-      status: z
-        .enum(["started", "completed", "abandoned"])
-        .optional()
-        .describe("Filter responses by status"),
       limit: z
         .number()
         .optional()
         .describe("Maximum number of responses to return"),
+      status: z
+        .enum(["started", "completed", "abandoned"])
+        .optional()
+        .describe("Filter responses by status"),
+      surveyId: z.string().describe("The survey ID to list responses for"),
     },
     async (params) =>
       textResult(
         await client.listSurveyResponses(params.surveyId, {
-          status: params.status,
           limit: params.limit,
+          status: params.status,
         })
       )
   );

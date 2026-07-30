@@ -10,9 +10,7 @@ export async function generateMetadata({
   const { orgSlug } = await params;
 
   return generatePageMetadata({
-    title: `${orgSlug} - Changelog & Updates`,
     description: `Stay up to date with the latest updates and improvements from ${orgSlug}. See what's new and what's been shipped.`,
-    path: `/${orgSlug}/changelog`,
     keywords: [
       "changelog",
       "updates",
@@ -21,6 +19,8 @@ export async function generateMetadata({
       "new features",
       orgSlug,
     ],
+    path: `/${orgSlug}/changelog`,
+    title: `${orgSlug} - Changelog & Updates`,
   });
 }
 

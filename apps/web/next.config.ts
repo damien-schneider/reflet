@@ -2,18 +2,10 @@ import createMDX from "@next/mdx";
 import { withPostHogConfig } from "@posthog/nextjs-config";
 import type { NextConfig } from "next";
 
-// Import env to validate at build time
 import "@reflet/env/web";
 
 const nextConfig: NextConfig = {
-  reactStrictMode: true,
-  reactCompiler: true,
-
-  // Enable MDX pages
-  pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
-
-  // Use Rust-based MDX compiler with GFM support (tables, strikethrough, etc.)
-  // This is serializable for Turbopack unlike JS remark plugins
+  // Rust MDX stays serializable under Turbopack
   experimental: {
     mdxRs: {
       mdxType: "gfm",
@@ -21,56 +13,21 @@ const nextConfig: NextConfig = {
     optimizePackageImports: [
       "@phosphor-icons/react",
       "@tabler/icons-react",
-      "@hugeicons/react",
-      "@hugeicons/core-free-icons",
       "recharts",
       "motion",
       "motion/react",
       "@dnd-kit/core",
       "@dnd-kit/sortable",
       "embla-carousel-react",
-      "react-day-picker",
+      "@daypicker/react",
       "cmdk",
     ],
-  },
-
-  // GEO: redirect llm.txt to llms.txt for crawlers that expect the shorter path
-  redirects() {
-    return [{ source: "/llm.txt", destination: "/llms.txt", permanent: true }];
-  },
-
-  images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "avatars.githubusercontent.com",
-      },
-      {
-        protocol: "https",
-        hostname: "images.unsplash.com",
-      },
-      {
-        protocol: "https",
-        hostname: "*.convex.cloud",
-      },
-    ],
-  },
-
-  transpilePackages: ["@reflet/backend", "@reflet/env", "@reflet/ui"],
-  serverExternalPackages: ["isomorphic-dompurify"],
-  turbopack: {
-    resolveAlias: {
-      // Browser fallbacks for Node.js modules
-      fs: { browser: "./empty.ts" },
-      net: { browser: "./empty.ts" },
-      tls: { browser: "./empty.ts" },
-    },
+    useTypeScriptCli: true,
   },
   // biome-ignore lint/suspicious/useAwait: Next.js headers function is async
   async headers() {
     return [
       {
-        source: "/:path*",
         headers: [
           {
             key: "X-DNS-Prefetch-Control",
@@ -98,8 +55,46 @@ const nextConfig: NextConfig = {
               "camera=(), microphone=(), geolocation=(), browsing-topics=()",
           },
         ],
+        source: "/:path*",
       },
     ];
+  },
+
+  images: {
+    remotePatterns: [
+      {
+        hostname: "avatars.githubusercontent.com",
+        protocol: "https",
+      },
+      {
+        hostname: "images.unsplash.com",
+        protocol: "https",
+      },
+      {
+        hostname: "*.convex.cloud",
+        protocol: "https",
+      },
+    ],
+  },
+
+  // Enable MDX pages
+  pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
+  reactCompiler: true,
+  reactStrictMode: true,
+
+  // GEO: redirect llm.txt to llms.txt for crawlers that expect the shorter path
+  redirects() {
+    return [{ destination: "/llms.txt", permanent: true, source: "/llm.txt" }];
+  },
+
+  transpilePackages: ["@reflet/backend", "@reflet/env", "@reflet/ui"],
+  turbopack: {
+    resolveAlias: {
+      // Browser fallbacks for Node.js modules
+      fs: { browser: "./empty.ts" },
+      net: { browser: "./empty.ts" },
+      tls: { browser: "./empty.ts" },
+    },
   },
 };
 
@@ -112,9 +107,9 @@ const posthogProjectId = process.env.POSTHOG_PROJECT_ID;
 
 export default posthogApiKey && posthogProjectId
   ? withPostHogConfig(configWithMDX, {
+      host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
       personalApiKey: posthogApiKey,
       projectId: posthogProjectId,
-      host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
       sourcemaps: {
         deleteAfterUpload: true,
       },

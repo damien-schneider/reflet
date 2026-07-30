@@ -10,21 +10,21 @@ import { modules } from "../../test.helpers";
 
 // Test the Zod schema for auto-tagging response
 const autoTaggingResponseSchema = z.object({
+  reasoning: z
+    .string()
+    .describe("Brief explanation of why these tags were selected"),
   selectedTagIds: z
     .array(z.string())
     .describe(
       "Array of tag IDs from the provided list that match the feedback"
     ),
-  reasoning: z
-    .string()
-    .describe("Brief explanation of why these tags were selected"),
 });
 
 describe("Auto-tagging response schema", () => {
   test("should validate a valid response with tags", () => {
     const validResponse = {
-      selectedTagIds: ["tag1", "tag2"],
       reasoning: "These tags match the feedback content",
+      selectedTagIds: ["tag1", "tag2"],
     };
 
     const result = autoTaggingResponseSchema.safeParse(validResponse);
@@ -33,8 +33,8 @@ describe("Auto-tagging response schema", () => {
 
   test("should validate a response with empty tags array", () => {
     const emptyResponse = {
-      selectedTagIds: [],
       reasoning: "No tags match this feedback",
+      selectedTagIds: [],
     };
 
     const result = autoTaggingResponseSchema.safeParse(emptyResponse);
@@ -52,8 +52,8 @@ describe("Auto-tagging response schema", () => {
 
   test("should reject response with non-array selectedTagIds", () => {
     const invalidResponse = {
-      selectedTagIds: "not-an-array",
       reasoning: "Some reasoning",
+      selectedTagIds: "not-an-array",
     };
 
     const result = autoTaggingResponseSchema.safeParse(invalidResponse);
@@ -66,43 +66,44 @@ describe("Auto-tagging database operations", () => {
     const t = convexTest(schema, modules);
 
     // Create an organization first
-    const orgId = await t.run(async (ctx) => {
-      return await ctx.db.insert("organizations", {
-        name: "Test Org",
-        slug: "test-org",
-        isPublic: false,
-        subscriptionTier: "free",
-        subscriptionStatus: "none",
-        createdAt: Date.now(),
-      });
-    });
+    const orgId = await t.run(
+      async (ctx) =>
+        await ctx.db.insert("organizations", {
+          createdAt: Date.now(),
+          isPublic: false,
+          name: "Test Org",
+          slug: "test-org",
+          subscriptionStatus: "none",
+          subscriptionTier: "free",
+        })
+    );
 
     // Create some feedback without tags
     await t.run(async (ctx) => {
       await ctx.db.insert("feedback", {
-        organizationId: orgId,
-        title: "Feedback 1",
-        description: "Description 1",
-        status: "open",
-        voteCount: 0,
         commentCount: 0,
+        createdAt: Date.now(),
+        description: "Description 1",
         isApproved: true,
         isPinned: false,
-        createdAt: Date.now(),
+        organizationId: orgId,
+        status: "open",
+        title: "Feedback 1",
         updatedAt: Date.now(),
+        voteCount: 0,
       });
 
       await ctx.db.insert("feedback", {
-        organizationId: orgId,
-        title: "Feedback 2",
-        description: "Description 2",
-        status: "open",
-        voteCount: 0,
         commentCount: 0,
+        createdAt: Date.now(),
+        description: "Description 2",
         isApproved: true,
         isPinned: false,
-        createdAt: Date.now(),
+        organizationId: orgId,
+        status: "open",
+        title: "Feedback 2",
         updatedAt: Date.now(),
+        voteCount: 0,
       });
     });
 
@@ -122,37 +123,37 @@ describe("Auto-tagging database operations", () => {
     // Create organization, feedback, and tag
     const { feedbackId, tagId } = await t.run(async (ctx) => {
       const orgId = await ctx.db.insert("organizations", {
+        createdAt: Date.now(),
+        isPublic: false,
         name: "Test Org",
         slug: "test-org-tags",
-        isPublic: false,
-        subscriptionTier: "free",
         subscriptionStatus: "none",
-        createdAt: Date.now(),
+        subscriptionTier: "free",
       });
 
       const feedbackId = await ctx.db.insert("feedback", {
-        organizationId: orgId,
-        title: "Feature Request",
-        description: "Please add dark mode",
-        status: "open",
-        voteCount: 0,
         commentCount: 0,
+        createdAt: Date.now(),
+        description: "Please add dark mode",
         isApproved: true,
         isPinned: false,
-        createdAt: Date.now(),
+        organizationId: orgId,
+        status: "open",
+        title: "Feature Request",
         updatedAt: Date.now(),
+        voteCount: 0,
       });
 
       const tagId = await ctx.db.insert("tags", {
-        organizationId: orgId,
-        name: "Feature",
-        slug: "feature",
         color: "#0000FF",
         createdAt: Date.now(),
+        name: "Feature",
+        organizationId: orgId,
+        slug: "feature",
         updatedAt: Date.now(),
       });
 
-      return { orgId, feedbackId, tagId };
+      return { feedbackId, orgId, tagId };
     });
 
     // Apply tag using internal mutation
@@ -178,33 +179,33 @@ describe("Auto-tagging database operations", () => {
     // Create organization, feedback, and tag
     const { feedbackId, tagId } = await t.run(async (ctx) => {
       const orgId = await ctx.db.insert("organizations", {
+        createdAt: Date.now(),
+        isPublic: false,
         name: "Test Org",
         slug: "test-org-no-dup",
-        isPublic: false,
-        subscriptionTier: "free",
         subscriptionStatus: "none",
-        createdAt: Date.now(),
+        subscriptionTier: "free",
       });
 
       const feedbackId = await ctx.db.insert("feedback", {
-        organizationId: orgId,
-        title: "Bug Report",
-        description: "App crashes on login",
-        status: "open",
-        voteCount: 0,
         commentCount: 0,
+        createdAt: Date.now(),
+        description: "App crashes on login",
         isApproved: true,
         isPinned: false,
-        createdAt: Date.now(),
+        organizationId: orgId,
+        status: "open",
+        title: "Bug Report",
         updatedAt: Date.now(),
+        voteCount: 0,
       });
 
       const tagId = await ctx.db.insert("tags", {
-        organizationId: orgId,
-        name: "Bug",
-        slug: "bug",
         color: "#FF0000",
         createdAt: Date.now(),
+        name: "Bug",
+        organizationId: orgId,
+        slug: "bug",
         updatedAt: Date.now(),
       });
 
@@ -235,16 +236,17 @@ describe("Auto-tagging database operations", () => {
     const t = convexTest(schema, modules);
 
     // Create organization
-    const orgId = await t.run(async (ctx) => {
-      return await ctx.db.insert("organizations", {
-        name: "Test Org",
-        slug: "test-org-job",
-        isPublic: false,
-        subscriptionTier: "free",
-        subscriptionStatus: "none",
-        createdAt: Date.now(),
-      });
-    });
+    const orgId = await t.run(
+      async (ctx) =>
+        await ctx.db.insert("organizations", {
+          createdAt: Date.now(),
+          isPublic: false,
+          name: "Test Org",
+          slug: "test-org-job",
+          subscriptionStatus: "none",
+          subscriptionTier: "free",
+        })
+    );
 
     // Create a job
     const jobId = await t.mutation(internal.feedback.auto_tagging.createJob, {
@@ -255,9 +257,7 @@ describe("Auto-tagging database operations", () => {
     expect(jobId).toBeDefined();
 
     // Verify job was created with correct initial state
-    const job = await t.run(async (ctx) => {
-      return await ctx.db.get(jobId);
-    });
+    const job = await t.run(async (ctx) => await ctx.db.get(jobId));
 
     expect(job).toBeDefined();
     expect(job?.status).toBe("pending");
@@ -274,41 +274,39 @@ describe("Auto-tagging database operations", () => {
     // Create organization and job
     const { jobId } = await t.run(async (ctx) => {
       const orgId = await ctx.db.insert("organizations", {
+        createdAt: Date.now(),
+        isPublic: false,
         name: "Test Org",
         slug: "test-org-progress",
-        isPublic: false,
-        subscriptionTier: "free",
         subscriptionStatus: "none",
-        createdAt: Date.now(),
+        subscriptionTier: "free",
       });
 
       const jobId = await ctx.db.insert("autoTaggingJobs", {
-        organizationId: orgId,
-        status: "pending",
-        totalItems: 5,
-        processedItems: 0,
-        successfulItems: 0,
-        failedItems: 0,
         errors: [],
+        failedItems: 0,
+        organizationId: orgId,
+        processedItems: 0,
         startedAt: Date.now(),
+        status: "pending",
+        successfulItems: 0,
+        totalItems: 5,
       });
 
-      return { orgId, jobId };
+      return { jobId, orgId };
     });
 
     // Update progress
     await t.mutation(internal.feedback.auto_tagging.updateJobProgress, {
+      failedItems: 1,
       jobId,
       processedItems: 3,
-      successfulItems: 2,
-      failedItems: 1,
       status: "processing",
+      successfulItems: 2,
     });
 
     // Verify progress was updated
-    const job = await t.run(async (ctx) => {
-      return await ctx.db.get(jobId);
-    });
+    const job = await t.run(async (ctx) => await ctx.db.get(jobId));
 
     expect(job?.status).toBe("processing");
     expect(job?.processedItems).toBe(3);

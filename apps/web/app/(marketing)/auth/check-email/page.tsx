@@ -23,8 +23,8 @@ function CheckEmailContent() {
     setIsResending(true);
     try {
       await authClient.sendVerificationEmail({
-        email,
         callbackURL: "/auth/verify-email",
+        email,
       });
       toast.success("Verification email resent.");
     } catch {

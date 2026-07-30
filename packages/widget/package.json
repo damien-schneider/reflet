@@ -9,13 +9,10 @@
     "build": "vite build",
     "preview": "vite preview"
   },
-  "dependencies": {
-    "convex": "catalog:"
-  },
   "devDependencies": {
-    "@types/node": "^25.5.0",
-    "terser": "^5.46.1",
+    "@types/node": "^26.1.2",
+    "terser": "^5.49.0",
     "typescript": "catalog:",
-    "vite": "^8.0.3"
+    "vite": "^8.1.5"
   }
 }

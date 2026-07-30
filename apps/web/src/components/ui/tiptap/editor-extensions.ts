@@ -21,7 +21,6 @@ export interface CreateExtensionsOptions {
 
 function createSubmitExtension(onSubmit: () => void) {
   return Extension.create({
-    name: "submitShortcut",
     addKeyboardShortcuts() {
       return {
         "Mod-Enter": () => {
@@ -30,6 +29,7 @@ function createSubmitExtension(onSubmit: () => void) {
         },
       };
     },
+    name: "submitShortcut",
   });
 }
 
@@ -77,10 +77,10 @@ export interface ImageNodeViewResult {
 
 function getImageAttrs(attrs: Record<string, unknown>): ImageNodeAttrs {
   return {
-    src: (attrs.src as string) ?? "",
-    alt: (attrs.alt as string) ?? "",
-    title: (attrs.title as string) ?? "",
     align: (attrs.align as string) ?? "center",
+    alt: (attrs.alt as string) ?? "",
+    src: (attrs.src as string) ?? "",
+    title: (attrs.title as string) ?? "",
     width: (attrs.width as number) ?? null,
   };
 }
@@ -254,7 +254,7 @@ function attachResizeHandles(
 
   container.appendChild(handlesContainer);
 
-  return { onMouseMove, onMouseUp, onTouchMove, onTouchEnd };
+  return { onMouseMove, onMouseUp, onTouchEnd, onTouchMove };
 }
 
 export function createImageNodeView({
@@ -291,6 +291,14 @@ export function createImageNodeView({
     : null;
 
   return {
+    destroy: () => {
+      if (!eventHandlers) return;
+      document.removeEventListener("mousemove", eventHandlers.onMouseMove);
+      document.removeEventListener("mouseup", eventHandlers.onMouseUp);
+      document.removeEventListener("touchmove", eventHandlers.onTouchMove);
+      document.removeEventListener("touchend", eventHandlers.onTouchEnd);
+      document.removeEventListener("touchcancel", eventHandlers.onTouchEnd);
+    },
     dom: container,
     update: (updatedNode) => {
       if (updatedNode.type.name !== "image") return false;
@@ -314,14 +322,6 @@ export function createImageNodeView({
 
       return true;
     },
-    destroy: () => {
-      if (!eventHandlers) return;
-      document.removeEventListener("mousemove", eventHandlers.onMouseMove);
-      document.removeEventListener("mouseup", eventHandlers.onMouseUp);
-      document.removeEventListener("touchmove", eventHandlers.onTouchMove);
-      document.removeEventListener("touchend", eventHandlers.onTouchEnd);
-      document.removeEventListener("touchcancel", eventHandlers.onTouchEnd);
-    },
   };
 }
 
@@ -334,16 +334,17 @@ export function createExtensions(options: CreateExtensionsOptions) {
       heading: {
         levels: [1, 2, 3],
       },
+      link: false,
     }),
     Placeholder.configure({
-      placeholder,
       emptyEditorClass: "is-editor-empty",
+      placeholder,
     }),
     Link.configure({
-      openOnClick: false,
       HTMLAttributes: {
         class: "tiptap-link",
       },
+      openOnClick: false,
     }),
     ImageExtension.configure({
       HTMLAttributes: {
@@ -352,7 +353,7 @@ export function createExtensions(options: CreateExtensionsOptions) {
     }).extend({
       addNodeView() {
         return ({ node, editor, getPos }) =>
-          createImageNodeView({ node, editor, getPos });
+          createImageNodeView({ editor, getPos, node });
       },
     }),
     Typography,
@@ -365,8 +366,8 @@ export function createExtensions(options: CreateExtensionsOptions) {
       : []),
     Markdown.configure({
       html: true,
-      transformPastedText: true,
       transformCopiedText: true,
+      transformPastedText: true,
     }),
     createSlashCommandExtension({
       onImageUpload,
@@ -389,23 +390,6 @@ export function createEditorProps(
         ? "outline-none w-full tiptap-minimal-editor min-h-24"
         : "outline-none w-full tiptap-markdown-editor min-h-32",
     },
-    handlePaste: (_view: unknown, event: ClipboardEvent) => {
-      const items = event.clipboardData?.items;
-      if (!items) return false;
-
-      for (const item of items) {
-        if (item.type.startsWith("image/") || item.type.startsWith("video/")) {
-          const file = item.getAsFile();
-          if (file) {
-            event.preventDefault();
-            uploadMedia(file);
-            return true;
-          }
-        }
-      }
-
-      return false;
-    },
     handleDrop: (
       _view: unknown,
       event: DragEvent,
@@ -422,6 +406,23 @@ export function createEditorProps(
         event.preventDefault();
         uploadMedia(file);
         return true;
+      }
+
+      return false;
+    },
+    handlePaste: (_view: unknown, event: ClipboardEvent) => {
+      const items = event.clipboardData?.items;
+      if (!items) return false;
+
+      for (const item of items) {
+        if (item.type.startsWith("image/") || item.type.startsWith("video/")) {
+          const file = item.getAsFile();
+          if (file) {
+            event.preventDefault();
+            uploadMedia(file);
+            return true;
+          }
+        }
       }
 
       return false;

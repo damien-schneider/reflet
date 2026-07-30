@@ -38,27 +38,27 @@ export function getDeadlineInfo(
   const relativeLabel = formatDistanceToNow(target, { addSuffix: true });
 
   if (milestoneStatus === "completed") {
-    return { status: "none", label, relativeLabel, daysRemaining };
+    return { daysRemaining, label, relativeLabel, status: "none" };
   }
 
   if (isToday(target)) {
     return {
-      status: "due_today",
+      daysRemaining: 0,
       label,
       relativeLabel: "due today",
-      daysRemaining: 0,
+      status: "due_today",
     };
   }
 
   if (isPast(target)) {
-    return { status: "overdue", label, relativeLabel, daysRemaining };
+    return { daysRemaining, label, relativeLabel, status: "overdue" };
   }
 
   if (daysRemaining <= DUE_SOON_THRESHOLD_DAYS) {
-    return { status: "due_soon", label, relativeLabel, daysRemaining };
+    return { daysRemaining, label, relativeLabel, status: "due_soon" };
   }
 
-  return { status: "upcoming", label, relativeLabel, daysRemaining };
+  return { daysRemaining, label, relativeLabel, status: "upcoming" };
 }
 
 export function getDeadlineColor(status: DeadlineStatus): string {
@@ -83,26 +83,26 @@ export function getDeadlineBadgeStyles(status: DeadlineStatus): {
     case "overdue":
       return {
         bg: "bg-red-500/10",
-        text: "text-red-500",
         border: "border-red-500/20",
+        text: "text-red-500",
       };
     case "due_today":
       return {
         bg: "bg-amber-500/10",
-        text: "text-amber-500",
         border: "border-amber-500/20",
+        text: "text-amber-500",
       };
     case "due_soon":
       return {
         bg: "bg-amber-400/10",
-        text: "text-amber-400",
         border: "border-amber-400/20",
+        text: "text-amber-400",
       };
     default:
       return {
         bg: "bg-muted",
-        text: "text-muted-foreground",
         border: "border-border",
+        text: "text-muted-foreground",
       };
   }
 }

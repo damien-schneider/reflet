@@ -6,22 +6,22 @@ const mockPush = vi.fn();
 const mockPrefetch = vi.fn();
 
 vi.mock("convex/react", () => ({
+  useMutation: vi.fn(() => vi.fn()),
   useQuery: vi.fn(() => [
-    { _id: "org1", name: "Acme Inc", slug: "acme", logo: null },
+    { _id: "org1", logo: null, name: "Acme Inc", slug: "acme" },
     {
       _id: "org2",
+      logo: "https://example.com/logo.png",
       name: "Beta Corp",
       slug: "beta",
-      logo: "https://example.com/logo.png",
     },
   ]),
-  useMutation: vi.fn(() => vi.fn()),
 }));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
-    push: mockPush,
     prefetch: mockPrefetch,
+    push: mockPush,
   }),
 }));
 
@@ -55,7 +55,7 @@ vi.mock("next/link", () => ({
 }));
 
 vi.mock("sonner", () => ({
-  toast: { success: vi.fn(), error: vi.fn() },
+  toast: { error: vi.fn(), success: vi.fn() },
 }));
 
 vi.mock("@/components/ui/button", () => ({
@@ -88,17 +88,17 @@ vi.mock("@/components/ui/dialog", () => ({
   DialogContent: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
-  DialogHeader: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  DialogTitle: ({ children }: { children: React.ReactNode }) => (
-    <h2>{children}</h2>
-  ),
   DialogDescription: ({ children }: { children: React.ReactNode }) => (
     <p>{children}</p>
   ),
   DialogFooter: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
+  ),
+  DialogHeader: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DialogTitle: ({ children }: { children: React.ReactNode }) => (
+    <h2>{children}</h2>
   ),
 }));
 
@@ -174,11 +174,11 @@ vi.mock("@phosphor-icons/react", () => ({
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
     organizations: {
-      queries: {
-        list: "organizations.queries.list",
-      },
       mutations: {
         create: "organizations.mutations.create",
+      },
+      queries: {
+        list: "organizations.queries.list",
       },
     },
   },
@@ -228,7 +228,7 @@ describe("OrganizationSwitcher", () => {
 
   it("shows create dialog when Create organization is clicked", async () => {
     vi.mocked(useQuery).mockReturnValue([
-      { _id: "org1", name: "Acme", slug: "acme", logo: null },
+      { _id: "org1", logo: null, name: "Acme", slug: "acme" },
     ]);
     const user = userEvent.setup();
     render(<OrganizationSwitcher currentOrgSlug="acme" />);
@@ -239,7 +239,7 @@ describe("OrganizationSwitcher", () => {
 
   it("renders org links with correct hrefs", () => {
     vi.mocked(useQuery).mockReturnValue([
-      { _id: "org1", name: "Acme", slug: "acme", logo: null },
+      { _id: "org1", logo: null, name: "Acme", slug: "acme" },
     ]);
     render(<OrganizationSwitcher currentOrgSlug="acme" />);
     const link = screen.getByRole("link");
@@ -250,9 +250,9 @@ describe("OrganizationSwitcher", () => {
     vi.mocked(useQuery).mockReturnValue([
       {
         _id: "org1",
+        logo: "https://example.com/logo.png",
         name: "Beta Corp",
         slug: "beta",
-        logo: "https://example.com/logo.png",
       },
     ]);
     render(<OrganizationSwitcher currentOrgSlug="beta" />);
@@ -262,7 +262,7 @@ describe("OrganizationSwitcher", () => {
 
   it("renders first letter fallback when no logo", () => {
     vi.mocked(useQuery).mockReturnValue([
-      { _id: "org1", name: "Acme", slug: "acme", logo: null },
+      { _id: "org1", logo: null, name: "Acme", slug: "acme" },
     ]);
     render(<OrganizationSwitcher currentOrgSlug="acme" />);
     expect(screen.getAllByText("A").length).toBeGreaterThanOrEqual(1);
@@ -270,7 +270,7 @@ describe("OrganizationSwitcher", () => {
 
   it("renders create dialog input field", async () => {
     vi.mocked(useQuery).mockReturnValue([
-      { _id: "org1", name: "Acme", slug: "acme", logo: null },
+      { _id: "org1", logo: null, name: "Acme", slug: "acme" },
     ]);
     const user = userEvent.setup();
     render(<OrganizationSwitcher currentOrgSlug="acme" />);
@@ -280,7 +280,7 @@ describe("OrganizationSwitcher", () => {
 
   it("renders create dialog with Create button", async () => {
     vi.mocked(useQuery).mockReturnValue([
-      { _id: "org1", name: "Acme", slug: "acme", logo: null },
+      { _id: "org1", logo: null, name: "Acme", slug: "acme" },
     ]);
     const user = userEvent.setup();
     render(<OrganizationSwitcher currentOrgSlug="acme" />);
@@ -290,7 +290,7 @@ describe("OrganizationSwitcher", () => {
 
   it("allows typing in create org input", async () => {
     vi.mocked(useQuery).mockReturnValue([
-      { _id: "org1", name: "Acme", slug: "acme", logo: null },
+      { _id: "org1", logo: null, name: "Acme", slug: "acme" },
     ]);
     const user = userEvent.setup();
     render(<OrganizationSwitcher currentOrgSlug="acme" />);
@@ -302,7 +302,7 @@ describe("OrganizationSwitcher", () => {
 
   it("renders separator between org list and create option", () => {
     vi.mocked(useQuery).mockReturnValue([
-      { _id: "org1", name: "Acme", slug: "acme", logo: null },
+      { _id: "org1", logo: null, name: "Acme", slug: "acme" },
     ]);
     render(<OrganizationSwitcher currentOrgSlug="acme" />);
     expect(document.querySelector("hr")).toBeInTheDocument();
@@ -310,7 +310,7 @@ describe("OrganizationSwitcher", () => {
 
   it("renders with org data loaded", () => {
     vi.mocked(useQuery).mockReturnValue([
-      { _id: "org1", name: "Acme", slug: "acme", logo: null },
+      { _id: "org1", logo: null, name: "Acme", slug: "acme" },
     ]);
     const { container } = render(
       <OrganizationSwitcher currentOrgSlug="acme" />
@@ -320,8 +320,8 @@ describe("OrganizationSwitcher", () => {
 
   it("renders multiple org links", () => {
     vi.mocked(useQuery).mockReturnValue([
-      { _id: "org1", name: "Acme", slug: "acme", logo: null },
-      { _id: "org2", name: "Beta", slug: "beta", logo: null },
+      { _id: "org1", logo: null, name: "Acme", slug: "acme" },
+      { _id: "org2", logo: null, name: "Beta", slug: "beta" },
     ]);
     render(<OrganizationSwitcher currentOrgSlug="acme" />);
     const links = screen.getAllByRole("link");
@@ -336,7 +336,7 @@ describe("OrganizationSwitcher", () => {
 
   it("renders org name in the trigger", () => {
     vi.mocked(useQuery).mockReturnValue([
-      { _id: "org1", name: "Acme", slug: "acme", logo: null },
+      { _id: "org1", logo: null, name: "Acme", slug: "acme" },
     ]);
     render(<OrganizationSwitcher currentOrgSlug="acme" />);
     expect(screen.getAllByText("Acme").length).toBeGreaterThanOrEqual(1);
@@ -344,8 +344,8 @@ describe("OrganizationSwitcher", () => {
 
   it("does not show check mark for non-current org", () => {
     vi.mocked(useQuery).mockReturnValue([
-      { _id: "org1", name: "Acme", slug: "acme", logo: null },
-      { _id: "org2", name: "Beta", slug: "beta", logo: null },
+      { _id: "org1", logo: null, name: "Acme", slug: "acme" },
+      { _id: "org2", logo: null, name: "Beta", slug: "beta" },
     ]);
     render(<OrganizationSwitcher currentOrgSlug="acme" />);
     const checkIcons = screen.getAllByTestId("check-icon");
@@ -355,7 +355,7 @@ describe("OrganizationSwitcher", () => {
 
   it("shows create organization option", () => {
     vi.mocked(useQuery).mockReturnValue([
-      { _id: "org1", name: "Acme", slug: "acme", logo: null },
+      { _id: "org1", logo: null, name: "Acme", slug: "acme" },
     ]);
     render(<OrganizationSwitcher currentOrgSlug="acme" />);
     expect(screen.getByText("Create organization")).toBeInTheDocument();
@@ -366,7 +366,7 @@ describe("OrganizationSwitcher", () => {
     const { useMutation } = await import("convex/react");
     vi.mocked(useMutation).mockReturnValue(createOrgMock);
     vi.mocked(useQuery).mockReturnValue([
-      { _id: "org1", name: "Acme", slug: "acme", logo: null },
+      { _id: "org1", logo: null, name: "Acme", slug: "acme" },
     ]);
     const user = userEvent.setup();
     render(<OrganizationSwitcher currentOrgSlug="acme" />);
@@ -380,7 +380,7 @@ describe("OrganizationSwitcher", () => {
     const { useMutation } = await import("convex/react");
     vi.mocked(useMutation).mockReturnValue(createOrgMock);
     vi.mocked(useQuery).mockReturnValue([
-      { _id: "org1", name: "Acme", slug: "acme", logo: null },
+      { _id: "org1", logo: null, name: "Acme", slug: "acme" },
     ]);
     const user = userEvent.setup();
     render(<OrganizationSwitcher currentOrgSlug="acme" />);
@@ -399,7 +399,7 @@ describe("OrganizationSwitcher", () => {
     vi.mocked(useMutation).mockReturnValue(createOrgMock);
     const { toast } = await import("sonner");
     vi.mocked(useQuery).mockReturnValue([
-      { _id: "org1", name: "Acme", slug: "acme", logo: null },
+      { _id: "org1", logo: null, name: "Acme", slug: "acme" },
     ]);
     const user = userEvent.setup();
     render(<OrganizationSwitcher currentOrgSlug="acme" />);
@@ -415,7 +415,7 @@ describe("OrganizationSwitcher", () => {
     vi.mocked(useMutation).mockReturnValue(createOrgMock);
     const { toast } = await import("sonner");
     vi.mocked(useQuery).mockReturnValue([
-      { _id: "org1", name: "Acme", slug: "acme", logo: null },
+      { _id: "org1", logo: null, name: "Acme", slug: "acme" },
     ]);
     const user = userEvent.setup();
     render(<OrganizationSwitcher currentOrgSlug="acme" />);
@@ -430,7 +430,7 @@ describe("OrganizationSwitcher", () => {
     const { useMutation } = await import("convex/react");
     vi.mocked(useMutation).mockReturnValue(createOrgMock);
     vi.mocked(useQuery).mockReturnValue([
-      { _id: "org1", name: "Acme", slug: "acme", logo: null },
+      { _id: "org1", logo: null, name: "Acme", slug: "acme" },
     ]);
     const user = userEvent.setup();
     render(<OrganizationSwitcher currentOrgSlug="acme" />);
@@ -444,7 +444,7 @@ describe("OrganizationSwitcher", () => {
   it("filters out null entries in orgs list", () => {
     vi.mocked(useQuery).mockReturnValue([
       null,
-      { _id: "org1", name: "Acme", slug: "acme", logo: null },
+      { _id: "org1", logo: null, name: "Acme", slug: "acme" },
     ]);
     render(<OrganizationSwitcher currentOrgSlug="acme" />);
     expect(screen.getAllByText("Acme").length).toBeGreaterThanOrEqual(1);
@@ -452,8 +452,8 @@ describe("OrganizationSwitcher", () => {
 
   it("prefetches routes for non-current orgs", () => {
     vi.mocked(useQuery).mockReturnValue([
-      { _id: "org1", name: "Acme", slug: "acme", logo: null },
-      { _id: "org2", name: "Beta", slug: "beta", logo: null },
+      { _id: "org1", logo: null, name: "Acme", slug: "acme" },
+      { _id: "org2", logo: null, name: "Beta", slug: "beta" },
     ]);
     render(<OrganizationSwitcher currentOrgSlug="acme" />);
     expect(mockPrefetch).toHaveBeenCalledWith("/dashboard/beta");
@@ -461,7 +461,7 @@ describe("OrganizationSwitcher", () => {
 
   it("does not prefetch current org route", () => {
     vi.mocked(useQuery).mockReturnValue([
-      { _id: "org1", name: "Acme", slug: "acme", logo: null },
+      { _id: "org1", logo: null, name: "Acme", slug: "acme" },
     ]);
     render(<OrganizationSwitcher currentOrgSlug="acme" />);
     expect(mockPrefetch).not.toHaveBeenCalledWith("/dashboard/acme");
@@ -469,7 +469,7 @@ describe("OrganizationSwitcher", () => {
 
   it("renders OrgIcon fallback when org has no logo and no name match", () => {
     vi.mocked(useQuery).mockReturnValue([
-      { _id: "org1", name: "Acme", slug: "acme", logo: null },
+      { _id: "org1", logo: null, name: "Acme", slug: "acme" },
     ]);
     render(<OrganizationSwitcher currentOrgSlug="nonexistent" />);
     expect(screen.getByText("Select organization")).toBeInTheDocument();

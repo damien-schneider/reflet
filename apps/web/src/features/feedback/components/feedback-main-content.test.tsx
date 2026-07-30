@@ -102,25 +102,25 @@ import { FeedbackMainContent } from "./feedback-main-content";
 afterEach(cleanup);
 
 const baseFeedback = {
-  title: "Better dark mode",
+  _creationTime: Date.now(),
+  author: { email: "alice@test.com", name: "Alice" },
   description: "Please improve the dark mode theme.",
-  voteCount: 15,
   hasVoted: false,
   isPinned: false,
-  _creationTime: Date.now(),
-  author: { name: "Alice", email: "alice@test.com" },
+  title: "Better dark mode",
+  voteCount: 15,
 };
 
 const baseProps = {
-  feedback: baseFeedback,
-  isAdmin: false,
-  isEditingDescription: false,
   editedDescription: "",
-  isSubmitting: false,
-  handleToggleVote: vi.fn(),
-  handleTogglePin: vi.fn(),
+  feedback: baseFeedback,
   handleDeleteFeedback: vi.fn(),
   handleSaveDescription: vi.fn(),
+  handleTogglePin: vi.fn(),
+  handleToggleVote: vi.fn(),
+  isAdmin: false,
+  isEditingDescription: false,
+  isSubmitting: false,
   setEditedDescription: vi.fn(),
   setIsEditingDescription: vi.fn(),
 };
@@ -289,7 +289,7 @@ describe("FeedbackMainContent", () => {
         {...baseProps}
         feedback={{
           ...baseFeedback,
-          author: { name: null, email: "bob@test.com" },
+          author: { email: "bob@test.com", name: null },
         }}
       />
     );
@@ -439,7 +439,7 @@ describe("FeedbackMainContent", () => {
         {...baseProps}
         feedback={{
           ...baseFeedback,
-          author: { name: undefined, email: "test@x.com" },
+          author: { email: "test@x.com", name: undefined },
         }}
       />
     );

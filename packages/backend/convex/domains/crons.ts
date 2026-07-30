@@ -7,7 +7,6 @@ const RECENTLY_CHECKED_THRESHOLD_MS = 3 * 60 * 1000; // 3 minutes
 
 export const checkPendingDomains = internalAction({
   args: {},
-  returns: v.null(),
   handler: async (ctx) => {
     const pendingDomains = await ctx.runQuery(
       internal.domains.queries.getPendingDomains,
@@ -25,8 +24,8 @@ export const checkPendingDomains = internalAction({
 
     for (const domain of domainsToCheck) {
       await ctx.runAction(internal.domains.actions.checkSingleDomainStatus, {
-        organizationId: domain.organizationId,
         domain: domain.domain,
+        organizationId: domain.organizationId,
       });
     }
 
@@ -48,10 +47,11 @@ export const checkPendingDomains = internalAction({
 
       if (!hasProSubscription) {
         await ctx.runAction(internal.domains.actions.removeDomainAction, {
-          organizationId: org.organizationId,
           domain: org.domain,
+          organizationId: org.organizationId,
         });
       }
     }
   },
+  returns: v.null(),
 });

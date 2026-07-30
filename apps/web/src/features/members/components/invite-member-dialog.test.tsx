@@ -26,10 +26,10 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
 }));
 
 vi.mock("@phosphor-icons/react", () => ({
-  Shield: () => <span data-testid="shield-icon" />,
-  User: () => <span data-testid="user-icon" />,
   Check: () => <span data-testid="check-icon" />,
   Copy: () => <span data-testid="copy-icon" />,
+  Shield: () => <span data-testid="shield-icon" />,
+  User: () => <span data-testid="user-icon" />,
 }));
 
 vi.mock("@/components/ui/button", () => ({
@@ -69,17 +69,17 @@ vi.mock("@/components/ui/dialog", () => ({
   DialogContent: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="dialog-content">{children}</div>
   ),
-  DialogHeader: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  DialogTitle: ({ children }: { children: React.ReactNode }) => (
-    <h2>{children}</h2>
-  ),
   DialogDescription: ({ children }: { children: React.ReactNode }) => (
     <p>{children}</p>
   ),
   DialogFooter: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="dialog-footer">{children}</div>
+  ),
+  DialogHeader: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DialogTitle: ({ children }: { children: React.ReactNode }) => (
+    <h2>{children}</h2>
   ),
 }));
 
@@ -136,10 +136,6 @@ vi.mock("@/components/ui/select", () => ({
       {children}
     </div>
   ),
-  SelectTrigger: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="select-trigger">{children}</div>
-  ),
-  SelectValue: () => <span data-testid="select-value" />,
   SelectContent: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="select-content">{children}</div>
   ),
@@ -150,14 +146,18 @@ vi.mock("@/components/ui/select", () => ({
     children: React.ReactNode;
     value?: string;
   }) => <div data-testid={`select-item-${value}`}>{children}</div>,
+  SelectTrigger: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="select-trigger">{children}</div>
+  ),
+  SelectValue: () => <span data-testid="select-value" />,
 }));
 
 describe("InviteMemberDialog", () => {
   const mockOnOpenChange = vi.fn();
   const defaultProps = {
-    organizationId: "org123" as unknown as Id<"organizations">,
-    open: true,
     onOpenChange: mockOnOpenChange,
+    open: true,
+    organizationId: "org123" as unknown as Id<"organizations">,
   };
 
   beforeEach(() => {

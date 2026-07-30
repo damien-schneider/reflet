@@ -32,19 +32,19 @@ export function EmailSection({
     formState: { errors: emailErrors },
     reset: resetEmail,
   } = useForm<UpdateEmailForm>({
-    resolver: zodResolver(updateEmailSchema),
-    mode: "onChange",
     defaultValues: {
       newEmail: "",
     },
+    mode: "onChange",
+    resolver: zodResolver(updateEmailSchema),
   });
 
   const handleUpdateEmail = async (data: UpdateEmailForm) => {
     setIsLoading(true);
     try {
       await authClient.changeEmail({
-        newEmail: data.newEmail,
         callbackURL: `${window.location.origin}/dashboard/account`,
+        newEmail: data.newEmail,
       });
       toast.success("Email updated. Please check your inbox for verification.");
       resetEmail();

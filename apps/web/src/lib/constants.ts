@@ -17,18 +17,18 @@ export type SortOption = "newest" | "oldest" | "most_votes" | "most_comments";
 
 // Status options for selects/dropdowns
 export const STATUS_OPTIONS: { value: FeedbackStatus; label: string }[] = [
-  { value: "open", label: "Open" },
-  { value: "under_review", label: "Under Review" },
-  { value: "planned", label: "Planned" },
-  { value: "in_progress", label: "In Progress" },
-  { value: "completed", label: "Completed" },
-  { value: "closed", label: "Closed" },
+  { label: "Open", value: "open" },
+  { label: "Under Review", value: "under_review" },
+  { label: "Planned", value: "planned" },
+  { label: "In Progress", value: "in_progress" },
+  { label: "Completed", value: "completed" },
+  { label: "Closed", value: "closed" },
 ];
 
 export const LANE_OPTIONS: { value: RoadmapLane; label: string }[] = [
-  { value: "now", label: "Now" },
-  { value: "next", label: "Next" },
-  { value: "later", label: "Later" },
+  { label: "Now", value: "now" },
+  { label: "Next", value: "next" },
+  { label: "Later", value: "later" },
 ];
 
 export const STATUS_CONFIG: Record<
@@ -39,37 +39,37 @@ export const STATUS_CONFIG: Record<
     className: string;
   }
 > = {
-  open: {
-    label: "Open",
-    variant: "outline",
-    className: "border-blue-500 text-blue-600 dark:text-blue-400",
-  },
-  under_review: {
-    label: "Under Review",
-    variant: "secondary",
-    className:
-      "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
-  },
-  planned: {
-    label: "Planned",
-    variant: "secondary",
-    className:
-      "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
-  },
-  in_progress: {
-    label: "In Progress",
-    variant: "secondary",
-    className: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-  },
-  completed: {
-    label: "Completed",
-    variant: "default",
-    className: "bg-green-600 text-white",
-  },
   closed: {
+    className: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
     label: "Closed",
     variant: "secondary",
-    className: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
+  },
+  completed: {
+    className: "bg-green-600 text-white",
+    label: "Completed",
+    variant: "default",
+  },
+  in_progress: {
+    className: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+    label: "In Progress",
+    variant: "secondary",
+  },
+  open: {
+    className: "border-blue-500 text-blue-600 dark:text-blue-400",
+    label: "Open",
+    variant: "outline",
+  },
+  planned: {
+    className:
+      "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+    label: "Planned",
+    variant: "secondary",
+  },
+  under_review: {
+    className:
+      "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+    label: "Under Review",
+    variant: "secondary",
   },
 };
 
@@ -89,23 +89,23 @@ export const LANE_CONFIG: Record<
   { label: string; color: string; bgColor: string }
 > = {
   backlog: {
-    label: "Backlog",
-    color: "#f59e0b",
     bgColor: "bg-amber-50 dark:bg-amber-950",
-  },
-  now: {
-    label: "Now",
-    color: "#3b82f6",
-    bgColor: "bg-blue-50 dark:bg-blue-950",
-  },
-  next: {
-    label: "Next",
-    color: "#8b5cf6",
-    bgColor: "bg-purple-50 dark:bg-purple-950",
+    color: "#f59e0b",
+    label: "Backlog",
   },
   later: {
-    label: "Later",
-    color: "#6b7280",
     bgColor: "bg-gray-50 dark:bg-gray-900",
+    color: "#6b7280",
+    label: "Later",
+  },
+  next: {
+    bgColor: "bg-purple-50 dark:bg-purple-950",
+    color: "#8b5cf6",
+    label: "Next",
+  },
+  now: {
+    bgColor: "bg-blue-50 dark:bg-blue-950",
+    color: "#3b82f6",
+    label: "Now",
   },
 };

@@ -4,10 +4,9 @@ import { internalAction } from "../_generated/server";
 
 export const verifyDomainAction = internalAction({
   args: {
-    organizationId: v.id("organizations"),
     domain: v.string(),
+    organizationId: v.id("organizations"),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const verifyResult = await ctx.runAction(
       internal.domains.vercel.verifyDomain,
@@ -16,9 +15,9 @@ export const verifyDomainAction = internalAction({
 
     if (verifyResult.error) {
       await ctx.runMutation(internal.domains.internal.updateDomainStatus, {
+        error: verifyResult.error,
         organizationId: args.organizationId,
         status: "error",
-        error: verifyResult.error,
         verification: verifyResult.verification,
       });
       return;
@@ -32,10 +31,10 @@ export const verifyDomainAction = internalAction({
 
       if (configResult.misconfigured) {
         await ctx.runMutation(internal.domains.internal.updateDomainStatus, {
-          organizationId: args.organizationId,
-          status: "invalid_configuration",
           error:
             "DNS is not configured correctly. Please add a CNAME record pointing to cname.vercel-dns.com.",
+          organizationId: args.organizationId,
+          status: "invalid_configuration",
           verification: verifyResult.verification,
         });
         return;
@@ -55,28 +54,28 @@ export const verifyDomainAction = internalAction({
       verification: verifyResult.verification,
     });
   },
+  returns: v.null(),
 });
 
 export const checkSingleDomainStatus = internalAction({
   args: {
-    organizationId: v.id("organizations"),
     domain: v.string(),
+    organizationId: v.id("organizations"),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     await ctx.runAction(internal.domains.actions.verifyDomainAction, {
-      organizationId: args.organizationId,
       domain: args.domain,
+      organizationId: args.organizationId,
     });
   },
+  returns: v.null(),
 });
 
 export const addDomainAction = internalAction({
   args: {
-    organizationId: v.id("organizations"),
     domain: v.string(),
+    organizationId: v.id("organizations"),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const result = await ctx.runAction(
       internal.domains.vercel.addDomainToVercel,
@@ -85,9 +84,9 @@ export const addDomainAction = internalAction({
 
     if (!result.success) {
       await ctx.runMutation(internal.domains.internal.updateDomainStatus, {
+        error: result.error ?? "Failed to add domain to Vercel",
         organizationId: args.organizationId,
         status: "error",
-        error: result.error ?? "Failed to add domain to Vercel",
       });
       return;
     }
@@ -99,18 +98,18 @@ export const addDomainAction = internalAction({
     });
 
     await ctx.runAction(internal.domains.actions.verifyDomainAction, {
-      organizationId: args.organizationId,
       domain: args.domain,
+      organizationId: args.organizationId,
     });
   },
+  returns: v.null(),
 });
 
 export const removeDomainAction = internalAction({
   args: {
-    organizationId: v.id("organizations"),
     domain: v.string(),
+    organizationId: v.id("organizations"),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const result = await ctx.runAction(
       internal.domains.vercel.removeDomainFromVercel,
@@ -119,9 +118,9 @@ export const removeDomainAction = internalAction({
 
     if (!result.success) {
       await ctx.runMutation(internal.domains.internal.updateDomainStatus, {
+        error: result.error ?? "Failed to remove domain from Vercel",
         organizationId: args.organizationId,
         status: "error",
-        error: result.error ?? "Failed to remove domain from Vercel",
       });
       return;
     }
@@ -130,4 +129,5 @@ export const removeDomainAction = internalAction({
       organizationId: args.organizationId,
     });
   },
+  returns: v.null(),
 });

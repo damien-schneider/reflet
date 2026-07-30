@@ -4,9 +4,12 @@ import { feedbackStatus } from "../shared/validators";
 
 export const duplicateTables = {
   duplicatePairs: defineTable({
-    organizationId: v.id("organizations"),
+    detectedAt: v.number(),
     feedbackIdA: v.id("feedback"),
     feedbackIdB: v.id("feedback"),
+    organizationId: v.id("organizations"),
+    resolvedAt: v.optional(v.number()),
+    resolvedBy: v.optional(v.string()),
     similarityScore: v.number(),
     status: v.union(
       v.literal("pending"),
@@ -14,9 +17,6 @@ export const duplicateTables = {
       v.literal("rejected"),
       v.literal("merged")
     ),
-    detectedAt: v.number(),
-    resolvedAt: v.optional(v.number()),
-    resolvedBy: v.optional(v.string()),
   })
     .index("by_organization", ["organizationId"])
     .index("by_organization_status", ["organizationId", "status"])
@@ -24,14 +24,14 @@ export const duplicateTables = {
     .index("by_feedback_b", ["feedbackIdB"]),
 
   mergeHistory: defineTable({
-    organizationId: v.id("organizations"),
-    sourceFeedbackId: v.id("feedback"),
-    targetFeedbackId: v.id("feedback"),
-    mergedBy: v.string(),
     mergedAt: v.number(),
-    sourceTitle: v.string(),
+    mergedBy: v.string(),
+    organizationId: v.id("organizations"),
     sourceDescription: v.string(),
-    sourceVoteCount: v.number(),
+    sourceFeedbackId: v.id("feedback"),
     sourceStatus: feedbackStatus,
+    sourceTitle: v.string(),
+    sourceVoteCount: v.number(),
+    targetFeedbackId: v.id("feedback"),
   }).index("by_organization", ["organizationId"]),
 };

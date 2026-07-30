@@ -23,9 +23,10 @@ const dndHandlers: {
   onDragEnd:
     | ((event: { active: { id: string }; over: { id: string } | null }) => void)
     | null;
-} = { onDragStart: null, onDragEnd: null };
+} = { onDragEnd: null, onDragStart: null };
 
 vi.mock("@dnd-kit/core", () => ({
+  closestCorners: vi.fn(),
   DndContext: (props: Record<string, unknown>) => {
     dndHandlers.onDragStart =
       props.onDragStart as typeof dndHandlers.onDragStart;
@@ -37,19 +38,18 @@ vi.mock("@dnd-kit/core", () => ({
   DragOverlay: (props: Record<string, unknown>) => (
     <div data-testid="drag-overlay">{props.children as React.ReactNode}</div>
   ),
-  useSensor: vi.fn((...args: unknown[]) => args),
-  useSensors: vi.fn((...args: unknown[]) => args),
-  useDroppable: () => ({ setNodeRef: vi.fn(), isOver: false }),
-  useDraggable: ({ disabled }: { id: string; disabled?: boolean }) => ({
-    attributes: {},
-    listeners: disabled ? undefined : {},
-    setNodeRef: vi.fn(),
-    isDragging: false,
-  }),
   KeyboardSensor: vi.fn(),
   PointerSensor: vi.fn(),
   TouchSensor: vi.fn(),
-  closestCorners: vi.fn(),
+  useDraggable: ({ disabled }: { id: string; disabled?: boolean }) => ({
+    attributes: {},
+    isDragging: false,
+    listeners: disabled ? undefined : {},
+    setNodeRef: vi.fn(),
+  }),
+  useDroppable: () => ({ isOver: false, setNodeRef: vi.fn() }),
+  useSensor: vi.fn((...args: unknown[]) => args),
+  useSensors: vi.fn((...args: unknown[]) => args),
 }));
 
 vi.mock("@dnd-kit/sortable", () => ({
@@ -61,6 +61,12 @@ vi.mock("convex/react", () => ({
 
 // Mock motion/react for faster tests - preserve structure for testing
 vi.mock("motion/react", () => ({
+  AnimatePresence: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="animate-presence">{children}</div>
+  ),
+  LayoutGroup: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="layout-group">{children}</div>
+  ),
   motion: {
     div: ({
       children,
@@ -90,22 +96,16 @@ vi.mock("motion/react", () => ({
       </div>
     ),
   },
-  AnimatePresence: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="animate-presence">{children}</div>
-  ),
-  LayoutGroup: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="layout-group">{children}</div>
-  ),
 }));
 
 // Mock phosphor icons
 vi.mock("@phosphor-icons/react", () => ({
   CaretUp: () => <svg data-testid="caret-up-icon" />,
   ChatCircle: () => <svg data-testid="chat-icon" />,
+  DotsSixVertical: () => <svg data-testid="dots-icon" />,
+  Palette: () => <svg data-testid="palette-icon" />,
   Plus: () => <svg data-testid="plus-icon" />,
   Trash: () => <svg data-testid="trash-icon" />,
-  Palette: () => <svg data-testid="palette-icon" />,
-  DotsSixVertical: () => <svg data-testid="dots-icon" />,
 }));
 
 // Mock child components that have complex dependencies
@@ -164,43 +164,43 @@ vi.mock("./roadmap/roadmap-column-header", () => ({
 const mockStatuses = [
   {
     _id: "status-1" as Id<"organizationStatuses">,
-    name: "Backlog",
     color: "#6b7280",
+    name: "Backlog",
   },
   {
     _id: "status-2" as Id<"organizationStatuses">,
-    name: "In Progress",
     color: "#3b82f6",
+    name: "In Progress",
   },
   {
     _id: "status-3" as Id<"organizationStatuses">,
-    name: "Done",
     color: "#22c55e",
+    name: "Done",
   },
 ];
 
 const mockFeedback: FeedbackItem[] = [
   {
     _id: "feedback-1" as Id<"feedback">,
-    title: "Test feedback 1",
-    description: "Description 1",
-    voteCount: 5,
     commentCount: 2,
-    organizationStatusId: "status-1" as Id<"organizationStatuses">,
-    organizationId: "org-1" as Id<"organizations">,
     createdAt: Date.now(),
+    description: "Description 1",
+    organizationId: "org-1" as Id<"organizations">,
+    organizationStatusId: "status-1" as Id<"organizationStatuses">,
     tags: [],
+    title: "Test feedback 1",
+    voteCount: 5,
   },
   {
     _id: "feedback-2" as Id<"feedback">,
-    title: "Test feedback 2",
-    description: "Description 2",
-    voteCount: 3,
     commentCount: 1,
-    organizationStatusId: "status-2" as Id<"organizationStatuses">,
-    organizationId: "org-1" as Id<"organizations">,
     createdAt: Date.now(),
+    description: "Description 2",
+    organizationId: "org-1" as Id<"organizations">,
+    organizationStatusId: "status-2" as Id<"organizationStatuses">,
     tags: [],
+    title: "Test feedback 2",
+    voteCount: 3,
   },
 ];
 
@@ -650,14 +650,14 @@ describe("RoadmapView", () => {
         ...mockFeedback,
         {
           _id: "feedback-3" as Id<"feedback">,
-          title: "Test feedback 3",
-          description: "Description 3",
-          voteCount: 1,
           commentCount: 0,
-          organizationStatusId: "status-1" as Id<"organizationStatuses">,
-          organizationId: "org-1" as Id<"organizations">,
           createdAt: Date.now(),
+          description: "Description 3",
+          organizationId: "org-1" as Id<"organizations">,
+          organizationStatusId: "status-1" as Id<"organizationStatuses">,
           tags: [],
+          title: "Test feedback 3",
+          voteCount: 1,
         },
       ];
 
@@ -681,13 +681,13 @@ describe("RoadmapView", () => {
       const noStatusFeedback: FeedbackItem[] = [
         {
           _id: "feedback-4" as Id<"feedback">,
-          title: "Unassigned feedback",
-          description: "No status",
-          voteCount: 0,
           commentCount: 0,
-          organizationId: "org-1" as Id<"organizations">,
           createdAt: Date.now(),
+          description: "No status",
+          organizationId: "org-1" as Id<"organizations">,
           tags: [],
+          title: "Unassigned feedback",
+          voteCount: 0,
         },
       ];
 

@@ -9,7 +9,7 @@ const HEX_VALIDATION_REGEX = /^#?([a-f\d]{3}|[a-f\d]{6})$/i;
 function hexToHsl(hex: string): { h: number; s: number; l: number } {
   const result = HEX_COLOR_REGEX.exec(hex);
   if (!result) {
-    return { h: 0, s: 0, l: 50 };
+    return { h: 0, l: 50, s: 0 };
   }
 
   const r = Number.parseInt(result[1] ?? "0", 16) / 255;
@@ -36,8 +36,8 @@ function hexToHsl(hex: string): { h: number; s: number; l: number } {
 
   return {
     h: Math.round(h * 360),
-    s: Math.round(s * 100),
     l: Math.round(l * 100),
+    s: Math.round(s * 100),
   };
 }
 
@@ -141,9 +141,9 @@ export function generateColorPalette(primaryHex: string): ColorPalette {
 
   return {
     primary,
+    primaryForeground,
     primaryHover,
     primaryLight,
-    primaryForeground,
   };
 }
 
@@ -155,9 +155,9 @@ export function generateColorCssVars(
 ): Record<string, string> {
   return {
     "--color-primary": palette.primary,
+    "--color-primary-foreground": palette.primaryForeground,
     "--color-primary-hover": palette.primaryHover,
     "--color-primary-light": palette.primaryLight,
-    "--color-primary-foreground": palette.primaryForeground,
   };
 }
 

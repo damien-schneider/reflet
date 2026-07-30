@@ -21,9 +21,9 @@ export const findFeedbackWithBoardFields = query({
     const toMigrate = feedback.filter((f) => "boardId" in f || "statusId" in f);
 
     return {
-      total: feedback.length,
-      toMigrate: toMigrate.length,
       sampleIds: toMigrate.slice(0, 10).map((f) => f._id),
+      toMigrate: toMigrate.length,
+      total: feedback.length,
     };
   },
 });

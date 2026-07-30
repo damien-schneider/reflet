@@ -44,31 +44,9 @@ export function TiptapTitleEditor({
   }, [onSubmit]);
 
   const editor = useEditor({
-    immediatelyRender: false,
-    extensions: [
-      StarterKit.configure({
-        // Disable all block elements - title is single line
-        heading: false,
-        blockquote: false,
-        bulletList: false,
-        orderedList: false,
-        codeBlock: false,
-        horizontalRule: false,
-        hardBreak: false,
-        // Disable marks for clean title
-        bold: false,
-        italic: false,
-        strike: false,
-        code: false,
-      }),
-      Placeholder.configure({
-        placeholder,
-        emptyEditorClass: "is-editor-empty",
-      }),
-    ],
+    autofocus: autoFocus,
     content: value ? `<p>${value}</p>` : "",
     editable: !disabled,
-    autofocus: autoFocus,
     editorProps: {
       attributes: {
         class: "tiptap-title-editor outline-none w-full",
@@ -89,6 +67,28 @@ export function TiptapTitleEditor({
         return false;
       },
     },
+    extensions: [
+      StarterKit.configure({
+        blockquote: false,
+        // Disable marks for clean title
+        bold: false,
+        bulletList: false,
+        code: false,
+        codeBlock: false,
+        hardBreak: false,
+        // Disable all block elements - title is single line
+        heading: false,
+        horizontalRule: false,
+        italic: false,
+        orderedList: false,
+        strike: false,
+      }),
+      Placeholder.configure({
+        emptyEditorClass: "is-editor-empty",
+        placeholder,
+      }),
+    ],
+    immediatelyRender: false,
     onUpdate: ({ editor: ed }) => {
       // Get plain text content
       const text = ed.getText();

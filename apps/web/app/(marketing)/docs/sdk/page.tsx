@@ -5,11 +5,11 @@ import { InlineCode } from "@/components/ui/typography";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
-  title: "SDK Overview",
   description:
     "The official Reflet SDK for integrating feedback collection, voting, and roadmaps into your app.",
-  path: "/docs/sdk",
   keywords: ["sdk", "api", "react hooks", "integration"],
+  path: "/docs/sdk",
+  title: "SDK Overview",
 });
 
 export default function SdkOverviewPage() {

@@ -62,8 +62,8 @@ export function computeDashboardNavigation(
   );
 
   return {
-    redirectTo,
-    orgNotAccessible,
     hasOrganizations,
+    orgNotAccessible,
+    redirectTo,
   };
 }

@@ -107,25 +107,25 @@ const makeRelease = (
   title: string,
   extra: Partial<ReleaseData> = {}
 ): ReleaseData => ({
+  _creationTime: 1_700_000_000_000,
   _id: id as Id<"releases">,
   title,
-  _creationTime: 1_700_000_000_000,
   ...extra,
 });
 
 describe("ReleaseTimeline", () => {
   const defaultProps = {
+    orgSlug: "test-org",
     releases: [
       makeRelease("r1", "Release 1", {
-        version: "1.0.0",
         publishedAt: 1_700_000_000_000,
+        version: "1.0.0",
       }),
       makeRelease("r2", "Release 2", {
-        version: "2.0.0",
         publishedAt: 1_700_100_000_000,
+        version: "2.0.0",
       }),
     ],
-    orgSlug: "test-org",
   };
 
   it("renders all release items", () => {

@@ -44,9 +44,9 @@ export const list = query({
           ...member,
           user: userData
             ? {
-                name: userData.name ?? null,
                 email: userData.email ?? null,
                 image: userData.image ?? null,
+                name: userData.name ?? null,
               }
             : null,
         };
@@ -106,8 +106,8 @@ export const getCurrentMember = query({
  */
 export const remove = mutation({
   args: {
-    organizationId: v.id("organizations"),
     memberId: v.id("organizationMembers"),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -232,8 +232,8 @@ export const updateRole = mutation({
  */
 export const transferOwnership = mutation({
   args: {
-    organizationId: v.id("organizations"),
     newOwnerId: v.id("organizationMembers"),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -246,7 +246,7 @@ export const transferOwnership = mutation({
       )
       .unique();
 
-    if (!currentMembership || currentMembership.role !== "owner") {
+    if (currentMembership?.role !== "owner") {
       throw new Error("Only the owner can transfer ownership");
     }
 

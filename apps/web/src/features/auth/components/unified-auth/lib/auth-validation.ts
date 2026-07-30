@@ -15,11 +15,11 @@ export const signInSchema = z.object({
 // Schema for sign-up (email + password + confirm password)
 export const signUpSchema = z
   .object({
-    email: z.string().email("Invalid email address"),
-    password: z.string().min(8, "Password must be at least 8 characters"),
     confirmPassword: z
       .string()
       .min(8, "Password must be at least 8 characters"),
+    email: z.string().email("Invalid email address"),
+    password: z.string().min(8, "Password must be at least 8 characters"),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -86,13 +86,13 @@ export const formatAuthError = (message: string): string => {
 };
 
 export const animationVariants = {
-  initial: { opacity: 0, height: 0, marginBottom: 0 },
-  animate: { opacity: 1, height: "auto", marginBottom: 16 },
-  exit: { opacity: 0, height: 0, marginBottom: 0 },
+  animate: { height: "auto", marginBottom: 16, opacity: 1 },
+  exit: { height: 0, marginBottom: 0, opacity: 0 },
+  initial: { height: 0, marginBottom: 0, opacity: 0 },
 };
 
 export const titleVariants = {
-  initial: { opacity: 0, y: -10 },
   animate: { opacity: 1, y: 0 },
   exit: { opacity: 0, y: 10 },
+  initial: { opacity: 0, y: -10 },
 };

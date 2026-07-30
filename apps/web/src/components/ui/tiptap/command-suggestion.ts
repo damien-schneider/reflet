@@ -48,15 +48,14 @@ const createSuggestion = ({
   onImageUpload,
   onVideoUpload,
 }: SuggestionConfig): Omit<SuggestionOptions<CommandItem>, "editor"> => ({
+  command: ({ editor, range, props: item }) => {
+    item.command({ editor, range });
+  },
   items: ({ query }) => {
     const commands = createSlashCommands(onImageUpload, onVideoUpload);
     return commands.filter((item) =>
       item.title.toLowerCase().includes(query.toLowerCase())
     );
-  },
-
-  command: ({ editor, range, props: item }) => {
-    item.command({ editor, range });
   },
 
   render: () => {
@@ -65,18 +64,36 @@ const createSuggestion = ({
     let keyboardHandler: ((event: KeyboardEvent) => boolean) | null = null;
 
     return {
+      onExit: () => {
+        popup?.[0]?.destroy();
+        component?.destroy();
+        keyboardHandler = null;
+      },
+
+      onKeyDown: (props: { event: KeyboardEvent }) => {
+        if (props.event.key === "Escape") {
+          popup?.[0]?.hide();
+          return true;
+        }
+
+        if (keyboardHandler) {
+          return keyboardHandler(props.event);
+        }
+
+        return false;
+      },
       onStart: (props: SuggestionProps<CommandItem>) => {
         component = new ReactRenderer(CommandList, {
+          editor: props.editor,
           props: {
-            items: props.items,
             command: props.command,
+            items: props.items,
             onRegisterKeyHandler: (
               handler: (event: KeyboardEvent) => boolean
             ) => {
               keyboardHandler = handler;
             },
           },
-          editor: props.editor,
         });
 
         if (!props.clientRect) {
@@ -86,21 +103,21 @@ const createSuggestion = ({
         const appendTarget = findAppendTarget(props.editor.view.dom);
 
         popup = tippy("body", {
-          getReferenceClientRect: props.clientRect as () => DOMRect,
           appendTo: () => appendTarget,
           content: component.element,
-          showOnCreate: true,
+          getReferenceClientRect: props.clientRect as () => DOMRect,
           interactive: true,
-          trigger: "manual",
           placement: "bottom-start",
+          showOnCreate: true,
+          trigger: "manual",
           zIndex: SLASH_MENU_Z_INDEX,
         });
       },
 
       onUpdate: (props: SuggestionProps<CommandItem>) => {
         component?.updateProps({
-          items: props.items,
           command: props.command,
+          items: props.items,
           onRegisterKeyHandler: (
             handler: (event: KeyboardEvent) => boolean
           ) => {
@@ -116,25 +133,6 @@ const createSuggestion = ({
           getReferenceClientRect: props.clientRect as () => DOMRect,
         });
       },
-
-      onKeyDown: (props: { event: KeyboardEvent }) => {
-        if (props.event.key === "Escape") {
-          popup?.[0]?.hide();
-          return true;
-        }
-
-        if (keyboardHandler) {
-          return keyboardHandler(props.event);
-        }
-
-        return false;
-      },
-
-      onExit: () => {
-        popup?.[0]?.destroy();
-        component?.destroy();
-        keyboardHandler = null;
-      },
     };
   },
 });
@@ -144,8 +142,6 @@ interface SlashCommandOptions {
 }
 
 export const SlashCommand = Extension.create<SlashCommandOptions>({
-  name: "slashCommand",
-
   addOptions() {
     return {
       suggestion: createSuggestion({}),
@@ -160,6 +156,7 @@ export const SlashCommand = Extension.create<SlashCommandOptions>({
       }),
     ];
   },
+  name: "slashCommand",
 });
 
 export const createSlashCommandExtension = (config: SuggestionConfig) =>

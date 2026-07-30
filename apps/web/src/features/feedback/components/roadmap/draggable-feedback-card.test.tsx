@@ -7,13 +7,13 @@ let mockIsDragging = false;
 vi.mock("@dnd-kit/core", () => ({
   useDraggable: ({ id, disabled }: { id: string; disabled: boolean }) => ({
     attributes: {
-      role: "button",
       "aria-roledescription": "draggable",
       "data-id": id,
+      role: "button",
     },
+    isDragging: mockIsDragging,
     listeners: disabled ? {} : { onPointerDown: vi.fn() },
     setNodeRef: vi.fn(),
-    isDragging: mockIsDragging,
   }),
 }));
 
@@ -72,10 +72,10 @@ import { DraggableFeedbackCard } from "./draggable-feedback-card";
 
 const mockItem = {
   _id: "feedback-1",
-  title: "Test Feedback",
   description: "Test description",
+  status: { color: "#00ff00", name: "Open" },
+  title: "Test Feedback",
   voteCount: 5,
-  status: { name: "Open", color: "#00ff00" },
 } as Parameters<typeof DraggableFeedbackCard>[0]["item"];
 
 afterEach(() => {

@@ -119,20 +119,20 @@ import { ReleaseItem } from "./release-item";
 afterEach(cleanup);
 
 const makeRelease = (overrides: Partial<ReleaseData> = {}): ReleaseData => ({
+  _creationTime: 1_700_000_000_000,
   _id: "release1" as Id<"releases">,
   title: "New Features",
-  _creationTime: 1_700_000_000_000,
   ...overrides,
 });
 
 describe("ReleaseItem", () => {
   const defaultProps = {
-    release: makeRelease({
-      version: "1.0.0",
-      publishedAt: 1_700_000_000_000,
-      description: "## Changes\n- Fixed bugs",
-    }),
     orgSlug: "test-org",
+    release: makeRelease({
+      description: "## Changes\n- Fixed bugs",
+      publishedAt: 1_700_000_000_000,
+      version: "1.0.0",
+    }),
   };
 
   it("renders the release title", () => {
@@ -186,11 +186,11 @@ describe("ReleaseItem", () => {
 
   it("renders shipped features when feedback is present", () => {
     const release = makeRelease({
-      publishedAt: 1_700_000_000_000,
       feedback: [
         { _id: "fb1" as Id<"feedback">, title: "Dark Mode" },
         { _id: "fb2" as Id<"feedback">, title: "Export PDF" },
       ],
+      publishedAt: 1_700_000_000_000,
     });
     render(<ReleaseItem orgSlug="test-org" release={release} />);
     expect(screen.getByText("Shipped Features")).toBeInTheDocument();
@@ -200,8 +200,8 @@ describe("ReleaseItem", () => {
 
   it("filters out null feedback items", () => {
     const release = makeRelease({
-      publishedAt: 1_700_000_000_000,
       feedback: [{ _id: "fb1" as Id<"feedback">, title: "Dark Mode" }, null],
+      publishedAt: 1_700_000_000_000,
     });
     render(<ReleaseItem orgSlug="test-org" release={release} />);
     expect(screen.getByText("Dark Mode")).toBeInTheDocument();
@@ -209,8 +209,8 @@ describe("ReleaseItem", () => {
 
   it("does not show shipped features when feedback array is empty", () => {
     const release = makeRelease({
-      publishedAt: 1_700_000_000_000,
       feedback: [],
+      publishedAt: 1_700_000_000_000,
     });
     render(<ReleaseItem orgSlug="test-org" release={release} />);
     expect(screen.queryByText("Shipped Features")).not.toBeInTheDocument();

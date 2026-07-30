@@ -52,18 +52,18 @@ export const listMilestones = internalQuery({
           .withIndex("by_milestone", (q) => q.eq("milestoneId", m._id))
           .collect();
         return {
-          id: m._id,
-          name: m.name,
+          color: m.color,
+          completedAt: m.completedAt,
+          createdAt: m.createdAt,
           description: m.description,
           emoji: m.emoji,
-          color: m.color,
-          timeHorizon: m.timeHorizon,
-          targetDate: m.targetDate,
-          status: m.status,
-          isPublic: m.isPublic,
-          completedAt: m.completedAt,
           feedbackCount: feedbackLinks.length,
-          createdAt: m.createdAt,
+          id: m._id,
+          isPublic: m.isPublic,
+          name: m.name,
+          status: m.status,
+          targetDate: m.targetDate,
+          timeHorizon: m.timeHorizon,
         };
       })
     );
@@ -74,8 +74,8 @@ export const listMilestones = internalQuery({
 
 export const getMilestone = internalQuery({
   args: {
-    organizationId: v.id("organizations"),
     milestoneId: v.id("milestones"),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
     const milestone = await ctx.db.get(args.milestoneId);
@@ -96,26 +96,26 @@ export const getMilestone = internalQuery({
         }
         return {
           id: f._id,
-          title: f.title,
           status: f.status,
+          title: f.title,
           voteCount: f.voteCount,
         };
       })
     );
 
     return {
-      id: milestone._id,
-      name: milestone.name,
-      description: milestone.description,
-      emoji: milestone.emoji,
       color: milestone.color,
-      timeHorizon: milestone.timeHorizon,
-      targetDate: milestone.targetDate,
-      status: milestone.status,
-      isPublic: milestone.isPublic,
       completedAt: milestone.completedAt,
       createdAt: milestone.createdAt,
+      description: milestone.description,
+      emoji: milestone.emoji,
+      id: milestone._id,
+      isPublic: milestone.isPublic,
       linkedFeedback: linkedFeedback.filter(Boolean),
+      name: milestone.name,
+      status: milestone.status,
+      targetDate: milestone.targetDate,
+      timeHorizon: milestone.timeHorizon,
     };
   },
 });
@@ -126,16 +126,15 @@ export const getMilestone = internalQuery({
 
 export const createMilestone = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
-    name: v.string(),
+    color: v.string(),
     description: v.optional(v.string()),
     emoji: v.optional(v.string()),
-    color: v.string(),
-    timeHorizon,
-    targetDate: v.optional(v.number()),
     isPublic: v.optional(v.boolean()),
+    name: v.string(),
+    organizationId: v.id("organizations"),
+    targetDate: v.optional(v.number()),
+    timeHorizon,
   },
-  returns: v.object({ id: v.id("milestones") }),
   handler: async (ctx, args) => {
     // Find max order
     const existing = await ctx.db
@@ -148,37 +147,37 @@ export const createMilestone = internalMutation({
 
     const now = Date.now();
     const id = await ctx.db.insert("milestones", {
-      organizationId: args.organizationId,
-      name: args.name,
+      color: args.color,
+      createdAt: now,
       description: args.description,
       emoji: args.emoji,
-      color: args.color,
-      timeHorizon: args.timeHorizon,
-      targetDate: args.targetDate,
-      order: maxOrder + 1,
-      status: "active",
       isPublic: args.isPublic ?? true,
-      createdAt: now,
+      name: args.name,
+      order: maxOrder + 1,
+      organizationId: args.organizationId,
+      status: "active",
+      targetDate: args.targetDate,
+      timeHorizon: args.timeHorizon,
       updatedAt: now,
     });
 
     return { id };
   },
+  returns: v.object({ id: v.id("milestones") }),
 });
 
 export const updateMilestone = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
-    milestoneId: v.id("milestones"),
-    name: v.optional(v.string()),
+    color: v.optional(v.string()),
     description: v.optional(v.string()),
     emoji: v.optional(v.string()),
-    color: v.optional(v.string()),
-    timeHorizon: v.optional(timeHorizon),
-    targetDate: v.optional(v.number()),
     isPublic: v.optional(v.boolean()),
+    milestoneId: v.id("milestones"),
+    name: v.optional(v.string()),
+    organizationId: v.id("organizations"),
+    targetDate: v.optional(v.number()),
+    timeHorizon: v.optional(timeHorizon),
   },
-  returns: v.object({ success: v.boolean() }),
   handler: async (ctx, args) => {
     const milestone = await ctx.db.get(args.milestoneId);
     if (!milestone || milestone.organizationId !== args.organizationId) {
@@ -211,14 +210,14 @@ export const updateMilestone = internalMutation({
     await ctx.db.patch(args.milestoneId, updates);
     return { success: true };
   },
+  returns: v.object({ success: v.boolean() }),
 });
 
 export const completeMilestone = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
     milestoneId: v.id("milestones"),
+    organizationId: v.id("organizations"),
   },
-  returns: v.object({ success: v.boolean() }),
   handler: async (ctx, args) => {
     const milestone = await ctx.db.get(args.milestoneId);
     if (!milestone || milestone.organizationId !== args.organizationId) {
@@ -226,20 +225,20 @@ export const completeMilestone = internalMutation({
     }
 
     await ctx.db.patch(args.milestoneId, {
-      status: "completed",
       completedAt: Date.now(),
+      status: "completed",
       updatedAt: Date.now(),
     });
     return { success: true };
   },
+  returns: v.object({ success: v.boolean() }),
 });
 
 export const deleteMilestone = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
     milestoneId: v.id("milestones"),
+    organizationId: v.id("organizations"),
   },
-  returns: v.object({ success: v.boolean() }),
   handler: async (ctx, args) => {
     const milestone = await ctx.db.get(args.milestoneId);
     if (!milestone || milestone.organizationId !== args.organizationId) {
@@ -258,16 +257,16 @@ export const deleteMilestone = internalMutation({
     await ctx.db.delete(args.milestoneId);
     return { success: true };
   },
+  returns: v.object({ success: v.boolean() }),
 });
 
 export const linkMilestoneFeedback = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
-    milestoneId: v.id("milestones"),
-    feedbackId: v.id("feedback"),
     action: v.union(v.literal("link"), v.literal("unlink")),
+    feedbackId: v.id("feedback"),
+    milestoneId: v.id("milestones"),
+    organizationId: v.id("organizations"),
   },
-  returns: v.object({ success: v.boolean() }),
   handler: async (ctx, args) => {
     const milestone = await ctx.db.get(args.milestoneId);
     if (!milestone || milestone.organizationId !== args.organizationId) {
@@ -289,9 +288,9 @@ export const linkMilestoneFeedback = internalMutation({
     if (args.action === "link") {
       if (!existing) {
         await ctx.db.insert("milestoneFeedback", {
-          milestoneId: args.milestoneId,
-          feedbackId: args.feedbackId,
           addedAt: Date.now(),
+          feedbackId: args.feedbackId,
+          milestoneId: args.milestoneId,
         });
       }
     } else if (existing) {
@@ -300,4 +299,5 @@ export const linkMilestoneFeedback = internalMutation({
 
     return { success: true };
   },
+  returns: v.object({ success: v.boolean() }),
 });

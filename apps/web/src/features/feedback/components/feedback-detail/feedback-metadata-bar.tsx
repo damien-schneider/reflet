@@ -147,8 +147,8 @@ export function FeedbackMetadataBar({
   const handleAssigneeChange = useCallback(
     async (assigneeId: string) => {
       await assignFeedback({
-        feedbackId,
         assigneeId: assigneeId === "unassigned" ? undefined : assigneeId,
+        feedbackId,
       });
     },
     [feedbackId, assignFeedback]
@@ -169,14 +169,14 @@ export function FeedbackMetadataBar({
 
   const handleDeadlineChange = useCallback(
     async (date: Date) => {
-      await updateAnalysis({ feedbackId, deadline: date.getTime() });
+      await updateAnalysis({ deadline: date.getTime(), feedbackId });
       setDeadlineOpen(false);
     },
     [feedbackId, updateAnalysis]
   );
 
   const handleDeadlineClear = useCallback(async () => {
-    await updateAnalysis({ feedbackId, clearDeadline: true });
+    await updateAnalysis({ clearDeadline: true, feedbackId });
     setDeadlineOpen(false);
   }, [feedbackId, updateAnalysis]);
 

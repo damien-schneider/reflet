@@ -5,17 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Muted, Text } from "@/components/ui/typography";
 
 const STATUS_LABELS = {
-  operational: "All systems operational",
   degraded: "Degraded performance",
   major_outage: "Major outage",
   no_monitors: "No monitors",
+  operational: "All systems operational",
 } as const;
 
 const STATUS_COLORS = {
-  operational: "bg-emerald-500",
   degraded: "bg-amber-500",
   major_outage: "bg-red-500",
   no_monitors: "bg-muted-foreground",
+  operational: "bg-emerald-500",
 } as const;
 
 interface StatusCardProps {

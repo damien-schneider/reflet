@@ -6,16 +6,16 @@ const mockUseQuery = vi.fn();
 const mockUseMutation = vi.fn();
 
 vi.mock("convex/react", () => ({
-  useQuery: (...args: unknown[]) => mockUseQuery(...args),
   useMutation: (...args: unknown[]) => mockUseMutation(...args),
+  useQuery: (...args: unknown[]) => mockUseQuery(...args),
 }));
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
     feedback: {
       clarification: {
-        getClarificationStatus: "feedback_clarification.getClarificationStatus",
         generateCodingPrompt: "feedback_clarification.generateCodingPrompt",
+        getClarificationStatus: "feedback_clarification.getClarificationStatus",
         initiateClarification: "feedback_clarification.initiateClarification",
       },
     },
@@ -187,9 +187,9 @@ describe("AIClarification", () => {
 
   it("should show Generate button when no existing clarification", () => {
     mockUseQuery.mockReturnValue({
-      hasAiClarification: false,
       aiClarification: null,
       aiClarificationGeneratedAt: null,
+      hasAiClarification: false,
     });
     render(<AIClarification feedbackId={feedbackId} isAdmin={true} />);
     expect(screen.getByText("Generate")).toBeInTheDocument();
@@ -197,9 +197,9 @@ describe("AIClarification", () => {
 
   it("should show Regenerate button when existing clarification present", () => {
     mockUseQuery.mockImplementation(() => ({
-      hasAiClarification: true,
       aiClarification: "AI summary text here",
       aiClarificationGeneratedAt: Date.now(),
+      hasAiClarification: true,
     }));
     render(<AIClarification feedbackId={feedbackId} isAdmin={true} />);
     expect(screen.getByText("Regenerate")).toBeInTheDocument();
@@ -207,9 +207,9 @@ describe("AIClarification", () => {
 
   it("should show clarification text when available", () => {
     mockUseQuery.mockImplementation(() => ({
-      hasAiClarification: true,
       aiClarification: "This is the AI summary",
       aiClarificationGeneratedAt: Date.now(),
+      hasAiClarification: true,
     }));
     render(<AIClarification feedbackId={feedbackId} isAdmin={true} />);
     expect(screen.getByText("This is the AI summary")).toBeInTheDocument();
@@ -217,9 +217,9 @@ describe("AIClarification", () => {
 
   it("should show enhanced feedback summary title", () => {
     mockUseQuery.mockImplementation(() => ({
-      hasAiClarification: true,
       aiClarification: "Summary",
       aiClarificationGeneratedAt: Date.now(),
+      hasAiClarification: true,
     }));
     render(<AIClarification feedbackId={feedbackId} isAdmin={true} />);
     expect(screen.getByText("Enhanced feedback summary")).toBeInTheDocument();
@@ -227,9 +227,9 @@ describe("AIClarification", () => {
 
   it("should show Coding Prompt button", () => {
     mockUseQuery.mockImplementation(() => ({
-      hasAiClarification: false,
       aiClarification: null,
       aiClarificationGeneratedAt: null,
+      hasAiClarification: false,
     }));
     render(<AIClarification feedbackId={feedbackId} isAdmin={true} />);
     expect(screen.getByText("Coding Prompt")).toBeInTheDocument();
@@ -237,9 +237,9 @@ describe("AIClarification", () => {
 
   it("should show prompt text when no existing clarification", () => {
     mockUseQuery.mockImplementation(() => ({
-      hasAiClarification: false,
       aiClarification: null,
       aiClarificationGeneratedAt: null,
+      hasAiClarification: false,
     }));
     render(<AIClarification feedbackId={feedbackId} isAdmin={true} />);
     expect(screen.getByText(/Click "Generate" to create/)).toBeInTheDocument();
@@ -247,9 +247,9 @@ describe("AIClarification", () => {
 
   it("should show Copy button for clarification", () => {
     mockUseQuery.mockImplementation(() => ({
-      hasAiClarification: true,
       aiClarification: "Summary",
       aiClarificationGeneratedAt: Date.now(),
+      hasAiClarification: true,
     }));
     render(<AIClarification feedbackId={feedbackId} isAdmin={true} />);
     expect(screen.getByText("Copy")).toBeInTheDocument();
@@ -258,9 +258,9 @@ describe("AIClarification", () => {
   it("should show generated date when available", () => {
     const date = new Date(2026, 0, 15).getTime();
     mockUseQuery.mockImplementation(() => ({
-      hasAiClarification: true,
       aiClarification: "Summary",
       aiClarificationGeneratedAt: date,
+      hasAiClarification: true,
     }));
     render(<AIClarification feedbackId={feedbackId} isAdmin={true} />);
     expect(screen.getByText(/Generated/)).toBeInTheDocument();
@@ -268,9 +268,9 @@ describe("AIClarification", () => {
 
   it("should call initiateClarification when Generate is clicked", () => {
     mockUseQuery.mockImplementation(() => ({
-      hasAiClarification: false,
       aiClarification: null,
       aiClarificationGeneratedAt: null,
+      hasAiClarification: false,
     }));
     render(<AIClarification feedbackId={feedbackId} isAdmin={true} />);
     fireEvent.click(screen.getByText("Generate"));
@@ -279,9 +279,9 @@ describe("AIClarification", () => {
 
   it("should disable Generate button while generating", () => {
     mockUseQuery.mockImplementation(() => ({
-      hasAiClarification: false,
       aiClarification: null,
       aiClarificationGeneratedAt: null,
+      hasAiClarification: false,
     }));
     render(<AIClarification feedbackId={feedbackId} isAdmin={true} />);
 
@@ -295,9 +295,9 @@ describe("AIClarification", () => {
   describe("Coding Prompt Dialog", () => {
     it("should open dialog when Coding Prompt button is clicked", () => {
       mockUseQuery.mockImplementation(() => ({
-        hasAiClarification: false,
         aiClarification: null,
         aiClarificationGeneratedAt: null,
+        hasAiClarification: false,
       }));
       render(<AIClarification feedbackId={feedbackId} isAdmin={true} />);
       fireEvent.click(screen.getByText("Coding Prompt"));
@@ -314,14 +314,14 @@ describe("AIClarification", () => {
           queryRef.includes("generateCodingPrompt")
         ) {
           return {
-            prompt: "Implement the fix for issue #123",
             hasRepoContext: true,
+            prompt: "Implement the fix for issue #123",
           };
         }
         return {
-          hasAiClarification: false,
           aiClarification: null,
           aiClarificationGeneratedAt: null,
+          hasAiClarification: false,
         };
       });
       render(<AIClarification feedbackId={feedbackId} isAdmin={true} />);
@@ -337,12 +337,12 @@ describe("AIClarification", () => {
           typeof queryRef === "string" &&
           queryRef.includes("generateCodingPrompt")
         ) {
-          return undefined;
+          return;
         }
         return {
-          hasAiClarification: false,
           aiClarification: null,
           aiClarificationGeneratedAt: null,
+          hasAiClarification: false,
         };
       });
       render(<AIClarification feedbackId={feedbackId} isAdmin={true} />);
@@ -356,12 +356,12 @@ describe("AIClarification", () => {
           typeof queryRef === "string" &&
           queryRef.includes("generateCodingPrompt")
         ) {
-          return { prompt: "Some prompt", hasRepoContext: false };
+          return { hasRepoContext: false, prompt: "Some prompt" };
         }
         return {
-          hasAiClarification: false,
           aiClarification: null,
           aiClarificationGeneratedAt: null,
+          hasAiClarification: false,
         };
       });
       render(<AIClarification feedbackId={feedbackId} isAdmin={true} />);
@@ -375,12 +375,12 @@ describe("AIClarification", () => {
           typeof queryRef === "string" &&
           queryRef.includes("generateCodingPrompt")
         ) {
-          return { prompt: "Some prompt", hasRepoContext: true };
+          return { hasRepoContext: true, prompt: "Some prompt" };
         }
         return {
-          hasAiClarification: false,
           aiClarification: null,
           aiClarificationGeneratedAt: null,
+          hasAiClarification: false,
         };
       });
       render(<AIClarification feedbackId={feedbackId} isAdmin={true} />);
@@ -397,9 +397,9 @@ describe("AIClarification", () => {
       });
 
       mockUseQuery.mockImplementation(() => ({
-        hasAiClarification: true,
         aiClarification: "Clarified summary text",
         aiClarificationGeneratedAt: Date.now(),
+        hasAiClarification: true,
       }));
       render(<AIClarification feedbackId={feedbackId} isAdmin={true} />);
       fireEvent.click(screen.getByText("Copy"));
@@ -412,12 +412,12 @@ describe("AIClarification", () => {
           typeof queryRef === "string" &&
           queryRef.includes("generateCodingPrompt")
         ) {
-          return { prompt: "Fix the bug", hasRepoContext: true };
+          return { hasRepoContext: true, prompt: "Fix the bug" };
         }
         return {
-          hasAiClarification: false,
           aiClarification: null,
           aiClarificationGeneratedAt: null,
+          hasAiClarification: false,
         };
       });
       render(<AIClarification feedbackId={feedbackId} isAdmin={true} />);
@@ -436,12 +436,12 @@ describe("AIClarification", () => {
           typeof queryRef === "string" &&
           queryRef.includes("generateCodingPrompt")
         ) {
-          return { prompt: "Fix the bug code", hasRepoContext: true };
+          return { hasRepoContext: true, prompt: "Fix the bug code" };
         }
         return {
-          hasAiClarification: false,
           aiClarification: null,
           aiClarificationGeneratedAt: null,
+          hasAiClarification: false,
         };
       });
       render(<AIClarification feedbackId={feedbackId} isAdmin={true} />);
@@ -452,9 +452,9 @@ describe("AIClarification", () => {
 
     it("should show loading state after clicking Generate and show skeleton", () => {
       mockUseQuery.mockImplementation(() => ({
-        hasAiClarification: false,
         aiClarification: null,
         aiClarificationGeneratedAt: null,
+        hasAiClarification: false,
       }));
       render(<AIClarification feedbackId={feedbackId} isAdmin={true} />);
       fireEvent.click(screen.getByText("Generate"));

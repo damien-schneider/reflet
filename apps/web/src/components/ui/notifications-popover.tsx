@@ -38,27 +38,27 @@ const notificationIcons: Record<
   NotificationType,
   React.ComponentType<{ className?: string }>
 > = {
-  status_change: TrendUp,
-  new_comment: Chat,
-  vote_milestone: TrendUp,
-  new_support_message: Envelope,
-  invitation: UserPlus,
   feedback_shipped: Package,
-  intelligence_insight: Binoculars,
   incident_detected: ShieldWarning,
   incident_resolved: ShieldWarning,
+  intelligence_insight: Binoculars,
+  invitation: UserPlus,
+  new_comment: Chat,
+  new_support_message: Envelope,
+  status_change: TrendUp,
+  vote_milestone: TrendUp,
 };
 
 const notificationColors: Record<NotificationType, string> = {
-  status_change: "text-olive-500",
-  new_comment: "text-emerald-500",
-  vote_milestone: "text-amber-500",
-  new_support_message: "text-purple-500",
-  invitation: "text-olive-500",
   feedback_shipped: "text-sky-500",
-  intelligence_insight: "text-indigo-500",
   incident_detected: "text-red-500",
   incident_resolved: "text-green-500",
+  intelligence_insight: "text-indigo-500",
+  invitation: "text-olive-500",
+  new_comment: "text-emerald-500",
+  new_support_message: "text-purple-500",
+  status_change: "text-olive-500",
+  vote_milestone: "text-amber-500",
 };
 
 interface NotificationItemProps {
@@ -169,12 +169,12 @@ export function NotificationsPopover({
                   key={notification._id}
                   notification={{
                     _id: notification._id,
-                    type: notification.type,
-                    title: notification.title,
-                    message: notification.message,
-                    isRead: notification.isRead,
                     createdAt: notification.createdAt,
                     invitationToken: notification.invitationToken,
+                    isRead: notification.isRead,
+                    message: notification.message,
+                    title: notification.title,
+                    type: notification.type,
                   }}
                 />
               ))}

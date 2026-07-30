@@ -4,6 +4,12 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/components/ui/field", () => ({
   Field: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  FieldError: ({ errors }: { errors?: Array<{ message?: string }> }) =>
+    errors ? (
+      <span data-testid="field-error">
+        {errors.map((e) => e.message).join(", ")}
+      </span>
+    ) : null,
   FieldLabel: ({
     children,
     htmlFor,
@@ -11,12 +17,6 @@ vi.mock("@/components/ui/field", () => ({
     children: React.ReactNode;
     htmlFor?: string;
   }) => <label htmlFor={htmlFor}>{children}</label>,
-  FieldError: ({ errors }: { errors?: Array<{ message?: string }> }) =>
-    errors ? (
-      <span data-testid="field-error">
-        {errors.map((e) => e.message).join(", ")}
-      </span>
-    ) : null,
 }));
 
 vi.mock("@/components/ui/input", () => ({
@@ -44,15 +44,15 @@ afterEach(cleanup);
 const baseProps = {
   id: "test-password",
   label: "Password",
-  showPassword: false,
   onTogglePassword: vi.fn(),
+  placeholder: "Enter password",
   register: {
     name: "test-password" as const,
-    onChange: vi.fn(),
     onBlur: vi.fn(),
+    onChange: vi.fn(),
     ref: vi.fn(),
   },
-  placeholder: "Enter password",
+  showPassword: false,
 };
 
 describe("PasswordInputField", () => {

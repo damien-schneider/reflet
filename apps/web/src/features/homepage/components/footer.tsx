@@ -2,55 +2,55 @@ import Link from "next/link";
 
 const PRODUCT_LINKS = [
   {
-    label: "Feedback Board",
     href: "https://www.reflet.app/reflet",
+    label: "Feedback Board",
   },
   {
-    label: "Roadmap",
     href: "https://www.reflet.app/reflet?view=roadmap",
+    label: "Roadmap",
   },
   {
-    label: "Milestones",
     href: "https://www.reflet.app/reflet?view=milestones",
+    label: "Milestones",
   },
   {
-    label: "Changelog",
     href: "https://www.reflet.app/reflet?view=changelog",
+    label: "Changelog",
   },
   {
-    label: "Support",
     href: "https://www.reflet.app/reflet?view=support",
+    label: "Support",
   },
 ] as const;
 
 const COMPANY_LINKS = [
-  { label: "Features", href: "/features", internal: true },
-  { label: "Pricing", href: "/pricing", internal: true },
-  { label: "Integrations", href: "/integrations", internal: true },
-  { label: "Security", href: "/security", internal: true },
-  { label: "Blog", href: "/blog", internal: true },
-  { label: "Docs", href: "/docs", internal: true },
+  { href: "/features", internal: true, label: "Features" },
+  { href: "/pricing", internal: true, label: "Pricing" },
+  { href: "/integrations", internal: true, label: "Integrations" },
+  { href: "/security", internal: true, label: "Security" },
+  { href: "/blog", internal: true, label: "Blog" },
+  { href: "/docs", internal: true, label: "Docs" },
   {
-    label: "GitHub",
     href: "https://github.com/damien-schneider/reflet",
+    label: "GitHub",
   },
 ] as const;
 
 const COMPARE_LINKS = [
-  { label: "Reflet vs Canny", href: "/blog/reflet-vs-canny" },
-  { label: "Reflet vs Featurebase", href: "/blog/reflet-vs-featurebase" },
-  { label: "Reflet vs Productboard", href: "/blog/reflet-vs-productboard" },
-  { label: "Reflet vs UserVoice", href: "/blog/reflet-vs-uservoice" },
-  { label: "Reflet vs Fider", href: "/blog/reflet-vs-fider" },
-  { label: "Reflet vs Nolt", href: "/blog/reflet-vs-nolt" },
-  { label: "Reflet vs Frill", href: "/blog/reflet-vs-frill" },
-  { label: "Reflet vs Upvoty", href: "/blog/reflet-vs-upvoty" },
+  { href: "/blog/reflet-vs-canny", label: "Reflet vs Canny" },
+  { href: "/blog/reflet-vs-featurebase", label: "Reflet vs Featurebase" },
+  { href: "/blog/reflet-vs-productboard", label: "Reflet vs Productboard" },
+  { href: "/blog/reflet-vs-uservoice", label: "Reflet vs UserVoice" },
+  { href: "/blog/reflet-vs-fider", label: "Reflet vs Fider" },
+  { href: "/blog/reflet-vs-nolt", label: "Reflet vs Nolt" },
+  { href: "/blog/reflet-vs-frill", label: "Reflet vs Frill" },
+  { href: "/blog/reflet-vs-upvoty", label: "Reflet vs Upvoty" },
 ] as const;
 
 const LEGAL_LINKS = [
-  { label: "Privacy", href: "/privacy" },
-  { label: "Terms", href: "/terms" },
-  { label: "Cookies", href: "/cookies" },
+  { href: "/privacy", label: "Privacy" },
+  { href: "/terms", label: "Terms" },
+  { href: "/cookies", label: "Cookies" },
 ] as const;
 
 export default function Footer() {

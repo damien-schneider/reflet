@@ -2,16 +2,16 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("convex/react", () => ({
-  useQuery: vi.fn(() => []),
   useMutation: vi.fn(() => vi.fn()),
+  useQuery: vi.fn(() => []),
 }));
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
     integrations: {
       website_references: {
-        list: "website_references.list",
         create: "website_references.create",
+        list: "website_references.list",
         refresh: "website_references.refresh",
         remove: "website_references.remove",
       },
@@ -110,13 +110,13 @@ describe("WebsiteReferenceList", () => {
     vi.mocked(useQuery).mockReturnValue([
       {
         _id: "ref1",
-        url: "https://example.com",
         status: "success",
+        url: "https://example.com",
       },
       {
         _id: "ref2",
-        url: "https://other.com",
         status: "pending",
+        url: "https://other.com",
       },
     ]);
     render(
@@ -132,9 +132,9 @@ describe("WebsiteReferenceList", () => {
 
   it("renders correct number of reference cards", () => {
     vi.mocked(useQuery).mockReturnValue([
-      { _id: "ref1", url: "https://a.com", status: "success" },
-      { _id: "ref2", url: "https://b.com", status: "success" },
-      { _id: "ref3", url: "https://c.com", status: "success" },
+      { _id: "ref1", status: "success", url: "https://a.com" },
+      { _id: "ref2", status: "success", url: "https://b.com" },
+      { _id: "ref3", status: "success", url: "https://c.com" },
     ]);
     render(
       <WebsiteReferenceList

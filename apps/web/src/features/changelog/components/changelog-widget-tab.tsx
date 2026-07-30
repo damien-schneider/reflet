@@ -58,7 +58,7 @@ export function ChangelogWidgetTab({
     const name = keyName.trim() || "Default";
     setIsGenerating(true);
     try {
-      await generateApiKeysMutation({ organizationId, name });
+      await generateApiKeysMutation({ name, organizationId });
       setKeyName("");
       toast.success("API keys generated");
     } catch (error) {

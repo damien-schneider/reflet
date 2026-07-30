@@ -13,9 +13,9 @@ type Router = ReturnType<typeof httpRouter>;
 // ============================================
 
 const createFeedbackSchema = z.object({
-  title: z.string().optional(),
   description: z.string().optional(),
   tagId: z.string().optional(),
+  title: z.string().optional(),
 });
 
 const voteFeedbackSchema = z.object({
@@ -24,8 +24,8 @@ const voteFeedbackSchema = z.object({
 });
 
 const commentBodySchema = z.object({
-  feedbackId: z.string().optional(),
   body: z.string().optional(),
+  feedbackId: z.string().optional(),
   parentId: z.string().optional(),
 });
 
@@ -54,10 +54,10 @@ const COMMENTS_SORT_OPTIONS = ["newest", "oldest"] as const;
 // ============================================
 
 const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
   "Access-Control-Allow-Headers":
     "Content-Type, Authorization, X-User-Token, X-Visitor-Id",
+  "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
+  "Access-Control-Allow-Origin": "*",
   "Access-Control-Max-Age": "86400",
 };
 
@@ -67,12 +67,12 @@ function jsonResponse(
   headers: Record<string, string> = {}
 ): Response {
   return new Response(JSON.stringify(data), {
-    status,
     headers: {
       "Content-Type": "application/json",
       ...CORS_HEADERS,
       ...headers,
     },
+    status,
   });
 }
 
@@ -106,7 +106,7 @@ function optionalStringField(
 }
 
 function corsPreflightResponse(): Response {
-  return new Response(null, { status: 204, headers: CORS_HEADERS });
+  return new Response(null, { headers: CORS_HEADERS, status: 204 });
 }
 
 function parseEnumParam<T extends string>(
@@ -116,7 +116,6 @@ function parseEnumParam<T extends string>(
   if (value && (validValues as readonly string[]).includes(value)) {
     return value as T;
   }
-  return undefined;
 }
 
 function parseOptionalId<T extends TableNames>(
@@ -174,8 +173,8 @@ async function authenticateApiRequest(
   const authHeader = request.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) {
     return {
-      success: false,
       response: errorResponse("Missing or invalid Authorization header", 401),
+      success: false,
     };
   }
 
@@ -195,8 +194,8 @@ async function authenticateApiRequest(
     )
   ) {
     return {
-      success: false,
       response: errorResponse(validation.error ?? "Invalid API key", 401),
+      success: false,
     };
   }
 
@@ -217,10 +216,10 @@ async function authenticateApiRequest(
       const externalUser = await ctx.runMutation(
         internal.feedback.api_auth.getOrCreateExternalUser,
         {
-          organizationId,
-          externalId: decoded.id,
           email: decoded.email,
+          externalId: decoded.id,
           name: decoded.name,
+          organizationId,
         }
       );
       externalUserId = externalUser.externalUserId;
@@ -228,13 +227,13 @@ async function authenticateApiRequest(
   }
 
   return {
-    success: true,
     auth: {
-      organizationId,
-      organizationApiKeyId,
-      isSecretKey,
       externalUserId,
+      isSecretKey,
+      organizationApiKeyId,
+      organizationId,
     },
+    success: true,
   };
 }
 
@@ -265,16 +264,14 @@ export function registerPublicApiRoutes(http: Router): void {
     "/api/v1/surveys/respond/complete",
   ] as const) {
     http.route({
-      path,
-      method: "OPTIONS",
       handler: httpAction(async () => corsPreflightResponse()),
+      method: "OPTIONS",
+      path,
     });
   }
 
   // GET /api/v1/feedback - Get organization config
   http.route({
-    path: "/api/v1/feedback",
-    method: "GET",
     handler: httpAction(async (ctx, request) => {
       try {
         const authResult = await authenticateApiRequest(ctx, request);
@@ -308,12 +305,12 @@ export function registerPublicApiRoutes(http: Router): void {
         );
       }
     }),
+    method: "GET",
+    path: "/api/v1/feedback",
   });
 
   // GET /api/v1/feedback/list - List feedback items
   http.route({
-    path: "/api/v1/feedback/list",
-    method: "GET",
     handler: httpAction(async (ctx, request) => {
       try {
         const authResult = await authenticateApiRequest(ctx, request);
@@ -350,15 +347,15 @@ export function registerPublicApiRoutes(http: Router): void {
         const result = await ctx.runQuery(
           internal.feedback.api_public.listFeedbackByOrganization,
           {
-            organizationId,
-            statusId: parseOptionalId<"organizationStatuses">(statusId),
-            tagId: parseOptionalId<"tags">(tagId),
-            status: status ?? undefined,
-            search: search ?? undefined,
-            sortBy: sortBy ?? undefined,
+            externalUserId,
             limit: limit ? Number.parseInt(limit, 10) : undefined,
             offset: offset ? Number.parseInt(offset, 10) : undefined,
-            externalUserId,
+            organizationId,
+            search: search ?? undefined,
+            sortBy: sortBy ?? undefined,
+            status: status ?? undefined,
+            statusId: parseOptionalId<"organizationStatuses">(statusId),
+            tagId: parseOptionalId<"tags">(tagId),
           }
         );
 
@@ -370,12 +367,12 @@ export function registerPublicApiRoutes(http: Router): void {
         );
       }
     }),
+    method: "GET",
+    path: "/api/v1/feedback/list",
   });
 
   // GET /api/v1/feedback/item - Get single feedback item
   http.route({
-    path: "/api/v1/feedback/item",
-    method: "GET",
     handler: httpAction(async (ctx, request) => {
       try {
         const authResult = await authenticateApiRequest(ctx, request);
@@ -406,9 +403,9 @@ export function registerPublicApiRoutes(http: Router): void {
         const result = await ctx.runQuery(
           internal.feedback.api_public.getFeedbackByOrganization,
           {
-            organizationId,
-            feedbackId,
             externalUserId,
+            feedbackId,
+            organizationId,
           }
         );
 
@@ -424,12 +421,12 @@ export function registerPublicApiRoutes(http: Router): void {
         );
       }
     }),
+    method: "GET",
+    path: "/api/v1/feedback/item",
   });
 
   // GET /api/v1/feedback/similar - Search for similar feedback ("Did you mean?")
   http.route({
-    path: "/api/v1/feedback/similar",
-    method: "GET",
     handler: httpAction(async (ctx, request) => {
       try {
         const authResult = await authenticateApiRequest(ctx, request);
@@ -458,12 +455,12 @@ export function registerPublicApiRoutes(http: Router): void {
         );
       }
     }),
+    method: "GET",
+    path: "/api/v1/feedback/similar",
   });
 
   // POST /api/v1/feedback/create - Create new feedback
   http.route({
-    path: "/api/v1/feedback/create",
-    method: "POST",
     handler: httpAction(async (ctx, request) => {
       try {
         const authResult = await authenticateApiRequest(ctx, request);
@@ -497,11 +494,11 @@ export function registerPublicApiRoutes(http: Router): void {
         const result = await ctx.runMutation(
           internal.feedback.api_public.createFeedbackByOrganization,
           {
-            organizationId,
-            title,
             description,
-            tagId: parseOptionalId<"tags">(tagId),
             externalUserId,
+            organizationId,
+            tagId: parseOptionalId<"tags">(tagId),
+            title,
           }
         );
 
@@ -513,12 +510,12 @@ export function registerPublicApiRoutes(http: Router): void {
         );
       }
     }),
+    method: "POST",
+    path: "/api/v1/feedback/create",
   });
 
   // POST /api/v1/feedback/vote - Vote on feedback
   http.route({
-    path: "/api/v1/feedback/vote",
-    method: "POST",
     handler: httpAction(async (ctx, request) => {
       try {
         const authResult = await authenticateApiRequest(ctx, request);
@@ -559,9 +556,9 @@ export function registerPublicApiRoutes(http: Router): void {
         const result = await ctx.runMutation(
           internal.feedback.api_public.voteFeedbackByOrganization,
           {
-            organizationId,
-            feedbackId: parseId<"feedback">(feedbackId, "feedbackId"),
             externalUserId,
+            feedbackId: parseId<"feedback">(feedbackId, "feedbackId"),
+            organizationId,
             voteType,
           }
         );
@@ -574,12 +571,12 @@ export function registerPublicApiRoutes(http: Router): void {
         );
       }
     }),
+    method: "POST",
+    path: "/api/v1/feedback/vote",
   });
 
   // GET /api/v1/feedback/comments - List comments for feedback
   http.route({
-    path: "/api/v1/feedback/comments",
-    method: "GET",
     handler: httpAction(async (ctx, request) => {
       try {
         const authResult = await authenticateApiRequest(ctx, request);
@@ -604,8 +601,8 @@ export function registerPublicApiRoutes(http: Router): void {
         const result = await ctx.runQuery(
           internal.feedback.api_public.listCommentsByOrganization,
           {
-            organizationId,
             feedbackId,
+            organizationId,
             sortBy: sortBy ?? undefined,
           }
         );
@@ -618,12 +615,12 @@ export function registerPublicApiRoutes(http: Router): void {
         );
       }
     }),
+    method: "GET",
+    path: "/api/v1/feedback/comments",
   });
 
   // POST /api/v1/feedback/comment - Add comment to feedback
   http.route({
-    path: "/api/v1/feedback/comment",
-    method: "POST",
     handler: httpAction(async (ctx, request) => {
       try {
         const authResult = await authenticateApiRequest(ctx, request);
@@ -657,11 +654,11 @@ export function registerPublicApiRoutes(http: Router): void {
         const result = await ctx.runMutation(
           internal.feedback.api_public.addCommentByOrganization,
           {
-            organizationId,
-            feedbackId: parseId<"feedback">(body.feedbackId, "feedbackId"),
             body: body.body,
-            parentId: parseOptionalId<"comments">(body.parentId),
             externalUserId,
+            feedbackId: parseId<"feedback">(body.feedbackId, "feedbackId"),
+            organizationId,
+            parentId: parseOptionalId<"comments">(body.parentId),
           }
         );
 
@@ -673,12 +670,12 @@ export function registerPublicApiRoutes(http: Router): void {
         );
       }
     }),
+    method: "POST",
+    path: "/api/v1/feedback/comment",
   });
 
   // POST /api/v1/feedback/subscribe - Subscribe to feedback updates
   http.route({
-    path: "/api/v1/feedback/subscribe",
-    method: "POST",
     handler: httpAction(async (ctx, request) => {
       const authResult = await authenticateApiRequest(ctx, request);
       if (!authResult.success) {
@@ -704,9 +701,9 @@ export function registerPublicApiRoutes(http: Router): void {
         const result = await ctx.runMutation(
           internal.feedback.api_public.subscribeFeedbackByOrganization,
           {
-            organizationId,
-            feedbackId: parseId<"feedback">(body.feedbackId, "feedbackId"),
             externalUserId,
+            feedbackId: parseId<"feedback">(body.feedbackId, "feedbackId"),
+            organizationId,
           }
         );
 
@@ -718,12 +715,12 @@ export function registerPublicApiRoutes(http: Router): void {
         );
       }
     }),
+    method: "POST",
+    path: "/api/v1/feedback/subscribe",
   });
 
   // POST /api/v1/feedback/unsubscribe - Unsubscribe from feedback updates
   http.route({
-    path: "/api/v1/feedback/unsubscribe",
-    method: "POST",
     handler: httpAction(async (ctx, request) => {
       const authResult = await authenticateApiRequest(ctx, request);
       if (!authResult.success) {
@@ -749,9 +746,9 @@ export function registerPublicApiRoutes(http: Router): void {
         const result = await ctx.runMutation(
           internal.feedback.api_public.unsubscribeFeedbackByOrganization,
           {
-            organizationId,
-            feedbackId: parseId<"feedback">(body.feedbackId, "feedbackId"),
             externalUserId,
+            feedbackId: parseId<"feedback">(body.feedbackId, "feedbackId"),
+            organizationId,
           }
         );
 
@@ -763,12 +760,12 @@ export function registerPublicApiRoutes(http: Router): void {
         );
       }
     }),
+    method: "POST",
+    path: "/api/v1/feedback/unsubscribe",
   });
 
   // GET /api/v1/feedback/roadmap - Get roadmap data
   http.route({
-    path: "/api/v1/feedback/roadmap",
-    method: "GET",
     handler: httpAction(async (ctx, request) => {
       try {
         const authResult = await authenticateApiRequest(ctx, request);
@@ -795,12 +792,12 @@ export function registerPublicApiRoutes(http: Router): void {
         );
       }
     }),
+    method: "GET",
+    path: "/api/v1/feedback/roadmap",
   });
 
   // GET /api/v1/feedback/changelog - Get changelog/releases
   http.route({
-    path: "/api/v1/feedback/changelog",
-    method: "GET",
     handler: httpAction(async (ctx, request) => {
       try {
         const authResult = await authenticateApiRequest(ctx, request);
@@ -815,8 +812,8 @@ export function registerPublicApiRoutes(http: Router): void {
         const result = await ctx.runQuery(
           internal.feedback.api_public.getChangelogByOrganization,
           {
-            organizationId,
             limit: limit ? Number.parseInt(limit, 10) : undefined,
+            organizationId,
           }
         );
 
@@ -828,12 +825,12 @@ export function registerPublicApiRoutes(http: Router): void {
         );
       }
     }),
+    method: "GET",
+    path: "/api/v1/feedback/changelog",
   });
 
   // POST /api/v1/feedback/screenshot/upload-url - Generate upload URL for screenshot
   http.route({
-    path: "/api/v1/feedback/screenshot/upload-url",
-    method: "POST",
     handler: httpAction(async (ctx, request) => {
       try {
         const authResult = await authenticateApiRequest(ctx, request);
@@ -854,12 +851,12 @@ export function registerPublicApiRoutes(http: Router): void {
         );
       }
     }),
+    method: "POST",
+    path: "/api/v1/feedback/screenshot/upload-url",
   });
 
   // POST /api/v1/feedback/screenshot/save - Save screenshot metadata after upload
   http.route({
-    path: "/api/v1/feedback/screenshot/save",
-    method: "POST",
     handler: httpAction(async (ctx, request) => {
       try {
         const authResult = await authenticateApiRequest(ctx, request);
@@ -885,16 +882,16 @@ export function registerPublicApiRoutes(http: Router): void {
         const screenshotId = await ctx.runMutation(
           internal.feedback.screenshots.saveScreenshotPublic,
           {
-            feedbackId: feedbackId as Id<"feedback">,
-            storageId: storageId as Id<"_storage">,
-            filename: stringFieldOr(body, "filename", "screenshot.png"),
-            mimeType: stringFieldOr(body, "mimeType", "image/png"),
-            size: optionalNumberField(body, "size") ?? 0,
-            width: optionalNumberField(body, "width"),
-            height: optionalNumberField(body, "height"),
             captureSource: "widget",
-            pageUrl: optionalStringField(body, "pageUrl"),
             externalUserId,
+            feedbackId: feedbackId as Id<"feedback">,
+            filename: stringFieldOr(body, "filename", "screenshot.png"),
+            height: optionalNumberField(body, "height"),
+            mimeType: stringFieldOr(body, "mimeType", "image/png"),
+            pageUrl: optionalStringField(body, "pageUrl"),
+            size: optionalNumberField(body, "size") ?? 0,
+            storageId: storageId as Id<"_storage">,
+            width: optionalNumberField(body, "width"),
           }
         );
 
@@ -906,6 +903,8 @@ export function registerPublicApiRoutes(http: Router): void {
         );
       }
     }),
+    method: "POST",
+    path: "/api/v1/feedback/screenshot/save",
   });
 
   // ============================================
@@ -914,8 +913,6 @@ export function registerPublicApiRoutes(http: Router): void {
 
   // GET /api/v1/surveys/active - Get active survey for widget
   http.route({
-    path: "/api/v1/surveys/active",
-    method: "GET",
     handler: httpAction(async (ctx, request) => {
       try {
         const authResult = await authenticateApiRequest(ctx, request);
@@ -950,12 +947,12 @@ export function registerPublicApiRoutes(http: Router): void {
         );
       }
     }),
+    method: "GET",
+    path: "/api/v1/surveys/active",
   });
 
   // POST /api/v1/surveys/respond/start - Start a survey response
   http.route({
-    path: "/api/v1/surveys/respond/start",
-    method: "POST",
     handler: httpAction(async (ctx, request) => {
       try {
         const authResult = await authenticateApiRequest(ctx, request);
@@ -984,15 +981,15 @@ export function registerPublicApiRoutes(http: Router): void {
         const responseId = await ctx.runMutation(
           internal.surveys.mutations.startResponse,
           {
-            surveyId: surveyId as Id<"surveys">,
-            organizationId,
             externalUserId,
+            organizationId,
+            pageUrl:
+              typeof body.pageUrl === "string" ? body.pageUrl : undefined,
             respondentId:
               typeof body.respondentId === "string"
                 ? body.respondentId
                 : undefined,
-            pageUrl:
-              typeof body.pageUrl === "string" ? body.pageUrl : undefined,
+            surveyId: surveyId as Id<"surveys">,
             userAgent:
               typeof body.userAgent === "string" ? body.userAgent : undefined,
           }
@@ -1006,12 +1003,12 @@ export function registerPublicApiRoutes(http: Router): void {
         );
       }
     }),
+    method: "POST",
+    path: "/api/v1/surveys/respond/start",
   });
 
   // POST /api/v1/surveys/respond/answer - Submit an answer
   http.route({
-    path: "/api/v1/surveys/respond/answer",
-    method: "POST",
     handler: httpAction(async (ctx, request) => {
       try {
         const authResult = await authenticateApiRequest(ctx, request);
@@ -1044,8 +1041,8 @@ export function registerPublicApiRoutes(http: Router): void {
         const answerId = await ctx.runMutation(
           internal.surveys.mutations.submitAnswer,
           {
-            responseId: responseId as Id<"surveyResponses">,
             questionId: questionId as Id<"surveyQuestions">,
+            responseId: responseId as Id<"surveyResponses">,
             value: value as string | number | boolean | string[],
           }
         );
@@ -1058,12 +1055,12 @@ export function registerPublicApiRoutes(http: Router): void {
         );
       }
     }),
+    method: "POST",
+    path: "/api/v1/surveys/respond/answer",
   });
 
   // POST /api/v1/surveys/respond/complete - Complete a survey response
   http.route({
-    path: "/api/v1/surveys/respond/complete",
-    method: "POST",
     handler: httpAction(async (ctx, request) => {
       try {
         const authResult = await authenticateApiRequest(ctx, request);
@@ -1099,5 +1096,7 @@ export function registerPublicApiRoutes(http: Router): void {
         );
       }
     }),
+    method: "POST",
+    path: "/api/v1/surveys/respond/complete",
   });
 }

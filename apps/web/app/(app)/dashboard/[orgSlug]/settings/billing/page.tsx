@@ -54,7 +54,7 @@ export default function BillingPage({
   const canManageBilling = subscriptionStatus?.canManageBilling ?? false;
   const canViewBilling = subscriptionStatus?.canViewBilling ?? false;
   const subscription = subscriptionStatus?.subscription ?? null;
-  const usage = subscriptionStatus?.usage ?? { members: 0, feedback: 0 };
+  const usage = subscriptionStatus?.usage ?? { feedback: 0, members: 0 };
   const limits = subscriptionStatus?.limits ?? DEFAULT_LIMITS;
 
   const handleUpgrade = async (priceKey: string) => {
@@ -64,15 +64,15 @@ export default function BillingPage({
 
     setIsLoading(priceKey);
     capture("plan_upgrade_clicked", {
-      plan: "pro",
       interval: priceKey.includes("Yearly") ? "yearly" : "monthly",
+      plan: "pro",
     });
     try {
       const result = await createCheckoutSession({
+        cancelUrl: `${window.location.origin}/dashboard/${orgSlug}/settings/billing?canceled=true`,
         organizationId: org._id,
         priceKey: priceKey as "proMonthly" | "proYearly",
         successUrl: `${window.location.origin}/dashboard/${orgSlug}/settings/billing?success=true`,
-        cancelUrl: `${window.location.origin}/dashboard/${orgSlug}/settings/billing?canceled=true`,
       });
 
       if (result.url) {

@@ -147,19 +147,19 @@ const makeFeedback = (
   author?: { name: string | null; email: string; image: string | null } | null;
 } =>
   ({
-    _id: "fb1" as Id<"feedback">,
     _creationTime: Date.now(),
-    title: "Test Feedback",
-    description: "A test description",
-    voteCount: 12,
+    _id: "fb1" as Id<"feedback">,
+    author: { email: "john@test.com", image: null, name: "John" },
     commentCount: 3,
     createdAt: Date.now() - 86_400_000,
-    organizationId: "org1" as Id<"organizations">,
-    isPinned: false,
+    description: "A test description",
     hasVoted: false,
-    tags: [],
+    isPinned: false,
+    organizationId: "org1" as Id<"organizations">,
     organizationStatus: null,
-    author: { name: "John", email: "john@test.com", image: null },
+    tags: [],
+    title: "Test Feedback",
+    voteCount: 12,
     ...overrides,
   }) as never;
 
@@ -194,8 +194,8 @@ describe("FeedbackListItem", () => {
       <FeedbackListItem
         feedback={makeFeedback({
           tags: [
-            { _id: "t1", name: "Bug", color: "red", icon: "🐛" },
-            { _id: "t2", name: "Feature", color: "blue" },
+            { _id: "t1", color: "red", icon: "🐛", name: "Bug" },
+            { _id: "t2", color: "blue", name: "Feature" },
           ],
         })}
       />
@@ -209,7 +209,7 @@ describe("FeedbackListItem", () => {
     render(
       <FeedbackListItem
         feedback={makeFeedback({
-          organizationStatus: { name: "Open", color: "green" },
+          organizationStatus: { color: "green", name: "Open" },
         })}
       />
     );
@@ -247,8 +247,8 @@ describe("FeedbackListItem", () => {
     render(
       <FeedbackListItem
         feedback={makeFeedback({
-          priority: "critical",
           aiPriority: "low",
+          priority: "critical",
         })}
       />
     );
@@ -298,7 +298,7 @@ describe("FeedbackListItem", () => {
     render(
       <FeedbackListItem
         feedback={makeFeedback({
-          author: { name: null, email: "user@test.com", image: null },
+          author: { email: "user@test.com", image: null, name: null },
         })}
       />
     );
@@ -309,8 +309,8 @@ describe("FeedbackListItem", () => {
     render(
       <FeedbackListItem
         feedback={makeFeedback({
-          complexity: "high",
           aiComplexity: "low",
+          complexity: "high",
         })}
       />
     );
@@ -321,7 +321,7 @@ describe("FeedbackListItem", () => {
     render(
       <FeedbackListItem
         feedback={makeFeedback({
-          tags: [{ _id: "t1", name: "Bug", color: "red", icon: "🐛" }],
+          tags: [{ _id: "t1", color: "red", icon: "🐛", name: "Bug" }],
         })}
       />
     );

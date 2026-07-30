@@ -8,24 +8,23 @@ const mockCommands = {
 
 const mockEditor = {
   commands: mockCommands,
+  destroy: vi.fn(),
+  getHTML: () => "<p>mock html</p>",
+  isEditable: true,
+  off: vi.fn(),
+  on: vi.fn(),
+  setEditable: vi.fn(),
   storage: {
-    markdown: {
-      getMarkdown: () => "mock markdown",
-    },
     characterCount: {
       characters: () => 10,
     },
+    markdown: {
+      getMarkdown: () => "mock markdown",
+    },
   },
-  getHTML: () => "<p>mock html</p>",
-  on: vi.fn(),
-  off: vi.fn(),
-  destroy: vi.fn(),
-  setEditable: vi.fn(),
-  isEditable: true,
 };
 
 vi.mock("@tiptap/react", () => ({
-  useEditor: vi.fn(() => mockEditor),
   EditorContent: ({ editor }: { editor: unknown }) => (
     <div
       className="ProseMirror"
@@ -36,6 +35,7 @@ vi.mock("@tiptap/react", () => ({
       {editor ? "Editor content" : "No editor"}
     </div>
   ),
+  useEditor: vi.fn(() => mockEditor),
 }));
 
 // Mock Tiptap extensions
@@ -80,8 +80,8 @@ vi.mock("tiptap-markdown", () => ({
 
 // Mock the custom extensions
 vi.mock("./slash-command", () => ({
-  SlashCommand: {},
   createSlashCommandExtension: () => ({}),
+  SlashCommand: {},
 }));
 
 vi.mock("./image-bubble-menu", () => ({
@@ -98,30 +98,30 @@ vi.mock("./image-extension", () => ({
 
 vi.mock("./use-media-upload", () => ({
   useMediaUpload: () => ({
-    uploadMedia: vi.fn().mockResolvedValue({
-      url: "https://example.com/media.jpg",
-      type: "image",
-    }),
     isUploading: false,
+    uploadMedia: vi.fn().mockResolvedValue({
+      type: "image",
+      url: "https://example.com/media.jpg",
+    }),
     uploadProgress: null,
   }),
 }));
 
 const mockFocus = vi.fn();
 const mockHookReturn = {
+  characterCount: 10,
   editor: {
     ...mockEditor,
     commands: { ...mockCommands, focus: mockFocus },
   },
-  imageInputRef: { current: null },
-  videoInputRef: { current: null },
   handleImageChange: vi.fn(),
   handleVideoChange: vi.fn(),
+  imageInputRef: { current: null },
+  isAtLimit: false,
+  isNearLimit: false,
   isUploading: false,
   uploadProgress: null,
-  characterCount: 10,
-  isNearLimit: false,
-  isAtLimit: false,
+  videoInputRef: { current: null },
 };
 
 vi.mock("./hooks/use-editor", () => ({
@@ -363,8 +363,8 @@ describe("TiptapMarkdownEditor", () => {
       };
       useTiptapMarkdownEditor.mockReturnValueOnce({
         ...mockHookReturn,
-        isAtLimit: true,
         characterCount: 100,
+        isAtLimit: true,
       });
       render(
         <TiptapMarkdownEditor
@@ -384,8 +384,8 @@ describe("TiptapMarkdownEditor", () => {
       };
       useTiptapMarkdownEditor.mockReturnValueOnce({
         ...mockHookReturn,
-        isNearLimit: true,
         characterCount: 90,
+        isNearLimit: true,
       });
       render(
         <TiptapMarkdownEditor

@@ -10,16 +10,16 @@ import { ThemeProvider } from "@/lib/theme-provider";
 import "./globals.css";
 
 const inter = Inter({
+  display: "optional",
   subsets: ["latin"],
   variable: "--font-sans",
-  display: "optional",
 });
 
 const instrumentSerif = Instrument_Serif({
-  weight: "400",
+  display: "optional",
   subsets: ["latin"],
   variable: "--font-display",
-  display: "optional",
+  weight: "400",
 });
 
 export const metadata: Metadata = defaultMetadata;

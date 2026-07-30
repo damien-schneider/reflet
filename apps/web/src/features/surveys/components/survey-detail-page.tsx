@@ -72,7 +72,7 @@ export default function SurveyDetailPage({
 
   const handleStatusChange = async (status: SurveyStatus) => {
     try {
-      await updateStatus({ surveyId: survey._id, status });
+      await updateStatus({ status, surveyId: survey._id });
       toast.success(`Survey ${status}`);
     } catch {
       toast.error("Failed to update status");

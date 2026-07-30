@@ -17,26 +17,26 @@ export const DEFAULT_CARD_STYLE: CardStyle = "minimal-notch";
 
 export const CARD_STYLE_OPTIONS = [
   {
-    value: "minimal-notch" as const,
-    label: "Minimal Notch",
     description: "Clean layout with a left-edge notch vote indicator.",
+    label: "Minimal Notch",
+    value: "minimal-notch" as const,
   },
   {
-    value: "sweep-corner" as const,
-    label: "Sweep Corner",
     description: "Corner vote badge with a sweep animation on click.",
+    label: "Sweep Corner",
+    value: "sweep-corner" as const,
   },
   {
-    value: "editorial-feed" as const,
-    label: "Editorial Feed",
     description: "Rich editorial layout with author details and inline voting.",
+    label: "Editorial Feed",
+    value: "editorial-feed" as const,
   },
 ] as const;
 
 const CARD_COMPONENTS: Record<CardStyle, ComponentType<FeedCardProps>> = {
-  "sweep-corner": SweepCornerFeedCard,
-  "minimal-notch": MinimalNotchFeedCard,
   "editorial-feed": EditorialFeedFeedCard,
+  "minimal-notch": MinimalNotchFeedCard,
+  "sweep-corner": SweepCornerFeedCard,
 };
 
 export function getCardComponent(

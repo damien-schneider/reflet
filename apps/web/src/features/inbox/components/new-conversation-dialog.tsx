@@ -49,9 +49,9 @@ export function NewConversationDialog({
     setIsSubmitting(true);
     try {
       const conversationId = await onSubmit({
+        initialMessage: trimmedMessage,
         organizationId,
         subject: subject.trim() || undefined,
-        initialMessage: trimmedMessage,
       });
       onOpenChange(false);
       setSubject("");

@@ -9,18 +9,6 @@ export const listTags = internalQuery({
   args: {
     organizationId: v.id("organizations"),
   },
-  returns: v.array(
-    v.object({
-      id: v.id("tags"),
-      name: v.string(),
-      slug: v.string(),
-      color: v.string(),
-      icon: v.optional(v.string()),
-      description: v.optional(v.string()),
-      isPublic: v.optional(v.boolean()),
-      createdAt: v.number(),
-    })
-  ),
   handler: async (ctx, args) => {
     const tags = await ctx.db
       .query("tags")
@@ -30,16 +18,28 @@ export const listTags = internalQuery({
       .collect();
 
     return tags.map((t) => ({
+      color: t.color,
+      createdAt: t.createdAt,
+      description: t.description,
+      icon: t.icon,
       id: t._id,
+      isPublic: t.settings?.isPublic,
       name: t.name,
       slug: t.slug,
-      color: t.color,
-      icon: t.icon,
-      description: t.description,
-      isPublic: t.settings?.isPublic,
-      createdAt: t.createdAt,
     }));
   },
+  returns: v.array(
+    v.object({
+      color: v.string(),
+      createdAt: v.number(),
+      description: v.optional(v.string()),
+      icon: v.optional(v.string()),
+      id: v.id("tags"),
+      isPublic: v.optional(v.boolean()),
+      name: v.string(),
+      slug: v.string(),
+    })
+  ),
 });
 
 // ============================================
@@ -48,14 +48,13 @@ export const listTags = internalQuery({
 
 export const createTag = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
-    name: v.string(),
     color: v.string(),
-    icon: v.optional(v.string()),
     description: v.optional(v.string()),
+    icon: v.optional(v.string()),
     isPublic: v.optional(v.boolean()),
+    name: v.string(),
+    organizationId: v.id("organizations"),
   },
-  returns: v.object({ id: v.id("tags") }),
   handler: async (ctx, args) => {
     const slug = args.name
       .toLowerCase()
@@ -74,32 +73,32 @@ export const createTag = internalMutation({
 
     const now = Date.now();
     const id = await ctx.db.insert("tags", {
-      organizationId: args.organizationId,
-      name: args.name,
-      slug,
       color: args.color,
-      icon: args.icon,
-      description: args.description,
-      settings: { isPublic: args.isPublic ?? false },
       createdAt: now,
+      description: args.description,
+      icon: args.icon,
+      name: args.name,
+      organizationId: args.organizationId,
+      settings: { isPublic: args.isPublic ?? false },
+      slug,
       updatedAt: now,
     });
 
     return { id };
   },
+  returns: v.object({ id: v.id("tags") }),
 });
 
 export const updateTag = internalMutation({
   args: {
+    color: v.optional(v.string()),
+    description: v.optional(v.string()),
+    icon: v.optional(v.string()),
+    isPublic: v.optional(v.boolean()),
+    name: v.optional(v.string()),
     organizationId: v.id("organizations"),
     tagId: v.id("tags"),
-    name: v.optional(v.string()),
-    color: v.optional(v.string()),
-    icon: v.optional(v.string()),
-    description: v.optional(v.string()),
-    isPublic: v.optional(v.boolean()),
   },
-  returns: v.object({ success: v.boolean() }),
   handler: async (ctx, args) => {
     const tag = await ctx.db.get(args.tagId);
     if (!tag || tag.organizationId !== args.organizationId) {
@@ -130,6 +129,7 @@ export const updateTag = internalMutation({
     await ctx.db.patch(args.tagId, updates);
     return { success: true };
   },
+  returns: v.object({ success: v.boolean() }),
 });
 
 export const deleteTag = internalMutation({
@@ -137,7 +137,6 @@ export const deleteTag = internalMutation({
     organizationId: v.id("organizations"),
     tagId: v.id("tags"),
   },
-  returns: v.object({ success: v.boolean() }),
   handler: async (ctx, args) => {
     const tag = await ctx.db.get(args.tagId);
     if (!tag || tag.organizationId !== args.organizationId) {
@@ -156,4 +155,5 @@ export const deleteTag = internalMutation({
     await ctx.db.delete(args.tagId);
     return { success: true };
   },
+  returns: v.object({ success: v.boolean() }),
 });

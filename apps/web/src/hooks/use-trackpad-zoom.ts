@@ -111,5 +111,5 @@ export function useTrackpadZoom({
     };
   }, [enabled, clamp, sensitivity]);
 
-  return { zoom, ref } as const;
+  return { ref, zoom } as const;
 }

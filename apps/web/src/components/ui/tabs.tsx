@@ -37,14 +37,14 @@ function Tabs({
 const tabsListVariants = cva(
   "group/tabs-list inline-flex w-fit items-center justify-center rounded-full p-1 text-muted-foreground data-[variant=line]:rounded-none data-[variant=line]:p-0 group-data-[orientation=vertical]/tabs:h-fit group-data-[orientation=vertical]/tabs:flex-col",
   {
+    defaultVariants: {
+      variant: "default",
+    },
     variants: {
       variant: {
         default: "gap-1 bg-muted",
         line: "gap-1 bg-transparent",
       },
-    },
-    defaultVariants: {
-      variant: "default",
     },
   }
 );
@@ -74,7 +74,7 @@ function TabsIndicator() {
     <motion.span
       className="absolute inset-0 rounded-full bg-background shadow-sm"
       layoutId="tabs-indicator"
-      transition={{ type: "spring", bounce: 0.15, duration: 0.4 }}
+      transition={{ bounce: 0.15, duration: 0.4, type: "spring" }}
     />
   );
 }
@@ -100,8 +100,8 @@ function TabsTrigger({
     setIsActive(ref.hasAttribute("data-active"));
 
     observer.observe(ref, {
-      attributes: true,
       attributeFilter: ["data-active"],
+      attributes: true,
     });
 
     return () => observer.disconnect();

@@ -16,10 +16,10 @@ describe("admin_api_feedback - updateFeedback", () => {
     const feedbackId = await createFeedback(t, orgId);
 
     await t.mutation(internal.admin_api.feedback.updateFeedback, {
-      organizationId: orgId,
-      feedbackId,
-      title: "Updated Title",
       description: "Updated desc",
+      feedbackId,
+      organizationId: orgId,
+      title: "Updated Title",
     });
 
     const fb = await t.run(async (ctx) => ctx.db.get(feedbackId));
@@ -32,20 +32,20 @@ describe("admin_api_feedback - updateFeedback", () => {
     const orgId = await createOrg(t);
     const otherOrgId = await t.run(async (ctx) =>
       ctx.db.insert("organizations", {
+        createdAt: Date.now(),
+        isPublic: false,
         name: "Other",
         slug: "other",
-        isPublic: false,
-        subscriptionTier: "free",
         subscriptionStatus: "none",
-        createdAt: Date.now(),
+        subscriptionTier: "free",
       })
     );
     const feedbackId = await createFeedback(t, orgId);
 
     await expect(
       t.mutation(internal.admin_api.feedback.updateFeedback, {
-        organizationId: otherOrgId,
         feedbackId,
+        organizationId: otherOrgId,
         title: "Hacked",
       })
     ).rejects.toThrow("Feedback not found");
@@ -59,8 +59,8 @@ describe("admin_api_feedback - deleteFeedback / restoreFeedback", () => {
     const feedbackId = await createFeedback(t, orgId);
 
     await t.mutation(internal.admin_api.feedback.deleteFeedback, {
-      organizationId: orgId,
       feedbackId,
+      organizationId: orgId,
     });
 
     const fb = await t.run(async (ctx) => ctx.db.get(feedbackId));
@@ -73,13 +73,13 @@ describe("admin_api_feedback - deleteFeedback / restoreFeedback", () => {
     const feedbackId = await createFeedback(t, orgId);
 
     await t.mutation(internal.admin_api.feedback.deleteFeedback, {
-      organizationId: orgId,
       feedbackId,
+      organizationId: orgId,
     });
 
     await t.mutation(internal.admin_api.feedback.restoreFeedback, {
-      organizationId: orgId,
       feedbackId,
+      organizationId: orgId,
     });
 
     const fb = await t.run(async (ctx) => ctx.db.get(feedbackId));
@@ -93,8 +93,8 @@ describe("admin_api_feedback - deleteFeedback / restoreFeedback", () => {
 
     await expect(
       t.mutation(internal.admin_api.feedback.restoreFeedback, {
-        organizationId: orgId,
         feedbackId,
+        organizationId: orgId,
       })
     ).rejects.toThrow("Feedback is not deleted");
   });
@@ -108,17 +108,17 @@ describe("admin_api_feedback - assignFeedback", () => {
 
     await t.run(async (ctx) =>
       ctx.db.insert("organizationMembers", {
-        organizationId: orgId,
-        userId: "user-123",
-        role: "admin",
         createdAt: Date.now(),
+        organizationId: orgId,
+        role: "admin",
+        userId: "user-123",
       })
     );
 
     await t.mutation(internal.admin_api.feedback.assignFeedback, {
-      organizationId: orgId,
-      feedbackId,
       assigneeId: "user-123",
+      feedbackId,
+      organizationId: orgId,
     });
 
     const fb = await t.run(async (ctx) => ctx.db.get(feedbackId));
@@ -131,8 +131,8 @@ describe("admin_api_feedback - assignFeedback", () => {
     const feedbackId = await createFeedback(t, orgId);
 
     await t.mutation(internal.admin_api.feedback.assignFeedback, {
-      organizationId: orgId,
       feedbackId,
+      organizationId: orgId,
     });
 
     const fb = await t.run(async (ctx) => ctx.db.get(feedbackId));
@@ -146,9 +146,9 @@ describe("admin_api_feedback - assignFeedback", () => {
 
     await expect(
       t.mutation(internal.admin_api.feedback.assignFeedback, {
-        organizationId: orgId,
-        feedbackId,
         assigneeId: "non-member",
+        feedbackId,
+        organizationId: orgId,
       })
     ).rejects.toThrow("Assignee is not a member of this organization");
   });
@@ -161,8 +161,8 @@ describe("admin_api_feedback - setFeedbackStatus", () => {
     const feedbackId = await createFeedback(t, orgId);
 
     await t.mutation(internal.admin_api.feedback.setFeedbackStatus, {
-      organizationId: orgId,
       feedbackId,
+      organizationId: orgId,
       status: "in_progress",
     });
 
@@ -176,8 +176,8 @@ describe("admin_api_feedback - setFeedbackStatus", () => {
     const feedbackId = await createFeedback(t, orgId);
 
     await t.mutation(internal.admin_api.feedback.setFeedbackStatus, {
-      organizationId: orgId,
       feedbackId,
+      organizationId: orgId,
       status: "completed",
     });
 
@@ -193,18 +193,18 @@ describe("admin_api_feedback - setFeedbackStatus", () => {
 
     const statusId = await t.run(async (ctx) =>
       ctx.db.insert("organizationStatuses", {
-        organizationId: orgId,
-        name: "In Review",
         color: "#FFAA00",
-        order: 0,
         createdAt: Date.now(),
+        name: "In Review",
+        order: 0,
+        organizationId: orgId,
         updatedAt: Date.now(),
       })
     );
 
     await t.mutation(internal.admin_api.feedback.setFeedbackStatus, {
-      organizationId: orgId,
       feedbackId,
+      organizationId: orgId,
       statusId,
     });
 
@@ -217,31 +217,31 @@ describe("admin_api_feedback - setFeedbackStatus", () => {
     const orgId = await createOrg(t);
     const otherOrgId = await t.run(async (ctx) =>
       ctx.db.insert("organizations", {
+        createdAt: Date.now(),
+        isPublic: false,
         name: "Other",
         slug: "other",
-        isPublic: false,
-        subscriptionTier: "free",
         subscriptionStatus: "none",
-        createdAt: Date.now(),
+        subscriptionTier: "free",
       })
     );
     const feedbackId = await createFeedback(t, orgId);
 
     const foreignStatusId = await t.run(async (ctx) =>
       ctx.db.insert("organizationStatuses", {
-        organizationId: otherOrgId,
-        name: "Foreign",
         color: "#F00",
-        order: 0,
         createdAt: Date.now(),
+        name: "Foreign",
+        order: 0,
+        organizationId: otherOrgId,
         updatedAt: Date.now(),
       })
     );
 
     await expect(
       t.mutation(internal.admin_api.feedback.setFeedbackStatus, {
-        organizationId: orgId,
         feedbackId,
+        organizationId: orgId,
         statusId: foreignStatusId,
       })
     ).rejects.toThrow("Status not found in this organization");
@@ -256,30 +256,30 @@ describe("admin_api_feedback - updateFeedbackTags", () => {
 
     const tag1Id = await t.run(async (ctx) =>
       ctx.db.insert("tags", {
-        organizationId: orgId,
-        name: "Bug",
-        slug: "bug",
         color: "#F00",
         createdAt: Date.now(),
+        name: "Bug",
+        organizationId: orgId,
+        slug: "bug",
         updatedAt: Date.now(),
       })
     );
     const tag2Id = await t.run(async (ctx) =>
       ctx.db.insert("tags", {
-        organizationId: orgId,
-        name: "Feature",
-        slug: "feature",
         color: "#0F0",
         createdAt: Date.now(),
+        name: "Feature",
+        organizationId: orgId,
+        slug: "feature",
         updatedAt: Date.now(),
       })
     );
 
     // Add both tags
     await t.mutation(internal.admin_api.feedback.updateFeedbackTags, {
-      organizationId: orgId,
-      feedbackId,
       addTagIds: [tag1Id, tag2Id],
+      feedbackId,
+      organizationId: orgId,
     });
 
     let tags = await t.run(async (ctx) =>
@@ -294,8 +294,8 @@ describe("admin_api_feedback - updateFeedbackTags", () => {
 
     // Remove one tag
     await t.mutation(internal.admin_api.feedback.updateFeedbackTags, {
-      organizationId: orgId,
       feedbackId,
+      organizationId: orgId,
       removeTagIds: [tag1Id],
     });
 
@@ -318,25 +318,25 @@ describe("admin_api_feedback - updateFeedbackTags", () => {
 
     const tagId = await t.run(async (ctx) =>
       ctx.db.insert("tags", {
-        organizationId: orgId,
-        name: "Tag",
-        slug: "tag",
         color: "#000",
         createdAt: Date.now(),
+        name: "Tag",
+        organizationId: orgId,
+        slug: "tag",
         updatedAt: Date.now(),
       })
     );
 
     await t.mutation(internal.admin_api.feedback.updateFeedbackTags, {
-      organizationId: orgId,
-      feedbackId,
       addTagIds: [tagId],
+      feedbackId,
+      organizationId: orgId,
     });
 
     await t.mutation(internal.admin_api.feedback.updateFeedbackTags, {
-      organizationId: orgId,
-      feedbackId,
       addTagIds: [tagId],
+      feedbackId,
+      organizationId: orgId,
     });
 
     const tags = await t.run(async (ctx) =>
@@ -350,32 +350,32 @@ describe("admin_api_feedback - updateFeedbackTags", () => {
     const orgId = await createOrg(t);
     const otherOrgId = await t.run(async (ctx) =>
       ctx.db.insert("organizations", {
+        createdAt: Date.now(),
+        isPublic: false,
         name: "Other",
         slug: "other",
-        isPublic: false,
-        subscriptionTier: "free",
         subscriptionStatus: "none",
-        createdAt: Date.now(),
+        subscriptionTier: "free",
       })
     );
     const feedbackId = await createFeedback(t, orgId);
 
     const foreignTagId = await t.run(async (ctx) =>
       ctx.db.insert("tags", {
-        organizationId: otherOrgId,
-        name: "Foreign",
-        slug: "foreign",
         color: "#000",
         createdAt: Date.now(),
+        name: "Foreign",
+        organizationId: otherOrgId,
+        slug: "foreign",
         updatedAt: Date.now(),
       })
     );
 
     await expect(
       t.mutation(internal.admin_api.feedback.updateFeedbackTags, {
-        organizationId: orgId,
-        feedbackId,
         addTagIds: [foreignTagId],
+        feedbackId,
+        organizationId: orgId,
       })
     ).rejects.toThrow("not found");
   });
@@ -388,10 +388,10 @@ describe("admin_api_feedback - updateFeedbackAnalysis", () => {
     const feedbackId = await createFeedback(t, orgId);
 
     await t.mutation(internal.admin_api.feedback.updateFeedbackAnalysis, {
-      organizationId: orgId,
-      feedbackId,
-      priority: "high",
       complexity: "moderate",
+      feedbackId,
+      organizationId: orgId,
+      priority: "high",
       timeEstimate: "2-4 hours",
     });
 
@@ -410,18 +410,18 @@ describe("admin_api_feedback - comment mutations", () => {
 
     const commentId = await t.run(async (ctx) =>
       ctx.db.insert("comments", {
-        feedbackId,
         body: "Original",
-        isOfficial: false,
         createdAt: Date.now(),
+        feedbackId,
+        isOfficial: false,
         updatedAt: Date.now(),
       })
     );
 
     await t.mutation(internal.admin_api.feedback.updateComment, {
-      organizationId: orgId,
-      commentId,
       body: "Updated comment",
+      commentId,
+      organizationId: orgId,
     });
 
     const comment = await t.run(async (ctx) => ctx.db.get(commentId));
@@ -433,31 +433,31 @@ describe("admin_api_feedback - comment mutations", () => {
     const orgId = await createOrg(t);
     const otherOrgId = await t.run(async (ctx) =>
       ctx.db.insert("organizations", {
+        createdAt: Date.now(),
+        isPublic: false,
         name: "Other",
         slug: "other",
-        isPublic: false,
-        subscriptionTier: "free",
         subscriptionStatus: "none",
-        createdAt: Date.now(),
+        subscriptionTier: "free",
       })
     );
 
     const feedbackId = await createFeedback(t, orgId);
     const commentId = await t.run(async (ctx) =>
       ctx.db.insert("comments", {
-        feedbackId,
         body: "Hello",
-        isOfficial: false,
         createdAt: Date.now(),
+        feedbackId,
+        isOfficial: false,
         updatedAt: Date.now(),
       })
     );
 
     await expect(
       t.mutation(internal.admin_api.feedback.updateComment, {
-        organizationId: otherOrgId,
-        commentId,
         body: "Hacked",
+        commentId,
+        organizationId: otherOrgId,
       })
     ).rejects.toThrow("Comment not found in this organization");
   });
@@ -472,10 +472,10 @@ describe("admin_api_feedback - comment mutations", () => {
 
     const commentId = await t.run(async (ctx) =>
       ctx.db.insert("comments", {
-        feedbackId,
         body: "Parent",
-        isOfficial: false,
         createdAt: Date.now(),
+        feedbackId,
+        isOfficial: false,
         updatedAt: Date.now(),
       })
     );
@@ -483,18 +483,18 @@ describe("admin_api_feedback - comment mutations", () => {
     // Create a reply
     await t.run(async (ctx) =>
       ctx.db.insert("comments", {
-        feedbackId,
         body: "Reply",
+        createdAt: Date.now(),
+        feedbackId,
         isOfficial: false,
         parentId: commentId,
-        createdAt: Date.now(),
         updatedAt: Date.now(),
       })
     );
 
     await t.mutation(internal.admin_api.feedback.deleteComment, {
-      organizationId: orgId,
       commentId,
+      organizationId: orgId,
     });
 
     const remaining = await t.run(async (ctx) =>
@@ -514,27 +514,27 @@ describe("admin_api_feedback - comment mutations", () => {
 
     const commentId = await t.run(async (ctx) =>
       ctx.db.insert("comments", {
-        feedbackId,
         body: "Response",
-        isOfficial: false,
         createdAt: Date.now(),
+        feedbackId,
+        isOfficial: false,
         updatedAt: Date.now(),
       })
     );
 
     await t.mutation(internal.admin_api.feedback.markCommentOfficial, {
-      organizationId: orgId,
       commentId,
       isOfficial: true,
+      organizationId: orgId,
     });
 
     let comment = await t.run(async (ctx) => ctx.db.get(commentId));
     expect(comment?.isOfficial).toBe(true);
 
     await t.mutation(internal.admin_api.feedback.markCommentOfficial, {
-      organizationId: orgId,
       commentId,
       isOfficial: false,
+      organizationId: orgId,
     });
 
     comment = await t.run(async (ctx) => ctx.db.get(commentId));

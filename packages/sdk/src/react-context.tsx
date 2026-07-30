@@ -77,8 +77,8 @@ export function RefletProvider({
 
   const client = useMemo(() => {
     const config: RefletConfig = {
-      publicKey,
       baseUrl,
+      publicKey,
       user,
       userToken,
     };
@@ -101,13 +101,13 @@ export function RefletProvider({
 
   const value = useMemo(
     () => ({
-      client,
-      publicKey,
       baseUrl,
+      client,
       isReady,
+      publicKey,
+      setUser,
       user,
       userToken,
-      setUser,
     }),
     [client, publicKey, baseUrl, isReady, user, userToken]
   );

@@ -5,10 +5,10 @@ import { getAuthUser } from "../shared/utils";
 
 // Default statuses to create for new organizations (used as roadmap columns)
 const DEFAULT_STATUSES = [
-  { name: "Backlog", color: "#6b7280", icon: "clock", order: 0 },
-  { name: "Planned", color: "#3b82f6", icon: "calendar", order: 1 },
-  { name: "In Progress", color: "#8b5cf6", icon: "spinner", order: 2 },
-  { name: "Done", color: "#22c55e", icon: "check-circle", order: 3 },
+  { color: "#6b7280", icon: "clock", name: "Backlog", order: 0 },
+  { color: "#3b82f6", icon: "calendar", name: "Planned", order: 1 },
+  { color: "#8b5cf6", icon: "spinner", name: "In Progress", order: 2 },
+  { color: "#22c55e", icon: "check-circle", name: "Done", order: 3 },
 ] as const;
 
 /**
@@ -38,9 +38,7 @@ export const list = query({
  */
 export const get = query({
   args: { id: v.id("organizationStatuses") },
-  handler: (ctx, args) => {
-    return ctx.db.get(args.id);
-  },
+  handler: (ctx, args) => ctx.db.get(args.id),
 });
 
 /**
@@ -85,12 +83,12 @@ export const createDefaults = mutation({
 
     for (const status of DEFAULT_STATUSES) {
       const id = await ctx.db.insert("organizationStatuses", {
-        organizationId: args.organizationId,
-        name: status.name,
         color: status.color,
-        icon: status.icon,
-        order: status.order,
         createdAt: now,
+        icon: status.icon,
+        name: status.name,
+        order: status.order,
+        organizationId: args.organizationId,
         updatedAt: now,
       });
       statusIds.push(id);
@@ -146,22 +144,22 @@ export const ensureDefaults = mutation({
 
     for (const status of DEFAULT_STATUSES) {
       const id = await ctx.db.insert("organizationStatuses", {
-        organizationId: args.organizationId,
-        name: status.name,
         color: status.color,
-        icon: status.icon,
-        order: status.order,
         createdAt: now,
+        icon: status.icon,
+        name: status.name,
+        order: status.order,
+        organizationId: args.organizationId,
         updatedAt: now,
       });
       createdStatuses.push({
         _id: id,
-        organizationId: args.organizationId,
-        name: status.name,
         color: status.color,
-        icon: status.icon,
-        order: status.order,
         createdAt: now,
+        icon: status.icon,
+        name: status.name,
+        order: status.order,
+        organizationId: args.organizationId,
         updatedAt: now,
       });
     }
@@ -175,10 +173,10 @@ export const ensureDefaults = mutation({
  */
 export const create = mutation({
   args: {
-    organizationId: v.id("organizations"),
-    name: v.string(),
     color: v.string(),
     icon: v.optional(v.string()),
+    name: v.string(),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -212,12 +210,12 @@ export const create = mutation({
 
     const now = Date.now();
     const statusId = await ctx.db.insert("organizationStatuses", {
-      organizationId: args.organizationId,
-      name: args.name,
       color: args.color,
-      icon: args.icon,
-      order: maxOrder + 1,
       createdAt: now,
+      icon: args.icon,
+      name: args.name,
+      order: maxOrder + 1,
+      organizationId: args.organizationId,
       updatedAt: now,
     });
 
@@ -230,10 +228,10 @@ export const create = mutation({
  */
 export const update = mutation({
   args: {
-    id: v.id("organizationStatuses"),
-    name: v.optional(v.string()),
     color: v.optional(v.string()),
     icon: v.optional(v.string()),
+    id: v.id("organizationStatuses"),
+    name: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);

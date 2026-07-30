@@ -48,31 +48,31 @@ export const getConfig = query({
       (subscription.status === "active" || subscription.status === "trialing");
 
     return {
-      widgetId: args.widgetId,
-      organizationName: org.name,
-      primaryColor: settings.primaryColor,
-      position: settings.position,
-      welcomeMessage: settings.welcomeMessage,
-      greetingMessage: settings.greetingMessage,
-      showLauncher: settings.showLauncher,
       autoOpen: settings.autoOpen,
-      zIndex: settings.zIndex,
+      greetingMessage: settings.greetingMessage,
       hideBranding: org.hideBranding === true && Boolean(isPro),
+      organizationName: org.name,
+      position: settings.position,
+      primaryColor: settings.primaryColor,
+      showLauncher: settings.showLauncher,
+      welcomeMessage: settings.welcomeMessage,
+      widgetId: args.widgetId,
+      zIndex: settings.zIndex,
     };
   },
 });
 
 export const getOrCreateConversation = mutation({
   args: {
-    widgetId: v.string(),
-    visitorId: v.string(),
     metadata: v.optional(
       v.object({
-        userAgent: v.optional(v.string()),
-        url: v.optional(v.string()),
         referrer: v.optional(v.string()),
+        url: v.optional(v.string()),
+        userAgent: v.optional(v.string()),
       })
     ),
+    visitorId: v.string(),
+    widgetId: v.string(),
   },
   handler: async (ctx, args) => {
     const widget = await ctx.db
@@ -99,8 +99,8 @@ export const getOrCreateConversation = mutation({
 
       return {
         conversationId: existingWidgetConv.conversationId,
-        visitorId: args.visitorId,
         isNew: false,
+        visitorId: args.visitorId,
       };
     }
 
@@ -108,41 +108,41 @@ export const getOrCreateConversation = mutation({
     const visitorId = args.visitorId || generateVisitorId();
 
     const conversationId = await ctx.db.insert("supportConversations", {
-      organizationId: widget.organizationId,
-      userId: `widget_${visitorId}`,
-      subject: "Widget conversation",
-      status: "open",
-      assignedTo: undefined,
-      lastMessageAt: now,
-      userUnreadCount: 0,
       adminUnreadCount: 0,
+      assignedTo: undefined,
       createdAt: now,
+      lastMessageAt: now,
+      organizationId: widget.organizationId,
+      status: "open",
+      subject: "Widget conversation",
       updatedAt: now,
+      userId: `widget_${visitorId}`,
+      userUnreadCount: 0,
     });
 
     await ctx.db.insert("widgetConversations", {
-      widgetId: widget._id,
       conversationId,
-      visitorId,
-      metadata: args.metadata,
-      lastSeenAt: now,
       createdAt: now,
+      lastSeenAt: now,
+      metadata: args.metadata,
+      visitorId,
+      widgetId: widget._id,
     });
 
     return {
       conversationId,
-      visitorId,
       isNew: true,
+      visitorId,
     };
   },
 });
 
 export const sendMessage = mutation({
   args: {
-    widgetId: v.string(),
-    visitorId: v.string(),
-    conversationId: v.id("supportConversations"),
     body: v.string(),
+    conversationId: v.id("supportConversations"),
+    visitorId: v.string(),
+    widgetId: v.string(),
   },
   handler: async (ctx, args) => {
     const widget = await ctx.db
@@ -173,22 +173,22 @@ export const sendMessage = mutation({
     const now = Date.now();
 
     const messageId = await ctx.db.insert("supportMessages", {
+      body: args.body,
       conversationId: args.conversationId,
+      createdAt: now,
+      isRead: false,
       senderId: `widget_${args.visitorId}`,
       senderType: "user",
-      body: args.body,
-      isRead: false,
-      createdAt: now,
     });
 
     const newStatus =
       conversation.status === "awaiting_reply" ? "open" : conversation.status;
 
     await ctx.db.patch(args.conversationId, {
-      lastMessageAt: now,
-      updatedAt: now,
       adminUnreadCount: conversation.adminUnreadCount + 1,
+      lastMessageAt: now,
       status: newStatus,
+      updatedAt: now,
     });
 
     await ctx.db.patch(widgetConv._id, {
@@ -201,9 +201,9 @@ export const sendMessage = mutation({
 
 export const listMessages = query({
   args: {
-    widgetId: v.string(),
-    visitorId: v.string(),
     conversationId: v.id("supportConversations"),
+    visitorId: v.string(),
+    widgetId: v.string(),
   },
   handler: async (ctx, args) => {
     const widget = await ctx.db
@@ -236,20 +236,20 @@ export const listMessages = query({
     messages.sort((a, b) => a.createdAt - b.createdAt);
 
     return messages.map((msg) => ({
-      id: msg._id,
       body: msg.body,
-      senderType: msg.senderType,
-      isOwnMessage: msg.senderId === `widget_${args.visitorId}`,
       createdAt: msg.createdAt,
+      id: msg._id,
+      isOwnMessage: msg.senderId === `widget_${args.visitorId}`,
+      senderType: msg.senderType,
     }));
   },
 });
 
 export const markMessagesAsRead = mutation({
   args: {
-    widgetId: v.string(),
-    visitorId: v.string(),
     conversationId: v.id("supportConversations"),
+    visitorId: v.string(),
+    widgetId: v.string(),
   },
   handler: async (ctx, args) => {
     const widget = await ctx.db
@@ -286,8 +286,8 @@ export const markMessagesAsRead = mutation({
     }
 
     await ctx.db.patch(args.conversationId, {
-      userUnreadCount: 0,
       updatedAt: Date.now(),
+      userUnreadCount: 0,
     });
 
     return true;
@@ -296,9 +296,9 @@ export const markMessagesAsRead = mutation({
 
 export const getUnreadCount = query({
   args: {
-    widgetId: v.string(),
-    visitorId: v.string(),
     conversationId: v.id("supportConversations"),
+    visitorId: v.string(),
+    widgetId: v.string(),
   },
   handler: async (ctx, args) => {
     const widget = await ctx.db

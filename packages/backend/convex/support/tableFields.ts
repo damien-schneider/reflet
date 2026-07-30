@@ -6,19 +6,28 @@ import {
 } from "../shared/validators";
 
 export const supportTables = {
-  supportConversations: defineTable({
-    organizationId: v.id("organizations"),
-    userId: v.string(),
-    guestId: v.optional(v.string()),
-    guestEmail: v.optional(v.string()),
-    subject: v.optional(v.string()),
-    status: supportConversationStatus,
-    assignedTo: v.optional(v.string()),
-    lastMessageAt: v.number(),
-    userUnreadCount: v.number(),
-    adminUnreadCount: v.number(),
+  messageReactions: defineTable({
     createdAt: v.number(),
+    emoji: v.string(),
+    messageId: v.id("supportMessages"),
+    userId: v.string(),
+  })
+    .index("by_message", ["messageId"])
+    .index("by_user", ["userId"])
+    .index("by_message_user", ["messageId", "userId"]),
+  supportConversations: defineTable({
+    adminUnreadCount: v.number(),
+    assignedTo: v.optional(v.string()),
+    createdAt: v.number(),
+    guestEmail: v.optional(v.string()),
+    guestId: v.optional(v.string()),
+    lastMessageAt: v.number(),
+    organizationId: v.id("organizations"),
+    status: supportConversationStatus,
+    subject: v.optional(v.string()),
     updatedAt: v.number(),
+    userId: v.string(),
+    userUnreadCount: v.number(),
   })
     .index("by_organization", ["organizationId"])
     .index("by_user", ["userId"])
@@ -28,23 +37,13 @@ export const supportTables = {
     .index("by_guest", ["guestId"]),
 
   supportMessages: defineTable({
+    body: v.string(),
     conversationId: v.id("supportConversations"),
+    createdAt: v.number(),
+    isRead: v.boolean(),
     senderId: v.string(),
     senderType: supportMessageSenderType,
-    body: v.string(),
-    isRead: v.boolean(),
-    createdAt: v.number(),
   })
     .index("by_conversation", ["conversationId"])
     .index("by_conversation_created", ["conversationId", "createdAt"]),
-
-  messageReactions: defineTable({
-    messageId: v.id("supportMessages"),
-    userId: v.string(),
-    emoji: v.string(),
-    createdAt: v.number(),
-  })
-    .index("by_message", ["messageId"])
-    .index("by_user", ["userId"])
-    .index("by_message_user", ["messageId", "userId"]),
 };

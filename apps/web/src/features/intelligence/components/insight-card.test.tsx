@@ -59,13 +59,13 @@ afterEach(cleanup);
 
 const baseInsight = {
   _id: "insight-1",
-  type: "feature_suggestion",
-  title: "Add dark mode support",
-  summary: "Users frequently request dark mode for reduced eye strain.",
+  createdAt: Date.now() - 60 * 60 * 1000, // 1 hour ago
   priority: "high",
   status: "active",
   suggestedFeedbackTitle: "Dark mode",
-  createdAt: Date.now() - 60 * 60 * 1000, // 1 hour ago
+  summary: "Users frequently request dark mode for reduced eye strain.",
+  title: "Add dark mode support",
+  type: "feature_suggestion",
 };
 
 const baseProps = {

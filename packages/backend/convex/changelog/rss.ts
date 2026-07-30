@@ -10,12 +10,11 @@ export const getOrganizationBySlug = internalQuery({
   args: {
     slug: v.string(),
   },
-  handler: async (ctx, args) => {
-    return await ctx.db
+  handler: async (ctx, args) =>
+    await ctx.db
       .query("organizations")
       .withIndex("by_slug", (q) => q.eq("slug", args.slug))
-      .unique();
-  },
+      .unique(),
 });
 
 /**
@@ -23,8 +22,8 @@ export const getOrganizationBySlug = internalQuery({
  */
 export const getPublishedReleases = internalQuery({
   args: {
-    organizationId: v.id("organizations"),
     limit: v.optional(v.number()),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
     const limit = args.limit ?? 50;

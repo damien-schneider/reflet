@@ -36,17 +36,17 @@ vi.mock("@/components/ui/dialog", () => ({
     children: React.ReactNode;
     className?: string;
   }) => <div className={className}>{children}</div>,
-  DialogHeader: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  DialogTitle: ({ children }: { children: React.ReactNode }) => (
-    <h2>{children}</h2>
-  ),
   DialogDescription: ({ children }: { children: React.ReactNode }) => (
     <p>{children}</p>
   ),
   DialogFooter: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
+  ),
+  DialogHeader: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DialogTitle: ({ children }: { children: React.ReactNode }) => (
+    <h2>{children}</h2>
   ),
 }));
 
@@ -81,10 +81,10 @@ import { NewConversationDialog } from "./new-conversation-dialog";
 afterEach(cleanup);
 
 const baseProps = {
-  organizationId: "org1" as never,
-  open: true,
   onOpenChange: vi.fn(),
   onSubmit: vi.fn().mockResolvedValue("conv-123"),
+  open: true,
+  organizationId: "org1" as never,
 };
 
 describe("NewConversationDialog", () => {
@@ -143,9 +143,9 @@ describe("NewConversationDialog", () => {
     await user.click(screen.getByText("Send message"));
 
     expect(onSubmit).toHaveBeenCalledWith({
+      initialMessage: "Help me",
       organizationId: "org1",
       subject: "Billing question",
-      initialMessage: "Help me",
     });
   });
 
@@ -186,9 +186,9 @@ describe("NewConversationDialog", () => {
     await user.click(screen.getByText("Send message"));
 
     expect(onSubmit).toHaveBeenCalledWith({
+      initialMessage: "My issue",
       organizationId: "org1",
       subject: undefined,
-      initialMessage: "My issue",
     });
   });
 });

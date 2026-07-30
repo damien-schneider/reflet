@@ -95,10 +95,10 @@ export function decodeUserToken(
     }
 
     return {
-      id: userId,
       email: payload.email,
-      name: payload.name,
       exp: payload.exp,
+      id: userId,
+      name: payload.name,
     };
   } catch {
     return null;
@@ -116,11 +116,11 @@ export async function createUserToken(
 ): Promise<string> {
   const header = { alg: "HS256", typ: "JWT" };
   const payload = {
-    id: user.id,
     email: user.email,
-    name: user.name,
-    iat: Math.floor(Date.now() / 1000),
     exp: Math.floor(Date.now() / 1000) + expiresInSeconds,
+    iat: Math.floor(Date.now() / 1000),
+    id: user.id,
+    name: user.name,
   };
 
   const headerB64 = btoa(JSON.stringify(header));
@@ -153,7 +153,7 @@ export const validateApiKey = internalQuery({
     const isSecretKey = apiKey.startsWith("fb_sec_");
 
     if (!(isPublicKey || isSecretKey)) {
-      return { success: false, error: "Invalid API key format" };
+      return { error: "Invalid API key format", success: false };
     }
 
     if (isPublicKey) {
@@ -164,18 +164,18 @@ export const validateApiKey = internalQuery({
         .unique();
 
       if (!orgApiKeyRecord) {
-        return { success: false, error: "Invalid API key" };
+        return { error: "Invalid API key", success: false };
       }
 
       if (!orgApiKeyRecord.isActive) {
-        return { success: false, error: "API key is inactive" };
+        return { error: "API key is inactive", success: false };
       }
 
       return {
-        success: true,
-        organizationId: orgApiKeyRecord.organizationId,
-        organizationApiKeyId: orgApiKeyRecord._id,
         isSecretKey: false,
+        organizationApiKeyId: orgApiKeyRecord._id,
+        organizationId: orgApiKeyRecord.organizationId,
+        success: true,
       };
     }
 
@@ -188,14 +188,14 @@ export const validateApiKey = internalQuery({
       .unique();
 
     if (!orgApiKeyRecord?.isActive) {
-      return { success: false, error: "Invalid API key" };
+      return { error: "Invalid API key", success: false };
     }
 
     return {
-      success: true,
-      organizationId: orgApiKeyRecord.organizationId,
-      organizationApiKeyId: orgApiKeyRecord._id,
       isSecretKey: true,
+      organizationApiKeyId: orgApiKeyRecord._id,
+      organizationId: orgApiKeyRecord.organizationId,
+      success: true,
     };
   },
 });
@@ -205,12 +205,12 @@ export const validateApiKey = internalQuery({
  */
 export const getOrCreateExternalUser = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
-    externalId: v.string(),
-    email: v.optional(v.string()),
-    name: v.optional(v.string()),
     avatar: v.optional(v.string()),
+    email: v.optional(v.string()),
+    externalId: v.string(),
     metadata: v.optional(v.any()),
+    name: v.optional(v.string()),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args): Promise<ExternalUserContext> => {
     const { organizationId, externalId, email, name, avatar, metadata } = args;
@@ -227,37 +227,37 @@ export const getOrCreateExternalUser = internalMutation({
     if (existingUser) {
       // Update last seen and any changed fields
       await ctx.db.patch(existingUser._id, {
-        email: email ?? existingUser.email,
-        name: name ?? existingUser.name,
         avatar: avatar ?? existingUser.avatar,
-        metadata: metadata ?? existingUser.metadata,
+        email: email ?? existingUser.email,
         lastSeenAt: now,
+        metadata: metadata ?? existingUser.metadata,
+        name: name ?? existingUser.name,
       });
 
       return {
-        externalUserId: existingUser._id,
-        externalId: existingUser.externalId,
         email: email ?? existingUser.email,
+        externalId: existingUser.externalId,
+        externalUserId: existingUser._id,
         name: name ?? existingUser.name,
       };
     }
 
     // Create new external user at organization level
     const newUserId = await ctx.db.insert("externalUsers", {
-      organizationId,
-      externalId,
-      email,
-      name,
       avatar,
-      metadata,
       createdAt: now,
+      email,
+      externalId,
       lastSeenAt: now,
+      metadata,
+      name,
+      organizationId,
     });
 
     return {
-      externalUserId: newUserId,
-      externalId,
       email,
+      externalId,
+      externalUserId: newUserId,
       name,
     };
   },
@@ -268,24 +268,24 @@ export const getOrCreateExternalUser = internalMutation({
  */
 export const logApiRequest = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
-    organizationApiKeyId: v.optional(v.id("organizationApiKeys")),
     endpoint: v.string(),
-    method: v.string(),
-    statusCode: v.number(),
     ip: v.optional(v.string()),
+    method: v.string(),
+    organizationApiKeyId: v.optional(v.id("organizationApiKeys")),
+    organizationId: v.id("organizations"),
+    statusCode: v.number(),
     userAgent: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     await ctx.db.insert("apiRequestLogs", {
-      organizationId: args.organizationId,
-      organizationApiKeyId: args.organizationApiKeyId,
       endpoint: args.endpoint,
-      method: args.method,
-      statusCode: args.statusCode,
       ip: args.ip,
-      userAgent: args.userAgent,
+      method: args.method,
+      organizationApiKeyId: args.organizationApiKeyId,
+      organizationId: args.organizationId,
+      statusCode: args.statusCode,
       timestamp: Date.now(),
+      userAgent: args.userAgent,
     });
   },
 });
@@ -295,9 +295,9 @@ export const logApiRequest = internalMutation({
  */
 export const checkRateLimit = internalQuery({
   args: {
+    maxRequests: v.optional(v.number()), // Default 100 for public, 1000 for secret
     organizationApiKeyId: v.id("organizationApiKeys"),
     windowMs: v.optional(v.number()), // Default 60000 (1 minute)
-    maxRequests: v.optional(v.number()), // Default 100 for public, 1000 for secret
   },
   handler: async (ctx, args) => {
     const windowMs = args.windowMs ?? 60_000;
@@ -333,8 +333,8 @@ export const checkRateLimit = internalQuery({
  */
 export const generateOrganizationApiKeys = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
     name: v.string(),
+    organizationId: v.id("organizations"),
     tagId: v.optional(v.id("tags")),
   },
   handler: async (ctx, args) => {
@@ -345,13 +345,13 @@ export const generateOrganizationApiKeys = internalMutation({
     const secretKeyHash = await hashSecretKey(secretKey);
 
     const apiKeyId = await ctx.db.insert("organizationApiKeys", {
-      organizationId,
+      createdAt: Date.now(),
+      isActive: true,
       name,
-      tagId,
+      organizationId,
       publicKey,
       secretKeyHash,
-      isActive: true,
-      createdAt: Date.now(),
+      tagId,
     });
 
     // Return the unhashed secret key (only shown once)
@@ -405,15 +405,15 @@ export const getOrganizationApiKeys = internalQuery({
       .collect();
 
     return keys.map((key) => ({
+      allowedDomains: key.allowedDomains,
       apiKeyId: key._id,
+      createdAt: key.createdAt,
+      isActive: key.isActive,
+      lastUsedAt: key.lastUsedAt,
       name: key.name,
       publicKey: key.publicKey,
-      tagId: key.tagId,
-      isActive: key.isActive,
-      allowedDomains: key.allowedDomains,
       rateLimit: key.rateLimit,
-      createdAt: key.createdAt,
-      lastUsedAt: key.lastUsedAt,
+      tagId: key.tagId,
     }));
   },
 });
@@ -423,16 +423,16 @@ export const getOrganizationApiKeys = internalQuery({
  */
 export const updateOrganizationApiKeySettings = internalMutation({
   args: {
-    apiKeyId: v.id("organizationApiKeys"),
-    name: v.optional(v.string()),
-    tagId: v.optional(v.id("tags")),
-    isActive: v.optional(v.boolean()),
     allowedDomains: v.optional(v.array(v.string())),
+    apiKeyId: v.id("organizationApiKeys"),
+    isActive: v.optional(v.boolean()),
+    name: v.optional(v.string()),
     rateLimit: v.optional(
       v.object({
         requestsPerMinute: v.number(),
       })
     ),
+    tagId: v.optional(v.id("tags")),
   },
   handler: async (ctx, args) => {
     const { apiKeyId, ...updates } = args;

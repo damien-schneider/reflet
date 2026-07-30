@@ -29,11 +29,11 @@ const MAX_CONTENT_LENGTH = 5000;
 
 // AI schemas
 const profileSchema = z.object({
-  summary: z.string(),
-  strengths: z.array(z.string()),
-  weaknesses: z.array(z.string()),
   opportunities: z.array(z.string()),
+  strengths: z.array(z.string()),
+  summary: z.string(),
   threats: z.array(z.string()),
+  weaknesses: z.array(z.string()),
 });
 
 const featureExtractionSchema = z.object({
@@ -70,27 +70,27 @@ const buildUrlEntries = (competitor: {
 }): UrlEntry[] => {
   const entries: UrlEntry[] = [];
   if (competitor.websiteUrl) {
-    entries.push({ key: "website", url: competitor.websiteUrl, source: "web" });
+    entries.push({ key: "website", source: "web", url: competitor.websiteUrl });
   }
   if (competitor.changelogUrl) {
     entries.push({
       key: "changelog",
-      url: competitor.changelogUrl,
       source: "competitor_changelog",
+      url: competitor.changelogUrl,
     });
   }
   if (competitor.pricingUrl) {
     entries.push({
       key: "pricing",
-      url: competitor.pricingUrl,
       source: "competitor_pricing",
+      url: competitor.pricingUrl,
     });
   }
   if (competitor.featuresUrl) {
     entries.push({
       key: "features",
-      url: competitor.featuresUrl,
       source: "competitor_features",
+      url: competitor.featuresUrl,
     });
   }
   return entries;
@@ -186,12 +186,12 @@ export const getCompetitor = internalQuery({
  */
 export const updateCompetitorAfterScrape = internalMutation({
   args: {
-    competitorId: v.id("competitors"),
-    lastScrapedContent: v.optional(v.string()),
-    lastScrapedAt: v.number(),
     aiProfile: v.optional(v.string()),
     aiProfileUpdatedAt: v.optional(v.number()),
+    competitorId: v.id("competitors"),
     featureList: v.optional(v.array(v.string())),
+    lastScrapedAt: v.number(),
+    lastScrapedContent: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { competitorId, ...updates } = args;
@@ -207,20 +207,16 @@ export const updateCompetitorAfterScrape = internalMutation({
  */
 export const createSignal = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
-    jobId: v.id("intelligenceJobs"),
-    source: v.union(
-      v.literal("reddit"),
-      v.literal("hackernews"),
-      v.literal("web"),
-      v.literal("competitor_changelog"),
-      v.literal("competitor_pricing"),
-      v.literal("competitor_features")
-    ),
     competitorId: v.optional(v.id("competitors")),
-    title: v.string(),
     content: v.string(),
-    url: v.optional(v.string()),
+    jobId: v.id("intelligenceJobs"),
+    organizationId: v.id("organizations"),
+    relevanceScore: v.number(),
+    sentiment: v.union(
+      v.literal("positive"),
+      v.literal("negative"),
+      v.literal("neutral")
+    ),
     signalType: v.union(
       v.literal("pain_point"),
       v.literal("feature_request"),
@@ -229,26 +225,30 @@ export const createSignal = internalMutation({
       v.literal("market_trend"),
       v.literal("feature_gap")
     ),
-    relevanceScore: v.number(),
-    sentiment: v.union(
-      v.literal("positive"),
-      v.literal("negative"),
-      v.literal("neutral")
+    source: v.union(
+      v.literal("reddit"),
+      v.literal("hackernews"),
+      v.literal("web"),
+      v.literal("competitor_changelog"),
+      v.literal("competitor_pricing"),
+      v.literal("competitor_features")
     ),
+    title: v.string(),
+    url: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const signalId = await ctx.db.insert("intelligenceSignals", {
-      organizationId: args.organizationId,
-      jobId: args.jobId,
-      source: args.source,
       competitorId: args.competitorId,
-      title: args.title,
       content: args.content,
-      url: args.url,
-      signalType: args.signalType,
+      createdAt: Date.now(),
+      jobId: args.jobId,
+      organizationId: args.organizationId,
       relevanceScore: args.relevanceScore,
       sentiment: args.sentiment,
-      createdAt: Date.now(),
+      signalType: args.signalType,
+      source: args.source,
+      title: args.title,
+      url: args.url,
     });
     return signalId;
   },
@@ -270,9 +270,9 @@ export const createJob = internalMutation({
   handler: async (ctx, args) => {
     const jobId = await ctx.db.insert("intelligenceJobs", {
       organizationId: args.organizationId,
-      type: args.type,
-      status: "pending",
       startedAt: Date.now(),
+      status: "pending",
+      type: args.type,
     });
     return jobId;
   },
@@ -283,20 +283,20 @@ export const createJob = internalMutation({
  */
 export const updateJob = internalMutation({
   args: {
+    errorMessage: v.optional(v.string()),
     jobId: v.id("intelligenceJobs"),
+    stats: v.optional(
+      v.object({
+        errors: v.number(),
+        itemsFound: v.number(),
+        itemsProcessed: v.number(),
+      })
+    ),
     status: v.union(
       v.literal("pending"),
       v.literal("processing"),
       v.literal("completed"),
       v.literal("failed")
-    ),
-    errorMessage: v.optional(v.string()),
-    stats: v.optional(
-      v.object({
-        itemsFound: v.number(),
-        itemsProcessed: v.number(),
-        errors: v.number(),
-      })
     ),
   },
   handler: async (ctx, args) => {
@@ -352,7 +352,7 @@ const scrapeAllUrls = async (
     }
   }
 
-  return { scrapedContent, processed, errors, errorMessages };
+  return { errorMessages, errors, processed, scrapedContent };
 };
 
 /**
@@ -418,25 +418,25 @@ export const scrapeCompetitor = internalAction({
     await ctx.runMutation(
       internal.intelligence.competitor_monitor.updateCompetitorAfterScrape,
       {
-        competitorId: args.competitorId,
-        lastScrapedContent: combinedContent || undefined,
-        lastScrapedAt: Date.now(),
         aiProfile,
         aiProfileUpdatedAt,
+        competitorId: args.competitorId,
         featureList,
+        lastScrapedAt: Date.now(),
+        lastScrapedContent: combinedContent || undefined,
       }
     );
 
     await ctx.runMutation(internal.intelligence.competitor_monitor.updateJob, {
-      jobId,
-      status: totalErrors === urlEntries.length ? "failed" : "completed",
       errorMessage:
         errorMessages.length > 0 ? errorMessages.join(" | ") : undefined,
+      jobId,
       stats: {
+        errors: totalErrors,
         itemsFound: urlEntries.length,
         itemsProcessed: processed,
-        errors: totalErrors,
       },
+      status: totalErrors === urlEntries.length ? "failed" : "completed",
     });
   },
 });
@@ -475,16 +475,16 @@ const detectAndSignalChanges = async (
     await ctx.runMutation(
       internal.intelligence.competitor_monitor.createSignal,
       {
-        organizationId: competitor.organizationId,
-        jobId,
-        source: entry.source,
         competitorId: competitor._id,
-        title: `${competitor.name} ${entry.key} change detected`,
         content: content.slice(0, 1000),
-        url: entry.url,
-        signalType,
+        jobId,
+        organizationId: competitor.organizationId,
         relevanceScore: 0.7,
         sentiment: "neutral",
+        signalType,
+        source: entry.source,
+        title: `${competitor.name} ${entry.key} change detected`,
+        url: entry.url,
       }
     );
   }
@@ -526,7 +526,7 @@ const generateAiData = async (
     }
   }
 
-  return { aiProfile, aiProfileUpdatedAt, featureList, errors };
+  return { aiProfile, aiProfileUpdatedAt, errors, featureList };
 };
 
 // ============================================
@@ -546,10 +546,10 @@ const generateSwotProfile = async (
 
   return await generateStructured({
     model: PROFILE_MODEL,
+    prompt: `Analyze this competitor and generate a SWOT profile:\n\nCOMPETITOR: ${competitorName}\n\nSCRAPED CONTENT:\n${contentSummary}\n\nProvide a concise summary, and list specific strengths, weaknesses, opportunities, and threats based on the content.`,
     schema: profileSchema,
     system:
       'You are a competitive intelligence analyst. Analyze the provided competitor website content and generate a SWOT analysis profile. Be specific and actionable in your analysis.\n\nRespond with ONLY valid JSON matching this exact format:\n{\n  "summary": "string",\n  "strengths": ["string"],\n  "weaknesses": ["string"],\n  "opportunities": ["string"],\n  "threats": ["string"]\n}',
-    prompt: `Analyze this competitor and generate a SWOT profile:\n\nCOMPETITOR: ${competitorName}\n\nSCRAPED CONTENT:\n${contentSummary}\n\nProvide a concise summary, and list specific strengths, weaknesses, opportunities, and threats based on the content.`,
   });
 };
 
@@ -567,10 +567,10 @@ const extractFeatures = async (
     try {
       result = await generateStructured({
         model: modelId,
+        prompt: `Extract the product features for "${competitorName}" from this page content:\n\n${content}\n\nList each distinct product feature mentioned or implied on this page.`,
         schema: featureExtractionSchema,
         system:
           'You are a product analyst. Extract a list of product features from the provided website content. Focus on concrete, distinct features.\n\nRespond with ONLY valid JSON: { "features": ["feature1", "feature2", ...] }',
-        prompt: `Extract the product features for "${competitorName}" from this page content:\n\n${content}\n\nList each distinct product feature mentioned or implied on this page.`,
       });
       break;
     } catch (err) {

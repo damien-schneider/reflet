@@ -122,14 +122,10 @@ afterEach(() => {
 
 const baseFeedback = {
   _id: "f1" as Id<"feedback">,
-  title: "Test Feedback",
-  voteCount: 10,
   commentCount: 5,
   createdAt: Date.now() - 60_000,
-  organizationId: "org1" as Id<"organizations">,
-  upvoteCount: 7,
   downvoteCount: 3,
-  userVoteType: null as "upvote" | "downvote" | null,
+  organizationId: "org1" as Id<"organizations">,
   tags: [] as Array<{
     _id: Id<"tags">;
     name: string;
@@ -137,6 +133,10 @@ const baseFeedback = {
     icon?: string;
     appliedByAi?: boolean;
   } | null>,
+  title: "Test Feedback",
+  upvoteCount: 7,
+  userVoteType: null as "upvote" | "downvote" | null,
+  voteCount: 10,
 };
 
 describe("MinimalNotchFeedCard", () => {
@@ -236,7 +236,7 @@ describe("MinimalNotchFeedCard", () => {
       <MinimalNotchFeedCard
         feedback={{
           ...baseFeedback,
-          organizationStatus: { name: "In Progress", color: "blue" },
+          organizationStatus: { color: "blue", name: "In Progress" },
         }}
       />
     );
@@ -255,8 +255,8 @@ describe("MinimalNotchFeedCard", () => {
         feedback={{
           ...baseFeedback,
           tags: [
-            { _id: "t1" as Id<"tags">, name: "Bug", color: "red" },
-            { _id: "t2" as Id<"tags">, name: "Feature", color: "green" },
+            { _id: "t1" as Id<"tags">, color: "red", name: "Bug" },
+            { _id: "t2" as Id<"tags">, color: "green", name: "Feature" },
           ],
         }}
       />
@@ -276,7 +276,7 @@ describe("MinimalNotchFeedCard", () => {
         feedback={{
           ...baseFeedback,
           tags: [
-            { _id: "t1" as Id<"tags">, name: "Bug", color: "red", icon: "🐛" },
+            { _id: "t1" as Id<"tags">, color: "red", icon: "🐛", name: "Bug" },
           ],
         }}
       />
@@ -292,9 +292,9 @@ describe("MinimalNotchFeedCard", () => {
           tags: [
             {
               _id: "t1" as Id<"tags">,
-              name: "Bug",
-              color: "red",
               appliedByAi: true,
+              color: "red",
+              name: "Bug",
             },
           ],
         }}
@@ -310,7 +310,7 @@ describe("MinimalNotchFeedCard", () => {
           ...baseFeedback,
           tags: [
             null,
-            { _id: "t1" as Id<"tags">, name: "Bug", color: "red" },
+            { _id: "t1" as Id<"tags">, color: "red", name: "Bug" },
             null,
           ],
         }}
@@ -359,7 +359,7 @@ describe("MinimalNotchFeedCard", () => {
       <MinimalNotchFeedCard
         feedback={{
           ...baseFeedback,
-          tags: [{ _id: "t1" as Id<"tags">, name: "Bug", color: "purple" }],
+          tags: [{ _id: "t1" as Id<"tags">, color: "purple", name: "Bug" }],
         }}
       />
     );

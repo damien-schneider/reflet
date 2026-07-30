@@ -24,20 +24,20 @@ interface IncidentComposerProps {
 
 const severityOptions = [
   {
-    value: "minor" as const,
-    label: "Minor",
     color: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
+    label: "Minor",
+    value: "minor" as const,
   },
   {
-    value: "major" as const,
-    label: "Major",
     color:
       "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
+    label: "Major",
+    value: "major" as const,
   },
   {
-    value: "critical" as const,
-    label: "Critical",
     color: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+    label: "Critical",
+    value: "critical" as const,
   },
 ];
 
@@ -71,10 +71,10 @@ export function IncidentComposer({
     }
 
     onSubmit({
-      title: title.trim(),
-      severity,
       affectedMonitorIds: [...selectedMonitors],
       message: message.trim(),
+      severity,
+      title: title.trim(),
     });
   };
 

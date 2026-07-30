@@ -95,10 +95,10 @@ export const subscribe = mutation({
     }
 
     const subscriberId = await ctx.db.insert("changelogSubscribers", {
-      userId: user._id,
       organizationId: args.organizationId,
       subscribedAt: Date.now(),
       unsubscribeToken: generateUnsubscribeToken(),
+      userId: user._id,
     });
 
     return subscriberId;
@@ -133,8 +133,8 @@ export const unsubscribe = mutation({
  */
 export const subscribeByEmail = mutation({
   args: {
-    organizationId: v.id("organizations"),
     email: v.string(),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
     const normalizedEmail = args.email.toLowerCase();
@@ -203,14 +203,13 @@ export const getSubscribersByOrganization = internalQuery({
   args: {
     organizationId: v.id("organizations"),
   },
-  handler: async (ctx, args) => {
-    return await ctx.db
+  handler: async (ctx, args) =>
+    await ctx.db
       .query("changelogSubscribers")
       .withIndex("by_organization", (q) =>
         q.eq("organizationId", args.organizationId)
       )
-      .collect();
-  },
+      .collect(),
 });
 
 /**

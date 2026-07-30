@@ -50,24 +50,24 @@ export interface FeedbackDialogProps {
 }
 
 export const DEFAULT_LABELS: Required<FeedbackDialogLabels> = {
+  cancel: "Cancel",
+  categoryBug: "Bug",
+  categoryFeature: "Feature",
+  categoryQuestion: "Question",
+  descriptionPlaceholder: "Tell us more... (optional)",
+  emailLabel: "Email",
+  emailPlaceholder: "your@email.com (optional)",
+  required: "Required",
+  submit: "Send Feedback",
+  successMessage: "Your feedback has been received. We appreciate your input.",
+  successTitle: "Thank you!",
   title: "Send Feedback",
   titlePlaceholder: "What's on your mind?",
-  descriptionPlaceholder: "Tell us more... (optional)",
-  emailPlaceholder: "your@email.com (optional)",
-  emailLabel: "Email",
-  submit: "Send Feedback",
-  cancel: "Cancel",
-  successTitle: "Thank you!",
-  successMessage: "Your feedback has been received. We appreciate your input.",
-  categoryFeature: "Feature",
-  categoryBug: "Bug",
-  categoryQuestion: "Question",
-  required: "Required",
 };
 
 export const CATEGORY_ICONS: Record<FeedbackCategory, string> = {
-  feature: "✨",
   bug: "🐛",
+  feature: "✨",
   question: "💬",
 };
 

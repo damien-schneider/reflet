@@ -64,20 +64,20 @@ const resolveConfig = (
     : config.pushToGithubOnPublish;
 
   return {
-    syncDirection: finalSyncDirection,
     autoSync: finalAutoSync,
     pushToGithub: finalPushToGithub,
+    syncDirection: finalSyncDirection,
   };
 };
 
 const buildConfig = (overrides: Partial<WizardConfig> = {}): WizardConfig => ({
-  workflow: "manual",
-  syncDirection: "none",
-  autoSyncReleases: false,
-  pushToGithubOnPublish: false,
   autoPublishImported: false,
-  manualSyncEnabled: false,
+  autoSyncReleases: false,
   manualSyncDirection: "none",
+  manualSyncEnabled: false,
+  pushToGithubOnPublish: false,
+  syncDirection: "none",
+  workflow: "manual",
   ...overrides,
 });
 
@@ -114,9 +114,9 @@ describe("resolveConfig", () => {
   describe("ai_powered workflow", () => {
     test("should use config syncDirection directly", () => {
       const config = buildConfig({
-        workflow: "ai_powered",
-        syncDirection: "reflet_first",
         pushToGithubOnPublish: true,
+        syncDirection: "reflet_first",
+        workflow: "ai_powered",
       });
 
       const result = resolveConfig(config);
@@ -130,10 +130,10 @@ describe("resolveConfig", () => {
   describe("automated workflow", () => {
     test("should use github_first with autoSync enabled", () => {
       const config = buildConfig({
-        workflow: "automated",
-        syncDirection: "github_first",
         autoSyncReleases: true,
         pushToGithubOnPublish: false,
+        syncDirection: "github_first",
+        workflow: "automated",
       });
 
       const result = resolveConfig(config);
@@ -147,11 +147,11 @@ describe("resolveConfig", () => {
   describe("manual workflow with sync disabled", () => {
     test("should resolve everything to none/false", () => {
       const config = buildConfig({
-        workflow: "manual",
-        syncDirection: "none",
         autoSyncReleases: false,
-        pushToGithubOnPublish: false,
         manualSyncEnabled: false,
+        pushToGithubOnPublish: false,
+        syncDirection: "none",
+        workflow: "manual",
       });
 
       const result = resolveConfig(config);
@@ -165,9 +165,9 @@ describe("resolveConfig", () => {
   describe("manual workflow with sync enabled", () => {
     test("should use manualSyncDirection for bidirectional", () => {
       const config = buildConfig({
-        workflow: "manual",
-        manualSyncEnabled: true,
         manualSyncDirection: "bidirectional",
+        manualSyncEnabled: true,
+        workflow: "manual",
       });
 
       const result = resolveConfig(config);
@@ -179,9 +179,9 @@ describe("resolveConfig", () => {
 
     test("should enable autoSync but not pushToGithub for github_first", () => {
       const config = buildConfig({
-        workflow: "manual",
-        manualSyncEnabled: true,
         manualSyncDirection: "github_first",
+        manualSyncEnabled: true,
+        workflow: "manual",
       });
 
       const result = resolveConfig(config);
@@ -193,9 +193,9 @@ describe("resolveConfig", () => {
 
     test("should enable both autoSync and pushToGithub for reflet_first", () => {
       const config = buildConfig({
-        workflow: "manual",
-        manualSyncEnabled: true,
         manualSyncDirection: "reflet_first",
+        manualSyncEnabled: true,
+        workflow: "manual",
       });
 
       const result = resolveConfig(config);
@@ -207,9 +207,9 @@ describe("resolveConfig", () => {
 
     test("should disable autoSync when manualSyncDirection is none", () => {
       const config = buildConfig({
-        workflow: "manual",
-        manualSyncEnabled: true,
         manualSyncDirection: "none",
+        manualSyncEnabled: true,
+        workflow: "manual",
       });
 
       const result = resolveConfig(config);
@@ -223,10 +223,10 @@ describe("resolveConfig", () => {
   describe("edge cases", () => {
     test("should not use manualSyncDirection for non-manual workflows", () => {
       const config = buildConfig({
-        workflow: "ai_powered",
-        syncDirection: "reflet_first",
-        manualSyncEnabled: true,
         manualSyncDirection: "github_first",
+        manualSyncEnabled: true,
+        syncDirection: "reflet_first",
+        workflow: "ai_powered",
       });
 
       const result = resolveConfig(config);
@@ -237,11 +237,11 @@ describe("resolveConfig", () => {
 
     test("should not use manualSyncDirection for automated workflows", () => {
       const config = buildConfig({
-        workflow: "automated",
-        syncDirection: "github_first",
         autoSyncReleases: true,
-        manualSyncEnabled: true,
         manualSyncDirection: "bidirectional",
+        manualSyncEnabled: true,
+        syncDirection: "github_first",
+        workflow: "automated",
       });
 
       const result = resolveConfig(config);

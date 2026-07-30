@@ -41,61 +41,61 @@ export async function GET(request: NextRequest) {
   return new ImageResponse(
     <div
       style={{
+        alignItems: "center",
         background: BG_CREAM,
-        width: "100%",
-        height: "100%",
         display: "flex",
         flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
         fontFamily: "Inter",
-        position: "relative",
+        height: "100%",
+        justifyContent: "center",
         padding: "60px 72px",
+        position: "relative",
+        width: "100%",
       }}
     >
       <div
         style={{
-          position: "absolute",
-          bottom: "0",
-          left: "0",
-          right: "0",
-          height: "4px",
           background: `linear-gradient(90deg, ${GREEN} 0%, ${OLIVE_300} 50%, transparent 100%)`,
+          bottom: "0",
+          height: "4px",
+          left: "0",
+          position: "absolute",
+          right: "0",
         }}
       />
 
       <div
         style={{
+          alignItems: "center",
           display: "flex",
           flexDirection: "column",
-          alignItems: "center",
           gap: "32px",
           maxWidth: "900px",
         }}
       >
         <div
           style={{
-            display: "flex",
             alignItems: "center",
-            gap: "12px",
             background: "#dcfce7",
             borderRadius: "100px",
+            display: "flex",
+            gap: "12px",
             padding: "10px 24px",
           }}
         >
           <div
             style={{
-              width: "10px",
-              height: "10px",
-              borderRadius: "50%",
               background: GREEN,
+              borderRadius: "50%",
+              height: "10px",
+              width: "10px",
             }}
           />
           <span
             style={{
+              color: "#166534",
               fontFamily: "Inter SemiBold",
               fontSize: "20px",
-              color: "#166534",
             }}
           >
             Shipped
@@ -104,12 +104,12 @@ export async function GET(request: NextRequest) {
 
         <div
           style={{
+            color: TEXT_DARK,
             fontFamily: "Instrument Serif",
             fontSize: "64px",
-            color: TEXT_DARK,
+            letterSpacing: "-0.02em",
             lineHeight: 1.1,
             textAlign: "center",
-            letterSpacing: "-0.02em",
           }}
         >
           {truncate(feedbackTitle, 80)}
@@ -118,8 +118,8 @@ export async function GET(request: NextRequest) {
         {releaseTitle && (
           <div
             style={{
-              fontSize: "22px",
               color: TEXT_MUTED,
+              fontSize: "22px",
               textAlign: "center",
             }}
           >
@@ -130,59 +130,59 @@ export async function GET(request: NextRequest) {
 
       <div
         style={{
-          position: "absolute",
+          alignItems: "center",
           bottom: "28px",
           display: "flex",
-          alignItems: "center",
           gap: "10px",
+          position: "absolute",
         }}
       >
         <div
           style={{
-            width: "6px",
-            height: "6px",
-            borderRadius: "50%",
             background: OLIVE_600,
+            borderRadius: "50%",
+            height: "6px",
+            width: "6px",
           }}
         />
         <span
           style={{
+            color: TEXT_MUTED,
             fontFamily: "Inter SemiBold",
             fontSize: "18px",
-            color: TEXT_MUTED,
           }}
         >
           {orgName || "reflet.app"}
         </span>
         <span style={{ color: OLIVE_300, fontSize: "18px" }}>·</span>
-        <span style={{ fontSize: "18px", color: OLIVE_600 }}>
+        <span style={{ color: OLIVE_600, fontSize: "18px" }}>
           You asked, we shipped
         </span>
       </div>
     </div>,
     {
-      width: 1200,
-      height: 630,
       fonts: [
         {
-          name: "Instrument Serif",
           data: instrumentData,
+          name: "Instrument Serif",
           style: "normal",
           weight: 400,
         },
         {
-          name: "Inter",
           data: interData,
+          name: "Inter",
           style: "normal",
           weight: 400,
         },
         {
-          name: "Inter SemiBold",
           data: interSemiBoldData,
+          name: "Inter SemiBold",
           style: "normal",
           weight: 600,
         },
       ],
+      height: 630,
+      width: 1200,
     }
   );
 }

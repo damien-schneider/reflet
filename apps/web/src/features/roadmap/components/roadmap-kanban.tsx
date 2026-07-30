@@ -72,11 +72,11 @@ export function RoadmapKanban({
     }
 
     return organizationStatuses.map((status) => ({
-      id: status._id,
-      label: status.name,
-      color: status.color,
       bgColor: `bg-[${status.color}]/10`,
+      color: status.color,
+      id: status._id,
       isDoneStatus: status.name.toLowerCase() === "completed",
+      label: status.name,
       laneOrder: status.order,
     }));
   }, [organizationStatuses]);
@@ -101,22 +101,22 @@ export function RoadmapKanban({
     for (const item of roadmapData) {
       const feedbackItem: RoadmapItemData = {
         _id: item._id,
-        title: item.title,
-        description: item.description,
-        status: item.status,
-        voteCount: item.voteCount,
         commentCount: item.commentCount,
+        description: item.description,
+        hasVoted: item.hasVoted,
         organizationStatusId: item.organizationStatusId ?? null,
         roadmapOrder: item.roadmapOrder ?? null,
-        hasVoted: item.hasVoted,
+        status: item.status,
         tags: item.tags
           ?.filter((tag): tag is NonNullable<typeof tag> => tag !== null)
           .map((tag) => ({
             _id: tag._id,
-            name: tag.name,
             color: tag.color,
             icon: tag.icon,
+            name: tag.name,
           })),
+        title: item.title,
+        voteCount: item.voteCount,
       };
       if (item.organizationStatusId && grouped[item.organizationStatusId]) {
         grouped[item.organizationStatusId].push(feedbackItem);
@@ -183,10 +183,10 @@ export function RoadmapKanban({
 
     try {
       await createStatus({
-        organizationId,
-        name: newColumnName.trim(),
         color: newColumnColor,
         icon: newColumnIsDone ? "check-circle" : undefined,
+        name: newColumnName.trim(),
+        organizationId,
       });
 
       setNewColumnName("");
@@ -201,11 +201,11 @@ export function RoadmapKanban({
   // Build lane display config including backlog
   const allLaneConfigs = useMemo(() => {
     const backlogConfig: LaneConfig = {
-      id: "backlog",
-      label: "Backlog",
-      color: "#f59e0b",
       bgColor: "bg-amber-50 dark:bg-amber-950",
+      color: "#f59e0b",
+      id: "backlog",
       isDoneStatus: false,
+      label: "Backlog",
       laneOrder: -1,
     };
     return isAdmin ? [backlogConfig, ...laneConfigs] : laneConfigs;

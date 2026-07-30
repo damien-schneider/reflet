@@ -11,12 +11,12 @@ self.addEventListener("push", (event) => {
     const { title, body, icon, badge, url } = data;
 
     const options = {
-      body: body || "",
-      icon: icon || "/icon-192x192.png",
-      badge: badge || "/icon-192x192.png",
-      data: { url: url || "/dashboard" },
-      vibrate: [100, 50, 100],
       actions: [{ action: "open", title: "Open" }],
+      badge: badge || "/icon-192x192.png",
+      body: body || "",
+      data: { url: url || "/dashboard" },
+      icon: icon || "/icon-192x192.png",
+      vibrate: [100, 50, 100],
     };
 
     event.waitUntil(
@@ -40,7 +40,7 @@ self.addEventListener("notificationclick", (event) => {
 
   event.waitUntil(
     self.clients
-      .matchAll({ type: "window", includeUncontrolled: true })
+      .matchAll({ includeUncontrolled: true, type: "window" })
       .then((clientList) => {
         // Focus existing window if available
         for (const client of clientList) {

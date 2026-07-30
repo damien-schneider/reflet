@@ -23,8 +23,8 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
     storage: {
       generateUploadUrl: "generateUploadUrl",
-      getStorageUrlMutation: "getStorageUrlMutation",
       getStorageUrl: "getStorageUrl",
+      getStorageUrlMutation: "getStorageUrlMutation",
     },
   },
 }));
@@ -36,8 +36,8 @@ describe("useImageUpload", () => {
     vi.clearAllMocks();
     mockQuery.mockReturnValue(null);
     global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
       json: () => Promise.resolve({ storageId: "storage-id-123" }),
+      ok: true,
     });
     const mod = await import("./use-image-upload");
     useImageUpload = mod.useImageUpload;
@@ -107,9 +107,9 @@ describe("useImageUpload", () => {
       expect(global.fetch).toHaveBeenCalledWith(
         "https://upload.example.com",
         expect.objectContaining({
-          method: "POST",
-          headers: { "Content-Type": "image/png" },
           body: file,
+          headers: { "Content-Type": "image/png" },
+          method: "POST",
         })
       );
       expect(onSuccess).toHaveBeenCalledWith(
@@ -177,7 +177,7 @@ describe("useImageUpload", () => {
       const mockGetAsFile = vi.fn(() => file);
       const event = {
         clipboardData: {
-          items: [{ type: "image/png", getAsFile: mockGetAsFile }],
+          items: [{ getAsFile: mockGetAsFile, type: "image/png" }],
         },
         preventDefault: vi.fn(),
       } as unknown as ClipboardEvent;
@@ -211,7 +211,7 @@ describe("useImageUpload", () => {
 
       const event = {
         clipboardData: {
-          items: [{ type: "text/plain", getAsFile: vi.fn(() => null) }],
+          items: [{ getAsFile: vi.fn(() => null), type: "text/plain" }],
         },
       } as unknown as ClipboardEvent;
 

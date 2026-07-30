@@ -9,19 +9,19 @@ const mockCreateKeyword = vi.fn();
 const mockRemoveKeyword = vi.fn();
 
 vi.mock("convex/react", () => ({
-  useQuery: (...args: unknown[]) => mockUseQuery(...args),
   useMutation: (...args: unknown[]) => {
     const result = mockUseMutation(...args);
     return result;
   },
+  useQuery: (...args: unknown[]) => mockUseQuery(...args),
 }));
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
     intelligence: {
       keywords: {
-        list: "intelligence.keywords.list",
         create: "intelligence.keywords.create",
+        list: "intelligence.keywords.list",
         remove: "intelligence.keywords.remove",
       },
     },
@@ -30,8 +30,8 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
 
 vi.mock("sonner", () => ({
   toast: {
-    success: vi.fn(),
     error: vi.fn(),
+    success: vi.fn(),
   },
 }));
 

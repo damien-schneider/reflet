@@ -8,9 +8,7 @@ export const getRelease = internalQuery({
   args: {
     releaseId: v.id("releases"),
   },
-  handler: async (ctx, args) => {
-    return await ctx.db.get(args.releaseId);
-  },
+  handler: async (ctx, args) => await ctx.db.get(args.releaseId),
 });
 
 /**
@@ -20,7 +18,5 @@ export const getOrganization = internalQuery({
   args: {
     organizationId: v.id("organizations"),
   },
-  handler: async (ctx, args) => {
-    return await ctx.db.get(args.organizationId);
-  },
+  handler: async (ctx, args) => await ctx.db.get(args.organizationId),
 });

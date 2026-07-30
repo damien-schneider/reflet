@@ -27,9 +27,9 @@ interface McpError {
 }
 
 const JSON_RPC_ERRORS = {
-  METHOD_NOT_FOUND: { code: -32_601, message: "Method not found" },
-  INVALID_PARAMS: { code: -32_602, message: "Invalid params" },
   INTERNAL_ERROR: { code: -32_603, message: "Internal error" },
+  INVALID_PARAMS: { code: -32_602, message: "Invalid params" },
+  METHOD_NOT_FOUND: { code: -32_601, message: "Method not found" },
 } as const;
 
 export function isErrorResult(value: unknown): value is McpError {
@@ -51,8 +51,8 @@ export function extractArgs(
 
 function handleInitialize(): unknown {
   return {
-    protocolVersion: PROTOCOL_VERSION,
     capabilities: { tools: {} },
+    protocolVersion: PROTOCOL_VERSION,
     serverInfo: { name: SERVER_NAME, version: SERVER_VERSION },
   };
 }
@@ -82,11 +82,11 @@ async function handleToolsCall(
   try {
     const result = await executeTool(name, ctx, organizationId, args);
     const text = typeof result === "string" ? result : JSON.stringify(result);
-    return { content: [{ type: "text", text }] };
+    return { content: [{ text, type: "text" }] };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     return {
-      content: [{ type: "text", text: `Error: ${message}` }],
+      content: [{ text: `Error: ${message}`, type: "text" }],
       isError: true,
     };
   }
@@ -108,31 +108,31 @@ export async function dispatch(
         result = handleInitialize();
         break;
       case "notifications/initialized":
-        return { jsonrpc: "2.0", id: responseId, result: {} };
+        return { id: responseId, jsonrpc: "2.0", result: {} };
       case "tools/list":
         result = handleToolsList();
         break;
       case "tools/call":
         result = await handleToolsCall(ctx, organizationId, params ?? {});
         if (isErrorResult(result)) {
-          return { jsonrpc: "2.0", id: responseId, error: result.error };
+          return { error: result.error, id: responseId, jsonrpc: "2.0" };
         }
         break;
       default:
         return {
-          jsonrpc: "2.0",
-          id: responseId,
           error: JSON_RPC_ERRORS.METHOD_NOT_FOUND,
+          id: responseId,
+          jsonrpc: "2.0",
         };
     }
 
-    return { jsonrpc: "2.0", id: responseId, result };
+    return { id: responseId, jsonrpc: "2.0", result };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     return {
-      jsonrpc: "2.0",
-      id: responseId,
       error: { ...JSON_RPC_ERRORS.INTERNAL_ERROR, data: message },
+      id: responseId,
+      jsonrpc: "2.0",
     };
   }
 }

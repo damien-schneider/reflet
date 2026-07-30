@@ -7,8 +7,8 @@ const GITHUB_API_URL = "https://api.github.com";
 
 const GITHUB_AUTH_HEADERS = (token: string) =>
   ({
-    Authorization: `Bearer ${token}`,
     Accept: "application/vnd.github+json",
+    Authorization: `Bearer ${token}`,
     "X-GitHub-Api-Version": "2022-11-28",
   }) as const;
 
@@ -65,8 +65,8 @@ export async function searchCode(
 
   return (data.items ?? []).map((item) => ({
     filePath: item.path,
-    repository: item.repository.full_name,
     matchedFragments: (item.text_matches ?? []).map((m) => m.fragment),
+    repository: item.repository.full_name,
   }));
 }
 
@@ -105,7 +105,7 @@ export async function fetchFileContent(
     ? `${decoded.slice(0, MAX_FILE_CONTENT_LENGTH)}\n...[truncated]`
     : decoded;
 
-  return { filePath: path, content, truncated };
+  return { content, filePath: path, truncated };
 }
 
 /**

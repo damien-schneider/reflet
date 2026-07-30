@@ -14,9 +14,9 @@ import { InlineCode } from "@/components/ui/typography";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
-  title: "Minimal Notch - Feedback Card",
   description: "A minimal feedback card with a side notch vote indicator.",
   path: "/docs/components/feedback-cards/minimal-notch",
+  title: "Minimal Notch - Feedback Card",
 });
 
 const SOURCE_CODE = readFileSync(
@@ -37,93 +37,93 @@ const IMPORT_CODE = `import {
 
 const SUBCOMPONENTS = [
   {
-    name: "MinimalNotch",
     description: "Root provider. Manages vote state via React context.",
+    name: "MinimalNotch",
     props: [
       {
-        name: "defaultUpvotes",
-        type: "number",
-        required: true,
         description: "Initial upvote count.",
-      },
-      {
-        name: "defaultDownvotes",
-        type: "number",
+        name: "defaultUpvotes",
         required: true,
-        description: "Initial downvote count.",
+        type: "number",
       },
       {
-        name: "onVoteChange",
-        type: "(voteType, upvotes, downvotes) => void",
-        required: false,
+        description: "Initial downvote count.",
+        name: "defaultDownvotes",
+        required: true,
+        type: "number",
+      },
+      {
         description: "Callback fired when the vote changes.",
+        name: "onVoteChange",
+        required: false,
+        type: "(voteType, upvotes, downvotes) => void",
       },
     ],
   },
   {
-    name: "MinimalNotchCard",
     description:
       "Card body with rounded border, hover shadow, and inner spacing.",
+    name: "MinimalNotchCard",
     props: [],
   },
   {
-    name: "MinimalNotchTitle",
     description: "Heading rendered as an h3.",
+    name: "MinimalNotchTitle",
     props: [],
   },
   {
-    name: "MinimalNotchStatus",
     description: "Colored status badge pill.",
+    name: "MinimalNotchStatus",
     props: [
       {
-        name: "color",
-        type: "BadgeColor",
-        required: false,
         description:
           'Color key: purple, green, blue, red, amber, pink, or gray. Defaults to "blue".',
+        name: "color",
+        required: false,
+        type: "BadgeColor",
       },
     ],
   },
   {
-    name: "MinimalNotchTags",
     description: "Flex-wrap container for tags.",
+    name: "MinimalNotchTags",
     props: [],
   },
   {
-    name: "MinimalNotchTag",
     description: "Individual colored tag pill.",
+    name: "MinimalNotchTag",
     props: [
       {
-        name: "color",
-        type: "BadgeColor",
-        required: false,
         description:
           'Color key: purple, green, blue, red, amber, pink, or gray. Defaults to "gray".',
+        name: "color",
+        required: false,
+        type: "BadgeColor",
       },
     ],
   },
   {
-    name: "MinimalNotchMeta",
     description: "Row with comment count and relative time.",
+    name: "MinimalNotchMeta",
     props: [
       {
-        name: "comments",
-        type: "number",
-        required: true,
         description: "Comment count.",
+        name: "comments",
+        required: true,
+        type: "number",
       },
       {
-        name: "time",
-        type: "string",
-        required: true,
         description: 'Relative time string, e.g. "3 days ago".',
+        name: "time",
+        required: true,
+        type: "string",
       },
     ],
   },
   {
-    name: "MinimalNotchVote",
     description:
       "Vote column with animated notch bar, glow effect, and up/down buttons. Reads vote state from context.",
+    name: "MinimalNotchVote",
     props: [],
   },
 ] as const;

@@ -37,12 +37,21 @@ export default function GitHubSettingsPage({
     currentMember?.role === "admin" || currentMember?.role === "owner";
 
   const settings = useGitHubSettings({
-    orgId: org?._id,
-    orgSlug,
-    userId: session?.user?.id,
-    isConnected: queries.connectionStatus?.isConnected ?? false,
+    deleteLabelMapping: async (
+      args: Parameters<typeof mutations.deleteLabelMappingMutation>[0]
+    ) => {
+      await mutations.deleteLabelMappingMutation(args);
+    },
+    disconnect: async (
+      args: Parameters<typeof mutations.disconnectMutation>[0]
+    ) => {
+      await mutations.disconnectMutation(args);
+    },
     hasRepository: queries.connectionStatus?.hasRepository ?? false,
     hasWebhook: queries.connectionStatus?.hasWebhook ?? false,
+    isConnected: queries.connectionStatus?.isConnected ?? false,
+    orgId: org?._id,
+    orgSlug,
     selectRepository: async (
       args: Parameters<typeof mutations.selectRepositoryMutation>[0]
     ) => {
@@ -52,11 +61,6 @@ export default function GitHubSettingsPage({
       args: Parameters<typeof mutations.toggleAutoSyncMutation>[0]
     ) => {
       await mutations.toggleAutoSyncMutation(args);
-    },
-    disconnect: async (
-      args: Parameters<typeof mutations.disconnectMutation>[0]
-    ) => {
-      await mutations.disconnectMutation(args);
     },
     toggleIssuesSync: async (
       args: Parameters<typeof mutations.toggleIssuesSyncMutation>[0]
@@ -68,11 +72,7 @@ export default function GitHubSettingsPage({
     ) => {
       await mutations.upsertLabelMappingMutation(args);
     },
-    deleteLabelMapping: async (
-      args: Parameters<typeof mutations.deleteLabelMappingMutation>[0]
-    ) => {
-      await mutations.deleteLabelMappingMutation(args);
-    },
+    userId: session?.user?.id,
   });
 
   if (!org) {

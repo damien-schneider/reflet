@@ -3,36 +3,36 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: { absolute: "Documentation | Reflet" },
   description:
     "Complete developer documentation for Reflet. Explore the SDK, React hooks, embeddable widgets, REST API, and component library to integrate user feedback.",
+  title: { absolute: "Documentation | Reflet" },
 };
 
 const sections = [
   {
-    title: "SDK",
     description: "Integrate feedback collection with hooks and API",
     href: "/docs/sdk",
+    title: "SDK",
   },
   {
-    title: "Widgets",
     description: "Drop-in feedback and changelog widgets",
     href: "/docs/widget",
+    title: "Widgets",
   },
   {
-    title: "REST API",
     description: "Full CRUD API for feedback, votes, comments, and more",
     href: "/docs/api",
+    title: "REST API",
   },
   {
-    title: "Component Library",
     description: "Pre-made UI components via shadcn registry",
     href: "/docs/components",
+    title: "Component Library",
   },
   {
-    title: "MCP Server",
     description: "Connect AI assistants like Cursor, Claude Code and Copilot",
     href: "/docs/mcp",
+    title: "MCP Server",
   },
 ] as const;
 

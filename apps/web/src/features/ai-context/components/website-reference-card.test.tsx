@@ -109,11 +109,11 @@ afterEach(() => {
 
 const baseReference = {
   _id: "ref1" as never,
-  url: "https://docs.example.com/guide",
-  title: "Getting Started Guide",
   description: "A comprehensive guide to get started",
-  status: "success" as const,
   lastFetchedAt: Date.now() - 86_400_000,
+  status: "success" as const,
+  title: "Getting Started Guide",
+  url: "https://docs.example.com/guide",
 };
 
 describe("WebsiteReferenceCard", () => {
@@ -181,8 +181,8 @@ describe("WebsiteReferenceCard", () => {
         isAdmin={false}
         reference={{
           ...baseReference,
-          status: "error",
           errorMessage: "Failed to fetch",
+          status: "error",
         }}
       />
     );

@@ -72,8 +72,8 @@ export const listMyPendingInvitations = query({
         const org = await ctx.db.get(invitation.organizationId);
         return {
           ...invitation,
-          organizationName: org?.name ?? "Unknown",
           organizationLogo: org?.logo,
+          organizationName: org?.name ?? "Unknown",
         };
       })
     );
@@ -115,8 +115,8 @@ export const getByToken = query({
  */
 export const create = mutation({
   args: {
-    organizationId: v.id("organizations"),
     email: v.string(),
+    organizationId: v.id("organizations"),
     role: v.union(v.literal("admin"), v.literal("member")),
   },
   handler: async (ctx, args) => {
@@ -197,13 +197,13 @@ export const create = mutation({
 
     // Create invitation (expires in 7 days)
     const invitationId = await ctx.db.insert("invitations", {
-      organizationId: args.organizationId,
+      createdAt: Date.now(),
       email: args.email.toLowerCase(),
+      expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
+      inviterId: user._id,
+      organizationId: args.organizationId,
       role: args.role,
       status: "pending",
-      expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
-      createdAt: Date.now(),
-      inviterId: user._id,
       token,
     });
 
@@ -218,11 +218,11 @@ export const create = mutation({
       0,
       internal.email.renderer.sendInvitationEmail,
       {
-        to: args.email.toLowerCase(),
-        organizationName: org.name,
-        inviterName,
-        role: args.role,
         acceptUrl,
+        inviterName,
+        organizationName: org.name,
+        role: args.role,
+        to: args.email.toLowerCase(),
       }
     );
 
@@ -292,10 +292,10 @@ export const accept = mutation({
 
     // Create membership
     await ctx.db.insert("organizationMembers", {
-      organizationId: invitation.organizationId,
-      userId: user._id,
-      role: invitation.role,
       createdAt: Date.now(),
+      organizationId: invitation.organizationId,
+      role: invitation.role,
+      userId: user._id,
     });
 
     // Mark invitation as accepted
@@ -400,11 +400,11 @@ export const resend = mutation({
       0,
       internal.email.renderer.sendInvitationEmail,
       {
-        to: invitation.email,
-        organizationName: org.name,
-        inviterName,
-        role: emailRole,
         acceptUrl,
+        inviterName,
+        organizationName: org.name,
+        role: emailRole,
+        to: invitation.email,
       }
     );
 

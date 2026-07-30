@@ -10,12 +10,12 @@ vi.mock("@tiptap/extension-image", () => ({
         unknown
       >;
       const attrs = addAttributes.call({
-        parent: () => ({ src: {}, alt: {} }),
+        parent: () => ({ alt: {}, src: {} }),
       });
       return {
-        name: "image",
         attrs,
         configure: vi.fn(),
+        name: "image",
       };
     }),
   },

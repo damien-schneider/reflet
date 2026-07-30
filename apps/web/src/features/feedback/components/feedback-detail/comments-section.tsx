@@ -31,8 +31,8 @@ export function CommentsSection({
   const addComment = useMutation(api.feedback.comments.create);
 
   const { isGeneratingDraft, handleGenerateDraftReply } = useAIDraftReply({
-    feedbackId,
     effectiveIsAdmin: isAdmin,
+    feedbackId,
     setNewComment,
   });
 
@@ -44,8 +44,8 @@ export function CommentsSection({
     setIsSubmitting(true);
     try {
       await addComment({
-        feedbackId,
         body: newComment.trim(),
+        feedbackId,
       });
       setNewComment("");
     } finally {
@@ -184,16 +184,16 @@ function buildCommentTree(rawComments: RawComment[]): CommentData[] {
   // First pass: create CommentData objects
   for (const comment of rawComments) {
     commentMap.set(comment._id, {
-      id: comment._id,
-      content: comment.body,
-      createdAt: comment.createdAt,
       author: comment.author
         ? {
-            name: comment.author.name,
             email: comment.author.email,
             image: comment.author.image,
+            name: comment.author.name,
           }
         : undefined,
+      content: comment.body,
+      createdAt: comment.createdAt,
+      id: comment._id,
       replies: [],
     });
   }

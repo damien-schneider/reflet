@@ -137,9 +137,9 @@ export default function ChangelogPage({
   let githubAction: React.ReactNode = null;
   if (!githubStatus?.isConnected) {
     const href = buildGitHubInstallUrl({
-      userId: session?.user?.id,
       organizationId: org._id,
       orgSlug,
+      userId: session?.user?.id,
     });
     githubAction = href ? (
       <Button render={<Link href={href} />} variant="outline">

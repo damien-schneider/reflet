@@ -144,8 +144,8 @@ export const syncReleases = action({
         api.integrations.github.mutations.updateSyncStatus,
         {
           connectionId: connection._id,
-          status: "error",
           error: error instanceof Error ? error.message : "Unknown error",
+          status: "error",
         }
       );
       throw error;
@@ -158,11 +158,11 @@ export const syncReleases = action({
  */
 export const syncIssues = action({
   args: {
+    labels: v.optional(v.string()),
     organizationId: v.id("organizations"),
     state: v.optional(
       v.union(v.literal("open"), v.literal("closed"), v.literal("all"))
     ),
-    labels: v.optional(v.string()),
   },
   handler: async (
     ctx,
@@ -196,15 +196,15 @@ export const syncIssues = action({
         api.integrations.github.actions.fetchIssues,
         {
           installationToken: token,
+          labels: args.labels,
           repositoryFullName: connection.repositoryFullName,
           state: args.state ?? "all",
-          labels: args.labels,
         }
       );
 
       await ctx.runMutation(api.integrations.github.issues.saveSyncedIssues, {
-        organizationId: args.organizationId,
         issues,
+        organizationId: args.organizationId,
       });
 
       const importResult = await ctx.runMutation(
@@ -213,17 +213,17 @@ export const syncIssues = action({
       );
 
       return {
+        imported: importResult.imported,
         success: true,
         synced: issues.length,
-        imported: importResult.imported,
       };
     } catch (error) {
       await ctx.runMutation(
         api.integrations.github.issues.updateIssuesSyncStatus,
         {
           connectionId: connection._id,
-          status: "error",
           error: error instanceof Error ? error.message : "Unknown error",
+          status: "error",
         }
       );
       throw error;
@@ -279,8 +279,8 @@ export const setupWebhook = action({
       {
         installationToken: token,
         repositoryFullName: connection.repositoryFullName,
-        webhookUrl,
         secret: webhookSecret,
+        webhookUrl,
       }
     );
 

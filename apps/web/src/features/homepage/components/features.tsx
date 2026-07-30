@@ -14,16 +14,16 @@ import { WidgetCard } from "./feature-cards/widget-card";
 
 const GRID_ITEMS = [
   {
-    id: "feedback",
     Component: FeedbackBoardCard,
     className: "md:col-span-2 md:row-span-2",
+    id: "feedback",
   },
-  { id: "ai", Component: AITriageCard, className: "md:row-span-2" },
-  { id: "roadmap", Component: RoadmapKanbanCard, className: "" },
-  { id: "widget", Component: WidgetCard, className: "" },
-  { id: "changelog", Component: ChangelogCard, className: "" },
-  { id: "developer", Component: DeveloperCard, className: "md:col-span-2" },
-  { id: "opensource", Component: OpenSourceCard, className: "" },
+  { Component: AITriageCard, className: "md:row-span-2", id: "ai" },
+  { Component: RoadmapKanbanCard, className: "", id: "roadmap" },
+  { Component: WidgetCard, className: "", id: "widget" },
+  { Component: ChangelogCard, className: "", id: "changelog" },
+  { Component: DeveloperCard, className: "md:col-span-2", id: "developer" },
+  { Component: OpenSourceCard, className: "", id: "opensource" },
 ] as const;
 
 export default function Features() {
@@ -46,7 +46,7 @@ export default function Features() {
         <motion.div
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           initial={{ opacity: 0, y: 12 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
+          transition={{ delay: 0.1, duration: 0.4 }}
         >
           <H2 className="mb-14 max-w-2xl" variant="section">
             Everything you need to build products users love.
@@ -63,7 +63,7 @@ export default function Features() {
                 className={item.className}
                 initial={{ opacity: 0, y: 20 }}
                 key={item.id}
-                transition={{ duration: 0.4, delay: 0.15 + i * 0.06 }}
+                transition={{ delay: 0.15 + i * 0.06, duration: 0.4 }}
               >
                 <Component />
               </motion.div>

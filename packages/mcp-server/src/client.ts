@@ -55,9 +55,9 @@ export class RefletAdminClient {
     let response: Response;
     try {
       response = await fetch(`${this.baseUrl}${path}`, {
-        method,
-        headers,
         body: body ? JSON.stringify(body) : undefined,
+        headers,
+        method,
       });
     } catch (error) {
       const message =
@@ -217,8 +217,8 @@ export class RefletAdminClient {
     assigneeId?: string
   ): Promise<SuccessResponse> {
     return this.request("POST", "/api/v1/admin/feedback/assign", {
-      feedbackId,
       assigneeId,
+      feedbackId,
     });
   }
 
@@ -229,8 +229,8 @@ export class RefletAdminClient {
   ): Promise<SuccessResponse> {
     return this.request("POST", "/api/v1/admin/feedback/set-status", {
       feedbackId,
-      statusId,
       status,
+      statusId,
     });
   }
 
@@ -240,8 +240,8 @@ export class RefletAdminClient {
     removeTagIds?: string[]
   ): Promise<SuccessResponse> {
     return this.request("POST", "/api/v1/admin/feedback/update-tags", {
-      feedbackId,
       addTagIds,
+      feedbackId,
       removeTagIds,
     });
   }
@@ -266,8 +266,8 @@ export class RefletAdminClient {
 
   updateComment(commentId: string, body: string): Promise<SuccessResponse> {
     return this.request("POST", "/api/v1/admin/comment/update", {
-      commentId,
       body,
+      commentId,
     });
   }
 
@@ -381,9 +381,9 @@ export class RefletAdminClient {
     action: "link" | "unlink"
   ): Promise<SuccessResponse> {
     return this.request("POST", "/api/v1/admin/release/link-feedback", {
-      releaseId,
-      feedbackId,
       action,
+      feedbackId,
+      releaseId,
     });
   }
 
@@ -462,9 +462,9 @@ export class RefletAdminClient {
     action: "link" | "unlink"
   ): Promise<SuccessResponse> {
     return this.request("POST", "/api/v1/admin/milestone/link-feedback", {
-      milestoneId,
-      feedbackId,
       action,
+      feedbackId,
+      milestoneId,
     });
   }
 
@@ -631,8 +631,8 @@ export class RefletAdminClient {
     status: "draft" | "active" | "paused" | "closed"
   ): Promise<null> {
     return this.request("POST", "/api/v1/admin/survey/update-status", {
-      surveyId,
       status,
+      surveyId,
     });
   }
 

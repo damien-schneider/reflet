@@ -69,18 +69,18 @@ export function ChangelogWidget({
 
     if (WidgetClass) {
       const instance = new WidgetClass({
-        publicKey,
-        mode,
-        position,
-        theme,
-        primaryColor,
-        maxEntries,
-        triggerSelector,
         autoOpenForNew,
         locale,
-        onOpen,
+        maxEntries,
+        mode,
         onClose,
         onEntryClick,
+        onOpen,
+        position,
+        primaryColor,
+        publicKey,
+        theme,
+        triggerSelector,
       });
 
       widgetRef.current = instance;
@@ -101,18 +101,18 @@ export function ChangelogWidget({
 
         if (LoadedClass) {
           const instance = new LoadedClass({
-            publicKey,
-            mode,
-            position,
-            theme,
-            primaryColor,
-            maxEntries,
-            triggerSelector,
             autoOpenForNew,
             locale,
-            onOpen,
+            maxEntries,
+            mode,
             onClose,
             onEntryClick,
+            onOpen,
+            position,
+            primaryColor,
+            publicKey,
+            theme,
+            triggerSelector,
           });
 
           widgetRef.current = instance;

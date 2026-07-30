@@ -3,10 +3,8 @@ import type { Metadata } from "next";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
-  title: "REST API Reference",
   description:
     "Full API for managing feedback, votes, comments, changelog, and roadmap programmatically.",
-  path: "/docs/api",
   keywords: [
     "rest api",
     "api reference",
@@ -15,6 +13,8 @@ export const metadata: Metadata = generatePageMetadata({
     "roadmap api",
     "endpoints",
   ],
+  path: "/docs/api",
+  title: "REST API Reference",
 });
 
 const codeBlockClass =

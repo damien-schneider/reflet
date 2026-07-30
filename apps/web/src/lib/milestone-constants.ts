@@ -17,34 +17,34 @@ export const TIME_HORIZON_CONFIG: Record<
   TimeHorizon,
   { label: string; shortLabel: string; description: string }
 > = {
-  now: {
-    label: "Now",
-    shortLabel: "Now",
-    description: "Currently in progress",
-  },
-  next_month: {
-    label: "Next Month",
-    shortLabel: "1mo",
-    description: "Coming in ~1 month",
-  },
-  next_quarter: {
-    label: "Next Quarter",
-    shortLabel: "3mo",
-    description: "Coming in ~3 months",
-  },
-  half_year: {
-    label: "6 Months",
-    shortLabel: "6mo",
-    description: "Coming in ~6 months",
-  },
-  next_year: {
-    label: "Next Year",
-    shortLabel: "1yr",
-    description: "Coming next year",
-  },
   future: {
+    description: "Someday / on the horizon",
     label: "Future",
     shortLabel: "Future",
-    description: "Someday / on the horizon",
+  },
+  half_year: {
+    description: "Coming in ~6 months",
+    label: "6 Months",
+    shortLabel: "6mo",
+  },
+  next_month: {
+    description: "Coming in ~1 month",
+    label: "Next Month",
+    shortLabel: "1mo",
+  },
+  next_quarter: {
+    description: "Coming in ~3 months",
+    label: "Next Quarter",
+    shortLabel: "3mo",
+  },
+  next_year: {
+    description: "Coming next year",
+    label: "Next Year",
+    shortLabel: "1yr",
+  },
+  now: {
+    description: "Currently in progress",
+    label: "Now",
+    shortLabel: "Now",
   },
 };

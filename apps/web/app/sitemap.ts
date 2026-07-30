@@ -14,130 +14,130 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Static marketing pages
   const staticPages: MetadataRoute.Sitemap = [
     {
-      url: BASE_URL,
-      lastModified: now,
       changeFrequency: "weekly",
+      lastModified: now,
       priority: 1,
+      url: BASE_URL,
     },
     {
+      changeFrequency: "monthly",
+      lastModified: now,
+      priority: 0.9,
       url: `${BASE_URL}/features`,
-      lastModified: now,
-      changeFrequency: "monthly",
-      priority: 0.9,
     },
     {
+      changeFrequency: "monthly",
+      lastModified: now,
+      priority: 0.9,
       url: `${BASE_URL}/pricing`,
-      lastModified: now,
-      changeFrequency: "monthly",
-      priority: 0.9,
     },
     {
-      url: `${BASE_URL}/blog`,
-      lastModified: now,
       changeFrequency: "daily",
+      lastModified: now,
       priority: 0.9,
+      url: `${BASE_URL}/blog`,
     },
     {
-      url: `${BASE_URL}/integrations`,
-      lastModified: now,
       changeFrequency: "monthly",
+      lastModified: now,
       priority: 0.8,
+      url: `${BASE_URL}/integrations`,
     },
     {
-      url: `${BASE_URL}/security`,
-      lastModified: now,
       changeFrequency: "monthly",
+      lastModified: now,
       priority: 0.6,
+      url: `${BASE_URL}/security`,
     },
   ];
 
   // Docs pages
   const docsPages: MetadataRoute.Sitemap = [
     {
-      url: `${BASE_URL}/docs`,
-      lastModified: now,
       changeFrequency: "weekly",
+      lastModified: now,
       priority: 0.8,
+      url: `${BASE_URL}/docs`,
     },
     {
+      changeFrequency: "weekly",
+      lastModified: now,
+      priority: 0.7,
       url: `${BASE_URL}/docs/sdk`,
-      lastModified: now,
-      changeFrequency: "weekly",
-      priority: 0.7,
     },
     {
+      changeFrequency: "monthly",
+      lastModified: now,
+      priority: 0.7,
       url: `${BASE_URL}/docs/sdk/installation`,
-      lastModified: now,
-      changeFrequency: "monthly",
-      priority: 0.7,
     },
     {
+      changeFrequency: "monthly",
+      lastModified: now,
+      priority: 0.7,
       url: `${BASE_URL}/docs/sdk/react-hooks`,
-      lastModified: now,
-      changeFrequency: "monthly",
-      priority: 0.7,
     },
     {
+      changeFrequency: "monthly",
+      lastModified: now,
+      priority: 0.7,
       url: `${BASE_URL}/docs/api`,
-      lastModified: now,
-      changeFrequency: "monthly",
-      priority: 0.7,
     },
     {
-      url: `${BASE_URL}/docs/widget`,
-      lastModified: now,
       changeFrequency: "weekly",
+      lastModified: now,
       priority: 0.7,
+      url: `${BASE_URL}/docs/widget`,
     },
     {
+      changeFrequency: "monthly",
+      lastModified: now,
+      priority: 0.6,
       url: `${BASE_URL}/docs/widget/feedback-widget`,
-      lastModified: now,
-      changeFrequency: "monthly",
-      priority: 0.6,
     },
     {
+      changeFrequency: "monthly",
+      lastModified: now,
+      priority: 0.6,
       url: `${BASE_URL}/docs/widget/changelog-widget`,
-      lastModified: now,
-      changeFrequency: "monthly",
-      priority: 0.6,
     },
     {
-      url: `${BASE_URL}/docs/components`,
-      lastModified: now,
       changeFrequency: "monthly",
+      lastModified: now,
       priority: 0.6,
+      url: `${BASE_URL}/docs/components`,
     },
   ];
 
   // Legal pages (low priority)
   const legalPages: MetadataRoute.Sitemap = [
     {
+      changeFrequency: "yearly",
+      lastModified: now,
+      priority: 0.3,
       url: `${BASE_URL}/terms`,
-      lastModified: now,
-      changeFrequency: "yearly",
-      priority: 0.3,
     },
     {
+      changeFrequency: "yearly",
+      lastModified: now,
+      priority: 0.3,
       url: `${BASE_URL}/privacy`,
-      lastModified: now,
-      changeFrequency: "yearly",
-      priority: 0.3,
     },
     {
-      url: `${BASE_URL}/cookies`,
-      lastModified: now,
       changeFrequency: "yearly",
+      lastModified: now,
       priority: 0.3,
+      url: `${BASE_URL}/cookies`,
     },
   ];
 
   // Blog posts (use actual post date for lastModified)
   const posts = await getAllBlogPosts();
   const blogPages: MetadataRoute.Sitemap = posts.map((post) => ({
-    url: `${BASE_URL}/blog/${post.slug}`,
-    lastModified: new Date(post.meta.date),
     changeFrequency: "monthly" as const,
+    lastModified: new Date(post.meta.date),
     priority: post.meta.category === "comparison" ? 0.85 : 0.8,
+    url: `${BASE_URL}/blog/${post.slug}`,
   }));
 
   // Public organization pages
@@ -152,24 +152,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     orgPages = publicOrgs.flatMap((org) => [
       {
-        url: `${BASE_URL}/${org.slug}`,
-        lastModified: new Date(org.updatedAt),
         changeFrequency: "daily" as const,
+        lastModified: new Date(org.updatedAt),
         priority: 0.7,
+        url: `${BASE_URL}/${org.slug}`,
       },
       {
-        url: `${BASE_URL}/${org.slug}/changelog`,
-        lastModified: new Date(org.updatedAt),
         changeFrequency: "weekly" as const,
+        lastModified: new Date(org.updatedAt),
         priority: 0.6,
+        url: `${BASE_URL}/${org.slug}/changelog`,
       },
     ]);
 
     feedbackPages = publicFeedback.map((entry) => ({
-      url: `${BASE_URL}/${entry.orgSlug}/feedback/${entry.feedbackId}`,
-      lastModified: new Date(entry.updatedAt),
       changeFrequency: "weekly" as const,
+      lastModified: new Date(entry.updatedAt),
       priority: 0.5,
+      url: `${BASE_URL}/${entry.orgSlug}/feedback/${entry.feedbackId}`,
     }));
   } catch {
     // Silently continue if Convex is unreachable during build

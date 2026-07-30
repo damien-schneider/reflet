@@ -199,16 +199,16 @@ function InsightsTab({
 // ============================================
 
 const SIGNAL_TYPE_LABELS: Record<string, string> = {
-  pain_point: "Pain Point",
+  competitor_update: "Competitor Update",
   feature_request: "Feature Request",
   market_trend: "Market Trend",
-  competitor_update: "Competitor Update",
+  pain_point: "Pain Point",
 };
 
 const SOURCE_LABELS: Record<string, string> = {
+  hackernews: "Hacker News",
   reddit: "Reddit",
   web: "Web",
-  hackernews: "Hacker News",
 };
 
 function SentimentBar({

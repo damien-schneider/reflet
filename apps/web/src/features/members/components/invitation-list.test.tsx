@@ -71,11 +71,11 @@ const makeInvitation = (
     lastSentAt: number;
   }> = {}
 ) => ({
-  _id: overrides._id ?? ("inv1" as never),
   _creationTime: overrides._creationTime ?? Date.now() - 120_000,
+  _id: overrides._id ?? ("inv1" as never),
   email: overrides.email ?? "invite@example.com",
-  role: overrides.role ?? ("member" as const),
   lastSentAt: overrides.lastSentAt,
+  role: overrides.role ?? ("member" as const),
 });
 
 describe("InvitationList", () => {
@@ -129,8 +129,8 @@ describe("InvitationList", () => {
   it("calls resendInvitation on Resend click", async () => {
     const user = userEvent.setup();
     const invitation = makeInvitation({
-      _id: "inv1",
       _creationTime: Date.now() - 120_000,
+      _id: "inv1",
     });
     render(<InvitationList invitations={[invitation]} />);
     await user.click(screen.getByText("Resend"));
@@ -142,14 +142,14 @@ describe("InvitationList", () => {
   it("renders multiple invitations", () => {
     const invitations = [
       makeInvitation({
+        _creationTime: Date.now() - 120_000,
         _id: "inv1" as never,
         email: "a@test.com",
-        _creationTime: Date.now() - 120_000,
       }),
       makeInvitation({
+        _creationTime: Date.now() - 120_000,
         _id: "inv2" as never,
         email: "b@test.com",
-        _creationTime: Date.now() - 120_000,
       }),
     ];
     render(<InvitationList invitations={invitations} />);

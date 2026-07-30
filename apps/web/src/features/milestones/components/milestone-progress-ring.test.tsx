@@ -7,13 +7,6 @@ vi.mock("motion/react", () => ({
       style: _style,
       ...props
     }: Record<string, unknown> & { style?: unknown }) => <circle {...props} />,
-    span: ({
-      children,
-      className,
-    }: {
-      children: React.ReactNode;
-      className?: string;
-    }) => <span className={className}>{children}</span>,
     div: ({
       children,
       className,
@@ -21,8 +14,15 @@ vi.mock("motion/react", () => ({
       children: React.ReactNode;
       className?: string;
     }) => <div className={className}>{children}</div>,
+    span: ({
+      children,
+      className,
+    }: {
+      children: React.ReactNode;
+      className?: string;
+    }) => <span className={className}>{children}</span>,
   },
-  useMotionValue: () => ({ set: vi.fn(), get: () => 0 }),
+  useMotionValue: () => ({ get: () => 0, set: vi.fn() }),
   useSpring: (val: unknown) => val,
   useTransform: (_val: unknown, fn: (v: number) => unknown) => fn(0),
 }));
@@ -37,10 +37,10 @@ afterEach(cleanup);
 
 describe("MilestoneProgressRing", () => {
   const baseProgress = {
-    total: 10,
     completed: 5,
     inProgress: 2,
     percentage: 50,
+    total: 10,
   };
 
   it("renders without crash", () => {
@@ -82,17 +82,17 @@ describe("MilestoneProgressRing", () => {
   });
 
   it("handles zero total gracefully", () => {
-    const progress = { total: 0, completed: 0, inProgress: 0, percentage: 0 };
+    const progress = { completed: 0, inProgress: 0, percentage: 0, total: 0 };
     render(<MilestoneProgressRing progress={progress} />);
     expect(screen.getByLabelText("Milestone progress: 0%")).toBeInTheDocument();
   });
 
   it("handles 100% completion", () => {
     const progress = {
-      total: 5,
       completed: 5,
       inProgress: 0,
       percentage: 100,
+      total: 5,
     };
     render(<MilestoneProgressRing progress={progress} />);
     expect(

@@ -41,9 +41,9 @@ export function FeedbackCreator({
 
     try {
       await createFeedback({
+        description: description.trim(),
         organizationId,
         title: title.trim(),
-        description: description.trim(),
       });
 
       capture("feedback_created", { source: "admin" });

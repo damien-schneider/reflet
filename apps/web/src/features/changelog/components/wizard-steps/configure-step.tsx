@@ -134,13 +134,13 @@ function AiPoweredConfig({ config, onChange }: ConfigureStepProps) {
 }
 
 const CONVENTIONAL_COMMIT_EXAMPLES = [
-  { prefix: "feat:", description: "A new feature", bump: "minor" },
-  { prefix: "fix:", description: "A bug fix", bump: "patch" },
-  { prefix: "chore:", description: "Maintenance tasks", bump: "none" },
+  { bump: "minor", description: "A new feature", prefix: "feat:" },
+  { bump: "patch", description: "A bug fix", prefix: "fix:" },
+  { bump: "none", description: "Maintenance tasks", prefix: "chore:" },
   {
-    prefix: "feat!:",
-    description: "Breaking change",
     bump: "major",
+    description: "Breaking change",
+    prefix: "feat!:",
   },
 ] as const;
 
@@ -173,7 +173,7 @@ function AutomatedConfig({ config, onChange }: ConfigureStepProps) {
           rel="noopener noreferrer"
           target="_blank"
         >
-          Learn more
+          Read the Conventional Commits guide
           <ArrowSquareOut className="h-3 w-3" />
         </a>
       </div>

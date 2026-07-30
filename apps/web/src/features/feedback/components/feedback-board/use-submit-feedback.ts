@@ -12,10 +12,10 @@ interface NewFeedbackState {
 }
 
 const INITIAL_FEEDBACK: NewFeedbackState = {
-  title: "",
+  attachments: [],
   description: "",
   email: "",
-  attachments: [],
+  title: "",
 };
 
 const MAX_TITLE_LENGTH = 100;
@@ -75,19 +75,19 @@ export function useSubmitFeedback({
       let createdFeedbackId: Id<"feedback"> | undefined;
       if (isMember) {
         createdFeedbackId = await createFeedbackMember({
-          organizationId,
-          title: trimmedTitle,
-          description: newFeedback.description.trim() || "",
           attachments,
+          description: newFeedback.description.trim() || "",
+          organizationId,
           tagId: submitTagId,
+          title: trimmedTitle,
         });
       } else {
         await createFeedbackPublic({
-          organizationId,
-          title: trimmedTitle,
+          attachments,
           description: newFeedback.description.trim() || undefined,
           email: newFeedback.email.trim() || undefined,
-          attachments,
+          organizationId,
+          title: trimmedTitle,
         });
       }
       capture("feedback_created", {
@@ -95,8 +95,8 @@ export function useSubmitFeedback({
       });
       if (createdFeedbackId && submitAssigneeId) {
         await assignFeedback({
-          feedbackId: createdFeedbackId,
           assigneeId: submitAssigneeId,
+          feedbackId: createdFeedbackId,
         });
       }
       closeSubmitDrawer();
@@ -111,13 +111,13 @@ export function useSubmitFeedback({
   };
 
   return {
+    handleSubmitFeedback,
+    isSubmitting,
     newFeedback,
     setNewFeedback,
-    isSubmitting,
-    submitTagId,
+    setSubmitAssigneeId,
     setSubmitTagId,
     submitAssigneeId,
-    setSubmitAssigneeId,
-    handleSubmitFeedback,
+    submitTagId,
   } as const;
 }

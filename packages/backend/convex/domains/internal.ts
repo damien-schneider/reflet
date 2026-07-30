@@ -4,42 +4,42 @@ import { domainStatus } from "../shared/validators";
 
 export const updateDomainStatus = internalMutation({
   args: {
+    error: v.optional(v.string()),
+    lastCheckedAt: v.optional(v.number()),
     organizationId: v.id("organizations"),
     status: domainStatus,
-    error: v.optional(v.string()),
     verification: v.optional(
       v.array(
         v.object({
-          type: v.string(),
           domain: v.string(),
-          value: v.string(),
           reason: v.optional(v.string()),
+          type: v.string(),
+          value: v.string(),
         })
       )
     ),
-    lastCheckedAt: v.optional(v.number()),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     await ctx.db.patch(args.organizationId, {
-      customDomainStatus: args.status,
       customDomainError: args.error,
-      customDomainVerification: args.verification,
       customDomainLastCheckedAt: args.lastCheckedAt ?? Date.now(),
+      customDomainStatus: args.status,
+      customDomainVerification: args.verification,
     });
   },
+  returns: v.null(),
 });
 
 export const clearDomainFields = internalMutation({
   args: { organizationId: v.id("organizations") },
-  returns: v.null(),
   handler: async (ctx, args) => {
     await ctx.db.patch(args.organizationId, {
       customDomain: undefined,
-      customDomainStatus: undefined,
-      customDomainVerification: undefined,
       customDomainError: undefined,
       customDomainLastCheckedAt: undefined,
+      customDomainStatus: undefined,
+      customDomainVerification: undefined,
     });
   },
+  returns: v.null(),
 });

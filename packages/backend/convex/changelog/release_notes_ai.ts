@@ -18,28 +18,28 @@ const MAX_FILES_FOR_CONTEXT = 50;
  */
 export const generateReleaseNotes = action({
   args: {
+    additionalContext: v.optional(v.string()),
     commits: v.array(
       v.object({
-        sha: v.string(),
-        message: v.string(),
-        fullMessage: v.optional(v.string()),
         author: v.string(),
+        fullMessage: v.optional(v.string()),
+        message: v.string(),
+        sha: v.string(),
       })
     ),
     files: v.optional(
       v.array(
         v.object({
-          filename: v.string(),
-          status: v.string(),
           additions: v.number(),
           deletions: v.number(),
+          filename: v.string(),
+          status: v.string(),
         })
       )
     ),
-    version: v.optional(v.string()),
     previousVersion: v.optional(v.string()),
     repositoryName: v.optional(v.string()),
-    additionalContext: v.optional(v.string()),
+    version: v.optional(v.string()),
   },
   handler: async (_ctx, args) => {
     const commitSummary = args.commits

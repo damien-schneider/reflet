@@ -8,11 +8,11 @@ import { internalAction } from "../_generated/server";
 
 // Notification type preference mapping
 const NOTIFICATION_TYPE_PREFERENCE_MAP: Record<string, string> = {
-  status_change: "notifyOnStatusChange",
-  new_comment: "notifyOnNewComment",
-  vote_milestone: "notifyOnVoteMilestone",
-  new_support_message: "notifyOnNewSupportMessage",
   invitation: "notifyOnInvitation",
+  new_comment: "notifyOnNewComment",
+  new_support_message: "notifyOnNewSupportMessage",
+  status_change: "notifyOnStatusChange",
+  vote_milestone: "notifyOnVoteMilestone",
 };
 
 /**
@@ -46,7 +46,7 @@ function getVapidConfig(): {
     return null;
   }
 
-  return { publicKey, privateKey, subject };
+  return { privateKey, publicKey, subject };
 }
 
 interface PushSubscription {
@@ -68,11 +68,11 @@ async function sendToSubscription(
     await webpush.sendNotification(
       {
         endpoint: subscription.endpoint,
-        keys: { p256dh: subscription.p256dh, auth: subscription.auth },
+        keys: { auth: subscription.auth, p256dh: subscription.p256dh },
       },
       payload
     );
-    return { success: true, expired: false };
+    return { expired: false, success: true };
   } catch (error: unknown) {
     const statusCode =
       error instanceof Error && "statusCode" in error
@@ -80,14 +80,14 @@ async function sendToSubscription(
         : 0;
 
     if (statusCode === 410 || statusCode === 404) {
-      return { success: false, expired: true };
+      return { expired: true, success: false };
     }
 
     console.error(
       "[Push] Failed to send:",
       error instanceof Error ? error.message : "Unknown error"
     );
-    return { success: false, expired: false };
+    return { expired: false, success: false };
   }
 }
 
@@ -98,11 +98,11 @@ async function sendToSubscription(
  */
 export const sendPushNotification = internalAction({
   args: {
-    userId: v.string(),
-    type: v.string(),
-    title: v.string(),
     message: v.string(),
+    title: v.string(),
+    type: v.string(),
     url: v.optional(v.string()),
+    userId: v.string(),
   },
   handler: async (
     ctx,
@@ -114,11 +114,11 @@ export const sendPushNotification = internalAction({
     );
 
     if (!preferences?.pushEnabled) {
-      return { sent: 0, reason: "push_disabled" };
+      return { reason: "push_disabled", sent: 0 };
     }
 
     if (!isNotificationTypeEnabled(preferences, args.type)) {
-      return { sent: 0, reason: "type_disabled" };
+      return { reason: "type_disabled", sent: 0 };
     }
 
     const subscriptions: PushSubscription[] = await ctx.runQuery(
@@ -127,21 +127,21 @@ export const sendPushNotification = internalAction({
     );
 
     if (subscriptions.length === 0) {
-      return { sent: 0, reason: "no_subscriptions" };
+      return { reason: "no_subscriptions", sent: 0 };
     }
 
     const vapid = getVapidConfig();
     if (!vapid) {
-      return { sent: 0, reason: "vapid_not_configured" };
+      return { reason: "vapid_not_configured", sent: 0 };
     }
 
     webpush.setVapidDetails(vapid.subject, vapid.publicKey, vapid.privateKey);
 
     const payload = JSON.stringify({
-      title: args.title,
+      badge: "/icon-192x192.png",
       body: args.message,
       icon: "/icon-192x192.png",
-      badge: "/icon-192x192.png",
+      title: args.title,
       url: args.url ?? "/dashboard",
     });
 
@@ -166,6 +166,6 @@ export const sendPushNotification = internalAction({
       );
     }
 
-    return { sent, expired: expiredIds.length };
+    return { expired: expiredIds.length, sent };
   },
 });

@@ -76,9 +76,9 @@ const resolveUserProfile = async (
     return null;
   }
   return {
-    name: userData.name ?? null,
     email: userData.email ?? "",
     image: userData.image ?? null,
+    name: userData.name ?? null,
   };
 };
 
@@ -108,12 +108,12 @@ export const getPublicMeta = query({
     }
 
     return {
-      title: feedback.title,
       description: feedback.description,
-      status: feedback.status,
-      voteCount: feedback.voteCount ?? 0,
       orgName: org.name,
       orgSlug: org.slug,
+      status: feedback.status,
+      title: feedback.title,
+      voteCount: feedback.voteCount ?? 0,
     };
   },
 });
@@ -149,13 +149,13 @@ export const getShippedMeta = query({
     }
 
     return {
-      title: feedback.title,
       description: feedback.description,
-      status: feedback.status,
-      voteCount: feedback.voteCount ?? 0,
       orgName: org.name,
       orgSlug: org.slug,
       releaseTitle,
+      status: feedback.status,
+      title: feedback.title,
+      voteCount: feedback.voteCount ?? 0,
     };
   },
 });
@@ -213,16 +213,16 @@ export const get = query({
 
     return {
       ...feedback,
+      assignee,
+      author,
+      hasVoted,
+      isAuthor: user?._id === feedback.authorId,
+      isMember,
       organization: org,
       organizationStatus,
-      tags,
-      hasVoted,
-      userVoteType,
-      isMember,
       role,
-      isAuthor: user?._id === feedback.authorId,
-      author,
-      assignee,
+      tags,
+      userVoteType,
     };
   },
 });

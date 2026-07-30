@@ -18,11 +18,11 @@ export function registerOrganizationTools(
     "org_update",
     "Update organization settings like name, visibility, branding, or support.",
     {
-      name: z.string().optional().describe("Organization name"),
       isPublic: z
         .boolean()
         .optional()
         .describe("Whether the feedback board is publicly accessible"),
+      name: z.string().optional().describe("Organization name"),
       primaryColor: z.string().optional().describe("Brand color (hex)"),
       supportEnabled: z
         .boolean()

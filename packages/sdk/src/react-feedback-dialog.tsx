@@ -51,18 +51,18 @@ export function FeedbackDialog({
     handleSubmit,
     handleTrapFocus,
   } = useFeedbackDialog({
-    open,
-    onOpenChange,
-    publicKey,
     baseUrl,
-    user,
-    userToken,
-    primaryColor,
     defaultCategory,
     labels: labelsProp,
-    onSubmit,
-    onOpen,
     onClose,
+    onOpen,
+    onOpenChange,
+    onSubmit,
+    open,
+    primaryColor,
+    publicKey,
+    user,
+    userToken,
   });
 
   if (!open) {

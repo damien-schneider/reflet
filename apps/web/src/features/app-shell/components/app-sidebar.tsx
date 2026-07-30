@@ -34,44 +34,27 @@ import { NavSecondary } from "@/features/navigation/components/nav-secondary";
 import { NavUser } from "@/features/navigation/components/nav-user";
 
 const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  navMain: [
+  documents: [
     {
-      title: "Dashboard",
+      icon: IconDatabase,
+      name: "Data Library",
       url: "#",
-      icon: IconDashboard,
     },
     {
-      title: "Lifecycle",
+      icon: IconReport,
+      name: "Reports",
       url: "#",
-      icon: IconListDetails,
     },
     {
-      title: "Analytics",
+      icon: IconFileWord,
+      name: "Word Assistant",
       url: "#",
-      icon: IconChartBar,
-    },
-    {
-      title: "Projects",
-      url: "#",
-      icon: IconFolder,
-    },
-    {
-      title: "Team",
-      url: "#",
-      icon: IconUsers,
     },
   ],
   navClouds: [
     {
-      title: "Capture",
       icon: IconCamera,
       isActive: true,
-      url: "#",
       items: [
         {
           title: "Active Proposals",
@@ -82,11 +65,11 @@ const data = {
           url: "#",
         },
       ],
+      title: "Capture",
+      url: "#",
     },
     {
-      title: "Proposal",
       icon: IconFileDescription,
-      url: "#",
       items: [
         {
           title: "Active Proposals",
@@ -97,11 +80,11 @@ const data = {
           url: "#",
         },
       ],
+      title: "Proposal",
+      url: "#",
     },
     {
-      title: "Prompts",
       icon: IconFileAi,
-      url: "#",
       items: [
         {
           title: "Active Proposals",
@@ -112,42 +95,59 @@ const data = {
           url: "#",
         },
       ],
+      title: "Prompts",
+      url: "#",
+    },
+  ],
+  navMain: [
+    {
+      icon: IconDashboard,
+      title: "Dashboard",
+      url: "#",
+    },
+    {
+      icon: IconListDetails,
+      title: "Lifecycle",
+      url: "#",
+    },
+    {
+      icon: IconChartBar,
+      title: "Analytics",
+      url: "#",
+    },
+    {
+      icon: IconFolder,
+      title: "Projects",
+      url: "#",
+    },
+    {
+      icon: IconUsers,
+      title: "Team",
+      url: "#",
     },
   ],
   navSecondary: [
     {
+      icon: IconSettings,
       title: "Gear",
       url: "#",
-      icon: IconSettings,
     },
     {
+      icon: IconHelp,
       title: "Get Help",
       url: "#",
-      icon: IconHelp,
     },
     {
+      icon: IconSearch,
       title: "MagnifyingGlass",
       url: "#",
-      icon: IconSearch,
     },
   ],
-  documents: [
-    {
-      name: "Data Library",
-      url: "#",
-      icon: IconDatabase,
-    },
-    {
-      name: "Reports",
-      url: "#",
-      icon: IconReport,
-    },
-    {
-      name: "Word Assistant",
-      url: "#",
-      icon: IconFileWord,
-    },
-  ],
+  user: {
+    avatar: "/avatars/shadcn.jpg",
+    email: "m@example.com",
+    name: "shadcn",
+  },
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {

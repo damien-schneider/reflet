@@ -20,13 +20,6 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
   DropdownMenu: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
-  DropdownMenuTrigger: ({
-    children,
-  }: {
-    children?: React.ReactNode;
-    render?: React.ReactNode;
-    className?: string;
-  }) => <div>{children}</div>,
   DropdownMenuContent: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
@@ -52,6 +45,13 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
       {children}
     </button>
   ),
+  DropdownMenuTrigger: ({
+    children,
+  }: {
+    children?: React.ReactNode;
+    render?: React.ReactNode;
+    className?: string;
+  }) => <div>{children}</div>,
 }));
 
 vi.mock("@/components/ui/badge", () => ({
@@ -77,13 +77,13 @@ vi.mock("@/lib/utils", () => ({
 import { StatusDisplay } from "./status-display";
 
 const statuses = [
-  { _id: "s1" as Id<"organizationStatuses">, name: "Open", color: "blue" },
+  { _id: "s1" as Id<"organizationStatuses">, color: "blue", name: "Open" },
   {
     _id: "s2" as Id<"organizationStatuses">,
-    name: "In Progress",
     color: "yellow",
+    name: "In Progress",
   },
-  { _id: "s3" as Id<"organizationStatuses">, name: "Done", color: "green" },
+  { _id: "s3" as Id<"organizationStatuses">, color: "green", name: "Done" },
 ];
 
 describe("StatusDisplay", () => {

@@ -20,10 +20,10 @@ export async function generateMetadata({
     const org = orgs.find((o) => o.slug === orgSlug);
     if (org) {
       return generatePageMetadata({
-        title: `${orgSlug} - Feature Requests & Feedback`,
         description: `Submit feature requests and feedback for ${orgSlug}. Vote on ideas and help shape the product.`,
-        path: `/${orgSlug}`,
         keywords: ["feedback", "feature requests", "product feedback", orgSlug],
+        path: `/${orgSlug}`,
+        title: `${orgSlug} - Feature Requests & Feedback`,
       });
     }
   } catch {
@@ -31,10 +31,10 @@ export async function generateMetadata({
   }
 
   return generatePageMetadata({
-    title: `${orgSlug} - Feature Requests & Feedback`,
     description: `Submit feature requests and feedback for ${orgSlug}. Vote on ideas and help shape the product.`,
-    path: `/${orgSlug}`,
     keywords: ["feedback", "feature requests", "product feedback", orgSlug],
+    path: `/${orgSlug}`,
+    title: `${orgSlug} - Feature Requests & Feedback`,
   });
 }
 

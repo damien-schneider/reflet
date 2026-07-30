@@ -112,15 +112,15 @@ afterEach(cleanup);
 describe("TagCard", () => {
   const defaultTag = {
     _id: "tag1" as Id<"tags">,
-    name: "Bug",
     color: "red",
+    name: "Bug",
   };
 
   const defaultProps = {
-    tag: defaultTag,
     isAdmin: false,
-    onEdit: vi.fn(),
     onDelete: vi.fn(),
+    onEdit: vi.fn(),
+    tag: defaultTag,
   };
 
   it("renders the card", () => {
@@ -176,8 +176,8 @@ describe("TagCard", () => {
   it("renders with different tag data", () => {
     const tag = {
       _id: "tag2" as Id<"tags">,
-      name: "Feature",
       color: "blue",
+      name: "Feature",
     };
     render(<TagCard {...defaultProps} tag={tag} />);
     expect(screen.getByText("Feature")).toBeInTheDocument();

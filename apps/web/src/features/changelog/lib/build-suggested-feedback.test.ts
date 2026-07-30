@@ -9,8 +9,8 @@ const makeMatch = (
   confidence: "high" | "medium" | "low" = "high",
   reason = "test reason"
 ) => ({
-  feedbackId: fId,
   confidence,
+  feedbackId: fId,
   reason,
 });
 
@@ -20,8 +20,8 @@ const makeFeedback = (
   title = `Feedback ${id}`
 ) => ({
   _id: feedbackId(id),
-  title,
   status,
+  title,
 });
 
 describe("buildSuggestedFeedback", () => {
@@ -53,13 +53,13 @@ describe("buildSuggestedFeedback", () => {
     expect(result).toEqual([
       {
         _id: feedbackId("f1"),
-        title: "Bug in login",
-        status: "open",
         match: {
-          feedbackId: "f1",
           confidence: "high",
+          feedbackId: "f1",
           reason: "addressed in release",
         },
+        status: "open",
+        title: "Bug in login",
       },
     ]);
   });

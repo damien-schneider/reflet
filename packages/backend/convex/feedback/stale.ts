@@ -25,9 +25,9 @@ export const updateSettings = mutation({
   args: {
     organizationId: v.id("organizations"),
     settings: v.object({
-      enabled: v.boolean(),
-      daysInactive: v.number(),
       action: v.union(v.literal("archive"), v.literal("close")),
+      daysInactive: v.number(),
+      enabled: v.boolean(),
       excludeStatuses: v.optional(
         v.array(
           v.union(

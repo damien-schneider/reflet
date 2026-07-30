@@ -60,7 +60,7 @@ export function WidgetCard() {
               exit={{ opacity: 0, scale: 0.9, y: 8 }}
               initial={{ opacity: 0, scale: 0.9, y: 8 }}
               key="dialog"
-              transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              transition={{ damping: 30, stiffness: 400, type: "spring" }}
             >
               {submitted ? (
                 <div className="flex flex-col items-center gap-2 p-5">

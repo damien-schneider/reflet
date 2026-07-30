@@ -14,9 +14,9 @@ function extractBearerToken(request: Request): string | null {
 }
 
 const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Origin": "*",
   "Access-Control-Expose-Headers": "WWW-Authenticate",
   "Access-Control-Max-Age": "86400",
 } as const;
@@ -27,12 +27,12 @@ function jsonResponse(
   extraHeaders?: Record<string, string>
 ): Response {
   return new Response(JSON.stringify(body), {
-    status,
     headers: {
       "Content-Type": "application/json",
       ...CORS_HEADERS,
       ...extraHeaders,
     },
+    status,
   });
 }
 
@@ -41,12 +41,12 @@ function jsonRpcError(
   code: number,
   message: string
 ) {
-  return { jsonrpc: "2.0" as const, id, error: { code, message } };
+  return { error: { code, message }, id, jsonrpc: "2.0" as const };
 }
 
 const jsonRpcRequestSchema = z.object({
-  jsonrpc: z.literal("2.0"),
   id: z.union([z.number(), z.string(), z.null()]).optional(),
+  jsonrpc: z.literal("2.0"),
   method: z.string(),
   params: z.record(z.string(), z.unknown()).optional(),
 });
@@ -119,11 +119,12 @@ export const mcpHandler = httpAction(async (ctx, request) => {
   return jsonResponse(response);
 });
 
-export const mcpCorsHandler = httpAction(async (_ctx, _request) => {
-  return await Promise.resolve(
-    new Response(null, {
-      status: 204,
-      headers: CORS_HEADERS,
-    })
-  );
-});
+export const mcpCorsHandler = httpAction(
+  async (_ctx, _request) =>
+    await Promise.resolve(
+      new Response(null, {
+        headers: CORS_HEADERS,
+        status: 204,
+      })
+    )
+);

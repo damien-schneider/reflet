@@ -4,9 +4,9 @@ import { InlineCode } from "@/components/ui/typography";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
-  title: "SDK Installation",
   description: "Install and configure the Reflet SDK in your application.",
   path: "/docs/sdk/installation",
+  title: "SDK Installation",
 });
 
 export default function SdkInstallationPage() {

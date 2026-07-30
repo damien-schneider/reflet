@@ -48,11 +48,11 @@ export class ChangelogApi {
     const url = `${CONVEX_URL}/api/v1/feedback/changelog${query ? `?${query}` : ""}`;
 
     const response = await fetch(url, {
-      method: "GET",
       headers: {
-        "Content-Type": "application/json",
         Authorization: `Bearer ${this.publicKey}`,
+        "Content-Type": "application/json",
       },
+      method: "GET",
     });
 
     const data: unknown = await response.json();

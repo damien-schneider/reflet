@@ -276,7 +276,7 @@ function CompactChangelogPreview() {
 
 export default function LandingLiveDemo() {
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, amount: 0.15 });
+  const isInView = useInView(ref, { amount: 0.15, once: true });
 
   return (
     <section

@@ -11,12 +11,12 @@ describe("feedback_stale", () => {
 
     await t.run(async (ctx) => {
       const fakeId = await ctx.db.insert("organizations", {
+        createdAt: Date.now(),
+        isPublic: false,
         name: "Test",
         slug: "test",
-        isPublic: false,
-        subscriptionTier: "free",
         subscriptionStatus: "none",
-        createdAt: Date.now(),
+        subscriptionTier: "free",
       });
       // Delete it so query returns null
       await ctx.db.delete(fakeId);
@@ -26,16 +26,17 @@ describe("feedback_stale", () => {
   test("getSettings returns null when no stale settings configured", async () => {
     const t = convexTest(schema, modules);
 
-    const orgId = await t.run(async (ctx) => {
-      return await ctx.db.insert("organizations", {
-        name: "Test Org",
-        slug: "test-org",
-        isPublic: false,
-        subscriptionTier: "free",
-        subscriptionStatus: "none",
-        createdAt: Date.now(),
-      });
-    });
+    const orgId = await t.run(
+      async (ctx) =>
+        await ctx.db.insert("organizations", {
+          createdAt: Date.now(),
+          isPublic: false,
+          name: "Test Org",
+          slug: "test-org",
+          subscriptionStatus: "none",
+          subscriptionTier: "free",
+        })
+    );
 
     const result = await t.query(api.feedback.stale.getSettings, {
       organizationId: orgId,
@@ -48,17 +49,17 @@ describe("feedback_stale", () => {
 
     const orgId = await t.run(async (ctx) => {
       const id = await ctx.db.insert("organizations", {
+        createdAt: Date.now(),
+        isPublic: false,
         name: "Test Org",
         slug: "test-org",
-        isPublic: false,
-        subscriptionTier: "free",
-        subscriptionStatus: "none",
-        createdAt: Date.now(),
         staleFeedbackSettings: {
-          enabled: true,
-          daysInactive: 30,
           action: "close",
+          daysInactive: 30,
+          enabled: true,
         },
+        subscriptionStatus: "none",
+        subscriptionTier: "free",
       });
       return id;
     });
@@ -67,16 +68,16 @@ describe("feedback_stale", () => {
     const sixtyDaysAgo = Date.now() - 60 * 86_400_000;
     await t.run(async (ctx) => {
       await ctx.db.insert("feedback", {
-        organizationId: orgId,
-        title: "Old feedback",
-        description: "This is stale",
-        status: "open",
-        voteCount: 0,
         commentCount: 0,
+        createdAt: sixtyDaysAgo,
+        description: "This is stale",
         isApproved: true,
         isPinned: false,
-        createdAt: sixtyDaysAgo,
+        organizationId: orgId,
+        status: "open",
+        title: "Old feedback",
         updatedAt: sixtyDaysAgo,
+        voteCount: 0,
       });
     });
 
@@ -96,36 +97,37 @@ describe("feedback_stale", () => {
   test("archiveStaleFeedback skips recent items", async () => {
     const t = convexTest(schema, modules);
 
-    const orgId = await t.run(async (ctx) => {
-      return await ctx.db.insert("organizations", {
-        name: "Test Org",
-        slug: "test-org",
-        isPublic: false,
-        subscriptionTier: "free",
-        subscriptionStatus: "none",
-        createdAt: Date.now(),
-        staleFeedbackSettings: {
-          enabled: true,
-          daysInactive: 30,
-          action: "close",
-        },
-      });
-    });
+    const orgId = await t.run(
+      async (ctx) =>
+        await ctx.db.insert("organizations", {
+          createdAt: Date.now(),
+          isPublic: false,
+          name: "Test Org",
+          slug: "test-org",
+          staleFeedbackSettings: {
+            action: "close",
+            daysInactive: 30,
+            enabled: true,
+          },
+          subscriptionStatus: "none",
+          subscriptionTier: "free",
+        })
+    );
 
     // Insert recent feedback (1 day ago)
     const oneDayAgo = Date.now() - 86_400_000;
     await t.run(async (ctx) => {
       await ctx.db.insert("feedback", {
-        organizationId: orgId,
-        title: "Recent feedback",
-        description: "This is fresh",
-        status: "open",
-        voteCount: 0,
         commentCount: 0,
+        createdAt: oneDayAgo,
+        description: "This is fresh",
         isApproved: true,
         isPinned: false,
-        createdAt: oneDayAgo,
+        organizationId: orgId,
+        status: "open",
+        title: "Recent feedback",
         updatedAt: oneDayAgo,
+        voteCount: 0,
       });
     });
 
@@ -139,36 +141,37 @@ describe("feedback_stale", () => {
   test("archiveStaleFeedback skips excluded statuses", async () => {
     const t = convexTest(schema, modules);
 
-    const orgId = await t.run(async (ctx) => {
-      return await ctx.db.insert("organizations", {
-        name: "Test Org",
-        slug: "test-org",
-        isPublic: false,
-        subscriptionTier: "free",
-        subscriptionStatus: "none",
-        createdAt: Date.now(),
-        staleFeedbackSettings: {
-          enabled: true,
-          daysInactive: 30,
-          action: "close",
-          excludeStatuses: ["planned", "in_progress"],
-        },
-      });
-    });
+    const orgId = await t.run(
+      async (ctx) =>
+        await ctx.db.insert("organizations", {
+          createdAt: Date.now(),
+          isPublic: false,
+          name: "Test Org",
+          slug: "test-org",
+          staleFeedbackSettings: {
+            action: "close",
+            daysInactive: 30,
+            enabled: true,
+            excludeStatuses: ["planned", "in_progress"],
+          },
+          subscriptionStatus: "none",
+          subscriptionTier: "free",
+        })
+    );
 
     const sixtyDaysAgo = Date.now() - 60 * 86_400_000;
     await t.run(async (ctx) => {
       await ctx.db.insert("feedback", {
-        organizationId: orgId,
-        title: "Planned feedback",
-        description: "This is planned",
-        status: "planned",
-        voteCount: 0,
         commentCount: 0,
+        createdAt: sixtyDaysAgo,
+        description: "This is planned",
         isApproved: true,
         isPinned: false,
-        createdAt: sixtyDaysAgo,
+        organizationId: orgId,
+        status: "planned",
+        title: "Planned feedback",
         updatedAt: sixtyDaysAgo,
+        voteCount: 0,
       });
     });
 
@@ -182,35 +185,36 @@ describe("feedback_stale", () => {
   test("archiveStaleFeedback skips disabled orgs", async () => {
     const t = convexTest(schema, modules);
 
-    const orgId = await t.run(async (ctx) => {
-      return await ctx.db.insert("organizations", {
-        name: "Test Org",
-        slug: "test-org",
-        isPublic: false,
-        subscriptionTier: "free",
-        subscriptionStatus: "none",
-        createdAt: Date.now(),
-        staleFeedbackSettings: {
-          enabled: false,
-          daysInactive: 30,
-          action: "close",
-        },
-      });
-    });
+    const orgId = await t.run(
+      async (ctx) =>
+        await ctx.db.insert("organizations", {
+          createdAt: Date.now(),
+          isPublic: false,
+          name: "Test Org",
+          slug: "test-org",
+          staleFeedbackSettings: {
+            action: "close",
+            daysInactive: 30,
+            enabled: false,
+          },
+          subscriptionStatus: "none",
+          subscriptionTier: "free",
+        })
+    );
 
     const sixtyDaysAgo = Date.now() - 60 * 86_400_000;
     await t.run(async (ctx) => {
       await ctx.db.insert("feedback", {
-        organizationId: orgId,
-        title: "Old feedback",
-        description: "This is stale",
-        status: "open",
-        voteCount: 0,
         commentCount: 0,
+        createdAt: sixtyDaysAgo,
+        description: "This is stale",
         isApproved: true,
         isPinned: false,
-        createdAt: sixtyDaysAgo,
+        organizationId: orgId,
+        status: "open",
+        title: "Old feedback",
         updatedAt: sixtyDaysAgo,
+        voteCount: 0,
       });
     });
 

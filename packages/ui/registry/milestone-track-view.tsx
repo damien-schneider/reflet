@@ -99,7 +99,7 @@ export function MilestoneTrackView({
             className="overflow-hidden"
             exit={{ height: 0, opacity: 0 }}
             initial={{ height: 0, opacity: 0 }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            transition={{ damping: 25, stiffness: 300, type: "spring" }}
           >
             <div className="mt-2 rounded-lg border bg-card p-3 text-muted-foreground text-xs">
               {milestones.find((m) => m.id === activeId)?.name} —{" "}

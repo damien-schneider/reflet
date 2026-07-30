@@ -5,10 +5,10 @@ import { InlineCode } from "@/components/ui/typography";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
-  title: "Component Installation",
   description:
     "How to install Reflet UI components into your project using the shadcn registry.",
   path: "/docs/components/installation",
+  title: "Component Installation",
 });
 
 export default function InstallationPage() {

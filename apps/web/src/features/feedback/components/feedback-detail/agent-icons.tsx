@@ -23,7 +23,6 @@ export const COPILOT_ICON = (
     <mask
       height="100"
       id="mask0"
-      mask-type="alpha"
       maskUnits="userSpaceOnUse"
       width="100"
       x="0"

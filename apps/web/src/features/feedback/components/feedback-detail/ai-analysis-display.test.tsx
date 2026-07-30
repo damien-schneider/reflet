@@ -6,8 +6,8 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("convex/react", () => ({
-  useQuery: vi.fn(),
   useMutation: vi.fn(() => vi.fn()),
+  useQuery: vi.fn(),
 }));
 
 vi.mock("./complexity-badge", () => ({

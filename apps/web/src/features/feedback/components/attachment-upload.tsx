@@ -75,12 +75,12 @@ export function AttachmentUpload({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const { uploadImage, isUploading } = useImageUpload({
+    onError: (err) => {
+      setError(err.message);
+    },
     onSuccess: (url) => {
       onAttachmentsChange([...attachments, url]);
       setError(null);
-    },
-    onError: (err) => {
-      setError(err.message);
     },
   });
 

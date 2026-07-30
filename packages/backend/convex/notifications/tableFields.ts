@@ -4,40 +4,40 @@ import { notificationType } from "../shared/validators";
 
 export const notificationTables = {
   notifications: defineTable({
-    userId: v.string(),
-    type: notificationType,
-    title: v.string(),
-    message: v.string(),
+    createdAt: v.number(),
     feedbackId: v.optional(v.id("feedback")),
     invitationToken: v.optional(v.string()),
     isRead: v.boolean(),
-    createdAt: v.number(),
+    message: v.string(),
+    title: v.string(),
+    type: notificationType,
+    userId: v.string(),
   })
     .index("by_user", ["userId"])
     .index("by_user_read", ["userId", "isRead"]),
 
   pushSubscriptions: defineTable({
-    userId: v.string(),
+    auth: v.string(),
+    createdAt: v.number(),
     endpoint: v.string(),
     p256dh: v.string(),
-    auth: v.string(),
     userAgent: v.optional(v.string()),
-    createdAt: v.number(),
+    userId: v.string(),
   })
     .index("by_user", ["userId"])
     .index("by_endpoint", ["endpoint"]),
 
   userNotificationPreferences: defineTable({
-    userId: v.string(),
-    pushEnabled: v.boolean(),
-    notifyOnStatusChange: v.boolean(),
-    notifyOnNewComment: v.boolean(),
-    notifyOnVoteMilestone: v.boolean(),
-    notifyOnNewSupportMessage: v.boolean(),
-    notifyOnInvitation: v.boolean(),
-    pushPromptDismissed: v.boolean(),
-    weeklyDigestEnabled: v.optional(v.boolean()),
     createdAt: v.number(),
+    notifyOnInvitation: v.boolean(),
+    notifyOnNewComment: v.boolean(),
+    notifyOnNewSupportMessage: v.boolean(),
+    notifyOnStatusChange: v.boolean(),
+    notifyOnVoteMilestone: v.boolean(),
+    pushEnabled: v.boolean(),
+    pushPromptDismissed: v.boolean(),
     updatedAt: v.number(),
+    userId: v.string(),
+    weeklyDigestEnabled: v.optional(v.boolean()),
   }).index("by_user", ["userId"]),
 };

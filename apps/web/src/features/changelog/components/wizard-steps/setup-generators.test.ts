@@ -8,17 +8,17 @@ import {
 } from "./setup-generators";
 
 const makeConfig = (overrides: Partial<WizardConfig> = {}): WizardConfig => ({
-  workflow: "ai_powered",
-  syncDirection: "reflet_first",
-  autoSyncReleases: false,
-  pushToGithubOnPublish: true,
   autoPublishImported: true,
+  autoSyncReleases: false,
   autoVersioning: true,
-  versionPrefix: "v",
-  versionIncrement: "patch",
-  targetBranch: "main",
-  manualSyncEnabled: false,
   manualSyncDirection: "bidirectional",
+  manualSyncEnabled: false,
+  pushToGithubOnPublish: true,
+  syncDirection: "reflet_first",
+  targetBranch: "main",
+  versionIncrement: "patch",
+  versionPrefix: "v",
+  workflow: "ai_powered",
   ...overrides,
 });
 
@@ -38,15 +38,15 @@ const makePromptOptions = (
   const config = makeConfig(configOverrides);
   const webhookUrl = extra.webhookUrl ?? DEFAULT_WEBHOOK;
   return {
-    repoFullName: extra.repoFullName ?? "owner/repo",
+    config,
     defaultBranch: extra.defaultBranch ?? config.targetBranch,
+    orgSlug: extra.orgSlug ?? DEFAULT_SLUG,
+    repoFullName: extra.repoFullName ?? "owner/repo",
     webhookUrl,
     workflowYaml: generateWorkflowYaml(
       webhookUrl,
       extra.defaultBranch ?? config.targetBranch
     ),
-    config,
-    orgSlug: extra.orgSlug ?? DEFAULT_SLUG,
   };
 };
 
@@ -184,10 +184,10 @@ describe("generateAiPrompt", () => {
     it("should include version info when autoVersioning is enabled", () => {
       const prompt = generateAiPrompt(
         makePromptOptions({
-          workflow: "ai_powered",
           autoVersioning: true,
-          versionPrefix: "v",
           versionIncrement: "patch",
+          versionPrefix: "v",
+          workflow: "ai_powered",
         })
       );
       expect(prompt).toContain("SemVer");
@@ -196,7 +196,7 @@ describe("generateAiPrompt", () => {
 
     it("should say disabled when autoVersioning is off", () => {
       const prompt = generateAiPrompt(
-        makePromptOptions({ workflow: "ai_powered", autoVersioning: false })
+        makePromptOptions({ autoVersioning: false, workflow: "ai_powered" })
       );
       expect(prompt).toContain("disabled");
     });
@@ -218,14 +218,14 @@ describe("generateAiPrompt", () => {
     it("should mention push-to-GitHub differently when disabled", () => {
       const enabled = generateAiPrompt(
         makePromptOptions({
-          workflow: "ai_powered",
           pushToGithubOnPublish: true,
+          workflow: "ai_powered",
         })
       );
       const disabled = generateAiPrompt(
         makePromptOptions({
-          workflow: "ai_powered",
           pushToGithubOnPublish: false,
+          workflow: "ai_powered",
         })
       );
       expect(enabled).not.toBe(disabled);
@@ -274,7 +274,7 @@ describe("generateAiPrompt", () => {
 
     it("should include version prefix", () => {
       const prompt = generateAiPrompt(
-        makePromptOptions({ workflow: "automated", versionPrefix: "release-" })
+        makePromptOptions({ versionPrefix: "release-", workflow: "automated" })
       );
       expect(prompt).toContain("release-");
     });
@@ -290,14 +290,14 @@ describe("generateAiPrompt", () => {
   describe("Manual workflow with sync disabled", () => {
     it("should say no GitHub setup needed", () => {
       const prompt = generateAiPrompt(
-        makePromptOptions({ workflow: "manual", manualSyncEnabled: false })
+        makePromptOptions({ manualSyncEnabled: false, workflow: "manual" })
       );
       expect(prompt.toLowerCase()).toContain("no github setup needed");
     });
 
     it("should mention Settings for later setup", () => {
       const prompt = generateAiPrompt(
-        makePromptOptions({ workflow: "manual", manualSyncEnabled: false })
+        makePromptOptions({ manualSyncEnabled: false, workflow: "manual" })
       );
       expect(prompt).toContain("Settings");
       expect(prompt).toContain("Releases");
@@ -305,7 +305,7 @@ describe("generateAiPrompt", () => {
 
     it("should NOT include any workflow YAML", () => {
       const prompt = generateAiPrompt(
-        makePromptOptions({ workflow: "manual", manualSyncEnabled: false })
+        makePromptOptions({ manualSyncEnabled: false, workflow: "manual" })
       );
       expect(prompt).not.toContain("reflet-release-sync.yml");
       expect(prompt).not.toContain("release-please.yml");
@@ -316,9 +316,9 @@ describe("generateAiPrompt", () => {
     it("should include workflow YAML instructions", () => {
       const prompt = generateAiPrompt(
         makePromptOptions({
-          workflow: "manual",
-          manualSyncEnabled: true,
           manualSyncDirection: "github_first",
+          manualSyncEnabled: true,
+          workflow: "manual",
         })
       );
       expect(prompt).toContain("reflet-release-sync.yml");
@@ -327,9 +327,9 @@ describe("generateAiPrompt", () => {
     it("should describe github_first direction correctly", () => {
       const prompt = generateAiPrompt(
         makePromptOptions({
-          workflow: "manual",
-          manualSyncEnabled: true,
           manualSyncDirection: "github_first",
+          manualSyncEnabled: true,
+          workflow: "manual",
         })
       );
       expect(prompt).toContain("GitHub");
@@ -339,9 +339,9 @@ describe("generateAiPrompt", () => {
     it("should describe bidirectional direction correctly", () => {
       const prompt = generateAiPrompt(
         makePromptOptions({
-          workflow: "manual",
-          manualSyncEnabled: true,
           manualSyncDirection: "bidirectional",
+          manualSyncEnabled: true,
+          workflow: "manual",
         })
       );
       expect(prompt.toLowerCase()).toContain("bidirectional");
@@ -350,9 +350,9 @@ describe("generateAiPrompt", () => {
     it("should describe reflet_first direction correctly", () => {
       const prompt = generateAiPrompt(
         makePromptOptions({
-          workflow: "manual",
-          manualSyncEnabled: true,
           manualSyncDirection: "reflet_first",
+          manualSyncEnabled: true,
+          workflow: "manual",
         })
       );
       expect(prompt).toContain("Reflet");

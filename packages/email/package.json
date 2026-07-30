@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "email dev --dir src/templates --port 3333",
     "export": "email export --dir src/templates --outDir out",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest"
   },
   "exports": {
     "./templates/base-layout": "./src/templates/base-layout.tsx",
@@ -21,17 +21,17 @@
     "./templates/styles": "./src/templates/styles.ts"
   },
   "dependencies": {
-    "@react-email/components": "^1.0.10",
-    "@react-email/render": "^2.0.4",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "@react-email/render": "^2.1.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-email": "^6.9.1"
   },
   "devDependencies": {
-    "@react-email/preview-server": "^5.2.10",
+    "@react-email/ui": "6.9.1",
     "@reflet/config": "workspace:*",
-    "@types/react": "^19.2.14",
-    "react-email": "^5.2.10",
+    "@types/node": "^26.1.2",
+    "@types/react": "^19.2.17",
     "typescript": "catalog:",
-    "vitest": "^4.1.1"
+    "vitest": "^4.1.10"
   }
 }

@@ -22,9 +22,8 @@ type BillingInterval = "monthly" | "yearly";
 
 const TIERS = [
   {
-    name: "Starter",
-    monthlyPrice: 0,
-    yearlyPrice: 0,
+    cta: "Get started free",
+    ctaVariant: "outline" as const,
     description: "For open source projects and small teams getting started.",
     features: [
       "Unlimited feedback posts",
@@ -33,15 +32,15 @@ const TIERS = [
       "Community support",
       "Embeddable widget",
     ],
-    cta: "Get started free",
-    ctaVariant: "outline" as const,
     highlighted: false,
+    monthlyPrice: 0,
+    name: "Starter",
+    yearlyPrice: 0,
   },
   {
-    name: "Growth",
-    monthlyPrice: 15,
-    yearlyPrice: 150,
-    yearlySavings: 30,
+    badge: "Most popular",
+    cta: "Start 14-day free trial",
+    ctaVariant: "default" as const,
     description: "For teams needing private boards and integrations.",
     features: [
       "Everything in Starter",
@@ -51,16 +50,15 @@ const TIERS = [
       "Custom domain",
       "Priority support",
     ],
-    cta: "Start 14-day free trial",
-    ctaVariant: "default" as const,
     highlighted: true,
-    badge: "Most popular",
+    monthlyPrice: 15,
+    name: "Growth",
+    yearlyPrice: 150,
+    yearlySavings: 30,
   },
   {
-    name: "Business",
-    monthlyPrice: 49,
-    yearlyPrice: 480,
-    yearlySavings: 108,
+    cta: "Talk to us",
+    ctaVariant: "outline" as const,
     description: "Enterprise-grade control with unlimited access.",
     features: [
       "Everything in Growth",
@@ -70,16 +68,18 @@ const TIERS = [
       "Full API access",
       "Dedicated success manager",
     ],
-    cta: "Talk to us",
-    ctaVariant: "outline" as const,
     highlighted: false,
+    monthlyPrice: 49,
+    name: "Business",
+    yearlyPrice: 480,
+    yearlySavings: 108,
   },
 ] as const;
 
 export default function LandingPricing() {
   const [interval, setInterval] = useState<BillingInterval>("yearly");
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, amount: 0.15 });
+  const isInView = useInView(ref, { amount: 0.15, once: true });
   const isYearly = interval === "yearly";
 
   return (
@@ -215,8 +215,8 @@ export default function LandingPricing() {
                   href="/dashboard"
                   onClick={() =>
                     capture("pricing_tier_clicked", {
-                      tier: tier.name,
                       interval,
+                      tier: tier.name,
                     })
                   }
                 >

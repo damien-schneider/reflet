@@ -72,35 +72,35 @@ vi.mock("./comment-item", () => ({
 
 const makeComment = (id: string, body: string): CommentData => ({
   _id: id as Id<"comments">,
+  authorName: "User",
   body,
   createdAt: Date.now(),
-  authorName: "User",
 });
 
 const defaultProps = {
-  comments: [] as CommentData[],
-  topLevelComments: [] as CommentData[],
   commentReplies: vi.fn(() => []),
-  effectiveIsAdmin: false,
-  isGeneratingDraft: false,
-  onGenerateDraftReply: vi.fn(),
-  newComment: "",
-  onNewCommentChange: vi.fn(),
-  isSubmittingComment: false,
-  onSubmitComment: vi.fn(),
+  comments: [] as CommentData[],
   editCommentContent: "",
   editingCommentId: null as Id<"comments"> | null,
-  replyingTo: null as Id<"comments"> | null,
-  replyContent: "",
+  effectiveIsAdmin: false,
+  isGeneratingDraft: false,
+  isSubmittingComment: false,
+  newComment: "",
   onDelete: vi.fn(),
   onEdit: vi.fn(),
   onEditCancel: vi.fn(),
   onEditContentChange: vi.fn(),
+  onGenerateDraftReply: vi.fn(),
+  onNewCommentChange: vi.fn(),
   onReply: vi.fn(),
   onReplyCancel: vi.fn(),
   onReplyContentChange: vi.fn(),
+  onSubmitComment: vi.fn(),
   onSubmitReply: vi.fn(),
   onUpdateComment: vi.fn(),
+  replyContent: "",
+  replyingTo: null as Id<"comments"> | null,
+  topLevelComments: [] as CommentData[],
 };
 
 describe("CommentsSection", () => {

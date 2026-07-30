@@ -112,11 +112,11 @@ export const create = mutation({
 
     // Create the reference
     const referenceId = await ctx.db.insert("websiteReferences", {
-      organizationId: args.organizationId,
-      url: normalizedUrl,
-      status: "pending",
       createdAt: now,
+      organizationId: args.organizationId,
+      status: "pending",
       updatedAt: now,
+      url: normalizedUrl,
     });
 
     // Schedule scraping
@@ -215,7 +215,10 @@ export const refresh = mutation({
  */
 export const updateStatus = internalMutation({
   args: {
+    description: v.optional(v.string()),
+    errorMessage: v.optional(v.string()),
     id: v.id("websiteReferences"),
+    scrapedContent: v.optional(v.string()),
     status: v.union(
       v.literal("pending"),
       v.literal("fetching"),
@@ -223,9 +226,6 @@ export const updateStatus = internalMutation({
       v.literal("error")
     ),
     title: v.optional(v.string()),
-    description: v.optional(v.string()),
-    scrapedContent: v.optional(v.string()),
-    errorMessage: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { id, status, ...updates } = args;
@@ -319,21 +319,21 @@ export const scrapeWebsite = internalAction({
       await ctx.runMutation(
         internal.integrations.website_references.updateStatus,
         {
+          description,
           id: args.referenceId,
+          scrapedContent: content,
           status: "success",
           title,
-          description,
-          scrapedContent: content,
         }
       );
     } catch (error) {
       await ctx.runMutation(
         internal.integrations.website_references.updateStatus,
         {
-          id: args.referenceId,
-          status: "error",
           errorMessage:
             error instanceof Error ? error.message : "Unknown error",
+          id: args.referenceId,
+          status: "error",
         }
       );
     }

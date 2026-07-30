@@ -45,7 +45,7 @@ export function useVoteState(initialUp: number, initialDown: number) {
     [voteType]
   );
 
-  return { voteType, upvotes, downvotes, vote };
+  return { downvotes, upvotes, vote, voteType };
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -65,12 +65,12 @@ export function AnimatedCount({
     <LazyMotion features={domAnimation}>
       <AnimatePresence mode="popLayout">
         <m.span
-          animate={{ y: 0, opacity: 1 }}
+          animate={{ opacity: 1, y: 0 }}
           className={cn("tabular-nums", className)}
-          exit={{ y: exitY, opacity: 0 }}
-          initial={{ y: initialY, opacity: 0 }}
+          exit={{ opacity: 0, y: exitY }}
+          initial={{ opacity: 0, y: initialY }}
           key={value}
-          transition={{ type: "spring", stiffness: 500, damping: 30 }}
+          transition={{ damping: 30, stiffness: 500, type: "spring" }}
         >
           {value}
         </m.span>

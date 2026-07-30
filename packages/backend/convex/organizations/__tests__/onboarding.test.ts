@@ -10,26 +10,26 @@ describe("onboarding", () => {
 
     const progressId = await t.run(async (ctx) => {
       const orgId = await ctx.db.insert("organizations", {
+        createdAt: Date.now(),
+        isPublic: false,
         name: "Test Org",
         slug: "test-org",
-        isPublic: false,
-        subscriptionTier: "free",
         subscriptionStatus: "none",
-        createdAt: Date.now(),
+        subscriptionTier: "free",
       });
 
       return await ctx.db.insert("onboardingProgress", {
+        createdAt: Date.now(),
         organizationId: orgId,
-        userId: "user_123",
         steps: {
           boardCreated: false,
           brandingCustomized: false,
-          githubConnected: false,
-          widgetInstalled: false,
-          teamInvited: false,
           firstFeedbackCreated: false,
+          githubConnected: false,
+          teamInvited: false,
+          widgetInstalled: false,
         },
-        createdAt: Date.now(),
+        userId: "user_123",
       });
     });
 
@@ -48,26 +48,26 @@ describe("onboarding", () => {
 
     const progressId = await t.run(async (ctx) => {
       const orgId = await ctx.db.insert("organizations", {
+        createdAt: Date.now(),
+        isPublic: false,
         name: "Test Org",
         slug: "test-org",
-        isPublic: false,
-        subscriptionTier: "free",
         subscriptionStatus: "none",
-        createdAt: Date.now(),
+        subscriptionTier: "free",
       });
 
       return await ctx.db.insert("onboardingProgress", {
+        createdAt: Date.now(),
         organizationId: orgId,
-        userId: "user_123",
         steps: {
           boardCreated: false,
           brandingCustomized: false,
-          githubConnected: false,
-          widgetInstalled: false,
-          teamInvited: false,
           firstFeedbackCreated: false,
+          githubConnected: false,
+          teamInvited: false,
+          widgetInstalled: false,
         },
-        createdAt: Date.now(),
+        userId: "user_123",
       });
     });
 
@@ -95,27 +95,27 @@ describe("onboarding", () => {
 
     const progressId = await t.run(async (ctx) => {
       const orgId = await ctx.db.insert("organizations", {
+        createdAt: Date.now(),
+        isPublic: false,
         name: "Test Org",
         slug: "test-org",
-        isPublic: false,
-        subscriptionTier: "free",
         subscriptionStatus: "none",
-        createdAt: Date.now(),
+        subscriptionTier: "free",
       });
 
       return await ctx.db.insert("onboardingProgress", {
+        completedAt: Date.now(),
+        createdAt: Date.now(),
         organizationId: orgId,
-        userId: "user_123",
         steps: {
           boardCreated: true,
           brandingCustomized: true,
-          githubConnected: true,
-          widgetInstalled: true,
-          teamInvited: true,
           firstFeedbackCreated: true,
+          githubConnected: true,
+          teamInvited: true,
+          widgetInstalled: true,
         },
-        completedAt: Date.now(),
-        createdAt: Date.now(),
+        userId: "user_123",
       });
     });
 
@@ -130,27 +130,27 @@ describe("onboarding", () => {
 
     const progressId = await t.run(async (ctx) => {
       const orgId = await ctx.db.insert("organizations", {
+        createdAt: Date.now(),
+        isPublic: false,
         name: "Test Org",
         slug: "test-org",
-        isPublic: false,
-        subscriptionTier: "free",
         subscriptionStatus: "none",
-        createdAt: Date.now(),
+        subscriptionTier: "free",
       });
 
       return await ctx.db.insert("onboardingProgress", {
+        createdAt: Date.now(),
+        dismissedAt: Date.now(),
         organizationId: orgId,
-        userId: "user_123",
         steps: {
           boardCreated: true,
           brandingCustomized: false,
-          githubConnected: false,
-          widgetInstalled: false,
-          teamInvited: false,
           firstFeedbackCreated: false,
+          githubConnected: false,
+          teamInvited: false,
+          widgetInstalled: false,
         },
-        dismissedAt: Date.now(),
-        createdAt: Date.now(),
+        userId: "user_123",
       });
     });
 
@@ -167,26 +167,26 @@ describe("onboarding", () => {
 
     await t.run(async (ctx) => {
       const orgId = await ctx.db.insert("organizations", {
+        createdAt: Date.now(),
+        isPublic: false,
         name: "Test Org",
         slug: "test-org",
-        isPublic: false,
-        subscriptionTier: "free",
         subscriptionStatus: "none",
-        createdAt: Date.now(),
+        subscriptionTier: "free",
       });
 
       await ctx.db.insert("onboardingProgress", {
+        createdAt: Date.now(),
         organizationId: orgId,
-        userId: "user_123",
         steps: {
           boardCreated: true,
           brandingCustomized: false,
-          githubConnected: false,
-          widgetInstalled: false,
-          teamInvited: false,
           firstFeedbackCreated: false,
+          githubConnected: false,
+          teamInvited: false,
+          widgetInstalled: false,
         },
-        createdAt: Date.now(),
+        userId: "user_123",
       });
 
       // Query by index - should find the progress

@@ -13,10 +13,8 @@ import Navbar from "@/features/homepage/components/navbar";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata = generatePageMetadata({
-  title: "Features | Reflet - Built for Developer-Led SaaS Teams",
   description:
     "AI-powered triage, embeddable widget, two-way GitHub sync, real-time collaboration, and REST API. Everything developer-led SaaS teams need to close the feedback loop.",
-  path: "/features",
   keywords: [
     "feedback widget",
     "AI triage",
@@ -27,15 +25,14 @@ export const metadata = generatePageMetadata({
     "SaaS feedback platform",
     "product roadmap features",
   ],
+  path: "/features",
+  title: "Features | Reflet - Built for Developer-Led SaaS Teams",
 });
 
 const FEATURES = [
   {
-    id: "ai",
-    icon: Brain,
     accent: "text-violet-500",
     accentBg: "bg-violet-500/10 dark:bg-violet-500/15",
-    title: "AI-Powered Triage",
     description:
       "Auto-tag, score priority, estimate complexity, and detect duplicates — all in milliseconds.",
     details: [
@@ -45,13 +42,13 @@ const FEATURES = [
       "Duplicate detection with configurable match threshold",
       "Confidence scores so you always stay in control",
     ],
+    icon: Brain,
+    id: "ai",
+    title: "AI-Powered Triage",
   },
   {
-    id: "widget",
-    icon: ChatCircleDots,
     accent: "text-emerald-500",
     accentBg: "bg-emerald-500/10 dark:bg-emerald-500/15",
-    title: "Embeddable Widget",
     description:
       "Drop a script tag into your app. Users submit feedback without leaving your product.",
     details: [
@@ -61,13 +58,13 @@ const FEATURES = [
       "Changelog widget to announce releases in-app",
       "TypeScript-first with full type definitions",
     ],
+    icon: ChatCircleDots,
+    id: "widget",
+    title: "Embeddable Widget",
   },
   {
-    id: "github",
-    icon: GithubLogo,
     accent: "text-foreground",
     accentBg: "bg-[#f0efea] dark:bg-[#ffffff08]",
-    title: "Two-Way GitHub Sync",
     description:
       "Link feedback to issues. When a PR merges, the linked request moves to shipped.",
     details: [
@@ -77,13 +74,13 @@ const FEATURES = [
       "Auto-generate changelog entries from merged PRs",
       "Works with GitHub Actions and CI/CD pipelines",
     ],
+    icon: GithubLogo,
+    id: "github",
+    title: "Two-Way GitHub Sync",
   },
   {
-    id: "realtime",
-    icon: Lightning,
     accent: "text-amber-500",
     accentBg: "bg-amber-500/10 dark:bg-amber-500/15",
-    title: "Real-Time Everything",
     description:
       "Built on Convex — votes, comments, and status changes sync instantly across all devices.",
     details: [
@@ -93,13 +90,13 @@ const FEATURES = [
       "Multiplayer editing without conflicts",
       "Optimistic UI for snappy interactions",
     ],
+    icon: Lightning,
+    id: "realtime",
+    title: "Real-Time Everything",
   },
   {
-    id: "api",
-    icon: Code,
     accent: "text-sky-500",
     accentBg: "bg-sky-500/10 dark:bg-sky-500/15",
-    title: "REST API & Webhooks",
     description:
       "Full CRUD API for programmatic access. Webhooks fire on every status transition.",
     details: [
@@ -109,6 +106,9 @@ const FEATURES = [
       "Rate limiting with generous free-tier quotas",
       "OpenAPI specification for easy integration",
     ],
+    icon: Code,
+    id: "api",
+    title: "REST API & Webhooks",
   },
 ] as const;
 

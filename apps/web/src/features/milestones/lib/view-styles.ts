@@ -13,22 +13,22 @@ export const DEFAULT_MILESTONE_VIEW_STYLE: MilestoneViewStyle = "track";
 
 export const MILESTONE_VIEW_STYLE_OPTIONS = [
   {
-    value: "track" as const,
-    label: "Horizontal Track",
     description:
       "Horizontal track grouped by time horizons with pinch-to-zoom.",
+    label: "Horizontal Track",
+    value: "track" as const,
   },
   {
-    value: "editorial-accordion" as const,
-    label: "Editorial Accordion",
     description:
       "Serif typography with percentage column and color-wash accordion.",
+    label: "Editorial Accordion",
+    value: "editorial-accordion" as const,
   },
   {
-    value: "dashboard-timeline" as const,
-    label: "Dashboard Timeline",
     description:
       "KPI summary bar at top with vertical timeline and sweep animation.",
+    label: "Dashboard Timeline",
+    value: "dashboard-timeline" as const,
   },
 ] as const;
 
@@ -36,9 +36,9 @@ const MILESTONE_VIEW_COMPONENTS: Record<
   MilestoneViewStyle,
   ComponentType<MilestonesViewProps>
 > = {
-  track: TrackView,
-  "editorial-accordion": EditorialAccordionView,
   "dashboard-timeline": DashboardTimelineView,
+  "editorial-accordion": EditorialAccordionView,
+  track: TrackView,
 };
 
 export function getMilestoneViewComponent(

@@ -39,16 +39,16 @@ vi.mock("@/lib/utils", () => ({
 
 vi.mock("./mock-data", () => ({
   MOCK: {
-    title: "Test Title",
-    status: { name: "Planned", color: "blue" },
-    tags: [
-      { id: "1", name: "UX", color: "purple" },
-      { id: "2", name: "Feature", color: "green" },
-    ],
     commentCount: 7,
-    timeAgo: "3 days ago",
-    upvotes: 24,
     downvotes: 3,
+    status: { color: "blue", name: "Planned" },
+    tags: [
+      { color: "purple", id: "1", name: "UX" },
+      { color: "green", id: "2", name: "Feature" },
+    ],
+    timeAgo: "3 days ago",
+    title: "Test Title",
+    upvotes: 24,
   },
 }));
 

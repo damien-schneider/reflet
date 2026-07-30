@@ -12,10 +12,10 @@ import { insightStatus, insightType } from "./tableFields";
  */
 export const list = query({
   args: {
+    limit: v.optional(v.number()),
     organizationId: v.id("organizations"),
     status: v.optional(insightStatus),
     type: v.optional(insightType),
-    limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -214,23 +214,23 @@ export const convertToFeedback = mutation({
     const now = Date.now();
 
     const feedbackId = await ctx.db.insert("feedback", {
-      organizationId: insight.organizationId,
-      title: insight.suggestedFeedbackTitle,
-      description: insight.suggestedFeedbackDescription ?? "",
-      status: "open",
-      voteCount: 0,
       commentCount: 0,
+      createdAt: now,
+      description: insight.suggestedFeedbackDescription ?? "",
       isApproved: true,
       isPinned: false,
+      organizationId: insight.organizationId,
       source: "api",
-      createdAt: now,
+      status: "open",
+      title: insight.suggestedFeedbackTitle,
       updatedAt: now,
+      voteCount: 0,
     });
 
     const existingLinkedIds = insight.linkedFeedbackIds ?? [];
     await ctx.db.patch(args.insightId, {
-      status: "converted_to_feedback",
       linkedFeedbackIds: [...existingLinkedIds, feedbackId],
+      status: "converted_to_feedback",
     });
 
     return feedbackId;

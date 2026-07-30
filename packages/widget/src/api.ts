@@ -13,15 +13,15 @@ async function convexQuery<T>(
 ): Promise<T | null> {
   const url = `${CONVEX_URL}/api/query`;
   const response = await fetch(url, {
-    method: "POST",
+    body: JSON.stringify({
+      args,
+      format: "json",
+      path: fnName,
+    }),
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      path: fnName,
-      args,
-      format: "json",
-    }),
+    method: "POST",
   });
 
   if (!response.ok) {
@@ -50,15 +50,15 @@ async function convexMutation<T>(
 ): Promise<T | null> {
   const url = `${CONVEX_URL}/api/mutation`;
   const response = await fetch(url, {
-    method: "POST",
+    body: JSON.stringify({
+      args,
+      format: "json",
+      path: fnName,
+    }),
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      path: fnName,
-      args,
-      format: "json",
-    }),
+    method: "POST",
   });
 
   if (!response.ok) {
@@ -97,9 +97,9 @@ export function getOrCreateConversation(
   isNew: boolean;
 } | null> {
   return convexMutation("widget_public:getOrCreateConversation", {
-    widgetId,
-    visitorId,
     metadata,
+    visitorId,
+    widgetId,
   });
 }
 
@@ -110,10 +110,10 @@ export function sendMessage(
   body: string
 ): Promise<{ messageId: string } | null> {
   return convexMutation("widget_public:sendMessage", {
-    widgetId,
-    visitorId,
-    conversationId,
     body,
+    conversationId,
+    visitorId,
+    widgetId,
   });
 }
 
@@ -125,9 +125,9 @@ export async function fetchMessages(
   const result = await convexQuery<WidgetMessage[]>(
     "widget_public:listMessages",
     {
-      widgetId,
-      visitorId,
       conversationId,
+      visitorId,
+      widgetId,
     }
   );
   return result ?? [];
@@ -141,9 +141,9 @@ export async function markMessagesAsRead(
   const result = await convexMutation<boolean>(
     "widget_public:markMessagesAsRead",
     {
-      widgetId,
-      visitorId,
       conversationId,
+      visitorId,
+      widgetId,
     }
   );
   return result ?? false;
@@ -155,9 +155,9 @@ export async function fetchUnreadCount(
   conversationId: string
 ): Promise<number> {
   const result = await convexQuery<number>("widget_public:getUnreadCount", {
-    widgetId,
-    visitorId,
     conversationId,
+    visitorId,
+    widgetId,
   });
   return result ?? 0;
 }

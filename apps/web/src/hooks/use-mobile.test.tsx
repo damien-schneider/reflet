@@ -9,14 +9,16 @@ describe("useIsMobile", () => {
   const createMockMatchMedia = (matches: boolean) => {
     listeners = new Map();
     return vi.fn().mockImplementation((query: string) => ({
-      matches,
-      media: query,
-      onchange: null,
       addEventListener: vi.fn((event: string, cb: () => void) => {
         const existing = listeners.get(event) ?? [];
         existing.push(cb);
         listeners.set(event, existing);
       }),
+      addListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+      matches,
+      media: query,
+      onchange: null,
       removeEventListener: vi.fn((event: string, cb: () => void) => {
         const existing = listeners.get(event) ?? [];
         listeners.set(
@@ -24,9 +26,7 @@ describe("useIsMobile", () => {
           existing.filter((l) => l !== cb)
         );
       }),
-      addListener: vi.fn(),
       removeListener: vi.fn(),
-      dispatchEvent: vi.fn(),
     }));
   };
 
@@ -34,15 +34,15 @@ describe("useIsMobile", () => {
 
   afterEach(() => {
     Object.defineProperty(window, "innerWidth", {
-      writable: true,
       value: originalInnerWidth,
+      writable: true,
     });
   });
 
   it("returns true when window width is below 768px", () => {
     Object.defineProperty(window, "innerWidth", {
-      writable: true,
       value: 500,
+      writable: true,
     });
     window.matchMedia = createMockMatchMedia(true);
 
@@ -52,8 +52,8 @@ describe("useIsMobile", () => {
 
   it("returns false when window width is 768px or above", () => {
     Object.defineProperty(window, "innerWidth", {
-      writable: true,
       value: 1024,
+      writable: true,
     });
     window.matchMedia = createMockMatchMedia(false);
 
@@ -63,8 +63,8 @@ describe("useIsMobile", () => {
 
   it("updates when media query changes", () => {
     Object.defineProperty(window, "innerWidth", {
-      writable: true,
       value: 1024,
+      writable: true,
     });
     window.matchMedia = createMockMatchMedia(false);
 
@@ -73,8 +73,8 @@ describe("useIsMobile", () => {
 
     act(() => {
       Object.defineProperty(window, "innerWidth", {
-        writable: true,
         value: 500,
+        writable: true,
       });
       const changeListeners = listeners.get("change") ?? [];
       for (const listener of changeListeners) {
@@ -87,8 +87,8 @@ describe("useIsMobile", () => {
 
   it("cleans up event listener on unmount", () => {
     Object.defineProperty(window, "innerWidth", {
-      writable: true,
       value: 1024,
+      writable: true,
     });
     window.matchMedia = createMockMatchMedia(false);
 
@@ -101,8 +101,8 @@ describe("useIsMobile", () => {
 
   it("returns false at exactly 768px", () => {
     Object.defineProperty(window, "innerWidth", {
-      writable: true,
       value: 768,
+      writable: true,
     });
     window.matchMedia = createMockMatchMedia(false);
 
@@ -112,8 +112,8 @@ describe("useIsMobile", () => {
 
   it("returns true at 767px", () => {
     Object.defineProperty(window, "innerWidth", {
-      writable: true,
       value: 767,
+      writable: true,
     });
     window.matchMedia = createMockMatchMedia(true);
 

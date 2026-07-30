@@ -2,11 +2,9 @@ import { expect, test } from "@playwright/test";
 
 const DASHBOARD_REGEX = /\/dashboard/;
 
-// Auth form headings (French UI)
-const AUTH_SIGNUP_HEADING = "Créer un compte";
+const AUTH_SIGNUP_HEADING = "Create an account";
 
-// Auth form headings (French UI)
-const AUTH_SIGNIN_HEADING = "Bon retour parmi nous";
+const AUTH_SIGNIN_HEADING = "Welcome back";
 
 /**
  * Helper to complete sign-up flow with the new unified auth form
@@ -25,7 +23,7 @@ async function signUpNewUser(
   await page.getByTestId("password-input").fill(user.password);
   await page.getByTestId("confirm-password-input").fill(user.password);
 
-  await page.getByRole("button", { name: "Créer mon compte" }).click();
+  await page.getByRole("button", { name: "Create my account" }).click();
 }
 
 /**
@@ -43,7 +41,7 @@ async function signInUser(
   });
 
   await page.getByTestId("password-input").fill(user.password);
-  await page.getByRole("button", { name: "Se connecter" }).click();
+  await page.getByRole("button", { name: "Sign in" }).click();
 }
 
 test.describe("Organization Creation", () => {
@@ -86,7 +84,7 @@ test.describe("Organization Creation", () => {
     const authHeading = page.locator("h1");
     const headingText = await authHeading.textContent().catch(() => "");
 
-    if (headingText?.includes("Authentification")) {
+    if (headingText?.includes("Authentication")) {
       await signInUser(page, testUser);
       await page.waitForURL(DASHBOARD_REGEX, { timeout: 15_000 });
       await page.waitForLoadState("networkidle");
@@ -169,7 +167,7 @@ test.describe("Organization Creation", () => {
     // Sign in after sign-up if still on auth form
     const isOnAuthForm = await page
       .locator("h1")
-      .filter({ hasText: "Authentification" })
+      .filter({ hasText: "Authentication" })
       .isVisible()
       .catch(() => false);
 

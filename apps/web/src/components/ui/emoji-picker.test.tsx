@@ -11,28 +11,6 @@ const mockOnEmojiSelect = vi.fn();
 
 vi.mock("frimousse", () => ({
   EmojiPicker: {
-    Root: ({
-      children,
-      onEmojiSelect,
-    }: {
-      children: React.ReactNode;
-      onEmojiSelect: (emoji: { emoji: string }) => void;
-    }) => {
-      // Store the callback so we can call it in tests
-      mockOnEmojiSelect.mockImplementation((emoji: string) => {
-        onEmojiSelect({ emoji });
-      });
-      return <div data-testid="frimousse-root">{children}</div>;
-    },
-    Search: ({ placeholder }: { placeholder: string }) => (
-      <input data-testid="emoji-search" placeholder={placeholder} />
-    ),
-    Viewport: ({ children }: { children: React.ReactNode }) => (
-      <div data-testid="emoji-viewport">{children}</div>
-    ),
-    Loading: ({ children }: { children: React.ReactNode }) => (
-      <div data-testid="emoji-loading">{children}</div>
-    ),
     Empty: ({ children }: { children: React.ReactNode }) => (
       <div data-testid="emoji-empty">{children}</div>
     ),
@@ -55,6 +33,28 @@ vi.mock("frimousse", () => ({
         </div>
       );
     },
+    Loading: ({ children }: { children: React.ReactNode }) => (
+      <div data-testid="emoji-loading">{children}</div>
+    ),
+    Root: ({
+      children,
+      onEmojiSelect,
+    }: {
+      children: React.ReactNode;
+      onEmojiSelect: (emoji: { emoji: string }) => void;
+    }) => {
+      // Store the callback so we can call it in tests
+      mockOnEmojiSelect.mockImplementation((emoji: string) => {
+        onEmojiSelect({ emoji });
+      });
+      return <div data-testid="frimousse-root">{children}</div>;
+    },
+    Search: ({ placeholder }: { placeholder: string }) => (
+      <input data-testid="emoji-search" placeholder={placeholder} />
+    ),
+    Viewport: ({ children }: { children: React.ReactNode }) => (
+      <div data-testid="emoji-viewport">{children}</div>
+    ),
   },
 }));
 
@@ -102,15 +102,6 @@ vi.mock("@/components/ui/popover", () => ({
     mockSetPopoverOpen.mockImplementation(onOpenChange);
     return <div data-testid="popover">{children}</div>;
   },
-  PopoverTrigger: ({
-    render,
-  }: {
-    render: (props: { onClick: () => void }) => React.ReactNode;
-  }) => (
-    <div data-testid="popover-trigger">
-      {render({ onClick: () => mockSetPopoverOpen(!mockPopoverOpen) })}
-    </div>
-  ),
   PopoverContent: ({
     children,
     className,
@@ -123,6 +114,15 @@ vi.mock("@/components/ui/popover", () => ({
         {children}
       </div>
     ) : null,
+  PopoverTrigger: ({
+    render,
+  }: {
+    render: (props: { onClick: () => void }) => React.ReactNode;
+  }) => (
+    <div data-testid="popover-trigger">
+      {render({ onClick: () => mockSetPopoverOpen(!mockPopoverOpen) })}
+    </div>
+  ),
 }));
 
 // Import the component after mocks

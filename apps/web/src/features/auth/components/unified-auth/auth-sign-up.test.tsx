@@ -40,9 +40,9 @@ vi.mock("@/components/ui/typography", () => ({
 
 vi.mock("./lib/auth-validation", () => ({
   titleVariants: {
-    initial: { opacity: 0 },
     animate: { opacity: 1 },
     exit: { opacity: 0 },
+    initial: { opacity: 0 },
   },
 }));
 

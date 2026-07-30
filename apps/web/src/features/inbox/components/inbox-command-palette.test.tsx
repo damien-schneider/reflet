@@ -31,12 +31,6 @@ vi.mock("@/components/ui/command", () => ({
         {children}
       </div>
     ) : null,
-  CommandInput: (props: React.InputHTMLAttributes<HTMLInputElement>) => (
-    <input data-testid="command-input" {...props} />
-  ),
-  CommandList: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
   CommandEmpty: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
@@ -47,6 +41,9 @@ vi.mock("@/components/ui/command", () => ({
     children: React.ReactNode;
     heading?: string;
   }) => <div data-testid={`group-${heading}`}>{children}</div>,
+  CommandInput: (props: React.InputHTMLAttributes<HTMLInputElement>) => (
+    <input data-testid="command-input" {...props} />
+  ),
   CommandItem: ({
     children,
     onSelect,
@@ -59,6 +56,9 @@ vi.mock("@/components/ui/command", () => ({
       {children}
     </button>
   ),
+  CommandList: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
   CommandShortcut: ({ children }: { children: React.ReactNode }) => (
     <kbd>{children}</kbd>
   ),
@@ -66,9 +66,9 @@ vi.mock("@/components/ui/command", () => ({
 
 vi.mock("@phosphor-icons/react", () => ({
   CheckCircle: () => <svg />,
-  XCircle: () => <svg />,
-  MagnifyingGlass: () => <svg />,
   Gear: () => <svg />,
+  MagnifyingGlass: () => <svg />,
+  XCircle: () => <svg />,
 }));
 
 vi.mock("@/lib/utils", () => ({
@@ -81,12 +81,12 @@ afterEach(cleanup);
 
 describe("InboxCommandPalette", () => {
   const defaultProps = {
-    open: true,
+    hasSelectedConversation: true,
+    onClose: vi.fn(),
     onOpenChange: vi.fn(),
     onResolve: vi.fn(),
-    onClose: vi.fn(),
     onToggleSupport: vi.fn(),
-    hasSelectedConversation: true,
+    open: true,
     supportEnabled: false,
   };
 

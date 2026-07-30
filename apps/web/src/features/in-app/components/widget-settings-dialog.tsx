@@ -71,13 +71,13 @@ export function WidgetSettingsDialog({
     const greetingValue = greetingMessage || undefined;
     try {
       await updateSettings({
-        widgetId: widget._id,
-        primaryColor,
-        position,
-        welcomeMessage,
-        greetingMessage: greetingValue,
-        showLauncher,
         autoOpen,
+        greetingMessage: greetingValue,
+        position,
+        primaryColor,
+        showLauncher,
+        welcomeMessage,
+        widgetId: widget._id,
         zIndex,
       });
       toast.success("Widget settings saved");

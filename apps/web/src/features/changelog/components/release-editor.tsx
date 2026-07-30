@@ -126,11 +126,11 @@ export function ReleaseEditor({
 
   // Auto-save with debounce
   const { releaseId, saveStatus } = useAutoSaveRelease({
-    organizationId,
+    description,
     initialReleaseId: release?._id ?? null,
+    organizationId,
     title,
     version,
-    description,
   });
 
   // Commits management
@@ -183,24 +183,24 @@ export function ReleaseEditor({
 
       if (idToPublish) {
         await updateRelease({
+          description: description.trim() || undefined,
           id: idToPublish,
           title: title.trim() || "Untitled Release",
           version: version.trim() || undefined,
-          description: description.trim() || undefined,
         });
       } else {
         idToPublish = await createRelease({
+          description: description.trim() || undefined,
           organizationId,
           title: title.trim() || "Untitled Release",
           version: version.trim() || undefined,
-          description: description.trim() || undefined,
         });
       }
 
       await publishRelease({
-        id: idToPublish,
         feedbackStatus:
           feedbackLinkStatus === "keep" ? undefined : feedbackLinkStatus,
+        id: idToPublish,
       });
       capture("release_published", {
         has_version: Boolean(version.trim()),
@@ -227,25 +227,25 @@ export function ReleaseEditor({
 
       if (idToSchedule) {
         await updateRelease({
+          description: description.trim() || undefined,
           id: idToSchedule,
           title: title.trim() || "Untitled Release",
           version: version.trim() || undefined,
-          description: description.trim() || undefined,
         });
       } else {
         idToSchedule = await createRelease({
+          description: description.trim() || undefined,
           organizationId,
           title: title.trim() || "Untitled Release",
           version: version.trim() || undefined,
-          description: description.trim() || undefined,
         });
       }
 
       await schedulePublish({
-        id: idToSchedule,
-        scheduledPublishAt: scheduledAt,
         feedbackStatus:
           feedbackLinkStatus === "keep" ? undefined : feedbackLinkStatus,
+        id: idToSchedule,
+        scheduledPublishAt: scheduledAt,
       });
       capture("release_scheduled", {
         has_version: Boolean(version.trim()),
@@ -637,9 +637,9 @@ function ReleaseEditorFooter({
               className="mt-1 inline-block font-medium text-primary text-xs hover:underline"
               href={
                 buildGitHubInstallUrl({
-                  userId,
                   organizationId,
                   orgSlug,
+                  userId,
                 }) ?? "#"
               }
             >

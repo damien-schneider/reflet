@@ -16,29 +16,29 @@ export class RefletFeedbackWidget {
   private activeSurvey: SurveyData | null = null;
   private surveyRenderer: SurveyRenderer | null = null;
   private readonly state: WidgetState = {
-    isOpen: false,
-    isLoading: true,
-    view: "list",
     boardConfig: null,
+    error: null,
     feedbackItems: [],
+    isLoading: true,
+    isOpen: false,
     selectedFeedback: null,
     selectedFeedbackComments: [],
-    error: null,
+    view: "list",
   };
 
   constructor(config: WidgetConfig) {
     this.config = {
+      features: {
+        changelog: false,
+        comments: true,
+        createFeedback: true,
+        roadmap: false,
+        voting: true,
+      },
       mode: "floating",
       position: "bottom-right",
-      theme: "light",
       primaryColor: "#6366f1",
-      features: {
-        voting: true,
-        comments: true,
-        roadmap: false,
-        changelog: false,
-        createFeedback: true,
-      },
+      theme: "light",
       ...config,
     };
 
@@ -144,16 +144,16 @@ export class RefletFeedbackWidget {
     }
 
     attachWidgetEventListeners(this.shadowRoot, {
-      open: () => this.open(),
       close: () => this.close(),
+      onAction: (action) => this.handleAction(action),
+      onCreateSubmit: () => this.handleCreateSubmit(),
+      open: () => this.open(),
+      openDetail: (id) => this.openFeedbackDetail(id),
       setView: (view) => {
         this.state.view = view;
         this.render();
       },
-      openDetail: (id) => this.openFeedbackDetail(id),
       vote: (id) => this.handleVote(id),
-      onAction: (action) => this.handleAction(action),
-      onCreateSubmit: () => this.handleCreateSubmit(),
     });
   }
 
@@ -199,8 +199,8 @@ export class RefletFeedbackWidget {
   private async loadFeedback(): Promise<void> {
     try {
       const result = await this.api.listFeedback({
-        sortBy: "votes",
         limit: 50,
+        sortBy: "votes",
       });
       this.state.feedbackItems = result.items;
       this.state.isLoading = false;
@@ -289,7 +289,7 @@ export class RefletFeedbackWidget {
     }
 
     try {
-      const result = await this.api.createFeedback({ title, description });
+      const result = await this.api.createFeedback({ description, title });
 
       // Upload screenshot if one was captured
       if (this.pendingScreenshot) {
@@ -299,11 +299,11 @@ export class RefletFeedbackWidget {
           );
           await this.api.saveScreenshot({
             feedbackId: result.feedbackId,
-            storageId,
             filename: "screenshot.png",
             mimeType: "image/png",
-            size: this.pendingScreenshot.size,
             pageUrl: getPageUrl(),
+            size: this.pendingScreenshot.size,
+            storageId,
           });
         } catch {
           // Screenshot upload failed, but feedback was created
@@ -469,10 +469,9 @@ export class RefletFeedbackWidget {
     this.shadowRoot.appendChild(surveyContainer);
 
     this.surveyRenderer = new SurveyRenderer({
-      container: surveyContainer,
       api: this.api,
-      survey,
       callbacks: this.config.survey,
+      container: surveyContainer,
       onComplete: () => {
         this.surveyRenderer?.destroy();
         surveyContainer.remove();
@@ -485,6 +484,7 @@ export class RefletFeedbackWidget {
         this.surveyRenderer = null;
         this.activeSurvey = null;
       },
+      survey,
     });
 
     this.surveyRenderer.start();

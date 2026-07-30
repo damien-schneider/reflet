@@ -21,8 +21,8 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
     organizations: {
       milestones: {
-        update: "milestones:update",
         remove: "milestones:remove",
+        update: "milestones:update",
       },
     },
   },
@@ -180,9 +180,9 @@ vi.mock("@/components/ui/select", () => ({
 vi.mock("@/lib/milestone-constants", () => ({
   isTimeHorizon: () => true,
   TIME_HORIZON_CONFIG: {
-    now: { label: "Now" },
-    next_month: { label: "Next Month" },
     later: { label: "Later" },
+    next_month: { label: "Next Month" },
+    now: { label: "Now" },
   },
   TIME_HORIZONS: ["now", "next_month", "later"],
 }));
@@ -192,7 +192,7 @@ vi.mock("@/lib/milestone-deadline", () => ({
 }));
 
 vi.mock("@/lib/tag-colors", () => ({
-  getTagColorValues: () => ({ text: "#3b82f6", bg: "#eff6ff" }),
+  getTagColorValues: () => ({ bg: "#eff6ff", text: "#3b82f6" }),
   isValidTagColor: () => true,
 }));
 
@@ -229,18 +229,18 @@ const makeMilestone = (
   }> = {}
 ) => ({
   _id: (overrides._id ?? "ms1") as never,
-  name: overrides.name ?? "Alpha Release",
-  emoji: overrides.emoji ?? "🚀",
   color: overrides.color ?? "blue",
-  timeHorizon: (overrides.timeHorizon ?? "now") as never,
-  targetDate: overrides.targetDate,
-  status: overrides.status ?? "active",
+  emoji: overrides.emoji ?? "🚀",
+  name: overrides.name ?? "Alpha Release",
   progress: overrides.progress ?? {
-    total: 10,
     completed: 5,
     inProgress: 2,
     percentage: 50,
+    total: 10,
   },
+  status: overrides.status ?? "active",
+  targetDate: overrides.targetDate,
+  timeHorizon: (overrides.timeHorizon ?? "now") as never,
 });
 
 describe("MilestoneSegment", () => {
@@ -373,7 +373,7 @@ describe("MilestoneSegment", () => {
       <MilestoneSegment
         isActive={false}
         milestone={makeMilestone({
-          progress: { total: 4, completed: 2, inProgress: 0, percentage: 50 },
+          progress: { completed: 2, inProgress: 0, percentage: 50, total: 4 },
         })}
         onClick={vi.fn()}
       />
@@ -479,7 +479,7 @@ describe("MilestoneSegment", () => {
       <MilestoneSegment
         isActive={false}
         milestone={makeMilestone({
-          progress: { total: 4, completed: 0, inProgress: 0, percentage: 0 },
+          progress: { completed: 0, inProgress: 0, percentage: 0, total: 4 },
         })}
         onClick={vi.fn()}
       />
@@ -492,7 +492,7 @@ describe("MilestoneSegment", () => {
       <MilestoneSegment
         isActive={false}
         milestone={makeMilestone({
-          progress: { total: 4, completed: 4, inProgress: 0, percentage: 100 },
+          progress: { completed: 4, inProgress: 0, percentage: 100, total: 4 },
         })}
         onClick={vi.fn()}
       />
@@ -536,7 +536,7 @@ describe("MilestoneSegment", () => {
       <MilestoneSegment
         isActive={false}
         milestone={makeMilestone({
-          progress: { total: 10, completed: 3, inProgress: 4, percentage: 30 },
+          progress: { completed: 3, inProgress: 4, percentage: 30, total: 10 },
         })}
         onClick={vi.fn()}
       />
@@ -644,8 +644,8 @@ describe("MilestoneSegment", () => {
   it("renders overdue dot when deadline is overdue", async () => {
     const { getDeadlineInfo } = await import("@/lib/milestone-deadline");
     vi.mocked(getDeadlineInfo).mockReturnValue({
-      status: "overdue",
       relativeLabel: "2 days overdue",
+      status: "overdue",
     } as never);
     const { container } = render(
       <MilestoneSegment

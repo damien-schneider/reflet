@@ -23,8 +23,8 @@ export function formatDate(timestamp: number): string {
   }
 
   return date.toLocaleDateString(undefined, {
-    month: "short",
     day: "numeric",
+    month: "short",
     year: date.getFullYear() === now.getFullYear() ? undefined : "numeric",
   });
 }

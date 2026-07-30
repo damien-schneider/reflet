@@ -81,7 +81,6 @@ export const getConnectionForAnalysis = internalQuery({
  */
 export const updateAnalysisSection = mutation({
   args: {
-    organizationId: v.id("organizations"),
     field: v.union(
       v.literal("summary"),
       v.literal("techStack"),
@@ -89,6 +88,7 @@ export const updateAnalysisSection = mutation({
       v.literal("features"),
       v.literal("repoStructure")
     ),
+    organizationId: v.id("organizations"),
     value: v.string(),
   },
   handler: async (ctx, args) => {
@@ -182,10 +182,10 @@ export const startAnalysis = mutation({
 
     // Create new analysis record
     const analysisId = await ctx.db.insert("repoAnalysis", {
-      organizationId: args.organizationId,
-      githubConnectionId: connection._id,
-      status: "pending",
       createdAt: now,
+      githubConnectionId: connection._id,
+      organizationId: args.organizationId,
+      status: "pending",
       updatedAt: now,
     });
 
@@ -209,18 +209,18 @@ export const startAnalysis = mutation({
 export const updateAnalysisStatus = internalMutation({
   args: {
     analysisId: v.id("repoAnalysis"),
+    architecture: v.optional(v.string()),
+    error: v.optional(v.string()),
+    features: v.optional(v.string()),
+    repoStructure: v.optional(v.string()),
     status: v.union(
       v.literal("pending"),
       v.literal("in_progress"),
       v.literal("completed"),
       v.literal("error")
     ),
-    error: v.optional(v.string()),
     summary: v.optional(v.string()),
     techStack: v.optional(v.string()),
-    architecture: v.optional(v.string()),
-    features: v.optional(v.string()),
-    repoStructure: v.optional(v.string()),
     threadId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -321,12 +321,12 @@ Format each section clearly with the headers above.`,
         internal.integrations.github.repo_analysis.updateAnalysisStatus,
         {
           analysisId: args.analysisId,
-          status: "completed",
-          summary: sections.summary,
-          techStack: sections.techStack,
           architecture: sections.architecture,
           features: sections.features,
           repoStructure: sections.repoStructure,
+          status: "completed",
+          summary: sections.summary,
+          techStack: sections.techStack,
         }
       );
     } catch (error) {
@@ -334,8 +334,8 @@ Format each section clearly with the headers above.`,
         internal.integrations.github.repo_analysis.updateAnalysisStatus,
         {
           analysisId: args.analysisId,
-          status: "error",
           error: error instanceof Error ? error.message : "Unknown error",
+          status: "error",
         }
       );
     }

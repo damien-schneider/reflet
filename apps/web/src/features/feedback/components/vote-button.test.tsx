@@ -20,8 +20,8 @@ vi.mock("convex/react", () => ({
 
 // Mock jotai
 vi.mock("jotai", () => ({
-  useAtomValue: vi.fn(),
   atom: vi.fn(),
+  useAtomValue: vi.fn(),
 }));
 
 // Mock auth guard
@@ -73,8 +73,8 @@ describe("VoteButton", () => {
 
   const defaultProps = {
     feedbackId: "feedback123" as Id<"feedback">,
-    voteCount: 10,
     hasVoted: false,
+    voteCount: 10,
   };
 
   it("should render with vote count and icon", () => {

@@ -5,6 +5,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/components/ui/tooltip", () => ({
   Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  TooltipContent: ({ children }: { children: React.ReactNode }) => (
+    <span>{children}</span>
+  ),
   TooltipTrigger: ({
     children,
     render: renderEl,
@@ -18,9 +21,6 @@ vi.mock("@/components/ui/tooltip", () => ({
     ) : (
       <span {...props}>{children}</span>
     ),
-  TooltipContent: ({ children }: { children: React.ReactNode }) => (
-    <span>{children}</span>
-  ),
 }));
 
 vi.mock("@/components/ui/button", () => ({
@@ -41,8 +41,8 @@ vi.mock("@/components/ui/button", () => ({
 
 vi.mock("@phosphor-icons/react", () => ({
   CheckCircle: () => <svg data-testid="icon-resolve" />,
-  XCircle: () => <svg data-testid="icon-close" />,
   UserCirclePlus: () => <svg data-testid="icon-assign" />,
+  XCircle: () => <svg data-testid="icon-close" />,
 }));
 
 vi.mock("@/lib/utils", () => ({

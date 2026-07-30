@@ -3,25 +3,25 @@ import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
 export const env = createEnv({
+  emptyStringAsUndefined: true,
+  runtimeEnv: process.env,
   server: {
-    NODE_ENV: z
-      .enum(["development", "production", "test"])
-      .default("development"),
-    SITE_URL: z.url().optional(),
+    // GitHub App configuration (optional - for org integration)
+    GITHUB_APP_ID: z.string().optional(),
+    GITHUB_APP_PRIVATE_KEY: z.string().optional(),
+    GITHUB_APP_SLUG: z.string().optional(),
     // GitHub OAuth configuration (optional - for user auth)
     GITHUB_CLIENT_ID: z.string().optional(),
     GITHUB_CLIENT_SECRET: z.string().optional(),
-    // GitHub App configuration (optional - for org integration)
-    GITHUB_APP_ID: z.string().optional(),
-    GITHUB_APP_SLUG: z.string().optional(),
-    GITHUB_APP_PRIVATE_KEY: z.string().optional(),
     GITHUB_WEBHOOK_SECRET: z.string().optional(),
+    NODE_ENV: z
+      .enum(["development", "production", "test"])
+      .default("development"),
     // OpenRouter API key (optional - for AI features)
     OPENROUTER_API_KEY: z.string().optional(),
     // PostHog source maps upload (optional - for error tracking with unminified stack traces)
     POSTHOG_PERSONAL_API_KEY: z.string().optional(),
     POSTHOG_PROJECT_ID: z.string().optional(),
+    SITE_URL: z.url().optional(),
   },
-  runtimeEnv: process.env,
-  emptyStringAsUndefined: true,
 });

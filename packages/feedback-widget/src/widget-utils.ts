@@ -34,11 +34,11 @@ export function generateSimpleToken(user: {
   name?: string;
 }): string {
   const payload = {
-    id: user.id,
     email: user.email,
-    name: user.name,
-    iat: Math.floor(Date.now() / 1000),
     exp: Math.floor(Date.now() / 1000) + TOKEN_EXPIRY_SECONDS,
+    iat: Math.floor(Date.now() / 1000),
+    id: user.id,
+    name: user.name,
   };
   const header = btoa(JSON.stringify({ alg: "none", typ: "JWT" }));
   const payloadB64 = btoa(JSON.stringify(payload));

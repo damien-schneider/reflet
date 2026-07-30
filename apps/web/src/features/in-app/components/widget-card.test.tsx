@@ -10,15 +10,15 @@ vi.mock("convex/react", () => ({
 }));
 
 vi.mock("sonner", () => ({
-  toast: { success: vi.fn(), error: vi.fn() },
+  toast: { error: vi.fn(), success: vi.fn() },
 }));
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
     widget: {
       admin: {
-        update: "widget_admin.update",
         remove: "widget_admin.remove",
+        update: "widget_admin.update",
       },
     },
   },
@@ -32,24 +32,6 @@ vi.mock("@/components/ui/alert-dialog", () => ({
     children: React.ReactNode;
     open: boolean;
   }) => (open ? <div data-testid="alert-dialog">{children}</div> : null),
-  AlertDialogContent: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  AlertDialogHeader: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  AlertDialogTitle: ({ children }: { children: React.ReactNode }) => (
-    <h2>{children}</h2>
-  ),
-  AlertDialogDescription: ({ children }: { children: React.ReactNode }) => (
-    <p>{children}</p>
-  ),
-  AlertDialogFooter: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  AlertDialogCancel: ({ children }: { children: React.ReactNode }) => (
-    <button type="button">{children}</button>
-  ),
   AlertDialogAction: ({
     children,
     onClick,
@@ -61,6 +43,24 @@ vi.mock("@/components/ui/alert-dialog", () => ({
     <button onClick={onClick} type="button">
       {children}
     </button>
+  ),
+  AlertDialogCancel: ({ children }: { children: React.ReactNode }) => (
+    <button type="button">{children}</button>
+  ),
+  AlertDialogContent: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  AlertDialogDescription: ({ children }: { children: React.ReactNode }) => (
+    <p>{children}</p>
+  ),
+  AlertDialogFooter: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  AlertDialogHeader: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  AlertDialogTitle: ({ children }: { children: React.ReactNode }) => (
+    <h2>{children}</h2>
   ),
 }));
 
@@ -95,6 +95,9 @@ vi.mock("@/components/ui/card", () => ({
   CardContent: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
+  CardDescription: ({ children }: { children: React.ReactNode }) => (
+    <p>{children}</p>
+  ),
   CardHeader: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
@@ -105,29 +108,12 @@ vi.mock("@/components/ui/card", () => ({
     children: React.ReactNode;
     className?: string;
   }) => <h2 className={className}>{children}</h2>,
-  CardDescription: ({ children }: { children: React.ReactNode }) => (
-    <p>{children}</p>
-  ),
 }));
 
 vi.mock("@/components/ui/dropdown-menu", () => ({
   DropdownMenu: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
-  DropdownMenuTrigger: ({
-    children,
-    render: Render,
-  }: {
-    children?: React.ReactNode;
-    render?:
-      | React.ReactNode
-      | ((props: Record<string, unknown>) => React.ReactNode);
-  }) => {
-    if (typeof Render === "function") {
-      return Render({});
-    }
-    return <div>{children}</div>;
-  },
   DropdownMenuContent: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
@@ -145,6 +131,20 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
     </button>
   ),
   DropdownMenuSeparator: () => <hr />,
+  DropdownMenuTrigger: ({
+    children,
+    render: Render,
+  }: {
+    children?: React.ReactNode;
+    render?:
+      | React.ReactNode
+      | ((props: Record<string, unknown>) => React.ReactNode);
+  }) => {
+    if (typeof Render === "function") {
+      return Render({});
+    }
+    return <div>{children}</div>;
+  },
 }));
 
 vi.mock("@/components/ui/typography", () => ({
@@ -196,24 +196,24 @@ afterEach(() => {
 });
 
 const baseWidget = {
-  _id: "w1" as never,
   _creationTime: Date.now(),
-  widgetId: "widget-abc-123",
-  name: "Support Widget",
+  _id: "w1" as never,
+  conversationCount: 5,
   isActive: true,
+  name: "Support Widget",
   organizationId: "org1" as never,
   settings: {
-    _id: "ws1" as never,
     _creationTime: Date.now(),
-    widgetId: "w1" as never,
-    primaryColor: "#5c6d4f",
-    position: "bottom-right" as const,
-    welcomeMessage: "Hello",
-    showLauncher: true,
+    _id: "ws1" as never,
     autoOpen: false,
+    position: "bottom-right" as const,
+    primaryColor: "#5c6d4f",
+    showLauncher: true,
+    welcomeMessage: "Hello",
+    widgetId: "w1" as never,
     zIndex: 9999,
   },
-  conversationCount: 5,
+  widgetId: "widget-abc-123",
 };
 
 describe("WidgetCard", () => {
@@ -287,9 +287,9 @@ describe("WidgetCard", () => {
 
   it("copies embed code to clipboard on icon click", async () => {
     Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
       value: { writeText: vi.fn().mockResolvedValue(undefined) },
       writable: true,
-      configurable: true,
     });
     const { toast } = await import("sonner");
     const user = userEvent.setup();
@@ -351,9 +351,9 @@ describe("WidgetCard", () => {
 
   it("shows check icon after copy", async () => {
     Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
       value: { writeText: vi.fn().mockResolvedValue(undefined) },
       writable: true,
-      configurable: true,
     });
     const user = userEvent.setup();
     render(<WidgetCard orgSlug="test" widget={baseWidget} />);

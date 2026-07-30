@@ -82,9 +82,9 @@ export const list = query({
           ...comment,
           author: author
             ? {
-                name: author.name || undefined,
                 email: author.email,
                 image: author.image || undefined,
+                name: author.name || undefined,
               }
             : undefined,
           isAuthor: user?._id === comment.authorId,
@@ -101,9 +101,7 @@ export const list = query({
  */
 export const get = query({
   args: { id: v.id("comments") },
-  handler: async (ctx, args) => {
-    return await ctx.db.get(args.id);
-  },
+  handler: async (ctx, args) => await ctx.db.get(args.id),
 });
 
 // ============================================
@@ -115,8 +113,8 @@ export const get = query({
  */
 export const create = mutation({
   args: {
-    feedbackId: v.id("feedback"),
     body: v.string(),
+    feedbackId: v.id("feedback"),
     parentId: v.optional(v.id("comments")),
   },
   handler: async (ctx, args) => {
@@ -160,12 +158,12 @@ export const create = mutation({
 
     const now = Date.now();
     const commentId = await ctx.db.insert("comments", {
-      feedbackId: args.feedbackId,
       authorId: user._id,
       body: args.body,
+      createdAt: now,
+      feedbackId: args.feedbackId,
       isOfficial: false,
       parentId: args.parentId,
-      createdAt: now,
       updatedAt: now,
     });
 
@@ -177,13 +175,13 @@ export const create = mutation({
     // Create notification for feedback author (if not commenting on own feedback)
     if (feedback.authorId && feedback.authorId !== user._id) {
       await ctx.db.insert("notifications", {
-        userId: feedback.authorId,
-        type: "new_comment",
-        title: "New comment on your feedback",
-        message: `Someone commented on "${feedback.title}"`,
+        createdAt: now,
         feedbackId: args.feedbackId,
         isRead: false,
-        createdAt: now,
+        message: `Someone commented on "${feedback.title}"`,
+        title: "New comment on your feedback",
+        type: "new_comment",
+        userId: feedback.authorId,
       });
 
       // Trigger push notification
@@ -191,11 +189,11 @@ export const create = mutation({
         0,
         internal.notifications.push.sendPushNotification,
         {
-          userId: feedback.authorId,
-          type: "new_comment",
-          title: "New comment on your feedback",
           message: `Someone commented on "${feedback.title}"`,
+          title: "New comment on your feedback",
+          type: "new_comment",
           url: "/dashboard",
+          userId: feedback.authorId,
         }
       );
     }
@@ -209,8 +207,8 @@ export const create = mutation({
  */
 export const update = mutation({
   args: {
-    id: v.id("comments"),
     body: v.string(),
+    id: v.id("comments"),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);

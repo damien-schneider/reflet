@@ -28,20 +28,27 @@ export function MarkdownRenderer({
   className,
 }: MarkdownRendererProps) {
   const editor = useEditor({
-    immediatelyRender: false,
+    content,
+    editable: false,
+    editorProps: {
+      attributes: {
+        class: "tiptap-renderer",
+      },
+    },
     extensions: [
       StarterKit.configure({
         heading: {
           levels: [1, 2, 3],
         },
+        link: false,
       }),
       Link.configure({
-        openOnClick: true,
         HTMLAttributes: {
           class: "tiptap-link",
-          target: "_blank",
           rel: "noopener noreferrer",
+          target: "_blank",
         },
+        openOnClick: true,
       }),
       ImageExtension.configure({
         HTMLAttributes: {
@@ -115,13 +122,7 @@ export function MarkdownRenderer({
         html: false,
       }),
     ],
-    content,
-    editable: false,
-    editorProps: {
-      attributes: {
-        class: "tiptap-renderer",
-      },
-    },
+    immediatelyRender: false,
   });
 
   // Sync external content changes

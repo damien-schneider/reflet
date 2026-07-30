@@ -15,9 +15,8 @@ type BillingInterval = "monthly" | "yearly";
 
 const PRICING_TIERS = [
   {
-    name: "Starter",
-    monthlyPrice: 0,
-    yearlyPrice: 0,
+    buttonText: "Get Started",
+    buttonVariant: "outline" as const,
     description: "Perfect for open source projects and small startups.",
     features: [
       "Unlimited feedback posts",
@@ -26,15 +25,15 @@ const PRICING_TIERS = [
       "Changelog",
       "Community support",
     ],
-    buttonText: "Get Started",
-    buttonVariant: "outline" as const,
     highlighted: false,
+    monthlyPrice: 0,
+    name: "Starter",
+    yearlyPrice: 0,
   },
   {
-    name: "Growth",
-    monthlyPrice: 15,
-    yearlyPrice: 150,
-    yearlySavings: 30,
+    badge: "Most popular",
+    buttonText: "Start Free Trial",
+    buttonVariant: "secondary" as const,
     description: "For growing teams needing privacy and integrations.",
     features: [
       "Everything in Starter",
@@ -44,16 +43,15 @@ const PRICING_TIERS = [
       "Custom domain",
       "Priority support",
     ],
-    buttonText: "Start Free Trial",
-    buttonVariant: "secondary" as const,
     highlighted: true,
-    badge: "Most popular",
+    monthlyPrice: 15,
+    name: "Growth",
+    yearlyPrice: 150,
+    yearlySavings: 30,
   },
   {
-    name: "Business",
-    monthlyPrice: 49,
-    yearlyPrice: 480,
-    yearlySavings: 108,
+    buttonText: "Contact Sales",
+    buttonVariant: "outline" as const,
     description: "Advanced control for larger organizations.",
     features: [
       "Everything in Growth",
@@ -63,9 +61,11 @@ const PRICING_TIERS = [
       "API access",
       "Dedicated success manager",
     ],
-    buttonText: "Contact Sales",
-    buttonVariant: "outline" as const,
     highlighted: false,
+    monthlyPrice: 49,
+    name: "Business",
+    yearlyPrice: 480,
+    yearlySavings: 108,
   },
 ] as const;
 

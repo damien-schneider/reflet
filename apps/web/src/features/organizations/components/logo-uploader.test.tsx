@@ -47,10 +47,10 @@ vi.mock("@/components/ui/tiptap/use-image-upload", () => ({
     onSuccess: (url: string) => void;
     onError: (err: Error) => void;
   }) => ({
+    isUploading: false,
     uploadImage: vi.fn(async () => {
       onSuccess("https://uploaded.example.com/logo.png");
     }),
-    isUploading: false,
   }),
 }));
 

@@ -48,9 +48,9 @@ const getNextVersionSuggestions = (
 
   return {
     highest,
-    patch: `${prefix}${highest.major}.${highest.minor}.${highest.patch + 1}`,
-    minor: `${prefix}${highest.major}.${highest.minor + 1}.0`,
     major: `${prefix}${highest.major + 1}.0.0`,
+    minor: `${prefix}${highest.major}.${highest.minor + 1}.0`,
+    patch: `${prefix}${highest.major}.${highest.minor}.${highest.patch + 1}`,
   };
 };
 
@@ -197,9 +197,9 @@ describe("getNextVersion suggestions", () => {
 describe("release ordering logic", () => {
   test("should sort published releases by publishedAt descending", () => {
     const releases = [
-      { title: "Oldest", publishedAt: 1000 },
-      { title: "Middle", publishedAt: 2000 },
-      { title: "Newest", publishedAt: 3000 },
+      { publishedAt: 1000, title: "Oldest" },
+      { publishedAt: 2000, title: "Middle" },
+      { publishedAt: 3000, title: "Newest" },
     ];
 
     const sorted = [...releases].sort((a, b) => b.publishedAt - a.publishedAt);
@@ -208,11 +208,11 @@ describe("release ordering logic", () => {
 
   test("should place drafts before published when combining", () => {
     const published = [
-      { title: "Published", publishedAt: 5000, createdAt: 5000 },
+      { createdAt: 5000, publishedAt: 5000, title: "Published" },
     ];
     const drafts = [
-      { title: "New Draft", publishedAt: undefined, createdAt: 2000 },
-      { title: "Old Draft", publishedAt: undefined, createdAt: 1000 },
+      { createdAt: 2000, publishedAt: undefined, title: "New Draft" },
+      { createdAt: 1000, publishedAt: undefined, title: "Old Draft" },
     ];
 
     const sortedDrafts = [...drafts].sort((a, b) => b.createdAt - a.createdAt);

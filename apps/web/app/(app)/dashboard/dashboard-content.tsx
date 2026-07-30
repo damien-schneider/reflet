@@ -30,20 +30,20 @@ import { sidebarOpenAtom } from "@/store/dashboard-atoms";
 import { computeDashboardNavigation } from "./use-dashboard-navigation";
 
 const routeLabels: Record<string, string> = {
-  feedback: "Feedback",
-  settings: "Settings",
-  tags: "Tags",
-  changelog: "Changelog",
-  general: "General",
-  billing: "Billing",
-  members: "Members",
-  inbox: "Inbox",
-  github: "GitHub",
-  branding: "Branding",
-  "super-admin": "Super Admin",
   account: "Account",
+  billing: "Billing",
+  branding: "Branding",
+  changelog: "Changelog",
+  feedback: "Feedback",
+  general: "General",
+  github: "GitHub",
+  inbox: "Inbox",
+  members: "Members",
   project: "Project",
+  settings: "Settings",
   setup: "Setup",
+  "super-admin": "Super Admin",
+  tags: "Tags",
 };
 
 /** Routes under /dashboard/ that don't require an org slug */
@@ -63,9 +63,9 @@ function buildBreadcrumbItemsForSettings(
 ): Array<{ label: string; href: string; isActive: boolean }> {
   const items: Array<{ label: string; href: string; isActive: boolean }> = [
     {
-      label: "Settings",
       href: `/dashboard/${orgSlug}/settings`,
       isActive: relevantSegments.length === 2,
+      label: "Settings",
     },
   ];
 
@@ -73,9 +73,9 @@ function buildBreadcrumbItemsForSettings(
     const settingsSegment = relevantSegments[2];
     const settingsLabel = routeLabels[settingsSegment] ?? settingsSegment;
     items.push({
-      label: settingsLabel,
       href: `/dashboard/${orgSlug}/settings/${settingsSegment}`,
       isActive: true,
+      label: settingsLabel,
     });
   }
 
@@ -89,9 +89,9 @@ function buildBreadcrumbItems(
 ): Array<{ label: string; href: string; isActive: boolean }> {
   const items: Array<{ label: string; href: string; isActive: boolean }> = [
     {
-      label: "Dashboard",
       href: "/dashboard",
       isActive: relevantSegments.length === 0,
+      label: "Dashboard",
     },
   ];
 
@@ -102,9 +102,9 @@ function buildBreadcrumbItems(
     NON_ORG_ROUTES.includes(firstSegment as (typeof NON_ORG_ROUTES)[number])
   ) {
     items.push({
-      label: routeLabels[firstSegment] ?? firstSegment,
       href: `/dashboard/${firstSegment}`,
       isActive: true,
+      label: routeLabels[firstSegment] ?? firstSegment,
     });
     return items;
   }
@@ -114,9 +114,9 @@ function buildBreadcrumbItems(
   }
 
   items.push({
-    label: org?.name ?? orgSlug,
     href: `/dashboard/${orgSlug}`,
     isActive: relevantSegments.length === 1,
+    label: org?.name ?? orgSlug,
   });
 
   if (relevantSegments.length <= 1) {
@@ -130,9 +130,9 @@ function buildBreadcrumbItems(
     items.push(...buildBreadcrumbItemsForSettings(orgSlug, relevantSegments));
   } else {
     items.push({
-      label: routeLabel,
       href: `/dashboard/${orgSlug}/${routeSegment}`,
       isActive: true,
+      label: routeLabel,
     });
   }
 
@@ -211,7 +211,7 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
   );
 
   const { redirectTo, orgNotAccessible, hasOrganizations } =
-    computeDashboardNavigation({ orgSlug, org, organizations });
+    computeDashboardNavigation({ org, organizations, orgSlug });
 
   useEffect(() => {
     if (redirectTo && !isNonOrgRoute) {

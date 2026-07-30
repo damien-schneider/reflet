@@ -103,11 +103,11 @@ export function ChangelogSection({
       setIsSaving(true);
       try {
         await updateOrg({
-          id: organizationId,
           changelogSettings: {
             ...settings,
             ...updates,
           },
+          id: organizationId,
         });
         toast.success("Settings saved");
       } catch (error) {

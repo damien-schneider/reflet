@@ -18,13 +18,13 @@ const EASE_OUT_EXPO = [0.16, 1, 0.3, 1] as const;
 
 export default function RoadmapMockup() {
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, amount: 0.3 });
+  const isInView = useInView(ref, { amount: 0.3, once: true });
 
   return (
     <motion.div
-      animate={isInView ? { opacity: 1, y: 0, rotateX: 0 } : {}}
+      animate={isInView ? { opacity: 1, rotateX: 0, y: 0 } : {}}
       className="w-full overflow-hidden rounded-xl shadow-[0_24px_64px_-16px_rgba(0,0,0,0.12)] dark:shadow-[0_24px_64px_-16px_rgba(0,0,0,0.5)]"
-      initial={{ opacity: 0, y: 40, rotateX: 4 }}
+      initial={{ opacity: 0, rotateX: 4, y: 40 }}
       ref={ref}
       style={{ perspective: "1200px" }}
       transition={{ duration: 0.9, ease: EASE_OUT_EXPO }}

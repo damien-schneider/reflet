@@ -7,17 +7,6 @@ const MIN_EMAILS_FOR_ALERT = 10;
 
 export const getDailyHealthReport = internalQuery({
   args: {},
-  returns: v.object({
-    organizations: v.array(
-      v.object({
-        organizationId: v.string(),
-        total: v.number(),
-        bounced: v.number(),
-        complained: v.number(),
-        bounceRate: v.number(),
-      })
-    ),
-  }),
   handler: async (ctx) => {
     const since = Date.now() - MILLISECONDS_PER_DAY;
 
@@ -35,9 +24,9 @@ export const getDailyHealthReport = internalQuery({
     for (const log of recentLogs) {
       const orgId = log.organizationId;
       const existing = byOrg.get(orgId) ?? {
-        total: 0,
         bounced: 0,
         complained: 0,
+        total: 0,
       };
       existing.total++;
       if (log.status === "bounced") {
@@ -58,20 +47,30 @@ export const getDailyHealthReport = internalQuery({
         return bounceRate > HIGH_BOUNCE_RATE_THRESHOLD || stats.complained > 0;
       })
       .map(([orgId, stats]) => ({
+        bounced: stats.bounced,
+        bounceRate: stats.bounced / stats.total,
+        complained: stats.complained,
         organizationId: orgId,
         total: stats.total,
-        bounced: stats.bounced,
-        complained: stats.complained,
-        bounceRate: stats.bounced / stats.total,
       }));
 
     return { organizations: flagged };
   },
+  returns: v.object({
+    organizations: v.array(
+      v.object({
+        bounced: v.number(),
+        bounceRate: v.number(),
+        complained: v.number(),
+        organizationId: v.string(),
+        total: v.number(),
+      })
+    ),
+  }),
 });
 
 export const cleanupOldEvents = internalMutation({
   args: {},
-  returns: v.object({ deleted: v.number() }),
   handler: async (ctx) => {
     const RETENTION_DAYS = 90;
     const cutoff = Date.now() - RETENTION_DAYS * MILLISECONDS_PER_DAY;
@@ -87,4 +86,5 @@ export const cleanupOldEvents = internalMutation({
 
     return { deleted: oldEvents.length };
   },
+  returns: v.object({ deleted: v.number() }),
 });

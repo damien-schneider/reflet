@@ -12,57 +12,57 @@ type Router = ReturnType<typeof httpRouter>;
 const webhookInstallationSchema = z.object({ id: z.number() });
 
 const releasePayloadSchema = z.object({
-  release: z.object({
-    id: z.number(),
-    tag_name: z.string(),
-    name: z.string().nullable(),
-    body: z.string().nullable(),
-    html_url: z.string(),
-    draft: z.boolean(),
-    prerelease: z.boolean(),
-    published_at: z.string().nullable(),
-    created_at: z.string(),
-  }),
   action: z.string(),
   installation: webhookInstallationSchema,
+  release: z.object({
+    body: z.string().nullable(),
+    created_at: z.string(),
+    draft: z.boolean(),
+    html_url: z.string(),
+    id: z.number(),
+    name: z.string().nullable(),
+    prerelease: z.boolean(),
+    published_at: z.string().nullable(),
+    tag_name: z.string(),
+  }),
 });
 
 const issuePayloadSchema = z.object({
-  issue: z.object({
-    id: z.number(),
-    number: z.number(),
-    title: z.string(),
-    body: z.string().nullable(),
-    html_url: z.string(),
-    state: z.enum(["open", "closed"]),
-    labels: z.array(z.object({ name: z.string() })),
-    user: z.object({ login: z.string(), avatar_url: z.string() }).nullable(),
-    milestone: z.object({ title: z.string() }).nullable(),
-    assignees: z.array(z.object({ login: z.string() })),
-    created_at: z.string(),
-    updated_at: z.string(),
-    closed_at: z.string().nullable(),
-  }),
   action: z.string(),
   installation: webhookInstallationSchema,
+  issue: z.object({
+    assignees: z.array(z.object({ login: z.string() })),
+    body: z.string().nullable(),
+    closed_at: z.string().nullable(),
+    created_at: z.string(),
+    html_url: z.string(),
+    id: z.number(),
+    labels: z.array(z.object({ name: z.string() })),
+    milestone: z.object({ title: z.string() }).nullable(),
+    number: z.number(),
+    state: z.enum(["open", "closed"]),
+    title: z.string(),
+    updated_at: z.string(),
+    user: z.object({ avatar_url: z.string(), login: z.string() }).nullable(),
+  }),
 });
 
 const pullRequestPayloadSchema = z.object({
-  pull_request: z.object({
-    id: z.number(),
-    number: z.number(),
-    title: z.string(),
-    body: z.string().nullable(),
-    html_url: z.string(),
-    state: z.enum(["open", "closed"]),
-    merged: z.boolean(),
-    merged_at: z.string().nullable(),
-    user: z.object({ login: z.string(), avatar_url: z.string() }).nullable(),
-    head: z.object({ ref: z.string(), sha: z.string() }),
-    base: z.object({ ref: z.string() }),
-  }),
   action: z.string(),
   installation: webhookInstallationSchema,
+  pull_request: z.object({
+    base: z.object({ ref: z.string() }),
+    body: z.string().nullable(),
+    head: z.object({ ref: z.string(), sha: z.string() }),
+    html_url: z.string(),
+    id: z.number(),
+    merged: z.boolean(),
+    merged_at: z.string().nullable(),
+    number: z.number(),
+    state: z.enum(["open", "closed"]),
+    title: z.string(),
+    user: z.object({ avatar_url: z.string(), login: z.string() }).nullable(),
+  }),
 });
 
 // ============================================
@@ -77,8 +77,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function webhookJson(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
-    status,
     headers: { "Content-Type": "application/json" },
+    status,
   });
 }
 
@@ -91,7 +91,7 @@ async function verifyWebhookSignature(
   const key = await crypto.subtle.importKey(
     "raw",
     encoder.encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
+    { hash: "SHA-256", name: "HMAC" },
     false,
     ["sign"]
   );
@@ -106,7 +106,7 @@ async function verifyWebhookSignature(
   const verifyKey = await crypto.subtle.importKey(
     "raw",
     encoder.encode("verify"),
-    { name: "HMAC", hash: "SHA-256" },
+    { hash: "SHA-256", name: "HMAC" },
     false,
     ["sign"]
   );
@@ -138,7 +138,7 @@ async function handleInstallationWebhook(
       installationId: String(installation.id),
     }
   );
-  return webhookJson({ success: true, action: "installation_deleted" });
+  return webhookJson({ action: "installation_deleted", success: true });
 }
 
 async function handleReleaseWebhook(
@@ -157,27 +157,27 @@ async function handleReleaseWebhook(
     await ctx.runMutation(
       internal.integrations.github.actions.processReleaseWebhook,
       {
+        action,
         connectionId: connection._id,
         organizationId: connection.organizationId,
         release: {
-          id: String(release.id),
-          tagName: release.tag_name,
-          name: release.name ?? undefined,
           body: release.body ?? undefined,
+          createdAt: new Date(release.created_at).getTime(),
           htmlUrl: release.html_url,
+          id: String(release.id),
           isDraft: release.draft,
           isPrerelease: release.prerelease,
+          name: release.name ?? undefined,
           publishedAt: release.published_at
             ? new Date(release.published_at).getTime()
             : undefined,
-          createdAt: new Date(release.created_at).getTime(),
+          tagName: release.tag_name,
         },
-        action,
       }
     );
   }
 
-  return webhookJson({ success: true, action: "release_processed" });
+  return webhookJson({ action: "release_processed", success: true });
 }
 
 async function handleIssueWebhook(
@@ -196,32 +196,32 @@ async function handleIssueWebhook(
     await ctx.runMutation(
       internal.integrations.github.actions.processIssueWebhook,
       {
+        action,
         connectionId: connection._id,
-        organizationId: connection.organizationId,
         issue: {
-          id: String(issue.id),
-          number: issue.number,
-          title: issue.title,
-          body: issue.body ?? undefined,
-          htmlUrl: issue.html_url,
-          state: issue.state,
-          labels: issue.labels.map((l) => l.name),
+          assignees: issue.assignees.map((a) => a.login),
           author: issue.user?.login,
           authorAvatarUrl: issue.user?.avatar_url,
-          milestone: issue.milestone?.title,
-          assignees: issue.assignees.map((a) => a.login),
-          createdAt: new Date(issue.created_at).getTime(),
-          updatedAt: new Date(issue.updated_at).getTime(),
+          body: issue.body ?? undefined,
           closedAt: issue.closed_at
             ? new Date(issue.closed_at).getTime()
             : undefined,
+          createdAt: new Date(issue.created_at).getTime(),
+          htmlUrl: issue.html_url,
+          id: String(issue.id),
+          labels: issue.labels.map((l) => l.name),
+          milestone: issue.milestone?.title,
+          number: issue.number,
+          state: issue.state,
+          title: issue.title,
+          updatedAt: new Date(issue.updated_at).getTime(),
         },
-        action,
+        organizationId: connection.organizationId,
       }
     );
   }
 
-  return webhookJson({ success: true, action: "issue_processed" });
+  return webhookJson({ action: "issue_processed", success: true });
 }
 
 async function handlePullRequestWebhook(
@@ -232,7 +232,7 @@ async function handlePullRequestWebhook(
     pullRequestPayloadSchema.parse(payload);
 
   if (action !== "closed" || !pull_request.merged) {
-    return webhookJson({ success: true, action: "pr_ignored" });
+    return webhookJson({ action: "pr_ignored", success: true });
   }
 
   const installationId = String(installation.id);
@@ -249,23 +249,23 @@ async function handlePullRequestWebhook(
         connectionId: connection._id,
         organizationId: connection.organizationId,
         pullRequest: {
-          id: String(pull_request.id),
-          number: pull_request.number,
-          title: pull_request.title,
+          authorLogin: pull_request.user?.login,
+          baseRef: pull_request.base.ref,
           body: pull_request.body ?? undefined,
+          headRef: pull_request.head.ref,
           htmlUrl: pull_request.html_url,
+          id: String(pull_request.id),
           mergedAt: pull_request.merged_at
             ? new Date(pull_request.merged_at).getTime()
             : undefined,
-          headRef: pull_request.head.ref,
-          baseRef: pull_request.base.ref,
-          authorLogin: pull_request.user?.login,
+          number: pull_request.number,
+          title: pull_request.title,
         },
       }
     );
   }
 
-  return webhookJson({ success: true, action: "pr_processed" });
+  return webhookJson({ action: "pr_processed", success: true });
 }
 
 // ============================================
@@ -337,7 +337,7 @@ async function routeWebhookEvent(
     return await handlePullRequestWebhook(ctx, payload);
   }
 
-  return webhookJson({ success: true, event: eventType });
+  return webhookJson({ event: eventType, success: true });
 }
 
 // ============================================
@@ -346,8 +346,6 @@ async function routeWebhookEvent(
 
 export function registerGithubWebhookRoutes(http: Router): void {
   http.route({
-    path: "/github-webhook",
-    method: "POST",
     handler: httpAction(async (ctx, request) => {
       const eventType = request.headers.get("X-GitHub-Event");
 
@@ -385,5 +383,7 @@ export function registerGithubWebhookRoutes(http: Router): void {
         );
       }
     }),
+    method: "POST",
+    path: "/github-webhook",
   });
 }

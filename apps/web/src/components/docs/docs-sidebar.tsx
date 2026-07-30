@@ -24,43 +24,42 @@ interface NavSection {
 
 const NAV_SECTIONS: NavSection[] = [
   {
+    links: [
+      { href: "/docs/sdk", label: "Overview" },
+      { href: "/docs/sdk/installation", label: "Installation" },
+      { href: "/docs/sdk/react-hooks", label: "React Hooks" },
+    ],
     title: "SDK",
-    links: [
-      { label: "Overview", href: "/docs/sdk" },
-      { label: "Installation", href: "/docs/sdk/installation" },
-      { label: "React Hooks", href: "/docs/sdk/react-hooks" },
-    ],
   },
   {
+    links: [
+      { href: "/docs/widget", label: "Overview" },
+      { href: "/docs/widget/feedback-widget", label: "Feedback Widget" },
+      { href: "/docs/widget/changelog-widget", label: "Changelog Widget" },
+    ],
     title: "Widgets",
-    links: [
-      { label: "Overview", href: "/docs/widget" },
-      { label: "Feedback Widget", href: "/docs/widget/feedback-widget" },
-      { label: "Changelog Widget", href: "/docs/widget/changelog-widget" },
-    ],
   },
   {
-    title: "Components",
     links: [
-      { label: "Overview", href: "/docs/components" },
-      { label: "Installation", href: "/docs/components/installation" },
-      { label: "Theming", href: "/docs/components/theming" },
+      { href: "/docs/components", label: "Overview" },
+      { href: "/docs/components/installation", label: "Installation" },
+      { href: "/docs/components/theming", label: "Theming" },
     ],
     subGroups: [
       {
         label: "Feedback Cards",
         links: [
           {
-            label: "Sweep Corner",
             href: "/docs/components/feedback-cards/sweep-corner",
+            label: "Sweep Corner",
           },
           {
-            label: "Minimal Notch",
             href: "/docs/components/feedback-cards/minimal-notch",
+            label: "Minimal Notch",
           },
           {
-            label: "Editorial Feed",
             href: "/docs/components/feedback-cards/editorial-feed",
+            label: "Editorial Feed",
           },
         ],
       },
@@ -68,20 +67,21 @@ const NAV_SECTIONS: NavSection[] = [
         label: "Milestone Views",
         links: [
           {
-            label: "Horizontal Track",
             href: "/docs/components/milestone-views/track",
+            label: "Horizontal Track",
           },
           {
-            label: "Editorial Accordion",
             href: "/docs/components/milestone-views/editorial-accordion",
+            label: "Editorial Accordion",
           },
           {
-            label: "Dashboard Timeline",
             href: "/docs/components/milestone-views/dashboard-timeline",
+            label: "Dashboard Timeline",
           },
         ],
       },
     ],
+    title: "Components",
   },
 ] as const;
 

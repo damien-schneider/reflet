@@ -50,17 +50,17 @@ export const getPublicStatus = query({
 
         return {
           _id: incident._id,
-          title: incident.title,
-          severity: incident.severity,
-          status: incident.status,
-          startedAt: incident.startedAt,
           affectedMonitors: affectedMonitorNames,
+          severity: incident.severity,
+          startedAt: incident.startedAt,
+          status: incident.status,
+          title: incident.title,
           updates: updates
             .sort((a, b) => b.createdAt - a.createdAt)
             .map((u) => ({
-              status: u.status,
-              message: u.message,
               createdAt: u.createdAt,
+              message: u.message,
+              status: u.status,
             })),
         };
       })
@@ -109,34 +109,34 @@ export const getPublicStatus = query({
       const existing = grouped.get(group) ?? [];
       existing.push({
         _id: m._id,
-        name: m.name,
-        status: m.status,
         lastResponseTimeMs: m.lastResponseTimeMs,
+        name: m.name,
         recentChecks: recentChecks.map((c) => ({
-          responseTimeMs: c.responseTimeMs,
           checkedAt: c.checkedAt,
           isUp: c.isUp,
+          responseTimeMs: c.responseTimeMs,
         })),
+        status: m.status,
       });
       grouped.set(group, existing);
     }
 
     const monitorGroups = [...grouped.entries()]
-      .map(([name, monitors]) => ({ name, monitors }))
+      .map(([name, monitors]) => ({ monitors, name }))
       .sort((a, b) => a.name.localeCompare(b.name));
 
     return {
-      orgName: org.name,
-      orgLogo: org.logo,
-      overallStatus,
-      monitorGroups,
       activeIncidents: activeWithUpdates,
+      monitorGroups,
+      orgLogo: org.logo,
+      orgName: org.name,
+      overallStatus,
     };
   },
 });
 
 export const getPublicIncidentHistory = query({
-  args: { orgSlug: v.string(), days: v.optional(v.number()) },
+  args: { days: v.optional(v.number()), orgSlug: v.string() },
   handler: async (ctx, args) => {
     const org = await ctx.db
       .query("organizations")
@@ -175,19 +175,19 @@ export const getPublicIncidentHistory = query({
 
         return {
           _id: incident._id,
-          title: incident.title,
-          severity: incident.severity,
-          startedAt: incident.startedAt,
-          resolvedAt: incident.resolvedAt,
           affectedMonitors: incident.affectedMonitorIds
             .map((id) => monitorNameMap.get(id))
             .filter(Boolean),
+          resolvedAt: incident.resolvedAt,
+          severity: incident.severity,
+          startedAt: incident.startedAt,
+          title: incident.title,
           updates: updates
             .sort((a, b) => a.createdAt - b.createdAt)
             .map((u) => ({
-              status: u.status,
-              message: u.message,
               createdAt: u.createdAt,
+              message: u.message,
+              status: u.status,
             })),
         };
       })
@@ -198,7 +198,7 @@ export const getPublicIncidentHistory = query({
 });
 
 export const getMonitorUptimeHistory = query({
-  args: { orgSlug: v.string(), monitorId: v.id("statusMonitors") },
+  args: { monitorId: v.id("statusMonitors"), orgSlug: v.string() },
   handler: async (ctx, args) => {
     const org = await ctx.db
       .query("organizations")
@@ -232,9 +232,9 @@ export const getMonitorUptimeHistory = query({
     for (const check of checks) {
       const day = new Date(check.checkedAt).toISOString().split("T")[0];
       const bucket = dailyBuckets.get(day) ?? {
+        avgResponseTime: 0,
         total: 0,
         up: 0,
-        avgResponseTime: 0,
       };
       bucket.total++;
       if (check.isUp) {
@@ -246,22 +246,22 @@ export const getMonitorUptimeHistory = query({
 
     const days = [...dailyBuckets.entries()]
       .map(([date, bucket]) => ({
-        date,
-        uptimePercentage:
-          bucket.total > 0
-            ? Math.round((bucket.up / bucket.total) * 10_000) / 100
-            : 100,
         avgResponseTimeMs:
           bucket.total > 0
             ? Math.round(bucket.avgResponseTime / bucket.total)
             : 0,
+        date,
         totalChecks: bucket.total,
+        uptimePercentage:
+          bucket.total > 0
+            ? Math.round((bucket.up / bucket.total) * 10_000) / 100
+            : 100,
       }))
       .sort((a, b) => a.date.localeCompare(b.date));
 
     return {
-      monitorName: monitor.name,
       days,
+      monitorName: monitor.name,
     };
   },
 });
@@ -328,8 +328,8 @@ export const getPublicUptimeBars = query({
             : 100;
 
         return {
-          monitorId: monitor._id,
           days,
+          monitorId: monitor._id,
           overallUptime,
         };
       })

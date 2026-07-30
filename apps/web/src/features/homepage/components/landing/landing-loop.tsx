@@ -19,15 +19,15 @@ import { LOOP_STEPS } from "./landing-data";
 const EASE_OUT_EXPO = [0.16, 1, 0.3, 1] as const;
 
 const ICON_MAP: Record<string, ReactNode> = {
-  inbox: <Tray size={22} weight="duotone" />,
   brain: <Brain size={22} weight="duotone" />,
   code: <Code size={22} weight="duotone" />,
+  inbox: <Tray size={22} weight="duotone" />,
   megaphone: <MegaphoneSimple size={22} weight="duotone" />,
 };
 
 export default function LandingLoop() {
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, amount: 0.2 });
+  const isInView = useInView(ref, { amount: 0.2, once: true });
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
   return (

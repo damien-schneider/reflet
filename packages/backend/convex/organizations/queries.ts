@@ -5,18 +5,18 @@ import { authComponent } from "../auth/auth";
 // Subscription plan limits
 export const PLAN_LIMITS = {
   free: {
-    maxBoards: 1,
-    maxMembers: 3,
-    maxFeedbackPerBoard: 100,
-    customBranding: false,
     apiAccess: false,
+    customBranding: false,
+    maxBoards: 1,
+    maxFeedbackPerBoard: 100,
+    maxMembers: 3,
   },
   pro: {
-    maxBoards: 5,
-    maxMembers: 10,
-    maxFeedbackPerBoard: 1000,
-    customBranding: true,
     apiAccess: true,
+    customBranding: true,
+    maxBoards: 5,
+    maxFeedbackPerBoard: 1000,
+    maxMembers: 10,
   },
 } as const;
 

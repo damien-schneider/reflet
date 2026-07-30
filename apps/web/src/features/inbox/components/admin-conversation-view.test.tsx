@@ -3,8 +3,8 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("convex/react", () => ({
-  useQuery: vi.fn(() => []),
   useMutation: vi.fn(() => vi.fn()),
+  useQuery: vi.fn(() => []),
 }));
 
 vi.mock("@/lib/auth-client", () => ({
@@ -112,8 +112,8 @@ vi.mock("@/features/inbox/components/message-list", () => ({
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
     support_messages: {
-      listReactions: "support_messages.listReactions",
       addReaction: "support_messages.addReaction",
+      listReactions: "support_messages.listReactions",
       removeReaction: "support_messages.removeReaction",
     },
   },
@@ -127,9 +127,9 @@ import {
 afterEach(cleanup);
 
 const baseConversation = {
-  subject: "Help with billing",
-  status: "open",
   assignedTo: undefined,
+  status: "open",
+  subject: "Help with billing",
   user: { name: "Test User" },
 };
 
@@ -137,10 +137,10 @@ const baseProps = {
   conversation: baseConversation,
   messages: [],
   messagesLoading: false,
-  teamMembers: [],
+  onAssign: vi.fn(),
   onSendMessage: vi.fn(),
   onStatusChange: vi.fn(),
-  onAssign: vi.fn(),
+  teamMembers: [],
 };
 
 describe("AdminConversationView", () => {
@@ -180,8 +180,8 @@ describe("AdminConversationView", () => {
         {...baseProps}
         conversation={{
           ...baseConversation,
-          user: undefined,
           guestEmail: "guest@example.com",
+          user: undefined,
         }}
       />
     );

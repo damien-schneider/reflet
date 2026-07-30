@@ -29,27 +29,27 @@ export function PasswordSection({
     formState: { errors: passwordErrors },
     reset: resetPassword,
   } = useForm<UpdatePasswordForm>({
-    resolver: zodResolver(updatePasswordSchema),
-    mode: "onChange",
     defaultValues: {
+      confirmPassword: "",
       currentPassword: "",
       newPassword: "",
-      confirmPassword: "",
     },
+    mode: "onChange",
+    resolver: zodResolver(updatePasswordSchema),
   });
 
   const [showPassword, setShowPassword] = useState({
+    confirm: false,
     current: false,
     new: false,
-    confirm: false,
   });
 
   const handleUpdatePassword = async (data: UpdatePasswordForm) => {
     setIsLoading(true);
     try {
       await authClient.changePassword({
-        newPassword: data.newPassword,
         currentPassword: data.currentPassword,
+        newPassword: data.newPassword,
       });
       toast.success("Password updated successfully");
       resetPassword();

@@ -14,30 +14,30 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 // Mock the Convex hooks
 const mockFeedback = {
   _id: "test-feedback-id" as Id<"feedback">,
-  title: "Test Feedback Title",
-  description: "Test feedback description",
-  voteCount: 5,
   commentCount: 2,
-  hasVoted: false,
-  isPinned: false,
-  isAuthor: false,
-  role: "member" as const,
   createdAt: Date.now() - 86_400_000, // 1 day ago
-  organizationStatusId: "test-status-id" as Id<"organizationStatuses">,
+  description: "Test feedback description",
+  hasVoted: false,
+  isAuthor: false,
+  isPinned: false,
   organizationId: "test-org-id" as Id<"organizations">,
+  organizationStatusId: "test-status-id" as Id<"organizationStatuses">,
+  role: "member" as const,
   tags: [
-    { _id: "tag1", name: "Bug", color: "#ff0000" },
-    { _id: "tag2", name: "Feature", color: "#00ff00" },
+    { _id: "tag1", color: "#ff0000", name: "Bug" },
+    { _id: "tag2", color: "#00ff00", name: "Feature" },
   ],
+  title: "Test Feedback Title",
+  voteCount: 5,
 };
 
 const mockComments = [
   {
     _id: "comment1",
+    authorImage: undefined,
+    authorName: "John Doe",
     body: "This is a test comment",
     createdAt: Date.now() - 3_600_000,
-    authorName: "John Doe",
-    authorImage: undefined,
     isAuthor: false,
     isOfficial: false,
     parentId: undefined,
@@ -45,9 +45,9 @@ const mockComments = [
 ];
 
 const mockOrganizationStatuses = [
-  { _id: "status1", name: "Open", color: "#3b82f6", order: 0 },
-  { _id: "status2", name: "In Progress", color: "#f59e0b", order: 1 },
-  { _id: "status3", name: "Done", color: "#10b981", order: 2 },
+  { _id: "status1", color: "#3b82f6", name: "Open", order: 0 },
+  { _id: "status2", color: "#f59e0b", name: "In Progress", order: 1 },
+  { _id: "status3", color: "#10b981", name: "Done", order: 2 },
 ];
 
 const mockUseQuery = vi.fn();
@@ -58,7 +58,6 @@ const mockUpdateFeedbackStatus = vi.fn().mockResolvedValue(undefined);
 const mockUseMutation = vi.fn(() => vi.fn());
 
 vi.mock("convex/react", () => ({
-  useQuery: (...args: unknown[]) => mockUseQuery(...args),
   useMutation: (name: string) => {
     if (name === "votes.toggle") {
       return mockToggleVote;
@@ -74,30 +73,31 @@ vi.mock("convex/react", () => ({
     }
     return mockUseMutation();
   },
+  useQuery: (...args: unknown[]) => mockUseQuery(...args),
 }));
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
     feedback: {
-      queries: { get: "feedback.get" },
-      mutations: { update: "feedback.update" },
-      comments: {
-        list: "comments.list",
-        create: "comments.create",
-        update: "comments.update",
-        remove: "comments.remove",
-      },
       actions: {
-        updateStatus: "feedback_actions.updateStatus",
-        updateOrganizationStatus: "feedback_actions.updateOrganizationStatus",
         remove: "feedback_actions.remove",
         togglePin: "feedback_actions.togglePin",
+        updateOrganizationStatus: "feedback_actions.updateOrganizationStatus",
+        updateStatus: "feedback_actions.updateStatus",
       },
-      votes: { toggle: "votes.toggle" },
       clarification: {
         getDraftReplyStatus: "feedback.clarification.getDraftReplyStatus",
         initiateDraftReply: "feedback.clarification.initiateDraftReply",
       },
+      comments: {
+        create: "comments.create",
+        list: "comments.list",
+        remove: "comments.remove",
+        update: "comments.update",
+      },
+      mutations: { update: "feedback.update" },
+      queries: { get: "feedback.get" },
+      votes: { toggle: "votes.toggle" },
     },
     organizations: {
       statuses: { list: "organization_statuses.list" },
@@ -112,17 +112,17 @@ vi.mock("@/components/ui/dialog", () => ({
   DialogContent: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="dialog-content">{children}</div>
   ),
-  DialogHeader: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  DialogTitle: ({ children }: { children: React.ReactNode }) => (
-    <h2>{children}</h2>
-  ),
   DialogDescription: ({ children }: { children: React.ReactNode }) => (
     <p>{children}</p>
   ),
   DialogFooter: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
+  ),
+  DialogHeader: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DialogTitle: ({ children }: { children: React.ReactNode }) => (
+    <h2>{children}</h2>
   ),
 }));
 
@@ -287,9 +287,6 @@ vi.mock("@/components/ui/avatar", () => ({
       {children}
     </div>
   ),
-  AvatarImage: ({ src }: { src?: string }) => (
-    <span data-src={src} data-testid="avatar-image" />
-  ),
   AvatarFallback: ({
     children,
     className,
@@ -300,6 +297,9 @@ vi.mock("@/components/ui/avatar", () => ({
     <span className={className} data-testid="avatar-fallback">
       {children}
     </span>
+  ),
+  AvatarImage: ({ src }: { src?: string }) => (
+    <span data-src={src} data-testid="avatar-image" />
   ),
 }));
 
@@ -326,17 +326,6 @@ vi.mock("@/components/ui/select", () => ({
       {children}
     </div>
   ),
-  SelectTrigger: ({
-    children,
-    className,
-  }: {
-    children: React.ReactNode;
-    className?: string;
-  }) => (
-    <button className={className} data-testid="select-trigger" type="button">
-      {children}
-    </button>
-  ),
   SelectContent: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="select-content">{children}</div>
   ),
@@ -351,6 +340,17 @@ vi.mock("@/components/ui/select", () => ({
       {children}
     </div>
   ),
+  SelectTrigger: ({
+    children,
+    className,
+  }: {
+    children: React.ReactNode;
+    className?: string;
+  }) => (
+    <button className={className} data-testid="select-trigger" type="button">
+      {children}
+    </button>
+  ),
   SelectValue: ({
     children,
     placeholder,
@@ -363,9 +363,6 @@ vi.mock("@/components/ui/select", () => ({
 vi.mock("@/components/ui/dropdown-menu", () => ({
   DropdownList: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="dropdown-menu">{children}</div>
-  ),
-  DropdownListTrigger: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="dropdown-trigger">{children}</div>
   ),
   DropdownListContent: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="dropdown-content">{children}</div>
@@ -389,6 +386,9 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
     </button>
   ),
   DropdownListSeparator: () => <hr data-testid="dropdown-separator" />,
+  DropdownListTrigger: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dropdown-trigger">{children}</div>
+  ),
 }));
 
 vi.mock("@/components/ui/separator", () => ({
@@ -399,11 +399,11 @@ vi.mock("@/components/ui/separator", () => ({
 
 vi.mock("lucide-react", () => ({
   Calendar: () => <svg data-testid="calendar-icon" />,
-  Check: () => <svg data-testid="check-icon" />,
   CaretUp: () => <svg data-testid="chevron-up-icon" />,
-  Pencil: () => <svg data-testid="edit-icon" />,
   Chat: () => <svg data-testid="message-icon" />,
+  Check: () => <svg data-testid="check-icon" />,
   MoreHorizontal: () => <svg data-testid="more-icon" />,
+  Pencil: () => <svg data-testid="edit-icon" />,
   Pin: () => <svg data-testid="pin-icon" />,
   Send: () => <svg data-testid="send-icon" />,
   Trash2: () => <svg data-testid="trash-icon" />,
@@ -507,7 +507,7 @@ describe("FeedbackDetailDialog", () => {
     const onClose = vi.fn();
     mockUseQuery.mockImplementation((queryName) => {
       if (queryName === "feedback.get") {
-        return undefined; // Loading state
+        return; // Loading state
       }
       return [];
     });
@@ -944,7 +944,7 @@ describe("FeedbackDetailDialog - Interaction Handlers", () => {
         return [];
       }
       if (queryName === "organization_statuses.list") {
-        return undefined; // still loading
+        return; // still loading
       }
       return [];
     });
@@ -966,9 +966,9 @@ describe("FeedbackDetailDialog - Interaction Handlers", () => {
     const mixedTagsFeedback = {
       ...mockFeedback,
       tags: [
-        { _id: "tag1", name: "Bug", color: "#ff0000" },
+        { _id: "tag1", color: "#ff0000", name: "Bug" },
         null,
-        { _id: "tag3", name: "Enhancement", color: "#0000ff" },
+        { _id: "tag3", color: "#0000ff", name: "Enhancement" },
       ],
     };
 
@@ -1003,20 +1003,20 @@ describe("FeedbackDetailDialog - Interaction Handlers", () => {
     const commentsWithReplies = [
       {
         _id: "comment1",
+        authorImage: undefined,
+        authorName: "Alice",
         body: "Parent comment",
         createdAt: Date.now() - 3_600_000,
-        authorName: "Alice",
-        authorImage: undefined,
         isAuthor: false,
         isOfficial: false,
         parentId: undefined,
       },
       {
         _id: "comment2",
+        authorImage: undefined,
+        authorName: "Bob",
         body: "Reply comment",
         createdAt: Date.now() - 1_800_000,
-        authorName: "Bob",
-        authorImage: undefined,
         isAuthor: false,
         isOfficial: false,
         parentId: "comment1",
@@ -1526,8 +1526,8 @@ describe("FeedbackDetailDialog - Mutation Handlers", () => {
   it("should show Unpin text when feedback is already pinned", async () => {
     const pinnedFeedback = {
       ...mockFeedback,
-      role: "admin" as const,
       isPinned: true,
+      role: "admin" as const,
     };
     mockUseQuery.mockImplementation((queryName: string) => {
       if (queryName === "feedback.get") {

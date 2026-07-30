@@ -47,12 +47,12 @@ async function verifyStripeKey(stripe: Stripe): Promise<VerificationResult> {
   try {
     // Try to list customers (limited to 1) to verify the key works
     await stripe.customers.list({ limit: 1 });
-    return { success: true, message: "Stripe API key is valid" };
+    return { message: "Stripe API key is valid", success: true };
   } catch (error) {
     return {
-      success: false,
-      message: "Stripe API key is invalid or missing",
       details: error instanceof Error ? error.message : String(error),
+      message: "Stripe API key is invalid or missing",
+      success: false,
     };
   }
 }
@@ -65,9 +65,9 @@ async function verifyPrice(
 ): Promise<VerificationResult> {
   if (!priceId) {
     return {
-      success: false,
-      message: `${name} price ID is not set`,
       details: `Set STRIPE_PRICE_${name.toUpperCase().replace(" ", "_")} environment variable`,
+      message: `${name} price ID is not set`,
+      success: false,
     };
   }
 
@@ -102,23 +102,23 @@ async function verifyPrice(
 
     if (errors.length > 0) {
       return {
-        success: false,
-        message: `${name} price configuration mismatch`,
         details: errors.join("; "),
+        message: `${name} price configuration mismatch`,
+        success: false,
       };
     }
 
     const product = price.product as Stripe.Product;
     const currencySymbol = price.currency === "eur" ? "€" : "$";
     return {
-      success: true,
       message: `${name} price verified: ${product.name} - ${currencySymbol}${(price.unit_amount ?? 0) / 100}/${price.recurring?.interval}`,
+      success: true,
     };
   } catch (error) {
     return {
-      success: false,
-      message: `${name} price not found: ${priceId}`,
       details: error instanceof Error ? error.message : String(error),
+      message: `${name} price not found: ${priceId}`,
+      success: false,
     };
   }
 }
@@ -136,18 +136,18 @@ async function verifyWebhook(
 
     if (!matchingWebhook) {
       return {
-        success: false,
-        message: "No webhook endpoint found for /stripe/webhook",
         details:
           "Create a webhook at https://dashboard.stripe.com/webhooks with endpoint URL: https://your-deployment.convex.site/stripe/webhook",
+        message: "No webhook endpoint found for /stripe/webhook",
+        success: false,
       };
     }
 
     if (matchingWebhook.status !== "enabled") {
       return {
-        success: false,
-        message: "Webhook endpoint is not enabled",
         details: `Status: ${matchingWebhook.status}`,
+        message: "Webhook endpoint is not enabled",
+        success: false,
       };
     }
 
@@ -164,22 +164,22 @@ async function verifyWebhook(
 
     if (missingEvents.length > 0) {
       return {
-        success: false,
-        message: "Webhook is missing required events",
         details: `Missing: ${missingEvents.join(", ")}`,
+        message: "Webhook is missing required events",
+        success: false,
       };
     }
 
     return {
-      success: true,
-      message: `Webhook configured: ${matchingWebhook.url}`,
       details: `Events: ${matchingWebhook.enabled_events.length} configured`,
+      message: `Webhook configured: ${matchingWebhook.url}`,
+      success: true,
     };
   } catch (error) {
     return {
-      success: false,
-      message: "Failed to verify webhook configuration",
       details: error instanceof Error ? error.message : String(error),
+      message: "Failed to verify webhook configuration",
+      success: false,
     };
   }
 }
@@ -199,9 +199,9 @@ function getEnvConfig(): EnvConfig {
   return {
     isProduction,
     modeLabel: isProduction ? "PRODUCTION" : "TEST",
-    stripeSecretKey: process.env.STRIPE_SECRET_KEY,
     priceMonthly: process.env.STRIPE_PRICE_PRO_MONTHLY,
     priceYearly: process.env.STRIPE_PRICE_PRO_YEARLY,
+    stripeSecretKey: process.env.STRIPE_SECRET_KEY,
     webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
   };
 }

@@ -5,12 +5,12 @@ type TestCtx = ReturnType<typeof convexTest>;
 export const createOrg = async (t: TestCtx) =>
   t.run(async (ctx) =>
     ctx.db.insert("organizations", {
+      createdAt: Date.now(),
+      isPublic: false,
       name: "Test Org",
       slug: "test-org",
-      isPublic: false,
-      subscriptionTier: "free",
       subscriptionStatus: "none",
-      createdAt: Date.now(),
+      subscriptionTier: "free",
     })
   );
 
@@ -21,15 +21,15 @@ export const createFeedback = async (
 ) =>
   t.run(async (ctx) =>
     ctx.db.insert("feedback", {
-      organizationId: orgId,
-      title,
-      description: "Test description",
-      status: "open",
-      voteCount: 0,
       commentCount: 0,
+      createdAt: Date.now(),
+      description: "Test description",
       isApproved: true,
       isPinned: false,
-      createdAt: Date.now(),
+      organizationId: orgId,
+      status: "open",
+      title,
       updatedAt: Date.now(),
+      voteCount: 0,
     })
   );

@@ -42,8 +42,8 @@ export function useFeedbackDrawer(
       : null;
 
     return {
-      selectedFeedbackId,
       isOpen: selectedFeedbackId !== null,
+      selectedFeedbackId,
     };
   }, [searchParams]);
 
@@ -109,14 +109,14 @@ export function useFeedbackDrawer(
 
   return {
     ...state,
-    openFeedback,
     closeFeedback,
-    navigateToFeedback,
-    feedbackIds,
     currentIndex,
-    hasPrevious,
-    hasNext,
-    goToPrevious,
+    feedbackIds,
     goToNext,
+    goToPrevious,
+    hasNext,
+    hasPrevious,
+    navigateToFeedback,
+    openFeedback,
   };
 }

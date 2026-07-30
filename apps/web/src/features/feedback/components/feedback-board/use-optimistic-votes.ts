@@ -47,10 +47,10 @@ export function applyOptimisticVote(
 
   return {
     ...item,
-    userVoteType: newVoteType,
+    downvoteCount: (item.downvoteCount ?? 0) + downvoteDelta,
     hasVoted: newVoteType !== null,
     upvoteCount: (item.upvoteCount ?? 0) + upvoteDelta,
-    downvoteCount: (item.downvoteCount ?? 0) + downvoteDelta,
+    userVoteType: newVoteType,
     voteCount: item.voteCount + voteCountDelta,
   };
 }
@@ -107,7 +107,7 @@ export function useOptimisticVotes({
 
       setOptimisticVotes((prev) => {
         const next = new Map(prev);
-        next.set(feedbackId, { voteType: newVoteType, pending: true });
+        next.set(feedbackId, { pending: true, voteType: newVoteType });
         return next;
       });
 
@@ -134,5 +134,5 @@ export function useOptimisticVotes({
     [feedback, optimisticVotes, toggleVoteMutation, isAuthenticated, authGuard]
   );
 
-  return { optimisticVotes, handleToggleVote } as const;
+  return { handleToggleVote, optimisticVotes } as const;
 }

@@ -11,6 +11,16 @@ export function registerFeedbackTools(
     "feedback_list",
     "List feedback items. Filter by status, tags, or search text. Sort by votes, newest, oldest, or comments.",
     {
+      limit: z
+        .number()
+        .optional()
+        .describe("Max items to return (default: 50, max: 100)"),
+      offset: z.number().optional().describe("Pagination offset"),
+      search: z.string().optional().describe("Search in title and description"),
+      sortBy: z
+        .enum(["votes", "newest", "oldest", "comments"])
+        .optional()
+        .describe("Sort order (default: votes)"),
       status: z
         .enum([
           "open",
@@ -27,16 +37,6 @@ export function registerFeedbackTools(
         .optional()
         .describe("Filter by organization status ID"),
       tagId: z.string().optional().describe("Filter by tag ID"),
-      search: z.string().optional().describe("Search in title and description"),
-      sortBy: z
-        .enum(["votes", "newest", "oldest", "comments"])
-        .optional()
-        .describe("Sort order (default: votes)"),
-      limit: z
-        .number()
-        .optional()
-        .describe("Max items to return (default: 50, max: 100)"),
-      offset: z.number().optional().describe("Pagination offset"),
     },
     async (params) => textResult(await client.listFeedback(params))
   );
@@ -54,13 +54,13 @@ export function registerFeedbackTools(
     "feedback_create",
     "Create a new feedback item (feature request, bug report, etc.).",
     {
-      title: z.string().describe("Feedback title (max 100 chars)"),
       description: z
         .string()
         .describe(
           "Feedback description (rich text or markdown, max 10000 chars)"
         ),
       tagId: z.string().optional().describe("Tag ID to assign"),
+      title: z.string().describe("Feedback title (max 100 chars)"),
     },
     async (params) => textResult(await client.createFeedback(params))
   );
@@ -69,9 +69,9 @@ export function registerFeedbackTools(
     "feedback_update",
     "Update a feedback item's title or description.",
     {
+      description: z.string().optional().describe("New description"),
       feedbackId: z.string().describe("The feedback item ID"),
       title: z.string().optional().describe("New title"),
-      description: z.string().optional().describe("New description"),
     },
     async (params) => textResult(await client.updateFeedback(params))
   );
@@ -100,11 +100,11 @@ export function registerFeedbackTools(
     "feedback_assign",
     "Assign a feedback item to a team member, or unassign by omitting assigneeId.",
     {
-      feedbackId: z.string().describe("The feedback item ID"),
       assigneeId: z
         .string()
         .optional()
         .describe("User ID of the assignee (omit to unassign)"),
+      feedbackId: z.string().describe("The feedback item ID"),
     },
     async ({ feedbackId, assigneeId }) =>
       textResult(await client.assignFeedback(feedbackId, assigneeId))
@@ -115,7 +115,6 @@ export function registerFeedbackTools(
     "Change a feedback item's status on the roadmap. Provide either statusId (organization status) or status (generic status).",
     {
       feedbackId: z.string().describe("The feedback item ID"),
-      statusId: z.string().optional().describe("Organization status ID to set"),
       status: z
         .enum([
           "open",
@@ -127,6 +126,7 @@ export function registerFeedbackTools(
         ])
         .optional()
         .describe("Generic status to set"),
+      statusId: z.string().optional().describe("Organization status ID to set"),
     },
     async ({ feedbackId, statusId, status }) =>
       textResult(await client.setFeedbackStatus(feedbackId, statusId, status))
@@ -185,14 +185,14 @@ export function registerFeedbackTools(
     "feedback_set_complexity",
     "Set the complexity level of a feedback item.",
     {
-      feedbackId: z.string().describe("The feedback item ID"),
       complexity: z
         .enum(["trivial", "simple", "moderate", "complex", "very_complex"])
         .describe("Complexity level"),
+      feedbackId: z.string().describe("The feedback item ID"),
     },
     async ({ feedbackId, complexity }) =>
       textResult(
-        await client.updateFeedbackAnalysis({ feedbackId, complexity })
+        await client.updateFeedbackAnalysis({ complexity, feedbackId })
       )
   );
 
@@ -200,12 +200,12 @@ export function registerFeedbackTools(
     "feedback_set_deadline",
     "Set a deadline for a feedback item.",
     {
-      feedbackId: z.string().describe("The feedback item ID"),
       deadline: z
         .number()
         .describe("Deadline as Unix timestamp in milliseconds"),
+      feedbackId: z.string().describe("The feedback item ID"),
     },
     async ({ feedbackId, deadline }) =>
-      textResult(await client.updateFeedbackAnalysis({ feedbackId, deadline }))
+      textResult(await client.updateFeedbackAnalysis({ deadline, feedbackId }))
   );
 }

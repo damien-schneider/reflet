@@ -54,10 +54,10 @@ export interface FeedbackFilters {
 }
 
 export const feedbackFiltersAtom = atom<FeedbackFilters>({
-  status: null,
-  tagIds: [],
   search: "",
   sortBy: "votes",
+  status: null,
+  tagIds: [],
 });
 
 /**

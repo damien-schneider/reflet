@@ -7,8 +7,8 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("convex/react", () => ({
-  useQuery: vi.fn(),
   useMutation: vi.fn(() => vi.fn()),
+  useQuery: vi.fn(),
 }));
 
 vi.mock("@/components/ui/context-menu", () => ({
@@ -77,9 +77,9 @@ import { TagFilterBar } from "./tag-filter-bar";
 
 const organizationId = "org1" as Id<"organizations">;
 const tags: Tag[] = [
-  { _id: "t1" as Id<"tags">, name: "Bug", color: "red", icon: "🐛" },
-  { _id: "t2" as Id<"tags">, name: "Feature", color: "blue" },
-  { _id: "t3" as Id<"tags">, name: "UX", color: "green", icon: "✨" },
+  { _id: "t1" as Id<"tags">, color: "red", icon: "🐛", name: "Bug" },
+  { _id: "t2" as Id<"tags">, color: "blue", name: "Feature" },
+  { _id: "t3" as Id<"tags">, color: "green", icon: "✨", name: "UX" },
 ];
 
 describe("TagFilterBar", () => {

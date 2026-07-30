@@ -37,86 +37,92 @@ const DEFAULT_KEYWORDS = [
 ];
 
 export const siteConfig = {
-  name: SITE_NAME,
-  url: BASE_URL,
+  author: "Reflet Team",
   description: DEFAULT_DESCRIPTION,
   keywords: DEFAULT_KEYWORDS,
-  author: "Reflet Team",
+  name: SITE_NAME,
   twitterHandle: "@reflet_app",
+  url: BASE_URL,
 };
 
 export const viewport: Viewport = {
-  width: "device-width",
   initialScale: 1,
   maximumScale: 5,
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+    { color: "#ffffff", media: "(prefers-color-scheme: light)" },
+    { color: "#0a0a0a", media: "(prefers-color-scheme: dark)" },
   ],
+  width: "device-width",
 };
 
 const DEFAULT_OG_IMAGE = "/api/og";
 
 export const defaultMetadata: Metadata = {
-  metadataBase: new URL(BASE_URL),
-  title: {
-    default: DEFAULT_TITLE,
-    template: `%s | ${SITE_NAME}`,
-  },
-  description: DEFAULT_DESCRIPTION,
-  keywords: DEFAULT_KEYWORDS,
-  authors: [{ name: "Reflet Team", url: BASE_URL }],
-  creator: "Reflet",
-  publisher: "Reflet",
-  applicationName: SITE_NAME,
-  generator: "Next.js",
-  referrer: "origin-when-cross-origin",
-  formatDetection: {
-    email: false,
-    address: false,
-    telephone: false,
-  },
-  openGraph: {
-    type: "website",
-    locale: "en_US",
-    url: BASE_URL,
-    siteName: SITE_NAME,
-    title: DEFAULT_TITLE,
-    description: DEFAULT_DESCRIPTION,
-    images: [
-      {
-        url: DEFAULT_OG_IMAGE,
-        width: 1200,
-        height: 630,
-        alt: "Reflet - Product Feedback & Roadmap Platform",
-        type: "image/png",
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: DEFAULT_TITLE,
-    description: DEFAULT_DESCRIPTION,
-    images: [DEFAULT_OG_IMAGE],
-    creator: "@reflet_app",
-    site: "@reflet_app",
-  },
-  robots: {
-    index: true,
-    follow: true,
-    nocache: false,
-    googleBot: {
-      index: true,
-      follow: true,
-      "max-video-preview": -1,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-    },
-  },
   alternates: {
     types: {
       "application/rss+xml": `${BASE_URL}/feed.xml`,
     },
+  },
+  appleWebApp: {
+    statusBarStyle: "default",
+    title: "Reflet",
+  },
+  applicationName: SITE_NAME,
+  authors: [{ name: "Reflet Team", url: BASE_URL }],
+  category: "technology",
+  classification: "Business Software",
+  creator: "Reflet",
+  description: DEFAULT_DESCRIPTION,
+  formatDetection: {
+    address: false,
+    email: false,
+    telephone: false,
+  },
+  generator: "Next.js",
+  keywords: DEFAULT_KEYWORDS,
+  metadataBase: new URL(BASE_URL),
+  openGraph: {
+    description: DEFAULT_DESCRIPTION,
+    images: [
+      {
+        alt: "Reflet - Product Feedback & Roadmap Platform",
+        height: 630,
+        type: "image/png",
+        url: DEFAULT_OG_IMAGE,
+        width: 1200,
+      },
+    ],
+    locale: "en_US",
+    siteName: SITE_NAME,
+    title: DEFAULT_TITLE,
+    type: "website",
+    url: BASE_URL,
+  },
+  publisher: "Reflet",
+  referrer: "origin-when-cross-origin",
+  robots: {
+    follow: true,
+    googleBot: {
+      follow: true,
+      index: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+    index: true,
+    nocache: false,
+  },
+  title: {
+    default: DEFAULT_TITLE,
+    template: `%s | ${SITE_NAME}`,
+  },
+  twitter: {
+    card: "summary_large_image",
+    creator: "@reflet_app",
+    description: DEFAULT_DESCRIPTION,
+    images: [DEFAULT_OG_IMAGE],
+    site: "@reflet_app",
+    title: DEFAULT_TITLE,
   },
   verification: {
     // Add your verification codes here when available
@@ -124,12 +130,6 @@ export const defaultMetadata: Metadata = {
     // yandex: 'your-yandex-verification-code',
     // bing: 'your-bing-verification-code',
   },
-  appleWebApp: {
-    title: "Reflet",
-    statusBarStyle: "default",
-  },
-  category: "technology",
-  classification: "Business Software",
 };
 
 /**
@@ -186,38 +186,38 @@ export function generatePageMetadata(options: {
   const titleValue = needsAbsoluteTitle ? { absolute: title } : title;
 
   return {
-    title: titleValue,
-    description,
-    keywords: allKeywords,
-    openGraph: {
-      title,
-      description,
-      url,
-      locale: "en_US",
-      type: "website",
-      siteName: SITE_NAME,
-      images: [
-        {
-          url: image,
-          width: 1200,
-          height: 630,
-          alt: title,
-          type: "image/png",
-        },
-      ],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: [image],
-    },
     alternates: {
       canonical: url,
     },
+    description,
+    keywords: allKeywords,
+    openGraph: {
+      description,
+      images: [
+        {
+          alt: title,
+          height: 630,
+          type: "image/png",
+          url: image,
+          width: 1200,
+        },
+      ],
+      locale: "en_US",
+      siteName: SITE_NAME,
+      title,
+      type: "website",
+      url,
+    },
     robots: noIndex
-      ? { index: false, follow: false }
-      : { index: true, follow: true },
+      ? { follow: false, index: false }
+      : { follow: true, index: true },
+    title: titleValue,
+    twitter: {
+      card: "summary_large_image",
+      description,
+      images: [image],
+      title,
+    },
   };
 }
 
@@ -234,30 +234,30 @@ export function generateOrgMetadata(options: {
   const { orgName, orgSlug, page, description, feedbackId } = options;
 
   const titles = {
-    feedback: `${orgName} - Feature Requests & Feedback`,
-    roadmap: `${orgName} - Product Roadmap`,
     changelog: `${orgName} - Changelog & Updates`,
+    feedback: `${orgName} - Feature Requests & Feedback`,
     "feedback-item": `Feedback | ${orgName}`,
+    roadmap: `${orgName} - Product Roadmap`,
   } as const;
 
   const descriptions = {
-    feedback: `Submit feature requests and feedback for ${orgName}. Vote on ideas and help shape the product.`,
-    roadmap: `See what ${orgName} is working on and what's coming next. Transparent product roadmap.`,
     changelog: `Stay up to date with the latest updates and improvements from ${orgName}.`,
+    feedback: `Submit feature requests and feedback for ${orgName}. Vote on ideas and help shape the product.`,
     "feedback-item": `View feature requests and feedback for ${orgName}.`,
+    roadmap: `See what ${orgName} is working on and what's coming next. Transparent product roadmap.`,
   } as const;
 
   const paths = {
-    feedback: `/${orgSlug}`,
-    roadmap: `/${orgSlug}/roadmap`,
     changelog: `/${orgSlug}/changelog`,
+    feedback: `/${orgSlug}`,
     "feedback-item": `/${orgSlug}/feedback/${feedbackId ?? ""}`,
+    roadmap: `/${orgSlug}/roadmap`,
   } as const;
 
   return generatePageMetadata({
-    title: titles[page],
     description: description ?? descriptions[page],
-    path: paths[page],
     keywords: [orgName, page, "product updates"],
+    path: paths[page],
+    title: titles[page],
   });
 }

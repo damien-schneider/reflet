@@ -32,8 +32,8 @@ describe("useMediaUpload", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
       json: () => Promise.resolve({ storageId: "storage-id-456" }),
+      ok: true,
     });
     const mod = await import("./use-media-upload");
     useMediaUpload = mod.useMediaUpload;
@@ -63,12 +63,12 @@ describe("useMediaUpload", () => {
       });
 
       expect(uploadResult).toEqual({
-        url: "https://storage.example.com/media.jpg",
         type: "image",
+        url: "https://storage.example.com/media.jpg",
       });
       expect(onSuccess).toHaveBeenCalledWith({
-        url: "https://storage.example.com/media.jpg",
         type: "image",
+        url: "https://storage.example.com/media.jpg",
       });
     });
 
@@ -83,8 +83,8 @@ describe("useMediaUpload", () => {
       });
 
       expect(uploadResult).toEqual({
-        url: "https://storage.example.com/media.jpg",
         type: "video",
+        url: "https://storage.example.com/media.jpg",
       });
     });
 
@@ -111,7 +111,7 @@ describe("useMediaUpload", () => {
     it("rejects oversized images", async () => {
       const onError = vi.fn();
       const { result } = renderHook(() =>
-        useMediaUpload({ onError, maxImageSizeMB: 2 })
+        useMediaUpload({ maxImageSizeMB: 2, onError })
       );
 
       const largeContent = new ArrayBuffer(3 * 1024 * 1024);
@@ -132,7 +132,7 @@ describe("useMediaUpload", () => {
     it("rejects oversized videos", async () => {
       const onError = vi.fn();
       const { result } = renderHook(() =>
-        useMediaUpload({ onError, maxVideoSizeMB: 10 })
+        useMediaUpload({ maxVideoSizeMB: 10, onError })
       );
 
       const largeContent = new ArrayBuffer(11 * 1024 * 1024);

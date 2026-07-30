@@ -20,15 +20,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const ROLE_ICONS = {
-  owner: Crown,
   admin: Shield,
   member: User,
+  owner: Crown,
 };
 
 const ROLE_LABELS = {
-  owner: "Owner",
   admin: "Admin",
   member: "Member",
+  owner: "Owner",
 };
 
 interface MemberInfo {

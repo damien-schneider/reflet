@@ -51,7 +51,6 @@ function getConfirmPasswordErrors(
   if (confirmPasswordError) {
     return [confirmPasswordError];
   }
-  return undefined;
 }
 
 export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {

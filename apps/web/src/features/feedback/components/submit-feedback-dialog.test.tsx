@@ -65,20 +65,20 @@ vi.mock("./attachment-upload", () => ({
 import { SubmitFeedbackDialog } from "./submit-feedback-dialog";
 
 const baseFeedback = {
-  title: "",
+  attachments: [] as string[],
   description: "",
   email: "",
-  attachments: [] as string[],
+  title: "",
 };
 
 const baseProps = {
+  feedback: baseFeedback,
+  isMember: true,
   isOpen: true,
+  isSubmitting: false,
+  onFeedbackChange: vi.fn(),
   onOpenChange: vi.fn(),
   onSubmit: vi.fn().mockResolvedValue(undefined),
-  feedback: baseFeedback,
-  onFeedbackChange: vi.fn(),
-  isSubmitting: false,
-  isMember: true,
 };
 
 describe("SubmitFeedbackDialog", () => {

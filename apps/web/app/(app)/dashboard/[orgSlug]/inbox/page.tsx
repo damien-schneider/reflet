@@ -39,10 +39,10 @@ function formatTeamMembers(members: Member[] | undefined) {
   return members
     .filter((m) => m.role === "admin" || m.role === "owner")
     .map((m) => ({
-      id: m.userId,
-      name: m.user?.name ?? undefined,
       email: m.user?.email ?? "",
+      id: m.userId,
       image: m.user?.image ?? undefined,
+      name: m.user?.name ?? undefined,
     }));
 }
 
@@ -133,7 +133,7 @@ export default function InboxPage({
     if (!selectedConversationId) {
       return;
     }
-    await sendMessage({ conversationId: selectedConversationId, body });
+    await sendMessage({ body, conversationId: selectedConversationId });
   };
 
   const handleStatusChange = async (status: ConversationStatus) => {
@@ -148,8 +148,8 @@ export default function InboxPage({
       return;
     }
     await assignConversation({
-      id: selectedConversationId,
       assignedTo: memberId,
+      id: selectedConversationId,
     });
   };
 
@@ -173,8 +173,8 @@ export default function InboxPage({
       return;
     }
     await assignConversation({
-      id: conversationId as Id<"supportConversations">,
       assignedTo: currentUserId,
+      id: conversationId as Id<"supportConversations">,
     });
   };
 
@@ -214,13 +214,13 @@ export default function InboxPage({
 
   useKeyboardShortcuts(
     {
+      "/": () => searchInputRef.current?.focus(),
+      c: () => handleStatusChange("closed"),
+      e: () => handleStatusChange("resolved"),
       j: () => selectConversationByIndex(activeIndex + 1),
       k: () => selectConversationByIndex(activeIndex - 1),
-      e: () => handleStatusChange("resolved"),
-      c: () => handleStatusChange("closed"),
-      "/": () => searchInputRef.current?.focus(),
-      "shift+/": () => setShowHints((prev) => !prev),
       "meta+k": () => setCommandPaletteOpen(true),
+      "shift+/": () => setShowHints((prev) => !prev),
     },
     { enabled: isAdmin === true }
   );

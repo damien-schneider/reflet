@@ -103,11 +103,11 @@ export default function ReleaseSettingsPage({
       setIsSaving(true);
       try {
         await updateOrg({
-          id: orgId,
           changelogSettings: {
             ...settings,
             ...updates,
           },
+          id: orgId,
         });
         toast.success("Settings saved");
       } catch (error) {
@@ -222,7 +222,7 @@ export default function ReleaseSettingsPage({
               </div>
             </div>
             <Link
-              className={buttonVariants({ variant: "outline", size: "sm" })}
+              className={buttonVariants({ size: "sm", variant: "outline" })}
               href={`/dashboard/${orgSlug}/settings/github`}
             >
               <GithubLogo className="mr-1.5 h-4 w-4" />

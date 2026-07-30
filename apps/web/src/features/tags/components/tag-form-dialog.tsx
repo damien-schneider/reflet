@@ -53,9 +53,9 @@ export function TagFormDialog({
     color: TagColor;
     icon?: string;
   }>({
-    name: "",
     color: "blue",
     icon: undefined,
+    name: "",
   });
 
   useEffect(() => {
@@ -65,15 +65,15 @@ export function TagFormDialog({
         ? editingTag.color
         : migrateHexToNamedColor(editingTag.color);
       setFormData({
-        name: editingTag.name,
         color,
         icon: editingTag.icon,
+        name: editingTag.name,
       });
     } else {
       setFormData({
-        name: "",
         color: "blue",
         icon: undefined,
+        name: "",
       });
     }
   }, [editingTag]);
@@ -86,10 +86,10 @@ export function TagFormDialog({
     setIsSubmitting(true);
     try {
       await createTag({
-        organizationId,
-        name: formData.name.trim(),
         color: formData.color,
         icon: formData.icon,
+        name: formData.name.trim(),
+        organizationId,
       });
       onSuccess();
     } finally {
@@ -105,10 +105,10 @@ export function TagFormDialog({
     setIsSubmitting(true);
     try {
       await updateTag({
-        id: editingTag._id,
-        name: formData.name.trim(),
         color: formData.color,
         icon: formData.icon,
+        id: editingTag._id,
+        name: formData.name.trim(),
       });
       onSuccess();
     } finally {

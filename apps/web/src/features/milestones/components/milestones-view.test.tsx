@@ -4,30 +4,30 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 // Mock convex/react
 const mockMilestones = [
   {
-    _id: "m1",
     _creationTime: 1_700_000_000_000,
-    name: "Alpha release",
-    emoji: "\u{1F680}",
+    _id: "m1",
     color: "blue",
-    timeHorizon: "now",
+    emoji: "\u{1F680}",
+    name: "Alpha release",
+    progress: { completed: 2, inProgress: 1, percentage: 40, total: 5 },
     status: "active",
-    progress: { total: 5, completed: 2, inProgress: 1, percentage: 40 },
+    timeHorizon: "now",
   },
   {
-    _id: "m2",
     _creationTime: 1_700_000_001_000,
-    name: "Beta release",
-    emoji: "\u{1F3AF}",
+    _id: "m2",
     color: "green",
-    timeHorizon: "next_month",
+    emoji: "\u{1F3AF}",
+    name: "Beta release",
+    progress: { completed: 0, inProgress: 1, percentage: 0, total: 3 },
     status: "active",
-    progress: { total: 3, completed: 0, inProgress: 1, percentage: 0 },
+    timeHorizon: "next_month",
   },
 ];
 
 vi.mock("convex/react", () => ({
-  useQuery: () => mockMilestones,
   useMutation: () => vi.fn(),
+  useQuery: () => mockMilestones,
 }));
 
 // Mock useIsMobile to avoid window.matchMedia errors in test env
@@ -67,11 +67,15 @@ vi.mock("./milestone-expanded-panel", () => ({
 }));
 
 vi.mock("motion/react", () => ({
+  AnimatePresence: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
   motion: new Proxy(
     {},
     {
-      get: (_target, prop: string) => {
-        return ({
+      get:
+        (_target, prop: string) =>
+        ({
           children,
           className,
           style,
@@ -101,12 +105,8 @@ vi.mock("motion/react", () => ({
               {children}
             </Tag>
           );
-        };
-      },
+        },
     }
-  ),
-  AnimatePresence: ({ children }: { children: React.ReactNode }) => (
-    <>{children}</>
   ),
 }));
 
@@ -136,9 +136,9 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { MilestonesView } from "./milestones-view";
 
 const defaultProps = {
-  organizationId: "org123" as Id<"organizations">,
   isAdmin: true,
   onFeedbackClick: vi.fn(),
+  organizationId: "org123" as Id<"organizations">,
 };
 
 const ZONE_LABEL_PATTERN =
@@ -186,7 +186,7 @@ describe("MilestonesView - Trackpad Zoom", () => {
     const viewport = screen.getByTestId("scroll-viewport");
 
     // Non-bubbling event: only caught if listener is directly on the viewport
-    dispatchWheel(viewport, { deltaY: -20, ctrlKey: true });
+    dispatchWheel(viewport, { ctrlKey: true, deltaY: -20 });
 
     const widths = getZoneMinWidths();
     expect(widths.length).toBeGreaterThan(0);
@@ -197,7 +197,7 @@ describe("MilestonesView - Trackpad Zoom", () => {
     render(<MilestonesView {...defaultProps} />);
     const viewport = screen.getByTestId("scroll-viewport");
 
-    dispatchWheel(viewport, { deltaY: 20, ctrlKey: true });
+    dispatchWheel(viewport, { ctrlKey: true, deltaY: 20 });
 
     const widths = getZoneMinWidths();
     expect(widths.length).toBeGreaterThan(0);
@@ -208,7 +208,7 @@ describe("MilestonesView - Trackpad Zoom", () => {
     render(<MilestonesView {...defaultProps} />);
     const viewport = screen.getByTestId("scroll-viewport");
 
-    dispatchWheel(viewport, { deltaY: -50, ctrlKey: false });
+    dispatchWheel(viewport, { ctrlKey: false, deltaY: -50 });
 
     const widths = getZoneMinWidths();
     expect(widths.every((w) => w === 160)).toBe(true);
@@ -219,7 +219,7 @@ describe("MilestonesView - Trackpad Zoom", () => {
     const viewport = screen.getByTestId("scroll-viewport");
 
     for (let i = 0; i < 50; i++) {
-      dispatchWheel(viewport, { deltaY: 100, ctrlKey: true });
+      dispatchWheel(viewport, { ctrlKey: true, deltaY: 100 });
     }
 
     const widths = getZoneMinWidths();
@@ -231,7 +231,7 @@ describe("MilestonesView - Trackpad Zoom", () => {
     const viewport = screen.getByTestId("scroll-viewport");
 
     for (let i = 0; i < 100; i++) {
-      dispatchWheel(viewport, { deltaY: -100, ctrlKey: true });
+      dispatchWheel(viewport, { ctrlKey: true, deltaY: -100 });
     }
 
     const widths = getZoneMinWidths();

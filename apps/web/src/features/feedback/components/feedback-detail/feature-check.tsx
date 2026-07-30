@@ -33,32 +33,32 @@ interface EvidenceItem {
 
 const RESULT_CONFIG = {
   implemented: {
-    icon: CheckCircle,
-    label: "Implemented",
     className:
       "bg-green-50 text-green-700 border-green-200 dark:bg-green-950/50 dark:text-green-300 dark:border-green-800",
+    icon: CheckCircle,
     iconClassName: "text-green-600 dark:text-green-400",
-  },
-  partially_implemented: {
-    icon: Warning,
-    label: "Partially Implemented",
-    className:
-      "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800",
-    iconClassName: "text-amber-600 dark:text-amber-400",
-  },
-  not_implemented: {
-    icon: XCircle,
-    label: "Not Implemented",
-    className:
-      "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800",
-    iconClassName: "text-red-600 dark:text-red-400",
+    label: "Implemented",
   },
   inconclusive: {
-    icon: Question,
-    label: "Inconclusive",
     className:
       "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-950/50 dark:text-gray-300 dark:border-gray-800",
+    icon: Question,
     iconClassName: "text-gray-600 dark:text-gray-400",
+    label: "Inconclusive",
+  },
+  not_implemented: {
+    className:
+      "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800",
+    icon: XCircle,
+    iconClassName: "text-red-600 dark:text-red-400",
+    label: "Not Implemented",
+  },
+  partially_implemented: {
+    className:
+      "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800",
+    icon: Warning,
+    iconClassName: "text-amber-600 dark:text-amber-400",
+    label: "Partially Implemented",
   },
 } as const;
 

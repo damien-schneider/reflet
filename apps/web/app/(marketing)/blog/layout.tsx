@@ -4,16 +4,16 @@ import Link from "next/link";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
-  title: "Blog",
   description:
     "Learn about product feedback management, roadmap planning, and building products users love. Guides, tutorials, and best practices from the Reflet team.",
-  path: "/blog",
   keywords: [
     "product management blog",
     "feedback management",
     "roadmap planning",
     "product development",
   ],
+  path: "/blog",
+  title: "Blog",
 });
 
 export default function BlogLayout({

@@ -18,10 +18,10 @@ export const listStatuses = internalQuery({
       .collect();
 
     return statuses.map((s) => ({
-      id: s._id,
-      name: s.name,
       color: s.color,
       icon: s.icon,
+      id: s._id,
+      name: s.name,
       order: s.order,
     }));
   },
@@ -33,12 +33,11 @@ export const listStatuses = internalQuery({
 
 export const createStatus = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
-    name: v.string(),
     color: v.string(),
     icon: v.optional(v.string()),
+    name: v.string(),
+    organizationId: v.id("organizations"),
   },
-  returns: v.object({ id: v.id("organizationStatuses") }),
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query("organizationStatuses")
@@ -50,28 +49,28 @@ export const createStatus = internalMutation({
 
     const now = Date.now();
     const id = await ctx.db.insert("organizationStatuses", {
-      organizationId: args.organizationId,
-      name: args.name,
       color: args.color,
-      icon: args.icon,
-      order: maxOrder + 1,
       createdAt: now,
+      icon: args.icon,
+      name: args.name,
+      order: maxOrder + 1,
+      organizationId: args.organizationId,
       updatedAt: now,
     });
 
     return { id };
   },
+  returns: v.object({ id: v.id("organizationStatuses") }),
 });
 
 export const updateStatus = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
-    statusId: v.id("organizationStatuses"),
-    name: v.optional(v.string()),
     color: v.optional(v.string()),
     icon: v.optional(v.string()),
+    name: v.optional(v.string()),
+    organizationId: v.id("organizations"),
+    statusId: v.id("organizationStatuses"),
   },
-  returns: v.object({ success: v.boolean() }),
   handler: async (ctx, args) => {
     const status = await ctx.db.get(args.statusId);
     if (!status || status.organizationId !== args.organizationId) {
@@ -92,6 +91,7 @@ export const updateStatus = internalMutation({
     await ctx.db.patch(args.statusId, updates);
     return { success: true };
   },
+  returns: v.object({ success: v.boolean() }),
 });
 
 export const deleteStatus = internalMutation({
@@ -99,7 +99,6 @@ export const deleteStatus = internalMutation({
     organizationId: v.id("organizations"),
     statusId: v.id("organizationStatuses"),
   },
-  returns: v.object({ success: v.boolean() }),
   handler: async (ctx, args) => {
     const status = await ctx.db.get(args.statusId);
     if (!status || status.organizationId !== args.organizationId) {
@@ -126,4 +125,5 @@ export const deleteStatus = internalMutation({
     await ctx.db.delete(args.statusId);
     return { success: true };
   },
+  returns: v.object({ success: v.boolean() }),
 });

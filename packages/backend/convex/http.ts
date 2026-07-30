@@ -38,8 +38,6 @@ registerPublicApiRoutes(http);
 
 // RSS feed
 http.route({
-  path: "/rss",
-  method: "GET",
   handler: httpAction(async (ctx, request) => {
     const url = new URL(request.url);
     const pathParts = url.pathname.split("/").filter(Boolean);
@@ -66,20 +64,22 @@ http.route({
 
     const releases = await ctx.runQuery(
       internal.changelog.rss.getPublishedReleases,
-      { organizationId: org._id, limit: 50 }
+      { limit: 50, organizationId: org._id }
     );
 
     const siteUrl = process.env.SITE_URL ?? "";
     const rssXml = generateRssFeed(org, releases, siteUrl);
 
     return new Response(rssXml, {
-      status: 200,
       headers: {
-        "Content-Type": "application/rss+xml; charset=utf-8",
         "Cache-Control": "public, max-age=3600",
+        "Content-Type": "application/rss+xml; charset=utf-8",
       },
+      status: 200,
     });
   }),
+  method: "GET",
+  path: "/rss",
 });
 
 // Admin API (v1)
@@ -88,7 +88,7 @@ registerAdminContentRoutes(http);
 registerAdminManagementRoutes(http);
 
 // MCP server (JSON-RPC 2.0 over HTTP)
-http.route({ path: "/mcp", method: "POST", handler: mcpHandler });
-http.route({ path: "/mcp", method: "OPTIONS", handler: mcpCorsHandler });
+http.route({ handler: mcpHandler, method: "POST", path: "/mcp" });
+http.route({ handler: mcpCorsHandler, method: "OPTIONS", path: "/mcp" });
 
 export default http;

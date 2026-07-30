@@ -24,9 +24,9 @@ import { cn } from "@/lib/utils";
 // =============================================================================
 
 const TABS = [
-  { id: "feedback", label: "Feedback", icon: ChatCircleDots },
-  { id: "roadmap", label: "Roadmap", icon: Kanban },
-  { id: "changelog", label: "Changelog", icon: MegaphoneSimple },
+  { icon: ChatCircleDots, id: "feedback", label: "Feedback" },
+  { icon: Kanban, id: "roadmap", label: "Roadmap" },
+  { icon: MegaphoneSimple, id: "changelog", label: "Changelog" },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
@@ -37,55 +37,55 @@ type TabId = (typeof TABS)[number]["id"];
 
 const FEEDBACK_ITEMS = [
   {
-    id: "dark-mode",
-    title: "Dark mode support",
-    desc: "Please add a dark theme for late night work sessions.",
-    votes: 248,
     color: "green" as const,
+    desc: "Please add a dark theme for late night work sessions.",
+    id: "dark-mode",
     label: "Planned",
     tags: [
-      { label: "UX", color: "purple" as const },
-      { label: "Design", color: "pink" as const },
+      { color: "purple" as const, label: "UX" },
+      { color: "pink" as const, label: "Design" },
     ],
+    title: "Dark mode support",
+    votes: 248,
   },
   {
-    id: "slack-integration",
-    title: "Slack Integration",
-    desc: "Would love to see updates directly in our Slack channels.",
-    votes: 186,
     color: "orange" as const,
+    desc: "Would love to see updates directly in our Slack channels.",
+    id: "slack-integration",
     label: "In Progress",
-    tags: [{ label: "Integration", color: "blue" as const }],
+    tags: [{ color: "blue" as const, label: "Integration" }],
+    title: "Slack Integration",
+    votes: 186,
   },
   {
-    id: "public-api",
-    title: "Public API Access",
-    desc: "We want to pull feedback into our internal dashboard.",
-    votes: 142,
     color: "blue" as const,
+    desc: "We want to pull feedback into our internal dashboard.",
+    id: "public-api",
     label: "Under Review",
     tags: [
-      { label: "API", color: "blue" as const },
-      { label: "Dev", color: "gray" as const },
+      { color: "blue" as const, label: "API" },
+      { color: "gray" as const, label: "Dev" },
     ],
+    title: "Public API Access",
+    votes: 142,
   },
   {
-    id: "mobile-app",
-    title: "Mobile App",
-    desc: "A native app for iOS and Android would be great.",
-    votes: 98,
     color: "green" as const,
+    desc: "A native app for iOS and Android would be great.",
+    id: "mobile-app",
     label: "Planned",
-    tags: [{ label: "Mobile", color: "orange" as const }],
+    tags: [{ color: "orange" as const, label: "Mobile" }],
+    title: "Mobile App",
+    votes: 98,
   },
   {
-    id: "csv-export",
-    title: "CSV Export",
-    desc: "Need to export feedback data for reporting.",
-    votes: 76,
     color: "purple" as const,
+    desc: "Need to export feedback data for reporting.",
+    id: "csv-export",
     label: "Done",
-    tags: [{ label: "Data", color: "yellow" as const }],
+    tags: [{ color: "yellow" as const, label: "Data" }],
+    title: "CSV Export",
+    votes: 76,
   },
 ] as const;
 
@@ -95,31 +95,31 @@ const FEEDBACK_ITEMS = [
 
 const ROADMAP_COLUMNS = [
   {
-    id: "planned",
-    title: "Planned",
     color: "green" as const,
+    id: "planned",
     items: [
       { id: "r1", title: "Dark mode support", votes: 248 },
       { id: "r2", title: "Mobile app", votes: 98 },
     ],
+    title: "Planned",
   },
   {
-    id: "in-progress",
-    title: "In Progress",
     color: "orange" as const,
+    id: "in-progress",
     items: [
       { id: "r3", title: "Slack Integration", votes: 186 },
       { id: "r4", title: "Webhook events", votes: 64 },
     ],
+    title: "In Progress",
   },
   {
-    id: "done",
-    title: "Done",
     color: "purple" as const,
+    id: "done",
     items: [
       { id: "r5", title: "CSV Export", votes: 76 },
       { id: "r6", title: "Email digest", votes: 52 },
     ],
+    title: "Done",
   },
 ] as const;
 
@@ -129,31 +129,31 @@ const ROADMAP_COLUMNS = [
 
 const CHANGELOG_ENTRIES = [
   {
-    id: "c1",
-    version: "v2.4.0",
-    date: "Feb 18, 2026",
-    title: "Public API & Webhook Support",
-    items: ["REST API with full CRUD", "Webhook events for status changes"],
     color: "blue" as const,
+    date: "Feb 18, 2026",
+    id: "c1",
+    items: ["REST API with full CRUD", "Webhook events for status changes"],
+    title: "Public API & Webhook Support",
+    version: "v2.4.0",
   },
   {
-    id: "c2",
-    version: "v2.3.0",
-    date: "Feb 4, 2026",
-    title: "AI-Powered Triage",
-    items: ["Auto-categorize feedback with AI", "Duplicate detection & merge"],
     color: "purple" as const,
+    date: "Feb 4, 2026",
+    id: "c2",
+    items: ["Auto-categorize feedback with AI", "Duplicate detection & merge"],
+    title: "AI-Powered Triage",
+    version: "v2.3.0",
   },
   {
-    id: "c3",
-    version: "v2.2.0",
+    color: "green" as const,
     date: "Jan 20, 2026",
-    title: "Embeddable Widget SDK",
+    id: "c3",
     items: [
       "Drop-in feedback widget for any app",
       "Customizable themes & triggers",
     ],
-    color: "green" as const,
+    title: "Embeddable Widget SDK",
+    version: "v2.2.0",
   },
 ] as const;
 
@@ -266,9 +266,9 @@ function InteractiveMockup() {
                       className="absolute inset-0 rounded-md bg-card shadow-sm"
                       layoutId="hero-tab-bg"
                       transition={{
-                        type: "spring",
-                        stiffness: 400,
                         damping: 30,
+                        stiffness: 400,
+                        type: "spring",
                       }}
                     />
                   )}

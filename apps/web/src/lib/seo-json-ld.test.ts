@@ -102,9 +102,9 @@ describe("getOrgPageJsonLd", () => {
 
   it("uses custom description when provided", () => {
     const ld = getOrgPageJsonLd({
+      description: "Custom desc",
       orgName: "Acme",
       orgSlug: "acme",
-      description: "Custom desc",
     });
 
     expect(ld.description).toBe("Custom desc");
@@ -138,12 +138,12 @@ describe("getOrgPageJsonLd", () => {
 
 describe("getBlogPostJsonLd", () => {
   const baseArgs = {
-    title: "My Post",
+    author: "John Doe",
+    datePublished: "2025-01-15",
     description: "A test post",
     slug: "my-post",
-    datePublished: "2025-01-15",
-    author: "John Doe",
     tags: ["react", "nextjs"],
+    title: "My Post",
   };
 
   it("returns Article type with correct fields", () => {
@@ -209,10 +209,10 @@ describe("getBlogPostJsonLd", () => {
 describe("getComparisonJsonLd", () => {
   it("returns WebPage type", () => {
     const ld = getComparisonJsonLd({
-      title: "Reflet vs Canny",
+      competitorName: "Canny",
       description: "Comparison",
       slug: "reflet-vs-canny",
-      competitorName: "Canny",
+      title: "Reflet vs Canny",
     });
 
     expect(ld["@context"]).toBe("https://schema.org");
@@ -223,10 +223,10 @@ describe("getComparisonJsonLd", () => {
 
   it("contains both Reflet and competitor in about array", () => {
     const ld = getComparisonJsonLd({
-      title: "Reflet vs Productboard",
+      competitorName: "Productboard",
       description: "Compare",
       slug: "reflet-vs-productboard",
-      competitorName: "Productboard",
+      title: "Reflet vs Productboard",
     });
 
     expect(ld.about).toHaveLength(2);
@@ -239,13 +239,13 @@ describe("getComparisonJsonLd", () => {
 
 describe("getHowToJsonLd", () => {
   const baseArgs = {
-    title: "How to Collect Feedback",
     description: "A guide",
     slug: "how-to-collect-feedback",
     steps: [
       { name: "Step 1", text: "Do first thing" },
       { name: "Step 2", text: "Do second thing" },
     ],
+    title: "How to Collect Feedback",
   };
 
   it("returns HowTo type", () => {

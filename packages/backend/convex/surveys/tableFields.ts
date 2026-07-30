@@ -27,20 +27,20 @@ export const triggerTypeValidator = v.union(
 
 export const questionConfigValidator = v.optional(
   v.object({
-    minValue: v.optional(v.number()),
+    choices: v.optional(v.array(v.string())),
+    maxLabel: v.optional(v.string()),
+    maxLength: v.optional(v.number()),
     maxValue: v.optional(v.number()),
     minLabel: v.optional(v.string()),
-    maxLabel: v.optional(v.string()),
-    choices: v.optional(v.array(v.string())),
+    minValue: v.optional(v.number()),
     placeholder: v.optional(v.string()),
-    maxLength: v.optional(v.number()),
   })
 );
 
 export const triggerConfigValidator = v.optional(
   v.object({
-    pageUrl: v.optional(v.string()),
     delayMs: v.optional(v.number()),
+    pageUrl: v.optional(v.string()),
     sampleRate: v.optional(v.number()),
   })
 );
@@ -70,75 +70,74 @@ export const conditionalLogicConditionValidator = v.union(
 
 export const conditionalLogicValidator = v.optional(
   v.object({
-    dependsOn: v.optional(v.id("surveyQuestions")),
     condition: v.optional(conditionalLogicConditionValidator),
+    dependsOn: v.optional(v.id("surveyQuestions")),
     value: v.optional(v.union(v.string(), v.number(), v.boolean())),
   })
 );
 
 export const surveyTables = {
-  surveys: defineTable({
+  surveyAnswers: defineTable({
+    answeredAt: v.number(),
     organizationId: v.id("organizations"),
-    title: v.string(),
-    description: v.optional(v.string()),
-    status: surveyStatusValidator,
-    createdBy: v.string(),
-    triggerType: triggerTypeValidator,
-    triggerConfig: triggerConfigValidator,
-    startsAt: v.optional(v.number()),
-    endsAt: v.optional(v.number()),
-    maxResponses: v.optional(v.number()),
-    responseCount: v.number(),
-    completionRate: v.number(),
-    createdAt: v.number(),
-    updatedAt: v.number(),
+    questionId: v.id("surveyQuestions"),
+    responseId: v.id("surveyResponses"),
+    surveyId: v.id("surveys"),
+    value: answerValueValidator,
   })
-    .index("by_organization", ["organizationId"])
-    .index("by_organization_status", ["organizationId", "status"]),
+    .index("by_response", ["responseId"])
+    .index("by_question", ["questionId"])
+    .index("by_survey", ["surveyId"])
+    .index("by_survey_date", ["surveyId", "answeredAt"]),
 
   surveyQuestions: defineTable({
-    surveyId: v.id("surveys"),
-    organizationId: v.id("organizations"),
-    type: questionTypeValidator,
-    title: v.string(),
-    description: v.optional(v.string()),
-    required: v.boolean(),
-    order: v.number(),
-    config: questionConfigValidator,
     conditionalLogic: conditionalLogicValidator,
+    config: questionConfigValidator,
+    description: v.optional(v.string()),
+    order: v.number(),
+    organizationId: v.id("organizations"),
+    required: v.boolean(),
+    surveyId: v.id("surveys"),
+    title: v.string(),
+    type: questionTypeValidator,
   })
     .index("by_survey", ["surveyId"])
     .index("by_survey_order", ["surveyId", "order"]),
 
   surveyResponses: defineTable({
-    surveyId: v.id("surveys"),
-    organizationId: v.id("organizations"),
-    externalUserId: v.optional(v.id("externalUsers")),
-    respondentId: v.optional(v.string()),
-    status: responseStatusValidator,
-    startedAt: v.number(),
     completedAt: v.optional(v.number()),
+    externalUserId: v.optional(v.id("externalUsers")),
     metadata: v.optional(
       v.object({
         pageUrl: v.optional(v.string()),
         userAgent: v.optional(v.string()),
       })
     ),
+    organizationId: v.id("organizations"),
+    respondentId: v.optional(v.string()),
+    startedAt: v.number(),
+    status: responseStatusValidator,
+    surveyId: v.id("surveys"),
   })
     .index("by_survey", ["surveyId"])
     .index("by_survey_status", ["surveyId", "status"])
     .index("by_organization", ["organizationId"]),
-
-  surveyAnswers: defineTable({
-    responseId: v.id("surveyResponses"),
-    questionId: v.id("surveyQuestions"),
-    surveyId: v.id("surveys"),
+  surveys: defineTable({
+    completionRate: v.number(),
+    createdAt: v.number(),
+    createdBy: v.string(),
+    description: v.optional(v.string()),
+    endsAt: v.optional(v.number()),
+    maxResponses: v.optional(v.number()),
     organizationId: v.id("organizations"),
-    value: answerValueValidator,
-    answeredAt: v.number(),
+    responseCount: v.number(),
+    startsAt: v.optional(v.number()),
+    status: surveyStatusValidator,
+    title: v.string(),
+    triggerConfig: triggerConfigValidator,
+    triggerType: triggerTypeValidator,
+    updatedAt: v.number(),
   })
-    .index("by_response", ["responseId"])
-    .index("by_question", ["questionId"])
-    .index("by_survey", ["surveyId"])
-    .index("by_survey_date", ["surveyId", "answeredAt"]),
+    .index("by_organization", ["organizationId"])
+    .index("by_organization_status", ["organizationId", "status"]),
 };

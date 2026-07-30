@@ -201,9 +201,9 @@ export function RoadmapView({
                   key={status._id}
                   onDeleteClick={() =>
                     setDeleteDialogStatus({
+                      color: status.color,
                       id: status._id,
                       name: status.name,
-                      color: status.color,
                     })
                   }
                   onFeedbackClick={onFeedbackClick}
@@ -220,14 +220,14 @@ export function RoadmapView({
               {activeItem && (
                 <motion.div
                   animate={{
-                    scale: 1.05,
-                    rotate: 3,
                     boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+                    rotate: 3,
+                    scale: 1.05,
                   }}
                   className="w-64"
-                  exit={{ scale: 1, rotate: 0, opacity: 0 }}
-                  initial={{ scale: 1, rotate: 0 }}
-                  transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                  exit={{ opacity: 0, rotate: 0, scale: 1 }}
+                  initial={{ rotate: 0, scale: 1 }}
+                  transition={{ damping: 25, stiffness: 300, type: "spring" }}
                 >
                   <FeedbackCardContent isOverlay item={activeItem} />
                 </motion.div>

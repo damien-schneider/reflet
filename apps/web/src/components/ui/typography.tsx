@@ -9,17 +9,17 @@ import { cn } from "@/lib/utils";
 const h1Variants = cva(
   "font-display text-balance text-olive-950 dark:text-olive-100",
   {
+    defaultVariants: {
+      variant: "default",
+    },
     variants: {
       variant: {
         default: "text-5xl leading-tight tracking-tight",
         hero: "text-4xl leading-[1.1] tracking-tight sm:text-6xl sm:leading-tight md:text-7xl",
-        page: "text-4xl leading-tight tracking-tight sm:text-5xl",
         landing:
           "text-[clamp(2.5rem,6vw,5rem)] leading-[1.05] tracking-[-0.03em]",
+        page: "text-4xl leading-tight tracking-tight sm:text-5xl",
       },
-    },
-    defaultVariants: {
-      variant: "default",
     },
   }
 );
@@ -30,17 +30,17 @@ const h1Variants = cva(
 const h2Variants = cva(
   "font-display text-balance text-olive-950 dark:text-olive-100",
   {
-    variants: {
-      variant: {
-        default: "text-3xl leading-snug tracking-tight",
-        section: "text-4xl tracking-tight sm:text-5xl",
-        card: "text-xl font-medium text-foreground",
-        landing:
-          "text-[clamp(1.8rem,4vw,3rem)] leading-[1.1] tracking-[-0.02em]",
-      },
-    },
     defaultVariants: {
       variant: "default",
+    },
+    variants: {
+      variant: {
+        card: "text-xl font-medium text-foreground",
+        default: "text-3xl leading-snug tracking-tight",
+        landing:
+          "text-[clamp(1.8rem,4vw,3rem)] leading-[1.1] tracking-[-0.02em]",
+        section: "text-4xl tracking-tight sm:text-5xl",
+      },
     },
   }
 );
@@ -51,18 +51,18 @@ const h2Variants = cva(
 const h3Variants = cva(
   "font-display text-balance text-olive-950 dark:text-olive-100",
   {
-    variants: {
-      variant: {
-        default: "text-2xl leading-snug tracking-tight",
-        card: "text-xl font-medium text-foreground",
-        cardBold: "text-xl font-semibold text-foreground",
-        section: "font-sans text-base font-medium text-foreground text-pretty",
-        landing:
-          "text-[clamp(1.4rem,3vw,2rem)] leading-[1.15] tracking-[-0.01em]",
-      },
-    },
     defaultVariants: {
       variant: "default",
+    },
+    variants: {
+      variant: {
+        card: "text-xl font-medium text-foreground",
+        cardBold: "text-xl font-semibold text-foreground",
+        default: "text-2xl leading-snug tracking-tight",
+        landing:
+          "text-[clamp(1.4rem,3vw,2rem)] leading-[1.15] tracking-[-0.01em]",
+        section: "font-sans text-base font-medium text-foreground text-pretty",
+      },
     },
   }
 );
@@ -71,29 +71,29 @@ const h3Variants = cva(
 // Text Variants - Body text with semantic variants
 // ============================================================================
 const textVariants = cva("text-foreground", {
+  defaultVariants: {
+    align: "left",
+    variant: "body",
+  },
   variants: {
+    align: {
+      center: "text-center",
+      left: "text-left",
+      right: "text-right",
+    },
     variant: {
       body: "text-base leading-relaxed",
       bodyLarge: "text-lg leading-relaxed",
       bodySmall: "text-sm leading-relaxed",
       caption: "text-xs leading-normal text-muted-foreground",
-      label: "text-sm font-medium leading-none",
-      labelBold: "text-sm font-semibold leading-none",
-      overline:
-        "text-xs font-semibold uppercase tracking-wider text-muted-foreground",
       eyebrow:
         "text-[11px] font-semibold uppercase tracking-[0.15em] text-olive-600 dark:text-olive-400",
+      label: "text-sm font-medium leading-none",
+      labelBold: "text-sm font-semibold leading-none",
       link: "text-olive-600 underline underline-offset-4 hover:text-olive-700 dark:text-olive-400 dark:hover:text-olive-300 transition-colors",
+      overline:
+        "text-xs font-semibold uppercase tracking-wider text-muted-foreground",
     },
-    align: {
-      left: "text-left",
-      center: "text-center",
-      right: "text-right",
-    },
-  },
-  defaultVariants: {
-    variant: "body",
-    align: "left",
   },
 });
 
@@ -141,7 +141,7 @@ const Text = ({
   const Component: ElementType = as;
   return (
     <Component
-      className={cn(textVariants({ variant, align }), className)}
+      className={cn(textVariants({ align, variant }), className)}
       ref={ref as Ref<never>}
       {...(props as Record<string, unknown>)}
     />
@@ -172,15 +172,15 @@ const Muted = ({ as = "p", className, ref, ...props }: MutedProps) => {
 // ============================================================================
 
 const leadVariants = cva("text-muted-foreground leading-relaxed", {
+  defaultVariants: {
+    size: "default",
+  },
   variants: {
     size: {
       default: "text-base sm:text-xl",
-      sm: "text-[15px] sm:text-[17px]",
       lg: "text-[17px] sm:text-[19px]",
+      sm: "text-[15px] sm:text-[17px]",
     },
-  },
-  defaultVariants: {
-    size: "default",
   },
 });
 

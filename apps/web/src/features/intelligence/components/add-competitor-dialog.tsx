@@ -78,13 +78,13 @@ export function AddCompetitorDialog({
     setIsCreating(true);
     try {
       await createCompetitor({
-        organizationId,
-        name: name.trim(),
-        websiteUrl: websiteUrl.trim(),
-        description: description.trim() || undefined,
         changelogUrl: changelogUrl.trim() || undefined,
-        pricingUrl: pricingUrl.trim() || undefined,
+        description: description.trim() || undefined,
         featuresUrl: featuresUrl.trim() || undefined,
+        name: name.trim(),
+        organizationId,
+        pricingUrl: pricingUrl.trim() || undefined,
+        websiteUrl: websiteUrl.trim(),
       });
 
       toast.success("Competitor added");

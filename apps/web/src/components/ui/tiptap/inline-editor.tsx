@@ -41,46 +41,9 @@ export function TiptapInlineEditor({
   autoFocus = false,
 }: TiptapInlineEditorProps) {
   const editor = useEditor({
-    immediatelyRender: false,
-    extensions: [
-      StarterKit.configure({
-        // Disable block-level elements for inline editor
-        heading: false,
-        blockquote: false,
-        bulletList: false,
-        orderedList: false,
-        codeBlock: false,
-        horizontalRule: false,
-        hardBreak: {
-          keepMarks: true,
-        },
-      }),
-      Placeholder.configure({
-        placeholder,
-        emptyEditorClass: "is-editor-empty",
-      }),
-      Link.configure({
-        openOnClick: false,
-        HTMLAttributes: {
-          class: "tiptap-link",
-        },
-      }),
-      ...(maxLength
-        ? [
-            CharacterCount.configure({
-              limit: maxLength,
-            }),
-          ]
-        : []),
-      Markdown.configure({
-        html: false,
-        transformPastedText: true,
-        transformCopiedText: true,
-      }),
-    ],
+    autofocus: autoFocus,
     content: value,
     editable: !disabled,
-    autofocus: autoFocus,
     editorProps: {
       attributes: {
         class: "tiptap-inline-editor outline-none min-h-16 w-full",
@@ -95,6 +58,43 @@ export function TiptapInlineEditor({
         return false;
       },
     },
+    extensions: [
+      StarterKit.configure({
+        blockquote: false,
+        bulletList: false,
+        codeBlock: false,
+        hardBreak: {
+          keepMarks: true,
+        },
+        heading: false,
+        horizontalRule: false,
+        link: false,
+        orderedList: false,
+      }),
+      Placeholder.configure({
+        emptyEditorClass: "is-editor-empty",
+        placeholder,
+      }),
+      Link.configure({
+        HTMLAttributes: {
+          class: "tiptap-link",
+        },
+        openOnClick: false,
+      }),
+      ...(maxLength
+        ? [
+            CharacterCount.configure({
+              limit: maxLength,
+            }),
+          ]
+        : []),
+      Markdown.configure({
+        html: false,
+        transformCopiedText: true,
+        transformPastedText: true,
+      }),
+    ],
+    immediatelyRender: false,
     onUpdate: ({ editor: ed }) => {
       const markdown = getMarkdown(ed.storage);
       onChange(markdown);

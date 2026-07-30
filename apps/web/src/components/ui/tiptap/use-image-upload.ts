@@ -51,11 +51,11 @@ export function useImageUpload({
 
         // Step 2: Upload file to the URL
         const response = await fetch(uploadUrl, {
-          method: "POST",
+          body: file,
           headers: {
             "Content-Type": file.type,
           },
-          body: file,
+          method: "POST",
         });
 
         if (!response.ok) {
@@ -149,11 +149,11 @@ export function useImageUpload({
   }, [uploadImage]);
 
   return {
-    uploadImage,
-    handlePaste,
     handleDrop,
-    openFilePicker,
+    handlePaste,
     isUploading,
+    openFilePicker,
     storageUrl,
+    uploadImage,
   };
 }

@@ -41,19 +41,19 @@ const resolveTagSettings = async (
   defaultStatus: FeedbackStatusValue;
 }> => {
   if (!tagId) {
-    return { requireApproval: false, defaultStatus: "open" };
+    return { defaultStatus: "open", requireApproval: false };
   }
 
   const tag = await ctx.db.get(tagId);
   if (!tag || tag.organizationId !== organizationId) {
-    return { requireApproval: false, defaultStatus: "open" };
+    return { defaultStatus: "open", requireApproval: false };
   }
 
   return {
-    requireApproval: tag.settings?.requireApproval ?? false,
     defaultStatus: isFeedbackStatusValue(tag.settings?.defaultStatus)
       ? tag.settings.defaultStatus
       : "open",
+    requireApproval: tag.settings?.requireApproval ?? false,
   };
 };
 
@@ -123,11 +123,11 @@ const getDefaultOrganizationStatusId = async (
  */
 export const create = mutation({
   args: {
+    attachments: v.optional(v.array(v.string())),
+    description: v.string(),
     organizationId: v.id("organizations"),
     tagId: v.optional(v.id("tags")),
     title: v.string(),
-    description: v.string(),
-    attachments: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -173,26 +173,26 @@ export const create = mutation({
 
     const now = Date.now();
     const feedbackId = await ctx.db.insert("feedback", {
-      organizationId: org._id,
-      title: args.title,
-      description: args.description,
-      status: defaultStatus,
-      organizationStatusId: defaultOrgStatusId,
+      attachments: args.attachments,
       authorId: user._id,
-      voteCount: 1,
       commentCount: 0,
+      createdAt: now,
+      description: args.description,
       isApproved: !requireApproval,
       isPinned: false,
-      attachments: args.attachments,
-      createdAt: now,
+      organizationId: org._id,
+      organizationStatusId: defaultOrgStatusId,
+      status: defaultStatus,
+      title: args.title,
       updatedAt: now,
+      voteCount: 1,
     });
 
     await ctx.db.insert("feedbackVotes", {
+      createdAt: now,
       feedbackId,
       userId: user._id,
       voteType: "upvote",
-      createdAt: now,
     });
 
     if (args.tagId) {
@@ -240,15 +240,15 @@ export const create = mutation({
  */
 export const update = mutation({
   args: {
-    id: v.id("feedback"),
-    title: v.optional(v.string()),
+    attachments: v.optional(v.array(v.string())),
     description: v.optional(v.string()),
-    status: v.optional(feedbackStatus),
-    organizationStatusId: v.optional(v.id("organizationStatuses")),
+    id: v.id("feedback"),
     isApproved: v.optional(v.boolean()),
     isPinned: v.optional(v.boolean()),
+    organizationStatusId: v.optional(v.id("organizationStatuses")),
     roadmapOrder: v.optional(v.number()),
-    attachments: v.optional(v.array(v.string())),
+    status: v.optional(feedbackStatus),
+    title: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -310,7 +310,7 @@ export const update = mutation({
       ) {
         throw new Error("Only admins can update these fields");
       }
-      await ctx.db.patch(id, { title, description, updatedAt: Date.now() });
+      await ctx.db.patch(id, { description, title, updatedAt: Date.now() });
     }
 
     return args.id;

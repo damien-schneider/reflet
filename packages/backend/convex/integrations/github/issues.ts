@@ -53,8 +53,8 @@ export const getLabelMappings = query({
 
         return {
           ...mapping,
-          tagName: tag?.name,
           tagColor: tag?.color,
+          tagName: tag?.name,
         };
       })
     );
@@ -68,9 +68,9 @@ export const getLabelMappings = query({
  */
 export const listGithubIssues = query({
   args: {
+    limit: v.optional(v.number()),
     organizationId: v.id("organizations"),
     state: v.optional(v.union(v.literal("open"), v.literal("closed"))),
-    limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -151,8 +151,8 @@ export const getIssueSyncStatus = query({
 
     if (!connection) {
       return {
-        isEnabled: false,
         autoSync: false,
+        isEnabled: false,
         lastSyncAt: undefined,
         lastSyncStatus: undefined,
         mappingsCount: 0,
@@ -177,14 +177,14 @@ export const getIssueSyncStatus = query({
       .collect();
 
     return {
-      isEnabled: connection.issuesSyncEnabled ?? false,
       autoSync: connection.autoSyncIssues ?? false,
+      importedCount: issues.filter((i) => i.refletFeedbackId).length,
+      isEnabled: connection.issuesSyncEnabled ?? false,
       lastSyncAt: connection.lastIssuesSyncAt,
-      lastSyncStatus: connection.lastIssuesSyncStatus,
       lastSyncError: connection.lastIssuesSyncError,
+      lastSyncStatus: connection.lastIssuesSyncStatus,
       mappingsCount: mappings.length,
       syncedIssuesCount: issues.length,
-      importedCount: issues.filter((i) => i.refletFeedbackId).length,
     };
   },
 });
@@ -198,12 +198,7 @@ export const getIssueSyncStatus = query({
  */
 export const upsertLabelMapping = mutation({
   args: {
-    organizationId: v.id("organizations"),
-    githubLabelName: v.string(),
-    githubLabelColor: v.optional(v.string()),
-    targetTagId: v.optional(v.id("tags")),
     autoSync: v.boolean(),
-    syncClosedIssues: v.optional(v.boolean()),
     defaultStatus: v.optional(
       v.union(
         v.literal("open"),
@@ -214,6 +209,11 @@ export const upsertLabelMapping = mutation({
         v.literal("closed")
       )
     ),
+    githubLabelColor: v.optional(v.string()),
+    githubLabelName: v.string(),
+    organizationId: v.id("organizations"),
+    syncClosedIssues: v.optional(v.boolean()),
+    targetTagId: v.optional(v.id("tags")),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -256,11 +256,11 @@ export const upsertLabelMapping = mutation({
     if (existing) {
       // Update existing
       await ctx.db.patch(existing._id, {
-        githubLabelColor: args.githubLabelColor,
-        targetTagId: args.targetTagId,
         autoSync: args.autoSync,
-        syncClosedIssues: args.syncClosedIssues,
         defaultStatus: args.defaultStatus,
+        githubLabelColor: args.githubLabelColor,
+        syncClosedIssues: args.syncClosedIssues,
+        targetTagId: args.targetTagId,
         updatedAt: now,
       });
       return existing._id;
@@ -268,15 +268,15 @@ export const upsertLabelMapping = mutation({
 
     // Create new
     const mappingId = await ctx.db.insert("githubLabelMappings", {
-      organizationId: args.organizationId,
-      githubConnectionId: connection._id,
-      githubLabelName: args.githubLabelName,
-      githubLabelColor: args.githubLabelColor,
-      targetTagId: args.targetTagId,
       autoSync: args.autoSync,
-      syncClosedIssues: args.syncClosedIssues,
-      defaultStatus: args.defaultStatus,
       createdAt: now,
+      defaultStatus: args.defaultStatus,
+      githubConnectionId: connection._id,
+      githubLabelColor: args.githubLabelColor,
+      githubLabelName: args.githubLabelName,
+      organizationId: args.organizationId,
+      syncClosedIssues: args.syncClosedIssues,
+      targetTagId: args.targetTagId,
       updatedAt: now,
     });
 
@@ -321,9 +321,9 @@ export const deleteLabelMapping = mutation({
  */
 export const toggleIssuesSync = mutation({
   args: {
-    organizationId: v.id("organizations"),
-    enabled: v.boolean(),
     autoSync: v.optional(v.boolean()),
+    enabled: v.boolean(),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -352,8 +352,8 @@ export const toggleIssuesSync = mutation({
     }
 
     await ctx.db.patch(connection._id, {
-      issuesSyncEnabled: args.enabled,
       autoSyncIssues: args.autoSync ?? args.enabled,
+      issuesSyncEnabled: args.enabled,
       updatedAt: Date.now(),
     });
 
@@ -367,19 +367,19 @@ export const toggleIssuesSync = mutation({
 export const updateIssuesSyncStatus = mutation({
   args: {
     connectionId: v.id("githubConnections"),
+    error: v.optional(v.string()),
     status: v.union(
       v.literal("idle"),
       v.literal("syncing"),
       v.literal("success"),
       v.literal("error")
     ),
-    error: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.connectionId, {
-      lastIssuesSyncStatus: args.status,
-      lastIssuesSyncError: args.error,
       lastIssuesSyncAt: Date.now(),
+      lastIssuesSyncError: args.error,
+      lastIssuesSyncStatus: args.status,
       updatedAt: Date.now(),
     });
   },
@@ -390,25 +390,25 @@ export const updateIssuesSyncStatus = mutation({
  */
 export const saveSyncedIssues = mutation({
   args: {
-    organizationId: v.id("organizations"),
     issues: v.array(
       v.object({
-        githubIssueId: v.string(),
-        githubIssueNumber: v.number(),
-        title: v.string(),
         body: v.optional(v.string()),
-        htmlUrl: v.string(),
-        state: v.union(v.literal("open"), v.literal("closed")),
-        githubLabels: v.array(v.string()),
+        githubAssignees: v.optional(v.array(v.string())),
         githubAuthor: v.optional(v.string()),
         githubAuthorAvatarUrl: v.optional(v.string()),
-        githubMilestone: v.optional(v.string()),
-        githubAssignees: v.optional(v.array(v.string())),
-        githubCreatedAt: v.number(),
-        githubUpdatedAt: v.number(),
         githubClosedAt: v.optional(v.number()),
+        githubCreatedAt: v.number(),
+        githubIssueId: v.string(),
+        githubIssueNumber: v.number(),
+        githubLabels: v.array(v.string()),
+        githubMilestone: v.optional(v.string()),
+        githubUpdatedAt: v.number(),
+        htmlUrl: v.string(),
+        state: v.union(v.literal("open"), v.literal("closed")),
+        title: v.string(),
       })
     ),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
     const connection = await ctx.db
@@ -438,39 +438,39 @@ export const saveSyncedIssues = mutation({
       if (existing) {
         // Update existing
         await ctx.db.patch(existing._id, {
-          title: issue.title,
           body: issue.body,
-          htmlUrl: issue.htmlUrl,
-          state: issue.state,
-          githubLabels: issue.githubLabels,
+          githubAssignees: issue.githubAssignees,
           githubAuthor: issue.githubAuthor,
           githubAuthorAvatarUrl: issue.githubAuthorAvatarUrl,
-          githubMilestone: issue.githubMilestone,
-          githubAssignees: issue.githubAssignees,
-          githubUpdatedAt: issue.githubUpdatedAt,
           githubClosedAt: issue.githubClosedAt,
+          githubLabels: issue.githubLabels,
+          githubMilestone: issue.githubMilestone,
+          githubUpdatedAt: issue.githubUpdatedAt,
+          htmlUrl: issue.htmlUrl,
           lastSyncedAt: now,
+          state: issue.state,
+          title: issue.title,
         });
       } else {
         // Insert new
         await ctx.db.insert("githubIssues", {
-          organizationId: args.organizationId,
-          githubConnectionId: connection._id,
-          githubIssueId: issue.githubIssueId,
-          githubIssueNumber: issue.githubIssueNumber,
-          title: issue.title,
           body: issue.body,
-          htmlUrl: issue.htmlUrl,
-          state: issue.state,
-          githubLabels: issue.githubLabels,
+          githubAssignees: issue.githubAssignees,
           githubAuthor: issue.githubAuthor,
           githubAuthorAvatarUrl: issue.githubAuthorAvatarUrl,
-          githubMilestone: issue.githubMilestone,
-          githubAssignees: issue.githubAssignees,
-          githubCreatedAt: issue.githubCreatedAt,
-          githubUpdatedAt: issue.githubUpdatedAt,
           githubClosedAt: issue.githubClosedAt,
+          githubConnectionId: connection._id,
+          githubCreatedAt: issue.githubCreatedAt,
+          githubIssueId: issue.githubIssueId,
+          githubIssueNumber: issue.githubIssueNumber,
+          githubLabels: issue.githubLabels,
+          githubMilestone: issue.githubMilestone,
+          githubUpdatedAt: issue.githubUpdatedAt,
+          htmlUrl: issue.htmlUrl,
           lastSyncedAt: now,
+          organizationId: args.organizationId,
+          state: issue.state,
+          title: issue.title,
         });
       }
     }
@@ -492,7 +492,6 @@ export const saveSyncedIssues = mutation({
 export const importGithubIssue = mutation({
   args: {
     githubIssueId: v.id("githubIssues"),
-    tagIds: v.optional(v.array(v.id("tags"))),
     status: v.optional(
       v.union(
         v.literal("open"),
@@ -503,6 +502,7 @@ export const importGithubIssue = mutation({
         v.literal("closed")
       )
     ),
+    tagIds: v.optional(v.array(v.id("tags"))),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -541,21 +541,21 @@ export const importGithubIssue = mutation({
 
     // Create Reflet feedback
     const feedbackId = await ctx.db.insert("feedback", {
-      organizationId: githubIssue.organizationId,
-      title: githubIssue.title,
-      description: githubIssue.body ?? "",
-      status: feedbackStatus,
       authorId: user._id,
-      voteCount: 0,
       commentCount: 0,
-      isApproved: true, // Auto-approve imported issues
-      isPinned: false,
+      createdAt: now,
+      description: githubIssue.body ?? "",
+      githubHtmlUrl: githubIssue.htmlUrl,
       githubIssueId: githubIssue.githubIssueId,
       githubIssueNumber: githubIssue.githubIssueNumber,
-      githubHtmlUrl: githubIssue.htmlUrl,
+      isApproved: true, // Auto-approve imported issues
+      isPinned: false,
+      organizationId: githubIssue.organizationId,
+      status: feedbackStatus,
       syncedFromGithub: true,
-      createdAt: now,
+      title: githubIssue.title,
       updatedAt: now,
+      voteCount: 0,
     });
 
     // Add tags if provided
@@ -653,21 +653,21 @@ export const autoImportIssuesByLabel = mutation({
 
         // Create Reflet feedback
         const feedbackId = await ctx.db.insert("feedback", {
-          organizationId: args.organizationId,
-          title: issue.title,
-          description: issue.body ?? "",
-          status: feedbackStatus,
           authorId: "system", // System-created
-          voteCount: 0,
           commentCount: 0,
-          isApproved: true,
-          isPinned: false,
+          createdAt: now,
+          description: issue.body ?? "",
+          githubHtmlUrl: issue.htmlUrl,
           githubIssueId: issue.githubIssueId,
           githubIssueNumber: issue.githubIssueNumber,
-          githubHtmlUrl: issue.htmlUrl,
+          isApproved: true,
+          isPinned: false,
+          organizationId: args.organizationId,
+          status: feedbackStatus,
           syncedFromGithub: true,
-          createdAt: now,
+          title: issue.title,
           updatedAt: now,
+          voteCount: 0,
         });
 
         // Add tag if mapping has one

@@ -37,8 +37,8 @@ export function useMcpApiKey({
     setIsGenerating(true);
     try {
       const result = await generateApiKeysMutation({
-        organizationId,
         name: "MCP Server",
+        organizationId,
       });
       setNewSecretKey(result.secretKey);
       toast.success("API key generated");
@@ -56,10 +56,10 @@ export function useMcpApiKey({
   }, []);
 
   return {
-    hasExistingKey,
-    newSecretKey,
-    isGenerating,
-    handleGenerate,
     clearSecretKey,
+    handleGenerate,
+    hasExistingKey,
+    isGenerating,
+    newSecretKey,
   };
 }

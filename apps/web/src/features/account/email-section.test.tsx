@@ -4,13 +4,13 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@hookform/resolvers/zod", () => ({
   zodResolver: () => async (values: Record<string, unknown>) => ({
-    values,
     errors: {},
+    values,
   }),
 }));
 
 vi.mock("sonner", () => ({
-  toast: { success: vi.fn(), error: vi.fn() },
+  toast: { error: vi.fn(), success: vi.fn() },
 }));
 
 vi.mock("@/lib/auth-client", () => ({
@@ -42,19 +42,25 @@ vi.mock("@/components/ui/card", () => ({
   CardContent: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
+  CardDescription: ({ children }: { children: React.ReactNode }) => (
+    <p>{children}</p>
+  ),
   CardHeader: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
   CardTitle: ({ children }: { children: React.ReactNode }) => (
     <h2>{children}</h2>
   ),
-  CardDescription: ({ children }: { children: React.ReactNode }) => (
-    <p>{children}</p>
-  ),
 }));
 
 vi.mock("@/components/ui/field", () => ({
   Field: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  FieldError: ({ errors }: { errors?: Array<{ message?: string }> }) =>
+    errors ? (
+      <span data-testid="field-error">
+        {errors.map((e) => e.message).join(", ")}
+      </span>
+    ) : null,
   FieldLabel: ({
     children,
     htmlFor,
@@ -62,12 +68,6 @@ vi.mock("@/components/ui/field", () => ({
     children: React.ReactNode;
     htmlFor?: string;
   }) => <label htmlFor={htmlFor}>{children}</label>,
-  FieldError: ({ errors }: { errors?: Array<{ message?: string }> }) =>
-    errors ? (
-      <span data-testid="field-error">
-        {errors.map((e) => e.message).join(", ")}
-      </span>
-    ) : null,
 }));
 
 vi.mock("@/components/ui/input", () => ({

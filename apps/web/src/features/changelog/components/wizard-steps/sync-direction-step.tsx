@@ -40,31 +40,31 @@ interface SyncDirectionStepProps {
 
 const SYNC_OPTIONS = [
   {
-    id: "github_first" as const,
-    icon: ArrowDown,
-    title: "GitHub → Reflet",
     description:
       "Tag releases on GitHub. Reflet imports them as drafts for enrichment.",
+    icon: ArrowDown,
+    id: "github_first" as const,
+    title: "GitHub → Reflet",
   },
   {
-    id: "reflet_first" as const,
-    icon: ArrowUp,
-    title: "Reflet → GitHub",
     description:
       "Write releases in Reflet. On publish, a GitHub Release is created.",
+    icon: ArrowUp,
+    id: "reflet_first" as const,
+    title: "Reflet → GitHub",
   },
   {
-    id: "bidirectional" as const,
-    icon: ArrowsLeftRight,
-    title: "Bidirectional",
     description:
       "Keep both in sync. Changes flow in both directions automatically.",
+    icon: ArrowsLeftRight,
+    id: "bidirectional" as const,
+    title: "Bidirectional",
   },
   {
-    id: "none" as const,
-    icon: Prohibit,
-    title: "No sync",
     description: "Manage releases only in Reflet, no GitHub integration.",
+    icon: Prohibit,
+    id: "none" as const,
+    title: "No sync",
   },
 ] as const;
 

@@ -41,13 +41,13 @@ export class SurveyRenderer {
     this.onDismiss = params.onDismiss;
     this.callbacks = params.callbacks ?? {};
     this.state = {
-      currentQuestionIndex: 0,
       answers: new Map(),
+      currentQuestionIndex: 0,
       direction: "forward",
       errorMessage: null,
-      responseId: null,
-      phase: "loading",
       isSubmitting: false,
+      phase: "loading",
+      responseId: null,
       validationError: null,
     };
   }
@@ -59,8 +59,8 @@ export class SurveyRenderer {
 
     try {
       const { responseId } = await this.api.startSurveyResponse({
-        surveyId: this.survey._id,
         pageUrl: window.location.href,
+        surveyId: this.survey._id,
         userAgent: navigator.userAgent,
       });
       this.state.responseId = responseId;
@@ -95,9 +95,9 @@ export class SurveyRenderer {
 
       if (e.key === "Escape") {
         this.callbacks.onSurveyDismiss?.({
-          surveyId: this.survey._id,
-          questionIndex: this.state.currentQuestionIndex,
           answeredCount: this.state.answers.size,
+          questionIndex: this.state.currentQuestionIndex,
+          surveyId: this.survey._id,
         });
         this.onDismiss();
         return;
@@ -353,9 +353,9 @@ export class SurveyRenderer {
       .querySelector('[data-action="dismiss"]')
       ?.addEventListener("click", () => {
         this.callbacks.onSurveyDismiss?.({
-          surveyId: this.survey._id,
-          questionIndex: this.state.currentQuestionIndex,
           answeredCount: this.state.answers.size,
+          questionIndex: this.state.currentQuestionIndex,
+          surveyId: this.survey._id,
         });
         this.onDismiss();
       });
@@ -463,15 +463,15 @@ export class SurveyRenderer {
     try {
       if (value !== undefined && value !== "") {
         await this.api.submitSurveyAnswer({
-          responseId: this.state.responseId,
           questionId: question._id,
+          responseId: this.state.responseId,
           value: value as string | number | boolean | string[],
         });
 
         this.callbacks.onQuestionAnswer?.({
-          surveyId: this.survey._id,
           questionId: question._id,
           questionIndex: this.state.currentQuestionIndex,
+          surveyId: this.survey._id,
           value,
         });
       }
@@ -487,10 +487,10 @@ export class SurveyRenderer {
         this.state.phase = "complete";
         this.state.isSubmitting = false;
         this.callbacks.onSurveyComplete?.({
-          surveyId: this.survey._id,
-          responseId: this.state.responseId,
-          totalQuestions: this.survey.questions.length,
           answeredQuestions: this.state.answers.size,
+          responseId: this.state.responseId,
+          surveyId: this.survey._id,
+          totalQuestions: this.survey.questions.length,
         });
         this.render();
       }

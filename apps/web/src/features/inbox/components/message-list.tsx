@@ -125,14 +125,14 @@ export function MessageList({
     messageId: Id<"supportMessages">,
     emoji: string
   ) => {
-    addReaction({ messageId, emoji });
+    addReaction({ emoji, messageId });
   };
 
   const handleRemoveReaction = (
     messageId: Id<"supportMessages">,
     emoji: string
   ) => {
-    removeReaction({ messageId, emoji });
+    removeReaction({ emoji, messageId });
   };
 
   const messagesLength = messages?.length ?? 0;

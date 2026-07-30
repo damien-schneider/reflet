@@ -57,12 +57,12 @@ export function FeedbackList({
 
   // Query feedback from Convex
   const feedbackList = useQuery(api.feedback.list.listByOrganization, {
+    hideCompleted:
+      hideCompleted && selectedStatusIds.length === 0 ? true : undefined,
     organizationId,
     search: search || undefined,
     sortBy: convexSortBy,
     statusIds: effectiveStatusIds,
-    hideCompleted:
-      hideCompleted && selectedStatusIds.length === 0 ? true : undefined,
     tagIds: selectedTagIds.length > 0 ? selectedTagIds : undefined,
   });
 

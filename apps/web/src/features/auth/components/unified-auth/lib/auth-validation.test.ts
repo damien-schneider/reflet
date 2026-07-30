@@ -63,18 +63,18 @@ describe("signInSchema", () => {
 describe("signUpSchema", () => {
   it("validates matching passwords >= 8 chars", () => {
     const result = signUpSchema.safeParse({
+      confirmPassword: "password123",
       email: "user@example.com",
       password: "password123",
-      confirmPassword: "password123",
     });
     expect(result.success).toBe(true);
   });
 
   it("rejects password shorter than 8 characters", () => {
     const result = signUpSchema.safeParse({
+      confirmPassword: "short",
       email: "user@example.com",
       password: "short",
-      confirmPassword: "short",
     });
     expect(result.success).toBe(false);
     if (!result.success) {
@@ -85,9 +85,9 @@ describe("signUpSchema", () => {
 
   it("rejects when passwords do not match", () => {
     const result = signUpSchema.safeParse({
+      confirmPassword: "different123",
       email: "user@example.com",
       password: "password123",
-      confirmPassword: "different123",
     });
     expect(result.success).toBe(false);
     if (!result.success) {
@@ -98,18 +98,18 @@ describe("signUpSchema", () => {
 
   it("rejects invalid email in signup", () => {
     const result = signUpSchema.safeParse({
+      confirmPassword: "password123",
       email: "bad-email",
       password: "password123",
-      confirmPassword: "password123",
     });
     expect(result.success).toBe(false);
   });
 
   it("rejects empty confirmPassword", () => {
     const result = signUpSchema.safeParse({
+      confirmPassword: "",
       email: "user@example.com",
       password: "password123",
-      confirmPassword: "",
     });
     expect(result.success).toBe(false);
   });
@@ -121,18 +121,18 @@ describe("signUpSchema", () => {
 
   it("accepts exactly 8-character password", () => {
     const result = signUpSchema.safeParse({
+      confirmPassword: "12345678",
       email: "user@example.com",
       password: "12345678",
-      confirmPassword: "12345678",
     });
     expect(result.success).toBe(true);
   });
 
   it("refine error targets confirmPassword path", () => {
     const result = signUpSchema.safeParse({
+      confirmPassword: "password456",
       email: "user@example.com",
       password: "password123",
-      confirmPassword: "password456",
     });
     expect(result.success).toBe(false);
     if (!result.success) {

@@ -9,9 +9,9 @@ import { feedbackStatus } from "../shared/validators";
  */
 export const schedulePublish = mutation({
   args: {
+    feedbackStatus: v.optional(feedbackStatus),
     id: v.id("releases"),
     scheduledPublishAt: v.number(),
-    feedbackStatus: v.optional(feedbackStatus),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -52,10 +52,10 @@ export const schedulePublish = mutation({
     );
 
     await ctx.db.patch(args.id, {
-      scheduledPublishAt: args.scheduledPublishAt,
       scheduledBy: user._id,
       scheduledFeedbackStatus: args.feedbackStatus,
       scheduledJobId: jobId,
+      scheduledPublishAt: args.scheduledPublishAt,
       updatedAt: Date.now(),
     });
 
@@ -98,10 +98,10 @@ export const cancelScheduledPublish = mutation({
     }
 
     await ctx.db.patch(args.id, {
-      scheduledPublishAt: undefined,
       scheduledBy: undefined,
       scheduledFeedbackStatus: undefined,
       scheduledJobId: undefined,
+      scheduledPublishAt: undefined,
       updatedAt: Date.now(),
     });
 
@@ -114,9 +114,9 @@ export const cancelScheduledPublish = mutation({
  */
 export const reschedulePublish = mutation({
   args: {
+    feedbackStatus: v.optional(feedbackStatus),
     id: v.id("releases"),
     scheduledPublishAt: v.number(),
-    feedbackStatus: v.optional(feedbackStatus),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -157,10 +157,10 @@ export const reschedulePublish = mutation({
     );
 
     await ctx.db.patch(args.id, {
-      scheduledPublishAt: args.scheduledPublishAt,
       scheduledBy: user._id,
       scheduledFeedbackStatus: args.feedbackStatus,
       scheduledJobId: jobId,
+      scheduledPublishAt: args.scheduledPublishAt,
       updatedAt: Date.now(),
     });
 
@@ -194,10 +194,10 @@ export const executeScheduledPublish = internalMutation({
     // Publish the release
     await ctx.db.patch(args.releaseId, {
       publishedAt: now,
-      scheduledPublishAt: undefined,
       scheduledBy: undefined,
       scheduledFeedbackStatus: undefined,
       scheduledJobId: undefined,
+      scheduledPublishAt: undefined,
       updatedAt: now,
     });
 
@@ -265,10 +265,10 @@ export const checkMissedScheduledReleases = internalMutation({
         // Publish the release
         await ctx.db.patch(release._id, {
           publishedAt: now,
-          scheduledPublishAt: undefined,
           scheduledBy: undefined,
           scheduledFeedbackStatus: undefined,
           scheduledJobId: undefined,
+          scheduledPublishAt: undefined,
           updatedAt: now,
         });
 

@@ -10,10 +10,10 @@ vi.mock("@/components/ui/avatar", () => ({
     children: React.ReactNode;
     className?: string;
   }) => <div className={className}>{children}</div>,
-  AvatarImage: ({ alt }: { alt?: string }) => <img alt={alt} />,
   AvatarFallback: ({ children }: { children: React.ReactNode }) => (
     <span>{children}</span>
   ),
+  AvatarImage: ({ alt }: { alt?: string }) => <img alt={alt} />,
 }));
 
 vi.mock("@/components/ui/scroll-area", () => ({
@@ -59,13 +59,13 @@ afterEach(cleanup);
 
 const mockConversation = (overrides = {}) => ({
   _id: "conv1",
-  subject: "Need help",
-  status: "open",
-  lastMessageAt: Date.now() - 60_000,
-  userUnreadCount: 0,
   adminUnreadCount: 0,
-  user: { name: "John Doe", email: "john@example.com", image: undefined },
+  lastMessageAt: Date.now() - 60_000,
   lastMessagePreview: "Hello there",
+  status: "open",
+  subject: "Need help",
+  user: { email: "john@example.com", image: undefined, name: "John Doe" },
+  userUnreadCount: 0,
   ...overrides,
 });
 

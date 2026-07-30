@@ -48,15 +48,15 @@ export const getApiKeys = query({
       .collect();
 
     return keys.map((key) => ({
+      allowedDomains: key.allowedDomains,
       apiKeyId: key._id,
+      createdAt: key.createdAt,
+      isActive: key.isActive,
+      lastUsedAt: key.lastUsedAt,
       name: key.name,
       publicKey: key.publicKey,
-      tagId: key.tagId,
-      isActive: key.isActive,
-      allowedDomains: key.allowedDomains,
       rateLimit: key.rateLimit,
-      createdAt: key.createdAt,
-      lastUsedAt: key.lastUsedAt,
+      tagId: key.tagId,
     }));
   },
 });
@@ -66,8 +66,8 @@ export const getApiKeys = query({
  */
 export const listExternalUsers = query({
   args: {
-    organizationId: v.id("organizations"),
     limit: v.optional(v.number()),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
     const user = await authComponent.safeGetAuthUser(ctx);
@@ -105,13 +105,13 @@ export const listExternalUsers = query({
     const limit = args.limit ?? 100;
 
     return externalUsers.slice(0, limit).map((u) => ({
-      id: u._id,
-      externalId: u.externalId,
-      email: u.email,
-      name: u.name,
       avatar: u.avatar,
       createdAt: u.createdAt,
+      email: u.email,
+      externalId: u.externalId,
+      id: u._id,
       lastSeenAt: u.lastSeenAt,
+      name: u.name,
     }));
   },
 });
@@ -125,8 +125,8 @@ export const listExternalUsers = query({
  */
 export const generateApiKeys = mutation({
   args: {
-    organizationId: v.id("organizations"),
     name: v.string(),
+    organizationId: v.id("organizations"),
     tagId: v.optional(v.id("tags")),
   },
   handler: async (
@@ -160,8 +160,8 @@ export const generateApiKeys = mutation({
     const result = await ctx.runMutation(
       internal.feedback.api_auth.generateOrganizationApiKeys,
       {
-        organizationId: args.organizationId,
         name: args.name,
+        organizationId: args.organizationId,
         tagId: args.tagId,
       }
     );
@@ -175,8 +175,8 @@ export const generateApiKeys = mutation({
  */
 export const regenerateSecretKey = mutation({
   args: {
-    organizationId: v.id("organizations"),
     apiKeyId: v.id("organizationApiKeys"),
+    organizationId: v.id("organizations"),
   },
   handler: async (
     ctx,
@@ -226,17 +226,17 @@ export const regenerateSecretKey = mutation({
  */
 export const updateApiKeySettings = mutation({
   args: {
-    organizationId: v.id("organizations"),
-    apiKeyId: v.id("organizationApiKeys"),
-    name: v.optional(v.string()),
-    tagId: v.optional(v.id("tags")),
-    isActive: v.optional(v.boolean()),
     allowedDomains: v.optional(v.array(v.string())),
+    apiKeyId: v.id("organizationApiKeys"),
+    isActive: v.optional(v.boolean()),
+    name: v.optional(v.string()),
+    organizationId: v.id("organizations"),
     rateLimit: v.optional(
       v.object({
         requestsPerMinute: v.number(),
       })
     ),
+    tagId: v.optional(v.id("tags")),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -295,8 +295,8 @@ export const updateApiKeySettings = mutation({
  */
 export const deleteApiKey = mutation({
   args: {
-    organizationId: v.id("organizations"),
     apiKeyId: v.id("organizationApiKeys"),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -314,7 +314,7 @@ export const deleteApiKey = mutation({
       )
       .unique();
 
-    if (!membership || membership.role !== "owner") {
+    if (membership?.role !== "owner") {
       throw new Error("Only the organization owner can delete API keys");
     }
 

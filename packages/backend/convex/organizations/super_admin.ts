@@ -56,12 +56,12 @@ export const getDashboardStats = query({
     );
 
     return {
-      totalUsers: uniqueUserIds.size,
-      totalOrganizations: organizations.length,
-      totalFeedback: activeFeedback.length,
       activeProSubscriptions: proSubscriptions.length,
-      totalVotes: allVotes.length,
       totalComments: allComments.length,
+      totalFeedback: activeFeedback.length,
+      totalOrganizations: organizations.length,
+      totalUsers: uniqueUserIds.size,
+      totalVotes: allVotes.length,
     };
   },
 });
@@ -115,12 +115,12 @@ export const listUsers = query({
         const userData = await authComponent.getAnyUserById(ctx, userId);
         const stats = userStats.get(userId);
         return {
-          id: userId,
-          name: userData?.name ?? "Unknown",
           email: userData?.email ?? "Unknown",
+          id: userId,
           image: userData?.image ?? null,
-          organizationCount: stats?.count ?? 0,
           joinedAt: stats?.earliestJoin ?? 0,
+          name: userData?.name ?? "Unknown",
+          organizationCount: stats?.count ?? 0,
         };
       })
     );
@@ -165,14 +165,14 @@ export const listOrganizations = query({
 
         return {
           _id: org._id,
+          createdAt: org.createdAt,
+          feedbackCount: activeFeedbackCount,
+          isPublic: org.isPublic,
+          memberCount: members.length,
           name: org.name,
           slug: org.slug,
-          subscriptionTier: org.subscriptionTier,
           subscriptionStatus: org.subscriptionStatus,
-          isPublic: org.isPublic,
-          createdAt: org.createdAt,
-          memberCount: members.length,
-          feedbackCount: activeFeedbackCount,
+          subscriptionTier: org.subscriptionTier,
         };
       })
     );
@@ -212,12 +212,12 @@ export const getTopVotedFeedback = query({
 
     return topFeedback.map((f) => ({
       _id: f._id,
-      title: f.title,
-      status: f.status,
-      voteCount: f.voteCount,
       commentCount: f.commentCount,
-      organizationName: orgMap.get(f.organizationId) ?? "Unknown",
       createdAt: f.createdAt,
+      organizationName: orgMap.get(f.organizationId) ?? "Unknown",
+      status: f.status,
+      title: f.title,
+      voteCount: f.voteCount,
     }));
   },
 });
@@ -260,10 +260,10 @@ export const getRecentActivity = query({
     return recentActivity.map((a) => ({
       _id: a._id,
       action: a.action,
+      createdAt: a.createdAt,
       details: a.details,
       organizationName: orgMap.get(a.organizationId) ?? "Unknown",
       userName: userMap.get(a.authorId) ?? "Unknown",
-      createdAt: a.createdAt,
     }));
   },
 });
@@ -321,12 +321,12 @@ export const getTrends = query({
       const date = new Date(now - i * 24 * 60 * 60 * 1000);
       const key = date.toISOString().split("T")[0];
       buckets.set(key, {
-        feedback: 0,
-        users: 0,
-        organizations: 0,
-        votes: 0,
         comments: 0,
+        feedback: 0,
+        organizations: 0,
         subscriptions: 0,
+        users: 0,
+        votes: 0,
       });
     }
 
@@ -365,24 +365,24 @@ export const getTrends = query({
     const sortedDays = [...buckets.keys()].sort();
 
     const empty = {
-      feedback: 0,
-      users: 0,
-      organizations: 0,
-      votes: 0,
       comments: 0,
+      feedback: 0,
+      organizations: 0,
       subscriptions: 0,
+      users: 0,
+      votes: 0,
     };
 
     return sortedDays.map((date) => {
       const b = buckets.get(date) ?? empty;
       return {
+        comments: b.comments,
         date,
         feedback: b.feedback,
-        users: b.users,
         organizations: b.organizations,
-        votes: b.votes,
-        comments: b.comments,
         subscriptions: b.subscriptions,
+        users: b.users,
+        votes: b.votes,
       };
     });
   },
@@ -408,19 +408,19 @@ export const getRevenueSummary = query({
     return {
       freeCount: freeOrgs.length,
       proCount: proOrgs.length,
-      statusBreakdown: [...statusBreakdown.entries()].map(
-        ([status, count]) => ({
-          status,
-          count,
-        })
-      ),
       proOrganizations: proOrgs.map((o) => ({
         _id: o._id,
+        createdAt: o.createdAt,
         name: o.name,
         slug: o.slug,
         subscriptionStatus: o.subscriptionStatus,
-        createdAt: o.createdAt,
       })),
+      statusBreakdown: [...statusBreakdown.entries()].map(
+        ([status, count]) => ({
+          count,
+          status,
+        })
+      ),
     };
   },
 });

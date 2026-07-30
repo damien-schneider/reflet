@@ -19,17 +19,19 @@ export function useCommandPalette({
   const [isOpen, setIsOpen] = useAtom(commandPaletteOpenAtom);
   const router = useRouter();
 
-  const filteredItems = useMemo(() => {
-    return commandItems.filter((item) => {
-      if (item.requiresOrg && !orgSlug) {
-        return false;
-      }
-      if (item.requiresAdmin && !isAdmin) {
-        return false;
-      }
-      return true;
-    });
-  }, [orgSlug, isAdmin]);
+  const filteredItems = useMemo(
+    () =>
+      commandItems.filter((item) => {
+        if (item.requiresOrg && !orgSlug) {
+          return false;
+        }
+        if (item.requiresAdmin && !isAdmin) {
+          return false;
+        }
+        return true;
+      }),
+    [orgSlug, isAdmin]
+  );
 
   const buildHref = useCallback(
     (href: string) => {
@@ -63,10 +65,10 @@ export function useCommandPalette({
   }, [setIsOpen]);
 
   return {
-    isOpen,
-    setIsOpen,
+    buildHref,
     filteredItems,
     handleSelect,
-    buildHref,
+    isOpen,
+    setIsOpen,
   };
 }

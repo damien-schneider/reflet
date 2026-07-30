@@ -23,14 +23,14 @@ vi.mock("../tag-filter-bar", () => ({
 import { FeedbackToolbar } from "./feedback-toolbar";
 
 const baseProps = {
-  searchQuery: "",
+  isAdmin: false,
   onSearchChange: vi.fn(),
   onSubmitClick: vi.fn(),
-  tags: [] as Array<{ _id: Id<"tags">; name: string; color: string }>,
-  isAdmin: false,
-  organizationId: "org1" as Id<"organizations">,
-  selectedTagId: null,
   onTagSelect: vi.fn(),
+  organizationId: "org1" as Id<"organizations">,
+  searchQuery: "",
+  selectedTagId: null,
+  tags: [] as Array<{ _id: Id<"tags">; name: string; color: string }>,
 };
 
 describe("FeedbackToolbar", () => {
@@ -70,7 +70,7 @@ describe("FeedbackToolbar", () => {
     render(
       <FeedbackToolbar
         {...baseProps}
-        tags={[{ _id: "t1" as Id<"tags">, name: "Bug", color: "red" }]}
+        tags={[{ _id: "t1" as Id<"tags">, color: "red", name: "Bug" }]}
       />
     );
     expect(screen.getByTestId("tag-filter-bar")).toBeInTheDocument();

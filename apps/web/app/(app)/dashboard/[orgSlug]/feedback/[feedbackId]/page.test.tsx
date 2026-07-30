@@ -6,34 +6,34 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // Mock feedback data
 const mockFeedback = {
   _id: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
-  title: "Test Feedback Title",
-  description: "Test feedback description",
-  voteCount: 5,
   commentCount: 2,
-  hasVoted: false,
-  isPinned: false,
-  isAuthor: false,
-  role: "member" as const,
   createdAt: Date.now() - 86_400_000,
-  organizationStatusId: "status-1" as Id<"organizationStatuses">,
+  description: "Test feedback description",
+  hasVoted: false,
+  isAuthor: false,
+  isPinned: false,
   organizationId: "org-1" as Id<"organizations">,
-  tags: [{ _id: "tag1", name: "Bug", color: "#ff0000" }],
+  organizationStatusId: "status-1" as Id<"organizationStatuses">,
+  role: "member" as const,
+  tags: [{ _id: "tag1", color: "#ff0000", name: "Bug" }],
+  title: "Test Feedback Title",
+  voteCount: 5,
 };
 
 const mockOrg = {
   _id: "org-1" as Id<"organizations">,
-  name: "My Organization",
-  slug: "my-organization",
   isPublic: true,
-  subscriptionTier: "free" as const,
+  name: "My Organization",
   primaryColor: "#6366f1",
+  slug: "my-organization",
+  subscriptionTier: "free" as const,
 };
 
 const mockStatuses = [
   {
     _id: "status-1" as Id<"organizationStatuses">,
-    name: "New",
     color: "#6b7280",
+    name: "New",
     order: 0,
   },
 ];
@@ -44,25 +44,25 @@ const mockUseQuery = vi.fn();
 const mockUseMutation = vi.fn(() => vi.fn());
 
 vi.mock("convex/react", () => ({
-  useQuery: (...args: unknown[]) => mockUseQuery(...args),
   useMutation: () => mockUseMutation(),
+  useQuery: (...args: unknown[]) => mockUseQuery(...args),
 }));
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
     feedback: {
-      queries: { get: "feedback.get" },
-      comments: { list: "comments.list" },
-      votes: { toggle: "votes.toggle" },
       actions: { assign: "feedback_actions.assign" },
+      comments: { list: "comments.list" },
+      queries: { get: "feedback.get" },
+      votes: { toggle: "votes.toggle" },
     },
     organizations: {
-      queries: { getBySlug: "organizations.getBySlug" },
-      statuses: { list: "organization_statuses.list" },
       members: {
         getMembership: "members.getMembership",
         list: "members.list",
       },
+      queries: { getBySlug: "organizations.getBySlug" },
+      statuses: { list: "organization_statuses.list" },
     },
   },
 }));
@@ -75,8 +75,8 @@ vi.mock("react", async () => {
     use: (
       _promise: Promise<{ orgSlug: string; feedbackId: Id<"feedback"> }>
     ) => ({
-      orgSlug: "my-organization",
       feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+      orgSlug: "my-organization",
     }),
   };
 });
@@ -197,9 +197,6 @@ vi.mock("@/components/ui/avatar", () => ({
       {children}
     </span>
   ),
-  AvatarImage: ({ src }: { src?: string }) => (
-    <span data-src={src} data-testid="avatar-image" />
-  ),
   AvatarFallback: ({
     children,
     className,
@@ -211,6 +208,9 @@ vi.mock("@/components/ui/avatar", () => ({
       {children}
     </span>
   ),
+  AvatarImage: ({ src }: { src?: string }) => (
+    <span data-src={src} data-testid="avatar-image" />
+  ),
 }));
 
 vi.mock("@/components/ui/select", () => ({
@@ -221,6 +221,12 @@ vi.mock("@/components/ui/select", () => ({
     onValueChange?: (value: string) => void;
     value?: string;
   }) => <div data-testid="select">{children}</div>,
+  SelectContent: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="select-content">{children}</div>
+  ),
+  SelectItem: ({ children }: { children: React.ReactNode; value: string }) => (
+    <div data-testid="select-item">{children}</div>
+  ),
   SelectTrigger: ({
     children,
     className,
@@ -238,12 +244,6 @@ vi.mock("@/components/ui/select", () => ({
     children?: React.ReactNode;
     placeholder?: string;
   }) => <span data-testid="select-value">{children}</span>,
-  SelectContent: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="select-content">{children}</div>
-  ),
-  SelectItem: ({ children }: { children: React.ReactNode; value: string }) => (
-    <div data-testid="select-item">{children}</div>
-  ),
 }));
 
 vi.mock("@/components/ui/typography", () => ({
@@ -270,7 +270,7 @@ describe("FeedbackDetailPage", () => {
   beforeEach(() => {
     mockUseQuery.mockImplementation((queryFn, args) => {
       if (args === "skip") {
-        return undefined;
+        return;
       }
       const queryName = String(queryFn);
       if (queryName === "feedback.get") {
@@ -294,7 +294,6 @@ describe("FeedbackDetailPage", () => {
       if (queryName === "tags.list") {
         return [];
       }
-      return undefined;
     });
   });
 
@@ -307,8 +306,8 @@ describe("FeedbackDetailPage", () => {
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          orgSlug: "my-organization",
           feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+          orgSlug: "my-organization",
         })}
       />
     );
@@ -322,8 +321,8 @@ describe("FeedbackDetailPage", () => {
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          orgSlug: "my-organization",
           feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+          orgSlug: "my-organization",
         })}
       />
     );
@@ -337,8 +336,8 @@ describe("FeedbackDetailPage", () => {
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          orgSlug: "my-organization",
           feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+          orgSlug: "my-organization",
         })}
       />
     );
@@ -352,8 +351,8 @@ describe("FeedbackDetailPage", () => {
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          orgSlug: "my-organization",
           feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+          orgSlug: "my-organization",
         })}
       />
     );
@@ -367,8 +366,8 @@ describe("FeedbackDetailPage", () => {
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          orgSlug: "my-organization",
           feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+          orgSlug: "my-organization",
         })}
       />
     );
@@ -382,7 +381,7 @@ describe("FeedbackDetailPage", () => {
     // Override mock for this test
     mockUseQuery.mockImplementation((queryFn, args) => {
       if (args === "skip") {
-        return undefined;
+        return;
       }
       const queryName = String(queryFn);
       if (queryName === "feedback.get") {
@@ -394,14 +393,13 @@ describe("FeedbackDetailPage", () => {
       if (queryName === "members.getMembership") {
         return { role: "member" };
       }
-      return undefined;
     });
 
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          orgSlug: "my-organization",
           feedbackId: "nonexistent-id" as Id<"feedback">,
+          orgSlug: "my-organization",
         })}
       />
     );
@@ -415,8 +413,8 @@ describe("FeedbackDetailPage", () => {
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          orgSlug: "my-organization",
           feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+          orgSlug: "my-organization",
         })}
       />
     );
@@ -436,8 +434,8 @@ describe("FeedbackDetailPage", () => {
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          orgSlug: "my-organization",
           feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+          orgSlug: "my-organization",
         })}
       />
     );
@@ -449,8 +447,8 @@ describe("FeedbackDetailPage", () => {
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          orgSlug: "my-organization",
           feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+          orgSlug: "my-organization",
         })}
       />
     );
@@ -463,7 +461,7 @@ describe("FeedbackDetailPage", () => {
   it("should display pinned state when feedback is pinned", async () => {
     mockUseQuery.mockImplementation((queryFn, args) => {
       if (args === "skip") {
-        return undefined;
+        return;
       }
       const queryName = String(queryFn);
       if (queryName === "feedback.get") {
@@ -487,14 +485,13 @@ describe("FeedbackDetailPage", () => {
       if (queryName === "tags.list") {
         return [];
       }
-      return undefined;
     });
 
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          orgSlug: "my-organization",
           feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+          orgSlug: "my-organization",
         })}
       />
     );
@@ -508,8 +505,8 @@ describe("FeedbackDetailPage", () => {
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          orgSlug: "my-organization",
           feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+          orgSlug: "my-organization",
         })}
       />
     );
@@ -523,20 +520,19 @@ describe("FeedbackDetailPage", () => {
   it("should show organization not found when org is null", async () => {
     mockUseQuery.mockImplementation((queryFn, args) => {
       if (args === "skip") {
-        return undefined;
+        return;
       }
       const queryName = String(queryFn);
       if (queryName === "organizations.getBySlug") {
         return null;
       }
-      return undefined;
     });
 
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          orgSlug: "nonexistent-org",
           feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+          orgSlug: "nonexistent-org",
         })}
       />
     );
@@ -550,21 +546,21 @@ describe("FeedbackDetailPage", () => {
     const commentsWithData = [
       {
         _id: "c1",
+        author: { name: "Jane Doe" },
         body: "Great feature!",
         createdAt: Date.now() - 3_600_000,
-        author: { name: "Jane Doe" },
       },
       {
         _id: "c2",
+        author: { name: "John Smith" },
         body: "Needs improvement",
         createdAt: Date.now() - 7_200_000,
-        author: { name: "John Smith" },
       },
     ];
 
     mockUseQuery.mockImplementation((queryFn, args) => {
       if (args === "skip") {
-        return undefined;
+        return;
       }
       const queryName = String(queryFn);
       if (queryName === "feedback.get") {
@@ -588,14 +584,13 @@ describe("FeedbackDetailPage", () => {
       if (queryName === "tags.list") {
         return [];
       }
-      return undefined;
     });
 
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          orgSlug: "my-organization",
           feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+          orgSlug: "my-organization",
         })}
       />
     );
@@ -612,8 +607,8 @@ describe("FeedbackDetailPage", () => {
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          orgSlug: "my-organization",
           feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+          orgSlug: "my-organization",
         })}
       />
     );
@@ -632,8 +627,8 @@ describe("FeedbackDetailPage", () => {
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          orgSlug: "my-organization",
           feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+          orgSlug: "my-organization",
         })}
       />
     );
@@ -646,7 +641,7 @@ describe("FeedbackDetailPage", () => {
   it("should display assignee selector for admin users", async () => {
     mockUseQuery.mockImplementation((queryFn, args) => {
       if (args === "skip") {
-        return undefined;
+        return;
       }
       const queryName = String(queryFn);
       if (queryName === "feedback.get") {
@@ -667,22 +662,21 @@ describe("FeedbackDetailPage", () => {
       if (queryName === "members.list") {
         return [
           {
+            user: { email: "admin@test.com", image: null, name: "Admin User" },
             userId: "u1",
-            user: { name: "Admin User", email: "admin@test.com", image: null },
           },
         ];
       }
       if (queryName === "tags.list") {
         return [];
       }
-      return undefined;
     });
 
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          orgSlug: "my-organization",
           feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+          orgSlug: "my-organization",
         })}
       />
     );
@@ -695,17 +689,17 @@ describe("FeedbackDetailPage", () => {
   it("should display assignee name when feedback has assignee", async () => {
     mockUseQuery.mockImplementation((queryFn, args) => {
       if (args === "skip") {
-        return undefined;
+        return;
       }
       const queryName = String(queryFn);
       if (queryName === "feedback.get") {
         return {
           ...mockFeedback,
           assignee: {
-            id: "u1",
-            name: "Admin User",
             email: "admin@test.com",
+            id: "u1",
             image: null,
+            name: "Admin User",
           },
         };
       }
@@ -727,14 +721,13 @@ describe("FeedbackDetailPage", () => {
       if (queryName === "tags.list") {
         return [];
       }
-      return undefined;
     });
 
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          orgSlug: "my-organization",
           feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+          orgSlug: "my-organization",
         })}
       />
     );
@@ -747,7 +740,7 @@ describe("FeedbackDetailPage", () => {
   it("should handle feedback without description", async () => {
     mockUseQuery.mockImplementation((queryFn, args) => {
       if (args === "skip") {
-        return undefined;
+        return;
       }
       const queryName = String(queryFn);
       if (queryName === "feedback.get") {
@@ -771,14 +764,13 @@ describe("FeedbackDetailPage", () => {
       if (queryName === "tags.list") {
         return [];
       }
-      return undefined;
     });
 
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          orgSlug: "my-organization",
           feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+          orgSlug: "my-organization",
         })}
       />
     );
@@ -795,15 +787,15 @@ describe("FeedbackDetailPage", () => {
     const commentsWithData = [
       {
         _id: "c1",
+        author: { name: "User" },
         body: "Comment body",
         createdAt: Date.now(),
-        author: { name: "User" },
       },
     ];
 
     mockUseQuery.mockImplementation((queryFn, args) => {
       if (args === "skip") {
-        return undefined;
+        return;
       }
       const queryName = String(queryFn);
       if (queryName === "feedback.get") {
@@ -827,14 +819,13 @@ describe("FeedbackDetailPage", () => {
       if (queryName === "tags.list") {
         return [];
       }
-      return undefined;
     });
 
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          orgSlug: "my-organization",
           feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+          orgSlug: "my-organization",
         })}
       />
     );
@@ -848,15 +839,15 @@ describe("FeedbackDetailPage", () => {
     const commentsWithNullAuthor = [
       {
         _id: "c1",
+        author: null,
         body: "Anonymous comment",
         createdAt: Date.now(),
-        author: null,
       },
     ];
 
     mockUseQuery.mockImplementation((queryFn, args) => {
       if (args === "skip") {
-        return undefined;
+        return;
       }
       const queryName = String(queryFn);
       if (queryName === "feedback.get") {
@@ -880,14 +871,13 @@ describe("FeedbackDetailPage", () => {
       if (queryName === "tags.list") {
         return [];
       }
-      return undefined;
     });
 
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          orgSlug: "my-organization",
           feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+          orgSlug: "my-organization",
         })}
       />
     );
@@ -900,7 +890,7 @@ describe("FeedbackDetailPage", () => {
   it("should display feedback without tags", async () => {
     mockUseQuery.mockImplementation((queryFn, args) => {
       if (args === "skip") {
-        return undefined;
+        return;
       }
       const queryName = String(queryFn);
       if (queryName === "feedback.get") {
@@ -924,14 +914,13 @@ describe("FeedbackDetailPage", () => {
       if (queryName === "tags.list") {
         return [];
       }
-      return undefined;
     });
 
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          orgSlug: "my-organization",
           feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+          orgSlug: "my-organization",
         })}
       />
     );

@@ -79,6 +79,9 @@ export function useTiptapMarkdownEditor(
   const effectiveOnChange = debounceMs > 0 ? debouncedOnChange : onChange;
 
   const { uploadMedia, isUploading, uploadProgress } = useMediaUpload({
+    onError: (error: Error) => {
+      console.error("Media upload failed:", error);
+    },
     onSuccess: (result: MediaUploadResult) => {
       const ed = editorRef.current;
       if (!ed) return;
@@ -93,9 +96,6 @@ export function useTiptapMarkdownEditor(
           )
           .run();
       }
-    },
-    onError: (error: Error) => {
-      console.error("Media upload failed:", error);
     },
   });
 
@@ -135,25 +135,25 @@ export function useTiptapMarkdownEditor(
   }, []);
 
   const extensions = createExtensions({
-    placeholder,
     maxLength,
     onImageUpload: handleImageUpload,
-    onVideoUpload: handleVideoUpload,
     onSubmit: onSubmit ? handleSubmit : undefined,
+    onVideoUpload: handleVideoUpload,
+    placeholder,
   });
 
   const editorProps = createEditorProps({
-    uploadMedia,
     minimal,
+    uploadMedia,
   });
 
   const editor = useTiptapEditor({
-    immediatelyRender: false,
-    extensions,
+    autofocus: autoFocus,
     content: value,
     editable: editable && !disabled,
-    autofocus: autoFocus,
     editorProps,
+    extensions,
+    immediatelyRender: false,
     onUpdate: ({ editor: ed }) => {
       const markdown = getMarkdown(ed.storage);
       effectiveOnChange(markdown);
@@ -195,17 +195,17 @@ export function useTiptapMarkdownEditor(
   const isAtLimit = maxLength ? characterCount >= maxLength : false;
 
   return {
+    characterCount,
     editor,
-    imageInputRef,
-    videoInputRef,
-    handleImageUpload,
-    handleVideoUpload,
     handleImageChange,
+    handleImageUpload,
     handleVideoChange,
+    handleVideoUpload,
+    imageInputRef,
+    isAtLimit,
+    isNearLimit,
     isUploading,
     uploadProgress,
-    characterCount,
-    isNearLimit,
-    isAtLimit,
+    videoInputRef,
   };
 }

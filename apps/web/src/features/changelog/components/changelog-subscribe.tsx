@@ -60,8 +60,8 @@ export function ChangelogSubscribe({
 
   const handleEmailSubscribe = async (email: string) => {
     await subscribeByEmail({
-      organizationId,
       email,
+      organizationId,
     });
     capture("changelog_subscribed", { method: "email" });
   };

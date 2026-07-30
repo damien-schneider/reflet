@@ -9,55 +9,55 @@ import { Button } from "./button";
 const errorDisplayVariants = cva(
   "flex flex-col items-center justify-center text-center",
   {
-    variants: {
-      size: {
-        sm: "gap-2 p-4",
-        md: "gap-3 p-6",
-        lg: "gap-4 p-8",
-      },
-    },
     defaultVariants: {
       size: "md",
+    },
+    variants: {
+      size: {
+        lg: "gap-4 p-8",
+        md: "gap-3 p-6",
+        sm: "gap-2 p-4",
+      },
     },
   }
 );
 
 const iconVariants = cva("text-destructive", {
-  variants: {
-    size: {
-      sm: "size-6",
-      md: "size-8",
-      lg: "size-12",
-    },
-  },
   defaultVariants: {
     size: "md",
+  },
+  variants: {
+    size: {
+      lg: "size-12",
+      md: "size-8",
+      sm: "size-6",
+    },
   },
 });
 
 const titleVariants = cva("font-medium text-foreground", {
-  variants: {
-    size: {
-      sm: "text-sm",
-      md: "text-base",
-      lg: "text-lg",
-    },
-  },
   defaultVariants: {
     size: "md",
+  },
+  variants: {
+    size: {
+      lg: "text-lg",
+      md: "text-base",
+      sm: "text-sm",
+    },
   },
 });
 
 const descriptionVariants = cva("text-muted-foreground", {
-  variants: {
-    size: {
-      sm: "text-xs",
-      md: "text-sm",
-      lg: "text-sm",
-    },
-  },
   defaultVariants: {
     size: "md",
+  },
+  variants: {
+    size: {
+      lg: "text-sm",
+      md: "text-sm",
+      sm: "text-xs",
+    },
   },
 });
 

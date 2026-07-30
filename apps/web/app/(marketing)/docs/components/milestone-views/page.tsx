@@ -5,31 +5,31 @@ import { AllMilestoneViewsPreview } from "@/components/docs/milestone-view-previ
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
-  title: "Milestone Views",
   description:
     "Three visual styles for displaying milestone timelines on your feedback board.",
-  path: "/docs/components/milestone-views",
   keywords: ["milestones", "timeline", "views", "roadmap", "progress"],
+  path: "/docs/components/milestone-views",
+  title: "Milestone Views",
 });
 
 const VIEWS = [
   {
-    title: "Horizontal Track",
     description:
       "Default horizontal track grouped by time horizons with pinch-to-zoom support.",
     href: "/docs/components/milestone-views/track",
+    title: "Horizontal Track",
   },
   {
-    title: "Editorial Accordion",
     description:
       "Serif typography with a percentage column and color-wash accordion expansion.",
     href: "/docs/components/milestone-views/editorial-accordion",
+    title: "Editorial Accordion",
   },
   {
-    title: "Dashboard Timeline",
     description:
       "KPI summary bar at top with a vertical timeline and sweep animation on click.",
     href: "/docs/components/milestone-views/dashboard-timeline",
+    title: "Dashboard Timeline",
   },
 ] as const;
 

@@ -4,34 +4,34 @@ import { H2, Lead } from "@/components/ui/typography";
 
 const REVIEWS = [
   {
-    id: "sarah-j",
-    text: '"Reflet transformed how we handle feature requests. Instead of a chaotic Slack channel, we now have a clear, prioritized list of what our users actually want."',
     author: "Sarah J.",
-    role: "Product Manager",
     company: "The Cloud",
+    id: "sarah-j",
+    role: "Product Manager",
+    text: '"Reflet transformed how we handle feature requests. Instead of a chaotic Slack channel, we now have a clear, prioritized list of what our users actually want."',
   },
   {
-    id: "mike-t",
-    text: '"The roadmap view is a game changer for our stakeholders. They can finally see what\'s being worked on without pestering the engineering team every day."',
     author: "Mike T.",
-    role: "CTO",
     company: "Echo",
+    id: "mike-t",
+    role: "CTO",
+    text: '"The roadmap view is a game changer for our stakeholders. They can finally see what\'s being worked on without pestering the engineering team every day."',
   },
   {
-    id: "elena-r",
-    text: '"I love the changelog feature. Closing the loop with users when we ship a feature they asked for has significantly reduced our churn."',
     author: "Elena R.",
-    role: "Founder",
     company: "One Rec",
+    id: "elena-r",
+    role: "Founder",
+    text: '"I love the changelog feature. Closing the loop with users when we ship a feature they asked for has significantly reduced our churn."',
   },
 ] as const;
 
 const PRODUCT_LOGOS = [
-  { name: "Reflet", src: "/logos/reflet.png", width: 32, height: 32 },
-  { name: "The Cloud", src: "/logos/the-cloud.png", width: 120, height: 32 },
-  { name: "Echo", src: "/logos/echo.svg", width: 90, height: 24 },
-  { name: "One Rec", src: "/logos/one-rec.png", width: 32, height: 32 },
-  { name: "The Mug", src: "/logos/the-mug.png", width: 32, height: 32 },
+  { height: 32, name: "Reflet", src: "/logos/reflet.png", width: 32 },
+  { height: 32, name: "The Cloud", src: "/logos/the-cloud.png", width: 120 },
+  { height: 24, name: "Echo", src: "/logos/echo.svg", width: 90 },
+  { height: 32, name: "One Rec", src: "/logos/one-rec.png", width: 32 },
+  { height: 32, name: "The Mug", src: "/logos/the-mug.png", width: 32 },
 ] as const;
 
 export default function Testimonials() {

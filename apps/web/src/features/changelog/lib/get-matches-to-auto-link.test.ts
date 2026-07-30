@@ -9,8 +9,8 @@ const makeMatch = (
   confidence: "high" | "medium" | "low" = "high",
   reason = "test reason"
 ) => ({
-  feedbackId: fId,
   confidence,
+  feedbackId: fId,
   reason,
 });
 

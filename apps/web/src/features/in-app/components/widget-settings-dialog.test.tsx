@@ -5,13 +5,13 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 vi.mock("convex/react", () => {
   const mockFn = vi.fn().mockResolvedValue(undefined);
   return {
-    useMutation: vi.fn(() => mockFn),
     __mockMutationFn: mockFn,
+    useMutation: vi.fn(() => mockFn),
   };
 });
 
 vi.mock("sonner", () => ({
-  toast: { success: vi.fn(), error: vi.fn() },
+  toast: { error: vi.fn(), success: vi.fn() },
 }));
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
@@ -57,17 +57,17 @@ vi.mock("@/components/ui/dialog", () => ({
     children: React.ReactNode;
     className?: string;
   }) => <div className={className}>{children}</div>,
-  DialogHeader: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  DialogTitle: ({ children }: { children: React.ReactNode }) => (
-    <h2>{children}</h2>
-  ),
   DialogDescription: ({ children }: { children: React.ReactNode }) => (
     <p>{children}</p>
   ),
   DialogFooter: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
+  ),
+  DialogHeader: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DialogTitle: ({ children }: { children: React.ReactNode }) => (
+    <h2>{children}</h2>
   ),
 }));
 
@@ -151,25 +151,25 @@ import { WidgetSettingsDialog } from "./widget-settings-dialog";
 afterEach(cleanup);
 
 const baseWidget = {
-  _id: "w1" as never,
   _creationTime: Date.now(),
-  widgetId: "widget-123",
-  name: "Test Widget",
+  _id: "w1" as never,
+  conversationCount: 0,
   isActive: true,
+  name: "Test Widget",
   organizationId: "org1" as never,
   settings: {
-    _id: "ws1" as never,
     _creationTime: Date.now(),
-    widgetId: "w1" as never,
-    primaryColor: "#5c6d4f",
-    position: "bottom-right" as const,
-    welcomeMessage: "Hi there!",
-    greetingMessage: "We reply fast",
-    showLauncher: true,
+    _id: "ws1" as never,
     autoOpen: false,
+    greetingMessage: "We reply fast",
+    position: "bottom-right" as const,
+    primaryColor: "#5c6d4f",
+    showLauncher: true,
+    welcomeMessage: "Hi there!",
+    widgetId: "w1" as never,
     zIndex: 9999,
   },
-  conversationCount: 0,
+  widgetId: "widget-123",
 };
 
 describe("WidgetSettingsDialog", () => {
@@ -512,12 +512,12 @@ describe("WidgetSettingsDialog", () => {
     await user.click(screen.getByText("Save Changes"));
     expect(__mockMutationFn).toHaveBeenCalledWith(
       expect.objectContaining({
-        widgetId: "w1",
-        primaryColor: "#5c6d4f",
-        position: "bottom-right",
-        welcomeMessage: "Hi there!",
-        showLauncher: true,
         autoOpen: false,
+        position: "bottom-right",
+        primaryColor: "#5c6d4f",
+        showLauncher: true,
+        welcomeMessage: "Hi there!",
+        widgetId: "w1",
         zIndex: 9999,
       })
     );

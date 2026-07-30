@@ -10,8 +10,10 @@ vi.mock("convex/react", () => ({
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
-    organizations: {
-      queries: { get: "organizations:get" },
+    changelog: {
+      subscriptions: {
+        getSubscriberCount: "changelog_subscriptions:getSubscriberCount",
+      },
     },
     integrations: {
       github: {
@@ -20,15 +22,19 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
         },
       },
     },
-    changelog: {
-      subscriptions: {
-        getSubscriberCount: "changelog_subscriptions:getSubscriberCount",
-      },
+    organizations: {
+      queries: { get: "organizations:get" },
     },
   },
 }));
 
 vi.mock("@phosphor-icons/react", () => ({
+  CalendarBlank: ({ className }: { className?: string }) => (
+    <svg className={className} data-testid="calendar-icon" />
+  ),
+  CheckCircle: ({ className }: { className?: string }) => (
+    <svg className={className} data-testid="check-circle-icon" />
+  ),
   GithubLogo: ({ className }: { className?: string }) => (
     <svg className={className} data-testid="github-icon" />
   ),
@@ -145,14 +151,14 @@ const ORG_ID = "org123" as Id<"organizations">;
 
 describe("PublishConfirmDialog", () => {
   const defaultProps = {
-    open: true,
-    onOpenChange: vi.fn(),
-    onConfirm: vi.fn(),
     isSubmitting: false,
-    title: "Big Update",
-    version: "2.0.0",
+    onConfirm: vi.fn(),
+    onOpenChange: vi.fn(),
+    open: true,
     organizationId: ORG_ID,
     orgSlug: "test-org",
+    title: "Big Update",
+    version: "2.0.0",
   };
 
   beforeEach(() => {
@@ -161,12 +167,11 @@ describe("PublishConfirmDialog", () => {
         return { changelogSettings: {} };
       }
       if (queryName === "github:getConnectionStatus") {
-        return { isConnected: false, hasRepository: false };
+        return { hasRepository: false, isConnected: false };
       }
       if (queryName === "changelog_subscriptions:getSubscriberCount") {
         return 0;
       }
-      return undefined;
     });
   });
 
@@ -223,7 +228,6 @@ describe("PublishConfirmDialog", () => {
       if (queryName === "github:getConnectionStatus") {
         return { isConnected: false };
       }
-      return undefined;
     });
     render(<PublishConfirmDialog {...defaultProps} />);
     expect(
@@ -242,7 +246,6 @@ describe("PublishConfirmDialog", () => {
       if (queryName === "github:getConnectionStatus") {
         return { isConnected: false };
       }
-      return undefined;
     });
     render(<PublishConfirmDialog {...defaultProps} />);
     expect(
@@ -259,15 +262,14 @@ describe("PublishConfirmDialog", () => {
       }
       if (queryName === "github:getConnectionStatus") {
         return {
-          isConnected: true,
           hasRepository: true,
+          isConnected: true,
           repositoryFullName: "org/repo",
         };
       }
       if (queryName === "changelog_subscriptions:getSubscriberCount") {
         return 0;
       }
-      return undefined;
     });
     render(<PublishConfirmDialog {...defaultProps} />);
     expect(
@@ -283,12 +285,11 @@ describe("PublishConfirmDialog", () => {
         };
       }
       if (queryName === "github:getConnectionStatus") {
-        return { isConnected: false, hasRepository: false };
+        return { hasRepository: false, isConnected: false };
       }
       if (queryName === "changelog_subscriptions:getSubscriberCount") {
         return 0;
       }
-      return undefined;
     });
     render(<PublishConfirmDialog {...defaultProps} />);
     expect(
@@ -305,12 +306,11 @@ describe("PublishConfirmDialog", () => {
         };
       }
       if (queryName === "github:getConnectionStatus") {
-        return { isConnected: false, hasRepository: false };
+        return { hasRepository: false, isConnected: false };
       }
       if (queryName === "changelog_subscriptions:getSubscriberCount") {
         return 0;
       }
-      return undefined;
     });
     render(<PublishConfirmDialog {...defaultProps} />);
     const link = screen.getByText("Connect repository");

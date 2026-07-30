@@ -82,7 +82,7 @@ export function GenerateFromCommits({
 
   const previousReleaseCommit = useQuery(
     api.changelog.actions.getLatestCommitFromPreviousRelease,
-    { organizationId, excludeReleaseId: releaseId ?? undefined }
+    { excludeReleaseId: releaseId ?? undefined, organizationId }
   );
 
   const hasInstallation = Boolean(githubConnection?.installationId);
@@ -114,10 +114,10 @@ export function GenerateFromCommits({
       const head =
         currentTag && tagExists(tags, currentTag) ? currentTag : targetBranch;
       const result = await fetchCommits({
-        installationToken: token,
-        repositoryFullName: repoFullName,
         base: previousTag,
         head,
+        installationToken: token,
+        repositoryFullName: repoFullName,
       });
       return { commits: result.commits, files: result.files, previousTag };
     }
@@ -125,19 +125,19 @@ export function GenerateFromCommits({
     // No tags found — try using the latest commit from the previous release as base
     if (previousReleaseCommit?.sha) {
       const result = await fetchCommits({
-        installationToken: token,
-        repositoryFullName: repoFullName,
         base: previousReleaseCommit.sha,
         head: targetBranch,
+        installationToken: token,
+        repositoryFullName: repoFullName,
       });
       return { commits: result.commits, files: result.files, previousTag };
     }
 
     const commits = await fetchRecent({
-      installationToken: token,
-      repositoryFullName: repoFullName,
       branch: targetBranch,
+      installationToken: token,
       perPage: 30,
+      repositoryFullName: repoFullName,
     });
     return { commits, files: undefined, previousTag };
   };
@@ -152,25 +152,25 @@ export function GenerateFromCommits({
 
     const currentTag = version.trim();
     const response = await fetch("/api/ai/generate-release-notes", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         commits: commits.map((c) => ({
-          sha: c.sha,
-          message: c.message,
-          fullMessage: c.fullMessage,
           author: c.author,
+          fullMessage: c.fullMessage,
+          message: c.message,
+          sha: c.sha,
         })),
         files: files?.map((f) => ({
-          filename: f.filename,
-          status: f.status,
           additions: f.additions,
           deletions: f.deletions,
+          filename: f.filename,
+          status: f.status,
         })),
-        version: currentTag || undefined,
         previousVersion: previousTag ?? undefined,
         repositoryName: repoFullName,
+        version: currentTag || undefined,
       }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
       signal: abortController.signal,
     });
 
@@ -200,12 +200,12 @@ export function GenerateFromCommits({
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_CONVEX_SITE_URL ?? ""}/api/ai/generate-release-title`,
         {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             description,
             version: version.trim() || undefined,
           }),
+          headers: { "Content-Type": "application/json" },
+          method: "POST",
         }
       );
 

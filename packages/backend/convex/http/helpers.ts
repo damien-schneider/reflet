@@ -17,16 +17,16 @@ export interface AdminAuth {
 // ============================================
 
 const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Origin": "*",
   "Access-Control-Max-Age": "86400",
 } as const;
 
 export function jsonResponse(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
-    status,
     headers: { "Content-Type": "application/json", ...CORS_HEADERS },
+    status,
   });
 }
 
@@ -35,7 +35,7 @@ export function errorResponse(error: string, status = 400): Response {
 }
 
 function corsPreflightResponse(): Response {
-  return new Response(null, { status: 204, headers: CORS_HEADERS });
+  return new Response(null, { headers: CORS_HEADERS, status: 204 });
 }
 
 // ============================================
@@ -56,7 +56,7 @@ export function bool(value: unknown): boolean | undefined {
 
 export function strArr(value: unknown): string[] | undefined {
   if (!Array.isArray(value)) {
-    return undefined;
+    return;
   }
   return value.every((v): v is string => typeof v === "string")
     ? value
@@ -100,15 +100,15 @@ export async function parseJsonBody(
     const raw: unknown = await request.json();
     if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
       return {
-        success: false,
         response: errorResponse("Invalid JSON body", 400),
+        success: false,
       };
     }
-    return { success: true, body: raw as Record<string, unknown> };
+    return { body: raw as Record<string, unknown>, success: true };
   } catch {
     return {
-      success: false,
       response: errorResponse("Invalid JSON body", 400),
+      success: false,
     };
   }
 }
@@ -126,8 +126,8 @@ async function authenticateAdminRequest(
   const authHeader = request.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) {
     return {
-      success: false,
       response: errorResponse("Missing or invalid Authorization header", 401),
+      success: false,
     };
   }
 
@@ -145,18 +145,18 @@ async function authenticateAdminRequest(
     )
   ) {
     return {
-      success: false,
       response: errorResponse(validation.error ?? "Invalid API key", 401),
+      success: false,
     };
   }
 
   if (!validation.isSecretKey) {
     return {
-      success: false,
       response: errorResponse(
         "Admin API requires a secret key (fb_sec_*)",
         403
       ),
+      success: false,
     };
   }
 
@@ -166,8 +166,8 @@ async function authenticateAdminRequest(
   });
 
   return {
-    success: true,
     auth: { organizationId: validation.organizationId },
+    success: true,
   };
 }
 

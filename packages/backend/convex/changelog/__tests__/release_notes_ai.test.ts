@@ -80,19 +80,19 @@ ${args.additionalContext ? `## Additional Context\n${args.additionalContext}` : 
 
 function makeCommit(overrides: Partial<Commit> = {}): Commit {
   return {
-    sha: "abc1234",
-    message: "fix: resolve login issue",
     author: "devuser",
+    message: "fix: resolve login issue",
+    sha: "abc1234",
     ...overrides,
   };
 }
 
 function makeFile(overrides: Partial<FileChange> = {}): FileChange {
   return {
-    filename: "src/index.ts",
-    status: "modified",
     additions: 10,
     deletions: 3,
+    filename: "src/index.ts",
+    status: "modified",
     ...overrides,
   };
 }
@@ -101,7 +101,7 @@ describe("release notes AI prompt construction", () => {
   describe("commit formatting", () => {
     test("should limit commits to MAX_COMMITS_FOR_CONTEXT", () => {
       const commits = Array.from({ length: 150 }, (_, i) =>
-        makeCommit({ sha: `sha${i}`, message: `commit ${i}` })
+        makeCommit({ message: `commit ${i}`, sha: `sha${i}` })
       );
       const prompt = buildPrompt({ commits });
 
@@ -113,9 +113,9 @@ describe("release notes AI prompt construction", () => {
 
     test("should include sha and author in commit format", () => {
       const commit = makeCommit({
-        sha: "deadbeef",
-        message: "feat: add button",
         author: "janedoe",
+        message: "feat: add button",
+        sha: "deadbeef",
       });
       const prompt = buildPrompt({ commits: [commit] });
 
@@ -163,10 +163,10 @@ describe("release notes AI prompt construction", () => {
 
     test("should include additions and deletions in file format", () => {
       const file = makeFile({
-        filename: "lib/utils.ts",
-        status: "modified",
         additions: 25,
         deletions: 7,
+        filename: "lib/utils.ts",
+        status: "modified",
       });
       const prompt = buildPrompt({ commits: [makeCommit()], files: [file] });
 
@@ -175,10 +175,10 @@ describe("release notes AI prompt construction", () => {
 
     test("should handle files with zero additions and deletions", () => {
       const file = makeFile({
-        filename: "README.md",
-        status: "renamed",
         additions: 0,
         deletions: 0,
+        filename: "README.md",
+        status: "renamed",
       });
       const prompt = buildPrompt({ commits: [makeCommit()], files: [file] });
 
@@ -211,8 +211,8 @@ describe("release notes AI prompt construction", () => {
     test("should include previous version in parentheses", () => {
       const prompt = buildPrompt({
         commits: [makeCommit()],
-        version: "v2.0.0",
         previousVersion: "v1.9.0",
+        version: "v2.0.0",
       });
 
       expect(prompt).toContain("Version: v2.0.0 (from v1.9.0)");
@@ -234,8 +234,8 @@ describe("release notes AI prompt construction", () => {
 
     test("should include additional context when provided", () => {
       const prompt = buildPrompt({
-        commits: [makeCommit()],
         additionalContext: "This is a major refactor of the auth system.",
+        commits: [makeCommit()],
       });
 
       expect(prompt).toContain("This is a major refactor of the auth system.");

@@ -57,8 +57,8 @@ describe("auth store", () => {
     it("opens dialog with mode and message from options object", () => {
       const store = createStore();
       store.set(openAuthDialogAtom, {
-        mode: "signUp",
         message: "Please sign up to continue",
+        mode: "signUp",
       });
 
       expect(store.get(authDialogOpenAtom)).toBe(true);
@@ -91,8 +91,8 @@ describe("auth store", () => {
 
       // First open with a message
       store.set(openAuthDialogAtom, {
-        mode: "signUp",
         message: "Some message",
+        mode: "signUp",
       });
       expect(store.get(authDialogOpenAtom)).toBe(true);
 

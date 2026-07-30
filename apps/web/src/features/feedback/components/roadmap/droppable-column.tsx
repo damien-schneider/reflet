@@ -15,11 +15,11 @@ export function DroppableColumn({
   onDeleteClick,
 }: DroppableColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
-    id: status._id,
     data: {
-      type: "column",
       statusId: status._id,
+      type: "column",
     },
+    id: status._id,
   });
 
   // Background opacity: 8% normally, 28% when dragging over

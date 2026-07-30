@@ -25,8 +25,8 @@ export function registerCommentTools(
     "comment_create",
     "Add a comment to a feedback item. Can be a reply to another comment.",
     {
-      feedbackId: z.string().describe("The feedback item ID"),
       body: z.string().describe("Comment text (max 5000 chars)"),
+      feedbackId: z.string().describe("The feedback item ID"),
       parentId: z
         .string()
         .optional()
@@ -39,8 +39,8 @@ export function registerCommentTools(
     "comment_update",
     "Edit an existing comment's body text.",
     {
-      commentId: z.string().describe("The comment ID"),
       body: z.string().describe("New comment text"),
+      commentId: z.string().describe("The comment ID"),
     },
     async ({ commentId, body }) =>
       textResult(await client.updateComment(commentId, body))

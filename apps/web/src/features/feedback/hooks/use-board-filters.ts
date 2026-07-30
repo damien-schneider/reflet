@@ -8,14 +8,14 @@ import type { BoardView } from "../components/board-view-toggle";
 import type { SortOption } from "../components/filters-bar";
 
 const URL_PARAM_KEYS = {
-  view: "view",
+  hideCompleted: "hide_completed", // "0" = show completed; absent = hide (default)
+  newFeedback: "new", // Submit feedback drawer
+  search: "q",
   sort: "sort",
   status: "status",
-  tags: "tags",
   tag: "tag", // Single tag filter (from tag filter bar)
-  search: "q",
-  newFeedback: "new", // Submit feedback drawer
-  hideCompleted: "hide_completed", // "0" = show completed; absent = hide (default)
+  tags: "tags",
+  view: "view",
 } as const;
 
 const DEFAULT_VIEW: BoardView = "feed";
@@ -96,21 +96,21 @@ export function useBoardFilters(
         : DEFAULT_SORT;
 
     return {
-      view,
-      sortBy,
+      // Default true (hide); set "0" in URL to show completed
+      hideCompleted: searchParams.get(URL_PARAM_KEYS.hideCompleted) !== "0",
+      searchQuery: searchParams.get(URL_PARAM_KEYS.search) ?? "",
       selectedStatusIds: parseArrayParam<Id<"organizationStatuses">>(
         searchParams.get(URL_PARAM_KEYS.status)
-      ),
-      selectedTagIds: parseArrayParam<Id<"tags">>(
-        searchParams.get(URL_PARAM_KEYS.tags)
       ),
       selectedTagId: parseIdParam<Id<"tags">>(
         searchParams.get(URL_PARAM_KEYS.tag)
       ),
-      searchQuery: searchParams.get(URL_PARAM_KEYS.search) ?? "",
+      selectedTagIds: parseArrayParam<Id<"tags">>(
+        searchParams.get(URL_PARAM_KEYS.tags)
+      ),
       showSubmitDrawer: searchParams.get(URL_PARAM_KEYS.newFeedback) === "1",
-      // Default true (hide); set "0" in URL to show completed
-      hideCompleted: searchParams.get(URL_PARAM_KEYS.hideCompleted) !== "0",
+      sortBy,
+      view,
     };
   }, [searchParams, defaultView]);
 
@@ -259,18 +259,18 @@ export function useBoardFilters(
 
   return {
     ...state,
-    setView,
-    setSortBy,
-    setSelectedStatusIds,
-    setSelectedTagIds,
-    setSelectedTagId,
-    setSearchQuery,
-    openSubmitDrawer,
+    clearFilters,
     closeSubmitDrawer,
     handleStatusChange,
     handleTagChange,
-    clearFilters,
-    setHideCompleted,
     hasActiveFilters,
+    openSubmitDrawer,
+    setHideCompleted,
+    setSearchQuery,
+    setSelectedStatusIds,
+    setSelectedTagId,
+    setSelectedTagIds,
+    setSortBy,
+    setView,
   };
 }

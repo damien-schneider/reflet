@@ -3,15 +3,15 @@ import { Sparkle } from "@phosphor-icons/react";
 import { Badge } from "@/components/ui/badge";
 
 const AI_INDICATOR_COLORS: Record<string, string> = {
+  complex: "orange",
   critical: "red",
   high: "orange",
-  medium: "yellow",
   low: "blue",
-  none: "gray",
-  trivial: "green",
-  simple: "blue",
+  medium: "yellow",
   moderate: "yellow",
-  complex: "orange",
+  none: "gray",
+  simple: "blue",
+  trivial: "green",
   very_complex: "red",
 };
 

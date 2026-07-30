@@ -43,9 +43,9 @@ const PHASE_STEPS = [
 ] as const;
 
 const GROUPING_OPTIONS = [
-  { value: "auto" as const, label: "Auto" },
-  { value: "tags" as const, label: "Tags" },
-  { value: "weekly" as const, label: "Weekly" },
+  { label: "Auto", value: "auto" as const },
+  { label: "Tags", value: "tags" as const },
+  { label: "Weekly", value: "weekly" as const },
 ];
 
 interface RetroactiveInlineFlowProps {
@@ -99,8 +99,8 @@ export function RetroactiveInlineFlow({
     setIsStarting(true);
     try {
       await startRetroactive({
-        organizationId,
         groupingStrategy,
+        organizationId,
         skipExistingVersions: skipExisting,
       });
     } catch (error) {

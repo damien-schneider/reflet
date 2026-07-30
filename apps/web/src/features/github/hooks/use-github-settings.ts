@@ -162,9 +162,9 @@ export function useGitHubSettings({
   }, [orgId, hasRepository, listLabelsAction]);
 
   const connectHref = buildGitHubInstallUrl({
-    userId,
     organizationId: orgId,
     orgSlug,
+    userId,
   });
 
   const handleConnectClick = useCallback(() => {
@@ -193,10 +193,10 @@ export function useGitHubSettings({
       return;
     }
     await selectRepository({
-      organizationId: orgId,
-      repositoryId: repo.id,
-      repositoryFullName: repo.fullName,
       defaultBranch: repo.defaultBranch,
+      organizationId: orgId,
+      repositoryFullName: repo.fullName,
+      repositoryId: repo.id,
     });
     setIsChangingRepository(false);
   }, [orgId, selectedRepo, repositories, selectRepository]);
@@ -293,7 +293,7 @@ export function useGitHubSettings({
         setIsSettingUp(false);
       }
 
-      await toggleAutoSync({ organizationId: orgId, enabled });
+      await toggleAutoSync({ enabled, organizationId: orgId });
     },
     [orgId, toggleAutoSync, hasWebhook, setupWebhookAction]
   );
@@ -303,7 +303,7 @@ export function useGitHubSettings({
       if (!orgId) {
         return;
       }
-      await toggleIssuesSync({ organizationId: orgId, enabled, autoSync });
+      await toggleIssuesSync({ autoSync, enabled, organizationId: orgId });
     },
     [orgId, toggleIssuesSync]
   );
@@ -339,37 +339,37 @@ export function useGitHubSettings({
   );
 
   return {
-    // State
-    repositories,
-    loadingRepos,
-    selectedRepo,
-    isSyncing,
-    isSettingUp,
-    isChangingRepository,
-    isDisconnecting,
-    isSyncingIssues,
-    githubLabels,
-    isLoadingLabels,
-    webhookSetupError,
-    repoError,
-    // Setters
-    setSelectedRepo,
+    clearWebhookSetupError,
+    connectHref,
+    fetchLabels,
     // Handlers
     fetchRepositories,
+    githubLabels,
+    handleAddLabelMapping,
     handleChangeRepository,
-    fetchLabels,
-    connectHref,
     handleConnectClick,
     handleConnectNavigate,
-    handleSelectRepository,
-    handleSyncReleases,
-    handleSyncIssues,
-    handleSetup,
+    handleDeleteLabelMapping,
     handleDisconnect,
+    handleSelectRepository,
+    handleSetup,
+    handleSyncIssues,
+    handleSyncReleases,
     handleToggleAutoSync,
     handleToggleIssuesSync,
-    handleAddLabelMapping,
-    handleDeleteLabelMapping,
-    clearWebhookSetupError,
+    isChangingRepository,
+    isDisconnecting,
+    isLoadingLabels,
+    isSettingUp,
+    isSyncing,
+    isSyncingIssues,
+    loadingRepos,
+    repoError,
+    // State
+    repositories,
+    selectedRepo,
+    // Setters
+    setSelectedRepo,
+    webhookSetupError,
   };
 }

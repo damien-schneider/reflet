@@ -17,10 +17,10 @@ import { StatusDot } from "@/features/status/components/status-dot";
 import { GitHubConnectHint } from "@/shared/components/github-connect-hint";
 
 const statusLabels = {
-  operational: "All Systems Operational",
   degraded: "Degraded Performance",
   major_outage: "Major Outage",
   no_monitors: "No Monitors",
+  operational: "All Systems Operational",
 } as const;
 
 const getStatusBannerClass = (status: string): string => {
@@ -86,8 +86,8 @@ export default function StatusDashboardPage({
 
   const handleAddMonitor = async (url: string, name: string) => {
     await createMonitor({
-      organizationId: org._id,
       name,
+      organizationId: org._id,
       url,
     });
   };
@@ -108,7 +108,7 @@ export default function StatusDashboardPage({
     monitorId: Id<"statusMonitors">,
     checkIntervalMinutes: number
   ) => {
-    await updateMonitor({ monitorId, checkIntervalMinutes });
+    await updateMonitor({ checkIntervalMinutes, monitorId });
   };
 
   const handleCreateIncident = async (data: {
@@ -129,7 +129,7 @@ export default function StatusDashboardPage({
     status: "investigating" | "identified" | "monitoring" | "resolved",
     message: string
   ) => {
-    await postIncidentUpdate({ incidentId, status, message });
+    await postIncidentUpdate({ incidentId, message, status });
   };
 
   const hasMonitors = monitors && monitors.length > 0;

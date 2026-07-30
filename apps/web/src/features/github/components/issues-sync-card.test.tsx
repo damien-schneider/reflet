@@ -106,15 +106,15 @@ import { IssuesSyncSection } from "./issues-sync-card";
 afterEach(cleanup);
 
 const defaultProps = {
-  isEnabled: false,
   autoSync: false,
-  syncedIssuesCount: 0,
   importedCount: 0,
-  mappingsCount: 0,
-  isSyncing: false,
   isAdmin: true,
-  onToggleSync: vi.fn(),
+  isEnabled: false,
+  isSyncing: false,
+  mappingsCount: 0,
   onSyncNow: vi.fn(),
+  onToggleSync: vi.fn(),
+  syncedIssuesCount: 0,
 };
 
 describe("IssuesSyncSection", () => {

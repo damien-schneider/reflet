@@ -64,8 +64,8 @@ export function InviteMemberDialog({
     setIsSubmitting(true);
     try {
       const result = await inviteMember({
-        organizationId,
         email: inviteEmail.trim().toLowerCase(),
+        organizationId,
         role: inviteRole,
       });
       capture("member_invited", { role: inviteRole });

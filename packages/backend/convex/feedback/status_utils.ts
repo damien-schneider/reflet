@@ -12,15 +12,15 @@ const COMPLETED_STATUS_ENUMS = new Set<FeedbackStatusEnum>([
 ]);
 
 const STATUS_NAME_MAP: Record<string, FeedbackStatusEnum> = {
-  open: "open",
-  underreview: "under_review",
-  planned: "planned",
-  inprogress: "in_progress",
+  archived: "closed",
+  closed: "closed",
   completed: "completed",
   done: "completed",
-  closed: "closed",
+  inprogress: "in_progress",
+  open: "open",
+  planned: "planned",
   resolved: "closed",
-  archived: "closed",
+  underreview: "under_review",
 };
 
 /**

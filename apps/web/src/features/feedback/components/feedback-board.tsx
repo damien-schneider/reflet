@@ -75,11 +75,11 @@ function buildFeedbackQueryArgs(
 ) {
   const hasExplicitStatusFilter = selectedStatusIds.length > 0;
   return {
+    hideCompleted: (hideCompleted && !hasExplicitStatusFilter) || undefined,
     organizationId,
     search: searchQuery.trim() || undefined,
     sortBy,
     statusIds: hasExplicitStatusFilter ? selectedStatusIds : undefined,
-    hideCompleted: (hideCompleted && !hasExplicitStatusFilter) || undefined,
   };
 }
 
@@ -177,20 +177,20 @@ function FeedbackBoardContent({
     setSubmitAssigneeId,
     handleSubmitFeedback,
   } = useSubmitFeedback({
-    organizationId,
-    isMember,
-    createFeedbackPublic,
-    createFeedbackMember,
     assignFeedback,
     closeSubmitDrawer,
+    createFeedbackMember,
+    createFeedbackPublic,
+    isMember,
+    organizationId,
   });
 
   // Optimistic vote handling
   const { optimisticVotes, handleToggleVote } = useOptimisticVotes({
-    feedback,
-    toggleVoteMutation,
-    isAuthenticated,
     authGuard,
+    feedback,
+    isAuthenticated,
+    toggleVoteMutation,
   });
 
   // Ensure default statuses exist for this organization
@@ -250,19 +250,19 @@ function FeedbackBoardContent({
         data.attachments.length > 0 ? data.attachments : undefined;
       if (isMember) {
         await createFeedbackMember({
-          organizationId,
-          title: data.title,
-          description: data.description || "",
           attachments,
+          description: data.description || "",
+          organizationId,
           tagId: data.tagId,
+          title: data.title,
         });
       } else {
         await createFeedbackPublic({
-          organizationId,
-          title: data.title,
+          attachments,
           description: data.description || undefined,
           email: data.email || undefined,
-          attachments,
+          organizationId,
+          title: data.title,
         });
       }
       capture("feedback_created", {

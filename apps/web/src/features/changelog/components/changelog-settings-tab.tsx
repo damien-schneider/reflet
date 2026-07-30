@@ -103,11 +103,11 @@ export function ChangelogSettingsTab({
       setIsSaving(true);
       try {
         await updateOrg({
-          id: org._id,
           changelogSettings: {
             ...settings,
             ...updates,
           },
+          id: org._id,
         });
         toast.success("Settings saved");
       } catch (error) {
@@ -204,12 +204,12 @@ export function ChangelogSettingsTab({
               </div>
             </div>
             <a
-              className={buttonVariants({ variant: "outline", size: "sm" })}
+              className={buttonVariants({ size: "sm", variant: "outline" })}
               href={
                 buildGitHubInstallUrl({
-                  userId: session?.user?.id,
                   organizationId,
                   orgSlug,
+                  userId: session?.user?.id,
                 }) ?? "#"
               }
             >

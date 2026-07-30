@@ -25,35 +25,7 @@ export const authComponent = createClient<DataModel>(components.betterAuth);
 function createAuth(ctx: GenericCtx<DataModel>) {
   return betterAuth({
     baseURL: siteUrl,
-    trustedOrigins: [siteUrl, ...additionalOrigins],
     database: authComponent.adapter(ctx),
-    session: {
-      // Enable cookie caching to reduce database calls and improve session persistence
-      cookieCache: {
-        enabled: true,
-        maxAge: 5 * 60, // 5 minutes cache duration
-      },
-      // Session expires after 30 days
-      expiresIn: 60 * 60 * 24 * 30,
-      // Refresh session when it's 7 days old
-      updateAge: 60 * 60 * 24 * 7,
-    },
-    socialProviders: {
-      ...(githubClientId &&
-        githubClientSecret && {
-          github: {
-            clientId: githubClientId,
-            clientSecret: githubClientSecret,
-          },
-        }),
-      ...(googleClientId &&
-        googleClientSecret && {
-          google: {
-            clientId: googleClientId,
-            clientSecret: googleClientSecret,
-          },
-        }),
-    },
     emailAndPassword: {
       enabled: true,
       // Require email verification (can be disabled for e2e tests via SKIP_EMAIL_VERIFICATION=true)
@@ -80,9 +52,9 @@ function createAuth(ctx: GenericCtx<DataModel>) {
             0,
             internal.email.renderer.sendPasswordResetEmail,
             {
+              resetUrl: url,
               to: user.email,
               userName: user.name,
-              resetUrl: url,
             }
           );
           console.log("[Auth] Password reset email scheduled successfully");
@@ -96,8 +68,8 @@ function createAuth(ctx: GenericCtx<DataModel>) {
     },
     // Email verification config is separate from emailAndPassword
     emailVerification: {
-      sendOnSignUp: !skipEmailVerification,
       autoSignInAfterVerification: true,
+      sendOnSignUp: !skipEmailVerification,
       sendVerificationEmail: async ({
         user,
         url,
@@ -141,6 +113,34 @@ function createAuth(ctx: GenericCtx<DataModel>) {
         jwksRotateOnTokenGenerationError: true,
       }),
     ],
+    session: {
+      // Enable cookie caching to reduce database calls and improve session persistence
+      cookieCache: {
+        enabled: true,
+        maxAge: 5 * 60, // 5 minutes cache duration
+      },
+      // Session expires after 30 days
+      expiresIn: 60 * 60 * 24 * 30,
+      // Refresh session when it's 7 days old
+      updateAge: 60 * 60 * 24 * 7,
+    },
+    socialProviders: {
+      ...(githubClientId &&
+        githubClientSecret && {
+          github: {
+            clientId: githubClientId,
+            clientSecret: githubClientSecret,
+          },
+        }),
+      ...(googleClientId &&
+        googleClientSecret && {
+          google: {
+            clientId: googleClientId,
+            clientSecret: googleClientSecret,
+          },
+        }),
+    },
+    trustedOrigins: [siteUrl, ...additionalOrigins],
   });
 }
 

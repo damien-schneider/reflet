@@ -50,11 +50,11 @@ export interface InlineFeedbackInputHandle {
 }
 
 const INITIAL_STATE = {
-  title: "",
+  attachments: [] as string[],
   description: "",
   email: "",
-  attachments: [] as string[],
   tagId: undefined as Id<"tags"> | undefined,
+  title: "",
 };
 
 export function InlineFeedbackInput({
@@ -107,11 +107,11 @@ export function InlineFeedbackInput({
     setIsSubmitting(true);
     try {
       await onSubmit({
-        title: trimmedTitle,
+        attachments: form.attachments,
         description: form.description.trim(),
         email: form.email.trim(),
-        attachments: form.attachments,
         tagId: form.tagId,
+        title: trimmedTitle,
       });
       setForm(INITIAL_STATE);
       setIsExpanded(false);
@@ -197,15 +197,15 @@ export function InlineFeedbackInput({
               <AnimatePresence>
                 {showTitleCounter && (
                   <m.p
-                    animate={{ opacity: 1, height: "auto" }}
+                    animate={{ height: "auto", opacity: 1 }}
                     className={cn(
                       "mt-1 text-right text-xs tabular-nums",
                       isTitleOverLimit
                         ? "text-destructive"
                         : "text-muted-foreground"
                     )}
-                    exit={{ opacity: 0, height: 0 }}
-                    initial={{ opacity: 0, height: 0 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    initial={{ height: 0, opacity: 0 }}
                   >
                     {titleLength}/{MAX_TITLE_LENGTH}
                   </m.p>
@@ -243,10 +243,10 @@ export function InlineFeedbackInput({
               <AnimatePresence>
                 {!isMember && (
                   <m.div
-                    animate={{ opacity: 1, height: "auto" }}
+                    animate={{ height: "auto", opacity: 1 }}
                     className="overflow-hidden"
-                    exit={{ opacity: 0, height: 0 }}
-                    initial={{ opacity: 0, height: 0 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    initial={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.2 }}
                   >
                     <div className="mt-2">

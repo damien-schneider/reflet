@@ -63,8 +63,8 @@ export const list = query({
 
         return {
           ...widget,
-          settings,
           conversationCount: conversationCount.length,
+          settings,
         };
       })
     );
@@ -115,8 +115,8 @@ export const get = query({
 
 export const create = mutation({
   args: {
-    organizationId: v.id("organizations"),
     name: v.string(),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -150,22 +150,22 @@ export const create = mutation({
     }
 
     const id = await ctx.db.insert("widgets", {
-      organizationId: args.organizationId,
-      widgetId,
-      name: args.name,
-      isActive: true,
       createdAt: now,
+      isActive: true,
+      name: args.name,
+      organizationId: args.organizationId,
       updatedAt: now,
+      widgetId,
     });
 
     await ctx.db.insert("widgetSettings", {
-      widgetId: id,
-      primaryColor: org.primaryColor ?? "#5c6d4f",
-      position: "bottom-right",
-      welcomeMessage: "Hi there! How can we help you?",
-      greetingMessage: "We typically reply within a few hours",
-      showLauncher: true,
       autoOpen: false,
+      greetingMessage: "We typically reply within a few hours",
+      position: "bottom-right",
+      primaryColor: org.primaryColor ?? "#5c6d4f",
+      showLauncher: true,
+      welcomeMessage: "Hi there! How can we help you?",
+      widgetId: id,
       zIndex: 9999,
     });
 
@@ -175,9 +175,9 @@ export const create = mutation({
 
 export const update = mutation({
   args: {
-    widgetId: v.id("widgets"),
-    name: v.optional(v.string()),
     isActive: v.optional(v.boolean()),
+    name: v.optional(v.string()),
+    widgetId: v.id("widgets"),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -218,15 +218,15 @@ export const update = mutation({
 
 export const updateSettings = mutation({
   args: {
-    widgetId: v.id("widgets"),
-    primaryColor: v.optional(v.string()),
+    autoOpen: v.optional(v.boolean()),
+    greetingMessage: v.optional(v.string()),
     position: v.optional(
       v.union(v.literal("bottom-right"), v.literal("bottom-left"))
     ),
-    welcomeMessage: v.optional(v.string()),
-    greetingMessage: v.optional(v.string()),
+    primaryColor: v.optional(v.string()),
     showLauncher: v.optional(v.boolean()),
-    autoOpen: v.optional(v.boolean()),
+    welcomeMessage: v.optional(v.string()),
+    widgetId: v.id("widgets"),
     zIndex: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
@@ -377,8 +377,8 @@ export const regenerateWidgetId = mutation({
     }
 
     await ctx.db.patch(args.widgetId, {
-      widgetId: newWidgetId,
       updatedAt: Date.now(),
+      widgetId: newWidgetId,
     });
 
     return { widgetId: newWidgetId };

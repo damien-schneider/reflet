@@ -13,39 +13,39 @@ export interface AgentTarget {
 
 export const AGENTS: AgentTarget[] = [
   {
+    description: "Copy to clipboard for any AI assistant",
+    icon: <Copy className="h-4 w-4" />,
     id: "copy-generic",
     label: "Copy prompt",
-    icon: <Copy className="h-4 w-4" />,
     type: "copy",
-    description: "Copy to clipboard for any AI assistant",
   },
   {
+    description: "Open Cursor Composer with this prompt",
+    icon: CURSOR_ICON,
     id: "cursor",
     label: "Open in Cursor",
-    icon: CURSOR_ICON,
     type: "deeplink",
-    description: "Open Cursor Composer with this prompt",
   },
   {
+    description: "Open GitHub Copilot Chat in VS Code",
+    icon: COPILOT_ICON,
     id: "vscode-copilot",
     label: "Open in VS Code Copilot",
-    icon: COPILOT_ICON,
     type: "deeplink",
-    description: "Open GitHub Copilot Chat in VS Code",
   },
   {
+    description: "Open Windsurf with this prompt",
+    icon: WINDSURF_ICON,
     id: "windsurf",
     label: "Open in Windsurf",
-    icon: WINDSURF_ICON,
     type: "deeplink",
-    description: "Open Windsurf with this prompt",
   },
   {
+    description: "Open in GitHub Copilot Workspace (cloud)",
+    icon: COPILOT_ICON,
     id: "copilot-workspace",
     label: "Copilot Workspace",
-    icon: COPILOT_ICON,
     type: "cloud",
-    description: "Open in GitHub Copilot Workspace (cloud)",
   },
 ];
 

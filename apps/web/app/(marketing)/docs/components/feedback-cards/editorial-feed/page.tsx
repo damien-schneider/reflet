@@ -14,10 +14,10 @@ import { InlineCode } from "@/components/ui/typography";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
-  title: "Editorial Feed - Feedback Card",
   description:
     "A rich editorial feedback layout with margin vote annotations and stacked list items.",
   path: "/docs/components/feedback-cards/editorial-feed",
+  title: "Editorial Feed - Feedback Card",
 });
 
 const SOURCE_CODE = readFileSync(
@@ -41,95 +41,95 @@ const IMPORT_CODE = `import {
 
 const SUBCOMPONENTS = [
   {
-    name: "EditorialFeed",
     description: "List container with vertical dividers between items.",
+    name: "EditorialFeed",
     props: [],
   },
   {
-    name: "EditorialFeedItem",
     description:
       "Individual feed item. Provides vote context for child sub-components.",
+    name: "EditorialFeedItem",
     props: [
       {
-        name: "defaultUpvotes",
-        type: "number",
-        required: false,
         description: "Initial upvote count. Defaults to 0.",
-      },
-      {
-        name: "defaultDownvotes",
+        name: "defaultUpvotes",
+        required: false,
         type: "number",
-        required: false,
-        description: "Initial downvote count. Defaults to 0.",
       },
       {
-        name: "onVoteChange",
-        type: "(upvotes, downvotes) => void",
+        description: "Initial downvote count. Defaults to 0.",
+        name: "defaultDownvotes",
         required: false,
+        type: "number",
+      },
+      {
         description: "Callback fired when the vote changes.",
+        name: "onVoteChange",
+        required: false,
+        type: "(upvotes, downvotes) => void",
       },
     ],
   },
   {
-    name: "EditorialFeedVote",
     description:
       "Absolute-positioned vote annotation in the left margin with animated up/down buttons.",
+    name: "EditorialFeedVote",
     props: [],
   },
   {
-    name: "EditorialFeedRule",
     description:
       "Thin vertical rule separating the vote margin from the content.",
+    name: "EditorialFeedRule",
     props: [],
   },
   {
-    name: "EditorialFeedContent",
     description: "Wrapper for the title and meta content area.",
+    name: "EditorialFeedContent",
     props: [],
   },
   {
-    name: "EditorialFeedTitle",
     description: "Editorial-style heading with display font.",
+    name: "EditorialFeedTitle",
     props: [],
   },
   {
-    name: "EditorialFeedMeta",
     description: "Flex row for status, tags, comments, and time metadata.",
+    name: "EditorialFeedMeta",
     props: [],
   },
   {
-    name: "EditorialFeedStatus",
     description: "Colored status badge pill.",
+    name: "EditorialFeedStatus",
     props: [
       {
-        name: "color",
-        type: "StatusColor",
-        required: false,
         description:
           'Color key: purple, green, blue, red, amber, pink, or gray. Defaults to "gray".',
+        name: "color",
+        required: false,
+        type: "StatusColor",
       },
     ],
   },
   {
-    name: "EditorialFeedTag",
     description: "Italic tag prefixed with #.",
+    name: "EditorialFeedTag",
     props: [],
   },
   {
-    name: "EditorialFeedComments",
     description: "Comment count with dot separator.",
+    name: "EditorialFeedComments",
     props: [
       {
-        name: "count",
-        type: "number",
-        required: true,
         description: "Number of comments.",
+        name: "count",
+        required: true,
+        type: "number",
       },
     ],
   },
   {
-    name: "EditorialFeedTime",
     description: "Italic timestamp text.",
+    name: "EditorialFeedTime",
     props: [],
   },
 ] as const;

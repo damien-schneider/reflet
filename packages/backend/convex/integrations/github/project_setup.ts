@@ -34,92 +34,6 @@ const SETUP_STEPS = [
 
 export const getProjectSetup = query({
   args: { organizationId: v.id("organizations") },
-  returns: v.union(
-    v.object({
-      _id: v.id("projectSetupResults"),
-      _creationTime: v.number(),
-      organizationId: v.id("organizations"),
-      githubConnectionId: v.id("githubConnections"),
-      status: v.union(
-        v.literal("idle"),
-        v.literal("analyzing"),
-        v.literal("review"),
-        v.literal("completed"),
-        v.literal("error")
-      ),
-      steps: v.array(
-        v.object({
-          key: v.string(),
-          label: v.string(),
-          status: v.union(
-            v.literal("pending"),
-            v.literal("running"),
-            v.literal("done"),
-            v.literal("error")
-          ),
-          summary: v.optional(v.string()),
-          error: v.optional(v.string()),
-        })
-      ),
-      suggestedMonitors: v.optional(
-        v.array(
-          v.object({
-            url: v.string(),
-            name: v.string(),
-            method: v.optional(v.string()),
-            accepted: v.boolean(),
-          })
-        )
-      ),
-      suggestedKeywords: v.optional(
-        v.array(
-          v.object({
-            keyword: v.string(),
-            category: v.string(),
-            accepted: v.boolean(),
-          })
-        )
-      ),
-      suggestedTags: v.optional(
-        v.array(
-          v.object({
-            name: v.string(),
-            color: v.string(),
-            accepted: v.boolean(),
-          })
-        )
-      ),
-      changelogConfig: v.optional(
-        v.object({
-          workflow: v.union(
-            v.literal("ai_powered"),
-            v.literal("automated"),
-            v.literal("manual")
-          ),
-          importExisting: v.boolean(),
-          syncDirection: v.string(),
-          versionPrefix: v.string(),
-          targetBranch: v.string(),
-          releaseCount: v.optional(v.number()),
-          hasConventionalCommits: v.optional(v.boolean()),
-        })
-      ),
-      suggestedPrompts: v.optional(
-        v.array(
-          v.object({
-            title: v.string(),
-            prompt: v.string(),
-          })
-        )
-      ),
-      projectOverview: v.optional(v.string()),
-      error: v.optional(v.string()),
-      createdAt: v.number(),
-      updatedAt: v.number(),
-      completedAt: v.optional(v.number()),
-    }),
-    v.null()
-  ),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
@@ -142,19 +56,96 @@ export const getProjectSetup = query({
       .order("desc")
       .first();
   },
+  returns: v.union(
+    v.object({
+      _creationTime: v.number(),
+      _id: v.id("projectSetupResults"),
+      changelogConfig: v.optional(
+        v.object({
+          hasConventionalCommits: v.optional(v.boolean()),
+          importExisting: v.boolean(),
+          releaseCount: v.optional(v.number()),
+          syncDirection: v.string(),
+          targetBranch: v.string(),
+          versionPrefix: v.string(),
+          workflow: v.union(
+            v.literal("ai_powered"),
+            v.literal("automated"),
+            v.literal("manual")
+          ),
+        })
+      ),
+      completedAt: v.optional(v.number()),
+      createdAt: v.number(),
+      error: v.optional(v.string()),
+      githubConnectionId: v.id("githubConnections"),
+      organizationId: v.id("organizations"),
+      projectOverview: v.optional(v.string()),
+      status: v.union(
+        v.literal("idle"),
+        v.literal("analyzing"),
+        v.literal("review"),
+        v.literal("completed"),
+        v.literal("error")
+      ),
+      steps: v.array(
+        v.object({
+          error: v.optional(v.string()),
+          key: v.string(),
+          label: v.string(),
+          status: v.union(
+            v.literal("pending"),
+            v.literal("running"),
+            v.literal("done"),
+            v.literal("error")
+          ),
+          summary: v.optional(v.string()),
+        })
+      ),
+      suggestedKeywords: v.optional(
+        v.array(
+          v.object({
+            accepted: v.boolean(),
+            category: v.string(),
+            keyword: v.string(),
+          })
+        )
+      ),
+      suggestedMonitors: v.optional(
+        v.array(
+          v.object({
+            accepted: v.boolean(),
+            method: v.optional(v.string()),
+            name: v.string(),
+            url: v.string(),
+          })
+        )
+      ),
+      suggestedPrompts: v.optional(
+        v.array(
+          v.object({
+            prompt: v.string(),
+            title: v.string(),
+          })
+        )
+      ),
+      suggestedTags: v.optional(
+        v.array(
+          v.object({
+            accepted: v.boolean(),
+            color: v.string(),
+            name: v.string(),
+          })
+        )
+      ),
+      updatedAt: v.number(),
+    }),
+    v.null()
+  ),
 });
 
 export const getSetupStatus = query({
   args: { organizationId: v.id("organizations") },
-  returns: v.union(
-    v.object({
-      setupCompleted: v.boolean(),
-      hasGitHub: v.boolean(),
-      hasAnalysis: v.boolean(),
-      repositoryFullName: v.optional(v.string()),
-    }),
-    v.null()
-  ),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
@@ -190,13 +181,22 @@ export const getSetupStatus = query({
       .first();
 
     return {
-      setupCompleted: org.setupCompleted ?? false,
+      hasAnalysis: analysis?.status === "completed",
       hasGitHub:
         connection?.status === "connected" && !!connection.repositoryId,
-      hasAnalysis: analysis?.status === "completed",
       repositoryFullName: connection?.repositoryFullName ?? undefined,
+      setupCompleted: org.setupCompleted ?? false,
     };
   },
+  returns: v.union(
+    v.object({
+      hasAnalysis: v.boolean(),
+      hasGitHub: v.boolean(),
+      repositoryFullName: v.optional(v.string()),
+      setupCompleted: v.boolean(),
+    }),
+    v.null()
+  ),
 });
 
 // ============================================
@@ -205,15 +205,6 @@ export const getSetupStatus = query({
 
 export const getConnectionForSetup = internalQuery({
   args: { organizationId: v.id("organizations") },
-  returns: v.union(
-    v.object({
-      connectionId: v.id("githubConnections"),
-      installationId: v.string(),
-      repositoryFullName: v.string(),
-      defaultBranch: v.string(),
-    }),
-    v.null()
-  ),
   handler: async (ctx, args) => {
     const connection = await ctx.db
       .query("githubConnections")
@@ -228,11 +219,20 @@ export const getConnectionForSetup = internalQuery({
 
     return {
       connectionId: connection._id,
+      defaultBranch: connection.repositoryDefaultBranch ?? "main",
       installationId: connection.installationId,
       repositoryFullName: connection.repositoryFullName,
-      defaultBranch: connection.repositoryDefaultBranch ?? "main",
     };
   },
+  returns: v.union(
+    v.object({
+      connectionId: v.id("githubConnections"),
+      defaultBranch: v.string(),
+      installationId: v.string(),
+      repositoryFullName: v.string(),
+    }),
+    v.null()
+  ),
 });
 
 // ============================================
@@ -241,7 +241,6 @@ export const getConnectionForSetup = internalQuery({
 
 export const startProjectSetup = mutation({
   args: { organizationId: v.id("organizations") },
-  returns: v.id("projectSetupResults"),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
@@ -270,42 +269,42 @@ export const startProjectSetup = mutation({
     const now = Date.now();
 
     const setupId = await ctx.db.insert("projectSetupResults", {
-      organizationId: args.organizationId,
+      createdAt: now,
       githubConnectionId: connection._id,
+      organizationId: args.organizationId,
       status: "analyzing",
       steps: SETUP_STEPS.map((step) => ({
         key: step.key,
         label: step.label,
         status: "pending" as const,
       })),
-      createdAt: now,
       updatedAt: now,
     });
 
     await ctx.scheduler.runAfter(
       0,
       internal.integrations.github.project_setup.runProjectSetup,
-      { setupId, organizationId: args.organizationId }
+      { organizationId: args.organizationId, setupId }
     );
 
     return setupId;
   },
+  returns: v.id("projectSetupResults"),
 });
 
 export const updateStepStatus = internalMutation({
   args: {
+    error: v.optional(v.string()),
     setupId: v.id("projectSetupResults"),
-    stepKey: v.string(),
     status: v.union(
       v.literal("pending"),
       v.literal("running"),
       v.literal("done"),
       v.literal("error")
     ),
+    stepKey: v.string(),
     summary: v.optional(v.string()),
-    error: v.optional(v.string()),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const setup = await ctx.db.get(args.setupId);
     if (!setup) {
@@ -318,9 +317,9 @@ export const updateStepStatus = internalMutation({
       }
       return {
         ...step,
+        error: args.error ?? step.error,
         status: args.status,
         summary: args.summary ?? step.summary,
-        error: args.error ?? step.error,
       };
     });
 
@@ -331,10 +330,28 @@ export const updateStepStatus = internalMutation({
 
     return null;
   },
+  returns: v.null(),
 });
 
 export const updateSetupResults = internalMutation({
   args: {
+    changelogConfig: v.optional(
+      v.object({
+        hasConventionalCommits: v.optional(v.boolean()),
+        importExisting: v.boolean(),
+        releaseCount: v.optional(v.number()),
+        syncDirection: v.string(),
+        targetBranch: v.string(),
+        versionPrefix: v.string(),
+        workflow: v.union(
+          v.literal("ai_powered"),
+          v.literal("automated"),
+          v.literal("manual")
+        ),
+      })
+    ),
+    error: v.optional(v.string()),
+    projectOverview: v.optional(v.string()),
     setupId: v.id("projectSetupResults"),
     status: v.optional(
       v.union(
@@ -345,61 +362,43 @@ export const updateSetupResults = internalMutation({
         v.literal("error")
       )
     ),
-    suggestedMonitors: v.optional(
-      v.array(
-        v.object({
-          url: v.string(),
-          name: v.string(),
-          method: v.optional(v.string()),
-          accepted: v.boolean(),
-        })
-      )
-    ),
     suggestedKeywords: v.optional(
       v.array(
         v.object({
-          keyword: v.string(),
-          category: v.string(),
           accepted: v.boolean(),
+          category: v.string(),
+          keyword: v.string(),
+        })
+      )
+    ),
+    suggestedMonitors: v.optional(
+      v.array(
+        v.object({
+          accepted: v.boolean(),
+          method: v.optional(v.string()),
+          name: v.string(),
+          url: v.string(),
+        })
+      )
+    ),
+    suggestedPrompts: v.optional(
+      v.array(
+        v.object({
+          prompt: v.string(),
+          title: v.string(),
         })
       )
     ),
     suggestedTags: v.optional(
       v.array(
         v.object({
-          name: v.string(),
-          color: v.string(),
           accepted: v.boolean(),
+          color: v.string(),
+          name: v.string(),
         })
       )
     ),
-    changelogConfig: v.optional(
-      v.object({
-        workflow: v.union(
-          v.literal("ai_powered"),
-          v.literal("automated"),
-          v.literal("manual")
-        ),
-        importExisting: v.boolean(),
-        syncDirection: v.string(),
-        versionPrefix: v.string(),
-        targetBranch: v.string(),
-        releaseCount: v.optional(v.number()),
-        hasConventionalCommits: v.optional(v.boolean()),
-      })
-    ),
-    suggestedPrompts: v.optional(
-      v.array(
-        v.object({
-          title: v.string(),
-          prompt: v.string(),
-        })
-      )
-    ),
-    projectOverview: v.optional(v.string()),
-    error: v.optional(v.string()),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const { setupId, ...updates } = args;
     const now = Date.now();
@@ -434,18 +433,11 @@ export const updateSetupResults = internalMutation({
     await ctx.db.patch(setupId, patchData);
     return null;
   },
+  returns: v.null(),
 });
 
 export const applySetupResults = mutation({
   args: {
-    organizationId: v.id("organizations"),
-    setupId: v.id("projectSetupResults"),
-    acceptedMonitors: v.array(
-      v.object({
-        url: v.string(),
-        name: v.string(),
-      })
-    ),
     acceptedKeywords: v.array(
       v.object({
         keyword: v.string(),
@@ -456,10 +448,16 @@ export const applySetupResults = mutation({
         ),
       })
     ),
-    acceptedTags: v.array(
+    acceptedMonitors: v.array(
       v.object({
         name: v.string(),
+        url: v.string(),
+      })
+    ),
+    acceptedTags: v.array(
+      v.object({
         color: v.string(),
+        name: v.string(),
       })
     ),
     changelogSettings: v.optional(
@@ -473,8 +471,9 @@ export const applySetupResults = mutation({
         versionPrefix: v.optional(v.string()),
       })
     ),
+    organizationId: v.id("organizations"),
+    setupId: v.id("projectSetupResults"),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
@@ -494,26 +493,26 @@ export const applySetupResults = mutation({
     // Create monitors
     for (const monitor of args.acceptedMonitors) {
       await ctx.db.insert("statusMonitors", {
-        organizationId: args.organizationId,
-        name: monitor.name,
-        url: monitor.url,
-        checkIntervalMinutes: 5,
         alertThreshold: 3,
-        status: "operational",
+        checkIntervalMinutes: 5,
         consecutiveFailures: 0,
-        isPublic: true,
         createdAt: now,
+        isPublic: true,
+        name: monitor.name,
+        organizationId: args.organizationId,
+        status: "operational",
         updatedAt: now,
+        url: monitor.url,
       });
     }
 
     // Create keywords
     for (const keyword of args.acceptedKeywords) {
       await ctx.db.insert("intelligenceKeywords", {
-        organizationId: args.organizationId,
-        keyword: keyword.keyword,
-        source: keyword.source,
         createdAt: now,
+        keyword: keyword.keyword,
+        organizationId: args.organizationId,
+        source: keyword.source,
       });
     }
 
@@ -533,13 +532,13 @@ export const applySetupResults = mutation({
         continue;
       }
       await ctx.db.insert("tags", {
-        organizationId: args.organizationId,
-        name: tag.name,
-        slug,
         color: tag.color,
+        createdAt: now,
         isDoneStatus: false,
         isRoadmapLane: false,
-        createdAt: now,
+        name: tag.name,
+        organizationId: args.organizationId,
+        slug,
         updatedAt: now,
       });
       existingSlugs.add(slug);
@@ -563,13 +562,13 @@ export const applySetupResults = mutation({
 
       if (!existingConfig) {
         await ctx.db.insert("intelligenceConfig", {
-          organizationId: args.organizationId,
-          scanFrequency: "weekly",
-          redditEnabled: true,
-          webSearchEnabled: true,
           competitorTrackingEnabled: false,
           createdAt: now,
+          organizationId: args.organizationId,
+          redditEnabled: true,
+          scanFrequency: "weekly",
           updatedAt: now,
+          webSearchEnabled: true,
         });
       }
     }
@@ -581,21 +580,21 @@ export const applySetupResults = mutation({
     });
 
     await ctx.db.patch(args.setupId, {
-      status: "completed",
       completedAt: now,
+      status: "completed",
       updatedAt: now,
     });
 
     return null;
   },
+  returns: v.null(),
 });
 
 export const skipSetup = mutation({
   args: {
-    organizationId: v.id("organizations"),
     method: v.union(v.literal("manual"), v.literal("skipped")),
+    organizationId: v.id("organizations"),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
@@ -617,6 +616,7 @@ export const skipSetup = mutation({
 
     return null;
   },
+  returns: v.null(),
 });
 
 // ============================================
@@ -625,10 +625,9 @@ export const skipSetup = mutation({
 
 export const runProjectSetup = internalAction({
   args: {
-    setupId: v.id("projectSetupResults"),
     organizationId: v.id("organizations"),
+    setupId: v.id("projectSetupResults"),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     try {
       const connection = await ctx.runQuery(
@@ -647,8 +646,8 @@ export const runProjectSetup = internalAction({
         internal.integrations.github.project_setup.updateStepStatus,
         {
           setupId: args.setupId,
-          stepKey: "analyze_codebase",
           status: "running",
+          stepKey: "analyze_codebase",
         }
       );
 
@@ -688,8 +687,8 @@ Provide a concise project overview (2-3 sentences describing what this project d
         const analysisId = await ctx.runMutation(
           internal.integrations.github.project_setup.createRepoAnalysisRecord,
           {
-            organizationId: args.organizationId,
             connectionId: connection.connectionId,
+            organizationId: args.organizationId,
           }
         );
         if (analysisId) {
@@ -705,15 +704,15 @@ Provide a concise project overview (2-3 sentences describing what this project d
         internal.integrations.github.project_setup.updateStepStatus,
         {
           setupId: args.setupId,
-          stepKey: "analyze_codebase",
           status: "done",
+          stepKey: "analyze_codebase",
           summary: projectOverview.slice(0, 200),
         }
       );
 
       await ctx.runMutation(
         internal.integrations.github.project_setup.updateSetupResults,
-        { setupId: args.setupId, projectOverview }
+        { projectOverview, setupId: args.setupId }
       );
 
       // Step 2: Discover services
@@ -721,8 +720,8 @@ Provide a concise project overview (2-3 sentences describing what this project d
         internal.integrations.github.project_setup.updateStepStatus,
         {
           setupId: args.setupId,
-          stepKey: "discover_services",
           status: "running",
+          stepKey: "discover_services",
         }
       );
 
@@ -759,8 +758,8 @@ Return ONLY the JSON array, no markdown.`,
         internal.integrations.github.project_setup.updateStepStatus,
         {
           setupId: args.setupId,
-          stepKey: "discover_services",
           status: "done",
+          stepKey: "discover_services",
           summary:
             monitors.length > 0
               ? `Found ${monitors.length} endpoints to monitor`
@@ -778,8 +777,8 @@ Return ONLY the JSON array, no markdown.`,
         internal.integrations.github.project_setup.updateStepStatus,
         {
           setupId: args.setupId,
-          stepKey: "extract_keywords",
           status: "running",
+          stepKey: "extract_keywords",
         }
       );
 
@@ -816,8 +815,8 @@ Return ONLY the JSON array, no markdown.`,
         internal.integrations.github.project_setup.updateStepStatus,
         {
           setupId: args.setupId,
-          stepKey: "extract_keywords",
           status: "done",
+          stepKey: "extract_keywords",
           summary: `Found ${keywords.length} keywords`,
         }
       );
@@ -832,8 +831,8 @@ Return ONLY the JSON array, no markdown.`,
         internal.integrations.github.project_setup.updateStepStatus,
         {
           setupId: args.setupId,
-          stepKey: "configure_changelog",
           status: "running",
+          stepKey: "configure_changelog",
         }
       );
 
@@ -845,24 +844,24 @@ Return ONLY the JSON array, no markdown.`,
         : "";
 
       const changelogConfig = {
+        hasConventionalCommits: hasSemver,
+        importExisting: hasReleases,
+        releaseCount: releases.length,
+        syncDirection: "reflet_first",
+        targetBranch: defaultBranch,
+        versionPrefix,
         workflow: (hasReleases ? "ai_powered" : "manual") as
           | "ai_powered"
           | "automated"
           | "manual",
-        importExisting: hasReleases,
-        syncDirection: "reflet_first",
-        versionPrefix,
-        targetBranch: defaultBranch,
-        releaseCount: releases.length,
-        hasConventionalCommits: hasSemver,
       };
 
       await ctx.runMutation(
         internal.integrations.github.project_setup.updateStepStatus,
         {
           setupId: args.setupId,
-          stepKey: "configure_changelog",
           status: "done",
+          stepKey: "configure_changelog",
           summary: hasReleases
             ? `${releases.length} releases found, semver ${hasSemver ? "detected" : "not detected"}`
             : "No releases found",
@@ -871,13 +870,13 @@ Return ONLY the JSON array, no markdown.`,
 
       await ctx.runMutation(
         internal.integrations.github.project_setup.updateSetupResults,
-        { setupId: args.setupId, changelogConfig }
+        { changelogConfig, setupId: args.setupId }
       );
 
       // Step 5: Suggest tags
       await ctx.runMutation(
         internal.integrations.github.project_setup.updateStepStatus,
-        { setupId: args.setupId, stepKey: "suggest_tags", status: "running" }
+        { setupId: args.setupId, status: "running", stepKey: "suggest_tags" }
       );
 
       const tagsResult = await repoAnalysisAgent.generateText(
@@ -909,8 +908,8 @@ Return ONLY the JSON array, no markdown.`,
         internal.integrations.github.project_setup.updateStepStatus,
         {
           setupId: args.setupId,
-          stepKey: "suggest_tags",
           status: "done",
+          stepKey: "suggest_tags",
           summary: `Suggested ${tags.length} tags`,
         }
       );
@@ -925,8 +924,8 @@ Return ONLY the JSON array, no markdown.`,
         internal.integrations.github.project_setup.updateStepStatus,
         {
           setupId: args.setupId,
-          stepKey: "generate_prompts",
           status: "running",
+          stepKey: "generate_prompts",
         }
       );
 
@@ -959,8 +958,8 @@ Return ONLY the JSON array, no markdown.`,
         internal.integrations.github.project_setup.updateStepStatus,
         {
           setupId: args.setupId,
-          stepKey: "generate_prompts",
           status: "done",
+          stepKey: "generate_prompts",
           summary: `Generated ${prompts.length} personalized prompts`,
         }
       );
@@ -969,23 +968,24 @@ Return ONLY the JSON array, no markdown.`,
         internal.integrations.github.project_setup.updateSetupResults,
         {
           setupId: args.setupId,
-          suggestedPrompts: prompts,
           status: "review",
+          suggestedPrompts: prompts,
         }
       );
     } catch (error) {
       await ctx.runMutation(
         internal.integrations.github.project_setup.updateSetupResults,
         {
+          error: error instanceof Error ? error.message : "Unknown error",
           setupId: args.setupId,
           status: "error",
-          error: error instanceof Error ? error.message : "Unknown error",
         }
       );
     }
 
     return null;
   },
+  returns: v.null(),
 });
 
 // ============================================
@@ -994,10 +994,9 @@ Return ONLY the JSON array, no markdown.`,
 
 export const createRepoAnalysisRecord = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
     connectionId: v.id("githubConnections"),
+    organizationId: v.id("organizations"),
   },
-  returns: v.union(v.id("repoAnalysis"), v.null()),
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query("repoAnalysis")
@@ -1016,13 +1015,14 @@ export const createRepoAnalysisRecord = internalMutation({
 
     const now = Date.now();
     return await ctx.db.insert("repoAnalysis", {
-      organizationId: args.organizationId,
-      githubConnectionId: args.connectionId,
-      status: "pending",
       createdAt: now,
+      githubConnectionId: args.connectionId,
+      organizationId: args.organizationId,
+      status: "pending",
       updatedAt: now,
     });
   },
+  returns: v.union(v.id("repoAnalysis"), v.null()),
 });
 
 // ============================================

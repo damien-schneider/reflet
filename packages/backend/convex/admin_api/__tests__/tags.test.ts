@@ -15,9 +15,9 @@ describe("admin_api_tags", () => {
     const orgId = await createOrg(t);
 
     const result = await t.mutation(internal.admin_api.tags.createTag, {
-      organizationId: orgId,
-      name: "Bug Report",
       color: "#FF0000",
+      name: "Bug Report",
+      organizationId: orgId,
     });
 
     expect(result.id).toBeDefined();
@@ -37,16 +37,16 @@ describe("admin_api_tags", () => {
     const orgId = await createOrg(t);
 
     await t.mutation(internal.admin_api.tags.createTag, {
-      organizationId: orgId,
-      name: "Feature",
       color: "#00FF00",
+      name: "Feature",
+      organizationId: orgId,
     });
 
     await expect(
       t.mutation(internal.admin_api.tags.createTag, {
-        organizationId: orgId,
-        name: "Feature",
         color: "#0000FF",
+        name: "Feature",
+        organizationId: orgId,
       })
     ).rejects.toThrow('Tag with slug "feature" already exists');
   });
@@ -56,10 +56,10 @@ describe("admin_api_tags", () => {
     const orgId = await createOrg(t);
 
     await t.mutation(internal.admin_api.tags.createTag, {
-      organizationId: orgId,
-      name: "Public Tag",
       color: "#AABBCC",
       isPublic: true,
+      name: "Public Tag",
+      organizationId: orgId,
     });
 
     const tags = await t.query(internal.admin_api.tags.listTags, {
@@ -73,24 +73,24 @@ describe("admin_api_tags", () => {
     const orgId = await createOrg(t);
     const otherOrgId = await t.run(async (ctx) =>
       ctx.db.insert("organizations", {
+        createdAt: Date.now(),
+        isPublic: false,
         name: "Other Org",
         slug: "other-org",
-        isPublic: false,
-        subscriptionTier: "free",
         subscriptionStatus: "none",
-        createdAt: Date.now(),
+        subscriptionTier: "free",
       })
     );
 
     await t.mutation(internal.admin_api.tags.createTag, {
-      organizationId: orgId,
-      name: "Our Tag",
       color: "#111",
+      name: "Our Tag",
+      organizationId: orgId,
     });
     await t.mutation(internal.admin_api.tags.createTag, {
-      organizationId: otherOrgId,
-      name: "Their Tag",
       color: "#222",
+      name: "Their Tag",
+      organizationId: otherOrgId,
     });
 
     const tags = await t.query(internal.admin_api.tags.listTags, {
@@ -105,15 +105,15 @@ describe("admin_api_tags", () => {
     const orgId = await createOrg(t);
 
     const { id } = await t.mutation(internal.admin_api.tags.createTag, {
-      organizationId: orgId,
-      name: "Old Name",
       color: "#000",
+      name: "Old Name",
+      organizationId: orgId,
     });
 
     await t.mutation(internal.admin_api.tags.updateTag, {
+      name: "New Name",
       organizationId: orgId,
       tagId: id,
-      name: "New Name",
     });
 
     const tags = await t.query(internal.admin_api.tags.listTags, {
@@ -128,26 +128,26 @@ describe("admin_api_tags", () => {
     const orgId = await createOrg(t);
     const otherOrgId = await t.run(async (ctx) =>
       ctx.db.insert("organizations", {
+        createdAt: Date.now(),
+        isPublic: false,
         name: "Other",
         slug: "other",
-        isPublic: false,
-        subscriptionTier: "free",
         subscriptionStatus: "none",
-        createdAt: Date.now(),
+        subscriptionTier: "free",
       })
     );
 
     const { id } = await t.mutation(internal.admin_api.tags.createTag, {
-      organizationId: orgId,
-      name: "Tag",
       color: "#000",
+      name: "Tag",
+      organizationId: orgId,
     });
 
     await expect(
       t.mutation(internal.admin_api.tags.updateTag, {
+        name: "Hacked",
         organizationId: otherOrgId,
         tagId: id,
-        name: "Hacked",
       })
     ).rejects.toThrow("Tag not found");
   });
@@ -157,24 +157,24 @@ describe("admin_api_tags", () => {
     const orgId = await createOrg(t);
 
     const { id: tagId } = await t.mutation(internal.admin_api.tags.createTag, {
-      organizationId: orgId,
-      name: "ToDelete",
       color: "#F00",
+      name: "ToDelete",
+      organizationId: orgId,
     });
 
     // Create feedback and link it to the tag
     const _feedbackId = await t.run(async (ctx) => {
       const fId = await ctx.db.insert("feedback", {
-        organizationId: orgId,
-        title: "Test",
-        description: "Desc",
-        status: "open",
-        voteCount: 0,
         commentCount: 0,
+        createdAt: Date.now(),
+        description: "Desc",
         isApproved: true,
         isPinned: false,
-        createdAt: Date.now(),
+        organizationId: orgId,
+        status: "open",
+        title: "Test",
         updatedAt: Date.now(),
+        voteCount: 0,
       });
       await ctx.db.insert("feedbackTags", { feedbackId: fId, tagId });
       return fId;

@@ -19,33 +19,33 @@ const SYNTHESIS_MODEL = "anthropic/claude-sonnet-4";
 const synthesisSchema = z.object({
   insights: z.array(
     z.object({
+      priority: z.enum(["critical", "high", "medium", "low"]),
+      reasoning: z.string(),
+      relatedSignalIndices: z
+        .array(z.number())
+        .describe("Indices into the signals array"),
+      suggestedFeedbackDescription: z.string().optional(),
+      suggestedFeedbackTitle: z.string().optional(),
+      summary: z.string(),
+      title: z.string(),
       type: z.enum([
         "feature_suggestion",
         "competitive_alert",
         "market_opportunity",
         "risk_warning",
       ]),
-      title: z.string(),
-      summary: z.string(),
-      reasoning: z.string(),
-      priority: z.enum(["critical", "high", "medium", "low"]),
-      suggestedFeedbackTitle: z.string().optional(),
-      suggestedFeedbackDescription: z.string().optional(),
-      relatedSignalIndices: z
-        .array(z.number())
-        .describe("Indices into the signals array"),
     })
   ),
 });
 
 const battlecardSchema = z.object({
-  overview: z.string(),
-  strengths: z.array(z.string()),
-  weaknesses: z.array(z.string()),
-  talkTracks: z.array(z.object({ scenario: z.string(), response: z.string() })),
   objectionHandling: z.array(
     z.object({ objection: z.string(), rebuttal: z.string() })
   ),
+  overview: z.string(),
+  strengths: z.array(z.string()),
+  talkTracks: z.array(z.object({ response: z.string(), scenario: z.string() })),
+  weaknesses: z.array(z.string()),
 });
 
 // ============================================
@@ -89,8 +89,8 @@ export const getExistingFeedback = internalQuery({
 
     return feedbackItems.map((f) => ({
       _id: f._id,
-      title: f.title,
       description: f.description,
+      title: f.title,
     }));
   },
 });
@@ -104,8 +104,20 @@ export const getExistingFeedback = internalQuery({
  */
 export const createInsight = internalMutation({
   args: {
+    linkedFeedbackIds: v.optional(v.array(v.id("feedback"))),
     organizationId: v.id("organizations"),
+    priority: v.union(
+      v.literal("critical"),
+      v.literal("high"),
+      v.literal("medium"),
+      v.literal("low")
+    ),
+    reasoning: v.optional(v.string()),
     signalIds: v.array(v.id("intelligenceSignals")),
+    suggestedFeedbackDescription: v.optional(v.string()),
+    suggestedFeedbackTitle: v.optional(v.string()),
+    summary: v.string(),
+    title: v.string(),
     type: v.union(
       v.literal("feature_suggestion"),
       v.literal("competitive_alert"),
@@ -113,33 +125,21 @@ export const createInsight = internalMutation({
       v.literal("risk_warning"),
       v.literal("battlecard")
     ),
-    title: v.string(),
-    summary: v.string(),
-    reasoning: v.optional(v.string()),
-    priority: v.union(
-      v.literal("critical"),
-      v.literal("high"),
-      v.literal("medium"),
-      v.literal("low")
-    ),
-    suggestedFeedbackTitle: v.optional(v.string()),
-    suggestedFeedbackDescription: v.optional(v.string()),
-    linkedFeedbackIds: v.optional(v.array(v.id("feedback"))),
   },
   handler: async (ctx, args) => {
     const insightId = await ctx.db.insert("intelligenceInsights", {
-      organizationId: args.organizationId,
-      signalIds: args.signalIds,
-      type: args.type,
-      title: args.title,
-      summary: args.summary,
-      reasoning: args.reasoning,
-      priority: args.priority,
-      suggestedFeedbackTitle: args.suggestedFeedbackTitle,
-      suggestedFeedbackDescription: args.suggestedFeedbackDescription,
-      linkedFeedbackIds: args.linkedFeedbackIds,
-      status: "new",
       createdAt: Date.now(),
+      linkedFeedbackIds: args.linkedFeedbackIds,
+      organizationId: args.organizationId,
+      priority: args.priority,
+      reasoning: args.reasoning,
+      signalIds: args.signalIds,
+      status: "new",
+      suggestedFeedbackDescription: args.suggestedFeedbackDescription,
+      suggestedFeedbackTitle: args.suggestedFeedbackTitle,
+      summary: args.summary,
+      title: args.title,
+      type: args.type,
     });
 
     return insightId;
@@ -151,9 +151,9 @@ export const createInsight = internalMutation({
  */
 export const upsertBattlecard = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
     competitorId: v.id("competitors"),
     content: v.string(),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -169,19 +169,19 @@ export const upsertBattlecard = internalMutation({
 
     if (existing) {
       await ctx.db.patch(existing._id, {
-        content: args.content,
         aiGeneratedAt: now,
+        content: args.content,
         lastUpdatedAt: now,
       });
       return existing._id;
     }
 
     const battlecardId = await ctx.db.insert("battlecards", {
-      organizationId: args.organizationId,
+      aiGeneratedAt: now,
       competitorId: args.competitorId,
       content: args.content,
-      aiGeneratedAt: now,
       lastUpdatedAt: now,
+      organizationId: args.organizationId,
     });
 
     return battlecardId;
@@ -193,20 +193,20 @@ export const upsertBattlecard = internalMutation({
  */
 export const upsertFeatureComparison = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
     features: v.array(
       v.object({
-        featureName: v.string(),
-        userProductHasIt: v.boolean(),
         competitors: v.array(
           v.object({
             competitorId: v.id("competitors"),
-            hasIt: v.boolean(),
             details: v.optional(v.string()),
+            hasIt: v.boolean(),
           })
         ),
+        featureName: v.string(),
+        userProductHasIt: v.boolean(),
       })
     ),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -220,18 +220,18 @@ export const upsertFeatureComparison = internalMutation({
 
     if (existing) {
       await ctx.db.patch(existing._id, {
-        features: args.features,
         aiGeneratedAt: now,
+        features: args.features,
         lastUpdatedAt: now,
       });
       return existing._id;
     }
 
     const comparisonId = await ctx.db.insert("featureComparisons", {
-      organizationId: args.organizationId,
-      features: args.features,
       aiGeneratedAt: now,
+      features: args.features,
       lastUpdatedAt: now,
+      organizationId: args.organizationId,
     });
 
     return comparisonId;
@@ -308,17 +308,17 @@ const storeInsights = async (
     );
 
     await ctx.runMutation(internal.intelligence.synthesis.createInsight, {
-      organizationId,
-      signalIds: relatedSignalIds,
-      type: insight.type,
-      title: insight.title,
-      summary: insight.summary,
-      reasoning: insight.reasoning,
-      priority: insight.priority,
-      suggestedFeedbackTitle: insight.suggestedFeedbackTitle,
-      suggestedFeedbackDescription: insight.suggestedFeedbackDescription,
       linkedFeedbackIds:
         matchedFeedbackIds.length > 0 ? matchedFeedbackIds : undefined,
+      organizationId,
+      priority: insight.priority,
+      reasoning: insight.reasoning,
+      signalIds: relatedSignalIds,
+      suggestedFeedbackDescription: insight.suggestedFeedbackDescription,
+      suggestedFeedbackTitle: insight.suggestedFeedbackTitle,
+      summary: insight.summary,
+      title: insight.title,
+      type: insight.type,
     });
     count++;
   }
@@ -418,9 +418,9 @@ Generate actionable insights from these signals.`;
       );
       const result = await generateStructured({
         model: SYNTHESIS_MODEL,
+        prompt: userPrompt,
         schema: synthesisSchema,
         system: systemPrompt,
-        prompt: userPrompt,
       });
 
       const { insights } = result;
@@ -454,8 +454,8 @@ Generate actionable insights from these signals.`;
  */
 export const generateBattlecard = internalAction({
   args: {
-    organizationId: v.id("organizations"),
     competitorId: v.id("competitors"),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
     const since = Date.now() - SEVEN_DAYS_MS;
@@ -496,17 +496,17 @@ Generate a comprehensive sales battlecard.`;
     try {
       const result = await generateStructured({
         model: SYNTHESIS_MODEL,
+        prompt: userPrompt,
         schema: battlecardSchema,
         system: systemPrompt,
-        prompt: userPrompt,
       });
 
       const content = JSON.stringify(result);
 
       await ctx.runMutation(internal.intelligence.synthesis.upsertBattlecard, {
-        organizationId: args.organizationId,
         competitorId: args.competitorId,
         content,
+        organizationId: args.organizationId,
       });
 
       return { success: true };
@@ -562,15 +562,15 @@ export const updateFeatureComparison = internalAction({
     const featureComparisonSchema = z.object({
       features: z.array(
         z.object({
-          featureName: z.string(),
-          userProductHasIt: z.boolean(),
           competitors: z.array(
             z.object({
               competitorId: z.string().describe("The competitor ID"),
-              hasIt: z.boolean(),
               details: z.string().optional(),
+              hasIt: z.boolean(),
             })
           ),
+          featureName: z.string(),
+          userProductHasIt: z.boolean(),
         })
       ),
     });
@@ -586,9 +586,9 @@ Generate a feature comparison matrix. Use the exact competitor IDs from the sign
     try {
       const result = await generateStructured({
         model: SYNTHESIS_MODEL,
+        prompt: userPrompt,
         schema: featureComparisonSchema,
         system: systemPrompt,
-        prompt: userPrompt,
       });
 
       // Build a map of valid competitor IDs from signals for validation
@@ -600,8 +600,6 @@ Generate a feature comparison matrix. Use the exact competitor IDs from the sign
       }
 
       const features = result.features.map((f) => ({
-        featureName: f.featureName,
-        userProductHasIt: f.userProductHasIt,
         competitors: f.competitors
           .filter((c) => validCompetitorIds.has(c.competitorId))
           .map((c) => {
@@ -611,21 +609,23 @@ Generate a feature comparison matrix. Use the exact competitor IDs from the sign
             }
             return {
               competitorId: typedId,
-              hasIt: c.hasIt,
               details: c.details,
+              hasIt: c.hasIt,
             };
           }),
+        featureName: f.featureName,
+        userProductHasIt: f.userProductHasIt,
       }));
 
       await ctx.runMutation(
         internal.intelligence.synthesis.upsertFeatureComparison,
         {
-          organizationId: args.organizationId,
           features,
+          organizationId: args.organizationId,
         }
       );
 
-      return { success: true, featureCount: features.length };
+      return { featureCount: features.length, success: true };
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "AI parsing failed";

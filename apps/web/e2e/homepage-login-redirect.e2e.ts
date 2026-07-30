@@ -1,7 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-// Auth form heading (French UI)
-const AUTH_INITIAL_HEADING = "Authentification";
+const AUTH_INITIAL_HEADING = "Authentication";
 
 // URL pattern for dashboard
 const DASHBOARD_URL_PATTERN = /\/dashboard/;

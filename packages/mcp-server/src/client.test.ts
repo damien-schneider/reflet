@@ -9,8 +9,8 @@ let fetchSpy: ReturnType<typeof vi.fn>;
 const mockFetchResponse = (data: unknown, status = 200) => {
   fetchSpy.mockResolvedValueOnce(
     new Response(JSON.stringify(data), {
-      status,
       headers: { "Content-Type": "application/json" },
+      status,
     })
   );
 };
@@ -26,8 +26,8 @@ afterEach(() => {
 
 const createClient = () =>
   new RefletAdminClient({
-    secretKey: TEST_SECRET_KEY,
     baseUrl: TEST_BASE_URL,
+    secretKey: TEST_SECRET_KEY,
   });
 
 describe("RefletAdminClient - request construction", () => {
@@ -71,10 +71,10 @@ describe("RefletAdminClient - GET endpoints", () => {
     mockFetchResponse({ items: [] });
 
     await client.listFeedback({
-      status: "open",
       limit: 10,
       offset: 5,
       search: "test",
+      status: "open",
     });
 
     const [url] = fetchSpy.mock.calls[0] as [string, RequestInit];
@@ -89,7 +89,7 @@ describe("RefletAdminClient - GET endpoints", () => {
     const client = createClient();
     mockFetchResponse({ items: [] });
 
-    await client.listReleases({ status: "published", limit: 5 });
+    await client.listReleases({ limit: 5, status: "published" });
 
     const [url] = fetchSpy.mock.calls[0] as [string, RequestInit];
     expect(url).toContain("/api/v1/admin/releases");
@@ -135,18 +135,18 @@ describe("RefletAdminClient - POST endpoints", () => {
     mockFetchResponse({ id: "tag-1" });
 
     await client.createTag({
-      name: "Bug",
       color: "#FF0000",
       description: "Issues",
+      name: "Bug",
     });
 
     const [url, options] = fetchSpy.mock.calls[0] as [string, RequestInit];
     expect(url).toContain("/api/v1/admin/tag/create");
     expect(options.method).toBe("POST");
     expect(JSON.parse(options.body as string)).toEqual({
-      name: "Bug",
       color: "#FF0000",
       description: "Issues",
+      name: "Bug",
     });
   });
 
@@ -171,9 +171,9 @@ describe("RefletAdminClient - POST endpoints", () => {
     const [url, options] = fetchSpy.mock.calls[0] as [string, RequestInit];
     expect(url).toContain("/api/v1/admin/release/link-feedback");
     expect(JSON.parse(options.body as string)).toEqual({
-      releaseId: "rel-1",
-      feedbackId: "fb-1",
       action: "link",
+      feedbackId: "fb-1",
+      releaseId: "rel-1",
     });
   });
 
@@ -216,8 +216,8 @@ describe("RefletAdminClient - error handling", () => {
     const client = createClient();
     fetchSpy.mockResolvedValueOnce(
       new Response("not json", {
-        status: 200,
         headers: { "Content-Type": "text/plain" },
+        status: 200,
       })
     );
 

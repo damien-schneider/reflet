@@ -6,9 +6,8 @@ const BOARDS_URL_REGEX = /\/boards$/;
 const BOARD_DETAIL_REGEX = /\/boards\/[^/]+$/;
 const BOARD_SLUG_EXTRACT_REGEX = /\/boards\/([^/?]+)/;
 
-// Auth form headings (French UI)
-const AUTH_INITIAL_HEADING = "Authentification";
-const AUTH_SIGNUP_HEADING = "Créer un compte";
+const AUTH_INITIAL_HEADING = "Authentication";
+const AUTH_SIGNUP_HEADING = "Create an account";
 
 // Locator patterns
 const BOARDS_LINK_NAME = /boards/i;
@@ -27,12 +26,9 @@ const DIGIT_REGEX = /\d+/;
 const SEARCH_PLACEHOLDER = /search/i;
 const SORT_BUTTON_NAME = /sort|most voted|newest/i;
 
-/**
- * Helper to complete sign-up flow with the new unified auth form
- */
 async function signUpNewUser(
   page: import("@playwright/test").Page,
-  user: { name: string; email: string; password: string }
+  user: { email: string; password: string }
 ) {
   await page.getByTestId("email-input").fill(user.email);
   await page.getByTestId("email-input").blur();
@@ -41,10 +37,10 @@ async function signUpNewUser(
     timeout: 10_000,
   });
 
-  await page.getByTestId("name-input").fill(user.name);
   await page.getByTestId("password-input").fill(user.password);
+  await page.getByTestId("confirm-password-input").fill(user.password);
 
-  await page.getByRole("button", { name: "Créer mon compte" }).click();
+  await page.getByRole("button", { name: "Create my account" }).click();
 }
 
 /**
@@ -121,7 +117,6 @@ test.describe("Public Feedback Page and Dialog", () => {
     // Sign up with a fresh user for each test
     const timestamp = Date.now();
     const testUser = {
-      name: `Feedback Dialog Test ${timestamp}`,
       email: `feedback-dialog-${timestamp}@example.com`,
       password: "password123",
     };
@@ -369,7 +364,6 @@ test.describe("Public Org Page Search and Filter", () => {
   test.beforeEach(async ({ page }) => {
     const timestamp = Date.now();
     const testUser = {
-      name: `Search Filter Test ${timestamp}`,
       email: `search-filter-${timestamp}@example.com`,
       password: "password123",
     };
@@ -426,7 +420,6 @@ test.describe("Feedback Dialog - No Console Errors", () => {
   }) => {
     const timestamp = Date.now();
     const testUser = {
-      name: `Console Error Test ${timestamp}`,
       email: `console-feedback-${timestamp}@example.com`,
       password: "password123",
     };

@@ -59,10 +59,10 @@ export function SetupPage({ organizationId, orgSlug, userId }: SetupPageProps) {
   }
 
   const connectHref = buildGitHubInstallUrl({
-    userId,
     organizationId,
     orgSlug,
     returnTo: "setup",
+    userId,
   });
 
   const handleStartAnalysis = async () => {
@@ -78,12 +78,12 @@ export function SetupPage({ organizationId, orgSlug, userId }: SetupPageProps) {
   };
 
   const handleManualSetup = async () => {
-    await skipSetup({ organizationId, method: "manual" });
+    await skipSetup({ method: "manual", organizationId });
     router.push(`/dashboard/${orgSlug}`);
   };
 
   const handleSkip = async () => {
-    await skipSetup({ organizationId, method: "skipped" });
+    await skipSetup({ method: "skipped", organizationId });
     router.push(`/dashboard/${orgSlug}`);
   };
 

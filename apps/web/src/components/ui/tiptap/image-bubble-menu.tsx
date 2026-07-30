@@ -16,7 +16,7 @@ interface ImageBubbleMenuProps {
 
 export function ImageBubbleMenu({ editor }: ImageBubbleMenuProps) {
   const [isVisible, setIsVisible] = useState(false);
-  const [position, setPosition] = useState({ top: 0, left: 0 });
+  const [position, setPosition] = useState({ left: 0, top: 0 });
   const [currentAlign, setCurrentAlign] = useState<ImageAlignment>("center");
 
   const setAlignment = (align: ImageAlignment) => {
@@ -56,8 +56,8 @@ export function ImageBubbleMenu({ editor }: ImageBubbleMenuProps) {
           const editorRect = view.dom.getBoundingClientRect();
 
           setPosition({
-            top: rect.top - editorRect.top - 40,
             left: rect.left - editorRect.left + rect.width / 2,
+            top: rect.top - editorRect.top - 40,
           });
         }
       }
@@ -80,7 +80,7 @@ export function ImageBubbleMenu({ editor }: ImageBubbleMenuProps) {
   return (
     <div
       className="tiptap-image-bubble-menu pointer-events-auto absolute z-50 -translate-x-1/2"
-      style={{ top: position.top, left: position.left }}
+      style={{ left: position.left, top: position.top }}
     >
       <div className="flex items-center gap-1 rounded-lg border bg-background p-1 shadow-lg">
         <button

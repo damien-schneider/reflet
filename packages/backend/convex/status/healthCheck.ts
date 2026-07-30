@@ -81,24 +81,24 @@ export const getActiveIncidentForMonitor = internalQuery({
 
 export const recordCheck = internalMutation({
   args: {
+    errorMessage: v.optional(v.string()),
+    isUp: v.boolean(),
     monitorId: v.id("statusMonitors"),
     organizationId: v.id("organizations"),
-    statusCode: v.optional(v.number()),
     responseTimeMs: v.optional(v.number()),
-    isUp: v.boolean(),
-    errorMessage: v.optional(v.string()),
+    statusCode: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
 
     await ctx.db.insert("statusChecks", {
+      checkedAt: now,
+      errorMessage: args.errorMessage,
+      isUp: args.isUp,
       monitorId: args.monitorId,
       organizationId: args.organizationId,
-      statusCode: args.statusCode,
       responseTimeMs: args.responseTimeMs,
-      isUp: args.isUp,
-      errorMessage: args.errorMessage,
-      checkedAt: now,
+      statusCode: args.statusCode,
     });
 
     const monitor = await ctx.db.get(args.monitorId);
@@ -111,14 +111,14 @@ export const recordCheck = internalMutation({
         monitor.status === "major_outage" || monitor.status === "degraded";
 
       await ctx.db.patch(args.monitorId, {
-        status: "operational",
         consecutiveFailures: 0,
         lastCheckedAt: now,
         lastResponseTimeMs: args.responseTimeMs,
+        status: "operational",
         updatedAt: now,
       });
 
-      return { recovered: wasDown, monitorId: args.monitorId };
+      return { monitorId: args.monitorId, recovered: wasDown };
     }
 
     const newFailures = monitor.consecutiveFailures + 1;
@@ -126,25 +126,25 @@ export const recordCheck = internalMutation({
       newFailures >= monitor.alertThreshold ? "major_outage" : "degraded";
 
     await ctx.db.patch(args.monitorId, {
-      status: newStatus,
       consecutiveFailures: newFailures,
       lastCheckedAt: now,
       lastResponseTimeMs: args.responseTimeMs,
+      status: newStatus,
       updatedAt: now,
     });
 
     return {
-      shouldAlert: newFailures === monitor.alertThreshold,
       monitorId: args.monitorId,
+      shouldAlert: newFailures === monitor.alertThreshold,
     };
   },
 });
 
 export const autoCreateIncident = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
     monitorId: v.id("statusMonitors"),
     monitorName: v.string(),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -167,23 +167,23 @@ export const autoCreateIncident = internalMutation({
     }
 
     const incidentId = await ctx.db.insert("statusIncidents", {
-      organizationId: args.organizationId,
-      title: `${args.monitorName} is experiencing issues`,
-      severity: "major",
-      status: "investigating",
       affectedMonitorIds: [args.monitorId],
       autoDetected: true,
-      startedAt: now,
       createdAt: now,
+      organizationId: args.organizationId,
+      severity: "major",
+      startedAt: now,
+      status: "investigating",
+      title: `${args.monitorName} is experiencing issues`,
       updatedAt: now,
     });
 
     await ctx.db.insert("statusIncidentUpdates", {
+      createdAt: now,
       incidentId,
+      message: `Automated monitoring detected that ${args.monitorName} is not responding. We are investigating the issue.`,
       organizationId: args.organizationId,
       status: "investigating",
-      message: `Automated monitoring detected that ${args.monitorName} is not responding. We are investigating the issue.`,
-      createdAt: now,
     });
 
     return incidentId;
@@ -192,9 +192,9 @@ export const autoCreateIncident = internalMutation({
 
 export const autoResolveIncident = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
     monitorId: v.id("statusMonitors"),
     monitorName: v.string(),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -218,17 +218,17 @@ export const autoResolveIncident = internalMutation({
     }
 
     await ctx.db.patch(activeIncident._id, {
-      status: "resolved",
       resolvedAt: now,
+      status: "resolved",
       updatedAt: now,
     });
 
     await ctx.db.insert("statusIncidentUpdates", {
+      createdAt: now,
       incidentId: activeIncident._id,
+      message: `${args.monitorName} has recovered and is now operational.`,
       organizationId: args.organizationId,
       status: "resolved",
-      message: `${args.monitorName} has recovered and is now operational.`,
-      createdAt: now,
     });
 
     return activeIncident._id;
@@ -277,8 +277,8 @@ export const runHealthChecks = internalAction({
 
         const response = await fetch(monitor.url, {
           method,
-          signal: controller.signal,
           redirect: "follow",
+          signal: controller.signal,
         });
 
         clearTimeout(timeout);
@@ -293,12 +293,12 @@ export const runHealthChecks = internalAction({
       const result = await ctx.runMutation(
         internal.status.healthCheck.recordCheck,
         {
+          errorMessage,
+          isUp,
           monitorId: monitor._id,
           organizationId: monitor.organizationId,
-          statusCode,
           responseTimeMs,
-          isUp,
-          errorMessage,
+          statusCode,
         }
       );
 
@@ -309,18 +309,18 @@ export const runHealthChecks = internalAction({
       // Auto-create incident if threshold reached
       if ("shouldAlert" in result && result.shouldAlert) {
         await ctx.runMutation(internal.status.healthCheck.autoCreateIncident, {
-          organizationId: monitor.organizationId,
           monitorId: monitor._id,
           monitorName: monitor.name,
+          organizationId: monitor.organizationId,
         });
       }
 
       // Auto-resolve if monitor recovered
       if ("recovered" in result && result.recovered) {
         await ctx.runMutation(internal.status.healthCheck.autoResolveIncident, {
-          organizationId: monitor.organizationId,
           monitorId: monitor._id,
           monitorName: monitor.name,
+          organizationId: monitor.organizationId,
         });
       }
     }

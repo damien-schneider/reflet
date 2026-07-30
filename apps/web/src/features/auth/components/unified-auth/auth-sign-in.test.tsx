@@ -46,9 +46,9 @@ vi.mock("@/components/ui/field", () => ({
 
 vi.mock("./lib/auth-validation", () => ({
   animationVariants: {
-    initial: { opacity: 0 },
     animate: { opacity: 1 },
     exit: { opacity: 0 },
+    initial: { opacity: 0 },
   },
 }));
 
@@ -58,11 +58,11 @@ afterEach(cleanup);
 
 describe("AuthSubmitButton", () => {
   const baseProps = {
-    mode: null as "signIn" | "signUp" | null,
-    isSubmitting: false,
+    apiError: null as string | null,
     isCheckingEmail: false,
     isFormValid: true,
-    apiError: null as string | null,
+    isSubmitting: false,
+    mode: null as "signIn" | "signUp" | null,
   };
 
   it("renders Continue when mode is null", () => {

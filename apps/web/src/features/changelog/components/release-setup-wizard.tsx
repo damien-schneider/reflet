@@ -50,17 +50,17 @@ export interface WizardConfig {
 }
 
 const DEFAULT_CONFIG: WizardConfig = {
-  workflow: "ai_powered",
-  syncDirection: "reflet_first",
-  autoSyncReleases: false,
-  pushToGithubOnPublish: true,
   autoPublishImported: true,
+  autoSyncReleases: false,
   autoVersioning: true,
-  versionPrefix: "v",
-  versionIncrement: "patch",
-  targetBranch: "main",
-  manualSyncEnabled: false,
   manualSyncDirection: "bidirectional",
+  manualSyncEnabled: false,
+  pushToGithubOnPublish: true,
+  syncDirection: "reflet_first",
+  targetBranch: "main",
+  versionIncrement: "patch",
+  versionPrefix: "v",
+  workflow: "ai_powered",
 };
 
 interface ReleaseSetupWizardProps {
@@ -155,23 +155,23 @@ export function ReleaseSetupWizard({
 
       // Save changelog settings to org
       await updateOrg({
-        id: organizationId,
         changelogSettings: {
-          syncDirection: finalSyncDirection,
-          pushToGithubOnPublish: finalPushToGithub,
           autoPublishImported: config.autoPublishImported,
           autoVersioning: config.autoVersioning,
-          versionPrefix: config.versionPrefix,
-          versionIncrement: config.versionIncrement,
+          pushToGithubOnPublish: finalPushToGithub,
+          syncDirection: finalSyncDirection,
           targetBranch: config.targetBranch,
+          versionIncrement: config.versionIncrement,
+          versionPrefix: config.versionPrefix,
         },
+        id: organizationId,
       });
 
       // Toggle auto-sync if GitHub is connected
       if (githubConnection) {
         await toggleAutoSync({
-          organizationId,
           enabled: finalAutoSync,
+          organizationId,
         });
       }
 

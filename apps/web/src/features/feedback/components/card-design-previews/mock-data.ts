@@ -9,16 +9,16 @@ export interface MockFeedback {
 }
 
 export const MOCK: MockFeedback = {
-  title: "Add keyboard shortcuts for common actions",
-  status: { name: "Planned", color: "blue" },
-  tags: [
-    { id: "1", name: "UX", color: "purple" },
-    { id: "2", name: "Feature", color: "green" },
-  ],
   commentCount: 7,
-  timeAgo: "3 days ago",
-  upvotes: 24,
   downvotes: 3,
+  status: { color: "blue", name: "Planned" },
+  tags: [
+    { color: "purple", id: "1", name: "UX" },
+    { color: "green", id: "2", name: "Feature" },
+  ],
+  timeAgo: "3 days ago",
+  title: "Add keyboard shortcuts for common actions",
+  upvotes: 24,
 };
 
 export const MOCK_VOTERS = ["AS", "JD", "MK", "RL", "TS"];
@@ -26,21 +26,21 @@ export const MOCK_VOTERS = ["AS", "JD", "MK", "RL", "TS"];
 export const MOCK_LIST: readonly MockFeedback[] = [
   MOCK,
   {
-    title: "Dark mode support for the dashboard",
-    status: { name: "In Progress", color: "amber" },
-    tags: [{ id: "3", name: "Design", color: "pink" }],
     commentCount: 12,
-    timeAgo: "1 day ago",
-    upvotes: 41,
     downvotes: 2,
+    status: { color: "amber", name: "In Progress" },
+    tags: [{ color: "pink", id: "3", name: "Design" }],
+    timeAgo: "1 day ago",
+    title: "Dark mode support for the dashboard",
+    upvotes: 41,
   },
   {
-    title: "Export feedback data as CSV",
-    status: { name: "Under Review", color: "purple" },
-    tags: [{ id: "4", name: "Data", color: "blue" }],
     commentCount: 3,
-    timeAgo: "5 days ago",
-    upvotes: 8,
     downvotes: 1,
+    status: { color: "purple", name: "Under Review" },
+    tags: [{ color: "blue", id: "4", name: "Data" }],
+    timeAgo: "5 days ago",
+    title: "Export feedback data as CSV",
+    upvotes: 8,
   },
 ];

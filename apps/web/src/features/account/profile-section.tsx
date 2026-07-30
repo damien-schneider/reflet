@@ -38,20 +38,20 @@ export function ProfileSection({
     formState: { errors: profileErrors, isDirty: isProfileDirty },
     reset: resetProfile,
   } = useForm<UpdateProfileForm>({
-    resolver: zodResolver(updateProfileSchema),
-    mode: "onChange",
     defaultValues: {
-      name: user?.name ?? "",
       avatarUrl: "",
+      name: user?.name ?? "",
     },
+    mode: "onChange",
+    resolver: zodResolver(updateProfileSchema),
   });
 
   const handleUpdateProfile = async (data: UpdateProfileForm) => {
     setIsLoading(true);
     try {
       await authClient.updateUser({
-        name: data.name,
         image: avatarUrl || undefined,
+        name: data.name,
       });
       toast.success("Profile updated successfully");
       resetProfile();

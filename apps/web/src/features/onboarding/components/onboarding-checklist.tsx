@@ -42,46 +42,46 @@ const ICON_SIZE = 18;
 function getSteps(orgSlug: string): Step[] {
   return [
     {
-      key: "boardCreated",
-      label: "Create your feedback board",
       description: "Set up your first feedback board",
       href: `/dashboard/${orgSlug}/settings`,
       icon: <Tray size={ICON_SIZE} />,
+      key: "boardCreated",
+      label: "Create your feedback board",
     },
     {
-      key: "brandingCustomized",
-      label: "Customize your branding",
       description: "Add your logo and brand colors",
       href: `/dashboard/${orgSlug}/settings`,
       icon: <PaintBrush size={ICON_SIZE} />,
+      key: "brandingCustomized",
+      label: "Customize your branding",
     },
     {
-      key: "firstFeedbackCreated",
-      label: "Create your first feedback",
       description: "Add a feedback item to your board",
       href: `/dashboard/${orgSlug}`,
       icon: <Tray size={ICON_SIZE} />,
+      key: "firstFeedbackCreated",
+      label: "Create your first feedback",
     },
     {
-      key: "githubConnected",
-      label: "Connect GitHub",
       description: "Link your GitHub repos for auto-changelogs",
       href: `/dashboard/${orgSlug}/settings`,
       icon: <GithubLogo size={ICON_SIZE} />,
+      key: "githubConnected",
+      label: "Connect GitHub",
     },
     {
-      key: "widgetInstalled",
-      label: "Install the widget",
       description: "Embed feedback collection in your app",
       href: `/dashboard/${orgSlug}/settings`,
       icon: <PuzzlePiece size={ICON_SIZE} />,
+      key: "widgetInstalled",
+      label: "Install the widget",
     },
     {
-      key: "teamInvited",
-      label: "Invite your team",
       description: "Add team members to collaborate",
       href: `/dashboard/${orgSlug}/members`,
       icon: <Users size={ICON_SIZE} />,
+      key: "teamInvited",
+      label: "Invite your team",
     },
   ];
 }

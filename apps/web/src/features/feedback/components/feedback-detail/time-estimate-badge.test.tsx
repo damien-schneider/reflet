@@ -399,8 +399,8 @@ describe("TimeEstimateBadge", () => {
     fireEvent.click(screen.getByText("Reset to AI value"));
     await waitFor(() => {
       expect(mockUpdateAnalysis).toHaveBeenCalledWith({
-        feedbackId,
         clearTimeEstimate: true,
+        feedbackId,
       });
     });
   });

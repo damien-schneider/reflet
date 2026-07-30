@@ -134,10 +134,10 @@ export function MilestoneSegment({
         dateUpdate = { targetDate: editTargetDate };
       }
       await updateMilestone({
+        color: editColor,
+        emoji: editEmoji,
         id: milestone._id,
         name: trimmedName,
-        emoji: editEmoji,
-        color: editColor,
         timeHorizon: editHorizon,
         ...dateUpdate,
       });
@@ -275,7 +275,7 @@ export function MilestoneSegment({
           animate={{ width: `${percentage}%` }}
           className="absolute bottom-0 left-0 h-[2px] bg-white/30"
           initial={false}
-          transition={{ type: "spring", stiffness: 200, damping: 30 }}
+          transition={{ damping: 30, stiffness: 200, type: "spring" }}
         />
       </motion.button>
 
@@ -291,7 +291,7 @@ export function MilestoneSegment({
           className="absolute bottom-0.5 left-1/2 h-0.5 -translate-x-1/2 rounded-full"
           initial={{ width: 0 }}
           style={{ backgroundColor: colorValues.text }}
-          transition={{ type: "spring", stiffness: 300, damping: 25 }}
+          transition={{ damping: 25, stiffness: 300, type: "spring" }}
         />
       )}
     </div>

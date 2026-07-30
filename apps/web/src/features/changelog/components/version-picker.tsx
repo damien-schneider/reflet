@@ -28,8 +28,8 @@ export function VersionPicker({
   className,
 }: VersionPickerProps) {
   const versionSuggestions = useQuery(api.changelog.releases.getNextVersion, {
-    organizationId,
     excludeReleaseId,
+    organizationId,
   });
 
   const isAutoVersioning = versionSuggestions?.autoVersioning !== false;

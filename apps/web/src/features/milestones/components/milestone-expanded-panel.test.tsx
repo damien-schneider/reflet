@@ -4,25 +4,25 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockMilestone = {
   _id: "ms1",
-  name: "Alpha Release",
   description: "First alpha release",
-  targetDate: undefined as number | undefined,
-  status: "active",
-  progress: { total: 5, completed: 2, inProgress: 1, percentage: 40 },
   feedback: [
     {
       _id: "fb1",
+      organizationStatus: { color: "blue", name: "Open" },
       title: "Feedback One",
       voteCount: 10,
-      organizationStatus: { name: "Open", color: "blue" },
     },
     {
       _id: "fb2",
+      organizationStatus: null,
       title: "Feedback Two",
       voteCount: 5,
-      organizationStatus: null,
     },
   ],
+  name: "Alpha Release",
+  progress: { completed: 2, inProgress: 1, percentage: 40, total: 5 },
+  status: "active",
+  targetDate: undefined as number | undefined,
 };
 
 const mockAllFeedback = [
@@ -33,22 +33,22 @@ const mockAllFeedback = [
 let mockQueryFn: (ref: string, args: unknown) => unknown;
 
 vi.mock("convex/react", () => ({
-  useQuery: (ref: string, args: unknown) => mockQueryFn(ref, args),
   useMutation: () => vi.fn().mockResolvedValue(undefined),
+  useQuery: (ref: string, args: unknown) => mockQueryFn(ref, args),
 }));
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
-    organizations: {
-      milestones: {
-        get: "milestones:get",
-        addFeedback: "milestones:addFeedback",
-        removeFeedback: "milestones:removeFeedback",
-      },
-    },
     feedback: {
       list: {
         listByOrganization: "feedback_list:listByOrganization",
+      },
+    },
+    organizations: {
+      milestones: {
+        addFeedback: "milestones:addFeedback",
+        get: "milestones:get",
+        removeFeedback: "milestones:removeFeedback",
       },
     },
   },
@@ -123,8 +123,8 @@ vi.mock("@/components/ui/input", () => ({
 }));
 
 vi.mock("@/lib/milestone-deadline", () => ({
-  getDeadlineInfo: () => null,
   getDeadlineBadgeStyles: () => null,
+  getDeadlineInfo: () => null,
 }));
 
 vi.mock("@/lib/utils", () => ({
@@ -155,7 +155,6 @@ describe("MilestoneExpandedPanel", () => {
       if (ref === "feedback_list:listByOrganization") {
         return mockAllFeedback;
       }
-      return undefined;
     };
   });
 
@@ -263,7 +262,6 @@ describe("MilestoneExpandedPanel", () => {
       if (ref === "feedback_list:listByOrganization") {
         return [];
       }
-      return undefined;
     };
     render(
       <MilestoneExpandedPanel

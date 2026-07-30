@@ -10,18 +10,18 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const TYPE_LABEL: Record<string, string> = {
-  feature_suggestion: "Feature Suggestion",
+  battlecard: "Battlecard",
   competitive_alert: "Competitive Alert",
+  feature_suggestion: "Feature Suggestion",
   market_opportunity: "Market Opportunity",
   risk_warning: "Risk Warning",
-  battlecard: "Battlecard",
 };
 
 const PRIORITY_COLOR: Record<string, string> = {
   critical: "red",
   high: "orange",
-  medium: "yellow",
   low: "gray",
+  medium: "yellow",
 };
 
 interface FeedbackIntelligenceSectionProps {

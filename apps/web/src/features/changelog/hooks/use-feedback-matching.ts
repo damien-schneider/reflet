@@ -55,24 +55,24 @@ export function useFeedbackMatching(): UseFeedbackMatchingResult {
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_CONVEX_SITE_URL ?? ""}/api/ai/match-release-feedback`,
           {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              releaseNotes,
               commits: commits.map((c) => ({
-                sha: c.sha,
-                message: c.message,
-                fullMessage: c.fullMessage,
                 author: c.author,
+                fullMessage: c.fullMessage,
+                message: c.message,
+                sha: c.sha,
               })),
               feedbackItems: feedbackItems.map((f) => ({
-                id: f._id,
-                title: f.title,
                 description: f.description,
+                id: f._id,
                 status: f.status,
                 tags: f.tags.map((t) => t.name),
+                title: f.title,
               })),
+              releaseNotes,
             }),
+            headers: { "Content-Type": "application/json" },
+            method: "POST",
           }
         );
 
@@ -115,5 +115,5 @@ export function useFeedbackMatching(): UseFeedbackMatchingResult {
     setMatchError(null);
   }, []);
 
-  return { matches, isMatching, matchError, matchFeedback, clearMatches };
+  return { clearMatches, isMatching, matchError, matches, matchFeedback };
 }

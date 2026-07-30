@@ -84,7 +84,7 @@ export function RoadmapColumnHeader({
 
   const handleColorChange = useCallback(
     async (newColor: TagColor) => {
-      await updateStatus({ id: statusId, color: newColor });
+      await updateStatus({ color: newColor, id: statusId });
       setIsColorPickerOpen(false);
     },
     [statusId, updateStatus]

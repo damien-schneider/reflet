@@ -56,11 +56,11 @@ interface CommitData {
 function formatCommit(commit: GitHubCommit): CommitData {
   const firstLine = commit.commit.message.split("\n")[0] ?? "";
   return {
-    sha: commit.sha,
-    message: firstLine,
-    fullMessage: commit.commit.message,
     author: commit.author?.login ?? commit.commit.author.name,
     date: commit.commit.author.date,
+    fullMessage: commit.commit.message,
+    message: firstLine,
+    sha: commit.sha,
   };
 }
 
@@ -107,15 +107,15 @@ async function fetchGitHub<T>(
 
 async function callOpenRouter(apiKey: string, prompt: string): Promise<string> {
   const response = await fetch(OPENROUTER_URL, {
-    method: "POST",
+    body: JSON.stringify({
+      messages: [{ content: prompt, role: "user" }],
+      model: OPENROUTER_MODEL,
+    }),
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      model: OPENROUTER_MODEL,
-      messages: [{ role: "user", content: prompt }],
-    }),
+    method: "POST",
   });
 
   if (!response.ok) {
@@ -193,9 +193,9 @@ export const fetchTagsPhase = internalAction({
       await ctx.runMutation(
         internal.changelog.retroactive_mutations.updateJobProgress,
         {
+          currentStep: `Fetching tags from ${connection.repositoryFullName}...`,
           jobId: args.jobId,
           status: "fetching_tags",
-          currentStep: `Fetching tags from ${connection.repositoryFullName}...`,
         }
       );
 
@@ -213,10 +213,10 @@ export const fetchTagsPhase = internalAction({
       await ctx.runMutation(
         internal.changelog.retroactive_mutations.updateJobProgress,
         {
+          currentStep: `Found ${allTags.length} tags`,
           jobId: args.jobId,
           tags: allTags,
           totalTags: allTags.length,
-          currentStep: `Found ${allTags.length} tags`,
         }
       );
 
@@ -229,9 +229,9 @@ export const fetchTagsPhase = internalAction({
       await ctx.runMutation(
         internal.changelog.retroactive_mutations.updateJobProgress,
         {
+          error: `Failed to fetch tags: ${getErrorMessage(error)}`,
           jobId: args.jobId,
           status: "error",
-          error: `Failed to fetch tags: ${getErrorMessage(error)}`,
         }
       );
     }
@@ -273,8 +273,8 @@ async function fetchAllTags(
  */
 export const fetchCommitsPhase = internalAction({
   args: {
-    jobId: v.id("retroactiveJobs"),
     cursor: v.optional(v.number()),
+    jobId: v.id("retroactiveJobs"),
   },
   handler: async (ctx, args) => {
     const job = await ctx.runQuery(
@@ -290,9 +290,9 @@ export const fetchCommitsPhase = internalAction({
       await ctx.runMutation(
         internal.changelog.retroactive_mutations.updateJobProgress,
         {
+          currentStep: "Fetching commits...",
           jobId: args.jobId,
           status: "fetching_commits",
-          currentStep: "Fetching commits...",
         }
       );
 
@@ -398,9 +398,9 @@ export const fetchCommitsPhase = internalAction({
       await ctx.runMutation(
         internal.changelog.retroactive_mutations.updateJobProgress,
         {
+          error: `Failed to fetch commits: ${getErrorMessage(error)}`,
           jobId: args.jobId,
           status: "error",
-          error: `Failed to fetch commits: ${getErrorMessage(error)}`,
         }
       );
     }
@@ -443,7 +443,7 @@ async function fetchCommitsByTags(
       if (commits.length > 0) {
         await ctx.runMutation(
           internal.changelog.retroactive_mutations.saveCommitBatch,
-          { jobId: args.jobId, groupId: head.name, commits }
+          { commits, groupId: head.name, jobId: args.jobId }
         );
         totalFetched += commits.length;
       }
@@ -464,9 +464,9 @@ async function fetchCommitsByTags(
   await ctx.runMutation(
     internal.changelog.retroactive_mutations.updateJobProgress,
     {
-      jobId: args.jobId,
-      fetchedCommits: totalFetched,
       currentStep: `Fetched commits for ${endIndex} of ${tags.length - 1} tag pairs (${totalFetched} commits)`,
+      fetchedCommits: totalFetched,
+      jobId: args.jobId,
     }
   );
 
@@ -476,7 +476,7 @@ async function fetchCommitsByTags(
     await ctx.scheduler.runAfter(
       0,
       internal.changelog.retroactive_actions.fetchCommitsPhase,
-      { jobId: args.jobId, cursor: endIndex }
+      { cursor: endIndex, jobId: args.jobId }
     );
   } else if (totalFetched > 0) {
     // All pairs done and we have commits — proceed to grouping
@@ -536,9 +536,9 @@ async function fetchCommitsByTime(
       await ctx.runMutation(
         internal.changelog.retroactive_mutations.saveCommitBatch,
         {
-          jobId: args.jobId,
-          groupId: weekKey,
           commits: commits.slice(0, MAX_COMMITS_PER_GROUP),
+          groupId: weekKey,
+          jobId: args.jobId,
         }
       );
       totalFetched += commits.length;
@@ -548,9 +548,9 @@ async function fetchCommitsByTime(
   await ctx.runMutation(
     internal.changelog.retroactive_mutations.updateJobProgress,
     {
-      jobId: args.jobId,
-      fetchedCommits: totalFetched,
       currentStep: `Fetched ${totalFetched} commits (page ${page})`,
+      fetchedCommits: totalFetched,
+      jobId: args.jobId,
     }
   );
 
@@ -561,7 +561,7 @@ async function fetchCommitsByTime(
     ? internal.changelog.retroactive_actions.fetchCommitsPhase
     : internal.changelog.retroactive_actions.groupCommitsPhase;
   const nextArgs = hasNextPage
-    ? { jobId: args.jobId, cursor: page }
+    ? { cursor: page, jobId: args.jobId }
     : { jobId: args.jobId };
 
   await ctx.scheduler.runAfter(0, nextAction, nextArgs);
@@ -599,7 +599,7 @@ async function buildGroupsForStrategy(
   if (strategy === "auto" && !hasTags) {
     await ctx.runMutation(
       internal.changelog.retroactive_mutations.updateJobProgress,
-      { jobId, currentStep: "Clustering commits by semantic similarity..." }
+      { currentStep: "Clustering commits by semantic similarity...", jobId }
     );
     const groupMap = await clusterCommitsWithAI(allCommitDocs);
     return { groupMap, needsResave: true };
@@ -627,9 +627,9 @@ async function resaveCommitsWithNewGroups(
     await ctx.runMutation(
       internal.changelog.retroactive_mutations.saveCommitBatch,
       {
-        jobId,
-        groupId,
         commits: data.commits.slice(0, MAX_COMMITS_PER_GROUP),
+        groupId,
+        jobId,
       }
     );
   }
@@ -671,12 +671,12 @@ export const groupCommitsPhase = internalAction({
         await ctx.runMutation(
           internal.changelog.retroactive_mutations.updateJobProgress,
           {
-            jobId: args.jobId,
-            status: "completed",
             completedAt: Date.now(),
-            totalGroups: 0,
             currentStep:
               "No commits were retrieved from GitHub. Check that the repository has commits on the configured branch.",
+            jobId: args.jobId,
+            status: "completed",
+            totalGroups: 0,
           }
         );
         return;
@@ -733,27 +733,27 @@ export const groupCommitsPhase = internalAction({
       );
 
       const groups = groupEntries.map(([groupId, data]) => ({
-        id: groupId,
-        title: groupId,
-        version: isTagVersion(groupId) ? groupId : undefined,
+        commitCount: data.commits.length,
         dateFrom: data.dateFrom,
         dateTo: data.dateTo,
-        commitCount: data.commits.length,
+        id: groupId,
         status: "pending" as const,
+        title: groupId,
+        version: isTagVersion(groupId) ? groupId : undefined,
       }));
 
       await ctx.runMutation(
         internal.changelog.retroactive_mutations.updateJobGroups,
-        { jobId: args.jobId, groups }
+        { groups, jobId: args.jobId }
       );
 
       await ctx.runMutation(
         internal.changelog.retroactive_mutations.updateJobProgress,
         {
-          jobId: args.jobId,
-          totalGroups: groups.length,
-          processedGroups: 0,
           currentStep: `Organized ${groups.length} groups for release generation`,
+          jobId: args.jobId,
+          processedGroups: 0,
+          totalGroups: groups.length,
         }
       );
 
@@ -761,7 +761,7 @@ export const groupCommitsPhase = internalAction({
         await ctx.scheduler.runAfter(
           0,
           internal.changelog.retroactive_actions.generateNotesPhase,
-          { jobId: args.jobId, groupIndex: 0 }
+          { groupIndex: 0, jobId: args.jobId }
         );
       } else {
         const hint =
@@ -773,11 +773,11 @@ export const groupCommitsPhase = internalAction({
         await ctx.runMutation(
           internal.changelog.retroactive_mutations.updateJobProgress,
           {
+            completedAt: Date.now(),
+            currentStep: hint,
             jobId: args.jobId,
             status: "completed",
-            completedAt: Date.now(),
             totalGroups: 0,
-            currentStep: hint,
           }
         );
       }
@@ -785,9 +785,9 @@ export const groupCommitsPhase = internalAction({
       await ctx.runMutation(
         internal.changelog.retroactive_mutations.updateJobProgress,
         {
+          error: `Failed to group commits: ${getErrorMessage(error)}`,
           jobId: args.jobId,
           status: "error",
-          error: `Failed to group commits: ${getErrorMessage(error)}`,
         }
       );
     }
@@ -1104,8 +1104,8 @@ function inferGroupKey(commit: CommitData): string {
  */
 export const generateNotesPhase = internalAction({
   args: {
-    jobId: v.id("retroactiveJobs"),
     groupIndex: v.number(),
+    jobId: v.id("retroactiveJobs"),
   },
   handler: async (ctx, args) => {
     const job = await ctx.runQuery(
@@ -1118,7 +1118,7 @@ export const generateNotesPhase = internalAction({
     }
 
     const group = job.groups[args.groupIndex];
-    if (!group || group.status !== "pending") {
+    if (group?.status !== "pending") {
       await scheduleNextGroupOrFinish(
         ctx,
         args.jobId,
@@ -1132,20 +1132,20 @@ export const generateNotesPhase = internalAction({
       await ctx.runMutation(
         internal.changelog.retroactive_mutations.updateJobProgress,
         {
+          currentStep: `Generating notes for ${group.title} (${args.groupIndex + 1}/${job.groups.length})`,
           jobId: args.jobId,
           status: "generating",
-          currentStep: `Generating notes for ${group.title} (${args.groupIndex + 1}/${job.groups.length})`,
         }
       );
 
       await ctx.runMutation(
         internal.changelog.retroactive_mutations.updateGroupStatus,
-        { jobId: args.jobId, groupIndex: args.groupIndex, status: "generating" }
+        { groupIndex: args.groupIndex, jobId: args.jobId, status: "generating" }
       );
 
       const commitDocs = await ctx.runQuery(
         internal.changelog.retroactive_mutations.getCommitsForGroup,
-        { jobId: args.jobId, groupId: group.id }
+        { groupId: group.id, jobId: args.jobId }
       );
 
       const allCommits = commitDocs.flatMap((doc) => doc.commits);
@@ -1153,7 +1153,7 @@ export const generateNotesPhase = internalAction({
       if (allCommits.length === 0) {
         await ctx.runMutation(
           internal.changelog.retroactive_mutations.updateGroupStatus,
-          { jobId: args.jobId, groupIndex: args.groupIndex, status: "skipped" }
+          { groupIndex: args.groupIndex, jobId: args.jobId, status: "skipped" }
         );
         await scheduleNextGroupOrFinish(
           ctx,
@@ -1175,11 +1175,11 @@ export const generateNotesPhase = internalAction({
       await ctx.runMutation(
         internal.changelog.retroactive_mutations.updateGroupStatus,
         {
-          jobId: args.jobId,
-          groupIndex: args.groupIndex,
-          status: "generated",
-          generatedTitle,
           generatedDescription,
+          generatedTitle,
+          groupIndex: args.groupIndex,
+          jobId: args.jobId,
+          status: "generated",
         }
       );
 
@@ -1198,10 +1198,10 @@ export const generateNotesPhase = internalAction({
       await ctx.runMutation(
         internal.changelog.retroactive_mutations.updateGroupStatus,
         {
-          jobId: args.jobId,
-          groupIndex: args.groupIndex,
-          status: "error",
           error: getErrorMessage(error),
+          groupIndex: args.groupIndex,
+          jobId: args.jobId,
+          status: "error",
         }
       );
       await scheduleNextGroupOrFinish(
@@ -1225,7 +1225,7 @@ async function scheduleNextGroupOrFinish(
     await ctx.scheduler.runAfter(
       0,
       internal.changelog.retroactive_actions.generateNotesPhase,
-      { jobId, groupIndex: nextIndex }
+      { groupIndex: nextIndex, jobId }
     );
   } else {
     await ctx.scheduler.runAfter(
@@ -1282,7 +1282,7 @@ Instructions:
   const generatedTitle =
     (await callOpenRouter(apiKey, titlePrompt)) || group.title;
 
-  return { generatedTitle, generatedDescription };
+  return { generatedDescription, generatedTitle };
 }
 
 /**
@@ -1304,9 +1304,9 @@ export const createReleasesPhase = internalAction({
       await ctx.runMutation(
         internal.changelog.retroactive_mutations.updateJobProgress,
         {
+          currentStep: "Creating draft releases...",
           jobId: args.jobId,
           status: "creating_releases",
-          currentStep: "Creating draft releases...",
         }
       );
 
@@ -1314,13 +1314,13 @@ export const createReleasesPhase = internalAction({
 
       for (let i = 0; i < job.groups.length; i++) {
         const group = job.groups[i];
-        if (!group || group.status !== "generated") {
+        if (group?.status !== "generated") {
           continue;
         }
 
         const commitDocs = await ctx.runQuery(
           internal.changelog.retroactive_mutations.getCommitsForGroup,
-          { jobId: args.jobId, groupId: group.id }
+          { groupId: group.id, jobId: args.jobId }
         );
 
         const allCommits = commitDocs.flatMap((doc) => doc.commits);
@@ -1328,11 +1328,11 @@ export const createReleasesPhase = internalAction({
         const releaseId = await ctx.runMutation(
           internal.changelog.retroactive_mutations.createDraftRelease,
           {
+            commits: allCommits.slice(0, MAX_COMMITS_PER_GROUP),
+            description: group.generatedDescription ?? "",
             organizationId: job.organizationId,
             title: group.generatedTitle ?? group.title,
-            description: group.generatedDescription ?? "",
             version: group.version,
-            commits: allCommits.slice(0, MAX_COMMITS_PER_GROUP),
           }
         );
 
@@ -1341,10 +1341,10 @@ export const createReleasesPhase = internalAction({
         await ctx.runMutation(
           internal.changelog.retroactive_mutations.updateGroupStatus,
           {
-            jobId: args.jobId,
             groupIndex: i,
-            status: "created",
+            jobId: args.jobId,
             releaseId,
+            status: "created",
           }
         );
       }
@@ -1352,20 +1352,20 @@ export const createReleasesPhase = internalAction({
       await ctx.runMutation(
         internal.changelog.retroactive_mutations.updateJobProgress,
         {
-          jobId: args.jobId,
-          status: "completed",
           completedAt: Date.now(),
           createdReleaseIds,
           currentStep: `Created ${createdReleaseIds.length} draft releases`,
+          jobId: args.jobId,
+          status: "completed",
         }
       );
     } catch (error) {
       await ctx.runMutation(
         internal.changelog.retroactive_mutations.updateJobProgress,
         {
+          error: `Failed to create releases: ${getErrorMessage(error)}`,
           jobId: args.jobId,
           status: "error",
-          error: `Failed to create releases: ${getErrorMessage(error)}`,
         }
       );
     }

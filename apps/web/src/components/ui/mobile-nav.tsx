@@ -42,7 +42,7 @@ function MobileNavIndicator() {
     <motion.span
       className="absolute inset-0 rounded-full bg-background shadow-sm"
       layoutId="mobile-nav-indicator"
-      transition={{ type: "spring", bounce: 0.15, duration: 0.4 }}
+      transition={{ bounce: 0.15, duration: 0.4, type: "spring" }}
     />
   );
 }

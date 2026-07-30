@@ -44,56 +44,56 @@ const COMPONENTS: Array<{
   registryDependencies: string[];
 }> = [
   {
-    name: "feedback-sweep-corner",
-    file: "feedback-sweep-corner.tsx",
-    title: "Feedback Sweep Corner",
+    dependencies: ["motion", "@phosphor-icons/react", "clsx", "tailwind-merge"],
     description:
       "Feedback card with a corner vote badge and sweep animation effect on click.",
-    dependencies: ["motion", "@phosphor-icons/react", "clsx", "tailwind-merge"],
+    file: "feedback-sweep-corner.tsx",
+    name: "feedback-sweep-corner",
     registryDependencies: [],
+    title: "Feedback Sweep Corner",
   },
   {
-    name: "feedback-minimal-notch",
-    file: "feedback-minimal-notch.tsx",
-    title: "Feedback Minimal Notch",
+    dependencies: ["motion", "@phosphor-icons/react", "clsx", "tailwind-merge"],
     description: "Minimal feedback card with a left-edge notch vote indicator.",
-    dependencies: ["motion", "@phosphor-icons/react", "clsx", "tailwind-merge"],
+    file: "feedback-minimal-notch.tsx",
+    name: "feedback-minimal-notch",
     registryDependencies: [],
+    title: "Feedback Minimal Notch",
   },
   {
-    name: "feedback-editorial-feed",
-    file: "feedback-editorial-feed.tsx",
-    title: "Feedback Editorial Feed",
+    dependencies: ["motion", "@phosphor-icons/react", "clsx", "tailwind-merge"],
     description:
       "Rich editorial layout with margin vote annotations and stacked list items.",
-    dependencies: ["motion", "@phosphor-icons/react", "clsx", "tailwind-merge"],
+    file: "feedback-editorial-feed.tsx",
+    name: "feedback-editorial-feed",
     registryDependencies: [],
+    title: "Feedback Editorial Feed",
   },
   {
-    name: "milestone-track-view",
-    file: "milestone-track-view.tsx",
-    title: "Milestone Track View",
-    description: "Horizontal track grouped by time horizons.",
     dependencies: ["motion", "clsx", "tailwind-merge"],
+    description: "Horizontal track grouped by time horizons.",
+    file: "milestone-track-view.tsx",
+    name: "milestone-track-view",
     registryDependencies: [],
+    title: "Milestone Track View",
   },
   {
-    name: "milestone-editorial-accordion",
-    file: "milestone-editorial-accordion.tsx",
-    title: "Milestone Editorial Accordion",
+    dependencies: ["motion", "clsx", "tailwind-merge"],
     description:
       "Serif typography with percentage column and color-wash accordion.",
-    dependencies: ["motion", "clsx", "tailwind-merge"],
+    file: "milestone-editorial-accordion.tsx",
+    name: "milestone-editorial-accordion",
     registryDependencies: [],
+    title: "Milestone Editorial Accordion",
   },
   {
-    name: "milestone-dashboard-timeline",
-    file: "milestone-dashboard-timeline.tsx",
-    title: "Milestone Dashboard Timeline",
+    dependencies: ["motion", "clsx", "tailwind-merge"],
     description:
       "KPI summary bar at top with vertical timeline and sweep animation.",
-    dependencies: ["motion", "clsx", "tailwind-merge"],
+    file: "milestone-dashboard-timeline.tsx",
+    name: "milestone-dashboard-timeline",
     registryDependencies: [],
+    title: "Milestone Dashboard Timeline",
   },
 ];
 
@@ -116,23 +116,23 @@ function build() {
 
     const registryItem: RegistryItem = {
       $schema: "https://ui.shadcn.com/schema/registry-item.json",
-      name: component.name,
-      type: "registry:ui",
-      title: component.title,
-      description: component.description,
       dependencies: component.dependencies,
-      registryDependencies: component.registryDependencies,
+      description: component.description,
       files: [
         {
-          path: `ui/${component.file}`,
           content: source,
-          type: "registry:ui",
+          path: `ui/${component.file}`,
           target: `components/ui/${component.file}`,
+          type: "registry:ui",
         },
       ],
       meta: {
         importSpecifier: `@/components/ui/${component.name}`,
       },
+      name: component.name,
+      registryDependencies: component.registryDependencies,
+      title: component.title,
+      type: "registry:ui",
     };
 
     const outPath = resolve(OUTPUT_DIR, `${component.name}.json`);

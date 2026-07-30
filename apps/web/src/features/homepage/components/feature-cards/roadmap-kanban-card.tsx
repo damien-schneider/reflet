@@ -10,31 +10,31 @@ import { cn } from "@/lib/utils";
 
 const KANBAN_COLS = [
   {
-    id: "planned",
-    title: "Planned",
     color: "green" as const,
     dotColor: "bg-[#0f7b6c]",
+    id: "planned",
     items: [
       { id: "k1", title: "Dark mode", votes: 248 },
       { id: "k2", title: "Mobile app", votes: 98 },
     ],
+    title: "Planned",
   },
   {
-    id: "progress",
-    title: "In Progress",
     color: "orange" as const,
     dotColor: "bg-[#d9730d]",
+    id: "progress",
     items: [{ id: "k3", title: "Slack integration", votes: 186 }],
+    title: "In Progress",
   },
   {
-    id: "done",
-    title: "Done",
     color: "purple" as const,
     dotColor: "bg-[#6940a5]",
+    id: "done",
     items: [
       { id: "k5", title: "CSV Export", votes: 76 },
       { id: "k6", title: "Email digest", votes: 52 },
     ],
+    title: "Done",
   },
 ] as const;
 
@@ -76,8 +76,8 @@ export function RoadmapKanbanCard() {
                 <motion.div
                   animate={
                     dragging === item.id
-                      ? { scale: 1.05, rotate: 2, zIndex: 10 }
-                      : { scale: 1, rotate: 0, zIndex: 0 }
+                      ? { rotate: 2, scale: 1.05, zIndex: 10 }
+                      : { rotate: 0, scale: 1, zIndex: 0 }
                   }
                   className={cn(
                     "cursor-grab rounded-lg border border-border/50 bg-card p-2 shadow-sm transition-shadow hover:shadow-md active:cursor-grabbing",
@@ -87,9 +87,9 @@ export function RoadmapKanbanCard() {
                   onPointerDown={() => setDragging(item.id)}
                   onPointerUp={() => setDragging(null)}
                   transition={{
-                    type: "spring",
-                    stiffness: 300,
                     damping: 25,
+                    stiffness: 300,
+                    type: "spring",
                   }}
                 >
                   <div className="flex items-center justify-between">

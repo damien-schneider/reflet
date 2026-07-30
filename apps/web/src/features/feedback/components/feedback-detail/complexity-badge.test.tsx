@@ -209,8 +209,8 @@ describe("ComplexityBadge", () => {
     fireEvent.click(screen.getByText("Reset to AI value"));
     await waitFor(() => {
       expect(mockUpdateAnalysis).toHaveBeenCalledWith({
-        feedbackId,
         clearComplexity: true,
+        feedbackId,
       });
     });
   });

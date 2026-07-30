@@ -224,21 +224,21 @@ export function ReleaseItem({
 }
 
 const STATUS_DOT_COLORS: Record<string, string> = {
-  open: "bg-blue-500",
-  under_review: "bg-orange-500",
-  planned: "bg-purple-500",
-  in_progress: "bg-yellow-500",
-  completed: "bg-green-500",
   closed: "bg-gray-400",
+  completed: "bg-green-500",
+  in_progress: "bg-yellow-500",
+  open: "bg-blue-500",
+  planned: "bg-purple-500",
+  under_review: "bg-orange-500",
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  open: "Open",
-  under_review: "Under Review",
-  planned: "Planned",
-  in_progress: "In Progress",
-  completed: "Completed",
   closed: "Closed",
+  completed: "Completed",
+  in_progress: "In Progress",
+  open: "Open",
+  planned: "Planned",
+  under_review: "Under Review",
 };
 
 function FeedbackStatusDot({ status }: { status: string }) {

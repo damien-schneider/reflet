@@ -49,10 +49,10 @@ describe("feedback store", () => {
     it("feedbackFiltersAtom defaults correctly", () => {
       const store = createStore();
       expect(store.get(feedbackFiltersAtom)).toEqual({
-        status: null,
-        tagIds: [],
         search: "",
         sortBy: "votes",
+        status: null,
+        tagIds: [],
       });
     });
 
@@ -87,16 +87,16 @@ describe("feedback store", () => {
     it("can update feedbackFiltersAtom", () => {
       const store = createStore();
       store.set(feedbackFiltersAtom, {
-        status: "open",
-        tagIds: ["tag-1"],
         search: "hello",
         sortBy: "newest",
+        status: "open",
+        tagIds: ["tag-1"],
       });
       expect(store.get(feedbackFiltersAtom)).toEqual({
-        status: "open",
-        tagIds: ["tag-1"],
         search: "hello",
         sortBy: "newest",
+        status: "open",
+        tagIds: ["tag-1"],
       });
     });
 

@@ -57,9 +57,9 @@ export function TagFormPopover({
     color: TagColor;
     icon?: string;
   }>({
-    name: "",
     color: "blue",
     icon: undefined,
+    name: "",
   });
 
   useEffect(() => {
@@ -68,15 +68,15 @@ export function TagFormPopover({
         ? editingTag.color
         : migrateHexToNamedColor(editingTag.color);
       setFormData({
-        name: editingTag.name,
         color,
         icon: editingTag.icon,
+        name: editingTag.name,
       });
     } else {
       setFormData({
-        name: "",
         color: "blue",
         icon: undefined,
+        name: "",
       });
     }
   }, [editingTag]);
@@ -90,17 +90,17 @@ export function TagFormPopover({
     try {
       if (editingTag) {
         await updateTag({
-          id: editingTag._id,
-          name: formData.name.trim(),
           color: formData.color,
           icon: formData.icon,
+          id: editingTag._id,
+          name: formData.name.trim(),
         });
       } else {
         await createTag({
-          organizationId,
-          name: formData.name.trim(),
           color: formData.color,
           icon: formData.icon,
+          name: formData.name.trim(),
+          organizationId,
         });
       }
       onSuccess();

@@ -12,20 +12,20 @@ describe("sitemap_public", () => {
 
     await t.run(async (ctx) => {
       await ctx.db.insert("organizations", {
+        createdAt: Date.now(),
+        isPublic: true,
         name: "Public Org",
         slug: "public-org",
-        isPublic: true,
-        subscriptionTier: "free",
         subscriptionStatus: "none",
-        createdAt: Date.now(),
+        subscriptionTier: "free",
       });
       await ctx.db.insert("organizations", {
+        createdAt: Date.now(),
+        isPublic: false,
         name: "Private Org",
         slug: "private-org",
-        isPublic: false,
-        subscriptionTier: "free",
         subscriptionStatus: "none",
-        createdAt: Date.now(),
+        subscriptionTier: "free",
       });
     });
 
@@ -46,52 +46,52 @@ describe("sitemap_public", () => {
 
     await t.run(async (ctx) => {
       const orgId = await ctx.db.insert("organizations", {
+        createdAt: Date.now(),
+        isPublic: true,
         name: "Public Org",
         slug: "public-org",
-        isPublic: true,
-        subscriptionTier: "free",
         subscriptionStatus: "none",
-        createdAt: Date.now(),
+        subscriptionTier: "free",
       });
 
       await ctx.db.insert("feedback", {
-        organizationId: orgId,
-        title: "Approved feedback",
-        description: "Test",
-        status: "open",
-        voteCount: 0,
         commentCount: 0,
+        createdAt: Date.now(),
+        description: "Test",
         isApproved: true,
         isPinned: false,
-        createdAt: Date.now(),
+        organizationId: orgId,
+        status: "open",
+        title: "Approved feedback",
         updatedAt: Date.now(),
+        voteCount: 0,
       });
 
       await ctx.db.insert("feedback", {
-        organizationId: orgId,
-        title: "Unapproved feedback",
-        description: "Test",
-        status: "open",
-        voteCount: 0,
         commentCount: 0,
+        createdAt: Date.now(),
+        description: "Test",
         isApproved: false,
         isPinned: false,
-        createdAt: Date.now(),
+        organizationId: orgId,
+        status: "open",
+        title: "Unapproved feedback",
         updatedAt: Date.now(),
+        voteCount: 0,
       });
 
       await ctx.db.insert("feedback", {
-        organizationId: orgId,
-        title: "Deleted feedback",
-        description: "Test",
-        status: "open",
-        voteCount: 0,
         commentCount: 0,
+        createdAt: Date.now(),
+        deletedAt: Date.now(),
+        description: "Test",
         isApproved: true,
         isPinned: false,
-        createdAt: Date.now(),
+        organizationId: orgId,
+        status: "open",
+        title: "Deleted feedback",
         updatedAt: Date.now(),
-        deletedAt: Date.now(),
+        voteCount: 0,
       });
     });
 

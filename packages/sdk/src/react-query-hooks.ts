@@ -42,7 +42,7 @@ function useRefletQuery<T>(
     }
   }, [refetch, enabled]);
 
-  return { data, isLoading, error, refetch };
+  return { data, error, isLoading, refetch };
 }
 
 // ============================================
@@ -78,7 +78,7 @@ export function useFeedbackList(
   } = options;
 
   const params = useMemo(
-    () => ({ statusId, status, search, sortBy, limit, offset }),
+    () => ({ limit, offset, search, sortBy, status, statusId }),
     [statusId, status, search, sortBy, limit, offset]
   );
 
@@ -208,5 +208,5 @@ export function useUnreadChangelogCount(publicKey: string): {
     }
   }, [entries, storageKey]);
 
-  return { unreadCount, markAsRead };
+  return { markAsRead, unreadCount };
 }

@@ -34,9 +34,9 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
     feedback: {
       comments: {
-        update: "comments.update",
-        remove: "comments.remove",
         create: "comments.create",
+        remove: "comments.remove",
+        update: "comments.update",
       },
     },
   },
@@ -76,10 +76,10 @@ import { CommentItem } from "./comment-item";
 import type { CommentData } from "./types";
 
 const makeComment = (overrides: Partial<CommentData> = {}): CommentData => ({
-  id: "c1" as Id<"comments">,
+  author: { email: "alice@test.com", image: "/alice.png", name: "Alice" },
   content: "Test comment content",
   createdAt: Date.now() - 3_600_000,
-  author: { name: "Alice", email: "alice@test.com", image: "/alice.png" },
+  id: "c1" as Id<"comments">,
   replies: [],
   ...overrides,
 });
@@ -120,9 +120,9 @@ describe("CommentItem", () => {
     const comment = makeComment({
       replies: [
         makeComment({
-          id: "c2" as Id<"comments">,
+          author: { email: "bob@test.com", name: "Bob" },
           content: "Nested reply",
-          author: { name: "Bob", email: "bob@test.com" },
+          id: "c2" as Id<"comments">,
         }),
       ],
     });
@@ -172,8 +172,8 @@ describe("CommentItem", () => {
     fireEvent.click(screen.getByText("Save"));
     await waitFor(() => {
       expect(mockUpdateComment).toHaveBeenCalledWith({
-        id: "c1",
         body: "New content",
+        id: "c1",
       });
     });
   });

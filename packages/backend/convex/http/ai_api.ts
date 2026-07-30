@@ -23,11 +23,11 @@ async function requireSession(
   const session = await auth.api.getSession({ headers: request.headers });
   if (!session) {
     return {
-      success: false,
       response: errorResponse("Authentication required", 401),
+      success: false,
     };
   }
-  return { success: true, session };
+  return { session, success: true };
 }
 
 function handleAiError(error: unknown): Response {
@@ -47,8 +47,6 @@ const AI_API_PATHS = [
 export function registerAiApiRoutes(http: Router): void {
   // POST /api/ai/generate-release-title
   http.route({
-    path: "/api/ai/generate-release-title",
-    method: "POST",
     handler: httpAction(async (ctx, request) => {
       const authResult = await requireSession(ctx, request);
       if (!authResult.success) {
@@ -81,12 +79,12 @@ export function registerAiApiRoutes(http: Router): void {
         return handleAiError(error);
       }
     }),
+    method: "POST",
+    path: "/api/ai/generate-release-title",
   });
 
   // POST /api/ai/match-release-feedback
   http.route({
-    path: "/api/ai/match-release-feedback",
-    method: "POST",
     handler: httpAction(async (ctx, request) => {
       const authResult = await requireSession(ctx, request);
       if (!authResult.success) {
@@ -114,7 +112,6 @@ export function registerAiApiRoutes(http: Router): void {
         const matches = await ctx.runAction(
           api.changelog.ai_actions.matchReleaseFeedback,
           {
-            releaseNotes: body.releaseNotes,
             commits: body.commits as Array<{
               sha: string;
               message: string;
@@ -128,6 +125,7 @@ export function registerAiApiRoutes(http: Router): void {
               status: string;
               tags: string[];
             }>,
+            releaseNotes: body.releaseNotes,
           }
         );
 
@@ -136,10 +134,12 @@ export function registerAiApiRoutes(http: Router): void {
         return handleAiError(error);
       }
     }),
+    method: "POST",
+    path: "/api/ai/match-release-feedback",
   });
 
   // CORS preflight
   for (const path of AI_API_PATHS) {
-    http.route({ path, method: "OPTIONS", handler: corsOptionsHandler() });
+    http.route({ handler: corsOptionsHandler(), method: "OPTIONS", path });
   }
 }

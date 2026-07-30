@@ -9,15 +9,13 @@ const openrouter = createOpenRouter({
 });
 
 export const chatAgent = new Agent(components.agent, {
-  name: "Chat Agent",
-  languageModel: openrouter("anthropic/claude-sonnet-4"),
   instructions:
     "You are a helpful AI assistant. Be concise and friendly in your responses.",
+  languageModel: openrouter("anthropic/claude-sonnet-4"),
+  name: "Chat Agent",
 });
 
 export const feedbackClarificationAgent = new Agent(components.agent, {
-  name: "Feedback Clarification Agent",
-  languageModel: openrouter("z-ai/glm-4.5-air:free"),
   instructions: `You are an expert at understanding and clarifying user feedback for software products.
 Your job is to take raw user feedback and rephrase it to be:
 1. More detailed and specific
@@ -31,11 +29,11 @@ When clarifying feedback:
 - Suggest potential use cases or scenarios
 - Keep the original intent intact
 - Format the response in clear sections if needed`,
+  languageModel: openrouter("z-ai/glm-4.5-air:free"),
+  name: "Feedback Clarification Agent",
 });
 
 export const repoAnalysisAgent = new Agent(components.agent, {
-  name: "Repository Analysis Agent",
-  languageModel: openrouter("anthropic/claude-sonnet-4"),
   instructions: `You are an expert software architect analyzing codebases.
 Your job is to analyze a GitHub repository and provide:
 
@@ -46,6 +44,8 @@ Your job is to analyze a GitHub repository and provide:
 5. **Repository Structure**: The organization of the codebase
 
 Be thorough but concise. Focus on actionable insights that would help someone understand the project quickly.`,
+  languageModel: openrouter("anthropic/claude-sonnet-4"),
+  name: "Repository Analysis Agent",
 });
 
 // Note: Auto-tagging now uses AI SDK directly with structured output (generateObject)

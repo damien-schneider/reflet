@@ -13,10 +13,10 @@ export type ConversationStatus =
   | "closed";
 
 const STATUS_PILLS: { value: ConversationStatus; label: string }[] = [
-  { value: "open", label: "Open" },
-  { value: "awaiting_reply", label: "Awaiting" },
-  { value: "resolved", label: "Resolved" },
-  { value: "closed", label: "Closed" },
+  { label: "Open", value: "open" },
+  { label: "Awaiting", value: "awaiting_reply" },
+  { label: "Resolved", value: "resolved" },
+  { label: "Closed", value: "closed" },
 ];
 
 interface InboxFilterBarProps {

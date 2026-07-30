@@ -10,29 +10,13 @@ import { validateInputLength } from "../shared/validators";
 
 export const listReleases = internalQuery({
   args: {
+    limit: v.optional(v.number()),
+    offset: v.optional(v.number()),
     organizationId: v.id("organizations"),
     status: v.optional(
       v.union(v.literal("draft"), v.literal("published"), v.literal("all"))
     ),
-    limit: v.optional(v.number()),
-    offset: v.optional(v.number()),
   },
-  returns: v.object({
-    items: v.array(
-      v.object({
-        id: v.id("releases"),
-        title: v.string(),
-        description: v.optional(v.string()),
-        version: v.optional(v.string()),
-        publishedAt: v.optional(v.number()),
-        createdAt: v.number(),
-        updatedAt: v.number(),
-        feedbackCount: v.number(),
-      })
-    ),
-    total: v.number(),
-    hasMore: v.boolean(),
-  }),
   handler: async (ctx, args) => {
     let releases = await ctx.db
       .query("releases")
@@ -64,20 +48,36 @@ export const listReleases = internalQuery({
           .withIndex("by_release", (q) => q.eq("releaseId", r._id))
           .collect();
         return {
-          id: r._id,
-          title: r.title,
-          description: r.description,
-          version: r.version,
-          publishedAt: r.publishedAt,
           createdAt: r.createdAt,
-          updatedAt: r.updatedAt,
+          description: r.description,
           feedbackCount: feedbackLinks.length,
+          id: r._id,
+          publishedAt: r.publishedAt,
+          title: r.title,
+          updatedAt: r.updatedAt,
+          version: r.version,
         };
       })
     );
 
-    return { items, total, hasMore: offset + limit < total };
+    return { hasMore: offset + limit < total, items, total };
   },
+  returns: v.object({
+    hasMore: v.boolean(),
+    items: v.array(
+      v.object({
+        createdAt: v.number(),
+        description: v.optional(v.string()),
+        feedbackCount: v.number(),
+        id: v.id("releases"),
+        publishedAt: v.optional(v.number()),
+        title: v.string(),
+        updatedAt: v.number(),
+        version: v.optional(v.string()),
+      })
+    ),
+    total: v.number(),
+  }),
 });
 
 export const getRelease = internalQuery({
@@ -104,22 +104,22 @@ export const getRelease = internalQuery({
         }
         return {
           id: f._id,
-          title: f.title,
           status: f.status,
+          title: f.title,
           voteCount: f.voteCount,
         };
       })
     );
 
     return {
-      id: release._id,
-      title: release.title,
-      description: release.description,
-      version: release.version,
-      publishedAt: release.publishedAt,
       createdAt: release.createdAt,
-      updatedAt: release.updatedAt,
+      description: release.description,
+      id: release._id,
       linkedFeedback: linkedFeedback.filter(Boolean),
+      publishedAt: release.publishedAt,
+      title: release.title,
+      updatedAt: release.updatedAt,
+      version: release.version,
     };
   },
 });
@@ -130,38 +130,37 @@ export const getRelease = internalQuery({
 
 export const createRelease = internalMutation({
   args: {
+    description: v.optional(v.string()),
     organizationId: v.id("organizations"),
     title: v.string(),
-    description: v.optional(v.string()),
     version: v.optional(v.string()),
   },
-  returns: v.object({ id: v.id("releases") }),
   handler: async (ctx, args) => {
     validateInputLength(args.version, MAX_CHANGELOG_VERSION_LENGTH, "Version");
 
     const now = Date.now();
     const id = await ctx.db.insert("releases", {
+      createdAt: now,
+      description: args.description,
       organizationId: args.organizationId,
       title: args.title,
-      description: args.description,
-      version: args.version,
-      createdAt: now,
       updatedAt: now,
+      version: args.version,
     });
 
     return { id };
   },
+  returns: v.object({ id: v.id("releases") }),
 });
 
 export const updateRelease = internalMutation({
   args: {
+    description: v.optional(v.string()),
     organizationId: v.id("organizations"),
     releaseId: v.id("releases"),
     title: v.optional(v.string()),
-    description: v.optional(v.string()),
     version: v.optional(v.string()),
   },
-  returns: v.object({ success: v.boolean() }),
   handler: async (ctx, args) => {
     const release = await ctx.db.get(args.releaseId);
     if (!release || release.organizationId !== args.organizationId) {
@@ -184,6 +183,7 @@ export const updateRelease = internalMutation({
     await ctx.db.patch(args.releaseId, updates);
     return { success: true };
   },
+  returns: v.object({ success: v.boolean() }),
 });
 
 export const publishRelease = internalMutation({
@@ -191,7 +191,6 @@ export const publishRelease = internalMutation({
     organizationId: v.id("organizations"),
     releaseId: v.id("releases"),
   },
-  returns: v.object({ success: v.boolean() }),
   handler: async (ctx, args) => {
     const release = await ctx.db.get(args.releaseId);
     if (!release || release.organizationId !== args.organizationId) {
@@ -204,6 +203,7 @@ export const publishRelease = internalMutation({
     });
     return { success: true };
   },
+  returns: v.object({ success: v.boolean() }),
 });
 
 export const unpublishRelease = internalMutation({
@@ -211,7 +211,6 @@ export const unpublishRelease = internalMutation({
     organizationId: v.id("organizations"),
     releaseId: v.id("releases"),
   },
-  returns: v.object({ success: v.boolean() }),
   handler: async (ctx, args) => {
     const release = await ctx.db.get(args.releaseId);
     if (!release || release.organizationId !== args.organizationId) {
@@ -224,6 +223,7 @@ export const unpublishRelease = internalMutation({
     });
     return { success: true };
   },
+  returns: v.object({ success: v.boolean() }),
 });
 
 export const deleteRelease = internalMutation({
@@ -231,7 +231,6 @@ export const deleteRelease = internalMutation({
     organizationId: v.id("organizations"),
     releaseId: v.id("releases"),
   },
-  returns: v.object({ success: v.boolean() }),
   handler: async (ctx, args) => {
     const release = await ctx.db.get(args.releaseId);
     if (!release || release.organizationId !== args.organizationId) {
@@ -250,16 +249,16 @@ export const deleteRelease = internalMutation({
     await ctx.db.delete(args.releaseId);
     return { success: true };
   },
+  returns: v.object({ success: v.boolean() }),
 });
 
 export const linkReleaseFeedback = internalMutation({
   args: {
+    action: v.union(v.literal("link"), v.literal("unlink")),
+    feedbackId: v.id("feedback"),
     organizationId: v.id("organizations"),
     releaseId: v.id("releases"),
-    feedbackId: v.id("feedback"),
-    action: v.union(v.literal("link"), v.literal("unlink")),
   },
-  returns: v.object({ success: v.boolean() }),
   handler: async (ctx, args) => {
     const release = await ctx.db.get(args.releaseId);
     if (!release || release.organizationId !== args.organizationId) {
@@ -281,9 +280,9 @@ export const linkReleaseFeedback = internalMutation({
     if (args.action === "link") {
       if (!existing) {
         await ctx.db.insert("releaseFeedback", {
-          releaseId: args.releaseId,
-          feedbackId: args.feedbackId,
           createdAt: Date.now(),
+          feedbackId: args.feedbackId,
+          releaseId: args.releaseId,
         });
       }
     } else if (existing) {
@@ -292,6 +291,7 @@ export const linkReleaseFeedback = internalMutation({
 
     return { success: true };
   },
+  returns: v.object({ success: v.boolean() }),
 });
 
 // ============================================
@@ -300,9 +300,6 @@ export const linkReleaseFeedback = internalMutation({
 
 export const scheduleRelease = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
-    releaseId: v.id("releases"),
-    scheduledPublishAt: v.number(),
     feedbackStatus: v.optional(
       v.union(
         v.literal("open"),
@@ -313,8 +310,10 @@ export const scheduleRelease = internalMutation({
         v.literal("closed")
       )
     ),
+    organizationId: v.id("organizations"),
+    releaseId: v.id("releases"),
+    scheduledPublishAt: v.number(),
   },
-  returns: v.object({ success: v.boolean() }),
   handler: async (ctx, args) => {
     const release = await ctx.db.get(args.releaseId);
     if (!release || release.organizationId !== args.organizationId) {
@@ -343,14 +342,15 @@ export const scheduleRelease = internalMutation({
     );
 
     await ctx.db.patch(args.releaseId, {
-      scheduledPublishAt: args.scheduledPublishAt,
       scheduledFeedbackStatus: args.feedbackStatus,
       scheduledJobId: jobId,
+      scheduledPublishAt: args.scheduledPublishAt,
       updatedAt: Date.now(),
     });
 
     return { success: true };
   },
+  returns: v.object({ success: v.boolean() }),
 });
 
 export const cancelScheduledRelease = internalMutation({
@@ -358,7 +358,6 @@ export const cancelScheduledRelease = internalMutation({
     organizationId: v.id("organizations"),
     releaseId: v.id("releases"),
   },
-  returns: v.object({ success: v.boolean() }),
   handler: async (ctx, args) => {
     const release = await ctx.db.get(args.releaseId);
     if (!release || release.organizationId !== args.organizationId) {
@@ -377,13 +376,14 @@ export const cancelScheduledRelease = internalMutation({
     }
 
     await ctx.db.patch(args.releaseId, {
-      scheduledPublishAt: undefined,
       scheduledBy: undefined,
       scheduledFeedbackStatus: undefined,
       scheduledJobId: undefined,
+      scheduledPublishAt: undefined,
       updatedAt: Date.now(),
     });
 
     return { success: true };
   },
+  returns: v.object({ success: v.boolean() }),
 });

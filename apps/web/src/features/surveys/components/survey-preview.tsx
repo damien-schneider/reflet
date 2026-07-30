@@ -16,12 +16,12 @@ import { cn } from "@/lib/utils";
 import type { QuestionType, SurveyQuestion } from "@/store/surveys";
 
 const ICON_MAP = {
-  rating: Star,
-  nps: ChartBar,
-  text: TextAa,
-  single_choice: RadioButton,
-  multiple_choice: CheckSquare,
   boolean: ToggleLeft,
+  multiple_choice: CheckSquare,
+  nps: ChartBar,
+  rating: Star,
+  single_choice: RadioButton,
+  text: TextAa,
 } as const;
 
 interface SurveyPreviewProps {
@@ -165,12 +165,12 @@ const QUESTION_INPUT_COMPONENTS: Record<
   QuestionType,
   (props: Omit<QuestionInputProps, "type">) => React.ReactNode
 > = {
-  rating: RatingInput,
-  nps: NpsInput,
-  text: TextInput,
-  single_choice: SingleChoiceInput,
-  multiple_choice: MultipleChoiceInput,
   boolean: BooleanInput,
+  multiple_choice: MultipleChoiceInput,
+  nps: NpsInput,
+  rating: RatingInput,
+  single_choice: SingleChoiceInput,
+  text: TextInput,
 };
 
 function QuestionInput({ type, ...rest }: QuestionInputProps) {

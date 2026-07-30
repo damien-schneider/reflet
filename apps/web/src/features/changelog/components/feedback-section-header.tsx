@@ -22,12 +22,12 @@ export type FeedbackLinkStatus =
   | "closed";
 
 const LINK_STATUS_OPTIONS = [
-  { value: "keep", label: "Keep current status" },
-  { value: "completed", label: "Completed" },
-  { value: "closed", label: "Closed" },
-  { value: "in_progress", label: "In Progress" },
-  { value: "planned", label: "Planned" },
-  { value: "open", label: "Open" },
+  { label: "Keep current status", value: "keep" },
+  { label: "Completed", value: "completed" },
+  { label: "Closed", value: "closed" },
+  { label: "In Progress", value: "in_progress" },
+  { label: "Planned", value: "planned" },
+  { label: "Open", value: "open" },
 ] as const;
 
 interface FeedbackSectionHeaderProps {

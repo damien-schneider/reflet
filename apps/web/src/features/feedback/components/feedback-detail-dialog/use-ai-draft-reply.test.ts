@@ -6,8 +6,8 @@ const mockUseQuery = vi.fn();
 const mockUseMutation = vi.fn();
 
 vi.mock("convex/react", () => ({
-  useQuery: (...args: unknown[]) => mockUseQuery(...args),
   useMutation: (...args: unknown[]) => mockUseMutation(...args),
+  useQuery: (...args: unknown[]) => mockUseQuery(...args),
 }));
 
 // Must import after mock
@@ -32,8 +32,8 @@ describe("useAIDraftReply", () => {
   ) =>
     renderHook(() =>
       useAIDraftReply({
-        feedbackId,
         effectiveIsAdmin: true,
+        feedbackId,
         setNewComment,
         ...overrides,
       })

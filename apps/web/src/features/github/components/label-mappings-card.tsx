@@ -107,11 +107,11 @@ export function LabelMappingsSection({
     const label = githubLabels.find((l) => l.name === selectedLabel);
 
     onAddMapping({
-      githubLabelName: selectedLabel,
-      githubLabelColor: label?.color,
-      targetTagId: tags.find((t) => t._id === selectedTag)?._id,
       autoSync,
+      githubLabelColor: label?.color,
+      githubLabelName: selectedLabel,
       syncClosedIssues,
+      targetTagId: tags.find((t) => t._id === selectedTag)?._id,
     });
 
     // Reset form

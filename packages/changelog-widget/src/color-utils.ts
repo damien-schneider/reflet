@@ -18,16 +18,16 @@ export function createChangelogColors(
   return {
     bg: isDark ? "#1a1a2e" : "#ffffff",
     bgSecondary: isDark ? "#16213e" : "#f8fafc",
-    text: isDark ? "#e2e8f0" : "#1e293b",
-    textMuted: isDark ? "#94a3b8" : "#64748b",
     border: isDark ? "#334155" : "#e2e8f0",
+    error: "#ef4444",
+    newBadge: "#f59e0b",
     primary: primaryColor,
     primaryHover: adjustBrightness(primaryColor, isDark ? 20 : -10),
     primaryLight: isDark
       ? adjustBrightness(primaryColor, -60)
       : adjustBrightness(primaryColor, 80),
-    error: "#ef4444",
-    newBadge: "#f59e0b",
+    text: isDark ? "#e2e8f0" : "#1e293b",
+    textMuted: isDark ? "#94a3b8" : "#64748b",
   };
 }
 

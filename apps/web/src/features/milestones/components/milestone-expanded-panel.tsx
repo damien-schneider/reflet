@@ -38,10 +38,10 @@ export function MilestoneExpandedPanel({
   });
 
   const allFeedback = useQuery(api.feedback.list.listByOrganization, {
+    limit: 20,
     organizationId,
     search: searchQuery.trim() || undefined,
     sortBy: "votes",
-    limit: 20,
   });
 
   const addFeedback = useMutation(api.organizations.milestones.addFeedback);
@@ -52,8 +52,8 @@ export function MilestoneExpandedPanel({
   const handleAddFeedback = useCallback(
     async (feedbackId: Id<"feedback">) => {
       await addFeedback({
-        milestoneId,
         feedbackId,
+        milestoneId,
       });
       setSearchQuery("");
     },
@@ -63,8 +63,8 @@ export function MilestoneExpandedPanel({
   const handleRemoveFeedback = useCallback(
     async (feedbackId: Id<"feedback">) => {
       await removeFeedbackMutation({
-        milestoneId,
         feedbackId,
+        milestoneId,
       });
     },
     [milestoneId, removeFeedbackMutation]

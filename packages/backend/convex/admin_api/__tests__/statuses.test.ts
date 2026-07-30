@@ -15,15 +15,15 @@ describe("admin_api_statuses", () => {
     const orgId = await createOrg(t);
 
     await t.mutation(internal.admin_api.statuses.createStatus, {
-      organizationId: orgId,
-      name: "Open",
       color: "#00FF00",
+      name: "Open",
+      organizationId: orgId,
     });
 
     await t.mutation(internal.admin_api.statuses.createStatus, {
-      organizationId: orgId,
-      name: "Closed",
       color: "#FF0000",
+      name: "Closed",
+      organizationId: orgId,
     });
 
     const statuses = await t.query(internal.admin_api.statuses.listStatuses, {
@@ -42,24 +42,24 @@ describe("admin_api_statuses", () => {
     const orgId = await createOrg(t);
     const otherOrgId = await t.run(async (ctx) =>
       ctx.db.insert("organizations", {
+        createdAt: Date.now(),
+        isPublic: false,
         name: "Other",
         slug: "other",
-        isPublic: false,
-        subscriptionTier: "free",
         subscriptionStatus: "none",
-        createdAt: Date.now(),
+        subscriptionTier: "free",
       })
     );
 
     await t.mutation(internal.admin_api.statuses.createStatus, {
-      organizationId: orgId,
-      name: "Ours",
       color: "#111",
+      name: "Ours",
+      organizationId: orgId,
     });
     await t.mutation(internal.admin_api.statuses.createStatus, {
-      organizationId: otherOrgId,
-      name: "Theirs",
       color: "#222",
+      name: "Theirs",
+      organizationId: otherOrgId,
     });
 
     const statuses = await t.query(internal.admin_api.statuses.listStatuses, {
@@ -75,14 +75,14 @@ describe("admin_api_statuses", () => {
 
     const { id: statusId } = await t.mutation(
       internal.admin_api.statuses.createStatus,
-      { organizationId: orgId, name: "Old", color: "#000" }
+      { color: "#000", name: "Old", organizationId: orgId }
     );
 
     await t.mutation(internal.admin_api.statuses.updateStatus, {
+      color: "#FFF",
+      name: "New",
       organizationId: orgId,
       statusId,
-      name: "New",
-      color: "#FFF",
     });
 
     const statuses = await t.query(internal.admin_api.statuses.listStatuses, {
@@ -97,25 +97,25 @@ describe("admin_api_statuses", () => {
     const orgId = await createOrg(t);
     const otherOrgId = await t.run(async (ctx) =>
       ctx.db.insert("organizations", {
+        createdAt: Date.now(),
+        isPublic: false,
         name: "Other",
         slug: "other",
-        isPublic: false,
-        subscriptionTier: "free",
         subscriptionStatus: "none",
-        createdAt: Date.now(),
+        subscriptionTier: "free",
       })
     );
 
     const { id: statusId } = await t.mutation(
       internal.admin_api.statuses.createStatus,
-      { organizationId: orgId, name: "Status", color: "#000" }
+      { color: "#000", name: "Status", organizationId: orgId }
     );
 
     await expect(
       t.mutation(internal.admin_api.statuses.updateStatus, {
+        name: "Hacked",
         organizationId: otherOrgId,
         statusId,
-        name: "Hacked",
       })
     ).rejects.toThrow("Status not found");
   });
@@ -126,23 +126,23 @@ describe("admin_api_statuses", () => {
 
     const { id: statusId } = await t.mutation(
       internal.admin_api.statuses.createStatus,
-      { organizationId: orgId, name: "ToDelete", color: "#F00" }
+      { color: "#F00", name: "ToDelete", organizationId: orgId }
     );
 
     // Create feedback that references this status
     const feedbackId = await t.run(async (ctx) =>
       ctx.db.insert("feedback", {
-        organizationId: orgId,
-        title: "Test",
-        description: "Desc",
-        status: "open",
-        organizationStatusId: statusId,
-        voteCount: 0,
         commentCount: 0,
+        createdAt: Date.now(),
+        description: "Desc",
         isApproved: true,
         isPinned: false,
-        createdAt: Date.now(),
+        organizationId: orgId,
+        organizationStatusId: statusId,
+        status: "open",
+        title: "Test",
         updatedAt: Date.now(),
+        voteCount: 0,
       })
     );
 

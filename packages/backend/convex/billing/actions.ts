@@ -19,10 +19,10 @@ import {
  */
 export const createCheckoutSession = action({
   args: {
+    cancelUrl: v.string(),
     organizationId: v.id("organizations"),
     priceKey: v.union(v.literal("proMonthly"), v.literal("proYearly")),
     successUrl: v.string(),
-    cancelUrl: v.string(),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -67,10 +67,10 @@ export const createCheckoutSession = action({
 
     if (!customerId) {
       const result = await stripeClient.getOrCreateCustomer(ctx, {
-        // Use org ID as the customer identifier (not user ID)
-        userId: args.organizationId,
         email: user.email,
         name: org.name,
+        // Use org ID as the customer identifier (not user ID)
+        userId: args.organizationId,
       });
       customerId = result.customerId;
 
@@ -83,11 +83,11 @@ export const createCheckoutSession = action({
 
     // Create checkout session with promotion codes enabled
     const result = await createCheckoutSessionWithPromoCodes({
+      cancelUrl: args.cancelUrl,
       customerId,
+      orgId: args.organizationId,
       priceId,
       successUrl: args.successUrl,
-      cancelUrl: args.cancelUrl,
-      orgId: args.organizationId,
     });
 
     return {
@@ -149,8 +149,8 @@ export const createCustomerPortalSession = action({
  */
 export const cancelSubscription = action({
   args: {
-    organizationId: v.id("organizations"),
     cancelAtPeriodEnd: v.optional(v.boolean()),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -164,7 +164,7 @@ export const cancelSubscription = action({
       }
     );
 
-    if (!membership || membership.role !== "owner") {
+    if (membership?.role !== "owner") {
       throw new Error(
         "Only the organization owner can cancel the subscription"
       );
@@ -181,8 +181,8 @@ export const cancelSubscription = action({
     }
 
     await stripeClient.cancelSubscription(ctx, {
-      stripeSubscriptionId: subscription.stripeSubscriptionId,
       cancelAtPeriodEnd: args.cancelAtPeriodEnd ?? true,
+      stripeSubscriptionId: subscription.stripeSubscriptionId,
     });
 
     return { success: true };
@@ -209,7 +209,7 @@ export const reactivateSubscription = action({
       }
     );
 
-    if (!membership || membership.role !== "owner") {
+    if (membership?.role !== "owner") {
       throw new Error(
         "Only the organization owner can reactivate the subscription"
       );

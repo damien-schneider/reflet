@@ -25,8 +25,8 @@ export const getSubscriberCount = query({
 
 export const subscribe = mutation({
   args: {
-    organizationId: v.id("organizations"),
     email: v.string(),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
     // Check for existing subscription
@@ -44,10 +44,10 @@ export const subscribe = mutation({
     const token = crypto.randomUUID();
 
     await ctx.db.insert("statusSubscribers", {
-      organizationId: args.organizationId,
       email: args.email,
-      unsubscribeToken: token,
+      organizationId: args.organizationId,
       subscribedAt: Date.now(),
+      unsubscribeToken: token,
     });
 
     return { alreadySubscribed: false };

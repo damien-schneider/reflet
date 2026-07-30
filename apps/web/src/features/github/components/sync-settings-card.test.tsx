@@ -165,10 +165,10 @@ afterEach(cleanup);
 
 const defaultProps = {
   autoSyncEnabled: false,
-  isSyncing: false,
   isAdmin: true,
-  onToggleAutoSync: vi.fn(),
+  isSyncing: false,
   onSyncNow: vi.fn(),
+  onToggleAutoSync: vi.fn(),
 };
 
 describe("SyncSettingsSection", () => {

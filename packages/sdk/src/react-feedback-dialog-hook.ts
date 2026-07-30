@@ -163,8 +163,8 @@ export function useFeedbackDialog({
 
       try {
         const client = new Reflet({
-          publicKey,
           baseUrl,
+          publicKey,
           user,
           userToken,
         });
@@ -175,8 +175,8 @@ export function useFeedbackDialog({
           : "No additional details provided.";
 
         const result = await client.create({
-          title: title.trim(),
           description: `${categoryPrefix}${fullDescription}${isAnonymous && email ? `\n\n---\nContact: ${email}` : ""}`,
+          title: title.trim(),
         });
 
         setIsSuccess(true);
@@ -238,27 +238,27 @@ export function useFeedbackDialog({
   }, []);
 
   return {
-    labels,
-    title,
-    setTitle,
-    description,
-    setDescription,
-    email,
-    setEmail,
     category,
-    setCategory,
-    honeypot,
-    setHoneypot,
-    isSubmitting,
-    isSuccess,
-    error,
-    setError,
-    isClosing,
-    isAnonymous,
-    titleInputRef,
+    description,
     dialogRef,
+    email,
+    error,
     handleClose,
     handleSubmit,
     handleTrapFocus,
+    honeypot,
+    isAnonymous,
+    isClosing,
+    isSubmitting,
+    isSuccess,
+    labels,
+    setCategory,
+    setDescription,
+    setEmail,
+    setError,
+    setHoneypot,
+    setTitle,
+    title,
+    titleInputRef,
   };
 }

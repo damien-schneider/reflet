@@ -65,8 +65,8 @@ export const listDeleted = query({
 
         return {
           ...f,
-          tags,
           daysRemaining,
+          tags,
         };
       })
     );

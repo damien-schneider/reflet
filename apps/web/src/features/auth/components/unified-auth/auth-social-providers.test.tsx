@@ -91,8 +91,8 @@ describe("AuthSocialProviders", () => {
     render(<AuthSocialProviders />);
     await user.click(screen.getByText("Continue with Google"));
     expect(mockSignInSocial).toHaveBeenCalledWith({
-      provider: "google",
       callbackURL: "/dashboard",
+      provider: "google",
     });
   });
 
@@ -101,8 +101,8 @@ describe("AuthSocialProviders", () => {
     render(<AuthSocialProviders />);
     await user.click(screen.getByText("Continue with GitHub"));
     expect(mockSignInSocial).toHaveBeenCalledWith({
-      provider: "github",
       callbackURL: "/dashboard",
+      provider: "github",
     });
   });
 

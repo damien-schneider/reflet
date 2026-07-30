@@ -95,16 +95,16 @@ export const getVoters = query({
           : null;
         return {
           id: vote._id,
-          userId: vote.userId,
-          voteType: vote.voteType,
-          votedAt: vote.createdAt,
           user: userData
             ? {
-                name: userData.name ?? null,
                 email: userData.email ?? "",
                 image: userData.image ?? null,
+                name: userData.name ?? null,
               }
             : null,
+          userId: vote.userId,
+          votedAt: vote.createdAt,
+          voteType: vote.voteType,
         };
       })
     );
@@ -178,10 +178,10 @@ export const toggle = mutation({
     } else {
       // Add new vote
       await ctx.db.insert("feedbackVotes", {
+        createdAt: Date.now(),
         feedbackId: args.feedbackId,
         userId: user._id,
         voteType: args.voteType,
-        createdAt: Date.now(),
       });
       await (isUpvote ? counter.inc(ctx) : counter.dec(ctx));
     }
@@ -195,13 +195,13 @@ export const toggle = mutation({
       VOTE_MILESTONES.includes(roundedCount as (typeof VOTE_MILESTONES)[number])
     ) {
       await ctx.db.insert("notifications", {
-        userId: feedback.authorId,
-        type: "vote_milestone",
-        title: "Vote milestone reached!",
-        message: `Your feedback "${feedback.title}" has reached ${roundedCount} votes!`,
+        createdAt: Date.now(),
         feedbackId: args.feedbackId,
         isRead: false,
-        createdAt: Date.now(),
+        message: `Your feedback "${feedback.title}" has reached ${roundedCount} votes!`,
+        title: "Vote milestone reached!",
+        type: "vote_milestone",
+        userId: feedback.authorId,
       });
 
       // Trigger push notification
@@ -209,15 +209,15 @@ export const toggle = mutation({
         0,
         internal.notifications.push.sendPushNotification,
         {
-          userId: feedback.authorId,
-          type: "vote_milestone",
-          title: "Vote milestone reached!",
           message: `Your feedback "${feedback.title}" has reached ${roundedCount} votes!`,
+          title: "Vote milestone reached!",
+          type: "vote_milestone",
           url: "/dashboard",
+          userId: feedback.authorId,
         }
       );
     }
 
-    return { voted: true, voteCount: roundedCount };
+    return { voteCount: roundedCount, voted: true };
   },
 });

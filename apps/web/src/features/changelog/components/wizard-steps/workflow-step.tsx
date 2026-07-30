@@ -44,9 +44,6 @@ interface WorkflowStepProps {
 
 const WORKFLOW_OPTIONS = [
   {
-    id: "ai_powered" as const,
-    icon: Sparkle,
-    title: "AI-Powered Release Notes",
     badge: "Recommended",
     description:
       "Reflet fetches your commits since the last release and generates polished release notes with AI. You review, edit, and publish.",
@@ -55,11 +52,11 @@ const WORKFLOW_OPTIONS = [
       "Reflet fetches commits since the last tag and generates release notes with AI",
       "You review, edit, and publish — a GitHub Release is created automatically",
     ],
+    icon: Sparkle,
+    id: "ai_powered" as const,
+    title: "AI-Powered Release Notes",
   },
   {
-    id: "automated" as const,
-    icon: Lightning,
-    title: "Automated Releases",
     description:
       "Automatically create versioned releases when merging to your target branch. Uses conventional commits to determine version bumps.",
     howItWorks: [
@@ -67,11 +64,11 @@ const WORKFLOW_OPTIONS = [
       "On merge, release-please creates a release PR with the correct version bump",
       "When merged, a GitHub Release is created and synced to Reflet",
     ],
+    icon: Lightning,
+    id: "automated" as const,
+    title: "Automated Releases",
   },
   {
-    id: "manual" as const,
-    icon: PencilSimple,
-    title: "Manual",
     description:
       "Write release notes yourself in Reflet or GitHub. Sync between them as needed.",
     howItWorks: [
@@ -79,6 +76,9 @@ const WORKFLOW_OPTIONS = [
       "Optionally sync releases between Reflet and GitHub",
       "Full control over content, timing, and versioning",
     ],
+    icon: PencilSimple,
+    id: "manual" as const,
+    title: "Manual",
   },
 ] as const;
 

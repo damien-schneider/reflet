@@ -4,9 +4,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("tippy.js", () => ({
   default: vi.fn(() => [
     {
-      setProps: vi.fn(),
-      hide: vi.fn(),
       destroy: vi.fn(),
+      hide: vi.fn(),
+      setProps: vi.fn(),
     },
   ]),
 }));
@@ -16,11 +16,11 @@ vi.mock("@tiptap/core", () => ({
   Extension: {
     create: vi.fn((config: Record<string, unknown>) => ({
       ...config,
-      name: (config as { name: string }).name,
       configure: vi.fn((opts: Record<string, unknown>) => ({
         ...config,
         options: { ...opts },
       })),
+      name: (config as { name: string }).name,
       options: {
         suggestion: {},
       },
@@ -50,14 +50,14 @@ vi.mock("@tiptap/suggestion", () => ({
 vi.mock("./command-items", () => ({
   createSlashCommands: vi.fn((onImage?: () => void, onVideo?: () => void) => {
     const items = [
-      { title: "Heading 1", description: "heading", command: vi.fn() },
-      { title: "Bullet List", description: "list", command: vi.fn() },
+      { command: vi.fn(), description: "heading", title: "Heading 1" },
+      { command: vi.fn(), description: "list", title: "Bullet List" },
     ];
     if (onImage) {
-      items.push({ title: "Image", description: "image", command: vi.fn() });
+      items.push({ command: vi.fn(), description: "image", title: "Image" });
     }
     if (onVideo) {
-      items.push({ title: "Video", description: "video", command: vi.fn() });
+      items.push({ command: vi.fn(), description: "video", title: "Video" });
     }
     return items;
   }),
@@ -149,7 +149,7 @@ describe("command-suggestion", () => {
 
       // Test items filtering
       if (suggestion.items) {
-        const items = suggestion.items({ query: "head", editor: {} as never });
+        const items = suggestion.items({ editor: {} as never, query: "head" });
         expect(
           items.some((i: { title: string }) => i.title === "Heading 1")
         ).toBe(true);
@@ -159,15 +159,15 @@ describe("command-suggestion", () => {
       if (suggestion.command) {
         const mockRun = vi.fn();
         const mockItem = {
-          title: "Test",
           command: mockRun,
+          title: "Test",
         };
         const mockEditor = {} as never;
         const range = { from: 0, to: 1 };
         suggestion.command({
           editor: mockEditor,
-          range,
           props: mockItem,
+          range,
         });
         expect(mockRun).toHaveBeenCalledWith({
           editor: mockEditor,
@@ -185,8 +185,8 @@ describe("command-suggestion", () => {
 
       if (suggestion?.items) {
         const items = suggestion.items({
-          query: "bullet",
           editor: {} as never,
+          query: "bullet",
         });
         expect(
           items.some((i: { title: string }) => i.title === "Bullet List")
@@ -205,7 +205,7 @@ describe("command-suggestion", () => {
       const suggestion = ext.options?.suggestion;
 
       if (suggestion?.items) {
-        const items = suggestion.items({ query: "", editor: {} as never });
+        const items = suggestion.items({ editor: {} as never, query: "" });
         expect(items.length).toBeGreaterThanOrEqual(2);
       }
     });
@@ -228,12 +228,12 @@ describe("command-suggestion", () => {
       const renderResult = suggestion.render();
 
       const mockProps = {
-        items: [{ title: "Test" }],
-        command: vi.fn(),
         clientRect: () => new DOMRect(0, 0, 100, 20),
+        command: vi.fn(),
         editor: {
           view: { dom: document.createElement("div") },
         },
+        items: [{ title: "Test" }],
       };
 
       renderResult.onStart(mockProps as never);
@@ -242,10 +242,10 @@ describe("command-suggestion", () => {
       expect(tippy).toHaveBeenCalledWith(
         "body",
         expect.objectContaining({
-          showOnCreate: true,
           interactive: true,
-          trigger: "manual",
           placement: "bottom-start",
+          showOnCreate: true,
+          trigger: "manual",
         })
       );
     });
@@ -266,12 +266,12 @@ describe("command-suggestion", () => {
       (tippy as ReturnType<typeof vi.fn>).mockClear();
 
       renderResult.onStart({
-        items: [],
-        command: vi.fn(),
         clientRect: null,
+        command: vi.fn(),
         editor: {
           view: { dom: document.createElement("div") },
         },
+        items: [],
       } as never);
 
       expect(tippy).not.toHaveBeenCalled();
@@ -293,12 +293,12 @@ describe("command-suggestion", () => {
 
       // Start first
       renderResult.onStart({
-        items: [],
-        command: vi.fn(),
         clientRect: () => new DOMRect(),
+        command: vi.fn(),
         editor: {
           view: { dom: document.createElement("div") },
         },
+        items: [],
       } as never);
 
       const mockInstance = (ReactRenderer as ReturnType<typeof vi.fn>).mock
@@ -306,9 +306,9 @@ describe("command-suggestion", () => {
 
       // Update
       renderResult.onUpdate({
-        items: [{ title: "Updated" }],
-        command: vi.fn(),
         clientRect: () => new DOMRect(10, 10, 100, 20),
+        command: vi.fn(),
+        items: [{ title: "Updated" }],
       } as never);
 
       expect(mockInstance.updateProps).toHaveBeenCalled();
@@ -328,18 +328,18 @@ describe("command-suggestion", () => {
 
       const mockHide = vi.fn();
       (tippy as ReturnType<typeof vi.fn>).mockReturnValue([
-        { setProps: vi.fn(), hide: mockHide, destroy: vi.fn() },
+        { destroy: vi.fn(), hide: mockHide, setProps: vi.fn() },
       ]);
 
       const renderResult = suggestion.render();
 
       renderResult.onStart({
-        items: [],
-        command: vi.fn(),
         clientRect: () => new DOMRect(),
+        command: vi.fn(),
         editor: {
           view: { dom: document.createElement("div") },
         },
+        items: [],
       } as never);
 
       const result = renderResult.onKeyDown({
@@ -363,12 +363,12 @@ describe("command-suggestion", () => {
       const renderResult = suggestion.render();
 
       renderResult.onStart({
-        items: [],
-        command: vi.fn(),
         clientRect: () => new DOMRect(),
+        command: vi.fn(),
         editor: {
           view: { dom: document.createElement("div") },
         },
+        items: [],
       } as never);
 
       // Without a registered keyboard handler, should return false
@@ -387,7 +387,7 @@ describe("command-suggestion", () => {
 
       const mockDestroy = vi.fn();
       (tippy as ReturnType<typeof vi.fn>).mockReturnValue([
-        { setProps: vi.fn(), hide: vi.fn(), destroy: mockDestroy },
+        { destroy: mockDestroy, hide: vi.fn(), setProps: vi.fn() },
       ]);
 
       const ext = createSlashCommandExtension({});
@@ -399,12 +399,12 @@ describe("command-suggestion", () => {
       const renderResult = suggestion.render();
 
       renderResult.onStart({
-        items: [],
-        command: vi.fn(),
         clientRect: () => new DOMRect(),
+        command: vi.fn(),
         editor: {
           view: { dom: document.createElement("div") },
         },
+        items: [],
       } as never);
 
       const mockComponent = (ReactRenderer as ReturnType<typeof vi.fn>).mock

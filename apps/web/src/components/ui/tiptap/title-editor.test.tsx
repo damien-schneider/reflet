@@ -11,24 +11,24 @@ const mockFocus = vi.fn();
 const mockGetText = vi.fn(() => "existing text");
 
 const mockEditor = {
-  commands: { setContent: mockSetContent, focus: mockFocus },
-  getText: mockGetText,
-  setEditable: mockSetEditable,
-  on: vi.fn(),
-  off: vi.fn(),
+  commands: { focus: mockFocus, setContent: mockSetContent },
   destroy: vi.fn(),
+  getText: mockGetText,
+  off: vi.fn(),
+  on: vi.fn(),
+  setEditable: mockSetEditable,
 };
 
 let useEditorCallback: Record<string, unknown> | null = null;
 
 vi.mock("@tiptap/react", () => ({
+  EditorContent: ({ editor }: { editor: unknown }) => (
+    <div data-testid="editor-content">{editor ? "Editor" : "No editor"}</div>
+  ),
   useEditor: vi.fn((config: Record<string, unknown>) => {
     useEditorCallback = config;
     return mockEditor;
   }),
-  EditorContent: ({ editor }: { editor: unknown }) => (
-    <div data-testid="editor-content">{editor ? "Editor" : "No editor"}</div>
-  ),
 }));
 
 vi.mock("@tiptap/starter-kit", () => ({
@@ -153,8 +153,8 @@ describe("TiptapTitleEditor", () => {
         handleKeyDown: (view: unknown, event: KeyboardEvent) => boolean;
       };
       const event = new KeyboardEvent("keydown", {
-        key: "Enter",
         cancelable: true,
+        key: "Enter",
       });
       vi.spyOn(event, "preventDefault");
 
@@ -173,8 +173,8 @@ describe("TiptapTitleEditor", () => {
         handleKeyDown: (view: unknown, event: KeyboardEvent) => boolean;
       };
       const event = new KeyboardEvent("keydown", {
-        key: "Enter",
         cancelable: true,
+        key: "Enter",
       });
       editorProps.handleKeyDown(null, event);
       expect(onEnter).toHaveBeenCalled();
@@ -192,9 +192,9 @@ describe("TiptapTitleEditor", () => {
         handleKeyDown: (view: unknown, event: KeyboardEvent) => boolean;
       };
       const event = new KeyboardEvent("keydown", {
+        cancelable: true,
         key: "Enter",
         metaKey: true,
-        cancelable: true,
       });
       vi.spyOn(event, "preventDefault");
 
@@ -216,9 +216,9 @@ describe("TiptapTitleEditor", () => {
         handleKeyDown: (view: unknown, event: KeyboardEvent) => boolean;
       };
       const event = new KeyboardEvent("keydown", {
-        key: "Enter",
-        ctrlKey: true,
         cancelable: true,
+        ctrlKey: true,
+        key: "Enter",
       });
       const result = editorProps.handleKeyDown(null, event);
       expect(result).toBe(true);

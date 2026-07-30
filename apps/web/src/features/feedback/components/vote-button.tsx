@@ -44,15 +44,15 @@ export function VoteButton({
   };
 
   const sizeClasses = {
-    sm: "h-8 w-10 text-xs",
-    md: "h-10 w-12 text-sm",
     lg: "h-12 w-14 text-base",
+    md: "h-10 w-12 text-sm",
+    sm: "h-8 w-10 text-xs",
   };
 
   const iconSizes = {
-    sm: "h-3 w-3",
-    md: "h-4 w-4",
     lg: "h-5 w-5",
+    md: "h-4 w-4",
+    sm: "h-3 w-3",
   };
 
   const label = hasVoted ? "Remove vote" : "Upvote";

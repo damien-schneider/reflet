@@ -36,55 +36,55 @@ interface FeatureSection {
 
 const FEEDBACK_ITEMS = [
   {
+    author: "S",
+    authorColor: "bg-violet-500 dark:bg-violet-600",
     id: "dark-mode",
-    title: "Dark mode support",
     snippet:
       "Add a dark theme option across all pages and the embedded widget.",
-    votes: 248,
     status: "Planned",
     statusBadgeColor: "green" as const,
     tags: [
-      { label: "UI", color: "purple" as const },
-      { label: "Enhancement", color: "blue" as const },
+      { color: "purple" as const, label: "UI" },
+      { color: "blue" as const, label: "Enhancement" },
     ],
-    author: "S",
-    authorColor: "bg-violet-500 dark:bg-violet-600",
+    title: "Dark mode support",
+    votes: 248,
   },
   {
-    id: "slack",
-    title: "Slack notifications",
-    snippet: "Get real-time alerts in Slack when new feedback is submitted.",
-    votes: 186,
-    status: "In Progress",
-    statusBadgeColor: "orange" as const,
-    tags: [{ label: "Integration", color: "green" as const }],
     author: "M",
     authorColor: "bg-sky-500 dark:bg-sky-600",
+    id: "slack",
+    snippet: "Get real-time alerts in Slack when new feedback is submitted.",
+    status: "In Progress",
+    statusBadgeColor: "orange" as const,
+    tags: [{ color: "green" as const, label: "Integration" }],
+    title: "Slack notifications",
+    votes: 186,
   },
   {
+    author: "A",
+    authorColor: "bg-rose-500 dark:bg-rose-600",
     id: "csv",
-    title: "Bulk export to CSV",
     snippet: "Export filtered feedback data for analysis in spreadsheets.",
-    votes: 142,
     status: "Under Review",
     statusBadgeColor: "blue" as const,
     tags: [
-      { label: "Data", color: "yellow" as const },
-      { label: "Export", color: "orange" as const },
+      { color: "yellow" as const, label: "Data" },
+      { color: "orange" as const, label: "Export" },
     ],
-    author: "A",
-    authorColor: "bg-rose-500 dark:bg-rose-600",
+    title: "Bulk export to CSV",
+    votes: 142,
   },
   {
-    id: "mobile",
-    title: "Mobile app",
-    snippet: "Native iOS and Android app for managing feedback on the go.",
-    votes: 98,
-    status: "Open",
-    statusBadgeColor: "gray" as const,
-    tags: [{ label: "Mobile", color: "pink" as const }],
     author: "J",
     authorColor: "bg-emerald-500 dark:bg-emerald-600",
+    id: "mobile",
+    snippet: "Native iOS and Android app for managing feedback on the go.",
+    status: "Open",
+    statusBadgeColor: "gray" as const,
+    tags: [{ color: "pink" as const, label: "Mobile" }],
+    title: "Mobile app",
+    votes: 98,
   },
 ] as const;
 
@@ -165,32 +165,32 @@ function FeedbackBoardMockup() {
 
 const KANBAN_COLUMNS = [
   {
-    id: "planned",
-    title: "Planned",
     color: "bg-blue-500",
+    id: "planned",
     items: [
       { id: "r-dark", title: "Dark mode", votes: 248 },
       { id: "r-email", title: "Email digests", votes: 76 },
       { id: "r-rate", title: "API rate limits", votes: 54 },
     ],
+    title: "Planned",
   },
   {
-    id: "in-progress",
-    title: "In Progress",
     color: "bg-amber-500",
+    id: "in-progress",
     items: [
       { id: "r-slack", title: "Slack integration", votes: 186 },
       { id: "r-sso", title: "SSO (SAML)", votes: 112 },
     ],
+    title: "In Progress",
   },
   {
-    id: "completed",
-    title: "Completed",
     color: "bg-emerald-500",
+    id: "completed",
     items: [
       { id: "r-api", title: "Public API", votes: 203 },
       { id: "r-webhook", title: "Webhook events", votes: 167 },
     ],
+    title: "Completed",
   },
 ] as const;
 
@@ -333,18 +333,18 @@ function ChangelogMockup() {
 // =============================================================================
 
 const CODE_LINES = [
-  { text: "import { FeedbackButton } from 'reflet-sdk/react'", color: "text" },
-  { text: "", color: "" },
-  { text: "export function App() {", color: "text" },
-  { text: "  return (", color: "text" },
+  { color: "text", text: "import { FeedbackButton } from 'reflet-sdk/react'" },
+  { color: "", text: "" },
+  { color: "text", text: "export function App() {" },
+  { color: "text", text: "  return (" },
   {
-    text: '    <RefletProvider publicKey="pk_live_...a3f">',
     color: "highlight",
+    text: '    <RefletProvider publicKey="pk_live_...a3f">',
   },
-  { text: "      <FeedbackButton />", color: "highlight" },
-  { text: "    </RefletProvider>", color: "highlight" },
-  { text: "  )", color: "text" },
-  { text: "}", color: "text" },
+  { color: "highlight", text: "      <FeedbackButton />" },
+  { color: "highlight", text: "    </RefletProvider>" },
+  { color: "text", text: "  )" },
+  { color: "text", text: "}" },
 ] as const;
 
 function WidgetMockup() {
@@ -426,8 +426,8 @@ function WidgetMockup() {
 // =============================================================================
 
 const AI_TAGS = [
-  { id: "ux", label: "UX", color: "purple" as const },
-  { id: "productivity", label: "Productivity", color: "blue" as const },
+  { color: "purple" as const, id: "ux", label: "UX" },
+  { color: "blue" as const, id: "productivity", label: "Productivity" },
 ] as const;
 
 function AIFeaturesMockup() {
@@ -568,49 +568,49 @@ function FeatureBlock({
 
 const SECTIONS: FeatureSection[] = [
   {
-    id: "feedback-board",
     badge: "Feedback Collection",
-    title: "Every feature request, organized and prioritized",
     description:
       "Users submit ideas and vote on what matters most. AI auto-tags, estimates complexity, and detects duplicates so your team focuses on what counts.",
-    reverse: false,
+    id: "feedback-board",
     mockup: <FeedbackBoardMockup />,
+    reverse: false,
+    title: "Every feature request, organized and prioritized",
   },
   {
-    id: "roadmap",
     badge: "Visual Roadmap",
-    title: "A roadmap your team and users can actually follow",
     description:
       "Drag-and-drop kanban board with custom statuses. Share publicly to build trust, or keep internal for planning.",
-    reverse: true,
+    id: "roadmap",
     mockup: <RoadmapMockup />,
+    reverse: true,
+    title: "A roadmap your team and users can actually follow",
   },
   {
-    id: "changelog",
     badge: "Changelog",
-    title: "Close the loop with every release",
     description:
       "Publish beautiful release notes linked to the feedback that inspired them. Users get notified when their request ships.",
-    reverse: false,
+    id: "changelog",
     mockup: <ChangelogMockup />,
+    reverse: false,
+    title: "Close the loop with every release",
   },
   {
-    id: "widget-sdk",
     badge: "Developer Experience",
-    title: "Embed feedback anywhere with one line of code",
     description:
       "Drop-in widget via script tag, or go deep with React hooks. TypeScript-first SDK with useFeedbackList(), useVote(), and more.",
-    reverse: true,
+    id: "widget-sdk",
     mockup: <WidgetMockup />,
+    reverse: true,
+    title: "Embed feedback anywhere with one line of code",
   },
   {
-    id: "ai-features",
     badge: "AI-Powered",
-    title: "Let AI handle the busywork",
     description:
       "Automatic tagging, priority estimation, complexity scoring, and duplicate detection. Your team triages in minutes, not hours.",
-    reverse: false,
+    id: "ai-features",
     mockup: <AIFeaturesMockup />,
+    reverse: false,
+    title: "Let AI handle the busywork",
   },
 ];
 

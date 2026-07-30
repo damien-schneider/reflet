@@ -5,11 +5,11 @@ import { generatePageMetadata } from "@/lib/seo-config";
 import { DocsSidebarWrapper } from "./docs-sidebar-wrapper";
 
 export const metadata: Metadata = generatePageMetadata({
-  title: "Documentation",
   description:
     "Complete documentation for Reflet SDK, widgets, and component library.",
-  path: "/docs",
   keywords: ["documentation", "sdk", "components", "api reference"],
+  path: "/docs",
+  title: "Documentation",
 });
 
 export default function DocsLayout({

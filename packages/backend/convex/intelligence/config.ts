@@ -76,13 +76,13 @@ export const getOrCreate = mutation({
     const now = Date.now();
 
     const configId = await ctx.db.insert("intelligenceConfig", {
-      organizationId: args.organizationId,
-      scanFrequency: "weekly",
-      redditEnabled: false,
-      webSearchEnabled: false,
       competitorTrackingEnabled: false,
       createdAt: now,
+      organizationId: args.organizationId,
+      redditEnabled: false,
+      scanFrequency: "weekly",
       updatedAt: now,
+      webSearchEnabled: false,
     });
 
     return await ctx.db.get(configId);
@@ -94,7 +94,9 @@ export const getOrCreate = mutation({
  */
 export const update = mutation({
   args: {
+    competitorTrackingEnabled: v.optional(v.boolean()),
     organizationId: v.id("organizations"),
+    redditEnabled: v.optional(v.boolean()),
     scanFrequency: v.optional(
       v.union(
         v.literal("daily"),
@@ -102,9 +104,7 @@ export const update = mutation({
         v.literal("weekly")
       )
     ),
-    redditEnabled: v.optional(v.boolean()),
     webSearchEnabled: v.optional(v.boolean()),
-    competitorTrackingEnabled: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -202,7 +202,7 @@ export const getActiveScan = query({
       const twoMinutesAgo = Date.now() - 120_000;
       if (mostRecentJob.startedAt < twoMinutesAgo) {
         // Job is stale — treat as failed so UI doesn't get stuck
-        return { ...mostRecentJob, status: "failed" as const, _stale: true };
+        return { ...mostRecentJob, _stale: true, status: "failed" as const };
       }
       return mostRecentJob;
     }
@@ -313,15 +313,15 @@ export const startManualScan = mutation({
     const now = Date.now();
     const masterJobId = await ctx.db.insert("intelligenceJobs", {
       organizationId: args.organizationId,
-      type: "synthesis",
-      status: "pending",
       startedAt: now,
+      status: "pending",
+      type: "synthesis",
     });
 
     // Schedule the actual scan with reference to the master job
     await ctx.scheduler.runAfter(0, internal.intelligence.crons.runOrgScan, {
-      organizationId: args.organizationId,
       masterJobId,
+      organizationId: args.organizationId,
     });
 
     return { started: true };

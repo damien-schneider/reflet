@@ -46,7 +46,7 @@ export function BillingSection({
   const canManageBilling = subscriptionStatus?.canManageBilling ?? false;
   const canViewBilling = subscriptionStatus?.canViewBilling ?? false;
   const subscription = subscriptionStatus?.subscription ?? null;
-  const usage = subscriptionStatus?.usage ?? { members: 0, feedback: 0 };
+  const usage = subscriptionStatus?.usage ?? { feedback: 0, members: 0 };
   const limits = subscriptionStatus?.limits ?? DEFAULT_LIMITS;
 
   const handleUpgrade = async (priceKey: string) => {
@@ -56,21 +56,21 @@ export function BillingSection({
 
     setIsLoading(priceKey);
     capture("plan_upgrade_clicked", {
-      plan: "pro",
       interval: priceKey.includes("Yearly") ? "yearly" : "monthly",
+      plan: "pro",
     });
     try {
       const result = await createCheckoutSession({
+        cancelUrl: `${window.location.origin}/dashboard/${orgSlug}/project?canceled=true`,
         organizationId,
         priceKey: priceKey as "proMonthly" | "proYearly",
         successUrl: `${window.location.origin}/dashboard/${orgSlug}/project?success=true`,
-        cancelUrl: `${window.location.origin}/dashboard/${orgSlug}/project?canceled=true`,
       });
 
       if (result.url) {
         window.location.href = result.url;
       }
-    } catch (_error) {
+    } catch {
       // Billing checkout error — Stripe handles display
     } finally {
       setIsLoading(null);
@@ -92,7 +92,7 @@ export function BillingSection({
       if (result.url) {
         window.location.href = result.url;
       }
-    } catch (_error) {
+    } catch {
       // Portal session error — Stripe handles display
     } finally {
       setIsLoading(null);

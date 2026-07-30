@@ -33,10 +33,18 @@ export function registerMilestoneTools(
     "milestone_create",
     "Create a new milestone for organizing roadmap goals.",
     {
-      name: z.string().describe("Milestone name"),
+      color: z.string().describe("Milestone color"),
       description: z.string().optional().describe("Milestone description"),
       emoji: z.string().optional().describe("Emoji icon"),
-      color: z.string().describe("Milestone color"),
+      isPublic: z
+        .boolean()
+        .optional()
+        .describe("Whether the milestone is visible publicly (default: true)"),
+      name: z.string().describe("Milestone name"),
+      targetDate: z
+        .number()
+        .optional()
+        .describe("Target date as Unix timestamp in milliseconds"),
       timeHorizon: z
         .enum([
           "now",
@@ -47,14 +55,6 @@ export function registerMilestoneTools(
           "future",
         ])
         .describe("Time horizon for the milestone"),
-      targetDate: z
-        .number()
-        .optional()
-        .describe("Target date as Unix timestamp in milliseconds"),
-      isPublic: z
-        .boolean()
-        .optional()
-        .describe("Whether the milestone is visible publicly (default: true)"),
     },
     async (params) => textResult(await client.createMilestone(params))
   );
@@ -63,11 +63,16 @@ export function registerMilestoneTools(
     "milestone_update",
     "Update a milestone's properties.",
     {
-      milestoneId: z.string().describe("The milestone ID"),
-      name: z.string().optional().describe("New name"),
+      color: z.string().optional().describe("New color"),
       description: z.string().optional().describe("New description"),
       emoji: z.string().optional().describe("New emoji"),
-      color: z.string().optional().describe("New color"),
+      isPublic: z
+        .boolean()
+        .optional()
+        .describe("Whether the milestone is visible publicly"),
+      milestoneId: z.string().describe("The milestone ID"),
+      name: z.string().optional().describe("New name"),
+      targetDate: z.number().optional().describe("New target date"),
       timeHorizon: z
         .enum([
           "now",
@@ -79,11 +84,6 @@ export function registerMilestoneTools(
         ])
         .optional()
         .describe("New time horizon"),
-      targetDate: z.number().optional().describe("New target date"),
-      isPublic: z
-        .boolean()
-        .optional()
-        .describe("Whether the milestone is visible publicly"),
     },
     async (params) => textResult(await client.updateMilestone(params))
   );
@@ -112,9 +112,9 @@ export function registerMilestoneTools(
     "milestone_link_feedback",
     "Link or unlink a feedback item to/from a milestone.",
     {
-      milestoneId: z.string().describe("The milestone ID"),
-      feedbackId: z.string().describe("The feedback item ID"),
       action: z.enum(["link", "unlink"]).describe("Whether to link or unlink"),
+      feedbackId: z.string().describe("The feedback item ID"),
+      milestoneId: z.string().describe("The milestone ID"),
     },
     async ({ milestoneId, feedbackId, action }) =>
       textResult(

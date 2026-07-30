@@ -46,7 +46,7 @@ export function useAIDraftReply({
   }, [feedbackId, initiateDraftReply]);
 
   return {
-    isGeneratingDraft,
     handleGenerateDraftReply,
+    isGeneratingDraft,
   } as const;
 }

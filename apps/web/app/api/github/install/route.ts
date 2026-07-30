@@ -29,11 +29,11 @@ export async function GET(request: Request): Promise<NextResponse> {
 
   const state = Buffer.from(
     JSON.stringify({
-      userId,
       organizationId,
       orgSlug,
       returnTo,
       timestamp: Date.now(),
+      userId,
     })
   ).toString("base64url");
 
@@ -41,19 +41,19 @@ export async function GET(request: Request): Promise<NextResponse> {
   const cookieStore = await cookies();
   cookieStore.set("github_oauth_user_id", userId, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
     maxAge: 60 * 10,
     path: "/",
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
   });
 
   if (organizationId) {
     cookieStore.set("github_oauth_org_id", organizationId, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
       maxAge: 60 * 10,
       path: "/",
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
     });
   }
 

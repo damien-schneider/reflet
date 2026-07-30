@@ -38,8 +38,8 @@ export const fetchBranches = action({
     }>;
 
     return branches.map((branch) => ({
-      name: branch.name,
       isProtected: branch.protected,
+      name: branch.name,
     }));
   },
 });
@@ -54,10 +54,10 @@ export const fetchBranches = action({
  */
 export const fetchCommitsBetweenRefs = action({
   args: {
-    installationToken: v.string(),
-    repositoryFullName: v.string(),
     base: v.string(),
     head: v.string(),
+    installationToken: v.string(),
+    repositoryFullName: v.string(),
   },
   handler: async (_ctx, args) => {
     const response = await fetch(
@@ -107,22 +107,22 @@ export const fetchCommitsBetweenRefs = action({
     };
 
     return {
-      status: data.status,
       aheadBy: data.ahead_by,
-      totalCommits: data.total_commits,
       commits: data.commits.map((commit) => ({
-        sha: commit.sha.slice(0, 7),
-        message: commit.commit.message.split("\n")[0] ?? "",
-        fullMessage: commit.commit.message,
         author: commit.author?.login ?? commit.commit.author.name,
         date: commit.commit.author.date,
+        fullMessage: commit.commit.message,
+        message: commit.commit.message.split("\n")[0] ?? "",
+        sha: commit.sha.slice(0, 7),
       })),
       files: (data.files ?? []).map((file) => ({
-        filename: file.filename,
-        status: file.status,
         additions: file.additions,
         deletions: file.deletions,
+        filename: file.filename,
+        status: file.status,
       })),
+      status: data.status,
+      totalCommits: data.total_commits,
     };
   },
 });
@@ -168,10 +168,10 @@ export const fetchTags = action({
  */
 export const fetchRecentCommits = action({
   args: {
-    installationToken: v.string(),
-    repositoryFullName: v.string(),
     branch: v.string(),
+    installationToken: v.string(),
     perPage: v.optional(v.number()),
+    repositoryFullName: v.string(),
   },
   handler: async (_ctx, args) => {
     const count = args.perPage ?? 30;
@@ -205,11 +205,11 @@ export const fetchRecentCommits = action({
     }>;
 
     return commits.map((commit) => ({
-      sha: commit.sha.slice(0, 7),
-      message: commit.commit.message.split("\n")[0] ?? "",
-      fullMessage: commit.commit.message,
       author: commit.author?.login ?? commit.commit.author.name,
       date: commit.commit.author.date,
+      fullMessage: commit.commit.message,
+      message: commit.commit.message.split("\n")[0] ?? "",
+      sha: commit.sha.slice(0, 7),
     }));
   },
 });

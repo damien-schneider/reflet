@@ -85,7 +85,7 @@ export const getAggregateStatus = query({
     const publicMonitors = monitors.filter((m) => m.status !== "paused");
 
     if (publicMonitors.length === 0) {
-      return { status: "no_monitors" as const, monitorCount: 0 };
+      return { monitorCount: 0, status: "no_monitors" as const };
     }
 
     const hasMajorOutage = publicMonitors.some(
@@ -100,7 +100,7 @@ export const getAggregateStatus = query({
       status = "degraded";
     }
 
-    return { status, monitorCount: publicMonitors.length };
+    return { monitorCount: publicMonitors.length, status };
   },
 });
 
@@ -154,8 +154,8 @@ export const getMonitorsUptimeBars = query({
             : 100;
 
         return {
-          monitorId: monitor._id,
           days,
+          monitorId: monitor._id,
           overallUptime,
         };
       })
@@ -171,14 +171,14 @@ export const getMonitorsUptimeBars = query({
 
 export const createMonitor = mutation({
   args: {
-    organizationId: v.id("organizations"),
-    name: v.string(),
-    url: v.string(),
-    method: v.optional(monitorMethod),
-    checkIntervalMinutes: v.optional(v.number()),
     alertThreshold: v.optional(v.number()),
-    isPublic: v.optional(v.boolean()),
+    checkIntervalMinutes: v.optional(v.number()),
     groupName: v.optional(v.string()),
+    isPublic: v.optional(v.boolean()),
+    method: v.optional(monitorMethod),
+    name: v.string(),
+    organizationId: v.id("organizations"),
+    url: v.string(),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -198,35 +198,35 @@ export const createMonitor = mutation({
     const checkIntervalMinutes = Math.max(requestedInterval, minInterval);
 
     return await ctx.db.insert("statusMonitors", {
-      organizationId: args.organizationId,
-      name: args.name,
-      url: args.url,
-      method: args.method,
-      checkIntervalMinutes,
       alertThreshold: args.alertThreshold ?? 3,
-      status: "operational",
+      checkIntervalMinutes,
       consecutiveFailures: 0,
-      isPublic: args.isPublic ?? true,
-      groupName: args.groupName,
       createdAt: now,
+      groupName: args.groupName,
+      isPublic: args.isPublic ?? true,
+      method: args.method,
+      name: args.name,
+      organizationId: args.organizationId,
+      status: "operational",
       updatedAt: now,
+      url: args.url,
     });
   },
 });
 
 export const updateMonitor = mutation({
   args: {
-    monitorId: v.id("statusMonitors"),
-    name: v.optional(v.string()),
-    url: v.optional(v.string()),
-    method: v.optional(monitorMethod),
-    checkIntervalMinutes: v.optional(v.number()),
     alertThreshold: v.optional(v.number()),
-    isPublic: v.optional(v.boolean()),
+    checkIntervalMinutes: v.optional(v.number()),
     groupName: v.optional(v.string()),
     groupOrder: v.optional(v.number()),
+    isPublic: v.optional(v.boolean()),
+    method: v.optional(monitorMethod),
+    monitorId: v.id("statusMonitors"),
+    name: v.optional(v.string()),
     order: v.optional(v.number()),
     status: v.optional(monitorStatus),
+    url: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { monitorId, ...updates } = args;
@@ -274,10 +274,10 @@ export const reorderMonitors = mutation({
   args: {
     updates: v.array(
       v.object({
-        monitorId: v.id("statusMonitors"),
-        order: v.optional(v.number()),
         groupName: v.optional(v.string()),
         groupOrder: v.optional(v.number()),
+        monitorId: v.id("statusMonitors"),
+        order: v.optional(v.number()),
       })
     ),
   },
@@ -285,9 +285,9 @@ export const reorderMonitors = mutation({
     const now = Date.now();
     for (const update of args.updates) {
       await ctx.db.patch(update.monitorId, {
-        order: update.order,
         groupName: update.groupName,
         groupOrder: update.groupOrder,
+        order: update.order,
         updatedAt: now,
       });
     }

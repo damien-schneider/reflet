@@ -26,29 +26,29 @@ interface DemoItem {
 
 const DEMO_ITEMS: DemoItem[] = [
   {
-    label: "Feedback Board",
     description: "Collect and organize user feedback with voting",
     href: REFLET_BASE_URL,
+    label: "Feedback Board",
   },
   {
-    label: "Roadmap",
     description: "Kanban-style board to plan and track progress",
     href: `${REFLET_BASE_URL}?view=roadmap`,
+    label: "Roadmap",
   },
   {
-    label: "Milestones",
     description: "Track feature milestones and release goals",
     href: `${REFLET_BASE_URL}?view=milestones`,
+    label: "Milestones",
   },
   {
-    label: "Changelog",
     description: "Beautiful release notes linked to features",
     href: `${REFLET_BASE_URL}/changelog`,
+    label: "Changelog",
   },
   {
-    label: "Support",
     description: "Help center with real-time conversations",
     href: `${REFLET_BASE_URL}/support`,
+    label: "Support",
   },
 ];
 
@@ -61,14 +61,14 @@ interface ResourceItem {
 
 const RESOURCE_ITEMS: ResourceItem[] = [
   {
-    label: "Documentation",
     description: "Guides, SDK reference and API docs",
     href: "/docs",
+    label: "Documentation",
   },
   {
-    label: "Blog",
     description: "Product updates, tips and insights",
     href: "/blog",
+    label: "Blog",
   },
 ];
 

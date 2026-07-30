@@ -9,7 +9,6 @@ import { getAuthUser } from "../shared/utils";
  */
 export const linkFeedback = mutation({
   args: {
-    releaseId: v.id("releases"),
     feedbackId: v.id("feedback"),
     newStatus: v.optional(
       v.union(
@@ -21,6 +20,7 @@ export const linkFeedback = mutation({
         v.literal("closed")
       )
     ),
+    releaseId: v.id("releases"),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -69,9 +69,9 @@ export const linkFeedback = mutation({
     }
 
     const linkId = await ctx.db.insert("releaseFeedback", {
-      releaseId: args.releaseId,
-      feedbackId: args.feedbackId,
       createdAt: Date.now(),
+      feedbackId: args.feedbackId,
+      releaseId: args.releaseId,
     });
 
     // Update feedback status if requested
@@ -88,8 +88,8 @@ export const linkFeedback = mutation({
  */
 export const unlinkFeedback = mutation({
   args: {
-    releaseId: v.id("releases"),
     feedbackId: v.id("feedback"),
+    releaseId: v.id("releases"),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -187,19 +187,9 @@ export const getCompletedFeedback = query({
  */
 export const getAvailableFeedback = query({
   args: {
-    organizationId: v.id("organizations"),
     excludeReleaseId: v.optional(v.id("releases")),
+    organizationId: v.id("organizations"),
   },
-  returns: v.array(
-    v.object({
-      _id: v.id("feedback"),
-      title: v.string(),
-      description: v.optional(v.string()),
-      status: v.string(),
-      voteCount: v.number(),
-      tags: v.array(v.object({ _id: v.id("tags"), name: v.string() })),
-    })
-  ),
   handler: async (ctx, args) => {
     const user = await authComponent.safeGetAuthUser(ctx);
     if (!user) {
@@ -256,17 +246,27 @@ export const getAvailableFeedback = query({
 
         return {
           _id: f._id,
-          title: f.title,
           description: f.description,
           status: f.status,
-          voteCount: f.voteCount ?? 0,
           tags,
+          title: f.title,
+          voteCount: f.voteCount ?? 0,
         };
       })
     );
 
     return result;
   },
+  returns: v.array(
+    v.object({
+      _id: v.id("feedback"),
+      description: v.optional(v.string()),
+      status: v.string(),
+      tags: v.array(v.object({ _id: v.id("tags"), name: v.string() })),
+      title: v.string(),
+      voteCount: v.number(),
+    })
+  ),
 });
 
 /**
@@ -274,7 +274,6 @@ export const getAvailableFeedback = query({
  */
 export const publish = mutation({
   args: {
-    id: v.id("releases"),
     feedbackStatus: v.optional(
       v.union(
         v.literal("open"),
@@ -285,6 +284,7 @@ export const publish = mutation({
         v.literal("closed")
       )
     ),
+    id: v.id("releases"),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -478,9 +478,9 @@ export const pushToGithub = mutation({
     // Clear previous failed state before retrying
     if (release.githubPushStatus === "failed") {
       await ctx.db.patch(args.releaseId, {
-        githubPushStatus: undefined,
         githubPushError: undefined,
         githubPushErrorType: undefined,
+        githubPushStatus: undefined,
         updatedAt: Date.now(),
       });
     }
@@ -488,7 +488,7 @@ export const pushToGithub = mutation({
     await ctx.scheduler.runAfter(
       0,
       internal.integrations.github.node_actions.pushReleaseToGithub,
-      { releaseId: args.releaseId, manual: true }
+      { manual: true, releaseId: args.releaseId }
     );
 
     return { scheduled: true };
@@ -542,18 +542,18 @@ export const triggerGithubSync = mutation({
 // ============================================
 
 const commitValidator = v.object({
-  sha: v.string(),
-  message: v.string(),
-  fullMessage: v.string(),
   author: v.string(),
   date: v.string(),
+  fullMessage: v.string(),
+  message: v.string(),
+  sha: v.string(),
 });
 
 const fileValidator = v.object({
-  filename: v.string(),
-  status: v.string(),
   additions: v.number(),
   deletions: v.number(),
+  filename: v.string(),
+  status: v.string(),
 });
 
 /**
@@ -561,12 +561,11 @@ const fileValidator = v.object({
  */
 export const saveReleaseCommits = mutation({
   args: {
-    releaseId: v.id("releases"),
     commits: v.array(commitValidator),
     files: v.optional(v.array(fileValidator)),
     previousTag: v.optional(v.string()),
+    releaseId: v.id("releases"),
   },
-  returns: v.id("releaseCommits"),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
@@ -597,13 +596,14 @@ export const saveReleaseCommits = mutation({
     }
 
     return ctx.db.insert("releaseCommits", {
-      releaseId: args.releaseId,
       commits: args.commits,
+      createdAt: Date.now(),
       files: args.files,
       previousTag: args.previousTag,
-      createdAt: Date.now(),
+      releaseId: args.releaseId,
     });
   },
+  returns: v.id("releaseCommits"),
 });
 
 /**
@@ -646,8 +646,8 @@ export const getReleaseCommits = query({
  */
 export const getLatestCommitFromPreviousRelease = query({
   args: {
-    organizationId: v.id("organizations"),
     excludeReleaseId: v.optional(v.id("releases")),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
     const user = await authComponent.safeGetAuthUser(ctx);

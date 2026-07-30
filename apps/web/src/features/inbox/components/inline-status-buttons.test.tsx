@@ -38,9 +38,9 @@ vi.mock("@/components/ui/toggle-group", () => ({
 }));
 
 vi.mock("@phosphor-icons/react", () => ({
+  CheckCircle: () => <svg />,
   Circle: () => <svg />,
   Clock: () => <svg />,
-  CheckCircle: () => <svg />,
   XCircle: () => <svg />,
 }));
 

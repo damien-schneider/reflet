@@ -8,16 +8,16 @@ function createMockCtx() {
     throw new Error("Not available in test");
   };
   return {
-    runQuery: notAvailable,
-    runMutation: notAvailable,
-    runAction: notAvailable,
-    scheduler: { runAfter: notAvailable, runAt: notAvailable },
     auth: { getUserIdentity: notAvailable },
+    runAction: notAvailable,
+    runMutation: notAvailable,
+    runQuery: notAvailable,
+    scheduler: { runAfter: notAvailable, runAt: notAvailable },
     storage: {
-      getUrl: notAvailable,
-      getMetadata: notAvailable,
-      generateUploadUrl: notAvailable,
       delete: notAvailable,
+      generateUploadUrl: notAvailable,
+      getMetadata: notAvailable,
+      getUrl: notAvailable,
     },
     vectorSearch: notAvailable,
   } as never;
@@ -30,7 +30,7 @@ describe("dispatch", () => {
   describe("initialize", () => {
     test("returns protocol version and server info", async () => {
       const response = await dispatch(
-        { jsonrpc: "2.0", id: 1, method: "initialize" },
+        { id: 1, jsonrpc: "2.0", method: "initialize" },
         mockCtx,
         mockOrgId
       );
@@ -51,7 +51,7 @@ describe("dispatch", () => {
   describe("notifications/initialized", () => {
     test("returns empty result", async () => {
       const response = await dispatch(
-        { jsonrpc: "2.0", id: 2, method: "notifications/initialized" },
+        { id: 2, jsonrpc: "2.0", method: "notifications/initialized" },
         mockCtx,
         mockOrgId
       );
@@ -63,7 +63,7 @@ describe("dispatch", () => {
   describe("tools/list", () => {
     test("returns tools array with valid definitions", async () => {
       const response = await dispatch(
-        { jsonrpc: "2.0", id: 3, method: "tools/list" },
+        { id: 3, jsonrpc: "2.0", method: "tools/list" },
         mockCtx,
         mockOrgId
       );
@@ -84,7 +84,7 @@ describe("dispatch", () => {
   describe("tools/call", () => {
     test("returns error for missing tool name", async () => {
       const response = await dispatch(
-        { jsonrpc: "2.0", id: 4, method: "tools/call", params: {} },
+        { id: 4, jsonrpc: "2.0", method: "tools/call", params: {} },
         mockCtx,
         mockOrgId
       );
@@ -96,8 +96,8 @@ describe("dispatch", () => {
     test("returns error for unknown tool", async () => {
       const response = await dispatch(
         {
-          jsonrpc: "2.0",
           id: 5,
+          jsonrpc: "2.0",
           method: "tools/call",
           params: { name: "nonExistentTool" },
         },
@@ -117,7 +117,7 @@ describe("dispatch", () => {
 
     test("returns error for numeric tool name", async () => {
       const response = await dispatch(
-        { jsonrpc: "2.0", id: 6, method: "tools/call", params: { name: 123 } },
+        { id: 6, jsonrpc: "2.0", method: "tools/call", params: { name: 123 } },
         mockCtx,
         mockOrgId
       );
@@ -129,7 +129,7 @@ describe("dispatch", () => {
   describe("unknown method", () => {
     test("returns method not found error", async () => {
       const response = await dispatch(
-        { jsonrpc: "2.0", id: 7, method: "unknown/method" },
+        { id: 7, jsonrpc: "2.0", method: "unknown/method" },
         mockCtx,
         mockOrgId
       );
@@ -142,7 +142,7 @@ describe("dispatch", () => {
   describe("response envelope", () => {
     test("echoes the request id", async () => {
       const response = await dispatch(
-        { jsonrpc: "2.0", id: "abc-123", method: "initialize" },
+        { id: "abc-123", jsonrpc: "2.0", method: "initialize" },
         mockCtx,
         mockOrgId
       );
@@ -160,7 +160,7 @@ describe("dispatch", () => {
 
     test("always includes jsonrpc 2.0", async () => {
       const response = await dispatch(
-        { jsonrpc: "2.0", id: 8, method: "unknown" },
+        { id: 8, jsonrpc: "2.0", method: "unknown" },
         mockCtx,
         mockOrgId
       );
@@ -191,7 +191,7 @@ describe("isErrorResult", () => {
   });
 
   test("returns false for content result", () => {
-    expect(isErrorResult({ content: [{ type: "text", text: "hi" }] })).toBe(
+    expect(isErrorResult({ content: [{ text: "hi", type: "text" }] })).toBe(
       false
     );
   });

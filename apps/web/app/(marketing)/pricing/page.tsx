@@ -4,10 +4,8 @@ import Pricing from "@/features/homepage/components/pricing";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata = generatePageMetadata({
-  title: "Pricing | Reflet",
   description:
     "Simple, transparent pricing for teams of all sizes. Start free with a generous tier, or upgrade to Growth or Business for custom branding, API access, and priority support.",
-  path: "/pricing",
   keywords: [
     "pricing",
     "free tier",
@@ -15,6 +13,8 @@ export const metadata = generatePageMetadata({
     "feedback tool pricing",
     "open source",
   ],
+  path: "/pricing",
+  title: "Pricing | Reflet",
 });
 
 export default function PricingPage() {

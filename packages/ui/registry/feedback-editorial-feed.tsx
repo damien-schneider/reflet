@@ -39,14 +39,14 @@ function useVoteContext(): VoteContextValue {
 // ─── Status Color Map ────────────────────────────────────────────────────────
 
 const STATUS_COLORS = {
+  amber: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+  blue: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+  gray: "bg-gray-100 text-gray-600 dark:bg-gray-800/30 dark:text-gray-400",
+  green: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+  pink: "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400",
   purple:
     "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-  green: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  blue: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
   red: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-  amber: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-  pink: "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400",
-  gray: "bg-gray-100 text-gray-600 dark:bg-gray-800/30 dark:text-gray-400",
 } as const;
 
 type StatusColor = keyof typeof STATUS_COLORS;
@@ -143,16 +143,16 @@ function EditorialFeedItem({
     () =>
       isControlled
         ? {
-            voteType: controlledVoteType ?? null,
-            upvotes: controlledUpvotes,
             downvotes: controlledDownvotes ?? 0,
+            upvotes: controlledUpvotes,
             vote: (direction: "upvote" | "downvote") => onVote?.(direction),
+            voteType: controlledVoteType ?? null,
           }
         : {
-            voteType: internalVoteType,
-            upvotes: internalUpvotes,
             downvotes: internalDownvotes,
+            upvotes: internalUpvotes,
             vote: internalVote,
+            voteType: internalVoteType,
           },
     [
       isControlled,

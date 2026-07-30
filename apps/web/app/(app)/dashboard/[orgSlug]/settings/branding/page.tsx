@@ -124,16 +124,17 @@ export default function BrandingSettingsPage({
     save(newLogo, primaryColor);
   };
 
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }
       if (savedTimerRef.current) {
         clearTimeout(savedTimerRef.current);
       }
-    };
-  }, []);
+    },
+    []
+  );
 
   if (!org) {
     return (

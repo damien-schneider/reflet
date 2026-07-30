@@ -41,9 +41,6 @@ export const createSlashCommands = (
 ): CommandItem[] => {
   const commands: CommandItem[] = [
     {
-      title: "Heading 1",
-      description: "Large section heading",
-      icon: TextHOne,
       command: ({ editor, range }) => {
         editor
           .chain()
@@ -52,11 +49,11 @@ export const createSlashCommands = (
           .toggleHeading({ level: 1 })
           .run();
       },
+      description: "Large section heading",
+      icon: TextHOne,
+      title: "Heading 1",
     },
     {
-      title: "Heading 2",
-      description: "Medium section heading",
-      icon: TextHTwo,
       command: ({ editor, range }) => {
         editor
           .chain()
@@ -65,11 +62,11 @@ export const createSlashCommands = (
           .toggleHeading({ level: 2 })
           .run();
       },
+      description: "Medium section heading",
+      icon: TextHTwo,
+      title: "Heading 2",
     },
     {
-      title: "Heading 3",
-      description: "Small section heading",
-      icon: TextHThree,
       command: ({ editor, range }) => {
         editor
           .chain()
@@ -78,70 +75,73 @@ export const createSlashCommands = (
           .toggleHeading({ level: 3 })
           .run();
       },
+      description: "Small section heading",
+      icon: TextHThree,
+      title: "Heading 3",
     },
     {
-      title: "Bullet List",
-      description: "Create a bullet list",
-      icon: ListBullets,
       command: ({ editor, range }) => {
         editor.chain().focus().deleteRange(range).toggleBulletList().run();
       },
+      description: "Create a bullet list",
+      icon: ListBullets,
+      title: "Bullet List",
     },
     {
-      title: "Numbered List",
-      description: "Create a numbered list",
-      icon: ListNumbers,
       command: ({ editor, range }) => {
         editor.chain().focus().deleteRange(range).toggleOrderedList().run();
       },
+      description: "Create a numbered list",
+      icon: ListNumbers,
+      title: "Numbered List",
     },
     {
-      title: "Quote",
-      description: "Capture a quote",
-      icon: Quotes,
       command: ({ editor, range }) => {
         editor.chain().focus().deleteRange(range).toggleBlockquote().run();
       },
+      description: "Capture a quote",
+      icon: Quotes,
+      title: "Quote",
     },
     {
-      title: "Code Block",
-      description: "Display code with syntax highlighting",
-      icon: Code,
       command: ({ editor, range }) => {
         editor.chain().focus().deleteRange(range).toggleCodeBlock().run();
       },
+      description: "Display code with syntax highlighting",
+      icon: Code,
+      title: "Code Block",
     },
     {
-      title: "Divider",
-      description: "Insert a horizontal divider",
-      icon: Minus,
       command: ({ editor, range }) => {
         editor.chain().focus().deleteRange(range).setHorizontalRule().run();
       },
+      description: "Insert a horizontal divider",
+      icon: Minus,
+      title: "Divider",
     },
   ];
 
   if (onImageUpload) {
     commands.push({
-      title: "Image",
-      description: "Upload an image",
-      icon: Image,
       command: ({ editor, range }) => {
         editor.chain().focus().deleteRange(range).run();
         onImageUpload();
       },
+      description: "Upload an image",
+      icon: Image,
+      title: "Image",
     });
   }
 
   if (onVideoUpload) {
     commands.push({
-      title: "Video",
-      description: "Upload a video",
-      icon: VideoCamera,
       command: ({ editor, range }) => {
         editor.chain().focus().deleteRange(range).run();
         onVideoUpload();
       },
+      description: "Upload a video",
+      icon: VideoCamera,
+      title: "Video",
     });
   }
 

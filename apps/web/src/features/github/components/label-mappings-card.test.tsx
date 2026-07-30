@@ -169,14 +169,14 @@ import { LabelMappingsSection } from "./label-mappings-card";
 afterEach(cleanup);
 
 const defaultProps = {
-  mappings: [],
   githubLabels: [],
-  tags: [],
   isAdmin: true,
   isLoadingLabels: false,
+  mappings: [],
   onAddMapping: vi.fn(),
   onDeleteMapping: vi.fn(),
   onFetchLabels: vi.fn(),
+  tags: [],
 };
 
 describe("LabelMappingsSection", () => {
@@ -203,11 +203,11 @@ describe("LabelMappingsSection", () => {
     const mappings = [
       {
         _id: "map1" as never,
-        githubLabelName: "bug",
-        githubLabelColor: "ff0000",
         autoSync: true,
-        tagName: "Bug",
+        githubLabelColor: "ff0000",
+        githubLabelName: "bug",
         tagColor: "00ff00",
+        tagName: "Bug",
       },
     ];
     render(<LabelMappingsSection {...defaultProps} mappings={mappings} />);
@@ -220,8 +220,8 @@ describe("LabelMappingsSection", () => {
     const mappings = [
       {
         _id: "map1" as never,
-        githubLabelName: "feature",
         autoSync: false,
+        githubLabelName: "feature",
         tagName: "Feature",
       },
     ];
@@ -233,8 +233,8 @@ describe("LabelMappingsSection", () => {
     const mappings = [
       {
         _id: "map1" as never,
-        githubLabelName: "feature",
         autoSync: false,
+        githubLabelName: "feature",
       },
     ];
     render(<LabelMappingsSection {...defaultProps} mappings={mappings} />);
@@ -245,8 +245,8 @@ describe("LabelMappingsSection", () => {
     const mappings = [
       {
         _id: "map1" as never,
-        githubLabelName: "bug",
         autoSync: true,
+        githubLabelName: "bug",
       },
     ];
     render(<LabelMappingsSection {...defaultProps} mappings={mappings} />);
@@ -257,8 +257,8 @@ describe("LabelMappingsSection", () => {
     const mappings = [
       {
         _id: "map1" as never,
-        githubLabelName: "bug",
         autoSync: true,
+        githubLabelName: "bug",
       },
     ];
     render(
@@ -277,8 +277,8 @@ describe("LabelMappingsSection", () => {
     const mappings = [
       {
         _id: "map1" as never,
-        githubLabelName: "bug",
         autoSync: false,
+        githubLabelName: "bug",
       },
     ];
     render(

@@ -10,21 +10,20 @@ export default defineConfig({
   build: {
     lib: {
       entry: resolve(import.meta.dirname, "src/index.ts"),
-      name: "RefletChangelogWidget",
       fileName: () => "changelog-widget.js",
       formats: ["iife"],
+      name: "RefletChangelogWidget",
     },
-    outDir: "dist",
     minify: "terser",
+    outDir: "dist",
     rolldownOptions: {},
   },
   define: {
-    "process.env.NODE_ENV": JSON.stringify("production"),
     __CONVEX_URL__: JSON.stringify(CONVEX_URL),
+    "process.env.NODE_ENV": JSON.stringify("production"),
   },
   plugins: [
     {
-      name: "copy-to-web-public",
       closeBundle() {
         const src = resolve(import.meta.dirname, "dist/changelog-widget.js");
         const dest = resolve(
@@ -42,6 +41,7 @@ export default defineConfig({
           );
         }
       },
+      name: "copy-to-web-public",
     },
   ],
 });

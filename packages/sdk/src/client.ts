@@ -234,8 +234,8 @@ export class Reflet {
    */
   private buildHeaders(): Record<string, string> {
     const headers: Record<string, string> = {
-      "Content-Type": "application/json",
       Authorization: `Bearer ${this.publicKey}`,
+      "Content-Type": "application/json",
     };
 
     const token = this.userToken ?? this.generateUserToken();
@@ -297,9 +297,9 @@ export class Reflet {
     let response: Response;
     try {
       response = await fetch(`${this.baseUrl}${path}`, {
-        method,
-        headers: this.buildHeaders(),
         body: body ? JSON.stringify(body) : undefined,
+        headers: this.buildHeaders(),
+        method,
       });
     } catch (networkError) {
       const message =
@@ -344,17 +344,17 @@ export class Reflet {
    */
   private generateUserToken(): string | undefined {
     if (!this.user) {
-      return undefined;
+      return;
     }
 
     // Simple base64 encoding for client-side use
     // In production, tokens should be signed server-side
     const payload = {
-      id: this.user.id,
       email: this.user.email,
-      name: this.user.name,
-      iat: Math.floor(Date.now() / 1000),
       exp: Math.floor(Date.now() / 1000) + 86_400, // 24 hours
+      iat: Math.floor(Date.now() / 1000),
+      id: this.user.id,
+      name: this.user.name,
     };
 
     const header = btoa(JSON.stringify({ alg: "none", typ: "JWT" }));

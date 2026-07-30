@@ -144,8 +144,8 @@ afterEach(cleanup);
 
 const defaultProps = {
   hasWebhook: false,
-  isSettingUp: false,
   isAdmin: true,
+  isSettingUp: false,
   onSetup: vi.fn(),
 };
 

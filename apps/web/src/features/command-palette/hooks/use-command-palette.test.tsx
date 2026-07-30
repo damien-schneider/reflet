@@ -56,7 +56,7 @@ describe("useCommandPalette", () => {
 
     it("hides admin items when isAdmin is false", () => {
       const { result } = renderHook(
-        () => useCommandPalette({ orgSlug: "my-org", isAdmin: false }),
+        () => useCommandPalette({ isAdmin: false, orgSlug: "my-org" }),
         { wrapper }
       );
       const adminItems = result.current.filteredItems.filter(
@@ -67,7 +67,7 @@ describe("useCommandPalette", () => {
 
     it("shows admin items when isAdmin is true", () => {
       const { result } = renderHook(
-        () => useCommandPalette({ orgSlug: "my-org", isAdmin: true }),
+        () => useCommandPalette({ isAdmin: true, orgSlug: "my-org" }),
         { wrapper }
       );
       const adminItems = result.current.filteredItems.filter(
@@ -128,9 +128,9 @@ describe("useCommandPalette", () => {
       act(() => {
         document.dispatchEvent(
           new KeyboardEvent("keydown", {
+            bubbles: true,
             key: "k",
             metaKey: true,
-            bubbles: true,
           })
         );
       });
@@ -147,9 +147,9 @@ describe("useCommandPalette", () => {
       act(() => {
         document.dispatchEvent(
           new KeyboardEvent("keydown", {
-            key: "k",
-            ctrlKey: true,
             bubbles: true,
+            ctrlKey: true,
+            key: "k",
           })
         );
       });
@@ -167,9 +167,9 @@ describe("useCommandPalette", () => {
       act(() => {
         document.dispatchEvent(
           new KeyboardEvent("keydown", {
+            bubbles: true,
             key: "k",
             metaKey: true,
-            bubbles: true,
           })
         );
       });
@@ -179,9 +179,9 @@ describe("useCommandPalette", () => {
       act(() => {
         document.dispatchEvent(
           new KeyboardEvent("keydown", {
+            bubbles: true,
             key: "k",
             metaKey: true,
-            bubbles: true,
           })
         );
       });
@@ -197,8 +197,8 @@ describe("useCommandPalette", () => {
       act(() => {
         document.dispatchEvent(
           new KeyboardEvent("keydown", {
-            key: "k",
             bubbles: true,
+            key: "k",
           })
         );
       });
@@ -217,9 +217,9 @@ describe("useCommandPalette", () => {
       act(() => {
         document.dispatchEvent(
           new KeyboardEvent("keydown", {
+            bubbles: true,
             key: "k",
             metaKey: true,
-            bubbles: true,
           })
         );
       });

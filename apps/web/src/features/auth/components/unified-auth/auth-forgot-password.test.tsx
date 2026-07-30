@@ -24,13 +24,6 @@ vi.mock("@/components/ui/field", () => ({
     children: React.ReactNode;
     className?: string;
   }) => <div className={className}>{children}</div>,
-  FieldLabel: ({
-    children,
-    htmlFor,
-  }: {
-    children: React.ReactNode;
-    htmlFor?: string;
-  }) => <label htmlFor={htmlFor}>{children}</label>,
   FieldError: ({
     errors,
     "data-testid": testId,
@@ -41,6 +34,13 @@ vi.mock("@/components/ui/field", () => ({
     errors && errors.length > 0 ? (
       <span data-testid={testId}>{errors[0]?.message}</span>
     ) : null,
+  FieldLabel: ({
+    children,
+    htmlFor,
+  }: {
+    children: React.ReactNode;
+    htmlFor?: string;
+  }) => <label htmlFor={htmlFor}>{children}</label>,
 }));
 
 vi.mock("@/components/ui/input", () => ({
@@ -51,9 +51,9 @@ vi.mock("@/components/ui/input", () => ({
 
 vi.mock("./lib/auth-validation", () => ({
   animationVariants: {
-    initial: { opacity: 0 },
     animate: { opacity: 1 },
     exit: { opacity: 0 },
+    initial: { opacity: 0 },
   },
 }));
 
@@ -87,11 +87,11 @@ describe("AuthForgotPasswordLink", () => {
 
 describe("AuthConfirmPassword", () => {
   const baseProps = {
+    isSubmitting: false,
+    onConfirmPasswordChange: vi.fn(),
     register: vi.fn(() => ({ name: "confirmPassword" })) as ReturnType<
       typeof vi.fn
     >,
-    isSubmitting: false,
-    onConfirmPasswordChange: vi.fn(),
     setValue: vi.fn(),
     trigger: vi.fn(),
   };

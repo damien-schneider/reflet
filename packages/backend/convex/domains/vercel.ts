@@ -31,34 +31,34 @@ const getProjectId = (): string => {
   return projectId;
 };
 
-export const validateDomainFormat = (domain: string): boolean => {
-  return DOMAIN_FORMAT_REGEX.test(domain.toLowerCase());
-};
+export const validateDomainFormat = (domain: string): boolean =>
+  DOMAIN_FORMAT_REGEX.test(domain.toLowerCase());
 
 const vercelDomainResponseSchema = z.object({
-  name: z.string(),
   apexName: z.string().optional(),
-  projectId: z.string().optional(),
-  verified: z.boolean().optional(),
-  verification: z
-    .array(
-      z.object({
-        type: z.string(),
-        domain: z.string(),
-        value: z.string(),
-        reason: z.string().optional(),
-      })
-    )
-    .optional(),
   error: z
     .object({
       code: z.string(),
       message: z.string(),
     })
     .optional(),
+  name: z.string(),
+  projectId: z.string().optional(),
+  verification: z
+    .array(
+      z.object({
+        domain: z.string(),
+        reason: z.string().optional(),
+        type: z.string(),
+        value: z.string(),
+      })
+    )
+    .optional(),
+  verified: z.boolean().optional(),
 });
 
 const vercelDomainConfigSchema = z.object({
+  acceptedChallenges: z.array(z.string()).optional(),
   configuredBy: z
     .union([
       z.literal("A"),
@@ -68,34 +68,19 @@ const vercelDomainConfigSchema = z.object({
       z.null(),
     ])
     .optional(),
-  acceptedChallenges: z.array(z.string()).optional(),
   misconfigured: z.boolean(),
 });
 
 export const addDomainToVercel = internalAction({
   args: { domain: v.string() },
-  returns: v.object({
-    success: v.boolean(),
-    verification: v.optional(
-      v.array(
-        v.object({
-          type: v.string(),
-          domain: v.string(),
-          value: v.string(),
-          reason: v.optional(v.string()),
-        })
-      )
-    ),
-    error: v.optional(v.string()),
-  }),
   handler: async (_ctx, args) => {
     const projectId = getProjectId();
     const response = await fetch(
       `${VERCEL_API_BASE}/v10/projects/${projectId}/domains?${getTeamParam()}`,
       {
-        method: "POST",
-        headers: getVercelHeaders(),
         body: JSON.stringify({ name: args.domain }),
+        headers: getVercelHeaders(),
+        method: "POST",
       }
     );
 
@@ -103,34 +88,44 @@ export const addDomainToVercel = internalAction({
     const data = vercelDomainResponseSchema.parse(raw);
 
     if (data.error) {
-      return { success: false, error: data.error.message };
+      return { error: data.error.message, success: false };
     }
 
     return {
       success: true,
       verification: data.verification?.map((v) => ({
-        type: v.type,
         domain: v.domain,
-        value: v.value,
         reason: v.reason,
+        type: v.type,
+        value: v.value,
       })),
     };
   },
+  returns: v.object({
+    error: v.optional(v.string()),
+    success: v.boolean(),
+    verification: v.optional(
+      v.array(
+        v.object({
+          domain: v.string(),
+          reason: v.optional(v.string()),
+          type: v.string(),
+          value: v.string(),
+        })
+      )
+    ),
+  }),
 });
 
 export const removeDomainFromVercel = internalAction({
   args: { domain: v.string() },
-  returns: v.object({
-    success: v.boolean(),
-    error: v.optional(v.string()),
-  }),
   handler: async (_ctx, args) => {
     const projectId = getProjectId();
     const response = await fetch(
       `${VERCEL_API_BASE}/v9/projects/${projectId}/domains/${args.domain}?${getTeamParam()}`,
       {
-        method: "DELETE",
         headers: getVercelHeaders(),
+        method: "DELETE",
       }
     );
 
@@ -140,36 +135,26 @@ export const removeDomainFromVercel = internalAction({
         typeof raw === "object" && raw !== null && "error" in raw
           ? String((raw as { error: { message: string } }).error.message)
           : "Failed to remove domain from Vercel";
-      return { success: false, error: errorMessage };
+      return { error: errorMessage, success: false };
     }
 
     return { success: true };
   },
+  returns: v.object({
+    error: v.optional(v.string()),
+    success: v.boolean(),
+  }),
 });
 
 export const verifyDomain = internalAction({
   args: { domain: v.string() },
-  returns: v.object({
-    verified: v.boolean(),
-    verification: v.optional(
-      v.array(
-        v.object({
-          type: v.string(),
-          domain: v.string(),
-          value: v.string(),
-          reason: v.optional(v.string()),
-        })
-      )
-    ),
-    error: v.optional(v.string()),
-  }),
   handler: async (_ctx, args) => {
     const projectId = getProjectId();
     const response = await fetch(
       `${VERCEL_API_BASE}/v9/projects/${projectId}/domains/${args.domain}/verify?${getTeamParam()}`,
       {
-        method: "POST",
         headers: getVercelHeaders(),
+        method: "POST",
       }
     );
 
@@ -177,41 +162,50 @@ export const verifyDomain = internalAction({
     const data = vercelDomainResponseSchema.parse(raw);
 
     if (data.error) {
-      return { verified: false, error: data.error.message };
+      return { error: data.error.message, verified: false };
     }
 
     return {
-      verified: data.verified ?? false,
       verification: data.verification?.map((v) => ({
-        type: v.type,
         domain: v.domain,
-        value: v.value,
         reason: v.reason,
+        type: v.type,
+        value: v.value,
       })),
+      verified: data.verified ?? false,
     };
   },
+  returns: v.object({
+    error: v.optional(v.string()),
+    verification: v.optional(
+      v.array(
+        v.object({
+          domain: v.string(),
+          reason: v.optional(v.string()),
+          type: v.string(),
+          value: v.string(),
+        })
+      )
+    ),
+    verified: v.boolean(),
+  }),
 });
 
 export const getDomainConfig = internalAction({
   args: { domain: v.string() },
-  returns: v.object({
-    misconfigured: v.boolean(),
-    configuredBy: v.optional(v.string()),
-    error: v.optional(v.string()),
-  }),
   handler: async (_ctx, args) => {
     const response = await fetch(
       `${VERCEL_API_BASE}/v6/domains/${args.domain}/config?${getTeamParam()}`,
       {
-        method: "GET",
         headers: getVercelHeaders(),
+        method: "GET",
       }
     );
 
     if (!response.ok) {
       return {
-        misconfigured: true,
         error: "Failed to get domain configuration",
+        misconfigured: true,
       };
     }
 
@@ -219,8 +213,13 @@ export const getDomainConfig = internalAction({
     const data = vercelDomainConfigSchema.parse(raw);
 
     return {
-      misconfigured: data.misconfigured,
       configuredBy: data.configuredBy ?? undefined,
+      misconfigured: data.misconfigured,
     };
   },
+  returns: v.object({
+    configuredBy: v.optional(v.string()),
+    error: v.optional(v.string()),
+    misconfigured: v.boolean(),
+  }),
 });

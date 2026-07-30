@@ -10,27 +10,27 @@ const mockSetEditable = vi.fn();
 const mockFocus = vi.fn();
 
 const mockEditor = {
-  commands: { setContent: mockSetContent, focus: mockFocus },
-  storage: {
-    markdown: { getMarkdown: vi.fn(() => "") },
-    characterCount: { characters: vi.fn(() => 10) },
-  },
-  setEditable: mockSetEditable,
-  on: vi.fn(),
-  off: vi.fn(),
+  commands: { focus: mockFocus, setContent: mockSetContent },
   destroy: vi.fn(),
+  off: vi.fn(),
+  on: vi.fn(),
+  setEditable: mockSetEditable,
+  storage: {
+    characterCount: { characters: vi.fn(() => 10) },
+    markdown: { getMarkdown: vi.fn(() => "") },
+  },
 };
 
 let useEditorConfig: Record<string, unknown> | null = null;
 
 vi.mock("@tiptap/react", () => ({
+  EditorContent: ({ editor }: { editor: unknown }) => (
+    <div data-testid="editor-content">{editor ? "Editor" : "No editor"}</div>
+  ),
   useEditor: vi.fn((config: Record<string, unknown>) => {
     useEditorConfig = config;
     return mockEditor;
   }),
-  EditorContent: ({ editor }: { editor: unknown }) => (
-    <div data-testid="editor-content">{editor ? "Editor" : "No editor"}</div>
-  ),
 }));
 
 vi.mock("@tiptap/starter-kit", () => ({
@@ -181,9 +181,9 @@ describe("TiptapInlineEditor", () => {
         handleKeyDown: (view: unknown, event: KeyboardEvent) => boolean;
       };
       const event = new KeyboardEvent("keydown", {
+        cancelable: true,
         key: "Enter",
         metaKey: true,
-        cancelable: true,
       });
       vi.spyOn(event, "preventDefault");
       const result = handleKeyDown(null, event);

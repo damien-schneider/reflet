@@ -4,12 +4,11 @@ import { internalMutation, mutation } from "../_generated/server";
 import { getAuthUser } from "../shared/utils";
 
 // Helper to generate slug from name
-const generateSlug = (name: string): string => {
-  return name
+const generateSlug = (name: string): string =>
+  name
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
-};
 
 // ============================================
 // INTERNAL MUTATIONS (for testing and internal use)
@@ -21,9 +20,9 @@ const generateSlug = (name: string): string => {
  */
 export const createOrganization = internalMutation({
   args: {
+    isPublic: v.optional(v.boolean()),
     name: v.string(),
     slug: v.optional(v.string()),
-    isPublic: v.optional(v.boolean()),
     userId: v.string(),
   },
   handler: async (ctx, args) => {
@@ -41,77 +40,77 @@ export const createOrganization = internalMutation({
     const now = Date.now();
 
     const orgId = await ctx.db.insert("organizations", {
+      createdAt: now,
+      isPublic: args.isPublic ?? false,
       name: args.name,
       slug,
-      isPublic: args.isPublic ?? false,
-      subscriptionTier: "free",
       subscriptionStatus: "none",
-      createdAt: now,
+      subscriptionTier: "free",
     });
 
     await ctx.db.insert("organizationMembers", {
-      organizationId: orgId,
-      userId: args.userId,
-      role: "owner",
       createdAt: now,
+      organizationId: orgId,
+      role: "owner",
+      userId: args.userId,
     });
 
     const DEFAULT_STATUSES = [
-      { name: "Backlog", color: "#6b7280", icon: "clock", order: 0 },
-      { name: "Planned", color: "#3b82f6", icon: "calendar", order: 1 },
-      { name: "In Progress", color: "#8b5cf6", icon: "spinner", order: 2 },
-      { name: "Done", color: "#22c55e", icon: "check-circle", order: 3 },
+      { color: "#6b7280", icon: "clock", name: "Backlog", order: 0 },
+      { color: "#3b82f6", icon: "calendar", name: "Planned", order: 1 },
+      { color: "#8b5cf6", icon: "spinner", name: "In Progress", order: 2 },
+      { color: "#22c55e", icon: "check-circle", name: "Done", order: 3 },
     ];
 
     for (const status of DEFAULT_STATUSES) {
       await ctx.db.insert("organizationStatuses", {
-        organizationId: orgId,
-        name: status.name,
         color: status.color,
-        icon: status.icon,
-        order: status.order,
         createdAt: now,
+        icon: status.icon,
+        name: status.name,
+        order: status.order,
+        organizationId: orgId,
         updatedAt: now,
       });
     }
 
     const DEFAULT_TAGS = [
       {
-        name: "Feature Request",
-        slug: "feature-request",
         color: "#3b82f6",
         description: "New feature suggestions and ideas",
+        name: "Feature Request",
+        slug: "feature-request",
       },
       {
-        name: "Bug Report",
-        slug: "bug-report",
         color: "#ef4444",
         description: "Issues and problems to be fixed",
+        name: "Bug Report",
+        slug: "bug-report",
       },
       {
-        name: "Enhancement",
-        slug: "enhancement",
         color: "#8b5cf6",
         description: "Improvements to existing features",
+        name: "Enhancement",
+        slug: "enhancement",
       },
       {
-        name: "Question",
-        slug: "question",
         color: "#f59e0b",
         description: "Questions and support requests",
+        name: "Question",
+        slug: "question",
       },
     ];
 
     for (const tag of DEFAULT_TAGS) {
       await ctx.db.insert("tags", {
-        organizationId: orgId,
-        name: tag.name,
-        slug: tag.slug,
         color: tag.color,
+        createdAt: now,
         description: tag.description,
         isDoneStatus: false,
         isRoadmapLane: false,
-        createdAt: now,
+        name: tag.name,
+        organizationId: orgId,
+        slug: tag.slug,
         updatedAt: now,
       });
     }
@@ -159,9 +158,9 @@ export const updateOrganizationSlug = internalMutation({
  */
 export const create = mutation({
   args: {
+    isPublic: v.optional(v.boolean()),
     name: v.string(),
     slug: v.optional(v.string()),
-    isPublic: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -180,77 +179,77 @@ export const create = mutation({
     const now = Date.now();
 
     const orgId = await ctx.db.insert("organizations", {
+      createdAt: now,
+      isPublic: args.isPublic ?? false,
       name: args.name,
       slug,
-      isPublic: args.isPublic ?? false,
-      subscriptionTier: "free",
       subscriptionStatus: "none",
-      createdAt: now,
+      subscriptionTier: "free",
     });
 
     await ctx.db.insert("organizationMembers", {
-      organizationId: orgId,
-      userId: user._id,
-      role: "owner",
       createdAt: now,
+      organizationId: orgId,
+      role: "owner",
+      userId: user._id,
     });
 
     const DEFAULT_STATUSES = [
-      { name: "Backlog", color: "#6b7280", icon: "clock", order: 0 },
-      { name: "Planned", color: "#3b82f6", icon: "calendar", order: 1 },
-      { name: "In Progress", color: "#8b5cf6", icon: "spinner", order: 2 },
-      { name: "Done", color: "#22c55e", icon: "check-circle", order: 3 },
+      { color: "#6b7280", icon: "clock", name: "Backlog", order: 0 },
+      { color: "#3b82f6", icon: "calendar", name: "Planned", order: 1 },
+      { color: "#8b5cf6", icon: "spinner", name: "In Progress", order: 2 },
+      { color: "#22c55e", icon: "check-circle", name: "Done", order: 3 },
     ];
 
     for (const status of DEFAULT_STATUSES) {
       await ctx.db.insert("organizationStatuses", {
-        organizationId: orgId,
-        name: status.name,
         color: status.color,
-        icon: status.icon,
-        order: status.order,
         createdAt: now,
+        icon: status.icon,
+        name: status.name,
+        order: status.order,
+        organizationId: orgId,
         updatedAt: now,
       });
     }
 
     const DEFAULT_TAGS = [
       {
-        name: "Feature Request",
-        slug: "feature-request",
         color: "#3b82f6",
         description: "New feature suggestions and ideas",
+        name: "Feature Request",
+        slug: "feature-request",
       },
       {
-        name: "Bug Report",
-        slug: "bug-report",
         color: "#ef4444",
         description: "Issues and problems to be fixed",
+        name: "Bug Report",
+        slug: "bug-report",
       },
       {
-        name: "Enhancement",
-        slug: "enhancement",
         color: "#8b5cf6",
         description: "Improvements to existing features",
+        name: "Enhancement",
+        slug: "enhancement",
       },
       {
-        name: "Question",
-        slug: "question",
         color: "#f59e0b",
         description: "Questions and support requests",
+        name: "Question",
+        slug: "question",
       },
     ];
 
     for (const tag of DEFAULT_TAGS) {
       await ctx.db.insert("tags", {
-        organizationId: orgId,
-        name: tag.name,
-        slug: tag.slug,
         color: tag.color,
+        createdAt: now,
         description: tag.description,
         isDoneStatus: false,
         isRoadmapLane: false,
-        createdAt: now,
+        name: tag.name,
+        organizationId: orgId,
+        slug: tag.slug,
         updatedAt: now,
       });
     }
@@ -264,13 +263,6 @@ export const create = mutation({
  */
 export const update = mutation({
   args: {
-    id: v.id("organizations"),
-    name: v.optional(v.string()),
-    slug: v.optional(v.string()),
-    logo: v.optional(v.string()),
-    isPublic: v.optional(v.boolean()),
-    primaryColor: v.optional(v.string()),
-    customCss: v.optional(v.string()),
     changelogSettings: v.optional(
       v.object({
         autoPublishImported: v.optional(v.boolean()),
@@ -282,6 +274,7 @@ export const update = mutation({
         versionPrefix: v.optional(v.string()),
       })
     ),
+    customCss: v.optional(v.string()),
     feedbackSettings: v.optional(
       v.object({
         allowAnonymousVoting: v.optional(v.boolean()),
@@ -292,11 +285,6 @@ export const update = mutation({
             v.literal("editorial-feed")
           )
         ),
-        defaultTagId: v.optional(v.id("tags")),
-        defaultView: v.optional(
-          v.union(v.literal("roadmap"), v.literal("feed"))
-        ),
-        requireApproval: v.optional(v.boolean()),
         defaultStatus: v.optional(
           v.union(
             v.literal("open"),
@@ -307,6 +295,10 @@ export const update = mutation({
             v.literal("closed")
           )
         ),
+        defaultTagId: v.optional(v.id("tags")),
+        defaultView: v.optional(
+          v.union(v.literal("roadmap"), v.literal("feed"))
+        ),
         milestoneStyle: v.optional(
           v.union(
             v.literal("track"),
@@ -314,8 +306,15 @@ export const update = mutation({
             v.literal("dashboard-timeline")
           )
         ),
+        requireApproval: v.optional(v.boolean()),
       })
     ),
+    id: v.id("organizations"),
+    isPublic: v.optional(v.boolean()),
+    logo: v.optional(v.string()),
+    name: v.optional(v.string()),
+    primaryColor: v.optional(v.string()),
+    slug: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);

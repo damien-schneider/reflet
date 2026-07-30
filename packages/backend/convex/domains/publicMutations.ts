@@ -23,10 +23,9 @@ const ROOT_DOMAIN = "reflet.app";
 
 export const addDomain = mutation({
   args: {
-    organizationId: v.id("organizations"),
     domain: v.string(),
+    organizationId: v.id("organizations"),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
     const domain = args.domain.toLowerCase().trim();
@@ -96,21 +95,21 @@ export const addDomain = mutation({
     // Set domain on org and schedule Vercel API action
     await ctx.db.patch(args.organizationId, {
       customDomain: domain,
-      customDomainStatus: "pending_verification",
       customDomainError: undefined,
+      customDomainStatus: "pending_verification",
       customDomainVerification: undefined,
     });
 
     await ctx.scheduler.runAfter(0, internal.domains.actions.addDomainAction, {
-      organizationId: args.organizationId,
       domain,
+      organizationId: args.organizationId,
     });
   },
+  returns: v.null(),
 });
 
 export const removeDomain = mutation({
   args: { organizationId: v.id("organizations") },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
@@ -143,24 +142,24 @@ export const removeDomain = mutation({
 
     // Mark as removing
     await ctx.db.patch(args.organizationId, {
-      customDomainStatus: "removing",
       customDomainError: undefined,
+      customDomainStatus: "removing",
     });
 
     await ctx.scheduler.runAfter(
       0,
       internal.domains.actions.removeDomainAction,
       {
-        organizationId: args.organizationId,
         domain,
+        organizationId: args.organizationId,
       }
     );
   },
+  returns: v.null(),
 });
 
 export const checkVerification = mutation({
   args: { organizationId: v.id("organizations") },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
@@ -189,9 +188,10 @@ export const checkVerification = mutation({
       0,
       internal.domains.actions.verifyDomainAction,
       {
-        organizationId: args.organizationId,
         domain: org.customDomain,
+        organizationId: args.organizationId,
       }
     );
   },
+  returns: v.null(),
 });

@@ -23,9 +23,9 @@ const makeFeedbackItem = (
   }> = {}
 ) => ({
   _id: overrides._id ?? "fb1",
+  status: overrides.status ?? "open",
   title: overrides.title ?? "Test feedback",
   voteCount: overrides.voteCount ?? 5,
-  status: overrides.status ?? "open",
 });
 
 describe("MilestoneFeedbackPreview", () => {

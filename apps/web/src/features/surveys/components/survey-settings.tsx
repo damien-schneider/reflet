@@ -54,16 +54,16 @@ export function SurveySettings({ survey }: SurveySettingsProps) {
     setIsSaving(true);
     try {
       await updateSurvey({
+        description: description.trim() || undefined,
+        maxResponses: maxResponses ? Number(maxResponses) : undefined,
         surveyId: survey._id,
         title: title.trim(),
-        description: description.trim() || undefined,
-        triggerType,
         triggerConfig: {
-          pageUrl: pageUrl.trim() || undefined,
           delayMs: delayMs ? Number(delayMs) : undefined,
+          pageUrl: pageUrl.trim() || undefined,
           sampleRate: sampleRate ? Number(sampleRate) : undefined,
         },
-        maxResponses: maxResponses ? Number(maxResponses) : undefined,
+        triggerType,
       });
       toast.success("Settings saved");
     } catch {

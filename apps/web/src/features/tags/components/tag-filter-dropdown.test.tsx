@@ -209,7 +209,7 @@ vi.mock("@/components/ui/popover", () => ({
     if (render) {
       return (
         <div data-testid="popover-trigger">
-          {render({ ...props, onClick, className })}
+          {render({ ...props, className, onClick })}
           {children}
         </div>
       );
@@ -259,9 +259,9 @@ afterEach(() => {
 const ORG_ID = "org123" as Id<"organizations">;
 
 const makeTags = () => [
-  { _id: "tag1" as Id<"tags">, name: "Bug", color: "red" },
-  { _id: "tag2" as Id<"tags">, name: "Feature", color: "blue" },
-  { _id: "tag3" as Id<"tags">, name: "Improvement", color: "green" },
+  { _id: "tag1" as Id<"tags">, color: "red", name: "Bug" },
+  { _id: "tag2" as Id<"tags">, color: "blue", name: "Feature" },
+  { _id: "tag3" as Id<"tags">, color: "green", name: "Improvement" },
 ];
 
 describe("TagFilterDropdown", () => {
@@ -269,11 +269,11 @@ describe("TagFilterDropdown", () => {
   const mockUpdateTag = vi.fn().mockResolvedValue(undefined);
 
   const defaultProps = {
-    organizationId: ORG_ID,
-    tags: makeTags(),
-    selectedTagIds: [] as string[],
-    onTagChange: vi.fn(),
     isAdmin: false,
+    onTagChange: vi.fn(),
+    organizationId: ORG_ID,
+    selectedTagIds: [] as string[],
+    tags: makeTags(),
   };
 
   beforeEach(() => {
@@ -412,9 +412,9 @@ describe("TagFilterDropdown", () => {
       .closest("[data-testid='command-item']");
     fireEvent.click(createItem!);
     expect(mockCreateTag).toHaveBeenCalledWith({
-      organizationId: ORG_ID,
-      name: "NewTag",
       color: "orange",
+      name: "NewTag",
+      organizationId: ORG_ID,
     });
   });
 
@@ -426,7 +426,7 @@ describe("TagFilterDropdown", () => {
 
   it("shows tag with icon when present", () => {
     const tags = [
-      { _id: "tag1" as Id<"tags">, name: "Bug", color: "red", icon: "🐛" },
+      { _id: "tag1" as Id<"tags">, color: "red", icon: "🐛", name: "Bug" },
     ];
     render(<TagFilterDropdown {...defaultProps} tags={tags} />);
     expect(screen.getByText("🐛")).toBeInTheDocument();
@@ -502,8 +502,8 @@ describe("TagFilterDropdown", () => {
     const tags = [
       {
         _id: "tag1" as Id<"tags">,
-        name: "Very Long Tag Name That Should Still Display",
         color: "red",
+        name: "Very Long Tag Name That Should Still Display",
       },
     ];
     render(<TagFilterDropdown {...defaultProps} tags={tags} />);

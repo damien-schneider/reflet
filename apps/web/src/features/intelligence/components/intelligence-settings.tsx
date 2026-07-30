@@ -121,10 +121,10 @@ export function IntelligenceSettings({
     setIsSaving(true);
     try {
       await updateConfig({
-        organizationId,
-        scanFrequency,
         competitorTrackingEnabled,
+        organizationId,
         redditEnabled,
+        scanFrequency,
         webSearchEnabled,
       });
       toast.success("Settings saved");

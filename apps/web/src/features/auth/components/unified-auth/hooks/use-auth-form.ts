@@ -70,6 +70,12 @@ export function useAuthForm(onSuccess?: () => void): UseAuthFormReturn {
   } = useForm<SignUpFormData>({
     // Pass mode via context so resolver always gets current value
     context: { mode },
+    defaultValues: {
+      confirmPassword: "",
+      email: "",
+      password: "",
+    },
+    mode: "onChange",
     resolver: (async (data, resolverContext, options) => {
       try {
         // Read mode from context (which updates on re-render) instead of closure
@@ -86,12 +92,6 @@ export function useAuthForm(onSuccess?: () => void): UseAuthFormReturn {
         return { errors: {}, values: data };
       }
     }) as Resolver<SignUpFormData>,
-    mode: "onChange",
-    defaultValues: {
-      email: "",
-      password: "",
-      confirmPassword: "",
-    },
   });
 
   const watchedEmail = watch("email");
@@ -160,11 +160,6 @@ export function useAuthForm(onSuccess?: () => void): UseAuthFormReturn {
           password: data.password,
         },
         {
-          onSuccess: () => {
-            capture("sign_in_completed", { method: "email" });
-            onSuccess?.();
-            router.push("/pending-invitations");
-          },
           onError: (error) => {
             const message = error.error.message || error.error.statusText || "";
             const lowerMessage = message.toLowerCase();
@@ -180,6 +175,11 @@ export function useAuthForm(onSuccess?: () => void): UseAuthFormReturn {
             }
             setApiError(formatAuthError(message || "Sign in error"));
           },
+          onSuccess: () => {
+            capture("sign_in_completed", { method: "email" });
+            onSuccess?.();
+            router.push("/pending-invitations");
+          },
         }
       );
     } else {
@@ -189,12 +189,19 @@ export function useAuthForm(onSuccess?: () => void): UseAuthFormReturn {
 
       await authClient.signUp.email(
         {
-          email: data.email,
-          password: data.password,
-          name: placeholderName,
           callbackURL: "/auth/verify-email",
+          email: data.email,
+          name: placeholderName,
+          password: data.password,
         },
         {
+          onError: (error) => {
+            setApiError(
+              formatAuthError(
+                error.error.message || error.error.statusText || "Sign up error"
+              )
+            );
+          },
           onSuccess: () => {
             capture("sign_up_completed", { method: "email" });
             onSuccess?.();
@@ -210,13 +217,6 @@ export function useAuthForm(onSuccess?: () => void): UseAuthFormReturn {
               );
             }
           },
-          onError: (error) => {
-            setApiError(
-              formatAuthError(
-                error.error.message || error.error.statusText || "Sign up error"
-              )
-            );
-          },
         }
       );
     }
@@ -229,24 +229,24 @@ export function useAuthForm(onSuccess?: () => void): UseAuthFormReturn {
   };
 
   return {
-    email,
-    setEmail,
-    emailChecked,
-    isCheckingEmail,
-    mode,
     apiError,
-    setApiError,
-    passwordMismatchError,
-    setPasswordMismatchError,
-    register,
-    handleSubmit,
+    email,
+    emailChecked,
     errors,
+    handleEmailChange,
+    handleSubmit,
+    isCheckingEmail,
     isSubmitting,
-    watch,
+    mode,
+    onSubmit,
+    passwordMismatchError,
+    register,
+    resetMode,
+    setApiError,
+    setEmail,
+    setPasswordMismatchError,
     setValue,
     trigger,
-    onSubmit,
-    handleEmailChange,
-    resetMode,
+    watch,
   };
 }

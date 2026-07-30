@@ -62,8 +62,8 @@ export default function MembersGearPage({
       return;
     }
     await removeMember({
-      organizationId: org._id,
       memberId: removingMember.id,
+      organizationId: org._id,
     });
     setRemovingMember(null);
   };

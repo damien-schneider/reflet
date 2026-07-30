@@ -51,8 +51,8 @@ export function MembersSection({
       return;
     }
     await removeMember({
-      organizationId,
       memberId: removingMember.id,
+      organizationId,
     });
     setRemovingMember(null);
   };

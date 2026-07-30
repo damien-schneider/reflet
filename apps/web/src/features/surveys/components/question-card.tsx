@@ -24,12 +24,12 @@ import { cn } from "@/lib/utils";
 import type { QuestionConfig, QuestionType } from "@/store/surveys";
 
 const QUESTION_TYPE_ICON_MAP = {
-  rating: Star,
-  nps: ChartBar,
-  text: TextAa,
-  single_choice: RadioButton,
-  multiple_choice: CheckSquare,
   boolean: ToggleLeft,
+  multiple_choice: CheckSquare,
+  nps: ChartBar,
+  rating: Star,
+  single_choice: RadioButton,
+  text: TextAa,
 } as const;
 
 interface QuestionCardProps {

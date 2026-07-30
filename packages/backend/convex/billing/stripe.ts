@@ -37,14 +37,14 @@ export async function createCheckoutSessionWithPromoCodes(args: {
 }): Promise<{ sessionId: string; url: string | null }> {
   const stripe = new Stripe(stripeClient.apiKey);
   const session = await stripe.checkout.sessions.create({
-    mode: "subscription",
+    allow_promotion_codes: true,
+    cancel_url: args.cancelUrl,
     customer: args.customerId,
     line_items: [{ price: args.priceId, quantity: 1 }],
-    success_url: args.successUrl,
-    cancel_url: args.cancelUrl,
-    allow_promotion_codes: true,
     metadata: { orgId: args.orgId },
+    mode: "subscription",
     subscription_data: { metadata: { orgId: args.orgId } },
+    success_url: args.successUrl,
   });
 
   return { sessionId: session.id, url: session.url };

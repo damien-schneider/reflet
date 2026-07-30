@@ -21,13 +21,13 @@ export class RefletWidget {
   private shadowRoot: ShadowRoot | null = null;
   private pollTimer: number | null = null;
   private readonly state: WidgetState = {
-    isOpen: false,
-    isLoading: true,
     config: null,
     conversationId: null,
-    visitorId: null,
+    isLoading: true,
+    isOpen: false,
     messages: [],
     unreadCount: 0,
+    visitorId: null,
   };
 
   constructor(widgetId: string) {
@@ -167,9 +167,9 @@ export class RefletWidget {
         this.widgetId,
         this.state.visitorId,
         {
-          userAgent: navigator.userAgent,
-          url: window.location.href,
           referrer: document.referrer || undefined,
+          url: window.location.href,
+          userAgent: navigator.userAgent,
         }
       );
 
@@ -211,11 +211,11 @@ export class RefletWidget {
     input.style.height = "auto";
 
     const tempMessage: WidgetMessage = {
-      id: `temp_${Date.now()}`,
       body,
-      senderType: "user",
-      isOwnMessage: true,
       createdAt: Date.now(),
+      id: `temp_${Date.now()}`,
+      isOwnMessage: true,
+      senderType: "user",
     };
     this.state.messages.push(tempMessage);
     this.render();

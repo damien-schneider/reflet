@@ -6,7 +6,6 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       {
-        userAgent: "*",
         allow: "/",
         disallow: [
           "/admin/",
@@ -19,52 +18,53 @@ export default function robots(): MetadataRoute.Robots {
           "/settings/",
           "/_next/",
         ],
+        userAgent: "*",
       },
       // GEO: Allow AI/LLM crawlers on public content
       {
+        allow: ["/", "/blog/", "/docs/", "/features", "/pricing"],
+        disallow: ["/api/", "/dashboard/", "/auth/"],
         userAgent: "GPTBot",
-        allow: ["/", "/blog/", "/docs/", "/features", "/pricing"],
-        disallow: ["/api/", "/dashboard/", "/auth/"],
       },
       {
+        allow: ["/", "/blog/", "/docs/", "/features", "/pricing"],
+        disallow: ["/api/", "/dashboard/", "/auth/"],
         userAgent: "ChatGPT-User",
-        allow: ["/", "/blog/", "/docs/", "/features", "/pricing"],
-        disallow: ["/api/", "/dashboard/", "/auth/"],
       },
       {
+        allow: ["/", "/blog/", "/docs/", "/features", "/pricing"],
+        disallow: ["/api/", "/dashboard/", "/auth/"],
         userAgent: "ClaudeBot",
-        allow: ["/", "/blog/", "/docs/", "/features", "/pricing"],
-        disallow: ["/api/", "/dashboard/", "/auth/"],
       },
       {
+        allow: ["/", "/blog/", "/docs/", "/features", "/pricing"],
+        disallow: ["/api/", "/dashboard/", "/auth/"],
         userAgent: "anthropic-ai",
-        allow: ["/", "/blog/", "/docs/", "/features", "/pricing"],
-        disallow: ["/api/", "/dashboard/", "/auth/"],
       },
       {
+        allow: ["/", "/blog/", "/docs/", "/features", "/pricing"],
+        disallow: ["/api/", "/dashboard/", "/auth/"],
         userAgent: "PerplexityBot",
-        allow: ["/", "/blog/", "/docs/", "/features", "/pricing"],
-        disallow: ["/api/", "/dashboard/", "/auth/"],
       },
       {
+        allow: "/",
+        disallow: ["/api/", "/dashboard/", "/auth/"],
         userAgent: "Google-Extended",
-        allow: "/",
-        disallow: ["/api/", "/dashboard/", "/auth/"],
       },
       {
+        allow: "/",
+        disallow: ["/api/", "/dashboard/", "/auth/"],
         userAgent: "Applebot-Extended",
-        allow: "/",
-        disallow: ["/api/", "/dashboard/", "/auth/"],
       },
       {
+        allow: ["/", "/blog/", "/docs/"],
+        disallow: ["/api/", "/dashboard/", "/auth/"],
         userAgent: "Bytespider",
-        allow: ["/", "/blog/", "/docs/"],
-        disallow: ["/api/", "/dashboard/", "/auth/"],
       },
       {
-        userAgent: "cohere-ai",
         allow: ["/", "/blog/", "/docs/"],
         disallow: ["/api/", "/dashboard/", "/auth/"],
+        userAgent: "cohere-ai",
       },
     ],
     sitemap: `${BASE_URL}/sitemap.xml`,

@@ -10,9 +10,7 @@ export async function generateMetadata({
   const { orgSlug } = await params;
 
   return generatePageMetadata({
-    title: `${orgSlug} - System Status`,
     description: `Check the current status and uptime of ${orgSlug} services. View active incidents and subscribe to updates.`,
-    path: `/${orgSlug}/status`,
     keywords: [
       "status",
       "uptime",
@@ -21,6 +19,8 @@ export async function generateMetadata({
       "service health",
       orgSlug,
     ],
+    path: `/${orgSlug}/status`,
+    title: `${orgSlug} - System Status`,
   });
 }
 

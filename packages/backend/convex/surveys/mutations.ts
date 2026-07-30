@@ -18,12 +18,12 @@ import {
 } from "./tableFields";
 
 const questionInput = v.object({
-  type: questionTypeValidator,
-  title: v.string(),
-  description: v.optional(v.string()),
-  required: v.boolean(),
-  order: v.number(),
   config: questionConfigValidator,
+  description: v.optional(v.string()),
+  order: v.number(),
+  required: v.boolean(),
+  title: v.string(),
+  type: questionTypeValidator,
 });
 
 // ============================================
@@ -32,17 +32,16 @@ const questionInput = v.object({
 
 export const create = mutation({
   args: {
-    organizationId: v.id("organizations"),
-    title: v.string(),
     description: v.optional(v.string()),
-    triggerType: triggerTypeValidator,
-    triggerConfig: triggerConfigValidator,
-    startsAt: v.optional(v.number()),
     endsAt: v.optional(v.number()),
     maxResponses: v.optional(v.number()),
+    organizationId: v.id("organizations"),
     questions: v.array(questionInput),
+    startsAt: v.optional(v.number()),
+    title: v.string(),
+    triggerConfig: triggerConfigValidator,
+    triggerType: triggerTypeValidator,
   },
-  returns: v.id("surveys"),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
@@ -58,51 +57,51 @@ export const create = mutation({
     }
 
     const surveyId = await ctx.db.insert("surveys", {
-      organizationId: args.organizationId,
-      title: args.title,
-      description: args.description,
-      status: "draft",
-      createdBy: user._id,
-      triggerType: args.triggerType,
-      triggerConfig: args.triggerConfig,
-      startsAt: args.startsAt,
-      endsAt: args.endsAt,
-      maxResponses: args.maxResponses,
-      responseCount: 0,
       completionRate: 0,
       createdAt: Date.now(),
+      createdBy: user._id,
+      description: args.description,
+      endsAt: args.endsAt,
+      maxResponses: args.maxResponses,
+      organizationId: args.organizationId,
+      responseCount: 0,
+      startsAt: args.startsAt,
+      status: "draft",
+      title: args.title,
+      triggerConfig: args.triggerConfig,
+      triggerType: args.triggerType,
       updatedAt: Date.now(),
     });
 
     for (const question of args.questions) {
       await ctx.db.insert("surveyQuestions", {
-        surveyId,
-        organizationId: args.organizationId,
-        type: question.type,
-        title: question.title,
-        description: question.description,
-        required: question.required,
-        order: question.order,
         config: question.config,
+        description: question.description,
+        order: question.order,
+        organizationId: args.organizationId,
+        required: question.required,
+        surveyId,
+        title: question.title,
+        type: question.type,
       });
     }
 
     return surveyId;
   },
+  returns: v.id("surveys"),
 });
 
 export const update = mutation({
   args: {
-    surveyId: v.id("surveys"),
-    title: v.optional(v.string()),
     description: v.optional(v.string()),
-    triggerType: v.optional(triggerTypeValidator),
-    triggerConfig: triggerConfigValidator,
-    startsAt: v.optional(v.number()),
     endsAt: v.optional(v.number()),
     maxResponses: v.optional(v.number()),
+    startsAt: v.optional(v.number()),
+    surveyId: v.id("surveys"),
+    title: v.optional(v.string()),
+    triggerConfig: triggerConfigValidator,
+    triggerType: v.optional(triggerTypeValidator),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
@@ -137,14 +136,14 @@ export const update = mutation({
 
     return null;
   },
+  returns: v.null(),
 });
 
 export const updateStatus = mutation({
   args: {
-    surveyId: v.id("surveys"),
     status: surveyStatusValidator,
+    surveyId: v.id("surveys"),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
@@ -171,13 +170,13 @@ export const updateStatus = mutation({
 
     return null;
   },
+  returns: v.null(),
 });
 
 export const deleteSurvey = mutation({
   args: {
     surveyId: v.id("surveys"),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
@@ -226,6 +225,7 @@ export const deleteSurvey = mutation({
 
     return null;
   },
+  returns: v.null(),
 });
 
 export const duplicate = mutation({
@@ -233,7 +233,6 @@ export const duplicate = mutation({
     surveyId: v.id("surveys"),
     title: v.optional(v.string()),
   },
-  returns: v.id("surveys"),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
@@ -254,19 +253,19 @@ export const duplicate = mutation({
     }
 
     const newSurveyId = await ctx.db.insert("surveys", {
-      organizationId: survey.organizationId,
-      title: args.title ?? `${survey.title} (copy)`,
-      description: survey.description,
-      status: "draft",
-      createdBy: user._id,
-      triggerType: survey.triggerType,
-      triggerConfig: survey.triggerConfig,
-      startsAt: undefined,
-      endsAt: undefined,
-      maxResponses: survey.maxResponses,
-      responseCount: 0,
       completionRate: 0,
       createdAt: Date.now(),
+      createdBy: user._id,
+      description: survey.description,
+      endsAt: undefined,
+      maxResponses: survey.maxResponses,
+      organizationId: survey.organizationId,
+      responseCount: 0,
+      startsAt: undefined,
+      status: "draft",
+      title: args.title ?? `${survey.title} (copy)`,
+      triggerConfig: survey.triggerConfig,
+      triggerType: survey.triggerType,
       updatedAt: Date.now(),
     });
 
@@ -279,50 +278,30 @@ export const duplicate = mutation({
 
     for (const question of sortedQuestions) {
       await ctx.db.insert("surveyQuestions", {
-        surveyId: newSurveyId,
-        organizationId: survey.organizationId,
-        type: question.type,
-        title: question.title,
-        description: question.description,
-        required: question.required,
-        order: question.order,
-        config: question.config,
         conditionalLogic: question.conditionalLogic,
+        config: question.config,
+        description: question.description,
+        order: question.order,
+        organizationId: survey.organizationId,
+        required: question.required,
+        surveyId: newSurveyId,
+        title: question.title,
+        type: question.type,
       });
     }
 
     return newSurveyId;
   },
+  returns: v.id("surveys"),
 });
 
 export const listResponsesDetailed = query({
   args: {
-    surveyId: v.id("surveys"),
-    status: v.optional(responseStatusValidator),
-    limit: v.optional(v.number()),
     cursor: v.optional(v.string()),
+    limit: v.optional(v.number()),
+    status: v.optional(responseStatusValidator),
+    surveyId: v.id("surveys"),
   },
-  returns: v.object({
-    responses: v.array(
-      v.object({
-        _id: v.id("surveyResponses"),
-        status: responseStatusValidator,
-        respondentId: v.optional(v.string()),
-        pageUrl: v.optional(v.string()),
-        startedAt: v.number(),
-        completedAt: v.optional(v.number()),
-        answers: v.array(
-          v.object({
-            questionId: v.id("surveyQuestions"),
-            questionTitle: v.string(),
-            questionType: questionTypeValidator,
-            value: answerValueValidator,
-          })
-        ),
-      })
-    ),
-    hasMore: v.boolean(),
-  }),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
@@ -376,11 +355,6 @@ export const listResponsesDetailed = query({
 
         return {
           _id: response._id,
-          status: response.status,
-          respondentId: response.respondentId,
-          pageUrl: response.metadata?.pageUrl,
-          startedAt: response.startedAt,
-          completedAt: response.completedAt,
           answers: answers.map((a) => {
             const question = questionMap.get(a.questionId);
             return {
@@ -390,15 +364,41 @@ export const listResponsesDetailed = query({
               value: a.value,
             };
           }),
+          completedAt: response.completedAt,
+          pageUrl: response.metadata?.pageUrl,
+          respondentId: response.respondentId,
+          startedAt: response.startedAt,
+          status: response.status,
         };
       })
     );
 
     return {
-      responses,
       hasMore: startIndex + pageSize < filtered.length,
+      responses,
     };
   },
+  returns: v.object({
+    hasMore: v.boolean(),
+    responses: v.array(
+      v.object({
+        _id: v.id("surveyResponses"),
+        answers: v.array(
+          v.object({
+            questionId: v.id("surveyQuestions"),
+            questionTitle: v.string(),
+            questionType: questionTypeValidator,
+            value: answerValueValidator,
+          })
+        ),
+        completedAt: v.optional(v.number()),
+        pageUrl: v.optional(v.string()),
+        respondentId: v.optional(v.string()),
+        startedAt: v.number(),
+        status: responseStatusValidator,
+      })
+    ),
+  }),
 });
 
 // ============================================
@@ -407,16 +407,15 @@ export const listResponsesDetailed = query({
 
 export const addQuestion = mutation({
   args: {
-    surveyId: v.id("surveys"),
-    type: questionTypeValidator,
-    title: v.string(),
-    description: v.optional(v.string()),
-    required: v.boolean(),
-    order: v.number(),
-    config: questionConfigValidator,
     conditionalLogic: conditionalLogicValidator,
+    config: questionConfigValidator,
+    description: v.optional(v.string()),
+    order: v.number(),
+    required: v.boolean(),
+    surveyId: v.id("surveys"),
+    title: v.string(),
+    type: questionTypeValidator,
   },
-  returns: v.id("surveyQuestions"),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
@@ -437,31 +436,31 @@ export const addQuestion = mutation({
     }
 
     return await ctx.db.insert("surveyQuestions", {
-      surveyId: args.surveyId,
-      organizationId: survey.organizationId,
-      type: args.type,
-      title: args.title,
-      description: args.description,
-      required: args.required,
-      order: args.order,
-      config: args.config,
       conditionalLogic: args.conditionalLogic,
+      config: args.config,
+      description: args.description,
+      order: args.order,
+      organizationId: survey.organizationId,
+      required: args.required,
+      surveyId: args.surveyId,
+      title: args.title,
+      type: args.type,
     });
   },
+  returns: v.id("surveyQuestions"),
 });
 
 export const updateQuestion = mutation({
   args: {
-    questionId: v.id("surveyQuestions"),
-    type: v.optional(questionTypeValidator),
-    title: v.optional(v.string()),
-    description: v.optional(v.string()),
-    required: v.optional(v.boolean()),
-    order: v.optional(v.number()),
-    config: questionConfigValidator,
     conditionalLogic: conditionalLogicValidator,
+    config: questionConfigValidator,
+    description: v.optional(v.string()),
+    order: v.optional(v.number()),
+    questionId: v.id("surveyQuestions"),
+    required: v.optional(v.boolean()),
+    title: v.optional(v.string()),
+    type: v.optional(questionTypeValidator),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
@@ -498,13 +497,13 @@ export const updateQuestion = mutation({
 
     return null;
   },
+  returns: v.null(),
 });
 
 export const deleteQuestion = mutation({
   args: {
     questionId: v.id("surveyQuestions"),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
@@ -533,14 +532,14 @@ export const deleteQuestion = mutation({
 
     return null;
   },
+  returns: v.null(),
 });
 
 export const reorderQuestions = mutation({
   args: {
-    surveyId: v.id("surveys"),
     questionIds: v.array(v.id("surveyQuestions")),
+    surveyId: v.id("surveys"),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
@@ -566,6 +565,7 @@ export const reorderQuestions = mutation({
 
     return null;
   },
+  returns: v.null(),
 });
 
 // ============================================
@@ -577,20 +577,6 @@ export const list = query({
     organizationId: v.id("organizations"),
     status: v.optional(surveyStatusValidator),
   },
-  returns: v.array(
-    v.object({
-      _id: v.id("surveys"),
-      title: v.string(),
-      description: v.optional(v.string()),
-      status: surveyStatusValidator,
-      triggerType: triggerTypeValidator,
-      responseCount: v.number(),
-      completionRate: v.number(),
-      questionCount: v.number(),
-      createdAt: v.number(),
-      updatedAt: v.number(),
-    })
-  ),
   handler: async (ctx, args) => {
     const { status } = args;
     const surveysQuery = status
@@ -616,57 +602,39 @@ export const list = query({
 
         return {
           _id: survey._id,
-          title: survey.title,
-          description: survey.description,
-          status: survey.status,
-          triggerType: survey.triggerType,
-          responseCount: survey.responseCount,
           completionRate: survey.completionRate,
-          questionCount: questions.length,
           createdAt: survey.createdAt,
+          description: survey.description,
+          questionCount: questions.length,
+          responseCount: survey.responseCount,
+          status: survey.status,
+          title: survey.title,
+          triggerType: survey.triggerType,
           updatedAt: survey.updatedAt,
         };
       })
     );
   },
+  returns: v.array(
+    v.object({
+      _id: v.id("surveys"),
+      completionRate: v.number(),
+      createdAt: v.number(),
+      description: v.optional(v.string()),
+      questionCount: v.number(),
+      responseCount: v.number(),
+      status: surveyStatusValidator,
+      title: v.string(),
+      triggerType: triggerTypeValidator,
+      updatedAt: v.number(),
+    })
+  ),
 });
 
 export const get = query({
   args: {
     surveyId: v.id("surveys"),
   },
-  returns: v.union(
-    v.object({
-      _id: v.id("surveys"),
-      organizationId: v.id("organizations"),
-      title: v.string(),
-      description: v.optional(v.string()),
-      status: surveyStatusValidator,
-      createdBy: v.string(),
-      triggerType: triggerTypeValidator,
-      triggerConfig: triggerConfigValidator,
-      startsAt: v.optional(v.number()),
-      endsAt: v.optional(v.number()),
-      maxResponses: v.optional(v.number()),
-      responseCount: v.number(),
-      completionRate: v.number(),
-      questions: v.array(
-        v.object({
-          _id: v.id("surveyQuestions"),
-          type: questionTypeValidator,
-          title: v.string(),
-          description: v.optional(v.string()),
-          required: v.boolean(),
-          order: v.number(),
-          config: questionConfigValidator,
-          conditionalLogic: conditionalLogicValidator,
-        })
-      ),
-      createdAt: v.number(),
-      updatedAt: v.number(),
-    }),
-    v.null()
-  ),
   handler: async (ctx, args) => {
     const survey = await ctx.db.get(args.surveyId);
     if (!survey) {
@@ -682,32 +650,64 @@ export const get = query({
 
     return {
       _id: survey._id,
-      organizationId: survey.organizationId,
-      title: survey.title,
-      description: survey.description,
-      status: survey.status,
+      completionRate: survey.completionRate,
+      createdAt: survey.createdAt,
       createdBy: survey.createdBy,
-      triggerType: survey.triggerType,
-      triggerConfig: survey.triggerConfig,
-      startsAt: survey.startsAt,
+      description: survey.description,
       endsAt: survey.endsAt,
       maxResponses: survey.maxResponses,
-      responseCount: survey.responseCount,
-      completionRate: survey.completionRate,
+      organizationId: survey.organizationId,
       questions: sortedQuestions.map((q) => ({
         _id: q._id,
-        type: q.type,
-        title: q.title,
-        description: q.description,
-        required: q.required,
-        order: q.order,
-        config: q.config,
         conditionalLogic: q.conditionalLogic,
+        config: q.config,
+        description: q.description,
+        order: q.order,
+        required: q.required,
+        title: q.title,
+        type: q.type,
       })),
-      createdAt: survey.createdAt,
+      responseCount: survey.responseCount,
+      startsAt: survey.startsAt,
+      status: survey.status,
+      title: survey.title,
+      triggerConfig: survey.triggerConfig,
+      triggerType: survey.triggerType,
       updatedAt: survey.updatedAt,
     };
   },
+  returns: v.union(
+    v.object({
+      _id: v.id("surveys"),
+      completionRate: v.number(),
+      createdAt: v.number(),
+      createdBy: v.string(),
+      description: v.optional(v.string()),
+      endsAt: v.optional(v.number()),
+      maxResponses: v.optional(v.number()),
+      organizationId: v.id("organizations"),
+      questions: v.array(
+        v.object({
+          _id: v.id("surveyQuestions"),
+          conditionalLogic: conditionalLogicValidator,
+          config: questionConfigValidator,
+          description: v.optional(v.string()),
+          order: v.number(),
+          required: v.boolean(),
+          title: v.string(),
+          type: questionTypeValidator,
+        })
+      ),
+      responseCount: v.number(),
+      startsAt: v.optional(v.number()),
+      status: surveyStatusValidator,
+      title: v.string(),
+      triggerConfig: triggerConfigValidator,
+      triggerType: triggerTypeValidator,
+      updatedAt: v.number(),
+    }),
+    v.null()
+  ),
 });
 
 // ============================================
@@ -716,14 +716,13 @@ export const get = query({
 
 export const startResponse = internalMutation({
   args: {
-    surveyId: v.id("surveys"),
-    organizationId: v.id("organizations"),
     externalUserId: v.optional(v.id("externalUsers")),
-    respondentId: v.optional(v.string()),
+    organizationId: v.id("organizations"),
     pageUrl: v.optional(v.string()),
+    respondentId: v.optional(v.string()),
+    surveyId: v.id("surveys"),
     userAgent: v.optional(v.string()),
   },
-  returns: v.id("surveyResponses"),
   handler: async (ctx, args) => {
     const survey = await ctx.db.get(args.surveyId);
     if (!survey) {
@@ -739,27 +738,27 @@ export const startResponse = internalMutation({
     }
 
     return await ctx.db.insert("surveyResponses", {
-      surveyId: args.surveyId,
-      organizationId: args.organizationId,
       externalUserId: args.externalUserId,
-      respondentId: args.respondentId,
-      status: "in_progress",
-      startedAt: Date.now(),
       metadata: {
         pageUrl: args.pageUrl,
         userAgent: args.userAgent,
       },
+      organizationId: args.organizationId,
+      respondentId: args.respondentId,
+      startedAt: Date.now(),
+      status: "in_progress",
+      surveyId: args.surveyId,
     });
   },
+  returns: v.id("surveyResponses"),
 });
 
 export const submitAnswer = internalMutation({
   args: {
-    responseId: v.id("surveyResponses"),
     questionId: v.id("surveyQuestions"),
+    responseId: v.id("surveyResponses"),
     value: answerValueValidator,
   },
-  returns: v.id("surveyAnswers"),
   handler: async (ctx, args) => {
     const response = await ctx.db.get(args.responseId);
     if (!response) {
@@ -779,28 +778,28 @@ export const submitAnswer = internalMutation({
 
     if (existing) {
       await ctx.db.patch(existing._id, {
-        value: args.value,
         answeredAt: Date.now(),
+        value: args.value,
       });
       return existing._id;
     }
 
     return await ctx.db.insert("surveyAnswers", {
-      responseId: args.responseId,
-      questionId: args.questionId,
-      surveyId: response.surveyId,
-      organizationId: response.organizationId,
-      value: args.value,
       answeredAt: Date.now(),
+      organizationId: response.organizationId,
+      questionId: args.questionId,
+      responseId: args.responseId,
+      surveyId: response.surveyId,
+      value: args.value,
     });
   },
+  returns: v.id("surveyAnswers"),
 });
 
 export const completeResponse = internalMutation({
   args: {
     responseId: v.id("surveyResponses"),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const response = await ctx.db.get(args.responseId);
     if (!response) {
@@ -808,8 +807,8 @@ export const completeResponse = internalMutation({
     }
 
     await ctx.db.patch(args.responseId, {
-      status: "completed",
       completedAt: Date.now(),
+      status: "completed",
     });
 
     const survey = await ctx.db.get(response.surveyId);
@@ -824,17 +823,18 @@ export const completeResponse = internalMutation({
       ).length;
 
       await ctx.db.patch(response.surveyId, {
-        responseCount: totalResponses.length,
         completionRate:
           totalResponses.length > 0
             ? Math.round((completedCount / totalResponses.length) * 100)
             : 0,
+        responseCount: totalResponses.length,
         updatedAt: Date.now(),
       });
     }
 
     return null;
   },
+  returns: v.null(),
 });
 
 // ============================================
@@ -871,7 +871,7 @@ function computeNumericStats(answers: Array<{ value: AnswerValue }>): {
     counts.set(key, (counts.get(key) ?? 0) + 1);
   }
   const distribution = Array.from(counts.entries())
-    .map(([label, count]) => ({ label, count }))
+    .map(([label, count]) => ({ count, label }))
     .sort((a, b) => Number(a.label) - Number(b.label));
 
   return { averageValue, distribution };
@@ -894,7 +894,7 @@ function computeChoiceStats(
     }
   }
   return Array.from(counts.entries())
-    .map(([label, count]) => ({ label, count }))
+    .map(([label, count]) => ({ count, label }))
     .sort((a, b) => b.count - a.count);
 }
 
@@ -907,8 +907,8 @@ function computeBooleanStats(
     counts.set(key, (counts.get(key) ?? 0) + 1);
   }
   return Array.from(counts.entries()).map(([label, count]) => ({
-    label,
     count,
+    label,
   }));
 }
 
@@ -916,29 +916,6 @@ export const getAnalytics = query({
   args: {
     surveyId: v.id("surveys"),
   },
-  returns: v.object({
-    totalResponses: v.number(),
-    completedResponses: v.number(),
-    abandonedResponses: v.number(),
-    completionRate: v.number(),
-    questionStats: v.array(
-      v.object({
-        questionId: v.id("surveyQuestions"),
-        title: v.string(),
-        type: questionTypeValidator,
-        totalAnswers: v.number(),
-        averageValue: v.optional(v.number()),
-        distribution: v.optional(
-          v.array(
-            v.object({
-              label: v.string(),
-              count: v.number(),
-            })
-          )
-        ),
-      })
-    ),
-  }),
   handler: async (ctx, args) => {
     const responses = await ctx.db
       .query("surveyResponses")
@@ -973,44 +950,57 @@ export const getAnalytics = query({
         const boolDist = isBoolean ? computeBooleanStats(answers) : undefined;
 
         return {
-          questionId: question._id,
-          title: question.title,
-          type: question.type,
-          totalAnswers: answers.length,
           averageValue: numeric?.averageValue,
           distribution: numeric?.distribution ?? choiceDist ?? boolDist,
+          questionId: question._id,
+          title: question.title,
+          totalAnswers: answers.length,
+          type: question.type,
         };
       })
     );
 
     return {
-      totalResponses: responses.length,
-      completedResponses: completed.length,
       abandonedResponses: abandoned.length,
+      completedResponses: completed.length,
       completionRate:
         responses.length > 0
           ? Math.round((completed.length / responses.length) * 100)
           : 0,
       questionStats,
+      totalResponses: responses.length,
     };
   },
+  returns: v.object({
+    abandonedResponses: v.number(),
+    completedResponses: v.number(),
+    completionRate: v.number(),
+    questionStats: v.array(
+      v.object({
+        averageValue: v.optional(v.number()),
+        distribution: v.optional(
+          v.array(
+            v.object({
+              count: v.number(),
+              label: v.string(),
+            })
+          )
+        ),
+        questionId: v.id("surveyQuestions"),
+        title: v.string(),
+        totalAnswers: v.number(),
+        type: questionTypeValidator,
+      })
+    ),
+    totalResponses: v.number(),
+  }),
 });
 
 export const listResponses = query({
   args: {
-    surveyId: v.id("surveys"),
     status: v.optional(responseStatusValidator),
+    surveyId: v.id("surveys"),
   },
-  returns: v.array(
-    v.object({
-      _id: v.id("surveyResponses"),
-      respondentId: v.optional(v.string()),
-      status: responseStatusValidator,
-      startedAt: v.number(),
-      completedAt: v.optional(v.number()),
-      answerCount: v.number(),
-    })
-  ),
   handler: async (ctx, args) => {
     const { status } = args;
     const responsesQuery = status
@@ -1034,15 +1024,25 @@ export const listResponses = query({
 
         return {
           _id: response._id,
-          respondentId: response.respondentId,
-          status: response.status,
-          startedAt: response.startedAt,
-          completedAt: response.completedAt,
           answerCount: answers.length,
+          completedAt: response.completedAt,
+          respondentId: response.respondentId,
+          startedAt: response.startedAt,
+          status: response.status,
         };
       })
     );
   },
+  returns: v.array(
+    v.object({
+      _id: v.id("surveyResponses"),
+      answerCount: v.number(),
+      completedAt: v.optional(v.number()),
+      respondentId: v.optional(v.string()),
+      startedAt: v.number(),
+      status: responseStatusValidator,
+    })
+  ),
 });
 
 // ============================================
@@ -1054,28 +1054,6 @@ export const getActiveSurvey = internalQuery({
     organizationId: v.id("organizations"),
     triggerType: v.optional(triggerTypeValidator),
   },
-  returns: v.union(
-    v.object({
-      _id: v.id("surveys"),
-      title: v.string(),
-      description: v.optional(v.string()),
-      triggerType: triggerTypeValidator,
-      triggerConfig: triggerConfigValidator,
-      questions: v.array(
-        v.object({
-          _id: v.id("surveyQuestions"),
-          type: questionTypeValidator,
-          title: v.string(),
-          description: v.optional(v.string()),
-          required: v.boolean(),
-          order: v.number(),
-          config: questionConfigValidator,
-          conditionalLogic: conditionalLogicValidator,
-        })
-      ),
-    }),
-    v.null()
-  ),
   handler: async (ctx, args) => {
     const surveysQuery = args.triggerType
       ? ctx.db
@@ -1116,22 +1094,44 @@ export const getActiveSurvey = internalQuery({
 
     return {
       _id: survey._id,
-      title: survey.title,
       description: survey.description,
-      triggerType: survey.triggerType,
-      triggerConfig: survey.triggerConfig,
       questions: sortedQuestions.map((q) => ({
         _id: q._id,
-        type: q.type,
-        title: q.title,
-        description: q.description,
-        required: q.required,
-        order: q.order,
-        config: q.config,
         conditionalLogic: q.conditionalLogic,
+        config: q.config,
+        description: q.description,
+        order: q.order,
+        required: q.required,
+        title: q.title,
+        type: q.type,
       })),
+      title: survey.title,
+      triggerConfig: survey.triggerConfig,
+      triggerType: survey.triggerType,
     };
   },
+  returns: v.union(
+    v.object({
+      _id: v.id("surveys"),
+      description: v.optional(v.string()),
+      questions: v.array(
+        v.object({
+          _id: v.id("surveyQuestions"),
+          conditionalLogic: conditionalLogicValidator,
+          config: questionConfigValidator,
+          description: v.optional(v.string()),
+          order: v.number(),
+          required: v.boolean(),
+          title: v.string(),
+          type: questionTypeValidator,
+        })
+      ),
+      title: v.string(),
+      triggerConfig: triggerConfigValidator,
+      triggerType: triggerTypeValidator,
+    }),
+    v.null()
+  ),
 });
 
 // ============================================
@@ -1142,7 +1142,6 @@ const STALE_RESPONSE_HOURS = 24;
 
 export const abandonStaleResponses = internalMutation({
   args: {},
-  returns: v.object({ abandoned: v.number() }),
   handler: async (ctx) => {
     const cutoff = Date.now() - STALE_RESPONSE_HOURS * 60 * 60 * 1000;
 
@@ -1164,4 +1163,5 @@ export const abandonStaleResponses = internalMutation({
 
     return { abandoned: staleResponses.length };
   },
+  returns: v.object({ abandoned: v.number() }),
 });

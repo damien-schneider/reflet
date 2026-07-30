@@ -77,8 +77,8 @@ vi.mock("@/components/ui/popover", () => ({
 }));
 
 vi.mock("@/lib/milestone-deadline", () => ({
-  getDeadlineInfo: () => null,
   getDeadlineColor: () => "text-muted-foreground",
+  getDeadlineInfo: () => null,
 }));
 
 vi.mock("@/lib/utils", () => ({

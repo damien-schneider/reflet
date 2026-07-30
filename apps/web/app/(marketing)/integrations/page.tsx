@@ -19,10 +19,8 @@ import { H1, H2, H3, Lead } from "@/components/ui/typography";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
-  title: "Integrations",
   description:
     "Connect Reflet to your workflow with native integrations, a public API, and embeddable SDK. Sync feedback with GitHub, Slack, and other tools your team uses.",
-  path: "/integrations",
   keywords: [
     "integrations",
     "api",
@@ -33,6 +31,8 @@ export const metadata: Metadata = generatePageMetadata({
     "webhooks",
     "widgets",
   ],
+  path: "/integrations",
+  title: "Integrations",
 });
 
 interface Integration {
@@ -45,94 +45,94 @@ interface Integration {
 
 const AVAILABLE_INTEGRATIONS: Integration[] = [
   {
-    id: "github",
-    icon: GithubLogo,
-    title: "GitHub",
     description:
       "Sync issues and releases bi-directionally. Import GitHub issues as feedback, auto-publish releases as changelog entries.",
     href: "/docs",
+    icon: GithubLogo,
+    id: "github",
+    title: "GitHub",
   },
   {
-    id: "sdk",
-    icon: Code,
-    title: "SDK & React Hooks",
     description:
       "First-class TypeScript SDK with React hooks. useFeedbackList(), useVote(), useChangelog() - embed feedback natively in your app.",
     href: "/docs/sdk",
+    icon: Code,
+    id: "sdk",
+    title: "SDK & React Hooks",
   },
   {
-    id: "api",
-    icon: TerminalWindow,
-    title: "REST API",
     description:
       "Full CRUD API for feedback, votes, comments, changelog, and roadmap. Authenticate with API keys.",
     href: "/docs/api",
+    icon: TerminalWindow,
+    id: "api",
+    title: "REST API",
   },
   {
-    id: "widgets",
-    icon: Layout,
-    title: "Embeddable Widgets",
     description:
       "Drop-in feedback and changelog widgets. One script tag, works on any site.",
     href: "/docs/widget",
+    icon: Layout,
+    id: "widgets",
+    title: "Embeddable Widgets",
   },
   {
-    id: "email",
-    icon: EnvelopeSimple,
-    title: "Email Notifications",
     description:
       "Automatic email notifications for new feedback, status changes, and changelog updates via Resend.",
+    icon: EnvelopeSimple,
+    id: "email",
+    title: "Email Notifications",
   },
   {
-    id: "push",
-    icon: Bell,
-    title: "Web Push",
     description:
       "Browser push notifications to keep your team and users informed in real-time.",
+    icon: Bell,
+    id: "push",
+    title: "Web Push",
   },
   {
-    id: "mcp",
-    icon: Robot,
-    title: "MCP Server",
     description:
       "Let AI coding assistants like Cursor, Claude Code and VS Code Copilot read and manage your feedback directly via the Model Context Protocol.",
     href: "/docs/mcp",
+    icon: Robot,
+    id: "mcp",
+    title: "MCP Server",
   },
 ] as const;
 
 const COMING_SOON_INTEGRATIONS: Integration[] = [
   {
-    id: "slack",
-    icon: ChatTeardrop,
-    title: "Slack",
     description:
       "Get notified in Slack when feedback is submitted, voted on, or changes status.",
+    icon: ChatTeardrop,
+    id: "slack",
+    title: "Slack",
   },
   {
-    id: "linear",
-    icon: Lightning,
-    title: "Linear",
     description:
       "Create Linear issues from feedback. Status syncs bi-directionally.",
+    icon: Lightning,
+    id: "linear",
+    title: "Linear",
   },
   {
-    id: "jira",
-    icon: Kanban,
-    title: "Jira",
     description: "Push feedback to Jira. Sync statuses across both tools.",
+    icon: Kanban,
+    id: "jira",
+    title: "Jira",
   },
   {
-    id: "discord",
-    icon: DiscordLogo,
-    title: "Discord",
     description:
       "Feedback notifications and slash commands for your Discord community.",
+    icon: DiscordLogo,
+    id: "discord",
+    title: "Discord",
   },
   {
-    id: "zapier",
-    icon: ArrowsClockwise,
-    title: "Zapier",
     description: "Connect Reflet to 5,000+ apps with triggers and actions.",
+    icon: ArrowsClockwise,
+    id: "zapier",
+    title: "Zapier",
   },
 ] as const;
 

@@ -14,30 +14,30 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
         <div
           role="alert"
           style={{
-            display: "flex",
-            minHeight: "100vh",
-            flexDirection: "column",
             alignItems: "center",
+            backgroundColor: "#fafafa",
+            display: "flex",
+            flexDirection: "column",
+            fontFamily: "system-ui, sans-serif",
             justifyContent: "center",
+            minHeight: "100vh",
             padding: "2rem",
             textAlign: "center",
-            fontFamily: "system-ui, sans-serif",
-            backgroundColor: "#fafafa",
           }}
         >
           <div
             style={{
-              display: "flex",
               alignItems: "center",
+              backgroundColor: "rgba(239, 68, 68, 0.1)",
+              borderRadius: "9999px",
+              display: "flex",
+              height: "4rem",
               justifyContent: "center",
               width: "4rem",
-              height: "4rem",
-              borderRadius: "9999px",
-              backgroundColor: "rgba(239, 68, 68, 0.1)",
             }}
           >
             <Warning
-              style={{ width: "2rem", height: "2rem", color: "#ef4444" }}
+              style={{ color: "#ef4444", height: "2rem", width: "2rem" }}
               weight="fill"
             />
           </div>
@@ -45,9 +45,9 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
           <div style={{ marginTop: "1.5rem" }}>
             <h1
               style={{
+                color: "#171717",
                 fontSize: "1.5rem",
                 fontWeight: 600,
-                color: "#171717",
                 margin: 0,
               }}
             >
@@ -55,8 +55,8 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
             </h1>
             <p
               style={{
-                marginTop: "0.5rem",
                 color: "#737373",
+                marginTop: "0.5rem",
                 maxWidth: "28rem",
               }}
             >
@@ -68,14 +68,14 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
           {process.env.NODE_ENV === "development" && error?.message && (
             <code
               style={{
-                marginTop: "1rem",
-                padding: "0.5rem 1rem",
                 backgroundColor: "#f5f5f5",
                 borderRadius: "0.375rem",
-                fontSize: "0.875rem",
                 color: "#737373",
+                fontSize: "0.875rem",
+                marginTop: "1rem",
                 maxWidth: "32rem",
                 overflow: "auto",
+                padding: "0.5rem 1rem",
               }}
             >
               {error.message}
@@ -84,50 +84,50 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
 
           <div
             style={{
-              marginTop: "1.5rem",
               display: "flex",
               gap: "0.75rem",
+              marginTop: "1.5rem",
             }}
           >
             <button
               onClick={reset}
               style={{
-                display: "inline-flex",
                 alignItems: "center",
-                gap: "0.375rem",
-                padding: "0.5rem 1rem",
-                fontSize: "0.875rem",
-                fontWeight: 500,
-                color: "#171717",
                 backgroundColor: "white",
                 border: "1px solid #e5e5e5",
                 borderRadius: "0.5rem",
+                color: "#171717",
                 cursor: "pointer",
+                display: "inline-flex",
+                fontSize: "0.875rem",
+                fontWeight: 500,
+                gap: "0.375rem",
+                padding: "0.5rem 1rem",
               }}
               type="button"
             >
-              <ArrowClockwise style={{ width: "1rem", height: "1rem" }} />
+              <ArrowClockwise style={{ height: "1rem", width: "1rem" }} />
               Try again
             </button>
 
             <a
               href="/"
               style={{
-                display: "inline-flex",
                 alignItems: "center",
-                gap: "0.375rem",
-                padding: "0.5rem 1rem",
-                fontSize: "0.875rem",
-                fontWeight: 500,
-                color: "#737373",
                 backgroundColor: "transparent",
                 border: "1px solid transparent",
                 borderRadius: "0.5rem",
-                textDecoration: "none",
+                color: "#737373",
                 cursor: "pointer",
+                display: "inline-flex",
+                fontSize: "0.875rem",
+                fontWeight: 500,
+                gap: "0.375rem",
+                padding: "0.5rem 1rem",
+                textDecoration: "none",
               }}
             >
-              <House style={{ width: "1rem", height: "1rem" }} />
+              <House style={{ height: "1rem", width: "1rem" }} />
               Go home
             </a>
           </div>

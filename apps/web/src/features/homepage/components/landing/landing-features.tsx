@@ -184,9 +184,9 @@ function MiniApi() {
     <div className="overflow-hidden rounded-lg bg-olive-950 p-2.5 dark:bg-[#0d0d0b]">
       <pre className="font-mono text-[9px] leading-5">
         {[
-          { method: "GET ", color: "text-emerald-400", path: "/api/feedback" },
-          { method: "POST", color: "text-sky-400", path: " /api/feedback" },
-          { method: "HOOK", color: "text-amber-400", path: " status.changed" },
+          { color: "text-emerald-400", method: "GET ", path: "/api/feedback" },
+          { color: "text-sky-400", method: "POST", path: " /api/feedback" },
+          { color: "text-amber-400", method: "HOOK", path: " status.changed" },
         ].map((line, i) => (
           <div
             className="transition-transform duration-300 group-hover:translate-x-0.5"
@@ -206,60 +206,60 @@ function MiniApi() {
 
 const FEATURES = [
   {
-    id: "ai",
-    icon: Brain,
     accent: "text-violet-500",
     accentBg: "bg-violet-500/10 dark:bg-violet-500/15",
-    title: "AI-Powered Triage",
+    icon: Brain,
+    id: "ai",
     span: "sm:col-span-2",
+    title: "AI-Powered Triage",
   },
   {
-    id: "widget",
-    icon: ChatCircleDots,
     accent: "text-emerald-500",
     accentBg: "bg-emerald-500/10 dark:bg-emerald-500/15",
-    title: "Embeddable Widget",
+    icon: ChatCircleDots,
+    id: "widget",
     span: "",
+    title: "Embeddable Widget",
   },
   {
-    id: "github",
-    icon: GithubLogo,
     accent: "text-foreground",
     accentBg: "bg-muted dark:bg-muted",
-    title: "Two-Way GitHub Sync",
+    icon: GithubLogo,
+    id: "github",
     span: "",
+    title: "Two-Way GitHub Sync",
   },
   {
-    id: "realtime",
-    icon: Lightning,
     accent: "text-amber-500",
     accentBg: "bg-amber-500/10 dark:bg-amber-500/15",
-    title: "Real-Time Everything",
+    icon: Lightning,
+    id: "realtime",
     span: "",
+    title: "Real-Time Everything",
   },
   {
-    id: "api",
-    icon: Code,
     accent: "text-sky-500",
     accentBg: "bg-sky-500/10 dark:bg-sky-500/15",
-    title: "REST API & Webhooks",
+    icon: Code,
+    id: "api",
     span: "",
+    title: "REST API & Webhooks",
   },
 ] as const;
 
 const MINI_UI_MAP: Record<string, () => JSX.Element> = {
   ai: MiniAiTriage,
-  widget: MiniWidget,
+  api: MiniApi,
   github: MiniGithubSync,
   realtime: MiniRealtime,
-  api: MiniApi,
+  widget: MiniWidget,
 };
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 
 export default function LandingFeatures() {
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, amount: 0.1 });
+  const isInView = useInView(ref, { amount: 0.1, once: true });
 
   return (
     <section className="py-24 sm:py-32" ref={ref}>

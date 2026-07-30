@@ -18,31 +18,31 @@ function formatUserInfo(user: {
   image?: string | null;
 }) {
   return {
-    name: user.name || undefined,
     email: user.email,
     image: user.image || undefined,
+    name: user.name || undefined,
   };
 }
 
 function formatGuestUserInfo(guestEmail?: string) {
   return guestEmail
-    ? { name: undefined, email: guestEmail, image: undefined }
+    ? { email: guestEmail, image: undefined, name: undefined }
     : undefined;
 }
 
 async function formatAssignedUser(ctx: AuthCtx, assignedTo?: string) {
   if (!assignedTo) {
-    return undefined;
+    return;
   }
   const user = await authComponent.getAnyUserById(ctx, assignedTo);
   if (!user) {
-    return undefined;
+    return;
   }
   return {
-    id: user._id,
-    name: user.name || undefined,
     email: user.email,
+    id: user._id,
     image: user.image || undefined,
+    name: user.name || undefined,
   };
 }
 
@@ -71,6 +71,7 @@ export const listForUser = query({
 
 export const listForAdmin = query({
   args: {
+    assignedTo: v.optional(v.string()),
     organizationId: v.id("organizations"),
     status: v.optional(
       v.array(
@@ -82,7 +83,6 @@ export const listForAdmin = query({
         )
       )
     ),
-    assignedTo: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await authComponent.safeGetAuthUser(ctx);
@@ -142,8 +142,8 @@ export const listForAdmin = query({
 
 export const listForGuest = query({
   args: {
-    organizationId: v.id("organizations"),
     guestId: v.string(),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
     const conversations = await ctx.db
@@ -163,8 +163,8 @@ export const listForGuest = query({
 
 export const get = query({
   args: {
-    id: v.id("supportConversations"),
     guestId: v.optional(v.string()),
+    id: v.id("supportConversations"),
   },
   handler: async (ctx, args) => {
     const user = await authComponent.safeGetAuthUser(ctx);
@@ -184,9 +184,9 @@ export const get = query({
 
       return {
         ...conversation,
-        user: formatGuestUserInfo(conversation.guestEmail),
         assignedUser: await formatAssignedUser(ctx, conversation.assignedTo),
         isAdmin: false,
+        user: formatGuestUserInfo(conversation.guestEmail),
       };
     }
 
@@ -213,22 +213,22 @@ export const get = query({
 
     return {
       ...conversation,
+      assignedUser: await formatAssignedUser(ctx, conversation.assignedTo),
+      isAdmin,
       user: convUser
         ? formatUserInfo(convUser)
         : formatGuestUserInfo(conversation.guestEmail),
-      assignedUser: await formatAssignedUser(ctx, conversation.assignedTo),
-      isAdmin,
     };
   },
 });
 
 export const create = mutation({
   args: {
+    guestEmail: v.optional(v.string()),
+    guestId: v.optional(v.string()),
+    initialMessage: v.string(),
     organizationId: v.id("organizations"),
     subject: v.optional(v.string()),
-    initialMessage: v.string(),
-    guestId: v.optional(v.string()),
-    guestEmail: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await authComponent.safeGetAuthUser(ctx);
@@ -247,27 +247,27 @@ export const create = mutation({
     const now = Date.now();
 
     const conversationId = await ctx.db.insert("supportConversations", {
-      organizationId: args.organizationId,
-      userId: senderId,
-      guestId: user ? undefined : args.guestId,
-      guestEmail: user ? undefined : args.guestEmail,
-      subject: args.subject,
-      status: "open",
-      assignedTo: undefined,
-      lastMessageAt: now,
-      userUnreadCount: 0,
       adminUnreadCount: 1,
+      assignedTo: undefined,
       createdAt: now,
+      guestEmail: user ? undefined : args.guestEmail,
+      guestId: user ? undefined : args.guestId,
+      lastMessageAt: now,
+      organizationId: args.organizationId,
+      status: "open",
+      subject: args.subject,
       updatedAt: now,
+      userId: senderId,
+      userUnreadCount: 0,
     });
 
     await ctx.db.insert("supportMessages", {
+      body: args.initialMessage,
       conversationId,
+      createdAt: now,
+      isRead: false,
       senderId,
       senderType: "user",
-      body: args.initialMessage,
-      isRead: false,
-      createdAt: now,
     });
 
     return conversationId;
@@ -316,8 +316,8 @@ export const updateStatus = mutation({
 
 export const assign = mutation({
   args: {
-    id: v.id("supportConversations"),
     assignedTo: v.optional(v.string()),
+    id: v.id("supportConversations"),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);

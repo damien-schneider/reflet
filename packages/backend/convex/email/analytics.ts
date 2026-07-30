@@ -6,21 +6,9 @@ const MILLISECONDS_PER_DAY = 86_400_000;
 
 export const getEmailStats = query({
   args: {
-    organizationId: v.id("organizations"),
     days: v.optional(v.number()),
+    organizationId: v.id("organizations"),
   },
-  returns: v.object({
-    total: v.number(),
-    delivered: v.number(),
-    opened: v.number(),
-    clicked: v.number(),
-    bounced: v.number(),
-    complained: v.number(),
-    deliveryRate: v.number(),
-    openRate: v.number(),
-    clickRate: v.number(),
-    bounceRate: v.number(),
-  }),
   handler: async (ctx, args) => {
     await getAuthUser(ctx);
 
@@ -37,16 +25,16 @@ export const getEmailStats = query({
     const total = logs.length;
     if (total === 0) {
       return {
-        total: 0,
-        delivered: 0,
-        opened: 0,
-        clicked: 0,
         bounced: 0,
-        complained: 0,
-        deliveryRate: 0,
-        openRate: 0,
-        clickRate: 0,
         bounceRate: 0,
+        clicked: 0,
+        clickRate: 0,
+        complained: 0,
+        delivered: 0,
+        deliveryRate: 0,
+        opened: 0,
+        openRate: 0,
+        total: 0,
       };
     }
 
@@ -75,34 +63,37 @@ export const getEmailStats = query({
     }
 
     return {
-      total,
-      delivered,
-      opened,
-      clicked,
       bounced,
-      complained,
-      deliveryRate: total > 0 ? delivered / total : 0,
-      openRate: delivered > 0 ? opened / delivered : 0,
-      clickRate: delivered > 0 ? clicked / delivered : 0,
       bounceRate: total > 0 ? bounced / total : 0,
+      clicked,
+      clickRate: delivered > 0 ? clicked / delivered : 0,
+      complained,
+      delivered,
+      deliveryRate: total > 0 ? delivered / total : 0,
+      opened,
+      openRate: delivered > 0 ? opened / delivered : 0,
+      total,
     };
   },
+  returns: v.object({
+    bounced: v.number(),
+    bounceRate: v.number(),
+    clicked: v.number(),
+    clickRate: v.number(),
+    complained: v.number(),
+    delivered: v.number(),
+    deliveryRate: v.number(),
+    opened: v.number(),
+    openRate: v.number(),
+    total: v.number(),
+  }),
 });
 
 export const getEmailStatsByType = query({
   args: {
-    organizationId: v.id("organizations"),
     days: v.optional(v.number()),
+    organizationId: v.id("organizations"),
   },
-  returns: v.array(
-    v.object({
-      emailType: v.string(),
-      total: v.number(),
-      delivered: v.number(),
-      opened: v.number(),
-      bounced: v.number(),
-    })
-  ),
   handler: async (ctx, args) => {
     await getAuthUser(ctx);
 
@@ -123,10 +114,10 @@ export const getEmailStatsByType = query({
 
     for (const log of logs) {
       const existing = byType.get(log.emailType) ?? {
-        total: 0,
+        bounced: 0,
         delivered: 0,
         opened: 0,
-        bounced: 0,
+        total: 0,
       };
       existing.total++;
       if (log.deliveredAt) {
@@ -146,22 +137,22 @@ export const getEmailStatsByType = query({
       ...stats,
     }));
   },
+  returns: v.array(
+    v.object({
+      bounced: v.number(),
+      delivered: v.number(),
+      emailType: v.string(),
+      opened: v.number(),
+      total: v.number(),
+    })
+  ),
 });
 
 export const getEmailTimeline = query({
   args: {
-    organizationId: v.id("organizations"),
     days: v.optional(v.number()),
+    organizationId: v.id("organizations"),
   },
-  returns: v.array(
-    v.object({
-      date: v.string(),
-      sent: v.number(),
-      delivered: v.number(),
-      opened: v.number(),
-      bounced: v.number(),
-    })
-  ),
   handler: async (ctx, args) => {
     await getAuthUser(ctx);
 
@@ -183,10 +174,10 @@ export const getEmailTimeline = query({
     for (const log of logs) {
       const date = new Date(log.sentAt).toISOString().split("T")[0] ?? "";
       const existing = byDay.get(date) ?? {
-        sent: 0,
+        bounced: 0,
         delivered: 0,
         opened: 0,
-        bounced: 0,
+        sent: 0,
       };
       existing.sent++;
       if (log.deliveredAt) {
@@ -205,26 +196,22 @@ export const getEmailTimeline = query({
       .map(([date, stats]) => ({ date, ...stats }))
       .sort((a, b) => a.date.localeCompare(b.date));
   },
+  returns: v.array(
+    v.object({
+      bounced: v.number(),
+      date: v.string(),
+      delivered: v.number(),
+      opened: v.number(),
+      sent: v.number(),
+    })
+  ),
 });
 
 export const getRecentEmails = query({
   args: {
-    organizationId: v.id("organizations"),
     limit: v.optional(v.number()),
+    organizationId: v.id("organizations"),
   },
-  returns: v.array(
-    v.object({
-      _id: v.id("emailSendLog"),
-      to: v.string(),
-      subject: v.string(),
-      emailType: v.string(),
-      status: v.string(),
-      sentAt: v.number(),
-      deliveredAt: v.optional(v.number()),
-      openedAt: v.optional(v.number()),
-      bouncedAt: v.optional(v.number()),
-    })
-  ),
   handler: async (ctx, args) => {
     await getAuthUser(ctx);
 
@@ -240,29 +227,35 @@ export const getRecentEmails = query({
 
     return logs.map((log) => ({
       _id: log._id,
-      to: log.to,
-      subject: log.subject,
-      emailType: log.emailType,
-      status: log.status,
-      sentAt: log.sentAt,
-      deliveredAt: log.deliveredAt,
-      openedAt: log.openedAt,
       bouncedAt: log.bouncedAt,
+      deliveredAt: log.deliveredAt,
+      emailType: log.emailType,
+      openedAt: log.openedAt,
+      sentAt: log.sentAt,
+      status: log.status,
+      subject: log.subject,
+      to: log.to,
     }));
   },
+  returns: v.array(
+    v.object({
+      _id: v.id("emailSendLog"),
+      bouncedAt: v.optional(v.number()),
+      deliveredAt: v.optional(v.number()),
+      emailType: v.string(),
+      openedAt: v.optional(v.number()),
+      sentAt: v.number(),
+      status: v.string(),
+      subject: v.string(),
+      to: v.string(),
+    })
+  ),
 });
 
 export const getReleaseEmailStats = query({
   args: {
     releaseId: v.id("releases"),
   },
-  returns: v.object({
-    total: v.number(),
-    delivered: v.number(),
-    opened: v.number(),
-    clicked: v.number(),
-    bounced: v.number(),
-  }),
   handler: async (ctx, args) => {
     await getAuthUser(ctx);
 
@@ -292,11 +285,18 @@ export const getReleaseEmailStats = query({
     }
 
     return {
-      total: logs.length,
+      bounced,
+      clicked,
       delivered,
       opened,
-      clicked,
-      bounced,
+      total: logs.length,
     };
   },
+  returns: v.object({
+    bounced: v.number(),
+    clicked: v.number(),
+    delivered: v.number(),
+    opened: v.number(),
+    total: v.number(),
+  }),
 });

@@ -34,8 +34,8 @@ class FeedbackApi {
     body?: unknown
   ): Promise<T> {
     const headers: Record<string, string> = {
-      "Content-Type": "application/json",
       Authorization: `Bearer ${this.publicKey}`,
+      "Content-Type": "application/json",
     };
 
     if (this.userToken) {
@@ -43,9 +43,9 @@ class FeedbackApi {
     }
 
     const response = await fetch(`${CONVEX_URL}${path}`, {
-      method,
-      headers,
       body: body ? JSON.stringify(body) : undefined,
+      headers,
+      method,
     });
 
     const data: unknown = await response.json();
@@ -117,8 +117,8 @@ class FeedbackApi {
     body: string
   ): Promise<{ commentId: string }> {
     return await this.request("POST", "/api/v1/feedback/comment", {
-      feedbackId,
       body,
+      feedbackId,
     });
   }
 
@@ -173,9 +173,9 @@ class FeedbackApi {
     const { uploadUrl } = await this.getScreenshotUploadUrl();
 
     const uploadResponse = await fetch(uploadUrl, {
-      method: "POST",
-      headers: { "Content-Type": file.type },
       body: file,
+      headers: { "Content-Type": file.type },
+      method: "POST",
     });
 
     if (!uploadResponse.ok) {
@@ -198,13 +198,13 @@ class FeedbackApi {
   }): Promise<{ screenshotId: string }> {
     return await this.request("POST", "/api/v1/feedback/screenshot/save", {
       feedbackId: params.feedbackId,
-      storageId: params.storageId,
       filename: params.filename ?? "screenshot.png",
-      mimeType: params.mimeType ?? "image/png",
-      size: params.size ?? 0,
-      width: params.width,
       height: params.height,
+      mimeType: params.mimeType ?? "image/png",
       pageUrl: params.pageUrl,
+      size: params.size ?? 0,
+      storageId: params.storageId,
+      width: params.width,
     });
   }
 

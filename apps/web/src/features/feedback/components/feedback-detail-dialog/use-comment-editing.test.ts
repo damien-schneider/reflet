@@ -21,10 +21,10 @@ describe("useCommentEditing", () => {
   ) =>
     renderHook(() =>
       useCommentEditing({
-        feedbackId,
         createComment,
-        updateComment,
         deleteComment,
+        feedbackId,
+        updateComment,
         ...overrides,
       })
     );
@@ -53,8 +53,8 @@ describe("useCommentEditing", () => {
       });
 
       expect(createComment).toHaveBeenCalledWith({
-        feedbackId,
         body: "Hello world",
+        feedbackId,
       });
       expect(result.current.newComment).toBe("");
     });
@@ -163,8 +163,8 @@ describe("useCommentEditing", () => {
       });
 
       expect(createComment).toHaveBeenCalledWith({
-        feedbackId,
         body: "Reply text",
+        feedbackId,
         parentId: commentId1,
       });
       expect(result.current.replyContent).toBe("");
@@ -209,8 +209,8 @@ describe("useCommentEditing", () => {
       });
 
       expect(updateComment).toHaveBeenCalledWith({
-        id: commentId1,
         body: "Updated text",
+        id: commentId1,
       });
       expect(result.current.editingCommentId).toBeNull();
       expect(result.current.editCommentContent).toBe("");

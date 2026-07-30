@@ -10,10 +10,10 @@ const createMockNode = (
   attrs: Partial<ImageNodeViewOptions["node"]["attrs"]> = {}
 ): ImageNodeViewOptions["node"] => ({
   attrs: {
-    src: "https://example.com/image.png",
-    alt: "test image",
-    title: "",
     align: "center",
+    alt: "test image",
+    src: "https://example.com/image.png",
+    title: "",
     width: null,
     ...attrs,
   },
@@ -22,20 +22,20 @@ const createMockNode = (
 const createMockEditor = (
   isEditable: boolean
 ): ImageNodeViewOptions["editor"] => ({
-  isEditable,
   chain: () => ({
     focus: () => ({
       updateAttributes: () => ({ run: vi.fn() }),
     }),
   }),
+  isEditable,
 });
 
 describe("Image NodeView", () => {
   it("includes resize handles when editor is editable", () => {
     const { dom } = createImageNodeView({
-      node: createMockNode(),
       editor: createMockEditor(true),
       getPos: () => 0,
+      node: createMockNode(),
     });
 
     const resizeHandles = dom.querySelectorAll(".tiptap-resize-handle");
@@ -44,9 +44,9 @@ describe("Image NodeView", () => {
 
   it("does not include resize handles when editor is not editable", () => {
     const { dom } = createImageNodeView({
-      node: createMockNode(),
       editor: createMockEditor(false),
       getPos: () => 0,
+      node: createMockNode(),
     });
 
     const resizeHandles = dom.querySelectorAll(".tiptap-resize-handle");
@@ -55,9 +55,9 @@ describe("Image NodeView", () => {
 
   it("always renders the image element regardless of editable state", () => {
     const { dom } = createImageNodeView({
-      node: createMockNode({ src: "https://example.com/photo.jpg" }),
       editor: createMockEditor(false),
       getPos: () => 0,
+      node: createMockNode({ src: "https://example.com/photo.jpg" }),
     });
 
     const img = dom.querySelector("img");
@@ -67,28 +67,28 @@ describe("Image NodeView", () => {
 
   it("update returns false for non-image nodes", () => {
     const { update } = createImageNodeView({
-      node: createMockNode(),
       editor: createMockEditor(true),
       getPos: () => 0,
+      node: createMockNode(),
     });
-    const result = update({ type: { name: "paragraph" }, attrs: {} });
+    const result = update({ attrs: {}, type: { name: "paragraph" } });
     expect(result).toBe(false);
   });
 
   it("update returns true and updates attrs for image nodes", () => {
     const { dom, update } = createImageNodeView({
-      node: createMockNode(),
       editor: createMockEditor(true),
       getPos: () => 0,
+      node: createMockNode(),
     });
     const result = update({
-      type: { name: "image" },
       attrs: {
-        src: "https://example.com/new.png",
-        alt: "new",
         align: "left",
+        alt: "new",
+        src: "https://example.com/new.png",
         width: 200,
       },
+      type: { name: "image" },
     });
     expect(result).toBe(true);
     const img = dom.querySelector("img");
@@ -99,27 +99,27 @@ describe("Image NodeView", () => {
 
   it("destroy removes event listeners without error", () => {
     const { destroy } = createImageNodeView({
-      node: createMockNode(),
       editor: createMockEditor(true),
       getPos: () => 0,
+      node: createMockNode(),
     });
     expect(() => destroy()).not.toThrow();
   });
 
   it("destroy is safe for non-editable views", () => {
     const { destroy } = createImageNodeView({
-      node: createMockNode(),
       editor: createMockEditor(false),
       getPos: () => 0,
+      node: createMockNode(),
     });
     expect(() => destroy()).not.toThrow();
   });
 
   it("creates error placeholder element", () => {
     const { dom } = createImageNodeView({
-      node: createMockNode(),
       editor: createMockEditor(false),
       getPos: () => 0,
+      node: createMockNode(),
     });
     const errorEl = dom.querySelector(".tiptap-image-error");
     expect(errorEl).not.toBeNull();
@@ -128,9 +128,9 @@ describe("Image NodeView", () => {
 
   it("applies width style when provided", () => {
     const { dom } = createImageNodeView({
-      node: createMockNode({ width: 300 }),
       editor: createMockEditor(false),
       getPos: () => 0,
+      node: createMockNode({ width: 300 }),
     });
     const img = dom.querySelector("img");
     expect(img?.style.width).toBe("300px");
@@ -138,9 +138,9 @@ describe("Image NodeView", () => {
 
   it("sets data-align attribute", () => {
     const { dom } = createImageNodeView({
-      node: createMockNode({ align: "left" }),
       editor: createMockEditor(false),
       getPos: () => 0,
+      node: createMockNode({ align: "left" }),
     });
     expect(dom.getAttribute("data-align")).toBe("left");
   });
@@ -149,9 +149,9 @@ describe("Image NodeView", () => {
 describe("createExtensions", () => {
   it("returns an array of extensions", () => {
     const result = createExtensions({
-      placeholder: "Write something...",
       onImageUpload: vi.fn(),
       onVideoUpload: vi.fn(),
+      placeholder: "Write something...",
     });
     expect(Array.isArray(result)).toBe(true);
     expect(result.length).toBeGreaterThan(0);
@@ -159,10 +159,10 @@ describe("createExtensions", () => {
 
   it("includes CharacterCount when maxLength is provided", () => {
     const result = createExtensions({
-      placeholder: "Write...",
       maxLength: 500,
       onImageUpload: vi.fn(),
       onVideoUpload: vi.fn(),
+      placeholder: "Write...",
     });
     const hasCharCount = result.some((ext) => ext.name === "characterCount");
     expect(hasCharCount).toBe(true);
@@ -170,9 +170,9 @@ describe("createExtensions", () => {
 
   it("excludes CharacterCount when maxLength is not provided", () => {
     const result = createExtensions({
-      placeholder: "Write...",
       onImageUpload: vi.fn(),
       onVideoUpload: vi.fn(),
+      placeholder: "Write...",
     });
     const hasCharCount = result.some((ext) => ext.name === "characterCount");
     expect(hasCharCount).toBe(false);
@@ -180,10 +180,10 @@ describe("createExtensions", () => {
 
   it("includes submit shortcut when onSubmit is provided", () => {
     const result = createExtensions({
-      placeholder: "Write...",
       onImageUpload: vi.fn(),
-      onVideoUpload: vi.fn(),
       onSubmit: vi.fn(),
+      onVideoUpload: vi.fn(),
+      placeholder: "Write...",
     });
     const hasSubmit = result.some((ext) => ext.name === "submitShortcut");
     expect(hasSubmit).toBe(true);
@@ -191,9 +191,9 @@ describe("createExtensions", () => {
 
   it("excludes submit shortcut when onSubmit is not provided", () => {
     const result = createExtensions({
-      placeholder: "Write...",
       onImageUpload: vi.fn(),
       onVideoUpload: vi.fn(),
+      placeholder: "Write...",
     });
     const hasSubmit = result.some((ext) => ext.name === "submitShortcut");
     expect(hasSubmit).toBe(false);
@@ -203,27 +203,27 @@ describe("createExtensions", () => {
 describe("createEditorProps", () => {
   it("returns minimal class when minimal is true", () => {
     const props = createEditorProps({
-      uploadMedia: vi.fn(),
       minimal: true,
+      uploadMedia: vi.fn(),
     });
     expect(props.attributes.class).toContain("tiptap-minimal-editor");
   });
 
   it("returns full class when minimal is false", () => {
     const props = createEditorProps({
-      uploadMedia: vi.fn(),
       minimal: false,
+      uploadMedia: vi.fn(),
     });
     expect(props.attributes.class).toContain("tiptap-markdown-editor");
   });
 
   it("handlePaste uploads image files", () => {
     const uploadMedia = vi.fn();
-    const props = createEditorProps({ uploadMedia, minimal: false });
+    const props = createEditorProps({ minimal: false, uploadMedia });
     const mockFile = new File([""], "test.png", { type: "image/png" });
     const event = {
       clipboardData: {
-        items: [{ type: "image/png", getAsFile: () => mockFile }],
+        items: [{ getAsFile: () => mockFile, type: "image/png" }],
       },
       preventDefault: vi.fn(),
     } as unknown as ClipboardEvent;
@@ -235,10 +235,10 @@ describe("createEditorProps", () => {
 
   it("handlePaste returns false for non-media items", () => {
     const uploadMedia = vi.fn();
-    const props = createEditorProps({ uploadMedia, minimal: false });
+    const props = createEditorProps({ minimal: false, uploadMedia });
     const event = {
       clipboardData: {
-        items: [{ type: "text/plain", getAsFile: () => null }],
+        items: [{ getAsFile: () => null, type: "text/plain" }],
       },
       preventDefault: vi.fn(),
     } as unknown as ClipboardEvent;
@@ -250,7 +250,7 @@ describe("createEditorProps", () => {
 
   it("handleDrop uploads dropped image files", () => {
     const uploadMedia = vi.fn();
-    const props = createEditorProps({ uploadMedia, minimal: false });
+    const props = createEditorProps({ minimal: false, uploadMedia });
     const mockFile = new File([""], "photo.jpg", { type: "image/jpeg" });
     const event = {
       dataTransfer: { files: [mockFile] },
@@ -264,7 +264,7 @@ describe("createEditorProps", () => {
 
   it("handleDrop returns false when moved", () => {
     const uploadMedia = vi.fn();
-    const props = createEditorProps({ uploadMedia, minimal: false });
+    const props = createEditorProps({ minimal: false, uploadMedia });
     const event = {
       dataTransfer: { files: [] },
       preventDefault: vi.fn(),
@@ -276,7 +276,7 @@ describe("createEditorProps", () => {
 
   it("handleDrop uploads video files", () => {
     const uploadMedia = vi.fn();
-    const props = createEditorProps({ uploadMedia, minimal: false });
+    const props = createEditorProps({ minimal: false, uploadMedia });
     const mockFile = new File([""], "clip.mp4", { type: "video/mp4" });
     const event = {
       dataTransfer: { files: [mockFile] },
@@ -290,11 +290,11 @@ describe("createEditorProps", () => {
 
   it("handlePaste uploads video files", () => {
     const uploadMedia = vi.fn();
-    const props = createEditorProps({ uploadMedia, minimal: false });
+    const props = createEditorProps({ minimal: false, uploadMedia });
     const mockFile = new File([""], "clip.mp4", { type: "video/mp4" });
     const event = {
       clipboardData: {
-        items: [{ type: "video/mp4", getAsFile: () => mockFile }],
+        items: [{ getAsFile: () => mockFile, type: "video/mp4" }],
       },
       preventDefault: vi.fn(),
     } as unknown as ClipboardEvent;
@@ -306,7 +306,7 @@ describe("createEditorProps", () => {
 
   it("handleDrop returns false when no files", () => {
     const uploadMedia = vi.fn();
-    const props = createEditorProps({ uploadMedia, minimal: false });
+    const props = createEditorProps({ minimal: false, uploadMedia });
     const event = {
       dataTransfer: { files: [] },
       preventDefault: vi.fn(),
@@ -318,7 +318,7 @@ describe("createEditorProps", () => {
 
   it("handleDrop returns false for non-media files", () => {
     const uploadMedia = vi.fn();
-    const props = createEditorProps({ uploadMedia, minimal: false });
+    const props = createEditorProps({ minimal: false, uploadMedia });
     const mockFile = new File([""], "doc.pdf", { type: "application/pdf" });
     const event = {
       dataTransfer: { files: [mockFile] },
@@ -331,7 +331,7 @@ describe("createEditorProps", () => {
 
   it("handlePaste returns false when no clipboardData", () => {
     const uploadMedia = vi.fn();
-    const props = createEditorProps({ uploadMedia, minimal: false });
+    const props = createEditorProps({ minimal: false, uploadMedia });
     const event = {
       clipboardData: null,
       preventDefault: vi.fn(),
@@ -345,9 +345,9 @@ describe("createEditorProps", () => {
 describe("Image NodeView - error/load events", () => {
   it("hides image and shows error placeholder on image error", () => {
     const { dom } = createImageNodeView({
-      node: createMockNode({ src: "https://example.com/broken.png" }),
       editor: createMockEditor(false),
       getPos: () => 0,
+      node: createMockNode({ src: "https://example.com/broken.png" }),
     });
     const img = dom.querySelector("img")!;
     img.dispatchEvent(new Event("error"));
@@ -358,9 +358,9 @@ describe("Image NodeView - error/load events", () => {
 
   it("shows image and hides error on image load", () => {
     const { dom } = createImageNodeView({
-      node: createMockNode(),
       editor: createMockEditor(false),
       getPos: () => 0,
+      node: createMockNode(),
     });
     const img = dom.querySelector("img")!;
     // Simulate error then load
@@ -372,9 +372,9 @@ describe("Image NodeView - error/load events", () => {
 
   it("resets error state when update receives new src", () => {
     const { dom, update } = createImageNodeView({
-      node: createMockNode(),
       editor: createMockEditor(true),
       getPos: () => 0,
+      node: createMockNode(),
     });
     const img = dom.querySelector("img")!;
     // Simulate error
@@ -383,13 +383,13 @@ describe("Image NodeView - error/load events", () => {
 
     // Update with new src
     update({
-      type: { name: "image" },
       attrs: {
-        src: "https://example.com/new.png",
-        alt: "",
         align: "center",
+        alt: "",
+        src: "https://example.com/new.png",
         width: null,
       },
+      type: { name: "image" },
     });
     expect(img.style.display).toBe("block");
     expect(dom.hasAttribute("data-error")).toBe(false);
@@ -397,21 +397,21 @@ describe("Image NodeView - error/load events", () => {
 
   it("does not reset error state when update has same src", () => {
     const { dom, update } = createImageNodeView({
-      node: createMockNode({ src: "https://example.com/image.png" }),
       editor: createMockEditor(true),
       getPos: () => 0,
+      node: createMockNode({ src: "https://example.com/image.png" }),
     });
     const img = dom.querySelector("img")!;
     img.dispatchEvent(new Event("error"));
 
     update({
-      type: { name: "image" },
       attrs: {
-        src: "https://example.com/image.png",
-        alt: "",
         align: "center",
+        alt: "",
+        src: "https://example.com/image.png",
         width: null,
       },
+      type: { name: "image" },
     });
     // Error placeholder is NOT reset because src didn't change
     expect(img.style.display).toBe("none");
@@ -419,18 +419,18 @@ describe("Image NodeView - error/load events", () => {
 
   it("update without width does not set width style", () => {
     const { dom, update } = createImageNodeView({
-      node: createMockNode({ width: 200 }),
       editor: createMockEditor(true),
       getPos: () => 0,
+      node: createMockNode({ width: 200 }),
     });
     update({
-      type: { name: "image" },
       attrs: {
-        src: "https://example.com/new.png",
-        alt: "",
         align: "center",
+        alt: "",
+        src: "https://example.com/new.png",
         width: null,
       },
+      type: { name: "image" },
     });
     const img = dom.querySelector("img")!;
     // Width should still be from previous state since update only sets if width exists
@@ -442,28 +442,28 @@ describe("Image NodeView - resize interactions", () => {
   const createResizableView = (width = 200) => {
     const mockRun = vi.fn();
     const editor = {
-      isEditable: true,
       chain: () => ({
         focus: () => ({
           updateAttributes: () => ({ run: mockRun }),
         }),
       }),
+      isEditable: true,
     };
     const { dom, destroy } = createImageNodeView({
-      node: createMockNode({ width }),
       editor,
       getPos: () => 0,
+      node: createMockNode({ width }),
     });
     const img = dom.querySelector("img")!;
     Object.defineProperty(img, "offsetWidth", {
-      value: width,
       configurable: true,
+      value: width,
     });
     Object.defineProperty(img, "offsetHeight", {
-      value: width / 2,
       configurable: true,
+      value: width / 2,
     });
-    return { dom, img, mockRun, destroy };
+    return { destroy, dom, img, mockRun };
   };
 
   it("mousedown on resize handle sets data-resizing attribute", () => {
@@ -471,9 +471,9 @@ describe("Image NodeView - resize interactions", () => {
     const handle = dom.querySelector(".tiptap-resize-handle.bottom-right")!;
     handle.dispatchEvent(
       new MouseEvent("mousedown", {
+        bubbles: true,
         clientX: 100,
         clientY: 100,
-        bubbles: true,
       })
     );
     expect(dom.getAttribute("data-resizing")).toBe("true");
@@ -487,9 +487,9 @@ describe("Image NodeView - resize interactions", () => {
 
     handle.dispatchEvent(
       new MouseEvent("mousedown", {
+        bubbles: true,
         clientX: 100,
         clientY: 100,
-        bubbles: true,
       })
     );
     document.dispatchEvent(
@@ -508,9 +508,9 @@ describe("Image NodeView - resize interactions", () => {
 
     handle.dispatchEvent(
       new MouseEvent("mousedown", {
+        bubbles: true,
         clientX: 100,
         clientY: 100,
-        bubbles: true,
       })
     );
     document.dispatchEvent(new MouseEvent("mouseup"));
@@ -527,9 +527,9 @@ describe("Image NodeView - resize interactions", () => {
 
     handle.dispatchEvent(
       new MouseEvent("mousedown", {
+        bubbles: true,
         clientX: 200,
         clientY: 200,
-        bubbles: true,
       })
     );
     // Move far left to shrink below minimum
@@ -627,17 +627,17 @@ describe("Image NodeView - resize interactions", () => {
   it("getPos returning undefined skips editor update", () => {
     const mockRun = vi.fn();
     const editor = {
-      isEditable: true,
       chain: () => ({
         focus: () => ({
           updateAttributes: () => ({ run: mockRun }),
         }),
       }),
+      isEditable: true,
     };
     const { dom } = createImageNodeView({
-      node: createMockNode({ width: 200 }),
       editor,
       getPos: () => undefined,
+      node: createMockNode({ width: 200 }),
     });
     const img = dom.querySelector("img")!;
     Object.defineProperty(img, "offsetWidth", { value: 200 });
@@ -646,9 +646,9 @@ describe("Image NodeView - resize interactions", () => {
     const handle = dom.querySelector(".tiptap-resize-handle.bottom-right")!;
     handle.dispatchEvent(
       new MouseEvent("mousedown", {
+        bubbles: true,
         clientX: 100,
         clientY: 100,
-        bubbles: true,
       })
     );
     document.dispatchEvent(new MouseEvent("mouseup"));

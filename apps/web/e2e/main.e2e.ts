@@ -2,10 +2,9 @@ import { expect, test } from "@playwright/test";
 
 const DASHBOARD_ORG_SLUG_REGEX = /\/dashboard\/[^/]+$/;
 
-// Auth form headings (French UI)
-const AUTH_INITIAL_HEADING = "Authentification";
-const AUTH_SIGNUP_HEADING = "Créer un compte";
-const AUTH_SIGNIN_HEADING = "Bon retour parmi nous";
+const AUTH_INITIAL_HEADING = "Authentication";
+const AUTH_SIGNUP_HEADING = "Create an account";
+const AUTH_SIGNIN_HEADING = "Welcome back";
 
 /**
  * Helper to complete sign-up flow with the new unified auth form
@@ -32,7 +31,7 @@ async function signUpNewUser(
   await page.getByTestId("confirm-password-input").fill(user.password);
 
   // Submit
-  await page.getByRole("button", { name: "Créer mon compte" }).click();
+  await page.getByRole("button", { name: "Create my account" }).click();
 }
 
 /**
@@ -59,7 +58,7 @@ async function signInExistingUser(
   await page.getByTestId("password-input").fill(user.password);
 
   // Submit
-  await page.getByRole("button", { name: "Se connecter" }).click();
+  await page.getByRole("button", { name: "Sign in" }).click();
 }
 
 test.describe("Core Authentication Flows", () => {

@@ -15,16 +15,16 @@ describe("admin_api_milestones", () => {
     const orgId = await createOrg(t);
 
     await t.mutation(internal.admin_api.milestones.createMilestone, {
-      organizationId: orgId,
-      name: "First",
       color: "#111",
+      name: "First",
+      organizationId: orgId,
       timeHorizon: "now",
     });
 
     await t.mutation(internal.admin_api.milestones.createMilestone, {
-      organizationId: orgId,
-      name: "Second",
       color: "#222",
+      name: "Second",
+      organizationId: orgId,
       timeHorizon: "next_month",
     });
 
@@ -44,25 +44,25 @@ describe("admin_api_milestones", () => {
     const orgId = await createOrg(t);
 
     await t.mutation(internal.admin_api.milestones.createMilestone, {
-      organizationId: orgId,
-      name: "Active",
       color: "#111",
+      name: "Active",
+      organizationId: orgId,
       timeHorizon: "now",
     });
 
     const { id: completedId } = await t.mutation(
       internal.admin_api.milestones.createMilestone,
       {
-        organizationId: orgId,
-        name: "ToComplete",
         color: "#222",
+        name: "ToComplete",
+        organizationId: orgId,
         timeHorizon: "future",
       }
     );
 
     await t.mutation(internal.admin_api.milestones.completeMilestone, {
-      organizationId: orgId,
       milestoneId: completedId,
+      organizationId: orgId,
     });
 
     const active = await t.query(internal.admin_api.milestones.listMilestones, {
@@ -87,24 +87,24 @@ describe("admin_api_milestones", () => {
     const { id: milestoneId } = await t.mutation(
       internal.admin_api.milestones.createMilestone,
       {
-        organizationId: orgId,
-        name: "M1",
         color: "#111",
+        name: "M1",
+        organizationId: orgId,
         timeHorizon: "now",
       }
     );
     const feedbackId = await createFeedback(t, orgId);
 
     await t.mutation(internal.admin_api.milestones.linkMilestoneFeedback, {
-      organizationId: orgId,
-      milestoneId,
-      feedbackId,
       action: "link",
+      feedbackId,
+      milestoneId,
+      organizationId: orgId,
     });
 
     const milestone = await t.query(
       internal.admin_api.milestones.getMilestone,
-      { organizationId: orgId, milestoneId }
+      { milestoneId, organizationId: orgId }
     );
 
     expect(milestone).not.toBeNull();
@@ -116,28 +116,28 @@ describe("admin_api_milestones", () => {
     const orgId = await createOrg(t);
     const otherOrgId = await t.run(async (ctx) =>
       ctx.db.insert("organizations", {
+        createdAt: Date.now(),
+        isPublic: false,
         name: "Other",
         slug: "other",
-        isPublic: false,
-        subscriptionTier: "free",
         subscriptionStatus: "none",
-        createdAt: Date.now(),
+        subscriptionTier: "free",
       })
     );
 
     const { id: milestoneId } = await t.mutation(
       internal.admin_api.milestones.createMilestone,
       {
-        organizationId: orgId,
-        name: "Private",
         color: "#000",
+        name: "Private",
+        organizationId: orgId,
         timeHorizon: "now",
       }
     );
 
     const result = await t.query(internal.admin_api.milestones.getMilestone, {
-      organizationId: otherOrgId,
       milestoneId,
+      organizationId: otherOrgId,
     });
     expect(result).toBeNull();
   });
@@ -149,23 +149,23 @@ describe("admin_api_milestones", () => {
     const { id: milestoneId } = await t.mutation(
       internal.admin_api.milestones.createMilestone,
       {
-        organizationId: orgId,
-        name: "Old",
         color: "#000",
+        name: "Old",
+        organizationId: orgId,
         timeHorizon: "now",
       }
     );
 
     await t.mutation(internal.admin_api.milestones.updateMilestone, {
-      organizationId: orgId,
       milestoneId,
       name: "Updated",
+      organizationId: orgId,
       timeHorizon: "next_quarter",
     });
 
     const ms = await t.query(internal.admin_api.milestones.getMilestone, {
-      organizationId: orgId,
       milestoneId,
+      organizationId: orgId,
     });
     expect(ms?.name).toBe("Updated");
     expect(ms?.timeHorizon).toBe("next_quarter");
@@ -178,16 +178,16 @@ describe("admin_api_milestones", () => {
     const { id: milestoneId } = await t.mutation(
       internal.admin_api.milestones.createMilestone,
       {
-        organizationId: orgId,
-        name: "ToComplete",
         color: "#000",
+        name: "ToComplete",
+        organizationId: orgId,
         timeHorizon: "now",
       }
     );
 
     await t.mutation(internal.admin_api.milestones.completeMilestone, {
-      organizationId: orgId,
       milestoneId,
+      organizationId: orgId,
     });
 
     const ms = await t.run(async (ctx) => ctx.db.get(milestoneId));
@@ -202,24 +202,24 @@ describe("admin_api_milestones", () => {
     const { id: milestoneId } = await t.mutation(
       internal.admin_api.milestones.createMilestone,
       {
-        organizationId: orgId,
-        name: "ToDelete",
         color: "#000",
+        name: "ToDelete",
+        organizationId: orgId,
         timeHorizon: "now",
       }
     );
     const feedbackId = await createFeedback(t, orgId);
 
     await t.mutation(internal.admin_api.milestones.linkMilestoneFeedback, {
-      organizationId: orgId,
-      milestoneId,
-      feedbackId,
       action: "link",
+      feedbackId,
+      milestoneId,
+      organizationId: orgId,
     });
 
     await t.mutation(internal.admin_api.milestones.deleteMilestone, {
-      organizationId: orgId,
       milestoneId,
+      organizationId: orgId,
     });
 
     const deleted = await t.run(async (ctx) => ctx.db.get(milestoneId));
@@ -238,9 +238,9 @@ describe("admin_api_milestones", () => {
     const { id: milestoneId } = await t.mutation(
       internal.admin_api.milestones.createMilestone,
       {
-        organizationId: orgId,
-        name: "MS",
         color: "#000",
+        name: "MS",
+        organizationId: orgId,
         timeHorizon: "now",
       }
     );
@@ -248,10 +248,10 @@ describe("admin_api_milestones", () => {
 
     // Link
     await t.mutation(internal.admin_api.milestones.linkMilestoneFeedback, {
-      organizationId: orgId,
-      milestoneId,
-      feedbackId,
       action: "link",
+      feedbackId,
+      milestoneId,
+      organizationId: orgId,
     });
 
     let links = await t.run(async (ctx) =>
@@ -261,10 +261,10 @@ describe("admin_api_milestones", () => {
 
     // Idempotent link
     await t.mutation(internal.admin_api.milestones.linkMilestoneFeedback, {
-      organizationId: orgId,
-      milestoneId,
-      feedbackId,
       action: "link",
+      feedbackId,
+      milestoneId,
+      organizationId: orgId,
     });
     links = await t.run(async (ctx) =>
       ctx.db.query("milestoneFeedback").collect()
@@ -273,10 +273,10 @@ describe("admin_api_milestones", () => {
 
     // Unlink
     await t.mutation(internal.admin_api.milestones.linkMilestoneFeedback, {
-      organizationId: orgId,
-      milestoneId,
-      feedbackId,
       action: "unlink",
+      feedbackId,
+      milestoneId,
+      organizationId: orgId,
     });
     links = await t.run(async (ctx) =>
       ctx.db.query("milestoneFeedback").collect()

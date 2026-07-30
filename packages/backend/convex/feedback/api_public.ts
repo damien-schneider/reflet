@@ -60,26 +60,26 @@ export const getOrganizationConfig = internalQuery({
     const publicTags = tags.filter((t) => t.settings?.isPublic);
 
     return {
-      id: org._id,
-      name: org.name,
-      slug: org.slug,
-      logo: org.logo,
-      primaryColor: org.primaryColor,
-      isPublic: org.isPublic,
       feedbackSettings: org.feedbackSettings,
+      id: org._id,
+      isPublic: org.isPublic,
+      logo: org.logo,
+      name: org.name,
+      primaryColor: org.primaryColor,
+      slug: org.slug,
       statuses: statuses.map((s) => ({
-        id: s._id,
-        name: s.name,
         color: s.color,
         icon: s.icon,
+        id: s._id,
+        name: s.name,
         order: s.order,
       })),
       tags: publicTags.map((t) => ({
+        color: t.color,
+        description: t.description,
         id: t._id,
         name: t.name,
         slug: t.slug,
-        color: t.color,
-        description: t.description,
       })),
     };
   },
@@ -90,10 +90,10 @@ export const getOrganizationConfig = internalQuery({
  */
 export const listFeedbackByOrganization = internalQuery({
   args: {
+    externalUserId: v.optional(v.id("externalUsers")),
+    limit: v.optional(v.number()),
+    offset: v.optional(v.number()),
     organizationId: v.id("organizations"),
-    statusId: v.optional(v.id("organizationStatuses")),
-    tagId: v.optional(v.id("tags")),
-    status: v.optional(feedbackStatus),
     search: v.optional(v.string()),
     sortBy: v.optional(
       v.union(
@@ -103,14 +103,14 @@ export const listFeedbackByOrganization = internalQuery({
         v.literal("comments")
       )
     ),
-    limit: v.optional(v.number()),
-    offset: v.optional(v.number()),
-    externalUserId: v.optional(v.id("externalUsers")),
+    status: v.optional(feedbackStatus),
+    statusId: v.optional(v.id("organizationStatuses")),
+    tagId: v.optional(v.id("tags")),
   },
   handler: async (ctx, args) => {
     const org = await ctx.db.get(args.organizationId);
     if (!org) {
-      return { items: [], total: 0, hasMore: false };
+      return { hasMore: false, items: [], total: 0 };
     }
 
     // Get all feedback for this organization (excluding soft-deleted)
@@ -222,10 +222,10 @@ export const listFeedbackByOrganization = internalQuery({
             const tag = await ctx.db.get(ft.tagId);
             return tag
               ? {
+                  color: tag.color,
                   id: tag._id,
                   name: tag.name,
                   slug: tag.slug,
-                  color: tag.color,
                 }
               : null;
           })
@@ -261,43 +261,43 @@ export const listFeedbackByOrganization = internalQuery({
           const extUser = await ctx.db.get(f.externalUserId);
           if (extUser) {
             author = {
-              name: extUser.name,
-              email: extUser.email,
               avatar: extUser.avatar,
+              email: extUser.email,
               isExternal: true,
+              name: extUser.name,
             };
           }
         }
 
         return {
-          id: f._id,
-          title: f.title,
-          description: f.description,
-          status: f.status,
-          voteCount: f.voteCount,
+          author,
           commentCount: f.commentCount,
-          isPinned: f.isPinned,
-          hasVoted,
-          createdAt: f.createdAt,
-          updatedAt: f.updatedAt,
           completedAt: f.completedAt,
-          tags: tags.filter(Boolean),
+          createdAt: f.createdAt,
+          description: f.description,
+          hasVoted,
+          id: f._id,
+          isPinned: f.isPinned,
           organizationStatus: orgStatus
             ? {
+                color: orgStatus.color,
                 id: orgStatus._id,
                 name: orgStatus.name,
-                color: orgStatus.color,
               }
             : null,
-          author,
+          status: f.status,
+          tags: tags.filter(Boolean),
+          title: f.title,
+          updatedAt: f.updatedAt,
+          voteCount: f.voteCount,
         };
       })
     );
 
     return {
+      hasMore: offset + limit < total,
       items,
       total,
-      hasMore: offset + limit < total,
     };
   },
 });
@@ -307,9 +307,9 @@ export const listFeedbackByOrganization = internalQuery({
  */
 export const getFeedbackByOrganization = internalQuery({
   args: {
-    organizationId: v.id("organizations"),
-    feedbackId: v.id("feedback"),
     externalUserId: v.optional(v.id("externalUsers")),
+    feedbackId: v.id("feedback"),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
     const feedback = await ctx.db.get(args.feedbackId);
@@ -337,9 +337,9 @@ export const getFeedbackByOrganization = internalQuery({
       const status = await ctx.db.get(feedback.organizationStatusId);
       if (status) {
         organizationStatus = {
+          color: status.color,
           id: status._id,
           name: status.name,
-          color: status.color,
         };
       }
     }
@@ -353,7 +353,7 @@ export const getFeedbackByOrganization = internalQuery({
       feedbackTags.map(async (ft) => {
         const tag = await ctx.db.get(ft.tagId);
         return tag
-          ? { id: tag._id, name: tag.name, slug: tag.slug, color: tag.color }
+          ? { color: tag.color, id: tag._id, name: tag.name, slug: tag.slug }
           : null;
       })
     );
@@ -397,30 +397,30 @@ export const getFeedbackByOrganization = internalQuery({
       const extUser = await ctx.db.get(feedback.externalUserId);
       if (extUser) {
         author = {
-          name: extUser.name,
-          email: extUser.email,
           avatar: extUser.avatar,
+          email: extUser.email,
           isExternal: true,
+          name: extUser.name,
         };
       }
     }
 
     return {
-      id: feedback._id,
-      title: feedback.title,
-      description: feedback.description,
-      status: feedback.status,
-      voteCount: feedback.voteCount,
-      commentCount: feedback.commentCount,
-      isPinned: feedback.isPinned,
-      hasVoted,
-      isSubscribed,
-      createdAt: feedback.createdAt,
-      updatedAt: feedback.updatedAt,
-      completedAt: feedback.completedAt,
-      tags: tags.filter(Boolean),
-      organizationStatus,
       author,
+      commentCount: feedback.commentCount,
+      completedAt: feedback.completedAt,
+      createdAt: feedback.createdAt,
+      description: feedback.description,
+      hasVoted,
+      id: feedback._id,
+      isPinned: feedback.isPinned,
+      isSubscribed,
+      organizationStatus,
+      status: feedback.status,
+      tags: tags.filter(Boolean),
+      title: feedback.title,
+      updatedAt: feedback.updatedAt,
+      voteCount: feedback.voteCount,
     };
   },
 });
@@ -430,8 +430,8 @@ export const getFeedbackByOrganization = internalQuery({
  */
 export const listCommentsByOrganization = internalQuery({
   args: {
-    organizationId: v.id("organizations"),
     feedbackId: v.id("feedback"),
+    organizationId: v.id("organizations"),
     sortBy: v.optional(v.union(v.literal("newest"), v.literal("oldest"))),
   },
   handler: async (ctx, args) => {
@@ -477,10 +477,10 @@ export const listCommentsByOrganization = internalQuery({
         const extUser = await ctx.db.get(comment.externalUserId);
         if (extUser) {
           return {
-            name: extUser.name,
-            email: extUser.email,
             avatar: extUser.avatar,
+            email: extUser.email,
             isExternal: true,
+            name: extUser.name,
           };
         }
       }
@@ -495,23 +495,23 @@ export const listCommentsByOrganization = internalQuery({
           (repliesMap.get(comment._id) ?? []).map(async (reply) => {
             const replyAuthor = await getAuthorInfo(reply);
             return {
-              id: reply._id,
-              body: reply.body,
-              isOfficial: reply.isOfficial,
               author: replyAuthor,
+              body: reply.body,
               createdAt: reply.createdAt,
+              id: reply._id,
+              isOfficial: reply.isOfficial,
               updatedAt: reply.updatedAt,
             };
           })
         );
 
         return {
-          id: comment._id,
-          body: comment.body,
-          isOfficial: comment.isOfficial,
           author,
-          replies,
+          body: comment.body,
           createdAt: comment.createdAt,
+          id: comment._id,
+          isOfficial: comment.isOfficial,
+          replies,
           updatedAt: comment.updatedAt,
         };
       })
@@ -558,19 +558,19 @@ export const getRoadmapByOrganization = internalQuery({
 
     // Group by organization status
     const lanes = sortedStatuses.map((status) => ({
-      id: status._id,
-      name: status.name,
-      slug: status.name.toLowerCase().replace(/\s+/g, "-"),
       color: status.color,
+      id: status._id,
       items: approvedFeedback
         .filter((f) => f.organizationStatusId === status._id)
         .sort((a, b) => (a.roadmapOrder ?? 0) - (b.roadmapOrder ?? 0))
         .map((f) => ({
           id: f._id,
-          title: f.title,
           status: f.status,
+          title: f.title,
           voteCount: f.voteCount,
         })),
+      name: status.name,
+      slug: status.name.toLowerCase().replace(/\s+/g, "-"),
     }));
 
     return {
@@ -584,8 +584,8 @@ export const getRoadmapByOrganization = internalQuery({
  */
 export const getChangelogByOrganization = internalQuery({
   args: {
-    organizationId: v.id("organizations"),
     limit: v.optional(v.number()),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
     const { organizationId, limit = 20 } = args;
@@ -619,22 +619,22 @@ export const getChangelogByOrganization = internalQuery({
             return feedback
               ? {
                   id: feedback._id,
-                  title: feedback.title,
                   status: feedback.status,
+                  title: feedback.title,
                 }
               : null;
           })
         );
 
         return {
-          id: release._id,
-          title: release.title,
           description: release.description,
-          version: release.version,
-          publishedAt: release.publishedAt,
+          id: release._id,
           items: feedbackItems.filter(
             (f): f is NonNullable<typeof f> => f !== null
           ),
+          publishedAt: release.publishedAt,
+          title: release.title,
+          version: release.version,
         };
       })
     );
@@ -651,14 +651,6 @@ export const searchSimilarFeedback = internalQuery({
     organizationId: v.id("organizations"),
     title: v.string(),
   },
-  returns: v.array(
-    v.object({
-      _id: v.id("feedback"),
-      title: v.string(),
-      voteCount: v.number(),
-      status: v.string(),
-    })
-  ),
   handler: async (ctx, args) => {
     if (args.title.length < 3) {
       return [];
@@ -675,11 +667,19 @@ export const searchSimilarFeedback = internalQuery({
       .filter((f) => f.isApproved && !f.deletedAt && !f.isMerged)
       .map((f) => ({
         _id: f._id,
+        status: f.status,
         title: f.title,
         voteCount: f.voteCount,
-        status: f.status,
       }));
   },
+  returns: v.array(
+    v.object({
+      _id: v.id("feedback"),
+      status: v.string(),
+      title: v.string(),
+      voteCount: v.number(),
+    })
+  ),
 });
 
 // ============================================
@@ -691,11 +691,11 @@ export const searchSimilarFeedback = internalQuery({
  */
 export const createFeedbackByOrganization = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
-    title: v.string(),
     description: v.string(),
-    tagId: v.optional(v.id("tags")),
     externalUserId: v.optional(v.id("externalUsers")),
+    organizationId: v.id("organizations"),
+    tagId: v.optional(v.id("tags")),
+    title: v.string(),
   },
   handler: async (ctx, args) => {
     // Validate input
@@ -742,34 +742,34 @@ export const createFeedbackByOrganization = internalMutation({
 
     const now = Date.now();
     const feedbackId = await ctx.db.insert("feedback", {
-      organizationId: args.organizationId,
-      title: args.title,
-      description: args.description,
-      status: defaultStatus,
-      organizationStatusId: defaultOrgStatus?._id,
-      externalUserId: args.externalUserId,
-      voteCount: isAnonymous ? 0 : 1,
       commentCount: 0,
+      createdAt: now,
+      description: args.description,
+      externalUserId: args.externalUserId,
       isApproved: !requireApproval,
       isPinned: false,
+      organizationId: args.organizationId,
+      organizationStatusId: defaultOrgStatus?._id,
       source: "api",
-      createdAt: now,
+      status: defaultStatus,
+      title: args.title,
       updatedAt: now,
+      voteCount: isAnonymous ? 0 : 1,
     });
 
     // Auto-vote and auto-subscribe for identified users
     if (args.externalUserId) {
       await ctx.db.insert("feedbackVotes", {
-        feedbackId,
-        externalUserId: args.externalUserId,
-        voteType: "upvote",
         createdAt: now,
+        externalUserId: args.externalUserId,
+        feedbackId,
+        voteType: "upvote",
       });
 
       await ctx.db.insert("feedbackSubscriptions", {
-        feedbackId,
-        externalUserId: args.externalUserId,
         createdAt: now,
+        externalUserId: args.externalUserId,
+        feedbackId,
       });
     }
 
@@ -797,9 +797,9 @@ export const createFeedbackByOrganization = internalMutation({
  */
 export const voteFeedbackByOrganization = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
-    feedbackId: v.id("feedback"),
     externalUserId: v.id("externalUsers"),
+    feedbackId: v.id("feedback"),
+    organizationId: v.id("organizations"),
     voteType: v.optional(v.union(v.literal("upvote"), v.literal("downvote"))),
   },
   handler: async (ctx, args) => {
@@ -843,10 +843,10 @@ export const voteFeedbackByOrganization = internalMutation({
     } else {
       // Add new vote
       await ctx.db.insert("feedbackVotes", {
-        feedbackId: args.feedbackId,
-        externalUserId: args.externalUserId,
-        voteType,
         createdAt: Date.now(),
+        externalUserId: args.externalUserId,
+        feedbackId: args.feedbackId,
+        voteType,
       });
       newVoteCount =
         voteType === "upvote" ? newVoteCount + 1 : newVoteCount - 1;
@@ -856,7 +856,7 @@ export const voteFeedbackByOrganization = internalMutation({
     // Update vote count
     await ctx.db.patch(args.feedbackId, { voteCount: newVoteCount });
 
-    return { voted, voteCount: newVoteCount };
+    return { voteCount: newVoteCount, voted };
   },
 });
 
@@ -865,10 +865,10 @@ export const voteFeedbackByOrganization = internalMutation({
  */
 export const addCommentByOrganization = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
-    feedbackId: v.id("feedback"),
     body: v.string(),
     externalUserId: v.id("externalUsers"),
+    feedbackId: v.id("feedback"),
+    organizationId: v.id("organizations"),
     parentId: v.optional(v.id("comments")),
   },
   handler: async (ctx, args) => {
@@ -893,12 +893,12 @@ export const addCommentByOrganization = internalMutation({
 
     const now = Date.now();
     const commentId = await ctx.db.insert("comments", {
-      feedbackId,
       body,
-      externalUserId,
-      parentId,
-      isOfficial: false,
       createdAt: now,
+      externalUserId,
+      feedbackId,
+      isOfficial: false,
+      parentId,
       updatedAt: now,
     });
 
@@ -917,9 +917,9 @@ export const addCommentByOrganization = internalMutation({
  */
 export const subscribeFeedbackByOrganization = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
-    feedbackId: v.id("feedback"),
     externalUserId: v.id("externalUsers"),
+    feedbackId: v.id("feedback"),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
     const { organizationId, feedbackId, externalUserId } = args;
@@ -939,17 +939,17 @@ export const subscribeFeedbackByOrganization = internalMutation({
       .unique();
 
     if (existing) {
-      return { subscribed: true, alreadySubscribed: true };
+      return { alreadySubscribed: true, subscribed: true };
     }
 
     // Create subscription
     await ctx.db.insert("feedbackSubscriptions", {
-      feedbackId,
-      externalUserId,
       createdAt: Date.now(),
+      externalUserId,
+      feedbackId,
     });
 
-    return { subscribed: true, alreadySubscribed: false };
+    return { alreadySubscribed: false, subscribed: true };
   },
 });
 
@@ -958,9 +958,9 @@ export const subscribeFeedbackByOrganization = internalMutation({
  */
 export const unsubscribeFeedbackByOrganization = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
-    feedbackId: v.id("feedback"),
     externalUserId: v.id("externalUsers"),
+    feedbackId: v.id("feedback"),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
     const { organizationId, feedbackId, externalUserId } = args;
@@ -993,10 +993,10 @@ export const unsubscribeFeedbackByOrganization = internalMutation({
  */
 export const setImportanceByOrganization = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
+    externalUserId: v.id("externalUsers"),
     feedbackId: v.id("feedback"),
     importance: v.number(), // 1-4 scale
-    externalUserId: v.id("externalUsers"),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
     if (args.importance < 1 || args.importance > 4) {
@@ -1033,14 +1033,14 @@ export const setImportanceByOrganization = internalMutation({
     } else {
       // Create new importance vote
       await ctx.db.insert("feedbackImportanceVotes", {
-        feedbackId: args.feedbackId,
-        userId: externalUserId,
-        importance: args.importance,
         createdAt: now,
+        feedbackId: args.feedbackId,
+        importance: args.importance,
         updatedAt: now,
+        userId: externalUserId,
       });
     }
 
-    return { success: true, importance: args.importance };
+    return { importance: args.importance, success: true };
   },
 });

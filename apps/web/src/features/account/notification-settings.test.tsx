@@ -3,23 +3,23 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("convex/react", () => ({
-  useQuery: vi.fn(() => undefined),
   useMutation: vi.fn(() => vi.fn()),
+  useQuery: vi.fn(() => undefined),
 }));
 
 vi.mock("@/hooks/use-push-notifications", () => ({
   usePushNotifications: vi.fn(() => ({
+    isLoading: false,
+    isSubscribed: false,
     isSupported: true,
     permissionState: "default",
-    isSubscribed: false,
-    isLoading: false,
     subscribe: vi.fn(),
     unsubscribe: vi.fn(),
   })),
 }));
 
 vi.mock("sonner", () => ({
-  toast: { success: vi.fn(), error: vi.fn() },
+  toast: { error: vi.fn(), success: vi.fn() },
 }));
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
@@ -58,14 +58,14 @@ vi.mock("@/components/ui/card", () => ({
   CardContent: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
+  CardDescription: ({ children }: { children: React.ReactNode }) => (
+    <p>{children}</p>
+  ),
   CardHeader: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
   CardTitle: ({ children }: { children: React.ReactNode }) => (
     <h2>{children}</h2>
-  ),
-  CardDescription: ({ children }: { children: React.ReactNode }) => (
-    <p>{children}</p>
   ),
 }));
 
@@ -191,10 +191,10 @@ describe("NotificationSettings", () => {
 
   it("shows warning when push is not supported", () => {
     vi.mocked(usePushNotifications).mockReturnValue({
+      isLoading: false,
+      isSubscribed: false,
       isSupported: false,
       permissionState: "default",
-      isSubscribed: false,
-      isLoading: false,
       subscribe: vi.fn(),
       unsubscribe: vi.fn(),
     });
@@ -207,10 +207,10 @@ describe("NotificationSettings", () => {
 
   it("shows blocked warning when permission is denied", () => {
     vi.mocked(usePushNotifications).mockReturnValue({
+      isLoading: false,
+      isSubscribed: false,
       isSupported: true,
       permissionState: "denied",
-      isSubscribed: false,
-      isLoading: false,
       subscribe: vi.fn(),
       unsubscribe: vi.fn(),
     });
@@ -234,19 +234,19 @@ describe("NotificationSettings", () => {
   it("renders Active Devices when subscriptions exist", () => {
     vi.mocked(useQuery)
       .mockReturnValueOnce({
-        pushEnabled: true,
-        notifyOnStatusChange: true,
-        notifyOnNewComment: true,
-        notifyOnVoteMilestone: true,
-        notifyOnNewSupportMessage: true,
         notifyOnInvitation: true,
+        notifyOnNewComment: true,
+        notifyOnNewSupportMessage: true,
+        notifyOnStatusChange: true,
+        notifyOnVoteMilestone: true,
+        pushEnabled: true,
       })
       .mockReturnValueOnce([
         {
           _id: "sub1",
+          createdAt: Date.now() - 86_400_000,
           endpoint: "https://push.example.com",
           userAgent: "Chrome/120 Mobile",
-          createdAt: Date.now() - 86_400_000,
         },
       ]);
 
@@ -257,20 +257,20 @@ describe("NotificationSettings", () => {
   it("calls subscribe when push toggle is clicked while disabled", async () => {
     const mockSubscribe = vi.fn().mockResolvedValue(true);
     vi.mocked(usePushNotifications).mockReturnValue({
+      isLoading: false,
+      isSubscribed: false,
       isSupported: true,
       permissionState: "default",
-      isSubscribed: false,
-      isLoading: false,
       subscribe: mockSubscribe,
       unsubscribe: vi.fn(),
     });
     vi.mocked(useQuery).mockReturnValue({
-      pushEnabled: false,
-      notifyOnStatusChange: true,
-      notifyOnNewComment: true,
-      notifyOnVoteMilestone: true,
-      notifyOnNewSupportMessage: true,
       notifyOnInvitation: true,
+      notifyOnNewComment: true,
+      notifyOnNewSupportMessage: true,
+      notifyOnStatusChange: true,
+      notifyOnVoteMilestone: true,
+      pushEnabled: false,
     });
     const user = userEvent.setup();
     render(<NotificationSettings />);
@@ -282,20 +282,20 @@ describe("NotificationSettings", () => {
   it("calls unsubscribe when push toggle is clicked while enabled", async () => {
     const mockUnsubscribe = vi.fn().mockResolvedValue(undefined);
     vi.mocked(usePushNotifications).mockReturnValue({
+      isLoading: false,
+      isSubscribed: true,
       isSupported: true,
       permissionState: "granted",
-      isSubscribed: true,
-      isLoading: false,
       subscribe: vi.fn(),
       unsubscribe: mockUnsubscribe,
     });
     vi.mocked(useQuery).mockReturnValue({
-      pushEnabled: true,
-      notifyOnStatusChange: true,
-      notifyOnNewComment: true,
-      notifyOnVoteMilestone: true,
-      notifyOnNewSupportMessage: true,
       notifyOnInvitation: true,
+      notifyOnNewComment: true,
+      notifyOnNewSupportMessage: true,
+      notifyOnStatusChange: true,
+      notifyOnVoteMilestone: true,
+      pushEnabled: true,
     });
     const user = userEvent.setup();
     render(<NotificationSettings />);
@@ -331,20 +331,20 @@ describe("NotificationSettings", () => {
   it("shows Active Devices with Chrome Desktop user agent", () => {
     vi.mocked(useQuery)
       .mockReturnValueOnce({
-        pushEnabled: true,
-        notifyOnStatusChange: true,
-        notifyOnNewComment: true,
-        notifyOnVoteMilestone: true,
-        notifyOnNewSupportMessage: true,
         notifyOnInvitation: true,
+        notifyOnNewComment: true,
+        notifyOnNewSupportMessage: true,
+        notifyOnStatusChange: true,
+        notifyOnVoteMilestone: true,
+        pushEnabled: true,
       })
       .mockReturnValueOnce([
         {
           _id: "sub1",
+          createdAt: Date.now(),
           endpoint: "https://push.example.com",
           userAgent:
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-          createdAt: Date.now(),
         },
       ]);
     render(<NotificationSettings />);
@@ -355,20 +355,20 @@ describe("NotificationSettings", () => {
   it("shows Firefox Desktop user agent", () => {
     vi.mocked(useQuery)
       .mockReturnValueOnce({
-        pushEnabled: true,
-        notifyOnStatusChange: true,
-        notifyOnNewComment: true,
-        notifyOnVoteMilestone: true,
-        notifyOnNewSupportMessage: true,
         notifyOnInvitation: true,
+        notifyOnNewComment: true,
+        notifyOnNewSupportMessage: true,
+        notifyOnStatusChange: true,
+        notifyOnVoteMilestone: true,
+        pushEnabled: true,
       })
       .mockReturnValueOnce([
         {
           _id: "sub2",
+          createdAt: Date.now(),
           endpoint: "https://push.example.com",
           userAgent:
             "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/121.0",
-          createdAt: Date.now(),
         },
       ]);
     render(<NotificationSettings />);
@@ -378,20 +378,20 @@ describe("NotificationSettings", () => {
   it("shows Safari Desktop user agent", () => {
     vi.mocked(useQuery)
       .mockReturnValueOnce({
-        pushEnabled: true,
-        notifyOnStatusChange: true,
-        notifyOnNewComment: true,
-        notifyOnVoteMilestone: true,
-        notifyOnNewSupportMessage: true,
         notifyOnInvitation: true,
+        notifyOnNewComment: true,
+        notifyOnNewSupportMessage: true,
+        notifyOnStatusChange: true,
+        notifyOnVoteMilestone: true,
+        pushEnabled: true,
       })
       .mockReturnValueOnce([
         {
           _id: "sub3",
+          createdAt: Date.now(),
           endpoint: "https://push.example.com",
           userAgent:
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15",
-          createdAt: Date.now(),
         },
       ]);
     render(<NotificationSettings />);
@@ -401,18 +401,18 @@ describe("NotificationSettings", () => {
   it("shows Unknown device when user agent is missing", () => {
     vi.mocked(useQuery)
       .mockReturnValueOnce({
-        pushEnabled: true,
-        notifyOnStatusChange: true,
-        notifyOnNewComment: true,
-        notifyOnVoteMilestone: true,
-        notifyOnNewSupportMessage: true,
         notifyOnInvitation: true,
+        notifyOnNewComment: true,
+        notifyOnNewSupportMessage: true,
+        notifyOnStatusChange: true,
+        notifyOnVoteMilestone: true,
+        pushEnabled: true,
       })
       .mockReturnValueOnce([
         {
           _id: "sub4",
-          endpoint: "https://push.example.com",
           createdAt: Date.now(),
+          endpoint: "https://push.example.com",
         },
       ]);
     render(<NotificationSettings />);
@@ -422,20 +422,20 @@ describe("NotificationSettings", () => {
   it("shows Mobile user agent for mobile user agent string", () => {
     vi.mocked(useQuery)
       .mockReturnValueOnce({
-        pushEnabled: true,
-        notifyOnStatusChange: true,
-        notifyOnNewComment: true,
-        notifyOnVoteMilestone: true,
-        notifyOnNewSupportMessage: true,
         notifyOnInvitation: true,
+        notifyOnNewComment: true,
+        notifyOnNewSupportMessage: true,
+        notifyOnStatusChange: true,
+        notifyOnVoteMilestone: true,
+        pushEnabled: true,
       })
       .mockReturnValueOnce([
         {
           _id: "sub5",
+          createdAt: Date.now(),
           endpoint: "https://push.example.com",
           userAgent:
             "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
-          createdAt: Date.now(),
         },
       ]);
     render(<NotificationSettings />);
@@ -459,15 +459,15 @@ describe("NotificationSettings", () => {
     vi.mocked(useQuery).mockReturnValue([
       {
         _id: "sub1",
+        createdAt: Date.now(),
         endpoint: "https://push.example.com",
         userAgent: "Chrome",
-        createdAt: Date.now(),
       },
       {
         _id: "sub2",
+        createdAt: Date.now(),
         endpoint: "https://push2.example.com",
         userAgent: "Firefox",
-        createdAt: Date.now(),
       },
     ]);
     render(<NotificationSettings />);
@@ -480,12 +480,12 @@ describe("NotificationSettings", () => {
     const { useMutation } = await import("convex/react");
     vi.mocked(useMutation).mockReturnValue(mockUpdatePrefs);
     vi.mocked(useQuery).mockReturnValue({
-      pushEnabled: true,
-      notifyOnStatusChange: true,
-      notifyOnNewComment: true,
-      notifyOnVoteMilestone: true,
-      notifyOnNewSupportMessage: true,
       notifyOnInvitation: true,
+      notifyOnNewComment: true,
+      notifyOnNewSupportMessage: true,
+      notifyOnStatusChange: true,
+      notifyOnVoteMilestone: true,
+      pushEnabled: true,
     });
     const user = userEvent.setup();
     render(<NotificationSettings />);
@@ -500,20 +500,20 @@ describe("NotificationSettings", () => {
   it("shows Edge Desktop user agent", () => {
     vi.mocked(useQuery)
       .mockReturnValueOnce({
-        pushEnabled: true,
-        notifyOnStatusChange: true,
-        notifyOnNewComment: true,
-        notifyOnVoteMilestone: true,
-        notifyOnNewSupportMessage: true,
         notifyOnInvitation: true,
+        notifyOnNewComment: true,
+        notifyOnNewSupportMessage: true,
+        notifyOnStatusChange: true,
+        notifyOnVoteMilestone: true,
+        pushEnabled: true,
       })
       .mockReturnValueOnce([
         {
           _id: "sub6",
+          createdAt: Date.now(),
           endpoint: "https://push.example.com",
           userAgent:
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0",
-          createdAt: Date.now(),
         },
       ]);
     render(<NotificationSettings />);

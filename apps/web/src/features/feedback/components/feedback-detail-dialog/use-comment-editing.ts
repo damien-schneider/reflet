@@ -49,7 +49,7 @@ export function useCommentEditing({
     }
     setIsSubmittingComment(true);
     try {
-      await createComment({ feedbackId, body: trimmedComment });
+      await createComment({ body: trimmedComment, feedbackId });
       setNewComment("");
     } finally {
       setIsSubmittingComment(false);
@@ -65,8 +65,8 @@ export function useCommentEditing({
       setIsSubmittingComment(true);
       try {
         await createComment({
-          feedbackId,
           body: trimmedReply,
+          feedbackId,
           parentId,
         });
         setReplyContent("");
@@ -85,8 +85,8 @@ export function useCommentEditing({
         return;
       }
       await updateComment({
-        id: commentId,
         body: trimmedContent,
+        id: commentId,
       });
       setEditingCommentId(null);
       setEditCommentContent("");
@@ -103,22 +103,22 @@ export function useCommentEditing({
   }, [commentToDelete, deleteComment]);
 
   return {
-    newComment,
-    setNewComment,
-    replyingTo,
-    setReplyingTo,
-    replyContent,
-    setReplyContent,
-    editingCommentId,
-    setEditingCommentId,
-    editCommentContent,
-    setEditCommentContent,
-    isSubmittingComment,
     commentToDelete,
-    setCommentToDelete,
+    editCommentContent,
+    editingCommentId,
+    handleDeleteComment,
     handleSubmitComment,
     handleSubmitReply,
     handleUpdateComment,
-    handleDeleteComment,
+    isSubmittingComment,
+    newComment,
+    replyContent,
+    replyingTo,
+    setCommentToDelete,
+    setEditCommentContent,
+    setEditingCommentId,
+    setNewComment,
+    setReplyContent,
+    setReplyingTo,
   } as const;
 }

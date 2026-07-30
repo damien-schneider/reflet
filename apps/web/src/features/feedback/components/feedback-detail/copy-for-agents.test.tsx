@@ -19,11 +19,11 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
     },
     integrations: {
       github: {
-        repo_analysis: {
-          getLatestAnalysis: "repo_analysis.getLatestAnalysis",
-        },
         queries: {
           getConnectionStatus: "github.getConnectionStatus",
+        },
+        repo_analysis: {
+          getLatestAnalysis: "repo_analysis.getLatestAnalysis",
         },
       },
     },
@@ -31,74 +31,74 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
 }));
 
 vi.mock("sonner", () => ({
-  toast: { success: vi.fn(), error: vi.fn() },
+  toast: { error: vi.fn(), success: vi.fn() },
 }));
 
 vi.mock("./agent-config", () => ({
   AGENTS: [
     {
+      description: "Copy to clipboard",
+      icon: null,
       id: "copy-generic",
       label: "Copy prompt",
-      icon: null,
       type: "copy",
-      description: "Copy to clipboard",
     },
     {
+      description: "Open Cursor",
+      icon: null,
       id: "cursor",
       label: "Open in Cursor",
-      icon: null,
       type: "deeplink",
-      description: "Open Cursor",
     },
     {
+      description: "Cloud agent",
+      icon: null,
       id: "copilot-workspace",
       label: "Copilot Workspace",
-      icon: null,
       type: "cloud",
-      description: "Cloud agent",
     },
   ],
-  openDeepLink: vi.fn(() => true),
   openCloudAgent: vi.fn(() => true),
+  openDeepLink: vi.fn(() => true),
 }));
 
 describe("buildAgentPrompt", () => {
   it("should include title in output", () => {
     const result = buildAgentPrompt({
-      title: "Fix the login page",
       description: null,
-      tags: [],
       projectContext: null,
+      tags: [],
+      title: "Fix the login page",
     });
     expect(result).toContain("**Title:** Fix the login page");
   });
 
   it("should include description when provided", () => {
     const result = buildAgentPrompt({
-      title: "Bug",
       description: "The button doesn't work",
-      tags: [],
       projectContext: null,
+      tags: [],
+      title: "Bug",
     });
     expect(result).toContain("**Description:**\nThe button doesn't work");
   });
 
   it("should not include description when null", () => {
     const result = buildAgentPrompt({
-      title: "Bug",
       description: null,
-      tags: [],
       projectContext: null,
+      tags: [],
+      title: "Bug",
     });
     expect(result).not.toContain("**Description:**");
   });
 
   it("should include header section", () => {
     const result = buildAgentPrompt({
-      title: "Test",
       description: null,
-      tags: [],
       projectContext: null,
+      tags: [],
+      title: "Test",
     });
     expect(result).toContain("# User Feedback to Resolve");
     expect(result).toContain("## Feedback");
@@ -106,10 +106,10 @@ describe("buildAgentPrompt", () => {
 
   it("should include instructions section", () => {
     const result = buildAgentPrompt({
-      title: "Test",
       description: null,
-      tags: [],
       projectContext: null,
+      tags: [],
+      title: "Test",
     });
     expect(result).toContain("## Instructions");
     expect(result).toContain("Analyze the codebase");
@@ -117,33 +117,33 @@ describe("buildAgentPrompt", () => {
 
   it("should include tags when provided", () => {
     const result = buildAgentPrompt({
-      title: "Bug",
       description: null,
-      tags: [
-        { _id: "t1" as never, name: "urgent", color: "red", icon: "🔥" },
-        { _id: "t2" as never, name: "frontend", color: "blue" },
-      ],
       projectContext: null,
+      tags: [
+        { _id: "t1" as never, color: "red", icon: "🔥", name: "urgent" },
+        { _id: "t2" as never, color: "blue", name: "frontend" },
+      ],
+      title: "Bug",
     });
     expect(result).toContain("**Tags:** 🔥 urgent, frontend");
   });
 
   it("should not include tags section when tags array is empty", () => {
     const result = buildAgentPrompt({
-      title: "Bug",
       description: null,
-      tags: [],
       projectContext: null,
+      tags: [],
+      title: "Bug",
     });
     expect(result).not.toContain("**Tags:**");
   });
 
   it("should include project context when provided", () => {
     const result = buildAgentPrompt({
-      title: "Bug",
       description: null,
-      tags: [],
       projectContext: "**Project:** My App\n**Tech Stack:** Next.js",
+      tags: [],
+      title: "Bug",
     });
     expect(result).toContain("## Project Context");
     expect(result).toContain("**Project:** My App");
@@ -152,24 +152,24 @@ describe("buildAgentPrompt", () => {
 
   it("should not include project context when null", () => {
     const result = buildAgentPrompt({
-      title: "Bug",
       description: null,
-      tags: [],
       projectContext: null,
+      tags: [],
+      title: "Bug",
     });
     expect(result).not.toContain("## Project Context");
   });
 
   it("should include image URLs when attachments are provided", () => {
     const result = buildAgentPrompt({
-      title: "Button is broken",
-      description: "The submit button doesn't work",
-      tags: [],
-      projectContext: null,
       attachments: [
         "https://example.com/screenshot1.png",
         "https://example.com/screenshot2.jpg",
       ],
+      description: "The submit button doesn't work",
+      projectContext: null,
+      tags: [],
+      title: "Button is broken",
     });
 
     expect(result).toContain("**Title:** Button is broken");
@@ -183,11 +183,11 @@ describe("buildAgentPrompt", () => {
 
   it("should not include attachments section when no attachments", () => {
     const result = buildAgentPrompt({
-      title: "Feature request",
-      description: "Add dark mode",
-      tags: [],
-      projectContext: null,
       attachments: [],
+      description: "Add dark mode",
+      projectContext: null,
+      tags: [],
+      title: "Feature request",
     });
 
     expect(result).toContain("**Title:** Feature request");
@@ -196,11 +196,11 @@ describe("buildAgentPrompt", () => {
 
   it("should not include attachments section when attachments is undefined", () => {
     const result = buildAgentPrompt({
-      title: "Feature request",
-      description: "Add dark mode",
-      tags: [],
-      projectContext: null,
       attachments: undefined,
+      description: "Add dark mode",
+      projectContext: null,
+      tags: [],
+      title: "Feature request",
     });
 
     expect(result).toContain("**Title:** Feature request");
@@ -209,15 +209,15 @@ describe("buildAgentPrompt", () => {
 
   it("should format multiple image URLs as a list", () => {
     const result = buildAgentPrompt({
-      title: "UI Bug",
-      description: null,
-      tags: [],
-      projectContext: null,
       attachments: [
         "https://cdn.example.com/img1.png",
         "https://cdn.example.com/img2.png",
         "https://cdn.example.com/img3.png",
       ],
+      description: null,
+      projectContext: null,
+      tags: [],
+      title: "UI Bug",
     });
 
     expect(result).toContain("## Attached Screenshots");
@@ -228,11 +228,11 @@ describe("buildAgentPrompt", () => {
 
   it("should include all sections for fully populated prompt", () => {
     const result = buildAgentPrompt({
-      title: "Add dark mode",
-      description: "Users want a dark mode toggle",
-      tags: [{ _id: "t1" as never, name: "feature", color: "green" }],
-      projectContext: "**Project:** Reflet",
       attachments: ["https://example.com/mock.png"],
+      description: "Users want a dark mode toggle",
+      projectContext: "**Project:** Reflet",
+      tags: [{ _id: "t1" as never, color: "green", name: "feature" }],
+      title: "Add dark mode",
     });
     expect(result).toContain("## Feedback");
     expect(result).toContain("**Tags:** feature");
@@ -243,20 +243,20 @@ describe("buildAgentPrompt", () => {
 
   it("should handle tags with icon correctly", () => {
     const result = buildAgentPrompt({
-      title: "Test",
       description: null,
-      tags: [{ _id: "t1" as never, name: "bug", color: "red", icon: "🐛" }],
       projectContext: null,
+      tags: [{ _id: "t1" as never, color: "red", icon: "🐛", name: "bug" }],
+      title: "Test",
     });
     expect(result).toContain("🐛 bug");
   });
 
   it("should handle tags without icon correctly", () => {
     const result = buildAgentPrompt({
-      title: "Test",
       description: null,
-      tags: [{ _id: "t1" as never, name: "bug", color: "red" }],
       projectContext: null,
+      tags: [{ _id: "t1" as never, color: "red", name: "bug" }],
+      title: "Test",
     });
     expect(result).toContain("**Tags:** bug");
     expect(result).not.toContain("undefined");
@@ -398,9 +398,9 @@ describe("CopyForAgents Component", () => {
     mockUseQuery.mockImplementation((queryRef: string) => {
       if (queryRef === "repo_analysis.getLatestAnalysis") {
         return {
+          architecture: "Monorepo",
           summary: "A feedback tool",
           techStack: "Next.js, Convex",
-          architecture: "Monorepo",
         };
       }
       return null;
@@ -433,7 +433,7 @@ describe("CopyForAgents Component", () => {
         description="desc"
         feedbackId={feedbackId}
         organizationId={organizationId}
-        tags={[null, { _id: "t1" as never, name: "bug", color: "red" }]}
+        tags={[null, { _id: "t1" as never, color: "red", name: "bug" }]}
         title="Test"
       />
     );
@@ -443,22 +443,22 @@ describe("CopyForAgents Component", () => {
 
   it("includes feedback title in prompt output", () => {
     const result = buildAgentPrompt({
-      title: "My Feature Request",
-      description: "Details here",
-      tags: [],
       attachments: [],
+      description: "Details here",
       projectContext: null,
+      tags: [],
+      title: "My Feature Request",
     });
     expect(result).toContain("My Feature Request");
   });
 
   it("includes description in prompt output", () => {
     const result = buildAgentPrompt({
-      title: "Title",
-      description: "Descriptive content",
-      tags: [],
       attachments: [],
+      description: "Descriptive content",
       projectContext: null,
+      tags: [],
+      title: "Title",
     });
     expect(result).toContain("Descriptive content");
   });

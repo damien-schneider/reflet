@@ -15,45 +15,45 @@ const EASE_OUT_EXPO = [0.16, 1, 0.3, 1] as const;
 
 const BEFORE_ITEMS = [
   {
-    label: "Feedback scattered across Slack, email, and Intercom",
     icon: "😵",
+    label: "Feedback scattered across Slack, email, and Intercom",
   },
-  { label: "No way to know which features users want most", icon: "🤷" },
-  { label: "Same requests reported 5 times by different people", icon: "🔁" },
-  { label: "Users never know if their request was heard", icon: "📢" },
+  { icon: "🤷", label: "No way to know which features users want most" },
+  { icon: "🔁", label: "Same requests reported 5 times by different people" },
+  { icon: "📢", label: "Users never know if their request was heard" },
   {
-    label: "Roadmap decisions made on gut, not data",
     icon: "🎲",
+    label: "Roadmap decisions made on gut, not data",
   },
 ];
 
 const AFTER_ITEMS = [
   {
-    label: "Every request in one board — widget, API, or public portal",
     icon: "📥",
+    label: "Every request in one board — widget, API, or public portal",
   },
   {
-    label: "Vote counts surface the most-wanted features instantly",
     icon: "📊",
+    label: "Vote counts surface the most-wanted features instantly",
   },
   {
-    label: "AI detects and merges duplicates automatically (91% accuracy)",
     icon: "🤖",
+    label: "AI detects and merges duplicates automatically (91% accuracy)",
   },
   {
-    label: "Voters get notified the moment you ship their request",
     icon: "🔔",
+    label: "Voters get notified the moment you ship their request",
   },
   {
-    label: "Roadmap backed by real demand, visible to your whole team",
     icon: "🗺️",
+    label: "Roadmap backed by real demand, visible to your whole team",
   },
 ];
 
 export default function LandingBeforeAfter() {
   const [isAfter, setIsAfter] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, amount: 0.2 });
+  const isInView = useInView(ref, { amount: 0.2, once: true });
 
   const items = isAfter ? AFTER_ITEMS : BEFORE_ITEMS;
 

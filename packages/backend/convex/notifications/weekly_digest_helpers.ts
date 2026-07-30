@@ -68,8 +68,8 @@ export const getDigestData = internalQuery({
           try {
             const details = JSON.parse(log.details);
             statusChanges.push({
-              title: feedback.title,
               from: details.from ?? "unknown",
+              title: feedback.title,
               to: details.to ?? "unknown",
             });
           } catch {
@@ -85,20 +85,20 @@ export const getDigestData = internalQuery({
       .sort((a, b) => (b.voteCount ?? 0) - (a.voteCount ?? 0))
       .slice(0, 5)
       .map((f) => ({
-        title: f.title,
-        voteCount: f.voteCount ?? 0,
-        status: f.status,
         feedbackId: f._id,
+        status: f.status,
+        title: f.title,
         url: "",
+        voteCount: f.voteCount ?? 0,
       }));
 
     return {
+      newFeedbackCount: newFeedback.length,
       orgName: org.name,
       orgSlug: org.slug,
-      newFeedbackCount: newFeedback.length,
-      totalVotes: weekVotes.length,
-      topFeedback,
       statusChanges,
+      topFeedback,
+      totalVotes: weekVotes.length,
     };
   },
 });

@@ -77,9 +77,9 @@ Response format: [0, 3, 7]`;
 
     try {
       const result = await generateText({
+        maxOutputTokens: 200,
         model: openrouter("google/gemini-2.0-flash-001"),
         prompt,
-        maxOutputTokens: 200,
       });
 
       const match = result.text.match(ARRAY_PATTERN);
@@ -92,8 +92,8 @@ Response format: [0, 3, 7]`;
         .filter((i) => i >= 0 && i < feedbackItems.length)
         .map((i) => ({
           feedbackId: feedbackItems[i]._id,
-          title: feedbackItems[i].title,
           status: feedbackItems[i].status,
+          title: feedbackItems[i].title,
           voteCount: feedbackItems[i].voteCount,
         }));
 

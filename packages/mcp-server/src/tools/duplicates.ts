@@ -18,10 +18,10 @@ export function registerDuplicateTools(
     "duplicate_resolve",
     "Resolve a duplicate pair by confirming or rejecting it. Use 'confirm' to mark as true duplicates or 'reject' to dismiss.",
     {
-      pairId: z.string().describe("The duplicate pair ID"),
       action: z
         .enum(["confirm", "reject"])
         .describe("Whether to confirm or reject the duplicate pair"),
+      pairId: z.string().describe("The duplicate pair ID"),
     },
     async (params) => textResult(await client.resolveDuplicate(params))
   );
@@ -30,16 +30,16 @@ export function registerDuplicateTools(
     "duplicate_merge",
     "Merge two feedback items. Transfers votes, subscriptions from source to target. Source is marked as merged and hidden from lists.",
     {
+      pairId: z
+        .string()
+        .optional()
+        .describe("Optional duplicate pair ID to mark as resolved"),
       sourceFeedbackId: z
         .string()
         .describe("The feedback ID to merge FROM (will be hidden)"),
       targetFeedbackId: z
         .string()
         .describe("The feedback ID to merge INTO (will receive votes)"),
-      pairId: z
-        .string()
-        .optional()
-        .describe("Optional duplicate pair ID to mark as resolved"),
     },
     async (params) => textResult(await client.mergeFeedback(params))
   );

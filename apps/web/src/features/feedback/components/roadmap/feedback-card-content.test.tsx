@@ -19,13 +19,13 @@ import { FeedbackCardContent } from "./feedback-card-content";
 
 const makeItem = (overrides: Partial<FeedbackItem> = {}): FeedbackItem => ({
   _id: "fb1" as Id<"feedback">,
-  title: "Test feedback",
-  description: "A description",
-  voteCount: 7,
   commentCount: 3,
   createdAt: Date.now(),
+  description: "A description",
   organizationId: "org1" as Id<"organizations">,
   tags: [],
+  title: "Test feedback",
+  voteCount: 7,
   ...overrides,
 });
 
@@ -51,14 +51,14 @@ describe("FeedbackCardContent", () => {
       tags: [
         {
           _id: "t1" as Id<"tags">,
-          name: "Bug",
           color: "red",
           icon: "🐛",
+          name: "Bug",
         },
         {
           _id: "t2" as Id<"tags">,
-          name: "Feature",
           color: "blue",
+          name: "Feature",
         },
       ],
     });
@@ -71,9 +71,9 @@ describe("FeedbackCardContent", () => {
   it("limits tags to 2 visible", () => {
     const item = makeItem({
       tags: [
-        { _id: "t1" as Id<"tags">, name: "Bug", color: "red" },
-        { _id: "t2" as Id<"tags">, name: "Feature", color: "blue" },
-        { _id: "t3" as Id<"tags">, name: "Hidden", color: "green" },
+        { _id: "t1" as Id<"tags">, color: "red", name: "Bug" },
+        { _id: "t2" as Id<"tags">, color: "blue", name: "Feature" },
+        { _id: "t3" as Id<"tags">, color: "green", name: "Hidden" },
       ],
     });
     render(<FeedbackCardContent item={item} />);
@@ -89,7 +89,7 @@ describe("FeedbackCardContent", () => {
 
   it("skips null tags in array", () => {
     const item = makeItem({
-      tags: [null, { _id: "t1" as Id<"tags">, name: "Bug", color: "red" }],
+      tags: [null, { _id: "t1" as Id<"tags">, color: "red", name: "Bug" }],
     });
     render(<FeedbackCardContent item={item} />);
     expect(screen.getByText("Bug")).toBeInTheDocument();
@@ -100,9 +100,9 @@ describe("FeedbackCardContent", () => {
       tags: [
         {
           _id: "t1" as Id<"tags">,
-          name: "Auto",
-          color: "blue",
           appliedByAi: true,
+          color: "blue",
+          name: "Auto",
         },
       ],
     });
@@ -160,8 +160,8 @@ describe("FeedbackCardContent", () => {
   it("renders milestones when present", () => {
     const item = makeItem({
       milestones: [
-        { _id: "m1" as Id<"milestones">, name: "v1.0", emoji: "🚀" },
-        { _id: "m2" as Id<"milestones">, name: "v2.0", emoji: "🎉" },
+        { _id: "m1" as Id<"milestones">, emoji: "🚀", name: "v1.0" },
+        { _id: "m2" as Id<"milestones">, emoji: "🎉", name: "v2.0" },
       ],
     });
     render(<FeedbackCardContent item={item} />);
@@ -172,9 +172,9 @@ describe("FeedbackCardContent", () => {
   it("limits milestones to 2 and shows +N", () => {
     const item = makeItem({
       milestones: [
-        { _id: "m1" as Id<"milestones">, name: "v1", emoji: "🚀" },
-        { _id: "m2" as Id<"milestones">, name: "v2", emoji: "🎉" },
-        { _id: "m3" as Id<"milestones">, name: "v3", emoji: "🔥" },
+        { _id: "m1" as Id<"milestones">, emoji: "🚀", name: "v1" },
+        { _id: "m2" as Id<"milestones">, emoji: "🎉", name: "v2" },
+        { _id: "m3" as Id<"milestones">, emoji: "🔥", name: "v3" },
       ],
     });
     render(<FeedbackCardContent item={item} />);

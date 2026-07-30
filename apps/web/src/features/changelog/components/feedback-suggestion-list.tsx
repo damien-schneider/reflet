@@ -13,27 +13,27 @@ import {
 import { cn } from "@/lib/utils";
 
 const STATUS_LABELS: Record<string, string> = {
-  open: "Open",
-  under_review: "Under Review",
-  planned: "Planned",
-  in_progress: "In Progress",
-  completed: "Completed",
   closed: "Closed",
+  completed: "Completed",
+  in_progress: "In Progress",
+  open: "Open",
+  planned: "Planned",
+  under_review: "Under Review",
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  open: "blue",
-  under_review: "orange",
-  planned: "purple",
-  in_progress: "yellow",
-  completed: "green",
   closed: "gray",
+  completed: "green",
+  in_progress: "yellow",
+  open: "blue",
+  planned: "purple",
+  under_review: "orange",
 };
 
 const CONFIDENCE_STYLES: Record<string, { dot: string; label: string }> = {
   high: { dot: "bg-green-500", label: "High confidence" },
-  medium: { dot: "bg-yellow-500", label: "Medium confidence" },
   low: { dot: "bg-orange-400", label: "Low confidence" },
+  medium: { dot: "bg-yellow-500", label: "Medium confidence" },
 };
 
 interface SuggestedFeedbackItem {

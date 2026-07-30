@@ -14,21 +14,21 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
 
 vi.mock("@phosphor-icons/react", () => ({
   Crown: () => <span data-testid="icon-crown" />,
-  Shield: () => <span data-testid="icon-shield" />,
-  User: () => <span data-testid="icon-user" />,
   DotsThreeVertical: () => <span data-testid="icon-dots" />,
+  Shield: () => <span data-testid="icon-shield" />,
   Trash: () => <span data-testid="icon-trash" />,
+  User: () => <span data-testid="icon-user" />,
 }));
 
 vi.mock("@/components/ui/avatar", () => ({
   Avatar: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="avatar">{children}</div>
   ),
-  AvatarImage: ({ src }: { src?: string }) => (
-    <img alt="" data-testid="avatar-image" src={src} />
-  ),
   AvatarFallback: ({ children }: { children: React.ReactNode }) => (
     <span data-testid="avatar-fallback">{children}</span>
+  ),
+  AvatarImage: ({ src }: { src?: string }) => (
+    <img alt="" data-testid="avatar-image" src={src} />
   ),
 }));
 
@@ -104,9 +104,9 @@ const makeMember = (
   _id: overrides._id ?? ("m1" as never),
   role: overrides.role ?? "member",
   user: overrides.user ?? {
-    name: "John Doe",
     email: "john@example.com",
     image: "https://example.com/avatar.jpg",
+    name: "John Doe",
   },
 });
 
@@ -154,7 +154,7 @@ describe("MemberList", () => {
 
   it("falls back to email when name is null", () => {
     const member = makeMember({
-      user: { name: null, email: "jane@test.com", image: null },
+      user: { email: "jane@test.com", image: null, name: null },
     });
     render(
       <MemberList isOwner={false} members={[member]} onRemoveMember={vi.fn()} />
@@ -165,7 +165,7 @@ describe("MemberList", () => {
 
   it("falls back to Unknown when name and email are null", () => {
     const member = makeMember({
-      user: { name: null, email: null, image: null },
+      user: { email: null, image: null, name: null },
     });
     render(
       <MemberList isOwner={false} members={[member]} onRemoveMember={vi.fn()} />
@@ -275,7 +275,7 @@ describe("MemberList", () => {
       makeMember({
         _id: "m2" as never,
         role: "member",
-        user: { name: "Jane", email: "jane@test.com", image: null },
+        user: { email: "jane@test.com", image: null, name: "Jane" },
       }),
     ];
     render(<MemberList isOwner members={members} onRemoveMember={vi.fn()} />);

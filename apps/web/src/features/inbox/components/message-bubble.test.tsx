@@ -10,7 +10,6 @@ vi.mock("@/components/ui/avatar", () => ({
     children: React.ReactNode;
     className?: string;
   }) => <div className={className}>{children}</div>,
-  AvatarImage: ({ alt }: { alt?: string }) => <img alt={alt} />,
   AvatarFallback: ({
     children,
     className,
@@ -18,6 +17,7 @@ vi.mock("@/components/ui/avatar", () => ({
     children: React.ReactNode;
     className?: string;
   }) => <span className={className}>{children}</span>,
+  AvatarImage: ({ alt }: { alt?: string }) => <img alt={alt} />,
 }));
 
 vi.mock("@/lib/utils", () => ({
@@ -31,8 +31,8 @@ afterEach(cleanup);
 const baseProps = {
   body: "Hello, world!",
   isOwnMessage: false,
+  sender: { email: "alice@test.com", name: "Alice" },
   senderType: "user" as const,
-  sender: { name: "Alice", email: "alice@test.com" },
 };
 
 describe("MessageBubble", () => {
@@ -130,8 +130,8 @@ describe("MessageBubble", () => {
 
   it("renders reactions", () => {
     const reactions = [
-      { emoji: "👍", count: 3, userIds: ["u1", "u2", "u3"] },
-      { emoji: "❤️", count: 1, userIds: ["u1"] },
+      { count: 3, emoji: "👍", userIds: ["u1", "u2", "u3"] },
+      { count: 1, emoji: "❤️", userIds: ["u1"] },
     ];
     render(
       <MessageBubble
@@ -150,7 +150,7 @@ describe("MessageBubble", () => {
   it("calls onAddReaction when clicking a reaction the user hasn't reacted to", async () => {
     const user = userEvent.setup();
     const onAddReaction = vi.fn();
-    const reactions = [{ emoji: "👍", count: 1, userIds: ["other-user"] }];
+    const reactions = [{ count: 1, emoji: "👍", userIds: ["other-user"] }];
 
     render(
       <MessageBubble
@@ -176,7 +176,7 @@ describe("MessageBubble", () => {
     const user = userEvent.setup();
     const onRemoveReaction = vi.fn();
     const reactions = [
-      { emoji: "👍", count: 2, userIds: ["current-user", "other"] },
+      { count: 2, emoji: "👍", userIds: ["current-user", "other"] },
     ];
 
     render(
@@ -217,7 +217,7 @@ describe("MessageBubble", () => {
       <MessageBubble
         {...baseProps}
         onAddReaction={vi.fn()}
-        reactions={[{ emoji: "👍", count: 1, userIds: [] }]}
+        reactions={[{ count: 1, emoji: "👍", userIds: [] }]}
       />
     );
     expect(screen.queryByText("React")).not.toBeInTheDocument();

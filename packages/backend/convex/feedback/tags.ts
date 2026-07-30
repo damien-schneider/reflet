@@ -4,38 +4,37 @@ import { authComponent } from "../auth/auth";
 import { getAuthUser } from "../shared/utils";
 
 // Helper to generate slug from name
-const generateSlug = (name: string): string => {
-  return name
+const generateSlug = (name: string): string =>
+  name
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
-};
 
 // Default tags for categorizing feedback types
 const DEFAULT_TAGS = [
   {
-    name: "Feature Request",
-    slug: "feature-request",
     color: "#3b82f6",
     description: "New feature suggestions and ideas",
+    name: "Feature Request",
+    slug: "feature-request",
   },
   {
-    name: "Bug Report",
-    slug: "bug-report",
     color: "#ef4444",
     description: "Issues and problems to be fixed",
+    name: "Bug Report",
+    slug: "bug-report",
   },
   {
-    name: "Enhancement",
-    slug: "enhancement",
     color: "#8b5cf6",
     description: "Improvements to existing features",
+    name: "Enhancement",
+    slug: "enhancement",
   },
   {
-    name: "Question",
-    slug: "question",
     color: "#f59e0b",
     description: "Questions and support requests",
+    name: "Question",
+    slug: "question",
   },
 ] as const;
 
@@ -222,12 +221,12 @@ export const createDefaults = mutation({
 
     for (const tag of DEFAULT_TAGS) {
       const id = await ctx.db.insert("tags", {
-        organizationId: args.organizationId,
-        name: tag.name,
-        slug: tag.slug,
         color: tag.color,
-        description: tag.description,
         createdAt: now,
+        description: tag.description,
+        name: tag.name,
+        organizationId: args.organizationId,
+        slug: tag.slug,
         updatedAt: now,
       });
       tagIds.push(id);
@@ -242,11 +241,11 @@ export const createDefaults = mutation({
  */
 export const create = mutation({
   args: {
-    organizationId: v.id("organizations"),
-    name: v.string(),
-    slug: v.optional(v.string()),
     color: v.string(),
     description: v.optional(v.string()),
+    name: v.string(),
+    organizationId: v.id("organizations"),
+    slug: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -280,12 +279,12 @@ export const create = mutation({
 
     const now = Date.now();
     const tagId = await ctx.db.insert("tags", {
-      organizationId: args.organizationId,
-      name: args.name,
-      slug,
       color: args.color,
-      description: args.description,
       createdAt: now,
+      description: args.description,
+      name: args.name,
+      organizationId: args.organizationId,
+      slug,
       updatedAt: now,
     });
 
@@ -298,11 +297,11 @@ export const create = mutation({
  */
 export const update = mutation({
   args: {
+    color: v.optional(v.string()),
+    description: v.optional(v.string()),
     id: v.id("tags"),
     name: v.optional(v.string()),
     slug: v.optional(v.string()),
-    color: v.optional(v.string()),
-    description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);

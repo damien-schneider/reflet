@@ -52,11 +52,11 @@ function initWidget(): void {
       const publicKey = script.getAttribute("data-public-key");
       if (publicKey) {
         const widgetConfig: WidgetConfig = {
-          publicKey,
           mode: parseMode(script.getAttribute("data-mode")),
           position: parsePosition(script.getAttribute("data-position")),
-          theme: parseTheme(script.getAttribute("data-theme")),
           primaryColor: script.getAttribute("data-color") ?? undefined,
+          publicKey,
+          theme: parseTheme(script.getAttribute("data-theme")),
         };
 
         const widget = new RefletFeedbackWidget(widgetConfig);
@@ -80,21 +80,21 @@ function initWidget(): void {
 
   // Create widget with config
   const widgetConfig: WidgetConfig = {
-    publicKey: config.publicKey,
-    mode: config.mode ?? "floating",
-    position: config.position ?? "bottom-right",
-    theme: config.theme ?? "light",
-    primaryColor: config.primaryColor,
+    features: config.features,
     locale: config.locale,
     loginUrl: config.loginUrl,
+    mode: config.mode ?? "floating",
+    onClose: config.onClose,
+    onFeedbackCreated: config.onFeedbackCreated,
+    onOpen: config.onOpen,
+    onVote: config.onVote,
+    position: config.position ?? "bottom-right",
+    primaryColor: config.primaryColor,
+    publicKey: config.publicKey,
     targetId: config.targetId,
-    features: config.features,
+    theme: config.theme ?? "light",
     user: config.user,
     userToken: config.userToken,
-    onFeedbackCreated: config.onFeedbackCreated,
-    onVote: config.onVote,
-    onOpen: config.onOpen,
-    onClose: config.onClose,
   };
 
   const widget = new RefletFeedbackWidget(widgetConfig);

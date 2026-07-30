@@ -72,7 +72,7 @@ export function FeedbackDetailDialog({
     handleDescriptionChange,
     handleSaveChanges,
     handleCancelChanges,
-  } = useFeedbackEditing({ feedbackId, feedback, updateFeedback });
+  } = useFeedbackEditing({ feedback, feedbackId, updateFeedback });
 
   // Comment editing hook
   const {
@@ -94,10 +94,10 @@ export function FeedbackDetailDialog({
     handleUpdateComment,
     handleDeleteComment,
   } = useCommentEditing({
-    feedbackId,
     createComment,
-    updateComment,
     deleteComment,
+    feedbackId,
+    updateComment,
   });
 
   // Delete dialog
@@ -110,8 +110,8 @@ export function FeedbackDetailDialog({
 
   // AI Draft Reply
   const { isGeneratingDraft, handleGenerateDraftReply } = useAIDraftReply({
-    feedbackId,
     effectiveIsAdmin,
+    feedbackId,
     setNewComment,
   });
 

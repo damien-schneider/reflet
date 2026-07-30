@@ -46,8 +46,8 @@ export const syncAllReleases = internalAction({
         `${GITHUB_API_URL}/repos/${connection.repositoryFullName}/releases?per_page=100`,
         {
           headers: {
-            Authorization: `Bearer ${token}`,
             Accept: "application/vnd.github+json",
+            Authorization: `Bearer ${token}`,
             "X-GitHub-Api-Version": "2022-11-28",
           },
         }
@@ -70,17 +70,17 @@ export const syncAllReleases = internalAction({
       }>;
 
       const mapped = releases.map((release) => ({
-        githubReleaseId: String(release.id),
-        tagName: release.tag_name,
-        name: release.name ?? undefined,
         body: release.body ?? undefined,
+        createdAt: new Date(release.created_at).getTime(),
+        githubReleaseId: String(release.id),
         htmlUrl: release.html_url,
         isDraft: release.draft,
         isPrerelease: release.prerelease,
+        name: release.name ?? undefined,
         publishedAt: release.published_at
           ? new Date(release.published_at).getTime()
           : undefined,
-        createdAt: new Date(release.created_at).getTime(),
+        tagName: release.tag_name,
       }));
 
       await ctx.runMutation(
@@ -96,8 +96,8 @@ export const syncAllReleases = internalAction({
         api.integrations.github.mutations.updateSyncStatus,
         {
           connectionId: connection._id,
-          status: "error",
           error: error instanceof Error ? error.message : "Unknown error",
+          status: "error",
         }
       );
     }

@@ -4,10 +4,10 @@ import { InlineCode } from "@/components/ui/typography";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
-  title: "Component Theming",
   description:
     "How Reflet UI components adapt to your theme using CSS variables.",
   path: "/docs/components/theming",
+  title: "Component Theming",
 });
 
 const CSS_VARIABLES = [

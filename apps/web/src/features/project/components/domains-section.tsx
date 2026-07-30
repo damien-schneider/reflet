@@ -41,30 +41,30 @@ const DOMAIN_FORMAT_REGEX =
   /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/;
 
 const STATUS_CONFIG = {
-  pending_verification: {
-    label: "Pending Verification",
-    variant: "secondary" as const,
-    icon: ArrowsClockwise,
-  },
   active: {
+    icon: CheckCircle,
     label: "Active",
     variant: "default" as const,
-    icon: CheckCircle,
-  },
-  invalid_configuration: {
-    label: "Invalid Configuration",
-    variant: "destructive" as const,
-    icon: Warning,
-  },
-  removing: {
-    label: "Removing...",
-    variant: "secondary" as const,
-    icon: ArrowsClockwise,
   },
   error: {
+    icon: XCircle,
     label: "Error",
     variant: "destructive" as const,
-    icon: XCircle,
+  },
+  invalid_configuration: {
+    icon: Warning,
+    label: "Invalid Configuration",
+    variant: "destructive" as const,
+  },
+  pending_verification: {
+    icon: ArrowsClockwise,
+    label: "Pending Verification",
+    variant: "secondary" as const,
+  },
+  removing: {
+    icon: ArrowsClockwise,
+    label: "Removing...",
+    variant: "secondary" as const,
   },
 } as const;
 
@@ -114,7 +114,7 @@ export function DomainsSection({
     setError(null);
 
     try {
-      await addDomain({ organizationId, domain });
+      await addDomain({ domain, organizationId });
       setDomainInput("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to add domain.");

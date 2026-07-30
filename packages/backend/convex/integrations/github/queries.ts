@@ -110,27 +110,27 @@ export const getConnectionStatus = query({
 
     if (!connection) {
       return {
-        isConnected: false,
+        autoSyncEnabled: false,
+        hasCiSetup: false,
         hasRepository: false,
         hasWebhook: false,
-        hasCiSetup: false,
-        autoSyncEnabled: false,
+        isConnected: false,
       };
     }
 
     return {
+      accountAvatarUrl: connection.accountAvatarUrl,
+      accountLogin: connection.accountLogin,
+      autoSyncEnabled: Boolean(connection.autoSyncReleases),
+      hasCiSetup: Boolean(connection.ciWorkflowCreated),
+      hasRepository: Boolean(connection.repositoryId),
+      hasWebhook: Boolean(connection.webhookId),
       isConnected: connection.status === "connected",
       isOwnerLeft: connection.status === "owner_left",
-      hasRepository: Boolean(connection.repositoryId),
-      repositoryFullName: connection.repositoryFullName,
-      hasWebhook: Boolean(connection.webhookId),
-      hasCiSetup: Boolean(connection.ciWorkflowCreated),
-      autoSyncEnabled: Boolean(connection.autoSyncReleases),
       lastSyncAt: connection.lastSyncAt,
       lastSyncStatus: connection.lastSyncStatus,
-      accountLogin: connection.accountLogin,
-      accountAvatarUrl: connection.accountAvatarUrl,
       linkedByUserId: connection.linkedByUserId,
+      repositoryFullName: connection.repositoryFullName,
     };
   },
 });
@@ -191,35 +191,35 @@ export const getReleaseSyncStatus = query({
       )
       .map((gr) => ({
         _id: gr._id,
-        githubReleaseId: gr.githubReleaseId,
-        tagName: gr.tagName,
-        name: gr.name,
-        htmlUrl: gr.htmlUrl,
-        publishedAt: gr.publishedAt,
         createdAt: gr.createdAt,
+        githubReleaseId: gr.githubReleaseId,
+        htmlUrl: gr.htmlUrl,
+        name: gr.name,
+        publishedAt: gr.publishedAt,
+        tagName: gr.tagName,
       }));
 
     const refletOnly = refletReleases
       .filter((r) => r.publishedAt && !r.githubReleaseId && !r.syncedFromGithub)
       .map((r) => ({
         _id: r._id,
-        title: r.title,
-        version: r.version,
-        publishedAt: r.publishedAt,
-        githubPushStatus: r.githubPushStatus,
         githubPushError: r.githubPushError,
         githubPushErrorType: r.githubPushErrorType,
+        githubPushStatus: r.githubPushStatus,
+        publishedAt: r.publishedAt,
+        title: r.title,
+        version: r.version,
       }));
 
     const synced = refletReleases
       .filter((r) => r.githubReleaseId)
       .map((r) => ({
         _id: r._id,
+        githubHtmlUrl: r.githubHtmlUrl,
+        githubReleaseId: r.githubReleaseId,
+        publishedAt: r.publishedAt,
         title: r.title,
         version: r.version,
-        publishedAt: r.publishedAt,
-        githubReleaseId: r.githubReleaseId,
-        githubHtmlUrl: r.githubHtmlUrl,
       }));
 
     return { githubOnly, refletOnly, synced };
@@ -235,32 +235,31 @@ export const getReleaseSyncStatus = query({
  */
 export const getUserGithubConnection = internalQuery({
   args: { userId: v.string() },
+  handler: async (ctx, args) =>
+    await ctx.db
+      .query("userGithubConnections")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .first(),
   returns: v.union(
     v.object({
-      _id: v.id("userGithubConnections"),
       _creationTime: v.number(),
-      userId: v.string(),
-      installationId: v.string(),
-      accountType: v.union(v.literal("user"), v.literal("organization")),
-      accountLogin: v.string(),
+      _id: v.id("userGithubConnections"),
       accountAvatarUrl: v.optional(v.string()),
+      accountLogin: v.string(),
+      accountType: v.union(v.literal("user"), v.literal("organization")),
+      createdAt: v.number(),
+      installationId: v.string(),
       status: v.union(
         v.literal("connected"),
         v.literal("pending"),
         v.literal("error"),
         v.literal("owner_left")
       ),
-      createdAt: v.number(),
       updatedAt: v.number(),
+      userId: v.string(),
     }),
     v.null()
   ),
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query("userGithubConnections")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
-      .first();
-  },
 });
 
 /**
@@ -295,11 +294,11 @@ export const getOrgAvailableInstallations = internalQuery({
       if (connection && connection.status === "connected") {
         installations.push({
           _id: connection._id,
-          userId: connection.userId,
-          installationId: connection.installationId,
-          accountType: connection.accountType,
-          accountLogin: connection.accountLogin,
           accountAvatarUrl: connection.accountAvatarUrl,
+          accountLogin: connection.accountLogin,
+          accountType: connection.accountType,
+          installationId: connection.installationId,
+          userId: connection.userId,
         });
       }
     }
@@ -313,14 +312,13 @@ export const getOrgAvailableInstallations = internalQuery({
  */
 export const getConnectionByInstallation = internalQuery({
   args: { installationId: v.string() },
-  handler: async (ctx, args) => {
-    return await ctx.db
+  handler: async (ctx, args) =>
+    await ctx.db
       .query("githubConnections")
       .withIndex("by_installation", (q) =>
         q.eq("installationId", args.installationId)
       )
-      .first();
-  },
+      .first(),
 });
 
 /**

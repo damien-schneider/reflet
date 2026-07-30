@@ -60,8 +60,8 @@ export default function WidgetsPage({
     setIsCreating(true);
     try {
       await createWidget({
-        organizationId: org._id,
         name: widgetName.trim(),
+        organizationId: org._id,
       });
       setWidgetName("");
       setIsDialogOpen(false);

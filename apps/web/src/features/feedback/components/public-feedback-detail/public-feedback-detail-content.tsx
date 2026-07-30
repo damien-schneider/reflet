@@ -77,7 +77,7 @@ export function PublicFeedbackDetailContent({
     guard(async () => {
       setIsSubmittingComment(true);
       try {
-        await createComment({ feedbackId, body: trimmedComment });
+        await createComment({ body: trimmedComment, feedbackId });
         setNewComment("");
       } finally {
         setIsSubmittingComment(false);

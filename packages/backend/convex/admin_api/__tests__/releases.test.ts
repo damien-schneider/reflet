@@ -15,9 +15,9 @@ describe("admin_api_releases", () => {
     const orgId = await createOrg(t);
 
     const result = await t.mutation(internal.admin_api.releases.createRelease, {
+      description: "Initial release",
       organizationId: orgId,
       title: "v1.0.0 Release",
-      description: "Initial release",
       version: "v1.0.0",
     });
 
@@ -90,10 +90,10 @@ describe("admin_api_releases", () => {
     const feedbackId = await createFeedback(t, orgId);
 
     await t.mutation(internal.admin_api.releases.linkReleaseFeedback, {
+      action: "link",
+      feedbackId,
       organizationId: orgId,
       releaseId,
-      feedbackId,
-      action: "link",
     });
 
     const release = await t.query(internal.admin_api.releases.getRelease, {
@@ -111,12 +111,12 @@ describe("admin_api_releases", () => {
     const orgId = await createOrg(t);
     const otherOrgId = await t.run(async (ctx) =>
       ctx.db.insert("organizations", {
+        createdAt: Date.now(),
+        isPublic: false,
         name: "Other",
         slug: "other",
-        isPublic: false,
-        subscriptionTier: "free",
         subscriptionStatus: "none",
-        createdAt: Date.now(),
+        subscriptionTier: "free",
       })
     );
 
@@ -192,10 +192,10 @@ describe("admin_api_releases", () => {
     const feedbackId = await createFeedback(t, orgId);
 
     await t.mutation(internal.admin_api.releases.linkReleaseFeedback, {
+      action: "link",
+      feedbackId,
       organizationId: orgId,
       releaseId,
-      feedbackId,
-      action: "link",
     });
 
     await t.mutation(internal.admin_api.releases.deleteRelease, {
@@ -224,10 +224,10 @@ describe("admin_api_releases", () => {
 
     // Link
     await t.mutation(internal.admin_api.releases.linkReleaseFeedback, {
+      action: "link",
+      feedbackId,
       organizationId: orgId,
       releaseId,
-      feedbackId,
-      action: "link",
     });
 
     let links = await t.run(async (ctx) =>
@@ -237,10 +237,10 @@ describe("admin_api_releases", () => {
 
     // Duplicate link should be idempotent
     await t.mutation(internal.admin_api.releases.linkReleaseFeedback, {
+      action: "link",
+      feedbackId,
       organizationId: orgId,
       releaseId,
-      feedbackId,
-      action: "link",
     });
 
     links = await t.run(async (ctx) =>
@@ -250,10 +250,10 @@ describe("admin_api_releases", () => {
 
     // Unlink
     await t.mutation(internal.admin_api.releases.linkReleaseFeedback, {
+      action: "unlink",
+      feedbackId,
       organizationId: orgId,
       releaseId,
-      feedbackId,
-      action: "unlink",
     });
 
     links = await t.run(async (ctx) =>

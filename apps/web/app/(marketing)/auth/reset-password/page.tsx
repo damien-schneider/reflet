@@ -15,10 +15,10 @@ import { authClient } from "@/lib/auth-client";
 
 const resetPasswordSchema = z
   .object({
-    password: z.string().min(8, "Password must be at least 8 characters"),
     confirmPassword: z
       .string()
       .min(8, "Password must be at least 8 characters"),
+    password: z.string().min(8, "Password must be at least 8 characters"),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -44,11 +44,11 @@ function ResetPasswordContent() {
     formState: { errors, isSubmitting },
     watch,
   } = useForm<ResetPasswordFormData>({
-    resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
-      password: "",
       confirmPassword: "",
+      password: "",
     },
+    resolver: zodResolver(resetPasswordSchema),
   });
 
   const watchedPassword = watch("password");
@@ -94,13 +94,10 @@ function ResetPasswordContent() {
     }
   };
 
-  const isFormValid = () => {
-    return (
-      watchedPassword.length >= 8 &&
-      watchedConfirmPassword.length >= 8 &&
-      watchedPassword === watchedConfirmPassword
-    );
-  };
+  const isFormValid = () =>
+    watchedPassword.length >= 8 &&
+    watchedConfirmPassword.length >= 8 &&
+    watchedPassword === watchedConfirmPassword;
 
   if (status === "invalid") {
     return (

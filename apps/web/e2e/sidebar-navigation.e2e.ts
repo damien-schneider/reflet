@@ -1,7 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-// Auth form headings (French UI)
-const AUTH_SIGNUP_HEADING = "Créer un compte";
+const AUTH_SIGNUP_HEADING = "Create an account";
 
 const DASHBOARD_URL_PATTERN = /\/dashboard\/[^/]+$/;
 const BOARDS_URL_PATTERN = /\/dashboard\/[^/]+\/boards$/;
@@ -9,12 +8,9 @@ const SETTINGS_URL_PATTERN = /\/dashboard\/[^/]+\/settings$/;
 const BOARDS_LINK_REGEX = /Boards/i;
 const SETTINGS_LINK_REGEX = /Settings/i;
 
-/**
- * Helper to complete sign-up flow with the new unified auth form
- */
 async function signUpNewUser(
   page: import("@playwright/test").Page,
-  user: { name: string; email: string; password: string }
+  user: { email: string; password: string }
 ) {
   await page.getByTestId("email-input").fill(user.email);
   await page.getByTestId("email-input").blur();
@@ -23,16 +19,15 @@ async function signUpNewUser(
     timeout: 10_000,
   });
 
-  await page.getByTestId("name-input").fill(user.name);
   await page.getByTestId("password-input").fill(user.password);
-  await page.getByRole("button", { name: "Créer mon compte" }).click();
+  await page.getByTestId("confirm-password-input").fill(user.password);
+  await page.getByRole("button", { name: "Create my account" }).click();
 }
 
 test.describe("Sidebar Navigation - Boards and Settings", () => {
   test("should navigate to Boards page without 404 error", async ({ page }) => {
     const timestamp = Date.now();
     const testUser = {
-      name: `NavTest ${timestamp}`,
       email: `nav-test-${timestamp}@example.com`,
       password: "password123",
     };
@@ -70,7 +65,7 @@ test.describe("Sidebar Navigation - Boards and Settings", () => {
 
     // Verify page content - should show Boards heading (h1 specifically)
     await expect(
-      page.getByRole("heading", { name: "Boards", exact: true, level: 1 })
+      page.getByRole("heading", { exact: true, level: 1, name: "Boards" })
     ).toBeVisible({
       timeout: 10_000,
     });
@@ -81,7 +76,6 @@ test.describe("Sidebar Navigation - Boards and Settings", () => {
   }) => {
     const timestamp = Date.now();
     const testUser = {
-      name: `NavTest ${timestamp}`,
       email: `nav-test-settings-${timestamp}@example.com`,
       password: "password123",
     };

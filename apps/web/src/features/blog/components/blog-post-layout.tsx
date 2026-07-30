@@ -22,19 +22,19 @@ export function BlogPostLayout({ meta, slug, children }: BlogPostLayoutProps) {
   const jsonLd =
     meta.category === "comparison"
       ? getComparisonJsonLd({
-          title: meta.title,
+          competitorName: slug.replace("reflet-vs-", "").replace(/-/g, " "),
           description: meta.description,
           slug,
-          competitorName: slug.replace("reflet-vs-", "").replace(/-/g, " "),
+          title: meta.title,
         })
       : getBlogPostJsonLd({
-          title: meta.title,
-          description: meta.description,
-          slug,
-          datePublished: meta.date,
           author: meta.author,
-          tags: meta.tags,
+          datePublished: meta.date,
+          description: meta.description,
           ogImage: meta.ogImage,
+          slug,
+          tags: meta.tags,
+          title: meta.title,
         });
 
   const breadcrumbJsonLd = getBreadcrumbJsonLd([

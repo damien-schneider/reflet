@@ -6,11 +6,11 @@ vi.mock("@/lib/utils", () => ({
 }));
 
 vi.mock("@phosphor-icons/react", () => ({
-  TextAlignLeft: (props: Record<string, unknown>) => (
-    <svg data-testid="icon-align-left" {...props} />
-  ),
   TextAlignCenter: (props: Record<string, unknown>) => (
     <svg data-testid="icon-align-center" {...props} />
+  ),
+  TextAlignLeft: (props: Record<string, unknown>) => (
+    <svg data-testid="icon-align-left" {...props} />
   ),
   TextAlignRight: (props: Record<string, unknown>) => (
     <svg data-testid="icon-align-right" {...props} />
@@ -24,22 +24,22 @@ const createMockEditor = (overrides: Record<string, unknown> = {}) => {
   const mockChain = vi.fn(() => ({ focus: mockFocus }));
 
   return {
+    _mockRun: mockRun,
+    _mockUpdateAttributes: mockUpdateAttributes,
     chain: mockChain,
-    isActive: vi.fn(() => false),
     getAttributes: vi.fn(() => ({ align: "center" })),
-    on: vi.fn(),
+    isActive: vi.fn(() => false),
     off: vi.fn(),
+    on: vi.fn(),
     view: {
-      state: { selection: { from: 0 } },
       dom: Object.assign(document.createElement("div"), {
         getBoundingClientRect: () => new DOMRect(0, 0, 800, 600),
       }),
       domAtPos: vi.fn(() => ({
         node: document.createElement("div"),
       })),
+      state: { selection: { from: 0 } },
     },
-    _mockRun: mockRun,
-    _mockUpdateAttributes: mockUpdateAttributes,
     ...overrides,
   };
 };
@@ -95,8 +95,8 @@ describe("ImageBubbleMenu", () => {
 
   it("highlights center button by default", () => {
     const editor = createMockEditor({
-      isActive: vi.fn(() => true),
       getAttributes: vi.fn(() => ({ align: "center" })),
+      isActive: vi.fn(() => true),
     });
 
     render(<ImageBubbleMenu editor={editor as never} />);
@@ -182,8 +182,8 @@ describe("ImageBubbleMenu", () => {
 
   it("defaults to center when align attribute is invalid", () => {
     const editor = createMockEditor({
-      isActive: vi.fn(() => true),
       getAttributes: vi.fn(() => ({ align: "invalid" })),
+      isActive: vi.fn(() => true),
     });
 
     render(<ImageBubbleMenu editor={editor as never} />);
@@ -204,13 +204,13 @@ describe("ImageBubbleMenu", () => {
     const editor = createMockEditor({
       isActive: vi.fn(() => true),
       view: {
-        state: { selection: { from: 0 } },
         dom: Object.assign(document.createElement("div"), {
           getBoundingClientRect: () => new DOMRect(0, 0, 800, 600),
         }),
         domAtPos: vi.fn(() => ({
           node: parentDiv,
         })),
+        state: { selection: { from: 0 } },
       },
     });
 
@@ -219,6 +219,6 @@ describe("ImageBubbleMenu", () => {
     const menu = document.querySelector(".tiptap-image-bubble-menu");
     expect(menu).toBeInTheDocument();
     // The menu should have style props set
-    expect(menu).toHaveStyle({ top: "160px", left: "250px" });
+    expect(menu).toHaveStyle({ left: "250px", top: "160px" });
   });
 });

@@ -26,11 +26,11 @@ import { COMPLEXITY_OPTIONS, isComplexity } from "./ai-analysis-types";
 
 const COMPLEXITY_CONFIG: Record<Complexity, { label: string; color: string }> =
   {
-    trivial: { label: "Trivial", color: "green" },
-    simple: { label: "Simple", color: "blue" },
-    moderate: { label: "Moderate", color: "yellow" },
-    complex: { label: "Complex", color: "orange" },
-    very_complex: { label: "Very Complex", color: "red" },
+    complex: { color: "orange", label: "Complex" },
+    moderate: { color: "yellow", label: "Moderate" },
+    simple: { color: "blue", label: "Simple" },
+    trivial: { color: "green", label: "Trivial" },
+    very_complex: { color: "red", label: "Very Complex" },
   };
 
 export function ComplexityBadge({
@@ -58,15 +58,15 @@ export function ComplexityBadge({
       return;
     }
     await updateAnalysis({
-      feedbackId,
       complexity: value,
+      feedbackId,
     });
   };
 
   const handleClear = async () => {
     await updateAnalysis({
-      feedbackId,
       clearComplexity: true,
+      feedbackId,
     });
   };
 

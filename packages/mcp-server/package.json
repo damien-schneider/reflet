@@ -19,19 +19,19 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "typecheck": "tsc --noEmit",
+    "check-types": "tsc --noEmit",
     "lint": "cd ../.. && bun x ultracite check packages/mcp-server",
-    "test": "vitest run"
+    "test:unit": "vitest run"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.28.0",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@types/node": "^25.5.0",
+    "@types/node": "^26.1.2",
     "tsup": "^8.5.1",
-    "typescript": "catalog:",
-    "vitest": "^4.1.1"
+    "typescript": "6.0.3",
+    "vitest": "^4.1.10"
   },
   "engines": {
     "node": ">=18.0.0"

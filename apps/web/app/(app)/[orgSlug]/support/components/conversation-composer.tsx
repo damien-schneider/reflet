@@ -42,9 +42,9 @@ export function ConversationComposer({
       return;
     }
     onSubmit({
-      subject: subject.trim(),
-      message: message.trim(),
       email: isGuest ? guestEmail.trim() : undefined,
+      message: message.trim(),
+      subject: subject.trim(),
     });
     setSubject("");
     setMessage("");

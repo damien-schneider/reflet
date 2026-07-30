@@ -64,10 +64,10 @@ afterEach(cleanup);
 
 describe("InboxFilterBar", () => {
   const defaultProps = {
-    statusFilter: ["open", "awaiting_reply"] satisfies ConversationStatus[],
+    onSearchChange: vi.fn(),
     onToggleStatusFilter: vi.fn(),
     searchQuery: "",
-    onSearchChange: vi.fn(),
+    statusFilter: ["open", "awaiting_reply"] satisfies ConversationStatus[],
   };
 
   it("renders all four status filter pills", () => {

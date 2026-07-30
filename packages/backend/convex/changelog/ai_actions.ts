@@ -18,7 +18,6 @@ export const generateReleaseTitle = action({
     description: v.string(),
     version: v.optional(v.string()),
   },
-  returns: v.string(),
   handler: async (_ctx, args) => {
     if (!process.env.OPENROUTER_API_KEY) {
       throw new Error("AI service not configured");
@@ -44,40 +43,30 @@ Instructions:
 
     return result.text.trim();
   },
+  returns: v.string(),
 });
 
 export const matchReleaseFeedback = action({
   args: {
-    releaseNotes: v.string(),
     commits: v.array(
       v.object({
-        sha: v.string(),
-        message: v.string(),
-        fullMessage: v.optional(v.string()),
         author: v.string(),
+        fullMessage: v.optional(v.string()),
+        message: v.string(),
+        sha: v.string(),
       })
     ),
     feedbackItems: v.array(
       v.object({
-        id: v.string(),
-        title: v.string(),
         description: v.optional(v.string()),
+        id: v.string(),
         status: v.string(),
         tags: v.array(v.string()),
+        title: v.string(),
       })
     ),
+    releaseNotes: v.string(),
   },
-  returns: v.array(
-    v.object({
-      feedbackId: v.string(),
-      confidence: v.union(
-        v.literal("high"),
-        v.literal("medium"),
-        v.literal("low")
-      ),
-      reason: v.string(),
-    })
-  ),
   handler: async (_ctx, args) => {
     const { releaseNotes, commits, feedbackItems } = args;
 
@@ -167,9 +156,20 @@ Sort results by confidence (high first, then medium, then low).`;
         (m) => validIds.has(m.feedbackId) && validConfidences.has(m.confidence)
       )
       .map((m) => ({
-        feedbackId: m.feedbackId,
         confidence: m.confidence as "high" | "medium" | "low",
+        feedbackId: m.feedbackId,
         reason: m.reason,
       }));
   },
+  returns: v.array(
+    v.object({
+      confidence: v.union(
+        v.literal("high"),
+        v.literal("medium"),
+        v.literal("low")
+      ),
+      feedbackId: v.string(),
+      reason: v.string(),
+    })
+  ),
 });

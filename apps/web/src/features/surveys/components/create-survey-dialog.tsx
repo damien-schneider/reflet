@@ -71,24 +71,24 @@ export function CreateSurveyDialog({
     setIsCreating(true);
     try {
       const surveyId = await createSurvey({
-        organizationId,
-        title: title.trim(),
         description: description.trim() || undefined,
-        triggerType,
+        organizationId,
         questions: [],
+        title: title.trim(),
+        triggerType,
       });
 
       if (selectedTemplate !== "blank") {
         const questions = createQuestionsFromTemplate(selectedTemplate);
         for (const [index, q] of questions.entries()) {
           await addQuestion({
-            surveyId,
-            type: q.type,
-            title: q.title,
-            description: q.description,
-            required: q.required,
-            order: index,
             config: q.config,
+            description: q.description,
+            order: index,
+            required: q.required,
+            surveyId,
+            title: q.title,
+            type: q.type,
           });
         }
       }

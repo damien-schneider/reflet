@@ -18,9 +18,9 @@ export function registerStatusTools(
     "status_create",
     "Create a new organization status for the roadmap.",
     {
-      name: z.string().describe("Status name (e.g., 'In Review')"),
       color: z.string().describe("Status color (hex or named)"),
       icon: z.string().optional().describe("Status icon"),
+      name: z.string().describe("Status name (e.g., 'In Review')"),
     },
     async (params) => textResult(await client.createStatus(params))
   );
@@ -29,10 +29,10 @@ export function registerStatusTools(
     "status_update",
     "Update an organization status's name, color, or icon.",
     {
-      statusId: z.string().describe("The status ID"),
-      name: z.string().optional().describe("New name"),
       color: z.string().optional().describe("New color"),
       icon: z.string().optional().describe("New icon"),
+      name: z.string().optional().describe("New name"),
+      statusId: z.string().describe("The status ID"),
     },
     async (params) => textResult(await client.updateStatus(params))
   );

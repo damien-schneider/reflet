@@ -40,12 +40,12 @@ export function ReleaseFeedbackSection({
   ).withOptimisticUpdate((localStore, args) => {
     const available = localStore.getQuery(
       api.changelog.actions.getAvailableFeedback,
-      { organizationId, excludeReleaseId: args.releaseId }
+      { excludeReleaseId: args.releaseId, organizationId }
     );
     if (available) {
       localStore.setQuery(
         api.changelog.actions.getAvailableFeedback,
-        { organizationId, excludeReleaseId: args.releaseId },
+        { excludeReleaseId: args.releaseId, organizationId },
         available.filter((f) => f._id !== args.feedbackId)
       );
     }
@@ -79,7 +79,7 @@ export function ReleaseFeedbackSection({
 
   const availableFeedback = useQuery(
     api.changelog.actions.getAvailableFeedback,
-    { organizationId, excludeReleaseId: releaseId ?? undefined }
+    { excludeReleaseId: releaseId ?? undefined, organizationId }
   );
 
   const { matches, isMatching, matchError, matchFeedback, clearMatches } =
@@ -105,18 +105,18 @@ export function ReleaseFeedbackSection({
     .filter((f): f is NonNullable<typeof f> => f !== null)
     .map((f) => ({
       _id: f._id,
-      title: f.title,
       status: f.status,
+      title: f.title,
     }));
 
   useAutoTriggerMatching({
     autoTriggerMatching,
-    hasAutoTriggered,
-    description,
-    commits,
     availableFeedback,
-    setHasAutoTriggered,
+    commits,
+    description,
+    hasAutoTriggered,
     matchFeedback,
+    setHasAutoTriggered,
   });
 
   // Auto-link matched feedback when AI returns results
@@ -151,9 +151,9 @@ export function ReleaseFeedbackSection({
       const results = await Promise.allSettled(
         toLink.map((feedbackId) =>
           linkFeedback({
-            releaseId,
             feedbackId: feedbackId as Id<"feedback">,
             newStatus: statusToSet,
+            releaseId,
           })
         )
       );
@@ -224,7 +224,7 @@ export function ReleaseFeedbackSection({
         return;
       }
       try {
-        await unlinkFeedback({ releaseId, feedbackId });
+        await unlinkFeedback({ feedbackId, releaseId });
         toast.success("Feedback unlinked");
       } catch (error) {
         toast.error(
@@ -242,7 +242,7 @@ export function ReleaseFeedbackSection({
       }
       try {
         const statusToSet = linkStatus === "keep" ? undefined : linkStatus;
-        await linkFeedback({ releaseId, feedbackId, newStatus: statusToSet });
+        await linkFeedback({ feedbackId, newStatus: statusToSet, releaseId });
         toast.success("Feedback linked");
         setSearchQuery("");
       } catch (error) {

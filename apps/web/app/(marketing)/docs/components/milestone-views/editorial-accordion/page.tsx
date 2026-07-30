@@ -13,10 +13,10 @@ import { EditorialAccordionPreview } from "@/components/docs/milestone-view-prev
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
-  title: "Editorial Accordion - Milestone View",
   description:
     "A serif-typography accordion view with percentage columns and color-wash expansion.",
   path: "/docs/components/milestone-views/editorial-accordion",
+  title: "Editorial Accordion - Milestone View",
 });
 
 const SOURCE_CODE = readFileSync(

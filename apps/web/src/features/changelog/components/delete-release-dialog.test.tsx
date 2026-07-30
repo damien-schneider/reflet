@@ -52,9 +52,9 @@ afterEach(cleanup);
 
 describe("DeleteReleaseDialog", () => {
   const defaultProps = {
-    open: true,
     onClose: vi.fn(),
     onConfirm: vi.fn().mockResolvedValue(undefined),
+    open: true,
   };
 
   it("renders the dialog when open is true", () => {

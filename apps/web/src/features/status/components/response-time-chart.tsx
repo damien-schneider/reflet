@@ -22,8 +22,8 @@ interface ResponseTimeChartProps {
 
 const chartConfig = {
   responseTime: {
-    label: "Response Time",
     color: "var(--chart-1)",
+    label: "Response Time",
   },
 } satisfies ChartConfig;
 
@@ -31,23 +31,25 @@ export function ResponseTimeChart({
   recentChecks,
   lastResponseTimeMs,
 }: ResponseTimeChartProps) {
-  const chartData = useMemo(() => {
-    return recentChecks
-      .filter((c) => c.responseTimeMs !== undefined && c.responseTimeMs > 0)
-      .map((c) => ({
-        time: new Date(c.checkedAt).toLocaleTimeString("en-US", {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        date: new Date(c.checkedAt).toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        responseTime: c.responseTimeMs,
-      }));
-  }, [recentChecks]);
+  const chartData = useMemo(
+    () =>
+      recentChecks
+        .filter((c) => c.responseTimeMs !== undefined && c.responseTimeMs > 0)
+        .map((c) => ({
+          date: new Date(c.checkedAt).toLocaleDateString("en-US", {
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            month: "short",
+          }),
+          responseTime: c.responseTimeMs,
+          time: new Date(c.checkedAt).toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        })),
+    [recentChecks]
+  );
 
   if (chartData.length === 0) {
     return null;
@@ -67,7 +69,7 @@ export function ResponseTimeChart({
         <ChartContainer className="h-[80px] w-full" config={chartConfig}>
           <LineChart
             data={chartData}
-            margin={{ top: 4, right: 4, bottom: 0, left: 4 }}
+            margin={{ bottom: 0, left: 4, right: 4, top: 4 }}
           >
             <CartesianGrid strokeDasharray="3 3" vertical={false} />
             <XAxis axisLine={false} dataKey="time" hide tickLine={false} />

@@ -175,9 +175,9 @@ export const generateCodingPrompt = query({
 5. Keep changes minimal and focused on the specific request`);
 
     return {
-      prompt: promptParts.join("\n"),
       feedbackTitle: feedback.title,
       hasRepoContext: Boolean(repoAnalysis),
+      prompt: promptParts.join("\n"),
     };
   },
 });
@@ -213,9 +213,9 @@ export const getDifficultyEstimate = query({
     }
 
     return {
-      aiDifficultyScore: feedback.aiDifficultyScore,
-      aiDifficultyReasoning: feedback.aiDifficultyReasoning,
       aiDifficultyGeneratedAt: feedback.aiDifficultyGeneratedAt,
+      aiDifficultyReasoning: feedback.aiDifficultyReasoning,
+      aiDifficultyScore: feedback.aiDifficultyScore,
       hasAiDifficulty: Boolean(feedback.aiDifficultyScore),
     };
   },
@@ -327,8 +327,8 @@ export const initiateDraftReply = mutation({
  */
 export const saveClarification = internalMutation({
   args: {
-    feedbackId: v.id("feedback"),
     clarification: v.string(),
+    feedbackId: v.id("feedback"),
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.feedbackId, {
@@ -344,8 +344,8 @@ export const saveClarification = internalMutation({
  */
 export const saveDraftReply = internalMutation({
   args: {
-    feedbackId: v.id("feedback"),
     draftReply: v.string(),
+    feedbackId: v.id("feedback"),
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.feedbackId, {
@@ -361,7 +361,7 @@ export const saveDraftReply = internalMutation({
  */
 export const saveDifficultyEstimate = internalMutation({
   args: {
-    feedbackId: v.id("feedback"),
+    difficultyReasoning: v.string(),
     difficultyScore: v.union(
       v.literal("trivial"),
       v.literal("easy"),
@@ -369,13 +369,13 @@ export const saveDifficultyEstimate = internalMutation({
       v.literal("hard"),
       v.literal("complex")
     ),
-    difficultyReasoning: v.string(),
+    feedbackId: v.id("feedback"),
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.feedbackId, {
-      aiDifficultyScore: args.difficultyScore,
-      aiDifficultyReasoning: args.difficultyReasoning,
       aiDifficultyGeneratedAt: Date.now(),
+      aiDifficultyReasoning: args.difficultyReasoning,
+      aiDifficultyScore: args.difficultyScore,
       updatedAt: Date.now(),
     });
   },
@@ -537,11 +537,11 @@ Format your response as a well-structured clarification, ready to be shown to th
 
     // Save the clarification
     await ctx.runMutation(internal.feedback.clarification.saveClarification, {
-      feedbackId: args.feedbackId,
       clarification:
         typeof clarification === "string"
           ? clarification
           : JSON.stringify(clarification),
+      feedbackId: args.feedbackId,
     });
 
     return { success: true };
@@ -609,11 +609,11 @@ Write only the reply text, no additional commentary.`,
 
     // Save the draft reply
     await ctx.runMutation(internal.feedback.clarification.saveDraftReply, {
-      feedbackId: args.feedbackId,
       draftReply:
         typeof draftReply === "string"
           ? draftReply
           : JSON.stringify(draftReply),
+      feedbackId: args.feedbackId,
     });
 
     return { success: true };
@@ -728,9 +728,9 @@ Only output the JSON, no additional text.`,
     await ctx.runMutation(
       internal.feedback.clarification.saveDifficultyEstimate,
       {
-        feedbackId: args.feedbackId,
-        difficultyScore,
         difficultyReasoning,
+        difficultyScore,
+        feedbackId: args.feedbackId,
       }
     );
 

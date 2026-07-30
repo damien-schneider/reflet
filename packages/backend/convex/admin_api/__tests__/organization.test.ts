@@ -43,9 +43,9 @@ describe("admin_api_organization", () => {
     const orgId = await createOrg(t);
 
     await t.mutation(internal.admin_api.organization.updateOrganization, {
-      organizationId: orgId,
-      name: "Updated Org",
       isPublic: true,
+      name: "Updated Org",
+      organizationId: orgId,
       primaryColor: "#FF0000",
     });
 
@@ -62,8 +62,8 @@ describe("admin_api_organization", () => {
 
     await expect(
       t.mutation(internal.admin_api.organization.updateOrganization, {
-        organizationId: orgId,
         name: "Ghost",
+        organizationId: orgId,
       })
     ).rejects.toThrow("Organization not found");
   });
@@ -75,14 +75,14 @@ describe("admin_api_organization", () => {
     // Create milestone
     const milestoneId = await t.run(async (ctx) =>
       ctx.db.insert("milestones", {
-        organizationId: orgId,
-        name: "Sprint 1",
         color: "#0000FF",
-        timeHorizon: "now",
-        order: 0,
-        status: "active",
-        isPublic: true,
         createdAt: Date.now(),
+        isPublic: true,
+        name: "Sprint 1",
+        order: 0,
+        organizationId: orgId,
+        status: "active",
+        timeHorizon: "now",
         updatedAt: Date.now(),
       })
     );
@@ -90,36 +90,36 @@ describe("admin_api_organization", () => {
     // Create feedback and link to milestone
     const feedbackId = await t.run(async (ctx) =>
       ctx.db.insert("feedback", {
-        organizationId: orgId,
-        title: "Feature Request",
-        description: "Please add this",
-        status: "open",
-        voteCount: 5,
         commentCount: 0,
+        createdAt: Date.now(),
+        description: "Please add this",
         isApproved: true,
         isPinned: false,
+        organizationId: orgId,
         priority: "high",
-        createdAt: Date.now(),
+        status: "open",
+        title: "Feature Request",
         updatedAt: Date.now(),
+        voteCount: 5,
       })
     );
 
     await t.run(async (ctx) =>
       ctx.db.insert("milestoneFeedback", {
-        milestoneId,
-        feedbackId,
         addedAt: Date.now(),
+        feedbackId,
+        milestoneId,
       })
     );
 
     // Create status
     await t.run(async (ctx) =>
       ctx.db.insert("organizationStatuses", {
-        organizationId: orgId,
-        name: "In Progress",
         color: "#FFAA00",
-        order: 0,
         createdAt: Date.now(),
+        name: "In Progress",
+        order: 0,
+        organizationId: orgId,
         updatedAt: Date.now(),
       })
     );
@@ -142,26 +142,26 @@ describe("admin_api_organization", () => {
 
     await t.run(async (ctx) => {
       await ctx.db.insert("milestones", {
-        organizationId: orgId,
-        name: "Active MS",
         color: "#0F0",
-        timeHorizon: "now",
-        order: 0,
-        status: "active",
-        isPublic: true,
         createdAt: Date.now(),
+        isPublic: true,
+        name: "Active MS",
+        order: 0,
+        organizationId: orgId,
+        status: "active",
+        timeHorizon: "now",
         updatedAt: Date.now(),
       });
       await ctx.db.insert("milestones", {
-        organizationId: orgId,
-        name: "Completed MS",
         color: "#F00",
-        timeHorizon: "now",
-        order: 1,
-        status: "completed",
         completedAt: Date.now(),
-        isPublic: true,
         createdAt: Date.now(),
+        isPublic: true,
+        name: "Completed MS",
+        order: 1,
+        organizationId: orgId,
+        status: "completed",
+        timeHorizon: "now",
         updatedAt: Date.now(),
       });
     });

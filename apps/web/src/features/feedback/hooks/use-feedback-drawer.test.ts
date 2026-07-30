@@ -8,8 +8,8 @@ const mockPush = vi.fn();
 let currentSearchParams = new URLSearchParams();
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: mockPush, replace: vi.fn() }),
   usePathname: () => "/test-org/board",
+  useRouter: () => ({ push: mockPush, replace: vi.fn() }),
   useSearchParams: () => currentSearchParams,
 }));
 

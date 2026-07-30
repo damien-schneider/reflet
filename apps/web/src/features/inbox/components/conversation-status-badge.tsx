@@ -18,25 +18,25 @@ const STATUS_CONFIG: Record<
     className: string;
   }
 > = {
-  open: {
-    label: "Open",
-    icon: Circle,
-    className: "bg-olive-500/10 text-olive-600 dark:text-olive-400",
-  },
   awaiting_reply: {
-    label: "Awaiting",
-    icon: Clock,
     className: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-  },
-  resolved: {
-    label: "Resolved",
-    icon: CheckCircle,
-    className: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+    icon: Clock,
+    label: "Awaiting",
   },
   closed: {
-    label: "Closed",
-    icon: XCircle,
     className: "bg-zinc-500/10 text-zinc-600 dark:text-zinc-400",
+    icon: XCircle,
+    label: "Closed",
+  },
+  open: {
+    className: "bg-olive-500/10 text-olive-600 dark:text-olive-400",
+    icon: Circle,
+    label: "Open",
+  },
+  resolved: {
+    className: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+    icon: CheckCircle,
+    label: "Resolved",
   },
 };
 
@@ -57,9 +57,9 @@ export function ConversationStatusBadge({
   const config = isConversationStatus(status)
     ? STATUS_CONFIG[status]
     : {
-        label: status,
-        icon: Circle,
         className: "bg-zinc-500/10 text-zinc-600",
+        icon: Circle,
+        label: status,
       };
 
   const Icon = config.icon;

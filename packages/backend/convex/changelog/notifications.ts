@@ -36,8 +36,6 @@ async function resolveSubscriberEmail(
 
     return user?.email;
   }
-
-  return undefined;
 }
 
 async function sendEmailToSubscriber(
@@ -74,12 +72,12 @@ async function sendEmailToSubscriber(
   const unsubscribeUrl = `${params.siteUrl}/changelog/unsubscribe?token=${subscriber.unsubscribeToken}`;
 
   await ctx.runAction(internal.email.renderer.sendChangelogNotificationEmail, {
-    to: email,
     organizationName: params.organizationName,
-    releaseTitle: params.releaseTitle,
-    releaseVersion: params.releaseVersion,
     releaseDescription: params.descriptionText,
+    releaseTitle: params.releaseTitle,
     releaseUrl: params.releaseUrl,
+    releaseVersion: params.releaseVersion,
+    to: email,
     unsubscribeUrl,
   });
 
@@ -117,7 +115,7 @@ async function processSubscriberBatch(
     }
   }
 
-  return { sent, errors };
+  return { errors, sent };
 }
 
 /**
@@ -139,7 +137,7 @@ export const sendReleaseNotifications = internalAction({
         "[Changelog Notifications] Release not found:",
         args.releaseId
       );
-      return { success: false, error: "Release not found" };
+      return { error: "Release not found", success: false };
     }
 
     const org = await ctx.runQuery(
@@ -152,7 +150,7 @@ export const sendReleaseNotifications = internalAction({
         "[Changelog Notifications] Organization not found:",
         release.organizationId
       );
-      return { success: false, error: "Organization not found" };
+      return { error: "Organization not found", success: false };
     }
 
     const effectiveTier = await ctx.runQuery(
@@ -163,7 +161,7 @@ export const sendReleaseNotifications = internalAction({
       console.log(
         "[Changelog Notifications] Skipping - organization is not on Pro tier"
       );
-      return { success: true, skipped: true, reason: "Not Pro tier" };
+      return { reason: "Not Pro tier", skipped: true, success: true };
     }
 
     const subscribers: Subscriber[] = await ctx.runQuery(
@@ -173,19 +171,19 @@ export const sendReleaseNotifications = internalAction({
 
     if (subscribers.length === 0) {
       console.log("[Changelog Notifications] No subscribers found");
-      return { success: true, emailsSent: 0 };
+      return { emailsSent: 0, success: true };
     }
 
     const siteUrl = process.env.SITE_URL ?? "";
     const params = {
-      siteUrl,
-      releaseUrl: `${siteUrl}/${org.slug}/changelog`,
-      organizationName: org.name,
-      releaseTitle: release.title,
-      releaseVersion: release.version,
       descriptionText: release.description
         ? stripHtml(release.description).slice(0, 500)
         : "Check out the latest updates.",
+      organizationName: org.name,
+      releaseTitle: release.title,
+      releaseUrl: `${siteUrl}/${org.slug}/changelog`,
+      releaseVersion: release.version,
+      siteUrl,
     };
 
     let totalSent = 0;
@@ -207,10 +205,10 @@ export const sendReleaseNotifications = internalAction({
     );
 
     return {
-      success: true,
       emailsSent: totalSent,
-      totalSubscribers: subscribers.length,
       errors: allErrors.length > 0 ? allErrors : undefined,
+      success: true,
+      totalSubscribers: subscribers.length,
     };
   },
 });

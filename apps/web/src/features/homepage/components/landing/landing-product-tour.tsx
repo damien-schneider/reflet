@@ -25,16 +25,16 @@ const EASE_OUT_EXPO = [0.16, 1, 0.3, 1] as const;
 // ─── Widget / SDK Mockup ─────────────────────────────────────────────────────
 
 const CODE_LINES = [
-  { text: "import { RefletProvider, FeedbackButton }", hl: true },
-  { text: "  from 'reflet-sdk/react'", hl: true },
-  { text: "", hl: false },
-  { text: "export function App() {", hl: false },
-  { text: "  return (", hl: false },
-  { text: '    <RefletProvider publicKey="pk_live_…a3f">', hl: true },
-  { text: "      <FeedbackButton />", hl: true },
-  { text: "    </RefletProvider>", hl: true },
-  { text: "  )", hl: false },
-  { text: "}", hl: false },
+  { hl: true, text: "import { RefletProvider, FeedbackButton }" },
+  { hl: true, text: "  from 'reflet-sdk/react'" },
+  { hl: false, text: "" },
+  { hl: false, text: "export function App() {" },
+  { hl: false, text: "  return (" },
+  { hl: true, text: '    <RefletProvider publicKey="pk_live_…a3f">' },
+  { hl: true, text: "      <FeedbackButton />" },
+  { hl: true, text: "    </RefletProvider>" },
+  { hl: false, text: "  )" },
+  { hl: false, text: "}" },
 ] as const;
 
 function WidgetMockup() {
@@ -98,8 +98,8 @@ function WidgetMockup() {
 // ─── AI Analysis Mockup ──────────────────────────────────────────────────────
 
 const AI_AUTO_TAGS = [
-  { label: "UX", color: "purple" as const },
-  { label: "Productivity", color: "blue" as const },
+  { color: "purple" as const, label: "UX" },
+  { color: "blue" as const, label: "Productivity" },
 ];
 
 function AIMockup() {
@@ -198,28 +198,28 @@ function AIMockup() {
 
 const TOUR_SECTIONS = [
   {
-    id: "widget-sdk",
     badge: "Developer Experience",
-    title: "Embed feedback anywhere with two lines",
     description:
       "Drop-in widget via script tag, or go deep with React hooks. TypeScript-first SDK with useFeedbackList(), useVote(), and more.",
-    reverse: false,
+    id: "widget-sdk",
     mockup: "widget" as const,
+    reverse: false,
+    title: "Embed feedback anywhere with two lines",
   },
   {
-    id: "ai-features",
     badge: "AI-Powered Intelligence",
-    title: "Let AI handle the busywork",
     description:
       "Automatic tagging, priority estimation, complexity scoring, and duplicate detection. Your team triages in minutes, not hours.",
-    reverse: true,
+    id: "ai-features",
     mockup: "ai" as const,
+    reverse: true,
+    title: "Let AI handle the busywork",
   },
 ];
 
 export default function LandingProductTour() {
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, amount: 0.1 });
+  const isInView = useInView(ref, { amount: 0.1, once: true });
 
   return (
     <section className="py-24 sm:py-32" ref={ref}>

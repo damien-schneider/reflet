@@ -17,9 +17,9 @@ const LINK_HEADER_REGEX = /<([^>]+)>;\s*rel="([^"]+)"/;
  */
 export const generateWorkflowContent = action({
   args: {
+    branch: v.string(),
     organizationSlug: v.string(),
     webhookUrl: v.string(),
-    branch: v.string(),
   },
   handler: (_ctx, args) => {
     const workflowContent = `name: Reflet Release Sync
@@ -88,14 +88,13 @@ export const getConnectionFromApiRoute = action({
   args: {
     organizationId: v.id("organizations"),
   },
-  handler: async (ctx, args): Promise<Doc<"githubConnections"> | null> => {
-    return await ctx.runQuery(
+  handler: async (ctx, args): Promise<Doc<"githubConnections"> | null> =>
+    await ctx.runQuery(
       internal.integrations.github.queries.getConnectionInternal,
       {
         organizationId: args.organizationId,
       }
-    );
-  },
+    ),
 });
 
 /**
@@ -105,22 +104,22 @@ export const getConnectionFromApiRoute = action({
  */
 export const saveInstallationFromCallback = action({
   args: {
-    userId: v.string(),
-    installationId: v.string(),
-    accountType: v.union(v.literal("user"), v.literal("organization")),
-    accountLogin: v.string(),
     accountAvatarUrl: v.optional(v.string()),
+    accountLogin: v.string(),
+    accountType: v.union(v.literal("user"), v.literal("organization")),
+    installationId: v.string(),
     organizationId: v.optional(v.id("organizations")),
+    userId: v.string(),
   },
   handler: async (ctx, args): Promise<Id<"userGithubConnections">> => {
     const userConnectionId = await ctx.runMutation(
       internal.integrations.github.mutations.saveUserInstallation,
       {
-        userId: args.userId,
-        installationId: args.installationId,
-        accountType: args.accountType,
-        accountLogin: args.accountLogin,
         accountAvatarUrl: args.accountAvatarUrl,
+        accountLogin: args.accountLogin,
+        accountType: args.accountType,
+        installationId: args.installationId,
+        userId: args.userId,
       }
     );
 
@@ -129,9 +128,9 @@ export const saveInstallationFromCallback = action({
       await ctx.runMutation(
         internal.integrations.github.mutations.linkRepoToOrg,
         {
+          linkedByUserId: args.userId,
           organizationId: args.organizationId,
           userGithubConnectionId: userConnectionId,
-          linkedByUserId: args.userId,
         }
       );
     }
@@ -196,8 +195,8 @@ export const fetchRepositories = action({
 
       const response = await fetch(nextUrl, {
         headers: {
-          Authorization: `Bearer ${args.installationToken}`,
           Accept: "application/vnd.github+json",
+          Authorization: `Bearer ${args.installationToken}`,
           "X-GitHub-Api-Version": "2022-11-28",
         },
       });
@@ -241,12 +240,12 @@ export const fetchRepositories = action({
     );
 
     return allRepositories.map((repo) => ({
-      id: String(repo.id),
-      fullName: repo.full_name,
-      name: repo.name,
       defaultBranch: repo.default_branch,
-      isPrivate: repo.private,
       description: repo.description,
+      fullName: repo.full_name,
+      id: String(repo.id),
+      isPrivate: repo.private,
+      name: repo.name,
     }));
   },
 });
@@ -264,8 +263,8 @@ export const fetchReleases = action({
       `${GITHUB_API_URL}/repos/${args.repositoryFullName}/releases`,
       {
         headers: {
-          Authorization: `Bearer ${args.installationToken}`,
           Accept: "application/vnd.github+json",
+          Authorization: `Bearer ${args.installationToken}`,
           "X-GitHub-Api-Version": "2022-11-28",
         },
       }
@@ -288,17 +287,17 @@ export const fetchReleases = action({
     }>;
 
     return releases.map((release) => ({
-      githubReleaseId: String(release.id),
-      tagName: release.tag_name,
-      name: release.name ?? undefined,
       body: release.body ?? undefined,
+      createdAt: new Date(release.created_at).getTime(),
+      githubReleaseId: String(release.id),
       htmlUrl: release.html_url,
       isDraft: release.draft,
       isPrerelease: release.prerelease,
+      name: release.name ?? undefined,
       publishedAt: release.published_at
         ? new Date(release.published_at).getTime()
         : undefined,
-      createdAt: new Date(release.created_at).getTime(),
+      tagName: release.tag_name,
     }));
   },
 });
@@ -310,31 +309,31 @@ export const createWebhook = action({
   args: {
     installationToken: v.string(),
     repositoryFullName: v.string(),
-    webhookUrl: v.string(),
     secret: v.string(),
+    webhookUrl: v.string(),
   },
   handler: async (_ctx, args) => {
     const response = await fetch(
       `${GITHUB_API_URL}/repos/${args.repositoryFullName}/hooks`,
       {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${args.installationToken}`,
-          Accept: "application/vnd.github+json",
-          "X-GitHub-Api-Version": "2022-11-28",
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({
-          name: "web",
           active: true,
-          events: ["release"],
           config: {
-            url: args.webhookUrl,
             content_type: "json",
-            secret: args.secret,
             insecure_ssl: "0",
+            secret: args.secret,
+            url: args.webhookUrl,
           },
+          events: ["release"],
+          name: "web",
         }),
+        headers: {
+          Accept: "application/vnd.github+json",
+          Authorization: `Bearer ${args.installationToken}`,
+          "Content-Type": "application/json",
+          "X-GitHub-Api-Version": "2022-11-28",
+        },
+        method: "POST",
       }
     );
 
@@ -363,12 +362,12 @@ export const deleteWebhook = action({
     const response = await fetch(
       `${GITHUB_API_URL}/repos/${args.repositoryFullName}/hooks/${args.webhookId}`,
       {
-        method: "DELETE",
         headers: {
-          Authorization: `Bearer ${args.installationToken}`,
           Accept: "application/vnd.github+json",
+          Authorization: `Bearer ${args.installationToken}`,
           "X-GitHub-Api-Version": "2022-11-28",
         },
+        method: "DELETE",
       }
     );
 
@@ -385,20 +384,20 @@ export const deleteWebhook = action({
  */
 export const processReleaseWebhook = internalMutation({
   args: {
+    action: v.string(),
     connectionId: v.id("githubConnections"),
     organizationId: v.id("organizations"),
     release: v.object({
-      id: v.string(),
-      tagName: v.string(),
-      name: v.optional(v.string()),
       body: v.optional(v.string()),
+      createdAt: v.number(),
       htmlUrl: v.string(),
+      id: v.string(),
       isDraft: v.boolean(),
       isPrerelease: v.boolean(),
+      name: v.optional(v.string()),
       publishedAt: v.optional(v.number()),
-      createdAt: v.number(),
+      tagName: v.string(),
     }),
-    action: v.string(),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -433,30 +432,30 @@ export const processReleaseWebhook = internalMutation({
     if (existing) {
       // Update existing
       await ctx.db.patch(existing._id, {
-        tagName: args.release.tagName,
-        name: args.release.name,
         body: args.release.body,
         htmlUrl: args.release.htmlUrl,
         isDraft: args.release.isDraft,
         isPrerelease: args.release.isPrerelease,
-        publishedAt: args.release.publishedAt,
         lastSyncedAt: now,
+        name: args.release.name,
+        publishedAt: args.release.publishedAt,
+        tagName: args.release.tagName,
       });
     } else {
       // Insert new
       await ctx.db.insert("githubReleases", {
-        organizationId: args.organizationId,
+        body: args.release.body,
+        createdAt: args.release.createdAt,
         githubConnectionId: args.connectionId,
         githubReleaseId: args.release.id,
-        tagName: args.release.tagName,
-        name: args.release.name,
-        body: args.release.body,
         htmlUrl: args.release.htmlUrl,
         isDraft: args.release.isDraft,
         isPrerelease: args.release.isPrerelease,
-        publishedAt: args.release.publishedAt,
-        createdAt: args.release.createdAt,
         lastSyncedAt: now,
+        name: args.release.name,
+        organizationId: args.organizationId,
+        publishedAt: args.release.publishedAt,
+        tagName: args.release.tagName,
       });
     }
 
@@ -482,16 +481,16 @@ export const processReleaseWebhook = internalMutation({
 
       if (!existingRefletRelease) {
         await ctx.db.insert("releases", {
-          organizationId: args.organizationId,
-          title: args.release.name || args.release.tagName,
-          description: args.release.body,
-          version: args.release.tagName,
-          publishedAt: now,
-          githubReleaseId: args.release.id,
-          githubHtmlUrl: args.release.htmlUrl,
-          syncedFromGithub: true,
           createdAt: now,
+          description: args.release.body,
+          githubHtmlUrl: args.release.htmlUrl,
+          githubReleaseId: args.release.id,
+          organizationId: args.organizationId,
+          publishedAt: now,
+          syncedFromGithub: true,
+          title: args.release.name || args.release.tagName,
           updatedAt: now,
+          version: args.release.tagName,
         });
       }
     }
@@ -508,12 +507,12 @@ export const processReleaseWebhook = internalMutation({
 export const fetchIssues = action({
   args: {
     installationToken: v.string(),
+    labels: v.optional(v.string()), // Comma-separated list of labels
+    perPage: v.optional(v.number()),
     repositoryFullName: v.string(),
     state: v.optional(
       v.union(v.literal("open"), v.literal("closed"), v.literal("all"))
     ),
-    labels: v.optional(v.string()), // Comma-separated list of labels
-    perPage: v.optional(v.number()),
   },
   handler: async (_ctx, args) => {
     const params = new URLSearchParams();
@@ -527,8 +526,8 @@ export const fetchIssues = action({
       `${GITHUB_API_URL}/repos/${args.repositoryFullName}/issues?${params.toString()}`,
       {
         headers: {
-          Authorization: `Bearer ${args.installationToken}`,
           Accept: "application/vnd.github+json",
+          Authorization: `Bearer ${args.installationToken}`,
           "X-GitHub-Api-Version": "2022-11-28",
         },
       }
@@ -559,22 +558,22 @@ export const fetchIssues = action({
     const actualIssues = issues.filter((issue) => !issue.pull_request);
 
     return actualIssues.map((issue) => ({
-      githubIssueId: String(issue.id),
-      githubIssueNumber: issue.number,
-      title: issue.title,
       body: issue.body ?? undefined,
-      htmlUrl: issue.html_url,
-      state: issue.state,
-      githubLabels: issue.labels.map((l) => l.name),
+      githubAssignees: issue.assignees.map((a) => a.login),
       githubAuthor: issue.user?.login,
       githubAuthorAvatarUrl: issue.user?.avatar_url,
-      githubMilestone: issue.milestone?.title,
-      githubAssignees: issue.assignees.map((a) => a.login),
-      githubCreatedAt: new Date(issue.created_at).getTime(),
-      githubUpdatedAt: new Date(issue.updated_at).getTime(),
       githubClosedAt: issue.closed_at
         ? new Date(issue.closed_at).getTime()
         : undefined,
+      githubCreatedAt: new Date(issue.created_at).getTime(),
+      githubIssueId: String(issue.id),
+      githubIssueNumber: issue.number,
+      githubLabels: issue.labels.map((l) => l.name),
+      githubMilestone: issue.milestone?.title,
+      githubUpdatedAt: new Date(issue.updated_at).getTime(),
+      htmlUrl: issue.html_url,
+      state: issue.state,
+      title: issue.title,
     }));
   },
 });
@@ -592,8 +591,8 @@ export const fetchLabels = action({
       `${GITHUB_API_URL}/repos/${args.repositoryFullName}/labels?per_page=100`,
       {
         headers: {
-          Authorization: `Bearer ${args.installationToken}`,
           Accept: "application/vnd.github+json",
+          Authorization: `Bearer ${args.installationToken}`,
           "X-GitHub-Api-Version": "2022-11-28",
         },
       }
@@ -611,10 +610,10 @@ export const fetchLabels = action({
     }>;
 
     return labels.map((label) => ({
-      id: String(label.id),
-      name: label.name,
       color: label.color,
       description: label.description,
+      id: String(label.id),
+      name: label.name,
     }));
   },
 });
@@ -624,25 +623,25 @@ export const fetchLabels = action({
  */
 export const updateWebhookEvents = action({
   args: {
+    events: v.array(v.string()),
     installationToken: v.string(),
     repositoryFullName: v.string(),
     webhookId: v.string(),
-    events: v.array(v.string()),
   },
   handler: async (_ctx, args) => {
     const response = await fetch(
       `${GITHUB_API_URL}/repos/${args.repositoryFullName}/hooks/${args.webhookId}`,
       {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${args.installationToken}`,
-          Accept: "application/vnd.github+json",
-          "X-GitHub-Api-Version": "2022-11-28",
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({
           events: args.events,
         }),
+        headers: {
+          Accept: "application/vnd.github+json",
+          Authorization: `Bearer ${args.installationToken}`,
+          "Content-Type": "application/json",
+          "X-GitHub-Api-Version": "2022-11-28",
+        },
+        method: "PATCH",
       }
     );
 
@@ -662,18 +661,18 @@ export const updateWebhookEvents = action({
  */
 export const autoImportIssueToFeedback = internalMutation({
   args: {
-    issueId: v.id("githubIssues"),
     connectionId: v.id("githubConnections"),
-    organizationId: v.id("organizations"),
     issue: v.object({
-      id: v.string(),
-      number: v.number(),
-      title: v.string(),
       body: v.optional(v.string()),
       htmlUrl: v.string(),
-      state: v.union(v.literal("open"), v.literal("closed")),
+      id: v.string(),
       labels: v.array(v.string()),
+      number: v.number(),
+      state: v.union(v.literal("open"), v.literal("closed")),
+      title: v.string(),
     }),
+    issueId: v.id("githubIssues"),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -713,21 +712,21 @@ export const autoImportIssueToFeedback = internalMutation({
           : (mapping.defaultStatus ?? "open");
 
       const feedbackId = await ctx.db.insert("feedback", {
-        organizationId: args.organizationId,
-        title: args.issue.title,
-        description: args.issue.body ?? "",
-        status: feedbackStatus,
         authorId: "system",
-        voteCount: 0,
         commentCount: 0,
-        isApproved: true,
-        isPinned: false,
+        createdAt: now,
+        description: args.issue.body ?? "",
+        githubHtmlUrl: args.issue.htmlUrl,
         githubIssueId: args.issue.id,
         githubIssueNumber: args.issue.number,
-        githubHtmlUrl: args.issue.htmlUrl,
+        isApproved: true,
+        isPinned: false,
+        organizationId: args.organizationId,
+        status: feedbackStatus,
         syncedFromGithub: true,
-        createdAt: now,
+        title: args.issue.title,
         updatedAt: now,
+        voteCount: 0,
       });
 
       if (mapping.targetTagId) {
@@ -751,25 +750,25 @@ export const autoImportIssueToFeedback = internalMutation({
  */
 export const processIssueWebhook = internalMutation({
   args: {
+    action: v.string(),
     connectionId: v.id("githubConnections"),
-    organizationId: v.id("organizations"),
     issue: v.object({
-      id: v.string(),
-      number: v.number(),
-      title: v.string(),
-      body: v.optional(v.string()),
-      htmlUrl: v.string(),
-      state: v.union(v.literal("open"), v.literal("closed")),
-      labels: v.array(v.string()),
+      assignees: v.optional(v.array(v.string())),
       author: v.optional(v.string()),
       authorAvatarUrl: v.optional(v.string()),
-      milestone: v.optional(v.string()),
-      assignees: v.optional(v.array(v.string())),
-      createdAt: v.number(),
-      updatedAt: v.number(),
+      body: v.optional(v.string()),
       closedAt: v.optional(v.number()),
+      createdAt: v.number(),
+      htmlUrl: v.string(),
+      id: v.string(),
+      labels: v.array(v.string()),
+      milestone: v.optional(v.string()),
+      number: v.number(),
+      state: v.union(v.literal("open"), v.literal("closed")),
+      title: v.string(),
+      updatedAt: v.number(),
     }),
-    action: v.string(),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -795,18 +794,18 @@ export const processIssueWebhook = internalMutation({
     if (existing) {
       // Update existing issue
       await ctx.db.patch(existing._id, {
-        title: args.issue.title,
         body: args.issue.body,
-        htmlUrl: args.issue.htmlUrl,
-        state: args.issue.state,
-        githubLabels: args.issue.labels,
+        githubAssignees: args.issue.assignees,
         githubAuthor: args.issue.author,
         githubAuthorAvatarUrl: args.issue.authorAvatarUrl,
-        githubMilestone: args.issue.milestone,
-        githubAssignees: args.issue.assignees,
-        githubUpdatedAt: args.issue.updatedAt,
         githubClosedAt: args.issue.closedAt,
+        githubLabels: args.issue.labels,
+        githubMilestone: args.issue.milestone,
+        githubUpdatedAt: args.issue.updatedAt,
+        htmlUrl: args.issue.htmlUrl,
         lastSyncedAt: now,
+        state: args.issue.state,
+        title: args.issue.title,
       });
 
       // Update linked feedback if exists
@@ -816,9 +815,9 @@ export const processIssueWebhook = internalMutation({
           const newStatus =
             args.issue.state === "closed" ? "closed" : feedback.status;
           await ctx.db.patch(existing.refletFeedbackId, {
-            title: args.issue.title,
             description: args.issue.body ?? "",
             status: newStatus,
+            title: args.issue.title,
             updatedAt: now,
           });
         }
@@ -826,23 +825,23 @@ export const processIssueWebhook = internalMutation({
     } else {
       // Insert new issue
       const issueId = await ctx.db.insert("githubIssues", {
-        organizationId: args.organizationId,
-        githubConnectionId: args.connectionId,
-        githubIssueId: args.issue.id,
-        githubIssueNumber: args.issue.number,
-        title: args.issue.title,
         body: args.issue.body,
-        htmlUrl: args.issue.htmlUrl,
-        state: args.issue.state,
-        githubLabels: args.issue.labels,
+        githubAssignees: args.issue.assignees,
         githubAuthor: args.issue.author,
         githubAuthorAvatarUrl: args.issue.authorAvatarUrl,
-        githubMilestone: args.issue.milestone,
-        githubAssignees: args.issue.assignees,
-        githubCreatedAt: args.issue.createdAt,
-        githubUpdatedAt: args.issue.updatedAt,
         githubClosedAt: args.issue.closedAt,
+        githubConnectionId: args.connectionId,
+        githubCreatedAt: args.issue.createdAt,
+        githubIssueId: args.issue.id,
+        githubIssueNumber: args.issue.number,
+        githubLabels: args.issue.labels,
+        githubMilestone: args.issue.milestone,
+        githubUpdatedAt: args.issue.updatedAt,
+        htmlUrl: args.issue.htmlUrl,
         lastSyncedAt: now,
+        organizationId: args.organizationId,
+        state: args.issue.state,
+        title: args.issue.title,
       });
 
       // Schedule auto-import check via separate mutation
@@ -850,18 +849,18 @@ export const processIssueWebhook = internalMutation({
         0,
         internal.integrations.github.actions.autoImportIssueToFeedback,
         {
-          issueId,
           connectionId: args.connectionId,
-          organizationId: args.organizationId,
           issue: {
-            id: args.issue.id,
-            number: args.issue.number,
-            title: args.issue.title,
             body: args.issue.body,
             htmlUrl: args.issue.htmlUrl,
-            state: args.issue.state,
+            id: args.issue.id,
             labels: args.issue.labels,
+            number: args.issue.number,
+            state: args.issue.state,
+            title: args.issue.title,
           },
+          issueId,
+          organizationId: args.organizationId,
         }
       );
     }
@@ -887,15 +886,15 @@ export const processPullRequestWebhook = internalMutation({
     connectionId: v.id("githubConnections"),
     organizationId: v.id("organizations"),
     pullRequest: v.object({
+      authorLogin: v.optional(v.string()),
+      baseRef: v.string(),
+      body: v.optional(v.string()),
+      headRef: v.string(),
+      htmlUrl: v.string(),
       id: v.string(),
+      mergedAt: v.optional(v.number()),
       number: v.number(),
       title: v.string(),
-      body: v.optional(v.string()),
-      htmlUrl: v.string(),
-      mergedAt: v.optional(v.number()),
-      headRef: v.string(),
-      baseRef: v.string(),
-      authorLogin: v.optional(v.string()),
     }),
   },
   handler: async (ctx, args) => {
@@ -948,18 +947,18 @@ export const processPullRequestWebhook = internalMutation({
 
         // Create activity log
         await ctx.db.insert("activityLogs", {
-          feedbackId: feedback._id,
-          organizationId: args.organizationId,
-          authorId: "system",
           action: "status_changed",
+          authorId: "system",
+          createdAt: now,
           details: JSON.stringify({
-            oldStatus: feedback.status,
             newStatus: "completed",
-            source: "github_pr",
+            oldStatus: feedback.status,
             prNumber: pullRequest.number,
             prUrl: pullRequest.htmlUrl,
+            source: "github_pr",
           }),
-          createdAt: now,
+          feedbackId: feedback._id,
+          organizationId: args.organizationId,
         });
 
         processed++;

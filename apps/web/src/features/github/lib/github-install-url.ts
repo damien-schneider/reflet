@@ -11,7 +11,7 @@ export function buildGitHubInstallUrl(params: {
   returnTo?: string;
 }): string | undefined {
   if (!params.userId) {
-    return undefined;
+    return;
   }
   const search = new URLSearchParams();
   search.set("userId", params.userId);

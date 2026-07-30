@@ -5,8 +5,8 @@ import { useAuthGuard } from "./use-auth-guard";
 const mockOpenAuthDialog = vi.fn();
 
 vi.mock("jotai", () => ({
-  useSetAtom: () => mockOpenAuthDialog,
   atom: (val: unknown) => val,
+  useSetAtom: () => mockOpenAuthDialog,
 }));
 
 const mockUseSession = vi.fn();

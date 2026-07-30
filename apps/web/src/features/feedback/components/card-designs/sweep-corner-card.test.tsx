@@ -114,14 +114,10 @@ afterEach(() => {
 
 const baseFeedback = {
   _id: "f1" as Id<"feedback">,
-  title: "Test Feedback",
-  voteCount: 10,
   commentCount: 4,
   createdAt: Date.now() - 60_000,
-  organizationId: "org1" as Id<"organizations">,
-  upvoteCount: 6,
   downvoteCount: 4,
-  userVoteType: null as "upvote" | "downvote" | null,
+  organizationId: "org1" as Id<"organizations">,
   tags: [] as Array<{
     _id: Id<"tags">;
     name: string;
@@ -129,6 +125,10 @@ const baseFeedback = {
     icon?: string;
     appliedByAi?: boolean;
   } | null>,
+  title: "Test Feedback",
+  upvoteCount: 6,
+  userVoteType: null as "upvote" | "downvote" | null,
+  voteCount: 10,
 };
 
 describe("SweepCornerFeedCard", () => {
@@ -233,7 +233,7 @@ describe("SweepCornerFeedCard", () => {
       <SweepCornerFeedCard
         feedback={{
           ...baseFeedback,
-          organizationStatus: { name: "Done", color: "green" },
+          organizationStatus: { color: "green", name: "Done" },
         }}
       />
     );
@@ -254,8 +254,8 @@ describe("SweepCornerFeedCard", () => {
         feedback={{
           ...baseFeedback,
           tags: [
-            { _id: "t1" as Id<"tags">, name: "Bug", color: "red" },
-            { _id: "t2" as Id<"tags">, name: "Feature", color: "blue" },
+            { _id: "t1" as Id<"tags">, color: "red", name: "Bug" },
+            { _id: "t2" as Id<"tags">, color: "blue", name: "Feature" },
           ],
         }}
       />
@@ -276,7 +276,7 @@ describe("SweepCornerFeedCard", () => {
         feedback={{
           ...baseFeedback,
           tags: [
-            { _id: "t1" as Id<"tags">, name: "Bug", color: "red", icon: "🐛" },
+            { _id: "t1" as Id<"tags">, color: "red", icon: "🐛", name: "Bug" },
           ],
         }}
       />
@@ -292,9 +292,9 @@ describe("SweepCornerFeedCard", () => {
           tags: [
             {
               _id: "t1" as Id<"tags">,
-              name: "AI",
-              color: "purple",
               appliedByAi: true,
+              color: "purple",
+              name: "AI",
             },
           ],
         }}
@@ -308,7 +308,7 @@ describe("SweepCornerFeedCard", () => {
       <SweepCornerFeedCard
         feedback={{
           ...baseFeedback,
-          tags: [null, { _id: "t1" as Id<"tags">, name: "Bug", color: "red" }],
+          tags: [null, { _id: "t1" as Id<"tags">, color: "red", name: "Bug" }],
         }}
       />
     );

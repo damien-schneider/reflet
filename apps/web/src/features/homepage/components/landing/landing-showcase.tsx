@@ -21,25 +21,25 @@ const EASE_OUT_EXPO = [0.16, 1, 0.3, 1] as const;
 
 const SHOWCASE_TABS = [
   {
-    id: "feedback",
-    label: "Feedback Board",
-    icon: ChatCircleDots,
     description:
       "Collect and prioritize user requests with voting, AI triage, and duplicate detection.",
+    icon: ChatCircleDots,
+    id: "feedback",
+    label: "Feedback Board",
   },
   {
-    id: "roadmap",
-    label: "Roadmap",
-    icon: Kanban,
     description:
       "Drag prioritized items into columns. Sync with GitHub issues and track progress visually.",
+    icon: Kanban,
+    id: "roadmap",
+    label: "Roadmap",
   },
   {
-    id: "changelog",
-    label: "Changelog",
-    icon: MegaphoneSimple,
     description:
       "Publish releases, link resolved feedback, and automatically notify every voter.",
+    icon: MegaphoneSimple,
+    id: "changelog",
+    label: "Changelog",
   },
 ] as const;
 
@@ -48,7 +48,7 @@ type ShowcaseTabId = (typeof SHOWCASE_TABS)[number]["id"];
 export default function LandingShowcase() {
   const [activeTab, setActiveTab] = useState<ShowcaseTabId>("feedback");
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, amount: 0.15 });
+  const isInView = useInView(ref, { amount: 0.15, once: true });
 
   const activeInfo = SHOWCASE_TABS.find((t) => t.id === activeTab);
 
@@ -107,7 +107,7 @@ export default function LandingShowcase() {
                   <motion.div
                     className="absolute inset-0 rounded-xl bg-card shadow-sm"
                     layoutId="showcase-tab-bg"
-                    transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                    transition={{ damping: 30, stiffness: 350, type: "spring" }}
                   />
                 )}
                 <span className="relative z-10 flex items-center gap-2">

@@ -7,22 +7,22 @@ import { stripeTimestampToMs } from "./utils";
 // Plan limits for Free vs Pro tiers
 export const PLAN_LIMITS = {
   free: {
-    maxMembers: 3,
-    maxFeedback: 100,
+    apiAccess: false,
     customBranding: false,
     customDomain: false,
-    apiAccess: false,
-    prioritySupport: false,
+    maxFeedback: 100,
+    maxMembers: 3,
     minCheckIntervalMinutes: 5,
+    prioritySupport: false,
   },
   pro: {
-    maxMembers: Number.POSITIVE_INFINITY, // Unlimited
-    maxFeedback: 5000,
+    apiAccess: true,
     customBranding: true,
     customDomain: true,
-    apiAccess: true,
-    prioritySupport: true,
+    maxFeedback: 5000,
+    maxMembers: Number.POSITIVE_INFINITY, // Unlimited
     minCheckIntervalMinutes: 1,
+    prioritySupport: true,
   },
 } as const;
 
@@ -92,29 +92,29 @@ export const getStatus = query({
     const isOwner = membership.role === "owner";
 
     return {
-      tier,
-      status: subscription?.status ?? "none",
-      subscription: subscription
-        ? {
-            priceId: subscription.priceId,
-            status: subscription.status,
-            currentPeriodEnd: stripeTimestampToMs(
-              subscription.currentPeriodEnd
-            ),
-            cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
-            cancelAt: subscription.cancelAt,
-          }
-        : null,
-      limits,
-      usage: {
-        members: members.length,
-        feedback: feedbackCount.length,
-      },
-      isOwner,
       // Only owner can upgrade/checkout
       canManageBilling: isOwner,
       // All members can view the billing portal
       canViewBilling: true,
+      isOwner,
+      limits,
+      status: subscription?.status ?? "none",
+      subscription: subscription
+        ? {
+            cancelAt: subscription.cancelAt,
+            cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
+            currentPeriodEnd: stripeTimestampToMs(
+              subscription.currentPeriodEnd
+            ),
+            priceId: subscription.priceId,
+            status: subscription.status,
+          }
+        : null,
+      tier,
+      usage: {
+        feedback: feedbackCount.length,
+        members: members.length,
+      },
     };
   },
 });
@@ -124,7 +124,6 @@ export const getStatus = query({
  */
 export const checkLimit = query({
   args: {
-    organizationId: v.id("organizations"),
     action: v.union(
       v.literal("invite_member"),
       v.literal("create_feedback"),
@@ -132,6 +131,7 @@ export const checkLimit = query({
       v.literal("custom_domain"),
       v.literal("api_access")
     ),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
     const user = await authComponent.safeGetAuthUser(ctx);
@@ -169,9 +169,9 @@ export const checkLimit = query({
         if (feedbackItems.length >= limits.maxFeedback) {
           return {
             allowed: false,
-            reason: `Feedback limit reached (${limits.maxFeedback}). Upgrade to Pro for more.`,
             current: feedbackItems.length,
             limit: limits.maxFeedback,
+            reason: `Feedback limit reached (${limits.maxFeedback}). Upgrade to Pro for more.`,
           };
         }
         return { allowed: true };
@@ -198,9 +198,9 @@ export const checkLimit = query({
         if (total >= limits.maxMembers) {
           return {
             allowed: false,
-            reason: `Member limit reached (${limits.maxMembers}). Upgrade to Pro for unlimited members.`,
             current: total,
             limit: limits.maxMembers,
+            reason: `Member limit reached (${limits.maxMembers}). Upgrade to Pro for unlimited members.`,
           };
         }
         return { allowed: true };
@@ -249,7 +249,6 @@ export const checkLimit = query({
  */
 export const getPublicPlanFeatures = query({
   args: { organizationId: v.id("organizations") },
-  returns: v.object({ hideBranding: v.boolean() }),
   handler: async (ctx, args) => {
     const org = await ctx.db.get(args.organizationId);
     if (!org) {
@@ -268,4 +267,5 @@ export const getPublicPlanFeatures = query({
       hideBranding: org.hideBranding === true && Boolean(isPro),
     };
   },
+  returns: v.object({ hideBranding: v.boolean() }),
 });

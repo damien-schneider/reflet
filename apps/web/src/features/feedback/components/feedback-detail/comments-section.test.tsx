@@ -9,22 +9,22 @@ const mockUseQuery = vi.fn();
 const mockAddComment = vi.fn();
 
 vi.mock("convex/react", () => ({
-  useQuery: (...args: unknown[]) => mockUseQuery(...args),
   useMutation: () => mockAddComment,
+  useQuery: (...args: unknown[]) => mockUseQuery(...args),
 }));
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
     feedback: {
-      comments: {
-        list: "comments.list",
-        create: "comments.create",
-        update: "comments.update",
-        remove: "comments.remove",
-      },
       clarification: {
         getDraftReplyStatus: "feedback.clarification.getDraftReplyStatus",
         initiateDraftReply: "feedback.clarification.initiateDraftReply",
+      },
+      comments: {
+        create: "comments.create",
+        list: "comments.list",
+        remove: "comments.remove",
+        update: "comments.update",
       },
     },
   },
@@ -88,15 +88,15 @@ describe("CommentsSection", () => {
     mockUseQuery.mockReturnValue([
       {
         _id: "c1",
+        author: { email: "a@test.com", name: "Alice" },
         body: "Hello",
         createdAt: Date.now(),
-        author: { name: "Alice", email: "a@test.com" },
       },
       {
         _id: "c2",
+        author: { email: "b@test.com", name: "Bob" },
         body: "World",
         createdAt: Date.now(),
-        author: { name: "Bob", email: "b@test.com" },
       },
     ]);
     render(<CommentsSection feedbackId={feedbackId} />);
@@ -107,9 +107,9 @@ describe("CommentsSection", () => {
     mockUseQuery.mockReturnValue([
       {
         _id: "c1",
+        author: { email: "a@test.com", name: "Alice" },
         body: "First comment",
         createdAt: Date.now(),
-        author: { name: "Alice", email: "a@test.com" },
       },
     ]);
     render(<CommentsSection feedbackId={feedbackId} />);
@@ -130,10 +130,10 @@ describe("CommentsSection", () => {
     expect(screen.getByText("Post")).toBeInTheDocument();
   });
 
-  it("shows user avatar fallback when no user", () => {
+  it("renders AI Draft for admins", () => {
     mockUseQuery.mockReturnValue([]);
-    render(<CommentsSection currentUser={null} feedbackId={feedbackId} />);
-    expect(screen.getByText("?")).toBeInTheDocument();
+    render(<CommentsSection feedbackId={feedbackId} isAdmin />);
+    expect(screen.getByText("AI Draft")).toBeInTheDocument();
   });
 
   it("handles undefined commentsData gracefully", () => {
@@ -148,20 +148,19 @@ describe("CommentsSection", () => {
     mockUseQuery.mockReturnValue([
       {
         _id: "c1",
+        author: { email: "a@test.com", name: "Alice" },
         body: "Parent",
         createdAt: Date.now(),
-        author: { name: "Alice", email: "a@test.com" },
       },
       {
         _id: "c2",
+        author: { email: "b@test.com", name: "Bob" },
         body: "Reply",
         createdAt: Date.now(),
         parentId: "c1",
-        author: { name: "Bob", email: "b@test.com" },
       },
     ]);
     render(<CommentsSection feedbackId={feedbackId} />);
-    // Only root comment rendered directly, reply is nested
     const items = screen.getAllByTestId("comment-item");
     expect(items).toHaveLength(1);
     expect(items[0]).toHaveTextContent("Parent");

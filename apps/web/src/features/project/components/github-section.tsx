@@ -62,12 +62,21 @@ export function GitHubSection({
   const repoFullName = queries.connectionStatus?.repositoryFullName;
 
   const settings = useGitHubSettings({
-    orgId: organizationId,
-    orgSlug,
-    userId,
-    isConnected,
+    deleteLabelMapping: async (
+      args: Parameters<typeof mutations.deleteLabelMappingMutation>[0]
+    ) => {
+      await mutations.deleteLabelMappingMutation(args);
+    },
+    disconnect: async (
+      args: Parameters<typeof mutations.disconnectMutation>[0]
+    ) => {
+      await mutations.disconnectMutation(args);
+    },
     hasRepository,
     hasWebhook: queries.connectionStatus?.hasWebhook ?? false,
+    isConnected,
+    orgId: organizationId,
+    orgSlug,
     selectRepository: async (
       args: Parameters<typeof mutations.selectRepositoryMutation>[0]
     ) => {
@@ -77,11 +86,6 @@ export function GitHubSection({
       args: Parameters<typeof mutations.toggleAutoSyncMutation>[0]
     ) => {
       await mutations.toggleAutoSyncMutation(args);
-    },
-    disconnect: async (
-      args: Parameters<typeof mutations.disconnectMutation>[0]
-    ) => {
-      await mutations.disconnectMutation(args);
     },
     toggleIssuesSync: async (
       args: Parameters<typeof mutations.toggleIssuesSyncMutation>[0]
@@ -93,11 +97,7 @@ export function GitHubSection({
     ) => {
       await mutations.upsertLabelMappingMutation(args);
     },
-    deleteLabelMapping: async (
-      args: Parameters<typeof mutations.deleteLabelMappingMutation>[0]
-    ) => {
-      await mutations.deleteLabelMappingMutation(args);
-    },
+    userId,
   });
 
   return (
@@ -370,18 +370,18 @@ function AnalysisResults({
     field: AnalysisField;
     title: string;
   }[] = [
-    { title: "Summary", field: "summary", content: analysis.summary },
-    { title: "Tech Stack", field: "techStack", content: analysis.techStack },
+    { content: analysis.summary, field: "summary", title: "Summary" },
+    { content: analysis.techStack, field: "techStack", title: "Tech Stack" },
     {
-      title: "Architecture",
-      field: "architecture",
       content: analysis.architecture,
+      field: "architecture",
+      title: "Architecture",
     },
-    { title: "Features", field: "features", content: analysis.features },
+    { content: analysis.features, field: "features", title: "Features" },
     {
-      title: "Repository Structure",
-      field: "repoStructure",
       content: analysis.repoStructure,
+      field: "repoStructure",
+      title: "Repository Structure",
     },
   ];
 
@@ -389,8 +389,8 @@ function AnalysisResults({
 
   const handleSectionChange = async (field: AnalysisField, value: string) => {
     await updateSection({
-      organizationId,
       field,
+      organizationId,
       value,
     });
   };

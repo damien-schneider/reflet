@@ -9,16 +9,16 @@ import { Button } from "@/components/ui/button";
 const REFLET_BASE = "https://www.reflet.app/reflet";
 
 const DEMO_LINKS = [
-  { label: "Feedback Board", href: REFLET_BASE },
-  { label: "Roadmap", href: `${REFLET_BASE}?view=roadmap` },
-  { label: "Milestones", href: `${REFLET_BASE}?view=milestones` },
-  { label: "Changelog", href: `${REFLET_BASE}/changelog` },
-  { label: "Support", href: `${REFLET_BASE}/support` },
+  { href: REFLET_BASE, label: "Feedback Board" },
+  { href: `${REFLET_BASE}?view=roadmap`, label: "Roadmap" },
+  { href: `${REFLET_BASE}?view=milestones`, label: "Milestones" },
+  { href: `${REFLET_BASE}/changelog`, label: "Changelog" },
+  { href: `${REFLET_BASE}/support`, label: "Support" },
 ] as const;
 
 const RESOURCE_LINKS = [
-  { label: "Documentation", href: "/docs", internal: true },
-  { label: "Blog", href: "/blog", internal: true },
+  { href: "/docs", internal: true, label: "Documentation" },
+  { href: "/blog", internal: true, label: "Blog" },
 ] as const;
 
 const menuLinkClassName =

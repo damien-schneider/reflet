@@ -63,7 +63,6 @@ export const getStats = query({
       .collect();
 
     const stats = {
-      totalVotes: votes.length,
       average: 0,
       distribution: {
         1: 0, // Not important
@@ -71,6 +70,7 @@ export const getStats = query({
         3: 0, // Important
         4: 0, // Essential
       },
+      totalVotes: votes.length,
     };
 
     if (votes.length > 0) {
@@ -142,19 +142,19 @@ export const vote = mutation({
         importance: args.importance,
         updatedAt: now,
       });
-      return { updated: true, importance: args.importance };
+      return { importance: args.importance, updated: true };
     }
 
     // Create new vote
     await ctx.db.insert("feedbackImportanceVotes", {
-      feedbackId: args.feedbackId,
-      userId: user._id,
-      importance: args.importance,
       createdAt: now,
+      feedbackId: args.feedbackId,
+      importance: args.importance,
       updatedAt: now,
+      userId: user._id,
     });
 
-    return { updated: false, importance: args.importance };
+    return { importance: args.importance, updated: false };
   },
 });
 

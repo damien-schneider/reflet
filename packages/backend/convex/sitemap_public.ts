@@ -40,8 +40,8 @@ export const getPublicFeedbackForSitemap = query({
       for (const item of feedbackItems) {
         if (item.isApproved && !item.deletedAt) {
           entries.push({
-            orgSlug: org.slug,
             feedbackId: item._id,
+            orgSlug: org.slug,
             updatedAt: item.updatedAt ?? item.createdAt,
           });
         }

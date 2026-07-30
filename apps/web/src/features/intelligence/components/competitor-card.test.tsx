@@ -65,11 +65,11 @@ afterEach(cleanup);
 
 const baseCompetitor = {
   _id: "comp-1",
-  name: "Acme Inc",
-  websiteUrl: "https://acme.com",
   description: "A leading competitor in the market.",
-  status: "active",
   lastScrapedAt: Date.now() - 2 * 60 * 60 * 1000, // 2 hours ago
+  name: "Acme Inc",
+  status: "active",
+  websiteUrl: "https://acme.com",
 };
 
 const baseProps = {

@@ -28,15 +28,15 @@ export const sendShippedNotifications = internalAction({
     );
 
     if (!data) {
-      return { success: false, error: "Release or org not found" };
+      return { error: "Release or org not found", success: false };
     }
 
     if (!data.isPro) {
-      return { success: true, skipped: true, reason: "Not Pro tier" };
+      return { reason: "Not Pro tier", skipped: true, success: true };
     }
 
     if (data.feedbackItems.length === 0) {
-      return { success: true, emailsSent: 0 };
+      return { emailsSent: 0, success: true };
     }
 
     const siteUrl = process.env.SITE_URL ?? "";
@@ -74,12 +74,12 @@ export const sendShippedNotifications = internalAction({
             await ctx.runAction(
               internal.email.renderer.sendFeedbackShippedEmail,
               {
-                to: email,
-                organizationName: data.orgName,
                 feedbackTitle: item.feedbackTitle,
-                releaseTitle: data.releaseTitle,
                 feedbackUrl: `${siteUrl}/${data.orgSlug}/feedback/${item.feedbackId}`,
+                organizationName: data.orgName,
+                releaseTitle: data.releaseTitle,
                 releaseUrl: `${siteUrl}/${data.orgSlug}/changelog`,
+                to: email,
                 unsubscribeUrl: `${siteUrl}/settings/notifications`,
               }
             );
@@ -99,6 +99,6 @@ export const sendShippedNotifications = internalAction({
       }
     }
 
-    return { success: true, emailsSent: totalSent };
+    return { emailsSent: totalSent, success: true };
   },
 });

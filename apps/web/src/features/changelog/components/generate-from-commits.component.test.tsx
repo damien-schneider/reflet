@@ -8,8 +8,8 @@ const mockFetchCommits = vi.fn();
 const mockFetchRecent = vi.fn();
 
 vi.mock("convex/react", () => ({
-  useQuery: vi.fn(() => undefined),
   useAction: vi.fn(() => vi.fn()),
+  useQuery: vi.fn(() => undefined),
 }));
 
 vi.mock("next/link", () => ({
@@ -29,33 +29,33 @@ vi.mock("next/link", () => ({
 }));
 
 vi.mock("sonner", () => ({
-  toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
+  toast: { error: vi.fn(), info: vi.fn(), success: vi.fn() },
 }));
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
-    organizations: {
-      queries: { get: "organizations.get" },
-    },
-    integrations: {
-      github: {
-        queries: { getConnection: "github.getConnection" },
-        node_actions: {
-          getInstallationToken: "github_node_actions.getInstallationToken",
-        },
-        release_actions: {
-          fetchTags: "github_release_actions.fetchTags",
-          fetchCommitsBetweenRefs:
-            "github_release_actions.fetchCommitsBetweenRefs",
-          fetchRecentCommits: "github_release_actions.fetchRecentCommits",
-        },
-      },
-    },
     changelog: {
       actions: {
         getLatestCommitFromPreviousRelease:
           "changelog.actions.getLatestCommitFromPreviousRelease",
       },
+    },
+    integrations: {
+      github: {
+        node_actions: {
+          getInstallationToken: "github_node_actions.getInstallationToken",
+        },
+        queries: { getConnection: "github.getConnection" },
+        release_actions: {
+          fetchCommitsBetweenRefs:
+            "github_release_actions.fetchCommitsBetweenRefs",
+          fetchRecentCommits: "github_release_actions.fetchRecentCommits",
+          fetchTags: "github_release_actions.fetchTags",
+        },
+      },
+    },
+    organizations: {
+      queries: { get: "organizations.get" },
     },
   },
 }));
@@ -101,13 +101,13 @@ afterEach(() => {
 });
 
 const defaultProps = {
+  onComplete: vi.fn(),
+  onStreamChunk: vi.fn(),
+  onStreamStart: vi.fn(),
+  onTitleGenerated: vi.fn(),
   organizationId: "org1" as never,
   orgSlug: "test-org",
   version: "1.0.0",
-  onStreamStart: vi.fn(),
-  onStreamChunk: vi.fn(),
-  onComplete: vi.fn(),
-  onTitleGenerated: vi.fn(),
 };
 
 const connectedQuery = (
@@ -118,8 +118,8 @@ const connectedQuery = (
     .mockReturnValueOnce({ name: "Test Org", ...orgOverrides })
     .mockReturnValueOnce({
       installationId: "inst-123",
-      repositoryFullName: "owner/repo",
       repositoryDefaultBranch: "main",
+      repositoryFullName: "owner/repo",
       ...ghOverrides,
     });
 };
@@ -145,27 +145,27 @@ const setupActions = () => {
 
 const sampleCommits = [
   {
-    sha: "abc123",
-    message: "feat: add new feature",
-    fullMessage: "feat: add new feature\n\nDetailed description",
     author: "dev",
     date: "2026-01-01",
+    fullMessage: "feat: add new feature\n\nDetailed description",
+    message: "feat: add new feature",
+    sha: "abc123",
   },
   {
-    sha: "def456",
-    message: "fix: bug fix",
-    fullMessage: "fix: bug fix",
     author: "dev2",
     date: "2026-01-02",
+    fullMessage: "fix: bug fix",
+    message: "fix: bug fix",
+    sha: "def456",
   },
 ];
 
 const sampleFiles = [
   {
-    filename: "src/index.ts",
-    status: "modified",
     additions: 10,
     deletions: 5,
+    filename: "src/index.ts",
+    status: "modified",
   },
 ];
 
@@ -188,8 +188,8 @@ const createMockStreamResponse = (chunks: string[]) => {
     }),
   };
   return {
-    ok: true,
     body: { getReader: () => reader },
+    ok: true,
   };
 };
 
@@ -430,8 +430,8 @@ describe("GenerateFromCommits component", () => {
         expect(fetchSpy).toHaveBeenCalledWith(
           "/api/ai/generate-release-notes",
           expect.objectContaining({
-            method: "POST",
             headers: { "Content-Type": "application/json" },
+            method: "POST",
           })
         );
       });
@@ -566,13 +566,13 @@ describe("GenerateFromCommits component", () => {
 
       vi.mocked(useQuery)
         .mockReturnValueOnce({
-          name: "Org",
           changelogSettings: { targetBranch: "develop" },
+          name: "Org",
         })
         .mockReturnValueOnce({
           installationId: "inst-123",
-          repositoryFullName: "owner/repo",
           repositoryDefaultBranch: "main",
+          repositoryFullName: "owner/repo",
         });
 
       vi.spyOn(globalThis, "fetch")
@@ -600,8 +600,8 @@ describe("GenerateFromCommits component", () => {
         .mockReturnValueOnce({ name: "Org" })
         .mockReturnValueOnce({
           installationId: "inst-123",
-          repositoryFullName: "owner/repo",
           repositoryDefaultBranch: "develop",
+          repositoryFullName: "owner/repo",
         });
 
       vi.spyOn(globalThis, "fetch")
@@ -700,8 +700,8 @@ describe("GenerateFromCommits component", () => {
       });
 
       vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
-        ok: false,
         body: null,
+        ok: false,
       } as never);
 
       render(<GenerateFromCommits {...defaultProps} />);
@@ -726,8 +726,8 @@ describe("GenerateFromCommits component", () => {
       });
 
       vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
-        ok: true,
         body: null,
+        ok: true,
       } as never);
 
       render(<GenerateFromCommits {...defaultProps} />);
@@ -1267,8 +1267,8 @@ describe("GenerateFromCommits component", () => {
         .mockReturnValueOnce({ name: "Test Org" })
         .mockReturnValueOnce({
           installationId: "inst-123",
-          repositoryFullName: "owner/repo",
           repositoryDefaultBranch: "main",
+          repositoryFullName: "owner/repo",
         });
 
       mockFetchTags.mockRejectedValue(new Error("fail"));
@@ -1288,8 +1288,8 @@ describe("GenerateFromCommits component", () => {
         .mockReturnValueOnce({ name: "Test Org" })
         .mockReturnValueOnce({
           installationId: "inst-123",
-          repositoryFullName: "owner/repo",
           repositoryDefaultBranch: "main",
+          repositoryFullName: "owner/repo",
         });
 
       mockFetchTags.mockResolvedValue([]);

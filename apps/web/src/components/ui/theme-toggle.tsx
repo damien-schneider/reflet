@@ -14,15 +14,15 @@ export const themeIcons: Record<
   Theme,
   React.ComponentType<{ className?: string }>
 > = {
-  system: Desktop,
-  light: Sun,
   dark: Moon,
+  light: Sun,
+  system: Desktop,
 };
 
 export const themeLabels: Record<Theme, string> = {
-  system: "System",
-  light: "Light",
   dark: "Dark",
+  light: "Light",
+  system: "System",
 };
 
 const isValidTheme = (value: string | undefined): value is Theme =>
@@ -49,7 +49,7 @@ export function useThemeToggle() {
   const Icon = themeIcons[currentTheme];
   const label = themeLabels[currentTheme];
 
-  return { mounted, cycleTheme, setTheme, currentTheme, Icon, label };
+  return { currentTheme, cycleTheme, Icon, label, mounted, setTheme };
 }
 
 export function ThemeToggle({ className }: { className?: string }) {

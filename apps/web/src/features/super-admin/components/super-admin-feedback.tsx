@@ -17,18 +17,18 @@ const statusVariant: Record<
   string,
   "blue" | "green" | "orange" | "gray" | "purple" | "red"
 > = {
-  open: "blue",
-  under_review: "orange",
-  planned: "purple",
-  in_progress: "orange",
-  completed: "green",
   closed: "gray",
+  completed: "green",
+  in_progress: "orange",
+  open: "blue",
+  planned: "purple",
+  under_review: "orange",
 };
 
 function formatDate(timestamp: number): string {
   return new Date(timestamp).toLocaleDateString("en-US", {
-    month: "short",
     day: "numeric",
+    month: "short",
     year: "numeric",
   });
 }

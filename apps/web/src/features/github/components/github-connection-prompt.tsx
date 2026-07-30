@@ -21,28 +21,28 @@ interface GitHubConnectionPromptProps {
 
 const BENEFITS = [
   {
-    icon: Brain,
-    title: "AI-Powered Repository Analysis",
     description:
       "Automatically analyze your codebase structure, tech stack, and architecture",
+    icon: Brain,
+    title: "AI-Powered Repository Analysis",
   },
   {
-    icon: LightbulbFilament,
-    title: "Smarter Feedback Understanding",
     description:
       "AI uses repo context to better understand and categorize user feedback",
+    icon: LightbulbFilament,
+    title: "Smarter Feedback Understanding",
   },
   {
-    icon: Code,
-    title: "Better Coding Prompts",
     description:
       "Generate context-aware prompts tailored to your project's tech stack",
+    icon: Code,
+    title: "Better Coding Prompts",
   },
   {
-    icon: TreeStructure,
-    title: "Repository Structure Insights",
     description:
       "Visualize and understand your project's architecture at a glance",
+    icon: TreeStructure,
+    title: "Repository Structure Insights",
   },
 ] as const;
 

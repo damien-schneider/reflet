@@ -24,11 +24,11 @@ export function useGitHubSettingsMutations() {
   );
 
   return {
+    deleteLabelMappingMutation,
+    disconnectMutation,
     selectRepositoryMutation,
     toggleAutoSyncMutation,
-    disconnectMutation,
     toggleIssuesSyncMutation,
     upsertLabelMappingMutation,
-    deleteLabelMappingMutation,
   };
 }

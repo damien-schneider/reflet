@@ -34,12 +34,12 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
     integrations: {
       github: {
         client_actions: {
+          listLabels: "integrations.github.client_actions.listLabels",
           listRepositories:
             "integrations.github.client_actions.listRepositories",
-          listLabels: "integrations.github.client_actions.listLabels",
-          syncReleases: "integrations.github.client_actions.syncReleases",
-          syncIssues: "integrations.github.client_actions.syncIssues",
           setupWebhook: "integrations.github.client_actions.setupWebhook",
+          syncIssues: "integrations.github.client_actions.syncIssues",
+          syncReleases: "integrations.github.client_actions.syncReleases",
         },
       },
     },
@@ -65,18 +65,18 @@ afterEach(() => {
 });
 
 const defaultProps = {
-  orgId: "org1" as never,
-  orgSlug: "my-org",
-  userId: "user_123",
-  isConnected: true,
+  deleteLabelMapping: vi.fn().mockResolvedValue(undefined),
+  disconnect: vi.fn().mockResolvedValue(undefined),
   hasRepository: true,
   hasWebhook: false,
+  isConnected: true,
+  orgId: "org1" as never,
+  orgSlug: "my-org",
   selectRepository: vi.fn().mockResolvedValue(undefined),
   toggleAutoSync: vi.fn().mockResolvedValue(undefined),
-  disconnect: vi.fn().mockResolvedValue(undefined),
   toggleIssuesSync: vi.fn().mockResolvedValue(undefined),
   upsertLabelMapping: vi.fn().mockResolvedValue(undefined),
-  deleteLabelMapping: vi.fn().mockResolvedValue(undefined),
+  userId: "user_123",
 };
 
 describe("useGitHubSettings", () => {
@@ -97,12 +97,12 @@ describe("useGitHubSettings", () => {
   it("fetchRepositories calls listRepositories action", async () => {
     mockListRepositories.mockResolvedValueOnce([
       {
-        id: "r1",
-        fullName: "org/repo",
-        name: "repo",
         defaultBranch: "main",
-        isPrivate: false,
         description: null,
+        fullName: "org/repo",
+        id: "r1",
+        isPrivate: false,
+        name: "repo",
       },
     ]);
 
@@ -201,8 +201,8 @@ describe("useGitHubSettings", () => {
     const { result } = renderHook(() =>
       useGitHubSettings({
         ...defaultProps,
-        toggleAutoSync,
         hasWebhook: true,
+        toggleAutoSync,
       })
     );
 
@@ -211,8 +211,8 @@ describe("useGitHubSettings", () => {
     });
 
     expect(toggleAutoSync).toHaveBeenCalledWith({
-      organizationId: "org1",
       enabled: true,
+      organizationId: "org1",
     });
   });
 
@@ -227,9 +227,9 @@ describe("useGitHubSettings", () => {
     });
 
     expect(toggleIssuesSync).toHaveBeenCalledWith({
-      organizationId: "org1",
-      enabled: true,
       autoSync: false,
+      enabled: true,
+      organizationId: "org1",
     });
   });
 
@@ -241,15 +241,15 @@ describe("useGitHubSettings", () => {
 
     await act(async () => {
       await result.current.handleAddLabelMapping({
-        githubLabelName: "bug",
         autoSync: true,
+        githubLabelName: "bug",
       });
     });
 
     expect(upsertLabelMapping).toHaveBeenCalledWith({
-      organizationId: "org1",
-      githubLabelName: "bug",
       autoSync: true,
+      githubLabelName: "bug",
+      organizationId: "org1",
       targetTagId: undefined,
     });
   });
@@ -304,7 +304,7 @@ describe("useGitHubSettings", () => {
 
   it("fetchLabels calls listLabels action", async () => {
     mockListLabels.mockResolvedValueOnce([
-      { id: "l1", name: "bug", color: "ff0000", description: null },
+      { color: "ff0000", description: null, id: "l1", name: "bug" },
     ]);
 
     const { result } = renderHook(() => useGitHubSettings(defaultProps));
@@ -325,8 +325,8 @@ describe("useGitHubSettings", () => {
     const { result } = renderHook(() =>
       useGitHubSettings({
         ...defaultProps,
-        toggleAutoSync,
         hasWebhook: false,
+        toggleAutoSync,
       })
     );
 
@@ -343,12 +343,12 @@ describe("useGitHubSettings", () => {
   it("handleSelectRepository calls the function without error", async () => {
     mockListRepositories.mockResolvedValueOnce([
       {
-        id: "r1",
-        fullName: "owner/repo",
-        name: "repo",
         defaultBranch: "main",
-        isPrivate: false,
         description: null,
+        fullName: "owner/repo",
+        id: "r1",
+        isPrivate: false,
+        name: "repo",
       },
     ]);
 
@@ -368,10 +368,10 @@ describe("useGitHubSettings", () => {
     });
 
     expect(defaultProps.selectRepository).toHaveBeenCalledWith({
-      organizationId: "org1",
-      repositoryId: "r1",
-      repositoryFullName: "owner/repo",
       defaultBranch: "main",
+      organizationId: "org1",
+      repositoryFullName: "owner/repo",
+      repositoryId: "r1",
     });
   });
 

@@ -58,20 +58,20 @@ export function MilestoneProgressRing({
   const percentageMotion = useMotionValue(0);
 
   const completedSpring = useSpring(completedMotion, {
-    stiffness: 120,
     damping: 20,
+    stiffness: 120,
   });
   const inProgressSpring = useSpring(inProgressMotion, {
-    stiffness: 120,
     damping: 20,
+    stiffness: 120,
   });
   const plannedSpring = useSpring(plannedMotion, {
-    stiffness: 120,
     damping: 20,
+    stiffness: 120,
   });
   const percentageSpring = useSpring(percentageMotion, {
-    stiffness: 100,
     damping: 25,
+    stiffness: 100,
   });
 
   const completedDashoffset = useTransform(
@@ -131,35 +131,35 @@ export function MilestoneProgressRing({
 
   const segmentConfigs = [
     {
-      key: "completed",
-      visible: completed > 0,
-      dashoffset: completedDashoffset,
-      length: segments.completed,
       className: "stroke-emerald-500",
+      dashoffset: completedDashoffset,
+      key: "completed",
+      length: segments.completed,
       rotation: computeRotation("completed"),
+      visible: completed > 0,
     },
     {
-      key: "inProgress",
-      visible: inProgress > 0,
-      dashoffset: inProgressDashoffset,
-      length: segments.inProgress,
       className: "stroke-primary",
+      dashoffset: inProgressDashoffset,
+      key: "inProgress",
+      length: segments.inProgress,
       rotation: computeRotation("inProgress"),
+      visible: inProgress > 0,
     },
     {
-      key: "planned",
-      visible: planned > 0,
-      dashoffset: plannedDashoffset,
-      length: segments.planned,
       className: "stroke-muted-foreground/30",
+      dashoffset: plannedDashoffset,
+      key: "planned",
+      length: segments.planned,
       rotation: computeRotation("planned"),
+      visible: planned > 0,
     },
   ] as const;
 
   return (
     <div
       className="relative inline-flex items-center justify-center"
-      style={{ width: size, height: size }}
+      style={{ height: size, width: size }}
     >
       <svg
         aria-label={`Milestone progress: ${percentage}%`}
@@ -197,8 +197,8 @@ export function MilestoneProgressRing({
                 strokeLinecap="round"
                 strokeWidth={STROKE_WIDTH}
                 style={{
-                  strokeDashoffset: segment.dashoffset,
                   rotate: `${segment.rotation}deg`,
+                  strokeDashoffset: segment.dashoffset,
                   transformOrigin: "center",
                 }}
               />
@@ -223,14 +223,14 @@ export function MilestoneProgressRing({
       {isComplete && (
         <motion.div
           animate={{
-            scale: [1, 1.8, 1],
             opacity: [0.6, 0, 0.6],
+            scale: [1, 1.8, 1],
           }}
           className="pointer-events-none absolute inset-0 rounded-full border-2 border-emerald-500"
           transition={{
             duration: 2,
-            repeat: Number.POSITIVE_INFINITY,
             ease: "easeInOut",
+            repeat: Number.POSITIVE_INFINITY,
           }}
         />
       )}

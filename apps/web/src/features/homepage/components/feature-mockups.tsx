@@ -261,8 +261,8 @@ function MiniIntegrations() {
 
 function ExpandedAiMockup() {
   const aiAutoTags = [
-    { label: "UX", color: "purple" as const },
-    { label: "Productivity", color: "blue" as const },
+    { color: "purple" as const, label: "UX" },
+    { color: "blue" as const, label: "Productivity" },
   ];
 
   return (
@@ -347,16 +347,16 @@ function ExpandedAiMockup() {
 // ─── Expanded Widget Mockup (with code snippet) ─────────────────────────────
 
 const CODE_LINES = [
-  { text: "import { RefletProvider, FeedbackButton }", hl: true },
-  { text: "  from 'reflet-sdk/react'", hl: true },
-  { text: "", hl: false },
-  { text: "export function App() {", hl: false },
-  { text: "  return (", hl: false },
-  { text: '    <RefletProvider publicKey="pk_live_…a3f">', hl: true },
-  { text: "      <FeedbackButton />", hl: true },
-  { text: "    </RefletProvider>", hl: true },
-  { text: "  )", hl: false },
-  { text: "}", hl: false },
+  { hl: true, text: "import { RefletProvider, FeedbackButton }" },
+  { hl: true, text: "  from 'reflet-sdk/react'" },
+  { hl: false, text: "" },
+  { hl: false, text: "export function App() {" },
+  { hl: false, text: "  return (" },
+  { hl: true, text: '    <RefletProvider publicKey="pk_live_…a3f">' },
+  { hl: true, text: "      <FeedbackButton />" },
+  { hl: true, text: "    </RefletProvider>" },
+  { hl: false, text: "  )" },
+  { hl: false, text: "}" },
 ] as const;
 
 function ExpandedWidgetMockup() {
@@ -639,22 +639,22 @@ function ExpandedIntegrationsMockup() {
 
 export const COMPACT_MOCKUPS: Record<string, () => JSX.Element> = {
   ai: MiniAiTriage,
-  widget: MiniWidget,
-  github: MiniGithubSync,
-  realtime: MiniRealtime,
   api: MiniApi,
+  github: MiniGithubSync,
   integrations: MiniIntegrations,
+  realtime: MiniRealtime,
+  widget: MiniWidget,
 };
 
 // ─── Expanded mockups (for /features page) ───────────────────────────────────
 
 const EXPANDED_MOCKUPS: Record<string, () => JSX.Element> = {
   ai: ExpandedAiMockup,
-  widget: ExpandedWidgetMockup,
-  github: ExpandedGithubMockup,
-  realtime: ExpandedRealtimeMockup,
   api: ExpandedApiMockup,
+  github: ExpandedGithubMockup,
   integrations: ExpandedIntegrationsMockup,
+  realtime: ExpandedRealtimeMockup,
+  widget: ExpandedWidgetMockup,
 };
 
 // ─── Client wrapper for RSC pages ────────────────────────────────────────────

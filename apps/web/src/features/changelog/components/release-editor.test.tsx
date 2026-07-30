@@ -6,14 +6,13 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
+import { type FunctionReference, getFunctionName } from "convex/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-// Top-level regex patterns for performance
 const VERSION_PLACEHOLDER_REGEX = /v1\.0\.0/i;
 const PUBLISH_BUTTON_REGEX = /publish/i;
 const CANCEL_BUTTON_REGEX = /cancel/i;
 
-// Mock next/navigation
 const {
   mockPush,
   mockToast,
@@ -21,13 +20,15 @@ const {
   mockUpdateRelease,
   mockPublishRelease,
   mockUnpublishRelease,
+  mockOtherMutation,
 } = vi.hoisted(() => ({
-  mockPush: vi.fn(),
-  mockToast: { success: vi.fn(), error: vi.fn() },
   mockCreateRelease: vi.fn(),
-  mockUpdateRelease: vi.fn(),
+  mockOtherMutation: vi.fn(),
   mockPublishRelease: vi.fn(),
+  mockPush: vi.fn(),
+  mockToast: { error: vi.fn(), success: vi.fn() },
   mockUnpublishRelease: vi.fn(),
+  mockUpdateRelease: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -36,27 +37,25 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
-// Mock sonner
 vi.mock("sonner", () => ({
   toast: mockToast,
 }));
 
-// Mock tiptap components
 vi.mock("@tiptap/react", () => ({
-  useEditor: vi.fn(() => ({
-    commands: { setContent: vi.fn(), focus: vi.fn() },
-    storage: { markdown: { getMarkdown: () => "" } },
-    getText: () => "",
-    setEditable: vi.fn(),
-    on: vi.fn(),
-    off: vi.fn(),
-    isActive: vi.fn(() => false),
-    chain: vi.fn(() => ({ focus: vi.fn(() => ({ run: vi.fn() })) })),
-    view: { state: { selection: { from: 0, to: 0 } } },
-  })),
   EditorContent: ({ editor }: { editor: unknown }) => (
     <div data-testid="editor-content">{editor ? "Editor" : "No editor"}</div>
   ),
+  useEditor: vi.fn(() => ({
+    chain: vi.fn(() => ({ focus: vi.fn(() => ({ run: vi.fn() })) })),
+    commands: { focus: vi.fn(), setContent: vi.fn() },
+    getText: () => "",
+    isActive: vi.fn(() => false),
+    off: vi.fn(),
+    on: vi.fn(),
+    setEditable: vi.fn(),
+    storage: { markdown: { getMarkdown: () => "" } },
+    view: { state: { selection: { from: 0, to: 0 } } },
+  })),
 }));
 
 vi.mock("@tiptap/starter-kit", () => ({
@@ -104,28 +103,28 @@ vi.mock("@/components/ui/tiptap/image-extension", () => ({
 
 vi.mock("@/components/ui/tiptap/use-media-upload", () => ({
   useMediaUpload: () => ({
-    uploadMedia: vi.fn(),
     isUploading: false,
+    uploadMedia: vi.fn(),
     uploadProgress: null,
   }),
 }));
 
-let mutationIdx = 0;
+const mutationMocks: Record<string, typeof mockCreateRelease> = {
+  "changelog/actions:publish": mockPublishRelease,
+  "changelog/actions:unpublish": mockUnpublishRelease,
+  "changelog/mutations:create": mockCreateRelease,
+  "changelog/mutations:update": mockUpdateRelease,
+};
 
 vi.mock("convex/react", () => ({
-  useMutation: () => {
-    const order = [
-      mockCreateRelease,
-      mockUpdateRelease,
-      mockPublishRelease,
-      mockUnpublishRelease,
-    ];
-    const mock = order[mutationIdx % order.length];
-    mutationIdx++;
-    return mock;
+  useAction: () => vi.fn(),
+  useMutation: (reference: FunctionReference<"mutation">) => {
+    const mock = mutationMocks[getFunctionName(reference)] ?? mockOtherMutation;
+    return Object.assign((...args: unknown[]) => mock(...args), {
+      withOptimisticUpdate: () => mock,
+    });
   },
   useQuery: () => null,
-  useAction: () => vi.fn(),
 }));
 
 vi.mock("@/components/ui/tiptap/title-editor", () => ({
@@ -253,7 +252,6 @@ describe("ReleaseEditor", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mutationIdx = 0;
     mockCreateRelease.mockResolvedValue("new-release-id");
     mockUpdateRelease.mockResolvedValue(undefined);
     mockPublishRelease.mockResolvedValue(undefined);
@@ -306,9 +304,9 @@ describe("ReleaseEditor", () => {
         release={
           {
             _id: "release123",
+            description: "Test description",
             title: "Test Release",
             version: "v1.0.0",
-            description: "Test description",
           } as never
         }
       />
@@ -336,9 +334,9 @@ describe("ReleaseEditor", () => {
         release={
           {
             _id: "release123",
+            description: "Test description",
             title: "Unpublished Release",
             version: "v1.0.0",
-            description: "Test description",
           } as never
         }
       />
@@ -353,10 +351,10 @@ describe("ReleaseEditor", () => {
         release={
           {
             _id: "release123",
-            title: "Test Release",
-            version: "v1.0.0",
             description: "Test description",
             publishedAt: Date.now(),
+            title: "Test Release",
+            version: "v1.0.0",
           } as never
         }
       />
@@ -371,10 +369,10 @@ describe("ReleaseEditor", () => {
         release={
           {
             _id: "release123",
-            title: "Published Release",
-            version: "v2.0.0",
             description: "Published desc",
             publishedAt: Date.now(),
+            title: "Published Release",
+            version: "v2.0.0",
           } as never
         }
       />
@@ -392,9 +390,9 @@ describe("ReleaseEditor", () => {
         release={
           {
             _id: "release123",
+            description: "desc",
             title: "Test",
             version: "2.5.0",
-            description: "desc",
           } as never
         }
       />
@@ -443,9 +441,9 @@ describe("ReleaseEditor", () => {
           release={
             {
               _id: "release123",
+              description: "desc",
               title: "Old Title",
               version: "1.0.0",
-              description: "desc",
             } as never
           }
         />
@@ -545,6 +543,7 @@ describe("ReleaseEditor", () => {
       await waitFor(() => {
         expect(mockCreateRelease).toHaveBeenCalled();
         expect(mockPublishRelease).toHaveBeenCalledWith({
+          feedbackStatus: "completed",
           id: "new-release-id",
         });
       });
@@ -559,9 +558,9 @@ describe("ReleaseEditor", () => {
           release={
             {
               _id: "release123",
+              description: "desc",
               title: "Existing",
               version: "1.0.0",
-              description: "desc",
             } as never
           }
         />
@@ -576,6 +575,7 @@ describe("ReleaseEditor", () => {
           expect.objectContaining({ id: "release123" })
         );
         expect(mockPublishRelease).toHaveBeenCalledWith({
+          feedbackStatus: "completed",
           id: "release123",
         });
       });
@@ -620,10 +620,10 @@ describe("ReleaseEditor", () => {
           release={
             {
               _id: "release123",
-              title: "Published",
-              version: "1.0.0",
               description: "desc",
               publishedAt: Date.now(),
+              title: "Published",
+              version: "1.0.0",
             } as never
           }
         />
@@ -646,10 +646,10 @@ describe("ReleaseEditor", () => {
           release={
             {
               _id: "release123",
-              title: "Published",
-              version: "1.0.0",
               description: "desc",
               publishedAt: Date.now(),
+              title: "Published",
+              version: "1.0.0",
             } as never
           }
         />

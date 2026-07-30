@@ -302,9 +302,9 @@ export function TrackView({
                           initial={{ height: 0, opacity: 0 }}
                           key={`panel-${milestone._id}`}
                           transition={{
-                            type: "spring",
                             damping: 25,
                             stiffness: 300,
+                            type: "spring",
                           }}
                         >
                           <div className="pt-2">
@@ -349,7 +349,7 @@ export function TrackView({
               exit={{ height: 0, opacity: 0 }}
               initial={{ height: 0, opacity: 0 }}
               key={activeMilestoneId}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              transition={{ damping: 25, stiffness: 300, type: "spring" }}
             >
               <div className="pt-2">
                 <MilestoneExpandedPanel

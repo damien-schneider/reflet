@@ -9,117 +9,56 @@ import {
 } from "../../shared/validators";
 
 export const githubTables = {
-  userGithubConnections: defineTable({
-    userId: v.string(),
-    installationId: v.string(),
-    accountType: v.union(v.literal("user"), v.literal("organization")),
-    accountLogin: v.string(),
-    accountAvatarUrl: v.optional(v.string()),
-    status: githubConnectionStatus,
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  })
-    .index("by_user", ["userId"])
-    .index("by_installation", ["installationId"]),
-
   githubConnections: defineTable({
-    organizationId: v.id("organizations"),
-    installationId: v.string(),
-    accountType: v.union(v.literal("user"), v.literal("organization")),
-    accountLogin: v.string(),
     accountAvatarUrl: v.optional(v.string()),
-    linkedByUserId: v.optional(v.string()),
-    status: githubConnectionStatus,
-    repositoryId: v.optional(v.string()),
-    repositoryFullName: v.optional(v.string()),
-    repositoryDefaultBranch: v.optional(v.string()),
-    webhookId: v.optional(v.string()),
-    webhookSecret: v.optional(v.string()),
-    ciEnabled: v.optional(v.boolean()),
-    ciBranch: v.optional(v.string()),
-    ciWorkflowCreated: v.optional(v.boolean()),
-    autoSyncReleases: v.optional(v.boolean()),
-    lastSyncAt: v.optional(v.number()),
-    lastSyncStatus: v.optional(githubSyncStatus),
-    lastSyncError: v.optional(v.string()),
+    accountLogin: v.string(),
+    accountType: v.union(v.literal("user"), v.literal("organization")),
     autoSyncIssues: v.optional(v.boolean()),
+    autoSyncReleases: v.optional(v.boolean()),
+    ciBranch: v.optional(v.string()),
+    ciEnabled: v.optional(v.boolean()),
+    ciWorkflowCreated: v.optional(v.boolean()),
+    createdAt: v.number(),
+    installationId: v.string(),
     issuesSyncEnabled: v.optional(v.boolean()),
     lastIssuesSyncAt: v.optional(v.number()),
-    lastIssuesSyncStatus: v.optional(githubSyncStatus),
     lastIssuesSyncError: v.optional(v.string()),
-    createdAt: v.number(),
+    lastIssuesSyncStatus: v.optional(githubSyncStatus),
+    lastSyncAt: v.optional(v.number()),
+    lastSyncError: v.optional(v.string()),
+    lastSyncStatus: v.optional(githubSyncStatus),
+    linkedByUserId: v.optional(v.string()),
+    organizationId: v.id("organizations"),
+    repositoryDefaultBranch: v.optional(v.string()),
+    repositoryFullName: v.optional(v.string()),
+    repositoryId: v.optional(v.string()),
+    status: githubConnectionStatus,
     updatedAt: v.number(),
+    webhookId: v.optional(v.string()),
+    webhookSecret: v.optional(v.string()),
   })
     .index("by_organization", ["organizationId"])
     .index("by_installation", ["installationId"]),
 
-  githubReleases: defineTable({
-    organizationId: v.id("organizations"),
-    githubConnectionId: v.id("githubConnections"),
-    githubReleaseId: v.string(),
-    tagName: v.string(),
-    name: v.optional(v.string()),
-    body: v.optional(v.string()),
-    htmlUrl: v.string(),
-    isDraft: v.boolean(),
-    isPrerelease: v.boolean(),
-    publishedAt: v.optional(v.number()),
-    createdAt: v.number(),
-    refletReleaseId: v.optional(v.id("releases")),
-    lastSyncedAt: v.number(),
-  })
-    .index("by_organization", ["organizationId"])
-    .index("by_connection", ["githubConnectionId"])
-    .index("by_github_release_id", ["githubConnectionId", "githubReleaseId"]),
-
-  githubWebhookEvents: defineTable({
-    organizationId: v.id("organizations"),
-    githubConnectionId: v.id("githubConnections"),
-    eventType: v.string(),
-    action: v.optional(v.string()),
-    payload: v.string(),
-    processedAt: v.optional(v.number()),
-    error: v.optional(v.string()),
-    createdAt: v.number(),
-  })
-    .index("by_connection", ["githubConnectionId"])
-    .index("by_organization", ["organizationId"]),
-
-  githubLabelMappings: defineTable({
-    organizationId: v.id("organizations"),
-    githubConnectionId: v.id("githubConnections"),
-    githubLabelName: v.string(),
-    githubLabelColor: v.optional(v.string()),
-    targetTagId: v.optional(v.id("tags")),
-    autoSync: v.boolean(),
-    syncClosedIssues: v.optional(v.boolean()),
-    defaultStatus: v.optional(feedbackStatus),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  })
-    .index("by_organization", ["organizationId"])
-    .index("by_connection", ["githubConnectionId"])
-    .index("by_connection_label", ["githubConnectionId", "githubLabelName"]),
-
   githubIssues: defineTable({
-    organizationId: v.id("organizations"),
-    githubConnectionId: v.id("githubConnections"),
-    githubIssueId: v.string(),
-    githubIssueNumber: v.number(),
-    title: v.string(),
     body: v.optional(v.string()),
-    htmlUrl: v.string(),
-    state: v.union(v.literal("open"), v.literal("closed")),
-    githubLabels: v.array(v.string()),
+    githubAssignees: v.optional(v.array(v.string())),
     githubAuthor: v.optional(v.string()),
     githubAuthorAvatarUrl: v.optional(v.string()),
-    githubMilestone: v.optional(v.string()),
-    githubAssignees: v.optional(v.array(v.string())),
-    githubCreatedAt: v.number(),
-    githubUpdatedAt: v.number(),
     githubClosedAt: v.optional(v.number()),
-    refletFeedbackId: v.optional(v.id("feedback")),
+    githubConnectionId: v.id("githubConnections"),
+    githubCreatedAt: v.number(),
+    githubIssueId: v.string(),
+    githubIssueNumber: v.number(),
+    githubLabels: v.array(v.string()),
+    githubMilestone: v.optional(v.string()),
+    githubUpdatedAt: v.number(),
+    htmlUrl: v.string(),
     lastSyncedAt: v.number(),
+    organizationId: v.id("organizations"),
+    refletFeedbackId: v.optional(v.id("feedback")),
+    state: v.union(v.literal("open"), v.literal("closed")),
+    title: v.string(),
   })
     .index("by_organization", ["organizationId"])
     .index("by_connection", ["githubConnectionId"])
@@ -130,38 +69,76 @@ export const githubTables = {
     ])
     .index("by_reflet_feedback", ["refletFeedbackId"]),
 
-  repoAnalysis: defineTable({
-    organizationId: v.id("organizations"),
+  githubLabelMappings: defineTable({
+    autoSync: v.boolean(),
+    createdAt: v.number(),
+    defaultStatus: v.optional(feedbackStatus),
     githubConnectionId: v.id("githubConnections"),
-    status: repoAnalysisStatus,
-    summary: v.optional(v.string()),
-    techStack: v.optional(v.string()),
-    architecture: v.optional(v.string()),
-    features: v.optional(v.string()),
-    repoStructure: v.optional(v.string()),
-    error: v.optional(v.string()),
-    threadId: v.optional(v.string()),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-    completedAt: v.optional(v.number()),
-  }).index("by_organization", ["organizationId"]),
-
-  websiteReferences: defineTable({
+    githubLabelColor: v.optional(v.string()),
+    githubLabelName: v.string(),
     organizationId: v.id("organizations"),
-    url: v.string(),
-    title: v.optional(v.string()),
-    description: v.optional(v.string()),
-    scrapedContent: v.optional(v.string()),
-    status: websiteReferenceStatus,
-    errorMessage: v.optional(v.string()),
-    lastFetchedAt: v.optional(v.number()),
-    createdAt: v.number(),
+    syncClosedIssues: v.optional(v.boolean()),
+    targetTagId: v.optional(v.id("tags")),
     updatedAt: v.number(),
-  }).index("by_organization", ["organizationId"]),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_connection", ["githubConnectionId"])
+    .index("by_connection_label", ["githubConnectionId", "githubLabelName"]),
+
+  githubReleases: defineTable({
+    body: v.optional(v.string()),
+    createdAt: v.number(),
+    githubConnectionId: v.id("githubConnections"),
+    githubReleaseId: v.string(),
+    htmlUrl: v.string(),
+    isDraft: v.boolean(),
+    isPrerelease: v.boolean(),
+    lastSyncedAt: v.number(),
+    name: v.optional(v.string()),
+    organizationId: v.id("organizations"),
+    publishedAt: v.optional(v.number()),
+    refletReleaseId: v.optional(v.id("releases")),
+    tagName: v.string(),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_connection", ["githubConnectionId"])
+    .index("by_github_release_id", ["githubConnectionId", "githubReleaseId"]),
+
+  githubWebhookEvents: defineTable({
+    action: v.optional(v.string()),
+    createdAt: v.number(),
+    error: v.optional(v.string()),
+    eventType: v.string(),
+    githubConnectionId: v.id("githubConnections"),
+    organizationId: v.id("organizations"),
+    payload: v.string(),
+    processedAt: v.optional(v.number()),
+  })
+    .index("by_connection", ["githubConnectionId"])
+    .index("by_organization", ["organizationId"]),
 
   projectSetupResults: defineTable({
-    organizationId: v.id("organizations"),
+    changelogConfig: v.optional(
+      v.object({
+        hasConventionalCommits: v.optional(v.boolean()),
+        importExisting: v.boolean(),
+        releaseCount: v.optional(v.number()),
+        syncDirection: v.string(),
+        targetBranch: v.string(),
+        versionPrefix: v.string(),
+        workflow: v.union(
+          v.literal("ai_powered"),
+          v.literal("automated"),
+          v.literal("manual")
+        ),
+      })
+    ),
+    completedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    error: v.optional(v.string()),
     githubConnectionId: v.id("githubConnections"),
+    organizationId: v.id("organizations"),
+    projectOverview: v.optional(v.string()),
     status: v.union(
       v.literal("idle"),
       v.literal("analyzing"),
@@ -171,6 +148,7 @@ export const githubTables = {
     ),
     steps: v.array(
       v.object({
+        error: v.optional(v.string()),
         key: v.string(),
         label: v.string(),
         status: v.union(
@@ -180,64 +158,85 @@ export const githubTables = {
           v.literal("error")
         ),
         summary: v.optional(v.string()),
-        error: v.optional(v.string()),
       })
-    ),
-    suggestedMonitors: v.optional(
-      v.array(
-        v.object({
-          url: v.string(),
-          name: v.string(),
-          method: v.optional(v.string()),
-          accepted: v.boolean(),
-        })
-      )
     ),
     suggestedKeywords: v.optional(
       v.array(
         v.object({
-          keyword: v.string(),
-          category: v.string(),
           accepted: v.boolean(),
+          category: v.string(),
+          keyword: v.string(),
+        })
+      )
+    ),
+    suggestedMonitors: v.optional(
+      v.array(
+        v.object({
+          accepted: v.boolean(),
+          method: v.optional(v.string()),
+          name: v.string(),
+          url: v.string(),
+        })
+      )
+    ),
+    suggestedPrompts: v.optional(
+      v.array(
+        v.object({
+          prompt: v.string(),
+          title: v.string(),
         })
       )
     ),
     suggestedTags: v.optional(
       v.array(
         v.object({
-          name: v.string(),
-          color: v.string(),
           accepted: v.boolean(),
+          color: v.string(),
+          name: v.string(),
         })
       )
     ),
-    changelogConfig: v.optional(
-      v.object({
-        workflow: v.union(
-          v.literal("ai_powered"),
-          v.literal("automated"),
-          v.literal("manual")
-        ),
-        importExisting: v.boolean(),
-        syncDirection: v.string(),
-        versionPrefix: v.string(),
-        targetBranch: v.string(),
-        releaseCount: v.optional(v.number()),
-        hasConventionalCommits: v.optional(v.boolean()),
-      })
-    ),
-    suggestedPrompts: v.optional(
-      v.array(
-        v.object({
-          title: v.string(),
-          prompt: v.string(),
-        })
-      )
-    ),
-    projectOverview: v.optional(v.string()),
-    error: v.optional(v.string()),
-    createdAt: v.number(),
     updatedAt: v.number(),
+  }).index("by_organization", ["organizationId"]),
+
+  repoAnalysis: defineTable({
+    architecture: v.optional(v.string()),
     completedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    error: v.optional(v.string()),
+    features: v.optional(v.string()),
+    githubConnectionId: v.id("githubConnections"),
+    organizationId: v.id("organizations"),
+    repoStructure: v.optional(v.string()),
+    status: repoAnalysisStatus,
+    summary: v.optional(v.string()),
+    techStack: v.optional(v.string()),
+    threadId: v.optional(v.string()),
+    updatedAt: v.number(),
+  }).index("by_organization", ["organizationId"]),
+  userGithubConnections: defineTable({
+    accountAvatarUrl: v.optional(v.string()),
+    accountLogin: v.string(),
+    accountType: v.union(v.literal("user"), v.literal("organization")),
+    createdAt: v.number(),
+    installationId: v.string(),
+    status: githubConnectionStatus,
+    updatedAt: v.number(),
+    userId: v.string(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_installation", ["installationId"]),
+
+  websiteReferences: defineTable({
+    createdAt: v.number(),
+    description: v.optional(v.string()),
+    errorMessage: v.optional(v.string()),
+    lastFetchedAt: v.optional(v.number()),
+    organizationId: v.id("organizations"),
+    scrapedContent: v.optional(v.string()),
+    status: websiteReferenceStatus,
+    title: v.optional(v.string()),
+    updatedAt: v.number(),
+    url: v.string(),
   }).index("by_organization", ["organizationId"]),
 };

@@ -29,14 +29,14 @@ interface SweepCornerContextValue extends VoteState {}
 // ─── Tag Color Map ──────────────────────────────────────────────────────────
 
 const TAG_COLORS: Record<string, string> = {
+  amber: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+  blue: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+  gray: "bg-gray-100 text-gray-600 dark:bg-gray-800/30 dark:text-gray-400",
+  green: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+  pink: "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400",
   purple:
     "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-  green: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  blue: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
   red: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-  amber: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-  pink: "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400",
-  gray: "bg-gray-100 text-gray-600 dark:bg-gray-800/30 dark:text-gray-400",
 };
 
 // ─── Context ────────────────────────────────────────────────────────────────
@@ -96,7 +96,7 @@ function useVoteState(
     [voteType, onVoteChange]
   );
 
-  return { voteType, upvotes, downvotes, vote };
+  return { downvotes, upvotes, vote, voteType };
 }
 
 // ─── Animated Count Helper ──────────────────────────────────────────────────
@@ -111,12 +111,12 @@ function AnimatedCount({
   return (
     <AnimatePresence mode="popLayout">
       <motion.span
-        animate={{ y: 0, opacity: 1 }}
+        animate={{ opacity: 1, y: 0 }}
         className={cn("tabular-nums", className)}
-        exit={{ y: -6, opacity: 0 }}
-        initial={{ y: 6, opacity: 0 }}
+        exit={{ opacity: 0, y: -6 }}
+        initial={{ opacity: 0, y: 6 }}
         key={value}
-        transition={{ type: "spring", stiffness: 400, damping: 20 }}
+        transition={{ damping: 20, stiffness: 400, type: "spring" }}
       >
         {value}
       </motion.span>
@@ -159,10 +159,10 @@ function SweepCorner({
 
   const controlledState = useMemo<SweepCornerContextValue>(
     () => ({
-      upvotes: controlledUpvotes ?? 0,
       downvotes: controlledDownvotes ?? 0,
-      voteType: controlledVoteType ?? null,
+      upvotes: controlledUpvotes ?? 0,
       vote: (type) => onVote?.(type),
+      voteType: controlledVoteType ?? null,
     }),
     [controlledUpvotes, controlledDownvotes, controlledVoteType, onVote]
   );
@@ -274,7 +274,7 @@ function SweepCornerBadge() {
         borderRadius: voteType ? "0 12px 0 16px" : "0 12px 0 12px",
       }}
       className="absolute top-0 right-0 flex items-center gap-0 overflow-hidden border-border/30 border-b border-l bg-card shadow-sm"
-      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      transition={{ damping: 20, stiffness: 300, type: "spring" }}
     >
       <motion.button
         animate={{
@@ -368,7 +368,7 @@ function SweepCornerFooter({
       <AnimatePresence>
         {voteType && (
           <motion.div
-            animate={{ x: "100%", opacity: 0 }}
+            animate={{ opacity: 0, x: "100%" }}
             className={cn(
               "absolute inset-0",
               voteType === "upvote"
@@ -376,7 +376,7 @@ function SweepCornerFooter({
                 : "bg-gradient-to-r from-transparent via-destructive/12 to-transparent"
             )}
             exit={{ opacity: 0 }}
-            initial={{ x: "-100%", opacity: 1 }}
+            initial={{ opacity: 1, x: "-100%" }}
             key={voteType}
             transition={{ duration: 0.6, ease: "easeOut" }}
           />

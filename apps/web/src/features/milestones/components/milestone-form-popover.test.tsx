@@ -28,6 +28,17 @@ vi.mock("@/components/ui/popover", () => ({
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
   }) => <div data-testid="popover-root">{children}</div>,
+  PopoverContent: ({
+    children,
+    className,
+  }: {
+    children: React.ReactNode;
+    className?: string;
+  }) => (
+    <div className={className} data-testid="popover-content">
+      {children}
+    </div>
+  ),
   PopoverTrigger: ({
     children,
     ...props
@@ -39,17 +50,6 @@ vi.mock("@/components/ui/popover", () => ({
     <button data-testid="popover-trigger" type="button" {...props}>
       {children}
     </button>
-  ),
-  PopoverContent: ({
-    children,
-    className,
-  }: {
-    children: React.ReactNode;
-    className?: string;
-  }) => (
-    <div className={className} data-testid="popover-content">
-      {children}
-    </div>
   ),
 }));
 
@@ -129,11 +129,11 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { MilestoneFormPopover } from "./milestone-form-popover";
 
 const defaultProps = {
-  organizationId: "org123" as Id<"organizations">,
   defaultTimeHorizon: "now" as const,
-  open: true,
-  onOpenChange: vi.fn(),
   onCreated: vi.fn(),
+  onOpenChange: vi.fn(),
+  open: true,
+  organizationId: "org123" as Id<"organizations">,
 };
 
 describe("MilestoneFormPopover", () => {
@@ -177,12 +177,12 @@ describe("MilestoneFormPopover", () => {
 
     await waitFor(() => {
       expect(mockCreateMilestone).toHaveBeenCalledWith({
-        organizationId: "org123",
-        name: "New milestone",
-        emoji: undefined,
         color: "blue",
-        timeHorizon: "now",
+        emoji: undefined,
+        name: "New milestone",
+        organizationId: "org123",
         targetDate: undefined,
+        timeHorizon: "now",
       });
     });
   });

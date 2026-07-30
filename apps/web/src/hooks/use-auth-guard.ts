@@ -47,17 +47,16 @@ export function useAuthGuard(options: AuthGuardOptions = {}) {
         message:
           options.message ?? "Connectez-vous pour effectuer cette action",
       });
-      return undefined;
     },
     [isAuthenticated, openAuthDialog, options.message]
   );
 
   return {
+    /** Wrap an action to require authentication before executing */
+    guard,
     /** Whether the current user is authenticated */
     isAuthenticated,
     /** The current user's ID, or undefined if not authenticated */
     userId: session?.user?.id,
-    /** Wrap an action to require authentication before executing */
-    guard,
   };
 }

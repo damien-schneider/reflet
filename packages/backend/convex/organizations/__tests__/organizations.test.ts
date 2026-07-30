@@ -14,12 +14,12 @@ describe("Organization slug uniqueness", () => {
     // First, insert an organization directly into the database
     await t.run(async (ctx) => {
       await ctx.db.insert("organizations", {
+        createdAt: Date.now(),
+        isPublic: false,
         name: "First Org",
         slug: "my-unique-slug",
-        isPublic: false,
-        subscriptionTier: "free",
         subscriptionStatus: "none",
-        createdAt: Date.now(),
+        subscriptionTier: "free",
       });
     });
 
@@ -39,12 +39,12 @@ describe("Organization slug uniqueness", () => {
     // First, insert an organization with slug "my-org"
     await t.run(async (ctx) => {
       await ctx.db.insert("organizations", {
+        createdAt: Date.now(),
+        isPublic: false,
         name: "My Org",
         slug: "my-org",
-        isPublic: false,
-        subscriptionTier: "free",
         subscriptionStatus: "none",
-        createdAt: Date.now(),
+        subscriptionTier: "free",
       });
     });
 
@@ -107,9 +107,7 @@ describe("Organization slug update", () => {
     });
 
     // Verify the slug was updated
-    const org = await t.run(async (ctx) => {
-      return await ctx.db.get(orgId);
-    });
+    const org = await t.run(async (ctx) => await ctx.db.get(orgId));
 
     expect(org?.slug).toBe("new-slug");
   });
@@ -163,9 +161,7 @@ describe("Organization slug update", () => {
     });
 
     // Verify the slug is unchanged
-    const org = await t.run(async (ctx) => {
-      return await ctx.db.get(orgId);
-    });
+    const org = await t.run(async (ctx) => await ctx.db.get(orgId));
 
     expect(org?.slug).toBe("my-org");
   });

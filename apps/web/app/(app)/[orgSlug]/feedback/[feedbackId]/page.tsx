@@ -25,10 +25,10 @@ export async function generateMetadata({
         : `Feature request for ${meta.orgName}. ${meta.voteCount} votes.`;
 
       return generatePageMetadata({
-        title: `${meta.title} | ${meta.orgName}`,
         description,
-        path: `/${orgSlug}/feedback/${feedbackId}`,
         keywords: [meta.orgName, "feedback", "feature request", meta.status],
+        path: `/${orgSlug}/feedback/${feedbackId}`,
+        title: `${meta.title} | ${meta.orgName}`,
       });
     }
   } catch {
@@ -36,10 +36,10 @@ export async function generateMetadata({
   }
 
   return generatePageMetadata({
-    title: `Feedback | ${orgSlug}`,
     description: `View feedback and feature requests for ${orgSlug}.`,
-    path: `/${orgSlug}/feedback/${feedbackId}`,
     keywords: ["feedback", "feature request", orgSlug],
+    path: `/${orgSlug}/feedback/${feedbackId}`,
+    title: `Feedback | ${orgSlug}`,
   });
 }
 

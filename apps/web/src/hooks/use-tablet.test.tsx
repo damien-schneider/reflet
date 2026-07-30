@@ -9,14 +9,16 @@ describe("useIsTablet", () => {
   const createMockMatchMedia = (matches: boolean) => {
     listeners = new Map();
     return vi.fn().mockImplementation((query: string) => ({
-      matches,
-      media: query,
-      onchange: null,
       addEventListener: vi.fn((event: string, cb: () => void) => {
         const existing = listeners.get(event) ?? [];
         existing.push(cb);
         listeners.set(event, existing);
       }),
+      addListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+      matches,
+      media: query,
+      onchange: null,
       removeEventListener: vi.fn((event: string, cb: () => void) => {
         const existing = listeners.get(event) ?? [];
         listeners.set(
@@ -24,9 +26,7 @@ describe("useIsTablet", () => {
           existing.filter((l) => l !== cb)
         );
       }),
-      addListener: vi.fn(),
       removeListener: vi.fn(),
-      dispatchEvent: vi.fn(),
     }));
   };
 
@@ -34,15 +34,15 @@ describe("useIsTablet", () => {
 
   afterEach(() => {
     Object.defineProperty(window, "innerWidth", {
-      writable: true,
       value: originalInnerWidth,
+      writable: true,
     });
   });
 
   it("returns true when width is in tablet range (768-1023)", () => {
     Object.defineProperty(window, "innerWidth", {
-      writable: true,
       value: 900,
+      writable: true,
     });
     window.matchMedia = createMockMatchMedia(true);
 
@@ -52,8 +52,8 @@ describe("useIsTablet", () => {
 
   it("returns false when width is below tablet range", () => {
     Object.defineProperty(window, "innerWidth", {
-      writable: true,
       value: 500,
+      writable: true,
     });
     window.matchMedia = createMockMatchMedia(false);
 
@@ -63,8 +63,8 @@ describe("useIsTablet", () => {
 
   it("returns false when width is above tablet range", () => {
     Object.defineProperty(window, "innerWidth", {
-      writable: true,
       value: 1200,
+      writable: true,
     });
     window.matchMedia = createMockMatchMedia(false);
 
@@ -74,8 +74,8 @@ describe("useIsTablet", () => {
 
   it("returns true at exactly 768px (min boundary)", () => {
     Object.defineProperty(window, "innerWidth", {
-      writable: true,
       value: 768,
+      writable: true,
     });
     window.matchMedia = createMockMatchMedia(true);
 
@@ -85,8 +85,8 @@ describe("useIsTablet", () => {
 
   it("returns true at 1023px (max boundary)", () => {
     Object.defineProperty(window, "innerWidth", {
-      writable: true,
       value: 1023,
+      writable: true,
     });
     window.matchMedia = createMockMatchMedia(true);
 
@@ -96,8 +96,8 @@ describe("useIsTablet", () => {
 
   it("returns false at exactly 1024px", () => {
     Object.defineProperty(window, "innerWidth", {
-      writable: true,
       value: 1024,
+      writable: true,
     });
     window.matchMedia = createMockMatchMedia(false);
 
@@ -107,8 +107,8 @@ describe("useIsTablet", () => {
 
   it("returns false at 767px", () => {
     Object.defineProperty(window, "innerWidth", {
-      writable: true,
       value: 767,
+      writable: true,
     });
     window.matchMedia = createMockMatchMedia(false);
 
@@ -118,8 +118,8 @@ describe("useIsTablet", () => {
 
   it("updates when media query changes", () => {
     Object.defineProperty(window, "innerWidth", {
-      writable: true,
       value: 500,
+      writable: true,
     });
     window.matchMedia = createMockMatchMedia(false);
 
@@ -128,8 +128,8 @@ describe("useIsTablet", () => {
 
     act(() => {
       Object.defineProperty(window, "innerWidth", {
-        writable: true,
         value: 900,
+        writable: true,
       });
       const changeListeners = listeners.get("change") ?? [];
       for (const listener of changeListeners) {
@@ -142,8 +142,8 @@ describe("useIsTablet", () => {
 
   it("cleans up event listener on unmount", () => {
     Object.defineProperty(window, "innerWidth", {
-      writable: true,
       value: 900,
+      writable: true,
     });
     window.matchMedia = createMockMatchMedia(true);
 

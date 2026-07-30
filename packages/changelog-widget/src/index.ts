@@ -27,17 +27,17 @@ function handleCommand(
   switch (command) {
     case "open_changelog":
       widget.open();
-      return undefined;
+      return;
     case "close_changelog":
       widget.close();
-      return undefined;
+      return;
     case "get_unread_changelog_count":
       return widget.getUnreadCount();
     case "mark_changelog_read":
       widget.markAsRead();
-      return undefined;
+      return;
     default:
-      return undefined;
+      return;
   }
 }
 
@@ -71,7 +71,6 @@ function registerCommandApi(widget: RefletChangelogWidget): void {
         if (typeof command === "string") {
           return handleCommand(command, widget);
         }
-        return undefined;
       },
       { _changelogWidget: widget }
     );
@@ -125,43 +124,29 @@ function initWidget(): void {
       const themeAttr = script.getAttribute("data-theme");
 
       const config: ChangelogWidgetConfig = {
-        publicKey,
-        mode: isValidMode(modeAttr) ? modeAttr : "card",
-        position: isValidPosition(positionAttr) ? positionAttr : "bottom-right",
-        theme: isValidTheme(themeAttr) ? themeAttr : "light",
-        primaryColor: script.getAttribute("data-color") ?? undefined,
+        autoOpenForNew: script.getAttribute("data-auto-open") === "true",
         maxEntries: script.getAttribute("data-max-entries")
           ? Number(script.getAttribute("data-max-entries"))
           : undefined,
+        mode: isValidMode(modeAttr) ? modeAttr : "card",
+        position: isValidPosition(positionAttr) ? positionAttr : "bottom-right",
+        primaryColor: script.getAttribute("data-color") ?? undefined,
+        publicKey,
+        theme: isValidTheme(themeAttr) ? themeAttr : "light",
         triggerSelector:
           script.getAttribute("data-trigger-selector") ?? undefined,
-        autoOpenForNew: script.getAttribute("data-auto-open") === "true",
       };
 
       const widget = new RefletChangelogWidget(config);
       window.__refletChangelogWidgetInstance = widget;
       registerCommandApi(widget);
       widget.init();
-      return;
     }
-  }
-
-  // Check if window.Reflet has changelog config as a plain object
-  const refletConfig = window.Reflet;
-  if (
-    refletConfig &&
-    typeof refletConfig !== "function" &&
-    "publicKey" in refletConfig
-  ) {
-    // Don't auto-init from feedback widget's config - only from dedicated config
-    return;
   }
 }
 
-// Expose the widget class globally
 window.RefletChangelogWidget = RefletChangelogWidget;
 
-// Auto-initialize when DOM is ready
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initWidget);
 } else {

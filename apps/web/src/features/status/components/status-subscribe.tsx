@@ -17,7 +17,7 @@ export function StatusSubscribe({
   const subscribe = useMutation(api.status.subscriptions.subscribe);
 
   const handleSubscribe = async (email: string) => {
-    await subscribe({ organizationId, email });
+    await subscribe({ email, organizationId });
   };
 
   return (

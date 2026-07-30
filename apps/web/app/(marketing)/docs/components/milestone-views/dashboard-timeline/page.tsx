@@ -13,10 +13,10 @@ import { DashboardTimelinePreview } from "@/components/docs/milestone-view-previ
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
-  title: "Dashboard Timeline - Milestone View",
   description:
     "A KPI summary bar with vertical timeline and sweep animation on click.",
   path: "/docs/components/milestone-views/dashboard-timeline",
+  title: "Dashboard Timeline - Milestone View",
 });
 
 const SOURCE_CODE = readFileSync(

@@ -33,7 +33,7 @@ function ProgressBar({
         className="h-full rounded-full"
         initial={{ width: 0 }}
         style={{ backgroundColor: color }}
-        transition={{ type: "spring", stiffness: 200, damping: 30 }}
+        transition={{ damping: 30, stiffness: 200, type: "spring" }}
       />
     </div>
   );
@@ -120,8 +120,8 @@ export function EditorialAccordionView({
             : milestone.timeHorizon;
           const formattedDate = milestone.targetDate
             ? new Date(milestone.targetDate).toLocaleDateString("en-US", {
-                month: "short",
                 day: "numeric",
+                month: "short",
               })
             : null;
 
@@ -184,9 +184,9 @@ export function EditorialAccordionView({
                     initial={{ height: 0, opacity: 0 }}
                     key={`panel-${milestone._id}`}
                     transition={{
-                      type: "spring",
                       damping: 25,
                       stiffness: 300,
+                      type: "spring",
                     }}
                   >
                     <div className="px-3 pb-4">

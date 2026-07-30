@@ -11,11 +11,11 @@ import { getAuthUser } from "../shared/utils";
  */
 export const getSignalsByTopic = query({
   args: {
+    limit: v.optional(v.number()),
     organizationId: v.id("organizations"),
     source: v.optional(
       v.union(v.literal("reddit"), v.literal("web"), v.literal("all"))
     ),
-    limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -83,8 +83,8 @@ export const getSignalsByTopic = query({
       if (!grouped[groupKey]) {
         grouped[groupKey] = {
           keyword: groupKey,
+          sentimentBreakdown: { negative: 0, neutral: 0, positive: 0 },
           signals: [],
-          sentimentBreakdown: { positive: 0, negative: 0, neutral: 0 },
         };
       }
 
@@ -156,17 +156,17 @@ export const getTrendingTopics = query({
     }
 
     return {
-      totalSignals: recentSignals.length,
-      typeCounts,
-      sentimentOverview: { positive, negative, neutral },
-      topPainPoints: recentSignals
-        .filter((s) => s.signalType === "pain_point")
-        .sort((a, b) => b.relevanceScore - a.relevanceScore)
-        .slice(0, 5),
+      sentimentOverview: { negative, neutral, positive },
       topFeatureRequests: recentSignals
         .filter((s) => s.signalType === "feature_request")
         .sort((a, b) => b.relevanceScore - a.relevanceScore)
         .slice(0, 5),
+      topPainPoints: recentSignals
+        .filter((s) => s.signalType === "pain_point")
+        .sort((a, b) => b.relevanceScore - a.relevanceScore)
+        .slice(0, 5),
+      totalSignals: recentSignals.length,
+      typeCounts,
     };
   },
 });
@@ -176,8 +176,8 @@ export const getTrendingTopics = query({
  */
 export const getSignalHistory = query({
   args: {
-    organizationId: v.id("organizations"),
     days: v.optional(v.number()),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -215,7 +215,7 @@ export const getSignalHistory = query({
       const date =
         new Date(s.createdAt).toISOString().split("T")[0] ?? "unknown";
       if (!dailyCounts[date]) {
-        dailyCounts[date] = { total: 0, positive: 0, negative: 0, neutral: 0 };
+        dailyCounts[date] = { negative: 0, neutral: 0, positive: 0, total: 0 };
       }
       const day = dailyCounts[date];
       if (day) {

@@ -8,6 +8,28 @@
     "ultracite/biome/react",
     "ultracite/biome/remix"
   ],
+  "linter": {
+    "rules": {
+      "complexity": {
+        "noRedundantDefaultExport": "off"
+      },
+      "performance": {
+        "noAwaitInLoops": "off",
+        "noJsxPropsBind": "off"
+      },
+      "style": {
+        "noIncrementDecrement": "off",
+        "useDestructuring": "off",
+        "useErrorCause": "off"
+      },
+      "suspicious": {
+        "noEmptySource": "off",
+        "noLeakedRender": "off",
+        "noShadow": "off",
+        "noUnnecessaryConditions": "off"
+      }
+    }
+  },
   "overrides": [
     {
       "includes": [
@@ -29,6 +51,16 @@
       "includes": ["apps/web/src/components/ui/**/*"],
       "linter": {
         "enabled": false
+      }
+    },
+    {
+      "includes": ["**/*.svg"],
+      "linter": {
+        "rules": {
+          "a11y": {
+            "noSvgWithoutTitle": "off"
+          }
+        }
       }
     },
     {

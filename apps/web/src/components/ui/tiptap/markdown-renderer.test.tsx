@@ -9,24 +9,24 @@ const mockSetContent = vi.fn();
 
 const mockEditor = {
   commands: { setContent: mockSetContent },
+  destroy: vi.fn(),
+  off: vi.fn(),
+  on: vi.fn(),
   storage: {
     markdown: { getMarkdown: vi.fn(() => "") },
   },
-  on: vi.fn(),
-  off: vi.fn(),
-  destroy: vi.fn(),
 };
 
 let useEditorConfig: Record<string, unknown> | null = null;
 
 vi.mock("@tiptap/react", () => ({
+  EditorContent: ({ editor }: { editor: unknown }) => (
+    <div data-testid="editor-content">{editor ? "Editor" : "No editor"}</div>
+  ),
   useEditor: vi.fn((config: Record<string, unknown>) => {
     useEditorConfig = config;
     return mockEditor;
   }),
-  EditorContent: ({ editor }: { editor: unknown }) => (
-    <div data-testid="editor-content">{editor ? "Editor" : "No editor"}</div>
-  ),
 }));
 
 vi.mock("@tiptap/starter-kit", () => ({
@@ -206,10 +206,10 @@ describe("MarkdownRenderer", () => {
       const result = factory({
         node: {
           attrs: {
-            src: "https://example.com/image.jpg",
-            alt: "Test alt",
-            title: "Test title",
             align: "center",
+            alt: "Test alt",
+            src: "https://example.com/image.jpg",
+            title: "Test title",
             width: 300,
           },
         },
@@ -235,7 +235,7 @@ describe("MarkdownRenderer", () => {
       const factory = addNodeView();
       const result = factory({
         node: {
-          attrs: { src: "https://example.com/img.jpg", alt: "", align: "left" },
+          attrs: { align: "left", alt: "", src: "https://example.com/img.jpg" },
         },
       });
 
@@ -252,9 +252,9 @@ describe("MarkdownRenderer", () => {
       const result = factory({
         node: {
           attrs: {
-            src: "https://example.com/broken.jpg",
-            alt: "",
             align: "center",
+            alt: "",
+            src: "https://example.com/broken.jpg",
           },
         },
       });
@@ -286,9 +286,9 @@ describe("MarkdownRenderer", () => {
       const result = factory({
         node: {
           attrs: {
-            src: "https://example.com/old.jpg",
-            alt: "old",
             align: "center",
+            alt: "old",
+            src: "https://example.com/old.jpg",
           },
         },
       });
@@ -300,13 +300,13 @@ describe("MarkdownRenderer", () => {
 
       // Update with new src - should reset error state
       const updated = result.update({
-        type: { name: "image" },
         attrs: {
-          src: "https://example.com/new.jpg",
-          alt: "updated",
           align: "left",
+          alt: "updated",
+          src: "https://example.com/new.jpg",
           width: 500,
         },
+        type: { name: "image" },
       });
 
       expect(updated).toBe(true);
@@ -330,9 +330,9 @@ describe("MarkdownRenderer", () => {
       const result = factory({
         node: {
           attrs: {
-            src: "https://example.com/img.jpg",
-            alt: "",
             align: "center",
+            alt: "",
+            src: "https://example.com/img.jpg",
           },
         },
       });
@@ -342,12 +342,12 @@ describe("MarkdownRenderer", () => {
 
       // Update with same src
       result.update({
-        type: { name: "image" },
         attrs: {
-          src: "https://example.com/img.jpg",
-          alt: "updated",
           align: "right",
+          alt: "updated",
+          src: "https://example.com/img.jpg",
         },
+        type: { name: "image" },
       });
 
       // img.style.display should NOT be reset since src didn't change
@@ -366,16 +366,16 @@ describe("MarkdownRenderer", () => {
       const result = factory({
         node: {
           attrs: {
-            src: "https://example.com/img.jpg",
-            alt: "",
             align: "center",
+            alt: "",
+            src: "https://example.com/img.jpg",
           },
         },
       });
 
       const updated = result.update({
-        type: { name: "paragraph" },
         attrs: {},
+        type: { name: "paragraph" },
       });
       expect(updated).toBe(false);
     });
@@ -388,7 +388,7 @@ describe("MarkdownRenderer", () => {
       const factory = addNodeView();
       const result = factory({
         node: {
-          attrs: { src: "https://example.com/img.jpg", alt: "", title: "" },
+          attrs: { alt: "", src: "https://example.com/img.jpg", title: "" },
         },
       });
 
@@ -404,6 +404,7 @@ describe("MarkdownRenderer", () => {
       const { default: StarterKit } = await import("@tiptap/starter-kit");
       expect(StarterKit.configure).toHaveBeenCalledWith({
         heading: { levels: [1, 2, 3] },
+        link: false,
       });
     });
 
@@ -412,11 +413,11 @@ describe("MarkdownRenderer", () => {
       const { default: Link } = await import("@tiptap/extension-link");
       expect(Link.configure).toHaveBeenCalledWith(
         expect.objectContaining({
-          openOnClick: true,
           HTMLAttributes: expect.objectContaining({
-            target: "_blank",
             rel: "noopener noreferrer",
+            target: "_blank",
           }),
+          openOnClick: true,
         })
       );
     });

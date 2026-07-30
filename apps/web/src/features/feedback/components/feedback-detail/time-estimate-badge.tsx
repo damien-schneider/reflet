@@ -29,10 +29,10 @@ import { cn } from "@/lib/utils";
 type TimeUnit = "minutes" | "hours" | "days" | "weeks";
 
 const TIME_UNIT_OPTIONS: { value: TimeUnit; label: string }[] = [
-  { value: "minutes", label: "min" },
-  { value: "hours", label: "h" },
-  { value: "days", label: "d" },
-  { value: "weeks", label: "w" },
+  { label: "min", value: "minutes" },
+  { label: "h", value: "hours" },
+  { label: "d", value: "days" },
+  { label: "w", value: "weeks" },
 ];
 
 const TIME_UNIT_VALUES: TimeUnit[] = TIME_UNIT_OPTIONS.map((o) => o.value);
@@ -41,16 +41,16 @@ const isTimeUnit = (value: string): value is TimeUnit =>
   TIME_UNIT_VALUES.some((o) => o === value);
 
 const TIME_UNIT_LABELS: Record<TimeUnit, string> = {
-  minutes: "minutes",
-  hours: "hours",
   days: "days",
+  hours: "hours",
+  minutes: "minutes",
   weeks: "weeks",
 };
 
 const NUMBER_OPTIONS_BY_UNIT: Record<TimeUnit, number[]> = {
-  minutes: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60],
-  hours: [1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20, 24],
   days: [1, 2, 3, 4, 5, 6, 7],
+  hours: [1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20, 24],
+  minutes: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60],
   weeks: [1, 2, 3, 4, 6, 8],
 };
 
@@ -117,8 +117,8 @@ export function TimeEstimateBadge({
 
   const handleClear = async () => {
     await updateAnalysis({
-      feedbackId,
       clearTimeEstimate: true,
+      feedbackId,
     });
     setIsOpen(false);
   };

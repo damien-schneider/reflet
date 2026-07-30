@@ -28,13 +28,14 @@ function InstallCommand({ command }: InstallCommandProps) {
     }, COPY_FEEDBACK_DURATION_MS);
   }, [command]);
 
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
-    };
-  }, []);
+    },
+    []
+  );
 
   return (
     <div className="flex items-center gap-2 rounded-lg bg-muted px-4 py-3">

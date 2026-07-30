@@ -6,27 +6,6 @@ export const listPendingDuplicates = internalQuery({
   args: {
     organizationId: v.id("organizations"),
   },
-  returns: v.array(
-    v.object({
-      _id: v.id("duplicatePairs"),
-      feedbackA: v.object({
-        _id: v.id("feedback"),
-        title: v.string(),
-        description: v.string(),
-        voteCount: v.number(),
-        status: feedbackStatus,
-      }),
-      feedbackB: v.object({
-        _id: v.id("feedback"),
-        title: v.string(),
-        description: v.string(),
-        voteCount: v.number(),
-        status: feedbackStatus,
-      }),
-      similarityScore: v.number(),
-      detectedAt: v.number(),
-    })
-  ),
   handler: async (ctx, args) => {
     const pairs = await ctx.db
       .query("duplicatePairs")
@@ -44,22 +23,22 @@ export const listPendingDuplicates = internalQuery({
         }
         return {
           _id: pair._id,
+          detectedAt: pair.detectedAt,
           feedbackA: {
             _id: feedbackA._id,
-            title: feedbackA.title,
             description: feedbackA.description.slice(0, 200),
-            voteCount: feedbackA.voteCount,
             status: feedbackA.status,
+            title: feedbackA.title,
+            voteCount: feedbackA.voteCount,
           },
           feedbackB: {
             _id: feedbackB._id,
-            title: feedbackB.title,
             description: feedbackB.description.slice(0, 200),
-            voteCount: feedbackB.voteCount,
             status: feedbackB.status,
+            title: feedbackB.title,
+            voteCount: feedbackB.voteCount,
           },
           similarityScore: pair.similarityScore,
-          detectedAt: pair.detectedAt,
         };
       })
     );
@@ -68,15 +47,35 @@ export const listPendingDuplicates = internalQuery({
       (r): r is NonNullable<typeof r> => r !== null
     );
   },
+  returns: v.array(
+    v.object({
+      _id: v.id("duplicatePairs"),
+      detectedAt: v.number(),
+      feedbackA: v.object({
+        _id: v.id("feedback"),
+        description: v.string(),
+        status: feedbackStatus,
+        title: v.string(),
+        voteCount: v.number(),
+      }),
+      feedbackB: v.object({
+        _id: v.id("feedback"),
+        description: v.string(),
+        status: feedbackStatus,
+        title: v.string(),
+        voteCount: v.number(),
+      }),
+      similarityScore: v.number(),
+    })
+  ),
 });
 
 export const resolveDuplicate = internalMutation({
   args: {
-    pairId: v.id("duplicatePairs"),
     action: v.union(v.literal("confirm"), v.literal("reject")),
+    pairId: v.id("duplicatePairs"),
     resolvedBy: v.string(),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const pair = await ctx.db.get(args.pairId);
     if (!pair) {
@@ -84,23 +83,23 @@ export const resolveDuplicate = internalMutation({
     }
 
     await ctx.db.patch(args.pairId, {
-      status: args.action === "confirm" ? "confirmed" : "rejected",
       resolvedAt: Date.now(),
       resolvedBy: args.resolvedBy,
+      status: args.action === "confirm" ? "confirmed" : "rejected",
     });
 
     return null;
   },
+  returns: v.null(),
 });
 
 export const mergeFeedback = internalMutation({
   args: {
+    mergedBy: v.string(),
+    pairId: v.optional(v.id("duplicatePairs")),
     sourceFeedbackId: v.id("feedback"),
     targetFeedbackId: v.id("feedback"),
-    pairId: v.optional(v.id("duplicatePairs")),
-    mergedBy: v.string(),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const source = await ctx.db.get(args.sourceFeedbackId);
     const target = await ctx.db.get(args.targetFeedbackId);
@@ -135,11 +134,11 @@ export const mergeFeedback = internalMutation({
 
       if (!existingVote) {
         await ctx.db.insert("feedbackVotes", {
+          createdAt: vote.createdAt,
+          externalUserId: vote.externalUserId,
           feedbackId: args.targetFeedbackId,
           userId: vote.userId,
           voteType: vote.voteType,
-          externalUserId: vote.externalUserId,
-          createdAt: vote.createdAt,
         });
       }
     }
@@ -166,10 +165,10 @@ export const mergeFeedback = internalMutation({
 
       if (!existingSub) {
         await ctx.db.insert("feedbackSubscriptions", {
+          createdAt: sub.createdAt,
+          externalUserId: sub.externalUserId,
           feedbackId: args.targetFeedbackId,
           userId: sub.userId,
-          externalUserId: sub.externalUserId,
-          createdAt: sub.createdAt,
         });
       }
     }
@@ -188,21 +187,21 @@ export const mergeFeedback = internalMutation({
     ).length;
 
     await ctx.db.patch(args.targetFeedbackId, {
-      voteCount: upvotes - downvotes,
       updatedAt: Date.now(),
+      voteCount: upvotes - downvotes,
     });
 
     // Record merge history
     await ctx.db.insert("mergeHistory", {
-      organizationId: source.organizationId,
-      sourceFeedbackId: args.sourceFeedbackId,
-      targetFeedbackId: args.targetFeedbackId,
-      mergedBy: args.mergedBy,
       mergedAt: Date.now(),
-      sourceTitle: source.title,
+      mergedBy: args.mergedBy,
+      organizationId: source.organizationId,
       sourceDescription: source.description,
-      sourceVoteCount: source.voteCount,
+      sourceFeedbackId: args.sourceFeedbackId,
       sourceStatus: source.status,
+      sourceTitle: source.title,
+      sourceVoteCount: source.voteCount,
+      targetFeedbackId: args.targetFeedbackId,
     });
 
     // Mark source as merged
@@ -215,12 +214,13 @@ export const mergeFeedback = internalMutation({
     // Update pair status if provided
     if (args.pairId) {
       await ctx.db.patch(args.pairId, {
-        status: "merged",
         resolvedAt: Date.now(),
         resolvedBy: args.mergedBy,
+        status: "merged",
       });
     }
 
     return null;
   },
+  returns: v.null(),
 });

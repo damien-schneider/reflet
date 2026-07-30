@@ -44,8 +44,8 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
     organizations: {
       invitations: {
-        getByToken: "invitations.getByToken",
         accept: "invitations.accept",
+        getByToken: "invitations.getByToken",
       },
     },
   },
@@ -92,7 +92,7 @@ vi.mock("@/components/ui/typography", () => ({
 
 // Helper to create authenticated session
 const createAuthenticatedSession = () => ({
-  data: { user: { id: "user-123", email: "test@example.com" } },
+  data: { user: { email: "test@example.com", id: "user-123" } },
   isPending: false,
 });
 
@@ -134,10 +134,10 @@ describe("AcceptInvitationContent", () => {
 
   it("renders invitation details when valid", () => {
     mockInvitationQuery.mockReturnValue({
+      expiresAt: Date.now() + 86_400_000, // 1 day from now
       organizationName: "Acme Corp",
       role: "member",
       status: "pending",
-      expiresAt: Date.now() + 86_400_000, // 1 day from now
     });
 
     render(<AcceptInvitationContent token="valid-token" />);
@@ -150,10 +150,10 @@ describe("AcceptInvitationContent", () => {
 
   it("renders expired state for expired invitation", () => {
     mockInvitationQuery.mockReturnValue({
+      expiresAt: Date.now() - 86_400_000, // 1 day ago
       organizationName: "Acme Corp",
       role: "member",
       status: "pending",
-      expiresAt: Date.now() - 86_400_000, // 1 day ago
     });
 
     render(<AcceptInvitationContent token="expired-token" />);
@@ -164,10 +164,10 @@ describe("AcceptInvitationContent", () => {
   it("calls accept mutation when accept button is clicked", async () => {
     const user = userEvent.setup();
     mockInvitationQuery.mockReturnValue({
+      expiresAt: Date.now() + 86_400_000,
       organizationName: "Acme Corp",
       role: "member",
       status: "pending",
-      expiresAt: Date.now() + 86_400_000,
     });
     mockAcceptMutation.mockResolvedValue("org-id-123");
 
@@ -184,10 +184,10 @@ describe("AcceptInvitationContent", () => {
   it("redirects to organization dashboard on successful accept", async () => {
     const user = userEvent.setup();
     mockInvitationQuery.mockReturnValue({
+      expiresAt: Date.now() + 86_400_000,
       organizationName: "Acme Corp",
       role: "member",
       status: "pending",
-      expiresAt: Date.now() + 86_400_000,
     });
     mockAcceptMutation.mockResolvedValue("org-id-123");
 
@@ -204,10 +204,10 @@ describe("AcceptInvitationContent", () => {
   it("shows error message when accept fails", async () => {
     const user = userEvent.setup();
     mockInvitationQuery.mockReturnValue({
+      expiresAt: Date.now() + 86_400_000,
       organizationName: "Acme Corp",
       role: "member",
       status: "pending",
-      expiresAt: Date.now() + 86_400_000,
     });
     mockAcceptMutation.mockRejectedValue(new Error("Already a member"));
 
@@ -223,10 +223,10 @@ describe("AcceptInvitationContent", () => {
 
   it("renders already accepted state", () => {
     mockInvitationQuery.mockReturnValue({
+      expiresAt: Date.now() + 86_400_000,
       organizationName: "Acme Corp",
       role: "member",
       status: "accepted",
-      expiresAt: Date.now() + 86_400_000,
     });
 
     render(<AcceptInvitationContent token="accepted-token" />);
@@ -238,10 +238,10 @@ describe("AcceptInvitationContent", () => {
     it("shows auth form when user is not authenticated", () => {
       mockUseSession.mockReturnValue(createUnauthenticatedSession());
       mockInvitationQuery.mockReturnValue({
+        expiresAt: Date.now() + 86_400_000,
         organizationName: "Acme Corp",
         role: "member",
         status: "pending",
-        expiresAt: Date.now() + 86_400_000,
       });
 
       render(<AcceptInvitationContent token="valid-token" />);
@@ -259,10 +259,10 @@ describe("AcceptInvitationContent", () => {
     it("shows accept button when user is authenticated", () => {
       mockUseSession.mockReturnValue(createAuthenticatedSession());
       mockInvitationQuery.mockReturnValue({
+        expiresAt: Date.now() + 86_400_000,
         organizationName: "Acme Corp",
         role: "member",
         status: "pending",
-        expiresAt: Date.now() + 86_400_000,
       });
 
       render(<AcceptInvitationContent token="valid-token" />);
@@ -277,10 +277,10 @@ describe("AcceptInvitationContent", () => {
       // Start unauthenticated
       mockUseSession.mockReturnValue(createUnauthenticatedSession());
       mockInvitationQuery.mockReturnValue({
+        expiresAt: Date.now() + 86_400_000,
         organizationName: "Acme Corp",
         role: "member",
         status: "pending",
-        expiresAt: Date.now() + 86_400_000,
       });
       mockAcceptMutation.mockResolvedValue("org-id-123");
 
@@ -308,10 +308,10 @@ describe("AcceptInvitationContent", () => {
     it("shows invitation details even when not authenticated", () => {
       mockUseSession.mockReturnValue(createUnauthenticatedSession());
       mockInvitationQuery.mockReturnValue({
+        expiresAt: Date.now() + 86_400_000,
         organizationName: "Acme Corp",
         role: "member",
         status: "pending",
-        expiresAt: Date.now() + 86_400_000,
       });
 
       render(<AcceptInvitationContent token="valid-token" />);

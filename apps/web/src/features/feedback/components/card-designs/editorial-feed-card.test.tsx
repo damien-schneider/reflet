@@ -101,14 +101,10 @@ afterEach(() => {
 
 const baseFeedback = {
   _id: "f1" as Id<"feedback">,
-  title: "Test Feedback",
-  voteCount: 10,
   commentCount: 3,
   createdAt: Date.now() - 60_000,
-  organizationId: "org1" as Id<"organizations">,
-  upvoteCount: 8,
   downvoteCount: 2,
-  userVoteType: null as "upvote" | "downvote" | null,
+  organizationId: "org1" as Id<"organizations">,
   tags: [] as Array<{
     _id: Id<"tags">;
     name: string;
@@ -116,6 +112,10 @@ const baseFeedback = {
     icon?: string;
     appliedByAi?: boolean;
   } | null>,
+  title: "Test Feedback",
+  upvoteCount: 8,
+  userVoteType: null as "upvote" | "downvote" | null,
+  voteCount: 10,
 };
 
 describe("EditorialFeedFeedCard", () => {
@@ -211,7 +211,7 @@ describe("EditorialFeedFeedCard", () => {
       <EditorialFeedFeedCard
         feedback={{
           ...baseFeedback,
-          organizationStatus: { name: "In Progress", color: "blue" },
+          organizationStatus: { color: "blue", name: "In Progress" },
         }}
       />
     );
@@ -230,8 +230,8 @@ describe("EditorialFeedFeedCard", () => {
         feedback={{
           ...baseFeedback,
           tags: [
-            { _id: "t1" as Id<"tags">, name: "Bug", color: "red" },
-            { _id: "t2" as Id<"tags">, name: "Feature", color: "blue" },
+            { _id: "t1" as Id<"tags">, color: "red", name: "Bug" },
+            { _id: "t2" as Id<"tags">, color: "blue", name: "Feature" },
           ],
         }}
       />
@@ -249,9 +249,9 @@ describe("EditorialFeedFeedCard", () => {
           tags: [
             {
               _id: "t1" as Id<"tags">,
-              name: "Bug",
-              color: "red",
               appliedByAi: true,
+              color: "red",
+              name: "Bug",
             },
           ],
         }}
@@ -265,7 +265,7 @@ describe("EditorialFeedFeedCard", () => {
       <EditorialFeedFeedCard
         feedback={{
           ...baseFeedback,
-          tags: [null, { _id: "t1" as Id<"tags">, name: "Bug", color: "red" }],
+          tags: [null, { _id: "t1" as Id<"tags">, color: "red", name: "Bug" }],
         }}
       />
     );

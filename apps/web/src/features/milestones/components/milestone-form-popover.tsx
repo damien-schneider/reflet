@@ -70,12 +70,12 @@ export function MilestoneFormPopover({
     setIsSubmitting(true);
     try {
       await createMilestone({
-        organizationId,
-        name: trimmedName,
-        emoji,
         color,
-        timeHorizon: showHorizonPicker ? timeHorizon : defaultTimeHorizon,
+        emoji,
+        name: trimmedName,
+        organizationId,
         targetDate,
+        timeHorizon: showHorizonPicker ? timeHorizon : defaultTimeHorizon,
       });
       setName("");
       setEmoji(undefined);

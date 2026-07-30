@@ -4,13 +4,13 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@hookform/resolvers/zod", () => ({
   zodResolver: () => async (values: Record<string, unknown>) => ({
-    values,
     errors: {},
+    values,
   }),
 }));
 
 vi.mock("sonner", () => ({
-  toast: { success: vi.fn(), error: vi.fn() },
+  toast: { error: vi.fn(), success: vi.fn() },
 }));
 
 vi.mock("@/lib/auth-client", () => ({
@@ -58,19 +58,20 @@ vi.mock("@/components/ui/card", () => ({
   CardContent: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
+  CardDescription: ({ children }: { children: React.ReactNode }) => (
+    <p>{children}</p>
+  ),
   CardHeader: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
   CardTitle: ({ children }: { children: React.ReactNode }) => (
     <h2>{children}</h2>
   ),
-  CardDescription: ({ children }: { children: React.ReactNode }) => (
-    <p>{children}</p>
-  ),
 }));
 
 vi.mock("@/components/ui/field", () => ({
   Field: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  FieldError: () => null,
   FieldLabel: ({
     children,
     htmlFor,
@@ -78,7 +79,6 @@ vi.mock("@/components/ui/field", () => ({
     children: React.ReactNode;
     htmlFor?: string;
   }) => <label htmlFor={htmlFor}>{children}</label>,
-  FieldError: () => null,
 }));
 
 vi.mock("@/components/ui/input", () => ({
@@ -110,7 +110,7 @@ import { ProfileSection } from "./profile-section";
 
 afterEach(cleanup);
 
-const user = { name: "John Doe", email: "john@test.com", image: null };
+const user = { email: "john@test.com", image: null, name: "John Doe" };
 
 describe("ProfileSection", () => {
   it("renders card title", () => {
@@ -187,9 +187,9 @@ describe("ProfileSection", () => {
 
   it("renders avatar preview when user has image", () => {
     const userWithImage = {
-      name: "John",
       email: "john@test.com",
       image: "https://example.com/avatar.jpg",
+      name: "John",
     };
     render(
       <ProfileSection

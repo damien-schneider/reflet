@@ -88,30 +88,30 @@ export const getDigestData = internalQuery({
       .collect();
 
     return {
-      totalInsights: recentInsights.length,
-      criticalInsights: recentInsights.filter((i) => i.priority === "critical")
-        .length,
-      highInsights: recentInsights.filter((i) => i.priority === "high").length,
-      featureSuggestions: recentInsights.filter(
-        (i) => i.type === "feature_suggestion"
-      ).length,
+      activeCompetitors: competitors.length,
       competitiveAlerts: recentInsights.filter(
         (i) => i.type === "competitive_alert"
       ).length,
-      totalSignals: recentSignals.length,
-      redditSignals: recentSignals.filter((s) => s.source === "reddit").length,
-      webSignals: recentSignals.filter((s) => s.source === "web").length,
       competitorUpdates: recentSignals.filter(
         (s) =>
           s.source === "competitor_changelog" ||
           s.source === "competitor_pricing" ||
           s.source === "competitor_features"
       ).length,
-      activeCompetitors: competitors.length,
+      criticalInsights: recentInsights.filter((i) => i.priority === "critical")
+        .length,
+      featureSuggestions: recentInsights.filter(
+        (i) => i.type === "feature_suggestion"
+      ).length,
+      highInsights: recentInsights.filter((i) => i.priority === "high").length,
+      redditSignals: recentSignals.filter((s) => s.source === "reddit").length,
       topInsights: recentInsights
         .filter((i) => i.priority === "critical" || i.priority === "high")
         .slice(0, 5)
-        .map((i) => ({ title: i.title, type: i.type, priority: i.priority })),
+        .map((i) => ({ priority: i.priority, title: i.title, type: i.type })),
+      totalInsights: recentInsights.length,
+      totalSignals: recentSignals.length,
+      webSignals: recentSignals.filter((s) => s.source === "web").length,
     };
   },
 });
@@ -125,9 +125,9 @@ export const getDigestData = internalQuery({
  */
 export const createInsightNotifications = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
-    insightTitle: v.string(),
     insightId: v.id("intelligenceInsights"),
+    insightTitle: v.string(),
+    organizationId: v.id("organizations"),
     priority: v.string(),
   },
   handler: async (ctx, args) => {
@@ -145,12 +145,12 @@ export const createInsightNotifications = internalMutation({
     const now = Date.now();
     for (const admin of admins) {
       await ctx.db.insert("notifications", {
-        userId: admin.userId,
-        type: "intelligence_insight",
-        title: `${args.priority === "critical" ? "Critical" : "High Priority"} Intelligence Insight`,
-        message: args.insightTitle,
-        isRead: false,
         createdAt: now,
+        isRead: false,
+        message: args.insightTitle,
+        title: `${args.priority === "critical" ? "Critical" : "High Priority"} Intelligence Insight`,
+        type: "intelligence_insight",
+        userId: admin.userId,
       });
     }
   },
@@ -178,9 +178,9 @@ export const notifyHighPriorityInsights = internalAction({
       await ctx.runMutation(
         internal.intelligence.notifications.createInsightNotifications,
         {
-          organizationId: args.organizationId,
-          insightTitle: insight.title,
           insightId: insight._id,
+          insightTitle: insight.title,
+          organizationId: args.organizationId,
           priority: insight.priority,
         }
       );
@@ -222,8 +222,8 @@ export const sendIntelligenceDigest = internalAction({
       await ctx.runMutation(
         internal.intelligence.notifications.createDigestNotification,
         {
-          userId,
           message: `Weekly Intelligence: ${summaryParts.join(", ")} from ${digest.totalSignals} signals across ${digest.activeCompetitors} competitors.`,
+          userId,
         }
       );
     }
@@ -258,9 +258,7 @@ export const sendAllIntelligenceDigests = internalAction({
  */
 export const getAllConfiguredOrgs = internalQuery({
   args: {},
-  handler: (ctx) => {
-    return ctx.db.query("intelligenceConfig").collect();
-  },
+  handler: (ctx) => ctx.db.query("intelligenceConfig").collect(),
 });
 
 /**
@@ -268,17 +266,17 @@ export const getAllConfiguredOrgs = internalQuery({
  */
 export const createDigestNotification = internalMutation({
   args: {
-    userId: v.string(),
     message: v.string(),
+    userId: v.string(),
   },
   handler: async (ctx, args) => {
     await ctx.db.insert("notifications", {
-      userId: args.userId,
-      type: "intelligence_insight",
-      title: "Weekly Intelligence Digest",
-      message: args.message,
-      isRead: false,
       createdAt: Date.now(),
+      isRead: false,
+      message: args.message,
+      title: "Weekly Intelligence Digest",
+      type: "intelligence_insight",
+      userId: args.userId,
     });
   },
 });

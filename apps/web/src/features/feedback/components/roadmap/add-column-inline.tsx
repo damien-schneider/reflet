@@ -49,9 +49,9 @@ export function AddColumnInline({ organizationId }: AddColumnInlineProps) {
     }
 
     await createStatus({
-      organizationId,
-      name: trimmedName,
       color,
+      name: trimmedName,
+      organizationId,
     });
 
     setIsAdding(false);

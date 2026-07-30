@@ -13,29 +13,29 @@ const STATUS_OPTIONS: {
   activeClass: string;
 }[] = [
   {
-    value: "open",
-    label: "Open",
-    icon: Circle,
     activeClass: "data-[pressed]:bg-olive-500/15 data-[pressed]:text-olive-600",
+    icon: Circle,
+    label: "Open",
+    value: "open",
   },
   {
-    value: "awaiting_reply",
-    label: "Awaiting",
-    icon: Clock,
     activeClass: "data-[pressed]:bg-amber-500/15 data-[pressed]:text-amber-600",
+    icon: Clock,
+    label: "Awaiting",
+    value: "awaiting_reply",
   },
   {
-    value: "resolved",
-    label: "Resolved",
-    icon: CheckCircle,
     activeClass:
       "data-[pressed]:bg-emerald-500/15 data-[pressed]:text-emerald-600",
+    icon: CheckCircle,
+    label: "Resolved",
+    value: "resolved",
   },
   {
-    value: "closed",
-    label: "Closed",
-    icon: XCircle,
     activeClass: "data-[pressed]:bg-zinc-500/15 data-[pressed]:text-zinc-600",
+    icon: XCircle,
+    label: "Closed",
+    value: "closed",
   },
 ];
 

@@ -17,9 +17,9 @@ import { authComponent } from "../auth/auth";
  */
 export const subscribe = mutation({
   args: {
+    auth: v.string(),
     endpoint: v.string(),
     p256dh: v.string(),
-    auth: v.string(),
     userAgent: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -37,20 +37,20 @@ export const subscribe = mutation({
     if (existing) {
       // Update keys if they changed
       await ctx.db.patch(existing._id, {
-        p256dh: args.p256dh,
         auth: args.auth,
+        p256dh: args.p256dh,
         userAgent: args.userAgent,
       });
       return existing._id;
     }
 
     return await ctx.db.insert("pushSubscriptions", {
-      userId: user._id,
+      auth: args.auth,
+      createdAt: Date.now(),
       endpoint: args.endpoint,
       p256dh: args.p256dh,
-      auth: args.auth,
       userAgent: args.userAgent,
-      createdAt: Date.now(),
+      userId: user._id,
     });
   },
 });
@@ -101,9 +101,9 @@ export const getUserSubscriptions = query({
 
     return subscriptions.map((sub) => ({
       _id: sub._id,
+      createdAt: sub.createdAt,
       endpoint: sub.endpoint,
       userAgent: sub.userAgent,
-      createdAt: sub.createdAt,
     }));
   },
 });
@@ -117,12 +117,11 @@ export const getUserSubscriptions = query({
  */
 export const getSubscriptionsForUser = internalQuery({
   args: { userId: v.string() },
-  handler: async (ctx, args) => {
-    return await ctx.db
+  handler: async (ctx, args) =>
+    await ctx.db
       .query("pushSubscriptions")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
-      .collect();
-  },
+      .collect(),
 });
 
 /**
@@ -130,12 +129,11 @@ export const getSubscriptionsForUser = internalQuery({
  */
 export const getPreferencesForUser = internalQuery({
   args: { userId: v.string() },
-  handler: async (ctx, args) => {
-    return await ctx.db
+  handler: async (ctx, args) =>
+    await ctx.db
       .query("userNotificationPreferences")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
-      .first();
-  },
+      .first(),
 });
 
 /**

@@ -69,17 +69,17 @@ export default function PublicSupportPage({
       if (isGuest) {
         const savedGuestId = saveGuestSession(data.email ?? pendingEmail);
         await createConversation({
+          guestEmail: data.email ?? pendingEmail,
+          guestId: savedGuestId,
+          initialMessage: data.message,
           organizationId: org._id,
           subject: data.subject || undefined,
-          initialMessage: data.message,
-          guestId: savedGuestId,
-          guestEmail: data.email ?? pendingEmail,
         });
       } else {
         await createConversation({
+          initialMessage: data.message,
           organizationId: org._id,
           subject: data.subject || undefined,
-          initialMessage: data.message,
         });
       }
       setSubmitted(true);

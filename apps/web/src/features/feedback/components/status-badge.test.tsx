@@ -56,12 +56,12 @@ describe("StatusBadge", () => {
 
   it("should apply correct variant for each status", () => {
     const statusVariants = [
-      { status: "open", expectedVariant: "outline" },
-      { status: "under_review", expectedVariant: "secondary" },
-      { status: "planned", expectedVariant: "secondary" },
-      { status: "in_progress", expectedVariant: "secondary" },
-      { status: "completed", expectedVariant: "default" },
-      { status: "closed", expectedVariant: "secondary" },
+      { expectedVariant: "outline", status: "open" },
+      { expectedVariant: "secondary", status: "under_review" },
+      { expectedVariant: "secondary", status: "planned" },
+      { expectedVariant: "secondary", status: "in_progress" },
+      { expectedVariant: "default", status: "completed" },
+      { expectedVariant: "secondary", status: "closed" },
     ] as const;
 
     for (const { status, expectedVariant } of statusVariants) {

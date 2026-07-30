@@ -26,8 +26,8 @@ export const generateStructured = async <T>(options: {
 }): Promise<T> => {
   const response = await generateText({
     model: openrouter(options.model),
-    system: options.system,
     prompt: options.prompt,
+    system: options.system,
   });
 
   const text = response.text.trim();
@@ -62,9 +62,9 @@ export const generateStructuredWithFallback = async <T>(options: {
     try {
       return await generateStructured({
         model: modelId,
+        prompt: options.prompt,
         schema: options.schema,
         system: options.system,
-        prompt: options.prompt,
       });
     } catch (error) {
       console.warn(

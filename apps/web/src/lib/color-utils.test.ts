@@ -151,9 +151,9 @@ describe("generateColorCssVars", () => {
   it("returns all four CSS custom properties", () => {
     const palette: ColorPalette = {
       primary: "#3b82f6",
+      primaryForeground: "#ffffff",
       primaryHover: "#2563eb",
       primaryLight: "#eff6ff",
-      primaryForeground: "#ffffff",
     };
 
     const vars = generateColorCssVars(palette);

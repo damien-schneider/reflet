@@ -4,48 +4,48 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 const mockMilestones = [
   {
-    _id: "m1",
     _creationTime: 1_700_000_000_000,
-    name: "Alpha",
-    emoji: "🚀",
+    _id: "m1",
     color: "blue",
-    timeHorizon: "now",
+    emoji: "🚀",
+    name: "Alpha",
+    progress: { completed: 2, inProgress: 1, percentage: 40, total: 5 },
     status: "active",
     targetDate: undefined,
-    progress: { total: 5, completed: 2, inProgress: 1, percentage: 40 },
+    timeHorizon: "now",
   },
   {
-    _id: "m2",
     _creationTime: 1_700_000_001_000,
-    name: "Beta",
-    emoji: "🎯",
+    _id: "m2",
     color: "green",
-    timeHorizon: "next_month",
+    emoji: "🎯",
+    name: "Beta",
+    progress: { completed: 0, inProgress: 1, percentage: 0, total: 3 },
     status: "active",
     targetDate: Date.now() + 86_400_000,
-    progress: { total: 3, completed: 0, inProgress: 1, percentage: 0 },
+    timeHorizon: "next_month",
   },
 ];
 
 let queryResult: unknown = mockMilestones;
 
 vi.mock("convex/react", () => ({
-  useQuery: () => queryResult,
   useMutation: () => vi.fn(),
+  useQuery: () => queryResult,
 }));
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
-    organizations: {
-      milestones: {
-        list: "milestones:list",
-        get: "milestones:get",
-        addFeedback: "milestones:addFeedback",
-        removeFeedback: "milestones:removeFeedback",
-      },
-    },
     feedback: {
       list: { listByOrganization: "feedback:list" },
+    },
+    organizations: {
+      milestones: {
+        addFeedback: "milestones:addFeedback",
+        get: "milestones:get",
+        list: "milestones:list",
+        removeFeedback: "milestones:removeFeedback",
+      },
     },
   },
 }));
@@ -55,6 +55,7 @@ vi.mock("motion/react", () => ({
     <>{children}</>
   ),
   motion: {
+    circle: (props: Record<string, unknown>) => <circle {...props} />,
     div: ({
       children,
       className,
@@ -64,22 +65,21 @@ vi.mock("motion/react", () => ({
       className?: string;
       [key: string]: unknown;
     }) => <div className={className}>{children}</div>,
-    circle: (props: Record<string, unknown>) => <circle {...props} />,
   },
 }));
 
 vi.mock("@/lib/milestone-constants", () => ({
   isTimeHorizon: (v: string) => ["now", "next_month", "later"].includes(v),
   TIME_HORIZON_CONFIG: {
-    now: { label: "Now", shortLabel: "Now" },
-    next_month: { label: "Next Month", shortLabel: "Next" },
     later: { label: "Later", shortLabel: "Later" },
+    next_month: { label: "Next Month", shortLabel: "Next" },
+    now: { label: "Now", shortLabel: "Now" },
   },
   TIME_HORIZONS: ["now", "next_month", "later"],
 }));
 
 vi.mock("@/lib/tag-colors", () => ({
-  getTagColorValues: () => ({ text: "#3b82f6", bg: "#eff6ff" }),
+  getTagColorValues: () => ({ bg: "#eff6ff", text: "#3b82f6" }),
 }));
 
 vi.mock("@/lib/utils", () => ({

@@ -46,16 +46,16 @@ export function TiptapMarkdownEditor({
     isNearLimit,
     isAtLimit,
   } = useTiptapMarkdownEditor({
-    value,
-    onChange,
-    placeholder,
-    disabled,
-    maxLength,
     autoFocus,
-    editable,
-    minimal,
     debounceMs,
+    disabled,
+    editable,
+    maxLength,
+    minimal,
+    onChange,
     onSubmit,
+    placeholder,
+    value,
   });
 
   const handleContainerClick = useCallback(() => {

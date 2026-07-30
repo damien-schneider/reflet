@@ -35,32 +35,32 @@ import { StatCard } from "./stat-card";
 type TimeRange = "7d" | "30d";
 
 const growthChartConfig = {
-  users: {
-    label: "New Users",
-    color: "var(--chart-1)",
-  },
   organizations: {
-    label: "New Orgs",
     color: "var(--chart-2)",
+    label: "New Orgs",
   },
   subscriptions: {
-    label: "Subscriptions",
     color: "var(--chart-3)",
+    label: "Subscriptions",
+  },
+  users: {
+    color: "var(--chart-1)",
+    label: "New Users",
   },
 } satisfies ChartConfig;
 
 const engagementChartConfig = {
+  comments: {
+    color: "var(--chart-5)",
+    label: "Comments",
+  },
   feedback: {
-    label: "Feedback",
     color: "var(--chart-1)",
+    label: "Feedback",
   },
   votes: {
-    label: "Votes",
     color: "var(--chart-4)",
-  },
-  comments: {
-    label: "Comments",
-    color: "var(--chart-5)",
+    label: "Votes",
   },
 } satisfies ChartConfig;
 
@@ -83,7 +83,7 @@ function formatRelativeTime(timestamp: number): string {
 
 function formatChartDate(dateStr: string): string {
   const date = new Date(dateStr);
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return date.toLocaleDateString("en-US", { day: "numeric", month: "short" });
 }
 
 export function SuperAdminOverview() {

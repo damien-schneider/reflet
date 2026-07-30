@@ -50,25 +50,25 @@ const TIME_RANGES = [
 const EMAIL_TYPE_LABELS: Record<string, string> = {
   changelog_notification: "Changelog",
   feedback_shipped: "Shipped",
-  weekly_digest: "Digest",
   invitation: "Invitation",
-  verification: "Verification",
-  welcome: "Welcome",
-  password_reset: "Password Reset",
   other: "Other",
+  password_reset: "Password Reset",
+  verification: "Verification",
+  weekly_digest: "Digest",
+  welcome: "Welcome",
 } as const;
 
 const STATUS_VARIANTS: Record<
   string,
   "default" | "secondary" | "destructive" | "outline"
 > = {
-  sent: "secondary",
-  delivered: "default",
-  opened: "default",
-  clicked: "default",
   bounced: "destructive",
+  clicked: "default",
   complained: "destructive",
+  delivered: "default",
   delivery_delayed: "outline",
+  opened: "default",
+  sent: "secondary",
 } as const;
 
 function formatPercent(value: number): string {
@@ -130,18 +130,18 @@ export function EmailAnalyticsDashboard({
   const [days, setDays] = useState(30);
 
   const stats = useQuery(api.email.analytics.getEmailStats, {
-    organizationId,
     days,
+    organizationId,
   });
 
   const byType = useQuery(api.email.analytics.getEmailStatsByType, {
-    organizationId,
     days,
+    organizationId,
   });
 
   const recentEmails = useQuery(api.email.analytics.getRecentEmails, {
-    organizationId,
     limit: 20,
+    organizationId,
   });
 
   const isLoading =

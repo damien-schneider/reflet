@@ -28,11 +28,11 @@ const PRIORITY_CONFIG: Record<
   Priority,
   { label: string; color: string; icon: typeof Fire }
 > = {
-  critical: { label: "Critical", color: "red", icon: Fire },
-  high: { label: "High", color: "orange", icon: Lightning },
-  medium: { label: "Medium", color: "yellow", icon: Sparkle },
-  low: { label: "Low", color: "blue", icon: Sparkle },
-  none: { label: "None", color: "gray", icon: Sparkle },
+  critical: { color: "red", icon: Fire, label: "Critical" },
+  high: { color: "orange", icon: Lightning, label: "High" },
+  low: { color: "blue", icon: Sparkle, label: "Low" },
+  medium: { color: "yellow", icon: Sparkle, label: "Medium" },
+  none: { color: "gray", icon: Sparkle, label: "None" },
 };
 
 export function PriorityBadge({
@@ -68,8 +68,8 @@ export function PriorityBadge({
 
   const handleClear = async () => {
     await updateAnalysis({
-      feedbackId,
       clearPriority: true,
+      feedbackId,
     });
   };
 

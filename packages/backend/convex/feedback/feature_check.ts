@@ -28,6 +28,11 @@ const searchTermsSchema = z.object({
   featureDescription: z
     .string()
     .describe("Concise 1-2 sentence summary of the feature being requested"),
+  relevantPaths: z
+    .array(z.string())
+    .describe(
+      "Likely file path patterns where this feature might be implemented (e.g. 'src/features/auth', 'components/checkout')"
+    ),
   searchQueries: z
     .array(z.string())
     .min(3)
@@ -35,15 +40,20 @@ const searchTermsSchema = z.object({
     .describe(
       "GitHub code search queries to find this feature (function names, component names, API endpoints, etc.)"
     ),
-  relevantPaths: z
-    .array(z.string())
-    .describe(
-      "Likely file path patterns where this feature might be implemented (e.g. 'src/features/auth', 'components/checkout')"
-    ),
 });
 
 // Zod schema for feature check analysis result
 const featureCheckResultSchema = z.object({
+  confidence: z.number().min(0).max(1).describe("Confidence score from 0 to 1"),
+  evidence: z
+    .array(
+      z.object({
+        filePath: z.string(),
+        relevance: z.string().describe("Why this file is relevant"),
+        snippet: z.string().optional(),
+      })
+    )
+    .max(5),
   result: z.enum([
     "implemented",
     "partially_implemented",
@@ -53,16 +63,6 @@ const featureCheckResultSchema = z.object({
   summary: z
     .string()
     .describe("Human-readable explanation of the finding (2-4 sentences)"),
-  evidence: z
-    .array(
-      z.object({
-        filePath: z.string(),
-        snippet: z.string().optional(),
-        relevance: z.string().describe("Why this file is relevant"),
-      })
-    )
-    .max(5),
-  confidence: z.number().min(0).max(1).describe("Confidence score from 0 to 1"),
 });
 
 const MAX_FILES_TO_FETCH = 10;
@@ -77,17 +77,35 @@ const MAX_SEARCH_RESULTS = 15;
  */
 export const getFeatureCheckStatus = query({
   args: { feedbackId: v.id("feedback") },
+  handler: async (ctx, args) => {
+    const feedback = await ctx.db.get(args.feedbackId);
+    if (!feedback) {
+      return null;
+    }
+
+    return {
+      error: feedback.aiFeatureCheckError,
+      evidence: feedback.aiFeatureCheckEvidence,
+      generatedAt: feedback.aiFeatureCheckGeneratedAt,
+      result: feedback.aiFeatureCheckResult,
+      status: feedback.aiFeatureCheckStatus,
+      summary: feedback.aiFeatureCheckSummary,
+    };
+  },
   returns: v.union(
     v.null(),
     v.object({
-      status: v.optional(
-        v.union(
-          v.literal("pending"),
-          v.literal("checking"),
-          v.literal("completed"),
-          v.literal("error")
+      error: v.optional(v.string()),
+      evidence: v.optional(
+        v.array(
+          v.object({
+            filePath: v.string(),
+            relevance: v.string(),
+            snippet: v.optional(v.string()),
+          })
         )
       ),
+      generatedAt: v.optional(v.number()),
       result: v.optional(
         v.union(
           v.literal("implemented"),
@@ -96,35 +114,17 @@ export const getFeatureCheckStatus = query({
           v.literal("inconclusive")
         )
       ),
-      summary: v.optional(v.string()),
-      evidence: v.optional(
-        v.array(
-          v.object({
-            filePath: v.string(),
-            snippet: v.optional(v.string()),
-            relevance: v.string(),
-          })
+      status: v.optional(
+        v.union(
+          v.literal("pending"),
+          v.literal("checking"),
+          v.literal("completed"),
+          v.literal("error")
         )
       ),
-      generatedAt: v.optional(v.number()),
-      error: v.optional(v.string()),
+      summary: v.optional(v.string()),
     })
   ),
-  handler: async (ctx, args) => {
-    const feedback = await ctx.db.get(args.feedbackId);
-    if (!feedback) {
-      return null;
-    }
-
-    return {
-      status: feedback.aiFeatureCheckStatus,
-      result: feedback.aiFeatureCheckResult,
-      summary: feedback.aiFeatureCheckSummary,
-      evidence: feedback.aiFeatureCheckEvidence,
-      generatedAt: feedback.aiFeatureCheckGeneratedAt,
-      error: feedback.aiFeatureCheckError,
-    };
-  },
 });
 
 // ============================================
@@ -137,7 +137,6 @@ export const getFeatureCheckStatus = query({
  */
 export const startFeatureCheck = mutation({
   args: { feedbackId: v.id("feedback") },
-  returns: v.object({ started: v.boolean() }),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
@@ -168,8 +167,8 @@ export const startFeatureCheck = mutation({
 
     // Set to pending
     await ctx.db.patch(args.feedbackId, {
-      aiFeatureCheckStatus: "pending",
       aiFeatureCheckError: undefined,
+      aiFeatureCheckStatus: "pending",
       updatedAt: Date.now(),
     });
 
@@ -182,6 +181,7 @@ export const startFeatureCheck = mutation({
 
     return { started: true };
   },
+  returns: v.object({ started: v.boolean() }),
 });
 
 /**
@@ -189,6 +189,7 @@ export const startFeatureCheck = mutation({
  */
 export const updateFeatureCheckStatus = internalMutation({
   args: {
+    error: v.optional(v.string()),
     feedbackId: v.id("feedback"),
     status: v.union(
       v.literal("pending"),
@@ -196,17 +197,16 @@ export const updateFeatureCheckStatus = internalMutation({
       v.literal("completed"),
       v.literal("error")
     ),
-    error: v.optional(v.string()),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     await ctx.db.patch(args.feedbackId, {
-      aiFeatureCheckStatus: args.status,
       aiFeatureCheckError: args.error,
+      aiFeatureCheckStatus: args.status,
       updatedAt: Date.now(),
     });
     return null;
   },
+  returns: v.null(),
 });
 
 /**
@@ -214,6 +214,13 @@ export const updateFeatureCheckStatus = internalMutation({
  */
 export const saveFeatureCheckResult = internalMutation({
   args: {
+    evidence: v.array(
+      v.object({
+        filePath: v.string(),
+        relevance: v.string(),
+        snippet: v.optional(v.string()),
+      })
+    ),
     feedbackId: v.id("feedback"),
     result: v.union(
       v.literal("implemented"),
@@ -222,27 +229,20 @@ export const saveFeatureCheckResult = internalMutation({
       v.literal("inconclusive")
     ),
     summary: v.string(),
-    evidence: v.array(
-      v.object({
-        filePath: v.string(),
-        snippet: v.optional(v.string()),
-        relevance: v.string(),
-      })
-    ),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     await ctx.db.patch(args.feedbackId, {
-      aiFeatureCheckStatus: "completed",
-      aiFeatureCheckResult: args.result,
-      aiFeatureCheckSummary: args.summary,
+      aiFeatureCheckError: undefined,
       aiFeatureCheckEvidence: args.evidence,
       aiFeatureCheckGeneratedAt: Date.now(),
-      aiFeatureCheckError: undefined,
+      aiFeatureCheckResult: args.result,
+      aiFeatureCheckStatus: "completed",
+      aiFeatureCheckSummary: args.summary,
       updatedAt: Date.now(),
     });
     return null;
   },
+  returns: v.null(),
 });
 
 // ============================================
@@ -294,12 +294,11 @@ export const getFeedbackForFeatureCheck = internalQuery({
     return {
       feedback: {
         _id: feedback._id,
-        title: feedback.title,
-        description: feedback.description,
         aiClarification: feedback.aiClarification,
+        description: feedback.description,
         organizationId: feedback.organizationId,
+        title: feedback.title,
       },
-      tags: tags.filter(Boolean),
       githubConnection: githubConnection
         ? {
             installationId: githubConnection.installationId,
@@ -308,12 +307,13 @@ export const getFeedbackForFeatureCheck = internalQuery({
         : null,
       repoAnalysis: repoAnalysis
         ? {
-            summary: repoAnalysis.summary,
-            techStack: repoAnalysis.techStack,
             architecture: repoAnalysis.architecture,
             features: repoAnalysis.features,
+            summary: repoAnalysis.summary,
+            techStack: repoAnalysis.techStack,
           }
         : null,
+      tags: tags.filter(Boolean),
     };
   },
 });
@@ -333,7 +333,6 @@ export const getFeedbackForFeatureCheck = internalQuery({
  */
 export const runFeatureCheck = internalAction({
   args: { feedbackId: v.id("feedback") },
-  returns: v.null(),
   handler: async (ctx, args) => {
     // Update status to checking
     await ctx.runMutation(
@@ -374,14 +373,21 @@ export const runFeatureCheck = internalAction({
       // Build context for AI
       const contextPrompt = buildContextPrompt({
         organization: null,
-        repository: repo,
         repoAnalysis: repoAnalysis ?? null,
+        repository: repo,
         websiteReferences: [],
       });
 
       // 3. Extract search terms via AI
       const { object: searchTerms } = await generateObject({
         model: openrouter(FEATURE_CHECK_MODEL),
+        prompt: `Feature request:
+Title: ${feedback.title}
+Description: ${feedback.description ?? "(no description)"}
+${feedback.aiClarification ? `AI Clarification: ${feedback.aiClarification}` : ""}
+${tags.length > 0 ? `Tags: ${tags.join(", ")}` : ""}
+
+Generate search queries to find if this feature is already implemented in the codebase.`,
         schema: searchTermsSchema,
         system: `You are analyzing a feature request to determine what to search for in a codebase. Generate targeted GitHub code search queries that would find the implementation of this feature if it exists.
 
@@ -393,13 +399,6 @@ Focus on:
 - Configuration or feature flag names
 
 ${contextPrompt}`,
-        prompt: `Feature request:
-Title: ${feedback.title}
-Description: ${feedback.description ?? "(no description)"}
-${feedback.aiClarification ? `AI Clarification: ${feedback.aiClarification}` : ""}
-${tags.length > 0 ? `Tags: ${tags.join(", ")}` : ""}
-
-Generate search queries to find if this feature is already implemented in the codebase.`,
       });
 
       // 4. Search codebase
@@ -443,17 +442,6 @@ Generate search queries to find if this feature is already implemented in the co
 
       const { object: analysis } = await generateObject({
         model: openrouter(FEATURE_CHECK_MODEL),
-        schema: featureCheckResultSchema,
-        system: `You are analyzing a codebase to determine if a requested feature is already implemented.
-
-Your task:
-- Determine if the feature described in the request already exists in the codebase
-- Provide evidence from the actual code you see
-- Be precise — "implemented" means the feature is fully functional, "partially_implemented" means some aspects exist but it's incomplete
-- "not_implemented" means no evidence found in the code
-- "inconclusive" means the search results are ambiguous
-
-${contextPrompt}`,
         prompt: `## Feature Request
 Title: ${feedback.title}
 Description: ${feedback.description ?? "(no description)"}
@@ -467,20 +455,31 @@ ${searchResultsContext || "No matching files found in the codebase."}
 ${filesContext || "No file contents available."}
 
 Analyze whether this feature is already implemented based on the code above.`,
+        schema: featureCheckResultSchema,
+        system: `You are analyzing a codebase to determine if a requested feature is already implemented.
+
+Your task:
+- Determine if the feature described in the request already exists in the codebase
+- Provide evidence from the actual code you see
+- Be precise — "implemented" means the feature is fully functional, "partially_implemented" means some aspects exist but it's incomplete
+- "not_implemented" means no evidence found in the code
+- "inconclusive" means the search results are ambiguous
+
+${contextPrompt}`,
       });
 
       // 7. Save results
       await ctx.runMutation(
         internal.feedback.feature_check.saveFeatureCheckResult,
         {
+          evidence: analysis.evidence.map((e) => ({
+            filePath: e.filePath,
+            relevance: e.relevance,
+            snippet: e.snippet,
+          })),
           feedbackId: args.feedbackId,
           result: analysis.result,
           summary: analysis.summary,
-          evidence: analysis.evidence.map((e) => ({
-            filePath: e.filePath,
-            snippet: e.snippet,
-            relevance: e.relevance,
-          })),
         }
       );
     } catch (error) {
@@ -489,13 +488,14 @@ Analyze whether this feature is already implemented based on the code above.`,
       await ctx.runMutation(
         internal.feedback.feature_check.updateFeatureCheckStatus,
         {
+          error: message,
           feedbackId: args.feedbackId,
           status: "error",
-          error: message,
         }
       );
     }
 
     return null;
   },
+  returns: v.null(),
 });

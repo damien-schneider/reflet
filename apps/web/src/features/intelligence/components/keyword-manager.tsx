@@ -25,15 +25,15 @@ const isKeywordSource = (value: string): value is KeywordSource =>
   (KEYWORD_SOURCES as readonly string[]).includes(value);
 
 const SOURCE_LABELS: Record<KeywordSource, string> = {
+  both: "Both",
   reddit: "Reddit",
   web: "Web",
-  both: "Both",
 };
 
 const SOURCE_COLORS: Record<KeywordSource, string> = {
+  both: "purple",
   reddit: "orange",
   web: "blue",
-  both: "purple",
 };
 
 interface KeywordManagerProps {
@@ -71,8 +71,8 @@ export function KeywordManager({ organizationId }: KeywordManagerProps) {
     setIsAdding(true);
     try {
       await createKeyword({
-        organizationId,
         keyword: keyword.trim(),
+        organizationId,
         source,
         subreddit:
           showSubredditField && subreddit.trim() ? subreddit.trim() : undefined,

@@ -8,7 +8,7 @@ import {
   Preview,
   Section,
   Text,
-} from "@react-email/components";
+} from "react-email";
 import { baseStyles } from "./styles";
 
 interface BaseLayoutProps {
@@ -26,8 +26,8 @@ export function BaseLayout({ preview, children }: BaseLayoutProps) {
           fontStyle="normal"
           fontWeight={400}
           webFont={{
-            url: "https://fonts.gstatic.com/s/instrumentsans/v1/pximypc9vsFDm051Uf6KVwgkfoSxQ0GsQv8.woff2",
             format: "woff2",
+            url: "https://fonts.gstatic.com/s/instrumentsans/v1/pximypc9vsFDm051Uf6KVwgkfoSxQ0GsQv8.woff2",
           }}
         />
         <Font
@@ -36,8 +36,8 @@ export function BaseLayout({ preview, children }: BaseLayoutProps) {
           fontStyle="normal"
           fontWeight={600}
           webFont={{
-            url: "https://fonts.gstatic.com/s/instrumentsans/v1/pximypc9vsFDm051Uf6KVwgkfoSxQ0GsQv8.woff2",
             format: "woff2",
+            url: "https://fonts.gstatic.com/s/instrumentsans/v1/pximypc9vsFDm051Uf6KVwgkfoSxQ0GsQv8.woff2",
           }}
         />
       </Head>

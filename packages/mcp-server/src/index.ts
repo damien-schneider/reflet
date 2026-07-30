@@ -12,7 +12,7 @@ if (!secretKey) {
 
 const baseUrl = process.env.REFLET_BASE_URL;
 
-const client = new RefletAdminClient({ secretKey, baseUrl });
+const client = new RefletAdminClient({ baseUrl, secretKey });
 const server = createServer(client);
 const transport = new StdioServerTransport();
 

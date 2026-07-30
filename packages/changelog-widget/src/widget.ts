@@ -22,22 +22,22 @@ export class RefletChangelogWidget {
   private triggerElements: Element[] = [];
   private readonly boundTriggerHandler: (e: Event) => void;
   private readonly state: ChangelogWidgetState = {
-    isOpen: false,
-    isLoading: true,
     entries: [],
-    unreadCount: 0,
     error: null,
+    isLoading: true,
+    isOpen: false,
+    unreadCount: 0,
   };
 
   constructor(config: ChangelogWidgetConfig) {
     this.config = {
+      autoOpenForNew: false,
+      maxEntries: 10,
       mode: "card",
       position: "bottom-right",
-      theme: "light",
       primaryColor: "#6366f1",
-      maxEntries: 10,
+      theme: "light",
       triggerSelector: "[data-reflet-changelog]",
-      autoOpenForNew: false,
       ...config,
     };
 

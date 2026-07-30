@@ -19,10 +19,8 @@ import { H1, H2, H3, Lead, Text } from "@/components/ui/typography";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
-  title: "Security",
   description:
     "Discover how Reflet protects your data with enterprise-grade security, TLS encryption, role-based access controls, GDPR compliance, and regular security audits.",
-  path: "/security",
   keywords: [
     "security",
     "data protection",
@@ -31,107 +29,109 @@ export const metadata: Metadata = generatePageMetadata({
     "SOC 2",
     "open source security",
   ],
+  path: "/security",
+  title: "Security",
 });
 
 const INFRASTRUCTURE = [
   {
-    id: "convex-cloud",
-    icon: Cloud,
-    title: "Convex Cloud",
     description:
       "Your data is hosted on Convex's SOC 2 Type II compliant infrastructure. Automatic backups, zero-downtime deployments, and global edge distribution.",
+    icon: Cloud,
+    id: "convex-cloud",
+    title: "Convex Cloud",
   },
   {
-    id: "vercel-edge",
-    icon: Globe,
-    title: "Vercel Edge Network",
     description:
       "The web application runs on Vercel's edge network with automatic TLS encryption, DDoS protection, and 99.99% uptime SLA.",
+    icon: Globe,
+    id: "vercel-edge",
+    title: "Vercel Edge Network",
   },
   {
-    id: "encryption",
-    icon: LockKey,
-    title: "Encryption",
     description:
       "All data is encrypted in transit (TLS 1.3) and at rest. API keys are hashed before storage. Session tokens use HTTP-only secure cookies.",
+    icon: LockKey,
+    id: "encryption",
+    title: "Encryption",
   },
 ] as const;
 
 const AUTHENTICATION = [
   {
-    id: "rbac",
-    icon: Users,
-    title: "Role-Based Access Control",
     description:
       "Three permission levels: Owner, Admin, and Member. Control who can manage settings, moderate feedback, and invite team members.",
+    icon: Users,
+    id: "rbac",
+    title: "Role-Based Access Control",
   },
   {
-    id: "secure-auth",
-    icon: ShieldCheck,
-    title: "Secure Authentication",
     description:
       "Powered by Better-Auth with bcrypt password hashing, CSRF protection, and session management with automatic rotation.",
+    icon: ShieldCheck,
+    id: "secure-auth",
+    title: "Secure Authentication",
   },
   {
-    id: "oauth",
-    icon: Key,
-    title: "OAuth Providers",
     description:
       "Sign in with GitHub or Google. No passwords stored when using social login.",
+    icon: Key,
+    id: "oauth",
+    title: "OAuth Providers",
   },
 ] as const;
 
 const DATA_PRIVACY = [
   {
-    id: "gdpr",
-    icon: Fingerprint,
-    title: "GDPR Compliant",
     description:
       "We process data in accordance with GDPR. Users can request data export or deletion at any time.",
+    icon: Fingerprint,
+    id: "gdpr",
     link: { href: "/privacy", label: "Read our Privacy Policy" },
+    title: "GDPR Compliant",
   },
   {
-    id: "open-source",
-    icon: BookOpen,
-    title: "Open Source",
     description:
       "Our entire codebase is open source. Audit the code yourself, run your own security analysis, or self-host for full control.",
+    icon: BookOpen,
+    id: "open-source",
     link: {
+      external: true,
       href: "https://github.com/damien-schneider/reflet",
       label: "View on GitHub",
-      external: true,
     },
+    title: "Open Source",
   },
   {
-    id: "data-portability",
-    icon: DownloadSimple,
-    title: "Data Portability",
     description:
       "Export all your feedback, votes, and changelog entries as CSV or JSON. Your data is yours, always.",
+    icon: DownloadSimple,
+    id: "data-portability",
+    title: "Data Portability",
   },
 ] as const;
 
 const API_SECURITY = [
   {
-    id: "api-key-auth",
-    icon: IdentificationCard,
-    title: "API Key Authentication",
     description:
       "Public keys for read operations, secret keys for write operations. Keys are scoped per organization.",
+    icon: IdentificationCard,
+    id: "api-key-auth",
+    title: "API Key Authentication",
   },
   {
-    id: "rate-limiting",
-    icon: Timer,
-    title: "Rate Limiting",
     description:
       "Built-in rate limiting on all API endpoints protects against abuse and ensures fair usage.",
+    icon: Timer,
+    id: "rate-limiting",
+    title: "Rate Limiting",
   },
   {
-    id: "input-validation",
-    icon: CheckCircle,
-    title: "Input Validation",
     description:
       "All inputs validated with Zod schemas. XSS protection, SQL injection prevention (Convex's document model), and Content Security Policy headers.",
+    icon: CheckCircle,
+    id: "input-validation",
+    title: "Input Validation",
   },
 ] as const;
 

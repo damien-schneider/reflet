@@ -96,8 +96,8 @@ export function useApiKeys({
     setIsGenerating(true);
     try {
       const result = await generateApiKeysMutation({
-        organizationId,
         name: newKeyName.trim(),
+        organizationId,
       });
       setNewSecretKey(result.secretKey);
       setNewKeyName("");
@@ -118,8 +118,8 @@ export function useApiKeys({
     setIsRegenerating(true);
     try {
       const result = await regenerateSecretKeyMutation({
-        organizationId,
         apiKeyId: selectedKeyId,
+        organizationId,
       });
       setNewSecretKey(result.secretKey);
       setShowRegenerateDialog(false);
@@ -139,9 +139,9 @@ export function useApiKeys({
     async (apiKeyId: Id<"organizationApiKeys">, isActive: boolean) => {
       try {
         await updateApiKeySettingsMutation({
-          organizationId,
           apiKeyId,
           isActive,
+          organizationId,
         });
         toast.success(isActive ? "API key activated" : "API key deactivated");
       } catch (error) {
@@ -158,7 +158,7 @@ export function useApiKeys({
       return;
     }
     try {
-      await deleteApiKeyMutation({ organizationId, apiKeyId: keyToDelete });
+      await deleteApiKeyMutation({ apiKeyId: keyToDelete, organizationId });
       setShowDeleteDialog(false);
       setKeyToDelete(null);
       toast.success("API key deleted");
@@ -178,9 +178,9 @@ export function useApiKeys({
       const newDomains = [...currentDomains, domainInput.trim()];
       try {
         await updateApiKeySettingsMutation({
-          organizationId,
-          apiKeyId,
           allowedDomains: newDomains,
+          apiKeyId,
+          organizationId,
         });
         setDomainInput("");
         toast.success("Domain added");
@@ -202,9 +202,9 @@ export function useApiKeys({
       const newDomains = currentDomains.filter((d: string) => d !== domain);
       try {
         await updateApiKeySettingsMutation({
-          organizationId,
-          apiKeyId,
           allowedDomains: newDomains,
+          apiKeyId,
+          organizationId,
         });
         toast.success("Domain removed");
       } catch (error) {
@@ -223,32 +223,32 @@ export function useApiKeys({
 
   return {
     apiKeys,
-    showSecretKey,
-    setShowSecretKey,
-    newSecretKey,
-    setNewSecretKey,
-    isRegenerating,
-    setIsRegenerating,
-    showRegenerateDialog,
-    setShowRegenerateDialog,
-    selectedKeyId,
-    setSelectedKeyId,
-    showDeleteDialog,
-    setShowDeleteDialog,
-    keyToDelete,
-    setKeyToDelete,
+    copyToClipboard,
     domainInput,
-    setDomainInput,
-    newKeyName,
-    setNewKeyName,
-    isGenerating,
-    setIsGenerating,
+    handleAddDomain,
+    handleDeleteKey,
     handleGenerateKeys,
     handleRegenerateSecretKey,
-    handleToggleActive,
-    handleDeleteKey,
-    handleAddDomain,
     handleRemoveDomain,
-    copyToClipboard,
+    handleToggleActive,
+    isGenerating,
+    isRegenerating,
+    keyToDelete,
+    newKeyName,
+    newSecretKey,
+    selectedKeyId,
+    setDomainInput,
+    setIsGenerating,
+    setIsRegenerating,
+    setKeyToDelete,
+    setNewKeyName,
+    setNewSecretKey,
+    setSelectedKeyId,
+    setShowDeleteDialog,
+    setShowRegenerateDialog,
+    setShowSecretKey,
+    showDeleteDialog,
+    showRegenerateDialog,
+    showSecretKey,
   };
 }

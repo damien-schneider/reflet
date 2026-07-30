@@ -8,8 +8,8 @@ describe("useFeedbackEditing", () => {
   const updateFeedback = vi.fn().mockResolvedValue(undefined);
 
   const baseFeedback = {
-    title: "Original Title",
     description: "Original Description",
+    title: "Original Title",
   };
 
   afterEach(() => {
@@ -22,8 +22,8 @@ describe("useFeedbackEditing", () => {
     renderHook(
       ({ feedback }) =>
         useFeedbackEditing({
-          feedbackId,
           feedback,
+          feedbackId,
           updateFeedback,
           ...overrides,
         }),
@@ -39,7 +39,7 @@ describe("useFeedbackEditing", () => {
 
   it("should handle feedback with null description", () => {
     const { result } = renderUseFeedbackEditing({
-      feedback: { title: "Title", description: null },
+      feedback: { description: null, title: "Title" },
     });
     expect(result.current.editedDescription).toBe("");
   });
@@ -133,8 +133,8 @@ describe("useFeedbackEditing", () => {
       });
 
       expect(updateFeedback).toHaveBeenCalledWith({
-        id: feedbackId,
         description: "New Description",
+        id: feedbackId,
       });
     });
 
@@ -151,9 +151,9 @@ describe("useFeedbackEditing", () => {
       });
 
       expect(updateFeedback).toHaveBeenCalledWith({
+        description: "New Description",
         id: feedbackId,
         title: "New Title",
-        description: "New Description",
       });
     });
 
@@ -232,7 +232,7 @@ describe("useFeedbackEditing", () => {
     it("should update state when feedback prop changes", () => {
       const { result, rerender } = renderHook(
         ({ feedback }) =>
-          useFeedbackEditing({ feedbackId, feedback, updateFeedback }),
+          useFeedbackEditing({ feedback, feedbackId, updateFeedback }),
         {
           initialProps: {
             feedback: baseFeedback as typeof baseFeedback | null,
@@ -243,7 +243,7 @@ describe("useFeedbackEditing", () => {
       expect(result.current.editedTitle).toBe("Original Title");
 
       rerender({
-        feedback: { title: "Updated Title", description: "Updated Desc" },
+        feedback: { description: "Updated Desc", title: "Updated Title" },
       });
 
       expect(result.current.editedTitle).toBe("Updated Title");

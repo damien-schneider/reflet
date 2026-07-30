@@ -11,58 +11,58 @@ import { useInView } from "../../hooks/use-in-view";
 
 const NOTCH_FEEDBACK = [
   {
-    id: "dark-mode",
-    title: "Dark mode support",
+    comments: 14,
     desc: "Add a dark theme for late night sessions",
-    votes: 248,
+    id: "dark-mode",
+    label: "Planned",
     notchColor: "bg-[#0f7b6c]",
     status: "green" as const,
-    label: "Planned",
     tags: [
-      { label: "UX", color: "purple" as const, ai: true },
-      { label: "Design", color: "pink" as const, ai: false },
+      { ai: true, color: "purple" as const, label: "UX" },
+      { ai: false, color: "pink" as const, label: "Design" },
     ],
-    comments: 14,
     time: "2d ago",
+    title: "Dark mode support",
+    votes: 248,
   },
   {
-    id: "slack",
-    title: "Slack Integration",
+    comments: 8,
     desc: "Get feedback updates directly in Slack channels",
-    votes: 186,
+    id: "slack",
+    label: "In Progress",
     notchColor: "bg-[#d9730d]",
     status: "orange" as const,
-    label: "In Progress",
-    tags: [{ label: "Integration", color: "blue" as const, ai: true }],
-    comments: 8,
+    tags: [{ ai: true, color: "blue" as const, label: "Integration" }],
     time: "5d ago",
+    title: "Slack Integration",
+    votes: 186,
   },
   {
-    id: "api",
-    title: "Public API Access",
+    comments: 6,
     desc: "Pull feedback data into your internal dashboard",
-    votes: 142,
+    id: "api",
+    label: "Under Review",
     notchColor: "bg-[#0b6e99]",
     status: "blue" as const,
-    label: "Under Review",
     tags: [
-      { label: "API", color: "blue" as const, ai: false },
-      { label: "Dev", color: "gray" as const, ai: false },
+      { ai: false, color: "blue" as const, label: "API" },
+      { ai: false, color: "gray" as const, label: "Dev" },
     ],
-    comments: 6,
     time: "1w ago",
+    title: "Public API Access",
+    votes: 142,
   },
   {
-    id: "csv",
-    title: "CSV Export",
+    comments: 3,
     desc: "Export feedback data for reporting and analysis",
-    votes: 76,
+    id: "csv",
+    label: "Done",
     notchColor: "bg-[#6940a5]",
     status: "purple" as const,
-    label: "Done",
-    tags: [{ label: "Data", color: "yellow" as const, ai: true }],
-    comments: 3,
+    tags: [{ ai: true, color: "yellow" as const, label: "Data" }],
     time: "2w ago",
+    title: "CSV Export",
+    votes: 76,
   },
 ] as const;
 
@@ -149,12 +149,12 @@ export function FeedbackBoardCard() {
                   >
                     <motion.div
                       animate={
-                        isVoted ? { y: [0, -2, 0], scale: [1, 1.2, 1] } : {}
+                        isVoted ? { scale: [1, 1.2, 1], y: [0, -2, 0] } : {}
                       }
                       transition={{
-                        type: "spring",
-                        stiffness: 400,
                         damping: 20,
+                        stiffness: 400,
+                        type: "spring",
                       }}
                     >
                       <CaretUp

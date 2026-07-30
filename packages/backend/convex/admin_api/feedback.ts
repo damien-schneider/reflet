@@ -42,12 +42,11 @@ const complexityValue = v.union(
 
 export const updateFeedback = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
-    feedbackId: v.id("feedback"),
-    title: v.optional(v.string()),
     description: v.optional(v.string()),
+    feedbackId: v.id("feedback"),
+    organizationId: v.id("organizations"),
+    title: v.optional(v.string()),
   },
-  returns: v.object({ success: v.boolean() }),
   handler: async (ctx, args) => {
     const feedback = await ctx.db.get(args.feedbackId);
     if (!feedback || feedback.organizationId !== args.organizationId) {
@@ -72,14 +71,14 @@ export const updateFeedback = internalMutation({
     await ctx.db.patch(args.feedbackId, updates);
     return { success: true };
   },
+  returns: v.object({ success: v.boolean() }),
 });
 
 export const deleteFeedback = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
     feedbackId: v.id("feedback"),
+    organizationId: v.id("organizations"),
   },
-  returns: v.object({ success: v.boolean() }),
   handler: async (ctx, args) => {
     const feedback = await ctx.db.get(args.feedbackId);
     if (!feedback || feedback.organizationId !== args.organizationId) {
@@ -91,14 +90,14 @@ export const deleteFeedback = internalMutation({
     });
     return { success: true };
   },
+  returns: v.object({ success: v.boolean() }),
 });
 
 export const restoreFeedback = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
     feedbackId: v.id("feedback"),
+    organizationId: v.id("organizations"),
   },
-  returns: v.object({ success: v.boolean() }),
   handler: async (ctx, args) => {
     const feedback = await ctx.db.get(args.feedbackId);
     if (!feedback || feedback.organizationId !== args.organizationId) {
@@ -113,15 +112,15 @@ export const restoreFeedback = internalMutation({
     });
     return { success: true };
   },
+  returns: v.object({ success: v.boolean() }),
 });
 
 export const assignFeedback = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
-    feedbackId: v.id("feedback"),
     assigneeId: v.optional(v.string()),
+    feedbackId: v.id("feedback"),
+    organizationId: v.id("organizations"),
   },
-  returns: v.object({ success: v.boolean() }),
   handler: async (ctx, args) => {
     const feedback = await ctx.db.get(args.feedbackId);
     if (!feedback || feedback.organizationId !== args.organizationId) {
@@ -148,16 +147,16 @@ export const assignFeedback = internalMutation({
     });
     return { success: true };
   },
+  returns: v.object({ success: v.boolean() }),
 });
 
 export const setFeedbackStatus = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
     feedbackId: v.id("feedback"),
-    statusId: v.optional(v.id("organizationStatuses")),
+    organizationId: v.id("organizations"),
     status: v.optional(feedbackStatus),
+    statusId: v.optional(v.id("organizationStatuses")),
   },
-  returns: v.object({ success: v.boolean() }),
   handler: async (ctx, args) => {
     const feedback = await ctx.db.get(args.feedbackId);
     if (!feedback || feedback.organizationId !== args.organizationId) {
@@ -186,16 +185,16 @@ export const setFeedbackStatus = internalMutation({
     await ctx.db.patch(args.feedbackId, updates);
     return { success: true };
   },
+  returns: v.object({ success: v.boolean() }),
 });
 
 export const updateFeedbackTags = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
-    feedbackId: v.id("feedback"),
     addTagIds: v.optional(v.array(v.id("tags"))),
+    feedbackId: v.id("feedback"),
+    organizationId: v.id("organizations"),
     removeTagIds: v.optional(v.array(v.id("tags"))),
   },
-  returns: v.object({ success: v.boolean() }),
   handler: async (ctx, args) => {
     const feedback = await ctx.db.get(args.feedbackId);
     if (!feedback || feedback.organizationId !== args.organizationId) {
@@ -241,18 +240,18 @@ export const updateFeedbackTags = internalMutation({
 
     return { success: true };
   },
+  returns: v.object({ success: v.boolean() }),
 });
 
 export const updateFeedbackAnalysis = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
-    feedbackId: v.id("feedback"),
-    priority: v.optional(priorityValue),
     complexity: v.optional(complexityValue),
-    timeEstimate: v.optional(v.string()),
     deadline: v.optional(v.number()),
+    feedbackId: v.id("feedback"),
+    organizationId: v.id("organizations"),
+    priority: v.optional(priorityValue),
+    timeEstimate: v.optional(v.string()),
   },
-  returns: v.object({ success: v.boolean() }),
   handler: async (ctx, args) => {
     const feedback = await ctx.db.get(args.feedbackId);
     if (!feedback || feedback.organizationId !== args.organizationId) {
@@ -276,6 +275,7 @@ export const updateFeedbackAnalysis = internalMutation({
     await ctx.db.patch(args.feedbackId, updates);
     return { success: true };
   },
+  returns: v.object({ success: v.boolean() }),
 });
 
 // ============================================
@@ -284,11 +284,10 @@ export const updateFeedbackAnalysis = internalMutation({
 
 export const updateComment = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
-    commentId: v.id("comments"),
     body: v.string(),
+    commentId: v.id("comments"),
+    organizationId: v.id("organizations"),
   },
-  returns: v.object({ success: v.boolean() }),
   handler: async (ctx, args) => {
     validateInputLength(args.body, MAX_COMMENT_LENGTH, "Comment body");
 
@@ -308,14 +307,14 @@ export const updateComment = internalMutation({
     });
     return { success: true };
   },
+  returns: v.object({ success: v.boolean() }),
 });
 
 export const deleteComment = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
     commentId: v.id("comments"),
+    organizationId: v.id("organizations"),
   },
-  returns: v.object({ success: v.boolean() }),
   handler: async (ctx, args) => {
     const comment = await ctx.db.get(args.commentId);
     if (!comment) {
@@ -345,15 +344,15 @@ export const deleteComment = internalMutation({
 
     return { success: true };
   },
+  returns: v.object({ success: v.boolean() }),
 });
 
 export const markCommentOfficial = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
     commentId: v.id("comments"),
     isOfficial: v.boolean(),
+    organizationId: v.id("organizations"),
   },
-  returns: v.object({ success: v.boolean() }),
   handler: async (ctx, args) => {
     const comment = await ctx.db.get(args.commentId);
     if (!comment) {
@@ -371,4 +370,5 @@ export const markCommentOfficial = internalMutation({
     });
     return { success: true };
   },
+  returns: v.object({ success: v.boolean() }),
 });

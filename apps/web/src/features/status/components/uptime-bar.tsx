@@ -41,12 +41,12 @@ const getBarFill = (uptime: number | null): string => {
 };
 
 const chartConfig = {
+  degraded: { color: "oklch(0.828 0.189 84.429)", label: "Degraded" },
+  down: { color: "oklch(0.704 0.191 22.216)", label: "Down" },
+  "no-data": { color: "oklch(0.869 0 0)", label: "No data" },
+  up: { color: "oklch(0.765 0.177 163)", label: "Operational" },
   uptime: { label: "Uptime" },
-  up: { label: "Operational", color: "oklch(0.765 0.177 163)" },
-  degraded: { label: "Degraded", color: "oklch(0.828 0.189 84.429)" },
-  warning: { label: "Warning", color: "oklch(0.792 0.17 70.67)" },
-  down: { label: "Down", color: "oklch(0.704 0.191 22.216)" },
-  "no-data": { label: "No data", color: "oklch(0.869 0 0)" },
+  warning: { color: "oklch(0.792 0.17 70.67)", label: "Warning" },
 } satisfies ChartConfig;
 
 export function UptimeBar({
@@ -68,8 +68,8 @@ export function UptimeBar({
       const data = dayMap.get(date);
       result.push({
         date,
-        uptime: 100,
         raw: data?.uptimePercentage ?? null,
+        uptime: 100,
       });
     }
     return result;
@@ -91,7 +91,7 @@ export function UptimeBar({
       <BarChart
         barCategoryGap={1}
         data={chartData}
-        margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
+        margin={{ bottom: 0, left: 0, right: 0, top: 0 }}
       >
         <XAxis dataKey="date" hide />
         <ChartTooltip
@@ -103,9 +103,12 @@ export function UptimeBar({
               }}
               hideIndicator
               labelFormatter={(value) => {
+                if (typeof value !== "string" && typeof value !== "number") {
+                  return "";
+                }
                 return new Date(value).toLocaleDateString("en-US", {
-                  month: "short",
                   day: "numeric",
+                  month: "short",
                   year: "numeric",
                 });
               }}

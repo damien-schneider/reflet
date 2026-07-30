@@ -8,9 +8,9 @@ const mockFeedback = [
 ] as Array<{ _id: string; title: string }>;
 
 const mockStatuses = [
-  { _id: "s1", name: "In Progress", color: "blue" },
-  { _id: "s2", name: "Done", color: "green" },
-  { _id: "s3", name: "Backlog", color: "gray" },
+  { _id: "s1", color: "blue", name: "In Progress" },
+  { _id: "s2", color: "green", name: "Done" },
+  { _id: "s3", color: "gray", name: "Backlog" },
 ];
 
 describe("createAnnouncements", () => {

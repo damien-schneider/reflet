@@ -28,11 +28,11 @@ async function requireSession(
   const session = await auth.api.getSession({ headers: request.headers });
   if (!session) {
     return {
-      success: false,
       response: jsonResponse({ error: "Authentication required" }, 401),
+      success: false,
     };
   }
-  return { success: true, session };
+  return { session, success: true };
 }
 
 // ============================================
@@ -62,8 +62,8 @@ function parseGitHubError(errorMessage: string): {
     errorMessage.toLowerCase().includes("forbidden")
   ) {
     return {
-      error: "Permission denied",
       code: "GITHUB_PERMISSION_DENIED",
+      error: "Permission denied",
       message:
         "The GitHub App is missing the required webhook permissions. Please update the app permissions in GitHub settings.",
       status: 403,
@@ -75,8 +75,8 @@ function parseGitHubError(errorMessage: string): {
     errorMessage.toLowerCase().includes("not found")
   ) {
     return {
-      error: "Repository not found",
       code: "GITHUB_REPO_NOT_FOUND",
+      error: "Repository not found",
       message:
         "The repository could not be found. Please ensure the GitHub App has access to this repository.",
       status: 404,
@@ -88,8 +88,8 @@ function parseGitHubError(errorMessage: string): {
     errorMessage.includes("not reachable over the public Internet")
   ) {
     return {
-      error: "Localhost not supported",
       code: "LOCALHOST_NOT_SUPPORTED",
+      error: "Localhost not supported",
       message:
         "GitHub webhooks require a publicly accessible URL. Use a tunneling service (ngrok, cloudflared) for local development, or test in a deployed environment.",
       status: 400,
@@ -102,8 +102,8 @@ function parseGitHubError(errorMessage: string): {
     errorMessage.includes("Validation Failed")
   ) {
     return {
-      error: "Server configuration error",
       code: "INVALID_WEBHOOK_URL",
+      error: "Server configuration error",
       message:
         "The webhook URL could not be configured. Please contact support.",
       status: 500,
@@ -111,8 +111,8 @@ function parseGitHubError(errorMessage: string): {
   }
 
   return {
-    error: "Failed to setup GitHub integration",
     code: "GITHUB_SETUP_FAILED",
+    error: "Failed to setup GitHub integration",
     message: errorMessage,
     status: 500,
   };
@@ -162,13 +162,13 @@ const handleGetRepositories = httpAction(async (ctx, request) => {
     );
 
     return new Response(JSON.stringify({ repositories }), {
-      status: 200,
       headers: {
-        "Content-Type": "application/json",
         "Cache-Control": "no-store, no-cache, must-revalidate",
-        Pragma: "no-cache",
+        "Content-Type": "application/json",
         Expires: "0",
+        Pragma: "no-cache",
       },
+      status: 200,
     });
   } catch (error) {
     return jsonResponse(
@@ -302,15 +302,15 @@ const handlePostIssues = httpAction(async (ctx, request) => {
         api.integrations.github.actions.fetchIssues,
         {
           installationToken: tokenResult.token,
+          labels,
           repositoryFullName: connection.repositoryFullName,
           state: state ?? "all",
-          labels,
         }
       );
 
       await ctx.runMutation(api.integrations.github.issues.saveSyncedIssues, {
-        organizationId,
         issues,
+        organizationId,
       });
 
       const importResult = await ctx.runMutation(
@@ -319,17 +319,17 @@ const handlePostIssues = httpAction(async (ctx, request) => {
       );
 
       return jsonResponse({
+        imported: importResult.imported,
         success: true,
         synced: issues.length,
-        imported: importResult.imported,
       });
     } catch (error) {
       await ctx.runMutation(
         api.integrations.github.issues.updateIssuesSyncStatus,
         {
           connectionId: connection._id,
-          status: "error",
           error: error instanceof Error ? error.message : "Unknown error",
+          status: "error",
         }
       );
       throw error;
@@ -417,8 +417,8 @@ const handlePostSync = httpAction(async (ctx, request) => {
         api.integrations.github.mutations.updateSyncStatus,
         {
           connectionId: connection._id,
-          status: "error",
           error: error instanceof Error ? error.message : "Unknown error",
+          status: "error",
         }
       );
       throw error;
@@ -501,8 +501,8 @@ const handlePostSetup = httpAction(async (ctx, request) => {
         {
           installationToken: tokenResult.token,
           repositoryFullName: connection.repositoryFullName,
-          webhookUrl,
           secret: webhookSecret,
+          webhookUrl,
         }
       );
 
@@ -529,31 +529,31 @@ const handlePostSetup = httpAction(async (ctx, request) => {
         const workflowContent = await ctx.runAction(
           api.integrations.github.actions.generateWorkflowContent,
           {
+            branch,
             organizationSlug: org.slug,
             webhookUrl,
-            branch,
           }
         );
 
         await ctx.runAction(
           api.integrations.github.node_actions.createOrUpdateFile,
           {
-            installationToken: tokenResult.token,
-            repositoryFullName: connection.repositoryFullName,
-            path: ".github/workflows/reflet-release-sync.yml",
-            content: workflowContent,
-            message: "Add Reflet release sync workflow",
             branch,
+            content: workflowContent,
+            installationToken: tokenResult.token,
+            message: "Add Reflet release sync workflow",
+            path: ".github/workflows/reflet-release-sync.yml",
+            repositoryFullName: connection.repositoryFullName,
           }
         );
 
         await ctx.runMutation(
           api.integrations.github.mutations.updateCiSettings,
           {
-            organizationId,
-            ciEnabled: true,
             ciBranch: branch,
+            ciEnabled: true,
             ciWorkflowCreated: true,
+            organizationId,
           }
         );
 
@@ -572,7 +572,7 @@ const handlePostSetup = httpAction(async (ctx, request) => {
       status,
     } = parseGitHubError(errorMessage);
 
-    return jsonResponse({ error: errName, code, message }, status);
+    return jsonResponse({ code, error: errName, message }, status);
   }
 });
 
@@ -591,38 +591,38 @@ const GITHUB_API_PATHS = [
 export function registerGithubApiRoutes(http: Router): void {
   // GET routes
   http.route({
-    path: "/api/github/repositories",
-    method: "GET",
     handler: handleGetRepositories,
+    method: "GET",
+    path: "/api/github/repositories",
   });
 
   http.route({
-    path: "/api/github/labels",
-    method: "GET",
     handler: handleGetLabels,
+    method: "GET",
+    path: "/api/github/labels",
   });
 
   // POST routes
   http.route({
-    path: "/api/github/issues",
-    method: "POST",
     handler: handlePostIssues,
+    method: "POST",
+    path: "/api/github/issues",
   });
 
   http.route({
-    path: "/api/github/sync",
-    method: "POST",
     handler: handlePostSync,
+    method: "POST",
+    path: "/api/github/sync",
   });
 
   http.route({
-    path: "/api/github/setup",
-    method: "POST",
     handler: handlePostSetup,
+    method: "POST",
+    path: "/api/github/setup",
   });
 
   // CORS preflight handlers
   for (const path of GITHUB_API_PATHS) {
-    http.route({ path, method: "OPTIONS", handler: corsOptionsHandler() });
+    http.route({ handler: corsOptionsHandler(), method: "OPTIONS", path });
   }
 }

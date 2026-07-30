@@ -6,14 +6,11 @@ export const ImageExtension = TiptapImage.extend({
   addAttributes() {
     return {
       ...this.parent?.(),
-      width: {
-        default: null,
-        parseHTML: (element) => element.getAttribute("width"),
+      align: {
+        default: "center",
+        parseHTML: (element) => element.getAttribute("data-align") || "center",
         renderHTML: (attributes) => {
-          if (!attributes.width) {
-            return {};
-          }
-          return { width: attributes.width };
+          return { "data-align": attributes.align };
         },
       },
       height: {
@@ -26,11 +23,14 @@ export const ImageExtension = TiptapImage.extend({
           return { height: attributes.height };
         },
       },
-      align: {
-        default: "center",
-        parseHTML: (element) => element.getAttribute("data-align") || "center",
+      width: {
+        default: null,
+        parseHTML: (element) => element.getAttribute("width"),
         renderHTML: (attributes) => {
-          return { "data-align": attributes.align };
+          if (!attributes.width) {
+            return {};
+          }
+          return { width: attributes.width };
         },
       },
     };

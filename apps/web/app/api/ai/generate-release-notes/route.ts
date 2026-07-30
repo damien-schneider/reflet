@@ -1,5 +1,5 @@
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import { streamText } from "ai";
+import { createTextStreamResponse, streamText, toTextStream } from "ai";
 import { z } from "zod";
 
 const openrouter = createOpenRouter({
@@ -19,25 +19,25 @@ const MAX_COMMITS_FOR_CONTEXT = 100;
 const MAX_FILES_FOR_CONTEXT = 50;
 
 const commitInputSchema = z.object({
-  sha: z.string(),
-  message: z.string(),
-  fullMessage: z.string().optional(),
   author: z.string(),
+  fullMessage: z.string().optional(),
+  message: z.string(),
+  sha: z.string(),
 });
 
 const fileInputSchema = z.object({
-  filename: z.string(),
-  status: z.string(),
   additions: z.number(),
   deletions: z.number(),
+  filename: z.string(),
+  status: z.string(),
 });
 
 const requestBodySchema = z.object({
   commits: z.array(commitInputSchema),
   files: z.array(fileInputSchema).optional(),
-  version: z.string().optional(),
   previousVersion: z.string().optional(),
   repositoryName: z.string().optional(),
+  version: z.string().optional(),
 });
 
 export async function POST(request: Request): Promise<Response> {
@@ -106,9 +106,9 @@ ${fileSummary}
           prompt,
         });
 
-        // Await the first chunk to verify the model responds before returning the stream
-        const response = result.toTextStreamResponse();
-        return response;
+        return createTextStreamResponse({
+          stream: toTextStream({ stream: result.stream }),
+        });
       } catch {
         console.warn(`[ai] Model ${modelId} failed, trying next fallback...`);
       }
@@ -118,7 +118,7 @@ ${fileSummary}
   } catch (error) {
     if (error instanceof z.ZodError) {
       return Response.json(
-        { error: "Invalid request body", details: error.issues },
+        { details: error.issues, error: "Invalid request body" },
         { status: 400 }
       );
     }

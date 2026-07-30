@@ -4,10 +4,10 @@ import { H1, H2, H3, Lead, Text } from "@/components/ui/typography";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata = generatePageMetadata({
-  title: "Privacy Policy | Reflet",
   description:
     "Learn how Reflet collects, uses, and protects your personal information. Understand your GDPR and CCPA privacy rights and how to request data deletion.",
   path: "/privacy",
+  title: "Privacy Policy | Reflet",
 });
 
 export default function PrivacyPolicy() {

@@ -32,50 +32,29 @@ export const incidentStatus = v.union(
 // ============================================
 
 export const statusTables = {
-  statusMonitors: defineTable({
-    organizationId: v.id("organizations"),
-    name: v.string(),
-    url: v.string(),
-    method: v.optional(monitorMethod),
-    checkIntervalMinutes: v.number(),
-    alertThreshold: v.number(),
-    status: monitorStatus,
-    consecutiveFailures: v.number(),
-    lastCheckedAt: v.optional(v.number()),
-    lastResponseTimeMs: v.optional(v.number()),
-    isPublic: v.boolean(),
-    groupName: v.optional(v.string()),
-    groupOrder: v.optional(v.number()),
-    order: v.optional(v.number()),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  })
-    .index("by_organization", ["organizationId"])
-    .index("by_org_status", ["organizationId", "status"]),
-
   statusChecks: defineTable({
+    checkedAt: v.number(),
+    errorMessage: v.optional(v.string()),
+    isUp: v.boolean(),
     monitorId: v.id("statusMonitors"),
     organizationId: v.id("organizations"),
-    statusCode: v.optional(v.number()),
     responseTimeMs: v.optional(v.number()),
-    isUp: v.boolean(),
-    errorMessage: v.optional(v.string()),
-    checkedAt: v.number(),
+    statusCode: v.optional(v.number()),
   })
     .index("by_monitor", ["monitorId"])
     .index("by_monitor_time", ["monitorId", "checkedAt"])
     .index("by_org_time", ["organizationId", "checkedAt"]),
 
   statusIncidents: defineTable({
-    organizationId: v.id("organizations"),
-    title: v.string(),
-    severity: incidentSeverity,
-    status: incidentStatus,
     affectedMonitorIds: v.array(v.id("statusMonitors")),
     autoDetected: v.boolean(),
-    startedAt: v.number(),
-    resolvedAt: v.optional(v.number()),
     createdAt: v.number(),
+    organizationId: v.id("organizations"),
+    resolvedAt: v.optional(v.number()),
+    severity: incidentSeverity,
+    startedAt: v.number(),
+    status: incidentStatus,
+    title: v.string(),
     updatedAt: v.number(),
   })
     .index("by_organization", ["organizationId"])
@@ -83,18 +62,38 @@ export const statusTables = {
     .index("by_org_created", ["organizationId", "createdAt"]),
 
   statusIncidentUpdates: defineTable({
+    createdAt: v.number(),
     incidentId: v.id("statusIncidents"),
+    message: v.string(),
     organizationId: v.id("organizations"),
     status: incidentStatus,
-    message: v.string(),
-    createdAt: v.number(),
   }).index("by_incident", ["incidentId"]),
+  statusMonitors: defineTable({
+    alertThreshold: v.number(),
+    checkIntervalMinutes: v.number(),
+    consecutiveFailures: v.number(),
+    createdAt: v.number(),
+    groupName: v.optional(v.string()),
+    groupOrder: v.optional(v.number()),
+    isPublic: v.boolean(),
+    lastCheckedAt: v.optional(v.number()),
+    lastResponseTimeMs: v.optional(v.number()),
+    method: v.optional(monitorMethod),
+    name: v.string(),
+    order: v.optional(v.number()),
+    organizationId: v.id("organizations"),
+    status: monitorStatus,
+    updatedAt: v.number(),
+    url: v.string(),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_org_status", ["organizationId", "status"]),
 
   statusSubscribers: defineTable({
-    organizationId: v.id("organizations"),
     email: v.string(),
-    unsubscribeToken: v.string(),
+    organizationId: v.id("organizations"),
     subscribedAt: v.number(),
+    unsubscribeToken: v.string(),
   })
     .index("by_organization", ["organizationId"])
     .index("by_email_org", ["email", "organizationId"])

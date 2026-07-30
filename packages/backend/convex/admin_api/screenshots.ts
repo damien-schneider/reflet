@@ -5,22 +5,6 @@ export const listScreenshots = internalQuery({
   args: {
     feedbackId: v.id("feedback"),
   },
-  returns: v.array(
-    v.object({
-      _id: v.id("feedbackScreenshots"),
-      filename: v.string(),
-      mimeType: v.string(),
-      size: v.number(),
-      captureSource: v.union(
-        v.literal("widget"),
-        v.literal("upload"),
-        v.literal("paste")
-      ),
-      pageUrl: v.optional(v.string()),
-      url: v.union(v.string(), v.null()),
-      createdAt: v.number(),
-    })
-  ),
   handler: async (ctx, args) => {
     const screenshots = await ctx.db
       .query("feedbackScreenshots")
@@ -30,25 +14,40 @@ export const listScreenshots = internalQuery({
     return await Promise.all(
       screenshots.map(async (s) => ({
         _id: s._id,
+        captureSource: s.captureSource,
+        createdAt: s.createdAt,
         filename: s.filename,
         mimeType: s.mimeType,
-        size: s.size,
-        captureSource: s.captureSource,
         pageUrl: s.pageUrl,
+        size: s.size,
         url: s.annotatedStorageId
           ? await ctx.storage.getUrl(s.annotatedStorageId)
           : await ctx.storage.getUrl(s.storageId),
-        createdAt: s.createdAt,
       }))
     );
   },
+  returns: v.array(
+    v.object({
+      _id: v.id("feedbackScreenshots"),
+      captureSource: v.union(
+        v.literal("widget"),
+        v.literal("upload"),
+        v.literal("paste")
+      ),
+      createdAt: v.number(),
+      filename: v.string(),
+      mimeType: v.string(),
+      pageUrl: v.optional(v.string()),
+      size: v.number(),
+      url: v.union(v.string(), v.null()),
+    })
+  ),
 });
 
 export const deleteScreenshot = internalMutation({
   args: {
     screenshotId: v.id("feedbackScreenshots"),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const screenshot = await ctx.db.get(args.screenshotId);
     if (!screenshot) {
@@ -64,4 +63,5 @@ export const deleteScreenshot = internalMutation({
 
     return null;
   },
+  returns: v.null(),
 });

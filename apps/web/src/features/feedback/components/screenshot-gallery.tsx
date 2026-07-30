@@ -45,9 +45,9 @@ export function ScreenshotGallery({ feedbackId }: { feedbackId: FeedbackId }) {
       const uploadUrl = await generateUploadUrl();
 
       const response = await fetch(uploadUrl, {
-        method: "POST",
-        headers: { "Content-Type": file.type },
         body: file,
+        headers: { "Content-Type": file.type },
+        method: "POST",
       });
 
       if (!response.ok) {
@@ -59,12 +59,12 @@ export function ScreenshotGallery({ feedbackId }: { feedbackId: FeedbackId }) {
       };
 
       await saveScreenshot({
+        captureSource: "upload",
         feedbackId,
-        storageId,
         filename: file.name,
         mimeType: file.type,
         size: file.size,
-        captureSource: "upload",
+        storageId,
       });
 
       toast.success("Screenshot uploaded");

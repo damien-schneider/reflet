@@ -16,15 +16,15 @@ const makeFeedbackItem = (
   overrides: Partial<FeedbackItem> = {}
 ): FeedbackItem => ({
   _id: "f1" as Id<"feedback">,
-  title: "Test",
-  voteCount: 5,
   commentCount: 0,
   createdAt: Date.now(),
-  organizationId: "org1" as Id<"organizations">,
-  hasVoted: false,
-  userVoteType: null,
-  upvoteCount: 3,
   downvoteCount: 2,
+  hasVoted: false,
+  organizationId: "org1" as Id<"organizations">,
+  title: "Test",
+  upvoteCount: 3,
+  userVoteType: null,
+  voteCount: 5,
   ...overrides,
 });
 
@@ -55,8 +55,8 @@ describe("applyOptimisticVote", () => {
   it("applies upvote optimistically from no vote", () => {
     const item = makeFeedbackItem({ userVoteType: null });
     const result = applyOptimisticVote(item, {
-      voteType: "upvote",
       pending: true,
+      voteType: "upvote",
     });
     expect(result.userVoteType).toBe("upvote");
     expect(result.hasVoted).toBe(true);
@@ -66,14 +66,14 @@ describe("applyOptimisticVote", () => {
 
   it("applies downvote from upvote", () => {
     const item = makeFeedbackItem({
-      userVoteType: "upvote",
-      upvoteCount: 4,
       downvoteCount: 1,
+      upvoteCount: 4,
+      userVoteType: "upvote",
       voteCount: 3,
     });
     const result = applyOptimisticVote(item, {
-      voteType: "downvote",
       pending: true,
+      voteType: "downvote",
     });
     expect(result.userVoteType).toBe("downvote");
     expect(result.upvoteCount).toBe(3);
@@ -83,11 +83,11 @@ describe("applyOptimisticVote", () => {
 
   it("removes vote when toggling off", () => {
     const item = makeFeedbackItem({
-      userVoteType: "upvote",
       upvoteCount: 4,
+      userVoteType: "upvote",
       voteCount: 6,
     });
-    const result = applyOptimisticVote(item, { voteType: null, pending: true });
+    const result = applyOptimisticVote(item, { pending: true, voteType: null });
     expect(result.userVoteType).toBeNull();
     expect(result.hasVoted).toBe(false);
     expect(result.upvoteCount).toBe(3);
@@ -105,10 +105,10 @@ describe("useOptimisticVotes", () => {
     const toggleVoteMutation = vi.fn();
     const { result } = renderHook(() =>
       useOptimisticVotes({
-        feedback: [makeFeedbackItem()],
-        toggleVoteMutation,
-        isAuthenticated: false,
         authGuard,
+        feedback: [makeFeedbackItem()],
+        isAuthenticated: false,
+        toggleVoteMutation,
       })
     );
 
@@ -128,10 +128,10 @@ describe("useOptimisticVotes", () => {
     const toggleVoteMutation = vi.fn().mockResolvedValue(undefined);
     const { result } = renderHook(() =>
       useOptimisticVotes({
-        feedback: [makeFeedbackItem()],
-        toggleVoteMutation,
-        isAuthenticated: true,
         authGuard: vi.fn(),
+        feedback: [makeFeedbackItem()],
+        isAuthenticated: true,
+        toggleVoteMutation,
       })
     );
 
@@ -153,10 +153,10 @@ describe("useOptimisticVotes", () => {
     const toggleVoteMutation = vi.fn().mockRejectedValue(new Error("fail"));
     const { result } = renderHook(() =>
       useOptimisticVotes({
-        feedback: [makeFeedbackItem()],
-        toggleVoteMutation,
-        isAuthenticated: true,
         authGuard: vi.fn(),
+        feedback: [makeFeedbackItem()],
+        isAuthenticated: true,
+        toggleVoteMutation,
       })
     );
 

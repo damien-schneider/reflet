@@ -8,12 +8,12 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { useSubmitFeedback } from "./use-submit-feedback";
 
 const baseParams = {
-  organizationId: "org1" as Id<"organizations">,
-  isMember: true,
-  createFeedbackPublic: vi.fn(),
-  createFeedbackMember: vi.fn().mockResolvedValue("f1" as Id<"feedback">),
   assignFeedback: vi.fn(),
   closeSubmitDrawer: vi.fn(),
+  createFeedbackMember: vi.fn().mockResolvedValue("f1" as Id<"feedback">),
+  createFeedbackPublic: vi.fn(),
+  isMember: true,
+  organizationId: "org1" as Id<"organizations">,
 };
 
 describe("useSubmitFeedback", () => {
@@ -45,10 +45,10 @@ describe("useSubmitFeedback", () => {
 
     act(() => {
       result.current.setNewFeedback({
-        title: "   ",
+        attachments: [],
         description: "",
         email: "",
-        attachments: [],
+        title: "   ",
       });
     });
 
@@ -64,10 +64,10 @@ describe("useSubmitFeedback", () => {
 
     act(() => {
       result.current.setNewFeedback({
-        title: "a".repeat(101),
+        attachments: [],
         description: "",
         email: "",
-        attachments: [],
+        title: "a".repeat(101),
       });
     });
 
@@ -83,10 +83,10 @@ describe("useSubmitFeedback", () => {
 
     act(() => {
       result.current.setNewFeedback({
-        title: "Valid title",
+        attachments: [],
         description: "desc",
         email: "",
-        attachments: [],
+        title: "Valid title",
       });
     });
 
@@ -95,7 +95,7 @@ describe("useSubmitFeedback", () => {
     });
 
     expect(baseParams.createFeedbackMember).toHaveBeenCalledWith(
-      expect.objectContaining({ title: "Valid title", description: "desc" })
+      expect.objectContaining({ description: "desc", title: "Valid title" })
     );
     expect(baseParams.closeSubmitDrawer).toHaveBeenCalled();
   });
@@ -106,10 +106,10 @@ describe("useSubmitFeedback", () => {
 
     act(() => {
       result.current.setNewFeedback({
-        title: "Public feedback",
+        attachments: [],
         description: "desc",
         email: "test@example.com",
-        attachments: [],
+        title: "Public feedback",
       });
     });
 
@@ -119,8 +119,8 @@ describe("useSubmitFeedback", () => {
 
     expect(params.createFeedbackPublic).toHaveBeenCalledWith(
       expect.objectContaining({
-        title: "Public feedback",
         email: "test@example.com",
+        title: "Public feedback",
       })
     );
   });
@@ -130,10 +130,10 @@ describe("useSubmitFeedback", () => {
 
     act(() => {
       result.current.setNewFeedback({
-        title: "With assignee",
+        attachments: [],
         description: "",
         email: "",
-        attachments: [],
+        title: "With assignee",
       });
       result.current.setSubmitAssigneeId("user1");
     });
@@ -143,8 +143,8 @@ describe("useSubmitFeedback", () => {
     });
 
     expect(baseParams.assignFeedback).toHaveBeenCalledWith({
-      feedbackId: "f1",
       assigneeId: "user1",
+      feedbackId: "f1",
     });
   });
 
@@ -153,10 +153,10 @@ describe("useSubmitFeedback", () => {
 
     act(() => {
       result.current.setNewFeedback({
-        title: "Test",
+        attachments: [],
         description: "",
         email: "",
-        attachments: [],
+        title: "Test",
       });
       result.current.setSubmitTagId("tag1" as Id<"tags">);
     });
@@ -179,10 +179,10 @@ describe("useSubmitFeedback", () => {
 
     act(() => {
       result.current.setNewFeedback({
-        title: "Test",
+        attachments: [],
         description: "",
         email: "",
-        attachments: [],
+        title: "Test",
       });
     });
 

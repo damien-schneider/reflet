@@ -41,18 +41,18 @@ export const getReleaseAndFeedback = internalQuery({
       .slice(0, MAX_FEEDBACK_ITEMS)
       .map((f) => ({
         _id: f._id,
-        title: f.title,
         description: f.description,
         status: f.status,
+        title: f.title,
         voteCount: f.voteCount ?? 0,
       }));
 
     return {
-      release: {
-        title: release.title,
-        description: release.description,
-      },
       feedbackItems,
+      release: {
+        description: release.description,
+        title: release.title,
+      },
     };
   },
 });

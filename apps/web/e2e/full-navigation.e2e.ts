@@ -1,7 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-// Auth form headings (French UI)
-const AUTH_SIGNUP_HEADING = "Créer un compte";
+const AUTH_SIGNUP_HEADING = "Create an account";
 
 // URL patterns - all top-level
 const DASHBOARD_URL_PATTERN = /\/dashboard\/[^/]+$/;
@@ -9,12 +8,9 @@ const BOARD_DETAIL_URL_PATTERN = /\/dashboard\/[^/]+\/boards\/[^/]+$/;
 const ORG_SLUG_PATTERN = /\/dashboard\/([^/]+)$/;
 const TEST_BOARD_NAME_PATTERN = /Test Board/i;
 
-/**
- * Helper to complete sign-up flow with the new unified auth form
- */
 async function signUpNewUser(
   page: import("@playwright/test").Page,
-  user: { name: string; email: string; password: string }
+  user: { email: string; password: string }
 ) {
   await page.getByTestId("email-input").fill(user.email);
   await page.getByTestId("email-input").blur();
@@ -23,9 +19,9 @@ async function signUpNewUser(
     timeout: 10_000,
   });
 
-  await page.getByTestId("name-input").fill(user.name);
   await page.getByTestId("password-input").fill(user.password);
-  await page.getByRole("button", { name: "Créer mon compte" }).click();
+  await page.getByTestId("confirm-password-input").fill(user.password);
+  await page.getByRole("button", { name: "Create my account" }).click();
 }
 
 /**
@@ -64,7 +60,6 @@ test.describe("Full Navigation E2E - No 404 Errors", () => {
   }) => {
     const timestamp = Date.now();
     const testUser = {
-      name: `FullNav ${timestamp}`,
       email: `fullnav-${timestamp}@example.com`,
       password: "password123",
     };
@@ -97,7 +92,7 @@ test.describe("Full Navigation E2E - No 404 Errors", () => {
     await page.goto(`/dashboard/${orgSlug}/boards`);
     await page.waitForLoadState("networkidle");
     await expect(
-      page.getByRole("heading", { name: "Boards", exact: true, level: 1 })
+      page.getByRole("heading", { exact: true, level: 1, name: "Boards" })
     ).toBeVisible({ timeout: 10_000 });
 
     // 3. Create a board and navigate to board detail
@@ -120,7 +115,7 @@ test.describe("Full Navigation E2E - No 404 Errors", () => {
     await page.goto(`/dashboard/${orgSlug}/settings`);
     await page.waitForLoadState("networkidle");
     await expect(
-      page.getByRole("heading", { name: "General Gear", exact: true })
+      page.getByRole("heading", { exact: true, name: "General Gear" })
     ).toBeVisible({ timeout: 10_000 });
 
     // 6. Navigate to Settings > Members
@@ -160,7 +155,6 @@ test.describe("Full Navigation E2E - No 404 Errors", () => {
   test("should navigate public pages without 404", async ({ page }) => {
     const timestamp = Date.now();
     const testUser = {
-      name: `PublicNav ${timestamp}`,
       email: `publicnav-${timestamp}@example.com`,
       password: "password123",
     };

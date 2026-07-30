@@ -13,10 +13,10 @@ interface CallbackState {
 
 function parseStateParam(stateParam: string | null): CallbackState {
   const state: CallbackState = {
-    userId: null,
     organizationId: null,
     orgSlug: null,
     returnTo: null,
+    userId: null,
   };
 
   if (!stateParam) {
@@ -49,7 +49,7 @@ async function createGitHubAppJwt(
   privateKey: string
 ): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
-  const payload = { iat: now - 60, exp: now + 600, iss: appId };
+  const payload = { exp: now + 600, iat: now - 60, iss: appId };
 
   const crypto = await import("node:crypto");
   const header = Buffer.from(
@@ -138,8 +138,8 @@ export async function GET(request: Request): Promise<NextResponse> {
       `https://api.github.com/app/installations/${installationId}`,
       {
         headers: {
-          Authorization: `Bearer ${jwt}`,
           Accept: "application/vnd.github+json",
+          Authorization: `Bearer ${jwt}`,
           "X-GitHub-Api-Version": "2022-11-28",
         },
       }
@@ -159,17 +159,17 @@ export async function GET(request: Request): Promise<NextResponse> {
     await fetchAction(
       api.integrations.github.actions.saveInstallationFromCallback,
       {
-        userId: state.userId,
-        installationId,
+        accountAvatarUrl: installation.account.avatar_url,
+        accountLogin: installation.account.login,
         accountType:
           installation.account.type === "Organization"
             ? "organization"
             : "user",
-        accountLogin: installation.account.login,
-        accountAvatarUrl: installation.account.avatar_url,
+        installationId,
         organizationId: state.organizationId
           ? toOrgId(state.organizationId)
           : undefined,
+        userId: state.userId,
       }
     );
 

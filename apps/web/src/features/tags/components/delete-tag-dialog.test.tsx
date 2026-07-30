@@ -73,9 +73,9 @@ afterEach(() => {
 describe("DeleteTagDialog", () => {
   const mockDeleteTag = vi.fn().mockResolvedValue(undefined);
   const defaultProps = {
-    tagId: "tag1" as Id<"tags">,
     onOpenChange: vi.fn(),
     onSuccess: vi.fn(),
+    tagId: "tag1" as Id<"tags">,
   };
 
   beforeEach(() => {

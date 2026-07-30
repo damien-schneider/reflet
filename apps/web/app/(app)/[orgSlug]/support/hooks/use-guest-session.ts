@@ -65,7 +65,7 @@ export function useGuestSession(orgSlug: string) {
     (email: string) => {
       const existing = readSession(orgSlug);
       const guestId = existing?.guestId ?? generateGuestId();
-      const data: GuestSession = { guestId, guestEmail: email };
+      const data: GuestSession = { guestEmail: email, guestId };
       localStorage.setItem(getStorageKey(orgSlug), JSON.stringify(data));
       emitChange();
       return guestId;
@@ -80,10 +80,10 @@ export function useGuestSession(orgSlug: string) {
 
   return useMemo(
     () => ({
-      guestId: session?.guestId ?? null,
-      guestEmail: session?.guestEmail ?? null,
-      saveGuestSession,
       clearGuestSession,
+      guestEmail: session?.guestEmail ?? null,
+      guestId: session?.guestId ?? null,
+      saveGuestSession,
     }),
     [session, saveGuestSession, clearGuestSession]
   );

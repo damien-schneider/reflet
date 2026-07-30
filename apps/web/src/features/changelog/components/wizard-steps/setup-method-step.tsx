@@ -40,12 +40,12 @@ export function SetupMethodStep({
 
   const workflowYaml = generateWorkflowYaml(webhookUrl, defaultBranch);
   const aiPrompt = generateAiPrompt({
-    repoFullName,
+    config,
     defaultBranch,
+    orgSlug,
+    repoFullName,
     webhookUrl,
     workflowYaml,
-    config,
-    orgSlug,
   });
 
   const handleCopy = async (content: string, tab: string) => {

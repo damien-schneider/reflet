@@ -19,12 +19,12 @@ import {
 import { ChartTooltipContent } from "@/components/ui/chart";
 
 const data = [
-  { month: "Jan", desktop: 186, mobile: 80 },
-  { month: "Feb", desktop: 305, mobile: 200 },
-  { month: "Mar", desktop: 237, mobile: 120 },
-  { month: "Apr", desktop: 73, mobile: 190 },
-  { month: "May", desktop: 209, mobile: 130 },
-  { month: "Jun", desktop: 214, mobile: 140 },
+  { desktop: 186, mobile: 80, month: "Jan" },
+  { desktop: 305, mobile: 200, month: "Feb" },
+  { desktop: 237, mobile: 120, month: "Mar" },
+  { desktop: 73, mobile: 190, month: "Apr" },
+  { desktop: 209, mobile: 130, month: "May" },
+  { desktop: 214, mobile: 140, month: "Jun" },
 ];
 
 export function ChartAreaInteractive() {
@@ -42,10 +42,10 @@ export function ChartAreaInteractive() {
             <AreaChart
               data={data}
               margin={{
-                top: 10,
-                right: 30,
-                left: 0,
                 bottom: 0,
+                left: 0,
+                right: 30,
+                top: 10,
               }}
             >
               <CartesianGrid strokeDasharray="3 3" vertical={false} />

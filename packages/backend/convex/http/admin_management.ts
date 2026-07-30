@@ -35,8 +35,6 @@ export function registerAdminManagementRoutes(http: Router): void {
   // ============================================
 
   http.route({
-    path: "/api/v1/admin/milestones",
-    method: "GET",
     handler: adminGet(async (ctx, { organizationId }, url) => {
       const statusParam = url.searchParams.get("status") as
         | "active"
@@ -49,23 +47,23 @@ export function registerAdminManagementRoutes(http: Router): void {
         status: statusParam ?? undefined,
       });
     }),
+    method: "GET",
+    path: "/api/v1/admin/milestones",
   });
 
   http.route({
-    path: "/api/v1/admin/milestone",
-    method: "GET",
     handler: adminGet(async (ctx, { organizationId }, url) => {
       const id = url.searchParams.get("id");
       return await ctx.runQuery(internal.admin_api.milestones.getMilestone, {
-        organizationId,
         milestoneId: parseId<"milestones">(id, "id"),
+        organizationId,
       });
     }),
+    method: "GET",
+    path: "/api/v1/admin/milestone",
   });
 
   http.route({
-    path: "/api/v1/admin/milestone/create",
-    method: "POST",
     handler: adminPost(async (ctx, { organizationId }, body) => {
       const timeHorizon = requireStr(body.timeHorizon, "timeHorizon") as
         | "now"
@@ -77,22 +75,22 @@ export function registerAdminManagementRoutes(http: Router): void {
       return await ctx.runMutation(
         internal.admin_api.milestones.createMilestone,
         {
-          organizationId,
-          name: requireStr(body.name, "name"),
+          color: requireStr(body.color, "color"),
           description: str(body.description),
           emoji: str(body.emoji),
-          color: requireStr(body.color, "color"),
-          timeHorizon,
-          targetDate: num(body.targetDate),
           isPublic: bool(body.isPublic),
+          name: requireStr(body.name, "name"),
+          organizationId,
+          targetDate: num(body.targetDate),
+          timeHorizon,
         }
       );
     }),
+    method: "POST",
+    path: "/api/v1/admin/milestone/create",
   });
 
   http.route({
-    path: "/api/v1/admin/milestone/update",
-    method: "POST",
     handler: adminPost(async (ctx, { organizationId }, body) => {
       const timeHorizon = str(body.timeHorizon) as
         | "now"
@@ -105,69 +103,71 @@ export function registerAdminManagementRoutes(http: Router): void {
       return await ctx.runMutation(
         internal.admin_api.milestones.updateMilestone,
         {
-          organizationId,
+          color: str(body.color),
+          description: str(body.description),
+          emoji: str(body.emoji),
+          isPublic: bool(body.isPublic),
           milestoneId: parseId<"milestones">(
             str(body.milestoneId),
             "milestoneId"
           ),
           name: str(body.name),
-          description: str(body.description),
-          emoji: str(body.emoji),
-          color: str(body.color),
-          timeHorizon,
+          organizationId,
           targetDate: num(body.targetDate),
-          isPublic: bool(body.isPublic),
+          timeHorizon,
         }
       );
     }),
+    method: "POST",
+    path: "/api/v1/admin/milestone/update",
   });
 
   http.route({
-    path: "/api/v1/admin/milestone/complete",
-    method: "POST",
     handler: adminPost(async (ctx, { organizationId }, body) =>
       ctx.runMutation(internal.admin_api.milestones.completeMilestone, {
-        organizationId,
         milestoneId: parseId<"milestones">(
           str(body.milestoneId),
           "milestoneId"
         ),
+        organizationId,
       })
     ),
+    method: "POST",
+    path: "/api/v1/admin/milestone/complete",
   });
 
   http.route({
-    path: "/api/v1/admin/milestone/delete",
-    method: "POST",
     handler: adminPost(async (ctx, { organizationId }, body) =>
       ctx.runMutation(internal.admin_api.milestones.deleteMilestone, {
-        organizationId,
         milestoneId: parseId<"milestones">(
           str(body.milestoneId),
           "milestoneId"
         ),
+        organizationId,
       })
     ),
+    method: "POST",
+    path: "/api/v1/admin/milestone/delete",
   });
 
   http.route({
-    path: "/api/v1/admin/milestone/link-feedback",
-    method: "POST",
     handler: adminPost(async (ctx, { organizationId }, body) => {
       const action = requireStr(body.action, "action") as "link" | "unlink";
       return await ctx.runMutation(
         internal.admin_api.milestones.linkMilestoneFeedback,
         {
-          organizationId,
+          action,
+          feedbackId: parseId<"feedback">(str(body.feedbackId), "feedbackId"),
           milestoneId: parseId<"milestones">(
             str(body.milestoneId),
             "milestoneId"
           ),
-          feedbackId: parseId<"feedback">(str(body.feedbackId), "feedbackId"),
-          action,
+          organizationId,
         }
       );
     }),
+    method: "POST",
+    path: "/api/v1/admin/milestone/link-feedback",
   });
 
   // ============================================
@@ -175,53 +175,53 @@ export function registerAdminManagementRoutes(http: Router): void {
   // ============================================
 
   http.route({
-    path: "/api/v1/admin/members",
-    method: "GET",
     handler: adminGet(async (ctx, { organizationId }) =>
       ctx.runQuery(internal.admin_api.members.listMembers, {
         organizationId,
       })
     ),
+    method: "GET",
+    path: "/api/v1/admin/members",
   });
 
   http.route({
-    path: "/api/v1/admin/invitations",
-    method: "GET",
     handler: adminGet(async (ctx, { organizationId }) =>
       ctx.runQuery(internal.admin_api.members.listInvitations, {
         organizationId,
       })
     ),
+    method: "GET",
+    path: "/api/v1/admin/invitations",
   });
 
   http.route({
-    path: "/api/v1/admin/invitation/create",
-    method: "POST",
     handler: adminPost(async (ctx, { organizationId }, body) => {
       const role = requireStr(body.role, "role") as "admin" | "member";
       return await ctx.runMutation(
         internal.admin_api.members.createInvitation,
         {
-          organizationId,
           email: requireStr(body.email, "email"),
+          organizationId,
           role,
         }
       );
     }),
+    method: "POST",
+    path: "/api/v1/admin/invitation/create",
   });
 
   http.route({
-    path: "/api/v1/admin/invitation/cancel",
-    method: "POST",
     handler: adminPost(async (ctx, { organizationId }, body) =>
       ctx.runMutation(internal.admin_api.members.cancelInvitation, {
-        organizationId,
         invitationId: parseId<"invitations">(
           str(body.invitationId),
           "invitationId"
         ),
+        organizationId,
       })
     ),
+    method: "POST",
+    path: "/api/v1/admin/invitation/cancel",
   });
 
   // ============================================
@@ -229,31 +229,31 @@ export function registerAdminManagementRoutes(http: Router): void {
   // ============================================
 
   http.route({
-    path: "/api/v1/admin/organization",
-    method: "GET",
     handler: adminGet(async (ctx, { organizationId }) =>
       ctx.runQuery(internal.admin_api.organization.getOrganization, {
         organizationId,
       })
     ),
+    method: "GET",
+    path: "/api/v1/admin/organization",
   });
 
   http.route({
-    path: "/api/v1/admin/organization/update",
-    method: "POST",
     handler: adminPost(async (ctx, { organizationId }, body) =>
       ctx.runMutation(internal.admin_api.organization.updateOrganization, {
-        organizationId,
-        name: str(body.name),
         isPublic: bool(body.isPublic),
+        name: str(body.name),
+        organizationId,
         primaryColor: str(body.primaryColor),
         supportEnabled: bool(body.supportEnabled),
       })
     ),
+    method: "POST",
+    path: "/api/v1/admin/organization/update",
   });
 
   // --- CORS preflight for all admin management routes ---
   for (const path of ADMIN_MANAGEMENT_PATHS) {
-    http.route({ path, method: "OPTIONS", handler: corsOptionsHandler() });
+    http.route({ handler: corsOptionsHandler(), method: "OPTIONS", path });
   }
 }

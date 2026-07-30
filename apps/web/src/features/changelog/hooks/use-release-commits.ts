@@ -34,10 +34,10 @@ export function useReleaseCommits(releaseId: Id<"releases"> | null) {
     if (releaseId && commits.length > 0 && !hasSavedRef.current) {
       hasSavedRef.current = true;
       saveReleaseCommits({
-        releaseId,
         commits,
         files,
         previousTag,
+        releaseId,
       }).catch(() => {
         hasSavedRef.current = false;
       });
@@ -58,10 +58,10 @@ export function useReleaseCommits(releaseId: Id<"releases"> | null) {
       if (releaseId) {
         hasSavedRef.current = true;
         saveReleaseCommits({
-          releaseId,
           commits: fetchedCommits,
           files: fetchedFiles,
           previousTag: fetchedPreviousTag ?? undefined,
+          releaseId,
         }).catch(() => {
           hasSavedRef.current = false;
         });
@@ -70,5 +70,5 @@ export function useReleaseCommits(releaseId: Id<"releases"> | null) {
     [releaseId, saveReleaseCommits]
   );
 
-  return { commits, files, previousTag, handleCommitsFetched };
+  return { commits, files, handleCommitsFetched, previousTag };
 }

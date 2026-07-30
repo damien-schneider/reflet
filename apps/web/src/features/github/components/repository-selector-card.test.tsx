@@ -129,9 +129,9 @@ vi.mock("@/components/ui/combobox", async () => {
     return React.createElement(
       "div",
       {
-        "data-testid": "combobox",
         "data-input-value": inputValue,
         "data-open": open,
+        "data-testid": "combobox",
       },
       processChildren(children)
     );
@@ -145,21 +145,16 @@ vi.mock("@/components/ui/combobox", async () => {
     ...props
   }: React.InputHTMLAttributes<HTMLInputElement>) =>
     React.createElement("input", {
+      onChange,
+      onFocus,
       placeholder,
       type: "text",
       value,
-      onChange,
-      onFocus,
       ...props,
     });
 
-  const ComboboxContent = ({ children }: { children: React.ReactNode }) => {
-    return React.createElement(
-      "div",
-      { "data-testid": "combobox-content" },
-      children
-    );
-  };
+  const ComboboxContent = ({ children }: { children: React.ReactNode }) =>
+    React.createElement("div", { "data-testid": "combobox-content" }, children);
 
   const ComboboxList = ({
     children,
@@ -181,8 +176,8 @@ vi.mock("@/components/ui/combobox", async () => {
           React.createElement(
             "div",
             {
-              key: index,
               "data-testid": "combobox-list-item",
+              key: index,
               onClick: () => _onValueChange?.(item),
               role: "option",
             },
@@ -220,13 +215,13 @@ vi.mock("@/components/ui/combobox", async () => {
 
   return {
     Combobox,
-    ComboboxInput,
     ComboboxContent,
-    ComboboxList,
-    ComboboxItem,
-    ComboboxGroup,
-    ComboboxLabel,
     ComboboxEmpty,
+    ComboboxGroup,
+    ComboboxInput,
+    ComboboxItem,
+    ComboboxLabel,
+    ComboboxList,
   };
 });
 
@@ -244,28 +239,28 @@ vi.mock("@phosphor-icons/react", () => ({
 
 const mockRepositories = [
   {
-    id: "repo-1",
-    fullName: "owner-a/test-repo",
-    name: "test-repo",
     defaultBranch: "main",
-    isPrivate: false,
     description: "A test repository",
-  },
-  {
-    id: "repo-2",
-    fullName: "owner-a/another-repo",
-    name: "another-repo",
-    defaultBranch: "main",
-    isPrivate: true,
-    description: "Another repository",
-  },
-  {
-    id: "repo-3",
-    fullName: "owner-b/demo-project",
-    name: "demo-project",
-    defaultBranch: "main",
+    fullName: "owner-a/test-repo",
+    id: "repo-1",
     isPrivate: false,
+    name: "test-repo",
+  },
+  {
+    defaultBranch: "main",
+    description: "Another repository",
+    fullName: "owner-a/another-repo",
+    id: "repo-2",
+    isPrivate: true,
+    name: "another-repo",
+  },
+  {
+    defaultBranch: "main",
     description: "Demo project",
+    fullName: "owner-b/demo-project",
+    id: "repo-3",
+    isPrivate: false,
+    name: "demo-project",
   },
 ];
 

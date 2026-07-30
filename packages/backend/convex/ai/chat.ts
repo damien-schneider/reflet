@@ -22,9 +22,9 @@ export const createNewThread = mutation({
 
 export const listMessages = query({
   args: {
-    threadId: v.string(),
     paginationOpts: paginationOptsValidator,
     streamArgs: vStreamArgs,
+    threadId: v.string(),
   },
   handler: async (ctx, args) => {
     const paginated = await listUIMessages(ctx, components.agent, args);
@@ -35,17 +35,17 @@ export const listMessages = query({
 
 export const sendMessage = mutation({
   args: {
-    threadId: v.string(),
     prompt: v.string(),
+    threadId: v.string(),
   },
   handler: async (ctx, { threadId, prompt }) => {
     const { messageId } = await saveMessage(ctx, components.agent, {
-      threadId,
       prompt,
+      threadId,
     });
     await ctx.scheduler.runAfter(0, internal.ai.chat.generateResponseAsync, {
-      threadId,
       promptMessageId: messageId,
+      threadId,
     });
     return messageId;
   },
@@ -53,8 +53,8 @@ export const sendMessage = mutation({
 
 export const generateResponseAsync = internalAction({
   args: {
-    threadId: v.string(),
     promptMessageId: v.string(),
+    threadId: v.string(),
   },
   handler: async (ctx, { threadId, promptMessageId }) => {
     await chatAgent.streamText(

@@ -85,10 +85,10 @@ export const list = query({
             }
             return {
               _id: fb._id,
-              title: fb.title,
-              status: fb.status,
-              voteCount: fb.voteCount,
               organizationStatusId: fb.organizationStatusId,
+              status: fb.status,
+              title: fb.title,
+              voteCount: fb.voteCount,
             };
           })
         );
@@ -104,13 +104,13 @@ export const list = query({
 
         return {
           ...milestone,
+          feedbackPreview: validFeedback.slice(0, 3),
           progress: {
-            total,
             completed,
             inProgress,
             percentage: total > 0 ? Math.round((completed / total) * 100) : 0,
+            total,
           },
-          feedbackPreview: validFeedback.slice(0, 3),
         };
       })
     );
@@ -157,13 +157,13 @@ export const get = query({
 
         return {
           _id: fb._id,
-          title: fb.title,
-          status: fb.status,
-          voteCount: fb.voteCount,
           commentCount: fb.commentCount,
           organizationStatus: orgStatus
-            ? { name: orgStatus.name, color: orgStatus.color }
+            ? { color: orgStatus.color, name: orgStatus.name }
             : null,
+          status: fb.status,
+          title: fb.title,
+          voteCount: fb.voteCount,
         };
       })
     );
@@ -181,10 +181,10 @@ export const get = query({
       ...milestone,
       feedback: validFeedback,
       progress: {
-        total,
         completed,
         inProgress,
         percentage: total > 0 ? Math.round((completed / total) * 100) : 0,
+        total,
       },
     };
   },
@@ -214,11 +214,13 @@ export const listByFeedback = query({
  */
 export const create = mutation({
   args: {
-    organizationId: v.id("organizations"),
-    name: v.string(),
+    color: v.string(),
     description: v.optional(v.string()),
     emoji: v.optional(v.string()),
-    color: v.string(),
+    isPublic: v.optional(v.boolean()),
+    name: v.string(),
+    organizationId: v.id("organizations"),
+    targetDate: v.optional(v.number()),
     timeHorizon: v.union(
       v.literal("now"),
       v.literal("next_month"),
@@ -227,8 +229,6 @@ export const create = mutation({
       v.literal("next_year"),
       v.literal("future")
     ),
-    targetDate: v.optional(v.number()),
-    isPublic: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -266,17 +266,17 @@ export const create = mutation({
 
     const now = Date.now();
     return ctx.db.insert("milestones", {
-      organizationId: args.organizationId,
-      name: args.name,
+      color: args.color,
+      createdAt: now,
       description: args.description,
       emoji: args.emoji,
-      color: args.color,
-      timeHorizon: args.timeHorizon,
-      targetDate: args.targetDate,
-      order: maxOrder + 1,
-      status: "active",
       isPublic: args.isPublic ?? true,
-      createdAt: now,
+      name: args.name,
+      order: maxOrder + 1,
+      organizationId: args.organizationId,
+      status: "active",
+      targetDate: args.targetDate,
+      timeHorizon: args.timeHorizon,
       updatedAt: now,
     });
   },
@@ -287,11 +287,21 @@ export const create = mutation({
  */
 export const update = mutation({
   args: {
-    id: v.id("milestones"),
-    name: v.optional(v.string()),
+    clearTargetDate: v.optional(v.boolean()),
+    color: v.optional(v.string()),
     description: v.optional(v.string()),
     emoji: v.optional(v.string()),
-    color: v.optional(v.string()),
+    id: v.id("milestones"),
+    isPublic: v.optional(v.boolean()),
+    name: v.optional(v.string()),
+    status: v.optional(
+      v.union(
+        v.literal("active"),
+        v.literal("completed"),
+        v.literal("archived")
+      )
+    ),
+    targetDate: v.optional(v.number()),
     timeHorizon: v.optional(
       v.union(
         v.literal("now"),
@@ -302,16 +312,6 @@ export const update = mutation({
         v.literal("future")
       )
     ),
-    targetDate: v.optional(v.number()),
-    clearTargetDate: v.optional(v.boolean()),
-    status: v.optional(
-      v.union(
-        v.literal("active"),
-        v.literal("completed"),
-        v.literal("archived")
-      )
-    ),
-    isPublic: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -441,8 +441,8 @@ export const reorder = mutation({
  */
 export const addFeedback = mutation({
   args: {
-    milestoneId: v.id("milestones"),
     feedbackId: v.id("feedback"),
+    milestoneId: v.id("milestones"),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -476,10 +476,10 @@ export const addFeedback = mutation({
     }
 
     return ctx.db.insert("milestoneFeedback", {
-      milestoneId: args.milestoneId,
-      feedbackId: args.feedbackId,
       addedAt: Date.now(),
       addedBy: user._id,
+      feedbackId: args.feedbackId,
+      milestoneId: args.milestoneId,
     });
   },
 });
@@ -489,8 +489,8 @@ export const addFeedback = mutation({
  */
 export const removeFeedback = mutation({
   args: {
-    milestoneId: v.id("milestones"),
     feedbackId: v.id("feedback"),
+    milestoneId: v.id("milestones"),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -552,8 +552,8 @@ export const complete = mutation({
 
     const now = Date.now();
     await ctx.db.patch(args.id, {
-      status: "completed",
       completedAt: now,
+      status: "completed",
       updatedAt: now,
     });
 

@@ -10,7 +10,6 @@ vi.mock("@/components/ui/avatar", () => ({
     children: React.ReactNode;
     className?: string;
   }) => <div className={className}>{children}</div>,
-  AvatarImage: ({ src }: { src?: string }) => <img alt="" src={src} />,
   AvatarFallback: ({
     children,
     className,
@@ -18,6 +17,7 @@ vi.mock("@/components/ui/avatar", () => ({
     children: React.ReactNode;
     className?: string;
   }) => <span className={className}>{children}</span>,
+  AvatarImage: ({ src }: { src?: string }) => <img alt="" src={src} />,
 }));
 
 vi.mock("@/components/ui/button", () => ({
@@ -33,20 +33,6 @@ vi.mock("@/components/ui/button", () => ({
 vi.mock("@/components/ui/dropdown-menu", () => ({
   DropdownMenu: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
-  ),
-  DropdownMenuTrigger: ({
-    children,
-    render: Render,
-    disabled,
-  }: {
-    children?: React.ReactNode;
-    render?: React.ReactNode;
-    disabled?: boolean;
-  }) => (
-    <div data-disabled={disabled}>
-      {Render}
-      {children}
-    </div>
   ),
   DropdownMenuContent: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
@@ -71,6 +57,20 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
     <span>{children}</span>
   ),
   DropdownMenuSeparator: () => <hr />,
+  DropdownMenuTrigger: ({
+    children,
+    render: Render,
+    disabled,
+  }: {
+    children?: React.ReactNode;
+    render?: React.ReactNode;
+    disabled?: boolean;
+  }) => (
+    <div data-disabled={disabled}>
+      {Render}
+      {children}
+    </div>
+  ),
 }));
 
 vi.mock("@/lib/utils", () => ({
@@ -94,9 +94,9 @@ import { AssignMemberDropdown } from "./assign-member-dropdown";
 afterEach(cleanup);
 
 const members = [
-  { id: "m1", name: "Alice Smith", email: "alice@test.com", image: undefined },
-  { id: "m2", name: "Bob Jones", email: "bob@test.com", image: undefined },
-  { id: "m3", email: "carol@test.com", image: undefined },
+  { email: "alice@test.com", id: "m1", image: undefined, name: "Alice Smith" },
+  { email: "bob@test.com", id: "m2", image: undefined, name: "Bob Jones" },
+  { email: "carol@test.com", id: "m3", image: undefined },
 ];
 
 describe("AssignMemberDropdown", () => {

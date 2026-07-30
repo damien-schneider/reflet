@@ -28,8 +28,8 @@ export function CreateFeedbackDialog({
 }: CreateFeedbackDialogProps) {
   const createFeedback = useMutation(api.feedback.mutations.create);
   const [newFeedback, setNewFeedback] = useState({
-    title: "",
     description: "",
+    title: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -40,12 +40,12 @@ export function CreateFeedbackDialog({
     setIsSubmitting(true);
     try {
       await createFeedback({
+        description: newFeedback.description.trim(),
         organizationId,
         title: newFeedback.title.trim(),
-        description: newFeedback.description.trim(),
       });
       onOpenChange(false);
-      setNewFeedback({ title: "", description: "" });
+      setNewFeedback({ description: "", title: "" });
     } catch (error) {
       console.error("Failed to create feedback:", error);
     } finally {

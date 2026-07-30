@@ -13,8 +13,8 @@ export function AuthSocialProviders() {
         onClick={() => {
           capture("sign_in_completed", { method: "google" });
           authClient.signIn.social({
-            provider: "google",
             callbackURL: "/dashboard",
+            provider: "google",
           });
         }}
         type="button"
@@ -28,8 +28,8 @@ export function AuthSocialProviders() {
         onClick={() => {
           capture("sign_in_completed", { method: "github" });
           authClient.signIn.social({
-            provider: "github",
             callbackURL: "/dashboard",
+            provider: "github",
           });
         }}
         type="button"

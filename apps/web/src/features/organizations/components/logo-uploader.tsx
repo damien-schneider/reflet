@@ -38,12 +38,12 @@ export function LogoUploader({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const { uploadImage, isUploading } = useImageUpload({
+    onError: (err) => {
+      setError(err.message);
+    },
     onSuccess: (url) => {
       onLogoChange(url);
       setError(null);
-    },
-    onError: (err) => {
-      setError(err.message);
     },
   });
 

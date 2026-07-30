@@ -28,13 +28,14 @@ function CopyButton({ text, className }: { text: string; className?: string }) {
     timeoutRef.current = setTimeout(() => setCopied(false), COPY_FEEDBACK_MS);
   }, [text]);
 
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
-    };
-  }, []);
+    },
+    []
+  );
 
   return (
     <button

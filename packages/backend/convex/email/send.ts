@@ -5,11 +5,11 @@ import { internalAction, internalMutation } from "../_generated/server";
 
 // Initialize Resend component with event handling
 export const resend: Resend = new Resend(components.resend, {
+  // Handle email events (delivery, bounce, etc.)
+  onEmailEvent: internal.email.send.handleEmailEvent,
   // Disable test mode to send real emails via Resend
   // Resend handles rate limiting and safety features
   testMode: false,
-  // Handle email events (delivery, bounce, etc.)
-  onEmailEvent: internal.email.send.handleEmailEvent,
 });
 
 // Handle email status events from Resend webhooks
@@ -37,7 +37,6 @@ export const handleEmailEvent = internalMutation({
     // Log the raw event
     await ctx.db.insert("emailEvents", {
       emailSendLogId: sendLog?._id,
-      resendEmailId,
       eventType: type as
         | "email.sent"
         | "email.delivered"
@@ -47,23 +46,24 @@ export const handleEmailEvent = internalMutation({
         | "email.opened"
         | "email.clicked",
       recipientEmail,
+      resendEmailId,
       timestamp: now,
     });
 
     // Update send log status
     const statusMap: Record<string, string> = {
-      "email.delivered": "delivered",
       "email.bounced": "bounced",
-      "email.complained": "complained",
-      "email.opened": "opened",
       "email.clicked": "clicked",
+      "email.complained": "complained",
+      "email.delivered": "delivered",
       "email.delivery_delayed": "delivery_delayed",
+      "email.opened": "opened",
     };
     const timestampMap: Record<string, string> = {
+      "email.bounced": "bouncedAt",
+      "email.clicked": "clickedAt",
       "email.delivered": "deliveredAt",
       "email.opened": "openedAt",
-      "email.clicked": "clickedAt",
-      "email.bounced": "bouncedAt",
     };
 
     const newStatus = sendLog ? statusMap[type] : undefined;
@@ -99,8 +99,8 @@ export const handleEmailEvent = internalMutation({
     if (!existing) {
       await ctx.db.insert("emailSuppressions", {
         email: recipientEmail,
-        reason: isBounce ? "hard_bounce" : "complaint",
         originalEventType: type,
+        reason: isBounce ? "hard_bounce" : "complaint",
         suppressedAt: now,
       });
     }
@@ -110,16 +110,6 @@ export const handleEmailEvent = internalMutation({
 // Generic email sending mutation using the Resend component
 export const sendEmail = internalMutation({
   args: {
-    from: v.string(),
-    to: v.union(v.string(), v.array(v.string())),
-    subject: v.string(),
-    html: v.string(),
-    text: v.optional(v.string()),
-    replyTo: v.optional(v.union(v.string(), v.array(v.string()))),
-    headers: v.optional(
-      v.array(v.object({ name: v.string(), value: v.string() }))
-    ),
-    organizationId: v.optional(v.id("organizations")),
     emailType: v.optional(
       v.union(
         v.literal("changelog_notification"),
@@ -132,8 +122,18 @@ export const sendEmail = internalMutation({
         v.literal("other")
       )
     ),
-    releaseId: v.optional(v.id("releases")),
     feedbackId: v.optional(v.id("feedback")),
+    from: v.string(),
+    headers: v.optional(
+      v.array(v.object({ name: v.string(), value: v.string() }))
+    ),
+    html: v.string(),
+    organizationId: v.optional(v.id("organizations")),
+    releaseId: v.optional(v.id("releases")),
+    replyTo: v.optional(v.union(v.string(), v.array(v.string()))),
+    subject: v.string(),
+    text: v.optional(v.string()),
+    to: v.union(v.string(), v.array(v.string())),
   },
   handler: async (ctx, args) => {
     let replyToArray: string[] | undefined;
@@ -144,27 +144,27 @@ export const sendEmail = internalMutation({
 
     const emailId = await resend.sendEmail(ctx, {
       from: args.from,
-      to: args.to,
-      subject: args.subject,
-      html: args.html,
-      text: args.text,
-      replyTo: replyToArray,
       headers: args.headers,
+      html: args.html,
+      replyTo: replyToArray,
+      subject: args.subject,
+      text: args.text,
+      to: args.to,
     });
 
     // Log to emailSendLog if tracking params provided
     if (args.organizationId && args.emailType) {
       const recipientEmail = typeof args.to === "string" ? args.to : args.to[0];
       await ctx.db.insert("emailSendLog", {
-        organizationId: args.organizationId,
         emailType: args.emailType,
-        to: recipientEmail ?? "",
-        subject: args.subject,
-        releaseId: args.releaseId,
         feedbackId: args.feedbackId,
+        organizationId: args.organizationId,
+        releaseId: args.releaseId,
         resendEmailId: emailId,
-        status: "sent",
         sentAt: Date.now(),
+        status: "sent",
+        subject: args.subject,
+        to: recipientEmail ?? "",
       });
     }
 
@@ -178,14 +178,14 @@ export const sendBatchEmails = internalMutation({
     emails: v.array(
       v.object({
         from: v.string(),
-        to: v.union(v.string(), v.array(v.string())),
-        subject: v.string(),
-        html: v.string(),
-        text: v.optional(v.string()),
-        replyTo: v.optional(v.union(v.string(), v.array(v.string()))),
         headers: v.optional(
           v.array(v.object({ name: v.string(), value: v.string() }))
         ),
+        html: v.string(),
+        replyTo: v.optional(v.union(v.string(), v.array(v.string()))),
+        subject: v.string(),
+        text: v.optional(v.string()),
+        to: v.union(v.string(), v.array(v.string())),
       })
     ),
   },
@@ -201,12 +201,12 @@ export const sendBatchEmails = internalMutation({
 
       const emailId = await resend.sendEmail(ctx, {
         from: email.from,
-        to: email.to,
-        subject: email.subject,
-        html: email.html,
-        text: email.text,
-        replyTo: replyToArray,
         headers: email.headers,
+        html: email.html,
+        replyTo: replyToArray,
+        subject: email.subject,
+        text: email.text,
+        to: email.to,
       });
       emailIds.push(emailId);
     }
@@ -220,7 +220,5 @@ export const getEmailStatus = internalAction({
   args: {
     emailId: vEmailId,
   },
-  handler: async (ctx, args) => {
-    return await resend.status(ctx, args.emailId);
-  },
+  handler: async (ctx, args) => await resend.status(ctx, args.emailId),
 });

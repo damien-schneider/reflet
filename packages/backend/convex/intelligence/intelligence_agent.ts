@@ -39,8 +39,8 @@ const generateTextWithFallback = async (
     try {
       const result = await generateText({
         model: openrouter(modelId),
-        system: options.system,
         prompt: options.prompt,
+        system: options.system,
       });
       return result;
     } catch (error) {
@@ -63,9 +63,9 @@ const MAX_FINDINGS_PER_QUERY = 10;
 const signalOutputSchema = z.object({
   findings: z.array(
     z.object({
-      title: z.string(),
       content: z.string().describe("Summary of the finding"),
-      url: z.string().optional().describe("Source URL if found"),
+      relevanceScore: z.number().min(0).max(1),
+      sentiment: z.enum(["positive", "negative", "neutral"]),
       signalType: z.enum([
         "pain_point",
         "feature_request",
@@ -74,11 +74,11 @@ const signalOutputSchema = z.object({
         "market_trend",
         "feature_gap",
       ]),
-      relevanceScore: z.number().min(0).max(1),
-      sentiment: z.enum(["positive", "negative", "neutral"]),
       source: z
         .enum(["reddit", "hackernews", "web"])
         .describe("Best guess of where this info came from"),
+      title: z.string(),
+      url: z.string().optional().describe("Source URL if found"),
     })
   ),
 });
@@ -94,6 +94,7 @@ const extractFindings = async (
 ): Promise<SignalOutput> =>
   generateStructuredWithFallback({
     models: EXTRACTION_MODELS,
+    prompt: `${context}\n\n${rawText}`,
     schema: signalOutputSchema,
     system: `You are a data extraction specialist. Extract structured intelligence findings from the provided web search results.
 
@@ -115,7 +116,6 @@ Respond with ONLY valid JSON matching this exact format:
     }
   ]
 }`,
-    prompt: `${context}\n\n${rawText}`,
   });
 
 // ============================================
@@ -262,16 +262,16 @@ const storeFindings = async (
       await ctx.runMutation(
         internal.intelligence.competitor_monitor.createSignal,
         {
-          organizationId,
-          jobId,
-          source: finding.source,
           competitorId,
-          title: finding.title,
           content: finding.content.slice(0, 1000),
-          url: finding.url,
-          signalType: finding.signalType,
+          jobId,
+          organizationId,
           relevanceScore: finding.relevanceScore,
           sentiment: finding.sentiment,
+          signalType: finding.signalType,
+          source: finding.source,
+          title: finding.title,
+          url: finding.url,
         }
       );
       console.log(
@@ -287,7 +287,7 @@ const storeFindings = async (
     }
   }
 
-  return { stored, skipped };
+  return { skipped, stored };
 };
 
 // ============================================
@@ -341,8 +341,8 @@ export const runCommunitySearch = internalAction({
 
       // Step 1: Use :online model to search the web and get raw results
       const searchResponse = await generateTextWithFallback(SEARCH_MODELS, {
-        system: `You are a competitive intelligence analyst. Search the web for community discussions about pain points, feature requests, and market trends in the user's product space. Focus on Reddit, Hacker News, forums, and discussion threads from the past week. Be thorough and include source URLs when found. Return detailed findings as prose.`,
         prompt,
+        system: `You are a competitive intelligence analyst. Search the web for community discussions about pain points, feature requests, and market trends in the user's product space. Focus on Reddit, Hacker News, forums, and discussion threads from the past week. Be thorough and include source URLs when found. Return detailed findings as prose.`,
       });
 
       const rawSearchResults = searchResponse.text;
@@ -389,14 +389,14 @@ export const runCommunitySearch = internalAction({
       await ctx.runMutation(
         internal.intelligence.competitor_monitor.updateJob,
         {
-          jobId,
-          status: allFailed ? "failed" : "completed",
           errorMessage,
+          jobId,
           stats: {
+            errors,
             itemsFound,
             itemsProcessed,
-            errors,
           },
+          status: allFailed ? "failed" : "completed",
         }
       );
     }
@@ -448,9 +448,9 @@ export const runCompetitorResearch = internalAction({
 
         // Step 1: Use :online model to search the web for competitor intel
         const searchResponse = await generateTextWithFallback(SEARCH_MODELS, {
+          prompt,
           system:
             "You are a competitive intelligence analyst monitoring competitor activity. Search for recent updates, pricing changes, new features, and market moves from the specified competitor. Be thorough and include source URLs when found.",
-          prompt,
         });
 
         const rawSearchResults = searchResponse.text;
@@ -507,15 +507,15 @@ export const runCompetitorResearch = internalAction({
     );
 
     await ctx.runMutation(internal.intelligence.competitor_monitor.updateJob, {
-      jobId,
-      status: allFailed ? "failed" : "completed",
       errorMessage:
         competitorErrors.length > 0 ? competitorErrors.join(" | ") : undefined,
+      jobId,
       stats: {
+        errors,
         itemsFound,
         itemsProcessed,
-        errors,
       },
+      status: allFailed ? "failed" : "completed",
     });
 
     // Propagate failure to the pipeline so it's counted as an error

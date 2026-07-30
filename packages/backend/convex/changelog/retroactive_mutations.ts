@@ -7,24 +7,21 @@ import { internalMutation, internalQuery } from "../_generated/server";
 
 export const getJobInternal = internalQuery({
   args: { jobId: v.id("retroactiveJobs") },
-  handler: async (ctx, args) => {
-    return await ctx.db.get(args.jobId);
-  },
+  handler: async (ctx, args) => await ctx.db.get(args.jobId),
 });
 
 export const getCommitsForGroup = internalQuery({
   args: {
-    jobId: v.id("retroactiveJobs"),
     groupId: v.string(),
+    jobId: v.id("retroactiveJobs"),
   },
-  handler: async (ctx, args) => {
-    return await ctx.db
+  handler: async (ctx, args) =>
+    await ctx.db
       .query("retroactiveCommits")
       .withIndex("by_job_group", (q) =>
         q.eq("jobId", args.jobId).eq("groupId", args.groupId)
       )
-      .collect();
-  },
+      .collect(),
 });
 
 export const getExistingVersions = internalQuery({
@@ -43,12 +40,11 @@ export const getExistingVersions = internalQuery({
 
 export const getAllCommitsForJob = internalQuery({
   args: { jobId: v.id("retroactiveJobs") },
-  handler: async (ctx, args) => {
-    return await ctx.db
+  handler: async (ctx, args) =>
+    await ctx.db
       .query("retroactiveCommits")
       .withIndex("by_job", (q) => q.eq("jobId", args.jobId))
-      .collect();
-  },
+      .collect(),
 });
 
 // ============================================
@@ -64,12 +60,12 @@ export const deleteCommitDoc = internalMutation({
 
 export const updateJobProgress = internalMutation({
   args: {
-    jobId: v.id("retroactiveJobs"),
     completedAt: v.optional(v.number()),
     createdReleaseIds: v.optional(v.array(v.id("releases"))),
     currentStep: v.optional(v.string()),
     error: v.optional(v.string()),
     fetchedCommits: v.optional(v.number()),
+    jobId: v.id("retroactiveJobs"),
     processedGroups: v.optional(v.number()),
     status: v.optional(
       v.union(
@@ -104,15 +100,16 @@ export const updateJobProgress = internalMutation({
 
 export const updateJobGroups = internalMutation({
   args: {
-    jobId: v.id("retroactiveJobs"),
     groups: v.array(
       v.object({
-        id: v.string(),
-        title: v.string(),
-        version: v.optional(v.string()),
+        commitCount: v.number(),
         dateFrom: v.number(),
         dateTo: v.number(),
-        commitCount: v.number(),
+        error: v.optional(v.string()),
+        generatedDescription: v.optional(v.string()),
+        generatedTitle: v.optional(v.string()),
+        id: v.string(),
+        releaseId: v.optional(v.id("releases")),
         status: v.union(
           v.literal("pending"),
           v.literal("generating"),
@@ -121,12 +118,11 @@ export const updateJobGroups = internalMutation({
           v.literal("skipped"),
           v.literal("error")
         ),
-        generatedTitle: v.optional(v.string()),
-        generatedDescription: v.optional(v.string()),
-        releaseId: v.optional(v.id("releases")),
-        error: v.optional(v.string()),
+        title: v.string(),
+        version: v.optional(v.string()),
       })
     ),
+    jobId: v.id("retroactiveJobs"),
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.jobId, {
@@ -138,11 +134,11 @@ export const updateJobGroups = internalMutation({
 
 export const updateGroupStatus = internalMutation({
   args: {
-    jobId: v.id("retroactiveJobs"),
     error: v.optional(v.string()),
     generatedDescription: v.optional(v.string()),
     generatedTitle: v.optional(v.string()),
     groupIndex: v.number(),
+    jobId: v.id("retroactiveJobs"),
     releaseId: v.optional(v.id("releases")),
     status: v.union(
       v.literal("pending"),
@@ -187,41 +183,41 @@ export const updateGroupStatus = internalMutation({
 
 export const saveCommitBatch = internalMutation({
   args: {
-    jobId: v.id("retroactiveJobs"),
     commits: v.array(
       v.object({
-        sha: v.string(),
-        message: v.string(),
-        fullMessage: v.string(),
         author: v.string(),
         date: v.string(),
+        fullMessage: v.string(),
+        message: v.string(),
+        sha: v.string(),
       })
     ),
     groupId: v.string(),
+    jobId: v.id("retroactiveJobs"),
   },
   handler: async (ctx, args) => {
     await ctx.db.insert("retroactiveCommits", {
-      jobId: args.jobId,
-      groupId: args.groupId,
       commits: args.commits,
       createdAt: Date.now(),
+      groupId: args.groupId,
+      jobId: args.jobId,
     });
   },
 });
 
 export const createDraftRelease = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
     commits: v.array(
       v.object({
-        sha: v.string(),
-        message: v.string(),
-        fullMessage: v.string(),
         author: v.string(),
         date: v.string(),
+        fullMessage: v.string(),
+        message: v.string(),
+        sha: v.string(),
       })
     ),
     description: v.string(),
+    organizationId: v.id("organizations"),
     title: v.string(),
     version: v.optional(v.string()),
   },
@@ -229,19 +225,19 @@ export const createDraftRelease = internalMutation({
     const now = Date.now();
 
     const releaseId = await ctx.db.insert("releases", {
-      organizationId: args.organizationId,
-      title: args.title,
-      description: args.description,
-      version: args.version,
-      retroactivelyGenerated: true,
       createdAt: now,
+      description: args.description,
+      organizationId: args.organizationId,
+      retroactivelyGenerated: true,
+      title: args.title,
       updatedAt: now,
+      version: args.version,
     });
 
     await ctx.db.insert("releaseCommits", {
-      releaseId,
       commits: args.commits,
       createdAt: now,
+      releaseId,
     });
 
     return releaseId;

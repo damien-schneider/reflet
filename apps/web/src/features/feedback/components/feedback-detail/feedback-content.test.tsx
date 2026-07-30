@@ -244,8 +244,8 @@ describe("FeedbackContent", () => {
     fireEvent.click(screen.getByText("Save changes"));
     await waitFor(() => {
       expect(mockUpdateFeedback).toHaveBeenCalledWith({
-        id: feedbackId,
         description: "new desc",
+        id: feedbackId,
       });
     });
   });

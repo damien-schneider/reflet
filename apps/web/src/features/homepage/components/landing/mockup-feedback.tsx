@@ -37,7 +37,7 @@ export default function FeedbackBoardMockup() {
   const [votedIds, setVotedIds] = useState<Set<string>>(new Set());
   const [selectedId, setSelectedId] = useState("webhooks");
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, amount: 0.3 });
+  const isInView = useInView(ref, { amount: 0.3, once: true });
 
   const toggleVote = (id: string) => {
     setVotedIds((prev) => {

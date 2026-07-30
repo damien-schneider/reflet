@@ -65,8 +65,8 @@ function VerifyEmailContent() {
     if (session?.data?.user?.email) {
       try {
         await authClient.sendVerificationEmail({
-          email: session.data.user.email,
           callbackURL: "/auth/verify-email",
+          email: session.data.user.email,
         });
         setErrorMessage("A new verification email has been sent.");
       } catch {

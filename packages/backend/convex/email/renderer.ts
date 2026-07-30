@@ -31,11 +31,11 @@ export const sendVerificationEmail = internalAction({
 
     await ctx.runMutation(internal.email.send.sendEmail, {
       from: defaultFrom,
-      to: args.to,
-      subject: "Vérifiez votre adresse email",
       html,
-      text,
       replyTo: SUPPORT_EMAIL,
+      subject: "Vérifiez votre adresse email",
+      text,
+      to: args.to,
     });
   },
 });
@@ -43,9 +43,9 @@ export const sendVerificationEmail = internalAction({
 // Send password reset email using react-email template
 export const sendPasswordResetEmail = internalAction({
   args: {
+    resetUrl: v.string(),
     to: v.string(),
     userName: v.optional(v.string()),
-    resetUrl: v.string(),
   },
   handler: async (ctx, args) => {
     const { PasswordResetEmail } = await import(
@@ -53,19 +53,19 @@ export const sendPasswordResetEmail = internalAction({
     );
 
     const component = PasswordResetEmail({
-      userName: args.userName,
       resetUrl: args.resetUrl,
+      userName: args.userName,
     });
     const html = await render(component);
     const text = await render(component, { plainText: true });
 
     await ctx.runMutation(internal.email.send.sendEmail, {
       from: defaultFrom,
-      to: args.to,
-      subject: "Réinitialisez votre mot de passe",
       html,
-      text,
       replyTo: SUPPORT_EMAIL,
+      subject: "Réinitialisez votre mot de passe",
+      text,
+      to: args.to,
     });
   },
 });
@@ -73,9 +73,9 @@ export const sendPasswordResetEmail = internalAction({
 // Send welcome email using react-email template
 export const sendWelcomeEmail = internalAction({
   args: {
+    dashboardUrl: v.optional(v.string()),
     to: v.string(),
     userName: v.optional(v.string()),
-    dashboardUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const siteUrl = process.env.SITE_URL ?? "";
@@ -84,19 +84,19 @@ export const sendWelcomeEmail = internalAction({
       : `${siteUrl}/dashboard`;
 
     const component = WelcomeEmail({
-      userName: args.userName,
       dashboardUrl,
+      userName: args.userName,
     });
     const html = await render(component);
     const text = await render(component, { plainText: true });
 
     await ctx.runMutation(internal.email.send.sendEmail, {
       from: defaultFrom,
-      to: args.to,
-      subject: "Bienvenue sur Reflet",
       html,
-      text,
       replyTo: SUPPORT_EMAIL,
+      subject: "Bienvenue sur Reflet",
+      text,
+      to: args.to,
     });
   },
 });
@@ -104,29 +104,29 @@ export const sendWelcomeEmail = internalAction({
 // Send invitation email using react-email template
 export const sendInvitationEmail = internalAction({
   args: {
-    to: v.string(),
-    organizationName: v.string(),
-    inviterName: v.string(),
-    role: v.union(v.literal("admin"), v.literal("member")),
     acceptUrl: v.string(),
+    inviterName: v.string(),
+    organizationName: v.string(),
+    role: v.union(v.literal("admin"), v.literal("member")),
+    to: v.string(),
   },
   handler: async (ctx, args) => {
     const component = InvitationEmail({
-      organizationName: args.organizationName,
-      inviterName: args.inviterName,
-      role: args.role,
       acceptUrl: args.acceptUrl,
+      inviterName: args.inviterName,
+      organizationName: args.organizationName,
+      role: args.role,
     });
     const html = await render(component);
     const text = await render(component, { plainText: true });
 
     await ctx.runMutation(internal.email.send.sendEmail, {
       from: defaultFrom,
-      to: args.to,
-      subject: `Invitation à rejoindre ${args.organizationName}`,
       html,
-      text,
       replyTo: SUPPORT_EMAIL,
+      subject: `Invitation à rejoindre ${args.organizationName}`,
+      text,
+      to: args.to,
     });
   },
 });
@@ -134,15 +134,15 @@ export const sendInvitationEmail = internalAction({
 // Generic action to render any template and send
 export const sendTemplatedEmail = internalAction({
   args: {
-    to: v.union(v.string(), v.array(v.string())),
+    replyTo: v.optional(v.union(v.string(), v.array(v.string()))),
     subject: v.string(),
     template: v.union(v.literal("verification"), v.literal("welcome")),
     templateProps: v.object({
+      dashboardUrl: v.optional(v.string()),
       userName: v.optional(v.string()),
       verificationUrl: v.optional(v.string()),
-      dashboardUrl: v.optional(v.string()),
     }),
-    replyTo: v.optional(v.union(v.string(), v.array(v.string()))),
+    to: v.union(v.string(), v.array(v.string())),
   },
   handler: async (ctx, args) => {
     let component: React.JSX.Element;
@@ -165,8 +165,8 @@ export const sendTemplatedEmail = internalAction({
           : `${siteUrl}/dashboard`;
 
         component = WelcomeEmail({
-          userName: args.templateProps.userName,
           dashboardUrl,
+          userName: args.templateProps.userName,
         });
         break;
       }
@@ -179,11 +179,11 @@ export const sendTemplatedEmail = internalAction({
 
     await ctx.runMutation(internal.email.send.sendEmail, {
       from: defaultFrom,
-      to: args.to,
-      subject: args.subject,
       html,
-      text,
       replyTo: args.replyTo ?? SUPPORT_EMAIL,
+      subject: args.subject,
+      text,
+      to: args.to,
     });
   },
 });
@@ -191,12 +191,12 @@ export const sendTemplatedEmail = internalAction({
 // Send changelog notification email using react-email template
 export const sendChangelogNotificationEmail = internalAction({
   args: {
-    to: v.string(),
     organizationName: v.string(),
-    releaseTitle: v.string(),
-    releaseVersion: v.optional(v.string()),
     releaseDescription: v.string(),
+    releaseTitle: v.string(),
     releaseUrl: v.string(),
+    releaseVersion: v.optional(v.string()),
+    to: v.string(),
     unsubscribeUrl: v.string(),
   },
   handler: async (ctx, args) => {
@@ -206,10 +206,10 @@ export const sendChangelogNotificationEmail = internalAction({
 
     const component = ChangelogNotificationEmail({
       organizationName: args.organizationName,
-      releaseTitle: args.releaseTitle,
-      releaseVersion: args.releaseVersion,
       releaseDescription: args.releaseDescription,
+      releaseTitle: args.releaseTitle,
       releaseUrl: args.releaseUrl,
+      releaseVersion: args.releaseVersion,
       unsubscribeUrl: args.unsubscribeUrl,
     });
     const html = await render(component);
@@ -217,15 +217,15 @@ export const sendChangelogNotificationEmail = internalAction({
 
     await ctx.runMutation(internal.email.send.sendEmail, {
       from: defaultFrom,
-      to: args.to,
-      subject: `${args.organizationName} - ${args.releaseTitle}`,
-      html,
-      text,
-      replyTo: SUPPORT_EMAIL,
       headers: [
         { name: "List-Unsubscribe", value: args.unsubscribeUrl },
         { name: "List-Unsubscribe-Post", value: "List-Unsubscribe=One-Click" },
       ],
+      html,
+      replyTo: SUPPORT_EMAIL,
+      subject: `${args.organizationName} - ${args.releaseTitle}`,
+      text,
+      to: args.to,
     });
   },
 });
@@ -233,26 +233,26 @@ export const sendChangelogNotificationEmail = internalAction({
 // Send weekly digest email using react-email template
 export const sendWeeklyDigestEmail = internalAction({
   args: {
-    to: v.string(),
-    organizationName: v.string(),
+    dashboardUrl: v.string(),
     newFeedbackCount: v.number(),
-    totalVotes: v.number(),
-    topFeedback: v.array(
-      v.object({
-        title: v.string(),
-        voteCount: v.number(),
-        status: v.string(),
-        url: v.string(),
-      })
-    ),
+    organizationName: v.string(),
     statusChanges: v.array(
       v.object({
-        title: v.string(),
         from: v.string(),
+        title: v.string(),
         to: v.string(),
       })
     ),
-    dashboardUrl: v.string(),
+    to: v.string(),
+    topFeedback: v.array(
+      v.object({
+        status: v.string(),
+        title: v.string(),
+        url: v.string(),
+        voteCount: v.number(),
+      })
+    ),
+    totalVotes: v.number(),
     unsubscribeUrl: v.string(),
   },
   handler: async (ctx, args) => {
@@ -261,12 +261,12 @@ export const sendWeeklyDigestEmail = internalAction({
     );
 
     const component = WeeklyDigestEmail({
-      organizationName: args.organizationName,
-      newFeedbackCount: args.newFeedbackCount,
-      totalVotes: args.totalVotes,
-      topFeedback: args.topFeedback,
-      statusChanges: args.statusChanges,
       dashboardUrl: args.dashboardUrl,
+      newFeedbackCount: args.newFeedbackCount,
+      organizationName: args.organizationName,
+      statusChanges: args.statusChanges,
+      topFeedback: args.topFeedback,
+      totalVotes: args.totalVotes,
       unsubscribeUrl: args.unsubscribeUrl,
     });
     const html = await render(component);
@@ -274,11 +274,11 @@ export const sendWeeklyDigestEmail = internalAction({
 
     await ctx.runMutation(internal.email.send.sendEmail, {
       from: defaultFrom,
-      to: args.to,
-      subject: `${args.organizationName} - Weekly Digest`,
       html,
-      text,
       replyTo: SUPPORT_EMAIL,
+      subject: `${args.organizationName} - Weekly Digest`,
+      text,
+      to: args.to,
     });
   },
 });
@@ -286,12 +286,12 @@ export const sendWeeklyDigestEmail = internalAction({
 // Send feedback shipped notification email
 export const sendFeedbackShippedEmail = internalAction({
   args: {
-    to: v.string(),
-    organizationName: v.string(),
     feedbackTitle: v.string(),
-    releaseTitle: v.string(),
     feedbackUrl: v.string(),
+    organizationName: v.string(),
+    releaseTitle: v.string(),
     releaseUrl: v.string(),
+    to: v.string(),
     unsubscribeUrl: v.string(),
   },
   handler: async (ctx, args) => {
@@ -300,10 +300,10 @@ export const sendFeedbackShippedEmail = internalAction({
     );
 
     const component = FeedbackShippedEmail({
-      organizationName: args.organizationName,
       feedbackTitle: args.feedbackTitle,
-      releaseTitle: args.releaseTitle,
       feedbackUrl: args.feedbackUrl,
+      organizationName: args.organizationName,
+      releaseTitle: args.releaseTitle,
       releaseUrl: args.releaseUrl,
       unsubscribeUrl: args.unsubscribeUrl,
     });
@@ -312,15 +312,15 @@ export const sendFeedbackShippedEmail = internalAction({
 
     await ctx.runMutation(internal.email.send.sendEmail, {
       from: defaultFrom,
-      to: args.to,
-      subject: `${args.organizationName} - Your feedback has shipped!`,
-      html,
-      text,
-      replyTo: SUPPORT_EMAIL,
       headers: [
         { name: "List-Unsubscribe", value: args.unsubscribeUrl },
         { name: "List-Unsubscribe-Post", value: "List-Unsubscribe=One-Click" },
       ],
+      html,
+      replyTo: SUPPORT_EMAIL,
+      subject: `${args.organizationName} - Your feedback has shipped!`,
+      text,
+      to: args.to,
     });
   },
 });

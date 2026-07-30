@@ -46,7 +46,7 @@ export default function CustomDomainChangelogPage() {
           {rssUrl && (
             <a
               className={cn(
-                buttonVariants({ variant: "outline", size: "icon" })
+                buttonVariants({ size: "icon", variant: "outline" })
               )}
               href={rssUrl}
               rel="noopener noreferrer"

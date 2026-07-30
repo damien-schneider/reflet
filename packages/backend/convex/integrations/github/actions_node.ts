@@ -25,8 +25,8 @@ export const getInstallationToken = action({
     // Create JWT for GitHub App authentication
     const now = Math.floor(Date.now() / 1000);
     const payload = {
-      iat: now - 60, // Issued at time (60 seconds in the past to allow for clock drift)
       exp: now + 600, // Expiration time (10 minutes)
+      iat: now - 60, // Issued at time (60 seconds in the past to allow for clock drift)
       iss: appId,
     };
 
@@ -54,12 +54,12 @@ export const getInstallationToken = action({
     const response = await fetch(
       `${GITHUB_API_URL}/app/installations/${args.installationId}/access_tokens`,
       {
-        method: "POST",
         headers: {
-          Authorization: `Bearer ${jwt}`,
           Accept: "application/vnd.github+json",
+          Authorization: `Bearer ${jwt}`,
           "X-GitHub-Api-Version": "2022-11-28",
         },
+        method: "POST",
       }
     );
 
@@ -75,8 +75,8 @@ export const getInstallationToken = action({
       expires_at: string;
     };
     return {
-      token: data.token,
       expiresAt: data.expires_at,
+      token: data.token,
     };
   },
 });

@@ -14,10 +14,10 @@ import { InlineCode } from "@/components/ui/typography";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
-  title: "Sweep Corner - Feedback Card",
   description:
     "A feedback card with a corner vote badge and sweep animation effect.",
   path: "/docs/components/feedback-cards/sweep-corner",
+  title: "Sweep Corner - Feedback Card",
 });
 
 const SOURCE_CODE = readFileSync(
@@ -38,86 +38,86 @@ const IMPORT_CODE = `import {
 
 const SUBCOMPONENTS = [
   {
-    name: "SweepCorner",
     description: "Root provider. Manages vote state via React context.",
+    name: "SweepCorner",
     props: [
       {
-        name: "defaultUpvotes",
-        type: "number",
-        required: true,
         description: "Initial upvote count.",
-      },
-      {
-        name: "defaultDownvotes",
-        type: "number",
+        name: "defaultUpvotes",
         required: true,
-        description: "Initial downvote count.",
+        type: "number",
       },
       {
-        name: "onVoteChange",
-        type: "(voteType: VoteType) => void",
-        required: false,
+        description: "Initial downvote count.",
+        name: "defaultDownvotes",
+        required: true,
+        type: "number",
+      },
+      {
         description: "Callback fired when the vote changes.",
+        name: "onVoteChange",
+        required: false,
+        type: "(voteType: VoteType) => void",
       },
     ],
   },
   {
-    name: "SweepCornerCard",
     description:
       "Card container with rounded border, hover shadow, and transition.",
+    name: "SweepCornerCard",
     props: [],
   },
   {
-    name: "SweepCornerContent",
     description:
       "Content area with padding. Leaves right padding for the badge.",
+    name: "SweepCornerContent",
     props: [],
   },
   {
-    name: "SweepCornerTitle",
     description: "Heading rendered as an h3.",
+    name: "SweepCornerTitle",
     props: [],
   },
   {
-    name: "SweepCornerTags",
     description: "Flex-wrap container for tag pills.",
+    name: "SweepCornerTags",
     props: [],
   },
   {
-    name: "SweepCornerTag",
     description: "Individual colored tag pill.",
+    name: "SweepCornerTag",
     props: [
       {
-        name: "color",
-        type: "string",
-        required: true,
         description:
           "Color key: purple, green, blue, red, amber, pink, or gray.",
+        name: "color",
+        required: true,
+        type: "string",
       },
     ],
   },
   {
-    name: "SweepCornerBadge",
     description:
       "Corner vote badge with animated up/down buttons and net count. Reads vote state from context.",
+    name: "SweepCornerBadge",
     props: [],
   },
   {
-    name: "SweepCornerFooter",
     description:
       "Footer with comment count, time, vote stats, and sweep animation on vote.",
+    name: "SweepCornerFooter",
     props: [
       {
-        name: "comments",
-        type: "number",
-        required: true,
         description: "Comment count.",
+        name: "comments",
+        required: true,
+        type: "number",
       },
       {
-        name: "time",
-        type: "string",
-        required: true,
         description: 'Relative time string, e.g. "3 days ago".',
+        name: "time",
+        required: true,
+        type: "string",
       },
     ],
   },

@@ -14,11 +14,11 @@ import { getAuthUser } from "../shared/utils";
 // ============================================
 
 const PRIORITY_RANK: Record<string, number> = {
-  none: 0,
+  critical: 4,
+  high: 3,
   low: 1,
   medium: 2,
-  high: 3,
-  critical: 4,
+  none: 0,
 };
 
 // ============================================
@@ -181,12 +181,12 @@ export const getCompetitorStatusForFeedback = query({
 
     return {
       competitorsWithFeature,
-      totalCompetitors,
       matchingFeatures: matchingFeatures.map((f) => ({
+        competitors: f.competitors,
         featureName: f.featureName,
         userProductHasIt: f.userProductHasIt,
-        competitors: f.competitors,
       })),
+      totalCompetitors,
     };
   },
 });
@@ -200,8 +200,8 @@ export const getCompetitorStatusForFeedback = query({
  */
 export const applyPriorityBoost = internalMutation({
   args: {
-    feedbackId: v.id("feedback"),
     boostReason: v.string(),
+    feedbackId: v.id("feedback"),
     newPriority: v.union(
       v.literal("critical"),
       v.literal("high"),
@@ -222,8 +222,8 @@ export const applyPriorityBoost = internalMutation({
     if (newRank > currentRank) {
       await ctx.db.patch(args.feedbackId, {
         aiPriority: args.newPriority,
-        aiPriorityReasoning: args.boostReason,
         aiPriorityGeneratedAt: Date.now(),
+        aiPriorityReasoning: args.boostReason,
       });
     }
   },
@@ -239,8 +239,8 @@ const INSIGHT_PRIORITY_TO_FEEDBACK_PRIORITY: Record<string, FeedbackPriority> =
   {
     critical: "critical",
     high: "high",
-    medium: "medium",
     low: "low",
+    medium: "medium",
   };
 
 /**
@@ -268,8 +268,8 @@ export const runPriorityBoostForOrg = internalAction({
         await ctx.runMutation(
           internal.intelligence.feedback_integration.applyPriorityBoost,
           {
-            feedbackId,
             boostReason,
+            feedbackId,
             newPriority: feedbackPriority,
           }
         );

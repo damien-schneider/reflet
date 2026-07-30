@@ -25,10 +25,10 @@ const isSortOption = (value: string): value is SortOption =>
   SORT_OPTIONS.some((o) => o === value);
 
 const sortLabels: Record<SortOption, string> = {
-  votes: "Most Votes",
+  comments: "Most Comments",
   newest: "Newest",
   oldest: "Oldest",
-  comments: "Most Comments",
+  votes: "Most Votes",
 };
 
 export interface FiltersBarProps {

@@ -24,14 +24,14 @@ type BadgeColor =
   | "gray";
 
 const COLOR_MAP: Record<BadgeColor, string> = {
+  amber: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+  blue: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+  gray: "bg-gray-100 text-gray-600 dark:bg-gray-800/30 dark:text-gray-400",
+  green: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+  pink: "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400",
   purple:
     "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-  green: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  blue: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
   red: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-  amber: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-  pink: "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400",
-  gray: "bg-gray-100 text-gray-600 dark:bg-gray-800/30 dark:text-gray-400",
 };
 
 // ─── Vote State ─────────────────────────────────────────────────────────────
@@ -94,7 +94,7 @@ function useVoteState(
     [voteType, upvotes, downvotes, onVoteChange]
   );
 
-  return { voteType, upvotes, downvotes, vote };
+  return { downvotes, upvotes, vote, voteType };
 }
 
 // ─── Context ────────────────────────────────────────────────────────────────
@@ -150,10 +150,10 @@ function MinimalNotch({
 
   const state: VoteState = isControlled
     ? {
-        upvotes: controlledUpvotes,
         downvotes: controlledDownvotes ?? 0,
-        voteType: controlledVoteType ?? null,
+        upvotes: controlledUpvotes,
         vote: (type) => onVote?.(type),
+        voteType: controlledVoteType ?? null,
       }
     : internalState;
 
@@ -346,15 +346,15 @@ function MinimalNotchVote() {
       </button>
       <motion.div
         animate={{
-          height: voteType ? 4 : 3,
           backgroundColor: notchColor,
-          width: voteType ? 24 : 12,
           boxShadow: voteType
             ? `0 0 8px 1px ${notchColor}`
             : "0 0 0px 0px transparent",
+          height: voteType ? 4 : 3,
+          width: voteType ? 24 : 12,
         }}
         className="rounded-full"
-        transition={{ type: "spring", stiffness: 400, damping: 20 }}
+        transition={{ damping: 20, stiffness: 400, type: "spring" }}
       />
       <button
         aria-label={

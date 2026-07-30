@@ -26,8 +26,8 @@ export function PublicFeedbackVoting({
       style={
         hasVoted
           ? {
-              borderColor: primaryColor,
               backgroundColor: `${primaryColor}15`,
+              borderColor: primaryColor,
               color: primaryColor,
             }
           : undefined

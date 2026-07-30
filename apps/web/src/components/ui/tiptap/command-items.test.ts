@@ -12,8 +12,8 @@ const createMockEditor = () => {
     },
   });
   return {
-    chain: () => chain,
     _chain: chain,
+    chain: () => chain,
   };
 };
 

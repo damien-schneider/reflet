@@ -28,13 +28,13 @@ import type { FeedbackLinkStatus } from "./feedback-section-header";
 import { SchedulePicker } from "./schedule-picker";
 
 const STATUS_DISPLAY_LABELS: Record<FeedbackLinkStatus, string> = {
+  closed: "Closed",
+  completed: "Completed",
+  in_progress: "In Progress",
   keep: "Keep current status",
   open: "Open",
-  under_review: "Under Review",
   planned: "Planned",
-  in_progress: "In Progress",
-  completed: "Completed",
-  closed: "Closed",
+  under_review: "Under Review",
 } as const;
 
 interface PublishConfirmDialogProps {

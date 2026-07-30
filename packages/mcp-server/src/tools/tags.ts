@@ -18,14 +18,14 @@ export function registerTagTools(
     "tag_create",
     "Create a new tag for categorizing feedback.",
     {
-      name: z.string().describe("Tag name"),
       color: z.string().describe("Tag color (e.g., 'blue', 'red', 'green')"),
-      icon: z.string().optional().describe("Emoji icon (e.g., '🔥', '📦')"),
       description: z.string().optional().describe("Tag description"),
+      icon: z.string().optional().describe("Emoji icon (e.g., '🔥', '📦')"),
       isPublic: z
         .boolean()
         .optional()
         .describe("Whether the tag is visible in the public widget"),
+      name: z.string().describe("Tag name"),
     },
     async (params) => textResult(await client.createTag(params))
   );
@@ -34,15 +34,15 @@ export function registerTagTools(
     "tag_update",
     "Update an existing tag's properties.",
     {
-      tagId: z.string().describe("The tag ID"),
-      name: z.string().optional().describe("New tag name"),
       color: z.string().optional().describe("New tag color"),
-      icon: z.string().optional().describe("New emoji icon"),
       description: z.string().optional().describe("New description"),
+      icon: z.string().optional().describe("New emoji icon"),
       isPublic: z
         .boolean()
         .optional()
         .describe("Whether the tag is visible in the public widget"),
+      name: z.string().optional().describe("New tag name"),
+      tagId: z.string().describe("The tag ID"),
     },
     async (params) => textResult(await client.updateTag(params))
   );

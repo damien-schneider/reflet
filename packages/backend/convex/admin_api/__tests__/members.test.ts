@@ -16,16 +16,16 @@ describe("admin_api_members", () => {
 
     await t.run(async (ctx) => {
       await ctx.db.insert("organizationMembers", {
-        organizationId: orgId,
-        userId: "user-1",
-        role: "admin",
         createdAt: Date.now(),
+        organizationId: orgId,
+        role: "admin",
+        userId: "user-1",
       });
       await ctx.db.insert("organizationMembers", {
-        organizationId: orgId,
-        userId: "user-2",
-        role: "member",
         createdAt: Date.now(),
+        organizationId: orgId,
+        role: "member",
+        userId: "user-2",
       });
     });
 
@@ -47,8 +47,8 @@ describe("admin_api_members", () => {
     const result = await t.mutation(
       internal.admin_api.members.createInvitation,
       {
-        organizationId: orgId,
         email: "test@example.com",
+        organizationId: orgId,
         role: "member",
       }
     );
@@ -71,15 +71,15 @@ describe("admin_api_members", () => {
     const orgId = await createOrg(t);
 
     await t.mutation(internal.admin_api.members.createInvitation, {
-      organizationId: orgId,
       email: "dup@example.com",
+      organizationId: orgId,
       role: "member",
     });
 
     await expect(
       t.mutation(internal.admin_api.members.createInvitation, {
-        organizationId: orgId,
         email: "dup@example.com",
+        organizationId: orgId,
         role: "admin",
       })
     ).rejects.toThrow("An invitation for this email is already pending");
@@ -92,15 +92,15 @@ describe("admin_api_members", () => {
     const { id: invitationId } = await t.mutation(
       internal.admin_api.members.createInvitation,
       {
-        organizationId: orgId,
         email: "cancel@example.com",
+        organizationId: orgId,
         role: "member",
       }
     );
 
     await t.mutation(internal.admin_api.members.cancelInvitation, {
-      organizationId: orgId,
       invitationId,
+      organizationId: orgId,
     });
 
     const invitations = await t.query(
@@ -117,21 +117,21 @@ describe("admin_api_members", () => {
     // Create invitation manually with accepted status
     const invitationId = await t.run(async (ctx) =>
       ctx.db.insert("invitations", {
-        organizationId: orgId,
+        createdAt: Date.now(),
         email: "accepted@example.com",
+        expiresAt: Date.now() + 86_400_000,
+        inviterId: "user-1",
+        organizationId: orgId,
         role: "member",
         status: "accepted",
-        expiresAt: Date.now() + 86_400_000,
-        createdAt: Date.now(),
-        inviterId: "user-1",
         token: "test-token",
       })
     );
 
     await expect(
       t.mutation(internal.admin_api.members.cancelInvitation, {
-        organizationId: orgId,
         invitationId,
+        organizationId: orgId,
       })
     ).rejects.toThrow("Can only cancel pending invitations");
   });
@@ -141,28 +141,28 @@ describe("admin_api_members", () => {
     const orgId = await createOrg(t);
     const otherOrgId = await t.run(async (ctx) =>
       ctx.db.insert("organizations", {
+        createdAt: Date.now(),
+        isPublic: false,
         name: "Other",
         slug: "other",
-        isPublic: false,
-        subscriptionTier: "free",
         subscriptionStatus: "none",
-        createdAt: Date.now(),
+        subscriptionTier: "free",
       })
     );
 
     const { id: invitationId } = await t.mutation(
       internal.admin_api.members.createInvitation,
       {
-        organizationId: orgId,
         email: "test@example.com",
+        organizationId: orgId,
         role: "member",
       }
     );
 
     await expect(
       t.mutation(internal.admin_api.members.cancelInvitation, {
-        organizationId: otherOrgId,
         invitationId,
+        organizationId: otherOrgId,
       })
     ).rejects.toThrow("Invitation not found");
   });

@@ -6,6 +6,18 @@ vi.mock("@/components/ui/popover", () => ({
   Popover: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
+  PopoverContent: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="popover-content">{children}</div>
+  ),
+  PopoverDescription: ({ children }: { children: React.ReactNode }) => (
+    <p>{children}</p>
+  ),
+  PopoverHeader: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  PopoverTitle: ({ children }: { children: React.ReactNode }) => (
+    <h4>{children}</h4>
+  ),
   PopoverTrigger: ({
     children,
     render: Render,
@@ -17,18 +29,6 @@ vi.mock("@/components/ui/popover", () => ({
     <button data-testid="popover-trigger" type="button" {...props}>
       {children}
     </button>
-  ),
-  PopoverContent: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="popover-content">{children}</div>
-  ),
-  PopoverHeader: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  PopoverTitle: ({ children }: { children: React.ReactNode }) => (
-    <h4>{children}</h4>
-  ),
-  PopoverDescription: ({ children }: { children: React.ReactNode }) => (
-    <p>{children}</p>
   ),
 }));
 

@@ -13,16 +13,16 @@ import {
 
 const mockContextValue = {
   isAdmin: true,
+  onFeedbackClick: vi.fn(),
+  onVote: vi.fn(),
   primaryColor: "#ff0000",
   statuses: [
     {
       _id: "status1" as Id<"organizationStatuses">,
-      name: "Open",
       color: "#3b82f6",
+      name: "Open",
     },
   ],
-  onVote: vi.fn(),
-  onFeedbackClick: vi.fn(),
 };
 
 describe("feedback-board-context", () => {

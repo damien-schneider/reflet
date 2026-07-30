@@ -47,26 +47,6 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
   DropdownList: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="dropdown-list">{children}</div>
   ),
-  DropdownListTrigger: ({
-    render: renderProp,
-  }: {
-    render: React.ReactNode;
-  }) => <div data-testid="dropdown-trigger">{renderProp}</div>,
-  DropdownListContent: ({
-    children,
-  }: {
-    children: React.ReactNode;
-    align?: string;
-  }) => <div data-testid="dropdown-content">{children}</div>,
-  DropdownListSub: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="dropdown-sub">{children}</div>
-  ),
-  DropdownListSubTrigger: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="dropdown-sub-trigger">{children}</div>
-  ),
-  DropdownListSubContent: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="dropdown-sub-content">{children}</div>
-  ),
   DropdownListCheckboxItem: ({
     children,
     checked,
@@ -86,7 +66,12 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
       {children}
     </div>
   ),
-  DropdownListSeparator: () => <hr data-testid="separator" />,
+  DropdownListContent: ({
+    children,
+  }: {
+    children: React.ReactNode;
+    align?: string;
+  }) => <div data-testid="dropdown-content">{children}</div>,
   DropdownListItem: ({
     children,
     onClick,
@@ -104,26 +89,41 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
       {children}
     </div>
   ),
+  DropdownListSeparator: () => <hr data-testid="separator" />,
+  DropdownListSub: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dropdown-sub">{children}</div>
+  ),
+  DropdownListSubContent: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dropdown-sub-content">{children}</div>
+  ),
+  DropdownListSubTrigger: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dropdown-sub-trigger">{children}</div>
+  ),
+  DropdownListTrigger: ({
+    render: renderProp,
+  }: {
+    render: React.ReactNode;
+  }) => <div data-testid="dropdown-trigger">{renderProp}</div>,
 }));
 
 import { FilterDropdown } from "./filter-dropdown";
 
 const baseProps = {
-  statuses: [
-    { _id: "s1", name: "Open", color: "blue" },
-    { _id: "s2", name: "Closed", color: "green" },
-  ],
-  selectedStatusIds: [] as string[],
-  onStatusChange: vi.fn(),
-  tags: [
-    { _id: "t1", name: "Bug", color: "red" },
-    { _id: "t2", name: "Feature", color: "purple" },
-  ],
-  selectedTagIds: [] as string[],
-  onTagChange: vi.fn(),
   hideCompleted: false,
-  onHideCompletedToggle: vi.fn(),
   onClearFilters: vi.fn(),
+  onHideCompletedToggle: vi.fn(),
+  onStatusChange: vi.fn(),
+  onTagChange: vi.fn(),
+  selectedStatusIds: [] as string[],
+  selectedTagIds: [] as string[],
+  statuses: [
+    { _id: "s1", color: "blue", name: "Open" },
+    { _id: "s2", color: "green", name: "Closed" },
+  ],
+  tags: [
+    { _id: "t1", color: "red", name: "Bug" },
+    { _id: "t2", color: "purple", name: "Feature" },
+  ],
 };
 
 describe("FilterDropdown", () => {

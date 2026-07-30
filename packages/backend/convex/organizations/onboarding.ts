@@ -18,10 +18,10 @@ type StepName = (typeof ONBOARDING_STEPS)[number];
 const DEFAULT_STEPS: Record<StepName, boolean> = {
   boardCreated: false,
   brandingCustomized: false,
-  githubConnected: false,
-  widgetInstalled: false,
-  teamInvited: false,
   firstFeedbackCreated: false,
+  githubConnected: false,
+  teamInvited: false,
+  widgetInstalled: false,
 };
 
 async function detectStepsFromOrgData(
@@ -60,38 +60,25 @@ async function detectStepsFromOrgData(
   return {
     boardCreated: org !== null,
     brandingCustomized:
-      org !== null && (org.primaryColor != null || org.logo != null),
-    githubConnected: githubConnection !== null,
+      org !== null && (org.primaryColor !== null || org.logo !== null),
     firstFeedbackCreated: firstFeedback !== null,
-    widgetInstalled: widget !== null,
+    githubConnected: githubConnection !== null,
     teamInvited: members.length > 1,
+    widgetInstalled: widget !== null,
   };
 }
 
 const stepsValidator = v.object({
   boardCreated: v.boolean(),
   brandingCustomized: v.boolean(),
-  githubConnected: v.boolean(),
-  widgetInstalled: v.boolean(),
-  teamInvited: v.boolean(),
   firstFeedbackCreated: v.boolean(),
+  githubConnected: v.boolean(),
+  teamInvited: v.boolean(),
+  widgetInstalled: v.boolean(),
 });
 
 export const getProgress = query({
   args: { organizationId: v.id("organizations") },
-  returns: v.union(
-    v.null(),
-    v.object({
-      _id: v.id("onboardingProgress"),
-      _creationTime: v.number(),
-      organizationId: v.id("organizations"),
-      userId: v.string(),
-      steps: stepsValidator,
-      dismissedAt: v.optional(v.number()),
-      completedAt: v.optional(v.number()),
-      createdAt: v.number(),
-    })
-  ),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
@@ -128,11 +115,23 @@ export const getProgress = query({
       steps: mergedSteps,
     };
   },
+  returns: v.union(
+    v.null(),
+    v.object({
+      _creationTime: v.number(),
+      _id: v.id("onboardingProgress"),
+      completedAt: v.optional(v.number()),
+      createdAt: v.number(),
+      dismissedAt: v.optional(v.number()),
+      organizationId: v.id("organizations"),
+      steps: stepsValidator,
+      userId: v.string(),
+    })
+  ),
 });
 
 export const syncAutoDetectedProgress = mutation({
   args: { organizationId: v.id("organizations") },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
@@ -160,10 +159,10 @@ export const syncAutoDetectedProgress = mutation({
       const allDone = ONBOARDING_STEPS.every((s) => steps[s]);
 
       await ctx.db.insert("onboardingProgress", {
-        organizationId: args.organizationId,
-        userId: user._id,
-        steps,
         createdAt: Date.now(),
+        organizationId: args.organizationId,
+        steps,
+        userId: user._id,
         ...(allDone ? { completedAt: Date.now() } : {}),
       });
       return null;
@@ -193,6 +192,7 @@ export const syncAutoDetectedProgress = mutation({
 
     return null;
   },
+  returns: v.null(),
 });
 
 export const completeStep = mutation({
@@ -207,7 +207,6 @@ export const completeStep = mutation({
       v.literal("firstFeedbackCreated")
     ),
   },
-  returns: v.id("onboardingProgress"),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
@@ -223,10 +222,10 @@ export const completeStep = mutation({
       const allDone = ONBOARDING_STEPS.every((s) => steps[s]);
 
       return await ctx.db.insert("onboardingProgress", {
-        organizationId: args.organizationId,
-        userId: user._id,
-        steps,
         createdAt: Date.now(),
+        organizationId: args.organizationId,
+        steps,
+        userId: user._id,
         ...(allDone ? { completedAt: Date.now() } : {}),
       });
     }
@@ -245,11 +244,11 @@ export const completeStep = mutation({
 
     return progress._id;
   },
+  returns: v.id("onboardingProgress"),
 });
 
 export const dismiss = mutation({
   args: { organizationId: v.id("organizations") },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
@@ -265,14 +264,15 @@ export const dismiss = mutation({
     } else {
       // Create a dismissed progress entry so it doesn't reappear
       await ctx.db.insert("onboardingProgress", {
-        organizationId: args.organizationId,
-        userId: user._id,
-        steps: DEFAULT_STEPS,
         createdAt: Date.now(),
         dismissedAt: Date.now(),
+        organizationId: args.organizationId,
+        steps: DEFAULT_STEPS,
+        userId: user._id,
       });
     }
 
     return null;
   },
+  returns: v.null(),
 });

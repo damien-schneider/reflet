@@ -26,8 +26,8 @@ function generateStdioConfig(
     {
       [wrapper]: {
         reflet: {
-          command: "npx",
           args: ["-y", MCP_NPM_PACKAGE],
+          command: "npx",
           env: {
             REFLET_SECRET_KEY: secretKey,
           },
@@ -47,11 +47,11 @@ function generateHttpConfig(
     {
       [wrapper]: {
         reflet: {
-          type: "http",
-          url: `${CONVEX_SITE_URL}/mcp`,
           headers: {
             Authorization: `Bearer ${secretKey}`,
           },
+          type: "http",
+          url: `${CONVEX_SITE_URL}/mcp`,
         },
       },
     },
@@ -72,47 +72,47 @@ interface IdeConfig {
 
 const IDE_CONFIGS: IdeConfig[] = [
   {
+    description: "Add to your project root",
+    filePath: ".cursor/mcp.json",
     id: "cursor",
     name: "Cursor",
-    filePath: ".cursor/mcp.json",
-    description: "Add to your project root",
     wrapper: "mcpServers",
   },
   {
+    description: "Copilot agent mode",
+    filePath: ".vscode/mcp.json",
     id: "vscode",
     name: "VS Code",
-    filePath: ".vscode/mcp.json",
-    description: "Copilot agent mode",
     wrapper: "servers",
   },
   {
-    id: "claude-desktop",
-    name: "Claude Desktop",
-    filePath: null,
     description:
       "Go to Settings > Developer > Edit Config, then paste the configuration below.",
+    filePath: null,
+    id: "claude-desktop",
+    name: "Claude Desktop",
     wrapper: "mcpServers",
   },
   {
+    description: "Add to your project root",
+    filePath: ".mcp.json",
     id: "claude-code",
     name: "Claude Code",
-    filePath: ".mcp.json",
-    description: "Add to your project root",
     wrapper: "mcpServers",
   },
   {
+    description: "Global configuration",
+    filePath: "~/.codeium/windsurf/mcp_config.json",
     id: "windsurf",
     name: "Windsurf",
-    filePath: "~/.codeium/windsurf/mcp_config.json",
-    description: "Global configuration",
     wrapper: "mcpServers",
   },
   {
-    id: "chatgpt",
-    name: "ChatGPT",
-    filePath: null,
     description:
       "In ChatGPT, go to Settings > Connected MCP Servers > Add. Paste the URL and API key.",
+    filePath: null,
+    id: "chatgpt",
+    name: "ChatGPT",
     wrapper: "mcpServers",
   },
 ] as const;

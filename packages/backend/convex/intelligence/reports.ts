@@ -11,8 +11,8 @@ import { getAuthUser } from "../shared/utils";
  */
 export const getExportReport = query({
   args: {
-    organizationId: v.id("organizations"),
     days: v.optional(v.number()),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -81,34 +81,6 @@ export const getExportReport = query({
     const recentLlmChecks = llmChecks.filter((c) => c.checkedAt >= since);
 
     return {
-      generatedAt: Date.now(),
-      periodDays: days,
-      summary: {
-        totalInsights: recentInsights.length,
-        totalSignals: recentSignals.length,
-        activeCompetitors: competitors.filter((c) => c.status === "active")
-          .length,
-        insightsByType: countBy(recentInsights, "type"),
-        insightsByPriority: countBy(recentInsights, "priority"),
-        signalsBySource: countBy(recentSignals, "source"),
-        signalsByType: countBy(recentSignals, "signalType"),
-      },
-      insights: recentInsights.map((i) => ({
-        title: i.title,
-        type: i.type,
-        priority: i.priority,
-        summary: i.summary,
-        status: i.status,
-        createdAt: i.createdAt,
-      })),
-      competitors: competitors.map((c) => ({
-        name: c.name,
-        websiteUrl: c.websiteUrl,
-        status: c.status,
-        aiProfile: c.aiProfile,
-        featureCount: c.featureList?.length ?? 0,
-        lastScrapedAt: c.lastScrapedAt,
-      })),
       battlecards: battlecards.map((b) => {
         const competitor = competitors.find((c) => c._id === b.competitorId);
         return {
@@ -117,9 +89,25 @@ export const getExportReport = query({
           generatedAt: b.aiGeneratedAt,
         };
       }),
+      competitors: competitors.map((c) => ({
+        aiProfile: c.aiProfile,
+        featureCount: c.featureList?.length ?? 0,
+        lastScrapedAt: c.lastScrapedAt,
+        name: c.name,
+        status: c.status,
+        websiteUrl: c.websiteUrl,
+      })),
       featureComparison: featureComparison?.features ?? [],
+      generatedAt: Date.now(),
+      insights: recentInsights.map((i) => ({
+        createdAt: i.createdAt,
+        priority: i.priority,
+        status: i.status,
+        summary: i.summary,
+        title: i.title,
+        type: i.type,
+      })),
       llmVisibility: {
-        totalChecks: recentLlmChecks.length,
         averageStrength:
           recentLlmChecks.length > 0
             ? recentLlmChecks.reduce(
@@ -127,19 +115,31 @@ export const getExportReport = query({
                 0
               ) / recentLlmChecks.length
             : 0,
+        checks: recentLlmChecks.map((c) => ({
+          checkedAt: c.checkedAt,
+          context: c.context,
+          mentionsProduct: c.mentionsProduct,
+          prompt: c.prompt,
+          recommendationStrength: c.recommendationStrength,
+          sentiment: c.sentiment,
+        })),
         mentionRate:
           recentLlmChecks.length > 0
             ? recentLlmChecks.filter((c) => c.mentionsProduct).length /
               recentLlmChecks.length
             : 0,
-        checks: recentLlmChecks.map((c) => ({
-          prompt: c.prompt,
-          mentionsProduct: c.mentionsProduct,
-          recommendationStrength: c.recommendationStrength,
-          sentiment: c.sentiment,
-          context: c.context,
-          checkedAt: c.checkedAt,
-        })),
+        totalChecks: recentLlmChecks.length,
+      },
+      periodDays: days,
+      summary: {
+        activeCompetitors: competitors.filter((c) => c.status === "active")
+          .length,
+        insightsByPriority: countBy(recentInsights, "priority"),
+        insightsByType: countBy(recentInsights, "type"),
+        signalsBySource: countBy(recentSignals, "source"),
+        signalsByType: countBy(recentSignals, "signalType"),
+        totalInsights: recentInsights.length,
+        totalSignals: recentSignals.length,
       },
     };
   },
@@ -150,8 +150,8 @@ export const getExportReport = query({
  */
 export const getHistoricalTrends = query({
   args: {
-    organizationId: v.id("organizations"),
     days: v.optional(v.number()),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -192,10 +192,10 @@ export const getHistoricalTrends = query({
     return {
       timeline,
       totals: {
-        insights: recentInsights.length,
-        signals: recentSignals.length,
         byInsightType: countBy(recentInsights, "type"),
         bySignalSource: countBy(recentSignals, "source"),
+        insights: recentInsights.length,
+        signals: recentSignals.length,
       },
     };
   },
@@ -215,12 +215,12 @@ interface DailyEntry {
 }
 
 const emptyDay = (): DailyEntry => ({
-  insights: 0,
-  signals: 0,
-  featureSuggestions: 0,
   competitiveAlerts: 0,
-  painPoints: 0,
   featureRequests: 0,
+  featureSuggestions: 0,
+  insights: 0,
+  painPoints: 0,
+  signals: 0,
 });
 
 const getDateKey = (timestamp: number): string =>

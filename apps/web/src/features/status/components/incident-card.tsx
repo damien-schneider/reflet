@@ -30,16 +30,16 @@ interface IncidentCardProps {
 }
 
 const statusOptions = [
-  { value: "investigating" as const, label: "Investigating" },
-  { value: "identified" as const, label: "Identified" },
-  { value: "monitoring" as const, label: "Monitoring" },
-  { value: "resolved" as const, label: "Resolved" },
+  { label: "Investigating", value: "investigating" as const },
+  { label: "Identified", value: "identified" as const },
+  { label: "Monitoring", value: "monitoring" as const },
+  { label: "Resolved", value: "resolved" as const },
 ];
 
 const severityColors = {
-  minor: "border-amber-300 dark:border-amber-800",
-  major: "border-orange-300 dark:border-orange-800",
   critical: "border-red-300 dark:border-red-800",
+  major: "border-orange-300 dark:border-orange-800",
+  minor: "border-amber-300 dark:border-amber-800",
 };
 
 const formatRelativeTime = (timestamp: number): string => {

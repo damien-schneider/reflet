@@ -167,15 +167,17 @@ export function CopyForAgents({
     return contextParts.join("\n");
   }, [repoAnalysis]);
 
-  const getPrompt = useCallback((): string => {
-    return buildAgentPrompt({
-      title,
-      description,
-      tags: validTags,
-      projectContext: getProjectContext(),
-      attachments,
-    });
-  }, [title, description, validTags, getProjectContext, attachments]);
+  const getPrompt = useCallback(
+    (): string =>
+      buildAgentPrompt({
+        attachments,
+        description,
+        projectContext: getProjectContext(),
+        tags: validTags,
+        title,
+      }),
+    [title, description, validTags, getProjectContext, attachments]
+  );
 
   const handleAgentAction = useCallback(
     async (agent: AgentTarget) => {

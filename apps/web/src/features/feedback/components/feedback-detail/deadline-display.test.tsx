@@ -62,6 +62,14 @@ vi.mock("@/components/ui/popover", () => ({
     open: boolean;
     onOpenChange: (open: boolean) => void;
   }) => <div data-open={open}>{children}</div>,
+  PopoverContent: ({
+    children,
+  }: {
+    children: React.ReactNode;
+    align?: string;
+    className?: string;
+    sideOffset?: number;
+  }) => <div data-testid="popover-content">{children}</div>,
   PopoverTrigger: ({
     children,
     render: renderProp,
@@ -76,14 +84,6 @@ vi.mock("@/components/ui/popover", () => ({
       {children}
     </div>
   ),
-  PopoverContent: ({
-    children,
-  }: {
-    children: React.ReactNode;
-    align?: string;
-    className?: string;
-    sideOffset?: number;
-  }) => <div data-testid="popover-content">{children}</div>,
 }));
 
 vi.mock("@/lib/utils", () => ({
@@ -95,9 +95,9 @@ import { DeadlineDisplay } from "./deadline-display";
 
 const baseProps = {
   isOpen: false,
-  onOpenChange: vi.fn(),
   onChange: vi.fn(),
   onClear: vi.fn(),
+  onOpenChange: vi.fn(),
 };
 
 describe("DeadlineDisplay", () => {

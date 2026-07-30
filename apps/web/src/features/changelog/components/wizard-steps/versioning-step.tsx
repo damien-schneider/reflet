@@ -12,9 +12,9 @@ interface VersioningStepProps {
 }
 
 const INCREMENT_OPTIONS = [
-  { id: "patch" as const, label: "Patch", example: "v1.0.0 → v1.0.1" },
-  { id: "minor" as const, label: "Minor", example: "v1.0.0 → v1.1.0" },
-  { id: "major" as const, label: "Major", example: "v1.0.0 → v2.0.0" },
+  { example: "v1.0.0 → v1.0.1", id: "patch" as const, label: "Patch" },
+  { example: "v1.0.0 → v1.1.0", id: "minor" as const, label: "Minor" },
+  { example: "v1.0.0 → v2.0.0", id: "major" as const, label: "Major" },
 ] as const;
 
 export function VersioningStep({ config, onChange }: VersioningStepProps) {

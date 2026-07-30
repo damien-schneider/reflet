@@ -52,12 +52,12 @@ import type {
 } from "@/store/surveys";
 
 const QUESTION_TYPE_ICON_MAP = {
-  rating: Star,
-  nps: ChartBar,
-  text: TextAa,
-  single_choice: RadioButton,
-  multiple_choice: CheckSquare,
   boolean: ToggleLeft,
+  multiple_choice: CheckSquare,
+  nps: ChartBar,
+  rating: Star,
+  single_choice: RadioButton,
+  text: TextAa,
 } as const;
 
 const QUESTION_TYPES: QuestionType[] = [
@@ -123,14 +123,14 @@ function AddQuestionPanel({ onAdd, onCancel }: AddQuestionPanelProps) {
       : undefined;
     const base = getDefaultConfig(selectedType, parsedChoices);
     if (!base) {
-      return undefined;
+      return;
     }
 
     if (selectedType === "rating" || selectedType === "nps") {
       return {
         ...base,
-        minLabel: minLabel || base.minLabel,
         maxLabel: maxLabel || base.maxLabel,
+        minLabel: minLabel || base.minLabel,
       };
     }
     return base;
@@ -141,11 +141,11 @@ function AddQuestionPanel({ onAdd, onCancel }: AddQuestionPanelProps) {
       return;
     }
     onAdd({
-      type: selectedType,
-      title: title.trim(),
+      config: buildConfig(),
       description: description.trim() || undefined,
       required,
-      config: buildConfig(),
+      title: title.trim(),
+      type: selectedType,
     });
   };
 
@@ -377,9 +377,9 @@ function SortableQuestion({
   } = useSortable({ id: question._id });
 
   const style = {
+    opacity: isDragging ? 0.5 : 1,
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
   };
 
   return (
@@ -442,8 +442,8 @@ export function QuestionEditor({ questions, surveyId }: QuestionEditorProps) {
 
       try {
         await reorderQuestions({
-          surveyId,
           questionIds: reordered.map((q) => q._id),
+          surveyId,
         });
       } catch {
         toast.error("Failed to reorder questions");
@@ -462,13 +462,13 @@ export function QuestionEditor({ questions, surveyId }: QuestionEditorProps) {
     }) => {
       try {
         await addQuestion({
-          surveyId,
-          type: question.type,
-          title: question.title,
-          description: question.description,
-          required: question.required,
-          order: questions.length,
           config: question.config,
+          description: question.description,
+          order: questions.length,
+          required: question.required,
+          surveyId,
+          title: question.title,
+          type: question.type,
         });
         toast.success("Question added");
         setIsAdding(false);

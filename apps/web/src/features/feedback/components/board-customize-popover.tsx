@@ -74,11 +74,11 @@ export function BoardCustomizePopover({ orgSlug }: BoardCustomizePopoverProps) {
     setSaveStatus("saving");
     try {
       await updateOrg({
-        id: org._id,
         feedbackSettings: {
           ...org.feedbackSettings,
           ...updates,
         },
+        id: org._id,
       });
       setSaveStatus("saved");
       if (savedTimerRef.current) {
@@ -90,13 +90,14 @@ export function BoardCustomizePopover({ orgSlug }: BoardCustomizePopoverProps) {
     }
   };
 
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       if (savedTimerRef.current) {
         clearTimeout(savedTimerRef.current);
       }
-    };
-  }, []);
+    },
+    []
+  );
 
   return (
     <Popover>

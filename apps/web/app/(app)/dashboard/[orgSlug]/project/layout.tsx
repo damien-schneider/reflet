@@ -76,7 +76,7 @@ export default function ProjectLayout({
   const baseUrl = `/dashboard/${orgSlug}/project`;
 
   return (
-    <ProjectContext value={{ organizationId: org._id, isAdmin, orgSlug }}>
+    <ProjectContext value={{ isAdmin, organizationId: org._id, orgSlug }}>
       <div className="mx-auto max-w-5xl px-4 pt-12 pb-8">
         <div className="flex flex-col md:flex-row md:gap-8">
           {/* Mobile: horizontal scroll tabs */}

@@ -124,10 +124,10 @@ vi.mock("@/components/ui/tiptap/markdown-editor", () => ({
 
 const makeComment = (overrides?: Partial<CommentData>): CommentData => ({
   _id: "comment1" as Id<"comments">,
+  authorImage: "https://example.com/avatar.png",
+  authorName: "John Doe",
   body: "Test comment body",
   createdAt: Date.now() - 60_000,
-  authorName: "John Doe",
-  authorImage: "https://example.com/avatar.png",
   isAuthor: false,
   isOfficial: false,
   ...overrides,
@@ -135,22 +135,22 @@ const makeComment = (overrides?: Partial<CommentData>): CommentData => ({
 
 const defaultProps = {
   comment: makeComment(),
-  replies: [] as CommentData[],
-  isAdmin: false,
-  replyingTo: null as Id<"comments"> | null,
-  replyContent: "",
-  editingCommentId: null as Id<"comments"> | null,
   editCommentContent: "",
+  editingCommentId: null as Id<"comments"> | null,
+  isAdmin: false,
   isSubmittingComment: false,
+  onDelete: vi.fn(),
+  onEdit: vi.fn(),
+  onEditCancel: vi.fn(),
+  onEditContentChange: vi.fn(),
   onReply: vi.fn(),
   onReplyCancel: vi.fn(),
   onReplyContentChange: vi.fn(),
   onSubmitReply: vi.fn(),
-  onEdit: vi.fn(),
-  onEditCancel: vi.fn(),
-  onEditContentChange: vi.fn(),
   onUpdate: vi.fn(),
-  onDelete: vi.fn(),
+  replies: [] as CommentData[],
+  replyContent: "",
+  replyingTo: null as Id<"comments"> | null,
 };
 
 describe("CommentItem", () => {
@@ -412,14 +412,14 @@ describe("CommentItem", () => {
     const replies: CommentData[] = [
       makeComment({
         _id: "reply1" as Id<"comments">,
-        body: "Reply body 1",
         authorName: "Jane",
+        body: "Reply body 1",
         isAuthor: true,
       }),
       makeComment({
         _id: "reply2" as Id<"comments">,
-        body: "Reply body 2",
         authorName: "Bob",
+        body: "Reply body 2",
       }),
     ];
 
@@ -446,8 +446,8 @@ describe("CommentItem", () => {
       const replies = [
         makeComment({
           _id: "reply1" as Id<"comments">,
-          body: "Reply",
           authorName: "Alice",
+          body: "Reply",
         }),
       ];
       render(<CommentItem {...defaultProps} replies={replies} />);
