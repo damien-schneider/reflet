@@ -1,6 +1,6 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("convex/react", () => {
   const mockFn = vi.fn().mockResolvedValue(undefined);
@@ -147,8 +147,6 @@ vi.mock("@/components/ui/typography", () => ({
 }));
 
 import { WidgetSettingsDialog } from "./widget-settings-dialog";
-
-afterEach(cleanup);
 
 const baseWidget = {
   _creationTime: Date.now(),

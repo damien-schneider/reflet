@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -104,7 +104,6 @@ vi.mock("../milestone-form-popover", () => ({
 import { EditorialAccordionView } from "./editorial-accordion-view";
 
 afterEach(() => {
-  cleanup();
   queryResult = mockMilestones;
 });
 

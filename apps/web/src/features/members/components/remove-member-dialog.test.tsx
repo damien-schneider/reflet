@@ -1,6 +1,6 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/components/ui/button", () => ({
   Button: ({
@@ -51,8 +51,6 @@ vi.mock("@/components/ui/dialog", () => ({
 }));
 
 import { RemoveMemberDialog } from "./remove-member-dialog";
-
-afterEach(cleanup);
 
 describe("RemoveMemberDialog", () => {
   it("does not render when member is null", () => {

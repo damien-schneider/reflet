@@ -1,6 +1,6 @@
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@phosphor-icons/react", () => ({
   Megaphone: ({ className }: { className?: string }) => (
@@ -99,8 +99,6 @@ vi.mock("./release-item", () => ({
 
 import type { ReleaseData } from "./release-item";
 import { ReleaseTimeline } from "./release-timeline";
-
-afterEach(cleanup);
 
 const makeRelease = (
   id: string,

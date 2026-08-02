@@ -2,13 +2,7 @@
  * @vitest-environment jsdom
  */
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const { mockDismissJob, mockStartBulkAutoTagging, mockToast } = vi.hoisted(
@@ -56,7 +50,6 @@ const organizationId = "org1" as Id<"organizations">;
 
 describe("AutoTagButton", () => {
   afterEach(() => {
-    cleanup();
     vi.clearAllMocks();
   });
 

@@ -1,6 +1,6 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/components/ui/avatar", () => ({
   Avatar: ({
@@ -21,13 +21,9 @@ vi.mock("@/components/ui/avatar", () => ({
 }));
 
 vi.mock("@/components/ui/button", () => ({
-  Button: ({
-    children,
-    ...props
-  }: {
-    children: React.ReactNode;
-    [key: string]: unknown;
-  }) => <button type="button">{children}</button>,
+  Button: ({ children }: { children: React.ReactNode }) => (
+    <button type="button">{children}</button>
+  ),
 }));
 
 vi.mock("@/components/ui/dropdown-menu", () => ({
@@ -90,8 +86,6 @@ vi.mock("@phosphor-icons/react", () => ({
 }));
 
 import { AssignMemberDropdown } from "./assign-member-dropdown";
-
-afterEach(cleanup);
 
 const members = [
   { email: "alice@test.com", id: "m1", image: undefined, name: "Alice Smith" },
@@ -178,7 +172,8 @@ describe("AssignMemberDropdown", () => {
 
     // Get the Unassigned button in the dropdown (not the trigger)
     const unassignedButtons = screen.getAllByText("Unassigned");
-    await user.click(unassignedButtons.at(-1));
+    const lastUnassigned = unassignedButtons.at(-1);
+    await user.click(lastUnassigned);
     expect(onAssign).toHaveBeenCalledWith(undefined);
   });
 

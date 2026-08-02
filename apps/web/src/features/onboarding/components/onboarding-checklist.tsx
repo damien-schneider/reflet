@@ -43,14 +43,14 @@ function getSteps(orgSlug: string): Step[] {
   return [
     {
       description: "Set up your first feedback board",
-      href: `/dashboard/${orgSlug}/settings`,
+      href: `/dashboard/${orgSlug}/project`,
       icon: <Tray size={ICON_SIZE} />,
       key: "boardCreated",
       label: "Create your feedback board",
     },
     {
       description: "Add your logo and brand colors",
-      href: `/dashboard/${orgSlug}/settings`,
+      href: `/dashboard/${orgSlug}/project`,
       icon: <PaintBrush size={ICON_SIZE} />,
       key: "brandingCustomized",
       label: "Customize your branding",
@@ -64,14 +64,14 @@ function getSteps(orgSlug: string): Step[] {
     },
     {
       description: "Link your GitHub repos for auto-changelogs",
-      href: `/dashboard/${orgSlug}/settings`,
+      href: `/dashboard/${orgSlug}/project`,
       icon: <GithubLogo size={ICON_SIZE} />,
       key: "githubConnected",
       label: "Connect GitHub",
     },
     {
       description: "Embed feedback collection in your app",
-      href: `/dashboard/${orgSlug}/settings`,
+      href: `/dashboard/${orgSlug}/project`,
       icon: <PuzzlePiece size={ICON_SIZE} />,
       key: "widgetInstalled",
       label: "Install the widget",

@@ -32,15 +32,14 @@ import { computeDashboardNavigation } from "./use-dashboard-navigation";
 const routeLabels: Record<string, string> = {
   account: "Account",
   billing: "Billing",
-  branding: "Branding",
   changelog: "Changelog",
+  domains: "Domains",
   feedback: "Feedback",
   general: "General",
   github: "GitHub",
   inbox: "Inbox",
   members: "Members",
   project: "Project",
-  settings: "Settings",
   setup: "Setup",
   "super-admin": "Super Admin",
   tags: "Tags",
@@ -57,25 +56,24 @@ function getRelevantPathSegments(pathname: string): string[] {
     : pathSegments;
 }
 
-function buildBreadcrumbItemsForSettings(
+function buildBreadcrumbItemsForProject(
   orgSlug: string,
   relevantSegments: string[]
 ): Array<{ label: string; href: string; isActive: boolean }> {
   const items: Array<{ label: string; href: string; isActive: boolean }> = [
     {
-      href: `/dashboard/${orgSlug}/settings`,
+      href: `/dashboard/${orgSlug}/project`,
       isActive: relevantSegments.length === 2,
-      label: "Settings",
+      label: "Project",
     },
   ];
 
   if (relevantSegments.length > 2) {
-    const settingsSegment = relevantSegments[2];
-    const settingsLabel = routeLabels[settingsSegment] ?? settingsSegment;
+    const projectSegment = relevantSegments[2];
     items.push({
-      href: `/dashboard/${orgSlug}/settings/${settingsSegment}`,
+      href: `/dashboard/${orgSlug}/project/${projectSegment}`,
       isActive: true,
-      label: settingsLabel,
+      label: routeLabels[projectSegment] ?? projectSegment,
     });
   }
 
@@ -126,8 +124,8 @@ function buildBreadcrumbItems(
   const routeSegment = relevantSegments[1];
   const routeLabel = routeLabels[routeSegment] ?? routeSegment;
 
-  if (routeSegment === "settings") {
-    items.push(...buildBreadcrumbItemsForSettings(orgSlug, relevantSegments));
+  if (routeSegment === "project") {
+    items.push(...buildBreadcrumbItemsForProject(orgSlug, relevantSegments));
   } else {
     items.push({
       href: `/dashboard/${orgSlug}/${routeSegment}`,

@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -83,7 +83,6 @@ const baseProps = {
 
 describe("SubmitFeedbackDialog", () => {
   afterEach(() => {
-    cleanup();
     vi.clearAllMocks();
     mockUseQuery.mockReturnValue(undefined);
   });

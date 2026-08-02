@@ -1,50 +1,24 @@
 import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
+import {
+  MAX_SUPPORT_MESSAGE_LENGTH,
+  MAX_SUPPORT_SUBJECT_LENGTH,
+} from "../shared/constants";
+import { validateInputLength } from "../shared/validators";
+import { resolveConversationAccess } from "./access";
+import { resolveAssignedUser, resolveConversationPerson } from "./people";
+import {
+  buildMessagePreview,
+  isValidEmail,
+  supportConversationDetail,
+  supportConversationDoc,
+} from "./validators";
 
-type AuthCtx = Parameters<typeof authComponent.safeGetAuthUser>[0];
-
-const getAuthUser = async (ctx: AuthCtx) => {
-  const user = await authComponent.safeGetAuthUser(ctx);
-  if (!user) {
-    throw new Error("Not authenticated");
-  }
-  return user;
-};
-
-function formatUserInfo(user: {
-  name?: string | null;
-  email: string;
-  image?: string | null;
-}) {
-  return {
-    email: user.email,
-    image: user.image || undefined,
-    name: user.name || undefined,
-  };
-}
-
-function formatGuestUserInfo(guestEmail?: string) {
-  return guestEmail
-    ? { email: guestEmail, image: undefined, name: undefined }
-    : undefined;
-}
-
-async function formatAssignedUser(ctx: AuthCtx, assignedTo?: string) {
-  if (!assignedTo) {
-    return;
-  }
-  const user = await authComponent.getAnyUserById(ctx, assignedTo);
-  if (!user) {
-    return;
-  }
-  return {
-    email: user.email,
-    id: user._id,
-    image: user.image || undefined,
-    name: user.name || undefined,
-  };
-}
+const byMostRecent = (
+  a: { lastMessageAt: number },
+  b: { lastMessageAt: number }
+) => b.lastMessageAt - a.lastMessageAt;
 
 export const listForUser = query({
   args: {
@@ -63,81 +37,9 @@ export const listForUser = query({
       )
       .collect();
 
-    conversations.sort((a, b) => b.lastMessageAt - a.lastMessageAt);
-
-    return conversations;
+    return conversations.sort(byMostRecent);
   },
-});
-
-export const listForAdmin = query({
-  args: {
-    assignedTo: v.optional(v.string()),
-    organizationId: v.id("organizations"),
-    status: v.optional(
-      v.array(
-        v.union(
-          v.literal("open"),
-          v.literal("awaiting_reply"),
-          v.literal("resolved"),
-          v.literal("closed")
-        )
-      )
-    ),
-  },
-  handler: async (ctx, args) => {
-    const user = await authComponent.safeGetAuthUser(ctx);
-    if (!user) {
-      return [];
-    }
-
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", args.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership || membership.role === "member") {
-      return [];
-    }
-
-    let conversations = await ctx.db
-      .query("supportConversations")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .collect();
-
-    if (args.status && args.status.length > 0) {
-      conversations = conversations.filter((c) =>
-        args.status?.includes(c.status)
-      );
-    }
-
-    if (args.assignedTo) {
-      conversations = conversations.filter(
-        (c) => c.assignedTo === args.assignedTo
-      );
-    }
-
-    conversations.sort((a, b) => b.lastMessageAt - a.lastMessageAt);
-
-    const conversationsWithUser = await Promise.all(
-      conversations.map(async (conv) => {
-        const convUser = conv.guestId
-          ? null
-          : await authComponent.getAnyUserById(ctx, conv.userId);
-        return {
-          ...conv,
-          user: convUser
-            ? formatUserInfo(convUser)
-            : formatGuestUserInfo(conv.guestEmail),
-        };
-      })
-    );
-
-    return conversationsWithUser;
-  },
+  returns: v.array(supportConversationDoc),
 });
 
 export const listForGuest = query({
@@ -151,218 +53,11 @@ export const listForGuest = query({
       .withIndex("by_guest", (q) => q.eq("guestId", args.guestId))
       .collect();
 
-    const filtered = conversations.filter(
-      (c) => c.organizationId === args.organizationId
-    );
-
-    filtered.sort((a, b) => b.lastMessageAt - a.lastMessageAt);
-
-    return filtered;
+    return conversations
+      .filter((c) => c.organizationId === args.organizationId)
+      .sort(byMostRecent);
   },
-});
-
-export const get = query({
-  args: {
-    guestId: v.optional(v.string()),
-    id: v.id("supportConversations"),
-  },
-  handler: async (ctx, args) => {
-    const user = await authComponent.safeGetAuthUser(ctx);
-
-    const conversation = await ctx.db.get(args.id);
-    if (!conversation) {
-      return null;
-    }
-
-    // Guest access: verify guestId matches
-    if (!user) {
-      const isValidGuest =
-        args.guestId && conversation.guestId === args.guestId;
-      if (!isValidGuest) {
-        return null;
-      }
-
-      return {
-        ...conversation,
-        assignedUser: await formatAssignedUser(ctx, conversation.assignedTo),
-        isAdmin: false,
-        user: formatGuestUserInfo(conversation.guestEmail),
-      };
-    }
-
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q
-          .eq("organizationId", conversation.organizationId)
-          .eq("userId", user._id)
-      )
-      .unique();
-
-    const isAdmin =
-      membership?.role === "admin" || membership?.role === "owner";
-    const isOwner = conversation.userId === user._id;
-
-    if (!(isAdmin || isOwner)) {
-      return null;
-    }
-
-    const convUser = conversation.guestId
-      ? null
-      : await authComponent.getAnyUserById(ctx, conversation.userId);
-
-    return {
-      ...conversation,
-      assignedUser: await formatAssignedUser(ctx, conversation.assignedTo),
-      isAdmin,
-      user: convUser
-        ? formatUserInfo(convUser)
-        : formatGuestUserInfo(conversation.guestEmail),
-    };
-  },
-});
-
-export const create = mutation({
-  args: {
-    guestEmail: v.optional(v.string()),
-    guestId: v.optional(v.string()),
-    initialMessage: v.string(),
-    organizationId: v.id("organizations"),
-    subject: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    const user = await authComponent.safeGetAuthUser(ctx);
-
-    if (!(user || (args.guestId && args.guestEmail))) {
-      throw new Error("Either authentication or guest email is required");
-    }
-
-    const org = await ctx.db.get(args.organizationId);
-    if (!org) {
-      throw new Error("Organization not found");
-    }
-
-    // Already validated that either user or guestId exists above
-    const senderId = user?._id ?? (args.guestId as string);
-    const now = Date.now();
-
-    const conversationId = await ctx.db.insert("supportConversations", {
-      adminUnreadCount: 1,
-      assignedTo: undefined,
-      createdAt: now,
-      guestEmail: user ? undefined : args.guestEmail,
-      guestId: user ? undefined : args.guestId,
-      lastMessageAt: now,
-      organizationId: args.organizationId,
-      status: "open",
-      subject: args.subject,
-      updatedAt: now,
-      userId: senderId,
-      userUnreadCount: 0,
-    });
-
-    await ctx.db.insert("supportMessages", {
-      body: args.initialMessage,
-      conversationId,
-      createdAt: now,
-      isRead: false,
-      senderId,
-      senderType: "user",
-    });
-
-    return conversationId;
-  },
-});
-
-export const updateStatus = mutation({
-  args: {
-    id: v.id("supportConversations"),
-    status: v.union(
-      v.literal("open"),
-      v.literal("awaiting_reply"),
-      v.literal("resolved"),
-      v.literal("closed")
-    ),
-  },
-  handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
-
-    const conversation = await ctx.db.get(args.id);
-    if (!conversation) {
-      throw new Error("Conversation not found");
-    }
-
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q
-          .eq("organizationId", conversation.organizationId)
-          .eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership || membership.role === "member") {
-      throw new Error("Only admins can update conversation status");
-    }
-
-    await ctx.db.patch(args.id, {
-      status: args.status,
-      updatedAt: Date.now(),
-    });
-
-    return args.id;
-  },
-});
-
-export const assign = mutation({
-  args: {
-    assignedTo: v.optional(v.string()),
-    id: v.id("supportConversations"),
-  },
-  handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
-
-    const conversation = await ctx.db.get(args.id);
-    if (!conversation) {
-      throw new Error("Conversation not found");
-    }
-
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q
-          .eq("organizationId", conversation.organizationId)
-          .eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership || membership.role === "member") {
-      throw new Error("Only admins can assign conversations");
-    }
-
-    if (args.assignedTo) {
-      const { assignedTo } = args;
-      const assigneeMembership = await ctx.db
-        .query("organizationMembers")
-        .withIndex("by_org_user", (q) =>
-          q
-            .eq("organizationId", conversation.organizationId)
-            .eq("userId", assignedTo)
-        )
-        .unique();
-
-      if (!assigneeMembership) {
-        throw new Error("Assignee is not a member of this organization");
-      }
-    }
-
-    await ctx.db.patch(args.id, {
-      assignedTo: args.assignedTo,
-      updatedAt: Date.now(),
-    });
-
-    return args.id;
-  },
+  returns: v.array(supportConversationDoc),
 });
 
 export const getUnreadCountForUser = query({
@@ -384,79 +79,111 @@ export const getUnreadCountForUser = query({
 
     return conversations.reduce((acc, conv) => acc + conv.userUnreadCount, 0);
   },
+  returns: v.number(),
 });
 
-export const getUnreadCountForAdmin = query({
+export const get = query({
   args: {
-    organizationId: v.id("organizations"),
+    guestId: v.optional(v.string()),
+    id: v.id("supportConversations"),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.safeGetAuthUser(ctx);
-    if (!user) {
-      return 0;
+    const conversation = await ctx.db.get(args.id);
+    if (!conversation) {
+      return null;
     }
 
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", args.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership || membership.role === "member") {
-      return 0;
-    }
-
-    const conversations = await ctx.db
-      .query("supportConversations")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .collect();
-
-    return conversations.reduce((acc, conv) => acc + conv.adminUnreadCount, 0);
-  },
-});
-
-export const getSupportSettings = query({
-  args: {
-    organizationId: v.id("organizations"),
-  },
-  handler: async (ctx, args) => {
-    const org = await ctx.db.get(args.organizationId);
-    if (!org) {
+    const access = await resolveConversationAccess(
+      ctx,
+      conversation,
+      args.guestId
+    );
+    if (!access) {
       return null;
     }
 
     return {
-      supportEnabled: org.supportEnabled ?? false,
+      ...conversation,
+      assignedUser: access.isAdmin
+        ? await resolveAssignedUser(ctx, conversation.assignedTo)
+        : undefined,
+      isAdmin: access.isAdmin,
+      user: await resolveConversationPerson(ctx, conversation),
     };
   },
+  returns: v.union(supportConversationDetail, v.null()),
 });
 
-export const updateSupportSettings = mutation({
+export const create = mutation({
   args: {
+    guestEmail: v.optional(v.string()),
+    guestId: v.optional(v.string()),
+    initialMessage: v.string(),
     organizationId: v.id("organizations"),
-    supportEnabled: v.boolean(),
+    subject: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await authComponent.safeGetAuthUser(ctx);
+    const guest =
+      args.guestId && args.guestEmail
+        ? { email: args.guestEmail, id: args.guestId }
+        : null;
 
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", args.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership || membership.role === "member") {
-      throw new Error("Only admins can update support settings");
+    if (!(user || guest)) {
+      throw new Error("Either authentication or guest email is required");
+    }
+    if (guest && !isValidEmail(guest.email)) {
+      throw new Error("A valid guest email is required");
     }
 
-    await ctx.db.patch(args.organizationId, {
-      supportEnabled: args.supportEnabled,
+    const body = args.initialMessage.trim();
+    if (!body) {
+      throw new Error("Message cannot be empty");
+    }
+    validateInputLength(body, MAX_SUPPORT_MESSAGE_LENGTH, "Message");
+    validateInputLength(args.subject, MAX_SUPPORT_SUBJECT_LENGTH, "Subject");
+
+    const org = await ctx.db.get(args.organizationId);
+    if (!org) {
+      throw new Error("Organization not found");
+    }
+    if (!org.supportEnabled) {
+      throw new Error("Support is not enabled for this organization");
+    }
+
+    const senderId = user?._id ?? guest?.id;
+    if (!senderId) {
+      throw new Error("Either authentication or guest email is required");
+    }
+
+    const now = Date.now();
+
+    const conversationId = await ctx.db.insert("supportConversations", {
+      adminUnreadCount: 1,
+      assignedTo: undefined,
+      createdAt: now,
+      guestEmail: user ? undefined : guest?.email,
+      guestId: user ? undefined : guest?.id,
+      lastMessageAt: now,
+      lastMessagePreview: buildMessagePreview(body),
+      organizationId: args.organizationId,
+      status: "open",
+      subject: args.subject?.trim() || undefined,
+      updatedAt: now,
+      userId: senderId,
+      userUnreadCount: 0,
     });
 
-    return args.organizationId;
+    await ctx.db.insert("supportMessages", {
+      body,
+      conversationId,
+      createdAt: now,
+      isRead: false,
+      senderId,
+      senderType: "user",
+    });
+
+    return conversationId;
   },
+  returns: v.id("supportConversations"),
 });

@@ -1,6 +1,6 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { RepositorySelectorSection } from "./repository-selector-card";
 
 // Mock the UI components
@@ -265,10 +265,6 @@ const mockRepositories = [
 ];
 
 describe("RepositorySelectorSection - Combobox Filtering", () => {
-  afterEach(() => {
-    cleanup();
-  });
-
   describe("when typing in the combobox input", () => {
     it("should filter repositories by repository name", async () => {
       const user = userEvent.setup();

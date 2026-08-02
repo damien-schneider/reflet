@@ -22,6 +22,7 @@ export const supportTables = {
     guestEmail: v.optional(v.string()),
     guestId: v.optional(v.string()),
     lastMessageAt: v.number(),
+    lastMessagePreview: v.optional(v.string()),
     organizationId: v.id("organizations"),
     status: supportConversationStatus,
     subject: v.optional(v.string()),

@@ -1,6 +1,6 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/components/ui/popover", () => ({
   Popover: ({ children }: { children: React.ReactNode }) => (
@@ -87,8 +87,6 @@ vi.mock("@/lib/utils", () => ({
 }));
 
 import { SettingsPopover } from "./settings-popover";
-
-afterEach(cleanup);
 
 describe("SettingsPopover", () => {
   it("renders a gear trigger button", () => {

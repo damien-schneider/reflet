@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -190,7 +190,6 @@ vi.mock("./widget-settings-dialog", () => ({
 import { WidgetCard } from "./widget-card";
 
 afterEach(() => {
-  cleanup();
   mockUpdateWidget.mockClear();
   mockRemoveWidget.mockClear();
 });

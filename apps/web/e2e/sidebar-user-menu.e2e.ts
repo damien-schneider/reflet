@@ -1,58 +1,18 @@
 import { expect, test } from "@playwright/test";
-
-const AUTH_SIGNUP_HEADING = "Create an account";
-
-const DASHBOARD_URL_PATTERN = /\/dashboard\/[^/]+$/;
-
-async function signUpNewUser(
-  page: import("@playwright/test").Page,
-  user: { email: string; password: string }
-) {
-  await page.getByTestId("email-input").fill(user.email);
-  await page.getByTestId("email-input").blur();
-
-  await expect(page.locator("h1")).toContainText(AUTH_SIGNUP_HEADING, {
-    timeout: 10_000,
-  });
-
-  await page.getByTestId("password-input").fill(user.password);
-  await page.getByTestId("confirm-password-input").fill(user.password);
-  await page.getByRole("button", { name: "Create my account" }).click();
-}
+import {
+  makeTestUser,
+  openUserMenu,
+  signUpAndLandOnDashboard,
+} from "./helpers/auth";
 
 test.describe("Sidebar User Menu", () => {
-  test("should open user menu as a submenu", async ({ page }) => {
-    const timestamp = Date.now();
-    const TEST_USER = {
-      email: `sidebar-test-${timestamp}@mail.com`,
-      password: "password123",
-    };
+  test("opens the account dropdown from the sidebar", async ({ page }) => {
+    const user = makeTestUser("sidebar-user");
+    await signUpAndLandOnDashboard(page, user);
 
-    // 1. Sign up to get to the dashboard
-    await page.goto("/dashboard");
-    await page.waitForLoadState("domcontentloaded", { timeout: 10_000 });
+    await openUserMenu(page, user);
 
-    await signUpNewUser(page, TEST_USER);
-
-    // Wait for the dashboard to load (redirect to /dashboard/xyz)
-    await page.waitForURL(DASHBOARD_URL_PATTERN, { timeout: 20_000 });
-    await page.waitForLoadState("networkidle");
-
-    // 2. Find the user menu button in the sidebar footer (the collapsible trigger)
-    const userButton = page.locator('[data-slot="collapsible-trigger"]');
-    await expect(userButton).toBeVisible({ timeout: 15_000 });
-    await userButton.click({ force: true });
-    await page.waitForTimeout(500);
-
-    // If Sign out not visible, try clicking again
-    const signOutButton = page.getByText("Sign out");
-    const isVisible = await signOutButton.isVisible();
-    if (!isVisible) {
-      await userButton.click({ force: true });
-      await page.waitForTimeout(500);
-    }
-
-    // 3. Check if "Sign out" appears (it's a submenu item after expanding)
-    await expect(signOutButton).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText("My Account")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText("Sign out")).toBeVisible({ timeout: 10_000 });
   });
 });

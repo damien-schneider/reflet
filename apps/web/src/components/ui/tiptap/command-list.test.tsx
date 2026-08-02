@@ -1,5 +1,5 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/utils", () => ({
   cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
@@ -41,10 +41,6 @@ describe("CommandList", () => {
     vi.clearAllMocks();
     const mod = await import("./command-list");
     CommandList = mod.CommandList;
-  });
-
-  afterEach(() => {
-    cleanup();
   });
 
   it("returns null when items array is empty", () => {

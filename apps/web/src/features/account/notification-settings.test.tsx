@@ -1,6 +1,6 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("convex/react", () => ({
   useMutation: vi.fn(() => vi.fn()),
@@ -166,8 +166,6 @@ import { useQuery } from "convex/react";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
 
 import { NotificationSettings } from "./notification-settings";
-
-afterEach(cleanup);
 
 describe("NotificationSettings", () => {
   it("renders Push Notifications card", () => {

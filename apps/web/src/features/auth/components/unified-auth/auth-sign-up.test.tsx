@@ -1,8 +1,8 @@
 /**
  * @vitest-environment jsdom
  */
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("motion/react", () => ({
   AnimatePresence: ({ children }: { children: React.ReactNode }) => (
@@ -47,8 +47,6 @@ vi.mock("./lib/auth-validation", () => ({
 }));
 
 import { AuthHeader } from "./auth-sign-up";
-
-afterEach(cleanup);
 
 describe("AuthHeader", () => {
   it("renders Authentication title when mode is null", () => {

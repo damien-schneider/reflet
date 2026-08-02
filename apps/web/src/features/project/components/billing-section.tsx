@@ -1,20 +1,20 @@
 "use client";
 
-import {
-  DEFAULT_LIMITS,
-  PLANS,
-} from "@app/(app)/dashboard/[orgSlug]/settings/billing/billing-config";
-import { BillingToggle } from "@app/(app)/dashboard/[orgSlug]/settings/billing/billing-toggle";
-import type {
-  BillingInterval,
-  PlanTier,
-} from "@app/(app)/dashboard/[orgSlug]/settings/billing/billing-types";
-import { PlanCard } from "@app/(app)/dashboard/[orgSlug]/settings/billing/plan-card";
-import { UsageSection } from "@app/(app)/dashboard/[orgSlug]/settings/billing/usage-card";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useAction, useQuery } from "convex/react";
 import { useState } from "react";
+import {
+  DEFAULT_LIMITS,
+  PLANS,
+} from "@/features/project/components/billing/billing-config";
+import { BillingToggle } from "@/features/project/components/billing/billing-toggle";
+import type {
+  BillingInterval,
+  PlanTier,
+} from "@/features/project/components/billing/billing-types";
+import { PlanCard } from "@/features/project/components/billing/plan-card";
+import { UsageSection } from "@/features/project/components/billing/usage-card";
 import { capture } from "@/lib/analytics";
 
 interface BillingSectionProps {

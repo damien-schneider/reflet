@@ -1,5 +1,5 @@
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@phosphor-icons/react", () => ({
   Brain: () => <span data-testid="icon-brain" />,
@@ -63,8 +63,6 @@ vi.mock("@/components/ui/typography", () => ({
 }));
 
 import { GitHubConnectionPrompt } from "./github-connection-prompt";
-
-afterEach(cleanup);
 
 describe("GitHubConnectionPrompt", () => {
   it("renders title", () => {

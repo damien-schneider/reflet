@@ -1,5 +1,5 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/components/ui/button", () => ({
   Button: ({
@@ -47,8 +47,6 @@ vi.mock("@/components/ui/dialog", () => ({
 }));
 
 import { DeleteReleaseDialog } from "./delete-release-dialog";
-
-afterEach(cleanup);
 
 describe("DeleteReleaseDialog", () => {
   const defaultProps = {

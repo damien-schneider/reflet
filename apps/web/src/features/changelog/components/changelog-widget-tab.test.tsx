@@ -1,5 +1,5 @@
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockUseMutation = vi.fn();
@@ -118,7 +118,6 @@ const mockToast = toast as unknown as {
 };
 
 afterEach(() => {
-  cleanup();
   vi.clearAllMocks();
 });
 

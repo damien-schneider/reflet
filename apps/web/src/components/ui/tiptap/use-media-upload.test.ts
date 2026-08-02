@@ -1,5 +1,5 @@
-import { act, cleanup, renderHook } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { act, renderHook } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockGenerateUploadUrl = vi
   .fn()
@@ -37,10 +37,6 @@ describe("useMediaUpload", () => {
     });
     const mod = await import("./use-media-upload");
     useMediaUpload = mod.useMediaUpload;
-  });
-
-  afterEach(() => {
-    cleanup();
   });
 
   it("returns initial state", () => {

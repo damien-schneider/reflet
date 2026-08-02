@@ -1,5 +1,5 @@
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock the Tiptap components and hooks before importing the component
 const mockCommands = {
@@ -143,10 +143,6 @@ const mockUseTiptapEditor = useTiptapMarkdownEditor as ReturnType<typeof vi.fn>;
 describe("TiptapMarkdownEditor", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  afterEach(() => {
-    cleanup();
   });
 
   it("renders with the correct container class", () => {

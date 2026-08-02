@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { cleanup, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@phosphor-icons/react", () => ({
@@ -31,7 +31,6 @@ const makeItem = (overrides: Partial<FeedbackItem> = {}): FeedbackItem => ({
 
 describe("FeedbackCardContent", () => {
   afterEach(() => {
-    cleanup();
     vi.clearAllMocks();
   });
 

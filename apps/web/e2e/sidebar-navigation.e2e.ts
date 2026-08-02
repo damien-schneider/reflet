@@ -1,119 +1,56 @@
 import { expect, test } from "@playwright/test";
+import {
+  createOrganization,
+  makeOrgName,
+  makeTestUser,
+  signUpAndLandOnDashboard,
+} from "./helpers/auth";
 
-const AUTH_SIGNUP_HEADING = "Create an account";
+const NAV_LINKS = [
+  { name: "Project", path: "project" },
+  { name: "Feedback", path: "" },
+  { name: "Changelog", path: "changelog" },
+  { name: "Inbox", path: "inbox" },
+] as const;
 
-const DASHBOARD_URL_PATTERN = /\/dashboard\/[^/]+$/;
-const BOARDS_URL_PATTERN = /\/dashboard\/[^/]+\/boards$/;
-const SETTINGS_URL_PATTERN = /\/dashboard\/[^/]+\/settings$/;
-const BOARDS_LINK_REGEX = /Boards/i;
-const SETTINGS_LINK_REGEX = /Settings/i;
-
-async function signUpNewUser(
-  page: import("@playwright/test").Page,
-  user: { email: string; password: string }
-) {
-  await page.getByTestId("email-input").fill(user.email);
-  await page.getByTestId("email-input").blur();
-
-  await expect(page.locator("h1")).toContainText(AUTH_SIGNUP_HEADING, {
-    timeout: 10_000,
-  });
-
-  await page.getByTestId("password-input").fill(user.password);
-  await page.getByTestId("confirm-password-input").fill(user.password);
-  await page.getByRole("button", { name: "Create my account" }).click();
-}
-
-test.describe("Sidebar Navigation - Boards and Settings", () => {
-  test("should navigate to Boards page without 404 error", async ({ page }) => {
-    const timestamp = Date.now();
-    const testUser = {
-      email: `nav-test-${timestamp}@example.com`,
-      password: "password123",
-    };
-
-    // Track 404 responses
-    const responses404: string[] = [];
+test.describe("Sidebar navigation", () => {
+  test("points every workspace link at a live route", async ({ page }) => {
+    const notFound: string[] = [];
     page.on("response", (response) => {
       if (response.status() === 404) {
-        responses404.push(response.url());
+        notFound.push(response.url());
       }
     });
 
-    // 1. Sign up to get to the dashboard
-    await page.goto("/dashboard");
-    await page.waitForLoadState("domcontentloaded", { timeout: 10_000 });
+    await signUpAndLandOnDashboard(page, makeTestUser("nav"));
+    const slug = await createOrganization(page, makeOrgName("Nav Org"));
 
-    await signUpNewUser(page, testUser);
+    for (const link of NAV_LINKS) {
+      const expected = link.path
+        ? `/dashboard/${slug}/${link.path}`
+        : `/dashboard/${slug}`;
 
-    // Wait for the dashboard to load
-    await page.waitForURL(DASHBOARD_URL_PATTERN, { timeout: 20_000 });
-    await page.waitForLoadState("networkidle");
+      const navLink = page
+        .getByRole("link", { name: link.name })
+        .filter({ hasText: link.name })
+        .first();
 
-    // 2. Click on "Boards" in sidebar
-    const boardsLink = page.getByRole("link", { name: BOARDS_LINK_REGEX });
-    await expect(boardsLink).toBeVisible({ timeout: 10_000 });
-    await boardsLink.click();
+      await expect(navLink).toBeVisible({ timeout: 30_000 });
+      await expect(navLink).toHaveAttribute("href", expected);
+    }
 
-    // 3. Verify URL and no 404
-    await expect(page).toHaveURL(BOARDS_URL_PATTERN, { timeout: 15_000 });
-    await page.waitForLoadState("networkidle");
-
-    // Check no 404 HTTP responses for the boards page
-    const boards404 = responses404.filter((url) => url.includes("/boards"));
-    expect(boards404.length).toBe(0);
-
-    // Verify page content - should show Boards heading (h1 specifically)
-    await expect(
-      page.getByRole("heading", { exact: true, level: 1, name: "Boards" })
-    ).toBeVisible({
-      timeout: 10_000,
-    });
+    expect(notFound).toEqual([]);
   });
 
-  test("should navigate to Settings page without 404 error", async ({
-    page,
-  }) => {
-    const timestamp = Date.now();
-    const testUser = {
-      email: `nav-test-settings-${timestamp}@example.com`,
-      password: "password123",
-    };
+  test("renders the inbox route directly", async ({ page }) => {
+    await signUpAndLandOnDashboard(page, makeTestUser("nav-inbox"));
+    const slug = await createOrganization(page, makeOrgName("Nav Inbox Org"));
 
-    // Track 404 responses
-    const responses404: string[] = [];
-    page.on("response", (response) => {
-      if (response.status() === 404) {
-        responses404.push(response.url());
-      }
+    await page.goto(`/dashboard/${slug}/inbox`);
+
+    await expect(page.getByRole("heading", { name: "Inbox" })).toBeVisible({
+      timeout: 30_000,
     });
-
-    // 1. Sign up to get to the dashboard
-    await page.goto("/dashboard");
-    await page.waitForLoadState("domcontentloaded", { timeout: 10_000 });
-
-    await signUpNewUser(page, testUser);
-
-    // Wait for the dashboard to load
-    await page.waitForURL(DASHBOARD_URL_PATTERN, { timeout: 20_000 });
-    await page.waitForLoadState("networkidle");
-
-    // 2. Click on "Settings" in sidebar
-    const settingsLink = page.getByRole("link", { name: SETTINGS_LINK_REGEX });
-    await expect(settingsLink).toBeVisible({ timeout: 10_000 });
-    await settingsLink.click();
-
-    // 3. Verify URL and no 404
-    await expect(page).toHaveURL(SETTINGS_URL_PATTERN, { timeout: 15_000 });
-    await page.waitForLoadState("networkidle");
-
-    // Check no 404 HTTP responses for the settings page
-    const settings404 = responses404.filter((url) => url.includes("/settings"));
-    expect(settings404.length).toBe(0);
-
-    // Verify page content - should show Settings heading
-    await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible({
-      timeout: 10_000,
-    });
+    await expect(page.getByText("Manage support conversations")).toBeVisible();
   });
 });

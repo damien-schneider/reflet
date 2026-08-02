@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const mockUseQuery = vi.fn();
@@ -31,7 +31,6 @@ vi.mock("next/link", () => ({
 import { PublicViewToolbar } from "./public-view-toolbar";
 
 afterEach(() => {
-  cleanup();
   vi.clearAllMocks();
 });
 

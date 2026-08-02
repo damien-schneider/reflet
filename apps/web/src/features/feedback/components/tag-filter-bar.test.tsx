@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { cleanup, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -84,7 +84,6 @@ const tags: Tag[] = [
 
 describe("TagFilterBar", () => {
   afterEach(() => {
-    cleanup();
     vi.clearAllMocks();
   });
 

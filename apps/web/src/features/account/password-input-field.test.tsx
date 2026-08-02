@@ -1,6 +1,6 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/components/ui/field", () => ({
   Field: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -38,8 +38,6 @@ vi.mock("@phosphor-icons/react", () => ({
 }));
 
 import { PasswordInputField } from "./password-input-field";
-
-afterEach(cleanup);
 
 const baseProps = {
   id: "test-password",

@@ -207,6 +207,7 @@ export const githubTables = {
     features: v.optional(v.string()),
     githubConnectionId: v.id("githubConnections"),
     organizationId: v.id("organizations"),
+    productAnalysis: v.optional(v.string()),
     repoStructure: v.optional(v.string()),
     status: repoAnalysisStatus,
     summary: v.optional(v.string()),

@@ -57,7 +57,7 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
   );
 
   const adminUnreadCount = useQuery(
-    api.support.conversations.getUnreadCountForAdmin,
+    api.support.admin.getUnreadCount,
     org?._id ? { organizationId: org._id } : "skip"
   );
 
@@ -185,10 +185,11 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
     return !hasMoreSpecificMatch;
   };
 
-  const handleSignOut = () => {
+  // navigating before signOut resolves can abort the request and keep the session
+  const handleSignOut = async () => {
     capture("sign_out");
     posthog.reset();
-    authClient.signOut();
+    await authClient.signOut();
     window.location.href = "/";
   };
 

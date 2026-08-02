@@ -1,6 +1,6 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@phosphor-icons/react", () => ({
   CaretUp: () => <span data-testid="icon-caret-up" />,
@@ -11,8 +11,6 @@ vi.mock("@/lib/utils", () => ({
 }));
 
 import { MilestoneFeedbackPreview } from "./milestone-feedback-preview";
-
-afterEach(cleanup);
 
 const makeFeedbackItem = (
   overrides: Partial<{

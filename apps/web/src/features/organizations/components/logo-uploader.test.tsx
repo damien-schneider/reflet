@@ -1,6 +1,6 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("next/image", () => ({
   default: ({
@@ -84,8 +84,6 @@ vi.mock("@phosphor-icons/react", () => ({
 }));
 
 import { LogoUploader } from "./logo-uploader";
-
-afterEach(cleanup);
 
 describe("LogoUploader", () => {
   it("renders upload prompt when no logo", () => {

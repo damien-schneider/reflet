@@ -1,7 +1,6 @@
-import { renderHook } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import { createStore, Provider } from "jotai";
 import type { ReactNode } from "react";
-import { act } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useCommandPalette } from "./use-command-palette";
 

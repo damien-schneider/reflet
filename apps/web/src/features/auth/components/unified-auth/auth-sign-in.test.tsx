@@ -1,8 +1,8 @@
 /**
  * @vitest-environment jsdom
  */
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("motion/react", () => ({
   AnimatePresence: ({ children }: { children: React.ReactNode }) => (
@@ -53,8 +53,6 @@ vi.mock("./lib/auth-validation", () => ({
 }));
 
 import { AuthHelperText, AuthSubmitButton } from "./auth-sign-in";
-
-afterEach(cleanup);
 
 describe("AuthSubmitButton", () => {
   const baseProps = {

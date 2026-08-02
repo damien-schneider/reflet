@@ -1,7 +1,7 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type React from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/components/ui/badge", () => ({
   Badge: ({
@@ -60,8 +60,6 @@ vi.mock("@phosphor-icons/react", () => ({
 }));
 
 import { CompetitorCard } from "./competitor-card";
-
-afterEach(cleanup);
 
 const baseCompetitor = {
   _id: "comp-1",

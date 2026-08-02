@@ -1,5 +1,5 @@
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/components/ui/kbd", () => ({
   Kbd: ({ children }: { children: React.ReactNode }) => (
@@ -12,8 +12,6 @@ vi.mock("@/lib/utils", () => ({
 }));
 
 import { ShortcutHintBar } from "./shortcut-hint-bar";
-
-afterEach(cleanup);
 
 describe("ShortcutHintBar", () => {
   it("renders navigation hints when no conversation is selected", () => {

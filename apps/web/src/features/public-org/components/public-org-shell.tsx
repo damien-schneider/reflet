@@ -51,10 +51,9 @@ export function PublicOrgShell({
   const pathname = usePathname();
   const router = useRouter();
 
-  const supportSettings = useQuery(
-    api.support.conversations.getSupportSettings,
-    { organizationId: org._id }
-  );
+  const supportSettings = useQuery(api.support.settings.get, {
+    organizationId: org._id,
+  });
 
   const publicPlanFeatures = useQuery(
     api.billing.queries.getPublicPlanFeatures,

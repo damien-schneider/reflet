@@ -1,5 +1,5 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("motion/react", () => ({
   AnimatePresence: ({ children }: { children: React.ReactNode }) => (
@@ -61,8 +61,6 @@ import {
   AuthConfirmPassword,
   AuthForgotPasswordLink,
 } from "./auth-forgot-password";
-
-afterEach(cleanup);
 
 describe("AuthForgotPasswordLink", () => {
   it("renders forgot password link in signIn mode", () => {

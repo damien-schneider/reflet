@@ -8,13 +8,13 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Muted } from "@/components/ui/typography";
+import { AutomationSection } from "@/features/changelog/components/release-settings/automation-section";
+import { CurrentConfigSection } from "@/features/changelog/components/release-settings/current-config-section";
+import { ManualSyncSection } from "@/features/changelog/components/release-settings/manual-sync-section";
+import { SyncDirectionSection } from "@/features/changelog/components/release-settings/sync-direction-section";
+import { VersioningSection } from "@/features/changelog/components/release-settings/versioning-section";
 import { buildGitHubInstallUrl } from "@/features/github/lib/github-install-url";
 import { authClient } from "@/lib/auth-client";
-import { AutomationSection } from "../../../../app/(app)/dashboard/[orgSlug]/settings/releases/_components/automation-section";
-import { CurrentConfigSection } from "../../../../app/(app)/dashboard/[orgSlug]/settings/releases/_components/current-config-section";
-import { ManualSyncSection } from "../../../../app/(app)/dashboard/[orgSlug]/settings/releases/_components/manual-sync-section";
-import { SyncDirectionSection } from "../../../../app/(app)/dashboard/[orgSlug]/settings/releases/_components/sync-direction-section";
-import { VersioningSection } from "../../../../app/(app)/dashboard/[orgSlug]/settings/releases/_components/versioning-section";
 
 interface BranchInfo {
   isProtected: boolean;

@@ -1,5 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { StatusBadge } from "./status-badge";
 
 // Mock Badge component
@@ -20,10 +20,6 @@ vi.mock("@/components/ui/badge", () => ({
 }));
 
 describe("StatusBadge", () => {
-  afterEach(() => {
-    cleanup();
-  });
-
   it("should render open status with correct label", () => {
     render(<StatusBadge status="open" />);
     expect(screen.getByText("Open")).toBeInTheDocument();

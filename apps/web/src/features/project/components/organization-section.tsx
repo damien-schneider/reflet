@@ -19,6 +19,7 @@ import {
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { Muted } from "@/components/ui/typography";
 import { BrandingSection } from "./branding-section";
 
 const generateSlug = (text: string): string =>
@@ -207,6 +208,7 @@ export function OrganizationSection({
               </CardDescription>
             </div>
             <Switch
+              aria-label="Make organization public"
               checked={isPublic}
               disabled={!isAdmin}
               id="public-toggle"
@@ -215,10 +217,10 @@ export function OrganizationSection({
           </div>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground text-sm leading-relaxed">
+          <Muted className="leading-relaxed">
             When enabled, anyone can view your public roadmap and changelog
             without signing in.
-          </p>
+          </Muted>
         </CardContent>
       </Card>
 

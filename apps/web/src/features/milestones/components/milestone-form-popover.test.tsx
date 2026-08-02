@@ -1,10 +1,4 @@
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const mockCreateMilestone = vi.fn();
@@ -138,7 +132,6 @@ const defaultProps = {
 
 describe("MilestoneFormPopover", () => {
   afterEach(() => {
-    cleanup();
     mockCreateMilestone.mockReset();
   });
 

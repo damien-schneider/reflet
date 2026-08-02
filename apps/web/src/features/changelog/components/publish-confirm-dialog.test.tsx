@@ -1,5 +1,5 @@
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockUseQuery = vi.fn();
@@ -143,7 +143,6 @@ vi.mock("@/components/ui/dialog", () => ({
 import { PublishConfirmDialog } from "./publish-confirm-dialog";
 
 afterEach(() => {
-  cleanup();
   vi.clearAllMocks();
 });
 
@@ -316,7 +315,7 @@ describe("PublishConfirmDialog", () => {
     const link = screen.getByText("Connect repository");
     expect(link.closest("a")).toHaveAttribute(
       "href",
-      "/dashboard/test-org/settings/github"
+      "/dashboard/test-org/project/github"
     );
   });
 

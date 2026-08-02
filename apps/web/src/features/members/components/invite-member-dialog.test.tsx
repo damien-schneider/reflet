@@ -1,6 +1,6 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { InviteMemberDialog } from "./invite-member-dialog";
 
 // Regex patterns used in tests
@@ -163,10 +163,6 @@ describe("InviteMemberDialog", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockInviteMutation.mockReset();
-  });
-
-  afterEach(() => {
-    cleanup();
   });
 
   it("renders the dialog when open", () => {

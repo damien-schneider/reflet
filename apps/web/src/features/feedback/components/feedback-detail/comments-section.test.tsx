@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { cleanup, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const mockUseQuery = vi.fn();
@@ -66,7 +66,6 @@ const feedbackId = "f1" as Id<"feedback">;
 
 describe("CommentsSection", () => {
   afterEach(() => {
-    cleanup();
     vi.clearAllMocks();
   });
 

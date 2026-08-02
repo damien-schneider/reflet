@@ -1,5 +1,5 @@
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/utils", () => ({
   cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
@@ -66,10 +66,6 @@ describe("MarkdownRenderer", () => {
     capturedExtendConfig = null;
     const mod = await import("./markdown-renderer");
     MarkdownRenderer = mod.MarkdownRenderer;
-  });
-
-  afterEach(() => {
-    cleanup();
   });
 
   it("renders empty state when content is empty", () => {

@@ -1,6 +1,6 @@
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@phosphor-icons/react", () => ({
   Calendar: () => <svg data-testid="calendar-icon" />,
@@ -115,8 +115,6 @@ vi.mock("@/lib/utils", () => ({
 
 import type { ReleaseData } from "./release-item";
 import { ReleaseItem } from "./release-item";
-
-afterEach(cleanup);
 
 const makeRelease = (overrides: Partial<ReleaseData> = {}): ReleaseData => ({
   _creationTime: 1_700_000_000_000,

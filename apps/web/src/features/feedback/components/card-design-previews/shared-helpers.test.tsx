@@ -1,6 +1,6 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@phosphor-icons/react", () => ({
   ChatIcon: () => <span data-testid="icon-chat" />,
@@ -61,8 +61,6 @@ import {
   MockCard,
   useVoteState,
 } from "./shared-helpers";
-
-afterEach(cleanup);
 
 describe("useVoteState", () => {
   it("initializes with given values", () => {

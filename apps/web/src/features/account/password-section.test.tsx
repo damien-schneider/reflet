@@ -1,6 +1,6 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@hookform/resolvers/zod", () => ({
   zodResolver: () => async (values: Record<string, unknown>) => ({
@@ -94,8 +94,6 @@ vi.mock("@phosphor-icons/react", () => ({
 }));
 
 import { PasswordSection } from "./password-section";
-
-afterEach(cleanup);
 
 describe("PasswordSection", () => {
   it("renders card title", () => {

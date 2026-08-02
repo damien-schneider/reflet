@@ -1,5 +1,5 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/utils", () => ({
   cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
@@ -51,10 +51,6 @@ describe("ImageBubbleMenu", () => {
     vi.clearAllMocks();
     const mod = await import("./image-bubble-menu");
     ImageBubbleMenu = mod.ImageBubbleMenu;
-  });
-
-  afterEach(() => {
-    cleanup();
   });
 
   it("renders nothing when image is not active", () => {

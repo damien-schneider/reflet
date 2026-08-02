@@ -280,7 +280,7 @@ export function GenerateFromCommits({
     return (
       <Link
         className="flex items-center gap-1 text-muted-foreground text-xs hover:text-foreground"
-        href={`/dashboard/${orgSlug}/settings/github`}
+        href={`/dashboard/${orgSlug}/project/github`}
       >
         <Info className="h-3 w-3" />
         Connect a repository to generate

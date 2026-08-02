@@ -1,6 +1,6 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AcceptInvitationContent } from "./accept-invitation-page";
 
 // Regex patterns used in tests
@@ -110,10 +110,6 @@ describe("AcceptInvitationContent", () => {
     mockUseSession.mockReset();
     // Default to authenticated for backwards compatibility with existing tests
     mockUseSession.mockReturnValue(createAuthenticatedSession());
-  });
-
-  afterEach(() => {
-    cleanup();
   });
 
   it("renders loading state while fetching invitation", () => {

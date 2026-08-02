@@ -2,13 +2,7 @@
  * @vitest-environment jsdom
  */
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 // Mock the Convex hooks
@@ -491,7 +485,6 @@ import { FeedbackDetailDialog } from "./feedback-detail-dialog";
 
 describe("FeedbackDetailDialog", () => {
   afterEach(() => {
-    cleanup();
     vi.clearAllMocks();
   });
 
@@ -713,7 +706,6 @@ describe("FeedbackDetailDialog", () => {
 
 describe("FeedbackDetailDialog - Admin Features", () => {
   afterEach(() => {
-    cleanup();
     vi.clearAllMocks();
   });
 
@@ -779,7 +771,6 @@ describe("FeedbackDetailDialog - Admin Features", () => {
 
 describe("FeedbackDetailDialog - Interaction Handlers", () => {
   afterEach(() => {
-    cleanup();
     vi.clearAllMocks();
   });
 
@@ -1402,7 +1393,6 @@ describe("FeedbackDetailDialog - Mutation Handlers", () => {
   };
 
   afterEach(() => {
-    cleanup();
     vi.clearAllMocks();
   });
 

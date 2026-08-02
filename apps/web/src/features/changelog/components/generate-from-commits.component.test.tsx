@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -95,7 +95,6 @@ import { toast } from "sonner";
 import { GenerateFromCommits } from "./generate-from-commits";
 
 afterEach(() => {
-  cleanup();
   vi.clearAllMocks();
   vi.restoreAllMocks();
 });
@@ -230,7 +229,7 @@ describe("GenerateFromCommits component", () => {
       ).toBeInTheDocument();
       expect(screen.getByRole("link")).toHaveAttribute(
         "href",
-        "/dashboard/test-org/settings/github"
+        "/dashboard/test-org/project/github"
       );
     });
 
@@ -245,7 +244,7 @@ describe("GenerateFromCommits component", () => {
       render(<GenerateFromCommits {...defaultProps} orgSlug="my-custom-org" />);
       expect(screen.getByRole("link")).toHaveAttribute(
         "href",
-        "/dashboard/my-custom-org/settings/github"
+        "/dashboard/my-custom-org/project/github"
       );
     });
 

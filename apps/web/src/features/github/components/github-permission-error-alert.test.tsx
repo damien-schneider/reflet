@@ -1,6 +1,6 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@phosphor-icons/react", () => ({
   ArrowsClockwise: ({ className }: { className?: string }) => (
@@ -67,8 +67,6 @@ vi.mock("@/components/ui/button", () => ({
 }));
 
 import { GitHubPermissionErrorAlert } from "./github-permission-error-alert";
-
-afterEach(cleanup);
 
 const defaultProps = {
   onResync: vi.fn(),

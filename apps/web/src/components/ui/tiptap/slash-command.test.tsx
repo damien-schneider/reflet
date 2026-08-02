@@ -1,8 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { cleanup } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock the cn utility
 vi.mock("@/lib/utils", () => ({
@@ -15,10 +14,6 @@ const DIALOG_Z_INDEX = 50;
 describe("Slash Command", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  afterEach(() => {
-    cleanup();
   });
 
   describe("createSlashCommands", () => {

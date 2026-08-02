@@ -19,7 +19,7 @@ interface TagsCardProps {
 
 export function TagsCard({ basePath, tags }: TagsCardProps) {
   return (
-    <Link href={`${basePath}/settings`}>
+    <Link href={`${basePath}/project`}>
       <Card className="h-full transition-colors hover:bg-muted/30">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-sm">

@@ -1,5 +1,5 @@
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/utils", () => ({
   cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
@@ -64,10 +64,6 @@ describe("TiptapInlineEditor", () => {
     mockEditor.storage.characterCount.characters.mockReturnValue(10);
     const mod = await import("./inline-editor");
     TiptapInlineEditor = mod.TiptapInlineEditor;
-  });
-
-  afterEach(() => {
-    cleanup();
   });
 
   it("renders with data-slot attribute", () => {

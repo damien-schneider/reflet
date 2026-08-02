@@ -1,52 +1,24 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Doc } from "../_generated/dataModel";
-import type { QueryCtx } from "../_generated/server";
+import type { MutationCtx } from "../_generated/server";
 import { mutation, query } from "../_generated/server";
-import { authComponent } from "../auth/auth";
+import { MAX_SUPPORT_MESSAGE_LENGTH } from "../shared/constants";
+import { getAuthUser } from "../shared/utils";
+import { validateInputLength } from "../shared/validators";
+import { requireConversationAccess, resolveConversationAccess } from "./access";
+import { resolveMessageSenders } from "./people";
+import {
+  buildMessagePreview,
+  supportMessageReactions,
+  supportMessageWithSender,
+} from "./validators";
 
-const getAuthUser = async (ctx: QueryCtx) => {
-  const user = await authComponent.safeGetAuthUser(ctx);
-  if (!user) {
-    throw new Error("Not authenticated");
-  }
-  return user;
-};
-
-async function verifySendAccess(
-  ctx: QueryCtx,
-  conversation: Doc<"supportConversations">,
-  guestId?: string
-): Promise<{ isAdmin: boolean; isOwner: boolean; senderId: string }> {
-  const user = await authComponent.safeGetAuthUser(ctx);
-
-  if (user) {
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q
-          .eq("organizationId", conversation.organizationId)
-          .eq("userId", user._id)
-      )
-      .unique();
-
-    const isAdmin =
-      membership?.role === "admin" || membership?.role === "owner";
-    const isOwner = conversation.userId === user._id;
-
-    if (!(isAdmin || isOwner)) {
-      throw new Error("You don't have access to this conversation");
-    }
-
-    return { isAdmin, isOwner, senderId: user._id };
-  }
-
-  if (guestId && conversation.guestId === guestId) {
-    return { isAdmin: false, isOwner: true, senderId: guestId };
-  }
-
-  throw new Error("You don't have access to this conversation");
-}
+const REOPENED_STATUSES: Doc<"supportConversations">["status"][] = [
+  "awaiting_reply",
+  "resolved",
+  "closed",
+];
 
 export const list = query({
   args: {
@@ -54,78 +26,88 @@ export const list = query({
     guestId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.safeGetAuthUser(ctx);
-
     const conversation = await ctx.db.get(args.conversationId);
     if (!conversation) {
       return [];
     }
 
-    // Access check: authenticated user or guest
-    if (user) {
-      const membership = await ctx.db
-        .query("organizationMembers")
-        .withIndex("by_org_user", (q) =>
-          q
-            .eq("organizationId", conversation.organizationId)
-            .eq("userId", user._id)
-        )
-        .unique();
-
-      const isAdmin =
-        membership?.role === "admin" || membership?.role === "owner";
-      const isOwner = conversation.userId === user._id;
-
-      if (!(isAdmin || isOwner)) {
-        return [];
-      }
-    } else if (!(args.guestId && conversation.guestId === args.guestId)) {
+    const access = await resolveConversationAccess(
+      ctx,
+      conversation,
+      args.guestId
+    );
+    if (!access) {
       return [];
     }
 
-    const currentUserId = user?._id ?? args.guestId;
-
     const messages = await ctx.db
       .query("supportMessages")
-      .withIndex("by_conversation", (q) =>
+      .withIndex("by_conversation_created", (q) =>
         q.eq("conversationId", args.conversationId)
       )
       .collect();
 
-    messages.sort((a, b) => a.createdAt - b.createdAt);
-
-    const messagesWithSender = await Promise.all(
-      messages.map(async (msg) => {
-        const sender = await authComponent.getAnyUserById(ctx, msg.senderId);
-        let senderInfo:
-          | { id: string; name?: string; email: string; image?: string }
-          | undefined;
-        if (sender) {
-          senderInfo = {
-            email: sender.email,
-            id: sender._id,
-            image: sender.image || undefined,
-            name: sender.name || undefined,
-          };
-        } else if (conversation.guestEmail) {
-          senderInfo = {
-            email: conversation.guestEmail,
-            id: msg.senderId,
-            image: undefined,
-            name: undefined,
-          };
-        }
-        return {
-          ...msg,
-          isOwnMessage: msg.senderId === currentUserId,
-          sender: senderInfo,
-        };
-      })
+    // a guest sender id is not a Better Auth id — looking it up throws
+    const guestSenderId = conversation.guestId
+      ? conversation.userId
+      : undefined;
+    const senders = await resolveMessageSenders(
+      ctx,
+      messages
+        .map((message) => message.senderId)
+        .filter((senderId) => senderId !== guestSenderId)
     );
+    const guestSender = conversation.guestEmail
+      ? { email: conversation.guestEmail, id: conversation.userId }
+      : undefined;
 
-    return messagesWithSender;
+    return messages.map((message) => ({
+      ...message,
+      isOwnMessage: message.senderId === access.viewerId,
+      sender: senders.get(message.senderId) ?? guestSender,
+    }));
   },
+  returns: v.array(supportMessageWithSender),
 });
+
+const notifyUserOfAdminReply = async (
+  ctx: MutationCtx,
+  conversation: Doc<"supportConversations">,
+  now: number
+) => {
+  const message = `You have a new reply from support${conversation.subject ? `: ${conversation.subject}` : ""}`;
+
+  await ctx.db.insert("notifications", {
+    createdAt: now,
+    isRead: false,
+    message,
+    title: "New support message",
+    type: "new_support_message",
+    userId: conversation.userId,
+  });
+
+  await ctx.scheduler.runAfter(
+    0,
+    internal.notifications.push.sendPushNotification,
+    {
+      message,
+      title: "New support message",
+      type: "new_support_message",
+      url: "/dashboard",
+      userId: conversation.userId,
+    }
+  );
+};
+
+const nextStatus = (
+  current: Doc<"supportConversations">["status"],
+  isAdminReply: boolean
+): Doc<"supportConversations">["status"] => {
+  if (isAdminReply) {
+    return "awaiting_reply";
+  }
+  return REOPENED_STATUSES.includes(current) ? "open" : current;
+};
 
 export const send = mutation({
   args: {
@@ -139,73 +121,52 @@ export const send = mutation({
       throw new Error("Conversation not found");
     }
 
-    const { isAdmin, isOwner, senderId } = await verifySendAccess(
+    const { isAdmin, isOwner, viewerId } = await requireConversationAccess(
       ctx,
       conversation,
       args.guestId
     );
 
+    const body = args.body.trim();
+    if (!body) {
+      throw new Error("Message cannot be empty");
+    }
+    validateInputLength(body, MAX_SUPPORT_MESSAGE_LENGTH, "Message");
+
     const now = Date.now();
     const senderType = isAdmin && !isOwner ? "admin" : "user";
 
     const messageId = await ctx.db.insert("supportMessages", {
-      body: args.body,
+      body,
       conversationId: args.conversationId,
       createdAt: now,
       isRead: false,
-      senderId,
-      senderType: senderType as "user" | "admin",
+      senderId: viewerId,
+      senderType,
     });
 
-    const updateData: {
-      lastMessageAt: number;
-      updatedAt: number;
-      userUnreadCount?: number;
-      adminUnreadCount?: number;
-      status?: "open" | "awaiting_reply" | "resolved" | "closed";
-    } = {
+    const isAdminReply = senderType === "admin";
+
+    await ctx.db.patch(args.conversationId, {
+      adminUnreadCount: isAdminReply
+        ? conversation.adminUnreadCount
+        : conversation.adminUnreadCount + 1,
       lastMessageAt: now,
+      lastMessagePreview: buildMessagePreview(body),
+      status: nextStatus(conversation.status, isAdminReply),
       updatedAt: now,
-    };
+      userUnreadCount: isAdminReply
+        ? conversation.userUnreadCount + 1
+        : conversation.userUnreadCount,
+    });
 
-    if (senderType === "admin") {
-      updateData.userUnreadCount = conversation.userUnreadCount + 1;
-      updateData.status = "awaiting_reply";
-    } else {
-      updateData.adminUnreadCount = conversation.adminUnreadCount + 1;
-      if (conversation.status === "awaiting_reply") {
-        updateData.status = "open";
-      }
-    }
-
-    await ctx.db.patch(args.conversationId, updateData);
-
-    // Only send notifications for non-guest conversations
-    if (senderType === "admin" && !conversation.guestId) {
-      await ctx.db.insert("notifications", {
-        createdAt: now,
-        isRead: false,
-        message: `You have a new reply from support${conversation.subject ? `: ${conversation.subject}` : ""}`,
-        title: "New support message",
-        type: "new_support_message",
-        userId: conversation.userId,
-      });
-
-      await ctx.scheduler.runAfter(
-        0,
-        internal.notifications.push.sendPushNotification,
-        {
-          message: `You have a new reply from support${conversation.subject ? `: ${conversation.subject}` : ""}`,
-          title: "New support message",
-          type: "new_support_message",
-          url: "/dashboard",
-          userId: conversation.userId,
-        }
-      );
+    if (isAdminReply && !conversation.guestId) {
+      await notifyUserOfAdminReply(ctx, conversation, now);
     }
 
     return messageId;
   },
+  returns: v.id("supportMessages"),
 });
 
 export const markAsRead = mutation({
@@ -214,38 +175,18 @@ export const markAsRead = mutation({
     guestId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const user = await authComponent.safeGetAuthUser(ctx);
-
     const conversation = await ctx.db.get(args.conversationId);
     if (!conversation) {
       throw new Error("Conversation not found");
     }
 
-    let isAdmin = false;
-    let isOwner = false;
+    const { isAdmin, isOwner } = await requireConversationAccess(
+      ctx,
+      conversation,
+      args.guestId
+    );
 
-    if (user) {
-      const membership = await ctx.db
-        .query("organizationMembers")
-        .withIndex("by_org_user", (q) =>
-          q
-            .eq("organizationId", conversation.organizationId)
-            .eq("userId", user._id)
-        )
-        .unique();
-
-      isAdmin = membership?.role === "admin" || membership?.role === "owner";
-      isOwner = conversation.userId === user._id;
-
-      if (!(isAdmin || isOwner)) {
-        throw new Error("You don't have access to this conversation");
-      }
-    } else if (args.guestId && conversation.guestId === args.guestId) {
-      isOwner = true;
-    } else {
-      throw new Error("You don't have access to this conversation");
-    }
-
+    const readableSenderType = isOwner ? "admin" : "user";
     const messages = await ctx.db
       .query("supportMessages")
       .withIndex("by_conversation", (q) =>
@@ -253,33 +194,43 @@ export const markAsRead = mutation({
       )
       .collect();
 
-    for (const message of messages) {
-      if (!message.isRead) {
-        const shouldMarkRead =
-          (isOwner && message.senderType === "admin") ||
-          (isAdmin && message.senderType === "user");
+    await Promise.all(
+      messages
+        .filter(
+          (message) =>
+            !message.isRead && message.senderType === readableSenderType
+        )
+        .map((message) => ctx.db.patch(message._id, { isRead: true }))
+    );
 
-        if (shouldMarkRead) {
-          await ctx.db.patch(message._id, { isRead: true });
-        }
-      }
-    }
+    await ctx.db.patch(args.conversationId, {
+      updatedAt: Date.now(),
+      ...(isOwner ? { userUnreadCount: 0 } : {}),
+      ...(isAdmin && !isOwner ? { adminUnreadCount: 0 } : {}),
+    });
 
-    if (isOwner) {
-      await ctx.db.patch(args.conversationId, {
-        updatedAt: Date.now(),
-        userUnreadCount: 0,
-      });
-    } else if (isAdmin) {
-      await ctx.db.patch(args.conversationId, {
-        adminUnreadCount: 0,
-        updatedAt: Date.now(),
-      });
-    }
-
-    return true;
+    return null;
   },
+  returns: v.null(),
 });
+
+const requireMessageAccess = async (
+  ctx: MutationCtx,
+  messageId: Doc<"supportMessages">["_id"]
+) => {
+  const message = await ctx.db.get(messageId);
+  if (!message) {
+    throw new Error("Message not found");
+  }
+
+  const conversation = await ctx.db.get(message.conversationId);
+  if (!conversation) {
+    throw new Error("Conversation not found");
+  }
+
+  await requireConversationAccess(ctx, conversation);
+  return message;
+};
 
 export const addReaction = mutation({
   args: {
@@ -288,33 +239,7 @@ export const addReaction = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
-
-    const message = await ctx.db.get(args.messageId);
-    if (!message) {
-      throw new Error("Message not found");
-    }
-
-    const conversation = await ctx.db.get(message.conversationId);
-    if (!conversation) {
-      throw new Error("Conversation not found");
-    }
-
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q
-          .eq("organizationId", conversation.organizationId)
-          .eq("userId", user._id)
-      )
-      .unique();
-
-    const isAdmin =
-      membership?.role === "admin" || membership?.role === "owner";
-    const isOwner = conversation.userId === user._id;
-
-    if (!(isAdmin || isOwner)) {
-      throw new Error("You don't have access to this message");
-    }
+    await requireMessageAccess(ctx, args.messageId);
 
     const existingReaction = await ctx.db
       .query("messageReactions")
@@ -328,53 +253,28 @@ export const addReaction = mutation({
         createdAt: Date.now(),
         emoji: args.emoji,
       });
-    } else {
-      await ctx.db.insert("messageReactions", {
-        createdAt: Date.now(),
-        emoji: args.emoji,
-        messageId: args.messageId,
-        userId: user._id,
-      });
+      return null;
     }
 
-    return true;
+    await ctx.db.insert("messageReactions", {
+      createdAt: Date.now(),
+      emoji: args.emoji,
+      messageId: args.messageId,
+      userId: user._id,
+    });
+
+    return null;
   },
+  returns: v.null(),
 });
 
 export const removeReaction = mutation({
   args: {
-    emoji: v.string(),
     messageId: v.id("supportMessages"),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
-
-    const message = await ctx.db.get(args.messageId);
-    if (!message) {
-      throw new Error("Message not found");
-    }
-
-    const conversation = await ctx.db.get(message.conversationId);
-    if (!conversation) {
-      throw new Error("Conversation not found");
-    }
-
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q
-          .eq("organizationId", conversation.organizationId)
-          .eq("userId", user._id)
-      )
-      .unique();
-
-    const isAdmin =
-      membership?.role === "admin" || membership?.role === "owner";
-    const isOwner = conversation.userId === user._id;
-
-    if (!(isAdmin || isOwner)) {
-      throw new Error("You don't have access to this message");
-    }
+    await requireMessageAccess(ctx, args.messageId);
 
     const existingReaction = await ctx.db
       .query("messageReactions")
@@ -387,47 +287,62 @@ export const removeReaction = mutation({
       await ctx.db.delete(existingReaction._id);
     }
 
-    return true;
+    return null;
   },
+  returns: v.null(),
 });
 
 export const listReactions = query({
   args: {
-    messageIds: v.array(v.id("supportMessages")),
+    conversationId: v.id("supportConversations"),
+    guestId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const reactions = await Promise.all(
-      args.messageIds.map(async (messageId) => {
-        const messageReactions = await ctx.db
+    const conversation = await ctx.db.get(args.conversationId);
+    if (!conversation) {
+      return [];
+    }
+
+    const access = await resolveConversationAccess(
+      ctx,
+      conversation,
+      args.guestId
+    );
+    if (!access) {
+      return [];
+    }
+
+    const messages = await ctx.db
+      .query("supportMessages")
+      .withIndex("by_conversation", (q) =>
+        q.eq("conversationId", args.conversationId)
+      )
+      .collect();
+
+    return await Promise.all(
+      messages.map(async (message) => {
+        const reactions = await ctx.db
           .query("messageReactions")
-          .withIndex("by_message", (q) => q.eq("messageId", messageId))
+          .withIndex("by_message", (q) => q.eq("messageId", message._id))
           .collect();
 
-        const reactionsByEmoji = messageReactions.reduce<
-          Record<string, { count: number; userIds: string[] }>
-        >((acc, reaction) => {
-          if (!acc[reaction.emoji]) {
-            acc[reaction.emoji] = { count: 0, userIds: [] };
-          }
-          const entry = acc[reaction.emoji];
-          if (entry) {
-            entry.count += 1;
-            entry.userIds.push(reaction.userId);
-          }
-          return acc;
-        }, {});
+        const byEmoji = new Map<string, string[]>();
+        for (const reaction of reactions) {
+          const userIds = byEmoji.get(reaction.emoji) ?? [];
+          userIds.push(reaction.userId);
+          byEmoji.set(reaction.emoji, userIds);
+        }
 
         return {
-          messageId,
-          reactions: Object.entries(reactionsByEmoji).map(([emoji, data]) => ({
-            count: data.count,
+          messageId: message._id,
+          reactions: [...byEmoji].map(([emoji, userIds]) => ({
+            count: userIds.length,
             emoji,
-            userIds: data.userIds,
+            userIds,
           })),
         };
       })
     );
-
-    return reactions;
   },
+  returns: v.array(supportMessageReactions),
 });

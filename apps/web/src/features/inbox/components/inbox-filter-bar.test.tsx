@@ -1,6 +1,6 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/components/ui/toggle-group", () => ({
   ToggleGroup: ({
@@ -49,18 +49,21 @@ vi.mock("@/components/ui/typography", () => ({
 }));
 
 vi.mock("@phosphor-icons/react", () => ({
+  CheckCircle: () => <svg data-testid="check-icon" />,
+  Circle: () => <svg data-testid="circle-icon" />,
+  Clock: () => <svg data-testid="clock-icon" />,
   MagnifyingGlass: ({ className }: { className?: string }) => (
     <svg className={className} data-testid="search-icon" />
   ),
+  XCircle: () => <svg data-testid="x-icon" />,
 }));
 
 vi.mock("@/lib/utils", () => ({
   cn: (...classes: unknown[]) => classes.filter(Boolean).join(" "),
 }));
 
-import { type ConversationStatus, InboxFilterBar } from "./inbox-filter-bar";
-
-afterEach(cleanup);
+import type { ConversationStatus } from "@/features/support/lib/conversation-status";
+import { InboxFilterBar } from "./inbox-filter-bar";
 
 describe("InboxFilterBar", () => {
   const defaultProps = {

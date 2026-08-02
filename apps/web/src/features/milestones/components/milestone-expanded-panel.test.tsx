@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -142,7 +142,6 @@ vi.mock("./milestone-progress-ring", () => ({
 import { MilestoneExpandedPanel } from "./milestone-expanded-panel";
 
 afterEach(() => {
-  cleanup();
   vi.clearAllMocks();
 });
 

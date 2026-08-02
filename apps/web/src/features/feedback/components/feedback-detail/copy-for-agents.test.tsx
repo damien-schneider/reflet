@@ -1,5 +1,5 @@
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { buildAgentPrompt } from "./copy-for-agents";
@@ -271,7 +271,6 @@ import { CopyForAgents } from "./copy-for-agents";
 
 describe("CopyForAgents Component", () => {
   afterEach(() => {
-    cleanup();
     vi.clearAllMocks();
   });
 

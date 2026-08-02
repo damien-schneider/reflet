@@ -1,6 +1,6 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@phosphor-icons/react", () => ({
   Check: ({ className }: { className?: string }) => (
@@ -89,8 +89,6 @@ vi.mock("@/components/ui/typography", () => ({
 }));
 
 import { GitHubConnectionSection } from "./github-connection-card";
-
-afterEach(cleanup);
 
 describe("GitHubConnectionSection", () => {
   it("renders connect button when not connected and admin", () => {

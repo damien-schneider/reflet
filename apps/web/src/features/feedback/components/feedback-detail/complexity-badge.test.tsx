@@ -2,13 +2,7 @@
  * @vitest-environment jsdom
  */
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const mockUpdateAnalysis = vi.fn();
@@ -31,7 +25,6 @@ const feedbackId = "f1" as Id<"feedback">;
 
 describe("ComplexityBadge", () => {
   afterEach(() => {
-    cleanup();
     vi.clearAllMocks();
   });
 

@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { cleanup, render, renderHook, screen } from "@testing-library/react";
+import { render, renderHook, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -27,7 +27,6 @@ const mockContextValue = {
 
 describe("feedback-board-context", () => {
   afterEach(() => {
-    cleanup();
     vi.clearAllMocks();
   });
 

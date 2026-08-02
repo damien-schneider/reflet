@@ -1,6 +1,6 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@phosphor-icons/react", () => ({
   CalendarBlank: () => <span data-testid="icon-calendar" />,
@@ -86,8 +86,6 @@ vi.mock("@/lib/utils", () => ({
 }));
 
 import { MilestoneDatePicker } from "./milestone-date-picker";
-
-afterEach(cleanup);
 
 describe("MilestoneDatePicker", () => {
   it("renders without crashing", () => {

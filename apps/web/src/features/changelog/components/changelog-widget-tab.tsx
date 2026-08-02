@@ -261,7 +261,7 @@ export function MyApp() {
           </span>
           <Link
             className="text-primary text-xs hover:underline"
-            href={`/dashboard/${orgSlug}/settings/branding`}
+            href={`/dashboard/${orgSlug}/project/general`}
           >
             Change in branding settings
           </Link>

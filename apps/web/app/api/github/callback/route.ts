@@ -74,7 +74,7 @@ function buildRedirectUrl(
   if (orgSlug && returnTo === "setup") {
     redirectPath = `/dashboard/${orgSlug}/setup`;
   } else if (orgSlug) {
-    redirectPath = `/dashboard/${orgSlug}/settings/github`;
+    redirectPath = `/dashboard/${orgSlug}/project/github`;
   } else {
     redirectPath = "/dashboard";
   }

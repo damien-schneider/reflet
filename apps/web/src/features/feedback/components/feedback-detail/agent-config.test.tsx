@@ -1,4 +1,3 @@
-import { cleanup } from "@testing-library/react";
 import { toast } from "sonner";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -10,7 +9,6 @@ vi.mock("sonner", () => ({
 
 describe("agent-config", () => {
   afterEach(() => {
-    cleanup();
     vi.clearAllMocks();
     vi.restoreAllMocks();
   });

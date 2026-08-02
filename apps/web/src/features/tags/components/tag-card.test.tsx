@@ -1,6 +1,6 @@
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@phosphor-icons/react", () => ({
   DotsThreeVertical: () => <svg data-testid="dots-icon" />,
@@ -106,8 +106,6 @@ vi.mock("@/lib/utils", () => ({
 }));
 
 import { TagCard } from "./tag-card";
-
-afterEach(cleanup);
 
 describe("TagCard", () => {
   const defaultTag = {

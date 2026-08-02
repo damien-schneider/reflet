@@ -1,5 +1,5 @@
-import { cleanup, renderHook } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { renderHook } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockSetContent = vi.fn();
 const mockSetEditable = vi.fn();
@@ -59,10 +59,6 @@ describe("useTiptapMarkdownEditor", () => {
     mockEditor.storage.markdown.getMarkdown.mockReturnValue("");
     const mod = await import("./use-editor");
     useTiptapMarkdownEditor = mod.useTiptapMarkdownEditor;
-  });
-
-  afterEach(() => {
-    cleanup();
   });
 
   it("returns editor instance", () => {

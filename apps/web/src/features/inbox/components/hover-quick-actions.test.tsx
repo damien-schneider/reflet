@@ -1,7 +1,7 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import React from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/components/ui/tooltip", () => ({
   Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -50,8 +50,6 @@ vi.mock("@/lib/utils", () => ({
 }));
 
 import { HoverQuickActions } from "./hover-quick-actions";
-
-afterEach(cleanup);
 
 describe("HoverQuickActions", () => {
   it("renders resolve, close, and assign buttons", () => {

@@ -1,23 +1,9 @@
 "use client";
 
-import { CheckCircle } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
-import { useMutation, useQuery } from "convex/react";
-import { use, useState } from "react";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { H1, Lead } from "@/components/ui/typography";
-import { authClient } from "@/lib/auth-client";
-import { ConversationComposer } from "./components/conversation-composer";
-import { LoadingState } from "./components/loading-state";
-import { SupportUnavailable } from "./components/support-unavailable";
-import { useGuestSession } from "./hooks/use-guest-session";
+import { useQuery } from "convex/react";
+import { use } from "react";
+import { SupportCenter } from "@/features/support/components/support-center";
 
 export default function PublicSupportPage({
   params,
@@ -25,108 +11,7 @@ export default function PublicSupportPage({
   params: Promise<{ orgSlug: string }>;
 }) {
   const { orgSlug } = use(params);
-  const { data: session } = authClient.useSession();
-  const isLoggedIn = Boolean(session?.user);
-  const isGuest = !isLoggedIn;
-
-  const { guestEmail, saveGuestSession } = useGuestSession(orgSlug);
-  const [pendingEmail, setPendingEmail] = useState(guestEmail ?? "");
-
   const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
-  const supportSettings = useQuery(
-    api.support.conversations.getSupportSettings,
-    org?._id ? { organizationId: org._id } : "skip"
-  );
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-
-  const createConversation = useMutation(api.support.conversations.create);
-
-  if (org === undefined || supportSettings === undefined) {
-    return <LoadingState />;
-  }
-
-  if (!org) {
-    return null;
-  }
-
-  if (!supportSettings?.supportEnabled) {
-    return <SupportUnavailable orgSlug={orgSlug} />;
-  }
-
-  const handleSubmit = async (data: {
-    subject: string;
-    message: string;
-    email?: string;
-  }) => {
-    if (!(data.message.trim() && org?._id)) {
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      if (isGuest) {
-        const savedGuestId = saveGuestSession(data.email ?? pendingEmail);
-        await createConversation({
-          guestEmail: data.email ?? pendingEmail,
-          guestId: savedGuestId,
-          initialMessage: data.message,
-          organizationId: org._id,
-          subject: data.subject || undefined,
-        });
-      } else {
-        await createConversation({
-          initialMessage: data.message,
-          organizationId: org._id,
-          subject: data.subject || undefined,
-        });
-      }
-      setSubmitted(true);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8 text-center">
-        <H1 variant="page">Contact Support</H1>
-        <Lead>Get help from our team</Lead>
-      </div>
-
-      <div className="mx-auto max-w-lg">
-        {submitted ? (
-          <Card>
-            <CardHeader className="text-center">
-              <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
-                <CheckCircle
-                  className="h-6 w-6 text-green-600 dark:text-green-400"
-                  weight="fill"
-                />
-              </div>
-              <CardTitle>Message sent</CardTitle>
-              <CardDescription>
-                We've received your message and will get back to you soon.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex justify-center">
-              <Button onClick={() => setSubmitted(false)} variant="outline">
-                Send another message
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <ConversationComposer
-            alwaysExpanded
-            guestEmail={pendingEmail}
-            isGuest={isGuest}
-            isSubmitting={isSubmitting}
-            onGuestEmailChange={setPendingEmail}
-            onSubmit={handleSubmit}
-          />
-        )}
-      </div>
-    </div>
-  );
+  return <SupportCenter backHref={`/${orgSlug}`} org={org} />;
 }

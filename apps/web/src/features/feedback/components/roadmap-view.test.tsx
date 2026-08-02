@@ -1,7 +1,6 @@
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import {
   act,
-  cleanup,
   fireEvent,
   render,
   screen,
@@ -206,7 +205,6 @@ const mockFeedback: FeedbackItem[] = [
 
 describe("RoadmapView", () => {
   afterEach(() => {
-    cleanup();
     vi.clearAllMocks();
     dndHandlers.onDragStart = null;
     dndHandlers.onDragEnd = null;

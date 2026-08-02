@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -161,7 +161,6 @@ vi.mock("@phosphor-icons/react", () => ({
 import { KeywordManager } from "./keyword-manager";
 
 afterEach(() => {
-  cleanup();
   vi.clearAllMocks();
 });
 

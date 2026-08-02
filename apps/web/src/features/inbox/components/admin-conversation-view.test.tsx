@@ -1,6 +1,7 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("convex/react", () => ({
   useMutation: vi.fn(() => vi.fn()),
@@ -75,13 +76,17 @@ vi.mock("@phosphor-icons/react", () => ({
   ChatCircle: ({ className }: { className?: string }) => (
     <svg className={className} data-testid="chat-icon" />
   ),
+  CheckCircle: () => <svg data-testid="check-icon" />,
+  Circle: () => <svg data-testid="circle-icon" />,
+  Clock: () => <svg data-testid="clock-icon" />,
+  XCircle: () => <svg data-testid="x-icon" />,
 }));
 
 vi.mock("@/features/inbox/components/assign-member-dropdown", () => ({
   AssignMemberDropdown: () => <div data-testid="assign-dropdown">Assign</div>,
 }));
 
-vi.mock("@/features/inbox/components/message-input", () => ({
+vi.mock("@/features/support/components/message-input", () => ({
   MessageInput: ({
     disabled,
     placeholder,
@@ -96,14 +101,9 @@ vi.mock("@/features/inbox/components/message-input", () => ({
   ),
 }));
 
-vi.mock("@/features/inbox/components/message-list", () => ({
-  MessageList: ({
-    isLoading,
-  }: {
-    isLoading?: boolean;
-    messages?: unknown[];
-  }) => (
-    <div data-loading={isLoading} data-testid="message-list">
+vi.mock("@/features/support/components/message-list", () => ({
+  MessageList: ({ messages }: { messages?: unknown[] }) => (
+    <div data-count={messages?.length ?? 0} data-testid="message-list">
       Messages
     </div>
   ),
@@ -119,56 +119,70 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
   },
 }));
 
+import type { ConversationStatus } from "@/features/support/lib/conversation-status";
 import {
   AdminConversationView,
   EmptyConversationState,
 } from "./admin-conversation-view";
 
-afterEach(cleanup);
+interface Conversation {
+  _id: Id<"supportConversations">;
+  assignedTo?: string;
+  guestEmail?: string;
+  status: string;
+  subject?: string;
+  user?: { name?: string; email?: string };
+}
 
-const baseConversation = {
-  assignedTo: undefined,
+const baseConversation: Conversation = {
+  _id: "conv1" as Id<"supportConversations">,
   status: "open",
   subject: "Help with billing",
   user: { name: "Test User" },
 };
 
-const baseProps = {
-  conversation: baseConversation,
+const makeProps = (overrides?: {
+  conversation?: Conversation;
+  onStatusChange?: (status: ConversationStatus) => Promise<void>;
+}) => ({
+  actions: {
+    onAssign: vi.fn(),
+    onSendMessage: vi.fn(),
+    onStatusChange: overrides?.onStatusChange ?? vi.fn(),
+  },
+  conversation: overrides?.conversation ?? baseConversation,
   messages: [],
-  messagesLoading: false,
-  onAssign: vi.fn(),
-  onSendMessage: vi.fn(),
-  onStatusChange: vi.fn(),
   teamMembers: [],
-};
+});
 
 describe("AdminConversationView", () => {
   it("renders conversation subject", () => {
-    render(<AdminConversationView {...baseProps} />);
+    render(<AdminConversationView {...makeProps()} />);
     expect(screen.getByText("Help with billing")).toBeInTheDocument();
   });
 
   it("shows default title when subject is missing", () => {
     render(
       <AdminConversationView
-        {...baseProps}
-        conversation={{ ...baseConversation, subject: undefined }}
+        {...makeProps({
+          conversation: { ...baseConversation, subject: undefined },
+        })}
       />
     );
     expect(screen.getByText("Support Conversation")).toBeInTheDocument();
   });
 
   it("renders user name", () => {
-    render(<AdminConversationView {...baseProps} />);
+    render(<AdminConversationView {...makeProps()} />);
     expect(screen.getByText(/Test User/)).toBeInTheDocument();
   });
 
   it("shows Unknown User when user name is missing", () => {
     render(
       <AdminConversationView
-        {...baseProps}
-        conversation={{ ...baseConversation, user: undefined }}
+        {...makeProps({
+          conversation: { ...baseConversation, user: undefined },
+        })}
       />
     );
     expect(screen.getByText(/Unknown User/)).toBeInTheDocument();
@@ -177,12 +191,13 @@ describe("AdminConversationView", () => {
   it("shows guest email for guest conversations", () => {
     render(
       <AdminConversationView
-        {...baseProps}
-        conversation={{
-          ...baseConversation,
-          guestEmail: "guest@example.com",
-          user: undefined,
-        }}
+        {...makeProps({
+          conversation: {
+            ...baseConversation,
+            guestEmail: "guest@example.com",
+            user: undefined,
+          },
+        })}
       />
     );
     expect(screen.getByText(/guest@example.com/)).toBeInTheDocument();
@@ -190,25 +205,26 @@ describe("AdminConversationView", () => {
   });
 
   it("renders AssignMemberDropdown", () => {
-    render(<AdminConversationView {...baseProps} />);
+    render(<AdminConversationView {...makeProps()} />);
     expect(screen.getByTestId("assign-dropdown")).toBeInTheDocument();
   });
 
   it("renders MessageList", () => {
-    render(<AdminConversationView {...baseProps} />);
+    render(<AdminConversationView {...makeProps()} />);
     expect(screen.getByTestId("message-list")).toBeInTheDocument();
   });
 
   it("renders MessageInput", () => {
-    render(<AdminConversationView {...baseProps} />);
+    render(<AdminConversationView {...makeProps()} />);
     expect(screen.getByTestId("message-input")).toBeInTheDocument();
   });
 
   it("disables MessageInput when conversation is closed", () => {
     render(
       <AdminConversationView
-        {...baseProps}
-        conversation={{ ...baseConversation, status: "closed" }}
+        {...makeProps({
+          conversation: { ...baseConversation, status: "closed" },
+        })}
       />
     );
     expect(screen.getByTestId("message-input")).toHaveAttribute(
@@ -220,8 +236,9 @@ describe("AdminConversationView", () => {
   it("disables MessageInput when conversation is resolved", () => {
     render(
       <AdminConversationView
-        {...baseProps}
-        conversation={{ ...baseConversation, status: "resolved" }}
+        {...makeProps({
+          conversation: { ...baseConversation, status: "resolved" },
+        })}
       />
     );
     expect(screen.getByTestId("message-input")).toHaveAttribute(
@@ -231,7 +248,7 @@ describe("AdminConversationView", () => {
   });
 
   it("enables MessageInput when conversation is open", () => {
-    render(<AdminConversationView {...baseProps} />);
+    render(<AdminConversationView {...makeProps()} />);
     expect(screen.getByTestId("message-input")).toHaveAttribute(
       "data-disabled",
       "false"
@@ -239,16 +256,14 @@ describe("AdminConversationView", () => {
   });
 
   it("renders InlineStatusButtons", () => {
-    render(<AdminConversationView {...baseProps} />);
+    render(<AdminConversationView {...makeProps()} />);
     expect(screen.getByTestId("inline-status-buttons")).toBeInTheDocument();
   });
 
   it("calls onStatusChange when a status button is clicked", async () => {
-    const onStatusChange = vi.fn();
+    const onStatusChange = vi.fn(() => Promise.resolve());
     const user = userEvent.setup();
-    render(
-      <AdminConversationView {...baseProps} onStatusChange={onStatusChange} />
-    );
+    render(<AdminConversationView {...makeProps({ onStatusChange })} />);
     await user.click(screen.getByText("Closed"));
     expect(onStatusChange).toHaveBeenCalledWith("closed");
   });

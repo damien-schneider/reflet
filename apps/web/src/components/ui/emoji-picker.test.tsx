@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 // Mock Phosphor icons
@@ -130,7 +130,6 @@ import { EmojiPicker } from "./emoji-picker";
 
 describe("EmojiPicker", () => {
   afterEach(() => {
-    cleanup();
     vi.clearAllMocks();
     mockPopoverOpen = false;
   });
@@ -277,7 +276,6 @@ describe("EmojiPicker", () => {
 
 describe("EmojiPicker integration with Frimousse props spreading", () => {
   afterEach(() => {
-    cleanup();
     vi.clearAllMocks();
     mockPopoverOpen = false;
   });

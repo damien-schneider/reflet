@@ -188,7 +188,7 @@ export function PublishConfirmDialog({
                   GitHub push enabled but no repo connected.{" "}
                   <Link
                     className="underline hover:text-foreground"
-                    href={`/dashboard/${orgSlug}/settings/github`}
+                    href={`/dashboard/${orgSlug}/project/github`}
                   >
                     Connect repository
                   </Link>

@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@phosphor-icons/react", () => ({
@@ -102,7 +102,6 @@ const baseProps = {
 
 describe("DeadlineDisplay", () => {
   afterEach(() => {
-    cleanup();
     vi.clearAllMocks();
   });
 

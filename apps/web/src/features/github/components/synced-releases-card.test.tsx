@@ -1,5 +1,5 @@
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/components/ui/badge", () => ({
   Badge: ({
@@ -42,8 +42,6 @@ vi.mock("@/components/ui/typography", () => ({
 }));
 
 import { SyncedReleasesSection } from "./synced-releases-card";
-
-afterEach(cleanup);
 
 describe("SyncedReleasesSection", () => {
   it("returns null for empty releases", () => {

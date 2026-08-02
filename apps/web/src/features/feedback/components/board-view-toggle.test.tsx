@@ -1,5 +1,5 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { type BoardView, BoardViewToggle } from "./board-view-toggle";
 
 // Mock phosphor icons (component imports Flag, GridFour, List)
@@ -41,10 +41,6 @@ function getButtonByText(text: string): HTMLButtonElement {
 }
 
 describe("BoardViewToggle", () => {
-  afterEach(() => {
-    cleanup();
-  });
-
   it("should render all three tab buttons", () => {
     const onChange = vi.fn();
     render(<BoardViewToggle onChange={onChange} view="roadmap" />);

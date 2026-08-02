@@ -133,7 +133,7 @@ export function ProjectHubPage({
           </Card>
         </Link>
 
-        <Link href={`${basePath}/settings/github`}>
+        <Link href={`${basePath}/project/github`}>
           <Card className="h-full transition-colors hover:bg-muted/30">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-sm">

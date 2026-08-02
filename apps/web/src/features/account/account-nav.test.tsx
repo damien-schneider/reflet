@@ -1,6 +1,6 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/utils", () => ({
   cn: (...classes: unknown[]) => classes.filter(Boolean).join(" "),
@@ -19,8 +19,6 @@ vi.mock("@phosphor-icons/react", () => ({
 }));
 
 import { AccountNav } from "./account-nav";
-
-afterEach(cleanup);
 
 describe("AccountNav", () => {
   it("renders all nav items", () => {

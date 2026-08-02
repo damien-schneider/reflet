@@ -2,14 +2,18 @@
 
 import { ChatCircle } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import type { RefObject } from "react";
 
 import { H2, H3, Muted, Text } from "@/components/ui/typography";
 import { AssignMemberDropdown } from "@/features/inbox/components/assign-member-dropdown";
 import { InlineStatusButtons } from "@/features/inbox/components/inline-status-buttons";
-import { MessageInput } from "@/features/inbox/components/message-input";
-import { MessageList } from "@/features/inbox/components/message-list";
-
-type ConversationStatus = "open" | "awaiting_reply" | "resolved" | "closed";
+import { MessageInput } from "@/features/support/components/message-input";
+import { MessageList } from "@/features/support/components/message-list";
+import {
+  type ConversationStatus,
+  isConversationEditable,
+  isConversationStatus,
+} from "@/features/support/lib/conversation-status";
 
 interface TeamMember {
   email: string;
@@ -29,6 +33,7 @@ interface Message {
 }
 
 interface Conversation {
+  _id: Id<"supportConversations">;
   assignedTo?: string;
   guestEmail?: string;
   status: string;
@@ -37,26 +42,27 @@ interface Conversation {
 }
 
 interface AdminConversationViewProps {
+  actions: {
+    onAssign: (memberId: string | undefined) => Promise<void>;
+    onSendMessage: (body: string) => Promise<void>;
+    onStatusChange: (status: ConversationStatus) => Promise<void>;
+  };
   conversation: Conversation;
-  messages: Message[];
-  messagesLoading: boolean;
-  onAssign: (memberId: string | undefined) => Promise<void>;
-  onSendMessage: (body: string) => Promise<void>;
-  onStatusChange: (status: ConversationStatus) => Promise<void>;
+  messages: Message[] | undefined;
+  replyRef?: RefObject<HTMLTextAreaElement | null>;
   teamMembers: TeamMember[];
 }
 
 export function AdminConversationView({
   conversation,
   messages,
-  messagesLoading,
   teamMembers,
-  onSendMessage,
-  onStatusChange,
-  onAssign,
+  actions,
+  replyRef,
 }: AdminConversationViewProps) {
-  const isConversationClosed =
-    conversation.status === "closed" || conversation.status === "resolved";
+  const canReply =
+    isConversationStatus(conversation.status) &&
+    isConversationEditable(conversation.status);
 
   return (
     <>
@@ -81,23 +87,26 @@ export function AdminConversationView({
           <AssignMemberDropdown
             assignedTo={conversation.assignedTo}
             members={teamMembers}
-            onAssign={onAssign}
+            onAssign={actions.onAssign}
           />
 
           <InlineStatusButtons
             currentStatus={conversation.status}
-            onStatusChange={onStatusChange}
+            onStatusChange={actions.onStatusChange}
           />
         </div>
       </div>
 
-      <MessageList isLoading={messagesLoading} messages={messages} />
+      <MessageList conversationId={conversation._id} messages={messages} />
 
       <MessageInput
         autoFocus
-        disabled={isConversationClosed}
-        onSend={onSendMessage}
-        placeholder="Type your reply..."
+        disabled={!canReply}
+        onSend={actions.onSendMessage}
+        placeholder={
+          canReply ? "Type your reply..." : "Reopen this conversation to reply"
+        }
+        ref={replyRef}
       />
     </>
   );

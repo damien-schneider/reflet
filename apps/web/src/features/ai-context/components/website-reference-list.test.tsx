@@ -1,5 +1,5 @@
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("convex/react", () => ({
   useMutation: vi.fn(() => vi.fn()),
@@ -76,8 +76,6 @@ vi.mock("./website-reference-card", () => ({
 
 import { useQuery } from "convex/react";
 import { WebsiteReferenceList } from "./website-reference-list";
-
-afterEach(cleanup);
 
 const mockDialogState = { isOpen: false, setIsOpen: vi.fn() };
 
