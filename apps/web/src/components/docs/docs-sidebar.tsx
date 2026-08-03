@@ -34,6 +34,10 @@ const NAV_SECTIONS: NavSection[] = [
   {
     links: [
       { href: "/docs/widget", label: "Overview" },
+      {
+        href: "/docs/widget/floating-feedback",
+        label: "Floating Feedback Button",
+      },
       { href: "/docs/widget/feedback-widget", label: "Feedback Widget" },
       { href: "/docs/widget/changelog-widget", label: "Changelog Widget" },
     ],

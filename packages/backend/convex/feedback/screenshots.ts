@@ -6,23 +6,7 @@ import {
   query,
 } from "../_generated/server";
 import { getAuthUser } from "../shared/utils";
-
-const annotationValidator = v.object({
-  color: v.optional(v.string()),
-  endX: v.optional(v.number()),
-  endY: v.optional(v.number()),
-  height: v.optional(v.number()),
-  text: v.optional(v.string()),
-  type: v.union(
-    v.literal("rectangle"),
-    v.literal("arrow"),
-    v.literal("text"),
-    v.literal("blur")
-  ),
-  width: v.optional(v.number()),
-  x: v.number(),
-  y: v.number(),
-});
+import { screenshotAnnotationValidator } from "./tableFields";
 
 export const generateUploadUrl = mutation({
   args: {},
@@ -41,7 +25,7 @@ export const generatePublicUploadUrl = internalMutation({
 
 export const saveScreenshot = mutation({
   args: {
-    annotations: v.optional(v.array(annotationValidator)),
+    annotations: v.optional(v.array(screenshotAnnotationValidator)),
     captureSource: v.union(
       v.literal("widget"),
       v.literal("upload"),
@@ -85,7 +69,8 @@ export const saveScreenshot = mutation({
 
 export const saveScreenshotPublic = internalMutation({
   args: {
-    annotations: v.optional(v.array(annotationValidator)),
+    annotatedStorageId: v.optional(v.id("_storage")),
+    annotations: v.optional(v.array(screenshotAnnotationValidator)),
     captureSource: v.union(
       v.literal("widget"),
       v.literal("upload"),
@@ -108,6 +93,7 @@ export const saveScreenshotPublic = internalMutation({
     }
 
     return await ctx.db.insert("feedbackScreenshots", {
+      annotatedStorageId: args.annotatedStorageId,
       annotations: args.annotations,
       captureSource: args.captureSource,
       createdAt: Date.now(),
@@ -129,7 +115,7 @@ export const saveScreenshotPublic = internalMutation({
 export const updateAnnotations = mutation({
   args: {
     annotatedStorageId: v.optional(v.id("_storage")),
-    annotations: v.array(annotationValidator),
+    annotations: v.array(screenshotAnnotationValidator),
     screenshotId: v.id("feedbackScreenshots"),
   },
   handler: async (ctx, args) => {
@@ -186,7 +172,7 @@ export const getByFeedback = query({
       _id: v.id("feedbackScreenshots"),
       annotatedStorageId: v.optional(v.id("_storage")),
       annotatedUrl: v.union(v.string(), v.null()),
-      annotations: v.optional(v.array(annotationValidator)),
+      annotations: v.optional(v.array(screenshotAnnotationValidator)),
       captureSource: v.union(
         v.literal("widget"),
         v.literal("upload"),

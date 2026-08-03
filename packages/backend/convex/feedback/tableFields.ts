@@ -2,6 +2,77 @@ import { defineTable } from "convex/server";
 import { v } from "convex/values";
 import { feedbackStatus } from "../shared/validators";
 
+/** One drawing on a screenshot. `points` is only used by the pen tool. */
+export const screenshotAnnotationValidator = v.object({
+  color: v.optional(v.string()),
+  endX: v.optional(v.number()),
+  endY: v.optional(v.number()),
+  height: v.optional(v.number()),
+  points: v.optional(v.array(v.object({ x: v.number(), y: v.number() }))),
+  text: v.optional(v.string()),
+  type: v.union(
+    v.literal("rectangle"),
+    v.literal("arrow"),
+    v.literal("text"),
+    v.literal("blur"),
+    v.literal("pen"),
+    v.literal("highlight")
+  ),
+  width: v.optional(v.number()),
+  x: v.number(),
+  y: v.number(),
+});
+
+/**
+ * Where and how a report was written, as captured by the SDK widget.
+ * Every field is optional: older clients and the dashboard send nothing.
+ */
+export const feedbackContextValidator = v.object({
+  browser: v.optional(v.string()),
+  consoleEvents: v.optional(
+    v.array(
+      v.object({
+        level: v.union(v.literal("error"), v.literal("warn")),
+        message: v.string(),
+        timestamp: v.number(),
+      })
+    )
+  ),
+  device: v.optional(v.string()),
+  language: v.optional(v.string()),
+  metadata: v.optional(v.record(v.string(), v.string())),
+  os: v.optional(v.string()),
+  pageTitle: v.optional(v.string()),
+  referrer: v.optional(v.string()),
+  screen: v.optional(v.object({ height: v.number(), width: v.number() })),
+  sdkVersion: v.optional(v.string()),
+  selection: v.optional(
+    v.object({
+      componentStack: v.array(v.string()),
+      html: v.string(),
+      label: v.string(),
+      rect: v.object({
+        height: v.number(),
+        width: v.number(),
+        x: v.number(),
+        y: v.number(),
+      }),
+      selector: v.string(),
+      sourceLocation: v.optional(v.string()),
+    })
+  ),
+  timezone: v.optional(v.string()),
+  url: v.optional(v.string()),
+  userAgent: v.optional(v.string()),
+  viewport: v.optional(
+    v.object({
+      devicePixelRatio: v.number(),
+      height: v.number(),
+      width: v.number(),
+    })
+  ),
+});
+
 export const feedbackTables = {
   autoTaggingJobs: defineTable({
     completedAt: v.optional(v.number()),
@@ -121,6 +192,7 @@ export const feedbackTables = {
         v.literal("very_complex")
       )
     ),
+    context: v.optional(feedbackContextValidator),
     createdAt: v.number(),
     deadline: v.optional(v.number()),
     deletedAt: v.optional(v.number()),
@@ -181,26 +253,7 @@ export const feedbackTables = {
 
   feedbackScreenshots: defineTable({
     annotatedStorageId: v.optional(v.id("_storage")),
-    annotations: v.optional(
-      v.array(
-        v.object({
-          color: v.optional(v.string()),
-          endX: v.optional(v.number()),
-          endY: v.optional(v.number()),
-          height: v.optional(v.number()),
-          text: v.optional(v.string()),
-          type: v.union(
-            v.literal("rectangle"),
-            v.literal("arrow"),
-            v.literal("text"),
-            v.literal("blur")
-          ),
-          width: v.optional(v.number()),
-          x: v.number(),
-          y: v.number(),
-        })
-      )
-    ),
+    annotations: v.optional(v.array(screenshotAnnotationValidator)),
     captureSource: v.union(
       v.literal("widget"),
       v.literal("upload"),

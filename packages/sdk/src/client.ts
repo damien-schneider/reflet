@@ -15,6 +15,7 @@ import {
   RefletNotFoundError,
   type RefletUser,
   type Roadmap,
+  type SaveScreenshotParams,
   type SubscribeResponse,
   type UnsubscribeResponse,
   type VoteResponse,
@@ -140,6 +141,29 @@ export class Reflet {
     return await this.request<CreateFeedbackResponse>(
       "POST",
       "/api/v1/feedback/create",
+      params
+    );
+  }
+
+  /**
+   * Ask the API for a one-shot storage URL to upload a screenshot to.
+   */
+  async getScreenshotUploadUrl(): Promise<{ uploadUrl: string }> {
+    return await this.request<{ uploadUrl: string }>(
+      "POST",
+      "/api/v1/feedback/screenshot/upload-url"
+    );
+  }
+
+  /**
+   * Attach an already uploaded screenshot to a feedback item.
+   */
+  async saveScreenshot(
+    params: SaveScreenshotParams
+  ): Promise<{ screenshotId: string }> {
+    return await this.request<{ screenshotId: string }>(
+      "POST",
+      "/api/v1/feedback/screenshot/save",
       params
     );
   }

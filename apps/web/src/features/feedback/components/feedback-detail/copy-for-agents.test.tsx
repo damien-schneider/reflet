@@ -16,6 +16,9 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
       clarification: {
         generateCodingPrompt: "feedback.clarification.generateCodingPrompt",
       },
+      queries: {
+        get: "feedback.queries.get",
+      },
     },
     integrations: {
       github: {
@@ -268,6 +271,35 @@ const organizationId = "org1" as Id<"organizations">;
 
 // Import component after mocks
 import { CopyForAgents } from "./copy-for-agents";
+
+describe("buildAgentPrompt", () => {
+  it("adds a Where it happened section from the report context", () => {
+    const prompt = buildAgentPrompt({
+      description: "Nothing happens",
+      projectContext: null,
+      reportContext: {
+        browser: "Chrome 141",
+        url: "https://app.test/billing",
+      },
+      tags: [],
+      title: "Export is broken",
+    });
+
+    expect(prompt).toContain("## Where it happened");
+    expect(prompt).toContain("- **URL:** https://app.test/billing");
+  });
+
+  it("omits the section when no context was captured", () => {
+    const prompt = buildAgentPrompt({
+      description: "Nothing happens",
+      projectContext: null,
+      tags: [],
+      title: "Export is broken",
+    });
+
+    expect(prompt).not.toContain("## Where it happened");
+  });
+});
 
 describe("CopyForAgents Component", () => {
   afterEach(() => {

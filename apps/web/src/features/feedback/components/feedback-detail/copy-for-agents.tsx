@@ -31,6 +31,7 @@ import {
 import type { AgentTarget } from "./agent-config";
 import { AGENTS, openCloudAgent, openDeepLink } from "./agent-config";
 import type { FeedbackTag } from "./feedback-metadata-types";
+import { formatReportContext, type ReportContextValue } from "./report-context";
 
 interface CopyForAgentsProps {
   attachments?: string[];
@@ -51,12 +52,14 @@ export function buildAgentPrompt({
   tags,
   projectContext,
   attachments,
+  reportContext,
 }: {
   title: string;
   description: string | null;
   tags: FeedbackTag[];
   projectContext: string | null;
   attachments?: string[];
+  reportContext?: ReportContextValue;
 }): string {
   const parts: string[] = [];
 
@@ -78,6 +81,15 @@ export function buildAgentPrompt({
       .map((t) => `${t.icon ? `${t.icon} ` : ""}${t.name}`)
       .join(", ");
     parts.push(`**Tags:** ${tagLabels}\n`);
+  }
+
+  // Where the user hit the problem
+  const reportContextBlock = reportContext
+    ? formatReportContext(reportContext)
+    : "";
+  if (reportContextBlock) {
+    parts.push("## Where it happened\n");
+    parts.push(`${reportContextBlock}\n`);
   }
 
   // Project context from repo analysis
@@ -129,6 +141,8 @@ export function CopyForAgents({
     }
   );
 
+  const feedback = useQuery(api.feedback.queries.get, { id: feedbackId });
+
   // Get repo analysis for project context (lightweight query)
   const repoAnalysis = useQuery(
     api.integrations.github.repo_analysis.getLatestAnalysis,
@@ -173,10 +187,18 @@ export function CopyForAgents({
         attachments,
         description,
         projectContext: getProjectContext(),
+        reportContext: feedback?.context,
         tags: validTags,
         title,
       }),
-    [title, description, validTags, getProjectContext, attachments]
+    [
+      title,
+      description,
+      validTags,
+      getProjectContext,
+      attachments,
+      feedback?.context,
+    ]
   );
 
   const handleAgentAction = useCallback(

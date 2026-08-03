@@ -86,6 +86,23 @@ export function optionalId<T extends TableNames>(
   return typeof value === "string" && value ? (value as Id<T>) : undefined;
 }
 
+// `_storage` is a system table, so it is outside TableNames.
+export function parseStorageId(
+  value: string | null | undefined,
+  fieldName: string
+): Id<"_storage"> {
+  if (!value) {
+    throw new Error(`Missing required field: ${fieldName}`);
+  }
+  return value as Id<"_storage">;
+}
+
+export function optionalStorageId(
+  value: string | null | undefined
+): Id<"_storage"> | undefined {
+  return value ? (value as Id<"_storage">) : undefined;
+}
+
 // ============================================
 // JSON BODY PARSER
 // ============================================

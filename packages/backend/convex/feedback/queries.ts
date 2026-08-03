@@ -215,6 +215,8 @@ export const get = query({
       ...feedback,
       assignee,
       author,
+      // Widget context carries the reporter's environment — members only.
+      context: isMember ? feedback.context : undefined,
       hasVoted,
       isAuthor: user?._id === feedback.authorId,
       isMember,

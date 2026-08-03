@@ -1,0 +1,58 @@
+{
+  "name": "reflet-cli",
+  "version": "0.1.0",
+  "description": "Add the Reflet feedback widget to any React app in one command",
+  "license": "MIT",
+  "author": "Reflet <hello@reflet.app>",
+  "homepage": "https://reflet.app",
+  "bugs": {
+    "url": "https://github.com/reflet-app/reflet/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/reflet-app/reflet.git",
+    "directory": "packages/cli"
+  },
+  "keywords": [
+    "reflet",
+    "feedback",
+    "widget",
+    "cli",
+    "bug-report",
+    "screenshot"
+  ],
+  "type": "module",
+  "bin": {
+    "reflet": "./dist/index.js",
+    "reflet-cli": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "check-types": "tsc --noEmit",
+    "test:unit": "vitest run",
+    "lint": "cd ../.. && bun x ultracite check packages/cli",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.2",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "exports": {
+    "./prompt": "./src/setup-prompt.ts"
+  }
+}

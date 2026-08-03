@@ -1,6 +1,6 @@
 {
   "name": "reflet-sdk",
-  "version": "0.1.5",
+  "version": "0.2.0",
   "description": "Official Reflet SDK - Collect user feedback, feature requests, and bug reports from your app",
   "license": "MIT",
   "author": "Reflet <hello@reflet.app>",
@@ -39,6 +39,10 @@
       "import": "./dist/react.js",
       "types": "./dist/react.d.ts"
     },
+    "./feedback": {
+      "import": "./dist/feedback.js",
+      "types": "./dist/feedback.d.ts"
+    },
     "./server": {
       "import": "./dist/server.js",
       "types": "./dist/server.d.ts"
@@ -56,6 +60,7 @@
     "build": "tsdown",
     "dev": "tsdown --watch",
     "check-types": "tsc --noEmit",
+    "test:unit": "vitest run",
     "lint": "cd ../.. && bun x ultracite check packages/sdk",
     "prepublishOnly": "npm run build",
     "version:patch": "npm version patch && npm run release",
@@ -64,18 +69,33 @@
     "release": "npm run build && npm publish"
   },
   "peerDependencies": {
-    "react": "^18.0.0 || ^19.0.0"
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
   },
   "peerDependenciesMeta": {
     "react": {
       "optional": true
+    },
+    "react-dom": {
+      "optional": true
     }
   },
+  "dependencies": {
+    "@zumer/snapdom": "^2.23.1"
+  },
   "devDependencies": {
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/react": "^19.2.17",
+    "jsdom": "^30.0.1",
     "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "tsdown": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:",
+    "@types/react-dom": "19.2.3"
   },
   "engines": {
     "node": ">=18.0.0"

@@ -4,7 +4,7 @@ import { internal } from "../_generated/api";
 import type { Id, TableNames } from "../_generated/dataModel";
 import { httpAction } from "../_generated/server";
 import { decodeUserToken } from "../feedback/api_auth";
-import { parseId, parseJsonBody } from "./helpers";
+import { optionalStorageId, parseId, parseStorageId } from "./helpers";
 
 type Router = ReturnType<typeof httpRouter>;
 
@@ -12,10 +12,90 @@ type Router = ReturnType<typeof httpRouter>;
 // SCHEMAS
 // ============================================
 
+const pointSchema = z.object({ x: z.number(), y: z.number() });
+
+/**
+ * Widget-reported context. Every bound is a hard cap on what a public client
+ * can push into the database, not just a shape check.
+ */
+const feedbackContextSchema = z.object({
+  browser: z.string().max(120).optional(),
+  consoleEvents: z
+    .array(
+      z.object({
+        level: z.enum(["error", "warn"]),
+        message: z.string().max(1000),
+        timestamp: z.number(),
+      })
+    )
+    .max(30)
+    .optional(),
+  device: z.string().max(40).optional(),
+  language: z.string().max(40).optional(),
+  metadata: z.record(z.string().max(60), z.string().max(500)).optional(),
+  os: z.string().max(60).optional(),
+  pageTitle: z.string().max(300).optional(),
+  referrer: z.string().max(2000).optional(),
+  screen: z.object({ height: z.number(), width: z.number() }).optional(),
+  sdkVersion: z.string().max(40).optional(),
+  selection: z
+    .object({
+      componentStack: z.array(z.string().max(120)).max(10),
+      html: z.string().max(2000),
+      label: z.string().max(200),
+      rect: z.object({
+        height: z.number(),
+        width: z.number(),
+        x: z.number(),
+        y: z.number(),
+      }),
+      selector: z.string().max(600),
+      sourceLocation: z.string().max(400).optional(),
+    })
+    .optional(),
+  timezone: z.string().max(80).optional(),
+  url: z.string().max(2000).optional(),
+  userAgent: z.string().max(600).optional(),
+  viewport: z
+    .object({
+      devicePixelRatio: z.number(),
+      height: z.number(),
+      width: z.number(),
+    })
+    .optional(),
+});
+
 const createFeedbackSchema = z.object({
+  context: feedbackContextSchema.optional(),
   description: z.string().optional(),
   tagId: z.string().optional(),
   title: z.string().optional(),
+});
+
+const screenshotAnnotationSchema = z.object({
+  color: z.string().max(40).optional(),
+  endX: z.number().optional(),
+  endY: z.number().optional(),
+  height: z.number().optional(),
+  points: z.array(pointSchema).max(500).optional(),
+  text: z.string().max(280).optional(),
+  type: z.enum(["rectangle", "arrow", "text", "blur", "pen", "highlight"]),
+  width: z.number().optional(),
+  x: z.number(),
+  y: z.number(),
+});
+
+const saveScreenshotSchema = z.object({
+  annotatedStorageId: z.string().optional(),
+  annotations: z.array(screenshotAnnotationSchema).max(50).optional(),
+  feedbackId: z.string(),
+  filename: z.string().max(200).optional(),
+  height: z.number().optional(),
+  mimeType: z.string().max(80).optional(),
+  pageUrl: z.string().max(2000).optional(),
+  size: z.number().optional(),
+  storageId: z.string(),
+  width: z.number().optional(),
 });
 
 const voteFeedbackSchema = z.object({
@@ -78,31 +158,6 @@ function jsonResponse(
 
 function errorResponse(error: string, status = 400): Response {
   return jsonResponse({ error }, status);
-}
-
-function stringFieldOr(
-  body: Record<string, unknown>,
-  key: string,
-  defaultVal: string
-): string {
-  const val = body[key];
-  return typeof val === "string" ? val : defaultVal;
-}
-
-function optionalNumberField(
-  body: Record<string, unknown>,
-  key: string
-): number | undefined {
-  const val = body[key];
-  return typeof val === "number" ? val : undefined;
-}
-
-function optionalStringField(
-  body: Record<string, unknown>,
-  key: string
-): string | undefined {
-  const val = body[key];
-  return typeof val === "string" ? val : undefined;
 }
 
 function corsPreflightResponse(): Response {
@@ -476,7 +531,7 @@ export function registerPublicApiRoutes(http: Router): void {
         } catch {
           return errorResponse("Invalid JSON body", 400);
         }
-        const { title, description, tagId } = body;
+        const { title, description, tagId, context } = body;
 
         if (!(title && description)) {
           return errorResponse("Title and description are required", 400);
@@ -494,6 +549,7 @@ export function registerPublicApiRoutes(http: Router): void {
         const result = await ctx.runMutation(
           internal.feedback.api_public.createFeedbackByOrganization,
           {
+            context,
             description,
             externalUserId,
             organizationId,
@@ -866,32 +922,28 @@ export function registerPublicApiRoutes(http: Router): void {
 
         const { externalUserId } = authResult.auth;
 
-        const bodyResult = await parseJsonBody(request);
-        if (!bodyResult.success) {
-          return bodyResult.response;
-        }
-        const { body } = bodyResult;
-
-        const feedbackId = body.feedbackId as string | undefined;
-        const storageId = body.storageId as string | undefined;
-
-        if (!(feedbackId && storageId)) {
+        let body: z.infer<typeof saveScreenshotSchema>;
+        try {
+          body = saveScreenshotSchema.parse(await request.json());
+        } catch {
           return errorResponse("feedbackId and storageId are required", 400);
         }
 
         const screenshotId = await ctx.runMutation(
           internal.feedback.screenshots.saveScreenshotPublic,
           {
+            annotatedStorageId: optionalStorageId(body.annotatedStorageId),
+            annotations: body.annotations,
             captureSource: "widget",
             externalUserId,
-            feedbackId: feedbackId as Id<"feedback">,
-            filename: stringFieldOr(body, "filename", "screenshot.png"),
-            height: optionalNumberField(body, "height"),
-            mimeType: stringFieldOr(body, "mimeType", "image/png"),
-            pageUrl: optionalStringField(body, "pageUrl"),
-            size: optionalNumberField(body, "size") ?? 0,
-            storageId: storageId as Id<"_storage">,
-            width: optionalNumberField(body, "width"),
+            feedbackId: parseId<"feedback">(body.feedbackId, "feedbackId"),
+            filename: body.filename ?? "screenshot.png",
+            height: body.height,
+            mimeType: body.mimeType ?? "image/png",
+            pageUrl: body.pageUrl,
+            size: body.size ?? 0,
+            storageId: parseStorageId(body.storageId, "storageId"),
+            width: body.width,
           }
         );
 

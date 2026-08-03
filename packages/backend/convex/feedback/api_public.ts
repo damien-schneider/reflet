@@ -8,6 +8,7 @@ import {
   MAX_TITLE_LENGTH,
 } from "../shared/constants";
 import { validateInputLength } from "../shared/validators";
+import { feedbackContextValidator } from "./tableFields";
 
 // ============================================
 // TYPES
@@ -691,6 +692,7 @@ export const searchSimilarFeedback = internalQuery({
  */
 export const createFeedbackByOrganization = internalMutation({
   args: {
+    context: v.optional(feedbackContextValidator),
     description: v.string(),
     externalUserId: v.optional(v.id("externalUsers")),
     organizationId: v.id("organizations"),
@@ -743,6 +745,7 @@ export const createFeedbackByOrganization = internalMutation({
     const now = Date.now();
     const feedbackId = await ctx.db.insert("feedback", {
       commentCount: 0,
+      context: args.context,
       createdAt: now,
       description: args.description,
       externalUserId: args.externalUserId,

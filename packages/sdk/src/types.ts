@@ -131,9 +131,84 @@ export interface FeedbackListParams {
   statusId?: string;
 }
 
+export interface ElementRect {
+  height: number;
+  width: number;
+  x: number;
+  y: number;
+}
+
+export interface ElementSelection {
+  /** React component names owning the element, innermost first. */
+  componentStack: string[];
+  /** Truncated outerHTML of the selected element. */
+  html: string;
+  /** Short human-readable description, e.g. `button "Sign in"`. */
+  label: string;
+  rect: ElementRect;
+  selector: string;
+  /** `src/components/login-form.tsx:46:19` when the React build exposes it. */
+  sourceLocation?: string;
+}
+
+export interface ConsoleEvent {
+  level: "error" | "warn";
+  message: string;
+  timestamp: number;
+}
+
+export interface PageContext {
+  browser?: string;
+  device?: string;
+  language?: string;
+  os?: string;
+  pageTitle?: string;
+  referrer?: string;
+  screen?: { height: number; width: number };
+  timezone?: string;
+  url?: string;
+  userAgent?: string;
+  viewport?: { devicePixelRatio: number; height: number; width: number };
+}
+
+/** Everything the widget knows about where and how the feedback was written. */
+export interface FeedbackContext extends PageContext {
+  consoleEvents?: ConsoleEvent[];
+  metadata?: Record<string, string>;
+  sdkVersion?: string;
+  selection?: ElementSelection;
+}
+
 export interface CreateFeedbackParams {
+  context?: FeedbackContext;
   description: string;
   title: string;
+}
+
+export interface ScreenshotAnnotation {
+  color?: string;
+  endX?: number;
+  endY?: number;
+  height?: number;
+  points?: Array<{ x: number; y: number }>;
+  text?: string;
+  type: "arrow" | "blur" | "highlight" | "pen" | "rectangle" | "text";
+  width?: number;
+  x: number;
+  y: number;
+}
+
+export interface SaveScreenshotParams {
+  annotatedStorageId?: string;
+  annotations?: ScreenshotAnnotation[];
+  feedbackId: string;
+  filename?: string;
+  height?: number;
+  mimeType?: string;
+  pageUrl?: string;
+  size?: number;
+  storageId: string;
+  width?: number;
 }
 
 export interface CreateFeedbackResponse {

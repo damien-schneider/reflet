@@ -113,7 +113,67 @@ function FeedbackPage() {
 }
 ```
 
-### 4. Server-Side User Signing (Recommended for Production)
+### 4. Floating Feedback Widget
+
+One component adds a floating button to your app. Opening it screenshots the
+current viewport, lets the user draw on that screenshot, and lets them point at
+an element so the report carries the React component behind it.
+
+```bash
+npx reflet-cli init
+```
+
+Or mount it yourself, once, as the last child of your app shell:
+
+```tsx
+import { RefletFeedback } from 'reflet-sdk/feedback';
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body>
+        {children}
+        <RefletFeedback publicKey={process.env.NEXT_PUBLIC_REFLET_PUBLIC_KEY} />
+      </body>
+    </html>
+  );
+}
+```
+
+The entry ships its own `"use client"` directive, so a Next.js layout can stay a
+Server Component. With Vite, read the key from
+`import.meta.env.VITE_REFLET_PUBLIC_KEY` and render the widget next to `<App />`.
+
+Every report carries the URL, page title, browser, OS, device, viewport, locale
+and timezone, plus the last 30 console errors and warnings. Pointing at an
+element adds a selector that resolves back to it, the React component stack, and
+the source file and line when the build exposes them (development and preview
+builds do; production builds strip React's debug data).
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `publicKey` | `string` | — | Your `fb_pub_…` key. Optional inside `RefletProvider`. |
+| `user` | `RefletUser` | — | Who is reporting. Hides the email field. |
+| `position` | `"bottom-right" \| "bottom-left" \| "top-right" \| "top-left"` | `"bottom-right"` | Which corner the button sits in. |
+| `enabled` | `boolean` | `true` | Render the widget. Gate it to staff or beta users. |
+| `captureOnOpen` | `boolean` | `true` | Screenshot as soon as the panel opens. |
+| `captureConsole` | `boolean` | `true` | Record console errors and warnings. |
+| `hotkey` | `string \| null` | `null` | Shortcut toggling the panel, e.g. `"mod+shift+f"`. |
+| `theme` | `"auto" \| "light" \| "dark"` | `"auto"` | Colour scheme. |
+| `primaryColor` | `string` | — | Any CSS color for the button and accents. |
+| `offset` | `number` | `20` | Pixels between the button and the viewport edge. |
+| `metadata` | `Record<string, string>` | — | Extra fields merged into every report. |
+| `categories` | `("bug" \| "idea" \| "question")[]` | all three | Category chips to show. |
+| `labels` | `Partial<FeedbackWidgetLabels>` | — | Override any string for i18n. |
+| `onSubmit` | `(result: { feedbackId: string }) => void` | — | Fires after a successful send. |
+
+The panel renders in a shadow root, so your CSS cannot reach it and its CSS
+cannot reach your app. Screenshots are rendered from the DOM rather than through
+`getDisplayMedia`, so users are never asked for a screen-share permission —
+the trade-off is that cross-origin images without CORS headers, iframes and
+canvas content may come out blank.
+
+### 5. Server-Side User Signing (Recommended for Production)
 
 For production apps, sign user tokens on your server to prevent client-side spoofing.
 

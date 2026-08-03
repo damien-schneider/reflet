@@ -35,6 +35,7 @@ import type {
 } from "./feedback-detail-drawer-types";
 import { FeedbackMetadataBar } from "./feedback-metadata-bar";
 import { InlineClarification } from "./inline-clarification";
+import { ReportContext } from "./report-context";
 
 const EMPTY_FEEDBACK_LIST: FeedbackListItem[] = [];
 const EMPTY_FEEDBACK_IDS: Id<"feedback">[] = [];
@@ -345,6 +346,13 @@ function FeedbackDetailContent({
         <div className="border-t px-6 py-4">
           <ScreenshotGallery feedbackId={feedbackId} />
         </div>
+
+        {/* Where the report came from (members only) */}
+        {isAdmin && (
+          <div className="border-t px-6 py-4">
+            <ReportContext feedbackId={feedbackId} />
+          </div>
+        )}
 
         {/* Comments */}
         <div className="border-t px-6 py-6">

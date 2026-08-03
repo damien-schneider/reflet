@@ -2,9 +2,10 @@ import { defineConfig } from "tsdown";
 
 export default defineConfig({
   clean: true,
-  deps: { neverBundle: ["react"] },
+  deps: { neverBundle: ["react", "react-dom", "@zumer/snapdom"] },
   dts: true,
   entry: {
+    feedback: "src/feedback/entry.ts",
     index: "src/index.ts",
     react: "src/react.ts",
     server: "src/server.ts",
