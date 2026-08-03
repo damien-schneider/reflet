@@ -73,6 +73,7 @@
         "react-resizable-panels": "^4.12.2",
         "recharts": "^3.10.1",
         "reflet-cli": "workspace:*",
+        "reflet-sdk": "workspace:*",
         "shadcn": "^4.16.0",
         "sonner": "^2.0.7",
         "streamdown": "^2.5.0",

@@ -8,6 +8,9 @@ import { optionalStorageId, parseId, parseStorageId } from "./helpers";
 
 type Router = ReturnType<typeof httpRouter>;
 
+const PUBLIC_KEY_WRITES_PER_MINUTE = 30;
+const SECRET_KEY_WRITES_PER_MINUTE = 300;
+
 // ============================================
 // SCHEMAS
 // ============================================
@@ -186,11 +189,14 @@ interface ApiAuthContext {
   organizationId: Id<"organizations">;
 }
 
-async function checkOrganizationAccess(
+type AccessCheck =
+  | { allowed: true; isPublic: boolean }
+  | { allowed: false; response: Response };
+
+async function checkOrganizationExists(
   ctx: Parameters<Parameters<typeof httpAction>[0]>[0],
-  organizationId: Id<"organizations">,
-  isSecretKey: boolean
-): Promise<{ allowed: true } | { allowed: false; response: Response }> {
+  organizationId: Id<"organizations">
+): Promise<AccessCheck> {
   const org = await ctx.runQuery(
     internal.feedback.api_public.getOrganizationConfig,
     {
@@ -205,7 +211,20 @@ async function checkOrganizationAccess(
     };
   }
 
-  if (!(org.isPublic || isSecretKey)) {
+  return { allowed: true, isPublic: org.isPublic ?? false };
+}
+
+async function checkOrganizationAccess(
+  ctx: Parameters<Parameters<typeof httpAction>[0]>[0],
+  organizationId: Id<"organizations">,
+  isSecretKey: boolean
+): Promise<AccessCheck> {
+  const found = await checkOrganizationExists(ctx, organizationId);
+  if (!found.allowed) {
+    return found;
+  }
+
+  if (!(found.isPublic || isSecretKey)) {
     return {
       allowed: false,
       response: errorResponse(
@@ -215,7 +234,37 @@ async function checkOrganizationAccess(
     };
   }
 
-  return { allowed: true };
+  return found;
+}
+
+// Widget ingest: a public key may write into a private org, never read from it.
+async function checkWriteQuota(
+  ctx: Parameters<Parameters<typeof httpAction>[0]>[0],
+  auth: ApiAuthContext
+): Promise<AccessCheck> {
+  const found = await checkOrganizationExists(ctx, auth.organizationId);
+  if (!found.allowed) {
+    return found;
+  }
+
+  const quota = await ctx.runQuery(internal.feedback.api_auth.checkRateLimit, {
+    maxRequests: auth.isSecretKey
+      ? SECRET_KEY_WRITES_PER_MINUTE
+      : PUBLIC_KEY_WRITES_PER_MINUTE,
+    organizationApiKeyId: auth.organizationApiKeyId,
+  });
+
+  if (!quota.allowed) {
+    return {
+      allowed: false,
+      response: errorResponse(
+        "Too many reports from this key. Try again in a minute.",
+        429
+      ),
+    };
+  }
+
+  return found;
 }
 
 async function authenticateApiRequest(
@@ -523,7 +572,7 @@ export function registerPublicApiRoutes(http: Router): void {
           return authResult.response;
         }
 
-        const { organizationId, externalUserId, isSecretKey } = authResult.auth;
+        const { organizationId, externalUserId } = authResult.auth;
 
         let body: z.infer<typeof createFeedbackSchema>;
         try {
@@ -537,13 +586,9 @@ export function registerPublicApiRoutes(http: Router): void {
           return errorResponse("Title and description are required", 400);
         }
 
-        const access = await checkOrganizationAccess(
-          ctx,
-          organizationId,
-          isSecretKey
-        );
-        if (!access.allowed) {
-          return access.response;
+        const quota = await checkWriteQuota(ctx, authResult.auth);
+        if (!quota.allowed) {
+          return quota.response;
         }
 
         const result = await ctx.runMutation(
@@ -557,6 +602,15 @@ export function registerPublicApiRoutes(http: Router): void {
             title,
           }
         );
+
+        await ctx.runMutation(internal.feedback.api_auth.logApiRequest, {
+          endpoint: "/api/v1/feedback/create",
+          method: "POST",
+          organizationApiKeyId: authResult.auth.organizationApiKeyId,
+          organizationId,
+          statusCode: 201,
+          userAgent: request.headers.get("User-Agent") ?? undefined,
+        });
 
         return jsonResponse(result, 201);
       } catch (error) {
@@ -892,6 +946,11 @@ export function registerPublicApiRoutes(http: Router): void {
         const authResult = await authenticateApiRequest(ctx, request);
         if (!authResult.success) {
           return authResult.response;
+        }
+
+        const quota = await checkWriteQuota(ctx, authResult.auth);
+        if (!quota.allowed) {
+          return quota.response;
         }
 
         const uploadUrl = await ctx.runMutation(

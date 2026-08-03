@@ -276,6 +276,15 @@ export default function FloatingFeedbackPage() {
             Report context is only visible to members of your organization, not
             to visitors on a public board.
           </li>
+          <li>
+            Your organization does not have to be public. The public key writes
+            reports and nothing else — reading the board still needs a member
+            session or a secret key.
+          </li>
+          <li>
+            A public key is capped at 30 reports per minute. Past that the API
+            answers <InlineCode>429</InlineCode> and the panel shows the error.
+          </li>
         </ul>
       </Section>
     </div>

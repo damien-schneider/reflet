@@ -6,6 +6,7 @@ import {
   CreditCard,
   GithubLogo,
   Globe,
+  Key,
   Robot,
   Users,
 } from "@phosphor-icons/react";
@@ -18,6 +19,7 @@ import { cn } from "@/lib/utils";
 export type ProjectTab =
   | "github"
   | "ai-mcp"
+  | "api-keys"
   | "general"
   | "domains"
   | "members"
@@ -42,6 +44,12 @@ const NAV_ITEMS: NavItem[] = [
     icon: Robot,
     id: "ai-mcp",
     label: "AI & MCP",
+  },
+  {
+    description: "Keys for the SDK and the feedback widget",
+    icon: Key,
+    id: "api-keys",
+    label: "API Keys",
   },
   {
     description: "Name, branding, and visibility",

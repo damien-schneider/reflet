@@ -2,6 +2,7 @@
 
 import {
   BookOpen,
+  ChatCircle,
   Copy,
   Key,
   PuzzlePiece,
@@ -17,6 +18,7 @@ import { AiPromptSection } from "./components/ai-prompt-section";
 import { ApiKeyDialogs } from "./components/api-key-dialogs";
 import { ApiKeysList } from "./components/api-keys-list";
 import { FeedbackButtonGuide } from "./components/feedback-button-guide";
+import { FloatingWidgetGuide } from "./components/floating-widget-guide";
 import { IntegrationGuide } from "./components/integration-guide";
 import { useApiKeys } from "./hooks/use-api-keys";
 
@@ -104,6 +106,10 @@ export function ApiKeysSettings({ organizationId }: ApiKeysSettingsProps) {
 
         <Tabs defaultValue="ai">
           <TabsList>
+            <TabsTrigger value="widget">
+              <ChatCircle className="mr-2 h-4 w-4" />
+              Widget
+            </TabsTrigger>
             <TabsTrigger value="react">
               <PuzzlePiece className="mr-2 h-4 w-4" />
               React
@@ -117,6 +123,10 @@ export function ApiKeysSettings({ organizationId }: ApiKeysSettingsProps) {
               AI Prompt
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent className="mt-6" value="widget">
+            <FloatingWidgetGuide publicKey="fb_pub_xxxxxxxxxxxxxxxx" />
+          </TabsContent>
 
           <TabsContent className="mt-6" value="react">
             <FeedbackButtonGuide publicKey="fb_pub_xxxxxxxxxxxxxxxx" />
@@ -176,10 +186,14 @@ export function ApiKeysSettings({ organizationId }: ApiKeysSettingsProps) {
       )}
 
       <Tabs defaultValue="keys">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="keys">
             <Key className="mr-2 h-4 w-4" />
             API Keys
+          </TabsTrigger>
+          <TabsTrigger value="widget">
+            <ChatCircle className="mr-2 h-4 w-4" />
+            Widget
           </TabsTrigger>
           <TabsTrigger value="react">
             <PuzzlePiece className="mr-2 h-4 w-4" />
@@ -218,6 +232,12 @@ export function ApiKeysSettings({ organizationId }: ApiKeysSettingsProps) {
             setNewKeyName={setNewKeyName}
             setShowSecretKey={setShowSecretKey}
             showSecretKey={showSecretKey}
+          />
+        </TabsContent>
+
+        <TabsContent className="mt-6" value="widget">
+          <FloatingWidgetGuide
+            publicKey={firstKey?.publicKey ?? "fb_pub_xxx"}
           />
         </TabsContent>
 
