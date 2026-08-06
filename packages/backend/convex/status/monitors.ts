@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { components } from "../_generated/api";
 import { mutation, query } from "../_generated/server";
 import { PLAN_LIMITS } from "../billing/queries";
+import { requireOrgAdmin, requireOrgMember } from "../shared/access";
 import { monitorMethod, monitorStatus } from "./tableFields";
 
 // ============================================
@@ -11,6 +12,8 @@ import { monitorMethod, monitorStatus } from "./tableFields";
 export const listMonitors = query({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
+    await requireOrgMember(ctx, args.organizationId);
+
     const monitors = await ctx.db
       .query("statusMonitors")
       .withIndex("by_organization", (q) =>
@@ -46,6 +49,8 @@ export const getMonitorWithHistory = query({
     if (!monitor) {
       return null;
     }
+
+    await requireOrgMember(ctx, monitor.organizationId);
 
     // Last 7 days of checks
     const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
@@ -107,6 +112,8 @@ export const getAggregateStatus = query({
 export const getMonitorsUptimeBars = query({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
+    await requireOrgMember(ctx, args.organizationId);
+
     const monitors = await ctx.db
       .query("statusMonitors")
       .withIndex("by_organization", (q) =>
@@ -181,6 +188,8 @@ export const createMonitor = mutation({
     url: v.string(),
   },
   handler: async (ctx, args) => {
+    await requireOrgAdmin(ctx, args.organizationId, "create monitors");
+
     const now = Date.now();
 
     // Determine tier minimum check interval
@@ -230,30 +239,35 @@ export const updateMonitor = mutation({
   },
   handler: async (ctx, args) => {
     const { monitorId, ...updates } = args;
+
+    const monitor = await ctx.db.get(monitorId);
+    if (!monitor) {
+      throw new Error("Monitor not found");
+    }
+
+    await requireOrgAdmin(ctx, monitor.organizationId, "update monitors");
+
     const filtered = Object.fromEntries(
       Object.entries(updates).filter(([, val]) => val !== undefined)
     );
 
     // Clamp checkIntervalMinutes to tier minimum if being updated
     if (args.checkIntervalMinutes !== undefined) {
-      const monitor = await ctx.db.get(monitorId);
-      if (monitor) {
-        const subscription = await ctx.runQuery(
-          components.stripe.public.getSubscriptionByOrgId,
-          { orgId: monitor.organizationId }
-        );
-        const hasActiveSub =
-          subscription &&
-          (subscription.status === "active" ||
-            subscription.status === "trialing");
-        const minInterval = hasActiveSub
-          ? PLAN_LIMITS.pro.minCheckIntervalMinutes
-          : PLAN_LIMITS.free.minCheckIntervalMinutes;
-        filtered.checkIntervalMinutes = Math.max(
-          args.checkIntervalMinutes,
-          minInterval
-        );
-      }
+      const subscription = await ctx.runQuery(
+        components.stripe.public.getSubscriptionByOrgId,
+        { orgId: monitor.organizationId }
+      );
+      const hasActiveSub =
+        subscription &&
+        (subscription.status === "active" ||
+          subscription.status === "trialing");
+      const minInterval = hasActiveSub
+        ? PLAN_LIMITS.pro.minCheckIntervalMinutes
+        : PLAN_LIMITS.free.minCheckIntervalMinutes;
+      filtered.checkIntervalMinutes = Math.max(
+        args.checkIntervalMinutes,
+        minInterval
+      );
     }
 
     await ctx.db.patch(monitorId, {
@@ -266,6 +280,13 @@ export const updateMonitor = mutation({
 export const deleteMonitor = mutation({
   args: { monitorId: v.id("statusMonitors") },
   handler: async (ctx, args) => {
+    const monitor = await ctx.db.get(args.monitorId);
+    if (!monitor) {
+      throw new Error("Monitor not found");
+    }
+
+    await requireOrgAdmin(ctx, monitor.organizationId, "delete monitors");
+
     await ctx.db.delete(args.monitorId);
   },
 });
@@ -284,6 +305,13 @@ export const reorderMonitors = mutation({
   handler: async (ctx, args) => {
     const now = Date.now();
     for (const update of args.updates) {
+      const monitor = await ctx.db.get(update.monitorId);
+      if (!monitor) {
+        throw new Error("Monitor not found");
+      }
+
+      await requireOrgAdmin(ctx, monitor.organizationId, "reorder monitors");
+
       await ctx.db.patch(update.monitorId, {
         groupName: update.groupName,
         groupOrder: update.groupOrder,

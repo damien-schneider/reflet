@@ -78,7 +78,7 @@ export async function signUser(
   // Create signature using HMAC-SHA256 via Web Crypto API
   const signature = await createHmacSha256Signature(
     `${headerB64}.${payloadB64}`,
-    secretKey
+    await deriveSigningKey(secretKey)
   );
 
   return {
@@ -112,7 +112,7 @@ export async function verifyUser(
   // Verify signature using constant-time comparison
   const expectedSignature = await createHmacSha256Signature(
     `${headerB64}.${payloadB64}`,
-    secretKey
+    await deriveSigningKey(secretKey)
   );
 
   if (!constantTimeEqual(signature, expectedSignature)) {
@@ -187,6 +187,20 @@ function base64UrlDecode(str: string): string {
     bytes[i] = binary.charCodeAt(i);
   }
   return new TextDecoder().decode(bytes);
+}
+
+/**
+ * Signing key is the SHA-256 hex digest of the secret key: Reflet stores exactly
+ * that digest, so it can verify tokens without ever holding the raw secret.
+ */
+async function deriveSigningKey(secretKey: string): Promise<string> {
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(secretKey)
+  );
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 /**

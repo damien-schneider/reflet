@@ -25,7 +25,9 @@ export default function PendingInvitationsPage() {
   const invitations = useQuery(
     api.organizations.invitations.listMyPendingInvitations
   );
-  const acceptInvitation = useMutation(api.organizations.invitations.accept);
+  const acceptInvitation = useMutation(
+    api.organizations.invitation_actions.accept
+  );
   const [acceptingToken, setAcceptingToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 

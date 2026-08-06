@@ -51,9 +51,9 @@ vi.mock("convex/react", () => ({
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
     feedback: {
-      actions: { assign: "feedback_actions.assign" },
       comments: { list: "comments.list" },
       queries: { get: "feedback.get" },
+      triage_actions: { assign: "feedback_triage_actions.assign" },
       votes: { toggle: "votes.toggle" },
     },
     organizations: {

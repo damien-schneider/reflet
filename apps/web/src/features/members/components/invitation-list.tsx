@@ -135,8 +135,12 @@ function InvitationItem({
 }
 
 export function InvitationList({ invitations }: InvitationListProps) {
-  const cancelInvitation = useMutation(api.organizations.invitations.cancel);
-  const resendInvitation = useMutation(api.organizations.invitations.resend);
+  const cancelInvitation = useMutation(
+    api.organizations.invitation_actions.cancel
+  );
+  const resendInvitation = useMutation(
+    api.organizations.invitation_actions.resend
+  );
 
   const handleCancelInvitation = (invitationId: Id<"invitations">) => {
     cancelInvitation({ invitationId });

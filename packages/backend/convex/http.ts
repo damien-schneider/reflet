@@ -7,8 +7,8 @@ import { generateRssFeed } from "./changelog/rss";
 import { registerAdminContentRoutes } from "./http/admin_content";
 import { registerAdminFeedbackRoutes } from "./http/admin_feedback";
 import { registerAdminManagementRoutes } from "./http/admin_management";
+import { registerAdminSurveyRoutes } from "./http/admin_surveys";
 import { registerAiApiRoutes } from "./http/ai_api";
-import { registerGithubApiRoutes } from "./http/github_api";
 import { registerGithubWebhookRoutes } from "./http/github_webhook";
 import { registerPublicApiRoutes } from "./http/public_api";
 import { mcpCorsHandler, mcpHandler } from "./mcp/handler";
@@ -26,9 +26,6 @@ registerStripeRoutes(http, components.stripe as any, {
 
 // GitHub webhook
 registerGithubWebhookRoutes(http);
-
-// GitHub API (repositories, labels, issues, sync, setup)
-registerGithubApiRoutes(http);
 
 // AI API (release title, feedback matching)
 registerAiApiRoutes(http);
@@ -85,6 +82,7 @@ http.route({
 // Admin API (v1)
 registerAdminFeedbackRoutes(http);
 registerAdminContentRoutes(http);
+registerAdminSurveyRoutes(http);
 registerAdminManagementRoutes(http);
 
 // MCP server (JSON-RPC 2.0 over HTTP)

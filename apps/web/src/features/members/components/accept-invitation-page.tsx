@@ -21,7 +21,9 @@ export function AcceptInvitationContent({
   const invitation = useQuery(api.organizations.invitations.getByToken, {
     token,
   });
-  const acceptInvitation = useMutation(api.organizations.invitations.accept);
+  const acceptInvitation = useMutation(
+    api.organizations.invitation_actions.accept
+  );
   const [isAccepting, setIsAccepting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { data: session } = authClient.useSession();

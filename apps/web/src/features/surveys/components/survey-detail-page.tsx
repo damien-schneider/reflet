@@ -27,7 +27,7 @@ export default function SurveyDetailPage({
   params: Promise<{ orgSlug: string; surveyId: string }>;
 }) {
   const { orgSlug, surveyId } = use(params);
-  const survey = useQuery(api.surveys.mutations.get, {
+  const survey = useQuery(api.surveys.queries.get, {
     surveyId: surveyId as Id<"surveys">,
   });
   const updateSurvey = useMutation(api.surveys.mutations.update);

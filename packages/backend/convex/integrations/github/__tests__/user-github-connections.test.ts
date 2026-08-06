@@ -44,7 +44,7 @@ describe("saveUserInstallation", () => {
     const t = convexTest(testSchema, modules);
 
     const connectionId = await t.mutation(
-      internal.integrations.github.mutations.saveUserInstallation,
+      internal.integrations.github.installation_mutations.saveUserInstallation,
       {
         accountAvatarUrl: "https://github.com/octocat.png",
         accountLogin: "octocat",
@@ -68,7 +68,7 @@ describe("saveUserInstallation", () => {
     const t = convexTest(testSchema, modules);
 
     const firstId = await t.mutation(
-      internal.integrations.github.mutations.saveUserInstallation,
+      internal.integrations.github.installation_mutations.saveUserInstallation,
       {
         accountLogin: "old-user",
         accountType: "user",
@@ -78,7 +78,7 @@ describe("saveUserInstallation", () => {
     );
 
     const secondId = await t.mutation(
-      internal.integrations.github.mutations.saveUserInstallation,
+      internal.integrations.github.installation_mutations.saveUserInstallation,
       {
         accountLogin: "new-org",
         accountType: "organization",
@@ -110,7 +110,7 @@ describe("getOrgAvailableInstallations", () => {
 
     // user_A has a GitHub connection
     await t.mutation(
-      internal.integrations.github.mutations.saveUserInstallation,
+      internal.integrations.github.installation_mutations.saveUserInstallation,
       {
         accountLogin: "user-a-github",
         accountType: "user",
@@ -136,7 +136,7 @@ describe("getOrgAvailableInstallations", () => {
     await createMember(t, orgId, "user_B", "admin");
 
     await t.mutation(
-      internal.integrations.github.mutations.saveUserInstallation,
+      internal.integrations.github.installation_mutations.saveUserInstallation,
       {
         accountLogin: "user-a-github",
         accountType: "user",
@@ -146,7 +146,7 @@ describe("getOrgAvailableInstallations", () => {
     );
 
     await t.mutation(
-      internal.integrations.github.mutations.saveUserInstallation,
+      internal.integrations.github.installation_mutations.saveUserInstallation,
       {
         accountLogin: "org-beta",
         accountType: "organization",
@@ -174,7 +174,7 @@ describe("getOrgAvailableInstallations", () => {
     await createMember(t, orgId, "user_A", "admin");
 
     const connectionId = await t.mutation(
-      internal.integrations.github.mutations.saveUserInstallation,
+      internal.integrations.github.installation_mutations.saveUserInstallation,
       {
         accountLogin: "user-a-github",
         accountType: "user",
@@ -221,7 +221,7 @@ describe("linkRepoToOrg", () => {
     await createMember(t, orgId, "user_A", "admin");
 
     const userConnectionId = await t.mutation(
-      internal.integrations.github.mutations.saveUserInstallation,
+      internal.integrations.github.installation_mutations.saveUserInstallation,
       {
         accountAvatarUrl: "https://github.com/octocat.png",
         accountLogin: "octocat",
@@ -232,7 +232,7 @@ describe("linkRepoToOrg", () => {
     );
 
     const connectionId = await t.mutation(
-      internal.integrations.github.mutations.linkRepoToOrg,
+      internal.integrations.github.installation_mutations.linkRepoToOrg,
       {
         linkedByUserId: "user_A",
         organizationId: orgId,
@@ -257,7 +257,7 @@ describe("linkRepoToOrg", () => {
     await createMember(t, orgId, "user_B", "admin");
 
     const userConnA = await t.mutation(
-      internal.integrations.github.mutations.saveUserInstallation,
+      internal.integrations.github.installation_mutations.saveUserInstallation,
       {
         accountLogin: "user-a",
         accountType: "user",
@@ -268,7 +268,7 @@ describe("linkRepoToOrg", () => {
 
     // First link by user A
     const firstConnectionId = await t.mutation(
-      internal.integrations.github.mutations.linkRepoToOrg,
+      internal.integrations.github.installation_mutations.linkRepoToOrg,
       {
         linkedByUserId: "user_A",
         organizationId: orgId,
@@ -277,7 +277,7 @@ describe("linkRepoToOrg", () => {
     );
 
     const userConnB = await t.mutation(
-      internal.integrations.github.mutations.saveUserInstallation,
+      internal.integrations.github.installation_mutations.saveUserInstallation,
       {
         accountLogin: "org-beta",
         accountType: "organization",
@@ -288,7 +288,7 @@ describe("linkRepoToOrg", () => {
 
     // Re-link by user B
     const secondConnectionId = await t.mutation(
-      internal.integrations.github.mutations.linkRepoToOrg,
+      internal.integrations.github.installation_mutations.linkRepoToOrg,
       {
         linkedByUserId: "user_B",
         organizationId: orgId,
@@ -326,11 +326,14 @@ describe("linkRepoToOrg", () => {
     });
 
     await expect(
-      t.mutation(internal.integrations.github.mutations.linkRepoToOrg, {
-        linkedByUserId: "user_A",
-        organizationId: orgId,
-        userGithubConnectionId: fakeId,
-      })
+      t.mutation(
+        internal.integrations.github.installation_mutations.linkRepoToOrg,
+        {
+          linkedByUserId: "user_A",
+          organizationId: orgId,
+          userGithubConnectionId: fakeId,
+        }
+      )
     ).rejects.toThrow("User GitHub connection not found");
   });
 });
@@ -346,7 +349,7 @@ describe("handleMemberRemoved", () => {
     await createMember(t, orgId, "user_A", "admin");
 
     const userConn = await t.mutation(
-      internal.integrations.github.mutations.saveUserInstallation,
+      internal.integrations.github.installation_mutations.saveUserInstallation,
       {
         accountLogin: "octocat",
         accountType: "user",
@@ -356,7 +359,7 @@ describe("handleMemberRemoved", () => {
     );
 
     const connectionId = await t.mutation(
-      internal.integrations.github.mutations.linkRepoToOrg,
+      internal.integrations.github.installation_mutations.linkRepoToOrg,
       {
         linkedByUserId: "user_A",
         organizationId: orgId,
@@ -365,7 +368,7 @@ describe("handleMemberRemoved", () => {
     );
 
     await t.mutation(
-      internal.integrations.github.mutations.handleMemberRemoved,
+      internal.integrations.github.installation_mutations.handleMemberRemoved,
       {
         organizationId: orgId,
         userId: "user_A",
@@ -383,7 +386,7 @@ describe("handleMemberRemoved", () => {
     await createMember(t, orgId, "user_B", "admin");
 
     const userConnB = await t.mutation(
-      internal.integrations.github.mutations.saveUserInstallation,
+      internal.integrations.github.installation_mutations.saveUserInstallation,
       {
         accountLogin: "user-b",
         accountType: "user",
@@ -393,7 +396,7 @@ describe("handleMemberRemoved", () => {
     );
 
     const connectionId = await t.mutation(
-      internal.integrations.github.mutations.linkRepoToOrg,
+      internal.integrations.github.installation_mutations.linkRepoToOrg,
       {
         linkedByUserId: "user_B",
         organizationId: orgId,
@@ -403,7 +406,7 @@ describe("handleMemberRemoved", () => {
 
     // Remove user_A (who didn't link anything)
     await t.mutation(
-      internal.integrations.github.mutations.handleMemberRemoved,
+      internal.integrations.github.installation_mutations.handleMemberRemoved,
       {
         organizationId: orgId,
         userId: "user_A",
@@ -426,7 +429,7 @@ describe("handleInstallationDeleted (updated)", () => {
     await createMember(t, orgId, "user_A", "admin");
 
     const userConnId = await t.mutation(
-      internal.integrations.github.mutations.saveUserInstallation,
+      internal.integrations.github.installation_mutations.saveUserInstallation,
       {
         accountLogin: "octocat",
         accountType: "user",
@@ -436,7 +439,7 @@ describe("handleInstallationDeleted (updated)", () => {
     );
 
     const orgConnectionId = await t.mutation(
-      internal.integrations.github.mutations.linkRepoToOrg,
+      internal.integrations.github.installation_mutations.linkRepoToOrg,
       {
         linkedByUserId: "user_A",
         organizationId: orgId,
@@ -445,7 +448,8 @@ describe("handleInstallationDeleted (updated)", () => {
     );
 
     const result = await t.mutation(
-      internal.integrations.github.mutations.handleInstallationDeleted,
+      internal.integrations.github.installation_mutations
+        .handleInstallationDeleted,
       { installationId: "inst_A" }
     );
 
@@ -468,7 +472,7 @@ describe("handleInstallationDeleted (updated)", () => {
     await createMember(t, orgId2, "user_A", "admin");
 
     const userConnId = await t.mutation(
-      internal.integrations.github.mutations.saveUserInstallation,
+      internal.integrations.github.installation_mutations.saveUserInstallation,
       {
         accountLogin: "octocat",
         accountType: "user",
@@ -478,7 +482,7 @@ describe("handleInstallationDeleted (updated)", () => {
     );
 
     const connId1 = await t.mutation(
-      internal.integrations.github.mutations.linkRepoToOrg,
+      internal.integrations.github.installation_mutations.linkRepoToOrg,
       {
         linkedByUserId: "user_A",
         organizationId: orgId1,
@@ -487,7 +491,7 @@ describe("handleInstallationDeleted (updated)", () => {
     );
 
     const connId2 = await t.mutation(
-      internal.integrations.github.mutations.linkRepoToOrg,
+      internal.integrations.github.installation_mutations.linkRepoToOrg,
       {
         linkedByUserId: "user_A",
         organizationId: orgId2,
@@ -496,7 +500,8 @@ describe("handleInstallationDeleted (updated)", () => {
     );
 
     await t.mutation(
-      internal.integrations.github.mutations.handleInstallationDeleted,
+      internal.integrations.github.installation_mutations
+        .handleInstallationDeleted,
       { installationId: "inst_A" }
     );
 
@@ -517,7 +522,7 @@ describe("getUserGithubConnection", () => {
     const t = convexTest(testSchema, modules);
 
     await t.mutation(
-      internal.integrations.github.mutations.saveUserInstallation,
+      internal.integrations.github.installation_mutations.saveUserInstallation,
       {
         accountLogin: "octocat",
         accountType: "user",

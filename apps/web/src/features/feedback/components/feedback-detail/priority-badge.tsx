@@ -52,7 +52,9 @@ export function PriorityBadge({
   isAdmin: boolean;
   hasHumanOverride: boolean;
 }) {
-  const updateAnalysis = useMutation(api.feedback.actions.updateAnalysis);
+  const updateAnalysis = useMutation(
+    api.feedback.triage_actions.updateAnalysis
+  );
   const config = PRIORITY_CONFIG[effectivePriority];
   const Icon = config.icon;
 

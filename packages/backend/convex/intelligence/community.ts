@@ -2,10 +2,6 @@ import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { getAuthUser } from "../shared/utils";
 
-// ============================================
-// QUERIES
-// ============================================
-
 /**
  * Get recent community signals grouped by topic/keyword
  */

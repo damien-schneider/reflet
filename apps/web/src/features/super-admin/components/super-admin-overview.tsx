@@ -91,14 +91,16 @@ export function SuperAdminOverview() {
 
   const stats = useQuery(api.organizations.super_admin.getDashboardStats);
   const recentActivity = useQuery(
-    api.organizations.super_admin.getRecentActivity,
+    api.organizations.super_admin_metrics.getRecentActivity,
     {
       limit: 15,
     }
   );
 
   const days = timeRange === "7d" ? 7 : 30;
-  const trends = useQuery(api.organizations.super_admin.getTrends, { days });
+  const trends = useQuery(api.organizations.super_admin_metrics.getTrends, {
+    days,
+  });
 
   const chartData = useMemo(() => {
     if (!trends) {

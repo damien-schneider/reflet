@@ -2,13 +2,13 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import { env } from "@reflet/env/server";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { fetchAuthAction } from "@/lib/auth-server";
 import { toOrgId } from "@/lib/convex-helpers";
 
 interface CallbackState {
   organizationId: string | null;
   orgSlug: string | null;
   returnTo: string | null;
-  userId: string | null;
 }
 
 function parseStateParam(stateParam: string | null): CallbackState {
@@ -16,7 +16,6 @@ function parseStateParam(stateParam: string | null): CallbackState {
     organizationId: null,
     orgSlug: null,
     returnTo: null,
-    userId: null,
   };
 
   if (!stateParam) {
@@ -27,13 +26,11 @@ function parseStateParam(stateParam: string | null): CallbackState {
     const stateData = JSON.parse(
       Buffer.from(stateParam, "base64url").toString()
     ) as {
-      userId?: string;
       organizationId?: string;
       orgSlug?: string;
       returnTo?: string;
       timestamp: number;
     };
-    state.userId = stateData.userId ?? null;
     state.organizationId = stateData.organizationId ?? null;
     state.orgSlug = stateData.orgSlug ?? null;
     state.returnTo = stateData.returnTo ?? null;
@@ -107,21 +104,11 @@ export async function GET(request: Request): Promise<NextResponse> {
 
   // Fall back to cookies for missing state values
   const cookieStore = await cookies();
-  if (!state.userId) {
-    state.userId = cookieStore.get("github_oauth_user_id")?.value ?? null;
-  }
   if (!state.organizationId) {
     state.organizationId =
       cookieStore.get("github_oauth_org_id")?.value ?? null;
   }
 
-  if (!state.userId) {
-    return NextResponse.redirect(
-      new URL("/dashboard?error=missing_user_context", request.url)
-    );
-  }
-
-  cookieStore.delete("github_oauth_user_id");
   cookieStore.delete("github_oauth_org_id");
 
   try {
@@ -155,8 +142,7 @@ export async function GET(request: Request): Promise<NextResponse> {
       account: { login: string; type: string; avatar_url: string };
     };
 
-    const { fetchAction } = await import("convex/nextjs");
-    await fetchAction(
+    await fetchAuthAction(
       api.integrations.github.actions.saveInstallationFromCallback,
       {
         accountAvatarUrl: installation.account.avatar_url,
@@ -169,7 +155,6 @@ export async function GET(request: Request): Promise<NextResponse> {
         organizationId: state.organizationId
           ? toOrgId(state.organizationId)
           : undefined,
-        userId: state.userId,
       }
     );
 

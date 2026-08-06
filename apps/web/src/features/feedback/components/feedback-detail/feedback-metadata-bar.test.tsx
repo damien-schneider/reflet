@@ -16,19 +16,22 @@ vi.mock("convex/react", () => ({
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
     feedback: {
-      actions: {
-        assign: "feedback_actions.assign",
-        updateAnalysis: "feedback_actions.updateAnalysis",
-        updateOrganizationStatus: "feedback_actions.updateOrganizationStatus",
-      },
       subscriptions: {
         isSubscribed: "feedback_subscriptions.isSubscribed",
         toggle: "feedback_subscriptions.toggle",
       },
+      tag_mutations: {
+        addToFeedback: "tag_mutations.addToFeedback",
+        removeFromFeedback: "tag_mutations.removeFromFeedback",
+      },
       tags: {
-        addToFeedback: "tags.addToFeedback",
         list: "tags.list",
-        removeFromFeedback: "tags.removeFromFeedback",
+      },
+      triage_actions: {
+        assign: "feedback_triage_actions.assign",
+        updateAnalysis: "feedback_triage_actions.updateAnalysis",
+        updateOrganizationStatus:
+          "feedback_triage_actions.updateOrganizationStatus",
       },
       votes: { toggle: "votes.toggle" },
     },

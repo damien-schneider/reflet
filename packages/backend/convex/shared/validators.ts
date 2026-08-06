@@ -103,6 +103,11 @@ export const domainStatus = v.union(
 // INPUT VALIDATORS
 // ============================================
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export const isValidEmail = (email: string): boolean =>
+  EMAIL_PATTERN.test(email);
+
 /**
  * Validate input length to prevent DoS
  */

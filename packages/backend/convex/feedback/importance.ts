@@ -51,42 +51,6 @@ export const getUserVote = query({
   },
 });
 
-/**
- * Get importance vote statistics for a feedback
- */
-export const getStats = query({
-  args: { feedbackId: v.id("feedback") },
-  handler: async (ctx, args) => {
-    const votes = await ctx.db
-      .query("feedbackImportanceVotes")
-      .withIndex("by_feedback", (q) => q.eq("feedbackId", args.feedbackId))
-      .collect();
-
-    const stats = {
-      average: 0,
-      distribution: {
-        1: 0, // Not important
-        2: 0, // Nice to have
-        3: 0, // Important
-        4: 0, // Essential
-      },
-      totalVotes: votes.length,
-    };
-
-    if (votes.length > 0) {
-      const sum = votes.reduce((acc, v) => acc + v.importance, 0);
-      stats.average = sum / votes.length;
-
-      for (const vote of votes) {
-        const key = vote.importance as 1 | 2 | 3 | 4;
-        stats.distribution[key]++;
-      }
-    }
-
-    return stats;
-  },
-});
-
 // ============================================
 // MUTATIONS
 // ============================================

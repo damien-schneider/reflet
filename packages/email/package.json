@@ -7,7 +7,8 @@
     "dev": "email dev --dir src/templates --port 3333",
     "export": "email export --dir src/templates --outDir out",
     "test:unit": "vitest run",
-    "test:unit:watch": "vitest"
+    "test:unit:watch": "vitest",
+    "check-types": "tsc --noEmit"
   },
   "exports": {
     "./templates/base-layout": "./src/templates/base-layout.tsx",

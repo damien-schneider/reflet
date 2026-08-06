@@ -5,12 +5,11 @@ import {
   MAX_SUPPORT_MESSAGE_LENGTH,
   MAX_SUPPORT_SUBJECT_LENGTH,
 } from "../shared/constants";
-import { validateInputLength } from "../shared/validators";
+import { isValidEmail, validateInputLength } from "../shared/validators";
 import { resolveConversationAccess } from "./access";
 import { resolveAssignedUser, resolveConversationPerson } from "./people";
 import {
   buildMessagePreview,
-  isValidEmail,
   supportConversationDetail,
   supportConversationDoc,
 } from "./validators";

@@ -3,7 +3,7 @@
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateText } from "ai";
 import { v } from "convex/values";
-import { action } from "../_generated/server";
+import { internalAction } from "../_generated/server";
 
 const openrouter = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY,
@@ -13,7 +13,7 @@ const MAX_COMMITS_FOR_CONTEXT = 80;
 const MAX_FEEDBACK_CANDIDATES = 100;
 const JSON_OBJECT_REGEX = /\{[\s\S]*\}/;
 
-export const generateReleaseTitle = action({
+export const generateReleaseTitle = internalAction({
   args: {
     description: v.string(),
     version: v.optional(v.string()),
@@ -46,7 +46,7 @@ Instructions:
   returns: v.string(),
 });
 
-export const matchReleaseFeedback = action({
+export const matchReleaseFeedback = internalAction({
   args: {
     commits: v.array(
       v.object({

@@ -1,7 +1,7 @@
 "use node";
 
 import { v } from "convex/values";
-import { api, internal } from "../../_generated/api";
+import { internal } from "../../_generated/api";
 import { internalAction } from "../../_generated/server";
 
 const GITHUB_API_URL = "https://api.github.com";
@@ -30,10 +30,13 @@ export const syncAllReleases = internalAction({
     }
 
     // Update sync status to syncing
-    await ctx.runMutation(api.integrations.github.mutations.updateSyncStatus, {
-      connectionId: connection._id,
-      status: "syncing",
-    });
+    await ctx.runMutation(
+      internal.integrations.github.release_mutations.updateSyncStatus,
+      {
+        connectionId: connection._id,
+        status: "syncing",
+      }
+    );
 
     try {
       const { token } = await ctx.runAction(
@@ -84,7 +87,7 @@ export const syncAllReleases = internalAction({
       }));
 
       await ctx.runMutation(
-        api.integrations.github.mutations.saveSyncedReleases,
+        internal.integrations.github.release_mutations.saveSyncedReleases,
         {
           organizationId: args.organizationId,
           releases: mapped,
@@ -93,7 +96,7 @@ export const syncAllReleases = internalAction({
     } catch (error) {
       console.error("[GitHub Sync] Failed:", error);
       await ctx.runMutation(
-        api.integrations.github.mutations.updateSyncStatus,
+        internal.integrations.github.release_mutations.updateSyncStatus,
         {
           connectionId: connection._id,
           error: error instanceof Error ? error.message : "Unknown error",

@@ -36,15 +36,15 @@ export function ReleaseFeedbackSection({
   className,
 }: ReleaseFeedbackSectionProps) {
   const linkFeedback = useMutation(
-    api.changelog.actions.linkFeedback
+    api.changelog.feedback_links.linkFeedback
   ).withOptimisticUpdate((localStore, args) => {
     const available = localStore.getQuery(
-      api.changelog.actions.getAvailableFeedback,
+      api.changelog.feedback_links.getAvailableFeedback,
       { excludeReleaseId: args.releaseId, organizationId }
     );
     if (available) {
       localStore.setQuery(
-        api.changelog.actions.getAvailableFeedback,
+        api.changelog.feedback_links.getAvailableFeedback,
         { excludeReleaseId: args.releaseId, organizationId },
         available.filter((f) => f._id !== args.feedbackId)
       );
@@ -52,7 +52,7 @@ export function ReleaseFeedbackSection({
   });
 
   const unlinkFeedback = useMutation(
-    api.changelog.actions.unlinkFeedback
+    api.changelog.feedback_links.unlinkFeedback
   ).withOptimisticUpdate((localStore, args) => {
     const current = localStore.getQuery(api.changelog.queries.get, {
       id: args.releaseId,
@@ -78,7 +78,7 @@ export function ReleaseFeedbackSection({
   );
 
   const availableFeedback = useQuery(
-    api.changelog.actions.getAvailableFeedback,
+    api.changelog.feedback_links.getAvailableFeedback,
     { excludeReleaseId: releaseId ?? undefined, organizationId }
   );
 

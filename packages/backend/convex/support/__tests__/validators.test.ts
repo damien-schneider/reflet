@@ -1,7 +1,8 @@
 import { describe, expect, test } from "vitest";
 import { SUPPORT_PREVIEW_LENGTH } from "../../shared/constants";
 import { isOrgAdmin } from "../../shared/membership";
-import { buildMessagePreview, isValidEmail } from "../validators";
+import { isValidEmail } from "../../shared/validators";
+import { buildMessagePreview } from "../validators";
 
 describe("buildMessagePreview", () => {
   test("collapses whitespace runs into single spaces", () => {

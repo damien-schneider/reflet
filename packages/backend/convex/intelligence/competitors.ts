@@ -3,10 +3,6 @@ import { internal } from "../_generated/api";
 import { mutation, query } from "../_generated/server";
 import { getAuthUser } from "../shared/utils";
 
-// ============================================
-// URL VALIDATION
-// ============================================
-
 const validateUrl = (url: string): string => {
   let parsedUrl: URL;
   try {
@@ -19,10 +15,6 @@ const validateUrl = (url: string): string => {
   }
   return parsedUrl.href;
 };
-
-// ============================================
-// QUERIES
-// ============================================
 
 /**
  * List all competitors for an organization
@@ -83,10 +75,6 @@ export const get = query({
     return competitor;
   },
 });
-
-// ============================================
-// MUTATIONS
-// ============================================
 
 /**
  * Add a new competitor
@@ -150,7 +138,7 @@ export const create = mutation({
     // Schedule a scrape
     await ctx.scheduler.runAfter(
       0,
-      internal.intelligence.competitor_monitor.scrapeCompetitor,
+      internal.intelligence.competitor_scrape_action.scrapeCompetitor,
       { competitorId }
     );
 

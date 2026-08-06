@@ -3,9 +3,9 @@ import { components } from "../_generated/api";
 import { query } from "../_generated/server";
 
 /**
- * Check if a user with the given email already exists
- * This is used for the unified auth form to determine
- * whether to show sign-in or sign-up fields
+ * Deliberately enumerable: the unified auth form needs to know whether to show
+ * sign-in or sign-up fields before the password is typed. Hiding it would only
+ * move the signal to the sign-in error message.
  */
 export const checkEmailExists = query({
   args: {

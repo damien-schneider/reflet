@@ -1,6 +1,7 @@
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { createTextStreamResponse, streamText, toTextStream } from "ai";
 import { z } from "zod";
+import { getToken } from "@/lib/auth-server";
 
 const openrouter = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY,
@@ -40,8 +41,66 @@ const requestBodySchema = z.object({
   version: z.string().optional(),
 });
 
+/**
+ * A model only fails once the stream is pulled, so the first chunk has to be
+ * read here — otherwise the fallback chain can never advance past model one.
+ */
+async function openStreamForModel(
+  modelId: string,
+  prompt: string
+): Promise<ReadableStream<string> | null> {
+  const reader = toTextStream({
+    stream: streamText({ model: openrouter(modelId), prompt }).stream,
+  }).getReader();
+
+  let first: ReadableStreamReadResult<string>;
+  try {
+    first = await reader.read();
+  } catch {
+    reader.cancel().catch(() => {
+      // stream already errored
+    });
+    console.warn(`[ai] Model ${modelId} failed, trying next fallback...`);
+    return null;
+  }
+
+  let buffered = first.value;
+  let exhausted = first.done;
+
+  return new ReadableStream<string>({
+    cancel: (reason) => reader.cancel(reason),
+    async pull(controller) {
+      if (buffered !== undefined) {
+        controller.enqueue(buffered);
+        buffered = undefined;
+        return;
+      }
+      if (exhausted) {
+        controller.close();
+        return;
+      }
+      const { done, value } = await reader.read();
+      if (done) {
+        exhausted = true;
+        controller.close();
+        return;
+      }
+      if (value !== undefined) {
+        controller.enqueue(value);
+      }
+    },
+  });
+}
+
 export async function POST(request: Request): Promise<Response> {
   try {
+    if (!(await getToken())) {
+      return Response.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
     if (!process.env.OPENROUTER_API_KEY) {
       return Response.json(
         { error: "AI service not configured" },
@@ -100,17 +159,9 @@ ${fileSummary}
 - Output only the markdown content, nothing else`;
 
     for (const modelId of MODEL_FALLBACK_CHAIN) {
-      try {
-        const result = streamText({
-          model: openrouter(modelId),
-          prompt,
-        });
-
-        return createTextStreamResponse({
-          stream: toTextStream({ stream: result.stream }),
-        });
-      } catch {
-        console.warn(`[ai] Model ${modelId} failed, trying next fallback...`);
+      const stream = await openStreamForModel(modelId, prompt);
+      if (stream) {
+        return createTextStreamResponse({ stream });
       }
     }
 

@@ -5,6 +5,7 @@ import { generateText } from "ai";
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { action } from "../_generated/server";
+import { authComponent } from "../auth/auth";
 
 const ARRAY_PATTERN = /\[[\d,\s]*\]/;
 
@@ -31,6 +32,11 @@ export const suggestLinkedFeedback = action({
       voteCount: number;
     }[];
   }> => {
+    const user = await authComponent.safeGetAuthUser(ctx);
+    if (!user) {
+      throw new Error("Not authenticated");
+    }
+
     const data = await ctx.runQuery(
       internal.changelog.ai_matching_helpers.getReleaseAndFeedback,
       { releaseId: args.releaseId }

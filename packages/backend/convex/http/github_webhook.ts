@@ -133,7 +133,8 @@ async function handleInstallationWebhook(
   }
   const installation = webhookInstallationSchema.parse(payload.installation);
   await ctx.runMutation(
-    internal.integrations.github.mutations.handleInstallationDeleted,
+    internal.integrations.github.installation_mutations
+      .handleInstallationDeleted,
     {
       installationId: String(installation.id),
     }
@@ -155,7 +156,7 @@ async function handleReleaseWebhook(
 
   if (connection) {
     await ctx.runMutation(
-      internal.integrations.github.actions.processReleaseWebhook,
+      internal.integrations.github.webhook_events.processReleaseWebhook,
       {
         action,
         connectionId: connection._id,
@@ -194,7 +195,7 @@ async function handleIssueWebhook(
 
   if (connection) {
     await ctx.runMutation(
-      internal.integrations.github.actions.processIssueWebhook,
+      internal.integrations.github.webhook_events.processIssueWebhook,
       {
         action,
         connectionId: connection._id,
@@ -244,7 +245,7 @@ async function handlePullRequestWebhook(
 
   if (connection) {
     await ctx.runMutation(
-      internal.integrations.github.actions.processPullRequestWebhook,
+      internal.integrations.github.webhook_events.processPullRequestWebhook,
       {
         connectionId: connection._id,
         organizationId: connection.organizationId,

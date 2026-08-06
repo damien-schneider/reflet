@@ -43,11 +43,8 @@ export function ChangelogSection({
   );
 
   const updateOrg = useMutation(api.organizations.mutations.update);
-  const getToken = useAction(
-    api.integrations.github.node_actions.getInstallationToken
-  );
-  const fetchBranchesAction = useAction(
-    api.integrations.github.release_actions.fetchBranches
+  const listBranches = useAction(
+    api.integrations.github.repo_actions.listBranches
   );
 
   const [showWizard, setShowWizard] = useState(false);
@@ -69,14 +66,7 @@ export function ChangelogSection({
     }
     setIsLoadingBranches(true);
     try {
-      const { token } = await getToken({
-        installationId: githubConnection.installationId,
-      });
-      const result = await fetchBranchesAction({
-        installationToken: token,
-        repositoryFullName: githubConnection.repositoryFullName,
-      });
-      setBranches(result);
+      setBranches(await listBranches({ organizationId }));
     } catch {
       setBranches([]);
     } finally {
@@ -85,8 +75,8 @@ export function ChangelogSection({
   }, [
     githubConnection?.installationId,
     githubConnection?.repositoryFullName,
-    getToken,
-    fetchBranchesAction,
+    listBranches,
+    organizationId,
   ]);
 
   useEffect(() => {

@@ -131,7 +131,7 @@ export const ManualSyncSection = ({
   );
   const triggerSync = useMutation(api.changelog.actions.triggerGithubSync);
   const importRelease = useMutation(
-    api.integrations.github.mutations.importGithubRelease
+    api.integrations.github.release_mutations.importGithubRelease
   );
   const pushToGithub = useMutation(api.changelog.actions.pushToGithub);
 

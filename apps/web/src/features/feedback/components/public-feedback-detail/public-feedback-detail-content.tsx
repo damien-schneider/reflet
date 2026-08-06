@@ -38,7 +38,7 @@ export function PublicFeedbackDetailContent({
   const toggleVote = useMutation(api.feedback.votes.toggle);
   const createComment = useMutation(api.feedback.comments.create);
   const updateFeedbackStatus = useMutation(
-    api.feedback.actions.updateOrganizationStatus
+    api.feedback.triage_actions.updateOrganizationStatus
   );
   const togglePin = useMutation(api.feedback.actions.togglePin);
 

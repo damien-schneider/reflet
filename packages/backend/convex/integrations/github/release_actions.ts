@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { action } from "../../_generated/server";
+import { internalAction } from "../../_generated/server";
 
 const GITHUB_API_URL = "https://api.github.com";
 
@@ -12,7 +12,7 @@ const GITHUB_HEADERS = {
  * Fetch branches from a GitHub repository
  * Used by the setup wizard to let users pick a target branch
  */
-export const fetchBranches = action({
+export const fetchBranches = internalAction({
   args: {
     installationToken: v.string(),
     repositoryFullName: v.string(),
@@ -52,7 +52,7 @@ export const fetchBranches = action({
  * - If previousTag is provided, compares from previous tag to current tag/branch
  * - If no previousTag, fetches the latest commits on the branch
  */
-export const fetchCommitsBetweenRefs = action({
+export const fetchCommitsBetweenRefs = internalAction({
   args: {
     base: v.string(),
     head: v.string(),
@@ -131,7 +131,7 @@ export const fetchCommitsBetweenRefs = action({
  * Fetch tags from a GitHub repository (for version comparison)
  * Returns tags sorted by creation date (most recent first)
  */
-export const fetchTags = action({
+export const fetchTags = internalAction({
   args: {
     installationToken: v.string(),
     repositoryFullName: v.string(),
@@ -166,7 +166,7 @@ export const fetchTags = action({
 /**
  * Fetch recent commits on a branch (when no previous tag exists)
  */
-export const fetchRecentCommits = action({
+export const fetchRecentCommits = internalAction({
   args: {
     branch: v.string(),
     installationToken: v.string(),

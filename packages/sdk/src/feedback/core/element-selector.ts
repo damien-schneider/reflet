@@ -6,6 +6,10 @@ const WHITESPACE = /\s+/g;
 const MAX_LABEL_LENGTH = 80;
 const MAX_HTML_LENGTH = 600;
 const MAX_DEPTH = 12;
+// Hard caps enforced by POST /api/v1/feedback/create — over them the whole
+// report is rejected, so clip here rather than lose the submission.
+const MAX_SELECTOR_LENGTH = 600;
+const MAX_SOURCE_LOCATION_LENGTH = 400;
 
 function isUnique(selector: string): boolean {
   try {
@@ -123,7 +127,7 @@ export function describeElement(element: Element): string {
   }
 
   const firstClass = element.classList.item(0);
-  return firstClass ? `${tag}.${firstClass}` : tag;
+  return truncate(firstClass ? `${tag}.${firstClass}` : tag, MAX_LABEL_LENGTH);
 }
 
 export function getElementRect(element: Element): ElementRect {
@@ -145,7 +149,9 @@ export function buildElementSelection(element: Element): ElementSelection {
     html: truncate(element.outerHTML, MAX_HTML_LENGTH),
     label: describeElement(element),
     rect: getElementRect(element),
-    selector: buildSelector(element),
-    sourceLocation,
+    selector: truncate(buildSelector(element), MAX_SELECTOR_LENGTH),
+    sourceLocation: sourceLocation
+      ? truncate(sourceLocation, MAX_SOURCE_LOCATION_LENGTH)
+      : sourceLocation,
   };
 }

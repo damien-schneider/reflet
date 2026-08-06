@@ -62,7 +62,7 @@ describe("Auto-tagging response schema", () => {
 });
 
 describe("Auto-tagging database operations", () => {
-  test("should correctly count untagged feedback", async () => {
+  test("should reject untagged count for anonymous callers", async () => {
     const t = convexTest(schema, modules);
 
     // Create an organization first
@@ -107,14 +107,11 @@ describe("Auto-tagging database operations", () => {
       });
     });
 
-    const count = await t.query(
-      api.feedback.auto_tagging.getUntaggedFeedbackCount,
-      {
+    await expect(
+      t.query(api.feedback.auto_tagging.getUntaggedFeedbackCount, {
         organizationId: orgId,
-      }
-    );
-
-    expect(count).toBe(2);
+      })
+    ).rejects.toThrow("Not authenticated");
   });
 
   test("should apply tags to feedback with AI indicator", async () => {
@@ -157,7 +154,7 @@ describe("Auto-tagging database operations", () => {
     });
 
     // Apply tag using internal mutation
-    await t.mutation(internal.feedback.auto_tagging.applyAutoTags, {
+    await t.mutation(internal.feedback.auto_tagging_jobs.applyAutoTags, {
       feedbackId,
       tagIds: [tagId],
     });
@@ -213,12 +210,12 @@ describe("Auto-tagging database operations", () => {
     });
 
     // Apply the same tag twice
-    await t.mutation(internal.feedback.auto_tagging.applyAutoTags, {
+    await t.mutation(internal.feedback.auto_tagging_jobs.applyAutoTags, {
       feedbackId,
       tagIds: [tagId],
     });
 
-    await t.mutation(internal.feedback.auto_tagging.applyAutoTags, {
+    await t.mutation(internal.feedback.auto_tagging_jobs.applyAutoTags, {
       feedbackId,
       tagIds: [tagId],
     });
@@ -249,10 +246,13 @@ describe("Auto-tagging database operations", () => {
     );
 
     // Create a job
-    const jobId = await t.mutation(internal.feedback.auto_tagging.createJob, {
-      organizationId: orgId,
-      totalItems: 10,
-    });
+    const jobId = await t.mutation(
+      internal.feedback.auto_tagging_jobs.createJob,
+      {
+        organizationId: orgId,
+        totalItems: 10,
+      }
+    );
 
     expect(jobId).toBeDefined();
 
@@ -297,7 +297,7 @@ describe("Auto-tagging database operations", () => {
     });
 
     // Update progress
-    await t.mutation(internal.feedback.auto_tagging.updateJobProgress, {
+    await t.mutation(internal.feedback.auto_tagging_jobs.updateJobProgress, {
       failedItems: 1,
       jobId,
       processedItems: 3,

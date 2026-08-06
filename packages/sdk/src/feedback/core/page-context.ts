@@ -64,8 +64,21 @@ export function parseUserAgent(userAgent: string): AgentInfo {
   return info;
 }
 
-function optionalText(value: string | undefined): string | undefined {
-  return value?.trim() ? value : undefined;
+// Hard caps enforced by POST /api/v1/feedback/create — over them the whole
+// report is rejected, so clip here rather than lose the submission.
+const MAX_PAGE_TITLE_LENGTH = 300;
+const MAX_URL_LENGTH = 2000;
+const MAX_USER_AGENT_LENGTH = 600;
+
+function clip(value: string, max: number): string {
+  return value.length <= max ? value : value.slice(0, max);
+}
+
+function optionalText(
+  value: string | undefined,
+  max: number
+): string | undefined {
+  return value?.trim() ? clip(value, max) : undefined;
 }
 
 function resolveTimezone(): string | undefined {
@@ -88,13 +101,13 @@ export function collectPageContext(options?: {
     device: agent.device,
     language: navigator.language,
     os: agent.os,
-    pageTitle: optionalText(document.title),
-    referrer: optionalText(document.referrer),
+    pageTitle: optionalText(document.title, MAX_PAGE_TITLE_LENGTH),
+    referrer: optionalText(document.referrer, MAX_URL_LENGTH),
     screen: { height: window.screen.height, width: window.screen.width },
     sdkVersion: options?.sdkVersion,
     timezone: resolveTimezone(),
-    url: window.location.href,
-    userAgent,
+    url: clip(window.location.href, MAX_URL_LENGTH),
+    userAgent: clip(userAgent, MAX_USER_AGENT_LENGTH),
     viewport: {
       devicePixelRatio: window.devicePixelRatio,
       height: window.innerHeight,

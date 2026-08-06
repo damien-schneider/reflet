@@ -62,7 +62,7 @@ vi.mock("convex/react", () => ({
     if (name === "feedback_actions.remove") {
       return mockDeleteFeedback;
     }
-    if (name === "feedback_actions.updateOrganizationStatus") {
+    if (name === "feedback_triage_actions.updateOrganizationStatus") {
       return mockUpdateFeedbackStatus;
     }
     return mockUseMutation();
@@ -76,12 +76,11 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
       actions: {
         remove: "feedback_actions.remove",
         togglePin: "feedback_actions.togglePin",
-        updateOrganizationStatus: "feedback_actions.updateOrganizationStatus",
         updateStatus: "feedback_actions.updateStatus",
       },
       clarification: {
-        getDraftReplyStatus: "feedback.clarification.getDraftReplyStatus",
-        initiateDraftReply: "feedback.clarification.initiateDraftReply",
+        getClarificationStatus: "feedback.clarification.getClarificationStatus",
+        initiateClarification: "feedback.clarification.initiateClarification",
       },
       comments: {
         create: "comments.create",
@@ -89,8 +88,16 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
         remove: "comments.remove",
         update: "comments.update",
       },
+      draft_reply: {
+        getDraftReplyStatus: "feedback.draft_reply.getDraftReplyStatus",
+        initiateDraftReply: "feedback.draft_reply.initiateDraftReply",
+      },
       mutations: { update: "feedback.update" },
       queries: { get: "feedback.get" },
+      triage_actions: {
+        updateOrganizationStatus:
+          "feedback_triage_actions.updateOrganizationStatus",
+      },
       votes: { toggle: "votes.toggle" },
     },
     organizations: {

@@ -99,11 +99,8 @@ export function WorkflowStep({
     }
   );
 
-  const getToken = useAction(
-    api.integrations.github.node_actions.getInstallationToken
-  );
-  const fetchBranches = useAction(
-    api.integrations.github.release_actions.fetchBranches
+  const listBranches = useAction(
+    api.integrations.github.repo_actions.listBranches
   );
 
   const isConnected = Boolean(
@@ -120,14 +117,7 @@ export function WorkflowStep({
 
     setIsLoadingBranches(true);
     try {
-      const { token } = await getToken({
-        installationId: githubConnection.installationId,
-      });
-      const result = await fetchBranches({
-        installationToken: token,
-        repositoryFullName: githubConnection.repositoryFullName,
-      });
-      setBranches(result);
+      setBranches(await listBranches({ organizationId }));
     } catch {
       setBranches([]);
     } finally {
@@ -136,8 +126,8 @@ export function WorkflowStep({
   }, [
     githubConnection?.installationId,
     githubConnection?.repositoryFullName,
-    getToken,
-    fetchBranches,
+    listBranches,
+    organizationId,
   ]);
 
   useEffect(() => {

@@ -44,9 +44,11 @@ export function MilestoneExpandedPanel({
     sortBy: "votes",
   });
 
-  const addFeedback = useMutation(api.organizations.milestones.addFeedback);
+  const addFeedback = useMutation(
+    api.organizations.milestone_actions.addFeedback
+  );
   const removeFeedbackMutation = useMutation(
-    api.organizations.milestones.removeFeedback
+    api.organizations.milestone_actions.removeFeedback
   );
 
   const handleAddFeedback = useCallback(

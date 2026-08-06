@@ -1,23 +1,10 @@
 import { v } from "convex/values";
-import { mutation, query } from "../_generated/server";
+import { mutation } from "../_generated/server";
+import { isValidEmail } from "../shared/validators";
 
 // ============================================
 // QUERIES
 // ============================================
-
-export const getSubscriberCount = query({
-  args: { organizationId: v.id("organizations") },
-  handler: async (ctx, args) => {
-    const subscribers = await ctx.db
-      .query("statusSubscribers")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .collect();
-
-    return subscribers.length;
-  },
-});
 
 // ============================================
 // MUTATIONS
@@ -29,11 +16,20 @@ export const subscribe = mutation({
     organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
-    // Check for existing subscription
+    const email = args.email.trim().toLowerCase();
+    if (!isValidEmail(email)) {
+      throw new Error("Invalid email format");
+    }
+
+    const organization = await ctx.db.get(args.organizationId);
+    if (!organization) {
+      throw new Error("Organization not found");
+    }
+
     const existing = await ctx.db
       .query("statusSubscribers")
       .withIndex("by_email_org", (q) =>
-        q.eq("email", args.email).eq("organizationId", args.organizationId)
+        q.eq("email", email).eq("organizationId", args.organizationId)
       )
       .unique();
 
@@ -44,7 +40,7 @@ export const subscribe = mutation({
     const token = crypto.randomUUID();
 
     await ctx.db.insert("statusSubscribers", {
-      email: args.email,
+      email,
       organizationId: args.organizationId,
       subscribedAt: Date.now(),
       unsubscribeToken: token,

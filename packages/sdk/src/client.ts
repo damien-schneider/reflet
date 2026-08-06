@@ -24,6 +24,15 @@ import {
 // Default to Reflet production API (HTTP routes use .convex.site)
 const DEFAULT_API_URL = "https://harmless-clam-802.convex.site";
 
+/** btoa is Latin1-only — a name like "José" would throw. */
+function base64Utf8(value: string): string {
+  let binary = "";
+  for (const byte of new TextEncoder().encode(value)) {
+    binary += String.fromCharCode(byte);
+  }
+  return btoa(binary);
+}
+
 /**
  * Reflet SDK Client
  *
@@ -363,16 +372,14 @@ export class Reflet {
   }
 
   /**
-   * Generate a simple user token for client-side use
-   * Note: For production, use server-side token signing
+   * Unsigned identity from the `user` option. The API attributes reports with
+   * it but refuses voting, commenting and subscribing — those need `signUser`.
    */
   private generateUserToken(): string | undefined {
     if (!this.user) {
       return;
     }
 
-    // Simple base64 encoding for client-side use
-    // In production, tokens should be signed server-side
     const payload = {
       email: this.user.email,
       exp: Math.floor(Date.now() / 1000) + 86_400, // 24 hours
@@ -381,9 +388,10 @@ export class Reflet {
       name: this.user.name,
     };
 
-    const header = btoa(JSON.stringify({ alg: "none", typ: "JWT" }));
-    const payloadB64 = btoa(JSON.stringify(payload));
+    const header = base64Utf8(JSON.stringify({ alg: "none", typ: "JWT" }));
+    const payloadB64 = base64Utf8(JSON.stringify(payload));
 
+    // Empty signature — the server treats this identity as unverified
     return `${header}.${payloadB64}.`;
   }
 }

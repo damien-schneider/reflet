@@ -51,7 +51,7 @@ export function ColumnDeleteDialog({
     useState<Id<"organizationStatuses"> | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const removeStatus = useMutation(api.organizations.statuses.remove);
+  const removeStatus = useMutation(api.organizations.status_mutations.remove);
 
   const handleDelete = async () => {
     if (!(statusToDelete && moveToStatusId)) {

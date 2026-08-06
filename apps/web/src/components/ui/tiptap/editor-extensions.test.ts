@@ -1,10 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
+import { createEditorProps, createExtensions } from "./editor-extensions";
 import {
-  createEditorProps,
-  createExtensions,
   createImageNodeView,
   type ImageNodeViewOptions,
-} from "./editor-extensions";
+} from "./image-node-view";
 
 const createMockNode = (
   attrs: Partial<ImageNodeViewOptions["node"]["attrs"]> = {}

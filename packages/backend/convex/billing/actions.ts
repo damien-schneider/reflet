@@ -29,7 +29,7 @@ export const createCheckoutSession = action({
 
     // Verify user is the owner of this organization
     const membership = await ctx.runQuery(
-      internal.billing.internal.getMembershipForOrg,
+      internal.shared.access.membershipForUser,
       {
         organizationId: args.organizationId,
         userId: user._id,
@@ -111,7 +111,7 @@ export const createCustomerPortalSession = action({
 
     // Verify user is a member of this organization
     const membership = await ctx.runQuery(
-      internal.billing.internal.getMembershipForOrg,
+      internal.shared.access.membershipForUser,
       {
         organizationId: args.organizationId,
         userId: user._id,
@@ -157,7 +157,7 @@ export const cancelSubscription = action({
 
     // Verify user is the owner
     const membership = await ctx.runQuery(
-      internal.billing.internal.getMembershipForOrg,
+      internal.shared.access.membershipForUser,
       {
         organizationId: args.organizationId,
         userId: user._id,
@@ -202,7 +202,7 @@ export const reactivateSubscription = action({
 
     // Verify user is the owner
     const membership = await ctx.runQuery(
-      internal.billing.internal.getMembershipForOrg,
+      internal.shared.access.membershipForUser,
       {
         organizationId: args.organizationId,
         userId: user._id,

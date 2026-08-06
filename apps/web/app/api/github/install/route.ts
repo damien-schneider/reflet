@@ -2,21 +2,18 @@ import { env } from "@reflet/env/server";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
+const INSTALL_CONTEXT_MAX_AGE_SECONDS = 60 * 10;
+
 /**
  * Redirect to GitHub App installation page.
- * userId is required (user-level connection).
- * organizationId/orgSlug are optional (for redirect-back after install).
+ * The connection is bound to the session on the callback, so no user id travels
+ * through the state parameter.
  */
 export async function GET(request: Request): Promise<NextResponse> {
   const { searchParams } = new URL(request.url);
-  const userId = searchParams.get("userId");
   const organizationId = searchParams.get("organizationId");
   const orgSlug = searchParams.get("orgSlug");
   const returnTo = searchParams.get("returnTo");
-
-  if (!userId) {
-    return NextResponse.json({ error: "User ID is required" }, { status: 400 });
-  }
 
   const githubAppSlug = env.GITHUB_APP_SLUG;
 
@@ -33,24 +30,15 @@ export async function GET(request: Request): Promise<NextResponse> {
       orgSlug,
       returnTo,
       timestamp: Date.now(),
-      userId,
     })
   ).toString("base64url");
 
-  // Store context in cookies (backup in case state doesn't survive the redirect)
-  const cookieStore = await cookies();
-  cookieStore.set("github_oauth_user_id", userId, {
-    httpOnly: true,
-    maxAge: 60 * 10,
-    path: "/",
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-  });
-
+  // Backup in case the state parameter does not survive the redirect
   if (organizationId) {
+    const cookieStore = await cookies();
     cookieStore.set("github_oauth_org_id", organizationId, {
       httpOnly: true,
-      maxAge: 60 * 10,
+      maxAge: INSTALL_CONTEXT_MAX_AGE_SECONDS,
       path: "/",
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",

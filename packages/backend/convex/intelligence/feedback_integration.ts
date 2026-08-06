@@ -9,9 +9,7 @@ import {
 } from "../_generated/server";
 import { getAuthUser } from "../shared/utils";
 
-// ============================================
 // PRIORITY RANKING (higher index = higher priority)
-// ============================================
 
 const PRIORITY_RANK: Record<string, number> = {
   critical: 4,
@@ -20,10 +18,6 @@ const PRIORITY_RANK: Record<string, number> = {
   medium: 2,
   none: 0,
 };
-
-// ============================================
-// QUERIES
-// ============================================
 
 /**
  * Get insights that reference a specific feedback item
@@ -191,10 +185,6 @@ export const getCompetitorStatusForFeedback = query({
   },
 });
 
-// ============================================
-// INTERNAL MUTATIONS
-// ============================================
-
 /**
  * Apply a priority boost to a feedback item if the new priority is higher
  */
@@ -228,10 +218,6 @@ export const applyPriorityBoost = internalMutation({
     }
   },
 });
-
-// ============================================
-// INTERNAL ACTIONS
-// ============================================
 
 type FeedbackPriority = "critical" | "high" | "medium" | "low" | "none";
 
@@ -281,9 +267,7 @@ export const runPriorityBoostForOrg = internalAction({
   },
 });
 
-// ============================================
 // INTERNAL QUERIES (used by the action above)
-// ============================================
 
 /**
  * Get "new" insights that have linked feedback IDs for an org

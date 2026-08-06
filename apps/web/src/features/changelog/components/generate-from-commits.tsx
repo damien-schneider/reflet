@@ -67,21 +67,16 @@ export function GenerateFromCommits({
     }
   );
 
-  const getToken = useAction(
-    api.integrations.github.node_actions.getInstallationToken
+  const listTags = useAction(api.integrations.github.repo_actions.listTags);
+  const listCommitsBetweenRefs = useAction(
+    api.integrations.github.repo_actions.listCommitsBetweenRefs
   );
-  const fetchTags = useAction(
-    api.integrations.github.release_actions.fetchTags
-  );
-  const fetchCommits = useAction(
-    api.integrations.github.release_actions.fetchCommitsBetweenRefs
-  );
-  const fetchRecent = useAction(
-    api.integrations.github.release_actions.fetchRecentCommits
+  const listRecentCommits = useAction(
+    api.integrations.github.repo_actions.listRecentCommits
   );
 
   const previousReleaseCommit = useQuery(
-    api.changelog.actions.getLatestCommitFromPreviousRelease,
+    api.changelog.release_commits.getLatestCommitFromPreviousRelease,
     { excludeReleaseId: releaseId ?? undefined, organizationId }
   );
 
@@ -93,19 +88,12 @@ export function GenerateFromCommits({
     githubConnection?.repositoryDefaultBranch ??
     "main";
 
-  const fetchGitHubChanges = async (
-    installationId: string
-  ): Promise<{
+  const fetchGitHubChanges = async (): Promise<{
     commits: CommitInfo[];
     files: FileInfo[] | undefined;
     previousTag: string | null;
   }> => {
-    const { token } = await getToken({ installationId });
-
-    const tags = await fetchTags({
-      installationToken: token,
-      repositoryFullName: repoFullName,
-    });
+    const tags = await listTags({ organizationId });
 
     const currentTag = version.trim();
     const previousTag = findPreviousTag(tags, currentTag);
@@ -113,31 +101,28 @@ export function GenerateFromCommits({
     if (previousTag) {
       const head =
         currentTag && tagExists(tags, currentTag) ? currentTag : targetBranch;
-      const result = await fetchCommits({
+      const result = await listCommitsBetweenRefs({
         base: previousTag,
         head,
-        installationToken: token,
-        repositoryFullName: repoFullName,
+        organizationId,
       });
       return { commits: result.commits, files: result.files, previousTag };
     }
 
     // No tags found — try using the latest commit from the previous release as base
     if (previousReleaseCommit?.sha) {
-      const result = await fetchCommits({
+      const result = await listCommitsBetweenRefs({
         base: previousReleaseCommit.sha,
         head: targetBranch,
-        installationToken: token,
-        repositoryFullName: repoFullName,
+        organizationId,
       });
       return { commits: result.commits, files: result.files, previousTag };
     }
 
-    const commits = await fetchRecent({
+    const commits = await listRecentCommits({
       branch: targetBranch,
-      installationToken: token,
+      organizationId,
       perPage: 30,
-      repositoryFullName: repoFullName,
     });
     return { commits, files: undefined, previousTag };
   };
@@ -236,9 +221,7 @@ export function GenerateFromCommits({
     setIsFetchingCommits(true);
 
     try {
-      const { commits, files, previousTag } = await fetchGitHubChanges(
-        githubConnection.installationId
-      );
+      const { commits, files, previousTag } = await fetchGitHubChanges();
 
       if (commits.length === 0) {
         toast.info("No commits found to generate from.");

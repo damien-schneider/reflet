@@ -20,7 +20,7 @@ const mockUseQuery = vi.fn();
 
 vi.mock("convex/react", () => ({
   useMutation: (reference: string) =>
-    reference === "feedback_auto_tagging.startBulkAutoTagging"
+    reference === "feedback_auto_tagging_jobs.startBulkAutoTagging"
       ? mockStartBulkAutoTagging
       : mockDismissJob,
   useQuery: (...args: unknown[]) => mockUseQuery(...args),
@@ -30,11 +30,13 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
     feedback: {
       auto_tagging: {
-        dismissJob: "feedback_auto_tagging.dismissJob",
         getActiveJob: "feedback_auto_tagging.getActiveJob",
         getUntaggedFeedbackCount:
           "feedback_auto_tagging.getUntaggedFeedbackCount",
-        startBulkAutoTagging: "feedback_auto_tagging.startBulkAutoTagging",
+      },
+      auto_tagging_jobs: {
+        dismissJob: "feedback_auto_tagging_jobs.dismissJob",
+        startBulkAutoTagging: "feedback_auto_tagging_jobs.startBulkAutoTagging",
       },
     },
   },

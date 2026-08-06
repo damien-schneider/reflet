@@ -2,10 +2,6 @@ import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 import { getAuthUser } from "../shared/utils";
 
-// ============================================
-// QUERIES
-// ============================================
-
 /**
  * List all keywords for an organization
  */
@@ -36,10 +32,6 @@ export const list = query({
     return keywords.sort((a, b) => a.keyword.localeCompare(b.keyword));
   },
 });
-
-// ============================================
-// MUTATIONS
-// ============================================
 
 /**
  * Add a new keyword

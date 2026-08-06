@@ -95,7 +95,7 @@ export const mcpHandler = httpAction(async (ctx, request) => {
   // Fire-and-forget: update last-used timestamp
   ctx.scheduler.runAfter(
     0,
-    internal.feedback.api_auth.updateOrganizationApiKeyLastUsed,
+    internal.feedback.api_keys.updateOrganizationApiKeyLastUsed,
     { apiKeyId: validation.organizationApiKeyId }
   );
 

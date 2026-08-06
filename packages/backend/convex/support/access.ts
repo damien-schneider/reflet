@@ -50,24 +50,6 @@ export const requireConversationAccess = async (
   return access;
 };
 
-export const requireOrgAdmin = async (
-  ctx: QueryCtx,
-  organizationId: Id<"organizations">,
-  action: string
-): Promise<string> => {
-  const user = await authComponent.safeGetAuthUser(ctx);
-  if (!user) {
-    throw new Error("Not authenticated");
-  }
-
-  const membership = await getOrgMembership(ctx, organizationId, user._id);
-  if (!isOrgAdmin(membership?.role)) {
-    throw new Error(`Only admins can ${action}`);
-  }
-
-  return user._id;
-};
-
 export const isOrgAdminViewer = async (
   ctx: QueryCtx,
   organizationId: Id<"organizations">

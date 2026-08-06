@@ -8,13 +8,6 @@ const openrouter = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY,
 });
 
-export const chatAgent = new Agent(components.agent, {
-  instructions:
-    "You are a helpful AI assistant. Be concise and friendly in your responses.",
-  languageModel: openrouter("anthropic/claude-sonnet-4"),
-  name: "Chat Agent",
-});
-
 export const feedbackClarificationAgent = new Agent(components.agent, {
   instructions: `You are an expert at understanding and clarifying user feedback for software products.
 Your job is to take raw user feedback and rephrase it to be:

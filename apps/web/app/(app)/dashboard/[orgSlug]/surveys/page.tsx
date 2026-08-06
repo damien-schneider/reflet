@@ -20,7 +20,7 @@ export default function SurveysPage({
   const { orgSlug } = use(params);
   const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
   const surveys = useQuery(
-    api.surveys.mutations.list,
+    api.surveys.queries.list,
     org?._id ? { organizationId: org._id } : "skip"
   );
   const updateStatus = useMutation(api.surveys.mutations.updateStatus);

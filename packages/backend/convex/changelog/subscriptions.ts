@@ -7,8 +7,7 @@ import {
 } from "../_generated/server";
 import { authComponent } from "../auth/auth";
 import { getAuthUser } from "../shared/utils";
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+import { isValidEmail } from "../shared/validators";
 
 function generateUnsubscribeToken(): string {
   return crypto.randomUUID();
@@ -139,7 +138,7 @@ export const subscribeByEmail = mutation({
   handler: async (ctx, args) => {
     const normalizedEmail = args.email.toLowerCase();
 
-    if (!EMAIL_REGEX.test(normalizedEmail)) {
+    if (!isValidEmail(normalizedEmail)) {
       throw new Error("Invalid email format");
     }
 

@@ -6,10 +6,6 @@ import {
   internalQuery,
 } from "../_generated/server";
 
-// ============================================
-// INTERNAL QUERIES
-// ============================================
-
 /**
  * Get admin member user IDs for an organization
  */
@@ -116,10 +112,6 @@ export const getDigestData = internalQuery({
   },
 });
 
-// ============================================
-// INTERNAL MUTATIONS
-// ============================================
-
 /**
  * Create in-app notifications for high-priority insights
  */
@@ -155,10 +147,6 @@ export const createInsightNotifications = internalMutation({
     }
   },
 });
-
-// ============================================
-// INTERNAL ACTIONS
-// ============================================
 
 /**
  * Send notifications for new high-priority insights

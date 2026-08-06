@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
+import { requireOrgAdmin, requireOrgMember } from "../shared/access";
 import { incidentSeverity, incidentStatus } from "./tableFields";
 
 // ============================================
@@ -9,6 +10,8 @@ import { incidentSeverity, incidentStatus } from "./tableFields";
 export const getActiveIncidents = query({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
+    await requireOrgMember(ctx, args.organizationId);
+
     const incidents = await ctx.db
       .query("statusIncidents")
       .withIndex("by_org_status", (q) =>
@@ -50,6 +53,8 @@ export const getIncidentHistory = query({
     organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
+    await requireOrgMember(ctx, args.organizationId);
+
     const daysBack = args.days ?? 14;
     const cutoff = Date.now() - daysBack * 24 * 60 * 60 * 1000;
 
@@ -94,6 +99,8 @@ export const getIncidentWithUpdates = query({
       return null;
     }
 
+    await requireOrgMember(ctx, incident.organizationId);
+
     const updates = await ctx.db
       .query("statusIncidentUpdates")
       .withIndex("by_incident", (q) => q.eq("incidentId", args.incidentId))
@@ -126,6 +133,8 @@ export const createIncident = mutation({
     title: v.string(),
   },
   handler: async (ctx, args) => {
+    await requireOrgAdmin(ctx, args.organizationId, "declare incidents");
+
     const now = Date.now();
 
     const incidentId = await ctx.db.insert("statusIncidents", {
@@ -164,6 +173,12 @@ export const postIncidentUpdate = mutation({
       throw new Error("Incident not found");
     }
 
+    await requireOrgAdmin(
+      ctx,
+      incident.organizationId,
+      "post incident updates"
+    );
+
     const now = Date.now();
 
     await ctx.db.patch(args.incidentId, {
@@ -192,6 +207,8 @@ export const resolveIncident = mutation({
     if (!incident) {
       throw new Error("Incident not found");
     }
+
+    await requireOrgAdmin(ctx, incident.organizationId, "resolve incidents");
 
     const now = Date.now();
 

@@ -2,10 +2,9 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const mockGetToken = vi.fn();
-const mockFetchTags = vi.fn();
-const mockFetchCommits = vi.fn();
-const mockFetchRecent = vi.fn();
+const mockListTags = vi.fn();
+const mockListCommits = vi.fn();
+const mockListRecent = vi.fn();
 
 vi.mock("convex/react", () => ({
   useAction: vi.fn(() => vi.fn()),
@@ -35,22 +34,18 @@ vi.mock("sonner", () => ({
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
     changelog: {
-      actions: {
+      release_commits: {
         getLatestCommitFromPreviousRelease:
-          "changelog.actions.getLatestCommitFromPreviousRelease",
+          "changelog.release_commits.getLatestCommitFromPreviousRelease",
       },
     },
     integrations: {
       github: {
-        node_actions: {
-          getInstallationToken: "github_node_actions.getInstallationToken",
-        },
         queries: { getConnection: "github.getConnection" },
-        release_actions: {
-          fetchCommitsBetweenRefs:
-            "github_release_actions.fetchCommitsBetweenRefs",
-          fetchRecentCommits: "github_release_actions.fetchRecentCommits",
-          fetchTags: "github_release_actions.fetchTags",
+        repo_actions: {
+          listCommitsBetweenRefs: "github_repo_actions.listCommitsBetweenRefs",
+          listRecentCommits: "github_repo_actions.listRecentCommits",
+          listTags: "github_repo_actions.listTags",
         },
       },
     },
@@ -126,17 +121,14 @@ const connectedQuery = (
 const setupActions = () => {
   vi.mocked(useAction).mockImplementation((action: unknown) => {
     const actionStr = String(action);
-    if (actionStr.includes("getInstallationToken")) {
-      return mockGetToken;
+    if (actionStr.includes("listTags")) {
+      return mockListTags;
     }
-    if (actionStr.includes("fetchTags")) {
-      return mockFetchTags;
+    if (actionStr.includes("listCommitsBetweenRefs")) {
+      return mockListCommits;
     }
-    if (actionStr.includes("fetchCommitsBetweenRefs")) {
-      return mockFetchCommits;
-    }
-    if (actionStr.includes("fetchRecentCommits")) {
-      return mockFetchRecent;
+    if (actionStr.includes("listRecentCommits")) {
+      return mockListRecent;
     }
     return vi.fn();
   });
@@ -308,9 +300,8 @@ describe("GenerateFromCommits component", () => {
       setupActions();
       connectedQuery();
 
-      mockGetToken.mockResolvedValue({ token: "gh-token" });
-      mockFetchTags.mockResolvedValue([]);
-      mockFetchRecent.mockResolvedValue([]);
+      mockListTags.mockResolvedValue([]);
+      mockListRecent.mockResolvedValue([]);
 
       render(<GenerateFromCommits {...defaultProps} />);
       await user.click(screen.getByText("AI Generate"));
@@ -327,15 +318,14 @@ describe("GenerateFromCommits component", () => {
   describe("handleGenerate - successful generation with previous tag", () => {
     beforeEach(() => {
       setupActions();
-      mockGetToken.mockResolvedValue({ token: "gh-token" });
     });
 
     it("fetches commits between tags and streams output", async () => {
       const user = userEvent.setup();
       connectedQuery();
 
-      mockFetchTags.mockResolvedValue(sampleTags);
-      mockFetchCommits.mockResolvedValue({
+      mockListTags.mockResolvedValue(sampleTags);
+      mockListCommits.mockResolvedValue({
         commits: sampleCommits,
         files: sampleFiles,
       });
@@ -365,8 +355,8 @@ describe("GenerateFromCommits component", () => {
       const user = userEvent.setup();
       connectedQuery();
 
-      mockFetchTags.mockResolvedValue(sampleTags);
-      mockFetchCommits.mockResolvedValue({
+      mockListTags.mockResolvedValue(sampleTags);
+      mockListCommits.mockResolvedValue({
         commits: [sampleCommits[0]],
         files: [],
       });
@@ -387,8 +377,8 @@ describe("GenerateFromCommits component", () => {
       const user = userEvent.setup();
       connectedQuery();
 
-      mockFetchTags.mockResolvedValue(sampleTags);
-      mockFetchCommits.mockResolvedValue({
+      mockListTags.mockResolvedValue(sampleTags);
+      mockListCommits.mockResolvedValue({
         commits: sampleCommits,
         files: undefined,
       });
@@ -411,8 +401,8 @@ describe("GenerateFromCommits component", () => {
       const user = userEvent.setup();
       connectedQuery();
 
-      mockFetchTags.mockResolvedValue(sampleTags);
-      mockFetchCommits.mockResolvedValue({
+      mockListTags.mockResolvedValue(sampleTags);
+      mockListCommits.mockResolvedValue({
         commits: sampleCommits,
         files: sampleFiles,
       });
@@ -450,8 +440,8 @@ describe("GenerateFromCommits component", () => {
 
       const props = { ...defaultProps, version: "2.0.0" };
 
-      mockFetchTags.mockResolvedValue(sampleTags);
-      mockFetchCommits.mockResolvedValue({
+      mockListTags.mockResolvedValue(sampleTags);
+      mockListCommits.mockResolvedValue({
         commits: sampleCommits,
         files: undefined,
       });
@@ -464,7 +454,7 @@ describe("GenerateFromCommits component", () => {
       await user.click(screen.getByText("AI Generate"));
 
       await vi.waitFor(() => {
-        expect(mockFetchCommits).toHaveBeenCalledWith(
+        expect(mockListCommits).toHaveBeenCalledWith(
           expect.objectContaining({
             base: "v1.0.0",
             head: "main",
@@ -477,8 +467,8 @@ describe("GenerateFromCommits component", () => {
       const user = userEvent.setup();
       connectedQuery();
 
-      mockFetchTags.mockResolvedValue(sampleTags);
-      mockFetchCommits.mockResolvedValue({
+      mockListTags.mockResolvedValue(sampleTags);
+      mockListCommits.mockResolvedValue({
         commits: sampleCommits,
         files: undefined,
       });
@@ -491,7 +481,7 @@ describe("GenerateFromCommits component", () => {
       await user.click(screen.getByText("AI Generate"));
 
       await vi.waitFor(() => {
-        expect(mockFetchCommits).toHaveBeenCalledWith(
+        expect(mockListCommits).toHaveBeenCalledWith(
           expect.objectContaining({
             base: "v0.9.0",
             head: "1.0.0",
@@ -504,15 +494,14 @@ describe("GenerateFromCommits component", () => {
   describe("handleGenerate - no previous tag (fetches recent)", () => {
     beforeEach(() => {
       setupActions();
-      mockGetToken.mockResolvedValue({ token: "gh-token" });
     });
 
     it("fetches recent commits when no tags exist", async () => {
       const user = userEvent.setup();
       connectedQuery();
 
-      mockFetchTags.mockResolvedValue([]);
-      mockFetchRecent.mockResolvedValue(sampleCommits);
+      mockListTags.mockResolvedValue([]);
+      mockListRecent.mockResolvedValue(sampleCommits);
 
       vi.spyOn(globalThis, "fetch")
         .mockResolvedValueOnce(createMockStreamResponse(["content"]) as never)
@@ -522,7 +511,7 @@ describe("GenerateFromCommits component", () => {
       await user.click(screen.getByText("AI Generate"));
 
       await vi.waitFor(() => {
-        expect(mockFetchRecent).toHaveBeenCalledWith(
+        expect(mockListRecent).toHaveBeenCalledWith(
           expect.objectContaining({
             branch: "main",
             perPage: 30,
@@ -535,8 +524,8 @@ describe("GenerateFromCommits component", () => {
       const user = userEvent.setup();
       connectedQuery();
 
-      mockFetchTags.mockResolvedValue([]);
-      mockFetchRecent.mockResolvedValue(sampleCommits);
+      mockListTags.mockResolvedValue([]);
+      mockListRecent.mockResolvedValue(sampleCommits);
 
       const fetchSpy = vi.spyOn(globalThis, "fetch");
       fetchSpy
@@ -559,9 +548,8 @@ describe("GenerateFromCommits component", () => {
     it("uses custom targetBranch from changelogSettings", async () => {
       const user = userEvent.setup();
       setupActions();
-      mockGetToken.mockResolvedValue({ token: "gh-token" });
-      mockFetchTags.mockResolvedValue([]);
-      mockFetchRecent.mockResolvedValue(sampleCommits);
+      mockListTags.mockResolvedValue([]);
+      mockListRecent.mockResolvedValue(sampleCommits);
 
       vi.mocked(useQuery)
         .mockReturnValueOnce({
@@ -582,7 +570,7 @@ describe("GenerateFromCommits component", () => {
       await user.click(screen.getByText("AI Generate"));
 
       await vi.waitFor(() => {
-        expect(mockFetchRecent).toHaveBeenCalledWith(
+        expect(mockListRecent).toHaveBeenCalledWith(
           expect.objectContaining({ branch: "develop" })
         );
       });
@@ -591,9 +579,8 @@ describe("GenerateFromCommits component", () => {
     it("falls back to repositoryDefaultBranch when no changelogSettings", async () => {
       const user = userEvent.setup();
       setupActions();
-      mockGetToken.mockResolvedValue({ token: "gh-token" });
-      mockFetchTags.mockResolvedValue([]);
-      mockFetchRecent.mockResolvedValue(sampleCommits);
+      mockListTags.mockResolvedValue([]);
+      mockListRecent.mockResolvedValue(sampleCommits);
 
       vi.mocked(useQuery)
         .mockReturnValueOnce({ name: "Org" })
@@ -611,7 +598,7 @@ describe("GenerateFromCommits component", () => {
       await user.click(screen.getByText("AI Generate"));
 
       await vi.waitFor(() => {
-        expect(mockFetchRecent).toHaveBeenCalledWith(
+        expect(mockListRecent).toHaveBeenCalledWith(
           expect.objectContaining({ branch: "develop" })
         );
       });
@@ -621,29 +608,13 @@ describe("GenerateFromCommits component", () => {
   describe("handleGenerate - error handling", () => {
     beforeEach(() => {
       setupActions();
-      mockGetToken.mockResolvedValue({ token: "gh-token" });
-    });
-
-    it("shows error toast when getToken fails", async () => {
-      const user = userEvent.setup();
-      connectedQuery();
-
-      mockGetToken.mockRejectedValue(new Error("Token fetch failed"));
-
-      render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("AI Generate"));
-
-      await vi.waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith("Token fetch failed");
-      });
-      expect(defaultProps.onComplete).toHaveBeenCalledWith("");
     });
 
     it("shows error toast when fetchTags fails", async () => {
       const user = userEvent.setup();
       connectedQuery();
 
-      mockFetchTags.mockRejectedValue(new Error("Tags fetch failed"));
+      mockListTags.mockRejectedValue(new Error("Tags fetch failed"));
 
       render(<GenerateFromCommits {...defaultProps} />);
       await user.click(screen.getByText("AI Generate"));
@@ -657,7 +628,7 @@ describe("GenerateFromCommits component", () => {
       const user = userEvent.setup();
       connectedQuery();
 
-      mockFetchTags.mockRejectedValue("something broke");
+      mockListTags.mockRejectedValue("something broke");
 
       render(<GenerateFromCommits {...defaultProps} />);
       await user.click(screen.getByText("AI Generate"));
@@ -672,13 +643,13 @@ describe("GenerateFromCommits component", () => {
       connectedQuery();
 
       const abortError = new DOMException("Aborted", "AbortError");
-      mockFetchTags.mockRejectedValue(abortError);
+      mockListTags.mockRejectedValue(abortError);
 
       render(<GenerateFromCommits {...defaultProps} />);
       await user.click(screen.getByText("AI Generate"));
 
       await vi.waitFor(() => {
-        expect(mockFetchTags).toHaveBeenCalled();
+        expect(mockListTags).toHaveBeenCalled();
       });
 
       // Allow async to settle
@@ -692,8 +663,8 @@ describe("GenerateFromCommits component", () => {
       const user = userEvent.setup();
       connectedQuery();
 
-      mockFetchTags.mockResolvedValue(sampleTags);
-      mockFetchCommits.mockResolvedValue({
+      mockListTags.mockResolvedValue(sampleTags);
+      mockListCommits.mockResolvedValue({
         commits: sampleCommits,
         files: undefined,
       });
@@ -718,8 +689,8 @@ describe("GenerateFromCommits component", () => {
       const user = userEvent.setup();
       connectedQuery();
 
-      mockFetchTags.mockResolvedValue(sampleTags);
-      mockFetchCommits.mockResolvedValue({
+      mockListTags.mockResolvedValue(sampleTags);
+      mockListCommits.mockResolvedValue({
         commits: sampleCommits,
         files: undefined,
       });
@@ -743,7 +714,7 @@ describe("GenerateFromCommits component", () => {
       const user = userEvent.setup();
       connectedQuery();
 
-      mockFetchTags.mockRejectedValue(new Error("fail"));
+      mockListTags.mockRejectedValue(new Error("fail"));
 
       render(<GenerateFromCommits {...defaultProps} />);
       await user.click(screen.getByText("AI Generate"));
@@ -757,8 +728,8 @@ describe("GenerateFromCommits component", () => {
       const user = userEvent.setup();
       connectedQuery();
 
-      mockFetchTags.mockResolvedValue(sampleTags);
-      mockFetchCommits.mockRejectedValue(new Error("Commits fetch failed"));
+      mockListTags.mockResolvedValue(sampleTags);
+      mockListCommits.mockRejectedValue(new Error("Commits fetch failed"));
 
       render(<GenerateFromCommits {...defaultProps} />);
       await user.click(screen.getByText("AI Generate"));
@@ -772,8 +743,8 @@ describe("GenerateFromCommits component", () => {
       const user = userEvent.setup();
       connectedQuery();
 
-      mockFetchTags.mockResolvedValue([]);
-      mockFetchRecent.mockRejectedValue(
+      mockListTags.mockResolvedValue([]);
+      mockListRecent.mockRejectedValue(
         new Error("Recent commits fetch failed")
       );
 
@@ -789,15 +760,14 @@ describe("GenerateFromCommits component", () => {
   describe("handleGenerate - title generation", () => {
     beforeEach(() => {
       setupActions();
-      mockGetToken.mockResolvedValue({ token: "gh-token" });
     });
 
     it("generates title after successful stream", async () => {
       const user = userEvent.setup();
       connectedQuery();
 
-      mockFetchTags.mockResolvedValue([]);
-      mockFetchRecent.mockResolvedValue(sampleCommits);
+      mockListTags.mockResolvedValue([]);
+      mockListRecent.mockResolvedValue(sampleCommits);
 
       const fetchSpy = vi.spyOn(globalThis, "fetch");
       fetchSpy
@@ -818,8 +788,8 @@ describe("GenerateFromCommits component", () => {
       const user = userEvent.setup();
       connectedQuery();
 
-      mockFetchTags.mockResolvedValue([]);
-      mockFetchRecent.mockResolvedValue(sampleCommits);
+      mockListTags.mockResolvedValue([]);
+      mockListRecent.mockResolvedValue(sampleCommits);
 
       const fetchSpy = vi.spyOn(globalThis, "fetch");
       fetchSpy
@@ -848,8 +818,8 @@ describe("GenerateFromCommits component", () => {
       const user = userEvent.setup();
       connectedQuery();
 
-      mockFetchTags.mockResolvedValue([]);
-      mockFetchRecent.mockResolvedValue(sampleCommits);
+      mockListTags.mockResolvedValue([]);
+      mockListRecent.mockResolvedValue(sampleCommits);
 
       vi.spyOn(globalThis, "fetch")
         .mockResolvedValueOnce(createMockStreamResponse(["content"]) as never)
@@ -870,8 +840,8 @@ describe("GenerateFromCommits component", () => {
       const user = userEvent.setup();
       connectedQuery();
 
-      mockFetchTags.mockResolvedValue([]);
-      mockFetchRecent.mockResolvedValue(sampleCommits);
+      mockListTags.mockResolvedValue([]);
+      mockListRecent.mockResolvedValue(sampleCommits);
 
       vi.spyOn(globalThis, "fetch")
         .mockResolvedValueOnce(createMockStreamResponse(["content"]) as never)
@@ -892,8 +862,8 @@ describe("GenerateFromCommits component", () => {
       const user = userEvent.setup();
       connectedQuery();
 
-      mockFetchTags.mockResolvedValue([]);
-      mockFetchRecent.mockResolvedValue(sampleCommits);
+      mockListTags.mockResolvedValue([]);
+      mockListRecent.mockResolvedValue(sampleCommits);
 
       vi.spyOn(globalThis, "fetch")
         .mockResolvedValueOnce(createMockStreamResponse(["content"]) as never)
@@ -914,8 +884,8 @@ describe("GenerateFromCommits component", () => {
       const user = userEvent.setup();
       connectedQuery();
 
-      mockFetchTags.mockResolvedValue([]);
-      mockFetchRecent.mockResolvedValue(sampleCommits);
+      mockListTags.mockResolvedValue([]);
+      mockListRecent.mockResolvedValue(sampleCommits);
 
       vi.spyOn(globalThis, "fetch")
         .mockResolvedValueOnce(createMockStreamResponse(["content"]) as never)
@@ -936,8 +906,8 @@ describe("GenerateFromCommits component", () => {
       const user = userEvent.setup();
       connectedQuery();
 
-      mockFetchTags.mockResolvedValue([]);
-      mockFetchRecent.mockResolvedValue(sampleCommits);
+      mockListTags.mockResolvedValue([]);
+      mockListRecent.mockResolvedValue(sampleCommits);
 
       const fetchSpy = vi.spyOn(globalThis, "fetch");
       fetchSpy
@@ -963,18 +933,17 @@ describe("GenerateFromCommits component", () => {
   describe("handleGenerate - version edge cases", () => {
     beforeEach(() => {
       setupActions();
-      mockGetToken.mockResolvedValue({ token: "gh-token" });
     });
 
     it("trims version whitespace", async () => {
       const user = userEvent.setup();
       connectedQuery();
 
-      mockFetchTags.mockResolvedValue([
+      mockListTags.mockResolvedValue([
         { name: "v1.0.0", sha: "aaa" },
         { name: "v0.9.0", sha: "bbb" },
       ]);
-      mockFetchCommits.mockResolvedValue({
+      mockListCommits.mockResolvedValue({
         commits: sampleCommits,
         files: undefined,
       });
@@ -987,7 +956,7 @@ describe("GenerateFromCommits component", () => {
       await user.click(screen.getByText("AI Generate"));
 
       await vi.waitFor(() => {
-        expect(mockFetchCommits).toHaveBeenCalled();
+        expect(mockListCommits).toHaveBeenCalled();
       });
     });
 
@@ -995,8 +964,8 @@ describe("GenerateFromCommits component", () => {
       const user = userEvent.setup();
       connectedQuery();
 
-      mockFetchTags.mockResolvedValue([]);
-      mockFetchRecent.mockResolvedValue(sampleCommits);
+      mockListTags.mockResolvedValue([]);
+      mockListRecent.mockResolvedValue(sampleCommits);
 
       const fetchSpy = vi.spyOn(globalThis, "fetch");
       fetchSpy
@@ -1022,8 +991,8 @@ describe("GenerateFromCommits component", () => {
       const user = userEvent.setup();
       connectedQuery();
 
-      mockFetchTags.mockResolvedValue([]);
-      mockFetchRecent.mockResolvedValue(sampleCommits);
+      mockListTags.mockResolvedValue([]);
+      mockListRecent.mockResolvedValue(sampleCommits);
 
       const fetchSpy = vi.spyOn(globalThis, "fetch");
       fetchSpy
@@ -1049,19 +1018,18 @@ describe("GenerateFromCommits component", () => {
   describe("findPreviousTag logic (tested through component)", () => {
     beforeEach(() => {
       setupActions();
-      mockGetToken.mockResolvedValue({ token: "gh-token" });
     });
 
     it("finds previous tag when current tag is in list", async () => {
       const user = userEvent.setup();
       connectedQuery();
 
-      mockFetchTags.mockResolvedValue([
+      mockListTags.mockResolvedValue([
         { name: "v1.0.0", sha: "a" },
         { name: "v0.9.0", sha: "b" },
         { name: "v0.8.0", sha: "c" },
       ]);
-      mockFetchCommits.mockResolvedValue({
+      mockListCommits.mockResolvedValue({
         commits: sampleCommits,
         files: undefined,
       });
@@ -1074,7 +1042,7 @@ describe("GenerateFromCommits component", () => {
       await user.click(screen.getByText("AI Generate"));
 
       await vi.waitFor(() => {
-        expect(mockFetchCommits).toHaveBeenCalledWith(
+        expect(mockListCommits).toHaveBeenCalledWith(
           expect.objectContaining({
             base: "v0.8.0",
           })
@@ -1086,11 +1054,11 @@ describe("GenerateFromCommits component", () => {
       const user = userEvent.setup();
       connectedQuery();
 
-      mockFetchTags.mockResolvedValue([
+      mockListTags.mockResolvedValue([
         { name: "v2.0.0", sha: "a" },
         { name: "v1.0.0", sha: "b" },
       ]);
-      mockFetchCommits.mockResolvedValue({
+      mockListCommits.mockResolvedValue({
         commits: sampleCommits,
         files: undefined,
       });
@@ -1103,7 +1071,7 @@ describe("GenerateFromCommits component", () => {
       await user.click(screen.getByText("AI Generate"));
 
       await vi.waitFor(() => {
-        expect(mockFetchCommits).toHaveBeenCalledWith(
+        expect(mockListCommits).toHaveBeenCalledWith(
           expect.objectContaining({
             base: "v2.0.0",
           })
@@ -1115,11 +1083,11 @@ describe("GenerateFromCommits component", () => {
       const user = userEvent.setup();
       connectedQuery();
 
-      mockFetchTags.mockResolvedValue([
+      mockListTags.mockResolvedValue([
         { name: "v1.0.0", sha: "a" },
         { name: "v0.9.0", sha: "b" },
       ]);
-      mockFetchCommits.mockResolvedValue({
+      mockListCommits.mockResolvedValue({
         commits: sampleCommits,
         files: undefined,
       });
@@ -1132,7 +1100,7 @@ describe("GenerateFromCommits component", () => {
       await user.click(screen.getByText("AI Generate"));
 
       await vi.waitFor(() => {
-        expect(mockFetchCommits).toHaveBeenCalledWith(
+        expect(mockListCommits).toHaveBeenCalledWith(
           expect.objectContaining({
             base: "v1.0.0",
           })
@@ -1144,8 +1112,8 @@ describe("GenerateFromCommits component", () => {
       const user = userEvent.setup();
       connectedQuery();
 
-      mockFetchTags.mockResolvedValue([{ name: "v1.0.0", sha: "a" }]);
-      mockFetchCommits.mockResolvedValue({
+      mockListTags.mockResolvedValue([{ name: "v1.0.0", sha: "a" }]);
+      mockListCommits.mockResolvedValue({
         commits: sampleCommits,
         files: undefined,
       });
@@ -1158,7 +1126,7 @@ describe("GenerateFromCommits component", () => {
       await user.click(screen.getByText("AI Generate"));
 
       await vi.waitFor(() => {
-        expect(mockFetchCommits).toHaveBeenCalledWith(
+        expect(mockListCommits).toHaveBeenCalledWith(
           expect.objectContaining({ base: "v1.0.0" })
         );
       });
@@ -1168,11 +1136,11 @@ describe("GenerateFromCommits component", () => {
       const user = userEvent.setup();
       connectedQuery();
 
-      mockFetchTags.mockResolvedValue([
+      mockListTags.mockResolvedValue([
         { name: "v1.0.0", sha: "a" },
         { name: "v0.5.0", sha: "b" },
       ]);
-      mockFetchCommits.mockResolvedValue({
+      mockListCommits.mockResolvedValue({
         commits: sampleCommits,
         files: undefined,
       });
@@ -1185,7 +1153,7 @@ describe("GenerateFromCommits component", () => {
       await user.click(screen.getByText("AI Generate"));
 
       await vi.waitFor(() => {
-        expect(mockFetchCommits).toHaveBeenCalledWith(
+        expect(mockListCommits).toHaveBeenCalledWith(
           expect.objectContaining({ base: "v0.5.0" })
         );
       });
@@ -1195,18 +1163,17 @@ describe("GenerateFromCommits component", () => {
   describe("tagExists logic (tested through component)", () => {
     beforeEach(() => {
       setupActions();
-      mockGetToken.mockResolvedValue({ token: "gh-token" });
     });
 
     it("uses tag as head when tag name exactly matches version", async () => {
       const user = userEvent.setup();
       connectedQuery();
 
-      mockFetchTags.mockResolvedValue([
+      mockListTags.mockResolvedValue([
         { name: "1.0.0", sha: "a" },
         { name: "0.9.0", sha: "b" },
       ]);
-      mockFetchCommits.mockResolvedValue({
+      mockListCommits.mockResolvedValue({
         commits: sampleCommits,
         files: undefined,
       });
@@ -1219,7 +1186,7 @@ describe("GenerateFromCommits component", () => {
       await user.click(screen.getByText("AI Generate"));
 
       await vi.waitFor(() => {
-        expect(mockFetchCommits).toHaveBeenCalledWith(
+        expect(mockListCommits).toHaveBeenCalledWith(
           expect.objectContaining({ head: "1.0.0" })
         );
       });
@@ -1229,11 +1196,11 @@ describe("GenerateFromCommits component", () => {
       const user = userEvent.setup();
       connectedQuery();
 
-      mockFetchTags.mockResolvedValue([
+      mockListTags.mockResolvedValue([
         { name: "v2.0.0", sha: "a" },
         { name: "v1.0.0", sha: "b" },
       ]);
-      mockFetchCommits.mockResolvedValue({
+      mockListCommits.mockResolvedValue({
         commits: sampleCommits,
         files: undefined,
       });
@@ -1246,7 +1213,7 @@ describe("GenerateFromCommits component", () => {
       await user.click(screen.getByText("AI Generate"));
 
       await vi.waitFor(() => {
-        expect(mockFetchCommits).toHaveBeenCalledWith(
+        expect(mockListCommits).toHaveBeenCalledWith(
           expect.objectContaining({ head: "main" })
         );
       });
@@ -1256,7 +1223,6 @@ describe("GenerateFromCommits component", () => {
   describe("fetching state transitions", () => {
     beforeEach(() => {
       setupActions();
-      mockGetToken.mockResolvedValue({ token: "gh-token" });
     });
 
     it("resets button state after error", async () => {
@@ -1270,7 +1236,7 @@ describe("GenerateFromCommits component", () => {
           repositoryFullName: "owner/repo",
         });
 
-      mockFetchTags.mockRejectedValue(new Error("fail"));
+      mockListTags.mockRejectedValue(new Error("fail"));
 
       render(<GenerateFromCommits {...defaultProps} />);
       await user.click(screen.getByText("AI Generate"));
@@ -1291,8 +1257,8 @@ describe("GenerateFromCommits component", () => {
           repositoryFullName: "owner/repo",
         });
 
-      mockFetchTags.mockResolvedValue([]);
-      mockFetchRecent.mockResolvedValue([]);
+      mockListTags.mockResolvedValue([]);
+      mockListRecent.mockResolvedValue([]);
 
       render(<GenerateFromCommits {...defaultProps} />);
       await user.click(screen.getByText("AI Generate"));

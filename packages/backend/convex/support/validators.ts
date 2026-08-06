@@ -87,8 +87,3 @@ export const buildMessagePreview = (body: string): string => {
     ? `${normalized.slice(0, SUPPORT_PREVIEW_LENGTH - 1)}…`
     : normalized;
 };
-
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-export const isValidEmail = (email: string): boolean =>
-  EMAIL_PATTERN.test(email);

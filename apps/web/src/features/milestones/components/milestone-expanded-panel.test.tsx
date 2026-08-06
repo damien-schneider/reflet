@@ -45,10 +45,12 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
       },
     },
     organizations: {
-      milestones: {
+      milestone_actions: {
         addFeedback: "milestones:addFeedback",
-        get: "milestones:get",
         removeFeedback: "milestones:removeFeedback",
+      },
+      milestones: {
+        get: "milestones:get",
       },
     },
   },

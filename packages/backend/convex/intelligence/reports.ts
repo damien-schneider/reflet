@@ -2,10 +2,6 @@ import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { getAuthUser } from "../shared/utils";
 
-// ============================================
-// QUERIES
-// ============================================
-
 /**
  * Generate a full intelligence report for export
  */
@@ -200,10 +196,6 @@ export const getHistoricalTrends = query({
     };
   },
 });
-
-// ============================================
-// HELPERS
-// ============================================
 
 interface DailyEntry {
   competitiveAlerts: number;

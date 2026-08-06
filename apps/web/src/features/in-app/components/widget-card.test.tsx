@@ -17,8 +17,10 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
     widget: {
       admin: {
-        remove: "widget_admin.remove",
         update: "widget_admin.update",
+      },
+      admin_settings: {
+        remove: "widget_admin_settings.remove",
       },
     },
   },

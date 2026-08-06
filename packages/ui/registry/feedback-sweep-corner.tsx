@@ -13,8 +13,6 @@ import {
 
 import { cn } from "@/lib/utils";
 
-// ─── Types ──────────────────────────────────────────────────────────────────
-
 type VoteType = "upvote" | "downvote" | null;
 
 interface VoteState {
@@ -24,9 +22,7 @@ interface VoteState {
   voteType: VoteType;
 }
 
-interface SweepCornerContextValue extends VoteState {}
-
-// ─── Tag Color Map ──────────────────────────────────────────────────────────
+type SweepCornerContextValue = VoteState;
 
 const TAG_COLORS: Record<string, string> = {
   amber: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
@@ -39,8 +35,6 @@ const TAG_COLORS: Record<string, string> = {
   red: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
 };
 
-// ─── Context ────────────────────────────────────────────────────────────────
-
 const SweepCornerContext = createContext<SweepCornerContextValue | null>(null);
 
 function useSweepCornerContext(): SweepCornerContextValue {
@@ -52,8 +46,6 @@ function useSweepCornerContext(): SweepCornerContextValue {
   }
   return context;
 }
-
-// ─── Vote Hook ──────────────────────────────────────────────────────────────
 
 function useVoteState(
   initialUp: number,
@@ -99,8 +91,6 @@ function useVoteState(
   return { downvotes, upvotes, vote, voteType };
 }
 
-// ─── Animated Count Helper ──────────────────────────────────────────────────
-
 function AnimatedCount({
   value,
   className,
@@ -123,8 +113,6 @@ function AnimatedCount({
     </AnimatePresence>
   );
 }
-
-// ─── SweepCorner (Root Provider) ────────────────────────────────────────────
 
 interface SweepCornerProps {
   children: ReactNode;
@@ -176,8 +164,6 @@ function SweepCorner({
   );
 }
 
-// ─── SweepCornerCard ────────────────────────────────────────────────────────
-
 interface SweepCornerCardProps {
   children: ReactNode;
   className?: string;
@@ -196,8 +182,6 @@ function SweepCornerCard({ children, className }: SweepCornerCardProps) {
   );
 }
 
-// ─── SweepCornerContent ─────────────────────────────────────────────────────
-
 interface SweepCornerContentProps {
   children: ReactNode;
   className?: string;
@@ -208,8 +192,6 @@ function SweepCornerContent({ children, className }: SweepCornerContentProps) {
     <div className={cn("space-y-3 px-4 pt-4 pr-20", className)}>{children}</div>
   );
 }
-
-// ─── SweepCornerTitle ───────────────────────────────────────────────────────
 
 interface SweepCornerTitleProps {
   children: ReactNode;
@@ -224,8 +206,6 @@ function SweepCornerTitle({ children, className }: SweepCornerTitleProps) {
   );
 }
 
-// ─── SweepCornerTags ────────────────────────────────────────────────────────
-
 interface SweepCornerTagsProps {
   children: ReactNode;
   className?: string;
@@ -236,8 +216,6 @@ function SweepCornerTags({ children, className }: SweepCornerTagsProps) {
     <div className={cn("flex flex-wrap gap-1", className)}>{children}</div>
   );
 }
-
-// ─── SweepCornerTag ─────────────────────────────────────────────────────────
 
 interface SweepCornerTagProps {
   children: ReactNode;
@@ -261,8 +239,6 @@ function SweepCornerTag({ children, color, className }: SweepCornerTagProps) {
     </span>
   );
 }
-
-// ─── SweepCornerBadge ───────────────────────────────────────────────────────
 
 function SweepCornerBadge() {
   const { voteType, upvotes, downvotes, vote } = useSweepCornerContext();
@@ -341,8 +317,6 @@ function SweepCornerBadge() {
   );
 }
 
-// ─── SweepCornerFooter ──────────────────────────────────────────────────────
-
 interface SweepCornerFooterProps {
   className?: string;
   comments: number;
@@ -401,8 +375,6 @@ function SweepCornerFooter({
     </div>
   );
 }
-
-// ─── Exports ────────────────────────────────────────────────────────────────
 
 export {
   SweepCorner,

@@ -5,13 +5,13 @@ import {
   mutation,
   query,
 } from "../_generated/server";
-import { getAuthUser } from "../shared/utils";
+import { requireAuthUser, requireOrgMember } from "../shared/access";
 import { screenshotAnnotationValidator } from "./tableFields";
 
 export const generateUploadUrl = mutation({
   args: {},
   handler: async (ctx) => {
-    await getAuthUser(ctx);
+    await requireAuthUser(ctx);
     return await ctx.storage.generateUploadUrl();
   },
   returns: v.string(),
@@ -41,12 +41,12 @@ export const saveScreenshot = mutation({
     width: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
-
     const feedback = await ctx.db.get(args.feedbackId);
     if (!feedback) {
       throw new Error("Feedback not found");
     }
+
+    const { user } = await requireOrgMember(ctx, feedback.organizationId);
 
     return await ctx.db.insert("feedbackScreenshots", {
       annotations: args.annotations,
@@ -81,6 +81,7 @@ export const saveScreenshotPublic = internalMutation({
     filename: v.string(),
     height: v.optional(v.number()),
     mimeType: v.string(),
+    organizationId: v.id("organizations"),
     pageUrl: v.optional(v.string()),
     size: v.number(),
     storageId: v.id("_storage"),
@@ -88,7 +89,7 @@ export const saveScreenshotPublic = internalMutation({
   },
   handler: async (ctx, args) => {
     const feedback = await ctx.db.get(args.feedbackId);
-    if (!feedback) {
+    if (!feedback || feedback.organizationId !== args.organizationId) {
       throw new Error("Feedback not found");
     }
 
@@ -119,12 +120,12 @@ export const updateAnnotations = mutation({
     screenshotId: v.id("feedbackScreenshots"),
   },
   handler: async (ctx, args) => {
-    await getAuthUser(ctx);
-
     const screenshot = await ctx.db.get(args.screenshotId);
     if (!screenshot) {
       throw new Error("Screenshot not found");
     }
+
+    await requireOrgMember(ctx, screenshot.organizationId);
 
     await ctx.db.patch(args.screenshotId, {
       annotatedStorageId: args.annotatedStorageId,
@@ -141,6 +142,13 @@ export const getByFeedback = query({
     feedbackId: v.id("feedback"),
   },
   handler: async (ctx, args) => {
+    const feedback = await ctx.db.get(args.feedbackId);
+    if (!feedback) {
+      return [];
+    }
+
+    await requireOrgMember(ctx, feedback.organizationId);
+
     const screenshots = await ctx.db
       .query("feedbackScreenshots")
       .withIndex("by_feedback", (q) => q.eq("feedbackId", args.feedbackId))
@@ -229,12 +237,12 @@ export const deleteScreenshot = mutation({
     screenshotId: v.id("feedbackScreenshots"),
   },
   handler: async (ctx, args) => {
-    await getAuthUser(ctx);
-
     const screenshot = await ctx.db.get(args.screenshotId);
     if (!screenshot) {
       throw new Error("Screenshot not found");
     }
+
+    await requireOrgMember(ctx, screenshot.organizationId);
 
     await ctx.storage.delete(screenshot.storageId);
     if (screenshot.annotatedStorageId) {

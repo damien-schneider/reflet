@@ -118,12 +118,12 @@ describe("useGitHubSettings", () => {
     expect(result.current.repositories).toHaveLength(1);
   });
 
-  it("connectHref contains install URL with user and org params", () => {
+  it("connectHref contains install URL with org param and no user id", () => {
     const { result } = renderHook(() => useGitHubSettings(defaultProps));
 
     expect(result.current.connectHref).toContain("/api/github/install");
-    expect(result.current.connectHref).toContain("userId=user_123");
     expect(result.current.connectHref).toContain("organizationId=org1");
+    expect(result.current.connectHref).not.toContain("userId");
   });
 
   it("handleDisconnect calls disconnect mutation", async () => {

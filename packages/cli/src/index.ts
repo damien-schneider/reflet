@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { createInterface } from "node:readline/promises";
 import { parseArgs } from "node:util";
 import { runDoctor } from "./commands/doctor";
@@ -7,8 +8,23 @@ import { type InitReport, runInit, SDK_PACKAGE } from "./commands/init";
 import { nodeFileSystem, type PackageManager } from "./project";
 import { heading, indent, SYMBOL, style } from "./render";
 import { SETUP_PROMPT } from "./setup-prompt";
+import { isWidgetPosition, WIDGET_POSITIONS } from "./widget-position";
 
-const VERSION = "0.1.0";
+// Same depth from src/ and from dist/, so this resolves in both
+function readVersion(): string {
+  try {
+    const manifest: unknown = JSON.parse(
+      readFileSync(new URL("../package.json", import.meta.url), "utf8")
+    );
+    return typeof manifest === "object" &&
+      manifest !== null &&
+      typeof Reflect.get(manifest, "version") === "string"
+      ? Reflect.get(manifest, "version")
+      : "0.0.0";
+  } catch {
+    return "0.0.0";
+  }
+}
 
 const INSTALL_COMMAND: Record<PackageManager, string[]> = {
   bun: ["add"],
@@ -110,6 +126,15 @@ async function commandInit(values: {
   yes?: boolean;
 }): Promise<number> {
   const dryRun = values["dry-run"] === true;
+
+  const position = values.position;
+  if (position !== undefined && !isWidgetPosition(position)) {
+    process.stderr.write(
+      `${SYMBOL.cross} Unknown position "${position}" — expected one of ${WIDGET_POSITIONS.join(", ")}\n`
+    );
+    return 1;
+  }
+
   const interactive =
     !(values.yes || values["public-key"] || dryRun) &&
     process.stdin.isTTY === true;
@@ -122,7 +147,7 @@ async function commandInit(values: {
     dryRun,
     files: nodeFileSystem,
     install,
-    position: values.position,
+    position,
     publicKey,
     skipInstall: values["skip-install"] === true,
   });
@@ -163,7 +188,7 @@ export async function run(argv: string[]): Promise<number> {
   });
 
   if (values.version) {
-    process.stdout.write(`${VERSION}\n`);
+    process.stdout.write(`${readVersion()}\n`);
     return 0;
   }
 

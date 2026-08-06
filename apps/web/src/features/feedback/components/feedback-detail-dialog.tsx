@@ -54,7 +54,7 @@ export function FeedbackDetailDialog({
 
   const updateFeedback = useMutation(api.feedback.mutations.update);
   const updateFeedbackStatus = useMutation(
-    api.feedback.actions.updateOrganizationStatus
+    api.feedback.triage_actions.updateOrganizationStatus
   );
   const deleteFeedback = useMutation(api.feedback.actions.remove);
   const toggleVote = useMutation(api.feedback.votes.toggle);

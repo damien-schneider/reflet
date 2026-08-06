@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
-import { requireOrgAdmin } from "./access";
+import { requireOrgAdmin } from "../shared/access";
 
 export const get = query({
   args: {

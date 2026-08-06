@@ -3,10 +3,6 @@ import { mutation, query } from "../_generated/server";
 import { getAuthUser } from "../shared/utils";
 import { insightStatus, insightType } from "./tableFields";
 
-// ============================================
-// QUERIES
-// ============================================
-
 /**
  * List insights for an organization with optional filters
  */
@@ -116,10 +112,6 @@ export const getSignalsForInsight = query({
     return signals.filter(Boolean);
   },
 });
-
-// ============================================
-// MUTATIONS
-// ============================================
 
 /**
  * Dismiss an insight (admin only)

@@ -17,8 +17,9 @@ export interface AdminAuth {
 // ============================================
 
 const CORS_HEADERS = {
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers":
+    "Content-Type, Authorization, X-User-Token, X-Visitor-Id",
+  "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Max-Age": "86400",
 } as const;
@@ -34,7 +35,7 @@ export function errorResponse(error: string, status = 400): Response {
   return jsonResponse({ error }, status);
 }
 
-function corsPreflightResponse(): Response {
+export function corsPreflightResponse(): Response {
   return new Response(null, { headers: CORS_HEADERS, status: 204 });
 }
 
@@ -178,7 +179,7 @@ async function authenticateAdminRequest(
   }
 
   // Fire-and-forget: non-critical last-used timestamp update
-  ctx.runMutation(internal.feedback.api_auth.updateOrganizationApiKeyLastUsed, {
+  ctx.runMutation(internal.feedback.api_keys.updateOrganizationApiKeyLastUsed, {
     apiKeyId: validation.organizationApiKeyId,
   });
 

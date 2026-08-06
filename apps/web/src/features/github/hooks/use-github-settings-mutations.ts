@@ -14,13 +14,13 @@ export function useGitHubSettingsMutations() {
     api.integrations.github.mutations.disconnect
   );
   const toggleIssuesSyncMutation = useMutation(
-    api.integrations.github.issues.toggleIssuesSync
+    api.integrations.github.issue_sync.toggleIssuesSync
   );
   const upsertLabelMappingMutation = useMutation(
-    api.integrations.github.issues.upsertLabelMapping
+    api.integrations.github.issue_mappings.upsertLabelMapping
   );
   const deleteLabelMappingMutation = useMutation(
-    api.integrations.github.issues.deleteLabelMapping
+    api.integrations.github.issue_mappings.deleteLabelMapping
   );
 
   return {

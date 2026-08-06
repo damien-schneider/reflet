@@ -104,13 +104,17 @@ export function FeedbackMetadataBar({
 
   const toggleVote = useMutation(api.feedback.votes.toggle);
   const updateStatus = useMutation(
-    api.feedback.actions.updateOrganizationStatus
+    api.feedback.triage_actions.updateOrganizationStatus
   );
-  const assignFeedback = useMutation(api.feedback.actions.assign);
+  const assignFeedback = useMutation(api.feedback.triage_actions.assign);
   const toggleSubscription = useMutation(api.feedback.subscriptions.toggle);
-  const updateAnalysis = useMutation(api.feedback.actions.updateAnalysis);
-  const addTagMutation = useMutation(api.feedback.tags.addToFeedback);
-  const removeTagMutation = useMutation(api.feedback.tags.removeFromFeedback);
+  const updateAnalysis = useMutation(
+    api.feedback.triage_actions.updateAnalysis
+  );
+  const addTagMutation = useMutation(api.feedback.tag_mutations.addToFeedback);
+  const removeTagMutation = useMutation(
+    api.feedback.tag_mutations.removeFromFeedback
+  );
 
   const currentStatus = organizationStatuses?.find(
     (s) => s._id === organizationStatusId

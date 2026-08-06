@@ -2,15 +2,13 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { internalMutation, internalQuery } from "../_generated/server";
 
-// ============================================
-// TYPES
-// ============================================
-
 export interface ApiKeyValidation {
   error?: string;
   isSecretKey?: boolean;
   organizationApiKeyId?: Id<"organizationApiKeys">;
   organizationId?: Id<"organizations">;
+  /** HMAC key for widget user tokens. Server-side only, never returned to a client. */
+  secretKeyHash?: string;
   success: boolean;
 }
 
@@ -30,10 +28,6 @@ export interface ApiAuthResult {
   statusCode?: number;
   success: boolean;
 }
-
-// ============================================
-// HELPERS
-// ============================================
 
 /**
  * Generate a random API key
@@ -57,86 +51,6 @@ export async function hashSecretKey(key: string): Promise<string> {
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
 }
-
-/**
- * Decode and verify a JWT token for user identification
- * Simple JWT structure: base64(header).base64(payload).signature
- */
-export function decodeUserToken(
-  token: string
-): { id: string; email?: string; name?: string; exp?: number } | null {
-  try {
-    const parts = token.split(".");
-    if (parts.length !== 3) {
-      return null;
-    }
-
-    const payloadPart = parts[1];
-    if (!payloadPart) {
-      return null;
-    }
-
-    const payload = JSON.parse(atob(payloadPart)) as {
-      id?: string;
-      sub?: string;
-      email?: string;
-      name?: string;
-      exp?: number;
-    };
-
-    // Check expiration
-    if (payload.exp && Date.now() > payload.exp * 1000) {
-      return null;
-    }
-
-    const userId = payload.id || payload.sub;
-    if (!userId) {
-      return null;
-    }
-
-    return {
-      email: payload.email,
-      exp: payload.exp,
-      id: userId,
-      name: payload.name,
-    };
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Create a simple JWT token for user identification
- * For use by SDK clients to sign user info
- */
-export async function createUserToken(
-  user: { id: string; email?: string; name?: string },
-  secretKey: string,
-  expiresInSeconds = 86_400 // 24 hours default
-): Promise<string> {
-  const header = { alg: "HS256", typ: "JWT" };
-  const payload = {
-    email: user.email,
-    exp: Math.floor(Date.now() / 1000) + expiresInSeconds,
-    iat: Math.floor(Date.now() / 1000),
-    id: user.id,
-    name: user.name,
-  };
-
-  const headerB64 = btoa(JSON.stringify(header));
-  const payloadB64 = btoa(JSON.stringify(payload));
-
-  // Simple signature using secret key (in production, use proper HMAC)
-  const signature = await hashSecretKey(
-    `${headerB64}.${payloadB64}.${secretKey}`
-  );
-
-  return `${headerB64}.${payloadB64}.${signature}`;
-}
-
-// ============================================
-// INTERNAL QUERIES
-// ============================================
 
 /**
  * Validate an API key (public or secret)
@@ -175,6 +89,7 @@ export const validateApiKey = internalQuery({
         isSecretKey: false,
         organizationApiKeyId: orgApiKeyRecord._id,
         organizationId: orgApiKeyRecord.organizationId,
+        secretKeyHash: orgApiKeyRecord.secretKeyHash,
         success: true,
       };
     }
@@ -195,6 +110,7 @@ export const validateApiKey = internalQuery({
       isSecretKey: true,
       organizationApiKeyId: orgApiKeyRecord._id,
       organizationId: orgApiKeyRecord.organizationId,
+      secretKeyHash: orgApiKeyRecord.secretKeyHash,
       success: true,
     };
   },
@@ -321,161 +237,5 @@ export const checkRateLimit = internalQuery({
       remaining: Math.max(0, maxRequests - recentRequests.length),
       resetAt: windowStart + windowMs,
     };
-  },
-});
-
-// ============================================
-// ORGANIZATION API KEY MANAGEMENT
-// ============================================
-
-/**
- * Generate API keys for an organization
- */
-export const generateOrganizationApiKeys = internalMutation({
-  args: {
-    name: v.string(),
-    organizationId: v.id("organizations"),
-    tagId: v.optional(v.id("tags")),
-  },
-  handler: async (ctx, args) => {
-    const { organizationId, name, tagId } = args;
-
-    const publicKey = generateApiKey("fb_pub");
-    const secretKey = generateApiKey("fb_sec");
-    const secretKeyHash = await hashSecretKey(secretKey);
-
-    const apiKeyId = await ctx.db.insert("organizationApiKeys", {
-      createdAt: Date.now(),
-      isActive: true,
-      name,
-      organizationId,
-      publicKey,
-      secretKeyHash,
-      tagId,
-    });
-
-    // Return the unhashed secret key (only shown once)
-    return {
-      apiKeyId,
-      publicKey,
-      secretKey, // Only returned on creation!
-    };
-  },
-});
-
-/**
- * Regenerate secret key for an organization API key
- */
-export const regenerateOrganizationSecretKey = internalMutation({
-  args: {
-    apiKeyId: v.id("organizationApiKeys"),
-  },
-  handler: async (ctx, args) => {
-    const existingKey = await ctx.db.get(args.apiKeyId);
-    if (!existingKey) {
-      throw new Error("API key not found");
-    }
-
-    const newSecretKey = generateApiKey("fb_sec");
-    const secretKeyHash = await hashSecretKey(newSecretKey);
-
-    await ctx.db.patch(args.apiKeyId, {
-      secretKeyHash,
-    });
-
-    return {
-      secretKey: newSecretKey, // Only returned on regeneration!
-    };
-  },
-});
-
-/**
- * Get API keys info for an organization
- */
-export const getOrganizationApiKeys = internalQuery({
-  args: {
-    organizationId: v.id("organizations"),
-  },
-  handler: async (ctx, args) => {
-    const keys = await ctx.db
-      .query("organizationApiKeys")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .collect();
-
-    return keys.map((key) => ({
-      allowedDomains: key.allowedDomains,
-      apiKeyId: key._id,
-      createdAt: key.createdAt,
-      isActive: key.isActive,
-      lastUsedAt: key.lastUsedAt,
-      name: key.name,
-      publicKey: key.publicKey,
-      rateLimit: key.rateLimit,
-      tagId: key.tagId,
-    }));
-  },
-});
-
-/**
- * Update organization API key settings
- */
-export const updateOrganizationApiKeySettings = internalMutation({
-  args: {
-    allowedDomains: v.optional(v.array(v.string())),
-    apiKeyId: v.id("organizationApiKeys"),
-    isActive: v.optional(v.boolean()),
-    name: v.optional(v.string()),
-    rateLimit: v.optional(
-      v.object({
-        requestsPerMinute: v.number(),
-      })
-    ),
-    tagId: v.optional(v.id("tags")),
-  },
-  handler: async (ctx, args) => {
-    const { apiKeyId, ...updates } = args;
-
-    // Filter out undefined values
-    const filteredUpdates: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(updates)) {
-      if (value !== undefined) {
-        filteredUpdates[key] = value;
-      }
-    }
-
-    if (Object.keys(filteredUpdates).length > 0) {
-      await ctx.db.patch(apiKeyId, filteredUpdates);
-    }
-
-    return { success: true };
-  },
-});
-
-/**
- * Delete an organization API key
- */
-export const deleteOrganizationApiKey = internalMutation({
-  args: {
-    apiKeyId: v.id("organizationApiKeys"),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.delete(args.apiKeyId);
-    return { success: true };
-  },
-});
-
-/**
- * Update organization API key last used timestamp
- */
-export const updateOrganizationApiKeyLastUsed = internalMutation({
-  args: {
-    apiKeyId: v.id("organizationApiKeys"),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.patch(args.apiKeyId, {
-      lastUsedAt: Date.now(),
-    });
   },
 });

@@ -1,5 +1,5 @@
 import type { httpRouter } from "convex/server";
-import { api } from "../_generated/api";
+import { internal } from "../_generated/api";
 import { httpAction } from "../_generated/server";
 import { createAuth } from "../auth/auth";
 import {
@@ -70,7 +70,7 @@ export function registerAiApiRoutes(http: Router): void {
             : undefined;
 
         const title = await ctx.runAction(
-          api.changelog.ai_actions.generateReleaseTitle,
+          internal.changelog.ai_actions.generateReleaseTitle,
           { description, version }
         );
 
@@ -110,7 +110,7 @@ export function registerAiApiRoutes(http: Router): void {
         }
 
         const matches = await ctx.runAction(
-          api.changelog.ai_actions.matchReleaseFeedback,
+          internal.changelog.ai_actions.matchReleaseFeedback,
           {
             commits: body.commits as Array<{
               sha: string;

@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import type { Id } from "../../_generated/dataModel";
 import { internalQuery, query } from "../../_generated/server";
-import { getAuthUser } from "../../shared/utils";
+import { isOrgMemberViewer } from "../../shared/access";
 
 // ============================================
 // QUERIES
@@ -13,16 +13,7 @@ import { getAuthUser } from "../../shared/utils";
 export const getConnection = query({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
-
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", args.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership) {
+    if (!(await isOrgMemberViewer(ctx, args.organizationId))) {
       return null;
     }
 
@@ -33,7 +24,13 @@ export const getConnection = query({
       )
       .first();
 
-    return connection;
+    if (!connection) {
+      return null;
+    }
+
+    // webhookSecret verifies inbound GitHub payloads — server-side only
+    const { webhookSecret, ...safeConnection } = connection;
+    return safeConnection;
   },
 });
 
@@ -43,16 +40,7 @@ export const getConnection = query({
 export const listGithubReleases = query({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
-
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", args.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership) {
+    if (!(await isOrgMemberViewer(ctx, args.organizationId))) {
       return [];
     }
 
@@ -88,16 +76,7 @@ export const listGithubReleases = query({
 export const getConnectionStatus = query({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
-
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", args.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership) {
+    if (!(await isOrgMemberViewer(ctx, args.organizationId))) {
       return null;
     }
 
@@ -141,16 +120,7 @@ export const getConnectionStatus = query({
 export const getReleaseSyncStatus = query({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
-
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", args.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership) {
+    if (!(await isOrgMemberViewer(ctx, args.organizationId))) {
       return { githubOnly: [], refletOnly: [], synced: [] };
     }
 

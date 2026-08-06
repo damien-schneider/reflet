@@ -26,10 +26,10 @@ export function AutoTagButton({ organizationId }: AutoTagButtonProps) {
   });
 
   const startBulkAutoTagging = useMutation(
-    api.feedback.auto_tagging.startBulkAutoTagging
+    api.feedback.auto_tagging_jobs.startBulkAutoTagging
   );
 
-  const dismissJob = useMutation(api.feedback.auto_tagging.dismissJob);
+  const dismissJob = useMutation(api.feedback.auto_tagging_jobs.dismissJob);
 
   // Fire toast notifications on status transitions
   const jobStatus = job?.status ?? null;

@@ -1,8 +1,9 @@
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 
 /**
- * Build the GitHub App install URL with user context.
- * Returns undefined if userId is not available yet.
+ * Build the GitHub App install URL. The installation is bound to the session on
+ * the callback, so no user id is sent — `userId` only gates on the session
+ * being loaded. Returns undefined while it is not.
  */
 export function buildGitHubInstallUrl(params: {
   userId: string | undefined;
@@ -14,7 +15,6 @@ export function buildGitHubInstallUrl(params: {
     return;
   }
   const search = new URLSearchParams();
-  search.set("userId", params.userId);
   if (params.organizationId) {
     search.set("organizationId", params.organizationId);
   }

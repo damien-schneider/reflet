@@ -61,9 +61,9 @@ export function RoadmapKanban({
 
   // Mutations
   const updateFeedbackStatus = useMutation(
-    api.feedback.actions.updateOrganizationStatus
+    api.feedback.triage_actions.updateOrganizationStatus
   );
-  const createStatus = useMutation(api.organizations.statuses.create);
+  const createStatus = useMutation(api.organizations.status_mutations.create);
 
   // Build lane configuration from organization statuses
   const laneConfigs = useMemo((): LaneConfig[] => {

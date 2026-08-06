@@ -1,10 +1,6 @@
 import { defineTable } from "convex/server";
 import { v } from "convex/values";
 
-// ============================================
-// INTELLIGENCE VALIDATORS
-// ============================================
-
 export const scanFrequency = v.union(
   v.literal("daily"),
   v.literal("twice_weekly"),
@@ -81,10 +77,6 @@ export const keywordSource = v.union(
   v.literal("web"),
   v.literal("both")
 );
-
-// ============================================
-// INTELLIGENCE TABLES
-// ============================================
 
 export const intelligenceTables = {
   battlecards: defineTable({

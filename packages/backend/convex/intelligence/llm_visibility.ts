@@ -32,10 +32,6 @@ const visibilitySchema = z.object({
   sentiment: z.enum(["positive", "negative", "neutral"]),
 });
 
-// ============================================
-// QUERIES
-// ============================================
-
 /**
  * Get LLM visibility results for an organization
  */
@@ -67,10 +63,6 @@ export const getVisibilityResults = query({
   },
 });
 
-// ============================================
-// INTERNAL QUERIES
-// ============================================
-
 /**
  * Get org details and competitors for LLM visibility check
  */
@@ -99,10 +91,6 @@ export const getOrgForVisibility = internalQuery({
   },
 });
 
-// ============================================
-// INTERNAL MUTATIONS
-// ============================================
-
 /**
  * Store LLM visibility check result
  */
@@ -126,10 +114,6 @@ export const storeVisibilityResult = internalMutation({
     await ctx.db.insert("llmVisibilityChecks", args);
   },
 });
-
-// ============================================
-// ACTIONS
-// ============================================
 
 /**
  * Run LLM visibility check — asks an AI model common product questions

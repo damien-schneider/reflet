@@ -72,7 +72,7 @@ export const ScanStatusBanner = ({
     organizationId,
   });
 
-  const job = useQuery(api.intelligence.config.getActiveScan, {
+  const job = useQuery(api.intelligence.scan_control.getActiveScan, {
     organizationId,
   });
 
@@ -88,9 +88,11 @@ export const ScanStatusBanner = ({
   const hasCompetitors = competitors && competitors.length > 0;
   const canScan = hasKeywords || hasCompetitors;
 
-  const startManualScan = useMutation(api.intelligence.config.startManualScan);
-  const dismissScan = useMutation(api.intelligence.config.dismissScan);
-  const cancelScan = useMutation(api.intelligence.config.cancelScan);
+  const startManualScan = useMutation(
+    api.intelligence.scan_control.startManualScan
+  );
+  const dismissScan = useMutation(api.intelligence.scan_control.dismissScan);
+  const cancelScan = useMutation(api.intelligence.scan_control.cancelScan);
 
   const jobStatus = job?.status ?? null;
   const isStale = job !== null && job !== undefined && "_stale" in job;

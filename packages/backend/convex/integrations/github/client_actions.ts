@@ -47,7 +47,7 @@ export const listRepositories = action({
     );
 
     const repos: Repository[] = await ctx.runAction(
-      api.integrations.github.actions.fetchRepositories,
+      internal.integrations.github.actions.fetchRepositories,
       { installationToken: token }
     );
 
@@ -82,7 +82,7 @@ export const listLabels = action({
     );
 
     const labels: Label[] = await ctx.runAction(
-      api.integrations.github.actions.fetchLabels,
+      internal.integrations.github.issue_actions.fetchLabels,
       {
         installationToken: token,
         repositoryFullName: connection.repositoryFullName,
@@ -114,10 +114,13 @@ export const syncReleases = action({
       throw new Error("No repository connected");
     }
 
-    await ctx.runMutation(api.integrations.github.mutations.updateSyncStatus, {
-      connectionId: connection._id,
-      status: "syncing",
-    });
+    await ctx.runMutation(
+      internal.integrations.github.release_mutations.updateSyncStatus,
+      {
+        connectionId: connection._id,
+        status: "syncing",
+      }
+    );
 
     try {
       const { token } = await ctx.runAction(
@@ -126,7 +129,7 @@ export const syncReleases = action({
       );
 
       const releases = await ctx.runAction(
-        api.integrations.github.actions.fetchReleases,
+        internal.integrations.github.actions.fetchReleases,
         {
           installationToken: token,
           repositoryFullName: connection.repositoryFullName,
@@ -134,14 +137,14 @@ export const syncReleases = action({
       );
 
       await ctx.runMutation(
-        api.integrations.github.mutations.saveSyncedReleases,
+        internal.integrations.github.release_mutations.saveSyncedReleases,
         { organizationId: args.organizationId, releases }
       );
 
       return { success: true, synced: releases.length };
     } catch (error) {
       await ctx.runMutation(
-        api.integrations.github.mutations.updateSyncStatus,
+        internal.integrations.github.release_mutations.updateSyncStatus,
         {
           connectionId: connection._id,
           error: error instanceof Error ? error.message : "Unknown error",
@@ -182,7 +185,7 @@ export const syncIssues = action({
     }
 
     await ctx.runMutation(
-      api.integrations.github.issues.updateIssuesSyncStatus,
+      internal.integrations.github.issue_sync.updateIssuesSyncStatus,
       { connectionId: connection._id, status: "syncing" }
     );
 
@@ -193,7 +196,7 @@ export const syncIssues = action({
       );
 
       const issues = await ctx.runAction(
-        api.integrations.github.actions.fetchIssues,
+        internal.integrations.github.issue_actions.fetchIssues,
         {
           installationToken: token,
           labels: args.labels,
@@ -202,13 +205,16 @@ export const syncIssues = action({
         }
       );
 
-      await ctx.runMutation(api.integrations.github.issues.saveSyncedIssues, {
-        issues,
-        organizationId: args.organizationId,
-      });
+      await ctx.runMutation(
+        internal.integrations.github.issue_sync.saveSyncedIssues,
+        {
+          issues,
+          organizationId: args.organizationId,
+        }
+      );
 
       const importResult = await ctx.runMutation(
-        api.integrations.github.issues.autoImportIssuesByLabel,
+        internal.integrations.github.issue_mappings.autoImportIssuesByLabel,
         { organizationId: args.organizationId }
       );
 
@@ -219,7 +225,7 @@ export const syncIssues = action({
       };
     } catch (error) {
       await ctx.runMutation(
-        api.integrations.github.issues.updateIssuesSyncStatus,
+        internal.integrations.github.issue_sync.updateIssuesSyncStatus,
         {
           connectionId: connection._id,
           error: error instanceof Error ? error.message : "Unknown error",
@@ -275,7 +281,7 @@ export const setupWebhook = action({
     const webhookUrl = `${convexSiteUrl}/github-webhook`;
 
     const webhookResult = await ctx.runAction(
-      api.integrations.github.actions.createWebhook,
+      internal.integrations.github.webhook_actions.createWebhook,
       {
         installationToken: token,
         repositoryFullName: connection.repositoryFullName,

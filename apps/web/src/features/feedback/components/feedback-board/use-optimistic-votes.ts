@@ -7,7 +7,7 @@ import type { FeedbackItem } from "../feed-feedback-view";
 
 type VoteType = "upvote" | "downvote" | null;
 
-interface OptimisticVoteState {
+export interface OptimisticVoteState {
   pending: boolean;
   voteType: VoteType;
 }

@@ -1,6 +1,8 @@
 import { v } from "convex/values";
 import { components } from "../_generated/api";
 import { mutation, query } from "../_generated/server";
+import { MAX_SUPPORT_MESSAGE_LENGTH } from "../shared/constants";
+import { validateInputLength } from "../shared/validators";
 
 function generateVisitorId(): string {
   const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
@@ -145,6 +147,8 @@ export const sendMessage = mutation({
     widgetId: v.string(),
   },
   handler: async (ctx, args) => {
+    validateInputLength(args.body, MAX_SUPPORT_MESSAGE_LENGTH, "Message");
+
     const widget = await ctx.db
       .query("widgets")
       .withIndex("by_widget_id", (q) => q.eq("widgetId", args.widgetId))

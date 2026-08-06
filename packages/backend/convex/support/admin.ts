@@ -2,8 +2,9 @@ import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { mutation, query } from "../_generated/server";
+import { requireOrgAdmin } from "../shared/access";
 import { supportConversationStatus } from "../shared/validators";
-import { isOrgAdminViewer, requireOrgAdmin } from "./access";
+import { isOrgAdminViewer } from "./access";
 import { resolveConversationPerson } from "./people";
 import { supportConversationWithUser } from "./validators";
 

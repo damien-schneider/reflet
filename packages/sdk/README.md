@@ -173,9 +173,12 @@ cannot reach your app. Screenshots are rendered from the DOM rather than through
 the trade-off is that cross-origin images without CORS headers, iframes and
 canvas content may come out blank.
 
-### 5. Server-Side User Signing (Recommended for Production)
+### 5. Server-Side User Signing (required for voting and commenting)
 
-For production apps, sign user tokens on your server to prevent client-side spoofing.
+`user` is a client-asserted identity: the browser can claim to be anyone, so
+the API accepts it only to attribute a report or a survey answer. Voting,
+commenting and subscribing require a token signed on your server with
+`signUser` — anything else is rejected with a 401.
 
 **On your server** (works with any backend: Express, Fastify, Hono, serverless functions, etc.):
 
@@ -337,11 +340,11 @@ const reflet = new Reflet(config: RefletConfig);
 | Option | Type | Required | Description |
 |--------|------|----------|-------------|
 | `publicKey` | `string` | Yes | Your organization's public API key (`fb_pub_...`) |
-| `user` | `RefletUser` | No | User information for client-side identification |
-| `userToken` | `string` | No | Signed JWT from your server (use instead of `user` for production) |
+| `user` | `RefletUser` | No | Client-asserted identity — attributes reports only, never grants voting or commenting |
+| `userToken` | `string` | No | Signed JWT from your server (`signUser`), required for voting, commenting and subscribing |
 | `baseUrl` | `string` | No | Custom API endpoint (defaults to Reflet production API) |
 
-> **Note:** Provide either `user` OR `userToken`, not both. If neither is provided, the user can only read feedback (no voting, commenting, or creating).
+> **Note:** Provide either `user` OR `userToken`, not both. With neither, the user can only read feedback and submit anonymous reports. With `user` alone, reports are attributed but voting, commenting and subscribing stay unavailable.
 
 #### Methods
 
@@ -463,7 +466,7 @@ try {
 
 | Error | Cause | Solution |
 |-------|-------|----------|
-| `RefletAuthError` | No user/token provided | Pass `user` or `userToken` to the client |
+| `RefletAuthError` | No signed token provided | Pass a `userToken` from `signUser`; `user` alone cannot vote or comment |
 | `RefletAuthError` | Invalid or expired token | Generate a new token on your server |
 | `RefletNotFoundError` | Invalid feedback ID | Check the ID exists |
 | `RefletError` (403) | Organization is private | Use a secret key or make organization public |
@@ -582,7 +585,7 @@ function App() {
 
 **Cause:** Trying to vote, comment, or create feedback without user identification.
 
-**Solution:** Provide `user` or `userToken` when initializing the client:
+**Solution:** Provide a server-signed `userToken` when initializing the client:
 
 ```typescript
 const reflet = new Reflet({

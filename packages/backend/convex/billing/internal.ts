@@ -3,24 +3,6 @@ import { components } from "../_generated/api";
 import { internalMutation, internalQuery } from "../_generated/server";
 
 /**
- * Get membership for a user in an organization
- * Internal query used by subscription actions
- */
-export const getMembershipForOrg = internalQuery({
-  args: {
-    organizationId: v.id("organizations"),
-    userId: v.string(),
-  },
-  handler: async (ctx, args) =>
-    await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", args.organizationId).eq("userId", args.userId)
-      )
-      .unique(),
-});
-
-/**
  * Get organization by ID
  * Internal query used by subscription actions
  */

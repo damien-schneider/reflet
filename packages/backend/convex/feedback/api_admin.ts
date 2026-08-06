@@ -158,7 +158,7 @@ export const generateApiKeys = mutation({
 
     // Generate keys
     const result = await ctx.runMutation(
-      internal.feedback.api_auth.generateOrganizationApiKeys,
+      internal.feedback.api_keys.generateOrganizationApiKeys,
       {
         name: args.name,
         organizationId: args.organizationId,
@@ -211,7 +211,7 @@ export const regenerateSecretKey = mutation({
 
     // Regenerate secret key
     const result = await ctx.runMutation(
-      internal.feedback.api_auth.regenerateOrganizationSecretKey,
+      internal.feedback.api_keys.regenerateOrganizationSecretKey,
       {
         apiKeyId: args.apiKeyId,
       }

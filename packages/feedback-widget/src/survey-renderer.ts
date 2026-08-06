@@ -1,4 +1,7 @@
 import type { FeedbackApi } from "./api";
+import { escapeHtml } from "./survey-html";
+import { renderQuestionInput } from "./survey-inputs";
+import { renderComplete, renderError } from "./survey-screens";
 import type { SurveyCallbacks, SurveyData, SurveyQuestion } from "./types";
 
 type AnswerValue = string | number | boolean | string[];
@@ -129,10 +132,25 @@ export class SurveyRenderer {
         this.renderLoading();
         return;
       case "complete":
-        this.renderComplete();
+        renderComplete(
+          this.container,
+          () => this.onComplete(),
+          () => this.state.phase === "complete"
+        );
         return;
       case "error":
-        this.renderError(this.state.errorMessage ?? "An error occurred");
+        renderError(
+          this.container,
+          this.survey,
+          this.state.errorMessage ?? "An error occurred",
+          {
+            onDismiss: () => this.onDismiss(),
+            onRetry: async () => {
+              this.state.phase = "loading";
+              await this.start();
+            },
+          }
+        );
         return;
       case "question":
         break;
@@ -154,9 +172,9 @@ export class SurveyRenderer {
         : "reflet-slide-in-left";
 
     this.container.innerHTML = `
-      <div class="reflet-survey" role="dialog" aria-label="${this.escapeHtml(this.survey.title)}" aria-modal="true">
+      <div class="reflet-survey" role="dialog" aria-label="${escapeHtml(this.survey.title)}" aria-modal="true">
         <div class="reflet-survey-header">
-          <span class="reflet-survey-title" id="reflet-survey-title">${this.escapeHtml(this.survey.title)}</span>
+          <span class="reflet-survey-title" id="reflet-survey-title">${escapeHtml(this.survey.title)}</span>
           <button type="button" class="reflet-survey-close" data-action="dismiss" aria-label="Dismiss survey" title="Press Escape to dismiss">&times;</button>
         </div>
         <div class="reflet-survey-progress" role="progressbar" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100" aria-label="Survey progress: question ${currentNum} of ${totalQuestions}">
@@ -167,12 +185,12 @@ export class SurveyRenderer {
           <span class="reflet-survey-kbd-hint">Press Enter to continue</span>
         </div>
         <div class="reflet-survey-question ${animClass}" aria-live="polite">
-          <p class="reflet-survey-question-title" id="reflet-question-label">${this.escapeHtml(question.title)}${question.required ? ' <span class="reflet-required" aria-label="required">*</span>' : ""}</p>
-          ${question.description ? `<p class="reflet-survey-question-desc">${this.escapeHtml(question.description)}</p>` : ""}
+          <p class="reflet-survey-question-title" id="reflet-question-label">${escapeHtml(question.title)}${question.required ? ' <span class="reflet-required" aria-label="required">*</span>' : ""}</p>
+          ${question.description ? `<p class="reflet-survey-question-desc">${escapeHtml(question.description)}</p>` : ""}
           <div class="reflet-survey-input" role="group" aria-labelledby="reflet-question-label">
-            ${this.renderQuestionInput(question)}
+            ${renderQuestionInput(question, this.state.answers)}
           </div>
-          ${this.state.validationError ? `<p class="reflet-survey-validation" role="alert">${this.escapeHtml(this.state.validationError)}</p>` : ""}
+          ${this.state.validationError ? `<p class="reflet-survey-validation" role="alert">${escapeHtml(this.state.validationError)}</p>` : ""}
         </div>
         <div class="reflet-survey-actions">
           ${currentNum > 1 ? '<button type="button" class="reflet-survey-btn-secondary" data-action="prev" aria-label="Go to previous question">Back</button>' : "<div></div>"}
@@ -192,7 +210,7 @@ export class SurveyRenderer {
     this.container.innerHTML = `
       <div class="reflet-survey" role="dialog" aria-label="Loading survey" aria-busy="true">
         <div class="reflet-survey-header">
-          <span class="reflet-survey-title">${this.escapeHtml(this.survey.title)}</span>
+          <span class="reflet-survey-title">${escapeHtml(this.survey.title)}</span>
           <button type="button" class="reflet-survey-close" data-action="dismiss" aria-label="Dismiss survey">&times;</button>
         </div>
         <div class="reflet-loading" aria-label="Loading">
@@ -223,127 +241,6 @@ export class SurveyRenderer {
         firstBtn.focus();
       }
     });
-  }
-
-  private renderQuestionInput(question: SurveyQuestion): string {
-    const currentValue = this.state.answers.get(question._id);
-
-    switch (question.type) {
-      case "rating":
-        return this.renderRatingInput(question, currentValue);
-      case "nps":
-        return this.renderNpsInput(currentValue);
-      case "text":
-        return this.renderTextInput(question, currentValue);
-      case "single_choice":
-        return this.renderSingleChoiceInput(question, currentValue);
-      case "multiple_choice":
-        return this.renderMultipleChoiceInput(question, currentValue);
-      case "boolean":
-        return this.renderBooleanInput(currentValue);
-      default:
-        return "";
-    }
-  }
-
-  private renderRatingInput(
-    question: SurveyQuestion,
-    currentValue: AnswerValue | undefined
-  ): string {
-    const max = question.config?.maxValue ?? 5;
-    const min = question.config?.minValue ?? 1;
-    const items: string[] = [];
-    for (let i = min; i <= max; i++) {
-      const isSelected = currentValue === i;
-      items.push(
-        `<button type="button" class="reflet-rating-btn ${isSelected ? "selected" : ""}" data-value="${i}" aria-label="Rate ${i} out of ${max}" aria-pressed="${isSelected}" tabindex="0">${i}</button>`
-      );
-    }
-    const hasLabels = question.config?.minLabel || question.config?.maxLabel;
-    const labels = hasLabels
-      ? `<div class="reflet-rating-labels" aria-hidden="true">
-          <span>${this.escapeHtml(question.config?.minLabel ?? "")}</span>
-          <span>${this.escapeHtml(question.config?.maxLabel ?? "")}</span>
-        </div>`
-      : "";
-    return `<div class="reflet-rating-scale" role="radiogroup" aria-label="Rating scale">${items.join("")}</div>${labels}`;
-  }
-
-  private renderNpsInput(currentValue: AnswerValue | undefined): string {
-    const items: string[] = [];
-    for (let i = 0; i <= 10; i++) {
-      const isSelected = currentValue === i;
-      items.push(
-        `<button type="button" class="reflet-nps-btn ${isSelected ? "selected" : ""}" data-value="${i}" aria-label="Score ${i} out of 10" aria-pressed="${isSelected}" tabindex="0">${i}</button>`
-      );
-    }
-    return `
-      <div class="reflet-nps-scale" role="radiogroup" aria-label="NPS score">${items.join("")}</div>
-      <div class="reflet-rating-labels" aria-hidden="true">
-        <span>Not likely</span>
-        <span>Very likely</span>
-      </div>
-    `;
-  }
-
-  private renderTextInput(
-    question: SurveyQuestion,
-    currentValue: AnswerValue | undefined
-  ): string {
-    const placeholder = this.escapeHtml(
-      question.config?.placeholder ?? "Your answer..."
-    );
-    const maxLength = question.config?.maxLength ?? 1000;
-    const value =
-      typeof currentValue === "string" ? this.escapeHtml(currentValue) : "";
-    const charCount =
-      typeof currentValue === "string" ? currentValue.length : 0;
-    return `
-      <textarea class="reflet-survey-textarea" placeholder="${placeholder}" maxlength="${maxLength}" data-question="${question._id}" aria-label="${this.escapeHtml(question.title)}">${value}</textarea>
-      <div class="reflet-char-count" aria-live="polite">${charCount}/${maxLength}</div>
-    `;
-  }
-
-  private renderSingleChoiceInput(
-    question: SurveyQuestion,
-    currentValue: AnswerValue | undefined
-  ): string {
-    const choices = question.config?.choices ?? [];
-    return `<fieldset class="reflet-choice-list" role="radiogroup" aria-label="${this.escapeHtml(question.title)}">${choices
-      .map(
-        (choice) =>
-          `<label class="reflet-choice-item ${currentValue === choice ? "selected" : ""}">
-            <input type="radio" name="q_${question._id}" value="${this.escapeHtml(choice)}" ${currentValue === choice ? "checked" : ""} />
-            <span>${this.escapeHtml(choice)}</span>
-          </label>`
-      )
-      .join("")}</fieldset>`;
-  }
-
-  private renderMultipleChoiceInput(
-    question: SurveyQuestion,
-    currentValue: AnswerValue | undefined
-  ): string {
-    const choices = question.config?.choices ?? [];
-    const selectedValues = Array.isArray(currentValue) ? currentValue : [];
-    return `<fieldset class="reflet-choice-list" role="group" aria-label="${this.escapeHtml(question.title)}">${choices
-      .map(
-        (choice) =>
-          `<label class="reflet-choice-item ${selectedValues.includes(choice) ? "selected" : ""}">
-            <input type="checkbox" name="q_${question._id}" value="${this.escapeHtml(choice)}" ${selectedValues.includes(choice) ? "checked" : ""} />
-            <span>${this.escapeHtml(choice)}</span>
-          </label>`
-      )
-      .join("")}</fieldset>`;
-  }
-
-  private renderBooleanInput(currentValue: AnswerValue | undefined): string {
-    return `
-      <div class="reflet-boolean-btns" role="radiogroup" aria-label="Yes or No">
-        <button type="button" class="reflet-bool-btn ${currentValue === true ? "selected" : ""}" data-value="true" aria-pressed="${currentValue === true}" tabindex="0">Yes</button>
-        <button type="button" class="reflet-bool-btn ${currentValue === false ? "selected" : ""}" data-value="false" aria-pressed="${currentValue === false}" tabindex="0">No</button>
-      </div>
-    `;
   }
 
   private bindEvents(question: SurveyQuestion): void {
@@ -499,68 +396,5 @@ export class SurveyRenderer {
       this.state.validationError = "Failed to save answer. Please try again.";
       this.render();
     }
-  }
-
-  private renderComplete(): void {
-    this.container.innerHTML = `
-      <div class="reflet-survey" role="dialog" aria-label="Survey completed">
-        <div class="reflet-survey-complete reflet-fade-in">
-          <div class="reflet-survey-complete-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="28" height="28">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-          </div>
-          <p class="reflet-survey-complete-title">Thank you!</p>
-          <p class="reflet-survey-complete-desc">Your responses have been recorded.</p>
-          <button type="button" class="reflet-survey-btn-primary" data-action="close" aria-label="Close survey">Done</button>
-        </div>
-      </div>
-    `;
-
-    this.container
-      .querySelector('[data-action="close"]')
-      ?.addEventListener("click", () => {
-        this.onComplete();
-      });
-
-    // Auto-close after 5 seconds
-    setTimeout(() => {
-      if (this.state.phase === "complete") {
-        this.onComplete();
-      }
-    }, 5000);
-  }
-
-  private renderError(message: string): void {
-    this.container.innerHTML = `
-      <div class="reflet-survey" role="dialog" aria-label="Survey error">
-        <div class="reflet-survey-header">
-          <span class="reflet-survey-title">${this.escapeHtml(this.survey.title)}</span>
-           <button type="button" class="reflet-survey-close" data-action="dismiss" aria-label="Dismiss survey">&times;</button>
-        </div>
-        <div class="reflet-error" role="alert">${this.escapeHtml(message)}</div>
-        <div class="reflet-survey-actions">
-          <div></div>
-          <button type="button" class="reflet-survey-btn-primary" data-action="retry">Try Again</button>
-        </div>
-      </div>
-    `;
-
-    this.container
-      .querySelector('[data-action="dismiss"]')
-      ?.addEventListener("click", () => this.onDismiss());
-
-    this.container
-      .querySelector('[data-action="retry"]')
-      ?.addEventListener("click", () => {
-        this.state.phase = "loading";
-        this.start();
-      });
-  }
-
-  private escapeHtml(str: string): string {
-    const div = document.createElement("div");
-    div.textContent = str;
-    return div.innerHTML;
   }
 }

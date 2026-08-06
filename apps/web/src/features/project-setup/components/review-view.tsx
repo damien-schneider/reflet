@@ -16,57 +16,19 @@ import { useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { H1, Muted, Text } from "@/components/ui/typography";
 import { KeywordsSection } from "./keywords-section";
+import { LaunchBar } from "./launch-bar";
 import { MonitorsSection } from "./monitors-section";
-
-interface SuggestedMonitor {
-  accepted: boolean;
-  method?: string;
-  name: string;
-  url: string;
-}
-
-interface SuggestedKeyword {
-  accepted: boolean;
-  category: string;
-  keyword: string;
-}
-
-interface SuggestedTag {
-  accepted: boolean;
-  color: string;
-  name: string;
-}
-
-interface ChangelogConfig {
-  hasConventionalCommits?: boolean;
-  importExisting: boolean;
-  releaseCount?: number;
-  syncDirection: string;
-  targetBranch: string;
-  versionPrefix: string;
-  workflow: "ai_powered" | "automated" | "manual";
-}
-
-interface SuggestedPrompt {
-  prompt: string;
-  title: string;
-}
-
-interface SetupData {
-  _id: Id<"projectSetupResults">;
-  changelogConfig?: ChangelogConfig;
-  projectOverview?: string;
-  suggestedKeywords?: SuggestedKeyword[];
-  suggestedMonitors?: SuggestedMonitor[];
-  suggestedPrompts?: SuggestedPrompt[];
-  suggestedTags?: SuggestedTag[];
-}
+import type {
+  SetupData,
+  SuggestedKeyword,
+  SuggestedMonitor,
+  SuggestedTag,
+} from "./setup-types";
 
 interface ReviewViewProps {
   organizationId: Id<"organizations">;
@@ -372,57 +334,6 @@ export function ReviewView({
           onLaunch={handleLaunch}
           tags={tags}
         />
-      </div>
-    </div>
-  );
-}
-
-function LaunchBar({
-  changelogConfig,
-  isApplying,
-  monitors,
-  keywords,
-  tags,
-  onLaunch,
-}: {
-  changelogConfig?: ChangelogConfig;
-  isApplying: boolean;
-  monitors: SuggestedMonitor[];
-  keywords: SuggestedKeyword[];
-  tags: SuggestedTag[];
-  onLaunch: () => void;
-}) {
-  const monitorsCount = monitors.filter((m) => m.accepted).length;
-  const keywordsCount = keywords.filter((k) => k.accepted).length;
-  const tagsCount = tags.filter((t) => t.accepted).length;
-
-  const parts: string[] = [];
-  if (monitorsCount > 0) {
-    parts.push(`${monitorsCount} monitor${monitorsCount === 1 ? "" : "s"}`);
-  }
-  if (keywordsCount > 0) {
-    parts.push(`${keywordsCount} keyword${keywordsCount === 1 ? "" : "s"}`);
-  }
-  if (tagsCount > 0) {
-    parts.push(`${tagsCount} tag${tagsCount === 1 ? "" : "s"}`);
-  }
-  if (changelogConfig) {
-    parts.push("changelog config");
-  }
-
-  const summary =
-    parts.length > 0
-      ? `This will create ${parts.join(", ")}`
-      : "No items selected";
-
-  return (
-    <div className="sticky bottom-4 rounded-xl border bg-background/95 p-4 shadow-lg backdrop-blur-sm">
-      <div className="flex items-center justify-between">
-        <Muted className="text-xs">{summary}</Muted>
-        <Button disabled={isApplying} onClick={onLaunch} size="lg">
-          <Sparkle className="mr-2 size-4" />
-          {isApplying ? "Launching..." : "Launch Project"}
-        </Button>
       </div>
     </div>
   );

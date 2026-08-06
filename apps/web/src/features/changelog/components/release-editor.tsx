@@ -1,36 +1,20 @@
-import {
-  Check,
-  Clock,
-  CloudArrowUp,
-  Spinner,
-  WarningCircle,
-  X,
-} from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { format } from "date-fns";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Streamdown } from "streamdown";
-import { Button } from "@/components/ui/button";
-import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
-import { TiptapTitleEditor } from "@/components/ui/tiptap/title-editor";
-import { buildGitHubInstallUrl } from "@/features/github/lib/github-install-url";
 import { capture } from "@/lib/analytics";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { useAutoSaveRelease } from "../hooks/use-auto-save-release";
 import { useReleaseCommits } from "../hooks/use-release-commits";
 import type { FeedbackLinkStatus } from "./feedback-section-header";
-import { GenerateFromCommits } from "./generate-from-commits";
 import { PublishConfirmDialog } from "./publish-confirm-dialog";
-import { ReleaseCommitsList } from "./release-commits-list";
-import { ReleaseFeedbackSection } from "./release-feedback-section";
-import { ScheduleCountdown } from "./schedule-countdown";
-import { VersionPicker } from "./version-picker";
+import { ReleaseEditorBody } from "./release-editor-body";
+import { ReleaseEditorFooter } from "./release-editor-footer";
+import { ReleaseEditorToolbar } from "./release-editor-toolbar";
 
 interface ReleaseEditorProps {
   className?: string;
@@ -318,32 +302,6 @@ export function ReleaseEditor({
     router.push(`/dashboard/${orgSlug}/changelog`);
   };
 
-  const renderSaveStatus = () => {
-    if (saveStatus === "saving") {
-      return (
-        <span className="flex items-center gap-1 text-muted-foreground text-sm">
-          <Spinner className="h-4 w-4 animate-spin" />
-          Saving...
-        </span>
-      );
-    }
-
-    if (saveStatus === "saved") {
-      return (
-        <span className="flex items-center gap-1 text-green-600 text-sm dark:text-green-400">
-          <Check className="h-4 w-4" />
-          Saved
-        </span>
-      );
-    }
-
-    if (releaseId && !isPublished) {
-      return <span className="text-muted-foreground text-sm">Draft</span>;
-    }
-
-    return null;
-  };
-
   return (
     <div
       className={cn(
@@ -353,107 +311,41 @@ export function ReleaseEditor({
     >
       {/* Document-like content area */}
       <div className="flex min-h-125 flex-col">
-        {/* Version badge and status */}
-        <div className="flex items-center gap-2 px-6 pt-4">
-          <VersionPicker
-            disabled={isSubmitting || isStreaming}
-            excludeReleaseId={release?._id}
-            onChange={setVersion}
-            organizationId={organizationId}
-            value={version}
-          />
-          <GenerateFromCommits
-            disabled={isSubmitting}
-            isStreaming={isStreaming}
-            onCommitsFetched={handleCommitsFetched}
-            onComplete={handleStreamComplete}
-            onStreamChunk={handleStreamChunk}
-            onStreamStart={handleStreamStart}
-            onTitleGenerated={handleTitleGenerated}
-            organizationId={organizationId}
-            orgSlug={orgSlug}
-            releaseId={releaseId}
-            version={version}
-          />
-          {isPublished && (
-            <span className="rounded-full bg-green-100 px-2 py-0.5 text-green-700 text-xs dark:bg-green-900/30 dark:text-green-400">
-              Published
-            </span>
-          )}
-          {isScheduled && !isPublished && release.scheduledPublishAt && (
-            <div className="flex items-center gap-2">
-              <span className="flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-amber-700 text-xs dark:bg-amber-900/30 dark:text-amber-400">
-                <Clock className="h-3 w-3" />
-                Scheduled
-              </span>
-              <ScheduleCountdown scheduledAt={release.scheduledPublishAt} />
-              <Button
-                disabled={isSubmitting}
-                onClick={handleCancelSchedule}
-                size="icon"
-                title="Cancel schedule"
-                variant="ghost"
-              >
-                <X className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-          )}
-          <div className="ml-auto">{renderSaveStatus()}</div>
-        </div>
-
-        {/* Title area */}
-        <div className="px-6 pt-4 pb-2">
-          <TiptapTitleEditor
-            autoFocus
-            disabled={isSubmitting || isStreaming}
-            onChange={setTitle}
-            placeholder="What's New in v1.0"
-            value={title}
-          />
-        </div>
-
-        {/* Divider */}
-        <div className="mx-6 border-border/50 border-b" />
-
-        {/* Description area - takes up remaining space */}
-        <div className="flex-1 overflow-y-auto px-6 py-4">
-          {isStreaming ? (
-            <div className="prose prose-sm dark:prose-invert max-w-none">
-              <Streamdown caret="block" isAnimating mode="streaming">
-                {streamedContent}
-              </Streamdown>
-            </div>
-          ) : (
-            <TiptapMarkdownEditor
-              disabled={isSubmitting}
-              minimal
-              onChange={setDescription}
-              placeholder="Describe what's new in this release... Type '/' for commands, or drag and drop images/videos"
-              value={description}
-            />
-          )}
-        </div>
-
-        {/* Commits collapsible */}
-        {commits.length > 0 && (
-          <ReleaseCommitsList
-            commits={commits}
-            files={files}
-            previousTag={previousTag}
-          />
-        )}
-
-        {/* Feedback linking section */}
-        <div className="border-t px-6 py-4">
-          <ReleaseFeedbackSection
-            autoTriggerMatching={shouldAutoMatchFeedback}
-            commits={commits}
-            description={description}
-            onLinkStatusChange={setFeedbackLinkStatus}
-            organizationId={organizationId}
-            releaseId={releaseId}
-          />
-        </div>
+        <ReleaseEditorToolbar
+          handleCancelSchedule={handleCancelSchedule}
+          handleCommitsFetched={handleCommitsFetched}
+          handleStreamChunk={handleStreamChunk}
+          handleStreamComplete={handleStreamComplete}
+          handleStreamStart={handleStreamStart}
+          handleTitleGenerated={handleTitleGenerated}
+          isPublished={isPublished}
+          isScheduled={isScheduled}
+          isStreaming={isStreaming}
+          isSubmitting={isSubmitting}
+          organizationId={organizationId}
+          orgSlug={orgSlug}
+          release={release}
+          releaseId={releaseId}
+          saveStatus={saveStatus}
+          setVersion={setVersion}
+          version={version}
+        />
+        <ReleaseEditorBody
+          commits={commits}
+          description={description}
+          files={files}
+          isStreaming={isStreaming}
+          isSubmitting={isSubmitting}
+          onDescriptionChange={setDescription}
+          onTitleChange={setTitle}
+          organizationId={organizationId}
+          previousTag={previousTag}
+          releaseId={releaseId}
+          setFeedbackLinkStatus={setFeedbackLinkStatus}
+          shouldAutoMatchFeedback={shouldAutoMatchFeedback}
+          streamedContent={streamedContent}
+          title={title}
+        />
 
         {/* Footer */}
         <ReleaseEditorFooter
@@ -490,164 +382,6 @@ export function ReleaseEditor({
         title={title}
         version={version}
       />
-    </div>
-  );
-}
-
-function pushButtonLabel(status?: string): string {
-  if (status === "pending") {
-    return "Pushing…";
-  }
-  if (status === "failed") {
-    return "Retry Push to GitHub";
-  }
-  return "Push to GitHub";
-}
-
-interface ReleaseEditorFooterProps {
-  canPushToGithub: boolean;
-  isLinkedToGithub: boolean;
-  isPermissionError: boolean;
-  isPublished: boolean;
-  isScheduled: boolean;
-  isStreaming: boolean;
-  isSubmitting: boolean;
-  onCancel: () => void;
-  onCancelSchedule: () => void;
-  onPublish: () => void;
-  onPushToGithub: () => void;
-  onUnpublish: () => void;
-  organizationId: Id<"organizations">;
-  orgSlug: string;
-  release?: Doc<"releases">;
-  titleEmpty: boolean;
-  userId?: string;
-}
-
-function ReleaseEditorFooter({
-  isPublished,
-  isScheduled,
-  isSubmitting,
-  isStreaming,
-  titleEmpty,
-  canPushToGithub,
-  isLinkedToGithub,
-  isPermissionError,
-  release,
-  organizationId,
-  orgSlug,
-  onPublish,
-  onUnpublish,
-  onCancelSchedule,
-  onPushToGithub,
-  onCancel,
-  userId,
-}: ReleaseEditorFooterProps) {
-  const getPublishLabel = (): string => {
-    if (isPublished) {
-      return "Unpublish";
-    }
-    if (isScheduled) {
-      return "Cancel Schedule";
-    }
-    return "Publish";
-  };
-
-  const getPrimaryAction = () => {
-    if (isPublished) {
-      return onUnpublish;
-    }
-    if (isScheduled) {
-      return onCancelSchedule;
-    }
-    return onPublish;
-  };
-
-  const publishButtonLabel = getPublishLabel();
-
-  const handlePrimaryAction = getPrimaryAction();
-  return (
-    <div
-      className={cn("border-t bg-muted/30 px-6 py-4", "flex flex-col gap-3")}
-    >
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <Button
-            disabled={isSubmitting || isStreaming || titleEmpty}
-            onClick={handlePrimaryAction}
-            size="sm"
-            type="button"
-            variant={isPublished || isScheduled ? "outline" : "default"}
-          >
-            {publishButtonLabel}
-          </Button>
-
-          {canPushToGithub && (
-            <Button
-              disabled={isSubmitting || release?.githubPushStatus === "pending"}
-              onClick={onPushToGithub}
-              size="sm"
-              type="button"
-              variant="outline"
-            >
-              {release?.githubPushStatus === "pending" ? (
-                <Spinner className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <CloudArrowUp className="mr-1.5 h-3.5 w-3.5" />
-              )}
-              {pushButtonLabel(release?.githubPushStatus)}
-            </Button>
-          )}
-
-          {isLinkedToGithub && release?.githubHtmlUrl && (
-            <a
-              className="flex items-center gap-1.5 text-green-600 text-sm dark:text-green-400"
-              href={release.githubHtmlUrl}
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              <Check className="h-3.5 w-3.5" />
-              Linked to GitHub
-            </a>
-          )}
-        </div>
-
-        <Button
-          disabled={isSubmitting || isStreaming}
-          onClick={onCancel}
-          size="sm"
-          type="button"
-          variant="outline"
-        >
-          Cancel
-        </Button>
-      </div>
-
-      {isPermissionError && (
-        <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2.5">
-          <WarningCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
-          <div className="text-sm">
-            <p className="font-medium text-destructive">
-              GitHub permissions insufficient
-            </p>
-            <p className="mt-0.5 text-muted-foreground">
-              Reconnect your GitHub App to grant the required permissions.
-            </p>
-            <Link
-              className="mt-1 inline-block font-medium text-primary text-xs hover:underline"
-              href={
-                buildGitHubInstallUrl({
-                  organizationId,
-                  orgSlug,
-                  userId,
-                }) ?? "#"
-              }
-            >
-              Reconnect GitHub
-            </Link>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -7,6 +7,7 @@ import {
   type Framework,
   type PackageManager,
 } from "../project";
+import type { WidgetPosition } from "../widget-position";
 
 export const SDK_PACKAGE = "reflet-sdk";
 const IMPORT_LINE = `import { RefletFeedback } from "${SDK_PACKAGE}/feedback";`;
@@ -34,12 +35,15 @@ export interface InitInput {
   dryRun: boolean;
   files: FileSystemPort;
   install: (manager: PackageManager) => void;
-  position?: string;
+  position?: WidgetPosition;
   publicKey?: string;
   skipInstall: boolean;
 }
 
-function buildSnippet(keyExpression: string, position?: string): string {
+function buildSnippet(
+  keyExpression: string,
+  position?: WidgetPosition
+): string {
   const props = [
     position ? `position="${position}"` : null,
     `publicKey={${keyExpression}}`,

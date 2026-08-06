@@ -1,5 +1,4 @@
-import { defineSchema, defineTable } from "convex/server";
-import { v } from "convex/values";
+import { defineSchema } from "convex/server";
 import { adminApiTables } from "./admin_api/tableFields";
 import { billingTables } from "./billing/tableFields";
 import { changelogTables } from "./changelog/tableFields";
@@ -30,10 +29,4 @@ export default defineSchema({
   ...surveyTables,
   ...intelligenceTables,
   ...statusTables,
-
-  // Standalone tables
-  todos: defineTable({
-    completed: v.boolean(),
-    text: v.string(),
-  }),
 });

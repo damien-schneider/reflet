@@ -99,7 +99,9 @@ export function TimeEstimateBadge({
   isAdmin: boolean;
   hasHumanOverride: boolean;
 }) {
-  const updateAnalysis = useMutation(api.feedback.actions.updateAnalysis);
+  const updateAnalysis = useMutation(
+    api.feedback.triage_actions.updateAnalysis
+  );
   const parsed = parseTimeEstimate(effectiveEstimate);
   const [amount, setAmount] = useState(parsed.amount);
   const [unit, setUnit] = useState<TimeUnit>(parsed.unit);
