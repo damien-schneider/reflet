@@ -1,6 +1,6 @@
 "use client";
 
-import { ChatCircle, Code, Plus } from "@phosphor-icons/react";
+import { Plus } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
 import { use, useState } from "react";
@@ -20,7 +20,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { H1, H3, Muted, Text } from "@/components/ui/typography";
+import { H1, H3, Muted } from "@/components/ui/typography";
 import { FeedbackCollectorCard } from "@/features/in-app/components/feedback-collector-card";
 import { WidgetCard } from "@/features/in-app/components/widget-card";
 
@@ -97,13 +97,8 @@ export default function WidgetsPage({
 
   return (
     <div className="admin-container">
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <H1>In-App</H1>
-          <Text variant="bodySmall">
-            Install feedback collection and support directly in your product
-          </Text>
-        </div>
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <H1>In-App</H1>
         <Dialog onOpenChange={setIsDialogOpen} open={isDialogOpen}>
           <DialogTrigger render={<Button />}>
             <Plus className="mr-2 h-4 w-4" />
@@ -150,12 +145,9 @@ export default function WidgetsPage({
         publicKey={publicKey}
       />
 
-      <div className="mt-8 mb-4">
-        <H3 variant="card">Live chat</H3>
-        <Muted className="mt-1">
-          Give customers a direct support channel without leaving your app.
-        </Muted>
-      </div>
+      <H3 className="mt-8 mb-4" variant="card">
+        Live chat
+      </H3>
 
       {widgets && widgets.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2">
@@ -165,27 +157,14 @@ export default function WidgetsPage({
         </div>
       ) : (
         <Card>
-          <CardContent className="py-12 text-center">
-            <ChatCircle className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-            <H3 className="mb-2" variant="card">
-              No live chats yet
+          <CardContent className="py-10 text-center">
+            <H3 className="mb-4" variant="card">
+              No live chats
             </H3>
-            <Muted className="mb-4">
-              Add live chat when customers should be able to reach your team in
-              real time.
-            </Muted>
-            <div className="flex flex-col items-center gap-2">
-              <Button onClick={() => setIsDialogOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Live Chat
-              </Button>
-              <div className="mt-4 flex items-center gap-2 text-muted-foreground">
-                <Code className="h-4 w-4" />
-                <Text variant="bodySmall">
-                  Just add one script tag to your website
-                </Text>
-              </div>
-            </div>
+            <Button onClick={() => setIsDialogOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Live Chat
+            </Button>
           </CardContent>
         </Card>
       )}

@@ -118,15 +118,6 @@ describe("ProfileSection", () => {
     expect(screen.getByText("Profile")).toBeInTheDocument();
   });
 
-  it("renders card description", () => {
-    render(
-      <ProfileSection isLoading={false} setIsLoading={vi.fn()} user={user} />
-    );
-    expect(
-      screen.getByText("Update your profile information")
-    ).toBeInTheDocument();
-  });
-
   it("renders Name field with default value", () => {
     render(
       <ProfileSection isLoading={false} setIsLoading={vi.fn()} user={user} />
@@ -242,15 +233,6 @@ describe("ProfileSection", () => {
     expect(trashButton).toBeDefined();
     await u.click(trashButton!);
     expect(screen.queryByAltText("Avatar preview")).not.toBeInTheDocument();
-  });
-
-  it("renders avatar helper text", () => {
-    render(
-      <ProfileSection isLoading={false} setIsLoading={vi.fn()} user={user} />
-    );
-    expect(
-      screen.getByText(/Provide a direct link to your avatar/)
-    ).toBeInTheDocument();
   });
 
   it("submits form and calls authClient.updateUser", async () => {

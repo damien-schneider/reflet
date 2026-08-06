@@ -6,15 +6,11 @@ import { useQuery } from "convex/react";
 import { use, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { H1, Text } from "@/components/ui/typography";
+import { H1 } from "@/components/ui/typography";
 import { IntelligenceSettings } from "@/features/intelligence/components/intelligence-settings";
 import { CommunityTab } from "./community-tab";
 import { CompetitorsTab } from "./competitors-tab";
 import { InsightsTab } from "./insights-tab";
-
-// ============================================
-// MAIN PAGE
-// ============================================
 
 export default function IntelligencePage({
   params,
@@ -35,12 +31,7 @@ export default function IntelligencePage({
 
   return (
     <div className="admin-container">
-      <div className="mb-8">
-        <H1>Intelligence</H1>
-        <Text variant="bodySmall">
-          AI-powered competitive intelligence and market insights
-        </Text>
-      </div>
+      <H1 className="mb-8">Intelligence</H1>
 
       <Tabs onValueChange={setActiveTab} value={activeTab}>
         <TabsList>

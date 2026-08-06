@@ -30,6 +30,7 @@ const baseProps = {
   organizationId: "org1" as Id<"organizations">,
   searchQuery: "",
   selectedTagId: null,
+  showSearch: true,
   tags: [] as Array<{ _id: Id<"tags">; name: string; color: string }>,
 };
 
@@ -40,7 +41,7 @@ describe("FeedbackToolbar", () => {
 
   it("renders the search input with placeholder", () => {
     render(<FeedbackToolbar {...baseProps} />);
-    expect(screen.getByPlaceholderText("Search...")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Search feedback")).toBeInTheDocument();
   });
 
   it("renders the submit feedback button", () => {
@@ -53,7 +54,7 @@ describe("FeedbackToolbar", () => {
   it("calls onSearchChange when typing in search input", async () => {
     const user = userEvent.setup();
     render(<FeedbackToolbar {...baseProps} />);
-    const input = screen.getByPlaceholderText("Search...");
+    const input = screen.getByPlaceholderText("Search feedback");
     await user.type(input, "a");
     expect(baseProps.onSearchChange).toHaveBeenCalled();
   });
@@ -87,6 +88,13 @@ describe("FeedbackToolbar", () => {
 
   it("displays the current searchQuery value", () => {
     render(<FeedbackToolbar {...baseProps} searchQuery="hello" />);
-    expect(screen.getByPlaceholderText("Search...")).toHaveValue("hello");
+    expect(screen.getByPlaceholderText("Search feedback")).toHaveValue("hello");
+  });
+
+  it("hides search when it has no useful results", () => {
+    render(<FeedbackToolbar {...baseProps} showSearch={false} />);
+    expect(
+      screen.queryByPlaceholderText("Search feedback")
+    ).not.toBeInTheDocument();
   });
 });

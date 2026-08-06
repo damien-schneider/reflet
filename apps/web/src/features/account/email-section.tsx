@@ -59,10 +59,7 @@ export function EmailSection({
 
   return (
     <section className="space-y-6">
-      <div>
-        <H3 variant="section">Email</H3>
-        <Muted>Change your email address</Muted>
-      </div>
+      <H3 variant="section">Email</H3>
 
       <div className="flex items-center gap-4 rounded-lg bg-muted p-4">
         <div className="flex size-12 items-center justify-center rounded-none bg-background">

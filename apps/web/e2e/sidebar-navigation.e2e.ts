@@ -51,6 +51,5 @@ test.describe("Sidebar navigation", () => {
     await expect(page.getByRole("heading", { name: "Inbox" })).toBeVisible({
       timeout: 30_000,
     });
-    await expect(page.getByText("Manage support conversations")).toBeVisible();
   });
 });

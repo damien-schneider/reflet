@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowSquareOut, Heartbeat, Warning } from "@phosphor-icons/react";
+import { ArrowSquareOut, Warning } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
@@ -8,7 +8,7 @@ import Link from "next/link";
 import { use, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { H1, Muted, Text } from "@/components/ui/typography";
+import { H1 } from "@/components/ui/typography";
 import { AddMonitorInput } from "@/features/status/components/add-monitor-input";
 import { IncidentCard } from "@/features/status/components/incident-card";
 import { IncidentComposer } from "@/features/status/components/incident-composer";
@@ -135,25 +135,12 @@ export default function StatusDashboardPage({
   const hasMonitors = monitors && monitors.length > 0;
   const status = aggregateStatus?.status ?? "no_monitors";
 
-  // Empty state
   if (!hasMonitors && monitors !== undefined) {
     return (
       <div className="admin-container">
-        <div className="mb-8">
-          <H1>Status</H1>
-          <Text variant="bodySmall">
-            Monitor your services and show real-time health to your users
-          </Text>
-        </div>
+        <H1 className="mb-8">Status</H1>
 
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16">
-          <Heartbeat className="mb-4 h-12 w-12 text-muted-foreground" />
-          <h2 className="font-semibold text-lg">
-            Your users shouldn't have to guess if things are working
-          </h2>
-          <Muted className="mt-1 mb-6">
-            Add your first monitor to start tracking uptime
-          </Muted>
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12">
           <div className="w-full max-w-md space-y-4">
             <GitHubConnectHint
               description="endpoints and services from your codebase"
@@ -170,7 +157,6 @@ export default function StatusDashboardPage({
     );
   }
 
-  // Group monitors by groupName
   const grouped = new Map<string, NonNullable<typeof monitors>>();
   for (const m of monitors ?? []) {
     const group = m.groupName ?? "Ungrouped";
@@ -181,16 +167,10 @@ export default function StatusDashboardPage({
 
   return (
     <div className="admin-container">
-      {/* Header */}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <H1>Status</H1>
-          <Text variant="bodySmall">
-            Monitor your services and show real-time health to your users
-          </Text>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link href={`/${orgSlug}/status`} target="_blank">
+        <H1>Status</H1>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link href={`/${orgSlug}/status`} rel="noopener" target="_blank">
             <Button size="sm" variant="outline">
               <ArrowSquareOut className="mr-1.5 h-4 w-4" />
               Public Page
@@ -207,7 +187,6 @@ export default function StatusDashboardPage({
         </div>
       </div>
 
-      {/* Overall status banner */}
       <div
         className={`mb-6 flex items-center gap-3 rounded-lg p-4 ${getStatusBannerClass(status)}`}
       >
@@ -220,7 +199,6 @@ export default function StatusDashboardPage({
         )}
       </div>
 
-      {/* Incident composer */}
       {showComposer && (
         <div className="mb-6">
           <IncidentComposer
@@ -233,7 +211,6 @@ export default function StatusDashboardPage({
         </div>
       )}
 
-      {/* Active incidents */}
       {activeIncidents && activeIncidents.length > 0 && (
         <div className="mb-6 space-y-3">
           <h2 className="font-semibold text-sm">Active Incidents</h2>
@@ -247,7 +224,6 @@ export default function StatusDashboardPage({
         </div>
       )}
 
-      {/* Monitor groups */}
       <div className="space-y-6">
         {[...grouped.entries()].map(([groupName, groupMonitors]) => (
           <div key={groupName}>
@@ -274,7 +250,6 @@ export default function StatusDashboardPage({
         ))}
       </div>
 
-      {/* Add monitor */}
       <div className="mt-4">
         <AddMonitorInput onAdd={handleAddMonitor} organizationId={org._id} />
       </div>

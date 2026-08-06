@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 
@@ -24,6 +25,7 @@ export function hasAnalyticsConsent(): boolean {
 }
 
 export function CookieConsentBanner() {
+  const pathname = usePathname();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -48,21 +50,29 @@ export function CookieConsentBanner() {
   }
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 p-4">
-      <div className="mx-auto flex max-w-3xl flex-col gap-4 rounded-lg border border-border bg-background p-4 shadow-lg sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-muted-foreground text-sm">
-          We use cookies for analytics to improve your experience. See our{" "}
+    <div
+      className={`fixed inset-x-3 z-50 ${
+        pathname.startsWith("/dashboard") ? "bottom-28 sm:bottom-3" : "bottom-3"
+      }`}
+    >
+      <div className="mx-auto flex max-w-xl flex-wrap items-center gap-2 rounded-lg border border-border bg-background p-2.5 shadow-sm">
+        <p className="min-w-48 flex-1 text-muted-foreground text-sm">
+          Allow analytics cookies?{" "}
           <Link className="underline hover:text-foreground" href="/cookies">
-            Cookie Policy
-          </Link>{" "}
-          for details.
+            Details
+          </Link>
         </p>
         <div className="flex shrink-0 gap-2">
-          <Button onClick={handleReject} size="sm" variant="outline">
-            Reject
+          <Button
+            className="h-11 sm:h-8"
+            onClick={handleReject}
+            size="sm"
+            variant="ghost"
+          >
+            Decline
           </Button>
-          <Button onClick={handleAccept} size="sm">
-            Accept
+          <Button className="h-11 sm:h-8" onClick={handleAccept} size="sm">
+            Allow
           </Button>
         </div>
       </div>

@@ -138,15 +138,8 @@ export function NotificationSettings() {
 
   return (
     <div className="space-y-8">
-      {/* Push Notifications Master Toggle */}
       <section className="space-y-4">
-        <div>
-          <H3 variant="section">Push Notifications</H3>
-          <Muted>
-            Receive real-time notifications on this device, even when the app is
-            in the background.
-          </Muted>
-        </div>
+        <H3 variant="section">Push Notifications</H3>
 
         <div className="space-y-4">
           {!isSupported && (
@@ -204,14 +197,8 @@ export function NotificationSettings() {
 
       <Separator />
 
-      {/* Per-type Notification Preferences */}
       <section className="space-y-4">
-        <div>
-          <H3 variant="section">Notification Types</H3>
-          <Muted>
-            Choose which types of notifications you want to receive via push.
-          </Muted>
-        </div>
+        <H3 variant="section">Notification Types</H3>
 
         <div className="divide-y">
           <NotificationTypeToggle
@@ -257,15 +244,11 @@ export function NotificationSettings() {
         </div>
       </section>
 
-      {/* Active Devices */}
       {subscriptions && subscriptions.length > 0 && (
         <>
           <Separator />
           <section className="space-y-4">
-            <div>
-              <H3 variant="section">Active Devices</H3>
-              <Muted>Devices currently receiving push notifications.</Muted>
-            </div>
+            <H3 variant="section">Active Devices</H3>
 
             <div className="divide-y">
               {subscriptions.map((sub: PushSubscriptionInfo) => (
@@ -299,11 +282,6 @@ export function NotificationSettings() {
                 </div>
               ))}
             </div>
-            <Separator className="my-3" />
-            <Muted className="text-xs">
-              Each device where you enable notifications is listed here. Remove
-              devices you no longer use.
-            </Muted>
           </section>
         </>
       )}

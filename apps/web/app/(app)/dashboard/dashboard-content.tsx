@@ -37,15 +37,21 @@ const routeLabels: Record<string, string> = {
   feedback: "Feedback",
   general: "General",
   github: "GitHub",
+  "in-app": "In-App",
   inbox: "Inbox",
+  intelligence: "Intelligence",
   members: "Members",
+  milestones: "Milestones",
   project: "Project",
+  roadmap: "Roadmap",
   setup: "Setup",
+  status: "Status",
   "super-admin": "Super Admin",
+  surveys: "Surveys",
   tags: "Tags",
+  trash: "Trash",
 };
 
-/** Routes under /dashboard/ that don't require an org slug */
 const NON_ORG_ROUTES = ["super-admin", "account"] as const;
 
 function getRelevantPathSegments(pathname: string): string[] {
@@ -93,7 +99,6 @@ function buildBreadcrumbItems(
     },
   ];
 
-  // Handle non-org routes (e.g., /dashboard/super-admin, /dashboard/account)
   const firstSegment = relevantSegments[0];
   if (
     firstSegment &&
@@ -202,7 +207,6 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
 
   const isAdmin = org?.role === "admin" || org?.role === "owner";
 
-  // Detect non-org routes (e.g., /dashboard/super-admin, /dashboard/account)
   const relevantSegments = getRelevantPathSegments(pathname ?? "");
   const isNonOrgRoute = NON_ORG_ROUTES.includes(
     relevantSegments[0] as (typeof NON_ORG_ROUTES)[number]
@@ -241,20 +245,7 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
             {!orgSlug && hasOrganizations ? (
               <div className="flex min-h-[calc(100svh-3.5rem)] items-center justify-center p-6">
                 <div className="w-full max-w-sm">
-                  <div className="mb-6 flex justify-center">
-                    <div className="flex size-14 items-center justify-center rounded-2xl bg-olive-100 dark:bg-olive-800/30">
-                      <Buildings
-                        className="size-7 text-olive-600 dark:text-olive-400"
-                        weight="duotone"
-                      />
-                    </div>
-                  </div>
-                  <div className="mb-8 text-center">
-                    <H2>Select an organization</H2>
-                    <Muted className="mt-2">
-                      Choose a workspace to continue.
-                    </Muted>
-                  </div>
+                  <H2 className="mb-8 text-center">Select an organization</H2>
                   <nav
                     aria-label="Organizations"
                     className="flex flex-col gap-2"
@@ -262,7 +253,7 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
                     {organizations?.map((org) =>
                       org ? (
                         <Link
-                          className="group flex items-center gap-3 rounded-xl bg-card p-3 ring-1 ring-foreground/10 transition-all hover:ring-olive-400 dark:hover:ring-olive-600"
+                          className="group flex items-center gap-3 rounded-xl bg-card p-3 ring-1 ring-foreground/10 transition-shadow hover:ring-olive-400 dark:hover:ring-olive-600"
                           href={`/dashboard/${org.slug}`}
                           key={org._id}
                         >
@@ -294,24 +285,8 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
             {!orgSlug && organizations?.length === 0 ? (
               <div className="flex min-h-[calc(100svh-3.5rem)] items-center justify-center p-6">
                 <div className="w-full max-w-sm">
-                  <div className="mb-6 flex justify-center">
-                    <div className="flex size-14 items-center justify-center rounded-2xl bg-olive-100 dark:bg-olive-800/30">
-                      <Buildings
-                        className="size-7 text-olive-600 dark:text-olive-400"
-                        weight="duotone"
-                      />
-                    </div>
-                  </div>
-                  <div className="mb-8 text-center">
-                    <H2>Welcome to Reflet</H2>
-                    <Muted className="mt-2">
-                      Create your first organization to start collecting
-                      feedback.
-                    </Muted>
-                  </div>
-                  <div>
-                    <OrganizationSwitcher currentOrgSlug={undefined} />
-                  </div>
+                  <H2 className="mb-8 text-center">Welcome to Reflet</H2>
+                  <OrganizationSwitcher currentOrgSlug={undefined} />
                 </div>
               </div>
             ) : null}

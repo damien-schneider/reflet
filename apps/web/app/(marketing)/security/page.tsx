@@ -15,7 +15,9 @@ import {
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { H1, H2, H3, Lead, Text } from "@/components/ui/typography";
+import { H1, H2, H3, Lead } from "@/components/ui/typography";
+import Footer from "@/features/homepage/components/footer";
+import Navbar from "@/features/homepage/components/navbar";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
@@ -192,106 +194,73 @@ function SecurityCardItem({ card }: { card: SecurityCard }) {
 
 export default function SecurityPage() {
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        {/* Back link */}
-        <Link
-          className="text-muted-foreground text-sm hover:text-foreground"
-          href="/"
-        >
-          &larr; Back to Reflet
-        </Link>
+    <div className="flex min-h-screen flex-col bg-background">
+      <Navbar />
+      <main className="flex-1">
+        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+          <header className="mb-20">
+            <H1 variant="page">Built on trust, secured by design</H1>
+            <Lead className="mt-4 max-w-2xl">
+              Your feedback data is sensitive. Here&apos;s how we protect it.
+            </Lead>
+          </header>
 
-        {/* Header */}
-        <header className="mt-12 mb-20">
-          <span className="font-semibold text-muted-foreground text-sm uppercase tracking-wide">
-            Security
-          </span>
-          <H1 className="mt-4" variant="page">
-            Built on trust, secured by design
-          </H1>
-          <Lead className="mt-4 max-w-2xl">
-            Your feedback data is sensitive. Here&apos;s how we protect it.
-          </Lead>
-        </header>
+          <section className="mb-20">
+            <H2 className="mb-10" variant="section">
+              Infrastructure
+            </H2>
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+              {INFRASTRUCTURE.map((card) => (
+                <SecurityCardItem card={card} key={card.id} />
+              ))}
+            </div>
+          </section>
 
-        {/* Infrastructure */}
-        <section className="mb-20">
-          <H2 className="mb-10" variant="section">
-            Infrastructure
-          </H2>
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {INFRASTRUCTURE.map((card) => (
-              <SecurityCardItem card={card} key={card.id} />
-            ))}
-          </div>
-        </section>
+          <section className="mb-20">
+            <H2 className="mb-10" variant="section">
+              Authentication & Access
+            </H2>
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+              {AUTHENTICATION.map((card) => (
+                <SecurityCardItem card={card} key={card.id} />
+              ))}
+            </div>
+          </section>
 
-        {/* Authentication & Access */}
-        <section className="mb-20">
-          <H2 className="mb-10" variant="section">
-            Authentication & Access
-          </H2>
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {AUTHENTICATION.map((card) => (
-              <SecurityCardItem card={card} key={card.id} />
-            ))}
-          </div>
-        </section>
+          <section className="mb-20">
+            <H2 className="mb-10" variant="section">
+              Data & Privacy
+            </H2>
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+              {DATA_PRIVACY.map((card) => (
+                <SecurityCardItem card={card} key={card.id} />
+              ))}
+            </div>
+          </section>
 
-        {/* Data & Privacy */}
-        <section className="mb-20">
-          <H2 className="mb-10" variant="section">
-            Data & Privacy
-          </H2>
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {DATA_PRIVACY.map((card) => (
-              <SecurityCardItem card={card} key={card.id} />
-            ))}
-          </div>
-        </section>
+          <section className="mb-20">
+            <H2 className="mb-10" variant="section">
+              API Security
+            </H2>
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+              {API_SECURITY.map((card) => (
+                <SecurityCardItem card={card} key={card.id} />
+              ))}
+            </div>
+          </section>
 
-        {/* API Security */}
-        <section className="mb-20">
-          <H2 className="mb-10" variant="section">
-            API Security
-          </H2>
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {API_SECURITY.map((card) => (
-              <SecurityCardItem card={card} key={card.id} />
-            ))}
-          </div>
-        </section>
-
-        {/* Bottom CTA */}
-        <section className="rounded-2xl border border-border bg-card p-12 text-center">
-          <H2 className="mb-4">Have security questions?</H2>
-          <Text className="mx-auto mb-8 max-w-lg text-muted-foreground">
-            We&apos;re happy to discuss our security practices in detail.
-          </Text>
-          <a
-            className="inline-block font-medium text-olive-600 text-sm underline underline-offset-4 transition-colors hover:text-olive-700 dark:text-olive-400 dark:hover:text-olive-300"
-            href="mailto:security@reflet.app"
-          >
-            Contact our team
-          </a>
-        </section>
-
-        {/* Footer links */}
-        <footer className="mt-16 border-border border-t pt-8">
-          <div className="flex flex-wrap gap-4 text-muted-foreground text-sm">
-            <Link className="hover:text-foreground" href="/privacy">
-              Privacy Policy
-            </Link>
-            <Link className="hover:text-foreground" href="/terms">
-              Terms of Service
-            </Link>
-            <Link className="hover:text-foreground" href="/">
-              Back to Reflet
-            </Link>
-          </div>
-        </footer>
-      </div>
+          <section className="rounded-2xl border border-border bg-card p-8 text-center sm:p-12">
+            <H2 className="mb-8">Have security questions?</H2>
+            <a
+              className="inline-block font-medium text-olive-600 text-sm underline underline-offset-4 transition-colors hover:text-olive-700 dark:text-olive-400 dark:hover:text-olive-300"
+              href="mailto:security@reflet.app"
+            >
+              Contact our team
+            </a>
+          </section>
+        </div>
+      </main>
+      <Footer />
     </div>
   );
 }

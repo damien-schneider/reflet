@@ -19,15 +19,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { H2, Muted, Text } from "@/components/ui/typography";
+import { Muted, Text } from "@/components/ui/typography";
 import { DnsInstructions, DomainStatusBadge } from "./domain-status";
 
 const DOMAIN_FORMAT_REGEX =
@@ -115,21 +109,12 @@ export function DomainsSection({
 
   return (
     <div className="space-y-6">
-      <div>
-        <H2 variant="card">Domains</H2>
-        <Muted>Configure how people access your public feedback portal.</Muted>
-      </div>
-
-      {/* Auto Subdomain Card — always visible */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
             <Globe className="h-5 w-5 text-muted-foreground" />
             <CardTitle>Automatic Subdomain</CardTitle>
           </div>
-          <CardDescription>
-            Your public portal is always available at this address.
-          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-2">
@@ -141,31 +126,23 @@ export function DomainsSection({
         </CardContent>
       </Card>
 
-      {/* Custom Domain Card */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
             <Globe className="h-5 w-5 text-muted-foreground" />
             <CardTitle>Custom Domain</CardTitle>
           </div>
-          <CardDescription>
-            Use your own domain to serve your feedback portal (Pro feature).
-          </CardDescription>
         </CardHeader>
         <CardContent>
           {!isPro && (
             <div className="rounded-lg border border-dashed p-6 text-center">
               <Text className="mb-2 font-medium">Upgrade to Pro</Text>
-              <Muted>
-                Custom domains are available on the Pro plan. Upgrade to use
-                your own domain like feedback.yourcompany.com.
-              </Muted>
+              <Muted>Use your own domain on the Pro plan.</Muted>
             </div>
           )}
 
           {isPro && hasDomain && (
             <div className="space-y-4">
-              {/* Domain + Status */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <code className="rounded-md bg-muted px-3 py-1.5 text-sm">
@@ -225,7 +202,6 @@ export function DomainsSection({
                 </div>
               </div>
 
-              {/* Error message */}
               {domainStatus.customDomainError && (
                 <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3">
                   <Text className="text-destructive text-sm">
@@ -234,7 +210,6 @@ export function DomainsSection({
                 </div>
               )}
 
-              {/* DNS Instructions */}
               {domainStatus.customDomainStatus !== "active" && (
                 <DnsInstructions
                   domain={domainStatus.customDomain ?? ""}

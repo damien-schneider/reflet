@@ -69,10 +69,7 @@ export function ProfileSection({
 
   return (
     <section className="space-y-6">
-      <div>
-        <H3 variant="section">Profile</H3>
-        <Muted>Update your profile information</Muted>
-      </div>
+      <H3 variant="section">Profile</H3>
 
       <form
         className="space-y-4"
@@ -116,10 +113,6 @@ export function ProfileSection({
               profileErrors.avatarUrl ? [profileErrors.avatarUrl] : undefined
             }
           />
-          <Text variant="caption">
-            Provide a direct link to your avatar image (e.g., from Gravatar,
-            Imgur, or any image hosting service)
-          </Text>
         </Field>
 
         {currentAvatar && (

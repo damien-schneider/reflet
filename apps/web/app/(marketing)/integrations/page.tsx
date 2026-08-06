@@ -16,6 +16,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { H1, H2, H3, Lead } from "@/components/ui/typography";
+import Footer from "@/features/homepage/components/footer";
+import Navbar from "@/features/homepage/components/navbar";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
@@ -190,66 +192,58 @@ function ComingSoonCard({ integration }: { integration: Integration }) {
 
 export default function IntegrationsPage() {
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <section className="mx-auto max-w-7xl px-4 pt-16 pb-12 sm:px-6 lg:px-8">
-        <div className="mb-4">
-          <span className="font-semibold text-muted-foreground text-sm uppercase tracking-wide">
-            Integrations
-          </span>
-        </div>
-        <H1 className="mb-6 max-w-3xl" variant="page">
-          Connect Reflet to your workflow
-        </H1>
-        <Lead className="max-w-2xl">
-          Native integrations, a public API, and an SDK so you can embed
-          feedback anywhere.
-        </Lead>
-      </section>
+    <div className="flex min-h-screen flex-col bg-background">
+      <Navbar />
+      <main className="flex-1">
+        <section className="mx-auto max-w-7xl px-4 pt-16 pb-12 sm:px-6 lg:px-8">
+          <H1 className="mb-6 max-w-3xl" variant="page">
+            Connect Reflet to your workflow
+          </H1>
+          <Lead className="max-w-2xl">
+            Native integrations, a public API, and an SDK so you can embed
+            feedback anywhere.
+          </Lead>
+        </section>
 
-      {/* Available Now */}
-      <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
-        <H2 className="mb-8" variant="default">
-          Available Now
-        </H2>
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {AVAILABLE_INTEGRATIONS.map((integration) => (
-            <AvailableCard integration={integration} key={integration.id} />
-          ))}
-        </div>
-      </section>
-
-      {/* Coming Soon */}
-      <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
-        <H2 className="mb-8" variant="default">
-          Coming Soon
-        </H2>
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {COMING_SOON_INTEGRATIONS.map((integration) => (
-            <ComingSoonCard integration={integration} key={integration.id} />
-          ))}
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="mx-auto max-w-7xl px-4 pb-24 sm:px-6 lg:px-8">
-        <div className="rounded-2xl border border-border bg-card p-12 text-center">
-          <H2 className="mb-4" variant="default">
-            Need a specific integration?
+        <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
+          <H2 className="mb-8" variant="default">
+            Available now
           </H2>
-          <p className="mb-8 text-base text-muted-foreground sm:text-lg">
-            Request it on our public feedback board.
-          </p>
-          <a
-            className="inline-flex items-center justify-center rounded-full bg-primary px-8 py-3 font-medium text-primary-foreground text-sm transition-opacity hover:opacity-90"
-            href="https://www.reflet.app/reflet"
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            Request an integration
-          </a>
-        </div>
-      </section>
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+            {AVAILABLE_INTEGRATIONS.map((integration) => (
+              <AvailableCard integration={integration} key={integration.id} />
+            ))}
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
+          <H2 className="mb-8" variant="default">
+            Coming soon
+          </H2>
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+            {COMING_SOON_INTEGRATIONS.map((integration) => (
+              <ComingSoonCard integration={integration} key={integration.id} />
+            ))}
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-7xl px-4 pb-24 sm:px-6 lg:px-8">
+          <div className="rounded-2xl border border-border bg-card p-8 text-center sm:p-12">
+            <H2 className="mb-8" variant="default">
+              Need a specific integration?
+            </H2>
+            <a
+              className="inline-flex items-center justify-center rounded-full bg-primary px-8 py-3 font-medium text-primary-foreground text-sm transition-opacity hover:opacity-90"
+              href="https://www.reflet.app/reflet"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              Request an integration
+            </a>
+          </div>
+        </section>
+      </main>
+      <Footer />
     </div>
   );
 }

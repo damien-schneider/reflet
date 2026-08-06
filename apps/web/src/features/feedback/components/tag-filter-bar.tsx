@@ -122,13 +122,11 @@ export function TagFilterBar({
   return (
     <>
       <ScrollArea
-        className="mx-auto max-w-6xl"
-        classNameViewport="flex gap-2 pb-5 pt-1 px-4"
+        className="mx-auto max-w-3xl"
+        classNameViewport="flex gap-2 pb-4 pt-1 px-4"
       >
-        {/* AI Triage Pulse (admin only) */}
         {isAdmin && <TriagePulse organizationId={organizationId} />}
 
-        {/* All button */}
         <Button
           active={isAllSelected}
           color="gray"
@@ -139,7 +137,6 @@ export function TagFilterBar({
           All
         </Button>
 
-        {/* Tag buttons */}
         {tags.map((tag) => (
           <TagButton
             isAdmin={isAdmin}
@@ -154,7 +151,6 @@ export function TagFilterBar({
           />
         ))}
 
-        {/* Add tag button (admin only) */}
         {isAdmin && (
           <TagFormPopover
             onOpenChange={setShowCreatePopover}
@@ -165,7 +161,6 @@ export function TagFilterBar({
         )}
       </ScrollArea>
 
-      {/* Delete tag dialog */}
       <DeleteTagDialog
         onOpenChange={(open) => !open && setDeletingTagId(null)}
         onSuccess={handleDeleteSuccess}

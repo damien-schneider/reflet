@@ -59,7 +59,7 @@ export function FiltersBar({
   onClearFilters,
 }: FiltersBarProps) {
   return (
-    <div className="mx-auto mb-6 max-w-6xl px-4">
+    <div className="mx-auto mb-4 max-w-3xl px-4">
       <div className="flex items-center justify-between gap-2">
         <FilterDropdown
           hideCompleted={hideCompleted}

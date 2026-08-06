@@ -154,17 +154,6 @@ describe("EmailSection", () => {
     expect(screen.getByText("Update Email")).toBeDisabled();
   });
 
-  it("renders card description", () => {
-    render(
-      <EmailSection
-        isLoading={false}
-        setIsLoading={vi.fn()}
-        user={{ email: "test@test.com" }}
-      />
-    );
-    expect(screen.getByText("Change your email address")).toBeInTheDocument();
-  });
-
   it("renders Current Email label", () => {
     render(
       <EmailSection

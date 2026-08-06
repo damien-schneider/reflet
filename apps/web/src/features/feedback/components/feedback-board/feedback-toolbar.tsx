@@ -11,7 +11,6 @@ import type { Tag } from "../tag-filter-bar";
 import { TagFilterBar } from "../tag-filter-bar";
 
 interface FeedbackToolbarProps {
-  /** When provided, the FAB is hidden (inline input replaces it) */
   inlineInputRef?: RefObject<InlineFeedbackInputHandle | null>;
   isAdmin: boolean;
   onSearchChange: (value: string) => void;
@@ -20,6 +19,7 @@ interface FeedbackToolbarProps {
   organizationId: Id<"organizations">;
   searchQuery: string;
   selectedTagId: string | null;
+  showSearch: boolean;
   tags: Tag[];
 }
 
@@ -33,25 +33,23 @@ export const FeedbackToolbar = ({
   selectedTagId,
   onTagSelect,
   inlineInputRef,
+  showSearch,
 }: FeedbackToolbarProps) => (
   <>
-    {/* Toolbar area */}
-    <div className="mx-auto max-w-6xl px-4 pb-4">
-      <div className="flex min-w-0 items-center gap-4">
-        {/* Search bar */}
-        <div className="relative w-48 flex-shrink-0">
+    {showSearch && (
+      <div className="mx-auto max-w-3xl px-4 pb-3">
+        <div className="relative w-full sm:w-64">
           <MagnifyingGlassIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             className="h-10 rounded-full border-0 bg-muted pr-4 pl-10 focus-visible:ring-2"
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Search..."
+            onChange={(event) => onSearchChange(event.target.value)}
+            placeholder="Search feedback"
             value={searchQuery}
           />
         </div>
       </div>
-    </div>
+    )}
 
-    {/* Submit Feedback FAB — only shown when inline input is not available (roadmap/milestones) */}
     {!inlineInputRef && (
       <div className="fixed right-4 bottom-4 z-50 md:right-8 md:bottom-8">
         <Button
@@ -65,17 +63,14 @@ export const FeedbackToolbar = ({
       </div>
     )}
 
-    {/* Tag filter bar */}
     {(tags.length > 0 || isAdmin) && (
-      <div>
-        <TagFilterBar
-          isAdmin={isAdmin}
-          onTagSelect={onTagSelect}
-          organizationId={organizationId}
-          selectedTagId={selectedTagId}
-          tags={tags}
-        />
-      </div>
+      <TagFilterBar
+        isAdmin={isAdmin}
+        onTagSelect={onTagSelect}
+        organizationId={organizationId}
+        selectedTagId={selectedTagId}
+        tags={tags}
+      />
     )}
   </>
 );

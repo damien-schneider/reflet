@@ -11,7 +11,7 @@ const NavbarDesktop = dynamic(() => import("../navbar-desktop"), {
 
 const NavbarMobile = dynamic(() => import("../navbar-mobile"), {
   loading: () => (
-    <div className="fixed inset-x-4 bottom-4 z-50 h-12 rounded-2xl border border-border bg-background/95 shadow-lg backdrop-blur-md md:hidden" />
+    <div className="sticky top-0 z-50 h-16 border-border border-b bg-background/95 md:hidden" />
   ),
   ssr: false,
 });

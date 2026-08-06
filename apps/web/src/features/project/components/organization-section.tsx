@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -140,9 +139,6 @@ export function OrganizationSection({
       <Card>
         <CardHeader>
           <CardTitle>Organization Details</CardTitle>
-          <CardDescription>
-            Update your organization name and URL slug
-          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Field>
@@ -203,9 +199,6 @@ export function OrganizationSection({
                 <Globe className="h-4 w-4 text-muted-foreground" />
                 Visibility
               </CardTitle>
-              <CardDescription>
-                Control who can see your public pages
-              </CardDescription>
             </div>
             <Switch
               aria-label="Make organization public"
@@ -227,9 +220,6 @@ export function OrganizationSection({
       <Card>
         <CardHeader>
           <CardTitle>Branding</CardTitle>
-          <CardDescription>
-            Customize your logo and color scheme
-          </CardDescription>
         </CardHeader>
         <CardContent>
           <BrandingSection

@@ -1,6 +1,6 @@
 "use client";
 
-import { EyeSlash } from "@phosphor-icons/react";
+import { ArrowLeft, EyeSlash } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { use, useRef, useState } from "react";
 import { Alert, AlertAction, AlertTitle } from "@/components/ui/alert";
@@ -18,6 +18,7 @@ import { useInbox } from "@/features/inbox/hooks/use-inbox";
 import { ConversationList } from "@/features/support/components/conversation-list";
 import type { ConversationStatus } from "@/features/support/lib/conversation-status";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import { cn } from "@/lib/utils";
 
 function CenteredNotice({ body, title }: { body: string; title: string }) {
   return (
@@ -41,6 +42,7 @@ export default function InboxPage({
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [showHints, setShowHints] = useState(true);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
+  const [mobilePane, setMobilePane] = useState<"list" | "conversation">("list");
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const replyRef = useRef<HTMLTextAreaElement>(null);
@@ -132,6 +134,7 @@ export default function InboxPage({
     id: Id<"supportConversations">,
     status: ConversationStatus
   ) => write.updateStatus({ id, status });
+  const hasConversations = (conversations?.length ?? 0) > 0;
 
   return (
     <div className="flex h-full flex-col">
@@ -152,28 +155,35 @@ export default function InboxPage({
       {supportEnabled === false && (
         <Alert className="mx-4 mt-3 w-auto">
           <EyeSlash className="h-4 w-4" />
-          <AlertTitle>
-            Your inbox is private &mdash; users can&apos;t see it yet.
-          </AlertTitle>
+          <AlertTitle>Inbox is private</AlertTitle>
           <AlertAction>
             <Button
               onClick={() => toggleSupport(true)}
               size="sm"
               variant="outline"
             >
-              Make it public
+              Make public
             </Button>
           </AlertAction>
         </Alert>
       )}
 
       <div className="flex flex-1 overflow-hidden">
-        <div className="w-80 shrink-0 border-r">
+        <div
+          className={cn(
+            "w-full shrink-0 border-r md:block",
+            hasConversations ? "md:w-80" : "md:w-full",
+            mobilePane === "list" ? "block" : "hidden"
+          )}
+        >
           <ConversationList
             activeId={selectedId ?? undefined}
             conversations={conversations}
             isAdmin
-            onSelect={(conversation) => inbox.setSelectedId(conversation._id)}
+            onSelect={(conversation) => {
+              inbox.setSelectedId(conversation._id);
+              setMobilePane("conversation");
+            }}
             quickActions={{
               onAssign: (id) =>
                 viewerId
@@ -186,35 +196,46 @@ export default function InboxPage({
           />
         </div>
 
-        <div className="flex flex-1 flex-col">
-          {selectedConversation ? (
-            <AdminConversationView
-              actions={{
-                onAssign: async (memberId) => {
-                  await write.assignConversation({
-                    assignedTo: memberId,
-                    id: selectedConversation._id,
-                  });
-                },
-                onSendMessage: async (body) => {
-                  await write.sendMessage({
-                    body,
-                    conversationId: selectedConversation._id,
-                  });
-                },
-                onStatusChange: changeStatus,
-              }}
-              conversation={selectedConversation}
-              messages={messages}
-              replyRef={replyRef}
-              teamMembers={members}
-            />
-          ) : (
-            <EmptyConversationState
-              hasConversations={(conversations?.length ?? 0) > 0}
-            />
-          )}
-        </div>
+        {hasConversations && (
+          <div
+            className={cn(
+              "flex-1 flex-col",
+              mobilePane === "conversation" ? "flex" : "hidden md:flex"
+            )}
+          >
+            <div className="border-b p-2 md:hidden">
+              <Button onClick={() => setMobilePane("list")} variant="ghost">
+                <ArrowLeft className="size-4" />
+                Conversations
+              </Button>
+            </div>
+            {selectedConversation ? (
+              <AdminConversationView
+                actions={{
+                  onAssign: async (memberId) => {
+                    await write.assignConversation({
+                      assignedTo: memberId,
+                      id: selectedConversation._id,
+                    });
+                  },
+                  onSendMessage: async (body) => {
+                    await write.sendMessage({
+                      body,
+                      conversationId: selectedConversation._id,
+                    });
+                  },
+                  onStatusChange: changeStatus,
+                }}
+                conversation={selectedConversation}
+                messages={messages}
+                replyRef={replyRef}
+                teamMembers={members}
+              />
+            ) : (
+              <EmptyConversationState hasConversations />
+            )}
+          </div>
+        )}
       </div>
 
       <ShortcutHintBar

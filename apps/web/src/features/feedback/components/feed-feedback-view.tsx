@@ -1,6 +1,5 @@
 "use client";
 
-import { MagnifyingGlass as MagnifyingGlassIcon } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { AnimatePresence, domAnimation, LazyMotion, m } from "motion/react";
 import type React from "react";
@@ -55,12 +54,10 @@ export interface FeedbackItem {
 }
 
 export interface FeedFeedbackViewProps {
-  /** Card design style */
   cardStyle?: CardStyle;
   feedback: FeedbackItem[];
   hasActiveFilters: boolean;
   hideCompleted: boolean;
-  /** Ref to the inline input for scroll-to-focus from FAB */
   inlineInputRef?: React.Ref<InlineFeedbackInputHandle>;
   isAdmin: boolean;
   isLoading: boolean;
@@ -139,33 +136,9 @@ export function FeedFeedbackView({
             tags={tags}
           />
           {hasActiveFilters && (
-            <div className="flex flex-col items-center justify-center py-8">
-              <MagnifyingGlassIcon className="mb-4 h-12 w-12 text-muted-foreground" />
-              <h3 className="font-semibold text-lg">No matching feedback</h3>
-              <p className="text-muted-foreground">
-                Try adjusting your filters or search query.
-              </p>
-              {hideCompleted && (
-                <p className="mt-2 text-muted-foreground text-sm">
-                  Completed items are hidden — use the filter to show them.
-                </p>
-              )}
-            </div>
-          )}
-          {!(hasActiveFilters || hideCompleted) && (
             <p className="py-8 text-center text-muted-foreground">
-              Be the first to share your ideas!
+              Nothing matches your search or filters.
             </p>
-          )}
-          {!hasActiveFilters && hideCompleted && (
-            <div className="flex flex-col items-center py-8">
-              <p className="mb-2 text-muted-foreground">
-                No open feedback yet.
-              </p>
-              <p className="text-muted-foreground text-sm">
-                Completed items are hidden — use the filter to show them.
-              </p>
-            </div>
           )}
         </div>
       </>

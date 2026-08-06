@@ -1,6 +1,5 @@
 "use client";
 
-import { UserPlus } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
@@ -15,7 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
-import { H1, Muted } from "@/components/ui/typography";
+import { H1 } from "@/components/ui/typography";
 import { authClient } from "@/lib/auth-client";
 
 export default function PendingInvitationsPage() {
@@ -31,45 +30,34 @@ export default function PendingInvitationsPage() {
   const [acceptingToken, setAcceptingToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Determine redirect conditions
   const shouldRedirectToLogin = !(isSessionLoading || session?.user);
   const shouldRedirectToDashboard =
     invitations !== undefined && invitations.length === 0;
 
-  // Redirect to login if not authenticated
   useEffect(() => {
     if (shouldRedirectToLogin) {
       router.push("/auth/sign-in");
     }
   }, [shouldRedirectToLogin, router]);
 
-  // Redirect to dashboard if no pending invitations
   useEffect(() => {
     if (shouldRedirectToDashboard) {
       router.push("/dashboard");
     }
   }, [shouldRedirectToDashboard, router]);
 
-  // Show loading state while checking auth or loading invitations
   if (isSessionLoading || invitations === undefined || shouldRedirectToLogin) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Spinner className="h-8 w-8" />
-          <Muted>Chargement des invitations...</Muted>
-        </div>
+        <Spinner className="h-8 w-8" />
       </div>
     );
   }
 
-  // No pending invitations - show loading while redirecting
   if (invitations.length === 0) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Spinner className="h-8 w-8" />
-          <Muted>Redirection...</Muted>
-        </div>
+        <Spinner className="h-8 w-8" />
       </div>
     );
   }
@@ -79,12 +67,11 @@ export default function PendingInvitationsPage() {
     setError(null);
     try {
       await acceptInvitation({ token });
-      // If this was the last invitation, redirect to dashboard
       if (invitations.length === 1) {
         router.push("/dashboard");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Une erreur est survenue");
+      setError(err instanceof Error ? err.message : "Something went wrong");
       setAcceptingToken(null);
     }
   };
@@ -97,16 +84,7 @@ export default function PendingInvitationsPage() {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-lg">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-olive-100">
-            <UserPlus className="h-8 w-8 text-olive-600" />
-          </div>
-          <H1 className="mb-2" variant="page">
-            Invitations en attente
-          </H1>
-          <Muted>
-            Vous avez {invitations.length} invitation
-            {invitations.length > 1 ? "s" : ""} en attente
-          </Muted>
+          <H1 variant="page">Pending invitations</H1>
         </div>
 
         {error && (
@@ -117,12 +95,11 @@ export default function PendingInvitationsPage() {
 
         <div className="space-y-4">
           {invitations.map((invitation) => {
-            const roleLabel =
-              invitation.role === "admin" ? "Administrateur" : "Membre";
+            const roleLabel = invitation.role === "admin" ? "Admin" : "Member";
             const initials =
               invitation.organizationName
                 ?.split(" ")
-                .map((n) => n[0])
+                .map((word) => word[0])
                 .join("")
                 .toUpperCase()
                 .slice(0, 2) ?? "??";
@@ -139,9 +116,7 @@ export default function PendingInvitationsPage() {
                       <CardTitle className="text-lg">
                         {invitation.organizationName}
                       </CardTitle>
-                      <CardDescription>
-                        Invité en tant que {roleLabel}
-                      </CardDescription>
+                      <CardDescription>{roleLabel}</CardDescription>
                     </div>
                   </div>
                 </CardHeader>
@@ -153,15 +128,15 @@ export default function PendingInvitationsPage() {
                       onClick={() => handleAccept(invitation.token)}
                     >
                       {acceptingToken === invitation.token
-                        ? "Acceptation..."
-                        : "Accepter"}
+                        ? "Accepting..."
+                        : "Accept"}
                     </Button>
                     <Button
                       disabled={acceptingToken === invitation.token}
                       onClick={() => router.push(`/invite/${invitation.token}`)}
                       variant="outline"
                     >
-                      Voir les détails
+                      View details
                     </Button>
                   </div>
                 </CardContent>
@@ -172,7 +147,7 @@ export default function PendingInvitationsPage() {
 
         <div className="mt-8 text-center">
           <Button onClick={handleSkip} variant="ghost">
-            Passer pour le moment
+            Skip for now
           </Button>
         </div>
       </div>

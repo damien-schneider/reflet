@@ -101,11 +101,6 @@ describe("PasswordSection", () => {
     expect(screen.getByText("Password")).toBeInTheDocument();
   });
 
-  it("renders card description", () => {
-    render(<PasswordSection isLoading={false} setIsLoading={vi.fn()} />);
-    expect(screen.getByText("Change your password")).toBeInTheDocument();
-  });
-
   it("renders all three password fields", () => {
     render(<PasswordSection isLoading={false} setIsLoading={vi.fn()} />);
     expect(
@@ -209,12 +204,6 @@ describe("PasswordSection", () => {
     );
     await user.click(screen.getByText("Update Password"));
     expect(toast.error).toHaveBeenCalledWith("Wrong password");
-  });
-
-  it("renders card with proper structure", () => {
-    render(<PasswordSection isLoading={false} setIsLoading={vi.fn()} />);
-    expect(screen.getByText("Password")).toBeInTheDocument();
-    expect(screen.getByText("Change your password")).toBeInTheDocument();
   });
 
   it("button has submit type", () => {

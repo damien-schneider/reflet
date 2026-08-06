@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { H3, Muted, Text } from "@/components/ui/typography";
+import { H3, Text } from "@/components/ui/typography";
 import {
   type UpdatePasswordForm,
   updatePasswordSchema,
@@ -64,10 +64,7 @@ export function PasswordSection({
 
   return (
     <section className="space-y-6">
-      <div>
-        <H3 variant="section">Password</H3>
-        <Muted>Change your password</Muted>
-      </div>
+      <H3 variant="section">Password</H3>
 
       <form
         className="space-y-4"

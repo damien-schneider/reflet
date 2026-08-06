@@ -1,7 +1,7 @@
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { H1, Muted } from "@/components/ui/typography";
+import { H1 } from "@/components/ui/typography";
 import { SuperAdminFeedback } from "./super-admin-feedback";
 import { SuperAdminOrganizations } from "./super-admin-organizations";
 import { SuperAdminOverview } from "./super-admin-overview";
@@ -10,10 +10,7 @@ import { SuperAdminUsers } from "./super-admin-users";
 export function SuperAdminDashboard() {
   return (
     <div className="space-y-6 p-6">
-      <div>
-        <H1 variant="page">Super Admin</H1>
-        <Muted>Platform-wide overview and management</Muted>
-      </div>
+      <H1 variant="page">Super Admin</H1>
 
       <Tabs defaultValue="overview">
         <TabsList>

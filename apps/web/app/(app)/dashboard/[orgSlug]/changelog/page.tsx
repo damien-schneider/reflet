@@ -8,7 +8,7 @@ import Link from "next/link";
 import { use, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { H1, Muted, Text } from "@/components/ui/typography";
+import { H1, Muted } from "@/components/ui/typography";
 import { ChangelogSettingsTab } from "@/features/changelog/components/changelog-settings-tab";
 import { ChangelogWidgetTab } from "@/features/changelog/components/changelog-widget-tab";
 import { DeleteReleaseDialog } from "@/features/changelog/components/delete-release-dialog";
@@ -180,12 +180,7 @@ export default function ChangelogPage({
   return (
     <div className="admin-container">
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <H1>Changelog</H1>
-          <Text variant="bodySmall">
-            Manage release notes and product updates
-          </Text>
-        </div>
+        <H1>Changelog</H1>
         {isAdmin && (
           <div className="flex items-center gap-2">
             {githubAction}

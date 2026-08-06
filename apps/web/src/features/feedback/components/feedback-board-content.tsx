@@ -4,11 +4,10 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { H1, Lead } from "@/components/ui/typography";
+import { H1 } from "@/components/ui/typography";
 import { MilestonesView } from "@/features/milestones/components/milestones-view";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { capture } from "@/lib/analytics";
-import { cn } from "@/lib/utils";
 import { useBoardFilters } from "../hooks/use-board-filters";
 import { useFeedbackDrawer } from "../hooks/use-feedback-drawer";
 import { BoardCustomizePopover } from "./board-customize-popover";
@@ -29,11 +28,6 @@ import { RoadmapView } from "./roadmap-view";
 import { SubmitFeedbackDialog } from "./submit-feedback-dialog";
 import { useFilteredFeedback } from "./use-filtered-feedback";
 
-/**
- * Build query args for the feedback list, delegating "hide completed"
- * filtering to the backend instead of relying on a fragile client-side
- * heuristic based on status order.
- */
 function buildFeedbackQueryArgs(
   organizationId: Id<"organizations">,
   searchQuery: string,
@@ -62,7 +56,6 @@ export function FeedbackBoardContent({
   cardStyle,
   milestoneViewStyle,
 }: FeedbackBoardProps) {
-  // URL-based filter state
   const {
     view,
     setView,
@@ -85,15 +78,10 @@ export function FeedbackBoardContent({
     setHideCompleted,
   } = useBoardFilters(defaultView);
 
-  // Auth guard
   const { guard: authGuard, isAuthenticated } = useAuthGuard({
     message: "Sign in to vote on this feedback",
   });
 
-  // Queries - organization level
-  // Note: tagIds filtering is done client-side to avoid loading state when changing tag filters
-
-  // Fetch statuses first so we can compute effectiveStatusIds for the feedback query
   const orgStatuses = useQuery(api.organizations.statuses.list, {
     organizationId,
   });
@@ -113,8 +101,6 @@ export function FeedbackBoardContent({
     )
   );
 
-  // Store previous feedback to prevent blinking during refetch
-  // Uses render-time state update pattern (React docs: "Adjusting state based on props")
   const [previousFeedback, setPreviousFeedback] = useState<NonNullable<
     typeof feedback
   > | null>(null);
@@ -123,7 +109,6 @@ export function FeedbackBoardContent({
   }
   const hasLoadedOnce = previousFeedback !== null;
 
-  // Mutations
   const createFeedbackPublic = useMutation(
     api.feedback.actions.createPublicOrg
   );
@@ -134,7 +119,6 @@ export function FeedbackBoardContent({
     api.organizations.statuses.ensureDefaults
   );
 
-  // Submit feedback handler
   const {
     newFeedback,
     setNewFeedback,
@@ -153,7 +137,6 @@ export function FeedbackBoardContent({
     organizationId,
   });
 
-  // Optimistic vote handling
   const { optimisticVotes, handleToggleVote } = useOptimisticVotes({
     authGuard,
     feedback,
@@ -161,13 +144,9 @@ export function FeedbackBoardContent({
     toggleVoteMutation,
   });
 
-  // Ensure default statuses exist for this organization
   useEffect(() => {
     if (orgStatuses !== undefined && orgStatuses.length === 0 && isMember) {
-      // No statuses exist, create defaults
-      ensureStatusDefaults({ organizationId }).catch(() => {
-        // Silently fail - user may not have permission
-      });
+      ensureStatusDefaults({ organizationId }).catch(() => undefined);
     }
   }, [orgStatuses, organizationId, isMember, ensureStatusDefaults]);
 
@@ -180,16 +159,13 @@ export function FeedbackBoardContent({
     sortBy,
   });
 
-  // Extract feedback IDs for drawer navigation
   const feedbackIds = useMemo(
     () => filteredFeedback.map((f) => f._id),
     [filteredFeedback]
   );
 
-  // Inline feedback input ref (for FAB scroll-to-focus)
   const inlineInputRef = useRef<InlineFeedbackInputHandle>(null);
 
-  // Inline submit handler
   const handleInlineSubmit = useCallback(
     async (data: InlineSubmitData) => {
       const attachments =
@@ -218,7 +194,6 @@ export function FeedbackBoardContent({
     [isMember, organizationId, createFeedbackMember, createFeedbackPublic]
   );
 
-  // URL-based drawer state with navigation
   const {
     selectedFeedbackId,
     isOpen: isDrawerOpen,
@@ -231,12 +206,10 @@ export function FeedbackBoardContent({
     goToNext,
   } = useFeedbackDrawer(feedbackIds);
 
-  // Only show loading skeleton on initial load, not on filter/search changes
   if (feedback === undefined && !hasLoadedOnce) {
     return <LoadingState />;
   }
 
-  // Check if organization is public (for non-members)
   if (!(isPublic || isMember)) {
     return <PrivateOrgMessage />;
   }
@@ -249,26 +222,15 @@ export function FeedbackBoardContent({
       primaryColor={primaryColor}
       statuses={orgStatuses || []}
     >
-      <div
-        className={cn(
-          "py-8"
-          // view === "roadmap" ? "overflow-x-hidden" : "container mx-auto px-4"
-        )}
-      >
-        {/* Header */}
-        <div className={cn("mb-8 text-center", view === "roadmap" && "px-4")}>
-          <H1 variant="page">Feature Requests & Feedback</H1>
-          <Lead>
-            Help us improve by sharing your ideas and voting on features
-            you&apos;d like to see.
-          </Lead>
+      <div className="py-6">
+        <div className="mx-auto mb-5 flex max-w-3xl items-center justify-between px-4">
+          <H1 variant="page">Feedback</H1>
+          <div className="hidden items-center gap-2 md:flex">
+            <BoardViewToggle onChange={setView} view={view} />
+            {isAdmin && <BoardCustomizePopover orgSlug={orgSlug} />}
+          </div>
         </div>
 
-        {/* View toggle - sticky on desktop, fixed at bottom on mobile */}
-        <div className="sticky top-12 z-10 mb-4 hidden items-center justify-center gap-2 md:flex">
-          <BoardViewToggle onChange={setView} view={view} />
-          {isAdmin && <BoardCustomizePopover orgSlug={orgSlug} />}
-        </div>
         <div
           className="fixed inset-x-0 z-50 flex items-center justify-center gap-2 md:hidden"
           style={{
@@ -289,10 +251,10 @@ export function FeedbackBoardContent({
           organizationId={organizationId}
           searchQuery={searchQuery}
           selectedTagId={selectedTagId}
+          showSearch={filteredFeedback.length > 0 || searchQuery.length > 0}
           tags={tags ?? []}
         />
 
-        {/* Content */}
         <div className={view === "feed" ? "mx-auto max-w-3xl" : ""}>
           {view === "milestones" && (
             <MilestonesView
@@ -336,7 +298,6 @@ export function FeedbackBoardContent({
           )}
         </div>
 
-        {/* Feedback Detail Drawer */}
         <FeedbackDetailDrawer
           currentIndex={currentIndex}
           feedbackId={selectedFeedbackId}
@@ -351,7 +312,6 @@ export function FeedbackBoardContent({
           onPrevious={goToPrevious}
         />
 
-        {/* Submit Dialog */}
         <SubmitFeedbackDialog
           feedback={newFeedback}
           isAdmin={isAdmin}

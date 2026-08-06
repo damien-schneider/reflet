@@ -312,20 +312,6 @@ describe("NotificationSettings", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders card description for push notifications", () => {
-    render(<NotificationSettings />);
-    expect(
-      screen.getByText(/Receive real-time notifications on this device/)
-    ).toBeInTheDocument();
-  });
-
-  it("renders card description for notification types", () => {
-    render(<NotificationSettings />);
-    expect(
-      screen.getByText(/Choose which types of notifications/)
-    ).toBeInTheDocument();
-  });
-
   it("shows Active Devices with Chrome Desktop user agent", () => {
     vi.mocked(useQuery)
       .mockReturnValueOnce({

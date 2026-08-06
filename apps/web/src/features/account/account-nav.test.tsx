@@ -13,6 +13,9 @@ vi.mock("@phosphor-icons/react", () => ({
   Envelope: ({ className }: { className?: string }) => (
     <svg className={className} />
   ),
+  LockKey: ({ className }: { className?: string }) => (
+    <svg className={className} />
+  ),
   User: ({ className }: { className?: string }) => (
     <svg className={className} />
   ),

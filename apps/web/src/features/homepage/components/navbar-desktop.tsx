@@ -1,216 +1,51 @@
-"use client";
-
-import { GithubLogo } from "@phosphor-icons/react";
+import { GithubLogo } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import {
-  NavigationList,
-  NavigationListContent,
-  NavigationListItem,
-  NavigationListLink,
-  NavigationListList,
-  NavigationListTrigger,
-  navigationListTriggerStyle,
-} from "@/components/ui/navigation-menu";
-import { cn } from "@/lib/utils";
 
-const REFLET_BASE_URL = "https://www.reflet.app/reflet";
-
-interface DemoItem {
-  description: string;
-  href: string;
-  label: string;
-}
-
-const DEMO_ITEMS: DemoItem[] = [
-  {
-    description: "Collect and organize user feedback with voting",
-    href: REFLET_BASE_URL,
-    label: "Feedback Board",
-  },
-  {
-    description: "Kanban-style board to plan and track progress",
-    href: `${REFLET_BASE_URL}?view=roadmap`,
-    label: "Roadmap",
-  },
-  {
-    description: "Track feature milestones and release goals",
-    href: `${REFLET_BASE_URL}?view=milestones`,
-    label: "Milestones",
-  },
-  {
-    description: "Beautiful release notes linked to features",
-    href: `${REFLET_BASE_URL}/changelog`,
-    label: "Changelog",
-  },
-  {
-    description: "Help center with real-time conversations",
-    href: `${REFLET_BASE_URL}/support`,
-    label: "Support",
-  },
-];
-
-interface ResourceItem {
-  description: string;
-  external?: boolean;
-  href: string;
-  label: string;
-}
-
-const RESOURCE_ITEMS: ResourceItem[] = [
-  {
-    description: "Guides, SDK reference and API docs",
-    href: "/docs",
-    label: "Documentation",
-  },
-  {
-    description: "Product updates, tips and insights",
-    href: "/blog",
-    label: "Blog",
-  },
-];
+const navLinkClassName =
+  "font-medium text-foreground/75 text-sm transition-colors hover:text-foreground";
 
 export default function NavbarDesktop() {
-  const [hasScrolled, setHasScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => setHasScrolled(window.scrollY > 50);
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
   return (
-    <nav
-      className={cn(
-        "sticky top-0 z-50 hidden border-border border-b transition-[height,background-color,box-shadow] duration-300 md:block",
-        hasScrolled
-          ? "bg-background/95 shadow-sm backdrop-blur-lg"
-          : "bg-background/80 backdrop-blur-md"
-      )}
-    >
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div
-          className={cn(
-            "flex items-center justify-between transition-[height] duration-300",
-            hasScrolled ? "h-16" : "h-20"
-          )}
-        >
-          <div className="flex items-center gap-2">
-            {/* Logo */}
-            <div className="flex flex-shrink-0 items-center">
-              <Link
-                className="font-serif text-2xl text-foreground tracking-tight transition-opacity hover:opacity-70"
-                href="/"
-              >
-                Reflet.
-              </Link>
-            </div>
-
-            {/* Navigation Menu */}
-            <div className="ml-2">
-              <NavigationList>
-                <NavigationListList>
-                  <NavigationListItem>
-                    <NavigationListLink
-                      className={navigationListTriggerStyle()}
-                      href="/pricing"
-                    >
-                      Pricing
-                    </NavigationListLink>
-                  </NavigationListItem>
-
-                  <NavigationListItem>
-                    <NavigationListLink
-                      className={navigationListTriggerStyle()}
-                      href="/features"
-                    >
-                      Features
-                    </NavigationListLink>
-                  </NavigationListItem>
-
-                  <NavigationListItem>
-                    <NavigationListTrigger>Demo</NavigationListTrigger>
-                    <NavigationListContent className="w-[300px]">
-                      <ul className="grid gap-1 p-1">
-                        {DEMO_ITEMS.map((item) => (
-                          <li key={item.label}>
-                            <NavigationListLink
-                              href={item.href}
-                              rel="noopener noreferrer"
-                              target="_blank"
-                            >
-                              <div>
-                                <div className="font-medium text-sm leading-none">
-                                  {item.label}
-                                </div>
-                                <p className="mt-1 text-muted-foreground text-xs leading-snug">
-                                  {item.description}
-                                </p>
-                              </div>
-                            </NavigationListLink>
-                          </li>
-                        ))}
-                      </ul>
-                    </NavigationListContent>
-                  </NavigationListItem>
-
-                  <NavigationListItem>
-                    <NavigationListTrigger>Resources</NavigationListTrigger>
-                    <NavigationListContent className="w-[280px]">
-                      <ul className="grid gap-1 p-1">
-                        {RESOURCE_ITEMS.map((item) => (
-                          <li key={item.label}>
-                            <NavigationListLink href={item.href}>
-                              <div>
-                                <div className="font-medium text-sm leading-none">
-                                  {item.label}
-                                </div>
-                                <p className="mt-1 text-muted-foreground text-xs leading-snug">
-                                  {item.description}
-                                </p>
-                              </div>
-                            </NavigationListLink>
-                          </li>
-                        ))}
-                      </ul>
-                    </NavigationListContent>
-                  </NavigationListItem>
-                </NavigationListList>
-              </NavigationList>
-            </div>
-          </div>
-
-          {/* Desktop Right Actions */}
-          <div className="flex items-center gap-4">
-            <a
-              aria-label="GitHub repository"
-              className="inline-flex items-center text-foreground transition-colors hover:text-muted-foreground"
-              href="https://github.com/damien-schneider/reflet"
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              <GithubLogo className="h-5 w-5" />
-            </a>
-
-            <Link
-              className="font-medium text-foreground text-sm transition-colors hover:text-muted-foreground"
-              href="/dashboard"
-              prefetch={true}
-            >
-              Log in
+    <nav className="sticky top-0 z-50 hidden border-border border-b bg-background/95 backdrop-blur-md md:block">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center gap-8">
+          <Link
+            className="font-serif text-2xl text-foreground tracking-tight transition-opacity hover:opacity-70"
+            href="/"
+          >
+            Reflet.
+          </Link>
+          <div className="flex items-center gap-6">
+            <Link className={navLinkClassName} href="/features">
+              Features
             </Link>
-            <Link href="/dashboard" prefetch={true}>
-              <Button
-                className="transition-all duration-200 hover:scale-105 hover:shadow-md"
-                size="default"
-                variant="default"
-              >
-                Get started
-              </Button>
+            <Link className={navLinkClassName} href="/pricing">
+              Pricing
+            </Link>
+            <Link className={navLinkClassName} href="/docs">
+              Docs
             </Link>
           </div>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <a
+            aria-label="GitHub repository"
+            className="text-foreground/75 transition-colors hover:text-foreground"
+            href="https://github.com/damien-schneider/reflet"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            <GithubLogo className="size-5" />
+          </a>
+          <Link className={navLinkClassName} href="/dashboard" prefetch={true}>
+            Log in
+          </Link>
+          <Link href="/dashboard" prefetch={true}>
+            <Button size="default">Get started</Button>
+          </Link>
         </div>
       </div>
     </nav>
