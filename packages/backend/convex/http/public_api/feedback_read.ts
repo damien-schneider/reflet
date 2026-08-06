@@ -107,6 +107,7 @@ export function registerFeedbackReadRoutes(http: Router): void {
         {
           externalUserId: auth.externalUserId,
           feedbackId: parseId<"feedback">(feedbackIdParam, "id"),
+          includePrivateContext: auth.isSecretKey,
           organizationId: auth.organizationId,
         }
       );

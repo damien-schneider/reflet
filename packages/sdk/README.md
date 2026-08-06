@@ -156,6 +156,7 @@ builds do; production builds strip React's debug data).
 | `user` | `RefletUser` | — | Who is reporting. Hides the email field. |
 | `position` | `"bottom-right" \| "bottom-left" \| "top-right" \| "top-left"` | `"bottom-right"` | Which corner the button sits in. |
 | `enabled` | `boolean` | `true` | Render the widget. Gate it to staff or beta users. |
+| `dismissForDays` | `number` | — | Let a reporter hide the launcher in this browser for this many days. |
 | `captureOnOpen` | `boolean` | `true` | Screenshot as soon as the panel opens. |
 | `captureConsole` | `boolean` | `true` | Record console errors and warnings. |
 | `hotkey` | `string \| null` | `null` | Shortcut toggling the panel, e.g. `"mod+shift+f"`. |

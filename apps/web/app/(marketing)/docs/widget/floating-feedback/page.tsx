@@ -43,6 +43,13 @@ const PROPS = [
     type: "boolean",
   },
   {
+    default: "—",
+    description:
+      "Adds a panel action that hides the launcher in this browser for the chosen number of days.",
+    name: "dismissForDays",
+    type: "number",
+  },
+  {
     default: "true",
     description:
       "Screenshot the viewport as soon as the panel opens. Set to false to make it opt-in.",

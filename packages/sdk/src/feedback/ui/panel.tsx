@@ -260,11 +260,25 @@ export function FeedbackPanel({
         </button>
       </form>
 
-      <footer className="footer">
-        Powered by{" "}
-        <a href="https://reflet.app" rel="noopener noreferrer" target="_blank">
-          Reflet
-        </a>
+      <footer className="footer" data-dismissible={state.canDismiss}>
+        {state.canDismiss && (
+          <button className="dismiss-btn" onClick={state.dismiss} type="button">
+            {labels.dismissForDays.replace(
+              "{days}",
+              String(state.dismissForDays)
+            )}
+          </button>
+        )}
+        <span>
+          Powered by{" "}
+          <a
+            href="https://reflet.app"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            Reflet
+          </a>
+        </span>
       </footer>
     </section>
   );

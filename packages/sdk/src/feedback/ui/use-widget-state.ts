@@ -29,6 +29,34 @@ import {
 
 const SUCCESS_CLOSE_DELAY = 2400;
 const IS_APPLE = /Mac|iPhone|iPad/;
+const MILLISECONDS_PER_DAY = 86_400_000;
+const DISMISSAL_STORAGE_PREFIX = "reflet-feedback-dismissed";
+
+function readDismissedUntil(key: string): number {
+  if (typeof window === "undefined") {
+    return 0;
+  }
+
+  try {
+    const value = Number.parseInt(window.localStorage.getItem(key) ?? "", 10);
+    if (Number.isFinite(value) && value > Date.now()) {
+      return value;
+    }
+    window.localStorage.removeItem(key);
+  } catch {
+    return 0;
+  }
+
+  return 0;
+}
+
+function writeDismissedUntil(key: string, until: number): void {
+  try {
+    window.localStorage.setItem(key, String(until));
+  } catch {
+    // storage blocked (private mode, quota) — dismissal just does not persist
+  }
+}
 
 /**
  * Matches shortcuts written as `alt+f` or `mod+shift+k`, where `mod` is the
@@ -95,6 +123,13 @@ export function useWidgetState(props: RefletFeedbackProps) {
   const user = props.user ?? context?.user;
   const userToken = props.userToken ?? context?.userToken;
   const isAnonymous = !(user || userToken);
+  const dismissForDays =
+    props.dismissForDays !== undefined &&
+    Number.isFinite(props.dismissForDays) &&
+    props.dismissForDays > 0
+      ? props.dismissForDays
+      : null;
+  const dismissalKey = `${DISMISSAL_STORAGE_PREFIX}:${publicKey ?? "default"}:${user?.id ?? "anonymous"}`;
 
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState<WidgetStep>("compose");
@@ -110,6 +145,9 @@ export function useWidgetState(props: RefletFeedbackProps) {
   const [isCapturing, setIsCapturing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dismissedUntil, setDismissedUntil] = useState(() =>
+    readDismissedUntil(dismissalKey)
+  );
 
   const captureRef = useRef<CapturedImage | null>(null);
   const consoleRef = useRef<ConsoleRecorder | null>(null);
@@ -117,6 +155,9 @@ export function useWidgetState(props: RefletFeedbackProps) {
   useEffect(() => {
     captureRef.current = capture;
   }, [capture]);
+  useEffect(() => {
+    setDismissedUntil(readDismissedUntil(dismissalKey));
+  }, [dismissalKey]);
 
   useEffect(() => {
     if (props.captureConsole === false) {
@@ -173,6 +214,18 @@ export function useWidgetState(props: RefletFeedbackProps) {
     reset();
     props.onClose?.();
   }, [reset, props.onClose]);
+  const dismiss = useCallback(() => {
+    if (dismissForDays === null) {
+      return;
+    }
+
+    const until = Date.now() + dismissForDays * MILLISECONDS_PER_DAY;
+    writeDismissedUntil(dismissalKey, until);
+    setIsOpen(false);
+    reset();
+    setDismissedUntil(until);
+    props.onDismiss?.({ until });
+  }, [dismissForDays, dismissalKey, props.onDismiss, reset]);
 
   const open = useCallback(() => {
     setIsOpen(true);
@@ -286,15 +339,19 @@ export function useWidgetState(props: RefletFeedbackProps) {
 
   return {
     annotations,
+    canDismiss: dismissForDays !== null,
     capture,
     category,
     clearSelection,
     close,
+    dismiss,
+    dismissForDays,
     email,
     error,
     honeypot,
     isAnonymous,
     isCapturing,
+    isDismissed: dismissedUntil > Date.now(),
     isOpen,
     isSubmitting,
     message,

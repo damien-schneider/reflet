@@ -4,8 +4,14 @@ import { internalMutation, internalQuery } from "../_generated/server";
 export const listScreenshots = internalQuery({
   args: {
     feedbackId: v.id("feedback"),
+    organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
+    const feedback = await ctx.db.get(args.feedbackId);
+    if (!feedback || feedback.organizationId !== args.organizationId) {
+      throw new Error("Feedback not found");
+    }
+
     const screenshots = await ctx.db
       .query("feedbackScreenshots")
       .withIndex("by_feedback", (q) => q.eq("feedbackId", args.feedbackId))
@@ -46,11 +52,15 @@ export const listScreenshots = internalQuery({
 
 export const deleteScreenshot = internalMutation({
   args: {
+    organizationId: v.id("organizations"),
     screenshotId: v.id("feedbackScreenshots"),
   },
   handler: async (ctx, args) => {
     const screenshot = await ctx.db.get(args.screenshotId);
     if (!screenshot) {
+      throw new Error("Screenshot not found");
+    }
+    if (screenshot.organizationId !== args.organizationId) {
       throw new Error("Screenshot not found");
     }
 

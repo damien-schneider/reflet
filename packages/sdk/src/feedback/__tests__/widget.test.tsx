@@ -2,7 +2,10 @@ import { act, cleanup, fireEvent, render } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { RefletFeedback } from "../widget";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  window.localStorage.clear();
+});
 
 function shadow(): ShadowRoot {
   const host = document.querySelector("[data-reflet-widget]");
@@ -42,6 +45,36 @@ describe("RefletFeedback", () => {
 
   it("renders nothing when disabled", () => {
     render(<RefletFeedback enabled={false} publicKey="fb_pub_test" />);
+
+    expect(document.querySelector("[data-reflet-widget]")).toBeNull();
+  });
+
+  it("lets a reporter hide the launcher for the configured duration", () => {
+    const view = render(
+      <RefletFeedback
+        captureOnOpen={false}
+        dismissForDays={7}
+        publicKey="fb_pub_test"
+      />
+    );
+    click(launcher());
+
+    const dismiss = shadow().querySelector(".dismiss-btn");
+    if (!(dismiss instanceof HTMLButtonElement)) {
+      throw new Error("Dismiss action missing");
+    }
+    click(dismiss);
+
+    expect(document.querySelector("[data-reflet-widget]")).toBeNull();
+
+    view.unmount();
+    render(
+      <RefletFeedback
+        captureOnOpen={false}
+        dismissForDays={7}
+        publicKey="fb_pub_test"
+      />
+    );
 
     expect(document.querySelector("[data-reflet-widget]")).toBeNull();
   });

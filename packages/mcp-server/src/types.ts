@@ -5,10 +5,6 @@
  * available outside the backend package).
  */
 
-// ============================================
-// Common
-// ============================================
-
 export interface SuccessResponse {
   success: boolean;
 }
@@ -16,10 +12,6 @@ export interface SuccessResponse {
 export interface CreatedResponse {
   id: string;
 }
-
-// ============================================
-// Feedback (public endpoints)
-// ============================================
 
 export interface FeedbackAuthor {
   avatar?: string;
@@ -64,6 +56,38 @@ export interface ConfigResponse {
     description?: string;
   }>;
 }
+export interface FeedbackReportContext {
+  browser?: string;
+  consoleEvents?: Array<{
+    level: "error" | "warn";
+    message: string;
+    timestamp: number;
+  }>;
+  device?: string;
+  language?: string;
+  metadata?: Record<string, string>;
+  os?: string;
+  pageTitle?: string;
+  referrer?: string;
+  screen?: { height: number; width: number };
+  sdkVersion?: string;
+  selection?: {
+    componentStack: string[];
+    html: string;
+    label: string;
+    rect: { height: number; width: number; x: number; y: number };
+    selector: string;
+    sourceLocation?: string;
+  };
+  timezone?: string;
+  url?: string;
+  userAgent?: string;
+  viewport?: {
+    devicePixelRatio: number;
+    height: number;
+    width: number;
+  };
+}
 
 export interface FeedbackItem {
   author?: FeedbackAuthor | null;
@@ -89,6 +113,8 @@ export interface FeedbackListResponse {
 }
 
 export interface FeedbackDetailResponse extends FeedbackItem {
+  assigneeId?: string;
+  context?: FeedbackReportContext;
   isSubscribed: boolean;
 }
 
@@ -147,10 +173,6 @@ export interface ChangelogEntryResponse {
   version?: string;
 }
 
-// ============================================
-// Tags
-// ============================================
-
 export interface TagResponse {
   color: string;
   createdAt: number;
@@ -161,10 +183,6 @@ export interface TagResponse {
   name: string;
   slug: string;
 }
-
-// ============================================
-// Releases
-// ============================================
 
 export interface ReleaseListItem {
   createdAt: number;
@@ -198,10 +216,6 @@ export interface ReleaseDetailResponse {
   updatedAt: number;
   version?: string;
 }
-
-// ============================================
-// Milestones
-// ============================================
 
 export interface MilestoneListItem {
   color: string;
@@ -238,10 +252,6 @@ export interface MilestoneDetailResponse {
   timeHorizon: string;
 }
 
-// ============================================
-// Statuses
-// ============================================
-
 export interface StatusResponse {
   color: string;
   icon?: string;
@@ -249,10 +259,6 @@ export interface StatusResponse {
   name: string;
   order: number;
 }
-
-// ============================================
-// Members & Invitations
-// ============================================
 
 export interface MemberResponse {
   createdAt: number;
@@ -270,10 +276,6 @@ export interface InvitationResponse {
   status: string;
 }
 
-// ============================================
-// Organization
-// ============================================
-
 export interface OrganizationResponse {
   changelogSettings?: Record<string, unknown>;
   createdAt: number;
@@ -288,10 +290,6 @@ export interface OrganizationResponse {
   subscriptionTier?: string;
   supportEnabled: boolean;
 }
-
-// ============================================
-// Duplicates
-// ============================================
 
 export interface DuplicatePairResponse {
   _id: string;
@@ -313,10 +311,6 @@ export interface DuplicatePairResponse {
   similarityScore: number;
 }
 
-// ============================================
-// Screenshots
-// ============================================
-
 export interface ScreenshotResponse {
   _id: string;
   captureSource: string;
@@ -327,10 +321,6 @@ export interface ScreenshotResponse {
   size: number;
   url: string | null;
 }
-
-// ============================================
-// Surveys
-// ============================================
 
 export interface SurveyListItem {
   _id: string;

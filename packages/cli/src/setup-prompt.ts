@@ -1,8 +1,5 @@
-/**
- * Handed to a coding agent so it can wire the widget up without the CLI —
- * printed by `reflet prompt` and mirrored in the public docs.
- */
-export const SETUP_PROMPT = `Add the Reflet feedback widget to this app.
+export function generateSetupPrompt(publicKey = "fb_pub_xxx"): string {
+  return `Add the Reflet feedback widget to this app.
 
 Reflet is a feedback tool. The widget is a floating button that opens a panel
 where a user writes a report; it screenshots the current viewport
@@ -35,10 +32,12 @@ Do this:
    With Vite, read the key from \`import.meta.env.VITE_REFLET_PUBLIC_KEY\`
    instead.
 
-3. Add the public key to the env file the framework reads
-   (\`.env.local\` for Next.js, \`.env\` for Vite). The key starts with
-   \`fb_pub_\` and comes from the Reflet dashboard, under
-   Settings → API Keys & Widget. It is safe to expose in the browser.
+3. Add this public key to the env file the framework reads:
+
+   \`${publicKey}\`
+
+   Use \`.env.local\` for Next.js or \`.env\` for Vite. The key is safe to
+   expose in the browser and comes from Reflet Dashboard → In-App.
 
 4. If the app knows who the user is, pass it — reports then carry an identity
    instead of asking for an email:
@@ -58,7 +57,9 @@ Do this:
    - \`position\` — "bottom-right" (default), "bottom-left", "top-right", "top-left"
    - \`primaryColor\` — any CSS color, to match the product's brand
    - \`theme\` — "auto" (default), "light", "dark"
-   - \`enabled\` — pass a boolean to gate the widget, e.g. staff only
+   - \`enabled\` — target specific people with an app-owned boolean, for example
+     \`enabled={["user_1", "user_2"].includes(user.id)}\`
+   - \`dismissForDays\` — let a reporter hide the launcher for that many days
    - \`hotkey\` — e.g. "mod+shift+f"; off by default so nothing is hijacked
    - \`captureConsole\` — set to false to stop recording console errors
    - \`metadata\` — a flat string record merged into every report (plan, tenant…)
@@ -72,3 +73,6 @@ Constraints:
 
 When you are done, run the app, click the button and confirm the panel opens
 with a screenshot preview.`;
+}
+
+export const SETUP_PROMPT = generateSetupPrompt();

@@ -320,13 +320,14 @@ export function registerAdminContentRoutes(http: Router): void {
     path: "/api/v1/admin/duplicate/merge",
   });
   http.route({
-    handler: adminGet((ctx, _auth, url) => {
+    handler: adminGet((ctx, { organizationId }, url) => {
       const feedbackId = parseId<"feedback">(
         requireStr(url.searchParams.get("feedbackId"), "feedbackId"),
         "feedbackId"
       );
       return ctx.runQuery(internal.admin_api.screenshots.listScreenshots, {
         feedbackId,
+        organizationId,
       });
     }),
     method: "GET",
@@ -334,8 +335,9 @@ export function registerAdminContentRoutes(http: Router): void {
   });
 
   http.route({
-    handler: adminPost(async (ctx, _auth, body) =>
+    handler: adminPost(async (ctx, { organizationId }, body) =>
       ctx.runMutation(internal.admin_api.screenshots.deleteScreenshot, {
+        organizationId,
         screenshotId: parseId<"feedbackScreenshots">(
           requireStr(body.screenshotId, "screenshotId"),
           "screenshotId"

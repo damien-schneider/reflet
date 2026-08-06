@@ -229,6 +229,7 @@ export const getFeedbackByOrganization = internalQuery({
   args: {
     externalUserId: v.optional(v.id("externalUsers")),
     feedbackId: v.id("feedback"),
+    includePrivateContext: v.optional(v.boolean()),
     organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
@@ -273,9 +274,11 @@ export const getFeedbackByOrganization = internalQuery({
     }
 
     return {
+      assigneeId: args.includePrivateContext ? feedback.assigneeId : undefined,
       author: await loadAuthor(ctx, feedback.externalUserId),
       commentCount: feedback.commentCount,
       completedAt: feedback.completedAt,
+      context: args.includePrivateContext ? feedback.context : undefined,
       createdAt: feedback.createdAt,
       description: feedback.description,
       hasVoted: await hasVotedOn(ctx, args.feedbackId, args.externalUserId),

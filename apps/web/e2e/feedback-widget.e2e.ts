@@ -145,6 +145,17 @@ test.describe("Floating feedback widget", () => {
     });
     const publicKey = await publicKeyField.inputValue();
 
+    await page.goto(`/dashboard/${slug}/in-app`);
+    await expect(
+      page.getByRole("heading", { name: "Feedback collector" })
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Copy AI setup prompt" })
+    ).toBeVisible();
+    await expect(
+      page.locator("code").filter({ hasText: publicKey })
+    ).toContainText("reflet-cli init");
+
     const reportTitle = `Pay now does nothing ${Date.now()}`;
     const reportedUrl = "https://acme.example.com/billing?invoice=1042";
     const feedbackId = await submitLikeTheWidget(

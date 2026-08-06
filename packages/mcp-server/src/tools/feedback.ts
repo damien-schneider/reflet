@@ -43,7 +43,7 @@ export function registerFeedbackTools(
 
   server.tool(
     "feedback_get",
-    "Get a single feedback item by ID with full details including tags, vote count, and status.",
+    "Get a feedback item with tags, status, assignee, and private report context such as the page URL, selected element, React source location, browser, and console errors.",
     {
       feedbackId: z.string().describe("The feedback item ID"),
     },

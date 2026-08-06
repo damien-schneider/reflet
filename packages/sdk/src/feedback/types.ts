@@ -52,6 +52,7 @@ export interface FeedbackWidgetLabels {
   categoryQuestion: string;
   clearAnnotations: string;
   descriptionPlaceholder: string;
+  dismissForDays: string;
   done: string;
   emailLabel: string;
   emailPlaceholder: string;
@@ -81,6 +82,7 @@ export const DEFAULT_WIDGET_LABELS: FeedbackWidgetLabels = {
   categoryQuestion: "Question",
   clearAnnotations: "Clear drawing",
   descriptionPlaceholder: "What happened? What did you expect?",
+  dismissForDays: "Hide for {days} days",
   done: "Done",
   emailLabel: "Email",
   emailPlaceholder: "you@company.com",
@@ -109,6 +111,8 @@ export interface RefletFeedbackProps {
   captureOnOpen?: boolean;
   categories?: FeedbackWidgetCategory[];
   defaultCategory?: FeedbackWidgetCategory;
+  /** Let reporters hide the launcher for this many days. */
+  dismissForDays?: number;
   /** Render nothing when false — lets an app gate the widget per user. */
   enabled?: boolean;
   /** Keyboard shortcut opening the panel. Set to null to disable. */
@@ -119,6 +123,7 @@ export interface RefletFeedbackProps {
   /** Distance in px from the viewport edges. */
   offset?: number;
   onClose?: () => void;
+  onDismiss?: (result: { until: number }) => void;
   onOpen?: () => void;
   onSubmit?: (result: { feedbackId: string }) => void;
   position?: "bottom-left" | "bottom-right" | "top-left" | "top-right";

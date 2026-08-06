@@ -242,14 +242,27 @@ textarea:focus, input:focus { outline: none; border-color: var(--rf-primary); bo
 .hint { margin: 0; font-size: 12px; color: var(--rf-text-muted); }
 
 .footer {
-  padding: 8px 14px;
+  min-height: 44px;
+  padding: 0 14px;
   border-top: 1px solid var(--rf-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
   font-size: 11.5px;
   color: var(--rf-text-muted);
-  text-align: center;
 }
+.footer[data-dismissible="true"] { justify-content: space-between; }
 .footer a { color: inherit; text-decoration: none; font-weight: 550; }
 .footer a:hover { color: var(--rf-text); }
+.dismiss-btn {
+  align-self: stretch;
+  color: inherit;
+  font-size: 11.5px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.dismiss-btn:hover { color: var(--rf-text); }
 
 .done { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 32px 20px 36px; text-align: center; }
 .done svg { color: var(--rf-success); }

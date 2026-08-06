@@ -45,7 +45,7 @@ export function FloatingWidgetGuide({ publicKey }: { publicKey: string }) {
         <p className="font-medium text-sm">Install</p>
         <Snippet
           label="Install command"
-          value={`bunx reflet-cli init --key ${publicKey}`}
+          value={`npx reflet-cli init --public-key ${publicKey} --yes`}
         />
         <p className="text-muted-foreground text-xs">
           Detects Next.js, React Router or Vite, mounts the widget in your entry

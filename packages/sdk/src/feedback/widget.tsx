@@ -72,7 +72,7 @@ export function RefletFeedback(props: RefletFeedbackProps) {
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [close, isOpen, state.step]);
 
-  if (!enabled) {
+  if (!enabled || state.isDismissed) {
     return null;
   }
 
