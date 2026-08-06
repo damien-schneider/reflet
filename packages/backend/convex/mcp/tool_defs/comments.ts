@@ -22,6 +22,7 @@ defineTool(
   async (ctx, organizationId, params) =>
     ctx.runQuery(internal.feedback.api_public.listCommentsByOrganization, {
       feedbackId: asId<"feedback">(params.feedbackId, "feedbackId"),
+      includePrivateContext: true,
       organizationId,
       sortBy: str(params.sortBy) as "newest" | "oldest" | undefined,
     })

@@ -41,7 +41,8 @@ async function loadTags(ctx: QueryCtx, feedbackId: Id<"feedback">) {
 
 async function loadAuthor(
   ctx: QueryCtx,
-  externalUserId: Id<"externalUsers"> | undefined
+  externalUserId: Id<"externalUsers"> | undefined,
+  includePrivateContext: boolean
 ): Promise<PublicAuthor | null> {
   if (!externalUserId) {
     return null;
@@ -52,7 +53,7 @@ async function loadAuthor(
   }
   return {
     avatar: extUser.avatar,
-    email: extUser.email,
+    email: includePrivateContext ? extUser.email : undefined,
     isExternal: true,
     name: extUser.name,
   };
@@ -119,6 +120,7 @@ async function filterByTag(
 export const listFeedbackByOrganization = internalQuery({
   args: {
     externalUserId: v.optional(v.id("externalUsers")),
+    includePrivateContext: v.optional(v.boolean()),
     limit: v.optional(v.number()),
     offset: v.optional(v.number()),
     organizationId: v.id("organizations"),
@@ -197,7 +199,11 @@ export const listFeedbackByOrganization = internalQuery({
           : null;
 
         return {
-          author: await loadAuthor(ctx, f.externalUserId),
+          author: await loadAuthor(
+            ctx,
+            f.externalUserId,
+            args.includePrivateContext === true
+          ),
           commentCount: f.commentCount,
           completedAt: f.completedAt,
           createdAt: f.createdAt,
@@ -275,7 +281,11 @@ export const getFeedbackByOrganization = internalQuery({
 
     return {
       assigneeId: args.includePrivateContext ? feedback.assigneeId : undefined,
-      author: await loadAuthor(ctx, feedback.externalUserId),
+      author: await loadAuthor(
+        ctx,
+        feedback.externalUserId,
+        args.includePrivateContext === true
+      ),
       commentCount: feedback.commentCount,
       completedAt: feedback.completedAt,
       context: args.includePrivateContext ? feedback.context : undefined,

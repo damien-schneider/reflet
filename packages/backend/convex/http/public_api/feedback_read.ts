@@ -60,6 +60,7 @@ export function registerFeedbackReadRoutes(http: Router): void {
         internal.feedback.api_public_list.listFeedbackByOrganization,
         {
           externalUserId: auth.externalUserId,
+          includePrivateContext: auth.isSecretKey,
           limit: parseIntParam(url.searchParams.get("limit")),
           offset: parseIntParam(url.searchParams.get("offset")),
           organizationId: auth.organizationId,
@@ -171,6 +172,7 @@ export function registerFeedbackReadRoutes(http: Router): void {
         internal.feedback.api_public.listCommentsByOrganization,
         {
           feedbackId: parseId<"feedback">(feedbackIdParam, "feedbackId"),
+          includePrivateContext: auth.isSecretKey,
           organizationId: auth.organizationId,
           sortBy: parseEnumParam(
             url.searchParams.get("sortBy"),

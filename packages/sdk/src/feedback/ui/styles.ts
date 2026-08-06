@@ -396,4 +396,26 @@ textarea:focus, input:focus { outline: none; border-color: var(--rf-primary); bo
   border-radius: 4px;
   background: var(--rf-bg-subtle);
 }
+@media (pointer: coarse) {
+  .icon-btn, .tool, .swatch {
+    width: 44px;
+    height: 44px;
+  }
+
+  .segmented button, .ghost-btn, .submit, .toolbar .done-btn {
+    min-height: 44px;
+  }
+
+  .dismiss-btn, .footer a {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+  }
+
+  .footer a {
+    min-width: 44px;
+    justify-content: center;
+  }
+}
+
 `;

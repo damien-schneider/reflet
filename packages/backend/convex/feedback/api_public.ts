@@ -63,6 +63,7 @@ export const getOrganizationConfig = internalQuery({
 export const listCommentsByOrganization = internalQuery({
   args: {
     feedbackId: v.id("feedback"),
+    includePrivateContext: v.optional(v.boolean()),
     organizationId: v.id("organizations"),
     sortBy: v.optional(v.union(v.literal("newest"), v.literal("oldest"))),
   },
@@ -71,7 +72,8 @@ export const listCommentsByOrganization = internalQuery({
     if (
       !feedback ||
       feedback.organizationId !== args.organizationId ||
-      !feedback.isApproved
+      !feedback.isApproved ||
+      feedback.deletedAt
     ) {
       return [];
     }
@@ -104,7 +106,7 @@ export const listCommentsByOrganization = internalQuery({
         if (extUser) {
           return {
             avatar: extUser.avatar,
-            email: extUser.email,
+            email: args.includePrivateContext ? extUser.email : undefined,
             isExternal: true,
             name: extUser.name,
           };

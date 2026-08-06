@@ -45,6 +45,7 @@ defineTool(
   },
   async (ctx, organizationId, params) =>
     ctx.runQuery(internal.feedback.api_public_list.listFeedbackByOrganization, {
+      includePrivateContext: true,
       limit: num(params.limit),
       offset: num(params.offset),
       organizationId,

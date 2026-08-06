@@ -8,7 +8,7 @@ import schema from "../../schema";
 import { modules } from "../../test.helpers";
 
 describe("feedback API detail", () => {
-  test("returns report context only for private API reads", async () => {
+  test("returns reporter details only for private API reads", async () => {
     const t = convexTest(schema, modules);
     const { feedbackId, organizationId } = await t.run(async (ctx) => {
       const organizationId = await ctx.db.insert("organizations", {
@@ -18,6 +18,14 @@ describe("feedback API detail", () => {
         slug: "test-org",
         subscriptionStatus: "none",
         subscriptionTier: "free",
+      });
+      const externalUserId = await ctx.db.insert("externalUsers", {
+        createdAt: Date.now(),
+        email: "reporter@example.com",
+        externalId: "reporter-1",
+        lastSeenAt: Date.now(),
+        name: "Reporter",
+        organizationId,
       });
       const feedbackId = await ctx.db.insert("feedback", {
         assigneeId: "team-user-1",
@@ -36,6 +44,7 @@ describe("feedback API detail", () => {
         },
         createdAt: Date.now(),
         description: "Retry does nothing",
+        externalUserId,
         isApproved: true,
         isPinned: false,
         organizationId,
@@ -43,6 +52,14 @@ describe("feedback API detail", () => {
         title: "Invoice retry is broken",
         updatedAt: Date.now(),
         voteCount: 0,
+      });
+      await ctx.db.insert("comments", {
+        body: "Additional details",
+        createdAt: Date.now(),
+        externalUserId,
+        feedbackId,
+        isOfficial: false,
+        updatedAt: Date.now(),
       });
       return { feedbackId, organizationId };
     });
@@ -53,6 +70,7 @@ describe("feedback API detail", () => {
     );
     expect(publicResult?.context).toBeUndefined();
     expect(publicResult?.assigneeId).toBeUndefined();
+    expect(publicResult?.author?.email).toBeUndefined();
 
     const privateResult = await t.query(
       internal.feedback.api_public_list.getFeedbackByOrganization,
@@ -65,5 +83,39 @@ describe("feedback API detail", () => {
       "src/invoice-row.tsx:42:7"
     );
     expect(privateResult?.assigneeId).toBe("team-user-1");
+    expect(privateResult?.author?.email).toBe("reporter@example.com");
+
+    const publicList = await t.query(
+      internal.feedback.api_public_list.listFeedbackByOrganization,
+      { includePrivateContext: false, organizationId }
+    );
+    expect(publicList.items[0]?.author?.email).toBeUndefined();
+
+    const privateList = await t.query(
+      internal.feedback.api_public_list.listFeedbackByOrganization,
+      { includePrivateContext: true, organizationId }
+    );
+    expect(privateList.items[0]?.author?.email).toBe("reporter@example.com");
+
+    const publicComments = await t.query(
+      internal.feedback.api_public.listCommentsByOrganization,
+      { feedbackId, includePrivateContext: false, organizationId }
+    );
+    expect(publicComments[0]?.author?.email).toBeUndefined();
+
+    const privateComments = await t.query(
+      internal.feedback.api_public.listCommentsByOrganization,
+      { feedbackId, includePrivateContext: true, organizationId }
+    );
+    expect(privateComments[0]?.author?.email).toBe("reporter@example.com");
+
+    await t.run(async (ctx) => {
+      await ctx.db.patch(feedbackId, { deletedAt: Date.now() });
+    });
+    const deletedFeedbackComments = await t.query(
+      internal.feedback.api_public.listCommentsByOrganization,
+      { feedbackId, includePrivateContext: false, organizationId }
+    );
+    expect(deletedFeedbackComments).toEqual([]);
   });
 });

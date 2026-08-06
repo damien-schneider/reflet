@@ -13,13 +13,14 @@ import { generateSetupPrompt } from "reflet-cli/prompt";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
 } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 interface FeedbackCollectorCardProps {
   isLoading: boolean;
@@ -74,12 +75,12 @@ function InstallationPanel({
             read private data.
           </p>
         </div>
-        <Button
-          className="min-h-11"
-          render={<Link href={`/dashboard/${orgSlug}/project/api-keys`} />}
+        <Link
+          className={cn(buttonVariants(), "min-h-11")}
+          href={`/dashboard/${orgSlug}/project/api-keys`}
         >
           Create public key
-        </Button>
+        </Link>
       </div>
     );
   }
@@ -150,25 +151,22 @@ export function FeedbackCollectorCard({
               them.
             </CardDescription>
           </div>
-          <Button
-            className="min-h-11"
-            render={
-              <Link
-                href="/docs/widget/floating-feedback"
-                rel="noopener"
-                target="_blank"
-              />
-            }
-            size="sm"
-            variant="ghost"
+          <Link
+            className={cn(
+              buttonVariants({ size: "sm", variant: "ghost" }),
+              "min-h-11"
+            )}
+            href="/docs/widget/floating-feedback"
+            rel="noopener"
+            target="_blank"
           >
             View docs
             <ArrowSquareOut className="ml-2 h-4 w-4" />
-          </Button>
+          </Link>
         </div>
       </CardHeader>
       <CardContent className="grid gap-8 py-6 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,0.9fr)]">
-        <div className="space-y-5">
+        <div className="min-w-0 space-y-5">
           <div>
             <h3 className="font-medium text-sm">Every report includes</h3>
             <ul className="mt-3 space-y-3">
@@ -194,7 +192,7 @@ export function FeedbackCollectorCard({
           </p>
         </div>
 
-        <div className="flex flex-col justify-center rounded-lg bg-muted/60 p-4 sm:p-5">
+        <div className="flex min-w-0 flex-col justify-center rounded-lg bg-muted/60 p-4 sm:p-5">
           <InstallationPanel
             isLoading={isLoading}
             orgSlug={orgSlug}
