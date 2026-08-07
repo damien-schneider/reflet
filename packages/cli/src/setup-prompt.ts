@@ -3,73 +3,135 @@ export function generateSetupPrompt(publicKey = "fb_pub_xxx"): string {
 
 Reflet is a feedback tool. The widget is a floating button that opens a panel
 where a user writes a report; it screenshots the current viewport
-automatically, lets them draw on that screenshot, and lets them point at a
-specific element so the report carries the React component and its source
-location.
+automatically. On React it also lets them draw on that screenshot and point at
+an element, so the report carries that element's selector and markup — plus the
+component stack and source location when the build exposes them.
 
-Do this:
+Read this codebase first: which package manager it uses, which framework
+renders it, which file every page goes through, and how it reads the current
+user. Everything below adapts to what you find — nothing here assumes Next.js.
 
-1. Install the SDK with the package manager this repo already uses:
-   \`reflet-sdk\`
+## 1. Pick a path
 
-2. Mount the widget once, as the last child of the app shell, so it renders on
-   every page:
+- Renders React (Next.js, Vite, React Router, Remix, TanStack Start, Expo web,
+  Astro islands…) → §2, the npm package. Full annotation and element picker.
+- Anything else (Vue, Svelte, Angular, Rails, Django, Laravel, plain HTML) →
+  §3, the script tag. Report, screenshot and board; no annotation or picker.
 
-   - Next.js App Router → \`app/layout.tsx\` (or \`src/app/layout.tsx\`), just
-     before \`</body>\`. The widget ships its own \`"use client"\` directive, so
-     the layout can stay a Server Component.
-   - Next.js Pages Router → \`pages/_app.tsx\`, as a sibling of
-     \`<Component {...pageProps} />\` inside a fragment.
-   - Vite / React Router → next to \`<App />\` in \`src/main.tsx\`, or before
-     \`</body>\` in \`app/root.tsx\`.
+## 2. React
 
-   \`\`\`tsx
-   import { RefletFeedback } from "reflet-sdk/feedback";
+Install \`reflet-sdk\` with the package manager this repo already uses.
 
-   <RefletFeedback publicKey={process.env.NEXT_PUBLIC_REFLET_PUBLIC_KEY} />
-   \`\`\`
+Mount the widget exactly once, as the last child of the app shell — the single
+component every page renders through. Find that file; it is usually one of:
 
-   With Vite, read the key from \`import.meta.env.VITE_REFLET_PUBLIC_KEY\`
-   instead.
+- Next.js App Router → \`app/layout.tsx\`, just before \`</body>\`. The widget
+  ships its own \`"use client"\`, so the layout stays a Server Component.
+- Next.js Pages Router → \`pages/_app.tsx\`, sibling of \`<Component />\`.
+- Vite → beside \`<App />\` in \`src/main.tsx\`.
+- React Router / Remix → before \`</body>\` in \`app/root.tsx\`.
+- TanStack Start → the root route's shell component.
 
-3. Add this public key to the env file the framework reads:
+\`\`\`tsx
+import { RefletFeedback } from "reflet-sdk/feedback";
 
-   \`${publicKey}\`
+<RefletFeedback publicKey={/* see §4 */} />
+\`\`\`
 
-   Use \`.env.local\` for Next.js or \`.env\` for Vite. The key is safe to
-   expose in the browser and comes from Reflet Dashboard → In-App.
+## 3. Any other stack
 
-4. If the app knows who the user is, pass it — reports then carry an identity
-   instead of asking for an email:
+Serve one script tag on every page, from the layout or base template this app
+already has:
 
-   \`\`\`tsx
-   <RefletFeedback
-     publicKey={process.env.NEXT_PUBLIC_REFLET_PUBLIC_KEY}
-     user={{ id: user.id, email: user.email, name: user.name }}
-   />
-   \`\`\`
+\`\`\`html
+<script
+  src="https://www.reflet.app/widget/reflet-feedback.v1.js"
+  data-public-key="${publicKey}"
+  data-position="bottom-right"
+  data-theme="auto"
+  defer
+></script>
+\`\`\`
 
-   Use the app's real current-user object. Do not invent an auth hook: find how
-   this codebase reads the session and reuse it. If there is no auth, leave
-   \`user\` out.
+Anything beyond key, position, colour and theme goes through a config object
+declared before the script loads:
 
-5. Options worth setting when they match this app:
-   - \`position\` — "bottom-right" (default), "bottom-left", "top-right", "top-left"
-   - \`primaryColor\` — any CSS color, to match the product's brand
-   - \`theme\` — "auto" (default), "light", "dark"
-   - \`enabled\` — target specific people with an app-owned boolean, for example
-     \`enabled={["user_1", "user_2"].includes(user.id)}\`
-   - \`dismissForDays\` — let a reporter hide the launcher for that many days
-   - \`hotkey\` — e.g. "mod+shift+f"; off by default so nothing is hijacked
-   - \`captureConsole\` — set to false to stop recording console errors
-   - \`metadata\` — a flat string record merged into every report (plan, tenant…)
+\`\`\`html
+<script>
+  window.Reflet = {
+    publicKey: "${publicKey}",
+    user: { id: "user_123", email: "jane@example.com", name: "Jane Doe" },
+  };
+</script>
+\`\`\`
 
-Constraints:
+## 4. The public key
+
+\`${publicKey}\`
+
+It is safe in the browser and comes from Reflet Dashboard → In-App. Put it in
+whichever env file this framework reads, under whichever prefix that framework
+exposes to the browser — \`NEXT_PUBLIC_\`, \`VITE_\`, \`NUXT_PUBLIC_\`,
+\`PUBLIC_\`, \`EXPO_PUBLIC_\`, \`REACT_APP_\`. Read it the way the rest of this
+codebase reads its own public env vars; do not invent a second convention.
+
+## 5. Identity
+
+Reports carry an identity instead of asking for an email. Find how this
+codebase reads its session and reuse it — do not invent an auth hook. If there
+is no auth, skip this section.
+
+Unsigned, when the app is not security-sensitive about who files a report:
+
+\`\`\`tsx
+<RefletFeedback publicKey={KEY} user={{ id: user.id, email: user.email, name: user.name }} />
+\`\`\`
+
+Signed, so a browser cannot impersonate another user — sign on the server and
+hand the token down. \`signUser\` is runtime-agnostic (Node, Deno, Bun, Edge,
+Cloudflare Workers, Convex), so it fits a route handler, a server function, a
+middleware or a controller alike:
+
+\`\`\`ts
+import { signUser } from "reflet-sdk/server";
+
+const { token } = await signUser(
+  { id: user.id, email: user.email, name: user.name },
+  REFLET_SECRET_KEY
+);
+\`\`\`
+
+\`\`\`tsx
+<RefletFeedback publicKey={KEY} userToken={token} />
+\`\`\`
+
+The secret key never reaches the browser: read it from a server-only env var,
+never one carrying a public prefix. The script tag takes the same \`userToken\`
+through \`window.Reflet\`.
+
+## 6. Options worth setting when they match this app
+
+- \`position\` — "bottom-right" (default), "bottom-left", "top-right",
+  "top-left". Check what already sits in that corner before choosing.
+- \`primaryColor\` — any CSS colour, to match the product's brand.
+- \`theme\` — "auto" (default), "light", "dark". If this app owns a theme
+  toggle, pass its current value rather than leaving it on "auto".
+- \`enabled\` — gate the launcher on an app-owned boolean, for example
+  \`enabled={user.email === "you@example.com"}\` while dogfooding.
+- \`dismissForDays\` — let a reporter hide the launcher for that many days.
+- \`hotkey\` — e.g. "mod+shift+f"; off by default so nothing is hijacked.
+- \`captureConsole\` — set to false to stop recording console errors.
+- \`metadata\` — a flat string record merged into every report (plan, tenant…).
+
+## Constraints
+
 - Mount it exactly once. Two widgets means two floating buttons.
 - Do not wrap it in \`RefletProvider\` unless the app already uses one; the
   widget works standalone with a \`publicKey\`.
-- Do not add it to a server-only file other than a layout — it needs the DOM.
+- It needs the DOM: keep it out of server-only files other than the app shell.
 - Do not commit a real key if this repo commits its env files.
+- Match this codebase's conventions — its formatter, its import style, its file
+  layout. The integration should read like the code around it.
 
 When you are done, run the app, click the button and confirm the panel opens
 with a screenshot preview.`;
