@@ -3,6 +3,7 @@
 import { Plus } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 interface AddMonitorInputProps {
@@ -34,7 +35,6 @@ export function AddMonitorInput({ onAdd }: AddMonitorInputProps) {
       return;
     }
 
-    // Auto-prepend https:// if missing
     const fullUrl = trimmed.startsWith("http") ? trimmed : `https://${trimmed}`;
     const name = extractNameFromUrl(fullUrl);
 
@@ -45,33 +45,33 @@ export function AddMonitorInput({ onAdd }: AddMonitorInputProps) {
 
   if (!isAdding) {
     return (
-      <button
-        className="flex w-full items-center gap-2 rounded-lg border border-dashed p-4 text-muted-foreground text-sm transition-colors hover:border-primary hover:text-foreground"
+      <Button
+        className="w-full justify-start"
         onClick={() => setIsAdding(true)}
         type="button"
+        variant="outline"
       >
         <Plus className="h-4 w-4" />
-        Add a monitor
-      </button>
+        Add monitor
+      </Button>
     );
   }
 
   return (
-    <div className="flex items-center gap-2 rounded-lg border border-primary p-2">
+    <div className="flex items-center gap-2">
       <Input
         autoFocus
-        className="border-0 shadow-none focus-visible:ring-0"
         onBlur={() => {
           if (!url.trim()) {
             setIsAdding(false);
           }
         }}
-        onChange={(e) => setUrl(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
+        onChange={(event) => setUrl(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
             handleSubmit();
           }
-          if (e.key === "Escape") {
+          if (event.key === "Escape") {
             setUrl("");
             setIsAdding(false);
           }
@@ -79,9 +79,9 @@ export function AddMonitorInput({ onAdd }: AddMonitorInputProps) {
         placeholder="https://api.example.com/health"
         value={url}
       />
-      <span className="shrink-0 text-muted-foreground text-xs">
-        Press Enter to add
-      </span>
+      <Button disabled={!url.trim()} onClick={handleSubmit}>
+        Add
+      </Button>
     </div>
   );
 }

@@ -52,11 +52,11 @@ export default function ProjectLayout({
     return (
       <div className="mx-auto max-w-5xl px-4 pt-12 pb-8">
         <div className="flex flex-col md:flex-row md:gap-8">
-          <div className="hidden w-56 shrink-0 md:block">
+          <div className="hidden w-44 shrink-0 md:block">
             <div className="space-y-2">
               {Array.from({ length: 5 }, (_, i) => (
                 <Skeleton
-                  className="h-12 w-full rounded-lg"
+                  className="h-10 w-full rounded-lg"
                   key={`skeleton-${String(i)}`}
                 />
               ))}
@@ -79,19 +79,16 @@ export default function ProjectLayout({
     <ProjectContext value={{ isAdmin, organizationId: org._id, orgSlug }}>
       <div className="mx-auto max-w-5xl px-4 pt-12 pb-8">
         <div className="flex flex-col md:flex-row md:gap-8">
-          {/* Mobile: horizontal scroll tabs */}
           <ScrollArea className="-mx-4 mb-6 md:hidden" direction="horizontal">
             <div className="px-4">
               <ProjectNav baseUrl={baseUrl} variant="tabs" />
             </div>
           </ScrollArea>
 
-          {/* Desktop: sticky vertical nav */}
-          <div className="sticky top-12 hidden w-56 shrink-0 self-start md:block">
+          <div className="sticky top-12 hidden w-44 shrink-0 self-start md:block">
             <ProjectNav baseUrl={baseUrl} />
           </div>
 
-          {/* Content area */}
           <div className="min-w-0 flex-1">{children}</div>
         </div>
       </div>

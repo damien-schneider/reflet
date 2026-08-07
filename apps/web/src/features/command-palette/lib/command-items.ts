@@ -50,7 +50,7 @@ export const commandItems: CommandItem[] = [
     icon: Code,
     id: "in-app",
     keywords: ["in-app", "widgets", "embed", "code", "integration"],
-    label: "In-App",
+    label: "In-app",
     requiresAdmin: true,
     requiresOrg: true,
   },

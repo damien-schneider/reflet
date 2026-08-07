@@ -129,7 +129,7 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
           badge: undefined,
           href: "/dashboard/$orgSlug/in-app",
           icon: Code,
-          label: "In-App",
+          label: "In-app",
         },
         {
           badge: undefined,

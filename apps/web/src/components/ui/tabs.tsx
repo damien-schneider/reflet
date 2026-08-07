@@ -35,7 +35,7 @@ function Tabs({
 }
 
 const tabsListVariants = cva(
-  "inline-flex w-fit max-w-full items-center justify-center overflow-x-auto rounded-full p-1 text-muted-foreground group-data-[orientation=vertical]/tabs:max-w-none group-data-[orientation=vertical]/tabs:overflow-visible data-[variant=line]:rounded-none data-[variant=line]:p-0 group-data-[orientation=vertical]/tabs:h-fit group-data-[orientation=vertical]/tabs:flex-col",
+  "inline-flex w-fit max-w-full items-center justify-start overflow-x-auto rounded-full p-1 text-muted-foreground group-data-[orientation=vertical]/tabs:max-w-none group-data-[orientation=vertical]/tabs:overflow-visible data-[variant=line]:rounded-none data-[variant=line]:p-0 group-data-[orientation=vertical]/tabs:h-fit group-data-[orientation=vertical]/tabs:flex-col",
   {
     defaultVariants: {
       variant: "default",

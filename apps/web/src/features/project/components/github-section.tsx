@@ -1,14 +1,7 @@
 "use client";
 
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   useWebsiteReferenceDialog,
   WebsiteReferenceAddButton,
@@ -86,45 +79,37 @@ export function GitHubSection({
   });
 
   return (
-    <div className="space-y-6">
-      {/* GitHub Connection & Repository */}
-      <Card>
-        <CardHeader>
-          <CardTitle>GitHub Connection</CardTitle>
-          {isConnected ? null : (
-            <CardDescription>
-              Connect your GitHub account to sync releases
-            </CardDescription>
-          )}
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <GitHubConnectionSection
-            accountAvatarUrl={queries.connectionStatus?.accountAvatarUrl}
-            accountLogin={queries.connectionStatus?.accountLogin}
-            connectHref={settings.connectHref}
+    <div className="space-y-8">
+      <h1 className="font-semibold text-lg">GitHub</h1>
+
+      <section className="space-y-4">
+        <h2 className="font-medium text-sm">Connection</h2>
+        <GitHubConnectionSection
+          accountAvatarUrl={queries.connectionStatus?.accountAvatarUrl}
+          accountLogin={queries.connectionStatus?.accountLogin}
+          connectHref={settings.connectHref}
+          isAdmin={isAdmin}
+          isConnected={isConnected}
+          isDisconnecting={settings.isDisconnecting}
+          isOwnerLeft={queries.connectionStatus?.isOwnerLeft}
+          onConnectClick={settings.handleConnectClick}
+          onDisconnect={settings.handleDisconnect}
+        />
+        {isConnected ? (
+          <RepositorySelectorSection
+            error={settings.repoError}
+            hasRepository={hasRepository && !settings.isChangingRepository}
             isAdmin={isAdmin}
-            isConnected={isConnected}
-            isDisconnecting={settings.isDisconnecting}
-            isOwnerLeft={queries.connectionStatus?.isOwnerLeft}
-            onConnectClick={settings.handleConnectClick}
-            onDisconnect={settings.handleDisconnect}
+            loadingRepos={settings.loadingRepos}
+            onChangeRepository={settings.handleChangeRepository}
+            onConnectRepository={settings.handleSelectRepository}
+            onSelectRepo={settings.setSelectedRepo}
+            repositories={settings.repositories}
+            repositoryFullName={repoFullName}
+            selectedRepo={settings.selectedRepo}
           />
-          {isConnected ? (
-            <RepositorySelectorSection
-              error={settings.repoError}
-              hasRepository={hasRepository && !settings.isChangingRepository}
-              isAdmin={isAdmin}
-              loadingRepos={settings.loadingRepos}
-              onChangeRepository={settings.handleChangeRepository}
-              onConnectRepository={settings.handleSelectRepository}
-              onSelectRepo={settings.setSelectedRepo}
-              repositories={settings.repositories}
-              repositoryFullName={repoFullName}
-              selectedRepo={settings.selectedRepo}
-            />
-          ) : null}
-        </CardContent>
-      </Card>
+        ) : null}
+      </section>
 
       {hasRepository ? (
         <GitHubRepoDetails
@@ -139,29 +124,21 @@ export function GitHubSection({
         <RepoAnalysisPanel isAdmin={isAdmin} organizationId={organizationId} />
       ) : null}
 
-      {/* Website References */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Website References</CardTitle>
-          <CardDescription>
-            Add websites to provide additional context for AI
-          </CardDescription>
+      <section className="space-y-4 border-t pt-8">
+        <div className="flex items-center justify-between gap-4">
+          <h2 className="font-medium text-sm">Website references</h2>
           {isAdmin ? (
-            <CardAction>
-              <WebsiteReferenceAddButton
-                onOpen={() => websiteDialog.setIsOpen(true)}
-              />
-            </CardAction>
+            <WebsiteReferenceAddButton
+              onOpen={() => websiteDialog.setIsOpen(true)}
+            />
           ) : null}
-        </CardHeader>
-        <CardContent>
-          <WebsiteReferenceList
-            dialogState={websiteDialog}
-            isAdmin={isAdmin}
-            organizationId={organizationId}
-          />
-        </CardContent>
-      </Card>
+        </div>
+        <WebsiteReferenceList
+          dialogState={websiteDialog}
+          isAdmin={isAdmin}
+          organizationId={organizationId}
+        />
+      </section>
     </div>
   );
 }
@@ -179,7 +156,6 @@ function GitHubRepoDetails({
 }) {
   return (
     <div className="space-y-6">
-      {/* Release Sync */}
       <Card>
         <CardContent className="space-y-6">
           <SyncSettingsSection
@@ -194,7 +170,6 @@ function GitHubRepoDetails({
         </CardContent>
       </Card>
 
-      {/* Issue Sync & Label Mappings */}
       <Card>
         <CardContent className="space-y-6">
           <IssuesSyncSection

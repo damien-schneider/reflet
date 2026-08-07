@@ -1,9 +1,10 @@
 "use client";
 
-import { ArrowsClockwise, Globe, Trash } from "@phosphor-icons/react";
+import { ArrowsClockwise, Trash } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
+import Link from "next/link";
 import { useState } from "react";
 
 import {
@@ -18,8 +19,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Muted, Text } from "@/components/ui/typography";
 import { DnsInstructions, DomainStatusBadge } from "./domain-status";
@@ -103,165 +103,141 @@ export function DomainsSection({
     }
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
+  const copyToClipboard = async (text: string) => {
+    await navigator.clipboard.writeText(text);
   };
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Globe className="h-5 w-5 text-muted-foreground" />
-            <CardTitle>Automatic Subdomain</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-2">
-            <code className="rounded-md bg-muted px-3 py-1.5 text-sm">
-              {orgSlug}.reflet.app
-            </code>
-            <Badge variant="default">Active</Badge>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="space-y-8">
+      <h1 className="font-semibold text-lg">Domains</h1>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Globe className="h-5 w-5 text-muted-foreground" />
-            <CardTitle>Custom Domain</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {!isPro && (
-            <div className="rounded-lg border border-dashed p-6 text-center">
-              <Text className="mb-2 font-medium">Upgrade to Pro</Text>
-              <Muted>Use your own domain on the Pro plan.</Muted>
-            </div>
-          )}
+      <section className="flex items-center justify-between gap-4">
+        <div className="space-y-2">
+          <h2 className="font-medium text-sm">Subdomain</h2>
+          <code className="inline-block rounded-md bg-muted px-3 py-1.5 text-sm">
+            {orgSlug}.reflet.app
+          </code>
+        </div>
+        <Badge variant="default">Active</Badge>
+      </section>
 
-          {isPro && hasDomain && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <code className="rounded-md bg-muted px-3 py-1.5 text-sm">
-                    {domainStatus.customDomain}
-                  </code>
-                  {domainStatus.customDomainStatus && (
-                    <DomainStatusBadge
-                      status={domainStatus.customDomainStatus}
-                    />
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  {domainStatus.customDomainStatus !== "active" &&
-                    domainStatus.customDomainStatus !== "removing" && (
-                      <Button
-                        disabled={isChecking}
-                        onClick={handleCheckVerification}
-                        size="sm"
-                        variant="outline"
-                      >
-                        <ArrowsClockwise
-                          className={`h-4 w-4 ${isChecking ? "animate-spin" : ""}`}
-                        />
-                        Check Verification
-                      </Button>
-                    )}
-                  <AlertDialog>
-                    <AlertDialogTrigger
-                      className="inline-flex h-8 items-center justify-center gap-2 rounded-md bg-destructive px-3 text-destructive-foreground text-xs shadow-xs hover:bg-destructive/90 disabled:pointer-events-none disabled:opacity-50"
-                      disabled={
-                        !isAdmin ||
-                        domainStatus.customDomainStatus === "removing"
-                      }
+      <section className="space-y-4 border-t pt-8">
+        <h2 className="font-medium text-sm">Custom domain</h2>
+        {isPro ? null : (
+          <div className="flex items-center justify-between gap-4">
+            <Muted>Available on Pro</Muted>
+            <Link
+              className={buttonVariants({ size: "sm", variant: "outline" })}
+              href={`/dashboard/${orgSlug}/project/billing`}
+            >
+              Upgrade
+            </Link>
+          </div>
+        )}
+        {isPro && hasDomain && (
+          <div className="space-y-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
+                <code className="max-w-full overflow-x-auto rounded-md bg-muted px-3 py-1.5 text-sm">
+                  {domainStatus.customDomain}
+                </code>
+                {domainStatus.customDomainStatus && (
+                  <DomainStatusBadge status={domainStatus.customDomainStatus} />
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {domainStatus.customDomainStatus !== "active" &&
+                  domainStatus.customDomainStatus !== "removing" && (
+                    <Button
+                      disabled={isChecking}
+                      onClick={handleCheckVerification}
+                      size="sm"
+                      variant="outline"
                     >
-                      <Trash className="h-4 w-4" />
-                      Remove
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>
-                          Remove Custom Domain
-                        </AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This will remove {domainStatus.customDomain} from your
-                          organization. Your portal will still be accessible via{" "}
-                          {orgSlug}.reflet.app.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleRemoveDomain}>
-                          Remove Domain
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
+                      <ArrowsClockwise
+                        className={`h-4 w-4 ${isChecking ? "animate-spin" : ""}`}
+                      />
+                      Check verification
+                    </Button>
+                  )}
+                <AlertDialog>
+                  <AlertDialogTrigger
+                    className="inline-flex h-8 items-center justify-center gap-2 rounded-md bg-destructive px-3 text-destructive-foreground text-xs shadow-xs hover:bg-destructive/90 disabled:pointer-events-none disabled:opacity-50"
+                    disabled={
+                      !isAdmin || domainStatus.customDomainStatus === "removing"
+                    }
+                  >
+                    <Trash className="h-4 w-4" />
+                    Remove
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Remove custom domain</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will remove {domainStatus.customDomain} from your
+                        organization. Your portal will still be accessible via{" "}
+                        {orgSlug}.reflet.app.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleRemoveDomain}>
+                        Remove domain
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
-
-              {domainStatus.customDomainError && (
-                <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3">
-                  <Text className="text-destructive text-sm">
-                    {domainStatus.customDomainError}
-                  </Text>
-                </div>
-              )}
-
-              {domainStatus.customDomainStatus !== "active" && (
-                <DnsInstructions
-                  domain={domainStatus.customDomain ?? ""}
-                  onCopy={copyToClipboard}
-                  verification={domainStatus.customDomainVerification}
-                />
-              )}
-
-              {error && (
-                <Text className="text-destructive text-sm">{error}</Text>
-              )}
-
-              {domainStatus.customDomainLastCheckedAt && (
-                <Muted className="text-xs">
-                  Last checked:{" "}
-                  {new Date(
-                    domainStatus.customDomainLastCheckedAt
-                  ).toLocaleString()}
-                </Muted>
-              )}
             </div>
-          )}
 
-          {isPro && !hasDomain && (
-            <div className="space-y-4">
-              <div className="flex gap-2">
-                <Input
-                  disabled={!isAdmin}
-                  onChange={(e) => {
-                    setDomainInput(e.target.value);
-                    setError(null);
-                  }}
-                  placeholder="feedback.example.com"
-                  value={domainInput}
-                />
-                <Button
-                  disabled={!isAdmin || isAdding || !domainInput.trim()}
-                  onClick={handleAddDomain}
-                >
-                  {isAdding ? "Adding..." : "Add Domain"}
-                </Button>
+            {domainStatus.customDomainError && (
+              <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3">
+                <Text className="text-destructive text-sm">
+                  {domainStatus.customDomainError}
+                </Text>
               </div>
-              {error && (
-                <Text className="text-destructive text-sm">{error}</Text>
-              )}
-              {!isAdmin && (
-                <Muted>Only admins and owners can manage custom domains.</Muted>
-              )}
+            )}
+
+            {domainStatus.customDomainStatus !== "active" && (
+              <DnsInstructions
+                domain={domainStatus.customDomain ?? ""}
+                onCopy={copyToClipboard}
+                verification={domainStatus.customDomainVerification}
+              />
+            )}
+
+            {error && <Text className="text-destructive text-sm">{error}</Text>}
+          </div>
+        )}
+
+        {isPro && !hasDomain ? (
+          <div className="space-y-4">
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Input
+                disabled={!isAdmin}
+                onChange={(event) => {
+                  setDomainInput(event.target.value);
+                  setError(null);
+                }}
+                placeholder="feedback.example.com"
+                value={domainInput}
+              />
+              <Button
+                disabled={!isAdmin || isAdding || !domainInput.trim()}
+                onClick={handleAddDomain}
+              >
+                {isAdding ? "Adding..." : "Add domain"}
+              </Button>
             </div>
-          )}
-        </CardContent>
-      </Card>
+            {error ? (
+              <Text className="text-destructive text-sm">{error}</Text>
+            ) : null}
+            {isAdmin ? null : (
+              <Muted>Only admins and owners can manage custom domains.</Muted>
+            )}
+          </div>
+        ) : null}
+      </section>
     </div>
   );
 }

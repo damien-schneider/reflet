@@ -1,9 +1,7 @@
 "use client";
 
-import { Megaphone } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import type * as React from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { H3, Muted } from "@/components/ui/typography";
 import type { ReleaseData } from "./release-item";
 import { ReleaseItem } from "./release-item";
@@ -29,20 +27,11 @@ export function ReleaseTimeline<T extends ReleaseData>({
 }: ReleaseTimelineProps<T>) {
   if (!releases || releases.length === 0) {
     return (
-      <Card>
-        <CardContent className="py-12 text-center">
-          <Megaphone className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-          <H3 className="mb-2" variant="card">
-            No releases yet
-          </H3>
-          <Muted className="mb-4">
-            {isAdmin
-              ? "Create your first release to share product updates."
-              : "Check back soon for product updates."}
-          </Muted>
-          {emptyAction}
-        </CardContent>
-      </Card>
+      <div className="py-12 text-center">
+        <H3 variant="card">No releases</H3>
+        {isAdmin ? null : <Muted className="mt-2">Check back soon.</Muted>}
+        {emptyAction ? <div className="mt-4">{emptyAction}</div> : null}
+      </div>
     );
   }
 

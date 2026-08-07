@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Globe, Spinner } from "@phosphor-icons/react";
+import { Check, Spinner } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
@@ -8,17 +8,9 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Muted } from "@/components/ui/typography";
 import { BrandingSection } from "./branding-section";
 
 const generateSlug = (text: string): string =>
@@ -74,8 +66,10 @@ export function OrganizationSection({
   const [slug, setSlug] = useState("");
   const [isPublic, setIsPublic] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUpdatingVisibility, setIsUpdatingVisibility] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [visibilityError, setVisibilityError] = useState<string | null>(null);
 
   useEffect(() => {
     if (org) {
@@ -107,7 +101,6 @@ export function OrganizationSection({
       const trimmedSlug = slug.trim();
       await updateOrg({
         id: organizationId,
-        isPublic,
         name: name.trim(),
         slug: trimmedSlug,
       });
@@ -128,53 +121,62 @@ export function OrganizationSection({
     }
   };
 
-  const hasChanges =
-    org &&
-    (name !== org.name ||
-      slug !== org.slug ||
-      isPublic !== (org.isPublic ?? false));
+  const hasChanges = org && (name !== org.name || slug !== org.slug);
+
+  const handleVisibilityChange = async (checked: boolean) => {
+    const previousValue = isPublic;
+    setIsPublic(checked);
+    setIsUpdatingVisibility(true);
+    setVisibilityError(null);
+    try {
+      await updateOrg({ id: organizationId, isPublic: checked });
+    } catch {
+      setIsPublic(previousValue);
+      setVisibilityError("Could not update visibility");
+    } finally {
+      setIsUpdatingVisibility(false);
+    }
+  };
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Organization Details</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Field>
-            <FieldLabel htmlFor="org-name">Organization Name</FieldLabel>
-            <Input
-              disabled={!isAdmin}
-              id="org-name"
-              onChange={(e) => setName(e.target.value)}
-              placeholder="My Organization"
-              value={name}
-            />
-          </Field>
+    <div className="space-y-8">
+      <h1 className="font-semibold text-lg">Organization</h1>
 
-          <Field>
-            <FieldLabel htmlFor="org-slug">Organization URL</FieldLabel>
-            <div className="flex items-center gap-0 rounded-md border bg-muted/40 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1">
-              <span className="shrink-0 select-none border-r bg-muted px-3 py-2 text-muted-foreground text-sm">
-                /dashboard/
-              </span>
-              <Input
-                className="border-0 shadow-none focus-visible:ring-0"
-                disabled={!isAdmin}
-                id="org-slug"
-                onChange={(e) => handleSlugChange(e.target.value)}
-                placeholder="my-organization"
-                value={slug}
-              />
-            </div>
-            <FieldDescription>
-              Only lowercase letters, numbers, and hyphens
-            </FieldDescription>
-          </Field>
-        </CardContent>
+      <section className="space-y-4 border-b pb-8">
+        <h2 className="font-medium text-sm">Details</h2>
+        <Field>
+          <FieldLabel htmlFor="org-name">Name</FieldLabel>
+          <Input
+            disabled={!isAdmin}
+            id="org-name"
+            onChange={(event) => setName(event.target.value)}
+            placeholder="My organization"
+            value={name}
+          />
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="org-slug">URL</FieldLabel>
+          <div className="flex items-center gap-0 rounded-md border bg-muted/40 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1">
+            <span className="shrink-0 select-none border-r bg-muted px-3 py-2 text-muted-foreground text-sm">
+              /dashboard/
+            </span>
+            <Input
+              className="border-0 shadow-none focus-visible:ring-0"
+              disabled={!isAdmin}
+              id="org-slug"
+              onChange={(event) => handleSlugChange(event.target.value)}
+              placeholder="my-organization"
+              value={slug}
+            />
+          </div>
+          <FieldDescription>
+            Lowercase letters, numbers, and hyphens
+          </FieldDescription>
+        </Field>
 
         {isAdmin ? (
-          <CardFooter className="justify-between">
+          <div className="flex items-center justify-between gap-4">
             {error ? (
               <p className="text-destructive text-sm">{error}</p>
             ) : (
@@ -187,48 +189,39 @@ export function OrganizationSection({
             >
               <SaveButtonContent isSaving={isSaving} saved={saved} />
             </Button>
-          </CardFooter>
-        ) : null}
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <CardTitle className="flex items-center gap-2">
-                <Globe className="h-4 w-4 text-muted-foreground" />
-                Visibility
-              </CardTitle>
-            </div>
-            <Switch
-              aria-label="Make organization public"
-              checked={isPublic}
-              disabled={!isAdmin}
-              id="public-toggle"
-              onCheckedChange={setIsPublic}
-            />
           </div>
-        </CardHeader>
-        <CardContent>
-          <Muted className="leading-relaxed">
-            When enabled, anyone can view your public roadmap and changelog
-            without signing in.
-          </Muted>
-        </CardContent>
-      </Card>
+        ) : null}
+      </section>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Branding</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <BrandingSection
-            isAdmin={isAdmin}
-            organizationId={organizationId}
-            orgSlug={orgSlug}
+      <section className="border-b pb-8">
+        <div className="flex items-center justify-between gap-6">
+          <div>
+            <h2 className="font-medium text-sm">Public</h2>
+            <p className="mt-1 text-muted-foreground text-sm">
+              Anyone can view your roadmap and changelog.
+            </p>
+          </div>
+          <Switch
+            aria-label="Make organization public"
+            checked={isPublic}
+            disabled={!isAdmin || isUpdatingVisibility}
+            id="public-toggle"
+            onCheckedChange={handleVisibilityChange}
           />
-        </CardContent>
-      </Card>
+        </div>
+        {visibilityError ? (
+          <p className="mt-2 text-destructive text-sm">{visibilityError}</p>
+        ) : null}
+      </section>
+
+      <section className="space-y-4">
+        <h2 className="font-medium text-sm">Branding</h2>
+        <BrandingSection
+          isAdmin={isAdmin}
+          organizationId={organizationId}
+          orgSlug={orgSlug}
+        />
+      </section>
     </div>
   );
 }

@@ -26,7 +26,6 @@ export type ProjectTab =
   | "billing";
 
 interface NavItem {
-  description: string;
   icon: Icon;
   id: ProjectTab;
   label: string;
@@ -34,43 +33,36 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   {
-    description: "Repository and sync",
     icon: GithubLogo,
     id: "github",
     label: "GitHub",
   },
   {
-    description: "Assistant and integrations",
     icon: Robot,
     id: "ai-mcp",
     label: "AI & MCP",
   },
   {
-    description: "Keys for the SDK and the feedback widget",
     icon: Key,
     id: "api-keys",
     label: "API Keys",
   },
   {
-    description: "Name, branding, and visibility",
     icon: Buildings,
     id: "general",
     label: "Organization",
   },
   {
-    description: "Custom domains and subdomains",
     icon: Globe,
     id: "domains",
     label: "Domains",
   },
   {
-    description: "Invite and manage team",
     icon: Users,
     id: "members",
     label: "Members",
   },
   {
-    description: "Subscription and payments",
     icon: CreditCard,
     id: "billing",
     label: "Billing",
@@ -84,7 +76,7 @@ interface ProjectNavProps {
 
 export function ProjectNav({ baseUrl, variant = "sidebar" }: ProjectNavProps) {
   const pathname = usePathname();
-  const activeTab = pathname.split("/").pop() as ProjectTab;
+  const activeTab = pathname.split("/").pop();
 
   if (variant === "tabs") {
     return (
@@ -127,10 +119,10 @@ export function ProjectNav({ baseUrl, variant = "sidebar" }: ProjectNavProps) {
 
   return (
     <nav className="flex flex-col gap-1">
-      {NAV_ITEMS.map(({ id, label, description, icon: Icon }) => (
+      {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
         <Link
           className={cn(
-            "flex shrink-0 items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors",
+            "flex h-10 shrink-0 items-center gap-3 rounded-lg px-3 text-left font-medium text-sm transition-colors",
             activeTab === id
               ? "bg-accent text-accent-foreground"
               : "text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground"
@@ -140,12 +132,7 @@ export function ProjectNav({ baseUrl, variant = "sidebar" }: ProjectNavProps) {
           prefetch
         >
           <Icon className="size-4 shrink-0" />
-          <div className="flex flex-col">
-            <span className="font-medium">{label}</span>
-            <span className="hidden text-muted-foreground text-xs md:block">
-              {description}
-            </span>
-          </div>
+          <span>{label}</span>
         </Link>
       ))}
     </nav>

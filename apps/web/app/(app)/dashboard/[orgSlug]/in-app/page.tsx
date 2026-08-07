@@ -7,11 +7,9 @@ import { use, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -98,19 +96,15 @@ export default function WidgetsPage({
   return (
     <div className="admin-container">
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <H1>In-App</H1>
+        <H1>In-app</H1>
         <Dialog onOpenChange={setIsDialogOpen} open={isDialogOpen}>
           <DialogTrigger render={<Button />}>
             <Plus className="mr-2 h-4 w-4" />
-            Add Live Chat
+            Add live chat
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Create a new live chat</DialogTitle>
-              <DialogDescription>
-                Add a live chat to your website. Messages will appear in your
-                inbox.
-              </DialogDescription>
+              <DialogTitle>Create live chat</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
@@ -121,10 +115,6 @@ export default function WidgetsPage({
                   placeholder="Main Website Chat"
                   value={widgetName}
                 />
-                <Muted className="text-xs">
-                  A name to identify this chat (e.g., &quot;Marketing
-                  Site&quot;, &quot;Support Chat&quot;)
-                </Muted>
               </div>
             </div>
             <DialogFooter>
@@ -156,17 +146,9 @@ export default function WidgetsPage({
           ))}
         </div>
       ) : (
-        <Card>
-          <CardContent className="py-10 text-center">
-            <H3 className="mb-4" variant="card">
-              No live chats
-            </H3>
-            <Button onClick={() => setIsDialogOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Live Chat
-            </Button>
-          </CardContent>
-        </Card>
+        <p className="py-8 text-center text-muted-foreground text-sm">
+          No live chats
+        </p>
       )}
     </div>
   );

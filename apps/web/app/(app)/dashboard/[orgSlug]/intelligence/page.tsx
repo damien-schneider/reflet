@@ -19,7 +19,12 @@ export default function IntelligencePage({
 }) {
   const { orgSlug } = use(params);
   const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
-  const [activeTab, setActiveTab] = useState("insights");
+  const config = useQuery(
+    api.intelligence.config.get,
+    org ? { organizationId: org._id } : "skip"
+  );
+  const [selectedTab, setSelectedTab] = useState<string | null>(null);
+  const activeTab = selectedTab ?? "insights";
 
   if (!org) {
     return (
@@ -28,12 +33,29 @@ export default function IntelligencePage({
       </div>
     );
   }
+  if (config === undefined) {
+    return (
+      <div className="admin-container space-y-8">
+        <H1>Intelligence</H1>
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
+
+  if (config === null) {
+    return (
+      <div className="admin-container">
+        <H1 className="mb-8">Intelligence</H1>
+        <IntelligenceSettings organizationId={org._id} />
+      </div>
+    );
+  }
 
   return (
     <div className="admin-container">
       <H1 className="mb-8">Intelligence</H1>
 
-      <Tabs onValueChange={setActiveTab} value={activeTab}>
+      <Tabs onValueChange={setSelectedTab} value={activeTab}>
         <TabsList>
           <TabsTrigger value="insights">
             <Lightbulb className="mr-1.5 h-4 w-4" />

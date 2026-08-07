@@ -10,11 +10,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Text } from "@/components/ui/typography";
 import { InsightCard } from "@/features/intelligence/components/insight-card";
 import { ScanStatusBanner } from "@/features/intelligence/components/scan-status-banner";
-import { GitHubConnectHint } from "@/shared/components/github-connect-hint";
-
-// ============================================
-// INSIGHTS TAB
-// ============================================
 
 const INSIGHT_STATUS_FILTERS = [
   "new",
@@ -141,25 +136,12 @@ export function InsightsTab({
     }
   };
 
-  const hasConfig = config !== undefined && config !== null;
+  if (config === undefined) {
+    return <Skeleton className="h-32 w-full" />;
+  }
 
-  if (!hasConfig) {
-    return (
-      <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-        <Text variant="bodyLarge">No intelligence configured yet</Text>
-        <Text className="mt-2 max-w-md" variant="bodySmall">
-          Go to the Settings tab to configure scanning, then insights will
-          appear here.
-        </Text>
-        <div className="mt-6 w-full max-w-md space-y-4">
-          <GitHubConnectHint
-            description="keywords and competitors from your codebase"
-            organizationId={organizationId}
-            orgSlug={orgSlug}
-          />
-        </div>
-      </div>
-    );
+  if (config === null) {
+    return null;
   }
 
   return (

@@ -4,20 +4,14 @@ import { Check, Spinner } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LogoUploader } from "@/features/organizations/components/logo-uploader";
-import {
-  generateColorPalette,
-  isValidHexColor,
-  normalizeHexColor,
-} from "@/lib/color-utils";
+import { isValidHexColor, normalizeHexColor } from "@/lib/color-utils";
 
 const DEFAULT_PRIMARY_COLOR = "#5c6d4f";
 const AUTOSAVE_DEBOUNCE_MS = 800;
@@ -133,11 +127,8 @@ export function BrandingSection({
     []
   );
 
-  const colorPalette = generateColorPalette(primaryColor);
-
   return (
     <div className="space-y-6">
-      {/* Logo */}
       <div className="space-y-2">
         <Label>Logo</Label>
         <LogoUploader
@@ -147,12 +138,11 @@ export function BrandingSection({
         />
       </div>
 
-      {/* Primary Color */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label htmlFor="primary-color">Primary Color</Label>
           {isProTier ? null : (
-            <Link href={`/dashboard/${orgSlug}/project`}>
+            <Link href={`/dashboard/${orgSlug}/project/billing`}>
               <Badge
                 className="bg-olive-600/10 text-olive-600"
                 variant="secondary"
@@ -185,51 +175,6 @@ export function BrandingSection({
             Please enter a valid hex color (e.g., #5c6d4f)
           </p>
         ) : null}
-      </div>
-
-      {/* Preview */}
-      <div className="space-y-2">
-        <Label>Preview</Label>
-        <div className="overflow-hidden rounded-lg border">
-          <div className="bg-background p-4">
-            <div className="mb-4 flex items-center gap-3">
-              {logo ? (
-                <div className="relative h-8 w-24">
-                  <Image
-                    alt="Logo preview"
-                    className="object-contain"
-                    fill
-                    src={logo}
-                  />
-                </div>
-              ) : (
-                <span className="font-semibold">{org?.name}</span>
-              )}
-            </div>
-            <div className="flex gap-3">
-              <Button
-                className="transition-colors"
-                style={{
-                  backgroundColor: colorPalette.primary,
-                  color: colorPalette.primaryForeground,
-                }}
-              >
-                Primary
-              </Button>
-              <Button
-                className="transition-colors"
-                style={{
-                  backgroundColor: colorPalette.primaryLight,
-                  borderColor: colorPalette.primary,
-                  color: colorPalette.primary,
-                }}
-                variant="outline"
-              >
-                Secondary
-              </Button>
-            </div>
-          </div>
-        </div>
       </div>
 
       {saveStatus === "idle" ? null : (

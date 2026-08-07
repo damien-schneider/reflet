@@ -2,29 +2,6 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@phosphor-icons/react", () => ({
-  Megaphone: ({ className }: { className?: string }) => (
-    <svg className={className} data-testid="megaphone-icon" />
-  ),
-}));
-
-vi.mock("@/components/ui/card", () => ({
-  Card: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="card">{children}</div>
-  ),
-  CardContent: ({
-    children,
-    className,
-  }: {
-    children: React.ReactNode;
-    className?: string;
-  }) => (
-    <div className={className} data-testid="card-content">
-      {children}
-    </div>
-  ),
-}));
-
 vi.mock("@/components/ui/typography", () => ({
   H3: ({
     children,
@@ -136,21 +113,17 @@ describe("ReleaseTimeline", () => {
 
   it("shows empty state when releases array is empty", () => {
     render(<ReleaseTimeline orgSlug="test-org" releases={[]} />);
-    expect(screen.getByText("No releases yet")).toBeInTheDocument();
+    expect(screen.getByText("No releases")).toBeInTheDocument();
   });
 
-  it("shows admin empty message when isAdmin is true", () => {
+  it("hides public helper copy for admins", () => {
     render(<ReleaseTimeline isAdmin orgSlug="test-org" releases={[]} />);
-    expect(
-      screen.getByText("Create your first release to share product updates.")
-    ).toBeInTheDocument();
+    expect(screen.queryByText("Check back soon.")).not.toBeInTheDocument();
   });
 
-  it("shows non-admin empty message when isAdmin is false", () => {
+  it("shows public empty-state copy", () => {
     render(<ReleaseTimeline orgSlug="test-org" releases={[]} />);
-    expect(
-      screen.getByText("Check back soon for product updates.")
-    ).toBeInTheDocument();
+    expect(screen.getByText("Check back soon.")).toBeInTheDocument();
   });
 
   it("renders emptyAction in empty state", () => {
@@ -190,66 +163,6 @@ describe("ReleaseTimeline", () => {
     }
   });
 
-  it("shows empty state when releases is undefined-like (falsy)", () => {
-    render(
-      <ReleaseTimeline orgSlug="test-org" releases={[] as ReleaseData[]} />
-    );
-    expect(screen.getByText("No releases yet")).toBeInTheDocument();
-  });
-
-  it("shows megaphone icon in empty state", () => {
-    render(<ReleaseTimeline orgSlug="test-org" releases={[]} />);
-    expect(screen.getByTestId("megaphone-icon")).toBeInTheDocument();
-  });
-
-  it("renders a single release", () => {
-    render(
-      <ReleaseTimeline
-        orgSlug="test-org"
-        releases={[makeRelease("r1", "Solo Release")]}
-      />
-    );
-    expect(screen.getByText("Solo Release")).toBeInTheDocument();
-    expect(screen.getAllByTestId("release-item")).toHaveLength(1);
-  });
-
-  it("renders as admin with no releases shows admin empty message", () => {
-    render(<ReleaseTimeline isAdmin orgSlug="test-org" releases={[]} />);
-    expect(screen.getByText(/create|start|publish/i)).toBeInTheDocument();
-  });
-
-  it("renders as non-admin with no releases shows different message", () => {
-    render(
-      <ReleaseTimeline isAdmin={false} orgSlug="test-org" releases={[]} />
-    );
-    const elements = screen.getAllByText(/no releases|coming soon|check back/i);
-    expect(elements.length).toBeGreaterThan(0);
-  });
-
-  it("renders multiple releases in order", () => {
-    render(
-      <ReleaseTimeline
-        orgSlug="test-org"
-        releases={[
-          makeRelease("r1", "First"),
-          makeRelease("r2", "Second"),
-          makeRelease("r3", "Third"),
-        ]}
-      />
-    );
-    expect(screen.getAllByTestId("release-item")).toHaveLength(3);
-  });
-
-  it("renders release title text", () => {
-    render(
-      <ReleaseTimeline
-        orgSlug="test-org"
-        releases={[makeRelease("r1", "Big Feature")]}
-      />
-    );
-    expect(screen.getByText("Big Feature")).toBeInTheDocument();
-  });
-
   it("calls onPublish with release id when publish is clicked", () => {
     const onPublish = vi.fn();
     render(<ReleaseTimeline {...defaultProps} onPublish={onPublish} />);
@@ -276,14 +189,5 @@ describe("ReleaseTimeline", () => {
     );
     fireEvent.click(screen.getByTestId("delete-r1"));
     expect(onDelete).toHaveBeenCalledWith(releases[0]);
-  });
-
-  it("renders wrapper callbacks even when parent callbacks not provided", () => {
-    render(<ReleaseTimeline {...defaultProps} />);
-    // Component always passes wrapper arrow functions to ReleaseItem,
-    // so buttons render but clicking them is a no-op
-    expect(screen.getByTestId("publish-r1")).toBeInTheDocument();
-    fireEvent.click(screen.getByTestId("publish-r1"));
-    // No error thrown - the optional chaining makes it a no-op
   });
 });

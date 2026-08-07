@@ -242,16 +242,6 @@ export default function ChangelogPage({
             <RetroactiveDraftsBar orgSlug={orgSlug} releases={releases} />
           )}
           <ReleaseTimeline
-            emptyAction={
-              isAdmin && (
-                <Link href={`/dashboard/${orgSlug}/changelog/new`}>
-                  <Button>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Create Release
-                  </Button>
-                </Link>
-              )
-            }
             isAdmin={isAdmin}
             onDelete={setDeletingRelease}
             onPublish={handlePublish}

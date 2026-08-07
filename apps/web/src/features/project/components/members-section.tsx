@@ -7,13 +7,6 @@ import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { InvitationList } from "@/features/members/components/invitation-list";
 import { InviteMemberDialog } from "@/features/members/components/invite-member-dialog";
 import { MemberList } from "@/features/members/components/member-list";
@@ -44,7 +37,6 @@ export function MembersSection({
   } | null>(null);
 
   const isOwner = currentMember?.role === "owner";
-  const memberCount = members?.length ?? 0;
 
   const handleRemoveMember = async () => {
     if (!removingMember) {
@@ -58,46 +50,31 @@ export function MembersSection({
   };
 
   return (
-    <div className="space-y-4">
-      {isAdmin ? (
-        <div className="flex justify-end">
+    <div className="space-y-8">
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="font-semibold text-lg">Members</h1>
+        {isAdmin ? (
           <Button onClick={() => setIsInviteDialogOpen(true)} size="sm">
             <Plus className="mr-2 h-4 w-4" />
-            Invite Member
+            Invite member
           </Button>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Team Members</CardTitle>
-          <CardDescription>
-            {memberCount} member{memberCount === 1 ? "" : "s"} in this
-            organization
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <MemberList
-            isOwner={isOwner}
-            members={members}
-            onRemoveMember={(id, name) => setRemovingMember({ id, name })}
-          />
-        </CardContent>
-      </Card>
+      <section className="space-y-4">
+        <h2 className="font-medium text-sm">Team</h2>
+        <MemberList
+          isOwner={isOwner}
+          members={members}
+          onRemoveMember={(id, name) => setRemovingMember({ id, name })}
+        />
+      </section>
 
       {invitations && invitations.length > 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Pending Invitations</CardTitle>
-            <CardDescription>
-              {invitations.length} pending invitation
-              {invitations.length === 1 ? "" : "s"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <InvitationList invitations={invitations} />
-          </CardContent>
-        </Card>
+        <section className="space-y-4 border-t pt-8">
+          <h2 className="font-medium text-sm">Pending invitations</h2>
+          <InvitationList invitations={invitations} />
+        </section>
       ) : null}
 
       <InviteMemberDialog

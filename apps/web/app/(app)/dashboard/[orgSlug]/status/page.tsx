@@ -140,18 +140,13 @@ export default function StatusDashboardPage({
       <div className="admin-container">
         <H1 className="mb-8">Status</H1>
 
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12">
-          <div className="w-full max-w-md space-y-4">
-            <GitHubConnectHint
-              description="endpoints and services from your codebase"
-              organizationId={org._id}
-              orgSlug={orgSlug}
-            />
-            <AddMonitorInput
-              onAdd={handleAddMonitor}
-              organizationId={org._id}
-            />
-          </div>
+        <div className="mx-auto w-full max-w-md space-y-4">
+          <GitHubConnectHint
+            description="endpoints and services from your codebase"
+            organizationId={org._id}
+            orgSlug={orgSlug}
+          />
+          <AddMonitorInput onAdd={handleAddMonitor} organizationId={org._id} />
         </div>
       </div>
     );

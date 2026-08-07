@@ -1,25 +1,11 @@
 "use client";
 
-import {
-  ArrowSquareOut,
-  Camera,
-  Code,
-  Copy,
-  Crosshair,
-  Robot,
-} from "@phosphor-icons/react";
+import { ArrowSquareOut, Copy, Robot } from "@phosphor-icons/react";
 import Link from "next/link";
 import { generateSetupPrompt } from "reflet-cli/prompt";
 import { toast } from "sonner";
 
-import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-} from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 interface FeedbackCollectorCardProps {
@@ -27,24 +13,6 @@ interface FeedbackCollectorCardProps {
   orgSlug: string;
   publicKey?: string;
 }
-
-const CAPTURED_CONTEXT = [
-  {
-    description: "Current viewport, ready to draw on or redact",
-    icon: Camera,
-    label: "Screenshot",
-  },
-  {
-    description: "URL, browser, viewport and recent console errors",
-    icon: Code,
-    label: "Page context",
-  },
-  {
-    description: "CSS selector, React component and source location",
-    icon: Crosshair,
-    label: "Selected element",
-  },
-] as const;
 
 function InstallationPanel({
   isLoading,
@@ -55,33 +23,23 @@ function InstallationPanel({
     return (
       <div
         aria-label="Loading feedback collector setup"
-        className="space-y-4 motion-safe:animate-pulse"
+        className="space-y-3 motion-safe:animate-pulse"
         role="status"
       >
-        <div className="h-5 w-48 rounded bg-background" />
-        <div className="h-10 rounded bg-background" />
-        <div className="h-11 rounded bg-background" />
+        <div className="h-11 rounded-md bg-muted" />
+        <div className="h-11 rounded-md bg-muted" />
       </div>
     );
   }
 
   if (!publicKey) {
     return (
-      <div className="space-y-4">
-        <div>
-          <h3 className="font-medium">Create a public key first</h3>
-          <p className="mt-1 text-muted-foreground text-sm">
-            The browser-safe key sends feedback to this organization and cannot
-            read private data.
-          </p>
-        </div>
-        <Link
-          className={cn(buttonVariants(), "min-h-11")}
-          href={`/dashboard/${orgSlug}/project/api-keys`}
-        >
-          Create public key
-        </Link>
-      </div>
+      <Link
+        className={cn(buttonVariants(), "min-h-11")}
+        href={`/dashboard/${orgSlug}/project/api-keys`}
+      >
+        Create public key
+      </Link>
     );
   }
 
@@ -93,37 +51,27 @@ function InstallationPanel({
   };
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h3 className="font-medium">Install with your coding agent</h3>
-        <p className="mt-1 text-muted-foreground text-sm">
-          Copy a project-aware prompt for Claude Code, Cursor, Codex or another
-          coding agent.
-        </p>
-      </div>
+    <div className="max-w-2xl space-y-3">
       <Button
-        className="min-h-11 w-full"
-        onClick={() => copyToClipboard(setupPrompt, "AI setup prompt")}
+        className="min-h-11"
+        onClick={() => copyToClipboard(setupPrompt, "Setup prompt")}
       >
         <Robot className="mr-2 h-4 w-4" />
-        Copy AI setup prompt
+        Copy setup prompt
       </Button>
-      <div className="space-y-2">
-        <p className="font-medium text-xs">Or run one command</p>
-        <div className="flex min-w-0 items-center gap-2 rounded-md bg-background p-2">
-          <code className="min-w-0 flex-1 overflow-x-auto whitespace-nowrap px-1 text-xs">
-            {installCommand}
-          </code>
-          <Button
-            aria-label="Copy install command"
-            className="size-11"
-            onClick={() => copyToClipboard(installCommand, "Install command")}
-            size="icon"
-            variant="ghost"
-          >
-            <Copy className="h-4 w-4" />
-          </Button>
-        </div>
+      <div className="flex min-w-0 items-center gap-2 rounded-md bg-muted p-2">
+        <code className="min-w-0 flex-1 overflow-x-auto whitespace-nowrap px-1 text-xs">
+          {installCommand}
+        </code>
+        <Button
+          aria-label="Copy install command"
+          className="size-11"
+          onClick={() => copyToClipboard(installCommand, "Install command")}
+          size="icon"
+          variant="ghost"
+        >
+          <Copy className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   );
@@ -135,71 +83,27 @@ export function FeedbackCollectorCard({
   publicKey,
 }: FeedbackCollectorCardProps) {
   return (
-    <Card>
-      <CardHeader className="border-b">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <h2 className="font-medium text-base leading-snug">
-                Feedback collector
-              </h2>
-              <Badge variant="secondary">Recommended</Badge>
-            </div>
-            <CardDescription className="max-w-2xl">
-              Add a floating bubble to any React app. Reports arrive in your
-              feed with the visual and technical context needed to reproduce
-              them.
-            </CardDescription>
-          </div>
-          <Link
-            className={cn(
-              buttonVariants({ size: "sm", variant: "ghost" }),
-              "min-h-11"
-            )}
-            href="/docs/widget/floating-feedback"
-            rel="noopener"
-            target="_blank"
-          >
-            View docs
-            <ArrowSquareOut className="ml-2 h-4 w-4" />
-          </Link>
-        </div>
-      </CardHeader>
-      <CardContent className="grid gap-8 py-6 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,0.9fr)]">
-        <div className="min-w-0 space-y-5">
-          <div>
-            <h3 className="font-medium text-sm">Every report includes</h3>
-            <ul className="mt-3 space-y-3">
-              {CAPTURED_CONTEXT.map(({ description, icon: Icon, label }) => (
-                <li className="flex gap-3" key={label}>
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-                    <Icon aria-hidden="true" className="h-4 w-4" />
-                  </span>
-                  <span>
-                    <span className="block font-medium text-sm">{label}</span>
-                    <span className="block text-muted-foreground text-sm">
-                      {description}
-                    </span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <p className="max-w-xl text-muted-foreground text-sm">
-            Use the <code>enabled</code> prop to assign the bubble to selected
-            people. Set <code>dismissForDays</code> when reporters should be
-            able to hide it temporarily.
-          </p>
-        </div>
-
-        <div className="flex min-w-0 flex-col justify-center rounded-lg bg-muted/60 p-4 sm:p-5">
-          <InstallationPanel
-            isLoading={isLoading}
-            orgSlug={orgSlug}
-            publicKey={publicKey}
-          />
-        </div>
-      </CardContent>
-    </Card>
+    <section className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="font-medium text-base">Feedback collector</h2>
+        <Link
+          className={cn(
+            buttonVariants({ size: "sm", variant: "ghost" }),
+            "min-h-11"
+          )}
+          href="/docs/widget/floating-feedback"
+          rel="noopener"
+          target="_blank"
+        >
+          View docs
+          <ArrowSquareOut className="ml-2 h-4 w-4" />
+        </Link>
+      </div>
+      <InstallationPanel
+        isLoading={isLoading}
+        orgSlug={orgSlug}
+        publicKey={publicKey}
+      />
+    </section>
   );
 }

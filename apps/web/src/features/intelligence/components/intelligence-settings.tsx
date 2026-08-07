@@ -6,7 +6,6 @@ import { useMutation, useQuery } from "convex/react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -15,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 
 const SCAN_FREQUENCIES = ["daily", "twice_weekly", "weekly"] as const;
@@ -89,37 +89,29 @@ export function IntelligenceSettings({
   const [redditEnabled, setRedditEnabled] = useState(false);
   const [webSearchEnabled, setWebSearchEnabled] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    if (!(config || initialized)) {
-      getOrCreate({
-        organizationId,
-      }).catch(() => {
-        // Config creation handled silently
-      });
+    if (!config) {
+      return;
     }
-  }, [config, initialized, getOrCreate, organizationId]);
-
-  useEffect(() => {
-    if (config) {
-      setScanFrequency(
-        isScanFrequency(config.scanFrequency) ? config.scanFrequency : "weekly"
-      );
-      setCompetitorTrackingEnabled(config.competitorTrackingEnabled ?? false);
-      setRedditEnabled(config.redditEnabled ?? false);
-      setWebSearchEnabled(config.webSearchEnabled ?? false);
-      setInitialized(true);
-    }
+    setScanFrequency(
+      isScanFrequency(config.scanFrequency) ? config.scanFrequency : "weekly"
+    );
+    setCompetitorTrackingEnabled(config.competitorTrackingEnabled ?? false);
+    setRedditEnabled(config.redditEnabled ?? false);
+    setWebSearchEnabled(config.webSearchEnabled ?? false);
   }, [config]);
 
   const handleSave = async () => {
-    if (!config?._id) {
+    if (config === undefined) {
       return;
     }
 
     setIsSaving(true);
     try {
+      if (config === null) {
+        await getOrCreate({ organizationId });
+      }
       await updateConfig({
         competitorTrackingEnabled,
         organizationId,
@@ -127,7 +119,9 @@ export function IntelligenceSettings({
         scanFrequency,
         webSearchEnabled,
       });
-      toast.success("Settings saved");
+      toast.success(
+        config === null ? "Intelligence enabled" : "Settings saved"
+      );
     } catch (error) {
       toast.error("Failed to save settings", {
         description:
@@ -138,98 +132,81 @@ export function IntelligenceSettings({
     }
   };
 
+  if (config === undefined) {
+    return <Skeleton className="h-64 w-full" />;
+  }
+  const saveLabel = config === null ? "Enable intelligence" : "Save";
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Intelligence Settings</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="flex flex-col gap-6">
-          <div className="flex flex-col gap-2">
-            <Label>Scan Frequency</Label>
-            <Select
-              onValueChange={(value) => {
-                if (value && isScanFrequency(value)) {
-                  setScanFrequency(value);
-                }
-              }}
-              value={scanFrequency}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="daily">
-                  {SCAN_FREQUENCY_LABELS.daily}
-                </SelectItem>
-                <SelectItem value="twice_weekly">
-                  {SCAN_FREQUENCY_LABELS.twice_weekly}
-                </SelectItem>
-                <SelectItem value="weekly">
-                  {SCAN_FREQUENCY_LABELS.weekly}
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+    <div className="space-y-6">
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="scan-frequency">Scan frequency</Label>
+        <Select
+          onValueChange={(value) => {
+            if (value && isScanFrequency(value)) {
+              setScanFrequency(value);
+            }
+          }}
+          value={scanFrequency}
+        >
+          <SelectTrigger id="scan-frequency">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="daily">{SCAN_FREQUENCY_LABELS.daily}</SelectItem>
+            <SelectItem value="twice_weekly">
+              {SCAN_FREQUENCY_LABELS.twice_weekly}
+            </SelectItem>
+            <SelectItem value="weekly">
+              {SCAN_FREQUENCY_LABELS.weekly}
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <div className="flex flex-col gap-0.5">
-                <Label>Competitor Tracking</Label>
-                <p className="text-muted-foreground text-xs">
-                  AI monitors competitor websites for product updates, pricing
-                  changes, and new features
-                </p>
-              </div>
-              <Switch
-                checked={competitorTrackingEnabled}
-                onCheckedChange={setCompetitorTrackingEnabled}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex flex-col gap-0.5">
-                <Label>Community Monitoring</Label>
-                <p className="text-muted-foreground text-xs">
-                  AI searches Reddit, forums, and the web for pain points,
-                  feature requests, and market discussions. No API keys needed.
-                </p>
-              </div>
-              <Switch
-                checked={redditEnabled || webSearchEnabled}
-                onCheckedChange={(checked) => {
-                  setRedditEnabled(checked);
-                  setWebSearchEnabled(checked);
-                }}
-              />
-            </div>
-          </div>
-
-          <div className="rounded-lg border border-dashed p-4">
-            <div className="flex flex-col gap-0.5">
-              <Label>Manual & Automatic Scanning</Label>
-              <p className="text-muted-foreground text-xs">
-                Scans run automatically on the schedule above when at least one
-                pipeline is enabled. You can also run a scan manually at any
-                time from the Intelligence page.
-              </p>
-            </div>
-          </div>
-
-          {config?.lastScanAt && (
-            <div className="flex items-center gap-4 text-muted-foreground text-xs">
-              <span>Last scan: {formatRelativeTime(config.lastScanAt)}</span>
-              {config.nextScanAt && (
-                <span>Next scan: {formatFutureTime(config.nextScanAt)}</span>
-              )}
-            </div>
-          )}
-
-          <Button disabled={isSaving || !config?._id} onClick={handleSave}>
-            {isSaving ? "Saving..." : "Save Settings"}
-          </Button>
+      <div className="flex items-center justify-between gap-6">
+        <div>
+          <Label>Competitor tracking</Label>
+          <p className="mt-1 text-muted-foreground text-xs">
+            Monitor product and pricing updates.
+          </p>
         </div>
-      </CardContent>
-    </Card>
+        <Switch
+          aria-label="Competitor tracking"
+          checked={competitorTrackingEnabled}
+          onCheckedChange={setCompetitorTrackingEnabled}
+        />
+      </div>
+
+      <div className="flex items-center justify-between gap-6">
+        <div>
+          <Label>Community monitoring</Label>
+          <p className="mt-1 text-muted-foreground text-xs">
+            Find pain points and feature requests.
+          </p>
+        </div>
+        <Switch
+          aria-label="Community monitoring"
+          checked={redditEnabled || webSearchEnabled}
+          onCheckedChange={(checked) => {
+            setRedditEnabled(checked);
+            setWebSearchEnabled(checked);
+          }}
+        />
+      </div>
+
+      {config?.lastScanAt ? (
+        <div className="flex items-center gap-4 text-muted-foreground text-xs">
+          <span>Last scan: {formatRelativeTime(config.lastScanAt)}</span>
+          {config.nextScanAt ? (
+            <span>Next scan: {formatFutureTime(config.nextScanAt)}</span>
+          ) : null}
+        </div>
+      ) : null}
+
+      <Button disabled={isSaving} onClick={handleSave}>
+        {isSaving ? "Saving..." : saveLabel}
+      </Button>
+    </div>
   );
 }
