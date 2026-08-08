@@ -54,6 +54,7 @@ function submission(overrides: Record<string, unknown> = {}) {
     annotations: [] as Annotation[],
     category: "bug" as const,
     context: { url: "https://app.test/billing" },
+    element: null,
     isAnonymous: false,
     message: "The invoice total is wrong",
     screenshot: null,
@@ -182,6 +183,40 @@ describe("submitWidgetFeedback", () => {
     expect(saved[0]?.annotations).toEqual([
       { color: "#ef4444", endX: 100, endY: 100, type: "arrow", x: 10, y: 10 },
     ]);
+  });
+
+  it("attaches the element close-up as a capture of its own", async () => {
+    const { transport, saved } = stubTransport();
+
+    await submitWidgetFeedback(
+      transport,
+      submission({
+        element: capture({ height: 40, width: 120 }),
+        screenshot: capture(),
+      })
+    );
+
+    expect(saved.map((entry) => entry.captureSource)).toEqual([
+      "widget",
+      "element",
+    ]);
+    expect(saved[1]).toMatchObject({
+      filename: "element.png",
+      height: 40,
+      width: 120,
+    });
+  });
+
+  it("attaches the element close-up even without a page screenshot", async () => {
+    const { transport, saved } = stubTransport();
+
+    await submitWidgetFeedback(
+      transport,
+      submission({ element: capture(), screenshot: null })
+    );
+
+    expect(saved).toHaveLength(1);
+    expect(saved[0]?.captureSource).toBe("element");
   });
 
   it("keeps the feedback when the screenshot upload fails", async () => {

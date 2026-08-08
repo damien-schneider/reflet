@@ -28,6 +28,7 @@ import {
 } from "../types";
 
 const SUCCESS_CLOSE_DELAY = 2400;
+const ELEMENT_CAPTURE_MAX_WIDTH = 1200;
 const IS_APPLE = /Mac|iPhone|iPad/;
 const MILLISECONDS_PER_DAY = 86_400_000;
 const DISMISSAL_STORAGE_PREFIX = "reflet-feedback-dismissed";
@@ -116,6 +117,27 @@ function highlightFor(
   };
 }
 
+/**
+ * A capture whose object URL is revoked the moment it is replaced or dropped —
+ * holding one without this leaks the blob for the lifetime of the page.
+ */
+function useOwnedCapture() {
+  const [image, setImage] = useState<CapturedImage | null>(null);
+  const ref = useRef<CapturedImage | null>(null);
+
+  useEffect(() => {
+    ref.current = image;
+  }, [image]);
+  useEffect(() => () => releaseCapture(ref.current), []);
+
+  const replace = useCallback((next: CapturedImage | null) => {
+    releaseCapture(ref.current);
+    setImage(next);
+  }, []);
+
+  return [image, replace] as const;
+}
+
 export function useWidgetState(props: RefletFeedbackProps) {
   const context = useContext(RefletContext);
   const publicKey = props.publicKey ?? context?.publicKey;
@@ -139,7 +161,8 @@ export function useWidgetState(props: RefletFeedbackProps) {
   const [message, setMessage] = useState("");
   const [email, setEmail] = useState("");
   const [honeypot, setHoneypot] = useState("");
-  const [capture, setCapture] = useState<CapturedImage | null>(null);
+  const [capture, replaceCapture] = useOwnedCapture();
+  const [elementCapture, replaceElementCapture] = useOwnedCapture();
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [selection, setSelection] = useState<ElementSelection | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
@@ -150,6 +173,7 @@ export function useWidgetState(props: RefletFeedbackProps) {
   );
 
   const captureRef = useRef<CapturedImage | null>(null);
+  const pickRef = useRef(0);
   const consoleRef = useRef<ConsoleRecorder | null>(null);
 
   useEffect(() => {
@@ -171,18 +195,6 @@ export function useWidgetState(props: RefletFeedbackProps) {
     };
   }, [props.captureConsole]);
 
-  useEffect(
-    () => () => {
-      releaseCapture(captureRef.current);
-    },
-    []
-  );
-
-  const replaceCapture = useCallback((next: CapturedImage | null) => {
-    releaseCapture(captureRef.current);
-    setCapture(next);
-  }, []);
-
   const takeCapture = useCallback(
     (element?: Element): void => {
       setIsCapturing(true);
@@ -197,8 +209,9 @@ export function useWidgetState(props: RefletFeedbackProps) {
   );
 
   const reset = useCallback(() => {
-    releaseCapture(captureRef.current);
-    setCapture(null);
+    pickRef.current++;
+    replaceCapture(null);
+    replaceElementCapture(null);
     setAnnotations([]);
     setSelection(null);
     setMessage("");
@@ -207,7 +220,7 @@ export function useWidgetState(props: RefletFeedbackProps) {
     setError(null);
     setStep("compose");
     setCategory(props.defaultCategory ?? "bug");
-  }, [props.defaultCategory]);
+  }, [props.defaultCategory, replaceCapture, replaceElementCapture]);
 
   const close = useCallback(() => {
     setIsOpen(false);
@@ -236,26 +249,42 @@ export function useWidgetState(props: RefletFeedbackProps) {
     }
   }, [props.captureOnOpen, props.onOpen, takeCapture]);
 
-  const selectElement = useCallback((element: Element) => {
-    const picked = buildElementSelection(element);
-    setSelection(picked);
-    setStep("compose");
+  const selectElement = useCallback(
+    (element: Element) => {
+      const picked = buildElementSelection(element);
+      setSelection(picked);
+      setStep("compose");
 
-    const current = captureRef.current;
-    if (current) {
-      setAnnotations((previous) => [
-        ...previous.filter((item) => !item.id.startsWith("selection-")),
-        highlightFor(picked, current),
-      ]);
-    }
-  }, []);
+      const current = captureRef.current;
+      if (current) {
+        setAnnotations((previous) => [
+          ...previous.filter((item) => !item.id.startsWith("selection-")),
+          highlightFor(picked, current),
+        ]);
+      }
+
+      const pick = ++pickRef.current;
+      captureViewport({ element, maxWidth: ELEMENT_CAPTURE_MAX_WIDTH })
+        .catch(() => null)
+        .then((image) => {
+          if (pickRef.current === pick) {
+            replaceElementCapture(image);
+          } else {
+            releaseCapture(image);
+          }
+        });
+    },
+    [replaceElementCapture]
+  );
 
   const clearSelection = useCallback(() => {
+    pickRef.current++;
+    replaceElementCapture(null);
     setSelection(null);
     setAnnotations((previous) =>
       previous.filter((item) => !item.id.startsWith("selection-"))
     );
-  }, []);
+  }, [replaceElementCapture]);
 
   const removeCapture = useCallback(() => {
     replaceCapture(null);
@@ -302,6 +331,7 @@ export function useWidgetState(props: RefletFeedbackProps) {
             metadata: props.metadata,
             selection: selection ?? undefined,
           },
+          element: elementCapture,
           email,
           isAnonymous,
           message,
@@ -328,6 +358,7 @@ export function useWidgetState(props: RefletFeedbackProps) {
     category,
     client,
     close,
+    elementCapture,
     email,
     honeypot,
     isAnonymous,
@@ -346,6 +377,7 @@ export function useWidgetState(props: RefletFeedbackProps) {
     close,
     dismiss,
     dismissForDays,
+    elementCapture,
     email,
     error,
     honeypot,

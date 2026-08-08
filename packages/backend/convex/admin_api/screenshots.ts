@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "../_generated/server";
+import { captureSourceValidator } from "../feedback/tableFields";
 
 export const listScreenshots = internalQuery({
   args: {
@@ -35,11 +36,7 @@ export const listScreenshots = internalQuery({
   returns: v.array(
     v.object({
       _id: v.id("feedbackScreenshots"),
-      captureSource: v.union(
-        v.literal("widget"),
-        v.literal("upload"),
-        v.literal("paste")
-      ),
+      captureSource: captureSourceValidator,
       createdAt: v.number(),
       filename: v.string(),
       mimeType: v.string(),

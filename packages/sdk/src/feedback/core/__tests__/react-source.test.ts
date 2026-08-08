@@ -57,6 +57,14 @@ describe("resolveComponentStack", () => {
     expect(resolveComponentStack(span)).toEqual(["LoginForm", "AuthLayout"]);
   });
 
+  it("drops the mangled names a minified bundle hands out", () => {
+    const Ur = () => null;
+    const Card = () => null;
+
+    expect(resolveComponentStack(componentFiber(Ur))).toEqual([]);
+    expect(resolveComponentStack(componentFiber(Card))).toEqual(["Card"]);
+  });
+
   it("prefers displayName over the function name", () => {
     const Card = () => null;
     Card.displayName = "ui/Card";

@@ -76,6 +76,7 @@ export interface FeedbackReportContext {
     html: string;
     label: string;
     rect: { height: number; width: number; x: number; y: number };
+    region?: string;
     selector: string;
     sourceLocation?: string;
   };

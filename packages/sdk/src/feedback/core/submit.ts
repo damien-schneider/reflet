@@ -29,6 +29,8 @@ export interface WidgetSubmission {
   annotations: Annotation[];
   category: FeedbackWidgetCategory;
   context: FeedbackContext;
+  /** Close-up of the picked element, captured when the reporter pointed at it. */
+  element: CapturedImage | null;
   email?: string;
   isAnonymous: boolean;
   message: string;
@@ -70,6 +72,14 @@ export function buildDescription(params: {
   return `[${label}] ${message.trim()}${contact}`;
 }
 
+async function upload(
+  transport: FeedbackTransport,
+  image: CapturedImage
+): Promise<string> {
+  const { uploadUrl } = await transport.getScreenshotUploadUrl();
+  return await transport.uploadImage(uploadUrl, image);
+}
+
 async function attachScreenshot(
   transport: FeedbackTransport,
   feedbackId: string,
@@ -80,23 +90,16 @@ async function attachScreenshot(
     return false;
   }
 
-  const original = await transport.getScreenshotUploadUrl();
-  const storageId = await transport.uploadImage(original.uploadUrl, screenshot);
-
-  let annotatedStorageId: string | undefined;
-  if (annotated) {
-    const target = await transport.getScreenshotUploadUrl();
-    annotatedStorageId = await transport.uploadImage(
-      target.uploadUrl,
-      annotated
-    );
-  }
-
+  const storageId = await upload(transport, screenshot);
+  const annotatedStorageId = annotated
+    ? await upload(transport, annotated)
+    : undefined;
   const wireAnnotations = toWireAnnotations(annotations);
 
   await transport.saveScreenshot({
     annotatedStorageId,
     annotations: wireAnnotations.length > 0 ? wireAnnotations : undefined,
+    captureSource: "widget",
     feedbackId,
     filename: "screenshot.png",
     height: screenshot.height,
@@ -108,6 +111,29 @@ async function attachScreenshot(
   });
 
   return true;
+}
+
+async function attachElement(
+  transport: FeedbackTransport,
+  feedbackId: string,
+  submission: WidgetSubmission
+): Promise<void> {
+  const { context, element } = submission;
+  if (!element) {
+    return;
+  }
+
+  await transport.saveScreenshot({
+    captureSource: "element",
+    feedbackId,
+    filename: "element.png",
+    height: element.height,
+    mimeType: element.mimeType,
+    pageUrl: context.url,
+    size: element.blob.size,
+    storageId: await upload(transport, element),
+    width: element.width,
+  });
 }
 
 /**
@@ -129,12 +155,12 @@ export async function submitWidgetFeedback(
     title,
   });
 
-  let screenshotSaved = false;
-  try {
-    screenshotSaved = await attachScreenshot(transport, feedbackId, submission);
-  } catch {
-    screenshotSaved = false;
-  }
+  const screenshotSaved = await attachScreenshot(
+    transport,
+    feedbackId,
+    submission
+  ).catch(() => false);
+  await attachElement(transport, feedbackId, submission).catch(() => undefined);
 
   return { feedbackId, screenshotSaved };
 }

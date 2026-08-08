@@ -1,12 +1,14 @@
 import { ChatIcon, CloseIcon } from "./icons";
 
+/**
+ * Never changes size between states — the panel opening must not move the
+ * button out from under the pointer.
+ */
 export function Launcher({
-  compact,
   isOpen,
   label,
   onClick,
 }: {
-  compact: boolean;
   isOpen: boolean;
   label: string;
   onClick: () => void;
@@ -14,14 +16,16 @@ export function Launcher({
   return (
     <button
       aria-expanded={isOpen}
-      aria-label={label}
       className="launcher"
-      data-compact={compact || isOpen ? "true" : "false"}
+      data-open={isOpen}
       onClick={onClick}
       type="button"
     >
-      {isOpen ? <CloseIcon /> : <ChatIcon />}
-      {!(compact || isOpen) && label}
+      <span className="launcher-icon">
+        <ChatIcon className="on-open" />
+        <CloseIcon className="on-close" />
+      </span>
+      {label}
     </button>
   );
 }

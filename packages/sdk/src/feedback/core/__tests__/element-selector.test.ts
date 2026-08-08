@@ -3,6 +3,7 @@ import {
   buildElementSelection,
   buildSelector,
   describeElement,
+  describeRegion,
   getElementRect,
 } from "../element-selector";
 
@@ -41,25 +42,43 @@ describe("buildSelector", () => {
     expect(buildSelector(query("button"))).toBe('[data-testid="save-btn"]');
   });
 
+  it("prefers a form control name over a positional path", () => {
+    render('<form><input name="email" type="email" /></form>');
+
+    expect(buildSelector(query("input"))).toBe('input[name="email"]');
+  });
+
   it("builds a positional path when no stable handle exists", () => {
     render("<section><ul><li>a</li><li>b</li></ul></section>");
 
     const selector = buildSelector(query("li:nth-of-type(2)"));
 
-    expect(selector).toBe("body > section > ul > li:nth-of-type(2)");
+    expect(selector).toBe("ul > li:nth-of-type(2)");
     expect(document.querySelectorAll(selector)).toHaveLength(1);
   });
 
-  it("omits nth-of-type when the tag is unique among siblings", () => {
-    render("<section><ul><li>only</li></ul></section>");
+  it("stops growing the path as soon as it resolves uniquely", () => {
+    render(
+      "<div><div><div><section><ul><li>only</li></ul></section></div></div></div>"
+    );
 
-    expect(buildSelector(query("li"))).toBe("body > section > ul > li");
+    expect(buildSelector(query("li"))).toBe("ul > li");
   });
 
-  it("anchors the path on the closest ancestor with a unique id", () => {
+  it("keeps a parent for context instead of returning a bare tag", () => {
     render('<main id="app"><div><p>text</p></div></main>');
 
-    expect(buildSelector(query("p"))).toBe("#app > div > p");
+    expect(buildSelector(query("p"))).toBe("div > p");
+  });
+
+  it("anchors the path on the closest ancestor with a unique handle", () => {
+    render(
+      '<main id="app"><div><p>one</p></div><div><p>two</p></div></main><section><div><p>three</p></div><div><p>four</p></div></section>'
+    );
+
+    expect(buildSelector(query("#app > div:nth-of-type(2) > p"))).toBe(
+      "#app > div:nth-of-type(2) > p"
+    );
   });
 
   it("resolves the document element and body without a path", () => {
@@ -121,6 +140,7 @@ describe("buildElementSelection", () => {
     const selection = buildElementSelection(query("button"));
 
     expect(selection.selector).toBe("#app > button");
+    expect(selection.region).toBe("main");
     expect(selection.label).toBe('button "Save"');
     expect(selection.html).toBe('<button class="primary">Save</button>');
     expect(selection.rect).toEqual({ height: 0, width: 0, x: 0, y: 0 });
@@ -134,6 +154,54 @@ describe("buildElementSelection", () => {
     expect(buildElementSelection(query("div")).html.length).toBeLessThanOrEqual(
       600
     );
+  });
+
+  it("never reports what the user typed into a field", () => {
+    render(
+      '<form><input name="card" value="4242424242424242" /><input name="pass" type="password" value="hunter2" /></form>'
+    );
+
+    const { html } = buildElementSelection(query("form"));
+
+    expect(html).not.toContain("4242424242424242");
+    expect(html).not.toContain("hunter2");
+    expect(html).toContain('name="card"');
+  });
+
+  it("masks contact details left in the markup", () => {
+    render("<p>Contact ada@example.com about this</p>");
+
+    expect(buildElementSelection(query("p")).html).not.toContain(
+      "ada@example.com"
+    );
+  });
+
+  it("drops the subtree of anything marked as private", () => {
+    render("<div data-reflet-redact><span>salary: 92000</span></div>");
+
+    expect(buildElementSelection(query("div")).html).not.toContain("92000");
+  });
+});
+
+describe("describeRegion", () => {
+  beforeEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  it("names the landmark and the heading the element sits under", () => {
+    render(
+      '<main aria-label="Settings"><h2>Danger zone</h2><button>Delete</button></main>'
+    );
+
+    expect(describeRegion(query("button"))).toBe(
+      'main "Settings" › Danger zone'
+    );
+  });
+
+  it("returns nothing when the page offers no landmark or heading", () => {
+    render("<button>Delete</button>");
+
+    expect(describeRegion(query("button"))).toBeUndefined();
   });
 });
 

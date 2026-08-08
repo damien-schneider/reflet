@@ -1,16 +1,17 @@
 import { useEffect, useState } from "react";
 import { WIDGET_MARKER } from "../core/capture";
-import { buildSelector, describeElement } from "../core/element-selector";
+import { describeElement, describeRegion } from "../core/element-selector";
 import { getFiberFromNode, resolveComponentStack } from "../core/react-source";
 
-const LABEL_HEIGHT = 28;
+const LABEL_HEIGHT = 24;
 const LABEL_GAP = 6;
 
 interface HoverTarget {
   componentName?: string;
+  element: Element;
   label: string;
   rect: DOMRect;
-  selector: string;
+  region?: string;
 }
 
 function isWidgetOwned(element: Element): boolean {
@@ -28,15 +29,16 @@ function elementUnder(x: number, y: number): Element | null {
 function describeTarget(element: Element): HoverTarget {
   return {
     componentName: resolveComponentStack(getFiberFromNode(element))[0],
+    element,
     label: describeElement(element),
     rect: element.getBoundingClientRect(),
-    selector: buildSelector(element),
+    region: describeRegion(element),
   };
 }
 
 /**
  * Points at any element in the page the way a coding agent needs it: the React
- * component that owns it plus a selector that resolves back to it.
+ * component that owns it plus the page region it lives in.
  */
 export function ElementPicker({
   hint,
@@ -57,7 +59,16 @@ export function ElementPicker({
 
     const onMove = (event: PointerEvent) => {
       const element = elementUnder(event.clientX, event.clientY);
-      setTarget(element ? describeTarget(element) : null);
+      if (!element) {
+        setTarget(null);
+        return;
+      }
+
+      setTarget((current) =>
+        current?.element === element
+          ? { ...current, rect: element.getBoundingClientRect() }
+          : describeTarget(element)
+      );
     };
 
     const onClick = (event: MouseEvent) => {
@@ -123,12 +134,10 @@ export function ElementPicker({
               : rect.bottom + LABEL_GAP,
           }}
         >
-          {target.componentName ? (
-            <strong>{`<${target.componentName}>`}</strong>
-          ) : (
-            <strong>{target.label}</strong>
-          )}
-          <code>{target.selector}</code>
+          <strong>
+            {target.componentName ? `<${target.componentName}>` : target.label}
+          </strong>
+          {target.region && <span>{target.region}</span>}
         </div>
       )}
       <div className="picker-hint">

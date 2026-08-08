@@ -228,9 +228,10 @@ export default function FloatingFeedbackPage() {
           </li>
           <li>
             <strong className="text-foreground">Element.</strong> Point at
-            anything on the page and the report carries a selector that resolves
-            back to it, the React component stack, and the source file and line
-            when the build exposes them.
+            anything on the page and the report carries a close-up of it, the
+            page region it sits in, its redacted markup, a selector that
+            resolves back to it, the React component stack, and the source file
+            and line when the build exposes them.
           </li>
           <li>
             <strong className="text-foreground">Page context.</strong> URL,
@@ -278,6 +279,13 @@ export default function FloatingFeedbackPage() {
           <li>
             A failed screenshot upload never loses the written report — the
             feedback is created first, the image is attached after.
+          </li>
+          <li>
+            The markup of a picked element is scrubbed before it leaves the
+            browser: typed-in values, emails and token-shaped strings are
+            replaced. Mark a subtree with{" "}
+            <InlineCode>data-reflet-redact</InlineCode> to keep its contents out
+            of reports entirely.
           </li>
           <li>
             Report context is only visible to members of your organization, not

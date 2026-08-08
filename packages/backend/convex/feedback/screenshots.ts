@@ -6,7 +6,10 @@ import {
   query,
 } from "../_generated/server";
 import { requireAuthUser, requireOrgMember } from "../shared/access";
-import { screenshotAnnotationValidator } from "./tableFields";
+import {
+  captureSourceValidator,
+  screenshotAnnotationValidator,
+} from "./tableFields";
 
 export const generateUploadUrl = mutation({
   args: {},
@@ -26,11 +29,7 @@ export const generatePublicUploadUrl = internalMutation({
 export const saveScreenshot = mutation({
   args: {
     annotations: v.optional(v.array(screenshotAnnotationValidator)),
-    captureSource: v.union(
-      v.literal("widget"),
-      v.literal("upload"),
-      v.literal("paste")
-    ),
+    captureSource: captureSourceValidator,
     feedbackId: v.id("feedback"),
     filename: v.string(),
     height: v.optional(v.number()),
@@ -71,11 +70,7 @@ export const saveScreenshotPublic = internalMutation({
   args: {
     annotatedStorageId: v.optional(v.id("_storage")),
     annotations: v.optional(v.array(screenshotAnnotationValidator)),
-    captureSource: v.union(
-      v.literal("widget"),
-      v.literal("upload"),
-      v.literal("paste")
-    ),
+    captureSource: captureSourceValidator,
     externalUserId: v.optional(v.id("externalUsers")),
     feedbackId: v.id("feedback"),
     filename: v.string(),
@@ -181,11 +176,7 @@ export const getByFeedback = query({
       annotatedStorageId: v.optional(v.id("_storage")),
       annotatedUrl: v.union(v.string(), v.null()),
       annotations: v.optional(v.array(screenshotAnnotationValidator)),
-      captureSource: v.union(
-        v.literal("widget"),
-        v.literal("upload"),
-        v.literal("paste")
-      ),
+      captureSource: captureSourceValidator,
       createdAt: v.number(),
       filename: v.string(),
       height: v.optional(v.number()),

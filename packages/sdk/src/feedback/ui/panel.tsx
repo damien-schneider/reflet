@@ -31,7 +31,7 @@ function Attachment({
 }) {
   if (state.isCapturing) {
     return (
-      <div className="attachment">
+      <div className="card">
         <div className="thumb" />
         <div className="meta">
           <strong>{labels.retakeHint}</strong>
@@ -57,7 +57,7 @@ function Attachment({
   const annotationCount = state.annotations.length;
 
   return (
-    <div className="attachment">
+    <div className="card">
       <div className="thumb">
         <img
           alt=""
@@ -67,8 +67,8 @@ function Attachment({
         />
       </div>
       <div className="meta">
-        <strong>{labels.retakeHint}</strong>
-        <span>
+        <strong className="truncate">{labels.retakeHint}</strong>
+        <span className="truncate">
           {state.capture.width}×{state.capture.height}
           {annotationCount > 0 ? ` · ${annotationCount} marks` : ""}
         </span>
@@ -106,14 +106,15 @@ function Attachment({
   );
 }
 
-function SelectionChip({
+/** Shows the reporter exactly what will be sent about the element they picked. */
+function Selection({
   labels,
   state,
 }: {
   labels: FeedbackWidgetLabels;
   state: WidgetState;
 }) {
-  const { selection } = state;
+  const { elementCapture, selection } = state;
   if (!selection) {
     return (
       <button
@@ -130,21 +131,46 @@ function SelectionChip({
   const component = selection.componentStack[0];
 
   return (
-    <span className="chip">
-      <TargetIcon />
-      <span className="truncate">
-        {component ? <strong>{`<${component}>`}</strong> : selection.label}{" "}
-        <code>{selection.sourceLocation ?? selection.selector}</code>
-      </span>
-      <button
-        aria-label={labels.cancel}
-        className="icon-btn"
-        onClick={state.clearSelection}
-        type="button"
-      >
-        <CloseIcon />
-      </button>
-    </span>
+    <div className="card">
+      <div className="thumb contain">
+        {elementCapture && (
+          <img
+            alt=""
+            height={elementCapture.height}
+            src={elementCapture.objectUrl}
+            width={elementCapture.width}
+          />
+        )}
+      </div>
+      <div className="meta">
+        <strong className="truncate">
+          {component ? `<${component}>` : selection.label}
+        </strong>
+        <span className="truncate">
+          {selection.region ?? selection.sourceLocation ?? selection.selector}
+        </span>
+      </div>
+      <div className="actions">
+        <button
+          aria-label={labels.pickElement}
+          className="icon-btn"
+          onClick={() => state.setStep("picking")}
+          title={labels.pickElement}
+          type="button"
+        >
+          <TargetIcon />
+        </button>
+        <button
+          aria-label={labels.cancel}
+          className="icon-btn"
+          onClick={state.clearSelection}
+          title={labels.cancel}
+          type="button"
+        >
+          <CloseIcon />
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -225,8 +251,10 @@ export function FeedbackPanel({
           value={state.message}
         />
 
-        <Attachment labels={labels} state={state} />
-        <SelectionChip labels={labels} state={state} />
+        <div className="attachments">
+          <Attachment labels={labels} state={state} />
+          <Selection labels={labels} state={state} />
+        </div>
 
         {state.isAnonymous && (
           <input

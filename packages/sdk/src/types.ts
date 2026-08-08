@@ -141,11 +141,13 @@ export interface ElementRect {
 export interface ElementSelection {
   /** React component names owning the element, innermost first. */
   componentStack: string[];
-  /** Truncated outerHTML of the selected element. */
+  /** Truncated, redacted outerHTML of the selected element. */
   html: string;
   /** Short human-readable description, e.g. `button "Sign in"`. */
   label: string;
   rect: ElementRect;
+  /** Page area holding the element, e.g. `dialog "Members" › Danger zone`. */
+  region?: string;
   selector: string;
   /** `src/components/login-form.tsx:46:19` when the React build exposes it. */
   sourceLocation?: string;
@@ -201,6 +203,8 @@ export interface ScreenshotAnnotation {
 export interface SaveScreenshotParams {
   annotatedStorageId?: string;
   annotations?: ScreenshotAnnotation[];
+  /** `element` for the close-up of a picked element, `widget` for the page. */
+  captureSource?: "element" | "widget";
   feedbackId: string;
   filename?: string;
   height?: number;

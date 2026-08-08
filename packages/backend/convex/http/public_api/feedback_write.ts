@@ -260,7 +260,7 @@ export function registerFeedbackWriteRoutes(http: Router): void {
         {
           annotatedStorageId: optionalStorageId(body.data.annotatedStorageId),
           annotations: body.data.annotations,
-          captureSource: "widget",
+          captureSource: body.data.captureSource ?? "widget",
           externalUserId: auth.externalUserId ?? auth.unverifiedExternalUserId,
           feedbackId: parseId<"feedback">(body.data.feedbackId, "feedbackId"),
           filename: body.data.filename ?? "screenshot.png",

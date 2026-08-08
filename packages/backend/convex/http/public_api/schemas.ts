@@ -37,6 +37,7 @@ const feedbackContextSchema = z.object({
         x: z.number(),
         y: z.number(),
       }),
+      region: z.string().max(200).optional(),
       selector: z.string().max(600),
       sourceLocation: z.string().max(400).optional(),
     })
@@ -76,6 +77,8 @@ const screenshotAnnotationSchema = z.object({
 export const saveScreenshotSchema = z.object({
   annotatedStorageId: z.string().optional(),
   annotations: z.array(screenshotAnnotationSchema).max(50).optional(),
+  /** Public clients may only claim what the widget itself can capture. */
+  captureSource: z.enum(["widget", "element"]).optional(),
   feedbackId: z.string(),
   filename: z.string().max(200).optional(),
   height: z.number().optional(),

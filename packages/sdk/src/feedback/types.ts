@@ -1,7 +1,7 @@
 import type { RefletUser } from "../types";
 
-/** Reported with every submission. Keep in sync with package.json on release. */
-export const SDK_VERSION = "0.2.0";
+/** Reported with every submission. */
+export const SDK_VERSION = "0.3.0";
 
 const FEEDBACK_WIDGET_CATEGORIES = ["bug", "idea", "question"] as const;
 

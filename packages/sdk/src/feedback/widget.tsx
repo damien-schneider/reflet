@@ -86,21 +86,18 @@ export function RefletFeedback(props: RefletFeedbackProps) {
       theme={theme}
     >
       <div className="root" data-position={position}>
-        <div className="stack">
-          {showPanel && (
-            <FeedbackPanel
-              categories={categories}
-              labels={labels}
-              state={state}
-            />
-          )}
-          <Launcher
-            compact={isOpen}
-            isOpen={isOpen}
-            label={labels.trigger}
-            onClick={isOpen ? close : open}
+        {showPanel && (
+          <FeedbackPanel
+            categories={categories}
+            labels={labels}
+            state={state}
           />
-        </div>
+        )}
+        <Launcher
+          isOpen={isOpen}
+          label={labels.trigger}
+          onClick={isOpen ? close : open}
+        />
       </div>
 
       {isOpen && state.step === "annotate" && state.capture && (

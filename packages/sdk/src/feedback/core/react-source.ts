@@ -5,6 +5,9 @@ const FORWARD_REF_TYPE = Symbol.for("react.forward_ref");
 const MAX_STACK_DEPTH = 6;
 const MAX_FIBER_WALK = 60;
 const MAX_OWNER_WALK = 8;
+const MIN_NAME_LENGTH = 4;
+const CAPITALIZED = /^[A-Z]/;
+const WORD_INSIDE = /[a-z]{2}/;
 
 const ORIGIN_PREFIX = /^[a-z][\w+.-]*:\/\/[^/]*/i;
 const WEBPACK_PREFIX = /^webpack-internal:\/{2,}(\.\/)?/;
@@ -51,6 +54,22 @@ function readName(value: unknown): string | null {
   return typeof name === "string" && name ? name : null;
 }
 
+/**
+ * Minified bundles hand out names like `Ur` or `Sn`. Reporting those as the
+ * owning component actively misleads an agent, so only real words get through.
+ */
+function isMeaningfulName(name: string): boolean {
+  if (name.includes("/") || name.includes("_")) {
+    return true;
+  }
+
+  return (
+    name.length >= MIN_NAME_LENGTH &&
+    CAPITALIZED.test(name) &&
+    WORD_INSIDE.test(name)
+  );
+}
+
 function componentName(type: unknown, depth = 0): string | null {
   if (typeof type === "string" || type === null || depth > 3) {
     return null;
@@ -67,12 +86,7 @@ function componentName(type: unknown, depth = 0): string | null {
   }
 
   const name = readName(type);
-  if (!name || name.length < 2) {
-    return null;
-  }
-
-  const isMeaningful = name[0] === name[0]?.toUpperCase() || name.includes("/");
-  return isMeaningful ? name : null;
+  return name && isMeaningfulName(name) ? name : null;
 }
 
 /** Component names owning the fiber, innermost first. */

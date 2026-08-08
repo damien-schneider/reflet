@@ -39,7 +39,7 @@ describe("RefletFeedback", () => {
   it("renders a launcher in a shadow root, not in the host DOM", () => {
     mount();
 
-    expect(launcher().getAttribute("aria-label")).toBe("Feedback");
+    expect(launcher().textContent).toContain("Feedback");
     expect(document.body.querySelector(".launcher")).toBeNull();
   });
 

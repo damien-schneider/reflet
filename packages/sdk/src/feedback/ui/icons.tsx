@@ -1,9 +1,18 @@
 import type { ReactNode } from "react";
 
-function Svg({ children, size = 16 }: { children: ReactNode; size?: number }) {
+function Svg({
+  children,
+  className,
+  size = 16,
+}: {
+  children: ReactNode;
+  className?: string;
+  size?: number;
+}) {
   return (
     <svg
       aria-hidden="true"
+      className={className}
       fill="none"
       height={size}
       stroke="currentColor"
@@ -18,17 +27,17 @@ function Svg({ children, size = 16 }: { children: ReactNode; size?: number }) {
   );
 }
 
-export function ChatIcon() {
+export function ChatIcon({ className }: { className?: string }) {
   return (
-    <Svg size={18}>
+    <Svg className={className} size={15}>
       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
     </Svg>
   );
 }
 
-export function CloseIcon() {
+export function CloseIcon({ className }: { className?: string }) {
   return (
-    <Svg>
+    <Svg className={className}>
       <path d="M18 6 6 18M6 6l12 12" />
     </Svg>
   );

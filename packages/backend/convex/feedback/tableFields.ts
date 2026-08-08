@@ -2,6 +2,14 @@ import { defineTable } from "convex/server";
 import { v } from "convex/values";
 import { feedbackStatus } from "../shared/validators";
 
+/** How a screenshot got here. `element` is the close-up of a picked element. */
+export const captureSourceValidator = v.union(
+  v.literal("widget"),
+  v.literal("element"),
+  v.literal("upload"),
+  v.literal("paste")
+);
+
 /** One drawing on a screenshot. `points` is only used by the pen tool. */
 export const screenshotAnnotationValidator = v.object({
   color: v.optional(v.string()),
@@ -57,6 +65,7 @@ export const feedbackContextValidator = v.object({
         x: v.number(),
         y: v.number(),
       }),
+      region: v.optional(v.string()),
       selector: v.string(),
       sourceLocation: v.optional(v.string()),
     })
@@ -254,11 +263,7 @@ export const feedbackTables = {
   feedbackScreenshots: defineTable({
     annotatedStorageId: v.optional(v.id("_storage")),
     annotations: v.optional(v.array(screenshotAnnotationValidator)),
-    captureSource: v.union(
-      v.literal("widget"),
-      v.literal("upload"),
-      v.literal("paste")
-    ),
+    captureSource: captureSourceValidator,
     createdAt: v.number(),
     externalUserId: v.optional(v.id("externalUsers")),
     feedbackId: v.id("feedback"),
