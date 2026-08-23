@@ -27,7 +27,7 @@ import {
   SDK_VERSION,
   type WidgetStep,
 } from "../types";
-import { useRouteSync } from "./use-route-sync";
+import { useCaptureSync } from "./use-capture-sync";
 
 const SUCCESS_CLOSE_DELAY = 2400;
 const IS_APPLE = /Mac|iPhone|iPad/;
@@ -187,7 +187,7 @@ export function useWidgetState(props: RefletFeedbackProps) {
       });
   }, [replaceCapture]);
 
-  useRouteSync(
+  useCaptureSync(
     isOpen &&
       step === "compose" &&
       annotations.length === 0 &&

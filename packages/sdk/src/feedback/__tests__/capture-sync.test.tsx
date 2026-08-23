@@ -146,6 +146,24 @@ describe("capture and page context sync", () => {
     expect(createBodies[0]?.context?.scroll).toEqual({ x: 0, y: 0 });
   });
 
+  it("retakes the capture when the window is resized while composing", async () => {
+    render(<RefletFeedback publicKey="fb_pub_test" />);
+
+    act(() => {
+      launcher().click();
+    });
+
+    await waitFor(() => expect(captureViewport).toHaveBeenCalledTimes(1));
+
+    act(() => {
+      window.dispatchEvent(new Event("resize"));
+    });
+
+    await waitFor(() => expect(captureViewport).toHaveBeenCalledTimes(2), {
+      timeout: 2000,
+    });
+  });
+
   it("still submits the written feedback when every capture fails", async () => {
     vi.mocked(captureViewport).mockRejectedValue(new Error("no shot"));
 
