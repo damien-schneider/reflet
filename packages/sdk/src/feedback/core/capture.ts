@@ -20,6 +20,7 @@ interface SnapdomOptions {
   embedFonts: boolean;
   exclude: string[];
   fast: boolean;
+  reconcile: boolean;
 }
 
 export function buildSnapdomOptions(options: {
@@ -36,6 +37,7 @@ export function buildSnapdomOptions(options: {
     embedFonts: true,
     exclude: [`[${WIDGET_MARKER}]`, ...(options.excludeSelectors ?? [])],
     fast: true,
+    reconcile: true,
   };
 }
 
@@ -79,6 +81,31 @@ function downscale(
   return resized;
 }
 
+/** Wraps a rendered canvas as an owned capture, downscaled to `maxWidth`. */
+export async function capturedFromCanvas(
+  source: HTMLCanvasElement,
+  maxWidth: number
+): Promise<CapturedImage | null> {
+  const fitted = fitWithin(
+    { height: source.height, width: source.width },
+    maxWidth
+  );
+  const output = fitted.scale === 1 ? source : downscale(source, fitted);
+
+  const blob = await toBlob(output);
+  if (!blob) {
+    return null;
+  }
+
+  return {
+    blob,
+    height: output.height,
+    mimeType: "image/png",
+    objectUrl: URL.createObjectURL(blob),
+    width: output.width,
+  };
+}
+
 /**
  * Renders what the user is looking at right now.
  *
@@ -103,24 +130,10 @@ export async function captureViewport(
       })
     );
 
-    const fitted = fitWithin(
-      { height: canvas.height, width: canvas.width },
+    return await capturedFromCanvas(
+      canvas,
       options.maxWidth ?? DEFAULT_MAX_WIDTH
     );
-    const output = fitted.scale === 1 ? canvas : downscale(canvas, fitted);
-
-    const blob = await toBlob(output);
-    if (!blob) {
-      return null;
-    }
-
-    return {
-      blob,
-      height: output.height,
-      mimeType: "image/png",
-      objectUrl: URL.createObjectURL(blob),
-      width: output.width,
-    };
   } catch {
     return null;
   }

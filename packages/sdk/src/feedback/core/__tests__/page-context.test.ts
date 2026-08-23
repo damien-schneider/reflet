@@ -66,6 +66,41 @@ describe("collectPageContext", () => {
     expect(context.timezone).toBeTypeOf("string");
   });
 
+  it("records the scroll position the capture was taken at", () => {
+    const original = Object.getOwnPropertyDescriptor(window, "scrollY");
+    Object.defineProperty(window, "scrollY", {
+      configurable: true,
+      value: 1240,
+    });
+
+    try {
+      expect(collectPageContext().scroll).toEqual({ x: 0, y: 1240 });
+    } finally {
+      if (original) {
+        Object.defineProperty(window, "scrollY", original);
+      }
+    }
+  });
+
+  it("masks sensitive query parameters in the reported url", () => {
+    const restoreUrl = window.location.href;
+    window.history.pushState(
+      {},
+      "",
+      "/settings?tab=billing&token=super-secret-value"
+    );
+
+    try {
+      const context = collectPageContext();
+
+      expect(context.url).toContain("/settings");
+      expect(context.url).toContain("tab=billing");
+      expect(context.url).not.toContain("super-secret-value");
+    } finally {
+      window.history.replaceState({}, "", restoreUrl);
+    }
+  });
+
   it("keeps the page title and omits an empty referrer", () => {
     document.title = "Billing settings";
 

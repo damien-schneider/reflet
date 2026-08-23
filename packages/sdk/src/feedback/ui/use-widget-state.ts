@@ -8,13 +8,14 @@ import {
 } from "react";
 import { Reflet } from "../../client";
 import { RefletContext } from "../../react-context";
-import type { ElementSelection } from "../../types";
+import type { ElementSelection, FeedbackContext } from "../../types";
 import { renderAnnotatedImage } from "../core/annotation-renderer";
 import { captureViewport, releaseCapture } from "../core/capture";
 import {
   type ConsoleRecorder,
   startConsoleRecorder,
 } from "../core/console-recorder";
+import { captureElementCloseUp, highlightFor } from "../core/element-capture";
 import { buildElementSelection } from "../core/element-selector";
 import { collectPageContext } from "../core/page-context";
 import { createFeedbackTransport, submitWidgetFeedback } from "../core/submit";
@@ -26,9 +27,9 @@ import {
   SDK_VERSION,
   type WidgetStep,
 } from "../types";
+import { useRouteSync } from "./use-route-sync";
 
 const SUCCESS_CLOSE_DELAY = 2400;
-const ELEMENT_CAPTURE_MAX_WIDTH = 1200;
 const IS_APPLE = /Mac|iPhone|iPad/;
 const MILLISECONDS_PER_DAY = 86_400_000;
 const DISMISSAL_STORAGE_PREFIX = "reflet-feedback-dismissed";
@@ -98,25 +99,6 @@ export function matchesHotkey(
   );
 }
 
-function highlightFor(
-  selection: ElementSelection,
-  capture: CapturedImage
-): Annotation {
-  const scale = capture.width / window.innerWidth;
-  const { rect } = selection;
-
-  return {
-    color: "#4f46e5",
-    end: {
-      x: (rect.x + rect.width) * scale,
-      y: (rect.y + rect.height) * scale,
-    },
-    id: `selection-${rect.x}-${rect.y}`,
-    start: { x: rect.x * scale, y: rect.y * scale },
-    tool: "rectangle",
-  };
-}
-
 /**
  * A capture whose object URL is revoked the moment it is replaced or dropped —
  * holding one without this leaks the blob for the lifetime of the page.
@@ -172,13 +154,10 @@ export function useWidgetState(props: RefletFeedbackProps) {
     readDismissedUntil(dismissalKey)
   );
 
-  const captureRef = useRef<CapturedImage | null>(null);
   const pickRef = useRef(0);
   const consoleRef = useRef<ConsoleRecorder | null>(null);
+  const frozenContext = useRef<FeedbackContext | null>(null);
 
-  useEffect(() => {
-    captureRef.current = capture;
-  }, [capture]);
   useEffect(() => {
     setDismissedUntil(readDismissedUntil(dismissalKey));
   }, [dismissalKey]);
@@ -195,21 +174,31 @@ export function useWidgetState(props: RefletFeedbackProps) {
     };
   }, [props.captureConsole]);
 
-  const takeCapture = useCallback(
-    (element?: Element): void => {
-      setIsCapturing(true);
-      captureViewport({ element })
-        .catch(() => null)
-        .then((image) => {
-          setIsCapturing(false);
-          replaceCapture(image);
-        });
-    },
-    [replaceCapture]
+  /** Frozen at the same instant as the screenshot, so shot and URL always match. */
+  const takeCapture = useCallback((): void => {
+    const context = collectPageContext({ sdkVersion: SDK_VERSION });
+    setIsCapturing(true);
+    captureViewport()
+      .catch(() => null)
+      .then((image) => {
+        setIsCapturing(false);
+        replaceCapture(image);
+        frozenContext.current = image ? context : null;
+      });
+  }, [replaceCapture]);
+
+  useRouteSync(
+    isOpen &&
+      step === "compose" &&
+      annotations.length === 0 &&
+      !selection &&
+      props.captureOnOpen !== false,
+    takeCapture
   );
 
   const reset = useCallback(() => {
     pickRef.current++;
+    frozenContext.current = null;
     replaceCapture(null);
     replaceElementCapture(null);
     setAnnotations([]);
@@ -249,32 +238,32 @@ export function useWidgetState(props: RefletFeedbackProps) {
     }
   }, [props.captureOnOpen, props.onOpen, takeCapture]);
 
+  /** Fresh pixels so the highlight maps onto the scroll position the element had. */
   const selectElement = useCallback(
-    (element: Element) => {
+    async (element: Element) => {
       const picked = buildElementSelection(element);
       setSelection(picked);
       setStep("compose");
 
-      const current = captureRef.current;
-      if (current) {
-        setAnnotations((previous) => [
-          ...previous.filter((item) => !item.id.startsWith("selection-")),
-          highlightFor(picked, current),
-        ]);
+      const pick = ++pickRef.current;
+      const context = collectPageContext({ sdkVersion: SDK_VERSION });
+      const [fresh, closeUp] = await Promise.all([
+        captureViewport().catch(() => null),
+        captureElementCloseUp(element).catch(() => null),
+      ]);
+
+      if (pickRef.current !== pick) {
+        releaseCapture(fresh);
+        releaseCapture(closeUp);
+        return;
       }
 
-      const pick = ++pickRef.current;
-      captureViewport({ element, maxWidth: ELEMENT_CAPTURE_MAX_WIDTH })
-        .catch(() => null)
-        .then((image) => {
-          if (pickRef.current === pick) {
-            replaceElementCapture(image);
-          } else {
-            releaseCapture(image);
-          }
-        });
+      replaceCapture(fresh);
+      replaceElementCapture(closeUp);
+      frozenContext.current = fresh ? context : null;
+      setAnnotations(fresh ? [highlightFor(picked, fresh)] : []);
     },
-    [replaceElementCapture]
+    [replaceCapture, replaceElementCapture]
   );
 
   const clearSelection = useCallback(() => {
@@ -287,6 +276,7 @@ export function useWidgetState(props: RefletFeedbackProps) {
   }, [replaceElementCapture]);
 
   const removeCapture = useCallback(() => {
+    frozenContext.current = null;
     replaceCapture(null);
     setAnnotations([]);
   }, [replaceCapture]);
@@ -326,7 +316,8 @@ export function useWidgetState(props: RefletFeedbackProps) {
           annotations,
           category,
           context: {
-            ...collectPageContext({ sdkVersion: SDK_VERSION }),
+            ...(frozenContext.current ??
+              collectPageContext({ sdkVersion: SDK_VERSION })),
             consoleEvents: consoleRef.current?.events(),
             metadata: props.metadata,
             selection: selection ?? undefined,

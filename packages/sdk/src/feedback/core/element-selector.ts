@@ -6,6 +6,7 @@ const SAFE_ID = /^[A-Za-z][\w-]*$/;
 const WHITESPACE = /\s+/g;
 const MAX_LABEL_LENGTH = 80;
 const MAX_HTML_LENGTH = 600;
+const MAX_TEXT_LENGTH = 300;
 const MAX_REGION_LENGTH = 160;
 const MAX_HANDLE_VALUE_LENGTH = 80;
 const MAX_DEPTH = 12;
@@ -27,6 +28,60 @@ const NAMING_ATTRIBUTES = ["name", "aria-label"];
 const LANDMARK_SELECTOR =
   'dialog, [role="dialog"], [role="alertdialog"], main, nav, aside, header, footer, form, section, article';
 const HEADING_SELECTOR = 'h1, h2, h3, h4, h5, h6, [role="heading"]';
+
+/** Elements that start a new visual block — their text gets separated by a space. */
+const BLOCK_TAGS = new Set([
+  "address",
+  "article",
+  "aside",
+  "blockquote",
+  "dd",
+  "details",
+  "div",
+  "dl",
+  "dt",
+  "fieldset",
+  "figcaption",
+  "figure",
+  "footer",
+  "form",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "header",
+  "hr",
+  "li",
+  "main",
+  "nav",
+  "ol",
+  "p",
+  "pre",
+  "section",
+  "summary",
+  "table",
+  "td",
+  "th",
+  "tr",
+  "ul",
+]);
+
+function visibleText(element: Element): string {
+  const clone = element.cloneNode(true);
+  if (!(clone instanceof Element)) {
+    return "";
+  }
+
+  for (const node of clone.querySelectorAll("*")) {
+    if (BLOCK_TAGS.has(node.localName)) {
+      node.before(clone.ownerDocument.createTextNode(" "));
+    }
+  }
+
+  return collapseText(maskSecrets(clone.textContent ?? ""));
+}
 
 function isUnique(selector: string): boolean {
   try {
@@ -184,12 +239,14 @@ function describeLandmark(element: Element): string | null {
 }
 
 function headingAbove(element: Element): string | null {
-  let closest: Element | null = null;
+  const scope = element.closest(LANDMARK_SELECTOR) ?? document.body;
+  const probe = document.createRange();
+  probe.selectNodeContents(element);
+  probe.collapse(true);
 
-  for (const heading of document.querySelectorAll(HEADING_SELECTOR)) {
-    const position = heading.compareDocumentPosition(element);
-    // biome-ignore lint/suspicious/noBitwiseOperators: compareDocumentPosition returns a bitmask
-    if ((position & Node.DOCUMENT_POSITION_FOLLOWING) !== 0) {
+  let closest: Element | null = null;
+  for (const heading of scope.querySelectorAll(HEADING_SELECTOR)) {
+    if (probe.comparePoint(heading, 0) < 0) {
       closest = heading;
     }
   }
@@ -228,6 +285,7 @@ export function getElementRect(element: Element): ElementRect {
 /** Everything an agent needs to find the picked element back in the codebase. */
 export function buildElementSelection(element: Element): ElementSelection {
   const { componentStack, sourceLocation } = inspectReactElement(element);
+  const text = truncate(visibleText(element), MAX_TEXT_LENGTH);
 
   return {
     componentStack,
@@ -239,5 +297,6 @@ export function buildElementSelection(element: Element): ElementSelection {
     sourceLocation: sourceLocation
       ? truncate(sourceLocation, MAX_SOURCE_LOCATION_LENGTH)
       : sourceLocation,
+    text: text || undefined,
   };
 }

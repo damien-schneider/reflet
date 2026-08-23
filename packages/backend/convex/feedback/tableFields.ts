@@ -53,6 +53,7 @@ export const feedbackContextValidator = v.object({
   pageTitle: v.optional(v.string()),
   referrer: v.optional(v.string()),
   screen: v.optional(v.object({ height: v.number(), width: v.number() })),
+  scroll: v.optional(v.object({ x: v.number(), y: v.number() })),
   sdkVersion: v.optional(v.string()),
   selection: v.optional(
     v.object({
@@ -68,6 +69,7 @@ export const feedbackContextValidator = v.object({
       region: v.optional(v.string()),
       selector: v.string(),
       sourceLocation: v.optional(v.string()),
+      text: v.optional(v.string()),
     })
   ),
   timezone: v.optional(v.string()),

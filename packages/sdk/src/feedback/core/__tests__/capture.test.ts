@@ -40,6 +40,10 @@ describe("buildSnapdomOptions", () => {
   it("embeds fonts so text is not rendered with fallback glyphs", () => {
     expect(buildSnapdomOptions({}).embedFonts).toBe(true);
   });
+
+  it("reconciles the clone against the live dom so layouts do not drift", () => {
+    expect(buildSnapdomOptions({}).reconcile).toBe(true);
+  });
 });
 
 describe("fitWithin", () => {

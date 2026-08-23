@@ -1,4 +1,5 @@
 import type { FeedbackContext } from "../../types";
+import { redactUrl } from "./redact";
 
 interface AgentInfo {
   browser?: string;
@@ -104,9 +105,10 @@ export function collectPageContext(options?: {
     pageTitle: optionalText(document.title, MAX_PAGE_TITLE_LENGTH),
     referrer: optionalText(document.referrer, MAX_URL_LENGTH),
     screen: { height: window.screen.height, width: window.screen.width },
+    scroll: { x: window.scrollX, y: window.scrollY },
     sdkVersion: options?.sdkVersion,
     timezone: resolveTimezone(),
-    url: clip(window.location.href, MAX_URL_LENGTH),
+    url: redactUrl(window.location.href),
     userAgent: clip(userAgent, MAX_USER_AGENT_LENGTH),
     viewport: {
       devicePixelRatio: window.devicePixelRatio,

@@ -143,9 +143,29 @@ describe("buildElementSelection", () => {
     expect(selection.region).toBe("main");
     expect(selection.label).toBe('button "Save"');
     expect(selection.html).toBe('<button class="primary">Save</button>');
+    expect(selection.text).toBe("Save");
     expect(selection.rect).toEqual({ height: 0, width: 0, x: 0, y: 0 });
     expect(selection.componentStack).toEqual([]);
     expect(selection.sourceLocation).toBeUndefined();
+  });
+
+  it("keeps the visible text of containers whose markup gets cut off", () => {
+    render(
+      '<div class="banner"><h1>Welcome</h1><p>Pick a plan to continue.</p></div>'
+    );
+
+    expect(buildElementSelection(query("div.banner")).text).toBe(
+      "Welcome Pick a plan to continue."
+    );
+  });
+
+  it("masks secrets inside the visible text", () => {
+    render("<p>Questions? Mail ada@example.com</p>");
+
+    const { text } = buildElementSelection(query("p"));
+
+    expect(text).not.toContain("ada@example.com");
+    expect(text).toContain("Questions?");
   });
 
   it("truncates oversized markup", () => {

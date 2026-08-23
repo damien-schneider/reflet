@@ -151,6 +151,8 @@ export interface ElementSelection {
   selector: string;
   /** `src/components/login-form.tsx:46:19` when the React build exposes it. */
   sourceLocation?: string;
+  /** Collapsed visible text of the element — survives markup truncation. */
+  text?: string;
 }
 
 export interface ConsoleEvent {
@@ -167,6 +169,8 @@ export interface PageContext {
   pageTitle?: string;
   referrer?: string;
   screen?: { height: number; width: number };
+  /** Where the viewport sat in the page when the screenshot was taken. */
+  scroll?: { x: number; y: number };
   timezone?: string;
   url?: string;
   userAgent?: string;

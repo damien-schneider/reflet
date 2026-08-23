@@ -39,6 +39,58 @@ export function maskSecrets(value: string): string {
   return value.replace(EMAIL, REDACTED).replace(LONG_TOKEN, REDACTED);
 }
 
+const SENSITIVE_PARAM =
+  /token|secret|pass(?:word|wd)?|pwd|auth|jwt|credential|session|sid|key|email|ssn|otp|code|signature|nonce/i;
+const LEADING_QUESTION_MARK = /^\?/;
+
+function decoded(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+/**
+ * Query strings carry signed-in state (`?token=…`, `?userEmail=…`) straight
+ * into stored reports and agent prompts. Values of anything credential- or
+ * identity-shaped are masked; every other byte of the address stays intact.
+ */
+export function redactUrl(href: string): string {
+  let url: URL;
+  try {
+    url = new URL(href);
+  } catch {
+    return maskSecrets(href);
+  }
+
+  const pairs = url.search
+    .replace(LEADING_QUESTION_MARK, "")
+    .split("&")
+    .filter(Boolean);
+  if (
+    !pairs.some((pair) =>
+      SENSITIVE_PARAM.test(decoded(pair.split("=")[0] ?? ""))
+    )
+  ) {
+    return href;
+  }
+
+  const kept = pairs.map((pair) => {
+    const equals = pair.indexOf("=");
+    if (
+      equals === -1 ||
+      !SENSITIVE_PARAM.test(decoded(pair.slice(0, equals)))
+    ) {
+      return pair;
+    }
+    return `${pair.slice(0, equals)}=${REDACTED}`;
+  });
+
+  const query = kept.join("&");
+  return `${url.origin}${url.pathname}${query ? `?${query}` : ""}${url.hash}`;
+}
+
 function sanitizeUrl(value: string): string {
   if (OPAQUE_URI.test(value)) {
     return `${value.slice(0, value.indexOf(":"))}:${ELLIPSIS}`;
