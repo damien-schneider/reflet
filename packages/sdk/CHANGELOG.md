@@ -5,6 +5,24 @@ All notable changes to `reflet-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-08-23
+
+### Added
+
+- Visible text of the picked element ships with the selection, so agents can match it against the codebase even when the markup is truncated
+- Scroll position reported with the page context, telling agents where in the page the screenshot sits
+- Zoomed element shot now shows the surrounding zone: everything outside the selection is dimmed and the selection framed with an outline
+
+### Changed
+
+- The page context (url, title, scroll) is frozen at the same instant as each screenshot, and re-captured when the app navigates client-side while the panel is open — a report can no longer mix one route's pixels with another route's url
+- Picking an element re-captures the viewport first, so the highlight rectangle always lands on the scroll position the element had
+- Page screenshots run with snapdom `reconcile`, pinning layout drift between the live DOM and the capture
+
+### Fixed
+
+- Reported urls mask credential-shaped query values (`?token=…`, `?userEmail=…`) before they leave the browser
+
 ## [0.3.0] - 2026-08-08
 
 ### Added
