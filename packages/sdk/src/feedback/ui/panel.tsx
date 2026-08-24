@@ -1,11 +1,13 @@
 import { type ComponentType, useEffect, useRef } from "react";
 import type { FeedbackWidgetCategory, FeedbackWidgetLabels } from "../types";
+import { SDK_VERSION } from "../types";
 import {
   BugIcon,
   CameraIcon,
   CheckIcon,
   CloseIcon,
   IdeaIcon,
+  InfoIcon,
   PencilIcon,
   QuestionIcon,
   TargetIcon,
@@ -306,6 +308,13 @@ export function FeedbackPanel({
           >
             Reflet
           </a>
+          <span
+            className="version-info"
+            role="note"
+            title={`Reflet SDK ${SDK_VERSION}`}
+          >
+            <InfoIcon />
+          </span>
         </span>
       </footer>
     </section>

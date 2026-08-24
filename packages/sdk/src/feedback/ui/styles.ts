@@ -275,6 +275,8 @@ textarea:focus, input:focus { outline: none; border-color: color-mix(in srgb, va
 .footer[data-dismissible="true"] { justify-content: space-between; }
 .footer a { color: inherit; text-decoration: none; font-weight: 550; transition: color 120ms var(--rf-ease); }
 .footer a:hover { color: var(--rf-text); }
+.version-info { display: inline-flex; vertical-align: -2px; margin-left: 4px; opacity: 0.55; cursor: help; transition: opacity 120ms var(--rf-ease); }
+.version-info:hover { opacity: 1; }
 .dismiss-btn {
   align-self: stretch;
   color: inherit;

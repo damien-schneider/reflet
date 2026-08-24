@@ -160,3 +160,12 @@ export function CheckIcon({ size = 28 }: { size?: number }) {
     </svg>
   );
 }
+
+export function InfoIcon({ className }: { className?: string }) {
+  return (
+    <Svg className={className} size={12}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 8h.01M11 12h1v4h1" />
+    </Svg>
+  );
+}

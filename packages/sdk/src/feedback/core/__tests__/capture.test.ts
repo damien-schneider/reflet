@@ -1,5 +1,114 @@
-import { describe, expect, it } from "vitest";
-import { buildSnapdomOptions, fitWithin, WIDGET_MARKER } from "../capture";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  buildSnapdomOptions,
+  fitWithin,
+  inlineExternalImages,
+  restoreInlinedImages,
+  WIDGET_MARKER,
+} from "../capture";
+
+function mockImageFetch(responses: Record<string, boolean>): void {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: RequestInfo | URL) => {
+      const url = typeof input === "string" ? input : String(input);
+      const found = responses[url] !== undefined && responses[url] !== false;
+      return new Response(found ? "\u0089PNG" : "no-entry", {
+        headers: { "Content-Type": found ? "image/png" : "text/plain" },
+        status: found ? 200 : 404,
+      });
+    })
+  );
+}
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  document.body.innerHTML = "";
+});
+
+describe("inlineExternalImages", () => {
+  it("swaps a cross-origin image for a data url and restores the original", async () => {
+    mockImageFetch({ "https://cdn.test/avatar.png": true });
+    const img = document.createElement("img");
+    img.setAttribute("src", "https://cdn.test/avatar.png");
+    document.body.appendChild(img);
+
+    const swaps = await inlineExternalImages(document.body);
+
+    expect(img.getAttribute("src")).toMatch(/^data:image\//);
+    restoreInlinedImages(swaps);
+    expect(img.getAttribute("src")).toBe("https://cdn.test/avatar.png");
+  });
+
+  it("leaves data urls and same-origin images untouched", async () => {
+    mockImageFetch({});
+    const fetchSpy = vi.mocked(fetch);
+    const data = document.createElement("img");
+    data.src = "data:image/png;base64,AAA";
+    const sameOrigin = document.createElement("img");
+    sameOrigin.src = `${window.location.origin}/local.png`;
+    document.body.append(data, sameOrigin);
+
+    const swaps = await inlineExternalImages(document.body);
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(swaps).toEqual([]);
+    expect(data.src).toBe("data:image/png;base64,AAA");
+    expect(sameOrigin.src).toBe(`${window.location.origin}/local.png`);
+  });
+
+  it("drops srcset while swapped and brings it back on restore", async () => {
+    mockImageFetch({ "https://cdn.test/pic.png": true });
+    const img = document.createElement("img");
+    img.setAttribute("src", "https://cdn.test/pic.png");
+    img.setAttribute("srcset", "https://cdn.test/pic.png 2x");
+    img.setAttribute("sizes", "28px");
+    document.body.appendChild(img);
+
+    const swaps = await inlineExternalImages(document.body);
+
+    expect(img.hasAttribute("srcset")).toBe(false);
+    expect(img.hasAttribute("sizes")).toBe(false);
+    restoreInlinedImages(swaps);
+    expect(img.getAttribute("srcset")).toBe("https://cdn.test/pic.png 2x");
+    expect(img.getAttribute("sizes")).toBe("28px");
+  });
+
+  it("falls back to a transparent pixel when the image cannot be fetched", async () => {
+    mockImageFetch({ "https://cdn.test/private.png": false });
+    const img = document.createElement("img");
+    img.setAttribute("src", "https://cdn.test/private.png");
+    document.body.appendChild(img);
+
+    const swaps = await inlineExternalImages(document.body);
+
+    expect(img.getAttribute("src")).toBe(
+      "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+    );
+    restoreInlinedImages(swaps);
+    expect(img.getAttribute("src")).toBe("https://cdn.test/private.png");
+  });
+
+  it("inlines external urls inside inline background-image styles", async () => {
+    mockImageFetch({ "https://cdn.test/glow.png": true });
+    const glow = document.createElement("span");
+    glow.setAttribute(
+      "style",
+      'background-image: url("https://cdn.test/glow.png")'
+    );
+    document.body.appendChild(glow);
+
+    const swaps = await inlineExternalImages(document.body);
+
+    expect(glow.getAttribute("style")).toMatch(
+      /background-image: url\("data:image\/png[^)]*"\)/
+    );
+    restoreInlinedImages(swaps);
+    expect(glow.getAttribute("style")).toBe(
+      'background-image: url("https://cdn.test/glow.png")'
+    );
+  });
+});
 
 describe("buildSnapdomOptions", () => {
   it("always excludes the widget so it never lands in its own screenshot", () => {

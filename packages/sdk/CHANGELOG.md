@@ -5,6 +5,18 @@ All notable changes to `reflet-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.3] - 2026-08-23
+
+### Added
+
+- Small "i" icon next to "Powered by Reflet" — hover it to see the SDK version
+- Capture watchdog: if the screenshot pipeline hangs, the capture retries without raster images so the report always lands
+
+### Fixed
+
+- Screenshots no longer hang forever on pages whose cross-origin images fail snapdom's image decode (Chrome 151 + Convex storage avatars reproduced it) — the capture falls back to an image-free screenshot within ~10 seconds
+- The capture waits for page animations to settle first, so tiles frozen mid-entrance or mid-drag animation no longer appear displaced
+
 ## [0.3.2] - 2026-08-23
 
 ### Fixed
