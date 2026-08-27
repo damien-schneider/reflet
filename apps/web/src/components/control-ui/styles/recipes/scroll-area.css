@@ -1,0 +1,53 @@
+@layer components {
+  :where([data-control-family="scroll-area"][data-slot="root"]) {
+    --scroll-area-thumb-radius: 9999px;
+    --scroll-area-thumb-background: oklch(from var(--foreground) l c h / 0.4);
+    --scroll-area-corner-background: transparent;
+  }
+
+  :where([data-control-family="scroll-area"][data-slot="scrollbar"]) {
+    opacity: 0;
+    transition: opacity var(--duration-fast) var(--ease-standard);
+  }
+
+  :where([data-control-family="scroll-area"][data-slot="scrollbar"][data-visibility="always"]),
+
+  :where([data-control-family="scroll-area"][data-slot="scrollbar"][data-visibility="hover"]:is([data-hovering], [data-scrolling])),
+
+  :where([data-control-family="scroll-area"][data-slot="scrollbar"][data-visibility="scroll"][data-scrolling]) {
+    opacity: 1;
+  }
+
+  :where([data-control-family="scroll-area"][data-slot="thumb"]) {
+    border-radius: var(--scroll-area-thumb-radius);
+    background: var(--scroll-area-thumb-background);
+    transition: background-color var(--duration-fast) var(--ease-standard);
+  }
+
+  :where([data-control-family="scroll-area"][data-scroll-area-part="viewport"]) {
+    border-radius: inherit;
+    outline: none;
+  }
+
+  :where([data-control-family="scroll-area"][data-slot="corner"]) {
+    background: var(--scroll-area-corner-background);
+  }
+}
+
+@property --scroll-area-thumb-radius {
+  syntax: "<length-percentage>";
+  inherits: true;
+  initial-value: 0px;
+}
+
+@property --scroll-area-thumb-background {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --scroll-area-corner-background {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}

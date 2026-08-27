@@ -21,8 +21,7 @@
   "menuColor": "default",
   "menuAccent": "subtle",
   "registries": {
-    "reflet": {
-      "url": "https://www.reflet.app/r"
-    }
+    "@reflet": "https://www.reflet.app/r/{name}.json",
+    "@control-ui": "https://control-ui.dev/r/{name}.json"
   }
 }

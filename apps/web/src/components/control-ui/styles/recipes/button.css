@@ -1,0 +1,205 @@
+@layer components {
+  :where([data-control-family="button"][data-control="true"]) {
+    --button-radius: var(--radius-control);
+    --button-bg: transparent;
+    --button-foreground: var(--muted-foreground);
+    --button-hover-bg: oklch(from var(--foreground) l c h / 0.06);
+    --button-hover-foreground: var(--foreground);
+    --button-press-bg: var(--button-hover-bg);
+    --button-press-scale: 0.98;
+    --button-active-bg: oklch(from var(--foreground) l c h / 0.08);
+    --button-active-foreground: var(--foreground);
+    --button-active-hover-bg: var(--button-active-bg);
+    --button-active-shadow: var(--button-shadow);
+    --button-shadow: 0 0 transparent;
+    --button-focus-shadow: 0 0 0 2px var(--focus-ring, oklch(from var(--foreground) l c h / 0.2));
+    border-radius: var(--button-radius);
+    background-color: var(--button-bg);
+    box-shadow: var(--button-shadow);
+    color: var(--button-foreground);
+    cursor: pointer;
+    font-weight: 500;
+    outline: none;
+    transition-property: color, background-color, border-color, box-shadow, scale, translate, opacity, filter, backdrop-filter;
+    transition-timing-function: var(--ease-standard);
+    transition-duration: var(--duration-fast);
+  }
+
+  :where([data-control-family="button"][data-cursor="default"]) {
+    cursor: default;
+  }
+
+  :where([data-control-family="button"][data-variant="ghost"]) {
+    --button-foreground: var(--foreground);
+    --button-active-bg: transparent;
+    --button-active-foreground: var(--foreground);
+    --button-active-hover-bg: var(--button-hover-bg);
+  }
+
+  :where([data-control-family="button"][data-variant="solid"]) {
+    --button-bg: var(--primary);
+    --button-foreground: var(--primary-foreground);
+    --button-hover-bg: oklch(from var(--primary) l c h / 0.9);
+    --button-hover-foreground: var(--primary-foreground);
+    --button-shadow: var(--shadow-sm);
+    --button-active-bg: var(--button-bg);
+    --button-active-foreground: var(--button-foreground);
+    --button-active-hover-bg: var(--button-hover-bg);
+  }
+
+  :where([data-control-family="button"][data-variant="surface"]) {
+    --button-bg: oklch(from var(--card) l c h / 0.72);
+    --button-foreground: var(--foreground);
+    --button-hover-bg: oklch(from var(--foreground) l c h / 0.05);
+    --button-hover-foreground: var(--foreground);
+    --button-shadow: inset 0 0 0 1px var(--border), var(--shadow-sm);
+    --button-active-bg: oklch(from var(--primary) l c h / 0.08);
+    --button-active-foreground: var(--primary-text);
+    --button-active-shadow: inset 0 0 0 1px oklch(from var(--primary) l c h / 0.6), var(--shadow-sm);
+    --button-active-hover-bg: oklch(from var(--primary) l c h / 0.1);
+  }
+
+  :where([data-control-family="button"]:is([data-variant="surface"], [data-variant="ghost"], [data-variant="quiet"])[data-popup-open]) {
+    background-color: oklch(from var(--foreground) l c h / 0.07);
+    color: var(--button-hover-foreground);
+  }
+
+  :where([data-control-family="button"][data-tone="primary"]:not([data-variant="solid"])) {
+    --button-foreground: var(--primary-text);
+    --button-hover-foreground: var(--primary-text);
+  }
+
+  :where([data-control-family="button"][data-tone="danger"][data-variant="solid"]) {
+    --button-bg: var(--destructive);
+    --button-foreground: var(--destructive-foreground);
+    --button-hover-bg: oklch(from var(--destructive) l c h / 0.9);
+    --button-hover-foreground: var(--destructive-foreground);
+    --button-active-bg: var(--button-bg);
+    --button-active-foreground: var(--button-foreground);
+    --button-active-hover-bg: var(--button-hover-bg);
+  }
+
+  :where([data-control-family="button"][data-tone="danger"]:not([data-variant="solid"])) {
+    --button-foreground: var(--destructive-text);
+    --button-hover-foreground: var(--destructive-text);
+  }
+
+  :where([data-control-family="button"][data-shape="circle"]) {
+    --button-radius: 9999px;
+  }
+
+  @media (hover: hover) {
+    :where([data-control-family="button"]:hover) {
+      background-color: var(--button-hover-bg);
+      color: var(--button-hover-foreground);
+    }
+  }
+
+  :where([data-control-family="button"][data-active="true"]) {
+    background-color: var(--button-active-bg);
+    box-shadow: var(--button-active-shadow);
+    color: var(--button-active-foreground);
+  }
+
+  @media (hover: hover) {
+    :where([data-control-family="button"][data-active="true"]:hover) {
+      background-color: var(--button-active-hover-bg);
+      color: var(--button-active-foreground);
+    }
+  }
+
+  :where([data-control-family="button"]:active) {
+    background-color: var(--button-press-bg);
+    scale: var(--button-press-scale);
+  }
+  :where([data-control-family="button"]:focus-visible),
+
+  :where(label[data-control-family="button"][data-slot="root"]:has(:focus-visible)) {
+    box-shadow: var(--button-focus-shadow), var(--button-shadow);
+  }
+
+  :where([data-control-family="button"]:is(:disabled, [data-disabled], [aria-disabled="true"])) {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+
+  :where([data-control-family="button"][data-button-kind="model-switcher"][data-slot="indicator"]) {
+    border-radius: calc(infinity * 1px);
+    background-color: var(--primary);
+  }
+}
+
+@property --button-radius {
+  syntax: "<length-percentage>";
+  inherits: true;
+  initial-value: 0px;
+}
+
+@property --button-bg {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --button-foreground {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --button-hover-bg {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --button-hover-foreground {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --button-press-bg {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --button-press-scale {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
+}
+
+@property --button-active-bg {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --button-active-foreground {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --button-active-hover-bg {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --button-shadow {
+  syntax: "*";
+  inherits: true;
+}
+
+@property --button-active-shadow {
+  syntax: "*";
+  inherits: true;
+}
+
+@property --button-focus-shadow {
+  syntax: "*";
+  inherits: true;
+}

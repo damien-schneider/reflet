@@ -1,0 +1,122 @@
+@layer components {
+  :where([data-control-family="activity"][data-slot="root"]) {
+    --activity-row-foreground: var(--muted-foreground);
+    --activity-trigger-hover-background: oklch(from var(--muted) l c h / 0.45);
+    --activity-trigger-radius: var(--radius-control);
+    --activity-code-background: oklch(from var(--muted) l c h / 0.5);
+    font-size: var(--text-body);
+  }
+
+  :where([data-control-family="activity"][data-slot="row"]),
+
+  :where([data-control-family="activity"][data-slot="trigger"]) {
+    color: var(--activity-row-foreground);
+  }
+
+  :where([data-control-family="activity"][data-slot="trigger"]) {
+    border-radius: var(--activity-trigger-radius);
+  }
+
+  @media (hover: hover) {
+    :where([data-control-family="activity"][data-slot="trigger"]:hover) {
+      background: var(--activity-trigger-hover-background);
+      color: var(--foreground);
+    }
+  }
+
+  :where([data-control-family="activity"][data-slot="trigger"]:focus-visible) {
+    background: var(--activity-trigger-hover-background);
+  }
+
+  :where([data-control-family="activity"][data-slot="chevron"]) {
+    color: oklch(from var(--muted-foreground) l c h / 0.75);
+  }
+
+  :where([data-control-family="activity"][data-slot="icon"]) {
+    color: var(--muted-foreground);
+  }
+
+  :where([data-control-family="activity"][data-slot="root"][data-activity-state="running"] [data-slot="icon"]) {
+    color: var(--foreground);
+  }
+
+  :where(
+    [data-control-family="activity"][data-slot="root"][data-activity-state="running"]
+      [data-slot="icon"][data-status-icon]
+      svg
+  ) {
+    animation: spin var(--duration-slow) linear infinite;
+  }
+
+  :where([data-control-family="activity"][data-slot="root"][data-activity-state="error"] [data-slot="icon"]) {
+    color: var(--destructive-text);
+  }
+
+  :where([data-control-family="activity"][data-slot="title"]) {
+    color: currentColor;
+    font-size: var(--text-label);
+  }
+
+  :where([data-control-family="activity"][data-slot="status"]) {
+    color: var(--muted-foreground);
+    font-size: var(--text-caption);
+  }
+
+  :where([data-control-family="activity"][data-slot="status"][data-status="error"]) {
+    color: var(--destructive-text);
+  }
+
+  :where([data-control-family="activity"][data-slot="detail-label"]) {
+    color: var(--muted-foreground);
+    font-size: var(--text-micro);
+  }
+
+  :where([data-control-family="activity"][data-slot="detail-content"]) {
+    color: var(--foreground);
+    font-size: var(--text-label);
+  }
+
+  :where([data-control-family="activity"][data-slot="detail-content"][data-format="code"]) {
+    background: var(--activity-code-background);
+    border-radius: var(--radius-control);
+    font-size: var(--text-caption);
+  }
+
+  :where([data-control-family="activity"][data-slot="detail-content"]) {
+    line-height: calc(var(--spacing) * 5);
+    font-family: var(--font-mono);
+  }
+
+  :where([data-control-family="activity"][data-slot="detail-label"]) {
+    font-weight: var(--font-weight-medium);
+    letter-spacing: 0.08em;
+  }
+
+  :where([data-control-family="activity"][data-slot="title"]) {
+    font-weight: var(--font-weight-normal);
+  }
+}
+
+@property --activity-row-foreground {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --activity-trigger-radius {
+  syntax: "<length-percentage>";
+  inherits: true;
+  initial-value: 0px;
+}
+
+@property --activity-trigger-hover-background {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --activity-code-background {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}

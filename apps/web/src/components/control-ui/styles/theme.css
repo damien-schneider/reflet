@@ -1,0 +1,599 @@
+/* Load alongside Tailwind v4 and at least one complete skin theme — nothing here paints without a pack's token values. */
+
+@custom-variant dark (&:is(.dark *));
+
+/* biome-ignore-start lint/complexity/noImportantStyles: Reduced motion must override skin and inline motion. */
+/* Motion collapses under OS preference; !important wins over skin-scoped tokens and editor duration overrides. */
+@media (prefers-reduced-motion: reduce) {
+  :where(:root),
+  [data-skin] {
+    --duration-fast: 0ms !important;
+    --duration-base: 0ms !important;
+    --duration-slow: 0ms !important;
+  }
+
+  :where(
+    [data-skin],
+    [data-skin] *,
+    [data-skin]::before,
+    [data-skin]::after,
+    [data-skin] *::before,
+    [data-skin] *::after
+  ) {
+    scroll-behavior: auto !important;
+    transition-delay: 0ms !important;
+    transition-duration: 0ms !important;
+    animation-delay: 0ms !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* Explicit motion kill-switch, same collapse as above but opt-in via attribute, not OS preference.
+   Skin's `motion: "reduced"` flag or the theme editor toggle stamps [data-motion="reduced"] on <html>;
+   also targets skin-scoped portals directly since their [data-skin] tokens would beat inherited root values. */
+:root[data-motion="reduced"],
+[data-motion="reduced"][data-skin],
+[data-motion="reduced"] [data-skin] {
+  --duration-fast: 0ms !important;
+  --duration-base: 0ms !important;
+  --duration-slow: 0ms !important;
+}
+
+:where(
+  [data-motion="reduced"],
+  [data-motion="reduced"] *,
+  [data-motion="reduced"]::before,
+  [data-motion="reduced"]::after,
+  [data-motion="reduced"] *::before,
+  [data-motion="reduced"] *::after
+) {
+  scroll-behavior: auto !important;
+  transition-delay: 0ms !important;
+  transition-duration: 0ms !important;
+  animation-delay: 0ms !important;
+  animation-duration: 1ms !important;
+  animation-iteration-count: 1 !important;
+}
+/* biome-ignore-end lint/complexity/noImportantStyles: Reduced motion must override skin and inline motion. */
+
+/* Skin-root defaults at zero specificity — any pack declaration (theme.css or skin.css) wins.
+   First family: derived-tier contract tokens, re-valued by a pack only when it diverges.
+   Second family: core mechanics (math constants + aliases) that live OFF the contract entirely. */
+:where([data-skin]) {
+  /* font roles default to the skin's face; re-value one to give headings their own. */
+  --font-body: var(--font-sans);
+  --font-display: var(--font-sans);
+
+
+  /* majority defaults measured over the shipped packs; a pack declares one only to diverge,
+     and the dark block below carries the mode-split ones */
+  --primary-text: oklch(from var(--primary) 0.48 c h);
+  --destructive-text: oklch(from var(--destructive) 0.48 c h);
+  --ring-opacity: 1;
+
+  --text-micro: 0.625rem;
+  --text-caption: 0.6875rem;
+  --text-body: 0.875rem;
+  --text-body-lg: 1rem;
+  --text-heading-4: 0.9375rem;
+  --text-heading-4--line-height: 1.4;
+  --text-heading-4--font-weight: 600;
+  --text-heading-3: 1.125rem;
+  --text-heading-3--line-height: 1.35;
+  --text-heading-3--font-weight: 600;
+  --text-heading-2: 1.375rem;
+  --text-heading-2--line-height: 1.25;
+  --text-heading-2--font-weight: 600;
+  --text-heading-1: 1.875rem;
+  --text-heading-1--line-height: 1.15;
+  --text-heading-1--font-weight: 700;
+  --text-heading-1--letter-spacing: -0.018em;
+  --text-display: 2.25rem;
+  --text-display--line-height: 1.1;
+  --text-display--font-weight: 600;
+  --text-display--letter-spacing: -0.026em;
+
+  --corner-shape: round;
+  --corner-radius-fit: 0.5;
+  --radius-popover: calc(var(--radius-popup-item-fit) + clamp(0px, var(--radius-popup-item-fit) * 1000, var(--popover-padding) - 1px));
+
+  --shadow-highlight: oklch(1 0 0 / 0.62);
+  --shadow-y: 1;
+  --shadow-control-multiplier: 1;
+  --shadow-panel-multiplier: 2;
+  --shadow-popover-multiplier: 4;
+  --shadow-modal-multiplier: 5;
+  --shadow-ambient-multiplier: 8;
+
+  --control-h-xs: round(var(--control-h) * 0.78, 1px);
+  --control-h-sm: round(var(--control-h) * 0.89, 1px);
+  --control-h-lg: round(var(--control-h) * 1.11, 1px);
+
+  --badge-neutral: oklch(from var(--foreground) l c h / 0.08);
+  --badge-neutral-foreground: var(--foreground);
+  --badge-neutral-border: oklch(from var(--foreground) l c h / 0.1);
+  --badge-neutral-hover: oklch(from var(--foreground) l c h / 0.12);
+  --badge-red: oklch(from var(--color-red-500) l c h / 0.14);
+  --badge-red-foreground: var(--color-red-800);
+  --badge-red-border: oklch(from var(--color-red-500) l c h / 0.18);
+  --badge-red-hover: oklch(from var(--color-red-500) l c h / 0.2);
+  --badge-orange: oklch(from var(--color-orange-500) l c h / 0.16);
+  --badge-orange-foreground: var(--color-orange-800);
+  --badge-orange-border: oklch(from var(--color-orange-500) l c h / 0.2);
+  --badge-orange-hover: oklch(from var(--color-orange-500) l c h / 0.24);
+  --badge-yellow: oklch(from var(--color-yellow-400) l c h / 0.2);
+  --badge-yellow-foreground: var(--color-yellow-800);
+  --badge-yellow-border: oklch(from var(--color-yellow-400) l c h / 0.24);
+  --badge-yellow-hover: oklch(from var(--color-yellow-400) l c h / 0.28);
+  --badge-green: oklch(from var(--color-green-500) l c h / 0.16);
+  --badge-green-foreground: var(--color-green-800);
+  --badge-green-border: oklch(from var(--color-green-500) l c h / 0.2);
+  --badge-green-hover: oklch(from var(--color-green-500) l c h / 0.24);
+  --badge-blue: oklch(from var(--color-blue-500) l c h / 0.16);
+  --badge-blue-foreground: var(--color-blue-800);
+  --badge-blue-border: oklch(from var(--color-blue-500) l c h / 0.2);
+  --badge-blue-hover: oklch(from var(--color-blue-500) l c h / 0.24);
+  --badge-purple: oklch(from var(--color-purple-500) l c h / 0.16);
+  --badge-purple-foreground: var(--color-purple-800);
+  --badge-purple-border: oklch(from var(--color-purple-500) l c h / 0.2);
+  --badge-purple-hover: oklch(from var(--color-purple-500) l c h / 0.24);
+  --badge-pink: oklch(from var(--color-pink-500) l c h / 0.16);
+  --badge-pink-foreground: var(--color-pink-800);
+  --badge-pink-border: oklch(from var(--color-pink-500) l c h / 0.2);
+  --badge-pink-hover: oklch(from var(--color-pink-500) l c h / 0.24);
+
+  /* tw-scale rungs multiply from THE radius knob; the squircle fallback below re-derives them ×fit */
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.6);
+
+  /* Browser clamps rendered radius to half the box's short side, so at large --radius a row's visible
+     corner saturates below the --radius-popup-item token. Container must match the visible corner, not
+     the token, or it out-rounds the row and the overflow clip cuts it flat. */
+  --radius-popup-item-fit: min(var(--radius-popup-item), calc(var(--control-h-xs) / 2));
+  /* Sub-pixel guard for concentric nesting in ring-clipped containers (popup rows, code-block tabs);
+     shared with `rounded-nested` (effects.css). Bump to border+~2px if a clipped container ever gets a real border. */
+  --nest-safe: 1px;
+  /* Corner-fit ratio = 2+sqrt(2): control at gap `g` from corner radius R is sliced once R > ratio*g.
+     Caps corners that can outgrow their content inset (code-block --radius-panel vs fixed tab inset)
+     at gap*ratio, so header controls never clip. */
+  --nest-corner-ratio: 3.41421356;
+  --control-h-md: var(--control-h);
+
+  /* shadcn Sidebar compat: --sidebar* aliases existing tokens; row state derives from --foreground alpha. */
+  --sidebar: var(--canvas);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: oklch(from var(--foreground) l c h / 0.06);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+}
+
+:where(.dark [data-skin], .dark[data-skin]) {
+  --primary-text: oklch(from var(--primary) 0.78 c h);
+  --destructive-text: oklch(from var(--destructive) 0.78 c h);
+  --shadow-highlight: oklch(1 0 0 / 0.055);
+  --badge-neutral: oklch(from var(--foreground) l c h / 0.1);
+  --badge-neutral-border: oklch(from var(--foreground) l c h / 0.12);
+  --badge-neutral-hover: oklch(from var(--foreground) l c h / 0.14);
+  --badge-red: oklch(from var(--color-red-400) l c h / 0.18);
+  --badge-red-foreground: var(--color-red-300);
+  --badge-red-border: oklch(from var(--color-red-400) l c h / 0.22);
+  --badge-red-hover: oklch(from var(--color-red-400) l c h / 0.26);
+  --badge-orange: oklch(from var(--color-orange-400) l c h / 0.2);
+  --badge-orange-foreground: var(--color-orange-300);
+  --badge-orange-border: oklch(from var(--color-orange-400) l c h / 0.24);
+  --badge-orange-hover: oklch(from var(--color-orange-400) l c h / 0.28);
+  --badge-yellow: oklch(from var(--color-yellow-400) l c h / 0.22);
+  --badge-yellow-foreground: var(--color-yellow-300);
+  --badge-yellow-border: oklch(from var(--color-yellow-400) l c h / 0.26);
+  --badge-yellow-hover: oklch(from var(--color-yellow-400) l c h / 0.3);
+  --badge-green: oklch(from var(--color-green-400) l c h / 0.2);
+  --badge-green-foreground: var(--color-green-300);
+  --badge-green-border: oklch(from var(--color-green-400) l c h / 0.24);
+  --badge-green-hover: oklch(from var(--color-green-400) l c h / 0.28);
+  --badge-blue: oklch(from var(--color-blue-400) l c h / 0.2);
+  --badge-blue-foreground: var(--color-blue-300);
+  --badge-blue-border: oklch(from var(--color-blue-400) l c h / 0.24);
+  --badge-blue-hover: oklch(from var(--color-blue-400) l c h / 0.28);
+  --badge-purple: oklch(from var(--color-purple-400) l c h / 0.2);
+  --badge-purple-foreground: var(--color-purple-300);
+  --badge-purple-border: oklch(from var(--color-purple-400) l c h / 0.24);
+  --badge-purple-hover: oklch(from var(--color-purple-400) l c h / 0.28);
+  --badge-pink: oklch(from var(--color-pink-400) l c h / 0.2);
+  --badge-pink-foreground: var(--color-pink-300);
+  --badge-pink-border: oklch(from var(--color-pink-400) l c h / 0.24);
+  --badge-pink-hover: oklch(from var(--color-pink-400) l c h / 0.28);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-canvas: var(--canvas);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: oklch(from var(--popover) l c h / var(--popover-opacity));
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-text: var(--primary-text);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-text: var(--destructive-text);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Self-references, not values: @theme merges globally across all skin packs in one Tailwind build,
+     so a value here could never differ per skin. Self-ref keeps the var alive in the emitted utility,
+     so pack-scoped declarations re-value each rung per skin (same shape as --color-primary below). */
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-2xl: var(--radius-2xl);
+  --radius-field: var(--radius-field);
+  --radius-panel: var(--radius-panel);
+  --radius-scene: var(--radius-scene);
+
+  /* Same self-reference shape; rungs + paired line-height/weight/tracking live in each skin theme. */
+  --text-micro: var(--text-micro);
+  --text-caption: var(--text-caption);
+  --text-label: var(--text-label);
+  --text-body: var(--text-body);
+  --text-body-lg: var(--text-body-lg);
+  --text-heading-4: var(--text-heading-4);
+  --text-heading-4--line-height: var(--text-heading-4--line-height);
+  --text-heading-4--font-weight: var(--text-heading-4--font-weight);
+  --text-heading-3: var(--text-heading-3);
+  --text-heading-3--line-height: var(--text-heading-3--line-height);
+  --text-heading-3--font-weight: var(--text-heading-3--font-weight);
+  --text-heading-2: var(--text-heading-2);
+  --text-heading-2--line-height: var(--text-heading-2--line-height);
+  --text-heading-2--font-weight: var(--text-heading-2--font-weight);
+  --text-heading-1: var(--text-heading-1);
+  --text-heading-1--line-height: var(--text-heading-1--line-height);
+  --text-heading-1--font-weight: var(--text-heading-1--font-weight);
+  --text-heading-1--letter-spacing: var(--text-heading-1--letter-spacing);
+  --text-display: var(--text-display);
+  --text-display--line-height: var(--text-display--line-height);
+  --text-display--font-weight: var(--text-display--font-weight);
+  --text-display--letter-spacing: var(--text-display--letter-spacing);
+
+  /* Generates font-body/font-display utilities off role tokens above; skin re-values one alone to re-face all headings/body. */
+  --font-body: var(--font-body);
+  --font-display: var(--font-display);
+
+  /* Global knobs (size/opacity/y) + tier multipliers keep control/panel/popover/modal/ambient shadows
+     distinct without per-component math. Each tier layers tight+mid+long alphas for one soft umber
+     penumbra ("soft daylight"); every length multiplies the global knobs so --shadow-size:0 flattens all. */
+  --shadow-xs: inset 0 1px 0
+      oklch(from var(--shadow-highlight) l c h / calc(alpha * var(--shadow-opacity) * min(var(--shadow-size), 1))),
+    0 calc(1px * var(--shadow-size) * var(--shadow-control-multiplier) * var(--shadow-y))
+      calc(1.5px * var(--shadow-size) * var(--shadow-control-multiplier))
+      calc(-0.5px * var(--shadow-size) * var(--shadow-control-multiplier))
+      oklch(from var(--shadow-color) l c h / calc(0.05 * var(--shadow-opacity))),
+    0 calc(2px * var(--shadow-size) * var(--shadow-control-multiplier) * var(--shadow-y))
+      calc(4px * var(--shadow-size) * var(--shadow-control-multiplier))
+      calc(-2px * var(--shadow-size) * var(--shadow-control-multiplier))
+      oklch(from var(--shadow-color) l c h / calc(0.04 * var(--shadow-opacity)));
+  --shadow-sm: inset 0 1px 0
+      oklch(from var(--shadow-highlight) l c h / calc(alpha * var(--shadow-opacity) * min(var(--shadow-size), 1))),
+    0 calc(1px * var(--shadow-size) * var(--shadow-control-multiplier) * var(--shadow-y))
+      calc(1px * var(--shadow-size) * var(--shadow-control-multiplier))
+      calc(-0.5px * var(--shadow-size) * var(--shadow-control-multiplier))
+      oklch(from var(--shadow-color) l c h / calc(0.05 * var(--shadow-opacity))),
+    0 calc(2px * var(--shadow-size) * var(--shadow-control-multiplier) * var(--shadow-y))
+      calc(4px * var(--shadow-size) * var(--shadow-control-multiplier))
+      calc(-1px * var(--shadow-size) * var(--shadow-control-multiplier))
+      oklch(from var(--shadow-color) l c h / calc(0.05 * var(--shadow-opacity))),
+    0 calc(4px * var(--shadow-size) * var(--shadow-control-multiplier) * var(--shadow-y))
+      calc(10px * var(--shadow-size) * var(--shadow-control-multiplier))
+      calc(-2px * var(--shadow-size) * var(--shadow-control-multiplier))
+      oklch(from var(--shadow-color) l c h / calc(0.05 * var(--shadow-opacity)));
+  --shadow-md: inset 0 1px 0
+      oklch(from var(--shadow-highlight) l c h / calc(alpha * var(--shadow-opacity) * min(var(--shadow-size), 1))),
+    0 calc(1px * var(--shadow-size) * var(--shadow-panel-multiplier) * var(--shadow-y))
+      calc(1.5px * var(--shadow-size) * var(--shadow-panel-multiplier))
+      calc(-0.5px * var(--shadow-size) * var(--shadow-panel-multiplier))
+      oklch(from var(--shadow-color) l c h / calc(0.05 * var(--shadow-opacity))),
+    0 calc(2.5px * var(--shadow-size) * var(--shadow-panel-multiplier) * var(--shadow-y))
+      calc(5px * var(--shadow-size) * var(--shadow-panel-multiplier))
+      calc(-1.5px * var(--shadow-size) * var(--shadow-panel-multiplier))
+      oklch(from var(--shadow-color) l c h / calc(0.05 * var(--shadow-opacity))),
+    0 calc(5px * var(--shadow-size) * var(--shadow-panel-multiplier) * var(--shadow-y))
+      calc(10px * var(--shadow-size) * var(--shadow-panel-multiplier))
+      calc(-2.5px * var(--shadow-size) * var(--shadow-panel-multiplier))
+      oklch(from var(--shadow-color) l c h / calc(0.05 * var(--shadow-opacity)));
+  --shadow-pop: inset 0 1px 0
+      oklch(from var(--shadow-highlight) l c h / calc(alpha * var(--shadow-opacity) * min(var(--shadow-size), 1))),
+    0 calc(0.5px * var(--shadow-size) * var(--shadow-popover-multiplier) * var(--shadow-y))
+      calc(0.75px * var(--shadow-size) * var(--shadow-popover-multiplier))
+      calc(-0.25px * var(--shadow-size) * var(--shadow-popover-multiplier))
+      oklch(from var(--shadow-color) l c h / calc(0.04 * var(--shadow-opacity))),
+    0 calc(1.5px * var(--shadow-size) * var(--shadow-popover-multiplier) * var(--shadow-y))
+      calc(3px * var(--shadow-size) * var(--shadow-popover-multiplier))
+      calc(-0.75px * var(--shadow-size) * var(--shadow-popover-multiplier))
+      oklch(from var(--shadow-color) l c h / calc(0.05 * var(--shadow-opacity))),
+    0 calc(3px * var(--shadow-size) * var(--shadow-popover-multiplier) * var(--shadow-y))
+      calc(6px * var(--shadow-size) * var(--shadow-popover-multiplier))
+      calc(-1.5px * var(--shadow-size) * var(--shadow-popover-multiplier))
+      oklch(from var(--shadow-color) l c h / calc(0.06 * var(--shadow-opacity))),
+    0 calc(6px * var(--shadow-size) * var(--shadow-popover-multiplier) * var(--shadow-y))
+      calc(14px * var(--shadow-size) * var(--shadow-popover-multiplier))
+      calc(-3px * var(--shadow-size) * var(--shadow-popover-multiplier))
+      oklch(from var(--shadow-color) l c h / calc(0.07 * var(--shadow-opacity))); /* floating popovers */
+  --shadow-modal: inset 0 1px 0
+      oklch(from var(--shadow-highlight) l c h / calc(alpha * var(--shadow-opacity) * min(var(--shadow-size), 1))),
+    0 calc(0.6px * var(--shadow-size) * var(--shadow-modal-multiplier) * var(--shadow-y))
+      calc(1px * var(--shadow-size) * var(--shadow-modal-multiplier))
+      calc(-0.3px * var(--shadow-size) * var(--shadow-modal-multiplier))
+      oklch(from var(--shadow-color) l c h / calc(0.05 * var(--shadow-opacity))),
+    0 calc(1.6px * var(--shadow-size) * var(--shadow-modal-multiplier) * var(--shadow-y))
+      calc(3.2px * var(--shadow-size) * var(--shadow-modal-multiplier))
+      calc(-0.8px * var(--shadow-size) * var(--shadow-modal-multiplier))
+      oklch(from var(--shadow-color) l c h / calc(0.06 * var(--shadow-opacity))),
+    0 calc(3.4px * var(--shadow-size) * var(--shadow-modal-multiplier) * var(--shadow-y))
+      calc(7px * var(--shadow-size) * var(--shadow-modal-multiplier))
+      calc(-1.6px * var(--shadow-size) * var(--shadow-modal-multiplier))
+      oklch(from var(--shadow-color) l c h / calc(0.07 * var(--shadow-opacity))),
+    0 calc(7px * var(--shadow-size) * var(--shadow-modal-multiplier) * var(--shadow-y))
+      calc(16px * var(--shadow-size) * var(--shadow-modal-multiplier))
+      calc(-3px * var(--shadow-size) * var(--shadow-modal-multiplier))
+      oklch(from var(--shadow-color) l c h / calc(0.1 * var(--shadow-opacity))); /* dialogs and sheets */
+  --shadow-soft: 0 calc(0.75px * var(--shadow-size) * var(--shadow-ambient-multiplier) * var(--shadow-y))
+      calc(2px * var(--shadow-size) * var(--shadow-ambient-multiplier))
+      calc(-0.75px * var(--shadow-size) * var(--shadow-ambient-multiplier))
+      oklch(from var(--shadow-color) l c h / calc(0.03 * var(--shadow-opacity))),
+    0 calc(2px * var(--shadow-size) * var(--shadow-ambient-multiplier) * var(--shadow-y))
+      calc(5px * var(--shadow-size) * var(--shadow-ambient-multiplier))
+      calc(-1.5px * var(--shadow-size) * var(--shadow-ambient-multiplier))
+      oklch(from var(--shadow-color) l c h / calc(0.05 * var(--shadow-opacity))),
+    0 calc(4.5px * var(--shadow-size) * var(--shadow-ambient-multiplier) * var(--shadow-y))
+      calc(12px * var(--shadow-size) * var(--shadow-ambient-multiplier))
+      calc(-2.5px * var(--shadow-size) * var(--shadow-ambient-multiplier))
+      oklch(from var(--shadow-color) l c h / calc(0.05 * var(--shadow-opacity))); /* ambient lift */
+
+  /* bare `transition*` utilities inherit the themed curve + tempo */
+  --default-transition-duration: var(--duration-fast);
+  --default-transition-timing-function: var(--ease-standard);
+}
+
+@layer base {
+  /* v4 defaults border/divide color to currentColor; restore themed border (same rule shadcn v4 ships, host merge is harmless). */
+  /* border-box origin too: default padding-box origin + border-box clip + repeat tiles the gradient's far end into a translucent border ring (--border carries alpha in most packs). Escape hatch: bg-origin-padding. */
+  *,
+  ::after,
+  ::before {
+    border-color: var(--border);
+    background-origin: border-box;
+  }
+
+  @supports (corner-shape: squircle) {
+    :where([data-control-ui][data-slot]) {
+      corner-shape: var(--corner-shape);
+    }
+
+  }
+
+  /* Squircle w/o corner-shape support falls back to plain round radius, reading over-rounded; shrink
+     fallback by --corner-radius-fit to track Chrome's squircle. Gated on live --corner-shape via style
+     query (fires only when squircle selected); re-declared on DA elements since skin-root tokens bake var(--radius) at their root, unreachable by descendant override. No style-query support = current fallback. */
+  @supports not (corner-shape: squircle) {
+    @container style(--corner-shape: squircle) {
+      :where([data-control-ui][data-slot]) {
+        /* Halve base control radius; concentric popup/popover tokens re-derive from it, no second factor needed. */
+        --radius-control: calc(var(--radius) * 2 * var(--corner-radius-fit));
+        --radius-popup-item: calc(var(--radius-control) * 0.6);
+        --radius-popup-item-fit: min(var(--radius-popup-item), calc(var(--control-h-xs) / 2));
+        --radius-popover: calc(var(--radius-popup-item-fit) + clamp(0px, var(--radius-popup-item-fit) * 1000, var(--popover-padding) - 1px));
+        /* Each derives straight from --radius; must mirror the :where([data-skin]) scale above ×fit. */
+        --radius-sm: calc(var(--radius) * 0.6 * var(--corner-radius-fit));
+        --radius-md: calc(var(--radius) * 0.8 * var(--corner-radius-fit));
+        --radius-lg: calc(var(--radius) * var(--corner-radius-fit));
+        --radius-xl: calc(var(--radius) * 1.4 * var(--corner-radius-fit));
+        --radius-2xl: calc(var(--radius) * 1.6 * var(--corner-radius-fit));
+        --radius-field: calc(var(--radius) * 2.2 * var(--corner-radius-fit));
+        --radius-panel: calc(var(--radius) * 2.6 * var(--corner-radius-fit));
+        --radius-scene: calc(var(--radius) * 2.8 * var(--corner-radius-fit));
+      }
+    }
+  }
+}
+
+@layer components {
+  :where(
+      [data-control-ui="chat-message"][data-slot="root"],
+      [data-control-ui="chat-composer"][data-slot="root"]
+    ) {
+    opacity: 1;
+    filter: none;
+    translate: 0 0;
+    scale: 1;
+    transition:
+      opacity var(--duration-slow) var(--ease-emphasized),
+      filter var(--duration-slow) var(--ease-emphasized),
+      translate var(--duration-slow) var(--ease-emphasized),
+      scale var(--duration-slow) var(--ease-emphasized);
+  }
+
+  @starting-style {
+    :where([data-control-ui="chat-message"][data-slot="root"]) {
+      opacity: 0;
+      filter: blur(8px);
+      translate: 0 0.5rem;
+      scale: 0.985;
+    }
+
+    :where([data-control-ui="chat-composer"][data-slot="root"]) {
+      opacity: 0;
+      filter: blur(10px);
+      translate: 0 0.75rem;
+    }
+  }
+
+
+
+
+
+
+  /* Cross-slide switch, shared by every surface that swaps one panel for another (tabs panels, inline
+     citation sources). Contract: the element owning the switch carries data-slide="scope", each swapped
+     child data-slide="panel" plus the lifecycle attributes — inert, data-starting-style /
+     data-ending-style, data-activation-direction. Base UI stamps those on tabs panels; inline citation
+     stamps its own. Keyed on the role, not on a component, so a new caller opts in with two attributes. */
+  :where([data-slide="panel"]) {
+    translate: 0 0;
+    /* No opacity fade: panels unmount, fade-in from 0 would flash empty frame; slide-only keeps content opaque. */
+    transition: translate var(--duration-slow) var(--ease-emphasized);
+  }
+
+  /* Fallback switch (no anchor positioning): the outgoing panel stays mounted+inert until its exit
+     anim finishes; two in-flow panels would stack, so the exiting one is pulled from layout the moment
+     it's inert and the entering one gets a soft directional nudge. Active panel is never `inert`. */
+  :where([data-slide="panel"][inert]) {
+    display: none;
+  }
+
+  :where([data-slide="panel"][data-starting-style][data-activation-direction="left"]) {
+    translate: -0.35rem 0;
+  }
+
+  :where([data-slide="panel"][data-starting-style][data-activation-direction="right"]) {
+    translate: 0.35rem 0;
+  }
+
+  :where([data-slide="panel"][data-starting-style][data-activation-direction="up"]) {
+    translate: 0 -0.35rem;
+  }
+
+  :where([data-slide="panel"][data-starting-style][data-activation-direction="down"]) {
+    translate: 0 0.35rem;
+  }
+
+  /* True cross-slide (anchor positioning, Limited → @supports per the CSS-first rule): the exiting
+     panel is revived and glued edge-to-edge onto the entering panel's box (anchor = the open panel).
+     Anchor offsets track the anchor's translated box every frame, so the pair travel as ONE strip
+     driven by a single transition — the entering panel's ±100% slide — whatever wrapper the panels
+     happen to live in (they are not always the scope's direct children). */
+  @supports ((anchor-name: --aui-slide-panel) and (anchor-scope: --aui-slide-panel)) {
+    /* Per-instance scope: without it the exiting panel would anchor onto the LAST open panel in the
+       whole document — another instance's panel. Nested scopes re-scope, so names never leak. */
+    :where([data-slide="scope"]) {
+      anchor-scope: --aui-slide-panel;
+    }
+
+    :where([data-slide="panel"]:not([inert])) {
+      anchor-name: --aui-slide-panel;
+    }
+
+    /* display:block revives the fallback-hidden panel; anchor-size clips a longer outgoing panel to
+       the incoming one's box mid-slide. The per-direction glue below does the placement; a panel with
+       direction "none" gets no glue and no hold, i.e. the instant fallback swap. */
+    :where([data-slide="panel"][inert][data-ending-style]) {
+      display: block;
+      position: absolute;
+      position-anchor: --aui-slide-panel;
+      width: anchor-size(width);
+      height: anchor-size(height);
+      overflow: clip;
+    }
+
+    /* The panels' direct parent turns containing block + crops the ±100% travel while a switch is in
+       flight (an absolutely positioned exiting panel escapes the overflow of non-positioned ancestors). */
+    :where(:has(> [data-slide="panel"][data-ending-style])) {
+      position: relative;
+      overflow: clip;
+    }
+
+    /* Glue = trailing edge of the strip; the hold animation is what keeps Base UI from unmounting the
+       exiting panel mid-slide (it waits on the panel's own animations, and the glue isn't one). */
+    :where([data-slide="panel"][inert][data-ending-style][data-activation-direction="left"]) {
+      top: anchor(top);
+      left: anchor(right);
+      animation: aui-slide-exit-hold var(--duration-slow) var(--ease-emphasized) both;
+    }
+
+    :where([data-slide="panel"][inert][data-ending-style][data-activation-direction="right"]) {
+      top: anchor(top);
+      right: anchor(left);
+      animation: aui-slide-exit-hold var(--duration-slow) var(--ease-emphasized) both;
+    }
+
+    :where([data-slide="panel"][inert][data-ending-style][data-activation-direction="up"]) {
+      left: anchor(left);
+      top: anchor(bottom);
+      animation: aui-slide-exit-hold var(--duration-slow) var(--ease-emphasized) both;
+    }
+
+    :where([data-slide="panel"][inert][data-ending-style][data-activation-direction="down"]) {
+      left: anchor(left);
+      bottom: anchor(top);
+      animation: aui-slide-exit-hold var(--duration-slow) var(--ease-emphasized) both;
+    }
+
+    :where([data-slide="panel"][data-starting-style][data-activation-direction="left"]) {
+      translate: -100% 0;
+    }
+
+    :where([data-slide="panel"][data-starting-style][data-activation-direction="right"]) {
+      translate: 100% 0;
+    }
+
+    :where([data-slide="panel"][data-starting-style][data-activation-direction="up"]) {
+      translate: 0 -100%;
+    }
+
+    :where([data-slide="panel"][data-starting-style][data-activation-direction="down"]) {
+      translate: 0 100%;
+    }
+
+    /* Height morph: auto→auto never transitions, so the entering panel starts at the outgoing panel's
+       measured height (--aui-slide-prev-height, stamped by the component just before the switch) and
+       eases to its own intrinsic height — calc-size() makes the auto endpoint interpolable. The glued
+       exiting panel follows via anchor-size(height), so the whole strip resizes as one; overflow
+       mid-morph is cropped by the parent clip already active for the slide. :not([inert]) keeps this
+       off the exiting panel, whose height must stay anchor-size(height). */
+    @supports (height: calc-size(auto, size)) {
+      :where([data-slide="panel"]:not([inert])) {
+        height: calc-size(auto, size);
+        transition: translate var(--duration-slow) var(--ease-emphasized), height var(--duration-slow) var(--ease-emphasized);
+      }
+
+      :where([data-slide="panel"][data-starting-style]) {
+        height: var(--aui-slide-prev-height, calc-size(auto, size));
+      }
+    }
+  }
+
+  /* Visually inert 0.999→1 hold: exists purely so the exiting panel reports a running animation for
+     the slide's duration. Rides the motion tokens, so reduced motion collapses it to an instant swap. */
+  @keyframes aui-slide-exit-hold {
+    from {
+      opacity: 0.999;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+}

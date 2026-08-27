@@ -1,0 +1,342 @@
+@layer components {
+  :where([data-control-family="popup"][data-popup-part="surface"], [data-control-family="popup"][data-popup-part="list-surface"], [data-control-family="popup"][data-popup-part="bar"]) {
+    --popup-radius: var(--radius-popover);
+    --popup-background: var(--popover);
+    --popup-foreground: var(--popover-foreground);
+    --popup-border-color: var(--border);
+    --popup-border-width: 1px;
+    --popup-shadow: var(--shadow-pop);
+    --popup-backdrop-blur: var(--backdrop-blur-popover);
+    --popup-item-radius: var(--radius-popup-item);
+    --popup-item-foreground: var(--foreground);
+    --popup-item-highlight-background: oklch(from var(--foreground) l c h / 0.06);
+    --popup-item-disabled-opacity: 0.4;
+    --popup-separator-color: var(--border);
+    --popup-shortcut-foreground: var(--muted-foreground);
+    --_popup-transform-origin: var(--transform-origin);
+    border-radius: var(--popup-radius);
+    background-color: var(--popup-background);
+    box-shadow: inset 0 0 0 var(--popup-border-width) var(--popup-border-color), var(--popup-shadow);
+    color: var(--popup-foreground);
+    outline: none;
+    -webkit-backdrop-filter: blur(var(--popup-backdrop-blur));
+    backdrop-filter: blur(var(--popup-backdrop-blur));
+    transform-origin: var(--_popup-transform-origin);
+  }
+
+  :where(
+    [data-control-family="popup"][data-popup-part="surface"]:not([data-popup-static]):not([data-navigation-menu-part="viewport"]),
+    [data-control-family="popup"][data-popup-part="list-surface"]
+  ) {
+    transition-property: opacity, scale;
+    transition-duration: var(--duration-base);
+    transition-timing-function: var(--ease-emphasized);
+    transition-behavior: allow-discrete;
+  }
+
+  :where([data-control-family="popup"][data-popup-part="surface"]:not([data-sheet-part="content"]):not([data-navigation-menu-part="viewport"]):where( [data-starting-style], [data-ending-style] ), [data-control-family="popup"][data-popup-part="list-surface"]:where( [data-starting-style], [data-ending-style] )) {
+    scale: 0.95;
+    opacity: 0;
+  }
+
+  @starting-style {
+    :where([data-control-family="popup"][data-popup-part="surface"]:not([data-sheet-part="content"]):not([data-navigation-menu-part="viewport"]), [data-control-family="popup"][data-popup-part="list-surface"]) {
+      scale: 0.95;
+      opacity: 0;
+    }
+  }
+
+  :where([data-control-family="popup"][data-popup-part="backdrop"]) {
+    --_popup-overlay-background: oklch(from var(--foreground) l c h / var(--overlay-opacity));
+    background-color: var(--_popup-overlay-background);
+    -webkit-backdrop-filter: blur(var(--backdrop-blur-overlay));
+    backdrop-filter: blur(var(--backdrop-blur-overlay));
+    transition: opacity var(--duration-base) var(--ease-standard);
+  }
+
+  :where(.dark [data-control-family="popup"][data-popup-part="backdrop"]) {
+    --_popup-overlay-background: oklch(from var(--background) l c h / var(--overlay-opacity));
+  }
+
+  :where([data-control-family="popup"][data-popup-part="backdrop"]:is([data-starting-style], [data-ending-style])) {
+    opacity: 0;
+  }
+
+  :where([data-control-family="popup"][data-popup-part="list-surface"]) {
+    padding: var(--popover-padding);
+  }
+
+  :where([data-control-family="popup"][data-popup-part="bar"]) {
+    --popup-radius: var(--radius-control);
+    --popup-background: var(--card);
+    --popup-shadow: var(--shadow-xs);
+  }
+
+  :where([data-control-family="popup"][data-popup-part="surface"][data-surface="modal"]) {
+    --popup-radius: var(--radius-panel);
+    --popup-shadow: var(--shadow-modal);
+  }
+
+  :where([data-control-family="popup"][data-popup-kind="tooltip"][data-popup-part="surface"]) {
+    --popup-radius: var(--radius-control);
+    --popup-background: var(--foreground);
+    --popup-foreground: var(--background);
+  }
+
+  :where([data-control-family="popup"][data-popup-kind="sheet"][data-popup-part="surface"]) {
+    --popup-radius: 0px;
+    --popup-shadow: var(--shadow-modal);
+  }
+
+  :where([data-control-family="popup"][data-popup-kind="dialog"][data-slot="title"], [data-control-family="popup"][data-popup-kind="alert-dialog"][data-slot="title"]) {
+    font-size: var(--text-heading-3);
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.025em;
+  }
+
+  :where([data-control-family="popup"][data-popup-kind="dialog"][data-slot="description"], [data-control-family="popup"][data-popup-kind="alert-dialog"][data-slot="description"]) {
+    color: var(--muted-foreground);
+    font-size: var(--text-body);
+  }
+
+  :where([data-control-family="popup"][data-popup-kind="sheet"][data-slot="title"]) {
+    font-weight: 600;
+  }
+
+  :where([data-control-family="popup"][data-popup-kind="sheet"][data-slot="description"]) {
+    color: var(--muted-foreground);
+    font-size: var(--text-body);
+  }
+
+  :where([data-control-family="popup"][data-popup-kind="tooltip"][data-slot="arrow"]) {
+    color: var(--popup-background);
+  }
+
+  :where([data-control-family="popup"][data-popup-part="item"], [data-control-family="popup"][data-popup-part="navigation-link"]) {
+    cursor: pointer;
+    border-radius: var(--popup-item-radius);
+    color: var(--popup-item-foreground);
+    font-size: var(--text-body);
+    outline: none;
+    padding-block: 0.25rem;
+    padding-inline: calc(var(--padding-x) * 0.5);
+  }
+
+  :where([data-control-family="popup"][data-popup-part="navigation-link"]) {
+    font-size: var(--text-body);
+    transition-property: color, background-color, box-shadow, translate;
+    transition-duration: var(--duration-fast);
+    transition-timing-function: var(--ease-standard);
+  }
+
+  :where([data-control-family="popup"][data-popup-part="navigation-link"][data-variant="compact"]) {
+    color: var(--muted-foreground);
+    font-size: var(--text-label);
+    font-weight: 500;
+  }
+
+  :where([data-control-family="popup"][data-popup-part="navigation-link"]:where(:hover, :focus-visible, [data-active])) {
+    color: var(--foreground);
+  }
+
+  :where([data-control-family="popup"][data-popup-part="item"]:where([data-highlighted], [data-selected], [data-popup-open])), :where([data-control-family="popup"][data-popup-part="navigation-link"]:where(:hover, :focus-visible, [data-active])) {
+    background-color: var(--popup-item-highlight-background);
+  }
+
+  :where([data-control-family="popup"][data-popup-part="item"]:is([data-disabled]:not([data-disabled="false"]), [data-disabled="true"])) {
+    cursor: not-allowed;
+    opacity: var(--popup-item-disabled-opacity);
+  }
+
+
+  :where([data-control-family="popup"][data-popup-part="label"]) {
+    color: var(--muted-foreground);
+    font-size: var(--text-micro);
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  :where([data-control-family="popup"][data-popup-part="separator"]) {
+    background-color: var(--popup-separator-color);
+  }
+
+  :where([data-control-family="popup"][data-popup-part="shortcut"]) {
+    --_popup-shortcut-font-size: var(--text-body);
+    color: var(--popup-shortcut-foreground);
+    font-size: var(--_popup-shortcut-font-size);
+    letter-spacing: 0.02em;
+  }
+
+  :where([data-control-family="popup"][data-popup-kind="command"][data-slot="input-wrapper"]) {
+    border-block-end: 1px solid var(--popup-separator-color);
+  }
+
+  :where([data-control-family="popup"][data-popup-kind="command"][data-slot="input"]) {
+    background: transparent;
+    color: var(--foreground);
+  }
+
+  :where([data-control-family="popup"][data-popup-kind="command"][data-slot="input"])::placeholder, :where([data-control-family="popup"][data-popup-kind="command"][data-slot="empty"], [data-control-family="popup"][data-popup-kind="command"] [cmdk-group-heading]) {
+    color: var(--muted-foreground);
+  }
+
+  :where([data-control-family="popup"][data-popup-kind="command"][data-slot="input"]:disabled) {
+    opacity: 0.5;
+  }
+
+  :where([data-control-family="popup"][data-popup-kind="command"][data-slot="group"]) {
+    color: var(--foreground);
+  }
+
+  :where([data-control-family="popup"][data-popup-kind="command"][data-slot="shortcut"]) {
+    --_popup-shortcut-font-size: var(--text-label);
+  }
+
+  :where([data-select-part="icon"], [data-control-family="popup"][data-popup-kind="navigation-menu"][data-slot="icon"]) {
+    color: var(--muted-foreground);
+    transition-property: rotate;
+    transition-duration: var(--duration-base);
+    transition-timing-function: var(--ease-emphasized);
+  }
+
+  :where([data-select-part="trigger"][data-popup-open] [data-select-part="icon"]), :where([data-control-family="popup"][data-popup-kind="navigation-menu"][data-slot="trigger"][data-popup-open] :where([data-control-family="popup"][data-popup-kind="navigation-menu"][data-slot="icon"])) {
+    rotate: 180deg;
+  }
+
+  :where([data-control-family="popup"][data-popup-kind="select"][data-slot="item-indicator"]) {
+    color: var(--foreground);
+  }
+
+  :where([data-control-family="popup"][data-popup-kind="context-menu"][data-slot="radio-indicator"]) {
+    border-radius: 9999px;
+    background-color: currentColor;
+  }
+
+  :where([data-control-family="popup"][data-popup-kind="popover"][data-slot="title"]) {
+    font-size: var(--text-body);
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.01em;
+  }
+
+  :where([data-control-family="popup"][data-popup-kind="popover"][data-slot="description"]) {
+    color: var(--muted-foreground);
+    font-size: var(--text-body);
+  }
+
+  :where([data-control-family="popup"][data-popup-kind="navigation-menu"][data-slot="positioner"]) {
+    transition-property: inset-block-start, inset-inline-start, inset-block-end, inset-inline-end;
+    transition-duration: var(--duration-base);
+    transition-timing-function: var(--ease-emphasized);
+  }
+
+  :where([data-control-family="popup"][data-popup-kind="navigation-menu"][data-slot="popup"]) {
+    outline: none;
+    --_popup-transform-origin: var(--transform-origin);
+    transform-origin: var(--_popup-transform-origin);
+    transition-property: opacity, inline-size, block-size, scale;
+    transition-duration: var(--duration-base);
+    transition-timing-function: var(--ease-emphasized);
+  }
+
+  :where([data-control-family="popup"][data-popup-kind="navigation-menu"][data-slot="popup"]:is([data-starting-style], [data-ending-style])) {
+    scale: 0.95;
+    opacity: 0;
+  }
+
+  :where([data-control-family="popup"][data-popup-kind="navigation-menu"][data-slot="content"]) {
+    transition-property: opacity, translate;
+    transition-duration: var(--duration-base);
+    transition-timing-function: var(--ease-emphasized);
+  }
+
+  :where([data-control-family="popup"][data-popup-kind="navigation-menu"][data-slot="content"]:is([data-starting-style], [data-ending-style])) {
+    opacity: 0;
+  }
+
+  :where([data-control-family="popup"][data-popup-kind="navigation-menu"][data-slot="content"][data-starting-style][data-activation-direction="left"], [data-control-family="popup"][data-popup-kind="navigation-menu"][data-slot="content"][data-ending-style][data-activation-direction="right"]) {
+    translate: -0.75rem 0;
+  }
+
+  :where([data-control-family="popup"][data-popup-kind="navigation-menu"][data-slot="content"][data-starting-style][data-activation-direction="right"], [data-control-family="popup"][data-popup-kind="navigation-menu"][data-slot="content"][data-ending-style][data-activation-direction="left"]) {
+    translate: 0.75rem 0;
+  }
+}
+
+@property --popup-radius {
+  syntax: "*";
+  inherits: true;
+}
+
+@property --popup-background {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --popup-foreground {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --popup-border-color {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --popup-border-width {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+
+@property --popup-shadow {
+  syntax: "*";
+  inherits: true;
+}
+
+@property --popup-backdrop-blur {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+
+@property --popup-item-radius {
+  syntax: "<length-percentage>";
+  inherits: true;
+  initial-value: 0px;
+}
+
+@property --popup-item-foreground {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --popup-item-highlight-background {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --popup-item-disabled-opacity {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
+}
+
+@property --popup-separator-color {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --popup-shortcut-foreground {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}

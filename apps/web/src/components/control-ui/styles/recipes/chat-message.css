@@ -1,0 +1,144 @@
+@layer components {
+  :where([data-control-family="chat-message"][data-slot="root"]) {
+    --chat-message-avatar-radius: 9999px;
+    --chat-message-avatar-background: var(--card);
+    --chat-message-avatar-border-color: var(--border);
+    --chat-message-avatar-border-width: 1px;
+    --chat-message-radius: 0px;
+    --chat-message-corner-radius: 0px;
+    --chat-message-background: transparent;
+    --chat-message-background-image: none;
+    --chat-message-foreground: var(--foreground);
+    --chat-message-border-color: transparent;
+    --chat-message-border-width: 0px;
+    --chat-message-shadow: none;
+  }
+  :where([data-control-family="chat-message"][data-slot="avatar"]) {
+    border: var(--chat-message-avatar-border-width) solid var(--chat-message-avatar-border-color);
+    border-radius: var(--chat-message-avatar-radius);
+    background: var(--chat-message-avatar-background);
+    color: var(--muted-foreground);
+  }
+
+  :where([data-control-family="chat-message"][data-slot="content"]) {
+    border: var(--chat-message-border-width) solid var(--chat-message-border-color);
+    border-radius: var(--chat-message-radius);
+    border-start-end-radius: var(--chat-message-corner-radius);
+    background-color: var(--chat-message-background);
+    background-image: var(--chat-message-background-image);
+    box-shadow: var(--chat-message-shadow);
+    color: var(--chat-message-foreground);
+  }
+
+  :where([data-control-family="chat-message"][data-slot="root"][data-role="user"]) {
+    --chat-message-radius: var(--radius-field);
+    --chat-message-corner-radius: var(--radius-lg);
+    --chat-message-background: var(--primary);
+    --chat-message-foreground: var(--primary-foreground);
+    --chat-message-shadow: var(--shadow-sm);
+  }
+
+  :where([data-control-family="chat-message"][data-slot="content"][data-role="assistant"][data-streaming]) {
+    @apply shimmer-text;
+  }
+
+  :where([data-control-family="chat-message"][data-slot="actions"]) {
+    --_chat-message-actions-opacity: 0%;
+    opacity: var(--_chat-message-actions-opacity);
+    --_chat-message-actions-transition-property: opacity;
+    transition-property: var(--_chat-message-actions-transition-property);
+    transition-timing-function: var(--ease-standard);
+    transition-duration: var(--duration-fast);
+  }
+
+  @media (hover: hover) {
+    :where([data-control-family="chat-message"][data-slot="actions"]:is(:where(.group):hover *)) {
+      --_chat-message-actions-opacity: 100%;
+      opacity: var(--_chat-message-actions-opacity);
+    }
+  }
+
+  :where([data-control-family="chat-message"][data-slot="content"]) {
+    font-size: var(--text-body);
+    line-height: calc(var(--spacing) * 5);
+  }
+
+  :where([data-control-family="chat-message"][data-slot="header"]) {
+    font-size: var(--text-caption);
+    color: var(--muted-foreground);
+  }
+
+  :where([data-control-family="chat-message"][data-slot="avatar"]) {
+    font-size: var(--text-caption);
+  }
+}
+
+@property --chat-message-avatar-radius {
+  syntax: "<length-percentage>";
+  inherits: true;
+  initial-value: 0px;
+}
+
+@property --chat-message-avatar-background {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --chat-message-avatar-border-color {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --chat-message-avatar-border-width {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+
+@property --chat-message-radius {
+  syntax: "<length-percentage>";
+  inherits: true;
+  initial-value: 0px;
+}
+
+@property --chat-message-corner-radius {
+  syntax: "<length-percentage>";
+  inherits: true;
+  initial-value: 0px;
+}
+
+@property --chat-message-background {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --chat-message-background-image {
+  syntax: "*";
+  inherits: true;
+}
+
+@property --chat-message-foreground {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --chat-message-border-color {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --chat-message-border-width {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+
+@property --chat-message-shadow {
+  syntax: "*";
+  inherits: true;
+}

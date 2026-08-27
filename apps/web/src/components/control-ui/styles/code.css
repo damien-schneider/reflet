@@ -1,0 +1,57 @@
+/*
+ * Control UI — code + diff tokens, derived from the shared theme contract.
+ * --code-token-*: Shiki CSS-variables syntax palette (lib/code-tokens.ts) — follows active skin instead of a frozen palette. --diff-*: 3-tier diff colors (line/emphasis/gutter/fg per side), à la @pierre/diffs. Both skin-overridable via pack skin.css.
+ * Scoped to the root color mode at zero specificity so every skin inherits the correct palette and can override it locally.
+ */
+
+:where(:root) {
+  /* syntax — light (github-light adjacent, retinted onto the neutral token hue family) */
+  --code-foreground: var(--foreground);
+  --code-token-constant: oklch(0.5 0.15 250);
+  --code-token-string: oklch(0.49 0.13 150);
+  --code-token-string-expression: oklch(0.49 0.13 150);
+  --code-token-comment: oklch(0.48 0.015 285);
+  --code-token-keyword: oklch(0.53 0.2 18);
+  --code-token-parameter: oklch(0.52 0.09 55);
+  --code-token-function: oklch(0.54 0.17 300);
+  --code-token-punctuation: oklch(0.5 0.02 285);
+  --code-token-link: oklch(0.5 0.15 250);
+
+  /* diff — light. add ≈ green (H150), del ≈ red (H22). */
+  --diff-add-line: oklch(0.93 0.055 150 / 0.65);
+  --diff-add-emphasis: oklch(0.86 0.11 150 / 0.8);
+  --diff-add-gutter: oklch(0.91 0.07 150);
+  --diff-add-fg: oklch(0.48 0.11 150);
+  --diff-del-line: oklch(0.94 0.05 22 / 0.6);
+  --diff-del-emphasis: oklch(0.87 0.12 22 / 0.8);
+  --diff-del-gutter: oklch(0.92 0.07 22);
+  --diff-del-fg: oklch(0.53 0.16 22);
+  --diff-context-fg: var(--muted-foreground);
+  --diff-gutter-bg: oklch(from var(--muted) l c h / 0.5);
+}
+
+:where(.dark) {
+  /* syntax — dark (github-dark adjacent) */
+  --code-foreground: var(--foreground);
+  --code-token-constant: oklch(0.78 0.13 235);
+  --code-token-string: oklch(0.8 0.13 150);
+  --code-token-string-expression: oklch(0.8 0.13 150);
+  --code-token-comment: oklch(0.76 0.02 285);
+  --code-token-keyword: oklch(0.75 0.16 12);
+  --code-token-parameter: oklch(0.82 0.09 60);
+  --code-token-function: oklch(0.8 0.14 300);
+  --code-token-punctuation: oklch(0.72 0.02 285);
+  --code-token-link: oklch(0.78 0.13 235);
+
+  /* diff — dark */
+  --diff-add-line: oklch(0.5 0.11 150 / 0.22);
+  --diff-add-emphasis: oklch(0.6 0.14 150 / 0.34);
+  --diff-add-gutter: oklch(0.5 0.1 150 / 0.3);
+  --diff-add-fg: oklch(0.82 0.13 150);
+  --diff-del-line: oklch(0.55 0.16 22 / 0.24);
+  --diff-del-emphasis: oklch(0.62 0.18 22 / 0.36);
+  --diff-del-gutter: oklch(0.55 0.14 22 / 0.3);
+  --diff-del-fg: oklch(0.78 0.15 22);
+  --diff-context-fg: var(--muted-foreground);
+  --diff-gutter-bg: oklch(from var(--muted) l c h / 0.4);
+}

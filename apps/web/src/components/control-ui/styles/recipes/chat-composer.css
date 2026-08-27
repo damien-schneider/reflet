@@ -1,0 +1,179 @@
+@layer components {
+  :where([data-control-family="chat-composer"][data-slot="root"]) {
+    --chat-composer-root-background: oklch(from var(--background) l c h / 0.8);
+    --chat-composer-shell-background: oklch(from var(--card) l c h / 0.78);
+    --chat-composer-shell-background-image: none;
+    --chat-composer-shell-backdrop-filter: none;
+    --chat-composer-shell-border-color: var(--border);
+    --chat-composer-shell-radius: var(--radius-field);
+    --chat-composer-shell-shadow: var(--shadow-sm);
+    --chat-composer-input-foreground: var(--foreground);
+    --chat-composer-input-placeholder-foreground: var(--muted-foreground);
+    --chat-composer-mention-radius: var(--radius-popup-item);
+    --chat-composer-mention-border-color: transparent;
+    --chat-composer-mention-border-width: 0px;
+    --chat-composer-mention-background: oklch(from var(--primary) l c h / 0.1);
+    background: var(--chat-composer-root-background);
+  }
+
+  @supports (backdrop-filter: blur(1px)) {
+    :where([data-control-family="chat-composer"][data-slot="root"]) {
+      --chat-composer-root-background: oklch(from var(--background) l c h / 0.7);
+      backdrop-filter: blur(var(--backdrop-blur-popover));
+    }
+  }
+
+  :where([data-control-family="chat-composer"][data-slot="shell"]) {
+    border: 1px solid var(--chat-composer-shell-border-color);
+    border-radius: var(--chat-composer-shell-radius);
+    background-color: var(--chat-composer-shell-background);
+    background-image: var(--chat-composer-shell-background-image);
+    box-shadow:
+      inset 0 0 0 1px oklch(from var(--foreground) l c h / 0.04),
+      var(--chat-composer-shell-shadow);
+    backdrop-filter: var(--chat-composer-shell-backdrop-filter);
+    transition-property: box-shadow, filter, translate;
+    transition-duration: var(--duration-base);
+    transition-timing-function: var(--ease-emphasized);
+  }
+
+  :where([data-control-family="chat-composer"][data-slot="shell"][data-state="submitting"]) {
+    translate: 0 -0.125rem;
+    filter: saturate(1.02);
+    box-shadow: inset 0 0 0 1px oklch(from var(--foreground) l c h / 0.04), var(--shadow-md);
+  }
+
+  :where([data-control-family="chat-composer"][data-slot="accent"]) {
+    background-image: linear-gradient(to right, transparent, oklch(from var(--foreground) l c h / 0.2), transparent);
+  }
+
+  :where(
+    [data-control-family="chat-composer"]:is([data-slot="textarea"], [data-slot="fallback"], [data-slot="placeholder"]),
+    [data-control-family="chat-composer"][data-slot="editor"] .ProseMirror
+  ) {
+    font-size: var(--text-sm);
+    line-height: calc(var(--spacing) * 6);
+  }
+
+  :where(
+    [data-control-family="chat-composer"]:is([data-slot="textarea"], [data-slot="fallback"]),
+    [data-control-family="chat-composer"][data-slot="editor"] .ProseMirror
+  ) {
+    border: 0;
+    background: transparent;
+    color: var(--chat-composer-input-foreground);
+    outline: none;
+  }
+
+  :where([data-control-family="chat-composer"][data-slot="textarea"])::placeholder,
+  :where([data-control-family="chat-composer"][data-slot="fallback"])::placeholder,
+  :where([data-control-family="chat-composer"][data-slot="placeholder"]) {
+    color: var(--chat-composer-input-placeholder-foreground);
+  }
+
+  :where([data-control-family="chat-composer"][data-slot="textarea"]:disabled) {
+    opacity: 0.6;
+  }
+
+  :where([data-control-family="chat-composer"]:is([data-slot="tools"], [data-slot="footer"])) {
+    color: var(--muted-foreground);
+  }
+
+  :where([data-control-family="chat-composer"][data-slot="footer"]) {
+    font-size: var(--text-caption);
+  }
+
+  :where([data-control-family="chat-composer"][data-slot="mention"]) {
+    border: var(--chat-composer-mention-border-width) solid var(--chat-composer-mention-border-color);
+    border-radius: var(--chat-composer-mention-radius);
+    background: var(--chat-composer-mention-background);
+    color: var(--primary-text);
+    font-weight: var(--font-weight-medium);
+  }
+
+  :where([data-control-family="chat-composer"][data-slot="mention-icon"]) {
+    border-radius: 3px;
+  }
+
+
+
+  :where([data-control-family="chat-composer"][data-slot="mention-description"]) {
+    font-size: var(--text-micro);
+    color: var(--muted-foreground);
+  }
+}
+
+@property --chat-composer-root-background {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --chat-composer-shell-radius {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+
+@property --chat-composer-shell-background {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --chat-composer-shell-background-image {
+  syntax: "*";
+  inherits: true;
+}
+
+@property --chat-composer-shell-backdrop-filter {
+  syntax: "*";
+  inherits: true;
+}
+
+@property --chat-composer-shell-border-color {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --chat-composer-shell-shadow {
+  syntax: "*";
+  inherits: true;
+}
+
+@property --chat-composer-input-foreground {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --chat-composer-input-placeholder-foreground {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --chat-composer-mention-background {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --chat-composer-mention-radius {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+
+@property --chat-composer-mention-border-color {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --chat-composer-mention-border-width {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}

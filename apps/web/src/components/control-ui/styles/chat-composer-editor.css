@@ -1,0 +1,44 @@
+/*
+ * Blur choreography, token-driven (kill-switch collapses to 0).
+ * Entry: pill blurs+scales IN via @starting-style (freshly appended by ProseMirror). Exit: pill-delete/message-submit blur OUT via [data-chat-composer-exit] on a throwaway clone (ghost.ts) since ProseMirror removes nodes synchronously.
+ * Reads the shared --duration-* and --ease-* tokens.
+ */
+
+@layer components {
+  /* resting look + blur-IN transition; :not([data-chat-composer-exit] *) excludes exit ghosts/cloned pills from entry choreography */
+  :where([data-control-ui="chat-composer"][data-slot="mention"]):not([data-chat-composer-exit]):not([data-chat-composer-exit] *) {
+    opacity: 1;
+    filter: blur(0);
+    scale: 1;
+    transition:
+      opacity var(--duration-base) var(--ease-emphasized),
+      filter var(--duration-base) var(--ease-emphasized),
+      scale var(--duration-base) var(--ease-emphasized);
+  }
+
+  @starting-style {
+    :where([data-control-ui="chat-composer"][data-slot="mention"]):not([data-chat-composer-exit]):not([data-chat-composer-exit] *) {
+      opacity: 0;
+      filter: blur(6px);
+      scale: 0.82;
+    }
+  }
+
+  /* exit ghost: fixed-position clone, keyframe blurs it out then self-removes on animationend; finite duration lets kill-switch snap it away invisibly */
+  :where([data-chat-composer-exit][data-exiting]) {
+    opacity: 1;
+    filter: blur(0);
+    scale: 1;
+    translate: 0 0;
+    animation: chat-composer-blur-out var(--duration-base) var(--ease-emphasized) forwards;
+  }
+}
+
+@keyframes chat-composer-blur-out {
+  to {
+    opacity: 0;
+    filter: blur(8px);
+    scale: 0.94;
+    translate: 0 -0.25rem;
+  }
+}

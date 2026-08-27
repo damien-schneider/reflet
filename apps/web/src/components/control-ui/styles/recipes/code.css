@@ -1,0 +1,104 @@
+@layer components {
+  :where([data-control-family="code"][data-slot="root"]) {
+    --code-background: var(--background);
+    --code-border-color: var(--border);
+    --code-radius: var(--radius-panel);
+    --code-shadow: var(--shadow-sm);
+    --code-text-foreground: var(--code-foreground);
+    --code-title-foreground: var(--muted-foreground);
+  }
+
+  :where([data-control-family="code"][data-slot="root"][data-chrome="standalone"]) {
+    border: 1px solid var(--code-border-color);
+    border-radius: var(--code-radius);
+    background: var(--code-background);
+    box-shadow: var(--code-shadow);
+  }
+
+  :where([data-control-family="code"][data-slot="root"][data-chrome="embedded"]) {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  :where([data-control-family="code"][data-slot="header"]) {
+    border-bottom: 1px solid var(--border);
+  }
+
+  :where([data-control-family="code"][data-slot="title"]) {
+    color: var(--code-title-foreground);
+    font-size: var(--text-label);
+  }
+
+  :where([data-control-family="button"][data-code-floating="true"]) {
+    background: oklch(from var(--background) l c h / 0.85);
+    box-shadow: inset 0 0 0 1px var(--border), var(--shadow-sm);
+    backdrop-filter: blur(var(--backdrop-blur-popover));
+  }
+
+  :where([data-control-family="code"][data-slot="grid"]) {
+    color: var(--code-text-foreground);
+  }
+
+  :where([data-control-family="code"][data-slot="grid"][data-density="default"]) {
+    font-size: var(--text-label);
+  }
+
+  :where([data-control-family="code"][data-slot="grid"][data-density="compact"]) {
+    font-size: var(--text-micro);
+  }
+
+  :where([data-control-family="code"][data-slot="gutter"]) {
+    color: oklch(from var(--muted-foreground) l c h / 0.6);
+  }
+
+  :where([data-control-family="code"][data-slot="gutter"]) {
+    --_code-gutter-text-align: right;
+    text-align: var(--_code-gutter-text-align);
+  }
+
+  :where([data-control-family="code"][data-slot="title"]) {
+    font-family: var(--font-mono);
+  }
+
+  :where([data-control-family="code"][data-slot="gutter"]) {
+    --_code-gutter-number-style: tabular-nums;
+    font-variant-numeric: var(--_code-gutter-number-style);
+  }
+}
+
+@property --code-radius {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+
+@property --code-background {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --code-border-color {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --code-shadow {
+  syntax: "*";
+  inherits: true;
+}
+
+@property --code-title-foreground {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --code-text-foreground {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
