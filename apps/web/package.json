@@ -102,7 +102,6 @@
     "@types/react-dom": "19.2.3",
     "@vitest/coverage-v8": "^4.1.10",
     "@vitest/ui": "^4.1.10",
-    "agentation": "^3.0.2",
     "jsdom": "^30.0.1",
     "typescript": "catalog:",
     "vite": "catalog:",
