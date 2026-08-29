@@ -57,4 +57,12 @@ test-results
 # Widget build output
 apps/web/public/widget/
 # impeccable skill copies, installed locally
+.agent/
+.agents/
 .claude/skills/
+.codex/
+.cursor/agents/
+.cursor/skills/
+.github/agents/
+.github/hooks/impeccable.json
+.github/skills/
