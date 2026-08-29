@@ -1,115 +1,68 @@
 import Link from "next/link";
 
-const PRODUCT_LINKS = [
-  { href: "https://www.reflet.app/reflet", label: "Feedback Board" },
-  { href: "https://www.reflet.app/reflet?view=roadmap", label: "Roadmap" },
+import { RefletWordmark } from "@/components/reflet-mark";
+
+const LINKS = [
   {
-    href: "https://www.reflet.app/reflet?view=milestones",
-    label: "Milestones",
+    external: true,
+    href: "https://www.reflet.app/reflet",
+    label: "Live board",
   },
   {
+    external: true,
+    href: "https://www.reflet.app/reflet?view=roadmap",
+    label: "Roadmap",
+  },
+  {
+    external: true,
     href: "https://www.reflet.app/reflet?view=changelog",
     label: "Changelog",
   },
-  { href: "https://www.reflet.app/reflet?view=support", label: "Support" },
+  { external: false, href: "/docs", label: "Docs" },
+  { external: false, href: "/integrations", label: "Integrations" },
+  { external: false, href: "/security", label: "Security" },
+  { external: false, href: "/blog", label: "Blog" },
+  {
+    external: true,
+    href: "https://github.com/damien-schneider/reflet",
+    label: "GitHub",
+  },
+  { external: false, href: "/privacy", label: "Privacy" },
+  { external: false, href: "/terms", label: "Terms" },
 ] as const;
 
-const RESOURCE_LINKS = [
-  { href: "/features", label: "Features" },
-  { href: "/pricing", label: "Pricing" },
-  { href: "/integrations", label: "Integrations" },
-  { href: "/security", label: "Security" },
-  { href: "/blog", label: "Blog" },
-  { href: "/docs", label: "Docs" },
-] as const;
-
-const LEGAL_LINKS = [
-  { href: "/privacy", label: "Privacy" },
-  { href: "/terms", label: "Terms" },
-  { href: "/cookies", label: "Cookies" },
-] as const;
+const LINK_CLASS =
+  "inline-flex h-9 items-center text-[13px] text-muted-foreground transition-colors hover:text-foreground";
 
 export default function Footer() {
   return (
-    <footer className="border-border border-t bg-background py-12">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
-          <div className="col-span-2 sm:col-span-1">
-            <span className="font-serif text-foreground text-xl tracking-tight">
-              Reflet.
-            </span>
-          </div>
+    <footer className="waterline relative bg-background pt-20 pb-36 sm:pb-28">
+      <div className="mx-auto flex max-w-220 flex-col gap-10 px-5 sm:px-8 lg:flex-row lg:items-center lg:justify-between">
+        <RefletWordmark />
 
-          <div>
-            <p className="mb-3 font-semibold text-foreground text-sm">
-              Product
-            </p>
-            <ul className="space-y-2">
-              {PRODUCT_LINKS.map((link) => (
-                <li key={link.label}>
-                  <a
-                    className="text-muted-foreground text-sm hover:text-foreground"
-                    href={link.href}
-                    rel="noopener noreferrer"
-                    target="_blank"
-                  >
-                    {link.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
+        <nav className="flex flex-wrap items-center gap-x-6 gap-y-1">
+          {LINKS.map((link) =>
+            link.external ? (
+              <a
+                className={LINK_CLASS}
+                href={link.href}
+                key={link.label}
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                {link.label}
+              </a>
+            ) : (
+              <Link className={LINK_CLASS} href={link.href} key={link.label}>
+                {link.label}
+              </Link>
+            )
+          )}
+        </nav>
 
-          <div>
-            <p className="mb-3 font-semibold text-foreground text-sm">
-              Resources
-            </p>
-            <ul className="space-y-2">
-              {RESOURCE_LINKS.map((link) => (
-                <li key={link.label}>
-                  <Link
-                    className="text-muted-foreground text-sm hover:text-foreground"
-                    href={link.href}
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-              <li>
-                <a
-                  className="text-muted-foreground text-sm hover:text-foreground"
-                  href="https://github.com/damien-schneider/reflet"
-                  rel="noopener noreferrer"
-                  target="_blank"
-                >
-                  GitHub
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <p className="mb-3 font-semibold text-foreground text-sm">Legal</p>
-            <ul className="space-y-2">
-              {LEGAL_LINKS.map((link) => (
-                <li key={link.label}>
-                  <Link
-                    className="text-muted-foreground text-sm hover:text-foreground"
-                    href={link.href}
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-
-        <div className="mt-12 border-border border-t pt-8">
-          <p className="text-muted-foreground text-sm">
-            &copy; {new Date().getFullYear()} Damien Schneider EI. Open Source.
-          </p>
-        </div>
+        <p className="text-[13px] text-muted-foreground">
+          &copy; {new Date().getFullYear()} Damien Schneider EI
+        </p>
       </div>
     </footer>
   );

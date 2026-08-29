@@ -1,29 +1,36 @@
 import type { Metadata, Viewport } from "next";
-import { Instrument_Serif, Inter } from "next/font/google";
+import { Fraunces, Schibsted_Grotesk } from "next/font/google";
 import Script from "next/script";
 import { Suspense } from "react";
 import { CookieConsentBanner } from "@/components/cookie-consent-banner";
+import { FontSwitcher } from "@/components/dev/font-switcher";
 import { PostHogPageView } from "@/components/posthog-pageview";
+import { MotionPreferences } from "@/lib/motion-preferences";
 import { defaultMetadata, viewport as seoViewport } from "@/lib/seo-config";
 import { ThemeProvider } from "@/lib/theme-provider";
 
 import "./globals.css";
 
-const inter = Inter({
-  display: "optional",
+const schibstedGrotesk = Schibsted_Grotesk({
+  display: "swap",
+  style: ["normal", "italic"],
   subsets: ["latin"],
   variable: "--font-sans",
 });
 
-const instrumentSerif = Instrument_Serif({
-  display: "optional",
+const fraunces = Fraunces({
+  axes: ["SOFT", "WONK", "opsz"],
+  display: "swap",
+  style: ["normal", "italic"],
   subsets: ["latin"],
   variable: "--font-display",
-  weight: "400",
 });
 
 export const metadata: Metadata = defaultMetadata;
 export const viewport: Viewport = seoViewport;
+
+const NOSCRIPT_REVEAL =
+  '[style*="opacity:0"],[style*="opacity: 0"]{opacity:1!important;transform:none!important}';
 
 export default function RootLayout({
   children,
@@ -32,7 +39,7 @@ export default function RootLayout({
 }) {
   return (
     <html
-      className={`${inter.className} ${inter.variable} ${instrumentSerif.variable}`}
+      className={`${schibstedGrotesk.className} ${schibstedGrotesk.variable} ${fraunces.variable}`}
       lang="en"
       suppressHydrationWarning
     >
@@ -49,13 +56,19 @@ export default function RootLayout({
           src="https://umami.damien-schneider.pro/script.js"
           strategy="lazyOnload"
         />
+        <noscript>
+          <style>{NOSCRIPT_REVEAL}</style>
+        </noscript>
       </head>
       <body>
         <Suspense fallback={null}>
           <PostHogPageView />
         </Suspense>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <MotionPreferences>{children}</MotionPreferences>
+        </ThemeProvider>
         <CookieConsentBanner />
+        {process.env.NODE_ENV === "development" && <FontSwitcher />}
       </body>
     </html>
   );

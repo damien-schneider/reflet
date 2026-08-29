@@ -1,14 +1,14 @@
 import Link from "next/link";
-import {
-  Brain,
-  ChatCircleDots,
-  Code,
-  GithubLogo,
-  Lightning,
-} from "@/components/phosphor-icons";
+
+import { ArrowRight } from "@/components/phosphor-icons";
 import { Button } from "@/components/ui/button";
+import { H1, H2, Lead } from "@/components/ui/typography";
 import { FeatureMockup } from "@/features/homepage/components/feature-mockups";
 import Footer from "@/features/homepage/components/footer";
+import MarketingCta, {
+  CTA_PRIMARY_CLASS,
+  CTA_SECONDARY_CLASS,
+} from "@/features/homepage/components/marketing/marketing-cta";
 import Navbar from "@/features/homepage/components/navbar";
 import { generatePageMetadata } from "@/lib/seo-config";
 
@@ -31,8 +31,6 @@ export const metadata = generatePageMetadata({
 
 const FEATURES = [
   {
-    accent: "text-violet-500",
-    accentBg: "bg-violet-500/10 dark:bg-violet-500/15",
     description:
       "Auto-tag, score priority, estimate complexity, and detect duplicates — all in milliseconds.",
     details: [
@@ -42,13 +40,10 @@ const FEATURES = [
       "Duplicate detection with configurable match threshold",
       "Confidence scores so you always stay in control",
     ],
-    icon: Brain,
     id: "ai",
     title: "AI-Powered Triage",
   },
   {
-    accent: "text-emerald-500",
-    accentBg: "bg-emerald-500/10 dark:bg-emerald-500/15",
     description:
       "Drop a script tag into your app. Users submit feedback without leaving your product.",
     details: [
@@ -58,13 +53,10 @@ const FEATURES = [
       "Changelog widget to announce releases in-app",
       "TypeScript-first with full type definitions",
     ],
-    icon: ChatCircleDots,
     id: "widget",
     title: "Embeddable Widget",
   },
   {
-    accent: "text-foreground",
-    accentBg: "bg-[#f0efea] dark:bg-[#ffffff08]",
     description:
       "Link feedback to issues. When a PR merges, the linked request moves to shipped.",
     details: [
@@ -74,13 +66,10 @@ const FEATURES = [
       "Auto-generate changelog entries from merged PRs",
       "Works with GitHub Actions and CI/CD pipelines",
     ],
-    icon: GithubLogo,
     id: "github",
     title: "Two-Way GitHub Sync",
   },
   {
-    accent: "text-amber-500",
-    accentBg: "bg-amber-500/10 dark:bg-amber-500/15",
     description:
       "Built on Convex — votes, comments, and status changes sync instantly across all devices.",
     details: [
@@ -90,13 +79,10 @@ const FEATURES = [
       "Multiplayer editing without conflicts",
       "Optimistic UI for snappy interactions",
     ],
-    icon: Lightning,
     id: "realtime",
     title: "Real-Time Everything",
   },
   {
-    accent: "text-sky-500",
-    accentBg: "bg-sky-500/10 dark:bg-sky-500/15",
     description:
       "Full CRUD API for programmatic access. Webhooks fire on every status transition.",
     details: [
@@ -106,7 +92,6 @@ const FEATURES = [
       "Rate limiting with generous free-tier quotas",
       "OpenAPI specification for easy integration",
     ],
-    icon: Code,
     id: "api",
     title: "REST API & Webhooks",
   },
@@ -118,32 +103,32 @@ export default function FeaturesPage() {
       <Navbar />
 
       <main className="flex-1">
-        {/* Hero */}
-        <section className="relative overflow-hidden py-24 sm:py-32">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(120,113,80,0.08),transparent)] dark:bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(120,113,80,0.15),transparent)]" />
-          <div className="relative mx-auto max-w-300 px-5 text-center sm:px-8">
-            <span className="mb-3 block font-semibold text-[11px] text-olive-600 uppercase tracking-[0.15em] dark:text-olive-400">
-              Built for developer-led SaaS teams
-            </span>
-            <h1 className="mx-auto mb-6 max-w-180 font-display text-[clamp(2rem,5vw,3.5rem)] text-olive-950 leading-[1.1] tracking-[-0.02em] dark:text-olive-100">
+        <section className="relative overflow-hidden pt-32 pb-28 sm:pt-40 sm:pb-36">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,color-mix(in_oklch,var(--color-olive-600)_9%,transparent),transparent)]" />
+          <div className="paper-grain pointer-events-none absolute inset-0 opacity-[0.035] mix-blend-multiply [mask-image:linear-gradient(to_bottom,black_60%,transparent)] dark:opacity-[0.05] dark:mix-blend-screen" />
+
+          <div className="relative mx-auto max-w-220 px-5 text-center sm:px-8">
+            <H1 className="mx-auto max-w-200" variant="landing">
               Everything you need to ship what users actually want.
-            </h1>
-            <p className="mx-auto mb-10 max-w-140 text-[17px] text-muted-foreground leading-relaxed sm:text-[19px]">
+            </H1>
+            <Lead className="mx-auto mt-8 max-w-140 sm:mt-9">
               From collecting raw feedback to publishing changelogs — Reflet
               handles the full loop with AI triage, real-time sync, and
               developer-friendly tools. Built for teams that ship fast.
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-4">
-              <Link href="/dashboard">
-                <Button
-                  className="h-11 rounded-full px-6 text-[14px]"
-                  size="lg"
-                >
-                  Get started free
-                </Button>
-              </Link>
+            </Lead>
+            <div className="mt-14 flex flex-wrap items-center justify-center gap-3 sm:mt-16">
+              <Button
+                className="group h-11 rounded-full px-6 text-[15px]"
+                render={<Link href="/dashboard" />}
+              >
+                Get started free
+                <ArrowRight
+                  className="ml-1 transition-transform duration-300 group-hover:translate-x-0.5"
+                  size={15}
+                />
+              </Button>
               <Link
-                className="font-medium text-[14px] text-foreground transition-opacity hover:opacity-70"
+                className="flex h-11 items-center rounded-full border border-border px-5 font-medium text-[15px] text-foreground/80 transition-colors hover:border-foreground/30 hover:text-foreground"
                 href="/docs"
               >
                 Read the docs
@@ -152,81 +137,51 @@ export default function FeaturesPage() {
           </div>
         </section>
 
-        {/* Feature grid */}
-        <section className="py-16 sm:py-24">
-          <div className="mx-auto max-w-300 px-5 sm:px-8">
-            <div className="grid gap-12 sm:gap-16">
-              {FEATURES.map((feature, idx) => {
-                const Icon = feature.icon;
-                const isReversed = idx % 2 === 1;
-                return (
-                  <div
-                    className={`grid items-start gap-8 lg:grid-cols-2 lg:gap-16 ${isReversed ? "lg:[&>*:first-child]:order-2" : ""}`}
-                    key={feature.id}
-                  >
-                    {/* Text content */}
-                    <div>
-                      <div className="mb-4 flex items-center gap-3">
-                        <div
-                          className={`flex size-10 items-center justify-center rounded-xl ${feature.accentBg} ${feature.accent}`}
-                        >
-                          <Icon size={20} weight="duotone" />
-                        </div>
-                        <h2 className="font-display text-[clamp(1.4rem,3vw,2rem)] text-olive-950 leading-[1.15] tracking-[-0.01em] dark:text-olive-100">
-                          {feature.title}
-                        </h2>
-                      </div>
-                      <p className="mb-6 max-w-md text-[15px] text-muted-foreground leading-relaxed sm:text-[17px]">
-                        {feature.description}
-                      </p>
-                      <ul className="space-y-3">
-                        {feature.details.map((detail) => (
-                          <li
-                            className="flex items-start gap-3 text-[14px] text-foreground/80"
-                            key={detail}
-                          >
-                            <span className="mt-2 block size-1.5 shrink-0 rounded-full bg-olive-600 dark:bg-olive-400" />
-                            {detail}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+        <section className="mx-auto max-w-220 px-5 pb-8 sm:px-8">
+          <div className="grid gap-32 sm:gap-44">
+            {FEATURES.map((feature, index) => (
+              <div
+                className={`grid items-start gap-10 lg:grid-cols-2 lg:gap-16 ${index % 2 === 1 ? "lg:[&>*:first-child]:order-2" : ""}`}
+                key={feature.id}
+              >
+                <div className="min-w-0">
+                  <H2 variant="landing">{feature.title}</H2>
+                  <p className="mt-6 max-w-md text-[15px] text-muted-foreground leading-relaxed sm:text-[17px]">
+                    {feature.description}
+                  </p>
+                  <ul className="mt-10 border-border/70 border-t">
+                    {feature.details.map((detail) => (
+                      <li
+                        className="border-border/70 border-b py-3.5 text-[14px] text-foreground/80"
+                        key={detail}
+                      >
+                        {detail}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
 
-                    {/* Feature mockup */}
-                    <div className="flex items-center justify-center">
-                      <FeatureMockup id={feature.id} />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                <div className="-mx-5 min-w-0 sm:mx-0">
+                  <FeatureMockup id={feature.id} />
+                </div>
+              </div>
+            ))}
           </div>
         </section>
 
-        {/* CTA */}
-        <section className="bg-olive-950 py-20 dark:bg-[#0f0e0b]">
-          <div className="mx-auto max-w-300 px-5 text-center sm:px-8">
-            <h2 className="mb-4 font-display text-[clamp(1.8rem,4vw,2.5rem)] text-olive-100 leading-[1.1]">
-              Ready to close the feedback loop?
-            </h2>
-            <p className="mx-auto mb-8 max-w-120 text-[15px] text-olive-300/80 leading-relaxed sm:text-[17px]">
-              Start free. No credit card required. Upgrade when you need more.
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-4">
-              <Link href="/dashboard">
-                <Button className="h-12 rounded-full bg-olive-100 px-7 text-[15px] text-olive-950 hover:bg-white">
-                  See your feedback board
-                </Button>
+        <MarketingCta
+          actions={
+            <>
+              <Link className={CTA_PRIMARY_CLASS} href="/dashboard">
+                See your feedback board
               </Link>
-              <Link
-                className="font-medium text-[14px] text-olive-300 transition-colors hover:text-olive-100"
-                href="/pricing"
-              >
+              <Link className={CTA_SECONDARY_CLASS} href="/pricing">
                 View pricing
               </Link>
-            </div>
-          </div>
-        </section>
+            </>
+          }
+          title="Ready to close the feedback loop?"
+        />
       </main>
 
       <Footer />

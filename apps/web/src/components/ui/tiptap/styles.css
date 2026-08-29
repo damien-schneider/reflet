@@ -239,7 +239,7 @@
   color: var(--foreground);
 }
 
-/* Headings - Uses Instrument Serif (font-display) to match app typography */
+/* Headings - font-display, matching app typography */
 .tiptap-markdown-editor h1,
 .tiptap-markdown-editor h2,
 .tiptap-markdown-editor h3,
@@ -480,7 +480,7 @@
   opacity: 0.5;
 }
 
-/* Minimal editor headings - Uses Instrument Serif (font-display) to match app typography */
+/* Minimal editor headings - font-display, matching app typography */
 .tiptap-minimal-editor h1,
 .tiptap-minimal-editor h2,
 .tiptap-minimal-editor h3 {

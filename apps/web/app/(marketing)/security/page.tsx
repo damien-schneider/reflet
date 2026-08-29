@@ -1,22 +1,12 @@
-import {
-  BookOpen,
-  CheckCircle,
-  Cloud,
-  DownloadSimple,
-  Fingerprint,
-  Globe,
-  IdentificationCard,
-  Key,
-  LockKey,
-  ShieldCheck,
-  Timer,
-  Users,
-} from "@phosphor-icons/react/dist/ssr";
 import type { Metadata } from "next";
-import Link from "next/link";
 
-import { H1, H2, H3, Lead } from "@/components/ui/typography";
+import { H1, H2, Lead } from "@/components/ui/typography";
 import Footer from "@/features/homepage/components/footer";
+import MarketingCta, {
+  CTA_PRIMARY_CLASS,
+} from "@/features/homepage/components/marketing/marketing-cta";
+import type { RuledEntry } from "@/features/homepage/components/marketing/ruled-list";
+import RuledList from "@/features/homepage/components/marketing/ruled-list";
 import Navbar from "@/features/homepage/components/navbar";
 import { generatePageMetadata } from "@/lib/seo-config";
 
@@ -35,230 +25,142 @@ export const metadata: Metadata = generatePageMetadata({
   title: "Security",
 });
 
-const INFRASTRUCTURE = [
+const GROUPS: { entries: RuledEntry[]; id: string; title: string }[] = [
   {
-    description:
-      "Your data is hosted on Convex's SOC 2 Type II compliant infrastructure. Automatic backups, zero-downtime deployments, and global edge distribution.",
-    icon: Cloud,
-    id: "convex-cloud",
-    title: "Convex Cloud",
+    entries: [
+      {
+        description:
+          "Your data is hosted on Convex's SOC 2 Type II compliant infrastructure. Automatic backups, zero-downtime deployments, and global edge distribution.",
+        id: "convex-cloud",
+        title: "Convex Cloud",
+      },
+      {
+        description:
+          "The web application runs on Vercel's edge network with automatic TLS encryption, DDoS protection, and 99.99% uptime SLA.",
+        id: "vercel-edge",
+        title: "Vercel Edge Network",
+      },
+      {
+        description:
+          "All data is encrypted in transit (TLS 1.3) and at rest. API keys are hashed before storage. Session tokens use HTTP-only secure cookies.",
+        id: "encryption",
+        title: "Encryption",
+      },
+    ],
+    id: "infrastructure",
+    title: "Infrastructure",
   },
   {
-    description:
-      "The web application runs on Vercel's edge network with automatic TLS encryption, DDoS protection, and 99.99% uptime SLA.",
-    icon: Globe,
-    id: "vercel-edge",
-    title: "Vercel Edge Network",
+    entries: [
+      {
+        description:
+          "Three permission levels: Owner, Admin, and Member. Control who can manage settings, moderate feedback, and invite team members.",
+        id: "rbac",
+        title: "Role-Based Access Control",
+      },
+      {
+        description:
+          "Powered by Better-Auth with bcrypt password hashing, CSRF protection, and session management with automatic rotation.",
+        id: "secure-auth",
+        title: "Secure Authentication",
+      },
+      {
+        description:
+          "Sign in with GitHub or Google. No passwords stored when using social login.",
+        id: "oauth",
+        title: "OAuth Providers",
+      },
+    ],
+    id: "authentication",
+    title: "Authentication & access",
   },
   {
-    description:
-      "All data is encrypted in transit (TLS 1.3) and at rest. API keys are hashed before storage. Session tokens use HTTP-only secure cookies.",
-    icon: LockKey,
-    id: "encryption",
-    title: "Encryption",
-  },
-] as const;
-
-const AUTHENTICATION = [
-  {
-    description:
-      "Three permission levels: Owner, Admin, and Member. Control who can manage settings, moderate feedback, and invite team members.",
-    icon: Users,
-    id: "rbac",
-    title: "Role-Based Access Control",
-  },
-  {
-    description:
-      "Powered by Better-Auth with bcrypt password hashing, CSRF protection, and session management with automatic rotation.",
-    icon: ShieldCheck,
-    id: "secure-auth",
-    title: "Secure Authentication",
-  },
-  {
-    description:
-      "Sign in with GitHub or Google. No passwords stored when using social login.",
-    icon: Key,
-    id: "oauth",
-    title: "OAuth Providers",
-  },
-] as const;
-
-const DATA_PRIVACY = [
-  {
-    description:
-      "We process data in accordance with GDPR. Users can request data export or deletion at any time.",
-    icon: Fingerprint,
-    id: "gdpr",
-    link: { href: "/privacy", label: "Read our Privacy Policy" },
-    title: "GDPR Compliant",
+    entries: [
+      {
+        description:
+          "We process data in accordance with GDPR. Users can request data export or deletion at any time.",
+        href: "/privacy",
+        id: "gdpr",
+        title: "GDPR Compliant",
+      },
+      {
+        description:
+          "Our entire codebase is open source. Audit the code yourself, run your own security analysis, or self-host for full control.",
+        external: true,
+        href: "https://github.com/damien-schneider/reflet",
+        id: "open-source",
+        title: "Open Source",
+      },
+      {
+        description:
+          "Export all your feedback, votes, and changelog entries as CSV or JSON. Your data is yours, always.",
+        id: "data-portability",
+        title: "Data Portability",
+      },
+    ],
+    id: "data-privacy",
+    title: "Data & privacy",
   },
   {
-    description:
-      "Our entire codebase is open source. Audit the code yourself, run your own security analysis, or self-host for full control.",
-    icon: BookOpen,
-    id: "open-source",
-    link: {
-      external: true,
-      href: "https://github.com/damien-schneider/reflet",
-      label: "View on GitHub",
-    },
-    title: "Open Source",
+    entries: [
+      {
+        description:
+          "Public keys for read operations, secret keys for write operations. Keys are scoped per organization.",
+        id: "api-key-auth",
+        title: "API Key Authentication",
+      },
+      {
+        description:
+          "Built-in rate limiting on all API endpoints protects against abuse and ensures fair usage.",
+        id: "rate-limiting",
+        title: "Rate Limiting",
+      },
+      {
+        description:
+          "All inputs validated with Zod schemas. XSS protection, SQL injection prevention (Convex's document model), and Content Security Policy headers.",
+        id: "input-validation",
+        title: "Input Validation",
+      },
+    ],
+    id: "api-security",
+    title: "API security",
   },
-  {
-    description:
-      "Export all your feedback, votes, and changelog entries as CSV or JSON. Your data is yours, always.",
-    icon: DownloadSimple,
-    id: "data-portability",
-    title: "Data Portability",
-  },
-] as const;
-
-const API_SECURITY = [
-  {
-    description:
-      "Public keys for read operations, secret keys for write operations. Keys are scoped per organization.",
-    icon: IdentificationCard,
-    id: "api-key-auth",
-    title: "API Key Authentication",
-  },
-  {
-    description:
-      "Built-in rate limiting on all API endpoints protects against abuse and ensures fair usage.",
-    icon: Timer,
-    id: "rate-limiting",
-    title: "Rate Limiting",
-  },
-  {
-    description:
-      "All inputs validated with Zod schemas. XSS protection, SQL injection prevention (Convex's document model), and Content Security Policy headers.",
-    icon: CheckCircle,
-    id: "input-validation",
-    title: "Input Validation",
-  },
-] as const;
-
-interface SecurityCard {
-  description: string;
-  icon: React.ComponentType<{ size?: number }>;
-  id: string;
-  link?: { href: string; label: string; external?: boolean };
-  title: string;
-}
-
-const linkClassName =
-  "mt-4 inline-block font-medium text-olive-600 text-sm underline underline-offset-4 transition-colors hover:text-olive-700 dark:text-olive-400 dark:hover:text-olive-300";
-
-function CardLink({
-  link,
-}: {
-  link: { href: string; label: string; external?: boolean };
-}) {
-  if (link.external) {
-    return (
-      <a
-        className={linkClassName}
-        href={link.href}
-        rel="noopener noreferrer"
-        target="_blank"
-      >
-        {link.label}
-      </a>
-    );
-  }
-
-  return (
-    <Link className={linkClassName} href={link.href}>
-      {link.label}
-    </Link>
-  );
-}
-
-function SecurityCardItem({ card }: { card: SecurityCard }) {
-  const Icon = card.icon;
-
-  return (
-    <div className="rounded-2xl border border-border bg-card p-8 shadow-sm transition-shadow hover:shadow-md">
-      <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-muted text-foreground">
-        <Icon size={24} />
-      </div>
-      <H3 className="mb-3" variant="card">
-        {card.title}
-      </H3>
-      <p className="text-muted-foreground text-sm leading-relaxed">
-        {card.description}
-      </p>
-      {card.link ? <CardLink link={card.link} /> : null}
-    </div>
-  );
-}
+];
 
 export default function SecurityPage() {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Navbar />
       <main className="flex-1">
-        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-          <header className="mb-20">
-            <H1 variant="page">Built on trust, secured by design</H1>
-            <Lead className="mt-4 max-w-2xl">
-              Your feedback data is sensitive. Here&apos;s how we protect it.
-            </Lead>
-          </header>
+        <section className="mx-auto max-w-220 px-5 pt-28 pb-24 sm:px-8 sm:pt-36">
+          <H1 className="max-w-180" variant="landing">
+            Built on trust, secured by design
+          </H1>
+          <Lead className="mt-8 max-w-140">
+            Your feedback data is sensitive. Here&apos;s how we protect it.
+          </Lead>
+        </section>
 
-          <section className="mb-20">
-            <H2 className="mb-10" variant="section">
-              Infrastructure
+        {GROUPS.map((group) => (
+          <section
+            className="mx-auto max-w-220 px-5 pb-28 sm:px-8 sm:pb-36"
+            key={group.id}
+          >
+            <H2 className="mb-14 sm:mb-16" variant="landing">
+              {group.title}
             </H2>
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-              {INFRASTRUCTURE.map((card) => (
-                <SecurityCardItem card={card} key={card.id} />
-              ))}
-            </div>
+            <RuledList entries={group.entries} />
           </section>
+        ))}
 
-          <section className="mb-20">
-            <H2 className="mb-10" variant="section">
-              Authentication & Access
-            </H2>
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-              {AUTHENTICATION.map((card) => (
-                <SecurityCardItem card={card} key={card.id} />
-              ))}
-            </div>
-          </section>
-
-          <section className="mb-20">
-            <H2 className="mb-10" variant="section">
-              Data & Privacy
-            </H2>
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-              {DATA_PRIVACY.map((card) => (
-                <SecurityCardItem card={card} key={card.id} />
-              ))}
-            </div>
-          </section>
-
-          <section className="mb-20">
-            <H2 className="mb-10" variant="section">
-              API Security
-            </H2>
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-              {API_SECURITY.map((card) => (
-                <SecurityCardItem card={card} key={card.id} />
-              ))}
-            </div>
-          </section>
-
-          <section className="rounded-2xl border border-border bg-card p-8 text-center sm:p-12">
-            <H2 className="mb-8">Have security questions?</H2>
-            <a
-              className="inline-block font-medium text-olive-600 text-sm underline underline-offset-4 transition-colors hover:text-olive-700 dark:text-olive-400 dark:hover:text-olive-300"
-              href="mailto:security@reflet.app"
-            >
+        <MarketingCta
+          actions={
+            <a className={CTA_PRIMARY_CLASS} href="mailto:security@reflet.app">
               Contact our team
             </a>
-          </section>
-        </div>
+          }
+          title="Have security questions?"
+        />
       </main>
       <Footer />
     </div>

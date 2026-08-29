@@ -1,16 +1,19 @@
 "use client";
 
-import { GithubLogo, List, X } from "@phosphor-icons/react";
+import { List, X } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useRef } from "react";
 
+import { RefletWordmark } from "@/components/reflet-mark";
 import { Button } from "@/components/ui/button";
+import { useThemeToggle } from "@/components/ui/theme-toggle";
 
 const menuLinkClassName =
-  "block rounded-lg px-3 py-3 font-medium text-foreground text-lg transition-colors hover:bg-muted";
+  "block rounded-lg py-3 font-medium text-[15px] text-foreground transition-colors hover:text-muted-foreground";
 
 export default function MobileMenuDialog() {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const { cycleTheme, label: themeLabel } = useThemeToggle();
 
   const open = () => dialogRef.current?.showModal();
   const close = () => dialogRef.current?.close();
@@ -31,14 +34,10 @@ export default function MobileMenuDialog() {
         className="m-0 h-full max-h-full w-full max-w-full border-none bg-background p-0 backdrop:bg-transparent md:hidden"
         ref={dialogRef}
       >
-        <div className="flex h-full flex-col overflow-y-auto px-6 pt-6 pb-8">
-          <div className="flex items-center justify-between">
-            <Link
-              className="font-serif text-2xl text-foreground tracking-tight"
-              href="/"
-              onClick={close}
-            >
-              Reflet.
+        <div className="flex h-full flex-col overflow-y-auto px-5 pb-8">
+          <div className="flex h-16 items-center justify-between">
+            <Link href="/" onClick={close}>
+              <RefletWordmark />
             </Link>
             <button
               aria-label="Close menu"
@@ -69,7 +68,7 @@ export default function MobileMenuDialog() {
               Integrations
             </Link>
             <Link className={menuLinkClassName} href="/docs" onClick={close}>
-              Documentation
+              Docs
             </Link>
             <Link className={menuLinkClassName} href="/blog" onClick={close}>
               Blog
@@ -84,31 +83,41 @@ export default function MobileMenuDialog() {
               Live demo
             </a>
             <a
-              className={`${menuLinkClassName} flex items-center gap-2.5`}
+              className={menuLinkClassName}
               href="https://github.com/damien-schneider/reflet"
               onClick={close}
               rel="noopener noreferrer"
               target="_blank"
             >
-              <GithubLogo className="size-5" />
               GitHub
             </a>
           </nav>
 
           <div className="flex flex-col gap-3 border-border border-t pt-6">
+            <button
+              className={`${menuLinkClassName} text-left`}
+              onClick={cycleTheme}
+              type="button"
+            >
+              {themeLabel} theme
+            </button>
             <Link
-              className="rounded-lg py-3 text-center font-medium text-foreground text-sm transition-colors hover:bg-muted"
+              className={menuLinkClassName}
               href="/dashboard"
               onClick={close}
               prefetch={true}
             >
               Log in
             </Link>
-            <Link href="/dashboard" onClick={close} prefetch={true}>
-              <Button className="w-full" size="lg">
-                Get started
-              </Button>
-            </Link>
+            <Button
+              className="w-full text-[15px]"
+              render={
+                <Link href="/dashboard" onClick={close} prefetch={true} />
+              }
+              size="lg"
+            >
+              Get started
+            </Button>
           </div>
         </div>
       </dialog>

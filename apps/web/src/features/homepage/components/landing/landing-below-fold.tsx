@@ -2,22 +2,16 @@
 
 import dynamic from "next/dynamic";
 
-const LandingShowcase = dynamic(() => import("./landing-showcase"), {
-  ssr: false,
-});
-const LandingProductTour = dynamic(() => import("./landing-product-tour"), {
-  ssr: false,
-});
-const LandingPricing = dynamic(() => import("./landing-pricing"), {
-  ssr: false,
-});
-const LandingCTA = dynamic(() => import("./landing-cta"), { ssr: false });
+const LandingLoop = dynamic(() => import("./sections/loop"));
+const LandingDeveloper = dynamic(() => import("./sections/developer"));
+const LandingPricing = dynamic(() => import("./sections/pricing"));
+const LandingCTA = dynamic(() => import("./landing-closing"));
 
 export default function LandingBelowFold() {
   return (
     <>
-      <LandingShowcase />
-      <LandingProductTour />
+      <LandingLoop />
+      <LandingDeveloper />
       <LandingPricing />
       <LandingCTA />
     </>

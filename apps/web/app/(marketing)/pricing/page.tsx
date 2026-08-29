@@ -1,6 +1,6 @@
 import Footer from "@/features/homepage/components/footer";
+import Pricing from "@/features/homepage/components/landing/sections/pricing";
 import Navbar from "@/features/homepage/components/navbar";
-import Pricing from "@/features/homepage/components/pricing";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata = generatePageMetadata({

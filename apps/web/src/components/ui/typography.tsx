@@ -17,7 +17,7 @@ const h1Variants = cva(
         default: "text-5xl leading-tight tracking-tight",
         hero: "text-4xl leading-[1.1] tracking-tight sm:text-6xl sm:leading-tight md:text-7xl",
         landing:
-          "text-[clamp(2.5rem,6vw,5rem)] leading-[1.05] tracking-[-0.03em]",
+          "text-[clamp(2.5rem,6vw,5rem)] leading-[1.08] tracking-[-0.018em]",
         page: "text-4xl leading-tight tracking-tight sm:text-5xl",
       },
     },
@@ -38,7 +38,7 @@ const h2Variants = cva(
         card: "text-xl font-medium text-foreground",
         default: "text-3xl leading-snug tracking-tight",
         landing:
-          "text-[clamp(1.8rem,4vw,3rem)] leading-[1.1] tracking-[-0.02em]",
+          "text-[clamp(1.8rem,4vw,3rem)] leading-[1.14] tracking-[-0.012em]",
         section: "text-4xl tracking-tight sm:text-5xl",
       },
     },
@@ -96,10 +96,6 @@ const textVariants = cva("text-foreground", {
     },
   },
 });
-
-// ============================================================================
-// Heading Components (H1, H2, H3) - Uses Instrument Serif font
-// ============================================================================
 
 type H1Props = ComponentPropsWithRef<"h1"> & VariantProps<typeof h1Variants>;
 

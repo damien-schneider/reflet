@@ -56,3 +56,5 @@ test-results
 
 # Widget build output
 apps/web/public/widget/
+# impeccable skill copies, installed locally
+.claude/skills/

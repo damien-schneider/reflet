@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const CONSENT_KEY = "cookie-consent";
 
@@ -29,9 +30,16 @@ export function CookieConsentBanner() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    if (getCookieConsent() === null) {
-      setVisible(true);
+    if (getCookieConsent() !== null) {
+      return;
     }
+    const reveal = () => setVisible(true);
+    if (window.scrollY > 0) {
+      reveal();
+      return;
+    }
+    window.addEventListener("scroll", reveal, { once: true, passive: true });
+    return () => window.removeEventListener("scroll", reveal);
   }, []);
 
   const handleAccept = () => {
@@ -51,11 +59,12 @@ export function CookieConsentBanner() {
 
   return (
     <div
-      className={`fixed inset-x-3 z-50 ${
+      className={cn(
+        "fixed inset-x-3 z-50 sm:right-3 sm:left-auto",
         pathname.startsWith("/dashboard") ? "bottom-28 sm:bottom-3" : "bottom-3"
-      }`}
+      )}
     >
-      <div className="mx-auto flex max-w-xl flex-wrap items-center gap-2 rounded-lg border border-border bg-background p-2.5 shadow-sm">
+      <div className="flex max-w-sm flex-wrap items-center gap-2 rounded-lg border border-border bg-background p-2.5 shadow-sm">
         <p className="min-w-48 flex-1 text-muted-foreground text-sm">
           Allow analytics cookies?{" "}
           <Link className="underline hover:text-foreground" href="/cookies">

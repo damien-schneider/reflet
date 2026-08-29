@@ -10,6 +10,12 @@
       {
         "command": "bun x ultracite fix --unsafe && bun run check-types && cd packages/backend && bun run convex dev --once"
       }
+    ],
+    "preToolUse": [
+      {
+        "command": "[ ! -f \".cursor/skills/impeccable/scripts/hook-before-edit.mjs\" ] || node \".cursor/skills/impeccable/scripts/hook-before-edit.mjs\"",
+        "timeout": 5
+      }
     ]
   }
 }
