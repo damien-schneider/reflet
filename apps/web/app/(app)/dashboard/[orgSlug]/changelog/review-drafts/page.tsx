@@ -73,7 +73,7 @@ export default function ReviewDraftsPage({
   const { orgSlug } = use(params);
   const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
   const releases = useQuery(
-    api.changelog.releases.list,
+    api.changelog.queries.list,
     org?._id ? { organizationId: org._id } : "skip"
   );
 

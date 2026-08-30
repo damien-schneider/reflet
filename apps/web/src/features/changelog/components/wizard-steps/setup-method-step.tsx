@@ -8,11 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { WizardConfig } from "../release-setup-wizard";
+import type { WizardConfig } from "../wizard-config";
 import {
   generateAiPrompt,
-  generateCombinedWorkflowYaml,
-  generateWorkflowYaml,
+  generateAutoReleaseWorkflowYaml,
 } from "./setup-generators";
 
 interface SetupMethodStepProps {
@@ -29,23 +28,18 @@ export function SetupMethodStep({
 }: SetupMethodStepProps) {
   const [copiedTab, setCopiedTab] = useState<string | null>(null);
 
-  const webhookUrl =
-    typeof window === "undefined"
-      ? ""
-      : `${window.location.origin}/api/github/webhook`;
+  const appUrl = typeof window === "undefined" ? "" : window.location.origin;
 
   const defaultBranch =
     config.targetBranch || githubConnection?.repositoryDefaultBranch || "main";
   const repoFullName = githubConnection?.repositoryFullName ?? "owner/repo";
 
-  const workflowYaml = generateWorkflowYaml(webhookUrl, defaultBranch);
   const aiPrompt = generateAiPrompt({
+    appUrl,
     config,
     defaultBranch,
     orgSlug,
     repoFullName,
-    webhookUrl,
-    workflowYaml,
   });
 
   const handleCopy = async (content: string, tab: string) => {
@@ -81,37 +75,10 @@ export function SetupMethodStep({
     );
   }
 
-  // Determine the GitHub Action YAML to show based on workflow
-  const displayYaml =
-    config.workflow === "automated"
-      ? generateCombinedWorkflowYaml(
-          webhookUrl,
-          defaultBranch,
-          config.versionPrefix
-        )
-      : workflowYaml;
-
-  const yamlFileDescription =
-    config.workflow === "automated" ? (
-      <>
-        Create two workflow files in your repository:{" "}
-        <code className="rounded bg-muted px-1 text-[10px]">
-          .github/workflows/reflet-release-sync.yml
-        </code>{" "}
-        and{" "}
-        <code className="rounded bg-muted px-1 text-[10px]">
-          .github/workflows/release-please.yml
-        </code>
-      </>
-    ) : (
-      <>
-        Create{" "}
-        <code className="rounded bg-muted px-1 text-[10px]">
-          .github/workflows/reflet-release-sync.yml
-        </code>{" "}
-        in your repository with this content:
-      </>
-    );
+  const hasReleaseAutomation = config.workflow === "automated";
+  const displayYaml = hasReleaseAutomation
+    ? generateAutoReleaseWorkflowYaml(defaultBranch, config.versionPrefix)
+    : null;
 
   const setupDescription = getSetupDescription(config);
 
@@ -122,10 +89,9 @@ export function SetupMethodStep({
       {config.workflow === "ai_powered" && (
         <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-3 dark:border-blue-900 dark:bg-blue-950/20">
           <p className="text-blue-800 text-xs dark:text-blue-200">
-            No additional setup needed for AI release notes — Reflet handles
-            release note generation automatically when you click &quot;New
-            Release&quot;. The workflow below enables real-time sync with
-            GitHub.
+            No setup needed — Reflet generates release notes when you click
+            &quot;New Release&quot;, and the Reflet GitHub App already keeps
+            releases in sync.
           </p>
         </div>
       )}
@@ -142,10 +108,12 @@ export function SetupMethodStep({
             <Robot className="mr-1 h-3 w-3" />
             AI Prompt
           </TabsTrigger>
-          <TabsTrigger value="github-action">
-            <ClipboardText className="mr-1 h-3 w-3" />
-            GitHub Action
-          </TabsTrigger>
+          {hasReleaseAutomation && (
+            <TabsTrigger value="github-action">
+              <ClipboardText className="mr-1 h-3 w-3" />
+              GitHub Action
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {isWebhookSetup && (
@@ -203,55 +171,60 @@ export function SetupMethodStep({
               </Button>
             </div>
             <p className="text-[10px] text-muted-foreground">
-              {config.workflow === "automated"
-                ? "Both workflows use GitHub Actions' built-in token ($GITHUB_TOKEN) — no additional tokens or secrets needed. Works with both public and private repositories."
-                : "The workflow uses GitHub Actions' built-in token ($GITHUB_TOKEN) which is automatically available — you don't need to create, generate, or configure any token or secret. Works with both public and private repositories."}
+              {hasReleaseAutomation
+                ? "release-please uses GitHub Actions' built-in token ($GITHUB_TOKEN) — no additional tokens or secrets needed. Works with both public and private repositories."
+                : "Sync runs through the Reflet GitHub App — no token, secret or workflow file to add."}
             </p>
           </div>
         </TabsContent>
 
-        <TabsContent className="mt-3" value="github-action">
-          <div className="space-y-2">
-            <p className="text-muted-foreground text-xs">
-              {yamlFileDescription}
-            </p>
-            <div className="relative">
-              <ScrollArea
-                className="min-w-0 rounded-lg border bg-muted/50"
-                classNameViewport="max-h-[200px]"
-                direction="both"
-              >
-                <pre className="overflow-x-auto whitespace-pre p-3 pr-20 font-mono text-[11px] leading-relaxed">
-                  {displayYaml}
-                </pre>
-              </ScrollArea>
-              <Button
-                className="absolute top-2 right-2 h-7"
-                onClick={() => handleCopy(displayYaml, "yaml")}
-                size="sm"
-                type="button"
-                variant="secondary"
-              >
-                {copiedTab === "yaml" ? (
-                  <>
-                    <Check className="mr-1 h-3 w-3" />
-                    Copied
-                  </>
-                ) : (
-                  <>
-                    <ClipboardText className="mr-1 h-3 w-3" />
-                    Copy
-                  </>
-                )}
-              </Button>
+        {displayYaml && (
+          <TabsContent className="mt-3" value="github-action">
+            <div className="space-y-2">
+              <p className="text-muted-foreground text-xs">
+                Create{" "}
+                <code className="rounded bg-muted px-1 text-[10px]">
+                  .github/workflows/release-please.yml
+                </code>{" "}
+                in your repository with this content:
+              </p>
+              <div className="relative">
+                <ScrollArea
+                  className="min-w-0 rounded-lg border bg-muted/50"
+                  classNameViewport="max-h-[200px]"
+                  direction="both"
+                >
+                  <pre className="overflow-x-auto whitespace-pre p-3 pr-20 font-mono text-[11px] leading-relaxed">
+                    {displayYaml}
+                  </pre>
+                </ScrollArea>
+                <Button
+                  className="absolute top-2 right-2 h-7"
+                  onClick={() => handleCopy(displayYaml, "yaml")}
+                  size="sm"
+                  type="button"
+                  variant="secondary"
+                >
+                  {copiedTab === "yaml" ? (
+                    <>
+                      <Check className="mr-1 h-3 w-3" />
+                      Copied
+                    </>
+                  ) : (
+                    <>
+                      <ClipboardText className="mr-1 h-3 w-3" />
+                      Copy
+                    </>
+                  )}
+                </Button>
+              </div>
+              <p className="text-[10px] text-muted-foreground">
+                release-please uses GitHub Actions&apos; built-in token, which
+                is automatically available. Just commit the file.
+              </p>
             </div>
-            <p className="text-[10px] text-muted-foreground">
-              {config.workflow === "automated"
-                ? "Both workflows use GitHub Actions' built-in token, which is automatically available. You don't need to create any token or add any secret — just commit the files."
-                : "This workflow uses GitHub Actions' built-in token, which is automatically available in every workflow run. You don't need to create any token or add any secret — just commit the file. Works with both public and private repositories."}
-            </p>
-          </div>
-        </TabsContent>
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );

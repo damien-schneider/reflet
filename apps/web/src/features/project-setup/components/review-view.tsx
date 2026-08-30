@@ -116,7 +116,6 @@ export function ReviewView({
         changelogSettings: setup.changelogConfig
           ? {
               autoVersioning: setup.changelogConfig.workflow !== "manual",
-              syncDirection: setup.changelogConfig.syncDirection,
               targetBranch: setup.changelogConfig.targetBranch,
               versionPrefix: setup.changelogConfig.versionPrefix,
             }

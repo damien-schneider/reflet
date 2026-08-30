@@ -1,26 +1,20 @@
 "use node";
 
 import { v } from "convex/values";
+import { z } from "zod";
 import { internal } from "../../_generated/api";
 import { internalAction } from "../../_generated/server";
 import { repoAnalysisAgent } from "../../ai/agent";
 import { fetchGitHubReleases, fetchRepoData } from "./github_helpers";
+import { parseJsonArray } from "./llm_json";
+import type { ChangelogConfig } from "./project_setup_validators";
 
-const JSON_ARRAY_REGEX = /\[[\s\S]*\]/;
 const SEMVER_TAG_REGEX = /^v?\d+\.\d+/;
 
-function parseJsonArray<T>(text: string): T[] {
-  try {
-    const jsonMatch = text.match(JSON_ARRAY_REGEX);
-    if (!jsonMatch) {
-      return [];
-    }
-    const parsed: unknown = JSON.parse(jsonMatch[0]);
-    return Array.isArray(parsed) ? (parsed as T[]) : [];
-  } catch {
-    return [];
-  }
-}
+const MONITOR_SCHEMA = z.object({ name: z.string(), url: z.string() });
+const KEYWORD_SCHEMA = z.object({ category: z.string(), keyword: z.string() });
+const TAG_SCHEMA = z.object({ color: z.string(), name: z.string() });
+const PROMPT_SCHEMA = z.object({ prompt: z.string(), title: z.string() });
 
 export const runProjectSetup = internalAction({
   args: {
@@ -151,9 +145,9 @@ Return ONLY the JSON array, no markdown.`,
         }
       );
 
-      const monitors = parseJsonArray<{ url: string; name: string }>(
-        servicesResult.text
-      ).map((m) => ({ ...m, accepted: true }));
+      const monitors = parseJsonArray(servicesResult.text, MONITOR_SCHEMA).map(
+        (m) => ({ ...m, accepted: true })
+      );
 
       await ctx.runMutation(
         internal.integrations.github.project_setup_internal.updateStepStatus,
@@ -208,9 +202,9 @@ Return ONLY the JSON array, no markdown.`,
         }
       );
 
-      const keywords = parseJsonArray<{ keyword: string; category: string }>(
-        keywordsResult.text
-      ).map((k) => ({ ...k, accepted: true }));
+      const keywords = parseJsonArray(keywordsResult.text, KEYWORD_SCHEMA).map(
+        (k) => ({ ...k, accepted: true })
+      );
 
       await ctx.runMutation(
         internal.integrations.github.project_setup_internal.updateStepStatus,
@@ -248,14 +242,10 @@ Return ONLY the JSON array, no markdown.`,
         hasConventionalCommits: hasSemver,
         importExisting: hasReleases,
         releaseCount: releases.length,
-        syncDirection: "reflet_first",
         targetBranch: defaultBranch,
         versionPrefix,
-        workflow: (hasReleases ? "ai_powered" : "manual") as
-          | "ai_powered"
-          | "automated"
-          | "manual",
-      };
+        workflow: hasReleases ? "ai_powered" : "manual",
+      } satisfies ChangelogConfig;
 
       await ctx.runMutation(
         internal.integrations.github.project_setup_internal.updateStepStatus,
@@ -301,9 +291,10 @@ Return ONLY the JSON array, no markdown.`,
         }
       );
 
-      const tags = parseJsonArray<{ name: string; color: string }>(
-        tagsResult.text
-      ).map((t) => ({ ...t, accepted: true }));
+      const tags = parseJsonArray(tagsResult.text, TAG_SCHEMA).map((t) => ({
+        ...t,
+        accepted: true,
+      }));
 
       await ctx.runMutation(
         internal.integrations.github.project_setup_internal.updateStepStatus,
@@ -351,9 +342,7 @@ Return ONLY the JSON array, no markdown.`,
         }
       );
 
-      const prompts = parseJsonArray<{ title: string; prompt: string }>(
-        promptsResult.text
-      );
+      const prompts = parseJsonArray(promptsResult.text, PROMPT_SCHEMA);
 
       await ctx.runMutation(
         internal.integrations.github.project_setup_internal.updateStepStatus,

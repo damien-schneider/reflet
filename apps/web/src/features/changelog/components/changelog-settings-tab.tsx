@@ -9,9 +9,8 @@ import { toast } from "sonner";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Muted } from "@/components/ui/typography";
 import { AutomationSection } from "@/features/changelog/components/release-settings/automation-section";
-import { CurrentConfigSection } from "@/features/changelog/components/release-settings/current-config-section";
 import { ManualSyncSection } from "@/features/changelog/components/release-settings/manual-sync-section";
-import { SyncDirectionSection } from "@/features/changelog/components/release-settings/sync-direction-section";
+import type { ChangelogSettings } from "@/features/changelog/components/release-settings/types";
 import { VersioningSection } from "@/features/changelog/components/release-settings/versioning-section";
 import { buildGitHubInstallUrl } from "@/features/github/lib/github-install-url";
 import { authClient } from "@/lib/auth-client";
@@ -46,6 +45,9 @@ export function ChangelogSettingsTab({
   );
 
   const updateOrg = useMutation(api.organizations.mutations.update);
+  const toggleAutoSync = useMutation(
+    api.integrations.github.mutations.toggleAutoSync
+  );
   const listBranches = useAction(
     api.integrations.github.repo_actions.listBranches
   );
@@ -56,6 +58,9 @@ export function ChangelogSettingsTab({
 
   const settings = org?.changelogSettings;
   const isGitHubConnected = githubStatus?.isConnected === true;
+  const autoSyncReleases = githubStatus?.autoSyncEnabled === true;
+  const isSyncConfigured =
+    autoSyncReleases || settings?.pushToGithubOnPublish === true;
 
   const loadBranches = useCallback(async () => {
     if (
@@ -86,19 +91,13 @@ export function ChangelogSettingsTab({
   }, [isGitHubConnected, loadBranches]);
 
   const handleUpdate = useCallback(
-    async (updates: Record<string, unknown>) => {
+    async (updates: ChangelogSettings) => {
       if (!org?._id) {
         return;
       }
       setIsSaving(true);
       try {
-        await updateOrg({
-          changelogSettings: {
-            ...settings,
-            ...updates,
-          },
-          id: org._id,
-        });
+        await updateOrg({ changelogSettings: updates, id: org._id });
         toast.success("Settings saved");
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Failed to save");
@@ -106,7 +105,22 @@ export function ChangelogSettingsTab({
         setIsSaving(false);
       }
     },
-    [org?._id, settings, updateOrg]
+    [org?._id, updateOrg]
+  );
+
+  const handleToggleAutoSync = useCallback(
+    async (enabled: boolean) => {
+      setIsSaving(true);
+      try {
+        await toggleAutoSync({ enabled, organizationId });
+        toast.success("Settings saved");
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Failed to save");
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [organizationId, toggleAutoSync]
   );
 
   return (
@@ -132,7 +146,7 @@ export function ChangelogSettingsTab({
                 <div>
                   <p className="font-medium text-sm">GitHub Sync Wizard</p>
                   <Muted className="text-xs">
-                    {settings?.syncDirection
+                    {isSyncConfigured
                       ? "Re-run the guided setup"
                       : "Set up GitHub release sync"}
                   </Muted>
@@ -144,33 +158,23 @@ export function ChangelogSettingsTab({
                 size="sm"
                 variant="outline"
               >
-                {settings?.syncDirection ? "Re-configure" : "Run Setup"}
+                {isSyncConfigured ? "Re-configure" : "Run Setup"}
               </Button>
             </div>
           </div>
 
-          <SyncDirectionSection
-            currentDirection={settings?.syncDirection}
-            isAdmin={isAdmin}
-            isConnected={isGitHubConnected}
-            isSaving={isSaving}
-            onUpdate={handleUpdate}
-          />
-
           <AutomationSection
             autoPublishImported={settings?.autoPublishImported}
+            autoSyncReleases={autoSyncReleases}
             branches={branches}
             isAdmin={isAdmin}
             isLoadingBranches={isLoadingBranches}
             isSaving={isSaving}
+            onToggleAutoSync={handleToggleAutoSync}
             onUpdate={handleUpdate}
             pushToGithubOnPublish={settings?.pushToGithubOnPublish}
             targetBranch={settings?.targetBranch}
           />
-
-          {settings?.syncDirection && (
-            <CurrentConfigSection settings={settings} />
-          )}
 
           <ManualSyncSection
             isAdmin={isAdmin}

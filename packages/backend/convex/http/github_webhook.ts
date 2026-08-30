@@ -273,21 +273,26 @@ async function handlePullRequestWebhook(
 // SIGNATURE VERIFICATION
 // ============================================
 
-async function verifySignatureIfPresent(
+async function isSignatureValid(
   ctx: WebhookCtx,
   body: string,
   signature: string | null,
   payload: Record<string, unknown>
-): Promise<Response | null> {
+): Promise<boolean> {
   if (!signature) {
-    return null;
+    return false;
+  }
+
+  const appSecret = process.env.GITHUB_WEBHOOK_SECRET;
+  if (appSecret && (await verifyWebhookSignature(body, signature, appSecret))) {
+    return true;
   }
 
   const installation = webhookInstallationSchema.safeParse(
     payload.installation
   );
   if (!installation.success) {
-    return null;
+    return false;
   }
 
   const connection = await ctx.runQuery(
@@ -296,18 +301,14 @@ async function verifySignatureIfPresent(
   );
 
   if (!connection?.webhookSecret) {
-    return null;
+    return false;
   }
 
-  const valid = await verifyWebhookSignature(
+  return await verifyWebhookSignature(
     body,
     signature,
     connection.webhookSecret
   );
-  if (!valid) {
-    return webhookJson({ error: "Invalid webhook signature" }, 401);
-  }
-  return null;
 }
 
 // ============================================
@@ -363,14 +364,8 @@ export function registerGithubWebhookRoutes(http: Router): void {
           return webhookJson({ error: "Invalid webhook payload" }, 400);
         }
 
-        const signatureError = await verifySignatureIfPresent(
-          ctx,
-          body,
-          signature,
-          parsed
-        );
-        if (signatureError) {
-          return signatureError;
+        if (!(await isSignatureValid(ctx, body, signature, parsed))) {
+          return webhookJson({ error: "Invalid webhook signature" }, 401);
         }
 
         return await routeWebhookEvent(ctx, eventType, parsed);

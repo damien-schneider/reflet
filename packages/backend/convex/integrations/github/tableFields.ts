@@ -123,7 +123,8 @@ export const githubTables = {
         hasConventionalCommits: v.optional(v.boolean()),
         importExisting: v.boolean(),
         releaseCount: v.optional(v.number()),
-        syncDirection: v.string(),
+        // Unused: drop once migrations/strip_sync_direction has run everywhere.
+        syncDirection: v.optional(v.string()),
         targetBranch: v.string(),
         versionPrefix: v.string(),
         workflow: v.union(

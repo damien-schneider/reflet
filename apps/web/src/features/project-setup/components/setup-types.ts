@@ -1,45 +1,20 @@
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import type { api } from "@reflet/backend/convex/_generated/api";
+import type { FunctionReturnType } from "convex/server";
 
-export interface SuggestedMonitor {
-  accepted: boolean;
-  method?: string;
-  name: string;
-  url: string;
-}
+export type SetupData = NonNullable<
+  FunctionReturnType<
+    typeof api.integrations.github.project_setup.getProjectSetup
+  >
+>;
 
-export interface SuggestedKeyword {
-  accepted: boolean;
-  category: string;
-  keyword: string;
-}
-
-export interface SuggestedTag {
-  accepted: boolean;
-  color: string;
-  name: string;
-}
-
-export interface ChangelogConfig {
-  hasConventionalCommits?: boolean;
-  importExisting: boolean;
-  releaseCount?: number;
-  syncDirection: string;
-  targetBranch: string;
-  versionPrefix: string;
-  workflow: "ai_powered" | "automated" | "manual";
-}
-
-export interface SuggestedPrompt {
-  prompt: string;
-  title: string;
-}
-
-export interface SetupData {
-  _id: Id<"projectSetupResults">;
-  changelogConfig?: ChangelogConfig;
-  projectOverview?: string;
-  suggestedKeywords?: SuggestedKeyword[];
-  suggestedMonitors?: SuggestedMonitor[];
-  suggestedPrompts?: SuggestedPrompt[];
-  suggestedTags?: SuggestedTag[];
-}
+export type ChangelogConfig = NonNullable<SetupData["changelogConfig"]>;
+export type SuggestedKeyword = NonNullable<
+  SetupData["suggestedKeywords"]
+>[number];
+export type SuggestedMonitor = NonNullable<
+  SetupData["suggestedMonitors"]
+>[number];
+export type SuggestedPrompt = NonNullable<
+  SetupData["suggestedPrompts"]
+>[number];
+export type SuggestedTag = NonNullable<SetupData["suggestedTags"]>[number];

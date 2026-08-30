@@ -27,7 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import type { Workflow } from "../release-setup-wizard";
+import type { Workflow } from "../wizard-config";
 
 interface BranchInfo {
   isProtected: boolean;

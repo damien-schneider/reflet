@@ -127,7 +127,6 @@ export const getLatestCommitFromPreviousRelease = query({
       .order("desc")
       .collect();
 
-    // Find the most recent published release (with commits) that isn't the current one
     for (const release of releases) {
       if (!release.publishedAt) {
         continue;
@@ -141,9 +140,9 @@ export const getLatestCommitFromPreviousRelease = query({
         .withIndex("by_release", (q) => q.eq("releaseId", release._id))
         .first();
 
-      if (commitDoc && commitDoc.commits.length > 0) {
-        // Return the latest commit SHA (first commit is the most recent)
-        return { sha: commitDoc.commits[0].sha };
+      const newestCommit = commitDoc?.commits[0];
+      if (newestCommit) {
+        return { sha: newestCommit.sha };
       }
     }
 

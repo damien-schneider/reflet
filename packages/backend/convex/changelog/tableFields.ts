@@ -59,6 +59,7 @@ export const changelogTables = {
       v.union(v.literal("pending"), v.literal("success"), v.literal("failed"))
     ),
     githubReleaseId: v.optional(v.string()),
+    notifiedAt: v.optional(v.number()),
     organizationId: v.id("organizations"),
     publishedAt: v.optional(v.number()),
     retroactivelyGenerated: v.optional(v.boolean()),

@@ -73,13 +73,7 @@ export function BoardCustomizePopover({ orgSlug }: BoardCustomizePopoverProps) {
     }
     setSaveStatus("saving");
     try {
-      await updateOrg({
-        feedbackSettings: {
-          ...org.feedbackSettings,
-          ...updates,
-        },
-        id: org._id,
-      });
+      await updateOrg({ feedbackSettings: updates, id: org._id });
       setSaveStatus("saved");
       if (savedTimerRef.current) {
         clearTimeout(savedTimerRef.current);

@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalMutation, mutation } from "../_generated/server";
+import { versionIncrementValidator } from "../changelog/semver";
 import { getAuthUser } from "../shared/utils";
 
 // Helper to generate slug from name
@@ -268,9 +269,8 @@ export const update = mutation({
         autoPublishImported: v.optional(v.boolean()),
         autoVersioning: v.optional(v.boolean()),
         pushToGithubOnPublish: v.optional(v.boolean()),
-        syncDirection: v.optional(v.string()),
         targetBranch: v.optional(v.string()),
-        versionIncrement: v.optional(v.string()),
+        versionIncrement: v.optional(versionIncrementValidator),
         versionPrefix: v.optional(v.string()),
       })
     ),
@@ -357,8 +357,16 @@ export const update = mutation({
       }
     }
 
-    const { id, ...updates } = args;
-    await ctx.db.patch(id, updates);
+    const { id, changelogSettings, feedbackSettings, ...updates } = args;
+    await ctx.db.patch(id, {
+      ...updates,
+      ...(changelogSettings && {
+        changelogSettings: { ...org.changelogSettings, ...changelogSettings },
+      }),
+      ...(feedbackSettings && {
+        feedbackSettings: { ...org.feedbackSettings, ...feedbackSettings },
+      }),
+    });
 
     return id;
   },

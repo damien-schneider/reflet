@@ -11,7 +11,7 @@ vi.mock("convex/react", () => ({
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
     changelog: {
-      releases: { getNextVersion: "releases:getNextVersion" },
+      queries: { getNextVersion: "queries:getNextVersion" },
     },
   },
 }));
@@ -323,7 +323,7 @@ describe("VersionPicker", () => {
     const releaseId = "release123" as Id<"releases">;
     mockUseQuery.mockReturnValue(undefined);
     render(<VersionPicker {...defaultProps} excludeReleaseId={releaseId} />);
-    expect(mockUseQuery).toHaveBeenCalledWith("releases:getNextVersion", {
+    expect(mockUseQuery).toHaveBeenCalledWith("queries:getNextVersion", {
       excludeReleaseId: releaseId,
       organizationId: ORG_ID,
     });

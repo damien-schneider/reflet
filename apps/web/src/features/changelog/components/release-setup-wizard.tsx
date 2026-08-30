@@ -23,45 +23,18 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import {
+  applyWorkflowDefaults,
+  DEFAULT_CONFIG,
+  resolveSyncSettings,
+  type WizardConfig,
+  type Workflow,
+} from "./wizard-config";
 import { ConfigureStep } from "./wizard-steps/configure-step";
 import { SetupMethodStep } from "./wizard-steps/setup-method-step";
 import { WorkflowStep } from "./wizard-steps/workflow-step";
 
 const TOTAL_STEPS = 3;
-
-export type Workflow = "ai_powered" | "automated" | "manual";
-
-export interface WizardConfig {
-  autoPublishImported: boolean;
-  autoSyncReleases: boolean;
-  autoVersioning: boolean;
-  manualSyncDirection:
-    | "github_first"
-    | "reflet_first"
-    | "bidirectional"
-    | "none";
-  manualSyncEnabled: boolean;
-  pushToGithubOnPublish: boolean;
-  syncDirection: "github_first" | "reflet_first" | "bidirectional" | "none";
-  targetBranch: string;
-  versionIncrement: "patch" | "minor" | "major";
-  versionPrefix: string;
-  workflow: Workflow;
-}
-
-const DEFAULT_CONFIG: WizardConfig = {
-  autoPublishImported: true,
-  autoSyncReleases: false,
-  autoVersioning: true,
-  manualSyncDirection: "bidirectional",
-  manualSyncEnabled: false,
-  pushToGithubOnPublish: true,
-  syncDirection: "reflet_first",
-  targetBranch: "main",
-  versionIncrement: "patch",
-  versionPrefix: "v",
-  workflow: "ai_powered",
-};
 
 interface ReleaseSetupWizardProps {
   onOpenChange: (open: boolean) => void;
@@ -108,58 +81,20 @@ export function ReleaseSetupWizard({
     setConfig((prev) => ({ ...prev, ...partial }));
   };
 
-  // When workflow changes, auto-configure internal sync settings
   const handleWorkflowChange = (workflow: Workflow) => {
-    const updates: Partial<WizardConfig> = { workflow };
-
-    if (workflow === "ai_powered") {
-      updates.syncDirection = "reflet_first";
-      updates.autoSyncReleases = false;
-      updates.pushToGithubOnPublish = true;
-      updates.autoPublishImported = true;
-    } else if (workflow === "automated") {
-      updates.syncDirection = "github_first";
-      updates.autoSyncReleases = true;
-      updates.pushToGithubOnPublish = false;
-      updates.autoPublishImported = false;
-    } else {
-      // Manual — sync settings determined by sub-options in configure step
-      updates.syncDirection = "none";
-      updates.autoSyncReleases = false;
-      updates.pushToGithubOnPublish = false;
-      updates.autoPublishImported = false;
-    }
-
-    updateConfig(updates);
+    updateConfig({ workflow, ...applyWorkflowDefaults(workflow) });
   };
 
   const handleComplete = async () => {
     setIsSaving(true);
     try {
-      // Resolve final syncDirection for manual workflow
-      const finalSyncDirection =
-        config.workflow === "manual" && config.manualSyncEnabled
-          ? config.manualSyncDirection
-          : config.syncDirection;
+      const sync = resolveSyncSettings(config);
 
-      const finalAutoSync =
-        config.workflow === "manual" && config.manualSyncEnabled
-          ? config.manualSyncDirection !== "none"
-          : config.autoSyncReleases;
-
-      const finalPushToGithub =
-        config.workflow === "manual" && config.manualSyncEnabled
-          ? config.manualSyncDirection === "reflet_first" ||
-            config.manualSyncDirection === "bidirectional"
-          : config.pushToGithubOnPublish;
-
-      // Save changelog settings to org
       await updateOrg({
         changelogSettings: {
-          autoPublishImported: config.autoPublishImported,
+          autoPublishImported: sync.autoPublishImported,
           autoVersioning: config.autoVersioning,
-          pushToGithubOnPublish: finalPushToGithub,
-          syncDirection: finalSyncDirection,
+          pushToGithubOnPublish: sync.pushToGithubOnPublish,
           targetBranch: config.targetBranch,
           versionIncrement: config.versionIncrement,
           versionPrefix: config.versionPrefix,
@@ -167,10 +102,9 @@ export function ReleaseSetupWizard({
         id: organizationId,
       });
 
-      // Toggle auto-sync if GitHub is connected
       if (githubConnection) {
         await toggleAutoSync({
-          enabled: finalAutoSync,
+          enabled: sync.autoSyncReleases,
           organizationId,
         });
       }

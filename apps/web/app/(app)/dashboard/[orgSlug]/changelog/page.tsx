@@ -29,7 +29,7 @@ export default function ChangelogPage({
   const { data: session } = authClient.useSession();
   const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
   const releases = useQuery(
-    api.changelog.releases.list,
+    api.changelog.queries.list,
     org?._id ? { organizationId: org._id } : "skip"
   );
   const currentMember = useQuery(
@@ -50,14 +50,14 @@ export default function ChangelogPage({
     if (!org) {
       return;
     }
-    const current = localStore.getQuery(api.changelog.releases.list, {
+    const current = localStore.getQuery(api.changelog.queries.list, {
       organizationId: org._id,
     });
     if (!current) {
       return;
     }
     localStore.setQuery(
-      api.changelog.releases.list,
+      api.changelog.queries.list,
       { organizationId: org._id },
       current.filter((r) => r._id !== args.id)
     );
@@ -69,14 +69,14 @@ export default function ChangelogPage({
     if (!org) {
       return;
     }
-    const current = localStore.getQuery(api.changelog.releases.list, {
+    const current = localStore.getQuery(api.changelog.queries.list, {
       organizationId: org._id,
     });
     if (!current) {
       return;
     }
     localStore.setQuery(
-      api.changelog.releases.list,
+      api.changelog.queries.list,
       { organizationId: org._id },
       current.map((r) =>
         r._id === args.id ? { ...r, publishedAt: Date.now() } : r
@@ -90,14 +90,14 @@ export default function ChangelogPage({
     if (!org) {
       return;
     }
-    const current = localStore.getQuery(api.changelog.releases.list, {
+    const current = localStore.getQuery(api.changelog.queries.list, {
       organizationId: org._id,
     });
     if (!current) {
       return;
     }
     localStore.setQuery(
-      api.changelog.releases.list,
+      api.changelog.queries.list,
       { organizationId: org._id },
       current.map((r) =>
         r._id === args.id ? { ...r, publishedAt: undefined } : r

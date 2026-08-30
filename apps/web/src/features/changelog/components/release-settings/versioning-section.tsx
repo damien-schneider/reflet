@@ -11,12 +11,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import type { ChangelogSettingsUpdate, VersionIncrement } from "./types";
+
+const INCREMENT_OPTIONS: { label: string; value: VersionIncrement }[] = [
+  { label: "Patch", value: "patch" },
+  { label: "Minor", value: "minor" },
+  { label: "Major", value: "major" },
+];
 
 interface VersioningSectionProps {
   autoVersioning?: boolean;
   isAdmin: boolean;
   isSaving: boolean;
-  onUpdate: (updates: Record<string, unknown>) => Promise<void>;
+  onUpdate: ChangelogSettingsUpdate;
   versionIncrement?: string;
   versionPrefix?: string;
 }
@@ -61,15 +68,22 @@ export const VersioningSection = ({
           <Select
             defaultValue={versionIncrement ?? "patch"}
             disabled={!isAdmin || isSaving}
-            onValueChange={(val) => onUpdate({ versionIncrement: val })}
+            onValueChange={(val) => {
+              const option = INCREMENT_OPTIONS.find((o) => o.value === val);
+              if (option) {
+                onUpdate({ versionIncrement: option.value });
+              }
+            }}
           >
             <SelectTrigger className="mt-1 h-8">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="patch">Patch</SelectItem>
-              <SelectItem value="minor">Minor</SelectItem>
-              <SelectItem value="major">Major</SelectItem>
+              {INCREMENT_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

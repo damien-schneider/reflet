@@ -2,7 +2,7 @@
 
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import type { WizardConfig } from "../release-setup-wizard";
+import type { WizardConfig } from "../wizard-config";
 
 interface AutomationStepProps {
   config: WizardConfig;

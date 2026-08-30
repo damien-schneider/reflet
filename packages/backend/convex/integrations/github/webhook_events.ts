@@ -87,34 +87,39 @@ export const processReleaseWebhook = internalMutation({
       updatedAt: now,
     });
 
-    // Check if auto-import is enabled
     const connection = await ctx.db.get(args.connectionId);
-    if (connection?.autoSyncReleases && args.action === "published") {
-      // Auto-create Reflet release
-      const existingRefletRelease = await ctx.db
-        .query("releases")
-        .withIndex("by_github_release", (q) =>
-          q
-            .eq("organizationId", args.organizationId)
-            .eq("githubReleaseId", args.release.id)
-        )
-        .first();
-
-      if (!existingRefletRelease) {
-        await ctx.db.insert("releases", {
-          createdAt: now,
-          description: args.release.body,
-          githubHtmlUrl: args.release.htmlUrl,
-          githubReleaseId: args.release.id,
-          organizationId: args.organizationId,
-          publishedAt: now,
-          syncedFromGithub: true,
-          title: args.release.name || args.release.tagName,
-          updatedAt: now,
-          version: args.release.tagName,
-        });
-      }
+    if (!(connection?.autoSyncReleases && args.action === "published")) {
+      return;
     }
+
+    const existingRefletRelease = await ctx.db
+      .query("releases")
+      .withIndex("by_github_release", (q) =>
+        q
+          .eq("organizationId", args.organizationId)
+          .eq("githubReleaseId", args.release.id)
+      )
+      .first();
+
+    if (existingRefletRelease) {
+      return;
+    }
+
+    const org = await ctx.db.get(args.organizationId);
+    const autoPublish = org?.changelogSettings?.autoPublishImported !== false;
+
+    await ctx.db.insert("releases", {
+      createdAt: now,
+      description: args.release.body,
+      githubHtmlUrl: args.release.htmlUrl,
+      githubReleaseId: args.release.id,
+      organizationId: args.organizationId,
+      publishedAt: autoPublish ? now : undefined,
+      syncedFromGithub: true,
+      title: args.release.name || args.release.tagName,
+      updatedAt: now,
+      version: args.release.tagName,
+    });
   },
 });
 

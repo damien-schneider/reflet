@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import type { WizardConfig } from "../release-setup-wizard";
+import type { WizardConfig } from "../wizard-config";
 
 interface ConfigureStepProps {
   config: WizardConfig;

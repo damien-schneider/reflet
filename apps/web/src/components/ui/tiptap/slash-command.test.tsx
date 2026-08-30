@@ -32,7 +32,7 @@ describe("Slash Command", () => {
       expect(commands.find((c) => c.title === "Divider")).toBeDefined();
       expect(commands.find((c) => c.title === "Image")).toBeUndefined();
       expect(commands.find((c) => c.title === "Video")).toBeUndefined();
-    }, 10_000);
+    });
 
     it("includes Image command when onImageUpload is provided", async () => {
       const { createSlashCommands } = await import("./slash-command");

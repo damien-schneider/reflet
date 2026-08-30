@@ -164,6 +164,19 @@ export const sendReleaseNotifications = internalAction({
       return { reason: "Not Pro tier", skipped: true, success: true };
     }
 
+    const claimed = await ctx.runMutation(
+      internal.changelog.notifications_helpers.claimReleaseNotification,
+      { releaseId: args.releaseId }
+    );
+
+    if (!claimed) {
+      console.log(
+        "[Changelog Notifications] Already notified for release:",
+        args.releaseId
+      );
+      return { reason: "Already notified", skipped: true, success: true };
+    }
+
     const subscribers: Subscriber[] = await ctx.runQuery(
       internal.changelog.subscriptions.getSubscribersByOrganization,
       { organizationId: release.organizationId }

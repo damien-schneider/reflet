@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { type Infer, v } from "convex/values";
 
 export const SETUP_STEPS = [
   { key: "analyze_codebase", label: "Analyzing codebase" },
@@ -28,7 +28,6 @@ export const changelogConfigValidator = v.object({
   hasConventionalCommits: v.optional(v.boolean()),
   importExisting: v.boolean(),
   releaseCount: v.optional(v.number()),
-  syncDirection: v.string(),
   targetBranch: v.string(),
   versionPrefix: v.string(),
   workflow: v.union(
@@ -37,6 +36,8 @@ export const changelogConfigValidator = v.object({
     v.literal("manual")
   ),
 });
+
+export type ChangelogConfig = Infer<typeof changelogConfigValidator>;
 
 export const suggestedKeywordsValidator = v.array(
   v.object({

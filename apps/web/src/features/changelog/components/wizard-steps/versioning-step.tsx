@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import type { WizardConfig } from "../release-setup-wizard";
+import type { WizardConfig } from "../wizard-config";
 
 interface VersioningStepProps {
   config: WizardConfig;

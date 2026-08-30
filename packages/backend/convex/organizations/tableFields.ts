@@ -122,6 +122,7 @@ export const organizationTables = {
         autoPublishImported: v.optional(v.boolean()),
         autoVersioning: v.optional(v.boolean()),
         pushToGithubOnPublish: v.optional(v.boolean()),
+        // Unused: drop once migrations/strip_sync_direction has run everywhere.
         syncDirection: v.optional(v.string()),
         targetBranch: v.optional(v.string()),
         versionIncrement: v.optional(v.string()),

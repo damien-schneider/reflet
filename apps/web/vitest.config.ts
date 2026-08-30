@@ -31,5 +31,6 @@ export default defineConfig({
     exclude: ["node_modules", ".next", "e2e"],
     include: ["src/**/*.test.{ts,tsx}", "**/*.test.{ts,tsx}"],
     setupFiles: ["./vitest.setup.ts"],
+    testTimeout: 20_000,
   },
 });

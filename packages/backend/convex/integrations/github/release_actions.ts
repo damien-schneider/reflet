@@ -106,9 +106,12 @@ export const fetchCommitsBetweenRefs = internalAction({
       }>;
     };
 
+    // Compare API returns oldest-first; stored commit lists are newest-first.
+    const newestFirst = [...data.commits].reverse();
+
     return {
       aheadBy: data.ahead_by,
-      commits: data.commits.map((commit) => ({
+      commits: newestFirst.map((commit) => ({
         author: commit.author?.login ?? commit.commit.author.name,
         date: commit.commit.author.date,
         fullMessage: commit.commit.message,

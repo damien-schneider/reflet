@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import type { ChangelogSettingsUpdate } from "./types";
 
 interface BranchInfo {
   isProtected: boolean;
@@ -18,21 +19,25 @@ interface BranchInfo {
 
 interface AutomationSectionProps {
   autoPublishImported?: boolean;
+  autoSyncReleases: boolean;
   branches: BranchInfo[];
   isAdmin: boolean;
   isLoadingBranches: boolean;
   isSaving: boolean;
-  onUpdate: (updates: Record<string, unknown>) => Promise<void>;
+  onToggleAutoSync: (enabled: boolean) => Promise<void>;
+  onUpdate: ChangelogSettingsUpdate;
   pushToGithubOnPublish?: boolean;
   targetBranch?: string;
 }
 
 export const AutomationSection = ({
   autoPublishImported,
+  autoSyncReleases,
   branches,
   isAdmin,
   isLoadingBranches,
   isSaving,
+  onToggleAutoSync,
   onUpdate,
   pushToGithubOnPublish,
   targetBranch,
@@ -88,15 +93,28 @@ export const AutomationSection = ({
       </div>
 
       <div className="flex items-center justify-between">
-        <Label className="text-sm">Auto-publish imported releases</Label>
+        <Label className="text-sm">Import releases published on GitHub</Label>
         <Switch
-          checked={autoPublishImported === true}
+          checked={autoSyncReleases}
           disabled={!isAdmin || isSaving}
-          onCheckedChange={(checked) =>
-            onUpdate({ autoPublishImported: checked })
-          }
+          onCheckedChange={onToggleAutoSync}
         />
       </div>
+
+      {autoSyncReleases && (
+        <div className="flex items-center justify-between border-l pl-4">
+          <Label className="text-sm">
+            Publish imported releases right away
+          </Label>
+          <Switch
+            checked={autoPublishImported !== false}
+            disabled={!isAdmin || isSaving}
+            onCheckedChange={(checked) =>
+              onUpdate({ autoPublishImported: checked })
+            }
+          />
+        </div>
+      )}
     </div>
   </div>
 );

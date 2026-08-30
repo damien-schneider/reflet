@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { internal } from "../../_generated/api";
 import { mutation, query } from "../../_generated/server";
+import { versionIncrementValidator } from "../../changelog/semver";
 import {
   isOrgMemberViewer,
   requireOrgAdmin,
@@ -150,9 +151,8 @@ export const applySetupResults = mutation({
         autoPublishImported: v.optional(v.boolean()),
         autoVersioning: v.optional(v.boolean()),
         pushToGithubOnPublish: v.optional(v.boolean()),
-        syncDirection: v.optional(v.string()),
         targetBranch: v.optional(v.string()),
-        versionIncrement: v.optional(v.string()),
+        versionIncrement: v.optional(versionIncrementValidator),
         versionPrefix: v.optional(v.string()),
       })
     ),
@@ -216,8 +216,12 @@ export const applySetupResults = mutation({
     }
 
     if (args.changelogSettings) {
+      const org = await ctx.db.get(args.organizationId);
       await ctx.db.patch(args.organizationId, {
-        changelogSettings: args.changelogSettings,
+        changelogSettings: {
+          ...org?.changelogSettings,
+          ...args.changelogSettings,
+        },
       });
     }
 
