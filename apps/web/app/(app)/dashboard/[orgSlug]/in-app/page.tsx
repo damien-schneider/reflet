@@ -20,7 +20,47 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { H1, H3, Muted } from "@/components/ui/typography";
 import { FeedbackCollectorCard } from "@/features/in-app/components/feedback-collector-card";
-import { WidgetCard } from "@/features/in-app/components/widget-card";
+import {
+  WidgetCard,
+  type WidgetWithSettings,
+} from "@/features/in-app/components/widget-card";
+
+function WidgetList({
+  orgSlug,
+  widgets,
+}: {
+  orgSlug: string;
+  widgets: WidgetWithSettings[] | undefined;
+}) {
+  if (widgets === undefined) {
+    return (
+      <div
+        aria-label="Loading live chats"
+        className="grid gap-4 md:grid-cols-2"
+        role="status"
+      >
+        <Skeleton className="h-44 w-full" />
+        <Skeleton className="h-44 w-full" />
+      </div>
+    );
+  }
+
+  if (widgets.length === 0) {
+    return (
+      <p className="rounded-lg border border-dashed py-12 text-center text-muted-foreground text-sm">
+        No live chat yet
+      </p>
+    );
+  }
+
+  return (
+    <div className="grid gap-4 md:grid-cols-2">
+      {widgets.map((widget) => (
+        <WidgetCard key={widget._id} orgSlug={orgSlug} widget={widget} />
+      ))}
+    </div>
+  );
+}
 
 export default function WidgetsPage({
   params,
@@ -93,63 +133,57 @@ export default function WidgetsPage({
     }
   };
 
+  const canManageKeys = org.role === "admin" || org.role === "owner";
+
   return (
     <div className="admin-container">
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <H1>In-app</H1>
-        <Dialog onOpenChange={setIsDialogOpen} open={isDialogOpen}>
-          <DialogTrigger render={<Button />}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add live chat
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create live chat</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="widget-name">Name</Label>
-                <Input
-                  id="widget-name"
-                  onChange={(e) => setWidgetName(e.target.value)}
-                  placeholder="Main Website Chat"
-                  value={widgetName}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button
-                disabled={!widgetName.trim() || isCreating}
-                onClick={handleCreateWidget}
-              >
-                {isCreating ? "Creating..." : "Create"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+      <H1 className="mb-8">In-app</H1>
 
       <FeedbackCollectorCard
+        canManageKeys={canManageKeys}
         isLoading={apiKeys === undefined}
+        organizationId={org._id}
         orgSlug={orgSlug}
         publicKey={publicKey}
       />
 
-      <H3 className="mt-8 mb-4" variant="card">
-        Live chat
-      </H3>
-
-      {widgets && widgets.length > 0 ? (
-        <div className="grid gap-4 md:grid-cols-2">
-          {widgets.map((widget) => (
-            <WidgetCard key={widget._id} orgSlug={orgSlug} widget={widget} />
-          ))}
+      <section className="mt-10 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <H3 variant="card">Live chat</H3>
+          <Dialog onOpenChange={setIsDialogOpen} open={isDialogOpen}>
+            <DialogTrigger render={<Button size="sm" variant="outline" />}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add live chat
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create live chat</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="widget-name">Name</Label>
+                  <Input
+                    id="widget-name"
+                    onChange={(e) => setWidgetName(e.target.value)}
+                    placeholder="Main Website Chat"
+                    value={widgetName}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  disabled={!widgetName.trim() || isCreating}
+                  onClick={handleCreateWidget}
+                >
+                  {isCreating ? "Creating..." : "Create"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
-      ) : (
-        <p className="py-8 text-center text-muted-foreground text-sm">
-          No live chats
-        </p>
-      )}
+
+        <WidgetList orgSlug={orgSlug} widgets={widgets} />
+      </section>
     </div>
   );
 }

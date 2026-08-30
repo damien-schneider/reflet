@@ -3,6 +3,7 @@ import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
+import { requireOrgAdmin } from "../shared/access";
 import { getAuthUser } from "../shared/utils";
 
 // ============================================
@@ -119,6 +120,37 @@ export const listExternalUsers = query({
 // ============================================
 // MUTATIONS
 // ============================================
+
+/**
+ * Public key the in-app widgets embed, minted on first use (admin only)
+ */
+export const ensurePublicKey = mutation({
+  args: {
+    organizationId: v.id("organizations"),
+  },
+  handler: async (ctx, args): Promise<string> => {
+    await requireOrgAdmin(ctx, args.organizationId, "manage API keys");
+
+    const keys = await ctx.db
+      .query("organizationApiKeys")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .collect();
+
+    const existing = keys.find((key) => key.isActive) ?? keys[0];
+    if (existing) {
+      return existing.publicKey;
+    }
+
+    const created = await ctx.runMutation(
+      internal.feedback.api_keys.generateOrganizationApiKeys,
+      { name: "Default", organizationId: args.organizationId }
+    );
+
+    return created.publicKey;
+  },
+});
 
 /**
  * Generate API keys for an organization (admin only)

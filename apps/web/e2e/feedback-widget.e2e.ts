@@ -9,7 +9,8 @@ import {
 } from "./helpers/auth";
 
 const SITE_URL_PATTERN = /^NEXT_PUBLIC_CONVEX_SITE_URL=(.+)$/m;
-const PUBLIC_KEY_PATTERN = /^fb_pub_/;
+const PUBLIC_KEY_PATTERN = /fb_pub_/;
+const PUBLIC_KEY_VALUE_PATTERN = /fb_pub_\S+/;
 const QUOTES_PATTERN = /^["']|["']$/g;
 const NOT_PUBLIC_PATTERN = /not public/;
 
@@ -132,29 +133,26 @@ test.describe("Floating feedback widget", () => {
     await signUpAndLandOnDashboard(page, makeTestUser("widget"));
     const slug = await createOrganization(page, makeOrgName("Widget Org"));
 
-    await page.goto(`/dashboard/${slug}/project/api-keys`);
-    await page
-      .getByPlaceholder("API key name (e.g., Production)")
-      .fill("Widget e2e");
-    await page.getByRole("button", { name: "Generate API Keys" }).click();
-
-    await page.getByRole("tab", { name: "API Keys" }).click();
-    const publicKeyField = page.locator("input[readonly]").first();
-    await expect(publicKeyField).toHaveValue(PUBLIC_KEY_PATTERN, {
-      timeout: 30_000,
-    });
-    const publicKey = await publicKeyField.inputValue();
-
     await page.goto(`/dashboard/${slug}/in-app`);
     await expect(
       page.getByRole("heading", { name: "Feedback collector" })
     ).toBeVisible();
     await expect(
-      page.getByRole("button", { name: "Copy AI setup prompt" })
+      page.getByRole("button", { name: "Copy prompt" })
     ).toBeVisible();
-    await expect(
-      page.locator("code").filter({ hasText: publicKey })
-    ).toContainText("reflet-cli init");
+
+    const installCommand = page
+      .locator("code")
+      .filter({ hasText: PUBLIC_KEY_PATTERN });
+    await expect(installCommand).toContainText("reflet-cli init", {
+      timeout: 30_000,
+    });
+    const publicKey = (await installCommand.innerText()).match(
+      PUBLIC_KEY_VALUE_PATTERN
+    )?.[0];
+    if (!publicKey) {
+      throw new Error("No public key in the install command");
+    }
 
     const reportTitle = `Pay now does nothing ${Date.now()}`;
     const reportedUrl = "https://acme.example.com/billing?invoice=1042";

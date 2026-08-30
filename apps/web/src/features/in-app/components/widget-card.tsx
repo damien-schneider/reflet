@@ -37,7 +37,7 @@ import { Muted, Text } from "@/components/ui/typography";
 
 import { WidgetSettingsDialog } from "./widget-settings-dialog";
 
-type WidgetWithSettings = Doc<"widgets"> & {
+export type WidgetWithSettings = Doc<"widgets"> & {
   settings: Doc<"widgetSettings"> | null;
   conversationCount: number;
 };
