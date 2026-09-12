@@ -113,7 +113,7 @@ vi.mock("motion/react", () => ({
 // Mock ScrollArea with ref forwarding and data-slot viewport attribute
 // The component passes ref={trackRef} to ScrollArea and then queries for
 // [data-slot="scroll-area-viewport"] inside it via trackRef.current.querySelector
-vi.mock("@/components/ui/scroll-area", () => ({
+vi.mock("@ctrl-ui/react/ui/scroll-area", () => ({
   ScrollArea: ({
     children,
     direction,

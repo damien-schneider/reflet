@@ -1,7 +1,11 @@
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@ctrl-ui/react/ui/card";
 import { Heartbeat } from "@phosphor-icons/react";
 import Link from "next/link";
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Muted, Text } from "@/components/ui/typography";
 
 const STATUS_LABELS = {

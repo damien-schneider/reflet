@@ -1,10 +1,10 @@
+import { Button } from "@ctrl-ui/react/ui/button";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import { Bell, BellSlash } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import { EmailSubscribeForm } from "@/components/ui/email-subscribe-form";
 import { capture } from "@/lib/analytics";
 import { authClient } from "@/lib/auth-client";
@@ -73,7 +73,8 @@ export function ChangelogSubscribe({
         className={cn("gap-2", className)}
         disabled={isSubmitting || isSubscribed === undefined}
         onClick={handleToggleSubscription}
-        variant={isSubscribed ? "outline" : "default"}
+        tone={isSubscribed ? "neutral" : "primary"}
+        variant={isSubscribed ? "surface" : "solid"}
       >
         {isSubscribed ? (
           <>

@@ -37,7 +37,7 @@ vi.mock("@phosphor-icons/react", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/badge", () => ({
+vi.mock("@ctrl-ui/react/ui/badge", () => ({
   Badge: ({
     children,
     variant,
@@ -53,7 +53,7 @@ vi.mock("@/components/ui/badge", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     onClick,
@@ -80,7 +80,7 @@ vi.mock("@/components/ui/button", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/command", () => ({
+vi.mock("@ctrl-ui/react/ui/command", () => ({
   Command: ({
     children,
     shouldFilter,
@@ -146,7 +146,7 @@ vi.mock("@/components/ui/command", () => ({
   CommandSeparator: () => <hr data-testid="command-separator" />,
 }));
 
-vi.mock("@/components/ui/input", () => ({
+vi.mock("@ctrl-ui/react/ui/input", () => ({
   Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => (
     <input data-testid="edit-input" {...props} />
   ),
@@ -168,7 +168,7 @@ vi.mock("@/components/ui/notion-color-picker", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/popover", () => ({
+vi.mock("@ctrl-ui/react/ui/popover", () => ({
   Popover: ({
     children,
     open,
@@ -224,6 +224,7 @@ vi.mock("@/lib/tag-colors", () => ({
   isValidTagColor: (c: string) =>
     ["red", "blue", "green", "orange"].includes(c),
   migrateHexToNamedColor: () => "blue",
+  resolveTagColor: (color: string) => color,
 }));
 
 vi.mock("@/lib/utils", () => ({

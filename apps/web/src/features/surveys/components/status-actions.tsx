@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@ctrl-ui/react/ui/button";
 import type { SurveyStatus } from "@/store/surveys";
 
 interface StatusActionsProps {
@@ -19,7 +19,9 @@ export function StatusActions({
       <Button
         disabled={!hasQuestions}
         onClick={() => onStatusChange("active")}
-        size="sm"
+        size="xs"
+        tone="primary"
+        variant="solid"
       >
         Activate
       </Button>
@@ -29,8 +31,8 @@ export function StatusActions({
     return (
       <Button
         onClick={() => onStatusChange("paused")}
-        size="sm"
-        variant="outline"
+        size="xs"
+        variant="surface"
       >
         Pause
       </Button>
@@ -39,13 +41,18 @@ export function StatusActions({
   if (status === "paused") {
     return (
       <div className="flex items-center gap-2">
-        <Button onClick={() => onStatusChange("active")} size="sm">
+        <Button
+          onClick={() => onStatusChange("active")}
+          size="xs"
+          tone="primary"
+          variant="solid"
+        >
           Resume
         </Button>
         <Button
           onClick={() => onStatusChange("closed")}
-          size="sm"
-          variant="outline"
+          size="xs"
+          variant="surface"
         >
           Close
         </Button>
@@ -53,7 +60,7 @@ export function StatusActions({
     );
   }
   return (
-    <Button onClick={() => onStatusChange("draft")} size="sm" variant="outline">
+    <Button onClick={() => onStatusChange("draft")} size="xs" variant="surface">
       Reopen as Draft
     </Button>
   );

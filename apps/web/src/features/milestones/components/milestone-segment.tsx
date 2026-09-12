@@ -1,37 +1,36 @@
 "use client";
 
-import { CheckCircle, PencilSimple, Trash } from "@phosphor-icons/react";
-import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { useMutation } from "convex/react";
-import { motion } from "motion/react";
-import { useCallback, useState } from "react";
-
-import { Button } from "@/components/ui/button";
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
-  ContextList,
-  ContextListContent,
-  ContextListItem,
-  ContextListSeparator,
-  ContextListTrigger,
-} from "@/components/ui/context-menu";
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from "@ctrl-ui/react/ui/context-menu";
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { EmojiPicker } from "@/components/ui/emoji-picker";
-import { Input } from "@/components/ui/input";
-import { NotionColorPicker } from "@/components/ui/notion-color-picker";
+} from "@ctrl-ui/react/ui/dialog";
+import { Input } from "@ctrl-ui/react/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@ctrl-ui/react/ui/select";
+import { CheckCircle, PencilSimple, Trash } from "@phosphor-icons/react";
+import { api } from "@reflet/backend/convex/_generated/api";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { useMutation } from "convex/react";
+import { motion } from "motion/react";
+import { useCallback, useState } from "react";
+import { EmojiPicker } from "@/components/ui/emoji-picker";
+import { NotionColorPicker } from "@/components/ui/notion-color-picker";
 import type { TimeHorizon } from "@/lib/milestone-constants";
 import {
   isTimeHorizon,
@@ -305,26 +304,26 @@ export function MilestoneSegment({
 
   return (
     <>
-      <ContextList>
-        <ContextListTrigger>{segment}</ContextListTrigger>
-        <ContextListContent>
-          <ContextListItem onClick={handleEditOpen}>
+      <ContextMenu>
+        <ContextMenuTrigger>{segment}</ContextMenuTrigger>
+        <ContextMenuContent>
+          <ContextMenuItem onClick={handleEditOpen}>
             <PencilSimple />
             Edit
-          </ContextListItem>
+          </ContextMenuItem>
           {!isCompleted && (
-            <ContextListItem onClick={handleComplete}>
+            <ContextMenuItem onClick={handleComplete}>
               <CheckCircle />
               Mark as Complete
-            </ContextListItem>
+            </ContextMenuItem>
           )}
-          <ContextListSeparator />
-          <ContextListItem onClick={handleDelete} variant="destructive">
+          <ContextMenuSeparator />
+          <ContextMenuItem className="menu-item-danger" onClick={handleDelete}>
             <Trash />
             Delete
-          </ContextListItem>
-        </ContextListContent>
-      </ContextList>
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
 
       <Dialog onOpenChange={setEditOpen} open={editOpen}>
         <DialogContent className="sm:max-w-[360px]">
@@ -379,7 +378,7 @@ export function MilestoneSegment({
             <Button
               className="h-8 text-xs"
               onClick={() => setEditOpen(false)}
-              size="sm"
+              size="xs"
               variant="ghost"
             >
               Cancel
@@ -388,7 +387,9 @@ export function MilestoneSegment({
               className="h-8 text-xs"
               disabled={isSubmitting || !editName.trim()}
               onClick={handleEditSubmit}
-              size="sm"
+              size="xs"
+              tone="primary"
+              variant="solid"
             >
               {isSubmitting ? "Saving..." : "Save"}
             </Button>

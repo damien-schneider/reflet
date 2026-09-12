@@ -27,7 +27,7 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
   },
 }));
 
-vi.mock("sonner", () => ({
+vi.mock("@ctrl-ui/react/ui/toast", () => ({
   toast: { error: vi.fn(), success: vi.fn() },
 }));
 
@@ -39,7 +39,7 @@ vi.mock("@phosphor-icons/react", () => ({
   X: () => <span data-testid="x-icon" />,
 }));
 
-vi.mock("@/components/ui/sheet", () => ({
+vi.mock("@ctrl-ui/react/ui/sheet", () => ({
   Sheet: ({ children, open }: { children: React.ReactNode; open: boolean }) =>
     open ? <div data-testid="sheet">{children}</div> : null,
   SheetClose: ({ children }: { children: React.ReactNode }) => (
@@ -59,7 +59,7 @@ vi.mock("@/components/ui/sheet", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     onClick,
@@ -76,7 +76,7 @@ vi.mock("@/components/ui/button", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/scroll-area", () => ({
+vi.mock("@ctrl-ui/react/ui/scroll-area", () => ({
   ScrollArea: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),

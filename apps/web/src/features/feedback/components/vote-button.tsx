@@ -1,14 +1,14 @@
+import { Button } from "@ctrl-ui/react/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@ctrl-ui/react/ui/tooltip";
 import { CaretUp } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import type { MouseEvent } from "react";
-import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { capture } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
@@ -75,7 +75,8 @@ export function VoteButton({
             className
           )}
           onClick={handleVote}
-          variant={hasVoted ? "default" : "outline"}
+          tone={hasVoted ? "primary" : "neutral"}
+          variant={hasVoted ? "solid" : "surface"}
         >
           <CaretUp className={iconSizes[size]} />
           <span>{voteCount}</span>

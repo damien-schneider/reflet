@@ -1,18 +1,17 @@
 "use client";
 
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from "@ctrl-ui/react/ui/context-menu";
+import { ScrollArea } from "@ctrl-ui/react/ui/scroll-area";
 import { Pencil, Trash } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useState } from "react";
-
-import { Button } from "@/components/ui/button";
-import {
-  ContextList,
-  ContextListContent,
-  ContextListItem,
-  ContextListSeparator,
-  ContextListTrigger,
-} from "@/components/ui/context-menu";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { TagPill } from "@/components/tag-pill";
 import { DeleteTagDialog } from "@/features/tags/components/delete-tag-dialog";
 import { TagFormPopover } from "@/features/tags/components/tag-form-popover";
 import { TriagePulse } from "./triage-pulse";
@@ -52,16 +51,10 @@ function TagButton({
   const [isEditOpen, setIsEditOpen] = useState(false);
 
   const button = (
-    <Button
-      active={isSelected}
-      color={tag.color}
-      onClick={onClick}
-      size="pill"
-      variant="pill"
-    >
+    <TagPill active={isSelected} color={tag.color} onClick={onClick}>
       {tag.icon && <span className="mr-1">{tag.icon}</span>}
       {tag.name}
-    </Button>
+    </TagPill>
   );
 
   if (!isAdmin) {
@@ -69,8 +62,8 @@ function TagButton({
   }
 
   return (
-    <ContextList>
-      <ContextListTrigger>
+    <ContextMenu>
+      <ContextMenuTrigger>
         <TagFormPopover
           disableTriggerClick
           editingTag={tag}
@@ -80,19 +73,19 @@ function TagButton({
           organizationId={organizationId}
           trigger={button}
         />
-      </ContextListTrigger>
-      <ContextListContent>
-        <ContextListItem onClick={() => setIsEditOpen(true)}>
+      </ContextMenuTrigger>
+      <ContextMenuContent>
+        <ContextMenuItem onClick={() => setIsEditOpen(true)}>
           <Pencil className="mr-2 h-4 w-4" />
           Edit tag
-        </ContextListItem>
-        <ContextListSeparator />
-        <ContextListItem onClick={onDelete} variant="destructive">
+        </ContextMenuItem>
+        <ContextMenuSeparator />
+        <ContextMenuItem className="menu-item-danger" onClick={onDelete}>
           <Trash className="mr-2 h-4 w-4" />
           Delete tag
-        </ContextListItem>
-      </ContextListContent>
-    </ContextList>
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
   );
 }
 
@@ -123,42 +116,43 @@ export function TagFilterBar({
     <>
       <ScrollArea
         className="mx-auto max-w-3xl"
-        classNameViewport="flex gap-2 pb-4 pt-1 px-4"
+        lockAxis="y"
+        viewportClassName="px-4 pt-1 pb-4"
       >
-        {isAdmin && <TriagePulse organizationId={organizationId} />}
+        <div className="flex w-max items-center gap-2">
+          {isAdmin && <TriagePulse organizationId={organizationId} />}
 
-        <Button
-          active={isAllSelected}
-          color="gray"
-          onClick={() => onTagSelect(null)}
-          size="pill"
-          variant="pill"
-        >
-          All
-        </Button>
+          <TagPill
+            active={isAllSelected}
+            color="gray"
+            onClick={() => onTagSelect(null)}
+          >
+            All
+          </TagPill>
 
-        {tags.map((tag) => (
-          <TagButton
-            isAdmin={isAdmin}
-            isSelected={selectedTagId === tag._id}
-            key={tag._id}
-            onClick={() =>
-              onTagSelect(selectedTagId === tag._id ? null : tag._id)
-            }
-            onDelete={() => setDeletingTagId(tag._id)}
-            organizationId={organizationId}
-            tag={tag}
-          />
-        ))}
+          {tags.map((tag) => (
+            <TagButton
+              isAdmin={isAdmin}
+              isSelected={selectedTagId === tag._id}
+              key={tag._id}
+              onClick={() =>
+                onTagSelect(selectedTagId === tag._id ? null : tag._id)
+              }
+              onDelete={() => setDeletingTagId(tag._id)}
+              organizationId={organizationId}
+              tag={tag}
+            />
+          ))}
 
-        {isAdmin && (
-          <TagFormPopover
-            onOpenChange={setShowCreatePopover}
-            onSuccess={handleCreateSuccess}
-            open={showCreatePopover}
-            organizationId={organizationId}
-          />
-        )}
+          {isAdmin && (
+            <TagFormPopover
+              onOpenChange={setShowCreatePopover}
+              onSuccess={handleCreateSuccess}
+              open={showCreatePopover}
+              organizationId={organizationId}
+            />
+          )}
+        </div>
       </ScrollArea>
 
       <DeleteTagDialog

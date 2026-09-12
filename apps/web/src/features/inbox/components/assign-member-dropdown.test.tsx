@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/components/ui/avatar", () => ({
+vi.mock("@ctrl-ui/react/ui/avatar", () => ({
   Avatar: ({
     children,
     className,
@@ -20,7 +20,7 @@ vi.mock("@/components/ui/avatar", () => ({
   AvatarImage: ({ src }: { src?: string }) => <img alt="" src={src} />,
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({ children }: { children: React.ReactNode }) => (
     <button type="button">{children}</button>
   ),

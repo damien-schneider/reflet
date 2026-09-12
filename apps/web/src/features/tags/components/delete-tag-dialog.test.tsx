@@ -18,20 +18,30 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
   },
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     onClick,
+    tone,
     variant,
     ...props
-  }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: string }) => (
-    <button data-variant={variant} onClick={onClick} type="button" {...props}>
+  }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+    tone?: string;
+    variant?: string;
+  }) => (
+    <button
+      data-tone={tone}
+      data-variant={variant}
+      onClick={onClick}
+      type="button"
+      {...props}
+    >
       {children}
     </button>
   ),
 }));
 
-vi.mock("@/components/ui/dialog", () => ({
+vi.mock("@ctrl-ui/react/ui/dialog", () => ({
   Dialog: ({
     children,
     open,
@@ -144,19 +154,16 @@ describe("DeleteTagDialog", () => {
     expect(screen.queryByText("Delete")).not.toBeInTheDocument();
   });
 
-  it("has destructive variant on Delete button", () => {
+  it("has danger tone on Delete button", () => {
     render(<DeleteTagDialog {...defaultProps} />);
-    expect(screen.getByText("Delete")).toHaveAttribute(
-      "data-variant",
-      "destructive"
-    );
+    expect(screen.getByText("Delete")).toHaveAttribute("data-tone", "danger");
   });
 
-  it("has outline variant on Cancel button", () => {
+  it("has surface variant on Cancel button", () => {
     render(<DeleteTagDialog {...defaultProps} />);
     expect(screen.getByText("Cancel")).toHaveAttribute(
       "data-variant",
-      "outline"
+      "surface"
     );
   });
 });

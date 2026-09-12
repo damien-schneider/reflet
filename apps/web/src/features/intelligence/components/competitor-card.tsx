@@ -1,10 +1,16 @@
 "use client";
 
+import { Badge } from "@ctrl-ui/react/ui/badge";
+import { Button } from "@ctrl-ui/react/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@ctrl-ui/react/ui/card";
 import { ArrowSquareOut, Trash } from "@phosphor-icons/react";
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { TagBadge } from "@/components/tag-badge";
 
 const formatRelativeTime = (timestamp: number): string => {
   const now = Date.now();
@@ -81,7 +87,7 @@ export function CompetitorCard({ competitor, onRemove }: CompetitorCardProps) {
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center gap-2">
               <CardTitle>{competitor.name}</CardTitle>
-              <Badge color={statusVariant}>{statusLabel}</Badge>
+              <TagBadge color={statusVariant}>{statusLabel}</TagBadge>
               {competitor.featureList && competitor.featureList.length > 0 && (
                 <Badge variant="outline">
                   {competitor.featureList.length} feature
@@ -127,18 +133,19 @@ export function CompetitorCard({ competitor, onRemove }: CompetitorCardProps) {
             <>
               <Button
                 onClick={handleRemoveClick}
-                size="sm"
-                variant="destructive"
+                size="xs"
+                tone="danger"
+                variant="surface"
               >
                 <Trash data-icon="inline-start" />
                 Confirm Remove
               </Button>
-              <Button onClick={handleCancelRemove} size="sm" variant="ghost">
+              <Button onClick={handleCancelRemove} size="xs" variant="ghost">
                 Cancel
               </Button>
             </>
           ) : (
-            <Button onClick={handleRemoveClick} size="sm" variant="ghost">
+            <Button onClick={handleRemoveClick} size="xs" variant="ghost">
               <Trash data-icon="inline-start" />
               Remove
             </Button>

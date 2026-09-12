@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Progress } from "@ctrl-ui/react/ui/progress";
 import {
   CaretDown,
   CheckCircle,
@@ -17,9 +19,6 @@ import { useMutation, useQuery } from "convex/react";
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { type ReactNode, useEffect, useState } from "react";
-
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 
 type StepName =
   | "boardCreated"
@@ -197,8 +196,8 @@ export function OnboardingChecklist({
               </div>
               <Button
                 className="shrink-0"
+                iconOnly
                 onClick={toggleMinimized}
-                size="icon"
                 variant="ghost"
               >
                 <CaretDown size={16} />

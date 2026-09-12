@@ -1,10 +1,9 @@
 "use client";
 
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import { use } from "react";
-
-import { Skeleton } from "@/components/ui/skeleton";
 import { H2, Muted } from "@/components/ui/typography";
 import { FeedbackBoard } from "@/features/feedback/components/feedback-board";
 

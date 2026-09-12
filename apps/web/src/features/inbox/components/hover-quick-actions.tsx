@@ -1,13 +1,13 @@
 "use client";
 
-import { CheckCircle, UserCirclePlus, XCircle } from "@phosphor-icons/react";
-import type React from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@ctrl-ui/react/ui/tooltip";
+import { CheckCircle, UserCirclePlus, XCircle } from "@phosphor-icons/react";
+import type React from "react";
 import { cn } from "@/lib/utils";
 
 interface HoverQuickActionsProps {
@@ -40,8 +40,8 @@ export function HoverQuickActions({
           render={
             <Button
               className="h-7 w-7"
+              iconOnly
               onClick={(e) => handleClick(e, onResolve)}
-              size="icon"
               variant="ghost"
             />
           }
@@ -57,8 +57,8 @@ export function HoverQuickActions({
           render={
             <Button
               className="h-7 w-7"
+              iconOnly
               onClick={(e) => handleClick(e, onClose)}
-              size="icon"
               variant="ghost"
             />
           }
@@ -74,8 +74,8 @@ export function HoverQuickActions({
           render={
             <Button
               className="h-7 w-7"
+              iconOnly
               onClick={(e) => handleClick(e, onAssignToMe)}
-              size="icon"
               variant="ghost"
             />
           }

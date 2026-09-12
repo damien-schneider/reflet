@@ -9,7 +9,7 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
-vi.mock("sonner", () => ({
+vi.mock("@ctrl-ui/react/ui/toast", () => ({
   toast: {
     error: vi.fn(),
     success: vi.fn(),

@@ -1,11 +1,13 @@
-import Footer from "@/features/homepage/components/footer";
-import Navbar from "@/features/homepage/components/navbar";
-import Pricing from "@/features/homepage/components/pricing";
+import { MarketingFooter } from "@/features/homepage/components/experience/marketing-footer";
+import { MarketingNavigation } from "@/features/homepage/components/experience/marketing-navigation";
+import { MarketingPricing } from "@/features/homepage/components/experience/marketing-pricing";
+import { MarketingFaq } from "@/features/homepage/components/experience/marketing-sections";
 import { generatePageMetadata } from "@/lib/seo-config";
+import "@/features/homepage/components/experience/marketing.css";
 
 export const metadata = generatePageMetadata({
   description:
-    "Simple, transparent pricing for teams of all sizes. Start free with a generous tier, or upgrade to Growth or Business for custom branding, API access, and priority support.",
+    "Start collecting feedback for free. Upgrade to Pro for more feedback, unlimited team members, custom branding, custom domains, and API access.",
   keywords: [
     "pricing",
     "free tier",
@@ -19,12 +21,13 @@ export const metadata = generatePageMetadata({
 
 export default function PricingPage() {
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <Navbar />
-      <main className="flex-1">
-        <Pricing />
+    <div className="marketing-page">
+      <MarketingNavigation />
+      <main>
+        <MarketingPricing standalone />
+        <MarketingFaq />
       </main>
-      <Footer />
+      <MarketingFooter />
     </div>
   );
 }

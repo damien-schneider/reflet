@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/components/ui/avatar", () => ({
+vi.mock("@ctrl-ui/react/ui/avatar", () => ({
   Avatar: ({
     children,
     className,
@@ -17,7 +17,7 @@ vi.mock("@/components/ui/avatar", () => ({
   AvatarImage: ({ alt }: { alt?: string }) => <img alt={alt} />,
 }));
 
-vi.mock("@/components/ui/scroll-area", () => ({
+vi.mock("@ctrl-ui/react/ui/scroll-area", () => ({
   ScrollArea: ({
     children,
     className,

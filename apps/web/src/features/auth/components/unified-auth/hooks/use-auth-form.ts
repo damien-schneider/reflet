@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "@ctrl-ui/react/ui/toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { env } from "@reflet/env/web";
@@ -9,7 +10,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import { capture } from "@/lib/analytics";
 import { authClient } from "@/lib/auth-client";
 import {

@@ -1,9 +1,8 @@
 "use client";
 
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { ArrowSquareOut } from "@phosphor-icons/react";
 import { useState } from "react";
-
-import { Skeleton } from "@/components/ui/skeleton";
 import { H2, Lead, Text } from "@/components/ui/typography";
 
 export default function LiveDemo() {

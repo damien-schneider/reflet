@@ -1,8 +1,7 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import { ArrowDown, ArrowUp } from "@phosphor-icons/react";
-
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export function VoteButtons({
@@ -23,8 +22,8 @@ export function VoteButtons({
             "border-primary bg-primary/10 text-primary"
         )}
         onClick={() => onVote("upvote")}
-        size="sm"
-        variant="outline"
+        size="xs"
+        variant="surface"
       >
         <ArrowUp
           className={cn(
@@ -42,8 +41,8 @@ export function VoteButtons({
             "border-destructive bg-destructive/10 text-destructive"
         )}
         onClick={() => onVote("downvote")}
-        size="sm"
-        variant="outline"
+        size="xs"
+        variant="surface"
       >
         <ArrowDown
           className={cn(

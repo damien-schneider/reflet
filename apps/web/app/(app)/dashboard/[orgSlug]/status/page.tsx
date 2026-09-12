@@ -1,13 +1,12 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import { ArrowSquareOut, Warning } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import Link from "next/link";
 import { use, useState } from "react";
-
-import { Button } from "@/components/ui/button";
 import { H1 } from "@/components/ui/typography";
 import { AddMonitorInput } from "@/features/status/components/add-monitor-input";
 import { IncidentCard } from "@/features/status/components/incident-card";
@@ -166,7 +165,7 @@ export default function StatusDashboardPage({
         <H1>Status</H1>
         <div className="flex flex-wrap items-center gap-2">
           <Link href={`/${orgSlug}/status`} rel="noopener" target="_blank">
-            <Button size="sm" variant="outline">
+            <Button size="xs" variant="surface">
               <ArrowSquareOut className="mr-1.5 h-4 w-4" />
               Public Page
             </Button>
@@ -174,7 +173,8 @@ export default function StatusDashboardPage({
           <Button
             onClick={() => setShowComposer(!showComposer)}
             size="sm"
-            variant={showComposer ? "outline" : "destructive"}
+            tone={showComposer ? "neutral" : "danger"}
+            variant="surface"
           >
             <Warning className="mr-1.5 h-4 w-4" />
             {showComposer ? "Cancel" : "Report Incident"}

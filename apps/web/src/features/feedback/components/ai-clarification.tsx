@@ -1,21 +1,25 @@
 "use client";
 
-import { ArrowsClockwise, Code, Copy, Sparkle } from "@phosphor-icons/react";
-import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { useMutation, useQuery } from "convex/react";
-import { useState } from "react";
-
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@ctrl-ui/react/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@ctrl-ui/react/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Skeleton } from "@/components/ui/skeleton";
+} from "@ctrl-ui/react/ui/dialog";
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
+import { ArrowsClockwise, Code, Copy, Sparkle } from "@phosphor-icons/react";
+import { api } from "@reflet/backend/convex/_generated/api";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { useMutation, useQuery } from "convex/react";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface AIClarificationProps {
@@ -102,8 +106,8 @@ export function AIClarification({ feedbackId, isAdmin }: AIClarificationProps) {
         <div className="flex gap-2">
           <Button
             onClick={() => setShowPromptDialog(true)}
-            size="sm"
-            variant="outline"
+            size="xs"
+            variant="surface"
           >
             <Code className="mr-1 h-3 w-3" />
             Coding Prompt
@@ -111,8 +115,8 @@ export function AIClarification({ feedbackId, isAdmin }: AIClarificationProps) {
           <Button
             disabled={isGenerating}
             onClick={handleGenerate}
-            size="sm"
-            variant="outline"
+            size="xs"
+            variant="surface"
           >
             {isGenerating ? (
               <ArrowsClockwise className="mr-1 h-3 w-3 animate-spin" />
@@ -209,8 +213,9 @@ export function AIClarification({ feedbackId, isAdmin }: AIClarificationProps) {
                       promptCopied && "text-olive-600"
                     )}
                     onClick={handleCopyPrompt}
-                    size="sm"
-                    variant="secondary"
+                    size="xs"
+                    tone="primary"
+                    variant="surface"
                   >
                     <Copy className="mr-1 h-3 w-3" />
                     {promptCopied ? "Copied!" : "Copy Prompt"}

@@ -1,5 +1,13 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@ctrl-ui/react/ui/select";
 import {
   Calendar,
   Chat,
@@ -8,21 +16,13 @@ import {
 } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { formatDistanceToNow } from "date-fns";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { TagBadge } from "@/components/tag-badge";
 import {
   DropdownList,
   DropdownListContent,
   DropdownListItem,
   DropdownListTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { toId } from "@/lib/convex-helpers";
 import { getTagDotColor } from "@/lib/tag-colors";
 
@@ -110,7 +110,9 @@ export function PublicFeedbackHeader({
           </Select>
         ) : (
           currentStatus && (
-            <Badge color={currentStatus.color}>{currentStatus.name}</Badge>
+            <TagBadge color={currentStatus.color}>
+              {currentStatus.name}
+            </TagBadge>
           )
         )}
 
@@ -118,7 +120,7 @@ export function PublicFeedbackHeader({
           <DropdownList>
             <DropdownListTrigger
               render={(props) => (
-                <Button {...props} size="icon" variant="ghost">
+                <Button {...props} iconOnly variant="ghost">
                   <DotsThreeVertical className="h-4 w-4" />
                 </Button>
               )}

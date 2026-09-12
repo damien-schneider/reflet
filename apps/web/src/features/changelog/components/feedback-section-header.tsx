@@ -1,16 +1,16 @@
 "use client";
 
-import { Check, Sparkle, Spinner } from "@phosphor-icons/react";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@ctrl-ui/react/ui/badge";
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@ctrl-ui/react/ui/select";
+import { Check, Sparkle, Spinner } from "@phosphor-icons/react";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 
 export type FeedbackLinkStatus =
   | "keep"
@@ -57,11 +57,7 @@ export function FeedbackSectionHeader({
         <h3 className="flex items-center gap-1.5 font-medium text-sm">
           <Check className="h-4 w-4 text-muted-foreground" />
           Linked Feedback
-          {linkedCount > 0 && (
-            <Badge className="text-xs" variant="secondary">
-              {linkedCount}
-            </Badge>
-          )}
+          {linkedCount > 0 && <Badge className="text-xs">{linkedCount}</Badge>}
         </h3>
 
         {releaseId && (
@@ -74,9 +70,9 @@ export function FeedbackSectionHeader({
               availableFeedback.length === 0
             }
             onClick={onTriggerMatching}
-            size="sm"
+            size="xs"
             type="button"
-            variant="outline"
+            variant="surface"
           >
             {isMatching ? (
               <>

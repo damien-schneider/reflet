@@ -1,5 +1,7 @@
 "use client";
 
+import { Badge } from "@ctrl-ui/react/ui/badge";
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   ArrowsClockwise,
   CheckCircle,
@@ -7,35 +9,25 @@ import {
   Warning,
   XCircle,
 } from "@phosphor-icons/react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Muted, Text } from "@/components/ui/typography";
 
 const STATUS_CONFIG = {
-  active: {
-    icon: CheckCircle,
-    label: "Active",
-    variant: "default" as const,
-  },
-  error: {
-    icon: XCircle,
-    label: "Error",
-    variant: "destructive" as const,
-  },
+  active: { color: "green", icon: CheckCircle, label: "Active" },
+  error: { color: "red", icon: XCircle, label: "Error" },
   invalid_configuration: {
+    color: "red",
     icon: Warning,
     label: "Invalid Configuration",
-    variant: "destructive" as const,
   },
   pending_verification: {
+    color: "yellow",
     icon: ArrowsClockwise,
     label: "Pending Verification",
-    variant: "secondary" as const,
   },
   removing: {
+    color: "neutral",
     icon: ArrowsClockwise,
     label: "Removing...",
-    variant: "secondary" as const,
   },
 } as const;
 
@@ -48,7 +40,7 @@ export function DomainStatusBadge({
   const Icon = config.icon;
 
   return (
-    <Badge variant={config.variant}>
+    <Badge color={config.color}>
       <Icon className="mr-1 h-3 w-3" />
       {config.label}
     </Badge>
@@ -112,7 +104,7 @@ export function DnsInstructions({
               <td className="py-2 text-right">
                 <Button
                   onClick={() => onCopy("cname.vercel-dns.com")}
-                  size="sm"
+                  size="xs"
                   variant="ghost"
                 >
                   <Copy className="h-3.5 w-3.5" />
@@ -139,7 +131,7 @@ export function DnsInstructions({
                 <td className="py-2 text-right">
                   <Button
                     onClick={() => onCopy(record.value)}
-                    size="sm"
+                    size="xs"
                     variant="ghost"
                   >
                     <Copy className="h-3.5 w-3.5" />

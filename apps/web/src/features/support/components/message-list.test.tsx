@@ -14,7 +14,7 @@ vi.mock("@/lib/auth-client", () => ({
   },
 }));
 
-vi.mock("@/components/ui/scroll-area", () => ({
+vi.mock("@ctrl-ui/react/ui/scroll-area", () => ({
   ScrollArea: ({
     children,
     className,

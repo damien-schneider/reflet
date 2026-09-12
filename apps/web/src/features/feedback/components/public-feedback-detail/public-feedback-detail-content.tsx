@@ -1,13 +1,12 @@
 "use client";
 
+import { Separator } from "@ctrl-ui/react/ui/separator";
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useCallback, useState } from "react";
-
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
+import { TagBadge } from "@/components/tag-badge";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
 
 import { PublicFeedbackComments } from "./public-feedback-comments";
@@ -157,14 +156,14 @@ export function PublicFeedbackDetailContent({
               {feedback.tags
                 .filter((tag): tag is NonNullable<typeof tag> => tag !== null)
                 .map((tag) => (
-                  <Badge
+                  <TagBadge
                     className="font-normal"
                     color={tag.color}
                     key={tag._id}
                   >
                     {tag.icon && <span>{tag.icon}</span>}
                     {tag.name}
-                  </Badge>
+                  </TagBadge>
                 ))}
             </div>
           </div>

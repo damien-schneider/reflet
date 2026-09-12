@@ -1,6 +1,6 @@
 import { CaretDown } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { Badge } from "@/components/ui/badge";
+import { TagBadge } from "@/components/tag-badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,13 +39,13 @@ export function StatusDisplay({
             className="flex cursor-pointer select-none items-center"
             render={<button type="button" />}
           >
-            <Badge
+            <TagBadge
               className="h-8 rounded-full px-3 font-normal text-xs"
               color={currentStatus.color}
             >
               {currentStatus.name}
               <CaretDown className="h-3 w-3 opacity-70" />
-            </Badge>
+            </TagBadge>
           </DropdownMenuTrigger>
         ) : (
           <DropdownMenuTrigger
@@ -82,12 +82,12 @@ export function StatusDisplay({
 
   if (currentStatus) {
     return (
-      <Badge
+      <TagBadge
         className="rounded-full px-2 py-0.5 font-normal text-xs"
         color={currentStatus.color}
       >
         {currentStatus.name}
-      </Badge>
+      </TagBadge>
     );
   }
 

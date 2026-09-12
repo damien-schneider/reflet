@@ -1,15 +1,8 @@
 "use client";
 
-import { CalendarBlank, CaretLeft, CaretRight, X } from "@phosphor-icons/react";
-import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { useQuery } from "convex/react";
-import { formatDistanceToNow } from "date-fns";
-import { useHotkeys } from "react-hotkeys-hook";
-
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback, AvatarImage } from "@ctrl-ui/react/ui/avatar";
+import { Button } from "@ctrl-ui/react/ui/button";
+import { ScrollArea } from "@ctrl-ui/react/ui/scroll-area";
 import {
   Sheet,
   SheetClose,
@@ -17,13 +10,19 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from "@/components/ui/sheet";
-import { Spinner } from "@/components/ui/spinner";
+} from "@ctrl-ui/react/ui/sheet";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@ctrl-ui/react/ui/tooltip";
+import { CalendarBlank, CaretLeft, CaretRight, X } from "@phosphor-icons/react";
+import { api } from "@reflet/backend/convex/_generated/api";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { useQuery } from "convex/react";
+import { formatDistanceToNow } from "date-fns";
+import { useHotkeys } from "react-hotkeys-hook";
 import { ScreenshotGallery } from "../screenshot-gallery";
 import { CommentsSection } from "./comments-section";
 import { FeatureCheck } from "./feature-check";
@@ -150,9 +149,7 @@ export function FeedbackDetailDrawer({
     <Sheet onOpenChange={(open) => !open && onClose()} open={isOpen}>
       <SheetContent
         className="gap-0 overflow-hidden p-0 md:w-[70vw] md:max-w-[70vw]"
-        showCloseButton={false}
         side="right"
-        variant="panel"
       >
         {/* Header */}
         <SheetHeader className="flex shrink-0 flex-row items-center justify-between gap-2 border-b px-4 py-3">
@@ -220,8 +217,9 @@ export function FeedbackDetailDrawer({
               <>
                 <Button
                   disabled={!hasPrevious}
+                  iconOnly
                   onClick={onPrevious}
-                  size="icon-sm"
+                  size="xs"
                   title="Previous (k or Up arrow)"
                   variant="ghost"
                 >
@@ -234,8 +232,9 @@ export function FeedbackDetailDrawer({
                 </span>
                 <Button
                   disabled={!hasNext}
+                  iconOnly
                   onClick={onNext}
-                  size="icon-sm"
+                  size="xs"
                   title="Next (j or Down arrow)"
                   variant="ghost"
                 >
@@ -248,7 +247,9 @@ export function FeedbackDetailDrawer({
 
           {/* Close button */}
           <SheetClose
-            render={<Button onClick={onClose} size="icon-sm" variant="ghost" />}
+            render={
+              <Button iconOnly onClick={onClose} size="xs" variant="ghost" />
+            }
           >
             <X className="h-4 w-4" />
             <span className="sr-only">Close</span>

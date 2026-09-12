@@ -1,14 +1,13 @@
 "use client";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@ctrl-ui/react/ui/avatar";
+import { Badge } from "@ctrl-ui/react/ui/badge";
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
+import { Textarea } from "@ctrl-ui/react/ui/textarea";
 import { PaperPlaneRight } from "@phosphor-icons/react";
 import { formatDistanceToNow } from "date-fns";
 import { useHotkeys } from "react-hotkeys-hook";
-
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
 
 interface CommentAuthor {
   email?: string;
@@ -81,8 +80,10 @@ export function PublicFeedbackComments({
           <Button
             className="self-end"
             disabled={!newComment.trim() || isSubmittingComment}
+            iconOnly
             onClick={onSubmitComment}
-            size="icon"
+            tone="primary"
+            variant="solid"
           >
             <PaperPlaneRight className="h-4 w-4" />
           </Button>
@@ -155,11 +156,7 @@ function PublicCommentItem({
           <span className="font-medium text-sm">
             {comment.author?.name || comment.author?.email || "Anonymous"}
           </span>
-          {comment.isOfficial && (
-            <Badge className="text-xs" variant="secondary">
-              Official
-            </Badge>
-          )}
+          {comment.isOfficial && <Badge className="text-xs">Official</Badge>}
           <span className="text-muted-foreground text-xs">
             {formatDistanceToNow(comment.createdAt, {
               addSuffix: true,

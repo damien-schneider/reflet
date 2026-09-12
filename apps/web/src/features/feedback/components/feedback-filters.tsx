@@ -1,3 +1,18 @@
+import { Badge } from "@ctrl-ui/react/ui/badge";
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Input } from "@ctrl-ui/react/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@ctrl-ui/react/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@ctrl-ui/react/ui/select";
 import {
   Funnel,
   MagnifyingGlass,
@@ -11,21 +26,7 @@ import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { useAtom } from "jotai";
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { TagBadge } from "@/components/tag-badge";
 import type { SortOption } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
@@ -126,14 +127,11 @@ export function FeedbackFunnels({
           {/* Funnel button */}
           <Popover onOpenChange={setFunnelOpen} open={filterOpen}>
             <PopoverTrigger>
-              <Button className="gap-2" variant="outline">
+              <Button className="gap-2" variant="surface">
                 <Funnel className="h-4 w-4" />
                 Funnel
                 {filterCount > 0 && (
-                  <Badge
-                    className="ml-1 flex h-5 w-5 items-center justify-center p-0"
-                    variant="secondary"
-                  >
+                  <Badge className="ml-1 flex h-5 w-5 items-center justify-center p-0">
                     {filterCount}
                   </Badge>
                 )}
@@ -146,7 +144,7 @@ export function FeedbackFunnels({
                   <h4 className="mb-2 font-medium text-sm">Status</h4>
                   <div className="flex flex-wrap gap-1">
                     {organizationStatuses?.map((status) => (
-                      <Badge
+                      <TagBadge
                         className="cursor-pointer"
                         color={status.color}
                         key={status._id}
@@ -158,7 +156,7 @@ export function FeedbackFunnels({
                         }
                       >
                         {status.name}
-                      </Badge>
+                      </TagBadge>
                     ))}
                     {!organizationStatuses && (
                       <span className="text-muted-foreground text-sm">
@@ -174,7 +172,7 @@ export function FeedbackFunnels({
                     <h4 className="mb-2 font-medium text-sm">Tags</h4>
                     <div className="flex flex-wrap gap-1">
                       {tags.map((tag) => (
-                        <Badge
+                        <TagBadge
                           className="cursor-pointer"
                           color={tag.color}
                           key={tag._id}
@@ -186,7 +184,7 @@ export function FeedbackFunnels({
                           }
                         >
                           {tag.name}
-                        </Badge>
+                        </TagBadge>
                       ))}
                     </div>
                   </div>
@@ -197,7 +195,7 @@ export function FeedbackFunnels({
                   <Button
                     className="w-full"
                     onClick={clearAllFilters}
-                    size="sm"
+                    size="xs"
                     variant="ghost"
                   >
                     Clear all filters
@@ -210,7 +208,8 @@ export function FeedbackFunnels({
           {/* Hide Completed toggle */}
           <Button
             onClick={() => setHideCompleted((prev) => !prev)}
-            variant={hideCompleted ? "secondary" : "outline"}
+            tone={hideCompleted ? "primary" : "neutral"}
+            variant="surface"
           >
             {hideCompleted ? "Hide Completed" : "Show Completed"}
           </Button>
@@ -242,7 +241,7 @@ export function FeedbackFunnels({
         </div>
 
         {showSubmitButton && onSubmitClick && (
-          <Button onClick={onSubmitClick}>
+          <Button onClick={onSubmitClick} tone="primary" variant="solid">
             <Plus className="mr-2 h-4 w-4" />
             Submit Feedback
           </Button>
@@ -257,7 +256,6 @@ export function FeedbackFunnels({
             <Badge
               className="cursor-pointer gap-1"
               onClick={() => setHideCompleted(false)}
-              variant="secondary"
             >
               Completed hidden
               <X className="h-3 w-3" />
@@ -271,7 +269,7 @@ export function FeedbackFunnels({
               return null;
             }
             return (
-              <Badge
+              <TagBadge
                 className="cursor-pointer gap-1"
                 color={status.color}
                 key={statusId}
@@ -279,7 +277,7 @@ export function FeedbackFunnels({
               >
                 {status.name}
                 <X className="h-3 w-3" />
-              </Badge>
+              </TagBadge>
             );
           })}
           {selectedTagIds.map((tagId) => {
@@ -288,7 +286,7 @@ export function FeedbackFunnels({
               return null;
             }
             return (
-              <Badge
+              <TagBadge
                 className="cursor-pointer gap-1 font-normal"
                 color={tag.color}
                 key={tagId}
@@ -296,13 +294,13 @@ export function FeedbackFunnels({
               >
                 {tag.name}
                 <X className="h-3 w-3" />
-              </Badge>
+              </TagBadge>
             );
           })}
           <Button
             className="h-6 text-xs"
             onClick={clearAllFilters}
-            size="sm"
+            size="xs"
             variant="ghost"
           >
             Clear all

@@ -1,12 +1,12 @@
 "use client";
 
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
+import { Tabs, TabsList, TabsPanel, TabsTab } from "@ctrl-ui/react/ui/tabs";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { use, useState } from "react";
-import { toast } from "sonner";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { H1 } from "@/components/ui/typography";
 import { CreateSurveyDialog } from "@/features/surveys/components/create-survey-dialog";
 import { SurveyList } from "@/features/surveys/components/survey-list";
@@ -70,22 +70,22 @@ export default function SurveysPage({
       </div>
 
       <Tabs onValueChange={setStatusFilter} value={statusFilter}>
-        <TabsList variant="line">
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="draft">Draft</TabsTrigger>
-          <TabsTrigger value="active">Active</TabsTrigger>
-          <TabsTrigger value="paused">Paused</TabsTrigger>
-          <TabsTrigger value="closed">Closed</TabsTrigger>
+        <TabsList>
+          <TabsTab value="all">All</TabsTab>
+          <TabsTab value="draft">Draft</TabsTab>
+          <TabsTab value="active">Active</TabsTab>
+          <TabsTab value="paused">Paused</TabsTab>
+          <TabsTab value="closed">Closed</TabsTab>
         </TabsList>
 
-        <TabsContent className="mt-4" value={statusFilter}>
+        <TabsPanel className="mt-4" value={statusFilter}>
           <SurveyList
             onDelete={handleDelete}
             onStatusChange={handleStatusChange}
             orgSlug={orgSlug}
             surveys={filteredSurveys}
           />
-        </TabsContent>
+        </TabsPanel>
       </Tabs>
     </div>
   );

@@ -1,10 +1,6 @@
 "use client";
 
-import { Check, PaintBrush, Spinner } from "@phosphor-icons/react";
-import { api } from "@reflet/backend/convex/_generated/api";
-import { useMutation, useQuery } from "convex/react";
-import { useEffect, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Popover,
   PopoverContent,
@@ -12,7 +8,11 @@ import {
   PopoverHeader,
   PopoverTitle,
   PopoverTrigger,
-} from "@/components/ui/popover";
+} from "@ctrl-ui/react/ui/popover";
+import { Check, PaintBrush, Spinner } from "@phosphor-icons/react";
+import { api } from "@reflet/backend/convex/_generated/api";
+import { useMutation, useQuery } from "convex/react";
+import { useEffect, useRef, useState } from "react";
 import {
   DEFAULT_MILESTONE_VIEW_STYLE,
   MILESTONE_VIEW_STYLE_OPTIONS,
@@ -100,7 +100,7 @@ export function BoardCustomizePopover({ orgSlug }: BoardCustomizePopoverProps) {
           <Button
             {...props}
             className="h-8 w-8 text-muted-foreground"
-            size="icon"
+            iconOnly
             title="Customize appearance"
             variant="ghost"
           >

@@ -1,10 +1,10 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Input } from "@ctrl-ui/react/ui/input";
 import { Check, MagnifyingGlass, X } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { TagBadge } from "@/components/tag-badge";
 
 const STATUS_LABELS: Record<string, string> = {
   closed: "Closed",
@@ -28,20 +28,12 @@ const STATUS_COLORS: Record<string, string> = {
 
 function StatusBadge({ status }: { status: string }) {
   return (
-    <Badge
+    <TagBadge
       className="shrink-0 text-xs"
-      variant={
-        (STATUS_COLORS[status] as
-          | "green"
-          | "blue"
-          | "orange"
-          | "purple"
-          | "yellow"
-          | "gray") ?? "gray"
-      }
+      color={STATUS_COLORS[status] ?? "gray"}
     >
       {STATUS_LABELS[status] ?? status}
-    </Badge>
+    </TagBadge>
   );
 }
 
@@ -72,7 +64,7 @@ export function LinkedFeedbackList({
             <Button
               className="h-5 w-5 shrink-0 p-0 text-muted-foreground hover:text-destructive"
               onClick={() => onUnlink(item._id)}
-              size="sm"
+              size="xs"
               type="button"
               variant="ghost"
             >

@@ -1,7 +1,7 @@
 "use client";
 
+import { Card, CardContent } from "@ctrl-ui/react/ui/card";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   useWebsiteReferenceDialog,
   WebsiteReferenceAddButton,

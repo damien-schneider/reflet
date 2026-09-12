@@ -1,14 +1,14 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Field, FieldError, FieldLabel } from "@ctrl-ui/react/ui/field";
+import { Input } from "@ctrl-ui/react/ui/input";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Button } from "@/components/ui/button";
-import { Field, FieldError, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
 import { H1, Muted } from "@/components/ui/typography";
 import { authClient } from "@/lib/auth-client";
 
@@ -92,7 +92,7 @@ export default function ForgotPasswordPage() {
             check your spam folder.
           </Muted>
           <Link href="/">
-            <Button variant="outline">Back to home</Button>
+            <Button variant="surface">Back to home</Button>
           </Link>
         </div>
       </div>
@@ -120,15 +120,27 @@ export default function ForgotPasswordPage() {
             />
             <FieldError
               className="absolute top-full left-0"
-              errors={errors.email ? [errors.email] : undefined}
-            />
+              match={Boolean(errors.email?.message)}
+            >
+              {errors.email?.message}
+            </FieldError>
           </Field>
 
           {apiError && (
-            <FieldError className="mt-2" errors={[{ message: apiError }]} />
+            <Field>
+              <FieldError className="mt-2" match>
+                {apiError}
+              </FieldError>
+            </Field>
           )}
 
-          <Button className="mt-6 w-full" disabled={isSubmitting} type="submit">
+          <Button
+            className="mt-6 w-full"
+            disabled={isSubmitting}
+            tone="primary"
+            type="submit"
+            variant="solid"
+          >
             {isSubmitting ? (
               <>
                 <Spinner className="mr-2 h-4 w-4" />

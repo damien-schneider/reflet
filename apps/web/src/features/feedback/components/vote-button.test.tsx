@@ -34,7 +34,7 @@ vi.mock("@/hooks/use-auth-guard", () => ({
 }));
 
 // Mock tooltip
-vi.mock("@/components/ui/tooltip", () => ({
+vi.mock("@ctrl-ui/react/ui/tooltip", () => ({
   Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   TooltipContent: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="tooltip-content">{children}</div>
@@ -45,7 +45,7 @@ vi.mock("@/components/ui/tooltip", () => ({
 }));
 
 // Mock button
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     onClick,

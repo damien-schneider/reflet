@@ -1,9 +1,8 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import { CaretRight } from "@phosphor-icons/react";
 import Link from "next/link";
-
-import { Button } from "@/components/ui/button";
 
 import { H2, Lead } from "@/components/ui/typography";
 export default function CTA() {
@@ -22,8 +21,9 @@ export default function CTA() {
           <Link href="/dashboard">
             <Button
               className="w-full rounded-full sm:w-auto"
-              size="lg"
-              variant="default"
+              size="md"
+              tone="primary"
+              variant="solid"
             >
               Start free trial
             </Button>

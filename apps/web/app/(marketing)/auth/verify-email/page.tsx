@@ -1,9 +1,9 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
 import { H1, Muted } from "@/components/ui/typography";
 import { authClient } from "@/lib/auth-client";
 
@@ -116,10 +116,10 @@ function VerifyEmailContent() {
             {errorMessage ?? "The verification link is invalid or has expired."}
           </Muted>
           <div className="flex flex-col gap-3">
-            <Button onClick={handleResendEmail} variant="default">
+            <Button onClick={handleResendEmail} tone="primary" variant="solid">
               Resend verification email
             </Button>
-            <Button onClick={() => router.push("/")} variant="outline">
+            <Button onClick={() => router.push("/")} variant="surface">
               Back to home
             </Button>
           </div>
@@ -157,7 +157,12 @@ function VerifyEmailContent() {
           Your email address has been successfully verified. You can now access
           all features of your account.
         </Muted>
-        <Button className="w-full" onClick={handleContinue}>
+        <Button
+          className="w-full"
+          onClick={handleContinue}
+          tone="primary"
+          variant="solid"
+        >
           Continue to dashboard
         </Button>
       </div>

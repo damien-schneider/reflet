@@ -2,14 +2,15 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/components/ui/field", () => ({
+vi.mock("@ctrl-ui/react/ui/field", () => ({
   Field: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  FieldError: ({ errors }: { errors?: Array<{ message?: string }> }) =>
-    errors ? (
-      <span data-testid="field-error">
-        {errors.map((e) => e.message).join(", ")}
-      </span>
-    ) : null,
+  FieldError: ({
+    children,
+    match,
+  }: {
+    children?: React.ReactNode;
+    match?: boolean;
+  }) => (match ? <span data-testid="field-error">{children}</span> : null),
   FieldLabel: ({
     children,
     htmlFor,
@@ -19,7 +20,7 @@ vi.mock("@/components/ui/field", () => ({
   }) => <label htmlFor={htmlFor}>{children}</label>,
 }));
 
-vi.mock("@/components/ui/input", () => ({
+vi.mock("@ctrl-ui/react/ui/input", () => ({
   Input: ({
     ref: _ref,
     ...props
@@ -195,10 +196,10 @@ describe("PasswordInputField", () => {
     expect(input).toHaveAttribute("name", "my-password");
   });
 
-  it("renders error with undefined message", () => {
+  it("renders no error slot when the message is undefined", () => {
     render(
       <PasswordInputField {...baseProps} error={{ message: undefined }} />
     );
-    expect(screen.getByTestId("field-error")).toBeInTheDocument();
+    expect(screen.queryByTestId("field-error")).not.toBeInTheDocument();
   });
 });

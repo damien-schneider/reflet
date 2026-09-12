@@ -1,17 +1,18 @@
 "use client";
 
-import { GitBranch, Globe, Lock, Plug, Spinner } from "@phosphor-icons/react";
-
-import { Button } from "@/components/ui/button";
+import { Combobox as ComboboxPrimitive } from "@base-ui/react/combobox";
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
-  Combobox,
   ComboboxContent,
   ComboboxEmpty,
   ComboboxInput,
   ComboboxItem,
   ComboboxList,
-} from "@/components/ui/combobox";
+} from "@ctrl-ui/react/ui/combobox";
+import { GitBranch, Globe, Lock, Plug, Spinner } from "@phosphor-icons/react";
 import { Text } from "@/components/ui/typography";
+
+type SearchableRepository = Repository & { searchText: string };
 
 interface Repository {
   defaultBranch: string;
@@ -86,7 +87,7 @@ export function RepositorySelectorSection({
           <Text className="font-medium">{repositoryFullName}</Text>
         </div>
         {isAdmin ? (
-          <Button onClick={onChangeRepository} size="sm" variant="ghost">
+          <Button onClick={onChangeRepository} size="xs" variant="ghost">
             Change
           </Button>
         ) : null}
@@ -112,13 +113,12 @@ export function RepositorySelectorSection({
           </Text>
         </div>
       ) : null}
-      <Combobox
-        filter={(repo, query) => {
-          if (!query) {
-            return true;
-          }
-          return repo.searchText.includes(query.toLowerCase());
-        }}
+      {/* ponytail: base-ui Root because @ctrl-ui/react's Combobox does not type `filter`; switch back once it does. */}
+      <ComboboxPrimitive.Root
+        autoHighlight
+        filter={(repo, query) =>
+          !query || repo.searchText.includes(query.toLowerCase())
+        }
         items={flatRepositories}
         itemToStringLabel={(repo) => getRepositoryDisplayText(repo)}
         onValueChange={(value) => {
@@ -134,7 +134,7 @@ export function RepositorySelectorSection({
       >
         <ComboboxInput placeholder="Search repositories..." />
         <ComboboxContent>
-          <ComboboxList>
+          <ComboboxList<SearchableRepository>>
             {(repo) => (
               <ComboboxItem key={repo.id} value={repo}>
                 <div className="flex items-center gap-2">
@@ -155,9 +155,14 @@ export function RepositorySelectorSection({
           </ComboboxList>
           <ComboboxEmpty>No repositories found</ComboboxEmpty>
         </ComboboxContent>
-      </Combobox>
+      </ComboboxPrimitive.Root>
       {isAdmin ? (
-        <Button disabled={!selectedRepo} onClick={onConnectRepository}>
+        <Button
+          disabled={!selectedRepo}
+          onClick={onConnectRepository}
+          tone="primary"
+          variant="solid"
+        >
           <Plug className="mr-2 h-4 w-4" />
           Connect Repository
         </Button>

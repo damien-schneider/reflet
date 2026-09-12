@@ -1,6 +1,6 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Text } from "@/components/ui/typography";
 
 interface GitHubRelease {
@@ -41,9 +41,7 @@ export function SyncedReleasesSection({ releases }: SyncedReleasesCardProps) {
             {release.isPrerelease ? (
               <Badge variant="outline">Pre-release</Badge>
             ) : null}
-            {release.refletReleaseId ? (
-              <Badge variant="secondary">Imported</Badge>
-            ) : null}
+            {release.refletReleaseId ? <Badge>Imported</Badge> : null}
           </div>
         </div>
       ))}

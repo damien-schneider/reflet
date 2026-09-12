@@ -1,0 +1,241 @@
+:where(.feedback-story) {
+  background: var(--background);
+}
+:where(.journey-introduction) {
+  padding-top: var(--marketing-section-space);
+  padding-bottom: var(--marketing-content-space);
+}
+:where(.journey-introduction .marketing-section-intro) {
+  margin-bottom: 20px;
+}
+:where(.journey-skip) {
+  width: fit-content;
+  margin: auto;
+  font-size: 11px;
+  color: var(--muted-foreground);
+}
+:where(.journey-track) {
+  position: relative;
+  height: 700svh;
+}
+:where(.journey-anchor) {
+  position: absolute;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+:where(#journey-capture) {
+  top: 0;
+}
+:where(#journey-board) {
+  top: 100svh;
+}
+:where(#journey-ai) {
+  top: 200svh;
+}
+:where(#journey-planned) {
+  top: 300svh;
+}
+:where(#journey-done) {
+  top: 400svh;
+}
+:where(#journey-release) {
+  top: 500svh;
+}
+:where(#journey-notify) {
+  top: 600svh;
+}
+:where(.journey-sticky) {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 1160px;
+  height: 100svh;
+  padding: 28px 40px 18px;
+  margin: auto;
+}
+:where(.journey-heading) {
+  min-height: 100px;
+  margin-bottom: 24px;
+}
+:where(.journey-step-copy) {
+  display: flex;
+  gap: 45px;
+  align-items: center;
+  justify-content: space-between;
+}
+:where(.journey-step-count) {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 11px;
+  font-weight: 650;
+  color: var(--marketing-signal);
+}
+:where(.journey-step-count > span) {
+  margin-left: 6px;
+  font-weight: 400;
+  color: var(--muted-foreground);
+}
+:where(.journey-heading h3) {
+  max-width: 620px;
+  font-size: clamp(22px, 2.6vw, 34px);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.035em;
+}
+:where(.journey-step-copy > p) {
+  max-width: 300px;
+  font-size: 12px;
+  line-height: 1.75;
+  color: var(--muted-foreground);
+}
+:where(.journey-scene) {
+  flex-shrink: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--card);
+  border: 1px solid var(--marketing-edge);
+  border-radius: 32px;
+  box-shadow: var(--marketing-float-shadow);
+}
+:where(.journey-window-bar) {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  height: 46px;
+  padding: 0 20px;
+  font-size: 10px;
+  color: var(--muted-foreground);
+  background: var(--marketing-stage);
+  border-bottom: 1px solid var(--marketing-hairline);
+}
+:where(.journey-window-brand),
+:where(.journey-window-location) {
+  display: inline-flex;
+  gap: 7px;
+  align-items: center;
+}
+:where(.journey-window-brand) {
+  font-weight: 600;
+  color: var(--foreground);
+}
+:where(.journey-window-location) {
+  padding: 5px 14px;
+  background: var(--background);
+  border-radius: 7px;
+}
+:where(.journey-scene-body) {
+  position: relative;
+  height: clamp(340px, 51svh, 510px);
+  overflow: hidden;
+}
+:where(.journey-chapter-rail) {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  will-change: transform;
+}
+:where(.journey-surface) {
+  position: relative;
+  flex: 0 0 100%;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--card);
+  border-right: 1px solid var(--marketing-hairline);
+}
+:where(.journey-navigation) {
+  position: relative;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding: 6px;
+  margin: 25px auto 0;
+  background: var(--marketing-stage);
+  border: 1px solid var(--marketing-edge);
+  border-radius: 17px;
+  box-shadow:
+    var(--marketing-inset),
+    0 2px 3px var(--marketing-ambient-shadow);
+}
+:where(.journey-timeline-track) {
+  position: absolute;
+  right: 18px;
+  bottom: 2px;
+  left: 18px;
+  height: 2px;
+  overflow: hidden;
+  background: var(--marketing-hairline);
+  border-radius: 2px;
+}
+:where(.journey-timeline-progress) {
+  display: block;
+  height: 100%;
+  background: var(--marketing-signal);
+  transform-origin: left;
+}
+:where(.journey-navigation a[data-complete="true"]) {
+  color: var(--foreground);
+}
+:where(.journey-navigation a) {
+  position: relative;
+  padding: 10px 12px;
+  font-size: 11px;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+  border-radius: 12px;
+  isolation: isolate;
+  transition:
+    color var(--marketing-duration),
+    background var(--marketing-duration);
+}
+:where(.journey-navigation a:hover) {
+  color: var(--foreground);
+  background: var(--marketing-stage);
+}
+:where(.journey-navigation a[aria-current="step"]) {
+  color: var(--marketing-signal);
+}
+:where(.journey-nav-content) {
+  position: relative;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+:where(.journey-nav-indicator) {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--card);
+  border-radius: 12px;
+  box-shadow: var(--marketing-float-shadow);
+}
+:where(.journey-caption) {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+  font-size: 10px;
+  color: var(--muted-foreground);
+}
+:where(.journey-caption > span:last-child) {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+}
+:where(.journey-track[data-reduced-motion="true"]) {
+  height: auto;
+}
+:where(.journey-track[data-reduced-motion="true"] .journey-anchor) {
+  top: 0;
+}
+:where(.journey-track[data-reduced-motion="true"] .journey-sticky) {
+  position: relative;
+  height: auto;
+  min-height: 650px;
+  padding-block: 35px;
+}

@@ -8,7 +8,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command";
+} from "@ctrl-ui/react/ui/command";
 import { useCommandPalette } from "../hooks/use-command-palette";
 import { groupLabels } from "../lib/command-items";
 import type { CommandItem as CommandItemType } from "../lib/types";

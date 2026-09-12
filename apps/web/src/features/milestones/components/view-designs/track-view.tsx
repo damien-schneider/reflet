@@ -1,12 +1,11 @@
 "use client";
 
+import { ScrollArea } from "@ctrl-ui/react/ui/scroll-area";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { TimeHorizon } from "@/lib/milestone-constants";
 import {
@@ -169,9 +168,9 @@ export function TrackView({
       <div className="hidden md:block">
         <ScrollArea
           className="rounded-xl bg-secondary"
-          classNameViewport="px-4"
-          direction="horizontal"
+          lockAxis="y"
           ref={trackRef}
+          viewportClassName="px-4"
         >
           <div className="py-2">
             <div className="flex w-full items-stretch gap-0.5 p-0.5">

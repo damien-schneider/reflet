@@ -1,4 +1,4 @@
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTab } from "@ctrl-ui/react/ui/tabs";
 
 import type { BillingInterval } from "./billing-types";
 
@@ -22,17 +22,17 @@ export function BillingToggle({
         value={interval}
       >
         <TabsList className="h-10">
-          <TabsTrigger className="h-8 px-4" value="monthly">
+          <TabsTab className="h-8 px-4" value="monthly">
             Monthly
-          </TabsTrigger>
-          <TabsTrigger className="h-8 px-4" value="yearly">
+          </TabsTab>
+          <TabsTab className="h-8 px-4" value="yearly">
             Yearly
             {yearlySavings ? (
               <span className="ml-1.5 text-green-500">
                 (Save €{yearlySavings})
               </span>
             ) : null}
-          </TabsTrigger>
+          </TabsTab>
         </TabsList>
       </Tabs>
     </div>

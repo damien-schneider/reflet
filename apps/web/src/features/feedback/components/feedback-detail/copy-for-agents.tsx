@@ -1,5 +1,12 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { toast } from "@ctrl-ui/react/ui/toast";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@ctrl-ui/react/ui/tooltip";
 import {
   ArrowUpRight,
   CaretDown,
@@ -11,9 +18,6 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { useCallback, useState } from "react";
-import { toast } from "sonner";
-
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,11 +27,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import type { AgentTarget } from "./agent-config";
 import { AGENTS, openCloudAgent, openDeepLink } from "./agent-config";
 import type { FeedbackTag } from "./feedback-metadata-types";
@@ -281,8 +280,8 @@ export function CopyForAgents({
             render={
               <Button
                 className="h-8 gap-1.5 px-2.5"
-                size="sm"
-                variant="outline"
+                size="xs"
+                variant="surface"
               >
                 <Terminal className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Agents</span>

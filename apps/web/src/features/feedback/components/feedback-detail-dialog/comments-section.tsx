@@ -1,13 +1,13 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import {
   ArrowsClockwise,
   PaperPlaneRight,
   Sparkle,
 } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 
 import type { CommentData } from "./comment-item";
@@ -132,8 +132,8 @@ export function CommentsSection({
             <Button
               disabled={isGeneratingDraft}
               onClick={onGenerateDraftReply}
-              size="sm"
-              variant="outline"
+              size="xs"
+              variant="surface"
             >
               {isGeneratingDraft ? (
                 <>
@@ -160,8 +160,10 @@ export function CommentsSection({
           <Button
             className="self-end"
             disabled={!newComment.trim() || isSubmittingComment}
+            iconOnly
             onClick={onSubmitComment}
-            size="icon"
+            tone="primary"
+            variant="solid"
           >
             <PaperPlaneRight className="h-4 w-4" />
           </Button>

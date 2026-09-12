@@ -14,11 +14,11 @@ vi.mock("@/lib/auth-client", () => ({
   },
 }));
 
-vi.mock("@/components/ui/spinner", () => ({
+vi.mock("@ctrl-ui/react/ui/spinner", () => ({
   Spinner: () => <div data-testid="spinner">Loading...</div>,
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     disabled,
@@ -43,7 +43,7 @@ vi.mock("@/components/ui/button", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/input", () => ({
+vi.mock("@ctrl-ui/react/ui/input", () => ({
   Input: ({
     id,
     type,
@@ -54,7 +54,7 @@ vi.mock("@/components/ui/input", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/field", () => ({
+vi.mock("@ctrl-ui/react/ui/field", () => ({
   Field: ({
     children,
     className,
@@ -63,15 +63,14 @@ vi.mock("@/components/ui/field", () => ({
     className?: string;
   }) => <div className={className}>{children}</div>,
   FieldError: ({
-    errors,
+    children,
     className,
+    match,
   }: {
-    errors?: Array<{ message: string }>;
+    children?: React.ReactNode;
     className?: string;
-  }) =>
-    errors && errors.length > 0 ? (
-      <div className={className}>{errors[0].message}</div>
-    ) : null,
+    match?: boolean;
+  }) => (match ? <div className={className}>{children}</div> : null),
   FieldLabel: ({
     children,
     className,
@@ -119,7 +118,7 @@ vi.mock("next/navigation", () => ({
   })),
 }));
 
-vi.mock("sonner", () => ({
+vi.mock("@ctrl-ui/react/ui/toast", () => ({
   toast: {
     error: vi.fn(),
     success: vi.fn(),

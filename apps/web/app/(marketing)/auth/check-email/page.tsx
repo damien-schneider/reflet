@@ -1,10 +1,10 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
 import { H1, Muted } from "@/components/ui/typography";
 import { authClient } from "@/lib/auth-client";
 
@@ -69,7 +69,8 @@ function CheckEmailContent() {
           <Button
             disabled={isResending || !email}
             onClick={handleResendEmail}
-            variant="default"
+            tone="primary"
+            variant="solid"
           >
             {isResending ? (
               <>
@@ -80,7 +81,7 @@ function CheckEmailContent() {
               "Resend verification email"
             )}
           </Button>
-          <Button onClick={() => router.push("/")} variant="outline">
+          <Button onClick={() => router.push("/")} variant="surface">
             Back to home
           </Button>
         </div>

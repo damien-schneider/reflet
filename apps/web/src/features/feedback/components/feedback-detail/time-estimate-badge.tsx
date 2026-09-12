@@ -1,12 +1,21 @@
 "use client";
 
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@ctrl-ui/react/ui/popover";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@ctrl-ui/react/ui/tooltip";
 import { CaretDown, Clock, Sparkle, X } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { useState } from "react";
-
-import { Badge } from "@/components/ui/badge";
+import { TagBadge } from "@/components/tag-badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,16 +23,6 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 type TimeUnit = "minutes" | "hours" | "days" | "weeks";
@@ -153,7 +152,7 @@ export function TimeEstimateBadge({
     : `AI Time Estimate: ${effectiveEstimate}`;
 
   const badge = (
-    <Badge
+    <TagBadge
       className="h-8 gap-1 rounded-full px-3 font-normal text-xs"
       color="purple"
     >
@@ -174,7 +173,7 @@ export function TimeEstimateBadge({
         </TooltipContent>
       </Tooltip>
       {isAdmin && <CaretDown className="h-3 w-3 opacity-70" />}
-    </Badge>
+    </TagBadge>
   );
 
   if (!isAdmin) {

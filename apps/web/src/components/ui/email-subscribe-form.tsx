@@ -1,10 +1,10 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Input } from "@ctrl-ui/react/ui/input";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import { Bell, Envelope } from "@phosphor-icons/react";
 import { useState } from "react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 interface EmailSubscribeFormProps {
@@ -90,7 +90,12 @@ export function EmailSubscribeForm({
           value={email}
         />
       </div>
-      <Button disabled={isSubmitting || !email.trim()} type="submit">
+      <Button
+        disabled={isSubmitting || !email.trim()}
+        tone="primary"
+        type="submit"
+        variant="solid"
+      >
         <Bell className="mr-2 h-4 w-4" />
         Subscribe
       </Button>

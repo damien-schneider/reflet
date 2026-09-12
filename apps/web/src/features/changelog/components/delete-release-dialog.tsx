@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -8,7 +8,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@ctrl-ui/react/ui/dialog";
 
 interface DeleteReleaseDialogProps {
   onClose: () => void;
@@ -32,10 +32,10 @@ export function DeleteReleaseDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button onClick={onClose} variant="outline">
+          <Button onClick={onClose} variant="surface">
             Cancel
           </Button>
-          <Button onClick={onConfirm} variant="destructive">
+          <Button onClick={onConfirm} tone="danger" variant="surface">
             Delete
           </Button>
         </DialogFooter>

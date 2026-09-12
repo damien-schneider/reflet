@@ -1,14 +1,13 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import { CloudArrowUp, PencilSimple, Trash } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { format } from "date-fns";
 import Link from "next/link";
-import { toast } from "sonner";
-
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface RetroactiveDraftItemProps {
@@ -133,7 +132,7 @@ export function RetroactiveDraftItem({
 
       <div className="flex shrink-0 items-center gap-1">
         <Link href={`/dashboard/${orgSlug}/changelog/${release._id}/edit`}>
-          <Button aria-label="Edit release" size="sm" variant="ghost">
+          <Button aria-label="Edit release" size="xs" variant="ghost">
             <PencilSimple className="h-4 w-4" />
           </Button>
         </Link>
@@ -141,7 +140,7 @@ export function RetroactiveDraftItem({
         <Button
           aria-label="Publish release"
           onClick={handlePublish}
-          size="sm"
+          size="xs"
           variant="ghost"
         >
           <CloudArrowUp className="h-4 w-4" />
@@ -151,7 +150,7 @@ export function RetroactiveDraftItem({
           aria-label="Discard release"
           className="text-destructive hover:bg-destructive/10 hover:text-destructive"
           onClick={handleDiscard}
-          size="sm"
+          size="xs"
           variant="ghost"
         >
           <Trash className="h-4 w-4" />

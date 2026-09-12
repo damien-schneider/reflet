@@ -1,12 +1,12 @@
 "use client";
 
+import { Button, ButtonLink } from "@ctrl-ui/react/ui/button";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import { GithubLogo, MagicWand } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { useCallback, useEffect, useState } from "react";
-import { toast } from "sonner";
-import { Button, buttonVariants } from "@/components/ui/button";
 import { Muted } from "@/components/ui/typography";
 import { AutomationSection } from "@/features/changelog/components/release-settings/automation-section";
 import { ManualSyncSection } from "@/features/changelog/components/release-settings/manual-sync-section";
@@ -155,8 +155,8 @@ export function ChangelogSettingsTab({
               <Button
                 disabled={!isAdmin}
                 onClick={onOpenSetupWizard}
-                size="sm"
-                variant="outline"
+                size="xs"
+                variant="surface"
               >
                 {isSyncConfigured ? "Re-configure" : "Run Setup"}
               </Button>
@@ -197,8 +197,7 @@ export function ChangelogSettingsTab({
                 </Muted>
               </div>
             </div>
-            <a
-              className={buttonVariants({ size: "sm", variant: "outline" })}
+            <ButtonLink
               href={
                 buildGitHubInstallUrl({
                   organizationId,
@@ -206,10 +205,12 @@ export function ChangelogSettingsTab({
                   userId: session?.user?.id,
                 }) ?? "#"
               }
+              size="xs"
+              variant="surface"
             >
               <GithubLogo className="mr-1.5 h-4 w-4" />
               Connect GitHub
-            </a>
+            </ButtonLink>
           </div>
         </div>
       )}

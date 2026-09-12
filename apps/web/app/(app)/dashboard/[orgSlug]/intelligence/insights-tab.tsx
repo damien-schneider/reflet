@@ -1,12 +1,12 @@
 "use client";
 
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
+import { Tabs, TabsList, TabsPanel, TabsTab } from "@ctrl-ui/react/ui/tabs";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
-import { toast } from "sonner";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Text } from "@/components/ui/typography";
 import { InsightCard } from "@/features/intelligence/components/insight-card";
 import { ScanStatusBanner } from "@/features/intelligence/components/scan-status-banner";
@@ -149,21 +149,21 @@ export function InsightsTab({
       <ScanStatusBanner organizationId={organizationId} orgSlug={orgSlug} />
 
       <Tabs onValueChange={setStatusFilter} value={statusFilter}>
-        <TabsList variant="line">
-          <TabsTrigger value="new">New</TabsTrigger>
-          <TabsTrigger value="reviewed">Reviewed</TabsTrigger>
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="dismissed">Dismissed</TabsTrigger>
+        <TabsList>
+          <TabsTab value="new">New</TabsTab>
+          <TabsTab value="reviewed">Reviewed</TabsTab>
+          <TabsTab value="all">All</TabsTab>
+          <TabsTab value="dismissed">Dismissed</TabsTab>
         </TabsList>
 
-        <TabsContent className="mt-4" value={statusFilter}>
+        <TabsPanel className="mt-4" value={statusFilter}>
           <InsightsList
             insights={insights}
             onConvert={handleConvert}
             onDismiss={handleDismiss}
             statusFilter={statusFilter}
           />
-        </TabsContent>
+        </TabsPanel>
       </Tabs>
     </div>
   );

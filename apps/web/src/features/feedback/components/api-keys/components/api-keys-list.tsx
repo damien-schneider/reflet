@@ -1,9 +1,9 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Input } from "@ctrl-ui/react/ui/input";
 import { Plus } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ApiKeyCard } from "./api-key-card";
 
 interface ApiKey {
@@ -73,7 +73,9 @@ export function ApiKeysList({
         <Button
           disabled={isGenerating || !newKeyName.trim()}
           onClick={onGenerateKeys}
-          size="sm"
+          size="xs"
+          tone="primary"
+          variant="solid"
         >
           <Plus className="mr-2 h-4 w-4" />
           {isGenerating ? "Creating..." : "Create Key"}

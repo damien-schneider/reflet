@@ -1,5 +1,14 @@
 "use client";
 
+import { Badge } from "@ctrl-ui/react/ui/badge";
+import { Button } from "@ctrl-ui/react/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@ctrl-ui/react/ui/card";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import {
   Check,
   Copy,
@@ -15,10 +24,6 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
-import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { H1, Muted, Text } from "@/components/ui/typography";
 import { KeywordsSection } from "./keywords-section";
 import { LaunchBar } from "./launch-bar";
@@ -200,7 +205,7 @@ export function ReviewView({
                     variant={
                       setup.changelogConfig.workflow === "ai_powered"
                         ? "default"
-                        : "secondary"
+                        : "outline"
                     }
                   >
                     {WORKFLOW_LABELS[setup.changelogConfig.workflow]}
@@ -229,7 +234,7 @@ export function ReviewView({
                 </CardTitle>
                 <Button
                   onClick={() => toggleAllTags(acceptedTagsCount < tags.length)}
-                  size="sm"
+                  size="xs"
                   variant="ghost"
                 >
                   {acceptedTagsCount === tags.length
@@ -313,7 +318,7 @@ export function ReviewView({
                     </div>
                     <Button
                       onClick={() => copyToClipboard(prompt.prompt)}
-                      size="sm"
+                      size="xs"
                       variant="ghost"
                     >
                       <Copy className="size-3.5" />

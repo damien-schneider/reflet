@@ -7,7 +7,7 @@ vi.mock("@phosphor-icons/react", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     onClick,

@@ -1,6 +1,11 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@ctrl-ui/react/ui/card";
 import {
   Table,
   TableBody,
@@ -8,7 +13,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@ctrl-ui/react/ui/table";
 
 interface DataTableItem {
   invoice: string;

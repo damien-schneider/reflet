@@ -11,14 +11,14 @@ vi.mock("convex/react", () => ({
   useQuery: vi.fn(),
 }));
 
-vi.mock("@/components/ui/context-menu", () => ({
-  ContextList: ({ children }: { children: React.ReactNode }) => (
+vi.mock("@ctrl-ui/react/ui/context-menu", () => ({
+  ContextMenu: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="context-list">{children}</div>
   ),
-  ContextListContent: ({ children }: { children: React.ReactNode }) => (
+  ContextMenuContent: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="context-list-content">{children}</div>
   ),
-  ContextListItem: ({
+  ContextMenuItem: ({
     children,
     onClick,
   }: {
@@ -29,8 +29,8 @@ vi.mock("@/components/ui/context-menu", () => ({
       {children}
     </button>
   ),
-  ContextListSeparator: () => <hr />,
-  ContextListTrigger: ({ children }: { children: React.ReactNode }) => (
+  ContextMenuSeparator: () => <hr />,
+  ContextMenuTrigger: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
 }));

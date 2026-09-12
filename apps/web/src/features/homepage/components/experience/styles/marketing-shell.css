@@ -1,0 +1,168 @@
+:where(.marketing-page a),
+:where(.marketing-page button) {
+  -webkit-tap-highlight-color: transparent;
+}
+:where(.marketing-page a:focus-visible),
+:where(.marketing-page summary:focus-visible) {
+  outline: 2px solid var(--ring);
+  outline-offset: 5px;
+  border-radius: 4px;
+}
+:where(.marketing-page a) {
+  text-underline-offset: 4px;
+}
+:where(.marketing-navigation) {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1360px;
+  height: 78px;
+  padding: 0 48px;
+  margin: auto;
+}
+:where(.marketing-wordmark) {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 28px;
+  font-weight: 650;
+  letter-spacing: -0.05em;
+}
+:where(.reflet-mark) {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  color: var(--foreground);
+  rotate: -26deg;
+}
+:where(.marketing-navigation nav),
+:where(.marketing-navigation-actions) {
+  display: flex;
+  gap: 30px;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 600;
+}
+:where(.marketing-navigation nav a) {
+  color: var(--muted-foreground);
+  white-space: nowrap;
+  transition: color 160ms;
+}
+:where(.marketing-navigation nav a:hover) {
+  color: var(--foreground);
+}
+:where(.marketing-navigation-actions) {
+  gap: 22px;
+}
+:where(.marketing-section) {
+  max-width: 1240px;
+  padding: var(--marketing-section-space) 40px;
+  margin: 0 auto;
+  scroll-margin-top: 30px;
+}
+:where(.marketing-kicker) {
+  display: block;
+  margin-bottom: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  letter-spacing: 0;
+}
+:where(.marketing-section-intro) {
+  max-width: 660px;
+  margin: 0 auto var(--marketing-content-space);
+  text-align: center;
+}
+:where(.marketing-section h1),
+:where(.marketing-section h2),
+:where(.marketing-closing h2) {
+  font-size: clamp(36px, 4.2vw, 60px);
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -0.04em;
+}
+:where(.marketing-section-intro h1 span),
+:where(.marketing-section-intro h2 span) {
+  color: var(--foreground);
+}
+:where(.marketing-section-intro p) {
+  max-width: 490px;
+  margin: 22px auto 0;
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--muted-foreground);
+}
+:where(.marketing-intro-left) {
+  margin-left: 0;
+  text-align: left;
+}
+:where(.marketing-intro-left p) {
+  margin-left: 0;
+}
+:where(.marketing-caption) {
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+:where(.marketing-faq) {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 70px;
+}
+:where(.marketing-faq h2) {
+  font-size: 38px;
+}
+:where(.marketing-faq details) {
+  padding: 22px 0;
+  border-bottom: 1px solid var(--marketing-hairline);
+}
+:where(.marketing-faq summary) {
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+:where(.marketing-faq summary)::-webkit-details-marker {
+  display: none;
+}
+:where(.marketing-faq details p) {
+  padding: 18px 28px 0 0;
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--muted-foreground);
+}
+:where(.marketing-faq details a) {
+  text-decoration: underline;
+}
+:where(.marketing-closing) {
+  padding: var(--marketing-section-space) 24px;
+  text-align: center;
+  background: var(--secondary);
+}
+:where(.marketing-closing .marketing-caption) {
+  display: block;
+  margin-top: 20px;
+}
+:where(.marketing-footer) {
+  display: flex;
+  gap: 30px;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1320px;
+  padding: 50px 40px;
+  margin: auto;
+}
+:where(.marketing-footer p) {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+:where(.marketing-footer nav) {
+  display: flex;
+  gap: 22px;
+  font-size: 12px;
+}

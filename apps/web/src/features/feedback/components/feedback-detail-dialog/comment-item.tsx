@@ -1,12 +1,11 @@
 "use client";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@ctrl-ui/react/ui/avatar";
+import { Badge } from "@ctrl-ui/react/ui/badge";
+import { Button } from "@ctrl-ui/react/ui/button";
 import { DotsThreeVertical, Pencil, Trash } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { formatDistanceToNow } from "date-fns";
-
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   DropdownList,
   DropdownListContent,
@@ -83,11 +82,7 @@ export function CommentItem({
             <span className="font-medium text-sm">
               {comment.authorName || "Anonymous"}
             </span>
-            {comment.isOfficial && (
-              <Badge className="text-xs" variant="secondary">
-                Official
-              </Badge>
-            )}
+            {comment.isOfficial && <Badge className="text-xs">Official</Badge>}
             <span className="text-muted-foreground text-xs">
               {formatDistanceToNow(comment.createdAt, { addSuffix: true })}
             </span>
@@ -103,13 +98,15 @@ export function CommentItem({
                 value={editCommentContent}
               />
               <div className="flex gap-2">
-                <Button onClick={onEditCancel} size="sm" variant="ghost">
+                <Button onClick={onEditCancel} size="xs" variant="ghost">
                   Cancel
                 </Button>
                 <Button
                   disabled={!editCommentContent.trim()}
                   onClick={() => onUpdate(comment._id)}
-                  size="sm"
+                  size="xs"
+                  tone="primary"
+                  variant="solid"
                 >
                   Save
                 </Button>
@@ -124,7 +121,7 @@ export function CommentItem({
                 <Button
                   className="h-auto p-0 text-muted-foreground hover:text-foreground"
                   onClick={() => onReply(comment._id)}
-                  variant="link"
+                  variant="quiet"
                 >
                   Reply
                 </Button>
@@ -133,7 +130,7 @@ export function CommentItem({
                     <DropdownListTrigger>
                       <Button
                         className="h-auto p-0 text-muted-foreground opacity-0 group-hover:opacity-100"
-                        variant="link"
+                        variant="quiet"
                       >
                         <DotsThreeVertical className="h-4 w-4" />
                       </Button>
@@ -173,11 +170,13 @@ export function CommentItem({
                 <Button
                   disabled={!replyContent.trim() || isSubmittingComment}
                   onClick={() => onSubmitReply(comment._id)}
-                  size="sm"
+                  size="xs"
+                  tone="primary"
+                  variant="solid"
                 >
                   Reply
                 </Button>
-                <Button onClick={onReplyCancel} size="sm" variant="ghost">
+                <Button onClick={onReplyCancel} size="xs" variant="ghost">
                   Cancel
                 </Button>
               </div>
@@ -246,11 +245,7 @@ function ReplyItem({
           <span className="font-medium text-sm">
             {reply.authorName || "Anonymous"}
           </span>
-          {reply.isOfficial && (
-            <Badge className="text-xs" variant="secondary">
-              Official
-            </Badge>
-          )}
+          {reply.isOfficial && <Badge className="text-xs">Official</Badge>}
           <span className="text-muted-foreground text-xs">
             {formatDistanceToNow(reply.createdAt, {
               addSuffix: true,
@@ -268,13 +263,15 @@ function ReplyItem({
               value={editCommentContent}
             />
             <div className="flex gap-2">
-              <Button onClick={onEditCancel} size="sm" variant="ghost">
+              <Button onClick={onEditCancel} size="xs" variant="ghost">
                 Cancel
               </Button>
               <Button
                 disabled={!editCommentContent.trim()}
                 onClick={() => onUpdate(reply._id)}
-                size="sm"
+                size="xs"
+                tone="primary"
+                variant="solid"
               >
                 Save
               </Button>
@@ -289,7 +286,7 @@ function ReplyItem({
                   <DropdownListTrigger>
                     <Button
                       className="h-auto p-0 text-muted-foreground opacity-0 group-hover:opacity-100"
-                      variant="link"
+                      variant="quiet"
                     >
                       <DotsThreeVertical className="h-4 w-4" />
                     </Button>

@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -6,7 +6,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@ctrl-ui/react/ui/dialog";
 
 interface FeedbackDetailDialogsProps {
   commentToDelete: string | null;
@@ -40,11 +40,15 @@ export function FeedbackDetailDialogs({
           <DialogFooter>
             <Button
               onClick={() => setShowDeleteDialog(false)}
-              variant="outline"
+              variant="surface"
             >
               Cancel
             </Button>
-            <Button onClick={handleDeleteFeedback} variant="destructive">
+            <Button
+              onClick={handleDeleteFeedback}
+              tone="danger"
+              variant="surface"
+            >
               Delete
             </Button>
           </DialogFooter>
@@ -65,10 +69,14 @@ export function FeedbackDetailDialogs({
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button onClick={() => setCommentToDelete(null)} variant="outline">
+            <Button onClick={() => setCommentToDelete(null)} variant="surface">
               Cancel
             </Button>
-            <Button onClick={handleDeleteComment} variant="destructive">
+            <Button
+              onClick={handleDeleteComment}
+              tone="danger"
+              variant="surface"
+            >
               Delete
             </Button>
           </DialogFooter>

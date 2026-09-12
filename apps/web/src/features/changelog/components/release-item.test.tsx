@@ -28,7 +28,7 @@ vi.mock("next/link", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/badge", () => ({
+vi.mock("@ctrl-ui/react/ui/badge", () => ({
   Badge: ({
     children,
     variant,
@@ -44,7 +44,7 @@ vi.mock("@/components/ui/badge", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     onClick,

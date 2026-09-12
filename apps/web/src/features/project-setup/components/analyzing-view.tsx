@@ -1,12 +1,12 @@
 "use client";
 
+import { Progress } from "@ctrl-ui/react/ui/progress";
 import {
   CheckCircle,
   Circle,
   CircleNotch,
   WarningCircle,
 } from "@phosphor-icons/react";
-import { Progress } from "@/components/ui/progress";
 import { H1, Muted, Text } from "@/components/ui/typography";
 
 interface Step {

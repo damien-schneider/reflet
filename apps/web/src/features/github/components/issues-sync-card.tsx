@@ -1,11 +1,10 @@
 "use client";
 
+import { Badge } from "@ctrl-ui/react/ui/badge";
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Switch } from "@ctrl-ui/react/ui/switch";
 import { ArrowsClockwise, Spinner } from "@phosphor-icons/react";
-
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Text } from "@/components/ui/typography";
 
 interface IssuesSyncCardProps {
@@ -97,7 +96,7 @@ export function IssuesSyncSection({
               <Button
                 disabled={isSyncing}
                 onClick={onSyncNow}
-                variant="outline"
+                variant="surface"
               >
                 {isSyncing ? (
                   <Spinner className="mr-2 h-4 w-4 animate-spin" />
@@ -114,7 +113,7 @@ export function IssuesSyncSection({
                 </Text>
               ) : null}
               {lastSyncStatus === "error" ? (
-                <Badge variant="destructive">Error</Badge>
+                <Badge color="red">Error</Badge>
               ) : null}
             </div>
           </div>

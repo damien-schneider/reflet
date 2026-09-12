@@ -1,9 +1,4 @@
-import { Plus } from "@phosphor-icons/react";
-import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { useMutation, useQuery } from "convex/react";
-import { useCallback, useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -11,11 +6,16 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+} from "@ctrl-ui/react/ui/dialog";
+import { Input } from "@ctrl-ui/react/ui/input";
+import { Switch } from "@ctrl-ui/react/ui/switch";
+import { Plus } from "@phosphor-icons/react";
+import { api } from "@reflet/backend/convex/_generated/api";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { useMutation, useQuery } from "convex/react";
+import { useCallback, useMemo, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { NotionColorPicker } from "@/components/ui/notion-color-picker";
-import { Switch } from "@/components/ui/switch";
 import type { RoadmapItemData } from "@/features/roadmap/components/roadmap-item-card";
 import {
   type LaneConfig,
@@ -315,13 +315,15 @@ export function RoadmapKanban({
           <DialogFooter>
             <Button
               onClick={() => setShowAddColumnModal(false)}
-              variant="outline"
+              variant="surface"
             >
               Cancel
             </Button>
             <Button
               disabled={isCreatingColumn || !newColumnName.trim()}
               onClick={handleCreateColumn}
+              tone="primary"
+              variant="solid"
             >
               {isCreatingColumn ? "Creating..." : "Create Column"}
             </Button>

@@ -1,16 +1,10 @@
 "use client";
 
+import { Alert, AlertDescription, AlertTitle } from "@ctrl-ui/react/ui/alert";
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Switch } from "@ctrl-ui/react/ui/switch";
 import { ArrowsClockwise, Spinner, Warning, X } from "@phosphor-icons/react";
-
-import {
-  Alert,
-  AlertAction,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Text } from "@/components/ui/typography";
 
 import { GitHubPermissionErrorAlert } from "./github-permission-error-alert";
@@ -60,7 +54,7 @@ export function SyncSettingsSection({
     }
 
     return (
-      <Alert className="mb-4" variant="destructive">
+      <Alert className="mb-4 pr-10" variant="destructive">
         <Warning className="h-4 w-4" />
         <AlertTitle>Auto-sync setup failed</AlertTitle>
         <AlertDescription>
@@ -73,17 +67,17 @@ export function SyncSettingsSection({
           ) : null}
         </AlertDescription>
         {onClearError ? (
-          <AlertAction>
+          <div className="absolute top-2 right-2">
             <Button
               className="h-6 w-6"
+              iconOnly
               onClick={onClearError}
-              size="icon"
               variant="ghost"
             >
               <X className="h-4 w-4" />
               <span className="sr-only">Dismiss</span>
             </Button>
-          </AlertAction>
+          </div>
         ) : null}
       </Alert>
     );
@@ -115,7 +109,7 @@ export function SyncSettingsSection({
 
       <div className="flex items-center gap-4">
         {isAdmin ? (
-          <Button disabled={isSyncing} onClick={onSyncNow} variant="outline">
+          <Button disabled={isSyncing} onClick={onSyncNow} variant="surface">
             {isSyncing ? (
               <Spinner className="mr-2 h-4 w-4 animate-spin" />
             ) : (

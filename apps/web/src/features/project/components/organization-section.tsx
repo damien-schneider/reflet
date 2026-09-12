@@ -1,16 +1,15 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Field, FieldDescription, FieldLabel } from "@ctrl-ui/react/ui/field";
+import { Input } from "@ctrl-ui/react/ui/input";
+import { Switch } from "@ctrl-ui/react/ui/switch";
 import { Check, Spinner } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-
-import { Button } from "@/components/ui/button";
-import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import { BrandingSection } from "./branding-section";
 
 const generateSlug = (text: string): string =>
@@ -185,7 +184,9 @@ export function OrganizationSection({
             <Button
               disabled={isSaving || !name.trim() || !slug.trim() || !hasChanges}
               onClick={handleSave}
-              size="sm"
+              size="xs"
+              tone="primary"
+              variant="solid"
             >
               <SaveButtonContent isSaving={isSaving} saved={saved} />
             </Button>

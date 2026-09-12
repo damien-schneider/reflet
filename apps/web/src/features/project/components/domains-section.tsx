@@ -1,26 +1,24 @@
 "use client";
 
-import { ArrowsClockwise, Trash } from "@phosphor-icons/react";
-import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { useMutation, useQuery } from "convex/react";
-import Link from "next/link";
-import { useState } from "react";
-
 import {
   AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
+  AlertDialogClose,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+} from "@ctrl-ui/react/ui/alert-dialog";
+import { Badge } from "@ctrl-ui/react/ui/badge";
+import { Button, ButtonLink } from "@ctrl-ui/react/ui/button";
+import { Input } from "@ctrl-ui/react/ui/input";
+import { ArrowsClockwise, Trash } from "@phosphor-icons/react";
+import { api } from "@reflet/backend/convex/_generated/api";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { useMutation, useQuery } from "convex/react";
+import Link from "next/link";
+import { useState } from "react";
 import { Muted, Text } from "@/components/ui/typography";
 import { DnsInstructions, DomainStatusBadge } from "./domain-status";
 
@@ -126,12 +124,13 @@ export function DomainsSection({
         {isPro ? null : (
           <div className="flex items-center justify-between gap-4">
             <Muted>Available on Pro</Muted>
-            <Link
-              className={buttonVariants({ size: "sm", variant: "outline" })}
-              href={`/dashboard/${orgSlug}/project/billing`}
+            <ButtonLink
+              render={<Link href={`/dashboard/${orgSlug}/project/billing`} />}
+              size="xs"
+              variant="surface"
             >
               Upgrade
-            </Link>
+            </ButtonLink>
           </div>
         )}
         {isPro && hasDomain && (
@@ -151,8 +150,8 @@ export function DomainsSection({
                     <Button
                       disabled={isChecking}
                       onClick={handleCheckVerification}
-                      size="sm"
-                      variant="outline"
+                      size="xs"
+                      variant="surface"
                     >
                       <ArrowsClockwise
                         className={`h-4 w-4 ${isChecking ? "animate-spin" : ""}`}
@@ -180,10 +179,14 @@ export function DomainsSection({
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleRemoveDomain}>
+                      <AlertDialogClose>Cancel</AlertDialogClose>
+                      <AlertDialogClose
+                        onClick={handleRemoveDomain}
+                        tone="danger"
+                        variant="surface"
+                      >
                         Remove domain
-                      </AlertDialogAction>
+                      </AlertDialogClose>
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
@@ -225,6 +228,8 @@ export function DomainsSection({
               <Button
                 disabled={!isAdmin || isAdding || !domainInput.trim()}
                 onClick={handleAddDomain}
+                tone="primary"
+                variant="solid"
               >
                 {isAdding ? "Adding..." : "Add domain"}
               </Button>

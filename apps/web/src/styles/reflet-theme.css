@@ -1,0 +1,120 @@
+:root[data-theme="reflet"][data-skin],
+:root[data-theme="reflet"] [data-skin] {
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-sans);
+  --font-display--font-variation-settings: normal;
+  --text-label: 0.8125rem;
+  --text-heading-1--font-weight: 600;
+  --text-heading-1--letter-spacing: -0.035em;
+  --text-display--font-weight: 600;
+  --text-display--letter-spacing: -0.035em;
+
+  --background: oklch(0.978 0.002 90);
+  --foreground: oklch(0.235 0.006 265);
+  --card: oklch(1 0 0);
+  --card-foreground: var(--foreground);
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
+  --primary: oklch(0.255 0.006 265);
+  --primary-foreground: oklch(0.995 0 0);
+  --secondary: oklch(0.956 0.003 90);
+  --secondary-foreground: var(--foreground);
+  --muted: oklch(0.944 0.003 90);
+  --muted-foreground: oklch(0.49 0.008 265);
+  --accent: oklch(0.932 0.004 90);
+  --accent-foreground: var(--foreground);
+  --border: oklch(0.895 0.004 90 / var(--ring-opacity));
+  --input: oklch(0.86 0.004 90);
+  --ring: oklch(0.52 0.065 135);
+  --focus-ring: var(--ring);
+  --primary-text: oklch(0.42 0.065 135);
+  --canvas: oklch(0.958 0.003 90);
+  --destructive: oklch(0.53 0.19 28);
+  --destructive-foreground: oklch(1 0 0);
+
+  --radius: 0.75rem;
+  --radius-control: var(--radius);
+  --radius-field: var(--radius);
+  --radius-panel: calc(var(--radius) * 1.333333);
+  --radius-scene: calc(var(--radius) * 2);
+  --radius-popup-item: calc(var(--radius) * 0.75);
+  --popover-padding: 0.375rem;
+  --control-h: 2.375rem;
+  --padding-x: 1rem;
+  --padding-y: 0.625rem;
+  --duration-fast: 160ms;
+  --duration-base: 220ms;
+  --duration-slow: 300ms;
+  --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --overlay-opacity: 0.24;
+  --backdrop-blur-overlay: 3px;
+  --shadow-color: oklch(0.24 0.005 265);
+  --shadow-highlight: oklch(1 0 0 / 0.8);
+
+  --reflet-contact-shadow-color: oklch(from var(--shadow-color) l c h / 0.07);
+  --reflet-edge: var(--reflet-contact-shadow-color);
+  --reflet-light: inset 0 1px 0 var(--shadow-highlight);
+  --reflet-surface-light: oklch(
+    from var(--shadow-highlight) l c h /
+    calc(alpha * 0.3)
+  );
+  --reflet-control-shadow:
+    var(--reflet-light), 0 1px 2px var(--reflet-contact-shadow-color),
+    0 3px 6px -3px oklch(from var(--shadow-color) l c h / 0.12);
+  --reflet-control-hover-shadow:
+    var(--reflet-light), 0 2px 3px var(--reflet-contact-shadow-color),
+    0 5px 8px -4px oklch(from var(--shadow-color) l c h / 0.16);
+  --reflet-panel-shadow:
+    var(--reflet-light), 0 0 0 1px var(--reflet-edge),
+    0 2px 3px -1px oklch(from var(--shadow-color) l c h / 0.04),
+    0 12px 24px -12px oklch(from var(--shadow-color) l c h / 0.12);
+  --reflet-popup-shadow:
+    var(--reflet-light), 0 0 0 1px var(--reflet-edge),
+    0 4px 8px -4px oklch(from var(--shadow-color) l c h / 0.12),
+    0 20px 48px -16px oklch(from var(--shadow-color) l c h / 0.22);
+  --reflet-recess:
+    inset 0 1px 2px oklch(from var(--shadow-color) l c h / 0.055),
+    0 1px 0 var(--shadow-highlight);
+  --reflet-solid-light: oklch(1 0 0 / 0.14);
+  --reflet-solid-shadow:
+    inset 0 1px 0 var(--reflet-solid-light),
+    inset 0 -1px 0 oklch(0 0 0 / 0.18),
+    0 2px 3px oklch(from var(--shadow-color) l c h / 0.15),
+    0 4px 8px -4px oklch(from var(--shadow-color) l c h / 0.22);
+
+  --chart-1: var(--primary-text);
+  --chart-2: oklch(from var(--chart-1) calc(l + 0.12) c h);
+  --chart-3: oklch(from var(--chart-1) calc(l - 0.1) c h);
+  --chart-4: oklch(from var(--chart-1) calc(l + 0.06) calc(c * 0.6) h);
+  --chart-5: oklch(from var(--chart-1) calc(l + 0.22) calc(c * 0.5) h);
+}
+
+:root.dark[data-theme="reflet"][data-skin],
+:root.dark[data-theme="reflet"] [data-skin] {
+  --background: oklch(0.275 0.006 80);
+  --foreground: oklch(0.94 0.006 85);
+  --card: oklch(0.33 0.007 80);
+  --primary: var(--foreground);
+  --primary-foreground: var(--background);
+  --secondary: oklch(0.255 0.006 80);
+  --muted: oklch(0.355 0.007 80);
+  --muted-foreground: oklch(0.75 0.009 80);
+  --accent: oklch(0.385 0.008 80);
+  --border: oklch(0.425 0.008 80 / var(--ring-opacity));
+  --input: oklch(0.46 0.008 80);
+  --ring: oklch(0.76 0.08 135);
+  --primary-text: oklch(0.8 0.075 135);
+  --canvas: oklch(0.245 0.006 80);
+  --destructive: oklch(0.6 0.2 28);
+  --shadow-color: oklch(0 0 0);
+  --shadow-highlight: oklch(1 0 0 / 0.075);
+  --reflet-contact-shadow-color: oklch(from var(--shadow-color) l c h / 0.2);
+  --reflet-edge: oklch(1 0 0 / 0.035);
+  --reflet-light:
+    inset 0 1px 0 var(--shadow-highlight),
+    inset 0 -1px 0 oklch(from var(--shadow-color) l c h / 0.16);
+  --reflet-recess:
+    inset 0 1px 2px oklch(from var(--shadow-color) l c h / 0.26),
+    inset 0 3px 6px -3px oklch(from var(--shadow-color) l c h / 0.22),
+    0 1px 0 oklch(from var(--shadow-highlight) l c h / calc(alpha * 0.5));
+}

@@ -1,13 +1,12 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import { ArrowLeft } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import Link from "next/link";
 import { use } from "react";
-
-import { Button } from "@/components/ui/button";
 import { H1, Muted, Text } from "@/components/ui/typography";
 import { ReleaseEditor } from "@/features/changelog/components/release-editor";
 
@@ -49,7 +48,7 @@ export default function EditReleasePage({
             You don&apos;t have permission to edit releases.
           </Muted>
           <Link href={`/dashboard/${orgSlug}/changelog`}>
-            <Button className="mt-4" variant="outline">
+            <Button className="mt-4" variant="surface">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Changelog
             </Button>
@@ -68,7 +67,7 @@ export default function EditReleasePage({
             The release you&apos;re looking for doesn&apos;t exist.
           </Muted>
           <Link href={`/dashboard/${orgSlug}/changelog`}>
-            <Button className="mt-4" variant="outline">
+            <Button className="mt-4" variant="surface">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Changelog
             </Button>

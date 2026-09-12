@@ -1,5 +1,12 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Checkbox } from "@ctrl-ui/react/ui/checkbox";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@ctrl-ui/react/ui/collapsible";
 import {
   CaretDown,
   ClockCounterClockwise,
@@ -8,13 +15,6 @@ import {
   Spinner,
   X,
 } from "@phosphor-icons/react";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import {
@@ -82,7 +82,14 @@ export function TriggerView({
           </div>
         )}
 
-        <Button disabled={isStarting} onClick={onStart} size="lg" type="button">
+        <Button
+          disabled={isStarting}
+          onClick={onStart}
+          size="md"
+          tone="primary"
+          type="button"
+          variant="solid"
+        >
           {isStarting ? (
             <>
               <Spinner className="h-4 w-4 animate-spin" />

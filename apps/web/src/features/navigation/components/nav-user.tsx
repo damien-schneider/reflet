@@ -1,5 +1,6 @@
 "use client";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@ctrl-ui/react/ui/avatar";
 import {
   IconCreditCard,
   IconDotsVertical,
@@ -8,8 +9,6 @@ import {
   IconUserCircle,
 } from "@tabler/icons-react";
 import type * as React from "react";
-
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownList,
   DropdownListContent,

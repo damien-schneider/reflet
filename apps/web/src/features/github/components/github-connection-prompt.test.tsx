@@ -11,7 +11,7 @@ vi.mock("@phosphor-icons/react", () => ({
   TreeStructure: () => <span data-testid="icon-tree" />,
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     onClick,

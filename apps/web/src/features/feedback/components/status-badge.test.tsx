@@ -3,17 +3,19 @@ import { describe, expect, it, vi } from "vitest";
 import { StatusBadge } from "./status-badge";
 
 // Mock Badge component
-vi.mock("@/components/ui/badge", () => ({
+vi.mock("@ctrl-ui/react/ui/badge", () => ({
   Badge: ({
     children,
     className,
+    color,
     variant,
   }: {
     children: React.ReactNode;
     className?: string;
+    color?: string;
     variant?: string;
   }) => (
-    <span className={className} data-variant={variant}>
+    <span className={className} data-color={color} data-variant={variant}>
       {children}
     </span>
   ),
@@ -50,21 +52,21 @@ describe("StatusBadge", () => {
     expect(screen.getByText("Closed")).toBeInTheDocument();
   });
 
-  it("should apply correct variant for each status", () => {
-    const statusVariants = [
-      { expectedVariant: "outline", status: "open" },
-      { expectedVariant: "secondary", status: "under_review" },
-      { expectedVariant: "secondary", status: "planned" },
-      { expectedVariant: "secondary", status: "in_progress" },
-      { expectedVariant: "default", status: "completed" },
-      { expectedVariant: "secondary", status: "closed" },
+  it("should apply correct color for each status", () => {
+    const statusColors = [
+      { expectedColor: "blue", status: "open" },
+      { expectedColor: "yellow", status: "under_review" },
+      { expectedColor: "purple", status: "planned" },
+      { expectedColor: "blue", status: "in_progress" },
+      { expectedColor: "green", status: "completed" },
+      { expectedColor: "neutral", status: "closed" },
     ] as const;
 
-    for (const { status, expectedVariant } of statusVariants) {
+    for (const { status, expectedColor } of statusColors) {
       cleanup();
       const { container } = render(<StatusBadge status={status} />);
-      const badge = container.firstChild as HTMLElement;
-      expect(badge).toHaveAttribute("data-variant", expectedVariant);
+      const badge = container.firstChild;
+      expect(badge).toHaveAttribute("data-color", expectedColor);
     }
   });
 

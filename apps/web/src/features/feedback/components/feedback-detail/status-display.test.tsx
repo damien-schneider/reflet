@@ -12,6 +12,7 @@ vi.mock("@/lib/convex-helpers", () => ({
 
 vi.mock("@/lib/tag-colors", () => ({
   getTagSwatchClass: (color: string) => `swatch-${color}`,
+  resolveTagColor: (color: string) => color,
 }));
 
 let capturedOnValueChange: ((value: string) => void) | undefined;
@@ -54,7 +55,7 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
   }) => <div>{children}</div>,
 }));
 
-vi.mock("@/components/ui/badge", () => ({
+vi.mock("@ctrl-ui/react/ui/badge", () => ({
   Badge: ({
     children,
   }: {

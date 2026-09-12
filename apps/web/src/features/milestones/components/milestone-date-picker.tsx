@@ -1,16 +1,15 @@
 "use client";
 
-import { CalendarBlank } from "@phosphor-icons/react";
-import { format, startOfDay } from "date-fns";
-import { useState } from "react";
-
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Calendar } from "@ctrl-ui/react/ui/calendar";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
+} from "@ctrl-ui/react/ui/popover";
+import { CalendarBlank } from "@phosphor-icons/react";
+import { format, startOfDay } from "date-fns";
+import { useState } from "react";
 import { getDeadlineColor, getDeadlineInfo } from "@/lib/milestone-deadline";
 import { cn } from "@/lib/utils";
 
@@ -67,7 +66,7 @@ export function MilestoneDatePicker({
             <Button
               className="h-6 w-full text-xs"
               onClick={handleClear}
-              size="sm"
+              size="xs"
               variant="ghost"
             >
               Clear deadline

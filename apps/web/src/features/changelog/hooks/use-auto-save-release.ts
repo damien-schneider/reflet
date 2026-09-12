@@ -1,8 +1,8 @@
+import { toast } from "@ctrl-ui/react/ui/toast";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
 
 type SaveStatus = "idle" | "saving" | "saved";
 

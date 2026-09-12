@@ -24,6 +24,7 @@ import {
   themes as themeOptions,
   useThemeToggle,
 } from "@/components/ui/theme-toggle";
+import { cn } from "@/lib/utils";
 
 interface SidebarFooterContentProps {
   isPublic?: boolean;
@@ -41,7 +42,10 @@ export function SidebarFooterContent({
       <SidebarListItem>
         <NotificationsPopover
           render={(props: React.ComponentProps<"button">) => (
-            <SidebarListButton {...props}>
+            <SidebarListButton
+              {...props}
+              className={cn(props.className, "text-start")}
+            >
               <Bell className="h-4 w-4" />
               <span className="flex-1">Notifications</span>
             </SidebarListButton>
@@ -52,7 +56,11 @@ export function SidebarFooterContent({
         <DropdownList>
           <DropdownListTrigger
             render={(props: React.ComponentProps<"button">) => (
-              <SidebarListButton {...props} disabled={!themeMounted}>
+              <SidebarListButton
+                {...props}
+                className={cn(props.className, "text-start")}
+                disabled={!themeMounted}
+              >
                 <CircleHalf className="h-4 w-4" />
                 <span className="flex-1">Theme</span>
               </SidebarListButton>
@@ -80,19 +88,14 @@ export function SidebarFooterContent({
       {orgSlug && isPublic && (
         <SidebarListItem>
           <SidebarListButton
-            render={(props) => (
-              <Link
-                href={`/${orgSlug}`}
-                rel="noopener"
-                target="_blank"
-                {...props}
-              >
-                <Globe className="h-4 w-4" />
-                <span className="flex-1">Go to public page</span>
-                <ArrowUpRight className="ml-auto size-4" />
-              </Link>
-            )}
-          />
+            render={
+              <Link href={`/${orgSlug}`} rel="noopener" target="_blank" />
+            }
+          >
+            <Globe className="h-4 w-4" />
+            <span className="flex-1">Go to public page</span>
+            <ArrowUpRight className="ml-auto size-4" />
+          </SidebarListButton>
         </SidebarListItem>
       )}
     </>

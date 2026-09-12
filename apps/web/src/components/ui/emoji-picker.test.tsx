@@ -59,7 +59,7 @@ vi.mock("frimousse", () => ({
 }));
 
 // Mock Button component
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     onClick,
@@ -88,7 +88,7 @@ const mockSetPopoverOpen = vi.fn((open: boolean) => {
   mockPopoverOpen = open;
 });
 
-vi.mock("@/components/ui/popover", () => ({
+vi.mock("@ctrl-ui/react/ui/popover", () => ({
   Popover: ({
     children,
     open,

@@ -1,0 +1,128 @@
+@import "./reflet-theme.css";
+
+@layer components {
+  :root[data-theme="reflet"]
+    :where([data-control-family="card"][data-slot="root"]) {
+    --cui-card-radius: var(--radius-panel);
+    --cui-card-border-width: 0px;
+    --cui-card-shadow: var(--reflet-panel-shadow);
+  }
+
+  :root[data-theme="reflet"]
+    :where([data-control-family="button"][data-variant="solid"]) {
+    --cui-button-background-image: linear-gradient(
+      180deg,
+      var(--reflet-solid-light),
+      transparent 65%
+    );
+    --cui-button-shadow: var(--reflet-solid-shadow);
+    --cui-button-hover-shadow: var(--reflet-solid-shadow);
+    --cui-button-press-shadow: var(--reflet-recess);
+    --cui-button-press-scale: 0.98;
+  }
+
+  :root[data-theme="reflet"]
+    :where([data-control-family="button"][data-variant="surface"]) {
+    --cui-button-background: var(--card);
+    --cui-button-hover-background: var(--card);
+    --cui-button-background-image: linear-gradient(
+      180deg,
+      var(--reflet-surface-light),
+      transparent 70%
+    );
+    --cui-button-shadow: var(--reflet-control-shadow);
+    --cui-button-hover-shadow: var(--reflet-control-hover-shadow);
+    --cui-button-press-shadow: var(--reflet-recess);
+    --cui-button-active-shadow: var(--reflet-control-shadow);
+  }
+
+  :root[data-theme="reflet"]
+    :where(
+      [data-control-family="button"][data-variant="surface"][data-popup-open]
+    ) {
+    --cui-button-background-image: none;
+    --cui-button-shadow: var(--reflet-recess);
+    --cui-button-hover-shadow: var(--reflet-recess);
+    --cui-button-active-shadow: var(--reflet-recess);
+  }
+
+  :root[data-theme="reflet"]
+    :where([data-control-family="field"][data-control="true"]) {
+    --cui-field-background: var(--secondary);
+    --cui-field-border-color: var(--reflet-edge);
+    --cui-field-focus-border-color: var(--focus-ring);
+    --cui-field-shadow: var(--reflet-recess);
+  }
+
+  :root[data-theme="reflet"]
+    :where(
+      [data-control-family="popup"][data-popup-part="surface"],
+      [data-control-family="popup"][data-popup-part="list-surface"],
+      [data-control-family="popup"][data-popup-part="bar"]
+    ) {
+    --cui-popup-border-width: 0px;
+    --cui-popup-shadow: var(--reflet-popup-shadow);
+  }
+
+  :root[data-theme="reflet"]
+    :where([data-control-family="popup"][data-popup-kind="tooltip"]) {
+    --cui-popup-shadow: var(--reflet-control-shadow);
+  }
+
+  :root[data-theme="reflet"]
+    :where(
+      [data-control-family="tabs"][data-slot="root"]:not(
+        :has([data-variant="browser"])
+      )
+    ) {
+    --cui-tabs-trigger-radius: var(--radius-control);
+    --cui-tabs-list-background: var(--secondary);
+    --cui-tabs-list-shadow: var(--reflet-recess);
+    --cui-tabs-indicator-background: var(--card);
+    --cui-tabs-indicator-shadow: var(--reflet-control-shadow);
+  }
+
+  :root[data-theme="reflet"]
+    :where([data-control-family="sidebar"][data-slot="wrapper"]) {
+    --cui-sidebar-inset-background: var(--background);
+    --cui-sidebar-inset-shadow: var(--reflet-panel-shadow);
+  }
+
+  :root[data-theme="reflet"]
+    :where([data-control-family="sidebar"][data-slot="root"]) {
+    --cui-sidebar-menu-button-radius: var(--radius-control);
+    --cui-sidebar-menu-button-active-background: var(--card);
+    --cui-sidebar-menu-button-active-shadow: var(--reflet-control-shadow);
+    --cui-sidebar-group-label-foreground: var(--muted-foreground);
+  }
+
+  :root[data-theme="reflet"]
+    :where([data-control-family="switch"][data-slot="root"]) {
+    --cui-switch-thumb-shadow: var(--reflet-control-shadow);
+    box-shadow: var(--reflet-recess);
+  }
+
+  :root[data-theme="reflet"]
+    :where([data-control-family="switch"][data-slot="root"][data-checked]) {
+    box-shadow: var(--reflet-solid-shadow);
+  }
+
+  :root[data-theme="reflet"]
+    :where([data-control-family="kbd"][data-slot="root"]) {
+    --cui-kbd-background: var(--card);
+    --cui-kbd-border-color: var(--reflet-edge);
+    --cui-kbd-shadow: var(--reflet-control-shadow);
+  }
+
+  :root[data-theme="reflet"]
+    :where([data-control-family="range"][data-slot="root"]) {
+    --cui-range-thumb-shadow: var(--reflet-control-shadow);
+  }
+
+  :root[data-theme="reflet"]
+    :where([data-control-family="code"][data-slot="root"]) {
+    --cui-code-background: var(--secondary);
+    --cui-code-border-color: var(--reflet-edge);
+    --cui-code-shadow: var(--reflet-recess);
+  }
+}

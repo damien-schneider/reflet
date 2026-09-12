@@ -1,6 +1,12 @@
 "use client";
 
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@ctrl-ui/react/ui/popover";
+import { ScrollArea } from "@ctrl-ui/react/ui/scroll-area";
+import {
   Bell,
   Binoculars,
   Chat,
@@ -14,13 +20,6 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
-
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
 type NotificationType =

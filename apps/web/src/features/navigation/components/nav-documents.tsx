@@ -48,14 +48,10 @@ export function NavDocuments({
           const displayTitle = item.title ?? item.name ?? "";
           return (
             <SidebarListItem key={displayTitle}>
-              <SidebarListButton
-                render={(props) => (
-                  <Link href={item.url} {...props}>
-                    <item.icon />
-                    <span>{displayTitle}</span>
-                  </Link>
-                )}
-              />
+              <SidebarListButton render={<Link href={item.url} />}>
+                <item.icon />
+                <span>{displayTitle}</span>
+              </SidebarListButton>
               <DropdownList>
                 <DropdownListTrigger
                   render={(props: React.ComponentProps<"button">) => (

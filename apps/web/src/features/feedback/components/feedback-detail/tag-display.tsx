@@ -1,7 +1,7 @@
 import { CaretDown, Sparkle, Tag, X } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 
-import { Badge } from "@/components/ui/badge";
+import { TagBadge } from "@/components/tag-badge";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -39,7 +39,7 @@ export function TagDisplay({
     return (
       <div className="flex items-center gap-1.5">
         {validTags.map((tag) => (
-          <Badge
+          <TagBadge
             className="h-8 gap-1 rounded-full px-3 font-normal text-xs"
             color={tag.color}
             key={tag._id}
@@ -59,7 +59,7 @@ export function TagDisplay({
             >
               <X className="h-2.5 w-2.5" />
             </button>
-          </Badge>
+          </TagBadge>
         ))}
         <DropdownMenu>
           <DropdownMenuTrigger
@@ -100,7 +100,7 @@ export function TagDisplay({
     return (
       <div className="flex items-center gap-1.5">
         {validTags.map((tag) => (
-          <Badge
+          <TagBadge
             className="rounded-full px-2 py-0.5 font-normal text-xs"
             color={tag.color}
             key={tag._id}
@@ -112,7 +112,7 @@ export function TagDisplay({
                 <Sparkle className="h-3 w-3 opacity-60" weight="fill" />
               </span>
             )}
-          </Badge>
+          </TagBadge>
         ))}
       </div>
     );

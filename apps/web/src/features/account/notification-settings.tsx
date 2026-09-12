@@ -1,5 +1,9 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Separator } from "@ctrl-ui/react/ui/separator";
+import { Switch } from "@ctrl-ui/react/ui/switch";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import {
   Bell,
   BellRinging,
@@ -15,10 +19,6 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
 import { H3, Muted, Text } from "@/components/ui/typography";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
 
@@ -274,7 +274,7 @@ export function NotificationSettings() {
                   </div>
                   <Button
                     onClick={() => handleRemoveDevice(sub.endpoint)}
-                    size="sm"
+                    size="xs"
                     variant="ghost"
                   >
                     <Trash className="size-4" />

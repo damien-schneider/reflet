@@ -1,12 +1,11 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import { Plus } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
-
-import { Button } from "@/components/ui/button";
 import { InvitationList } from "@/features/members/components/invitation-list";
 import { InviteMemberDialog } from "@/features/members/components/invite-member-dialog";
 import { MemberList } from "@/features/members/components/member-list";
@@ -54,7 +53,12 @@ export function MembersSection({
       <div className="flex items-center justify-between gap-4">
         <h1 className="font-semibold text-lg">Members</h1>
         {isAdmin ? (
-          <Button onClick={() => setIsInviteDialogOpen(true)} size="sm">
+          <Button
+            onClick={() => setIsInviteDialogOpen(true)}
+            size="xs"
+            tone="primary"
+            variant="solid"
+          >
             <Plus className="mr-2 h-4 w-4" />
             Invite member
           </Button>

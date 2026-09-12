@@ -1,5 +1,11 @@
 "use client";
 
+import { Badge } from "@ctrl-ui/react/ui/badge";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@ctrl-ui/react/ui/collapsible";
 import {
   CaretDown,
   CaretRight,
@@ -9,12 +15,6 @@ import {
 } from "@phosphor-icons/react";
 import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 
 interface CommitInfo {

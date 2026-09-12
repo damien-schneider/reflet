@@ -36,11 +36,11 @@ vi.mock("@phosphor-icons/react", () => ({
   ),
 }));
 
-vi.mock("sonner", () => ({
+vi.mock("@ctrl-ui/react/ui/toast", () => ({
   toast: { error: vi.fn(), success: vi.fn() },
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     onClick,
@@ -64,15 +64,16 @@ vi.mock("@/components/ui/button", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/input", () => ({
+vi.mock("@ctrl-ui/react/ui/input", () => ({
   Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => (
     <input data-testid="email-input" {...props} />
   ),
 }));
 
 vi.mock("@/components/ui/email-subscribe-form", async () => {
-  const { toast: mockToastInner } =
-    await vi.importMock<typeof import("sonner")>("sonner");
+  const { toast: mockToastInner } = await vi.importMock<
+    typeof import("@ctrl-ui/react/ui/toast")
+  >("@ctrl-ui/react/ui/toast");
   return {
     EmailSubscribeForm: ({
       className,
@@ -131,7 +132,7 @@ vi.mock("@/lib/utils", () => ({
   cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
 }));
 
-import { toast } from "sonner";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import { authClient } from "@/lib/auth-client";
 import { ChangelogSubscribe } from "./changelog-subscribe";
 
@@ -265,21 +266,21 @@ describe("ChangelogSubscribe", () => {
       });
     });
 
-    it("has outline variant when subscribed", () => {
+    it("has surface variant when subscribed", () => {
       mockUseQuery.mockReturnValue(true);
       render(<ChangelogSubscribe organizationId={ORG_ID} />);
       expect(screen.getByRole("button")).toHaveAttribute(
         "data-variant",
-        "outline"
+        "surface"
       );
     });
 
-    it("has default variant when not subscribed", () => {
+    it("has solid variant when not subscribed", () => {
       mockUseQuery.mockReturnValue(false);
       render(<ChangelogSubscribe organizationId={ORG_ID} />);
       expect(screen.getByRole("button")).toHaveAttribute(
         "data-variant",
-        "default"
+        "solid"
       );
     });
 

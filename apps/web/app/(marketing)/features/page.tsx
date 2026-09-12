@@ -1,3 +1,4 @@
+import { Button } from "@ctrl-ui/react/ui/button";
 import Link from "next/link";
 import {
   Brain,
@@ -6,7 +7,6 @@ import {
   GithubLogo,
   Lightning,
 } from "@/components/phosphor-icons";
-import { Button } from "@/components/ui/button";
 import { FeatureMockup } from "@/features/homepage/components/feature-mockups";
 import Footer from "@/features/homepage/components/footer";
 import Navbar from "@/features/homepage/components/navbar";
@@ -137,7 +137,9 @@ export default function FeaturesPage() {
               <Link href="/dashboard">
                 <Button
                   className="h-11 rounded-full px-6 text-[14px]"
-                  size="lg"
+                  size="md"
+                  tone="primary"
+                  variant="solid"
                 >
                   Get started free
                 </Button>
@@ -214,7 +216,11 @@ export default function FeaturesPage() {
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4">
               <Link href="/dashboard">
-                <Button className="h-12 rounded-full bg-olive-100 px-7 text-[15px] text-olive-950 hover:bg-white">
+                <Button
+                  className="h-12 rounded-full bg-olive-100 px-7 text-[15px] text-olive-950 hover:bg-white"
+                  tone="primary"
+                  variant="solid"
+                >
                   See your feedback board
                 </Button>
               </Link>

@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Brain,
   Code,
@@ -7,10 +8,7 @@ import {
   LightbulbFilament,
   TreeStructure,
 } from "@phosphor-icons/react";
-
 import Link from "next/link";
-
-import { Button } from "@/components/ui/button";
 import { H3, Muted, Text } from "@/components/ui/typography";
 
 interface GitHubConnectionPromptProps {
@@ -77,7 +75,12 @@ export function GitHubConnectionPrompt({
         ))}
       </div>
       {isAdmin && connectHref ? (
-        <Button onClick={onConnectClick} render={<Link href={connectHref} />}>
+        <Button
+          onClick={onConnectClick}
+          render={<Link href={connectHref} />}
+          tone="primary"
+          variant="solid"
+        >
           <GithubLogo className="mr-2 h-4 w-4" />
           Connect GitHub
         </Button>

@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import type React from "react";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/components/ui/badge", () => ({
+vi.mock("@ctrl-ui/react/ui/badge", () => ({
   Badge: ({
     children,
     color,
@@ -13,7 +13,7 @@ vi.mock("@/components/ui/badge", () => ({
   }) => <span data-color={color}>{children}</span>,
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     onClick,
@@ -29,7 +29,7 @@ vi.mock("@/components/ui/button", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/card", () => ({
+vi.mock("@ctrl-ui/react/ui/card", () => ({
   Card: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="card">{children}</div>
   ),

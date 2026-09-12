@@ -25,7 +25,7 @@ vi.mock("@phosphor-icons/react", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     onClick,
@@ -71,7 +71,7 @@ vi.mock("@/components/ui/emoji-picker", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/input", () => ({
+vi.mock("@ctrl-ui/react/ui/input", () => ({
   Input: ({
     value,
     onChange,
@@ -109,7 +109,7 @@ vi.mock("@/components/ui/notion-color-picker", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/popover", () => ({
+vi.mock("@ctrl-ui/react/ui/popover", () => ({
   Popover: ({
     children,
     open,
@@ -160,6 +160,7 @@ vi.mock("@/lib/tag-colors", () => ({
   isValidTagColor: (c: string) =>
     ["red", "blue", "green", "orange"].includes(c),
   migrateHexToNamedColor: () => "blue",
+  resolveTagColor: (color: string) => color,
 }));
 
 import { TagFormPopover } from "./tag-form-popover";

@@ -26,15 +26,10 @@ export function NavSecondary({
         <SidebarList>
           {items.map((item) => (
             <SidebarListItem key={item.title}>
-              <SidebarListButton
-                render={(props: React.ComponentProps<"a">) => (
-                  <Link href={item.url} {...props}>
-                    <item.icon />
-                    <span>{item.title}</span>
-                  </Link>
-                )}
-                size="sm"
-              />
+              <SidebarListButton render={<Link href={item.url} />} size="sm">
+                <item.icon />
+                <span>{item.title}</span>
+              </SidebarListButton>
             </SidebarListItem>
           ))}
         </SidebarList>

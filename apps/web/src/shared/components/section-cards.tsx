@@ -1,7 +1,11 @@
+import { Badge } from "@ctrl-ui/react/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@ctrl-ui/react/ui/card";
 import { IconTrendingUp } from "@tabler/icons-react";
-
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export function SectionCards() {
   return (

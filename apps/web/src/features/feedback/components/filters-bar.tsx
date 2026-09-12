@@ -1,8 +1,7 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import { SortAscending as SortAscendingIcon } from "@phosphor-icons/react";
-
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -75,7 +74,7 @@ export function FiltersBar({
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
-              <Button size="sm" variant="ghost">
+              <Button size="xs" variant="ghost">
                 <SortAscendingIcon data-icon="inline-start" />
                 {sortLabels[sortBy]}
               </Button>

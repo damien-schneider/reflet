@@ -3,7 +3,7 @@
 import { Sparkle } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 
-import { Badge } from "@/components/ui/badge";
+import { TagBadge } from "@/components/tag-badge";
 import { H3 } from "@/components/ui/typography";
 import { cn } from "@/lib/utils";
 
@@ -69,14 +69,14 @@ export function AITriageCard() {
         >
           <span className="text-muted-foreground text-xs">Tags</span>
           <div className="flex gap-1.5">
-            <Badge color="purple">
+            <TagBadge color="purple">
               <Sparkle data-icon="inline-start" size={10} weight="fill" />
               UX
-            </Badge>
-            <Badge color="blue">
+            </TagBadge>
+            <TagBadge color="blue">
               <Sparkle data-icon="inline-start" size={10} weight="fill" />
               Productivity
-            </Badge>
+            </TagBadge>
           </div>
         </div>
 
@@ -88,10 +88,10 @@ export function AITriageCard() {
           )}
         >
           <span className="text-muted-foreground text-xs">Priority</span>
-          <Badge color="orange">
+          <TagBadge color="orange">
             <Sparkle data-icon="inline-start" size={10} weight="fill" />
             Medium
-          </Badge>
+          </TagBadge>
         </div>
 
         {/* Complexity */}
@@ -103,10 +103,10 @@ export function AITriageCard() {
         >
           <span className="text-muted-foreground text-xs">Complexity</span>
           <div className="flex items-center gap-2">
-            <Badge color="green">
+            <TagBadge color="green">
               <Sparkle data-icon="inline-start" size={10} weight="fill" />
               Simple
-            </Badge>
+            </TagBadge>
             <span className="font-mono text-[10px] text-muted-foreground">
               ~2h
             </span>
@@ -125,7 +125,7 @@ export function AITriageCard() {
           </span>
           <div className="flex items-center justify-between rounded-lg border border-border bg-muted/50 px-3 py-2">
             <div className="flex items-center gap-2">
-              <Badge color="yellow">87%</Badge>
+              <TagBadge color="yellow">87%</TagBadge>
               <span className="text-foreground text-xs">
                 Vim keybindings support
               </span>

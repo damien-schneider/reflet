@@ -1,3 +1,4 @@
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Check,
   CloudArrowUp,
@@ -6,7 +7,6 @@ import {
 } from "@phosphor-icons/react";
 import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { buildGitHubInstallUrl } from "@/features/github/lib/github-install-url";
 import { cn } from "@/lib/utils";
 
@@ -92,8 +92,9 @@ export function ReleaseEditorFooter({
             disabled={isSubmitting || isStreaming || titleEmpty}
             onClick={handlePrimaryAction}
             size="sm"
+            tone={isPublished || isScheduled ? "neutral" : "primary"}
             type="button"
-            variant={isPublished || isScheduled ? "outline" : "default"}
+            variant={isPublished || isScheduled ? "surface" : "solid"}
           >
             {publishButtonLabel}
           </Button>
@@ -102,9 +103,9 @@ export function ReleaseEditorFooter({
             <Button
               disabled={isSubmitting || release?.githubPushStatus === "pending"}
               onClick={onPushToGithub}
-              size="sm"
+              size="xs"
               type="button"
-              variant="outline"
+              variant="surface"
             >
               {release?.githubPushStatus === "pending" ? (
                 <Spinner className="mr-1.5 h-3.5 w-3.5 animate-spin" />
@@ -131,9 +132,9 @@ export function ReleaseEditorFooter({
         <Button
           disabled={isSubmitting || isStreaming}
           onClick={onCancel}
-          size="sm"
+          size="xs"
           type="button"
-          variant="outline"
+          variant="surface"
         >
           Cancel
         </Button>

@@ -1,8 +1,8 @@
+import { Badge } from "@ctrl-ui/react/ui/badge";
+import { Button } from "@ctrl-ui/react/ui/button";
 import NumberFlow from "@number-flow/react";
 import { Check, Crown, Sparkle, Warning } from "@phosphor-icons/react";
-
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { TagBadge } from "@/components/tag-badge";
 import { H3, Muted, Text } from "@/components/ui/typography";
 
 import type {
@@ -83,7 +83,7 @@ function PriceDisplay({
         </span>
         <span className="text-muted-foreground">/mo</span>
         {price.savings && (
-          <Badge
+          <TagBadge
             className={`ml-2 transition-opacity ${showYearlyDetails ? "opacity-100" : "opacity-0"}`}
             color="green"
           >
@@ -93,7 +93,7 @@ function PriceDisplay({
               value={price.savings}
             />
             /yr
-          </Badge>
+          </TagBadge>
         )}
       </div>
       <span
@@ -137,7 +137,7 @@ function PlanActions({
           className="w-full"
           disabled={isLoading === "portal"}
           onClick={onManageSubscription}
-          variant="outline"
+          variant="surface"
         >
           {isLoading === "portal" ? "Opening..." : "Manage Subscription"}
         </Button>
@@ -165,7 +165,7 @@ function PlanActions({
   if (isCurrentPlan && planId === "free") {
     return (
       <div className="mt-auto">
-        <Button className="w-full" disabled variant="outline">
+        <Button className="w-full" disabled variant="surface">
           Current Plan
         </Button>
       </div>
@@ -179,6 +179,8 @@ function PlanActions({
           className="w-full"
           disabled={isLoading !== null}
           onClick={onUpgrade}
+          tone="primary"
+          variant="solid"
         >
           {isLoading === priceKey ? (
             "Redirecting..."

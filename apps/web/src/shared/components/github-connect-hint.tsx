@@ -1,12 +1,11 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import { GithubLogo, Lightbulb } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import Link from "next/link";
-
-import { Button } from "@/components/ui/button";
 import { Muted, Text } from "@/components/ui/typography";
 
 interface GitHubConnectHintProps {
@@ -39,8 +38,8 @@ export function GitHubConnectHint({
       </div>
       <Button
         render={<Link href={`/dashboard/${orgSlug}/setup`} />}
-        size="sm"
-        variant="outline"
+        size="xs"
+        variant="surface"
       >
         <GithubLogo className="mr-1.5 size-3.5" />
         Connect

@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   ArrowsClockwise,
   CaretDown,
@@ -16,8 +17,6 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
-
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface FeatureCheckProps {
@@ -150,7 +149,7 @@ function FeatureCheckHeader({
           disabled={isPending || isStarting}
           onClick={onStart}
           size="xs"
-          variant="outline"
+          variant="surface"
         >
           {isPending ? (
             <>
@@ -283,7 +282,7 @@ function EvidenceList({
       <Button
         className="h-auto gap-1 p-0 text-muted-foreground text-xs"
         onClick={onToggle}
-        variant="link"
+        variant="quiet"
       >
         <Code className="h-3 w-3" />
         {evidence.length} file{evidence.length === 1 ? "" : "s"} found

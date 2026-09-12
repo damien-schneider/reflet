@@ -1,6 +1,13 @@
 "use client";
 
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@ctrl-ui/react/ui/select";
+import {
   ArrowDown,
   ArrowsLeftRight,
   ArrowUp,
@@ -14,13 +21,6 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useAction, useQuery } from "convex/react";
 import { useCallback, useEffect, useState } from "react";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 type SyncDirection = "github_first" | "reflet_first" | "bidirectional" | "none";

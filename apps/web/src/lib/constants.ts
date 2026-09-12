@@ -1,3 +1,4 @@
+import type { BadgeColor, BadgeVariant } from "@ctrl-ui/react/ui/badge";
 // Feedback status types and configuration
 export type FeedbackStatus =
   | "open"
@@ -33,44 +34,14 @@ export const LANE_OPTIONS: { value: RoadmapLane; label: string }[] = [
 
 export const STATUS_CONFIG: Record<
   FeedbackStatus,
-  {
-    label: string;
-    variant: "default" | "secondary" | "destructive" | "outline";
-    className: string;
-  }
+  { label: string; color: BadgeColor; variant?: BadgeVariant }
 > = {
-  closed: {
-    className: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
-    label: "Closed",
-    variant: "secondary",
-  },
-  completed: {
-    className: "bg-green-600 text-white",
-    label: "Completed",
-    variant: "default",
-  },
-  in_progress: {
-    className: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-    label: "In Progress",
-    variant: "secondary",
-  },
-  open: {
-    className: "border-blue-500 text-blue-600 dark:text-blue-400",
-    label: "Open",
-    variant: "outline",
-  },
-  planned: {
-    className:
-      "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
-    label: "Planned",
-    variant: "secondary",
-  },
-  under_review: {
-    className:
-      "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
-    label: "Under Review",
-    variant: "secondary",
-  },
+  closed: { color: "neutral", label: "Closed" },
+  completed: { color: "green", label: "Completed" },
+  in_progress: { color: "blue", label: "In Progress" },
+  open: { color: "blue", label: "Open", variant: "outline" },
+  planned: { color: "purple", label: "Planned" },
+  under_review: { color: "yellow", label: "Under Review" },
 };
 
 // Lane array for iteration (excluding completed for kanban)

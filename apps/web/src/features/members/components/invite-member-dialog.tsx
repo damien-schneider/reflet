@@ -1,9 +1,4 @@
-import { Check, Copy, Shield, User } from "@phosphor-icons/react";
-import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { useMutation } from "convex/react";
-import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -11,16 +6,21 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from "@ctrl-ui/react/ui/dialog";
+import { Input } from "@ctrl-ui/react/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@ctrl-ui/react/ui/select";
+import { Check, Copy, Shield, User } from "@phosphor-icons/react";
+import { api } from "@reflet/backend/convex/_generated/api";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { useMutation } from "convex/react";
+import { useEffect, useState } from "react";
+import { Label } from "@/components/ui/label";
 import { capture } from "@/lib/analytics";
 
 interface InviteMemberDialogProps {
@@ -120,7 +120,7 @@ export function InviteMemberDialog({
                   readOnly
                   value={inviteUrl}
                 />
-                <Button onClick={handleCopyLink} size="icon" variant="outline">
+                <Button iconOnly onClick={handleCopyLink} variant="surface">
                   {copied ? (
                     <Check className="h-4 w-4" />
                   ) : (
@@ -134,7 +134,9 @@ export function InviteMemberDialog({
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={handleClose}>Done</Button>
+            <Button onClick={handleClose} tone="primary" variant="solid">
+              Done
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -192,10 +194,15 @@ export function InviteMemberDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button onClick={() => onOpenChange(false)} variant="outline">
+          <Button onClick={() => onOpenChange(false)} variant="surface">
             Cancel
           </Button>
-          <Button disabled={isSubmitting} onClick={handleInvite}>
+          <Button
+            disabled={isSubmitting}
+            onClick={handleInvite}
+            tone="primary"
+            variant="solid"
+          >
             {isSubmitting ? "Sending..." : "Send invitation"}
           </Button>
         </DialogFooter>

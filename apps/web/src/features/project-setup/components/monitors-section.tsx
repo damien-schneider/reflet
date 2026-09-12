@@ -1,8 +1,12 @@
+import { Button } from "@ctrl-ui/react/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@ctrl-ui/react/ui/card";
+import { Checkbox } from "@ctrl-ui/react/ui/checkbox";
 import { Heartbeat } from "@phosphor-icons/react";
-
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import type { SuggestedMonitor } from "./setup-types";
 
 interface MonitorsSectionProps {
@@ -32,7 +36,7 @@ export function MonitorsSection({
           </CardTitle>
           <Button
             onClick={() => onToggleAll(acceptedCount < monitors.length)}
-            size="sm"
+            size="xs"
             variant="ghost"
           >
             {acceptedCount === monitors.length ? "Deselect all" : "Select all"}

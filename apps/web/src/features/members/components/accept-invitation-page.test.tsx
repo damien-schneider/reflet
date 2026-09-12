@@ -60,11 +60,11 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
-vi.mock("@/components/ui/spinner", () => ({
+vi.mock("@ctrl-ui/react/ui/spinner", () => ({
   Spinner: () => <div data-testid="spinner">Loading...</div>,
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     onClick,
@@ -77,7 +77,7 @@ vi.mock("@/components/ui/button", () => ({
     variant?: string;
   }) => (
     <button
-      data-testid={`button-${variant ?? "default"}`}
+      data-testid={`button-${variant ?? "quiet"}`}
       disabled={disabled}
       onClick={onClick}
       type="button"
@@ -171,7 +171,7 @@ describe("AcceptInvitationContent", () => {
 
     render(<AcceptInvitationContent token="valid-token" />);
 
-    const acceptButton = screen.getByTestId("button-default");
+    const acceptButton = screen.getByTestId("button-solid");
     await user.click(acceptButton);
 
     await waitFor(() => {
@@ -191,7 +191,7 @@ describe("AcceptInvitationContent", () => {
 
     render(<AcceptInvitationContent token="valid-token" />);
 
-    const acceptButton = screen.getByTestId("button-default");
+    const acceptButton = screen.getByTestId("button-solid");
     await user.click(acceptButton);
 
     await waitFor(() => {
@@ -211,7 +211,7 @@ describe("AcceptInvitationContent", () => {
 
     render(<AcceptInvitationContent token="valid-token" />);
 
-    const acceptButton = screen.getByTestId("button-default");
+    const acceptButton = screen.getByTestId("button-solid");
     await user.click(acceptButton);
 
     await waitFor(() => {

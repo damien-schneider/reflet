@@ -33,7 +33,7 @@ vi.mock("@phosphor-icons/react", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     onClick,
@@ -60,7 +60,7 @@ vi.mock("@/components/ui/button", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/card", () => ({
+vi.mock("@ctrl-ui/react/ui/card", () => ({
   Card: ({
     children,
     className,
@@ -107,7 +107,7 @@ vi.mock("@/components/ui/card", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/dialog", () => ({
+vi.mock("@ctrl-ui/react/ui/dialog", () => ({
   Dialog: ({
     children,
     open,
@@ -136,7 +136,7 @@ vi.mock("@/components/ui/dialog", () => ({
   }) => <h2 data-testid="dialog-title">{children}</h2>,
 }));
 
-vi.mock("@/components/ui/skeleton", () => ({
+vi.mock("@ctrl-ui/react/ui/skeleton", () => ({
   Skeleton: ({ className }: { className?: string }) => (
     <div className={className} data-testid="skeleton" />
   ),

@@ -1,12 +1,8 @@
 "use client";
 
-import { CaretLeft, CaretRight, MagnifyingGlass } from "@phosphor-icons/react";
-import { api } from "@reflet/backend/convex/_generated/api";
-import { useQuery } from "convex/react";
-import { useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Input } from "@ctrl-ui/react/ui/input";
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -14,7 +10,11 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@ctrl-ui/react/ui/table";
+import { CaretLeft, CaretRight, MagnifyingGlass } from "@phosphor-icons/react";
+import { api } from "@reflet/backend/convex/_generated/api";
+import { useQuery } from "convex/react";
+import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 20;
@@ -161,8 +161,8 @@ export function SuperAdminUsers() {
             <Button
               disabled={page === 0 || isPageTransition}
               onClick={() => setPage((p) => p - 1)}
-              size="sm"
-              variant="outline"
+              size="xs"
+              variant="surface"
             >
               <CaretLeft className="size-4" />
               Previous
@@ -170,8 +170,8 @@ export function SuperAdminUsers() {
             <Button
               disabled={page >= totalPages - 1 || isPageTransition}
               onClick={() => setPage((p) => p + 1)}
-              size="sm"
-              variant="outline"
+              size="xs"
+              variant="surface"
             >
               Next
               <CaretRight className="size-4" />

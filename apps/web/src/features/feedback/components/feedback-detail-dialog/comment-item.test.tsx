@@ -10,7 +10,7 @@ vi.mock("@phosphor-icons/react", () => ({
   Trash: () => <svg data-testid="trash-icon" />,
 }));
 
-vi.mock("@/components/ui/avatar", () => ({
+vi.mock("@ctrl-ui/react/ui/avatar", () => ({
   Avatar: ({
     children,
     className,
@@ -37,7 +37,7 @@ vi.mock("@/components/ui/avatar", () => ({
     src ? <img alt="" data-testid="avatar-image" src={src} /> : null,
 }));
 
-vi.mock("@/components/ui/badge", () => ({
+vi.mock("@ctrl-ui/react/ui/badge", () => ({
   Badge: ({
     children,
     variant,
@@ -51,7 +51,7 @@ vi.mock("@/components/ui/badge", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     onClick,

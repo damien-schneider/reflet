@@ -1,10 +1,9 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import { Desktop, Moon, Sun } from "@phosphor-icons/react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export const themes = ["system", "light", "dark"] as const;
@@ -72,7 +71,7 @@ export function ThemeToggle({ className }: { className?: string }) {
       <Button
         className={cn("h-8 w-8", className)}
         disabled
-        size="icon"
+        iconOnly
         variant="ghost"
       >
         <Desktop className="h-4 w-4" />
@@ -87,8 +86,8 @@ export function ThemeToggle({ className }: { className?: string }) {
   return (
     <Button
       className={cn("h-8 w-8", className)}
+      iconOnly
       onClick={cycleTheme}
-      size="icon"
       title={`Theme: ${themeLabels[currentTheme]}`}
       variant="ghost"
     >

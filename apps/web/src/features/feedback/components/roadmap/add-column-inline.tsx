@@ -1,19 +1,18 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Input } from "@ctrl-ui/react/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@ctrl-ui/react/ui/popover";
 import { Check, Plus, X } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { useCallback, useRef, useState } from "react";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { NotionColorPicker } from "@/components/ui/notion-color-picker";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { getTagDotColor, type TagColor } from "@/lib/tag-colors";
 
 interface AddColumnInlineProps {
@@ -119,16 +118,16 @@ export function AddColumnInline({ organizationId }: AddColumnInlineProps) {
         {/* Action buttons */}
         <Button
           className="h-6 w-6"
+          iconOnly
           onClick={handleSave}
-          size="icon"
           variant="ghost"
         >
           <Check className="h-3 w-3" />
         </Button>
         <Button
           className="h-6 w-6"
+          iconOnly
           onClick={handleCancel}
-          size="icon"
           variant="ghost"
         >
           <X className="h-3 w-3" />

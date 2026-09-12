@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   ArrowsClockwise,
   CaretDown,
@@ -10,8 +11,6 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
-
-import { Button } from "@/components/ui/button";
 
 interface InlineClarificationProps {
   feedbackId: Id<"feedback">;
@@ -60,7 +59,7 @@ export function InlineClarification({ feedbackId }: InlineClarificationProps) {
               <Button
                 className="h-auto p-0 text-olive-600 text-xs dark:text-olive-400"
                 onClick={() => setIsExpanded((prev) => !prev)}
-                variant="link"
+                variant="quiet"
               >
                 {isExpanded ? (
                   <>
@@ -77,7 +76,7 @@ export function InlineClarification({ feedbackId }: InlineClarificationProps) {
               className="h-auto p-0 text-muted-foreground text-xs"
               disabled={isRegenerating}
               onClick={handleRegenerate}
-              variant="link"
+              variant="quiet"
             >
               {isRegenerating ? (
                 <>

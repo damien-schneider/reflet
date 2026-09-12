@@ -1,12 +1,11 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import { Plus } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { useState } from "react";
-
-import { Button } from "@/components/ui/button";
 import { Muted } from "@/components/ui/typography";
 
 import { AddWebsiteDialog } from "./add-website-dialog";
@@ -24,7 +23,7 @@ export function useWebsiteReferenceDialog() {
 
 export function WebsiteReferenceAddButton({ onOpen }: { onOpen: () => void }) {
   return (
-    <Button onClick={onOpen} size="sm" variant="outline">
+    <Button onClick={onOpen} size="xs" variant="surface">
       <Plus className="mr-1.5 h-4 w-4" />
       Add Website
     </Button>

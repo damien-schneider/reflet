@@ -1,13 +1,12 @@
 "use client";
 
-import { Bell, BellSlash } from "@phosphor-icons/react";
-
-import { Button } from "@/components/ui/button";
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@ctrl-ui/react/ui/tooltip";
+import { Bell, BellSlash } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
 export function SubscribeButton({
@@ -22,8 +21,9 @@ export function SubscribeButton({
       <TooltipTrigger render={<span />}>
         <Button
           className={cn("h-8 w-8", isSubscribed === true && "text-primary")}
+          iconOnly
           onClick={onToggle}
-          size="icon-sm"
+          size="xs"
           variant="ghost"
         >
           {isSubscribed === true ? (

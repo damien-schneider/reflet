@@ -1,0 +1,83 @@
+.marketing-closing {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 50% 28%, var(--card), transparent 65%),
+    var(--secondary);
+  isolation: isolate;
+}
+:where(.closing-reflection) {
+  position: relative;
+  width: 280px;
+  height: 142px;
+  margin: 0 auto 28px;
+  color: var(--foreground);
+  pointer-events: none;
+}
+.closing-reflection .reflet-mark {
+  display: block;
+  width: 68px;
+  height: 68px;
+  margin: 0 auto;
+}
+:where(.closing-reflection-source) {
+  position: relative;
+  z-index: 1;
+  padding-bottom: 10px;
+  transform: perspective(500px) rotateY(calc(var(--reflection-x, 0) * 28deg))
+    rotateX(calc(var(--reflection-y, 0) * -20deg));
+}
+:where(.closing-reflection-water) {
+  height: 62px;
+  overflow: hidden;
+  border-top: 1px solid var(--muted-foreground);
+  opacity: 0.18;
+  mask-image: linear-gradient(black, transparent);
+}
+:where(.closing-reflection-water .reflet-mark) {
+  filter: blur(0.6px);
+  transform: scaleY(-1) skewX(calc(var(--reflection-x, 0) * 12deg));
+  translate: calc(var(--reflection-x, 0) * 16px) -4px;
+}
+:where(.closing-reflection-ripple) {
+  position: absolute;
+  top: 70px;
+  left: 15%;
+  width: 70%;
+  height: 30px;
+  border: 1px solid var(--marketing-hairline);
+  border-radius: 50%;
+  opacity: 0;
+}
+:where(.marketing-closing [data-control-family="button"]) {
+  margin-top: 30px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  :where(.marketing-closing:hover .closing-reflection-ripple),
+  :where(.marketing-closing:focus-within .closing-reflection-ripple) {
+    animation: closing-ripple 1800ms var(--marketing-ease) 2;
+  }
+  :where(.closing-reflection-ripple:last-child) {
+    animation-delay: 240ms;
+  }
+}
+@keyframes closing-ripple {
+  from {
+    opacity: 0.8;
+    scale: 0.35;
+  }
+  to {
+    opacity: 0;
+    scale: 1.5;
+    translate: 0 28px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :where(.closing-reflection-source) {
+    transform: none;
+  }
+  :where(.closing-reflection-water .reflet-mark) {
+    transform: scaleY(-1);
+    translate: 0 -4px;
+  }
+}

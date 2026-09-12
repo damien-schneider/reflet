@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/components/ui/avatar", () => ({
+vi.mock("@ctrl-ui/react/ui/avatar", () => ({
   Avatar: ({
     children,
     className,

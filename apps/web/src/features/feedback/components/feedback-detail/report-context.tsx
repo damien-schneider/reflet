@@ -1,11 +1,10 @@
 "use client";
 
+import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Browser, Crosshair, Monitor, Warning } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
-
-import { Badge } from "@/components/ui/badge";
 
 export type ReportContextValue = NonNullable<Doc<"feedback">["context"]>;
 
@@ -190,9 +189,7 @@ export function ReportContext({ feedbackId }: { feedbackId: Id<"feedback"> }) {
               <div className="flex min-w-0 flex-col gap-1">
                 <span className="flex flex-wrap items-center gap-1.5">
                   {selection.componentStack[0] && (
-                    <Badge variant="secondary">
-                      {`<${selection.componentStack[0]}>`}
-                    </Badge>
+                    <Badge>{`<${selection.componentStack[0]}>`}</Badge>
                   )}
                   <span>{selection.label}</span>
                 </span>

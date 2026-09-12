@@ -12,7 +12,7 @@ vi.mock("@phosphor-icons/react", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/badge", () => ({
+vi.mock("@ctrl-ui/react/ui/badge", () => ({
   Badge: ({
     children,
     variant,
@@ -22,7 +22,7 @@ vi.mock("@/components/ui/badge", () => ({
   }) => <span data-variant={variant}>{children}</span>,
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     onClick,
@@ -48,7 +48,7 @@ vi.mock("@/components/ui/label", () => ({
   }) => <label htmlFor={htmlFor}>{children}</label>,
 }));
 
-vi.mock("@/components/ui/switch", () => ({
+vi.mock("@ctrl-ui/react/ui/switch", () => ({
   Switch: ({
     checked,
     onCheckedChange,

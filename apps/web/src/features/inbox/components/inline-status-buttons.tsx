@@ -1,6 +1,6 @@
 "use client";
 
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Toggle } from "@ctrl-ui/react/ui/toggle";
 import {
   CONVERSATION_STATUS_META,
   CONVERSATION_STATUSES,
@@ -20,14 +20,14 @@ export function InlineStatusButtons({
   className,
 }: InlineStatusButtonsProps) {
   return (
-    <ToggleGroup className={cn("gap-1", className)} size="sm" variant="outline">
+    <div className={cn("inline-flex items-center gap-1", className)}>
       {CONVERSATION_STATUSES.map((status) => {
         const meta = CONVERSATION_STATUS_META[status];
         const Icon = meta.icon;
         const isActive = currentStatus === status;
 
         return (
-          <ToggleGroupItem
+          <Toggle
             className={cn("gap-1 text-xs", meta.toggleClassName)}
             key={status}
             onPressedChange={() => {
@@ -40,9 +40,9 @@ export function InlineStatusButtons({
           >
             <Icon className="h-3.5 w-3.5" />
             {meta.label}
-          </ToggleGroupItem>
+          </Toggle>
         );
       })}
-    </ToggleGroup>
+    </div>
   );
 }

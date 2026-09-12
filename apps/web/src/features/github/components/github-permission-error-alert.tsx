@@ -1,14 +1,8 @@
 "use client";
 
+import { Alert, AlertDescription, AlertTitle } from "@ctrl-ui/react/ui/alert";
+import { Button } from "@ctrl-ui/react/ui/button";
 import { ArrowsClockwise, Warning, X } from "@phosphor-icons/react";
-
-import {
-  Alert,
-  AlertAction,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 
 interface GitHubPermissionErrorAlertProps {
   message?: string;
@@ -24,7 +18,7 @@ export function GitHubPermissionErrorAlert({
   onDismiss,
 }: GitHubPermissionErrorAlertProps) {
   return (
-    <Alert className="mb-4" variant="destructive">
+    <Alert className="mb-4 pr-10" variant="destructive">
       <Warning className="h-4 w-4" />
       <AlertTitle>{title}</AlertTitle>
       <AlertDescription>
@@ -33,23 +27,23 @@ export function GitHubPermissionErrorAlert({
           New permissions have been added to the GitHub App. Please resync your
           connection to grant these permissions.
         </p>
-        <Button className="mt-3" onClick={onResync} size="sm" variant="outline">
+        <Button className="mt-3" onClick={onResync} size="xs" variant="surface">
           <ArrowsClockwise className="mr-2 h-4 w-4" />
           Resync GitHub Connection
         </Button>
       </AlertDescription>
       {onDismiss ? (
-        <AlertAction>
+        <div className="absolute top-2 right-2">
           <Button
             className="h-6 w-6"
+            iconOnly
             onClick={onDismiss}
-            size="icon"
             variant="ghost"
           >
             <X className="h-4 w-4" />
             <span className="sr-only">Dismiss</span>
           </Button>
-        </AlertAction>
+        </div>
       ) : null}
     </Alert>
   );

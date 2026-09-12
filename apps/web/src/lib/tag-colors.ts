@@ -103,15 +103,11 @@ export function isValidTagColor(color: string): color is TagColor {
 
 // Resolve any color (named or legacy hex) to a TagColor.
 // Tries named match first, then hex-to-named migration, then falls back to "default".
-function resolveTagColor(color: string): TagColor {
+export function resolveTagColor(color: string): TagColor {
   if (isValidTagColor(color)) {
     return color;
   }
   return migrateHexToNamedColor(color);
-}
-
-function getValidColor(color: string): TagColor {
-  return resolveTagColor(color);
 }
 
 // Get color values for a tag color
@@ -119,7 +115,7 @@ export function getTagColorValues(
   color: string,
   isDark = false
 ): { bg: string; text: string } {
-  const validColor = getValidColor(color);
+  const validColor = resolveTagColor(color);
   const values = COLOR_VALUES[validColor];
   return isDark
     ? { bg: values.darkBg, text: values.darkText }
@@ -220,13 +216,13 @@ const TAG_SWATCH_CLASSES: Record<TagColor, string> = {
 
 // Get Tailwind class for tag text color
 export function getTagTextClass(color: string): string {
-  const validColor = getValidColor(color);
+  const validColor = resolveTagColor(color);
   return TAG_TEXT_CLASSES[validColor];
 }
 
 // Get Tailwind class for color swatch
 export function getTagSwatchClass(color: string): string {
-  const validColor = getValidColor(color);
+  const validColor = resolveTagColor(color);
   return TAG_SWATCH_CLASSES[validColor];
 }
 

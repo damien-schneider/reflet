@@ -1,9 +1,9 @@
 "use client";
 
+import { Field, FieldError, FieldLabel } from "@ctrl-ui/react/ui/field";
+import { Input } from "@ctrl-ui/react/ui/input";
 import { Eye, EyeSlash } from "@phosphor-icons/react";
 import type { UseFormRegisterReturn } from "react-hook-form";
-import { Field, FieldError, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
 
 interface PasswordInputProps {
   error?: { message?: string };
@@ -54,7 +54,7 @@ export function PasswordInputField({
           )}
         </button>
       </div>
-      <FieldError errors={error ? [error] : undefined} />
+      <FieldError match={Boolean(error?.message)}>{error?.message}</FieldError>
     </Field>
   );
 }

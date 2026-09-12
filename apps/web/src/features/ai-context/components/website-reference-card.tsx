@@ -1,5 +1,8 @@
 "use client";
 
+import { Badge } from "@ctrl-ui/react/ui/badge";
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Card, CardContent } from "@ctrl-ui/react/ui/card";
 import {
   ArrowsClockwise,
   ArrowUpRight,
@@ -12,10 +15,6 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { useState } from "react";
-
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 interface WebsiteReference {
@@ -111,8 +110,9 @@ export function WebsiteReferenceCard({
             <div className="flex items-center gap-1">
               <Button
                 disabled={isLoading || isRefreshing}
+                iconOnly
                 onClick={handleRefresh}
-                size="icon-sm"
+                size="xs"
                 title="Refresh"
                 variant="ghost"
               >
@@ -125,8 +125,9 @@ export function WebsiteReferenceCard({
               </Button>
               <Button
                 disabled={isDeleting}
+                iconOnly
                 onClick={handleDelete}
-                size="icon-sm"
+                size="xs"
                 title="Delete"
                 variant="ghost"
               >
@@ -155,7 +156,7 @@ function StatusBadge({
     case "pending":
     case "fetching":
       return (
-        <Badge className="text-xs" variant="secondary">
+        <Badge className="text-xs">
           <Spinner className="mr-1 h-3 w-3 animate-spin" />
           Fetching...
         </Badge>
@@ -169,7 +170,7 @@ function StatusBadge({
       );
     case "error":
       return (
-        <Badge className="text-xs" title={errorMessage} variant="destructive">
+        <Badge className="text-xs" color="red" title={errorMessage}>
           <Warning className="mr-1 h-3 w-3" />
           Error
         </Badge>

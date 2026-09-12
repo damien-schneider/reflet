@@ -107,7 +107,7 @@ vi.mock("@phosphor-icons/react", () => ({
 }));
 
 // Mock UI components
-vi.mock("@/components/ui/card", () => ({
+vi.mock("@ctrl-ui/react/ui/card", () => ({
   Card: ({
     children,
     className,
@@ -143,7 +143,7 @@ vi.mock("@/components/ui/card", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/badge", () => ({
+vi.mock("@ctrl-ui/react/ui/badge", () => ({
   Badge: ({
     children,
     style,
@@ -159,7 +159,7 @@ vi.mock("@/components/ui/badge", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     onClick,
@@ -185,7 +185,7 @@ vi.mock("@/components/ui/button", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/avatar", () => ({
+vi.mock("@ctrl-ui/react/ui/avatar", () => ({
   Avatar: ({
     children,
     className,
@@ -213,7 +213,7 @@ vi.mock("@/components/ui/avatar", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/select", () => ({
+vi.mock("@ctrl-ui/react/ui/select", () => ({
   Select: ({
     children,
   }: {

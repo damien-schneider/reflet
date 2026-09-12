@@ -1,10 +1,10 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Input } from "@ctrl-ui/react/ui/input";
 import { Plus } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 
 interface AddMonitorInputProps {
   onAdd: (url: string, name: string) => void;
@@ -49,7 +49,7 @@ export function AddMonitorInput({ onAdd }: AddMonitorInputProps) {
         className="w-full justify-start"
         onClick={() => setIsAdding(true)}
         type="button"
-        variant="outline"
+        variant="surface"
       >
         <Plus className="h-4 w-4" />
         Add monitor
@@ -79,7 +79,12 @@ export function AddMonitorInput({ onAdd }: AddMonitorInputProps) {
         placeholder="https://api.example.com/health"
         value={url}
       />
-      <Button disabled={!url.trim()} onClick={handleSubmit}>
+      <Button
+        disabled={!url.trim()}
+        onClick={handleSubmit}
+        tone="primary"
+        variant="solid"
+      >
         Add
       </Button>
     </div>

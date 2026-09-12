@@ -1,31 +1,29 @@
 "use client";
 
-import { Check, Copy, Gear, Power, Trash } from "@phosphor-icons/react";
-import { api } from "@reflet/backend/convex/_generated/api";
-import type { Doc } from "@reflet/backend/convex/_generated/dataModel";
-import { useMutation } from "convex/react";
-import { useState } from "react";
-import { toast } from "sonner";
-
 import {
   AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
+  AlertDialogClose,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+} from "@ctrl-ui/react/ui/alert-dialog";
+import { Badge } from "@ctrl-ui/react/ui/badge";
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from "@ctrl-ui/react/ui/card";
+import { toast } from "@ctrl-ui/react/ui/toast";
+import { Check, Copy, Gear, Power, Trash } from "@phosphor-icons/react";
+import { api } from "@reflet/backend/convex/_generated/api";
+import type { Doc } from "@reflet/backend/convex/_generated/dataModel";
+import { useMutation } from "convex/react";
+import { useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -95,14 +93,12 @@ export function WidgetCard({ widget }: WidgetCardProps) {
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-2">
               <CardTitle className="text-lg">{widget.name}</CardTitle>
-              <Badge variant={widget.isActive ? "default" : "secondary"}>
-                {widget.isActive ? "Active" : "Inactive"}
-              </Badge>
+              <Badge>{widget.isActive ? "Active" : "Inactive"}</Badge>
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={(props: React.ComponentProps<"button">) => (
-                  <Button {...props} size="icon" variant="ghost">
+                  <Button {...props} iconOnly variant="ghost">
                     <Gear className="h-4 w-4" />
                   </Button>
                 )}
@@ -143,8 +139,8 @@ export function WidgetCard({ widget }: WidgetCardProps) {
               </pre>
               <Button
                 className="absolute top-2 right-2"
+                iconOnly
                 onClick={copyEmbedCode}
-                size="icon"
                 variant="ghost"
               >
                 {copied ? (
@@ -193,10 +189,14 @@ export function WidgetCard({ widget }: WidgetCardProps) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} variant="destructive">
+            <AlertDialogClose>Cancel</AlertDialogClose>
+            <AlertDialogClose
+              onClick={handleDelete}
+              tone="danger"
+              variant="surface"
+            >
               Delete
-            </AlertDialogAction>
+            </AlertDialogClose>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

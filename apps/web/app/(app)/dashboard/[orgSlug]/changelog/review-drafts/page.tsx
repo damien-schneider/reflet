@@ -1,15 +1,14 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import { ArrowLeft } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import Link from "next/link";
 import { use, useState } from "react";
-import { toast } from "sonner";
-
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { H1, Muted, Text } from "@/components/ui/typography";
 import { RetroactiveDraftItem } from "@/features/changelog/components/retroactive-draft-item";
 
@@ -42,7 +41,7 @@ function DraftsList({
           completes.
         </Muted>
         <Link href={`/dashboard/${orgSlug}/changelog`}>
-          <Button className="mt-6" variant="outline">
+          <Button className="mt-6" variant="surface">
             Back to Changelog
           </Button>
         </Link>
@@ -198,14 +197,16 @@ export default function ReviewDraftsPage({
 
       {drafts.length > 0 && (
         <div className="sticky top-0 z-10 mb-6 flex flex-wrap items-center gap-2 rounded-lg border bg-background p-3">
-          <Button onClick={handleToggleSelectAll} size="sm" variant="outline">
+          <Button onClick={handleToggleSelectAll} size="xs" variant="surface">
             {allSelected ? "Deselect All" : "Select All"}
           </Button>
 
           <Button
             disabled={selectedIds.size === 0}
             onClick={handleBulkPublish}
-            size="sm"
+            size="xs"
+            tone="primary"
+            variant="solid"
           >
             Publish Selected ({selectedIds.size})
           </Button>
@@ -214,8 +215,8 @@ export default function ReviewDraftsPage({
             className="text-destructive hover:bg-destructive/10"
             disabled={selectedIds.size === 0}
             onClick={handleBulkDiscard}
-            size="sm"
-            variant="outline"
+            size="xs"
+            variant="surface"
           >
             Discard Selected
           </Button>

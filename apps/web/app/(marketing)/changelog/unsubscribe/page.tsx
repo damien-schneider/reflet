@@ -1,11 +1,11 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useMutation } from "convex/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
 import { H1, Muted } from "@/components/ui/typography";
 
 function UnsubscribeContent() {
@@ -80,7 +80,7 @@ function UnsubscribeContent() {
           <Muted className="mb-6">
             {errorMessage ?? "The unsubscribe link is invalid or has expired."}
           </Muted>
-          <Button onClick={() => router.push("/")} variant="outline">
+          <Button onClick={() => router.push("/")} variant="surface">
             Back to home
           </Button>
         </div>
@@ -117,7 +117,12 @@ function UnsubscribeContent() {
           You have been successfully unsubscribed from changelog updates. You
           will no longer receive email notifications.
         </Muted>
-        <Button className="w-full" onClick={() => router.push("/")}>
+        <Button
+          className="w-full"
+          onClick={() => router.push("/")}
+          tone="primary"
+          variant="solid"
+        >
           Back to home
         </Button>
       </div>

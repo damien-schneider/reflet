@@ -27,7 +27,7 @@ vi.mock("next/link", () => ({
   ),
 }));
 
-vi.mock("sonner", () => ({
+vi.mock("@ctrl-ui/react/ui/toast", () => ({
   toast: { error: vi.fn(), info: vi.fn(), success: vi.fn() },
 }));
 
@@ -55,7 +55,7 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
   },
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     disabled,
@@ -85,8 +85,8 @@ vi.mock("@phosphor-icons/react", () => ({
   ),
 }));
 
+import { toast } from "@ctrl-ui/react/ui/toast";
 import { useAction, useQuery } from "convex/react";
-import { toast } from "sonner";
 import { GenerateFromCommits } from "./generate-from-commits";
 
 afterEach(() => {

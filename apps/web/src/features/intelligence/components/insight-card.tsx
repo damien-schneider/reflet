@@ -1,9 +1,14 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@ctrl-ui/react/ui/card";
 import { ArrowRight, X } from "@phosphor-icons/react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { TagBadge } from "@/components/tag-badge";
 
 const PRIORITY_VARIANT: Record<string, "red" | "orange" | "yellow" | "gray"> = {
   critical: "red",
@@ -82,11 +87,11 @@ export function InsightCard({
         <div className="flex items-start justify-between gap-2">
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center gap-2">
-              <Badge color={typeVariant}>{typeLabel}</Badge>
-              <Badge color={priorityVariant}>
+              <TagBadge color={typeVariant}>{typeLabel}</TagBadge>
+              <TagBadge color={priorityVariant}>
                 {insight.priority.charAt(0).toUpperCase() +
                   insight.priority.slice(1)}
-              </Badge>
+              </TagBadge>
             </div>
             <CardTitle>{insight.title}</CardTitle>
           </div>
@@ -99,13 +104,13 @@ export function InsightCard({
         <p className="text-muted-foreground text-sm">{insight.summary}</p>
         <div className="mt-3 flex items-center gap-2">
           {canConvert && (
-            <Button onClick={onConvert} size="sm" variant="outline">
+            <Button onClick={onConvert} size="xs" variant="surface">
               <ArrowRight data-icon="inline-start" />
               Convert to Feedback
             </Button>
           )}
           {canDismiss && (
-            <Button onClick={onDismiss} size="sm" variant="ghost">
+            <Button onClick={onDismiss} size="xs" variant="ghost">
               <X data-icon="inline-start" />
               Dismiss
             </Button>

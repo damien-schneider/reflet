@@ -1,5 +1,7 @@
 "use client";
 
+import { Card, CardContent } from "@ctrl-ui/react/ui/card";
+import { ScrollArea } from "@ctrl-ui/react/ui/scroll-area";
 import {
   closestCorners,
   DndContext,
@@ -18,8 +20,6 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { AnimatePresence, LayoutGroup, motion } from "motion/react";
 import { useCallback, useMemo, useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { toId } from "@/lib/convex-helpers";
 import type { FeedbackItem } from "./feed-feedback-view";
 import { AddColumnInline } from "./roadmap/add-column-inline";
@@ -55,7 +55,6 @@ export function RoadmapView({
     api.feedback.triage_actions.updateOrganizationStatus
   );
 
-  // Apply optimistic updates to feedback
   const optimisticFeedback = useMemo(() => {
     if (optimisticUpdates.size === 0) {
       return feedback;
@@ -119,7 +118,6 @@ export function RoadmapView({
       const targetItem = feedback.find((f) => f._id === over.id);
       const targetStatusId = targetItem?.organizationStatusId;
 
-      // Check if dropped on a column (status._id)
       const droppedOnColumn = statuses.find((s) => s._id === over.id);
       const finalStatusId = droppedOnColumn?._id ?? targetStatusId;
 
@@ -127,13 +125,11 @@ export function RoadmapView({
         return;
       }
 
-      // Get current item
       const currentItem = feedback.find((f) => f._id === feedbackId);
       if (currentItem?.organizationStatusId === finalStatusId) {
         return;
       }
 
-      // Apply optimistic update immediately
       setOptimisticUpdates((prev) => {
         const next = new Map(prev);
         next.set(feedbackId, { feedbackId, newStatusId: finalStatusId });
@@ -146,8 +142,6 @@ export function RoadmapView({
           organizationStatusId: finalStatusId,
         });
       } finally {
-        // Clear optimistic update after server responds
-        // The real data from Convex will take over
         setOptimisticUpdates((prev) => {
           const next = new Map(prev);
           next.delete(feedbackId);
@@ -181,38 +175,37 @@ export function RoadmapView({
           sensors={sensors}
         >
           <ScrollArea
-            className=""
-            classNameViewport="flex gap-4 pb-4 min-h-[70vh]"
-            styleViewport={{
-              paddingLeft: "max(1rem, calc(50vw - 35rem))",
-              paddingRight: "1rem",
-            }}
+            lockAxis="y"
+            viewportClassName="pb-4 pl-[max(1rem,calc(50vw-35rem))] pr-4"
+            viewportProps={{ "aria-label": "Roadmap columns", role: "region" }}
           >
-            {statuses.map((status) => {
-              const statusFeedback = optimisticFeedback.filter(
-                (f) => f.organizationStatusId === status._id
-              );
+            <div className="flex min-h-[70vh] w-max gap-4">
+              {statuses.map((status) => {
+                const statusFeedback = optimisticFeedback.filter(
+                  (f) => f.organizationStatusId === status._id
+                );
 
-              return (
-                <DroppableColumn
-                  isAdmin={isAdmin}
-                  isDragging={activeItem !== null}
-                  items={statusFeedback}
-                  key={status._id}
-                  onDeleteClick={() =>
-                    setDeleteDialogStatus({
-                      color: status.color,
-                      id: status._id,
-                      name: status.name,
-                    })
-                  }
-                  onFeedbackClick={onFeedbackClick}
-                  status={status}
-                />
-              );
-            })}
+                return (
+                  <DroppableColumn
+                    isAdmin={isAdmin}
+                    isDragging={activeItem !== null}
+                    items={statusFeedback}
+                    key={status._id}
+                    onDeleteClick={() =>
+                      setDeleteDialogStatus({
+                        color: status.color,
+                        id: status._id,
+                        name: status.name,
+                      })
+                    }
+                    onFeedbackClick={onFeedbackClick}
+                    status={status}
+                  />
+                );
+              })}
 
-            {isAdmin && <AddColumnInline organizationId={organizationId} />}
+              {isAdmin && <AddColumnInline organizationId={organizationId} />}
+            </div>
           </ScrollArea>
 
           <DragOverlay dropAnimation={null}>

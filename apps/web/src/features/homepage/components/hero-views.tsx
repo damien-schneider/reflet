@@ -9,7 +9,7 @@ import {
 import { motion } from "motion/react";
 import { useState } from "react";
 
-import { Badge } from "@/components/ui/badge";
+import { TagBadge } from "@/components/tag-badge";
 import { cn } from "@/lib/utils";
 import {
   CHANGELOG_ENTRIES,
@@ -84,11 +84,11 @@ export function FeedbackView() {
                   {item.desc}
                 </p>
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <Badge color={item.color}>{item.label}</Badge>
+                  <TagBadge color={item.color}>{item.label}</TagBadge>
                   {item.tags.map((tag) => (
-                    <Badge color={tag.color} key={tag.label}>
+                    <TagBadge color={tag.color} key={tag.label}>
                       {tag.label}
-                    </Badge>
+                    </TagBadge>
                   ))}
                 </div>
               </div>
@@ -101,7 +101,7 @@ export function FeedbackView() {
       <div className="hidden w-[340px] flex-col border-border border-l lg:flex">
         <div className="border-border border-b p-5">
           <div className="mb-3 flex items-center gap-2">
-            <Badge color="green">Planned</Badge>
+            <TagBadge color="green">Planned</TagBadge>
             <span className="text-muted-foreground text-xs">Oct 24, 2024</span>
           </div>
           <h3 className="mb-1 font-semibold text-base text-foreground">
@@ -146,9 +146,9 @@ export function FeedbackView() {
               Tags
             </span>
             <div className="flex flex-wrap gap-1.5">
-              <Badge color="purple">UX</Badge>
-              <Badge color="pink">Design</Badge>
-              <Badge color="blue">Accessibility</Badge>
+              <TagBadge color="purple">UX</TagBadge>
+              <TagBadge color="pink">Design</TagBadge>
+              <TagBadge color="blue">Accessibility</TagBadge>
             </div>
           </div>
 
@@ -221,7 +221,7 @@ export function RoadmapView() {
         >
           {/* Column header */}
           <div className="mb-3 flex items-center gap-2">
-            <Badge color={col.color}>{col.title}</Badge>
+            <TagBadge color={col.color}>{col.title}</TagBadge>
             <span className="font-medium text-muted-foreground text-xs">
               {col.items.length}
             </span>
@@ -306,7 +306,7 @@ export function ChangelogView() {
 
               <div className="flex-1 rounded-xl border border-border bg-card p-4 transition-shadow hover:shadow-md">
                 <div className="mb-2 flex flex-wrap items-center gap-2">
-                  <Badge color={entry.color}>{entry.version}</Badge>
+                  <TagBadge color={entry.color}>{entry.version}</TagBadge>
                   <span className="flex items-center gap-1 text-muted-foreground text-xs">
                     <CalendarBlank size={10} />
                     {entry.date}

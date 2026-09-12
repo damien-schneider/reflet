@@ -1,12 +1,17 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@ctrl-ui/react/ui/card";
 import { ArrowLeft, CheckCircle } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { H1, Lead, Muted } from "@/components/ui/typography";
 import { ConversationComposer } from "@/features/support/components/conversation-composer";
 import { ConversationList } from "@/features/support/components/conversation-list";
@@ -113,7 +118,7 @@ export function SupportCenter({ backHref, org }: SupportCenterProps) {
         <Button
           className="mb-4"
           onClick={() => setOpenConversationId(null)}
-          size="sm"
+          size="xs"
           variant="ghost"
         >
           <ArrowLeft className="h-4 w-4" />

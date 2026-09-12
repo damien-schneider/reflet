@@ -1,14 +1,13 @@
+import { Button } from "@ctrl-ui/react/ui/button";
 import { GithubLogo } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
-
-import { Button } from "@/components/ui/button";
 
 const navLinkClassName =
   "font-medium text-foreground/75 text-sm transition-colors hover:text-foreground";
 
 export default function NavbarDesktop() {
   return (
-    <nav className="sticky top-0 z-50 hidden border-border border-b bg-background/95 backdrop-blur-md md:block">
+    <nav className="sticky top-0 z-50 hidden border-border/60 border-b bg-background/70 backdrop-blur-xl md:block">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-8">
           <Link
@@ -44,7 +43,9 @@ export default function NavbarDesktop() {
             Log in
           </Link>
           <Link href="/dashboard" prefetch={true}>
-            <Button size="default">Get started</Button>
+            <Button tone="primary" variant="solid">
+              Get started
+            </Button>
           </Link>
         </div>
       </div>

@@ -1,8 +1,7 @@
+import { Badge } from "@ctrl-ui/react/ui/badge";
+import { Button } from "@ctrl-ui/react/ui/button";
 import Link from "next/link";
-
 import { JsonLd } from "@/components/json-ld";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { H1, Lead, Muted } from "@/components/ui/typography";
 import type { BlogPostMeta } from "@/lib/blog";
 import { formatDate, getCategoryLabel } from "@/lib/blog";
@@ -51,7 +50,7 @@ export function BlogPostLayout({ meta, slug, children }: BlogPostLayoutProps) {
       {/* Header */}
       <header className="mb-10">
         <div className="mb-4 flex items-center gap-3">
-          <Badge variant="secondary">{getCategoryLabel(meta.category)}</Badge>
+          <Badge>{getCategoryLabel(meta.category)}</Badge>
           <Muted>{meta.readingTime}</Muted>
         </div>
         <H1 className="mb-4" variant="page">
@@ -92,10 +91,12 @@ export function BlogPostLayout({ meta, slug, children }: BlogPostLayoutProps) {
         </p>
         <div className="flex justify-center gap-4">
           <Link href="/dashboard">
-            <Button size="lg">Start Free Trial</Button>
+            <Button size="md" tone="primary" variant="solid">
+              Start Free Trial
+            </Button>
           </Link>
           <Link href="/pricing">
-            <Button size="lg" variant="outline">
+            <Button size="md" variant="surface">
               View Pricing
             </Button>
           </Link>

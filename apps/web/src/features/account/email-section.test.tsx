@@ -9,7 +9,7 @@ vi.mock("@hookform/resolvers/zod", () => ({
   }),
 }));
 
-vi.mock("sonner", () => ({
+vi.mock("@ctrl-ui/react/ui/toast", () => ({
   toast: { error: vi.fn(), success: vi.fn() },
 }));
 
@@ -19,7 +19,7 @@ vi.mock("@/lib/auth-client", () => ({
   },
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     disabled,
@@ -37,7 +37,7 @@ vi.mock("@/components/ui/button", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/card", () => ({
+vi.mock("@ctrl-ui/react/ui/card", () => ({
   Card: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   CardContent: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
@@ -53,14 +53,15 @@ vi.mock("@/components/ui/card", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/field", () => ({
+vi.mock("@ctrl-ui/react/ui/field", () => ({
   Field: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  FieldError: ({ errors }: { errors?: Array<{ message?: string }> }) =>
-    errors ? (
-      <span data-testid="field-error">
-        {errors.map((e) => e.message).join(", ")}
-      </span>
-    ) : null,
+  FieldError: ({
+    children,
+    match,
+  }: {
+    children?: React.ReactNode;
+    match?: boolean;
+  }) => (match ? <span data-testid="field-error">{children}</span> : null),
   FieldLabel: ({
     children,
     htmlFor,
@@ -70,13 +71,13 @@ vi.mock("@/components/ui/field", () => ({
   }) => <label htmlFor={htmlFor}>{children}</label>,
 }));
 
-vi.mock("@/components/ui/input", () => ({
+vi.mock("@ctrl-ui/react/ui/input", () => ({
   Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => (
     <input {...props} />
   ),
 }));
 
-vi.mock("@/components/ui/separator", () => ({
+vi.mock("@ctrl-ui/react/ui/separator", () => ({
   Separator: () => <hr />,
 }));
 
@@ -192,7 +193,7 @@ describe("EmailSection", () => {
 
   it("submits form and calls authClient.changeEmail", async () => {
     const { authClient } = await import("@/lib/auth-client");
-    await import("sonner");
+    await import("@ctrl-ui/react/ui/toast");
     const setIsLoading = vi.fn();
     const user = userEvent.setup();
     render(
@@ -210,7 +211,7 @@ describe("EmailSection", () => {
 
   it("shows error toast on failure", async () => {
     const { authClient } = await import("@/lib/auth-client");
-    const { toast } = await import("sonner");
+    const { toast } = await import("@ctrl-ui/react/ui/toast");
     vi.mocked(authClient.changeEmail).mockRejectedValueOnce(
       new Error("Email taken")
     );

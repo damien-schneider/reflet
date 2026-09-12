@@ -1,12 +1,12 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import { CloudArrowUp, Eye } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import Link from "next/link";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 
 interface RetroactiveDraftsBarProps {
   orgSlug: string;
@@ -55,12 +55,18 @@ export function RetroactiveDraftsBar({
       </span>
       <div className="flex items-center gap-2">
         <Link href={`/dashboard/${orgSlug}/changelog/review-drafts`}>
-          <Button size="sm" variant="outline">
+          <Button size="xs" variant="surface">
             <Eye className="h-4 w-4" />
             Review First
           </Button>
         </Link>
-        <Button onClick={handlePublishAll} size="sm" type="button">
+        <Button
+          onClick={handlePublishAll}
+          size="xs"
+          tone="primary"
+          type="button"
+          variant="solid"
+        >
           <CloudArrowUp className="h-4 w-4" />
           Publish All
         </Button>

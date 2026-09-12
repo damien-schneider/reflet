@@ -1,9 +1,9 @@
-import { ChartBar, CheckCircle } from "@phosphor-icons/react";
 import {
   Progress,
   ProgressLabel,
   ProgressValue,
-} from "@/components/ui/progress";
+} from "@ctrl-ui/react/ui/progress";
+import { ChartBar, CheckCircle } from "@phosphor-icons/react";
 import { H3, Muted, Text } from "@/components/ui/typography";
 
 import type { LimitsData, UsageData } from "./billing-types";

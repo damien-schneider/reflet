@@ -1,0 +1,85 @@
+@media (max-width: 767px) {
+  :where(.marketing-page) {
+    --marketing-section-space: 100px;
+    --marketing-content-space: 48px;
+  }
+  :where(.marketing-navigation) {
+    gap: 18px;
+    height: 70px;
+    padding: 0 22px;
+  }
+  :where(.marketing-wordmark) {
+    font-size: 25px;
+  }
+  :where(.marketing-navigation nav) {
+    gap: 18px;
+    font-size: 12px;
+  }
+  :where(.marketing-docs-link),
+  :where(.marketing-login) {
+    display: none;
+  }
+  :where(.marketing-navigation-actions) {
+    gap: 8px;
+    margin-left: auto;
+  }
+  :where(.marketing-section) {
+    padding: var(--marketing-section-space) 24px;
+  }
+  :where(.marketing-developer),
+  :where(.marketing-plans),
+  :where(.marketing-faq) {
+    grid-template-columns: 1fr;
+  }
+  :where(.marketing-developer) {
+    gap: 32px;
+    padding-top: 60px;
+  }
+  :where(.marketing-code) {
+    padding: 20px;
+  }
+  :where(.marketing-code pre) {
+    font-size: 10px;
+  }
+  :where(.marketing-plan) {
+    padding: 28px;
+  }
+  :where(.marketing-open-source) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  :where(.marketing-faq) {
+    gap: 22px;
+  }
+  :where(.marketing-closing) {
+    padding: var(--marketing-section-space) 24px;
+  }
+  :where(.marketing-footer) {
+    flex-direction: column;
+    gap: 26px;
+    align-items: flex-start;
+    padding: 40px 24px;
+  }
+  :where(.marketing-footer nav) {
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+}
+@media (max-width: 440px) {
+  :where(.marketing-navigation) {
+    gap: 10px;
+    padding: 0 16px;
+  }
+  :where(.marketing-navigation nav) {
+    gap: 12px;
+  }
+  :where(.marketing-navigation nav a:first-child) {
+    display: none;
+  }
+  :where(.marketing-navigation .reflet-mark) {
+    display: none;
+  }
+  :where(.marketing-navigation-actions [data-control-family="button"]) {
+    --cui-button-padding-inline: 12px;
+  }
+}

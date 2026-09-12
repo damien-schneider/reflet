@@ -1,5 +1,15 @@
 "use client";
 
+import { Badge } from "@ctrl-ui/react/ui/badge";
+import { Button } from "@ctrl-ui/react/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+} from "@ctrl-ui/react/ui/card";
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import {
   ArrowRight,
   CheckCircle,
@@ -11,33 +21,22 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
-import { toast } from "sonner";
-
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-} from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 
 type OrganizationId = Id<"organizations">;
 
 function SimilarityBadge({ score }: { score: number }) {
   const percentage = Math.round(score * 100);
-  const getVariant = (): "destructive" | "default" | "secondary" => {
+  const color = (() => {
     if (percentage >= 90) {
-      return "destructive";
+      return "red";
     }
     if (percentage >= 75) {
-      return "default";
+      return "orange";
     }
-    return "secondary";
-  };
+    return "neutral";
+  })();
 
-  return <Badge variant={getVariant()}>{percentage}% similar</Badge>;
+  return <Badge color={color}>{percentage}% similar</Badge>;
 }
 
 function FeedbackPreview({
@@ -181,7 +180,9 @@ export function DuplicateReviewPanel({
                         pair._id
                       )
                     }
-                    size="sm"
+                    size="xs"
+                    tone="primary"
+                    variant="solid"
                   >
                     <GitMerge className="mr-1 size-3.5" />
                     Merge A → B
@@ -194,15 +195,15 @@ export function DuplicateReviewPanel({
                         pair._id
                       )
                     }
-                    size="sm"
-                    variant="outline"
+                    size="xs"
+                    variant="surface"
                   >
                     <GitMerge className="mr-1 size-3.5" />
                     Merge B → A
                   </Button>
                   <Button
                     onClick={() => handleReject(pair._id)}
-                    size="sm"
+                    size="xs"
                     variant="ghost"
                   >
                     <XCircle className="mr-1 size-3.5" />

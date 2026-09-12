@@ -1,11 +1,10 @@
 "use client";
 
+import { ScrollArea } from "@ctrl-ui/react/ui/scroll-area";
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import { use } from "react";
-
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
 import { H2, Muted } from "@/components/ui/typography";
 import { ProjectContext } from "@/features/project/components/project-context";
 import { ProjectNav } from "@/features/project/components/project-nav";
@@ -79,7 +78,7 @@ export default function ProjectLayout({
     <ProjectContext value={{ isAdmin, organizationId: org._id, orgSlug }}>
       <div className="mx-auto max-w-5xl px-4 pt-12 pb-8">
         <div className="flex flex-col md:flex-row md:gap-8">
-          <ScrollArea className="-mx-4 mb-6 md:hidden" direction="horizontal">
+          <ScrollArea className="-mx-4 mb-6 md:hidden" lockAxis="y">
             <div className="px-4">
               <ProjectNav baseUrl={baseUrl} variant="tabs" />
             </div>

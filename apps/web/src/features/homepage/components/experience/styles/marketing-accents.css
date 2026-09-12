@@ -1,0 +1,51 @@
+:where(
+  .marketing-page [data-feature="collect"],
+  .journey-track:is([data-step="capture"], [data-step="board"]),
+  .journey-surface:is([data-chapter="capture"], [data-chapter="board"])
+) {
+  --feature-color: var(--marketing-amber);
+  --feature-solid: var(--marketing-amber-solid);
+}
+:where(
+  .marketing-page [data-feature="plan"],
+  .journey-track:is([data-step="ai"], [data-step="planned"]),
+  .journey-surface:is([data-chapter="ai"], [data-chapter="planned"])
+) {
+  --feature-color: var(--marketing-violet);
+  --feature-solid: var(--marketing-violet-solid);
+}
+:where(
+  .marketing-page [data-feature="release"],
+  .journey-track:is(
+    [data-step="done"],
+    [data-step="release"],
+    [data-step="notify"]
+  ),
+  .journey-surface:is([data-chapter="release"], [data-chapter="notify"])
+) {
+  --feature-color: var(--marketing-green);
+  --feature-solid: var(--marketing-green-solid);
+}
+:where(.marketing-page [data-feature], .journey-track, .journey-surface) {
+  --marketing-signal: var(--feature-color);
+  --marketing-signal-soft: color-mix(
+    in srgb,
+    var(--feature-color) 9%,
+    var(--card)
+  );
+}
+@media (forced-colors: none) {
+  @supports (background-clip: text) {
+    :where(.feature-selector-button[aria-pressed="true"] strong > span) {
+      color: transparent;
+      background-image: linear-gradient(
+        105deg,
+        var(--feature-color),
+        var(--foreground) 80%
+      );
+      background-clip: text;
+      -webkit-box-decoration-break: clone;
+      box-decoration-break: clone;
+    }
+  }
+}

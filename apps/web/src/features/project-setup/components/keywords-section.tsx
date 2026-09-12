@@ -1,9 +1,13 @@
+import { Badge } from "@ctrl-ui/react/ui/badge";
+import { Button } from "@ctrl-ui/react/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@ctrl-ui/react/ui/card";
+import { Checkbox } from "@ctrl-ui/react/ui/checkbox";
 import { Binoculars } from "@phosphor-icons/react";
-
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import type { SuggestedKeyword } from "./setup-types";
 
 interface KeywordsSectionProps {
@@ -33,7 +37,7 @@ export function KeywordsSection({
           </CardTitle>
           <Button
             onClick={() => onToggleAll(acceptedCount < keywords.length)}
-            size="sm"
+            size="xs"
             variant="ghost"
           >
             {acceptedCount === keywords.length ? "Deselect all" : "Select all"}
@@ -54,7 +58,7 @@ export function KeywordsSection({
               <span className="flex-1 font-medium text-sm">
                 &quot;{keyword.keyword}&quot;
               </span>
-              <Badge variant="secondary">{keyword.category}</Badge>
+              <Badge>{keyword.category}</Badge>
             </div>
           ))}
         </div>

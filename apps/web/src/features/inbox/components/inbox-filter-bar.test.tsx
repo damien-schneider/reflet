@@ -2,19 +2,8 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/components/ui/toggle-group", () => ({
-  ToggleGroup: ({
-    children,
-    ...props
-  }: {
-    children: React.ReactNode;
-    [key: string]: unknown;
-  }) => (
-    <div data-testid="toggle-group" {...props}>
-      {children}
-    </div>
-  ),
-  ToggleGroupItem: ({
+vi.mock("@ctrl-ui/react/ui/toggle", () => ({
+  Toggle: ({
     children,
     value,
     pressed,
@@ -37,7 +26,7 @@ vi.mock("@/components/ui/toggle-group", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/input", () => ({
+vi.mock("@ctrl-ui/react/ui/input", () => ({
   Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => (
     <input {...props} />
   ),

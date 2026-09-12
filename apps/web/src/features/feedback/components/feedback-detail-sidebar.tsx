@@ -1,13 +1,13 @@
-import { X } from "@phosphor-icons/react";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@ctrl-ui/react/ui/card";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@ctrl-ui/react/ui/select";
+import { X } from "@phosphor-icons/react";
+import { TagBadge } from "@/components/tag-badge";
 import { getTagSwatchClass } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
 
@@ -55,7 +55,7 @@ export function FeedbackDetailSidebar({
           <div className="flex flex-wrap gap-2">
             {feedbackTags.map((tag) =>
               tag ? (
-                <Badge className="group" color={tag.color} key={tag._id}>
+                <TagBadge className="group" color={tag.color} key={tag._id}>
                   {tag.icon && <span>{tag.icon}</span>}
                   {tag.name}
                   {isAdmin && (
@@ -67,7 +67,7 @@ export function FeedbackDetailSidebar({
                       <X className="h-3 w-3" />
                     </button>
                   )}
-                </Badge>
+                </TagBadge>
               ) : null
             )}
             {feedbackTags.length === 0 && (

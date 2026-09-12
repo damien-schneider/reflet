@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/components/ui/kbd", () => ({
+vi.mock("@ctrl-ui/react/ui/kbd", () => ({
   Kbd: ({ children }: { children: React.ReactNode }) => (
     <kbd data-testid="kbd">{children}</kbd>
   ),

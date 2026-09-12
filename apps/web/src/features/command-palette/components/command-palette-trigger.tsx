@@ -1,8 +1,8 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import { MagnifyingGlass } from "@phosphor-icons/react";
 import { useSetAtom } from "jotai";
-import { Button } from "@/components/ui/button";
 import { commandPaletteOpenAtom } from "@/store/dashboard-atoms";
 
 export function CommandPaletteTrigger() {
@@ -12,7 +12,7 @@ export function CommandPaletteTrigger() {
     <Button
       className="h-8 w-full justify-start gap-2 text-muted-foreground group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0"
       onClick={() => setOpen(true)}
-      variant="outline"
+      variant="surface"
     >
       <MagnifyingGlass className="size-4 shrink-0" />
       <span className="flex-1 text-left group-data-[collapsible=icon]:hidden">

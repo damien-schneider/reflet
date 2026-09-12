@@ -19,7 +19,7 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
   },
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     onClick,
@@ -38,7 +38,7 @@ vi.mock("@/components/ui/typography", () => ({
   Muted: ({ children }: { children: React.ReactNode }) => <p>{children}</p>,
 }));
 
-vi.mock("@/components/ui/card", () => ({
+vi.mock("@ctrl-ui/react/ui/card", () => ({
   Card: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   CardContent: ({
     children,

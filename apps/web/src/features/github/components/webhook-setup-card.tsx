@@ -1,5 +1,8 @@
 "use client";
 
+import { Alert, AlertDescription, AlertTitle } from "@ctrl-ui/react/ui/alert";
+import { Badge } from "@ctrl-ui/react/ui/badge";
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Check,
   Spinner,
@@ -7,15 +10,6 @@ import {
   WebhooksLogo,
   X,
 } from "@phosphor-icons/react";
-
-import {
-  Alert,
-  AlertAction,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { H3, Muted, Text } from "@/components/ui/typography";
 
 import { GitHubPermissionErrorAlert } from "./github-permission-error-alert";
@@ -58,24 +52,24 @@ export function WebhookSetupSection({
     }
 
     return (
-      <Alert className="mb-4" variant="destructive">
+      <Alert className="mb-4 pr-10" variant="destructive">
         <Warning className="h-4 w-4" />
         <AlertTitle>Webhook setup failed</AlertTitle>
         <AlertDescription>
           <p>{error.message}</p>
         </AlertDescription>
         {onClearError ? (
-          <AlertAction>
+          <div className="absolute top-2 right-2">
             <Button
               className="h-6 w-6"
+              iconOnly
               onClick={onClearError}
-              size="icon"
               variant="ghost"
             >
               <X className="h-4 w-4" />
               <span className="sr-only">Dismiss</span>
             </Button>
-          </AlertAction>
+          </div>
         ) : null}
       </Alert>
     );
@@ -84,7 +78,7 @@ export function WebhookSetupSection({
   const renderContent = () => {
     if (hasWebhook) {
       return (
-        <Badge variant="secondary">
+        <Badge>
           <Check className="mr-1 h-3 w-3" />
           Webhook Active
         </Badge>
@@ -93,7 +87,12 @@ export function WebhookSetupSection({
 
     if (isAdmin) {
       return (
-        <Button disabled={isSettingUp} onClick={onSetup}>
+        <Button
+          disabled={isSettingUp}
+          onClick={onSetup}
+          tone="primary"
+          variant="solid"
+        >
           {isSettingUp ? (
             <Spinner className="mr-2 h-4 w-4 animate-spin" />
           ) : (

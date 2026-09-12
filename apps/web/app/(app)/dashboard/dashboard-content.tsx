@@ -21,6 +21,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { H2, Muted } from "@/components/ui/typography";
 import { CommandPalette } from "@/features/command-palette/components/command-palette";
 import { DashboardSidebar } from "@/features/dashboard/components/dashboard-sidebar";
@@ -227,7 +228,7 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
     <SidebarProvider onOpenChange={setSidebarOpen} open={sidebarOpen}>
       <CommandPalette isAdmin={isAdmin} orgSlug={orgSlug} />
       <DashboardSidebar orgSlug={orgSlug} pathname={pathname ?? ""} />
-      <SidebarInset>
+      <SidebarInset className="min-w-0">
         <header className="pointer-events-none sticky top-0 z-10 flex h-14 items-center gap-2 px-4 *:pointer-events-auto">
           <div className="flex items-center gap-2">
             <SidebarTrigger className="bg-background/20 backdrop-blur-sm hover:bg-background/30 md:hidden" />
@@ -238,6 +239,7 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
               />
             </div>
           </div>
+          <ThemeToggle className="ml-auto shrink-0 bg-background/20 backdrop-blur-sm hover:bg-background/30" />
         </header>
 
         {isNonOrgRoute ? (

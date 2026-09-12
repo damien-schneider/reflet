@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   ChartBar,
   CheckSquare,
@@ -9,7 +10,6 @@ import {
   ToggleLeft,
 } from "@phosphor-icons/react";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { H3, Muted, Text } from "@/components/ui/typography";
 import type { QuestionType, SurveyQuestion } from "@/store/surveys";
 import {
@@ -97,8 +97,8 @@ export function SurveyPreview({
         <Button
           disabled={isFirst}
           onClick={() => setCurrentIndex((i) => i - 1)}
-          size="sm"
-          variant="outline"
+          size="xs"
+          variant="surface"
         >
           Back
         </Button>
@@ -111,7 +111,9 @@ export function SurveyPreview({
               setCurrentIndex((i) => i + 1);
             }
           }}
-          size="sm"
+          size="xs"
+          tone="primary"
+          variant="solid"
         >
           {isLast ? "Submit" : "Next"}
         </Button>

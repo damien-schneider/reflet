@@ -1,5 +1,12 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@ctrl-ui/react/ui/card";
 import {
   ArrowRight,
   Brain,
@@ -11,9 +18,6 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import Link from "next/link";
-
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { H1, Muted, Text } from "@/components/ui/typography";
 import { IntelligenceCard } from "./intelligence-card";
 import { StatusCard } from "./status-card";
@@ -80,7 +84,12 @@ export function ProjectHubPage({
                 and more.
               </Text>
             </div>
-            <Button render={<Link href={`${basePath}/setup`} />} size="sm">
+            <Button
+              render={<Link href={`${basePath}/setup`} />}
+              size="xs"
+              tone="primary"
+              variant="solid"
+            >
               Connect
               <ArrowRight className="ml-1 size-3.5" />
             </Button>
@@ -161,7 +170,7 @@ export function ProjectHubPage({
         <div className="mt-6 flex items-center justify-center">
           <Button
             render={<Link href={`${basePath}/setup`} />}
-            size="sm"
+            size="xs"
             variant="ghost"
           >
             <Sparkle className="mr-1.5 size-3.5" />

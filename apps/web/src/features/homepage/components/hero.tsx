@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   ArrowRight,
   CaretRight,
@@ -10,8 +11,6 @@ import {
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { useState } from "react";
-
-import { Button } from "@/components/ui/button";
 import { H1, Lead } from "@/components/ui/typography";
 import { cn } from "@/lib/utils";
 import { ChangelogView, FeedbackView, RoadmapView } from "./hero-views";
@@ -70,8 +69,9 @@ export default function Hero() {
         <Link href="/dashboard">
           <Button
             className="w-full rounded-full sm:w-auto"
-            size="lg"
-            variant="default"
+            size="md"
+            tone="primary"
+            variant="solid"
           >
             Start free trial
           </Button>

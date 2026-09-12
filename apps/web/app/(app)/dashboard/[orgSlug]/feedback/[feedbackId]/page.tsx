@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Card, CardContent, CardHeader } from "@ctrl-ui/react/ui/card";
 import { ArrowLeft } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
@@ -7,9 +9,6 @@ import { useMutation, useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import { use, useCallback } from "react";
-
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { H2, Muted } from "@/components/ui/typography";
 import { FeedbackHeader } from "./feedback-header";
 
@@ -92,7 +91,7 @@ export default function FeedbackDetailPage({
             don&apos;t have access.
           </Muted>
           <Link href={`/dashboard/${orgSlug}`}>
-            <Button className="mt-4" variant="outline">
+            <Button className="mt-4" variant="surface">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to dashboard
             </Button>

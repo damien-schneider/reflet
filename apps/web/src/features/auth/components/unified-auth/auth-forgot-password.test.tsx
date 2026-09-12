@@ -16,7 +16,7 @@ vi.mock("motion/react", () => ({
   },
 }));
 
-vi.mock("@/components/ui/field", () => ({
+vi.mock("@ctrl-ui/react/ui/field", () => ({
   Field: ({
     children,
     className,
@@ -25,15 +25,14 @@ vi.mock("@/components/ui/field", () => ({
     className?: string;
   }) => <div className={className}>{children}</div>,
   FieldError: ({
-    errors,
+    children,
+    match,
     "data-testid": testId,
   }: {
-    errors?: Array<{ message?: string }>;
+    children?: React.ReactNode;
+    match?: boolean;
     "data-testid"?: string;
-  }) =>
-    errors && errors.length > 0 ? (
-      <span data-testid={testId}>{errors[0]?.message}</span>
-    ) : null,
+  }) => (match ? <span data-testid={testId}>{children}</span> : null),
   FieldLabel: ({
     children,
     htmlFor,
@@ -43,7 +42,7 @@ vi.mock("@/components/ui/field", () => ({
   }) => <label htmlFor={htmlFor}>{children}</label>,
 }));
 
-vi.mock("@/components/ui/input", () => ({
+vi.mock("@ctrl-ui/react/ui/input", () => ({
   Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => (
     <input {...props} />
   ),

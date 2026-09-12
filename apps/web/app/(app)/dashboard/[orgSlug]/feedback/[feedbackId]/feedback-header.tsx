@@ -1,5 +1,14 @@
 "use client";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@ctrl-ui/react/ui/avatar";
+import { Badge } from "@ctrl-ui/react/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@ctrl-ui/react/ui/select";
 import {
   ArrowLeft,
   CaretUp,
@@ -9,16 +18,6 @@ import {
 } from "@phosphor-icons/react";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
-
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { H1 } from "@/components/ui/typography";
 import { cn } from "@/lib/utils";
 

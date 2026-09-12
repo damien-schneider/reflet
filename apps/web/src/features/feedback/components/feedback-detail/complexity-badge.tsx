@@ -1,11 +1,15 @@
 "use client";
 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@ctrl-ui/react/ui/tooltip";
 import { CaretDown, Sparkle, TreeStructure, X } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
-
-import { Badge } from "@/components/ui/badge";
+import { TagBadge } from "@/components/tag-badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,11 +19,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { Complexity } from "./ai-analysis-types";
 import { COMPLEXITY_OPTIONS, isComplexity } from "./ai-analysis-types";
@@ -78,7 +77,7 @@ export function ComplexityBadge({
       : (reasoning ?? `AI Complexity: ${config.label}`);
 
   const badge = (
-    <Badge
+    <TagBadge
       className="h-8 gap-1 rounded-full px-3 font-normal text-xs"
       color={config.color}
     >
@@ -99,7 +98,7 @@ export function ComplexityBadge({
         </TooltipContent>
       </Tooltip>
       {isAdmin && <CaretDown className="h-3 w-3 opacity-70" />}
-    </Badge>
+    </TagBadge>
   );
 
   if (!isAdmin) {

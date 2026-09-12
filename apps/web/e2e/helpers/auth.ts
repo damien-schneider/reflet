@@ -71,10 +71,13 @@ export async function createOrganization(page: Page, name: string) {
     page.getByRole("heading", { name: "Welcome to Reflet" })
   ).toBeVisible({ timeout: 15_000 });
 
-  await page.getByRole("button", { name: "Select organization" }).click();
+  await page
+    .getByRole("main")
+    .getByRole("button", { name: "Select organization" })
+    .click();
   await page.getByText("Create organization").click();
 
-  const dialog = page.locator('[role="dialog"]');
+  const dialog = page.getByRole("dialog", { name: "Create organization" });
   await expect(dialog).toBeVisible({ timeout: 10_000 });
   await dialog.locator("#name").fill(name);
   await dialog.getByRole("button", { name: "Create" }).click();

@@ -1,11 +1,11 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check } from "@phosphor-icons/react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import { H3, Text } from "@/components/ui/typography";
 import {
   type UpdatePasswordForm,
@@ -116,7 +116,13 @@ export function PasswordSection({
           showPassword={showPassword.confirm}
         />
 
-        <Button className="w-full md:w-auto" disabled={isLoading} type="submit">
+        <Button
+          className="w-full md:w-auto"
+          disabled={isLoading}
+          tone="primary"
+          type="submit"
+          variant="solid"
+        >
           <Check className="mr-2 size-4" />
           Update Password
         </Button>

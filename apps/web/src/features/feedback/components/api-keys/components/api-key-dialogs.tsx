@@ -2,14 +2,13 @@
 
 import {
   AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
+  AlertDialogClose,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@ctrl-ui/react/ui/alert-dialog";
 
 interface ApiKeyDialogsProps {
   isRegenerating: boolean;
@@ -45,10 +44,15 @@ export function ApiKeyDialogs({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction disabled={isRegenerating} onClick={onRegenerate}>
+            <AlertDialogClose>Cancel</AlertDialogClose>
+            <AlertDialogClose
+              disabled={isRegenerating}
+              onClick={onRegenerate}
+              tone="primary"
+              variant="solid"
+            >
               {isRegenerating ? "Regenerating..." : "Regenerate"}
-            </AlertDialogAction>
+            </AlertDialogClose>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -63,8 +67,14 @@ export function ApiKeyDialogs({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={onDelete}>Delete</AlertDialogAction>
+            <AlertDialogClose>Cancel</AlertDialogClose>
+            <AlertDialogClose
+              onClick={onDelete}
+              tone="danger"
+              variant="surface"
+            >
+              Delete
+            </AlertDialogClose>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -1,7 +1,7 @@
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Card, CardContent } from "@ctrl-ui/react/ui/card";
 import { ChatCircle } from "@phosphor-icons/react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { H3, Muted } from "@/components/ui/typography";
 
 interface SupportUnavailableProps {
@@ -19,7 +19,7 @@ export function SupportUnavailable({ backHref }: SupportUnavailableProps) {
             Support messaging is not enabled for this organization.
           </Muted>
           <Link className="mt-4" href={backHref}>
-            <Button variant="outline">Go back</Button>
+            <Button variant="surface">Go back</Button>
           </Link>
         </CardContent>
       </Card>

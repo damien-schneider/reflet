@@ -1,15 +1,15 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Field, FieldError, FieldLabel } from "@ctrl-ui/react/ui/field";
+import { Input } from "@ctrl-ui/react/ui/input";
+import { Separator } from "@ctrl-ui/react/ui/separator";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, Envelope, Trash, User } from "@phosphor-icons/react";
 import Image from "next/image";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Field, FieldError, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import { H3, Muted, Text } from "@/components/ui/typography";
 import {
   type UpdateProfileForm,
@@ -82,9 +82,9 @@ export function ProfileSection({
             {...registerProfile("name")}
             defaultValue={user?.name ?? ""}
           />
-          <FieldError
-            errors={profileErrors.name ? [profileErrors.name] : undefined}
-          />
+          <FieldError match={Boolean(profileErrors.name?.message)}>
+            {profileErrors.name?.message}
+          </FieldError>
         </Field>
 
         <Field>
@@ -99,8 +99,8 @@ export function ProfileSection({
             />
             {avatarUrl && (
               <Button
+                iconOnly
                 onClick={() => setAvatarUrl("")}
-                size="icon"
                 type="button"
                 variant="ghost"
               >
@@ -108,11 +108,9 @@ export function ProfileSection({
               </Button>
             )}
           </div>
-          <FieldError
-            errors={
-              profileErrors.avatarUrl ? [profileErrors.avatarUrl] : undefined
-            }
-          />
+          <FieldError match={Boolean(profileErrors.avatarUrl?.message)}>
+            {profileErrors.avatarUrl?.message}
+          </FieldError>
         </Field>
 
         {currentAvatar && (
@@ -149,7 +147,9 @@ export function ProfileSection({
         <Button
           className="w-full md:w-auto"
           disabled={isLoading || !isProfileDirty}
+          tone="primary"
           type="submit"
+          variant="solid"
         >
           <Check className="mr-2 size-4" />
           Save Changes

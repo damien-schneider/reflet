@@ -5,7 +5,7 @@ import { RepositorySelectorSection } from "./repository-selector-card";
 
 // Mock the UI components
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     onClick,
@@ -64,7 +64,7 @@ vi.mock("@/components/ui/typography", () => ({
 }));
 
 // Mock the Combobox to simulate filtering behavior
-vi.mock("@/components/ui/combobox", async () => {
+vi.mock("@ctrl-ui/react/ui/combobox", async () => {
   const React = await import("react");
   const { useState, Children, isValidElement, cloneElement } = React;
 
@@ -223,6 +223,11 @@ vi.mock("@/components/ui/combobox", async () => {
     ComboboxLabel,
     ComboboxList,
   };
+});
+
+vi.mock("@base-ui/react/combobox", async () => {
+  const mod = await import("@ctrl-ui/react/ui/combobox");
+  return { Combobox: { Root: mod.Combobox } };
 });
 
 vi.mock("@phosphor-icons/react", () => ({

@@ -1,10 +1,9 @@
 "use client";
 
+import { Badge } from "@ctrl-ui/react/ui/badge";
 import { ArrowUp, DotsSixVertical, Lightning } from "@phosphor-icons/react";
 import { motion } from "motion/react";
 import { useState } from "react";
-
-import { Badge } from "@/components/ui/badge";
 import { H3 } from "@/components/ui/typography";
 import { cn } from "@/lib/utils";
 
@@ -52,7 +51,7 @@ export function RoadmapKanbanCard() {
             Roadmap
           </H3>
         </div>
-        <Badge variant="secondary">Kanban</Badge>
+        <Badge>Kanban</Badge>
       </div>
 
       {/* Kanban columns */}

@@ -1,13 +1,12 @@
 "use client";
 
+import { ScrollArea } from "@ctrl-ui/react/ui/scroll-area";
 import { ChatCircle } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { format, isToday, isYesterday } from "date-fns";
 import { useEffect, useRef } from "react";
-
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Text } from "@/components/ui/typography";
 import { MessageBubble } from "@/features/support/components/message-bubble";
 import { authClient } from "@/lib/auth-client";

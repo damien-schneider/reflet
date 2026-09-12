@@ -1,6 +1,6 @@
 import { Sparkle } from "@phosphor-icons/react";
 
-import { Badge } from "@/components/ui/badge";
+import { TagBadge } from "@/components/tag-badge";
 
 const AI_INDICATOR_COLORS: Record<string, string> = {
   complex: "orange",
@@ -26,7 +26,7 @@ export function AiMiniIndicator({
 }) {
   const color = AI_INDICATOR_COLORS[type] ?? "gray";
   return (
-    <Badge
+    <TagBadge
       className="h-5 gap-0.5 rounded-full px-1.5 font-normal text-[10px]"
       color={color}
     >
@@ -34,6 +34,6 @@ export function AiMiniIndicator({
         <Sparkle className="h-2.5 w-2.5 opacity-60" weight="fill" />
       )}
       <span className="capitalize">{label}</span>
-    </Badge>
+    </TagBadge>
   );
 }

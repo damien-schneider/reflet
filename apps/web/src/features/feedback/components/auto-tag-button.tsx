@@ -1,13 +1,12 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import { ArrowsClockwise, Sparkle } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useEffect, useRef } from "react";
-import { toast } from "sonner";
-
-import { Button } from "@/components/ui/button";
 
 interface AutoTagButtonProps {
   organizationId: Id<"organizations">;
@@ -96,7 +95,7 @@ export function AutoTagButton({ organizationId }: AutoTagButtonProps) {
   if (isProcessing) {
     const processed = Math.min(job.processedItems, job.totalItems);
     return (
-      <Button className="shrink-0 gap-1.5" disabled size="sm" variant="outline">
+      <Button className="shrink-0 gap-1.5" disabled size="xs" variant="surface">
         <ArrowsClockwise className="h-4 w-4 animate-spin" />
         <span>
           Tagging {processed}/{job.totalItems}...
@@ -114,8 +113,8 @@ export function AutoTagButton({ organizationId }: AutoTagButtonProps) {
     <Button
       className="shrink-0 gap-1.5"
       onClick={handleStartAutoTag}
-      size="sm"
-      variant="outline"
+      size="xs"
+      variant="surface"
     >
       <Sparkle className="h-4 w-4" />
       <span>Auto-tag {untaggedCount}</span>

@@ -6,13 +6,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/tag-colors", () => ({
   getTagDotColor: (color: string) => color,
+  resolveTagColor: (color: string) => color,
 }));
 
 vi.mock("@phosphor-icons/react", () => ({
   Funnel: () => <span data-testid="funnel-icon" />,
 }));
 
-vi.mock("@/components/ui/badge", () => ({
+vi.mock("@ctrl-ui/react/ui/badge", () => ({
   Badge: ({
     children,
     variant,
@@ -27,17 +28,24 @@ vi.mock("@/components/ui/badge", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
+    tone,
     variant,
     size,
   }: {
     children: React.ReactNode;
+    tone?: string;
     variant?: string;
     size?: string;
   }) => (
-    <button data-size={size} data-variant={variant} type="button">
+    <button
+      data-size={size}
+      data-tone={tone}
+      data-variant={variant}
+      type="button"
+    >
       {children}
     </button>
   ),
@@ -253,16 +261,16 @@ describe("FilterDropdown", () => {
     expect(featureItem).toHaveAttribute("data-checked", "true");
   });
 
-  it("uses secondary variant on button when filters are active", () => {
+  it("uses primary tone on button when filters are active", () => {
     render(<FilterDropdown {...baseProps} selectedStatusIds={["s1"]} />);
     const button = screen.getByText("Filter").closest("button");
-    expect(button).toHaveAttribute("data-variant", "secondary");
+    expect(button).toHaveAttribute("data-tone", "primary");
   });
 
-  it("uses outline variant on button when no filters active", () => {
+  it("uses neutral tone on button when no filters active", () => {
     render(<FilterDropdown {...baseProps} />);
     const button = screen.getByText("Filter").closest("button");
-    expect(button).toHaveAttribute("data-variant", "outline");
+    expect(button).toHaveAttribute("data-tone", "neutral");
   });
 
   it("computes activeCount correctly with all filter types", () => {

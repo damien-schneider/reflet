@@ -10,7 +10,7 @@ import {
   Tag,
 } from "@phosphor-icons/react";
 
-import { Badge } from "@/components/ui/badge";
+import { TagBadge } from "@/components/tag-badge";
 import { cn } from "@/lib/utils";
 
 // =============================================================================
@@ -126,7 +126,7 @@ export function AIFeaturesMockup() {
             AI Analysis
           </span>
         </div>
-        <Badge color="green">AI Confidence: 94%</Badge>
+        <TagBadge color="green">AI Confidence: 94%</TagBadge>
       </div>
 
       {/* Feedback title */}
@@ -149,10 +149,10 @@ export function AIFeaturesMockup() {
           </div>
           <div className="flex items-center gap-1.5">
             {AI_TAGS.map((tag) => (
-              <Badge color={tag.color} key={tag.id}>
+              <TagBadge color={tag.color} key={tag.id}>
                 <Sparkle data-icon="inline-start" size={10} weight="fill" />
                 {tag.label}
-              </Badge>
+              </TagBadge>
             ))}
           </div>
         </div>
@@ -163,7 +163,7 @@ export function AIFeaturesMockup() {
             <Lightning className="text-muted-foreground" size={14} />
             <span className="text-muted-foreground text-xs">Priority</span>
           </div>
-          <Badge color="orange">Medium</Badge>
+          <TagBadge color="orange">Medium</TagBadge>
         </div>
 
         {/* Complexity */}
@@ -187,7 +187,7 @@ export function AIFeaturesMockup() {
           </div>
           <div className="flex items-center justify-between rounded-lg border border-border bg-muted/50 px-3 py-2.5">
             <div className="flex items-center gap-2">
-              <Badge color="yellow">87% match</Badge>
+              <TagBadge color="yellow">87% match</TagBadge>
               <span className="text-foreground text-xs">
                 Vim keybindings support
               </span>

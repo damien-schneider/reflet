@@ -9,7 +9,7 @@ vi.mock("@hookform/resolvers/zod", () => ({
   }),
 }));
 
-vi.mock("sonner", () => ({
+vi.mock("@ctrl-ui/react/ui/toast", () => ({
   toast: { error: vi.fn(), success: vi.fn() },
 }));
 
@@ -31,7 +31,7 @@ vi.mock("next/image", () => ({
   }) => <img alt={alt} className={className} src={src} />,
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     disabled,
@@ -53,7 +53,7 @@ vi.mock("@/components/ui/button", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/card", () => ({
+vi.mock("@ctrl-ui/react/ui/card", () => ({
   Card: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   CardContent: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
@@ -69,7 +69,7 @@ vi.mock("@/components/ui/card", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/field", () => ({
+vi.mock("@ctrl-ui/react/ui/field", () => ({
   Field: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   FieldError: () => null,
   FieldLabel: ({
@@ -81,13 +81,13 @@ vi.mock("@/components/ui/field", () => ({
   }) => <label htmlFor={htmlFor}>{children}</label>,
 }));
 
-vi.mock("@/components/ui/input", () => ({
+vi.mock("@ctrl-ui/react/ui/input", () => ({
   Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => (
     <input {...props} />
   ),
 }));
 
-vi.mock("@/components/ui/separator", () => ({
+vi.mock("@ctrl-ui/react/ui/separator", () => ({
   Separator: () => <hr />,
 }));
 
@@ -255,7 +255,7 @@ describe("ProfileSection", () => {
 
   it("shows error toast on profile update failure", async () => {
     const { authClient } = await import("@/lib/auth-client");
-    const { toast } = await import("sonner");
+    const { toast } = await import("@ctrl-ui/react/ui/toast");
     vi.mocked(authClient.updateUser).mockRejectedValueOnce(
       new Error("Update failed")
     );

@@ -1,5 +1,10 @@
 "use client";
 
+import { Badge } from "@ctrl-ui/react/ui/badge";
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Input } from "@ctrl-ui/react/ui/input";
+import { Switch } from "@ctrl-ui/react/ui/switch";
+import { Textarea } from "@ctrl-ui/react/ui/textarea";
 import {
   ChartBar,
   CheckSquare,
@@ -12,12 +17,7 @@ import {
 } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
 import { QuestionInputPreview } from "@/features/surveys/components/question-input-preview";
 import { QUESTION_TYPE_LABELS } from "@/features/surveys/lib/constants";
 import { cn } from "@/lib/utils";
@@ -154,7 +154,7 @@ export function QuestionCard({
                 </button>
               )}
             </div>
-            <Badge className="shrink-0" variant="secondary">
+            <Badge className="shrink-0">
               <Icon className="mr-1 size-3" />
               {QUESTION_TYPE_LABELS[question.type]}
             </Badge>
@@ -282,7 +282,7 @@ export function QuestionCard({
         <Button
           className="opacity-0 transition-opacity group-hover:opacity-100"
           onClick={() => onDelete(question._id)}
-          size="sm"
+          size="xs"
           variant="ghost"
         >
           <Trash className="size-4" />

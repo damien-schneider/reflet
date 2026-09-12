@@ -1,11 +1,11 @@
 "use client";
 
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
+import { Tabs, TabsList, TabsPanel, TabsTab } from "@ctrl-ui/react/ui/tabs";
 import { GearSix, Hash, Lightbulb, Users } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import { use, useState } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { H1 } from "@/components/ui/typography";
 import { IntelligenceSettings } from "@/features/intelligence/components/intelligence-settings";
 import { CommunityTab } from "./community-tab";
@@ -57,39 +57,39 @@ export default function IntelligencePage({
 
       <Tabs onValueChange={setSelectedTab} value={activeTab}>
         <TabsList>
-          <TabsTrigger value="insights">
+          <TabsTab value="insights">
             <Lightbulb className="mr-1.5 h-4 w-4" />
             Insights
-          </TabsTrigger>
-          <TabsTrigger value="community">
+          </TabsTab>
+          <TabsTab value="community">
             <Hash className="mr-1.5 h-4 w-4" />
             Community
-          </TabsTrigger>
-          <TabsTrigger value="competitors">
+          </TabsTab>
+          <TabsTab value="competitors">
             <Users className="mr-1.5 h-4 w-4" />
             Competitors
-          </TabsTrigger>
-          <TabsTrigger value="settings">
+          </TabsTab>
+          <TabsTab value="settings">
             <GearSix className="mr-1.5 h-4 w-4" />
             Settings
-          </TabsTrigger>
+          </TabsTab>
         </TabsList>
 
-        <TabsContent className="mt-6" value="insights">
+        <TabsPanel className="mt-6" value="insights">
           <InsightsTab organizationId={org._id} orgSlug={orgSlug} />
-        </TabsContent>
+        </TabsPanel>
 
-        <TabsContent className="mt-6" value="community">
+        <TabsPanel className="mt-6" value="community">
           <CommunityTab organizationId={org._id} />
-        </TabsContent>
+        </TabsPanel>
 
-        <TabsContent className="mt-6" value="competitors">
+        <TabsPanel className="mt-6" value="competitors">
           <CompetitorsTab organizationId={org._id} orgSlug={orgSlug} />
-        </TabsContent>
+        </TabsPanel>
 
-        <TabsContent className="mt-6" value="settings">
+        <TabsPanel className="mt-6" value="settings">
           <IntelligenceSettings organizationId={org._id} />
-        </TabsContent>
+        </TabsPanel>
       </Tabs>
     </div>
   );

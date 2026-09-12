@@ -1,14 +1,13 @@
 "use client";
 
+import { Dialog, DialogContent } from "@ctrl-ui/react/ui/dialog";
+import { Separator } from "@ctrl-ui/react/ui/separator";
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useCallback, useState } from "react";
-
-import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
+import { TagBadge } from "@/components/tag-badge";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 
 import { AIClarification } from "./ai-clarification";
@@ -192,10 +191,14 @@ export function FeedbackDetailDialog({
             {feedback.tags
               .filter((tag): tag is NonNullable<typeof tag> => tag !== null)
               .map((tag) => (
-                <Badge className="font-normal" color={tag.color} key={tag._id}>
+                <TagBadge
+                  className="font-normal"
+                  color={tag.color}
+                  key={tag._id}
+                >
                   {tag.icon && <span>{tag.icon}</span>}
                   {tag.name}
-                </Badge>
+                </TagBadge>
               ))}
           </div>
         </div>

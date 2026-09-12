@@ -1,12 +1,5 @@
-import { CaretUpDown, Check, Plus } from "@phosphor-icons/react";
-import { api } from "@reflet/backend/convex/_generated/api";
-import { useMutation, useQuery } from "convex/react";
-import Image from "next/image";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { Menu } from "@base-ui/react/menu";
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -14,15 +7,22 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@ctrl-ui/react/ui/dialog";
+import { Input } from "@ctrl-ui/react/ui/input";
+import { toast } from "@ctrl-ui/react/ui/toast";
+import { CaretUpDown, Check, Plus } from "@phosphor-icons/react";
+import { api } from "@reflet/backend/convex/_generated/api";
+import { useMutation, useQuery } from "convex/react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
   DropdownList,
   DropdownListContent,
   DropdownListItem,
   DropdownListSeparator,
-  DropdownListTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 function OrgIcon({
@@ -71,7 +71,6 @@ export function OrganizationSwitcher({
 
   const currentOrg = organizations?.find((org) => org?.slug === currentOrgSlug);
 
-  // Prefetch organization routes for instant switching
   useEffect(() => {
     if (organizations) {
       for (const org of organizations) {
@@ -109,7 +108,7 @@ export function OrganizationSwitcher({
       <Button
         className="w-full justify-between group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0"
         disabled
-        variant="outline"
+        variant="surface"
       >
         <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded bg-olive-100 dark:bg-olive-800/40" />
         <span className="group-data-[collapsible=icon]:hidden">Loading...</span>
@@ -120,24 +119,20 @@ export function OrganizationSwitcher({
   return (
     <>
       <DropdownList>
-        <DropdownListTrigger
-          className="w-full justify-between"
-          render={
-            <Button
-              className="w-full justify-between group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0"
-              size="lg"
-              variant="outline"
-            />
-          }
+        <Button
+          className="w-full justify-between group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0"
+          render={<Menu.Trigger />}
+          size="md"
+          variant="surface"
         >
-          <span className="flex items-center gap-2 truncate">
+          <span className="flex min-w-0 flex-1 items-center gap-2 group-data-[collapsible=icon]:flex-none">
             <OrgIcon org={currentOrg} />
             <span className="truncate group-data-[collapsible=icon]:hidden">
               {currentOrg?.name || "Select organization"}
             </span>
           </span>
           <CaretUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 group-data-[collapsible=icon]:hidden" />
-        </DropdownListTrigger>
+        </Button>
         <DropdownListContent align="start" className="w-50">
           {organizations.map((org) =>
             org ? (
@@ -193,11 +188,16 @@ export function OrganizationSwitcher({
           <DialogFooter>
             <Button
               onClick={() => setShowCreateDialog(false)}
-              variant="outline"
+              variant="surface"
             >
               Cancel
             </Button>
-            <Button disabled={isCreating} onClick={handleCreateOrg}>
+            <Button
+              disabled={isCreating}
+              onClick={handleCreateOrg}
+              tone="primary"
+              variant="solid"
+            >
               {isCreating ? "Creating..." : "Create"}
             </Button>
           </DialogFooter>

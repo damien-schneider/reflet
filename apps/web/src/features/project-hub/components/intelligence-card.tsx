@@ -1,9 +1,13 @@
+import { Badge } from "@ctrl-ui/react/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@ctrl-ui/react/ui/card";
 import { Binoculars } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import Link from "next/link";
-
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Muted, Text } from "@/components/ui/typography";
 
 interface Keyword {
@@ -55,7 +59,7 @@ export function IntelligenceCard({
           {keywords.length > 0 ? (
             <div className="mt-1.5 flex flex-wrap gap-1">
               {keywords.slice(0, 3).map((kw) => (
-                <Badge className="text-[10px]" key={kw._id} variant="secondary">
+                <Badge className="text-[10px]" key={kw._id}>
                   {kw.keyword}
                 </Badge>
               ))}

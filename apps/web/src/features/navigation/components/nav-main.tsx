@@ -29,14 +29,10 @@ export function NavMain({
         <SidebarList>
           {items.map((item) => (
             <SidebarListItem key={item.title}>
-              <SidebarListButton
-                render={(props: React.ComponentProps<"a">) => (
-                  <Link href={item.url} {...props}>
-                    <item.icon />
-                    <span>{item.title}</span>
-                  </Link>
-                )}
-              />
+              <SidebarListButton render={<Link href={item.url} />}>
+                <item.icon />
+                <span>{item.title}</span>
+              </SidebarListButton>
               <SidebarListAction showOnHover>
                 <IconPlus />
                 <span className="sr-only">Add Project</span>

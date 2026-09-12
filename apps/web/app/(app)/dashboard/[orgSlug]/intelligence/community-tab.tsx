@@ -1,13 +1,18 @@
 "use client";
 
+import { Badge } from "@ctrl-ui/react/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@ctrl-ui/react/ui/card";
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
+import { Tabs, TabsList, TabsPanel, TabsTab } from "@ctrl-ui/react/ui/tabs";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Text } from "@/components/ui/typography";
 import { KeywordManager } from "@/features/intelligence/components/keyword-manager";
 
@@ -129,15 +134,15 @@ export function CommunityTab({
 
       {/* Signal feed */}
       <Tabs onValueChange={setSourceFilter} value={sourceFilter}>
-        <TabsList variant="line">
-          <TabsTrigger value="all">All Sources</TabsTrigger>
-          <TabsTrigger value="reddit">Reddit</TabsTrigger>
-          <TabsTrigger value="web">Web</TabsTrigger>
+        <TabsList>
+          <TabsTab value="all">All Sources</TabsTab>
+          <TabsTab value="reddit">Reddit</TabsTab>
+          <TabsTab value="web">Web</TabsTab>
         </TabsList>
 
-        <TabsContent className="mt-4" value={sourceFilter}>
+        <TabsPanel className="mt-4" value={sourceFilter}>
           <SignalGroupsList signalGroups={signalGroups} />
-        </TabsContent>
+        </TabsPanel>
       </Tabs>
     </div>
   );
@@ -218,7 +223,7 @@ function SignalGroupsList({
                       <Badge variant="outline">
                         {SOURCE_LABELS[signal.source] ?? signal.source}
                       </Badge>
-                      <Badge variant="secondary">
+                      <Badge>
                         {SIGNAL_TYPE_LABELS[signal.signalType] ??
                           signal.signalType}
                       </Badge>

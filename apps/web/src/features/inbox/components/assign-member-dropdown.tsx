@@ -1,9 +1,8 @@
 "use client";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@ctrl-ui/react/ui/avatar";
+import { Button } from "@ctrl-ui/react/ui/button";
 import { CaretDown, User, UserCircle } from "@phosphor-icons/react";
-
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -60,7 +59,7 @@ export function AssignMemberDropdown({
         render={
           <Button
             className={cn("justify-between gap-2", className)}
-            variant="outline"
+            variant="surface"
           />
         }
       >

@@ -1,9 +1,9 @@
 "use client";
 
+import { Badge } from "@ctrl-ui/react/ui/badge";
 import { ChatCircleDots, Check, Code } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
 import { H3 } from "@/components/ui/typography";
 
 export function WidgetCard() {
@@ -29,7 +29,7 @@ export function WidgetCard() {
             Embed Widget
           </H3>
         </div>
-        <Badge variant="secondary">SDK</Badge>
+        <Badge>SDK</Badge>
       </div>
 
       {/* Widget preview area */}

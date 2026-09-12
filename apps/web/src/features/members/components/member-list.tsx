@@ -1,3 +1,6 @@
+import { Avatar, AvatarFallback, AvatarImage } from "@ctrl-ui/react/ui/avatar";
+import { Badge } from "@ctrl-ui/react/ui/badge";
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Crown,
   DotsThreeVertical,
@@ -8,9 +11,6 @@ import {
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -106,7 +106,7 @@ export function MemberList({
                 <DropdownMenu>
                   <DropdownMenuTrigger
                     render={(props: React.ComponentProps<"button">) => (
-                      <Button {...props} size="icon" variant="ghost">
+                      <Button {...props} iconOnly variant="ghost">
                         <DotsThreeVertical className="h-4 w-4" />
                       </Button>
                     )}

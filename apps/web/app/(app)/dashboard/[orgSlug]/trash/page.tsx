@@ -1,13 +1,13 @@
 "use client";
 
+import { Badge } from "@ctrl-ui/react/ui/badge";
+import { Button } from "@ctrl-ui/react/ui/button";
 import { ArrowCounterClockwise, Spinner, Trash } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
 import { use, useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { H1, Muted } from "@/components/ui/typography";
 
 export default function TrashPage({
@@ -91,8 +91,8 @@ export default function TrashPage({
               <Button
                 disabled={restoringId === feedback._id}
                 onClick={() => handleRestore(feedback._id)}
-                size="sm"
-                variant="outline"
+                size="xs"
+                variant="surface"
               >
                 {restoringId === feedback._id ? (
                   <Spinner className="mr-1.5 size-3.5 animate-spin" />

@@ -80,6 +80,7 @@ vi.mock("@/lib/milestone-constants", () => ({
 
 vi.mock("@/lib/tag-colors", () => ({
   getTagColorValues: () => ({ bg: "#eff6ff", text: "#3b82f6" }),
+  resolveTagColor: (color: string) => color,
 }));
 
 vi.mock("@/lib/utils", () => ({

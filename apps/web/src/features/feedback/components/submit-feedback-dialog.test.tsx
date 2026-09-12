@@ -20,6 +20,7 @@ vi.mock("@/lib/convex-helpers", () => ({
 
 vi.mock("@/lib/tag-colors", () => ({
   getTagSwatchClass: (color: string) => `swatch-${color}`,
+  resolveTagColor: (color: string) => color,
 }));
 
 vi.mock("@/components/ui/tiptap/markdown-editor", () => ({

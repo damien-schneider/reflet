@@ -14,7 +14,7 @@ vi.mock("@phosphor-icons/react", () => ({
   Trash: () => <svg data-testid="trash-icon" />,
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     onClick,
@@ -75,7 +75,7 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/select", () => ({
+vi.mock("@ctrl-ui/react/ui/select", () => ({
   Select: ({
     children,
     onValueChange,
@@ -153,6 +153,7 @@ vi.mock("@/lib/convex-helpers", () => ({
 
 vi.mock("@/lib/tag-colors", () => ({
   getTagDotColor: (color: string) => color,
+  resolveTagColor: (color: string) => color,
 }));
 
 vi.mock("@/lib/utils", () => ({

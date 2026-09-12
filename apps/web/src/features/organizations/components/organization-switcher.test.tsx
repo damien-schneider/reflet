@@ -54,11 +54,11 @@ vi.mock("next/link", () => ({
   ),
 }));
 
-vi.mock("sonner", () => ({
+vi.mock("@ctrl-ui/react/ui/toast", () => ({
   toast: { error: vi.fn(), success: vi.fn() },
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     disabled,
@@ -76,7 +76,7 @@ vi.mock("@/components/ui/button", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/dialog", () => ({
+vi.mock("@ctrl-ui/react/ui/dialog", () => ({
   Dialog: ({
     children,
     open,
@@ -143,7 +143,7 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/input", () => ({
+vi.mock("@ctrl-ui/react/ui/input", () => ({
   Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => (
     <input {...props} />
   ),
@@ -396,7 +396,7 @@ describe("OrganizationSwitcher", () => {
       .mockRejectedValue(new Error("Duplicate name"));
     const { useMutation } = await import("convex/react");
     vi.mocked(useMutation).mockReturnValue(createOrgMock);
-    const { toast } = await import("sonner");
+    const { toast } = await import("@ctrl-ui/react/ui/toast");
     vi.mocked(useQuery).mockReturnValue([
       { _id: "org1", logo: null, name: "Acme", slug: "acme" },
     ]);
@@ -412,7 +412,7 @@ describe("OrganizationSwitcher", () => {
     const createOrgMock = vi.fn().mockRejectedValue("string error");
     const { useMutation } = await import("convex/react");
     vi.mocked(useMutation).mockReturnValue(createOrgMock);
-    const { toast } = await import("sonner");
+    const { toast } = await import("@ctrl-ui/react/ui/toast");
     vi.mocked(useQuery).mockReturnValue([
       { _id: "org1", logo: null, name: "Acme", slug: "acme" },
     ]);

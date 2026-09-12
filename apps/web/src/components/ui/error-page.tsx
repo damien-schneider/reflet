@@ -1,10 +1,9 @@
 "use client";
 
+import { Button, ButtonLink } from "@ctrl-ui/react/ui/button";
 import { ArrowClockwise, House, Warning } from "@phosphor-icons/react";
 import Link from "next/link";
-
 import { cn } from "@/lib/utils";
-import { Button, buttonVariants } from "./button";
 
 interface ErrorPageProps {
   className?: string;
@@ -52,22 +51,20 @@ export function ErrorPage({
 
       <div className="mt-6 flex items-center gap-3">
         {onRetry && (
-          <Button onClick={onRetry} variant="outline">
+          <Button onClick={onRetry} variant="surface">
             <ArrowClockwise className="size-4" data-icon="inline-start" />
             {retryLabel}
           </Button>
         )}
 
         {showHomeLink && (
-          <Link
-            className={buttonVariants({
-              variant: onRetry ? "ghost" : "outline",
-            })}
-            href="/"
+          <ButtonLink
+            render={<Link href="/" />}
+            variant={onRetry ? "ghost" : "surface"}
           >
             <House className="size-4" data-icon="inline-start" />
             Go home
-          </Link>
+          </ButtonLink>
         )}
       </div>
     </div>

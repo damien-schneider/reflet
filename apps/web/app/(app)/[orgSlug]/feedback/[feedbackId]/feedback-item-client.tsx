@@ -1,11 +1,10 @@
 "use client";
 
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { use } from "react";
-
-import { Skeleton } from "@/components/ui/skeleton";
 import { PublicFeedbackDetailContent } from "@/features/feedback/components/public-feedback-detail/public-feedback-detail-content";
 
 export default function FeedbackItemClient({

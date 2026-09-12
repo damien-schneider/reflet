@@ -1,0 +1,101 @@
+:where(.hero-product-scene) {
+  position: relative;
+  justify-self: end;
+  width: 100%;
+  min-width: 0;
+  max-width: 70svh;
+}
+:where(.hero-product-preview) {
+  position: relative;
+  z-index: 1;
+}
+:where(.hero-product-scene svg) {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+:where(.hero-reflection) {
+  position: relative;
+  height: clamp(140px, 18svh, 195px);
+  overflow: hidden;
+  color: var(--foreground);
+  background: radial-gradient(
+    ellipse at 55% 0%,
+    color-mix(in srgb, var(--marketing-amber) 6%, transparent),
+    transparent 70%
+  );
+  border-top: 1px solid color-mix(in srgb, var(--foreground) 6%, transparent);
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 8%,
+    black 92%,
+    transparent
+  );
+}
+:where(.hero-reflection-canvas) {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+}
+:where(.hero-reflection[data-renderer="webgl"] .hero-reflection-canvas) {
+  opacity: 1;
+}
+:where(.hero-reflection-fallback) {
+  position: absolute;
+  inset: 0;
+  opacity: 0.23;
+  mask-image: linear-gradient(black, transparent 85%);
+}
+:where(.hero-reflection-fallback svg) {
+  transform: scaleY(-1);
+}
+:where(.hero-reflection[data-renderer="webgl"] .hero-reflection-fallback) {
+  visibility: hidden;
+}
+@media (max-width: 767px) {
+  :where(.hero-product-scene) {
+    width: 100%;
+    max-width: 600px;
+    margin: auto;
+  }
+  :where(.hero-reflection) {
+    height: clamp(110px, 25vw, 155px);
+  }
+}
+@media (forced-colors: active) {
+  :where(.hero-reflection-canvas) {
+    display: none;
+  }
+  :where(.hero-reflection[data-renderer] .hero-reflection-fallback) {
+    visibility: visible;
+  }
+}
+:where(.hero-preview-controls) {
+  position: absolute;
+  top: -26px;
+  left: 50%;
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--marketing-stage);
+  border-radius: 16px;
+  box-shadow: var(--marketing-inset);
+  translate: -50% 0;
+}
+:where(.hero-preview-controls [data-control-family="button"]) {
+  --cui-button-height: 28px;
+  --cui-button-radius: 12px;
+  font-size: 11px;
+}
+:where(.hero-preview-controls [aria-pressed="true"]) {
+  background: var(--card);
+  box-shadow: var(--marketing-panel);
+}
+@media (prefers-reduced-motion: no-preference) {
+  :where(.hero-preview-card) {
+    transition: transform 700ms var(--marketing-reveal-ease);
+  }
+}

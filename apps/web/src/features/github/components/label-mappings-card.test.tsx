@@ -14,7 +14,7 @@ vi.mock("@phosphor-icons/react", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/badge", () => ({
+vi.mock("@ctrl-ui/react/ui/badge", () => ({
   Badge: ({
     children,
     style,
@@ -30,7 +30,7 @@ vi.mock("@/components/ui/badge", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     onClick,
@@ -56,7 +56,7 @@ vi.mock("@/components/ui/button", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/dialog", () => ({
+vi.mock("@ctrl-ui/react/ui/dialog", () => ({
   Dialog: ({ children, open }: { children: React.ReactNode; open: boolean }) =>
     open ? <div data-testid="dialog">{children}</div> : null,
   DialogContent: ({ children }: { children: React.ReactNode }) => (
@@ -86,7 +86,7 @@ vi.mock("@/components/ui/label", () => ({
   }) => <label htmlFor={htmlFor}>{children}</label>,
 }));
 
-vi.mock("@/components/ui/select", () => ({
+vi.mock("@ctrl-ui/react/ui/select", () => ({
   Select: ({
     children,
     onValueChange,
@@ -114,7 +114,7 @@ vi.mock("@/components/ui/select", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/switch", () => ({
+vi.mock("@ctrl-ui/react/ui/switch", () => ({
   Switch: ({
     checked,
     onCheckedChange,

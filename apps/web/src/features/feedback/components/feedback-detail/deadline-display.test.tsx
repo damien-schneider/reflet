@@ -13,7 +13,7 @@ vi.mock("@phosphor-icons/react", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/badge", () => ({
+vi.mock("@ctrl-ui/react/ui/badge", () => ({
   Badge: ({
     children,
     className,
@@ -29,7 +29,7 @@ vi.mock("@/components/ui/badge", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/calendar", () => ({
+vi.mock("@ctrl-ui/react/ui/calendar", () => ({
   Calendar: ({
     onSelect,
     selected,
@@ -53,7 +53,7 @@ vi.mock("@/components/ui/calendar", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/popover", () => ({
+vi.mock("@ctrl-ui/react/ui/popover", () => ({
   Popover: ({
     children,
     open,
@@ -189,11 +189,11 @@ describe("DeadlineDisplay", () => {
     expect(badge).toHaveAttribute("data-color", "red");
   });
 
-  it("shows violet badge color for future dates", () => {
+  it("shows purple badge color for future dates", () => {
     const futureDate = new Date(2027, 5, 15).getTime();
     render(<DeadlineDisplay {...baseProps} deadline={futureDate} />);
     const badge = screen.getByTestId("badge");
-    expect(badge).toHaveAttribute("data-color", "violet");
+    expect(badge).toHaveAttribute("data-color", "purple");
   });
 
   it("does not show overdue for today's date", () => {
@@ -201,7 +201,7 @@ describe("DeadlineDisplay", () => {
     today.setHours(12, 0, 0, 0);
     render(<DeadlineDisplay {...baseProps} deadline={today.getTime()} />);
     const badge = screen.getByTestId("badge");
-    expect(badge).toHaveAttribute("data-color", "violet");
+    expect(badge).toHaveAttribute("data-color", "purple");
   });
 
   it("shows deadline placeholder when deadline is undefined", () => {

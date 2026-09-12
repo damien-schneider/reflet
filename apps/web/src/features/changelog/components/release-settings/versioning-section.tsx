@@ -1,16 +1,16 @@
 "use client";
 
-import { Tag } from "@phosphor-icons/react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Input } from "@ctrl-ui/react/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
+} from "@ctrl-ui/react/ui/select";
+import { Switch } from "@ctrl-ui/react/ui/switch";
+import { Tag } from "@phosphor-icons/react";
+import { Label } from "@/components/ui/label";
 import type { ChangelogSettingsUpdate, VersionIncrement } from "./types";
 
 const INCREMENT_OPTIONS: { label: string; value: VersionIncrement }[] = [

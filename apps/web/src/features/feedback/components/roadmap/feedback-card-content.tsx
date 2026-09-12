@@ -1,12 +1,11 @@
+import { Card } from "@ctrl-ui/react/ui/card";
 import {
   CaretUp,
   ChatCircle,
   DotsSixVertical,
   Sparkle,
 } from "@phosphor-icons/react";
-
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+import { TagBadge } from "@/components/tag-badge";
 import { cn } from "@/lib/utils";
 import type { FeedbackItem } from "../feed-feedback-view";
 import type { DragHandleListeners } from "./roadmap-types";
@@ -61,7 +60,7 @@ export function FeedbackCardContent({
           {item.tags.slice(0, 2).map(
             (tag) =>
               tag && (
-                <Badge
+                <TagBadge
                   className="font-normal text-[11px]"
                   color={tag.color}
                   key={tag._id}
@@ -76,7 +75,7 @@ export function FeedbackCardContent({
                       />
                     </span>
                   )}
-                </Badge>
+                </TagBadge>
               )
           )}
         </div>

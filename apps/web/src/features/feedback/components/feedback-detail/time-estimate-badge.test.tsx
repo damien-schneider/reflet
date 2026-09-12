@@ -40,7 +40,7 @@ vi.mock("@phosphor-icons/react", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/badge", () => ({
+vi.mock("@ctrl-ui/react/ui/badge", () => ({
   Badge: ({
     children,
     className,
@@ -130,7 +130,7 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/popover", () => ({
+vi.mock("@ctrl-ui/react/ui/popover", () => ({
   Popover: ({
     children,
     open,
@@ -168,7 +168,7 @@ vi.mock("@/components/ui/popover", () => ({
   }) => <div data-testid="popover-trigger">{children}</div>,
 }));
 
-vi.mock("@/components/ui/tooltip", () => ({
+vi.mock("@ctrl-ui/react/ui/tooltip", () => ({
   Tooltip: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="tooltip">{children}</div>
   ),

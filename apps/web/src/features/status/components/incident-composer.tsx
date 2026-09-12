@@ -1,10 +1,10 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Input } from "@ctrl-ui/react/ui/input";
+import { Textarea } from "@ctrl-ui/react/ui/textarea";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 
 interface Monitor {
   _id: Id<"statusMonitors">;
@@ -140,7 +140,7 @@ export function IncidentComposer({
         />
 
         <div className="flex items-center justify-end gap-2">
-          <Button onClick={onCancel} size="sm" variant="ghost">
+          <Button onClick={onCancel} size="xs" variant="ghost">
             Cancel
           </Button>
           <Button
@@ -148,8 +148,9 @@ export function IncidentComposer({
               !(title.trim() && message.trim()) || selectedMonitors.size === 0
             }
             onClick={handleSubmit}
-            size="sm"
-            variant="destructive"
+            size="xs"
+            tone="danger"
+            variant="surface"
           >
             Publish Incident
           </Button>

@@ -1,10 +1,10 @@
 "use client";
 
+import { toast } from "@ctrl-ui/react/ui/toast";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useCallback, useState } from "react";
-import { toast } from "sonner";
 
 interface UseApiKeysProps {
   organizationId: Id<"organizations">;

@@ -1,7 +1,7 @@
+import { Card, CardContent } from "@ctrl-ui/react/ui/card";
 import { CaretUp, Sparkle } from "@phosphor-icons/react";
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { TagBadge } from "@/components/tag-badge";
 
 interface RoadmapCardProps {
   boardSlug: string;
@@ -41,7 +41,7 @@ export function RoadmapCard({
                 ?.filter((t): t is NonNullable<typeof t> => t !== null)
                 ?.slice(0, 2)
                 .map((tag) => (
-                  <Badge
+                  <TagBadge
                     className="h-5 font-normal text-[10px]"
                     color={tag.color}
                     key={tag._id}
@@ -56,7 +56,7 @@ export function RoadmapCard({
                         />
                       </span>
                     )}
-                  </Badge>
+                  </TagBadge>
                 ))}
             </div>
             <div className="flex items-center gap-1 text-muted-foreground text-xs">

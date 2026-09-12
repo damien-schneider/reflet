@@ -1,9 +1,9 @@
 "use client";
 
+import { Field, FieldError, FieldLabel } from "@ctrl-ui/react/ui/field";
+import { Input } from "@ctrl-ui/react/ui/input";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import type { FieldErrors, UseFormRegister } from "react-hook-form";
-import { Field, FieldError, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
 import type { SignUpFormData } from "./lib/auth-validation";
 
 interface AuthEmailFieldProps {
@@ -42,8 +42,10 @@ export function AuthEmailField({
       />
       <FieldError
         className="absolute top-full left-0"
-        errors={errors.email ? [errors.email] : undefined}
-      />
+        match={Boolean(errors.email?.message)}
+      >
+        {errors.email?.message}
+      </FieldError>
     </Field>
   );
 }
@@ -101,8 +103,10 @@ export function AuthPasswordField({
       />
       <FieldError
         className="absolute top-full left-0"
-        errors={errors.password ? [errors.password] : undefined}
-      />
+        match={Boolean(errors.password?.message)}
+      >
+        {errors.password?.message}
+      </FieldError>
     </Field>
   );
 }

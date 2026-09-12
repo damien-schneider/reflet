@@ -18,7 +18,7 @@ vi.mock("@/hooks/use-push-notifications", () => ({
   })),
 }));
 
-vi.mock("sonner", () => ({
+vi.mock("@ctrl-ui/react/ui/toast", () => ({
   toast: { error: vi.fn(), success: vi.fn() },
 }));
 
@@ -37,7 +37,7 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
   },
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     onClick,
@@ -53,7 +53,7 @@ vi.mock("@/components/ui/button", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/card", () => ({
+vi.mock("@ctrl-ui/react/ui/card", () => ({
   Card: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   CardContent: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
@@ -69,11 +69,11 @@ vi.mock("@/components/ui/card", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/separator", () => ({
+vi.mock("@ctrl-ui/react/ui/separator", () => ({
   Separator: () => <hr />,
 }));
 
-vi.mock("@/components/ui/switch", () => ({
+vi.mock("@ctrl-ui/react/ui/switch", () => ({
   Switch: ({
     checked,
     disabled,

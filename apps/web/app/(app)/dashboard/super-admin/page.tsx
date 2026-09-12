@@ -1,10 +1,10 @@
 "use client";
 
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { ShieldStar } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import Link from "next/link";
-import { Skeleton } from "@/components/ui/skeleton";
 import { H2, Muted } from "@/components/ui/typography";
 import { SuperAdminDashboard } from "@/features/super-admin/components/super-admin-dashboard";
 

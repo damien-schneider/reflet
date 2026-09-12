@@ -1,12 +1,12 @@
 "use client";
 
+import { Badge } from "@ctrl-ui/react/ui/badge";
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Input } from "@ctrl-ui/react/ui/input";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { useEffect, useRef } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 interface VersionPickerProps {
@@ -87,8 +87,9 @@ export function VersionPicker({
               className="h-5 px-1.5 text-[10px]"
               onClick={() => onChange(patchVersion)}
               size="sm"
+              tone={value === patchVersion ? "primary" : "neutral"}
               type="button"
-              variant={value === patchVersion ? "default" : "ghost"}
+              variant={value === patchVersion ? "solid" : "ghost"}
             >
               Patch {patchVersion}
             </Button>
@@ -98,8 +99,9 @@ export function VersionPicker({
               className="h-5 px-1.5 text-[10px]"
               onClick={() => onChange(minorVersion)}
               size="sm"
+              tone={value === minorVersion ? "primary" : "neutral"}
               type="button"
-              variant={value === minorVersion ? "default" : "ghost"}
+              variant={value === minorVersion ? "solid" : "ghost"}
             >
               Minor {minorVersion}
             </Button>
@@ -109,8 +111,9 @@ export function VersionPicker({
               className="h-5 px-1.5 text-[10px]"
               onClick={() => onChange(majorVersion)}
               size="sm"
+              tone={value === majorVersion ? "primary" : "neutral"}
               type="button"
-              variant={value === majorVersion ? "default" : "ghost"}
+              variant={value === majorVersion ? "solid" : "ghost"}
             >
               Major {majorVersion}
             </Button>

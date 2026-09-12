@@ -1,10 +1,10 @@
 "use client";
 
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { toast } from "sonner";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Text } from "@/components/ui/typography";
 import { AddCompetitorDialog } from "@/features/intelligence/components/add-competitor-dialog";
 import { CompetitorCard } from "@/features/intelligence/components/competitor-card";

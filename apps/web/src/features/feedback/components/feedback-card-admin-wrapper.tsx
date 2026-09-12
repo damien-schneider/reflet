@@ -1,27 +1,25 @@
 "use client";
 
-import { Trash } from "@phosphor-icons/react";
-import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { useMutation } from "convex/react";
-import { type ReactNode, useCallback, useState } from "react";
-
 import {
   AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
+  AlertDialogClose,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@ctrl-ui/react/ui/alert-dialog";
 import {
-  ContextList,
-  ContextListContent,
-  ContextListItem,
-  ContextListTrigger,
-} from "@/components/ui/context-menu";
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@ctrl-ui/react/ui/context-menu";
+import { Trash } from "@phosphor-icons/react";
+import { api } from "@reflet/backend/convex/_generated/api";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { useMutation } from "convex/react";
+import { type ReactNode, useCallback, useState } from "react";
 
 import { useFeedbackBoard } from "./feedback-board/feedback-board-context";
 
@@ -49,18 +47,18 @@ export function FeedbackCardAdminWrapper({
 
   return (
     <>
-      <ContextList>
-        <ContextListTrigger>{children}</ContextListTrigger>
-        <ContextListContent>
-          <ContextListItem
+      <ContextMenu>
+        <ContextMenuTrigger>{children}</ContextMenuTrigger>
+        <ContextMenuContent>
+          <ContextMenuItem
+            className="menu-item-danger"
             onClick={() => setShowDeleteDialog(true)}
-            variant="destructive"
           >
             <Trash className="mr-2 h-4 w-4" />
             Delete
-          </ContextListItem>
-        </ContextListContent>
-      </ContextList>
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
 
       <AlertDialog onOpenChange={setShowDeleteDialog} open={showDeleteDialog}>
         <AlertDialogContent>
@@ -72,10 +70,14 @@ export function FeedbackCardAdminWrapper({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} variant="destructive">
+            <AlertDialogClose>Cancel</AlertDialogClose>
+            <AlertDialogClose
+              onClick={handleDelete}
+              tone="danger"
+              variant="surface"
+            >
               Move to trash
-            </AlertDialogAction>
+            </AlertDialogClose>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

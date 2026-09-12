@@ -1,6 +1,5 @@
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@ctrl-ui/react/ui/badge";
 import { type FeedbackStatus, STATUS_CONFIG } from "@/lib/constants";
-import { cn } from "@/lib/utils";
 
 const isFeedbackStatus = (value: string): value is FeedbackStatus =>
   value in STATUS_CONFIG;
@@ -13,14 +12,10 @@ interface StatusBadgeProps {
 export function StatusBadge({ status, className }: StatusBadgeProps) {
   const config = isFeedbackStatus(status)
     ? STATUS_CONFIG[status]
-    : {
-        className: "",
-        label: status,
-        variant: "outline" as const,
-      };
+    : { color: "neutral" as const, label: status, variant: "outline" as const };
 
   return (
-    <Badge className={cn(config.className, className)} variant={config.variant}>
+    <Badge className={className} color={config.color} variant={config.variant}>
       {config.label}
     </Badge>
   );

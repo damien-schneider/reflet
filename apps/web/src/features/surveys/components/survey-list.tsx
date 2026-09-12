@@ -1,8 +1,8 @@
 "use client";
 
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { ClipboardText } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Muted } from "@/components/ui/typography";
 import { SurveyCard } from "@/features/surveys/components/survey-card";
 import type { SurveyStatus, TriggerType } from "@/store/surveys";

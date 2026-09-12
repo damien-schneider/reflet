@@ -1,5 +1,5 @@
-import LandingPage from "./landing/landing-page";
+import { MarketingPage } from "@/features/homepage/components/experience/marketing-page";
 
 export default function Homepage() {
-  return <LandingPage />;
+  return <MarketingPage />;
 }

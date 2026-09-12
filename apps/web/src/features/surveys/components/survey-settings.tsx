@@ -1,12 +1,12 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Input } from "@ctrl-ui/react/ui/input";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { useState } from "react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { H3 } from "@/components/ui/typography";
 import { TriggerPicker } from "@/features/surveys/components/trigger-picker";
@@ -212,7 +212,12 @@ export function SurveySettings({ survey }: SurveySettingsProps) {
       </section>
 
       <div className="flex justify-end border-t pt-4">
-        <Button disabled={!title.trim() || isSaving} onClick={handleSave}>
+        <Button
+          disabled={!title.trim() || isSaving}
+          onClick={handleSave}
+          tone="primary"
+          variant="solid"
+        >
           {isSaving ? "Saving..." : "Save Settings"}
         </Button>
       </div>

@@ -1,8 +1,8 @@
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { useAtomValue } from "jotai";
-import { Skeleton } from "@/components/ui/skeleton";
 import { FeedbackFunnels } from "@/features/feedback/components/feedback-filters";
 import { FeedbackListItem } from "@/features/feedback/components/feedback-list-item";
 import { authClient } from "@/lib/auth-client";

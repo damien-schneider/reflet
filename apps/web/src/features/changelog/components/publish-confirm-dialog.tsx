@@ -1,5 +1,16 @@
 "use client";
 
+import { Badge } from "@ctrl-ui/react/ui/badge";
+import { Button } from "@ctrl-ui/react/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@ctrl-ui/react/ui/dialog";
+import { Tabs, TabsList, TabsPanel, TabsTab } from "@ctrl-ui/react/ui/tabs";
 import {
   CalendarBlank,
   CheckCircle,
@@ -12,17 +23,6 @@ import { useQuery } from "convex/react";
 import { format } from "date-fns";
 import Link from "next/link";
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import type { FeedbackLinkStatus } from "./feedback-section-header";
 import { SchedulePicker } from "./schedule-picker";
@@ -124,14 +124,14 @@ export function PublishConfirmDialog({
             value={mode}
           >
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="now">Publish Now</TabsTrigger>
-              <TabsTrigger value="schedule">
+              <TabsTab value="now">Publish Now</TabsTab>
+              <TabsTab value="schedule">
                 <CalendarBlank className="mr-1.5 h-3.5 w-3.5" />
                 Schedule
-              </TabsTrigger>
+              </TabsTab>
             </TabsList>
 
-            <TabsContent className="mt-3" value="schedule">
+            <TabsPanel className="mt-3" value="schedule">
               <SchedulePicker
                 disabled={isSubmitting}
                 onChange={setScheduledDate}
@@ -143,7 +143,7 @@ export function PublishConfirmDialog({
                   {format(scheduledDate, "MMM d, yyyy 'at' h:mm a")}
                 </p>
               )}
-            </TabsContent>
+            </TabsPanel>
           </Tabs>
 
           {/* What will happen */}
@@ -201,17 +201,19 @@ export function PublishConfirmDialog({
         <DialogFooter>
           <Button
             onClick={() => onOpenChange(false)}
-            size="sm"
+            size="xs"
             type="button"
-            variant="outline"
+            variant="surface"
           >
             Cancel
           </Button>
           <Button
             disabled={isSubmitting || (mode === "schedule" && !isScheduleValid)}
             onClick={handleConfirm}
-            size="sm"
+            size="xs"
+            tone="primary"
             type="button"
+            variant="solid"
           >
             {mode === "schedule" ? "Schedule Publish" : "Publish"}
           </Button>

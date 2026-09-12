@@ -15,7 +15,7 @@ import {
   Tag,
 } from "@phosphor-icons/react";
 
-import { Badge } from "@/components/ui/badge";
+import { TagBadge } from "@/components/tag-badge";
 
 // ─── Expanded AI Mockup (for features page) ─────────────────────────────────
 
@@ -34,7 +34,7 @@ export function ExpandedAiMockup() {
             AI Analysis
           </span>
         </div>
-        <Badge color="green">94% confidence</Badge>
+        <TagBadge color="green">94% confidence</TagBadge>
       </div>
       <div className="border-[#e8e6e1] border-b px-5 py-3 dark:border-[#ffffff0d]">
         <span className="mb-1 block text-[10px] text-muted-foreground uppercase tracking-wider">
@@ -52,10 +52,10 @@ export function ExpandedAiMockup() {
           </div>
           <div className="flex gap-1.5">
             {aiAutoTags.map((tag) => (
-              <Badge color={tag.color} key={tag.label}>
+              <TagBadge color={tag.color} key={tag.label}>
                 <Sparkle data-icon="inline-start" size={9} weight="fill" />
                 {tag.label}
-              </Badge>
+              </TagBadge>
             ))}
           </div>
         </div>
@@ -64,7 +64,7 @@ export function ExpandedAiMockup() {
             <Lightning className="text-muted-foreground" size={13} />
             <span className="text-[12px] text-muted-foreground">Priority</span>
           </div>
-          <Badge color="orange">Medium</Badge>
+          <TagBadge color="orange">Medium</TagBadge>
         </div>
         <div className="flex items-center justify-between px-5 py-3">
           <div className="flex items-center gap-2">
@@ -86,7 +86,7 @@ export function ExpandedAiMockup() {
           </div>
           <div className="flex items-center justify-between rounded-lg border border-[#e8e6e1] bg-[#f0efea]/50 px-3 py-2 dark:border-[#ffffff0d] dark:bg-[#151412]">
             <div className="flex items-center gap-2">
-              <Badge color="yellow">87% match</Badge>
+              <TagBadge color="yellow">87% match</TagBadge>
               <span className="text-[12px] text-foreground">
                 Vim keybindings support
               </span>
@@ -359,7 +359,7 @@ export function ExpandedIntegrationsMockup() {
                 #feedback — New request: &quot;Add dark mode&quot;
               </span>
             </div>
-            <Badge color="green">Connected</Badge>
+            <TagBadge color="green">Connected</TagBadge>
           </div>
           <div className="flex items-center gap-3 px-4 py-3">
             <div className="flex size-8 items-center justify-center rounded-lg bg-[#5865F2]">
@@ -373,7 +373,7 @@ export function ExpandedIntegrationsMockup() {
                 #updates — New vote on &quot;Dark mode support&quot;
               </span>
             </div>
-            <Badge color="green">Connected</Badge>
+            <TagBadge color="green">Connected</TagBadge>
           </div>
           <div className="flex items-center gap-3 px-4 py-3">
             <div className="flex size-8 items-center justify-center rounded-lg bg-olive-600 dark:bg-olive-500">
@@ -387,7 +387,7 @@ export function ExpandedIntegrationsMockup() {
                 POST https://api.your-app.com/hooks
               </span>
             </div>
-            <Badge color="green">Active</Badge>
+            <TagBadge color="green">Active</TagBadge>
           </div>
         </div>
       </div>

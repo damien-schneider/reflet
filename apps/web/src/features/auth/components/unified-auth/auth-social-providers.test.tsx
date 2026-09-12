@@ -33,7 +33,7 @@ vi.mock("@phosphor-icons/react", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     onClick,
@@ -105,11 +105,11 @@ describe("AuthSocialProviders", () => {
     });
   });
 
-  it("renders buttons with outline variant", () => {
+  it("renders buttons with surface variant", () => {
     render(<AuthSocialProviders />);
     const buttons = screen.getAllByRole("button");
     for (const button of buttons) {
-      expect(button).toHaveAttribute("data-variant", "outline");
+      expect(button).toHaveAttribute("data-variant", "surface");
     }
   });
 

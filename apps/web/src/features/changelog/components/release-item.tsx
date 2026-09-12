@@ -1,5 +1,7 @@
 "use client";
 
+import { Badge } from "@ctrl-ui/react/ui/badge";
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Calendar,
   Check,
@@ -18,8 +20,6 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { format } from "date-fns";
 import Link from "next/link";
 import type * as React from "react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   DropdownList,
   DropdownListContent,
@@ -103,7 +103,7 @@ export function ReleaseItem({
               </Badge>
             )}
             {!(isPublished || isScheduled) && (
-              <Badge variant="secondary">
+              <Badge>
                 <EyeSlash className="mr-1 h-3 w-3" />
                 Draft
               </Badge>
@@ -133,7 +133,7 @@ export function ReleaseItem({
               <Link
                 href={`/dashboard/${orgSlug}/changelog/${release._id}/edit`}
               >
-                <Button size="sm" variant="ghost">
+                <Button size="xs" variant="ghost">
                   <PencilSimple className="h-4 w-4" />
                   <span className="ml-1.5 hidden sm:inline">Edit</span>
                 </Button>
@@ -141,7 +141,7 @@ export function ReleaseItem({
               <DropdownList>
                 <DropdownListTrigger
                   render={(props: React.ComponentProps<"button">) => (
-                    <Button {...props} size="icon" variant="ghost">
+                    <Button {...props} iconOnly variant="ghost">
                       <DotsThreeVertical className="h-4 w-4" />
                     </Button>
                   )}

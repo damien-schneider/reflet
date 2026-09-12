@@ -1,9 +1,9 @@
+import { Button } from "@ctrl-ui/react/ui/button";
 import { ArrowClockwise, Check } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
 
 const RESEND_COOLDOWN_MS = 60 * 1000; // 60 seconds - must match backend
 
@@ -113,8 +113,8 @@ function InvitationItem({
         <Button
           disabled={!canResend}
           onClick={handleResend}
-          size="sm"
-          variant="outline"
+          size="xs"
+          variant="surface"
         >
           <ResendButtonContent
             isResending={isResending}
@@ -124,7 +124,7 @@ function InvitationItem({
         </Button>
         <Button
           onClick={() => onCancel(invitation._id)}
-          size="sm"
+          size="xs"
           variant="ghost"
         >
           Cancel

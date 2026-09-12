@@ -1,9 +1,6 @@
 "use client";
 
-import { api } from "@reflet/backend/convex/_generated/api";
-import { useQuery } from "convex/react";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -11,7 +8,10 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@ctrl-ui/react/ui/table";
+import { api } from "@reflet/backend/convex/_generated/api";
+import { useQuery } from "convex/react";
+import { TagBadge } from "@/components/tag-badge";
 
 const statusVariant: Record<
   string,
@@ -94,9 +94,9 @@ export function SuperAdminFeedback() {
                     {fb.commentCount}
                   </TableCell>
                   <TableCell>
-                    <Badge variant={statusVariant[fb.status] ?? "gray"}>
+                    <TagBadge color={statusVariant[fb.status] ?? "gray"}>
                       {fb.status.replace("_", " ")}
-                    </Badge>
+                    </TagBadge>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {formatDate(fb.createdAt)}

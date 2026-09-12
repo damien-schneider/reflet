@@ -1,11 +1,6 @@
 "use client";
 
-import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { useMutation } from "convex/react";
-import { useState } from "react";
-
-import { Button } from "@/components/ui/button";
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -13,8 +8,12 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+} from "@ctrl-ui/react/ui/dialog";
+import { Input } from "@ctrl-ui/react/ui/input";
+import { api } from "@reflet/backend/convex/_generated/api";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { useMutation } from "convex/react";
+import { useState } from "react";
 import { Label } from "@/components/ui/label";
 
 interface AddWebsiteDialogProps {
@@ -110,10 +109,15 @@ export function AddWebsiteDialog({
           </div>
 
           <DialogFooter>
-            <Button onClick={handleClose} type="button" variant="outline">
+            <Button onClick={handleClose} type="button" variant="surface">
               Cancel
             </Button>
-            <Button disabled={isSubmitting || !url.trim()} type="submit">
+            <Button
+              disabled={isSubmitting || !url.trim()}
+              tone="primary"
+              type="submit"
+              variant="solid"
+            >
               {isSubmitting ? "Adding..." : "Add Website"}
             </Button>
           </DialogFooter>

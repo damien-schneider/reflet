@@ -1,17 +1,17 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Input } from "@ctrl-ui/react/ui/input";
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
+import { Tabs, TabsList, TabsPanel, TabsTab } from "@ctrl-ui/react/ui/tabs";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import { ArrowLeft } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import Link from "next/link";
 import { use, useState } from "react";
-import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TagBadge } from "@/components/tag-badge";
 import { H1, Text } from "@/components/ui/typography";
 import { AnalyticsDashboard } from "@/features/surveys/components/analytics-dashboard";
 import { QuestionEditor } from "@/features/surveys/components/question-editor";
@@ -109,12 +109,17 @@ export default function SurveyDetailPage({
                 }}
                 value={editTitle}
               />
-              <Button onClick={handleTitleSave} size="sm">
+              <Button
+                onClick={handleTitleSave}
+                size="xs"
+                tone="primary"
+                variant="solid"
+              >
                 Save
               </Button>
               <Button
                 onClick={() => setIsEditingTitle(false)}
-                size="sm"
+                size="xs"
                 variant="ghost"
               >
                 Cancel
@@ -130,9 +135,9 @@ export default function SurveyDetailPage({
               type="button"
             >
               <H1>{survey.title}</H1>
-              <Badge variant={STATUS_COLORS[survey.status]}>
+              <TagBadge color={STATUS_COLORS[survey.status]}>
                 {survey.status}
-              </Badge>
+              </TagBadge>
             </button>
           )}
           {survey.description ? (
@@ -150,15 +155,13 @@ export default function SurveyDetailPage({
       </div>
 
       <Tabs onValueChange={setActiveTab} value={activeTab}>
-        <TabsList variant="line">
-          <TabsTrigger value="builder">
-            Builder ({survey.questions.length})
-          </TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
+        <TabsList>
+          <TabsTab value="builder">Builder ({survey.questions.length})</TabsTab>
+          <TabsTab value="analytics">Analytics</TabsTab>
+          <TabsTab value="settings">Settings</TabsTab>
         </TabsList>
 
-        <TabsContent className="mt-6" value="builder">
+        <TabsPanel className="mt-6" value="builder">
           <div className="grid grid-cols-[1fr_360px] gap-8">
             <QuestionEditor
               questions={survey.questions}
@@ -175,15 +178,15 @@ export default function SurveyDetailPage({
               />
             </div>
           </div>
-        </TabsContent>
+        </TabsPanel>
 
-        <TabsContent className="mt-6" value="analytics">
+        <TabsPanel className="mt-6" value="analytics">
           <AnalyticsDashboard surveyId={survey._id} />
-        </TabsContent>
+        </TabsPanel>
 
-        <TabsContent className="mt-6" value="settings">
+        <TabsPanel className="mt-6" value="settings">
           <SurveySettings survey={survey} />
-        </TabsContent>
+        </TabsPanel>
       </Tabs>
     </div>
   );

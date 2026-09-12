@@ -1,7 +1,7 @@
+import { Avatar, AvatarFallback, AvatarImage } from "@ctrl-ui/react/ui/avatar";
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Textarea } from "@ctrl-ui/react/ui/textarea";
 import { PaperPlaneRight, Trash, X } from "@phosphor-icons/react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 
 interface CommentItemProps {
   comment: {
@@ -65,7 +65,7 @@ export function CommentItem({
             <div className="flex items-center gap-1">
               <Button
                 onClick={() => setReplyingTo(comment._id)}
-                size="sm"
+                size="xs"
                 variant="ghost"
               >
                 Reply
@@ -73,8 +73,8 @@ export function CommentItem({
               {isAdmin && (
                 <Button
                   className="h-8 w-8"
+                  iconOnly
                   onClick={() => onDeleteComment(comment._id)}
-                  size="icon"
                   variant="ghost"
                 >
                   <Trash className="h-4 w-4" />
@@ -97,14 +97,16 @@ export function CommentItem({
               <div className="flex flex-col gap-1">
                 <Button
                   disabled={!replyContent.trim() || isSubmitting}
+                  iconOnly
                   onClick={() => onSubmitReply(comment._id)}
-                  size="icon"
+                  tone="primary"
+                  variant="solid"
                 >
                   <PaperPlaneRight className="h-4 w-4" />
                 </Button>
                 <Button
+                  iconOnly
                   onClick={() => setReplyingTo(null)}
-                  size="icon"
                   variant="ghost"
                 >
                   <X className="h-4 w-4" />
@@ -147,8 +149,8 @@ export function CommentItem({
                     {isAdmin && (
                       <Button
                         className="h-6 w-6"
+                        iconOnly
                         onClick={() => onDeleteComment(reply._id)}
-                        size="icon"
                         variant="ghost"
                       >
                         <Trash className="h-3 w-3" />

@@ -1,10 +1,10 @@
 "use client";
 
+import { Input } from "@ctrl-ui/react/ui/input";
+import { Toggle } from "@ctrl-ui/react/ui/toggle";
 import { MagnifyingGlass } from "@phosphor-icons/react";
 import type React from "react";
 import type { RefObject } from "react";
-import { Input } from "@/components/ui/input";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { H1 } from "@/components/ui/typography";
 import {
   CONVERSATION_STATUS_META,
@@ -37,22 +37,18 @@ export function InboxFilterBar({
       </div>
 
       <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
-        <ToggleGroup
-          className="max-w-full overflow-x-auto"
-          size="sm"
-          variant="outline"
-        >
+        <div className="inline-flex max-w-full items-center gap-1 overflow-x-auto">
           {CONVERSATION_STATUSES.map((status) => (
-            <ToggleGroupItem
+            <Toggle
               key={status}
               onPressedChange={() => onToggleStatusFilter(status)}
               pressed={statusFilter.includes(status)}
               value={status}
             >
               {CONVERSATION_STATUS_META[status].label}
-            </ToggleGroupItem>
+            </Toggle>
           ))}
-        </ToggleGroup>
+        </div>
 
         <div className="relative w-full sm:ml-auto sm:w-56">
           <MagnifyingGlass className="absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

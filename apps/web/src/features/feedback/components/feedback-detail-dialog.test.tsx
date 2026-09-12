@@ -107,7 +107,7 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
 }));
 
 // Mock UI components
-vi.mock("@/components/ui/dialog", () => ({
+vi.mock("@ctrl-ui/react/ui/dialog", () => ({
   Dialog: ({ children, open }: { children: React.ReactNode; open: boolean }) =>
     open ? <div data-testid="dialog">{children}</div> : null,
   DialogContent: ({ children }: { children: React.ReactNode }) => (
@@ -127,7 +127,7 @@ vi.mock("@/components/ui/dialog", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/card", () => ({
+vi.mock("@ctrl-ui/react/ui/card", () => ({
   Card: ({
     children,
     className,
@@ -174,17 +174,18 @@ vi.mock("@/components/ui/card", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/skeleton", () => ({
+vi.mock("@ctrl-ui/react/ui/skeleton", () => ({
   Skeleton: ({ className }: { className?: string }) => (
     <div className={className} data-testid="skeleton" />
   ),
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     onClick,
     disabled,
+    tone,
     variant,
     size,
     className,
@@ -193,6 +194,7 @@ vi.mock("@/components/ui/button", () => ({
     children?: React.ReactNode;
     onClick?: () => void;
     disabled?: boolean;
+    tone?: string;
     variant?: string;
     size?: string;
     className?: string;
@@ -201,6 +203,7 @@ vi.mock("@/components/ui/button", () => ({
     <button
       className={className}
       data-size={size}
+      data-tone={tone}
       data-variant={variant}
       disabled={disabled}
       onClick={onClick}
@@ -211,7 +214,7 @@ vi.mock("@/components/ui/button", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/badge", () => ({
+vi.mock("@ctrl-ui/react/ui/badge", () => ({
   Badge: ({
     children,
     style,
@@ -227,7 +230,7 @@ vi.mock("@/components/ui/badge", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/input", () => ({
+vi.mock("@ctrl-ui/react/ui/input", () => ({
   Input: ({
     value,
     onChange,
@@ -248,7 +251,7 @@ vi.mock("@/components/ui/input", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/textarea", () => ({
+vi.mock("@ctrl-ui/react/ui/textarea", () => ({
   Textarea: ({
     value,
     onChange,
@@ -276,7 +279,7 @@ vi.mock("@/components/ui/textarea", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/avatar", () => ({
+vi.mock("@ctrl-ui/react/ui/avatar", () => ({
   Avatar: ({
     children,
     className,
@@ -304,7 +307,7 @@ vi.mock("@/components/ui/avatar", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/select", () => ({
+vi.mock("@ctrl-ui/react/ui/select", () => ({
   Select: ({
     children,
     value,
@@ -392,7 +395,7 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/separator", () => ({
+vi.mock("@ctrl-ui/react/ui/separator", () => ({
   Separator: ({ className }: { className?: string }) => (
     <hr className={className} data-testid="separator" />
   ),
@@ -1483,8 +1486,7 @@ describe("FeedbackDetailDialog - Mutation Handlers", () => {
     // Click the "Delete" confirmation button
     const deleteButtons = screen.getAllByText("Delete");
     const confirmButton = deleteButtons.find(
-      (btn) =>
-        btn.closest("button")?.getAttribute("data-variant") === "destructive"
+      (btn) => btn.closest("button")?.getAttribute("data-tone") === "danger"
     );
     expect(confirmButton).toBeTruthy();
     fireEvent.click(confirmButton?.closest("button")!);

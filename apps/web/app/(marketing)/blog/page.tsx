@@ -1,6 +1,5 @@
+import { Badge } from "@ctrl-ui/react/ui/badge";
 import Link from "next/link";
-
-import { Badge } from "@/components/ui/badge";
 import { H1, H3, Lead, Muted, Text } from "@/components/ui/typography";
 import { formatDate, getAllBlogPosts, getCategoryLabel } from "@/lib/blog";
 
@@ -33,9 +32,7 @@ export default async function BlogIndexPage() {
             >
               <Link href={`/blog/${post.slug}`}>
                 <div className="mb-3 flex items-center gap-3">
-                  <Badge variant="secondary">
-                    {getCategoryLabel(post.meta.category)}
-                  </Badge>
+                  <Badge>{getCategoryLabel(post.meta.category)}</Badge>
                   <Muted>{post.meta.readingTime}</Muted>
                 </div>
                 <H3

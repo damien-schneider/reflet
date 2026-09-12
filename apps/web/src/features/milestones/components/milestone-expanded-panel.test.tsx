@@ -79,7 +79,7 @@ vi.mock("motion/react", () => ({
   },
 }));
 
-vi.mock("@/components/ui/badge", () => ({
+vi.mock("@ctrl-ui/react/ui/badge", () => ({
   Badge: ({
     children,
     className,
@@ -89,7 +89,7 @@ vi.mock("@/components/ui/badge", () => ({
   }) => <span className={className}>{children}</span>,
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     onClick,
@@ -103,7 +103,7 @@ vi.mock("@/components/ui/button", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/input", () => ({
+vi.mock("@ctrl-ui/react/ui/input", () => ({
   Input: ({
     onChange,
     value,

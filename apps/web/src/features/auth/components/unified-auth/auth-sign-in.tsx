@@ -1,8 +1,8 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Field, FieldError } from "@ctrl-ui/react/ui/field";
 import { AnimatePresence, motion } from "motion/react";
-import { Button } from "@/components/ui/button";
-import { FieldError } from "@/components/ui/field";
 import type { AuthMode } from "./hooks/use-auth-form";
 import { animationVariants } from "./lib/auth-validation";
 
@@ -34,13 +34,19 @@ export function AuthSubmitButton({
   return (
     <>
       {apiError && (
-        <FieldError className="absolute" errors={[{ message: apiError }]} />
+        <Field>
+          <FieldError className="absolute" match>
+            {apiError}
+          </FieldError>
+        </Field>
       )}
       <Button
         className="mt-6 w-full"
         data-testid="submit-button"
         disabled={isSubmitting || isCheckingEmail || !isFormValid}
+        tone="primary"
         type="submit"
+        variant="solid"
       >
         {getButtonText(mode, isSubmitting)}
       </Button>

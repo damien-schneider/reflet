@@ -1,10 +1,9 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Input } from "@ctrl-ui/react/ui/input";
 import { Download, FileText, LoaderCircle } from "lucide-react";
 import { useState } from "react";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { H3, Muted, Text } from "@/components/ui/typography";
 
 interface LeadMagnetProps {
@@ -62,13 +61,13 @@ export function LeadMagnet({
           <Muted>{fileIcons[fileType]} download</Muted>
         </div>
         {submitted ? (
-          <Button disabled variant="outline">
+          <Button disabled variant="surface">
             <Download className="mr-2 h-4 w-4" />
             Downloaded
           </Button>
         ) : (
           <a download={fileName} href={downloadUrl}>
-            <Button variant="outline">
+            <Button variant="surface">
               <Download className="mr-2 h-4 w-4" />
               Download
             </Button>
@@ -108,7 +107,12 @@ export function LeadMagnet({
             type="email"
             value={email}
           />
-          <Button disabled={loading} type="submit">
+          <Button
+            disabled={loading}
+            tone="primary"
+            type="submit"
+            variant="solid"
+          >
             {loading ? (
               <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
             ) : (

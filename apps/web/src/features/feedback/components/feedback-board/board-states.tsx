@@ -1,6 +1,6 @@
+import { Card, CardContent } from "@ctrl-ui/react/ui/card";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import { Globe } from "@phosphor-icons/react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Spinner } from "@/components/ui/spinner";
 
 export function LoadingState() {
   return (

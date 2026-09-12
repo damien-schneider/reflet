@@ -1,11 +1,11 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
 import { H1, Muted } from "@/components/ui/typography";
 import UnifiedAuthForm from "@/features/auth/components/unified-auth/unified-auth-form";
 import { authClient } from "@/lib/auth-client";
@@ -83,7 +83,7 @@ export function AcceptInvitationContent({
           <Muted className="mb-6">
             Cette invitation n'existe pas ou a été annulée.
           </Muted>
-          <Button onClick={() => router.push("/")} variant="outline">
+          <Button onClick={() => router.push("/")} variant="surface">
             Retour à l'accueil
           </Button>
         </div>
@@ -123,7 +123,7 @@ export function AcceptInvitationContent({
             Cette invitation a expiré. Veuillez demander une nouvelle invitation
             à l'administrateur de l'organisation.
           </Muted>
-          <Button onClick={() => router.push("/")} variant="outline">
+          <Button onClick={() => router.push("/")} variant="surface">
             Retour à l'accueil
           </Button>
         </div>
@@ -162,7 +162,11 @@ export function AcceptInvitationContent({
             Cette invitation a déjà été acceptée. Vous êtes peut-être déjà
             membre de cette organisation.
           </Muted>
-          <Button onClick={() => router.push("/dashboard")} variant="default">
+          <Button
+            onClick={() => router.push("/dashboard")}
+            tone="primary"
+            variant="solid"
+          >
             Aller au tableau de bord
           </Button>
         </div>
@@ -209,7 +213,12 @@ export function AcceptInvitationContent({
         )}
         {isAuthenticated ? (
           <div className="flex flex-col gap-3">
-            <Button disabled={isAccepting} onClick={handleAcceptInvitation}>
+            <Button
+              disabled={isAccepting}
+              onClick={handleAcceptInvitation}
+              tone="primary"
+              variant="solid"
+            >
               {isAccepting
                 ? "Acceptation en cours..."
                 : "Accepter l'invitation"}
@@ -217,7 +226,7 @@ export function AcceptInvitationContent({
             <Button
               disabled={isAccepting}
               onClick={() => router.push("/")}
-              variant="outline"
+              variant="surface"
             >
               Refuser
             </Button>

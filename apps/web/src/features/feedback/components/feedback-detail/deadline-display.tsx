@@ -1,15 +1,14 @@
 "use client";
 
-import { CalendarCheck, X } from "@phosphor-icons/react";
-import { format, isPast, isToday } from "date-fns";
-
-import { Badge } from "@/components/ui/badge";
-import { Calendar } from "@/components/ui/calendar";
+import { Calendar } from "@ctrl-ui/react/ui/calendar";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
+} from "@ctrl-ui/react/ui/popover";
+import { CalendarCheck, X } from "@phosphor-icons/react";
+import { format, isPast, isToday } from "date-fns";
+import { TagBadge } from "@/components/tag-badge";
 import { cn } from "@/lib/utils";
 
 export function DeadlineDisplay({
@@ -38,17 +37,17 @@ export function DeadlineDisplay({
           className="flex cursor-pointer select-none items-center"
           render={<button type="button" />}
         >
-          <Badge
+          <TagBadge
             className={cn(
               "h-8 gap-1 rounded-full px-3 font-normal text-xs",
               isOverdue &&
                 "border-destructive/30 bg-destructive/10 text-destructive"
             )}
-            color={isOverdue ? "red" : "violet"}
+            color={isOverdue ? "red" : "purple"}
           >
             <CalendarCheck className="h-3 w-3" />
             <span>{format(deadlineDate, "MMM d")}</span>
-          </Badge>
+          </TagBadge>
         </PopoverTrigger>
       ) : (
         <PopoverTrigger

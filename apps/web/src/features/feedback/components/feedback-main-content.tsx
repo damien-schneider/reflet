@@ -1,3 +1,6 @@
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Card, CardContent, CardHeader } from "@ctrl-ui/react/ui/card";
+import { Textarea } from "@ctrl-ui/react/ui/textarea";
 import {
   CaretUp,
   DotsThreeVertical,
@@ -6,8 +9,6 @@ import {
   Trash,
 } from "@phosphor-icons/react";
 import type * as React from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   DropdownList,
   DropdownListContent,
@@ -15,7 +16,6 @@ import {
   DropdownListSeparator,
   DropdownListTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Textarea } from "@/components/ui/textarea";
 import { H3 } from "@/components/ui/typography";
 import { cn } from "@/lib/utils";
 
@@ -89,7 +89,7 @@ export function FeedbackMainContent({
                 <DropdownList>
                   <DropdownListTrigger
                     render={(props: React.ComponentProps<"button">) => (
-                      <Button {...props} size="icon" variant="ghost">
+                      <Button {...props} iconOnly variant="ghost">
                         <DotsThreeVertical className="h-4 w-4" />
                       </Button>
                     )}
@@ -136,14 +136,16 @@ export function FeedbackMainContent({
               <Button
                 disabled={isSubmitting}
                 onClick={handleSaveDescription}
-                size="sm"
+                size="xs"
+                tone="primary"
+                variant="solid"
               >
                 Save
               </Button>
               <Button
                 onClick={() => setIsEditingDescription(false)}
-                size="sm"
-                variant="outline"
+                size="xs"
+                variant="surface"
               >
                 Cancel
               </Button>
@@ -157,11 +159,11 @@ export function FeedbackMainContent({
             {isAdmin && (
               <Button
                 className="absolute top-0 right-0 opacity-0 transition-opacity group-hover:opacity-100"
+                iconOnly
                 onClick={() => {
                   setEditedDescription(feedback.description || "");
                   setIsEditingDescription(true);
                 }}
-                size="icon"
                 variant="ghost"
               >
                 <Pencil className="h-4 w-4" />

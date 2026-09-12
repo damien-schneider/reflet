@@ -49,11 +49,11 @@ vi.mock("next/link", () => ({
   ),
 }));
 
-vi.mock("sonner", () => ({
+vi.mock("@ctrl-ui/react/ui/toast", () => ({
   toast: { error: vi.fn(), success: vi.fn() },
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     onClick,
@@ -80,7 +80,7 @@ vi.mock("@/components/ui/button", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/input", () => ({
+vi.mock("@ctrl-ui/react/ui/input", () => ({
   Input: ({
     value,
     onChange,
@@ -109,7 +109,7 @@ Object.defineProperty(navigator, "clipboard", {
   writable: true,
 });
 
-import { toast } from "sonner";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import { ChangelogWidgetTab } from "./changelog-widget-tab";
 
 const mockToast = toast as unknown as {

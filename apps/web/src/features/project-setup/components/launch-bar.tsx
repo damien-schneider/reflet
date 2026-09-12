@@ -1,7 +1,7 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import { Sparkle } from "@phosphor-icons/react";
-import { Button } from "@/components/ui/button";
 import { Muted } from "@/components/ui/typography";
 import type {
   ChangelogConfig,
@@ -52,7 +52,13 @@ export function LaunchBar({
     <div className="sticky bottom-4 rounded-xl border bg-background/95 p-4 shadow-lg backdrop-blur-sm">
       <div className="flex items-center justify-between">
         <Muted className="text-xs">{summary}</Muted>
-        <Button disabled={isApplying} onClick={onLaunch} size="lg">
+        <Button
+          disabled={isApplying}
+          onClick={onLaunch}
+          size="md"
+          tone="primary"
+          variant="solid"
+        >
           <Sparkle className="mr-2 size-4" />
           {isApplying ? "Launching..." : "Launch Project"}
         </Button>

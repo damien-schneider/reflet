@@ -1,19 +1,18 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@ctrl-ui/react/ui/popover";
+import { ScrollArea } from "@ctrl-ui/react/ui/scroll-area";
 import { CaretRight, Check, Sparkle, Warning } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { useState } from "react";
-
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { TagBadge } from "@/components/tag-badge";
 import { cn } from "@/lib/utils";
 import { AiMiniIndicator } from "./ai-mini-indicator";
 
@@ -95,7 +94,7 @@ export function ResultsPopover({
         </div>
 
         {/* Results list */}
-        <ScrollArea classNameViewport="max-h-64">
+        <ScrollArea viewportClassName="max-h-64">
           <div className="divide-y">
             {recentItems?.map((item: TaggedItem) => {
               const validTags = item.tags.filter(
@@ -112,21 +111,21 @@ export function ResultsPopover({
                   </p>
                   <div className="mt-1.5 flex flex-wrap items-center gap-1">
                     {validTags.map((tag) => (
-                      <Badge
+                      <TagBadge
                         className="h-5 font-normal text-[10px]"
                         color={tag.color}
                         key={tag._id}
                       >
                         {tag.name}
-                      </Badge>
+                      </TagBadge>
                     ))}
                     {isUncategorized && (
-                      <Badge
+                      <TagBadge
                         className="h-5 border-dashed font-normal text-[10px]"
                         color="gray"
                       >
                         Unsorted
-                      </Badge>
+                      </TagBadge>
                     )}
                     {item.aiPriority && item.aiPriority !== "none" && (
                       <AiMiniIndicator

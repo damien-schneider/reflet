@@ -1,10 +1,9 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import { ArrowClockwise, Warning } from "@phosphor-icons/react";
 import { cva, type VariantProps } from "class-variance-authority";
-
 import { cn } from "@/lib/utils";
-import { Button } from "./button";
 
 const errorDisplayVariants = cva(
   "flex flex-col items-center justify-center text-center",
@@ -102,8 +101,8 @@ export function ErrorDisplay({
         <Button
           className="mt-2"
           onClick={onRetry}
-          size={size === "sm" ? "sm" : "default"}
-          variant="outline"
+          size={size === "sm" ? "xs" : "sm"}
+          variant="surface"
         >
           <ArrowClockwise className="size-4" data-icon="inline-start" />
           {retryLabel}

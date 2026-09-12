@@ -77,14 +77,14 @@ vi.mock("motion/react", () => ({
   },
 }));
 
-vi.mock("@/components/ui/context-menu", () => ({
-  ContextList: ({ children }: { children: React.ReactNode }) => (
+vi.mock("@ctrl-ui/react/ui/context-menu", () => ({
+  ContextMenu: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="context-list">{children}</div>
   ),
-  ContextListContent: ({ children }: { children: React.ReactNode }) => (
+  ContextMenuContent: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="context-content">{children}</div>
   ),
-  ContextListItem: ({
+  ContextMenuItem: ({
     children,
     onClick,
     variant,
@@ -97,13 +97,13 @@ vi.mock("@/components/ui/context-menu", () => ({
       {children}
     </button>
   ),
-  ContextListSeparator: () => <hr />,
-  ContextListTrigger: ({ children }: { children: React.ReactNode }) => (
+  ContextMenuSeparator: () => <hr />,
+  ContextMenuTrigger: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="context-trigger">{children}</div>
   ),
 }));
 
-vi.mock("@/components/ui/dialog", () => ({
+vi.mock("@ctrl-ui/react/ui/dialog", () => ({
   Dialog: ({
     children,
     open,
@@ -129,7 +129,7 @@ vi.mock("@/components/ui/dialog", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     onClick,
@@ -145,7 +145,7 @@ vi.mock("@/components/ui/button", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/input", () => ({
+vi.mock("@ctrl-ui/react/ui/input", () => ({
   Input: (props: Record<string, unknown>) => (
     <input {...(props as React.InputHTMLAttributes<HTMLInputElement>)} />
   ),
@@ -159,7 +159,7 @@ vi.mock("@/components/ui/notion-color-picker", () => ({
   NotionColorPicker: () => <div data-testid="color-picker" />,
 }));
 
-vi.mock("@/components/ui/select", () => ({
+vi.mock("@ctrl-ui/react/ui/select", () => ({
   Select: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
@@ -196,6 +196,7 @@ vi.mock("@/lib/milestone-deadline", () => ({
 vi.mock("@/lib/tag-colors", () => ({
   getTagColorValues: () => ({ bg: "#eff6ff", text: "#3b82f6" }),
   isValidTagColor: () => true,
+  resolveTagColor: (color: string) => color,
 }));
 
 vi.mock("@/lib/utils", () => ({

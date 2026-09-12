@@ -1,7 +1,7 @@
 "use client";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@ctrl-ui/react/ui/avatar";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/features/support/lib/initials";
 import { cn } from "@/lib/utils";
 

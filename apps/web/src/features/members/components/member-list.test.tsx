@@ -20,7 +20,7 @@ vi.mock("@phosphor-icons/react", () => ({
   User: () => <span data-testid="icon-user" />,
 }));
 
-vi.mock("@/components/ui/avatar", () => ({
+vi.mock("@ctrl-ui/react/ui/avatar", () => ({
   Avatar: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="avatar">{children}</div>
   ),
@@ -32,7 +32,7 @@ vi.mock("@/components/ui/avatar", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/badge", () => ({
+vi.mock("@ctrl-ui/react/ui/badge", () => ({
   Badge: ({
     children,
     className,
@@ -46,7 +46,7 @@ vi.mock("@/components/ui/badge", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     onClick,

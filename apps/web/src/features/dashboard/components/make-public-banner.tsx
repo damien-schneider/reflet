@@ -1,11 +1,11 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import { Globe, Spinner } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 
 interface MakePublicBannerProps {
   orgId: Id<"organizations">;
@@ -33,7 +33,7 @@ export function MakePublicBanner({ orgId }: MakePublicBannerProps) {
         className="w-full justify-start"
         disabled={isMakingPublic}
         onClick={handleMakePublic}
-        size="sm"
+        size="xs"
         variant="ghost"
       >
         {isMakingPublic ? (

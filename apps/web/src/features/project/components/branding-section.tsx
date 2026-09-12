@@ -1,14 +1,13 @@
 "use client";
 
+import { Badge } from "@ctrl-ui/react/ui/badge";
+import { Input } from "@ctrl-ui/react/ui/input";
 import { Check, Spinner } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LogoUploader } from "@/features/organizations/components/logo-uploader";
 import { isValidHexColor, normalizeHexColor } from "@/lib/color-utils";
@@ -143,12 +142,7 @@ export function BrandingSection({
           <Label htmlFor="primary-color">Primary Color</Label>
           {isProTier ? null : (
             <Link href={`/dashboard/${orgSlug}/project/billing`}>
-              <Badge
-                className="bg-olive-600/10 text-olive-600"
-                variant="secondary"
-              >
-                Pro
-              </Badge>
+              <Badge className="bg-olive-600/10 text-olive-600">Pro</Badge>
             </Link>
           )}
         </div>

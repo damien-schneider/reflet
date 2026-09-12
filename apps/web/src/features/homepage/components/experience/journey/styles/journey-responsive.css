@@ -1,0 +1,258 @@
+@media (max-width: 767px) {
+  :where(.journey-sticky) {
+    padding: 24px 18px 20px;
+  }
+  :where(.journey-heading) {
+    min-height: 135px;
+    margin-bottom: 20px;
+  }
+  :where(.journey-step-copy) {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  :where(.journey-heading h3) {
+    font-size: 25px;
+  }
+  :where(.journey-step-copy > p) {
+    max-width: 440px;
+    font-size: 11px;
+  }
+  :where(.journey-step-count) {
+    margin-bottom: 8px;
+  }
+  :where(.journey-scene) {
+    flex-shrink: 0;
+    border-radius: 24px;
+  }
+  :where(.journey-scene-body) {
+    height: clamp(320px, 43svh, 410px);
+  }
+  :where(.journey-window-bar) {
+    height: 34px;
+    padding: 0 12px;
+    font-size: 8px;
+  }
+  :where(.journey-window-bar > span:last-child),
+  :where(.journey-app-surface aside) {
+    display: none;
+  }
+  :where(.journey-app-workspace) {
+    padding: 20px;
+  }
+  :where(.journey-app-workspace h4) {
+    font-size: 23px;
+  }
+  :where(.journey-fake-project) {
+    width: 85%;
+  }
+  :where(.journey-app-tabs) {
+    opacity: 0.4;
+  }
+  :where(.journey-app-notification) {
+    right: 15%;
+    bottom: 13px;
+    font-size: 8px;
+  }
+  :where(.journey-request) {
+    padding: 16px;
+  }
+  :where(.journey-request h4) {
+    margin: 12px 0 8px;
+    font-size: 15px;
+  }
+  :where(.journey-request p) {
+    font-size: 11px;
+  }
+  :where(.journey-request-byline) {
+    font-size: 8px;
+  }
+  :where(.journey-request-byline small),
+  :where(.journey-request-comments) {
+    display: none;
+  }
+  :where(.journey-request-footer) {
+    padding-top: 12px;
+    margin-top: 14px;
+  }
+  :where(.journey-request .marketing-status) {
+    padding: 4px 6px;
+    font-size: 8px;
+  }
+  :where(.journey-request[data-request-state="release"] h4) {
+    font-size: clamp(20px, 6vw, 23px);
+  }
+  :where(.journey-request-release) {
+    font-size: 9px;
+  }
+  :where(.journey-board-surface) {
+    padding-top: 22px;
+  }
+  :where(.journey-board-title strong) {
+    font-size: 17px;
+  }
+  :where(.journey-board-title > span) {
+    font-size: 8px;
+  }
+  :where(.journey-board-column) {
+    padding: 12px 8px;
+  }
+  :where(.journey-board-column > div:first-child) {
+    gap: 5px;
+    font-size: 9px;
+  }
+  :where(.journey-board-column small) {
+    display: none;
+  }
+  :where(.journey-board-note) {
+    padding: 10px;
+  }
+  :where(.journey-board-note strong) {
+    font-size: 9px;
+  }
+  :where(.journey-board-note > span) {
+    font-size: 8px;
+  }
+  :where(.journey-ai-label) {
+    top: 10%;
+    left: 26%;
+    font-size: 11px;
+  }
+  :where(.journey-ai-suggestion) {
+    width: 46%;
+    padding: 10px;
+  }
+  :where(.journey-ai-related) {
+    top: 66%;
+    left: -12%;
+  }
+  :where(.journey-ai-category) {
+    top: 13%;
+    right: -18%;
+  }
+  :where(.journey-ai-suggestion strong) {
+    margin: 6px 0;
+    font-size: 9px;
+  }
+  :where(.journey-ai-suggestion small) {
+    display: none;
+  }
+  :where(.journey-release-surface h4) {
+    display: none;
+  }
+  :where(.journey-release-surface .marketing-kicker) {
+    font-size: 12px;
+  }
+  :where(.journey-release-date) {
+    display: none;
+  }
+  :where(.journey-published) {
+    bottom: 12px;
+    font-size: 8px;
+  }
+  :where(.journey-navigation) {
+    gap: 0;
+    align-self: center;
+    max-width: none;
+    padding: 2px 2px 22px;
+    margin-inline: 0;
+    margin-top: 22px;
+  }
+  :where(.journey-navigation)::after {
+    position: absolute;
+    right: 0;
+    bottom: 7px;
+    left: 0;
+    font-size: 10px;
+    color: var(--marketing-signal);
+    text-align: center;
+    content: attr(data-current-label);
+  }
+  :where(.journey-navigation a) {
+    display: grid;
+    flex: 0 0 44px;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+  }
+  :where(.journey-nav-content) {
+    gap: 5px;
+  }
+  :where(.journey-nav-content > span) {
+    display: none;
+  }
+  :where(.journey-caption) {
+    gap: 14px;
+    margin-top: 14px;
+    font-size: 8px;
+  }
+}
+@media (max-height: 700px) and (min-width: 768px) {
+  :where(.journey-sticky) {
+    padding-block: 12px;
+  }
+  :where(.journey-heading) {
+    min-height: 70px;
+    margin-bottom: 16px;
+  }
+  :where(.journey-scene-body) {
+    height: 340px;
+  }
+  :where(.journey-navigation) {
+    margin-top: 16px;
+  }
+  :where(.journey-caption) {
+    margin-top: 12px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :where(.journey-track) {
+    height: auto;
+  }
+  :where(.journey-anchor) {
+    top: 0;
+  }
+  :where(.journey-sticky) {
+    position: relative;
+    height: auto;
+    padding-block: 35px;
+  }
+}
+@media (max-height: 740px) and (max-width: 767px) {
+  :where(.journey-sticky) {
+    padding-block: 16px;
+  }
+  :where(.journey-heading) {
+    min-height: 115px;
+    margin-bottom: 14px;
+  }
+  :where(.journey-step-copy) {
+    gap: 8px;
+  }
+  :where(.journey-heading h3) {
+    font-size: 22px;
+  }
+  :where(.journey-step-copy > p) {
+    font-size: 10px;
+    line-height: 1.6;
+  }
+  :where(.journey-scene-body) {
+    height: 300px;
+  }
+  :where(.journey-navigation) {
+    margin-top: 16px;
+  }
+  :where(.journey-caption) {
+    display: none;
+  }
+  :where(.journey-request) {
+    padding: 14px;
+  }
+  :where(.journey-request h4) {
+    margin: 10px 0 6px;
+  }
+  :where(.journey-request p) {
+    font-size: 11px;
+  }
+}

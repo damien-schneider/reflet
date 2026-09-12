@@ -1,12 +1,6 @@
 "use client";
 
-import { ArrowsClockwise, Sparkle } from "@phosphor-icons/react";
-import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { useMutation, useQuery } from "convex/react";
-import { useState } from "react";
-
-import { Button } from "@/components/ui/button";
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Card,
   CardAction,
@@ -14,8 +8,13 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+} from "@ctrl-ui/react/ui/card";
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
+import { ArrowsClockwise, Sparkle } from "@phosphor-icons/react";
+import { api } from "@reflet/backend/convex/_generated/api";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { useMutation, useQuery } from "convex/react";
+import { useState } from "react";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { Muted, Text } from "@/components/ui/typography";
 
@@ -69,8 +68,8 @@ export function RepoAnalysisPanel({
             <Button
               disabled={isAnalyzing || isStarting}
               onClick={handleStartAnalysis}
-              size="sm"
-              variant="outline"
+              size="xs"
+              variant="surface"
             >
               {isAnalyzing || isStarting ? (
                 <ArrowsClockwise className="mr-1.5 h-4 w-4 animate-spin" />

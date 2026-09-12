@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 
 export function SupportLoadingState() {
   return (

@@ -1,13 +1,8 @@
 "use client";
 
-import { MagnifyingGlass } from "@phosphor-icons/react";
-import { api } from "@reflet/backend/convex/_generated/api";
-import { usePaginatedQuery } from "convex/react";
-import { useMemo, useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Input } from "@ctrl-ui/react/ui/input";
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -15,7 +10,12 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@ctrl-ui/react/ui/table";
+import { MagnifyingGlass } from "@phosphor-icons/react";
+import { api } from "@reflet/backend/convex/_generated/api";
+import { usePaginatedQuery } from "convex/react";
+import { useMemo, useState } from "react";
+import { TagBadge } from "@/components/tag-badge";
 
 const PAGE_SIZE = 20;
 
@@ -115,18 +115,16 @@ export function SuperAdminOrganizations() {
                     {org.slug}
                   </TableCell>
                   <TableCell>
-                    <Badge
-                      variant={
-                        org.subscriptionTier === "pro" ? "green" : "gray"
-                      }
+                    <TagBadge
+                      color={org.subscriptionTier === "pro" ? "green" : "gray"}
                     >
                       {org.subscriptionTier === "pro" ? "Pro" : "Free"}
-                    </Badge>
+                    </TagBadge>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={getStatusVariant(org.subscriptionStatus)}>
+                    <TagBadge color={getStatusVariant(org.subscriptionStatus)}>
                       {org.subscriptionStatus}
-                    </Badge>
+                    </TagBadge>
                   </TableCell>
                   <TableCell>{org.memberCount}</TableCell>
                   <TableCell>{org.feedbackCount}</TableCell>
@@ -145,8 +143,8 @@ export function SuperAdminOrganizations() {
         <div className="flex justify-center py-2">
           <Button
             onClick={() => loadMore(PAGE_SIZE)}
-            size="sm"
-            variant="outline"
+            size="xs"
+            variant="surface"
           >
             Load more
           </Button>

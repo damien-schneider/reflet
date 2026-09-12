@@ -1,6 +1,6 @@
 import { Check, Lightning, MegaphoneSimple } from "@phosphor-icons/react";
 
-import { Badge } from "@/components/ui/badge";
+import { TagBadge } from "@/components/tag-badge";
 import { H3 } from "@/components/ui/typography";
 
 const RELEASES = [
@@ -39,9 +39,9 @@ export function ChangelogCard() {
           <div className="relative" key={release.id}>
             {/* Version header */}
             <div className="mb-2 flex items-center gap-2">
-              <Badge color={release.color}>
+              <TagBadge color={release.color}>
                 <span className="font-mono">{release.version}</span>
-              </Badge>
+              </TagBadge>
             </div>
 
             <p className="mb-2 font-semibold text-foreground text-sm">

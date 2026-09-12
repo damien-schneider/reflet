@@ -1,12 +1,12 @@
 "use client";
 
+import { Badge, type BadgeColor } from "@ctrl-ui/react/ui/badge";
+import { Button } from "@ctrl-ui/react/ui/button";
 import { ArrowSquareOut } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 
 const STATUS_LABELS = {
   degraded: "Degraded",
@@ -17,14 +17,11 @@ const STATUS_LABELS = {
 
 type StatusKey = keyof typeof STATUS_LABELS;
 
-const BADGE_VARIANTS: Record<
-  StatusKey,
-  "secondary" | "outline" | "destructive"
-> = {
-  degraded: "destructive",
-  major_outage: "destructive",
-  no_monitors: "outline",
-  operational: "secondary",
+const BADGE_COLORS: Record<StatusKey, BadgeColor> = {
+  degraded: "orange",
+  major_outage: "red",
+  no_monitors: "neutral",
+  operational: "green",
 } as const;
 
 interface StatusSummarySectionProps {
@@ -44,7 +41,7 @@ export function StatusSummarySection({
   const monitorCount = aggregateStatus?.monitorCount ?? 0;
 
   const label = monitorCount > 0 ? STATUS_LABELS[status] : "No monitors";
-  const badgeVariant = BADGE_VARIANTS[status];
+  const badgeColor = BADGE_COLORS[status];
 
   return (
     <div className="space-y-4">
@@ -52,7 +49,7 @@ export function StatusSummarySection({
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className="font-medium text-sm">Status</span>
-            <Badge variant={badgeVariant}>{label}</Badge>
+            <Badge color={badgeColor}>{label}</Badge>
           </div>
           <p className="text-muted-foreground text-sm">
             {monitorCount > 0
@@ -61,7 +58,7 @@ export function StatusSummarySection({
           </p>
         </div>
         <Link href={`/dashboard/${orgSlug}/status`}>
-          <Button size="sm" variant="outline">
+          <Button size="xs" variant="surface">
             <ArrowSquareOut className="mr-2 h-4 w-4" />
             View Status Page
           </Button>

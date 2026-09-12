@@ -1,11 +1,10 @@
 "use client";
 
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { use } from "react";
-
-import { Skeleton } from "@/components/ui/skeleton";
 import { PublicFeedbackDetailContent } from "@/features/feedback/components/public-feedback-detail/public-feedback-detail-content";
 import { useCustomDomainOrg } from "@/features/public-org/hooks/use-custom-domain-org";
 

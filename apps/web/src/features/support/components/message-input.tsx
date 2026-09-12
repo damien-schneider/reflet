@@ -1,10 +1,9 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Textarea } from "@ctrl-ui/react/ui/textarea";
 import { PaperPlaneRight } from "@phosphor-icons/react";
 import { type RefObject, useState } from "react";
-
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
 interface MessageInputProps {
@@ -73,8 +72,10 @@ export function MessageInput({
         <Button
           className="shrink-0"
           disabled={!canSend}
+          iconOnly
           onClick={handleSend}
-          size="icon"
+          tone="primary"
+          variant="solid"
         >
           <PaperPlaneRight className="h-4 w-4" weight="fill" />
           <span className="sr-only">Send message</span>

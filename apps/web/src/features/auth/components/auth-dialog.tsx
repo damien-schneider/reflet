@@ -1,13 +1,13 @@
 "use client";
 
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@ctrl-ui/react/ui/dialog";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import {
   authDialogMessageAtom,
   authDialogOpenAtom,

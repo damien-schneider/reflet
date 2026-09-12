@@ -1,8 +1,7 @@
 "use client";
 
+import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Circle } from "@phosphor-icons/react";
-
-import { Badge } from "@/components/ui/badge";
 import {
   CONVERSATION_STATUS_META,
   isConversationStatus,
@@ -32,7 +31,7 @@ export function ConversationStatusBadge({
   const Icon = meta.icon;
 
   return (
-    <Badge className={cn(meta.badgeClassName, className)} variant="secondary">
+    <Badge className={cn(meta.badgeClassName, className)}>
       {showIcon && <Icon className="h-3 w-3" weight="fill" />}
       {meta.label}
     </Badge>

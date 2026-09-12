@@ -1,5 +1,9 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
+import { Tabs, TabsList, TabsPanel, TabsTab } from "@ctrl-ui/react/ui/tabs";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import {
   ArrowSquareOut,
   Check,
@@ -10,11 +14,6 @@ import {
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import Link from "next/link";
 import { useState } from "react";
-import { toast } from "sonner";
-
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMcpApiKey } from "../hooks/use-mcp-api-key";
 import { generateConfig, IDE_CONFIGS } from "./mcp-configs";
 
@@ -34,8 +33,8 @@ function CopyButton({ text, label }: { text: string; label: string }) {
     <Button
       aria-label={`Copy ${label.toLowerCase()}`}
       className="h-7 w-7"
+      iconOnly
       onClick={handleCopy}
-      size="icon"
       variant="ghost"
     >
       {hasCopied ? (
@@ -107,7 +106,13 @@ export function McpSetupGuide({ organizationId }: McpSetupGuideProps) {
         <div className="flex items-center justify-between gap-4">
           <h2 className="font-medium text-sm">API key</h2>
           {hasExistingKey === false && !newSecretKey ? (
-            <Button disabled={isGenerating} onClick={handleGenerate} size="sm">
+            <Button
+              disabled={isGenerating}
+              onClick={handleGenerate}
+              size="xs"
+              tone="primary"
+              variant="solid"
+            >
               <Key className="mr-2 h-4 w-4" />
               {isGenerating ? "Generating..." : "Generate key"}
             </Button>
@@ -116,8 +121,8 @@ export function McpSetupGuide({ organizationId }: McpSetupGuideProps) {
             <Button
               disabled={isGenerating}
               onClick={handleGenerate}
-              size="sm"
-              variant="outline"
+              size="xs"
+              variant="surface"
             >
               {isGenerating ? "Generating..." : "Generate new key"}
             </Button>
@@ -148,7 +153,7 @@ export function McpSetupGuide({ organizationId }: McpSetupGuideProps) {
                 <Button
                   className="mt-3"
                   onClick={clearSecretKey}
-                  size="sm"
+                  size="xs"
                   variant="ghost"
                 >
                   I&apos;ve saved it
@@ -193,19 +198,19 @@ export function McpSetupGuide({ organizationId }: McpSetupGuideProps) {
         <Tabs defaultValue="cursor">
           <TabsList>
             {IDE_CONFIGS.map((ide) => (
-              <TabsTrigger key={ide.id} value={ide.id}>
+              <TabsTab key={ide.id} value={ide.id}>
                 {ide.name}
-              </TabsTrigger>
+              </TabsTab>
             ))}
           </TabsList>
           {IDE_CONFIGS.map((ide) => (
-            <TabsContent className="mt-3" key={ide.id} value={ide.id}>
+            <TabsPanel className="mt-3" key={ide.id} value={ide.id}>
               <CodeBlock
                 code={generateConfig(ide, displayKey, transport)}
                 fileName={ide.filePath}
                 label={`${ide.name} config`}
               />
-            </TabsContent>
+            </TabsPanel>
           ))}
         </Tabs>
       </section>

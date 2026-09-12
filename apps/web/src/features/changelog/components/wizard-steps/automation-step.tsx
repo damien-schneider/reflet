@@ -1,7 +1,7 @@
 "use client";
 
+import { Switch } from "@ctrl-ui/react/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import type { WizardConfig } from "../wizard-config";
 
 interface AutomationStepProps {

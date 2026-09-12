@@ -14,7 +14,7 @@ vi.mock("@phosphor-icons/react", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/alert", () => ({
+vi.mock("@ctrl-ui/react/ui/alert", () => ({
   Alert: ({
     children,
     variant,
@@ -26,9 +26,6 @@ vi.mock("@/components/ui/alert", () => ({
       {children}
     </div>
   ),
-  AlertAction: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="alert-action">{children}</div>
-  ),
   AlertDescription: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
@@ -37,7 +34,7 @@ vi.mock("@/components/ui/alert", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     onClick,
@@ -127,7 +124,6 @@ describe("GitHubPermissionErrorAlert", () => {
   it("does not show dismiss button when onDismiss not provided", () => {
     render(<GitHubPermissionErrorAlert {...defaultProps} />);
     expect(screen.queryByText("Dismiss")).toBeNull();
-    expect(screen.queryByTestId("alert-action")).toBeNull();
   });
 
   it("calls onDismiss when dismiss button clicked", async () => {

@@ -1,5 +1,7 @@
 "use client";
 
+import { Button, ButtonLink } from "@ctrl-ui/react/ui/button";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import { ArrowSquareOut, Check, Copy } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
@@ -7,11 +9,7 @@ import { useMutation } from "convex/react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { generateSetupPrompt } from "reflet-cli/prompt";
-import { toast } from "sonner";
-
-import { Button, buttonVariants } from "@/components/ui/button";
 import { H3, Muted } from "@/components/ui/typography";
-import { cn } from "@/lib/utils";
 
 const COPIED_RESET_MS = 2000;
 
@@ -59,7 +57,9 @@ function InstallPanel({ publicKey }: { publicKey: string }) {
         <Button
           className="absolute top-3 right-3 min-h-11"
           onClick={() => copy("prompt", setupPrompt)}
-          size="sm"
+          size="xs"
+          tone="primary"
+          variant="solid"
         >
           {copied === "prompt" ? (
             <Check className="mr-2 h-4 w-4" />
@@ -76,8 +76,8 @@ function InstallPanel({ publicKey }: { publicKey: string }) {
         <Button
           aria-label="Copy install command"
           className="size-11 shrink-0"
+          iconOnly
           onClick={() => copy("command", installCommand)}
-          size="icon"
           variant="ghost"
         >
           {copied === "command" ? (
@@ -112,12 +112,13 @@ function NoKeyPanel({
   }
 
   return (
-    <Link
-      className={cn(buttonVariants({ variant: "outline" }), "min-h-11")}
-      href={`/dashboard/${orgSlug}/project/api-keys`}
+    <ButtonLink
+      className="min-h-11"
+      render={<Link href={`/dashboard/${orgSlug}/project/api-keys`} />}
+      variant="surface"
     >
       Create public key
-    </Link>
+    </ButtonLink>
   );
 }
 
@@ -145,18 +146,20 @@ export function FeedbackCollectorCard({
       <div className="space-y-1">
         <div className="flex items-center justify-between gap-3">
           <H3 variant="card">Feedback collector</H3>
-          <Link
-            className={cn(
-              buttonVariants({ size: "sm", variant: "ghost" }),
-              "min-h-11"
-            )}
-            href="/docs/widget/floating-feedback"
-            rel="noopener"
-            target="_blank"
+          <ButtonLink
+            className="min-h-11"
+            render={
+              <Link
+                href="/docs/widget/floating-feedback"
+                rel="noopener"
+                target="_blank"
+              />
+            }
+            size="xs"
           >
             View docs
             <ArrowSquareOut className="ml-2 h-4 w-4" />
-          </Link>
+          </ButtonLink>
         </div>
         <Muted className="max-w-xl text-sm">
           A floating button in your app. Each report carries the screenshot, the

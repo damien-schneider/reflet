@@ -1,0 +1,213 @@
+:where(.marketing-hero) {
+  display: flex;
+  flex-direction: column;
+  max-width: 1440px;
+  min-height: 90svh;
+  padding: 0 48px;
+  margin: auto;
+}
+:where(.hero-canvas) {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  isolation: isolate;
+}
+:where(.hero-editorial-line) {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 26px 12px 12px;
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+:where(.hero-open-source) {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  white-space: nowrap;
+}
+:where(.hero-open-source:hover) {
+  color: var(--foreground);
+}
+:where(.hero-main) {
+  display: grid;
+  flex: 1;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 18px;
+  align-items: center;
+  padding: 38px 0 28px 12px;
+}
+:where(.marketing-hero-copy) {
+  padding-bottom: 48px;
+}
+:where(.marketing-hero h1) {
+  max-width: 530px;
+  font-size: clamp(46px, 5.15vw, 76px);
+  font-weight: 500;
+  line-height: 1.06;
+  letter-spacing: -0.065em;
+}
+:where(.marketing-hero h1 > span) {
+  display: inline-block;
+}
+:where(.marketing-hero-copy > p) {
+  max-width: 355px;
+  margin-top: 30px;
+  font-size: 16px;
+  line-height: 1.8;
+  text-wrap: pretty;
+}
+:where(.hero-actions) {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: flex-start;
+  margin-top: 34px;
+}
+:where(.hero-actions [data-control-family="button"]) {
+  --cui-button-height: 50px;
+  --cui-button-radius: 16px;
+  --cui-button-padding-inline: 26px;
+  font-size: 14px;
+}
+:where(.hero-story-links) {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-inline: 12px;
+  border-block: 1px solid var(--marketing-hairline);
+}
+:where(.hero-story-links a) {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 24px 22px;
+  font-size: 12px;
+  transition: background var(--marketing-duration);
+}
+:where(.hero-story-links a + a) {
+  border-left: 1px solid var(--marketing-hairline);
+}
+:where(.hero-story-number) {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--feature-color);
+}
+:where(.hero-story-links svg) {
+  margin-left: auto;
+  color: var(--muted-foreground);
+  transition: translate var(--marketing-duration) var(--marketing-ease);
+}
+:where(.hero-story-links a:hover) {
+  background: var(--marketing-signal-soft);
+}
+:where(.hero-story-links a:hover svg) {
+  color: var(--feature-color);
+  translate: 2px -2px;
+}
+@media (max-width: 1050px) {
+  :where(.marketing-hero) {
+    padding-inline: 28px;
+  }
+  :where(.hero-main) {
+    grid-template-columns: 0.95fr 1.05fr;
+    gap: 0;
+  }
+  :where(.marketing-hero h1) {
+    font-size: clamp(44px, 5.3vw, 56px);
+  }
+  :where(.marketing-hero-copy > p) {
+    max-width: 310px;
+    font-size: 14px;
+  }
+  :where(.hero-story-links a) {
+    gap: 10px;
+    padding: 20px 10px;
+  }
+}
+@media (max-width: 767px) {
+  :where(.marketing-hero) {
+    padding-inline: 20px;
+  }
+  :where(.hero-editorial-line) {
+    padding: 26px 0 16px;
+    font-size: 10px;
+  }
+  :where(.hero-editorial-line > span) {
+    max-width: 160px;
+  }
+  :where(.hero-open-source) {
+    gap: 5px;
+  }
+  :where(.hero-main) {
+    grid-template-columns: 1fr;
+    gap: 36px;
+    padding: 32px 0 28px;
+  }
+  :where(.marketing-hero h1) {
+    max-width: 460px;
+    font-size: clamp(42px, 9.8vw, 66px);
+  }
+  :where(.marketing-hero-copy) {
+    padding: 0 4px;
+  }
+  :where(.marketing-hero-copy > p) {
+    max-width: 370px;
+    margin-top: 24px;
+  }
+  :where(.hero-actions) {
+    margin-top: 26px;
+  }
+  :where(.hero-story-links) {
+    grid-template-columns: 1fr;
+    margin-inline: 4px;
+  }
+  :where(.hero-story-links a) {
+    padding: 18px 0;
+  }
+  :where(.hero-story-links a + a) {
+    border-top: 1px solid var(--marketing-hairline);
+    border-left: 0;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  :where(.hero-canvas[data-reveal="visible"] .hero-editorial-line),
+  :where(.hero-canvas[data-reveal="visible"] h1 > span),
+  :where(.hero-canvas[data-reveal="visible"] .marketing-hero-copy > p),
+  :where(.hero-canvas[data-reveal="visible"] .hero-actions) {
+    animation: marketing-reveal var(--marketing-reveal-duration)
+      var(--marketing-reveal-ease) var(--hero-arrival-delay, 0ms) backwards;
+  }
+  :where(.hero-canvas[data-reveal="visible"] h1 > span) {
+    animation-name: marketing-heading-unveil;
+  }
+  :where(.marketing-hero h1 > span:first-child) {
+    --hero-arrival-delay: 60ms;
+  }
+  :where(.marketing-hero h1 > span:last-child) {
+    --hero-arrival-delay: 150ms;
+  }
+  :where(.marketing-hero-copy > p) {
+    --hero-arrival-delay: 280ms;
+  }
+  :where(.hero-actions) {
+    --hero-arrival-delay: 390ms;
+  }
+  :where(.hero-canvas[data-reveal="visible"] .hero-product-scene) {
+    animation: hero-scene-arrive 1100ms var(--marketing-reveal-ease) 220ms
+      backwards;
+  }
+}
+@keyframes hero-scene-arrive {
+  from {
+    opacity: 0;
+    translate: 0 32px;
+    scale: 0.975;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1;
+  }
+}

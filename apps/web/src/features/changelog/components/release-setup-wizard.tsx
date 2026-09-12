@@ -1,5 +1,16 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { ScrollArea } from "@ctrl-ui/react/ui/scroll-area";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@ctrl-ui/react/ui/sheet";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import {
   ArrowLeft,
   ArrowRight,
@@ -11,17 +22,6 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import {
   applyWorkflowDefaults,
@@ -129,9 +129,7 @@ export function ReleaseSetupWizard({
     <Sheet onOpenChange={onOpenChange} open={open}>
       <SheetContent
         className="gap-0 overflow-hidden p-0 md:w-140 md:max-w-140"
-        showCloseButton={false}
         side="right"
-        variant="panel"
       >
         {/* Header */}
         <SheetHeader className="flex shrink-0 flex-row items-center justify-between gap-2 border-b px-4 py-3">
@@ -147,8 +145,9 @@ export function ReleaseSetupWizard({
           <SheetClose
             render={
               <Button
+                iconOnly
                 onClick={() => onOpenChange(false)}
-                size="icon-sm"
+                size="xs"
                 variant="ghost"
               />
             }
@@ -204,7 +203,7 @@ export function ReleaseSetupWizard({
           <Button
             disabled={!canGoBack}
             onClick={() => setStep((s) => s - 1)}
-            size="sm"
+            size="xs"
             type="button"
             variant="ghost"
           >
@@ -216,8 +215,10 @@ export function ReleaseSetupWizard({
             <Button
               disabled={isSaving}
               onClick={handleComplete}
-              size="sm"
+              size="xs"
+              tone="primary"
               type="button"
+              variant="solid"
             >
               <Check className="mr-1 h-4 w-4" />
               Complete Setup
@@ -226,8 +227,10 @@ export function ReleaseSetupWizard({
             <Button
               disabled={!canGoNext}
               onClick={() => setStep((s) => s + 1)}
-              size="sm"
+              size="xs"
+              tone="primary"
               type="button"
+              variant="solid"
             >
               Next
               <ArrowRight className="ml-1 h-4 w-4" />

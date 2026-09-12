@@ -1,5 +1,6 @@
+import { env } from "@reflet/env/server";
 import type { Metadata, Viewport } from "next";
-import { Instrument_Serif, Inter } from "next/font/google";
+import { Manrope } from "next/font/google";
 import Script from "next/script";
 import { Suspense } from "react";
 import { CookieConsentBanner } from "@/components/cookie-consent-banner";
@@ -9,17 +10,10 @@ import { ThemeProvider } from "@/lib/theme-provider";
 
 import "./globals.css";
 
-const inter = Inter({
-  display: "optional",
+const manrope = Manrope({
+  display: "swap",
   subsets: ["latin"],
-  variable: "--font-sans",
-});
-
-const instrumentSerif = Instrument_Serif({
-  display: "optional",
-  subsets: ["latin"],
-  variable: "--font-display",
-  weight: "400",
+  variable: "--font-manrope",
 });
 
 export const metadata: Metadata = defaultMetadata;
@@ -32,13 +26,15 @@ export default function RootLayout({
 }) {
   return (
     <html
-      className={`${inter.className} ${inter.variable} ${instrumentSerif.variable}`}
+      className={manrope.variable}
+      data-skin="refined"
+      data-theme="reflet"
       lang="en"
       suppressHydrationWarning
     >
       <head>
         <link href="https://umami.damien-schneider.pro" rel="preconnect" />
-        {process.env.NODE_ENV === "development" && (
+        {env.NODE_ENV === "development" && (
           <Script
             src="//unpkg.com/react-grab/dist/index.global.js"
             strategy="lazyOnload"

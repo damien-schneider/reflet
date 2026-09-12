@@ -9,7 +9,7 @@ vi.mock("@phosphor-icons/react", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     onClick,
@@ -34,7 +34,7 @@ vi.mock("@/components/ui/button", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/card", () => ({
+vi.mock("@ctrl-ui/react/ui/card", () => ({
   Card: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="card">{children}</div>
   ),
@@ -99,6 +99,7 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
 
 vi.mock("@/lib/tag-colors", () => ({
   getTagSwatchClass: (color: string) => `swatch-${color}`,
+  resolveTagColor: (color: string) => color,
 }));
 
 vi.mock("@/lib/utils", () => ({

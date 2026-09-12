@@ -1,12 +1,11 @@
 "use client";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@ctrl-ui/react/ui/avatar";
+import { ScrollArea } from "@ctrl-ui/react/ui/scroll-area";
 import { ChatCircle } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { formatDistanceToNow } from "date-fns";
 import { useEffect, useRef } from "react";
-
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Text } from "@/components/ui/typography";
 import { HoverQuickActions } from "@/features/inbox/components/hover-quick-actions";
 import { ConversationStatusBadge } from "@/features/support/components/conversation-status-badge";

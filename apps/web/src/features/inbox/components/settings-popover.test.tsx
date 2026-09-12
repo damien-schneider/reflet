@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/components/ui/popover", () => ({
+vi.mock("@ctrl-ui/react/ui/popover", () => ({
   Popover: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
@@ -32,7 +32,7 @@ vi.mock("@/components/ui/popover", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/switch", () => ({
+vi.mock("@ctrl-ui/react/ui/switch", () => ({
   Switch: ({
     checked,
     onCheckedChange,
@@ -66,7 +66,7 @@ vi.mock("@/components/ui/label", () => ({
   }) => <span {...props}>{children}</span>,
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     ...props

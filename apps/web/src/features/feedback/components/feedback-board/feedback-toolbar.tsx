@@ -1,11 +1,11 @@
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Input } from "@ctrl-ui/react/ui/input";
 import {
   MagnifyingGlass as MagnifyingGlassIcon,
   Plus,
 } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import type { RefObject } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import type { InlineFeedbackInputHandle } from "../inline-feedback-input";
 import type { Tag } from "../tag-filter-bar";
 import { TagFilterBar } from "../tag-filter-bar";
@@ -41,7 +41,7 @@ export const FeedbackToolbar = ({
         <div className="relative w-full sm:w-64">
           <MagnifyingGlassIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            className="h-10 rounded-full border-0 bg-muted pr-4 pl-10 focus-visible:ring-2"
+            className="h-10 rounded-full border-0 bg-muted pr-4 pl-10"
             onChange={(event) => onSearchChange(event.target.value)}
             placeholder="Search feedback"
             value={searchQuery}
@@ -55,7 +55,9 @@ export const FeedbackToolbar = ({
         <Button
           className="h-12 rounded-full shadow-lg"
           onClick={onSubmitClick}
-          size="lg"
+          size="md"
+          tone="primary"
+          variant="solid"
         >
           <Plus className="h-4 w-4" />
           Submit Feedback

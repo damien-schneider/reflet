@@ -1,7 +1,7 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import { GithubLogo, GoogleLogo } from "@phosphor-icons/react";
-import { Button } from "@/components/ui/button";
 import { capture } from "@/lib/analytics";
 import { authClient } from "@/lib/auth-client";
 
@@ -18,7 +18,7 @@ export function AuthSocialProviders() {
           });
         }}
         type="button"
-        variant="outline"
+        variant="surface"
       >
         <GoogleLogo className="mr-2 size-5" weight="bold" />
         Continue with Google
@@ -33,7 +33,7 @@ export function AuthSocialProviders() {
           });
         }}
         type="button"
-        variant="outline"
+        variant="surface"
       >
         <GithubLogo className="mr-2 size-5" weight="fill" />
         Continue with GitHub

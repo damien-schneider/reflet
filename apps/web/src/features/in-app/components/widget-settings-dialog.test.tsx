@@ -10,7 +10,7 @@ vi.mock("convex/react", () => {
   };
 });
 
-vi.mock("sonner", () => ({
+vi.mock("@ctrl-ui/react/ui/toast", () => ({
   toast: { error: vi.fn(), success: vi.fn() },
 }));
 
@@ -24,7 +24,7 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
   },
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     disabled,
@@ -41,7 +41,7 @@ vi.mock("@/components/ui/button", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/dialog", () => ({
+vi.mock("@ctrl-ui/react/ui/dialog", () => ({
   Dialog: ({
     children,
     open,
@@ -71,7 +71,7 @@ vi.mock("@/components/ui/dialog", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/input", () => ({
+vi.mock("@ctrl-ui/react/ui/input", () => ({
   Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => (
     <input {...props} />
   ),
@@ -87,7 +87,7 @@ vi.mock("@/components/ui/label", () => ({
   }) => <label htmlFor={htmlFor}>{children}</label>,
 }));
 
-vi.mock("@/components/ui/select", () => ({
+vi.mock("@ctrl-ui/react/ui/select", () => ({
   Select: ({
     children,
     value,
@@ -115,7 +115,7 @@ vi.mock("@/components/ui/select", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/switch", () => ({
+vi.mock("@ctrl-ui/react/ui/switch", () => ({
   Switch: ({
     checked,
     disabled,
@@ -497,7 +497,7 @@ describe("WidgetSettingsDialog", () => {
     const { __mockMutationFn } = (await import("convex/react")) as {
       __mockMutationFn: ReturnType<typeof vi.fn>;
     };
-    const { toast } = await import("sonner");
+    const { toast } = await import("@ctrl-ui/react/ui/toast");
     const onOpenChange = vi.fn();
     const user = userEvent.setup();
     render(
@@ -528,7 +528,7 @@ describe("WidgetSettingsDialog", () => {
       __mockMutationFn: ReturnType<typeof vi.fn>;
     };
     __mockMutationFn.mockRejectedValueOnce(new Error("fail"));
-    const { toast } = await import("sonner");
+    const { toast } = await import("@ctrl-ui/react/ui/toast");
     const user = userEvent.setup();
     render(
       <WidgetSettingsDialog

@@ -1,5 +1,7 @@
 "use client";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@ctrl-ui/react/ui/avatar";
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   ArrowBendDownRight,
   DotsThree,
@@ -11,9 +13,6 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import { useMutation } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
-
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -107,7 +106,8 @@ export function CommentItem({ comment, isReply = false }: CommentItemOwnProps) {
                   <Button
                     {...props}
                     className="ml-auto h-6 w-6 opacity-0 transition-opacity group-hover:opacity-100"
-                    size="icon-sm"
+                    iconOnly
+                    size="xs"
                     variant="ghost"
                   >
                     <DotsThree className="h-4 w-4" />
@@ -150,7 +150,7 @@ export function CommentItem({ comment, isReply = false }: CommentItemOwnProps) {
                     setIsEditing(false);
                     setEditContent(comment.content);
                   }}
-                  size="sm"
+                  size="xs"
                   variant="ghost"
                 >
                   Cancel
@@ -158,7 +158,9 @@ export function CommentItem({ comment, isReply = false }: CommentItemOwnProps) {
                 <Button
                   disabled={!editContent.trim() || isSubmitting}
                   onClick={handleEdit}
-                  size="sm"
+                  size="xs"
+                  tone="primary"
+                  variant="solid"
                 >
                   {isSubmitting ? "Saving..." : "Save"}
                 </Button>
@@ -202,7 +204,7 @@ export function CommentItem({ comment, isReply = false }: CommentItemOwnProps) {
                       setIsReplying(false);
                       setReplyContent("");
                     }}
-                    size="sm"
+                    size="xs"
                     variant="ghost"
                   >
                     Cancel
@@ -211,7 +213,9 @@ export function CommentItem({ comment, isReply = false }: CommentItemOwnProps) {
                     className="gap-1"
                     disabled={!replyContent.trim() || isSubmitting}
                     onClick={handleReply}
-                    size="sm"
+                    size="xs"
+                    tone="primary"
+                    variant="solid"
                   >
                     <PaperPlaneTilt className="h-3.5 w-3.5" />
                     {isSubmitting ? "Posting..." : "Reply"}

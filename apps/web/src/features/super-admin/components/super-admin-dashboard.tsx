@@ -1,6 +1,6 @@
 "use client";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsPanel, TabsTab } from "@ctrl-ui/react/ui/tabs";
 import { H1 } from "@/components/ui/typography";
 import { SuperAdminFeedback } from "./super-admin-feedback";
 import { SuperAdminOrganizations } from "./super-admin-organizations";
@@ -14,27 +14,27 @@ export function SuperAdminDashboard() {
 
       <Tabs defaultValue="overview">
         <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="users">Users</TabsTrigger>
-          <TabsTrigger value="organizations">Organizations</TabsTrigger>
-          <TabsTrigger value="feedback">Feedback</TabsTrigger>
+          <TabsTab value="overview">Overview</TabsTab>
+          <TabsTab value="users">Users</TabsTab>
+          <TabsTab value="organizations">Organizations</TabsTab>
+          <TabsTab value="feedback">Feedback</TabsTab>
         </TabsList>
 
-        <TabsContent value="overview">
+        <TabsPanel value="overview">
           <SuperAdminOverview />
-        </TabsContent>
+        </TabsPanel>
 
-        <TabsContent value="users">
+        <TabsPanel value="users">
           <SuperAdminUsers />
-        </TabsContent>
+        </TabsPanel>
 
-        <TabsContent value="organizations">
+        <TabsPanel value="organizations">
           <SuperAdminOrganizations />
-        </TabsContent>
+        </TabsPanel>
 
-        <TabsContent value="feedback">
+        <TabsPanel value="feedback">
           <SuperAdminFeedback />
-        </TabsContent>
+        </TabsPanel>
       </Tabs>
     </div>
   );

@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   DotsThree,
   Lightning,
@@ -8,7 +9,6 @@ import {
   Trash,
 } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { Button } from "@/components/ui/button";
 import {
   DropdownList,
   DropdownListContent,
@@ -118,7 +118,7 @@ export function MonitorCard({
                     e.stopPropagation();
                     props.onClick?.(e);
                   }}
-                  size="sm"
+                  size="xs"
                   variant="ghost"
                 >
                   <DotsThree className="h-4 w-4" />

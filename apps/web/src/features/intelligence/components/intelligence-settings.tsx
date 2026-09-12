@@ -1,21 +1,21 @@
 "use client";
 
-import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { useMutation, useQuery } from "convex/react";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
+} from "@ctrl-ui/react/ui/select";
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
+import { Switch } from "@ctrl-ui/react/ui/switch";
+import { toast } from "@ctrl-ui/react/ui/toast";
+import { api } from "@reflet/backend/convex/_generated/api";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { useMutation, useQuery } from "convex/react";
+import { useEffect, useState } from "react";
+import { Label } from "@/components/ui/label";
 
 const SCAN_FREQUENCIES = ["daily", "twice_weekly", "weekly"] as const;
 type ScanFrequency = (typeof SCAN_FREQUENCIES)[number];
@@ -204,7 +204,12 @@ export function IntelligenceSettings({
         </div>
       ) : null}
 
-      <Button disabled={isSaving} onClick={handleSave}>
+      <Button
+        disabled={isSaving}
+        onClick={handleSave}
+        tone="primary"
+        variant="solid"
+      >
         {isSaving ? "Saving..." : saveLabel}
       </Button>
     </div>

@@ -12,7 +12,7 @@ vi.mock("@phosphor-icons/react", () => ({
   Sparkle: () => <svg data-testid="sparkle-icon" />,
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     onClick,
@@ -39,7 +39,7 @@ vi.mock("@/components/ui/button", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/skeleton", () => ({
+vi.mock("@ctrl-ui/react/ui/skeleton", () => ({
   Skeleton: ({ className }: { className?: string }) => (
     <div className={className} data-testid="skeleton" />
   ),

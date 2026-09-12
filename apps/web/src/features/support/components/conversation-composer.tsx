@@ -1,10 +1,10 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Input } from "@ctrl-ui/react/ui/input";
+import { Textarea } from "@ctrl-ui/react/ui/textarea";
 import { PaperPlaneRight } from "@phosphor-icons/react";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
 interface ConversationComposerProps {
@@ -104,7 +104,13 @@ export function ConversationComposer({
 
       {expanded && (
         <div className="mt-2 flex items-center justify-end">
-          <Button disabled={!canSend} onClick={handleSubmit} size="sm">
+          <Button
+            disabled={!canSend}
+            onClick={handleSubmit}
+            size="xs"
+            tone="primary"
+            variant="solid"
+          >
             <PaperPlaneRight className="h-4 w-4" weight="fill" />
             Send
           </Button>

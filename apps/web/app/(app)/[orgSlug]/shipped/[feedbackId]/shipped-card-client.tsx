@@ -1,21 +1,20 @@
 "use client";
 
-import { CheckCircle, Copy, LinkedinLogo, XLogo } from "@phosphor-icons/react";
-import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { useQuery } from "convex/react";
-import Link from "next/link";
-import { use, useCallback, useState } from "react";
-
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button, ButtonLink } from "@ctrl-ui/react/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+} from "@ctrl-ui/react/ui/card";
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
+import { CheckCircle, Copy, LinkedinLogo, XLogo } from "@phosphor-icons/react";
+import { api } from "@reflet/backend/convex/_generated/api";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { useQuery } from "convex/react";
+import Link from "next/link";
+import { use, useCallback, useState } from "react";
 
 export default function ShippedCardClient({
   params,
@@ -93,25 +92,27 @@ export default function ShippedCardClient({
           <div className="flex flex-col items-center gap-3">
             <p className="text-muted-foreground text-sm">Share this update</p>
             <div className="flex gap-2">
-              <a
-                className={buttonVariants({ size: "sm", variant: "outline" })}
+              <ButtonLink
                 href={twitterUrl}
                 rel="noopener noreferrer"
+                size="xs"
                 target="_blank"
+                variant="surface"
               >
                 <XLogo size={16} />
                 <span>Twitter</span>
-              </a>
-              <a
-                className={buttonVariants({ size: "sm", variant: "outline" })}
+              </ButtonLink>
+              <ButtonLink
                 href={linkedinUrl}
                 rel="noopener noreferrer"
+                size="xs"
                 target="_blank"
+                variant="surface"
               >
                 <LinkedinLogo size={16} />
                 <span>LinkedIn</span>
-              </a>
-              <Button onClick={handleCopy} size="sm" variant="outline">
+              </ButtonLink>
+              <Button onClick={handleCopy} size="xs" variant="surface">
                 <Copy size={16} />
                 <span>{copied ? "Copied!" : "Copy link"}</span>
               </Button>
@@ -119,12 +120,11 @@ export default function ShippedCardClient({
           </div>
 
           <div className="text-center">
-            <Link
-              className={buttonVariants({ variant: "link" })}
-              href={`/${orgSlug}/feedback/${feedbackId}`}
+            <ButtonLink
+              render={<Link href={`/${orgSlug}/feedback/${feedbackId}`} />}
             >
               View full feedback
-            </Link>
+            </ButtonLink>
           </div>
         </CardContent>
       </Card>

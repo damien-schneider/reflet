@@ -1,0 +1,84 @@
+:where(.marketing-page) {
+  --marketing-duration: 220ms;
+  --marketing-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --marketing-spring-ease: cubic-bezier(0.22, 1.18, 0.36, 1);
+  --marketing-press-duration: 90ms;
+  --marketing-settle-duration: 380ms;
+  --marketing-reveal-duration: 860ms;
+  --marketing-reveal-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --marketing-panel-duration: 560ms;
+  --marketing-settle-ease: cubic-bezier(0.22, 0.9, 0.24, 1);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :where(
+    [data-reveal="visible"][data-reveal-sequence="false"]:not(.hero-canvas)
+  ),
+  :where([data-reveal="visible"][data-reveal-sequence="true"] > *) {
+    animation: marketing-reveal var(--marketing-reveal-duration)
+      var(--marketing-reveal-ease) var(--reveal-delay, 0ms) backwards;
+  }
+  :where([data-reveal-sequence="true"] > :nth-child(2)) {
+    --reveal-delay: 70ms;
+  }
+  :where([data-reveal-sequence="true"] > :nth-child(3)) {
+    --reveal-delay: 140ms;
+  }
+  :where([data-reveal-sequence="true"] > :nth-child(4)) {
+    --reveal-delay: 210ms;
+  }
+  :where([data-reveal-sequence="true"] > :nth-child(n + 5)) {
+    --reveal-delay: 280ms;
+  }
+  :where(.feature-preview-body[data-active="true"]) {
+    animation: marketing-panel-arrive var(--marketing-panel-duration)
+      var(--marketing-settle-ease) backwards;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(.marketing-page) {
+    --marketing-duration: 0ms;
+    --marketing-reveal-duration: 0ms;
+    --marketing-panel-duration: 0ms;
+    --marketing-press-duration: 0ms;
+    --marketing-settle-duration: 0ms;
+  }
+}
+
+@keyframes marketing-reveal {
+  from {
+    opacity: 0;
+    translate: 0 24px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes marketing-panel-arrive {
+  from {
+    opacity: 0;
+    translate: 0 14px;
+    scale: 0.988;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1;
+  }
+}
+
+@keyframes marketing-heading-unveil {
+  from {
+    clip-path: inset(0 0 100% 0);
+    opacity: 0;
+    translate: 0 28px;
+  }
+  to {
+    clip-path: inset(0 0 -0.12em 0);
+    opacity: 1;
+    translate: 0 0;
+  }
+}

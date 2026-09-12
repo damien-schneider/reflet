@@ -1,18 +1,17 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { toast } from "@ctrl-ui/react/ui/toast";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@ctrl-ui/react/ui/tooltip";
 import { Sparkle } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useEffect, useRef } from "react";
-import { toast } from "sonner";
-
-import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { ResultsPopover } from "./triage-results-popover";
 
@@ -243,8 +242,8 @@ export function TriagePulse({ organizationId }: TriagePulseProps) {
     <Button
       className="shrink-0 gap-1.5"
       onClick={handleTriage}
-      size="sm"
-      variant="outline"
+      size="xs"
+      variant="surface"
     >
       <PulsingDot color={dotColor} />
       <Sparkle className="h-3.5 w-3.5" />

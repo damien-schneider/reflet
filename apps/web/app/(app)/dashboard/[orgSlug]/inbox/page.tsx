@@ -1,10 +1,10 @@
 "use client";
 
+import { Alert, AlertTitle } from "@ctrl-ui/react/ui/alert";
+import { Button } from "@ctrl-ui/react/ui/button";
 import { ArrowLeft, EyeSlash } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { use, useRef, useState } from "react";
-import { Alert, AlertAction, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import { H2, Muted } from "@/components/ui/typography";
 import {
   AdminConversationView,
@@ -153,18 +153,18 @@ export default function InboxPage({
       </InboxFilterBar>
 
       {supportEnabled === false && (
-        <Alert className="mx-4 mt-3 w-auto">
+        <Alert className="mx-4 mt-3 w-auto pr-32">
           <EyeSlash className="h-4 w-4" />
           <AlertTitle>Inbox is private</AlertTitle>
-          <AlertAction>
+          <div className="absolute top-2 right-2">
             <Button
               onClick={() => toggleSupport(true)}
-              size="sm"
-              variant="outline"
+              size="xs"
+              variant="surface"
             >
               Make public
             </Button>
-          </AlertAction>
+          </div>
         </Alert>
       )}
 

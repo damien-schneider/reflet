@@ -1,0 +1,140 @@
+:where(.marketing-pricing) {
+  border-top: 1px solid var(--marketing-hairline);
+}
+:where(.marketing-billing-toggle) {
+  position: relative;
+  display: flex;
+  width: fit-content;
+  padding: 4px;
+  margin: 30px auto;
+  background: var(--muted);
+  border-radius: 14px;
+  box-shadow: var(--marketing-inset);
+  isolation: isolate;
+}
+:where(.marketing-billing-toggle button) {
+  --cui-button-radius: 10px;
+  --cui-button-background: transparent;
+  --cui-button-hover-background: transparent;
+  --cui-button-shadow: none;
+  --cui-button-hover-shadow: none;
+  --cui-button-press-shadow: none;
+  min-width: 92px;
+}
+:where(.marketing-billing-toggle button[aria-pressed="true"]) {
+  color: var(--foreground);
+}
+:where(.marketing-billing-indicator) {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  z-index: -1;
+  width: 92px;
+  background: var(--card);
+  border-radius: 10px;
+  box-shadow: var(--marketing-float-shadow);
+  transition: translate var(--marketing-duration) var(--marketing-ease);
+}
+:where(
+  .marketing-billing-toggle[data-interval="yearly"] .marketing-billing-indicator
+) {
+  translate: 100% 0;
+}
+:where(.marketing-plans) {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  max-width: 880px;
+  margin: auto;
+}
+:where(.marketing-plan) {
+  height: 100%;
+  padding: 36px;
+  background: var(--card);
+  border-radius: 30px;
+  box-shadow: var(--marketing-panel);
+}
+:where(.marketing-plan[data-plan="pro"]) {
+  background: var(--card);
+  box-shadow: var(--marketing-hover-shadow);
+}
+:where(.marketing-plan-heading) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+:where(.marketing-plan h3) {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+}
+:where(.marketing-plan-heading span) {
+  padding: 6px 10px;
+  font-size: 10px;
+  background: var(--background);
+  border-radius: 999px;
+}
+:where(.marketing-plan > p) {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+:where(.marketing-plan-price) {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  margin-top: 34px;
+}
+:where(.marketing-plan-price strong) {
+  font-size: 56px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.045em;
+}
+:where(.marketing-plan-price > span) {
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+:where(.marketing-plan .marketing-plan-billing) {
+  margin-bottom: 28px;
+}
+:where(.marketing-plan ul) {
+  display: grid;
+  gap: 14px;
+  padding-top: 25px;
+  margin-top: 25px;
+  border-top: 1px solid var(--marketing-hairline);
+}
+:where(.marketing-plan li) {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-size: 13px;
+}
+:where(.marketing-plan li > svg) {
+  color: var(--muted-foreground);
+}
+:where(.marketing-open-source) {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 880px;
+  padding: 24px 2px;
+  margin: 28px auto 0;
+}
+:where(.marketing-open-source strong) {
+  font-size: 14px;
+  font-weight: 600;
+}
+:where(.marketing-open-source p) {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+:where(.marketing-open-source a) {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}

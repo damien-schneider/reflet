@@ -1,15 +1,15 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Field, FieldError, FieldLabel } from "@ctrl-ui/react/ui/field";
+import { Input } from "@ctrl-ui/react/ui/input";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Button } from "@/components/ui/button";
-import { Field, FieldError, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
 import { H1, Muted } from "@/components/ui/typography";
 import { authClient } from "@/lib/auth-client";
 
@@ -129,7 +129,9 @@ function ResetPasswordContent() {
             This reset link is invalid. Please request a new link.
           </Muted>
           <Link href="/auth/forgot-password">
-            <Button>Request a new link</Button>
+            <Button tone="primary" variant="solid">
+              Request a new link
+            </Button>
           </Link>
         </div>
       </div>
@@ -166,7 +168,9 @@ function ResetPasswordContent() {
             {apiError ?? "The reset link is invalid or has expired."}
           </Muted>
           <Link href="/auth/forgot-password">
-            <Button>Request a new link</Button>
+            <Button tone="primary" variant="solid">
+              Request a new link
+            </Button>
           </Link>
         </div>
       </div>
@@ -203,7 +207,12 @@ function ResetPasswordContent() {
             Your password has been successfully reset. You can now sign in with
             your new password.
           </Muted>
-          <Button className="w-full" onClick={() => router.push("/")}>
+          <Button
+            className="w-full"
+            onClick={() => router.push("/")}
+            tone="primary"
+            variant="solid"
+          >
             Sign in
           </Button>
         </div>
@@ -232,8 +241,10 @@ function ResetPasswordContent() {
             />
             <FieldError
               className="absolute top-full left-0"
-              errors={errors.password ? [errors.password] : undefined}
-            />
+              match={Boolean(errors.password?.message)}
+            >
+              {errors.password?.message}
+            </FieldError>
           </Field>
 
           <Field className="relative">
@@ -246,20 +257,26 @@ function ResetPasswordContent() {
             />
             <FieldError
               className="absolute top-full left-0"
-              errors={
-                errors.confirmPassword ? [errors.confirmPassword] : undefined
-              }
-            />
+              match={Boolean(errors.confirmPassword?.message)}
+            >
+              {errors.confirmPassword?.message}
+            </FieldError>
           </Field>
 
           {apiError && (
-            <FieldError className="mt-2" errors={[{ message: apiError }]} />
+            <Field>
+              <FieldError className="mt-2" match>
+                {apiError}
+              </FieldError>
+            </Field>
           )}
 
           <Button
             className="mt-6 w-full"
             disabled={isSubmitting || !isFormValid()}
+            tone="primary"
             type="submit"
+            variant="solid"
           >
             {isSubmitting ? (
               <>

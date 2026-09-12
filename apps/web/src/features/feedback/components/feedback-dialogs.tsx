@@ -1,8 +1,4 @@
-import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { useMutation } from "convex/react";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -10,10 +6,14 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+} from "@ctrl-ui/react/ui/dialog";
+import { Input } from "@ctrl-ui/react/ui/input";
+import { Textarea } from "@ctrl-ui/react/ui/textarea";
+import { api } from "@reflet/backend/convex/_generated/api";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { useMutation } from "convex/react";
+import { useState } from "react";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 
 interface CreateFeedbackDialogProps {
   onOpenChange: (open: boolean) => void;
@@ -88,10 +88,15 @@ export function CreateFeedbackDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button onClick={() => onOpenChange(false)} variant="outline">
+          <Button onClick={() => onOpenChange(false)} variant="surface">
             Cancel
           </Button>
-          <Button disabled={isSubmitting} onClick={handleSubmit}>
+          <Button
+            disabled={isSubmitting}
+            onClick={handleSubmit}
+            tone="primary"
+            variant="solid"
+          >
             {isSubmitting ? "Submitting..." : "Submit"}
           </Button>
         </DialogFooter>
@@ -134,10 +139,10 @@ export function DeleteFeedbackDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button onClick={onClose} variant="outline">
+          <Button onClick={onClose} variant="surface">
             Cancel
           </Button>
-          <Button onClick={handleDelete} variant="destructive">
+          <Button onClick={handleDelete} tone="danger" variant="surface">
             Move to trash
           </Button>
         </DialogFooter>

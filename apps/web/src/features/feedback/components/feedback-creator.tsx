@@ -1,10 +1,10 @@
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Input } from "@ctrl-ui/react/ui/input";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { useState } from "react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { capture } from "@/lib/analytics";
@@ -91,12 +91,17 @@ export function FeedbackCreator({
             disabled={isSubmitting}
             onClick={onCancel}
             type="button"
-            variant="outline"
+            variant="surface"
           >
             Cancel
           </Button>
         )}
-        <Button disabled={isSubmitting} type="submit">
+        <Button
+          disabled={isSubmitting}
+          tone="primary"
+          type="submit"
+          variant="solid"
+        >
           {isSubmitting ? "Submitting..." : "Submit Feedback"}
         </Button>
       </div>

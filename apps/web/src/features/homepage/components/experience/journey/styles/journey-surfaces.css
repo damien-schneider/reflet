@@ -1,0 +1,282 @@
+:where(.journey-app-surface) {
+  display: flex;
+  height: 100%;
+  background: var(--background);
+}
+:where(.journey-app-surface aside) {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 19%;
+  padding: 28px 22px;
+  font-size: 11px;
+  color: var(--muted-foreground);
+  border-right: 1px solid var(--marketing-hairline);
+}
+:where(.journey-app-surface aside > strong) {
+  margin-bottom: 14px;
+  font-size: 23px;
+  color: var(--foreground);
+  letter-spacing: -0.035em;
+}
+:where(.journey-app-surface aside > strong),
+:where(.journey-app-surface aside > span),
+:where(.journey-greeting),
+:where(.journey-board-title > span),
+:where(.journey-ai-label),
+:where(.journey-ai-suggestion > span),
+:where(.journey-ai-suggestion strong),
+:where(.journey-published) {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+:where(.orbit-logo) {
+  color: var(--marketing-signal);
+}
+:where(.journey-app-surface aside > small) {
+  margin-top: auto;
+  font-size: 9px;
+}
+:where(.journey-app-workspace) {
+  flex: 1;
+  padding: 28px 30px;
+}
+:where(.journey-greeting) {
+  font-size: 11px;
+  color: var(--muted-foreground);
+}
+:where(.journey-greeting > span) {
+  color: var(--marketing-signal);
+}
+:where(.journey-app-workspace h4) {
+  margin: 14px 0 22px;
+  font-size: 27px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.035em;
+}
+:where(.journey-app-tabs) {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 22px;
+  font-size: 10px;
+  color: var(--muted-foreground);
+}
+:where(.journey-app-tabs > span:first-child) {
+  padding-bottom: 8px;
+  color: var(--foreground);
+  border-bottom: 1px solid var(--foreground);
+}
+:where(.journey-fake-project) {
+  width: 48%;
+  padding: 15px;
+  margin-bottom: 12px;
+  background: var(--card);
+  border-radius: 20px;
+  box-shadow: var(--marketing-float-shadow);
+}
+:where(.journey-fake-project > span) {
+  float: left;
+  margin-right: 12px;
+  font-size: 20px;
+  color: var(--marketing-signal);
+}
+:where(.journey-fake-project strong) {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+}
+:where(.journey-fake-project small) {
+  font-size: 9px;
+  color: var(--muted-foreground);
+}
+:where(.journey-fake-progress) {
+  width: 70%;
+  height: 3px;
+  margin-top: 16px;
+  background: var(--muted);
+  border-radius: 5px;
+}
+:where(.journey-fake-progress > span) {
+  display: block;
+  width: 65%;
+  height: 100%;
+  background: var(--marketing-signal);
+  border-radius: inherit;
+}
+:where(.journey-app-notification) {
+  position: absolute;
+  right: 10%;
+  bottom: 28px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 11px;
+  color: var(--marketing-signal);
+}
+:where(.journey-board-surface) {
+  height: 100%;
+  padding: 28px 4%;
+}
+:where(.journey-board-title) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+:where(.journey-board-title strong) {
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+}
+:where(.journey-board-title > span) {
+  font-size: 10px;
+  color: var(--muted-foreground);
+}
+:where(.journey-board-columns) {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3.2%;
+  height: 85%;
+}
+:where(.journey-board-column) {
+  padding: 14px;
+  background: var(--secondary);
+  border-radius: 22px;
+  box-shadow: var(--marketing-inset);
+  transition: background var(--marketing-duration);
+}
+:where(.journey-board-column[data-current="true"]) {
+  background: var(--secondary);
+}
+:where(.journey-board-column > div:first-child) {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 11px;
+}
+:where(.journey-board-column > div:first-child > span) {
+  color: var(--marketing-signal);
+}
+:where(.journey-board-column strong) {
+  font-weight: 600;
+}
+:where(.journey-board-column small) {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--muted-foreground);
+}
+:where(.journey-board-note) {
+  padding: 16px;
+  margin-top: 20px;
+  background: var(--card);
+  border-radius: 20px;
+  box-shadow: var(--marketing-panel);
+}
+:where(.journey-board-note > span) {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 10px;
+  color: var(--muted-foreground);
+}
+:where(.journey-board-note strong) {
+  display: block;
+  font-size: 12px;
+}
+:where(.journey-board-note small) {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  margin-top: 18px;
+}
+:where(.journey-board-column[data-current="true"] .journey-board-note) {
+  visibility: hidden;
+}
+:where(.journey-triage-surface) {
+  position: relative;
+  height: 100%;
+  background: color-mix(in srgb, var(--marketing-violet) 5%, var(--card));
+}
+:where(.journey-triage-orbit) {
+  position: absolute;
+  top: 48%;
+  left: 20%;
+  width: 60%;
+  border-top: 1px dashed
+    color-mix(in oklch, var(--marketing-violet) 23%, transparent);
+}
+:where(.journey-ai-label) {
+  position: absolute;
+  top: 11%;
+  left: 40%;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--marketing-violet);
+}
+:where(.journey-ai-suggestion) {
+  position: absolute;
+  width: 23%;
+  padding: 18px;
+  background: var(--card);
+  border-radius: 24px;
+  box-shadow: var(--marketing-panel);
+}
+:where(.journey-ai-suggestion > span) {
+  margin-bottom: 14px;
+  font-size: 10px;
+  color: var(--marketing-violet);
+}
+:where(.journey-ai-suggestion strong) {
+  margin: 10px 0;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+:where(.journey-ai-suggestion small) {
+  font-size: 9px;
+  color: var(--muted-foreground);
+}
+:where(.journey-ai-related) {
+  top: 38%;
+  left: 5%;
+}
+:where(.journey-ai-category) {
+  top: 28%;
+  right: 5%;
+}
+:where(.journey-release-surface) {
+  padding: 25px;
+  text-align: center;
+}
+:where(.journey-release-surface .marketing-kicker) {
+  margin-bottom: 8px;
+  font-size: 10px;
+}
+:where(.journey-release-surface h4) {
+  font-size: 25px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+}
+:where(.journey-release-date) {
+  position: absolute;
+  top: 39%;
+  left: 5%;
+  font-size: 9px;
+  color: var(--muted-foreground);
+  letter-spacing: 0.12em;
+  writing-mode: vertical-rl;
+}
+:where(.journey-published) {
+  position: absolute;
+  right: 0;
+  bottom: 20px;
+  left: 0;
+  justify-content: center;
+  font-size: 11px;
+  color: var(--muted-foreground);
+}
+:where(.journey-published > span) {
+  color: var(--marketing-signal);
+}

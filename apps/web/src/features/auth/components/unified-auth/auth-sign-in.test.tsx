@@ -19,7 +19,7 @@ vi.mock("motion/react", () => ({
   },
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     disabled,
@@ -31,17 +31,17 @@ vi.mock("@/components/ui/button", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/field", () => ({
+vi.mock("@ctrl-ui/react/ui/field", () => ({
+  Field: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   FieldError: ({
-    errors,
+    children,
     className,
+    match,
   }: {
-    errors?: Array<{ message?: string }>;
+    children?: React.ReactNode;
     className?: string;
-  }) =>
-    errors && errors.length > 0 ? (
-      <span className={className}>{errors[0]?.message}</span>
-    ) : null,
+    match?: boolean;
+  }) => (match ? <span className={className}>{children}</span> : null),
 }));
 
 vi.mock("./lib/auth-validation", () => ({

@@ -1,12 +1,6 @@
 "use client";
 
-import { Plus } from "@phosphor-icons/react";
-import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { useMutation } from "convex/react";
-import { type FormEvent, useState } from "react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Dialog,
   DialogClose,
@@ -16,8 +10,14 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+} from "@ctrl-ui/react/ui/dialog";
+import { Input } from "@ctrl-ui/react/ui/input";
+import { toast } from "@ctrl-ui/react/ui/toast";
+import { Plus } from "@phosphor-icons/react";
+import { api } from "@reflet/backend/convex/_generated/api";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { useMutation } from "convex/react";
+import { type FormEvent, useState } from "react";
 import { Label } from "@/components/ui/label";
 
 const URL_PATTERN = /^https?:\/\/.+\..+/;
@@ -227,7 +227,12 @@ export function AddCompetitorDialog({
             <DialogClose className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-4 font-medium text-sm shadow-sm hover:bg-accent hover:text-accent-foreground">
               Cancel
             </DialogClose>
-            <Button disabled={!canSubmit} type="submit">
+            <Button
+              disabled={!canSubmit}
+              tone="primary"
+              type="submit"
+              variant="solid"
+            >
               {isCreating ? "Adding..." : "Add Competitor"}
             </Button>
           </DialogFooter>

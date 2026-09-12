@@ -16,7 +16,7 @@ vi.mock("@/lib/auth-client", () => ({
   },
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     ...props
@@ -26,7 +26,7 @@ vi.mock("@/components/ui/button", () => ({
   }) => <button {...props}>{children}</button>,
 }));
 
-vi.mock("@/components/ui/card", () => ({
+vi.mock("@ctrl-ui/react/ui/card", () => ({
   Card: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   CardContent: ({
     children,

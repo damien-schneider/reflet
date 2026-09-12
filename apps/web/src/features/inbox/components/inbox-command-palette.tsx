@@ -1,6 +1,5 @@
 "use client";
 
-import { CheckCircle, Gear, XCircle } from "@phosphor-icons/react";
 import {
   Command,
   CommandDialog,
@@ -10,7 +9,8 @@ import {
   CommandItem,
   CommandList,
   CommandShortcut,
-} from "@/components/ui/command";
+} from "@ctrl-ui/react/ui/command";
+import { CheckCircle, Gear, XCircle } from "@phosphor-icons/react";
 
 interface InboxCommandPaletteProps {
   hasSelectedConversation: boolean;

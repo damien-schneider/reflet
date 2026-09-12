@@ -1,16 +1,16 @@
 "use client";
 
-import { CalendarBlank, Clock, Globe } from "@phosphor-icons/react";
-import { format } from "date-fns";
-import { useState } from "react";
-import { Calendar } from "@/components/ui/calendar";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Calendar } from "@ctrl-ui/react/ui/calendar";
+import { Input } from "@ctrl-ui/react/ui/input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
+} from "@ctrl-ui/react/ui/popover";
+import { CalendarBlank, Clock, Globe } from "@phosphor-icons/react";
+import { format } from "date-fns";
+import { useState } from "react";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
 interface SchedulePickerProps {

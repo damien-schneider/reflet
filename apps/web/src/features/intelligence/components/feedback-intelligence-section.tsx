@@ -1,13 +1,17 @@
 "use client";
 
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@ctrl-ui/react/ui/card";
 import { Binoculars, CaretDown, CaretRight } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { useState } from "react";
-
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { TagBadge } from "@/components/tag-badge";
 
 const TYPE_LABEL: Record<string, string> = {
   battlecard: "Battlecard",
@@ -81,9 +85,9 @@ export const FeedbackIntelligenceSection = (
           <Binoculars className="size-4 text-muted-foreground" />
           <CardTitle className="text-sm">Intelligence</CardTitle>
           {hasInsights && (
-            <Badge color="blue">
+            <TagBadge color="blue">
               {insights.length} insight{insights.length === 1 ? "" : "s"}
-            </Badge>
+            </TagBadge>
           )}
         </button>
       </CardHeader>
@@ -103,12 +107,14 @@ export const FeedbackIntelligenceSection = (
                 >
                   <div className="flex flex-1 flex-col gap-1">
                     <div className="flex items-center gap-1.5">
-                      <Badge color={PRIORITY_COLOR[insight.priority] ?? "gray"}>
+                      <TagBadge
+                        color={PRIORITY_COLOR[insight.priority] ?? "gray"}
+                      >
                         {insight.priority}
-                      </Badge>
-                      <Badge color="blue">
+                      </TagBadge>
+                      <TagBadge color="blue">
                         {TYPE_LABEL[insight.type] ?? insight.type}
-                      </Badge>
+                      </TagBadge>
                     </div>
                     <p className="font-medium text-sm">{insight.title}</p>
                     <p className="text-muted-foreground text-xs">

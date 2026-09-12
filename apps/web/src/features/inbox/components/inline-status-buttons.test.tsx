@@ -2,19 +2,8 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/components/ui/toggle-group", () => ({
-  ToggleGroup: ({
-    children,
-    ...props
-  }: {
-    children: React.ReactNode;
-    [key: string]: unknown;
-  }) => (
-    <div data-testid="status-group" {...props}>
-      {children}
-    </div>
-  ),
-  ToggleGroupItem: ({
+vi.mock("@ctrl-ui/react/ui/toggle", () => ({
+  Toggle: ({
     children,
     value,
     pressed,
@@ -23,7 +12,7 @@ vi.mock("@/components/ui/toggle-group", () => ({
     children: React.ReactNode;
     value: string;
     pressed?: boolean;
-    onPressedChange?: (p: boolean) => void;
+    onPressedChange?: (pressed: boolean) => void;
     [key: string]: unknown;
   }) => (
     <button

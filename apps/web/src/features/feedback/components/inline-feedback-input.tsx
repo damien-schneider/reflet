@@ -1,18 +1,18 @@
 "use client";
 
-import { ArrowRight, Lightning, X } from "@phosphor-icons/react";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { AnimatePresence, domAnimation, LazyMotion, m } from "motion/react";
-import { useImperativeHandle, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Input } from "@ctrl-ui/react/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@ctrl-ui/react/ui/select";
+import { ArrowRight, Lightning, X } from "@phosphor-icons/react";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { AnimatePresence, domAnimation, LazyMotion, m } from "motion/react";
+import { useImperativeHandle, useRef, useState } from "react";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { getTagSwatchClass } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
@@ -166,8 +166,8 @@ export function InlineFeedbackInput({
               <Button
                 className="absolute top-2 right-2 h-7 w-7"
                 disabled={isSubmitting}
+                iconOnly
                 onClick={handleCancel}
-                size="icon"
                 variant="ghost"
               >
                 <X className="h-3.5 w-3.5" />
@@ -304,7 +304,13 @@ export function InlineFeedbackInput({
                     </Select>
                   )}
                 </div>
-                <Button disabled={!canSubmit} onClick={handleSubmit} size="sm">
+                <Button
+                  disabled={!canSubmit}
+                  onClick={handleSubmit}
+                  size="xs"
+                  tone="primary"
+                  variant="solid"
+                >
                   <ArrowRight className="mr-1 h-3 w-3" />
                   {isSubmitting ? "Submitting..." : "Submit"}
                 </Button>

@@ -1,9 +1,9 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
 
 const CONSENT_KEY = "cookie-consent";
 
@@ -66,12 +66,18 @@ export function CookieConsentBanner() {
           <Button
             className="h-11 sm:h-8"
             onClick={handleReject}
-            size="sm"
+            size="xs"
             variant="ghost"
           >
             Decline
           </Button>
-          <Button className="h-11 sm:h-8" onClick={handleAccept} size="sm">
+          <Button
+            className="h-11 sm:h-8"
+            onClick={handleAccept}
+            size="xs"
+            tone="primary"
+            variant="solid"
+          >
             Allow
           </Button>
         </div>

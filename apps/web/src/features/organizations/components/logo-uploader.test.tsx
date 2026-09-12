@@ -15,7 +15,7 @@ vi.mock("next/image", () => ({
   }) => <img alt={alt} className={className} src={src} />,
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     disabled,

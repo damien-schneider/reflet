@@ -4,7 +4,7 @@ import { CaretUp, ChatCircleDots, Sparkle } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 
-import { Badge } from "@/components/ui/badge";
+import { TagBadge } from "@/components/tag-badge";
 import { H3 } from "@/components/ui/typography";
 import { cn } from "@/lib/utils";
 import { useInView } from "../../hooks/use-in-view";
@@ -176,9 +176,9 @@ export function FeedbackBoardCard() {
                       {item.desc}
                     </p>
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <Badge color={item.status}>{item.label}</Badge>
+                      <TagBadge color={item.status}>{item.label}</TagBadge>
                       {item.tags.map((tag) => (
-                        <Badge color={tag.color} key={tag.label}>
+                        <TagBadge color={tag.color} key={tag.label}>
                           {tag.ai && (
                             <Sparkle
                               data-icon="inline-start"
@@ -187,7 +187,7 @@ export function FeedbackBoardCard() {
                             />
                           )}
                           {tag.label}
-                        </Badge>
+                        </TagBadge>
                       ))}
                     </div>
                   </div>

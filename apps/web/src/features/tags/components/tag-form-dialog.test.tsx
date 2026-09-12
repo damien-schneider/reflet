@@ -19,7 +19,7 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
   },
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     onClick,
@@ -39,7 +39,7 @@ vi.mock("@/components/ui/button", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/dialog", () => ({
+vi.mock("@ctrl-ui/react/ui/dialog", () => ({
   Dialog: ({
     children,
     open,
@@ -90,7 +90,7 @@ vi.mock("@/components/ui/emoji-picker", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/input", () => ({
+vi.mock("@ctrl-ui/react/ui/input", () => ({
   Input: ({
     value,
     onChange,
@@ -145,6 +145,7 @@ vi.mock("@/lib/tag-colors", () => ({
   isValidTagColor: (c: string) =>
     ["red", "blue", "green", "orange"].includes(c),
   migrateHexToNamedColor: () => "blue",
+  resolveTagColor: (color: string) => color,
 }));
 
 import { TagFormDialog } from "./tag-form-dialog";

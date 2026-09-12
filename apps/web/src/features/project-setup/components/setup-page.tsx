@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Card, CardContent } from "@ctrl-ui/react/ui/card";
 import { ArrowRight, Check, Gear, GithubLogo } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
@@ -7,8 +9,6 @@ import { useMutation, useQuery } from "convex/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { H1, Muted, Text } from "@/components/ui/typography";
 import { buildGitHubInstallUrl } from "@/features/github/lib/github-install-url";
 import { AnalyzingView } from "./analyzing-view";
@@ -123,10 +123,14 @@ export function SetupPage({ organizationId, orgSlug, userId }: SetupPageProps) {
               "An unexpected error occurred. Please try again."}
           </Text>
           <div className="flex justify-center gap-3">
-            <Button onClick={handleStartAnalysis} variant="default">
+            <Button
+              onClick={handleStartAnalysis}
+              tone="primary"
+              variant="solid"
+            >
               Try again
             </Button>
-            <Button onClick={handleManualSetup} variant="outline">
+            <Button onClick={handleManualSetup} variant="surface">
               Set up manually
             </Button>
           </div>
@@ -153,7 +157,13 @@ export function SetupPage({ organizationId, orgSlug, userId }: SetupPageProps) {
             Connected to {setupStatus.repositoryFullName}. Ready to analyze your
             repository and auto-configure everything.
           </Muted>
-          <Button disabled={isStarting} onClick={handleStartAnalysis} size="lg">
+          <Button
+            disabled={isStarting}
+            onClick={handleStartAnalysis}
+            size="md"
+            tone="primary"
+            variant="solid"
+          >
             Analyze this repo
             <ArrowRight className="ml-2 size-4" />
           </Button>
@@ -203,7 +213,9 @@ export function SetupPage({ organizationId, orgSlug, userId }: SetupPageProps) {
               className="w-full"
               disabled={!connectHref}
               render={connectHref ? <Link href={connectHref} /> : undefined}
-              size="lg"
+              size="md"
+              tone="primary"
+              variant="solid"
             >
               Connect GitHub
               <ArrowRight className="ml-2 size-4" />

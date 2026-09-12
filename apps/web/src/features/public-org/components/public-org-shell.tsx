@@ -1,5 +1,6 @@
 "use client";
 
+import { Tabs, TabsList, TabsTab } from "@ctrl-ui/react/ui/tabs";
 import {
   ChatCircle,
   FileText,
@@ -14,7 +15,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { H2, Text as TypographyText } from "@/components/ui/typography";
 import { PublicViewToolbar } from "@/features/feedback/components/public-view-toolbar";
 import { generateColorCssVars, generateColorPalette } from "@/lib/color-utils";
@@ -122,25 +122,25 @@ export function PublicOrgShell({
           value={currentTab}
         >
           <TabsList>
-            <TabsTrigger value="feedback">
+            <TabsTab value="feedback">
               <MessageSquare className="h-4 w-4" />
               Feedback
-            </TabsTrigger>
-            <TabsTrigger value="changelog">
+            </TabsTab>
+            <TabsTab value="changelog">
               <FileText className="h-4 w-4" />
               Changelog
-            </TabsTrigger>
+            </TabsTab>
             {statusEnabled && (
-              <TabsTrigger value="status">
+              <TabsTab value="status">
                 <Heartbeat className="h-4 w-4" />
                 Status
-              </TabsTrigger>
+              </TabsTab>
             )}
             {supportEnabled && (
-              <TabsTrigger value="support">
+              <TabsTab value="support">
                 <ChatCircle className="h-4 w-4" />
                 Support
-              </TabsTrigger>
+              </TabsTab>
             )}
           </TabsList>
         </Tabs>

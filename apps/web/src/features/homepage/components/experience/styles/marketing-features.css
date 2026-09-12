@@ -1,0 +1,71 @@
+:where(.marketing-avatar) {
+  display: inline-grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--marketing-signal);
+  background: var(--marketing-signal-soft);
+  border-radius: 50%;
+}
+:where(.marketing-status) {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  padding: 5px 8px;
+  font-size: 10px;
+  color: var(--marketing-signal);
+  background: var(--marketing-signal-soft);
+  border-radius: 7px;
+}
+:where(.marketing-developer) {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 70px;
+  align-items: center;
+  padding-top: 70px;
+  border-top: 1px solid var(--marketing-hairline);
+}
+:where(.marketing-developer h3) {
+  font-size: clamp(26px, 2.7vw, 38px);
+  font-weight: 600;
+  line-height: 1.18;
+  letter-spacing: -0.035em;
+}
+:where(.marketing-developer p) {
+  max-width: 350px;
+  margin: 18px 0;
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--muted-foreground);
+}
+:where(.marketing-code) {
+  min-width: 0;
+  padding: 22px 26px;
+  background: var(--card);
+  border: 1px solid var(--marketing-edge);
+  border-radius: 28px;
+  box-shadow: var(--marketing-float-shadow);
+}
+:where(.marketing-code > div) {
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 18px;
+  font-size: 11px;
+  color: var(--muted-foreground);
+  border-bottom: 1px solid var(--marketing-hairline);
+}
+:where(.marketing-code > div > span:first-child) {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+:where(.marketing-code pre) {
+  margin-top: 20px;
+  overflow-x: auto;
+  font-size: 12px;
+  line-height: 2;
+  color: var(--foreground);
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { Kbd } from "@/components/ui/kbd";
+import { Kbd } from "@ctrl-ui/react/ui/kbd";
 import { cn } from "@/lib/utils";
 
 interface ShortcutHintBarProps {

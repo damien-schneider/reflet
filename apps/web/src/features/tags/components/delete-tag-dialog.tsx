@@ -1,9 +1,6 @@
 "use client";
 
-import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { useMutation } from "convex/react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -11,7 +8,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@ctrl-ui/react/ui/dialog";
+import { api } from "@reflet/backend/convex/_generated/api";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { useMutation } from "convex/react";
 
 interface DeleteTagDialogProps {
   onOpenChange: (open: boolean) => void;
@@ -50,10 +50,10 @@ export function DeleteTagDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button onClick={() => onOpenChange(false)} variant="outline">
+          <Button onClick={() => onOpenChange(false)} variant="surface">
             Cancel
           </Button>
-          <Button onClick={handleDeleteTag} variant="destructive">
+          <Button onClick={handleDeleteTag} tone="danger" variant="surface">
             Delete
           </Button>
         </DialogFooter>

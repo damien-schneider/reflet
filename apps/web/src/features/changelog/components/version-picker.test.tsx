@@ -16,7 +16,7 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
   },
 }));
 
-vi.mock("@/components/ui/badge", () => ({
+vi.mock("@ctrl-ui/react/ui/badge", () => ({
   Badge: ({
     children,
     variant,
@@ -32,7 +32,7 @@ vi.mock("@/components/ui/badge", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     onClick,
@@ -57,7 +57,7 @@ vi.mock("@/components/ui/button", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/input", () => ({
+vi.mock("@ctrl-ui/react/ui/input", () => ({
   Input: ({
     value,
     onChange,
@@ -311,7 +311,7 @@ describe("VersionPicker", () => {
     render(<VersionPicker {...defaultProps} value="1.0.1" />);
     expect(screen.getByText(/Patch 1.0.1/)).toHaveAttribute(
       "data-variant",
-      "default"
+      "solid"
     );
     expect(screen.getByText(/Minor 1.1.0/)).toHaveAttribute(
       "data-variant",

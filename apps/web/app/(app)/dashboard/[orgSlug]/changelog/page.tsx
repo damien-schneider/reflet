@@ -1,13 +1,13 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Tabs, TabsList, TabsPanel, TabsTab } from "@ctrl-ui/react/ui/tabs";
 import { Code, GearSix, GithubLogo, Plus } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import Link from "next/link";
 import { use, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { H1, Muted } from "@/components/ui/typography";
 import { ChangelogSettingsTab } from "@/features/changelog/components/changelog-settings-tab";
 import { ChangelogWidgetTab } from "@/features/changelog/components/changelog-widget-tab";
@@ -142,7 +142,7 @@ export default function ChangelogPage({
       userId: session?.user?.id,
     });
     githubAction = href ? (
-      <Button render={<Link href={href} />} variant="outline">
+      <Button render={<Link href={href} />} variant="surface">
         <GithubLogo className="mr-2 h-4 w-4" />
         <span className="hidden sm:inline">Connect GitHub</span>
         <span className="sm:hidden">GitHub</span>
@@ -152,7 +152,7 @@ export default function ChangelogPage({
     githubAction = (
       <Button
         onClick={() => setActiveTab("settings")}
-        size="sm"
+        size="xs"
         variant="ghost"
       >
         <GearSix className="mr-1 h-4 w-4" />
@@ -185,7 +185,7 @@ export default function ChangelogPage({
           <div className="flex items-center gap-2">
             {githubAction}
             <Link href={`/dashboard/${orgSlug}/changelog/new`}>
-              <Button>
+              <Button tone="primary" variant="solid">
                 <Plus className="mr-2 h-4 w-4" />
                 <span className="hidden sm:inline">Create Release</span>
                 <span className="sm:hidden">New</span>
@@ -208,8 +208,8 @@ export default function ChangelogPage({
           </div>
           <Button
             onClick={() => setShowSetupWizard(true)}
-            size="sm"
-            variant="outline"
+            size="xs"
+            variant="surface"
           >
             Configure
           </Button>
@@ -218,23 +218,23 @@ export default function ChangelogPage({
 
       <Tabs onValueChange={setActiveTab} value={activeTab}>
         <TabsList>
-          <TabsTrigger value="releases">
+          <TabsTab value="releases">
             <Plus className="mr-2 h-4 w-4" />
             Releases
-          </TabsTrigger>
+          </TabsTab>
           {isAdmin && (
-            <TabsTrigger value="settings">
+            <TabsTab value="settings">
               <GearSix className="mr-2 h-4 w-4" />
               Settings
-            </TabsTrigger>
+            </TabsTab>
           )}
-          <TabsTrigger value="widget">
+          <TabsTab value="widget">
             <Code className="mr-2 h-4 w-4" />
             Embed
-          </TabsTrigger>
+          </TabsTab>
         </TabsList>
 
-        <TabsContent className="mt-6" value="releases">
+        <TabsPanel className="mt-6" value="releases">
           {githubStatus?.isConnected && org && (
             <RetroactiveInlineFlow organizationId={org._id} />
           )}
@@ -249,20 +249,20 @@ export default function ChangelogPage({
             orgSlug={orgSlug}
             releases={releases ?? []}
           />
-        </TabsContent>
+        </TabsPanel>
 
         {isAdmin && (
-          <TabsContent className="mt-6" value="settings">
+          <TabsPanel className="mt-6" value="settings">
             <ChangelogSettingsTab
               isAdmin={isAdmin}
               onOpenSetupWizard={() => setShowSetupWizard(true)}
               organizationId={org._id}
               orgSlug={orgSlug}
             />
-          </TabsContent>
+          </TabsPanel>
         )}
 
-        <TabsContent className="mt-6" value="widget">
+        <TabsPanel className="mt-6" value="widget">
           <ChangelogWidgetTab
             hasApiKeys={hasApiKeys}
             organizationId={org._id}
@@ -270,7 +270,7 @@ export default function ChangelogPage({
             primaryColor={org.primaryColor}
             publicKey={publicKey}
           />
-        </TabsContent>
+        </TabsPanel>
       </Tabs>
 
       {deletingRelease && (

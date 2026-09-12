@@ -1,15 +1,14 @@
 "use client";
 
-import { Smiley } from "@phosphor-icons/react";
-import { EmojiPicker as FrimousseEmojiPicker } from "frimousse";
-import { useState } from "react";
-
-import { Button } from "@/components/ui/button";
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
+} from "@ctrl-ui/react/ui/popover";
+import { Smiley } from "@phosphor-icons/react";
+import { EmojiPicker as FrimousseEmojiPicker } from "frimousse";
+import { useState } from "react";
 
 interface EmojiPickerProps {
   onChange: (emoji: string | undefined) => void;
@@ -36,8 +35,8 @@ export function EmojiPicker({ value, onChange }: EmojiPickerProps) {
           <Button
             {...props}
             className="h-8 w-8 p-0"
-            size="sm"
-            variant="outline"
+            size="xs"
+            variant="surface"
           >
             {value ? (
               <span className="text-base">{value}</span>

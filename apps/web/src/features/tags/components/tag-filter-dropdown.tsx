@@ -1,5 +1,22 @@
 "use client";
 
+import { Badge } from "@ctrl-ui/react/ui/badge";
+import { Button } from "@ctrl-ui/react/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+} from "@ctrl-ui/react/ui/command";
+import { Input } from "@ctrl-ui/react/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@ctrl-ui/react/ui/popover";
 import {
   Check,
   Pencil,
@@ -11,25 +28,7 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { useCallback, useMemo, useState } from "react";
-
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
-} from "@/components/ui/command";
-import { Input } from "@/components/ui/input";
 import { NotionColorPicker } from "@/components/ui/notion-color-picker";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import {
   getRandomTagColor,
   getTagDotColor,
@@ -149,7 +148,7 @@ function TagEditButton({ tag }: TagEditButtonProps) {
               <Button
                 className="h-7 px-2 text-destructive hover:text-destructive"
                 onClick={() => setShowDeleteDialog(true)}
-                size="sm"
+                size="xs"
                 variant="ghost"
               >
                 <Trash className="mr-1 h-3.5 w-3.5" />
@@ -159,12 +158,18 @@ function TagEditButton({ tag }: TagEditButtonProps) {
                 <Button
                   className="h-7"
                   onClick={() => setOpen(false)}
-                  size="sm"
+                  size="xs"
                   variant="ghost"
                 >
                   Cancel
                 </Button>
-                <Button className="h-7" onClick={handleSave} size="sm">
+                <Button
+                  className="h-7"
+                  onClick={handleSave}
+                  size="xs"
+                  tone="primary"
+                  variant="solid"
+                >
                   Save
                 </Button>
               </div>
@@ -246,9 +251,7 @@ export function TagFilterDropdown({
         <TagIcon className="h-4 w-4" />
         Tags
         {selectedTagIds.length > 0 && (
-          <Badge className="ml-1" variant="secondary">
-            {selectedTagIds.length}
-          </Badge>
+          <Badge className="ml-1">{selectedTagIds.length}</Badge>
         )}
       </PopoverTrigger>
       <PopoverContent align="start" className="w-56 p-0">

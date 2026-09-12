@@ -1,11 +1,11 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import { BellRinging, X } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
 
 export function PushNotificationPrompt() {
@@ -71,7 +71,7 @@ export function PushNotificationPrompt() {
         <Button
           disabled={isEnabling}
           onClick={handleEnable}
-          size="sm"
+          size="xs"
           variant="ghost"
         >
           {isEnabling ? "Enabling…" : "Enable"}

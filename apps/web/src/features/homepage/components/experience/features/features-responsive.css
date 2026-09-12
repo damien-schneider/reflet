@@ -1,0 +1,66 @@
+@media (max-width: 900px) {
+  :where(.feature-explorer) {
+    gap: 30px;
+  }
+  :where(.feature-preview-body) {
+    padding: 24px 0;
+  }
+}
+@media (max-width: 767px) {
+  :where(.feature-explorer) {
+    grid-template-columns: 1fr;
+    gap: 30px;
+    margin: 32px 0 64px;
+  }
+  :where(.feature-selector) {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  :where(.feature-selector-button) {
+    --cui-button-padding-inline: 8px;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+    padding-block: 14px;
+    text-align: center;
+  }
+  :where(.feature-selector-button strong) {
+    margin: 0;
+    font-size: 12px;
+  }
+  :where(.feature-selector-button strong + span),
+  :where(.feature-selector-button > svg),
+  :where(.feature-label-full) {
+    display: none;
+  }
+  :where(.feature-label-short) {
+    display: inline;
+  }
+  :where(.feature-mobile-description) {
+    display: block;
+    min-height: 42px;
+    font-size: 12px;
+    line-height: 1.75;
+    color: var(--muted-foreground);
+  }
+  :where(.feature-explorer-copy > a) {
+    margin: 12px 0 0;
+  }
+  :where(.feature-preview-body) {
+    padding: 12px 0;
+  }
+  :where(.feature-widget) {
+    padding: 20px;
+  }
+  :where(.feature-roadmap-columns) {
+    gap: 10px;
+  }
+  :where(.feature-roadmap-columns article) {
+    padding: 14px 10px;
+  }
+  :where(.feature-roadmap-columns .marketing-status) {
+    padding: 5px;
+    font-size: 8px;
+  }
+}

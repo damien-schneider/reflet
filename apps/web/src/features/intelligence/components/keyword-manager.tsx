@@ -1,22 +1,27 @@
 "use client";
 
-import { Hash, Plus, X } from "@phosphor-icons/react";
-import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { useMutation, useQuery } from "convex/react";
-import { type FormEvent, useState } from "react";
-import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Button } from "@ctrl-ui/react/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@ctrl-ui/react/ui/card";
+import { Input } from "@ctrl-ui/react/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@ctrl-ui/react/ui/select";
+import { toast } from "@ctrl-ui/react/ui/toast";
+import { Hash, Plus, X } from "@phosphor-icons/react";
+import { api } from "@reflet/backend/convex/_generated/api";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { useMutation, useQuery } from "convex/react";
+import { type FormEvent, useState } from "react";
+import { TagBadge } from "@/components/tag-badge";
 
 const KEYWORD_SOURCES = ["reddit", "web", "both"] as const;
 type KeywordSource = (typeof KEYWORD_SOURCES)[number];
@@ -136,7 +141,13 @@ export function KeywordManager({ organizationId }: KeywordManagerProps) {
                   <SelectItem value="both">Both</SelectItem>
                 </SelectContent>
               </Select>
-              <Button disabled={!canSubmit} size="sm" type="submit">
+              <Button
+                disabled={!canSubmit}
+                size="xs"
+                tone="primary"
+                type="submit"
+                variant="solid"
+              >
                 <Plus className="mr-1.5 size-4" />
                 {isAdding ? "Adding..." : "Add"}
               </Button>
@@ -194,13 +205,13 @@ function KeywordsList({
           <div className="flex items-center gap-2">
             <Hash className="size-4 text-muted-foreground" />
             <span className="text-sm">{kw.keyword}</span>
-            <Badge
+            <TagBadge
               color={
                 SOURCE_COLORS[isKeywordSource(kw.source) ? kw.source : "both"]
               }
             >
               {SOURCE_LABELS[isKeywordSource(kw.source) ? kw.source : "both"]}
-            </Badge>
+            </TagBadge>
             {kw.subreddit && (
               <span className="text-muted-foreground text-xs">
                 {kw.subreddit}
@@ -209,8 +220,8 @@ function KeywordsList({
           </div>
           <Button
             aria-label={`Remove keyword ${kw.keyword}`}
+            iconOnly
             onClick={() => onRemove(kw._id)}
-            size="icon"
             variant="ghost"
           >
             <X className="size-4" />

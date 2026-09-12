@@ -1,13 +1,13 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import { Info, Lightning, Spinner } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useAction, useQuery } from "convex/react";
 import Link from "next/link";
 import { useRef, useState } from "react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import { capture } from "@/lib/analytics";
 
 export interface CommitInfo {
@@ -278,10 +278,10 @@ export function GenerateFromCommits({
       className="h-7 gap-1 text-xs"
       disabled={isDisabled}
       onClick={handleGenerate}
-      size="sm"
+      size="xs"
       title="Generate release notes from recent code changes on GitHub"
       type="button"
-      variant="outline"
+      variant="surface"
     >
       {isFetchingCommits || isStreaming ? (
         <>

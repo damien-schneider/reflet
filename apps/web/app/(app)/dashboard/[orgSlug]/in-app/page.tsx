@@ -1,12 +1,6 @@
 "use client";
 
-import { Plus } from "@phosphor-icons/react";
-import { api } from "@reflet/backend/convex/_generated/api";
-import { useMutation, useQuery } from "convex/react";
-import { use, useState } from "react";
-import { toast } from "sonner";
-
-import { Button } from "@/components/ui/button";
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -14,10 +8,15 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+} from "@ctrl-ui/react/ui/dialog";
+import { Input } from "@ctrl-ui/react/ui/input";
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
+import { toast } from "@ctrl-ui/react/ui/toast";
+import { Plus } from "@phosphor-icons/react";
+import { api } from "@reflet/backend/convex/_generated/api";
+import { useMutation, useQuery } from "convex/react";
+import { use, useState } from "react";
 import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
 import { H1, H3, Muted } from "@/components/ui/typography";
 import { FeedbackCollectorCard } from "@/features/in-app/components/feedback-collector-card";
 import {
@@ -151,7 +150,7 @@ export default function WidgetsPage({
         <div className="flex flex-wrap items-center justify-between gap-3">
           <H3 variant="card">Live chat</H3>
           <Dialog onOpenChange={setIsDialogOpen} open={isDialogOpen}>
-            <DialogTrigger render={<Button size="sm" variant="outline" />}>
+            <DialogTrigger render={<Button size="xs" variant="surface" />}>
               <Plus className="mr-2 h-4 w-4" />
               Add live chat
             </DialogTrigger>
@@ -174,6 +173,8 @@ export default function WidgetsPage({
                 <Button
                   disabled={!widgetName.trim() || isCreating}
                   onClick={handleCreateWidget}
+                  tone="primary"
+                  variant="solid"
                 >
                   {isCreating ? "Creating..." : "Create"}
                 </Button>

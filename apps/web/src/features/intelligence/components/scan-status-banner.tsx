@@ -1,15 +1,14 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Card, CardContent } from "@ctrl-ui/react/ui/card";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import { ArrowsClockwise, MagnifyingGlass, X } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
-import { toast } from "sonner";
-
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 
 const formatRelativeTime = (timestamp: number): string => {
   const now = Date.now();
@@ -199,7 +198,7 @@ export const ScanStatusBanner = ({
           <Button
             className="shrink-0"
             onClick={handleCancelScan}
-            size="sm"
+            size="xs"
             variant="ghost"
           >
             <X className="h-4 w-4" />
@@ -216,8 +215,8 @@ export const ScanStatusBanner = ({
         className="shrink-0 gap-1.5"
         disabled={!canScan}
         onClick={handleStartScan}
-        size="sm"
-        variant="outline"
+        size="xs"
+        variant="surface"
       >
         <MagnifyingGlass className="h-4 w-4" />
         <span>Run Scan Now</span>

@@ -1,9 +1,9 @@
 "use client";
 
+import { Field, FieldError, FieldLabel } from "@ctrl-ui/react/ui/field";
+import { Input } from "@ctrl-ui/react/ui/input";
 import { AnimatePresence, motion } from "motion/react";
 import type { UseFormRegister } from "react-hook-form";
-import { Field, FieldError, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
 import type { AuthMode } from "./hooks/use-auth-form";
 import type { SignUpFormData } from "./lib/auth-validation";
 import { animationVariants } from "./lib/auth-validation";
@@ -82,8 +82,10 @@ export function AuthConfirmPassword({
             <FieldError
               className="absolute top-full left-0"
               data-testid="confirm-password-error"
-              errors={confirmPasswordErrors}
-            />
+              match={Boolean(confirmPasswordErrors?.[0]?.message)}
+            >
+              {confirmPasswordErrors?.[0]?.message}
+            </FieldError>
           </Field>
         </motion.div>
       )}

@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import {
   closestCenter,
   DndContext,
@@ -21,8 +23,6 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { useCallback, useState } from "react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import { Muted } from "@/components/ui/typography";
 import { QuestionCard } from "@/features/surveys/components/question-card";
 import { cn } from "@/lib/utils";
@@ -213,7 +213,12 @@ export function QuestionEditor({ questions, surveyId }: QuestionEditorProps) {
           <Muted className="mb-4">
             No questions yet. Add your first question to get started.
           </Muted>
-          <Button onClick={() => setIsAdding(true)} size="sm">
+          <Button
+            onClick={() => setIsAdding(true)}
+            size="xs"
+            tone="primary"
+            variant="solid"
+          >
             <Plus className="mr-1.5 size-4" />
             Add Question
           </Button>

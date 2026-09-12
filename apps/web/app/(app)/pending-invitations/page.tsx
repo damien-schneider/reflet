@@ -1,19 +1,19 @@
 "use client";
 
-import { api } from "@reflet/backend/convex/_generated/api";
-import { useMutation, useQuery } from "convex/react";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@ctrl-ui/react/ui/avatar";
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Spinner } from "@/components/ui/spinner";
+} from "@ctrl-ui/react/ui/card";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
+import { api } from "@reflet/backend/convex/_generated/api";
+import { useMutation, useQuery } from "convex/react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { H1 } from "@/components/ui/typography";
 import { authClient } from "@/lib/auth-client";
 
@@ -126,6 +126,8 @@ export default function PendingInvitationsPage() {
                       className="flex-1"
                       disabled={acceptingToken === invitation.token}
                       onClick={() => handleAccept(invitation.token)}
+                      tone="primary"
+                      variant="solid"
                     >
                       {acceptingToken === invitation.token
                         ? "Accepting..."
@@ -134,7 +136,7 @@ export default function PendingInvitationsPage() {
                     <Button
                       disabled={acceptingToken === invitation.token}
                       onClick={() => router.push(`/invite/${invitation.token}`)}
-                      variant="outline"
+                      variant="surface"
                     >
                       View details
                     </Button>

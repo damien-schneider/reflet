@@ -1,5 +1,5 @@
+import { toast } from "@ctrl-ui/react/ui/toast";
 import { Copy } from "@phosphor-icons/react";
-import { toast } from "sonner";
 
 import { COPILOT_ICON, CURSOR_ICON, WINDSURF_ICON } from "./agent-icons";
 

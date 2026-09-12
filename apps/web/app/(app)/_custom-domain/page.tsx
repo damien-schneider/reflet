@@ -1,9 +1,8 @@
 "use client";
 
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
-
-import { Skeleton } from "@/components/ui/skeleton";
 import type { BoardView as BoardViewType } from "@/features/feedback/components/board-view-toggle";
 import { FeedbackBoard } from "@/features/feedback/components/feedback-board";
 import { useCustomDomainOrg } from "@/features/public-org/hooks/use-custom-domain-org";

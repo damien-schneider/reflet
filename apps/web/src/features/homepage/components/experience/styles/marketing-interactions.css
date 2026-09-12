@@ -1,0 +1,275 @@
+:where(.marketing-page [data-control-family="button"][data-control="true"]) {
+  --cui-button-radius: 14px;
+  --cui-button-press-scale: 0.975;
+  transition-timing-function: var(--marketing-ease);
+  transition-duration: var(--marketing-duration);
+}
+:where(.marketing-page [data-control-family="button"][data-variant="solid"]) {
+  --cui-button-background-image: none;
+  --cui-button-background: var(--marketing-action-background);
+  --cui-button-foreground: var(--marketing-action-foreground);
+  --cui-button-hover-background: var(--marketing-action-hover);
+  --cui-button-hover-foreground: var(--marketing-action-foreground);
+  --cui-button-shadow: var(--marketing-action-shadow);
+  --cui-button-hover-shadow: var(--marketing-action-shadow);
+  --cui-button-press-shadow: var(--marketing-inset);
+}
+:where(.marketing-text-link) {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 550;
+}
+:where(.marketing-navigation nav a),
+:where(.marketing-login),
+:where(.marketing-footer nav a),
+:where(.marketing-text-link),
+:where(.marketing-open-source a) {
+  position: relative;
+  width: fit-content;
+  transition: color var(--marketing-duration) var(--marketing-ease);
+}
+:where(.marketing-navigation nav a),
+:where(.marketing-login),
+:where(.marketing-footer nav a) {
+  padding-block: 6px;
+}
+:where(.marketing-navigation nav a)::after,
+:where(.marketing-login)::after,
+:where(.marketing-footer nav a)::after,
+:where(.marketing-text-link)::after,
+:where(.marketing-open-source a)::after {
+  position: absolute;
+  right: 0;
+  bottom: 1px;
+  left: 0;
+  height: 1px;
+  content: "";
+  background: currentColor;
+  transform-origin: right;
+  scale: 0 1;
+  transition: scale var(--marketing-duration) var(--marketing-ease);
+}
+:where(.marketing-navigation nav a:is(:hover, :focus-visible))::after,
+:where(.marketing-login:is(:hover, :focus-visible))::after,
+:where(.marketing-footer nav a:is(:hover, :focus-visible))::after,
+:where(.marketing-text-link:is(:hover, :focus-visible))::after,
+:where(.marketing-open-source a:is(:hover, :focus-visible))::after {
+  transform-origin: left;
+  scale: 1 1;
+}
+:where(.marketing-navigation nav a:is(:hover, :focus-visible)),
+:where(.marketing-login:is(:hover, :focus-visible)),
+:where(.marketing-footer nav a:is(:hover, :focus-visible)) {
+  color: var(--foreground);
+}
+:where(.marketing-page .lucide-arrow-up-right),
+:where(.marketing-page .lucide-arrow-down),
+:where(.marketing-open-source a > span),
+:where(.hero-story-number) {
+  transition: translate var(--marketing-duration) var(--marketing-ease);
+}
+:where(.marketing-open-source a > span),
+:where(.hero-story-number) {
+  display: inline-block;
+}
+:where(.marketing-plan),
+:where(.feature-widget),
+:where(.marketing-code),
+:where(.feature-roadmap-columns article),
+:where(.feature-release-card) {
+  transition:
+    translate var(--marketing-settle-duration) var(--marketing-ease),
+    box-shadow var(--marketing-settle-duration) var(--marketing-ease);
+}
+:where(.feature-widget:focus-within),
+:where(.marketing-plan:focus-within) {
+  box-shadow: var(--marketing-hover-shadow);
+}
+:where(.feature-selector-button > svg) {
+  transition:
+    opacity var(--marketing-duration) var(--marketing-ease),
+    translate var(--marketing-duration) var(--marketing-ease);
+}
+:where(.feature-selector-button:is(:hover, :focus-visible) > svg) {
+  color: var(--feature-color);
+  opacity: 1;
+}
+:where(.feature-selector-icon) {
+  transition:
+    color var(--marketing-duration) var(--marketing-ease),
+    box-shadow var(--marketing-duration) var(--marketing-ease);
+}
+:where(.marketing-billing-indicator) {
+  transition: translate var(--marketing-settle-duration)
+    var(--marketing-spring-ease);
+}
+:where(.marketing-faq summary) {
+  position: relative;
+  align-items: center;
+  isolation: isolate;
+  transition: color var(--marketing-duration) var(--marketing-ease);
+}
+:where(.marketing-faq summary)::before {
+  position: absolute;
+  inset: -12px -14px;
+  z-index: -1;
+  content: "";
+  background: var(--marketing-stage);
+  border-radius: 14px;
+  opacity: 0;
+  transition: opacity var(--marketing-duration) var(--marketing-ease);
+}
+:where(.marketing-faq summary:is(:hover, :focus-visible))::before {
+  opacity: 1;
+}
+:where(.marketing-faq summary:is(:hover, :focus-visible)),
+:where(.marketing-faq details[open] summary) {
+  color: var(--foreground);
+}
+:where(.marketing-faq summary > svg) {
+  flex-shrink: 0;
+  transition: rotate var(--marketing-settle-duration)
+    var(--marketing-spring-ease);
+}
+:where(.marketing-faq details[open] summary > svg) {
+  rotate: 45deg;
+}
+@supports (interpolate-size: allow-keywords) {
+  :where(.marketing-faq details) {
+    interpolate-size: allow-keywords;
+  }
+  :where(.marketing-faq details)::details-content {
+    height: 0;
+    overflow: clip;
+    opacity: 0;
+    transition:
+      height var(--marketing-panel-duration) var(--marketing-reveal-ease),
+      opacity var(--marketing-duration),
+      content-visibility var(--marketing-panel-duration) allow-discrete;
+  }
+  :where(.marketing-faq details[open])::details-content {
+    height: auto;
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  :where(.feature-selector-icon svg),
+  :where(.marketing-wordmark .reflet-mark),
+  :where(.marketing-navigation-actions button[title^="Theme:"] svg),
+  :where(.journey-nav-content svg) {
+    transition: transform var(--marketing-settle-duration)
+      var(--marketing-spring-ease);
+  }
+  :where(.marketing-wordmark:is(:hover, :focus-visible) .reflet-mark) {
+    transform: rotate(16deg);
+  }
+  :where(
+    .marketing-navigation-actions
+      button[title^="Theme:"]:is(:hover, :focus-visible)
+      svg
+  ) {
+    transform: rotate(-18deg) scale(1.08);
+  }
+  :where(
+    .journey-navigation a:is(:hover, :focus-visible) .journey-nav-content svg
+  ) {
+    transform: translateY(-1px) scale(1.1);
+  }
+  :where(
+    .feature-selector-button:is(:hover, :focus-visible)
+      .feature-selector-icon
+      svg
+  ) {
+    transform: rotate(-6deg) scale(1.08);
+  }
+  :where(
+    .feature-selector-button[aria-pressed="true"] .feature-selector-icon svg
+  ) {
+    transform: rotate(0deg) scale(1.05);
+  }
+  :where(.marketing-page a:is(:hover, :focus-visible) .lucide-arrow-up-right),
+  :where(
+    .marketing-page
+      [data-control-family="button"]:not(:disabled):is(:hover, :focus-visible)
+      .lucide-arrow-up-right
+  ),
+  :where(.marketing-open-source a:is(:hover, :focus-visible) > span) {
+    translate: 2px -2px;
+  }
+  :where(.marketing-page a:is(:hover, :focus-visible) .lucide-arrow-down) {
+    translate: 0 3px;
+  }
+  :where(.hero-story-links a:is(:hover, :focus-visible) .hero-story-number) {
+    translate: 0 -2px;
+  }
+  :where(.marketing-page [data-control-family="button"]:not(:disabled):active) {
+    transition-duration: var(--marketing-press-duration);
+  }
+  :where(.feature-success-icon) {
+    animation: marketing-success-arrive 620ms var(--marketing-spring-ease)
+      backwards;
+  }
+  :where(.feature-success-icon path) {
+    stroke-dasharray: 40;
+    animation: marketing-check-draw 620ms var(--marketing-ease) 80ms backwards;
+  }
+}
+@media (hover: hover) and (pointer: fine) and (
+    prefers-reduced-motion: no-preference
+  ) {
+  :where(.marketing-plan:is(:hover, :focus-within)) {
+    box-shadow: var(--marketing-hover-shadow);
+    translate: 0 -3px;
+  }
+  :where(.marketing-plan:not(:hover, :focus-within)) {
+    translate: 0;
+  }
+  :where(.feature-preview-stage:hover),
+  :where(.marketing-code:hover),
+  :where(.feature-roadmap-columns article:hover),
+  :where(.feature-release-card:hover) {
+    box-shadow: var(--marketing-hover-shadow);
+  }
+  :where(
+    .marketing-page
+      [data-control-family="button"][data-variant="solid"]:not(:disabled):is(
+        :hover,
+        :focus-visible
+      )
+  ) {
+    translate: 0 -1px;
+  }
+  :where(.marketing-page [data-control-family="button"]:active) {
+    translate: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :where(.marketing-page *) {
+    scroll-behavior: auto;
+  }
+  :where(.marketing-page [data-control-family="button"]) {
+    --cui-button-press-scale: 1;
+  }
+}
+@keyframes marketing-success-arrive {
+  from {
+    opacity: 0;
+    scale: 0.8;
+    rotate: -8deg;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+    rotate: 0deg;
+  }
+}
+@keyframes marketing-check-draw {
+  from {
+    stroke-dashoffset: 40;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}

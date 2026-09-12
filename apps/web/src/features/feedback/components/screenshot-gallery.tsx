@@ -1,5 +1,15 @@
 "use client";
 
+import { Badge } from "@ctrl-ui/react/ui/badge";
+import { Button } from "@ctrl-ui/react/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@ctrl-ui/react/ui/dialog";
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import {
   Camera,
   DownloadSimple,
@@ -12,17 +22,6 @@ import { useMutation, useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
 import Image from "next/image";
 import { useRef, useState } from "react";
-import { toast } from "sonner";
-
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Skeleton } from "@/components/ui/skeleton";
 
 type FeedbackId = Id<"feedback">;
 
@@ -123,8 +122,8 @@ export function ScreenshotGallery({ feedbackId }: { feedbackId: FeedbackId }) {
         </div>
         <Button
           onClick={() => fileInputRef.current?.click()}
-          size="sm"
-          variant="outline"
+          size="xs"
+          variant="surface"
         >
           <UploadSimple className="mr-1 size-3.5" />
           Upload
@@ -172,9 +171,7 @@ export function ScreenshotGallery({ feedbackId }: { feedbackId: FeedbackId }) {
                   </div>
                 )}
                 <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/60 to-transparent p-2 opacity-0 transition-opacity group-hover:opacity-100">
-                  <Badge className="text-xs" variant="secondary">
-                    {screenshot.captureSource}
-                  </Badge>
+                  <Badge className="text-xs">{screenshot.captureSource}</Badge>
                   <div className="flex gap-1">
                     {displayUrl && (
                       <a

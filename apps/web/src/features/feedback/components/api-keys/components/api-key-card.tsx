@@ -1,12 +1,12 @@
 "use client";
 
+import { Badge } from "@ctrl-ui/react/ui/badge";
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Input } from "@ctrl-ui/react/ui/input";
+import { Switch } from "@ctrl-ui/react/ui/switch";
 import { Copy, Eye, EyeSlash, Plus, Trash } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 
 interface ApiKey {
   allowedDomains?: string[];
@@ -65,9 +65,7 @@ export function ApiKeyCard({
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Badge variant={apiKey.isActive ? "default" : "secondary"}>
-            {apiKey.isActive ? "Active" : "Inactive"}
-          </Badge>
+          <Badge>{apiKey.isActive ? "Active" : "Inactive"}</Badge>
           <Switch
             checked={apiKey.isActive}
             onCheckedChange={(checked) =>
@@ -75,8 +73,8 @@ export function ApiKeyCard({
             }
           />
           <Button
+            iconOnly
             onClick={() => onDelete(apiKey.apiKeyId)}
-            size="icon"
             variant="ghost"
           >
             <Trash className="h-4 w-4 text-destructive" />
@@ -89,9 +87,9 @@ export function ApiKeyCard({
         <div className="flex items-center gap-2">
           <Input className="font-mono" readOnly value={apiKey.publicKey} />
           <Button
+            iconOnly
             onClick={() => onCopyToClipboard(apiKey.publicKey, "Public key")}
-            size="icon"
-            variant="outline"
+            variant="surface"
           >
             <Copy className="h-4 w-4" />
           </Button>
@@ -108,10 +106,10 @@ export function ApiKeyCard({
             value="fb_sec_••••••••••••••••••••••••"
           />
           <Button
+            iconOnly
             onClick={() => setShowSecretKey(!showSecretKey)}
-            size="icon"
             title={showSecretKey ? "Hide" : "Show"}
-            variant="outline"
+            variant="surface"
           >
             {showSecretKey ? (
               <EyeSlash className="h-4 w-4" />
@@ -121,8 +119,8 @@ export function ApiKeyCard({
           </Button>
           <Button
             onClick={() => onRegenerate(apiKey.apiKeyId)}
-            size="sm"
-            variant="outline"
+            size="xs"
+            variant="surface"
           >
             Regenerate
           </Button>
@@ -147,7 +145,6 @@ export function ApiKeyCard({
                   domain
                 )
               }
-              variant="secondary"
             >
               {domain} &times;
             </Badge>
@@ -164,11 +161,11 @@ export function ApiKeyCard({
             value={domainInput}
           />
           <Button
+            iconOnly
             onClick={() =>
               onAddDomain(apiKey.apiKeyId, apiKey.allowedDomains ?? [])
             }
-            size="icon"
-            variant="outline"
+            variant="surface"
           >
             <Plus className="h-4 w-4" />
           </Button>

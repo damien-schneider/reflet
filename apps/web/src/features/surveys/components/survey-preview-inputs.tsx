@@ -1,6 +1,6 @@
 "use client";
 
-import { Textarea } from "@/components/ui/textarea";
+import { Textarea } from "@ctrl-ui/react/ui/textarea";
 import { cn } from "@/lib/utils";
 import type { QuestionType, SurveyQuestion } from "@/store/surveys";
 

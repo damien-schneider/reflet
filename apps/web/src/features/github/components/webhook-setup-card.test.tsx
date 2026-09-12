@@ -20,7 +20,7 @@ vi.mock("@phosphor-icons/react", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/alert", () => ({
+vi.mock("@ctrl-ui/react/ui/alert", () => ({
   Alert: ({
     children,
     variant,
@@ -32,9 +32,6 @@ vi.mock("@/components/ui/alert", () => ({
       {children}
     </div>
   ),
-  AlertAction: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
   AlertDescription: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
@@ -43,7 +40,7 @@ vi.mock("@/components/ui/alert", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/badge", () => ({
+vi.mock("@ctrl-ui/react/ui/badge", () => ({
   Badge: ({
     children,
     variant,
@@ -53,7 +50,7 @@ vi.mock("@/components/ui/badge", () => ({
   }) => <span data-variant={variant}>{children}</span>,
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     onClick,

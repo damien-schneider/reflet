@@ -1,26 +1,25 @@
 "use client";
 
-import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { useMutation } from "convex/react";
-import { useState } from "react";
-
-import { Button } from "@/components/ui/button";
-import { EmojiPicker } from "@/components/ui/emoji-picker";
-import { Input } from "@/components/ui/input";
-import { NotionColorPicker } from "@/components/ui/notion-color-picker";
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Input } from "@ctrl-ui/react/ui/input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
+} from "@ctrl-ui/react/ui/popover";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@ctrl-ui/react/ui/select";
+import { api } from "@reflet/backend/convex/_generated/api";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { useMutation } from "convex/react";
+import { useState } from "react";
+import { EmojiPicker } from "@/components/ui/emoji-picker";
+import { NotionColorPicker } from "@/components/ui/notion-color-picker";
 import type { TimeHorizon } from "@/lib/milestone-constants";
 import {
   isTimeHorizon,
@@ -145,7 +144,7 @@ export function MilestoneFormPopover({
             <Button
               className="h-7 text-xs"
               onClick={() => onOpenChange(false)}
-              size="sm"
+              size="xs"
               variant="ghost"
             >
               Cancel
@@ -154,7 +153,9 @@ export function MilestoneFormPopover({
               className="h-7 text-xs"
               disabled={isSubmitting || !name.trim()}
               onClick={handleSubmit}
-              size="sm"
+              size="xs"
+              tone="primary"
+              variant="solid"
             >
               {isSubmitting ? "Creating..." : "Create"}
             </Button>

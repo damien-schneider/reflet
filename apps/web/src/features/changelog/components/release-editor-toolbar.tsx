@@ -1,8 +1,8 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import { Clock, X } from "@phosphor-icons/react";
 import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
-import { Button } from "@/components/ui/button";
 import { GenerateFromCommits } from "./generate-from-commits";
 import { SaveStatus } from "./release-save-status";
 import { ScheduleCountdown } from "./schedule-countdown";
@@ -85,8 +85,8 @@ export function ReleaseEditorToolbar({
           <ScheduleCountdown scheduledAt={release.scheduledPublishAt} />
           <Button
             disabled={isSubmitting}
+            iconOnly
             onClick={handleCancelSchedule}
-            size="icon"
             title="Cancel schedule"
             variant="ghost"
           >

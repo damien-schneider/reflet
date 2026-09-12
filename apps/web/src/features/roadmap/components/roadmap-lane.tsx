@@ -1,6 +1,6 @@
+import { Button } from "@ctrl-ui/react/ui/button";
+import { ScrollArea } from "@ctrl-ui/react/ui/scroll-area";
 import { Plus } from "@phosphor-icons/react";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   RoadmapItemCard,
   type RoadmapItemData,
@@ -91,7 +91,7 @@ export function RoadmapLaneColumn({
           <Button
             className="h-7 w-7 p-0"
             onClick={() => onAddItem(lane)}
-            size="sm"
+            size="xs"
             variant="ghost"
           >
             <Plus className="h-4 w-4" />

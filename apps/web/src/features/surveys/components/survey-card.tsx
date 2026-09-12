@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   ChartBar,
   Clock,
@@ -12,8 +13,7 @@ import {
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { TagBadge } from "@/components/tag-badge";
 import {
   DropdownList,
   DropdownListContent,
@@ -59,9 +59,9 @@ export function SurveyCard({
         >
           <div className="flex items-center gap-2">
             <span className="font-medium">{survey.title}</span>
-            <Badge variant={STATUS_COLORS[survey.status]}>
+            <TagBadge color={STATUS_COLORS[survey.status]}>
               {survey.status}
-            </Badge>
+            </TagBadge>
           </div>
           {survey.description ? (
             <p className="mt-1 line-clamp-2 text-muted-foreground text-sm">
@@ -90,7 +90,7 @@ export function SurveyCard({
               <Button
                 {...props}
                 className="opacity-0 transition-opacity group-hover:opacity-100"
-                size="icon"
+                iconOnly
                 variant="ghost"
               >
                 <DotsThreeVertical className="size-4" />

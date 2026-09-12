@@ -1,26 +1,25 @@
+import {
+  AlertDialog,
+  AlertDialogClose,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@ctrl-ui/react/ui/alert-dialog";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@ctrl-ui/react/ui/context-menu";
 import { Chat, PushPin, Sparkle, Trash } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
 import { useCallback, useState } from "react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
-import {
-  ContextList,
-  ContextListContent,
-  ContextListItem,
-  ContextListTrigger,
-} from "@/components/ui/context-menu";
+import { TagBadge } from "@/components/tag-badge";
 import { VoteButton } from "@/features/feedback/components/vote-button";
 import { cn } from "@/lib/utils";
 import { AiMiniIndicator } from "./ai-mini-indicator";
@@ -95,8 +94,8 @@ export function FeedbackListItem({
 
   return (
     <>
-      <ContextList>
-        <ContextListTrigger>
+      <ContextMenu>
+        <ContextMenuTrigger>
           <button
             className={cn(
               "flex w-full gap-4 rounded-lg border p-4 text-left transition-colors hover:bg-accent/50",
@@ -147,7 +146,7 @@ export function FeedbackListItem({
                   {tags.length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-1">
                       {tags.map((tag) => (
-                        <Badge
+                        <TagBadge
                           className="font-normal text-xs"
                           color={tag.color}
                           key={tag._id}
@@ -162,7 +161,7 @@ export function FeedbackListItem({
                               />
                             </span>
                           )}
-                        </Badge>
+                        </TagBadge>
                       ))}
                     </div>
                   )}
@@ -199,29 +198,29 @@ export function FeedbackListItem({
 
                 {/* Status Badge from organizationStatus */}
                 {feedback.organizationStatus && (
-                  <Badge
+                  <TagBadge
                     className="shrink-0"
                     color={feedback.organizationStatus.color}
                   >
                     {feedback.organizationStatus.name}
-                  </Badge>
+                  </TagBadge>
                 )}
               </div>
             </div>
           </button>
-        </ContextListTrigger>
+        </ContextMenuTrigger>
         {canDelete && (
-          <ContextListContent>
-            <ContextListItem
+          <ContextMenuContent>
+            <ContextMenuItem
               className="text-destructive focus:text-destructive"
               onClick={() => setShowDeleteDialog(true)}
             >
               <Trash className="mr-2 h-4 w-4" />
               Delete
-            </ContextListItem>
-          </ContextListContent>
+            </ContextMenuItem>
+          </ContextMenuContent>
         )}
-      </ContextList>
+      </ContextMenu>
 
       <AlertDialog onOpenChange={setShowDeleteDialog} open={showDeleteDialog}>
         <AlertDialogContent>
@@ -233,10 +232,14 @@ export function FeedbackListItem({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} variant="destructive">
+            <AlertDialogClose>Cancel</AlertDialogClose>
+            <AlertDialogClose
+              onClick={handleDelete}
+              tone="danger"
+              variant="surface"
+            >
               Move to trash
-            </AlertDialogAction>
+            </AlertDialogClose>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -1,12 +1,11 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import { PaperPlaneTilt, Sparkle } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useCallback, useState } from "react";
-
-import { Button } from "@/components/ui/button";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { cn } from "@/lib/utils";
 import { useAIDraftReply } from "../feedback-detail-dialog/use-ai-draft-reply";
@@ -140,7 +139,7 @@ function CommentInput({
             className="h-8 gap-1.5"
             disabled={isGeneratingDraft}
             onClick={onGenerateDraft}
-            size="sm"
+            size="xs"
             title="Generate AI draft reply"
             variant="ghost"
           >
@@ -154,7 +153,9 @@ function CommentInput({
           className="h-8 gap-1.5"
           disabled={!canSubmit}
           onClick={onSubmit}
-          size="sm"
+          size="xs"
+          tone="primary"
+          variant="solid"
         >
           <PaperPlaneTilt className="h-3.5 w-3.5" />
           {isSubmitting ? "Posting..." : "Post"}

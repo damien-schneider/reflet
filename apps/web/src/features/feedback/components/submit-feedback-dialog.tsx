@@ -1,19 +1,15 @@
 "use client";
 
-import { User, X } from "@phosphor-icons/react";
-import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { useQuery } from "convex/react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@ctrl-ui/react/ui/avatar";
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Input } from "@ctrl-ui/react/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@ctrl-ui/react/ui/select";
 import {
   Sheet,
   SheetClose,
@@ -21,7 +17,11 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from "@/components/ui/sheet";
+} from "@ctrl-ui/react/ui/sheet";
+import { User, X } from "@phosphor-icons/react";
+import { api } from "@reflet/backend/convex/_generated/api";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { useQuery } from "convex/react";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { TiptapTitleEditor } from "@/components/ui/tiptap/title-editor";
 import { toId } from "@/lib/convex-helpers";
@@ -108,9 +108,7 @@ export function SubmitFeedbackDialog({
     <Sheet onOpenChange={onOpenChange} open={isOpen}>
       <SheetContent
         className="gap-0 overflow-hidden p-0 md:w-[50vw] md:max-w-2xl"
-        showCloseButton={false}
         side="right"
-        variant="panel"
       >
         {/* Header */}
         <SheetHeader className="flex shrink-0 flex-row items-center justify-between gap-2 border-b px-4 py-3">
@@ -125,8 +123,9 @@ export function SubmitFeedbackDialog({
           <SheetClose
             render={
               <Button
+                iconOnly
                 onClick={() => onOpenChange(false)}
-                size="icon-sm"
+                size="xs"
                 variant="ghost"
               />
             }
@@ -310,12 +309,18 @@ export function SubmitFeedbackDialog({
                 )}
               <Button
                 onClick={() => onOpenChange(false)}
-                size="sm"
+                size="xs"
                 variant="ghost"
               >
                 Cancel
               </Button>
-              <Button disabled={!canSubmit} onClick={onSubmit} size="sm">
+              <Button
+                disabled={!canSubmit}
+                onClick={onSubmit}
+                size="xs"
+                tone="primary"
+                variant="solid"
+              >
                 {isSubmitting ? "Submitting..." : "Submit"}
               </Button>
             </div>

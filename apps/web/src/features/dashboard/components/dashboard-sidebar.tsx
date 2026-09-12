@@ -256,18 +256,16 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
                     <SidebarListItem key={item.href}>
                       <SidebarListButton
                         isActive={isActive(item.href)}
-                        render={(props) => (
-                          <Link href={buildHref(item.href)} {...props}>
-                            <item.icon className="h-4 w-4" />
-                            <span className="flex-1">{item.label}</span>
-                            {item.badge !== undefined && (
-                              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-olive-500 px-1.5 font-medium text-[10px] text-white">
-                                {item.badge > 99 ? "99+" : item.badge}
-                              </span>
-                            )}
-                          </Link>
+                        render={<Link href={buildHref(item.href)} />}
+                      >
+                        <item.icon className="h-4 w-4" />
+                        <span className="flex-1">{item.label}</span>
+                        {item.badge !== undefined && (
+                          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-olive-500 px-1.5 font-medium text-[10px] text-white">
+                            {item.badge > 99 ? "99+" : item.badge}
+                          </span>
                         )}
-                      />
+                      </SidebarListButton>
                     </SidebarListItem>
                   ))}
                 </SidebarList>
@@ -283,18 +281,16 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
                       <SidebarListItem key={item.href}>
                         <SidebarListButton
                           isActive={isActive(item.href)}
-                          render={(props) => (
-                            <Link href={buildHref(item.href)} {...props}>
-                              <item.icon className="h-4 w-4" />
-                              <span className="flex-1">{item.label}</span>
-                              {item.badge !== undefined && (
-                                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-olive-500 px-1.5 font-medium text-[10px] text-white">
-                                  {item.badge > 99 ? "99+" : item.badge}
-                                </span>
-                              )}
-                            </Link>
+                          render={<Link href={buildHref(item.href)} />}
+                        >
+                          <item.icon className="h-4 w-4" />
+                          <span className="flex-1">{item.label}</span>
+                          {item.badge !== undefined && (
+                            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-olive-500 px-1.5 font-medium text-[10px] text-white">
+                              {item.badge > 99 ? "99+" : item.badge}
+                            </span>
                           )}
-                        />
+                        </SidebarListButton>
                       </SidebarListItem>
                     ))}
                   </SidebarList>
@@ -323,13 +319,11 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
                       pathname === "/dashboard/super-admin" ||
                       pathname.startsWith("/dashboard/super-admin/")
                     }
-                    render={(props) => (
-                      <Link href="/dashboard/super-admin" {...props}>
-                        <ShieldStar className="h-4 w-4" />
-                        <span>Super Admin</span>
-                      </Link>
-                    )}
-                  />
+                    render={<Link href="/dashboard/super-admin" />}
+                  >
+                    <ShieldStar className="h-4 w-4" />
+                    <span>Super Admin</span>
+                  </SidebarListButton>
                 </SidebarListItem>
               </SidebarList>
             </SidebarGroupContent>

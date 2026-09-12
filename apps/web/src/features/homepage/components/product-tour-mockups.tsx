@@ -7,7 +7,7 @@ import {
   Lightning,
 } from "@phosphor-icons/react";
 
-import { Badge } from "@/components/ui/badge";
+import { TagBadge } from "@/components/tag-badge";
 import { cn } from "@/lib/utils";
 
 const FEEDBACK_ITEMS = [
@@ -105,7 +105,7 @@ export function FeedbackBoardMockup() {
                 <span className="font-medium text-foreground text-sm">
                   {item.title}
                 </span>
-                <Badge color={item.statusBadgeColor}>{item.status}</Badge>
+                <TagBadge color={item.statusBadgeColor}>{item.status}</TagBadge>
               </div>
               <p className="mb-1.5 truncate text-muted-foreground text-xs">
                 {item.snippet}
@@ -113,9 +113,9 @@ export function FeedbackBoardMockup() {
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1">
                   {item.tags.map((tag) => (
-                    <Badge color={tag.color} key={tag.label}>
+                    <TagBadge color={tag.color} key={tag.label}>
                       {tag.label}
-                    </Badge>
+                    </TagBadge>
                   ))}
                 </div>
                 <div

@@ -1,20 +1,19 @@
 "use client";
 
+import { Badge } from "@ctrl-ui/react/ui/badge";
+import { Button } from "@ctrl-ui/react/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@ctrl-ui/react/ui/popover";
 import { Check, Palette, Trash, X } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { useTheme } from "next-themes";
 import { useCallback, useEffect, useState } from "react";
-
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { NotionColorPicker } from "@/components/ui/notion-color-picker";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { TiptapTitleEditor } from "@/components/ui/tiptap/title-editor";
 import {
   getTagTextColor,
@@ -132,16 +131,16 @@ export function RoadmapColumnHeader({
         <>
           <Button
             className="h-6 w-6 shrink-0"
+            iconOnly
             onClick={handleSave}
-            size="icon"
             variant="ghost"
           >
             <Check className="h-3 w-3" />
           </Button>
           <Button
             className="h-6 w-6 shrink-0"
+            iconOnly
             onClick={handleCancel}
-            size="icon"
             variant="ghost"
           >
             <X className="h-3 w-3" />
@@ -150,16 +149,14 @@ export function RoadmapColumnHeader({
       ) : (
         <>
           {/* Count badge */}
-          <Badge className="ml-auto shrink-0" variant="secondary">
-            {count}
-          </Badge>
+          <Badge className="ml-auto shrink-0">{count}</Badge>
 
           {/* Admin actions - just delete */}
           {isAdmin && (
             <Button
               className="h-6 w-6 shrink-0 text-destructive opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
+              iconOnly
               onClick={onDelete}
-              size="icon"
               variant="ghost"
             >
               <Trash className="h-3 w-3" />

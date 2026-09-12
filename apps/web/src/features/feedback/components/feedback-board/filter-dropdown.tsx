@@ -1,8 +1,8 @@
 "use client";
 
+import { Badge } from "@ctrl-ui/react/ui/badge";
+import { Button } from "@ctrl-ui/react/ui/button";
 import { Funnel } from "@phosphor-icons/react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   DropdownList,
   DropdownListCheckboxItem,
@@ -46,7 +46,11 @@ export function FilterDropdown({
     <DropdownList>
       <DropdownListTrigger
         render={
-          <Button size="sm" variant={activeCount > 0 ? "secondary" : "outline"}>
+          <Button
+            size="sm"
+            tone={activeCount > 0 ? "primary" : "neutral"}
+            variant="surface"
+          >
             <Funnel data-icon="inline-start" />
             Filter
             {activeCount > 0 && (

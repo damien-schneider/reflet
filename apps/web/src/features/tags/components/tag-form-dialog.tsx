@@ -1,11 +1,6 @@
 "use client";
 
-import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { useMutation } from "convex/react";
-import { useEffect, useState } from "react";
-
-import { Button } from "@/components/ui/button";
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -13,9 +8,13 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@ctrl-ui/react/ui/dialog";
+import { Input } from "@ctrl-ui/react/ui/input";
+import { api } from "@reflet/backend/convex/_generated/api";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { useMutation } from "convex/react";
+import { useEffect, useState } from "react";
 import { EmojiPicker } from "@/components/ui/emoji-picker";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NotionColorPicker } from "@/components/ui/notion-color-picker";
 import {
@@ -160,12 +159,14 @@ export function TagFormDialog({
           />
         </div>
         <DialogFooter>
-          <Button onClick={() => onOpenChange(false)} variant="outline">
+          <Button onClick={() => onOpenChange(false)} variant="surface">
             Cancel
           </Button>
           <Button
             disabled={isSubmitting}
             onClick={editingTag ? handleUpdateTag : handleCreateTag}
+            tone="primary"
+            variant="solid"
           >
             {buttonLabel}
           </Button>

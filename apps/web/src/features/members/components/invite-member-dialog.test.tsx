@@ -32,11 +32,12 @@ vi.mock("@phosphor-icons/react", () => ({
   User: () => <span data-testid="user-icon" />,
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     onClick,
     disabled,
+    iconOnly,
     variant,
     className,
     size,
@@ -44,6 +45,7 @@ vi.mock("@/components/ui/button", () => ({
     children: React.ReactNode;
     onClick?: () => void;
     disabled?: boolean;
+    iconOnly?: boolean;
     variant?: string;
     className?: string;
     size?: string;
@@ -51,9 +53,7 @@ vi.mock("@/components/ui/button", () => ({
     <button
       className={className}
       data-size={size}
-      data-testid={
-        size === "icon" ? "copy-button" : `button-${variant ?? "default"}`
-      }
+      data-testid={iconOnly ? "copy-button" : `button-${variant ?? "quiet"}`}
       disabled={disabled}
       onClick={onClick}
       type="button"
@@ -63,7 +63,7 @@ vi.mock("@/components/ui/button", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/dialog", () => ({
+vi.mock("@ctrl-ui/react/ui/dialog", () => ({
   Dialog: ({ children, open }: { children: React.ReactNode; open: boolean }) =>
     open ? <div data-testid="dialog">{children}</div> : null,
   DialogContent: ({ children }: { children: React.ReactNode }) => (
@@ -83,7 +83,7 @@ vi.mock("@/components/ui/dialog", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/input", () => ({
+vi.mock("@ctrl-ui/react/ui/input", () => ({
   Input: ({
     id,
     type,
@@ -124,7 +124,7 @@ vi.mock("@/components/ui/label", () => ({
   }) => <label htmlFor={htmlFor}>{children}</label>,
 }));
 
-vi.mock("@/components/ui/select", () => ({
+vi.mock("@ctrl-ui/react/ui/select", () => ({
   Select: ({
     children,
     value,

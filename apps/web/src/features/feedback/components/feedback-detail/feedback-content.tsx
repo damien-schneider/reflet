@@ -1,12 +1,11 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
-
-import { Button } from "@/components/ui/button";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { TiptapTitleEditor } from "@/components/ui/tiptap/title-editor";
 
@@ -137,10 +136,10 @@ export function FeedbackContent({
       {/* Save/Cancel buttons */}
       {hasUnsavedChanges && isAdmin && (
         <div className="flex items-center gap-2 pt-2">
-          <Button onClick={handleSave} size="sm">
+          <Button onClick={handleSave} size="xs" tone="primary" variant="solid">
             Save changes
           </Button>
-          <Button onClick={handleCancel} size="sm" variant="ghost">
+          <Button onClick={handleCancel} size="xs" variant="ghost">
             Cancel
           </Button>
         </div>

@@ -1,10 +1,10 @@
 "use client";
 
+import { Button, ButtonLink } from "@ctrl-ui/react/ui/button";
+import { Input } from "@ctrl-ui/react/ui/input";
 import { ArrowSquareOut, Copy, Key, Warning } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import Link from "next/link";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ApiKeyDialogs } from "./components/api-key-dialogs";
 import { ApiKeysList } from "./components/api-keys-list";
 import { useApiKeys } from "./hooks/use-api-keys";
@@ -54,15 +54,13 @@ export function ApiKeysSettings({ organizationId }: ApiKeysSettingsProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
         <h1 className="font-semibold text-lg">API keys</h1>
-        <Link
-          className={buttonVariants({ size: "sm", variant: "ghost" })}
-          href="/docs/sdk"
-          rel="noopener"
-          target="_blank"
+        <ButtonLink
+          render={<Link href="/docs/sdk" rel="noopener" target="_blank" />}
+          size="xs"
         >
           Docs
           <ArrowSquareOut className="ml-2 h-4 w-4" />
-        </Link>
+        </ButtonLink>
       </div>
 
       {newSecretKey ? (
@@ -82,9 +80,9 @@ export function ApiKeysSettings({ organizationId }: ApiKeysSettingsProps) {
                 </code>
                 <Button
                   aria-label="Copy secret key"
+                  iconOnly
                   onClick={() => copyToClipboard(newSecretKey, "Secret key")}
-                  size="icon"
-                  variant="outline"
+                  variant="surface"
                 >
                   <Copy className="h-4 w-4" />
                 </Button>
@@ -92,7 +90,7 @@ export function ApiKeysSettings({ organizationId }: ApiKeysSettingsProps) {
               <Button
                 className="mt-3"
                 onClick={() => setNewSecretKey(null)}
-                size="sm"
+                size="xs"
                 variant="ghost"
               >
                 I&apos;ve saved it
@@ -113,6 +111,8 @@ export function ApiKeysSettings({ organizationId }: ApiKeysSettingsProps) {
           <Button
             disabled={isGenerating || !newKeyName.trim()}
             onClick={handleGenerateKeys}
+            tone="primary"
+            variant="solid"
           >
             <Key className="mr-2 h-4 w-4" />
             {isGenerating ? "Generating..." : "Generate key"}

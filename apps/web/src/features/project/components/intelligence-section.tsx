@@ -1,11 +1,10 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import Link from "next/link";
-
-import { Button } from "@/components/ui/button";
 import { IntelligenceSettings } from "@/features/intelligence/components/intelligence-settings";
 
 interface IntelligenceSectionProps {
@@ -32,7 +31,7 @@ export function IntelligenceSection({
             insights.
           </p>
           <Link href={`/dashboard/${orgSlug}/intelligence/settings`}>
-            <Button className="mt-4" size="sm" variant="default">
+            <Button className="mt-4" size="xs" tone="primary" variant="solid">
               Set Up Intelligence
             </Button>
           </Link>

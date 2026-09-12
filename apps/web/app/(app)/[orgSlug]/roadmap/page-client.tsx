@@ -1,12 +1,11 @@
 "use client";
 
+import { Badge } from "@ctrl-ui/react/ui/badge";
+import { Card, CardContent } from "@ctrl-ui/react/ui/card";
 import { CaretUp as ChevronUp } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import { use } from "react";
-
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 
 export default function PublicRoadmapPageClient({
   params,
@@ -79,7 +78,7 @@ export default function PublicRoadmapPageClient({
                 style={{ backgroundColor: lane.color }}
               />
               <h3 className="font-semibold">{lane.name}</h3>
-              <Badge className="ml-auto" variant="secondary">
+              <Badge className="ml-auto">
                 {feedbackByLane[lane._id]?.length || 0}
               </Badge>
             </div>

@@ -10,7 +10,7 @@ vi.mock("@phosphor-icons/react", () => ({
   Trash: () => <span data-testid="icon-trash" />,
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     onClick,
@@ -30,7 +30,7 @@ vi.mock("@/components/ui/button", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/card", () => ({
+vi.mock("@ctrl-ui/react/ui/card", () => ({
   Card: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="card">{children}</div>
   ),
@@ -68,7 +68,7 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
   }) => <>{render({})}</>,
 }));
 
-vi.mock("@/components/ui/textarea", () => ({
+vi.mock("@ctrl-ui/react/ui/textarea", () => ({
   Textarea: ({
     value,
     onChange,

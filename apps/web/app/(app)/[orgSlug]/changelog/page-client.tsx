@@ -1,16 +1,14 @@
 "use client";
 
+import { ButtonLink } from "@ctrl-ui/react/ui/button";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { env } from "@reflet/env/web";
 import { IconRss } from "@tabler/icons-react";
 import { useQuery } from "convex/react";
 import { use } from "react";
-
-import { buttonVariants } from "@/components/ui/button";
 import { H1, Lead } from "@/components/ui/typography";
 import { ChangelogSubscribe } from "@/features/changelog/components/changelog-subscribe";
 import { ReleaseTimeline } from "@/features/changelog/components/release-timeline";
-import { cn } from "@/lib/utils";
 
 export default function PublicChangelogPageClient({
   params,
@@ -49,18 +47,17 @@ export default function PublicChangelogPageClient({
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {rssUrl && (
-            <a
-              className={cn(
-                buttonVariants({ size: "icon", variant: "outline" })
-              )}
+            <ButtonLink
               href={rssUrl}
+              iconOnly
               rel="noopener noreferrer"
               target="_blank"
               title="RSS Feed"
+              variant="surface"
             >
               <IconRss className="h-4 w-4" />
               <span className="sr-only">RSS Feed</span>
-            </a>
+            </ButtonLink>
           )}
           <ChangelogSubscribe organizationId={org._id} />
         </div>

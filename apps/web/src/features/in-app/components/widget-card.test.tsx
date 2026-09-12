@@ -9,7 +9,7 @@ vi.mock("convex/react", () => ({
   useMutation: vi.fn(() => mockUpdateWidget),
 }));
 
-vi.mock("sonner", () => ({
+vi.mock("@ctrl-ui/react/ui/toast", () => ({
   toast: { error: vi.fn(), success: vi.fn() },
 }));
 
@@ -26,7 +26,7 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
   },
 }));
 
-vi.mock("@/components/ui/alert-dialog", () => ({
+vi.mock("@ctrl-ui/react/ui/alert-dialog", () => ({
   AlertDialog: ({
     children,
     open,
@@ -34,20 +34,16 @@ vi.mock("@/components/ui/alert-dialog", () => ({
     children: React.ReactNode;
     open: boolean;
   }) => (open ? <div data-testid="alert-dialog">{children}</div> : null),
-  AlertDialogAction: ({
+  AlertDialogClose: ({
     children,
     onClick,
   }: {
     children: React.ReactNode;
-    onClick: () => void;
-    variant?: string;
+    onClick?: () => void;
   }) => (
     <button onClick={onClick} type="button">
       {children}
     </button>
-  ),
-  AlertDialogCancel: ({ children }: { children: React.ReactNode }) => (
-    <button type="button">{children}</button>
   ),
   AlertDialogContent: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
@@ -66,7 +62,7 @@ vi.mock("@/components/ui/alert-dialog", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/badge", () => ({
+vi.mock("@ctrl-ui/react/ui/badge", () => ({
   Badge: ({
     children,
     variant,
@@ -76,7 +72,7 @@ vi.mock("@/components/ui/badge", () => ({
   }) => <span data-variant={variant}>{children}</span>,
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     onClick,
@@ -92,7 +88,7 @@ vi.mock("@/components/ui/button", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/card", () => ({
+vi.mock("@ctrl-ui/react/ui/card", () => ({
   Card: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   CardContent: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
@@ -292,7 +288,7 @@ describe("WidgetCard", () => {
       value: { writeText: vi.fn().mockResolvedValue(undefined) },
       writable: true,
     });
-    const { toast } = await import("sonner");
+    const { toast } = await import("@ctrl-ui/react/ui/toast");
     const user = userEvent.setup();
     render(<WidgetCard orgSlug="test" widget={baseWidget} />);
     const copyIcon = screen.getByTestId("copy-icon");

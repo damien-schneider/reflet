@@ -13,7 +13,7 @@ vi.mock("date-fns", () => ({
     new Date(date.getFullYear(), date.getMonth(), date.getDate()),
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     onClick,
@@ -29,7 +29,7 @@ vi.mock("@/components/ui/button", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/calendar", () => ({
+vi.mock("@ctrl-ui/react/ui/calendar", () => ({
   Calendar: ({
     onSelect,
     selected,
@@ -50,7 +50,7 @@ vi.mock("@/components/ui/calendar", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/popover", () => ({
+vi.mock("@ctrl-ui/react/ui/popover", () => ({
   Popover: ({
     children,
     open,

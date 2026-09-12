@@ -9,7 +9,7 @@ vi.mock("@hookform/resolvers/zod", () => ({
   }),
 }));
 
-vi.mock("sonner", () => ({
+vi.mock("@ctrl-ui/react/ui/toast", () => ({
   toast: { error: vi.fn(), success: vi.fn() },
 }));
 
@@ -19,7 +19,7 @@ vi.mock("@/lib/auth-client", () => ({
   },
 }));
 
-vi.mock("@/components/ui/button", () => ({
+vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     disabled,
@@ -35,7 +35,7 @@ vi.mock("@/components/ui/button", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/card", () => ({
+vi.mock("@ctrl-ui/react/ui/card", () => ({
   Card: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   CardContent: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
@@ -184,7 +184,7 @@ describe("PasswordSection", () => {
 
   it("shows error toast on password change failure", async () => {
     const { authClient } = await import("@/lib/auth-client");
-    const { toast } = await import("sonner");
+    const { toast } = await import("@ctrl-ui/react/ui/toast");
     vi.mocked(authClient.changePassword).mockRejectedValueOnce(
       new Error("Wrong password")
     );
@@ -220,7 +220,7 @@ describe("PasswordSection", () => {
 
   it("shows success toast on successful password change", async () => {
     const { authClient } = await import("@/lib/auth-client");
-    const { toast } = await import("sonner");
+    const { toast } = await import("@ctrl-ui/react/ui/toast");
     vi.mocked(authClient.changePassword).mockResolvedValueOnce({} as never);
     const user = userEvent.setup();
     render(<PasswordSection isLoading={false} setIsLoading={vi.fn()} />);
@@ -242,7 +242,7 @@ describe("PasswordSection", () => {
 
   it("shows generic error toast for non-Error exceptions", async () => {
     const { authClient } = await import("@/lib/auth-client");
-    const { toast } = await import("sonner");
+    const { toast } = await import("@ctrl-ui/react/ui/toast");
     vi.mocked(authClient.changePassword).mockRejectedValueOnce("string error");
     const user = userEvent.setup();
     render(<PasswordSection isLoading={false} setIsLoading={vi.fn()} />);

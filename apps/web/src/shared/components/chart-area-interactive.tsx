@@ -1,6 +1,13 @@
 "use client";
 
 import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@ctrl-ui/react/ui/card";
+import {
   Area,
   AreaChart,
   CartesianGrid,
@@ -9,13 +16,6 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { ChartTooltipContent } from "@/components/ui/chart";
 
 const data = [

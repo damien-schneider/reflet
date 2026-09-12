@@ -1,11 +1,6 @@
 "use client";
 
-import { Warning } from "@phosphor-icons/react";
-import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { useMutation } from "convex/react";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -13,14 +8,19 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@ctrl-ui/react/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@ctrl-ui/react/ui/select";
+import { Warning } from "@phosphor-icons/react";
+import { api } from "@reflet/backend/convex/_generated/api";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { useMutation } from "convex/react";
+import { useState } from "react";
 import { toId } from "@/lib/convex-helpers";
 import { getTagDotColor } from "@/lib/tag-colors";
 
@@ -142,7 +142,7 @@ export function ColumnDeleteDialog({
         )}
 
         <DialogFooter>
-          <Button onClick={() => handleOpenChange(false)} variant="outline">
+          <Button onClick={() => handleOpenChange(false)} variant="surface">
             Cancel
           </Button>
           <Button
@@ -152,7 +152,8 @@ export function ColumnDeleteDialog({
               (feedbackCount > 0 && !moveToStatusId)
             }
             onClick={handleDelete}
-            variant="destructive"
+            tone="danger"
+            variant="surface"
           >
             {isDeleting ? "Deleting..." : "Delete Column"}
           </Button>

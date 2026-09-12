@@ -1,9 +1,9 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Textarea } from "@ctrl-ui/react/ui/textarea";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { StatusDot } from "./status-dot";
 
 interface IncidentUpdate {
@@ -97,8 +97,8 @@ export function IncidentCard({ incident, onPostUpdate }: IncidentCardProps) {
         </div>
         <Button
           onClick={() => setShowUpdateForm(!showUpdateForm)}
-          size="sm"
-          variant="outline"
+          size="xs"
+          variant="surface"
         >
           Post Update
         </Button>
@@ -167,7 +167,7 @@ export function IncidentCard({ incident, onPostUpdate }: IncidentCardProps) {
           <div className="flex justify-end gap-2">
             <Button
               onClick={() => setShowUpdateForm(false)}
-              size="sm"
+              size="xs"
               variant="ghost"
             >
               Cancel
@@ -175,7 +175,9 @@ export function IncidentCard({ incident, onPostUpdate }: IncidentCardProps) {
             <Button
               disabled={!updateMessage.trim()}
               onClick={handlePostUpdate}
-              size="sm"
+              size="xs"
+              tone="primary"
+              variant="solid"
             >
               Post Update
             </Button>

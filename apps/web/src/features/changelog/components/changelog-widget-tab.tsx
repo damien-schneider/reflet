@@ -1,15 +1,14 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Input } from "@ctrl-ui/react/ui/input";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import { Copy, Key, Robot, Warning } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
-import { toast } from "sonner";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { generateChangelogWidgetPrompt } from "../lib/generate-changelog-widget-prompt";
 
 const DEFAULT_PRIMARY_COLOR = "#5c6d4f";
@@ -148,7 +147,9 @@ export function MyApp() {
                 <Button
                   disabled={isGenerating}
                   onClick={handleGenerateKeys}
-                  size="sm"
+                  size="xs"
+                  tone="primary"
+                  variant="solid"
                 >
                   <Key className="mr-2 h-4 w-4" />
                   {isGenerating ? "Generating..." : "Generate API Keys"}
@@ -278,8 +279,9 @@ export function MyApp() {
           <Button
             className="absolute top-3 right-3 z-10"
             onClick={() => copyToClipboard(scriptTagCode, "Script tag")}
-            size="sm"
-            variant="secondary"
+            size="xs"
+            tone="primary"
+            variant="surface"
           >
             <Copy className="mr-2 h-4 w-4" />
             Copy
@@ -300,8 +302,9 @@ export function MyApp() {
           <Button
             className="absolute top-3 right-3 z-10"
             onClick={() => copyToClipboard(reactCode, "React code")}
-            size="sm"
-            variant="secondary"
+            size="xs"
+            tone="primary"
+            variant="surface"
           >
             <Copy className="mr-2 h-4 w-4" />
             Copy
@@ -324,8 +327,9 @@ export function MyApp() {
             <Button
               className="absolute top-3 right-3 z-10"
               onClick={() => copyToClipboard(triggerCode, "Trigger code")}
-              size="sm"
-              variant="secondary"
+              size="xs"
+              tone="primary"
+              variant="surface"
             >
               <Copy className="mr-2 h-4 w-4" />
               Copy
@@ -359,8 +363,9 @@ export function MyApp() {
           <Button
             className="absolute top-3 right-3 z-10"
             onClick={() => copyToClipboard(aiPrompt, "AI prompt")}
-            size="sm"
-            variant="secondary"
+            size="xs"
+            tone="primary"
+            variant="surface"
           >
             <Copy className="mr-2 h-4 w-4" />
             Copy Prompt
@@ -373,7 +378,8 @@ export function MyApp() {
         <Button
           className="mt-3 w-full"
           onClick={() => copyToClipboard(aiPrompt, "AI prompt")}
-          variant="default"
+          tone="primary"
+          variant="solid"
         >
           <Copy className="mr-2 h-4 w-4" />
           Copy Full AI Prompt

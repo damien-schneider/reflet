@@ -1,15 +1,16 @@
 "use client";
 
-import { Sparkle, Spinner } from "@phosphor-icons/react";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@ctrl-ui/react/ui/badge";
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Checkbox } from "@ctrl-ui/react/ui/checkbox";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@ctrl-ui/react/ui/tooltip";
+import { Sparkle, Spinner } from "@phosphor-icons/react";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { TagBadge } from "@/components/tag-badge";
 import { cn } from "@/lib/utils";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -76,15 +77,13 @@ export function FeedbackSuggestionList({
         <span className="flex items-center gap-1.5 font-medium text-xs">
           <Sparkle className="h-3.5 w-3.5 text-purple-500" />
           AI Suggestions
-          <Badge className="text-xs" variant="secondary">
-            {items.length}
-          </Badge>
+          <Badge className="text-xs">{items.length}</Badge>
         </span>
         <div className="flex items-center gap-1.5">
           <Button
             className="h-6 text-xs"
             onClick={allSelected ? onDeselectAll : onSelectAll}
-            size="sm"
+            size="xs"
             type="button"
             variant="ghost"
           >
@@ -95,9 +94,10 @@ export function FeedbackSuggestionList({
               className="h-6 gap-1 text-xs"
               disabled={isLinking}
               onClick={onLinkSelected}
-              size="sm"
+              size="xs"
+              tone="primary"
               type="button"
-              variant="default"
+              variant="solid"
             >
               {isLinking ? <Spinner className="h-3 w-3 animate-spin" /> : null}
               Link {selectedIds.size}
@@ -148,20 +148,12 @@ export function FeedbackSuggestionList({
                 </TooltipContent>
               </Tooltip>
               <span className="min-w-0 flex-1 truncate">{item.title}</span>
-              <Badge
+              <TagBadge
                 className="shrink-0 text-xs"
-                variant={
-                  (STATUS_COLORS[item.status] as
-                    | "green"
-                    | "blue"
-                    | "orange"
-                    | "purple"
-                    | "yellow"
-                    | "gray") ?? "gray"
-                }
+                color={STATUS_COLORS[item.status] ?? "gray"}
               >
                 {STATUS_LABELS[item.status] ?? item.status}
-              </Badge>
+              </TagBadge>
             </div>
           );
         })}

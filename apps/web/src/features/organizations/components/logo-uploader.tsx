@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Image as ImageIcon,
   Spinner,
@@ -8,8 +9,6 @@ import {
 } from "@phosphor-icons/react";
 import Image from "next/image";
 import { useCallback, useRef, useState } from "react";
-
-import { Button } from "@/components/ui/button";
 import { useImageUpload } from "@/components/ui/tiptap/use-image-upload";
 import { Muted } from "@/components/ui/typography";
 import { cn } from "@/lib/utils";
@@ -225,9 +224,9 @@ export function LogoUploader({
         <Button
           disabled={disabled}
           onClick={handleRemove}
-          size="sm"
+          size="xs"
           type="button"
-          variant="outline"
+          variant="surface"
         >
           <Trash className="mr-2 h-4 w-4" />
           Remove logo

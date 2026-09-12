@@ -1,5 +1,13 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@ctrl-ui/react/ui/select";
 import {
   Calendar,
   CaretUp,
@@ -10,7 +18,6 @@ import {
 } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { formatDistanceToNow } from "date-fns";
-import { Button } from "@/components/ui/button";
 import {
   DropdownList,
   DropdownListContent,
@@ -18,13 +25,6 @@ import {
   DropdownListSeparator,
   DropdownListTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { TiptapTitleEditor } from "@/components/ui/tiptap/title-editor";
 import { toId } from "@/lib/convex-helpers";
 import { getTagDotColor } from "@/lib/tag-colors";
@@ -111,10 +111,15 @@ export function FeedbackHeader({
           {/* Save/Cancel buttons for unsaved changes */}
           {hasUnsavedChanges && canEdit && (
             <div className="mt-2 flex items-center gap-2">
-              <Button onClick={onSaveChanges} size="sm">
+              <Button
+                onClick={onSaveChanges}
+                size="xs"
+                tone="primary"
+                variant="solid"
+              >
                 Save
               </Button>
-              <Button onClick={onCancelChanges} size="sm" variant="ghost">
+              <Button onClick={onCancelChanges} size="xs" variant="ghost">
                 Cancel
               </Button>
             </div>
@@ -181,7 +186,7 @@ export function FeedbackHeader({
         {canEdit && (
           <DropdownList>
             <DropdownListTrigger>
-              <Button size="icon" variant="ghost">
+              <Button iconOnly variant="ghost">
                 <DotsThreeVertical className="h-4 w-4" />
               </Button>
             </DropdownListTrigger>

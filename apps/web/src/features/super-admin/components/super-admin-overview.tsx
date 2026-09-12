@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import {
   Buildings,
   ChatCircle,
@@ -20,7 +22,6 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Button } from "@/components/ui/button";
 import {
   type ChartConfig,
   ChartContainer,
@@ -29,7 +30,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { Skeleton } from "@/components/ui/skeleton";
 import { StatCard } from "./stat-card";
 
 type TimeRange = "7d" | "30d";
@@ -134,14 +134,16 @@ export function SuperAdminOverview() {
       <Button
         onClick={() => setTimeRange("7d")}
         size="sm"
-        variant={timeRange === "7d" ? "default" : "ghost"}
+        tone={timeRange === "7d" ? "primary" : "neutral"}
+        variant={timeRange === "7d" ? "solid" : "ghost"}
       >
         7 days
       </Button>
       <Button
         onClick={() => setTimeRange("30d")}
         size="sm"
-        variant={timeRange === "30d" ? "default" : "ghost"}
+        tone={timeRange === "30d" ? "primary" : "neutral"}
+        variant={timeRange === "30d" ? "solid" : "ghost"}
       >
         30 days
       </Button>

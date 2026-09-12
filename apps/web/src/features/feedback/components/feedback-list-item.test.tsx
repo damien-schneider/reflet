@@ -26,7 +26,7 @@ vi.mock("@phosphor-icons/react", () => ({
   Trash: () => <span data-testid="icon-trash" />,
 }));
 
-vi.mock("@/components/ui/badge", () => ({
+vi.mock("@ctrl-ui/react/ui/badge", () => ({
   Badge: ({
     children,
     color,
@@ -42,14 +42,14 @@ vi.mock("@/components/ui/badge", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/context-menu", () => ({
-  ContextList: ({ children }: { children: React.ReactNode }) => (
+vi.mock("@ctrl-ui/react/ui/context-menu", () => ({
+  ContextMenu: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
-  ContextListContent: ({ children }: { children: React.ReactNode }) => (
+  ContextMenuContent: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="context-content">{children}</div>
   ),
-  ContextListItem: ({
+  ContextMenuItem: ({
     children,
     onClick,
   }: {
@@ -60,12 +60,12 @@ vi.mock("@/components/ui/context-menu", () => ({
       {children}
     </button>
   ),
-  ContextListTrigger: ({ children }: { children: React.ReactNode }) => (
+  ContextMenuTrigger: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
 }));
 
-vi.mock("@/components/ui/alert-dialog", () => ({
+vi.mock("@ctrl-ui/react/ui/alert-dialog", () => ({
   AlertDialog: ({
     children,
     open,
@@ -73,7 +73,7 @@ vi.mock("@/components/ui/alert-dialog", () => ({
     children: React.ReactNode;
     open: boolean;
   }) => (open ? <div data-testid="alert-dialog">{children}</div> : null),
-  AlertDialogAction: ({
+  AlertDialogClose: ({
     children,
     onClick,
   }: {
@@ -83,9 +83,6 @@ vi.mock("@/components/ui/alert-dialog", () => ({
     <button onClick={onClick} type="button">
       {children}
     </button>
-  ),
-  AlertDialogCancel: ({ children }: { children: React.ReactNode }) => (
-    <button type="button">{children}</button>
   ),
   AlertDialogContent: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>

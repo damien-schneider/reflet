@@ -1,11 +1,10 @@
 "use client";
 
+import { Badge } from "@ctrl-ui/react/ui/badge";
+import { Button } from "@ctrl-ui/react/ui/button";
 import { Check, GithubLogo, Spinner, Warning, X } from "@phosphor-icons/react";
 import Image from "next/image";
 import Link from "next/link";
-
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Muted, Text } from "@/components/ui/typography";
 
 interface GitHubConnectionCardProps {
@@ -44,7 +43,12 @@ export function GitHubConnectionSection({
           organization. An admin with GitHub connected can re-link it.
         </Muted>
         {isAdmin && connectHref ? (
-          <Button onClick={onConnectClick} render={<Link href={connectHref} />}>
+          <Button
+            onClick={onConnectClick}
+            render={<Link href={connectHref} />}
+            tone="primary"
+            variant="solid"
+          >
             <GithubLogo className="mr-2 h-4 w-4" />
             Re-link GitHub
           </Button>
@@ -67,7 +71,7 @@ export function GitHubConnectionSection({
             />
           ) : null}
           <Text className="font-medium">{accountLogin}</Text>
-          <Badge variant="secondary">
+          <Badge>
             <Check className="mr-1 h-3 w-3" />
             Connected
           </Badge>
@@ -76,7 +80,7 @@ export function GitHubConnectionSection({
           <Button
             disabled={isDisconnecting}
             onClick={onDisconnect}
-            size="sm"
+            size="xs"
             variant="ghost"
           >
             {isDisconnecting ? (
@@ -94,7 +98,12 @@ export function GitHubConnectionSection({
   return (
     <div>
       {isAdmin && connectHref ? (
-        <Button onClick={onConnectClick} render={<Link href={connectHref} />}>
+        <Button
+          onClick={onConnectClick}
+          render={<Link href={connectHref} />}
+          tone="primary"
+          variant="solid"
+        >
           <GithubLogo className="mr-2 h-4 w-4" />
           Connect GitHub
         </Button>

@@ -1,8 +1,6 @@
 "use client";
 
-import { Gear } from "@phosphor-icons/react";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Popover,
   PopoverContent,
@@ -10,8 +8,10 @@ import {
   PopoverHeader,
   PopoverTitle,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { Switch } from "@/components/ui/switch";
+} from "@ctrl-ui/react/ui/popover";
+import { Switch } from "@ctrl-ui/react/ui/switch";
+import { Gear } from "@phosphor-icons/react";
+import { Label } from "@/components/ui/label";
 
 interface SettingsPopoverProps {
   isSaving: boolean;
@@ -26,7 +26,7 @@ export function SettingsPopover({
 }: SettingsPopoverProps) {
   return (
     <Popover>
-      <PopoverTrigger render={<Button size="sm" variant="outline" />}>
+      <PopoverTrigger render={<Button size="xs" variant="surface" />}>
         <Gear className="h-4 w-4" />
         Settings
       </PopoverTrigger>

@@ -1,15 +1,14 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Input } from "@ctrl-ui/react/ui/input";
 import { CalendarBlank, MagnifyingGlass, X } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useState } from "react";
-
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { TagBadge } from "@/components/tag-badge";
 import {
   getDeadlineBadgeStyles,
   getDeadlineInfo,
@@ -176,20 +175,20 @@ export function MilestoneExpandedPanel({
                       <span className="line-clamp-1">{fb.title}</span>
                       <span className="flex items-center gap-2 text-muted-foreground text-xs">
                         {fb.organizationStatus && (
-                          <Badge
+                          <TagBadge
                             className="font-normal text-[10px]"
                             color={fb.organizationStatus.color}
                           >
                             {fb.organizationStatus.name}
-                          </Badge>
+                          </TagBadge>
                         )}
                         <span>{fb.voteCount} votes</span>
                       </span>
                     </button>
                     <Button
                       className="h-6 w-6 opacity-0 group-hover:opacity-100"
+                      iconOnly
                       onClick={() => handleRemoveFeedback(fb._id)}
-                      size="icon"
                       type="button"
                       variant="ghost"
                     >
@@ -262,12 +261,12 @@ export function MilestoneExpandedPanel({
                       <span className="line-clamp-1">{fb.title}</span>
                       <span className="flex items-center gap-2 text-muted-foreground text-xs">
                         {fb.organizationStatus && (
-                          <Badge
+                          <TagBadge
                             className="font-normal text-[10px]"
                             color={fb.organizationStatus.color}
                           >
                             {fb.organizationStatus.name}
-                          </Badge>
+                          </TagBadge>
                         )}
                         <span>{fb.voteCount} votes</span>
                       </span>

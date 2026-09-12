@@ -1,11 +1,10 @@
 "use client";
 
+import { Card } from "@ctrl-ui/react/ui/card";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useEffect } from "react";
-
-import { Card } from "@/components/ui/card";
 import { H2, Muted, Text } from "@/components/ui/typography";
 import { ConversationStatusBadge } from "@/features/support/components/conversation-status-badge";
 import { MessageInput } from "@/features/support/components/message-input";

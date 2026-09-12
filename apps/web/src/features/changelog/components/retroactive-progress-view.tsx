@@ -1,12 +1,12 @@
 "use client";
 
-import { CaretDown, Spinner } from "@phosphor-icons/react";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+} from "@ctrl-ui/react/ui/collapsible";
+import { CaretDown, Spinner } from "@phosphor-icons/react";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
 import { GroupStatusDot, StatBadge } from "./retroactive-completion";
 import { PHASE_STEPS } from "./retroactive-constants";

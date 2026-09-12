@@ -1,8 +1,8 @@
 "use client";
 
-import { Input } from "@/components/ui/input";
+import { Input } from "@ctrl-ui/react/ui/input";
+import { Switch } from "@ctrl-ui/react/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import type { WizardConfig } from "../wizard-config";
 

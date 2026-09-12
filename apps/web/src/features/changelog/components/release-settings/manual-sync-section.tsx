@@ -1,5 +1,14 @@
 "use client";
 
+import { Badge } from "@ctrl-ui/react/ui/badge";
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
+import { toast } from "@ctrl-ui/react/ui/toast";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@ctrl-ui/react/ui/tooltip";
 import {
   ArrowSquareOut,
   ArrowsClockwise,
@@ -14,16 +23,7 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import Link from "next/link";
 import { useState } from "react";
-import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { buildGitHubInstallUrl } from "@/features/github/lib/github-install-url";
 import { authClient } from "@/lib/auth-client";
 
@@ -189,9 +189,7 @@ export const ManualSyncSection = ({
           <div className="flex items-center gap-2">
             <p className="font-medium text-sm">Release Sync</p>
             {totalCount > 0 && (
-              <Badge className="px-1.5 py-0 text-[10px]" variant="secondary">
-                {totalCount}
-              </Badge>
+              <Badge className="px-1.5 py-0 text-[10px]">{totalCount}</Badge>
             )}
           </div>
           <SyncStatusIndicator
@@ -202,8 +200,8 @@ export const ManualSyncSection = ({
         <Button
           disabled={!isAdmin || isSyncing}
           onClick={handleSync}
-          size="sm"
-          variant="outline"
+          size="xs"
+          variant="surface"
         >
           <ArrowsClockwise
             className={`mr-1.5 h-4 w-4 ${isSyncing ? "animate-spin" : ""}`}
@@ -240,7 +238,7 @@ export const ManualSyncSection = ({
                     className="ml-2 shrink-0"
                     disabled={!isAdmin || importingId === gr._id}
                     onClick={() => handleImport(gr._id)}
-                    size="sm"
+                    size="xs"
                     variant="ghost"
                   >
                     {importingId === gr._id ? (
@@ -318,7 +316,7 @@ export const ManualSyncSection = ({
                     className="ml-2 shrink-0"
                     disabled={!isAdmin || pushingId === r._id}
                     onClick={() => handlePush(r._id)}
-                    size="sm"
+                    size="xs"
                     variant="ghost"
                   >
                     {pushingId === r._id ? (
@@ -348,10 +346,7 @@ export const ManualSyncSection = ({
                 >
                   <div className="flex items-center gap-2 overflow-hidden">
                     {r.version && (
-                      <Badge
-                        className="shrink-0 font-mono text-[11px]"
-                        variant="secondary"
-                      >
+                      <Badge className="shrink-0 font-mono text-[11px]">
                         {r.version}
                       </Badge>
                     )}

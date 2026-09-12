@@ -1,6 +1,7 @@
+import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Chat } from "@phosphor-icons/react";
 import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
-import { Badge } from "@/components/ui/badge";
+import { TagBadge } from "@/components/tag-badge";
 import { VoteButton } from "@/features/feedback/components/vote-button";
 import { cn } from "@/lib/utils";
 
@@ -87,14 +88,14 @@ export function RoadmapItemCard({
       {tags.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1">
           {tags.slice(0, 3).map((tag) => (
-            <Badge
+            <TagBadge
               className="font-normal text-xs"
               color={tag.color}
               key={tag._id}
             >
               {tag.icon && <span>{tag.icon}</span>}
               {tag.name}
-            </Badge>
+            </TagBadge>
           ))}
           {tags.length > 3 && (
             <Badge className="text-xs" variant="outline">

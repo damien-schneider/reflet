@@ -1,5 +1,29 @@
 "use client";
 
+import { Badge, type BadgeColor } from "@ctrl-ui/react/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@ctrl-ui/react/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@ctrl-ui/react/ui/select";
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@ctrl-ui/react/ui/table";
 import {
   ArrowDown,
   ArrowUp,
@@ -14,31 +38,6 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
-
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
 const TIME_RANGES = [
@@ -58,17 +57,14 @@ const EMAIL_TYPE_LABELS: Record<string, string> = {
   welcome: "Welcome",
 } as const;
 
-const STATUS_VARIANTS: Record<
-  string,
-  "default" | "secondary" | "destructive" | "outline"
-> = {
-  bounced: "destructive",
-  clicked: "default",
-  complained: "destructive",
-  delivered: "default",
-  delivery_delayed: "outline",
-  opened: "default",
-  sent: "secondary",
+const STATUS_COLORS: Record<string, BadgeColor> = {
+  bounced: "red",
+  clicked: "green",
+  complained: "red",
+  delivered: "green",
+  delivery_delayed: "yellow",
+  opened: "blue",
+  sent: "neutral",
 } as const;
 
 function formatPercent(value: number): string {
@@ -301,9 +297,7 @@ export function EmailAnalyticsDashboard({
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge
-                        variant={STATUS_VARIANTS[email.status] ?? "secondary"}
-                      >
+                      <Badge color={STATUS_COLORS[email.status] ?? "neutral"}>
                         {email.status}
                       </Badge>
                     </TableCell>

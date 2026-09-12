@@ -1,9 +1,9 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Card, CardHeader, CardTitle } from "@ctrl-ui/react/ui/card";
 import { DotsThreeVertical, Trash } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   DropdownList,
   DropdownListContent,
@@ -45,7 +45,7 @@ export function TagCard({ tag, isAdmin, onEdit, onDelete }: TagCardProps) {
                   <Button
                     {...props}
                     className="h-8 w-8"
-                    size="icon"
+                    iconOnly
                     variant="ghost"
                   >
                     <DotsThreeVertical className="h-4 w-4" />

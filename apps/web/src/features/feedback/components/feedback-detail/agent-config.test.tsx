@@ -1,9 +1,9 @@
-import { toast } from "sonner";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AGENTS, openCloudAgent, openDeepLink } from "./agent-config";
 
-vi.mock("sonner", () => ({
+vi.mock("@ctrl-ui/react/ui/toast", () => ({
   toast: { error: vi.fn(), success: vi.fn() },
 }));
 

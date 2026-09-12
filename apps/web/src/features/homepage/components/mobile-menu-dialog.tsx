@@ -1,10 +1,9 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import { GithubLogo, List, X } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useRef } from "react";
-
-import { Button } from "@/components/ui/button";
 
 const menuLinkClassName =
   "block rounded-lg px-3 py-3 font-medium text-foreground text-lg transition-colors hover:bg-muted";
@@ -105,7 +104,12 @@ export default function MobileMenuDialog() {
               Log in
             </Link>
             <Link href="/dashboard" onClick={close} prefetch={true}>
-              <Button className="w-full" size="lg">
+              <Button
+                className="w-full"
+                size="md"
+                tone="primary"
+                variant="solid"
+              >
                 Get started
               </Button>
             </Link>

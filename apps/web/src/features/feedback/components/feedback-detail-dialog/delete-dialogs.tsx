@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -8,7 +8,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@ctrl-ui/react/ui/dialog";
 
 interface DeleteFeedbackDialogProps {
   onDelete: () => void;
@@ -32,10 +32,10 @@ export function DeleteFeedbackDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button onClick={() => onOpenChange(false)} variant="outline">
+          <Button onClick={() => onOpenChange(false)} variant="surface">
             Cancel
           </Button>
-          <Button onClick={onDelete} variant="destructive">
+          <Button onClick={onDelete} tone="danger" variant="surface">
             Delete
           </Button>
         </DialogFooter>
@@ -66,10 +66,10 @@ export function DeleteCommentDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button onClick={() => onOpenChange(false)} variant="outline">
+          <Button onClick={() => onOpenChange(false)} variant="surface">
             Cancel
           </Button>
-          <Button onClick={onDelete} variant="destructive">
+          <Button onClick={onDelete} tone="danger" variant="surface">
             Delete
           </Button>
         </DialogFooter>

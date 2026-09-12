@@ -1,11 +1,7 @@
 "use client";
 
-import { Plus, Trash } from "@phosphor-icons/react";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { useState } from "react";
-
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@ctrl-ui/react/ui/badge";
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -13,16 +9,19 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
+} from "@ctrl-ui/react/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
+} from "@ctrl-ui/react/ui/select";
+import { Switch } from "@ctrl-ui/react/ui/switch";
+import { Plus, Trash } from "@phosphor-icons/react";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { useState } from "react";
+import { Label } from "@/components/ui/label";
 import { Text } from "@/components/ui/typography";
 
 interface GitHubLabel {
@@ -127,7 +126,7 @@ export function LabelMappingsSection({
       <div className="space-y-3">
         {isAdmin ? (
           <div className="flex justify-end">
-            <Button onClick={handleOpenDialog} size="sm" variant="outline">
+            <Button onClick={handleOpenDialog} size="xs" variant="surface">
               <Plus className="mr-2 h-4 w-4" />
               Add Mapping
             </Button>
@@ -162,7 +161,6 @@ export function LabelMappingsSection({
                             ? `#${mapping.tagColor}`
                             : undefined,
                         }}
-                        variant="secondary"
                       >
                         {mapping.tagName}
                       </Badge>
@@ -170,13 +168,11 @@ export function LabelMappingsSection({
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  {mapping.autoSync ? (
-                    <Badge variant="secondary">Auto-sync</Badge>
-                  ) : null}
+                  {mapping.autoSync ? <Badge>Auto-sync</Badge> : null}
                   {isAdmin ? (
                     <Button
+                      iconOnly
                       onClick={() => onDeleteMapping(mapping._id)}
-                      size="icon"
                       variant="ghost"
                     >
                       <Trash className="h-4 w-4" />
@@ -291,10 +287,15 @@ export function LabelMappingsSection({
           </div>
 
           <DialogFooter>
-            <Button onClick={() => setIsDialogOpen(false)} variant="outline">
+            <Button onClick={() => setIsDialogOpen(false)} variant="surface">
               Cancel
             </Button>
-            <Button disabled={!selectedLabel} onClick={handleAddMapping}>
+            <Button
+              disabled={!selectedLabel}
+              onClick={handleAddMapping}
+              tone="primary"
+              variant="solid"
+            >
               Add Mapping
             </Button>
           </DialogFooter>

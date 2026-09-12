@@ -1,5 +1,9 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Input } from "@ctrl-ui/react/ui/input";
+import { Switch } from "@ctrl-ui/react/ui/switch";
+import { Textarea } from "@ctrl-ui/react/ui/textarea";
 import {
   ChartBar,
   CheckSquare,
@@ -10,11 +14,7 @@ import {
   ToggleLeft,
 } from "@phosphor-icons/react";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
 import { QuestionInputPreview } from "@/features/surveys/components/question-input-preview";
 import {
   getDefaultConfig,
@@ -131,7 +131,7 @@ export function AddQuestionPanel({ onAdd, onCancel }: AddQuestionPanelProps) {
         <div className="border-b bg-muted/30 px-5 py-3">
           <div className="flex items-center justify-between">
             <p className="font-medium text-sm">Choose a question type</p>
-            <Button onClick={onCancel} size="sm" variant="ghost">
+            <Button onClick={onCancel} size="xs" variant="ghost">
               Cancel
             </Button>
           </div>
@@ -193,7 +193,7 @@ export function AddQuestionPanel({ onAdd, onCancel }: AddQuestionPanelProps) {
               </span>
             </div>
           </div>
-          <Button onClick={onCancel} size="sm" variant="ghost">
+          <Button onClick={onCancel} size="xs" variant="ghost">
             Cancel
           </Button>
         </div>
@@ -274,7 +274,13 @@ export function AddQuestionPanel({ onAdd, onCancel }: AddQuestionPanelProps) {
           </div>
 
           <div className="mt-2 flex items-center gap-2">
-            <Button disabled={!title.trim()} onClick={handleSubmit} size="sm">
+            <Button
+              disabled={!title.trim()}
+              onClick={handleSubmit}
+              size="xs"
+              tone="primary"
+              variant="solid"
+            >
               <Plus className="mr-1.5 size-4" />
               Add Question
             </Button>

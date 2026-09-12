@@ -1,5 +1,12 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Input } from "@ctrl-ui/react/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@ctrl-ui/react/ui/popover";
 import { Plus } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
@@ -7,16 +14,8 @@ import { useMutation } from "convex/react";
 import type React from "react";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
-
-import { Button } from "@/components/ui/button";
 import { EmojiPicker } from "@/components/ui/emoji-picker";
-import { Input } from "@/components/ui/input";
 import { NotionColorPicker } from "@/components/ui/notion-color-picker";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import {
   isValidTagColor,
   migrateHexToNamedColor,
@@ -140,7 +139,7 @@ export function TagFormPopover({
         <Button
           className="h-7 text-xs"
           onClick={() => onOpenChange(false)}
-          size="sm"
+          size="xs"
           variant="ghost"
         >
           Cancel
@@ -149,7 +148,9 @@ export function TagFormPopover({
           className="h-7 text-xs"
           disabled={isSubmitting || !formData.name.trim()}
           onClick={handleSubmit}
-          size="sm"
+          size="xs"
+          tone="primary"
+          variant="solid"
         >
           {isSubmitting ? "Saving..." : ""}
           {!isSubmitting && editingTag ? "Save" : ""}

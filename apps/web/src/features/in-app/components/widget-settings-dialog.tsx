@@ -1,12 +1,6 @@
 "use client";
 
-import { api } from "@reflet/backend/convex/_generated/api";
-import type { Doc } from "@reflet/backend/convex/_generated/dataModel";
-import { useMutation } from "convex/react";
-import { type ChangeEvent, useState } from "react";
-import { toast } from "sonner";
-
-import { Button } from "@/components/ui/button";
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -14,17 +8,22 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from "@ctrl-ui/react/ui/dialog";
+import { Input } from "@ctrl-ui/react/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
+} from "@ctrl-ui/react/ui/select";
+import { Switch } from "@ctrl-ui/react/ui/switch";
+import { toast } from "@ctrl-ui/react/ui/toast";
+import { api } from "@reflet/backend/convex/_generated/api";
+import type { Doc } from "@reflet/backend/convex/_generated/dataModel";
+import { useMutation } from "convex/react";
+import { type ChangeEvent, useState } from "react";
+import { Label } from "@/components/ui/label";
 import { Muted } from "@/components/ui/typography";
 
 type WidgetWithSettings = Doc<"widgets"> & {
@@ -235,11 +234,16 @@ export function WidgetSettingsDialog({
           <Button
             disabled={isSaving}
             onClick={() => onOpenChange(false)}
-            variant="outline"
+            variant="surface"
           >
             Cancel
           </Button>
-          <Button disabled={isSaving} onClick={handleSave}>
+          <Button
+            disabled={isSaving}
+            onClick={handleSave}
+            tone="primary"
+            variant="solid"
+          >
             {isSaving ? "Saving..." : "Save Changes"}
           </Button>
         </DialogFooter>

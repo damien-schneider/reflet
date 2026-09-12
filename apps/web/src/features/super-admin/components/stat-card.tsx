@@ -1,5 +1,5 @@
+import { Card, CardContent } from "@ctrl-ui/react/ui/card";
 import type { Icon } from "@phosphor-icons/react";
-import { Card, CardContent } from "@/components/ui/card";
 
 interface StatCardProps {
   icon: Icon;
