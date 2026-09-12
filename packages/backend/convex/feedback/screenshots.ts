@@ -88,6 +88,17 @@ export const saveScreenshotPublic = internalMutation({
       throw new Error("Feedback not found");
     }
 
+    const existing = await ctx.db
+      .query("feedbackScreenshots")
+      .withIndex("by_feedback", (query) =>
+        query.eq("feedbackId", args.feedbackId)
+      )
+      .filter((query) => query.eq(query.field("storageId"), args.storageId))
+      .unique();
+    if (existing) {
+      return existing._id;
+    }
+
     return await ctx.db.insert("feedbackScreenshots", {
       annotatedStorageId: args.annotatedStorageId,
       annotations: args.annotations,

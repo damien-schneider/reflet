@@ -1,12 +1,10 @@
 import {
-  type ComponentType,
   type PointerEvent as ReactPointerEvent,
   useEffect,
   useRef,
   useState,
 } from "react";
-import { drawAnnotations } from "../core/annotation-renderer";
-import { ANNOTATION_COLORS, isDegenerate } from "../core/annotations";
+import { isDegenerate } from "../core/annotations";
 import type {
   Annotation,
   AnnotationTool,
@@ -15,26 +13,14 @@ import type {
   Point,
 } from "../types";
 import {
-  ArrowIcon,
-  BlurIcon,
-  HighlightIcon,
-  PencilIcon,
-  SquareIcon,
-  TrashIcon,
-  UndoIcon,
-} from "./icons";
-
-const TOOLS: Array<{
-  icon: ComponentType;
-  id: AnnotationTool;
-  label: string;
-}> = [
-  { icon: PencilIcon, id: "pen", label: "Draw" },
-  { icon: ArrowIcon, id: "arrow", label: "Arrow" },
-  { icon: SquareIcon, id: "rectangle", label: "Box" },
-  { icon: HighlightIcon, id: "highlight", label: "Highlight" },
-  { icon: BlurIcon, id: "blur", label: "Hide" },
-];
+  annotationColorHex,
+  DEFAULT_ANNOTATION_COLOR,
+} from "./annotation/color-value";
+import { TextAnnotationEditor } from "./annotation/text/text-editor";
+import { useTextAnnotation } from "./annotation/text/use-text-annotation";
+import { type AnnotationEditor, AnnotationToolbar } from "./annotation/toolbar";
+import { useAnnotationCanvas } from "./annotation/use-annotation-canvas";
+import { useImageMorph } from "./annotation/use-image-morph";
 
 function toImagePoint(
   canvas: HTMLCanvasElement,
@@ -43,75 +29,70 @@ function toImagePoint(
 ): Point {
   const bounds = canvas.getBoundingClientRect();
   return {
-    x: ((clientX - bounds.left) / bounds.width) * canvas.width,
-    y: ((clientY - bounds.top) / bounds.height) * canvas.height,
+    x: Math.max(
+      0,
+      Math.min(
+        canvas.width,
+        ((clientX - bounds.left) / bounds.width) * canvas.width
+      )
+    ),
+    y: Math.max(
+      0,
+      Math.min(
+        canvas.height,
+        ((clientY - bounds.top) / bounds.height) * canvas.height
+      )
+    ),
   };
 }
 
 export function Annotator({
-  annotations,
   capture,
   labels,
-  onChange,
-  onDone,
+  editor,
 }: {
-  annotations: Annotation[];
   capture: CapturedImage;
   labels: FeedbackWidgetLabels;
-  onChange: (annotations: Annotation[]) => void;
-  onDone: () => void;
+  editor: AnnotationEditor & { trigger?: HTMLElement | null };
 }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const nextId = useRef(0);
-  const [tool, setTool] = useState<AnnotationTool>("pen");
-  const [color, setColor] = useState<string>(ANNOTATION_COLORS[0]);
+  const { annotations, onChange, onDone, onRetake } = editor;
+  const morph = useImageMorph(editor.trigger, onDone);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const [tool, setTool] = useState<AnnotationTool>("rectangle");
+  const [colorSelection, setColorSelection] = useState(
+    DEFAULT_ANNOTATION_COLOR
+  );
+  const color = annotationColorHex(colorSelection);
   const [draft, setDraft] = useState<Annotation | null>(null);
-  // State, not a ref: the redraw effect must re-run once the bitmap is decoded.
-  const [base, setBase] = useState<HTMLImageElement | null>(null);
-
+  const { canvasRef, hasError, isDecoded } = useAnnotationCanvas(
+    capture,
+    draft ? [...annotations, draft] : annotations
+  );
+  const text = useTextAnnotation({ annotations, color, onChange });
   useEffect(() => {
-    let active = true;
-    const image = new Image();
-    image.onload = () => {
-      if (active) {
-        setBase(image);
-      }
-    };
-    image.src = capture.objectUrl;
-    return () => {
-      active = false;
-      setBase(null);
-    };
-  }, [capture.objectUrl]);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const context = canvas?.getContext("2d");
-    if (!(canvas && context)) {
-      return;
-    }
-
-    context.clearRect(0, 0, canvas.width, canvas.height);
-    if (base) {
-      context.drawImage(base, 0, 0, canvas.width, canvas.height);
-    }
-    drawAnnotations(context, draft ? [...annotations, draft] : annotations);
-  }, [annotations, base, draft]);
+    const dialog = dialogRef.current;
+    dialog?.showModal();
+    return () => dialog?.close();
+  }, []);
 
   const onPointerDown = (event: ReactPointerEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
-    if (!canvas) {
+    if (!(canvas && isDecoded) || event.button !== 0) {
       return;
     }
 
-    canvas.setPointerCapture(event.pointerId);
     const point = toImagePoint(canvas, event.clientX, event.clientY);
-    nextId.current += 1;
+    if (tool === "text") {
+      event.preventDefault();
+      text.beginText(canvas, point);
+      return;
+    }
+    canvas.setPointerCapture(event.pointerId);
 
     setDraft({
       color,
       end: point,
-      id: `a${nextId.current}`,
+      id: crypto.randomUUID(),
       points: tool === "pen" ? [point] : undefined,
       start: point,
       tool,
@@ -142,88 +123,74 @@ export function Annotator({
     setDraft(null);
   };
 
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        onDone();
-      }
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [onDone]);
-
   return (
-    <div className="overlay">
+    <dialog
+      aria-label={labels.annotateHint}
+      className="overlay"
+      data-closing={morph.isClosing}
+      data-opening={morph.isOpening}
+      onCancel={(event) => {
+        event.preventDefault();
+        morph.close();
+      }}
+      ref={dialogRef}
+    >
+      {hasError && (
+        <p className="error" role="alert">
+          {labels.captureFailed}
+        </p>
+      )}
+      <style>{`.editor-image { --rf-capture-ratio: ${capture.width / capture.height}; }`}</style>
       <div className="editor">
-        <canvas
-          height={capture.height}
-          onPointerCancel={onPointerUp}
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          ref={canvasRef}
-          width={capture.width}
-        />
-      </div>
-
-      <div className="toolbar">
-        <div className="group">
-          {TOOLS.map(({ icon: Icon, id, label }) => (
-            <button
-              aria-label={label}
-              aria-pressed={tool === id}
-              className="tool"
-              key={id}
-              onClick={() => setTool(id)}
-              title={label}
-              type="button"
-            >
-              <Icon />
-            </button>
-          ))}
-        </div>
-
-        <div className="group">
-          {ANNOTATION_COLORS.map((value) => (
-            <button
-              aria-label={`Color ${value}`}
-              aria-pressed={color === value}
-              className="swatch"
-              key={value}
-              onClick={() => setColor(value)}
-              style={{ background: value }}
-              type="button"
+        <div className="editor-image" ref={morph.frameRef}>
+          <div className="editor-visual" ref={morph.visualRef}>
+            <img
+              alt=""
+              height={capture.height}
+              src={capture.objectUrl}
+              width={capture.width}
             />
-          ))}
-        </div>
-
-        <div className="group">
-          <button
-            aria-label={labels.undo}
-            className="tool"
-            disabled={annotations.length === 0}
-            onClick={() => onChange(annotations.slice(0, -1))}
-            title={labels.undo}
-            type="button"
-          >
-            <UndoIcon />
-          </button>
-          <button
-            aria-label={labels.clearAnnotations}
-            className="tool"
-            disabled={annotations.length === 0}
-            onClick={() => onChange([])}
-            title={labels.clearAnnotations}
-            type="button"
-          >
-            <TrashIcon />
-          </button>
-          <button className="done-btn" onClick={onDone} type="button">
-            {labels.done}
-          </button>
+            <canvas
+              data-tool={tool}
+              height={capture.height}
+              onPointerCancel={() => setDraft(null)}
+              onPointerDown={onPointerDown}
+              onPointerMove={onPointerMove}
+              onPointerUp={onPointerUp}
+              ref={canvasRef}
+              width={capture.width}
+            />
+          </div>
         </div>
       </div>
-    </div>
+
+      {text.textDraft && (
+        <TextAnnotationEditor
+          draft={text.textDraft}
+          key={text.textDraft.annotation.id}
+          onCancel={text.cancelText}
+          onCommit={(value) => {
+            if (canvasRef.current) {
+              text.commitText(canvasRef.current, value);
+            }
+          }}
+        />
+      )}
+      <AnnotationToolbar
+        drawing={{
+          color: colorSelection,
+          setColor: setColorSelection,
+          setTool,
+          tool,
+        }}
+        editor={{
+          annotations,
+          onChange,
+          onDone: () => morph.close(),
+          onRetake: onRetake ? () => morph.close(onRetake) : undefined,
+        }}
+        labels={labels}
+      />
+    </dialog>
   );
 }

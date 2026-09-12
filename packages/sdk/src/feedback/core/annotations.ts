@@ -1,15 +1,13 @@
 import type { ElementRect, ScreenshotAnnotation } from "../../types";
 import type { Annotation, AnnotationTool, Point } from "../types";
 
-export const ANNOTATION_COLORS = [
-  "#ef4444",
-  "#f59e0b",
-  "#22c55e",
-  "#3b82f6",
-  "#111827",
-] as const;
-
-const BOX_TOOLS: AnnotationTool[] = ["rectangle", "highlight", "blur"];
+const BOX_TOOLS: AnnotationTool[] = [
+  "text",
+  "rectangle",
+  "spotlight",
+  "highlight",
+  "blur",
+];
 const MIN_GESTURE_LENGTH = 8;
 const ARROW_HEAD_ANGLE = Math.PI / 7;
 const DEFAULT_PATH_TOLERANCE = 2.5;
@@ -75,6 +73,9 @@ export function simplifyPath(
 }
 
 export function isDegenerate(annotation: Annotation): boolean {
+  if (annotation.tool === "text") {
+    return !annotation.text?.trim();
+  }
   if (annotation.tool === "pen") {
     return (annotation.points?.length ?? 0) < 2;
   }
@@ -101,6 +102,7 @@ function toWire(annotation: Annotation): ScreenshotAnnotation {
     return {
       color,
       height: rect.height,
+      ...(tool === "text" ? { text: annotation.text } : {}),
       type: tool,
       width: rect.width,
       x: rect.x,

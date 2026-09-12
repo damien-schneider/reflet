@@ -30,6 +30,8 @@ function fakeContext(canvas?: HTMLCanvasElement): FakeContext {
       context.calls.push(`fillRect(${x},${y},${width},${height})`);
     },
     fillStyle: "",
+    fillText: track("fillText"),
+    font: "",
     globalAlpha: 1,
     lineCap: "butt",
     lineJoin: "miter",
@@ -41,6 +43,7 @@ function fakeContext(canvas?: HTMLCanvasElement): FakeContext {
     stroke: track("stroke"),
     strokeRect: track("strokeRect"),
     strokeStyle: "",
+    textBaseline: "top",
   };
 
   return context;
@@ -63,6 +66,17 @@ describe("drawAnnotations", () => {
 
     drawAnnotations(context, [annotation({})]);
 
+    expect(context.calls).toContain("strokeRect(20,30,180,120)");
+  });
+
+  it("dims only the outside of the spotlight and outlines its clear center", () => {
+    const context = fakeContext();
+    drawAnnotations(context, [annotation({ tool: "spotlight" })]);
+    expect(context.calls).toContain("fillRect(0,0,1200,30)");
+    expect(context.calls).toContain("fillRect(0,150,1200,650)");
+    expect(context.calls).toContain("fillRect(0,30,20,120)");
+    expect(context.calls).toContain("fillRect(200,30,1000,120)");
+    expect(context.calls).not.toContain("fillRect(20,30,180,120)");
     expect(context.calls).toContain("strokeRect(20,30,180,120)");
   });
 
@@ -157,4 +171,21 @@ describe("drawAnnotations", () => {
       2
     );
   });
+});
+
+it("paints each line of a text annotation at its scaled position", () => {
+  const context = fakeContext();
+  drawAnnotations(
+    context,
+    [
+      annotation({
+        end: { x: 220, y: 94 },
+        text: "Wrong amount\nPlease check",
+        tool: "text",
+      }),
+    ],
+    { scale: 2 }
+  );
+  expect(context.calls).toContain("fillText(Wrong amount,40,60)");
+  expect(context.calls).toContain("fillText(Please check,40,124)");
 });

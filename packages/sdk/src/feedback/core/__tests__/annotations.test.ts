@@ -135,26 +135,29 @@ describe("toWireAnnotations", () => {
     ]);
   });
 
-  it("maps box shapes to a normalized rect", () => {
-    const wire = toWireAnnotations([
-      annotation({
-        end: { x: 10, y: 20 },
-        start: { x: 60, y: 70 },
-        tool: "blur",
-      }),
-    ]);
+  it.each(["rectangle", "spotlight", "highlight", "blur"] as const)(
+    "maps %s to a normalized rect",
+    (tool) => {
+      const wire = toWireAnnotations([
+        annotation({
+          end: { x: 10, y: 20 },
+          start: { x: 60, y: 70 },
+          tool,
+        }),
+      ]);
 
-    expect(wire).toEqual([
-      {
-        color: "#ef4444",
-        height: 50,
-        type: "blur",
-        width: 50,
-        x: 10,
-        y: 20,
-      },
-    ]);
-  });
+      expect(wire).toEqual([
+        {
+          color: "#ef4444",
+          height: 50,
+          type: tool,
+          width: 50,
+          x: 10,
+          y: 20,
+        },
+      ]);
+    }
+  );
 
   it("maps a pen stroke to its simplified path", () => {
     const wire = toWireAnnotations([
@@ -179,4 +182,27 @@ describe("toWireAnnotations", () => {
       []
     );
   });
+});
+
+it("serializes multiline text and its bounding box while dropping empty notes", () => {
+  expect(
+    toWireAnnotations([
+      annotation({
+        end: { x: 200, y: 64 },
+        text: "Wrong amount\nPlease check",
+        tool: "text",
+      }),
+      annotation({ text: "   ", tool: "text" }),
+    ])
+  ).toEqual([
+    {
+      color: "#ef4444",
+      height: 64,
+      text: "Wrong amount\nPlease check",
+      type: "text",
+      width: 200,
+      x: 0,
+      y: 0,
+    },
+  ]);
 });

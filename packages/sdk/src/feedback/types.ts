@@ -1,7 +1,8 @@
-import type { RefletUser } from "../types";
+import type { FeedbackContext, RefletUser } from "../types";
 
 /** Reported with every submission. */
 export const SDK_VERSION = "0.3.3";
+export const DEFAULT_WIDGET_OFFSET = 20;
 
 const FEEDBACK_WIDGET_CATEGORIES = ["bug", "idea", "question"] as const;
 
@@ -12,6 +13,8 @@ const ANNOTATION_TOOLS = [
   "pen",
   "arrow",
   "rectangle",
+  "text",
+  "spotlight",
   "highlight",
   "blur",
 ] as const;
@@ -30,6 +33,7 @@ export interface Annotation {
   /** Freehand path, in image pixels. Only set for the pen tool. */
   points?: Point[];
   start: Point;
+  text?: string;
   tool: AnnotationTool;
 }
 
@@ -42,27 +46,47 @@ export interface CapturedImage {
   width: number;
 }
 
+export interface ScreenshotDraft {
+  annotations: Annotation[];
+  context: FeedbackContext;
+  id: string;
+  image: CapturedImage;
+  source: "automatic" | "manual";
+}
+
 export interface FeedbackWidgetLabels {
   annotateHint: string;
+  attachmentUploadFailed: string;
   attachScreenshot: string;
   back: string;
   cancel: string;
+  captureFailed: string;
+  capturing: string;
   categoryBug: string;
   categoryIdea: string;
+  categoryLabel: string;
   categoryQuestion: string;
   clearAnnotations: string;
+  clearSelection: string;
   descriptionPlaceholder: string;
   dismissForDays: string;
   done: string;
+  emailInvalid: string;
   emailLabel: string;
   emailPlaceholder: string;
   errorGeneric: string;
   errorTitleRequired: string;
+  minimize: string;
+  moreOptions: string;
+  moveFeedback: string;
   pickElement: string;
   pickElementHint: string;
   recapture: string;
   removeScreenshot: string;
+  resume: string;
   retakeHint: string;
+  retryAttachments: string;
+  screenshot: string;
   submit: string;
   successMessage: string;
   successTitle: string;
@@ -74,25 +98,38 @@ export interface FeedbackWidgetLabels {
 
 export const DEFAULT_WIDGET_LABELS: FeedbackWidgetLabels = {
   annotateHint: "Draw on the screenshot to point at the problem.",
+  attachmentUploadFailed:
+    "Your feedback was saved, but some screenshots are still pending. Retry to attach them.",
   attachScreenshot: "Attach a screenshot",
   back: "Back",
   cancel: "Cancel",
+  captureFailed: "Screenshot unavailable. Try again or send without it.",
+  capturing: "Taking screenshot…",
   categoryBug: "Bug",
   categoryIdea: "Idea",
+  categoryLabel: "Feedback type",
   categoryQuestion: "Question",
   clearAnnotations: "Clear drawing",
-  descriptionPlaceholder: "What happened? What did you expect?",
+  clearSelection: "Remove selected element",
+  descriptionPlaceholder: "What would you like to share?",
   dismissForDays: "Hide for {days} days",
   done: "Done",
+  emailInvalid: "Enter a valid email address.",
   emailLabel: "Email",
   emailPlaceholder: "you@company.com",
   errorGeneric: "Something went wrong. Please try again.",
   errorTitleRequired: "Tell us a bit about it first.",
+  minimize: "Minimize feedback",
+  moreOptions: "More options",
+  moveFeedback: "Move feedback",
   pickElement: "Point at an element",
   pickElementHint: "Click the element you are talking about — cancel with",
   recapture: "Retake",
   removeScreenshot: "Remove",
+  resume: "Resume feedback",
   retakeHint: "Screenshot of this page",
+  retryAttachments: "Retry attachments",
+  screenshot: "Screenshot",
   submit: "Send feedback",
   successMessage: "We read every report. Thanks for taking the time.",
   successTitle: "Feedback sent",

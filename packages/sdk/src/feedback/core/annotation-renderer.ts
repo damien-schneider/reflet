@@ -1,6 +1,7 @@
 import type { ElementRect } from "../../types";
 import type { Annotation, CapturedImage, Point } from "../types";
 import { arrowHead, isDegenerate, normalizeRect } from "./annotations";
+import { capturedFromCanvas } from "./capture";
 
 const STROKE_WIDTH = 3;
 const ARROW_HEAD_SIZE = 16;
@@ -26,6 +27,8 @@ export interface AnnotationCanvasContext {
   fill: () => void;
   fillRect: (x: number, y: number, width: number, height: number) => void;
   fillStyle: string | CanvasGradient | CanvasPattern;
+  fillText: (text: string, x: number, y: number) => void;
+  font: string;
   globalAlpha: number;
   lineCap: CanvasLineCap;
   lineJoin: CanvasLineJoin;
@@ -37,6 +40,7 @@ export interface AnnotationCanvasContext {
   stroke: () => void;
   strokeRect: (x: number, y: number, width: number, height: number) => void;
   strokeStyle: string | CanvasGradient | CanvasPattern;
+  textBaseline: CanvasTextBaseline;
 }
 
 function scalePoint(point: Point, scale: number): Point {
@@ -136,6 +140,32 @@ function drawPen(
   context.stroke();
 }
 
+function drawSpotlight(
+  context: AnnotationCanvasContext,
+  rect: ElementRect
+): void {
+  const { width, height } = context.canvas;
+  context.save();
+  context.fillStyle = REDACTION_FILL;
+  context.globalAlpha = 0.55;
+  context.fillRect(0, 0, width, rect.y);
+  context.fillRect(
+    0,
+    rect.y + rect.height,
+    width,
+    height - rect.y - rect.height
+  );
+  context.fillRect(0, rect.y, rect.x, rect.height);
+  context.fillRect(
+    rect.x + rect.width,
+    rect.y,
+    width - rect.x - rect.width,
+    rect.height
+  );
+  context.restore();
+  context.strokeRect(rect.x, rect.y, rect.width, rect.height);
+}
+
 function drawAnnotation(
   context: AnnotationCanvasContext,
   annotation: Annotation,
@@ -155,6 +185,16 @@ function drawAnnotation(
   context.fillStyle = color;
 
   switch (tool) {
+    case "text": {
+      const lines = (annotation.text ?? "").split("\n");
+      const lineHeight = rect.height / lines.length;
+      context.font = `${lineHeight / 1.4}px ui-sans-serif, system-ui, sans-serif`;
+      context.textBaseline = "top";
+      for (const [index, line] of lines.entries()) {
+        context.fillText(line, rect.x, rect.y + index * lineHeight);
+      }
+      break;
+    }
     case "pen":
       drawPen(context, annotation.points ?? [], scale);
       break;
@@ -165,6 +205,9 @@ function drawAnnotation(
         scalePoint(annotation.end, scale),
         scale
       );
+      break;
+    case "spotlight":
+      drawSpotlight(context, rect);
       break;
     case "rectangle":
       context.strokeRect(rect.x, rect.y, rect.width, rect.height);
@@ -203,12 +246,6 @@ function loadImage(url: string): Promise<HTMLImageElement> {
   });
 }
 
-function toBlob(canvas: HTMLCanvasElement): Promise<Blob | null> {
-  return new Promise((resolve) => {
-    canvas.toBlob(resolve, "image/png");
-  });
-}
-
 /**
  * Burns the annotations into a copy of the capture so reviewers and agents see
  * the drawing without needing to replay the vector data.
@@ -233,16 +270,5 @@ export async function renderAnnotatedImage(
   context.drawImage(image, 0, 0, source.width, source.height);
   drawAnnotations(context, annotations);
 
-  const blob = await toBlob(canvas);
-  if (!blob) {
-    return null;
-  }
-
-  return {
-    blob,
-    height: source.height,
-    mimeType: "image/png",
-    objectUrl: URL.createObjectURL(blob),
-    width: source.width,
-  };
+  return await capturedFromCanvas(canvas, source.width);
 }

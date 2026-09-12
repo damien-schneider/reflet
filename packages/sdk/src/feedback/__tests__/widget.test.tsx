@@ -85,7 +85,11 @@ describe("RefletFeedback", () => {
     click(launcher());
     expect(shadow().querySelector(".panel")).not.toBeNull();
 
-    click(launcher());
+    const cancel = shadow().querySelector(".options-popover .ghost-btn");
+    if (!(cancel instanceof HTMLButtonElement)) {
+      throw new Error("Cancel missing");
+    }
+    click(cancel);
     expect(shadow().querySelector(".panel")).toBeNull();
   });
 
@@ -119,17 +123,48 @@ describe("RefletFeedback", () => {
     mount();
     click(launcher());
 
-    const chips = shadow().querySelectorAll(".segmented button");
-    const [bug, idea] = Array.from(chips);
-    if (!(bug instanceof HTMLElement && idea instanceof HTMLElement)) {
-      throw new Error("Category chips missing");
+    const category = shadow().querySelector(
+      'select[aria-label="Feedback type"]'
+    );
+    if (!(category instanceof HTMLSelectElement)) {
+      throw new Error("Category selector missing");
     }
 
-    expect(bug.getAttribute("aria-pressed")).toBe("true");
-    click(idea);
+    expect(category.value).toBe("bug");
+    fireEvent.change(category, { target: { value: "idea" } });
+    expect(category.value).toBe("idea");
+  });
 
-    expect(idea.getAttribute("aria-pressed")).toBe("true");
-    expect(bug.getAttribute("aria-pressed")).toBe("false");
+  it("opens with one line and expands only when the reporter focuses it", () => {
+    mount();
+    click(launcher());
+    const message = shadow().querySelector("textarea");
+    if (!(message instanceof HTMLTextAreaElement)) {
+      throw new Error("Message missing");
+    }
+    expect(message.rows).toBe(1);
+    fireEvent.focus(message);
+    expect(message.rows).toBe(3);
+  });
+
+  it("keeps the draft when temporarily minimized and restored", () => {
+    mount();
+    click(launcher());
+    const message = shadow().querySelector("textarea");
+    const minimize = shadow().querySelector('[aria-label="Minimize feedback"]');
+    if (
+      !(
+        message instanceof HTMLTextAreaElement &&
+        minimize instanceof HTMLButtonElement
+      )
+    ) {
+      throw new Error("Composer controls missing");
+    }
+    fireEvent.change(message, { target: { value: "Keep my draft" } });
+    click(minimize);
+    expect(shadow().querySelector("textarea")).toBeNull();
+    click(launcher());
+    expect(shadow().querySelector("textarea")?.value).toBe("Keep my draft");
   });
 
   it("asks anonymous reporters for an email but not identified ones", () => {
@@ -155,10 +190,7 @@ describe("RefletFeedback", () => {
     mount();
     click(launcher());
 
-    const buttons = Array.from(shadow().querySelectorAll(".ghost-btn"));
-    const picker = buttons.find((button) =>
-      button.textContent?.includes("Point at an element")
-    );
+    const picker = shadow().querySelector('[aria-label="Point at an element"]');
     if (!(picker instanceof HTMLElement)) {
       throw new Error("Picker trigger missing");
     }
@@ -166,7 +198,9 @@ describe("RefletFeedback", () => {
     click(picker);
 
     expect(shadow().querySelector(".picker-hint")).not.toBeNull();
-    expect(shadow().querySelector(".panel")).toBeNull();
+    expect(shadow().querySelector(".root")?.getAttribute("data-editing")).toBe(
+      "true"
+    );
   });
 
   it("places the widget at the requested corner", () => {

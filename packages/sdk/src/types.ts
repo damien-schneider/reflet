@@ -198,7 +198,14 @@ export interface ScreenshotAnnotation {
   height?: number;
   points?: Array<{ x: number; y: number }>;
   text?: string;
-  type: "arrow" | "blur" | "highlight" | "pen" | "rectangle" | "text";
+  type:
+    | "arrow"
+    | "blur"
+    | "highlight"
+    | "pen"
+    | "rectangle"
+    | "spotlight"
+    | "text";
   width?: number;
   x: number;
   y: number;

@@ -3,12 +3,14 @@ import type {
   CreateFeedbackParams,
   SaveScreenshotParams,
 } from "../../../types";
-import type { Annotation, CapturedImage } from "../../types";
+import type { CapturedImage, ScreenshotDraft } from "../../types";
 import {
+  attachPreparedScreenshots,
   buildDescription,
   deriveTitle,
   type FeedbackTransport,
   submitWidgetFeedback,
+  type WidgetSubmission,
 } from "../submit";
 
 function capture(overrides: Partial<CapturedImage> = {}): CapturedImage {
@@ -48,16 +50,34 @@ function stubTransport(overrides: Partial<FeedbackTransport> = {}) {
   return { created, saved, transport, uploads };
 }
 
-function submission(overrides: Record<string, unknown> = {}) {
+vi.mock("../annotation-renderer", () => ({
+  renderAnnotatedImage: vi.fn(async () =>
+    capture({ objectUrl: "blob:annotated" })
+  ),
+}));
+vi.mock("../capture", () => ({ releaseCapture: vi.fn() }));
+
+function screenshot(overrides: Partial<ScreenshotDraft> = {}): ScreenshotDraft {
   return {
-    annotated: null,
-    annotations: [] as Annotation[],
-    category: "bug" as const,
+    annotations: [],
+    context: { url: "https://app.test/billing" },
+    id: "first",
+    image: capture(),
+    source: "manual",
+    ...overrides,
+  };
+}
+
+function submission(
+  overrides: Partial<WidgetSubmission> = {}
+): WidgetSubmission {
+  return {
+    category: "bug",
     context: { url: "https://app.test/billing" },
     element: null,
     isAnonymous: false,
     message: "The invoice total is wrong",
-    screenshot: null,
+    screenshots: [],
     ...overrides,
   };
 }
@@ -125,10 +145,10 @@ describe("buildDescription", () => {
 describe("submitWidgetFeedback", () => {
   it("creates the feedback with its derived title and context", async () => {
     const { transport, created } = stubTransport();
-
-    const result = await submitWidgetFeedback(transport, submission());
-
-    expect(result).toEqual({ feedbackId: "fb_1", screenshotSaved: false });
+    expect(await submitWidgetFeedback(transport, submission())).toEqual({
+      feedbackId: "fb_1",
+      pendingScreenshots: [],
+    });
     expect(created[0]).toEqual({
       context: { url: "https://app.test/billing" },
       description: "[Bug] The invoice total is wrong",
@@ -136,17 +156,35 @@ describe("submitWidgetFeedback", () => {
     });
   });
 
-  it("uploads the screenshot and links it to the feedback", async () => {
-    const { transport, saved, uploads } = stubTransport();
-
+  it("uploads every screenshot with its own page and annotations", async () => {
+    const { transport, created, saved, uploads } = stubTransport();
     const result = await submitWidgetFeedback(
       transport,
-      submission({ screenshot: capture() })
+      submission({
+        screenshots: [
+          screenshot(),
+          screenshot({
+            annotations: [
+              {
+                color: "#ef4444",
+                end: { x: 100, y: 100 },
+                id: "mark",
+                start: { x: 10, y: 10 },
+                tool: "spotlight",
+              },
+            ],
+            context: { url: "https://app.test/settings" },
+            id: "second",
+          }),
+        ],
+      })
     );
-
-    expect(uploads).toEqual(["https://upload.test/a"]);
+    expect(created).toHaveLength(1);
+    expect(saved).toHaveLength(2);
+    expect(uploads).toHaveLength(3);
     expect(saved[0]).toMatchObject({
       feedbackId: "fb_1",
+      filename: "screenshot-1.png",
       height: 800,
       mimeType: "image/png",
       pageUrl: "https://app.test/billing",
@@ -154,90 +192,85 @@ describe("submitWidgetFeedback", () => {
       width: 1280,
     });
     expect(saved[0]?.annotatedStorageId).toBeUndefined();
-    expect(result.screenshotSaved).toBe(true);
-  });
-
-  it("uploads the annotated copy alongside the original", async () => {
-    const { transport, saved, uploads } = stubTransport();
-    const annotations: Annotation[] = [
-      {
-        color: "#ef4444",
-        end: { x: 100, y: 100 },
-        id: "a1",
-        start: { x: 10, y: 10 },
-        tool: "arrow",
-      },
-    ];
-
-    await submitWidgetFeedback(
-      transport,
-      submission({
-        annotated: capture({ objectUrl: "blob:annotated" }),
-        annotations,
-        screenshot: capture(),
-      })
-    );
-
-    expect(uploads).toHaveLength(2);
-    expect(saved[0]?.annotatedStorageId).toBe("storage_2");
-    expect(saved[0]?.annotations).toEqual([
-      { color: "#ef4444", endX: 100, endY: 100, type: "arrow", x: 10, y: 10 },
-    ]);
-  });
-
-  it("attaches the element close-up as a capture of its own", async () => {
-    const { transport, saved } = stubTransport();
-
-    await submitWidgetFeedback(
-      transport,
-      submission({
-        element: capture({ height: 40, width: 120 }),
-        screenshot: capture(),
-      })
-    );
-
-    expect(saved.map((entry) => entry.captureSource)).toEqual([
-      "widget",
-      "element",
-    ]);
     expect(saved[1]).toMatchObject({
-      filename: "element.png",
-      height: 40,
-      width: 120,
+      annotatedStorageId: "storage_3",
+      annotations: [
+        {
+          color: "#ef4444",
+          height: 90,
+          type: "spotlight",
+          width: 90,
+          x: 10,
+          y: 10,
+        },
+      ],
+      filename: "screenshot-2.png",
+      pageUrl: "https://app.test/settings",
     });
+    expect(result.pendingScreenshots).toEqual([]);
   });
 
-  it("attaches the element close-up even without a page screenshot", async () => {
-    const { transport, saved } = stubTransport();
+  it.each([false, true])(
+    "attaches an element close-up with a viewport: %s",
+    async (withViewport) => {
+      const { transport, saved } = stubTransport();
+      await submitWidgetFeedback(
+        transport,
+        submission({
+          element: capture({ height: 40, width: 120 }),
+          screenshots: withViewport ? [screenshot()] : [],
+        })
+      );
+      expect(saved.map((entry) => entry.captureSource)).toEqual(
+        withViewport ? ["widget", "element"] : ["element"]
+      );
+      expect(saved.at(-1)).toMatchObject({
+        filename: "element.png",
+        height: 40,
+        width: 120,
+      });
+    }
+  );
 
-    await submitWidgetFeedback(
-      transport,
-      submission({ element: capture(), screenshot: null })
-    );
-
-    expect(saved).toHaveLength(1);
-    expect(saved[0]?.captureSource).toBe("element");
-  });
-
-  it("keeps the feedback when the screenshot upload fails", async () => {
+  it("leaves the draft unsent if any image upload fails", async () => {
     const { transport, created } = stubTransport({
       uploadImage: () => Promise.reject(new Error("network down")),
     });
+    await expect(
+      submitWidgetFeedback(
+        transport,
+        submission({ screenshots: [screenshot()] })
+      )
+    ).rejects.toThrow("network down");
+    expect(created).toHaveLength(0);
+  });
 
+  it("retries only missing attachments without creating another report or uploading again", async () => {
+    const saveScreenshot = vi
+      .fn<FeedbackTransport["saveScreenshot"]>()
+      .mockResolvedValueOnce({ screenshotId: "first" })
+      .mockRejectedValueOnce(new Error("unavailable"))
+      .mockResolvedValueOnce({ screenshotId: "second" });
+    const { transport, created, uploads } = stubTransport({ saveScreenshot });
     const result = await submitWidgetFeedback(
       transport,
-      submission({ screenshot: capture() })
+      submission({ screenshots: [screenshot(), screenshot({ id: "second" })] })
     );
-
-    expect(result).toEqual({ feedbackId: "fb_1", screenshotSaved: false });
+    expect(result.pendingScreenshots).toHaveLength(1);
+    expect(result.pendingScreenshots[0]?.storageId).toBe("storage_2");
+    expect(await attachPreparedScreenshots(transport, result)).toEqual({
+      feedbackId: "fb_1",
+      pendingScreenshots: [],
+    });
     expect(created).toHaveLength(1);
+    expect(uploads).toHaveLength(2);
+    expect(saveScreenshot).toHaveBeenCalledTimes(3);
   });
 
   it("propagates a failure to create the feedback itself", async () => {
     const { transport } = stubTransport({
       create: () => Promise.reject(new Error("rate limited")),
     });
-
     await expect(submitWidgetFeedback(transport, submission())).rejects.toThrow(
       "rate limited"
     );
@@ -246,7 +279,6 @@ describe("submitWidgetFeedback", () => {
   it("refuses an empty message before touching the network", async () => {
     const create = vi.fn();
     const { transport } = stubTransport({ create });
-
     await expect(
       submitWidgetFeedback(transport, submission({ message: "   " }))
     ).rejects.toThrow(/describe/i);

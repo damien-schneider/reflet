@@ -1,15 +1,5 @@
-import {
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import { Reflet } from "../../client";
-import { RefletContext } from "../../react-context";
-import type { ElementSelection, FeedbackContext } from "../../types";
-import { renderAnnotatedImage } from "../core/annotation-renderer";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { ElementSelection } from "../../types";
 import { captureViewport, releaseCapture } from "../core/capture";
 import {
   type ConsoleRecorder,
@@ -18,21 +8,22 @@ import {
 import { captureElementCloseUp, highlightFor } from "../core/element-capture";
 import { buildElementSelection } from "../core/element-selector";
 import { collectPageContext } from "../core/page-context";
-import { createFeedbackTransport, submitWidgetFeedback } from "../core/submit";
 import {
-  type Annotation,
-  type CapturedImage,
+  DEFAULT_WIDGET_LABELS,
   type FeedbackWidgetCategory,
   type RefletFeedbackProps,
   SDK_VERSION,
   type WidgetStep,
 } from "../types";
+import { useFeedbackSubmission } from "./state/use-feedback-submission";
+import { useOwnedCapture } from "./state/use-owned-capture";
+import { useScreenshotDrafts } from "./state/use-screenshot-drafts";
+import { useWidgetConfig } from "./state/use-widget-config";
 import { useCaptureSync } from "./use-capture-sync";
 
 const SUCCESS_CLOSE_DELAY = 2400;
 const IS_APPLE = /Mac|iPhone|iPad/;
 const MILLISECONDS_PER_DAY = 86_400_000;
-const DISMISSAL_STORAGE_PREFIX = "reflet-feedback-dismissed";
 
 function readDismissedUntil(key: string): number {
   if (typeof window === "undefined") {
@@ -60,10 +51,6 @@ function writeDismissedUntil(key: string, until: number): void {
   }
 }
 
-/**
- * Matches shortcuts written as `alt+f` or `mod+shift+k`, where `mod` is the
- * platform's command key.
- */
 export function matchesHotkey(
   event: Pick<
     KeyboardEvent,
@@ -99,64 +86,39 @@ export function matchesHotkey(
   );
 }
 
-/**
- * A capture whose object URL is revoked the moment it is replaced or dropped —
- * holding one without this leaks the blob for the lifetime of the page.
- */
-function useOwnedCapture() {
-  const [image, setImage] = useState<CapturedImage | null>(null);
-  const ref = useRef<CapturedImage | null>(null);
-
-  useEffect(() => {
-    ref.current = image;
-  }, [image]);
-  useEffect(() => () => releaseCapture(ref.current), []);
-
-  const replace = useCallback((next: CapturedImage | null) => {
-    releaseCapture(ref.current);
-    setImage(next);
-  }, []);
-
-  return [image, replace] as const;
-}
-
 export function useWidgetState(props: RefletFeedbackProps) {
-  const context = useContext(RefletContext);
-  const publicKey = props.publicKey ?? context?.publicKey;
-  const baseUrl = props.baseUrl ?? context?.baseUrl;
-  const user = props.user ?? context?.user;
-  const userToken = props.userToken ?? context?.userToken;
-  const isAnonymous = !(user || userToken);
-  const dismissForDays =
-    props.dismissForDays !== undefined &&
-    Number.isFinite(props.dismissForDays) &&
-    props.dismissForDays > 0
-      ? props.dismissForDays
-      : null;
-  const dismissalKey = `${DISMISSAL_STORAGE_PREFIX}:${publicKey ?? "default"}:${user?.id ?? "anonymous"}`;
+  const { client, defaultCategory, dismissalKey, dismissForDays, isAnonymous } =
+    useWidgetConfig(props);
 
   const [isOpen, setIsOpen] = useState(false);
+  const [annotationTrigger, setAnnotationTrigger] =
+    useState<HTMLButtonElement | null>(null);
   const [step, setStep] = useState<WidgetStep>("compose");
-  const [category, setCategory] = useState<FeedbackWidgetCategory>(
-    props.defaultCategory ?? "bug"
-  );
+  const [category, setCategory] =
+    useState<FeedbackWidgetCategory>(defaultCategory);
   const [message, setMessage] = useState("");
   const [email, setEmail] = useState("");
   const [honeypot, setHoneypot] = useState("");
-  const [capture, replaceCapture] = useOwnedCapture();
   const [elementCapture, replaceElementCapture] = useOwnedCapture();
-  const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [selection, setSelection] = useState<ElementSelection | null>(null);
-  const [isCapturing, setIsCapturing] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isElementCapturing, setIsElementCapturing] = useState(false);
+  const successTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [dismissedUntil, setDismissedUntil] = useState(() =>
     readDismissedUntil(dismissalKey)
   );
 
   const pickRef = useRef(0);
+  useEffect(
+    () => () => {
+      pickRef.current++;
+      if (successTimer.current) {
+        clearTimeout(successTimer.current);
+      }
+    },
+    []
+  );
   const consoleRef = useRef<ConsoleRecorder | null>(null);
-  const frozenContext = useRef<FeedbackContext | null>(null);
 
   useEffect(() => {
     setDismissedUntil(readDismissedUntil(dismissalKey));
@@ -174,42 +136,71 @@ export function useWidgetState(props: RefletFeedbackProps) {
     };
   }, [props.captureConsole]);
 
-  /** Frozen at the same instant as the screenshot, so shot and URL always match. */
-  const takeCapture = useCallback((): void => {
-    const context = collectPageContext({ sdkVersion: SDK_VERSION });
-    setIsCapturing(true);
-    captureViewport()
-      .catch(() => null)
-      .then((image) => {
-        setIsCapturing(false);
-        replaceCapture(image);
-        frozenContext.current = image ? context : null;
-      });
-  }, [replaceCapture]);
+  const captureFailed =
+    props.labels?.captureFailed ?? DEFAULT_WIDGET_LABELS.captureFailed;
+  const gallery = useScreenshotDrafts(captureFailed, setError);
+  const {
+    activeScreenshot,
+    cancelPendingCapture,
+    clearSelectionAnnotations,
+    refreshAutomatic,
+    resetScreenshots,
+    storeScreenshot,
+  } = gallery;
+  const capture = activeScreenshot?.image ?? null;
+  const annotations = activeScreenshot?.annotations ?? [];
+  const isCapturing = gallery.pendingCapture !== null || isElementCapturing;
+  const submission = useFeedbackSubmission({
+    client,
+    onError: setError,
+    onSubmitted: (feedbackId) => {
+      setStep("success");
+      props.onSubmit?.({ feedbackId });
+      successTimer.current = setTimeout(close, SUCCESS_CLOSE_DELAY);
+    },
+    partialUploadMessage:
+      props.labels?.attachmentUploadFailed ??
+      DEFAULT_WIDGET_LABELS.attachmentUploadFailed,
+  });
+  const { resetSubmission } = submission;
+  const firstCapture = gallery.pendingCapture ?? gallery.screenshots[0];
+  const canRefreshAutomatically =
+    gallery.screenshots.length <= 1 && firstCapture?.source === "automatic";
 
   useCaptureSync(
     isOpen &&
+      !submission.isEditingDisabled &&
       step === "compose" &&
+      canRefreshAutomatically &&
       annotations.length === 0 &&
       !selection &&
       props.captureOnOpen !== false,
-    takeCapture
+    refreshAutomatic
   );
 
   const reset = useCallback(() => {
+    if (successTimer.current) {
+      clearTimeout(successTimer.current);
+    }
+    setAnnotationTrigger(null);
+    resetSubmission();
     pickRef.current++;
-    frozenContext.current = null;
-    replaceCapture(null);
+    setIsElementCapturing(false);
+    resetScreenshots();
     replaceElementCapture(null);
-    setAnnotations([]);
     setSelection(null);
     setMessage("");
     setEmail("");
     setHoneypot("");
     setError(null);
     setStep("compose");
-    setCategory(props.defaultCategory ?? "bug");
-  }, [props.defaultCategory, replaceCapture, replaceElementCapture]);
+    setCategory(defaultCategory);
+  }, [
+    defaultCategory,
+    resetSubmission,
+    resetScreenshots,
+    replaceElementCapture,
+  ]);
 
   const close = useCallback(() => {
     setIsOpen(false);
@@ -234,13 +225,14 @@ export function useWidgetState(props: RefletFeedbackProps) {
     setStep("compose");
     props.onOpen?.();
     if (props.captureOnOpen !== false) {
-      takeCapture();
+      refreshAutomatic();
     }
-  }, [props.captureOnOpen, props.onOpen, takeCapture]);
+  }, [props.captureOnOpen, props.onOpen, refreshAutomatic]);
 
-  /** Fresh pixels so the highlight maps onto the scroll position the element had. */
   const selectElement = useCallback(
     async (element: Element) => {
+      cancelPendingCapture();
+      setIsElementCapturing(true);
       const picked = buildElementSelection(element);
       setSelection(picked);
       setStep("compose");
@@ -258,109 +250,67 @@ export function useWidgetState(props: RefletFeedbackProps) {
         return;
       }
 
-      replaceCapture(fresh);
+      setIsElementCapturing(false);
+      if (fresh) {
+        storeScreenshot({
+          annotations: [highlightFor(picked, fresh)],
+          context,
+          id: crypto.randomUUID(),
+          image: fresh,
+          source: "manual",
+        });
+      } else {
+        setError(captureFailed);
+      }
       replaceElementCapture(closeUp);
-      frozenContext.current = fresh ? context : null;
-      setAnnotations(fresh ? [highlightFor(picked, fresh)] : []);
     },
-    [replaceCapture, replaceElementCapture]
+    [
+      cancelPendingCapture,
+      captureFailed,
+      storeScreenshot,
+      replaceElementCapture,
+    ]
   );
 
   const clearSelection = useCallback(() => {
     pickRef.current++;
     replaceElementCapture(null);
     setSelection(null);
-    setAnnotations((previous) =>
-      previous.filter((item) => !item.id.startsWith("selection-"))
-    );
-  }, [replaceElementCapture]);
+    setIsElementCapturing(false);
+    clearSelectionAnnotations();
+  }, [clearSelectionAnnotations, replaceElementCapture]);
 
-  const removeCapture = useCallback(() => {
-    frozenContext.current = null;
-    replaceCapture(null);
-    setAnnotations([]);
-  }, [replaceCapture]);
-
-  const client = useMemo(
-    () =>
-      publicKey ? new Reflet({ baseUrl, publicKey, user, userToken }) : null,
-    [baseUrl, publicKey, user, userToken]
-  );
-
-  const submit = useCallback(async () => {
+  const submit = () => {
     if (honeypot) {
       setStep("success");
       return;
     }
-    if (!client) {
-      setError(
-        "Reflet is missing a publicKey. Pass one to RefletFeedback or RefletProvider."
-      );
-      return;
-    }
-
-    setIsSubmitting(true);
-    setError(null);
-
-    let annotated: CapturedImage | null = null;
-
-    try {
-      annotated = capture
-        ? await renderAnnotatedImage(capture, annotations)
-        : null;
-
-      const result = await submitWidgetFeedback(
-        createFeedbackTransport(client),
-        {
-          annotated,
-          annotations,
-          category,
-          context: {
-            ...(frozenContext.current ??
-              collectPageContext({ sdkVersion: SDK_VERSION })),
-            consoleEvents: consoleRef.current?.events(),
-            metadata: props.metadata,
-            selection: selection ?? undefined,
-          },
-          element: elementCapture,
-          email,
-          isAnonymous,
-          message,
-          screenshot: capture,
-        }
-      );
-
-      setStep("success");
-      props.onSubmit?.({ feedbackId: result.feedbackId });
-      setTimeout(close, SUCCESS_CLOSE_DELAY);
-    } catch (submitError) {
-      setError(
-        submitError instanceof Error
-          ? submitError.message
-          : "Something went wrong. Please try again."
-      );
-    } finally {
-      releaseCapture(annotated);
-      setIsSubmitting(false);
-    }
-  }, [
-    annotations,
-    capture,
-    category,
-    client,
-    close,
-    elementCapture,
-    email,
-    honeypot,
-    isAnonymous,
-    message,
-    props.metadata,
-    props.onSubmit,
-    selection,
-  ]);
+    return submission.submit({
+      category,
+      context: {
+        ...(activeScreenshot?.context ??
+          collectPageContext({ sdkVersion: SDK_VERSION })),
+        consoleEvents: consoleRef.current?.events(),
+        metadata: props.metadata,
+        selection: selection ?? undefined,
+      },
+      element: elementCapture,
+      email,
+      isAnonymous,
+      message,
+      screenshots: gallery.screenshots,
+    });
+  };
 
   return {
+    activeScreenshot,
+    annotateScreenshot: (id: string, trigger: HTMLButtonElement) => {
+      setAnnotationTrigger(trigger);
+      gallery.selectScreenshot(id);
+      setStep("annotate");
+    },
     annotations,
+    annotationTrigger,
     canDismiss: dismissForDays !== null,
     capture,
     category,
@@ -371,18 +321,23 @@ export function useWidgetState(props: RefletFeedbackProps) {
     elementCapture,
     email,
     error,
+    hasPendingAttachments: submission.hasPendingAttachments,
     honeypot,
     isAnonymous,
     isCapturing,
     isDismissed: dismissedUntil > Date.now(),
+    isEditingDisabled: submission.isEditingDisabled,
     isOpen,
-    isSubmitting,
+    isSubmitting: submission.isSubmitting,
     message,
     open,
-    removeCapture,
+    pendingCapture: gallery.pendingCapture,
+    removeCapture: gallery.removeCapture,
+    retakeCapture: gallery.retakeCapture,
+    screenshots: gallery.screenshots,
     selectElement,
     selection,
-    setAnnotations,
+    setAnnotations: gallery.setAnnotations,
     setCategory,
     setEmail,
     setHoneypot,
@@ -390,7 +345,7 @@ export function useWidgetState(props: RefletFeedbackProps) {
     setStep,
     step,
     submit,
-    takeCapture,
+    takeCapture: gallery.takeCapture,
   };
 }
 

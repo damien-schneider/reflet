@@ -20,6 +20,7 @@ export const screenshotAnnotationValidator = v.object({
   text: v.optional(v.string()),
   type: v.union(
     v.literal("rectangle"),
+    v.literal("spotlight"),
     v.literal("arrow"),
     v.literal("text"),
     v.literal("blur"),

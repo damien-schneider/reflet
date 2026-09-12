@@ -40,11 +40,9 @@ function capture(): CapturedImage {
 function mount(overrides: Partial<Parameters<typeof Annotator>[0]> = {}) {
   return render(
     <Annotator
-      annotations={[]}
       capture={capture()}
+      editor={{ annotations: [], onChange: vi.fn(), onDone: vi.fn() }}
       labels={DEFAULT_WIDGET_LABELS}
-      onChange={vi.fn()}
-      onDone={vi.fn()}
       {...overrides}
     />
   );
@@ -57,6 +55,8 @@ async function flushImageLoad(): Promise<void> {
 }
 
 beforeEach(() => {
+  HTMLDialogElement.prototype.showModal = vi.fn();
+  HTMLDialogElement.prototype.close = vi.fn();
   const track =
     (name: string) =>
     (...args: unknown[]) => {
@@ -73,6 +73,8 @@ beforeEach(() => {
     fill: track("fill"),
     fillRect: track("fillRect"),
     fillStyle: "",
+    fillText: track("fillText"),
+    font: "",
     globalAlpha: 1,
     lineCap: "butt",
     lineJoin: "miter",
@@ -84,6 +86,7 @@ beforeEach(() => {
     stroke: track("stroke"),
     strokeRect: track("strokeRect"),
     strokeStyle: "",
+    textBaseline: "top",
   };
 
   Object.defineProperty(HTMLCanvasElement.prototype, "getContext", {
@@ -125,19 +128,21 @@ describe("Annotator", () => {
 
     rerender(
       <Annotator
-        annotations={[
-          {
-            color: "#ef4444",
-            end: { x: 200, y: 150 },
-            id: "a1",
-            start: { x: 20, y: 30 },
-            tool: "rectangle",
-          },
-        ]}
         capture={capture()}
+        editor={{
+          annotations: [
+            {
+              color: "#ef4444",
+              end: { x: 200, y: 150 },
+              id: "a1",
+              start: { x: 20, y: 30 },
+              tool: "rectangle",
+            },
+          ],
+          onChange: vi.fn(),
+          onDone: vi.fn(),
+        }}
         labels={DEFAULT_WIDGET_LABELS}
-        onChange={vi.fn()}
-        onDone={vi.fn()}
       />
     );
 

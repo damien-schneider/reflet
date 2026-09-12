@@ -1,12 +1,12 @@
 import { useEffect } from "react";
 import {
   DEFAULT_WIDGET_LABELS,
+  DEFAULT_WIDGET_OFFSET,
   type FeedbackWidgetCategory,
   type RefletFeedbackProps,
 } from "./types";
 import { Annotator } from "./ui/annotator";
-import { Launcher } from "./ui/launcher";
-import { FeedbackPanel } from "./ui/panel";
+import { FloatingWidget } from "./ui/floating/floating-widget";
 import { ElementPicker } from "./ui/picker";
 import { ShadowPortal } from "./ui/shadow-portal";
 import { matchesHotkey, useWidgetState } from "./ui/use-widget-state";
@@ -16,19 +16,13 @@ const DEFAULT_CATEGORIES: FeedbackWidgetCategory[] = [
   "idea",
   "question",
 ];
-const DEFAULT_OFFSET = 20;
 
-/**
- * Floating feedback button with a screenshot, annotation and element picker
- * flow. Mount it once, anywhere below `RefletProvider` or with its own
- * `publicKey`.
- */
 export function RefletFeedback(props: RefletFeedbackProps) {
   const {
     categories = DEFAULT_CATEGORIES,
     enabled = true,
     hotkey = null,
-    offset = DEFAULT_OFFSET,
+    offset = DEFAULT_WIDGET_OFFSET,
     position = "bottom-right",
     theme = "auto",
   } = props;
@@ -57,27 +51,9 @@ export function RefletFeedback(props: RefletFeedbackProps) {
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [close, enabled, hotkey, isOpen, open]);
 
-  useEffect(() => {
-    if (!isOpen || state.step !== "compose") {
-      return;
-    }
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        close();
-      }
-    };
-
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [close, isOpen, state.step]);
-
   if (!enabled || state.isDismissed) {
     return null;
   }
-
-  const showPanel =
-    isOpen && state.step !== "picking" && state.step !== "annotate";
 
   return (
     <ShadowPortal
@@ -85,28 +61,33 @@ export function RefletFeedback(props: RefletFeedbackProps) {
       primaryColor={props.primaryColor}
       theme={theme}
     >
-      <div className="root" data-position={position}>
-        {showPanel && (
-          <FeedbackPanel
-            categories={categories}
-            labels={labels}
-            state={state}
-          />
-        )}
-        <Launcher
-          isOpen={isOpen}
-          label={labels.trigger}
-          onClick={isOpen ? close : open}
-        />
-      </div>
+      <div
+        aria-hidden="true"
+        className="capture-halo"
+        data-active={state.isCapturing}
+      />
+      <FloatingWidget
+        labels={labels}
+        options={{ categories, position }}
+        state={state}
+      />
 
-      {isOpen && state.step === "annotate" && state.capture && (
+      {isOpen && state.step === "annotate" && state.activeScreenshot && (
         <Annotator
-          annotations={state.annotations}
-          capture={state.capture}
+          capture={state.activeScreenshot.image}
+          editor={{
+            annotations: state.annotations,
+            onChange: state.setAnnotations,
+            onDone: () => state.setStep("compose"),
+            onRetake: () => {
+              state.setStep("compose");
+              if (state.activeScreenshot) {
+                state.retakeCapture(state.activeScreenshot.id);
+              }
+            },
+            trigger: state.annotationTrigger,
+          }}
           labels={labels}
-          onChange={state.setAnnotations}
-          onDone={() => state.setStep("compose")}
         />
       )}
 

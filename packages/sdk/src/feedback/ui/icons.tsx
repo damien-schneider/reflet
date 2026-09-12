@@ -43,31 +43,6 @@ export function CloseIcon({ className }: { className?: string }) {
   );
 }
 
-export function BugIcon() {
-  return (
-    <Svg size={14}>
-      <path d="M8 6a4 4 0 0 1 8 0M6 10h12v4a6 6 0 0 1-12 0zM3 12h3M18 12h3M4.5 6.5 7 8M19.5 6.5 17 8M4.5 17.5 7 16M19.5 17.5 17 16" />
-    </Svg>
-  );
-}
-
-export function IdeaIcon() {
-  return (
-    <Svg size={14}>
-      <path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.5.4.8.9.9 1.5l.1.7h5.2l.1-.7c.1-.6.4-1.1.9-1.5A6 6 0 0 0 12 3" />
-    </Svg>
-  );
-}
-
-export function QuestionIcon() {
-  return (
-    <Svg size={14}>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M9.6 9.4a2.5 2.5 0 1 1 3.3 2.4c-.6.2-.9.8-.9 1.4v.3M12 17h.01" />
-    </Svg>
-  );
-}
-
 export function CameraIcon() {
   return (
     <Svg>
@@ -110,31 +85,6 @@ export function ArrowIcon() {
   );
 }
 
-export function SquareIcon() {
-  return (
-    <Svg>
-      <rect height="13" rx="1.5" width="16" x="4" y="5.5" />
-    </Svg>
-  );
-}
-
-export function HighlightIcon() {
-  return (
-    <Svg>
-      <path d="M4 15h16M6 5h12v7H6z" />
-    </Svg>
-  );
-}
-
-export function BlurIcon() {
-  return (
-    <Svg>
-      <path d="M12 3c3.5 4 5.5 6.6 5.5 9.2A5.5 5.5 0 0 1 6.5 12.2C6.5 9.6 8.5 7 12 3" />
-      <path d="M9 13h.01M12 15h.01M15 12h.01" />
-    </Svg>
-  );
-}
-
 export function UndoIcon() {
   return (
     <Svg>
@@ -161,11 +111,70 @@ export function CheckIcon({ size = 28 }: { size?: number }) {
   );
 }
 
-export function InfoIcon({ className }: { className?: string }) {
+export function GripIcon() {
   return (
-    <Svg className={className} size={12}>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 8h.01M11 12h1v4h1" />
+    <Svg>
+      <path d="M9 5h.01M15 5h.01M9 12h.01M15 12h.01M9 19h.01M15 19h.01" />
+    </Svg>
+  );
+}
+export function MinusIcon() {
+  return (
+    <Svg>
+      <path d="M5 12h14" />
+    </Svg>
+  );
+}
+export function MoreIcon() {
+  return (
+    <Svg>
+      <path d="M5 12h.01M12 12h.01M19 12h.01" />
+    </Svg>
+  );
+}
+
+export function ChevronDownIcon() {
+  return (
+    <Svg>
+      <path d="m7 10 5 5 5-5" />
+    </Svg>
+  );
+}
+
+export function SquareIcon() {
+  return (
+    <Svg>
+      <rect height="14" rx="2" width="14" x="5" y="5" />
+    </Svg>
+  );
+}
+export function TextIcon() {
+  return (
+    <Svg>
+      <path d="M5 6V4h14v2M12 4v16M8 20h8" />
+    </Svg>
+  );
+}
+export function SpotlightIcon() {
+  return (
+    <Svg>
+      <path d="M8 4H4v4M16 4h4v4M4 16v4h4M20 16v4h-4" />
+      <rect height="8" rx="1" width="8" x="8" y="8" />
+    </Svg>
+  );
+}
+export function HighlightIcon() {
+  return (
+    <Svg>
+      <path d="M4 19h16M8 15l8-11 4 3-8 11-4-3ZM7 15l-2 3" />
+    </Svg>
+  );
+}
+export function BlurIcon() {
+  return (
+    <Svg>
+      <rect height="14" rx="2" width="14" x="5" y="5" />
+      <path d="M8 8h8v8H8z" />
     </Svg>
   );
 }

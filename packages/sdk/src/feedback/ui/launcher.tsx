@@ -1,24 +1,24 @@
+import type { Ref } from "react";
 import { ChatIcon, CloseIcon } from "./icons";
 
-/**
- * Never changes size between states — the panel opening must not move the
- * button out from under the pointer.
- */
 export function Launcher({
   isOpen,
   label,
   onClick,
+  buttonRef,
 }: {
   isOpen: boolean;
   label: string;
   onClick: () => void;
+  buttonRef?: Ref<HTMLButtonElement>;
 }) {
   return (
     <button
       aria-expanded={isOpen}
-      className="launcher"
+      className="launcher glass"
       data-open={isOpen}
       onClick={onClick}
+      ref={buttonRef}
       type="button"
     >
       <span className="launcher-icon">

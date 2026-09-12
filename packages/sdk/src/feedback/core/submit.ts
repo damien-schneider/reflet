@@ -6,11 +6,14 @@ import type {
   SaveScreenshotParams,
 } from "../../types";
 import type {
-  Annotation,
   CapturedImage,
   FeedbackWidgetCategory,
+  ScreenshotDraft,
 } from "../types";
-import { toWireAnnotations } from "./annotations";
+import {
+  type PreparedScreenshot,
+  uploadScreenshots,
+} from "./submission/upload-screenshots";
 
 const MAX_TITLE_LENGTH = 100;
 const NEWLINE = /\r?\n/;
@@ -25,24 +28,20 @@ export interface FeedbackTransport {
 }
 
 export interface WidgetSubmission {
-  annotated: CapturedImage | null;
-  annotations: Annotation[];
   category: FeedbackWidgetCategory;
   context: FeedbackContext;
-  /** Close-up of the picked element, captured when the reporter pointed at it. */
   element: CapturedImage | null;
   email?: string;
   isAnonymous: boolean;
   message: string;
-  screenshot: CapturedImage | null;
+  screenshots: ScreenshotDraft[];
 }
 
 export interface SubmitResult {
   feedbackId: string;
-  screenshotSaved: boolean;
+  pendingScreenshots: PreparedScreenshot[];
 }
 
-/** First line of the message, cut on a word boundary so titles stay readable. */
 export function deriveTitle(message: string): string {
   const firstLine =
     message
@@ -72,74 +71,40 @@ export function buildDescription(params: {
   return `[${label}] ${message.trim()}${contact}`;
 }
 
-async function upload(
+export async function attachPreparedScreenshots(
   transport: FeedbackTransport,
-  image: CapturedImage
-): Promise<string> {
-  const { uploadUrl } = await transport.getScreenshotUploadUrl();
-  return await transport.uploadImage(uploadUrl, image);
+  result: SubmitResult
+): Promise<SubmitResult> {
+  const results = await Promise.allSettled(
+    result.pendingScreenshots.map((screenshot) =>
+      transport.saveScreenshot({
+        ...screenshot,
+        feedbackId: result.feedbackId,
+      })
+    )
+  );
+  const pendingScreenshots = result.pendingScreenshots.filter(
+    (_, index) => results[index]?.status === "rejected"
+  );
+  return { feedbackId: result.feedbackId, pendingScreenshots };
 }
 
-async function attachScreenshot(
+async function createReportWithScreenshots(
   transport: FeedbackTransport,
-  feedbackId: string,
-  submission: WidgetSubmission
-): Promise<boolean> {
-  const { annotated, annotations, context, screenshot } = submission;
-  if (!screenshot) {
-    return false;
-  }
-
-  const storageId = await upload(transport, screenshot);
-  const annotatedStorageId = annotated
-    ? await upload(transport, annotated)
-    : undefined;
-  const wireAnnotations = toWireAnnotations(annotations);
-
-  await transport.saveScreenshot({
-    annotatedStorageId,
-    annotations: wireAnnotations.length > 0 ? wireAnnotations : undefined,
-    captureSource: "widget",
-    feedbackId,
-    filename: "screenshot.png",
-    height: screenshot.height,
-    mimeType: screenshot.mimeType,
-    pageUrl: context.url,
-    size: screenshot.blob.size,
-    storageId,
-    width: screenshot.width,
+  submission: WidgetSubmission,
+  pendingScreenshots: PreparedScreenshot[]
+) {
+  const { feedbackId } = await transport.create({
+    context: submission.context,
+    description: buildDescription(submission),
+    title: deriveTitle(submission.message),
   });
-
-  return true;
-}
-
-async function attachElement(
-  transport: FeedbackTransport,
-  feedbackId: string,
-  submission: WidgetSubmission
-): Promise<void> {
-  const { context, element } = submission;
-  if (!element) {
-    return;
-  }
-
-  await transport.saveScreenshot({
-    captureSource: "element",
+  return attachPreparedScreenshots(transport, {
     feedbackId,
-    filename: "element.png",
-    height: element.height,
-    mimeType: element.mimeType,
-    pageUrl: context.url,
-    size: element.blob.size,
-    storageId: await upload(transport, element),
-    width: element.width,
+    pendingScreenshots,
   });
 }
 
-/**
- * Creates the feedback first, then attaches the capture. A failed upload is
- * reported back but never discards what the user wrote.
- */
 export async function submitWidgetFeedback(
   transport: FeedbackTransport,
   submission: WidgetSubmission
@@ -148,21 +113,8 @@ export async function submitWidgetFeedback(
   if (!title) {
     throw new Error("Please describe your feedback before sending it.");
   }
-
-  const { feedbackId } = await transport.create({
-    context: submission.context,
-    description: buildDescription(submission),
-    title,
-  });
-
-  const screenshotSaved = await attachScreenshot(
-    transport,
-    feedbackId,
-    submission
-  ).catch(() => false);
-  await attachElement(transport, feedbackId, submission).catch(() => undefined);
-
-  return { feedbackId, screenshotSaved };
+  const pendingScreenshots = await uploadScreenshots(transport, submission);
+  return createReportWithScreenshots(transport, submission, pendingScreenshots);
 }
 
 function isStorageResponse(value: unknown): value is { storageId: string } {

@@ -81,6 +81,7 @@
     }
   },
   "dependencies": {
+    "@base-ui/react": "^1.8.0",
     "@zumer/snapdom": "^2.23.1"
   },
   "devDependencies": {

@@ -1,274 +1,58 @@
-import { type ComponentType, useEffect, useRef } from "react";
-import type { FeedbackWidgetCategory, FeedbackWidgetLabels } from "../types";
-import { SDK_VERSION } from "../types";
+import { useEffect, useRef } from "react";
+import type { FeedbackWidgetLabels } from "../types";
+import { Attachments } from "./composer/attachments";
 import {
-  BugIcon,
-  CameraIcon,
-  CheckIcon,
-  CloseIcon,
-  IdeaIcon,
-  InfoIcon,
-  PencilIcon,
-  QuestionIcon,
-  TargetIcon,
-  TrashIcon,
-} from "./icons";
+  type ComposerControlOptions,
+  ComposerControls,
+} from "./composer/controls";
+import { MessageInput } from "./composer/message-input";
+import { CheckIcon } from "./icons";
 import type { WidgetState } from "./use-widget-state";
 
-const CATEGORY_META: Record<
-  FeedbackWidgetCategory,
-  { icon: ComponentType; labelKey: keyof FeedbackWidgetLabels }
-> = {
-  bug: { icon: BugIcon, labelKey: "categoryBug" },
-  idea: { icon: IdeaIcon, labelKey: "categoryIdea" },
-  question: { icon: QuestionIcon, labelKey: "categoryQuestion" },
-};
-
-function Attachment({
-  labels,
-  state,
-}: {
-  labels: FeedbackWidgetLabels;
-  state: WidgetState;
-}) {
-  if (state.isCapturing) {
-    return (
-      <div className="card">
-        <div className="thumb" />
-        <div className="meta">
-          <strong>{labels.retakeHint}</strong>
-          <span>…</span>
-        </div>
-      </div>
-    );
-  }
-
-  if (!state.capture) {
-    return (
-      <button
-        className="ghost-btn"
-        onClick={() => state.takeCapture()}
-        type="button"
-      >
-        <CameraIcon />
-        {labels.attachScreenshot}
-      </button>
-    );
-  }
-
-  const annotationCount = state.annotations.length;
-
-  return (
-    <div className="card">
-      <div className="thumb">
-        <img
-          alt=""
-          height={state.capture.height}
-          src={state.capture.objectUrl}
-          width={state.capture.width}
-        />
-      </div>
-      <div className="meta">
-        <strong className="truncate">{labels.retakeHint}</strong>
-        <span className="truncate">
-          {state.capture.width}×{state.capture.height}
-          {annotationCount > 0 ? ` · ${annotationCount} marks` : ""}
-        </span>
-      </div>
-      <div className="actions">
-        <button
-          aria-label={labels.annotateHint}
-          className="icon-btn"
-          onClick={() => state.setStep("annotate")}
-          title={labels.annotateHint}
-          type="button"
-        >
-          <PencilIcon />
-        </button>
-        <button
-          aria-label={labels.recapture}
-          className="icon-btn"
-          onClick={() => state.takeCapture()}
-          title={labels.recapture}
-          type="button"
-        >
-          <CameraIcon />
-        </button>
-        <button
-          aria-label={labels.removeScreenshot}
-          className="icon-btn"
-          onClick={state.removeCapture}
-          title={labels.removeScreenshot}
-          type="button"
-        >
-          <TrashIcon />
-        </button>
-      </div>
-    </div>
-  );
-}
-
-/** Shows the reporter exactly what will be sent about the element they picked. */
-function Selection({
-  labels,
-  state,
-}: {
-  labels: FeedbackWidgetLabels;
-  state: WidgetState;
-}) {
-  const { elementCapture, selection } = state;
-  if (!selection) {
-    return (
-      <button
-        className="ghost-btn"
-        onClick={() => state.setStep("picking")}
-        type="button"
-      >
-        <TargetIcon />
-        {labels.pickElement}
-      </button>
-    );
-  }
-
-  const component = selection.componentStack[0];
-
-  return (
-    <div className="card">
-      <div className="thumb contain">
-        {elementCapture && (
-          <img
-            alt=""
-            height={elementCapture.height}
-            src={elementCapture.objectUrl}
-            width={elementCapture.width}
-          />
-        )}
-      </div>
-      <div className="meta">
-        <strong className="truncate">
-          {component ? `<${component}>` : selection.label}
-        </strong>
-        <span className="truncate">
-          {selection.region ?? selection.sourceLocation ?? selection.selector}
-        </span>
-      </div>
-      <div className="actions">
-        <button
-          aria-label={labels.pickElement}
-          className="icon-btn"
-          onClick={() => state.setStep("picking")}
-          title={labels.pickElement}
-          type="button"
-        >
-          <TargetIcon />
-        </button>
-        <button
-          aria-label={labels.cancel}
-          className="icon-btn"
-          onClick={state.clearSelection}
-          title={labels.cancel}
-          type="button"
-        >
-          <CloseIcon />
-        </button>
-      </div>
-    </div>
-  );
-}
-
 export function FeedbackPanel({
-  categories,
+  options,
   labels,
   state,
 }: {
-  categories: FeedbackWidgetCategory[];
+  options: ComposerControlOptions;
   labels: FeedbackWidgetLabels;
   state: WidgetState;
 }) {
-  const messageRef = useRef<HTMLTextAreaElement>(null);
-
+  const panelRef = useRef<HTMLElement>(null);
   useEffect(() => {
-    messageRef.current?.focus();
+    panelRef.current?.focus();
   }, []);
 
   if (state.step === "success") {
     return (
       <section aria-live="polite" className="panel">
-        <div className="done">
+        <div className="done success-panel glass">
           <CheckIcon />
           <h2>{labels.successTitle}</h2>
           <p>{labels.successMessage}</p>
         </div>
+        <div className="composer-toolbar">{options.floatingControls}</div>
       </section>
     );
   }
 
   return (
-    <section aria-label={labels.title} className="panel">
-      <header className="head">
-        <h2>{labels.title}</h2>
-        <span className="spacer" />
-        <button
-          aria-label={labels.cancel}
-          className="icon-btn"
-          onClick={state.close}
-          type="button"
-        >
-          <CloseIcon />
-        </button>
-      </header>
-
+    <section
+      aria-label={labels.title}
+      className="panel"
+      ref={panelRef}
+      tabIndex={-1}
+    >
+      <Attachments labels={labels} state={state} />
       <form
-        className="body"
+        className="composer"
         onSubmit={(event) => {
           event.preventDefault();
           state.submit();
         }}
       >
-        {categories.length > 1 && (
-          <fieldset className="segmented">
-            {categories.map((value) => {
-              const { icon: Icon, labelKey } = CATEGORY_META[value];
-              return (
-                <button
-                  aria-pressed={state.category === value}
-                  key={value}
-                  onClick={() => state.setCategory(value)}
-                  type="button"
-                >
-                  <Icon />
-                  {labels[labelKey]}
-                </button>
-              );
-            })}
-          </fieldset>
-        )}
-
-        <textarea
-          aria-label={labels.descriptionPlaceholder}
-          maxLength={4000}
-          onChange={(event) => state.setMessage(event.target.value)}
-          placeholder={labels.descriptionPlaceholder}
-          ref={messageRef}
-          value={state.message}
-        />
-
-        <div className="attachments">
-          <Attachment labels={labels} state={state} />
-          <Selection labels={labels} state={state} />
-        </div>
-
-        {state.isAnonymous && (
-          <input
-            aria-label={labels.emailLabel}
-            autoComplete="email"
-            onChange={(event) => state.setEmail(event.target.value)}
-            placeholder={labels.emailPlaceholder}
-            type="email"
-            value={state.email}
-          />
-        )}
-
+        <MessageInput labels={labels} state={state} />
+        <ComposerControls labels={labels} options={options} state={state} />
         <div aria-hidden="true" className="hp">
           <input
             autoComplete="off"
@@ -278,45 +62,12 @@ export function FeedbackPanel({
             value={state.honeypot}
           />
         </div>
-
-        {state.error && <p className="error">{state.error}</p>}
-
-        <button
-          className="submit"
-          disabled={state.isSubmitting || !state.message.trim()}
-          type="submit"
-        >
-          {state.isSubmitting ? <span className="spinner" /> : labels.submit}
-        </button>
-      </form>
-
-      <footer className="footer" data-dismissible={state.canDismiss}>
-        {state.canDismiss && (
-          <button className="dismiss-btn" onClick={state.dismiss} type="button">
-            {labels.dismissForDays.replace(
-              "{days}",
-              String(state.dismissForDays)
-            )}
-          </button>
+        {state.error && (
+          <p className="error glass" role="alert">
+            {state.error}
+          </p>
         )}
-        <span>
-          Powered by{" "}
-          <a
-            href="https://reflet.app"
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            Reflet
-          </a>
-          <span
-            className="version-info"
-            role="note"
-            title={`Reflet SDK ${SDK_VERSION}`}
-          >
-            <InfoIcon />
-          </span>
-        </span>
-      </footer>
+      </form>
     </section>
   );
 }
