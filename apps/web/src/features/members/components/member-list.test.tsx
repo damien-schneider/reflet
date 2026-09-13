@@ -62,7 +62,7 @@ vi.mock("@ctrl-ui/react/ui/button", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/dropdown-menu", () => ({
+vi.mock("@ctrl-ui/react/ui/dropdown-menu", () => ({
   DropdownMenu: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="dropdown-menu">{children}</div>
   ),

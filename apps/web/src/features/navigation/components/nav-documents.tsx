@@ -1,6 +1,22 @@
 "use client";
 
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@ctrl-ui/react/ui/dropdown-menu";
+import {
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuAction,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from "@ctrl-ui/react/ui/sidebar";
+import {
   IconDotsVertical,
   IconFolder,
   IconShare,
@@ -8,23 +24,6 @@ import {
 } from "@tabler/icons-react";
 import Link from "next/link";
 import type * as React from "react";
-
-import {
-  DropdownList,
-  DropdownListContent,
-  DropdownListItem,
-  DropdownListSeparator,
-  DropdownListTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarList,
-  SidebarListAction,
-  SidebarListButton,
-  SidebarListItem,
-  useSidebar,
-} from "@/components/ui/sidebar";
 
 export function NavDocuments({
   items,
@@ -43,54 +42,54 @@ export function NavDocuments({
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
       <SidebarGroupLabel>{title}</SidebarGroupLabel>
-      <SidebarList>
+      <SidebarMenu>
         {items.map((item) => {
           const displayTitle = item.title ?? item.name ?? "";
           return (
-            <SidebarListItem key={displayTitle}>
-              <SidebarListButton render={<Link href={item.url} />}>
+            <SidebarMenuItem key={displayTitle}>
+              <SidebarMenuButton render={<Link href={item.url} />}>
                 <item.icon />
                 <span>{displayTitle}</span>
-              </SidebarListButton>
-              <DropdownList>
-                <DropdownListTrigger
+              </SidebarMenuButton>
+              <DropdownMenu>
+                <DropdownMenuTrigger
                   render={(props: React.ComponentProps<"button">) => (
-                    <SidebarListAction showOnHover {...props}>
+                    <SidebarMenuAction showOnHover {...props}>
                       <IconDotsVertical />
                       <span className="sr-only">More</span>
-                    </SidebarListAction>
+                    </SidebarMenuAction>
                   )}
                 />
-                <DropdownListContent
+                <DropdownMenuContent
                   align={isMobile ? "end" : "start"}
                   className="w-48 rounded-lg"
                   side={isMobile ? "bottom" : "right"}
                 >
-                  <DropdownListItem>
+                  <DropdownMenuItem>
                     <IconFolder className="text-muted-foreground" />
                     <span>View Project</span>
-                  </DropdownListItem>
-                  <DropdownListItem>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
                     <IconShare className="text-muted-foreground" />
                     <span>Share Project</span>
-                  </DropdownListItem>
-                  <DropdownListSeparator />
-                  <DropdownListItem>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>
                     <IconTrash className="text-muted-foreground" />
                     <span>Delete Project</span>
-                  </DropdownListItem>
-                </DropdownListContent>
-              </DropdownList>
-            </SidebarListItem>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </SidebarMenuItem>
           );
         })}
-        <SidebarListItem>
-          <SidebarListButton className="text-sidebar-foreground/70">
+        <SidebarMenuItem>
+          <SidebarMenuButton className="text-sidebar-foreground/70">
             <IconDotsVertical className="text-sidebar-foreground/70" />
             <span>More</span>
-          </SidebarListButton>
-        </SidebarListItem>
-      </SidebarList>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
     </SidebarGroup>
   );
 }

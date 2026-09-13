@@ -1,6 +1,7 @@
 "use client";
 
 import { Separator } from "@ctrl-ui/react/ui/separator";
+import { SidebarTrigger } from "@ctrl-ui/react/ui/sidebar";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -9,7 +10,6 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export function SiteHeader() {
   return (

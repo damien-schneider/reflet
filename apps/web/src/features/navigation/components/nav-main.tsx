@@ -1,17 +1,16 @@
 "use client";
 
-import { IconPlus, IconSearch } from "@tabler/icons-react";
-import Link from "next/link";
-import type * as React from "react";
-
 import {
   SidebarGroup,
   SidebarGroupContent,
-  SidebarList,
-  SidebarListAction,
-  SidebarListButton,
-  SidebarListItem,
-} from "@/components/ui/sidebar";
+  SidebarMenu,
+  SidebarMenuAction,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@ctrl-ui/react/ui/sidebar";
+import { IconPlus, IconSearch } from "@tabler/icons-react";
+import Link from "next/link";
+import type * as React from "react";
 
 export function NavMain({
   items,
@@ -26,26 +25,26 @@ export function NavMain({
   return (
     <SidebarGroup>
       <SidebarGroupContent>
-        <SidebarList>
+        <SidebarMenu>
           {items.map((item) => (
-            <SidebarListItem key={item.title}>
-              <SidebarListButton render={<Link href={item.url} />}>
+            <SidebarMenuItem key={item.title}>
+              <SidebarMenuButton render={<Link href={item.url} />}>
                 <item.icon />
                 <span>{item.title}</span>
-              </SidebarListButton>
-              <SidebarListAction showOnHover>
+              </SidebarMenuButton>
+              <SidebarMenuAction showOnHover>
                 <IconPlus />
                 <span className="sr-only">Add Project</span>
-              </SidebarListAction>
-            </SidebarListItem>
+              </SidebarMenuAction>
+            </SidebarMenuItem>
           ))}
-          <SidebarListItem>
-            <SidebarListButton className="text-sidebar-foreground/70">
+          <SidebarMenuItem>
+            <SidebarMenuButton className="text-sidebar-foreground/70">
               <IconSearch className="text-sidebar-foreground/70" />
               <span>MagnifyingGlass</span>
-            </SidebarListButton>
-          </SidebarListItem>
-        </SidebarList>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>
   );

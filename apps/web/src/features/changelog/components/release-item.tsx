@@ -3,6 +3,13 @@
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@ctrl-ui/react/ui/dropdown-menu";
+import {
   Calendar,
   Check,
   Clock,
@@ -20,13 +27,6 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { format } from "date-fns";
 import Link from "next/link";
 import type * as React from "react";
-import {
-  DropdownList,
-  DropdownListContent,
-  DropdownListItem,
-  DropdownListSeparator,
-  DropdownListTrigger,
-} from "@/components/ui/dropdown-menu";
 import { MarkdownRenderer } from "@/components/ui/tiptap/markdown-renderer";
 import { cn } from "@/lib/utils";
 
@@ -138,36 +138,36 @@ export function ReleaseItem({
                   <span className="ml-1.5 hidden sm:inline">Edit</span>
                 </Button>
               </Link>
-              <DropdownList>
-                <DropdownListTrigger
+              <DropdownMenu>
+                <DropdownMenuTrigger
                   render={(props: React.ComponentProps<"button">) => (
                     <Button {...props} iconOnly variant="ghost">
                       <DotsThreeVertical className="h-4 w-4" />
                     </Button>
                   )}
                 />
-                <DropdownListContent align="end">
+                <DropdownMenuContent align="end">
                   {isPublished ? (
-                    <DropdownListItem onClick={onUnpublish}>
+                    <DropdownMenuItem onClick={onUnpublish}>
                       <EyeSlash className="mr-2 h-4 w-4" />
                       Unpublish
-                    </DropdownListItem>
+                    </DropdownMenuItem>
                   ) : (
-                    <DropdownListItem onClick={onPublish}>
+                    <DropdownMenuItem onClick={onPublish}>
                       <Eye className="mr-2 h-4 w-4" />
                       Publish
-                    </DropdownListItem>
+                    </DropdownMenuItem>
                   )}
-                  <DropdownListSeparator />
-                  <DropdownListItem
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
                     className="text-destructive"
                     onClick={onDelete}
                   >
                     <Trash className="mr-2 h-4 w-4" />
                     Delete
-                  </DropdownListItem>
-                </DropdownListContent>
-              </DropdownList>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           )}
         </div>

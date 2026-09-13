@@ -2,6 +2,13 @@
 
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@ctrl-ui/react/ui/dropdown-menu";
+import {
   ChartBar,
   Clock,
   DotsThreeVertical,
@@ -14,13 +21,6 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import { TagBadge } from "@/components/tag-badge";
-import {
-  DropdownList,
-  DropdownListContent,
-  DropdownListItem,
-  DropdownListSeparator,
-  DropdownListTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   STATUS_COLORS,
   TRIGGER_LABELS,
@@ -84,8 +84,8 @@ export function SurveyCard({
             </span>
           </div>
         </Link>
-        <DropdownList>
-          <DropdownListTrigger
+        <DropdownMenu>
+          <DropdownMenuTrigger
             render={(props: React.ComponentProps<"button">) => (
               <Button
                 {...props}
@@ -97,54 +97,54 @@ export function SurveyCard({
               </Button>
             )}
           />
-          <DropdownListContent align="end">
+          <DropdownMenuContent align="end">
             {survey.status === "draft" ? (
-              <DropdownListItem
+              <DropdownMenuItem
                 onClick={() => onStatusChange(survey._id, "active")}
               >
                 <Play className="mr-2 size-4" />
                 Activate
-              </DropdownListItem>
+              </DropdownMenuItem>
             ) : null}
             {survey.status === "active" ? (
-              <DropdownListItem
+              <DropdownMenuItem
                 onClick={() => onStatusChange(survey._id, "paused")}
               >
                 <Pause className="mr-2 size-4" />
                 Pause
-              </DropdownListItem>
+              </DropdownMenuItem>
             ) : null}
             {survey.status === "paused" ? (
               <>
-                <DropdownListItem
+                <DropdownMenuItem
                   onClick={() => onStatusChange(survey._id, "active")}
                 >
                   <Play className="mr-2 size-4" />
                   Resume
-                </DropdownListItem>
-                <DropdownListItem
+                </DropdownMenuItem>
+                <DropdownMenuItem
                   onClick={() => onStatusChange(survey._id, "closed")}
                 >
                   <XCircle className="mr-2 size-4" />
                   Close
-                </DropdownListItem>
+                </DropdownMenuItem>
               </>
             ) : null}
             {survey.status === "closed" ? (
-              <DropdownListItem
+              <DropdownMenuItem
                 onClick={() => onStatusChange(survey._id, "draft")}
               >
                 <Play className="mr-2 size-4" />
                 Reopen as Draft
-              </DropdownListItem>
+              </DropdownMenuItem>
             ) : null}
-            <DropdownListSeparator />
-            <DropdownListItem onClick={() => onDelete(survey._id)}>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => onDelete(survey._id)}>
               <Trash className="mr-2 size-4 text-destructive" />
               <span className="text-destructive">Delete</span>
-            </DropdownListItem>
-          </DropdownListContent>
-        </DropdownList>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );

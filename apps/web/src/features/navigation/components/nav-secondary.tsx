@@ -1,14 +1,14 @@
 "use client";
 
-import Link from "next/link";
-import type * as React from "react";
 import {
   SidebarGroup,
   SidebarGroupContent,
-  SidebarList,
-  SidebarListButton,
-  SidebarListItem,
-} from "@/components/ui/sidebar";
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@ctrl-ui/react/ui/sidebar";
+import Link from "next/link";
+import type * as React from "react";
 
 export function NavSecondary({
   items,
@@ -23,16 +23,16 @@ export function NavSecondary({
   return (
     <SidebarGroup {...props}>
       <SidebarGroupContent>
-        <SidebarList>
+        <SidebarMenu>
           {items.map((item) => (
-            <SidebarListItem key={item.title}>
-              <SidebarListButton render={<Link href={item.url} />} size="sm">
+            <SidebarMenuItem key={item.title}>
+              <SidebarMenuButton render={<Link href={item.url} />} size="sm">
                 <item.icon />
                 <span>{item.title}</span>
-              </SidebarListButton>
-            </SidebarListItem>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           ))}
-        </SidebarList>
+        </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>
   );

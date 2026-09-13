@@ -2,6 +2,13 @@
 
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@ctrl-ui/react/ui/dropdown-menu";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -18,13 +25,6 @@ import {
 } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { formatDistanceToNow } from "date-fns";
-import {
-  DropdownList,
-  DropdownListContent,
-  DropdownListItem,
-  DropdownListSeparator,
-  DropdownListTrigger,
-} from "@/components/ui/dropdown-menu";
 import { TiptapTitleEditor } from "@/components/ui/tiptap/title-editor";
 import { toId } from "@/lib/convex-helpers";
 import { getTagDotColor } from "@/lib/tag-colors";
@@ -182,31 +182,32 @@ export function FeedbackHeader({
           </Select>
         )}
 
-        {/* Actions menu */}
         {canEdit && (
-          <DropdownList>
-            <DropdownListTrigger>
-              <Button iconOnly variant="ghost">
-                <DotsThreeVertical className="h-4 w-4" />
-              </Button>
-            </DropdownListTrigger>
-            <DropdownListContent align="end">
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              aria-label="Feedback actions"
+              iconOnly
+              variant="ghost"
+            >
+              <DotsThreeVertical className="h-4 w-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
               {effectiveIsAdmin && (
-                <DropdownListItem onClick={onTogglePin}>
+                <DropdownMenuItem onClick={onTogglePin}>
                   <PushPin className="mr-2 h-4 w-4" />
                   {feedback?.isPinned ? "Unpin" : "Pin"} feedback
-                </DropdownListItem>
+                </DropdownMenuItem>
               )}
-              {effectiveIsAdmin && <DropdownListSeparator />}
-              <DropdownListItem
+              {effectiveIsAdmin && <DropdownMenuSeparator />}
+              <DropdownMenuItem
                 className="text-destructive"
                 onClick={onDeleteClick}
               >
                 <Trash className="mr-2 h-4 w-4" />
                 Delete feedback
-              </DropdownListItem>
-            </DropdownListContent>
-          </DropdownList>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
       </div>
     </div>

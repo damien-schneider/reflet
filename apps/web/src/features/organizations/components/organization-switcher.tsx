@@ -8,6 +8,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@ctrl-ui/react/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@ctrl-ui/react/ui/dropdown-menu";
 import { Input } from "@ctrl-ui/react/ui/input";
 import { toast } from "@ctrl-ui/react/ui/toast";
 import { CaretUpDown, Check, Plus } from "@phosphor-icons/react";
@@ -17,12 +23,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import {
-  DropdownList,
-  DropdownListContent,
-  DropdownListItem,
-  DropdownListSeparator,
-} from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 
 function OrgIcon({
@@ -118,7 +118,7 @@ export function OrganizationSwitcher({
 
   return (
     <>
-      <DropdownList>
+      <DropdownMenu>
         <Button
           className="w-full justify-between group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0"
           render={<Menu.Trigger />}
@@ -133,10 +133,10 @@ export function OrganizationSwitcher({
           </span>
           <CaretUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 group-data-[collapsible=icon]:hidden" />
         </Button>
-        <DropdownListContent align="start" className="w-50">
+        <DropdownMenuContent align="start" className="w-50">
           {organizations.map((org) =>
             org ? (
-              <DropdownListItem
+              <DropdownMenuItem
                 className="flex items-center justify-between"
                 key={org._id}
                 render={(props) => (
@@ -153,13 +153,13 @@ export function OrganizationSwitcher({
               />
             ) : null
           )}
-          {organizations.length > 0 && <DropdownListSeparator />}
-          <DropdownListItem onClick={() => setShowCreateDialog(true)}>
+          {organizations.length > 0 && <DropdownMenuSeparator />}
+          <DropdownMenuItem onClick={() => setShowCreateDialog(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Create organization
-          </DropdownListItem>
-        </DropdownListContent>
-      </DropdownList>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       <Dialog onOpenChange={setShowCreateDialog} open={showCreateDialog}>
         <DialogContent>

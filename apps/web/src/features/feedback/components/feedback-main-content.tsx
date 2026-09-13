@@ -1,5 +1,12 @@
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Card, CardContent, CardHeader } from "@ctrl-ui/react/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@ctrl-ui/react/ui/dropdown-menu";
 import { Textarea } from "@ctrl-ui/react/ui/textarea";
 import {
   CaretUp,
@@ -9,13 +16,6 @@ import {
   Trash,
 } from "@phosphor-icons/react";
 import type * as React from "react";
-import {
-  DropdownList,
-  DropdownListContent,
-  DropdownListItem,
-  DropdownListSeparator,
-  DropdownListTrigger,
-} from "@/components/ui/dropdown-menu";
 import { H3 } from "@/components/ui/typography";
 import { cn } from "@/lib/utils";
 
@@ -86,29 +86,29 @@ export function FeedbackMainContent({
                 {feedback.title}
               </H3>
               {isAdmin && (
-                <DropdownList>
-                  <DropdownListTrigger
+                <DropdownMenu>
+                  <DropdownMenuTrigger
                     render={(props: React.ComponentProps<"button">) => (
                       <Button {...props} iconOnly variant="ghost">
                         <DotsThreeVertical className="h-4 w-4" />
                       </Button>
                     )}
                   />
-                  <DropdownListContent align="end">
-                    <DropdownListItem onClick={handleTogglePin}>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={handleTogglePin}>
                       <PushPin className="mr-2 h-4 w-4" />
                       {feedback.isPinned ? "Unpin" : "Pin"}
-                    </DropdownListItem>
-                    <DropdownListSeparator />
-                    <DropdownListItem
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
                       className="text-destructive"
                       onClick={handleDeleteFeedback}
                     >
                       <Trash className="mr-2 h-4 w-4" />
                       Delete
-                    </DropdownListItem>
-                  </DropdownListContent>
-                </DropdownList>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
             </div>
             <div className="mt-2 flex items-center gap-2 text-muted-foreground text-sm">

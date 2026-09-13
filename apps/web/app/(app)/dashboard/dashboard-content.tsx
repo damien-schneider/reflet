@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@ctrl-ui/react/ui/sidebar";
 import { Buildings, CaretRight } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
@@ -16,11 +21,6 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { H2, Muted } from "@/components/ui/typography";
 import { CommandPalette } from "@/features/command-palette/components/command-palette";

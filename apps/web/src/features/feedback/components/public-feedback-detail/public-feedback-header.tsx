@@ -2,6 +2,12 @@
 
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@ctrl-ui/react/ui/dropdown-menu";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -17,12 +23,6 @@ import {
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { formatDistanceToNow } from "date-fns";
 import { TagBadge } from "@/components/tag-badge";
-import {
-  DropdownList,
-  DropdownListContent,
-  DropdownListItem,
-  DropdownListTrigger,
-} from "@/components/ui/dropdown-menu";
 import { toId } from "@/lib/convex-helpers";
 import { getTagDotColor } from "@/lib/tag-colors";
 
@@ -117,21 +117,21 @@ export function PublicFeedbackHeader({
         )}
 
         {isAdmin && (
-          <DropdownList>
-            <DropdownListTrigger
+          <DropdownMenu>
+            <DropdownMenuTrigger
               render={(props) => (
                 <Button {...props} iconOnly variant="ghost">
                   <DotsThreeVertical className="h-4 w-4" />
                 </Button>
               )}
             />
-            <DropdownListContent align="end">
-              <DropdownListItem onClick={onTogglePin}>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={onTogglePin}>
                 <PushPin className="mr-2 h-4 w-4" />
                 {isPinned ? "Unpin" : "Pin"}
-              </DropdownListItem>
-            </DropdownListContent>
-          </DropdownList>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
       </div>
     </div>

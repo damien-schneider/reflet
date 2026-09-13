@@ -51,11 +51,11 @@ vi.mock("@ctrl-ui/react/ui/button", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/dropdown-menu", () => ({
-  DropdownList: ({ children }: { children: React.ReactNode }) => (
+vi.mock("@ctrl-ui/react/ui/dropdown-menu", () => ({
+  DropdownMenu: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="dropdown-list">{children}</div>
   ),
-  DropdownListCheckboxItem: ({
+  DropdownMenuCheckboxItem: ({
     children,
     checked,
     onCheckedChange,
@@ -74,13 +74,13 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
       {children}
     </div>
   ),
-  DropdownListContent: ({
+  DropdownMenuContent: ({
     children,
   }: {
     children: React.ReactNode;
     align?: string;
   }) => <div data-testid="dropdown-content">{children}</div>,
-  DropdownListItem: ({
+  DropdownMenuItem: ({
     children,
     onClick,
   }: {
@@ -97,17 +97,17 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
       {children}
     </div>
   ),
-  DropdownListSeparator: () => <hr data-testid="separator" />,
-  DropdownListSub: ({ children }: { children: React.ReactNode }) => (
+  DropdownMenuSeparator: () => <hr data-testid="separator" />,
+  DropdownMenuSub: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="dropdown-sub">{children}</div>
   ),
-  DropdownListSubContent: ({ children }: { children: React.ReactNode }) => (
+  DropdownMenuSubContent: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="dropdown-sub-content">{children}</div>
   ),
-  DropdownListSubTrigger: ({ children }: { children: React.ReactNode }) => (
+  DropdownMenuSubTrigger: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="dropdown-sub-trigger">{children}</div>
   ),
-  DropdownListTrigger: ({
+  DropdownMenuTrigger: ({
     render: renderProp,
   }: {
     render: React.ReactNode;

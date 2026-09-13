@@ -73,14 +73,14 @@ vi.mock("@ctrl-ui/react/ui/button", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/dropdown-menu", () => ({
-  DropdownList: ({ children }: { children: React.ReactNode }) => (
+vi.mock("@ctrl-ui/react/ui/dropdown-menu", () => ({
+  DropdownMenu: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="dropdown">{children}</div>
   ),
-  DropdownListContent: ({ children }: { children: React.ReactNode }) => (
+  DropdownMenuContent: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="dropdown-content">{children}</div>
   ),
-  DropdownListItem: ({
+  DropdownMenuItem: ({
     children,
     onClick,
     className,
@@ -98,7 +98,7 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
       {children}
     </button>
   ),
-  DropdownListTrigger: ({ children }: { children: React.ReactNode }) => (
+  DropdownMenuTrigger: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="dropdown-trigger">{children}</div>
   ),
 }));

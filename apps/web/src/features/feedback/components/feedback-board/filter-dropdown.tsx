@@ -2,18 +2,18 @@
 
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button } from "@ctrl-ui/react/ui/button";
-import { Funnel } from "@phosphor-icons/react";
 import {
-  DropdownList,
-  DropdownListCheckboxItem,
-  DropdownListContent,
-  DropdownListItem,
-  DropdownListSeparator,
-  DropdownListSub,
-  DropdownListSubContent,
-  DropdownListSubTrigger,
-  DropdownListTrigger,
-} from "@/components/ui/dropdown-menu";
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@ctrl-ui/react/ui/dropdown-menu";
+import { Funnel } from "@phosphor-icons/react";
 import { getTagDotColor } from "@/lib/tag-colors";
 
 interface FilterDropdownProps {
@@ -43,8 +43,8 @@ export function FilterDropdown({
     selectedStatusIds.length + selectedTagIds.length + (hideCompleted ? 1 : 0);
 
   return (
-    <DropdownList>
-      <DropdownListTrigger
+    <DropdownMenu>
+      <DropdownMenuTrigger
         render={
           <Button
             size="sm"
@@ -64,14 +64,14 @@ export function FilterDropdown({
           </Button>
         }
       />
-      <DropdownListContent align="start">
+      <DropdownMenuContent align="start">
         {/* Status submenu */}
         {statuses.length > 0 && (
-          <DropdownListSub>
-            <DropdownListSubTrigger>Status</DropdownListSubTrigger>
-            <DropdownListSubContent>
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>Status</DropdownMenuSubTrigger>
+            <DropdownMenuSubContent>
               {statuses.map((status) => (
-                <DropdownListCheckboxItem
+                <DropdownMenuCheckboxItem
                   checked={selectedStatusIds.includes(status._id)}
                   key={status._id}
                   onCheckedChange={(checked) =>
@@ -87,19 +87,19 @@ export function FilterDropdown({
                     }}
                   />
                   {status.name}
-                </DropdownListCheckboxItem>
+                </DropdownMenuCheckboxItem>
               ))}
-            </DropdownListSubContent>
-          </DropdownListSub>
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
         )}
 
         {/* Tag submenu */}
         {tags.length > 0 && (
-          <DropdownListSub>
-            <DropdownListSubTrigger>Tag</DropdownListSubTrigger>
-            <DropdownListSubContent>
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>Tag</DropdownMenuSubTrigger>
+            <DropdownMenuSubContent>
               {tags.map((tag) => (
-                <DropdownListCheckboxItem
+                <DropdownMenuCheckboxItem
                   checked={selectedTagIds.includes(tag._id)}
                   key={tag._id}
                   onCheckedChange={(checked) => onTagChange(tag._id, checked)}
@@ -109,35 +109,35 @@ export function FilterDropdown({
                     style={{ backgroundColor: getTagDotColor(tag.color) }}
                   />
                   {tag.name}
-                </DropdownListCheckboxItem>
+                </DropdownMenuCheckboxItem>
               ))}
-            </DropdownListSubContent>
-          </DropdownListSub>
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
         )}
 
-        <DropdownListSeparator />
+        <DropdownMenuSeparator />
 
         {/* Show completed toggle */}
-        <DropdownListCheckboxItem
+        <DropdownMenuCheckboxItem
           checked={!hideCompleted}
           onCheckedChange={onHideCompletedToggle}
         >
           Show completed
-        </DropdownListCheckboxItem>
+        </DropdownMenuCheckboxItem>
 
         {/* Clear all filters */}
         {activeCount > 0 && (
           <>
-            <DropdownListSeparator />
-            <DropdownListItem
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
               className="text-muted-foreground text-xs"
               onClick={onClearFilters}
             >
               Clear all filters
-            </DropdownListItem>
+            </DropdownMenuItem>
           </>
         )}
-      </DropdownListContent>
-    </DropdownList>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

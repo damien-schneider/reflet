@@ -2,6 +2,21 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@ctrl-ui/react/ui/avatar";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@ctrl-ui/react/ui/dropdown-menu";
+import {
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from "@ctrl-ui/react/ui/sidebar";
+import {
   IconCreditCard,
   IconDotsVertical,
   IconLogout,
@@ -9,21 +24,6 @@ import {
   IconUserCircle,
 } from "@tabler/icons-react";
 import type * as React from "react";
-import {
-  DropdownList,
-  DropdownListContent,
-  DropdownListGroup,
-  DropdownListItem,
-  DropdownListLabel,
-  DropdownListSeparator,
-  DropdownListTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  SidebarList,
-  SidebarListButton,
-  SidebarListItem,
-  useSidebar,
-} from "@/components/ui/sidebar";
 
 export function NavUser({
   user,
@@ -33,12 +33,12 @@ export function NavUser({
   const { isMobile } = useSidebar();
 
   return (
-    <SidebarList>
-      <SidebarListItem>
-        <DropdownList>
-          <DropdownListTrigger
+    <SidebarMenu>
+      <SidebarMenuItem>
+        <DropdownMenu>
+          <DropdownMenuTrigger
             render={(props: React.ComponentProps<"button">) => (
-              <SidebarListButton
+              <SidebarMenuButton
                 className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 size="lg"
                 {...props}
@@ -54,16 +54,16 @@ export function NavUser({
                   </span>
                 </div>
                 <IconDotsVertical className="ml-auto size-4" />
-              </SidebarListButton>
+              </SidebarMenuButton>
             )}
           />
-          <DropdownListContent
+          <DropdownMenuContent
             align="end"
             className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
             side={isMobile ? "bottom" : "right"}
             sideOffset={4}
           >
-            <DropdownListLabel className="p-0 font-normal">
+            <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage alt={user.name} src={user.avatar} />
@@ -76,30 +76,30 @@ export function NavUser({
                   </span>
                 </div>
               </div>
-            </DropdownListLabel>
-            <DropdownListSeparator />
-            <DropdownListGroup>
-              <DropdownListItem>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuItem>
                 <IconUserCircle className="mr-2 size-4" />
                 Account
-              </DropdownListItem>
-              <DropdownListItem>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
                 <IconCreditCard className="mr-2 size-4" />
                 Billing
-              </DropdownListItem>
-              <DropdownListItem>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
                 <IconNotification className="mr-2 size-4" />
                 Notifications
-              </DropdownListItem>
-            </DropdownListGroup>
-            <DropdownListSeparator />
-            <DropdownListItem>
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem>
               <IconLogout className="mr-2 size-4" />
               Log out
-            </DropdownListItem>
-          </DropdownListContent>
-        </DropdownList>
-      </SidebarListItem>
-    </SidebarList>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </SidebarMenuItem>
+    </SidebarMenu>
   );
 }

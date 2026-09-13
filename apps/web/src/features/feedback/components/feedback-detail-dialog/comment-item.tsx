@@ -3,15 +3,15 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@ctrl-ui/react/ui/avatar";
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button } from "@ctrl-ui/react/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@ctrl-ui/react/ui/dropdown-menu";
 import { DotsThreeVertical, Pencil, Trash } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { formatDistanceToNow } from "date-fns";
-import {
-  DropdownList,
-  DropdownListContent,
-  DropdownListItem,
-  DropdownListTrigger,
-} from "@/components/ui/dropdown-menu";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 
 export interface CommentData {
@@ -126,31 +126,30 @@ export function CommentItem({
                   Reply
                 </Button>
                 {canModify && (
-                  <DropdownList>
-                    <DropdownListTrigger>
-                      <Button
-                        className="h-auto p-0 text-muted-foreground opacity-0 group-hover:opacity-100"
-                        variant="quiet"
-                      >
-                        <DotsThreeVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownListTrigger>
-                    <DropdownListContent>
-                      <DropdownListItem
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      aria-label="Comment actions"
+                      className="h-auto p-0 text-muted-foreground pointer-fine:opacity-0 focus-visible:opacity-100 group-hover:opacity-100 data-popup-open:opacity-100"
+                      variant="ghost"
+                    >
+                      <DotsThreeVertical className="h-4 w-4" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem
                         onClick={() => onEdit(comment._id, comment.body)}
                       >
                         <Pencil className="mr-2 h-4 w-4" />
                         Edit
-                      </DropdownListItem>
-                      <DropdownListItem
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
                         className="text-destructive"
                         onClick={() => onDelete(comment._id)}
                       >
                         <Trash className="mr-2 h-4 w-4" />
                         Delete
-                      </DropdownListItem>
-                    </DropdownListContent>
-                  </DropdownList>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 )}
               </div>
             </>
@@ -282,31 +281,30 @@ function ReplyItem({
             <p className="mt-1 whitespace-pre-wrap text-sm">{reply.body}</p>
             {(reply.isAuthor || isAdmin) && (
               <div className="mt-1">
-                <DropdownList>
-                  <DropdownListTrigger>
-                    <Button
-                      className="h-auto p-0 text-muted-foreground opacity-0 group-hover:opacity-100"
-                      variant="quiet"
-                    >
-                      <DotsThreeVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownListTrigger>
-                  <DropdownListContent>
-                    <DropdownListItem
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    aria-label="Reply actions"
+                    className="h-auto p-0 text-muted-foreground pointer-fine:opacity-0 focus-visible:opacity-100 group-hover:opacity-100 data-popup-open:opacity-100"
+                    variant="ghost"
+                  >
+                    <DotsThreeVertical className="h-4 w-4" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem
                       onClick={() => onEdit(reply._id, reply.body)}
                     >
                       <Pencil className="mr-2 h-4 w-4" />
                       Edit
-                    </DropdownListItem>
-                    <DropdownListItem
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
                       className="text-destructive"
                       onClick={() => onDelete(reply._id)}
                     >
                       <Trash className="mr-2 h-4 w-4" />
                       Delete
-                    </DropdownListItem>
-                  </DropdownListContent>
-                </DropdownList>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             )}
           </>

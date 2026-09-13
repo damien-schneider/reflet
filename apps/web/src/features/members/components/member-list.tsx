@@ -2,6 +2,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@ctrl-ui/react/ui/avatar";
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@ctrl-ui/react/ui/dropdown-menu";
+import {
   Crown,
   DotsThreeVertical,
   Shield,
@@ -11,13 +18,6 @@ import {
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 const ROLE_ICONS = {
   admin: Shield,

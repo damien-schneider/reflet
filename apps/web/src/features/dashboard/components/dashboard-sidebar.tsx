@@ -1,4 +1,22 @@
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@ctrl-ui/react/ui/dropdown-menu";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@ctrl-ui/react/ui/sidebar";
+import {
   Binoculars,
   CaretUpDown,
   Chat,
@@ -18,24 +36,6 @@ import { useQuery } from "convex/react";
 import Link from "next/link";
 import posthog from "posthog-js";
 import type * as React from "react";
-import {
-  DropdownList,
-  DropdownListContent,
-  DropdownListItem,
-  DropdownListTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarList,
-  SidebarListButton,
-  SidebarListItem,
-} from "@/components/ui/sidebar";
 import { CommandPaletteTrigger } from "@/features/command-palette/components/command-palette-trigger";
 import { OrganizationSwitcher } from "@/features/organizations/components/organization-switcher";
 import { capture } from "@/lib/analytics";
@@ -197,12 +197,12 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
     <Sidebar collapsible="icon">
       <SidebarHeader>
         {/* User menu */}
-        <SidebarList>
-          <SidebarListItem>
-            <DropdownList>
-              <DropdownListTrigger
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger
                 render={(props: React.ComponentProps<"button">) => (
-                  <SidebarListButton {...props} size="lg">
+                  <SidebarMenuButton {...props} size="lg">
                     <div className="flex size-8 min-w-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
                       <User className="size-4" />
                     </div>
@@ -215,16 +215,16 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
                       </span>
                     </div>
                     <CaretUpDown className="ml-auto size-4 transition-opacity duration-200 ease-in-out group-data-[collapsible=icon]:opacity-0" />
-                  </SidebarListButton>
+                  </SidebarMenuButton>
                 )}
               />
-              <DropdownListContent
+              <DropdownMenuContent
                 align="start"
                 className="min-w-56 rounded-lg"
                 side="bottom"
                 sideOffset={4}
               >
-                <DropdownListItem
+                <DropdownMenuItem
                   render={(props) => (
                     <Link href="/dashboard/account" {...props}>
                       <User className="mr-2 size-4" />
@@ -232,14 +232,14 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
                     </Link>
                   )}
                 />
-                <DropdownListItem onClick={handleSignOut}>
+                <DropdownMenuItem onClick={handleSignOut}>
                   <SignOut className="mr-2 size-4" />
                   <span>Sign out</span>
-                </DropdownListItem>
-              </DropdownListContent>
-            </DropdownList>
-          </SidebarListItem>
-        </SidebarList>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+        </SidebarMenu>
 
         <OrganizationSwitcher currentOrgSlug={orgSlug} />
         <CommandPaletteTrigger />
@@ -251,10 +251,10 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
             <SidebarGroup>
               <SidebarGroupLabel>Workspace</SidebarGroupLabel>
               <SidebarGroupContent>
-                <SidebarList>
+                <SidebarMenu>
                   {workspaceNavItems.map((item) => (
-                    <SidebarListItem key={item.href}>
-                      <SidebarListButton
+                    <SidebarMenuItem key={item.href}>
+                      <SidebarMenuButton
                         isActive={isActive(item.href)}
                         render={<Link href={buildHref(item.href)} />}
                       >
@@ -265,10 +265,10 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
                             {item.badge > 99 ? "99+" : item.badge}
                           </span>
                         )}
-                      </SidebarListButton>
-                    </SidebarListItem>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
                   ))}
-                </SidebarList>
+                </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
 
@@ -276,10 +276,10 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
               <SidebarGroup>
                 <SidebarGroupLabel>Admin</SidebarGroupLabel>
                 <SidebarGroupContent>
-                  <SidebarList>
+                  <SidebarMenu>
                     {adminNavItems.map((item) => (
-                      <SidebarListItem key={item.href}>
-                        <SidebarListButton
+                      <SidebarMenuItem key={item.href}>
+                        <SidebarMenuButton
                           isActive={isActive(item.href)}
                           render={<Link href={buildHref(item.href)} />}
                         >
@@ -290,10 +290,10 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
                               {item.badge > 99 ? "99+" : item.badge}
                             </span>
                           )}
-                        </SidebarListButton>
-                      </SidebarListItem>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
                     ))}
-                  </SidebarList>
+                  </SidebarMenu>
                 </SidebarGroupContent>
               </SidebarGroup>
             )}
@@ -312,9 +312,9 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
           <SidebarGroup>
             <SidebarGroupLabel>Platform</SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarList>
-                <SidebarListItem>
-                  <SidebarListButton
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
                     isActive={
                       pathname === "/dashboard/super-admin" ||
                       pathname.startsWith("/dashboard/super-admin/")
@@ -323,9 +323,9 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
                   >
                     <ShieldStar className="h-4 w-4" />
                     <span>Super Admin</span>
-                  </SidebarListButton>
-                </SidebarListItem>
-              </SidebarList>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
         )}
@@ -340,9 +340,9 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
       )}
 
       <SidebarFooter>
-        <SidebarList>
+        <SidebarMenu>
           <SidebarFooterContent isPublic={org?.isPublic} orgSlug={orgSlug} />
-        </SidebarList>
+        </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
   );

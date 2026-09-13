@@ -17,7 +17,7 @@ vi.mock("@/lib/tag-colors", () => ({
 
 let capturedOnValueChange: ((value: string) => void) | undefined;
 
-vi.mock("@/components/ui/dropdown-menu", () => ({
+vi.mock("@ctrl-ui/react/ui/dropdown-menu", () => ({
   DropdownMenu: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),

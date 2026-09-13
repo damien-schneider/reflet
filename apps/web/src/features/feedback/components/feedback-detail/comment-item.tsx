@@ -3,6 +3,12 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@ctrl-ui/react/ui/avatar";
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@ctrl-ui/react/ui/dropdown-menu";
+import {
   ArrowBendDownRight,
   DotsThree,
   PaperPlaneTilt,
@@ -13,12 +19,6 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import { useMutation } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 
 import { useFeedbackId } from "./comment-context";

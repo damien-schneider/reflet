@@ -1,6 +1,13 @@
 "use client";
 
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@ctrl-ui/react/ui/dropdown-menu";
+import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -16,13 +23,6 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { useState } from "react";
 import { TagBadge } from "@/components/tag-badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
 type TimeUnit = "minutes" | "hours" | "days" | "weeks";

@@ -2,7 +2,6 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@ctrl-ui/react/ui/avatar";
 import { Button } from "@ctrl-ui/react/ui/button";
-import { CaretDown, User, UserCircle } from "@phosphor-icons/react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,7 +10,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@ctrl-ui/react/ui/dropdown-menu";
+import { CaretDown, User, UserCircle } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
 interface TeamMember {

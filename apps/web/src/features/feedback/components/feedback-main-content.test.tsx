@@ -42,14 +42,14 @@ vi.mock("@ctrl-ui/react/ui/card", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/dropdown-menu", () => ({
-  DropdownList: ({ children }: { children: React.ReactNode }) => (
+vi.mock("@ctrl-ui/react/ui/dropdown-menu", () => ({
+  DropdownMenu: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="dropdown">{children}</div>
   ),
-  DropdownListContent: ({ children }: { children: React.ReactNode }) => (
+  DropdownMenuContent: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="dropdown-content">{children}</div>
   ),
-  DropdownListItem: ({
+  DropdownMenuItem: ({
     children,
     onClick,
   }: {
@@ -60,8 +60,8 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
       {children}
     </button>
   ),
-  DropdownListSeparator: () => <hr />,
-  DropdownListTrigger: ({
+  DropdownMenuSeparator: () => <hr />,
+  DropdownMenuTrigger: ({
     render,
   }: {
     render: (props: Record<string, unknown>) => React.ReactNode;

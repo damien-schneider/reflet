@@ -18,19 +18,19 @@ import {
   CardHeader,
   CardTitle,
 } from "@ctrl-ui/react/ui/card";
-import { toast } from "@ctrl-ui/react/ui/toast";
-import { Check, Copy, Gear, Power, Trash } from "@phosphor-icons/react";
-import { api } from "@reflet/backend/convex/_generated/api";
-import type { Doc } from "@reflet/backend/convex/_generated/dataModel";
-import { useMutation } from "convex/react";
-import { useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@ctrl-ui/react/ui/dropdown-menu";
+import { toast } from "@ctrl-ui/react/ui/toast";
+import { Check, Copy, Gear, Power, Trash } from "@phosphor-icons/react";
+import { api } from "@reflet/backend/convex/_generated/api";
+import type { Doc } from "@reflet/backend/convex/_generated/dataModel";
+import { useMutation } from "convex/react";
+import { useState } from "react";
 import { Muted, Text } from "@/components/ui/typography";
 
 import { WidgetSettingsDialog } from "./widget-settings-dialog";

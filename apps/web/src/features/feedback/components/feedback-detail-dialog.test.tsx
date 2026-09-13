@@ -364,14 +364,14 @@ vi.mock("@ctrl-ui/react/ui/select", () => ({
   }) => <span data-testid="select-value">{children || placeholder}</span>,
 }));
 
-vi.mock("@/components/ui/dropdown-menu", () => ({
-  DropdownList: ({ children }: { children: React.ReactNode }) => (
+vi.mock("@ctrl-ui/react/ui/dropdown-menu", () => ({
+  DropdownMenu: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="dropdown-menu">{children}</div>
   ),
-  DropdownListContent: ({ children }: { children: React.ReactNode }) => (
+  DropdownMenuContent: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="dropdown-content">{children}</div>
   ),
-  DropdownListItem: ({
+  DropdownMenuItem: ({
     children,
     onClick,
     className,
@@ -389,8 +389,8 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
       {children}
     </button>
   ),
-  DropdownListSeparator: () => <hr data-testid="dropdown-separator" />,
-  DropdownListTrigger: ({ children }: { children: React.ReactNode }) => (
+  DropdownMenuSeparator: () => <hr data-testid="dropdown-separator" />,
+  DropdownMenuTrigger: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="dropdown-trigger">{children}</div>
   ),
 }));

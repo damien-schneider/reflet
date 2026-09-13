@@ -2,7 +2,7 @@ import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-} from "@/components/ui/sidebar";
+} from "@ctrl-ui/react/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { AppSidebar } from "./app-sidebar";
 

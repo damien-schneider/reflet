@@ -2,6 +2,12 @@
 
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@ctrl-ui/react/ui/dropdown-menu";
+import {
   DotsThree,
   Lightning,
   Pause,
@@ -9,12 +15,6 @@ import {
   Trash,
 } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import {
-  DropdownList,
-  DropdownListContent,
-  DropdownListItem,
-  DropdownListTrigger,
-} from "@/components/ui/dropdown-menu";
 import { ResponseTimeChart } from "./response-time-chart";
 import { StatusDot } from "./status-dot";
 import { UptimeBar } from "./uptime-bar";
@@ -109,8 +109,8 @@ export function MonitorCard({
             </span>
           </div>
 
-          <DropdownList>
-            <DropdownListTrigger
+          <DropdownMenu>
+            <DropdownMenuTrigger
               render={(props) => (
                 <Button
                   {...props}
@@ -125,9 +125,9 @@ export function MonitorCard({
                 </Button>
               )}
             />
-            <DropdownListContent align="end">
+            <DropdownMenuContent align="end">
               {monitor.status === "paused" ? (
-                <DropdownListItem
+                <DropdownMenuItem
                   onClick={(e) => {
                     e.stopPropagation();
                     onResume(monitor._id);
@@ -135,9 +135,9 @@ export function MonitorCard({
                 >
                   <Play className="mr-2 h-4 w-4" />
                   Resume
-                </DropdownListItem>
+                </DropdownMenuItem>
               ) : (
-                <DropdownListItem
+                <DropdownMenuItem
                   onClick={(e) => {
                     e.stopPropagation();
                     onPause(monitor._id);
@@ -145,7 +145,7 @@ export function MonitorCard({
                 >
                   <Pause className="mr-2 h-4 w-4" />
                   Pause
-                </DropdownListItem>
+                </DropdownMenuItem>
               )}
               {isPro && onUpdateInterval && (
                 <>
@@ -154,7 +154,7 @@ export function MonitorCard({
                     Check interval
                   </div>
                   {CHECK_INTERVALS.map((interval) => (
-                    <DropdownListItem
+                    <DropdownMenuItem
                       key={interval.value}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -172,11 +172,11 @@ export function MonitorCard({
                         {monitor.checkIntervalMinutes === interval.value &&
                           " (current)"}
                       </span>
-                    </DropdownListItem>
+                    </DropdownMenuItem>
                   ))}
                 </>
               )}
-              <DropdownListItem
+              <DropdownMenuItem
                 onClick={(e) => {
                   e.stopPropagation();
                   onDelete(monitor._id);
@@ -184,9 +184,9 @@ export function MonitorCard({
               >
                 <Trash className="mr-2 h-4 w-4" />
                 Delete
-              </DropdownListItem>
-            </DropdownListContent>
-          </DropdownList>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 

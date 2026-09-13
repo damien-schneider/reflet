@@ -1,6 +1,15 @@
 "use client";
 
 import { Button } from "@ctrl-ui/react/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@ctrl-ui/react/ui/dropdown-menu";
 import { toast } from "@ctrl-ui/react/ui/toast";
 import {
   Tooltip,
@@ -18,15 +27,6 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { useCallback, useState } from "react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import type { AgentTarget } from "./agent-config";
 import { AGENTS, openCloudAgent, openDeepLink } from "./agent-config";
 import type { FeedbackTag } from "./feedback-metadata-types";

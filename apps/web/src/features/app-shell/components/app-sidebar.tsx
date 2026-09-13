@@ -1,6 +1,15 @@
 "use client";
 
 import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@ctrl-ui/react/ui/sidebar";
+import {
   IconCamera,
   IconChartBar,
   IconDashboard,
@@ -19,15 +28,6 @@ import {
 } from "@tabler/icons-react";
 import Link from "next/link";
 import type * as React from "react";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarList,
-  SidebarListButton,
-  SidebarListItem,
-} from "@/components/ui/sidebar";
 import { NavDocuments } from "@/features/navigation/components/nav-documents";
 import { NavMain } from "@/features/navigation/components/nav-main";
 import { NavSecondary } from "@/features/navigation/components/nav-secondary";
@@ -154,17 +154,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <SidebarList>
-          <SidebarListItem>
-            <SidebarListButton
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
               className="data-[slot=sidebar-menu-button]:!p-1.5"
               render={<Link href="/" />}
             >
               <IconInnerShadowTop className="!size-5" />
               <span className="font-semibold text-base">Acme Inc.</span>
-            </SidebarListButton>
-          </SidebarListItem>
-        </SidebarList>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />

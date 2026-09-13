@@ -1,14 +1,14 @@
 "use client";
 
 import { Button } from "@ctrl-ui/react/ui/button";
-import { SortAscending as SortAscendingIcon } from "@phosphor-icons/react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@ctrl-ui/react/ui/dropdown-menu";
+import { SortAscending as SortAscendingIcon } from "@phosphor-icons/react";
 import { FilterDropdown } from "./feedback-board/filter-dropdown";
 
 export type SortOption = "votes" | "newest" | "oldest" | "comments";

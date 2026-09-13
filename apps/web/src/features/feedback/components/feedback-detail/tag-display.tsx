@@ -1,13 +1,12 @@
-import { CaretDown, Sparkle, Tag, X } from "@phosphor-icons/react";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-
-import { TagBadge } from "@/components/tag-badge";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@ctrl-ui/react/ui/dropdown-menu";
+import { CaretDown, Sparkle, Tag, X } from "@phosphor-icons/react";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { TagBadge } from "@/components/tag-badge";
 import { getTagSwatchClass } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
 

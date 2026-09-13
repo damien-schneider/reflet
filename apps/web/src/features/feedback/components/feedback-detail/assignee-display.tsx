@@ -1,12 +1,12 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@ctrl-ui/react/ui/avatar";
-import { CaretDown, User } from "@phosphor-icons/react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@ctrl-ui/react/ui/dropdown-menu";
+import { CaretDown, User } from "@phosphor-icons/react";
 
 interface AssigneeDisplayProps {
   assignee?: {
