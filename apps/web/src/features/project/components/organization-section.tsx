@@ -3,6 +3,11 @@
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Field, FieldDescription, FieldLabel } from "@ctrl-ui/react/ui/field";
 import { Input } from "@ctrl-ui/react/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@ctrl-ui/react/ui/input-group";
 import { Switch } from "@ctrl-ui/react/ui/switch";
 import { Check, Spinner } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
@@ -156,20 +161,18 @@ export function OrganizationSection({
 
         <Field>
           <FieldLabel htmlFor="org-slug">URL</FieldLabel>
-          <div className="flex items-center gap-0 rounded-md border bg-muted/40 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-1">
-            <span className="shrink-0 select-none border-r bg-muted px-3 py-2 text-muted-foreground text-sm">
-              /dashboard/
-            </span>
-            <Input
-              className="border-0 shadow-none focus-visible:ring-0"
+          <InputGroup data-disabled={!isAdmin || undefined}>
+            <InputGroupAddon>/dashboard/</InputGroupAddon>
+            <InputGroupInput
+              aria-describedby="org-slug-description"
               disabled={!isAdmin}
               id="org-slug"
               onChange={(event) => handleSlugChange(event.target.value)}
               placeholder="my-organization"
               value={slug}
             />
-          </div>
-          <FieldDescription>
+          </InputGroup>
+          <FieldDescription id="org-slug-description">
             Lowercase letters, numbers, and hyphens
           </FieldDescription>
         </Field>
