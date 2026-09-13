@@ -2,9 +2,10 @@
 
 import { Button, ButtonLink } from "@ctrl-ui/react/ui/button";
 import { Input } from "@ctrl-ui/react/ui/input";
-import { ArrowSquareOut, Copy, Key, Warning } from "@phosphor-icons/react";
+import { ArrowSquareOut, Key } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import Link from "next/link";
+import { SecretOnceBanner } from "@/components/secret-once-banner";
 import { ApiKeyDialogs } from "./components/api-key-dialogs";
 import { ApiKeysList } from "./components/api-keys-list";
 import { useApiKeys } from "./hooks/use-api-keys";
@@ -64,40 +65,12 @@ export function ApiKeysSettings({ organizationId }: ApiKeysSettingsProps) {
       </div>
 
       {newSecretKey ? (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950">
-          <div className="flex items-start gap-3">
-            <Warning className="mt-0.5 h-5 w-5 text-amber-600" />
-            <div className="min-w-0 flex-1">
-              <h2 className="font-medium text-amber-800 dark:text-amber-200">
-                Save your secret key now
-              </h2>
-              <p className="mt-1 text-amber-700 text-sm dark:text-amber-300">
-                This is the only time it will be shown.
-              </p>
-              <div className="mt-3 flex items-center gap-2">
-                <code className="min-w-0 flex-1 overflow-x-auto rounded bg-amber-100 px-3 py-2 font-mono text-sm dark:bg-amber-900">
-                  {newSecretKey}
-                </code>
-                <Button
-                  aria-label="Copy secret key"
-                  iconOnly
-                  onClick={() => copyToClipboard(newSecretKey, "Secret key")}
-                  variant="surface"
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
-              </div>
-              <Button
-                className="mt-3"
-                onClick={() => setNewSecretKey(null)}
-                size="xs"
-                variant="ghost"
-              >
-                I&apos;ve saved it
-              </Button>
-            </div>
-          </div>
-        </div>
+        <SecretOnceBanner
+          onCopy={() => copyToClipboard(newSecretKey, "Secret key")}
+          onDismiss={() => setNewSecretKey(null)}
+          secret={newSecretKey}
+          title="Save your secret key now"
+        />
       ) : null}
 
       {apiKeys.length === 0 ? (

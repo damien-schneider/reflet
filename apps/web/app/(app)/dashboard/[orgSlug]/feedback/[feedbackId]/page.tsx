@@ -10,6 +10,7 @@ import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import { use, useCallback } from "react";
 import { H2, Muted } from "@/components/ui/typography";
+import { useCreateGithubIssue } from "@/features/github/hooks/use-create-github-issue";
 import { FeedbackHeader } from "./feedback-header";
 
 export default function FeedbackDetailPage({
@@ -44,6 +45,10 @@ export default function FeedbackDetailPage({
 
   const toggleVote = useMutation(api.feedback.votes.toggle);
   const assignFeedback = useMutation(api.feedback.triage_actions.assign);
+  const { isCreatingGithubIssue, onCreateGithubIssue } = useCreateGithubIssue({
+    feedbackId,
+    organizationId: isAdmin ? org?._id : undefined,
+  });
 
   const handleVote = useCallback(async () => {
     if (feedbackId) {
@@ -110,6 +115,10 @@ export default function FeedbackDetailPage({
   }
 
   const status = statuses?.find((s) => s._id === feedback.organizationStatusId);
+  const githubIssue =
+    feedback.githubHtmlUrl && feedback.githubIssueNumber !== undefined
+      ? { number: feedback.githubIssueNumber, url: feedback.githubHtmlUrl }
+      : null;
 
   return (
     <div className="flex h-full flex-col">
@@ -117,11 +126,14 @@ export default function FeedbackDetailPage({
         assignee={feedback.assignee}
         commentCount={feedback.commentCount ?? 0}
         createdAt={feedback.createdAt}
+        githubIssue={githubIssue}
         hasVoted={feedback.hasVoted}
         isAdmin={isAdmin}
+        isCreatingGithubIssue={isCreatingGithubIssue}
         isPinned={feedback.isPinned}
         members={members}
         onAssigneeChange={handleAssigneeChange}
+        onCreateGithubIssue={onCreateGithubIssue}
         onVote={handleVote}
         orgSlug={orgSlug}
         primaryColor={org.primaryColor ?? "#6366f1"}

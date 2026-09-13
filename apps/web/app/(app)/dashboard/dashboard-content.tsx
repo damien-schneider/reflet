@@ -32,7 +32,7 @@ import { computeDashboardNavigation } from "./use-dashboard-navigation";
 
 const routeLabels: Record<string, string> = {
   account: "Account",
-  "ai-mcp": "AI & MCP",
+  agents: "Agents & CLI",
   "api-keys": "API Keys",
   billing: "Billing",
   changelog: "Changelog",

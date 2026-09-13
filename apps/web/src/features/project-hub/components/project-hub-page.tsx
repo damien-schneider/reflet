@@ -125,19 +125,21 @@ export function ProjectHubPage({
 
         <TagsCard basePath={basePath} tags={tags} />
 
-        <Link href={`${basePath}/ai`}>
+        <Link href={`${basePath}/project/agents`}>
           <Card className="h-full transition-colors hover:bg-muted/30">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-sm">
                 <Brain className="size-4" />
-                AI & MCP
+                Agents & CLI
               </CardTitle>
             </CardHeader>
             <CardContent>
               <Text className="font-medium" variant="bodySmall">
-                AI agent & MCP tools
+                Let coding agents fix feedback
               </Text>
-              <Muted className="mt-1 text-xs">Configure from the AI page</Muted>
+              <Muted className="mt-1 text-xs">
+                Secret key, CLI login, agent loop
+              </Muted>
             </CardContent>
           </Card>
         </Link>

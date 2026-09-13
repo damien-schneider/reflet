@@ -1,5 +1,4 @@
 import { v } from "convex/values";
-import { internal } from "../_generated/api";
 import { internalMutation } from "../_generated/server";
 import {
   MAX_COMMENT_LENGTH,
@@ -7,6 +6,7 @@ import {
   MAX_TITLE_LENGTH,
 } from "../shared/constants";
 import { validateInputLength } from "../shared/validators";
+import { scheduleAfterCreate } from "./after_create";
 import { feedbackContextValidator } from "./tableFields";
 
 const MIN_IMPORTANCE = 1;
@@ -98,11 +98,10 @@ export const createFeedbackByOrganization = internalMutation({
       await ctx.db.insert("feedbackTags", { feedbackId, tagId: args.tagId });
     }
 
-    await ctx.scheduler.runAfter(
-      0,
-      internal.duplicates.detection.findSimilarFeedback,
-      { feedbackId }
-    );
+    await scheduleAfterCreate(ctx, feedbackId, {
+      aiEnrichment: false,
+      autoTagging: false,
+    });
 
     return { feedbackId, isApproved: !requireApproval };
   },

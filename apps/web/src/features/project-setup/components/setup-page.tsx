@@ -21,7 +21,7 @@ const SETUP_BENEFITS = [
   "Configure your changelog from releases",
   "Suggest tags from your codebase",
   "Generate AI prompts for your project",
-  "Set up MCP for your coding assistant",
+  "Hand feedback to your coding agent through the CLI",
 ] as const;
 
 interface SetupPageProps {

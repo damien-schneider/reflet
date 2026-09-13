@@ -94,11 +94,11 @@ const AVAILABLE_INTEGRATIONS: Integration[] = [
   },
   {
     description:
-      "Let AI coding assistants like Cursor, Claude Code and VS Code Copilot read and manage your feedback directly via the Model Context Protocol.",
-    href: "/docs/mcp",
+      "One command for Claude Code, Cursor, Codex or CI to claim the next feedback, fix it and close it: npx reflet-cli.",
+    href: "/docs/cli",
     icon: Robot,
-    id: "mcp",
-    title: "MCP Server",
+    id: "cli",
+    title: "CLI for agents",
   },
 ] as const;
 

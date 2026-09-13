@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
 import { getAuthUser } from "../shared/utils";
+import { applyReleaseStatus } from "./feedback_status";
 
 export const linkFeedback = mutation({
   args: {
@@ -57,10 +58,7 @@ export const linkFeedback = mutation({
       .unique();
 
     if (existing) {
-      // Still update status if requested
-      if (args.newStatus && feedback.status !== args.newStatus) {
-        await ctx.db.patch(args.feedbackId, { status: args.newStatus });
-      }
+      await applyReleaseStatus(ctx, feedback, args.newStatus, user._id);
       return existing._id;
     }
 
@@ -70,10 +68,7 @@ export const linkFeedback = mutation({
       releaseId: args.releaseId,
     });
 
-    // Update feedback status if requested
-    if (args.newStatus && feedback.status !== args.newStatus) {
-      await ctx.db.patch(args.feedbackId, { status: args.newStatus });
-    }
+    await applyReleaseStatus(ctx, feedback, args.newStatus, user._id);
 
     return linkId;
   },

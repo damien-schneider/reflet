@@ -277,18 +277,18 @@ export function ReviewView({
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Robot className="size-4" />
-              MCP Setup
+              Agents &amp; CLI
             </CardTitle>
           </CardHeader>
           <CardContent>
             <Text className="mb-2" variant="bodySmall">
-              Your AI coding assistant can manage feedback, releases, and
-              roadmap directly from your IDE. Configure MCP after launching from
-              the AI page.
+              A coding agent can claim feedback, fix it and open the pull
+              request through the reflet CLI. Generate a secret key after
+              launching, from Project → Agents &amp; CLI.
             </Text>
             <Muted className="text-xs">
-              Available in Cursor, VS Code, Claude Code, Claude Desktop, and
-              more.
+              Works with any agent that can run a shell: Claude Code, Cursor,
+              Codex, CI jobs.
             </Muted>
           </CardContent>
         </Card>

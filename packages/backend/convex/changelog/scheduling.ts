@@ -8,6 +8,7 @@ import {
 } from "../_generated/server";
 import { requireOrgAdmin } from "../shared/access";
 import { feedbackStatus } from "../shared/validators";
+import { applyReleaseStatusToLinkedFeedback } from "./feedback_status";
 
 async function publishScheduledRelease(
   ctx: MutationCtx,
@@ -25,19 +26,12 @@ async function publishScheduledRelease(
   });
 
   if (release.scheduledFeedbackStatus) {
-    const links = await ctx.db
-      .query("releaseFeedback")
-      .withIndex("by_release", (q) => q.eq("releaseId", release._id))
-      .collect();
-
-    for (const link of links) {
-      const feedback = await ctx.db.get(link.feedbackId);
-      if (feedback && feedback.status !== release.scheduledFeedbackStatus) {
-        await ctx.db.patch(link.feedbackId, {
-          status: release.scheduledFeedbackStatus,
-        });
-      }
-    }
+    await applyReleaseStatusToLinkedFeedback(
+      ctx,
+      release._id,
+      release.scheduledFeedbackStatus,
+      release.scheduledBy ?? "system"
+    );
   }
 
   await ctx.scheduler.runAfter(

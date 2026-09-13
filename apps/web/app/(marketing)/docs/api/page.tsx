@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { generatePageMetadata } from "@/lib/seo-config";
 import { codeBlockClass } from "./code-block-class";
 import { EndpointsSection } from "./endpoints-section";
+import { WebhooksSection } from "./webhooks-section";
 
 export const metadata: Metadata = generatePageMetadata({
   description:
@@ -110,6 +111,8 @@ export default function ApiReferencePage() {
       </section>
 
       <EndpointsSection />
+
+      <WebhooksSection />
 
       {/* Rate Limiting */}
       <section className="mb-12">

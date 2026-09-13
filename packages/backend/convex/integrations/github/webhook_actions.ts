@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { internalAction } from "../../_generated/server";
-import { GITHUB_API_URL } from "./github_constants";
+import { GITHUB_API_URL, githubApiHeaders } from "./github_constants";
 
 export const createWebhook = internalAction({
   args: {
@@ -24,12 +24,7 @@ export const createWebhook = internalAction({
           events: ["release"],
           name: "web",
         }),
-        headers: {
-          Accept: "application/vnd.github+json",
-          Authorization: `Bearer ${args.installationToken}`,
-          "Content-Type": "application/json",
-          "X-GitHub-Api-Version": "2022-11-28",
-        },
+        headers: githubApiHeaders(args.installationToken),
         method: "POST",
       }
     );
@@ -45,11 +40,3 @@ export const createWebhook = internalAction({
     return { webhookId: String(webhook.id) };
   },
 });
-
-/**
- * Internal mutation to process webhook release event
- */
-
-/**
- * Internal mutation to handle auto-import of issue to feedback
- */

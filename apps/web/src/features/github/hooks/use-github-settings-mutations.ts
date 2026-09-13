@@ -16,6 +16,9 @@ export function useGitHubSettingsMutations() {
   const toggleIssuesSyncMutation = useMutation(
     api.integrations.github.issue_sync.toggleIssuesSync
   );
+  const setPromoteTriggerMutation = useMutation(
+    api.integrations.github.issue_sync.setPromoteTrigger
+  );
   const upsertLabelMappingMutation = useMutation(
     api.integrations.github.issue_mappings.upsertLabelMapping
   );
@@ -27,6 +30,7 @@ export function useGitHubSettingsMutations() {
     deleteLabelMappingMutation,
     disconnectMutation,
     selectRepositoryMutation,
+    setPromoteTriggerMutation,
     toggleAutoSyncMutation,
     toggleIssuesSyncMutation,
     upsertLabelMappingMutation,

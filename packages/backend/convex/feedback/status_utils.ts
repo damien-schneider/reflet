@@ -1,4 +1,4 @@
-type FeedbackStatusEnum =
+export type FeedbackStatusEnum =
   | "open"
   | "under_review"
   | "planned"
@@ -31,6 +31,9 @@ export const mapStatusNameToEnum = (statusName: string): FeedbackStatusEnum => {
   const normalizedName = statusName.toLowerCase().replace(/[\s_-]/g, "");
   return STATUS_NAME_MAP[normalizedName] ?? "open";
 };
+
+export const isFinishedStatus = (status: FeedbackStatusEnum): boolean =>
+  COMPLETED_STATUS_ENUMS.has(status);
 
 /**
  * Check whether a status name maps to a "completed" or "closed" enum value.

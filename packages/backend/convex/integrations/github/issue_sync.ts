@@ -1,6 +1,8 @@
 import { v } from "convex/values";
 import { internalMutation, mutation } from "../../_generated/server";
 import { requireOrgAdmin } from "../../shared/access";
+import { feedbackStatus } from "../../shared/validators";
+import { promoteTrigger } from "./tableFields";
 
 export const toggleIssuesSync = mutation({
   args: {
@@ -28,6 +30,42 @@ export const toggleIssuesSync = mutation({
       updatedAt: Date.now(),
     });
 
+    return connection._id;
+  },
+});
+
+export const setPromoteTrigger = mutation({
+  args: {
+    organizationId: v.id("organizations"),
+    promoteStatus: v.optional(feedbackStatus),
+    promoteTrigger,
+  },
+  handler: async (ctx, args) => {
+    await requireOrgAdmin(
+      ctx,
+      args.organizationId,
+      "configure issue promotion"
+    );
+    if (args.promoteTrigger === "on_status" && !args.promoteStatus) {
+      throw new Error("Pick the status that creates the issue");
+    }
+
+    const connection = await ctx.db
+      .query("githubConnections")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .first();
+    if (!connection) {
+      throw new Error("No GitHub connection found");
+    }
+
+    await ctx.db.patch(connection._id, {
+      promoteStatus:
+        args.promoteTrigger === "on_status" ? args.promoteStatus : undefined,
+      promoteTrigger: args.promoteTrigger,
+      updatedAt: Date.now(),
+    });
     return connection._id;
   },
 });

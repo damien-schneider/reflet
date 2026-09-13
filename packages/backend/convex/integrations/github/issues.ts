@@ -67,6 +67,8 @@ export const getIssueSyncStatus = query({
         lastSyncAt: undefined,
         lastSyncStatus: undefined,
         mappingsCount: 0,
+        promoteStatus: undefined,
+        promoteTrigger: "manual" as const,
         syncedIssuesCount: 0,
       };
     }
@@ -95,6 +97,8 @@ export const getIssueSyncStatus = query({
       lastSyncError: connection.lastIssuesSyncError,
       lastSyncStatus: connection.lastIssuesSyncStatus,
       mappingsCount: mappings.length,
+      promoteStatus: connection.promoteStatus,
+      promoteTrigger: connection.promoteTrigger ?? "manual",
       syncedIssuesCount: issues.length,
     };
   },

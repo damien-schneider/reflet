@@ -1,8 +1,8 @@
 "use client";
 
-import { Combobox as ComboboxPrimitive } from "@base-ui/react/combobox";
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
+  Combobox,
   ComboboxContent,
   ComboboxEmpty,
   ComboboxInput,
@@ -113,8 +113,7 @@ export function RepositorySelectorSection({
           </Text>
         </div>
       ) : null}
-      {/* ponytail: base-ui Root because @ctrl-ui/react's Combobox does not type `filter`; switch back once it does. */}
-      <ComboboxPrimitive.Root
+      <Combobox
         autoHighlight
         filter={(repo, query) =>
           !query || repo.searchText.includes(query.toLowerCase())
@@ -155,7 +154,7 @@ export function RepositorySelectorSection({
           </ComboboxList>
           <ComboboxEmpty>No repositories found</ComboboxEmpty>
         </ComboboxContent>
-      </ComboboxPrimitive.Root>
+      </Combobox>
       {isAdmin ? (
         <Button
           disabled={!selectedRepo}

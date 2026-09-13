@@ -2,6 +2,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@ctrl-ui/react/ui/avatar";
 import { Badge } from "@ctrl-ui/react/ui/badge";
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Select,
   SelectContent,
@@ -13,6 +14,7 @@ import {
   ArrowLeft,
   CaretUp,
   ChatCircle,
+  GithubLogo,
   PushPin,
   User,
 } from "@phosphor-icons/react";
@@ -30,8 +32,10 @@ interface FeedbackHeaderProps {
   } | null;
   commentCount: number;
   createdAt: number;
+  githubIssue?: { number: number; url: string } | null;
   hasVoted?: boolean;
   isAdmin: boolean;
+  isCreatingGithubIssue?: boolean;
   isPinned?: boolean;
   members:
     | Array<{
@@ -44,6 +48,7 @@ interface FeedbackHeaderProps {
       }>
     | undefined;
   onAssigneeChange: (assigneeId: string) => void;
+  onCreateGithubIssue?: () => void;
   onVote: () => void;
   orgSlug: string;
   primaryColor: string;
@@ -69,6 +74,9 @@ export function FeedbackHeader({
   tags,
   members,
   assignee,
+  githubIssue,
+  isCreatingGithubIssue,
+  onCreateGithubIssue,
 }: FeedbackHeaderProps) {
   return (
     <div className="border-b p-6">
@@ -160,10 +168,52 @@ export function FeedbackHeader({
               members={members}
               onAssigneeChange={onAssigneeChange}
             />
+            <GithubIssueLink
+              githubIssue={githubIssue}
+              isCreating={isCreatingGithubIssue}
+              onCreate={onCreateGithubIssue}
+            />
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+function GithubIssueLink({
+  githubIssue,
+  isCreating,
+  onCreate,
+}: {
+  githubIssue?: { number: number; url: string } | null;
+  isCreating?: boolean;
+  onCreate?: () => void;
+}) {
+  if (githubIssue) {
+    return (
+      <a
+        className="flex items-center gap-1 hover:text-foreground"
+        href={githubIssue.url}
+        rel="noopener"
+        target="_blank"
+      >
+        <GithubLogo className="h-4 w-4" />#{githubIssue.number}
+      </a>
+    );
+  }
+  if (!onCreate) {
+    return null;
+  }
+  return (
+    <Button
+      disabled={isCreating}
+      onClick={onCreate}
+      size="xs"
+      variant="surface"
+    >
+      <GithubLogo className="mr-1.5 h-4 w-4" />
+      {isCreating ? "Creating issue..." : "Send to GitHub"}
+    </Button>
   );
 }
 

@@ -1,6 +1,13 @@
 import { v } from "convex/values";
-import { internalAction, internalMutation } from "../../_generated/server";
-import { GITHUB_API_URL } from "./github_constants";
+import type { Id } from "../../_generated/dataModel";
+import {
+  internalAction,
+  internalMutation,
+  type MutationCtx,
+} from "../../_generated/server";
+import { GITHUB_API_URL, githubApiHeaders } from "./github_constants";
+import { feedbackIdFromIssueBody } from "./issue_body";
+import { attachIssueToFeedback } from "./issue_promote";
 
 export const fetchIssues = internalAction({
   args: {
@@ -22,13 +29,7 @@ export const fetchIssues = internalAction({
 
     const response = await fetch(
       `${GITHUB_API_URL}/repos/${args.repositoryFullName}/issues?${params.toString()}`,
-      {
-        headers: {
-          Accept: "application/vnd.github+json",
-          Authorization: `Bearer ${args.installationToken}`,
-          "X-GitHub-Api-Version": "2022-11-28",
-        },
-      }
+      { headers: githubApiHeaders(args.installationToken) }
     );
 
     if (!response.ok) {
@@ -87,13 +88,7 @@ export const fetchLabels = internalAction({
   handler: async (_ctx, args) => {
     const response = await fetch(
       `${GITHUB_API_URL}/repos/${args.repositoryFullName}/labels?per_page=100`,
-      {
-        headers: {
-          Accept: "application/vnd.github+json",
-          Authorization: `Bearer ${args.installationToken}`,
-          "X-GitHub-Api-Version": "2022-11-28",
-        },
-      }
+      { headers: githubApiHeaders(args.installationToken) }
     );
 
     if (!response.ok) {
@@ -116,9 +111,26 @@ export const fetchLabels = internalAction({
   },
 });
 
-/**
- * Update webhook to include issues events
- */
+async function linkPromotedFeedback(
+  ctx: MutationCtx,
+  args: {
+    issue: { body?: string };
+    issueId: Id<"githubIssues">;
+    organizationId: Id<"organizations">;
+  }
+): Promise<boolean> {
+  const marker = feedbackIdFromIssueBody(args.issue.body);
+  const feedbackId = marker ? ctx.db.normalizeId("feedback", marker) : null;
+  const feedback = feedbackId ? await ctx.db.get(feedbackId) : null;
+  if (!feedback || feedback.organizationId !== args.organizationId) {
+    return false;
+  }
+  const issue = await ctx.db.get(args.issueId);
+  if (issue && !feedback.githubIssueId) {
+    await attachIssueToFeedback(ctx, feedback, issue);
+  }
+  return true;
+}
 
 export const autoImportIssueToFeedback = internalMutation({
   args: {
@@ -136,6 +148,10 @@ export const autoImportIssueToFeedback = internalMutation({
     organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
+    if (await linkPromotedFeedback(ctx, args)) {
+      return;
+    }
+
     const now = Date.now();
     const connection = await ctx.db.get(args.connectionId);
 
@@ -205,7 +221,3 @@ export const autoImportIssueToFeedback = internalMutation({
     }
   },
 });
-
-/**
- * Internal mutation to process webhook issue event
- */

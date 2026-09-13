@@ -38,6 +38,40 @@ vi.mock("@ctrl-ui/react/ui/button", () => ({
   ),
 }));
 
+vi.mock("@ctrl-ui/react/ui/select", () => ({
+  Select: ({
+    children,
+    disabled,
+    onValueChange,
+    value,
+  }: {
+    children: React.ReactNode;
+    disabled?: boolean;
+    onValueChange?: (value: string) => void;
+    value?: string;
+  }) => (
+    <select
+      disabled={disabled}
+      onChange={(event) => onValueChange?.(event.target.value)}
+      value={value}
+    >
+      {children}
+    </select>
+  ),
+  SelectContent: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
+  SelectItem: ({
+    children,
+    value,
+  }: {
+    children: React.ReactNode;
+    value: string;
+  }) => <option value={value}>{children}</option>,
+  SelectTrigger: () => null,
+  SelectValue: () => null,
+}));
+
 vi.mock("@/components/ui/label", () => ({
   Label: ({
     children,
@@ -110,8 +144,10 @@ const defaultProps = {
   isEnabled: false,
   isSyncing: false,
   mappingsCount: 0,
+  onPromoteTriggerChange: vi.fn(),
   onSyncNow: vi.fn(),
   onToggleSync: vi.fn(),
+  promoteTrigger: "manual" as const,
   syncedIssuesCount: 0,
 };
 
@@ -213,5 +249,48 @@ describe("IssuesSyncSection", () => {
   it("disables switch for non-admin", () => {
     render(<IssuesSyncSection {...defaultProps} isAdmin={false} />);
     expect(screen.getByTestId("switch-issues-sync")).toBeDisabled();
+  });
+});
+
+describe("IssuesSyncSection promote trigger", () => {
+  it("switching to on_status sends the default status", async () => {
+    const onPromoteTriggerChange = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <IssuesSyncSection
+        {...defaultProps}
+        onPromoteTriggerChange={onPromoteTriggerChange}
+      />
+    );
+
+    await user.selectOptions(screen.getByRole("combobox"), "on_status");
+
+    expect(onPromoteTriggerChange).toHaveBeenCalledWith("on_status", "planned");
+  });
+
+  it("shows the status picker only for on_status and forwards its value", async () => {
+    const onPromoteTriggerChange = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <IssuesSyncSection
+        {...defaultProps}
+        onPromoteTriggerChange={onPromoteTriggerChange}
+        promoteStatus="planned"
+        promoteTrigger="on_status"
+      />
+    );
+
+    const [, statusSelect] = screen.getAllByRole("combobox");
+    await user.selectOptions(statusSelect, "in_progress");
+
+    expect(onPromoteTriggerChange).toHaveBeenCalledWith(
+      "on_status",
+      "in_progress"
+    );
+  });
+
+  it("hides the status picker for manual", () => {
+    render(<IssuesSyncSection {...defaultProps} />);
+    expect(screen.getAllByRole("combobox")).toHaveLength(1);
   });
 });

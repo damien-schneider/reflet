@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { internalMutation } from "../_generated/server";
+import { changeFeedbackStatus } from "../feedback/status_change";
 import {
   MAX_COMMENT_LENGTH,
   MAX_DESCRIPTION_LENGTH,
@@ -163,26 +164,12 @@ export const setFeedbackStatus = internalMutation({
       throw new Error("Feedback not found");
     }
 
-    const updates: Record<string, unknown> = { updatedAt: Date.now() };
-
-    if (args.statusId !== undefined) {
-      if (args.statusId) {
-        const orgStatus = await ctx.db.get(args.statusId);
-        if (!orgStatus || orgStatus.organizationId !== args.organizationId) {
-          throw new Error("Status not found in this organization");
-        }
-      }
-      updates.organizationStatusId = args.statusId;
-    }
-
-    if (args.status !== undefined) {
-      updates.status = args.status;
-      if (args.status === "completed") {
-        updates.completedAt = Date.now();
-      }
-    }
-
-    await ctx.db.patch(args.feedbackId, updates);
+    await changeFeedbackStatus(ctx, feedback, {
+      actorId: "api",
+      organizationStatusId: args.statusId,
+      source: "api",
+      status: args.status,
+    });
     return { success: true };
   },
   returns: v.object({ success: v.boolean() }),

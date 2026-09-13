@@ -4,6 +4,7 @@ import { components, internal } from "./_generated/api";
 import { httpAction } from "./_generated/server";
 import { authComponent, createAuth } from "./auth/auth";
 import { generateRssFeed } from "./changelog/rss";
+import { registerAdminAgentRoutes } from "./http/admin_agent";
 import { registerAdminContentRoutes } from "./http/admin_content";
 import { registerAdminFeedbackRoutes } from "./http/admin_feedback";
 import { registerAdminManagementRoutes } from "./http/admin_management";
@@ -11,7 +12,6 @@ import { registerAdminSurveyRoutes } from "./http/admin_surveys";
 import { registerAiApiRoutes } from "./http/ai_api";
 import { registerGithubWebhookRoutes } from "./http/github_webhook";
 import { registerPublicApiRoutes } from "./http/public_api";
-import { mcpCorsHandler, mcpHandler } from "./mcp/handler";
 
 const http = httpRouter();
 
@@ -81,12 +81,9 @@ http.route({
 
 // Admin API (v1)
 registerAdminFeedbackRoutes(http);
+registerAdminAgentRoutes(http);
 registerAdminContentRoutes(http);
 registerAdminSurveyRoutes(http);
 registerAdminManagementRoutes(http);
-
-// MCP server (JSON-RPC 2.0 over HTTP)
-http.route({ handler: mcpHandler, method: "POST", path: "/mcp" });
-http.route({ handler: mcpCorsHandler, method: "OPTIONS", path: "/mcp" });
 
 export default http;

@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { getAuthUser } from "../shared/utils";
-import { mapStatusNameToEnum } from "./status_utils";
+import { changeFeedbackStatus } from "./status_change";
 
 export const addTag = mutation({
   args: {
@@ -119,22 +119,10 @@ export const updateOrganizationStatus = mutation({
       throw new Error("You are not a member of this organization");
     }
 
-    // Validate organizationStatusId belongs to the same organization
-    let newStatus = feedback.status;
-    if (args.organizationStatusId) {
-      const status = await ctx.db.get(args.organizationStatusId);
-      if (!status || status.organizationId !== feedback.organizationId) {
-        throw new Error("Invalid status for this organization");
-      }
-
-      // Map custom status name to enum value for the status field
-      newStatus = mapStatusNameToEnum(status.name);
-    }
-
-    await ctx.db.patch(args.feedbackId, {
-      organizationStatusId: args.organizationStatusId,
-      status: newStatus,
-      updatedAt: Date.now(),
+    await changeFeedbackStatus(ctx, feedback, {
+      actorId: user._id,
+      organizationStatusId: args.organizationStatusId ?? null,
+      source: "user",
     });
 
     return args.feedbackId;

@@ -9,9 +9,7 @@ import {
 } from "../_generated/server";
 import { getAuthUser } from "../shared/utils";
 
-// PRIORITY RANKING (higher index = higher priority)
-
-const PRIORITY_RANK: Record<string, number> = {
+export const PRIORITY_RANK: Record<string, number> = {
   critical: 4,
   high: 3,
   low: 1,

@@ -1,9 +1,9 @@
 import { v } from "convex/values";
-import { internal } from "../_generated/api";
 import { mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
 import { PLAN_LIMITS } from "../organizations/queries";
 import { getAuthUser } from "../shared/utils";
+import { scheduleAfterCreate } from "./after_create";
 
 export const listPublic = query({
   args: {
@@ -167,29 +167,10 @@ export const createPublicOrg = mutation({
       voteCount: 0,
     });
 
-    // Schedule duplicate detection
-    await ctx.scheduler.runAfter(
-      0,
-      internal.duplicates.detection.findSimilarFeedback,
-      { feedbackId }
-    );
-
-    // Schedule AI auto-triage
-    await ctx.scheduler.runAfter(
-      0,
-      internal.feedback.auto_tagging_actions.processAutoTagging,
-      { feedbackId }
-    );
-    await ctx.scheduler.runAfter(
-      0,
-      internal.feedback.clarification.generateClarification,
-      { feedbackId }
-    );
-    await ctx.scheduler.runAfter(
-      0,
-      internal.feedback.draft_reply.generateDraftReplyAction,
-      { feedbackId }
-    );
+    await scheduleAfterCreate(ctx, feedbackId, {
+      aiEnrichment: true,
+      autoTagging: true,
+    });
 
     return feedbackId;
   },

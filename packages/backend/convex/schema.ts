@@ -12,6 +12,7 @@ import { organizationTables } from "./organizations/tableFields";
 import { statusTables } from "./status/tableFields";
 import { supportTables } from "./support/tableFields";
 import { surveyTables } from "./surveys/tableFields";
+import { webhookTables } from "./webhooks/tableFields";
 import { widgetTables } from "./widget/tableFields";
 
 export default defineSchema({
@@ -29,4 +30,5 @@ export default defineSchema({
   ...surveyTables,
   ...intelligenceTables,
   ...statusTables,
+  ...webhookTables,
 });

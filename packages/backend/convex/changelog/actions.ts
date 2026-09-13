@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { mutation } from "../_generated/server";
 import { getAuthUser } from "../shared/utils";
+import { applyReleaseStatusToLinkedFeedback } from "./feedback_status";
 
 export const publish = mutation({
   args: {
@@ -46,20 +47,13 @@ export const publish = mutation({
       updatedAt: Date.now(),
     });
 
-    // Update linked feedback status on publish
     if (args.feedbackStatus) {
-      const links = await ctx.db
-        .query("releaseFeedback")
-        .withIndex("by_release", (q) => q.eq("releaseId", args.id))
-        .collect();
-      for (const link of links) {
-        const feedback = await ctx.db.get(link.feedbackId);
-        if (feedback && feedback.status !== args.feedbackStatus) {
-          await ctx.db.patch(link.feedbackId, {
-            status: args.feedbackStatus,
-          });
-        }
-      }
+      await applyReleaseStatusToLinkedFeedback(
+        ctx,
+        args.id,
+        args.feedbackStatus,
+        user._id
+      );
     }
 
     // Schedule email notifications to subscribers

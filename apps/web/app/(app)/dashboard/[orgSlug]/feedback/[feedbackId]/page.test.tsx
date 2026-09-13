@@ -1,5 +1,5 @@
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -42,10 +42,16 @@ const mockComments: unknown[] = [];
 
 const mockUseQuery = vi.fn();
 const mockUseMutation = vi.fn(() => vi.fn());
+const mockUseAction = vi.fn(() => vi.fn());
 
 vi.mock("convex/react", () => ({
+  useAction: () => mockUseAction(),
   useMutation: () => mockUseMutation(),
   useQuery: (...args: unknown[]) => mockUseQuery(...args),
+}));
+
+vi.mock("@ctrl-ui/react/ui/toast", () => ({
+  toast: { error: vi.fn(), success: vi.fn() },
 }));
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
@@ -55,6 +61,14 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
       queries: { get: "feedback.get" },
       triage_actions: { assign: "feedback_triage_actions.assign" },
       votes: { toggle: "votes.toggle" },
+    },
+    integrations: {
+      github: {
+        client_actions: {
+          createIssueFromFeedback: "github.createIssueFromFeedback",
+        },
+        queries: { getConnectionStatus: "github.getConnectionStatus" },
+      },
     },
     organizations: {
       members: {
@@ -102,6 +116,7 @@ vi.mock("@phosphor-icons/react", () => ({
   ArrowLeft: () => <span data-testid="arrow-left" />,
   CaretUp: () => <span data-testid="caret-up" />,
   ChatCircle: () => <span data-testid="chat-circle" />,
+  GithubLogo: () => <span data-testid="github-logo" />,
   PushPin: () => <span data-testid="push-pin" />,
   User: () => <span data-testid="user-icon" />,
 }));
@@ -928,5 +943,83 @@ describe("FeedbackDetailPage", () => {
       expect(screen.getByText("Test Feedback Title")).toBeInTheDocument();
       expect(screen.queryByText("Bug")).not.toBeInTheDocument();
     });
+  });
+});
+
+describe("FeedbackDetailPage GitHub issue", () => {
+  const respondWith =
+    (overrides: Record<string, unknown>) =>
+    (queryFn: unknown, args: unknown) => {
+      if (args === "skip") {
+        return;
+      }
+      const responses: Record<string, unknown> = {
+        "comments.list": mockComments,
+        "feedback.get": mockFeedback,
+        "github.getConnectionStatus": { hasRepository: true },
+        "members.getMembership": { role: "admin" },
+        "members.list": [],
+        "organization_statuses.list": mockStatuses,
+        "organizations.getBySlug": mockOrg,
+        ...overrides,
+      };
+      return responses[String(queryFn)];
+    };
+
+  const params = Promise.resolve({
+    feedbackId: mockFeedback._id,
+    orgSlug: "my-organization",
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("links the GitHub issue once the feedback is promoted", async () => {
+    mockUseQuery.mockImplementation(
+      respondWith({
+        "feedback.get": {
+          ...mockFeedback,
+          githubHtmlUrl: "https://github.com/acme/app/issues/42",
+          githubIssueNumber: 42,
+        },
+      })
+    );
+
+    render(<FeedbackDetailPage params={params} />);
+
+    await waitFor(() => {
+      expect(screen.getByRole("link", { name: "#42" })).toHaveAttribute(
+        "href",
+        "https://github.com/acme/app/issues/42"
+      );
+    });
+    expect(screen.queryByText("Send to GitHub")).toBeNull();
+  });
+
+  it("lets admins with a repository send unlinked feedback to GitHub", async () => {
+    const createIssue = vi.fn(async () => ({ htmlUrl: "u", issueNumber: 7 }));
+    mockUseAction.mockReturnValue(createIssue);
+    mockUseQuery.mockImplementation(respondWith({}));
+
+    render(<FeedbackDetailPage params={params} />);
+
+    fireEvent.click(await screen.findByText("Send to GitHub"));
+    await waitFor(() => {
+      expect(createIssue).toHaveBeenCalledWith({
+        feedbackId: mockFeedback._id,
+      });
+    });
+  });
+
+  it("hides the GitHub action without a connected repository", async () => {
+    mockUseQuery.mockImplementation(
+      respondWith({ "github.getConnectionStatus": { hasRepository: false } })
+    );
+
+    render(<FeedbackDetailPage params={params} />);
+
+    await screen.findByText("Test Feedback Title");
+    expect(screen.queryByText("Send to GitHub")).toBeNull();
   });
 });

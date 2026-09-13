@@ -8,6 +8,12 @@ import {
   websiteReferenceStatus,
 } from "../../shared/validators";
 
+export const promoteTrigger = v.union(
+  v.literal("manual"),
+  v.literal("on_status"),
+  v.literal("on_create")
+);
+
 export const githubTables = {
   githubConnections: defineTable({
     accountAvatarUrl: v.optional(v.string()),
@@ -29,6 +35,8 @@ export const githubTables = {
     lastSyncStatus: v.optional(githubSyncStatus),
     linkedByUserId: v.optional(v.string()),
     organizationId: v.id("organizations"),
+    promoteStatus: v.optional(feedbackStatus),
+    promoteTrigger: v.optional(promoteTrigger),
     repositoryDefaultBranch: v.optional(v.string()),
     repositoryFullName: v.optional(v.string()),
     repositoryId: v.optional(v.string()),

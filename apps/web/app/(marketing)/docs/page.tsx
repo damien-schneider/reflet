@@ -30,9 +30,10 @@ const sections = [
     title: "Component Library",
   },
   {
-    description: "Connect AI assistants like Cursor, Claude Code and Copilot",
-    href: "/docs/mcp",
-    title: "MCP Server",
+    description:
+      "Let coding agents read, claim and close feedback from a shell",
+    href: "/docs/cli",
+    title: "CLI for agents",
   },
 ] as const;
 

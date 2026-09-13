@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 
 export type ProjectTab =
   | "github"
-  | "ai-mcp"
+  | "agents"
   | "api-keys"
   | "general"
   | "domains"
@@ -39,8 +39,8 @@ const NAV_ITEMS: NavItem[] = [
   },
   {
     icon: Robot,
-    id: "ai-mcp",
-    label: "AI & MCP",
+    id: "agents",
+    label: "Agents & CLI",
   },
   {
     icon: Key,

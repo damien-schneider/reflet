@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
+import { changeFeedbackStatus } from "../feedback/status_change";
 import { getAuthUser } from "../shared/utils";
 
 // Default statuses to create for new organizations (used as roadmap columns)
@@ -178,11 +179,11 @@ export const remove = mutation({
       )
       .collect();
 
-    const now = Date.now();
     for (const feedback of feedbackItems) {
-      await ctx.db.patch(feedback._id, {
+      await changeFeedbackStatus(ctx, feedback, {
+        actorId: user._id,
         organizationStatusId: args.moveToStatusId,
-        updatedAt: now,
+        source: "user",
       });
     }
 

@@ -60,6 +60,11 @@ export function GitHubSection({
     ) => {
       await mutations.selectRepositoryMutation(args);
     },
+    setPromoteTrigger: async (
+      args: Parameters<typeof mutations.setPromoteTriggerMutation>[0]
+    ) => {
+      await mutations.setPromoteTriggerMutation(args);
+    },
     toggleAutoSync: async (
       args: Parameters<typeof mutations.toggleAutoSyncMutation>[0]
     ) => {
@@ -181,8 +186,11 @@ function GitHubRepoDetails({
             lastSyncAt={queries.issueSyncStatus?.lastSyncAt}
             lastSyncStatus={queries.issueSyncStatus?.lastSyncStatus}
             mappingsCount={queries.issueSyncStatus?.mappingsCount ?? 0}
+            onPromoteTriggerChange={settings.handleSetPromoteTrigger}
             onSyncNow={settings.handleSyncIssues}
             onToggleSync={settings.handleToggleIssuesSync}
+            promoteStatus={queries.issueSyncStatus?.promoteStatus}
+            promoteTrigger={queries.issueSyncStatus?.promoteTrigger ?? "manual"}
             syncedIssuesCount={queries.issueSyncStatus?.syncedIssuesCount ?? 0}
           />
           <LabelMappingsSection

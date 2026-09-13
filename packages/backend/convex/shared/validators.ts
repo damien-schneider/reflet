@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { type Infer, v } from "convex/values";
 
 // ============================================
 // SCHEMA VALIDATORS (shared across domains)
@@ -33,6 +33,16 @@ export const feedbackStatus = v.union(
   v.literal("completed"),
   v.literal("closed")
 );
+
+export type FeedbackStatusValue = Infer<typeof feedbackStatus>;
+
+export const FEEDBACK_STATUS_VALUES: readonly FeedbackStatusValue[] =
+  feedbackStatus.members.map((member) => member.value);
+
+export const isFeedbackStatusValue = (
+  value: unknown
+): value is FeedbackStatusValue =>
+  FEEDBACK_STATUS_VALUES.some((status) => status === value);
 
 export const notificationType = v.union(
   v.literal("status_change"),

@@ -2,6 +2,7 @@ import type { httpRouter } from "convex/server";
 import { z } from "zod";
 import { internal } from "../_generated/api";
 import { httpAction } from "../_generated/server";
+import { hmacSha256Hex, signaturesMatch } from "../shared/hmac";
 
 type Router = ReturnType<typeof httpRouter>;
 
@@ -41,6 +42,7 @@ const issuePayloadSchema = z.object({
     milestone: z.object({ title: z.string() }).nullable(),
     number: z.number(),
     state: z.enum(["open", "closed"]),
+    state_reason: z.string().nullable().optional(),
     title: z.string(),
     updated_at: z.string(),
     user: z.object({ avatar_url: z.string(), login: z.string() }).nullable(),
@@ -87,37 +89,8 @@ async function verifyWebhookSignature(
   signature: string,
   secret: string
 ): Promise<boolean> {
-  const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(secret),
-    { hash: "SHA-256", name: "HMAC" },
-    false,
-    ["sign"]
-  );
-  const signed = await crypto.subtle.sign("HMAC", key, encoder.encode(body));
-  const hexDigest = Array.from(new Uint8Array(signed))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-  const expected = `sha256=${hexDigest}`;
-
-  // Constant-time comparison via double-HMAC: avoids bitwise operators
-  // while preventing timing attacks on the string comparison
-  const verifyKey = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode("verify"),
-    { hash: "SHA-256", name: "HMAC" },
-    false,
-    ["sign"]
-  );
-  const [hmacExpected, hmacActual] = await Promise.all([
-    crypto.subtle.sign("HMAC", verifyKey, encoder.encode(expected)),
-    crypto.subtle.sign("HMAC", verifyKey, encoder.encode(signature)),
-  ]);
-
-  const a = new Uint8Array(hmacExpected);
-  const b = new Uint8Array(hmacActual);
-  return a.length === b.length && a.every((val, i) => val === b[i]);
+  const expected = `sha256=${await hmacSha256Hex(secret, body)}`;
+  return await signaturesMatch(expected, signature);
 }
 
 // ============================================
@@ -214,6 +187,7 @@ async function handleIssueWebhook(
           milestone: issue.milestone?.title,
           number: issue.number,
           state: issue.state,
+          stateReason: issue.state_reason ?? undefined,
           title: issue.title,
           updatedAt: new Date(issue.updated_at).getTime(),
         },

@@ -2,14 +2,14 @@
 
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Card, CardHeader, CardTitle } from "@ctrl-ui/react/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@ctrl-ui/react/ui/dropdown-menu";
 import { DotsThreeVertical, Trash } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import {
-  DropdownList,
-  DropdownListContent,
-  DropdownListItem,
-  DropdownListTrigger,
-} from "@/components/ui/dropdown-menu";
 import { getTagSwatchClass } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
 
@@ -39,8 +39,8 @@ export function TagCard({ tag, isAdmin, onEdit, onDelete }: TagCardProps) {
             <CardTitle className="text-base">{tag.name}</CardTitle>
           </div>
           {isAdmin && (
-            <DropdownList>
-              <DropdownListTrigger
+            <DropdownMenu>
+              <DropdownMenuTrigger
                 render={(props: React.ComponentProps<"button">) => (
                   <Button
                     {...props}
@@ -52,17 +52,17 @@ export function TagCard({ tag, isAdmin, onEdit, onDelete }: TagCardProps) {
                   </Button>
                 )}
               />
-              <DropdownListContent align="end">
-                <DropdownListItem onClick={onEdit}>Edit</DropdownListItem>
-                <DropdownListItem
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={onEdit}>Edit</DropdownMenuItem>
+                <DropdownMenuItem
                   className="text-destructive"
                   onClick={onDelete}
                 >
                   <Trash className="mr-2 h-4 w-4" />
                   Delete
-                </DropdownListItem>
-              </DropdownListContent>
-            </DropdownList>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
       </CardHeader>

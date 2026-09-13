@@ -6,6 +6,8 @@
 import { v } from "convex/values";
 import { api, internal } from "../../_generated/api";
 import { action } from "../../_generated/server";
+import { randomSecretHex } from "../../shared/hmac";
+import type { GithubIssueRef } from "./issue_promote";
 
 interface Repository {
   defaultBranch: string;
@@ -270,12 +272,7 @@ export const setupWebhook = action({
       { installationId: connection.installationId }
     );
 
-    // Generate webhook secret
-    const bytes = new Uint8Array(32);
-    crypto.getRandomValues(bytes);
-    const webhookSecret = Array.from(bytes)
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
+    const webhookSecret = randomSecretHex();
 
     const convexSiteUrl = process.env.CONVEX_SITE_URL ?? "";
     const webhookUrl = `${convexSiteUrl}/github-webhook`;
@@ -297,5 +294,25 @@ export const setupWebhook = action({
     });
 
     return { success: true, webhook: { id: webhookResult.webhookId } };
+  },
+});
+
+export const createIssueFromFeedback = action({
+  args: { feedbackId: v.id("feedback") },
+  handler: async (ctx, args): Promise<GithubIssueRef> => {
+    const feedback = await ctx.runQuery(api.feedback.queries.get, {
+      id: args.feedbackId,
+    });
+    if (!feedback) {
+      throw new Error("Feedback not found");
+    }
+    const isAdmin = feedback.role === "admin" || feedback.role === "owner";
+    if (!isAdmin) {
+      throw new Error("Only admins can create GitHub issues");
+    }
+    return await ctx.runAction(
+      internal.integrations.github.issue_promote.promoteFeedback,
+      { feedbackId: args.feedbackId, organizationId: feedback.organizationId }
+    );
   },
 });

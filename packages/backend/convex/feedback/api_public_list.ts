@@ -231,6 +231,78 @@ export const listFeedbackByOrganization = internalQuery({
   },
 });
 
+export async function shapeFeedbackDetail(
+  ctx: QueryCtx,
+  feedback: Doc<"feedback">,
+  options: {
+    externalUserId?: Id<"externalUsers">;
+    includePrivateContext: boolean;
+  }
+) {
+  let organizationStatus: {
+    color: string;
+    id: Id<"organizationStatuses">;
+    name: string;
+  } | null = null;
+  if (feedback.organizationStatusId) {
+    const status = await ctx.db.get(feedback.organizationStatusId);
+    if (status) {
+      organizationStatus = {
+        color: status.color,
+        id: status._id,
+        name: status.name,
+      };
+    }
+  }
+
+  let isSubscribed = false;
+  if (options.externalUserId) {
+    const subscription = await ctx.db
+      .query("feedbackSubscriptions")
+      .withIndex("by_feedback_external_user", (q) =>
+        q
+          .eq("feedbackId", feedback._id)
+          .eq("externalUserId", options.externalUserId)
+      )
+      .unique();
+    isSubscribed = subscription !== null;
+  }
+
+  const privateFields = options.includePrivateContext
+    ? {
+        assigneeId: feedback.assigneeId,
+        claimedBy: feedback.claimedBy,
+        context: feedback.context,
+        githubHtmlUrl: feedback.githubHtmlUrl,
+        githubIssueNumber: feedback.githubIssueNumber,
+        syncedFromGithub: feedback.syncedFromGithub,
+      }
+    : {};
+
+  return {
+    ...privateFields,
+    author: await loadAuthor(
+      ctx,
+      feedback.externalUserId,
+      options.includePrivateContext
+    ),
+    commentCount: feedback.commentCount,
+    completedAt: feedback.completedAt,
+    createdAt: feedback.createdAt,
+    description: feedback.description,
+    hasVoted: await hasVotedOn(ctx, feedback._id, options.externalUserId),
+    id: feedback._id,
+    isPinned: feedback.isPinned,
+    isSubscribed,
+    organizationStatus,
+    status: feedback.status,
+    tags: await loadTags(ctx, feedback._id),
+    title: feedback.title,
+    updatedAt: feedback.updatedAt,
+    voteCount: feedback.voteCount,
+  };
+}
+
 export const getFeedbackByOrganization = internalQuery({
   args: {
     externalUserId: v.optional(v.id("externalUsers")),
@@ -250,57 +322,9 @@ export const getFeedbackByOrganization = internalQuery({
       return null;
     }
 
-    let organizationStatus: {
-      color: string;
-      id: Id<"organizationStatuses">;
-      name: string;
-    } | null = null;
-    if (feedback.organizationStatusId) {
-      const status = await ctx.db.get(feedback.organizationStatusId);
-      if (status) {
-        organizationStatus = {
-          color: status.color,
-          id: status._id,
-          name: status.name,
-        };
-      }
-    }
-
-    let isSubscribed = false;
-    if (args.externalUserId) {
-      const subscription = await ctx.db
-        .query("feedbackSubscriptions")
-        .withIndex("by_feedback_external_user", (q) =>
-          q
-            .eq("feedbackId", args.feedbackId)
-            .eq("externalUserId", args.externalUserId)
-        )
-        .unique();
-      isSubscribed = subscription !== null;
-    }
-
-    return {
-      assigneeId: args.includePrivateContext ? feedback.assigneeId : undefined,
-      author: await loadAuthor(
-        ctx,
-        feedback.externalUserId,
-        args.includePrivateContext === true
-      ),
-      commentCount: feedback.commentCount,
-      completedAt: feedback.completedAt,
-      context: args.includePrivateContext ? feedback.context : undefined,
-      createdAt: feedback.createdAt,
-      description: feedback.description,
-      hasVoted: await hasVotedOn(ctx, args.feedbackId, args.externalUserId),
-      id: feedback._id,
-      isPinned: feedback.isPinned,
-      isSubscribed,
-      organizationStatus,
-      status: feedback.status,
-      tags: await loadTags(ctx, args.feedbackId),
-      title: feedback.title,
-      updatedAt: feedback.updatedAt,
-      voteCount: feedback.voteCount,
-    };
+    return await shapeFeedbackDetail(ctx, feedback, {
+      externalUserId: args.externalUserId,
+      includePrivateContext: args.includePrivateContext === true,
+    });
   },
 });

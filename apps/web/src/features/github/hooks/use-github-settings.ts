@@ -15,6 +15,8 @@ type IssueStatus =
   | "completed"
   | "closed";
 
+type PromoteTrigger = "manual" | "on_status" | "on_create";
+
 interface Repository {
   defaultBranch: string;
   description: string | null;
@@ -47,6 +49,11 @@ interface UseGitHubSettingsProps {
     repositoryFullName: string;
     defaultBranch: string;
   }) => Promise<void>;
+  setPromoteTrigger: (args: {
+    organizationId: Id<"organizations">;
+    promoteTrigger: PromoteTrigger;
+    promoteStatus?: IssueStatus;
+  }) => Promise<void>;
   toggleAutoSync: (args: {
     organizationId: Id<"organizations">;
     enabled: boolean;
@@ -76,6 +83,7 @@ export function useGitHubSettings({
   hasRepository,
   hasWebhook,
   selectRepository,
+  setPromoteTrigger,
   toggleAutoSync,
   disconnect,
   toggleIssuesSync,
@@ -308,6 +316,20 @@ export function useGitHubSettings({
     [orgId, toggleIssuesSync]
   );
 
+  const handleSetPromoteTrigger = useCallback(
+    async (promoteTrigger: PromoteTrigger, promoteStatus?: IssueStatus) => {
+      if (!orgId) {
+        return;
+      }
+      await setPromoteTrigger({
+        organizationId: orgId,
+        promoteStatus,
+        promoteTrigger,
+      });
+    },
+    [orgId, setPromoteTrigger]
+  );
+
   const handleAddLabelMapping = useCallback(
     async (mapping: {
       githubLabelName: string;
@@ -352,6 +374,7 @@ export function useGitHubSettings({
     handleDeleteLabelMapping,
     handleDisconnect,
     handleSelectRepository,
+    handleSetPromoteTrigger,
     handleSetup,
     handleSyncIssues,
     handleSyncReleases,

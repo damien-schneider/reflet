@@ -193,6 +193,8 @@ export const feedbackTables = {
     assigneeId: v.optional(v.string()),
     attachments: v.optional(v.array(v.string())),
     authorId: v.optional(v.string()),
+    claimedAt: v.optional(v.number()),
+    claimedBy: v.optional(v.string()),
     commentCount: v.number(),
     completedAt: v.optional(v.number()),
     complexity: v.optional(

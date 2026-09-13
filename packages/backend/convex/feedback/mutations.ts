@@ -6,31 +6,18 @@ import { mutation } from "../_generated/server";
 import { PLAN_LIMITS } from "../organizations/queries";
 import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from "../shared/constants";
 import { getAuthUser } from "../shared/utils";
-import { feedbackStatus, validateInputLength } from "../shared/validators";
+import {
+  type FeedbackStatusValue,
+  feedbackStatus,
+  isFeedbackStatusValue,
+  validateInputLength,
+} from "../shared/validators";
+import { afterApproval, scheduleAfterCreate } from "./after_create";
+import { changeFeedbackStatus } from "./status_change";
 
 // ============================================
 // HELPERS
 // ============================================
-
-type FeedbackStatusValue =
-  | "open"
-  | "under_review"
-  | "planned"
-  | "in_progress"
-  | "completed"
-  | "closed";
-
-const FEEDBACK_STATUS_VALUES: readonly string[] = [
-  "open",
-  "under_review",
-  "planned",
-  "in_progress",
-  "completed",
-  "closed",
-];
-
-const isFeedbackStatusValue = (value: unknown): value is FeedbackStatusValue =>
-  typeof value === "string" && FEEDBACK_STATUS_VALUES.includes(value);
 
 const resolveTagSettings = async (
   ctx: MutationCtx,
@@ -205,31 +192,10 @@ export const create = mutation({
       }
     }
 
-    // Schedule duplicate detection
-    await ctx.scheduler.runAfter(
-      0,
-      internal.duplicates.detection.findSimilarFeedback,
-      { feedbackId }
-    );
-
-    // Schedule AI auto-triage (only if no tag was manually assigned)
-    if (!args.tagId) {
-      await ctx.scheduler.runAfter(
-        0,
-        internal.feedback.auto_tagging_actions.processAutoTagging,
-        { feedbackId }
-      );
-    }
-    await ctx.scheduler.runAfter(
-      0,
-      internal.feedback.clarification.generateClarification,
-      { feedbackId }
-    );
-    await ctx.scheduler.runAfter(
-      0,
-      internal.feedback.draft_reply.generateDraftReplyAction,
-      { feedbackId }
-    );
+    await scheduleAfterCreate(ctx, feedbackId, {
+      aiEnrichment: true,
+      autoTagging: !args.tagId,
+    });
 
     return feedbackId;
   },
@@ -285,20 +251,18 @@ export const update = mutation({
     }
 
     if (isAdmin) {
-      const { id, ...updates } = args;
-
-      let completedAt = feedback.completedAt;
-      if (args.status === "completed" && feedback.status !== "completed") {
-        completedAt = Date.now();
-      } else if (args.status && args.status !== "completed") {
-        completedAt = undefined;
-      }
-
-      await ctx.db.patch(id, {
-        ...updates,
-        completedAt,
-        updatedAt: Date.now(),
+      const { id, organizationStatusId, status, ...updates } = args;
+      await ctx.db.patch(id, { ...updates, updatedAt: Date.now() });
+      await changeFeedbackStatus(ctx, feedback, {
+        actorId: user._id,
+        organizationStatusId,
+        source: "user",
+        status,
       });
+      const becameApproved = args.isApproved === true && !feedback.isApproved;
+      if (becameApproved) {
+        await afterApproval(ctx, { ...feedback, isApproved: true });
+      }
     } else {
       const { id, title, description } = args;
       if (

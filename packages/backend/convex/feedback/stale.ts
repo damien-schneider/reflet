@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { internalMutation, mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
+import { changeFeedbackStatus } from "./status_change";
 
 const MS_PER_DAY = 86_400_000;
 
@@ -70,7 +71,6 @@ export const updateSettings = mutation({
  * Called by a daily cron job.
  */
 export const archiveStaleFeedback = internalMutation({
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: batch archival logic with multiple status checks
   handler: async (ctx) => {
     const now = Date.now();
 
@@ -116,11 +116,10 @@ export const archiveStaleFeedback = internalMutation({
           continue;
         }
 
-        const newStatus = settings.action === "archive" ? "closed" : "closed";
-
-        await ctx.db.patch(item._id, {
-          status: newStatus,
-          updatedAt: now,
+        await changeFeedbackStatus(ctx, item, {
+          actorId: "system",
+          source: "stale",
+          status: "closed",
         });
 
         totalProcessed++;

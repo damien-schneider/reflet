@@ -244,7 +244,7 @@ describe("admin_api_feedback - setFeedbackStatus", () => {
         organizationId: orgId,
         statusId: foreignStatusId,
       })
-    ).rejects.toThrow("Status not found in this organization");
+    ).rejects.toThrow("Invalid status for this organization");
   });
 });
 

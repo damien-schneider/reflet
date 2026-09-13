@@ -1,7 +1,59 @@
 import { v } from "convex/values";
 import { internal } from "../../_generated/api";
 import type { Id } from "../../_generated/dataModel";
-import { internalMutation } from "../../_generated/server";
+import { internalMutation, type MutationCtx } from "../../_generated/server";
+import { changeFeedbackStatus } from "../../feedback/status_change";
+import { isFinishedStatus } from "../../feedback/status_utils";
+import type { FeedbackStatusValue } from "../../shared/validators";
+
+interface IncomingIssue {
+  body?: string;
+  number: number;
+  state: "open" | "closed";
+  stateReason?: string;
+  title: string;
+}
+
+function statusFromIssue(
+  current: FeedbackStatusValue,
+  action: string,
+  issue: IncomingIssue
+): FeedbackStatusValue | undefined {
+  if (issue.state === "closed") {
+    return issue.stateReason === "completed" ? "completed" : "closed";
+  }
+  if (action === "reopened" && isFinishedStatus(current)) {
+    return "open";
+  }
+}
+
+async function syncLinkedFeedback(
+  ctx: MutationCtx,
+  feedbackId: Id<"feedback">,
+  action: string,
+  issue: IncomingIssue
+): Promise<void> {
+  const feedback = await ctx.db.get(feedbackId);
+  if (!feedback) {
+    return;
+  }
+  if (feedback.syncedFromGithub) {
+    await ctx.db.patch(feedback._id, {
+      description: issue.body ?? "",
+      title: issue.title,
+      updatedAt: Date.now(),
+    });
+  }
+  const status = statusFromIssue(feedback.status, action, issue);
+  if (status) {
+    await changeFeedbackStatus(ctx, feedback, {
+      actorId: "system",
+      details: { issueNumber: issue.number },
+      source: "github",
+      status,
+    });
+  }
+}
 
 export const processReleaseWebhook = internalMutation({
   args: {
@@ -140,6 +192,7 @@ export const processIssueWebhook = internalMutation({
       milestone: v.optional(v.string()),
       number: v.number(),
       state: v.union(v.literal("open"), v.literal("closed")),
+      stateReason: v.optional(v.string()),
       title: v.string(),
       updatedAt: v.number(),
     }),
@@ -183,19 +236,13 @@ export const processIssueWebhook = internalMutation({
         title: args.issue.title,
       });
 
-      // Update linked feedback if exists
       if (existing.refletFeedbackId) {
-        const feedback = await ctx.db.get(existing.refletFeedbackId);
-        if (feedback) {
-          const newStatus =
-            args.issue.state === "closed" ? "closed" : feedback.status;
-          await ctx.db.patch(existing.refletFeedbackId, {
-            description: args.issue.body ?? "",
-            status: newStatus,
-            title: args.issue.title,
-            updatedAt: now,
-          });
-        }
+        await syncLinkedFeedback(
+          ctx,
+          existing.refletFeedbackId,
+          args.action,
+          args.issue
+        );
       }
     } else {
       // Insert new issue
@@ -248,14 +295,8 @@ export const processIssueWebhook = internalMutation({
   },
 });
 
-// Regex to match feedback references in PR title/body
 const FEEDBACK_REF_REGEX = /(?:fixes|closes|resolves)\s+reflet:([a-z0-9]+)/gi;
 
-/**
- * Process a merged pull request webhook.
- * Looks for feedback references like "fixes reflet:{feedbackId}" in PR title/body
- * and updates the referenced feedback status to "completed".
- */
 export const processPullRequestWebhook = internalMutation({
   args: {
     connectionId: v.id("githubConnections"),
@@ -274,16 +315,12 @@ export const processPullRequestWebhook = internalMutation({
   },
   handler: async (ctx, args) => {
     const { pullRequest } = args;
-    const now = Date.now();
 
-    // Combine title and body to search for references
     const searchText = [pullRequest.title, pullRequest.body ?? ""].join("\n");
 
-    // Find all feedback references
     const feedbackIds: string[] = [];
     let match: RegExpExecArray | null = null;
 
-    // Reset regex state
     FEEDBACK_REF_REGEX.lastIndex = 0;
     match = FEEDBACK_REF_REGEX.exec(searchText);
     while (match !== null) {
@@ -297,48 +334,21 @@ export const processPullRequestWebhook = internalMutation({
 
     let processed = 0;
 
-    for (const feedbackId of feedbackIds) {
-      try {
-        const feedback = await ctx.db.get(feedbackId as Id<"feedback">);
+    for (const feedbackRef of feedbackIds) {
+      const feedbackId = ctx.db.normalizeId("feedback", feedbackRef);
+      const feedback = feedbackId ? await ctx.db.get(feedbackId) : null;
+      if (!feedback || feedback.organizationId !== args.organizationId) {
+        continue;
+      }
 
-        if (!feedback) {
-          continue;
-        }
-
-        // Verify feedback belongs to the same organization
-        if (feedback.organizationId !== args.organizationId) {
-          continue;
-        }
-
-        // Only update if not already completed
-        if (feedback.status === "completed") {
-          continue;
-        }
-
-        await ctx.db.patch(feedback._id, {
-          status: "completed",
-          updatedAt: now,
-        });
-
-        // Create activity log
-        await ctx.db.insert("activityLogs", {
-          action: "status_changed",
-          authorId: "system",
-          createdAt: now,
-          details: JSON.stringify({
-            newStatus: "completed",
-            oldStatus: feedback.status,
-            prNumber: pullRequest.number,
-            prUrl: pullRequest.htmlUrl,
-            source: "github_pr",
-          }),
-          feedbackId: feedback._id,
-          organizationId: args.organizationId,
-        });
-
+      const changed = await changeFeedbackStatus(ctx, feedback, {
+        actorId: "system",
+        details: { prNumber: pullRequest.number, prUrl: pullRequest.htmlUrl },
+        source: "github",
+        status: "completed",
+      });
+      if (changed) {
         processed++;
-      } catch {
-        // Skip individual processing failures
       }
     }
 
