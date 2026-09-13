@@ -1,6 +1,6 @@
 {
   "name": "reflet-cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Add the Reflet feedback widget to any app and drive the Reflet admin API from your terminal",
   "license": "MIT",
   "author": "Reflet <hello@reflet.app>",
