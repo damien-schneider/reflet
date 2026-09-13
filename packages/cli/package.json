@@ -1,7 +1,7 @@
 {
   "name": "reflet-cli",
   "version": "0.1.0",
-  "description": "Add the Reflet feedback widget to any React app in one command",
+  "description": "Add the Reflet feedback widget to any app and drive the Reflet admin API from your terminal",
   "license": "MIT",
   "author": "Reflet <hello@reflet.app>",
   "homepage": "https://reflet.app",
@@ -19,7 +19,8 @@
     "widget",
     "cli",
     "bug-report",
-    "screenshot"
+    "screenshot",
+    "agent"
   ],
   "type": "module",
   "bin": {
@@ -53,6 +54,7 @@
     "access": "public"
   },
   "exports": {
+    "./agent-prompt": "./src/agent-prompt.ts",
     "./prompt": "./src/setup-prompt.ts"
   }
 }

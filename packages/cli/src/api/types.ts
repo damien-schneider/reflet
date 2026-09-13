@@ -1,10 +1,3 @@
-/**
- * Response types for the Reflet Admin API.
- *
- * IDs are plain strings (Convex branded Id<T> types are not
- * available outside the backend package).
- */
-
 export interface SuccessResponse {
   success: boolean;
 }
@@ -115,8 +108,23 @@ export interface FeedbackListResponse {
 
 export interface FeedbackDetailResponse extends FeedbackItem {
   assigneeId?: string;
+  claimedBy?: string;
   context?: FeedbackReportContext;
+  githubHtmlUrl?: string;
+  githubIssueNumber?: number;
   isSubscribed: boolean;
+  syncedFromGithub?: boolean;
+}
+
+export interface GithubIssueResponse {
+  htmlUrl: string;
+  issueNumber: number;
+}
+
+export interface FeedbackQueueFilter {
+  limit?: number;
+  statuses?: string[];
+  tagIds?: string[];
 }
 
 export interface CreateFeedbackResponse {

@@ -67,10 +67,6 @@ export class RefletTransport {
     return data as T;
   }
 
-  // ============================================
-  // Query param helpers
-  // ============================================
-
   protected buildQuery(
     params: Record<string, string | number | boolean | undefined>
   ): string {

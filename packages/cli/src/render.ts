@@ -32,3 +32,41 @@ export function indent(text: string, width = 2): string {
     .map((line) => (line ? `${pad}${line}` : line))
     .join("\n");
 }
+
+type Cell = string | number | boolean | null | undefined;
+
+function isCell(value: unknown): value is Cell {
+  return value === null || typeof value !== "object";
+}
+
+function cellText(value: Cell): string {
+  return value === null || value === undefined ? "" : String(value);
+}
+
+export function table(rows: Record<string, unknown>[]): string {
+  const first = rows[0];
+  if (!first) {
+    return style.dim("(empty)");
+  }
+  const columns = Object.keys(first).filter((key) => isCell(first[key]));
+  const widths = columns.map((column) =>
+    Math.max(
+      column.length,
+      ...rows.map(
+        (row) => cellText(isCell(row[column]) ? row[column] : "").length
+      )
+    )
+  );
+  const line = (cells: string[]) =>
+    cells.map((cell, index) => cell.padEnd(widths[index] ?? 0)).join("  ");
+  return [
+    style.bold(line(columns)),
+    ...rows.map((row) =>
+      line(
+        columns.map((column) =>
+          cellText(isCell(row[column]) ? row[column] : "")
+        )
+      )
+    ),
+  ].join("\n");
+}

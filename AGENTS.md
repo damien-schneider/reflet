@@ -24,7 +24,7 @@ packages/config/       → Shared tsconfig, vitest, biome
 packages/email/        → Email templates
 packages/widget/       → Embeddable widget
 packages/sdk/          → SDK
-packages/mcp-server/   → MCP server
+packages/cli/          → reflet CLI (widget setup + admin API for agents)
 ```
 
 Feature folders: `components/` `hooks/` `stores/` `lib/` `types/` `features/` (sub-features)

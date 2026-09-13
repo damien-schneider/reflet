@@ -3,8 +3,11 @@ import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { createInterface } from "node:readline/promises";
 import { parseArgs } from "node:util";
+import { AGENT_PROMPT } from "./agent-prompt";
+import { ADMIN_RESOURCES, runAdmin } from "./commands/admin";
 import { runDoctor } from "./commands/doctor";
 import { type InitReport, runInit, SDK_PACKAGE } from "./commands/init";
+import { runLogin } from "./commands/login";
 import { nodeFileSystem, type PackageManager } from "./project";
 import { heading, indent, SYMBOL, style } from "./render";
 import { SETUP_PROMPT } from "./setup-prompt";
@@ -33,12 +36,19 @@ const INSTALL_COMMAND: Record<PackageManager, string[]> = {
   yarn: ["add"],
 };
 
-const HELP = `${style.bold("reflet")} — add the Reflet feedback widget to a React app
+const HELP = `${style.bold("reflet")} — the Reflet feedback widget and admin API from your terminal
 
-${style.bold("Usage")}
+${style.bold("Widget setup")}
   reflet init [options]     install the SDK and mount the widget
   reflet doctor             check an existing setup
   reflet prompt             print the setup prompt for a coding agent
+
+${style.bold("Admin API")} ${style.dim("(REFLET_API_KEY or reflet login)")}
+  reflet login              store a secret key in ~/.reflet/config.json
+  reflet prompt agent       print the fix-a-feedback loop for a coding agent
+  reflet <resource> <action> [args] [--flags] [--json]
+  resources: ${ADMIN_RESOURCES.join(", ")}
+  reflet <resource>         list its actions
 
 ${style.bold("Options for init")}
   --public-key <key>        your fb_pub_… key from the Reflet dashboard
@@ -49,9 +59,10 @@ ${style.bold("Options for init")}
   --cwd <dir>               project root (defaults to the current directory)
 
 ${style.bold("Examples")}
-  npx reflet-cli init
   npx reflet-cli init --public-key fb_pub_abc --yes
-  npx reflet-cli doctor`;
+  npx reflet-cli login --api-key fb_sec_abc
+  npx reflet-cli feedback claim-next --json
+  npx reflet-cli feedback status <id> completed`;
 
 function install(manager: PackageManager): void {
   const args = [...INSTALL_COMMAND[manager], SDK_PACKAGE];
@@ -172,7 +183,19 @@ function commandDoctor(cwd: string): number {
 }
 
 export async function run(argv: string[]): Promise<number> {
-  const { positionals, values } = parseArgs({
+  const [command, subcommand] = argv;
+  if (command !== undefined && ADMIN_RESOURCES.includes(command)) {
+    return await runAdmin(argv);
+  }
+  if (command === "login") {
+    return await runLogin(argv.slice(1));
+  }
+  if (command === "prompt" && subcommand === "agent") {
+    process.stdout.write(`${AGENT_PROMPT}\n`);
+    return 0;
+  }
+
+  const { values } = parseArgs({
     allowPositionals: true,
     args: argv,
     options: {
@@ -191,8 +214,6 @@ export async function run(argv: string[]): Promise<number> {
     process.stdout.write(`${readVersion()}\n`);
     return 0;
   }
-
-  const command = positionals[0];
 
   if (values.help || !command) {
     process.stdout.write(`${HELP}\n`);

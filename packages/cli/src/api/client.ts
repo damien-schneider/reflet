@@ -1,4 +1,4 @@
-import { ContentApi } from "./client-content.js";
+import { ContentApi } from "./client-content";
 import type {
   CreatedResponse,
   DuplicatePairResponse,
@@ -11,7 +11,7 @@ import type {
   SurveyDetailResponse,
   SurveyListItem,
   SurveyResponseItem,
-} from "./types.js";
+} from "./types";
 
 export class RefletAdminClient extends ContentApi {
   listMembers(): Promise<MemberResponse[]> {

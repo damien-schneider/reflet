@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { RefletAdminClient } from "./client.js";
+import { RefletAdminClient } from "../api/client";
 
 const TEST_BASE_URL = "https://test.convex.site";
 const TEST_SECRET_KEY = "fb_sec_test123";
@@ -54,14 +54,6 @@ describe("RefletAdminClient - request construction", () => {
 
     const [url] = fetchSpy.mock.calls[0] as [string, RequestInit];
     expect(url.startsWith(TEST_BASE_URL)).toBe(true);
-  });
-
-  test("uses default base URL when not specified", () => {
-    const client = new RefletAdminClient({ secretKey: "key" });
-    // Client construction should set default; we test via a request
-    mockFetchResponse({});
-    // The default URL is internal, we just verify the client was created
-    expect(client).toBeDefined();
   });
 });
 

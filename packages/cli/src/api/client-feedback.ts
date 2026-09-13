@@ -1,4 +1,4 @@
-import { RefletTransport } from "./transport.js";
+import { RefletTransport } from "./transport";
 import type {
   ChangelogEntryResponse,
   CommentResponse,
@@ -7,10 +7,12 @@ import type {
   CreateFeedbackResponse,
   FeedbackDetailResponse,
   FeedbackListResponse,
+  FeedbackQueueFilter,
+  GithubIssueResponse,
   RoadmapResponse,
   SuccessResponse,
   VoteResponse,
-} from "./types.js";
+} from "./types";
 
 export class FeedbackApi extends RefletTransport {
   getConfig(): Promise<ConfigResponse> {
@@ -173,6 +175,39 @@ export class FeedbackApi extends RefletTransport {
     return this.request("POST", "/api/v1/admin/comment/mark-official", {
       commentId,
       isOfficial,
+    });
+  }
+
+  nextFeedback(
+    params?: FeedbackQueueFilter
+  ): Promise<FeedbackDetailResponse[]> {
+    const query = this.buildQuery({
+      limit: params?.limit,
+      statuses: params?.statuses?.join(","),
+      tagIds: params?.tagIds?.join(","),
+    });
+    return this.request("GET", `/api/v1/admin/feedback/next${query}`);
+  }
+
+  claimNext(
+    params: FeedbackQueueFilter & { claimedBy: string }
+  ): Promise<FeedbackDetailResponse | null> {
+    return this.request("POST", "/api/v1/admin/feedback/claim-next", params);
+  }
+
+  claimFeedback(
+    feedbackId: string,
+    claimedBy: string
+  ): Promise<FeedbackDetailResponse> {
+    return this.request("POST", "/api/v1/admin/feedback/claim", {
+      claimedBy,
+      feedbackId,
+    });
+  }
+
+  createGithubIssue(feedbackId: string): Promise<GithubIssueResponse> {
+    return this.request("POST", "/api/v1/admin/feedback/create-github-issue", {
+      feedbackId,
     });
   }
 }

@@ -1,4 +1,4 @@
-import { FeedbackApi } from "./client-feedback.js";
+import { FeedbackApi } from "./client-feedback";
 import type {
   CreatedResponse,
   MilestoneDetailResponse,
@@ -8,7 +8,7 @@ import type {
   StatusResponse,
   SuccessResponse,
   TagResponse,
-} from "./types.js";
+} from "./types";
 
 export class ContentApi extends FeedbackApi {
   listTags(): Promise<TagResponse[]> {
