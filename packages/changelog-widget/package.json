@@ -1,6 +1,7 @@
 {
   "name": "@reflet/changelog-widget",
   "version": "1.0.0",
+  "private": true,
   "description": "Embeddable changelog widget for Reflet - show product updates on any website",
   "type": "module",
   "main": "dist/changelog-widget.js",

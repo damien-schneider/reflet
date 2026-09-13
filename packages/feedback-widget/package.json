@@ -1,6 +1,7 @@
 {
   "name": "@reflet/feedback-widget",
   "version": "1.0.0",
+  "private": true,
   "description": "Embeddable feedback widget for Reflet - add feedback collection to any website",
   "type": "module",
   "main": "dist/feedback-widget.js",

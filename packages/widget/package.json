@@ -1,6 +1,7 @@
 {
   "name": "@reflet/widget",
   "version": "1.0.0",
+  "private": true,
   "description": "Embeddable chat widget for Reflet",
   "type": "module",
   "main": "dist/widget.js",
