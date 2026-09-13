@@ -13,10 +13,16 @@ function mockImageFetch(responses: Record<string, boolean>): void {
     vi.fn(async (input: RequestInfo | URL) => {
       const url = typeof input === "string" ? input : String(input);
       const found = responses[url] !== undefined && responses[url] !== false;
-      return new Response(found ? "\u0089PNG" : "no-entry", {
-        headers: { "Content-Type": found ? "image/png" : "text/plain" },
+      const body = found ? "\u0089PNG" : "no-entry";
+      const contentType = found ? "image/png" : "text/plain";
+      const response = new Response(body, {
+        headers: { "Content-Type": contentType },
         status: found ? 200 : 404,
       });
+      vi.spyOn(response, "blob").mockResolvedValue(
+        new Blob([body], { type: contentType })
+      );
+      return response;
     })
   );
 }

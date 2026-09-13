@@ -5,6 +5,19 @@ All notable changes to `reflet-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.4] - 2026-09-13
+
+### Changed
+
+- Compact, draggable feedback controls with improved desktop and mobile interactions
+- Screenshots can be added, annotated, and removed independently while composing feedback
+- Smoother annotation editing with text annotations and an accessible color picker
+
+### Fixed
+
+- Retrying screenshot uploads no longer creates duplicate attachments
+- Screenshot captures stay attached to the draft that requested them when the widget closes or reopens
+
 ## [0.3.3] - 2026-08-23
 
 ### Added
