@@ -7,7 +7,6 @@ import {
 } from "./helpers/auth";
 
 const NAV_LINKS = [
-  { name: "Project", path: "project" },
   { name: "Feedback", path: "" },
   { name: "Changelog", path: "changelog" },
   { name: "Inbox", path: "inbox" },
@@ -39,6 +38,13 @@ test.describe("Sidebar navigation", () => {
       await expect(navLink).toHaveAttribute("href", expected);
     }
 
+    const project = page.getByRole("button", { exact: true, name: "Project" });
+    await project.click();
+    await expect(project).toHaveAttribute("aria-expanded", "true");
+    await expect(
+      page.getByRole("list", { exact: true, name: "Project" }).getByRole("link")
+    ).toHaveCount(7);
+
     expect(notFound).toEqual([]);
   });
 
@@ -53,3 +59,75 @@ test.describe("Sidebar navigation", () => {
     });
   });
 });
+
+for (const viewport of [
+  { height: 1000, width: 1440 },
+  { height: 1000, width: 900 },
+  { height: 844, width: 390 },
+]) {
+  test(`project submenu navigation at ${viewport.width}px`, async ({
+    page,
+  }, testInfo) => {
+    await page.setViewportSize(viewport);
+    if (viewport.width === 900) {
+      await page.emulateMedia({ reducedMotion: "reduce" });
+    }
+    await signUpAndLandOnDashboard(page, makeTestUser("project-nav"));
+    const slug = await createOrganization(page, makeOrgName("Project Nav"));
+    await page.goto(`/dashboard/${slug}/project/general`);
+
+    const mobile = viewport.width < 1024;
+    const sidebarTrigger = page.getByRole("button", {
+      exact: true,
+      name: "Toggle Sidebar",
+    });
+    if (mobile) {
+      await sidebarTrigger.click();
+      await expect(
+        page.getByRole("dialog", { exact: true, name: "Sidebar" })
+      ).toBeInViewport({ ratio: 1 });
+    }
+
+    const project = page.getByRole("button", { exact: true, name: "Project" });
+    const submenu = page.getByRole("list", { exact: true, name: "Project" });
+    await expect(project).toHaveAttribute("aria-expanded", "true");
+    await expect(
+      submenu.getByRole("link", { exact: true, name: "Organization" })
+    ).toHaveAttribute("aria-current", "page");
+    await expect(
+      page.getByRole("link", { exact: true, name: "Members" })
+    ).toHaveCount(1);
+    await page.screenshot({
+      animations: "disabled",
+      path: testInfo.outputPath("project-sidebar.png"),
+    });
+
+    await submenu.getByRole("link", { exact: true, name: "Members" }).click();
+    await expect(page).toHaveURL(`/dashboard/${slug}/project/members`);
+    if (mobile) {
+      await expect(
+        page.getByRole("dialog", { exact: true, name: "Sidebar" })
+      ).not.toBeVisible();
+      await sidebarTrigger.click();
+      await page.keyboard.press("Escape");
+      await expect(sidebarTrigger).toBeFocused();
+    } else {
+      await expect(
+        submenu.getByRole("link", { exact: true, name: "Members" })
+      ).toHaveAttribute("aria-current", "page");
+      await page.keyboard.press("ControlOrMeta+b");
+      await expect(submenu).not.toBeVisible();
+      await project.click();
+      await expect(submenu).toBeVisible();
+    }
+
+    const hasHorizontalOverflow = await page.evaluate(
+      () => document.documentElement.scrollWidth > window.innerWidth
+    );
+    expect(hasHorizontalOverflow).toBe(false);
+    await page.screenshot({
+      animations: "disabled",
+      path: testInfo.outputPath("project-content.png"),
+    });
+  });
+}

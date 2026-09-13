@@ -231,7 +231,7 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
       <SidebarInset className="min-w-0">
         <header className="pointer-events-none sticky top-0 z-10 flex h-14 items-center gap-2 px-4 *:pointer-events-auto">
           <div className="flex items-center gap-2">
-            <SidebarTrigger className="bg-background/20 backdrop-blur-sm hover:bg-background/30 md:hidden" />
+            <SidebarTrigger className="bg-background/20 backdrop-blur-sm hover:bg-background/30 lg:hidden" />
             <div className="flex flex-1 items-center gap-2 rounded-lg border border-background/50 bg-background/20 px-4 py-1 backdrop-blur-xs">
               <DashboardBreadcrumb
                 orgSlug={orgSlug}

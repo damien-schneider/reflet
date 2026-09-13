@@ -1,13 +1,11 @@
 "use client";
 
-import { ScrollArea } from "@ctrl-ui/react/ui/scroll-area";
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import { use } from "react";
 import { H2, Muted } from "@/components/ui/typography";
 import { ProjectContext } from "@/features/project/components/project-context";
-import { ProjectNav } from "@/features/project/components/project-nav";
 
 export default function ProjectLayout({
   children,
@@ -49,47 +47,20 @@ export default function ProjectLayout({
 
   if (currentMember === undefined) {
     return (
-      <div className="mx-auto max-w-5xl px-4 pt-12 pb-8">
-        <div className="flex flex-col md:flex-row md:gap-8">
-          <div className="hidden w-44 shrink-0 md:block">
-            <div className="space-y-2">
-              {Array.from({ length: 5 }, (_, i) => (
-                <Skeleton
-                  className="h-10 w-full rounded-lg"
-                  key={`skeleton-${String(i)}`}
-                />
-              ))}
-            </div>
-          </div>
-          <div className="min-w-0 flex-1 space-y-4">
-            <Skeleton className="h-8 w-48" />
-            <Skeleton className="h-64 w-full" />
-          </div>
-        </div>
+      <div className="mx-auto w-full max-w-5xl space-y-4 px-4 pt-12 pb-8">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-64 w-full" />
       </div>
     );
   }
 
   const isAdmin =
     currentMember?.role === "admin" || currentMember?.role === "owner";
-  const baseUrl = `/dashboard/${orgSlug}/project`;
 
   return (
     <ProjectContext value={{ isAdmin, organizationId: org._id, orgSlug }}>
-      <div className="mx-auto max-w-5xl px-4 pt-12 pb-8">
-        <div className="flex flex-col md:flex-row md:gap-8">
-          <ScrollArea className="-mx-4 mb-6 md:hidden" lockAxis="y">
-            <div className="px-4">
-              <ProjectNav baseUrl={baseUrl} variant="tabs" />
-            </div>
-          </ScrollArea>
-
-          <div className="sticky top-12 hidden w-44 shrink-0 self-start md:block">
-            <ProjectNav baseUrl={baseUrl} />
-          </div>
-
-          <div className="min-w-0 flex-1">{children}</div>
-        </div>
+      <div className="mx-auto w-full min-w-0 max-w-5xl px-4 pt-12 pb-8">
+        {children}
       </div>
     </ProjectContext>
   );

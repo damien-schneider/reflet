@@ -1,140 +1,96 @@
 "use client";
 
-import type { Icon } from "@phosphor-icons/react";
 import {
-  Buildings,
-  CreditCard,
-  GithubLogo,
-  Globe,
-  Key,
-  Robot,
-  Users,
-} from "@phosphor-icons/react";
-import { LayoutGroup, motion } from "motion/react";
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@ctrl-ui/react/ui/collapsible";
+import {
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSub,
+  useSidebar,
+} from "@ctrl-ui/react/ui/sidebar";
+import { CaretRight, Cube } from "@phosphor-icons/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 
-import { cn } from "@/lib/utils";
-
-export type ProjectTab =
-  | "github"
-  | "agents"
-  | "api-keys"
-  | "general"
-  | "domains"
-  | "members"
-  | "billing";
-
-interface NavItem {
-  icon: Icon;
-  id: ProjectTab;
-  label: string;
-}
-
-const NAV_ITEMS: NavItem[] = [
-  {
-    icon: GithubLogo,
-    id: "github",
-    label: "GitHub",
-  },
-  {
-    icon: Robot,
-    id: "agents",
-    label: "Agents & CLI",
-  },
-  {
-    icon: Key,
-    id: "api-keys",
-    label: "API Keys",
-  },
-  {
-    icon: Buildings,
-    id: "general",
-    label: "Organization",
-  },
-  {
-    icon: Globe,
-    id: "domains",
-    label: "Domains",
-  },
-  {
-    icon: Users,
-    id: "members",
-    label: "Members",
-  },
-  {
-    icon: CreditCard,
-    id: "billing",
-    label: "Billing",
-  },
+const PROJECT_SECTIONS = [
+  { id: "github", label: "GitHub" },
+  { id: "agents", label: "Agents & CLI" },
+  { id: "api-keys", label: "API Keys" },
+  { id: "general", label: "Organization" },
+  { id: "domains", label: "Domains" },
+  { id: "members", label: "Members" },
+  { id: "billing", label: "Billing" },
 ];
 
-interface ProjectNavProps {
-  baseUrl: string;
-  variant?: "sidebar" | "tabs";
+function ProjectSectionLinks({ baseUrl }: { baseUrl: string }) {
+  const pathname = usePathname();
+  const { setOpenMobile } = useSidebar();
+
+  return (
+    <SidebarMenuSub aria-label="Project">
+      {PROJECT_SECTIONS.map(({ id, label }) => {
+        const href = `${baseUrl}/${id}`;
+        const isActive = pathname === href || pathname.startsWith(`${href}/`);
+        return (
+          <SidebarMenuItem key={id}>
+            <SidebarMenuButton
+              aria-current={isActive ? "page" : undefined}
+              isActive={isActive}
+              render={
+                <Link href={href} onNavigate={() => setOpenMobile(false)} />
+              }
+            >
+              <span>{label}</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        );
+      })}
+    </SidebarMenuSub>
+  );
 }
 
-export function ProjectNav({ baseUrl, variant = "sidebar" }: ProjectNavProps) {
+export function ProjectNav({ baseUrl }: { baseUrl: string }) {
   const pathname = usePathname();
-  const activeTab = pathname.split("/").pop();
+  const isProjectRoute =
+    pathname === baseUrl || pathname.startsWith(`${baseUrl}/`);
+  const [expanded, setExpanded] = useState(isProjectRoute);
+  const { isMobile, setOpen, state } = useSidebar();
+  const highlightProject =
+    isProjectRoute && (!expanded || state === "collapsed");
 
-  if (variant === "tabs") {
-    return (
-      <LayoutGroup>
-        <nav className="inline-flex w-fit items-center gap-1 rounded-full bg-muted p-1 text-muted-foreground">
-          {NAV_ITEMS.map(({ id, label, icon: Icon }) => {
-            const isActive = activeTab === id;
-            return (
-              <Link
-                className={cn(
-                  "relative inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 font-medium text-foreground/60 text-sm transition-colors hover:text-foreground",
-                  isActive && "text-foreground"
-                )}
-                href={`${baseUrl}/${id}`}
-                key={id}
-                prefetch
-              >
-                {isActive && (
-                  <motion.span
-                    className="absolute inset-0 rounded-full bg-background shadow-sm"
-                    layoutId="project-tab-indicator"
-                    transition={{
-                      bounce: 0.15,
-                      duration: 0.4,
-                      type: "spring",
-                    }}
-                  />
-                )}
-                <span className="relative z-10 inline-flex items-center gap-1.5">
-                  <Icon className="size-4 shrink-0" />
-                  {label}
-                </span>
-              </Link>
-            );
-          })}
-        </nav>
-      </LayoutGroup>
-    );
+  function changeExpanded(nextExpanded: boolean) {
+    if (!isMobile && state === "collapsed") {
+      setOpen(true);
+      setExpanded(true);
+      return;
+    }
+    setExpanded(nextExpanded);
   }
 
   return (
-    <nav className="flex flex-col gap-1">
-      {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
-        <Link
-          className={cn(
-            "flex h-10 shrink-0 items-center gap-3 rounded-lg px-3 text-left font-medium text-sm transition-colors",
-            activeTab === id
-              ? "bg-accent text-accent-foreground"
-              : "text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground"
-          )}
-          href={`${baseUrl}/${id}`}
-          key={id}
-          prefetch
+    <SidebarMenuItem>
+      <Collapsible onOpenChange={changeExpanded} open={expanded}>
+        <SidebarMenuButton
+          isActive={highlightProject}
+          render={<CollapsibleTrigger />}
+          tooltip="Project"
         >
-          <Icon className="size-4 shrink-0" />
-          <span>{label}</span>
-        </Link>
-      ))}
-    </nav>
+          <Cube />
+          <span className="flex-1">Project</span>
+          <CaretRight
+            className="group-data-[collapsible=icon]:hidden"
+            data-control-ui="sidebar"
+            data-slot="chevron"
+          />
+        </SidebarMenuButton>
+        <CollapsibleContent className="group-data-[collapsible=icon]:hidden">
+          <ProjectSectionLinks baseUrl={baseUrl} />
+        </CollapsibleContent>
+      </Collapsible>
+    </SidebarMenuItem>
   );
 }

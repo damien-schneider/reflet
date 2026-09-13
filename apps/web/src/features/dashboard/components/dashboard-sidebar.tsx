@@ -38,6 +38,7 @@ import posthog from "posthog-js";
 import type * as React from "react";
 import { CommandPaletteTrigger } from "@/features/command-palette/components/command-palette-trigger";
 import { OrganizationSwitcher } from "@/features/organizations/components/organization-switcher";
+import { ProjectNav } from "@/features/project/components/project-nav";
 import { capture } from "@/lib/analytics";
 import { authClient } from "@/lib/auth-client";
 import { GoProBanner } from "./go-pro-banner";
@@ -152,8 +153,6 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
       ]
     : [];
 
-  const orgNavItems: typeof adminNavItems = [];
-
   const isActive = (path: string) => {
     const fullPath = buildPath(path);
     if (!fullPath) {
@@ -168,12 +167,7 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
       return false;
     }
 
-    // Don't highlight if a more specific nav item also matches the current path
-    const allNavItems = [
-      ...workspaceNavItems,
-      ...adminNavItems,
-      ...orgNavItems,
-    ];
+    const allNavItems = [...workspaceNavItems, ...adminNavItems];
     const hasMoreSpecificMatch = allNavItems.some((item) => {
       const itemPath = buildPath(item.href);
       return (
@@ -196,7 +190,6 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        {/* User menu */}
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>
@@ -252,22 +245,29 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
               <SidebarGroupLabel>Workspace</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {workspaceNavItems.map((item) => (
-                    <SidebarMenuItem key={item.href}>
-                      <SidebarMenuButton
-                        isActive={isActive(item.href)}
-                        render={<Link href={buildHref(item.href)} />}
-                      >
-                        <item.icon className="h-4 w-4" />
-                        <span className="flex-1">{item.label}</span>
-                        {item.badge !== undefined && (
-                          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-olive-500 px-1.5 font-medium text-[10px] text-white">
-                            {item.badge > 99 ? "99+" : item.badge}
-                          </span>
-                        )}
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
+                  {workspaceNavItems.map((item) =>
+                    item.label === "Project" ? (
+                      <ProjectNav
+                        baseUrl={buildHref(item.href)}
+                        key={`${buildHref(item.href)}:${isActive(item.href)}`}
+                      />
+                    ) : (
+                      <SidebarMenuItem key={item.href}>
+                        <SidebarMenuButton
+                          isActive={isActive(item.href)}
+                          render={<Link href={buildHref(item.href)} />}
+                        >
+                          <item.icon className="h-4 w-4" />
+                          <span className="flex-1">{item.label}</span>
+                          {item.badge !== undefined && (
+                            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-olive-500 px-1.5 font-medium text-[10px] text-white">
+                              {item.badge > 99 ? "99+" : item.badge}
+                            </span>
+                          )}
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    )
+                  )}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
