@@ -2,17 +2,6 @@
   "name": "reflet-cli",
   "version": "0.1.1",
   "description": "Add the Reflet feedback widget to any app and drive the Reflet admin API from your terminal",
-  "license": "MIT",
-  "author": "Reflet <hello@reflet.app>",
-  "homepage": "https://reflet.app",
-  "bugs": {
-    "url": "https://github.com/reflet-app/reflet/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/reflet-app/reflet.git",
-    "directory": "packages/cli"
-  },
   "keywords": [
     "reflet",
     "feedback",
@@ -22,7 +11,22 @@
     "screenshot",
     "agent"
   ],
+  "homepage": "https://reflet.app",
+  "bugs": {
+    "url": "https://github.com/reflet-app/reflet/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/reflet-app/reflet.git",
+    "directory": "packages/cli"
+  },
+  "license": "MIT",
+  "author": "Reflet <hello@reflet.app>",
   "type": "module",
+  "exports": {
+    "./agent-prompt": "./src/agent-prompt.ts",
+    "./prompt": "./src/setup-prompt.ts"
+  },
   "bin": {
     "reflet": "./dist/index.js",
     "reflet-cli": "./dist/index.js"
@@ -34,11 +38,11 @@
   ],
   "scripts": {
     "build": "tsdown",
-    "dev": "tsdown --watch",
     "check-types": "tsc --noEmit",
-    "test:unit": "vitest run",
+    "dev": "tsdown --watch",
     "lint": "cd ../.. && bun x ultracite check packages/cli",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "test:unit": "vitest run"
   },
   "devDependencies": {
     "@types/node": "^26.1.2",
@@ -52,9 +56,5 @@
   },
   "publishConfig": {
     "access": "public"
-  },
-  "exports": {
-    "./agent-prompt": "./src/agent-prompt.ts",
-    "./prompt": "./src/setup-prompt.ts"
   }
 }

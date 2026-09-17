@@ -3,13 +3,6 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "scripts": {
-    "dev": "email dev --dir src/templates --port 3333",
-    "export": "email export --dir src/templates --outDir out",
-    "test:unit": "vitest run",
-    "test:unit:watch": "vitest",
-    "check-types": "tsc --noEmit"
-  },
   "exports": {
     "./templates/base-layout": "./src/templates/base-layout.tsx",
     "./templates/password-reset-email": "./src/templates/password-reset-email.tsx",
@@ -21,17 +14,24 @@
     "./templates/feedback-shipped-email": "./src/templates/feedback-shipped-email.tsx",
     "./templates/styles": "./src/templates/styles.ts"
   },
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "dev": "email dev --dir src/templates --port 3333",
+    "export": "email export --dir src/templates --outDir out",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest"
+  },
   "dependencies": {
     "@react-email/render": "^2.1.0",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
-    "react-email": "^6.9.1"
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-email": "^6.9.5"
   },
   "devDependencies": {
-    "@react-email/ui": "6.9.1",
+    "@react-email/ui": "6.9.5",
     "@reflet/config": "workspace:*",
     "@types/node": "^26.1.2",
-    "@types/react": "^19.2.17",
+    "@types/react": "^19.3.0",
     "typescript": "catalog:",
     "vite": "catalog:",
     "vitest": "catalog:"

@@ -2,17 +2,6 @@
   "name": "reflet-sdk",
   "version": "0.3.4",
   "description": "Official Reflet SDK - Collect user feedback, feature requests, and bug reports from your app",
-  "license": "MIT",
-  "author": "Reflet <hello@reflet.app>",
-  "homepage": "https://reflet.app",
-  "bugs": {
-    "url": "https://github.com/reflet-app/reflet/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/reflet-app/reflet.git",
-    "directory": "packages/sdk"
-  },
   "keywords": [
     "feedback",
     "feature-requests",
@@ -28,24 +17,35 @@
     "roadmap",
     "changelog"
   ],
-  "type": "module",
+  "homepage": "https://reflet.app",
+  "bugs": {
+    "url": "https://github.com/reflet-app/reflet/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/reflet-app/reflet.git",
+    "directory": "packages/sdk"
+  },
+  "license": "MIT",
+  "author": "Reflet <hello@reflet.app>",
   "sideEffects": false,
+  "type": "module",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     },
     "./react": {
-      "import": "./dist/react.js",
-      "types": "./dist/react.d.ts"
+      "types": "./dist/react.d.ts",
+      "import": "./dist/react.js"
     },
     "./feedback": {
-      "import": "./dist/feedback.js",
-      "types": "./dist/feedback.d.ts"
+      "types": "./dist/feedback.d.ts",
+      "import": "./dist/feedback.js"
     },
     "./server": {
-      "import": "./dist/server.js",
-      "types": "./dist/server.d.ts"
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.js"
     }
   },
   "main": "./dist/index.js",
@@ -58,15 +58,33 @@
   ],
   "scripts": {
     "build": "tsdown",
-    "dev": "tsdown --watch",
     "check-types": "tsc --noEmit",
-    "test:unit": "vitest run",
+    "dev": "tsdown --watch",
     "lint": "cd ../.. && bun x ultracite check packages/sdk",
     "prepublishOnly": "npm run build",
-    "version:patch": "npm version patch && npm run release",
-    "version:minor": "npm version minor && npm run release",
+    "release": "npm run build && npm publish",
+    "test:unit": "vitest run",
     "version:major": "npm version major && npm run release",
-    "release": "npm run build && npm publish"
+    "version:minor": "npm version minor && npm run release",
+    "version:patch": "npm version patch && npm run release"
+  },
+  "dependencies": {
+    "@base-ui/react": "^1.8.0",
+    "@zumer/snapdom": "^3.0.0"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.7",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "19.3.0",
+    "jsdom": "^30.1.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
   },
   "peerDependencies": {
     "react": "^18.0.0 || ^19.0.0",
@@ -79,24 +97,6 @@
     "react-dom": {
       "optional": true
     }
-  },
-  "dependencies": {
-    "@base-ui/react": "^1.8.0",
-    "@zumer/snapdom": "^2.23.1"
-  },
-  "devDependencies": {
-    "@testing-library/dom": "^10.4.1",
-    "@testing-library/react": "^16.3.2",
-    "@testing-library/user-event": "^14.6.1",
-    "@types/react": "^19.2.17",
-    "jsdom": "^30.0.1",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
-    "tsdown": "catalog:",
-    "typescript": "catalog:",
-    "vite": "catalog:",
-    "vitest": "catalog:",
-    "@types/react-dom": "19.2.3"
   },
   "engines": {
     "node": ">=18.0.0"

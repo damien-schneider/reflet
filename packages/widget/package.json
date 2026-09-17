@@ -6,10 +6,10 @@
   "type": "module",
   "main": "dist/widget.js",
   "scripts": {
-    "dev": "vite build --watch",
     "build": "vite build",
-    "preview": "vite preview",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "dev": "vite build --watch",
+    "preview": "vite preview"
   },
   "devDependencies": {
     "@types/node": "^26.1.2",

@@ -3,24 +3,6 @@
   "version": "1.0.0",
   "private": true,
   "description": "Embeddable changelog widget for Reflet - show product updates on any website",
-  "type": "module",
-  "main": "dist/changelog-widget.js",
-  "scripts": {
-    "dev": "vite build --watch",
-    "build": "vite build",
-    "preview": "vite preview",
-    "check-types": "tsc --noEmit"
-  },
-  "devDependencies": {
-    "@types/node": "^26.1.2",
-    "typescript": "catalog:",
-    "vite": "catalog:"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/reflet-app/reflet.git",
-    "directory": "packages/changelog-widget"
-  },
   "keywords": [
     "changelog",
     "widget",
@@ -28,5 +10,23 @@
     "reflet",
     "whats-new"
   ],
-  "license": "MIT"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/reflet-app/reflet.git",
+    "directory": "packages/changelog-widget"
+  },
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/changelog-widget.js",
+  "scripts": {
+    "build": "vite build",
+    "check-types": "tsc --noEmit",
+    "dev": "vite build --watch",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.2",
+    "typescript": "catalog:",
+    "vite": "catalog:"
+  }
 }

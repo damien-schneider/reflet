@@ -7,6 +7,9 @@
     "./web": "./src/web.ts",
     "./server": "./src/server.ts"
   },
+  "scripts": {
+    "check-types": "tsc --noEmit"
+  },
   "dependencies": {
     "@t3-oss/env-core": "^0.13.11",
     "dotenv": "catalog:",
@@ -16,8 +19,5 @@
     "@reflet/config": "workspace:*",
     "@types/node": "^26.1.2",
     "typescript": "catalog:"
-  },
-  "scripts": {
-    "check-types": "tsc --noEmit"
   }
 }

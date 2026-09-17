@@ -22,7 +22,6 @@ const nextConfig: NextConfig = {
       "@daypicker/react",
       "cmdk",
     ],
-    useTypeScriptCli: true,
   },
   // biome-ignore lint/suspicious/useAwait: Next.js headers function is async
   async headers() {
