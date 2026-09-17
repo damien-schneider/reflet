@@ -1,6 +1,6 @@
 import type { FeedbackContext, RefletUser } from "../types";
 
-export const SDK_VERSION = "0.3.4";
+export const SDK_VERSION = "0.3.5";
 export const DEFAULT_WIDGET_OFFSET = 20;
 
 const FEEDBACK_WIDGET_CATEGORIES = ["bug", "idea", "question"] as const;
