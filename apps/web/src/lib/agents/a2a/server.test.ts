@@ -179,3 +179,13 @@ it("does not accept push notification destinations", async () => {
     id: "request-1",
   });
 });
+
+it.each(["overview", "../../.env.local"])(
+  "returns no JSON-RPC response to a notification for %s",
+  async (document) => {
+    const { id: _id, ...notification } = messageRequest(document);
+    const response = await handleAgentMessage(request(notification));
+    expect(response.status).toBe(204);
+    expect(await response.text()).toBe("");
+  }
+);

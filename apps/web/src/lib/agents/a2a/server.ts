@@ -36,6 +36,19 @@ function rpcResponse(body: unknown, status = 200) {
   });
 }
 
+function respondToRequest(
+  id: string | number | null | undefined,
+  body: unknown
+) {
+  if (id === undefined) {
+    return new Response(null, {
+      headers: { "Cache-Control": "no-store" },
+      status: 204,
+    });
+  }
+  return rpcResponse(body);
+}
+
 function rpcError(
   error: A2AError,
   status = 200,
@@ -124,11 +137,15 @@ export async function handleAgentMessage(request: Request): Promise<Response> {
     if (Symbol.asyncIterator in response) {
       throw new Error("Stateless documentation returned an unexpected stream.");
     }
-    return rpcResponse(response);
+    return respondToRequest(body.id, response);
   } catch (error) {
     if (!(error instanceof A2AError)) {
       throw error;
     }
-    return rpcError(error, 200, body.id ?? null);
+    return respondToRequest(body.id, {
+      error: JsonRpcTransportHandler.mapToJSONRPCError(error),
+      id: body.id ?? null,
+      jsonrpc: "2.0",
+    });
   }
 }
