@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto";
 import { BASE_URL, SITE_NAME } from "@/lib/seo-config";
 
+import { DOCUMENTATION_SERVER, MCP_CARD } from "./mcp/metadata";
+
 const SKILL_NAME = /^name: (.+)$/m;
 const SKILL_DESCRIPTION = /^description: (.+)$/m;
 
@@ -37,6 +39,17 @@ export function skillDiscovery(markdown: string) {
           ],
           type: "application/ai-skill+md",
           url,
+        },
+        {
+          description: MCP_CARD.description,
+          displayName: DOCUMENTATION_SERVER.title,
+          identifier: `urn:air:${new URL(BASE_URL).hostname}:mcp:documentation`,
+          representativeQueries: [
+            "Read the public product documentation",
+            "Learn the supported integration and authentication workflow",
+          ],
+          type: "application/mcp-server-card+json",
+          url: new URL("/api/mcp/server-card", BASE_URL).href,
         },
       ],
       host: {

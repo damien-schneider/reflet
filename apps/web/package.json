@@ -32,6 +32,7 @@
     "@hookform/resolvers": "^5.9.1",
     "@mdx-js/loader": "^3.1.1",
     "@mdx-js/react": "^3.1.1",
+    "@modelcontextprotocol/server": "2.0.0",
     "@next/mdx": "^16.3.5",
     "@number-flow/react": "^0.6.2",
     "@openrouter/ai-sdk-provider": "^3.0.0",

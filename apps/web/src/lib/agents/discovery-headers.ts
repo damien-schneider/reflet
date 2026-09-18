@@ -1,4 +1,5 @@
 export const DISCOVERY_LINKS = [
+  '</api/mcp/server-card>; rel="service-desc"; type="application/mcp-server-card+json"',
   '</llms.txt>; rel="alternate"; type="text/markdown"',
   '</sitemap.xml>; rel="sitemap"; type="application/xml"',
   '</.well-known/agent-skills/index.json>; rel="agent-skills"; type="application/json"',

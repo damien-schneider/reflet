@@ -9,3 +9,7 @@ An organization owner or administrator obtains a secret `fb_sec_` API key from t
 The API uses `Authorization: Bearer <secret-key>`. Use the backend URL documented by the CLI or the organization's self-hosted setup; `REFLET_API_URL` overrides it. See [the API documentation](https://www.reflet.app/docs/api) and [CLI commands](https://www.reflet.app/docs/cli).
 
 Keep keys in a secret store, never in public content. Only perform mutations authorized by the user. Organization administrators can revoke keys in the dashboard. Reflet does not advertise an OAuth authorization server or automatic agent account registration.
+
+## Public documentation MCP
+
+Connect using Streamable HTTP at https://www.reflet.app/api/mcp. No credentials are required: the server only reads the public overview, this authentication guide, and the published integration skill. It cannot access an account or perform writes.
