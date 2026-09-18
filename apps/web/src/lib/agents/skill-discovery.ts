@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { BASE_URL } from "@/lib/seo-config";
+import { BASE_URL, SITE_NAME } from "@/lib/seo-config";
 
 const SKILL_NAME = /^name: (.+)$/m;
 const SKILL_DESCRIPTION = /^description: (.+)$/m;
@@ -39,6 +39,11 @@ export function skillDiscovery(markdown: string) {
           url,
         },
       ],
+      host: {
+        displayName: SITE_NAME,
+        identifier: new URL(BASE_URL).hostname,
+      },
+      specVersion: "1.0",
     },
   };
 }

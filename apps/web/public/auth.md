@@ -1,4 +1,4 @@
-# Authentication for Reflet agents
+# Reflet auth.md
 
 Public marketing pages, documentation, and public feedback boards are readable without credentials. Private organizations and administration require authentication.
 
