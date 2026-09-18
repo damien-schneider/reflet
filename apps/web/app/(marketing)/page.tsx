@@ -5,15 +5,15 @@ import Homepage from "@/features/homepage/components/homepage";
 import { BASE_URL } from "@/lib/seo-config";
 import { getHomePageJsonLd } from "@/lib/seo-json-ld";
 
+// Next replaces HTML Vary headers; do not cache the negotiated homepage.
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   alternates: {
     canonical: BASE_URL,
   },
 };
 
-/**
- * Root index route — middleware redirects authenticated users to /dashboard
- */
 export default function Index() {
   const jsonLd = getHomePageJsonLd();
   return (

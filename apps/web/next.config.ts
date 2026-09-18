@@ -28,6 +28,18 @@ const nextConfig: NextConfig = {
     return [
       {
         headers: [
+          { key: "Content-Type", value: "text/markdown; charset=utf-8" },
+        ],
+        source: "/llms.txt",
+      },
+      {
+        headers: [
+          { key: "Content-Type", value: "text/markdown; charset=utf-8" },
+        ],
+        source: "/:path*.md",
+      },
+      {
+        headers: [
           {
             key: "X-DNS-Prefetch-Control",
             value: "on",

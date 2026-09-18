@@ -1,99 +1,32 @@
 # Reflet
 
-> A modern product feedback and roadmap platform that helps you collect feedback, prioritize features, and keep your users in the loop.
+> Product feedback, roadmaps, and changelogs for developer-led teams.
 
-## Overview
+Collect feedback through public boards and an embedded widget, organize it with votes and tags, prioritize work on a roadmap, and close the loop with release notes. Organizations choose which content is public and manage access for their team.
 
-Reflet transforms chaotic feedback into actionable product insights. Build products your users actually love through transparent collaboration.
+## Explore
 
-## Core Features
+- [Features](https://www.reflet.app/features)
+- [Pricing and current plan limits](https://www.reflet.app/pricing)
+- [Documentation](https://www.reflet.app/docs)
+- [Blog](https://www.reflet.app/blog)
+- [Get started](https://www.reflet.app/auth/sign-up)
 
-### Feedback Management
-Collect and organize user feedback with upvoting, comments, and tags. Prioritize what matters most to your users with intuitive filtering and search.
+## Integrate and automate
 
-### Roadmap Planning
-Visualize your product roadmap with a beautiful kanban-style board. Drag-and-drop items between stages: Backlog → Planned → In Progress → Done.
+- [CLI documentation](https://www.reflet.app/docs/cli)
+- [API documentation](https://www.reflet.app/docs/api)
+- [SDK installation](https://www.reflet.app/docs/sdk/installation)
+- [Feedback widget](https://www.reflet.app/docs/widget/feedback-widget)
+- [Authentication](https://www.reflet.app/auth.md)
+- [Agent skills](https://www.reflet.app/.well-known/agent-skills/index.json)
+- [API catalog](https://www.reflet.app/.well-known/api-catalog)
+- [Sitemap](https://www.reflet.app/sitemap.xml)
 
-### Changelog & Releases
-Keep users informed with beautiful release notes. Link updates directly to the features they requested, creating a virtuous feedback loop.
+Public pages require no login. Organization administration requires a secret API key. Public widget keys cannot administer feedback. Private boards and dashboard data remain subject to authorization.
 
-### Real-Time Collaboration
-Multiple users can work simultaneously without conflicts. Every change syncs across all connected devices in milliseconds.
+## Project
 
-### Team Management
-Multi-tenant architecture with organizations, team invitations, and role-based access control (Owner, Admin, Member).
-
-### Branding & Customization
-Customize your public-facing pages with your brand colors, custom CSS, and domain.
-
-### Flexible Privacy
-Choose what's public and what's private. Create private boards for internal discussions while keeping public feedback transparent.
-
-### Smart Notifications
-Get notified about status changes, new comments, and vote milestones. Stay in the loop without drowning in noise.
-
-### Powerful Search
-Full-text search across all feedback items with intelligent filtering by status, tags, and more.
-
-## Use Cases
-
-- **Startups**: Get early feedback and build features users actually want
-- **SaaS Companies**: Transparent roadmap builds trust and reduces churn
-- **Open Source Projects**: Community-driven feature requests with voting
-- **Agencies**: Client collaboration boards with private workspaces
-- **Enterprise**: Role-based access, SSO, and private boards
-
-## Tech Stack
-
-- **Frontend**: React 19, Next.js (App Router)
-- **Backend**: Convex (real-time reactive backend)
-- **UI**: TailwindCSS, shadcn/ui
-- **Auth**: Better-Auth
-- **Build**: Turborepo, Bun
-
-## Getting Started
-
-Visit [reflet.app](https://www.reflet.app) to get started for free.
-
-### Self-Hosting
-
-Reflet is open source and can be self-hosted:
-
-```bash
-git clone https://github.com/damien-schneider/reflet.git
-cd reflet
-bun install
-bun run dev:setup
-bun run dev
-```
-
-## Alternatives & Comparisons
-
-Reflet is an open-source alternative to the following product feedback tools:
-
-- **Canny**: Reflet offers similar features at 60-80% lower cost with open-source transparency
-- **Featurebase**: Reflet focuses on feedback while Featurebase bundles customer support
-- **Productboard**: Reflet is simpler and more affordable ($15-49/mo vs $75/maker/mo)
-- **UserVoice**: Reflet is modern and accessible (free tier) vs UserVoice's $799/mo+ enterprise pricing
-- **Fider**: Both are open-source; Reflet uses a modern TypeScript stack with AI triage
-- **Nolt**: Reflet adds changelogs, AI triage, and a free tier that Nolt lacks
-- **Frill**: Reflet adds real-time sync and AI features to similar developer-friendly tools
-- **Upvoty**: Reflet offers a modern UI and active development vs Upvoty's dated interface
-- **Sleekplan**: Reflet provides real-time sync and AI vs Sleekplan's built-in surveys
-- **FeatureOS**: Reflet offers transparent pricing and open source vs FeatureOS's frequent price changes
-- **ProductLift**: Reflet adds AI triage and GitHub integration vs ProductLift's multi-language focus
-- **Rapidr**: Reflet costs 70%+ less than Rapidr with comparable features
-- **Savio**: Reflet focuses on public feedback boards while Savio centralizes B2B internal feedback
-- **FeedBear**: Reflet offers significantly more features (changelogs, API, AI) at a lower price
-
-## Links
-
-- Website: https://www.reflet.app
-- GitHub: https://github.com/damien-schneider/reflet
-- Documentation: https://www.reflet.app/docs
-- Blog: https://www.reflet.app/blog
-- Pricing: https://www.reflet.app/pricing
-
-## License
-
-Server Side Public License (SSPL) - See LICENSE file for details.
+- [Source code](https://github.com/damien-schneider/reflet)
+- [Privacy](https://www.reflet.app/privacy)
+- [Terms](https://www.reflet.app/terms)
