@@ -13,3 +13,9 @@ Keep keys in a secret store, never in public content. Only perform mutations aut
 ## Public documentation MCP
 
 Connect using Streamable HTTP at https://www.reflet.app/api/mcp. No credentials are required: the server only reads the public overview, this authentication guide, and the published integration skill. It cannot access an account or perform writes.
+
+## Public A2A documentation
+
+Discover the A2A 1.0 documentation agent at `/.well-known/agent-card.json`. Send JSON-RPC `SendMessage` requests to `/api/a2a` with `A2A-Version: 1.0` and one `text/plain` part containing exactly `overview`, `authentication`, or `integration`. Responses contain the corresponding published Markdown document.
+
+This interface requires no credentials, retains no conversation history or tasks, and cannot read account data or perform account actions. It does not support streaming or push notifications. Existing product authentication still applies to account operations.

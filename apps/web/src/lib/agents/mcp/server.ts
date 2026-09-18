@@ -1,12 +1,12 @@
-import {
-  createMcpHandler,
-  hostHeaderValidationResponse,
-  McpServer,
-  originValidationResponse,
-} from "@modelcontextprotocol/server";
+import { createMcpHandler, McpServer } from "@modelcontextprotocol/server";
 import { z } from "zod";
-import { documentationUri, documentName, readDocumentation } from "./documents";
-import { DOCUMENTATION_SERVER, MCP_ENDPOINT } from "./metadata";
+import {
+  documentationUri,
+  documentName,
+  readDocumentation,
+} from "@/lib/agents/documents";
+import { rejectUntrustedAgentRequest } from "@/lib/agents/request-origin";
+import { DOCUMENTATION_SERVER } from "./metadata";
 
 function createDocumentationServer() {
   const server = new McpServer(DOCUMENTATION_SERVER);
@@ -46,15 +46,10 @@ function createDocumentationServer() {
 const handler = createMcpHandler(createDocumentationServer, {
   maxSubscriptions: 0,
 });
-const siteHostname = new URL(MCP_ENDPOINT).hostname;
-const allowedHosts = [siteHostname, "localhost", "127.0.0.1"];
-
 export async function handleDocumentationRequest(
   request: Request
 ): Promise<Response> {
-  const rejected =
-    hostHeaderValidationResponse(request, allowedHosts) ??
-    originValidationResponse(request, allowedHosts);
+  const rejected = rejectUntrustedAgentRequest(request);
   if (rejected) {
     return rejected;
   }

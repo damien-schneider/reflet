@@ -1,4 +1,5 @@
 import { env } from "@reflet/env/web";
+import { A2A_ENDPOINT } from "@/lib/agents/a2a/card";
 import { MCP_ENDPOINT } from "@/lib/agents/mcp/metadata";
 import { BASE_URL } from "@/lib/seo-config";
 
@@ -8,6 +9,18 @@ export function GET() {
   return Response.json(
     {
       linkset: [
+        {
+          anchor: A2A_ENDPOINT,
+          "service-desc": [
+            {
+              href: `${BASE_URL}/.well-known/agent-card.json`,
+              type: "application/json",
+            },
+          ],
+          "service-doc": [
+            { href: `${BASE_URL}/auth.md`, type: "text/markdown" },
+          ],
+        },
         {
           anchor: MCP_ENDPOINT,
           "service-desc": [
