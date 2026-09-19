@@ -93,7 +93,7 @@ export function RefletFeedback(props: RefletFeedbackProps) {
 
       {isOpen && state.step === "picking" && (
         <ElementPicker
-          hint={labels.pickElementHint}
+          labels={labels}
           onCancel={() => state.setStep("compose")}
           onPick={state.selectElement}
         />

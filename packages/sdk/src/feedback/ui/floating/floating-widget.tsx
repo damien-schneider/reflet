@@ -7,6 +7,7 @@ import type {
 import { GripIcon, MinusIcon } from "../icons";
 import { Launcher } from "../launcher";
 import { FeedbackPanel } from "../panel";
+import { SelectionOutline } from "../selection-outline";
 import type { WidgetState } from "../use-widget-state";
 import { useFloatingPosition } from "./use-floating-position";
 
@@ -62,6 +63,9 @@ export function FloatingWidget({
       ref={floating.rootRef}
     >
       <style>{floating.styles}</style>
+      {showPanel && state.step === "compose" && (
+        <SelectionOutline node={state.selectedNode} />
+      )}
       {showPanel ? (
         <FeedbackPanel
           labels={labels}

@@ -11,6 +11,7 @@ export function MessageInput({
   state: WidgetState;
 }) {
   const [expanded, setExpanded] = useState(false);
+
   const submitLabel = state.hasPendingAttachments
     ? labels.retryAttachments
     : labels.submit;
@@ -30,9 +31,7 @@ export function MessageInput({
         aria-busy={state.isSubmitting}
         aria-label={submitLabel}
         className="submit"
-        disabled={
-          state.isSubmitting || state.isCapturing || !state.message.trim()
-        }
+        disabled={state.isSubmitting || state.isCapturing || !state.canSubmit}
         title={submitLabel}
         type="submit"
       >

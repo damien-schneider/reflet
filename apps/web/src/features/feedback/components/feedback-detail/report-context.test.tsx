@@ -39,6 +39,7 @@ describe("formatReportContext", () => {
     const block = formatReportContext(
       context({
         selection: {
+          comment: "Pay does nothing on the second invoice.",
           componentStack: ["InvoiceRow", "BillingTable"],
           html: '<button class="pay">Pay</button>',
           label: 'button "Pay"',
@@ -51,6 +52,9 @@ describe("formatReportContext", () => {
     );
 
     expect(block).toContain('- **Element:** button "Pay"');
+    expect(block).toContain(
+      "- **Reporter note:** Pay does nothing on the second invoice."
+    );
     expect(block).toContain("- **Component:** `<InvoiceRow>`");
     expect(block).toContain('- **Region:** dialog "Invoice" › Payment');
     expect(block).toContain("- **Source:** `src/billing/invoice-row.tsx:42:7`");

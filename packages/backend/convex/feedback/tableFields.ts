@@ -58,6 +58,7 @@ export const feedbackContextValidator = v.object({
   sdkVersion: v.optional(v.string()),
   selection: v.optional(
     v.object({
+      comment: v.optional(v.string()),
       componentStack: v.array(v.string()),
       html: v.string(),
       label: v.string(),

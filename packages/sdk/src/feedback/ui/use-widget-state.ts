@@ -6,7 +6,10 @@ import {
   startConsoleRecorder,
 } from "../core/console-recorder";
 import { captureElementCloseUp, highlightFor } from "../core/element-capture";
-import { buildElementSelection } from "../core/element-selector";
+import {
+  buildElementSelection,
+  MAX_SELECTION_COMMENT_LENGTH,
+} from "../core/element-selector";
 import { collectPageContext } from "../core/page-context";
 import {
   DEFAULT_WIDGET_LABELS,
@@ -101,6 +104,7 @@ export function useWidgetState(props: RefletFeedbackProps) {
   const [honeypot, setHoneypot] = useState("");
   const [elementCapture, replaceElementCapture] = useOwnedCapture();
   const [selection, setSelection] = useState<ElementSelection | null>(null);
+  const [selectedNode, setSelectedNode] = useState<Element | null>(null);
   const [isElementCapturing, setIsElementCapturing] = useState(false);
   const successTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -189,6 +193,7 @@ export function useWidgetState(props: RefletFeedbackProps) {
     resetScreenshots();
     replaceElementCapture(null);
     setSelection(null);
+    setSelectedNode(null);
     setMessage("");
     setEmail("");
     setHoneypot("");
@@ -230,11 +235,17 @@ export function useWidgetState(props: RefletFeedbackProps) {
   }, [props.captureOnOpen, props.onOpen, refreshAutomatic]);
 
   const selectElement = useCallback(
-    async (element: Element) => {
+    async (element: Element, note = "") => {
       cancelPendingCapture();
       setIsElementCapturing(true);
-      const picked = buildElementSelection(element);
+      const picked: ElementSelection = note
+        ? {
+            ...buildElementSelection(element),
+            comment: note.slice(0, MAX_SELECTION_COMMENT_LENGTH),
+          }
+        : buildElementSelection(element);
       setSelection(picked);
+      setSelectedNode(element);
       setStep("compose");
 
       const pick = ++pickRef.current;
@@ -276,10 +287,13 @@ export function useWidgetState(props: RefletFeedbackProps) {
     pickRef.current++;
     replaceElementCapture(null);
     setSelection(null);
+    setSelectedNode(null);
     setIsElementCapturing(false);
     clearSelectionAnnotations();
   }, [clearSelectionAnnotations, replaceElementCapture]);
 
+  // A note written on the element is a complete report on its own.
+  const reportedMessage = message.trim() || selection?.comment || "";
   const submit = () => {
     if (honeypot) {
       setStep("success");
@@ -297,7 +311,7 @@ export function useWidgetState(props: RefletFeedbackProps) {
       element: elementCapture,
       email,
       isAnonymous,
-      message,
+      message: reportedMessage,
       screenshots: gallery.screenshots,
     });
   };
@@ -312,6 +326,7 @@ export function useWidgetState(props: RefletFeedbackProps) {
     annotations,
     annotationTrigger,
     canDismiss: dismissForDays !== null,
+    canSubmit: reportedMessage.length > 0,
     capture,
     category,
     clearSelection,
@@ -336,6 +351,7 @@ export function useWidgetState(props: RefletFeedbackProps) {
     retakeCapture: gallery.retakeCapture,
     screenshots: gallery.screenshots,
     selectElement,
+    selectedNode,
     selection,
     setAnnotations: gallery.setAnnotations,
     setCategory,

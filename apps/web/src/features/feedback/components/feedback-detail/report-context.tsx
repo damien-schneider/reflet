@@ -37,6 +37,9 @@ function formatSelection(
 ) {
   const lines = [`- **Element:** ${selection.label}`];
 
+  if (selection.comment) {
+    lines.push(`- **Reporter note:** ${fenceSafe(selection.comment)}`);
+  }
   if (selection.text) {
     lines.push(`- **Text:** ${fenceSafe(selection.text)}`);
   }
@@ -193,6 +196,9 @@ export function ReportContext({ feedbackId }: { feedbackId: Id<"feedback"> }) {
                   )}
                   <span>{selection.label}</span>
                 </span>
+                {selection.comment && (
+                  <span className="text-foreground">{selection.comment}</span>
+                )}
                 {selection.region && (
                   <span className="text-muted-foreground text-xs">
                     {selection.region}

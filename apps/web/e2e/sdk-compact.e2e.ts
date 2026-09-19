@@ -174,6 +174,51 @@ test.describe("Compact SDK on touch screens", () => {
     await expect(page.locator(".screenshot-preview")).toBeVisible();
     await expect(page.locator(".annotation-count")).not.toBeVisible();
   });
+
+  test("writes the comment on the picked element before attaching it", async ({
+    page,
+  }, testInfo) => {
+    await openWidget(page);
+    await page.locator('.icon-btn[aria-label="Point at an element"]').tap();
+    const target = page.getByRole("button", { name: "Manage plan" });
+    await target.tap();
+
+    const note = page.getByRole("textbox", {
+      name: "Comment on the picked element",
+    });
+    await expect(note).toBeFocused();
+    await expect(page.locator(".selection-chip")).not.toBeVisible();
+
+    const card = await page.locator(".picker-note").boundingBox();
+    const element = await target.boundingBox();
+    if (!(card && element)) {
+      throw new Error("Note card or picked element missing");
+    }
+    const distance = Math.min(
+      Math.abs(element.y - (card.y + card.height)),
+      Math.abs(card.y - (element.y + element.height))
+    );
+    expect(distance).toBeLessThanOrEqual(24);
+    await page.screenshot({
+      animations: "disabled",
+      path: testInfo.outputPath("mobile-element-note.png"),
+    });
+
+    await note.fill("This does nothing on my phone.");
+    await page.getByRole("button", { name: "Attach this element" }).tap();
+
+    await expect(page.locator(".selection-chip")).toBeVisible();
+    await expect(page.locator(".selection-outline")).toBeVisible();
+    await expect(page.locator(".selection-chip")).toContainText(
+      "This does nothing on my phone."
+    );
+    await expect(
+      page.getByRole("textbox", { name: "What would you like to share?" })
+    ).toHaveValue("");
+    await expect(
+      page.getByRole("button", { exact: true, name: "Send feedback" })
+    ).toBeEnabled();
+  });
 });
 
 test.describe("SDK submission and constrained layouts", () => {
@@ -225,6 +270,50 @@ test.describe("SDK submission and constrained layouts", () => {
     });
   });
 
+  test("sends an element note as the report body and keeps it on the selection", async ({
+    page,
+  }) => {
+    const submissions: Record<string, unknown>[] = [];
+    await page.route("**/api/sdk-demo/**", async (route) => {
+      const url = route.request().url();
+      if (url.endsWith("/create")) {
+        submissions.push(route.request().postDataJSON());
+        await route.fulfill({ json: { feedbackId: "demo-report" } });
+      } else if (url.endsWith("/upload-url")) {
+        await route.fulfill({
+          json: { uploadUrl: "http://localhost:3003/api/sdk-demo/upload" },
+        });
+      } else {
+        await route.fulfill({ json: { storageId: "demo-image" } });
+      }
+    });
+    await openWidget(page);
+    await page.locator('.icon-btn[aria-label="Point at an element"]').click();
+    await page.getByRole("button", { name: "Manage plan" }).click();
+    await page
+      .getByRole("textbox", { name: "Comment on the picked element" })
+      .fill("Opens nothing.");
+    await page.keyboard.press("Enter");
+    await expect(page.locator(".selection-chip")).toBeVisible();
+    await page
+      .getByRole("button", { exact: true, name: "Send feedback" })
+      .click();
+    await expect(
+      page.getByRole("heading", { name: "Feedback sent" })
+    ).toBeVisible();
+
+    expect(submissions).toHaveLength(1);
+    expect(submissions[0]).toMatchObject({
+      context: {
+        selection: {
+          comment: "Opens nothing.",
+          componentStack: expect.arrayContaining(["Button"]),
+        },
+      },
+      description: "[Bug] Opens nothing.",
+    });
+  });
+
   test("keeps a moved widget reachable in dark mode at 320px", async ({
     page,
   }, testInfo) => {
@@ -262,6 +351,10 @@ test.describe("SDK submission and constrained layouts", () => {
     await expect(page.locator(".annotation-count")).not.toBeVisible();
     await page.getByRole("button", { name: "Point at an element" }).click();
     await page.getByRole("button", { name: "Manage plan" }).click();
+    await page
+      .getByRole("textbox", { name: "Comment on the picked element" })
+      .fill("Nothing happens when I press this.");
+    await page.keyboard.press("Enter");
     await expect(page.locator(".selection-chip")).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Hide plan details" })

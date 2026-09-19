@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import type { Point, RefletFeedbackProps } from "../../types";
+import { onViewportChange, visibleViewport } from "../visible-viewport";
 
 const EDGE_GAP = 12;
 const KEYBOARD_STEP = 24;
@@ -17,22 +18,6 @@ const KEY_DIRECTIONS: Record<string, Point> = {
   ArrowRight: { x: KEYBOARD_STEP, y: 0 },
   ArrowUp: { x: 0, y: -KEYBOARD_STEP },
 };
-
-function visibleViewport() {
-  const viewport = window.visualViewport;
-  const left = viewport?.offsetLeft ?? 0;
-  const top = viewport?.offsetTop ?? 0;
-  const width = viewport?.width ?? window.innerWidth;
-  const height = viewport?.height ?? window.innerHeight;
-  return {
-    bottom: window.innerHeight - top - height,
-    height,
-    left,
-    right: window.innerWidth - left - width,
-    top,
-    width,
-  };
-}
 
 function clampPosition(
   point: Point,
@@ -106,7 +91,6 @@ export function useFloatingPosition(
     keepInViewport();
   }, [keepInViewport]);
   useEffect(() => {
-    const resizeViewport = () => setViewport(visibleViewport());
     const observer =
       typeof ResizeObserver === "undefined"
         ? null
@@ -114,14 +98,12 @@ export function useFloatingPosition(
     if (rootRef.current) {
       observer?.observe(rootRef.current);
     }
-    window.addEventListener("resize", resizeViewport);
-    window.visualViewport?.addEventListener("resize", resizeViewport);
-    window.visualViewport?.addEventListener("scroll", resizeViewport);
+    const stopListening = onViewportChange(() =>
+      setViewport(visibleViewport())
+    );
     return () => {
       observer?.disconnect();
-      window.removeEventListener("resize", resizeViewport);
-      window.visualViewport?.removeEventListener("resize", resizeViewport);
-      window.visualViewport?.removeEventListener("scroll", resizeViewport);
+      stopListening();
     };
   }, [keepInViewport]);
 

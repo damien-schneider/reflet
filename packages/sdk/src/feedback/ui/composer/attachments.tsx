@@ -15,7 +15,9 @@ function SelectedElement({
   if (!state.selection) {
     return null;
   }
-  const component = state.selection.componentStack[0];
+  const { comment, componentStack, label, selector, sourceLocation } =
+    state.selection;
+  const component = componentStack[0];
   return (
     <div className="selection-chip glass">
       <button
@@ -23,7 +25,7 @@ function SelectedElement({
         className="selection-label"
         disabled={state.isEditingDisabled || state.isCapturing}
         onClick={() => state.setStep("picking")}
-        title={state.selection.sourceLocation ?? state.selection.selector}
+        title={comment ?? sourceLocation ?? selector}
         type="button"
       >
         {state.elementCapture ? (
@@ -36,9 +38,10 @@ function SelectedElement({
         ) : (
           <TargetIcon />
         )}
-        <span className="truncate">
-          {component ? `<${component}>` : state.selection.label}
+        <span className="selection-name">
+          {component ? `<${component}>` : label}
         </span>
+        {comment && <span className="truncate">{comment}</span>}
       </button>
       <button
         aria-label={labels.clearSelection}

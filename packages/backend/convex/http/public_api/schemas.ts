@@ -28,6 +28,7 @@ const feedbackContextSchema = z.object({
   sdkVersion: z.string().max(40).optional(),
   selection: z
     .object({
+      comment: z.string().max(2000).optional(),
       componentStack: z.array(z.string().max(120)).max(10),
       html: z.string().max(2000),
       label: z.string().max(200),
@@ -40,6 +41,7 @@ const feedbackContextSchema = z.object({
       region: z.string().max(200).optional(),
       selector: z.string().max(600),
       sourceLocation: z.string().max(400).optional(),
+      text: z.string().max(300).optional(),
     })
     .optional(),
   timezone: z.string().max(80).optional(),

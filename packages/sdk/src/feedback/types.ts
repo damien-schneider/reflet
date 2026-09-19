@@ -55,6 +55,7 @@ export interface ScreenshotDraft {
 
 export interface FeedbackWidgetLabels {
   annotateHint: string;
+  attachElement: string;
   attachmentUploadFailed: string;
   attachScreenshot: string;
   back: string;
@@ -70,6 +71,8 @@ export interface FeedbackWidgetLabels {
   descriptionPlaceholder: string;
   dismissForDays: string;
   done: string;
+  elementNote: string;
+  elementNotePlaceholder: string;
   emailInvalid: string;
   emailLabel: string;
   emailPlaceholder: string;
@@ -78,6 +81,7 @@ export interface FeedbackWidgetLabels {
   minimize: string;
   moreOptions: string;
   moveFeedback: string;
+  pickAnother: string;
   pickElement: string;
   pickElementHint: string;
   recapture: string;
@@ -97,6 +101,7 @@ export interface FeedbackWidgetLabels {
 
 export const DEFAULT_WIDGET_LABELS: FeedbackWidgetLabels = {
   annotateHint: "Draw on the screenshot to point at the problem.",
+  attachElement: "Attach this element",
   attachmentUploadFailed:
     "Your feedback was saved, but some screenshots are still pending. Retry to attach them.",
   attachScreenshot: "Attach a screenshot",
@@ -113,6 +118,8 @@ export const DEFAULT_WIDGET_LABELS: FeedbackWidgetLabels = {
   descriptionPlaceholder: "What would you like to share?",
   dismissForDays: "Hide for {days} days",
   done: "Done",
+  elementNote: "Comment on the picked element",
+  elementNotePlaceholder: "What is wrong with this?",
   emailInvalid: "Enter a valid email address.",
   emailLabel: "Email",
   emailPlaceholder: "you@company.com",
@@ -121,8 +128,9 @@ export const DEFAULT_WIDGET_LABELS: FeedbackWidgetLabels = {
   minimize: "Minimize feedback",
   moreOptions: "More options",
   moveFeedback: "Move feedback",
+  pickAnother: "Pick another",
   pickElement: "Point at an element",
-  pickElementHint: "Click the element you are talking about — cancel with",
+  pickElementHint: "Pick the element you are talking about",
   recapture: "Retake",
   removeScreenshot: "Remove",
   resume: "Resume feedback",

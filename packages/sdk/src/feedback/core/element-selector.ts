@@ -15,6 +15,7 @@ const MIN_PATH_SEGMENTS = 2;
 // report is rejected, so clip here rather than lose the submission.
 const MAX_SELECTOR_LENGTH = 600;
 const MAX_SOURCE_LOCATION_LENGTH = 400;
+export const MAX_SELECTION_COMMENT_LENGTH = 2000;
 
 const TEST_ATTRIBUTES = [
   "data-testid",

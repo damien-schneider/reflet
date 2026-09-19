@@ -139,6 +139,8 @@ export interface ElementRect {
 }
 
 export interface ElementSelection {
+  /** What the reporter wrote about this element while picking it. */
+  comment?: string;
   /** React component names owning the element, innermost first. */
   componentStack: string[];
   /** Truncated, redacted outerHTML of the selected element. */

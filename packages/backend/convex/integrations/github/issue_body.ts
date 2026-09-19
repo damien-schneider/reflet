@@ -38,6 +38,9 @@ function reportContextLines(context: Doc<"feedback">["context"]): string[] {
   const { selection } = context;
   if (selection) {
     lines.push(`- Element: ${selection.label} (\`${selection.selector}\`)`);
+    if (selection.comment) {
+      lines.push(`- Note on element: ${selection.comment}`);
+    }
     if (selection.sourceLocation) {
       lines.push(`- Source: ${selection.sourceLocation}`);
     }

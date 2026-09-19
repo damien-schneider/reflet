@@ -62,6 +62,7 @@ summary::-webkit-details-marker { display: none; }
 .attachment-skeleton::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background: var(--rf-bg-subtle); animation: rf-fade 800ms alternate infinite; }
 .selection-chip { display: flex; align-items: center; max-width: 100%; padding: 3px; border-radius: var(--rf-pill); }
 .selection-label { display: flex; align-items: center; min-width: 0; gap: 6px; padding: 0 6px; font-size: 11px; }
+.selection-name { flex: none; font-weight: 600; color: var(--rf-accent); }
 .selection-label img { object-fit: contain; border-radius: var(--rf-pill); }
 @media (pointer: coarse) {
   .category-select { height: 44px; max-width: 96px; }
