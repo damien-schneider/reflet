@@ -146,20 +146,31 @@ export function FeedbackCollectorCard({
       <div className="space-y-1">
         <div className="flex items-center justify-between gap-3">
           <H3 variant="card">Feedback collector</H3>
-          <ButtonLink
-            className="min-h-11"
-            render={
-              <Link
-                href="/docs/widget/floating-feedback"
-                rel="noopener"
-                target="_blank"
-              />
-            }
-            size="xs"
-          >
-            View docs
-            <ArrowSquareOut className="ml-2 h-4 w-4" />
-          </ButtonLink>
+          <div className="flex items-center gap-2">
+            <ButtonLink
+              className="min-h-11"
+              render={<Link href="/sdk-demo" rel="noopener" target="_blank" />}
+              size="xs"
+              variant="surface"
+            >
+              Try it
+              <ArrowSquareOut className="ml-2 h-4 w-4" />
+            </ButtonLink>
+            <ButtonLink
+              className="min-h-11"
+              render={
+                <Link
+                  href="/docs/widget/floating-feedback"
+                  rel="noopener"
+                  target="_blank"
+                />
+              }
+              size="xs"
+            >
+              View docs
+              <ArrowSquareOut className="ml-2 h-4 w-4" />
+            </ButtonLink>
+          </div>
         </div>
         <Muted className="max-w-xl text-sm">
           A floating button in your app. Each report carries the screenshot, the
