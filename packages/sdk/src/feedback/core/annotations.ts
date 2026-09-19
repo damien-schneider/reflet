@@ -9,7 +9,6 @@ const BOX_TOOLS: AnnotationTool[] = [
   "blur",
 ];
 const MIN_GESTURE_LENGTH = 8;
-const ARROW_HEAD_ANGLE = Math.PI / 7;
 const DEFAULT_PATH_TOLERANCE = 2.5;
 
 export function normalizeRect(start: Point, end: Point): ElementRect {
@@ -21,26 +20,6 @@ export function normalizeRect(start: Point, end: Point): ElementRect {
   };
 }
 
-/** The two barbs closing the arrow tip, both `size` px away from `end`. */
-export function arrowHead(
-  start: Point,
-  end: Point,
-  size: number
-): [Point, Point] {
-  const angle = Math.atan2(end.y - start.y, end.x - start.x);
-  if (Math.hypot(end.x - start.x, end.y - start.y) === 0) {
-    return [end, end];
-  }
-
-  const barb = (offset: number): Point => ({
-    x: end.x - size * Math.cos(angle + offset),
-    y: end.y - size * Math.sin(angle + offset),
-  });
-
-  return [barb(-ARROW_HEAD_ANGLE), barb(ARROW_HEAD_ANGLE)];
-}
-
-/** Drops points a user cannot perceive, keeping the payload small. */
 export function simplifyPath(
   points: Point[],
   tolerance = DEFAULT_PATH_TOLERANCE
@@ -120,7 +99,6 @@ function toWire(annotation: Annotation): ScreenshotAnnotation {
   };
 }
 
-/** Serializes to the shape the Reflet API stores next to the screenshot. */
 export function toWireAnnotations(
   annotations: Annotation[]
 ): ScreenshotAnnotation[] {

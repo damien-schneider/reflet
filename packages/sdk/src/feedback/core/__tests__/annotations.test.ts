@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Annotation } from "../../types";
 import {
-  arrowHead,
   isDegenerate,
   normalizeRect,
   simplifyPath,
@@ -36,30 +35,6 @@ describe("normalizeRect", () => {
       x: 5,
       y: 8,
     });
-  });
-});
-
-describe("arrowHead", () => {
-  it("returns two barbs at the arrow tip", () => {
-    const [left, right] = arrowHead({ x: 0, y: 0 }, { x: 100, y: 0 }, 20);
-
-    expect(Math.hypot(left.x - 100, left.y)).toBeCloseTo(20, 5);
-    expect(Math.hypot(right.x - 100, right.y)).toBeCloseTo(20, 5);
-    expect(left.y).toBeCloseTo(-right.y, 5);
-    expect(left.x).toBeLessThan(100);
-  });
-
-  it("follows the arrow direction", () => {
-    const [left] = arrowHead({ x: 0, y: 0 }, { x: 0, y: 100 }, 20);
-
-    expect(left.y).toBeLessThan(100);
-  });
-
-  it("collapses to the tip for a zero length arrow", () => {
-    expect(arrowHead({ x: 5, y: 5 }, { x: 5, y: 5 }, 20)).toEqual([
-      { x: 5, y: 5 },
-      { x: 5, y: 5 },
-    ]);
   });
 });
 

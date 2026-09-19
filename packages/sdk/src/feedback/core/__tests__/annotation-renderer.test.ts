@@ -89,12 +89,14 @@ describe("drawAnnotations", () => {
     expect(context.alphaAtFill[0]).toBeLessThan(1);
   });
 
-  it("draws the shaft and the closed head of an arrow", () => {
+  it("draws an arrow as one continuous filled silhouette", () => {
     const context = fakeContext();
 
     drawAnnotations(context, [annotation({ tool: "arrow" })]);
 
-    expect(context.calls).toContain("moveTo(20,30)");
+    expect(context.calls.filter((call) => call === "beginPath()")).toHaveLength(
+      1
+    );
     expect(context.calls).toContain("lineTo(200,150)");
     expect(context.calls.filter((call) => call === "closePath()")).toHaveLength(
       1
@@ -159,6 +161,29 @@ describe("drawAnnotations", () => {
     drawAnnotations(context, [annotation({})], { scale: 2 });
 
     expect(context.calls).toContain("strokeRect(40,60,360,240)");
+  });
+
+  it("keeps the arrow silhouette identical in the editor and a scaled export", () => {
+    const preview = fakeContext();
+    const exported = fakeContext();
+    const arrows = [annotation({ tool: "arrow" })];
+    drawAnnotations(preview, arrows);
+    drawAnnotations(exported, arrows, { scale: 2 });
+
+    const coordinates = (context: FakeContext) =>
+      context.calls.flatMap((call) => {
+        if (!(call.startsWith("moveTo(") || call.startsWith("lineTo("))) {
+          return [];
+        }
+        return call
+          .slice(call.indexOf("(") + 1, -1)
+          .split(",")
+          .map(Number);
+      });
+    expect(coordinates(exported)).toEqual(
+      coordinates(preview).map((coordinate) => coordinate * 2)
+    );
+    expect(exported.lineWidth).toBe(preview.lineWidth * 2);
   });
 
   it("restores the context state for every annotation", () => {

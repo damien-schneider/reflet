@@ -1,18 +1,14 @@
 import type { ElementRect } from "../../types";
 import type { Annotation, CapturedImage, Point } from "../types";
-import { arrowHead, isDegenerate, normalizeRect } from "./annotations";
+import { isDegenerate, normalizeRect } from "./annotations";
+import { arrowOutline } from "./arrow-geometry";
 import { capturedFromCanvas } from "./capture";
 
 const STROKE_WIDTH = 3;
-const ARROW_HEAD_SIZE = 16;
 const HIGHLIGHT_ALPHA = 0.3;
 const REDACTION_FILL = "#111827";
 const PIXEL_BLOCK = 10;
 
-/**
- * The slice of `CanvasRenderingContext2D` the annotation layer needs.
- * Narrowing it keeps the drawing code testable without a canvas polyfill.
- */
 export interface AnnotationCanvasContext {
   beginPath: () => void;
   canvas: { height: number; width: number };
@@ -63,10 +59,7 @@ function isCanvasElement(value: unknown): value is HTMLCanvasElement {
   );
 }
 
-/**
- * Downsamples the region and paints it back enlarged, so redacted pixels are
- * unrecoverable. Falls back to an opaque block wherever 2d canvases are absent.
- */
+// Downsample before repainting so redacted pixels cannot be recovered.
 function redact(context: AnnotationCanvasContext, rect: ElementRect): void {
   const source = context.canvas;
   const width = Math.max(1, Math.round(rect.width / PIXEL_BLOCK));
@@ -102,22 +95,27 @@ function redact(context: AnnotationCanvasContext, rect: ElementRect): void {
 
 function drawArrow(
   context: AnnotationCanvasContext,
-  start: Point,
-  end: Point,
+  annotation: Annotation,
   scale: number
 ): void {
-  context.beginPath();
-  context.moveTo(start.x, start.y);
-  context.lineTo(end.x, end.y);
-  context.stroke();
+  const { points, strokeWidth } = arrowOutline(
+    annotation.start,
+    annotation.end
+  );
+  const [first, ...rest] = points.map((point) => scalePoint(point, scale));
+  if (!first) {
+    return;
+  }
 
-  const [left, right] = arrowHead(start, end, ARROW_HEAD_SIZE * scale);
   context.beginPath();
-  context.moveTo(end.x, end.y);
-  context.lineTo(left.x, left.y);
-  context.lineTo(right.x, right.y);
+  context.moveTo(first.x, first.y);
+  for (const point of rest) {
+    context.lineTo(point.x, point.y);
+  }
   context.closePath();
+  context.lineWidth = strokeWidth * scale;
   context.fill();
+  context.stroke();
 }
 
 function drawPen(
@@ -199,12 +197,7 @@ function drawAnnotation(
       drawPen(context, annotation.points ?? [], scale);
       break;
     case "arrow":
-      drawArrow(
-        context,
-        scalePoint(annotation.start, scale),
-        scalePoint(annotation.end, scale),
-        scale
-      );
+      drawArrow(context, annotation, scale);
       break;
     case "spotlight":
       drawSpotlight(context, rect);
@@ -246,10 +239,6 @@ function loadImage(url: string): Promise<HTMLImageElement> {
   });
 }
 
-/**
- * Burns the annotations into a copy of the capture so reviewers and agents see
- * the drawing without needing to replay the vector data.
- */
 export async function renderAnnotatedImage(
   source: CapturedImage,
   annotations: Annotation[]
