@@ -42,10 +42,17 @@ describe("Feedback review queue", () => {
         })
     );
 
+    const before = await t.query(api.feedback.list.listByOrganization, {
+      organizationId,
+    });
+    expect(before.map((item) => item._id)).toContain(feedbackId);
+
     await t.mutation(internal.feedback.review.holdForReview, { feedbackId });
 
-    const held = await t.run(async (ctx) => await ctx.db.get(feedbackId));
-    expect(held?.isApproved).toBe(false);
+    const after = await t.query(api.feedback.list.listByOrganization, {
+      organizationId,
+    });
+    expect(after.map((item) => item._id)).not.toContain(feedbackId);
   });
 
   test("pending review is not readable by anonymous visitors", async () => {

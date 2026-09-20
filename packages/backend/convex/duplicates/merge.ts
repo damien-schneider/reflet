@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
+import { requireOrgMember } from "../shared/access";
 import { getAuthUser } from "../shared/utils";
 import { feedbackStatus } from "../shared/validators";
 
@@ -8,7 +9,7 @@ export const getPendingDuplicates = query({
     organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
-    await getAuthUser(ctx);
+    await requireOrgMember(ctx, args.organizationId);
 
     const pairs = await ctx.db
       .query("duplicatePairs")
@@ -86,6 +87,8 @@ export const resolveDuplicate = mutation({
       throw new Error("Duplicate pair not found");
     }
 
+    await requireOrgMember(ctx, pair.organizationId);
+
     await ctx.db.patch(args.pairId, {
       resolvedAt: Date.now(),
       resolvedBy: user._id,
@@ -116,6 +119,8 @@ export const mergeFeedback = mutation({
     if (source.organizationId !== target.organizationId) {
       throw new Error("Cannot merge feedback from different organizations");
     }
+
+    await requireOrgMember(ctx, source.organizationId);
 
     // Transfer votes from source to target
     const sourceVotes = await ctx.db
@@ -236,7 +241,7 @@ export const getMergeHistory = query({
     organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
-    await getAuthUser(ctx);
+    await requireOrgMember(ctx, args.organizationId);
 
     const history = await ctx.db
       .query("mergeHistory")

@@ -27,6 +27,11 @@ const cases = [
     title: "Great product!",
   },
   {
+    description: "Honestly the best tool we use. Keep it up!",
+    expectReview: false,
+    title: "Love it",
+  },
+  {
     description:
       "Every invoice PDF we download is missing the VAT line, so accounting rejects them.",
     expectReview: false,

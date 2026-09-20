@@ -37,14 +37,24 @@ const triage = (probabilities: Record<string, number>) =>
   );
 
 describe("evaluateFeedbackTriage", () => {
-  it("flags low-usefulness feedback for review while still tagging it", async () => {
+  it("keeps genuine but unactionable feedback public, recording its low score", async () => {
+    const result = await triage({
+      junk: 0.06,
+      usefulness: 0.05,
+    });
+
+    expect(result.needsReview).toBe(false);
+    expect(result.usefulness).toBe(0.05);
+  });
+
+  it("withholds junk for review while still tagging it", async () => {
     const result = await triage({
       [`tag:${BUG}`]: 0.99,
-      usefulness: 0.04,
+      junk: 0.94,
+      usefulness: 0.03,
     });
 
     expect(result.needsReview).toBe(true);
-    expect(result.usefulness).toBe(0.04);
     expect(result.tagIds).toEqual([BUG]);
   });
 
@@ -73,8 +83,8 @@ describe("evaluateFeedbackTriage", () => {
     expect(result.tagIds).toEqual([BUG, MOBILE, BILLING]);
   });
 
-  it("rejects rather than resolving to spam when the usefulness answer is absent", async () => {
-    const dropUsefulness = new MockEvaluationModel({
+  it("rejects rather than resolving to junk when the verdict is incomplete", async () => {
+    const dropVerdict = new MockEvaluationModel({
       doEvaluate: async () => ({
         answers: { [`tag:${BUG}`]: { probability: 0.99, type: "boolean" } },
         warnings: [],
@@ -84,7 +94,7 @@ describe("evaluateFeedbackTriage", () => {
     await expect(
       evaluateFeedbackTriage(
         { description: "Checkout fails", tags, title: "Broken checkout" },
-        dropUsefulness
+        dropVerdict
       )
     ).rejects.toThrow();
   });
@@ -112,6 +122,7 @@ describe("evaluateFeedbackTriage", () => {
 
     expect(Object.keys(asked)).toEqual([
       "usefulness",
+      "junk",
       `tag:${BUG}`,
       `tag:${BILLING}`,
       `tag:${MOBILE}`,

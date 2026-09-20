@@ -14,9 +14,10 @@ const typeSafeAi = createTypeSafeAi({
 export const jev: EvaluationModel = typeSafeAi.evaluationModel("jev-1.13");
 
 const USEFULNESS_QUESTION_ID = "usefulness";
+const JUNK_QUESTION_ID = "junk";
 const TAG_QUESTION_PREFIX = "tag:";
 
-const REVIEW_USEFULNESS_THRESHOLD = 0.5;
+const REVIEW_JUNK_THRESHOLD = 0.5;
 const MIN_TAG_PROBABILITY = 0.65;
 const MAX_TAGS_PER_FEEDBACK = 3;
 
@@ -39,11 +40,21 @@ const buildQuestions = (tags: TriageTag[]) => {
     [USEFULNESS_QUESTION_ID]: {
       criteria: {
         false:
-          "Spam, advertising, a test entry, gibberish, an empty placeholder, or praise with no problem or request attached.",
+          "Praise, thanks, or a remark with no problem or request attached, or content that is not about the product at all.",
         true: "A bug report, feature request, complaint, question, or suggestion a product team could act on.",
       },
       instructions:
         "Is this genuine product feedback that a product team could act on?",
+      type: "boolean",
+    },
+    [JUNK_QUESTION_ID]: {
+      criteria: {
+        false:
+          "Anything written in good faith by a real user about the product, including pure praise, thanks, complaints, and vague or low-effort reports.",
+        true: "Advertising, promotional links, phishing, a throwaway test entry, empty filler, or gibberish with no meaning.",
+      },
+      instructions:
+        "Should this submission be withheld from a public feedback board?",
       type: "boolean",
     },
   };
@@ -82,9 +93,10 @@ export const evaluateFeedbackTriage = async (
   };
 
   const usefulnessAnswer = answers[USEFULNESS_QUESTION_ID];
-  if (usefulnessAnswer?.type !== "boolean") {
+  const junkAnswer = answers[JUNK_QUESTION_ID];
+  if (usefulnessAnswer?.type !== "boolean" || junkAnswer?.type !== "boolean") {
     throw new Error(
-      "Triage evaluation returned no usefulness answer; refusing to route feedback"
+      "Triage evaluation returned an incomplete verdict; refusing to route feedback"
     );
   }
   const usefulness = usefulnessAnswer.probability;
@@ -100,7 +112,7 @@ export const evaluateFeedbackTriage = async (
     .map((candidate) => candidate.tagId);
 
   return {
-    needsReview: usefulness < REVIEW_USEFULNESS_THRESHOLD,
+    needsReview: junkAnswer.probability >= REVIEW_JUNK_THRESHOLD,
     tagIds,
     usefulness,
   };
