@@ -26,12 +26,12 @@ config({ path: isProductionMode ? ".env.production" : ".env.local" });
 
 const EXPECTED_PRICES = {
   proMonthly: {
-    amount: 1500, // €15.00
+    amount: 2900,
     currency: "eur",
     interval: "month",
   },
   proYearly: {
-    amount: 15_000, // €150.00
+    amount: 29_000,
     currency: "eur",
     interval: "year",
   },
