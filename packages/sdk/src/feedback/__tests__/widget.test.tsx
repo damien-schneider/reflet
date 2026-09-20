@@ -119,18 +119,6 @@ describe("RefletFeedback", () => {
     expect(submit.disabled).toBe(false);
   });
 
-  it("opens with one line and expands only when the reporter focuses it", () => {
-    mount();
-    click(launcher());
-    const message = shadow().querySelector("textarea");
-    if (!(message instanceof HTMLTextAreaElement)) {
-      throw new Error("Message missing");
-    }
-    expect(message.rows).toBe(1);
-    fireEvent.focus(message);
-    expect(message.rows).toBe(3);
-  });
-
   it("keeps the draft when temporarily minimized and restored", () => {
     mount();
     click(launcher());
@@ -149,6 +137,52 @@ describe("RefletFeedback", () => {
     expect(shadow().querySelector("textarea")).toBeNull();
     click(launcher());
     expect(shadow().querySelector("textarea")?.value).toBe("Keep my draft");
+  });
+
+  it("returns the launcher to its corner after the panel was dragged away", () => {
+    mount();
+    click(launcher());
+    const handle = shadow().querySelector(".drag-handle");
+    const minimize = shadow().querySelector('[aria-label="Minimize feedback"]');
+    if (
+      !(
+        handle instanceof HTMLButtonElement &&
+        minimize instanceof HTMLButtonElement
+      )
+    ) {
+      throw new Error("Floating controls missing");
+    }
+    let captured = false;
+    handle.setPointerCapture = () => {
+      captured = true;
+    };
+    handle.hasPointerCapture = () => captured;
+    handle.releasePointerCapture = () => {
+      captured = false;
+    };
+    act(() => {
+      fireEvent.pointerDown(handle, {
+        button: 0,
+        clientX: 10,
+        clientY: 10,
+        pointerId: 1,
+      });
+      fireEvent.pointerMove(handle, {
+        clientX: 240,
+        clientY: 180,
+        pointerId: 1,
+      });
+      fireEvent.pointerUp(handle, { pointerId: 1 });
+    });
+    expect(shadow().querySelector(".root")?.getAttribute("data-moved")).toBe(
+      "true"
+    );
+
+    click(minimize);
+
+    expect(shadow().querySelector(".root")?.getAttribute("data-moved")).toBe(
+      "false"
+    );
   });
 
   it("asks anonymous reporters for an email but not identified ones", () => {

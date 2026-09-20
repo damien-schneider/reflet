@@ -67,15 +67,27 @@ export function RefletFeedback(props: RefletFeedbackProps) {
             annotations: state.annotations,
             onChange: state.setAnnotations,
             onDone: () => state.setStep("compose"),
-            onRetake: () => {
-              state.setStep("compose");
-              if (state.activeScreenshot) {
-                state.retakeCapture(state.activeScreenshot.id);
-              }
-            },
-            trigger: state.annotationTrigger,
+            onRetake: state.activeScreenshot.selection
+              ? undefined
+              : () => {
+                  state.setStep("compose");
+                  if (state.activeScreenshot) {
+                    state.retakeCapture(state.activeScreenshot.id);
+                  }
+                },
+            trigger: state.annotationTrigger?.thumbnail,
           }}
           labels={labels}
+          note={
+            state.activeScreenshot.selection && {
+              comment: state.activeScreenshot.selection.comment ?? "",
+              onChange: (comment) => {
+                if (state.activeScreenshot) {
+                  state.setSelectionComment(state.activeScreenshot.id, comment);
+                }
+              },
+            }
+          }
         />
       )}
 

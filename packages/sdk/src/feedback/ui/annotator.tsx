@@ -5,6 +5,7 @@ import {
   useState,
 } from "react";
 import { isDegenerate } from "../core/annotations";
+import { MAX_SELECTION_COMMENT_LENGTH } from "../core/element-selector";
 import type {
   Annotation,
   AnnotationTool,
@@ -21,6 +22,7 @@ import { useTextAnnotation } from "./annotation/text/use-text-annotation";
 import { type AnnotationEditor, AnnotationToolbar } from "./annotation/toolbar";
 import { useAnnotationCanvas } from "./annotation/use-annotation-canvas";
 import { useImageMorph } from "./annotation/use-image-morph";
+import { TargetIcon } from "./icons";
 
 function toImagePoint(
   canvas: HTMLCanvasElement,
@@ -50,10 +52,12 @@ export function Annotator({
   capture,
   labels,
   editor,
+  note,
 }: {
   capture: CapturedImage;
   labels: FeedbackWidgetLabels;
   editor: AnnotationEditor & { trigger?: HTMLElement | null };
+  note?: { comment: string; onChange: (comment: string) => void };
 }) {
   const { annotations, onChange, onDone, onRetake } = editor;
   const morph = useImageMorph(editor.trigger, onDone);
@@ -191,6 +195,18 @@ export function Annotator({
         }}
         labels={labels}
       />
+      {note && (
+        <div className="element-note glass">
+          <TargetIcon />
+          <textarea
+            aria-label={labels.elementNote}
+            maxLength={MAX_SELECTION_COMMENT_LENGTH}
+            onChange={(event) => note.onChange(event.target.value)}
+            placeholder={labels.elementNotePlaceholder}
+            value={note.comment}
+          />
+        </div>
+      )}
     </dialog>
   );
 }

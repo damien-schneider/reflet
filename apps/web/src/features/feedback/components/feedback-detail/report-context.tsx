@@ -32,9 +32,20 @@ function fenceSafe(value: string): string {
   return value.replace(FENCE, "`");
 }
 
-function formatSelection(
-  selection: NonNullable<ReportContextValue["selection"]>
-) {
+export type ElementSelectionValue = NonNullable<
+  ReportContextValue["selection"]
+>;
+
+export function reportContextSelections(
+  context: ReportContextValue
+): ElementSelectionValue[] {
+  return [
+    ...(context.selections ?? []),
+    ...(context.selection ? [context.selection] : []),
+  ];
+}
+
+function formatSelection(selection: ElementSelectionValue) {
   const lines = [`- **Element:** ${selection.label}`];
 
   if (selection.comment) {
@@ -97,8 +108,7 @@ export function formatReportContext(context: ReportContextValue): string {
     lines.push(`- **Scroll:** ${scroll.x}, ${scroll.y}px`);
   }
 
-  const { selection } = context;
-  if (selection) {
+  for (const selection of reportContextSelections(context)) {
     lines.push(...formatSelection(selection));
   }
 
@@ -146,7 +156,7 @@ export function ReportContext({ feedbackId }: { feedbackId: Id<"feedback"> }) {
 
   const environment = describeEnvironment(context);
   const viewport = describeViewport(context);
-  const { selection } = context;
+  const selections = reportContextSelections(context);
   const consoleEvents = context.consoleEvents ?? [];
 
   return (
@@ -184,9 +194,10 @@ export function ReportContext({ feedbackId }: { feedbackId: Id<"feedback"> }) {
           />
         )}
 
-        {selection && (
+        {selections.map((selection) => (
           <Row
             icon={<Crosshair className="h-4 w-4" />}
+            key={`${selection.selector}@${selection.rect.x},${selection.rect.y}`}
             label="Element"
             value={
               <div className="flex min-w-0 flex-col gap-1">
@@ -210,7 +221,7 @@ export function ReportContext({ feedbackId }: { feedbackId: Id<"feedback"> }) {
               </div>
             }
           />
-        )}
+        ))}
 
         {consoleEvents.length > 0 && (
           <Row

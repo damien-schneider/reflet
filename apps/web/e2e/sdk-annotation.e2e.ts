@@ -12,7 +12,7 @@ for (const width of [1440, 390, 320]) {
       page,
     }, testInfo) => {
       await openWidget(page);
-      await page.locator(".screenshot-preview").click();
+      await page.locator(".annotate-action").click();
       await expect(page.locator(".overlay")).toHaveAttribute(
         "data-opening",
         "false"
@@ -81,7 +81,7 @@ for (const width of [1440, 390, 320]) {
       await done.click();
       await expect(page.locator(".overlay")).not.toBeVisible();
       await expect(page.locator(".annotation-count")).toHaveText("2");
-      await page.locator(".screenshot-preview").click();
+      await page.locator(".annotate-action").click();
       await expect(page.locator(".overlay")).toHaveAttribute(
         "data-opening",
         "false"

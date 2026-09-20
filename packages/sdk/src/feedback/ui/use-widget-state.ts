@@ -18,7 +18,6 @@ import {
   type WidgetStep,
 } from "../types";
 import { useFeedbackSubmission } from "./state/use-feedback-submission";
-import { useOwnedCapture } from "./state/use-owned-capture";
 import { useScreenshotDrafts } from "./state/use-screenshot-drafts";
 import { useWidgetConfig } from "./state/use-widget-config";
 import { useCaptureSync } from "./use-capture-sync";
@@ -88,20 +87,22 @@ export function matchesHotkey(
   );
 }
 
+export interface AnnotationTrigger {
+  button: HTMLButtonElement;
+  thumbnail: HTMLElement;
+}
+
 export function useWidgetState(props: RefletFeedbackProps) {
   const { client, dismissalKey, dismissForDays, isAnonymous } =
     useWidgetConfig(props);
 
   const [isOpen, setIsOpen] = useState(false);
   const [annotationTrigger, setAnnotationTrigger] =
-    useState<HTMLButtonElement | null>(null);
+    useState<AnnotationTrigger | null>(null);
   const [step, setStep] = useState<WidgetStep>("compose");
   const [message, setMessage] = useState("");
   const [email, setEmail] = useState("");
   const [honeypot, setHoneypot] = useState("");
-  const [elementCapture, replaceElementCapture] = useOwnedCapture();
-  const [selection, setSelection] = useState<ElementSelection | null>(null);
-  const [selectedNode, setSelectedNode] = useState<Element | null>(null);
   const [isElementCapturing, setIsElementCapturing] = useState(false);
   const successTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -143,7 +144,6 @@ export function useWidgetState(props: RefletFeedbackProps) {
   const {
     activeScreenshot,
     cancelPendingCapture,
-    clearSelectionAnnotations,
     refreshAutomatic,
     resetScreenshots,
     storeScreenshot,
@@ -174,7 +174,7 @@ export function useWidgetState(props: RefletFeedbackProps) {
       step === "compose" &&
       canRefreshAutomatically &&
       annotations.length === 0 &&
-      !selection &&
+      !gallery.screenshots.some((draft) => draft.selection) &&
       props.captureOnOpen !== false,
     refreshAutomatic
   );
@@ -188,15 +188,12 @@ export function useWidgetState(props: RefletFeedbackProps) {
     pickRef.current++;
     setIsElementCapturing(false);
     resetScreenshots();
-    replaceElementCapture(null);
-    setSelection(null);
-    setSelectedNode(null);
     setMessage("");
     setEmail("");
     setHoneypot("");
     setError(null);
     setStep("compose");
-  }, [resetSubmission, resetScreenshots, replaceElementCapture]);
+  }, [resetSubmission, resetScreenshots]);
 
   const close = useCallback(() => {
     setIsOpen(false);
@@ -235,8 +232,6 @@ export function useWidgetState(props: RefletFeedbackProps) {
             comment: note.slice(0, MAX_SELECTION_COMMENT_LENGTH),
           }
         : buildElementSelection(element);
-      setSelection(picked);
-      setSelectedNode(element);
       setStep("compose");
 
       const pick = ++pickRef.current;
@@ -253,62 +248,63 @@ export function useWidgetState(props: RefletFeedbackProps) {
       }
 
       setIsElementCapturing(false);
-      if (fresh) {
-        storeScreenshot({
-          annotations: [highlightFor(picked, fresh)],
-          context,
-          id: crypto.randomUUID(),
-          image: fresh,
-          source: "manual",
-        });
-      } else {
+      if (!fresh) {
+        releaseCapture(closeUp);
         setError(captureFailed);
+        return;
       }
-      replaceElementCapture(closeUp);
+      storeScreenshot({
+        annotations: [highlightFor(picked, fresh)],
+        closeUp,
+        context,
+        id: crypto.randomUUID(),
+        image: fresh,
+        selectedNode: element,
+        selection: picked,
+        source: "manual",
+      });
     },
-    [
-      cancelPendingCapture,
-      captureFailed,
-      storeScreenshot,
-      replaceElementCapture,
-    ]
+    [cancelPendingCapture, captureFailed, storeScreenshot]
   );
 
-  const clearSelection = useCallback(() => {
-    pickRef.current++;
-    replaceElementCapture(null);
-    setSelection(null);
-    setSelectedNode(null);
-    setIsElementCapturing(false);
-    clearSelectionAnnotations();
-  }, [clearSelectionAnnotations, replaceElementCapture]);
-
-  // A note written on the element is a complete report on its own.
-  const reportedMessage = message.trim() || selection?.comment || "";
+  const selections = gallery.screenshots.flatMap(({ selection }) =>
+    selection ? [selection] : []
+  );
+  const firstElementNote = selections.find(({ comment }) => comment)?.comment;
+  const reportedMessage = message.trim() || firstElementNote || "";
   const submit = () => {
     if (honeypot) {
       setStep("success");
       return;
     }
+    setStep("compose");
     return submission.submit({
       context: {
         ...(activeScreenshot?.context ??
           collectPageContext({ sdkVersion: SDK_VERSION })),
         consoleEvents: consoleRef.current?.events(),
         metadata: props.metadata,
-        selection: selection ?? undefined,
+        selections,
       },
-      element: elementCapture,
       email,
       isAnonymous,
       message: reportedMessage,
       screenshots: gallery.screenshots,
     });
   };
+  const requestSubmit = () => {
+    const needsEmail =
+      isAnonymous && email.length === 0 && !submission.hasPendingAttachments;
+    if (needsEmail && !honeypot) {
+      setStep("email");
+      return;
+    }
+    return submit();
+  };
 
   return {
     activeScreenshot,
-    annotateScreenshot: (id: string, trigger: HTMLButtonElement) => {
+    annotateScreenshot: (id: string, trigger: AnnotationTrigger) => {
       setAnnotationTrigger(trigger);
       gallery.selectScreenshot(id);
       setStep("annotate");
@@ -318,11 +314,9 @@ export function useWidgetState(props: RefletFeedbackProps) {
     canDismiss: dismissForDays !== null,
     canSubmit: reportedMessage.length > 0,
     capture,
-    clearSelection,
     close,
     dismiss,
     dismissForDays,
-    elementCapture,
     email,
     error,
     hasPendingAttachments: submission.hasPendingAttachments,
@@ -337,15 +331,16 @@ export function useWidgetState(props: RefletFeedbackProps) {
     open,
     pendingCapture: gallery.pendingCapture,
     removeCapture: gallery.removeCapture,
+    requestSubmit,
     retakeCapture: gallery.retakeCapture,
     screenshots: gallery.screenshots,
     selectElement,
-    selectedNode,
-    selection,
+    selections,
     setAnnotations: gallery.setAnnotations,
     setEmail,
     setHoneypot,
     setMessage,
+    setSelectionComment: gallery.setSelectionComment,
     setStep,
     step,
     submit,

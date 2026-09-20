@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { FeedbackWidgetLabels, RefletFeedbackProps } from "../../types";
-import { GripIcon, MinusIcon } from "../icons";
+import { CloseIcon, GripIcon } from "../icons";
 import { Launcher } from "../launcher";
 import { FeedbackPanel } from "../panel";
 import { SelectionOutline } from "../selection-outline";
@@ -18,8 +18,8 @@ export function FloatingWidget({
 }) {
   const [minimized, setMinimized] = useState(false);
   const launcherRef = useRef<HTMLButtonElement>(null);
-  const floating = useFloatingPosition(position);
   const showPanel = state.isOpen && !minimized;
+  const floating = useFloatingPosition(position, showPanel);
   const minimize = () => {
     setMinimized(true);
     requestAnimationFrame(() => launcherRef.current?.focus());
@@ -27,7 +27,7 @@ export function FloatingWidget({
 
   useEffect(() => {
     if (state.step === "compose") {
-      state.annotationTrigger?.focus({ preventScroll: true });
+      state.annotationTrigger?.button.focus({ preventScroll: true });
     }
   }, [state.step, state.annotationTrigger]);
 
@@ -56,13 +56,17 @@ export function FloatingWidget({
       ref={floating.rootRef}
     >
       <style>{floating.styles}</style>
-      {showPanel && state.step === "compose" && (
-        <SelectionOutline node={state.selectedNode} />
-      )}
+      {showPanel &&
+        state.step === "compose" &&
+        state.screenshots.map(({ id, selectedNode }) =>
+          selectedNode ? (
+            <SelectionOutline key={id} node={selectedNode} />
+          ) : null
+        )}
       {showPanel ? (
         <FeedbackPanel
           floatingControls={
-            <div className="floating-controls glass">
+            <div className="floating-controls">
               <button
                 aria-label={labels.moveFeedback}
                 className="icon-btn drag-handle"
@@ -79,7 +83,7 @@ export function FloatingWidget({
                 title={labels.minimize}
                 type="button"
               >
-                <MinusIcon />
+                <CloseIcon />
               </button>
             </div>
           }

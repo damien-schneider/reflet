@@ -3,7 +3,6 @@ import { captureViewport, releaseCapture } from "../../core/capture";
 import { collectPageContext } from "../../core/page-context";
 import {
   type Annotation,
-  type CapturedImage,
   type ScreenshotDraft,
   SDK_VERSION,
 } from "../../types";
@@ -11,6 +10,11 @@ import {
 export interface CaptureRequest {
   id: string;
   source: ScreenshotDraft["source"];
+}
+
+function releaseDraft(draft: ScreenshotDraft | undefined): void {
+  releaseCapture(draft?.image);
+  releaseCapture(draft?.closeUp);
 }
 
 export function useScreenshotDrafts(
@@ -22,23 +26,23 @@ export function useScreenshotDrafts(
   const [pendingCapture, setPendingCapture] = useState<CaptureRequest | null>(
     null
   );
-  const ownedImages = useRef(new Map<string, CapturedImage>());
+  const ownedDrafts = useRef(new Map<string, ScreenshotDraft>());
   const captureRequest = useRef<CaptureRequest | null>(null);
 
   useEffect(() => {
-    const images = ownedImages.current;
+    const drafts = ownedDrafts.current;
     return () => {
       captureRequest.current = null;
-      for (const image of images.values()) {
-        releaseCapture(image);
+      for (const draft of drafts.values()) {
+        releaseDraft(draft);
       }
-      images.clear();
+      drafts.clear();
     };
   }, []);
 
   const storeScreenshot = useCallback((screenshot: ScreenshotDraft) => {
-    releaseCapture(ownedImages.current.get(screenshot.id));
-    ownedImages.current.set(screenshot.id, screenshot.image);
+    releaseDraft(ownedDrafts.current.get(screenshot.id));
+    ownedDrafts.current.set(screenshot.id, screenshot);
     setScreenshots((previous) => {
       const replacing = previous.some(({ id }) => id === screenshot.id);
       return replacing
@@ -85,7 +89,7 @@ export function useScreenshotDrafts(
   const refreshAutomatic = useCallback(() => {
     takeScreenshot({
       id:
-        ownedImages.current.keys().next().value ??
+        ownedDrafts.current.keys().next().value ??
         captureRequest.current?.id ??
         crypto.randomUUID(),
       source: "automatic",
@@ -94,7 +98,7 @@ export function useScreenshotDrafts(
 
   const retakeCapture = useCallback(
     (id: string) => {
-      if (!captureRequest.current && ownedImages.current.has(id)) {
+      if (!captureRequest.current && ownedDrafts.current.has(id)) {
         takeScreenshot({ id, source: "manual" });
       }
     },
@@ -106,8 +110,8 @@ export function useScreenshotDrafts(
       if (captureRequest.current?.id === id) {
         cancelPendingCapture();
       }
-      releaseCapture(ownedImages.current.get(id));
-      ownedImages.current.delete(id);
+      releaseDraft(ownedDrafts.current.get(id));
+      ownedDrafts.current.delete(id);
       setScreenshots((previous) => previous.filter((item) => item.id !== id));
       setActiveId((current) => (current === id ? null : current));
     },
@@ -116,10 +120,10 @@ export function useScreenshotDrafts(
 
   const resetScreenshots = useCallback(() => {
     cancelPendingCapture();
-    for (const image of ownedImages.current.values()) {
-      releaseCapture(image);
+    for (const draft of ownedDrafts.current.values()) {
+      releaseDraft(draft);
     }
-    ownedImages.current.clear();
+    ownedDrafts.current.clear();
     setScreenshots([]);
     setActiveId(null);
   }, [cancelPendingCapture]);
@@ -135,14 +139,13 @@ export function useScreenshotDrafts(
     [activeId]
   );
 
-  const clearSelectionAnnotations = useCallback(() => {
+  const setSelectionComment = useCallback((id: string, comment: string) => {
     setScreenshots((previous) =>
-      previous.map((item) => ({
-        ...item,
-        annotations: item.annotations.filter(
-          ({ id }) => !id.startsWith("selection-")
-        ),
-      }))
+      previous.map((item) =>
+        item.id === id && item.selection
+          ? { ...item, selection: { ...item.selection, comment } }
+          : item
+      )
     );
   }, []);
 
@@ -152,7 +155,6 @@ export function useScreenshotDrafts(
       screenshots.at(-1) ??
       null,
     cancelPendingCapture,
-    clearSelectionAnnotations,
     pendingCapture,
     refreshAutomatic,
     removeCapture,
@@ -161,6 +163,7 @@ export function useScreenshotDrafts(
     screenshots,
     selectScreenshot: setActiveId,
     setAnnotations,
+    setSelectionComment,
     storeScreenshot,
     takeCapture,
   };

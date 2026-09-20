@@ -61,7 +61,7 @@ export const PICKER_STYLES = `
   color: var(--rf-text);
   background: var(--rf-bg);
   border-radius: var(--rf-pill);
-  box-shadow: var(--rf-shadow);
+  box-shadow: var(--rf-ring), var(--rf-shadow);
   animation: rf-fade 240ms var(--rf-ease);
 }
 .picker-instruction { display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

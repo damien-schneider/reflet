@@ -31,7 +31,7 @@ async function slowImageEncoding(page: Page) {
 test.describe("Multiple captures on desktop", () => {
   test.use({ colorScheme: "light", viewport: { height: 1000, width: 1440 } });
 
-  test("keeps separate drawings, retakes only one image and retries missing uploads", async ({
+  test("keeps separate drawings per capture and retries missing uploads", async ({
     page,
   }, testInfo) => {
     await slowImageEncoding(page);
@@ -95,14 +95,11 @@ test.describe("Multiple captures on desktop", () => {
       exact: true,
       name: "Screenshot 2",
     });
-    const beforeRetake = await second.locator("img").getAttribute("src");
-    await second.hover();
-    await second.getByRole("button", { name: "Retake" }).click();
     await expect(second.locator("img")).not.toHaveAttribute(
       "src",
-      beforeRetake ?? ""
+      original ?? ""
     );
-    await expect(second.locator(".annotation-count")).toHaveCount(0);
+    await expect(second.locator(".annotation-count")).toHaveText("1");
     const first = page.getByRole("group", {
       exact: true,
       name: "Screenshot 1",
@@ -122,6 +119,9 @@ test.describe("Multiple captures on desktop", () => {
     await page
       .getByRole("button", { exact: true, name: "Send feedback" })
       .click();
+    await page
+      .getByRole("button", { exact: true, name: "Send without email" })
+      .click();
     await expect(page.locator(".composer").getByRole("alert")).toContainText(
       "screenshots are still pending"
     );
@@ -132,7 +132,7 @@ test.describe("Multiple captures on desktop", () => {
     ).toBeVisible();
     expect(created).toHaveLength(1);
     expect(saved).toHaveLength(3);
-    expect(uploadCount).toBe(4);
+    expect(uploadCount).toBe(5);
     expect(saved).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -141,6 +141,7 @@ test.describe("Multiple captures on desktop", () => {
           filename: "screenshot-1.png",
         }),
         expect.objectContaining({
+          annotations: [expect.objectContaining({ type: "spotlight" })],
           feedbackId: "demo-report",
           filename: "screenshot-2.png",
         }),

@@ -2,6 +2,25 @@ import { z } from "zod";
 
 const pointSchema = z.object({ x: z.number(), y: z.number() });
 
+const elementSelectionSchema = z.object({
+  comment: z.string().max(2000).optional(),
+  componentStack: z.array(z.string().max(120)).max(10),
+  html: z.string().max(2000),
+  label: z.string().max(200),
+  rect: z.object({
+    height: z.number(),
+    width: z.number(),
+    x: z.number(),
+    y: z.number(),
+  }),
+  region: z.string().max(200).optional(),
+  selector: z.string().max(600),
+  sourceLocation: z.string().max(400).optional(),
+  text: z.string().max(300).optional(),
+});
+
+const MAX_SELECTIONS = 10;
+
 /**
  * Widget-reported context. Every bound is a hard cap on what a public client
  * can push into the database, not just a shape check.
@@ -26,24 +45,7 @@ const feedbackContextSchema = z.object({
   referrer: z.string().max(2000).optional(),
   screen: z.object({ height: z.number(), width: z.number() }).optional(),
   sdkVersion: z.string().max(40).optional(),
-  selection: z
-    .object({
-      comment: z.string().max(2000).optional(),
-      componentStack: z.array(z.string().max(120)).max(10),
-      html: z.string().max(2000),
-      label: z.string().max(200),
-      rect: z.object({
-        height: z.number(),
-        width: z.number(),
-        x: z.number(),
-        y: z.number(),
-      }),
-      region: z.string().max(200).optional(),
-      selector: z.string().max(600),
-      sourceLocation: z.string().max(400).optional(),
-      text: z.string().max(300).optional(),
-    })
-    .optional(),
+  selections: z.array(elementSelectionSchema).max(MAX_SELECTIONS).optional(),
   timezone: z.string().max(80).optional(),
   url: z.string().max(2000).optional(),
   userAgent: z.string().max(600).optional(),

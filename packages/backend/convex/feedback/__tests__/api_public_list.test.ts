@@ -32,14 +32,16 @@ describe("feedback API detail", () => {
         commentCount: 0,
         context: {
           browser: "Chrome 140",
-          selection: {
-            componentStack: ["InvoiceRow"],
-            html: "<button>Retry</button>",
-            label: "button Retry",
-            rect: { height: 32, width: 80, x: 10, y: 20 },
-            selector: "button[data-action=retry]",
-            sourceLocation: "src/invoice-row.tsx:42:7",
-          },
+          selections: [
+            {
+              componentStack: ["InvoiceRow"],
+              html: "<button>Retry</button>",
+              label: "button Retry",
+              rect: { height: 32, width: 80, x: 10, y: 20 },
+              selector: "button[data-action=retry]",
+              sourceLocation: "src/invoice-row.tsx:42:7",
+            },
+          ],
           url: "https://app.example.com/invoices/123",
         },
         createdAt: Date.now(),
@@ -79,7 +81,7 @@ describe("feedback API detail", () => {
     expect(privateResult?.context?.url).toBe(
       "https://app.example.com/invoices/123"
     );
-    expect(privateResult?.context?.selection?.sourceLocation).toBe(
+    expect(privateResult?.context?.selections?.[0]?.sourceLocation).toBe(
       "src/invoice-row.tsx:42:7"
     );
     expect(privateResult?.assigneeId).toBe("team-user-1");

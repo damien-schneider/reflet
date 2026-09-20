@@ -6,6 +6,7 @@ const MIN_CONTEXT_PADDING = 24;
 const MAX_CONTEXT_WIDTH = 2000;
 const CLOSE_UP_MAX_WIDTH = 1200;
 const SELECTION_COLOR = "#4f46e5";
+const SELECTION_ANNOTATION_PREFIX = "selection-";
 const OUTLINE_COLOR = "#4f46e5";
 const OUTLINE_GLOW = "#ffffff";
 const OUTLINE_WIDTH = 3;
@@ -70,7 +71,10 @@ export function closeUpGeometry(params: {
   };
 }
 
-/** Rectangle annotation marking the picked element on the viewport shot. */
+export function isSelectionAnnotation({ id }: Annotation): boolean {
+  return id.startsWith(SELECTION_ANNOTATION_PREFIX);
+}
+
 export function highlightFor(
   selection: ElementSelection,
   capture: CapturedImage
@@ -84,7 +88,7 @@ export function highlightFor(
       x: (rect.x + rect.width) * scale,
       y: (rect.y + rect.height) * scale,
     },
-    id: `selection-${rect.x}-${rect.y}`,
+    id: `${SELECTION_ANNOTATION_PREFIX}${rect.x}-${rect.y}`,
     start: { x: rect.x * scale, y: rect.y * scale },
     tool: "rectangle",
   };

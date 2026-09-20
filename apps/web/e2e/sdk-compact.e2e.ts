@@ -15,10 +15,9 @@ test.describe("Compact SDK on desktop", () => {
     const message = page.getByRole("textbox", {
       name: "What would you like to share?",
     });
-    await expect(message).toHaveAttribute("rows", "1");
     const footprint = await page.locator(".root").boundingBox();
     expect(footprint?.width).toBeLessThanOrEqual(360);
-    expect(footprint?.height).toBeLessThanOrEqual(180);
+    expect(footprint?.height).toBeLessThanOrEqual(240);
     await page.screenshot({
       animations: "disabled",
       path: testInfo.outputPath("desktop-compact.png"),
@@ -26,11 +25,7 @@ test.describe("Compact SDK on desktop", () => {
     await message.fill(
       "Manage plan does nothing when I click it. I expected to see my subscription settings."
     );
-    await expect(message).toHaveAttribute("rows", "3");
     await expect(message).toHaveCSS("height", "76px");
-    await page
-      .getByRole("combobox", { name: "Feedback type" })
-      .selectOption("question");
     await drawSpotlight(page);
     await page.getByLabel("More drawing tools", { exact: true }).focus();
     await page.keyboard.press("Tab");
@@ -62,9 +57,6 @@ test.describe("Compact SDK on desktop", () => {
     await expect(message).toHaveValue(
       "Manage plan does nothing when I click it. I expected to see my subscription settings."
     );
-    await expect(
-      page.getByRole("combobox", { name: "Feedback type" })
-    ).toHaveValue("question");
     await expect(page.locator(".annotation-count")).toHaveText("1");
     const handle = page.getByRole("button", { name: "Move feedback" });
     const before = await handle.boundingBox();
@@ -111,6 +103,9 @@ test.describe("Compact SDK on desktop", () => {
       .fill("My invoice is incorrect.");
     await page
       .getByRole("button", { exact: true, name: "Send feedback" })
+      .click();
+    await page
+      .getByRole("button", { exact: true, name: "Send without email" })
       .click();
     await expect(page.locator(".composer").getByRole("alert")).toContainText(
       "This is a preview. No feedback was sent."
@@ -179,7 +174,9 @@ test.describe("Compact SDK on touch screens", () => {
     page,
   }, testInfo) => {
     await openWidget(page);
-    await page.locator('.icon-btn[aria-label="Point at an element"]').tap();
+    await page
+      .locator('.capture-action[aria-label="Point at an element"]')
+      .tap();
     const target = page.getByRole("button", { name: "Manage plan" });
     await target.tap();
 
@@ -187,7 +184,7 @@ test.describe("Compact SDK on touch screens", () => {
       name: "Comment on the picked element",
     });
     await expect(note).toBeFocused();
-    await expect(page.locator(".selection-chip")).not.toBeVisible();
+    await expect(page.locator(".selection-badge")).toHaveCount(0);
 
     const card = await page.locator(".picker-note").boundingBox();
     const element = await target.boundingBox();
@@ -207,11 +204,14 @@ test.describe("Compact SDK on touch screens", () => {
     await note.fill("This does nothing on my phone.");
     await page.getByRole("button", { name: "Attach this element" }).tap();
 
-    await expect(page.locator(".selection-chip")).toBeVisible();
+    await expect(page.locator(".selection-badge")).toHaveCount(1);
     await expect(page.locator(".selection-outline")).toBeVisible();
-    await expect(page.locator(".selection-chip")).toContainText(
-      "This does nothing on my phone."
-    );
+    await expect(page.locator(".annotation-count")).toHaveCount(0);
+    await page.locator(".annotate-action").last().tap();
+    await expect(
+      page.getByRole("textbox", { name: "Comment on the picked element" })
+    ).toHaveValue("This does nothing on my phone.");
+    await page.getByRole("button", { name: "Done" }).tap();
     await expect(
       page.getByRole("textbox", { name: "What would you like to share?" })
     ).toHaveValue("");
@@ -222,9 +222,7 @@ test.describe("Compact SDK on touch screens", () => {
 });
 
 test.describe("SDK submission and constrained layouts", () => {
-  test("sends the selected category and annotation with the report", async ({
-    page,
-  }) => {
+  test("sends the annotated screenshot with the report", async ({ page }) => {
     const submissions: unknown[] = [];
     const screenshots: unknown[] = [];
     await page.route("**/api/sdk-demo/**", async (route) => {
@@ -244,9 +242,6 @@ test.describe("SDK submission and constrained layouts", () => {
       }
     });
     await openWidget(page);
-    await page
-      .getByRole("combobox", { name: "Feedback type" })
-      .selectOption("idea");
     await drawSpotlight(page);
     await page.getByRole("button", { exact: true, name: "Done" }).click();
     await page
@@ -255,12 +250,15 @@ test.describe("SDK submission and constrained layouts", () => {
     await page
       .getByRole("button", { exact: true, name: "Send feedback" })
       .click();
+    await page
+      .getByRole("button", { exact: true, name: "Send without email" })
+      .click();
     await expect(
       page.getByRole("heading", { name: "Feedback sent" })
     ).toBeVisible();
     expect(submissions).toHaveLength(1);
     expect(submissions[0]).toMatchObject({
-      description: "[Idea] Let me download all invoices together.",
+      description: "Let me download all invoices together.",
       title: "Let me download all invoices together.",
     });
     expect(screenshots).toHaveLength(1);
@@ -270,7 +268,7 @@ test.describe("SDK submission and constrained layouts", () => {
     });
   });
 
-  test("sends an element note as the report body and keeps it on the selection", async ({
+  test("sends one selection per picked element and uses the first note as the body", async ({
     page,
   }) => {
     const submissions: Record<string, unknown>[] = [];
@@ -288,15 +286,29 @@ test.describe("SDK submission and constrained layouts", () => {
       }
     });
     await openWidget(page);
-    await page.locator('.icon-btn[aria-label="Point at an element"]').click();
+    await page
+      .locator('.capture-action[aria-label="Point at an element"]')
+      .click();
     await page.getByRole("button", { name: "Manage plan" }).click();
     await page
       .getByRole("textbox", { name: "Comment on the picked element" })
       .fill("Opens nothing.");
     await page.keyboard.press("Enter");
-    await expect(page.locator(".selection-chip")).toBeVisible();
+    await expect(page.locator(".selection-badge")).toHaveCount(1);
+    await page
+      .locator('.capture-action[aria-label="Point at an element"]')
+      .click();
+    await page.getByText("Visa ending in 4242").click();
+    await page
+      .getByRole("textbox", { name: "Comment on the picked element" })
+      .fill("Wrong card shown.");
+    await page.keyboard.press("Enter");
+    await expect(page.locator(".selection-badge")).toHaveCount(2);
     await page
       .getByRole("button", { exact: true, name: "Send feedback" })
+      .click();
+    await page
+      .getByRole("button", { exact: true, name: "Send without email" })
       .click();
     await expect(
       page.getByRole("heading", { name: "Feedback sent" })
@@ -305,12 +317,15 @@ test.describe("SDK submission and constrained layouts", () => {
     expect(submissions).toHaveLength(1);
     expect(submissions[0]).toMatchObject({
       context: {
-        selection: {
-          comment: "Opens nothing.",
-          componentStack: expect.arrayContaining(["Button"]),
-        },
+        selections: [
+          {
+            comment: "Opens nothing.",
+            componentStack: expect.arrayContaining(["Button"]),
+          },
+          { comment: "Wrong card shown." },
+        ],
       },
-      description: "[Bug] Opens nothing.",
+      description: "Opens nothing.",
     });
   });
 
@@ -355,12 +370,17 @@ test.describe("SDK submission and constrained layouts", () => {
       .getByRole("textbox", { name: "Comment on the picked element" })
       .fill("Nothing happens when I press this.");
     await page.keyboard.press("Enter");
-    await expect(page.locator(".selection-chip")).toBeVisible();
+    await expect(page.locator(".selection-badge")).toHaveCount(1);
     await expect(
       page.getByRole("button", { name: "Hide plan details" })
     ).not.toBeVisible();
-    await page.getByRole("button", { name: "Remove selected element" }).click();
-    await expect(page.locator(".selection-chip")).not.toBeVisible();
+    await page
+      .locator(".screenshot-attachment")
+      .last()
+      .getByRole("button", { exact: true, name: "Remove" })
+      .click();
+    await expect(page.locator(".selection-badge")).toHaveCount(0);
+    await expect(page.locator(".selection-outline")).toHaveCount(0);
   });
 });
 

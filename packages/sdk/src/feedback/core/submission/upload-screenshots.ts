@@ -16,8 +16,8 @@ async function prepareScreenshot(
   transport: FeedbackTransport,
   screenshot: ScreenshotDraft,
   index: number
-): Promise<PreparedScreenshot> {
-  const { image, annotations, context } = screenshot;
+): Promise<PreparedScreenshot[]> {
+  const { closeUp, image, annotations, context } = screenshot;
   const annotated =
     annotations.length > 0
       ? await renderAnnotatedImage(image, annotations)
@@ -30,19 +30,34 @@ async function prepareScreenshot(
     const annotatedStorageId = annotated
       ? await uploadImage(transport, annotated)
       : undefined;
-    return {
-      annotatedStorageId,
-      annotations:
-        annotations.length > 0 ? toWireAnnotations(annotations) : undefined,
-      captureSource: "widget",
-      filename: `screenshot-${index + 1}.png`,
-      height: image.height,
-      mimeType: image.mimeType,
-      pageUrl: context.url,
-      size: image.blob.size,
-      storageId,
-      width: image.width,
-    };
+    const prepared: PreparedScreenshot[] = [
+      {
+        annotatedStorageId,
+        annotations:
+          annotations.length > 0 ? toWireAnnotations(annotations) : undefined,
+        captureSource: "widget",
+        filename: `screenshot-${index + 1}.png`,
+        height: image.height,
+        mimeType: image.mimeType,
+        pageUrl: context.url,
+        size: image.blob.size,
+        storageId,
+        width: image.width,
+      },
+    ];
+    if (closeUp) {
+      prepared.push({
+        captureSource: "element",
+        filename: `element-${index + 1}.png`,
+        height: closeUp.height,
+        mimeType: closeUp.mimeType,
+        pageUrl: context.url,
+        size: closeUp.blob.size,
+        storageId: await uploadImage(transport, closeUp),
+        width: closeUp.width,
+      });
+    }
+    return prepared;
   } finally {
     releaseCapture(annotated);
   }
@@ -57,24 +72,10 @@ export async function uploadScreenshots(
       prepareScreenshot(transport, screenshot, index)
     )
   );
-  const prepared = results.map((result) => {
+  return results.flatMap((result) => {
     if (result.status === "rejected") {
       throw result.reason;
     }
     return result.value;
   });
-  const element = submission.element;
-  if (element) {
-    prepared.push({
-      captureSource: "element",
-      filename: "element.png",
-      height: element.height,
-      mimeType: element.mimeType,
-      pageUrl: submission.context.url,
-      size: element.blob.size,
-      storageId: await uploadImage(transport, element),
-      width: element.width,
-    });
-  }
-  return prepared;
 }

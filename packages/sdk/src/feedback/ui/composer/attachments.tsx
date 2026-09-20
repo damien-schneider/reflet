@@ -1,60 +1,10 @@
 import { ScrollArea } from "@base-ui/react/scroll-area";
 import { useEffect, useRef } from "react";
 import type { FeedbackWidgetLabels } from "../../types";
-import { CameraIcon, CloseIcon, TargetIcon } from "../icons";
+import { CameraIcon } from "../icons";
 import type { WidgetState } from "../use-widget-state";
+import { CaptureSlot } from "./capture-slot";
 import { ScreenshotCard } from "./screenshot-card";
-
-function SelectedElement({
-  labels,
-  state,
-}: {
-  labels: FeedbackWidgetLabels;
-  state: WidgetState;
-}) {
-  if (!state.selection) {
-    return null;
-  }
-  const { comment, componentStack, label, selector, sourceLocation } =
-    state.selection;
-  const component = componentStack[0];
-  return (
-    <div className="selection-chip glass">
-      <button
-        aria-label={labels.pickElement}
-        className="selection-label"
-        disabled={state.isEditingDisabled || state.isCapturing}
-        onClick={() => state.setStep("picking")}
-        title={comment ?? sourceLocation ?? selector}
-        type="button"
-      >
-        {state.elementCapture ? (
-          <img
-            alt=""
-            height={32}
-            src={state.elementCapture.objectUrl}
-            width={32}
-          />
-        ) : (
-          <TargetIcon />
-        )}
-        <span className="selection-name">
-          {component ? `<${component}>` : label}
-        </span>
-        {comment && <span className="truncate">{comment}</span>}
-      </button>
-      <button
-        aria-label={labels.clearSelection}
-        className="icon-btn"
-        disabled={state.isEditingDisabled || state.isCapturing}
-        onClick={state.clearSelection}
-        type="button"
-      >
-        <CloseIcon />
-      </button>
-    </div>
-  );
-}
 
 export function Attachments({
   labels,
@@ -76,42 +26,44 @@ export function Attachments({
     !state.screenshots.some(({ id }) => id === state.pendingCapture?.id);
   return (
     <div className="attachments">
-      <SelectedElement labels={labels} state={state} />
-      <ScrollArea.Root className="screenshot-scroll-area">
-        <ScrollArea.Viewport
-          aria-label={labels.screenshot}
-          className="screenshot-strip"
-          ref={stripRef}
-          role="region"
-        >
-          <ScrollArea.Content className="screenshot-strip-content">
-            {state.screenshots.map((draft, index) => (
-              <ScreenshotCard
-                item={{ draft, multiple: count > 1, number: index + 1 }}
-                key={draft.id}
-                labels={labels}
-                state={state}
-              />
-            ))}
-            {isAdding && (
-              <div
-                aria-label={labels.capturing}
-                className="attachment-skeleton glass"
-                role="status"
-              >
-                <CameraIcon />
-                <span>{labels.capturing}</span>
-              </div>
-            )}
-          </ScrollArea.Content>
-        </ScrollArea.Viewport>
-        <ScrollArea.Scrollbar
-          className="screenshot-scrollbar"
-          orientation="horizontal"
-        >
-          <ScrollArea.Thumb className="screenshot-scroll-thumb" />
-        </ScrollArea.Scrollbar>
-      </ScrollArea.Root>
+      <div className="attachment-row">
+        <CaptureSlot labels={labels} state={state} />
+        <ScrollArea.Root className="screenshot-scroll-area">
+          <ScrollArea.Viewport
+            aria-label={labels.screenshot}
+            className="screenshot-strip"
+            ref={stripRef}
+            role="region"
+          >
+            <ScrollArea.Content className="screenshot-strip-content">
+              {state.screenshots.map((draft, index) => (
+                <ScreenshotCard
+                  item={{ draft, number: index + 1 }}
+                  key={draft.id}
+                  labels={labels}
+                  state={state}
+                />
+              ))}
+              {isAdding && (
+                <div
+                  aria-label={labels.capturing}
+                  className="attachment-skeleton glass"
+                  role="status"
+                >
+                  <CameraIcon />
+                  <span>{labels.capturing}</span>
+                </div>
+              )}
+            </ScrollArea.Content>
+          </ScrollArea.Viewport>
+          <ScrollArea.Scrollbar
+            className="screenshot-scrollbar"
+            orientation="horizontal"
+          >
+            <ScrollArea.Thumb className="screenshot-scroll-thumb" />
+          </ScrollArea.Scrollbar>
+        </ScrollArea.Root>
+      </div>
     </div>
   );
 }

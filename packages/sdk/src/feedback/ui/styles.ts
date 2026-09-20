@@ -24,14 +24,16 @@ export const WIDGET_STYLES = `
   --rf-spectrum: conic-gradient(#ff5757, #ffde59, #6bdb78, #4ac9fa, #8b5cf6, #ef73dc, #ff5757);
   --rf-radius: 20px;
   --rf-pill: 999px;
+  --rf-attachment-height: 78px;
   --rf-width: 360px;
   --rf-glass: rgb(255 255 255 / 72%);
   --rf-glass-highlight: rgb(255 255 255 / 90%);
   --rf-glass-stroke: rgb(255 255 255 / 70%);
   --rf-radius-sm: 8px;
   --rf-shadow-inset: inset 0 0 0 1px var(--rf-border);
-  --rf-shadow-low: 0 0 0 1px rgb(15 15 15 / 4%), 0 1px 2px rgb(15 15 15 / 6%), 0 4px 10px -4px rgb(15 15 15 / 10%);
-  --rf-shadow: 0 0 0 1px rgb(15 15 15 / 4%), 0 2px 5px -1px rgb(15 15 15 / 7%), 0 12px 32px -8px rgb(15 15 15 / 16%);
+  --rf-ring: 0 0 0 1px rgb(15 15 15 / 4%);
+  --rf-shadow-low: 0 1px 2px rgb(15 15 15 / 6%), 0 4px 10px -4px rgb(15 15 15 / 10%);
+  --rf-shadow: 0 2px 5px -1px rgb(15 15 15 / 7%), 0 12px 32px -8px rgb(15 15 15 / 16%);
   --rf-shadow-float: 0 4px 12px -3px rgb(15 15 15 / 35%);
   --rf-ease: cubic-bezier(0.16, 1, 0.3, 1);
   color-scheme: light;
@@ -55,8 +57,9 @@ export const WIDGET_STYLES = `
   --rf-accent: #529cca;
   --rf-danger: #eb5757;
   --rf-success: #4dab74;
-  --rf-shadow-low: 0 0 0 1px rgb(255 255 255 / 6%), 0 1px 2px rgb(0 0 0 / 30%), 0 4px 10px -4px rgb(0 0 0 / 40%);
-  --rf-shadow: 0 0 0 1px rgb(255 255 255 / 7%), 0 2px 5px -1px rgb(0 0 0 / 35%), 0 14px 36px -10px rgb(0 0 0 / 55%);
+  --rf-ring: 0 0 0 1px rgb(255 255 255 / 7%);
+  --rf-shadow-low: 0 1px 2px rgb(0 0 0 / 30%), 0 4px 10px -4px rgb(0 0 0 / 40%);
+  --rf-shadow: 0 2px 5px -1px rgb(0 0 0 / 35%), 0 14px 36px -10px rgb(0 0 0 / 55%);
   --rf-shadow-float: 0 4px 14px -3px rgb(0 0 0 / 55%);
   color-scheme: dark;
 }
@@ -104,8 +107,8 @@ svg { flex-shrink: 0; }
 .launcher-icon { display: flex; width: 15px; height: 15px; }
 .launcher-icon .on-close { display: none; }
 .floating-controls {
-  display: flex; align-items: center; padding: 3px; flex: none;
-  border-radius: var(--rf-pill);
+  display: flex; align-items: center; flex: none;
+  margin-right: auto; padding-left: 3px;
   animation: rf-in 220ms var(--rf-ease);
 }
 .drag-handle { touch-action: none; cursor: grab; }

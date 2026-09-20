@@ -43,14 +43,21 @@ function clampPosition(
 }
 
 export function useFloatingPosition(
-  corner: RefletFeedbackProps["position"] = "bottom-right"
+  corner: RefletFeedbackProps["position"] = "bottom-right",
+  isPanelOpen = false
 ) {
   const rootRef = useRef<HTMLDivElement>(null);
   const gesture = useRef<Point | null>(null);
   const [position, setPosition] = useState<Point | null>(null);
+  const [positionedPanelOpen, setPositionedPanelOpen] = useState(isPanelOpen);
   const [viewport, setViewport] = useState(visibleViewport);
   const horizontalEdge = corner.endsWith("right") ? "right" : "left";
   const verticalEdge = corner.startsWith("bottom") ? "bottom" : "top";
+
+  if (positionedPanelOpen !== isPanelOpen) {
+    setPositionedPanelOpen(isPanelOpen);
+    setPosition(null);
+  }
 
   const moveTo = useCallback(
     (point: Point, bounds: DOMRect) => {
@@ -120,15 +127,17 @@ export function useFloatingPosition(
   };
   const onPointerMove = (event: PointerEvent<HTMLButtonElement>) => {
     const bounds = rootRef.current?.getBoundingClientRect();
-    if (bounds && gesture.current) {
-      moveTo(
-        {
-          x: event.clientX - gesture.current.x,
-          y: event.clientY - gesture.current.y,
-        },
-        bounds
-      );
+    const grab = gesture.current;
+    if (
+      !(
+        bounds &&
+        grab &&
+        event.currentTarget.hasPointerCapture(event.pointerId)
+      )
+    ) {
+      return;
     }
+    moveTo({ x: event.clientX - grab.x, y: event.clientY - grab.y }, bounds);
   };
   const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
     const direction = KEY_DIRECTIONS[event.key];
@@ -147,6 +156,9 @@ export function useFloatingPosition(
   return {
     handleProps: {
       onKeyDown,
+      onLostPointerCapture: () => {
+        gesture.current = null;
+      },
       onPointerCancel: () => {
         gesture.current = null;
       },

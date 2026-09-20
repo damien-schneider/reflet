@@ -184,7 +184,7 @@ export interface FeedbackContext extends PageContext {
   consoleEvents?: ConsoleEvent[];
   metadata?: Record<string, string>;
   sdkVersion?: string;
-  selection?: ElementSelection;
+  selections?: ElementSelection[];
 }
 
 export interface CreateFeedbackParams {

@@ -1,4 +1,4 @@
-import type { FeedbackContext, RefletUser } from "../types";
+import type { ElementSelection, FeedbackContext, RefletUser } from "../types";
 
 export const SDK_VERSION = "0.4.0";
 export const DEFAULT_WIDGET_OFFSET = 20;
@@ -42,9 +42,12 @@ export interface CapturedImage {
 
 export interface ScreenshotDraft {
   annotations: Annotation[];
+  closeUp?: CapturedImage | null;
   context: FeedbackContext;
   id: string;
   image: CapturedImage;
+  selectedNode?: Element;
+  selection?: ElementSelection;
   source: "automatic" | "manual";
 }
 
@@ -58,7 +61,6 @@ export interface FeedbackWidgetLabels {
   captureFailed: string;
   capturing: string;
   clearAnnotations: string;
-  clearSelection: string;
   descriptionPlaceholder: string;
   dismissForDays: string;
   done: string;
@@ -67,6 +69,8 @@ export interface FeedbackWidgetLabels {
   emailInvalid: string;
   emailLabel: string;
   emailPlaceholder: string;
+  emailPromptBody: string;
+  emailPromptTitle: string;
   errorGeneric: string;
   errorTitleRequired: string;
   minimize: string;
@@ -81,6 +85,7 @@ export interface FeedbackWidgetLabels {
   retakeHint: string;
   retryAttachments: string;
   screenshot: string;
+  sendWithoutEmail: string;
   submit: string;
   successMessage: string;
   successTitle: string;
@@ -101,7 +106,6 @@ export const DEFAULT_WIDGET_LABELS: FeedbackWidgetLabels = {
   captureFailed: "Screenshot unavailable. Try again or send without it.",
   capturing: "Taking screenshot…",
   clearAnnotations: "Clear drawing",
-  clearSelection: "Remove selected element",
   descriptionPlaceholder: "What would you like to share?",
   dismissForDays: "Hide for {days} days",
   done: "Done",
@@ -110,6 +114,8 @@ export const DEFAULT_WIDGET_LABELS: FeedbackWidgetLabels = {
   emailInvalid: "Enter a valid email address.",
   emailLabel: "Email",
   emailPlaceholder: "you@company.com",
+  emailPromptBody: "We only use it to follow up on this report.",
+  emailPromptTitle: "Add your email?",
   errorGeneric: "Something went wrong. Please try again.",
   errorTitleRequired: "Tell us a bit about it first.",
   minimize: "Minimize feedback",
@@ -124,6 +130,7 @@ export const DEFAULT_WIDGET_LABELS: FeedbackWidgetLabels = {
   retakeHint: "Screenshot of this page",
   retryAttachments: "Retry attachments",
   screenshot: "Screenshot",
+  sendWithoutEmail: "Send without email",
   submit: "Send feedback",
   successMessage: "We read every report. Thanks for taking the time.",
   successTitle: "Feedback sent",
@@ -163,4 +170,9 @@ export interface RefletFeedbackProps {
   userToken?: string;
 }
 
-export type WidgetStep = "annotate" | "compose" | "picking" | "success";
+export type WidgetStep =
+  | "annotate"
+  | "compose"
+  | "email"
+  | "picking"
+  | "success";

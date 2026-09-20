@@ -30,7 +30,11 @@ import { useCallback, useState } from "react";
 import type { AgentTarget } from "./agent-config";
 import { AGENTS, openCloudAgent, openDeepLink } from "./agent-config";
 import type { FeedbackTag } from "./feedback-metadata-types";
-import { formatReportContext, type ReportContextValue } from "./report-context";
+import {
+  formatReportContext,
+  type ReportContextValue,
+  reportContextSelections,
+} from "./report-context";
 
 interface CopyForAgentsProps {
   attachments?: string[];
@@ -106,7 +110,7 @@ export function buildAgentPrompt({
   // Attached screenshots/images
   if (attachments && attachments.length > 0) {
     parts.push("## Attached Screenshots\n");
-    if (reportContext?.selection) {
+    if (reportContext && reportContextSelections(reportContext).length > 0) {
       parts.push(
         "One attachment shows the selected zone zoomed in: the surroundings are dimmed and the selection is outlined.\n"
       );

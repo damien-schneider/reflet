@@ -17,8 +17,9 @@ Auth: \`REFLET_API_KEY\` env, or \`reflet login --api-key fb_sec_…\` once.
    \`--statuses open,planned\`, \`--tags <tagId,…>\`, \`--as <name>\` (defaults
    to user@host and is what the dashboard shows as the claimer).
 
-2. Read it. \`context.selection.sourceLocation\` and \`componentStack\` point at
-   the code; \`context.consoleEvents\` holds the errors; \`context.url\` the page.
+2. Read it. Each \`context.selections[]\` entry points at the code through its
+   \`sourceLocation\` and \`componentStack\`; \`context.consoleEvents\` holds the
+   errors; \`context.url\` the page.
    Comments may carry reproduction steps:
 
    \`npx reflet-cli feedback comments <id> --json\`

@@ -61,7 +61,7 @@ for (const width of [1440, 390, 320]) {
         reducedMotion: width === 320 ? "reduce" : "no-preference",
       });
       await openWidget(page);
-      await page.locator(".screenshot-preview").click();
+      await page.locator(".annotate-action").click();
       await expect(page.locator(".overlay")).toHaveAttribute(
         "data-opening",
         "false"

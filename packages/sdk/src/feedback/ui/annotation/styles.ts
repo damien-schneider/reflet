@@ -13,9 +13,15 @@ export const ANNOTATOR_STYLES = `
 .overlay[data-opening="true"] .editor { pointer-events: none; }
 .overlay[data-closing="true"] { pointer-events: none; }
 .overlay[data-closing="true"]::before { opacity: 0; }
-.overlay[data-closing="true"] .toolbar { opacity: 0; transform: translateY(8px); }
+.overlay[data-closing="true"] .toolbar, .overlay[data-closing="true"] .element-note { opacity: 0; transform: translateY(8px); }
 
-.toolbar { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; transition: opacity 180ms var(--rf-ease), transform 180ms var(--rf-ease); padding: 4px 12px max(16px, env(safe-area-inset-bottom)); }
+.element-note { order: 1; display: flex; align-items: flex-start; gap: 10px; width: min(560px, calc(100vw - 32px)); margin: 0 auto 10px; padding: 10px 14px; border-radius: var(--rf-radius); transition: opacity 180ms var(--rf-ease), transform 180ms var(--rf-ease); }
+.element-note svg { flex: none; margin-top: 4px; opacity: 0.7; }
+.element-note textarea { flex: 1; min-width: 0; height: 42px; max-height: 96px; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; resize: none; }
+.element-note textarea:focus { outline: none; }
+.element-note:focus-within { outline: 2px solid var(--rf-accent); outline-offset: 2px; }
+
+.toolbar { order: 2; display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; transition: opacity 180ms var(--rf-ease), transform 180ms var(--rf-ease); padding: 4px 12px max(16px, env(safe-area-inset-bottom)); }
 .toolbar .group { display: flex; align-items: center; gap: 2px; padding: 4px; border-radius: var(--rf-pill); }
 .tool[aria-pressed="true"], .tool[data-selected="true"] { background: var(--rf-primary); color: var(--rf-primary-text); }
 .color-picker { position: relative; }

@@ -45,7 +45,7 @@ for (const width of [390, 320]) {
       const removeLast = page
         .getByRole("group", { exact: true, name: "Screenshot 4" })
         .getByRole("button", { exact: true, name: "Remove" });
-      for (let step = 0; step < 12; step++) {
+      for (let step = 0; step < 16; step++) {
         await page.keyboard.press("Tab");
         if (await removeLast.evaluate((button) => button.matches(":focus"))) {
           break;
@@ -55,11 +55,13 @@ for (const width of [390, 320]) {
       await expect(viewport).toHaveAttribute("data-overflow-x-start");
       await removeLast.press("Enter");
       await expect(page.locator(".screenshot-preview")).toHaveCount(3);
-      await page
-        .getByRole("group", { exact: true, name: "Screenshot 3" })
-        .getByRole("button", { exact: true, name: "Remove" })
-        .click();
-      await expect(page.locator(".screenshot-preview")).toHaveCount(2);
+      for (const number of [3, 2]) {
+        await page
+          .getByRole("group", { exact: true, name: `Screenshot ${number}` })
+          .getByRole("button", { exact: true, name: "Remove" })
+          .click();
+      }
+      await expect(page.locator(".screenshot-preview")).toHaveCount(1);
       await expect(viewport).not.toHaveAttribute("data-has-overflow-x");
       await expect(viewport).not.toHaveAttribute("data-overflow-x-start");
       await expect(viewport).not.toHaveAttribute("data-overflow-x-end");
@@ -91,13 +93,15 @@ test("scrolls the captures with a native touch swipe", async ({
   }
   const session = await page.context().newCDPSession(page);
   const y = bounds.y + 20;
+  const start = bounds.x + bounds.width - 10;
+  const end = bounds.x + 10;
   await session.send("Input.dispatchTouchEvent", {
-    touchPoints: [{ x: bounds.x + 280, y }],
+    touchPoints: [{ x: start, y }],
     type: "touchStart",
   });
-  for (const x of [240, 200, 160, 120, 80]) {
+  for (const progress of [0.2, 0.4, 0.6, 0.8, 1]) {
     await session.send("Input.dispatchTouchEvent", {
-      touchPoints: [{ x: bounds.x + x, y }],
+      touchPoints: [{ x: start + (end - start) * progress, y }],
       type: "touchMove",
     });
   }

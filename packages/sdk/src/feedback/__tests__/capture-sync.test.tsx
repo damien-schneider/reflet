@@ -105,6 +105,13 @@ function submitFeedback(): void {
   act(() => {
     submit.click();
   });
+  const sendWithoutEmail = shadow().querySelector(".ghost-btn");
+  if (!(sendWithoutEmail instanceof HTMLButtonElement)) {
+    throw new Error("Email prompt missing");
+  }
+  act(() => {
+    sendWithoutEmail.click();
+  });
 }
 
 describe("capture and page context sync", () => {

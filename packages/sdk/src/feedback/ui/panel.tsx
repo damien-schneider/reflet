@@ -1,7 +1,7 @@
 import { type ReactNode, useEffect, useRef } from "react";
 import type { FeedbackWidgetLabels } from "../types";
 import { Attachments } from "./composer/attachments";
-import { ComposerControls } from "./composer/controls";
+import { EmailPrompt } from "./composer/email-prompt";
 import { MessageInput } from "./composer/message-input";
 import { CheckIcon } from "./icons";
 import type { WidgetState } from "./use-widget-state";
@@ -33,6 +33,21 @@ export function FeedbackPanel({
     );
   }
 
+  if (state.step === "email") {
+    return (
+      <section aria-label={labels.emailPromptTitle} className="panel">
+        <button
+          aria-label={labels.back}
+          className="email-scrim"
+          onClick={() => state.setStep("compose")}
+          type="button"
+        />
+        <EmailPrompt labels={labels} state={state} />
+        <div className="composer-toolbar">{floatingControls}</div>
+      </section>
+    );
+  }
+
   return (
     <section
       aria-label={labels.title}
@@ -45,11 +60,10 @@ export function FeedbackPanel({
         className="composer"
         onSubmit={(event) => {
           event.preventDefault();
-          state.submit();
+          state.requestSubmit();
         }}
       >
-        <MessageInput labels={labels} state={state} />
-        <ComposerControls
+        <MessageInput
           floatingControls={floatingControls}
           labels={labels}
           state={state}

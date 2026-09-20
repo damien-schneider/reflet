@@ -41,14 +41,16 @@ describe("buildIssueBody", () => {
             },
           ],
           os: "macOS",
-          selection: {
-            componentStack: ["Editor", "SaveButton"],
-            html: "<button>",
-            label: "Save",
-            rect: { height: 1, width: 1, x: 0, y: 0 },
-            selector: "button.save",
-            sourceLocation: "src/editor.tsx:42",
-          },
+          selections: [
+            {
+              componentStack: ["Editor", "SaveButton"],
+              html: "<button>",
+              label: "Save",
+              rect: { height: 1, width: 1, x: 0, y: 0 },
+              selector: "button.save",
+              sourceLocation: "src/editor.tsx:42",
+            },
+          ],
           url: "https://app.acme.com/editor",
           viewport: { devicePixelRatio: 2, height: 900, width: 1440 },
         },
@@ -74,6 +76,73 @@ describe("buildIssueBody", () => {
       "[Open in Reflet](https://reflet.app/dashboard/acme/feedback/abc)"
     );
     expect(feedbackIdFromIssueBody(body)).toBe(FEEDBACK_ID);
+  });
+
+  test("renders one block per selection, in order", () => {
+    const body = buildIssueBody({
+      dashboardUrl: "https://reflet.app",
+      feedback: feedbackDoc({
+        context: {
+          selections: [
+            {
+              comment: "Wrong label",
+              componentStack: ["Editor", "SaveButton"],
+              html: "<button>",
+              label: "Save",
+              rect: { height: 1, width: 1, x: 0, y: 0 },
+              selector: "button.save",
+              sourceLocation: "src/editor.tsx:42",
+            },
+            {
+              comment: "Misaligned",
+              componentStack: ["Editor", "Toolbar"],
+              html: "<div>",
+              label: "Toolbar",
+              rect: { height: 2, width: 2, x: 4, y: 8 },
+              selector: "div.toolbar",
+              sourceLocation: "src/toolbar.tsx:12",
+            },
+          ],
+        },
+      }),
+      screenshots: [],
+    });
+
+    expect(body).toContain(
+      [
+        "- Element: Save (`button.save`)",
+        "- Note on element: Wrong label",
+        "- Source: src/editor.tsx:42",
+        "- Components: Editor > SaveButton",
+        "- Element: Toolbar (`div.toolbar`)",
+        "- Note on element: Misaligned",
+        "- Source: src/toolbar.tsx:12",
+        "- Components: Editor > Toolbar",
+      ].join("\n")
+    );
+  });
+
+  test("still renders a legacy singular selection", () => {
+    const body = buildIssueBody({
+      dashboardUrl: "https://reflet.app",
+      feedback: feedbackDoc({
+        context: {
+          selection: {
+            componentStack: ["InvoiceRow"],
+            html: "<button>Retry</button>",
+            label: "Retry",
+            rect: { height: 1, width: 1, x: 0, y: 0 },
+            selector: "button.retry",
+            sourceLocation: "src/invoice-row.tsx:7",
+          },
+        },
+      }),
+      screenshots: [],
+    });
+
+    expect(body).toContain("- Element: Retry (`button.retry`)");
+    expect(body).toContain("- Source: src/invoice-row.tsx:7");
+    expect(body).toContain("- Components: InvoiceRow");
   });
 
   test("keeps only the last 10 console errors", () => {

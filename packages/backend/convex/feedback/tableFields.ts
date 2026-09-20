@@ -32,6 +32,24 @@ export const screenshotAnnotationValidator = v.object({
   y: v.number(),
 });
 
+/** One element a reporter pointed at, with the note they attached to it. */
+export const elementSelectionValidator = v.object({
+  comment: v.optional(v.string()),
+  componentStack: v.array(v.string()),
+  html: v.string(),
+  label: v.string(),
+  rect: v.object({
+    height: v.number(),
+    width: v.number(),
+    x: v.number(),
+    y: v.number(),
+  }),
+  region: v.optional(v.string()),
+  selector: v.string(),
+  sourceLocation: v.optional(v.string()),
+  text: v.optional(v.string()),
+});
+
 /**
  * Where and how a report was written, as captured by the SDK widget.
  * Every field is optional: older clients and the dashboard send nothing.
@@ -56,24 +74,8 @@ export const feedbackContextValidator = v.object({
   screen: v.optional(v.object({ height: v.number(), width: v.number() })),
   scroll: v.optional(v.object({ x: v.number(), y: v.number() })),
   sdkVersion: v.optional(v.string()),
-  selection: v.optional(
-    v.object({
-      comment: v.optional(v.string()),
-      componentStack: v.array(v.string()),
-      html: v.string(),
-      label: v.string(),
-      rect: v.object({
-        height: v.number(),
-        width: v.number(),
-        x: v.number(),
-        y: v.number(),
-      }),
-      region: v.optional(v.string()),
-      selector: v.string(),
-      sourceLocation: v.optional(v.string()),
-      text: v.optional(v.string()),
-    })
-  ),
+  selection: v.optional(elementSelectionValidator),
+  selections: v.optional(v.array(elementSelectionValidator)),
   timezone: v.optional(v.string()),
   url: v.optional(v.string()),
   userAgent: v.optional(v.string()),

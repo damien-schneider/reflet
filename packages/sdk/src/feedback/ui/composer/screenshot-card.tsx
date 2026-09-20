@@ -1,6 +1,8 @@
+import { useRef } from "react";
+import { isSelectionAnnotation } from "../../core/element-capture";
 import type { FeedbackWidgetLabels, ScreenshotDraft } from "../../types";
 import { ScreenshotPreview } from "../annotation/screenshot-preview";
-import { CameraIcon, PencilIcon, TrashIcon } from "../icons";
+import { PencilIcon, TargetIcon, TrashIcon } from "../icons";
 import type { WidgetState } from "../use-widget-state";
 
 export function ScreenshotCard({
@@ -8,40 +10,39 @@ export function ScreenshotCard({
   labels,
   state,
 }: {
-  item: { draft: ScreenshotDraft; number: number; multiple: boolean };
+  item: { draft: ScreenshotDraft; number: number };
   labels: FeedbackWidgetLabels;
   state: WidgetState;
 }) {
-  const { draft, number, multiple } = item;
+  const { draft, number } = item;
+  const previewRef = useRef<HTMLDivElement>(null);
   const isCapturing = state.pendingCapture?.id === draft.id;
   const disabled = state.isEditingDisabled || state.isCapturing;
+  const drawings = draft.annotations.filter(
+    (annotation) => !isSelectionAnnotation(annotation)
+  );
   return (
     <fieldset
       aria-label={`${labels.screenshot} ${number}`}
-      className="screenshot-attachment glass"
+      className="screenshot-attachment"
     >
-      <button
-        aria-label={labels.annotateHint}
-        className="screenshot-preview"
-        disabled={disabled}
-        onClick={(event) =>
-          state.annotateScreenshot(draft.id, event.currentTarget)
-        }
-        type="button"
-      >
+      <div className="screenshot-preview glass" ref={previewRef}>
         <ScreenshotPreview
           annotations={draft.annotations}
           capture={draft.image}
         />
-        <span className="attachment-caption glass">
-          <PencilIcon />
-          <span className="attachment-caption-label">{labels.screenshot}</span>
-          {multiple && <span>{number}</span>}
-          {draft.annotations.length > 0 && (
-            <span className="annotation-count">{draft.annotations.length}</span>
-          )}
+      </div>
+      {draft.selection && (
+        <span
+          className="selection-badge glass"
+          title={draft.selection.comment ?? draft.selection.label}
+        >
+          <TargetIcon />
         </span>
-      </button>
+      )}
+      {drawings.length > 0 && (
+        <span className="annotation-count glass">{drawings.length}</span>
+      )}
       {isCapturing ? (
         <div className="capture-progress glass" role="status">
           <span className="spinner" />
@@ -50,14 +51,21 @@ export function ScreenshotCard({
       ) : (
         <div className="attachment-actions glass">
           <button
-            aria-label={labels.recapture}
-            className="icon-btn"
+            aria-label={labels.annotateHint}
+            className="icon-btn annotate-action"
             disabled={disabled}
-            onClick={() => state.retakeCapture(draft.id)}
-            title={labels.recapture}
+            onClick={(event) => {
+              if (previewRef.current) {
+                state.annotateScreenshot(draft.id, {
+                  button: event.currentTarget,
+                  thumbnail: previewRef.current,
+                });
+              }
+            }}
+            title={labels.annotateHint}
             type="button"
           >
-            <CameraIcon />
+            <PencilIcon />
           </button>
           <button
             aria-label={labels.removeScreenshot}

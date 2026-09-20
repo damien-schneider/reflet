@@ -25,7 +25,6 @@ export interface FeedbackTransport {
 
 export interface WidgetSubmission {
   context: FeedbackContext;
-  element: CapturedImage | null;
   email?: string;
   isAnonymous: boolean;
   message: string;

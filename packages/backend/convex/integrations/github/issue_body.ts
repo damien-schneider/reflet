@@ -14,6 +14,16 @@ export function feedbackIdFromIssueBody(
   return body ? FEEDBACK_MARKER_REGEX.exec(body)?.[1] : undefined;
 }
 
+type FeedbackContext = NonNullable<Doc<"feedback">["context"]>;
+type ElementSelection = NonNullable<FeedbackContext["selection"]>;
+
+function selectionsOf(context: FeedbackContext): ElementSelection[] {
+  return [
+    ...(context.selections ?? []),
+    ...(context.selection ? [context.selection] : []),
+  ];
+}
+
 function reportContextLines(context: Doc<"feedback">["context"]): string[] {
   if (!context) {
     return [];
@@ -35,8 +45,7 @@ function reportContextLines(context: Doc<"feedback">["context"]): string[] {
   if (context.sdkVersion) {
     lines.push(`- SDK: ${context.sdkVersion}`);
   }
-  const { selection } = context;
-  if (selection) {
+  for (const selection of selectionsOf(context)) {
     lines.push(`- Element: ${selection.label} (\`${selection.selector}\`)`);
     if (selection.comment) {
       lines.push(`- Note on element: ${selection.comment}`);

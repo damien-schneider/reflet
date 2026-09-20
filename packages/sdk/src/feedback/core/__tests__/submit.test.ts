@@ -73,7 +73,6 @@ function submission(
 ): WidgetSubmission {
   return {
     context: { url: "https://app.test/billing" },
-    element: null,
     isAnonymous: false,
     message: "The invoice total is wrong",
     screenshots: [],
@@ -195,27 +194,31 @@ describe("submitWidgetFeedback", () => {
     expect(result.pendingScreenshots).toEqual([]);
   });
 
-  it.each([false, true])(
-    "attaches an element close-up with a viewport: %s",
-    async (withViewport) => {
-      const { transport, saved } = stubTransport();
-      await submitWidgetFeedback(
-        transport,
-        submission({
-          element: capture({ height: 40, width: 120 }),
-          screenshots: withViewport ? [screenshot()] : [],
-        })
-      );
-      expect(saved.map((entry) => entry.captureSource)).toEqual(
-        withViewport ? ["widget", "element"] : ["element"]
-      );
-      expect(saved.at(-1)).toMatchObject({
-        filename: "element.png",
-        height: 40,
-        width: 120,
-      });
-    }
-  );
+  it("uploads a close-up next to each capture taken from the picker", async () => {
+    const { transport, saved } = stubTransport();
+    await submitWidgetFeedback(
+      transport,
+      submission({
+        screenshots: [
+          screenshot(),
+          screenshot({
+            closeUp: capture({ height: 40, width: 120 }),
+            id: "second",
+          }),
+        ],
+      })
+    );
+    expect(saved.map((entry) => entry.captureSource)).toEqual([
+      "widget",
+      "widget",
+      "element",
+    ]);
+    expect(saved.at(-1)).toMatchObject({
+      filename: "element-2.png",
+      height: 40,
+      width: 120,
+    });
+  });
 
   it("leaves the draft unsent if any image upload fails", async () => {
     const { transport, created } = stubTransport({

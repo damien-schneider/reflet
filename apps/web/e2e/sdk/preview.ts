@@ -16,7 +16,7 @@ export async function openWidget(page: Page) {
 }
 
 export async function drawSpotlight(page: Page, screenshotIndex = 0) {
-  await page.locator(".screenshot-preview").nth(screenshotIndex).click();
+  await page.locator(".annotate-action").nth(screenshotIndex).click();
   await expect(page.locator(".overlay")).toHaveAttribute(
     "data-opening",
     "false"
