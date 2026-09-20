@@ -425,6 +425,27 @@ describe("CopyForAgents Component", () => {
     );
   });
 
+  it("copies the queue command scoped to this feedback", () => {
+    mockUseQuery.mockReturnValue(null);
+    const writeTextMock = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, {
+      clipboard: { writeText: writeTextMock },
+    });
+
+    render(
+      <CopyForAgents
+        description="Test desc"
+        feedbackId={feedbackId}
+        organizationId={organizationId}
+        title="Test title"
+      />
+    );
+    fireEvent.click(screen.getByText("Agents"));
+    fireEvent.click(screen.getByText("/reflet <id>"));
+
+    expect(writeTextMock).toHaveBeenCalledWith(`/reflet ${feedbackId}`);
+  });
+
   it("includes project context from repo analysis in prompt", async () => {
     mockUseQuery.mockImplementation((queryRef: string) => {
       if (queryRef === "repo_analysis.getLatestAnalysis") {

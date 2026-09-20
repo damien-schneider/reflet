@@ -264,6 +264,13 @@ export function CopyForAgents({
     setTimeout(() => setCopiedId(null), 2000);
   }, [codingPrompt]);
 
+  const handleCopyQueueCommand = useCallback(async () => {
+    await navigator.clipboard.writeText(`/reflet ${feedbackId}`);
+    setCopiedId("reflet-cli");
+    toast.success("Paste it in an agent that ran reflet agent install");
+    setTimeout(() => setCopiedId(null), 2000);
+  }, [feedbackId]);
+
   // Filter cloud agents that need GitHub
   const availableAgents = AGENTS.filter((agent) => {
     if (agent.id === "copilot-workspace" && !repository) {
@@ -300,6 +307,26 @@ export function CopyForAgents({
       </Tooltip>
 
       <DropdownMenuContent align="end" className="w-64">
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>Work it end to end</DropdownMenuLabel>
+          <DropdownMenuItem onClick={handleCopyQueueCommand}>
+            <span className="mr-2 flex h-4 w-4 items-center justify-center">
+              {copiedId === "reflet-cli" ? (
+                <Check className="h-4 w-4 text-success-text" />
+              ) : (
+                <Terminal className="h-4 w-4" />
+              )}
+            </span>
+            <div className="flex flex-col">
+              <span>/reflet {"<id>"}</span>
+              <span className="text-muted-foreground text-xs">
+                Claim, fix, open the PR and close it
+              </span>
+            </div>
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+
         <DropdownMenuGroup>
           <DropdownMenuLabel>Copy for agents</DropdownMenuLabel>
           {copyAgents.map((agent) => (

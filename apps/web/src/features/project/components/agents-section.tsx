@@ -97,20 +97,40 @@ export function AgentsSection({ organizationId }: AgentsSectionProps) {
       </section>
 
       <section className="space-y-3">
-        <h2 className="font-medium text-sm">Connect the CLI</h2>
+        <h2 className="font-medium text-sm">1. Connect the CLI</h2>
         <p className="text-muted-foreground text-sm">
           Stores the key in <code>~/.reflet/config.json</code>. In CI or a
           sandbox, set <code>REFLET_API_KEY</code> instead.
         </p>
         <InstallCommand command={loginCommand} />
-        <InstallCommand command="npx reflet-cli feedback claim-next --json" />
       </section>
 
       <section className="space-y-3">
-        <h2 className="font-medium text-sm">Agent loop</h2>
+        <h2 className="font-medium text-sm">2. Teach your agent the loop</h2>
         <p className="text-muted-foreground text-sm">
-          Paste this into a coding agent running in your repo. Also printed by{" "}
-          <code>npx reflet-cli prompt agent</code>.
+          Run this once in the repository. It writes the workflow where Claude
+          Code, Codex and omp look for skills, so the agent claims an item,
+          reads its screenshots and element source locations, fixes it, opens
+          the pull request and moves the status — until the queue is empty.
+        </p>
+        <InstallCommand command="npx reflet-cli agent install" />
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="font-medium text-sm">3. Ask for it</h2>
+        <p className="text-muted-foreground text-sm">
+          <code>/reflet</code> in Claude Code, <code>$reflet</code> in Codex, or
+          just ask any agent to work the Reflet queue. Add a feedback id to
+          scope the run to one item.
+        </p>
+        <InstallCommand command="/reflet" />
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="font-medium text-sm">Without the skill</h2>
+        <p className="text-muted-foreground text-sm">
+          The same workflow as plain text, for an agent that reads no skill
+          files. Also printed by <code>npx reflet-cli prompt agent</code>.
         </p>
         <CopyBlock content={AGENT_PROMPT} label="Agent prompt" />
       </section>

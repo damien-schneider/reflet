@@ -147,8 +147,18 @@ export const COMMAND_GROUPS = [
         description: "Duplicate pairs",
       },
       {
+        command: "screenshot download <feedbackId> [--out dir]",
+        description:
+          "Write the annotated screenshots to .reflet/screenshots/<feedbackId>/",
+      },
+      {
         command: "screenshot list <feedbackId> | delete <id>",
         description: "Screenshots",
+      },
+      {
+        command: "agent install",
+        description:
+          "Write the /reflet queue workflow for Claude Code, Codex and omp",
       },
       {
         command: "survey list | get | analytics | responses <id>",
@@ -163,6 +173,11 @@ export const COMMAND_GROUPS = [
 ] as const;
 
 export const RECIPES = [
+  {
+    prompt:
+      "Run `npx reflet-cli agent install`, then `/reflet` to work the queue until it is empty.",
+    title: "Fix every open feedback",
+  },
   {
     prompt:
       "Run `npx reflet-cli feedback claim-next --json`, read the item, fix it in this repo, open a PR whose body says `fixes reflet:<id>`, then comment on the feedback with the PR link.",

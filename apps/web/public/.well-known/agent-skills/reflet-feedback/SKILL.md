@@ -19,11 +19,21 @@ Run `npx reflet-cli@latest login` interactively, or provide `REFLET_API_KEY` thr
 npx reflet-cli@latest feedback list --json
 npx reflet-cli@latest feedback get FEEDBACK_ID --json
 npx reflet-cli@latest feedback comments FEEDBACK_ID --json
+npx reflet-cli@latest screenshot download FEEDBACK_ID
 ```
 
-Keep the requested organization and feedback scope. Read the report, screenshots, comments, and linked work before classifying or changing status. `feedback claim-next` claims work and changes status; it is a mutation, not a queue preview.
+Keep the requested organization and feedback scope. Read the report, screenshots, comments, and linked work before classifying or changing status. `screenshot download` writes the annotated images to `.reflet/screenshots/FEEDBACK_ID/` so you can open them. `feedback claim-next` claims work and changes status; it is a mutation, not a queue preview.
 
 For an authorized change, inspect `npx reflet-cli@latest --help` and the relevant command's help, perform that change, then read the item again to verify it. Publishing releases, commenting, deleting, or modifying feedback requires the user's task to authorize that action.
+
+## Fix reported bugs inside a repository
+
+Run `npx reflet-cli@latest agent install` in the repository once. It writes the
+end-to-end queue workflow — claim, read, fix, open the pull request, move the
+status — to `.agents/skills/reflet/`, `.claude/skills/reflet/`,
+`.omp/skills/reflet/` and `.claude/commands/reflet.md`, so Codex, Claude Code
+and omp all reach it. `npx reflet-cli@latest prompt agent` prints the same
+workflow.
 
 ## References
 

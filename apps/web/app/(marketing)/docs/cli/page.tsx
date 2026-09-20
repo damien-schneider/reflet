@@ -83,9 +83,27 @@ export default function CliDocsPage() {
       </section>
 
       <section className="mb-10">
+        <SectionTitle>Install the workflow</SectionTitle>
+        <p className="mb-3 text-muted-foreground text-sm">
+          Run once in the repository the feedback is about. It writes the queue
+          workflow to <InlineCode>.agents/skills/reflet/</InlineCode>,{" "}
+          <InlineCode>.claude/skills/reflet/</InlineCode>,{" "}
+          <InlineCode>.omp/skills/reflet/</InlineCode> and{" "}
+          <InlineCode>.claude/commands/reflet.md</InlineCode>, then{" "}
+          <InlineCode>/reflet</InlineCode> in Claude Code,{" "}
+          <InlineCode>$reflet</InlineCode> in Codex — or a plain ask in any
+          other agent — works the queue until it is empty.
+        </p>
+        <div className="space-y-2">
+          <InstallCommand command="npx reflet-cli agent install" />
+          <InstallCommand command="npx reflet-cli screenshot download <feedbackId>" />
+        </div>
+      </section>
+
+      <section className="mb-10">
         <SectionTitle>Agent loop</SectionTitle>
         <p className="mb-3 text-muted-foreground text-sm">
-          The prompt a coding agent needs to go from queue to pull request. Also
+          What that skill contains, for an agent that reads no skill files. Also
           printed by <InlineCode>npx reflet-cli prompt agent</InlineCode>.
           Merging a PR that says <InlineCode>Closes #issue</InlineCode> or{" "}
           <InlineCode>fixes reflet:&lt;id&gt;</InlineCode> marks the feedback
