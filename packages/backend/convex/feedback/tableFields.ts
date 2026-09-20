@@ -178,6 +178,7 @@ export const feedbackTables = {
       )
     ),
     aiFeatureCheckSummary: v.optional(v.string()),
+    aiJunk: v.optional(v.number()),
     aiPriority: v.optional(
       v.union(
         v.literal("critical"),

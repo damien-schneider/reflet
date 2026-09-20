@@ -28,6 +28,7 @@ export interface TriageTag {
 }
 
 export interface FeedbackTriage {
+  junk: number;
   needsReview: boolean;
   tagIds: Id<"tags">[];
   usefulness: number;
@@ -112,6 +113,7 @@ export const evaluateFeedbackTriage = async (
     .map((candidate) => candidate.tagId);
 
   return {
+    junk: junkAnswer.probability,
     needsReview: junkAnswer.probability >= REVIEW_JUNK_THRESHOLD,
     tagIds,
     usefulness,

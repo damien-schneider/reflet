@@ -39,7 +39,26 @@ interface PendingReviewPanelProps {
   orgSlug: string;
 }
 
-function UsefulnessIndicator({ usefulness }: { usefulness: number }) {
+function HoldReason({
+  junk,
+  usefulness,
+}: {
+  junk?: number;
+  usefulness?: number;
+}) {
+  if (junk !== undefined) {
+    return (
+      <AiMiniIndicator
+        label={`${Math.round(junk * PERCENTAGE_SCALE)}% likely junk`}
+        type="high"
+      />
+    );
+  }
+
+  if (usefulness === undefined) {
+    return null;
+  }
+
   const percentage = Math.round(usefulness * PERCENTAGE_SCALE);
   const type = (() => {
     if (percentage < LOW_USEFULNESS_PERCENTAGE) {
@@ -136,9 +155,7 @@ export function PendingReviewPanel({
                     {formatDistanceToNow(item.createdAt, { addSuffix: true })}
                   </CardDescription>
                 </div>
-                {item.aiUsefulness === undefined ? null : (
-                  <UsefulnessIndicator usefulness={item.aiUsefulness} />
-                )}
+                <HoldReason junk={item.aiJunk} usefulness={item.aiUsefulness} />
               </div>
             </CardHeader>
             <CardContent className="space-y-4">

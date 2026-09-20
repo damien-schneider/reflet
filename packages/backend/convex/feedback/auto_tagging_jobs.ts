@@ -52,6 +52,7 @@ export const saveAiAnalysis = internalMutation({
     ),
     complexityReasoning: v.optional(v.string()),
     feedbackId: v.id("feedback"),
+    junk: v.optional(v.number()),
     priority: v.optional(
       v.union(
         v.literal("critical"),
@@ -94,6 +95,10 @@ export const saveAiAnalysis = internalMutation({
     if (args.usefulness !== undefined) {
       updates.aiUsefulness = args.usefulness;
       updates.aiUsefulnessGeneratedAt = now;
+    }
+
+    if (args.junk !== undefined) {
+      updates.aiJunk = args.junk;
     }
 
     await ctx.db.patch(args.feedbackId, updates);

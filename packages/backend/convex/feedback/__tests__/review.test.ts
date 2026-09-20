@@ -4,6 +4,7 @@ import { describe, expect, test } from "vitest";
 import { api, internal } from "../../_generated/api";
 import schema from "../../schema";
 import { modules } from "../../test.helpers";
+import { collectPendingReview } from "../review";
 
 const seedOrganization = async () => {
   const t = convexTest(schema, modules);
@@ -53,6 +54,11 @@ describe("Feedback review queue", () => {
       organizationId,
     });
     expect(after.map((item) => item._id)).not.toContain(feedbackId);
+
+    const queued = await t.run(
+      async (ctx) => await collectPendingReview(ctx, organizationId)
+    );
+    expect(queued.map((item) => item._id)).toEqual([feedbackId]);
   });
 
   test("pending review is not readable by anonymous visitors", async () => {

@@ -1,5 +1,6 @@
 import { v } from "convex/values";
-import { internalMutation, query } from "../_generated/server";
+import type { Id } from "../_generated/dataModel";
+import { internalMutation, type QueryCtx, query } from "../_generated/server";
 import { requireOrgMember } from "../shared/access";
 import { afterApproval } from "./after_create";
 
@@ -30,30 +31,39 @@ export const releaseAfterTriage = internalMutation({
   },
 });
 
+export const collectPendingReview = async (
+  ctx: QueryCtx,
+  organizationId: Id<"organizations">
+) => {
+  const feedbackItems = await ctx.db
+    .query("feedback")
+    .withIndex("by_org_approved", (q) =>
+      q.eq("organizationId", organizationId).eq("isApproved", false)
+    )
+    .collect();
+
+  return feedbackItems
+    .filter((feedback) => !(feedback.deletedAt || feedback.isMerged))
+    .sort((a, b) => b.createdAt - a.createdAt)
+    .map((feedback) => ({
+      _id: feedback._id,
+      aiJunk: feedback.aiJunk,
+      aiUsefulness: feedback.aiUsefulness,
+      createdAt: feedback.createdAt,
+      description: feedback.description,
+      source: feedback.source,
+      title: feedback.title,
+    }));
+};
+
 export const listPendingReview = query({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
     const access = await requireOrgMember(ctx, args.organizationId);
 
-    const feedbackItems = await ctx.db
-      .query("feedback")
-      .withIndex("by_org_approved", (q) =>
-        q.eq("organizationId", args.organizationId).eq("isApproved", false)
-      )
-      .collect();
-
-    const items = feedbackItems
-      .filter((feedback) => !(feedback.deletedAt || feedback.isMerged))
-      .sort((a, b) => b.createdAt - a.createdAt)
-      .map((feedback) => ({
-        _id: feedback._id,
-        aiUsefulness: feedback.aiUsefulness,
-        createdAt: feedback.createdAt,
-        description: feedback.description,
-        source: feedback.source,
-        title: feedback.title,
-      }));
-
-    return { canApprove: access.isAdmin, items };
+    return {
+      canApprove: access.isAdmin,
+      items: await collectPendingReview(ctx, args.organizationId),
+    };
   },
 });

@@ -127,7 +127,11 @@ Description: ${feedback.description || "(no description)"}`;
     if (!result) {
       await ctx.runMutation(
         internal.feedback.auto_tagging_jobs.saveAiAnalysis,
-        { feedbackId: args.feedbackId, usefulness: triage.usefulness }
+        {
+          feedbackId: args.feedbackId,
+          junk: triage.junk,
+          usefulness: triage.usefulness,
+        }
       );
 
       return {
@@ -141,6 +145,7 @@ Description: ${feedback.description || "(no description)"}`;
       complexity: result.complexity,
       complexityReasoning: result.complexityReasoning,
       feedbackId: args.feedbackId,
+      junk: triage.junk,
       priority: result.priority,
       priorityReasoning: result.priorityReasoning,
       timeEstimate: result.timeEstimate,
