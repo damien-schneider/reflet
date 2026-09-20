@@ -1,6 +1,6 @@
 import type { FeedbackContext, RefletUser } from "../types";
 
-export const SDK_VERSION = "0.3.5";
+export const SDK_VERSION = "0.4.0";
 export const DEFAULT_WIDGET_OFFSET = 20;
 
 const ANNOTATION_TOOLS = [
