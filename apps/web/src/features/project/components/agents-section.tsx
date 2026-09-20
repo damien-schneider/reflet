@@ -108,10 +108,11 @@ export function AgentsSection({ organizationId }: AgentsSectionProps) {
       <section className="space-y-3">
         <h2 className="font-medium text-sm">2. Teach your agent the loop</h2>
         <p className="text-muted-foreground text-sm">
-          Run this once in the repository. It writes the workflow where Claude
-          Code, Codex and omp look for skills, so the agent claims an item,
-          reads its screenshots and element source locations, fixes it, opens
-          the pull request and moves the status — until the queue is empty.
+          Run this once in the repository. It writes the workflow to{" "}
+          <code>.agents/skills/</code> and <code>.claude/skills/</code>, where
+          coding agents look for skills, so the agent claims an item, reads its
+          screenshots and element source locations, fixes it, opens the pull
+          request and moves the status — until the queue is empty.
         </p>
         <InstallCommand command="npx reflet-cli agent install" />
       </section>

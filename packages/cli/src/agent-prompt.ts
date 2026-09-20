@@ -20,6 +20,9 @@ once. \`REFLET_API_URL\` points at a self-hosted API.
 Repeat from step 1 until \`claim-next\` has nothing left. One feedback per branch
 and per pull request.
 
+Given a feedback id instead of the whole queue, claim that one with
+\`npx reflet-cli@latest feedback claim <id>\`, run steps 2 to 5 on it, and stop.
+
 1. Claim the highest-priority open item and lock it for two hours:
 
    \`npx reflet-cli@latest feedback claim-next --json\`

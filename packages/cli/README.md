@@ -60,9 +60,8 @@ them can work the queue end to end without being told how:
 
 | File | Read by |
 | --- | --- |
-| `.agents/skills/reflet/SKILL.md` | Codex (`$reflet`), and anything following the agent-skills layout |
+| `.agents/skills/reflet/SKILL.md` | Codex (`$reflet`), omp, and anything else following the agent-skills layout |
 | `.claude/skills/reflet/SKILL.md` | Claude Code |
-| `.omp/skills/reflet/SKILL.md` | omp |
 | `.claude/commands/reflet.md` | Claude Code, as the `/reflet` slash command |
 
 It also adds `.reflet/` to `.gitignore`, where downloaded screenshots land.
@@ -71,7 +70,8 @@ Running it twice changes nothing. `--dry-run` and `--cwd <dir>` behave as in
 
 The workflow claims one item, reads its screenshots, element source locations
 and console errors, fixes it, opens the pull request, comments and moves the
-status — then repeats until the queue is empty.
+status — then repeats until the queue is empty. Pass a feedback id (`/reflet
+fb_…`) to work just that one.
 
 ### Admin API
 

@@ -18,7 +18,6 @@ function workspace(initial: Record<string, string> = {}) {
 const SKILL_PATHS = [
   "/app/.agents/skills/reflet/SKILL.md",
   "/app/.claude/skills/reflet/SKILL.md",
-  "/app/.omp/skills/reflet/SKILL.md",
 ];
 
 describe("agent install", () => {
@@ -37,6 +36,7 @@ describe("agent install", () => {
       expect(frontmatter).toContain("name: reflet\n");
       expect(JSON.parse(description ?? "")).toBe(SKILL_DESCRIPTION);
       expect(document).toContain("feedback claim-next");
+      expect(document).toContain("feedback claim <id>");
     }
     expect(store.get("/app/.claude/commands/reflet.md")).toContain(
       "$ARGUMENTS"

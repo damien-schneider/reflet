@@ -86,13 +86,13 @@ export default function CliDocsPage() {
         <SectionTitle>Install the workflow</SectionTitle>
         <p className="mb-3 text-muted-foreground text-sm">
           Run once in the repository the feedback is about. It writes the queue
-          workflow to <InlineCode>.agents/skills/reflet/</InlineCode>,{" "}
-          <InlineCode>.claude/skills/reflet/</InlineCode>,{" "}
-          <InlineCode>.omp/skills/reflet/</InlineCode> and{" "}
+          workflow to <InlineCode>.agents/skills/reflet/</InlineCode> (Codex,
+          omp), <InlineCode>.claude/skills/reflet/</InlineCode> and{" "}
           <InlineCode>.claude/commands/reflet.md</InlineCode>, then{" "}
           <InlineCode>/reflet</InlineCode> in Claude Code,{" "}
           <InlineCode>$reflet</InlineCode> in Codex — or a plain ask in any
-          other agent — works the queue until it is empty.
+          other agent — works the queue until it is empty. A feedback id scopes
+          the run to one item.
         </p>
         <div className="space-y-2">
           <InstallCommand command="npx reflet-cli agent install" />

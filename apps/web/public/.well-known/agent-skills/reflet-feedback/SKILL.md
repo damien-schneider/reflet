@@ -30,10 +30,9 @@ For an authorized change, inspect `npx reflet-cli@latest --help` and the relevan
 
 Run `npx reflet-cli@latest agent install` in the repository once. It writes the
 end-to-end queue workflow — claim, read, fix, open the pull request, move the
-status — to `.agents/skills/reflet/`, `.claude/skills/reflet/`,
-`.omp/skills/reflet/` and `.claude/commands/reflet.md`, so Codex, Claude Code
-and omp all reach it. `npx reflet-cli@latest prompt agent` prints the same
-workflow.
+status — to `.agents/skills/reflet/`, `.claude/skills/reflet/` and
+`.claude/commands/reflet.md`, so Codex, omp and Claude Code all reach it.
+`npx reflet-cli@latest prompt agent` prints the same workflow.
 
 ## References
 

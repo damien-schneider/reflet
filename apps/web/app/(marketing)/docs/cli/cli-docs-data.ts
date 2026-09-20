@@ -158,7 +158,7 @@ export const COMMAND_GROUPS = [
       {
         command: "agent install",
         description:
-          "Write the /reflet queue workflow for Claude Code, Codex and omp",
+          "Write the /reflet queue workflow into the repository's skill folders",
       },
       {
         command: "survey list | get | analytics | responses <id>",

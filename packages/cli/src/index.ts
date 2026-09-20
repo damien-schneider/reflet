@@ -45,7 +45,7 @@ ${style.bold("Widget setup")}
   reflet prompt             print the setup prompt for a coding agent
 
 ${style.bold("Coding agents")}
-  reflet agent install      write the /reflet skill for Claude Code, Codex and omp
+  reflet agent install      write the feedback loop as a skill for coding agents
   reflet prompt agent       print the fix-a-feedback loop for a coding agent
 
 ${style.bold("Admin API")} ${style.dim("(REFLET_API_KEY or reflet login)")}

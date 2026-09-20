@@ -4,7 +4,7 @@ import type { InitChange } from "./init";
 import { SCREENSHOT_DIRECTORY } from "./screenshot-download";
 
 /** Every harness reads `SKILL.md`; only the directory it scans differs. */
-const SKILL_DIRECTORIES = [".agents/skills", ".claude/skills", ".omp/skills"];
+const SKILL_DIRECTORIES = [".agents/skills", ".claude/skills"];
 const SLASH_COMMAND_FILE = ".claude/commands/reflet.md";
 const IGNORE_FILE = ".gitignore";
 const IGNORE_ENTRY = `${SCREENSHOT_DIRECTORY.split("/")[0]}/`;
@@ -79,8 +79,9 @@ function ignoreScreenshots(input: AgentInstallInput): InitChange {
 }
 
 /**
- * Drops the feedback workflow where Claude Code, Codex and omp look for it, so
- * `/reflet` works in any of them without the user copying a prompt around.
+ * Drops the feedback workflow where agents look for skills — `.agents/skills`
+ * for Codex and omp, `.claude/skills` for Claude Code — so the loop runs
+ * without the user copying a prompt around.
  */
 export function runAgentInstall(input: AgentInstallInput): InitChange[] {
   return [
