@@ -1,10 +1,5 @@
-/**
- * Self-contained styles for the FeedbackButton and FeedbackDialog components.
- * Uses CSS custom properties for theming. Injected via <style> tag with a unique ID
- * to avoid duplication. All selectors are scoped under `[data-reflet-feedback]`.
- */
-
 import { getFeedbackChromeCSS } from "./react-feedback-styles-parts";
+import { REFLET_Z_INDEX } from "./z-index";
 
 const STYLE_ID = "reflet-feedback-styles";
 
@@ -24,9 +19,15 @@ export function injectFeedbackStyles(): void {
 
 function getFeedbackCSS(): string {
   return `
+:root {
+  --reflet-scrim: rgb(0 0 0 / 45%);
+}
+
 [data-reflet-feedback] {
   --reflet-primary: #6366f1;
   --reflet-primary-hover: #4f46e5;
+  --reflet-on-primary: #ffffff;
+  --reflet-on-primary-soft: rgb(255 255 255 / 30%);
   --reflet-bg: #ffffff;
   --reflet-bg-secondary: #f9fafb;
   --reflet-text: #111827;
@@ -35,10 +36,11 @@ function getFeedbackCSS(): string {
   --reflet-border: #e5e7eb;
   --reflet-radius: 12px;
   --reflet-radius-sm: 8px;
-  --reflet-shadow: 0 20px 60px -12px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.05);
+  --reflet-shadow: 0 20px 60px -12px rgb(0 0 0 / 25%), 0 0 0 1px rgb(0 0 0 / 5%);
   --reflet-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --reflet-success: #22c55e;
   --reflet-error: #ef4444;
+  --reflet-ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -49,7 +51,7 @@ function getFeedbackCSS(): string {
     --reflet-text-secondary: #9ca3af;
     --reflet-text-tertiary: #6b7280;
     --reflet-border: #374151;
-    --reflet-shadow: 0 20px 60px -12px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05);
+    --reflet-shadow: 0 20px 60px -12px rgb(0 0 0 / 50%), 0 0 0 1px rgb(255 255 255 / 5%);
   }
 }
 
@@ -60,16 +62,7 @@ function getFeedbackCSS(): string {
   --reflet-text-secondary: #9ca3af;
   --reflet-text-tertiary: #6b7280;
   --reflet-border: #374151;
-  --reflet-shadow: 0 20px 60px -12px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05);
-}
-
-/* ===== Overlay ===== */
-.reflet-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.4);
-  z-index: 99998;
-  animation: reflet-fade-in 150ms ease-out;
+  --reflet-shadow: 0 20px 60px -12px rgb(0 0 0 / 50%), 0 0 0 1px rgb(255 255 255 / 5%);
 }
 
 @keyframes reflet-fade-in {
@@ -111,34 +104,42 @@ function getFeedbackCSS(): string {
   to { transform: rotate(360deg); }
 }
 
-.reflet-overlay[data-closing="true"] {
-  animation: reflet-fade-out 150ms ease-in forwards;
-}
-
-/* ===== Dialog (Desktop) ===== */
 .reflet-dialog {
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 99999;
+  z-index: ${REFLET_Z_INDEX.dialogContent};
+  margin: 0;
+  border: 0;
+  padding: 0;
   background: var(--reflet-bg);
   border-radius: var(--reflet-radius);
   box-shadow: var(--reflet-shadow);
   width: 480px;
   max-width: calc(100vw - 32px);
-  max-height: calc(100vh - 64px);
+  max-height: calc(100dvh - 64px);
   overflow: hidden;
+  overscroll-behavior: contain;
   font-family: var(--reflet-font);
   color: var(--reflet-text);
-  animation: reflet-scale-in 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  animation: reflet-scale-in 200ms var(--reflet-ease);
+}
+
+.reflet-dialog::backdrop {
+  z-index: ${REFLET_Z_INDEX.dialogOverlay};
+  background: var(--reflet-scrim);
+  animation: reflet-fade-in 150ms ease-out;
 }
 
 .reflet-dialog[data-closing="true"] {
-  animation: reflet-scale-out 150ms ease-in forwards;
+  animation: reflet-scale-out 150ms ease-out forwards;
 }
 
-/* ===== Sheet (Mobile) ===== */
+.reflet-dialog[data-closing="true"]::backdrop {
+  animation: reflet-fade-out 150ms ease-out forwards;
+}
+
 @media (max-width: 640px) {
   .reflet-dialog {
     top: auto;
@@ -149,16 +150,16 @@ function getFeedbackCSS(): string {
     width: 100%;
     max-width: 100%;
     border-radius: var(--reflet-radius) var(--reflet-radius) 0 0;
-    max-height: 90vh;
-    animation: reflet-slide-up 300ms cubic-bezier(0.16, 1, 0.3, 1);
+    max-height: 90dvh;
+    padding-bottom: env(safe-area-inset-bottom);
+    animation: reflet-slide-up 300ms var(--reflet-ease);
   }
 
   .reflet-dialog[data-closing="true"] {
-    animation: reflet-slide-down 200ms ease-in forwards;
+    animation: reflet-slide-down 200ms ease-out forwards;
   }
 }
 
-/* ===== Header ===== */
 .reflet-header {
   display: flex;
   align-items: center;
@@ -178,8 +179,8 @@ function getFeedbackCSS(): string {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   border: none;
   background: transparent;
   border-radius: 8px;
@@ -187,7 +188,7 @@ function getFeedbackCSS(): string {
   cursor: pointer;
   padding: 0;
   flex-shrink: 0;
-  transition: background 150ms, color 150ms;
+  transition: background 150ms, color 150ms, transform 150ms var(--reflet-ease);
 }
 
 .reflet-close:hover {
@@ -200,7 +201,6 @@ function getFeedbackCSS(): string {
   height: 18px;
 }
 
-/* ===== Form ===== */
 .reflet-form {
   padding: 20px 24px 24px;
   display: flex;
@@ -252,37 +252,36 @@ function getFeedbackCSS(): string {
   min-height: 100px;
 }
 
-/* ===== Category Selector ===== */
-.reflet-categories {
-  display: flex;
-  gap: 8px;
+[data-reflet-feedback] :focus-visible {
+  outline: 2px solid var(--reflet-primary);
+  outline-offset: 2px;
 }
 
-.reflet-category {
-  flex: 1;
-  padding: 8px 12px;
-  border: 1px solid var(--reflet-border);
-  border-radius: var(--reflet-radius-sm);
-  background: var(--reflet-bg);
-  color: var(--reflet-text-secondary);
-  font-family: var(--reflet-font);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  text-align: center;
-  transition: all 150ms;
+[data-reflet-feedback] button:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
-.reflet-category:hover {
-  border-color: var(--reflet-primary);
-  color: var(--reflet-text);
-}
-
-.reflet-category[data-selected="true"] {
-  border-color: var(--reflet-primary);
-  background: color-mix(in srgb, var(--reflet-primary) 8%, transparent);
-  color: var(--reflet-primary);
+@media (pointer: coarse), (max-width: 640px) {
+  .reflet-input,
+  .reflet-textarea {
+    font-size: 16px;
+  }
 }
 ${getFeedbackChromeCSS()}
+@media (prefers-reduced-motion: reduce) {
+  [data-reflet-feedback] *,
+  [data-reflet-feedback] *::before,
+  [data-reflet-feedback] *::after,
+  .reflet-dialog,
+  .reflet-dialog::backdrop {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+
+  [data-reflet-feedback] button:active:not(:disabled) {
+    transform: none;
+  }
+}
 `;
 }

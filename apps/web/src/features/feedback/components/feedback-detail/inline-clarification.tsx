@@ -47,9 +47,9 @@ export function InlineClarification({ feedbackId }: InlineClarificationProps) {
   const hasMore = clarification.includes("\n");
 
   return (
-    <div className="rounded-lg border border-olive-200 bg-olive-50 px-4 py-3 dark:border-olive-800 dark:bg-olive-950/50">
+    <div className="rounded-lg border border-border bg-brand-subtle px-4 py-3">
       <div className="flex items-start gap-2">
-        <Sparkle className="mt-0.5 h-4 w-4 shrink-0 text-olive-600 dark:text-olive-400" />
+        <Sparkle className="mt-0.5 h-4 w-4 shrink-0 text-brand-text" />
         <div className="min-w-0 flex-1">
           <p className="whitespace-pre-wrap text-sm leading-relaxed">
             {isExpanded ? clarification : firstLine}
@@ -57,7 +57,7 @@ export function InlineClarification({ feedbackId }: InlineClarificationProps) {
           <div className="mt-1.5 flex items-center gap-2">
             {hasMore && (
               <Button
-                className="h-auto p-0 text-olive-600 text-xs dark:text-olive-400"
+                className="h-auto p-0 text-brand-text text-xs"
                 onClick={() => setIsExpanded((prev) => !prev)}
                 variant="quiet"
               >

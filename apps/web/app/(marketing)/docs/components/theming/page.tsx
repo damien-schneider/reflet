@@ -1,3 +1,11 @@
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@ctrl-ui/react/ui/table";
 import type { Metadata } from "next";
 
 import { InlineCode } from "@/components/ui/typography";
@@ -28,7 +36,7 @@ const CSS_VARIABLES = [
 export default function ThemingPage() {
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="mb-2 font-display text-3xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+      <h1 className="mb-2 font-display text-3xl text-foreground leading-snug tracking-tight">
         Theming
       </h1>
       <p className="mb-8 text-base text-muted-foreground sm:text-xl">
@@ -37,7 +45,7 @@ export default function ThemingPage() {
       </p>
 
       <section className="mb-10">
-        <h2 className="mb-3 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+        <h2 className="mb-3 font-display text-2xl text-foreground leading-snug tracking-tight">
           How it works
         </h2>
         <p className="mb-4 text-muted-foreground text-sm leading-relaxed">
@@ -55,42 +63,35 @@ export default function ThemingPage() {
       </section>
 
       <section className="mb-10">
-        <h2 className="mb-4 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+        <h2 className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight">
           CSS variables used
         </h2>
         <div className="overflow-hidden rounded-lg border border-border">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-border border-b bg-muted/50">
-                <th className="px-4 py-2.5 text-left font-semibold text-xs">
-                  Variable
-                </th>
-                <th className="px-4 py-2.5 text-left font-semibold text-xs">
-                  Used for
-                </th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table className="text-sm">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-xs">Variable</TableHead>
+                <TableHead className="text-xs">Used for</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {CSS_VARIABLES.map((v) => (
-                <tr
-                  className="border-border border-b last:border-0"
-                  key={v.name}
-                >
-                  <td className="px-4 py-2">
+                <TableRow key={v.name}>
+                  <TableCell>
                     <InlineCode>{v.name}</InlineCode>
-                  </td>
-                  <td className="px-4 py-2 text-muted-foreground text-xs">
+                  </TableCell>
+                  <TableCell className="whitespace-normal text-muted-foreground text-xs">
                     {v.usage}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       </section>
 
       <section className="mb-10">
-        <h2 className="mb-3 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+        <h2 className="mb-3 font-display text-2xl text-foreground leading-snug tracking-tight">
           Customizing components
         </h2>
         <p className="mb-4 text-muted-foreground text-sm leading-relaxed">
@@ -109,7 +110,7 @@ export default function ThemingPage() {
       </section>
 
       <section>
-        <h2 className="mb-3 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+        <h2 className="mb-3 font-display text-2xl text-foreground leading-snug tracking-tight">
           Dark mode
         </h2>
         <p className="text-muted-foreground text-sm leading-relaxed">

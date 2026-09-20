@@ -418,25 +418,6 @@ describe("FeedbackHeader", () => {
     });
   });
 
-  describe("vote button styling", () => {
-    it("applies hasVoted styles when user has voted", () => {
-      const { container } = render(
-        <FeedbackHeader
-          {...defaultProps}
-          feedback={{ ...baseFeedback, hasVoted: true }}
-        />
-      );
-      const voteButton = container.querySelector("button");
-      expect(voteButton?.className).toContain("border-olive-600");
-    });
-
-    it("does not apply hasVoted styles when user has not voted", () => {
-      const { container } = render(<FeedbackHeader {...defaultProps} />);
-      const voteButton = container.querySelector("button");
-      expect(voteButton?.className).not.toContain("border-olive-600");
-    });
-  });
-
   describe("date display", () => {
     it("renders date formatted with formatDistanceToNow", () => {
       render(<FeedbackHeader {...defaultProps} />);

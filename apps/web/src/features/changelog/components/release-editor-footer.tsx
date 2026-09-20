@@ -1,10 +1,6 @@
 import { Button } from "@ctrl-ui/react/ui/button";
-import {
-  Check,
-  CloudArrowUp,
-  Spinner,
-  WarningCircle,
-} from "@phosphor-icons/react";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
+import { Check, CloudArrowUp, WarningCircle } from "@phosphor-icons/react";
 import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
 import Link from "next/link";
 import { buildGitHubInstallUrl } from "@/features/github/lib/github-install-url";
@@ -108,7 +104,7 @@ export function ReleaseEditorFooter({
               variant="surface"
             >
               {release?.githubPushStatus === "pending" ? (
-                <Spinner className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                <Spinner className="mr-1.5" size="xs" />
               ) : (
                 <CloudArrowUp className="mr-1.5 h-3.5 w-3.5" />
               )}
@@ -118,7 +114,7 @@ export function ReleaseEditorFooter({
 
           {isLinkedToGithub && release?.githubHtmlUrl && (
             <a
-              className="flex items-center gap-1.5 text-green-600 text-sm dark:text-green-400"
+              className="flex items-center gap-1.5 text-sm text-success-text"
               href={release.githubHtmlUrl}
               rel="noopener noreferrer"
               target="_blank"

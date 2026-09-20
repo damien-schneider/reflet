@@ -4,6 +4,7 @@ import NumberFlow from "@number-flow/react";
 import { Check, Crown, Sparkle, Warning } from "@phosphor-icons/react";
 import { TagBadge } from "@/components/tag-badge";
 import { H3, Muted, Text } from "@/components/ui/typography";
+import { cn } from "@/lib/utils";
 
 import type {
   BillingInterval,
@@ -30,7 +31,10 @@ function FeatureItem({
     <li className="flex items-center gap-2 text-sm">
       {included ? (
         <Check
-          className={`h-4 w-4 shrink-0 ${highlight ? "text-green-500" : "text-muted-foreground"}`}
+          className={cn(
+            "h-4 w-4 shrink-0",
+            highlight ? "text-success-text" : "text-muted-foreground"
+          )}
           weight="bold"
         />
       ) : (
@@ -230,9 +234,10 @@ export function PlanCard({
 
   return (
     <div
-      className={`relative flex flex-col rounded-xl border bg-card p-6 text-card-foreground shadow-sm ${
-        plan.highlighted ? "ring-2 ring-olive-600 dark:ring-olive-500" : ""
-      }`}
+      className={cn(
+        "relative flex flex-col rounded-xl border bg-card p-6 text-card-foreground shadow-sm",
+        plan.highlighted && "ring-2 ring-ring"
+      )}
     >
       {plan.badge && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -243,7 +248,7 @@ export function PlanCard({
       <div className="mb-4">
         <div className="flex items-center gap-2">
           {plan.id === "pro" ? (
-            <Crown className="h-5 w-5 text-amber-500" weight="fill" />
+            <Crown className="h-5 w-5 text-warning-text" weight="fill" />
           ) : (
             <Sparkle className="h-5 w-5 text-muted-foreground" />
           )}
@@ -274,11 +279,10 @@ export function PlanCard({
           ))}
         </ul>
 
-        {/* Subscription status for current Pro plan */}
         {isCurrentPlan && plan.id === "pro" && subscription && (
           <div className="rounded-lg border bg-muted/30 p-3">
             {subscription.cancelAtPeriodEnd ? (
-              <div className="flex items-center gap-2 text-amber-600">
+              <div className="flex items-center gap-2 text-warning-text">
                 <Warning className="h-4 w-4" weight="fill" />
                 <Text variant="bodySmall">
                   Cancels on{" "}

@@ -14,6 +14,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@ctrl-ui/react/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@ctrl-ui/react/ui/tooltip";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
@@ -95,11 +100,25 @@ export function MilestoneFormPopover({
     }
   };
 
+  const horizonLabel = TIME_HORIZON_CONFIG[defaultTimeHorizon].label;
+  const addLabel = `Add milestone to ${horizonLabel}`;
+
   return (
     <Popover onOpenChange={onOpenChange} open={open}>
-      <PopoverTrigger className={triggerClassName} type="button">
-        <span className="leading-none">+</span>
-      </PopoverTrigger>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <PopoverTrigger
+              aria-label={addLabel}
+              className={triggerClassName}
+              type="button"
+            >
+              <span className="leading-none">+</span>
+            </PopoverTrigger>
+          }
+        />
+        <TooltipContent>{addLabel}</TooltipContent>
+      </Tooltip>
       <PopoverContent align="start" className="w-[280px] p-3">
         <div className="space-y-3">
           <div className="flex items-center gap-2">

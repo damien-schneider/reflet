@@ -2,7 +2,7 @@
 
 import { useDebouncedCallback } from "@tanstack/react-pacer";
 import { type Editor, useEditor as useTiptapEditor } from "@tiptap/react";
-import { useCallback, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { createEditorProps, createExtensions } from "../editor-extensions";
 import { type MediaUploadResult, useMediaUpload } from "../use-media-upload";
 
@@ -68,7 +68,6 @@ export function useTiptapMarkdownEditor(
   const initialValueRef = useRef(value);
   const onSubmitRef = useRef(onSubmit);
 
-  // Keep ref updated with latest onSubmit
   useEffect(() => {
     onSubmitRef.current = onSubmit;
   }, [onSubmit]);
@@ -99,40 +98,27 @@ export function useTiptapMarkdownEditor(
     },
   });
 
-  const handleImageUpload = useCallback(() => {
+  const handleImageUpload = () => {
     imageInputRef.current?.click();
-  }, []);
+  };
 
-  const handleVideoUpload = useCallback(() => {
+  const handleVideoUpload = () => {
     videoInputRef.current?.click();
-  }, []);
+  };
 
-  const handleImageChange = useCallback(
-    async (event: React.ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      if (file) {
-        await uploadMedia(file);
-      }
-      event.target.value = "";
-    },
-    [uploadMedia]
-  );
+  const handleMediaChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      await uploadMedia(file);
+    }
+    event.target.value = "";
+  };
 
-  const handleVideoChange = useCallback(
-    async (event: React.ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      if (file) {
-        await uploadMedia(file);
-      }
-      event.target.value = "";
-    },
-    [uploadMedia]
-  );
-
-  // Stable callback that always calls the latest onSubmit
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = () => {
     onSubmitRef.current?.();
-  }, []);
+  };
 
   const extensions = createExtensions({
     maxLength,
@@ -176,7 +162,6 @@ export function useTiptapMarkdownEditor(
     }
   }, [editor]);
 
-  // Sync external value changes to editor (e.g. from AI generation)
   useEffect(() => {
     if (!editor) return;
     const currentMarkdown = getMarkdown(editor.storage);
@@ -197,9 +182,9 @@ export function useTiptapMarkdownEditor(
   return {
     characterCount,
     editor,
-    handleImageChange,
+    handleImageChange: handleMediaChange,
     handleImageUpload,
-    handleVideoChange,
+    handleVideoChange: handleMediaChange,
     handleVideoUpload,
     imageInputRef,
     isAtLimit,

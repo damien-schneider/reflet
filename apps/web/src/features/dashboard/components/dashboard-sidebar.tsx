@@ -50,6 +50,14 @@ interface DashboardSidebarProps {
   pathname: string;
 }
 
+function NavBadge({ count }: { count: number }) {
+  return (
+    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-brand px-1.5 font-medium text-brand-foreground text-caption tabular-nums">
+      {count > 99 ? "99+" : count}
+    </span>
+  );
+}
+
 export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
   const currentUser = useQuery(api.auth.queries.getCurrentUser);
   const org = useQuery(
@@ -76,33 +84,23 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
     org?._id ? { organizationId: org._id } : "skip"
   );
 
-  const buildPath = (path: string) =>
-    orgSlug ? path.replace("$orgSlug", orgSlug) : "";
-
-  const buildHref = (path: string) => {
-    if (!orgSlug) {
-      return "#";
-    }
-    return path.replace("$orgSlug", orgSlug);
-  };
-
   const workspaceNavItems = orgSlug
     ? [
         {
           badge: undefined,
-          href: "/dashboard/$orgSlug/project",
+          href: `/dashboard/${orgSlug}/project`,
           icon: Cube,
           label: "Project",
         },
         {
           badge: undefined,
-          href: "/dashboard/$orgSlug",
+          href: `/dashboard/${orgSlug}`,
           icon: Chat,
           label: "Feedback",
         },
         {
           badge: undefined,
-          href: "/dashboard/$orgSlug/changelog",
+          href: `/dashboard/${orgSlug}/changelog`,
           icon: FileText,
           label: "Changelog",
         },
@@ -111,7 +109,7 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
             adminUnreadCount && adminUnreadCount > 0
               ? adminUnreadCount
               : undefined,
-          href: "/dashboard/$orgSlug/inbox",
+          href: `/dashboard/${orgSlug}/inbox`,
           icon: ChatCircle,
           label: "Inbox",
         },
@@ -122,43 +120,38 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
     ? [
         {
           badge: undefined,
-          href: "/dashboard/$orgSlug/status",
+          href: `/dashboard/${orgSlug}/status`,
           icon: Heartbeat,
           label: "Status",
         },
         {
           badge: undefined,
-          href: "/dashboard/$orgSlug/in-app",
+          href: `/dashboard/${orgSlug}/in-app`,
           icon: Code,
           label: "In-app",
         },
         {
           badge: undefined,
-          href: "/dashboard/$orgSlug/surveys",
+          href: `/dashboard/${orgSlug}/surveys`,
           icon: ClipboardText,
           label: "Surveys",
         },
         {
           badge: undefined,
-          href: "/dashboard/$orgSlug/intelligence",
+          href: `/dashboard/${orgSlug}/intelligence`,
           icon: Binoculars,
           label: "Intelligence",
         },
         {
           badge: deletedCount && deletedCount > 0 ? deletedCount : undefined,
-          href: "/dashboard/$orgSlug/trash",
+          href: `/dashboard/${orgSlug}/trash`,
           icon: Trash,
           label: "Trash",
         },
       ]
     : [];
 
-  const isActive = (path: string) => {
-    const fullPath = buildPath(path);
-    if (!fullPath) {
-      return false;
-    }
-
+  const isActive = (fullPath: string) => {
     if (pathname === fullPath) {
       return true;
     }
@@ -168,18 +161,15 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
     }
 
     const allNavItems = [...workspaceNavItems, ...adminNavItems];
-    const hasMoreSpecificMatch = allNavItems.some((item) => {
-      const itemPath = buildPath(item.href);
-      return (
-        itemPath.length > fullPath.length &&
-        (pathname === itemPath || pathname.startsWith(`${itemPath}/`))
-      );
-    });
+    const hasMoreSpecificMatch = allNavItems.some(
+      (item) =>
+        item.href.length > fullPath.length &&
+        (pathname === item.href || pathname.startsWith(`${item.href}/`))
+    );
 
     return !hasMoreSpecificMatch;
   };
 
-  // navigating before signOut resolves can abort the request and keep the session
   const handleSignOut = async () => {
     capture("sign_out");
     posthog.reset();
@@ -199,7 +189,7 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
                     <div className="flex size-8 min-w-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
                       <User className="size-4" />
                     </div>
-                    <div className="grid flex-1 text-left text-sm leading-tight transition-opacity duration-200 ease-in-out group-data-[collapsible=icon]:opacity-0">
+                    <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:sr-only">
                       <span className="truncate font-medium">
                         {currentUser?.name ?? "Account"}
                       </span>
@@ -207,7 +197,10 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
                         {currentUser?.email ?? ""}
                       </span>
                     </div>
-                    <CaretUpDown className="ml-auto size-4 transition-opacity duration-200 ease-in-out group-data-[collapsible=icon]:opacity-0" />
+                    <CaretUpDown
+                      aria-hidden="true"
+                      className="ml-auto size-4 group-data-[collapsible=icon]:hidden"
+                    />
                   </SidebarMenuButton>
                 )}
               />
@@ -248,21 +241,20 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
                   {workspaceNavItems.map((item) =>
                     item.label === "Project" ? (
                       <ProjectNav
-                        baseUrl={buildHref(item.href)}
-                        key={`${buildHref(item.href)}:${isActive(item.href)}`}
+                        baseUrl={item.href}
+                        key={`${item.href}:${isActive(item.href)}`}
                       />
                     ) : (
                       <SidebarMenuItem key={item.href}>
                         <SidebarMenuButton
+                          className="min-h-10"
                           isActive={isActive(item.href)}
-                          render={<Link href={buildHref(item.href)} />}
+                          render={<Link href={item.href} />}
                         >
                           <item.icon className="h-4 w-4" />
                           <span className="flex-1">{item.label}</span>
                           {item.badge !== undefined && (
-                            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-olive-500 px-1.5 font-medium text-[10px] text-white">
-                              {item.badge > 99 ? "99+" : item.badge}
-                            </span>
+                            <NavBadge count={item.badge} />
                           )}
                         </SidebarMenuButton>
                       </SidebarMenuItem>
@@ -280,15 +272,14 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
                     {adminNavItems.map((item) => (
                       <SidebarMenuItem key={item.href}>
                         <SidebarMenuButton
+                          className="min-h-10"
                           isActive={isActive(item.href)}
-                          render={<Link href={buildHref(item.href)} />}
+                          render={<Link href={item.href} />}
                         >
                           <item.icon className="h-4 w-4" />
                           <span className="flex-1">{item.label}</span>
                           {item.badge !== undefined && (
-                            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-olive-500 px-1.5 font-medium text-[10px] text-white">
-                              {item.badge > 99 ? "99+" : item.badge}
-                            </span>
+                            <NavBadge count={item.badge} />
                           )}
                         </SidebarMenuButton>
                       </SidebarMenuItem>
@@ -315,6 +306,7 @@ export function DashboardSidebar({ orgSlug, pathname }: DashboardSidebarProps) {
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton
+                    className="min-h-10"
                     isActive={
                       pathname === "/dashboard/super-admin" ||
                       pathname.startsWith("/dashboard/super-admin/")

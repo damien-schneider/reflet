@@ -5,7 +5,7 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useMemo, useState } from "react";
-
+import { withAlpha } from "@/lib/color";
 import type { TimeHorizon } from "@/lib/milestone-constants";
 import {
   isTimeHorizon,
@@ -126,12 +126,14 @@ export function EditorialAccordionView({
             : null;
 
           return (
-            <motion.div
-              animate={{
-                backgroundColor: isExpanded ? `${colorHex}06` : "transparent",
-              }}
+            <div
+              className="transition-colors duration-200"
               key={milestone._id}
-              transition={{ duration: 0.2 }}
+              style={{
+                backgroundColor: isExpanded
+                  ? withAlpha(colorHex, 2.4)
+                  : undefined,
+              }}
             >
               <button
                 className={cn(
@@ -159,7 +161,7 @@ export function EditorialAccordionView({
                     )}
                     <span>{milestone.name}</span>
                   </div>
-                  <div className="font-serif text-[11px] text-muted-foreground italic">
+                  <div className="font-serif text-caption text-muted-foreground italic">
                     {horizonLabel}
                     {formattedDate && ` \u00B7 ${formattedDate}`}
                   </div>
@@ -200,7 +202,7 @@ export function EditorialAccordionView({
                   </motion.div>
                 )}
               </AnimatePresence>
-            </motion.div>
+            </div>
           );
         })}
       </div>

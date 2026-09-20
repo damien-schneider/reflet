@@ -26,7 +26,6 @@ export type {
   Annotation,
   AnnotationTool,
   CapturedImage,
-  FeedbackWidgetCategory,
   FeedbackWidgetLabels,
   RefletFeedbackProps,
 } from "./types";

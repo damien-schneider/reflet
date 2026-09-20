@@ -1,8 +1,10 @@
 "use client";
 
+import { ButtonLink } from "@ctrl-ui/react/ui/button";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { H1 } from "@/components/ui/typography";
 import { MilestonesView } from "@/features/milestones/components/milestones-view";
@@ -227,7 +229,20 @@ export function FeedbackBoardContent({
           <H1 variant="page">Feedback</H1>
           <div className="hidden items-center gap-2 md:flex">
             <BoardViewToggle onChange={setView} view={view} />
-            {isAdmin && <BoardCustomizePopover orgSlug={orgSlug} />}
+            {isAdmin && (
+              <>
+                <BoardCustomizePopover orgSlug={orgSlug} />
+                <ButtonLink
+                  render={
+                    <Link href={`/dashboard/${orgSlug}/feedback/review`} />
+                  }
+                  size="xs"
+                  variant="ghost"
+                >
+                  Pending review
+                </ButtonLink>
+              </>
+            )}
           </div>
         </div>
 

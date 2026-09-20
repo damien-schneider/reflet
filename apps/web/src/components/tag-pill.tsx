@@ -8,54 +8,44 @@ import { cn } from "@/lib/utils";
 
 const PILL_COLOR_STYLES: Record<string, { active: string; base: string }> = {
   blue: {
-    active:
-      "bg-[#d3e5ef] text-[#0b6e99] dark:bg-[#529cca26] dark:text-[#5e87c9]",
-    base: "text-[#0b6e99] dark:text-[#5e87c9]",
+    active: "bg-tag-blue/15 text-tag-blue-text",
+    base: "text-tag-blue-text",
   },
   brown: {
-    active:
-      "bg-[#eee0da] text-[#64473a] dark:bg-[#93726426] dark:text-[#b4836d]",
-    base: "text-[#64473a] dark:text-[#b4836d]",
+    active: "bg-tag-brown/15 text-tag-brown-text",
+    base: "text-tag-brown-text",
   },
   default: {
-    active:
-      "bg-[#f1f1ef] text-[#787774] dark:bg-[#ffffff0f] dark:text-[#9b9a97]",
-    base: "text-[#787774] dark:text-[#9b9a97]",
+    active: "bg-muted text-muted-foreground",
+    base: "text-muted-foreground",
   },
   gray: {
-    active:
-      "bg-[#f1f1ef] text-[#787774] dark:bg-[#ffffff0f] dark:text-[#9b9a97]",
-    base: "text-[#787774] dark:text-[#9b9a97]",
+    active: "bg-muted text-muted-foreground",
+    base: "text-muted-foreground",
   },
   green: {
-    active:
-      "bg-[#dbeddb] text-[#0f7b6c] dark:bg-[#4dab9a24] dark:text-[#529e72]",
-    base: "text-[#0f7b6c] dark:text-[#529e72]",
+    active: "bg-tag-green/15 text-tag-green-text",
+    base: "text-tag-green-text",
   },
   orange: {
-    active:
-      "bg-[#fadec9] text-[#d9730d] dark:bg-[#ffa34426] dark:text-[#c77d48]",
-    base: "text-[#d9730d] dark:text-[#c77d48]",
+    active: "bg-tag-orange/15 text-tag-orange-text",
+    base: "text-tag-orange-text",
   },
   pink: {
-    active:
-      "bg-[#f5e0e9] text-[#ad1a72] dark:bg-[#e255a126] dark:text-[#b65590]",
-    base: "text-[#ad1a72] dark:text-[#b65590]",
+    active: "bg-tag-pink/15 text-tag-pink-text",
+    base: "text-tag-pink-text",
   },
   purple: {
-    active:
-      "bg-[#e8deee] text-[#6940a5] dark:bg-[#9a6dd726] dark:text-[#9a6dd7]",
-    base: "text-[#6940a5] dark:text-[#9a6dd7]",
+    active: "bg-tag-purple/15 text-tag-purple-text",
+    base: "text-tag-purple-text",
   },
   red: {
-    active:
-      "bg-[#ffe2dd] text-[#e03e3e] dark:bg-[#ea575226] dark:text-[#df5452]",
-    base: "text-[#e03e3e] dark:text-[#df5452]",
+    active: "bg-tag-red/15 text-tag-red-text",
+    base: "text-tag-red-text",
   },
   yellow: {
-    active:
-      "bg-[#fdecc8] text-[#dfab01] dark:bg-[#ffdc4924] dark:text-[#c29343]",
-    base: "text-[#dfab01] dark:text-[#c29343]",
+    active: "bg-tag-yellow/15 text-tag-yellow-text",
+    base: "text-tag-yellow-text",
   },
 };
 
@@ -77,7 +67,7 @@ export function TagPill({
   return (
     <ButtonPrimitive
       className={cn(
-        "group/tag-pill inline-flex h-7 shrink-0 cursor-pointer select-none items-center justify-center gap-0 whitespace-nowrap rounded-full bg-muted px-3 text-sm outline-none transition-all hover:bg-muted/80 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50",
+        "group/tag-pill inline-flex h-7 shrink-0 cursor-pointer select-none items-center justify-center gap-0 whitespace-nowrap rounded-full bg-muted px-3 text-sm outline-none transition-colors hover:bg-muted/80 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50",
         active ? colorStyles.active : colorStyles.base,
         className
       )}
@@ -85,7 +75,7 @@ export function TagPill({
     >
       <span
         className={cn(
-          "inline-flex overflow-hidden transition-all duration-200 ease-out",
+          "inline-flex overflow-hidden transition-[max-width,margin-right] duration-200 ease-out",
           active ? "mr-1 max-w-4" : "max-w-0"
         )}
       >

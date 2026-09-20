@@ -1,6 +1,22 @@
 "use client";
 
+import {
+  AlertDialog,
+  AlertDialogClose,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@ctrl-ui/react/ui/alert-dialog";
 import { Button } from "@ctrl-ui/react/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@ctrl-ui/react/ui/select";
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { toast } from "@ctrl-ui/react/ui/toast";
 import { ArrowLeft } from "@phosphor-icons/react";
@@ -12,24 +28,59 @@ import { use, useState } from "react";
 import { H1, Muted, Text } from "@/components/ui/typography";
 import { RetroactiveDraftItem } from "@/features/changelog/components/retroactive-draft-item";
 
+const SORT_ORDERS = ["newest", "oldest"] as const;
+
+type SortOrder = (typeof SORT_ORDERS)[number];
+
+const SORT_ORDER_LABELS: Record<SortOrder, string> = {
+  newest: "Newest first",
+  oldest: "Oldest first",
+};
+
+const SKELETON_ROWS = ["first", "second", "third"] as const;
+
+interface DraftRelease {
+  _id: Id<"releases">;
+  commitCount: number;
+  createdAt: number;
+  description?: string;
+  publishedAt?: number;
+  retroactivelyGenerated?: boolean;
+  title: string;
+  version?: string;
+}
+
+function DraftsSkeleton() {
+  return (
+    <div className="space-y-4">
+      {SKELETON_ROWS.map((row) => (
+        <div className="flex items-start gap-4 rounded-lg border p-4" key={row}>
+          <Skeleton className="mt-1 size-5 shrink-0 rounded" />
+          <div className="min-w-0 flex-1">
+            <Skeleton className="h-6 w-64 max-w-full rounded-md" />
+            <Skeleton className="mt-1 h-5 w-full rounded-md" />
+            <Skeleton className="mt-2 h-4 w-44 rounded-md" />
+          </div>
+          <div className="flex shrink-0 items-center gap-1">
+            <Skeleton className="size-7 rounded-md" />
+            <Skeleton className="size-7 rounded-md" />
+            <Skeleton className="size-7 rounded-md" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function DraftsList({
   drafts,
   orgSlug,
   selectedIds,
   onSelect,
 }: {
-  drafts: Array<{
-    _id: Id<"releases">;
-    title: string;
-    description?: string;
-    version?: string;
-    createdAt: number;
-    publishedAt?: number;
-    commitCount: number;
-    retroactivelyGenerated?: boolean;
-  }>;
+  drafts: DraftRelease[];
   orgSlug: string;
-  selectedIds: Set<string>;
+  selectedIds: Set<Id<"releases">>;
   onSelect: (id: Id<"releases">, selected: boolean) => void;
 }) {
   if (drafts.length === 0) {
@@ -40,11 +91,13 @@ function DraftsList({
           Generated changelogs will appear here once the retroactive job
           completes.
         </Muted>
-        <Link href={`/dashboard/${orgSlug}/changelog`}>
-          <Button className="mt-6" variant="surface">
-            Back to Changelog
-          </Button>
-        </Link>
+        <Button
+          className="mt-6"
+          render={<Link href={`/dashboard/${orgSlug}/changelog`} />}
+          variant="surface"
+        >
+          Back to Changelog
+        </Button>
       </div>
     );
   }
@@ -62,6 +115,25 @@ function DraftsList({
       ))}
     </div>
   );
+}
+
+function sortDrafts(
+  releases: DraftRelease[] | undefined,
+  sortOrder: SortOrder
+): DraftRelease[] {
+  if (!releases) {
+    return [];
+  }
+
+  return releases
+    .filter(
+      (r) => r.retroactivelyGenerated === true && r.publishedAt === undefined
+    )
+    .sort((a, b) =>
+      sortOrder === "newest"
+        ? b.createdAt - a.createdAt
+        : a.createdAt - b.createdAt
+    );
 }
 
 export default function ReviewDraftsPage({
@@ -83,33 +155,17 @@ export default function ReviewDraftsPage({
     api.changelog.retroactive.discardRetroactiveDrafts
   );
 
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
+  const [selectedIds, setSelectedIds] = useState<Set<Id<"releases">>>(
+    new Set()
+  );
+  const [sortOrder, setSortOrder] = useState<SortOrder>("newest");
+  const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
 
-  const drafts = (() => {
-    if (!releases) {
-      return [];
-    }
-
-    const filtered = releases.filter(
-      (r) => r.retroactivelyGenerated === true && r.publishedAt === undefined
-    );
-
-    return filtered.sort((a, b) =>
-      sortOrder === "newest"
-        ? b.createdAt - a.createdAt
-        : a.createdAt - b.createdAt
-    );
-  })();
-
+  const drafts = sortDrafts(releases, sortOrder);
   const allSelected = drafts.length > 0 && selectedIds.size === drafts.length;
 
   const handleToggleSelectAll = () => {
-    if (allSelected) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(drafts.map((d) => d._id)));
-    }
+    setSelectedIds(allSelected ? new Set() : new Set(drafts.map((d) => d._id)));
   };
 
   const handleSelect = (id: Id<"releases">, selected: boolean) => {
@@ -129,41 +185,24 @@ export default function ReviewDraftsPage({
       return;
     }
 
+    const count = selectedIds.size;
     try {
       await publishDrafts({
-        releaseIds: Array.from(selectedIds) as Id<"releases">[],
+        releaseIds: Array.from(selectedIds),
         useHistoricalDates: true,
       });
-      toast.success(
-        `Published ${selectedIds.size} release${selectedIds.size === 1 ? "" : "s"}`
-      );
+      toast.success(`Published ${count} release${count === 1 ? "" : "s"}`);
       setSelectedIds(new Set());
     } catch {
       toast.error("Failed to publish releases");
     }
   };
 
-  const handleBulkDiscard = async () => {
-    if (selectedIds.size === 0) {
-      return;
-    }
-
-    // biome-ignore lint/suspicious/noAlert: Simple confirmation for destructive bulk action
-    const confirmed = window.confirm(
-      `Are you sure you want to discard ${selectedIds.size} draft release${selectedIds.size === 1 ? "" : "s"}? This action cannot be undone.`
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
+  const handleConfirmDiscard = async () => {
+    const count = selectedIds.size;
     try {
-      await discardDrafts({
-        releaseIds: Array.from(selectedIds) as Id<"releases">[],
-      });
-      toast.success(
-        `Discarded ${selectedIds.size} draft${selectedIds.size === 1 ? "" : "s"}`
-      );
+      await discardDrafts({ releaseIds: Array.from(selectedIds) });
+      toast.success(`Discarded ${count} draft${count === 1 ? "" : "s"}`);
       setSelectedIds(new Set());
     } catch {
       toast.error("Failed to discard releases");
@@ -173,7 +212,12 @@ export default function ReviewDraftsPage({
   if (!org) {
     return (
       <div className="admin-container">
-        <Skeleton className="h-8 w-48" />
+        <Skeleton className="mb-4 h-5 w-36 rounded-md" />
+        <div className="mb-8">
+          <Skeleton className="h-9 w-80 max-w-full rounded-md" />
+          <Skeleton className="mt-2 h-5 w-52 rounded-md" />
+        </div>
+        <DraftsSkeleton />
       </div>
     );
   }
@@ -181,7 +225,7 @@ export default function ReviewDraftsPage({
   return (
     <div className="admin-container">
       <Link
-        className="mb-4 inline-flex items-center gap-1 text-muted-foreground text-sm hover:text-foreground"
+        className="mb-4 inline-flex min-h-10 items-center gap-1 text-muted-foreground text-sm hover:text-foreground"
         href={`/dashboard/${orgSlug}/changelog`}
       >
         <ArrowLeft className="h-4 w-4" />
@@ -191,12 +235,13 @@ export default function ReviewDraftsPage({
       <div className="mb-8">
         <H1>Review Generated Changelogs</H1>
         <Text variant="bodySmall">
-          {drafts.length} draft{drafts.length === 1 ? "" : "s"} ready for review
+          <span className="tabular-nums">{drafts.length}</span> draft
+          {drafts.length === 1 ? "" : "s"} ready for review
         </Text>
       </div>
 
       {drafts.length > 0 && (
-        <div className="sticky top-0 z-10 mb-6 flex flex-wrap items-center gap-2 rounded-lg border bg-background p-3">
+        <div className="sticky top-(--sticky-header-height) z-20 mb-6 flex flex-wrap items-center gap-2 rounded-lg border bg-background p-3">
           <Button onClick={handleToggleSelectAll} size="xs" variant="surface">
             {allSelected ? "Deselect All" : "Select All"}
           </Button>
@@ -208,40 +253,46 @@ export default function ReviewDraftsPage({
             tone="primary"
             variant="solid"
           >
-            Publish Selected ({selectedIds.size})
+            Publish Selected (
+            <span className="tabular-nums">{selectedIds.size}</span>)
           </Button>
 
           <Button
-            className="text-destructive hover:bg-destructive/10"
             disabled={selectedIds.size === 0}
-            onClick={handleBulkDiscard}
+            onClick={() => setDiscardDialogOpen(true)}
             size="xs"
+            tone="danger"
             variant="surface"
           >
             Discard Selected
           </Button>
 
           <div className="ml-auto">
-            <select
-              className="rounded-md border bg-background px-2 py-1 text-sm"
-              onChange={(e) =>
-                setSortOrder(e.target.value as "newest" | "oldest")
+            <Select
+              onValueChange={(value) =>
+                setSortOrder(
+                  SORT_ORDERS.find((order) => order === value) ?? "newest"
+                )
               }
               value={sortOrder}
             >
-              <option value="newest">Newest first</option>
-              <option value="oldest">Oldest first</option>
-            </select>
+              <SelectTrigger aria-label="Sort drafts" className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SORT_ORDERS.map((order) => (
+                  <SelectItem key={order} value={order}>
+                    {SORT_ORDER_LABELS[order]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
       )}
 
       {releases === undefined ? (
-        <div className="space-y-4">
-          {["a", "b", "c"].map((id) => (
-            <Skeleton className="h-32 w-full" key={id} />
-          ))}
-        </div>
+        <DraftsSkeleton />
       ) : (
         <DraftsList
           drafts={drafts}
@@ -250,6 +301,30 @@ export default function ReviewDraftsPage({
           selectedIds={selectedIds}
         />
       )}
+
+      <AlertDialog onOpenChange={setDiscardDialogOpen} open={discardDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Discard {selectedIds.size} draft
+              {selectedIds.size === 1 ? "" : "s"}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Discarded drafts are removed permanently. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogClose>Cancel</AlertDialogClose>
+            <AlertDialogClose
+              onClick={handleConfirmDiscard}
+              tone="danger"
+              variant="surface"
+            >
+              Discard
+            </AlertDialogClose>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

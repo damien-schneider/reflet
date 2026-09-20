@@ -3,11 +3,19 @@
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Input } from "@ctrl-ui/react/ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@ctrl-ui/react/ui/tooltip";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
+
+const AUTO_VERSION_HINT =
+  "Version is managed automatically. Use the buttons below or disable auto-versioning in settings.";
 
 interface VersionPickerProps {
   className?: string;
@@ -35,7 +43,6 @@ export function VersionPicker({
   const isAutoVersioning = versionSuggestions?.autoVersioning !== false;
   const hasAppliedDefault = useRef(false);
 
-  // Auto-apply the default increment version for new releases
   useEffect(() => {
     if (hasAppliedDefault.current || value || !isAutoVersioning) {
       return;
@@ -52,72 +59,59 @@ export function VersionPicker({
     }
   }, [versionSuggestions, value, isAutoVersioning, onChange]);
 
-  const patchVersion = versionSuggestions?.patch;
-  const minorVersion = versionSuggestions?.minor;
-  const majorVersion = versionSuggestions?.major;
+  const increments = [
+    { label: "Patch", version: versionSuggestions?.patch },
+    { label: "Minor", version: versionSuggestions?.minor },
+    { label: "Major", version: versionSuggestions?.major },
+  ].filter(
+    (increment): increment is { label: string; version: string } =>
+      typeof increment.version === "string" && increment.version.length > 0
+  );
 
-  const hasSuggestions = patchVersion || minorVersion || majorVersion;
+  const versionInput = (
+    <Input
+      aria-label="Release version"
+      className="h-7 w-28 text-xs tabular-nums"
+      disabled={disabled}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder="v1.0.0"
+      readOnly={isAutoVersioning}
+      value={value}
+    />
+  );
 
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
       <div className="flex items-center gap-2">
-        <Input
-          className="h-7 w-28 text-xs"
-          disabled={disabled}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="v1.0.0"
-          readOnly={isAutoVersioning}
-          title={
-            isAutoVersioning
-              ? "Version is managed automatically. Use the buttons below or disable auto-versioning in settings."
-              : undefined
-          }
-          value={value}
-        />
+        {isAutoVersioning ? (
+          <Tooltip>
+            <TooltipTrigger render={versionInput} />
+            <TooltipContent>{AUTO_VERSION_HINT}</TooltipContent>
+          </Tooltip>
+        ) : (
+          versionInput
+        )}
         {versionSuggestions?.current && (
-          <Badge className="text-[10px]" variant="outline">
+          <Badge className="text-caption tabular-nums" variant="outline">
             latest: {versionSuggestions.current}
           </Badge>
         )}
       </div>
-      {hasSuggestions && !disabled && (
+      {increments.length > 0 && !disabled && (
         <div className="flex items-center gap-1">
-          {patchVersion && (
+          {increments.map((increment) => (
             <Button
-              className="h-5 px-1.5 text-[10px]"
-              onClick={() => onChange(patchVersion)}
+              className="h-5 px-1.5 text-caption tabular-nums"
+              key={increment.label}
+              onClick={() => onChange(increment.version)}
               size="sm"
-              tone={value === patchVersion ? "primary" : "neutral"}
+              tone={value === increment.version ? "primary" : "neutral"}
               type="button"
-              variant={value === patchVersion ? "solid" : "ghost"}
+              variant={value === increment.version ? "solid" : "ghost"}
             >
-              Patch {patchVersion}
+              {increment.label} {increment.version}
             </Button>
-          )}
-          {minorVersion && (
-            <Button
-              className="h-5 px-1.5 text-[10px]"
-              onClick={() => onChange(minorVersion)}
-              size="sm"
-              tone={value === minorVersion ? "primary" : "neutral"}
-              type="button"
-              variant={value === minorVersion ? "solid" : "ghost"}
-            >
-              Minor {minorVersion}
-            </Button>
-          )}
-          {majorVersion && (
-            <Button
-              className="h-5 px-1.5 text-[10px]"
-              onClick={() => onChange(majorVersion)}
-              size="sm"
-              tone={value === majorVersion ? "primary" : "neutral"}
-              type="button"
-              variant={value === majorVersion ? "solid" : "ghost"}
-            >
-              Major {majorVersion}
-            </Button>
-          )}
+          ))}
         </div>
       )}
     </div>

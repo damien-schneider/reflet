@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import { CaretUp } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
@@ -17,9 +18,11 @@ export function PublicFeedbackVoting({
   onVote,
 }: PublicFeedbackVotingProps) {
   return (
-    <button
+    <Button
+      aria-label={hasVoted ? "Remove vote" : "Upvote"}
+      aria-pressed={hasVoted}
       className={cn(
-        "flex flex-col items-center rounded-lg border p-3 transition-colors hover:bg-accent",
+        "h-auto flex-col rounded-lg border p-3 transition-colors hover:bg-accent",
         hasVoted && "border-primary bg-primary/10 text-primary"
       )}
       onClick={onVote}
@@ -32,10 +35,10 @@ export function PublicFeedbackVoting({
             }
           : undefined
       }
-      type="button"
+      variant="quiet"
     >
       <CaretUp className="h-5 w-5" />
-      <span className="font-bold text-lg">{voteCount}</span>
-    </button>
+      <span className="font-bold text-lg tabular-nums">{voteCount}</span>
+    </Button>
   );
 }

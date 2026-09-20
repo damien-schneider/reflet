@@ -1,3 +1,4 @@
+import { Button } from "@ctrl-ui/react/ui/button";
 import { Card, CardContent, CardHeader } from "@ctrl-ui/react/ui/card";
 import {
   Select,
@@ -6,6 +7,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@ctrl-ui/react/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@ctrl-ui/react/ui/tooltip";
 import { X } from "@phosphor-icons/react";
 import { TagBadge } from "@/components/tag-badge";
 import { getTagSwatchClass } from "@/lib/tag-colors";
@@ -46,7 +52,6 @@ export function FeedbackDetailSidebar({
 }: FeedbackDetailSidebarProps) {
   return (
     <div className="space-y-6">
-      {/* Tags */}
       <Card>
         <CardHeader>
           <h3 className="font-semibold">Tags</h3>
@@ -59,13 +64,21 @@ export function FeedbackDetailSidebar({
                   {tag.icon && <span>{tag.icon}</span>}
                   {tag.name}
                   {isAdmin && (
-                    <button
-                      className="ml-1 opacity-0 transition-opacity group-hover:opacity-100"
-                      onClick={() => handleRemoveTag(tag._id)}
-                      type="button"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
+                    <Tooltip>
+                      <TooltipTrigger
+                        aria-label={`Remove ${tag.name} tag`}
+                        render={
+                          <Button
+                            className="pointer-fine:pointer-events-none ml-1 h-auto p-0 pointer-fine:opacity-0 transition-opacity focus-visible:pointer-events-auto focus-visible:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100"
+                            onClick={() => handleRemoveTag(tag._id)}
+                            variant="quiet"
+                          />
+                        }
+                      >
+                        <X className="h-3 w-3" />
+                      </TooltipTrigger>
+                      <TooltipContent>Remove tag</TooltipContent>
+                    </Tooltip>
                   )}
                 </TagBadge>
               ) : null
@@ -101,7 +114,6 @@ export function FeedbackDetailSidebar({
         </CardContent>
       </Card>
 
-      {/* Status info */}
       <Card>
         <CardHeader>
           <h3 className="font-semibold">Status</h3>
@@ -110,11 +122,13 @@ export function FeedbackDetailSidebar({
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Votes</span>
-              <span className="font-medium">{feedback.voteCount}</span>
+              <span className="font-medium tabular-nums">
+                {feedback.voteCount}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Comments</span>
-              <span className="font-medium">{commentsCount}</span>
+              <span className="font-medium tabular-nums">{commentsCount}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Created</span>

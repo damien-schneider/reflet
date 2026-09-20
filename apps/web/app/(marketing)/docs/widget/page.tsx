@@ -14,7 +14,7 @@ export const metadata: Metadata = generatePageMetadata({
 export default function WidgetOverviewPage() {
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="mb-2 font-display text-3xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+      <h1 className="mb-2 font-display text-3xl text-foreground leading-snug tracking-tight">
         Widgets
       </h1>
       <p className="mb-8 text-base text-muted-foreground sm:text-xl">
@@ -24,7 +24,7 @@ export default function WidgetOverviewPage() {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Link
-          className="group rounded-xl border border-border bg-card p-5 transition-all hover:border-foreground/20 hover:shadow-sm"
+          className="group rounded-xl border border-border bg-card p-5 transition-[border-color,box-shadow] hover:border-foreground/20 hover:shadow-sm"
           href="/docs/widget/feedback-widget"
         >
           <h2 className="mb-1 font-semibold text-sm transition-colors group-hover:text-primary">
@@ -36,7 +36,7 @@ export default function WidgetOverviewPage() {
           </p>
         </Link>
         <Link
-          className="group rounded-xl border border-border bg-card p-5 transition-all hover:border-foreground/20 hover:shadow-sm"
+          className="group rounded-xl border border-border bg-card p-5 transition-[border-color,box-shadow] hover:border-foreground/20 hover:shadow-sm"
           href="/docs/widget/changelog-widget"
         >
           <h2 className="mb-1 font-semibold text-sm transition-colors group-hover:text-primary">
@@ -50,7 +50,7 @@ export default function WidgetOverviewPage() {
       </div>
 
       <section className="mt-12">
-        <h2 className="mb-3 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+        <h2 className="mb-3 font-display text-2xl text-foreground leading-snug tracking-tight">
           How widgets work
         </h2>
         <ul className="list-inside list-disc space-y-2 text-muted-foreground text-sm">

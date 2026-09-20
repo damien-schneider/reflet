@@ -66,7 +66,6 @@ export function ChangelogSubscribe({
     capture("changelog_subscribed", { method: "email" });
   };
 
-  // Logged in user - show toggle button
   if (userId) {
     return (
       <Button
@@ -91,7 +90,6 @@ export function ChangelogSubscribe({
     );
   }
 
-  // Not logged in - show shared email form (inline in header)
   return (
     <EmailSubscribeForm
       className={className}

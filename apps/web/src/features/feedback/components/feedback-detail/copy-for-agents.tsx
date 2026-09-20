@@ -275,20 +275,22 @@ export function CopyForAgents({
   return (
     <DropdownMenu>
       <Tooltip>
-        <TooltipTrigger render={<span />}>
-          <DropdownMenuTrigger
-            render={
-              <Button
-                className="h-8 gap-1.5 px-2.5"
-                size="xs"
-                variant="surface"
-              >
-                <Terminal className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Agents</span>
-                <CaretDown className="h-3 w-3 opacity-50" />
-              </Button>
-            }
-          />
+        <TooltipTrigger
+          render={
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  className="h-8 gap-1.5 px-2.5"
+                  size="xs"
+                  variant="surface"
+                />
+              }
+            />
+          }
+        >
+          <Terminal className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">Agents</span>
+          <CaretDown className="h-3 w-3 opacity-50" />
         </TooltipTrigger>
         <TooltipContent>Copy prompt for AI coding agents</TooltipContent>
       </Tooltip>
@@ -303,7 +305,7 @@ export function CopyForAgents({
             >
               <span className="mr-2 flex h-4 w-4 items-center justify-center">
                 {copiedId === agent.id ? (
-                  <Check className="h-4 w-4 text-green-600" />
+                  <Check className="h-4 w-4 text-success-text" />
                 ) : (
                   agent.icon
                 )}
@@ -325,7 +327,7 @@ export function CopyForAgents({
               <DropdownMenuItem onClick={handleCopyCodingPrompt}>
                 <span className="mr-2 flex h-4 w-4 items-center justify-center">
                   {copiedId === "coding-prompt" ? (
-                    <Check className="h-4 w-4 text-green-600" />
+                    <Check className="h-4 w-4 text-success-text" />
                   ) : (
                     <Code className="h-4 w-4" />
                   )}
@@ -355,7 +357,7 @@ export function CopyForAgents({
                 >
                   <span className="mr-2 flex h-4 w-4 items-center justify-center">
                     {copiedId === agent.id ? (
-                      <Check className="h-4 w-4 text-green-600" />
+                      <Check className="h-4 w-4 text-success-text" />
                     ) : (
                       agent.icon
                     )}

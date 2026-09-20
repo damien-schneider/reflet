@@ -61,9 +61,9 @@ const statusLabels = {
 } as const;
 
 const statusLabelStyles = {
-  degraded: "text-amber-600 dark:text-amber-400",
-  major_outage: "text-red-600 dark:text-red-400",
-  operational: "text-emerald-600 dark:text-emerald-400",
+  degraded: "text-warning-text",
+  major_outage: "text-destructive-text",
+  operational: "text-success-text",
   paused: "text-muted-foreground",
 } as const;
 

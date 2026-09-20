@@ -4,7 +4,7 @@ import { toast } from "@ctrl-ui/react/ui/toast";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useFeedbackMatching } from "../hooks/use-feedback-matching";
 import { getMatchesToAutoLink } from "../lib/get-matches-to-auto-link";
@@ -93,13 +93,10 @@ export function ReleaseFeedbackSection({
   const linkStatusRef = useRef(linkStatus);
   linkStatusRef.current = linkStatus;
 
-  const handleLinkStatusChange = useCallback(
-    (status: FeedbackLinkStatus) => {
-      setLinkStatus(status);
-      onLinkStatusChange?.(status);
-    },
-    [onLinkStatusChange]
-  );
+  const handleLinkStatusChange = (status: FeedbackLinkStatus) => {
+    setLinkStatus(status);
+    onLinkStatusChange?.(status);
+  };
 
   const linkedFeedback = (releaseData?.feedbackItems ?? [])
     .filter((f): f is NonNullable<typeof f> => f !== null)
@@ -119,7 +116,6 @@ export function ReleaseFeedbackSection({
     setHasAutoTriggered,
   });
 
-  // Auto-link matched feedback when AI returns results
   useEffect(() => {
     if (
       matches.length === 0 ||
@@ -186,7 +182,6 @@ export function ReleaseFeedbackSection({
     };
   }, [matches, releaseId, isMatching, releaseData, linkFeedback, clearMatches]);
 
-  // Show toast for matching errors and zero-match results
   useEffect(() => {
     if (matchError) {
       toast.error(`Failed to find related feedback: ${matchError}`);
@@ -199,14 +194,13 @@ export function ReleaseFeedbackSection({
       return;
     }
 
-    // Matching just completed (was matching, now isn't)
     if (wasMatchingRef.current && !isMatching && matches.length === 0) {
       toast.info("No related feedback found for this release");
     }
     wasMatchingRef.current = false;
   }, [matchError, isMatching, matches.length]);
 
-  const handleTriggerMatching = useCallback(() => {
+  const handleTriggerMatching = () => {
     if (!availableFeedback || availableFeedback.length === 0) {
       toast.info("No feedback items available to match");
       return;
@@ -216,43 +210,37 @@ export function ReleaseFeedbackSection({
       return;
     }
     matchFeedback(description, commits, availableFeedback);
-  }, [availableFeedback, description, commits, matchFeedback]);
+  };
 
-  const handleUnlink = useCallback(
-    async (feedbackId: Id<"feedback">) => {
-      if (!releaseId) {
-        return;
-      }
-      try {
-        await unlinkFeedback({ feedbackId, releaseId });
-        toast.success("Feedback unlinked");
-      } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Failed to unlink feedback"
-        );
-      }
-    },
-    [releaseId, unlinkFeedback]
-  );
+  const handleUnlink = async (feedbackId: Id<"feedback">) => {
+    if (!releaseId) {
+      return;
+    }
+    try {
+      await unlinkFeedback({ feedbackId, releaseId });
+      toast.success("Feedback unlinked");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to unlink feedback"
+      );
+    }
+  };
 
-  const handleManualLink = useCallback(
-    async (feedbackId: Id<"feedback">) => {
-      if (!releaseId) {
-        return;
-      }
-      try {
-        const statusToSet = linkStatus === "keep" ? undefined : linkStatus;
-        await linkFeedback({ feedbackId, newStatus: statusToSet, releaseId });
-        toast.success("Feedback linked");
-        setSearchQuery("");
-      } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Failed to link feedback"
-        );
-      }
-    },
-    [releaseId, linkFeedback, linkStatus]
-  );
+  const handleManualLink = async (feedbackId: Id<"feedback">) => {
+    if (!releaseId) {
+      return;
+    }
+    try {
+      const statusToSet = linkStatus === "keep" ? undefined : linkStatus;
+      await linkFeedback({ feedbackId, newStatus: statusToSet, releaseId });
+      toast.success("Feedback linked");
+      setSearchQuery("");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to link feedback"
+      );
+    }
+  };
 
   const searchResults = searchQuery.trim()
     ? (availableFeedback ?? []).filter((f) =>
@@ -300,8 +288,6 @@ export function ReleaseFeedbackSection({
     </div>
   );
 }
-
-// --- Helpers ---
 
 interface AutoTriggerParams {
   autoTriggerMatching: boolean | undefined;

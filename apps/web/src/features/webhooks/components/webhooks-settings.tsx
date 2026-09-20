@@ -13,6 +13,14 @@ import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button, ButtonLink } from "@ctrl-ui/react/ui/button";
 import { Input } from "@ctrl-ui/react/ui/input";
 import { Switch } from "@ctrl-ui/react/ui/switch";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@ctrl-ui/react/ui/table";
 import { ArrowSquareOut, Trash } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { formatDistanceToNow } from "date-fns";
@@ -167,7 +175,7 @@ export function WebhooksSettings({ organizationId }: WebhooksSettingsProps) {
                   ))}
                 </div>
                 {webhook.consecutiveFailures > 0 ? (
-                  <Muted className="text-amber-600 text-xs">
+                  <Muted className="text-warning-text text-xs">
                     {webhook.consecutiveFailures} consecutive failures
                     {webhook.isActive ? "" : " — disabled automatically"}
                   </Muted>
@@ -199,41 +207,41 @@ export function WebhooksSettings({ organizationId }: WebhooksSettingsProps) {
       )}
 
       {deliveries && deliveries.length > 0 ? (
-        <div className="overflow-x-auto rounded-lg border">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left text-muted-foreground text-xs">
-              <tr>
-                <th className="px-3 py-2 font-medium">Event</th>
-                <th className="px-3 py-2 font-medium">Status</th>
-                <th className="px-3 py-2 font-medium">Attempts</th>
-                <th className="px-3 py-2 font-medium">Last error</th>
-                <th className="px-3 py-2 font-medium">When</th>
-              </tr>
-            </thead>
-            <tbody>
+        <div className="overflow-hidden rounded-lg border">
+          <Table className="text-sm">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Event</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Attempts</TableHead>
+                <TableHead>Last error</TableHead>
+                <TableHead>When</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {deliveries.map((delivery) => (
-                <tr className="border-t" key={delivery._id}>
-                  <td className="px-3 py-2 font-mono text-xs">
+                <TableRow key={delivery._id}>
+                  <TableCell className="font-mono text-caption">
                     {delivery.event}
-                  </td>
-                  <td className="px-3 py-2">
+                  </TableCell>
+                  <TableCell>
                     <Badge color={DELIVERY_BADGE_COLOR[delivery.status]}>
                       {delivery.status}
                     </Badge>
-                  </td>
-                  <td className="px-3 py-2">{delivery.attempts}</td>
-                  <td className="max-w-48 truncate px-3 py-2 text-muted-foreground">
+                  </TableCell>
+                  <TableCell>{delivery.attempts}</TableCell>
+                  <TableCell className="max-w-48 truncate text-muted-foreground">
                     {delivery.lastError ?? ""}
-                  </td>
-                  <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap text-muted-foreground">
                     {formatDistanceToNow(delivery.createdAt, {
                       addSuffix: true,
                     })}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       ) : null}
 

@@ -15,7 +15,7 @@ export const metadata: Metadata = generatePageMetadata({
 export default function SdkOverviewPage() {
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="mb-2 font-display text-3xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+      <h1 className="mb-2 font-display text-3xl text-foreground leading-snug tracking-tight">
         Reflet SDK
       </h1>
       <p className="mb-8 text-base text-muted-foreground sm:text-xl">
@@ -24,7 +24,7 @@ export default function SdkOverviewPage() {
       </p>
 
       <section className="mb-10">
-        <h2 className="mb-3 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+        <h2 className="mb-3 font-display text-2xl text-foreground leading-snug tracking-tight">
           Features
         </h2>
         <ul className="list-inside list-disc space-y-2 text-muted-foreground text-sm">
@@ -38,7 +38,7 @@ export default function SdkOverviewPage() {
       </section>
 
       <section className="mb-10">
-        <h2 className="mb-3 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+        <h2 className="mb-3 font-display text-2xl text-foreground leading-snug tracking-tight">
           Quick start
         </h2>
         <div className="space-y-4">
@@ -81,7 +81,7 @@ await reflet.create({
       </section>
 
       <section>
-        <h2 className="mb-4 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+        <h2 className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight">
           Learn more
         </h2>
         <div className="grid gap-3 sm:grid-cols-2">

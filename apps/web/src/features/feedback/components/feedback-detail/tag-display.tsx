@@ -1,9 +1,15 @@
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@ctrl-ui/react/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@ctrl-ui/react/ui/tooltip";
 import { CaretDown, Sparkle, Tag, X } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { TagBadge } from "@/components/tag-badge";
@@ -46,24 +52,37 @@ export function TagDisplay({
             {tag.icon && <span>{tag.icon}</span>}
             {tag.name}
             {tag.appliedByAi && (
-              <span title="Applied by AI">
+              <>
                 <Sparkle className="h-3 w-3 opacity-60" weight="fill" />
-              </span>
+                <span className="sr-only">Applied by AI</span>
+              </>
             )}
-            <button
-              className="ml-0.5 rounded-full p-0.5 opacity-60 transition-opacity hover:opacity-100"
-              onClick={() => onToggleTag(tag._id, true)}
-              title={`Remove ${tag.name}`}
-              type="button"
-            >
-              <X className="h-2.5 w-2.5" />
-            </button>
+            <Tooltip>
+              <TooltipTrigger
+                aria-label={`Remove ${tag.name}`}
+                render={
+                  <Button
+                    className="ml-0.5 h-auto rounded-full p-0.5 opacity-60 transition-opacity hover:opacity-100"
+                    onClick={() => onToggleTag(tag._id, true)}
+                    variant="quiet"
+                  />
+                }
+              >
+                <X className="h-2.5 w-2.5" />
+              </TooltipTrigger>
+              <TooltipContent>{`Remove ${tag.name}`}</TooltipContent>
+            </Tooltip>
           </TagBadge>
         ))}
         <DropdownMenu>
           <DropdownMenuTrigger
-            className="flex h-8 w-auto cursor-pointer select-none items-center gap-1.5 rounded-full border border-input border-dashed bg-transparent px-3 text-sm transition-colors"
-            render={<button type="button" />}
+            aria-label="Add tags"
+            render={
+              <Button
+                className="h-8 w-auto select-none gap-1.5 rounded-full border border-input border-dashed px-3 text-sm transition-colors"
+                variant="quiet"
+              />
+            }
           >
             <Tag className="h-3.5 w-3.5 text-muted-foreground" />
             <span className="text-muted-foreground text-xs">Tags</span>
@@ -107,9 +126,10 @@ export function TagDisplay({
             {tag.icon && <span>{tag.icon}</span>}
             {tag.name}
             {tag.appliedByAi && (
-              <span title="Applied by AI">
+              <>
                 <Sparkle className="h-3 w-3 opacity-60" weight="fill" />
-              </span>
+                <span className="sr-only">Applied by AI</span>
+              </>
             )}
           </TagBadge>
         ))}

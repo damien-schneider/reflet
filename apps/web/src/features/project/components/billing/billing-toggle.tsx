@@ -28,7 +28,7 @@ export function BillingToggle({
           <TabsTab className="h-8 px-4" value="yearly">
             Yearly
             {yearlySavings ? (
-              <span className="ml-1.5 text-green-500">
+              <span className="ml-1.5 text-success-text">
                 (Save €{yearlySavings})
               </span>
             ) : null}

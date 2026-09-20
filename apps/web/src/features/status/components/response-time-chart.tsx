@@ -100,7 +100,7 @@ export function ResponseTimeChart({
             />
           </LineChart>
         </ChartContainer>
-        <div className="mt-2 flex items-center justify-between text-[10px] text-muted-foreground sm:text-xs">
+        <div className="mt-2 flex items-center justify-between text-caption text-muted-foreground sm:text-label">
           <span>24h ago</span>
           <span>Now</span>
         </div>

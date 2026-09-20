@@ -62,10 +62,10 @@ export default function ForgotPasswordPage() {
       <div className="flex min-h-screen items-center justify-center">
         <div className="w-full max-w-md p-6 text-center">
           <div className="mb-6 flex justify-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-olive-100">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-secondary">
               <svg
                 aria-label="Email icon"
-                className="h-8 w-8 text-olive-600"
+                className="h-8 w-8 text-brand-text"
                 fill="none"
                 role="img"
                 stroke="currentColor"
@@ -153,7 +153,7 @@ export default function ForgotPasswordPage() {
 
           <div className="text-center">
             <Link
-              className="font-medium text-olive-600 text-sm hover:underline"
+              className="font-medium text-brand-text text-sm hover:underline"
               href="/"
             >
               Back to sign in

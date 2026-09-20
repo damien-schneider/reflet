@@ -41,7 +41,7 @@ export default function DocsPage() {
   return (
     <div className="mx-auto max-w-4xl py-12">
       <div className="mb-10">
-        <h1 className="font-display text-4xl text-olive-950 leading-tight tracking-tight sm:text-5xl dark:text-olive-100">
+        <h1 className="font-display text-4xl text-foreground leading-tight tracking-tight sm:text-5xl">
           Reflet Documentation
         </h1>
         <p className="mt-2 text-base text-muted-foreground sm:text-xl">

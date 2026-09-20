@@ -196,7 +196,7 @@ export default function TermsOfService() {
               with the SSPL terms. For commercial licensing inquiries, contact
               us at{" "}
               <a
-                className="text-olive-600 underline hover:text-olive-700 dark:text-olive-400"
+                className="text-brand-text underline hover:text-brand-text/80"
                 href="mailto:licensing@reflet.app"
               >
                 licensing@reflet.app
@@ -306,7 +306,7 @@ export default function TermsOfService() {
             <Text className="mt-2">
               <strong>Email:</strong>{" "}
               <a
-                className="text-olive-600 underline hover:text-olive-700 dark:text-olive-400"
+                className="text-brand-text underline hover:text-brand-text/80"
                 href="mailto:legal@reflet.app"
               >
                 legal@reflet.app

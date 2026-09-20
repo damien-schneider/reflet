@@ -1,9 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type {
-  FeedbackWidgetCategory,
-  FeedbackWidgetLabels,
-  RefletFeedbackProps,
-} from "../../types";
+import type { FeedbackWidgetLabels, RefletFeedbackProps } from "../../types";
 import { GripIcon, MinusIcon } from "../icons";
 import { Launcher } from "../launcher";
 import { FeedbackPanel } from "../panel";
@@ -13,19 +9,16 @@ import { useFloatingPosition } from "./use-floating-position";
 
 export function FloatingWidget({
   labels,
-  options,
+  position,
   state,
 }: {
   labels: FeedbackWidgetLabels;
-  options: {
-    categories: FeedbackWidgetCategory[];
-    position: RefletFeedbackProps["position"];
-  };
+  position: RefletFeedbackProps["position"];
   state: WidgetState;
 }) {
   const [minimized, setMinimized] = useState(false);
   const launcherRef = useRef<HTMLButtonElement>(null);
-  const floating = useFloatingPosition(options.position);
+  const floating = useFloatingPosition(position);
   const showPanel = state.isOpen && !minimized;
   const minimize = () => {
     setMinimized(true);
@@ -59,7 +52,7 @@ export function FloatingWidget({
         state.isOpen && (state.step === "picking" || state.step === "annotate")
       }
       data-moved={Boolean(floating.position)}
-      data-position={options.position}
+      data-position={position}
       ref={floating.rootRef}
     >
       <style>{floating.styles}</style>
@@ -68,32 +61,29 @@ export function FloatingWidget({
       )}
       {showPanel ? (
         <FeedbackPanel
+          floatingControls={
+            <div className="floating-controls glass">
+              <button
+                aria-label={labels.moveFeedback}
+                className="icon-btn drag-handle"
+                title={labels.moveFeedback}
+                type="button"
+                {...floating.handleProps}
+              >
+                <GripIcon />
+              </button>
+              <button
+                aria-label={labels.minimize}
+                className="icon-btn"
+                onClick={minimize}
+                title={labels.minimize}
+                type="button"
+              >
+                <MinusIcon />
+              </button>
+            </div>
+          }
           labels={labels}
-          options={{
-            categories: options.categories,
-            floatingControls: (
-              <div className="floating-controls glass">
-                <button
-                  aria-label={labels.moveFeedback}
-                  className="icon-btn drag-handle"
-                  title={labels.moveFeedback}
-                  type="button"
-                  {...floating.handleProps}
-                >
-                  <GripIcon />
-                </button>
-                <button
-                  aria-label={labels.minimize}
-                  className="icon-btn"
-                  onClick={minimize}
-                  title={labels.minimize}
-                  type="button"
-                >
-                  <MinusIcon />
-                </button>
-              </div>
-            ),
-          }}
           state={state}
         />
       ) : (

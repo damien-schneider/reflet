@@ -1,11 +1,16 @@
 "use client";
 
 import { Button } from "@ctrl-ui/react/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@ctrl-ui/react/ui/tooltip";
 import { PaperPlaneTilt, Sparkle } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { cn } from "@/lib/utils";
 import { useAIDraftReply } from "../feedback-detail-dialog/use-ai-draft-reply";
@@ -35,7 +40,7 @@ export function CommentsSection({
     setNewComment,
   });
 
-  const handleSubmitComment = useCallback(async () => {
+  const handleSubmitComment = async () => {
     if (!newComment.trim() || isSubmitting) {
       return;
     }
@@ -50,23 +55,22 @@ export function CommentsSection({
     } finally {
       setIsSubmitting(false);
     }
-  }, [feedbackId, newComment, isSubmitting, addComment]);
+  };
 
-  // Transform comments to CommentData format with nested replies
   const comments = buildCommentTree(commentsData ?? []);
   const commentCount = commentsData?.length ?? 0;
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <h3 className="font-medium text-sm">
         Discussion
         {commentCount > 0 && (
-          <span className="ml-2 text-muted-foreground">({commentCount})</span>
+          <span className="ml-2 text-muted-foreground tabular-nums">
+            ({commentCount})
+          </span>
         )}
       </h3>
 
-      {/* Comment Input */}
       <CommentInput
         isAdmin={isAdmin}
         isGeneratingDraft={isGeneratingDraft}
@@ -77,7 +81,6 @@ export function CommentsSection({
         value={newComment}
       />
 
-      {/* Comments List */}
       <CommentProvider feedbackId={feedbackId}>
         <div className="space-y-1">
           {comments.length === 0 ? (
@@ -116,11 +119,11 @@ function CommentInput({
 }: CommentInputProps) {
   const canSubmit = Boolean(value.trim()) && !isSubmitting;
 
-  const handleKeyboardSubmit = useCallback(() => {
+  const handleKeyboardSubmit = () => {
     if (canSubmit) {
       onSubmit();
     }
-  }, [canSubmit, onSubmit]);
+  };
 
   return (
     <div className="overflow-hidden rounded-xl border bg-muted/30 focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20">
@@ -135,19 +138,28 @@ function CommentInput({
       />
       <div className="flex items-center justify-end gap-2 border-t bg-muted/50 px-3 py-2">
         {isAdmin && (
-          <Button
-            className="h-8 gap-1.5"
-            disabled={isGeneratingDraft}
-            onClick={onGenerateDraft}
-            size="xs"
-            title="Generate AI draft reply"
-            variant="ghost"
-          >
-            <Sparkle
-              className={cn("h-3.5 w-3.5", isGeneratingDraft && "animate-spin")}
-            />
-            {isGeneratingDraft ? "Drafting..." : "AI Draft"}
-          </Button>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  className="h-8 gap-1.5"
+                  disabled={isGeneratingDraft}
+                  onClick={onGenerateDraft}
+                  size="xs"
+                  variant="ghost"
+                />
+              }
+            >
+              <Sparkle
+                className={cn(
+                  "h-3.5 w-3.5",
+                  isGeneratingDraft && "animate-spin"
+                )}
+              />
+              {isGeneratingDraft ? "Drafting..." : "AI Draft"}
+            </TooltipTrigger>
+            <TooltipContent>Generate AI draft reply</TooltipContent>
+          </Tooltip>
         )}
         <Button
           className="h-8 gap-1.5"
@@ -165,7 +177,6 @@ function CommentInput({
   );
 }
 
-// Build recursive comment tree from flat list
 interface RawComment {
   _id: Id<"comments">;
   author?: {
@@ -182,7 +193,6 @@ function buildCommentTree(rawComments: RawComment[]): CommentData[] {
   const commentMap = new Map<string, CommentData>();
   const rootComments: CommentData[] = [];
 
-  // First pass: create CommentData objects
   for (const comment of rawComments) {
     commentMap.set(comment._id, {
       author: comment.author
@@ -199,7 +209,6 @@ function buildCommentTree(rawComments: RawComment[]): CommentData[] {
     });
   }
 
-  // Second pass: build tree by linking children to parents
   for (const comment of rawComments) {
     const commentData = commentMap.get(comment._id);
     if (!commentData) {

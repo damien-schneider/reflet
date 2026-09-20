@@ -6,6 +6,7 @@ import { CaretUp as ChevronUp } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import { use } from "react";
+import { DEFAULT_PRIMARY_COLOR } from "@/lib/branding";
 
 export default function PublicRoadmapPageClient({
   params,
@@ -31,7 +32,7 @@ export default function PublicRoadmapPageClient({
     );
   }
 
-  const primaryColor = org.primaryColor ?? "#3b82f6";
+  const primaryColor = org.primaryColor ?? DEFAULT_PRIMARY_COLOR;
   const roadmapLanes = roadmapConfig.lanes || [];
   const allFeedback = roadmapFeedback || [];
 
@@ -74,8 +75,8 @@ export default function PublicRoadmapPageClient({
           >
             <div className="mb-4 flex items-center gap-2">
               <div
-                className="h-3 w-3 rounded"
-                style={{ backgroundColor: lane.color }}
+                className="h-3 w-3 rounded bg-(--lane-color)"
+                style={{ "--lane-color": lane.color }}
               />
               <h3 className="font-semibold">{lane.name}</h3>
               <Badge className="ml-auto">
@@ -128,16 +129,16 @@ function RoadmapCard({ feedback, primaryColor }: RoadmapCardProps) {
       ?.slice(0, 2) ?? [];
 
   return (
-    <Card className="cursor-pointer transition-all duration-200 hover:scale-[1.02] hover:bg-accent/50 hover:shadow-md">
+    <Card className="cursor-pointer transition-[transform,background-color,box-shadow] duration-200 hover:scale-[1.02] hover:bg-accent/50 hover:shadow-md">
       <CardContent className="p-3">
         <h4 className="font-medium text-sm">{feedback.title}</h4>
         <div className="mt-2 flex items-center justify-between">
           <div className="flex flex-wrap gap-1">
             {nonLaneTags.map((tag) => (
               <Badge
-                className="text-xs"
+                className="border-(color:--tag-color) text-(color:--tag-color) text-xs"
                 key={tag._id}
-                style={{ borderColor: tag.color, color: tag.color }}
+                style={{ "--tag-color": tag.color }}
                 variant="outline"
               >
                 {tag.name}
@@ -145,8 +146,8 @@ function RoadmapCard({ feedback, primaryColor }: RoadmapCardProps) {
             ))}
           </div>
           <div
-            className="flex items-center gap-1 text-xs"
-            style={{ color: primaryColor }}
+            className="text-(color:--vote-color) flex items-center gap-1 text-xs"
+            style={{ "--vote-color": primaryColor }}
           >
             <ChevronUp className="h-3 w-3" />
             {feedback.voteCount}

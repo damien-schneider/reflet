@@ -10,6 +10,8 @@ import {
 } from "@/components/docs/component-preview";
 import { SWEEP_CORNER_CODE } from "@/components/docs/feedback-card-codes";
 import { SweepCornerPreview } from "@/components/docs/feedback-card-previews";
+import type { PropDefinition } from "@/components/docs/props-table";
+import { PropsTable } from "@/components/docs/props-table";
 import { InlineCode } from "@/components/ui/typography";
 import { generatePageMetadata } from "@/lib/seo-config";
 
@@ -36,7 +38,11 @@ const IMPORT_CODE = `import {
   SweepCornerTitle,
 } from "@/components/ui/feedback-sweep-corner";`;
 
-const SUBCOMPONENTS = [
+const SUBCOMPONENTS: {
+  description: string;
+  name: string;
+  props: PropDefinition[];
+}[] = [
   {
     description: "Root provider. Manages vote state via React context.",
     name: "SweepCorner",
@@ -89,7 +95,7 @@ const SUBCOMPONENTS = [
     props: [
       {
         description:
-          "Color key: purple, green, blue, red, amber, pink, or gray.",
+          "Color key: blue, brown, green, orange, pink, purple, red, yellow, gray, or default.",
         name: "color",
         required: true,
         type: "string",
@@ -121,12 +127,12 @@ const SUBCOMPONENTS = [
       },
     ],
   },
-] as const;
+];
 
 export default function SweepCornerPage() {
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="mb-2 font-display text-3xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+      <h1 className="mb-2 font-display text-3xl text-foreground leading-snug tracking-tight">
         Sweep Corner
       </h1>
       <p className="mb-8 text-base text-muted-foreground sm:text-xl">
@@ -135,7 +141,7 @@ export default function SweepCornerPage() {
       </p>
 
       <section className="mb-10">
-        <h2 className="mb-4 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+        <h2 className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight">
           Preview
         </h2>
         <ComponentPreview code={`${IMPORT_CODE}\n\n${SWEEP_CORNER_CODE}`}>
@@ -144,7 +150,7 @@ export default function SweepCornerPage() {
       </section>
 
       <section className="mb-10">
-        <h2 className="mb-4 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+        <h2 className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight">
           Installation
         </h2>
         <InstallTabs
@@ -154,7 +160,7 @@ export default function SweepCornerPage() {
       </section>
 
       <section className="mb-10">
-        <h2 className="mb-4 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+        <h2 className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight">
           Usage
         </h2>
         <CodeBlock code={IMPORT_CODE} />
@@ -163,7 +169,7 @@ export default function SweepCornerPage() {
       </section>
 
       <section>
-        <h2 className="mb-4 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+        <h2 className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight">
           API Reference
         </h2>
         <div className="space-y-8">
@@ -175,48 +181,7 @@ export default function SweepCornerPage() {
               <p className="mb-3 text-muted-foreground text-sm">
                 {comp.description}
               </p>
-              {comp.props.length > 0 && (
-                <div className="overflow-hidden rounded-lg border border-border">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-border border-b bg-muted/50">
-                        <th className="px-4 py-2.5 text-left font-semibold text-xs">
-                          Prop
-                        </th>
-                        <th className="px-4 py-2.5 text-left font-semibold text-xs">
-                          Type
-                        </th>
-                        <th className="px-4 py-2.5 text-left font-semibold text-xs">
-                          Description
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {comp.props.map((p) => (
-                        <tr
-                          className="border-border border-b last:border-0"
-                          key={p.name}
-                        >
-                          <td className="px-4 py-2">
-                            <InlineCode>{p.name}</InlineCode>
-                            {p.required && (
-                              <span className="ml-1 text-destructive text-xs">
-                                *
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-4 py-2">
-                            <InlineCode>{p.type}</InlineCode>
-                          </td>
-                          <td className="px-4 py-2 text-muted-foreground text-xs">
-                            {p.description}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+              {comp.props.length > 0 && <PropsTable props={comp.props} />}
             </div>
           ))}
         </div>

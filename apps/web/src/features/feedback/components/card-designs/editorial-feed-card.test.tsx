@@ -38,18 +38,21 @@ vi.mock("@reflet/ui/feedback-editorial-feed", () => ({
   ),
   EditorialFeedItem: ({
     children,
+    className,
     onVote,
     upvotes,
     downvotes,
     voteType,
   }: {
     children: React.ReactNode;
+    className?: string;
     onVote: (d: string) => void;
     upvotes: number;
     downvotes: number;
     voteType: string | null;
   }) => (
     <div
+      className={className}
       data-downvotes={downvotes}
       data-testid="feed-item"
       data-upvotes={upvotes}
@@ -145,33 +148,6 @@ describe("EditorialFeedFeedCard", () => {
     render(<EditorialFeedFeedCard feedback={baseFeedback} onClick={onClick} />);
     fireEvent.click(screen.getByRole("button", { name: /test feedback/i }));
     expect(onClick).toHaveBeenCalledWith("f1");
-  });
-
-  it("calls onClick on Enter keydown", () => {
-    const onClick = vi.fn();
-    render(<EditorialFeedFeedCard feedback={baseFeedback} onClick={onClick} />);
-    fireEvent.keyDown(screen.getByRole("button", { name: /test feedback/i }), {
-      key: "Enter",
-    });
-    expect(onClick).toHaveBeenCalledWith("f1");
-  });
-
-  it("calls onClick on Space keydown", () => {
-    const onClick = vi.fn();
-    render(<EditorialFeedFeedCard feedback={baseFeedback} onClick={onClick} />);
-    fireEvent.keyDown(screen.getByRole("button", { name: /test feedback/i }), {
-      key: " ",
-    });
-    expect(onClick).toHaveBeenCalledWith("f1");
-  });
-
-  it("does not call onClick for other keys", () => {
-    const onClick = vi.fn();
-    render(<EditorialFeedFeedCard feedback={baseFeedback} onClick={onClick} />);
-    fireEvent.keyDown(screen.getByRole("button", { name: /test feedback/i }), {
-      key: "Tab",
-    });
-    expect(onClick).not.toHaveBeenCalled();
   });
 
   it("handles vote upvote via authGuard", () => {
@@ -312,9 +288,7 @@ describe("EditorialFeedFeedCard", () => {
     render(
       <EditorialFeedFeedCard className="custom-class" feedback={baseFeedback} />
     );
-    expect(screen.getByRole("button", { name: /test feedback/i })).toHaveClass(
-      "custom-class"
-    );
+    expect(screen.getByTestId("feed-item")).toHaveClass("custom-class");
   });
 
   it("renders with tags=undefined", () => {

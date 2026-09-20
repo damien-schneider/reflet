@@ -17,6 +17,8 @@ interface HoverQuickActionsProps {
   onResolve: () => void;
 }
 
+const ACTION_BUTTON = "size-10";
+
 export function HoverQuickActions({
   onResolve,
   onClose,
@@ -31,57 +33,60 @@ export function HoverQuickActions({
   return (
     <div
       className={cn(
-        "flex items-center gap-0.5 opacity-0 transition-opacity group-hover/conversation:opacity-100",
+        "flex items-center gap-0.5 opacity-0 transition-opacity",
+        "pointer-events-none group-focus-within/conversation:pointer-events-auto group-hover/conversation:pointer-events-auto",
+        "group-focus-within/conversation:opacity-100 group-hover/conversation:opacity-100",
+        "pointer-coarse:pointer-events-auto pointer-coarse:opacity-100",
         className
       )}
     >
       <Tooltip>
         <TooltipTrigger
+          aria-label="Resolve"
           render={
             <Button
-              className="h-7 w-7"
+              className={ACTION_BUTTON}
               iconOnly
               onClick={(e) => handleClick(e, onResolve)}
               variant="ghost"
             />
           }
         >
-          <CheckCircle className="h-4 w-4 text-emerald-500" />
-          <span className="sr-only">Resolve</span>
+          <CheckCircle className="h-4 w-4 text-success-text" />
         </TooltipTrigger>
         <TooltipContent>Resolve</TooltipContent>
       </Tooltip>
 
       <Tooltip>
         <TooltipTrigger
+          aria-label="Close"
           render={
             <Button
-              className="h-7 w-7"
+              className={ACTION_BUTTON}
               iconOnly
               onClick={(e) => handleClick(e, onClose)}
               variant="ghost"
             />
           }
         >
-          <XCircle className="h-4 w-4 text-zinc-500" />
-          <span className="sr-only">Close</span>
+          <XCircle className="h-4 w-4 text-muted-foreground" />
         </TooltipTrigger>
         <TooltipContent>Close</TooltipContent>
       </Tooltip>
 
       <Tooltip>
         <TooltipTrigger
+          aria-label="Assign to me"
           render={
             <Button
-              className="h-7 w-7"
+              className={ACTION_BUTTON}
               iconOnly
               onClick={(e) => handleClick(e, onAssignToMe)}
               variant="ghost"
             />
           }
         >
-          <UserCirclePlus className="h-4 w-4 text-olive-500" />
-          <span className="sr-only">Assign to me</span>
+          <UserCirclePlus className="h-4 w-4 text-brand-text" />
         </TooltipTrigger>
         <TooltipContent>Assign to me</TooltipContent>
       </Tooltip>

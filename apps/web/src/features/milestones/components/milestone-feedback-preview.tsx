@@ -61,7 +61,7 @@ export function MilestoneFeedbackPreview({
         </button>
       ))}
       {overflow > 0 && (
-        <span className="block px-1 text-[11px] text-muted-foreground">
+        <span className="block px-1 text-caption text-muted-foreground">
           +{overflow} more
         </span>
       )}

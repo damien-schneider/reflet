@@ -74,7 +74,7 @@ subscribe({ feedbackId, action: "subscribe" });`,
 export default function ReactHooksPage() {
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="mb-2 font-display text-3xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+      <h1 className="mb-2 font-display text-3xl text-foreground leading-snug tracking-tight">
         React Hooks
       </h1>
       <p className="mb-8 text-base text-muted-foreground sm:text-xl">
@@ -83,7 +83,7 @@ export default function ReactHooksPage() {
       </p>
 
       <section className="mb-10">
-        <h2 className="mb-3 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+        <h2 className="mb-3 font-display text-2xl text-foreground leading-snug tracking-tight">
           Provider setup
         </h2>
         <div className="rounded-lg border border-border bg-muted/30 p-4">
@@ -105,7 +105,7 @@ function App({ children }) {
       </section>
 
       <section>
-        <h2 className="mb-6 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+        <h2 className="mb-6 font-display text-2xl text-foreground leading-snug tracking-tight">
           Available hooks
         </h2>
         <div className="space-y-8">

@@ -72,9 +72,15 @@ describe("ImageBubbleMenu", () => {
 
     render(<ImageBubbleMenu editor={editor as never} />);
 
-    expect(screen.getByTitle("Align left")).toBeInTheDocument();
-    expect(screen.getByTitle("Align center")).toBeInTheDocument();
-    expect(screen.getByTitle("Align right")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Align left" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Align center" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Align right" })
+    ).toBeInTheDocument();
   });
 
   it("renders alignment icons", () => {
@@ -89,19 +95,6 @@ describe("ImageBubbleMenu", () => {
     expect(screen.getByTestId("icon-align-right")).toBeInTheDocument();
   });
 
-  it("highlights center button by default", () => {
-    const editor = createMockEditor({
-      getAttributes: vi.fn(() => ({ align: "center" })),
-      isActive: vi.fn(() => true),
-    });
-
-    render(<ImageBubbleMenu editor={editor as never} />);
-
-    const centerButton = screen.getByTitle("Align center");
-    expect(centerButton.className).toContain("bg-muted");
-    expect(centerButton.className).toContain("text-primary");
-  });
-
   it("calls setAlignment with left when left button clicked", () => {
     const editor = createMockEditor({
       isActive: vi.fn(() => true),
@@ -109,7 +102,7 @@ describe("ImageBubbleMenu", () => {
 
     render(<ImageBubbleMenu editor={editor as never} />);
 
-    fireEvent.click(screen.getByTitle("Align left"));
+    fireEvent.click(screen.getByRole("button", { name: "Align left" }));
     expect(editor.chain).toHaveBeenCalled();
     expect(editor._mockUpdateAttributes).toHaveBeenCalledWith("image", {
       align: "left",
@@ -124,7 +117,7 @@ describe("ImageBubbleMenu", () => {
 
     render(<ImageBubbleMenu editor={editor as never} />);
 
-    fireEvent.click(screen.getByTitle("Align right"));
+    fireEvent.click(screen.getByRole("button", { name: "Align right" }));
     expect(editor._mockUpdateAttributes).toHaveBeenCalledWith("image", {
       align: "right",
     });
@@ -137,7 +130,7 @@ describe("ImageBubbleMenu", () => {
 
     render(<ImageBubbleMenu editor={editor as never} />);
 
-    fireEvent.click(screen.getByTitle("Align center"));
+    fireEvent.click(screen.getByRole("button", { name: "Align center" }));
     expect(editor._mockUpdateAttributes).toHaveBeenCalledWith("image", {
       align: "center",
     });
@@ -184,8 +177,8 @@ describe("ImageBubbleMenu", () => {
 
     render(<ImageBubbleMenu editor={editor as never} />);
 
-    const centerButton = screen.getByTitle("Align center");
-    expect(centerButton.className).toContain("bg-muted");
+    const centerButton = screen.getByRole("button", { name: "Align center" });
+    expect(centerButton).toHaveAttribute("aria-pressed", "true");
   });
 
   it("positions menu based on image element bounding rect", () => {

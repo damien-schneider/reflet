@@ -2,7 +2,14 @@
 
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button } from "@ctrl-ui/react/ui/button";
-import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@ctrl-ui/react/ui/empty";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import { toast } from "@ctrl-ui/react/ui/toast";
 import {
   Tooltip,
@@ -15,7 +22,6 @@ import {
   CheckCircle,
   CloudArrowDown,
   CloudArrowUp,
-  Spinner,
   WarningCircle,
 } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
@@ -23,9 +29,16 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import Link from "next/link";
 import { useState } from "react";
-import { Label } from "@/components/ui/label";
 import { buildGitHubInstallUrl } from "@/features/github/lib/github-install-url";
 import { authClient } from "@/lib/auth-client";
+import { cn } from "@/lib/utils";
+import {
+  pushButtonLabel,
+  SyncGroup,
+  SyncLoadingSkeleton,
+  SyncRow,
+  SyncStatusIndicator,
+} from "./manual-sync-parts";
 
 interface ManualSyncSectionProps {
   isAdmin: boolean;
@@ -33,86 +46,6 @@ interface ManualSyncSectionProps {
   lastSyncStatus?: string;
   organizationId: Id<"organizations">;
   orgSlug: string;
-}
-
-function formatRelativeTime(timestamp: number): string {
-  const seconds = Math.floor((Date.now() - timestamp) / 1000);
-  if (seconds < 60) {
-    return "just now";
-  }
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) {
-    return `${minutes}m ago`;
-  }
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) {
-    return `${hours}h ago`;
-  }
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
-}
-
-function pushButtonLabel(status?: string): string {
-  if (status === "failed") {
-    return "Retry";
-  }
-  return "Push";
-}
-
-function SyncStatusIndicator({
-  lastSyncAt,
-  lastSyncStatus,
-}: {
-  lastSyncAt?: number;
-  lastSyncStatus?: string;
-}) {
-  if (lastSyncStatus === "syncing") {
-    return (
-      <span className="flex items-center gap-1.5 text-muted-foreground text-xs">
-        <ArrowsClockwise className="h-3 w-3 animate-spin" />
-        Syncing…
-      </span>
-    );
-  }
-
-  if (lastSyncStatus === "error") {
-    return (
-      <span className="flex items-center gap-1.5 text-destructive text-xs">
-        <WarningCircle className="h-3 w-3" />
-        Sync failed
-      </span>
-    );
-  }
-
-  if (lastSyncAt) {
-    return (
-      <span className="flex items-center gap-1.5 text-muted-foreground text-xs">
-        <CheckCircle className="h-3 w-3" />
-        Synced {formatRelativeTime(lastSyncAt)}
-      </span>
-    );
-  }
-
-  return <span className="text-muted-foreground text-xs">Never synced</span>;
-}
-
-function LoadingSkeleton() {
-  return (
-    <div className="space-y-4 rounded-lg border p-4">
-      <div className="flex items-center justify-between">
-        <div className="space-y-1.5">
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-3 w-48" />
-        </div>
-        <Skeleton className="h-8 w-36 rounded-md" />
-      </div>
-      <div className="space-y-2 pt-2">
-        <Skeleton className="h-3 w-40" />
-        <Skeleton className="h-10 w-full rounded" />
-        <Skeleton className="h-10 w-full rounded" />
-      </div>
-    </div>
-  );
 }
 
 export const ManualSyncSection = ({
@@ -176,7 +109,7 @@ export const ManualSyncSection = ({
   };
 
   if (!syncStatus) {
-    return <LoadingSkeleton />;
+    return <SyncLoadingSkeleton />;
   }
 
   const { githubOnly, refletOnly, synced } = syncStatus;
@@ -189,7 +122,9 @@ export const ManualSyncSection = ({
           <div className="flex items-center gap-2">
             <p className="font-medium text-sm">Release Sync</p>
             {totalCount > 0 && (
-              <Badge className="px-1.5 py-0 text-[10px]">{totalCount}</Badge>
+              <Badge className="px-1.5 py-0 text-micro tabular-nums">
+                {totalCount}
+              </Badge>
             )}
           </div>
           <SyncStatusIndicator
@@ -204,7 +139,7 @@ export const ManualSyncSection = ({
           variant="surface"
         >
           <ArrowsClockwise
-            className={`mr-1.5 h-4 w-4 ${isSyncing ? "animate-spin" : ""}`}
+            className={cn("mr-1.5 h-4 w-4", isSyncing && "animate-spin")}
           />
           {isSyncing ? "Syncing…" : "Sync with GitHub"}
         </Button>
@@ -213,165 +148,159 @@ export const ManualSyncSection = ({
       {totalCount > 0 ? (
         <div className="space-y-3 border-t pt-3">
           {githubOnly.length > 0 && (
-            <div className="space-y-1.5">
-              <Label className="text-muted-foreground text-xs">
-                <CloudArrowDown className="mr-1 inline h-3.5 w-3.5" />
-                Available to import ({githubOnly.length})
-              </Label>
+            <SyncGroup
+              icon={CloudArrowDown}
+              label={`Available to import (${githubOnly.length})`}
+            >
               {githubOnly.map((gr) => (
-                <div
-                  className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-2"
-                  key={gr._id}
-                >
-                  <div className="flex items-center gap-2 overflow-hidden">
-                    <Badge
-                      className="shrink-0 font-mono text-[11px]"
-                      variant="outline"
+                <SyncRow
+                  action={
+                    <Button
+                      className="ml-2 shrink-0"
+                      disabled={!isAdmin || importingId === gr._id}
+                      onClick={() => handleImport(gr._id)}
+                      size="xs"
+                      variant="ghost"
                     >
-                      {gr.tagName}
-                    </Badge>
-                    <span className="truncate text-sm">
-                      {gr.name ?? gr.tagName}
-                    </span>
-                  </div>
-                  <Button
-                    className="ml-2 shrink-0"
-                    disabled={!isAdmin || importingId === gr._id}
-                    onClick={() => handleImport(gr._id)}
-                    size="xs"
-                    variant="ghost"
-                  >
-                    {importingId === gr._id ? (
-                      <ArrowsClockwise className="mr-1 h-3 w-3 animate-spin" />
-                    ) : (
-                      <CloudArrowDown className="mr-1 h-3 w-3" />
-                    )}
-                    {importingId === gr._id ? "Importing…" : "Import"}
-                  </Button>
-                </div>
+                      {importingId === gr._id ? (
+                        <Spinner className="mr-1" size="xs" />
+                      ) : (
+                        <CloudArrowDown className="mr-1 h-3 w-3" />
+                      )}
+                      {importingId === gr._id ? "Importing…" : "Import"}
+                    </Button>
+                  }
+                  key={gr._id}
+                  label={gr.tagName}
+                  outlined
+                  title={gr.name ?? gr.tagName}
+                />
               ))}
-            </div>
+            </SyncGroup>
           )}
 
           {refletOnly.length > 0 && (
-            <div className="space-y-1.5">
-              <Label className="text-muted-foreground text-xs">
-                <CloudArrowUp className="mr-1 inline h-3.5 w-3.5" />
-                Not on GitHub ({refletOnly.length})
-              </Label>
+            <SyncGroup
+              icon={CloudArrowUp}
+              label={`Not on GitHub (${refletOnly.length})`}
+            >
               {refletOnly.map((r) => (
-                <div
-                  className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-2"
-                  key={r._id}
-                >
-                  <div className="flex items-center gap-2 overflow-hidden">
-                    {r.version && (
-                      <Badge
-                        className="shrink-0 font-mono text-[11px]"
-                        variant="outline"
-                      >
-                        {r.version}
-                      </Badge>
-                    )}
-                    <span className="truncate text-sm">{r.title}</span>
-                    {r.githubPushStatus === "failed" && (
-                      <Tooltip>
-                        <TooltipTrigger
-                          className="flex shrink-0 items-center gap-1 text-destructive text-xs"
-                          render={<span />}
-                        >
-                          <WarningCircle className="h-3 w-3" />
-                          Failed
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          {r.githubPushErrorType === "permission_denied"
-                            ? "GitHub App lacks permission to create releases. Reconnect to update permissions."
-                            : (r.githubPushError ?? "Push to GitHub failed")}
-                        </TooltipContent>
-                      </Tooltip>
-                    )}
-                    {r.githubPushStatus === "failed" &&
-                      r.githubPushErrorType === "permission_denied" && (
-                        <Link
-                          className="shrink-0 font-medium text-primary text-xs hover:underline"
-                          href={
-                            buildGitHubInstallUrl({
-                              organizationId,
-                              orgSlug,
-                              userId: session?.user?.id,
-                            }) ?? "#"
-                          }
-                        >
-                          Reconnect
-                        </Link>
+                <SyncRow
+                  action={
+                    <Button
+                      className="ml-2 shrink-0"
+                      disabled={!isAdmin || pushingId === r._id}
+                      onClick={() => handlePush(r._id)}
+                      size="xs"
+                      variant="ghost"
+                    >
+                      {pushingId === r._id ? (
+                        <Spinner className="mr-1" size="xs" />
+                      ) : (
+                        <CloudArrowUp className="mr-1 h-3 w-3" />
                       )}
-                    {r.githubPushStatus === "pending" && (
-                      <span className="flex shrink-0 items-center gap-1 text-muted-foreground text-xs">
-                        <Spinner className="h-3 w-3 animate-spin" />
-                        Pending
-                      </span>
+                      {pushingId === r._id
+                        ? "Pushing…"
+                        : pushButtonLabel(r.githubPushStatus)}
+                    </Button>
+                  }
+                  key={r._id}
+                  label={r.version}
+                  outlined
+                  title={r.title}
+                >
+                  {r.githubPushStatus === "failed" && (
+                    <Tooltip>
+                      <TooltipTrigger
+                        render={
+                          <Button
+                            className="h-auto shrink-0 gap-1 px-1 py-0 text-destructive-text text-xs"
+                            size="xs"
+                            type="button"
+                            variant="quiet"
+                          >
+                            <WarningCircle className="h-3 w-3" />
+                            Failed
+                          </Button>
+                        }
+                      />
+                      <TooltipContent>
+                        {r.githubPushErrorType === "permission_denied"
+                          ? "GitHub App lacks permission to create releases. Reconnect to update permissions."
+                          : (r.githubPushError ?? "Push to GitHub failed")}
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                  {r.githubPushStatus === "failed" &&
+                    r.githubPushErrorType === "permission_denied" && (
+                      <Link
+                        className="shrink-0 font-medium text-primary text-xs hover:underline"
+                        href={
+                          buildGitHubInstallUrl({
+                            organizationId,
+                            orgSlug,
+                            userId: session?.user?.id,
+                          }) ?? "#"
+                        }
+                      >
+                        Reconnect
+                      </Link>
                     )}
-                  </div>
-                  <Button
-                    className="ml-2 shrink-0"
-                    disabled={!isAdmin || pushingId === r._id}
-                    onClick={() => handlePush(r._id)}
-                    size="xs"
-                    variant="ghost"
-                  >
-                    {pushingId === r._id ? (
-                      <ArrowsClockwise className="mr-1 h-3 w-3 animate-spin" />
-                    ) : (
-                      <CloudArrowUp className="mr-1 h-3 w-3" />
-                    )}
-                    {pushingId === r._id
-                      ? "Pushing…"
-                      : pushButtonLabel(r.githubPushStatus)}
-                  </Button>
-                </div>
+                  {r.githubPushStatus === "pending" && (
+                    <span className="flex shrink-0 items-center gap-1 text-muted-foreground text-xs">
+                      <Spinner size="xs" />
+                      Pending
+                    </span>
+                  )}
+                </SyncRow>
               ))}
-            </div>
+            </SyncGroup>
           )}
 
           {synced.length > 0 && (
-            <div className="space-y-1.5">
-              <Label className="text-muted-foreground text-xs">
-                <CheckCircle className="mr-1 inline h-3.5 w-3.5" />
-                Linked ({synced.length})
-              </Label>
+            <SyncGroup icon={CheckCircle} label={`Linked (${synced.length})`}>
               {synced.map((r) => (
-                <div
-                  className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-2"
+                <SyncRow
+                  action={
+                    r.githubHtmlUrl && (
+                      <Tooltip>
+                        <TooltipTrigger
+                          render={
+                            <a
+                              aria-label={`View ${r.title} on GitHub`}
+                              className="ml-2 shrink-0 text-muted-foreground transition-colors hover:text-foreground"
+                              href={r.githubHtmlUrl}
+                              rel="noopener noreferrer"
+                              target="_blank"
+                            >
+                              <ArrowSquareOut className="h-4 w-4" />
+                            </a>
+                          }
+                        />
+                        <TooltipContent>View on GitHub</TooltipContent>
+                      </Tooltip>
+                    )
+                  }
                   key={r._id}
-                >
-                  <div className="flex items-center gap-2 overflow-hidden">
-                    {r.version && (
-                      <Badge className="shrink-0 font-mono text-[11px]">
-                        {r.version}
-                      </Badge>
-                    )}
-                    <span className="truncate text-sm">{r.title}</span>
-                  </div>
-                  {r.githubHtmlUrl && (
-                    <a
-                      className="ml-2 shrink-0 text-muted-foreground transition-colors hover:text-foreground"
-                      href={r.githubHtmlUrl}
-                      rel="noopener noreferrer"
-                      target="_blank"
-                    >
-                      <ArrowSquareOut className="h-4 w-4" />
-                    </a>
-                  )}
-                </div>
+                  label={r.version}
+                  title={r.title}
+                />
               ))}
-            </div>
+            </SyncGroup>
           )}
         </div>
       ) : (
-        <p className="border-t pt-3 text-center text-muted-foreground text-xs">
-          No releases found. Click "Sync with GitHub" to fetch releases from
-          your repository.
-        </p>
+        <Empty className="border-t pt-3">
+          <EmptyHeader>
+            <EmptyMedia>
+              <CloudArrowDown className="h-6 w-6" />
+            </EmptyMedia>
+            <EmptyTitle>No releases found</EmptyTitle>
+            <EmptyDescription>
+              Click "Sync with GitHub" to fetch releases from your repository.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       )}
     </div>
   );

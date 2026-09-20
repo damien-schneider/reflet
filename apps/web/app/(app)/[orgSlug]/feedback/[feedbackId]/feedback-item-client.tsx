@@ -2,10 +2,11 @@
 
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { use } from "react";
 import { PublicFeedbackDetailContent } from "@/features/feedback/components/public-feedback-detail/public-feedback-detail-content";
+import { DEFAULT_PRIMARY_COLOR } from "@/lib/branding";
+import { toId } from "@/lib/convex-helpers";
 
 export default function FeedbackItemClient({
   params,
@@ -35,12 +36,12 @@ export default function FeedbackItemClient({
     return null;
   }
 
-  const primaryColor = org.primaryColor ?? "#3b82f6";
+  const primaryColor = org.primaryColor ?? DEFAULT_PRIMARY_COLOR;
 
   return (
     <div className="container mx-auto max-w-3xl px-4 py-8">
       <PublicFeedbackDetailContent
-        feedbackId={feedbackId as Id<"feedback">}
+        feedbackId={toId("feedback", feedbackId)}
         isAdmin={isAdmin}
         isMember={isMember}
         organizationId={org._id}

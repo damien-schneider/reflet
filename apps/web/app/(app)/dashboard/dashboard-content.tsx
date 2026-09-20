@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   SidebarInset,
   SidebarProvider,
@@ -9,7 +10,6 @@ import { Buildings, CaretRight } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import { useAtom } from "jotai";
-import Image from "next/image";
 import Link from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -26,6 +26,7 @@ import { H2, Muted } from "@/components/ui/typography";
 import { CommandPalette } from "@/features/command-palette/components/command-palette";
 import { DashboardSidebar } from "@/features/dashboard/components/dashboard-sidebar";
 import { PushNotificationPrompt } from "@/features/dashboard/components/push-notification-prompt";
+import { OrgAvatar } from "@/features/organizations/components/org-avatar";
 import { OrganizationSwitcher } from "@/features/organizations/components/organization-switcher";
 import { sidebarOpenAtom } from "@/store/dashboard-atoms";
 import { computeDashboardNavigation } from "./use-dashboard-navigation";
@@ -103,10 +104,7 @@ function buildBreadcrumbItems(
   ];
 
   const firstSegment = relevantSegments[0];
-  if (
-    firstSegment &&
-    NON_ORG_ROUTES.includes(firstSegment as (typeof NON_ORG_ROUTES)[number])
-  ) {
+  if (firstSegment && NON_ORG_ROUTES.some((route) => route === firstSegment)) {
     items.push({
       href: `/dashboard/${firstSegment}`,
       isActive: true,
@@ -211,8 +209,8 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
   const isAdmin = org?.role === "admin" || org?.role === "owner";
 
   const relevantSegments = getRelevantPathSegments(pathname ?? "");
-  const isNonOrgRoute = NON_ORG_ROUTES.includes(
-    relevantSegments[0] as (typeof NON_ORG_ROUTES)[number]
+  const isNonOrgRoute = NON_ORG_ROUTES.some(
+    (route) => route === relevantSegments[0]
   );
 
   const { redirectTo, orgNotAccessible, hasOrganizations } =
@@ -229,17 +227,17 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
       <CommandPalette isAdmin={isAdmin} orgSlug={orgSlug} />
       <DashboardSidebar orgSlug={orgSlug} pathname={pathname ?? ""} />
       <SidebarInset className="min-w-0">
-        <header className="pointer-events-none sticky top-0 z-10 flex h-14 items-center gap-2 px-4 *:pointer-events-auto">
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-border/60 border-b bg-background/80 px-4 backdrop-blur-md">
           <div className="flex items-center gap-2">
-            <SidebarTrigger className="bg-background/20 backdrop-blur-sm hover:bg-background/30 lg:hidden" />
-            <div className="flex flex-1 items-center gap-2 rounded-lg border border-background/50 bg-background/20 px-4 py-1 backdrop-blur-xs">
+            <SidebarTrigger className="lg:hidden" />
+            <div className="flex flex-1 items-center gap-2">
               <DashboardBreadcrumb
                 orgSlug={orgSlug}
                 pathname={pathname ?? ""}
               />
             </div>
           </div>
-          <ThemeToggle className="ml-auto shrink-0 bg-background/20 backdrop-blur-sm hover:bg-background/30" />
+          <ThemeToggle className="ml-auto shrink-0" />
         </header>
 
         {isNonOrgRoute ? (
@@ -257,23 +255,11 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
                     {organizations?.map((org) =>
                       org ? (
                         <Link
-                          className="group flex items-center gap-3 rounded-xl bg-card p-3 ring-1 ring-foreground/10 transition-shadow hover:ring-olive-400 dark:hover:ring-olive-600"
+                          className="group flex items-center gap-3 rounded-xl bg-card p-3 ring-1 ring-foreground/10 transition-shadow hover:ring-ring"
                           href={`/dashboard/${org.slug}`}
                           key={org._id}
                         >
-                          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-olive-100 font-display text-lg text-olive-700 dark:bg-olive-800/40 dark:text-olive-300">
-                            {org.logo ? (
-                              <Image
-                                alt={org.name}
-                                className="size-10 rounded-lg object-contain"
-                                height={40}
-                                src={org.logo}
-                                width={40}
-                              />
-                            ) : (
-                              org.name.charAt(0).toUpperCase()
-                            )}
-                          </div>
+                          <OrgAvatar org={org} size="lg" />
                           <span className="flex-1 truncate font-medium text-sm">
                             {org.name}
                           </span>
@@ -299,9 +285,9 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
               <div className="flex min-h-[calc(100svh-3.5rem)] items-center justify-center p-6">
                 <div className="w-full max-w-sm text-center">
                   <div className="mb-6 flex justify-center">
-                    <div className="flex size-14 items-center justify-center rounded-2xl bg-red-100 dark:bg-red-800/30">
+                    <div className="flex size-14 items-center justify-center rounded-2xl bg-destructive/10">
                       <Buildings
-                        className="size-7 text-red-600 dark:text-red-400"
+                        className="size-7 text-destructive-text"
                         weight="duotone"
                       />
                     </div>
@@ -311,12 +297,14 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
                     You don&apos;t have access to this organization, or it
                     doesn&apos;t exist.
                   </Muted>
-                  <Link
-                    className="mt-6 inline-block rounded-lg bg-olive-600 px-4 py-2 font-medium text-sm text-white transition-colors hover:bg-olive-700"
-                    href="/dashboard"
+                  <Button
+                    className="mt-6"
+                    render={<Link href="/dashboard" />}
+                    tone="primary"
+                    variant="solid"
                   >
                     Back to dashboard
-                  </Link>
+                  </Button>
                 </div>
               </div>
             ) : null}

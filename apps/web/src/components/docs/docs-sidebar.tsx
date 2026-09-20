@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@ctrl-ui/react/ui/collapsible";
 import { CaretDown } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useState } from "react";
@@ -104,6 +109,7 @@ function SidebarLink({
 }) {
   return (
     <Link
+      aria-current={isActive ? "page" : undefined}
       className={cn(
         "block rounded-md px-3 py-1.5 text-sm transition-colors",
         isActive
@@ -126,20 +132,16 @@ function SidebarSection({
 }) {
   const sectionHasActiveLink =
     section.links.some((link) => link.href === pathname) ||
-    section.subGroups?.some((group) =>
+    (section.subGroups?.some((group) =>
       group.links.some((link) => link.href === pathname)
-    );
+    ) ??
+      false);
 
   const [isOpen, setIsOpen] = useState(sectionHasActiveLink);
 
   return (
-    <div>
-      <button
-        aria-expanded={isOpen}
-        className="flex w-full items-center justify-between px-3 py-2 font-semibold text-foreground text-sm transition-colors hover:text-foreground/80"
-        onClick={() => setIsOpen((prev) => !prev)}
-        type="button"
-      >
+    <Collapsible onOpenChange={setIsOpen} open={isOpen}>
+      <CollapsibleTrigger className="flex w-full items-center justify-between px-3 py-2 font-semibold text-foreground text-sm transition-colors hover:text-foreground/80">
         {section.title}
         <CaretDown
           className={cn(
@@ -147,8 +149,8 @@ function SidebarSection({
             isOpen && "rotate-180"
           )}
         />
-      </button>
-      {isOpen && (
+      </CollapsibleTrigger>
+      <CollapsibleContent>
         <nav aria-label={`${section.title} navigation`} className="mt-1">
           <ul className="flex flex-col gap-0.5">
             {section.links.map((link) => (
@@ -167,8 +169,8 @@ function SidebarSection({
             ))}
           </ul>
         </nav>
-      )}
-    </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 
@@ -183,13 +185,8 @@ function SidebarSubGroup({
   const [isOpen, setIsOpen] = useState(hasActiveLink);
 
   return (
-    <div className="ml-3">
-      <button
-        aria-expanded={isOpen}
-        className="flex w-full items-center justify-between px-3 py-1.5 font-medium text-muted-foreground text-sm transition-colors hover:text-foreground"
-        onClick={() => setIsOpen((prev) => !prev)}
-        type="button"
-      >
+    <Collapsible className="ml-3" onOpenChange={setIsOpen} open={isOpen}>
+      <CollapsibleTrigger className="flex w-full items-center justify-between px-3 py-1.5 font-medium text-muted-foreground text-sm transition-colors hover:text-foreground">
         {group.label}
         <CaretDown
           className={cn(
@@ -197,8 +194,8 @@ function SidebarSubGroup({
             isOpen && "rotate-180"
           )}
         />
-      </button>
-      {isOpen && (
+      </CollapsibleTrigger>
+      <CollapsibleContent>
         <ul className="mt-0.5 flex flex-col gap-0.5 border-border border-l pl-2">
           {group.links.map((link) => (
             <li key={link.href}>
@@ -210,8 +207,8 @@ function SidebarSubGroup({
             </li>
           ))}
         </ul>
-      )}
-    </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 

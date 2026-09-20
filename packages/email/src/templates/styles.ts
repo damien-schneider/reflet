@@ -1,44 +1,20 @@
-/**
- * Shared email design system
- * Minimal modern aesthetic aligned with Reflet brand identity
- *
- * Colors derived from globals.css oklch values:
- * - background: oklch(0.97 0.005 85) → #F7F7F4
- * - foreground: oklch(0.15 0.015 75) → #1A1814
- * - muted-foreground: oklch(0.5 0.01 75) → #7A7770
- * - border: oklch(0.88 0.008 85) → #E0DED9
- * - olive-600: oklch(0.466 0.025 107.3) → #5C6D4F
- * - olive-700: oklch(0.394 0.023 107.4) → #4A5840
- */
-
-// Brand Colors (matching globals.css)
 export const colors = {
-  // Semantic colors from globals.css
-  background: "#F7F7F4",
-  border: "#E0DED9",
-  card: "#FDFCFB",
-  foreground: "#1A1814",
-  muted: "#F0EFEA",
-  mutedForeground: "#7A7770",
-  // Brand olive palette
-  olive: {
-    100: "#F4F5F2",
-    200: "#E8EAE4",
-    600: "#5C6D4F",
-    700: "#4A5840",
-    800: "#3A4532",
-  },
+  background: "#F8F8F6",
+  border: "#DDDCD9",
+  brand: "#59724B",
+  brandForeground: "#FFFFFF",
+  card: "#FFFFFF",
+  foreground: "#1D1E21",
+  muted: "#F1F0EE",
+  mutedForeground: "#5E6065",
 } as const;
 
-// Typography
 export const fonts = {
   display: "'Instrument Serif', Georgia, 'Times New Roman', serif",
   sans: "'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
 } as const;
 
-// Shared component styles
 export const baseStyles = {
-  // Layout
   body: {
     backgroundColor: colors.background,
     fontFamily: fonts.sans,
@@ -46,9 +22,9 @@ export const baseStyles = {
     padding: "48px 16px",
   },
   button: {
-    backgroundColor: "#6B7C5E",
+    backgroundColor: colors.brand,
     borderRadius: "8px",
-    color: "#FFFFFF",
+    color: colors.brandForeground,
     display: "inline-block",
     fontFamily: fonts.sans,
     fontSize: "14px",
@@ -57,7 +33,6 @@ export const baseStyles = {
     textDecoration: "none",
   },
 
-  // Button - centered
   buttonWrapper: {
     margin: "28px 0 8px",
     textAlign: "center" as const,
@@ -98,7 +73,7 @@ export const baseStyles = {
     textAlign: "center" as const,
   },
   footerBrand: {
-    color: colors.olive[600],
+    color: colors.brand,
     fontFamily: fonts.display,
     fontSize: "16px",
     fontWeight: "400" as const,
@@ -141,7 +116,7 @@ export const baseStyles = {
     margin: "28px 0",
   },
   link: {
-    color: colors.olive[600],
+    color: colors.brand,
     fontFamily: fonts.sans,
     fontSize: "13px",
     lineHeight: "1.6",
@@ -175,7 +150,7 @@ export const baseStyles = {
     margin: "0 0 16px",
   },
   wordmark: {
-    color: colors.olive[600],
+    color: colors.brand,
     fontFamily: fonts.display,
     fontSize: "24px",
     fontWeight: "400" as const,

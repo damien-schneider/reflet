@@ -29,7 +29,7 @@ const IMPORT_CODE = `import { MilestoneTrackView } from "@/components/ui/milesto
 export default function TrackViewPage() {
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="mb-2 font-display text-3xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+      <h1 className="mb-2 font-display text-3xl text-foreground leading-snug tracking-tight">
         Horizontal Track
       </h1>
       <p className="mb-8 text-base text-muted-foreground sm:text-xl">
@@ -38,7 +38,7 @@ export default function TrackViewPage() {
       </p>
 
       <section className="mb-10">
-        <h2 className="mb-4 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+        <h2 className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight">
           Preview
         </h2>
         <ComponentPreview code={`${IMPORT_CODE}\n\n${TRACK_VIEW_CODE}`}>
@@ -47,7 +47,7 @@ export default function TrackViewPage() {
       </section>
 
       <section className="mb-10">
-        <h2 className="mb-4 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+        <h2 className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight">
           Installation
         </h2>
         <InstallTabs
@@ -57,7 +57,7 @@ export default function TrackViewPage() {
       </section>
 
       <section className="mb-10">
-        <h2 className="mb-4 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+        <h2 className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight">
           Usage
         </h2>
         <CodeBlock code={IMPORT_CODE} />
@@ -66,7 +66,7 @@ export default function TrackViewPage() {
       </section>
 
       <section className="mb-10">
-        <h2 className="mb-4 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+        <h2 className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight">
           Features
         </h2>
         <ul className="list-disc space-y-2 pl-6 text-muted-foreground text-sm">
@@ -95,7 +95,7 @@ export default function TrackViewPage() {
       </section>
 
       <section>
-        <h2 className="mb-4 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+        <h2 className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight">
           Configuration
         </h2>
         <p className="text-muted-foreground text-sm">

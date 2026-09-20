@@ -1,8 +1,8 @@
 import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { fetchQuery } from "convex/nextjs";
 import type { Metadata } from "next";
 
+import { toId } from "@/lib/convex-helpers";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 import ShippedCardClient from "./shipped-card-client";
@@ -16,7 +16,7 @@ export async function generateMetadata({
 
   try {
     const meta = await fetchQuery(api.feedback.queries.getShippedMeta, {
-      id: feedbackId as Id<"feedback">,
+      id: toId("feedback", feedbackId),
     });
 
     if (meta) {

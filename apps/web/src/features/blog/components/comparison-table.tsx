@@ -1,3 +1,11 @@
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@ctrl-ui/react/ui/table";
 import { Check, Minus, X } from "lucide-react";
 
 import { H3 } from "@/components/ui/typography";
@@ -12,7 +20,6 @@ interface Feature {
 }
 
 interface ComparisonTableProps {
-  competitorLogo?: string;
   competitorName: string;
   features: Feature[];
 }
@@ -20,14 +27,14 @@ interface ComparisonTableProps {
 function FeatureCell({ value }: { value: FeatureValue }) {
   if (value === "yes") {
     return (
-      <span className="flex items-center justify-center text-emerald-600">
+      <span className="flex items-center justify-center text-success-text">
         <Check className="h-5 w-5" />
       </span>
     );
   }
   if (value === "strong") {
     return (
-      <span className="flex items-center justify-center text-emerald-600">
+      <span className="flex items-center justify-center text-success-text">
         <Check className="h-5 w-5 stroke-[3]" />
         <Check className="-ml-2 h-5 w-5 stroke-[3]" />
       </span>
@@ -35,14 +42,14 @@ function FeatureCell({ value }: { value: FeatureValue }) {
   }
   if (value === "no") {
     return (
-      <span className="flex items-center justify-center text-red-500">
+      <span className="flex items-center justify-center text-destructive-text">
         <X className="h-5 w-5" />
       </span>
     );
   }
   if (value === "partial") {
     return (
-      <span className="flex items-center justify-center text-amber-500">
+      <span className="flex items-center justify-center text-warning-text">
         <Minus className="h-5 w-5" />
       </span>
     );
@@ -56,49 +63,47 @@ export function ComparisonTable({
 }: ComparisonTableProps) {
   return (
     <div className="my-8 overflow-hidden rounded-xl border border-border">
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="bg-muted">
-              <th className="px-6 py-4 text-left font-semibold">Feature</th>
-              <th className="w-32 px-6 py-4 text-center font-semibold">
-                <span className="flex items-center justify-center gap-2">
-                  <span className="flex h-6 w-6 items-center justify-center rounded bg-olive-600 font-bold text-[10px] text-olive-100">
-                    R
-                  </span>
-                  Reflet
+      <Table>
+        <TableHeader>
+          <TableRow className="bg-muted">
+            <TableHead className="px-6 py-4 font-semibold">Feature</TableHead>
+            <TableHead className="w-32 px-6 py-4 text-center font-semibold">
+              <span className="flex items-center justify-center gap-2">
+                <span className="flex h-6 w-6 items-center justify-center rounded bg-brand font-bold text-brand-foreground text-caption">
+                  R
                 </span>
-              </th>
-              <th className="w-32 px-6 py-4 text-center font-semibold">
-                {competitorName}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {features.map((feature, index) => (
-              <tr
-                className={index % 2 === 0 ? "bg-card" : "bg-muted/30"}
-                key={feature.name}
-              >
-                <td className="px-6 py-4">
-                  <div className="font-medium">{feature.name}</div>
-                  {feature.description && (
-                    <div className="mt-1 text-muted-foreground text-sm">
-                      {feature.description}
-                    </div>
-                  )}
-                </td>
-                <td className="px-6 py-4">
-                  <FeatureCell value={feature.reflet} />
-                </td>
-                <td className="px-6 py-4">
-                  <FeatureCell value={feature.competitor} />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                Reflet
+              </span>
+            </TableHead>
+            <TableHead className="w-32 px-6 py-4 text-center font-semibold">
+              {competitorName}
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {features.map((feature, index) => (
+            <TableRow
+              className={index % 2 === 0 ? "bg-card" : "bg-muted/30"}
+              key={feature.name}
+            >
+              <TableCell className="whitespace-normal px-6 py-4">
+                <div className="font-medium">{feature.name}</div>
+                {feature.description && (
+                  <div className="mt-1 text-muted-foreground text-sm">
+                    {feature.description}
+                  </div>
+                )}
+              </TableCell>
+              <TableCell className="px-6 py-4">
+                <FeatureCell value={feature.reflet} />
+              </TableCell>
+              <TableCell className="px-6 py-4">
+                <FeatureCell value={feature.competitor} />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 }
@@ -126,9 +131,9 @@ export function PricingComparison({
     <div className="my-8">
       <H3 className="mb-4">Pricing Comparison</H3>
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-xl border-2 border-olive-600 bg-card p-6">
+        <div className="rounded-xl border-2 border-brand bg-card p-6">
           <div className="mb-4 flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded bg-olive-600 font-bold text-olive-100 text-sm">
+            <span className="flex h-8 w-8 items-center justify-center rounded bg-brand font-bold text-brand-foreground text-sm">
               R
             </span>
             <span className="font-semibold text-lg">Reflet</span>

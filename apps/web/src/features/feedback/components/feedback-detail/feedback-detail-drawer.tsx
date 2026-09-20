@@ -25,6 +25,7 @@ import { formatDistanceToNow } from "date-fns";
 import { useHotkeys } from "react-hotkeys-hook";
 import { ScreenshotGallery } from "../screenshot-gallery";
 import { CommentsSection } from "./comments-section";
+import { isCompositeWidgetFocused } from "./composite-widget-focus";
 import { FeatureCheck } from "./feature-check";
 import { FeedbackContent } from "./feedback-content";
 import type {
@@ -58,25 +59,22 @@ export function FeedbackDetailDrawer({
   onPrevious,
   onNext,
 }: FeedbackDetailDrawerProps) {
-  // Fetch full details (includes author, assignee)
   const feedbackDetails = useQuery(
     api.feedback.queries.get,
     feedbackId ? { id: feedbackId } : "skip"
   );
 
-  // Find initial data from list for instant display
   const listItem = feedbackId
     ? feedbackList.find((f) => f._id === feedbackId)
     : null;
 
-  // Merge: use full details if available, otherwise use list data
   const feedback =
     feedbackDetails ??
     (listItem && feedbackId
       ? {
           _id: feedbackId,
-          assignee: null, // Will load from full details
-          author: null, // Will load from full details
+          assignee: null,
+          author: null,
           commentCount: listItem.commentCount,
           createdAt: listItem.createdAt,
           description: listItem.description ?? null,
@@ -96,12 +94,11 @@ export function FeedbackDetailDrawer({
         }
       : null);
 
-  // Keyboard shortcuts for navigation
   useHotkeys(
     "j",
     () => {
-      if (isOpen && hasNext && onNext) {
-        onNext();
+      if (!isCompositeWidgetFocused()) {
+        onNext?.();
       }
     },
     { enabled: isOpen && hasNext },
@@ -111,8 +108,8 @@ export function FeedbackDetailDrawer({
   useHotkeys(
     "k",
     () => {
-      if (isOpen && hasPrevious && onPrevious) {
-        onPrevious();
+      if (!isCompositeWidgetFocused()) {
+        onPrevious?.();
       }
     },
     { enabled: isOpen && hasPrevious },
@@ -122,8 +119,8 @@ export function FeedbackDetailDrawer({
   useHotkeys(
     "ArrowDown",
     () => {
-      if (isOpen && hasNext && onNext) {
-        onNext();
+      if (!isCompositeWidgetFocused()) {
+        onNext?.();
       }
     },
     { enabled: isOpen && hasNext },
@@ -133,8 +130,8 @@ export function FeedbackDetailDrawer({
   useHotkeys(
     "ArrowUp",
     () => {
-      if (isOpen && hasPrevious && onPrevious) {
-        onPrevious();
+      if (!isCompositeWidgetFocused()) {
+        onPrevious?.();
       }
     },
     { enabled: isOpen && hasPrevious },
@@ -142,7 +139,6 @@ export function FeedbackDetailDrawer({
   );
 
   const showNavigation = feedbackIds.length > 1;
-  // Only show loading if we have no data at all (not even from the list)
   const isLoading = feedbackId && !feedback;
 
   return (
@@ -151,51 +147,38 @@ export function FeedbackDetailDrawer({
         className="gap-0 overflow-hidden p-0 md:w-[70vw] md:max-w-[70vw]"
         side="right"
       >
-        {/* Header */}
         <SheetHeader className="flex shrink-0 flex-row items-center justify-between gap-2 border-b px-4 py-3">
           <SheetTitle className="sr-only">Feedback Details</SheetTitle>
           <SheetDescription className="sr-only">
             View and manage feedback details
           </SheetDescription>
 
-          {/* Metadata: Author & Date */}
           <div className="flex items-center gap-3">
-            {/* Author */}
             {feedback?.author && (
-              <Tooltip>
-                <TooltipTrigger>
-                  <div className="flex items-center gap-1.5">
-                    <Avatar className="h-5 w-5">
-                      <AvatarImage src={feedback.author.image ?? undefined} />
-                      <AvatarFallback className="text-[10px]">
-                        {feedback.author.name?.charAt(0) ?? "?"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-muted-foreground text-xs">
-                      {feedback.author.name ?? "Anonymous"}
-                    </span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  Posted by {feedback.author.name ?? "Anonymous"}
-                </TooltipContent>
-              </Tooltip>
+              <div className="flex items-center gap-1.5">
+                <Avatar className="h-5 w-5">
+                  <AvatarImage src={feedback.author.image ?? undefined} />
+                  <AvatarFallback className="text-micro">
+                    {feedback.author.name?.charAt(0) ?? "?"}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-muted-foreground text-xs">
+                  <span className="sr-only">Posted by </span>
+                  {feedback.author.name ?? "Anonymous"}
+                </span>
+              </div>
             )}
 
-            {/* Date */}
             {feedback?.createdAt && (
-              <Tooltip>
-                <TooltipTrigger>
-                  <div className="flex items-center gap-1 text-muted-foreground text-xs">
-                    <CalendarBlank className="h-3.5 w-3.5" />
-                    <span>
-                      {formatDistanceToNow(feedback.createdAt, {
-                        addSuffix: true,
-                      })}
-                    </span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
+              <time
+                className="flex items-center gap-1 text-muted-foreground text-xs"
+                dateTime={new Date(feedback.createdAt).toISOString()}
+              >
+                <CalendarBlank className="h-3.5 w-3.5" />
+                {formatDistanceToNow(feedback.createdAt, {
+                  addSuffix: true,
+                })}
+                <span className="sr-only">
                   {new Date(feedback.createdAt).toLocaleDateString("en-US", {
                     day: "numeric",
                     hour: "numeric",
@@ -203,49 +186,58 @@ export function FeedbackDetailDrawer({
                     month: "long",
                     year: "numeric",
                   })}
-                </TooltipContent>
-              </Tooltip>
+                </span>
+              </time>
             )}
           </div>
 
-          {/* Spacer */}
           <div className="flex-1" />
 
-          {/* Navigation controls */}
           <div className="flex items-center gap-1">
             {showNavigation && (
               <>
-                <Button
-                  disabled={!hasPrevious}
-                  iconOnly
-                  onClick={onPrevious}
-                  size="xs"
-                  title="Previous (k or Up arrow)"
-                  variant="ghost"
-                >
-                  <CaretLeft className="h-4 w-4" />
-                  <span className="sr-only">Previous feedback</span>
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger
+                    aria-label="Previous feedback"
+                    render={
+                      <Button
+                        disabled={!hasPrevious}
+                        iconOnly
+                        onClick={onPrevious}
+                        size="xs"
+                        variant="ghost"
+                      />
+                    }
+                  >
+                    <CaretLeft className="h-4 w-4" />
+                  </TooltipTrigger>
+                  <TooltipContent>Previous (k or arrow up)</TooltipContent>
+                </Tooltip>
                 <span className="min-w-12 text-center text-muted-foreground text-xs tabular-nums">
                   {currentIndex >= 0 ? currentIndex + 1 : "-"} /{" "}
                   {feedbackIds.length}
                 </span>
-                <Button
-                  disabled={!hasNext}
-                  iconOnly
-                  onClick={onNext}
-                  size="xs"
-                  title="Next (j or Down arrow)"
-                  variant="ghost"
-                >
-                  <CaretRight className="h-4 w-4" />
-                  <span className="sr-only">Next feedback</span>
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger
+                    aria-label="Next feedback"
+                    render={
+                      <Button
+                        disabled={!hasNext}
+                        iconOnly
+                        onClick={onNext}
+                        size="xs"
+                        variant="ghost"
+                      />
+                    }
+                  >
+                    <CaretRight className="h-4 w-4" />
+                  </TooltipTrigger>
+                  <TooltipContent>Next (j or arrow down)</TooltipContent>
+                </Tooltip>
               </>
             )}
           </div>
 
-          {/* Close button */}
           <SheetClose
             render={
               <Button iconOnly onClick={onClose} size="xs" variant="ghost" />
@@ -256,7 +248,6 @@ export function FeedbackDetailDrawer({
           </SheetClose>
         </SheetHeader>
 
-        {/* Content */}
         <FeedbackDetailContent
           feedback={feedback}
           feedbackId={feedbackId}
@@ -289,7 +280,6 @@ function FeedbackDetailContent({
   return (
     <ScrollArea className="flex-1">
       <div className="flex flex-col">
-        {/* Metadata bar */}
         <FeedbackMetadataBar
           aiComplexity={feedback.aiComplexity}
           aiComplexityReasoning={feedback.aiComplexityReasoning}
@@ -315,7 +305,6 @@ function FeedbackDetailContent({
           voteCount={feedback.voteCount ?? 0}
         />
 
-        {/* Main content */}
         <div className="min-h-[60vh] px-6 py-4">
           <FeedbackContent
             attachments={feedback.attachments}
@@ -326,14 +315,12 @@ function FeedbackDetailContent({
           />
         </div>
 
-        {/* AI Clarification (admin only) */}
         {isAdmin && (
           <div className="px-6 pb-4">
             <InlineClarification feedbackId={feedbackId} />
           </div>
         )}
 
-        {/* Feature Implementation Check (admin only) */}
         {isAdmin && (
           <div className="px-6 pb-4">
             <FeatureCheck
@@ -343,19 +330,16 @@ function FeedbackDetailContent({
           </div>
         )}
 
-        {/* Screenshots */}
         <div className="border-t px-6 py-4">
           <ScreenshotGallery feedbackId={feedbackId} />
         </div>
 
-        {/* Where the report came from (members only) */}
         {isAdmin && (
           <div className="border-t px-6 py-4">
             <ReportContext feedbackId={feedbackId} />
           </div>
         )}
 
-        {/* Comments */}
         <div className="border-t px-6 py-6">
           <CommentsSection feedbackId={feedbackId} isAdmin={isAdmin} />
         </div>

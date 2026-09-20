@@ -5,13 +5,11 @@ import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { useCallback, useEffect } from "react";
+import { useEffect } from "react";
 import { Markdown } from "tiptap-markdown";
 import { cn } from "@/lib/utils";
 import "./styles.css";
 
-// Helper to get markdown from tiptap-markdown storage
-// The tiptap-markdown extension adds a `markdown` storage that TypeScript doesn't know about
 const getMarkdown = (storage: unknown): string => {
   const storageWithMarkdown = storage as {
     markdown?: { getMarkdown?: () => string };
@@ -49,7 +47,6 @@ export function TiptapInlineEditor({
         class: "tiptap-inline-editor outline-none min-h-16 w-full",
       },
       handleKeyDown: (_view, event) => {
-        // Handle Cmd/Ctrl + Enter to submit
         if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
           event.preventDefault();
           onSubmit?.();
@@ -101,7 +98,6 @@ export function TiptapInlineEditor({
     },
   });
 
-  // Sync external value changes
   useEffect(() => {
     if (!editor) return;
 
@@ -111,7 +107,6 @@ export function TiptapInlineEditor({
     }
   }, [editor, value]);
 
-  // Update editable state
   useEffect(() => {
     if (!editor) return;
     editor.setEditable(!disabled);
@@ -121,9 +116,9 @@ export function TiptapInlineEditor({
   const isNearLimit = maxLength && characterCount > maxLength * 0.9;
   const isAtLimit = maxLength && characterCount >= maxLength;
 
-  const handleContainerClick = useCallback(() => {
+  const handleContainerClick = () => {
     editor?.commands.focus();
-  }, [editor]);
+  };
 
   return (
     <div
@@ -142,12 +137,10 @@ export function TiptapInlineEditor({
       {maxLength && (
         <div
           className={cn(
-            "mt-1 text-right text-xs",
-            isAtLimit
-              ? "text-destructive"
-              : isNearLimit
-                ? "text-amber-500"
-                : "text-muted-foreground"
+            "mt-1 text-right text-xs tabular-nums",
+            isAtLimit && "text-destructive-text",
+            !isAtLimit && isNearLimit && "text-warning-text",
+            !(isAtLimit || isNearLimit) && "text-muted-foreground"
           )}
         >
           {characterCount}/{maxLength}

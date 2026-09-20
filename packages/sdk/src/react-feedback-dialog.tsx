@@ -1,12 +1,7 @@
 import { useFeedbackDialog } from "./react-feedback-dialog-hook";
-import {
-  CATEGORY_ICONS,
-  type FeedbackDialogLabels,
-  type FeedbackDialogProps,
-} from "./react-feedback-dialog-types";
+import type { FeedbackDialogProps } from "./react-feedback-dialog-types";
 
 export type {
-  FeedbackCategory,
   FeedbackDialogLabels,
   FeedbackDialogProps,
 } from "./react-feedback-dialog-types";
@@ -20,8 +15,6 @@ export function FeedbackDialog({
   userToken,
   theme = "auto",
   primaryColor,
-  defaultCategory = "feature",
-  categories = ["feature", "bug", "question"],
   labels: labelsProp,
   onSubmit,
   onOpen,
@@ -35,8 +28,6 @@ export function FeedbackDialog({
     setDescription,
     email,
     setEmail,
-    category,
-    setCategory,
     honeypot,
     setHoneypot,
     isSubmitting,
@@ -49,10 +40,8 @@ export function FeedbackDialog({
     dialogRef,
     handleClose,
     handleSubmit,
-    handleTrapFocus,
   } = useFeedbackDialog({
     baseUrl,
-    defaultCategory,
     labels: labelsProp,
     onClose,
     onOpen,
@@ -71,26 +60,15 @@ export function FeedbackDialog({
 
   return (
     <div data-reflet-feedback="" data-theme={theme}>
-      {/* Overlay */}
-      <button
-        aria-label="Close feedback dialog"
-        className="reflet-overlay"
-        data-closing={isClosing ? "true" : undefined}
-        onClick={handleClose}
-        tabIndex={0}
-        type="button"
-      />
-
-      {/* Dialog */}
-      {/* biome-ignore lint/a11y/noNoninteractiveElementInteractions: dialog role requires keyboard trap */}
-      <div
+      <dialog
         aria-label={labels.title}
-        aria-modal="true"
         className="reflet-dialog"
         data-closing={isClosing ? "true" : undefined}
-        onKeyDown={handleTrapFocus}
+        onCancel={(event) => {
+          event.preventDefault();
+          handleClose();
+        }}
         ref={dialogRef}
-        role="dialog"
       >
         {isSuccess ? (
           <div className="reflet-success">
@@ -112,11 +90,10 @@ export function FeedbackDialog({
           </div>
         ) : (
           <>
-            {/* Header */}
             <div className="reflet-header">
               <h2 className="reflet-title">{labels.title}</h2>
               <button
-                aria-label="Close"
+                aria-label={labels.close}
                 className="reflet-close"
                 onClick={handleClose}
                 type="button"
@@ -136,31 +113,7 @@ export function FeedbackDialog({
               </button>
             </div>
 
-            {/* Form */}
             <form className="reflet-form" onSubmit={handleSubmit}>
-              {/* Category selector */}
-              {categories.length > 1 && (
-                <div className="reflet-categories">
-                  {categories.map((cat) => (
-                    <button
-                      className="reflet-category"
-                      data-selected={cat === category ? "true" : undefined}
-                      key={cat}
-                      onClick={() => setCategory(cat)}
-                      type="button"
-                    >
-                      {CATEGORY_ICONS[cat]}{" "}
-                      {
-                        labels[
-                          `category${cat.charAt(0).toUpperCase()}${cat.slice(1)}` as keyof FeedbackDialogLabels
-                        ]
-                      }
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* Title */}
               <div className="reflet-field">
                 <input
                   aria-label="Feedback title"
@@ -181,7 +134,6 @@ export function FeedbackDialog({
                 />
               </div>
 
-              {/* Description */}
               <div className="reflet-field">
                 <textarea
                   aria-label="Feedback description"
@@ -194,14 +146,12 @@ export function FeedbackDialog({
                 />
               </div>
 
-              {/* Email (anonymous only) */}
               {isAnonymous && (
                 <div className="reflet-field">
                   <label className="reflet-label" htmlFor="reflet-email">
                     {labels.emailLabel}
                   </label>
                   <input
-                    aria-label="Email address"
                     autoComplete="email"
                     className="reflet-input"
                     id="reflet-email"
@@ -213,7 +163,6 @@ export function FeedbackDialog({
                 </div>
               )}
 
-              {/* Honeypot */}
               <div aria-hidden="true" className="reflet-hp">
                 <input
                   autoComplete="off"
@@ -225,10 +174,8 @@ export function FeedbackDialog({
                 />
               </div>
 
-              {/* Error */}
               {error && <p className="reflet-error-msg">{error}</p>}
 
-              {/* Footer */}
               <div className="reflet-footer">
                 <button
                   className="reflet-btn reflet-btn-secondary"
@@ -251,7 +198,6 @@ export function FeedbackDialog({
               </div>
             </form>
 
-            {/* Powered by */}
             <div className="reflet-powered">
               Powered by{" "}
               <a
@@ -264,7 +210,7 @@ export function FeedbackDialog({
             </div>
           </>
         )}
-      </div>
+      </dialog>
     </div>
   );
 }

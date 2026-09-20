@@ -4,7 +4,7 @@ import MobileMenuDialog from "./mobile-menu-dialog";
 
 export default function NavbarMobile() {
   return (
-    <header className="sticky top-0 z-50 flex h-16 items-center justify-between border-border/60 border-b bg-background/70 px-4 backdrop-blur-xl md:hidden">
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-border/60 border-b bg-background/70 px-4 backdrop-blur-xl md:hidden">
       <Link
         className="font-serif text-2xl text-foreground tracking-tight"
         href="/"

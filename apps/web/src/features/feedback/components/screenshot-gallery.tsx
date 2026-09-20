@@ -1,15 +1,21 @@
 "use client";
 
 import { Badge } from "@ctrl-ui/react/ui/badge";
-import { Button } from "@ctrl-ui/react/ui/button";
+import { Button, ButtonLink } from "@ctrl-ui/react/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@ctrl-ui/react/ui/dialog";
+import { Input } from "@ctrl-ui/react/ui/input";
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { toast } from "@ctrl-ui/react/ui/toast";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@ctrl-ui/react/ui/tooltip";
 import {
   Camera,
   DownloadSimple,
@@ -116,7 +122,7 @@ export function ScreenshotGallery({ feedbackId }: { feedbackId: FeedbackId }) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           <Camera className="size-4 text-muted-foreground" />
-          <span className="font-medium text-sm">
+          <span className="font-medium text-sm tabular-nums">
             Screenshots ({screenshots.length})
           </span>
         </div>
@@ -128,7 +134,7 @@ export function ScreenshotGallery({ feedbackId }: { feedbackId: FeedbackId }) {
           <UploadSimple className="mr-1 size-3.5" />
           Upload
         </Button>
-        <input
+        <Input
           accept="image/*"
           className="hidden"
           onChange={handleFileChange}
@@ -151,45 +157,64 @@ export function ScreenshotGallery({ feedbackId }: { feedbackId: FeedbackId }) {
                 key={screenshot._id}
               >
                 {displayUrl ? (
-                  <button
-                    className="block w-full cursor-pointer"
+                  <Button
+                    aria-label={`Preview ${screenshot.filename}`}
+                    className="block h-auto w-full cursor-pointer p-0"
                     onClick={() => setPreviewUrl(displayUrl)}
-                    type="button"
+                    variant="quiet"
                   >
                     <Image
                       alt={screenshot.filename}
-                      className="aspect-video w-full object-cover"
+                      className="aspect-video w-full object-cover outline outline-1 outline-black/10 -outline-offset-1 dark:outline-white/10"
                       height={180}
                       src={displayUrl}
                       unoptimized
                       width={320}
                     />
-                  </button>
+                  </Button>
                 ) : (
                   <div className="flex aspect-video items-center justify-center bg-muted">
                     <Camera className="size-6 text-muted-foreground" />
                   </div>
                 )}
-                <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/60 to-transparent p-2 opacity-0 transition-opacity group-hover:opacity-100">
+                <div className="pointer-events-none pointer-coarse:pointer-events-auto absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-foreground/60 to-transparent p-2 opacity-0 pointer-coarse:opacity-100 transition-opacity group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100">
                   <Badge className="text-xs">{screenshot.captureSource}</Badge>
                   <div className="flex gap-1">
                     {displayUrl && (
-                      <a
-                        className="rounded p-1 hover:bg-white/20"
-                        download={screenshot.filename}
-                        href={displayUrl}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <DownloadSimple className="size-3.5 text-white" />
-                      </a>
+                      <Tooltip>
+                        <TooltipTrigger
+                          aria-label={`Download ${screenshot.filename}`}
+                          render={
+                            <ButtonLink
+                              className="rounded p-1 text-background hover:bg-background/20"
+                              download={screenshot.filename}
+                              href={displayUrl}
+                              iconOnly
+                              variant="quiet"
+                            />
+                          }
+                        >
+                          <DownloadSimple className="size-3.5" />
+                        </TooltipTrigger>
+                        <TooltipContent>Download</TooltipContent>
+                      </Tooltip>
                     )}
-                    <button
-                      className="rounded p-1 hover:bg-white/20"
-                      onClick={() => handleDelete(screenshot._id)}
-                      type="button"
-                    >
-                      <Trash className="size-3.5 text-white" />
-                    </button>
+                    <Tooltip>
+                      <TooltipTrigger
+                        aria-label={`Delete ${screenshot.filename}`}
+                        render={
+                          <Button
+                            className="rounded p-1 text-background hover:bg-background/20"
+                            iconOnly
+                            onClick={() => handleDelete(screenshot._id)}
+                            variant="quiet"
+                          />
+                        }
+                      >
+                        <Trash className="size-3.5" />
+                      </TooltipTrigger>
+                      <TooltipContent>Delete screenshot</TooltipContent>
+                    </Tooltip>
                   </div>
                 </div>
                 <p className="truncate px-2 py-1 text-muted-foreground text-xs">
@@ -214,7 +239,7 @@ export function ScreenshotGallery({ feedbackId }: { feedbackId: FeedbackId }) {
           {previewUrl && (
             <Image
               alt="Screenshot preview"
-              className="w-full rounded-md"
+              className="w-full rounded-md outline outline-1 outline-black/10 -outline-offset-1 dark:outline-white/10"
               height={600}
               src={previewUrl}
               unoptimized

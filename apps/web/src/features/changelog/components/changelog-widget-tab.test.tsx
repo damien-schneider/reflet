@@ -1,6 +1,7 @@
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { DEFAULT_PRIMARY_COLOR } from "@/lib/branding";
 
 const mockUseMutation = vi.fn();
 
@@ -265,7 +266,7 @@ describe("ChangelogWidgetTab", () => {
 
   it("shows default color when no primary color provided", () => {
     render(<ChangelogWidgetTab {...defaultProps} />);
-    expect(screen.getByText("#5c6d4f")).toBeInTheDocument();
+    expect(screen.getByText(DEFAULT_PRIMARY_COLOR)).toBeInTheDocument();
   });
 
   it("links to branding settings page", () => {

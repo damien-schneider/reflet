@@ -213,7 +213,8 @@ export function RoadmapView({
               {activeItem && (
                 <motion.div
                   animate={{
-                    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+                    boxShadow:
+                      "0 25px 50px -12px oklch(from var(--shadow-color) l c h / 0.25)",
                     rotate: 3,
                     scale: 1.05,
                   }}

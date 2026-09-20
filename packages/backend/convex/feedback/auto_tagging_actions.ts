@@ -2,16 +2,34 @@ import { generateObject } from "ai";
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
-import { internalAction } from "../_generated/server";
+import { type ActionCtx, internalAction } from "../_generated/server";
 import {
   AUTO_TAGGING_MODELS,
   type AutoTaggingResponse,
   autoTaggingResponseSchema,
   openrouter,
 } from "./auto_tagging_model";
+import {
+  evaluateFeedbackTriage,
+  type FeedbackTriage,
+  isTriageConfigured,
+} from "./triage_evaluation";
+
+const moderate = async (
+  ctx: ActionCtx,
+  feedbackId: Id<"feedback">,
+  needsReview: boolean
+) => {
+  await ctx.runMutation(
+    needsReview
+      ? internal.feedback.review.holdForReview
+      : internal.feedback.review.releaseAfterTriage,
+    { feedbackId }
+  );
+};
 
 export const processAutoTagging = internalAction({
-  args: { feedbackId: v.id("feedback") },
+  args: { applyModeration: v.boolean(), feedbackId: v.id("feedback") },
   handler: async (
     ctx,
     args
@@ -21,61 +39,76 @@ export const processAutoTagging = internalAction({
       { feedbackId: args.feedbackId }
     );
 
-    if (!data?.feedback || data.tags.length === 0) {
+    if (!data?.feedback) {
+      return { reason: "Feedback not found", success: false, tagCount: 0 };
+    }
+
+    const releaseUntriaged = async () => {
+      if (args.applyModeration) {
+        await moderate(ctx, args.feedbackId, false);
+      }
+    };
+
+    const { feedback, tags } = data;
+
+    if (!isTriageConfigured()) {
+      await releaseUntriaged();
       return {
-        reason: "No feedback or tags found",
+        reason: "OPENROUTER_API_KEY is not set; triage is required for tagging",
         success: false,
         tagCount: 0,
       };
     }
 
-    const { feedback, tags } = data;
+    let triage: FeedbackTriage;
+    try {
+      triage = await evaluateFeedbackTriage({
+        description: feedback.description,
+        tags,
+        title: feedback.title,
+      });
+    } catch (err) {
+      await releaseUntriaged();
+      return {
+        reason: `Triage evaluation failed: ${err instanceof Error ? err.message : String(err)}`,
+        success: false,
+        tagCount: 0,
+      };
+    }
 
-    const tagsDescription = tags
-      .map(
-        (tag: { _id: Id<"tags">; name: string; description?: string }) =>
-          `- ID: "${tag._id}", Name: "${tag.name}"${tag.description ? `, Description: "${tag.description}"` : ""}`
-      )
-      .join("\n");
+    if (args.applyModeration) {
+      await moderate(ctx, args.feedbackId, triage.needsReview);
+    }
+
+    if (triage.tagIds.length > 0) {
+      await ctx.runMutation(internal.feedback.auto_tagging_jobs.applyAutoTags, {
+        feedbackId: args.feedbackId,
+        tagIds: triage.tagIds,
+      });
+    }
 
     const systemPrompt = `You are a feedback analysis assistant. Your job is to analyze user feedback and:
-1. Select the most appropriate tags from the available list
-2. Assess the priority level of the feedback
-3. Estimate the implementation complexity
-4. Provide a time estimate for implementation
+1. Assess the priority level of the feedback
+2. Estimate the implementation complexity
+3. Provide a time estimate for implementation
 
 IMPORTANT:
-- Only select tag IDs from the provided list
-- Select 1-3 tags that best match the feedback content
-- If no tags match well, return an empty array for selectedTagIds
 - Be realistic about priority, complexity, and time estimates
 - Priority levels: critical (blocking/urgent issue), high (important/impactful), medium (standard priority), low (nice-to-have), none (informational only)
 - Complexity levels: trivial (quick config change, <1 hour), simple (straightforward, 1-4 hours), moderate (some investigation needed, 1-2 days), complex (significant changes, 3-5 days), very_complex (major feature/architecture, 1+ weeks)
-- Time estimate should be a human-readable range like "2-4 hours" or "1-2 days"
-- If the feedback is unclear, nonsensical, a test entry, spam, or too vague to categorize meaningfully, set priority to "none", complexity to "trivial", timeEstimate to "N/A", return an empty selectedTagIds array, and explain in reasoning that the feedback could not be categorized`;
+- Time estimate should be a human-readable range like "2-4 hours" or "1-2 days"`;
 
-    const userPrompt = `Analyze this feedback and provide tags, priority, complexity, and time estimate:
+    const userPrompt = `Analyze this feedback and provide priority, complexity, and time estimate:
 
 FEEDBACK:
 Title: ${feedback.title}
-Description: ${feedback.description || "(no description)"}
+Description: ${feedback.description || "(no description)"}`;
 
-AVAILABLE TAGS (use exact IDs):
-${tagsDescription}`;
-
-    const validTagMap = new Map<string, Id<"tags">>();
-    for (const t of tags) {
-      validTagMap.set(t._id, t._id);
-    }
-
-    // Try models in fallback chain
     let result: AutoTaggingResponse | null = null;
     let lastError: Error | null = null;
 
     for (const modelId of AUTO_TAGGING_MODELS) {
       try {
-        console.log(`Trying auto-tagging with model: ${modelId}...`);
-
         const response = await generateObject({
           model: openrouter(modelId),
           prompt: userPrompt,
@@ -84,7 +117,6 @@ ${tagsDescription}`;
         });
 
         result = response.object;
-        console.log(`Model ${modelId} succeeded:`, result);
         break;
       } catch (err) {
         console.error(`Model ${modelId} failed:`, err);
@@ -93,31 +125,18 @@ ${tagsDescription}`;
     }
 
     if (!result) {
+      await ctx.runMutation(
+        internal.feedback.auto_tagging_jobs.saveAiAnalysis,
+        { feedbackId: args.feedbackId, usefulness: triage.usefulness }
+      );
+
       return {
         reason: `All AI models failed: ${lastError?.message ?? "Unknown error"}`,
         success: false,
-        tagCount: 0,
+        tagCount: triage.tagIds.length,
       };
     }
 
-    // Filter to only valid tag IDs that exist in the org
-    const selectedTagIds = result.selectedTagIds
-      .map((id) => validTagMap.get(id))
-      .filter((id): id is Id<"tags"> => id !== undefined);
-
-    console.log("AI reasoning:", result.reasoning);
-    console.log("Valid tag IDs:", Array.from(validTagMap.keys()));
-    console.log("AI returned IDs:", result.selectedTagIds);
-    console.log("Matched tag IDs:", selectedTagIds);
-
-    if (selectedTagIds.length > 0) {
-      await ctx.runMutation(internal.feedback.auto_tagging_jobs.applyAutoTags, {
-        feedbackId: args.feedbackId,
-        tagIds: selectedTagIds,
-      });
-    }
-
-    // Save AI analysis (priority, complexity, time estimate) regardless of tag matching
     await ctx.runMutation(internal.feedback.auto_tagging_jobs.saveAiAnalysis, {
       complexity: result.complexity,
       complexityReasoning: result.complexityReasoning,
@@ -125,16 +144,15 @@ ${tagsDescription}`;
       priority: result.priority,
       priorityReasoning: result.priorityReasoning,
       timeEstimate: result.timeEstimate,
+      usefulness: triage.usefulness,
     });
 
-    if (selectedTagIds.length > 0) {
-      return { success: true, tagCount: selectedTagIds.length };
+    if (triage.tagIds.length > 0) {
+      return { success: true, tagCount: triage.tagIds.length };
     }
 
     return {
-      reason:
-        result.reasoning ||
-        "AI selected no matching tags but analysis was saved",
+      reason: "No tag matched confidently but analysis was saved",
       success: true,
       tagCount: 0,
     };
@@ -187,6 +205,7 @@ export const processBulkAutoTagging = internalAction({
           .runAction(
             internal.feedback.auto_tagging_actions.processAutoTagging,
             {
+              applyModeration: false,
               feedbackId,
             }
           )

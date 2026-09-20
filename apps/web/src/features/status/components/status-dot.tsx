@@ -14,11 +14,11 @@ interface StatusDotProps {
 }
 
 const colorMap: Record<StatusType, string> = {
-  degraded: "bg-amber-500",
-  major_outage: "bg-red-500",
-  no_monitors: "bg-gray-300",
-  operational: "bg-emerald-500",
-  paused: "bg-gray-400",
+  degraded: "bg-warning",
+  major_outage: "bg-destructive",
+  no_monitors: "bg-muted-foreground/40",
+  operational: "bg-success",
+  paused: "bg-muted-foreground",
 };
 
 const sizeMap = {

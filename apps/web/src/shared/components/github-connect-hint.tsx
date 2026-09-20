@@ -29,7 +29,7 @@ export function GitHubConnectHint({
 
   return (
     <div className="mb-4 flex items-center gap-3 rounded-lg border border-dashed bg-muted/30 px-4 py-3">
-      <Lightbulb className="size-4 shrink-0 text-amber-500" />
+      <Lightbulb className="size-4 shrink-0 text-warning-text" />
       <div className="flex-1">
         <Text className="font-medium" variant="bodySmall">
           Connect GitHub to auto-discover

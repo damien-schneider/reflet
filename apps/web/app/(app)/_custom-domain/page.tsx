@@ -6,6 +6,7 @@ import { useQuery } from "convex/react";
 import type { BoardView as BoardViewType } from "@/features/feedback/components/board-view-toggle";
 import { FeedbackBoard } from "@/features/feedback/components/feedback-board";
 import { useCustomDomainOrg } from "@/features/public-org/hooks/use-custom-domain-org";
+import { DEFAULT_PRIMARY_COLOR } from "@/lib/branding";
 
 export default function CustomDomainPage() {
   const org = useCustomDomainOrg();
@@ -37,7 +38,7 @@ export default function CustomDomainPage() {
     return null;
   }
 
-  const primaryColor = org.primaryColor ?? "#3b82f6";
+  const primaryColor = org.primaryColor ?? DEFAULT_PRIMARY_COLOR;
   const rawDefaultView = org.feedbackSettings?.defaultView;
   const defaultView: BoardViewType =
     rawDefaultView === "roadmap" ||

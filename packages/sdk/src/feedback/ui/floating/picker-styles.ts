@@ -1,15 +1,22 @@
+import { REFLET_Z_INDEX } from "../../../z-index";
+
 export const PICKER_STYLES = `
 .picker-box {
   position: fixed;
+  top: 0;
+  left: 0;
   pointer-events: none;
   border-radius: 5px;
   background: color-mix(in srgb, var(--rf-accent) 10%, transparent);
   box-shadow: 0 0 0 2px var(--rf-accent), 0 0 0 5px color-mix(in srgb, var(--rf-accent) 18%, transparent);
-  transition: top 130ms var(--rf-ease), left 130ms var(--rf-ease), width 130ms var(--rf-ease), height 130ms var(--rf-ease);
+  will-change: translate;
+  transition: translate 130ms var(--rf-ease);
 }
 .picker-box[data-pinned="true"] { transition: none; }
 .picker-label {
   position: fixed;
+  top: 0;
+  left: 0;
   pointer-events: none;
   display: inline-flex;
   align-items: center;
@@ -19,13 +26,14 @@ export const PICKER_STYLES = `
   padding: 0 8px;
   font-size: 11.5px;
   font-weight: 500;
-  color: #ffffff;
+  color: var(--rf-accent-text);
   background: var(--rf-accent);
   border-radius: 6px;
-  box-shadow: 0 4px 12px -3px rgb(15 15 15 / 35%);
+  box-shadow: var(--rf-shadow-float);
   white-space: nowrap;
   overflow: hidden;
-  transition: top 130ms var(--rf-ease), left 130ms var(--rf-ease);
+  will-change: translate;
+  transition: translate 130ms var(--rf-ease);
 }
 .picker-label strong { flex: none; font-weight: 600; }
 .picker-label span { min-width: 0; overflow: hidden; text-overflow: ellipsis; opacity: 0.75; }
@@ -69,7 +77,7 @@ export const PICKER_STYLES = `
 .picker-cancel {
   display: inline-flex;
   align-items: center;
-  height: 32px;
+  height: 40px;
   padding: 0 14px;
   border-radius: var(--rf-pill);
   font-size: 12.5px;
@@ -80,7 +88,7 @@ export const PICKER_STYLES = `
 .picker-cancel:hover { background: var(--rf-bg-hover); color: var(--rf-text); }
 .picker-note {
   position: fixed;
-  z-index: 2147483001;
+  z-index: ${REFLET_Z_INDEX.annotatorOverlay};
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -90,6 +98,7 @@ export const PICKER_STYLES = `
   border-radius: 18px;
   animation: rf-in 180ms var(--rf-ease);
 }
+.picker-note:focus-within { outline: 2px solid var(--rf-accent); outline-offset: 2px; }
 .picker-note-target {
   display: flex;
   align-items: center;

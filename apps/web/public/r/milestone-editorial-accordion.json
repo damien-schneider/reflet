@@ -1,5 +1,61 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "cssVars": {
+    "dark": {
+      "tag-blue": "oklch(0.676 0.11 235)",
+      "tag-blue-text": "oklch(0.78 0.11 235)",
+      "tag-brown": "oklch(0.74 0.069 45)",
+      "tag-brown-text": "oklch(0.81 0.069 45)",
+      "tag-green": "oklch(0.724 0.101 180)",
+      "tag-green-text": "oklch(0.802 0.101 180)",
+      "tag-orange": "oklch(0.756 0.115 56)",
+      "tag-orange-text": "oklch(0.818 0.115 56)",
+      "tag-pink": "oklch(0.66 0.143 351)",
+      "tag-pink-text": "oklch(0.774 0.143 351)",
+      "tag-purple": "oklch(0.692 0.159 299)",
+      "tag-purple-text": "oklch(0.786 0.126 299)",
+      "tag-red": "oklch(0.708 0.174 25)",
+      "tag-red-text": "oklch(0.794 0.118 25)",
+      "tag-yellow": "oklch(0.772 0.112 86)",
+      "tag-yellow-text": "oklch(0.826 0.112 86)"
+    },
+    "light": {
+      "tag-blue": "oklch(0.548 0.105 235)",
+      "tag-blue-text": "oklch(0.45 0.095 235)",
+      "tag-brown": "oklch(0.5 0.045 45)",
+      "tag-brown-text": "oklch(0.42 0.045 45)",
+      "tag-green": "oklch(0.564 0.092 180)",
+      "tag-green-text": "oklch(0.46 0.083 180)",
+      "tag-orange": "oklch(0.596 0.145 56)",
+      "tag-orange-text": "oklch(0.48 0.117 56)",
+      "tag-pink": "oklch(0.532 0.193 351)",
+      "tag-pink-text": "oklch(0.44 0.182 351)",
+      "tag-purple": "oklch(0.516 0.157 299)",
+      "tag-purple-text": "oklch(0.43 0.157 299)",
+      "tag-red": "oklch(0.58 0.199 25)",
+      "tag-red-text": "oklch(0.47 0.19 25)",
+      "tag-yellow": "oklch(0.612 0.125 86)",
+      "tag-yellow-text": "oklch(0.49 0.1 86)"
+    },
+    "theme": {
+      "color-tag-blue": "var(--tag-blue)",
+      "color-tag-blue-text": "var(--tag-blue-text)",
+      "color-tag-brown": "var(--tag-brown)",
+      "color-tag-brown-text": "var(--tag-brown-text)",
+      "color-tag-green": "var(--tag-green)",
+      "color-tag-green-text": "var(--tag-green-text)",
+      "color-tag-orange": "var(--tag-orange)",
+      "color-tag-orange-text": "var(--tag-orange-text)",
+      "color-tag-pink": "var(--tag-pink)",
+      "color-tag-pink-text": "var(--tag-pink-text)",
+      "color-tag-purple": "var(--tag-purple)",
+      "color-tag-purple-text": "var(--tag-purple-text)",
+      "color-tag-red": "var(--tag-red)",
+      "color-tag-red-text": "var(--tag-red-text)",
+      "color-tag-yellow": "var(--tag-yellow)",
+      "color-tag-yellow-text": "var(--tag-yellow-text)"
+    }
+  },
   "dependencies": [
     "motion",
     "clsx",
@@ -8,7 +64,7 @@
   "description": "Serif typography with percentage column and color-wash accordion.",
   "files": [
     {
-      "content": "\"use client\";\n\nimport { AnimatePresence, motion } from \"motion/react\";\nimport { useState } from \"react\";\n\nimport { cn } from \"@/lib/utils\";\n\nexport interface Milestone {\n  colorHex: string;\n  emoji: string;\n  horizonLabel: string;\n  horizonShort: string;\n  id: string;\n  name: string;\n  progress: {\n    total: number;\n    completed: number;\n    inProgress: number;\n    percentage: number;\n  };\n  targetDate: string | null;\n}\n\nexport interface MilestoneEditorialAccordionProps {\n  className?: string;\n  milestones: Milestone[];\n}\n\nfunction ProgressBar({\n  percentage,\n  color,\n}: {\n  percentage: number;\n  color: string;\n}) {\n  return (\n    <div className=\"h-[3px] w-24 overflow-hidden rounded-full bg-muted/40\">\n      <motion.div\n        animate={{ width: `${percentage}%` }}\n        className=\"h-full rounded-full\"\n        initial={{ width: 0 }}\n        style={{ backgroundColor: color }}\n        transition={{ damping: 30, stiffness: 200, type: \"spring\" }}\n      />\n    </div>\n  );\n}\n\nfunction ProgressRing({\n  percentage,\n  size = 36,\n  strokeWidth = 3,\n  color,\n}: {\n  percentage: number;\n  size?: number;\n  strokeWidth?: number;\n  color: string;\n}) {\n  const radius = (size - strokeWidth) / 2;\n  const circumference = 2 * Math.PI * radius;\n  const offset = circumference - (percentage / 100) * circumference;\n  const center = size / 2;\n\n  return (\n    <div\n      className=\"relative inline-flex items-center justify-center\"\n      style={{ height: size, width: size }}\n    >\n      <svg\n        aria-hidden=\"true\"\n        height={size}\n        viewBox={`0 0 ${size} ${size}`}\n        width={size}\n      >\n        <circle\n          className=\"stroke-muted/30\"\n          cx={center}\n          cy={center}\n          fill=\"none\"\n          r={radius}\n          strokeWidth={strokeWidth}\n        />\n        <motion.circle\n          animate={{ strokeDashoffset: offset }}\n          cx={center}\n          cy={center}\n          fill=\"none\"\n          initial={{ strokeDashoffset: circumference }}\n          r={radius}\n          stroke={color}\n          strokeDasharray={circumference}\n          strokeLinecap=\"round\"\n          strokeWidth={strokeWidth}\n          style={{ rotate: \"-90deg\", transformOrigin: \"center\" }}\n          transition={{ damping: 20, stiffness: 120, type: \"spring\" }}\n        />\n      </svg>\n      <span className=\"pointer-events-none absolute inset-0 flex items-center justify-center font-semibold text-[10px] tabular-nums\">\n        {percentage}%\n      </span>\n    </div>\n  );\n}\n\nexport function MilestoneEditorialAccordion({\n  milestones,\n  className,\n}: MilestoneEditorialAccordionProps) {\n  const [openId, setOpenId] = useState<string | null>(null);\n\n  return (\n    <div\n      className={cn(\"w-full space-y-0 divide-y divide-border/40\", className)}\n    >\n      {milestones.map((m) => {\n        const isOpen = openId === m.id;\n        return (\n          <motion.div\n            animate={{\n              backgroundColor: isOpen ? `${m.colorHex}06` : \"transparent\",\n            }}\n            className=\"transition-colors\"\n            key={m.id}\n          >\n            <button\n              className=\"flex w-full items-center gap-4 px-4 py-3 text-left\"\n              onClick={() => setOpenId(isOpen ? null : m.id)}\n              type=\"button\"\n            >\n              <div className=\"w-12 shrink-0 text-right\">\n                <span\n                  className=\"font-mono text-base tabular-nums\"\n                  style={{ color: m.colorHex }}\n                >\n                  {m.progress.percentage}%\n                </span>\n              </div>\n              <div className=\"h-6 w-px bg-border\" />\n              <div className=\"min-w-0 flex-1\">\n                <h4 className=\"font-serif text-sm\">\n                  {m.emoji} {m.name}\n                </h4>\n                <p className=\"font-serif text-[10px] text-muted-foreground italic\">\n                  {m.horizonLabel}\n                  {m.targetDate ? ` \\u00B7 Due ${m.targetDate}` : \"\"}\n                </p>\n              </div>\n              <ProgressBar\n                color={m.colorHex}\n                percentage={m.progress.percentage}\n              />\n            </button>\n            <AnimatePresence>\n              {isOpen && (\n                <motion.div\n                  animate={{ height: \"auto\", opacity: 1 }}\n                  className=\"overflow-hidden\"\n                  exit={{ height: 0, opacity: 0 }}\n                  initial={{ height: 0, opacity: 0 }}\n                  transition={{ damping: 25, stiffness: 300, type: \"spring\" }}\n                >\n                  <div className=\"flex gap-4 px-4 pb-3 pl-20\">\n                    <ProgressRing\n                      color={m.colorHex}\n                      percentage={m.progress.percentage}\n                      size={40}\n                    />\n                    <div className=\"flex-1 text-muted-foreground text-xs\">\n                      <p className=\"font-serif italic\">\n                        {m.progress.completed} of {m.progress.total} complete,{\" \"}\n                        {m.progress.inProgress} underway\n                      </p>\n                    </div>\n                  </div>\n                </motion.div>\n              )}\n            </AnimatePresence>\n          </motion.div>\n        );\n      })}\n    </div>\n  );\n}\n",
+      "content": "\"use client\";\n\nimport { AnimatePresence, MotionConfig, motion } from \"motion/react\";\nimport { useState } from \"react\";\n\nimport { cn } from \"@/lib/utils\";\n\nexport interface Milestone {\n  colorHex: string;\n  emoji: string;\n  horizonLabel: string;\n  horizonShort: string;\n  id: string;\n  name: string;\n  progress: {\n    total: number;\n    completed: number;\n    inProgress: number;\n    percentage: number;\n  };\n  targetDate: string | null;\n}\n\nexport interface MilestoneEditorialAccordionProps {\n  className?: string;\n  milestones: Milestone[];\n}\n\nfunction ProgressBar({\n  percentage,\n  color,\n}: {\n  percentage: number;\n  color: string;\n}) {\n  return (\n    <div className=\"h-[3px] w-24 overflow-hidden rounded-full bg-muted/40\">\n      <motion.div\n        animate={{ width: `${percentage}%` }}\n        className=\"h-full rounded-full\"\n        initial={{ width: 0 }}\n        style={{ backgroundColor: color }}\n        transition={{ damping: 30, stiffness: 200, type: \"spring\" }}\n      />\n    </div>\n  );\n}\n\nfunction ProgressRing({\n  percentage,\n  size = 36,\n  strokeWidth = 3,\n  color,\n}: {\n  percentage: number;\n  size?: number;\n  strokeWidth?: number;\n  color: string;\n}) {\n  const radius = (size - strokeWidth) / 2;\n  const circumference = 2 * Math.PI * radius;\n  const offset = circumference - (percentage / 100) * circumference;\n  const center = size / 2;\n\n  return (\n    <div\n      className=\"relative inline-flex items-center justify-center\"\n      style={{ height: size, width: size }}\n    >\n      <svg\n        aria-hidden=\"true\"\n        height={size}\n        viewBox={`0 0 ${size} ${size}`}\n        width={size}\n      >\n        <circle\n          className=\"stroke-muted/30\"\n          cx={center}\n          cy={center}\n          fill=\"none\"\n          r={radius}\n          strokeWidth={strokeWidth}\n        />\n        <motion.circle\n          animate={{ strokeDashoffset: offset }}\n          cx={center}\n          cy={center}\n          fill=\"none\"\n          initial={{ strokeDashoffset: circumference }}\n          r={radius}\n          stroke={color}\n          strokeDasharray={circumference}\n          strokeLinecap=\"round\"\n          strokeWidth={strokeWidth}\n          style={{ rotate: \"-90deg\", transformOrigin: \"center\" }}\n          transition={{ damping: 20, stiffness: 120, type: \"spring\" }}\n        />\n      </svg>\n      <span className=\"pointer-events-none absolute inset-0 flex items-center justify-center font-semibold text-[10px] tabular-nums\">\n        {percentage}%\n      </span>\n    </div>\n  );\n}\n\nexport function MilestoneEditorialAccordion({\n  milestones,\n  className,\n}: MilestoneEditorialAccordionProps) {\n  const [openId, setOpenId] = useState<string | null>(null);\n\n  return (\n    <MotionConfig reducedMotion=\"user\">\n      <div\n        className={cn(\"w-full space-y-0 divide-y divide-border/40\", className)}\n      >\n        {milestones.map((m) => {\n          const isOpen = openId === m.id;\n          return (\n            <motion.div\n              animate={{\n                backgroundColor: isOpen ? `${m.colorHex}06` : `${m.colorHex}00`,\n              }}\n              key={m.id}\n            >\n              <button\n                className=\"flex w-full items-center gap-4 px-4 py-3 text-left\"\n                onClick={() => setOpenId(isOpen ? null : m.id)}\n                type=\"button\"\n              >\n                <div className=\"w-12 shrink-0 text-right\">\n                  <span\n                    className=\"font-mono text-base tabular-nums\"\n                    style={{ color: m.colorHex }}\n                  >\n                    {m.progress.percentage}%\n                  </span>\n                </div>\n                <div className=\"h-6 w-px bg-border\" />\n                <div className=\"min-w-0 flex-1\">\n                  <h4 className=\"font-serif text-sm\">\n                    {m.emoji} {m.name}\n                  </h4>\n                  <p className=\"font-serif text-[10px] text-muted-foreground italic\">\n                    {m.horizonLabel}\n                    {m.targetDate ? ` \\u00B7 Due ${m.targetDate}` : \"\"}\n                  </p>\n                </div>\n                <ProgressBar\n                  color={m.colorHex}\n                  percentage={m.progress.percentage}\n                />\n              </button>\n              <AnimatePresence>\n                {isOpen && (\n                  <motion.div\n                    animate={{ height: \"auto\", opacity: 1 }}\n                    className=\"overflow-hidden\"\n                    exit={{ height: 0, opacity: 0 }}\n                    initial={{ height: 0, opacity: 0 }}\n                    transition={{ damping: 25, stiffness: 300, type: \"spring\" }}\n                  >\n                    <div className=\"flex gap-4 px-4 pb-3 pl-20\">\n                      <ProgressRing\n                        color={m.colorHex}\n                        percentage={m.progress.percentage}\n                        size={40}\n                      />\n                      <div className=\"flex-1 text-muted-foreground text-xs\">\n                        <p className=\"font-serif italic\">\n                          {m.progress.completed} of {m.progress.total} complete,{\" \"}\n                          {m.progress.inProgress} underway\n                        </p>\n                      </div>\n                    </div>\n                  </motion.div>\n                )}\n              </AnimatePresence>\n            </motion.div>\n          );\n        })}\n      </div>\n    </MotionConfig>\n  );\n}\n",
       "path": "ui/milestone-editorial-accordion.tsx",
       "target": "components/ui/milestone-editorial-accordion.tsx",
       "type": "registry:ui"

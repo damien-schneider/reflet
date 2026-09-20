@@ -145,11 +145,8 @@ export function SetupPage({ organizationId, orgSlug, userId }: SetupPageProps) {
       <div className="flex min-h-[calc(100svh-3.5rem)] items-center justify-center p-6">
         <div className="w-full max-w-lg text-center">
           <div className="mb-6 flex justify-center">
-            <div className="flex size-14 items-center justify-center rounded-2xl bg-emerald-100 dark:bg-emerald-800/30">
-              <Check
-                className="size-7 text-emerald-600 dark:text-emerald-400"
-                weight="bold"
-              />
+            <div className="flex size-14 items-center justify-center rounded-2xl bg-success-subtle">
+              <Check className="size-7 text-success-text" weight="bold" />
             </div>
           </div>
           <H1 className="mb-2">GitHub connected</H1>
@@ -201,7 +198,7 @@ export function SetupPage({ organizationId, orgSlug, userId }: SetupPageProps) {
                   key={benefit}
                 >
                   <Check
-                    className="mt-0.5 size-4 shrink-0 text-emerald-500"
+                    className="mt-0.5 size-4 shrink-0 text-success"
                     weight="bold"
                   />
                   {benefit}

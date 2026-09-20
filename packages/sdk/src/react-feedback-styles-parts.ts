@@ -1,6 +1,5 @@
 export function getFeedbackChromeCSS(): string {
   return `
-/* ===== Footer ===== */
 .reflet-footer {
   display: flex;
   justify-content: flex-end;
@@ -9,6 +8,7 @@ export function getFeedbackChromeCSS(): string {
 }
 
 .reflet-btn {
+  min-height: 40px;
   padding: 10px 20px;
   border: none;
   border-radius: var(--reflet-radius-sm);
@@ -16,7 +16,7 @@ export function getFeedbackChromeCSS(): string {
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 150ms;
+  transition: background 150ms, color 150ms, opacity 150ms, transform 150ms var(--reflet-ease);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -26,7 +26,7 @@ export function getFeedbackChromeCSS(): string {
 
 .reflet-btn-primary {
   background: var(--reflet-primary);
-  color: #ffffff;
+  color: var(--reflet-on-primary);
 }
 
 .reflet-btn-primary:hover:not(:disabled) {
@@ -48,17 +48,15 @@ export function getFeedbackChromeCSS(): string {
   color: var(--reflet-text);
 }
 
-/* ===== Spinner ===== */
 .reflet-spinner {
   width: 16px;
   height: 16px;
-  border: 2px solid rgba(255,255,255,0.3);
-  border-top-color: #ffffff;
+  border: 2px solid var(--reflet-on-primary-soft);
+  border-top-color: var(--reflet-on-primary);
   border-radius: 50%;
   animation: reflet-spin 600ms linear infinite;
 }
 
-/* ===== Success State ===== */
 .reflet-success {
   display: flex;
   flex-direction: column;
@@ -104,28 +102,27 @@ export function getFeedbackChromeCSS(): string {
   margin: 0;
 }
 
-/* ===== Error State ===== */
 .reflet-error-msg {
   font-size: 13px;
   color: var(--reflet-error);
   margin: 0;
 }
 
-/* ===== Trigger Button ===== */
 .reflet-trigger {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  min-height: 40px;
   padding: 10px 18px;
   background: var(--reflet-primary);
-  color: #ffffff;
+  color: var(--reflet-on-primary);
   border: none;
   border-radius: var(--reflet-radius-sm);
   font-family: var(--reflet-font);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: background 150ms;
+  transition: background 150ms, transform 150ms var(--reflet-ease);
   line-height: 1;
 }
 
@@ -138,7 +135,6 @@ export function getFeedbackChromeCSS(): string {
   height: 16px;
 }
 
-/* ===== Honeypot ===== */
 .reflet-hp {
   position: absolute;
   top: -9999px;
@@ -149,7 +145,6 @@ export function getFeedbackChromeCSS(): string {
   z-index: -1;
 }
 
-/* ===== Powered by ===== */
 .reflet-powered {
   text-align: center;
   padding: 0 24px 16px;
@@ -167,7 +162,6 @@ export function getFeedbackChromeCSS(): string {
   color: var(--reflet-primary);
 }
 
-/* ===== Mobile handle ===== */
 @media (max-width: 640px) {
   .reflet-header::before {
     content: '';
@@ -184,6 +178,14 @@ export function getFeedbackChromeCSS(): string {
   .reflet-header {
     position: relative;
     padding-top: 24px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reflet-success-icon svg path {
+    stroke-dasharray: none;
+    stroke-dashoffset: 0;
+    animation: none;
   }
 }
 `;

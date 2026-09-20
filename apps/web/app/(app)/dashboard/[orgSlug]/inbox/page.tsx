@@ -168,7 +168,7 @@ export default function InboxPage({
         </Alert>
       )}
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex min-h-0 flex-1">
         <div
           className={cn(
             "w-full shrink-0 border-r md:block",

@@ -60,23 +60,23 @@ export const LANE_CONFIG: Record<
   { label: string; color: string; bgColor: string }
 > = {
   backlog: {
-    bgColor: "bg-amber-50 dark:bg-amber-950",
-    color: "#f59e0b",
+    bgColor: "bg-chart-3/10",
+    color: "var(--chart-3)",
     label: "Backlog",
   },
   later: {
-    bgColor: "bg-gray-50 dark:bg-gray-900",
-    color: "#6b7280",
+    bgColor: "bg-muted/50",
+    color: "var(--muted-foreground)",
     label: "Later",
   },
   next: {
-    bgColor: "bg-purple-50 dark:bg-purple-950",
-    color: "#8b5cf6",
+    bgColor: "bg-chart-4/10",
+    color: "var(--chart-4)",
     label: "Next",
   },
   now: {
-    bgColor: "bg-blue-50 dark:bg-blue-950",
-    color: "#3b82f6",
+    bgColor: "bg-chart-2/10",
+    color: "var(--chart-2)",
     label: "Now",
   },
 };

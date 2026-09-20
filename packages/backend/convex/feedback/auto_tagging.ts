@@ -22,7 +22,6 @@ export const getUntaggedFeedbackCount = query({
         continue;
       }
 
-      // Skip items that have already been AI-analyzed
       if (feedback.aiPriorityGeneratedAt) {
         continue;
       }
@@ -186,7 +185,6 @@ export const getUntaggedFeedbackIds = internalQuery({
         continue;
       }
 
-      // Skip items that have already been AI-analyzed
       if (feedback.aiPriorityGeneratedAt) {
         continue;
       }

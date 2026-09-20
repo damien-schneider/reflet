@@ -1,4 +1,4 @@
-import { act, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 // Mock convex/react
@@ -143,7 +143,7 @@ const defaultProps = {
 
 const ZONE_LABEL_PATTERN =
   /^(Now|Next Month|Next Quarter|6 Months|Next Year|Future)$/;
-const MIN_WIDTH_PATTERN = /min-width:\s*(\d+)/;
+const MIN_WIDTH_PATTERN = /--zone-min:\s*(\d+)/;
 
 function getZoneMinWidths(): number[] {
   const labels = screen.getAllByText(ZONE_LABEL_PATTERN);
@@ -232,5 +232,23 @@ describe("MilestonesView - Trackpad Zoom", () => {
 
     const widths = getZoneMinWidths();
     expect(widths.every((w) => w <= 500)).toBe(true);
+  });
+
+  it("zooms in from an explicit control without a trackpad gesture", () => {
+    render(<MilestonesView {...defaultProps} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Zoom in track" }));
+
+    expect(getZoneMinWidths().some((w) => w > 160)).toBe(true);
+  });
+
+  it("restores the default zoom from the reset control", () => {
+    render(<MilestonesView {...defaultProps} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Zoom out track" }));
+    expect(getZoneMinWidths().every((w) => w < 160)).toBe(true);
+
+    fireEvent.click(screen.getByRole("button", { name: "Reset track zoom" }));
+    expect(getZoneMinWidths().every((w) => w === 160)).toBe(true);
   });
 });

@@ -25,7 +25,7 @@ export function AuthForgotPasswordLink({ mode }: AuthForgotPasswordLinkProps) {
           variants={animationVariants}
         >
           <a
-            className="font-medium text-olive-600 text-sm hover:underline"
+            className="font-medium text-brand-text text-sm hover:underline"
             href="/auth/forgot-password"
           >
             Forgot password?

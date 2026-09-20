@@ -103,7 +103,7 @@ export function QuestionCard({
   return (
     <div
       className={cn(
-        "group rounded-lg border bg-card transition-all",
+        "group rounded-lg border bg-card transition-[border-color,box-shadow]",
         isActive
           ? "ring-2 ring-primary ring-offset-2"
           : "hover:border-foreground/20"

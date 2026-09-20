@@ -77,7 +77,7 @@ import {
 export default function ComponentsOverviewPage() {
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="mb-2 font-display text-3xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+      <h1 className="mb-2 font-display text-3xl text-foreground leading-snug tracking-tight">
         Component Library
       </h1>
       <p className="mb-8 text-base text-muted-foreground sm:text-xl">
@@ -96,7 +96,7 @@ export default function ComponentsOverviewPage() {
       </div>
 
       <section className="mb-10">
-        <h2 className="mb-4 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+        <h2 className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight">
           Feedback Cards
         </h2>
         <p className="mb-6 text-muted-foreground text-sm">
@@ -112,7 +112,7 @@ export default function ComponentsOverviewPage() {
       <div className="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {CARDS.map((card) => (
           <Link
-            className="group rounded-xl border border-border bg-card p-5 transition-all hover:border-foreground/20 hover:shadow-sm"
+            className="group rounded-xl border border-border bg-card p-5 transition-[border-color,box-shadow] hover:border-foreground/20 hover:shadow-sm"
             href={card.href}
             key={card.href}
           >
@@ -127,7 +127,7 @@ export default function ComponentsOverviewPage() {
       </div>
 
       <section className="mb-10">
-        <h2 className="mb-4 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+        <h2 className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight">
           Composable API
         </h2>
         <p className="mb-4 text-muted-foreground text-sm">
@@ -139,7 +139,7 @@ export default function ComponentsOverviewPage() {
       </section>
 
       <div className="space-y-4">
-        <h2 className="font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+        <h2 className="font-display text-2xl text-foreground leading-snug tracking-tight">
           Getting Started
         </h2>
         <div className="space-y-2 text-muted-foreground text-sm">

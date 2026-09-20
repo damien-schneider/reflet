@@ -143,7 +143,7 @@ export function NotificationSettings() {
 
         <div className="space-y-4">
           {!isSupported && (
-            <div className="flex items-center gap-3 rounded-lg bg-amber-50 p-3 text-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
+            <div className="flex items-center gap-3 rounded-lg bg-warning-subtle p-3 text-warning-text">
               <Warning className="size-5 shrink-0" />
               <Text variant="bodySmall">
                 Push notifications are not supported in this browser. Try
@@ -153,7 +153,7 @@ export function NotificationSettings() {
           )}
 
           {isPushDenied && (
-            <div className="flex items-center gap-3 rounded-lg bg-red-50 p-3 text-red-800 dark:bg-red-900/20 dark:text-red-200">
+            <div className="flex items-center gap-3 rounded-lg bg-destructive-subtle p-3 text-destructive-text">
               <BellSlash className="size-5 shrink-0" />
               <Text variant="bodySmall">
                 Notifications are blocked by your browser. To enable them, open
@@ -164,9 +164,9 @@ export function NotificationSettings() {
 
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-start gap-3">
-              <div className="mt-0.5 flex size-10 items-center justify-center rounded-lg bg-olive-100 dark:bg-olive-800/30">
+              <div className="mt-0.5 flex size-10 items-center justify-center rounded-lg bg-secondary">
                 {pushEnabled ? (
-                  <BellRinging className="size-5 text-olive-600 dark:text-olive-400" />
+                  <BellRinging className="size-5 text-brand-text" />
                 ) : (
                   <Bell className="size-5 text-muted-foreground" />
                 )}
@@ -205,7 +205,7 @@ export function NotificationSettings() {
             checked={preferences?.notifyOnStatusChange ?? true}
             description="When the status of your feedback changes"
             disabled={!pushEnabled || isPrefsLoading}
-            icon={<TrendUp className="size-4 text-olive-500" />}
+            icon={<TrendUp className="size-4 text-muted-foreground" />}
             label="Status changes"
             onToggle={(v) => handleTypeToggle("notifyOnStatusChange", v)}
           />
@@ -213,7 +213,7 @@ export function NotificationSettings() {
             checked={preferences?.notifyOnNewComment ?? true}
             description="When someone comments on your feedback"
             disabled={!pushEnabled || isPrefsLoading}
-            icon={<ChatCircle className="size-4 text-emerald-500" />}
+            icon={<ChatCircle className="size-4 text-success-text" />}
             label="New comments"
             onToggle={(v) => handleTypeToggle("notifyOnNewComment", v)}
           />
@@ -221,7 +221,7 @@ export function NotificationSettings() {
             checked={preferences?.notifyOnVoteMilestone ?? true}
             description="When your feedback reaches a vote milestone"
             disabled={!pushEnabled || isPrefsLoading}
-            icon={<TrendUp className="size-4 text-amber-500" />}
+            icon={<TrendUp className="size-4 text-warning-text" />}
             label="Vote milestones"
             onToggle={(v) => handleTypeToggle("notifyOnVoteMilestone", v)}
           />
@@ -229,7 +229,7 @@ export function NotificationSettings() {
             checked={preferences?.notifyOnNewSupportMessage ?? true}
             description="When you receive a reply from support"
             disabled={!pushEnabled || isPrefsLoading}
-            icon={<Envelope className="size-4 text-purple-500" />}
+            icon={<Envelope className="size-4 text-chart-4-text" />}
             label="Support messages"
             onToggle={(v) => handleTypeToggle("notifyOnNewSupportMessage", v)}
           />
@@ -237,7 +237,7 @@ export function NotificationSettings() {
             checked={preferences?.notifyOnInvitation ?? true}
             description="When you're invited to join an organization"
             disabled={!pushEnabled || isPrefsLoading}
-            icon={<Bell className="size-4 text-olive-500" />}
+            icon={<Bell className="size-4 text-muted-foreground" />}
             label="Invitations"
             onToggle={(v) => handleTypeToggle("notifyOnInvitation", v)}
           />

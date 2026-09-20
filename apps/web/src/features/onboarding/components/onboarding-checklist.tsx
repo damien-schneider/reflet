@@ -172,7 +172,7 @@ export function OnboardingChecklist({
             </span>
             <div className="h-1.5 w-12 overflow-hidden rounded-full bg-muted">
               <div
-                className="h-full rounded-full bg-primary transition-all"
+                className="h-full rounded-full bg-primary transition-[width]"
                 style={{ width: `${percentage}%` }}
               />
             </div>

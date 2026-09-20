@@ -6,7 +6,7 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useMemo, useState } from "react";
-
+import { withAlpha } from "@/lib/color";
 import { isTimeHorizon, TIME_HORIZON_CONFIG } from "@/lib/milestone-constants";
 import { getTagColorValues } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
@@ -57,7 +57,7 @@ function OverallProgressRing({ percentage }: { percentage: number }) {
           transition={{ damping: 20, stiffness: 120, type: "spring" }}
         />
       </svg>
-      <span className="pointer-events-none absolute inset-0 flex items-center justify-center font-semibold text-[10px] tabular-nums">
+      <span className="pointer-events-none absolute inset-0 flex items-center justify-center font-semibold text-micro tabular-nums">
         {percentage}%
       </span>
     </div>
@@ -80,7 +80,7 @@ function MultiSegmentBar({
     <div className="flex h-[3px] w-20 overflow-hidden rounded-full bg-muted/30">
       <motion.div
         animate={{ width: `${completedPct}%` }}
-        className="h-full bg-emerald-500"
+        className="h-full bg-success"
         initial={{ width: 0 }}
         transition={{ damping: 30, stiffness: 200, type: "spring" }}
       />
@@ -173,7 +173,7 @@ export function DashboardTimelineView({
           </span>
           <div className="flex items-center gap-1">
             <span
-              className="inline-block h-2 w-2 rounded-full bg-emerald-500"
+              className="inline-block h-2 w-2 rounded-full bg-success"
               title={`${totals.completed} done`}
             />
             <span className="text-muted-foreground text-xs">
@@ -254,9 +254,9 @@ export function DashboardTimelineView({
                   </span>
 
                   <span
-                    className="shrink-0 rounded-full px-1.5 py-0.5 font-medium text-[10px]"
+                    className="shrink-0 rounded-full px-1.5 py-0.5 font-medium text-caption"
                     style={{
-                      backgroundColor: `${colorHex}18`,
+                      backgroundColor: withAlpha(colorHex, 9),
                       color: colorHex,
                     }}
                   >

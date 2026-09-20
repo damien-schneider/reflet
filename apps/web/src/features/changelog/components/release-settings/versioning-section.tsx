@@ -54,11 +54,14 @@ export const VersioningSection = ({
 
       <div className="flex items-center gap-4">
         <div className="flex-1">
-          <Label className="text-xs">Version prefix</Label>
+          <Label className="text-xs" htmlFor="version-prefix">
+            Version prefix
+          </Label>
           <Input
             className="mt-1 h-8"
             defaultValue={versionPrefix ?? "v"}
             disabled={!isAdmin || isSaving}
+            id="version-prefix"
             onBlur={(e) => onUpdate({ versionPrefix: e.target.value })}
             placeholder="v"
           />
@@ -75,7 +78,7 @@ export const VersioningSection = ({
               }
             }}
           >
-            <SelectTrigger className="mt-1 h-8">
+            <SelectTrigger aria-label="Default increment" className="mt-1 h-8">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

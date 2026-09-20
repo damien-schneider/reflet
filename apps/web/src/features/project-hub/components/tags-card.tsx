@@ -41,7 +41,7 @@ export function TagsCard({ basePath, tags }: TagsCardProps) {
                 <div className="mt-1.5 flex flex-wrap gap-1">
                   {tags.slice(0, 4).map((tag) => (
                     <span
-                      className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px]"
+                      className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-caption"
                       key={tag._id}
                     >
                       <span
@@ -52,7 +52,7 @@ export function TagsCard({ basePath, tags }: TagsCardProps) {
                     </span>
                   ))}
                   {tags.length > 4 && (
-                    <Badge className="text-[10px]" variant="outline">
+                    <Badge className="text-caption" variant="outline">
                       +{tags.length - 4}
                     </Badge>
                   )}

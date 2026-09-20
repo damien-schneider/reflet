@@ -4,6 +4,7 @@ import { Button } from "@ctrl-ui/react/ui/button";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 
 const CONSENT_KEY = "cookie-consent";
 
@@ -51,9 +52,10 @@ export function CookieConsentBanner() {
 
   return (
     <div
-      className={`fixed inset-x-3 z-50 ${
+      className={cn(
+        "fixed inset-x-3 z-50",
         pathname.startsWith("/dashboard") ? "bottom-28 sm:bottom-3" : "bottom-3"
-      }`}
+      )}
     >
       <div className="mx-auto flex max-w-xl flex-wrap items-center gap-2 rounded-lg border border-border bg-background p-2.5 shadow-sm">
         <p className="min-w-48 flex-1 text-muted-foreground text-sm">

@@ -19,7 +19,13 @@ interface FeedbackContentProps {
 
 function AttachmentThumbnail({ src, alt }: { src: string; alt: string }) {
   return (
-    <Image alt={alt} className="object-cover" fill sizes="80px" src={src} />
+    <Image
+      alt={alt}
+      className="object-cover outline outline-1 outline-black/10 -outline-offset-1 dark:outline-white/10"
+      fill
+      sizes="80px"
+      src={src}
+    />
   );
 }
 

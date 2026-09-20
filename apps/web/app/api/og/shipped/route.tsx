@@ -1,14 +1,17 @@
 import { ImageResponse } from "next/og";
 import type { NextRequest } from "next/server";
+import {
+  BG_CREAM,
+  BRAND,
+  BRAND_SUBTLE,
+  BRAND_TEXT,
+  INK_SOFT,
+  RULE,
+  TEXT_DARK,
+  TEXT_MUTED,
+} from "../og-theme";
 
 export const runtime = "edge";
-
-const BG_CREAM = "#f5f2ed";
-const TEXT_DARK = "#1a1810";
-const TEXT_MUTED = "#7a7868";
-const OLIVE_600 = "#5b5b4b";
-const OLIVE_300 = "#d8d8d0";
-const GREEN = "#22c55e";
 
 const instrumentSerifRegular = fetch(
   new URL("../InstrumentSerif-Regular.ttf", import.meta.url)
@@ -55,7 +58,7 @@ export async function GET(request: NextRequest) {
     >
       <div
         style={{
-          background: `linear-gradient(90deg, ${GREEN} 0%, ${OLIVE_300} 50%, transparent 100%)`,
+          background: `linear-gradient(90deg, ${BRAND} 0%, ${RULE} 50%, transparent 100%)`,
           bottom: "0",
           height: "4px",
           left: "0",
@@ -76,7 +79,7 @@ export async function GET(request: NextRequest) {
         <div
           style={{
             alignItems: "center",
-            background: "#dcfce7",
+            background: BRAND_SUBTLE,
             borderRadius: "100px",
             display: "flex",
             gap: "12px",
@@ -85,7 +88,7 @@ export async function GET(request: NextRequest) {
         >
           <div
             style={{
-              background: GREEN,
+              background: BRAND,
               borderRadius: "50%",
               height: "10px",
               width: "10px",
@@ -93,7 +96,7 @@ export async function GET(request: NextRequest) {
           />
           <span
             style={{
-              color: "#166534",
+              color: BRAND_TEXT,
               fontFamily: "Inter SemiBold",
               fontSize: "20px",
             }}
@@ -139,7 +142,7 @@ export async function GET(request: NextRequest) {
       >
         <div
           style={{
-            background: OLIVE_600,
+            background: INK_SOFT,
             borderRadius: "50%",
             height: "6px",
             width: "6px",
@@ -154,8 +157,8 @@ export async function GET(request: NextRequest) {
         >
           {orgName || "reflet.app"}
         </span>
-        <span style={{ color: OLIVE_300, fontSize: "18px" }}>·</span>
-        <span style={{ color: OLIVE_600, fontSize: "18px" }}>
+        <span style={{ color: RULE, fontSize: "18px" }}>·</span>
+        <span style={{ color: INK_SOFT, fontSize: "18px" }}>
           You asked, we shipped
         </span>
       </div>

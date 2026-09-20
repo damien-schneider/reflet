@@ -1,6 +1,11 @@
 "use client";
 
 import { Button } from "@ctrl-ui/react/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@ctrl-ui/react/ui/tooltip";
 import { Clock, X } from "@phosphor-icons/react";
 import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
 import { GenerateFromCommits } from "./generate-from-commits";
@@ -72,26 +77,36 @@ export function ReleaseEditorToolbar({
         version={version}
       />
       {isPublished && (
-        <span className="rounded-full bg-green-100 px-2 py-0.5 text-green-700 text-xs dark:bg-green-900/30 dark:text-green-400">
+        <span className="rounded-full bg-success-subtle px-2 py-0.5 text-success-text text-xs">
           Published
         </span>
       )}
       {isScheduled && !isPublished && release?.scheduledPublishAt && (
         <div className="flex items-center gap-2">
-          <span className="flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-amber-700 text-xs dark:bg-amber-900/30 dark:text-amber-400">
+          <span className="flex items-center gap-1 rounded-full bg-warning-subtle px-2 py-0.5 text-warning-text text-xs">
             <Clock className="h-3 w-3" />
             Scheduled
           </span>
           <ScheduleCountdown scheduledAt={release.scheduledPublishAt} />
-          <Button
-            disabled={isSubmitting}
-            iconOnly
-            onClick={handleCancelSchedule}
-            title="Cancel schedule"
-            variant="ghost"
-          >
-            <X className="h-3.5 w-3.5" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  aria-label="Cancel schedule"
+                  className="size-7"
+                  disabled={isSubmitting}
+                  iconOnly
+                  onClick={handleCancelSchedule}
+                  size="xs"
+                  type="button"
+                  variant="ghost"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              }
+            />
+            <TooltipContent>Cancel schedule</TooltipContent>
+          </Tooltip>
         </div>
       )}
       <div className="ml-auto">

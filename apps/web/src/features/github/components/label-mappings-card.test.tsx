@@ -180,9 +180,10 @@ const defaultProps = {
 describe("LabelMappingsSection", () => {
   it("shows empty state when no mappings", () => {
     render(<LabelMappingsSection {...defaultProps} />);
+    expect(screen.getByText("No label mappings yet")).toBeInTheDocument();
     expect(
       screen.getByText(
-        "No label mappings yet. Add one to sync issues by label."
+        "Map a GitHub label to a Reflet tag to sync issues by label."
       )
     ).toBeInTheDocument();
   });

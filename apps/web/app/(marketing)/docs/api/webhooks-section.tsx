@@ -1,3 +1,4 @@
+import { Table, TableBody, TableCell, TableRow } from "@ctrl-ui/react/ui/table";
 import { codeBlockClass } from "./code-block-class";
 
 const EVENTS = [
@@ -43,7 +44,7 @@ export function WebhooksSection() {
   return (
     <section className="mb-12">
       <h2
-        className="mb-4 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100"
+        className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight"
         id="webhooks"
       >
         Webhooks
@@ -58,21 +59,21 @@ export function WebhooksSection() {
       </p>
 
       <h3 className="mb-2 font-semibold text-sm">Events</h3>
-      <div className="mb-6 overflow-x-auto rounded-lg border border-border">
-        <table className="w-full text-sm">
-          <tbody>
+      <div className="mb-6 overflow-hidden rounded-lg border border-border">
+        <Table className="text-sm">
+          <TableBody>
             {EVENTS.map(([event, description]) => (
-              <tr className="border-b last:border-b-0" key={event}>
-                <td className="px-4 py-2">
+              <TableRow key={event}>
+                <TableCell>
                   <code className="text-foreground text-xs">{event}</code>
-                </td>
-                <td className="px-4 py-2 text-muted-foreground">
+                </TableCell>
+                <TableCell className="whitespace-normal text-muted-foreground">
                   {description}
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
 
       <h3 className="mb-2 font-semibold text-sm">Request</h3>

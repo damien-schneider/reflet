@@ -9,6 +9,11 @@ import {
   PopoverTitle,
   PopoverTrigger,
 } from "@ctrl-ui/react/ui/popover";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@ctrl-ui/react/ui/tooltip";
 import { Check, PaintBrush, Spinner } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
@@ -95,20 +100,25 @@ export function BoardCustomizePopover({ orgSlug }: BoardCustomizePopoverProps) {
 
   return (
     <Popover>
-      <PopoverTrigger
-        render={(props: React.ComponentProps<"button">) => (
-          <Button
-            {...props}
-            className="h-8 w-8 text-muted-foreground"
-            iconOnly
-            title="Customize appearance"
-            variant="ghost"
-          >
-            <PaintBrush className="h-4 w-4" />
-            <span className="sr-only">Customize board appearance</span>
-          </Button>
-        )}
-      />
+      <Tooltip>
+        <TooltipTrigger
+          aria-label="Customize appearance"
+          render={
+            <PopoverTrigger
+              render={
+                <Button
+                  className="h-8 w-8 text-muted-foreground"
+                  iconOnly
+                  variant="ghost"
+                />
+              }
+            />
+          }
+        >
+          <PaintBrush className="h-4 w-4" />
+        </TooltipTrigger>
+        <TooltipContent>Customize appearance</TooltipContent>
+      </Tooltip>
 
       <PopoverContent align="end" className="w-80">
         <PopoverHeader>
@@ -118,55 +128,52 @@ export function BoardCustomizePopover({ orgSlug }: BoardCustomizePopoverProps) {
           </PopoverDescription>
         </PopoverHeader>
 
-        {/* Card Style */}
         <div className="space-y-2">
           <p className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
             Card Style
           </p>
           <div className="grid grid-cols-3 gap-1.5">
             {CARD_STYLE_OPTIONS.map((option) => (
-              <button
+              <Button
                 className={cn(
-                  "rounded-lg border px-2 py-2 text-center text-xs transition-all",
+                  "h-auto rounded-lg border px-2 py-2 text-center text-xs transition-[background-color,border-color,box-shadow,color]",
                   cardStyle === option.value
                     ? "border-primary bg-primary/5 font-medium text-foreground shadow-sm"
                     : "border-transparent bg-muted/50 text-muted-foreground hover:bg-muted"
                 )}
                 key={option.value}
                 onClick={() => save({ cardStyle: option.value })}
-                type="button"
+                variant="quiet"
               >
                 {option.label}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
 
-        {/* Milestone View */}
         <div className="space-y-2">
           <p className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
             Milestone View
           </p>
           <div className="grid grid-cols-3 gap-1.5">
             {MILESTONE_VIEW_STYLE_OPTIONS.map((option) => (
-              <button
+              <Button
                 className={cn(
-                  "rounded-lg border px-2 py-2 text-center text-xs transition-all",
+                  "h-auto rounded-lg border px-2 py-2 text-center text-xs transition-[background-color,border-color,box-shadow,color]",
                   milestoneStyle === option.value
                     ? "border-primary bg-primary/5 font-medium text-foreground shadow-sm"
                     : "border-transparent bg-muted/50 text-muted-foreground hover:bg-muted"
                 )}
                 key={option.value}
                 onClick={() => save({ milestoneStyle: option.value })}
-                type="button"
+                variant="quiet"
               >
                 {option.label}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
 
-        {/* Save status */}
         {saveStatus !== "idle" && (
           <div className="flex items-center justify-end gap-1.5 text-muted-foreground text-xs">
             {saveStatus === "saving" && (

@@ -44,29 +44,6 @@ vi.mock("@ctrl-ui/react/ui/badge", () => ({
   ),
 }));
 
-vi.mock("@ctrl-ui/react/ui/button", () => ({
-  Button: ({
-    children,
-    onClick,
-    variant,
-    size,
-    ...props
-  }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
-    variant?: string;
-    size?: string;
-  }) => (
-    <button
-      data-size={size}
-      data-variant={variant}
-      onClick={onClick}
-      type="button"
-      {...props}
-    >
-      {children}
-    </button>
-  ),
-}));
-
 vi.mock("@ctrl-ui/react/ui/dropdown-menu", () => ({
   DropdownMenu: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="dropdown">{children}</div>

@@ -153,7 +153,7 @@ function AvailableCard({ integration }: { integration: Integration }) {
         {integration.description}
       </p>
       {integration.href ? (
-        <span className="mt-4 inline-block font-medium text-olive-600 text-sm underline underline-offset-4 transition-colors hover:text-olive-700 dark:text-olive-400 dark:hover:text-olive-300">
+        <span className="mt-4 inline-block font-medium text-brand-text text-sm underline underline-offset-4 transition-colors hover:text-brand-text/80">
           View docs
         </span>
       ) : null}

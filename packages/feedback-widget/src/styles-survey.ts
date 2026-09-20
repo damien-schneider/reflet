@@ -2,7 +2,6 @@ import { adjustBrightness, type WidgetColors } from "./color-utils";
 
 export function getSurveyStyles(colors: WidgetColors): string {
   return `
-    /* Survey */
     .reflet-survey {
       padding: 16px;
     }
@@ -43,16 +42,13 @@ export function getSurveyStyles(colors: WidgetColors): string {
     }
 
     .reflet-survey-progress-bar {
+      width: 100%;
       height: 100%;
       background: ${colors.primary};
       border-radius: 2px;
-      transition: width 0.3s ease;
-    }
-
-    .reflet-survey-progress-text {
-      font-size: 11px;
-      color: ${colors.textMuted};
-      margin-bottom: 16px;
+      transform-origin: left center;
+      scale: var(--reflet-survey-progress, 0) 1;
+      transition: scale 0.3s ease-out;
     }
 
     .reflet-survey-question {
@@ -112,7 +108,7 @@ export function getSurveyStyles(colors: WidgetColors): string {
     .reflet-nps-btn.selected {
       background: ${colors.primary};
       border-color: ${colors.primary};
-      color: white;
+      color: ${colors.onPrimary};
     }
 
     .reflet-nps-btn {
@@ -200,7 +196,7 @@ export function getSurveyStyles(colors: WidgetColors): string {
     .reflet-bool-btn.selected {
       background: ${colors.primary};
       border-color: ${colors.primary};
-      color: white;
+      color: ${colors.onPrimary};
     }
 
     .reflet-survey-actions {
@@ -211,9 +207,10 @@ export function getSurveyStyles(colors: WidgetColors): string {
     }
 
     .reflet-survey-btn-primary {
+      min-height: 40px;
       padding: 10px 20px;
       background: ${colors.primary};
-      color: white;
+      color: ${colors.onPrimary};
       border: none;
       border-radius: 8px;
       font-size: 14px;
@@ -232,6 +229,7 @@ export function getSurveyStyles(colors: WidgetColors): string {
     }
 
     .reflet-survey-btn-secondary {
+      min-height: 40px;
       padding: 10px 20px;
       background: transparent;
       color: ${colors.textMuted};
@@ -256,7 +254,7 @@ export function getSurveyStyles(colors: WidgetColors): string {
       height: 48px;
       border-radius: 50%;
       background: ${colors.primary};
-      color: white;
+      color: ${colors.onPrimary};
       display: flex;
       align-items: center;
       justify-content: center;
@@ -277,7 +275,6 @@ export function getSurveyStyles(colors: WidgetColors): string {
       margin-bottom: 20px;
     }
 
-    /* Survey animations */
     @keyframes reflet-slide-right {
       from { opacity: 0; transform: translateX(16px); }
       to { opacity: 1; transform: translateX(0); }
@@ -313,30 +310,28 @@ export function getSurveyStyles(colors: WidgetColors): string {
       display: inline-block;
       width: 14px;
       height: 14px;
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      border-top-color: white;
+      border: 2px solid ${colors.onPrimarySoft};
+      border-top-color: ${colors.onPrimary};
       border-radius: 50%;
       animation: reflet-btn-spin 0.6s linear infinite;
       margin-right: 6px;
       vertical-align: middle;
     }
 
-    /* Survey validation */
     .reflet-survey-validation {
       font-size: 12px;
       color: ${colors.error};
       margin-top: 8px;
     }
 
-    /* Character count */
     .reflet-char-count {
       font-size: 11px;
+      font-variant-numeric: tabular-nums;
       color: ${colors.textMuted};
       text-align: right;
       margin-top: 4px;
     }
 
-    /* Keyboard hint */
     .reflet-survey-kbd-hint {
       font-size: 11px;
       color: ${colors.textMuted};
@@ -348,22 +343,20 @@ export function getSurveyStyles(colors: WidgetColors): string {
       justify-content: space-between;
       align-items: center;
       font-size: 11px;
+      font-variant-numeric: tabular-nums;
       color: ${colors.textMuted};
       margin-bottom: 16px;
     }
 
-    /* Selected choice highlight */
     .reflet-choice-item.selected {
       border-color: ${colors.primary};
       background: ${adjustBrightness(colors.primary, 95)};
     }
 
-    /* Survey overlay animation */
     .reflet-survey-overlay {
       animation: reflet-fade-in 0.2s ease-out;
     }
 
-    /* Fieldset reset */
     fieldset.reflet-choice-list {
       border: none;
       padding: 0;

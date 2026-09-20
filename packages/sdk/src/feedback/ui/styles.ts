@@ -1,3 +1,4 @@
+import { REFLET_Z_INDEX } from "../../z-index";
 import { DEFAULT_WIDGET_OFFSET } from "../types";
 import { ANNOTATOR_STYLES } from "./annotation/styles";
 import { COMPOSER_STYLES } from "./composer/styles";
@@ -10,13 +11,17 @@ export const WIDGET_STYLES = `
   --rf-bg-subtle: rgb(55 53 47 / 4%);
   --rf-bg-hover: rgb(55 53 47 / 7%);
   --rf-border: rgb(55 53 47 / 9%);
+  --rf-hairline: rgb(15 15 15 / 10%);
   --rf-text: #37352f;
   --rf-text-muted: rgb(55 53 47 / 68%);
   --rf-primary: #37352f;
   --rf-primary-text: #ffffff;
   --rf-accent: #2383e2;
+  --rf-accent-text: #ffffff;
   --rf-danger: #d44c47;
   --rf-success: #448361;
+  --rf-swatch-base: #ffffff;
+  --rf-spectrum: conic-gradient(#ff5757, #ffde59, #6bdb78, #4ac9fa, #8b5cf6, #ef73dc, #ff5757);
   --rf-radius: 20px;
   --rf-pill: 999px;
   --rf-width: 360px;
@@ -27,6 +32,7 @@ export const WIDGET_STYLES = `
   --rf-shadow-inset: inset 0 0 0 1px var(--rf-border);
   --rf-shadow-low: 0 0 0 1px rgb(15 15 15 / 4%), 0 1px 2px rgb(15 15 15 / 6%), 0 4px 10px -4px rgb(15 15 15 / 10%);
   --rf-shadow: 0 0 0 1px rgb(15 15 15 / 4%), 0 2px 5px -1px rgb(15 15 15 / 7%), 0 12px 32px -8px rgb(15 15 15 / 16%);
+  --rf-shadow-float: 0 4px 12px -3px rgb(15 15 15 / 35%);
   --rf-ease: cubic-bezier(0.16, 1, 0.3, 1);
   color-scheme: light;
   all: initial;
@@ -38,6 +44,7 @@ export const WIDGET_STYLES = `
   --rf-bg-subtle: rgb(255 255 255 / 5%);
   --rf-bg-hover: rgb(255 255 255 / 9%);
   --rf-border: rgb(255 255 255 / 9%);
+  --rf-hairline: rgb(255 255 255 / 12%);
   --rf-text: #ebeae8;
   --rf-text-muted: rgb(255 255 255 / 68%);
   --rf-glass: rgb(32 32 32 / 78%);
@@ -50,6 +57,7 @@ export const WIDGET_STYLES = `
   --rf-success: #4dab74;
   --rf-shadow-low: 0 0 0 1px rgb(255 255 255 / 6%), 0 1px 2px rgb(0 0 0 / 30%), 0 4px 10px -4px rgb(0 0 0 / 40%);
   --rf-shadow: 0 0 0 1px rgb(255 255 255 / 7%), 0 2px 5px -1px rgb(0 0 0 / 35%), 0 14px 36px -10px rgb(0 0 0 / 55%);
+  --rf-shadow-float: 0 4px 14px -3px rgb(0 0 0 / 55%);
   color-scheme: dark;
 }
 
@@ -58,7 +66,7 @@ export const WIDGET_STYLES = `
 
 .root {
   position: fixed;
-  z-index: 2147483000;
+  z-index: ${REFLET_Z_INDEX.widgetRoot};
   display: flex;
   align-items: flex-end;
   gap: 8px;
@@ -75,21 +83,22 @@ export const WIDGET_STYLES = `
 .root[data-position^="top"] .panel { transform-origin: top center; }
 .root[data-editing="true"] { visibility: hidden; pointer-events: none; }
 button, select, input, textarea { font: inherit; color: inherit; }
-button { margin: 0; cursor: pointer; border: 0; background: none; }
+button { margin: 0; cursor: pointer; border: 0; background: none; transition: scale 120ms var(--rf-ease); }
 button:disabled { cursor: not-allowed; opacity: .4; }
+button:active:not(:disabled) { scale: .97; }
 svg { flex-shrink: 0; }
 :focus-visible { outline: 2px solid var(--rf-accent); outline-offset: 3px; }
 .icon-btn, .tool {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 32px; height: 32px; flex: none; border-radius: var(--rf-pill); color: var(--rf-text-muted);
-  transition: background 160ms var(--rf-ease), color 160ms var(--rf-ease);
+  width: 40px; height: 40px; flex: none; border-radius: var(--rf-pill); color: var(--rf-text-muted);
+  transition: background 160ms var(--rf-ease), color 160ms var(--rf-ease), scale 120ms var(--rf-ease);
 }
 .icon-btn:hover, .tool:hover { background: var(--rf-bg-hover); color: var(--rf-text); }
 .launcher {
   display: inline-flex; align-items: center; gap: 7px; height: 40px; padding: 0 15px;
   border-radius: var(--rf-pill); color: var(--rf-text);
   font-weight: 500;
-  transition: transform 200ms var(--rf-ease), box-shadow 200ms var(--rf-ease);
+  transition: transform 200ms var(--rf-ease), box-shadow 200ms var(--rf-ease), scale 120ms var(--rf-ease);
 }
 .launcher:hover { transform: translateY(-2px); box-shadow: var(--rf-shadow); }
 .launcher-icon { display: flex; width: 15px; height: 15px; }
@@ -102,7 +111,7 @@ svg { flex-shrink: 0; }
 .drag-handle { touch-action: none; cursor: grab; }
 .drag-handle:active { cursor: grabbing; }
 .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ghost-btn { display: flex; align-items: center; gap: 8px; min-height: 32px; padding: 0 8px; border-radius: var(--rf-radius-sm); }
+.ghost-btn { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 8px; border-radius: var(--rf-radius-sm); }
 .ghost-btn:hover { background: var(--rf-bg-hover); }
 .error { margin: 0; padding: 10px 14px; border-radius: var(--rf-radius); font-size: 12px; color: var(--rf-danger); }
 .done { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 24px; text-align: center; }
@@ -143,7 +152,7 @@ svg { flex-shrink: 0; }
 @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
   .glass::before { background: var(--rf-bg); backdrop-filter: none; -webkit-backdrop-filter: none; }
 }
-.capture-halo { position: fixed; inset: 0; z-index: 2147482999; pointer-events: none; opacity: 0; transition: opacity 500ms var(--rf-ease); }
+.capture-halo { position: fixed; inset: 0; z-index: ${REFLET_Z_INDEX.captureHalo}; pointer-events: none; opacity: 0; transition: opacity 500ms var(--rf-ease); }
 .capture-halo[data-active="true"] { opacity: 1; transition-duration: 140ms; }
 .capture-halo::before { content: ""; position: absolute; inset: 0; border-radius: 20px; box-shadow: inset 14px 0 36px -16px var(--rf-accent), inset -14px 0 36px -16px var(--rf-accent), inset 0 0 4px 1px color-mix(in srgb, var(--rf-accent) 35%, transparent); }
 .capture-halo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, color-mix(in srgb, var(--rf-accent) 20%, transparent), transparent 5%, transparent 95%, color-mix(in srgb, var(--rf-accent) 20%, transparent)); }
@@ -152,5 +161,6 @@ ${ANNOTATOR_STYLES}
 ${PICKER_STYLES}
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
+  button:active:not(:disabled) { scale: 1; }
 }
 `;

@@ -7,11 +7,16 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@ctrl-ui/react/ui/popover";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@ctrl-ui/react/ui/tooltip";
 import { Check, Plus, X } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
-import { useCallback, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { NotionColorPicker } from "@/components/ui/notion-color-picker";
 import { getTagDotColor, type TagColor } from "@/lib/tag-colors";
 
@@ -28,19 +33,19 @@ export function AddColumnInline({ organizationId }: AddColumnInlineProps) {
 
   const createStatus = useMutation(api.organizations.status_mutations.create);
 
-  const handleStartAdding = useCallback(() => {
+  const handleStartAdding = () => {
     setIsAdding(true);
     setName("");
     setColor("blue");
     setTimeout(() => inputRef.current?.focus(), 0);
-  }, []);
+  };
 
-  const handleCancel = useCallback(() => {
+  const handleCancel = () => {
     setIsAdding(false);
     setName("");
-  }, []);
+  };
 
-  const handleSave = useCallback(async () => {
+  const handleSave = async () => {
     const trimmedName = name.trim();
     if (!trimmedName) {
       handleCancel();
@@ -55,19 +60,16 @@ export function AddColumnInline({ organizationId }: AddColumnInlineProps) {
 
     setIsAdding(false);
     setName("");
-  }, [name, color, organizationId, createStatus, handleCancel]);
+  };
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        handleSave();
-      } else if (e.key === "Escape") {
-        handleCancel();
-      }
-    },
-    [handleSave, handleCancel]
-  );
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleSave();
+    } else if (e.key === "Escape") {
+      handleCancel();
+    }
+  };
 
   if (!isAdding) {
     return (
@@ -87,13 +89,19 @@ export function AddColumnInline({ organizationId }: AddColumnInlineProps) {
   return (
     <div className="w-72 shrink-0 rounded-lg border bg-muted/30 p-4">
       <div className="mb-3 flex items-center gap-2">
-        {/* Color picker */}
         <Popover onOpenChange={setIsColorPickerOpen} open={isColorPickerOpen}>
-          <PopoverTrigger
-            className="h-3 w-3 shrink-0 rounded-full transition-transform hover:scale-110"
-            style={{ backgroundColor: getTagDotColor(color) }}
-            title="Choose color"
-          />
+          <Tooltip>
+            <TooltipTrigger
+              aria-label="Choose color"
+              render={
+                <PopoverTrigger
+                  className="h-3 w-3 shrink-0 rounded-full transition-transform hover:scale-110"
+                  style={{ backgroundColor: getTagDotColor(color) }}
+                />
+              }
+            />
+            <TooltipContent>Choose color</TooltipContent>
+          </Tooltip>
           <PopoverContent align="start" className="w-[200px] p-2">
             <NotionColorPicker
               onChange={(newColor) => {
@@ -105,8 +113,8 @@ export function AddColumnInline({ organizationId }: AddColumnInlineProps) {
           </PopoverContent>
         </Popover>
 
-        {/* Name input */}
         <Input
+          aria-label="Column name"
           className="h-7 flex-1 px-2 py-1 text-sm"
           onChange={(e) => setName(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -115,23 +123,38 @@ export function AddColumnInline({ organizationId }: AddColumnInlineProps) {
           value={name}
         />
 
-        {/* Action buttons */}
-        <Button
-          className="h-6 w-6"
-          iconOnly
-          onClick={handleSave}
-          variant="ghost"
-        >
-          <Check className="h-3 w-3" />
-        </Button>
-        <Button
-          className="h-6 w-6"
-          iconOnly
-          onClick={handleCancel}
-          variant="ghost"
-        >
-          <X className="h-3 w-3" />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger
+            aria-label="Create column"
+            render={
+              <Button
+                className="h-6 w-6"
+                iconOnly
+                onClick={handleSave}
+                variant="ghost"
+              />
+            }
+          >
+            <Check className="h-3 w-3" />
+          </TooltipTrigger>
+          <TooltipContent>Create column</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger
+            aria-label="Cancel"
+            render={
+              <Button
+                className="h-6 w-6"
+                iconOnly
+                onClick={handleCancel}
+                variant="ghost"
+              />
+            }
+          >
+            <X className="h-3 w-3" />
+          </TooltipTrigger>
+          <TooltipContent>Cancel</TooltipContent>
+        </Tooltip>
       </div>
 
       <div className="py-8 text-center text-muted-foreground text-sm">

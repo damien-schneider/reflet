@@ -1,3 +1,11 @@
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@ctrl-ui/react/ui/table";
 import Link from "next/link";
 
 import { H1, H2, H3, Lead, Text } from "@/components/ui/typography";
@@ -58,108 +66,84 @@ export default function CookiePolicy() {
               These cookies are necessary for the Service to function and cannot
               be disabled. They include:
             </Text>
-            <div className="overflow-x-auto">
-              <table className="mt-4 w-full border-collapse text-sm">
-                <thead>
-                  <tr className="border-border border-b">
-                    <th className="px-4 py-2 text-left font-semibold">
-                      Cookie
-                    </th>
-                    <th className="px-4 py-2 text-left font-semibold">
-                      Purpose
-                    </th>
-                    <th className="px-4 py-2 text-left font-semibold">
-                      Duration
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  <tr>
-                    <td className="px-4 py-2 font-mono text-xs">
-                      better-auth.session_token
-                    </td>
-                    <td className="px-4 py-2">
-                      Keeps you logged in to your account
-                    </td>
-                    <td className="px-4 py-2">30 days</td>
-                  </tr>
-                  <tr>
-                    <td className="px-4 py-2 font-mono text-xs">
-                      better-auth.csrf_token
-                    </td>
-                    <td className="px-4 py-2">
-                      Protects against cross-site request forgery attacks
-                    </td>
-                    <td className="px-4 py-2">Session</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            <Table className="mt-4 text-sm">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Cookie</TableHead>
+                  <TableHead>Purpose</TableHead>
+                  <TableHead>Duration</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">
+                    better-auth.session_token
+                  </TableCell>
+                  <TableCell className="whitespace-normal">
+                    Keeps you logged in to your account
+                  </TableCell>
+                  <TableCell className="tabular-nums">30 days</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">
+                    better-auth.csrf_token
+                  </TableCell>
+                  <TableCell className="whitespace-normal">
+                    Protects against cross-site request forgery attacks
+                  </TableCell>
+                  <TableCell className="tabular-nums">Session</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
 
             <H3 className="mt-6 text-lg">Functional Cookies</H3>
             <Text>
               These cookies enable enhanced functionality and personalization:
             </Text>
-            <div className="overflow-x-auto">
-              <table className="mt-4 w-full border-collapse text-sm">
-                <thead>
-                  <tr className="border-border border-b">
-                    <th className="px-4 py-2 text-left font-semibold">
-                      Cookie
-                    </th>
-                    <th className="px-4 py-2 text-left font-semibold">
-                      Purpose
-                    </th>
-                    <th className="px-4 py-2 text-left font-semibold">
-                      Duration
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  <tr>
-                    <td className="px-4 py-2 font-mono text-xs">theme</td>
-                    <td className="px-4 py-2">
-                      Remembers your light/dark mode preference
-                    </td>
-                    <td className="px-4 py-2">1 year</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            <Table className="mt-4 text-sm">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Cookie</TableHead>
+                  <TableHead>Purpose</TableHead>
+                  <TableHead>Duration</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell className="font-mono text-xs">theme</TableCell>
+                  <TableCell className="whitespace-normal">
+                    Remembers your light/dark mode preference
+                  </TableCell>
+                  <TableCell className="tabular-nums">1 year</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
 
             <H3 className="mt-6 text-lg">Analytics Cookies</H3>
             <Text>
               We use privacy-focused analytics to understand how visitors use
               our website:
             </Text>
-            <div className="overflow-x-auto">
-              <table className="mt-4 w-full border-collapse text-sm">
-                <thead>
-                  <tr className="border-border border-b">
-                    <th className="px-4 py-2 text-left font-semibold">
-                      Service
-                    </th>
-                    <th className="px-4 py-2 text-left font-semibold">
-                      Purpose
-                    </th>
-                    <th className="px-4 py-2 text-left font-semibold">
-                      Privacy Note
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  <tr>
-                    <td className="px-4 py-2">Umami</td>
-                    <td className="px-4 py-2">
-                      Privacy-focused website analytics
-                    </td>
-                    <td className="px-4 py-2">
-                      No personal data collected, no cookies stored
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            <Table className="mt-4 text-sm">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Service</TableHead>
+                  <TableHead>Purpose</TableHead>
+                  <TableHead>Privacy Note</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell>Umami</TableCell>
+                  <TableCell className="whitespace-normal">
+                    Privacy-focused website analytics
+                  </TableCell>
+                  <TableCell className="whitespace-normal">
+                    No personal data collected, no cookies stored
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
             <Text className="mt-2 text-muted-foreground">
               Umami is a privacy-focused analytics solution that does not use
               cookies or collect personal information.
@@ -212,7 +196,7 @@ export default function CookiePolicy() {
             <ul className="mt-2 list-disc space-y-1 pl-6 text-sm">
               <li>
                 <a
-                  className="text-olive-600 underline hover:text-olive-700 dark:text-olive-400"
+                  className="text-brand-text underline hover:text-brand-text/80"
                   href="https://stripe.com/privacy"
                   rel="noopener noreferrer"
                   target="_blank"
@@ -222,7 +206,7 @@ export default function CookiePolicy() {
               </li>
               <li>
                 <a
-                  className="text-olive-600 underline hover:text-olive-700 dark:text-olive-400"
+                  className="text-brand-text underline hover:text-brand-text/80"
                   href="https://policies.google.com/privacy"
                   rel="noopener noreferrer"
                   target="_blank"
@@ -232,7 +216,7 @@ export default function CookiePolicy() {
               </li>
               <li>
                 <a
-                  className="text-olive-600 underline hover:text-olive-700 dark:text-olive-400"
+                  className="text-brand-text underline hover:text-brand-text/80"
                   href="https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement"
                   rel="noopener noreferrer"
                   target="_blank"
@@ -290,7 +274,7 @@ export default function CookiePolicy() {
             <ul className="mt-2 list-disc space-y-1 pl-6 text-sm">
               <li>
                 <a
-                  className="text-olive-600 underline hover:text-olive-700 dark:text-olive-400"
+                  className="text-brand-text underline hover:text-brand-text/80"
                   href="https://support.google.com/chrome/answer/95647"
                   rel="noopener noreferrer"
                   target="_blank"
@@ -300,7 +284,7 @@ export default function CookiePolicy() {
               </li>
               <li>
                 <a
-                  className="text-olive-600 underline hover:text-olive-700 dark:text-olive-400"
+                  className="text-brand-text underline hover:text-brand-text/80"
                   href="https://support.mozilla.org/en-US/kb/cookies-information-websites-store-on-your-computer"
                   rel="noopener noreferrer"
                   target="_blank"
@@ -310,7 +294,7 @@ export default function CookiePolicy() {
               </li>
               <li>
                 <a
-                  className="text-olive-600 underline hover:text-olive-700 dark:text-olive-400"
+                  className="text-brand-text underline hover:text-brand-text/80"
                   href="https://support.apple.com/guide/safari/manage-cookies-sfri11471/mac"
                   rel="noopener noreferrer"
                   target="_blank"
@@ -320,7 +304,7 @@ export default function CookiePolicy() {
               </li>
               <li>
                 <a
-                  className="text-olive-600 underline hover:text-olive-700 dark:text-olive-400"
+                  className="text-brand-text underline hover:text-brand-text/80"
                   href="https://support.microsoft.com/en-us/microsoft-edge/delete-cookies-in-microsoft-edge-63947406-40ac-c3b8-57b9-2a946a29ae09"
                   rel="noopener noreferrer"
                   target="_blank"
@@ -359,7 +343,7 @@ export default function CookiePolicy() {
             <Text className="mt-2">
               <strong>Email:</strong>{" "}
               <a
-                className="text-olive-600 underline hover:text-olive-700 dark:text-olive-400"
+                className="text-brand-text underline hover:text-brand-text/80"
                 href="mailto:legal@reflet.app"
               >
                 legal@reflet.app

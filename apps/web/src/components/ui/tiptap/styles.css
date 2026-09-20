@@ -29,6 +29,8 @@
   margin: 1rem 0;
   cursor: pointer;
   border-radius: var(--radius);
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--foreground) 10%, transparent);
   transition: outline 0.15s ease;
 }
 
@@ -136,7 +138,7 @@
   height: 8px;
   pointer-events: auto;
   background: var(--background);
-  border: 1.5px solid var(--color-olive-600);
+  border: 1.5px solid var(--brand-text);
   border-radius: 2px;
   transition:
     transform 0.1s ease,
@@ -144,7 +146,7 @@
 }
 
 .tiptap-resize-handle:hover {
-  background: var(--color-olive-100);
+  background: var(--secondary);
   transform: scale(1.2);
 }
 

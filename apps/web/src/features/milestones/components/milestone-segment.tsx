@@ -1,48 +1,22 @@
 "use client";
 
-import { Button } from "@ctrl-ui/react/ui/button";
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuSeparator,
-  ContextMenuTrigger,
-} from "@ctrl-ui/react/ui/context-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@ctrl-ui/react/ui/dialog";
-import { Input } from "@ctrl-ui/react/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@ctrl-ui/react/ui/select";
 import { CheckCircle, PencilSimple, Trash } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { motion } from "motion/react";
-import { useCallback, useState } from "react";
-import { EmojiPicker } from "@/components/ui/emoji-picker";
-import { NotionColorPicker } from "@/components/ui/notion-color-picker";
+import { useState } from "react";
 import type { TimeHorizon } from "@/lib/milestone-constants";
-import {
-  isTimeHorizon,
-  TIME_HORIZON_CONFIG,
-  TIME_HORIZONS,
-} from "@/lib/milestone-constants";
 import { getDeadlineInfo } from "@/lib/milestone-deadline";
-import type { TagColor } from "@/lib/tag-colors";
-import { getTagColorValues, isValidTagColor } from "@/lib/tag-colors";
+import { getTagColorValues } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
 
-import { MilestoneDatePicker } from "./milestone-date-picker";
+import { MilestoneEditDialog } from "./milestone-edit-dialog";
+import {
+  type MilestoneAction,
+  MilestoneActionsMenu,
+  MilestoneContextMenu,
+} from "./milestone-segment-menu";
 
 interface MilestoneSegmentProps {
   className?: string;
@@ -68,6 +42,7 @@ interface MilestoneSegmentProps {
 }
 
 const HATCH_PATTERN_ID = "milestone-hatch";
+const HATCH_OPACITY = 0.08;
 
 export function MilestoneSegment({
   milestone,
@@ -79,129 +54,68 @@ export function MilestoneSegment({
 }: MilestoneSegmentProps) {
   const colorValues = getTagColorValues(milestone.color);
   const { percentage, completed, total } = milestone.progress;
+  const patternId = `${HATCH_PATTERN_ID}-${milestone._id}`;
 
   const [editOpen, setEditOpen] = useState(false);
-  const [editName, setEditName] = useState(milestone.name);
-  const [editEmoji, setEditEmoji] = useState<string | undefined>(
-    milestone.emoji
-  );
-  const [editColor, setEditColor] = useState<TagColor>(
-    isValidTagColor(milestone.color) ? milestone.color : "default"
-  );
-  const [editHorizon, setEditHorizon] = useState<TimeHorizon>(
-    milestone.timeHorizon
-  );
-  const [editTargetDate, setEditTargetDate] = useState<number | undefined>(
-    milestone.targetDate
-  );
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const updateMilestone = useMutation(api.organizations.milestones.update);
   const removeMilestone = useMutation(
     api.organizations.milestone_actions.remove
   );
 
-  const handleEditOpen = useCallback(() => {
-    setEditName(milestone.name);
-    setEditEmoji(milestone.emoji);
-    setEditColor(
-      isValidTagColor(milestone.color) ? milestone.color : "default"
-    );
-    setEditHorizon(milestone.timeHorizon);
-    setEditTargetDate(milestone.targetDate);
-    setEditOpen(true);
-  }, [
-    milestone.name,
-    milestone.emoji,
-    milestone.color,
-    milestone.timeHorizon,
-    milestone.targetDate,
-  ]);
-
-  const handleEditSubmit = useCallback(async () => {
-    const trimmedName = editName.trim();
-    if (!trimmedName) {
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const dateCleared =
-        milestone.targetDate !== undefined && editTargetDate === undefined;
-      let dateUpdate: { clearTargetDate?: true; targetDate?: number } = {};
-      if (dateCleared) {
-        dateUpdate = { clearTargetDate: true };
-      } else if (editTargetDate !== undefined) {
-        dateUpdate = { targetDate: editTargetDate };
-      }
-      await updateMilestone({
-        color: editColor,
-        emoji: editEmoji,
-        id: milestone._id,
-        name: trimmedName,
-        timeHorizon: editHorizon,
-        ...dateUpdate,
-      });
-      setEditOpen(false);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [
-    editName,
-    editEmoji,
-    editColor,
-    editHorizon,
-    editTargetDate,
-    milestone._id,
-    milestone.targetDate,
-    updateMilestone,
-  ]);
-
-  const handleEditKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        handleEditSubmit();
-      }
-    },
-    [handleEditSubmit]
-  );
-
-  const handleComplete = useCallback(async () => {
-    await updateMilestone({
-      id: milestone._id,
-      status: "completed",
-    });
-  }, [milestone._id, updateMilestone]);
-
-  const handleDelete = useCallback(async () => {
-    await removeMilestone({ id: milestone._id });
-  }, [milestone._id, removeMilestone]);
-
   const isCompleted = milestone.status === "completed";
   const deadlineInfo = getDeadlineInfo(milestone.targetDate, milestone.status);
+
+  const actions: MilestoneAction[] = [
+    {
+      icon: <PencilSimple />,
+      label: "Edit",
+      run: () => setEditOpen(true),
+    },
+    ...(isCompleted
+      ? []
+      : [
+          {
+            icon: <CheckCircle />,
+            label: "Mark as Complete",
+            run: async () => {
+              await updateMilestone({ id: milestone._id, status: "completed" });
+            },
+          },
+        ]),
+    {
+      danger: true,
+      icon: <Trash />,
+      label: "Delete",
+      run: async () => {
+        await removeMilestone({ id: milestone._id });
+      },
+    },
+  ];
+
   const isOverdue = deadlineInfo?.status === "overdue";
+  const overdueSuffix = isOverdue ? `, ${deadlineInfo.relativeLabel}` : "";
 
   const segment = (
     <div className={cn("group/seg relative", className)}>
       <motion.button
-        aria-label={`${milestone.name}: ${percentage}% complete (${completed} of ${total})`}
+        aria-label={`${milestone.name}: ${percentage}% complete (${completed} of ${total})${overdueSuffix}`}
         className={cn(
-          "relative h-10 w-full overflow-hidden rounded-sm",
-          "text-left font-medium text-white text-xs",
+          "relative h-10 w-full overflow-hidden rounded-sm bg-(--segment-fill)",
+          "text-left font-medium text-band-foreground text-xs",
           "outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
-          "cursor-pointer select-none transition-shadow duration-200"
-          // isActive && "ring-1 ring-white/40"
+          "cursor-pointer select-none transition-shadow duration-200",
+          isActive && "shadow-[0_1px_8px_var(--segment-glow)]"
         )}
         onClick={onClick}
         style={{
-          backgroundColor: colorValues.text,
-          boxShadow: isActive ? `0 1px 8px ${colorValues.text}50` : undefined,
+          "--segment-fill": colorValues.text,
+          "--segment-glow":
+            "color-mix(in oklab, var(--segment-fill) 31%, transparent)",
           ...style,
         }}
         type="button"
       >
-        {/* Diagonal hatching overlay */}
         <svg
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 h-full w-full"
@@ -209,13 +123,14 @@ export function MilestoneSegment({
           <defs>
             <pattern
               height="6"
-              id={`${HATCH_PATTERN_ID}-${milestone._id}`}
+              id={patternId}
               patternTransform="rotate(45)"
               patternUnits="userSpaceOnUse"
               width="6"
             >
               <line
-                stroke="rgba(255,255,255,0.08)"
+                stroke="var(--band-foreground)"
+                strokeOpacity={HATCH_OPACITY}
                 strokeWidth="1"
                 x1="0"
                 x2="0"
@@ -224,75 +139,62 @@ export function MilestoneSegment({
               />
             </pattern>
           </defs>
-          <rect
-            fill={`url(#${HATCH_PATTERN_ID}-${milestone._id})`}
-            height="100%"
-            width="100%"
-          />
+          <rect fill={`url(#${patternId})`} height="100%" width="100%" />
         </svg>
 
-        {/* Default state: emoji + name */}
         <span
           className={cn(
-            "absolute inset-0 flex items-center gap-1.5 truncate px-2.5 leading-none",
-            "transition-opacity duration-150",
-            "group-hover/seg:opacity-0"
+            "absolute inset-0 flex items-center justify-between gap-2 px-2.5 leading-none",
+            isAdmin && "pr-8"
           )}
         >
-          {milestone.emoji && (
-            <span className="shrink-0 text-sm">{milestone.emoji}</span>
-          )}
-          <span className="truncate">{milestone.name}</span>
-        </span>
-
-        {/* Hover state: inline details */}
-        <span
-          className={cn(
-            "absolute inset-0 flex items-center justify-between px-2.5 leading-none",
-            "opacity-0 transition-opacity duration-150",
-            "group-hover/seg:opacity-100"
-          )}
-        >
-          <span className="flex items-center gap-1.5 truncate">
+          <span className="flex min-w-0 items-center gap-1.5 truncate">
             {milestone.emoji && (
               <span className="shrink-0 text-sm">{milestone.emoji}</span>
             )}
             <span className="truncate">{milestone.name}</span>
           </span>
-          <span className="ml-2 flex shrink-0 items-center gap-1.5">
+          <span className="flex shrink-0 items-center gap-1.5 opacity-0 pointer-coarse:opacity-100 transition-opacity duration-150 group-focus-within/seg:opacity-100 group-hover/seg:opacity-100">
             {deadlineInfo && (
-              <span className="text-[10px] opacity-80">
+              <span className="text-band-foreground/80 text-caption tabular-nums">
                 {deadlineInfo.relativeLabel}
               </span>
             )}
-            <span className="rounded bg-white/20 px-1.5 py-0.5 font-mono text-[10px] tabular-nums">
+            <span className="rounded bg-band-foreground/20 px-1.5 py-0.5 font-mono text-caption tabular-nums">
               {percentage}%
             </span>
           </span>
         </span>
 
-        {/* Progress fill at the bottom */}
         <motion.div
           animate={{ width: `${percentage}%` }}
-          className="absolute bottom-0 left-0 h-[2px] bg-white/30"
+          className="absolute bottom-0 left-0 h-[2px] bg-band-foreground/30"
           initial={false}
           transition={{ damping: 30, stiffness: 200, type: "spring" }}
         />
       </motion.button>
 
-      {/* Overdue dot indicator */}
       {isOverdue && (
-        <span className="absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-red-500" />
+        <span
+          aria-hidden="true"
+          className="absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-destructive"
+        />
       )}
 
-      {/* Active state: subtle bottom highlight line */}
       {isActive && (
         <motion.div
           animate={{ width: "60%" }}
-          className="absolute bottom-0.5 left-1/2 h-0.5 -translate-x-1/2 rounded-full"
+          className="absolute bottom-0.5 left-1/2 h-0.5 -translate-x-1/2 rounded-full bg-(--segment-fill)"
           initial={{ width: 0 }}
-          style={{ backgroundColor: colorValues.text }}
+          style={{ "--segment-fill": colorValues.text }}
           transition={{ damping: 25, stiffness: 300, type: "spring" }}
+        />
+      )}
+
+      {isAdmin && (
+        <MilestoneActionsMenu
+          actions={actions}
+          milestoneName={milestone.name}
         />
       )}
     </div>
@@ -304,98 +206,12 @@ export function MilestoneSegment({
 
   return (
     <>
-      <ContextMenu>
-        <ContextMenuTrigger>{segment}</ContextMenuTrigger>
-        <ContextMenuContent>
-          <ContextMenuItem onClick={handleEditOpen}>
-            <PencilSimple />
-            Edit
-          </ContextMenuItem>
-          {!isCompleted && (
-            <ContextMenuItem onClick={handleComplete}>
-              <CheckCircle />
-              Mark as Complete
-            </ContextMenuItem>
-          )}
-          <ContextMenuSeparator />
-          <ContextMenuItem className="menu-item-danger" onClick={handleDelete}>
-            <Trash />
-            Delete
-          </ContextMenuItem>
-        </ContextMenuContent>
-      </ContextMenu>
-
-      <Dialog onOpenChange={setEditOpen} open={editOpen}>
-        <DialogContent className="sm:max-w-[360px]">
-          <DialogHeader>
-            <DialogTitle>Edit Milestone</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <EmojiPicker onChange={setEditEmoji} value={editEmoji} />
-              <Input
-                autoFocus
-                className="h-8 flex-1"
-                onChange={(e) => setEditName(e.target.value)}
-                onKeyDown={handleEditKeyDown}
-                placeholder="Milestone name..."
-                value={editName}
-              />
-            </div>
-
-            <NotionColorPicker
-              onChange={(c) => setEditColor(c)}
-              value={editColor}
-            />
-
-            <Select
-              onValueChange={(val) => {
-                if (val && isTimeHorizon(val)) {
-                  setEditHorizon(val);
-                }
-              }}
-              value={editHorizon}
-            >
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {TIME_HORIZONS.map((h) => (
-                  <SelectItem key={h} value={h}>
-                    {TIME_HORIZON_CONFIG[h].label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <MilestoneDatePicker
-              milestoneStatus={milestone.status}
-              onChange={setEditTargetDate}
-              value={editTargetDate}
-            />
-          </div>
-          <DialogFooter>
-            <Button
-              className="h-8 text-xs"
-              onClick={() => setEditOpen(false)}
-              size="xs"
-              variant="ghost"
-            >
-              Cancel
-            </Button>
-            <Button
-              className="h-8 text-xs"
-              disabled={isSubmitting || !editName.trim()}
-              onClick={handleEditSubmit}
-              size="xs"
-              tone="primary"
-              variant="solid"
-            >
-              {isSubmitting ? "Saving..." : "Save"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <MilestoneContextMenu actions={actions}>{segment}</MilestoneContextMenu>
+      <MilestoneEditDialog
+        milestone={milestone}
+        onOpenChange={setEditOpen}
+        open={editOpen}
+      />
     </>
   );
 }

@@ -1,9 +1,17 @@
-import { cn } from "@/lib/utils";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@ctrl-ui/react/ui/table";
 
 interface PropDefinition {
   default?: string;
   description: string;
   name: string;
+  required?: boolean;
   type: string;
 }
 
@@ -12,60 +20,56 @@ interface PropsTableProps {
 }
 
 function PropsTable({ props }: PropsTableProps) {
+  const showDefaults = props.some((prop) => prop.default !== undefined);
+
   return (
     <div className="overflow-x-auto rounded-lg border border-border">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-border border-b bg-muted/50">
-            <th className="px-4 py-3 text-left font-medium text-foreground">
-              Prop
-            </th>
-            <th className="px-4 py-3 text-left font-medium text-foreground">
-              Type
-            </th>
-            <th className="px-4 py-3 text-left font-medium text-foreground">
-              Default
-            </th>
-            <th className="px-4 py-3 text-left font-medium text-foreground">
-              Description
-            </th>
-          </tr>
-        </thead>
-        <tbody>
+      <Table className="w-full text-sm">
+        <TableHeader>
+          <TableRow className="bg-muted/50">
+            <TableHead className="text-foreground">Prop</TableHead>
+            <TableHead className="text-foreground">Type</TableHead>
+            {showDefaults && (
+              <TableHead className="text-foreground">Default</TableHead>
+            )}
+            <TableHead className="text-foreground">Description</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {props.map((prop) => (
-            <tr
-              className="border-border border-b last:border-b-0"
-              key={prop.name}
-            >
-              <td className="px-4 py-3 align-top">
-                <code
-                  className={cn(
-                    "rounded bg-muted px-1.5 py-0.5 font-mono text-sm",
-                    "text-foreground"
-                  )}
-                >
+            <TableRow key={prop.name}>
+              <TableCell className="align-top">
+                <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-foreground text-sm">
                   {prop.name}
                 </code>
-              </td>
-              <td className="px-4 py-3 align-top">
+                {prop.required && (
+                  <span className="ml-1 text-destructive-text">
+                    <span aria-hidden="true">*</span>
+                    <span className="sr-only">required</span>
+                  </span>
+                )}
+              </TableCell>
+              <TableCell className="align-top">
                 <code className="font-mono text-muted-foreground text-sm">
                   {prop.type}
                 </code>
-              </td>
-              <td className="px-4 py-3 align-top text-muted-foreground">
-                {prop.default ? (
-                  <code className="font-mono text-sm">{prop.default}</code>
-                ) : (
-                  <span className="text-muted-foreground/60">-</span>
-                )}
-              </td>
-              <td className="px-4 py-3 align-top text-muted-foreground">
+              </TableCell>
+              {showDefaults && (
+                <TableCell className="align-top text-muted-foreground">
+                  {prop.default ? (
+                    <code className="font-mono text-sm">{prop.default}</code>
+                  ) : (
+                    <span className="text-muted-foreground/60">-</span>
+                  )}
+                </TableCell>
+              )}
+              <TableCell className="align-top text-muted-foreground">
                 {prop.description}
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   );
 }

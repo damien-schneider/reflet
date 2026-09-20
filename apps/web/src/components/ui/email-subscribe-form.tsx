@@ -58,21 +58,14 @@ export function EmailSubscribeForm({
   if (isSubscribed) {
     if (!isCard) {
       return (
-        <p
-          className={cn(
-            "text-emerald-600 text-sm dark:text-emerald-400",
-            className
-          )}
-        >
+        <p className={cn("text-success-text text-sm", className)}>
           {successMessage}
         </p>
       );
     }
     return (
       <div className={cn("rounded-lg border p-4", className)}>
-        <p className="text-emerald-600 text-sm dark:text-emerald-400">
-          {successMessage}
-        </p>
+        <p className="text-success-text text-sm">{successMessage}</p>
       </div>
     );
   }

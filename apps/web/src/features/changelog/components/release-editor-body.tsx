@@ -44,7 +44,6 @@ export function ReleaseEditorBody({
 }: ReleaseEditorBodyProps) {
   return (
     <>
-      {/* Title area */}
       <div className="px-6 pt-4 pb-2">
         <TiptapTitleEditor
           autoFocus
@@ -55,10 +54,8 @@ export function ReleaseEditorBody({
         />
       </div>
 
-      {/* Divider */}
       <div className="mx-6 border-border/50 border-b" />
 
-      {/* Description area - takes up remaining space */}
       <div className="flex-1 overflow-y-auto px-6 py-4">
         {isStreaming ? (
           <div className="prose prose-sm dark:prose-invert max-w-none">
@@ -77,7 +74,6 @@ export function ReleaseEditorBody({
         )}
       </div>
 
-      {/* Commits collapsible */}
       {commits.length > 0 && (
         <ReleaseCommitsList
           commits={commits}
@@ -86,7 +82,6 @@ export function ReleaseEditorBody({
         />
       )}
 
-      {/* Feedback linking section */}
       <div className="border-t px-6 py-4">
         <ReleaseFeedbackSection
           autoTriggerMatching={shouldAutoMatchFeedback}

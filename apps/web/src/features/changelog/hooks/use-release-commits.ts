@@ -1,7 +1,7 @@
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CommitInfo, FileInfo } from "../components/generate-from-commits";
 
 export function useReleaseCommits(releaseId: Id<"releases"> | null) {
@@ -44,31 +44,28 @@ export function useReleaseCommits(releaseId: Id<"releases"> | null) {
     }
   }, [releaseId, commits, files, previousTag, saveReleaseCommits]);
 
-  const handleCommitsFetched = useCallback(
-    (
-      fetchedCommits: CommitInfo[],
-      fetchedFiles: FileInfo[] | undefined,
-      fetchedPreviousTag: string | null
-    ) => {
-      hasSavedRef.current = false;
-      setCommits(fetchedCommits);
-      setFiles(fetchedFiles);
-      setPreviousTag(fetchedPreviousTag ?? undefined);
+  const handleCommitsFetched = (
+    fetchedCommits: CommitInfo[],
+    fetchedFiles: FileInfo[] | undefined,
+    fetchedPreviousTag: string | null
+  ) => {
+    hasSavedRef.current = false;
+    setCommits(fetchedCommits);
+    setFiles(fetchedFiles);
+    setPreviousTag(fetchedPreviousTag ?? undefined);
 
-      if (releaseId) {
-        hasSavedRef.current = true;
-        saveReleaseCommits({
-          commits: fetchedCommits,
-          files: fetchedFiles,
-          previousTag: fetchedPreviousTag ?? undefined,
-          releaseId,
-        }).catch(() => {
-          hasSavedRef.current = false;
-        });
-      }
-    },
-    [releaseId, saveReleaseCommits]
-  );
+    if (releaseId) {
+      hasSavedRef.current = true;
+      saveReleaseCommits({
+        commits: fetchedCommits,
+        files: fetchedFiles,
+        previousTag: fetchedPreviousTag ?? undefined,
+        releaseId,
+      }).catch(() => {
+        hasSavedRef.current = false;
+      });
+    }
+  };
 
   return { commits, files, handleCommitsFetched, previousTag };
 }

@@ -47,12 +47,14 @@ export default function EditReleasePage({
           <Muted className="mt-2">
             You don&apos;t have permission to edit releases.
           </Muted>
-          <Link href={`/dashboard/${orgSlug}/changelog`}>
-            <Button className="mt-4" variant="surface">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Changelog
-            </Button>
-          </Link>
+          <Button
+            className="mt-4"
+            render={<Link href={`/dashboard/${orgSlug}/changelog`} />}
+            variant="surface"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Changelog
+          </Button>
         </div>
       </div>
     );
@@ -66,12 +68,14 @@ export default function EditReleasePage({
           <Muted className="mt-2">
             The release you&apos;re looking for doesn&apos;t exist.
           </Muted>
-          <Link href={`/dashboard/${orgSlug}/changelog`}>
-            <Button className="mt-4" variant="surface">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Changelog
-            </Button>
-          </Link>
+          <Button
+            className="mt-4"
+            render={<Link href={`/dashboard/${orgSlug}/changelog`} />}
+            variant="surface"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Changelog
+          </Button>
         </div>
       </div>
     );

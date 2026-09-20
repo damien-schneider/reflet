@@ -45,12 +45,15 @@ const getBarFill = (uptime: number | null): string => {
 };
 
 const chartConfig = {
-  degraded: { color: "oklch(0.828 0.189 84.429)", label: "Degraded" },
-  down: { color: "oklch(0.704 0.191 22.216)", label: "Down" },
-  "no-data": { color: "oklch(0.869 0 0)", label: "No data" },
-  up: { color: "oklch(0.765 0.177 163)", label: "Operational" },
+  degraded: { color: "var(--warning)", label: "Degraded" },
+  down: { color: "var(--destructive)", label: "Down" },
+  "no-data": { color: "var(--muted-foreground)", label: "No data" },
+  up: { color: "var(--success)", label: "Operational" },
   uptime: { label: "Uptime" },
-  warning: { color: "oklch(0.792 0.17 70.67)", label: "Warning" },
+  warning: {
+    color: "color-mix(in oklab, var(--warning) 60%, var(--destructive))",
+    label: "Warning",
+  },
 } satisfies ChartConfig;
 
 export function UptimeBar({
@@ -131,7 +134,7 @@ export function UptimeBar({
   );
 
   const footerEl = (
-    <div className="mt-2 flex items-center justify-between text-[10px] text-muted-foreground sm:text-xs">
+    <div className="mt-2 flex items-center justify-between text-caption text-muted-foreground sm:text-label">
       <span>
         <span className="tabular-nums">{totalDays}</span> days ago
       </span>

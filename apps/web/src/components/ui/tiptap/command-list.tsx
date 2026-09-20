@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Button } from "@ctrl-ui/react/ui/button";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import type { CommandListProps } from "./command-items";
 
@@ -10,16 +11,6 @@ export function CommandList({
   onRegisterKeyHandler,
 }: CommandListProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
-
-  const selectItem = useCallback(
-    (index: number) => {
-      const item = items[index];
-      if (item) {
-        command(item);
-      }
-    },
-    [items, command]
-  );
 
   useEffect(() => {
     setSelectedIndex(0);
@@ -40,7 +31,10 @@ export function CommandList({
       if (event.key === "Enter") {
         event.preventDefault();
         event.stopPropagation();
-        selectItem(selectedIndex);
+        const selected = items[selectedIndex];
+        if (selected) {
+          command(selected);
+        }
         return true;
       }
 
@@ -48,7 +42,7 @@ export function CommandList({
     };
 
     onRegisterKeyHandler(handleKeyDown);
-  }, [items.length, selectedIndex, selectItem, onRegisterKeyHandler]);
+  }, [items, command, selectedIndex, onRegisterKeyHandler]);
 
   if (items.length === 0) {
     return null;
@@ -61,34 +55,36 @@ export function CommandList({
     >
       {items.map((item, index) => {
         const Icon = item.icon;
+        const isSelected = selectedIndex === index;
         return (
-          <button
+          <Button
+            active={isSelected}
             className={cn(
-              "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm outline-none",
-              "hover:bg-muted",
-              selectedIndex === index && "bg-muted"
+              "h-auto w-full justify-start gap-2 rounded-lg px-2 py-1.5 text-left text-sm",
+              isSelected && "bg-muted"
             )}
             key={item.title}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              selectItem(index);
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              command(item);
             }}
-            onMouseDown={(e) => {
-              e.preventDefault();
+            onMouseDown={(event) => {
+              event.preventDefault();
             }}
-            type="button"
+            size="md"
+            variant="ghost"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-md border bg-background">
+            <span className="flex h-8 w-8 items-center justify-center rounded-md border bg-background">
               <Icon className="h-4 w-4" />
-            </div>
-            <div>
-              <p className="font-medium">{item.title}</p>
-              <p className="text-muted-foreground text-xs">
+            </span>
+            <span className="block">
+              <span className="block font-medium">{item.title}</span>
+              <span className="block text-muted-foreground text-xs">
                 {item.description}
-              </p>
-            </div>
-          </button>
+              </span>
+            </span>
+          </Button>
         );
       })}
     </div>

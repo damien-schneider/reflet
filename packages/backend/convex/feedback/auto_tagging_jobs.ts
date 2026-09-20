@@ -63,6 +63,7 @@ export const saveAiAnalysis = internalMutation({
     ),
     priorityReasoning: v.optional(v.string()),
     timeEstimate: v.optional(v.string()),
+    usefulness: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const feedback = await ctx.db.get(args.feedbackId);
@@ -88,6 +89,11 @@ export const saveAiAnalysis = internalMutation({
     if (args.timeEstimate) {
       updates.aiTimeEstimate = args.timeEstimate;
       updates.aiTimeEstimateGeneratedAt = now;
+    }
+
+    if (args.usefulness !== undefined) {
+      updates.aiUsefulness = args.usefulness;
+      updates.aiUsefulnessGeneratedAt = now;
     }
 
     await ctx.db.patch(args.feedbackId, updates);

@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import { Calendar } from "@ctrl-ui/react/ui/calendar";
 import {
   Popover,
@@ -34,8 +35,8 @@ export function DeadlineDisplay({
     <Popover onOpenChange={onOpenChange} open={isOpen}>
       {hasDeadline && deadlineDate ? (
         <PopoverTrigger
-          className="flex cursor-pointer select-none items-center"
-          render={<button type="button" />}
+          aria-label="Change deadline"
+          render={<Button className="h-auto select-none p-0" variant="quiet" />}
         >
           <TagBadge
             className={cn(
@@ -51,8 +52,13 @@ export function DeadlineDisplay({
         </PopoverTrigger>
       ) : (
         <PopoverTrigger
-          className="flex h-8 cursor-pointer select-none items-center gap-1.5 rounded-full border border-input border-dashed bg-transparent px-3 text-xs transition-colors"
-          render={<button type="button" />}
+          aria-label="Change deadline"
+          render={
+            <Button
+              className="h-8 select-none gap-1.5 rounded-full border border-input border-dashed px-3 text-xs transition-colors"
+              variant="quiet"
+            />
+          }
         >
           <CalendarCheck className="h-3 w-3 text-muted-foreground" />
           <span className="text-muted-foreground">Deadline</span>
@@ -69,14 +75,15 @@ export function DeadlineDisplay({
           selected={deadlineDate ?? undefined}
         />
         {hasDeadline && (
-          <button
-            className="flex w-full items-center justify-center gap-1 border-t pt-2 text-muted-foreground text-xs hover:text-foreground"
+          <Button
+            className="mt-2 h-auto w-full gap-1 border-t pt-2 text-xs"
             onClick={onClear}
-            type="button"
+            size="xs"
+            variant="quiet"
           >
             <X className="h-3 w-3" />
             Clear deadline
-          </button>
+          </Button>
         )}
       </PopoverContent>
     </Popover>

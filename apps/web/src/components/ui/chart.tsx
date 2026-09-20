@@ -5,8 +5,9 @@ import * as RechartsPrimitive from "recharts";
 
 import { cn } from "@/lib/utils";
 
-// Format: { THEME_NAME: CSS_SELECTOR }
 const THEMES = { dark: ".dark", light: "" } as const;
+type ChartTheme = keyof typeof THEMES;
+const CHART_THEMES: readonly ChartTheme[] = ["light", "dark"];
 
 export type ChartConfig = {
   [k in string]: {
@@ -71,35 +72,26 @@ function ChartContainer({
 
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
   const colorConfig = Object.entries(config).filter(
-    ([, config]) => config.theme || config.color
+    ([, entry]) => entry.theme || entry.color
   );
 
-  if (!colorConfig.length) {
+  if (colorConfig.length === 0) {
     return null;
   }
 
-  return (
-    <style
-      dangerouslySetInnerHTML={{
-        __html: Object.entries(THEMES)
-          .map(
-            ([theme, prefix]) => `
-${prefix} [data-chart=${id}] {
-${colorConfig
-  .map(([key, itemConfig]) => {
-    const color =
-      itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
-      itemConfig.color;
-    return color ? `  --color-${key}: ${color};` : null;
-  })
-  .join("\n")}
-}
-`
-          )
-          .join("\n"),
-      }}
-    />
-  );
+  const css = CHART_THEMES.map((theme) => {
+    const declarations = colorConfig
+      .map(([key, itemConfig]) => {
+        const color = itemConfig.theme?.[theme] ?? itemConfig.color;
+        return color ? `  --color-${key}: ${color};` : "";
+      })
+      .filter((declaration) => declaration !== "")
+      .join("\n");
+
+    return `${THEMES[theme]} [data-chart=${id}] {\n${declarations}\n}`;
+  }).join("\n");
+
+  return <style dangerouslySetInnerHTML={{ __html: css }} />;
 };
 
 const ChartTooltip = RechartsPrimitive.Tooltip;
@@ -128,7 +120,7 @@ function ChartTooltipContent({
   }) {
   const { config } = useChart();
 
-  const tooltipLabel = React.useMemo(() => {
+  const renderTooltipLabel = () => {
     if (hideLabel || !payload?.length) {
       return null;
     }
@@ -154,15 +146,7 @@ function ChartTooltipContent({
     }
 
     return <div className={cn("font-medium", labelClassName)}>{value}</div>;
-  }, [
-    label,
-    labelFormatter,
-    payload,
-    hideLabel,
-    labelClassName,
-    config,
-    labelKey,
-  ]);
+  };
 
   if (!active || !payload?.length) {
     return null;
@@ -177,7 +161,7 @@ function ChartTooltipContent({
         className
       )}
     >
-      {!nestLabel ? tooltipLabel : null}
+      {nestLabel ? null : renderTooltipLabel()}
       <div className="grid gap-1.5">
         {payload
           .filter((item) => item.type !== "none")
@@ -227,7 +211,7 @@ function ChartTooltipContent({
                       )}
                     >
                       <div className="grid gap-1.5">
-                        {nestLabel ? tooltipLabel : null}
+                        {nestLabel ? renderTooltipLabel() : null}
                         <span className="text-muted-foreground">
                           {itemConfig?.label || item.name}
                         </span>
@@ -307,6 +291,15 @@ function ChartLegendContent({
   );
 }
 
+const readStringEntry = (source: unknown, key: string): string | undefined => {
+  if (typeof source !== "object" || source === null) {
+    return undefined;
+  }
+
+  const value = Reflect.get(source, key);
+  return typeof value === "string" ? value : undefined;
+};
+
 function getPayloadConfigFromPayload(
   config: ChartConfig,
   payload: unknown,
@@ -316,24 +309,9 @@ function getPayloadConfigFromPayload(
     return undefined;
   }
 
-  const payloadRecord = payload as Record<string, unknown>;
-
-  const nestedPayload =
-    typeof payloadRecord.payload === "object" && payloadRecord.payload !== null
-      ? (payloadRecord.payload as Record<string, unknown>)
-      : undefined;
-
-  let configLabelKey: string = key;
-
-  if (key in payloadRecord && typeof payloadRecord[key] === "string") {
-    configLabelKey = payloadRecord[key] as string;
-  } else if (
-    nestedPayload &&
-    key in nestedPayload &&
-    typeof nestedPayload[key] === "string"
-  ) {
-    configLabelKey = nestedPayload[key] as string;
-  }
+  const nestedPayload = "payload" in payload ? payload.payload : undefined;
+  const configLabelKey =
+    readStringEntry(payload, key) ?? readStringEntry(nestedPayload, key) ?? key;
 
   return configLabelKey in config ? config[configLabelKey] : config[key];
 }

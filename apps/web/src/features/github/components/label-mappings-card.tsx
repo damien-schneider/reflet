@@ -11,6 +11,14 @@ import {
   DialogTitle,
 } from "@ctrl-ui/react/ui/dialog";
 import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@ctrl-ui/react/ui/empty";
+import { Field, FieldLabel } from "@ctrl-ui/react/ui/field";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -18,8 +26,14 @@ import {
   SelectValue,
 } from "@ctrl-ui/react/ui/select";
 import { Switch } from "@ctrl-ui/react/ui/switch";
-import { Plus, Trash } from "@phosphor-icons/react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@ctrl-ui/react/ui/tooltip";
+import { Plus, Tag, Trash } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import type { CSSProperties } from "react";
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Text } from "@/components/ui/typography";
@@ -75,6 +89,90 @@ interface LabelMappingsCardProps {
   tags: RefletTag[];
 }
 
+const SIX_DIGIT_HEX = /^#?([\da-f]{6})$/i;
+const LIGHT_FILL_LUMINANCE = 0.5;
+const SWATCH_CLASS = "h-3 w-3 rounded-full bg-(--label-fill)";
+const CHIP_CLASS = "bg-(--label-fill) text-(--label-ink)";
+
+function labelVars(color: string | undefined): CSSProperties | undefined {
+  if (!color) {
+    return;
+  }
+  const digits = SIX_DIGIT_HEX.exec(color)?.[1];
+  const luminance = digits
+    ? (0.299 * Number.parseInt(digits.slice(0, 2), 16) +
+        0.587 * Number.parseInt(digits.slice(2, 4), 16) +
+        0.114 * Number.parseInt(digits.slice(4, 6), 16)) /
+      255
+    : 0;
+  return {
+    "--label-fill": color,
+    "--label-ink":
+      luminance > LIGHT_FILL_LUMINANCE
+        ? "var(--band)"
+        : "var(--band-foreground)",
+  };
+}
+
+function MappingRow({
+  mapping,
+  isAdmin,
+  onDelete,
+}: {
+  isAdmin: boolean;
+  mapping: LabelMapping;
+  onDelete: () => void;
+}) {
+  const labelFill = mapping.githubLabelColor
+    ? `#${mapping.githubLabelColor}`
+    : undefined;
+  const tagFill = mapping.tagColor ? `#${mapping.tagColor}` : undefined;
+
+  return (
+    <div className="flex items-center justify-between rounded-lg border p-3">
+      <div className="flex items-center gap-3">
+        <Badge
+          className={labelFill ? CHIP_CLASS : undefined}
+          style={labelVars(labelFill)}
+        >
+          {mapping.githubLabelName}
+        </Badge>
+        {mapping.tagName && (
+          <>
+            <Text className="text-muted-foreground">→</Text>
+            <Badge
+              className={tagFill ? CHIP_CLASS : undefined}
+              style={labelVars(tagFill)}
+            >
+              {mapping.tagName}
+            </Badge>
+          </>
+        )}
+      </div>
+      <div className="flex items-center gap-2">
+        {mapping.autoSync ? <Badge>Auto-sync</Badge> : null}
+        {isAdmin ? (
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  aria-label={`Remove the ${mapping.githubLabelName} mapping`}
+                  iconOnly
+                  onClick={onDelete}
+                  variant="ghost"
+                >
+                  <Trash className="h-4 w-4" />
+                </Button>
+              }
+            />
+            <TooltipContent>Remove mapping</TooltipContent>
+          </Tooltip>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 export function LabelMappingsSection({
   mappings,
   githubLabels,
@@ -113,7 +211,6 @@ export function LabelMappingsSection({
       targetTagId: tags.find((t) => t._id === selectedTag)?._id,
     });
 
-    // Reset form
     setSelectedLabel("");
     setSelectedTag("");
     setAutoSync(true);
@@ -135,59 +232,26 @@ export function LabelMappingsSection({
         {mappings.length > 0 ? (
           <div className="space-y-3">
             {mappings.map((mapping) => (
-              <div
-                className="flex items-center justify-between rounded-lg border p-3"
+              <MappingRow
+                isAdmin={isAdmin}
                 key={mapping._id}
-              >
-                <div className="flex items-center gap-3">
-                  <Badge
-                    style={{
-                      backgroundColor: mapping.githubLabelColor
-                        ? `#${mapping.githubLabelColor}`
-                        : undefined,
-                      color: mapping.githubLabelColor
-                        ? getContrastColor(mapping.githubLabelColor)
-                        : undefined,
-                    }}
-                  >
-                    {mapping.githubLabelName}
-                  </Badge>
-                  {mapping.tagName && (
-                    <>
-                      <Text className="text-muted-foreground">→</Text>
-                      <Badge
-                        style={{
-                          backgroundColor: mapping.tagColor
-                            ? `#${mapping.tagColor}`
-                            : undefined,
-                        }}
-                      >
-                        {mapping.tagName}
-                      </Badge>
-                    </>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  {mapping.autoSync ? <Badge>Auto-sync</Badge> : null}
-                  {isAdmin ? (
-                    <Button
-                      iconOnly
-                      onClick={() => onDeleteMapping(mapping._id)}
-                      variant="ghost"
-                    >
-                      <Trash className="h-4 w-4" />
-                    </Button>
-                  ) : null}
-                </div>
-              </div>
+                mapping={mapping}
+                onDelete={() => onDeleteMapping(mapping._id)}
+              />
             ))}
           </div>
         ) : (
-          <div className="py-6 text-center">
-            <Text className="text-muted-foreground text-sm">
-              No label mappings yet. Add one to sync issues by label.
-            </Text>
-          </div>
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia>
+                <Tag />
+              </EmptyMedia>
+              <EmptyTitle>No label mappings yet</EmptyTitle>
+              <EmptyDescription>
+                Map a GitHub label to a Reflet tag to sync issues by label.
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         )}
       </div>
 
@@ -202,13 +266,13 @@ export function LabelMappingsSection({
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>GitHub Label</Label>
+            <Field>
+              <FieldLabel htmlFor="github-label">GitHub Label</FieldLabel>
               <Select
                 onValueChange={(value) => setSelectedLabel(value ?? "")}
                 value={selectedLabel}
               >
-                <SelectTrigger>
+                <SelectTrigger id="github-label">
                   <SelectValue
                     placeholder={
                       isLoadingLabels ? "Loading labels..." : "Select a label"
@@ -220,8 +284,8 @@ export function LabelMappingsSection({
                     <SelectItem key={label.id} value={label.name}>
                       <div className="flex items-center gap-2">
                         <div
-                          className="h-3 w-3 rounded-full"
-                          style={{ backgroundColor: `#${label.color}` }}
+                          className={SWATCH_CLASS}
+                          style={labelVars(`#${label.color}`)}
                         />
                         {label.name}
                       </div>
@@ -229,15 +293,15 @@ export function LabelMappingsSection({
                   ))}
                 </SelectContent>
               </Select>
-            </div>
+            </Field>
 
-            <div className="space-y-2">
-              <Label>Tag (optional)</Label>
+            <Field>
+              <FieldLabel htmlFor="reflet-tag">Tag (optional)</FieldLabel>
               <Select
                 onValueChange={(value) => setSelectedTag(value ?? "")}
                 value={selectedTag}
               >
-                <SelectTrigger>
+                <SelectTrigger id="reflet-tag">
                   <SelectValue placeholder="Select a tag (optional)" />
                 </SelectTrigger>
                 <SelectContent>
@@ -246,8 +310,8 @@ export function LabelMappingsSection({
                     <SelectItem key={tag._id} value={tag._id}>
                       <div className="flex items-center gap-2">
                         <div
-                          className="h-3 w-3 rounded-full"
-                          style={{ backgroundColor: tag.color }}
+                          className={SWATCH_CLASS}
+                          style={labelVars(tag.color)}
                         />
                         {tag.name}
                       </div>
@@ -255,7 +319,7 @@ export function LabelMappingsSection({
                   ))}
                 </SelectContent>
               </Select>
-            </div>
+            </Field>
 
             <div className="flex items-center justify-between">
               <div>
@@ -303,15 +367,4 @@ export function LabelMappingsSection({
       </Dialog>
     </>
   );
-}
-
-/**
- * Get contrasting text color for a background color
- */
-function getContrastColor(hexColor: string): string {
-  const r = Number.parseInt(hexColor.slice(0, 2), 16);
-  const g = Number.parseInt(hexColor.slice(2, 4), 16);
-  const b = Number.parseInt(hexColor.slice(4, 6), 16);
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.5 ? "#000000" : "#ffffff";
 }

@@ -29,13 +29,14 @@ export function renderCardModeHTML(
   }
 
   return `
-    <div class="reflet-changelog-card ${position}" data-action="open-panel">
+    <div class="reflet-changelog-card ${position}">
+      <button class="reflet-changelog-card-open" data-action="open-panel" type="button" aria-label="What's New: ${escapeHtml(latest.title)}"></button>
       <div class="reflet-changelog-card-header">
         <span class="reflet-changelog-card-icon">${megaphoneIcon}</span>
         <span class="reflet-changelog-card-label">What's New</span>
         ${unreadCount > 0 ? `<span class="reflet-changelog-card-badge">${unreadCount}</span>` : ""}
-        <button class="reflet-changelog-card-dismiss" data-action="dismiss" aria-label="Dismiss">${closeIcon}</button>
       </div>
+      <button class="reflet-changelog-card-dismiss" data-action="dismiss" type="button" aria-label="Dismiss">${closeIcon}</button>
       <div class="reflet-changelog-card-body">
         <div class="reflet-changelog-card-title">${escapeHtml(latest.title)}</div>
         ${latest.version ? `<div class="reflet-changelog-card-version">v${escapeHtml(latest.version)}</div>` : ""}
@@ -83,13 +84,13 @@ export function renderPanelHTML(
 
   return `
     ${overlayStart}
-    <div class="reflet-changelog-panel ${panelType}" ${panelType === "popup" ? 'onclick="event.stopPropagation()"' : ""}>
+    <div class="reflet-changelog-panel ${panelType}" role="dialog" aria-modal="${panelType === "popup"}" aria-label="What's New">
       <div class="reflet-changelog-panel-header">
         <div class="reflet-changelog-panel-header-left">
           <span class="reflet-changelog-panel-icon">${megaphoneIcon}</span>
           <h3 class="reflet-changelog-panel-title">What's New</h3>
         </div>
-        <button class="reflet-changelog-close-btn" data-action="close" aria-label="Close">${closeIcon}</button>
+        <button class="reflet-changelog-close-btn" data-action="close" type="button" aria-label="Close">${closeIcon}</button>
       </div>
 
       ${error ? renderErrorHTML(error) : ""}
@@ -113,7 +114,7 @@ export function renderEntriesListHTML(
       <div class="reflet-changelog-empty">
         <div class="reflet-changelog-empty-icon">${emptyIcon}</div>
         <p>No updates yet</p>
-        <p style="margin-top: 4px; font-size: 13px;">Check back later for product updates.</p>
+        <p class="reflet-changelog-empty-note">Check back later for product updates.</p>
       </div>
     `;
   }
@@ -124,29 +125,29 @@ export function renderEntriesListHTML(
       entry.publishedAt && entry.publishedAt > lastSeenTimestamp
     );
     html += `
-      <div class="reflet-changelog-entry" data-entry-id="${entry.id}">
-        <div class="reflet-changelog-entry-header">
+      <button class="reflet-changelog-entry" data-entry-id="${entry.id}" type="button">
+        <span class="reflet-changelog-entry-header">
           ${entry.version ? `<span class="reflet-changelog-entry-version">v${escapeHtml(entry.version)}</span>` : ""}
           ${entry.publishedAt ? `<span class="reflet-changelog-entry-date">${formatDate(entry.publishedAt)}</span>` : ""}
           ${isNew ? `<span class="reflet-changelog-entry-new">${sparkleIcon} New</span>` : ""}
-        </div>
-        <div class="reflet-changelog-entry-title">${escapeHtml(entry.title)}</div>
-        ${entry.description ? `<div class="reflet-changelog-entry-description">${escapeHtml(entry.description)}</div>` : ""}
+        </span>
+        <span class="reflet-changelog-entry-title">${escapeHtml(entry.title)}</span>
+        ${entry.description ? `<span class="reflet-changelog-entry-description">${escapeHtml(entry.description)}</span>` : ""}
         ${
           entry.feedback.length > 0
             ? `
-          <div class="reflet-changelog-entry-feedback">
+          <span class="reflet-changelog-entry-feedback">
             ${entry.feedback
               .map(
                 (fb) =>
                   `<span class="reflet-changelog-entry-feedback-item">${externalLinkIcon} ${escapeHtml(fb.title)}</span>`
               )
               .join("")}
-          </div>
+          </span>
         `
             : ""
         }
-      </div>
+      </button>
     `;
   }
   html += "</div>";
@@ -165,7 +166,7 @@ function renderErrorHTML(error: string): string {
   return `
     <div class="reflet-changelog-error">
       <p>${escapeHtml(error)}</p>
-      <button class="reflet-changelog-retry-btn" data-action="retry">Retry</button>
+      <button class="reflet-changelog-retry-btn" data-action="retry" type="button">Retry</button>
     </div>
   `;
 }

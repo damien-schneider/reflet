@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
+import { createContext, useContext, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const mockUpdateMilestone = vi.fn().mockResolvedValue(undefined);
@@ -32,9 +33,72 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
 
 vi.mock("@phosphor-icons/react", () => ({
   CheckCircle: () => <span data-testid="icon-check" />,
+  DotsThreeVertical: () => <span data-testid="icon-dots" />,
   PencilSimple: () => <span data-testid="icon-pencil" />,
   Trash: () => <span data-testid="icon-trash" />,
 }));
+
+vi.mock("@ctrl-ui/react/ui/dropdown-menu", () => {
+  const OpenContext = createContext<{ open: boolean; toggle: () => void }>({
+    open: false,
+    toggle: () => undefined,
+  });
+  return {
+    DropdownMenu: ({ children }: { children: React.ReactNode }) => {
+      const [open, setOpen] = useState(false);
+      return (
+        <OpenContext.Provider
+          value={{ open, toggle: () => setOpen((value) => !value) }}
+        >
+          {children}
+        </OpenContext.Provider>
+      );
+    },
+    DropdownMenuContent: ({ children }: { children: React.ReactNode }) => {
+      const { open } = useContext(OpenContext);
+      return open ? (
+        <div data-testid="dropdown-content" role="menu">
+          {children}
+        </div>
+      ) : null;
+    },
+    DropdownMenuItem: ({
+      children,
+      className,
+      onClick,
+    }: {
+      children: React.ReactNode;
+      className?: string;
+      onClick?: () => void;
+    }) => (
+      <button className={className} onClick={onClick} type="button">
+        {children}
+      </button>
+    ),
+    DropdownMenuSeparator: () => <hr />,
+    DropdownMenuTrigger: ({
+      children,
+      className,
+      ...rest
+    }: {
+      "aria-label"?: string;
+      children: React.ReactNode;
+      className?: string;
+    }) => {
+      const { toggle } = useContext(OpenContext);
+      return (
+        <button
+          aria-label={rest["aria-label"]}
+          className={className}
+          onClick={toggle}
+          type="button"
+        >
+          {children}
+        </button>
+      );
+    },
+  };
+});
 
 vi.mock("motion/react", () => ({
   motion: {
@@ -193,12 +257,6 @@ vi.mock("@/lib/milestone-deadline", () => ({
   getDeadlineInfo: vi.fn(() => null),
 }));
 
-vi.mock("@/lib/tag-colors", () => ({
-  getTagColorValues: () => ({ bg: "#eff6ff", text: "#3b82f6" }),
-  isValidTagColor: () => true,
-  resolveTagColor: (color: string) => color,
-}));
-
 vi.mock("@/lib/utils", () => ({
   cn: (...classes: unknown[]) => classes.filter(Boolean).join(" "),
 }));
@@ -267,7 +325,7 @@ describe("MilestoneSegment", () => {
         onClick={vi.fn()}
       />
     );
-    expect(screen.getAllByText("Beta")).toHaveLength(2); // default and hover state
+    expect(screen.getByText("Beta")).toBeInTheDocument();
   });
 
   it("renders emoji", () => {
@@ -320,6 +378,39 @@ describe("MilestoneSegment", () => {
       />
     );
     expect(screen.getByTestId("context-list")).toBeInTheDocument();
+  });
+
+  it("exposes admin actions through a labelled keyboard-reachable trigger", async () => {
+    const user = userEvent.setup();
+    render(
+      <MilestoneSegment
+        isActive={false}
+        isAdmin
+        milestone={makeMilestone({ name: "Beta" })}
+        onClick={vi.fn()}
+      />
+    );
+    const trigger = screen.getByRole("button", {
+      name: "Actions for Beta",
+    });
+    expect(screen.queryByTestId("dropdown-content")).toBeNull();
+    trigger.focus();
+    await user.keyboard("{Enter}");
+    expect(screen.getByTestId("dropdown-content")).toBeInTheDocument();
+  });
+
+  it("does not render an actions trigger for non-admins", () => {
+    render(
+      <MilestoneSegment
+        isActive={false}
+        isAdmin={false}
+        milestone={makeMilestone({ name: "Beta" })}
+        onClick={vi.fn()}
+      />
+    );
+    expect(
+      screen.queryByRole("button", { name: "Actions for Beta" })
+    ).toBeNull();
   });
 
   it("context menu shows Edit option", () => {
@@ -643,32 +734,34 @@ describe("MilestoneSegment", () => {
     expect(screen.getByText("Save")).toBeDisabled();
   });
 
-  it("renders overdue dot when deadline is overdue", async () => {
+  it("announces the overdue deadline in the accessible name", async () => {
     const { getDeadlineInfo } = await import("@/lib/milestone-deadline");
     vi.mocked(getDeadlineInfo).mockReturnValue({
+      daysRemaining: -2,
+      label: "Jan 1, 2025",
       relativeLabel: "2 days overdue",
       status: "overdue",
-    } as never);
-    const { container } = render(
+    });
+    render(
       <MilestoneSegment
         isActive={false}
         milestone={makeMilestone({ targetDate: Date.now() - 86_400_000 })}
         onClick={vi.fn()}
       />
     );
-    expect(container.querySelector(".bg-red-500")).toBeInTheDocument();
+    expect(screen.getByLabelText(/2 days overdue/)).toBeInTheDocument();
     vi.mocked(getDeadlineInfo).mockReturnValue(null);
   });
 
-  it("does not render overdue dot when not overdue", () => {
-    const { container } = render(
+  it("omits the overdue notice when the milestone is on track", () => {
+    render(
       <MilestoneSegment
         isActive={false}
         milestone={makeMilestone()}
         onClick={vi.fn()}
       />
     );
-    expect(container.querySelector(".bg-red-500")).toBeNull();
+    expect(screen.queryByLabelText(/overdue/i)).toBeNull();
   });
 
   it("updates name in edit dialog", async () => {

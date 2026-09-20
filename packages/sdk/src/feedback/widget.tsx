@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import {
   DEFAULT_WIDGET_LABELS,
   DEFAULT_WIDGET_OFFSET,
-  type FeedbackWidgetCategory,
   type RefletFeedbackProps,
 } from "./types";
 import { Annotator } from "./ui/annotator";
@@ -11,15 +10,8 @@ import { ElementPicker } from "./ui/picker";
 import { ShadowPortal } from "./ui/shadow-portal";
 import { matchesHotkey, useWidgetState } from "./ui/use-widget-state";
 
-const DEFAULT_CATEGORIES: FeedbackWidgetCategory[] = [
-  "bug",
-  "idea",
-  "question",
-];
-
 export function RefletFeedback(props: RefletFeedbackProps) {
   const {
-    categories = DEFAULT_CATEGORIES,
     enabled = true,
     hotkey = null,
     offset = DEFAULT_WIDGET_OFFSET,
@@ -66,11 +58,7 @@ export function RefletFeedback(props: RefletFeedbackProps) {
         className="capture-halo"
         data-active={state.isCapturing}
       />
-      <FloatingWidget
-        labels={labels}
-        options={{ categories, position }}
-        state={state}
-      />
+      <FloatingWidget labels={labels} position={position} state={state} />
 
       {isOpen && state.step === "annotate" && state.activeScreenshot && (
         <Annotator

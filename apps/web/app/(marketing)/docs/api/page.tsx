@@ -1,3 +1,11 @@
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@ctrl-ui/react/ui/table";
 import type { Metadata } from "next";
 
 import { generatePageMetadata } from "@/lib/seo-config";
@@ -24,7 +32,7 @@ export default function ApiReferencePage() {
   return (
     <div className="mx-auto max-w-4xl py-12">
       <div className="mb-10">
-        <h1 className="font-display text-4xl text-olive-950 leading-tight tracking-tight sm:text-5xl dark:text-olive-100">
+        <h1 className="font-display text-4xl text-foreground leading-tight tracking-tight sm:text-5xl">
           REST API Reference
         </h1>
         <p className="mt-2 text-base text-muted-foreground sm:text-xl">
@@ -36,7 +44,7 @@ export default function ApiReferencePage() {
       {/* Authentication */}
       <section className="mb-12">
         <h2
-          className="mb-4 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100"
+          className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight"
           id="authentication"
         >
           Authentication
@@ -93,7 +101,7 @@ export default function ApiReferencePage() {
       {/* Base URL */}
       <section className="mb-12">
         <h2
-          className="mb-4 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100"
+          className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight"
           id="base-url"
         >
           Base URL
@@ -117,7 +125,7 @@ export default function ApiReferencePage() {
       {/* Rate Limiting */}
       <section className="mb-12">
         <h2
-          className="mb-4 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100"
+          className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight"
           id="rate-limiting"
         >
           Rate Limiting
@@ -128,44 +136,44 @@ export default function ApiReferencePage() {
           <code className="rounded bg-muted px-1 py-0.5 text-xs">429</code>{" "}
           status code. Check the response headers to monitor your usage.
         </p>
-        <div className="overflow-x-auto rounded-lg border border-border">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b bg-muted/50">
-                <th className="px-4 py-2 text-left font-medium">Header</th>
-                <th className="px-4 py-2 text-left font-medium">Description</th>
-              </tr>
-            </thead>
-            <tbody className="text-muted-foreground">
-              <tr className="border-b">
-                <td className="px-4 py-2">
+        <div className="overflow-hidden rounded-lg border border-border">
+          <Table className="text-sm">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Header</TableHead>
+                <TableHead>Description</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="text-muted-foreground">
+              <TableRow>
+                <TableCell>
                   <code className="text-foreground text-xs">
                     X-RateLimit-Limit
                   </code>
-                </td>
-                <td className="px-4 py-2">
+                </TableCell>
+                <TableCell className="whitespace-normal">
                   Maximum number of requests allowed per window.
-                </td>
-              </tr>
-              <tr>
-                <td className="px-4 py-2">
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>
                   <code className="text-foreground text-xs">
                     X-RateLimit-Remaining
                   </code>
-                </td>
-                <td className="px-4 py-2">
+                </TableCell>
+                <TableCell className="whitespace-normal">
                   Number of requests remaining in the current window.
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
         </div>
       </section>
 
       {/* Error Format */}
       <section className="mb-12">
         <h2
-          className="mb-4 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100"
+          className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight"
           id="errors"
         >
           Errors
@@ -180,53 +188,55 @@ export default function ApiReferencePage() {
   "error": "Error message description"
 }`}</code>
         </pre>
-        <div className="overflow-x-auto rounded-lg border border-border">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b bg-muted/50">
-                <th className="px-4 py-2 text-left font-medium">Status Code</th>
-                <th className="px-4 py-2 text-left font-medium">Meaning</th>
-                <th className="px-4 py-2 text-left font-medium">Description</th>
-              </tr>
-            </thead>
-            <tbody className="text-muted-foreground">
-              <tr className="border-b">
-                <td className="px-4 py-2">
+        <div className="overflow-hidden rounded-lg border border-border">
+          <Table className="text-sm">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Status Code</TableHead>
+                <TableHead>Meaning</TableHead>
+                <TableHead>Description</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="text-muted-foreground">
+              <TableRow>
+                <TableCell>
                   <code className="text-foreground text-xs">400</code>
-                </td>
-                <td className="px-4 py-2">Bad Request</td>
-                <td className="px-4 py-2">
+                </TableCell>
+                <TableCell>Bad Request</TableCell>
+                <TableCell className="whitespace-normal">
                   The request body or parameters are invalid.
-                </td>
-              </tr>
-              <tr className="border-b">
-                <td className="px-4 py-2">
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>
                   <code className="text-foreground text-xs">401</code>
-                </td>
-                <td className="px-4 py-2">Unauthorized</td>
-                <td className="px-4 py-2">Missing or invalid API key.</td>
-              </tr>
-              <tr className="border-b">
-                <td className="px-4 py-2">
+                </TableCell>
+                <TableCell>Unauthorized</TableCell>
+                <TableCell className="whitespace-normal">
+                  Missing or invalid API key.
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>
                   <code className="text-foreground text-xs">404</code>
-                </td>
-                <td className="px-4 py-2">Not Found</td>
-                <td className="px-4 py-2">
+                </TableCell>
+                <TableCell>Not Found</TableCell>
+                <TableCell className="whitespace-normal">
                   The requested resource does not exist.
-                </td>
-              </tr>
-              <tr>
-                <td className="px-4 py-2">
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>
                   <code className="text-foreground text-xs">429</code>
-                </td>
-                <td className="px-4 py-2">Rate Limited</td>
-                <td className="px-4 py-2">
+                </TableCell>
+                <TableCell>Rate Limited</TableCell>
+                <TableCell className="whitespace-normal">
                   Too many requests. Wait and retry after the rate limit window
                   resets.
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
         </div>
       </section>
     </div>

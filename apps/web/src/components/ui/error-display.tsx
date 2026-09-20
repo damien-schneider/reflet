@@ -21,7 +21,7 @@ const errorDisplayVariants = cva(
   }
 );
 
-const iconVariants = cva("text-destructive", {
+const iconVariants = cva("text-destructive-text", {
   defaultVariants: {
     size: "md",
   },

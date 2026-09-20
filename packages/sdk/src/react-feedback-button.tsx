@@ -7,7 +7,6 @@ import {
   useState,
 } from "react";
 import {
-  type FeedbackCategory,
   FeedbackDialog,
   type FeedbackDialogLabels,
 } from "./react-feedback-dialog";
@@ -26,14 +25,10 @@ export interface FeedbackButtonProps {
   asChild?: boolean;
   /** API base URL override */
   baseUrl?: string;
-  /** Categories to show */
-  categories?: FeedbackCategory[];
   /** Custom trigger content or element (used with asChild) */
   children?: ReactNode;
   /** Custom CSS class for the default trigger button */
   className?: string;
-  /** Default selected category */
-  defaultCategory?: FeedbackCategory;
   /** Custom labels / i18n */
   labels?: FeedbackDialogLabels & { trigger?: string };
   /** Called when dialog closes */
@@ -87,8 +82,6 @@ export function FeedbackButton({
   userToken,
   theme = "auto",
   primaryColor,
-  defaultCategory = "feature",
-  categories,
   labels,
   onSubmit,
   onOpen,
@@ -145,8 +138,6 @@ export function FeedbackButton({
       {trigger}
       <FeedbackDialog
         baseUrl={baseUrl}
-        categories={categories}
-        defaultCategory={defaultCategory}
         labels={labels}
         onClose={onClose}
         onOpen={onOpen}

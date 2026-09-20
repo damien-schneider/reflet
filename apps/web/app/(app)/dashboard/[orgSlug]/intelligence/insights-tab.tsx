@@ -30,7 +30,7 @@ function InsightsList({
 }: {
   insights:
     | {
-        _id: string;
+        _id: Id<"intelligenceInsights">;
         type: string;
         title: string;
         summary: string;
@@ -41,14 +41,14 @@ function InsightsList({
       }[]
     | undefined;
   statusFilter: string;
-  onDismiss: (id: string) => void;
-  onConvert: (id: string) => void;
+  onDismiss: (id: Id<"intelligenceInsights">) => void;
+  onConvert: (id: Id<"intelligenceInsights">) => void;
 }) {
   if (insights === undefined) {
     return (
       <div className="space-y-4">
         {["a", "b", "c"].map((id) => (
-          <Skeleton className="h-32 w-full" key={id} />
+          <Skeleton className="h-44 w-full" key={id} />
         ))}
       </div>
     );
@@ -104,11 +104,9 @@ export function InsightsTab({
     api.intelligence.insights.convertToFeedback
   );
 
-  const handleDismiss = async (insightId: string) => {
+  const handleDismiss = async (insightId: Id<"intelligenceInsights">) => {
     try {
-      await dismissInsight({
-        insightId: insightId as Id<"intelligenceInsights">,
-      });
+      await dismissInsight({ insightId });
       toast.success("Insight dismissed");
     } catch (error: unknown) {
       toast.error("Failed to dismiss insight", {
@@ -120,11 +118,9 @@ export function InsightsTab({
     }
   };
 
-  const handleConvert = async (insightId: string) => {
+  const handleConvert = async (insightId: Id<"intelligenceInsights">) => {
     try {
-      await convertToFeedback({
-        insightId: insightId as Id<"intelligenceInsights">,
-      });
+      await convertToFeedback({ insightId });
       toast.success("Feedback item created from insight");
     } catch (error: unknown) {
       toast.error("Failed to convert insight", {

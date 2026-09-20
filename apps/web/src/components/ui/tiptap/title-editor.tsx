@@ -4,7 +4,7 @@ import Placeholder from "@tiptap/extension-placeholder";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import type React from "react";
-import { useCallback, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import "./styles.css";
 
@@ -31,7 +31,6 @@ export function TiptapTitleEditor({
   onEnter,
   onSubmit,
 }: TiptapTitleEditorProps) {
-  // Use refs to always access the latest callbacks
   const onEnterRef = useRef(onEnter);
   const onSubmitRef = useRef(onSubmit);
 
@@ -52,13 +51,11 @@ export function TiptapTitleEditor({
         class: "tiptap-title-editor outline-none w-full",
       },
       handleKeyDown: (_view, event) => {
-        // Handle mod+enter for submit
         if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
           event.preventDefault();
           onSubmitRef.current?.();
           return true;
         }
-        // Prevent Enter from creating new lines
         if (event.key === "Enter") {
           event.preventDefault();
           onEnterRef.current?.();
@@ -70,13 +67,11 @@ export function TiptapTitleEditor({
     extensions: [
       StarterKit.configure({
         blockquote: false,
-        // Disable marks for clean title
         bold: false,
         bulletList: false,
         code: false,
         codeBlock: false,
         hardBreak: false,
-        // Disable all block elements - title is single line
         heading: false,
         horizontalRule: false,
         italic: false,
@@ -90,13 +85,10 @@ export function TiptapTitleEditor({
     ],
     immediatelyRender: false,
     onUpdate: ({ editor: ed }) => {
-      // Get plain text content
-      const text = ed.getText();
-      onChange(text);
+      onChange(ed.getText());
     },
   });
 
-  // Sync external value changes
   useEffect(() => {
     if (!editor) return;
 
@@ -106,15 +98,14 @@ export function TiptapTitleEditor({
     }
   }, [editor, value]);
 
-  // Update editable state
   useEffect(() => {
     if (!editor) return;
     editor.setEditable(!disabled);
   }, [editor, disabled]);
 
-  const handleContainerClick = useCallback(() => {
+  const handleContainerClick = () => {
     editor?.commands.focus();
-  }, [editor]);
+  };
 
   return (
     <div

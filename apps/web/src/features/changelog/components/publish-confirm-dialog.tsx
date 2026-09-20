@@ -27,6 +27,8 @@ import { useState } from "react";
 import type { FeedbackLinkStatus } from "./feedback-section-header";
 import { SchedulePicker } from "./schedule-picker";
 
+type PublishMode = "now" | "schedule";
+
 const STATUS_DISPLAY_LABELS: Record<FeedbackLinkStatus, string> = {
   closed: "Closed",
   completed: "Completed",
@@ -64,7 +66,7 @@ export function PublishConfirmDialog({
   linkedFeedbackCount = 0,
   feedbackLinkStatus = "completed",
 }: PublishConfirmDialogProps) {
-  const [mode, setMode] = useState<"now" | "schedule">("now");
+  const [mode, setMode] = useState<PublishMode>("now");
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>();
 
   const orgData = useQuery(api.organizations.queries.get, {
@@ -108,21 +110,16 @@ export function PublishConfirmDialog({
         </DialogHeader>
 
         <div className="space-y-3 py-2">
-          {/* Release info */}
           <div className="rounded-lg border p-3">
             <p className="font-medium text-sm">{title || "Untitled Release"}</p>
             {version && (
-              <Badge className="mt-1" variant="outline">
+              <Badge className="mt-1 tabular-nums" variant="outline">
                 {version}
               </Badge>
             )}
           </div>
 
-          {/* Publish mode selector */}
-          <Tabs
-            onValueChange={(v) => setMode(v as "now" | "schedule")}
-            value={mode}
-          >
+          <Tabs<PublishMode> onValueChange={setMode} value={mode}>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTab value="now">Publish Now</TabsTab>
               <TabsTab value="schedule">
@@ -146,7 +143,6 @@ export function PublishConfirmDialog({
             </TabsPanel>
           </Tabs>
 
-          {/* What will happen */}
           <div className="space-y-2">
             <p className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
               {mode === "schedule" ? "On scheduled publish" : "On publish"}
@@ -154,7 +150,7 @@ export function PublishConfirmDialog({
 
             <div className="flex items-center gap-2 text-sm">
               <PaperPlaneTilt className="h-4 w-4 text-muted-foreground" />
-              <span>
+              <span className="tabular-nums">
                 {subCount > 0
                   ? `Notify ${subCount} subscriber${subCount === 1 ? "" : "s"} via email`
                   : "No subscribers to notify"}
@@ -173,7 +169,7 @@ export function PublishConfirmDialog({
             {linkedFeedbackCount > 0 && feedbackLinkStatus !== "keep" && (
               <div className="flex items-center gap-2 text-sm">
                 <CheckCircle className="h-4 w-4 text-muted-foreground" />
-                <span>
+                <span className="tabular-nums">
                   Set {linkedFeedbackCount} linked feedback
                   {linkedFeedbackCount === 1 ? "" : "s"} to{" "}
                   <strong>{STATUS_DISPLAY_LABELS[feedbackLinkStatus]}</strong>

@@ -1,5 +1,6 @@
 "use client";
 
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import Link from "next/link";
@@ -20,7 +21,7 @@ export default function PublicOrgLayoutClient({
   if (org === undefined) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div>Loading...</div>
+        <Spinner />
       </div>
     );
   }
@@ -30,7 +31,7 @@ export default function PublicOrgLayoutClient({
       <div className="flex min-h-screen flex-col items-center justify-center">
         <H1 variant="page">Organization not found</H1>
         <Link
-          className="mt-4 text-olive-600 underline underline-offset-4 transition-colors hover:text-olive-700 dark:text-olive-400 dark:hover:text-olive-300"
+          className="mt-4 text-brand-text underline underline-offset-4 transition-colors hover:text-foreground"
           href="/"
         >
           Go back home

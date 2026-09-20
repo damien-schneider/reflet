@@ -1,12 +1,12 @@
 "use client";
 
 import { Button } from "@ctrl-ui/react/ui/button";
-import { toast } from "@ctrl-ui/react/ui/toast";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@ctrl-ui/react/ui/tooltip";
+  Progress,
+  ProgressIndicator,
+  ProgressTrack,
+} from "@ctrl-ui/react/ui/progress";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import { Sparkle } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
@@ -49,71 +49,60 @@ function ProcessingIndicator({
   const percentage = total > 0 ? Math.round((processed / total) * 100) : 0;
 
   return (
-    <Tooltip>
-      <TooltipTrigger
-        render={
-          <div className="flex shrink-0 items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5">
-            {/* Animated progress ring */}
-            <div className="relative h-4 w-4 shrink-0">
-              <svg
-                aria-label={`Progress: ${percentage}%`}
-                className="h-4 w-4 -rotate-90"
-                role="img"
-                viewBox="0 0 16 16"
-              >
-                <circle
-                  className="stroke-current text-muted"
-                  cx="8"
-                  cy="8"
-                  fill="none"
-                  r="6"
-                  strokeWidth="2"
-                />
-                <circle
-                  className="stroke-current text-primary transition-all duration-500 ease-out"
-                  cx="8"
-                  cy="8"
-                  fill="none"
-                  r="6"
-                  strokeDasharray={`${percentage * 0.377} 37.7`}
-                  strokeLinecap="round"
-                  strokeWidth="2"
-                />
-              </svg>
-            </div>
+    <Progress
+      aria-label="AI auto-tagging progress"
+      className="w-auto shrink-0 flex-row items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5"
+      max={total}
+      value={processed}
+    >
+      <svg
+        aria-hidden="true"
+        className="h-4 w-4 shrink-0 -rotate-90"
+        viewBox="0 0 16 16"
+      >
+        <circle
+          className="stroke-current text-muted"
+          cx="8"
+          cy="8"
+          fill="none"
+          r="6"
+          strokeWidth="2"
+        />
+        <circle
+          className="stroke-current text-primary transition-[stroke-dasharray] duration-500 ease-out"
+          cx="8"
+          cy="8"
+          fill="none"
+          r="6"
+          strokeDasharray={`${percentage * 0.377} 37.7`}
+          strokeLinecap="round"
+          strokeWidth="2"
+        />
+      </svg>
 
-            {/* Progress text */}
-            <div className="flex items-baseline gap-1">
-              <span className="font-medium text-xs tabular-nums">
-                {processed}
-                <span className="text-muted-foreground">/{total}</span>
-              </span>
-              <span className="text-[10px] text-muted-foreground">tagged</span>
-            </div>
+      <div className="flex items-baseline gap-1">
+        <span className="font-medium text-xs tabular-nums">
+          {processed}
+          <span className="text-muted-foreground">/{total}</span>
+        </span>
+        <span className="text-caption text-muted-foreground">tagged</span>
+      </div>
 
-            {/* Progress bar */}
-            <div className="h-1 w-12 overflow-hidden rounded-full bg-muted">
-              <div
-                className={cn(
-                  "h-full rounded-full transition-all duration-500 ease-out",
-                  failed > 0 ? "bg-amber-500" : "bg-primary"
-                )}
-                style={{ width: `${percentage}%` }}
-              />
-            </div>
-          </div>
-        }
-      />
-      <TooltipContent>
-        <div className="space-y-1">
-          <p className="font-medium">AI auto-tagging in progress</p>
-          <p className="text-muted-foreground">
-            {processed} of {total} items processed ({percentage}%)
-          </p>
-          {failed > 0 && <p className="text-amber-500">{failed} failed</p>}
-        </div>
-      </TooltipContent>
-    </Tooltip>
+      {failed > 0 && (
+        <span className="text-caption text-warning-text tabular-nums">
+          {failed} failed
+        </span>
+      )}
+
+      <ProgressTrack className="h-1 w-12 rounded-full bg-muted">
+        <ProgressIndicator
+          className={cn(
+            "h-full rounded-full transition-[width,background-color] duration-500 ease-out",
+            failed > 0 ? "bg-warning" : "bg-primary"
+          )}
+        />
+      </ProgressTrack>
+    </Progress>
   );
 }
 
@@ -134,7 +123,6 @@ export function TriagePulse({ organizationId }: TriagePulseProps) {
   );
   const dismissJob = useMutation(api.feedback.auto_tagging_jobs.dismissJob);
 
-  // Fire toast on status transitions
   const jobStatus = job?.status ?? null;
   const jobSuccessful = job?.successfulItems ?? 0;
   const jobFailed = job?.failedItems ?? 0;
@@ -183,7 +171,6 @@ export function TriagePulse({ organizationId }: TriagePulseProps) {
     }
   };
 
-  // Processing: show animated progress ring + bar
   if (isProcessing && job) {
     const processed = Math.min(job.processedItems, job.totalItems);
     return (
@@ -197,13 +184,10 @@ export function TriagePulse({ organizationId }: TriagePulseProps) {
 
   const handleDismissJob = () => {
     if (job) {
-      dismissJob({ jobId: job._id }).catch(() => {
-        // Dismiss errors are non-critical
-      });
+      dismissJob({ jobId: job._id }).catch(() => undefined);
     }
   };
 
-  // Completed: show clickable results indicator with popover
   if (isCompleted && job) {
     return (
       <ResultsPopover
@@ -220,14 +204,13 @@ export function TriagePulse({ organizationId }: TriagePulseProps) {
   const allTriaged = count === 0;
   const manyUntriaged = count >= MANY_UNTAGGED_THRESHOLD;
 
-  let dotColor = "bg-amber-500";
+  let dotColor = "bg-warning";
   if (allTriaged) {
-    dotColor = "bg-emerald-500";
+    dotColor = "bg-success";
   } else if (manyUntriaged) {
-    dotColor = "bg-red-500";
+    dotColor = "bg-destructive";
   }
 
-  // All caught up: calm green dot
   if (allTriaged) {
     return (
       <div className="flex shrink-0 items-center gap-1.5 px-2 text-muted-foreground text-xs">
@@ -237,7 +220,6 @@ export function TriagePulse({ organizationId }: TriagePulseProps) {
     );
   }
 
-  // Items need review: pulsing dot + action button
   return (
     <Button
       className="shrink-0 gap-1.5"
@@ -247,7 +229,7 @@ export function TriagePulse({ organizationId }: TriagePulseProps) {
     >
       <PulsingDot color={dotColor} />
       <Sparkle className="h-3.5 w-3.5" />
-      <span>
+      <span className="tabular-nums">
         {count} need{count === 1 ? "s" : ""} review
       </span>
     </Button>

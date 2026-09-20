@@ -66,7 +66,9 @@ export function PublicFeedbackComments({
 
   return (
     <div>
-      <h3 className="mb-4 font-medium">Comments ({comments?.length || 0})</h3>
+      <h3 className="mb-4 font-medium tabular-nums">
+        Comments ({comments?.length || 0})
+      </h3>
 
       {isAuthenticated ? (
         <div className="mb-6 flex gap-2">
@@ -89,13 +91,13 @@ export function PublicFeedbackComments({
           </Button>
         </div>
       ) : (
-        <button
-          className="mb-6 w-full cursor-pointer rounded-md border border-dashed p-4 text-center text-muted-foreground text-sm transition-colors hover:border-primary/50 hover:text-foreground"
+        <Button
+          className="mb-6 h-auto w-full rounded-md border border-dashed p-4 text-center text-muted-foreground text-sm transition-colors hover:border-primary/50 hover:text-foreground"
           onClick={onSubmitComment}
-          type="button"
+          variant="quiet"
         >
           Sign in to leave a comment
-        </button>
+        </Button>
       )}
 
       {comments === undefined && (

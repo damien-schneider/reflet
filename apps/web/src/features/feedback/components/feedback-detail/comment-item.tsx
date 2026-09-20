@@ -90,7 +90,6 @@ export function CommentItem({ comment, isReply = false }: CommentItemOwnProps) {
         </Avatar>
 
         <div className="min-w-0 flex-1">
-          {/* Header */}
           <div className="flex items-center gap-2">
             <span className="font-medium text-sm">
               {comment.author?.name ?? "Anonymous"}
@@ -99,13 +98,13 @@ export function CommentItem({ comment, isReply = false }: CommentItemOwnProps) {
               {formatDistanceToNow(comment.createdAt, { addSuffix: true })}
             </span>
 
-            {/* Actions menu */}
             <DropdownMenu>
               <DropdownMenuTrigger
+                aria-label="Comment actions"
                 render={(props: React.ComponentProps<"button">) => (
                   <Button
                     {...props}
-                    className="ml-auto h-6 w-6 opacity-0 transition-opacity group-hover:opacity-100"
+                    className="pointer-fine:pointer-events-none ml-auto h-6 w-6 pointer-fine:opacity-0 transition-opacity focus-visible:pointer-events-auto focus-visible:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100 data-popup-open:pointer-events-auto data-popup-open:opacity-100"
                     iconOnly
                     size="xs"
                     variant="ghost"
@@ -130,7 +129,6 @@ export function CommentItem({ comment, isReply = false }: CommentItemOwnProps) {
             </DropdownMenu>
           </div>
 
-          {/* Content */}
           {isEditing ? (
             <div className="mt-2">
               <div className="overflow-hidden rounded-lg border">
@@ -172,19 +170,18 @@ export function CommentItem({ comment, isReply = false }: CommentItemOwnProps) {
                 {comment.content}
               </p>
 
-              {/* Reply button */}
-              <button
-                className="mt-2 flex items-center gap-1 text-muted-foreground text-xs transition-colors hover:text-foreground"
+              <Button
+                className="mt-2 h-auto gap-1 p-0 text-xs"
                 onClick={() => setIsReplying(true)}
-                type="button"
+                size="xs"
+                variant="quiet"
               >
                 <ArrowBendDownRight className="h-3 w-3" />
                 Reply
-              </button>
+              </Button>
             </>
           )}
 
-          {/* Reply input */}
           {isReplying && (
             <div className="mt-3">
               <div className="overflow-hidden rounded-lg border bg-muted/30">
@@ -225,7 +222,6 @@ export function CommentItem({ comment, isReply = false }: CommentItemOwnProps) {
             </div>
           )}
 
-          {/* Replies */}
           {comment.replies.length > 0 && (
             <div className="mt-3 space-y-1 border-muted border-l-2 pl-3">
               {comment.replies.map((reply) => (

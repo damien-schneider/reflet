@@ -30,9 +30,9 @@ export function RoadmapCard({
       href={`/dashboard/${orgSlug}/boards/${boardSlug}/feedback/${feedback._id}`}
       prefetch={true}
     >
-      <Card className="group cursor-pointer transition-all hover:border-olive-600 hover:bg-accent/50">
+      <Card className="group cursor-pointer transition-colors hover:border-brand hover:bg-accent/50">
         <CardContent className="p-3">
-          <h4 className="font-medium text-sm transition-colors group-hover:text-olive-600">
+          <h4 className="font-medium text-sm transition-colors group-hover:text-brand-text">
             {feedback.title}
           </h4>
           <div className="mt-2 flex items-center justify-between">
@@ -42,26 +42,27 @@ export function RoadmapCard({
                 ?.slice(0, 2)
                 .map((tag) => (
                   <TagBadge
-                    className="h-5 font-normal text-[10px]"
+                    className="h-5 font-normal text-caption"
                     color={tag.color}
                     key={tag._id}
                   >
                     {tag.icon && <span>{tag.icon}</span>}
                     {tag.name}
                     {tag.appliedByAi && (
-                      <span title="Applied by AI">
+                      <>
                         <Sparkle
                           className="h-2.5 w-2.5 opacity-60"
                           weight="fill"
                         />
-                      </span>
+                        <span className="sr-only">Applied by AI</span>
+                      </>
                     )}
                   </TagBadge>
                 ))}
             </div>
             <div className="flex items-center gap-1 text-muted-foreground text-xs">
               <CaretUp className="h-3 w-3" />
-              {feedback.voteCount}
+              <span className="tabular-nums">{feedback.voteCount}</span>
             </div>
           </div>
         </CardContent>

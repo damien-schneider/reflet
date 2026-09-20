@@ -34,7 +34,7 @@ export function GitHubConnectionSection({
     return (
       <div className="space-y-3">
         <div className="flex items-center gap-3">
-          <Warning className="h-5 w-5 text-amber-500" />
+          <Warning className="h-5 w-5 text-warning" />
           <Text className="font-medium">GitHub connection lost</Text>
           <Badge variant="outline">Disconnected</Badge>
         </div>

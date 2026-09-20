@@ -72,6 +72,7 @@
   margin-bottom: 10px;
   font-size: 11px;
   font-weight: 650;
+  font-variant-numeric: tabular-nums;
   color: var(--marketing-signal);
 }
 :where(.journey-step-count > span) {

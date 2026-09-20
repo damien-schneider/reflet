@@ -3,73 +3,51 @@ import { type ComponentPropsWithRef, type ElementType, type Ref } from "react";
 
 import { cn } from "@/lib/utils";
 
-// ============================================================================
-// H1 Variants - Hero and page titles
-// ============================================================================
-const h1Variants = cva(
-  "font-display text-balance text-olive-950 dark:text-olive-100",
-  {
-    defaultVariants: {
-      variant: "default",
+const h1Variants = cva("font-display text-balance text-foreground", {
+  defaultVariants: {
+    variant: "default",
+  },
+  variants: {
+    variant: {
+      default: "text-5xl leading-tight tracking-tight",
+      hero: "text-4xl leading-[1.1] tracking-tight sm:text-6xl sm:leading-tight md:text-7xl",
+      landing:
+        "text-[clamp(2.5rem,6vw,5rem)] leading-[1.05] tracking-[-0.03em]",
+      page: "text-4xl leading-tight tracking-tight sm:text-5xl",
     },
-    variants: {
-      variant: {
-        default: "text-5xl leading-tight tracking-tight",
-        hero: "text-4xl leading-[1.1] tracking-tight sm:text-6xl sm:leading-tight md:text-7xl",
-        landing:
-          "text-[clamp(2.5rem,6vw,5rem)] leading-[1.05] tracking-[-0.03em]",
-        page: "text-4xl leading-tight tracking-tight sm:text-5xl",
-      },
-    },
-  }
-);
+  },
+});
 
-// ============================================================================
-// H2 Variants - Section and card titles
-// ============================================================================
-const h2Variants = cva(
-  "font-display text-balance text-olive-950 dark:text-olive-100",
-  {
-    defaultVariants: {
-      variant: "default",
+const h2Variants = cva("font-display text-balance text-foreground", {
+  defaultVariants: {
+    variant: "default",
+  },
+  variants: {
+    variant: {
+      card: "text-xl font-medium",
+      default: "text-3xl leading-snug tracking-tight",
+      landing: "text-[clamp(1.8rem,4vw,3rem)] leading-[1.1] tracking-[-0.02em]",
+      section: "text-4xl tracking-tight sm:text-5xl",
     },
-    variants: {
-      variant: {
-        card: "text-xl font-medium text-foreground",
-        default: "text-3xl leading-snug tracking-tight",
-        landing:
-          "text-[clamp(1.8rem,4vw,3rem)] leading-[1.1] tracking-[-0.02em]",
-        section: "text-4xl tracking-tight sm:text-5xl",
-      },
-    },
-  }
-);
+  },
+});
 
-// ============================================================================
-// H3 Variants - Card and item titles
-// ============================================================================
-const h3Variants = cva(
-  "font-display text-balance text-olive-950 dark:text-olive-100",
-  {
-    defaultVariants: {
-      variant: "default",
+const h3Variants = cva("font-display text-balance text-foreground", {
+  defaultVariants: {
+    variant: "default",
+  },
+  variants: {
+    variant: {
+      card: "text-xl font-medium",
+      cardBold: "text-xl font-semibold",
+      default: "text-2xl leading-snug tracking-tight",
+      landing:
+        "text-[clamp(1.4rem,3vw,2rem)] leading-[1.15] tracking-[-0.01em]",
+      section: "font-sans text-base font-medium text-pretty",
     },
-    variants: {
-      variant: {
-        card: "text-xl font-medium text-foreground",
-        cardBold: "text-xl font-semibold text-foreground",
-        default: "text-2xl leading-snug tracking-tight",
-        landing:
-          "text-[clamp(1.4rem,3vw,2rem)] leading-[1.15] tracking-[-0.01em]",
-        section: "font-sans text-base font-medium text-foreground text-pretty",
-      },
-    },
-  }
-);
+  },
+});
 
-// ============================================================================
-// Text Variants - Body text with semantic variants
-// ============================================================================
 const textVariants = cva("text-foreground", {
   defaultVariants: {
     align: "left",
@@ -87,19 +65,15 @@ const textVariants = cva("text-foreground", {
       bodySmall: "text-sm leading-relaxed",
       caption: "text-xs leading-normal text-muted-foreground",
       eyebrow:
-        "text-[11px] font-semibold uppercase tracking-[0.15em] text-olive-600 dark:text-olive-400",
+        "text-caption font-semibold uppercase tracking-[0.15em] text-brand-text",
       label: "text-sm font-medium leading-none",
       labelBold: "text-sm font-semibold leading-none",
-      link: "text-olive-600 underline underline-offset-4 hover:text-olive-700 dark:text-olive-400 dark:hover:text-olive-300 transition-colors",
+      link: "text-brand-text underline underline-offset-4 hover:text-brand-text/80 transition-colors",
       overline:
         "text-xs font-semibold uppercase tracking-wider text-muted-foreground",
     },
   },
 });
-
-// ============================================================================
-// Heading Components (H1, H2, H3) - Uses Instrument Serif font
-// ============================================================================
 
 type H1Props = ComponentPropsWithRef<"h1"> & VariantProps<typeof h1Variants>;
 
@@ -118,10 +92,6 @@ type H3Props = ComponentPropsWithRef<"h3"> & VariantProps<typeof h3Variants>;
 const H3 = ({ variant, className, ref, ...props }: H3Props) => (
   <h3 className={cn(h3Variants({ variant }), className)} ref={ref} {...props} />
 );
-
-// ============================================================================
-// Text Component - General purpose text with variants
-// ============================================================================
 
 type TextElement = "p" | "span" | "div" | "label" | "a";
 
@@ -148,10 +118,6 @@ const Text = ({
   );
 };
 
-// ============================================================================
-// Muted Text - For secondary/muted content
-// ============================================================================
-
 type MutedProps = ComponentPropsWithRef<"p"> & {
   as?: TextElement;
 };
@@ -167,19 +133,15 @@ const Muted = ({ as = "p", className, ref, ...props }: MutedProps) => {
   );
 };
 
-// ============================================================================
-// Lead Text - For intro paragraphs
-// ============================================================================
-
-const leadVariants = cva("text-muted-foreground leading-relaxed", {
+const leadVariants = cva("font-normal text-muted-foreground leading-relaxed", {
   defaultVariants: {
     size: "default",
   },
   variants: {
     size: {
       default: "text-base sm:text-xl",
-      lg: "text-[17px] sm:text-[19px]",
-      sm: "text-[15px] sm:text-[17px]",
+      lg: "text-body-lg sm:text-heading-3",
+      sm: "text-heading-4 sm:text-body-lg",
     },
   },
 });
@@ -190,19 +152,11 @@ const Lead = ({ size, className, ref, ...props }: LeadProps) => (
   <p className={cn(leadVariants({ size }), className)} ref={ref} {...props} />
 );
 
-// ============================================================================
-// Large Text - Emphasized body text
-// ============================================================================
-
 type LargeProps = ComponentPropsWithRef<"p">;
 
 const Large = ({ className, ref, ...props }: LargeProps) => (
   <p className={cn("font-semibold text-lg", className)} ref={ref} {...props} />
 );
-
-// ============================================================================
-// Small Text - Fine print, captions
-// ============================================================================
 
 type SmallProps = ComponentPropsWithRef<"small">;
 
@@ -213,10 +167,6 @@ const Small = ({ className, ref, ...props }: SmallProps) => (
     {...props}
   />
 );
-
-// ============================================================================
-// Inline Code
-// ============================================================================
 
 type InlineCodeProps = ComponentPropsWithRef<"code">;
 
@@ -231,23 +181,15 @@ const InlineCode = ({ className, ref, ...props }: InlineCodeProps) => (
   />
 );
 
-// ============================================================================
-// Blockquote
-// ============================================================================
-
 type BlockquoteProps = ComponentPropsWithRef<"blockquote">;
 
 const Blockquote = ({ className, ref, ...props }: BlockquoteProps) => (
   <blockquote
-    className={cn("mt-6 border-olive-300 border-l-2 pl-6 italic", className)}
+    className={cn("mt-6 border-border border-l-2 pl-6 italic", className)}
     ref={ref}
     {...props}
   />
 );
-
-// ============================================================================
-// Exports
-// ============================================================================
 
 export {
   Blockquote,

@@ -167,7 +167,7 @@ export function MessageBubble({
         </div>
 
         {showTimestamp && timestamp && (
-          <span className="text-[10px] text-muted-foreground/70">
+          <span className="text-caption text-muted-foreground/70">
             {new Date(timestamp).toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",

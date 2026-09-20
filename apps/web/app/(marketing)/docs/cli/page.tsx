@@ -1,3 +1,11 @@
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@ctrl-ui/react/ui/table";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AGENT_PROMPT } from "reflet-cli/agent-prompt";
@@ -39,7 +47,7 @@ const ENV_VARS = [
 
 function SectionTitle({ children }: { children: string }) {
   return (
-    <h2 className="mb-3 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+    <h2 className="mb-3 font-display text-2xl text-foreground leading-snug tracking-tight">
       {children}
     </h2>
   );
@@ -48,7 +56,7 @@ function SectionTitle({ children }: { children: string }) {
 export default function CliDocsPage() {
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="mb-2 font-display text-3xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+      <h1 className="mb-2 font-display text-3xl text-foreground leading-snug tracking-tight">
         CLI for agents
       </h1>
       <p className="mb-8 text-base text-muted-foreground sm:text-xl">
@@ -119,25 +127,20 @@ export default function CliDocsPage() {
                 {group.category}
               </h3>
               <div className="overflow-hidden rounded-lg border border-border">
-                <table className="w-full text-sm">
-                  <tbody>
-                    {group.commands.map((entry, index) => (
-                      <tr
-                        className={
-                          index % 2 === 0 ? "bg-muted/20" : "bg-background"
-                        }
-                        key={entry.command}
-                      >
-                        <td className="px-4 py-2">
+                <Table className="text-sm">
+                  <TableBody>
+                    {group.commands.map((entry) => (
+                      <TableRow key={entry.command}>
+                        <TableCell>
                           <InlineCode>{entry.command}</InlineCode>
-                        </td>
-                        <td className="px-4 py-2 text-muted-foreground">
+                        </TableCell>
+                        <TableCell className="whitespace-normal text-muted-foreground">
                           {entry.description}
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
             </div>
           ))}
@@ -147,33 +150,30 @@ export default function CliDocsPage() {
       <section className="mb-10">
         <SectionTitle>Environment variables</SectionTitle>
         <div className="overflow-hidden rounded-lg border border-border">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b bg-muted/50">
-                <th className="px-4 py-2 text-left font-medium">Variable</th>
-                <th className="px-4 py-2 text-left font-medium">Required</th>
-                <th className="px-4 py-2 text-left font-medium">Description</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ENV_VARS.map((entry, index) => (
-                <tr
-                  className={index % 2 === 0 ? "bg-background" : "bg-muted/20"}
-                  key={entry.name}
-                >
-                  <td className="px-4 py-2">
+          <Table className="text-sm">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Variable</TableHead>
+                <TableHead>Required</TableHead>
+                <TableHead>Description</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {ENV_VARS.map((entry) => (
+                <TableRow key={entry.name}>
+                  <TableCell>
                     <InlineCode>{entry.name}</InlineCode>
-                  </td>
-                  <td className="px-4 py-2 text-muted-foreground">
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
                     {entry.required}
-                  </td>
-                  <td className="px-4 py-2 text-muted-foreground">
+                  </TableCell>
+                  <TableCell className="whitespace-normal text-muted-foreground">
                     {entry.description}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       </section>
 

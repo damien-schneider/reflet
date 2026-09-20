@@ -107,7 +107,7 @@ function ConversationRow({
             >
               {displayName}
             </span>
-            <span className="shrink-0 text-[10px] text-muted-foreground">
+            <span className="shrink-0 text-caption text-muted-foreground">
               {formatDistanceToNow(conversation.lastMessageAt, {
                 addSuffix: false,
               })}
@@ -137,7 +137,7 @@ function ConversationRow({
               status={conversation.status}
             />
             {hasUnread && (
-              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-olive-500 px-1.5 font-medium text-[10px] text-white">
+              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-brand px-1.5 font-medium text-brand-foreground text-caption">
                 {unreadCount > 99 ? "99+" : unreadCount}
               </span>
             )}

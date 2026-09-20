@@ -133,7 +133,7 @@ describe("CommentItem", () => {
   it("shows edit form when Edit is clicked from dropdown", async () => {
     render(<CommentItem comment={makeComment()} />);
     // Open dropdown menu
-    const dotsButton = screen.getByRole("button", { name: "" });
+    const dotsButton = screen.getByRole("button", { name: "Comment actions" });
     fireEvent.click(dotsButton);
     // Click Edit
     fireEvent.click(screen.getByText("Edit"));
@@ -144,7 +144,7 @@ describe("CommentItem", () => {
 
   it("cancels edit and restores original content", async () => {
     render(<CommentItem comment={makeComment({ content: "Original" })} />);
-    const dotsButton = screen.getByRole("button", { name: "" });
+    const dotsButton = screen.getByRole("button", { name: "Comment actions" });
     fireEvent.click(dotsButton);
     fireEvent.click(screen.getByText("Edit"));
     // Click Cancel
@@ -156,7 +156,7 @@ describe("CommentItem", () => {
   it("calls updateComment on save", async () => {
     mockUpdateComment.mockResolvedValue(undefined);
     render(<CommentItem comment={makeComment({ content: "Old content" })} />);
-    const dotsButton = screen.getByRole("button", { name: "" });
+    const dotsButton = screen.getByRole("button", { name: "Comment actions" });
     fireEvent.click(dotsButton);
     fireEvent.click(screen.getByText("Edit"));
     // Type new content
@@ -173,7 +173,7 @@ describe("CommentItem", () => {
 
   it("does not save when edit content is empty", async () => {
     render(<CommentItem comment={makeComment()} />);
-    const dotsButton = screen.getByRole("button", { name: "" });
+    const dotsButton = screen.getByRole("button", { name: "Comment actions" });
     fireEvent.click(dotsButton);
     fireEvent.click(screen.getByText("Edit"));
     const editor = screen.getByTestId("markdown-editor");
@@ -185,7 +185,7 @@ describe("CommentItem", () => {
   it("calls deleteComment when Delete is clicked", async () => {
     mockDeleteComment.mockResolvedValue(undefined);
     render(<CommentItem comment={makeComment()} />);
-    const dotsButton = screen.getByRole("button", { name: "" });
+    const dotsButton = screen.getByRole("button", { name: "Comment actions" });
     fireEvent.click(dotsButton);
     fireEvent.click(screen.getByText("Delete"));
     await waitFor(() => {

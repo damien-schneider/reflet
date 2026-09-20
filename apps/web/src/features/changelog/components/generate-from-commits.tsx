@@ -1,14 +1,23 @@
 "use client";
 
 import { Button } from "@ctrl-ui/react/ui/button";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import { toast } from "@ctrl-ui/react/ui/toast";
-import { Info, Lightning, Spinner } from "@phosphor-icons/react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@ctrl-ui/react/ui/tooltip";
+import { Info, Lightning } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useAction, useQuery } from "convex/react";
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { capture } from "@/lib/analytics";
+
+const GENERATE_HINT =
+  "Generate release notes from recent code changes on GitHub";
 
 export interface CommitInfo {
   author: string;
@@ -109,7 +118,6 @@ export function GenerateFromCommits({
       return { commits: result.commits, files: result.files, previousTag };
     }
 
-    // No tags found — try using the latest commit from the previous release as base
     if (previousReleaseCommit?.sha) {
       const result = await listCommitsBetweenRefs({
         base: previousReleaseCommit.sha,
@@ -180,35 +188,42 @@ export function GenerateFromCommits({
     return fullContent;
   };
 
-  const generateTitle = async (description: string): Promise<void> => {
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_CONVEX_SITE_URL ?? ""}/api/ai/generate-release-title`,
-        {
-          body: JSON.stringify({
-            description,
-            version: version.trim() || undefined,
-          }),
-          headers: { "Content-Type": "application/json" },
-          method: "POST",
-        }
-      );
-
-      if (!response.ok) {
-        return;
+  const fetchGeneratedTitle = async (
+    description: string
+  ): Promise<string | undefined> => {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_CONVEX_SITE_URL ?? ""}/api/ai/generate-release-title`,
+      {
+        body: JSON.stringify({
+          description,
+          version: version.trim() || undefined,
+        }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
       }
+    );
 
-      const data: unknown = await response.json();
-      if (
-        data &&
-        typeof data === "object" &&
-        "title" in data &&
-        typeof data.title === "string"
-      ) {
-        onTitleGenerated(data.title);
-      }
-    } catch {
-      // Title generation is best-effort, don't show errors
+    if (!response.ok) {
+      return;
+    }
+
+    const data: unknown = await response.json();
+    if (
+      data &&
+      typeof data === "object" &&
+      "title" in data &&
+      typeof data.title === "string"
+    ) {
+      return data.title;
+    }
+  };
+
+  const applyGeneratedTitle = async (description: string) => {
+    const generated = await fetchGeneratedTitle(description).catch(
+      () => undefined
+    );
+    if (generated) {
+      onTitleGenerated(generated);
     }
   };
 
@@ -241,7 +256,7 @@ export function GenerateFromCommits({
         `Generated from ${commits.length} commit${commits.length === 1 ? "" : "s"}`
       );
 
-      generateTitle(fullContent);
+      applyGeneratedTitle(fullContent);
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") {
         return;
@@ -274,27 +289,34 @@ export function GenerateFromCommits({
   const isDisabled = disabled || isFetchingCommits || isStreaming;
 
   return (
-    <Button
-      className="h-7 gap-1 text-xs"
-      disabled={isDisabled}
-      onClick={handleGenerate}
-      size="xs"
-      title="Generate release notes from recent code changes on GitHub"
-      type="button"
-      variant="surface"
-    >
-      {isFetchingCommits || isStreaming ? (
-        <>
-          <Spinner className="h-3 w-3 animate-spin" />
-          {isFetchingCommits ? "Fetching..." : "Generating..."}
-        </>
-      ) : (
-        <>
-          <Lightning className="h-3 w-3" />
-          AI Generate
-        </>
-      )}
-    </Button>
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Button
+            aria-label={GENERATE_HINT}
+            className="h-7 gap-1 text-xs"
+            disabled={isDisabled}
+            onClick={handleGenerate}
+            size="xs"
+            type="button"
+            variant="surface"
+          >
+            {isFetchingCommits || isStreaming ? (
+              <>
+                <Spinner size="xs" />
+                {isFetchingCommits ? "Fetching..." : "Generating..."}
+              </>
+            ) : (
+              <>
+                <Lightning className="h-3 w-3" />
+                AI Generate
+              </>
+            )}
+          </Button>
+        }
+      />
+      <TooltipContent>{GENERATE_HINT}</TooltipContent>
+    </Tooltip>
   );
 }
 

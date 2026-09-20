@@ -34,8 +34,6 @@ import {
   SweepCornerTitle,
 } from "@reflet/ui/feedback-sweep-corner";
 
-// ─── Sweep Corner ────────────────────────────────────────────────────────────
-
 function SweepCornerPreview() {
   return (
     <div className="w-full max-w-sm">
@@ -58,8 +56,6 @@ function SweepCornerPreview() {
   );
 }
 
-// ─── Minimal Notch ───────────────────────────────────────────────────────────
-
 function MinimalNotchPreview() {
   return (
     <div className="w-full max-w-sm">
@@ -80,8 +76,6 @@ function MinimalNotchPreview() {
     </div>
   );
 }
-
-// ─── Editorial Feed ──────────────────────────────────────────────────────────
 
 function EditorialFeedPreview() {
   return (
@@ -111,7 +105,7 @@ function EditorialFeedPreview() {
               Dark mode support for the dashboard
             </EditorialFeedTitle>
             <EditorialFeedMeta>
-              <EditorialFeedStatus color="amber">
+              <EditorialFeedStatus color="orange">
                 In Progress
               </EditorialFeedStatus>
               <EditorialFeedTag>Design</EditorialFeedTag>
@@ -139,8 +133,6 @@ function EditorialFeedPreview() {
     </div>
   );
 }
-
-// ─── All Cards (Overview) ────────────────────────────────────────────────────
 
 function AllCardsPreview() {
   return (

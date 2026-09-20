@@ -10,6 +10,8 @@ import {
 } from "@/components/docs/component-preview";
 import { EDITORIAL_FEED_CODE } from "@/components/docs/feedback-card-codes";
 import { EditorialFeedPreview } from "@/components/docs/feedback-card-previews";
+import type { PropDefinition } from "@/components/docs/props-table";
+import { PropsTable } from "@/components/docs/props-table";
 import { InlineCode } from "@/components/ui/typography";
 import { generatePageMetadata } from "@/lib/seo-config";
 
@@ -39,7 +41,11 @@ const IMPORT_CODE = `import {
   EditorialFeedVote,
 } from "@/components/ui/feedback-editorial-feed";`;
 
-const SUBCOMPONENTS = [
+const SUBCOMPONENTS: {
+  description: string;
+  name: string;
+  props: PropDefinition[];
+}[] = [
   {
     description: "List container with vertical dividers between items.",
     name: "EditorialFeed",
@@ -103,7 +109,7 @@ const SUBCOMPONENTS = [
     props: [
       {
         description:
-          'Color key: purple, green, blue, red, amber, pink, or gray. Defaults to "gray".',
+          'Color key: blue, brown, green, orange, pink, purple, red, yellow, gray, or default. Defaults to "gray".',
         name: "color",
         required: false,
         type: "StatusColor",
@@ -132,12 +138,12 @@ const SUBCOMPONENTS = [
     name: "EditorialFeedTime",
     props: [],
   },
-] as const;
+];
 
 export default function EditorialFeedPage() {
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="mb-2 font-display text-3xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+      <h1 className="mb-2 font-display text-3xl text-foreground leading-snug tracking-tight">
         Editorial Feed
       </h1>
       <p className="mb-8 text-base text-muted-foreground sm:text-xl">
@@ -146,7 +152,7 @@ export default function EditorialFeedPage() {
       </p>
 
       <section className="mb-10">
-        <h2 className="mb-4 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+        <h2 className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight">
           Preview
         </h2>
         <ComponentPreview code={`${IMPORT_CODE}\n\n${EDITORIAL_FEED_CODE}`}>
@@ -155,7 +161,7 @@ export default function EditorialFeedPage() {
       </section>
 
       <section className="mb-10">
-        <h2 className="mb-4 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+        <h2 className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight">
           Installation
         </h2>
         <InstallTabs
@@ -165,7 +171,7 @@ export default function EditorialFeedPage() {
       </section>
 
       <section className="mb-10">
-        <h2 className="mb-4 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+        <h2 className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight">
           Usage
         </h2>
         <CodeBlock code={IMPORT_CODE} />
@@ -174,7 +180,7 @@ export default function EditorialFeedPage() {
       </section>
 
       <section>
-        <h2 className="mb-4 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+        <h2 className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight">
           API Reference
         </h2>
         <div className="space-y-8">
@@ -186,48 +192,7 @@ export default function EditorialFeedPage() {
               <p className="mb-3 text-muted-foreground text-sm">
                 {comp.description}
               </p>
-              {comp.props.length > 0 && (
-                <div className="overflow-hidden rounded-lg border border-border">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-border border-b bg-muted/50">
-                        <th className="px-4 py-2.5 text-left font-semibold text-xs">
-                          Prop
-                        </th>
-                        <th className="px-4 py-2.5 text-left font-semibold text-xs">
-                          Type
-                        </th>
-                        <th className="px-4 py-2.5 text-left font-semibold text-xs">
-                          Description
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {comp.props.map((p) => (
-                        <tr
-                          className="border-border border-b last:border-0"
-                          key={p.name}
-                        >
-                          <td className="px-4 py-2">
-                            <InlineCode>{p.name}</InlineCode>
-                            {p.required && (
-                              <span className="ml-1 text-destructive text-xs">
-                                *
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-4 py-2">
-                            <InlineCode>{p.type}</InlineCode>
-                          </td>
-                          <td className="px-4 py-2 text-muted-foreground text-xs">
-                            {p.description}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+              {comp.props.length > 0 && <PropsTable props={comp.props} />}
             </div>
           ))}
         </div>

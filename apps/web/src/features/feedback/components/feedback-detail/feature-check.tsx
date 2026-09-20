@@ -32,31 +32,28 @@ interface EvidenceItem {
 
 const RESULT_CONFIG = {
   implemented: {
-    className:
-      "bg-green-50 text-green-700 border-green-200 dark:bg-green-950/50 dark:text-green-300 dark:border-green-800",
+    className: "bg-success-subtle text-success-text border-success/30",
     icon: CheckCircle,
-    iconClassName: "text-green-600 dark:text-green-400",
+    iconClassName: "text-success-text",
     label: "Implemented",
   },
   inconclusive: {
-    className:
-      "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-950/50 dark:text-gray-300 dark:border-gray-800",
+    className: "bg-muted text-muted-foreground border-border",
     icon: Question,
-    iconClassName: "text-gray-600 dark:text-gray-400",
+    iconClassName: "text-muted-foreground",
     label: "Inconclusive",
   },
   not_implemented: {
     className:
-      "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800",
+      "bg-destructive-subtle text-destructive-text border-destructive/30",
     icon: XCircle,
-    iconClassName: "text-red-600 dark:text-red-400",
+    iconClassName: "text-destructive-text",
     label: "Not Implemented",
   },
   partially_implemented: {
-    className:
-      "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800",
+    className: "bg-warning-subtle text-warning-text border-warning/30",
     icon: Warning,
-    iconClassName: "text-amber-600 dark:text-amber-400",
+    iconClassName: "text-warning-text",
     label: "Partially Implemented",
   },
 } as const;

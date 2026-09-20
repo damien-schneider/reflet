@@ -67,7 +67,7 @@ export function AssignMemberDropdown({
           <div className="flex items-center gap-2">
             <Avatar className="h-5 w-5">
               <AvatarImage src={assignedMember.image} />
-              <AvatarFallback className="text-[10px]">
+              <AvatarFallback className="text-micro">
                 {getInitials(assignedMember.name, assignedMember.email)}
               </AvatarFallback>
             </Avatar>
@@ -107,7 +107,7 @@ export function AssignMemberDropdown({
               >
                 <Avatar className="h-5 w-5">
                   <AvatarImage src={member.image} />
-                  <AvatarFallback className="text-[10px]">
+                  <AvatarFallback className="text-micro">
                     {getInitials(member.name, member.email)}
                   </AvatarFallback>
                 </Avatar>

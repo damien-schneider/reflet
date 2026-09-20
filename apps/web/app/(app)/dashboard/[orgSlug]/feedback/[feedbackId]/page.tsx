@@ -8,9 +8,10 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
-import { use, useCallback } from "react";
+import { use } from "react";
 import { H2, Muted } from "@/components/ui/typography";
 import { useCreateGithubIssue } from "@/features/github/hooks/use-create-github-issue";
+import { DEFAULT_PRIMARY_COLOR } from "@/lib/branding";
 import { FeedbackHeader } from "./feedback-header";
 
 export default function FeedbackDetailPage({
@@ -50,28 +51,25 @@ export default function FeedbackDetailPage({
     organizationId: isAdmin ? org?._id : undefined,
   });
 
-  const handleVote = useCallback(async () => {
+  const handleVote = async () => {
     if (feedbackId) {
       await toggleVote({
         feedbackId,
         voteType: "upvote",
       });
     }
-  }, [feedbackId, toggleVote]);
+  };
 
-  const handleAssigneeChange = useCallback(
-    async (assigneeId: string) => {
-      if (!feedbackId) {
-        return;
-      }
-      await assignFeedback({
-        assigneeId:
-          !assigneeId || assigneeId === "unassigned" ? undefined : assigneeId,
-        feedbackId,
-      });
-    },
-    [feedbackId, assignFeedback]
-  );
+  const handleAssigneeChange = async (assigneeId: string) => {
+    if (!feedbackId) {
+      return;
+    }
+    await assignFeedback({
+      assigneeId:
+        !assigneeId || assigneeId === "unassigned" ? undefined : assigneeId,
+      feedbackId,
+    });
+  };
 
   if (!org) {
     return (
@@ -95,12 +93,14 @@ export default function FeedbackDetailPage({
             The feedback you&apos;re looking for doesn&apos;t exist or you
             don&apos;t have access.
           </Muted>
-          <Link href={`/dashboard/${orgSlug}`}>
-            <Button className="mt-4" variant="surface">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to dashboard
-            </Button>
-          </Link>
+          <Button
+            className="mt-4"
+            render={<Link href={`/dashboard/${orgSlug}`} />}
+            variant="surface"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to dashboard
+          </Button>
         </div>
       </div>
     );
@@ -136,7 +136,7 @@ export default function FeedbackDetailPage({
         onCreateGithubIssue={onCreateGithubIssue}
         onVote={handleVote}
         orgSlug={orgSlug}
-        primaryColor={org.primaryColor ?? "#6366f1"}
+        primaryColor={org.primaryColor ?? DEFAULT_PRIMARY_COLOR}
         status={status}
         tags={feedback.tags}
         title={feedback.title}

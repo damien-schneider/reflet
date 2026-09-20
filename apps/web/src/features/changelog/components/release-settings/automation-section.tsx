@@ -7,8 +7,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@ctrl-ui/react/ui/select";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import { Switch } from "@ctrl-ui/react/ui/switch";
-import { GitBranch, Spinner } from "@phosphor-icons/react";
+import { GitBranch } from "@phosphor-icons/react";
 import { Label } from "@/components/ui/label";
 import type { ChangelogSettingsUpdate } from "./types";
 
@@ -53,7 +54,7 @@ export const AutomationSection = ({
         </div>
         {isLoadingBranches ? (
           <div className="flex h-8 w-40 items-center gap-1.5 text-muted-foreground text-xs">
-            <Spinner className="h-3 w-3 animate-spin" />
+            <Spinner size="xs" />
             Loading branches…
           </div>
         ) : (
@@ -66,7 +67,10 @@ export const AutomationSection = ({
             }}
             value={targetBranch ?? "main"}
           >
-            <SelectTrigger className="h-8 w-40 text-xs">
+            <SelectTrigger
+              aria-label="Target branch"
+              className="h-8 w-40 text-xs"
+            >
               <SelectValue placeholder="Select branch" />
             </SelectTrigger>
             <SelectContent>

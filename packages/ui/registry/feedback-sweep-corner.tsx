@@ -1,7 +1,7 @@
 "use client";
 
 import { CaretDown, CaretUp, Chat } from "@phosphor-icons/react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, MotionConfig, motion } from "motion/react";
 import type { ReactNode } from "react";
 import {
   createContext,
@@ -24,15 +24,19 @@ interface VoteState {
 
 type SweepCornerContextValue = VoteState;
 
+const NEUTRAL_TAG = "bg-muted text-muted-foreground";
+
 const TAG_COLORS: Record<string, string> = {
-  amber: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-  blue: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  gray: "bg-gray-100 text-gray-600 dark:bg-gray-800/30 dark:text-gray-400",
-  green: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  pink: "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400",
-  purple:
-    "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-  red: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+  blue: "bg-tag-blue/15 text-tag-blue-text",
+  brown: "bg-tag-brown/15 text-tag-brown-text",
+  default: NEUTRAL_TAG,
+  gray: NEUTRAL_TAG,
+  green: "bg-tag-green/15 text-tag-green-text",
+  orange: "bg-tag-orange/15 text-tag-orange-text",
+  pink: "bg-tag-pink/15 text-tag-pink-text",
+  purple: "bg-tag-purple/15 text-tag-purple-text",
+  red: "bg-tag-red/15 text-tag-red-text",
+  yellow: "bg-tag-yellow/15 text-tag-yellow-text",
 };
 
 const SweepCornerContext = createContext<SweepCornerContextValue | null>(null);
@@ -159,7 +163,9 @@ function SweepCorner({
 
   return (
     <SweepCornerContext.Provider value={contextValue}>
-      <div className={cn("relative", className)}>{children}</div>
+      <MotionConfig reducedMotion="user">
+        <div className={cn("relative", className)}>{children}</div>
+      </MotionConfig>
     </SweepCornerContext.Provider>
   );
 }
@@ -173,7 +179,7 @@ function SweepCornerCard({ children, className }: SweepCornerCardProps) {
   return (
     <div
       className={cn(
-        "rounded-xl border border-border/50 bg-card transition-all hover:border-border hover:shadow-sm",
+        "rounded-xl border border-border/50 bg-card transition-[border-color,box-shadow] hover:border-border hover:shadow-sm",
         className
       )}
     >
@@ -224,8 +230,7 @@ interface SweepCornerTagProps {
 }
 
 function SweepCornerTag({ children, color, className }: SweepCornerTagProps) {
-  const colorClasses =
-    TAG_COLORS[color] ?? "bg-secondary text-secondary-foreground";
+  const colorClasses = TAG_COLORS[color] ?? NEUTRAL_TAG;
 
   return (
     <span
@@ -253,15 +258,11 @@ function SweepCornerBadge() {
       transition={{ damping: 20, stiffness: 300, type: "spring" }}
     >
       <motion.button
-        animate={{
-          backgroundColor:
-            voteType === "upvote" ? "var(--color-primary)" : "transparent",
-        }}
         aria-label={voteType === "upvote" ? "Remove upvote" : "Upvote"}
         className={cn(
           "relative cursor-pointer px-2.5 py-2 text-xs transition-colors",
           voteType === "upvote"
-            ? "text-primary-foreground"
+            ? "bg-primary text-primary-foreground"
             : "text-muted-foreground hover:bg-muted hover:text-foreground"
         )}
         onClick={(e) => {
@@ -288,17 +289,11 @@ function SweepCornerBadge() {
       />
 
       <motion.button
-        animate={{
-          backgroundColor:
-            voteType === "downvote"
-              ? "var(--color-destructive)"
-              : "transparent",
-        }}
         aria-label={voteType === "downvote" ? "Remove downvote" : "Downvote"}
         className={cn(
           "relative cursor-pointer px-2.5 py-2 text-xs transition-colors",
           voteType === "downvote"
-            ? "text-destructive-foreground"
+            ? "bg-destructive text-destructive-foreground"
             : "text-muted-foreground hover:bg-muted hover:text-foreground"
         )}
         onClick={(e) => {

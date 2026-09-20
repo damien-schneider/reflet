@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Select,
   SelectContent,
@@ -7,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@ctrl-ui/react/ui/select";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import {
   ArrowDown,
   ArrowsLeftRight,
@@ -14,12 +16,11 @@ import {
   CheckCircle,
   GitBranch,
   Prohibit,
-  Spinner,
 } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useAction, useQuery } from "convex/react";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
@@ -94,68 +95,76 @@ export function SyncDirectionStep({
   );
   const needsGitHub = value !== "none";
 
-  const loadBranches = useCallback(async () => {
-    if (
-      !(githubConnection?.installationId && githubConnection.repositoryFullName)
-    ) {
+  useEffect(() => {
+    if (!(isConnected && needsGitHub)) {
       return;
     }
 
+    let cancelled = false;
     setIsLoadingBranches(true);
-    try {
-      setBranches(await listBranches({ organizationId }));
-    } catch {
-      setBranches([]);
-    } finally {
-      setIsLoadingBranches(false);
-    }
-  }, [
-    githubConnection?.installationId,
-    githubConnection?.repositoryFullName,
-    listBranches,
-    organizationId,
-  ]);
+    listBranches({ organizationId }).then(
+      (result) => {
+        if (cancelled) {
+          return;
+        }
+        setBranches(result);
+        setIsLoadingBranches(false);
+      },
+      () => {
+        if (cancelled) {
+          return;
+        }
+        setBranches([]);
+        setIsLoadingBranches(false);
+      }
+    );
 
-  // Fetch branches when GitHub is connected
-  useEffect(() => {
-    if (isConnected && needsGitHub) {
-      loadBranches();
-    }
-  }, [isConnected, needsGitHub, loadBranches]);
+    return () => {
+      cancelled = true;
+    };
+  }, [isConnected, needsGitHub, listBranches, organizationId]);
 
   return (
     <div className="space-y-3">
       <p className="text-muted-foreground text-sm">
         Choose how releases flow between GitHub and Reflet:
       </p>
-      <div className="grid gap-2">
-        {SYNC_OPTIONS.map((option) => (
-          <button
-            className={cn(
-              "flex items-start gap-3 rounded-lg border p-3 text-left transition-colors",
-              value === option.id
-                ? "border-primary bg-primary/5"
-                : "border-border hover:border-primary/50"
-            )}
-            key={option.id}
-            onClick={() => onChange(option.id)}
-            type="button"
-          >
-            <option.icon
+      <fieldset aria-label="Sync direction" className="grid min-w-0 gap-2">
+        {SYNC_OPTIONS.map((option) => {
+          const selected = value === option.id;
+          return (
+            <Button
+              active={selected}
+              aria-pressed={selected}
               className={cn(
-                "mt-0.5 h-5 w-5 flex-shrink-0",
-                value === option.id ? "text-primary" : "text-muted-foreground"
+                "h-auto w-full items-start justify-start gap-3 rounded-lg border p-3 text-left",
+                selected
+                  ? "border-primary bg-primary/5"
+                  : "border-border hover:border-primary/50"
               )}
-            />
-            <div>
-              <p className="font-medium text-sm">{option.title}</p>
-              <p className="mt-0.5 text-muted-foreground text-xs">
-                {option.description}
-              </p>
-            </div>
-          </button>
-        ))}
-      </div>
+              key={option.id}
+              onClick={() => onChange(option.id)}
+              type="button"
+              variant="quiet"
+            >
+              <option.icon
+                className={cn(
+                  "mt-0.5 h-5 w-5 flex-shrink-0",
+                  selected ? "text-primary" : "text-muted-foreground"
+                )}
+              />
+              <span className="block">
+                <span className="block font-medium text-sm">
+                  {option.title}
+                </span>
+                <span className="mt-0.5 block text-muted-foreground text-xs">
+                  {option.description}
+                </span>
+              </span>
+            </Button>
+          );
+        })}
+      </fieldset>
 
       {needsGitHub && isConnected && (
         <ConnectedBranchSelector
@@ -184,10 +193,10 @@ function ConnectedBranchSelector({
   targetBranch: string;
 }) {
   return (
-    <div className="space-y-2 rounded-lg border border-green-200 bg-green-50/50 p-3 dark:border-green-900 dark:bg-green-950/20">
+    <div className="space-y-2 rounded-lg border border-border bg-success-subtle p-3">
       <div className="flex items-center gap-2">
-        <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-        <p className="font-medium text-green-700 text-xs dark:text-green-300">
+        <CheckCircle className="h-4 w-4 text-success-text" />
+        <p className="font-medium text-success-text text-xs">
           Connected to {repoFullName}
         </p>
       </div>
@@ -224,7 +233,7 @@ function BranchInput({
   if (isLoading) {
     return (
       <div className="flex h-7 flex-1 items-center gap-1.5 text-muted-foreground text-xs">
-        <Spinner className="h-3 w-3 animate-spin" />
+        <Spinner size="xs" />
         Loading branches…
       </div>
     );

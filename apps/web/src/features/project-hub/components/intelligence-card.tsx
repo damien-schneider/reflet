@@ -59,12 +59,12 @@ export function IntelligenceCard({
           {keywords.length > 0 ? (
             <div className="mt-1.5 flex flex-wrap gap-1">
               {keywords.slice(0, 3).map((kw) => (
-                <Badge className="text-[10px]" key={kw._id}>
+                <Badge className="text-caption" key={kw._id}>
                   {kw.keyword}
                 </Badge>
               ))}
               {keywords.length > 3 && (
-                <Badge className="text-[10px]" variant="outline">
+                <Badge className="text-caption" variant="outline">
                   +{keywords.length - 3}
                 </Badge>
               )}

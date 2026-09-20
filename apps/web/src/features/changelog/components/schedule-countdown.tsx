@@ -46,7 +46,7 @@ export function ScheduleCountdown({
     return (
       <span
         className={cn(
-          "flex items-center gap-1 text-amber-600 text-xs dark:text-amber-400",
+          "flex items-center gap-1 text-warning-text text-xs",
           className
         )}
       >
@@ -62,10 +62,8 @@ export function ScheduleCountdown({
   return (
     <span
       className={cn(
-        "flex items-center gap-1 text-xs",
-        isUrgent
-          ? "animate-pulse text-amber-600 dark:text-amber-400"
-          : "text-muted-foreground",
+        "flex items-center gap-1 text-xs tabular-nums",
+        isUrgent ? "animate-pulse text-warning-text" : "text-muted-foreground",
         className
       )}
     >

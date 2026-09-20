@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Command,
   CommandDialog,
   CommandEmpty,
   CommandGroup,
@@ -43,36 +42,34 @@ export function InboxCommandPalette({
       open={open}
       title="Inbox Commands"
     >
-      <Command>
-        <CommandInput placeholder="Type a command..." />
-        <CommandList>
-          <CommandEmpty>No commands found.</CommandEmpty>
+      <CommandInput placeholder="Type a command..." />
+      <CommandList>
+        <CommandEmpty>No commands found.</CommandEmpty>
 
-          {hasSelectedConversation && (
-            <CommandGroup heading="Actions">
-              <CommandItem onSelect={() => runAndClose(onResolve)}>
-                <CheckCircle className="h-4 w-4 text-emerald-500" />
-                Resolve conversation
-                <CommandShortcut>E</CommandShortcut>
-              </CommandItem>
-              <CommandItem onSelect={() => runAndClose(onClose)}>
-                <XCircle className="h-4 w-4 text-zinc-500" />
-                Close conversation
-                <CommandShortcut>C</CommandShortcut>
-              </CommandItem>
-            </CommandGroup>
-          )}
-
-          <CommandGroup heading="Settings">
-            <CommandItem onSelect={() => runAndClose(onToggleSupport)}>
-              <Gear className="h-4 w-4" />
-              {supportEnabled
-                ? "Disable public support page"
-                : "Enable public support page"}
+        {hasSelectedConversation && (
+          <CommandGroup heading="Actions">
+            <CommandItem onSelect={() => runAndClose(onResolve)}>
+              <CheckCircle className="h-4 w-4 text-success-text" />
+              Resolve conversation
+              <CommandShortcut>E</CommandShortcut>
+            </CommandItem>
+            <CommandItem onSelect={() => runAndClose(onClose)}>
+              <XCircle className="h-4 w-4 text-muted-foreground" />
+              Close conversation
+              <CommandShortcut>C</CommandShortcut>
             </CommandItem>
           </CommandGroup>
-        </CommandList>
-      </Command>
+        )}
+
+        <CommandGroup heading="Settings">
+          <CommandItem onSelect={() => runAndClose(onToggleSupport)}>
+            <Gear className="h-4 w-4" />
+            {supportEnabled
+              ? "Disable public support page"
+              : "Enable public support page"}
+          </CommandItem>
+        </CommandGroup>
+      </CommandList>
     </CommandDialog>
   );
 }

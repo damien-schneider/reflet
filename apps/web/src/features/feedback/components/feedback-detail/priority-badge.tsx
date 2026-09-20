@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -74,10 +75,10 @@ export function PriorityBadge({
     });
   };
 
-  const tooltipContent =
+  const aiNote =
     isOverridden && aiPriority
       ? `AI suggested: ${PRIORITY_CONFIG[aiPriority].label}`
-      : (reasoning ?? `AI Priority: ${config.label}`);
+      : reasoning;
 
   const badge = (
     <TagBadge
@@ -86,44 +87,60 @@ export function PriorityBadge({
     >
       <Icon className="h-3 w-3" weight="fill" />
       <span>P: {config.label}</span>
-      <Tooltip>
-        <TooltipTrigger onClick={(e) => e.stopPropagation()} render={<span />}>
-          <Sparkle
-            className={cn(
-              "h-2.5 w-2.5",
-              isOverridden ? "opacity-80" : "opacity-50"
-            )}
-            weight={isOverridden ? "fill" : "regular"}
-          />
-        </TooltipTrigger>
-        <TooltipContent className="max-w-xs">
-          <p className="text-xs">{tooltipContent}</p>
-        </TooltipContent>
-      </Tooltip>
+      <Sparkle
+        className={cn(
+          "h-2.5 w-2.5",
+          isOverridden ? "opacity-80" : "opacity-50"
+        )}
+        weight={isOverridden ? "fill" : "regular"}
+      />
       {isAdmin && <CaretDown className="h-3 w-3 opacity-70" />}
     </TagBadge>
+  );
+
+  const tooltip = (
+    <TooltipContent className="max-w-xs">
+      <p className="font-semibold text-xs">Priority: {config.label}</p>
+      {aiNote && <p className="mt-1 text-xs opacity-80">{aiNote}</p>}
+    </TooltipContent>
   );
 
   if (!isAdmin) {
     return (
       <Tooltip>
-        <TooltipTrigger>{badge}</TooltipTrigger>
-        <TooltipContent className="max-w-xs">
-          <p className="font-semibold text-xs">Priority: {config.label}</p>
-          {reasoning && <p className="mt-1 text-xs opacity-80">{reasoning}</p>}
-        </TooltipContent>
+        <TooltipTrigger
+          aria-label={`Priority: ${config.label}`}
+          render={
+            <Button className="h-auto rounded-full p-0" variant="quiet" />
+          }
+        >
+          {badge}
+        </TooltipTrigger>
+        {tooltip}
       </Tooltip>
     );
   }
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger
-        className="flex cursor-pointer select-none items-center"
-        render={<button type="button" />}
-      >
-        {badge}
-      </DropdownMenuTrigger>
+      <Tooltip>
+        <TooltipTrigger
+          aria-label={`Priority: ${config.label}. Change priority`}
+          render={
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  className="h-auto select-none rounded-full p-0"
+                  variant="quiet"
+                />
+              }
+            />
+          }
+        >
+          {badge}
+        </TooltipTrigger>
+        {tooltip}
+      </Tooltip>
       <DropdownMenuContent align="start" className="w-44">
         <DropdownMenuRadioGroup
           onValueChange={handleChange}

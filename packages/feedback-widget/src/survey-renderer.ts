@@ -178,7 +178,7 @@ export class SurveyRenderer {
           <button type="button" class="reflet-survey-close" data-action="dismiss" aria-label="Dismiss survey" title="Press Escape to dismiss">&times;</button>
         </div>
         <div class="reflet-survey-progress" role="progressbar" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100" aria-label="Survey progress: question ${currentNum} of ${totalQuestions}">
-          <div class="reflet-survey-progress-bar" style="width: ${progress}%"></div>
+          <div class="reflet-survey-progress-bar" style="--reflet-survey-progress: ${progress / 100}"></div>
         </div>
         <div class="reflet-survey-progress-text" aria-hidden="true">
           <span>${currentNum} of ${totalQuestions}</span>

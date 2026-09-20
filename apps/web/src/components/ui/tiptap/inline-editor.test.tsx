@@ -109,27 +109,6 @@ describe("TiptapInlineEditor", () => {
     expect(screen.queryByText(/\/\d+/)).not.toBeInTheDocument();
   });
 
-  it("shows destructive color when at limit", () => {
-    mockEditor.storage.characterCount.characters.mockReturnValue(100);
-    render(<TiptapInlineEditor maxLength={100} onChange={vi.fn()} value="" />);
-    const counter = screen.getByText("100/100");
-    expect(counter.className).toContain("text-destructive");
-  });
-
-  it("shows amber color when near limit", () => {
-    mockEditor.storage.characterCount.characters.mockReturnValue(95);
-    render(<TiptapInlineEditor maxLength={100} onChange={vi.fn()} value="" />);
-    const counter = screen.getByText("95/100");
-    expect(counter.className).toContain("text-amber-500");
-  });
-
-  it("shows muted color when well below limit", () => {
-    mockEditor.storage.characterCount.characters.mockReturnValue(10);
-    render(<TiptapInlineEditor maxLength={100} onChange={vi.fn()} value="" />);
-    const counter = screen.getByText("10/100");
-    expect(counter.className).toContain("text-muted-foreground");
-  });
-
   it("syncs external value changes to editor", () => {
     mockEditor.storage.markdown.getMarkdown.mockReturnValue("old");
     const { rerender } = render(

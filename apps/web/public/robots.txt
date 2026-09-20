@@ -14,14 +14,13 @@ User-agent: cohere-ai
 Content-Signal: search=yes, ai-input=yes
 Allow: /
 Disallow: /admin/
+Allow: /api/og
 Disallow: /api/
 Disallow: /dashboard/
-Disallow: /dashboard-demo/
 Disallow: /auth/
 Disallow: /invite/
 Disallow: /pending-invitations
 Disallow: /settings/
-Disallow: /design-explore/
 Disallow: /test-tiptap
 
 Sitemap: https://www.reflet.app/sitemap.xml

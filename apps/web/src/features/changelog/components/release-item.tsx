@@ -1,7 +1,7 @@
 "use client";
 
 import { Badge } from "@ctrl-ui/react/ui/badge";
-import { Button } from "@ctrl-ui/react/ui/button";
+import { Button, ButtonLink } from "@ctrl-ui/react/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,6 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@ctrl-ui/react/ui/dropdown-menu";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import {
   Calendar,
   Check,
@@ -19,7 +20,6 @@ import {
   GitCommit,
   GithubLogo,
   PencilSimple,
-  Spinner,
   Trash,
   WarningCircle,
 } from "@phosphor-icons/react";
@@ -70,17 +70,19 @@ export function ReleaseItem({
   onDelete,
 }: ReleaseItemProps) {
   const isPublished = release.publishedAt !== undefined;
-  const isScheduled = !isPublished && release.scheduledPublishAt !== undefined;
+  const scheduledDate =
+    isPublished || release.scheduledPublishAt === undefined
+      ? null
+      : format(release.scheduledPublishAt, "MMM d, h:mm a");
   const publishDate = release.publishedAt
     ? format(release.publishedAt, "MMMM d, yyyy")
     : null;
 
   return (
     <article className="relative">
-      {/* Sticky version header */}
       <div
         className={cn(
-          "sticky top-0 z-10 -mx-4 px-4 py-3 backdrop-blur-sm",
+          "sticky top-0 z-20 -mx-4 px-4 py-3 backdrop-blur-sm",
           "border-transparent border-b bg-background/80",
           "md:-mx-0 md:px-0"
         )}
@@ -92,17 +94,13 @@ export function ReleaseItem({
                 {release.version}
               </Badge>
             )}
-            {isScheduled && (
-              <Badge
-                className="border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300"
-                variant="outline"
-              >
+            {scheduledDate && (
+              <Badge variant="outline">
                 <Clock className="mr-1 h-3 w-3" />
-                Scheduled{" "}
-                {format(release.scheduledPublishAt as number, "MMM d, h:mm a")}
+                Scheduled <span className="tabular-nums">{scheduledDate}</span>
               </Badge>
             )}
-            {!(isPublished || isScheduled) && (
+            {!(isPublished || scheduledDate) && (
               <Badge>
                 <EyeSlash className="mr-1 h-3 w-3" />
                 Draft
@@ -123,25 +121,32 @@ export function ReleaseItem({
               </span>
             )}
 
-            {/* GitHub status indicator */}
             {isPublished && <GitHubStatusIndicator release={release} />}
           </div>
 
-          {/* Admin actions */}
           {isAdmin && (
             <div className="flex items-center gap-1 sm:gap-2">
-              <Link
-                href={`/dashboard/${orgSlug}/changelog/${release._id}/edit`}
+              <ButtonLink
+                render={
+                  <Link
+                    href={`/dashboard/${orgSlug}/changelog/${release._id}/edit`}
+                  />
+                }
+                size="xs"
+                variant="ghost"
               >
-                <Button size="xs" variant="ghost">
-                  <PencilSimple className="h-4 w-4" />
-                  <span className="ml-1.5 hidden sm:inline">Edit</span>
-                </Button>
-              </Link>
+                <PencilSimple className="h-4 w-4" />
+                <span className="ml-1.5 hidden sm:inline">Edit</span>
+              </ButtonLink>
               <DropdownMenu>
                 <DropdownMenuTrigger
                   render={(props: React.ComponentProps<"button">) => (
-                    <Button {...props} iconOnly variant="ghost">
+                    <Button
+                      {...props}
+                      aria-label="Release actions"
+                      iconOnly
+                      variant="ghost"
+                    >
                       <DotsThreeVertical className="h-4 w-4" />
                     </Button>
                   )}
@@ -173,7 +178,6 @@ export function ReleaseItem({
         </div>
       </div>
 
-      {/* Content */}
       <div className={cn("pt-6 pb-12", !isPublished && "opacity-70")}>
         <h2 className="mb-4 font-semibold text-2xl md:text-3xl">
           {release.title}
@@ -183,7 +187,6 @@ export function ReleaseItem({
           <MarkdownRenderer content={release.description} />
         )}
 
-        {/* Shipped features */}
         {release.feedback && release.feedback.length > 0 && (
           <div className="mt-8">
             <h3 className="mb-3 font-medium text-muted-foreground text-sm uppercase tracking-wide">
@@ -197,7 +200,7 @@ export function ReleaseItem({
                     className="flex items-center gap-2 text-sm"
                     key={item._id}
                   >
-                    <Check className="h-4 w-4 shrink-0 text-olive-500" />
+                    <Check className="h-4 w-4 shrink-0 text-success-text" />
                     <span className="min-w-0 flex-1">{item.title}</span>
                     {item.status && <FeedbackStatusDot status={item.status} />}
                   </li>
@@ -206,15 +209,14 @@ export function ReleaseItem({
           </div>
         )}
 
-        {/* Commit count - admin only */}
         {isAdmin &&
           release.commitCount !== undefined &&
           release.commitCount > 0 && (
             <div className="mt-4 flex items-center gap-1.5 text-muted-foreground text-xs">
               <GitCommit className="h-3.5 w-3.5" />
               <span>
-                {release.commitCount} commit
-                {release.commitCount === 1 ? "" : "s"} used
+                <span className="tabular-nums">{release.commitCount}</span>{" "}
+                commit{release.commitCount === 1 ? "" : "s"} used
               </span>
             </div>
           )}
@@ -224,12 +226,12 @@ export function ReleaseItem({
 }
 
 const STATUS_DOT_COLORS: Record<string, string> = {
-  closed: "bg-gray-400",
-  completed: "bg-green-500",
-  in_progress: "bg-yellow-500",
-  open: "bg-blue-500",
-  planned: "bg-purple-500",
-  under_review: "bg-orange-500",
+  closed: "bg-muted-foreground",
+  completed: "bg-success",
+  in_progress: "bg-warning",
+  open: "bg-chart-2",
+  planned: "bg-chart-4",
+  under_review: "bg-chart-3",
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -242,14 +244,18 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 function FeedbackStatusDot({ status }: { status: string }) {
+  const label = STATUS_LABELS[status] ?? status;
   return (
-    <span
-      className={cn(
-        "inline-block h-2 w-2 shrink-0 rounded-full",
-        STATUS_DOT_COLORS[status] ?? "bg-gray-400"
-      )}
-      title={STATUS_LABELS[status] ?? status}
-    />
+    <span className="flex shrink-0 items-center gap-1.5 text-muted-foreground text-xs">
+      <span
+        aria-hidden="true"
+        className={cn(
+          "inline-block h-2 w-2 shrink-0 rounded-full",
+          STATUS_DOT_COLORS[status] ?? "bg-muted-foreground"
+        )}
+      />
+      {label}
+    </span>
   );
 }
 
@@ -257,7 +263,8 @@ function GitHubStatusIndicator({ release }: { release: ReleaseData }) {
   if (release.githubReleaseId && release.githubHtmlUrl) {
     return (
       <a
-        className="flex items-center gap-1 text-green-600 text-xs dark:text-green-400"
+        aria-label="View release on GitHub"
+        className="flex items-center gap-1 text-success-text text-xs"
         href={release.githubHtmlUrl}
         rel="noopener noreferrer"
         target="_blank"
@@ -272,16 +279,18 @@ function GitHubStatusIndicator({ release }: { release: ReleaseData }) {
     return (
       <span className="flex items-center gap-1 text-muted-foreground text-xs">
         <GithubLogo className="h-3.5 w-3.5" />
-        <Spinner className="h-3 w-3 animate-spin" />
+        <Spinner className="h-3 w-3" />
+        <span className="sr-only">Pushing to GitHub</span>
       </span>
     );
   }
 
   if (release.githubPushStatus === "failed") {
     return (
-      <span className="flex items-center gap-1 text-destructive text-xs">
+      <span className="flex items-center gap-1 text-destructive-text text-xs">
         <GithubLogo className="h-3.5 w-3.5" />
         <WarningCircle className="h-3 w-3" />
+        <span className="sr-only">Push to GitHub failed</span>
       </span>
     );
   }

@@ -1,5 +1,6 @@
 import { useDroppable } from "@dnd-kit/core";
 
+import { withAlpha } from "@/lib/color";
 import { getTagDotColor } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
 import { DraggableFeedbackCard } from "./draggable-feedback-card";
@@ -22,8 +23,7 @@ export function DroppableColumn({
     id: status._id,
   });
 
-  // Background opacity: 8% normally, 28% when dragging over
-  const bgOpacity = isOver ? "28" : "08";
+  const bgOpacity = isOver ? 16 : 3;
 
   return (
     <div
@@ -32,7 +32,7 @@ export function DroppableColumn({
       )}
       ref={setNodeRef}
       style={{
-        backgroundColor: `${getTagDotColor(status.color)}${bgOpacity}`,
+        backgroundColor: withAlpha(getTagDotColor(status.color), bgOpacity),
       }}
     >
       <RoadmapColumnHeader

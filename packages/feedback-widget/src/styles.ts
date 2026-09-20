@@ -1,19 +1,21 @@
-/**
- * Generate widget CSS styles
- */
 import { adjustBrightness, createWidgetColors } from "./color-utils";
+import { getFormStyles } from "./styles-form";
 import { getLayoutStyles } from "./styles-layout";
 import { getSurveyStyles } from "./styles-survey";
 
 export function getWidgetStyles(
   primaryColor: string,
-  zIndex: number,
   theme: "light" | "dark"
 ): string {
-  const isDark = theme === "dark";
-  const colors = createWidgetColors(primaryColor, isDark);
+  const colors = createWidgetColors(primaryColor, theme === "dark");
 
   return `
+    :host {
+      all: initial;
+      display: block;
+      color-scheme: ${theme};
+    }
+
     * {
       box-sizing: border-box;
       margin: 0;
@@ -27,9 +29,22 @@ export function getWidgetStyles(
       color: ${colors.text};
     }
 
-    ${getLayoutStyles(colors, zIndex)}
+    button {
+      font: inherit;
+      transition: scale 0.12s ease-out;
+    }
 
-    /* Feedback List */
+    button:active:not(:disabled) {
+      scale: 0.97;
+    }
+
+    :focus-visible {
+      outline: 2px solid ${colors.primary};
+      outline-offset: 2px;
+    }
+
+    ${getLayoutStyles(colors)}
+
     .reflet-feedback-list {
       display: flex;
       flex-direction: column;
@@ -37,17 +52,43 @@ export function getWidgetStyles(
     }
 
     .reflet-feedback-card {
+      position: relative;
       background: ${colors.bg};
       border: 1px solid ${colors.border};
       border-radius: 12px;
       padding: 16px;
-      cursor: pointer;
       transition: border-color 0.2s, box-shadow 0.2s;
     }
 
-    .reflet-feedback-card:hover {
+    .reflet-feedback-card:hover,
+    .reflet-feedback-card:focus-within {
       border-color: ${colors.primary};
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      box-shadow: 0 2px 8px ${colors.shadowSoft};
+    }
+
+    .reflet-feedback-open {
+      position: absolute;
+      inset: 0;
+      border: none;
+      background: transparent;
+      border-radius: inherit;
+      cursor: pointer;
+    }
+
+    .reflet-feedback-row {
+      display: flex;
+      gap: 12px;
+    }
+
+    .reflet-feedback-main {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .reflet-feedback-comments {
+      display: flex;
+      align-items: center;
+      gap: 4px;
     }
 
     .reflet-feedback-title {
@@ -62,6 +103,7 @@ export function getWidgetStyles(
       align-items: center;
       gap: 12px;
       font-size: 13px;
+      font-variant-numeric: tabular-nums;
       color: ${colors.textMuted};
     }
 
@@ -73,27 +115,70 @@ export function getWidgetStyles(
       border-radius: 4px;
       font-size: 12px;
       font-weight: 500;
+      color: var(--reflet-chip-color, ${colors.textMuted});
+      background: color-mix(
+        in srgb,
+        var(--reflet-chip-color, ${colors.textMuted}) 12%,
+        transparent
+      );
     }
 
     .reflet-feedback-status-dot {
       width: 8px;
       height: 8px;
       border-radius: 50%;
+      background: var(--reflet-chip-color, ${colors.textMuted});
     }
 
-    /* Vote Button */
+    .reflet-muted-note {
+      color: ${colors.textMuted};
+      font-size: 13px;
+    }
+
+    .reflet-detail-title {
+      font-size: 18px;
+      margin-bottom: 16px;
+    }
+
+    .reflet-detail-meta {
+      margin-bottom: 16px;
+    }
+
+    .reflet-detail-body {
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    .reflet-detail-heading {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .reflet-detail-form {
+      margin-top: 16px;
+    }
+
+    .reflet-retry-btn {
+      margin-top: 12px;
+    }
+
     .reflet-vote-btn {
+      position: relative;
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: center;
       gap: 2px;
       padding: 8px 12px;
       background: ${colors.bgSecondary};
       border: 1px solid ${colors.border};
       border-radius: 8px;
+      color: ${colors.text};
       cursor: pointer;
-      transition: all 0.2s;
+      transition: border-color 0.2s, background 0.2s, color 0.2s, scale 0.12s ease-out;
       min-width: 48px;
+      min-height: 48px;
     }
 
     .reflet-vote-btn:hover {
@@ -104,12 +189,13 @@ export function getWidgetStyles(
     .reflet-vote-btn.voted {
       background: ${colors.primary};
       border-color: ${colors.primary};
-      color: white;
+      color: ${colors.onPrimary};
     }
 
     .reflet-vote-count {
       font-size: 14px;
       font-weight: 600;
+      font-variant-numeric: tabular-nums;
     }
 
     .reflet-vote-icon {
@@ -117,69 +203,6 @@ export function getWidgetStyles(
       height: 16px;
     }
 
-    /* Create Feedback Form */
-    .reflet-form {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .reflet-form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .reflet-form-label {
-      font-size: 13px;
-      font-weight: 500;
-      color: ${colors.text};
-    }
-
-    .reflet-form-input,
-    .reflet-form-textarea {
-      padding: 10px 12px;
-      border: 1px solid ${colors.border};
-      border-radius: 8px;
-      font-size: 14px;
-      background: ${colors.bg};
-      color: ${colors.text};
-      transition: border-color 0.2s;
-    }
-
-    .reflet-form-input:focus,
-    .reflet-form-textarea:focus {
-      outline: none;
-      border-color: ${colors.primary};
-    }
-
-    .reflet-form-textarea {
-      resize: vertical;
-      min-height: 120px;
-    }
-
-    .reflet-submit-btn {
-      padding: 12px 24px;
-      background: ${colors.primary};
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    .reflet-submit-btn:hover {
-      background: ${colors.primaryHover};
-    }
-
-    .reflet-submit-btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    /* Loading State */
     .reflet-loading {
       display: flex;
       align-items: center;
@@ -200,7 +223,6 @@ export function getWidgetStyles(
       to { transform: rotate(360deg); }
     }
 
-    /* Empty State */
     .reflet-empty {
       text-align: center;
       padding: 40px 20px;
@@ -214,16 +236,14 @@ export function getWidgetStyles(
       opacity: 0.5;
     }
 
-    /* Error State */
     .reflet-error {
       text-align: center;
       padding: 20px;
       color: ${colors.error};
-      background: ${isDark ? "rgba(239, 68, 68, 0.1)" : "#fef2f2"};
+      background: ${colors.errorBg};
       border-radius: 8px;
     }
 
-    /* Login Prompt */
     .reflet-login-prompt {
       text-align: center;
       padding: 20px;
@@ -233,9 +253,10 @@ export function getWidgetStyles(
 
     .reflet-login-btn {
       margin-top: 12px;
+      min-height: 44px;
       padding: 10px 20px;
       background: ${colors.primary};
-      color: white;
+      color: ${colors.onPrimary};
       border: none;
       border-radius: 8px;
       cursor: pointer;
@@ -243,7 +264,6 @@ export function getWidgetStyles(
       font-weight: 500;
     }
 
-    /* Comments */
     .reflet-comments {
       display: flex;
       flex-direction: column;
@@ -277,6 +297,7 @@ export function getWidgetStyles(
 
     .reflet-comment-time {
       font-size: 12px;
+      font-variant-numeric: tabular-nums;
       color: ${colors.textMuted};
     }
 
@@ -289,7 +310,6 @@ export function getWidgetStyles(
       border-left: 3px solid ${colors.primary};
     }
 
-    /* Tags */
     .reflet-tags {
       display: flex;
       flex-wrap: wrap;
@@ -302,57 +322,41 @@ export function getWidgetStyles(
       border-radius: 4px;
       font-size: 11px;
       font-weight: 500;
+      color: var(--reflet-chip-color, ${colors.textMuted});
+      background: color-mix(
+        in srgb,
+        var(--reflet-chip-color, ${colors.textMuted}) 12%,
+        transparent
+      );
     }
 
-    /* Form Actions */
-    .reflet-form-actions {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .reflet-screenshot-btn {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 10px 16px;
-      background: ${colors.bgSecondary};
-      border: 1px solid ${colors.border};
-      border-radius: 8px;
-      font-size: 13px;
-      color: ${colors.textMuted};
-      cursor: pointer;
-      transition: border-color 0.2s, color 0.2s;
-      white-space: nowrap;
-    }
-
-    .reflet-screenshot-btn:hover {
-      border-color: ${colors.primary};
-      color: ${colors.text};
-    }
-
-    .reflet-screenshot-btn.reflet-screenshot-captured {
-      border-color: ${colors.primary};
-      color: ${colors.primary};
-      background: ${adjustBrightness(colors.primary, 90)};
-    }
-
-    /* Screenshot Preview */
-    .reflet-screenshot-preview {
-      margin-top: 8px;
-      border-radius: 8px;
-      overflow: hidden;
-      border: 1px solid ${colors.border};
-    }
-
-    .reflet-screenshot-preview img {
-      display: block;
-      width: 100%;
-      height: auto;
-      max-height: 120px;
-      object-fit: cover;
-    }
+    ${getFormStyles(colors)}
 
     ${getSurveyStyles(colors)}
+
+    @media (pointer: coarse), (max-width: 640px) {
+      .reflet-form-input,
+      .reflet-form-textarea,
+      .reflet-survey-textarea {
+        font-size: 16px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 1ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 1ms !important;
+      }
+
+      .reflet-spinner,
+      .reflet-btn-spinner {
+        animation: none;
+      }
+
+      button:active:not(:disabled) {
+        scale: 1;
+      }
+    }
   `;
 }

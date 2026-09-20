@@ -64,7 +64,7 @@ export function GitHubConnectionPrompt({
       <div className="grid gap-4 sm:grid-cols-2">
         {BENEFITS.map((benefit) => (
           <div className="flex gap-3" key={benefit.title}>
-            <benefit.icon className="mt-0.5 h-5 w-5 shrink-0 text-olive-600" />
+            <benefit.icon className="mt-0.5 h-5 w-5 shrink-0 text-brand-text" />
             <div>
               <Text className="font-medium text-sm">{benefit.title}</Text>
               <Text className="text-muted-foreground text-xs">

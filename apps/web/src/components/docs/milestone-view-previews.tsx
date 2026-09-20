@@ -4,7 +4,6 @@ import { MilestoneDashboardTimeline } from "@reflet/ui/milestone-dashboard-timel
 import { MilestoneEditorialAccordion } from "@reflet/ui/milestone-editorial-accordion";
 import { MilestoneTrackView } from "@reflet/ui/milestone-track-view";
 
-// Mock milestone data for previews
 const MOCK_MILESTONES = [
   {
     colorHex: "#0b6e99",
@@ -48,25 +47,17 @@ const MOCK_MILESTONES = [
   },
 ];
 
-// ─── Track View Preview ─────────────────────────────────────────────────────
-
 function TrackViewPreview() {
   return <MilestoneTrackView milestones={MOCK_MILESTONES} />;
 }
-
-// ─── Editorial Accordion Preview ────────────────────────────────────────────
 
 function EditorialAccordionPreview() {
   return <MilestoneEditorialAccordion milestones={MOCK_MILESTONES} />;
 }
 
-// ─── Dashboard Timeline Preview ─────────────────────────────────────────────
-
 function DashboardTimelinePreview() {
   return <MilestoneDashboardTimeline milestones={MOCK_MILESTONES} />;
 }
-
-// ─── All Previews (Overview) ────────────────────────────────────────────────
 
 function AllMilestoneViewsPreview() {
   return (

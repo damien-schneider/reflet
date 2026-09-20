@@ -67,27 +67,23 @@ export function ReleaseCommitsList({
           <CaretRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
         )}
         <GitCommit className="h-4 w-4 shrink-0 text-muted-foreground" />
-        <span className="font-medium text-muted-foreground">
+        <span className="font-medium text-muted-foreground tabular-nums">
           {commits.length} commit{commits.length === 1 ? "" : "s"} used
         </span>
         {previousTag && (
-          <Badge className="ml-1 text-xs" variant="outline">
+          <Badge className="ml-1 text-xs tabular-nums" variant="outline">
             from {previousTag}
           </Badge>
         )}
         {files && files.length > 0 && (
-          <span className="ml-auto flex items-center gap-1.5 text-muted-foreground text-xs">
+          <span className="ml-auto flex items-center gap-1.5 text-muted-foreground text-xs tabular-nums">
             <FileCode className="h-3.5 w-3.5" />
             {files.length} file{files.length === 1 ? "" : "s"}
             {totalAdditions > 0 && (
-              <span className="text-green-600 dark:text-green-400">
-                +{totalAdditions}
-              </span>
+              <span className="text-success-text">+{totalAdditions}</span>
             )}
             {totalDeletions > 0 && (
-              <span className="text-red-500 dark:text-red-400">
-                −{totalDeletions}
-              </span>
+              <span className="text-destructive-text">−{totalDeletions}</span>
             )}
           </span>
         )}
@@ -111,14 +107,14 @@ export function ReleaseCommitsList({
                   <User className="h-3 w-3" />
                   {commit.author}
                 </span>
-                <span
+                <time
                   className="shrink-0 text-muted-foreground text-xs"
-                  title={commit.date}
+                  dateTime={commit.date}
                 >
                   {formatDistanceToNow(new Date(commit.date), {
                     addSuffix: true,
                   })}
-                </span>
+                </time>
               </li>
             ))}
           </ul>

@@ -113,15 +113,15 @@ export function InlineFeedbackInput({
         tagId: form.tagId,
         title: trimmedTitle,
       });
-      setForm(INITIAL_STATE);
-      setIsExpanded(false);
-      setJustSubmitted(true);
-      setTimeout(() => setJustSubmitted(false), 1500);
     } catch {
-      // Error is handled by the parent (Convex client shows it)
-    } finally {
       setIsSubmitting(false);
+      return;
     }
+    setIsSubmitting(false);
+    setForm(INITIAL_STATE);
+    setIsExpanded(false);
+    setJustSubmitted(true);
+    setTimeout(() => setJustSubmitted(false), 1500);
   };
 
   const handleCancel = () => {
@@ -160,9 +160,7 @@ export function InlineFeedbackInput({
           )}
         >
           {isExpanded ? (
-            // Expanded state
             <div className="relative px-3 py-3">
-              {/* Close button — top right */}
               <Button
                 className="absolute top-2 right-2 h-7 w-7"
                 disabled={isSubmitting}
@@ -174,7 +172,6 @@ export function InlineFeedbackInput({
                 <span className="sr-only">Cancel</span>
               </Button>
 
-              {/* Title row */}
               <div className="flex items-center gap-3 pr-8">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                   <Lightning className="h-4 w-4" weight="fill" />
@@ -193,7 +190,6 @@ export function InlineFeedbackInput({
                 />
               </div>
 
-              {/* Character counter */}
               <AnimatePresence>
                 {showTitleCounter && (
                   <m.p
@@ -212,10 +208,8 @@ export function InlineFeedbackInput({
                 )}
               </AnimatePresence>
 
-              {/* Divider */}
               <div className="mt-2 border-border/40 border-b" />
 
-              {/* Description */}
               <div className="mt-2">
                 <TiptapMarkdownEditor
                   minimal
@@ -228,7 +222,6 @@ export function InlineFeedbackInput({
                 />
               </div>
 
-              {/* Attachments */}
               <div className="mt-2">
                 <AttachmentUpload
                   attachments={form.attachments}
@@ -239,7 +232,6 @@ export function InlineFeedbackInput({
                 />
               </div>
 
-              {/* Email for non-members */}
               <AnimatePresence>
                 {!isMember && (
                   <m.div
@@ -265,7 +257,6 @@ export function InlineFeedbackInput({
                 )}
               </AnimatePresence>
 
-              {/* Footer: tag selector + submit */}
               <div className="mt-2 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   {showTagSelector && (
@@ -317,11 +308,10 @@ export function InlineFeedbackInput({
               </div>
             </div>
           ) : (
-            // Ghost state
-            <button
-              className="flex w-full items-center gap-3 px-4 py-4 text-left"
+            <Button
+              className="h-auto w-full justify-start gap-3 px-4 py-4 text-left"
               onClick={handleGhostClick}
-              type="button"
+              variant="quiet"
             >
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                 <Lightning className="h-4 w-4" weight="fill" />
@@ -329,11 +319,10 @@ export function InlineFeedbackInput({
               <span className="text-muted-foreground text-sm">
                 Share an idea or suggestion...
               </span>
-            </button>
+            </Button>
           )}
         </div>
 
-        {/* Success flash */}
         <AnimatePresence>
           {justSubmitted && (
             <m.p

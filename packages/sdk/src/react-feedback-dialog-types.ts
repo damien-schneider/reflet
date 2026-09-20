@@ -1,12 +1,8 @@
 import type { CreateFeedbackResponse, RefletUser } from "./types";
 
-export type FeedbackCategory = "feature" | "bug" | "question";
-
 export interface FeedbackDialogLabels {
   cancel?: string;
-  categoryBug?: string;
-  categoryFeature?: string;
-  categoryQuestion?: string;
+  close?: string;
   descriptionPlaceholder?: string;
   emailLabel?: string;
   emailPlaceholder?: string;
@@ -21,10 +17,6 @@ export interface FeedbackDialogLabels {
 export interface FeedbackDialogProps {
   /** API base URL override */
   baseUrl?: string;
-  /** Categories to show (default: all three) */
-  categories?: FeedbackCategory[];
-  /** Default selected category */
-  defaultCategory?: FeedbackCategory;
   /** Custom labels / i18n */
   labels?: FeedbackDialogLabels;
   /** Called when dialog closes */
@@ -51,9 +43,7 @@ export interface FeedbackDialogProps {
 
 export const DEFAULT_LABELS: Required<FeedbackDialogLabels> = {
   cancel: "Cancel",
-  categoryBug: "Bug",
-  categoryFeature: "Feature",
-  categoryQuestion: "Question",
+  close: "Close",
   descriptionPlaceholder: "Tell us more... (optional)",
   emailLabel: "Email",
   emailPlaceholder: "your@email.com (optional)",
@@ -63,12 +53,6 @@ export const DEFAULT_LABELS: Required<FeedbackDialogLabels> = {
   successTitle: "Thank you!",
   title: "Send Feedback",
   titlePlaceholder: "What's on your mind?",
-};
-
-export const CATEGORY_ICONS: Record<FeedbackCategory, string> = {
-  bug: "🐛",
-  feature: "✨",
-  question: "💬",
 };
 
 export const AUTO_CLOSE_DELAY = 2500;

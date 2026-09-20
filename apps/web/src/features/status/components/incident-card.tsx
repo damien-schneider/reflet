@@ -4,6 +4,7 @@ import { Button } from "@ctrl-ui/react/ui/button";
 import { Textarea } from "@ctrl-ui/react/ui/textarea";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 import { StatusDot } from "./status-dot";
 
 interface IncidentUpdate {
@@ -37,9 +38,9 @@ const statusOptions = [
 ];
 
 const severityColors = {
-  critical: "border-red-300 dark:border-red-800",
-  major: "border-orange-300 dark:border-orange-800",
-  minor: "border-amber-300 dark:border-amber-800",
+  critical: "border-destructive/50",
+  major: "border-warning/60",
+  minor: "border-warning/30",
 };
 
 const formatRelativeTime = (timestamp: number): string => {
@@ -107,7 +108,7 @@ export function IncidentCard({ incident, onPostUpdate }: IncidentCardProps) {
       <div className="mt-2 flex flex-wrap gap-1">
         {incident.affectedMonitors.map((m) => (
           <span
-            className="rounded-full bg-red-50 px-2 py-0.5 text-red-700 text-xs dark:bg-red-950 dark:text-red-300"
+            className="rounded-full bg-destructive-subtle px-2 py-0.5 text-destructive-text text-xs"
             key={m.name}
           >
             {m.name}
@@ -137,20 +138,27 @@ export function IncidentCard({ incident, onPostUpdate }: IncidentCardProps) {
       {showUpdateForm && (
         <div className="mt-3 space-y-2 border-t pt-3">
           <div className="flex gap-1.5">
-            {statusOptions.map((opt) => (
-              <button
-                className={`rounded-full px-3 py-1 text-xs transition-colors ${
-                  updateStatus === opt.value
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:text-foreground"
-                }`}
-                key={opt.value}
-                onClick={() => setUpdateStatus(opt.value)}
-                type="button"
-              >
-                {opt.label}
-              </button>
-            ))}
+            {statusOptions.map((opt) => {
+              const selected = updateStatus === opt.value;
+              return (
+                <Button
+                  active={selected}
+                  aria-pressed={selected}
+                  className={cn(
+                    "h-auto rounded-full px-3 py-1 text-xs",
+                    selected
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground hover:text-foreground"
+                  )}
+                  key={opt.value}
+                  onClick={() => setUpdateStatus(opt.value)}
+                  type="button"
+                  variant="quiet"
+                >
+                  {opt.label}
+                </Button>
+              );
+            })}
           </div>
           <Textarea
             autoFocus

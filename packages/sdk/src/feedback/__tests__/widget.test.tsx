@@ -119,22 +119,6 @@ describe("RefletFeedback", () => {
     expect(submit.disabled).toBe(false);
   });
 
-  it("switches the reported category", () => {
-    mount();
-    click(launcher());
-
-    const category = shadow().querySelector(
-      'select[aria-label="Feedback type"]'
-    );
-    if (!(category instanceof HTMLSelectElement)) {
-      throw new Error("Category selector missing");
-    }
-
-    expect(category.value).toBe("bug");
-    fireEvent.change(category, { target: { value: "idea" } });
-    expect(category.value).toBe("idea");
-  });
-
   it("opens with one line and expands only when the reporter focuses it", () => {
     mount();
     click(launcher());

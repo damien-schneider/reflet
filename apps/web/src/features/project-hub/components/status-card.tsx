@@ -16,10 +16,10 @@ const STATUS_LABELS = {
 } as const;
 
 const STATUS_COLORS = {
-  degraded: "bg-amber-500",
-  major_outage: "bg-red-500",
+  degraded: "bg-warning",
+  major_outage: "bg-destructive",
   no_monitors: "bg-muted-foreground",
-  operational: "bg-emerald-500",
+  operational: "bg-success",
 } as const;
 
 interface StatusCardProps {

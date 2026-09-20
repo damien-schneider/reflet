@@ -56,10 +56,10 @@ function UnsubscribeContent() {
       <div className="flex min-h-screen items-center justify-center">
         <div className="w-full max-w-md p-6 text-center">
           <div className="mb-6 flex justify-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive-subtle">
               <svg
                 aria-label="Error icon"
-                className="h-8 w-8 text-red-600"
+                className="h-8 w-8 text-destructive-text"
                 fill="none"
                 role="img"
                 stroke="currentColor"
@@ -92,10 +92,10 @@ function UnsubscribeContent() {
     <div className="flex min-h-screen items-center justify-center">
       <div className="w-full max-w-md p-6 text-center">
         <div className="mb-6 flex justify-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-success-subtle">
             <svg
               aria-label="Success icon"
-              className="h-8 w-8 text-green-600"
+              className="h-8 w-8 text-success-text"
               fill="none"
               role="img"
               stroke="currentColor"

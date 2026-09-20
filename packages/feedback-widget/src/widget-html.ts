@@ -1,3 +1,4 @@
+import { DEFAULT_STATUS_COLOR } from "./color-utils";
 import {
   backIcon,
   closeIcon,
@@ -15,48 +16,58 @@ export function renderWidgetHTML(
   config: WidgetConfig
 ): string {
   const { mode, position } = config;
-  const { isOpen, isLoading, boardConfig, error } = state;
 
   let html = "";
 
-  if (mode === "floating" && !isOpen) {
+  if (mode === "floating" && !state.isOpen) {
     html += `
-      <button class="reflet-launcher ${position}" aria-label="Open feedback">
+      <button class="reflet-launcher ${position}" type="button" aria-label="Open feedback">
         <span class="reflet-launcher-icon">${feedbackIcon}</span>
       </button>
     `;
   }
 
-  if (isOpen || mode === "inline") {
-    const windowClass =
-      mode === "inline" ? "reflet-window inline" : `reflet-window ${position}`;
-
-    html += `
-      <div class="${windowClass}">
-        <div class="reflet-header">
-          <div class="reflet-header-content">
-            <h3 class="reflet-header-title">${boardConfig?.name ?? "Feedback"}</h3>
-            ${boardConfig?.description ? `<p class="reflet-header-subtitle">${escapeHtml(boardConfig.description)}</p>` : ""}
-          </div>
-          ${mode === "floating" ? `<button class="reflet-close-btn" aria-label="Close">${closeIcon}</button>` : ""}
-        </div>
-
-        ${renderNavHTML(config, state.view)}
-
-        <div class="reflet-content">
-          ${isLoading ? renderLoadingHTML() : ""}
-          ${error ? renderErrorHTML(error) : ""}
-          ${isLoading || error ? "" : renderViewHTML(state, config)}
-        </div>
-
-        <div class="reflet-footer">
-          Powered by <a href="https://reflet.app" target="_blank" rel="noopener">Reflet</a>
-        </div>
-      </div>
-    `;
+  if (state.isOpen || mode === "inline") {
+    html += renderWindowHTML(state, config);
   }
 
   return html;
+}
+
+function renderWindowHTML(state: WidgetState, config: WidgetConfig): string {
+  const { mode, position } = config;
+  const { isLoading, boardConfig, error } = state;
+  const isFloating = mode === "floating";
+  const title = boardConfig?.name ?? "Feedback";
+  const windowClass =
+    mode === "inline" ? "reflet-window inline" : `reflet-window ${position}`;
+  const dialogAttrs = isFloating
+    ? ` role="dialog" aria-modal="true" aria-label="${escapeHtml(title)}"`
+    : "";
+
+  return `
+    <div class="${windowClass}"${dialogAttrs}>
+      <div class="reflet-header">
+        <div class="reflet-header-content">
+          <h3 class="reflet-header-title">${escapeHtml(title)}</h3>
+          ${boardConfig?.description ? `<p class="reflet-header-subtitle">${escapeHtml(boardConfig.description)}</p>` : ""}
+        </div>
+        ${isFloating ? `<button class="reflet-close-btn" type="button" aria-label="Close">${closeIcon}</button>` : ""}
+      </div>
+
+      ${renderNavHTML(config, state.view)}
+
+      <div class="reflet-content">
+        ${isLoading ? renderLoadingHTML() : ""}
+        ${error ? renderErrorHTML(error) : ""}
+        ${isLoading || error ? "" : renderViewHTML(state, config)}
+      </div>
+
+      <div class="reflet-footer">
+        Powered by <a href="https://reflet.app" target="_blank" rel="noopener">Reflet</a>
+      </div>
+    </div>
+  `;
 }
 
 function renderNavHTML(
@@ -116,7 +127,7 @@ function renderFeedbackListHTML(
 
   if (features?.createFeedback) {
     html += `
-      <button class="reflet-submit-btn" style="width: 100%; margin-bottom: 16px; display: flex; align-items: center; justify-content: center; gap: 8px;" data-action="create">
+      <button class="reflet-submit-btn reflet-submit-btn-block" data-action="create" type="button">
         ${plusIcon}
         Submit Feedback
       </button>
@@ -147,35 +158,36 @@ function renderFeedbackCardHTML(
   item: FeedbackItem,
   features: WidgetConfig["features"]
 ): string {
-  const statusColor = item.boardStatus?.color ?? "#6b7280";
+  const statusColor = item.boardStatus?.color ?? DEFAULT_STATUS_COLOR;
 
   return `
-    <div class="reflet-feedback-card" data-feedback-id="${item.id}">
-      <div style="display: flex; gap: 12px;">
+    <div class="reflet-feedback-card">
+      <button class="reflet-feedback-open" data-feedback-id="${item.id}" type="button" aria-label="${escapeHtml(item.title)}"></button>
+      <div class="reflet-feedback-row">
         ${
           features?.voting
             ? `
-          <button class="reflet-vote-btn ${item.hasVoted ? "voted" : ""}" data-vote-id="${item.id}" onclick="event.stopPropagation()">
+          <button class="reflet-vote-btn ${item.hasVoted ? "voted" : ""}" data-vote-id="${item.id}" type="button" aria-label="Upvote">
             <span class="reflet-vote-icon">${upvoteIcon}</span>
             <span class="reflet-vote-count">${item.voteCount}</span>
           </button>
         `
             : ""
         }
-        <div style="flex: 1; min-width: 0;">
+        <div class="reflet-feedback-main">
           <div class="reflet-feedback-title">${escapeHtml(item.title)}</div>
           <div class="reflet-feedback-meta">
             ${
               item.boardStatus
                 ? `
-              <span class="reflet-feedback-status" style="background: ${statusColor}20; color: ${statusColor};">
-                <span class="reflet-feedback-status-dot" style="background: ${statusColor};"></span>
+              <span class="reflet-feedback-status" style="--reflet-chip-color: ${statusColor}">
+                <span class="reflet-feedback-status-dot"></span>
                 ${escapeHtml(item.boardStatus.name)}
               </span>
             `
                 : ""
             }
-            <span style="display: flex; align-items: center; gap: 4px;">
+            <span class="reflet-feedback-comments">
               ${commentIcon}
               ${item.commentCount}
             </span>
@@ -188,7 +200,7 @@ function renderFeedbackCardHTML(
               ${item.tags
                 .map(
                   (tag) =>
-                    `<span class="reflet-tag" style="background: ${tag.color}20; color: ${tag.color};">${escapeHtml(tag.name)}</span>`
+                    `<span class="reflet-tag" style="--reflet-chip-color: ${tag.color}">${escapeHtml(tag.name)}</span>`
                 )
                 .join("")}
             </div>
@@ -207,24 +219,25 @@ function renderFeedbackDetailHTML(state: WidgetState): string {
     return "";
   }
 
-  const statusColor = selectedFeedback.boardStatus?.color ?? "#6b7280";
+  const statusColor =
+    selectedFeedback.boardStatus?.color ?? DEFAULT_STATUS_COLOR;
 
   return `
-    <button class="reflet-back-btn" data-action="back">
+    <button class="reflet-back-btn" data-action="back" type="button">
       ${backIcon}
       Back to list
     </button>
 
-    <h3 class="reflet-feedback-title" style="font-size: 18px; margin-bottom: 16px;">
+    <h3 class="reflet-feedback-title reflet-detail-title">
       ${escapeHtml(selectedFeedback.title)}
     </h3>
 
-    <div class="reflet-feedback-meta" style="margin-bottom: 16px;">
+    <div class="reflet-feedback-meta reflet-detail-meta">
       ${
         selectedFeedback.boardStatus
           ? `
-        <span class="reflet-feedback-status" style="background: ${statusColor}20; color: ${statusColor};">
-          <span class="reflet-feedback-status-dot" style="background: ${statusColor};"></span>
+        <span class="reflet-feedback-status" style="--reflet-chip-color: ${statusColor}">
+          <span class="reflet-feedback-status-dot"></span>
           ${escapeHtml(selectedFeedback.boardStatus.name)}
         </span>
       `
@@ -234,26 +247,26 @@ function renderFeedbackDetailHTML(state: WidgetState): string {
       <span>${formatDate(selectedFeedback.createdAt)}</span>
     </div>
 
-    <div style="margin-bottom: 24px; line-height: 1.6;">
+    <div class="reflet-detail-body">
       ${escapeHtml(selectedFeedback.description)}
     </div>
 
-    <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">
+    <h4 class="reflet-detail-heading">
       Comments (${selectedFeedbackComments.length})
     </h4>
 
     ${renderCommentsHTML(selectedFeedbackComments)}
 
-    <div class="reflet-form" style="margin-top: 16px;">
+    <div class="reflet-form reflet-detail-form">
       <textarea class="reflet-form-textarea" placeholder="Add a comment..." rows="3" id="comment-input"></textarea>
-      <button class="reflet-submit-btn" data-action="comment">Post Comment</button>
+      <button class="reflet-submit-btn" data-action="comment" type="button">Post Comment</button>
     </div>
   `;
 }
 
 function renderCommentsHTML(comments: Comment[]): string {
   if (comments.length === 0) {
-    return '<p style="color: #64748b; font-size: 13px;">No comments yet. Be the first to comment!</p>';
+    return '<p class="reflet-muted-note">No comments yet. Be the first to comment!</p>';
   }
 
   return `
@@ -281,7 +294,7 @@ function renderCreateFormHTML(config: WidgetConfig): string {
 
   if (!isAuthenticated) {
     return `
-      <button class="reflet-back-btn" data-action="back">
+      <button class="reflet-back-btn" data-action="back" type="button">
         ${backIcon}
         Back to list
       </button>
@@ -290,7 +303,7 @@ function renderCreateFormHTML(config: WidgetConfig): string {
         <p>Please sign in to submit feedback</p>
         ${
           config.loginUrl
-            ? '<button class="reflet-login-btn" data-action="login">Sign In</button>'
+            ? '<button class="reflet-login-btn" data-action="login" type="button">Sign In</button>'
             : ""
         }
       </div>
@@ -298,12 +311,12 @@ function renderCreateFormHTML(config: WidgetConfig): string {
   }
 
   return `
-    <button class="reflet-back-btn" data-action="back">
+    <button class="reflet-back-btn" data-action="back" type="button">
       ${backIcon}
       Back to list
     </button>
 
-    <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">Submit Feedback</h3>
+    <h3 class="reflet-detail-heading">Submit Feedback</h3>
 
     <form class="reflet-form" data-form="create">
       <div class="reflet-form-group">
@@ -336,7 +349,7 @@ function renderErrorHTML(error: string | null): string {
   return `
     <div class="reflet-error">
       <p>${escapeHtml(error ?? "An error occurred")}</p>
-      <button class="reflet-submit-btn" style="margin-top: 12px;" data-action="retry">Retry</button>
+      <button class="reflet-submit-btn reflet-retry-btn" data-action="retry" type="button">Retry</button>
     </div>
   `;
 }

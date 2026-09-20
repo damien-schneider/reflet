@@ -91,9 +91,9 @@ function QuestionStatCard({ stat }: { stat: QuestionStat }) {
                 <div className="relative h-5 flex-1 overflow-hidden rounded bg-muted">
                   <div
                     className={cn(
-                      "absolute inset-y-0 left-0 rounded transition-all",
-                      pct > 66 && "bg-green-500/20",
-                      pct > 33 && pct <= 66 && "bg-yellow-500/20",
+                      "absolute inset-y-0 left-0 rounded transition-[width,background-color]",
+                      pct > 66 && "bg-success/20",
+                      pct > 33 && pct <= 66 && "bg-warning/20",
                       pct <= 33 && "bg-primary/20"
                     )}
                     style={{ width: `${pct}%` }}

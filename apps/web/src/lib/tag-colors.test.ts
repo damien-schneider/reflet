@@ -1,19 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
-  getColorBadgeStyles,
   getRandomTagColor,
-  getTagBgColor,
-  getTagColorStyles,
   getTagColorValues,
   getTagDotColor,
   getTagSwatchClass,
-  getTagTextClass,
   getTagTextColor,
   isValidTagColor,
   migrateHexToNamedColor,
   TAG_COLOR_LABELS,
   TAG_COLORS,
 } from "./tag-colors";
+
+const HARDCODED_COLOR = /#|dark:|rgb\(|oklch\(/;
 
 describe("TAG_COLORS", () => {
   it("contains exactly 10 colors", () => {
@@ -70,16 +68,35 @@ describe("isValidTagColor", () => {
 });
 
 describe("getTagColorValues", () => {
-  it("returns bg and text for valid named colors (light mode)", () => {
+  it("returns token-backed bg and text for valid named colors", () => {
     const result = getTagColorValues("red");
-    expect(result.bg).toBe("#ffe2dd");
-    expect(result.text).toBe("#e03e3e");
+    expect(result.bg).toBe(
+      "color-mix(in oklab, var(--tag-red) 15%, transparent)"
+    );
+    expect(result.text).toBe("var(--tag-red-text)");
   });
 
-  it("returns dark mode values when isDark is true", () => {
-    const result = getTagColorValues("red", true);
-    expect(result.bg).toBe("rgba(234, 87, 82, 0.15)");
-    expect(result.text).toBe("#df5452");
+  it("maps gray and default onto the muted surface", () => {
+    for (const color of ["gray", "default"]) {
+      const result = getTagColorValues(color);
+      expect(result.bg).toBe("var(--muted)");
+      expect(result.text).toBe("var(--muted-foreground)");
+    }
+  });
+
+  it("gives every chromatic name a distinct token pair", () => {
+    const chromatic = TAG_COLORS.filter(
+      (color) => color !== "gray" && color !== "default"
+    );
+    const texts = chromatic.map((color) => getTagColorValues(color).text);
+    expect(new Set(texts).size).toBe(chromatic.length);
+  });
+
+  it("never emits a raw colour literal", () => {
+    for (const color of TAG_COLORS) {
+      const { bg, text } = getTagColorValues(color);
+      expect(`${bg} ${text}`).not.toMatch(/#[0-9a-f]{3,8}|rgba?\(|oklch\(/i);
+    }
   });
 
   it("falls back to default for invalid color names", () => {
@@ -100,88 +117,18 @@ describe("getTagColorValues", () => {
     expect(result).toEqual(defaultResult);
   });
 
-  it("returns correct values for every named color in light mode", () => {
+  it("returns a bg and text string for every named color", () => {
     for (const color of TAG_COLORS) {
       const result = getTagColorValues(color);
-      expect(result).toHaveProperty("bg");
-      expect(result).toHaveProperty("text");
       expect(typeof result.bg).toBe("string");
       expect(typeof result.text).toBe("string");
     }
   });
 });
 
-describe("getTagColorStyles", () => {
-  it("returns CSSProperties with backgroundColor, color, and borderColor", () => {
-    const styles = getTagColorStyles("blue");
-    expect(styles.backgroundColor).toBe("#d3e5ef");
-    expect(styles.color).toBe("#0b6e99");
-    expect(styles.borderColor).toBe("#0b6e994d");
-  });
-
-  it("returns dark mode styles when isDark is true", () => {
-    const styles = getTagColorStyles("blue", true);
-    expect(styles.backgroundColor).toBe("rgba(82, 156, 202, 0.15)");
-    expect(styles.color).toBe("#5e87c9");
-  });
-
-  it("falls back to default for invalid color", () => {
-    const defaultStyles = getTagColorStyles("default");
-    const invalidStyles = getTagColorStyles("xyz");
-    expect(invalidStyles).toEqual(defaultStyles);
-  });
-});
-
-describe("getColorBadgeStyles", () => {
-  it("returns palette styles for valid named colors", () => {
-    const styles = getColorBadgeStyles("green");
-    expect(styles.backgroundColor).toBe("#dbeddb");
-    expect(styles.color).toBe("#0f7b6c");
-    expect(styles.borderColor).toBe("#0f7b6c30");
-  });
-
-  it("returns palette styles for 'default' color", () => {
-    const styles = getColorBadgeStyles("default");
-    expect(styles.backgroundColor).toBe("#f1f1ef");
-    expect(styles.color).toBe("#787774");
-  });
-
-  it("returns alpha-based styles for unknown hex colors", () => {
-    const hex = "#abcdef";
-    const styles = getColorBadgeStyles(hex);
-    expect(styles.backgroundColor).toBe("#abcdef15");
-    expect(styles.color).toBe("#abcdef");
-    expect(styles.borderColor).toBe("#abcdef30");
-  });
-
-  it("returns palette styles for known legacy hex colors", () => {
-    const styles = getColorBadgeStyles("#ef4444");
-    const redStyles = getColorBadgeStyles("red");
-    expect(styles).toEqual(redStyles);
-  });
-});
-
-describe("getTagBgColor", () => {
-  it("returns background color in light mode", () => {
-    expect(getTagBgColor("purple")).toBe("#e8deee");
-  });
-
-  it("returns background color in dark mode", () => {
-    expect(getTagBgColor("purple", true)).toBe("rgba(154, 109, 215, 0.15)");
-  });
-
-  it("falls back to default for invalid color", () => {
-    expect(getTagBgColor("invalid")).toBe(getTagBgColor("default"));
-  });
-});
-
 describe("getTagTextColor", () => {
-  it("returns text color in light mode", () => {
-    expect(getTagTextColor("orange")).toBe("#d9730d");
-  });
-
-  it("returns text color in dark mode", () => {
-    expect(getTagTextColor("orange", true)).toBe("#c77d48");
+  it("returns the token-backed text colour", () => {
+    expect(getTagTextColor("orange")).toBe("var(--tag-orange-text)");
   });
 
   it("falls back to default for invalid color", () => {
@@ -190,24 +137,20 @@ describe("getTagTextColor", () => {
 });
 
 describe("getTagDotColor", () => {
-  it("returns text color for valid named colors", () => {
-    expect(getTagDotColor("red")).toBe("#e03e3e");
+  it("returns the token-backed text colour for valid named colors", () => {
+    expect(getTagDotColor("red")).toBe("var(--tag-red-text)");
   });
 
-  it("returns dark text color when isDark is true", () => {
-    expect(getTagDotColor("red", true)).toBe("#df5452");
-  });
-
-  it("returns text color for known hex via migration", () => {
-    expect(getTagDotColor("#3b82f6")).toBe("#0b6e99");
+  it("returns the token-backed text colour for known hex via migration", () => {
+    expect(getTagDotColor("#3b82f6")).toBe("var(--tag-blue-text)");
   });
 
   it("returns the raw hex for unknown hex colors", () => {
     expect(getTagDotColor("#abcdef")).toBe("#abcdef");
   });
 
-  it("returns default text color for 'default'", () => {
-    expect(getTagDotColor("default")).toBe("#787774");
+  it("returns the muted foreground for 'default'", () => {
+    expect(getTagDotColor("default")).toBe("var(--muted-foreground)");
   });
 });
 
@@ -224,26 +167,35 @@ describe("getRandomTagColor", () => {
   });
 });
 
-describe("getTagTextClass", () => {
-  it("returns Tailwind class string for valid colors", () => {
-    const cls = getTagTextClass("red");
-    expect(cls).toContain("text-[#e03e3e]");
-    expect(cls).toContain("dark:text-[#df5452]");
-  });
-
-  it("falls back to default class for invalid color", () => {
-    expect(getTagTextClass("invalid")).toBe(getTagTextClass("default"));
-  });
-});
-
 describe("getTagSwatchClass", () => {
-  it("returns Tailwind class string for valid colors", () => {
-    const cls = getTagSwatchClass("blue");
-    expect(cls).toContain("bg-[#d3e5ef]");
+  it("returns the dedicated tag palette classes for valid colors", () => {
+    expect(getTagSwatchClass("blue")).toBe("bg-tag-blue border-tag-blue");
+    expect(getTagSwatchClass("red")).toBe("bg-tag-red border-tag-red");
+    expect(getTagSwatchClass("brown")).toBe("bg-tag-brown border-tag-brown");
+    expect(getTagSwatchClass("yellow")).toBe("bg-tag-yellow border-tag-yellow");
+    expect(getTagSwatchClass("gray")).toBe("bg-muted border-border");
   });
 
   it("falls back to default class for invalid color", () => {
     expect(getTagSwatchClass("nope")).toBe(getTagSwatchClass("default"));
+  });
+
+  it("gives every chromatic name its own distinct classes", () => {
+    const seen: Record<string, true> = {};
+    for (const color of TAG_COLORS) {
+      if (color === "default" || color === "gray") {
+        continue;
+      }
+      const classes = getTagSwatchClass(color);
+      expect(seen[classes]).toBeUndefined();
+      seen[classes] = true;
+    }
+  });
+
+  it("never emits a hardcoded color or a dark variant", () => {
+    for (const color of TAG_COLORS) {
+      expect(getTagSwatchClass(color)).not.toMatch(HARDCODED_COLOR);
+    }
   });
 });
 

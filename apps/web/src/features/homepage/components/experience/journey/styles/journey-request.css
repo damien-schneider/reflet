@@ -48,6 +48,7 @@
   gap: 4px;
   align-items: center;
   font-size: 10px;
+  font-variant-numeric: tabular-nums;
   color: var(--muted-foreground);
 }
 :where(.journey-request-comments) {

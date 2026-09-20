@@ -165,6 +165,7 @@
 :where(.journey-board-column small) {
   margin-left: auto;
   font-size: 10px;
+  font-variant-numeric: tabular-nums;
   color: var(--muted-foreground);
 }
 :where(.journey-board-note) {
@@ -189,6 +190,7 @@
   gap: 5px;
   align-items: center;
   margin-top: 18px;
+  font-variant-numeric: tabular-nums;
 }
 :where(.journey-board-column[data-current="true"] .journey-board-note) {
   visibility: hidden;

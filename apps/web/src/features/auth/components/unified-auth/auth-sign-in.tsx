@@ -76,7 +76,7 @@ export function AuthHelperText({ mode, onResetMode }: AuthHelperTextProps) {
               <>
                 Don't have an account?{" "}
                 <button
-                  className="font-medium text-olive-600 hover:underline"
+                  className="font-medium text-brand-text hover:underline"
                   onClick={onResetMode}
                   type="button"
                 >
@@ -87,7 +87,7 @@ export function AuthHelperText({ mode, onResetMode }: AuthHelperTextProps) {
               <>
                 Already have an account?{" "}
                 <button
-                  className="font-medium text-olive-600 hover:underline"
+                  className="font-medium text-brand-text hover:underline"
                   onClick={onResetMode}
                   type="button"
                 >

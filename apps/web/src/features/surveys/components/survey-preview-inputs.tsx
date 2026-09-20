@@ -63,16 +63,12 @@ export function NpsInput({
               "flex size-9 items-center justify-center rounded border text-sm transition-colors",
               answer === val &&
                 "border-primary bg-primary text-primary-foreground",
-              answer !== val &&
-                val <= 6 &&
-                "hover:bg-red-50 dark:hover:bg-red-950",
+              answer !== val && val <= 6 && "hover:bg-destructive-subtle",
               answer !== val &&
                 val > 6 &&
                 val <= 8 &&
-                "hover:bg-yellow-50 dark:hover:bg-yellow-950",
-              answer !== val &&
-                val > 8 &&
-                "hover:bg-green-50 dark:hover:bg-green-950"
+                "hover:bg-warning-subtle",
+              answer !== val && val > 8 && "hover:bg-success-subtle"
             )}
             key={val}
             onClick={() => onAnswer(val)}

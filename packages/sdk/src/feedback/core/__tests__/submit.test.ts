@@ -72,7 +72,6 @@ function submission(
   overrides: Partial<WidgetSubmission> = {}
 ): WidgetSubmission {
   return {
-    category: "bug",
     context: { url: "https://app.test/billing" },
     element: null,
     isAnonymous: false,
@@ -107,32 +106,18 @@ describe("deriveTitle", () => {
 });
 
 describe("buildDescription", () => {
-  it("prefixes the category", () => {
-    expect(
-      buildDescription({
-        category: "bug",
-        isAnonymous: false,
-        message: "Broken",
-      })
-    ).toBe("[Bug] Broken");
-  });
-
   it("appends a contact block for anonymous reporters", () => {
     const description = buildDescription({
-      category: "idea",
       email: "jane@example.com",
       isAnonymous: true,
       message: "Add dark mode",
     });
 
-    expect(description).toBe(
-      "[Idea] Add dark mode\n\n---\nContact: jane@example.com"
-    );
+    expect(description).toBe("Add dark mode\n\n---\nContact: jane@example.com");
   });
 
   it("ignores the email of an identified user", () => {
     const description = buildDescription({
-      category: "question",
       email: "jane@example.com",
       isAnonymous: false,
       message: "How do I export?",
@@ -151,7 +136,7 @@ describe("submitWidgetFeedback", () => {
     });
     expect(created[0]).toEqual({
       context: { url: "https://app.test/billing" },
-      description: "[Bug] The invoice total is wrong",
+      description: "The invoice total is wrong",
       title: "The invoice total is wrong",
     });
   });

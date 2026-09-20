@@ -146,7 +146,7 @@ interface SecurityCard {
 }
 
 const linkClassName =
-  "mt-4 inline-block font-medium text-olive-600 text-sm underline underline-offset-4 transition-colors hover:text-olive-700 dark:text-olive-400 dark:hover:text-olive-300";
+  "mt-4 inline-block font-medium text-brand-text text-sm underline underline-offset-4 transition-colors hover:text-brand-text/80";
 
 function CardLink({
   link,
@@ -252,7 +252,7 @@ export default function SecurityPage() {
           <section className="rounded-2xl border border-border bg-card p-8 text-center sm:p-12">
             <H2 className="mb-8">Have security questions?</H2>
             <a
-              className="inline-block font-medium text-olive-600 text-sm underline underline-offset-4 transition-colors hover:text-olive-700 dark:text-olive-400 dark:hover:text-olive-300"
+              className="inline-block font-medium text-brand-text text-sm underline underline-offset-4 transition-colors hover:text-brand-text/80"
               href="mailto:security@reflet.app"
             >
               Contact our team

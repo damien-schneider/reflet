@@ -1,3 +1,11 @@
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@ctrl-ui/react/ui/table";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -14,7 +22,7 @@ export const metadata: Metadata = generatePageMetadata({
 export default function FeedbackWidgetPage() {
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="mb-2 font-display text-3xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+      <h1 className="mb-2 font-display text-3xl text-foreground leading-snug tracking-tight">
         Feedback Widget
       </h1>
       <p className="mb-8 text-base text-muted-foreground sm:text-xl">
@@ -23,7 +31,7 @@ export default function FeedbackWidgetPage() {
       </p>
 
       <section className="mb-10">
-        <h2 className="mb-3 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+        <h2 className="mb-3 font-display text-2xl text-foreground leading-snug tracking-tight">
           Script tag embed
         </h2>
         <p className="mb-4 text-muted-foreground text-sm">
@@ -42,7 +50,7 @@ export default function FeedbackWidgetPage() {
       </section>
 
       <section className="mb-10">
-        <h2 className="mb-3 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+        <h2 className="mb-3 font-display text-2xl text-foreground leading-snug tracking-tight">
           React component
         </h2>
         <p className="mb-4 text-muted-foreground text-sm">
@@ -64,59 +72,55 @@ function App() {
       </section>
 
       <section className="mb-10">
-        <h2 className="mb-3 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+        <h2 className="mb-3 font-display text-2xl text-foreground leading-snug tracking-tight">
           Configuration
         </h2>
         <div className="overflow-hidden rounded-lg border border-border">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-border border-b bg-muted/50">
-                <th className="px-4 py-2.5 text-left font-semibold text-xs">
-                  Attribute / Prop
-                </th>
-                <th className="px-4 py-2.5 text-left font-semibold text-xs">
-                  Values
-                </th>
-                <th className="px-4 py-2.5 text-left font-semibold text-xs">
-                  Description
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="border-border border-b">
-                <td className="px-4 py-2">
+          <Table className="text-sm">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-xs">Attribute / Prop</TableHead>
+                <TableHead className="text-xs">Values</TableHead>
+                <TableHead className="text-xs">Description</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                <TableCell>
                   <InlineCode>data-key / publicKey</InlineCode>
-                </td>
-                <td className="px-4 py-2 text-xs">string</td>
-                <td className="px-4 py-2 text-muted-foreground text-xs">
+                </TableCell>
+                <TableCell className="text-xs">string</TableCell>
+                <TableCell className="whitespace-normal text-muted-foreground text-xs">
                   Your organization&apos;s public API key. Required.
-                </td>
-              </tr>
-              <tr className="border-border border-b">
-                <td className="px-4 py-2">
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>
                   <InlineCode>data-position / position</InlineCode>
-                </td>
-                <td className="px-4 py-2 text-xs">bottom-right, bottom-left</td>
-                <td className="px-4 py-2 text-muted-foreground text-xs">
+                </TableCell>
+                <TableCell className="text-xs">
+                  bottom-right, bottom-left
+                </TableCell>
+                <TableCell className="whitespace-normal text-muted-foreground text-xs">
                   Where the floating button appears. Default: bottom-right.
-                </td>
-              </tr>
-              <tr>
-                <td className="px-4 py-2">
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>
                   <InlineCode>data-theme / theme</InlineCode>
-                </td>
-                <td className="px-4 py-2 text-xs">light, dark, auto</td>
-                <td className="px-4 py-2 text-muted-foreground text-xs">
+                </TableCell>
+                <TableCell className="text-xs">light, dark, auto</TableCell>
+                <TableCell className="whitespace-normal text-muted-foreground text-xs">
                   Widget color scheme. Default: auto (matches system).
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
         </div>
       </section>
 
       <section>
-        <h2 className="mb-3 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+        <h2 className="mb-3 font-display text-2xl text-foreground leading-snug tracking-tight">
           User identification
         </h2>
         <p className="text-muted-foreground text-sm leading-relaxed">

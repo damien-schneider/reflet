@@ -1,4 +1,11 @@
 import { ChangelogApi } from "./api";
+import { DEFAULT_PRIMARY_COLOR } from "./color-utils";
+import {
+  countUnread,
+  latestTimestamp,
+  readLastSeen,
+  writeLastSeen,
+} from "./read-state";
 import { getChangelogStyles } from "./styles";
 import type {
   ChangelogEntry,
@@ -12,8 +19,6 @@ import {
   renderTriggerModeHTML,
 } from "./widget-html";
 
-const STORAGE_KEY_PREFIX = "reflet_changelog_seen_";
-
 export class RefletChangelogWidget {
   private readonly config: ChangelogWidgetConfig;
   private readonly api: ChangelogApi;
@@ -21,6 +26,8 @@ export class RefletChangelogWidget {
   private shadowRoot: ShadowRoot | null = null;
   private triggerElements: Element[] = [];
   private readonly boundTriggerHandler: (e: Event) => void;
+  private readonly boundEscapeHandler: (e: KeyboardEvent) => void;
+  private previousFocus: HTMLElement | null = null;
   private readonly state: ChangelogWidgetState = {
     entries: [],
     error: null,
@@ -35,7 +42,7 @@ export class RefletChangelogWidget {
       maxEntries: 10,
       mode: "card",
       position: "bottom-right",
-      primaryColor: "#6366f1",
+      primaryColor: DEFAULT_PRIMARY_COLOR,
       theme: "light",
       triggerSelector: "[data-reflet-changelog]",
       ...config,
@@ -46,6 +53,12 @@ export class RefletChangelogWidget {
       e.preventDefault();
       e.stopPropagation();
       this.toggle();
+    };
+    this.boundEscapeHandler = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && this.state.isOpen) {
+        e.preventDefault();
+        this.close();
+      }
     };
   }
 
@@ -105,8 +118,7 @@ export class RefletChangelogWidget {
 
     const style = document.createElement("style");
     style.textContent = getChangelogStyles(
-      primaryColor ?? "#6366f1",
-      9999,
+      primaryColor ?? DEFAULT_PRIMARY_COLOR,
       resolvedTheme
     );
     this.shadowRoot.appendChild(style);
@@ -140,55 +152,18 @@ export class RefletChangelogWidget {
     }
   }
 
-  private getStorageKey(): string {
-    return `${STORAGE_KEY_PREFIX}${this.config.publicKey}`;
-  }
-
-  private getLastSeenTimestamp(): number {
-    try {
-      const stored = localStorage.getItem(this.getStorageKey());
-      return stored ? Number(stored) : 0;
-    } catch {
-      return 0;
-    }
-  }
-
-  private setLastSeenTimestamp(timestamp: number): void {
-    try {
-      localStorage.setItem(this.getStorageKey(), String(timestamp));
-    } catch {
-      // localStorage unavailable - ignore
-    }
-  }
-
   private computeUnreadCount(entries: ChangelogEntry[]): number {
-    const lastSeen = this.getLastSeenTimestamp();
-    let count = 0;
-    for (const entry of entries) {
-      if (entry.publishedAt && entry.publishedAt > lastSeen) {
-        count++;
-      }
-    }
-    return count;
+    return countUnread(entries, readLastSeen(this.config.publicKey));
   }
 
   private markAllAsRead(): void {
-    if (this.state.entries.length === 0) {
+    const latest = latestTimestamp(this.state.entries);
+    if (latest === 0) {
       return;
     }
-
-    let latestTimestamp = 0;
-    for (const entry of this.state.entries) {
-      if (entry.publishedAt && entry.publishedAt > latestTimestamp) {
-        latestTimestamp = entry.publishedAt;
-      }
-    }
-
-    if (latestTimestamp > 0) {
-      this.setLastSeenTimestamp(latestTimestamp);
-      this.state.unreadCount = 0;
-      this.updateTriggerBadges();
-    }
+    writeLastSeen(this.config.publicKey, latest);
+    this.state.unreadCount = 0;
+    this.updateTriggerBadges();
   }
 
   private render(): void {
@@ -222,7 +197,7 @@ export class RefletChangelogWidget {
             "popup",
             isLoading,
             error,
-            this.getLastSeenTimestamp()
+            readLastSeen(this.config.publicKey)
           );
         }
         return renderCardModeHTML(
@@ -252,7 +227,6 @@ export class RefletChangelogWidget {
       return;
     }
 
-    // Panel close via overlay click
     const overlay = this.shadowRoot.querySelector(".reflet-changelog-overlay");
     if (overlay) {
       overlay.addEventListener("click", (e) => {
@@ -262,28 +236,16 @@ export class RefletChangelogWidget {
       });
     }
 
-    // Stop propagation on panel itself
     const panel = this.shadowRoot.querySelector(".reflet-changelog-panel");
     if (panel) {
       panel.addEventListener("click", (e) => e.stopPropagation());
     }
 
-    // Card click to open panel
     const card = this.shadowRoot.querySelector("[data-action='open-panel']");
     if (card) {
-      card.addEventListener("click", (e) => {
-        // Don't open if dismiss was clicked
-        if (
-          e.target instanceof HTMLElement &&
-          e.target.closest("[data-action='dismiss']")
-        ) {
-          return;
-        }
-        this.open();
-      });
+      card.addEventListener("click", () => this.open());
     }
 
-    // All action buttons
     const actionButtons = Array.from(
       this.shadowRoot.querySelectorAll("[data-action]")
     );
@@ -347,25 +309,39 @@ export class RefletChangelogWidget {
   private dismiss(): void {
     this.markAllAsRead();
 
-    // In card mode, just hide the card
     if (this.config.mode === "card" && this.container) {
       this.container.style.display = "none";
     }
   }
 
-  // ==================== Public API ====================
+  private focusPanel(): void {
+    this.shadowRoot
+      ?.querySelector<HTMLElement>(".reflet-changelog-close-btn")
+      ?.focus();
+  }
 
   open(): void {
+    this.previousFocus =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
     this.state.isOpen = true;
     this.markAllAsRead();
     this.config.onOpen?.();
     this.render();
+    document.addEventListener("keydown", this.boundEscapeHandler, true);
+    this.focusPanel();
   }
 
   close(): void {
     this.state.isOpen = false;
     this.config.onClose?.();
     this.render();
+    document.removeEventListener("keydown", this.boundEscapeHandler, true);
+    if (this.previousFocus?.isConnected) {
+      this.previousFocus.focus();
+    }
+    this.previousFocus = null;
   }
 
   toggle(): void {
@@ -387,6 +363,7 @@ export class RefletChangelogWidget {
 
   destroy(): void {
     this.unbindTriggers();
+    document.removeEventListener("keydown", this.boundEscapeHandler, true);
     if (this.container) {
       this.container.remove();
       this.container = null;

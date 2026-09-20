@@ -55,29 +55,28 @@ export function ResultsPopover({
     <Popover onOpenChange={setIsOpen} open={isOpen}>
       <PopoverTrigger
         render={
-          <button
+          <Button
             className={cn(
-              "flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-all duration-300",
+              "h-auto shrink-0 gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors duration-300",
               hasFailed
-                ? "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-400"
-                : "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400"
+                ? "border-warning/30 bg-warning-subtle text-warning-text"
+                : "border-success/30 bg-success-subtle text-success-text"
             )}
-            type="button"
-          >
-            {hasFailed ? (
-              <Warning className="h-3.5 w-3.5" weight="bold" />
-            ) : (
-              <Check className="h-3.5 w-3.5" weight="bold" />
-            )}
-            <span className="font-medium">
-              {successful} tagged{hasFailed ? `, ${failed} failed` : ""}
-            </span>
-            <CaretRight className="h-3 w-3 opacity-60" />
-          </button>
+            variant="surface"
+          />
         }
-      />
+      >
+        {hasFailed ? (
+          <Warning className="h-3.5 w-3.5" weight="bold" />
+        ) : (
+          <Check className="h-3.5 w-3.5" weight="bold" />
+        )}
+        <span className="font-medium tabular-nums">
+          {successful} tagged{hasFailed ? `, ${failed} failed` : ""}
+        </span>
+        <CaretRight className="h-3 w-3 opacity-60" />
+      </PopoverTrigger>
       <PopoverContent align="start" className="w-80 p-0">
-        {/* Header */}
         <div className="flex items-center justify-between border-b px-3 py-2">
           <div className="flex items-center gap-1.5">
             <Sparkle className="h-3.5 w-3.5 text-primary" weight="fill" />
@@ -92,8 +91,6 @@ export function ResultsPopover({
             Dismiss
           </Button>
         </div>
-
-        {/* Results list */}
         <ScrollArea viewportClassName="max-h-64">
           <div className="divide-y">
             {recentItems?.map((item: TaggedItem) => {
@@ -112,7 +109,7 @@ export function ResultsPopover({
                   <div className="mt-1.5 flex flex-wrap items-center gap-1">
                     {validTags.map((tag) => (
                       <TagBadge
-                        className="h-5 font-normal text-[10px]"
+                        className="h-5 font-normal text-caption"
                         color={tag.color}
                         key={tag._id}
                       >
@@ -121,7 +118,7 @@ export function ResultsPopover({
                     ))}
                     {isUncategorized && (
                       <TagBadge
-                        className="h-5 border-dashed font-normal text-[10px]"
+                        className="h-5 border-dashed font-normal text-caption"
                         color="gray"
                       >
                         Unsorted
@@ -142,7 +139,7 @@ export function ResultsPopover({
                     {item.aiTimeEstimate &&
                       item.aiTimeEstimate !== "N/A" &&
                       item.aiTimeEstimate !== "none" && (
-                        <span className="text-[10px] text-muted-foreground">
+                        <span className="text-micro text-muted-foreground">
                           ~{item.aiTimeEstimate}
                         </span>
                       )}

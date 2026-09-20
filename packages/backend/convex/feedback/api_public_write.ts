@@ -100,7 +100,7 @@ export const createFeedbackByOrganization = internalMutation({
 
     await scheduleAfterCreate(ctx, feedbackId, {
       aiEnrichment: false,
-      autoTagging: false,
+      autoTagging: !args.tagId,
     });
 
     return { feedbackId, isApproved: !requireApproval };

@@ -13,7 +13,6 @@ import {
 import { collectPageContext } from "../core/page-context";
 import {
   DEFAULT_WIDGET_LABELS,
-  type FeedbackWidgetCategory,
   type RefletFeedbackProps,
   SDK_VERSION,
   type WidgetStep,
@@ -90,15 +89,13 @@ export function matchesHotkey(
 }
 
 export function useWidgetState(props: RefletFeedbackProps) {
-  const { client, defaultCategory, dismissalKey, dismissForDays, isAnonymous } =
+  const { client, dismissalKey, dismissForDays, isAnonymous } =
     useWidgetConfig(props);
 
   const [isOpen, setIsOpen] = useState(false);
   const [annotationTrigger, setAnnotationTrigger] =
     useState<HTMLButtonElement | null>(null);
   const [step, setStep] = useState<WidgetStep>("compose");
-  const [category, setCategory] =
-    useState<FeedbackWidgetCategory>(defaultCategory);
   const [message, setMessage] = useState("");
   const [email, setEmail] = useState("");
   const [honeypot, setHoneypot] = useState("");
@@ -199,13 +196,7 @@ export function useWidgetState(props: RefletFeedbackProps) {
     setHoneypot("");
     setError(null);
     setStep("compose");
-    setCategory(defaultCategory);
-  }, [
-    defaultCategory,
-    resetSubmission,
-    resetScreenshots,
-    replaceElementCapture,
-  ]);
+  }, [resetSubmission, resetScreenshots, replaceElementCapture]);
 
   const close = useCallback(() => {
     setIsOpen(false);
@@ -300,7 +291,6 @@ export function useWidgetState(props: RefletFeedbackProps) {
       return;
     }
     return submission.submit({
-      category,
       context: {
         ...(activeScreenshot?.context ??
           collectPageContext({ sdkVersion: SDK_VERSION })),
@@ -328,7 +318,6 @@ export function useWidgetState(props: RefletFeedbackProps) {
     canDismiss: dismissForDays !== null,
     canSubmit: reportedMessage.length > 0,
     capture,
-    category,
     clearSelection,
     close,
     dismiss,
@@ -354,7 +343,6 @@ export function useWidgetState(props: RefletFeedbackProps) {
     selectedNode,
     selection,
     setAnnotations: gallery.setAnnotations,
-    setCategory,
     setEmail,
     setHoneypot,
     setMessage,

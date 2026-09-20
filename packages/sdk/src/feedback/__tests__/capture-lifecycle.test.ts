@@ -96,20 +96,6 @@ describe("retaking a screenshot", () => {
   });
 });
 
-it("starts with an allowed category when the host omits the default", () => {
-  const { result } = renderHook(() =>
-    useWidgetState({
-      captureOnOpen: false,
-      categories: ["idea", "question"],
-      publicKey: "fb_pub_test",
-    })
-  );
-  expect(result.current.category).toBe("idea");
-  act(() => result.current.setCategory("question"));
-  act(() => result.current.close());
-  expect(result.current.category).toBe("idea");
-});
-
 it("adds a second capture without replacing the first image or its drawing", async () => {
   const { result } = mount();
   act(() => result.current.takeCapture());

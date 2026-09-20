@@ -34,7 +34,7 @@ function UsageProgress({
   return (
     <div>
       <Progress
-        className={isAtLimit ? "[&>div]:bg-red-500" : ""}
+        className={isAtLimit ? "[&>div]:bg-destructive" : ""}
         value={percentage}
       >
         <ProgressLabel>{label}</ProgressLabel>
@@ -45,12 +45,12 @@ function UsageProgress({
         </ProgressValue>
       </Progress>
       {isAtLimit && (
-        <Text className="mt-1 text-red-500" variant="bodySmall">
+        <Text className="mt-1 text-destructive-text" variant="bodySmall">
           {atLimitMessage}
         </Text>
       )}
       {isNearLimit && (
-        <Text className="mt-1 text-amber-500" variant="bodySmall">
+        <Text className="mt-1 text-warning-text" variant="bodySmall">
           {nearLimitMessage}
         </Text>
       )}
@@ -68,7 +68,7 @@ function FeatureStatus({
   return (
     <div className="flex items-center gap-2">
       <CheckCircle
-        className={`h-4 w-4 ${enabled ? "text-green-500" : "text-muted-foreground/30"}`}
+        className={`h-4 w-4 ${enabled ? "text-success" : "text-muted-foreground/30"}`}
         weight="fill"
       />
       <Text

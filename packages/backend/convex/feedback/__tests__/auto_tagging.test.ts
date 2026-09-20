@@ -1,65 +1,9 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
-import { z } from "zod";
 import { api, internal } from "../../_generated/api";
 import schema from "../../schema";
 import { modules } from "../../test.helpers";
-
-// Type assertion to work around convex-test version mismatch
-
-// Test the Zod schema for auto-tagging response
-const autoTaggingResponseSchema = z.object({
-  reasoning: z
-    .string()
-    .describe("Brief explanation of why these tags were selected"),
-  selectedTagIds: z
-    .array(z.string())
-    .describe(
-      "Array of tag IDs from the provided list that match the feedback"
-    ),
-});
-
-describe("Auto-tagging response schema", () => {
-  test("should validate a valid response with tags", () => {
-    const validResponse = {
-      reasoning: "These tags match the feedback content",
-      selectedTagIds: ["tag1", "tag2"],
-    };
-
-    const result = autoTaggingResponseSchema.safeParse(validResponse);
-    expect(result.success).toBe(true);
-  });
-
-  test("should validate a response with empty tags array", () => {
-    const emptyResponse = {
-      reasoning: "No tags match this feedback",
-      selectedTagIds: [],
-    };
-
-    const result = autoTaggingResponseSchema.safeParse(emptyResponse);
-    expect(result.success).toBe(true);
-  });
-
-  test("should reject response without selectedTagIds", () => {
-    const invalidResponse = {
-      reasoning: "Some reasoning",
-    };
-
-    const result = autoTaggingResponseSchema.safeParse(invalidResponse);
-    expect(result.success).toBe(false);
-  });
-
-  test("should reject response with non-array selectedTagIds", () => {
-    const invalidResponse = {
-      reasoning: "Some reasoning",
-      selectedTagIds: "not-an-array",
-    };
-
-    const result = autoTaggingResponseSchema.safeParse(invalidResponse);
-    expect(result.success).toBe(false);
-  });
-});
 
 describe("Auto-tagging database operations", () => {
   test("should reject untagged count for anonymous callers", async () => {

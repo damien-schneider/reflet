@@ -1,20 +1,17 @@
-import { useEffect, useRef } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
 import type { FeedbackWidgetLabels } from "../types";
 import { Attachments } from "./composer/attachments";
-import {
-  type ComposerControlOptions,
-  ComposerControls,
-} from "./composer/controls";
+import { ComposerControls } from "./composer/controls";
 import { MessageInput } from "./composer/message-input";
 import { CheckIcon } from "./icons";
 import type { WidgetState } from "./use-widget-state";
 
 export function FeedbackPanel({
-  options,
+  floatingControls,
   labels,
   state,
 }: {
-  options: ComposerControlOptions;
+  floatingControls: ReactNode;
   labels: FeedbackWidgetLabels;
   state: WidgetState;
 }) {
@@ -31,7 +28,7 @@ export function FeedbackPanel({
           <h2>{labels.successTitle}</h2>
           <p>{labels.successMessage}</p>
         </div>
-        <div className="composer-toolbar">{options.floatingControls}</div>
+        <div className="composer-toolbar">{floatingControls}</div>
       </section>
     );
   }
@@ -52,7 +49,11 @@ export function FeedbackPanel({
         }}
       >
         <MessageInput labels={labels} state={state} />
-        <ComposerControls labels={labels} options={options} state={state} />
+        <ComposerControls
+          floatingControls={floatingControls}
+          labels={labels}
+          state={state}
+        />
         <div aria-hidden="true" className="hp">
           <input
             autoComplete="off"

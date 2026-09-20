@@ -129,7 +129,7 @@ export function CommentItem({
                   <DropdownMenu>
                     <DropdownMenuTrigger
                       aria-label="Comment actions"
-                      className="h-auto p-0 text-muted-foreground pointer-fine:opacity-0 focus-visible:opacity-100 group-hover:opacity-100 data-popup-open:opacity-100"
+                      className="pointer-fine:pointer-events-none h-auto p-0 text-muted-foreground pointer-fine:opacity-0 focus-visible:pointer-events-auto focus-visible:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100 data-popup-open:pointer-events-auto data-popup-open:opacity-100"
                       variant="ghost"
                     >
                       <DotsThreeVertical className="h-4 w-4" />
@@ -284,7 +284,7 @@ function ReplyItem({
                 <DropdownMenu>
                   <DropdownMenuTrigger
                     aria-label="Reply actions"
-                    className="h-auto p-0 text-muted-foreground pointer-fine:opacity-0 focus-visible:opacity-100 group-hover:opacity-100 data-popup-open:opacity-100"
+                    className="pointer-fine:pointer-events-none h-auto p-0 text-muted-foreground pointer-fine:opacity-0 focus-visible:pointer-events-auto focus-visible:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100 data-popup-open:pointer-events-auto data-popup-open:opacity-100"
                     variant="ghost"
                   >
                     <DotsThreeVertical className="h-4 w-4" />

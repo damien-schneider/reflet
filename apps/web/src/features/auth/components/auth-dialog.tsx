@@ -29,7 +29,7 @@ export function AuthDialog() {
         </DialogHeader>
         {message && (
           <div className="px-6 pt-6 pb-0">
-            <div className="rounded-lg border border-olive-200 bg-olive-50 p-4 dark:border-olive-800 dark:bg-olive-950/50">
+            <div className="rounded-lg border border-border bg-secondary p-4">
               <p className="text-center text-muted-foreground text-sm">
                 {message}
               </p>

@@ -77,7 +77,7 @@ function NpsPreview({
   config?: QuestionConfig;
 }) {
   const values = Array.from({ length: 11 }, (_, i) => i);
-  const buttonSize = compact ? "size-6 text-[10px]" : "size-8 text-xs";
+  const buttonSize = compact ? "size-6 text-micro" : "size-8 text-xs";
 
   return (
     <div>
@@ -87,9 +87,9 @@ function NpsPreview({
             className={cn(
               "flex items-center justify-center rounded border",
               buttonSize,
-              val <= 6 && "text-red-400/70",
-              val > 6 && val <= 8 && "text-yellow-500/70",
-              val > 8 && "text-green-500/70"
+              val <= 6 && "text-destructive-text/70",
+              val > 6 && val <= 8 && "text-warning-text/70",
+              val > 8 && "text-success-text/70"
             )}
             key={val}
           >

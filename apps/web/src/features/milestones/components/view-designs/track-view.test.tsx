@@ -105,11 +105,6 @@ vi.mock("@/lib/milestone-constants", () => ({
   TIME_HORIZONS: ["now", "next_month", "later"],
 }));
 
-vi.mock("@/lib/tag-colors", () => ({
-  getTagColorValues: () => ({ bg: "#eff6ff", text: "#3b82f6" }),
-  resolveTagColor: (color: string) => color,
-}));
-
 vi.mock("@/lib/utils", () => ({
   cn: (...classes: unknown[]) => classes.filter(Boolean).join(" "),
 }));
@@ -149,16 +144,16 @@ afterEach(() => {
 });
 
 describe("TrackView", () => {
-  it("shows loading spinner when milestones is undefined", () => {
+  it("announces a loading state while milestones are pending", () => {
     queryResult = undefined;
-    const { container } = render(
+    render(
       <TrackView
         isAdmin={false}
         onFeedbackClick={vi.fn()}
         organizationId={"org1" as never}
       />
     );
-    expect(container.querySelector(".animate-spin")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("Loading");
   });
 
   it("renders milestone segment components", () => {

@@ -28,14 +28,6 @@ export const autoTaggingResponseSchema = z.object({
   priorityReasoning: z
     .string()
     .describe("Brief explanation of why this priority level was assigned"),
-  reasoning: z
-    .string()
-    .describe("Brief explanation of why these tags were selected"),
-  selectedTagIds: z
-    .array(z.string())
-    .describe(
-      "Array of tag IDs from the provided list that match the feedback"
-    ),
   timeEstimate: z
     .string()
     .describe(

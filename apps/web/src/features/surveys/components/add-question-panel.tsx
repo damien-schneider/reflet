@@ -141,7 +141,7 @@ export function AddQuestionPanel({ onAdd, onCancel }: AddQuestionPanelProps) {
             const Icon = QUESTION_TYPE_ICON_MAP[type];
             return (
               <button
-                className="group/type flex flex-col items-start gap-2 rounded-lg border p-4 text-left transition-all hover:border-primary/50 hover:bg-primary/5"
+                className="group/type flex flex-col items-start gap-2 rounded-lg border p-4 text-left transition-colors hover:border-primary/50 hover:bg-primary/5"
                 key={type}
                 onClick={() => handleSelectType(type)}
                 type="button"

@@ -3,15 +3,6 @@ import { Reflet } from "../../../client";
 import { RefletContext } from "../../../react-context";
 import type { RefletFeedbackProps } from "../../types";
 
-function defaultCategory(props: RefletFeedbackProps) {
-  const preferred = props.defaultCategory ?? "bug";
-  return (
-    props.categories?.find((category) => category === preferred) ??
-    props.categories?.[0] ??
-    preferred
-  );
-}
-
 function dismissalDuration(days: number | undefined) {
   return days !== undefined && Number.isFinite(days) && days > 0 ? days : null;
 }
@@ -29,7 +20,6 @@ export function useWidgetConfig(props: RefletFeedbackProps) {
   );
   return {
     client,
-    defaultCategory: defaultCategory(props),
     dismissalKey: `reflet-feedback-dismissed:${publicKey ?? "default"}:${user?.id ?? "anonymous"}`,
     dismissForDays: dismissalDuration(props.dismissForDays),
     isAnonymous: !(user || userToken),

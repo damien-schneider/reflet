@@ -1,5 +1,13 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@ctrl-ui/react/ui/empty";
 import {
   Popover,
   PopoverContent,
@@ -49,15 +57,15 @@ const notificationIcons: Record<
 };
 
 const notificationColors: Record<NotificationType, string> = {
-  feedback_shipped: "text-sky-500",
-  incident_detected: "text-red-500",
-  incident_resolved: "text-green-500",
-  intelligence_insight: "text-indigo-500",
-  invitation: "text-olive-500",
-  new_comment: "text-emerald-500",
-  new_support_message: "text-purple-500",
-  status_change: "text-olive-500",
-  vote_milestone: "text-amber-500",
+  feedback_shipped: "text-success-text",
+  incident_detected: "text-destructive-text",
+  incident_resolved: "text-success-text",
+  intelligence_insight: "text-chart-2-text",
+  invitation: "text-brand-text",
+  new_comment: "text-chart-1-text",
+  new_support_message: "text-chart-4-text",
+  status_change: "text-brand-text",
+  vote_milestone: "text-warning-text",
 };
 
 interface NotificationItemProps {
@@ -98,17 +106,16 @@ function NotificationItem({ notification }: NotificationItemProps) {
         <p className="mt-0.5 line-clamp-2 text-muted-foreground text-xs">
           {notification.message}
         </p>
-        <p className="mt-1 text-muted-foreground text-[10px]">
+        <p className="mt-1 text-caption text-muted-foreground">
           {formatDistanceToNow(notification.createdAt, { addSuffix: true })}
         </p>
       </div>
       {!notification.isRead && (
-        <div className="h-2 w-2 shrink-0 rounded-full bg-olive-500" />
+        <div className="h-2 w-2 shrink-0 rounded-full bg-brand" />
       )}
     </div>
   );
 
-  // Make invitation notifications clickable
   if (notification.type === "invitation" && notification.invitationToken) {
     return (
       <Link href={`/invite/${notification.invitationToken}`}>{content}</Link>
@@ -127,6 +134,7 @@ export function NotificationsPopover({
 }) {
   const notifications = useQuery(api.notifications.queries.list, { limit: 10 });
   const unreadCount = useQuery(api.notifications.queries.getUnreadCount);
+  const hasUnread = unreadCount !== undefined && unreadCount > 0;
 
   return (
     <Popover>
@@ -134,27 +142,38 @@ export function NotificationsPopover({
         <PopoverTrigger render={render} />
       ) : (
         <PopoverTrigger
-          className={cn(
-            "relative inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
-            className
-          )}
-        >
-          <Bell className="h-4 w-4" />
-          {unreadCount && unreadCount > 0 ? (
-            <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-olive-500 px-1 font-medium text-[10px] text-white">
-              {unreadCount > 9 ? "9+" : unreadCount}
-            </span>
-          ) : null}
-          <span className="sr-only">Notifications</span>
-        </PopoverTrigger>
+          render={
+            <Button
+              aria-label={
+                hasUnread
+                  ? `Notifications, ${unreadCount} unread`
+                  : "Notifications"
+              }
+              className={cn("relative size-8", className)}
+              iconOnly
+              size="sm"
+              variant="ghost"
+            >
+              <Bell className="h-4 w-4" />
+              {hasUnread ? (
+                <span
+                  aria-hidden="true"
+                  className="-top-0.5 -right-0.5 absolute flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-micro font-medium text-brand-foreground tabular-nums"
+                >
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              ) : null}
+            </Button>
+          }
+        />
       )}
       <PopoverContent align="end" className="w-80 p-0" side="right">
         <div className="border-b px-4 py-3">
           <h3 className="font-semibold text-sm">Notifications</h3>
-          {unreadCount && unreadCount > 0 ? (
+          {hasUnread ? (
             <p className="text-muted-foreground text-xs">
-              {unreadCount} notification{unreadCount !== 1 && "s"} non lue
-              {unreadCount !== 1 && "s"}
+              <span className="tabular-nums">{unreadCount}</span> notification
+              {unreadCount !== 1 && "s"} non lue{unreadCount !== 1 && "s"}
             </p>
           ) : (
             <p className="text-muted-foreground text-xs">Vous êtes à jour</p>
@@ -179,18 +198,20 @@ export function NotificationsPopover({
               ))}
             </div>
           ) : (
-            <div className="flex h-full items-center justify-center p-8 text-center">
-              <div>
-                <Bell className="mx-auto h-8 w-8 text-muted-foreground/50" />
-                <p className="mt-2 text-muted-foreground text-sm">
+            <Empty className="h-full p-8 text-center">
+              <EmptyHeader>
+                <EmptyMedia>
+                  <Bell className="h-8 w-8 text-muted-foreground/50" />
+                </EmptyMedia>
+                <EmptyTitle className="mt-2 text-muted-foreground text-sm">
                   Aucune notification
-                </p>
-                <p className="mt-1 text-muted-foreground/70 text-xs">
+                </EmptyTitle>
+                <EmptyDescription className="mt-1 text-muted-foreground/70 text-xs">
                   Vous serez notifié des nouveaux feedbacks, commentaires et
                   mises à jour
-                </p>
-              </div>
-            </div>
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           )}
         </ScrollArea>
       </PopoverContent>

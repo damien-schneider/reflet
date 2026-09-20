@@ -1,7 +1,7 @@
 "use client";
 
 import { CaretDown, CaretUp, Chat } from "@phosphor-icons/react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, MotionConfig, motion } from "motion/react";
 import {
   createContext,
   type ReactNode,
@@ -12,29 +12,32 @@ import {
 
 import { cn } from "@/lib/utils";
 
-// ─── Color Map ──────────────────────────────────────────────────────────────
-
 type BadgeColor =
-  | "purple"
-  | "green"
   | "blue"
-  | "red"
-  | "amber"
+  | "brown"
+  | "default"
+  | "gray"
+  | "green"
+  | "orange"
   | "pink"
-  | "gray";
+  | "purple"
+  | "red"
+  | "yellow";
+
+const NEUTRAL_BADGE = "bg-muted text-muted-foreground";
 
 const COLOR_MAP: Record<BadgeColor, string> = {
-  amber: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-  blue: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  gray: "bg-gray-100 text-gray-600 dark:bg-gray-800/30 dark:text-gray-400",
-  green: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  pink: "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400",
-  purple:
-    "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-  red: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+  blue: "bg-tag-blue/15 text-tag-blue-text",
+  brown: "bg-tag-brown/15 text-tag-brown-text",
+  default: NEUTRAL_BADGE,
+  gray: NEUTRAL_BADGE,
+  green: "bg-tag-green/15 text-tag-green-text",
+  orange: "bg-tag-orange/15 text-tag-orange-text",
+  pink: "bg-tag-pink/15 text-tag-pink-text",
+  purple: "bg-tag-purple/15 text-tag-purple-text",
+  red: "bg-tag-red/15 text-tag-red-text",
+  yellow: "bg-tag-yellow/15 text-tag-yellow-text",
 };
-
-// ─── Vote State ─────────────────────────────────────────────────────────────
 
 type VoteType = "upvote" | "downvote" | null;
 
@@ -97,8 +100,6 @@ function useVoteState(
   return { downvotes, upvotes, vote, voteType };
 }
 
-// ─── Context ────────────────────────────────────────────────────────────────
-
 const MinimalNotchContext = createContext<VoteState | null>(null);
 
 function useMinimalNotchContext(): VoteState {
@@ -110,8 +111,6 @@ function useMinimalNotchContext(): VoteState {
   }
   return context;
 }
-
-// ─── Root Provider ──────────────────────────────────────────────────────────
 
 interface MinimalNotchProps {
   children: ReactNode;
@@ -159,12 +158,12 @@ function MinimalNotch({
 
   return (
     <MinimalNotchContext.Provider value={state}>
-      <div className={cn("group flex gap-3", className)}>{children}</div>
+      <MotionConfig reducedMotion="user">
+        <div className={cn("group flex gap-3", className)}>{children}</div>
+      </MotionConfig>
     </MinimalNotchContext.Provider>
   );
 }
-
-// ─── Card ───────────────────────────────────────────────────────────────────
 
 interface MinimalNotchCardProps {
   children: ReactNode;
@@ -175,7 +174,7 @@ function MinimalNotchCard({ children, className }: MinimalNotchCardProps) {
   return (
     <div
       className={cn(
-        "flex-1 rounded-xl border border-border/50 bg-card px-4 py-4 transition-all hover:border-border hover:shadow-sm",
+        "flex-1 rounded-xl border border-border/50 bg-card px-4 py-4 transition-[border-color,box-shadow] hover:border-border hover:shadow-sm",
         className
       )}
     >
@@ -183,8 +182,6 @@ function MinimalNotchCard({ children, className }: MinimalNotchCardProps) {
     </div>
   );
 }
-
-// ─── Title ──────────────────────────────────────────────────────────────────
 
 interface MinimalNotchTitleProps {
   children: ReactNode;
@@ -198,8 +195,6 @@ function MinimalNotchTitle({ children, className }: MinimalNotchTitleProps) {
     </h3>
   );
 }
-
-// ─── Status Badge ───────────────────────────────────────────────────────────
 
 interface MinimalNotchStatusProps {
   children: ReactNode;
@@ -216,7 +211,7 @@ function MinimalNotchStatus({
     <span
       className={cn(
         "mt-1.5 inline-flex items-center rounded-sm px-2 py-0.5 font-normal text-[10px]",
-        COLOR_MAP[color],
+        COLOR_MAP[color] ?? NEUTRAL_BADGE,
         className
       )}
     >
@@ -224,8 +219,6 @@ function MinimalNotchStatus({
     </span>
   );
 }
-
-// ─── Tags Container ─────────────────────────────────────────────────────────
 
 interface MinimalNotchTagsProps {
   children: ReactNode;
@@ -237,8 +230,6 @@ function MinimalNotchTags({ children, className }: MinimalNotchTagsProps) {
     <div className={cn("flex flex-wrap gap-1", className)}>{children}</div>
   );
 }
-
-// ─── Individual Tag ─────────────────────────────────────────────────────────
 
 interface MinimalNotchTagProps {
   children: ReactNode;
@@ -255,7 +246,7 @@ function MinimalNotchTag({
     <span
       className={cn(
         "inline-flex items-center rounded-sm px-2 py-0.5 font-normal text-[10px]",
-        COLOR_MAP[color],
+        COLOR_MAP[color] ?? NEUTRAL_BADGE,
         className
       )}
     >
@@ -263,8 +254,6 @@ function MinimalNotchTag({
     </span>
   );
 }
-
-// ─── Meta ───────────────────────────────────────────────────────────────────
 
 interface MinimalNotchMetaProps {
   className?: string;
@@ -292,8 +281,6 @@ function MinimalNotchMeta({
     </div>
   );
 }
-
-// ─── Vote Column with Notch ─────────────────────────────────────────────────
 
 function MinimalNotchVote() {
   const { voteType, upvotes, downvotes, vote } = useMinimalNotchContext();
@@ -349,7 +336,7 @@ function MinimalNotchVote() {
           backgroundColor: notchColor,
           boxShadow: voteType
             ? `0 0 8px 1px ${notchColor}`
-            : "0 0 0px 0px transparent",
+            : `0 0 0px 0px ${notchColor}`,
           height: voteType ? 4 : 3,
           width: voteType ? 24 : 12,
         }}
@@ -384,8 +371,6 @@ function MinimalNotchVote() {
     </div>
   );
 }
-
-// ─── Exports ────────────────────────────────────────────────────────────────
 
 export {
   MinimalNotch,

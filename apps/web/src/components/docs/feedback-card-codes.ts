@@ -58,7 +58,7 @@ const EDITORIAL_FEED_CODE = `<EditorialFeed>
         Dark mode support for the dashboard
       </EditorialFeedTitle>
       <EditorialFeedMeta>
-        <EditorialFeedStatus color="amber">In Progress</EditorialFeedStatus>
+        <EditorialFeedStatus color="orange">In Progress</EditorialFeedStatus>
         <EditorialFeedTag>Design</EditorialFeedTag>
         <EditorialFeedComments count={12} />
         <EditorialFeedTime>1 day ago</EditorialFeedTime>

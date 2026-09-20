@@ -36,7 +36,7 @@ export default async function BlogIndexPage() {
                   <Muted>{post.meta.readingTime}</Muted>
                 </div>
                 <H3
-                  className="mb-2 transition-colors group-hover:text-olive-600"
+                  className="mb-2 transition-colors group-hover:text-brand-text"
                   variant="cardBold"
                 >
                   {post.meta.title}
@@ -45,7 +45,7 @@ export default async function BlogIndexPage() {
                   {post.meta.description}
                 </Text>
                 <div className="flex items-center gap-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-olive-600/10 font-bold text-olive-600 text-xs">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-subtle font-bold text-brand-text text-xs">
                     {post.meta.author
                       .split(" ")
                       .map((n) => n[0])

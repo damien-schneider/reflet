@@ -63,25 +63,29 @@ export function FeedbackMainContent({
     <Card>
       <CardHeader>
         <div className="flex items-start gap-4">
-          <button
+          <Button
+            aria-label={feedback.hasVoted ? "Remove vote" : "Upvote"}
+            aria-pressed={feedback.hasVoted}
             className={cn(
-              "flex flex-col items-center rounded-lg border p-3 transition-colors",
+              "h-auto flex-col rounded-lg border p-3 transition-colors",
               feedback.hasVoted
-                ? "border-olive-600 bg-olive-600/10 text-olive-600"
-                : "border-border hover:border-olive-600"
+                ? "border-brand bg-brand-subtle text-brand-text"
+                : "border-border hover:border-brand"
             )}
             onClick={handleToggleVote}
-            type="button"
+            variant="quiet"
           >
             <CaretUp className="h-5 w-5" />
-            <span className="font-bold text-lg">{feedback.voteCount}</span>
-          </button>
+            <span className="font-bold text-lg tabular-nums">
+              {feedback.voteCount}
+            </span>
+          </Button>
 
           <div className="flex-1">
             <div className="flex items-start justify-between">
               <H3 variant="card">
                 {feedback.isPinned && (
-                  <PushPin className="mr-2 inline h-5 w-5 text-olive-600" />
+                  <PushPin className="mr-2 inline h-5 w-5 text-brand-text" />
                 )}
                 {feedback.title}
               </H3>
@@ -101,7 +105,7 @@ export function FeedbackMainContent({
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
-                      className="text-destructive"
+                      className="menu-item-danger"
                       onClick={handleDeleteFeedback}
                     >
                       <Trash className="mr-2 h-4 w-4" />
@@ -158,7 +162,8 @@ export function FeedbackMainContent({
             </p>
             {isAdmin && (
               <Button
-                className="absolute top-0 right-0 opacity-0 transition-opacity group-hover:opacity-100"
+                aria-label="Edit description"
+                className="pointer-fine:pointer-events-none absolute top-0 right-0 pointer-fine:opacity-0 transition-opacity focus-visible:pointer-events-auto focus-visible:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100"
                 iconOnly
                 onClick={() => {
                   setEditedDescription(feedback.description || "");

@@ -5,11 +5,7 @@ import type {
   FeedbackContext,
   SaveScreenshotParams,
 } from "../../types";
-import type {
-  CapturedImage,
-  FeedbackWidgetCategory,
-  ScreenshotDraft,
-} from "../types";
+import type { CapturedImage, ScreenshotDraft } from "../types";
 import {
   type PreparedScreenshot,
   uploadScreenshots,
@@ -28,7 +24,6 @@ export interface FeedbackTransport {
 }
 
 export interface WidgetSubmission {
-  category: FeedbackWidgetCategory;
   context: FeedbackContext;
   element: CapturedImage | null;
   email?: string;
@@ -59,16 +54,14 @@ export function deriveTitle(message: string): string {
 }
 
 export function buildDescription(params: {
-  category: FeedbackWidgetCategory;
   email?: string;
   isAnonymous: boolean;
   message: string;
 }): string {
-  const { category, email, isAnonymous, message } = params;
-  const label = category.charAt(0).toUpperCase() + category.slice(1);
+  const { email, isAnonymous, message } = params;
   const contact = isAnonymous && email ? `\n\n---\nContact: ${email}` : "";
 
-  return `[${label}] ${message.trim()}${contact}`;
+  return `${message.trim()}${contact}`;
 }
 
 export async function attachPreparedScreenshots(

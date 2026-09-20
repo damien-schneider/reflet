@@ -32,18 +32,21 @@ vi.mock("@phosphor-icons/react", () => ({
 vi.mock("@reflet/ui/feedback-sweep-corner", () => ({
   SweepCorner: ({
     children,
+    className,
     onVote,
     upvotes,
     downvotes,
     voteType,
   }: {
     children: React.ReactNode;
+    className?: string;
     onVote: (d: string) => void;
     upvotes: number;
     downvotes: number;
     voteType: string | null;
   }) => (
     <div
+      className={className}
       data-downvotes={downvotes}
       data-testid="sweep"
       data-upvotes={upvotes}
@@ -158,33 +161,6 @@ describe("SweepCornerFeedCard", () => {
     render(<SweepCornerFeedCard feedback={baseFeedback} onClick={onClick} />);
     fireEvent.click(screen.getByRole("button", { name: /test feedback/i }));
     expect(onClick).toHaveBeenCalledWith("f1");
-  });
-
-  it("calls onClick on Enter key", () => {
-    const onClick = vi.fn();
-    render(<SweepCornerFeedCard feedback={baseFeedback} onClick={onClick} />);
-    fireEvent.keyDown(screen.getByRole("button", { name: /test feedback/i }), {
-      key: "Enter",
-    });
-    expect(onClick).toHaveBeenCalledWith("f1");
-  });
-
-  it("calls onClick on Space key", () => {
-    const onClick = vi.fn();
-    render(<SweepCornerFeedCard feedback={baseFeedback} onClick={onClick} />);
-    fireEvent.keyDown(screen.getByRole("button", { name: /test feedback/i }), {
-      key: " ",
-    });
-    expect(onClick).toHaveBeenCalledWith("f1");
-  });
-
-  it("ignores other keys", () => {
-    const onClick = vi.fn();
-    render(<SweepCornerFeedCard feedback={baseFeedback} onClick={onClick} />);
-    fireEvent.keyDown(screen.getByRole("button", { name: /test feedback/i }), {
-      key: "Tab",
-    });
-    expect(onClick).not.toHaveBeenCalled();
   });
 
   it("handles upvote through authGuard", () => {
@@ -342,9 +318,7 @@ describe("SweepCornerFeedCard", () => {
 
   it("applies custom className", () => {
     render(<SweepCornerFeedCard className="my-cls" feedback={baseFeedback} />);
-    expect(screen.getByRole("button", { name: /test feedback/i })).toHaveClass(
-      "my-cls"
-    );
+    expect(screen.getByTestId("sweep")).toHaveClass("my-cls");
   });
 
   it("renders time in footer", () => {

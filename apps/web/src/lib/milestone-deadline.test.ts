@@ -137,78 +137,50 @@ describe("getDeadlineInfo", () => {
   });
 });
 
-describe("getDeadlineColor", () => {
-  it("returns red for overdue", () => {
-    expect(getDeadlineColor("overdue")).toBe("text-red-500");
-  });
+const ALL_STATUSES: DeadlineStatus[] = [
+  "overdue",
+  "due_today",
+  "due_soon",
+  "upcoming",
+  "none",
+];
+const URGENT_STATUSES: DeadlineStatus[] = ["overdue", "due_today", "due_soon"];
+const CALM_STATUSES: DeadlineStatus[] = ["upcoming", "none"];
 
-  it("returns amber-500 for due_today", () => {
-    expect(getDeadlineColor("due_today")).toBe("text-amber-500");
-  });
-
-  it("returns amber-400 for due_soon", () => {
-    expect(getDeadlineColor("due_soon")).toBe("text-amber-400");
-  });
-
-  it("returns muted for upcoming", () => {
-    expect(getDeadlineColor("upcoming")).toBe("text-muted-foreground");
-  });
-
-  it("returns muted for none", () => {
-    expect(getDeadlineColor("none")).toBe("text-muted-foreground");
-  });
-});
-
-describe("getDeadlineBadgeStyles", () => {
-  it("returns correct styles for overdue", () => {
-    const styles = getDeadlineBadgeStyles("overdue");
-    expect(styles.bg).toContain("red");
-    expect(styles.text).toContain("red");
-    expect(styles.border).toContain("red");
-  });
-
-  it("returns correct styles for due_today", () => {
-    const styles = getDeadlineBadgeStyles("due_today");
-    expect(styles.bg).toContain("amber-500");
-    expect(styles.text).toContain("amber-500");
-    expect(styles.border).toContain("amber-500");
-  });
-
-  it("returns correct styles for due_soon", () => {
-    const styles = getDeadlineBadgeStyles("due_soon");
-    expect(styles.bg).toContain("amber-400");
-    expect(styles.text).toContain("amber-400");
-    expect(styles.border).toContain("amber-400");
-  });
-
-  it("returns muted styles for upcoming", () => {
-    const styles = getDeadlineBadgeStyles("upcoming");
-    expect(styles.bg).toBe("bg-muted");
-    expect(styles.text).toBe("text-muted-foreground");
-    expect(styles.border).toBe("border-border");
-  });
-
-  it("returns muted styles for none", () => {
-    const styles = getDeadlineBadgeStyles("none");
-    expect(styles.bg).toBe("bg-muted");
-    expect(styles.text).toBe("text-muted-foreground");
-    expect(styles.border).toBe("border-border");
-  });
-
-  it("all statuses return bg, text, and border properties", () => {
-    const statuses: DeadlineStatus[] = [
-      "overdue",
-      "due_today",
-      "due_soon",
-      "upcoming",
-      "none",
-    ];
-
-    for (const status of statuses) {
-      const styles = getDeadlineBadgeStyles(status);
-      expect(styles).toHaveProperty("bg");
-      expect(styles).toHaveProperty("text");
-      expect(styles).toHaveProperty("border");
+describe("deadline styling", () => {
+  it("styles every status through design tokens, never raw colours", () => {
+    for (const status of ALL_STATUSES) {
+      const { bg, text, border } = getDeadlineBadgeStyles(status);
+      for (const value of [bg, text, border, getDeadlineColor(status)]) {
+        expect(value).not.toMatch(/#|rgb\(|oklch\(|dark:/);
+        expect(value.length).toBeGreaterThan(0);
+      }
     }
+  });
+
+  it("draws attention to urgent deadlines and stays quiet otherwise", () => {
+    for (const status of URGENT_STATUSES) {
+      expect(getDeadlineColor(status)).not.toBe("text-muted-foreground");
+    }
+    for (const status of CALM_STATUSES) {
+      expect(getDeadlineColor(status)).toBe("text-muted-foreground");
+    }
+  });
+
+  it("keeps the badge text colour consistent with the standalone colour", () => {
+    for (const status of ALL_STATUSES) {
+      expect(getDeadlineBadgeStyles(status).text).toBe(
+        getDeadlineColor(status)
+      );
+    }
+  });
+
+  it("escalates overdue beyond the merely due", () => {
+    const overdue = getDeadlineBadgeStyles("overdue");
+    const dueToday = getDeadlineBadgeStyles("due_today");
+    const dueSoon = getDeadlineBadgeStyles("due_soon");
+
+    expect(overdue.text).not.toBe(dueToday.text);
+    expect(dueToday.bg).not.toBe(dueSoon.bg);
   });
 });

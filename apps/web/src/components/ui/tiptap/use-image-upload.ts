@@ -3,7 +3,19 @@
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { useCallback, useState } from "react";
+import { useState } from "react";
+
+const MAX_IMAGE_SIZE_MB = 5;
+
+function validateImageFile(file: File): Error | null {
+  if (!file.type.startsWith("image/")) {
+    return new Error("Please upload an image file");
+  }
+  if (file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
+    return new Error(`Image must be smaller than ${MAX_IMAGE_SIZE_MB}MB`);
+  }
+  return null;
+}
 
 interface UseImageUploadOptions {
   onError?: (error: Error) => void;
@@ -21,112 +33,88 @@ export function useImageUpload({
     null
   );
 
-  // Query the URL when we have a storageId (for reactive updates)
   const storageUrl = useQuery(
     api.storage.getStorageUrl,
     lastStorageId ? { storageId: lastStorageId } : "skip"
   );
 
-  const uploadImage = useCallback(
-    async (file: File): Promise<string | null> => {
-      if (!file.type.startsWith("image/")) {
-        const error = new Error("Please upload an image file");
-        onError?.(error);
-        return null;
-      }
-
-      const maxSizeInMB = 5;
-      const maxSizeBytes = maxSizeInMB * 1024 * 1024;
-      if (file.size > maxSizeBytes) {
-        const error = new Error(`Image must be smaller than ${maxSizeInMB}MB`);
-        onError?.(error);
-        return null;
-      }
-
-      setIsUploading(true);
-
-      try {
-        // Step 1: Generate upload URL
-        const uploadUrl = await generateUploadUrl();
-
-        // Step 2: Upload file to the URL
-        const response = await fetch(uploadUrl, {
-          body: file,
-          headers: {
-            "Content-Type": file.type,
-          },
-          method: "POST",
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to upload image");
-        }
-
-        // Step 3: Get the storageId from response
-        const { storageId } = (await response.json()) as {
-          storageId: Id<"_storage">;
-        };
-        setLastStorageId(storageId);
-
-        // Step 4: Get the public URL from Convex
-        const url = await getStorageUrl({ storageId });
-
-        if (!url) {
-          throw new Error("Failed to get storage URL");
-        }
-
-        onSuccess?.(url);
-        return url;
-      } catch (err) {
-        const error =
-          err instanceof Error ? err : new Error("Failed to upload image");
-        onError?.(error);
-        return null;
-      } finally {
-        setIsUploading(false);
-      }
-    },
-    [generateUploadUrl, getStorageUrl, onSuccess, onError]
-  );
-
-  const handlePaste = useCallback(
-    async (event: ClipboardEvent): Promise<string | null> => {
-      const items = event.clipboardData?.items;
-      if (!items) return null;
-
-      for (const item of items) {
-        if (item.type.startsWith("image/")) {
-          const file = item.getAsFile();
-          if (file) {
-            event.preventDefault();
-            return uploadImage(file);
-          }
-        }
-      }
-
+  const uploadImage = async (file: File): Promise<string | null> => {
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      onError?.(validationError);
       return null;
-    },
-    [uploadImage]
-  );
+    }
 
-  const handleDrop = useCallback(
-    async (event: DragEvent): Promise<string | null> => {
-      const files = event.dataTransfer?.files;
-      if (!files?.length) return null;
+    setIsUploading(true);
 
-      const file = files[0];
-      if (file?.type.startsWith("image/")) {
-        event.preventDefault();
-        return uploadImage(file);
+    try {
+      const uploadUrl = await generateUploadUrl();
+      const response = await fetch(uploadUrl, {
+        body: file,
+        headers: {
+          "Content-Type": file.type,
+        },
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to upload image");
       }
 
-      return null;
-    },
-    [uploadImage]
-  );
+      const { storageId }: { storageId: Id<"_storage"> } =
+        await response.json();
+      setLastStorageId(storageId);
 
-  const openFilePicker = useCallback((): Promise<string | null> => {
-    return new Promise((resolve) => {
+      const url = await getStorageUrl({ storageId });
+
+      if (!url) {
+        throw new Error("Failed to get storage URL");
+      }
+
+      onSuccess?.(url);
+      return url;
+    } catch (err) {
+      const error =
+        err instanceof Error ? err : new Error("Failed to upload image");
+      onError?.(error);
+      return null;
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handlePaste = async (event: ClipboardEvent): Promise<string | null> => {
+    const items = event.clipboardData?.items;
+    if (!items) return null;
+
+    for (const item of items) {
+      if (item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+        if (file) {
+          event.preventDefault();
+          return uploadImage(file);
+        }
+      }
+    }
+
+    return null;
+  };
+
+  const handleDrop = async (event: DragEvent): Promise<string | null> => {
+    const files = event.dataTransfer?.files;
+    if (!files?.length) return null;
+
+    const file = files[0];
+    if (file?.type.startsWith("image/")) {
+      event.preventDefault();
+      return uploadImage(file);
+    }
+
+    return null;
+  };
+
+  const openFilePicker = (): Promise<string | null> =>
+    new Promise((resolve) => {
       const input = document.createElement("input");
       input.type = "file";
       input.accept = "image/*";
@@ -137,16 +125,10 @@ export function useImageUpload({
           return;
         }
         const file = target.files?.[0];
-        if (file) {
-          const url = await uploadImage(file);
-          resolve(url);
-        } else {
-          resolve(null);
-        }
+        resolve(file ? await uploadImage(file) : null);
       };
       input.click();
     });
-  }, [uploadImage]);
 
   return {
     handleDrop,

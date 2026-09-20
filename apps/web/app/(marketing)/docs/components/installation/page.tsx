@@ -14,7 +14,7 @@ export const metadata: Metadata = generatePageMetadata({
 export default function InstallationPage() {
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="mb-2 font-display text-3xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+      <h1 className="mb-2 font-display text-3xl text-foreground leading-snug tracking-tight">
         Installation
       </h1>
       <p className="mb-8 text-base text-muted-foreground sm:text-xl">
@@ -22,7 +22,7 @@ export default function InstallationPage() {
       </p>
 
       <section className="mb-10">
-        <h2 className="mb-3 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+        <h2 className="mb-3 font-display text-2xl text-foreground leading-snug tracking-tight">
           Prerequisites
         </h2>
         <ul className="list-inside list-disc space-y-2 text-muted-foreground text-sm">
@@ -43,7 +43,7 @@ export default function InstallationPage() {
       </section>
 
       <section className="mb-10">
-        <h2 className="mb-3 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+        <h2 className="mb-3 font-display text-2xl text-foreground leading-snug tracking-tight">
           Install a component
         </h2>
         <p className="mb-4 text-muted-foreground text-sm">
@@ -67,7 +67,7 @@ export default function InstallationPage() {
       </section>
 
       <section className="mb-10">
-        <h2 className="mb-3 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+        <h2 className="mb-3 font-display text-2xl text-foreground leading-snug tracking-tight">
           What gets installed
         </h2>
         <p className="mb-4 text-muted-foreground text-sm">
@@ -88,7 +88,7 @@ export default function InstallationPage() {
       </section>
 
       <section className="mb-10">
-        <h2 className="mb-3 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+        <h2 className="mb-3 font-display text-2xl text-foreground leading-snug tracking-tight">
           Usage
         </h2>
         <p className="mb-4 text-muted-foreground text-sm">
@@ -121,7 +121,7 @@ const item = {
       </section>
 
       <section>
-        <h2 className="mb-3 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+        <h2 className="mb-3 font-display text-2xl text-foreground leading-snug tracking-tight">
           Connecting to Reflet SDK
         </h2>
         <p className="text-muted-foreground text-sm">

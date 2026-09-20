@@ -53,8 +53,8 @@ export function LeadMagnet({
   if (variant === "inline") {
     return (
       <div className="my-6 flex items-center gap-4 rounded-lg border border-border bg-muted/50 p-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-olive-600/10">
-          <FileText className="h-6 w-6 text-olive-600" />
+        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-brand-subtle">
+          <FileText className="h-6 w-6 text-brand-text" />
         </div>
         <div className="flex-1">
           <Text className="font-medium">{title}</Text>
@@ -78,10 +78,10 @@ export function LeadMagnet({
   }
 
   return (
-    <div className="my-8 rounded-xl border border-olive-200 bg-olive-50/50 p-6 dark:border-olive-800 dark:bg-olive-950/20">
+    <div className="my-8 rounded-xl border border-border bg-secondary p-6">
       <div className="mb-4 flex items-start gap-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-olive-600">
-          <FileText className="h-6 w-6 text-white" />
+        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-brand">
+          <FileText className="h-6 w-6 text-brand-foreground" />
         </div>
         <div>
           <H3 className="mb-1" variant="card">
@@ -92,8 +92,8 @@ export function LeadMagnet({
       </div>
 
       {submitted ? (
-        <div className="rounded-lg bg-emerald-50 p-4 text-center dark:bg-emerald-950/20">
-          <Text className="font-medium text-emerald-700 dark:text-emerald-400">
+        <div className="rounded-lg bg-success-subtle p-4 text-center">
+          <Text className="font-medium text-success-text">
             Your download has started. Check your downloads folder.
           </Text>
         </div>

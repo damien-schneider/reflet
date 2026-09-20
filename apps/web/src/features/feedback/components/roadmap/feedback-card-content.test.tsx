@@ -107,7 +107,7 @@ describe("FeedbackCardContent", () => {
     });
     render(<FeedbackCardContent item={item} />);
     expect(screen.getByText("Auto")).toBeInTheDocument();
-    expect(screen.getByTitle("Applied by AI")).toBeInTheDocument();
+    expect(screen.getByText("Applied by AI")).toBeInTheDocument();
   });
 
   it("applies isDragging styles", () => {

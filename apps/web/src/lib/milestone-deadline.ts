@@ -64,11 +64,10 @@ export function getDeadlineInfo(
 export function getDeadlineColor(status: DeadlineStatus): string {
   switch (status) {
     case "overdue":
-      return "text-red-500";
+      return "text-destructive-text";
     case "due_today":
-      return "text-amber-500";
     case "due_soon":
-      return "text-amber-400";
+      return "text-warning-text";
     default:
       return "text-muted-foreground";
   }
@@ -82,21 +81,21 @@ export function getDeadlineBadgeStyles(status: DeadlineStatus): {
   switch (status) {
     case "overdue":
       return {
-        bg: "bg-red-500/10",
-        border: "border-red-500/20",
-        text: "text-red-500",
+        bg: "bg-destructive/10",
+        border: "border-destructive/20",
+        text: "text-destructive-text",
       };
     case "due_today":
       return {
-        bg: "bg-amber-500/10",
-        border: "border-amber-500/20",
-        text: "text-amber-500",
+        bg: "bg-warning/15",
+        border: "border-warning/25",
+        text: "text-warning-text",
       };
     case "due_soon":
       return {
-        bg: "bg-amber-400/10",
-        border: "border-amber-400/20",
-        text: "text-amber-400",
+        bg: "bg-warning/10",
+        border: "border-warning/20",
+        text: "text-warning-text",
       };
     default:
       return {

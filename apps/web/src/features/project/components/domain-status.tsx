@@ -3,6 +3,19 @@
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@ctrl-ui/react/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@ctrl-ui/react/ui/tooltip";
+import {
   ArrowsClockwise,
   CheckCircle,
   Copy,
@@ -47,6 +60,33 @@ export function DomainStatusBadge({
   );
 }
 
+function CopyValueButton({
+  onCopy,
+  value,
+}: {
+  onCopy: (text: string) => void;
+  value: string;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Button
+            aria-label={`Copy ${value}`}
+            iconOnly
+            onClick={() => onCopy(value)}
+            size="xs"
+            variant="ghost"
+          >
+            <Copy />
+          </Button>
+        }
+      />
+      <TooltipContent>Copy {value}</TooltipContent>
+    </Tooltip>
+  );
+}
+
 export function DnsInstructions({
   domain,
   onCopy,
@@ -68,80 +108,62 @@ export function DnsInstructions({
         Add the following DNS record to your domain provider:
       </Muted>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b">
-              <th className="pb-2 text-left font-medium text-muted-foreground">
-                Type
-              </th>
-              <th className="pb-2 text-left font-medium text-muted-foreground">
-                Name
-              </th>
-              <th className="pb-2 text-left font-medium text-muted-foreground">
-                Value
-              </th>
-              <th className="pb-2 text-right font-medium text-muted-foreground" />
-            </tr>
-          </thead>
-          <tbody>
-            <tr className="border-b">
-              <td className="py-2">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Type</TableHead>
+            <TableHead>Name</TableHead>
+            <TableHead>Value</TableHead>
+            <TableHead>
+              <span className="sr-only">Copy</span>
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow>
+            <TableCell>
+              <code className="rounded bg-background px-1.5 py-0.5 text-xs">
+                CNAME
+              </code>
+            </TableCell>
+            <TableCell>
+              <code className="rounded bg-background px-1.5 py-0.5 text-xs">
+                {domain}
+              </code>
+            </TableCell>
+            <TableCell>
+              <code className="rounded bg-background px-1.5 py-0.5 text-xs">
+                cname.vercel-dns.com
+              </code>
+            </TableCell>
+            <TableCell className="text-right">
+              <CopyValueButton onCopy={onCopy} value="cname.vercel-dns.com" />
+            </TableCell>
+          </TableRow>
+          {verification?.map((record) => (
+            <TableRow key={record.domain}>
+              <TableCell>
                 <code className="rounded bg-background px-1.5 py-0.5 text-xs">
-                  CNAME
+                  {record.type}
                 </code>
-              </td>
-              <td className="py-2">
+              </TableCell>
+              <TableCell>
                 <code className="rounded bg-background px-1.5 py-0.5 text-xs">
-                  {domain}
+                  {record.domain}
                 </code>
-              </td>
-              <td className="py-2">
-                <code className="rounded bg-background px-1.5 py-0.5 text-xs">
-                  cname.vercel-dns.com
+              </TableCell>
+              <TableCell>
+                <code className="break-all rounded bg-background px-1.5 py-0.5 text-xs">
+                  {record.value}
                 </code>
-              </td>
-              <td className="py-2 text-right">
-                <Button
-                  onClick={() => onCopy("cname.vercel-dns.com")}
-                  size="xs"
-                  variant="ghost"
-                >
-                  <Copy className="h-3.5 w-3.5" />
-                </Button>
-              </td>
-            </tr>
-            {verification?.map((record) => (
-              <tr className="border-b" key={record.domain}>
-                <td className="py-2">
-                  <code className="rounded bg-background px-1.5 py-0.5 text-xs">
-                    {record.type}
-                  </code>
-                </td>
-                <td className="py-2">
-                  <code className="rounded bg-background px-1.5 py-0.5 text-xs">
-                    {record.domain}
-                  </code>
-                </td>
-                <td className="py-2">
-                  <code className="break-all rounded bg-background px-1.5 py-0.5 text-xs">
-                    {record.value}
-                  </code>
-                </td>
-                <td className="py-2 text-right">
-                  <Button
-                    onClick={() => onCopy(record.value)}
-                    size="xs"
-                    variant="ghost"
-                  >
-                    <Copy className="h-3.5 w-3.5" />
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+              </TableCell>
+              <TableCell className="text-right">
+                <CopyValueButton onCopy={onCopy} value={record.value} />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
 
       <Muted className="text-xs">
         DNS changes can take up to 48 hours to propagate. Click &quot;Check

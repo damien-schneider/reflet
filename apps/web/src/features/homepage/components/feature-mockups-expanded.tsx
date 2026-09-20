@@ -26,29 +26,29 @@ export function ExpandedAiMockup() {
   ];
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-[#e8e6e1] bg-[#faf9f7] shadow-[0_20px_50px_-12px_rgba(45,59,66,0.1)] dark:border-[#ffffff0d] dark:bg-[#1e1d1a]">
-      <div className="flex items-center justify-between border-[#e8e6e1] border-b px-5 py-3 dark:border-[#ffffff0d]">
+    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
+      <div className="flex items-center justify-between border-border border-b px-5 py-3">
         <div className="flex items-center gap-2">
-          <Sparkle className="text-violet-500" size={15} weight="fill" />
-          <span className="font-semibold text-[13px] text-foreground">
+          <Sparkle className="text-chart-4-text" size={15} weight="fill" />
+          <span className="font-semibold text-foreground text-label">
             AI Analysis
           </span>
         </div>
         <TagBadge color="green">94% confidence</TagBadge>
       </div>
-      <div className="border-[#e8e6e1] border-b px-5 py-3 dark:border-[#ffffff0d]">
-        <span className="mb-1 block text-[10px] text-muted-foreground uppercase tracking-wider">
+      <div className="border-border border-b px-5 py-3">
+        <span className="mb-1 block text-caption text-muted-foreground uppercase tracking-wider">
           Analyzing
         </span>
-        <span className="font-medium text-[13px] text-foreground">
+        <span className="font-medium text-foreground text-label">
           Add keyboard shortcuts for power users
         </span>
       </div>
-      <div className="divide-y divide-[#e8e6e1] dark:divide-[#ffffff0d]">
+      <div className="divide-y divide-border">
         <div className="flex items-center justify-between px-5 py-3">
           <div className="flex items-center gap-2">
             <Tag className="text-muted-foreground" size={13} />
-            <span className="text-[12px] text-muted-foreground">Auto-tags</span>
+            <span className="text-label text-muted-foreground">Auto-tags</span>
           </div>
           <div className="flex gap-1.5">
             {aiAutoTags.map((tag) => (
@@ -62,37 +62,35 @@ export function ExpandedAiMockup() {
         <div className="flex items-center justify-between px-5 py-3">
           <div className="flex items-center gap-2">
             <Lightning className="text-muted-foreground" size={13} />
-            <span className="text-[12px] text-muted-foreground">Priority</span>
+            <span className="text-label text-muted-foreground">Priority</span>
           </div>
           <TagBadge color="orange">Medium</TagBadge>
         </div>
         <div className="flex items-center justify-between px-5 py-3">
           <div className="flex items-center gap-2">
             <Code className="text-muted-foreground" size={13} />
-            <span className="text-[12px] text-muted-foreground">
-              Complexity
-            </span>
+            <span className="text-label text-muted-foreground">Complexity</span>
           </div>
-          <span className="font-medium text-[12px] text-foreground">
+          <span className="font-medium text-foreground text-label">
             Simple · ~2h
           </span>
         </div>
         <div className="px-5 py-3">
           <div className="mb-2 flex items-center gap-2">
             <GitMerge className="text-muted-foreground" size={13} />
-            <span className="text-[12px] text-muted-foreground">
+            <span className="text-label text-muted-foreground">
               Duplicate detected
             </span>
           </div>
-          <div className="flex items-center justify-between rounded-lg border border-[#e8e6e1] bg-[#f0efea]/50 px-3 py-2 dark:border-[#ffffff0d] dark:bg-[#151412]">
+          <div className="flex items-center justify-between rounded-lg border border-border bg-muted px-3 py-2">
             <div className="flex items-center gap-2">
               <TagBadge color="yellow">87% match</TagBadge>
-              <span className="text-[12px] text-foreground">
+              <span className="text-foreground text-label">
                 Vim keybindings support
               </span>
             </div>
             <button
-              className="rounded-md bg-olive-600 px-2 py-1 font-medium text-[10px] text-white transition-colors hover:bg-olive-700 dark:bg-olive-500"
+              className="rounded-md bg-brand px-2 py-1 font-medium text-brand-foreground text-caption transition-colors hover:bg-brand/90"
               type="button"
             >
               Merge
@@ -122,35 +120,29 @@ const CODE_LINES = [
 export function ExpandedWidgetMockup() {
   return (
     <div className="space-y-4">
-      <div className="overflow-hidden rounded-2xl border border-[#e8e6e1] bg-[#faf9f7] shadow-[0_20px_50px_-12px_rgba(45,59,66,0.1)] dark:border-[#ffffff0d] dark:bg-[#1e1d1a]">
-        <div className="flex items-center gap-3 border-[#e8e6e1] border-b bg-[#f0efea] px-4 py-2.5 dark:border-[#ffffff0d] dark:bg-[#151412]">
+      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
+        <div className="flex items-center gap-3 border-border border-b bg-muted px-4 py-2.5">
           <div className="flex gap-1.5">
-            <div className="size-2.5 rounded-full bg-[#ff5f57]/60" />
-            <div className="size-2.5 rounded-full bg-[#febc2e]/60" />
-            <div className="size-2.5 rounded-full bg-[#28c840]/60" />
+            <div className="size-2.5 rounded-full bg-destructive/60" />
+            <div className="size-2.5 rounded-full bg-warning/60" />
+            <div className="size-2.5 rounded-full bg-success/60" />
           </div>
-          <span className="font-mono text-[11px] text-muted-foreground">
+          <span className="font-mono text-caption text-muted-foreground">
             app.tsx
           </span>
         </div>
         <div className="p-4">
-          <pre className="font-mono text-[12px] leading-6">
+          <pre className="font-mono text-label leading-6">
             {CODE_LINES.map((line, i) => (
               <div
-                className={
-                  line.hl ? "rounded bg-olive-600/5 dark:bg-olive-400/5" : ""
-                }
+                className={line.hl ? "rounded bg-brand-subtle" : ""}
                 key={`code-${i.toString()}`}
               >
-                <span className="mr-4 inline-block w-4 select-none text-right text-[11px] text-muted-foreground/40">
+                <span className="mr-4 inline-block w-4 select-none text-right text-caption text-muted-foreground/40">
                   {i + 1}
                 </span>
                 <span
-                  className={
-                    line.hl
-                      ? "text-olive-700 dark:text-olive-300"
-                      : "text-foreground/80"
-                  }
+                  className={line.hl ? "text-brand-text" : "text-foreground/80"}
                 >
                   {line.text}
                 </span>
@@ -160,10 +152,16 @@ export function ExpandedWidgetMockup() {
         </div>
       </div>
       <div className="flex items-center justify-end gap-3 pr-2">
-        <span className="text-[13px] text-muted-foreground">Result →</span>
-        <div className="flex h-10 items-center gap-2 rounded-full bg-olive-600 px-4 shadow-lg dark:bg-olive-500">
-          <ChatCircleDots className="text-white" size={16} weight="fill" />
-          <span className="font-medium text-[13px] text-white">Feedback</span>
+        <span className="text-label text-muted-foreground">Result →</span>
+        <div className="flex h-10 items-center gap-2 rounded-full bg-brand px-4 shadow-lg">
+          <ChatCircleDots
+            className="text-brand-foreground"
+            size={16}
+            weight="fill"
+          />
+          <span className="font-medium text-brand-foreground text-label">
+            Feedback
+          </span>
         </div>
       </div>
     </div>
@@ -175,57 +173,49 @@ export function ExpandedWidgetMockup() {
 export function ExpandedGithubMockup() {
   return (
     <div className="space-y-3">
-      <div className="overflow-hidden rounded-2xl border border-[#e8e6e1] bg-[#faf9f7] shadow-[0_20px_50px_-12px_rgba(45,59,66,0.1)] dark:border-[#ffffff0d] dark:bg-[#1e1d1a]">
-        <div className="flex items-center gap-2 border-[#e8e6e1] border-b px-4 py-3 dark:border-[#ffffff0d]">
+      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
+        <div className="flex items-center gap-2 border-border border-b px-4 py-3">
           <GithubLogo className="text-foreground" size={15} weight="fill" />
-          <span className="font-semibold text-[13px] text-foreground">
+          <span className="font-semibold text-foreground text-label">
             GitHub Activity
           </span>
         </div>
-        <div className="divide-y divide-[#e8e6e1] dark:divide-[#ffffff0d]">
+        <div className="divide-y divide-border">
           <div className="flex items-center gap-3 px-4 py-3">
-            <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-500/15">
-              <Code
-                className="text-violet-600 dark:text-violet-400"
-                size={12}
-              />
+            <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-chart-4/15">
+              <Code className="text-chart-4-text" size={12} />
             </div>
             <div>
-              <span className="block font-medium text-[12px] text-foreground">
+              <span className="block font-medium text-foreground text-label">
                 Issue #87 created
               </span>
-              <span className="text-[10px] text-muted-foreground">
+              <span className="text-caption text-muted-foreground">
                 Linked to &quot;Add dark mode support&quot;
               </span>
             </div>
           </div>
           <div className="flex items-center gap-3 px-4 py-3">
-            <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-500/15">
-              <GitMerge
-                className="text-amber-600 dark:text-amber-400"
-                size={12}
-              />
+            <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-warning-subtle">
+              <GitMerge className="text-warning-text" size={12} />
             </div>
             <div>
-              <span className="block font-medium text-[12px] text-foreground">
+              <span className="block font-medium text-foreground text-label">
                 PR #142 merged
               </span>
-              <span className="text-[10px] text-muted-foreground">
+              <span className="text-caption text-muted-foreground">
                 feat: add dark mode support
               </span>
             </div>
           </div>
-          <div className="flex items-center gap-3 bg-emerald-50/50 px-4 py-3 dark:bg-emerald-500/5">
-            <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-500/15">
-              <span className="font-bold text-[10px] text-emerald-600 dark:text-emerald-400">
-                ✓
-              </span>
+          <div className="flex items-center gap-3 bg-success-subtle px-4 py-3">
+            <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-success-subtle">
+              <span className="font-bold text-micro text-success-text">✓</span>
             </div>
             <div>
-              <span className="block font-medium text-[12px] text-emerald-700 dark:text-emerald-300">
+              <span className="block font-medium text-label text-success-text">
                 Status → Shipped
               </span>
-              <span className="text-[10px] text-emerald-600/70 dark:text-emerald-400/70">
+              <span className="text-caption text-success-text/70">
                 Changelog v2.4.0 auto-generated · 3 voters notified
               </span>
             </div>
@@ -240,56 +230,56 @@ export function ExpandedGithubMockup() {
 
 export function ExpandedRealtimeMockup() {
   return (
-    <div className="overflow-hidden rounded-2xl border border-[#e8e6e1] bg-[#faf9f7] shadow-[0_20px_50px_-12px_rgba(45,59,66,0.1)] dark:border-[#ffffff0d] dark:bg-[#1e1d1a]">
-      <div className="flex items-center justify-between border-[#e8e6e1] border-b px-4 py-3 dark:border-[#ffffff0d]">
+    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
+      <div className="flex items-center justify-between border-border border-b px-4 py-3">
         <div className="flex items-center gap-2">
           <div className="relative size-2">
-            <div className="absolute inset-0 animate-ping rounded-full bg-emerald-500/60" />
-            <div className="relative size-2 rounded-full bg-emerald-500" />
+            <div className="absolute inset-0 animate-ping rounded-full bg-success/60" />
+            <div className="relative size-2 rounded-full bg-success" />
           </div>
-          <span className="font-semibold text-[13px] text-emerald-600 dark:text-emerald-400">
+          <span className="font-semibold text-label text-success-text">
             Live Activity
           </span>
         </div>
         <div className="flex -space-x-1.5">
-          <div className="size-6 rounded-full border-2 border-[#faf9f7] bg-violet-500 dark:border-[#1e1d1a]" />
-          <div className="size-6 rounded-full border-2 border-[#faf9f7] bg-sky-500 dark:border-[#1e1d1a]" />
-          <div className="size-6 rounded-full border-2 border-[#faf9f7] bg-rose-500 dark:border-[#1e1d1a]" />
-          <div className="flex size-6 items-center justify-center rounded-full border-2 border-[#faf9f7] bg-[#e8e6e1] dark:border-[#1e1d1a] dark:bg-[#ffffff0d]">
-            <span className="font-medium text-[8px] text-muted-foreground">
+          <div className="size-6 rounded-full border-2 border-card bg-chart-4" />
+          <div className="size-6 rounded-full border-2 border-card bg-chart-2" />
+          <div className="size-6 rounded-full border-2 border-card bg-chart-5" />
+          <div className="flex size-6 items-center justify-center rounded-full border-2 border-card bg-border">
+            <span className="font-medium text-micro text-muted-foreground">
               +4
             </span>
           </div>
         </div>
       </div>
-      <div className="divide-y divide-[#e8e6e1] dark:divide-[#ffffff0d]">
+      <div className="divide-y divide-border">
         <div className="flex items-center gap-3 px-4 py-2.5">
-          <div className="size-5 rounded-full bg-violet-500" />
-          <span className="flex-1 text-[12px] text-foreground">
+          <div className="size-5 rounded-full bg-chart-4" />
+          <span className="flex-1 text-foreground text-label">
             Sarah voted on &quot;Dark mode&quot;
           </span>
-          <span className="text-[10px] text-muted-foreground">just now</span>
+          <span className="text-caption text-muted-foreground">just now</span>
         </div>
         <div className="flex items-center gap-3 px-4 py-2.5">
-          <div className="size-5 rounded-full bg-sky-500" />
-          <span className="flex-1 text-[12px] text-foreground">
+          <div className="size-5 rounded-full bg-chart-2" />
+          <span className="flex-1 text-foreground text-label">
             Mike commented on &quot;API rate limits&quot;
           </span>
-          <span className="text-[10px] text-muted-foreground">2s ago</span>
+          <span className="text-caption text-muted-foreground">2s ago</span>
         </div>
         <div className="flex items-center gap-3 px-4 py-2.5">
-          <div className="size-5 rounded-full bg-rose-500" />
-          <span className="flex-1 text-[12px] text-foreground">
+          <div className="size-5 rounded-full bg-chart-5" />
+          <span className="flex-1 text-foreground text-label">
             Priya moved &quot;SSO&quot; to In Progress
           </span>
-          <span className="text-[10px] text-muted-foreground">5s ago</span>
+          <span className="text-caption text-muted-foreground">5s ago</span>
         </div>
         <div className="flex items-center gap-3 px-4 py-2.5 opacity-60">
-          <div className="size-5 rounded-full bg-amber-500" />
-          <span className="flex-1 text-[12px] text-foreground">
+          <div className="size-5 rounded-full bg-warning" />
+          <span className="flex-1 text-foreground text-label">
             Alex submitted new feedback
           </span>
-          <span className="text-[10px] text-muted-foreground">12s ago</span>
+          <span className="text-caption text-muted-foreground">12s ago</span>
         </div>
       </div>
     </div>
@@ -300,39 +290,44 @@ export function ExpandedRealtimeMockup() {
 
 export function ExpandedApiMockup() {
   return (
-    <div className="overflow-hidden rounded-2xl border border-[#e8e6e1] shadow-[0_20px_50px_-12px_rgba(45,59,66,0.1)] dark:border-[#ffffff0d]">
-      <div className="bg-olive-950 p-5 dark:bg-[#0d0d0b]">
-        <pre className="font-mono text-[11px] leading-6">
-          <div className="mb-3 text-olive-400/50"># Feedback endpoints</div>
-          <div>
-            <span className="text-emerald-400">GET </span>
-            <span className="text-olive-300/80">/api/v1/feedback</span>
-            <span className="ml-4 text-olive-500"># List all</span>
+    <div className="overflow-hidden rounded-2xl border border-border shadow-xl">
+      <div className="bg-band p-5">
+        <pre className="font-mono text-caption leading-6">
+          <div className="mb-3 text-band-muted-foreground/70">
+            # Feedback endpoints
           </div>
           <div>
-            <span className="text-sky-400">POST </span>
-            <span className="text-olive-300/80">/api/v1/feedback</span>
-            <span className="ml-4 text-olive-500"># Create</span>
+            <span className="text-chart-1-text">GET </span>
+            <span className="text-band-muted-foreground">/api/v1/feedback</span>
+            <span className="ml-4 text-band-muted-foreground"># List all</span>
           </div>
           <div>
-            <span className="text-amber-400">PATCH</span>
-            <span className="text-olive-300/80"> /api/v1/feedback/:id</span>
-            <span className="ml-2 text-olive-500"># Update</span>
+            <span className="text-chart-2-text">POST </span>
+            <span className="text-band-muted-foreground">/api/v1/feedback</span>
+            <span className="ml-4 text-band-muted-foreground"># Create</span>
           </div>
-          <div className="mt-3 border-olive-700/30 border-t pt-3 text-olive-400/50">
+          <div>
+            <span className="text-chart-3-text">PATCH</span>
+            <span className="text-band-muted-foreground">
+              {" "}
+              /api/v1/feedback/:id
+            </span>
+            <span className="ml-2 text-band-muted-foreground"># Update</span>
+          </div>
+          <div className="mt-3 border-border border-t pt-3 text-band-muted-foreground/70">
             # Webhooks
           </div>
           <div>
-            <span className="text-violet-400">HOOK </span>
-            <span className="text-olive-300/80">feedback.created</span>
+            <span className="text-chart-4-text">HOOK </span>
+            <span className="text-band-muted-foreground">feedback.created</span>
           </div>
           <div>
-            <span className="text-violet-400">HOOK </span>
-            <span className="text-olive-300/80">status.changed</span>
+            <span className="text-chart-4-text">HOOK </span>
+            <span className="text-band-muted-foreground">status.changed</span>
           </div>
           <div>
-            <span className="text-violet-400">HOOK </span>
-            <span className="text-olive-300/80">vote.added</span>
+            <span className="text-chart-4-text">HOOK </span>
+            <span className="text-band-muted-foreground">vote.added</span>
           </div>
         </pre>
       </div>
@@ -345,45 +340,49 @@ export function ExpandedApiMockup() {
 export function ExpandedIntegrationsMockup() {
   return (
     <div className="space-y-3">
-      <div className="overflow-hidden rounded-2xl border border-[#e8e6e1] bg-[#faf9f7] shadow-[0_20px_50px_-12px_rgba(45,59,66,0.1)] dark:border-[#ffffff0d] dark:bg-[#1e1d1a]">
-        <div className="divide-y divide-[#e8e6e1] dark:divide-[#ffffff0d]">
+      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
+        <div className="divide-y divide-border">
           <div className="flex items-center gap-3 px-4 py-3">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-[#4A154B]">
-              <span className="font-bold text-[11px] text-white">S</span>
+            <div className="flex size-8 items-center justify-center rounded-lg bg-chart-4">
+              <span className="font-bold text-background text-caption">S</span>
             </div>
             <div className="flex-1">
-              <span className="block font-medium text-[12px] text-foreground">
+              <span className="block font-medium text-foreground text-label">
                 Slack
               </span>
-              <span className="text-[10px] text-muted-foreground">
+              <span className="text-caption text-muted-foreground">
                 #feedback — New request: &quot;Add dark mode&quot;
               </span>
             </div>
             <TagBadge color="green">Connected</TagBadge>
           </div>
           <div className="flex items-center gap-3 px-4 py-3">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-[#5865F2]">
-              <span className="font-bold text-[11px] text-white">D</span>
+            <div className="flex size-8 items-center justify-center rounded-lg bg-chart-2">
+              <span className="font-bold text-background text-caption">D</span>
             </div>
             <div className="flex-1">
-              <span className="block font-medium text-[12px] text-foreground">
+              <span className="block font-medium text-foreground text-label">
                 Discord
               </span>
-              <span className="text-[10px] text-muted-foreground">
+              <span className="text-caption text-muted-foreground">
                 #updates — New vote on &quot;Dark mode support&quot;
               </span>
             </div>
             <TagBadge color="green">Connected</TagBadge>
           </div>
           <div className="flex items-center gap-3 px-4 py-3">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-olive-600 dark:bg-olive-500">
-              <Lightning className="text-white" size={13} weight="fill" />
+            <div className="flex size-8 items-center justify-center rounded-lg bg-brand">
+              <Lightning
+                className="text-brand-foreground"
+                size={13}
+                weight="fill"
+              />
             </div>
             <div className="flex-1">
-              <span className="block font-medium text-[12px] text-foreground">
+              <span className="block font-medium text-foreground text-label">
                 Webhooks
               </span>
-              <span className="text-[10px] text-muted-foreground">
+              <span className="text-caption text-muted-foreground">
                 POST https://api.your-app.com/hooks
               </span>
             </div>

@@ -1,15 +1,45 @@
 @import "./reflet-theme.css";
 
 @layer components {
+  /* ---------------------------------------------------------------- surfaces */
+
   :root[data-theme="reflet"]
-    :where([data-control-family="card"][data-slot="root"]) {
+  :where([data-control-family="card"][data-slot="root"]) {
     --cui-card-radius: var(--radius-panel);
     --cui-card-border-width: 0px;
     --cui-card-shadow: var(--reflet-panel-shadow);
   }
 
   :root[data-theme="reflet"]
-    :where([data-control-family="button"][data-variant="solid"]) {
+    :where([data-control-family="alert"][data-slot="root"]) {
+    --cui-alert-radius: var(--radius-panel);
+    --cui-alert-background: var(--card);
+    --cui-alert-border-color: transparent;
+    --cui-alert-shadow: var(--reflet-panel-shadow);
+  }
+
+  :root[data-theme="reflet"]
+    :where([data-control-family="empty"][data-slot="root"]) {
+    --cui-empty-radius: var(--radius-panel);
+    --cui-empty-background: var(--secondary);
+    --cui-empty-border-color: var(--border);
+    --cui-empty-border-width: 1px;
+    --cui-empty-border-style: dashed;
+    --cui-empty-media-radius: var(--radius-control);
+    --cui-empty-media-background: var(--card);
+  }
+
+  :root[data-theme="reflet"]
+    :where([data-control-family="item"][data-slot="root"]) {
+    --cui-item-radius: var(--radius-control);
+    --cui-item-hover-background: var(--accent);
+    --cui-item-border-width: 0px;
+  }
+
+  /* ---------------------------------------------------------------- controls */
+
+  :root[data-theme="reflet"]
+  :where([data-control-family="button"][data-variant="solid"]) {
     --cui-button-background-image: linear-gradient(
       180deg,
       var(--reflet-solid-light),
@@ -47,53 +77,35 @@
   }
 
   :root[data-theme="reflet"]
-    :where([data-control-family="field"][data-control="true"]) {
+    :where([data-control-family="button"][data-disabled]) {
+    --cui-button-background-image: none;
+    --cui-button-shadow: none;
+    --cui-button-hover-shadow: none;
+  }
+
+  /* --input, not the depth ring: a field edge is an affordance, so it clears
+     3:1 against the surface it sits on. --border stays for separation only. */
+  :root[data-theme="reflet"]
+  :where([data-control-family="field"][data-control="true"]) {
     --cui-field-background: var(--secondary);
-    --cui-field-border-color: var(--reflet-edge);
+    --cui-field-border-color: var(--input);
     --cui-field-focus-border-color: var(--focus-ring);
     --cui-field-shadow: var(--reflet-recess);
+    --cui-field-font-size: 1rem;
   }
 
-  :root[data-theme="reflet"]
-    :where(
-      [data-control-family="popup"][data-popup-part="surface"],
-      [data-control-family="popup"][data-popup-part="list-surface"],
-      [data-control-family="popup"][data-popup-part="bar"]
-    ) {
-    --cui-popup-border-width: 0px;
-    --cui-popup-shadow: var(--reflet-popup-shadow);
+  /* iOS Safari zooms the viewport when a focused field is under 16px. */
+  @media (width >= 48rem) {
+    :root[data-theme="reflet"]
+      :where([data-control-family="field"][data-control="true"]) {
+      --cui-field-font-size: var(--text-body);
+    }
   }
 
-  :root[data-theme="reflet"]
-    :where([data-control-family="popup"][data-popup-kind="tooltip"]) {
-    --cui-popup-shadow: var(--reflet-control-shadow);
-  }
-
-  :root[data-theme="reflet"]
-    :where(
-      [data-control-family="tabs"][data-slot="root"]:not(
-        :has([data-variant="browser"])
-      )
-    ) {
-    --cui-tabs-trigger-radius: var(--radius-control);
-    --cui-tabs-list-background: var(--secondary);
-    --cui-tabs-list-shadow: var(--reflet-recess);
-    --cui-tabs-indicator-background: var(--card);
-    --cui-tabs-indicator-shadow: var(--reflet-control-shadow);
-  }
-
-  :root[data-theme="reflet"]
-    :where([data-control-family="sidebar"][data-slot="wrapper"]) {
-    --cui-sidebar-inset-background: var(--background);
-    --cui-sidebar-inset-shadow: var(--reflet-panel-shadow);
-  }
-
-  :root[data-theme="reflet"]
-    :where([data-control-family="sidebar"][data-slot="root"]) {
-    --cui-sidebar-menu-button-radius: var(--radius-control);
-    --cui-sidebar-menu-button-active-background: var(--card);
-    --cui-sidebar-menu-button-active-shadow: var(--reflet-control-shadow);
-    --cui-sidebar-group-label-foreground: var(--muted-foreground);
+  :root[data-theme="reflet"] :where([data-control-family="choice"]) {
+    --cui-choice-border-color: var(--input);
+    --cui-choice-checked-background: var(--primary);
+    --cui-choice-checked-border-color: var(--primary);
   }
 
   :root[data-theme="reflet"]
@@ -119,10 +131,141 @@
     --cui-range-thumb-shadow: var(--reflet-control-shadow);
   }
 
+  /* ------------------------------------------------------------------ popups */
+
+  :root[data-theme="reflet"]
+  :where(
+    [data-control-family="popup"][data-popup-part="surface"],
+    [data-control-family="popup"][data-popup-part="list-surface"],
+    [data-control-family="popup"][data-popup-part="bar"]
+  ) {
+    --cui-popup-border-width: 0px;
+    --cui-popup-shadow: var(--reflet-popup-shadow);
+    --cui-popup-separator-color: var(--border);
+    --cui-popup-shortcut-foreground: var(--muted-foreground);
+  }
+
+  :root[data-theme="reflet"]
+    :where([data-control-family="popup"][data-popup-kind="tooltip"]) {
+    --cui-popup-shadow: var(--reflet-control-shadow);
+  }
+
+  /* --------------------------------------------------------------- navigation */
+
+  :root[data-theme="reflet"]
+  :where(
+    [data-control-family="tabs"][data-slot="root"]:not(
+      :has([data-variant="browser"])
+    )
+  ) {
+    --cui-tabs-trigger-radius: var(--radius-control);
+    --cui-tabs-list-background: var(--secondary);
+    --cui-tabs-list-shadow: var(--reflet-recess);
+    --cui-tabs-indicator-background: var(--card);
+    --cui-tabs-indicator-shadow: var(--reflet-control-shadow);
+  }
+
+  :root[data-theme="reflet"]
+    :where([data-control-family="sidebar"][data-slot="wrapper"]) {
+    --cui-sidebar-inset-background: var(--background);
+    --cui-sidebar-inset-shadow: var(--reflet-panel-shadow);
+  }
+
+  :root[data-theme="reflet"]
+    :where([data-control-family="sidebar"][data-slot="root"]) {
+    --cui-sidebar-menu-button-radius: var(--radius-control);
+    --cui-sidebar-menu-button-active-background: var(--card);
+    --cui-sidebar-menu-button-active-shadow: var(--reflet-control-shadow);
+    --cui-sidebar-group-label-foreground: var(--muted-foreground);
+  }
+
+  /* ---------------------------------------------------------------- data & text */
+
+  :root[data-theme="reflet"]
+  :where([data-control-family="table"][data-slot="root"]) {
+    --cui-table-border-color: var(--border);
+    --cui-table-row-hover-background: var(--secondary);
+    --cui-table-row-selected-background: var(--accent);
+    --cui-table-header-foreground: var(--muted-foreground);
+    --cui-table-footer-background: var(--secondary);
+  }
+
+  :root[data-theme="reflet"]
+    :where([data-control-family="dropzone"][data-slot="root"]) {
+    --cui-dropzone-surface-radius: var(--radius-panel);
+    --cui-dropzone-surface-border-color: var(--input);
+    --cui-dropzone-surface-foreground: var(--muted-foreground);
+    --cui-dropzone-accept-border-color: var(--brand);
+    --cui-dropzone-reject-border-color: var(--destructive);
+    --cui-dropzone-overlay-background: var(--brand-subtle);
+  }
+
+  :root[data-theme="reflet"]
+    :where([data-control-family="color-picker"][data-slot="root"]) {
+    --cui-color-picker-area-radius: var(--radius-field);
+    --cui-color-picker-trigger-radius: var(--radius-control);
+    --cui-color-picker-trigger-shadow: var(--reflet-control-shadow);
+    --cui-color-picker-swatch-radius: var(--radius-popup-item);
+    --cui-color-picker-output-swatch-radius: var(--radius-popup-item);
+    --cui-color-picker-slider-thumb-radius: 999px;
+    --cui-color-picker-slider-thumb-background: var(--card);
+  }
+
+  :root[data-theme="reflet"]
+    :where([data-control-family="pagination"][data-slot="root"]) {
+    --cui-pagination-link-radius: var(--radius-control);
+    --cui-pagination-link-foreground: var(--muted-foreground);
+    --cui-pagination-link-hover-background: var(--secondary);
+  }
+
+  :root[data-theme="reflet"]
+    :where([data-control-family="separator"][data-slot="root"]) {
+    --cui-separator-root-background: var(--border);
+  }
+
+  :root[data-theme="reflet"]
+    :where([data-control-family="badge"][data-slot="root"]) {
+    --cui-badge-border-color: var(--reflet-edge);
+  }
+
+  :root[data-theme="reflet"]
+    :where([data-control-family="skeleton"][data-slot="root"]) {
+    --cui-skeleton-radius: var(--radius-control);
+    --cui-skeleton-background: var(--muted);
+  }
+
+  :root[data-theme="reflet"]
+    :where([data-control-family="spinner"][data-slot="root"]) {
+    --cui-spinner-foreground: var(--muted-foreground);
+  }
+
+  :root[data-theme="reflet"]
+    :where([data-control-family="scroll-area"][data-slot="root"]) {
+    --cui-scroll-area-thumb-radius: 9999px;
+    --cui-scroll-area-thumb-background: var(--input);
+    --cui-scroll-area-corner-background: transparent;
+  }
+
   :root[data-theme="reflet"]
     :where([data-control-family="code"][data-slot="root"]) {
     --cui-code-background: var(--secondary);
     --cui-code-border-color: var(--reflet-edge);
     --cui-code-shadow: var(--reflet-recess);
+  }
+
+  :root[data-theme="reflet"]
+    :where([data-control-family="avatar"][data-slot="root"]) {
+    --cui-avatar-fallback-background: var(--secondary);
+    --cui-avatar-fallback-foreground: var(--muted-foreground);
+    --cui-avatar-group-ring-color: var(--card);
+    outline: 1px solid oklch(0 0 0 / 0.1);
+    outline-offset: -1px;
+  }
+
+  /* Pale photos and light initials have no edge of their own on a light
+     surface; the inset line gives every avatar a shape. */
+  :root.dark[data-theme="reflet"]
+  :where([data-control-family="avatar"][data-slot="root"]) {
+    outline-color: oklch(1 0 0 / 0.1);
   }
 }

@@ -88,7 +88,7 @@ export default function PendingInvitationsPage() {
         </div>
 
         {error && (
-          <div className="mb-4 rounded-md bg-red-50 p-3 text-center text-red-600 text-sm">
+          <div className="mb-4 rounded-md bg-destructive-subtle p-3 text-center text-destructive-text text-sm">
             {error}
           </div>
         )}

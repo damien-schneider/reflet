@@ -50,7 +50,6 @@ export type { FeedbackButtonProps } from "./react-feedback-button";
 // Feedback Components
 export { FeedbackButton } from "./react-feedback-button";
 export type {
-  FeedbackCategory,
   FeedbackDialogLabels,
   FeedbackDialogProps,
 } from "./react-feedback-dialog";

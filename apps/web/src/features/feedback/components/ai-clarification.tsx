@@ -100,7 +100,7 @@ export function AIClarification({ feedbackId, isAdmin }: AIClarificationProps) {
     <div className="mb-6">
       <div className="mb-2 flex items-center justify-between">
         <h3 className="flex items-center gap-2 font-medium">
-          <Sparkle className="h-4 w-4 text-olive-600" />
+          <Sparkle className="h-4 w-4 text-brand-text" />
           AI Clarification
         </h3>
         <div className="flex gap-2">
@@ -143,16 +143,16 @@ export function AIClarification({ feedbackId, isAdmin }: AIClarificationProps) {
       )}
 
       {hasExisting && !isLoading && (
-        <Card className="bg-olive-50/50 dark:bg-olive-950/20">
+        <Card className="bg-secondary">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="font-medium text-olive-700 text-sm dark:text-olive-300">
+              <CardTitle className="font-medium text-brand-text text-sm">
                 Enhanced feedback summary
               </CardTitle>
               <Button
                 className={cn(
                   "h-6 gap-1 px-2 text-xs",
-                  copied && "text-olive-600"
+                  copied && "text-brand-text"
                 )}
                 onClick={handleCopy}
                 size="xs"
@@ -186,7 +186,6 @@ export function AIClarification({ feedbackId, isAdmin }: AIClarificationProps) {
         </p>
       )}
 
-      {/* Coding Prompt Dialog */}
       <Dialog onOpenChange={setShowPromptDialog} open={showPromptDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -210,7 +209,7 @@ export function AIClarification({ feedbackId, isAdmin }: AIClarificationProps) {
                   <Button
                     className={cn(
                       "absolute top-2 right-2",
-                      promptCopied && "text-olive-600"
+                      promptCopied && "text-brand-text"
                     )}
                     onClick={handleCopyPrompt}
                     size="xs"

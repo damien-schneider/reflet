@@ -64,23 +64,25 @@ export function VoteButton({
 
   return (
     <Tooltip>
-      <TooltipTrigger>
-        <Button
-          aria-label={label}
-          aria-pressed={hasVoted}
-          className={cn(
-            "flex flex-col items-center justify-center gap-0.5 font-semibold",
-            sizeClasses[size],
-            hasVoted && "bg-primary text-primary-foreground",
-            className
-          )}
-          onClick={handleVote}
-          tone={hasVoted ? "primary" : "neutral"}
-          variant={hasVoted ? "solid" : "surface"}
-        >
-          <CaretUp className={iconSizes[size]} />
-          <span>{voteCount}</span>
-        </Button>
+      <TooltipTrigger
+        aria-label={label}
+        aria-pressed={hasVoted}
+        render={
+          <Button
+            className={cn(
+              "flex flex-col items-center justify-center gap-0.5 font-semibold",
+              sizeClasses[size],
+              hasVoted && "bg-primary text-primary-foreground",
+              className
+            )}
+            onClick={handleVote}
+            tone={hasVoted ? "primary" : "neutral"}
+            variant={hasVoted ? "solid" : "surface"}
+          />
+        }
+      >
+        <CaretUp className={iconSizes[size]} />
+        <span className="tabular-nums">{voteCount}</span>
       </TooltipTrigger>
       <TooltipContent>
         <p>{tooltipText}</p>

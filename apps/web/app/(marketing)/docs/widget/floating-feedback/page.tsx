@@ -148,7 +148,7 @@ function Section({
 }) {
   return (
     <section className="mb-10">
-      <h2 className="mb-3 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+      <h2 className="mb-3 font-display text-2xl text-foreground leading-snug tracking-tight">
         {title}
       </h2>
       {children}
@@ -159,7 +159,7 @@ function Section({
 export default function FloatingFeedbackPage() {
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="mb-2 font-display text-3xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+      <h1 className="mb-2 font-display text-3xl text-foreground leading-snug tracking-tight">
         Floating Feedback Button
       </h1>
       <p className="mb-8 text-base text-muted-foreground sm:text-xl">

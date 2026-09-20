@@ -47,7 +47,7 @@ export function attachWidgetEventListeners(
   }
 
   const feedbackCards = Array.from(
-    shadowRoot.querySelectorAll(".reflet-feedback-card")
+    shadowRoot.querySelectorAll("[data-feedback-id]")
   );
   for (const card of feedbackCards) {
     card.addEventListener("click", () => {

@@ -124,8 +124,6 @@ function MyComponent() {
   publicKey="${publicKey}"
   theme="auto"              // "light" | "dark" | "auto"
   primaryColor="#6366f1"     // Your brand color
-  defaultCategory="feature"  // "feature" | "bug" | "question"
-  categories={["feature", "bug"]}  // Which categories to show
   labels={{
     trigger: "Feedback",
     title: "Send Feedback",
@@ -146,8 +144,6 @@ function MyComponent() {
 | userToken | string | — | Server-signed JWT (alternative to user) |
 | theme | "light" \\| "dark" \\| "auto" | "auto" | Color theme |
 | primaryColor | string | "#6366f1" | Primary brand color |
-| defaultCategory | string | "feature" | Default selected category |
-| categories | string[] | ["feature", "bug", "question"] | Categories to show |
 | labels | object | — | Custom text labels for i18n |
 | asChild | boolean | false | Use child element as trigger |
 | className | string | — | Custom CSS class for trigger button |

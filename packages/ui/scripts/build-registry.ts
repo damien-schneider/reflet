@@ -13,6 +13,8 @@ import { resolve } from "node:path";
 const ROOT = resolve(import.meta.dirname, "../../..");
 const REGISTRY_DIR = resolve(import.meta.dirname, "../registry");
 const OUTPUT_DIR = resolve(ROOT, "apps/web/public/r");
+const THEME_FILE = resolve(ROOT, "apps/web/src/styles/reflet-theme.css");
+const TAG_TOKEN = /^\s*--(tag-[a-z-]+):\s*([^;]+);/;
 
 interface RegistryFile {
   content: string;
@@ -21,8 +23,17 @@ interface RegistryFile {
   type: "registry:ui";
 }
 
+type TokenMap = Record<string, string>;
+
+interface CssVars {
+  dark: TokenMap;
+  light: TokenMap;
+  theme: TokenMap;
+}
+
 interface RegistryItem {
   $schema: string;
+  cssVars: CssVars;
   dependencies: string[];
   description: string;
   files: RegistryFile[];
@@ -33,6 +44,39 @@ interface RegistryItem {
   registryDependencies: string[];
   title: string;
   type: "registry:ui";
+}
+
+function readTagTokens(): CssVars {
+  const lines = readFileSync(THEME_FILE, "utf-8").split("\n");
+  const light: TokenMap = {};
+  const dark: TokenMap = {};
+
+  for (const line of lines) {
+    const match = TAG_TOKEN.exec(line);
+    if (!(match?.[1] && match[2])) {
+      continue;
+    }
+    const [, name, value] = match;
+    const target = name in light ? dark : light;
+    target[name] = value.trim();
+  }
+
+  const names = Object.keys(light);
+  if (names.length === 0 || names.length !== Object.keys(dark).length) {
+    throw new Error(
+      `Expected matching light/dark --tag-* blocks in ${THEME_FILE}, found ${names.length} light and ${Object.keys(dark).length} dark`
+    );
+  }
+
+  const theme: TokenMap = {};
+  for (const name of names) {
+    if (!(name in dark)) {
+      throw new Error(`--${name} has a light value but no dark counterpart`);
+    }
+    theme[`color-${name}`] = `var(--${name})`;
+  }
+
+  return { dark, light, theme };
 }
 
 const COMPONENTS: Array<{
@@ -102,6 +146,7 @@ function build() {
     mkdirSync(OUTPUT_DIR, { recursive: true });
   }
 
+  const cssVars = readTagTokens();
   let built = 0;
 
   for (const component of COMPONENTS) {
@@ -116,6 +161,7 @@ function build() {
 
     const registryItem: RegistryItem = {
       $schema: "https://ui.shadcn.com/schema/registry-item.json",
+      cssVars,
       dependencies: component.dependencies,
       description: component.description,
       files: [

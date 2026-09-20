@@ -1,8 +1,14 @@
 "use client";
 
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@ctrl-ui/react/ui/empty";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import type * as React from "react";
-import { H3, Muted } from "@/components/ui/typography";
 import type { ReleaseData } from "./release-item";
 import { ReleaseItem } from "./release-item";
 
@@ -27,11 +33,15 @@ export function ReleaseTimeline<T extends ReleaseData>({
 }: ReleaseTimelineProps<T>) {
   if (!releases || releases.length === 0) {
     return (
-      <div className="py-12 text-center">
-        <H3 variant="card">No releases</H3>
-        {isAdmin ? null : <Muted className="mt-2">Check back soon.</Muted>}
-        {emptyAction ? <div className="mt-4">{emptyAction}</div> : null}
-      </div>
+      <Empty>
+        <EmptyHeader>
+          <EmptyTitle>No releases</EmptyTitle>
+          {isAdmin ? null : (
+            <EmptyDescription>Check back soon.</EmptyDescription>
+          )}
+        </EmptyHeader>
+        {emptyAction ? <EmptyContent>{emptyAction}</EmptyContent> : null}
+      </Empty>
     );
   }
 

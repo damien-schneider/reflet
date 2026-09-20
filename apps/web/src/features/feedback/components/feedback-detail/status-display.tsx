@@ -1,3 +1,4 @@
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,8 +37,10 @@ export function StatusDisplay({
       <DropdownMenu>
         {currentStatus ? (
           <DropdownMenuTrigger
-            className="flex cursor-pointer select-none items-center"
-            render={<button type="button" />}
+            aria-label="Change status"
+            render={
+              <Button className="h-auto select-none p-0" variant="quiet" />
+            }
           >
             <TagBadge
               className="h-8 rounded-full px-3 font-normal text-xs"
@@ -49,8 +52,13 @@ export function StatusDisplay({
           </DropdownMenuTrigger>
         ) : (
           <DropdownMenuTrigger
-            className="flex h-8 w-auto cursor-pointer select-none items-center gap-1.5 rounded-full border border-input border-dashed bg-transparent px-3 text-sm transition-colors"
-            render={<button type="button" />}
+            aria-label="Change status"
+            render={
+              <Button
+                className="h-8 w-auto select-none gap-1.5 rounded-full border border-input border-dashed px-3 text-sm transition-colors"
+                variant="quiet"
+              />
+            }
           >
             <span className="text-muted-foreground text-xs">Status</span>
             <CaretDown className="h-3.5 w-3.5 text-muted-foreground" />

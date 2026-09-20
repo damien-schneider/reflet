@@ -230,8 +230,7 @@ describe("WidgetSettingsDialog", () => {
         widget={baseWidget}
       />
     );
-    const colorInput = screen.getByPlaceholderText("#5c6d4f");
-    expect(colorInput).toHaveValue("#5c6d4f");
+    expect(screen.getByLabelText("Primary color")).toHaveValue("#5c6d4f");
   });
 
   it("renders welcome message with initial value", () => {
@@ -320,7 +319,7 @@ describe("WidgetSettingsDialog", () => {
         widget={baseWidget}
       />
     );
-    const colorInput = screen.getByPlaceholderText("#5c6d4f");
+    const colorInput = screen.getByLabelText("Primary color");
     await user.clear(colorInput);
     await user.type(colorInput, "#ff0000");
     expect(colorInput).toHaveValue("#ff0000");
@@ -335,10 +334,10 @@ describe("WidgetSettingsDialog", () => {
         widget={baseWidget}
       />
     );
-    const zIndexInput = screen.getByDisplayValue("9999");
+    const zIndexInput = screen.getByLabelText("Z-Index");
     await user.clear(zIndexInput);
     await user.type(zIndexInput, "5000");
-    expect(zIndexInput).toHaveValue(5000);
+    expect(zIndexInput).toHaveValue("5000");
   });
 
   it("renders subtitle input with initial value", () => {

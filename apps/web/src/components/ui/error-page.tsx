@@ -35,11 +35,11 @@ export function ErrorPage({
       role="alert"
     >
       <div className="rounded-full bg-destructive/10 p-4">
-        <Warning className="size-12 text-destructive" weight="fill" />
+        <Warning className="size-12 text-destructive-text" weight="fill" />
       </div>
 
       <div className="mt-6 space-y-2">
-        <h1 className="text-2xl font-semibold text-foreground">{title}</h1>
+        <h1 className="font-semibold text-2xl text-foreground">{title}</h1>
         <p className="max-w-md text-muted-foreground">{description}</p>
       </div>
 

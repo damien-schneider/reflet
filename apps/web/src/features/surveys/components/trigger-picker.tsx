@@ -40,7 +40,7 @@ export function TriggerPicker({ value, onChange }: TriggerPickerProps) {
         return (
           <button
             className={cn(
-              "flex items-start gap-3 rounded-lg border p-3 text-left transition-all",
+              "flex items-start gap-3 rounded-lg border p-3 text-left transition-[background-color,border-color,box-shadow]",
               isSelected
                 ? "border-primary bg-primary/5 ring-1 ring-primary/20"
                 : "hover:border-foreground/20 hover:bg-accent/50"
@@ -101,7 +101,7 @@ export function TriggerPickerCompact({
         return (
           <button
             className={cn(
-              "flex items-center gap-2.5 rounded-lg border px-3 py-2.5 text-left transition-all",
+              "flex items-center gap-2.5 rounded-lg border px-3 py-2.5 text-left transition-[background-color,border-color,box-shadow]",
               isSelected
                 ? "border-primary bg-primary/5 ring-1 ring-primary/20"
                 : "hover:border-foreground/20 hover:bg-accent/50"
@@ -120,7 +120,7 @@ export function TriggerPickerCompact({
               <p className="truncate font-medium text-xs">
                 {TRIGGER_LABELS[type]}
               </p>
-              <p className="truncate text-[11px] text-muted-foreground">
+              <p className="truncate text-caption text-muted-foreground">
                 {description}
               </p>
             </div>

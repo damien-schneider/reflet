@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import { Calendar } from "@ctrl-ui/react/ui/calendar";
 import { Input } from "@ctrl-ui/react/ui/input";
 import {
@@ -85,19 +86,23 @@ export function SchedulePicker({
       <div className="flex items-center gap-2">
         <Popover>
           <PopoverTrigger
-            className={cn(
-              "inline-flex h-8 items-center justify-start rounded-md border border-input bg-background px-3 text-left font-normal text-sm shadow-sm ring-offset-background",
-              "hover:bg-accent hover:text-accent-foreground",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-              "disabled:pointer-events-none disabled:opacity-50",
-              "w-full",
-              !selectedDate && "text-muted-foreground"
-            )}
-            disabled={disabled}
-          >
-            <CalendarBlank className="mr-2 h-4 w-4" />
-            {selectedDate ? format(selectedDate, "MMM d, yyyy") : "Pick date"}
-          </PopoverTrigger>
+            render={
+              <Button
+                className={cn(
+                  "w-full justify-start font-normal",
+                  !selectedDate && "text-muted-foreground"
+                )}
+                disabled={disabled}
+                size="sm"
+                variant="surface"
+              >
+                <CalendarBlank className="mr-2 h-4 w-4" />
+                {selectedDate
+                  ? format(selectedDate, "MMM d, yyyy")
+                  : "Pick date"}
+              </Button>
+            }
+          />
           <PopoverContent align="start" className="w-auto p-0">
             <Calendar
               disabled={(date) =>
@@ -113,7 +118,8 @@ export function SchedulePicker({
         <div className="relative">
           <Clock className="absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            className="w-28 pl-8"
+            aria-label="Publish time"
+            className="w-28 pl-8 tabular-nums"
             disabled={disabled}
             onChange={(e) => handleTimeChange(e.target.value)}
             type="time"
@@ -122,13 +128,11 @@ export function SchedulePicker({
         </div>
       </div>
 
-      {/* Timezone info */}
       <div className="flex items-center gap-1.5 text-muted-foreground text-xs">
         <Globe className="h-3.5 w-3.5" />
         <span>{userTimezone}</span>
       </div>
 
-      {/* Multi-timezone preview */}
       {combinedDate && !isInPast && (
         <div className="rounded-md border bg-muted/30 px-3 py-2">
           <Label className="mb-1.5 block text-muted-foreground text-xs">
@@ -136,7 +140,7 @@ export function SchedulePicker({
           </Label>
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
             {TIMEZONE_PREVIEWS.map((tz) => (
-              <span key={tz.label}>
+              <span className="tabular-nums" key={tz.label}>
                 <span className="font-medium">{tz.label}:</span>{" "}
                 {formatTimeInTimezone(combinedDate, tz.offset)}
               </span>
@@ -145,9 +149,8 @@ export function SchedulePicker({
         </div>
       )}
 
-      {/* Validation error */}
       {isInPast && (
-        <p className="text-destructive text-xs">
+        <p className="text-destructive-text text-xs">
           Scheduled time must be in the future
         </p>
       )}

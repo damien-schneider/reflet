@@ -146,7 +146,7 @@ export function MilestoneExpandedPanel({
                   <CalendarBlank className="h-3 w-3" />
                   {deadlineInfo.label}
                 </span>
-                <span className={cn("text-[10px]", deadlineBadgeStyles.text)}>
+                <span className={cn("text-caption", deadlineBadgeStyles.text)}>
                   {deadlineInfo.relativeLabel}
                 </span>
               </div>
@@ -176,7 +176,7 @@ export function MilestoneExpandedPanel({
                       <span className="flex items-center gap-2 text-muted-foreground text-xs">
                         {fb.organizationStatus && (
                           <TagBadge
-                            className="font-normal text-[10px]"
+                            className="font-normal text-caption"
                             color={fb.organizationStatus.color}
                           >
                             {fb.organizationStatus.name}
@@ -262,7 +262,7 @@ export function MilestoneExpandedPanel({
                       <span className="flex items-center gap-2 text-muted-foreground text-xs">
                         {fb.organizationStatus && (
                           <TagBadge
-                            className="font-normal text-[10px]"
+                            className="font-normal text-caption"
                             color={fb.organizationStatus.color}
                           >
                             {fb.organizationStatus.name}

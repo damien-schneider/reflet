@@ -1,16 +1,24 @@
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@ctrl-ui/react/ui/table";
 import { codeBlockClass } from "./code-block-class";
 
 export function FeedbackEndpoints() {
   return (
     <div className="mb-10">
-      <h3 className="mb-6 font-display text-olive-950 text-xl tracking-tight dark:text-olive-100">
+      <h3 className="mb-6 font-display text-foreground text-xl tracking-tight">
         Feedback
       </h3>
       <div className="space-y-8">
         {/* GET /feedback */}
         <div className="space-y-4" id="list-feedback">
           <h4 className="font-semibold text-lg">
-            <code className="mr-2 rounded bg-emerald-100 px-2 py-1 text-emerald-700 text-sm dark:bg-emerald-950 dark:text-emerald-300">
+            <code className="mr-2 rounded bg-chart-1/15 px-2 py-1 text-chart-1-text text-sm">
               GET
             </code>{" "}
             /api/v1/feedback
@@ -22,67 +30,63 @@ export function FeedbackEndpoints() {
             <p className="mb-2 font-medium text-foreground text-xs">
               Query parameters
             </p>
-            <div className="overflow-x-auto rounded-lg border border-border">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b bg-muted/50">
-                    <th className="px-4 py-2 text-left font-medium">
-                      Parameter
-                    </th>
-                    <th className="px-4 py-2 text-left font-medium">Type</th>
-                    <th className="px-4 py-2 text-left font-medium">
-                      Description
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="text-muted-foreground">
-                  <tr className="border-b">
-                    <td className="px-4 py-2">
+            <div className="overflow-hidden rounded-lg border border-border">
+              <Table className="text-sm">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Parameter</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Description</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody className="text-muted-foreground">
+                  <TableRow>
+                    <TableCell>
                       <code className="text-foreground text-xs">publicKey</code>
-                    </td>
-                    <td className="px-4 py-2">string</td>
-                    <td className="px-4 py-2">
+                    </TableCell>
+                    <TableCell>string</TableCell>
+                    <TableCell className="whitespace-normal">
                       Required. Your public API key.
-                    </td>
-                  </tr>
-                  <tr className="border-b">
-                    <td className="px-4 py-2">
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>
                       <code className="text-foreground text-xs">status</code>
-                    </td>
-                    <td className="px-4 py-2">string</td>
-                    <td className="px-4 py-2">
+                    </TableCell>
+                    <TableCell>string</TableCell>
+                    <TableCell className="whitespace-normal">
                       Filter by status (e.g. open, in_progress, closed).
-                    </td>
-                  </tr>
-                  <tr className="border-b">
-                    <td className="px-4 py-2">
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>
                       <code className="text-foreground text-xs">sort</code>
-                    </td>
-                    <td className="px-4 py-2">string</td>
-                    <td className="px-4 py-2">
+                    </TableCell>
+                    <TableCell>string</TableCell>
+                    <TableCell className="whitespace-normal">
                       Sort order: votes, newest, or oldest.
-                    </td>
-                  </tr>
-                  <tr className="border-b">
-                    <td className="px-4 py-2">
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>
                       <code className="text-foreground text-xs">limit</code>
-                    </td>
-                    <td className="px-4 py-2">number</td>
-                    <td className="px-4 py-2">
+                    </TableCell>
+                    <TableCell>number</TableCell>
+                    <TableCell className="whitespace-normal">
                       Number of items to return (default 20).
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="px-4 py-2">
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>
                       <code className="text-foreground text-xs">cursor</code>
-                    </td>
-                    <td className="px-4 py-2">string</td>
-                    <td className="px-4 py-2">
+                    </TableCell>
+                    <TableCell>string</TableCell>
+                    <TableCell className="whitespace-normal">
                       Pagination cursor from a previous response.
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
             </div>
           </div>
           <div>
@@ -123,7 +127,7 @@ export function FeedbackEndpoints() {
         {/* POST /feedback */}
         <div className="space-y-4" id="create-feedback">
           <h4 className="font-semibold text-lg">
-            <code className="mr-2 rounded bg-blue-100 px-2 py-1 text-blue-700 text-sm dark:bg-blue-950 dark:text-blue-300">
+            <code className="mr-2 rounded bg-chart-2/15 px-2 py-1 text-chart-2-text text-sm">
               POST
             </code>{" "}
             /api/v1/feedback
@@ -175,7 +179,7 @@ export function FeedbackEndpoints() {
         {/* GET /feedback/:id */}
         <div className="space-y-4" id="get-feedback">
           <h4 className="font-semibold text-lg">
-            <code className="mr-2 rounded bg-emerald-100 px-2 py-1 text-emerald-700 text-sm dark:bg-emerald-950 dark:text-emerald-300">
+            <code className="mr-2 rounded bg-chart-1/15 px-2 py-1 text-chart-1-text text-sm">
               GET
             </code>{" "}
             /api/v1/feedback/:id
@@ -215,7 +219,7 @@ export function FeedbackEndpoints() {
         {/* POST /feedback/:id/vote */}
         <div className="space-y-4" id="vote-feedback">
           <h4 className="font-semibold text-lg">
-            <code className="mr-2 rounded bg-blue-100 px-2 py-1 text-blue-700 text-sm dark:bg-blue-950 dark:text-blue-300">
+            <code className="mr-2 rounded bg-chart-2/15 px-2 py-1 text-chart-2-text text-sm">
               POST
             </code>{" "}
             /api/v1/feedback/:id/vote
@@ -263,7 +267,7 @@ export function FeedbackEndpoints() {
         {/* GET /feedback/:id/comments */}
         <div className="space-y-4" id="list-comments">
           <h4 className="font-semibold text-lg">
-            <code className="mr-2 rounded bg-emerald-100 px-2 py-1 text-emerald-700 text-sm dark:bg-emerald-950 dark:text-emerald-300">
+            <code className="mr-2 rounded bg-chart-1/15 px-2 py-1 text-chart-1-text text-sm">
               GET
             </code>{" "}
             /api/v1/feedback/:id/comments
@@ -311,7 +315,7 @@ export function FeedbackEndpoints() {
         {/* POST /feedback/:id/comments */}
         <div className="space-y-4" id="add-comment">
           <h4 className="font-semibold text-lg">
-            <code className="mr-2 rounded bg-blue-100 px-2 py-1 text-blue-700 text-sm dark:bg-blue-950 dark:text-blue-300">
+            <code className="mr-2 rounded bg-chart-2/15 px-2 py-1 text-chart-2-text text-sm">
               POST
             </code>{" "}
             /api/v1/feedback/:id/comments

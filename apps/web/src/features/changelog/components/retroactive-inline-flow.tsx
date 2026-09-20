@@ -92,17 +92,14 @@ export function RetroactiveInlineFlow({
     }
   };
 
-  // Running state
   if (isJobActive) {
     return <ProgressView job={job} onCancel={handleCancel} />;
   }
 
-  // Completed state — show summary
   if (job?.status === "completed") {
     return <CompletionSummary job={job} onDismiss={() => setDismissed(true)} />;
   }
 
-  // Error state (show trigger again with error context)
   if (job?.status === "error") {
     return (
       <TriggerView
@@ -119,7 +116,6 @@ export function RetroactiveInlineFlow({
     );
   }
 
-  // Trigger state (no job or terminal job)
   if (!job || isJobTerminal) {
     return (
       <TriggerView
@@ -137,5 +133,3 @@ export function RetroactiveInlineFlow({
 
   return null;
 }
-
-// --- Trigger View ---

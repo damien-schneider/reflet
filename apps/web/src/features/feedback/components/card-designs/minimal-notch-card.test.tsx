@@ -32,18 +32,21 @@ vi.mock("@phosphor-icons/react", () => ({
 vi.mock("@reflet/ui/feedback-minimal-notch", () => ({
   MinimalNotch: ({
     children,
+    className,
     onVote,
     upvotes,
     downvotes,
     voteType,
   }: {
     children: React.ReactNode;
+    className?: string;
     onVote: (d: string) => void;
     upvotes: number;
     downvotes: number;
     voteType: string | null;
   }) => (
     <div
+      className={className}
       data-downvotes={downvotes}
       data-testid="notch"
       data-upvotes={upvotes}
@@ -161,33 +164,6 @@ describe("MinimalNotchFeedCard", () => {
     render(<MinimalNotchFeedCard feedback={baseFeedback} onClick={onClick} />);
     fireEvent.click(screen.getByRole("button", { name: /test feedback/i }));
     expect(onClick).toHaveBeenCalledWith("f1");
-  });
-
-  it("calls onClick on Enter key", () => {
-    const onClick = vi.fn();
-    render(<MinimalNotchFeedCard feedback={baseFeedback} onClick={onClick} />);
-    fireEvent.keyDown(screen.getByRole("button", { name: /test feedback/i }), {
-      key: "Enter",
-    });
-    expect(onClick).toHaveBeenCalledWith("f1");
-  });
-
-  it("calls onClick on Space key", () => {
-    const onClick = vi.fn();
-    render(<MinimalNotchFeedCard feedback={baseFeedback} onClick={onClick} />);
-    fireEvent.keyDown(screen.getByRole("button", { name: /test feedback/i }), {
-      key: " ",
-    });
-    expect(onClick).toHaveBeenCalledWith("f1");
-  });
-
-  it("ignores other keys", () => {
-    const onClick = vi.fn();
-    render(<MinimalNotchFeedCard feedback={baseFeedback} onClick={onClick} />);
-    fireEvent.keyDown(screen.getByRole("button", { name: /test feedback/i }), {
-      key: "Escape",
-    });
-    expect(onClick).not.toHaveBeenCalled();
   });
 
   it("handles upvote through authGuard", () => {
@@ -348,9 +324,7 @@ describe("MinimalNotchFeedCard", () => {
     render(
       <MinimalNotchFeedCard className="my-class" feedback={baseFeedback} />
     );
-    expect(screen.getByRole("button", { name: /test feedback/i })).toHaveClass(
-      "my-class"
-    );
+    expect(screen.getByTestId("notch")).toHaveClass("my-class");
   });
 
   it("passes tag color prop", () => {

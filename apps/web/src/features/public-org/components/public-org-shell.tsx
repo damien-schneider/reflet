@@ -17,9 +17,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { H2, Text as TypographyText } from "@/components/ui/typography";
 import { PublicViewToolbar } from "@/features/feedback/components/public-view-toolbar";
+import { DEFAULT_PRIMARY_COLOR } from "@/lib/branding";
 import { generateColorCssVars, generateColorPalette } from "@/lib/color-utils";
-
-const DEFAULT_PRIMARY_COLOR = "#5c6d4f";
+import { cn } from "@/lib/utils";
 
 function resolveTab(pathname: string, basePath: string): string {
   const relativePath = basePath ? pathname.replace(basePath, "") : pathname;
@@ -33,6 +33,32 @@ function resolveTab(pathname: string, basePath: string): string {
     return "status";
   }
   return "feedback";
+}
+
+function MobileNavLink({
+  href,
+  icon: Icon,
+  isActive,
+  label,
+}: {
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  isActive: boolean;
+  label: string;
+}) {
+  return (
+    <Link
+      aria-current={isActive ? "page" : undefined}
+      className={cn(
+        "flex flex-1 flex-col items-center gap-1 py-3 text-xs transition-colors",
+        isActive ? "font-medium text-brand-text" : "text-muted-foreground"
+      )}
+      href={href}
+    >
+      <Icon className="h-5 w-5" />
+      {label}
+    </Link>
+  );
 }
 
 interface PublicOrgShellProps {
@@ -106,7 +132,7 @@ export function PublicOrgShell({
           {org.logo ? (
             <Image
               alt={org.name}
-              className="h-8 max-w-30 object-contain"
+              className="h-8 max-w-30 object-contain outline outline-1 outline-black/10 -outline-offset-1 dark:outline-white/10"
               height={32}
               src={org.logo}
               width={120}
@@ -150,53 +176,33 @@ export function PublicOrgShell({
 
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t bg-background md:hidden">
         <div className="flex items-center justify-around">
-          <Link
-            className={`flex flex-1 flex-col items-center gap-1 py-3 text-xs transition-colors ${
-              currentTab === "feedback"
-                ? "font-medium text-olive-600"
-                : "text-muted-foreground"
-            }`}
+          <MobileNavLink
             href={basePath || "/"}
-          >
-            <MessageSquare className="h-5 w-5" />
-            Feedback
-          </Link>
-          <Link
-            className={`flex flex-1 flex-col items-center gap-1 py-3 text-xs transition-colors ${
-              currentTab === "changelog"
-                ? "font-medium text-olive-600"
-                : "text-muted-foreground"
-            }`}
+            icon={MessageSquare}
+            isActive={currentTab === "feedback"}
+            label="Feedback"
+          />
+          <MobileNavLink
             href={`${basePath}/changelog`}
-          >
-            <FileText className="h-5 w-5" />
-            Changelog
-          </Link>
+            icon={FileText}
+            isActive={currentTab === "changelog"}
+            label="Changelog"
+          />
           {statusEnabled && (
-            <Link
-              className={`flex flex-1 flex-col items-center gap-1 py-3 text-xs transition-colors ${
-                currentTab === "status"
-                  ? "font-medium text-olive-600"
-                  : "text-muted-foreground"
-              }`}
+            <MobileNavLink
               href={`${basePath}/status`}
-            >
-              <Heartbeat className="h-5 w-5" />
-              Status
-            </Link>
+              icon={Heartbeat}
+              isActive={currentTab === "status"}
+              label="Status"
+            />
           )}
           {supportEnabled && (
-            <Link
-              className={`flex flex-1 flex-col items-center gap-1 py-3 text-xs transition-colors ${
-                currentTab === "support"
-                  ? "font-medium text-olive-600"
-                  : "text-muted-foreground"
-              }`}
+            <MobileNavLink
               href={`${basePath}/support`}
-            >
-              <ChatCircle className="h-5 w-5" />
-              Support
-            </Link>
+              icon={ChatCircle}
+              isActive={currentTab === "support"}
+              label="Support"
+            />
           )}
         </div>
       </nav>
@@ -207,7 +213,7 @@ export function PublicOrgShell({
             <TypographyText variant="bodySmall">
               Powered by{" "}
               <Link
-                className="font-display font-medium text-lg text-olive-600 underline underline-offset-4 transition-colors hover:text-olive-700 dark:text-olive-400 dark:hover:text-olive-300"
+                className="font-display font-medium text-brand-text text-lg underline underline-offset-4 transition-colors hover:text-brand-text/80"
                 href={env.NEXT_PUBLIC_SITE_URL ?? "https://www.reflet.app"}
                 rel="noopener"
                 target="_blank"

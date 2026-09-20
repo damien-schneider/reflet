@@ -9,8 +9,6 @@ import { cn } from "@/lib/utils";
 import { ImageExtension } from "./image-extension";
 import "./styles.css";
 
-// Helper to get markdown from tiptap-markdown storage
-// The tiptap-markdown extension adds a `markdown` storage that TypeScript doesn't know about
 const getMarkdown = (storage: unknown): string => {
   const storageWithMarkdown = storage as {
     markdown?: { getMarkdown?: () => string };
@@ -65,7 +63,14 @@ export function MarkdownRenderer({
             img.src = node.attrs.src;
             img.alt = node.attrs.alt || "";
             img.title = node.attrs.title || "";
-            img.classList.add("tiptap-image");
+            img.classList.add(
+              "tiptap-image",
+              "outline",
+              "outline-1",
+              "-outline-offset-1",
+              "outline-black/10",
+              "dark:outline-white/10"
+            );
             img.setAttribute("data-align", node.attrs.align || "center");
             if (node.attrs.width) {
               img.style.width = `${node.attrs.width}px`;
@@ -125,11 +130,9 @@ export function MarkdownRenderer({
     immediatelyRender: false,
   });
 
-  // Sync external content changes
   useEffect(() => {
     if (!editor) return;
 
-    // Only update if content actually changed
     const currentMarkdown = getMarkdown(editor.storage);
     if (content !== currentMarkdown) {
       editor.commands.setContent(content);

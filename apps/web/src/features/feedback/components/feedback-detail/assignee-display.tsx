@@ -1,4 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@ctrl-ui/react/ui/avatar";
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,14 +43,19 @@ export function AssigneeDisplay({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        className="flex h-8 w-auto cursor-pointer select-none items-center gap-2 rounded-full border border-input border-dashed bg-transparent px-3 text-sm transition-colors"
-        render={<button type="button" />}
+        aria-label="Change assignee"
+        render={
+          <Button
+            className="h-8 w-auto select-none gap-2 rounded-full border border-input border-dashed px-3 text-sm transition-colors"
+            variant="quiet"
+          />
+        }
       >
         {assignee ? (
           <div className="flex items-center gap-1.5">
             <Avatar className="h-4 w-4">
               <AvatarImage src={assignee.image ?? undefined} />
-              <AvatarFallback className="text-[8px]">
+              <AvatarFallback className="text-micro">
                 {assignee.name?.charAt(0) ?? "?"}
               </AvatarFallback>
             </Avatar>
@@ -75,7 +81,7 @@ export function AssigneeDisplay({
             <DropdownMenuRadioItem key={member.userId} value={member.userId}>
               <Avatar className="h-5 w-5">
                 <AvatarImage src={member.user?.image ?? undefined} />
-                <AvatarFallback className="text-[8px]">
+                <AvatarFallback className="text-micro">
                   {member.user?.name?.charAt(0) ?? "?"}
                 </AvatarFallback>
               </Avatar>

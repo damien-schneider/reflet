@@ -16,29 +16,27 @@ const styles: Record<
   { bg: string; border: string; icon: React.ReactNode; title: string }
 > = {
   info: {
-    bg: "bg-blue-500/5",
-    border: "border-blue-500/15",
-    icon: <Info className="h-5 w-5 text-blue-600 dark:text-blue-400" />,
+    bg: "bg-chart-2/10",
+    border: "border-chart-2/30",
+    icon: <Info className="h-5 w-5 text-chart-2-text" />,
     title: "Note",
   },
   success: {
-    bg: "bg-emerald-500/5",
-    border: "border-emerald-500/15",
-    icon: (
-      <CircleCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-    ),
+    bg: "bg-success-subtle",
+    border: "border-success/30",
+    icon: <CircleCheck className="h-5 w-5 text-success-text" />,
     title: "Success",
   },
   tip: {
-    bg: "bg-amber-500/5",
-    border: "border-amber-500/15",
-    icon: <Lightbulb className="h-5 w-5 text-amber-600 dark:text-amber-400" />,
+    bg: "bg-warning-subtle",
+    border: "border-warning/30",
+    icon: <Lightbulb className="h-5 w-5 text-warning-text" />,
     title: "Tip",
   },
   warning: {
-    bg: "bg-red-500/5",
-    border: "border-red-500/15",
-    icon: <CircleAlert className="h-5 w-5 text-red-600 dark:text-red-400" />,
+    bg: "bg-destructive-subtle",
+    border: "border-destructive/30",
+    icon: <CircleAlert className="h-5 w-5 text-destructive-text" />,
     title: "Warning",
   },
 };

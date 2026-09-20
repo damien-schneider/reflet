@@ -1,5 +1,6 @@
 "use client";
 
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import Link from "next/link";
@@ -26,7 +27,7 @@ export default function CustomDomainLayout({
   if (!hostname || org === undefined) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div>Loading...</div>
+        <Spinner />
       </div>
     );
   }
@@ -39,7 +40,7 @@ export default function CustomDomainLayout({
           No organization is configured for this domain.
         </Muted>
         <Link
-          className="mt-4 text-olive-600 underline underline-offset-4 transition-colors hover:text-olive-700 dark:text-olive-400 dark:hover:text-olive-300"
+          className="mt-4 text-brand-text underline underline-offset-4 transition-colors hover:text-foreground"
           href="https://www.reflet.app"
           rel="noopener"
         >

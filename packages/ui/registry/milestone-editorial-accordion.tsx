@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, MotionConfig, motion } from "motion/react";
 import { useState } from "react";
 
 import { cn } from "@/lib/utils";
@@ -110,75 +110,76 @@ export function MilestoneEditorialAccordion({
   const [openId, setOpenId] = useState<string | null>(null);
 
   return (
-    <div
-      className={cn("w-full space-y-0 divide-y divide-border/40", className)}
-    >
-      {milestones.map((m) => {
-        const isOpen = openId === m.id;
-        return (
-          <motion.div
-            animate={{
-              backgroundColor: isOpen ? `${m.colorHex}06` : "transparent",
-            }}
-            className="transition-colors"
-            key={m.id}
-          >
-            <button
-              className="flex w-full items-center gap-4 px-4 py-3 text-left"
-              onClick={() => setOpenId(isOpen ? null : m.id)}
-              type="button"
+    <MotionConfig reducedMotion="user">
+      <div
+        className={cn("w-full space-y-0 divide-y divide-border/40", className)}
+      >
+        {milestones.map((m) => {
+          const isOpen = openId === m.id;
+          return (
+            <motion.div
+              animate={{
+                backgroundColor: isOpen ? `${m.colorHex}06` : `${m.colorHex}00`,
+              }}
+              key={m.id}
             >
-              <div className="w-12 shrink-0 text-right">
-                <span
-                  className="font-mono text-base tabular-nums"
-                  style={{ color: m.colorHex }}
-                >
-                  {m.progress.percentage}%
-                </span>
-              </div>
-              <div className="h-6 w-px bg-border" />
-              <div className="min-w-0 flex-1">
-                <h4 className="font-serif text-sm">
-                  {m.emoji} {m.name}
-                </h4>
-                <p className="font-serif text-[10px] text-muted-foreground italic">
-                  {m.horizonLabel}
-                  {m.targetDate ? ` \u00B7 Due ${m.targetDate}` : ""}
-                </p>
-              </div>
-              <ProgressBar
-                color={m.colorHex}
-                percentage={m.progress.percentage}
-              />
-            </button>
-            <AnimatePresence>
-              {isOpen && (
-                <motion.div
-                  animate={{ height: "auto", opacity: 1 }}
-                  className="overflow-hidden"
-                  exit={{ height: 0, opacity: 0 }}
-                  initial={{ height: 0, opacity: 0 }}
-                  transition={{ damping: 25, stiffness: 300, type: "spring" }}
-                >
-                  <div className="flex gap-4 px-4 pb-3 pl-20">
-                    <ProgressRing
-                      color={m.colorHex}
-                      percentage={m.progress.percentage}
-                      size={40}
-                    />
-                    <div className="flex-1 text-muted-foreground text-xs">
-                      <p className="font-serif italic">
-                        {m.progress.completed} of {m.progress.total} complete,{" "}
-                        {m.progress.inProgress} underway
-                      </p>
+              <button
+                className="flex w-full items-center gap-4 px-4 py-3 text-left"
+                onClick={() => setOpenId(isOpen ? null : m.id)}
+                type="button"
+              >
+                <div className="w-12 shrink-0 text-right">
+                  <span
+                    className="font-mono text-base tabular-nums"
+                    style={{ color: m.colorHex }}
+                  >
+                    {m.progress.percentage}%
+                  </span>
+                </div>
+                <div className="h-6 w-px bg-border" />
+                <div className="min-w-0 flex-1">
+                  <h4 className="font-serif text-sm">
+                    {m.emoji} {m.name}
+                  </h4>
+                  <p className="font-serif text-[10px] text-muted-foreground italic">
+                    {m.horizonLabel}
+                    {m.targetDate ? ` \u00B7 Due ${m.targetDate}` : ""}
+                  </p>
+                </div>
+                <ProgressBar
+                  color={m.colorHex}
+                  percentage={m.progress.percentage}
+                />
+              </button>
+              <AnimatePresence>
+                {isOpen && (
+                  <motion.div
+                    animate={{ height: "auto", opacity: 1 }}
+                    className="overflow-hidden"
+                    exit={{ height: 0, opacity: 0 }}
+                    initial={{ height: 0, opacity: 0 }}
+                    transition={{ damping: 25, stiffness: 300, type: "spring" }}
+                  >
+                    <div className="flex gap-4 px-4 pb-3 pl-20">
+                      <ProgressRing
+                        color={m.colorHex}
+                        percentage={m.progress.percentage}
+                        size={40}
+                      />
+                      <div className="flex-1 text-muted-foreground text-xs">
+                        <p className="font-serif italic">
+                          {m.progress.completed} of {m.progress.total} complete,{" "}
+                          {m.progress.inProgress} underway
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
-        );
-      })}
-    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          );
+        })}
+      </div>
+    </MotionConfig>
   );
 }

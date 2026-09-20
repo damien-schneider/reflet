@@ -1,4 +1,6 @@
 import { createApi, type FeedbackApi } from "./api";
+import { DEFAULT_PRIMARY_COLOR } from "./color-utils";
+import { ModalFocusManager } from "./modal-focus";
 import { getWidgetStyles } from "./styles";
 import type { SurveyRenderer } from "./survey-renderer";
 import type { SurveyData, WidgetConfig, WidgetState } from "./types";
@@ -21,6 +23,7 @@ export abstract class WidgetCore {
   protected pendingScreenshot: Blob | null = null;
   protected activeSurvey: SurveyData | null = null;
   protected surveyRenderer: SurveyRenderer | null = null;
+  protected focusManager: ModalFocusManager | null = null;
   protected readonly state: WidgetState = {
     boardConfig: null,
     error: null,
@@ -43,7 +46,7 @@ export abstract class WidgetCore {
       },
       mode: "floating",
       position: "bottom-right",
-      primaryColor: "#6366f1",
+      primaryColor: DEFAULT_PRIMARY_COLOR,
       theme: "light",
       ...config,
     };
@@ -89,16 +92,20 @@ export abstract class WidgetCore {
       if (target) {
         this.container = target;
         this.shadowRoot = this.container.attachShadow({ mode: "closed" });
-        this.state.isOpen = true; // Inline mode is always "open"
+        this.state.isOpen = true;
         return;
       }
     }
 
-    // Create floating container
     this.container = document.createElement("div");
     this.container.id = "reflet-feedback-widget-root";
     this.shadowRoot = this.container.attachShadow({ mode: "closed" });
     document.body.appendChild(this.container);
+    this.focusManager = new ModalFocusManager(
+      this.shadowRoot,
+      this.container,
+      () => this.close()
+    );
   }
 
   protected injectStyles(): void {
@@ -118,8 +125,7 @@ export abstract class WidgetCore {
 
     const style = document.createElement("style");
     style.textContent = getWidgetStyles(
-      primaryColor ?? "#6366f1",
-      9999,
+      primaryColor ?? DEFAULT_PRIMARY_COLOR,
       resolvedTheme
     );
     this.shadowRoot.appendChild(style);
@@ -142,6 +148,23 @@ export abstract class WidgetCore {
     wrapper.innerHTML = renderWidgetHTML(this.state, this.config);
     this.shadowRoot.appendChild(wrapper);
     this.attachEventListeners();
+    this.syncModalFocus();
+  }
+
+  private syncModalFocus(): void {
+    const manager = this.focusManager;
+    if (!(manager && this.shadowRoot) || this.config.mode !== "floating") {
+      return;
+    }
+    const windowEl =
+      this.shadowRoot.querySelector<HTMLElement>(".reflet-window");
+    if (this.state.isOpen && windowEl) {
+      manager.attach(windowEl);
+      return;
+    }
+    manager.release(
+      this.shadowRoot.querySelector<HTMLElement>(".reflet-launcher")
+    );
   }
 
   protected attachEventListeners(): void {
@@ -215,6 +238,8 @@ export abstract class WidgetCore {
   }
 
   destroy(): void {
+    this.focusManager?.release();
+    this.focusManager = null;
     if (this.container && this.config.mode === "floating") {
       this.container.remove();
       this.container = null;

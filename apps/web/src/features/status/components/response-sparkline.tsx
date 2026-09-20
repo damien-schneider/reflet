@@ -46,7 +46,7 @@ export function ResponseSparkline({
   return (
     <svg
       aria-label="Response time sparkline"
-      className={`text-olive-500 ${className}`}
+      className={`text-brand-text ${className}`}
       height={height}
       preserveAspectRatio="none"
       role="img"

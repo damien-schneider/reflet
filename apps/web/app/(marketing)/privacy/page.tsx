@@ -1,3 +1,11 @@
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@ctrl-ui/react/ui/table";
 import Link from "next/link";
 
 import { H1, H2, H3, Lead, Text } from "@/components/ui/typography";
@@ -9,6 +17,39 @@ export const metadata = generatePageMetadata({
   path: "/privacy",
   title: "Privacy Policy | Reflet",
 });
+
+const THIRD_PARTY_SERVICES = [
+  {
+    dataShared: "Customer ID, subscription details",
+    purpose: "Payment processing",
+    service: "Stripe",
+  },
+  {
+    dataShared: "Email addresses, notification content",
+    purpose: "Email delivery",
+    service: "Resend",
+  },
+  {
+    dataShared: "All user and organization data",
+    purpose: "Database and backend",
+    service: "Convex",
+  },
+  {
+    dataShared: "Account info, repository data",
+    purpose: "OAuth and issue sync",
+    service: "GitHub",
+  },
+  {
+    dataShared: "Account info, feedback content for AI processing",
+    purpose: "OAuth and AI features",
+    service: "Google",
+  },
+  {
+    dataShared: "Feedback content for processing",
+    purpose: "AI features",
+    service: "Anthropic",
+  },
+];
 
 export default function PrivacyPolicy() {
   return (
@@ -113,65 +154,28 @@ export default function PrivacyPolicy() {
               providers who assist us in operating the Service:
             </Text>
 
-            <div className="overflow-x-auto">
-              <table className="mt-4 w-full border-collapse text-sm">
-                <thead>
-                  <tr className="border-border border-b">
-                    <th className="px-4 py-2 text-left font-semibold">
-                      Service
-                    </th>
-                    <th className="px-4 py-2 text-left font-semibold">
-                      Purpose
-                    </th>
-                    <th className="px-4 py-2 text-left font-semibold">
-                      Data Shared
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  <tr>
-                    <td className="px-4 py-2">Stripe</td>
-                    <td className="px-4 py-2">Payment processing</td>
-                    <td className="px-4 py-2">
-                      Customer ID, subscription details
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="px-4 py-2">Resend</td>
-                    <td className="px-4 py-2">Email delivery</td>
-                    <td className="px-4 py-2">
-                      Email addresses, notification content
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="px-4 py-2">Convex</td>
-                    <td className="px-4 py-2">Database and backend</td>
-                    <td className="px-4 py-2">
-                      All user and organization data
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="px-4 py-2">GitHub</td>
-                    <td className="px-4 py-2">OAuth and issue sync</td>
-                    <td className="px-4 py-2">Account info, repository data</td>
-                  </tr>
-                  <tr>
-                    <td className="px-4 py-2">Google</td>
-                    <td className="px-4 py-2">OAuth and AI features</td>
-                    <td className="px-4 py-2">
-                      Account info, feedback content for AI processing
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="px-4 py-2">Anthropic</td>
-                    <td className="px-4 py-2">AI features</td>
-                    <td className="px-4 py-2">
-                      Feedback content for processing
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            <Table className="mt-4 text-sm">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Service</TableHead>
+                  <TableHead>Purpose</TableHead>
+                  <TableHead>Data Shared</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {THIRD_PARTY_SERVICES.map((entry) => (
+                  <TableRow key={entry.service}>
+                    <TableCell>{entry.service}</TableCell>
+                    <TableCell className="whitespace-normal">
+                      {entry.purpose}
+                    </TableCell>
+                    <TableCell className="whitespace-normal">
+                      {entry.dataShared}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
 
             <Text className="mt-4">
               We may also share information when required by law, to protect our
@@ -274,7 +278,7 @@ export default function PrivacyPolicy() {
             <Text className="mt-2">
               <strong>Email:</strong>{" "}
               <a
-                className="text-olive-600 underline hover:text-olive-700 dark:text-olive-400"
+                className="text-brand-text underline hover:text-brand-text/80"
                 href="mailto:legal@reflet.app"
               >
                 legal@reflet.app

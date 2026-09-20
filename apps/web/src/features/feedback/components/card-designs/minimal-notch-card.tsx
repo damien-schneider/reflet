@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import { PushPin, Sparkle } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
@@ -15,10 +16,9 @@ import {
 } from "@reflet/ui/feedback-minimal-notch";
 import { useMutation } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
-import { useCallback } from "react";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
+import { resolveTagColor } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
-
 import type { FeedbackItem } from "../feed-feedback-view";
 
 interface MinimalNotchFeedCardProps {
@@ -38,104 +38,75 @@ export function MinimalNotchFeedCard({
   const toggleVote = useMutation(api.feedback.votes.toggle);
   const tags = (feedback.tags ?? []).filter(Boolean);
 
-  const handleVote = useCallback(
-    (direction: "upvote" | "downvote") => {
-      authGuard(async () => {
-        await toggleVote({ feedbackId: feedback._id, voteType: direction });
-      });
-    },
-    [authGuard, toggleVote, feedback._id]
-  );
-
-  const handleClick = useCallback(() => {
-    onClick?.(feedback._id);
-  }, [onClick, feedback._id]);
+  const handleVote = (direction: "upvote" | "downvote") => {
+    authGuard(async () => {
+      await toggleVote({ feedbackId: feedback._id, voteType: direction });
+    });
+  };
 
   return (
-    // biome-ignore lint/a11y/useSemanticElements: card container with nested interactive buttons cannot be a <button>
-    <div
-      className={cn("cursor-pointer", className)}
-      onClick={handleClick}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          handleClick();
-        }
-      }}
-      role="button"
-      tabIndex={0}
+    <MinimalNotch
+      className={cn("relative", className)}
+      downvotes={feedback.downvoteCount ?? 0}
+      onVote={handleVote}
+      upvotes={feedback.upvoteCount ?? feedback.voteCount ?? 0}
+      voteType={feedback.userVoteType ?? null}
     >
-      <MinimalNotch
-        downvotes={feedback.downvoteCount ?? 0}
-        onVote={handleVote}
-        upvotes={feedback.upvoteCount ?? feedback.voteCount ?? 0}
-        voteType={feedback.userVoteType ?? null}
+      <MinimalNotchCardUI
+        className={cn(feedback.isPinned && "border-primary/50 bg-primary/5")}
       >
-        <MinimalNotchCardUI
-          className={cn(feedback.isPinned && "border-primary/50 bg-primary/5")}
-        >
-          <MinimalNotchTitle>
+        <MinimalNotchTitle>
+          <Button
+            className="static h-auto w-full cursor-pointer justify-start whitespace-normal p-0 text-left font-medium text-sm leading-snug after:absolute after:inset-0 after:content-['']"
+            onClick={() => onClick?.(feedback._id)}
+            variant="quiet"
+          >
             {feedback.isPinned && (
               <PushPin className="mr-1 inline h-3.5 w-3.5 text-primary" />
             )}
             {feedback.title}
-          </MinimalNotchTitle>
-          {feedback.organizationStatus && (
-            <MinimalNotchStatus
-              color={
-                feedback.organizationStatus.color as
-                  | "purple"
-                  | "green"
-                  | "blue"
-                  | "red"
-                  | "amber"
-                  | "pink"
-                  | "gray"
-              }
-            >
-              {feedback.organizationStatus.name}
-            </MinimalNotchStatus>
-          )}
-          {tags.length > 0 && (
-            <MinimalNotchTags>
-              {tags.map(
-                (tag) =>
-                  tag && (
-                    <MinimalNotchTag
-                      color={
-                        tag.color as
-                          | "purple"
-                          | "green"
-                          | "blue"
-                          | "red"
-                          | "amber"
-                          | "pink"
-                          | "gray"
-                      }
-                      key={tag._id}
-                    >
-                      {tag.icon && <span>{tag.icon}</span>}
-                      {tag.name}
-                      {tag.appliedByAi && (
+          </Button>
+        </MinimalNotchTitle>
+        {feedback.organizationStatus && (
+          <MinimalNotchStatus
+            color={resolveTagColor(feedback.organizationStatus.color)}
+          >
+            {feedback.organizationStatus.name}
+          </MinimalNotchStatus>
+        )}
+        {tags.length > 0 && (
+          <MinimalNotchTags>
+            {tags.map(
+              (tag) =>
+                tag && (
+                  <MinimalNotchTag
+                    color={resolveTagColor(tag.color)}
+                    key={tag._id}
+                  >
+                    {tag.icon && <span>{tag.icon}</span>}
+                    {tag.name}
+                    {tag.appliedByAi && (
+                      <>
                         <Sparkle
                           className="h-2.5 w-2.5 opacity-60"
                           weight="fill"
                         />
-                      )}
-                    </MinimalNotchTag>
-                  )
-              )}
-            </MinimalNotchTags>
-          )}
-          <MinimalNotchMeta
-            comments={feedback.commentCount}
-            time={formatDistanceToNow(feedback.createdAt, {
-              addSuffix: true,
-            })}
-          />
-        </MinimalNotchCardUI>
-        <MinimalNotchVote />
-      </MinimalNotch>
-    </div>
+                        <span className="sr-only">Applied by AI</span>
+                      </>
+                    )}
+                  </MinimalNotchTag>
+                )
+            )}
+          </MinimalNotchTags>
+        )}
+        <MinimalNotchMeta
+          comments={feedback.commentCount}
+          time={formatDistanceToNow(feedback.createdAt, {
+            addSuffix: true,
+          })}
+        />
+      </MinimalNotchCardUI>
+      <MinimalNotchVote />
+    </MinimalNotch>
   );
 }

@@ -1,28 +1,12 @@
-import {
-  AlertDialog,
-  AlertDialogClose,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@ctrl-ui/react/ui/alert-dialog";
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuTrigger,
-} from "@ctrl-ui/react/ui/context-menu";
-import { Chat, PushPin, Sparkle, Trash } from "@phosphor-icons/react";
-import { api } from "@reflet/backend/convex/_generated/api";
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Chat, PushPin, Sparkle } from "@phosphor-icons/react";
 import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
-import { useMutation } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
-import { useCallback, useState } from "react";
 import { TagBadge } from "@/components/tag-badge";
 import { VoteButton } from "@/features/feedback/components/vote-button";
 import { cn } from "@/lib/utils";
 import { AiMiniIndicator } from "./ai-mini-indicator";
+import { FeedbackDeleteMenu } from "./feedback-delete-menu";
 
 interface FeedbackTag {
   _id: Id<"tags">;
@@ -54,6 +38,13 @@ interface FeedbackListItemProps {
   onClick?: (feedbackId: Id<"feedback">) => void;
 }
 
+const PRIORITY_BORDER: Record<string, string> = {
+  critical: "border-l-4 border-l-red-500",
+  high: "border-l-4 border-l-orange-500",
+  low: "border-l-4 border-l-blue-300",
+  medium: "border-l-4 border-l-yellow-500",
+};
+
 export function FeedbackListItem({
   feedback,
   onClick,
@@ -61,188 +52,117 @@ export function FeedbackListItem({
   isAdmin = false,
   isAuthor = false,
 }: FeedbackListItemProps) {
-  const deleteFeedback = useMutation(api.feedback.actions.remove);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const tags = feedback.tags ?? [];
-  const canDelete = isAuthor || isAdmin;
-
-  const effectivePriorityForBorder = feedback.priority ?? feedback.aiPriority;
-  const priorityBorderMap = {
-    critical: "border-l-4 border-l-red-500",
-    high: "border-l-4 border-l-orange-500",
-    low: "border-l-4 border-l-blue-300",
-    medium: "border-l-4 border-l-yellow-500",
-  } as const;
-  const priorityBorderClass =
-    (effectivePriorityForBorder &&
-      priorityBorderMap[
-        effectivePriorityForBorder as keyof typeof priorityBorderMap
-      ]) ||
-    "";
-
-  const handleDelete = useCallback(async () => {
-    if (!canDelete) {
-      return;
-    }
-    await deleteFeedback({ id: feedback._id });
-    setShowDeleteDialog(false);
-  }, [canDelete, feedback._id, deleteFeedback]);
-
-  const handleClick = useCallback(() => {
-    onClick?.(feedback._id);
-  }, [onClick, feedback._id]);
+  const effectivePriority = feedback.priority ?? feedback.aiPriority;
+  const effectiveComplexity = feedback.complexity ?? feedback.aiComplexity;
 
   return (
-    <>
-      <ContextMenu>
-        <ContextMenuTrigger>
-          <button
-            className={cn(
-              "flex w-full gap-4 rounded-lg border p-4 text-left transition-colors hover:bg-accent/50",
-              feedback.isPinned && "border-primary/50 bg-primary/5",
-              priorityBorderClass,
-              className
-            )}
-            onClick={handleClick}
-            type="button"
-          >
-            {/* Vote button */}
-            <VoteButton
-              feedbackId={feedback._id}
-              hasVoted={feedback.hasVoted}
-              size="md"
-              voteCount={feedback.voteCount ?? 0}
-            />
+    <FeedbackDeleteMenu
+      canDelete={isAuthor || isAdmin}
+      feedbackId={feedback._id}
+    >
+      <div className="relative">
+        <Button
+          className={cn(
+            "group h-auto w-full items-start justify-start gap-4 whitespace-normal rounded-lg border p-4 pl-20 text-left transition-colors hover:bg-accent/50",
+            feedback.isPinned && "border-primary/50 bg-primary/5",
+            effectivePriority && PRIORITY_BORDER[effectivePriority],
+            className
+          )}
+          onClick={() => onClick?.(feedback._id)}
+          variant="quiet"
+        >
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <h3 className="line-clamp-2 font-semibold text-base transition-colors group-hover:text-brand-text">
+                  {feedback.isPinned && (
+                    <PushPin className="mr-1 inline h-4 w-4 text-brand-text" />
+                  )}
+                  {feedback.title}
+                </h3>
 
-            {/* Content */}
-            <div className="min-w-0 flex-1">
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0 flex-1">
-                  {/* Title */}
-                  <h3 className="line-clamp-2 font-semibold text-base transition-colors group-hover:text-olive-600">
-                    {feedback.isPinned && (
-                      <PushPin className="mr-1 inline h-4 w-4 text-olive-600" />
-                    )}
-                    {feedback.title}
-                  </h3>
-
-                  {/* Meta info */}
-                  <div className="mt-1 flex items-center gap-2 text-muted-foreground text-sm">
-                    <span>{feedback.author?.name ?? "Unknown"}</span>
-                    <span>•</span>
-                    <span>
-                      {formatDistanceToNow(feedback.createdAt, {
-                        addSuffix: true,
-                      })}
-                    </span>
-                    <span>•</span>
-                    <span className="flex items-center gap-1">
-                      <Chat className="h-3 w-3" />
+                <div className="mt-1 flex items-center gap-2 text-muted-foreground text-sm">
+                  <span>{feedback.author?.name ?? "Unknown"}</span>
+                  <span>•</span>
+                  <span>
+                    {formatDistanceToNow(feedback.createdAt, {
+                      addSuffix: true,
+                    })}
+                  </span>
+                  <span>•</span>
+                  <span className="flex items-center gap-1">
+                    <Chat className="h-3 w-3" />
+                    <span className="tabular-nums">
                       {feedback.commentCount}
                     </span>
-                  </div>
-
-                  {/* Tags */}
-                  {tags.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1">
-                      {tags.map((tag) => (
-                        <TagBadge
-                          className="font-normal text-xs"
-                          color={tag.color}
-                          key={tag._id}
-                        >
-                          {tag.icon && <span>{tag.icon}</span>}
-                          {tag.name}
-                          {tag.appliedByAi && (
-                            <span title="Applied by AI">
-                              <Sparkle
-                                className="h-3 w-3 opacity-60"
-                                weight="fill"
-                              />
-                            </span>
-                          )}
-                        </TagBadge>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* AI Analysis indicators */}
-                  {(() => {
-                    const effectivePriority =
-                      feedback.priority ?? feedback.aiPriority;
-                    const effectiveComplexity =
-                      feedback.complexity ?? feedback.aiComplexity;
-                    if (!(effectivePriority || effectiveComplexity)) {
-                      return null;
-                    }
-                    return (
-                      <div className="mt-1.5 flex items-center gap-1">
-                        {effectivePriority && (
-                          <AiMiniIndicator
-                            isAiValue={!feedback.priority}
-                            label={`P: ${effectivePriority}`}
-                            type={effectivePriority}
-                          />
-                        )}
-                        {effectiveComplexity && (
-                          <AiMiniIndicator
-                            isAiValue={!feedback.complexity}
-                            label={`C: ${effectiveComplexity}`}
-                            type={effectiveComplexity}
-                          />
-                        )}
-                      </div>
-                    );
-                  })()}
+                  </span>
                 </div>
 
-                {/* Status Badge from organizationStatus */}
-                {feedback.organizationStatus && (
-                  <TagBadge
-                    className="shrink-0"
-                    color={feedback.organizationStatus.color}
-                  >
-                    {feedback.organizationStatus.name}
-                  </TagBadge>
+                {tags.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {tags.map((tag) => (
+                      <TagBadge
+                        className="font-normal text-xs"
+                        color={tag.color}
+                        key={tag._id}
+                      >
+                        {tag.icon && <span>{tag.icon}</span>}
+                        {tag.name}
+                        {tag.appliedByAi && (
+                          <>
+                            <Sparkle
+                              className="h-3 w-3 opacity-60"
+                              weight="fill"
+                            />
+                            <span className="sr-only">Applied by AI</span>
+                          </>
+                        )}
+                      </TagBadge>
+                    ))}
+                  </div>
+                )}
+
+                {(effectivePriority || effectiveComplexity) && (
+                  <div className="mt-1.5 flex items-center gap-1">
+                    {effectivePriority && (
+                      <AiMiniIndicator
+                        isAiValue={!feedback.priority}
+                        label={`P: ${effectivePriority}`}
+                        type={effectivePriority}
+                      />
+                    )}
+                    {effectiveComplexity && (
+                      <AiMiniIndicator
+                        isAiValue={!feedback.complexity}
+                        label={`C: ${effectiveComplexity}`}
+                        type={effectiveComplexity}
+                      />
+                    )}
+                  </div>
                 )}
               </div>
-            </div>
-          </button>
-        </ContextMenuTrigger>
-        {canDelete && (
-          <ContextMenuContent>
-            <ContextMenuItem
-              className="text-destructive focus:text-destructive"
-              onClick={() => setShowDeleteDialog(true)}
-            >
-              <Trash className="mr-2 h-4 w-4" />
-              Delete
-            </ContextMenuItem>
-          </ContextMenuContent>
-        )}
-      </ContextMenu>
 
-      <AlertDialog onOpenChange={setShowDeleteDialog} open={showDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete feedback</AlertDialogTitle>
-            <AlertDialogDescription>
-              This feedback will be moved to trash. You can restore it within 30
-              days.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogClose>Cancel</AlertDialogClose>
-            <AlertDialogClose
-              onClick={handleDelete}
-              tone="danger"
-              variant="surface"
-            >
-              Move to trash
-            </AlertDialogClose>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+              {feedback.organizationStatus && (
+                <TagBadge
+                  className="shrink-0"
+                  color={feedback.organizationStatus.color}
+                >
+                  {feedback.organizationStatus.name}
+                </TagBadge>
+              )}
+            </div>
+          </div>
+        </Button>
+
+        <VoteButton
+          className="absolute top-4 left-4"
+          feedbackId={feedback._id}
+          hasVoted={feedback.hasVoted}
+          size="md"
+          voteCount={feedback.voteCount ?? 0}
+        />
+      </div>
+    </FeedbackDeleteMenu>
   );
 }

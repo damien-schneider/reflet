@@ -1,44 +1,41 @@
 import type { WidgetColors } from "./color-utils";
+import { FEEDBACK_WIDGET_Z_INDEX } from "./z-index";
 
-/**
- * Layout styles: launcher, window, header, navigation, content area, footer, back button
- */
-export function getLayoutStyles(colors: WidgetColors, zIndex: number): string {
+export function getLayoutStyles(colors: WidgetColors): string {
   return `
-    /* Floating Launcher Button */
     .reflet-launcher {
       position: fixed;
-      z-index: ${zIndex};
+      z-index: ${FEEDBACK_WIDGET_Z_INDEX.launcher};
       width: 56px;
       height: 56px;
       border-radius: 50%;
       background: ${colors.primary};
       border: none;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 4px 12px ${colors.shadow};
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: transform 0.2s, box-shadow 0.2s;
+      transition: transform 0.2s, box-shadow 0.2s, scale 0.12s ease-out;
     }
 
     .reflet-launcher:hover {
       transform: scale(1.05);
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 6px 16px ${colors.shadow};
     }
 
     .reflet-launcher.bottom-right {
-      bottom: 24px;
+      bottom: max(24px, env(safe-area-inset-bottom));
       right: 24px;
     }
 
     .reflet-launcher.bottom-left {
-      bottom: 24px;
+      bottom: max(24px, env(safe-area-inset-bottom));
       left: 24px;
     }
 
     .reflet-launcher-icon {
-      color: white;
+      color: ${colors.onPrimary};
       width: 24px;
       height: 24px;
     }
@@ -48,9 +45,10 @@ export function getLayoutStyles(colors: WidgetColors, zIndex: number): string {
       top: -4px;
       right: -4px;
       background: ${colors.error};
-      color: white;
+      color: ${colors.onPrimary};
       font-size: 11px;
       font-weight: 600;
+      font-variant-numeric: tabular-nums;
       min-width: 20px;
       height: 20px;
       border-radius: 10px;
@@ -60,33 +58,31 @@ export function getLayoutStyles(colors: WidgetColors, zIndex: number): string {
       padding: 0 6px;
     }
 
-    /* Main Window */
     .reflet-window {
       position: fixed;
-      z-index: ${zIndex + 1};
+      z-index: ${FEEDBACK_WIDGET_Z_INDEX.window};
       width: 400px;
       max-width: calc(100vw - 48px);
       height: 600px;
-      max-height: calc(100vh - 48px);
+      max-height: calc(100dvh - 48px);
       background: ${colors.bg};
       border-radius: 16px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 8px 32px ${colors.shadow};
       display: flex;
       flex-direction: column;
       overflow: hidden;
     }
 
     .reflet-window.bottom-right {
-      bottom: 96px;
+      bottom: max(96px, calc(72px + env(safe-area-inset-bottom)));
       right: 24px;
     }
 
     .reflet-window.bottom-left {
-      bottom: 96px;
+      bottom: max(96px, calc(72px + env(safe-area-inset-bottom)));
       left: 24px;
     }
 
-    /* Inline Mode */
     .reflet-window.inline {
       position: relative;
       width: 100%;
@@ -97,11 +93,10 @@ export function getLayoutStyles(colors: WidgetColors, zIndex: number): string {
       border: 1px solid ${colors.border};
     }
 
-    /* Header */
     .reflet-header {
       padding: 16px;
       background: ${colors.primary};
-      color: white;
+      color: ${colors.onPrimary};
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
@@ -127,20 +122,21 @@ export function getLayoutStyles(colors: WidgetColors, zIndex: number): string {
     .reflet-close-btn {
       background: transparent;
       border: none;
-      color: white;
+      color: ${colors.onPrimary};
       cursor: pointer;
-      padding: 4px;
-      border-radius: 4px;
+      width: 40px;
+      height: 40px;
+      margin: -8px -8px 0 0;
+      border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
     }
 
     .reflet-close-btn:hover {
-      background: rgba(255, 255, 255, 0.1);
+      background: ${colors.onPrimaryOverlay};
     }
 
-    /* Navigation */
     .reflet-nav {
       display: flex;
       border-bottom: 1px solid ${colors.border};
@@ -150,6 +146,7 @@ export function getLayoutStyles(colors: WidgetColors, zIndex: number): string {
 
     .reflet-nav-item {
       flex: 1;
+      min-height: 44px;
       padding: 12px;
       background: transparent;
       border: none;
@@ -170,14 +167,13 @@ export function getLayoutStyles(colors: WidgetColors, zIndex: number): string {
       border-bottom-color: ${colors.primary};
     }
 
-    /* Content Area */
     .reflet-content {
       flex: 1;
       overflow-y: auto;
+      overscroll-behavior: contain;
       padding: 16px;
     }
 
-    /* Footer */
     .reflet-footer {
       padding: 12px 16px;
       border-top: 1px solid ${colors.border};
@@ -196,11 +192,11 @@ export function getLayoutStyles(colors: WidgetColors, zIndex: number): string {
       text-decoration: underline;
     }
 
-    /* Back Button */
     .reflet-back-btn {
       display: flex;
       align-items: center;
       gap: 6px;
+      min-height: 40px;
       padding: 8px 0;
       background: transparent;
       border: none;

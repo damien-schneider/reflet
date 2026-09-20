@@ -59,10 +59,10 @@ export function AcceptInvitationContent({
       <div className="flex min-h-screen items-center justify-center">
         <div className="w-full max-w-md p-6 text-center">
           <div className="mb-6 flex justify-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive-subtle">
               <svg
                 aria-label="Icône erreur"
-                className="h-8 w-8 text-red-600"
+                className="h-8 w-8 text-destructive-text"
                 fill="none"
                 role="img"
                 stroke="currentColor"
@@ -98,10 +98,10 @@ export function AcceptInvitationContent({
       <div className="flex min-h-screen items-center justify-center">
         <div className="w-full max-w-md p-6 text-center">
           <div className="mb-6 flex justify-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-yellow-100">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-warning-subtle">
               <svg
                 aria-label="Icône expirée"
-                className="h-8 w-8 text-yellow-600"
+                className="h-8 w-8 text-warning-text"
                 fill="none"
                 role="img"
                 stroke="currentColor"
@@ -137,10 +137,10 @@ export function AcceptInvitationContent({
       <div className="flex min-h-screen items-center justify-center">
         <div className="w-full max-w-md p-6 text-center">
           <div className="mb-6 flex justify-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-olive-100">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-secondary">
               <svg
                 aria-label="Icône information"
-                className="h-8 w-8 text-olive-600"
+                className="h-8 w-8 text-brand-text"
                 fill="none"
                 role="img"
                 stroke="currentColor"
@@ -180,10 +180,10 @@ export function AcceptInvitationContent({
     <div className="flex min-h-screen items-center justify-center">
       <div className="w-full max-w-md p-6 text-center">
         <div className="mb-6 flex justify-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-success-subtle">
             <svg
               aria-label="Icône invitation"
-              className="h-8 w-8 text-green-600"
+              className="h-8 w-8 text-success-text"
               fill="none"
               role="img"
               stroke="currentColor"
@@ -207,7 +207,7 @@ export function AcceptInvitationContent({
           .
         </Muted>
         {error && (
-          <div className="mb-4 rounded-md bg-red-50 p-3 text-red-600 text-sm">
+          <div className="mb-4 rounded-md bg-destructive-subtle p-3 text-destructive-text text-sm">
             {error}
           </div>
         )}

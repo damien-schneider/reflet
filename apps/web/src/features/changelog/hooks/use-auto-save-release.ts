@@ -2,7 +2,7 @@ import { toast } from "@ctrl-ui/react/ui/toast";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type SaveStatus = "idle" | "saving" | "saved";
 
@@ -13,6 +13,12 @@ interface UseAutoSaveReleaseOptions {
   description: string;
   initialReleaseId: Id<"releases"> | null;
   organizationId: Id<"organizations">;
+  title: string;
+  version: string;
+}
+
+interface ReleaseDraft {
+  description: string;
   title: string;
   version: string;
 }
@@ -36,32 +42,25 @@ export function useAutoSaveRelease({
     initialReleaseId
   );
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isFirstEditRef = useRef(true);
 
-  const hasContent = title.trim() || version.trim() || description.trim();
-
-  const autoSave = useCallback(async () => {
-    if (!hasContent) {
-      return;
-    }
-
+  const autoSave = async (draft: ReleaseDraft) => {
     setSaveStatus("saving");
 
     try {
       if (releaseId) {
         await updateRelease({
-          description: description.trim() || undefined,
+          description: draft.description || undefined,
           id: releaseId,
-          title: title.trim() || "Untitled Release",
-          version: version.trim() || undefined,
+          title: draft.title || "Untitled Release",
+          version: draft.version || undefined,
         });
       } else {
         const newId = await createRelease({
-          description: description.trim() || undefined,
+          description: draft.description || undefined,
           organizationId,
-          title: title.trim() || "Untitled Release",
-          version: version.trim() || undefined,
+          title: draft.title || "Untitled Release",
+          version: draft.version || undefined,
         });
         setReleaseId(newId);
       }
@@ -73,16 +72,10 @@ export function useAutoSaveRelease({
         error instanceof Error ? error.message : "Failed to save draft"
       );
     }
-  }, [
-    hasContent,
-    releaseId,
-    title,
-    version,
-    description,
-    organizationId,
-    createRelease,
-    updateRelease,
-  ]);
+  };
+
+  const autoSaveRef = useRef(autoSave);
+  autoSaveRef.current = autoSave;
 
   useEffect(() => {
     if (isFirstEditRef.current) {
@@ -90,22 +83,23 @@ export function useAutoSaveRelease({
       return;
     }
 
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
-
-    if (hasContent) {
-      debounceTimerRef.current = setTimeout(() => {
-        autoSave();
-      }, AUTO_SAVE_DEBOUNCE_MS);
-    }
-
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
+    const draft: ReleaseDraft = {
+      description: description.trim(),
+      title: title.trim(),
+      version: version.trim(),
     };
-  }, [hasContent, autoSave]);
+
+    if (!(draft.title || draft.version || draft.description)) {
+      return;
+    }
+
+    const timer = setTimeout(
+      () => autoSaveRef.current(draft),
+      AUTO_SAVE_DEBOUNCE_MS
+    );
+
+    return () => clearTimeout(timer);
+  }, [description, title, version]);
 
   return { releaseId, saveStatus };
 }

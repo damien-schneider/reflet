@@ -24,12 +24,12 @@ interface AnalyzingViewProps {
 
 function StepIcon({ status }: { status: Step["status"] }) {
   if (status === "done") {
-    return <CheckCircle className="size-5 text-emerald-500" weight="fill" />;
+    return <CheckCircle className="size-5 text-success" weight="fill" />;
   }
   if (status === "running") {
     return (
       <CircleNotch
-        className="size-5 animate-spin text-olive-500"
+        className="size-5 animate-spin text-brand-text"
         weight="bold"
       />
     );

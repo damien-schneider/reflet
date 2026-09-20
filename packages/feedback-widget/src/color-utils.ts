@@ -3,12 +3,22 @@ export interface WidgetColors {
   bgSecondary: string;
   border: string;
   error: string;
+  errorBg: string;
+  hairline: string;
+  onPrimary: string;
+  onPrimaryOverlay: string;
+  onPrimarySoft: string;
   primary: string;
   primaryHover: string;
+  shadow: string;
+  shadowSoft: string;
   success: string;
   text: string;
   textMuted: string;
 }
+
+export const DEFAULT_STATUS_COLOR = "#6b7280";
+export const DEFAULT_PRIMARY_COLOR = "#6366f1";
 
 export function createWidgetColors(
   primaryColor: string,
@@ -19,8 +29,15 @@ export function createWidgetColors(
     bgSecondary: isDark ? "#16213e" : "#f8fafc",
     border: isDark ? "#334155" : "#e2e8f0",
     error: "#ef4444",
+    errorBg: isDark ? "rgb(239 68 68 / 10%)" : "#fef2f2",
+    hairline: isDark ? "rgb(255 255 255 / 10%)" : "rgb(0 0 0 / 10%)",
+    onPrimary: "#ffffff",
+    onPrimaryOverlay: "rgb(255 255 255 / 12%)",
+    onPrimarySoft: "rgb(255 255 255 / 30%)",
     primary: primaryColor,
     primaryHover: adjustBrightness(primaryColor, isDark ? 20 : -10),
+    shadow: isDark ? "rgb(0 0 0 / 45%)" : "rgb(0 0 0 / 15%)",
+    shadowSoft: isDark ? "rgb(0 0 0 / 35%)" : "rgb(0 0 0 / 6%)",
     success: "#22c55e",
     text: isDark ? "#e2e8f0" : "#1e293b",
     textMuted: isDark ? "#94a3b8" : "#64748b",

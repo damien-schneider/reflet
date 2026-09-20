@@ -1,5 +1,11 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@ctrl-ui/react/ui/tooltip";
 import { Check, Warning, X } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
@@ -54,18 +60,27 @@ export function CompletionSummary({ job, onDismiss }: CompletionSummaryProps) {
       className={cn(
         "relative mb-6 rounded-xl border p-5",
         hasResults
-          ? "border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950/30"
-          : "border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30"
+          ? "border-border bg-success-subtle"
+          : "border-border bg-warning-subtle"
       )}
     >
-      <button
-        aria-label="Dismiss"
-        className="absolute top-3 right-3 rounded-md p-1 text-muted-foreground transition-colors hover:text-foreground"
-        onClick={onDismiss}
-        type="button"
-      >
-        <X className="h-4 w-4" />
-      </button>
+      <Tooltip>
+        <TooltipTrigger
+          aria-label="Dismiss"
+          render={
+            <Button
+              className="absolute top-3 right-3"
+              iconOnly
+              onClick={onDismiss}
+              size="md"
+              variant="ghost"
+            />
+          }
+        >
+          <X className="h-4 w-4" />
+        </TooltipTrigger>
+        <TooltipContent>Dismiss</TooltipContent>
+      </Tooltip>
 
       <div className="flex items-start gap-3">
         <CompletionIcon hasResults={hasResults} />
@@ -100,14 +115,14 @@ export function CompletionSummary({ job, onDismiss }: CompletionSummaryProps) {
 export function CompletionIcon({ hasResults }: { hasResults: boolean }) {
   if (hasResults) {
     return (
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-500/10">
-        <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-success-subtle">
+        <Check className="h-4 w-4 text-success-text" />
       </div>
     );
   }
   return (
-    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-500/10">
-      <Warning className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-warning-subtle">
+      <Warning className="h-4 w-4 text-warning-text" />
     </div>
   );
 }
@@ -178,8 +193,6 @@ export function CompletionStats({
   );
 }
 
-// --- Shared components ---
-
 export function StatBadge({
   label,
   value,
@@ -199,17 +212,20 @@ export function StatBadge({
 
 export function GroupStatusDot({ status }: { status: string }) {
   return (
-    <div
-      className={cn(
-        "h-2 w-2 rounded-full",
-        status === "created" && "bg-green-500",
-        status === "generated" && "bg-green-500",
-        status === "generating" && "animate-pulse bg-primary",
-        status === "pending" && "bg-muted-foreground/30",
-        status === "skipped" && "bg-muted-foreground/30",
-        status === "error" && "bg-destructive"
-      )}
-      title={status}
-    />
+    <span className="inline-flex items-center">
+      <span
+        aria-hidden="true"
+        className={cn(
+          "h-2 w-2 rounded-full",
+          status === "created" && "bg-success",
+          status === "generated" && "bg-success",
+          status === "generating" && "animate-pulse bg-primary",
+          status === "pending" && "bg-muted-foreground/30",
+          status === "skipped" && "bg-muted-foreground/30",
+          status === "error" && "bg-destructive"
+        )}
+      />
+      <span className="sr-only">{status}</span>
+    </span>
   );
 }

@@ -6,7 +6,7 @@ import { GithubLogo, MagicWand } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useAction, useMutation, useQuery } from "convex/react";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Muted } from "@/components/ui/typography";
 import { AutomationSection } from "@/features/changelog/components/release-settings/automation-section";
 import { ManualSyncSection } from "@/features/changelog/components/release-settings/manual-sync-section";
@@ -62,70 +62,66 @@ export function ChangelogSettingsTab({
   const isSyncConfigured =
     autoSyncReleases || settings?.pushToGithubOnPublish === true;
 
-  const loadBranches = useCallback(async () => {
-    if (
-      !(githubConnection?.installationId && githubConnection.repositoryFullName)
-    ) {
-      return;
-    }
-
-    setIsLoadingBranches(true);
-    try {
-      setBranches(await listBranches({ organizationId }));
-    } catch {
-      setBranches([]);
-    } finally {
-      setIsLoadingBranches(false);
-    }
-  }, [
-    githubConnection?.installationId,
-    githubConnection?.repositoryFullName,
-    listBranches,
-    organizationId,
-  ]);
+  const hasRepository = Boolean(
+    githubConnection?.installationId && githubConnection.repositoryFullName
+  );
 
   useEffect(() => {
-    if (isGitHubConnected) {
-      loadBranches();
+    if (!(isGitHubConnected && hasRepository)) {
+      return;
     }
-  }, [isGitHubConnected, loadBranches]);
-
-  const handleUpdate = useCallback(
-    async (updates: ChangelogSettings) => {
-      if (!org?._id) {
-        return;
-      }
-      setIsSaving(true);
+    let cancelled = false;
+    setIsLoadingBranches(true);
+    (async () => {
       try {
-        await updateOrg({ changelogSettings: updates, id: org._id });
-        toast.success("Settings saved");
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Failed to save");
+        const loaded = await listBranches({ organizationId });
+        if (!cancelled) {
+          setBranches(loaded);
+        }
+      } catch {
+        if (!cancelled) {
+          setBranches([]);
+        }
       } finally {
-        setIsSaving(false);
+        if (!cancelled) {
+          setIsLoadingBranches(false);
+        }
       }
-    },
-    [org?._id, updateOrg]
-  );
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isGitHubConnected, hasRepository, listBranches, organizationId]);
 
-  const handleToggleAutoSync = useCallback(
-    async (enabled: boolean) => {
-      setIsSaving(true);
-      try {
-        await toggleAutoSync({ enabled, organizationId });
-        toast.success("Settings saved");
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Failed to save");
-      } finally {
-        setIsSaving(false);
-      }
-    },
-    [organizationId, toggleAutoSync]
-  );
+  const handleUpdate = async (updates: ChangelogSettings) => {
+    if (!org?._id) {
+      return;
+    }
+    setIsSaving(true);
+    try {
+      await updateOrg({ changelogSettings: updates, id: org._id });
+      toast.success("Settings saved");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to save");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleToggleAutoSync = async (enabled: boolean) => {
+    setIsSaving(true);
+    try {
+      await toggleAutoSync({ enabled, organizationId });
+      toast.success("Settings saved");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to save");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
-      {/* Versioning — always available */}
       <VersioningSection
         autoVersioning={settings?.autoVersioning}
         isAdmin={isAdmin}
@@ -135,10 +131,8 @@ export function ChangelogSettingsTab({
         versionPrefix={settings?.versionPrefix}
       />
 
-      {/* GitHub Sync — only when connected */}
       {isGitHubConnected ? (
         <>
-          {/* Setup wizard launcher */}
           <div className="rounded-lg border p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">

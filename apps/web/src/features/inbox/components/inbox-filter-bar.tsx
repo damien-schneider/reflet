@@ -37,7 +37,7 @@ export function InboxFilterBar({
       </div>
 
       <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="inline-flex max-w-full items-center gap-1 overflow-x-auto">
+        <div className="flex flex-wrap items-center gap-1">
           {CONVERSATION_STATUSES.map((status) => (
             <Toggle
               key={status}

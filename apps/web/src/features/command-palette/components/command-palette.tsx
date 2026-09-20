@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Command,
   CommandDialog,
   CommandEmpty,
   CommandGroup,
@@ -58,45 +57,43 @@ export function CommandPalette({ orgSlug, isAdmin }: CommandPaletteProps) {
 
   return (
     <CommandDialog
+      commandProps={{
+        filter: (value, search) => {
+          const item = filteredItems.find((i) => i.id === value);
+          if (!item) {
+            return 0;
+          }
+          return filterCommandItems([item], search).length > 0 ? 1 : 0;
+        },
+      }}
       description="Search for pages and settings"
       onOpenChange={setIsOpen}
       open={isOpen}
       title="Command Palette"
     >
-      <Command
-        filter={(value, search) => {
-          const item = filteredItems.find((i) => i.id === value);
-          if (!item) {
-            return 0;
-          }
-          const filtered = filterCommandItems([item], search);
-          return filtered.length > 0 ? 1 : 0;
-        }}
-      >
-        <CommandInput placeholder="Search pages and settings..." />
-        <CommandList>
-          <CommandEmpty>No results found.</CommandEmpty>
-          {Object.entries(groupedItems).map(([group, items]) => (
-            <CommandGroup heading={groupLabels[group] ?? group} key={group}>
-              {items.map((item) => (
-                <CommandItem
-                  key={item.id}
-                  onSelect={() => handleSelect(item)}
-                  value={item.id}
-                >
-                  <item.icon className="size-4" />
-                  <span className="flex-1">{item.label}</span>
-                  {item.description ? (
-                    <span className="text-muted-foreground text-xs">
-                      {item.description}
-                    </span>
-                  ) : null}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          ))}
-        </CommandList>
-      </Command>
+      <CommandInput placeholder="Search pages and settings..." />
+      <CommandList>
+        <CommandEmpty>No results found.</CommandEmpty>
+        {Object.entries(groupedItems).map(([group, items]) => (
+          <CommandGroup heading={groupLabels[group] ?? group} key={group}>
+            {items.map((item) => (
+              <CommandItem
+                key={item.id}
+                onSelect={() => handleSelect(item)}
+                value={item.id}
+              >
+                <item.icon className="size-4" />
+                <span className="flex-1">{item.label}</span>
+                {item.description ? (
+                  <span className="text-muted-foreground text-xs">
+                    {item.description}
+                  </span>
+                ) : null}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        ))}
+      </CommandList>
     </CommandDialog>
   );
 }

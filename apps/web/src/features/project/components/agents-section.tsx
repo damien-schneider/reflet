@@ -59,18 +59,18 @@ export function AgentsSection({ organizationId }: AgentsSectionProps) {
         ) : null}
 
         {newSecretKey ? (
-          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950">
+          <div className="rounded-lg border border-warning/30 bg-warning-subtle p-4">
             <div className="flex items-start gap-3">
-              <Warning className="mt-0.5 h-5 w-5 text-amber-600" />
+              <Warning className="mt-0.5 h-5 w-5 text-warning-text" />
               <div className="min-w-0 flex-1">
-                <p className="font-medium text-amber-800 text-sm dark:text-amber-200">
+                <p className="font-medium text-sm text-warning-text">
                   Save your secret key now
                 </p>
-                <p className="mt-1 text-amber-700 text-xs dark:text-amber-300">
+                <p className="mt-1 text-warning-text text-xs">
                   This is the only time it will be shown.
                 </p>
                 <div className="mt-3 flex items-center gap-2">
-                  <code className="min-w-0 flex-1 overflow-x-auto rounded bg-amber-100 px-3 py-2 font-mono text-sm dark:bg-amber-900">
+                  <code className="min-w-0 flex-1 overflow-x-auto rounded bg-warning/15 px-3 py-2 font-mono text-sm">
                     {newSecretKey}
                   </code>
                   <Button

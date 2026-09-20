@@ -79,22 +79,23 @@ export function FeedbackHeader({
   return (
     <div className="flex items-start justify-between border-b p-6">
       <div className="flex items-start gap-4">
-        {/* Vote button */}
-        <button
+        <Button
+          aria-label={feedback?.hasVoted ? "Remove vote" : "Upvote"}
+          aria-pressed={feedback?.hasVoted}
           className={cn(
-            "flex flex-col items-center rounded-lg border p-3 transition-colors hover:bg-accent",
-            feedback?.hasVoted &&
-              "border-olive-600 bg-olive-600/10 text-olive-600"
+            "h-auto flex-col rounded-lg border p-3 transition-colors hover:bg-accent",
+            feedback?.hasVoted && "border-brand bg-brand-subtle text-brand-text"
           )}
           onClick={onVote}
-          type="button"
+          variant="quiet"
         >
           <CaretUp className="h-5 w-5" />
-          <span className="font-bold text-lg">{feedback?.voteCount}</span>
-        </button>
+          <span className="font-bold text-lg tabular-nums">
+            {feedback?.voteCount}
+          </span>
+        </Button>
 
         <div className="flex-1">
-          {/* Title */}
           <div className="flex items-center gap-2">
             <TiptapTitleEditor
               className="font-semibold text-xl"
@@ -104,11 +105,10 @@ export function FeedbackHeader({
               value={editedTitle}
             />
             {feedback?.isPinned && (
-              <PushPin className="h-4 w-4 shrink-0 text-olive-600" />
+              <PushPin className="h-4 w-4 shrink-0 text-brand-text" />
             )}
           </div>
 
-          {/* Save/Cancel buttons for unsaved changes */}
           {hasUnsavedChanges && canEdit && (
             <div className="mt-2 flex items-center gap-2">
               <Button
@@ -125,7 +125,6 @@ export function FeedbackHeader({
             </div>
           )}
 
-          {/* Meta info */}
           <div className="mt-1 flex flex-wrap items-center gap-2 text-muted-foreground text-sm">
             <span className="flex items-center gap-1">
               <Calendar className="h-3 w-3" />
@@ -133,7 +132,7 @@ export function FeedbackHeader({
                 addSuffix: true,
               })}
             </span>
-            <span className="flex items-center gap-1">
+            <span className="flex items-center gap-1 tabular-nums">
               <Chat className="h-3 w-3" />
               {feedback?.commentCount} comments
             </span>
@@ -141,9 +140,7 @@ export function FeedbackHeader({
         </div>
       </div>
 
-      {/* Status & Actions */}
       <div className="flex items-center gap-2">
-        {/* Status selector (admin only) */}
         {effectiveIsAdmin && effectiveStatuses.length > 0 && (
           <Select
             onValueChange={(val) =>
@@ -200,7 +197,7 @@ export function FeedbackHeader({
               )}
               {effectiveIsAdmin && <DropdownMenuSeparator />}
               <DropdownMenuItem
-                className="text-destructive"
+                className="menu-item-danger"
                 onClick={onDeleteClick}
               >
                 <Trash className="mr-2 h-4 w-4" />

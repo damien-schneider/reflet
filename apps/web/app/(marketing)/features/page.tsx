@@ -31,8 +31,8 @@ export const metadata = generatePageMetadata({
 
 const FEATURES = [
   {
-    accent: "text-violet-500",
-    accentBg: "bg-violet-500/10 dark:bg-violet-500/15",
+    accent: "text-chart-4-text",
+    accentBg: "bg-chart-4/10",
     description:
       "Auto-tag, score priority, estimate complexity, and detect duplicates — all in milliseconds.",
     details: [
@@ -47,8 +47,8 @@ const FEATURES = [
     title: "AI-Powered Triage",
   },
   {
-    accent: "text-emerald-500",
-    accentBg: "bg-emerald-500/10 dark:bg-emerald-500/15",
+    accent: "text-success-text",
+    accentBg: "bg-success-subtle",
     description:
       "Drop a script tag into your app. Users submit feedback without leaving your product.",
     details: [
@@ -64,7 +64,7 @@ const FEATURES = [
   },
   {
     accent: "text-foreground",
-    accentBg: "bg-[#f0efea] dark:bg-[#ffffff08]",
+    accentBg: "bg-muted",
     description:
       "Link feedback to issues. When a PR merges, the linked request moves to shipped.",
     details: [
@@ -79,8 +79,8 @@ const FEATURES = [
     title: "Two-Way GitHub Sync",
   },
   {
-    accent: "text-amber-500",
-    accentBg: "bg-amber-500/10 dark:bg-amber-500/15",
+    accent: "text-warning-text",
+    accentBg: "bg-warning-subtle",
     description:
       "Built on Convex — votes, comments, and status changes sync instantly across all devices.",
     details: [
@@ -95,8 +95,8 @@ const FEATURES = [
     title: "Real-Time Everything",
   },
   {
-    accent: "text-sky-500",
-    accentBg: "bg-sky-500/10 dark:bg-sky-500/15",
+    accent: "text-chart-2-text",
+    accentBg: "bg-chart-2/10",
     description:
       "Full CRUD API for programmatic access. Webhooks fire on every status transition.",
     details: [
@@ -120,15 +120,15 @@ export default function FeaturesPage() {
       <main className="flex-1">
         {/* Hero */}
         <section className="relative overflow-hidden py-24 sm:py-32">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(120,113,80,0.08),transparent)] dark:bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(120,113,80,0.15),transparent)]" />
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,var(--brand-subtle),transparent)]" />
           <div className="relative mx-auto max-w-300 px-5 text-center sm:px-8">
-            <span className="mb-3 block font-semibold text-[11px] text-olive-600 uppercase tracking-[0.15em] dark:text-olive-400">
+            <span className="mb-3 block font-semibold text-brand-text text-caption uppercase tracking-[0.15em]">
               Built for developer-led SaaS teams
             </span>
-            <h1 className="mx-auto mb-6 max-w-180 font-display text-[clamp(2rem,5vw,3.5rem)] text-olive-950 leading-[1.1] tracking-[-0.02em] dark:text-olive-100">
+            <h1 className="mx-auto mb-6 max-w-180 font-display text-[clamp(2rem,5vw,3.5rem)] text-foreground leading-[1.1] tracking-[-0.02em]">
               Everything you need to ship what users actually want.
             </h1>
-            <p className="mx-auto mb-10 max-w-140 text-[17px] text-muted-foreground leading-relaxed sm:text-[19px]">
+            <p className="mx-auto mb-10 max-w-140 text-body-lg text-muted-foreground leading-relaxed sm:font-normal sm:text-heading-3">
               From collecting raw feedback to publishing changelogs — Reflet
               handles the full loop with AI triage, real-time sync, and
               developer-friendly tools. Built for teams that ship fast.
@@ -136,7 +136,7 @@ export default function FeaturesPage() {
             <div className="flex flex-wrap items-center justify-center gap-4">
               <Link href="/dashboard">
                 <Button
-                  className="h-11 rounded-full px-6 text-[14px]"
+                  className="h-11 rounded-full px-6 text-body"
                   size="md"
                   tone="primary"
                   variant="solid"
@@ -145,7 +145,7 @@ export default function FeaturesPage() {
                 </Button>
               </Link>
               <Link
-                className="font-medium text-[14px] text-foreground transition-opacity hover:opacity-70"
+                className="font-medium text-body text-foreground transition-opacity hover:opacity-70"
                 href="/docs"
               >
                 Read the docs
@@ -174,20 +174,20 @@ export default function FeaturesPage() {
                         >
                           <Icon size={20} weight="duotone" />
                         </div>
-                        <h2 className="font-display text-[clamp(1.4rem,3vw,2rem)] text-olive-950 leading-[1.15] tracking-[-0.01em] dark:text-olive-100">
+                        <h2 className="font-display text-[clamp(1.4rem,3vw,2rem)] text-foreground leading-[1.15] tracking-[-0.01em]">
                           {feature.title}
                         </h2>
                       </div>
-                      <p className="mb-6 max-w-md text-[15px] text-muted-foreground leading-relaxed sm:text-[17px]">
+                      <p className="mb-6 max-w-md text-body text-muted-foreground leading-relaxed sm:text-body-lg">
                         {feature.description}
                       </p>
                       <ul className="space-y-3">
                         {feature.details.map((detail) => (
                           <li
-                            className="flex items-start gap-3 text-[14px] text-foreground/80"
+                            className="flex items-start gap-3 text-body text-foreground/80"
                             key={detail}
                           >
-                            <span className="mt-2 block size-1.5 shrink-0 rounded-full bg-olive-600 dark:bg-olive-400" />
+                            <span className="mt-2 block size-1.5 shrink-0 rounded-full bg-brand" />
                             {detail}
                           </li>
                         ))}
@@ -206,18 +206,18 @@ export default function FeaturesPage() {
         </section>
 
         {/* CTA */}
-        <section className="bg-olive-950 py-20 dark:bg-[#0f0e0b]">
+        <section className="bg-band py-20">
           <div className="mx-auto max-w-300 px-5 text-center sm:px-8">
-            <h2 className="mb-4 font-display text-[clamp(1.8rem,4vw,2.5rem)] text-olive-100 leading-[1.1]">
+            <h2 className="mb-4 font-display text-[clamp(1.8rem,4vw,2.5rem)] text-band-foreground leading-[1.1]">
               Ready to close the feedback loop?
             </h2>
-            <p className="mx-auto mb-8 max-w-120 text-[15px] text-olive-300/80 leading-relaxed sm:text-[17px]">
+            <p className="mx-auto mb-8 max-w-120 text-band-muted-foreground text-body leading-relaxed sm:text-body-lg">
               Start free. No credit card required. Upgrade when you need more.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4">
               <Link href="/dashboard">
                 <Button
-                  className="h-12 rounded-full bg-olive-100 px-7 text-[15px] text-olive-950 hover:bg-white"
+                  className="h-12 rounded-full bg-band-foreground px-7 text-band text-body hover:bg-band-foreground/90"
                   tone="primary"
                   variant="solid"
                 >
@@ -225,7 +225,7 @@ export default function FeaturesPage() {
                 </Button>
               </Link>
               <Link
-                className="font-medium text-[14px] text-olive-300 transition-colors hover:text-olive-100"
+                className="font-medium text-band-muted-foreground text-body transition-colors hover:text-band-foreground"
                 href="/pricing"
               >
                 View pricing

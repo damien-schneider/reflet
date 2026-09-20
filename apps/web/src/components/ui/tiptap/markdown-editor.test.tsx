@@ -350,48 +350,6 @@ describe("TiptapMarkdownEditor", () => {
       );
       expect(screen.getByText("10/100")).toBeInTheDocument();
     });
-
-    it("applies destructive color when at limit", async () => {
-      const { useTiptapMarkdownEditor } = (await import(
-        "./hooks/use-editor"
-      )) as {
-        useTiptapMarkdownEditor: ReturnType<typeof vi.fn>;
-      };
-      useTiptapMarkdownEditor.mockReturnValueOnce({
-        ...mockHookReturn,
-        characterCount: 100,
-        isAtLimit: true,
-      });
-      render(
-        <TiptapMarkdownEditor
-          maxLength={100}
-          onChange={() => {}}
-          value="content"
-        />
-      );
-      expect(screen.getByText("100/100")).toHaveClass("text-destructive");
-    });
-
-    it("applies amber color when near limit", async () => {
-      const { useTiptapMarkdownEditor } = (await import(
-        "./hooks/use-editor"
-      )) as {
-        useTiptapMarkdownEditor: ReturnType<typeof vi.fn>;
-      };
-      useTiptapMarkdownEditor.mockReturnValueOnce({
-        ...mockHookReturn,
-        characterCount: 90,
-        isNearLimit: true,
-      });
-      render(
-        <TiptapMarkdownEditor
-          maxLength={100}
-          onChange={() => {}}
-          value="content"
-        />
-      );
-      expect(screen.getByText("90/100")).toHaveClass("text-amber-500");
-    });
   });
 
   describe("upload progress", () => {

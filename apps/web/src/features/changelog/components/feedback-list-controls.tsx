@@ -24,8 +24,6 @@ const STATUS_COLORS: Record<string, string> = {
   under_review: "orange",
 };
 
-// --- StatusBadge shared util ---
-
 function StatusBadge({ status }: { status: string }) {
   return (
     <TagBadge
@@ -36,8 +34,6 @@ function StatusBadge({ status }: { status: string }) {
     </TagBadge>
   );
 }
-
-// --- Linked Feedback List ---
 
 interface LinkedFeedbackListProps {
   items: Array<{ _id: Id<"feedback">; title: string; status: string }>;
@@ -57,12 +53,14 @@ export function LinkedFeedbackList({
           className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted/50"
           key={item._id}
         >
-          <Check className="h-3.5 w-3.5 shrink-0 text-green-600 dark:text-green-400" />
+          <Check className="h-3.5 w-3.5 shrink-0 text-success-text" />
           <span className="min-w-0 flex-1 truncate">{item.title}</span>
           <StatusBadge status={item.status} />
           {releaseId && (
             <Button
-              className="h-5 w-5 shrink-0 p-0 text-muted-foreground hover:text-destructive"
+              aria-label={`Unlink ${item.title}`}
+              className="shrink-0 text-muted-foreground hover:text-destructive-text"
+              iconOnly
               onClick={() => onUnlink(item._id)}
               size="xs"
               type="button"
@@ -76,8 +74,6 @@ export function LinkedFeedbackList({
     </div>
   );
 }
-
-// --- Manual Feedback Search ---
 
 interface FeedbackSearchInputProps {
   onLink: (feedbackId: Id<"feedback">) => void;
@@ -101,6 +97,7 @@ export function FeedbackSearchInput({
       <div className="relative">
         <MagnifyingGlass className="absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
         <Input
+          aria-label="Search feedback to link"
           className="h-8 border-transparent bg-transparent pl-8 text-sm shadow-none focus-visible:border-input"
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search feedback to link..."
@@ -110,15 +107,17 @@ export function FeedbackSearchInput({
       {searchResults.length > 0 && (
         <div className="absolute right-0 left-0 z-20 mt-1 max-h-40 overflow-y-auto rounded-lg border bg-popover p-1 shadow-md">
           {searchResults.slice(0, 8).map((item) => (
-            <button
-              className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted/50"
+            <Button
+              className="w-full justify-start gap-2 text-left font-normal"
               key={item._id}
               onClick={() => onLink(item._id)}
+              size="sm"
               type="button"
+              variant="ghost"
             >
               <span className="min-w-0 flex-1 truncate">{item.title}</span>
               <StatusBadge status={item.status} />
-            </button>
+            </Button>
           ))}
         </div>
       )}

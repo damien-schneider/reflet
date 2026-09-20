@@ -1,14 +1,6 @@
 "use client";
 
-/**
- * Wraps Phosphor Icons as client components so they can be used
- * as client islands inside React Server Components.
- *
- * @phosphor-icons/react calls createContext at module level,
- * which requires a "use client" boundary.
- *
- * biome-ignore lint/performance/noBarrelFile: intentional re-export for RSC client boundary
- */
+// biome-ignore lint/performance/noBarrelFile: RSC client boundary required because @phosphor-icons/react calls createContext at module level
 export {
   ArrowRightIcon as ArrowRight,
   BrainIcon as Brain,

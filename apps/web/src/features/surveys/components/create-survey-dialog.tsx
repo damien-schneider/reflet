@@ -140,7 +140,7 @@ export function CreateSurveyDialog({
                 return (
                   <button
                     className={cn(
-                      "flex flex-col items-start gap-1.5 rounded-lg border p-4 text-left transition-all",
+                      "flex flex-col items-start gap-1.5 rounded-lg border p-4 text-left transition-colors",
                       "hover:border-primary/50 hover:bg-primary/5",
                       isBlank && "border-dashed"
                     )}
@@ -154,7 +154,7 @@ export function CreateSurveyDialog({
                       {t.description}
                     </p>
                     {t.questions.length > 0 ? (
-                      <span className="mt-1 text-[11px] text-muted-foreground">
+                      <span className="mt-1 text-caption text-muted-foreground">
                         {t.questions.length} question
                         {t.questions.length === 1 ? "" : "s"}
                       </span>

@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import { Input } from "@ctrl-ui/react/ui/input";
 import {
   Select,
@@ -11,7 +12,6 @@ import {
 import { Switch } from "@ctrl-ui/react/ui/switch";
 import { ArrowSquareOut } from "@phosphor-icons/react";
 import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
 import type { WizardConfig } from "../wizard-config";
 
 interface ConfigureStepProps {
@@ -77,26 +77,31 @@ function VersioningSection({ config, onChange }: ConfigureStepProps) {
           </div>
 
           <div className="space-y-1">
-            <Label className="text-muted-foreground text-xs">
+            <span className="text-muted-foreground text-xs" id="default-bump">
               Default bump
-            </Label>
-            <div className="inline-flex rounded-md border">
-              {INCREMENT_OPTIONS.map((option) => (
-                <button
-                  className={cn(
-                    "px-3 py-1.5 text-xs transition-colors first:rounded-l-md last:rounded-r-md",
-                    config.versionIncrement === option.id
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                  key={option.id}
-                  onClick={() => onChange({ versionIncrement: option.id })}
-                  type="button"
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
+            </span>
+            <fieldset
+              aria-labelledby="default-bump"
+              className="inline-flex min-w-0 gap-1"
+            >
+              {INCREMENT_OPTIONS.map((option) => {
+                const selected = config.versionIncrement === option.id;
+                return (
+                  <Button
+                    active={selected}
+                    aria-pressed={selected}
+                    key={option.id}
+                    onClick={() => onChange({ versionIncrement: option.id })}
+                    size="sm"
+                    tone={selected ? "primary" : "neutral"}
+                    type="button"
+                    variant={selected ? "solid" : "ghost"}
+                  >
+                    {option.label}
+                  </Button>
+                );
+              })}
+            </fieldset>
           </div>
         </div>
       )}
@@ -155,13 +160,13 @@ function AutomatedConfig({ config, onChange }: ConfigureStepProps) {
               className="flex items-center justify-between gap-2"
               key={example.prefix}
             >
-              <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px]">
+              <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-caption">
                 {example.prefix}
               </code>
               <span className="flex-1 text-muted-foreground text-xs">
                 {example.description}
               </span>
-              <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+              <span className="rounded-full bg-muted px-2 py-0.5 text-caption text-muted-foreground">
                 {example.bump}
               </span>
             </div>

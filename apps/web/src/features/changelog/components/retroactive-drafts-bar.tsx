@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@ctrl-ui/react/ui/button";
+import { Button, ButtonLink } from "@ctrl-ui/react/ui/button";
 import { toast } from "@ctrl-ui/react/ui/toast";
 import { CloudArrowUp, Eye } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
@@ -49,17 +49,21 @@ export function RetroactiveDraftsBar({
 
   return (
     <div className="sticky top-0 z-20 mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-background/95 px-4 py-3 backdrop-blur">
-      <span className="font-medium text-sm">
+      <span className="font-medium text-sm tabular-nums">
         {retroactiveDrafts.length} draft release
         {retroactiveDrafts.length === 1 ? "" : "s"} ready to publish
       </span>
       <div className="flex items-center gap-2">
-        <Link href={`/dashboard/${orgSlug}/changelog/review-drafts`}>
-          <Button size="xs" variant="surface">
-            <Eye className="h-4 w-4" />
-            Review First
-          </Button>
-        </Link>
+        <ButtonLink
+          render={
+            <Link href={`/dashboard/${orgSlug}/changelog/review-drafts`} />
+          }
+          size="xs"
+          variant="surface"
+        >
+          <Eye className="h-4 w-4" />
+          Review First
+        </ButtonLink>
         <Button
           onClick={handlePublishAll}
           size="xs"

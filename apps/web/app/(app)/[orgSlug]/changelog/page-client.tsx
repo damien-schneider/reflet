@@ -1,6 +1,11 @@
 "use client";
 
 import { ButtonLink } from "@ctrl-ui/react/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@ctrl-ui/react/ui/tooltip";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { env } from "@reflet/env/web";
 import { IconRss } from "@tabler/icons-react";
@@ -47,17 +52,24 @@ export default function PublicChangelogPageClient({
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {rssUrl && (
-            <ButtonLink
-              href={rssUrl}
-              iconOnly
-              rel="noopener noreferrer"
-              target="_blank"
-              title="RSS Feed"
-              variant="surface"
-            >
-              <IconRss className="h-4 w-4" />
-              <span className="sr-only">RSS Feed</span>
-            </ButtonLink>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <ButtonLink
+                    className="size-10"
+                    href={rssUrl}
+                    iconOnly
+                    rel="noopener noreferrer"
+                    target="_blank"
+                    variant="surface"
+                  />
+                }
+              >
+                <IconRss className="h-4 w-4" />
+                <span className="sr-only">RSS Feed</span>
+              </TooltipTrigger>
+              <TooltipContent>RSS Feed</TooltipContent>
+            </Tooltip>
           )}
           <ChangelogSubscribe organizationId={org._id} />
         </div>

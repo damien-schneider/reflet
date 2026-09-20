@@ -3,11 +3,6 @@ import type { FeedbackContext, RefletUser } from "../types";
 export const SDK_VERSION = "0.3.5";
 export const DEFAULT_WIDGET_OFFSET = 20;
 
-const FEEDBACK_WIDGET_CATEGORIES = ["bug", "idea", "question"] as const;
-
-export type FeedbackWidgetCategory =
-  (typeof FEEDBACK_WIDGET_CATEGORIES)[number];
-
 const ANNOTATION_TOOLS = [
   "pen",
   "arrow",
@@ -62,10 +57,6 @@ export interface FeedbackWidgetLabels {
   cancel: string;
   captureFailed: string;
   capturing: string;
-  categoryBug: string;
-  categoryIdea: string;
-  categoryLabel: string;
-  categoryQuestion: string;
   clearAnnotations: string;
   clearSelection: string;
   descriptionPlaceholder: string;
@@ -109,10 +100,6 @@ export const DEFAULT_WIDGET_LABELS: FeedbackWidgetLabels = {
   cancel: "Cancel",
   captureFailed: "Screenshot unavailable. Try again or send without it.",
   capturing: "Taking screenshot…",
-  categoryBug: "Bug",
-  categoryIdea: "Idea",
-  categoryLabel: "Feedback type",
-  categoryQuestion: "Question",
   clearAnnotations: "Clear drawing",
   clearSelection: "Remove selected element",
   descriptionPlaceholder: "What would you like to share?",
@@ -153,8 +140,6 @@ export interface RefletFeedbackProps {
   captureConsole?: boolean;
   /** Take a screenshot of the viewport as soon as the panel opens. */
   captureOnOpen?: boolean;
-  categories?: FeedbackWidgetCategory[];
-  defaultCategory?: FeedbackWidgetCategory;
   /** Let reporters hide the launcher for this many days. */
   dismissForDays?: number;
   /** Render nothing when false — lets an app gate the widget per user. */

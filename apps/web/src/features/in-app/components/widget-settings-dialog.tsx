@@ -2,6 +2,14 @@
 
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
+  ColorPicker,
+  ColorPickerArea,
+  ColorPickerContent,
+  ColorPickerHue,
+  ColorPickerInput,
+  ColorPickerTrigger,
+} from "@ctrl-ui/react/ui/color-picker";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -9,7 +17,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@ctrl-ui/react/ui/dialog";
+import { Field, FieldDescription, FieldLabel } from "@ctrl-ui/react/ui/field";
 import { Input } from "@ctrl-ui/react/ui/input";
+import {
+  NumberField,
+  NumberFieldDecrement,
+  NumberFieldGroup,
+  NumberFieldIncrement,
+  NumberFieldInput,
+} from "@ctrl-ui/react/ui/number-field";
 import {
   Select,
   SelectContent,
@@ -19,12 +35,14 @@ import {
 } from "@ctrl-ui/react/ui/select";
 import { Switch } from "@ctrl-ui/react/ui/switch";
 import { toast } from "@ctrl-ui/react/ui/toast";
+import { Minus, Plus } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Doc } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { type ChangeEvent, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Muted } from "@/components/ui/typography";
+import { DEFAULT_PRIMARY_COLOR } from "@/lib/branding";
 
 type WidgetWithSettings = Doc<"widgets"> & {
   settings: Doc<"widgetSettings"> | null;
@@ -39,6 +57,9 @@ interface WidgetSettingsDialogProps {
 
 type WidgetPosition = "bottom-right" | "bottom-left";
 
+const DEFAULT_Z_INDEX = 9999;
+const MIN_Z_INDEX = 1;
+
 export function WidgetSettingsDialog({
   widget,
   open,
@@ -48,7 +69,7 @@ export function WidgetSettingsDialog({
   const [isSaving, setIsSaving] = useState(false);
 
   const [primaryColor, setPrimaryColor] = useState(
-    widget.settings?.primaryColor ?? "#5c6d4f"
+    widget.settings?.primaryColor ?? DEFAULT_PRIMARY_COLOR
   );
   const [position, setPosition] = useState<WidgetPosition>(
     widget.settings?.position ?? "bottom-right"
@@ -63,15 +84,16 @@ export function WidgetSettingsDialog({
     widget.settings?.showLauncher ?? true
   );
   const [autoOpen, setAutoOpen] = useState(widget.settings?.autoOpen ?? false);
-  const [zIndex, setZIndex] = useState(widget.settings?.zIndex ?? 9999);
+  const [zIndex, setZIndex] = useState(
+    widget.settings?.zIndex ?? DEFAULT_Z_INDEX
+  );
 
   const handleSave = async () => {
     setIsSaving(true);
-    const greetingValue = greetingMessage || undefined;
     try {
       await updateSettings({
         autoOpen,
-        greetingMessage: greetingValue,
+        greetingMessage: greetingMessage || undefined,
         position,
         primaryColor,
         showLauncher,
@@ -98,37 +120,34 @@ export function WidgetSettingsDialog({
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="primary-color">Primary Color</Label>
-            <div className="flex gap-2">
-              <Input
-                className="w-12 p-1"
-                disabled={isSaving}
-                id="primary-color-picker"
-                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                  setPrimaryColor(e.target.value)
-                }
-                type="color"
-                value={primaryColor}
-              />
-              <Input
-                className="flex-1"
-                disabled={isSaving}
-                id="primary-color"
-                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                  setPrimaryColor(e.target.value)
-                }
-                placeholder="#5c6d4f"
-                value={primaryColor}
-              />
-            </div>
-            <Muted className="text-xs">
+          <Field>
+            <FieldLabel htmlFor="primary-color">Primary Color</FieldLabel>
+            <ColorPicker
+              disabled={isSaving}
+              format="hex"
+              onValueChange={setPrimaryColor}
+              value={primaryColor}
+            >
+              <div className="flex items-center gap-2">
+                <ColorPickerTrigger aria-label="Pick the widget primary color" />
+                <ColorPickerInput
+                  aria-label="Primary color"
+                  className="flex-1"
+                  id="primary-color"
+                />
+              </div>
+              <ColorPickerContent>
+                <ColorPickerArea />
+                <ColorPickerHue />
+              </ColorPickerContent>
+            </ColorPicker>
+            <FieldDescription>
               The main color used for the widget bubble and header
-            </Muted>
-          </div>
+            </FieldDescription>
+          </Field>
 
-          <div className="grid gap-2">
-            <Label htmlFor="position">Position</Label>
+          <Field>
+            <FieldLabel htmlFor="position">Position</FieldLabel>
             <Select
               onValueChange={(val) => {
                 if (val === "bottom-right" || val === "bottom-left") {
@@ -137,7 +156,7 @@ export function WidgetSettingsDialog({
               }}
               value={position}
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full" id="position">
                 <SelectValue placeholder="Select position" />
               </SelectTrigger>
               <SelectContent>
@@ -145,13 +164,13 @@ export function WidgetSettingsDialog({
                 <SelectItem value="bottom-left">Bottom Left</SelectItem>
               </SelectContent>
             </Select>
-            <Muted className="text-xs">
+            <FieldDescription>
               Where the widget bubble appears on the page
-            </Muted>
-          </div>
+            </FieldDescription>
+          </Field>
 
-          <div className="grid gap-2">
-            <Label htmlFor="welcome-message">Welcome Message</Label>
+          <Field>
+            <FieldLabel htmlFor="welcome-message">Welcome Message</FieldLabel>
             <Input
               disabled={isSaving}
               id="welcome-message"
@@ -161,13 +180,15 @@ export function WidgetSettingsDialog({
               placeholder="Hi there! How can we help you?"
               value={welcomeMessage}
             />
-            <Muted className="text-xs">
+            <FieldDescription>
               The greeting shown at the top of the chat window
-            </Muted>
-          </div>
+            </FieldDescription>
+          </Field>
 
-          <div className="grid gap-2">
-            <Label htmlFor="greeting-message">Subtitle (optional)</Label>
+          <Field>
+            <FieldLabel htmlFor="greeting-message">
+              Subtitle (optional)
+            </FieldLabel>
             <Input
               disabled={isSaving}
               id="greeting-message"
@@ -177,32 +198,40 @@ export function WidgetSettingsDialog({
               placeholder="We typically reply within a few hours"
               value={greetingMessage}
             />
-            <Muted className="text-xs">
+            <FieldDescription>
               A secondary message shown below the welcome message
-            </Muted>
-          </div>
+            </FieldDescription>
+          </Field>
 
-          <div className="grid gap-2">
-            <Label htmlFor="z-index">Z-Index</Label>
-            <Input
+          <Field>
+            <FieldLabel htmlFor="z-index">Z-Index</FieldLabel>
+            <NumberField
               disabled={isSaving}
+              format={{ useGrouping: false }}
               id="z-index"
-              min={1}
-              onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                setZIndex(Number(e.target.value))
-              }
-              type="number"
+              min={MIN_Z_INDEX}
+              onValueChange={(next) => setZIndex(next ?? MIN_Z_INDEX)}
               value={zIndex}
-            />
-            <Muted className="text-xs">
+            >
+              <NumberFieldGroup>
+                <NumberFieldDecrement aria-label="Decrease z-index">
+                  <Minus />
+                </NumberFieldDecrement>
+                <NumberFieldInput className="tabular-nums" />
+                <NumberFieldIncrement aria-label="Increase z-index">
+                  <Plus />
+                </NumberFieldIncrement>
+              </NumberFieldGroup>
+            </NumberField>
+            <FieldDescription>
               Higher values place the widget above other elements
-            </Muted>
-          </div>
+            </FieldDescription>
+          </Field>
 
           <div className="flex items-center justify-between">
             <div>
               <Label htmlFor="show-launcher">Show Launcher</Label>
-              <Muted className="text-xs">
+              <Muted className="text-caption">
                 Display the chat bubble on the page
               </Muted>
             </div>
@@ -217,7 +246,7 @@ export function WidgetSettingsDialog({
           <div className="flex items-center justify-between">
             <div>
               <Label htmlFor="auto-open">Auto Open</Label>
-              <Muted className="text-xs">
+              <Muted className="text-caption">
                 Automatically open the chat on page load
               </Muted>
             </div>

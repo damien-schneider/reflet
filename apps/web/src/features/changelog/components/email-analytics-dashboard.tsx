@@ -9,6 +9,13 @@ import {
   CardTitle,
 } from "@ctrl-ui/react/ui/card";
 import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@ctrl-ui/react/ui/empty";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -93,24 +100,29 @@ function StatCard({
         <div className="min-w-0">
           <p className="truncate text-muted-foreground text-sm">{title}</p>
           <div className="flex items-center gap-2">
-            <p className="font-semibold text-2xl">{value}</p>
+            <p className="font-semibold text-2xl tabular-nums">{value}</p>
             {trend && trend !== "neutral" && (
               <span
                 className={cn(
                   "flex items-center text-xs",
-                  trend === "up" ? "text-green-600" : "text-red-600"
+                  trend === "up" ? "text-success-text" : "text-destructive-text"
                 )}
               >
                 {trend === "up" ? (
-                  <ArrowUp className="h-3 w-3" />
+                  <ArrowUp aria-hidden className="h-3 w-3" />
                 ) : (
-                  <ArrowDown className="h-3 w-3" />
+                  <ArrowDown aria-hidden className="h-3 w-3" />
                 )}
+                <span className="sr-only">
+                  {trend === "up" ? "Trending up" : "Trending down"}
+                </span>
               </span>
             )}
           </div>
           {subtext && (
-            <p className="text-muted-foreground text-xs">{subtext}</p>
+            <p className="text-muted-foreground text-xs tabular-nums">
+              {subtext}
+            </p>
           )}
         </div>
       </CardContent>
@@ -167,7 +179,7 @@ export function EmailAnalyticsDashboard({
           </p>
         </div>
         <Select onValueChange={(v) => setDays(Number(v))} value={String(days)}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger aria-label="Time range" className="w-40">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -180,7 +192,6 @@ export function EmailAnalyticsDashboard({
         </Select>
       </div>
 
-      {/* Stats cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           icon={EnvelopeSimple}
@@ -209,7 +220,6 @@ export function EmailAnalyticsDashboard({
         />
       </div>
 
-      {/* By type breakdown */}
       {byType.length > 0 && (
         <Card>
           <CardHeader>
@@ -239,13 +249,19 @@ export function EmailAnalyticsDashboard({
                     <TableCell className="font-medium">
                       {EMAIL_TYPE_LABELS[row.emailType] ?? row.emailType}
                     </TableCell>
-                    <TableCell className="text-right">{row.total}</TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right tabular-nums">
+                      {row.total}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
                       {row.delivered}
                     </TableCell>
-                    <TableCell className="text-right">{row.opened}</TableCell>
-                    <TableCell className="text-right">{row.bounced}</TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right tabular-nums">
+                      {row.opened}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {row.bounced}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
                       {row.delivered > 0
                         ? formatPercent(row.opened / row.delivered)
                         : "—"}
@@ -258,7 +274,6 @@ export function EmailAnalyticsDashboard({
         </Card>
       )}
 
-      {/* Recent emails */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
@@ -271,10 +286,17 @@ export function EmailAnalyticsDashboard({
         </CardHeader>
         <CardContent>
           {recentEmails.length === 0 ? (
-            <p className="py-8 text-center text-muted-foreground text-sm">
-              No emails sent yet. Publish a release to start sending
-              notifications.
-            </p>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia>
+                  <EnvelopeSimple className="h-6 w-6" />
+                </EmptyMedia>
+                <EmptyTitle>No emails sent yet</EmptyTitle>
+                <EmptyDescription>
+                  Publish a release to start sending notifications.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           ) : (
             <Table>
               <TableHeader>

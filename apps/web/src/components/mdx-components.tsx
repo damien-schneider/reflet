@@ -1,3 +1,4 @@
+import { Table, TableCell, TableHead } from "@ctrl-ui/react/ui/table";
 import type { MDXComponents } from "mdx/types";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,6 +10,7 @@ import {
   H3,
   InlineCode,
   Text,
+  textVariants,
 } from "@/components/ui/typography";
 
 export function useMDXComponents(components: MDXComponents): MDXComponents {
@@ -18,7 +20,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
       if (isExternal) {
         return (
           <a
-            className="text-olive-600 underline underline-offset-4 transition-colors hover:text-olive-700 dark:text-olive-400 dark:hover:text-olive-300"
+            className={textVariants({ variant: "link" })}
             href={href}
             rel="noopener noreferrer"
             target="_blank"
@@ -28,10 +30,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
         );
       }
       return (
-        <Link
-          className="text-olive-600 underline underline-offset-4 transition-colors hover:text-olive-700 dark:text-olive-400 dark:hover:text-olive-300"
-          href={href ?? "#"}
-        >
+        <Link className={textVariants({ variant: "link" })} href={href ?? "#"}>
           {children}
         </Link>
       );
@@ -57,7 +56,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     img: ({ src, alt }) => (
       <Image
         alt={alt ?? ""}
-        className="my-6 rounded-lg"
+        className="my-6 rounded-lg outline outline-1 outline-black/10 -outline-offset-1 dark:outline-white/10"
         height={400}
         src={src ?? ""}
         width={800}
@@ -83,16 +82,18 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     ),
     table: ({ children }) => (
       <div className="my-6 overflow-x-auto">
-        <table className="w-full border-collapse text-sm">{children}</table>
+        <Table className="w-full border-collapse text-sm">{children}</Table>
       </div>
     ),
     td: ({ children }) => (
-      <td className="border border-border px-4 py-2">{children}</td>
+      <TableCell className="border border-border px-4 py-2">
+        {children}
+      </TableCell>
     ),
     th: ({ children }) => (
-      <th className="border border-border bg-muted px-4 py-2 text-left font-semibold">
+      <TableHead className="border border-border bg-muted px-4 py-2 text-left font-semibold">
         {children}
-      </th>
+      </TableHead>
     ),
     ul: ({ children }) => (
       <ul className="my-4 ml-6 list-disc space-y-2 text-muted-foreground">

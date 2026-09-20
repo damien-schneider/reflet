@@ -9,7 +9,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@ctrl-ui/react/ui/select";
-import { Check, Sparkle, Spinner } from "@phosphor-icons/react";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
+import { Check, Sparkle } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 
 export type FeedbackLinkStatus =
@@ -57,7 +58,9 @@ export function FeedbackSectionHeader({
         <h3 className="flex items-center gap-1.5 font-medium text-sm">
           <Check className="h-4 w-4 text-muted-foreground" />
           Linked Feedback
-          {linkedCount > 0 && <Badge className="text-xs">{linkedCount}</Badge>}
+          {linkedCount > 0 && (
+            <Badge className="text-xs tabular-nums">{linkedCount}</Badge>
+          )}
         </h3>
 
         {releaseId && (
@@ -76,7 +79,7 @@ export function FeedbackSectionHeader({
           >
             {isMatching ? (
               <>
-                <Spinner className="h-3 w-3 animate-spin" />
+                <Spinner size="xs" />
                 Finding...
               </>
             ) : (
@@ -94,11 +97,14 @@ export function FeedbackSectionHeader({
           <span className="text-muted-foreground text-xs">
             Set status on link:
           </span>
-          <Select
-            onValueChange={(v) => onLinkStatusChange(v as FeedbackLinkStatus)}
+          <Select<FeedbackLinkStatus>
+            onValueChange={onLinkStatusChange}
             value={linkStatus}
           >
-            <SelectTrigger className="h-7 w-44 text-xs">
+            <SelectTrigger
+              aria-label="Set status on link"
+              className="h-7 w-44 text-xs"
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

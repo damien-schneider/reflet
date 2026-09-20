@@ -3,10 +3,6 @@
 import { useState } from "react";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 
-/**
- * Test page for TiptapMarkdownEditor - used for E2E testing only.
- * This page is not linked from anywhere and is only accessible via direct URL.
- */
 export default function TestTiptapPage() {
   const [content, setContent] = useState("");
 

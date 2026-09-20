@@ -15,7 +15,7 @@ interface ConversationStatusBadgeProps {
 }
 
 const UNKNOWN_STATUS = {
-  badgeClassName: "bg-zinc-500/10 text-zinc-600",
+  badgeClassName: "bg-muted text-muted-foreground",
   icon: Circle,
 };
 

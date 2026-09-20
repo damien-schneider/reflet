@@ -191,6 +191,8 @@ export const feedbackTables = {
     aiPriorityReasoning: v.optional(v.string()),
     aiTimeEstimate: v.optional(v.string()),
     aiTimeEstimateGeneratedAt: v.optional(v.number()),
+    aiUsefulness: v.optional(v.number()),
+    aiUsefulnessGeneratedAt: v.optional(v.number()),
     assigneeId: v.optional(v.string()),
     attachments: v.optional(v.array(v.string())),
     authorId: v.optional(v.string()),
@@ -243,6 +245,7 @@ export const feedbackTables = {
     voteCount: v.number(),
   })
     .index("by_organization", ["organizationId"])
+    .index("by_org_approved", ["organizationId", "isApproved"])
     .index("by_author", ["authorId"])
     .index("by_status", ["status"])
     .index("by_org_status_id", ["organizationStatusId"])

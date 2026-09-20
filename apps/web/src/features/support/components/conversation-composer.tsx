@@ -63,7 +63,7 @@ export function ConversationComposer({
   return (
     <div
       className={cn(
-        "rounded-lg border bg-card p-3 transition-all",
+        "rounded-lg border bg-card p-3 transition-[box-shadow]",
         expanded && "ring-1 ring-ring",
         className
       )}

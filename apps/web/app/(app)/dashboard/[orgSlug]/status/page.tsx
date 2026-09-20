@@ -24,13 +24,13 @@ const statusLabels = {
 
 const getStatusBannerClass = (status: string): string => {
   if (status === "operational") {
-    return "bg-emerald-50 dark:bg-emerald-950/30";
+    return "bg-success-subtle";
   }
   if (status === "degraded") {
-    return "bg-amber-50 dark:bg-amber-950/30";
+    return "bg-warning-subtle";
   }
   if (status === "major_outage") {
-    return "bg-red-50 dark:bg-red-950/30";
+    return "bg-destructive-subtle";
   }
   return "bg-muted";
 };
@@ -164,12 +164,20 @@ export default function StatusDashboardPage({
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <H1>Status</H1>
         <div className="flex flex-wrap items-center gap-2">
-          <Link href={`/${orgSlug}/status`} rel="noopener" target="_blank">
-            <Button size="xs" variant="surface">
-              <ArrowSquareOut className="mr-1.5 h-4 w-4" />
-              Public Page
-            </Button>
-          </Link>
+          <Button
+            render={
+              <Link
+                href={`/${orgSlug}/status`}
+                rel="noopener"
+                target="_blank"
+              />
+            }
+            size="xs"
+            variant="surface"
+          >
+            <ArrowSquareOut className="mr-1.5 h-4 w-4" />
+            Public Page
+          </Button>
           <Button
             onClick={() => setShowComposer(!showComposer)}
             size="sm"

@@ -1,7 +1,12 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import { Field, FieldError, FieldLabel } from "@ctrl-ui/react/ui/field";
-import { Input } from "@ctrl-ui/react/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@ctrl-ui/react/ui/input-group";
 import { Eye, EyeSlash } from "@phosphor-icons/react";
 import type { UseFormRegisterReturn } from "react-hook-form";
 
@@ -28,8 +33,8 @@ export function PasswordInputField({
   return (
     <Field>
       <FieldLabel htmlFor={id}>{label}</FieldLabel>
-      <div className="relative">
-        <Input
+      <InputGroup>
+        <InputGroupInput
           id={id}
           onBlur={(e) => {
             onBlur(e);
@@ -42,18 +47,19 @@ export function PasswordInputField({
           type={showPassword ? "text" : "password"}
           {...restRegister}
         />
-        <button
-          className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-          onClick={onTogglePassword}
-          type="button"
-        >
-          {showPassword ? (
-            <EyeSlash className="size-4" />
-          ) : (
-            <Eye className="size-4" />
-          )}
-        </button>
-      </div>
+        <InputGroupAddon className="ml-auto">
+          <Button
+            aria-label={showPassword ? "Hide password" : "Show password"}
+            iconOnly
+            onClick={onTogglePassword}
+            size="xs"
+            type="button"
+            variant="ghost"
+          >
+            {showPassword ? <EyeSlash /> : <Eye />}
+          </Button>
+        </InputGroupAddon>
+      </InputGroup>
       <FieldError match={Boolean(error?.message)}>{error?.message}</FieldError>
     </Field>
   );

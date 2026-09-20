@@ -347,28 +347,6 @@ describe("FeedbackMainContent", () => {
     expect(container.querySelector("[data-testid='card']")).toBeInTheDocument();
   });
 
-  it("renders hasVoted CSS classes on vote button", () => {
-    render(
-      <FeedbackMainContent
-        {...baseProps}
-        feedback={{ ...baseFeedback, hasVoted: true }}
-      />
-    );
-    const voteButton = screen.getByText("15").closest("button");
-    expect(voteButton?.className).toContain("olive-600");
-  });
-
-  it("renders non-voted CSS classes on vote button", () => {
-    render(
-      <FeedbackMainContent
-        {...baseProps}
-        feedback={{ ...baseFeedback, hasVoted: false }}
-      />
-    );
-    const voteButton = screen.getByText("15").closest("button");
-    expect(voteButton?.className).toContain("hover:border-olive-600");
-  });
-
   it("renders pin icon when feedback is pinned", () => {
     render(
       <FeedbackMainContent

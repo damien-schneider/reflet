@@ -1,6 +1,8 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
+
+const uploadImage = vi.fn();
 
 vi.mock("next/image", () => ({
   default: ({
@@ -15,123 +17,28 @@ vi.mock("next/image", () => ({
   }) => <img alt={alt} className={className} src={src} />,
 }));
 
-vi.mock("@ctrl-ui/react/ui/button", () => ({
-  Button: ({
-    children,
-    disabled,
-    onClick,
-    type,
-    ...rest
-  }: {
-    children: React.ReactNode;
-    disabled?: boolean;
-    onClick?: () => void;
-    type?: string;
-    [key: string]: unknown;
-  }) => (
-    <button
-      disabled={disabled}
-      onClick={onClick}
-      type={type as "button" | "submit"}
-    >
-      {children}
-    </button>
-  ),
-}));
-
 vi.mock("@/components/ui/tiptap/use-image-upload", () => ({
-  useImageUpload: ({
-    onSuccess,
-    onError,
-  }: {
-    onSuccess: (url: string) => void;
-    onError: (err: Error) => void;
-  }) => ({
+  useImageUpload: ({ onSuccess }: { onSuccess: (url: string) => void }) => ({
     isUploading: false,
-    uploadImage: vi.fn(async () => {
+    uploadImage: uploadImage.mockImplementation(() => {
       onSuccess("https://uploaded.example.com/logo.png");
     }),
   }),
 }));
 
-vi.mock("@/components/ui/typography", () => ({
-  Muted: ({
-    children,
-    className,
-  }: {
-    children: React.ReactNode;
-    className?: string;
-  }) => <span className={className}>{children}</span>,
-}));
-
-vi.mock("@/lib/utils", () => ({
-  cn: (...classes: unknown[]) => classes.filter(Boolean).join(" "),
-}));
-
-vi.mock("@phosphor-icons/react", () => ({
-  Image: ({ className }: { className?: string }) => (
-    <svg className={className} data-testid="image-icon" />
-  ),
-  Spinner: ({ className }: { className?: string }) => (
-    <svg className={className} data-testid="spinner-icon" />
-  ),
-  Trash: ({ className }: { className?: string }) => (
-    <svg className={className} />
-  ),
-  Upload: ({ className }: { className?: string }) => (
-    <svg className={className} data-testid="upload-icon" />
-  ),
-}));
-
 import { LogoUploader } from "./logo-uploader";
 
+const pngFile = () => new File(["img"], "logo.png", { type: "image/png" });
+
 describe("LogoUploader", () => {
-  it("renders upload prompt when no logo", () => {
+  it("prompts for a logo when none is set", () => {
     render(<LogoUploader onLogoChange={vi.fn()} />);
     expect(screen.getByText("Click or drag to upload")).toBeInTheDocument();
-  });
-
-  it("renders format hint", () => {
-    render(<LogoUploader onLogoChange={vi.fn()} />);
     expect(screen.getByText(/PNG, JPG, SVG, WebP/)).toBeInTheDocument();
-  });
-
-  it("renders current logo when provided", () => {
-    render(
-      <LogoUploader
-        currentLogo="https://example.com/logo.png"
-        onLogoChange={vi.fn()}
-      />
-    );
-    expect(screen.getByAltText("Organization logo")).toBeInTheDocument();
-  });
-
-  it("shows replace hint when logo exists", () => {
-    render(
-      <LogoUploader
-        currentLogo="https://example.com/logo.png"
-        onLogoChange={vi.fn()}
-      />
-    );
-    expect(screen.getByText("Click or drag to replace")).toBeInTheDocument();
-  });
-
-  it("renders Remove logo button when logo exists", () => {
-    render(
-      <LogoUploader
-        currentLogo="https://example.com/logo.png"
-        onLogoChange={vi.fn()}
-      />
-    );
-    expect(screen.getByText("Remove logo")).toBeInTheDocument();
-  });
-
-  it("does not render Remove logo button when no logo", () => {
-    render(<LogoUploader onLogoChange={vi.fn()} />);
     expect(screen.queryByText("Remove logo")).not.toBeInTheDocument();
   });
 
-  it("calls onLogoChange(null) when remove button is clicked", async () => {
+  it("previews the current logo and offers removal", async () => {
     const user = userEvent.setup();
     const onLogoChange = vi.fn();
     render(
@@ -141,185 +48,80 @@ describe("LogoUploader", () => {
       />
     );
 
-    await user.click(screen.getByText("Remove logo"));
-    expect(onLogoChange).toHaveBeenCalledWith(null);
-  });
-
-  it("renders hidden file input", () => {
-    const { container } = render(<LogoUploader onLogoChange={vi.fn()} />);
-    const fileInput = container.querySelector('input[type="file"]');
-    expect(fileInput).toBeInTheDocument();
-    expect(fileInput).toHaveClass("hidden");
-  });
-
-  it("accepts correct file formats", () => {
-    const { container } = render(<LogoUploader onLogoChange={vi.fn()} />);
-    const fileInput = container.querySelector('input[type="file"]');
-    expect(fileInput).toHaveAttribute(
-      "accept",
-      "image/png,image/jpeg,image/svg+xml,image/webp"
-    );
-  });
-
-  it("disables drop zone when disabled", () => {
-    render(<LogoUploader disabled={true} onLogoChange={vi.fn()} />);
-    const dropZone = screen.getByRole("button");
-    expect(dropZone).toBeDisabled();
-  });
-
-  it("has accessible file input label", () => {
-    const { container } = render(<LogoUploader onLogoChange={vi.fn()} />);
-    const fileInput = container.querySelector('input[type="file"]');
-    expect(fileInput).toHaveAttribute("aria-label", "Logo file input");
-  });
-
-  it("triggers file input on Enter keypress", async () => {
-    const user = userEvent.setup();
-    render(<LogoUploader onLogoChange={vi.fn()} />);
-    const dropZone = screen.getByRole("button");
-    await user.tab();
-    await user.keyboard("{Enter}");
-    // Verify the drop zone is focusable and responds to keyboard
-    expect(dropZone).toBeInTheDocument();
-  });
-
-  it("triggers file input on Space keypress", async () => {
-    const user = userEvent.setup();
-    render(<LogoUploader onLogoChange={vi.fn()} />);
-    const dropZone = screen.getByRole("button");
-    await user.tab();
-    await user.keyboard(" ");
-    expect(dropZone).toBeInTheDocument();
-  });
-
-  it("renders image icon when no logo", () => {
-    render(<LogoUploader onLogoChange={vi.fn()} />);
-    expect(screen.getByTestId("image-icon")).toBeInTheDocument();
-  });
-
-  it("does not show image icon when logo exists", () => {
-    render(
-      <LogoUploader
-        currentLogo="https://example.com/logo.png"
-        onLogoChange={vi.fn()}
-      />
-    );
-    expect(screen.queryByTestId("image-icon")).not.toBeInTheDocument();
-  });
-
-  it("shows organization logo image when logo exists", () => {
-    render(
-      <LogoUploader
-        currentLogo="https://example.com/logo.png"
-        onLogoChange={vi.fn()}
-      />
-    );
     expect(screen.getByAltText("Organization logo")).toHaveAttribute(
       "src",
       "https://example.com/logo.png"
     );
-  });
-
-  it("does not show Remove button when disabled", () => {
-    render(
-      <LogoUploader
-        currentLogo="https://example.com/logo.png"
-        disabled={true}
-        onLogoChange={vi.fn()}
-      />
-    );
-    const removeBtn = screen.getByText("Remove logo");
-    expect(removeBtn).toBeDisabled();
-  });
-
-  it("shows format hint in empty state", () => {
-    render(<LogoUploader onLogoChange={vi.fn()} />);
-    expect(screen.getByText(/PNG, JPG, SVG, WebP/)).toBeInTheDocument();
-  });
-
-  it("shows Click or drag to upload text in empty state", () => {
-    render(<LogoUploader onLogoChange={vi.fn()} />);
-    expect(screen.getByText("Click or drag to upload")).toBeInTheDocument();
-  });
-
-  it("shows replace text when logo exists", () => {
-    render(
-      <LogoUploader
-        currentLogo="https://example.com/logo.png"
-        onLogoChange={vi.fn()}
-      />
-    );
     expect(screen.getByText("Click or drag to replace")).toBeInTheDocument();
-  });
 
-  it("calls onLogoChange(null) when Remove button is clicked", async () => {
-    const onLogoChange = vi.fn();
-    const user = userEvent.setup();
-    render(
-      <LogoUploader
-        currentLogo="https://example.com/logo.png"
-        onLogoChange={onLogoChange}
-      />
-    );
-    await user.click(screen.getByText("Remove logo"));
+    await user.click(screen.getByRole("button", { name: /Remove logo/ }));
     expect(onLogoChange).toHaveBeenCalledWith(null);
   });
 
-  it("renders hidden file input with correct accept attribute", () => {
+  it("exposes a keyboard-reachable trigger separate from the file input", () => {
     render(<LogoUploader onLogoChange={vi.fn()} />);
     const input = screen.getByLabelText("Logo file input");
-    expect(input).toHaveAttribute(
+    const trigger = screen.getByRole("button");
+
+    expect(input).toHaveAttribute("type", "file");
+    expect(input.tagName).toBe("INPUT");
+    expect(trigger.tagName).toBe("BUTTON");
+    expect(trigger.contains(input)).toBe(false);
+    expect(input).toHaveAttribute("tabindex", "-1");
+  });
+
+  it("restricts selection to the supported image formats", () => {
+    render(<LogoUploader onLogoChange={vi.fn()} />);
+    expect(screen.getByLabelText("Logo file input")).toHaveAttribute(
       "accept",
-      "image/png,image/jpeg,image/svg+xml,image/webp"
+      "image/jpeg,image/png,image/svg+xml,image/webp"
     );
   });
 
-  it("renders file input as disabled when disabled", () => {
-    render(<LogoUploader disabled onLogoChange={vi.fn()} />);
-    const input = screen.getByLabelText("Logo file input");
-    expect(input).toBeDisabled();
-  });
-
-  it("calls onLogoChange when a valid file is selected", async () => {
-    const onLogoChange = vi.fn();
+  it("uploads an accepted file and reports the resulting url", async () => {
     const user = userEvent.setup();
+    const onLogoChange = vi.fn();
     render(<LogoUploader onLogoChange={onLogoChange} />);
-    const input = screen.getByLabelText("Logo file input");
-    const file = new File(["img"], "logo.png", { type: "image/png" });
-    await user.upload(input, file);
-    expect(onLogoChange).toHaveBeenCalled();
+
+    await user.upload(screen.getByLabelText("Logo file input"), pngFile());
+
+    expect(uploadImage).toHaveBeenCalled();
+    expect(onLogoChange).toHaveBeenCalledWith(
+      "https://uploaded.example.com/logo.png"
+    );
   });
 
-  it("renders drop zone area", () => {
-    const { container } = render(<LogoUploader onLogoChange={vi.fn()} />);
-    expect(container.querySelector("div")).toBeInTheDocument();
-  });
-
-  it("renders upload text prompt", () => {
+  it("rejects an unsupported file type with guidance", async () => {
     render(<LogoUploader onLogoChange={vi.fn()} />);
-    expect(screen.getByText(/Upload|Drop|Click|logo/i)).toBeInTheDocument();
-  });
+    const input = screen.getByLabelText("Logo file input");
 
-  it("shows current logo preview when currentLogo is provided", () => {
-    render(
-      <LogoUploader
-        currentLogo="https://example.com/logo.png"
-        onLogoChange={vi.fn()}
-      />
-    );
-    const img = screen.getByRole("img");
-    expect(img).toHaveAttribute("src", "https://example.com/logo.png");
-  });
+    fireEvent.change(input, {
+      target: {
+        files: [new File(["nope"], "notes.txt", { type: "text/plain" })],
+      },
+    });
 
-  it("renders remove button when currentLogo is set", () => {
-    render(
-      <LogoUploader
-        currentLogo="https://example.com/logo.png"
-        onLogoChange={vi.fn()}
-      />
-    );
     expect(
-      screen.getByText(/Remove|remove|Delete|delete/i)
+      await screen.findByText("Please upload a PNG, JPG, SVG, or WebP image")
     ).toBeInTheDocument();
+  });
+
+  it("rejects a file over the size limit", async () => {
+    const user = userEvent.setup();
+    render(<LogoUploader onLogoChange={vi.fn()} />);
+    const tooBig = new File(["x"], "huge.png", { type: "image/png" });
+    Object.defineProperty(tooBig, "size", { value: 3 * 1024 * 1024 });
+
+    await user.upload(screen.getByLabelText("Logo file input"), tooBig);
+
+    expect(
+      await screen.findByText("Image must be smaller than 2MB")
+    ).toBeInTheDocument();
+  });
+
+  it("disables both the trigger and the file input when disabled", () => {
+    render(<LogoUploader disabled onLogoChange={vi.fn()} />);
+    expect(screen.getByRole("button")).toBeDisabled();
+    expect(screen.getByLabelText("Logo file input")).toBeDisabled();
   });
 });

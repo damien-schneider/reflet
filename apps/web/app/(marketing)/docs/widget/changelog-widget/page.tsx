@@ -1,3 +1,11 @@
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@ctrl-ui/react/ui/table";
 import type { Metadata } from "next";
 
 import { InlineCode } from "@/components/ui/typography";
@@ -13,7 +21,7 @@ export const metadata: Metadata = generatePageMetadata({
 export default function ChangelogWidgetPage() {
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="mb-2 font-display text-3xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+      <h1 className="mb-2 font-display text-3xl text-foreground leading-snug tracking-tight">
         Changelog Widget
       </h1>
       <p className="mb-8 text-base text-muted-foreground sm:text-xl">
@@ -22,7 +30,7 @@ export default function ChangelogWidgetPage() {
       </p>
 
       <section className="mb-10">
-        <h2 className="mb-3 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+        <h2 className="mb-3 font-display text-2xl text-foreground leading-snug tracking-tight">
           Script tag embed
         </h2>
         <p className="mb-4 text-muted-foreground text-sm">
@@ -43,7 +51,7 @@ export default function ChangelogWidgetPage() {
       </section>
 
       <section className="mb-10">
-        <h2 className="mb-3 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+        <h2 className="mb-3 font-display text-2xl text-foreground leading-snug tracking-tight">
           React component
         </h2>
         <p className="mb-4 text-muted-foreground text-sm">
@@ -67,7 +75,7 @@ function App() {
       </section>
 
       <section className="mb-10">
-        <h2 className="mb-3 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+        <h2 className="mb-3 font-display text-2xl text-foreground leading-snug tracking-tight">
           Features
         </h2>
         <ul className="list-inside list-disc space-y-2 text-muted-foreground text-sm">
@@ -82,54 +90,48 @@ function App() {
       </section>
 
       <section>
-        <h2 className="mb-3 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100">
+        <h2 className="mb-3 font-display text-2xl text-foreground leading-snug tracking-tight">
           Configuration
         </h2>
         <div className="overflow-hidden rounded-lg border border-border">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-border border-b bg-muted/50">
-                <th className="px-4 py-2.5 text-left font-semibold text-xs">
-                  Attribute / Prop
-                </th>
-                <th className="px-4 py-2.5 text-left font-semibold text-xs">
-                  Values
-                </th>
-                <th className="px-4 py-2.5 text-left font-semibold text-xs">
-                  Description
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="border-border border-b">
-                <td className="px-4 py-2">
+          <Table className="text-sm">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-xs">Attribute / Prop</TableHead>
+                <TableHead className="text-xs">Values</TableHead>
+                <TableHead className="text-xs">Description</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                <TableCell>
                   <InlineCode>data-key / publicKey</InlineCode>
-                </td>
-                <td className="px-4 py-2 text-xs">string</td>
-                <td className="px-4 py-2 text-muted-foreground text-xs">
+                </TableCell>
+                <TableCell className="text-xs">string</TableCell>
+                <TableCell className="whitespace-normal text-muted-foreground text-xs">
                   Your organization&apos;s public API key. Required.
-                </td>
-              </tr>
-              <tr className="border-border border-b">
-                <td className="px-4 py-2">
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>
                   <InlineCode>data-trigger / trigger</InlineCode>
-                </td>
-                <td className="px-4 py-2 text-xs">string (element ID)</td>
-                <td className="px-4 py-2 text-muted-foreground text-xs">
+                </TableCell>
+                <TableCell className="text-xs">string (element ID)</TableCell>
+                <TableCell className="whitespace-normal text-muted-foreground text-xs">
                   ID of the element that opens the popover. Script tag only.
-                </td>
-              </tr>
-              <tr>
-                <td className="px-4 py-2">
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>
                   <InlineCode>data-limit / limit</InlineCode>
-                </td>
-                <td className="px-4 py-2 text-xs">number</td>
-                <td className="px-4 py-2 text-muted-foreground text-xs">
+                </TableCell>
+                <TableCell className="text-xs">number</TableCell>
+                <TableCell className="whitespace-normal text-muted-foreground text-xs">
                   Max entries to display. Default: 10.
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
         </div>
       </section>
     </div>

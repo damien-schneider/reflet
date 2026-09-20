@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowDown, ArrowUp } from "@phosphor-icons/react";
-import { motion } from "motion/react";
+import { MotionConfig, motion } from "motion/react";
 import {
   createContext,
   type ReactNode,
@@ -12,8 +12,6 @@ import {
 } from "react";
 
 import { cn } from "@/lib/utils";
-
-// ─── Vote Context ────────────────────────────────────────────────────────────
 
 type VoteDirection = "upvote" | "downvote" | null;
 
@@ -36,22 +34,22 @@ function useVoteContext(): VoteContextValue {
   return context;
 }
 
-// ─── Status Color Map ────────────────────────────────────────────────────────
+const NEUTRAL_STATUS = "bg-muted text-muted-foreground";
 
 const STATUS_COLORS = {
-  amber: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-  blue: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  gray: "bg-gray-100 text-gray-600 dark:bg-gray-800/30 dark:text-gray-400",
-  green: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  pink: "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400",
-  purple:
-    "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-  red: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+  blue: "bg-tag-blue/15 text-tag-blue-text",
+  brown: "bg-tag-brown/15 text-tag-brown-text",
+  default: NEUTRAL_STATUS,
+  gray: NEUTRAL_STATUS,
+  green: "bg-tag-green/15 text-tag-green-text",
+  orange: "bg-tag-orange/15 text-tag-orange-text",
+  pink: "bg-tag-pink/15 text-tag-pink-text",
+  purple: "bg-tag-purple/15 text-tag-purple-text",
+  red: "bg-tag-red/15 text-tag-red-text",
+  yellow: "bg-tag-yellow/15 text-tag-yellow-text",
 } as const;
 
 type StatusColor = keyof typeof STATUS_COLORS;
-
-// ─── EditorialFeed ───────────────────────────────────────────────────────────
 
 interface EditorialFeedProps {
   children: ReactNode;
@@ -65,8 +63,6 @@ function EditorialFeed({ children, className }: EditorialFeedProps) {
     </div>
   );
 }
-
-// ─── EditorialFeedItem ───────────────────────────────────────────────────────
 
 interface EditorialFeedItemProps {
   children: ReactNode;
@@ -169,12 +165,12 @@ function EditorialFeedItem({
 
   return (
     <VoteContext.Provider value={contextValue}>
-      <div className={cn("relative py-4 pl-16", className)}>{children}</div>
+      <MotionConfig reducedMotion="user">
+        <div className={cn("relative py-4 pl-16", className)}>{children}</div>
+      </MotionConfig>
     </VoteContext.Provider>
   );
 }
-
-// ─── EditorialFeedVote ───────────────────────────────────────────────────────
 
 function EditorialFeedVote() {
   const { voteType, upvotes, downvotes, vote } = useVoteContext();
@@ -228,8 +224,6 @@ function EditorialFeedVote() {
   );
 }
 
-// ─── EditorialFeedRule ───────────────────────────────────────────────────────
-
 interface EditorialFeedRuleProps {
   className?: string;
 }
@@ -245,8 +239,6 @@ function EditorialFeedRule({ className }: EditorialFeedRuleProps) {
   );
 }
 
-// ─── EditorialFeedContent ────────────────────────────────────────────────────
-
 interface EditorialFeedContentProps {
   children: ReactNode;
   className?: string;
@@ -258,8 +250,6 @@ function EditorialFeedContent({
 }: EditorialFeedContentProps) {
   return <div className={className}>{children}</div>;
 }
-
-// ─── EditorialFeedTitle ──────────────────────────────────────────────────────
 
 interface EditorialFeedTitleProps {
   children: ReactNode;
@@ -279,8 +269,6 @@ function EditorialFeedTitle({ children, className }: EditorialFeedTitleProps) {
   );
 }
 
-// ─── EditorialFeedMeta ───────────────────────────────────────────────────────
-
 interface EditorialFeedMetaProps {
   children: ReactNode;
   className?: string;
@@ -299,8 +287,6 @@ function EditorialFeedMeta({ children, className }: EditorialFeedMetaProps) {
   );
 }
 
-// ─── EditorialFeedStatus ─────────────────────────────────────────────────────
-
 interface EditorialFeedStatusProps {
   children: ReactNode;
   className?: string;
@@ -316,7 +302,7 @@ function EditorialFeedStatus({
     <span
       className={cn(
         "inline-flex items-center rounded-sm px-2 py-0.5 font-normal text-[10px]",
-        STATUS_COLORS[color],
+        STATUS_COLORS[color] ?? NEUTRAL_STATUS,
         className
       )}
     >
@@ -324,8 +310,6 @@ function EditorialFeedStatus({
     </span>
   );
 }
-
-// ─── EditorialFeedTag ────────────────────────────────────────────────────────
 
 interface EditorialFeedTagProps {
   children: ReactNode;
@@ -335,8 +319,6 @@ interface EditorialFeedTagProps {
 function EditorialFeedTag({ children, className }: EditorialFeedTagProps) {
   return <span className={cn("italic", className)}>#{children}</span>;
 }
-
-// ─── EditorialFeedComments ───────────────────────────────────────────────────
 
 interface EditorialFeedCommentsProps {
   className?: string;
@@ -357,8 +339,6 @@ function EditorialFeedComments({
   );
 }
 
-// ─── EditorialFeedTime ───────────────────────────────────────────────────────
-
 interface EditorialFeedTimeProps {
   children: ReactNode;
   className?: string;
@@ -367,8 +347,6 @@ interface EditorialFeedTimeProps {
 function EditorialFeedTime({ children, className }: EditorialFeedTimeProps) {
   return <span className={cn("italic", className)}>{children}</span>;
 }
-
-// ─── Exports ─────────────────────────────────────────────────────────────────
 
 export {
   EditorialFeed,

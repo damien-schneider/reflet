@@ -17,17 +17,15 @@ const statusMessages = {
 } as const;
 
 const statusBannerStyles = {
-  degraded:
-    "bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200",
-  major_outage: "bg-red-50 text-red-800 dark:bg-red-950/40 dark:text-red-200",
-  operational:
-    "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200",
+  degraded: "bg-warning-subtle text-warning-text",
+  major_outage: "bg-destructive-subtle text-destructive-text",
+  operational: "bg-success-subtle text-success-text",
 } as const;
 
 const statusLabelStyles = {
-  degraded: "text-amber-600 dark:text-amber-400",
-  major_outage: "text-red-600 dark:text-red-400",
-  operational: "text-emerald-600 dark:text-emerald-400",
+  degraded: "text-warning-text",
+  major_outage: "text-destructive-text",
+  operational: "text-success-text",
 } as const;
 
 const statusLabelText = {
@@ -138,14 +136,14 @@ export default function CustomDomainStatusPage() {
           <H2 variant="card">Active Incidents</H2>
           {statusData.activeIncidents.map((incident) => (
             <div
-              className="rounded-lg border border-red-200 p-4 dark:border-red-900"
+              className="rounded-lg border border-destructive/30 p-4"
               key={incident._id}
             >
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <h3 className="font-semibold text-sm">{incident.title}</h3>
                   <div className="mt-1 flex items-center gap-2 text-xs">
-                    <span className="rounded-full bg-red-100 px-2 py-0.5 text-red-700 capitalize dark:bg-red-950 dark:text-red-300">
+                    <span className="rounded-full bg-destructive-subtle px-2 py-0.5 text-destructive-text capitalize">
                       {incident.severity}
                     </span>
                     <span className="text-muted-foreground capitalize">

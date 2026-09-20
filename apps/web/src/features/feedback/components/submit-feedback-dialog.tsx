@@ -280,7 +280,7 @@ export function SubmitFeedbackDialog({
                             <AvatarImage
                               src={member.user?.image ?? undefined}
                             />
-                            <AvatarFallback className="text-[8px]">
+                            <AvatarFallback className="text-micro">
                               {member.user?.name?.charAt(0) ?? "?"}
                             </AvatarFallback>
                           </Avatar>
@@ -360,7 +360,7 @@ function AssigneeTriggerContent({
     <div className="flex items-center gap-2">
       <Avatar className="h-4 w-4">
         <AvatarImage src={selected.user?.image ?? undefined} />
-        <AvatarFallback className="text-[8px]">
+        <AvatarFallback className="text-micro">
           {selected.user?.name?.charAt(0) ?? "?"}
         </AvatarFallback>
       </Avatar>

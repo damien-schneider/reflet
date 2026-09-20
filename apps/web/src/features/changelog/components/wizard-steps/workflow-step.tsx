@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Collapsible,
   CollapsibleContent,
@@ -12,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@ctrl-ui/react/ui/select";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import {
   CaretDown,
   CheckCircle,
@@ -19,12 +21,11 @@ import {
   Lightning,
   PencilSimple,
   Sparkle,
-  Spinner,
 } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useAction, useQuery } from "convex/react";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import type { Workflow } from "../wizard-config";
@@ -108,33 +109,34 @@ export function WorkflowStep({
   );
   const needsGitHub = value !== "manual";
 
-  const loadBranches = useCallback(async () => {
-    if (
-      !(githubConnection?.installationId && githubConnection.repositoryFullName)
-    ) {
+  useEffect(() => {
+    if (!(isConnected && needsGitHub)) {
       return;
     }
 
+    let cancelled = false;
     setIsLoadingBranches(true);
-    try {
-      setBranches(await listBranches({ organizationId }));
-    } catch {
-      setBranches([]);
-    } finally {
-      setIsLoadingBranches(false);
-    }
-  }, [
-    githubConnection?.installationId,
-    githubConnection?.repositoryFullName,
-    listBranches,
-    organizationId,
-  ]);
+    listBranches({ organizationId }).then(
+      (result) => {
+        if (cancelled) {
+          return;
+        }
+        setBranches(result);
+        setIsLoadingBranches(false);
+      },
+      () => {
+        if (cancelled) {
+          return;
+        }
+        setBranches([]);
+        setIsLoadingBranches(false);
+      }
+    );
 
-  useEffect(() => {
-    if (isConnected && needsGitHub) {
-      loadBranches();
-    }
-  }, [isConnected, needsGitHub, loadBranches]);
+    return () => {
+      cancelled = true;
+    };
+  }, [isConnected, needsGitHub, listBranches, organizationId]);
 
   return (
     <div className="space-y-3">
@@ -183,13 +185,16 @@ function WorkflowCard({
         selected ? "border-primary bg-primary/5" : "border-border"
       )}
     >
-      <button
+      <Button
+        active={selected}
+        aria-pressed={selected}
         className={cn(
-          "flex w-full items-start gap-3 p-3 text-left transition-colors",
+          "h-auto w-full items-start justify-start gap-3 rounded-lg p-3 text-left",
           !selected && "hover:border-primary/50"
         )}
         onClick={() => onChange(option.id)}
         type="button"
+        variant="quiet"
       >
         <option.icon
           className={cn(
@@ -198,20 +203,20 @@ function WorkflowCard({
           )}
           weight={selected ? "fill" : "regular"}
         />
-        <div className="flex-1">
-          <div className="flex items-center gap-2">
-            <p className="font-medium text-sm">{option.title}</p>
+        <span className="block flex-1">
+          <span className="flex items-center gap-2">
+            <span className="font-medium text-sm">{option.title}</span>
             {"badge" in option && option.badge && (
-              <span className="rounded-full bg-primary/10 px-2 py-0.5 font-medium text-[10px] text-primary">
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 font-medium text-caption text-primary">
                 {option.badge}
               </span>
             )}
-          </div>
-          <p className="mt-0.5 text-muted-foreground text-xs">
+          </span>
+          <span className="mt-0.5 block text-muted-foreground text-xs">
             {option.description}
-          </p>
-        </div>
-      </button>
+          </span>
+        </span>
+      </Button>
 
       {selected && (
         <Collapsible onOpenChange={setHowItWorksOpen} open={howItWorksOpen}>
@@ -231,7 +236,7 @@ function WorkflowCard({
                   className="flex items-start gap-2 text-muted-foreground text-xs"
                   key={step}
                 >
-                  <span className="mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-muted font-medium text-[10px]">
+                  <span className="mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-muted font-medium text-micro tabular-nums">
                     {i + 1}
                   </span>
                   {step}
@@ -259,10 +264,10 @@ function ConnectedBranchSelector({
   targetBranch: string;
 }) {
   return (
-    <div className="space-y-2 rounded-lg border border-green-200 bg-green-50/50 p-3 dark:border-green-900 dark:bg-green-950/20">
+    <div className="space-y-2 rounded-lg border border-border bg-success-subtle p-3">
       <div className="flex items-center gap-2">
-        <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-        <p className="font-medium text-green-700 text-xs dark:text-green-300">
+        <CheckCircle className="h-4 w-4 text-success-text" />
+        <p className="font-medium text-success-text text-xs">
           Connected to {repoFullName}
         </p>
       </div>
@@ -299,7 +304,7 @@ function BranchInput({
   if (isLoading) {
     return (
       <div className="flex h-7 flex-1 items-center gap-1.5 text-muted-foreground text-xs">
-        <Spinner className="h-3 w-3 animate-spin" />
+        <Spinner size="xs" />
         Loading branches…
       </div>
     );

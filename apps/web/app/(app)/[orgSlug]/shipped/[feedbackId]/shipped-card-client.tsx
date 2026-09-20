@@ -11,10 +11,12 @@ import {
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { CheckCircle, Copy, LinkedinLogo, XLogo } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import Link from "next/link";
-import { use, useCallback, useState } from "react";
+import { use, useState } from "react";
+import { toId } from "@/lib/convex-helpers";
+
+const COPIED_RESET_MS = 2000;
 
 export default function ShippedCardClient({
   params,
@@ -25,7 +27,7 @@ export default function ShippedCardClient({
   const [copied, setCopied] = useState(false);
 
   const meta = useQuery(api.feedback.queries.getShippedMeta, {
-    id: feedbackId as Id<"feedback">,
+    id: toId("feedback", feedbackId),
   });
 
   const shareUrl =
@@ -33,11 +35,11 @@ export default function ShippedCardClient({
       ? `/${orgSlug}/shipped/${feedbackId}`
       : window.location.href;
 
-  const handleCopy = useCallback(async () => {
+  const handleCopy = async () => {
     await navigator.clipboard.writeText(shareUrl);
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }, [shareUrl]);
+    setTimeout(() => setCopied(false), COPIED_RESET_MS);
+  };
 
   if (meta === undefined) {
     return (
@@ -69,7 +71,7 @@ export default function ShippedCardClient({
     <div className="container mx-auto flex max-w-2xl justify-center px-4 py-16">
       <Card className="w-full">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex items-center gap-2 rounded-full bg-green-100 px-4 py-2 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+          <div className="mx-auto mb-4 flex items-center gap-2 rounded-full bg-success-subtle px-4 py-2 text-success-text">
             <CheckCircle size={20} weight="fill" />
             <span className="font-medium text-sm">Shipped</span>
           </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import { Input } from "@ctrl-ui/react/ui/input";
 import { Switch } from "@ctrl-ui/react/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -59,27 +60,38 @@ export function VersioningStep({ config, onChange }: VersioningStepProps) {
           </div>
 
           <div className="space-y-2">
-            <Label className="text-sm">Default increment</Label>
-            <div className="flex gap-2">
-              {INCREMENT_OPTIONS.map((option) => (
-                <button
-                  className={cn(
-                    "flex flex-col items-center rounded-lg border px-4 py-2 transition-colors",
-                    config.versionIncrement === option.id
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-primary/50"
-                  )}
-                  key={option.id}
-                  onClick={() => onChange({ versionIncrement: option.id })}
-                  type="button"
-                >
-                  <span className="font-medium text-sm">{option.label}</span>
-                  <span className="text-[10px] text-muted-foreground">
-                    {option.example}
-                  </span>
-                </button>
-              ))}
-            </div>
+            <span className="font-medium text-sm" id="default-increment">
+              Default increment
+            </span>
+            <fieldset
+              aria-labelledby="default-increment"
+              className="flex min-w-0 gap-2"
+            >
+              {INCREMENT_OPTIONS.map((option) => {
+                const selected = config.versionIncrement === option.id;
+                return (
+                  <Button
+                    active={selected}
+                    aria-pressed={selected}
+                    className={cn(
+                      "h-auto flex-col items-center gap-0 rounded-lg border px-4 py-2",
+                      selected
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-primary/50"
+                    )}
+                    key={option.id}
+                    onClick={() => onChange({ versionIncrement: option.id })}
+                    type="button"
+                    variant="quiet"
+                  >
+                    <span className="font-medium text-sm">{option.label}</span>
+                    <span className="text-caption text-muted-foreground tabular-nums">
+                      {option.example}
+                    </span>
+                  </Button>
+                );
+              })}
+            </fieldset>
           </div>
         </>
       )}

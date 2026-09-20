@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -147,9 +148,9 @@ export function TimeEstimateBadge({
     handleSave(closestAmount, newUnit);
   };
 
-  const tooltipContent = isOverridden
+  const aiNote = isOverridden
     ? `AI suggested: ${aiTimeEstimate}`
-    : `AI Time Estimate: ${effectiveEstimate}`;
+    : `Estimated implementation time: ${effectiveEstimate}`;
 
   const badge = (
     <TagBadge
@@ -157,35 +158,36 @@ export function TimeEstimateBadge({
       color="purple"
     >
       <Clock className="h-3 w-3" />
-      <span>{effectiveEstimate}</span>
-      <Tooltip>
-        <TooltipTrigger onClick={(e) => e.stopPropagation()} render={<span />}>
-          <Sparkle
-            className={cn(
-              "h-2.5 w-2.5",
-              isOverridden ? "opacity-80" : "opacity-50"
-            )}
-            weight={isOverridden ? "fill" : "regular"}
-          />
-        </TooltipTrigger>
-        <TooltipContent>
-          <p className="text-xs">{tooltipContent}</p>
-        </TooltipContent>
-      </Tooltip>
+      <span className="tabular-nums">{effectiveEstimate}</span>
+      <Sparkle
+        className={cn(
+          "h-2.5 w-2.5",
+          isOverridden ? "opacity-80" : "opacity-50"
+        )}
+        weight={isOverridden ? "fill" : "regular"}
+      />
       {isAdmin && <CaretDown className="h-3 w-3 opacity-70" />}
     </TagBadge>
+  );
+
+  const tooltip = (
+    <TooltipContent className="max-w-xs">
+      <p className="text-xs">{aiNote}</p>
+    </TooltipContent>
   );
 
   if (!isAdmin) {
     return (
       <Tooltip>
-        <TooltipTrigger>{badge}</TooltipTrigger>
-        <TooltipContent>
-          <p className="font-semibold text-xs">Time Estimate</p>
-          <p className="mt-1 text-xs opacity-80">
-            Estimated implementation time: {effectiveEstimate}
-          </p>
-        </TooltipContent>
+        <TooltipTrigger
+          aria-label={`Time estimate: ${effectiveEstimate}`}
+          render={
+            <Button className="h-auto rounded-full p-0" variant="quiet" />
+          }
+        >
+          {badge}
+        </TooltipTrigger>
+        {tooltip}
       </Tooltip>
     );
   }
@@ -202,14 +204,36 @@ export function TimeEstimateBadge({
       }}
       open={isOpen}
     >
-      <PopoverTrigger render={<button type="button" />}>{badge}</PopoverTrigger>
+      <Tooltip>
+        <TooltipTrigger
+          aria-label={`Time estimate: ${effectiveEstimate}. Change estimate`}
+          render={
+            <PopoverTrigger
+              render={
+                <Button
+                  className="h-auto select-none rounded-full p-0"
+                  variant="quiet"
+                />
+              }
+            />
+          }
+        >
+          {badge}
+        </TooltipTrigger>
+        {tooltip}
+      </Tooltip>
       <PopoverContent align="start" className="w-64 p-3" sideOffset={4}>
         <p className="mb-2 font-medium text-xs">Time estimate</p>
         <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger
-              className="flex h-8 cursor-pointer items-center gap-1 rounded-md border border-input bg-transparent px-2.5 text-sm"
-              render={<button type="button" />}
+              render={
+                <Button
+                  aria-label="Amount"
+                  className="h-8 gap-1 rounded-md px-2.5 text-sm tabular-nums"
+                  variant="surface"
+                />
+              }
             >
               {amount}
               <CaretDown className="h-3 w-3 opacity-60" />
@@ -223,7 +247,11 @@ export function TimeEstimateBadge({
                 value={String(amount)}
               >
                 {NUMBER_OPTIONS_BY_UNIT[unit].map((n) => (
-                  <DropdownMenuRadioItem key={n} value={String(n)}>
+                  <DropdownMenuRadioItem
+                    className="tabular-nums"
+                    key={n}
+                    value={String(n)}
+                  >
                     {n}
                   </DropdownMenuRadioItem>
                 ))}
@@ -232,8 +260,13 @@ export function TimeEstimateBadge({
           </DropdownMenu>
           <DropdownMenu>
             <DropdownMenuTrigger
-              className="flex h-8 cursor-pointer items-center gap-1 rounded-md border border-input bg-transparent px-2.5 text-sm"
-              render={<button type="button" />}
+              render={
+                <Button
+                  aria-label="Unit"
+                  className="h-8 gap-1 rounded-md px-2.5 text-sm"
+                  variant="surface"
+                />
+              }
             >
               {TIME_UNIT_LABELS[unit]}
               <CaretDown className="h-3 w-3 opacity-60" />
@@ -253,14 +286,15 @@ export function TimeEstimateBadge({
           </DropdownMenu>
         </div>
         {hasHumanOverride && (
-          <button
-            className="mt-2 flex w-full items-center justify-center gap-1 border-t pt-2 text-muted-foreground text-xs hover:text-foreground"
+          <Button
+            className="mt-2 h-auto w-full gap-1 border-t pt-2 text-xs"
             onClick={handleClear}
-            type="button"
+            size="xs"
+            variant="quiet"
           >
             <X className="h-3 w-3" />
             Reset to AI value
-          </button>
+          </Button>
         )}
       </PopoverContent>
     </Popover>

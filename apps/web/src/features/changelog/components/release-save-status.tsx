@@ -1,6 +1,7 @@
 "use client";
 
-import { Check, Spinner } from "@phosphor-icons/react";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
+import { Check } from "@phosphor-icons/react";
 
 export function SaveStatus({
   isPublished,
@@ -14,7 +15,7 @@ export function SaveStatus({
   if (saveStatus === "saving") {
     return (
       <span className="flex items-center gap-1 text-muted-foreground text-sm">
-        <Spinner className="h-4 w-4 animate-spin" />
+        <Spinner size="sm" />
         Saving...
       </span>
     );
@@ -22,7 +23,7 @@ export function SaveStatus({
 
   if (saveStatus === "saved") {
     return (
-      <span className="flex items-center gap-1 text-green-600 text-sm dark:text-green-400">
+      <span className="flex items-center gap-1 text-sm text-success-text">
         <Check className="h-4 w-4" />
         Saved
       </span>

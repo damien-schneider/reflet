@@ -51,19 +51,19 @@ function SentimentBar({
     <div className="flex h-2 w-full overflow-hidden rounded-full">
       {positive > 0 && (
         <div
-          className="bg-green-500"
+          className="bg-success"
           style={{ width: `${(positive / total) * 100}%` }}
         />
       )}
       {neutral > 0 && (
         <div
-          className="bg-gray-300"
+          className="bg-muted-foreground/40"
           style={{ width: `${(neutral / total) * 100}%` }}
         />
       )}
       {negative > 0 && (
         <div
-          className="bg-red-500"
+          className="bg-destructive"
           style={{ width: `${(negative / total) * 100}%` }}
         />
       )}
@@ -234,7 +234,7 @@ function SignalGroupsList({
                     </p>
                     {signal.url && (
                       <a
-                        className="mt-1 inline-block text-blue-600 text-xs hover:underline"
+                        className="mt-1 inline-block text-brand-text text-xs hover:underline"
                         href={signal.url}
                         rel="noopener"
                         target="_blank"

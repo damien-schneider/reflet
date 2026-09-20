@@ -99,16 +99,13 @@ export function ReleaseEditor({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPublishConfirm, setShowPublishConfirm] = useState(false);
 
-  // Streaming AI generation state
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamedContent, setStreamedContent] = useState("");
 
-  // Feedback matching auto-trigger
   const [shouldAutoMatchFeedback, setShouldAutoMatchFeedback] = useState(false);
   const [feedbackLinkStatus, setFeedbackLinkStatus] =
     useState<FeedbackLinkStatus>("completed");
 
-  // Auto-save with debounce
   const { releaseId, saveStatus } = useAutoSaveRelease({
     description,
     initialReleaseId: release?._id ?? null,
@@ -117,11 +114,9 @@ export function ReleaseEditor({
     version,
   });
 
-  // Commits management
   const { commits, files, previousTag, handleCommitsFetched } =
     useReleaseCommits(releaseId);
 
-  // Get linked feedback count for the publish dialog
   const releaseData = useQuery(
     api.changelog.queries.get,
     releaseId ? { id: releaseId } : "skip"
@@ -146,7 +141,6 @@ export function ReleaseEditor({
     setStreamedContent("");
     if (content) {
       setDescription(content);
-      // Auto-trigger feedback matching after AI generation completes
       setShouldAutoMatchFeedback(true);
     }
   };
@@ -309,7 +303,6 @@ export function ReleaseEditor({
         className
       )}
     >
-      {/* Document-like content area */}
       <div className="flex min-h-125 flex-col">
         <ReleaseEditorToolbar
           handleCancelSchedule={handleCancelSchedule}
@@ -347,7 +340,6 @@ export function ReleaseEditor({
           title={title}
         />
 
-        {/* Footer */}
         <ReleaseEditorFooter
           canPushToGithub={canPushToGithub}
           isLinkedToGithub={isLinkedToGithub}

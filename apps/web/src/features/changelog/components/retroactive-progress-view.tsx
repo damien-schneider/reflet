@@ -1,11 +1,18 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@ctrl-ui/react/ui/collapsible";
-import { CaretDown, Spinner } from "@phosphor-icons/react";
+import {
+  Progress,
+  ProgressIndicator,
+  ProgressTrack,
+} from "@ctrl-ui/react/ui/progress";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
+import { CaretDown } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
 import { GroupStatusDot, StatBadge } from "./retroactive-completion";
@@ -50,10 +57,9 @@ export function ProgressView({ job, onCancel }: ProgressViewProps) {
   return (
     <div className="mb-6 rounded-xl border p-5">
       <div className="flex flex-col gap-4">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Spinner className="h-5 w-5 animate-spin text-primary" />
+            <Spinner className="text-primary" />
             <div>
               <h3 className="font-medium text-sm">Generating changelog...</h3>
               <p className="text-muted-foreground text-xs">
@@ -61,16 +67,11 @@ export function ProgressView({ job, onCancel }: ProgressViewProps) {
               </p>
             </div>
           </div>
-          <button
-            className="text-muted-foreground text-sm transition-colors hover:text-foreground"
-            onClick={onCancel}
-            type="button"
-          >
+          <Button onClick={onCancel} size="sm" type="button" variant="ghost">
             Cancel
-          </button>
+          </Button>
         </div>
 
-        {/* Live stats */}
         <div className="flex flex-wrap gap-4">
           {job.totalTags !== undefined && (
             <StatBadge label="Tags" value={job.totalTags} />
@@ -86,14 +87,15 @@ export function ProgressView({ job, onCancel }: ProgressViewProps) {
           )}
         </div>
 
-        {/* Progress bar */}
         <div className="flex flex-col gap-1.5">
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-            <div
-              className="h-full rounded-full bg-primary transition-all duration-500"
-              style={{ width: `${progressPercent}%` }}
-            />
-          </div>
+          <Progress
+            aria-label="Release generation progress"
+            value={progressPercent}
+          >
+            <ProgressTrack className="h-1.5 w-full rounded-full bg-muted">
+              <ProgressIndicator className="h-full rounded-full bg-primary" />
+            </ProgressTrack>
+          </Progress>
           {totalGroups > 0 && (
             <span className="text-muted-foreground text-xs tabular-nums">
               {processedGroups} / {totalGroups} releases
@@ -101,37 +103,37 @@ export function ProgressView({ job, onCancel }: ProgressViewProps) {
           )}
         </div>
 
-        {/* Phase steps */}
-        <div className="flex items-center gap-1">
+        <ol className="flex items-center gap-1">
           {PHASE_STEPS.map((step, index) => {
             const isCompleted = index < currentPhaseIndex;
             const isActive = index === currentPhaseIndex;
 
             return (
-              <div className="flex items-center gap-1" key={step.key}>
-                <div
+              <li className="flex items-center gap-1" key={step.key}>
+                <span
+                  aria-hidden="true"
                   className={cn(
                     "h-2 w-2 rounded-full transition-colors",
-                    isCompleted && "bg-green-500",
+                    isCompleted && "bg-success",
                     isActive && "bg-primary",
                     !(isCompleted || isActive) && "bg-muted-foreground/20"
                   )}
-                  title={step.label}
                 />
+                <span className="sr-only">{step.label}</span>
                 {index < PHASE_STEPS.length - 1 && (
-                  <div
+                  <span
+                    aria-hidden="true"
                     className={cn(
                       "h-px w-4",
-                      isCompleted ? "bg-green-500" : "bg-muted-foreground/20"
+                      isCompleted ? "bg-success" : "bg-muted-foreground/20"
                     )}
                   />
                 )}
-              </div>
+              </li>
             );
           })}
-        </div>
+        </ol>
 
-        {/* Group details (collapsible) */}
         {job.groups && job.groups.length > 0 && (
           <Collapsible>
             <CollapsibleTrigger className="group flex items-center gap-1 text-muted-foreground text-xs transition-colors hover:text-foreground">
@@ -164,5 +166,3 @@ export function ProgressView({ job, onCancel }: ProgressViewProps) {
     </div>
   );
 }
-
-// --- Completion Summary ---

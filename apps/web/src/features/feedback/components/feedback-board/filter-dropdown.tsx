@@ -55,7 +55,7 @@ export function FilterDropdown({
             Filter
             {activeCount > 0 && (
               <Badge
-                className="ml-1 h-4 min-w-4 px-1 text-[10px]"
+                className="ml-1 h-4 min-w-4 px-1 text-micro"
                 variant="default"
               >
                 {activeCount}

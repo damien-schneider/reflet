@@ -5,7 +5,7 @@ export function EndpointsSection() {
   return (
     <section className="mb-12">
       <h2
-        className="mb-6 font-display text-2xl text-olive-950 leading-snug tracking-tight dark:text-olive-100"
+        className="mb-6 font-display text-2xl text-foreground leading-snug tracking-tight"
         id="endpoints"
       >
         Endpoints
@@ -16,13 +16,13 @@ export function EndpointsSection() {
 
       {/* Changelog Endpoints */}
       <div className="mb-10">
-        <h3 className="mb-6 font-display text-olive-950 text-xl tracking-tight dark:text-olive-100">
+        <h3 className="mb-6 font-display text-foreground text-xl tracking-tight">
           Changelog
         </h3>
         <div className="space-y-8">
           <div className="space-y-4" id="list-changelog">
             <h4 className="font-semibold text-lg">
-              <code className="mr-2 rounded bg-emerald-100 px-2 py-1 text-emerald-700 text-sm dark:bg-emerald-950 dark:text-emerald-300">
+              <code className="mr-2 rounded bg-chart-1/15 px-2 py-1 text-chart-1-text text-sm">
                 GET
               </code>{" "}
               /api/v1/changelog
@@ -62,13 +62,13 @@ export function EndpointsSection() {
 
       {/* Roadmap Endpoints */}
       <div className="mb-10">
-        <h3 className="mb-6 font-display text-olive-950 text-xl tracking-tight dark:text-olive-100">
+        <h3 className="mb-6 font-display text-foreground text-xl tracking-tight">
           Roadmap
         </h3>
         <div className="space-y-8">
           <div className="space-y-4" id="list-roadmap">
             <h4 className="font-semibold text-lg">
-              <code className="mr-2 rounded bg-emerald-100 px-2 py-1 text-emerald-700 text-sm dark:bg-emerald-950 dark:text-emerald-300">
+              <code className="mr-2 rounded bg-chart-1/15 px-2 py-1 text-chart-1-text text-sm">
                 GET
               </code>{" "}
               /api/v1/roadmap
@@ -119,13 +119,13 @@ export function EndpointsSection() {
 
       {/* Subscriptions Endpoints */}
       <div className="mb-10">
-        <h3 className="mb-6 font-display text-olive-950 text-xl tracking-tight dark:text-olive-100">
+        <h3 className="mb-6 font-display text-foreground text-xl tracking-tight">
           Subscriptions
         </h3>
         <div className="space-y-8">
           <div className="space-y-4" id="subscribe">
             <h4 className="font-semibold text-lg">
-              <code className="mr-2 rounded bg-blue-100 px-2 py-1 text-blue-700 text-sm dark:bg-blue-950 dark:text-blue-300">
+              <code className="mr-2 rounded bg-chart-2/15 px-2 py-1 text-chart-2-text text-sm">
                 POST
               </code>{" "}
               /api/v1/subscribe

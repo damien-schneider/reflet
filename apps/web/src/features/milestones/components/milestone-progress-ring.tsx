@@ -131,7 +131,7 @@ export function MilestoneProgressRing({
 
   const segmentConfigs = [
     {
-      className: "stroke-emerald-500",
+      className: "stroke-success",
       dashoffset: completedDashoffset,
       key: "completed",
       length: segments.completed,
@@ -165,7 +165,8 @@ export function MilestoneProgressRing({
         aria-label={`Milestone progress: ${percentage}%`}
         className={cn(
           "overflow-visible",
-          isComplete && "drop-shadow-[0_0_6px_rgba(16,185,129,0.5)]"
+          isComplete &&
+            "drop-shadow-[0_0_6px_color-mix(in_oklab,var(--success)_50%,transparent)]"
         )}
         height={size}
         role="img"
@@ -211,8 +212,8 @@ export function MilestoneProgressRing({
         className={cn(
           "pointer-events-none absolute inset-0 flex items-center justify-center",
           "font-semibold tabular-nums leading-none",
-          isComplete ? "text-emerald-500" : "text-foreground",
-          size <= 36 ? "text-[9px]" : "text-[11px]"
+          isComplete ? "text-success-text" : "text-foreground",
+          size <= 36 ? "text-micro" : "text-caption"
         )}
       >
         <motion.span>{displayPercentage}</motion.span>
@@ -226,7 +227,7 @@ export function MilestoneProgressRing({
             opacity: [0.6, 0, 0.6],
             scale: [1, 1.8, 1],
           }}
-          className="pointer-events-none absolute inset-0 rounded-full border-2 border-emerald-500"
+          className="pointer-events-none absolute inset-0 rounded-full border-2 border-success"
           transition={{
             duration: 2,
             ease: "easeInOut",

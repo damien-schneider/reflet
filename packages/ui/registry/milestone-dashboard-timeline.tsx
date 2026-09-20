@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, MotionConfig, motion } from "motion/react";
 import { useState } from "react";
 
 import { cn } from "@/lib/utils";
@@ -41,7 +41,7 @@ function MultiSegmentBar({
     <div className="flex h-[3px] w-20 overflow-hidden rounded-full bg-muted/30">
       <motion.div
         animate={{ width: `${completedPct}%` }}
-        className="h-full bg-emerald-500"
+        className="h-full bg-chart-1"
         initial={{ width: 0 }}
         transition={{ damping: 30, stiffness: 200, type: "spring" }}
       />
@@ -144,110 +144,116 @@ export function MilestoneDashboardTimeline({
   };
 
   return (
-    <div className={cn("w-full space-y-3", className)}>
-      {/* KPI bar */}
-      <div className="flex items-center gap-3 rounded-xl bg-secondary p-2.5">
-        <ProgressRing
-          color="var(--color-primary)"
-          percentage={overallPct}
-          size={32}
-          strokeWidth={2.5}
-        />
-        <div className="flex flex-1 items-center gap-4 text-[11px]">
-          <div>
-            <span className="font-bold text-sm tabular-nums">
-              {totalCompleted}
-            </span>
-            <span className="text-muted-foreground">/{totalItems}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            <span className="text-muted-foreground">{totalCompleted} done</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-            <span className="text-muted-foreground">{totalInProgress} WIP</span>
+    <MotionConfig reducedMotion="user">
+      <div className={cn("w-full space-y-3", className)}>
+        {/* KPI bar */}
+        <div className="flex items-center gap-3 rounded-xl bg-secondary p-2.5">
+          <ProgressRing
+            color="var(--color-primary)"
+            percentage={overallPct}
+            size={32}
+            strokeWidth={2.5}
+          />
+          <div className="flex flex-1 items-center gap-4 text-[11px]">
+            <div>
+              <span className="font-bold text-sm tabular-nums">
+                {totalCompleted}
+              </span>
+              <span className="text-muted-foreground">/{totalItems}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="h-1.5 w-1.5 rounded-full bg-chart-1" />
+              <span className="text-muted-foreground">
+                {totalCompleted} done
+              </span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+              <span className="text-muted-foreground">
+                {totalInProgress} WIP
+              </span>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Timeline */}
-      <div className="relative pl-5">
-        <div className="absolute top-0 bottom-0 left-[11.5px] w-px bg-border" />
-        {milestones.map((m) => {
-          const isActive = activeId === m.id;
-          const isSweeping = sweepId === m.id;
-          return (
-            <div className="relative mb-1 last:mb-0" key={m.id}>
-              <div
-                className="absolute top-2.5 -left-3 h-2 w-2 rounded-full border-2 border-background"
-                style={{ backgroundColor: m.colorHex }}
-              />
-              <button
-                className={cn(
-                  "relative w-full overflow-hidden rounded-lg p-2 text-left transition-all",
-                  isActive ? "bg-accent/50" : "hover:bg-accent/20"
-                )}
-                onClick={() => handleClick(m.id)}
-                type="button"
-              >
-                <AnimatePresence>
-                  {isSweeping && (
-                    <motion.div
-                      animate={{ opacity: 0, x: "100%" }}
-                      className="absolute inset-0"
-                      exit={{ opacity: 0 }}
-                      initial={{ opacity: 0.12, x: "-100%" }}
-                      style={{ backgroundColor: m.colorHex }}
-                      transition={{ duration: 0.4, ease: "easeOut" }}
+        {/* Timeline */}
+        <div className="relative pl-5">
+          <div className="absolute top-0 bottom-0 left-[11.5px] w-px bg-border" />
+          {milestones.map((m) => {
+            const isActive = activeId === m.id;
+            const isSweeping = sweepId === m.id;
+            return (
+              <div className="relative mb-1 last:mb-0" key={m.id}>
+                <div
+                  className="absolute top-2.5 -left-3 h-2 w-2 rounded-full border-2 border-background"
+                  style={{ backgroundColor: m.colorHex }}
+                />
+                <button
+                  className={cn(
+                    "relative w-full overflow-hidden rounded-lg p-2 text-left transition-colors",
+                    isActive ? "bg-accent/50" : "hover:bg-accent/20"
+                  )}
+                  onClick={() => handleClick(m.id)}
+                  type="button"
+                >
+                  <AnimatePresence>
+                    {isSweeping && (
+                      <motion.div
+                        animate={{ opacity: 0, x: "100%" }}
+                        className="absolute inset-0"
+                        exit={{ opacity: 0 }}
+                        initial={{ opacity: 0.12, x: "-100%" }}
+                        style={{ backgroundColor: m.colorHex }}
+                        transition={{ duration: 0.4, ease: "easeOut" }}
+                      />
+                    )}
+                  </AnimatePresence>
+                  <div className="relative z-10 flex items-center gap-2">
+                    <span className="text-xs">{m.emoji}</span>
+                    <span className="flex-1 truncate font-medium text-xs">
+                      {m.name}
+                    </span>
+                    <span className="rounded bg-muted px-1 py-0.5 text-[9px]">
+                      {m.horizonShort}
+                    </span>
+                    <MultiSegmentBar
+                      completed={m.progress.completed}
+                      inProgress={m.progress.inProgress}
+                      total={m.progress.total}
                     />
+                    <span
+                      className="w-6 text-right font-mono text-[10px] tabular-nums"
+                      style={{ color: m.colorHex }}
+                    >
+                      {m.progress.percentage}%
+                    </span>
+                  </div>
+                </button>
+                <AnimatePresence>
+                  {isActive && (
+                    <motion.div
+                      animate={{ height: "auto", opacity: 1 }}
+                      className="overflow-hidden"
+                      exit={{ height: 0, opacity: 0 }}
+                      initial={{ height: 0, opacity: 0 }}
+                      transition={{
+                        damping: 25,
+                        stiffness: 300,
+                        type: "spring",
+                      }}
+                    >
+                      <div className="mt-1 ml-5 rounded-lg border bg-card p-2 text-muted-foreground text-xs">
+                        {m.progress.completed}/{m.progress.total} done &middot;{" "}
+                        {m.progress.inProgress} in progress
+                      </div>
+                    </motion.div>
                   )}
                 </AnimatePresence>
-                <div className="relative z-10 flex items-center gap-2">
-                  <span className="text-xs">{m.emoji}</span>
-                  <span className="flex-1 truncate font-medium text-xs">
-                    {m.name}
-                  </span>
-                  <span className="rounded bg-muted px-1 py-0.5 text-[9px]">
-                    {m.horizonShort}
-                  </span>
-                  <MultiSegmentBar
-                    completed={m.progress.completed}
-                    inProgress={m.progress.inProgress}
-                    total={m.progress.total}
-                  />
-                  <span
-                    className="w-6 text-right font-mono text-[10px] tabular-nums"
-                    style={{ color: m.colorHex }}
-                  >
-                    {m.progress.percentage}%
-                  </span>
-                </div>
-              </button>
-              <AnimatePresence>
-                {isActive && (
-                  <motion.div
-                    animate={{ height: "auto", opacity: 1 }}
-                    className="overflow-hidden"
-                    exit={{ height: 0, opacity: 0 }}
-                    initial={{ height: 0, opacity: 0 }}
-                    transition={{
-                      damping: 25,
-                      stiffness: 300,
-                      type: "spring",
-                    }}
-                  >
-                    <div className="mt-1 ml-5 rounded-lg border bg-card p-2 text-muted-foreground text-xs">
-                      {m.progress.completed}/{m.progress.total} done &middot;{" "}
-                      {m.progress.inProgress} in progress
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          );
-        })}
+              </div>
+            );
+          })}
+        </div>
       </div>
-    </div>
+    </MotionConfig>
   );
 }

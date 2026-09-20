@@ -1,9 +1,5 @@
 "use client";
 
-/**
- * Thin client wrapper for scroll-triggered animations.
- * Keeps content server-rendered while adding motion on scroll.
- */
 import { motion, useInView } from "motion/react";
 import { useRef } from "react";
 

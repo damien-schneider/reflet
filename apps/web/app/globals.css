@@ -15,37 +15,108 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-chart-1-text: var(--chart-1-text);
+  --color-chart-2-text: var(--chart-2-text);
+  --color-chart-3-text: var(--chart-3-text);
+  --color-chart-4-text: var(--chart-4-text);
+  --color-chart-5-text: var(--chart-5-text);
   --radius-3xl: calc(var(--radius) * 2);
-  --color-brand: var(--primary);
-  --color-brand-foreground: var(--primary-foreground);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-text: var(--brand-text);
+  --color-brand-subtle: var(--brand-subtle);
+  --color-band: var(--band);
+  --color-band-foreground: var(--band-foreground);
+  --color-band-muted-foreground: var(--band-muted-foreground);
+  --color-destructive-text: var(--destructive-text);
+  --color-destructive-subtle: var(--destructive-subtle);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-text: var(--success-text);
+  --color-success-subtle: var(--success-subtle);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-text: var(--warning-text);
+  --color-warning-subtle: var(--warning-subtle);
+  --color-tag-blue: var(--tag-blue);
+  --color-tag-blue-text: var(--tag-blue-text);
+  --color-tag-brown: var(--tag-brown);
+  --color-tag-brown-text: var(--tag-brown-text);
+  --color-tag-green: var(--tag-green);
+  --color-tag-green-text: var(--tag-green-text);
+  --color-tag-orange: var(--tag-orange);
+  --color-tag-orange-text: var(--tag-orange-text);
+  --color-tag-pink: var(--tag-pink);
+  --color-tag-pink-text: var(--tag-pink-text);
+  --color-tag-purple: var(--tag-purple);
+  --color-tag-purple-text: var(--tag-purple-text);
+  --color-tag-red: var(--tag-red);
+  --color-tag-red-text: var(--tag-red-text);
+  --color-tag-yellow: var(--tag-yellow);
+  --color-tag-yellow-text: var(--tag-yellow-text);
 }
 
 .menu-item-danger {
-  --cui-popup-item-foreground: var(--destructive);
+  --cui-popup-item-foreground: var(--destructive-text);
   --cui-popup-item-highlight-background: oklch(
-    from var(--destructive) l c h /
+    from var(--destructive-text) l c h /
     0.12
   );
-  --cui-popup-item-highlight-foreground: var(--destructive);
+  --cui-popup-item-highlight-foreground: var(--destructive-text);
 }
 
 .tag-badge-brown {
-  --cui-badge-background: #eee0da;
-  --cui-badge-foreground: #64473a;
+  --cui-badge-background: oklch(0.916 0.017 45);
+  --cui-badge-foreground: oklch(0.426 0.045 45);
 }
 
 .dark .tag-badge-brown {
-  --cui-badge-background: rgb(147 114 100 / 0.15);
-  --cui-badge-foreground: #b4836d;
+  --cui-badge-background: oklch(0.37 0.02 45);
+  --cui-badge-foreground: oklch(0.75 0.062 45);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
+  html {
+    @apply bg-background;
+  }
+
   body {
     font-family: var(--font-sans);
+    font-synthesis: none;
     @apply bg-background text-foreground antialiased;
+  }
+
+  ::selection {
+    color: currentColor;
+    background-color: oklch(from var(--brand) l c h / 0.2);
+  }
+
+  :where(h1, h2, h3) {
+    text-wrap: balance;
+  }
+
+  :where(
+    a,
+    button,
+    input,
+    label,
+    select,
+    summary,
+    textarea,
+    [role="button"],
+    [role="menuitem"],
+    [role="option"],
+    [role="tab"]
+  ) {
+    touch-action: manipulation;
+  }
+
+  :where([id]) {
+    scroll-margin-top: var(--sticky-header-height);
   }
 
   .font-display {
@@ -54,183 +125,8 @@
   }
 }
 
-@supports (view-transition-name: none) {
-  ::view-transition-old(root),
-  ::view-transition-new(root) {
-    animation-duration: 200ms;
-    animation-timing-function: ease-out;
-  }
-
-  ::view-transition-old(root) {
-    animation-name: fade-out;
-  }
-
-  ::view-transition-new(root) {
-    animation-name: fade-in;
-  }
-
-  @keyframes fade-out {
-    from {
-      opacity: 1;
-    }
-    to {
-      opacity: 0;
-    }
-  }
-
-  @keyframes fade-in {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-
-  .feedback-card {
-    view-transition-name: var(--feedback-card-name);
-  }
-
-  .board-view-content {
-    view-transition-name: board-content;
-  }
-
-  ::view-transition-old(board-content),
-  ::view-transition-new(board-content) {
-    animation-duration: 250ms;
-    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  ::view-transition-old(board-content) {
-    animation-name: slide-out-left;
-  }
-
-  ::view-transition-new(board-content) {
-    animation-name: slide-in-right;
-  }
-
-  @keyframes slide-out-left {
-    from {
-      opacity: 1;
-      transform: translateX(0);
-    }
-    to {
-      opacity: 0;
-      transform: translateX(-20px);
-    }
-  }
-
-  @keyframes slide-in-right {
-    from {
-      opacity: 0;
-      transform: translateX(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
-}
-
-@keyframes hero-fade-up {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes hero-fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.hero-animate {
-  opacity: 0;
-  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
-  animation-fill-mode: forwards;
-}
-
-.hero-fade-up {
-  animation-name: hero-fade-up;
-}
-
-.hero-fade-in {
-  animation-name: hero-fade-in;
-}
-
-.hero-delay-0 {
-  animation-duration: 0.6s;
-  animation-delay: 0s;
-}
-
-.hero-delay-1 {
-  animation-duration: 0.7s;
-  animation-delay: 0.1s;
-}
-
-.hero-delay-2 {
-  animation-duration: 0.6s;
-  animation-delay: 0.2s;
-}
-
-.hero-delay-3 {
-  animation-duration: 0.5s;
-  animation-delay: 0.3s;
-}
-
-.hero-delay-5 {
-  animation-duration: 0.8s;
-  animation-delay: 0.5s;
-}
-
-.hero-delay-6 {
-  animation-duration: 0.5s;
-  animation-delay: 0.6s;
-}
-
-@keyframes dialog-in {
-  from {
-    opacity: 0;
-  }
-}
-
-@keyframes dialog-content-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-}
-
-.hero-delay-7 {
-  animation-duration: 0.5s;
-  animation-delay: 0.7s;
-}
-
-.hero-delay-8 {
-  animation-duration: 0.5s;
-  animation-delay: 0.8s;
-}
-
 @layer components {
   .admin-container {
     @apply mx-auto max-w-3xl px-4 pt-12 pb-8;
-  }
-}
-
-@keyframes hero-float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
   }
 }

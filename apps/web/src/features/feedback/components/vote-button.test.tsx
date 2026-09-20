@@ -1,5 +1,6 @@
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { fireEvent, render, screen } from "@testing-library/react";
+import { cloneElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { VoteButton } from "./vote-button";
 
@@ -39,9 +40,19 @@ vi.mock("@ctrl-ui/react/ui/tooltip", () => ({
   TooltipContent: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="tooltip-content">{children}</div>
   ),
-  TooltipTrigger: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="tooltip-trigger">{children}</div>
-  ),
+  TooltipTrigger: ({
+    children,
+    render: renderEl,
+    ...props
+  }: {
+    children?: React.ReactNode;
+    render?: React.ReactElement;
+  }) =>
+    renderEl ? (
+      cloneElement(renderEl, props, children)
+    ) : (
+      <div data-testid="tooltip-trigger">{children}</div>
+    ),
 }));
 
 // Mock button

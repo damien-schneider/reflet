@@ -74,7 +74,7 @@ export function WebsiteReferenceCard({
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <a
-                className="flex items-center gap-1 font-medium text-sm hover:text-olive-600 hover:underline"
+                className="flex items-center gap-1 font-medium text-sm hover:text-brand-text hover:underline"
                 href={reference.url}
                 rel="noopener noreferrer"
                 target="_blank"
@@ -163,7 +163,7 @@ function StatusBadge({
       );
     case "success":
       return (
-        <Badge className="bg-olive-100 text-olive-700 text-xs dark:bg-olive-900 dark:text-olive-300">
+        <Badge className="bg-brand-subtle text-brand-text text-xs">
           <Check className="mr-1 h-3 w-3" />
           Success
         </Badge>

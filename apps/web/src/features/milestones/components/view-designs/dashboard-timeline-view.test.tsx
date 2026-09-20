@@ -78,11 +78,6 @@ vi.mock("@/lib/milestone-constants", () => ({
   TIME_HORIZONS: ["now", "next_month", "later"],
 }));
 
-vi.mock("@/lib/tag-colors", () => ({
-  getTagColorValues: () => ({ bg: "#eff6ff", text: "#3b82f6" }),
-  resolveTagColor: (color: string) => color,
-}));
-
 vi.mock("@/lib/utils", () => ({
   cn: (...classes: unknown[]) => classes.filter(Boolean).join(" "),
 }));

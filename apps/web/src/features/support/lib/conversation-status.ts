@@ -24,33 +24,32 @@ interface StatusMeta {
 export const CONVERSATION_STATUS_META: Record<ConversationStatus, StatusMeta> =
   {
     awaiting_reply: {
-      badgeClassName: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+      badgeClassName: "bg-warning/10 text-warning-text",
       icon: Clock,
       label: "Awaiting",
       toggleClassName:
-        "data-[pressed]:bg-amber-500/15 data-[pressed]:text-amber-600",
+        "data-[pressed]:bg-warning/15 data-[pressed]:text-warning-text",
     },
     closed: {
-      badgeClassName: "bg-zinc-500/10 text-zinc-600 dark:text-zinc-400",
+      badgeClassName: "bg-muted text-muted-foreground",
       icon: XCircle,
       label: "Closed",
       toggleClassName:
-        "data-[pressed]:bg-zinc-500/15 data-[pressed]:text-zinc-600",
+        "data-[pressed]:bg-muted data-[pressed]:text-muted-foreground",
     },
     open: {
-      badgeClassName: "bg-olive-500/10 text-olive-600 dark:text-olive-400",
+      badgeClassName: "bg-brand-subtle text-brand-text",
       icon: Circle,
       label: "Open",
       toggleClassName:
-        "data-[pressed]:bg-olive-500/15 data-[pressed]:text-olive-600",
+        "data-[pressed]:bg-brand-subtle data-[pressed]:text-brand-text",
     },
     resolved: {
-      badgeClassName:
-        "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+      badgeClassName: "bg-success/10 text-success-text",
       icon: CheckCircle,
       label: "Resolved",
       toggleClassName:
-        "data-[pressed]:bg-emerald-500/15 data-[pressed]:text-emerald-600",
+        "data-[pressed]:bg-success/15 data-[pressed]:text-success-text",
     },
   };
 

@@ -184,21 +184,23 @@ export default function ChangelogPage({
         {isAdmin && (
           <div className="flex items-center gap-2">
             {githubAction}
-            <Link href={`/dashboard/${orgSlug}/changelog/new`}>
-              <Button tone="primary" variant="solid">
-                <Plus className="mr-2 h-4 w-4" />
-                <span className="hidden sm:inline">Create Release</span>
-                <span className="sm:hidden">New</span>
-              </Button>
-            </Link>
+            <Button
+              render={<Link href={`/dashboard/${orgSlug}/changelog/new`} />}
+              tone="primary"
+              variant="solid"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              <span className="hidden sm:inline">Create Release</span>
+              <span className="sm:hidden">New</span>
+            </Button>
           </div>
         )}
       </div>
 
       {showSetupBanner && (
-        <div className="mb-6 flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 dark:border-blue-900 dark:bg-blue-950/30">
+        <div className="mb-6 flex items-center justify-between rounded-lg border border-chart-2/30 bg-chart-2/10 px-4 py-3">
           <div className="flex items-center gap-3">
-            <GithubLogo className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <GithubLogo className="h-5 w-5 text-chart-2-text" />
             <div>
               <p className="font-medium text-sm">Configure release sync</p>
               <p className="text-muted-foreground text-xs">

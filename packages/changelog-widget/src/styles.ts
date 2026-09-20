@@ -1,17 +1,20 @@
-/**
- * Generate changelog widget CSS styles
- */
 import { createChangelogColors } from "./color-utils";
+import { getCardStyles } from "./styles-card";
+import { CHANGELOG_WIDGET_Z_INDEX } from "./z-index";
 
 export function getChangelogStyles(
   primaryColor: string,
-  zIndex: number,
   theme: "light" | "dark"
 ): string {
-  const isDark = theme === "dark";
-  const colors = createChangelogColors(primaryColor, isDark);
+  const colors = createChangelogColors(primaryColor, theme === "dark");
 
   return `
+    :host {
+      all: initial;
+      display: block;
+      color-scheme: ${theme};
+    }
+
     * {
       box-sizing: border-box;
       margin: 0;
@@ -25,137 +28,45 @@ export function getChangelogStyles(
       color: ${colors.text};
     }
 
-    /* ==================== CARD MODE ==================== */
-
-    .reflet-changelog-card {
-      position: fixed;
-      z-index: ${zIndex};
-      max-width: 320px;
-      background: ${colors.bg};
-      border-radius: 12px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-      border: 1px solid ${colors.border};
-      cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
-      overflow: hidden;
+    button {
+      font: inherit;
+      transition: scale 0.12s ease-out;
     }
 
-    .reflet-changelog-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.16);
+    button:active:not(:disabled) {
+      scale: 0.97;
     }
 
-    .reflet-changelog-card.bottom-right {
-      bottom: 24px;
-      right: 24px;
+    :focus-visible {
+      outline: 2px solid ${colors.primary};
+      outline-offset: 2px;
     }
 
-    .reflet-changelog-card.bottom-left {
-      bottom: 24px;
-      left: 24px;
-    }
-
-    .reflet-changelog-card-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 16px;
-      background: ${colors.primary};
-      color: white;
-    }
-
-    .reflet-changelog-card-icon {
-      width: 20px;
-      height: 20px;
-      flex-shrink: 0;
-    }
-
-    .reflet-changelog-card-label {
-      font-size: 13px;
-      font-weight: 600;
-      flex: 1;
-    }
-
-    .reflet-changelog-card-badge {
-      background: ${colors.newBadge};
-      color: white;
-      font-size: 11px;
-      font-weight: 600;
-      padding: 1px 7px;
-      border-radius: 10px;
-    }
-
-    .reflet-changelog-card-body {
-      padding: 12px 16px;
-    }
-
-    .reflet-changelog-card-title {
-      font-size: 14px;
-      font-weight: 600;
-      color: ${colors.text};
-      margin-bottom: 4px;
-    }
-
-    .reflet-changelog-card-version {
-      font-size: 12px;
-      color: ${colors.textMuted};
-    }
-
-    .reflet-changelog-card-dismiss {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      background: transparent;
-      border: none;
-      color: rgba(255, 255, 255, 0.7);
-      cursor: pointer;
-      padding: 2px;
-      border-radius: 4px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 20px;
-      height: 20px;
-    }
-
-    .reflet-changelog-card-dismiss:hover {
-      color: white;
-      background: rgba(255, 255, 255, 0.15);
-    }
-
-    .reflet-changelog-card-dismiss svg {
-      width: 14px;
-      height: 14px;
-    }
-
-    /* ==================== POPUP / TRIGGER PANEL ==================== */
+    ${getCardStyles(colors)}
 
     .reflet-changelog-overlay {
       position: fixed;
       inset: 0;
-      z-index: ${zIndex};
-      background: rgba(0, 0, 0, 0.4);
+      z-index: ${CHANGELOG_WIDGET_Z_INDEX.trigger};
+      background: ${colors.scrim};
       display: flex;
       align-items: center;
       justify-content: center;
     }
 
     .reflet-changelog-panel {
-      z-index: ${zIndex + 1};
+      position: relative;
+      z-index: ${CHANGELOG_WIDGET_Z_INDEX.panel};
       width: 420px;
       max-width: calc(100vw - 32px);
-      max-height: 520px;
+      max-height: min(520px, calc(100dvh - 32px));
       background: ${colors.bg};
       border-radius: 16px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 8px 32px ${colors.shadow};
       display: flex;
       flex-direction: column;
       overflow: hidden;
       border: 1px solid ${colors.border};
-    }
-
-    .reflet-changelog-panel.popup {
-      /* Centered via overlay flex */
     }
 
     .reflet-changelog-panel.trigger {
@@ -165,7 +76,7 @@ export function getChangelogStyles(
     .reflet-changelog-panel-header {
       padding: 16px 20px;
       background: ${colors.primary};
-      color: white;
+      color: ${colors.onPrimary};
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -192,9 +103,11 @@ export function getChangelogStyles(
     .reflet-changelog-close-btn {
       background: transparent;
       border: none;
-      color: white;
+      color: ${colors.onPrimary};
       cursor: pointer;
-      padding: 4px;
+      width: 40px;
+      height: 40px;
+      margin: -8px -8px -8px 0;
       border-radius: 4px;
       display: flex;
       align-items: center;
@@ -202,18 +115,24 @@ export function getChangelogStyles(
     }
 
     .reflet-changelog-close-btn:hover {
-      background: rgba(255, 255, 255, 0.1);
+      background: ${colors.onPrimaryOverlay};
     }
 
     .reflet-changelog-list {
       flex: 1;
       overflow-y: auto;
+      overscroll-behavior: contain;
       padding: 8px 0;
     }
 
     .reflet-changelog-entry {
-      padding: 16px 20px;
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      border: none;
       border-bottom: 1px solid ${colors.border};
+      padding: 16px 20px;
       cursor: pointer;
       transition: background 0.15s;
     }
@@ -236,6 +155,7 @@ export function getChangelogStyles(
     .reflet-changelog-entry-version {
       font-size: 12px;
       font-weight: 600;
+      font-variant-numeric: tabular-nums;
       color: ${colors.primary};
       background: ${colors.primaryLight};
       padding: 2px 8px;
@@ -244,6 +164,7 @@ export function getChangelogStyles(
 
     .reflet-changelog-entry-date {
       font-size: 12px;
+      font-variant-numeric: tabular-nums;
       color: ${colors.textMuted};
     }
 
@@ -257,6 +178,7 @@ export function getChangelogStyles(
     }
 
     .reflet-changelog-entry-title {
+      display: block;
       font-size: 15px;
       font-weight: 600;
       color: ${colors.text};
@@ -289,8 +211,6 @@ export function getChangelogStyles(
       align-items: center;
       gap: 4px;
     }
-
-    /* ==================== SHARED ==================== */
 
     .reflet-changelog-footer {
       padding: 10px 16px;
@@ -343,20 +263,26 @@ export function getChangelogStyles(
       opacity: 0.5;
     }
 
+    .reflet-changelog-empty-note {
+      margin-top: 4px;
+      font-size: 13px;
+    }
+
     .reflet-changelog-error {
       text-align: center;
       padding: 20px;
       color: ${colors.error};
-      background: ${isDark ? "rgba(239, 68, 68, 0.1)" : "#fef2f2"};
+      background: ${colors.errorBg};
       border-radius: 8px;
       margin: 16px 20px;
     }
 
     .reflet-changelog-retry-btn {
       margin-top: 12px;
+      min-height: 40px;
       padding: 8px 16px;
       background: ${colors.primary};
-      color: white;
+      color: ${colors.onPrimary};
       border: none;
       border-radius: 8px;
       font-size: 13px;
@@ -366,6 +292,27 @@ export function getChangelogStyles(
 
     .reflet-changelog-retry-btn:hover {
       background: ${colors.primaryHover};
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 1ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 1ms !important;
+      }
+
+      .reflet-changelog-spinner {
+        animation: none;
+      }
+
+      button:active:not(:disabled) {
+        scale: 1;
+      }
+
+      .reflet-changelog-card:hover,
+      .reflet-changelog-card:focus-within {
+        transform: none;
+      }
     }
   `;
 }

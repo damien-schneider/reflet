@@ -282,7 +282,7 @@ describe("GenerateFromCommits component", () => {
       connectedQuery();
       render(<GenerateFromCommits {...defaultProps} isStreaming />);
       expect(screen.getByText("Generating...")).toBeInTheDocument();
-      expect(screen.getByTestId("spinner-icon")).toBeInTheDocument();
+      expect(screen.getByRole("status")).toBeInTheDocument();
     });
 
     it("button is disabled when isStreaming", () => {

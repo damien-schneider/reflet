@@ -1,11 +1,74 @@
 "use client";
 
+import { Input } from "@ctrl-ui/react/ui/input";
 import { EditorContent } from "@tiptap/react";
-import { useCallback } from "react";
+import type React from "react";
 import { cn } from "@/lib/utils";
 import { useTiptapMarkdownEditor } from "./hooks/use-editor";
 import { ImageBubbleMenu } from "./image-bubble-menu";
 import "./styles.css";
+
+interface MediaFileInputsProps {
+  imageInputRef: React.RefObject<HTMLInputElement | null>;
+  onImageChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onVideoChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  videoInputRef: React.RefObject<HTMLInputElement | null>;
+}
+
+function MediaFileInputs({
+  imageInputRef,
+  videoInputRef,
+  onImageChange,
+  onVideoChange,
+}: MediaFileInputsProps) {
+  return (
+    <>
+      <Input
+        accept="image/*"
+        aria-label="Upload an image"
+        className="hidden"
+        onChange={onImageChange}
+        ref={imageInputRef}
+        type="file"
+      />
+      <Input
+        accept="video/*"
+        aria-label="Upload a video"
+        className="hidden"
+        onChange={onVideoChange}
+        ref={videoInputRef}
+        type="file"
+      />
+    </>
+  );
+}
+
+interface CharacterCounterProps {
+  characterCount: number;
+  isAtLimit: boolean;
+  isNearLimit: boolean;
+  maxLength: number;
+}
+
+function CharacterCounter({
+  characterCount,
+  maxLength,
+  isNearLimit,
+  isAtLimit,
+}: CharacterCounterProps) {
+  return (
+    <span
+      className={cn(
+        "tabular-nums",
+        isAtLimit && "text-destructive-text",
+        !isAtLimit && isNearLimit && "text-warning-text",
+        !(isAtLimit || isNearLimit) && "text-muted-foreground"
+      )}
+    >
+      {characterCount}/{maxLength}
+    </span>
+  );
+}
 
 interface TiptapMarkdownEditorProps {
   autoFocus?: boolean;
@@ -58,82 +121,30 @@ export function TiptapMarkdownEditor({
     value,
   });
 
-  const handleContainerClick = useCallback(() => {
+  const handleContainerClick = () => {
     if (editable && !disabled) {
       editor?.commands.focus();
     }
-  }, [editor, editable, disabled]);
+  };
 
-  if (minimal) {
-    return (
-      <div
-        className={cn(
-          "w-full",
-          disabled && "cursor-not-allowed opacity-50",
-          className
-        )}
-        data-slot="tiptap-markdown-editor"
-        onClick={handleContainerClick}
-      >
-        <div className="relative">
-          <EditorContent editor={editor} />
-          {editor && editable && !disabled && (
-            <ImageBubbleMenu editor={editor} />
-          )}
-        </div>
+  const containerClassName = cn(
+    minimal
+      ? "w-full"
+      : "border-input dark:bg-input/30 rounded-lg border bg-transparent px-2.5 py-2 text-base transition-colors md:text-sm",
+    !minimal &&
+      editable &&
+      !disabled &&
+      "focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]",
+    !minimal && disabled && "bg-input/50 dark:bg-input/80",
+    disabled && "cursor-not-allowed opacity-50",
+    className
+  );
 
-        <input
-          accept="image/*"
-          className="hidden"
-          onChange={handleImageChange}
-          ref={imageInputRef}
-          type="file"
-        />
-        <input
-          accept="video/*"
-          className="hidden"
-          onChange={handleVideoChange}
-          ref={videoInputRef}
-          type="file"
-        />
-
-        {(isUploading || maxLength) && (
-          <div className="mt-2 flex items-center justify-between text-xs">
-            {isUploading && (
-              <span className="text-muted-foreground">{uploadProgress}</span>
-            )}
-            {!isUploading && <span />}
-
-            {maxLength && (
-              <span
-                className={cn(
-                  isAtLimit
-                    ? "text-destructive"
-                    : isNearLimit
-                      ? "text-amber-500"
-                      : "text-muted-foreground"
-                )}
-              >
-                {characterCount}/{maxLength}
-              </span>
-            )}
-          </div>
-        )}
-      </div>
-    );
-  }
+  const showFooter = minimal ? Boolean(isUploading || maxLength) : true;
 
   return (
     <div
-      className={cn(
-        "border-input dark:bg-input/30 rounded-lg border bg-transparent px-2.5 py-2 text-base transition-colors md:text-sm",
-        editable &&
-          !disabled &&
-          "focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]",
-        disabled &&
-          "bg-input/50 dark:bg-input/80 cursor-not-allowed opacity-50",
-        className
-      )}
+      className={containerClassName}
       data-slot="tiptap-markdown-editor"
       onClick={handleContainerClick}
     >
@@ -142,41 +153,30 @@ export function TiptapMarkdownEditor({
         {editor && editable && !disabled && <ImageBubbleMenu editor={editor} />}
       </div>
 
-      <input
-        accept="image/*"
-        className="hidden"
-        onChange={handleImageChange}
-        ref={imageInputRef}
-        type="file"
-      />
-      <input
-        accept="video/*"
-        className="hidden"
-        onChange={handleVideoChange}
-        ref={videoInputRef}
-        type="file"
+      <MediaFileInputs
+        imageInputRef={imageInputRef}
+        onImageChange={handleImageChange}
+        onVideoChange={handleVideoChange}
+        videoInputRef={videoInputRef}
       />
 
-      <div className="mt-2 flex items-center justify-between text-xs">
-        {isUploading && (
-          <span className="text-muted-foreground">{uploadProgress}</span>
-        )}
-        {!isUploading && <span />}
-
-        {maxLength && (
-          <span
-            className={cn(
-              isAtLimit
-                ? "text-destructive"
-                : isNearLimit
-                  ? "text-amber-500"
-                  : "text-muted-foreground"
-            )}
-          >
-            {characterCount}/{maxLength}
-          </span>
-        )}
-      </div>
+      {showFooter && (
+        <div className="mt-2 flex items-center justify-between text-xs">
+          {isUploading ? (
+            <span className="text-muted-foreground">{uploadProgress}</span>
+          ) : (
+            <span />
+          )}
+          {maxLength ? (
+            <CharacterCounter
+              characterCount={characterCount}
+              isAtLimit={isAtLimit}
+              isNearLimit={isNearLimit}
+              maxLength={maxLength}
+            />
+          ) : null}
+        </div>
+      )}
     </div>
   );
 }

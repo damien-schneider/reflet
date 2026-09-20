@@ -1,12 +1,12 @@
 "use client";
 
 import { ScrollArea } from "@ctrl-ui/react/ui/scroll-area";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { AnimatePresence, motion } from "motion/react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useEffect, useRef, useState } from "react";
 import type { TimeHorizon } from "@/lib/milestone-constants";
 import {
   isTimeHorizon,
@@ -18,6 +18,7 @@ import { MilestoneExpandedPanel } from "../milestone-expanded-panel";
 import { MilestoneFormPopover } from "../milestone-form-popover";
 import { MilestoneSegment } from "../milestone-segment";
 import type { MilestonesViewProps } from "../milestones-view";
+import { TrackZoomControls } from "./track-zoom-controls";
 
 interface SafariGestureEvent extends Event {
   scale: number;
@@ -33,8 +34,34 @@ const DEFAULT_ZONE_WIDTH = 160;
 const ZOOM_SENSITIVITY = 0.5;
 const ZONE_GROWTH_FACTOR = 1.12;
 
+const ADD_TRIGGER_INLINE =
+  "flex w-8 shrink-0 items-center justify-center self-stretch rounded-sm text-sm text-muted-foreground/60 transition-colors hover:bg-muted-foreground/10 hover:text-foreground";
+const ADD_TRIGGER_BLOCK =
+  "flex h-10 w-full items-center justify-center rounded-sm border border-muted-foreground/30 border-dashed text-lg text-muted-foreground/60 transition-colors hover:border-muted-foreground/60 hover:text-foreground";
+
 function getZoneFlexGrow(index: number): number {
   return Math.round(100 * ZONE_GROWTH_FACTOR ** index) / 100;
+}
+
+function zoneStyle(index: number, minWidth: number): React.CSSProperties {
+  return {
+    "--zone-grow": getZoneFlexGrow(index),
+    "--zone-min": `${minWidth}px`,
+  };
+}
+
+function groupByHorizon<T extends { timeHorizon: string }>(items: T[]) {
+  const groups = new Map<TimeHorizon, T[]>();
+  for (const horizon of TIME_HORIZONS) {
+    groups.set(horizon, []);
+  }
+  for (const item of items) {
+    if (!isTimeHorizon(item.timeHorizon)) {
+      continue;
+    }
+    groups.get(item.timeHorizon)?.push(item);
+  }
+  return groups;
 }
 
 export function TrackView({
@@ -45,7 +72,6 @@ export function TrackView({
   const milestones = useQuery(api.organizations.milestones.list, {
     organizationId,
   });
-  const isMobile = useIsMobile();
   const [activeMilestoneId, setActiveMilestoneId] =
     useState<Id<"milestones"> | null>(null);
   const [popoverOpenHorizon, setPopoverOpenHorizon] =
@@ -71,15 +97,15 @@ export function TrackView({
     );
     const el = viewport ?? wrapper;
 
+    const clamp = (width: number) =>
+      Math.min(MAX_ZONE_WIDTH, Math.max(MIN_ZONE_WIDTH, width));
+
     const handleWheel = (e: WheelEvent) => {
       if (!e.ctrlKey) {
         return;
       }
       e.preventDefault();
-      setZoneMinWidth((prev) => {
-        const delta = -e.deltaY * ZOOM_SENSITIVITY;
-        return Math.min(MAX_ZONE_WIDTH, Math.max(MIN_ZONE_WIDTH, prev + delta));
-      });
+      setZoneMinWidth((prev) => clamp(prev - e.deltaY * ZOOM_SENSITIVITY));
     };
 
     const handleGestureStart = (e: Event) => {
@@ -94,9 +120,7 @@ export function TrackView({
       }
       const scaleDelta = e.scale / lastGestureScaleRef.current;
       lastGestureScaleRef.current = e.scale;
-      setZoneMinWidth((prev) =>
-        Math.min(MAX_ZONE_WIDTH, Math.max(MIN_ZONE_WIDTH, prev * scaleDelta))
-      );
+      setZoneMinWidth((prev) => clamp(prev * scaleDelta));
     };
 
     el.addEventListener("wheel", handleWheel, { passive: false });
@@ -114,57 +138,45 @@ export function TrackView({
     };
   }, [hasMilestones]);
 
-  const handleMilestoneClick = useCallback((milestoneId: Id<"milestones">) => {
+  const toggleMilestone = (milestoneId: Id<"milestones">) => {
     setActiveMilestoneId((prev) => (prev === milestoneId ? null : milestoneId));
-  }, []);
+  };
 
-  const handlePopoverOpenChange = useCallback(
-    (horizon: TimeHorizon, open: boolean) => {
-      setPopoverOpenHorizon(open ? horizon : null);
-    },
-    []
-  );
+  const groupedMilestones = groupByHorizon(milestones ?? []);
 
-  const groupedMilestones = useMemo(() => {
-    const groups = new Map<TimeHorizon, NonNullable<typeof milestones>>();
-    for (const horizon of TIME_HORIZONS) {
-      groups.set(horizon, []);
-    }
-    if (milestones) {
-      for (const milestone of milestones) {
-        if (!isTimeHorizon(milestone.timeHorizon)) {
-          continue;
-        }
-        const group = groups.get(milestone.timeHorizon);
-        if (group) {
-          group.push(milestone);
-        }
-      }
-    }
-    return groups;
-  }, [milestones]);
+  const activeHorizons = isAdmin
+    ? [...TIME_HORIZONS]
+    : TIME_HORIZONS.filter(
+        (horizon) => (groupedMilestones.get(horizon)?.length ?? 0) > 0
+      );
 
-  const activeHorizons = useMemo(() => {
-    if (isAdmin) {
-      return [...TIME_HORIZONS];
-    }
-    return TIME_HORIZONS.filter((h) => {
-      const group = groupedMilestones.get(h);
-      return group && group.length > 0;
-    });
-  }, [groupedMilestones, isAdmin]);
+  const addPopoverProps = (horizon: TimeHorizon) => ({
+    defaultTimeHorizon: horizon,
+    onCreated: () => setPopoverOpenHorizon(null),
+    onOpenChange: (open: boolean) =>
+      setPopoverOpenHorizon(open ? horizon : null),
+    open: popoverOpenHorizon === horizon,
+    organizationId,
+  });
 
   if (milestones === undefined) {
     return (
       <div className="flex min-h-[200px] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
+        <Spinner />
       </div>
     );
   }
 
   return (
     <div className="space-y-3 px-4">
-      {/* Desktop: horizontal track with pinch-to-zoom */}
+      <TrackZoomControls
+        base={DEFAULT_ZONE_WIDTH}
+        max={MAX_ZONE_WIDTH}
+        min={MIN_ZONE_WIDTH}
+        onChange={setZoneMinWidth}
+        value={zoneMinWidth}
+      />
+
       <div className="hidden md:block">
         <ScrollArea
           className="rounded-xl bg-secondary"
@@ -180,12 +192,9 @@ export function TrackView({
 
                 return (
                   <div
-                    className="relative flex items-stretch gap-0.5"
+                    className="relative flex min-w-(--zone-min) grow-(--zone-grow) items-stretch gap-0.5"
                     key={horizon}
-                    style={{
-                      flexGrow: getZoneFlexGrow(zoneIndex),
-                      minWidth: zoneMinWidth,
-                    }}
+                    style={zoneStyle(zoneIndex, zoneMinWidth)}
                   >
                     {zoneMilestones.length > 0 && (
                       <div className="flex flex-1 flex-col gap-0.5">
@@ -195,37 +204,25 @@ export function TrackView({
                             isAdmin={isAdmin}
                             key={milestone._id}
                             milestone={milestone}
-                            onClick={() => handleMilestoneClick(milestone._id)}
+                            onClick={() => toggleMilestone(milestone._id)}
                           />
                         ))}
                       </div>
                     )}
 
-                    {isAdmin && !isEmpty && !isMobile && (
+                    {isAdmin && !isEmpty && (
                       <MilestoneFormPopover
-                        defaultTimeHorizon={horizon}
-                        onCreated={() => setPopoverOpenHorizon(null)}
-                        onOpenChange={(open) =>
-                          handlePopoverOpenChange(horizon, open)
-                        }
-                        open={popoverOpenHorizon === horizon}
-                        organizationId={organizationId}
-                        triggerClassName="flex w-8 shrink-0 items-center justify-center self-stretch rounded-sm text-sm text-muted-foreground/30 transition-colors hover:bg-muted-foreground/10 hover:text-muted-foreground/60"
+                        {...addPopoverProps(horizon)}
+                        triggerClassName={ADD_TRIGGER_INLINE}
                       />
                     )}
 
                     {isEmpty && (
                       <div className="flex flex-1">
-                        {isAdmin && !isMobile ? (
+                        {isAdmin ? (
                           <MilestoneFormPopover
-                            defaultTimeHorizon={horizon}
-                            onCreated={() => setPopoverOpenHorizon(null)}
-                            onOpenChange={(open) =>
-                              handlePopoverOpenChange(horizon, open)
-                            }
-                            open={popoverOpenHorizon === horizon}
-                            organizationId={organizationId}
-                            triggerClassName="flex h-10 w-full items-center justify-center rounded-sm border border-muted-foreground/20 border-dashed text-lg text-muted-foreground/40 transition-colors hover:border-muted-foreground/40 hover:text-muted-foreground/60"
+                            {...addPopoverProps(horizon)}
+                            triggerClassName={ADD_TRIGGER_BLOCK}
                           />
                         ) : (
                           <div className="h-10 w-full rounded-sm bg-muted/20" />
@@ -234,7 +231,7 @@ export function TrackView({
                     )}
 
                     {zoneIndex < activeHorizons.length - 1 && (
-                      <div className="w-[1px] shrink-0 self-stretch bg-border/30" />
+                      <div className="w-px shrink-0 self-stretch bg-border/30" />
                     )}
                   </div>
                 );
@@ -244,14 +241,11 @@ export function TrackView({
             <div className="mt-2 flex w-full">
               {activeHorizons.map((horizon, zoneIndex) => (
                 <div
-                  className="text-center"
+                  className="min-w-(--zone-min) grow-(--zone-grow) text-center"
                   key={horizon}
-                  style={{
-                    flexGrow: getZoneFlexGrow(zoneIndex),
-                    minWidth: zoneMinWidth,
-                  }}
+                  style={zoneStyle(zoneIndex, zoneMinWidth)}
                 >
-                  <span className="text-[11px] text-muted-foreground">
+                  <span className="text-caption text-muted-foreground">
                     {TIME_HORIZON_CONFIG[horizon].label}
                   </span>
                 </div>
@@ -260,15 +254,14 @@ export function TrackView({
 
             <div className="relative mt-1">
               <div className="flex items-center gap-1">
-                <div className="h-2 w-[2px] rounded-full bg-primary" />
-                <span className="text-[10px] text-primary">Today</span>
+                <div className="h-2 w-px rounded-full bg-primary" />
+                <span className="text-caption text-primary">Today</span>
               </div>
             </div>
           </div>
         </ScrollArea>
       </div>
 
-      {/* Mobile: vertical stacked layout */}
       <div className="block px-4 md:hidden">
         {activeHorizons.map((horizon) => {
           const zoneMilestones = groupedMilestones.get(horizon) ?? [];
@@ -290,7 +283,7 @@ export function TrackView({
                       isActive={activeMilestoneId === milestone._id}
                       isAdmin={isAdmin}
                       milestone={milestone}
-                      onClick={() => handleMilestoneClick(milestone._id)}
+                      onClick={() => toggleMilestone(milestone._id)}
                     />
                     <AnimatePresence>
                       {activeMilestoneId === milestone._id && (
@@ -320,16 +313,10 @@ export function TrackView({
                   </div>
                 ))}
 
-                {zoneMilestones.length === 0 && isAdmin && isMobile && (
+                {isAdmin && (
                   <MilestoneFormPopover
-                    defaultTimeHorizon={horizon}
-                    onCreated={() => setPopoverOpenHorizon(null)}
-                    onOpenChange={(open) =>
-                      handlePopoverOpenChange(horizon, open)
-                    }
-                    open={popoverOpenHorizon === horizon}
-                    organizationId={organizationId}
-                    triggerClassName="flex h-10 w-full items-center justify-center rounded-sm border border-muted-foreground/20 border-dashed text-lg text-muted-foreground/40 transition-colors hover:border-muted-foreground/40 hover:text-muted-foreground/60"
+                    {...addPopoverProps(horizon)}
+                    triggerClassName={ADD_TRIGGER_BLOCK}
                   />
                 )}
               </div>
@@ -338,7 +325,6 @@ export function TrackView({
         })}
       </div>
 
-      {/* Desktop: expanded panel below track */}
       <div className="mx-auto max-w-3xl">
         <AnimatePresence>
           {activeMilestoneId && (

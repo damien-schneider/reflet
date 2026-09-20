@@ -89,6 +89,7 @@
 :where(.marketing-plan-price strong) {
   font-size: 56px;
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
   line-height: 1;
   letter-spacing: -0.045em;
 }
@@ -98,6 +99,7 @@
 }
 :where(.marketing-plan .marketing-plan-billing) {
   margin-bottom: 28px;
+  font-variant-numeric: tabular-nums;
 }
 :where(.marketing-plan ul) {
   display: grid;

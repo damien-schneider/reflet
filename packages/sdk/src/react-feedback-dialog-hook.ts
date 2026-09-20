@@ -1,7 +1,6 @@
 import {
   type FormEvent,
-  type KeyboardEvent,
-  useCallback,
+  type RefObject,
   useContext,
   useEffect,
   useRef,
@@ -12,10 +11,103 @@ import { RefletContext } from "./react-context";
 import {
   AUTO_CLOSE_DELAY,
   DEFAULT_LABELS,
-  type FeedbackCategory,
   type FeedbackDialogProps,
 } from "./react-feedback-dialog-types";
 import { injectFeedbackStyles } from "./react-feedback-styles";
+
+const CLOSE_ANIMATION_MS = 200;
+
+function openDialog(dialog: HTMLDialogElement) {
+  if (typeof dialog.showModal === "function") {
+    dialog.showModal();
+    return;
+  }
+  dialog.open = true;
+}
+
+function closeDialog(dialog: HTMLDialogElement) {
+  if (typeof dialog.close === "function") {
+    dialog.close();
+    return;
+  }
+  dialog.open = false;
+}
+
+function useModalDialog(
+  open: boolean,
+  dialogRef: RefObject<HTMLDialogElement | null>,
+  titleInputRef: RefObject<HTMLInputElement | null>
+) {
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!(open && dialog) || dialog.open) {
+      return;
+    }
+    openDialog(dialog);
+    titleInputRef.current?.focus();
+    return () => closeDialog(dialog);
+  }, [open, dialogRef, titleInputRef]);
+}
+
+function useBackdropDismiss(
+  open: boolean,
+  dialogRef: RefObject<HTMLDialogElement | null>,
+  onDismiss: () => void
+) {
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!(open && dialog)) {
+      return;
+    }
+    const dismiss = (event: MouseEvent) => {
+      if (event.target === dialog) {
+        onDismiss();
+      }
+    };
+    dialog.addEventListener("click", dismiss);
+    return () => dialog.removeEventListener("click", dismiss);
+  }, [open, dialogRef, onDismiss]);
+}
+
+function useScrollLock(open: boolean) {
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    const root = document.documentElement;
+    const previousOverflow = root.style.overflow;
+    const previousGutter = root.style.getPropertyValue("scrollbar-gutter");
+    root.style.setProperty("scrollbar-gutter", "stable");
+    root.style.overflow = "hidden";
+    return () => {
+      root.style.overflow = previousOverflow;
+      if (previousGutter) {
+        root.style.setProperty("scrollbar-gutter", previousGutter);
+      } else {
+        root.style.removeProperty("scrollbar-gutter");
+      }
+    };
+  }, [open]);
+}
+
+function usePrimaryColor(
+  primaryColor: string | undefined,
+  dialogRef: RefObject<HTMLDialogElement | null>
+) {
+  useEffect(() => {
+    injectFeedbackStyles();
+  }, []);
+
+  useEffect(() => {
+    if (!(primaryColor && dialogRef.current)) {
+      return;
+    }
+    const host = dialogRef.current.closest("[data-reflet-feedback]");
+    if (host instanceof HTMLElement) {
+      host.style.setProperty("--reflet-primary", primaryColor);
+    }
+  }, [primaryColor, dialogRef]);
+}
 
 export function useFeedbackDialog({
   open,
@@ -25,12 +117,11 @@ export function useFeedbackDialog({
   user: userProp,
   userToken: userTokenProp,
   primaryColor,
-  defaultCategory = "feature",
   labels: labelsProp,
   onSubmit,
   onOpen,
   onClose,
-}: Omit<FeedbackDialogProps, "theme" | "categories">) {
+}: Omit<FeedbackDialogProps, "theme">) {
   const context = useContext(RefletContext);
   const publicKey = publicKeyProp ?? context?.publicKey;
   const user = userProp ?? context?.user;
@@ -41,7 +132,6 @@ export function useFeedbackDialog({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [email, setEmail] = useState("");
-  const [category, setCategory] = useState<FeedbackCategory>(defaultCategory);
   const [honeypot, setHoneypot] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -49,210 +139,105 @@ export function useFeedbackDialog({
   const [isClosing, setIsClosing] = useState(false);
 
   const titleInputRef = useRef<HTMLInputElement>(null);
-  const dialogRef = useRef<HTMLDivElement>(null);
-  const previousActiveElement = useRef<Element | null>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
 
   const isAnonymous = !(user || userToken);
 
-  // Inject styles on mount
-  useEffect(() => {
-    injectFeedbackStyles();
-  }, []);
+  usePrimaryColor(primaryColor, dialogRef);
+  useModalDialog(open, dialogRef, titleInputRef);
+  useScrollLock(open);
 
-  // Apply primary color
-  useEffect(() => {
-    if (!(primaryColor && dialogRef.current)) {
-      return;
-    }
-    const el = dialogRef.current.closest("[data-reflet-feedback]");
-    if (el instanceof HTMLElement) {
-      el.style.setProperty("--reflet-primary", primaryColor);
-    }
-  }, [primaryColor]);
-
-  // Focus management
   useEffect(() => {
     if (open) {
-      previousActiveElement.current = document.activeElement;
       onOpen?.();
-      requestAnimationFrame(() => {
-        titleInputRef.current?.focus();
-      });
     }
   }, [open, onOpen]);
 
-  // Escape key
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-
-    const handleKeyDown = (e: globalThis.KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        handleClose();
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  });
-
-  // Lock body scroll
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = originalOverflow;
-    };
-  }, [open]);
-
-  const resetForm = useCallback(() => {
+  const resetForm = () => {
     setTitle("");
     setDescription("");
     setEmail("");
-    setCategory(defaultCategory);
     setHoneypot("");
     setError(null);
     setIsSuccess(false);
     setIsSubmitting(false);
-  }, [defaultCategory]);
+  };
 
-  const handleClose = useCallback(() => {
+  const handleClose = () => {
     setIsClosing(true);
     setTimeout(() => {
       setIsClosing(false);
       onOpenChange(false);
       onClose?.();
       resetForm();
-      // Restore focus
-      if (previousActiveElement.current instanceof HTMLElement) {
-        previousActiveElement.current.focus();
-      }
-    }, 200);
-  }, [onOpenChange, onClose, resetForm]);
+    }, CLOSE_ANIMATION_MS);
+  };
 
-  const handleSubmit = useCallback(
-    async (e: FormEvent) => {
-      e.preventDefault();
+  useBackdropDismiss(open, dialogRef, handleClose);
 
-      // Honeypot check (spam prevention)
-      if (honeypot) {
-        setIsSuccess(true);
-        return;
-      }
+  const buildDescription = () => {
+    const body = description.trim() || "No additional details provided.";
+    const contact = isAnonymous && email ? `\n\n---\nContact: ${email}` : "";
+    return `${body}${contact}`;
+  };
 
-      if (!publicKey) {
-        setError(
-          "Missing publicKey. Provide it as a prop or via RefletProvider."
-        );
-        return;
-      }
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
 
-      if (!title.trim()) {
-        setError(labels.required);
-        return;
-      }
-
-      setIsSubmitting(true);
-      setError(null);
-
-      try {
-        const client = new Reflet({
-          baseUrl,
-          publicKey,
-          user,
-          userToken,
-        });
-
-        const categoryPrefix = `[${category.charAt(0).toUpperCase() + category.slice(1)}] `;
-        const fullDescription = description.trim()
-          ? description.trim()
-          : "No additional details provided.";
-
-        const result = await client.create({
-          description: `${categoryPrefix}${fullDescription}${isAnonymous && email ? `\n\n---\nContact: ${email}` : ""}`,
-          title: title.trim(),
-        });
-
-        setIsSuccess(true);
-        onSubmit?.(result);
-
-        setTimeout(() => {
-          handleClose();
-        }, AUTO_CLOSE_DELAY);
-      } catch (err) {
-        const message =
-          err instanceof Error
-            ? err.message
-            : "Something went wrong. Please try again.";
-        setError(message);
-      } finally {
-        setIsSubmitting(false);
-      }
-    },
-    [
-      honeypot,
-      publicKey,
-      title,
-      description,
-      email,
-      category,
-      baseUrl,
-      user,
-      userToken,
-      isAnonymous,
-      labels.required,
-      onSubmit,
-      handleClose,
-    ]
-  );
-
-  const handleTrapFocus = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.key !== "Tab" || !dialogRef.current) {
+    if (honeypot) {
+      setIsSuccess(true);
       return;
     }
 
-    const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
-      'button, input, textarea, [tabindex]:not([tabindex="-1"])'
-    );
-    const first = focusable[0];
-    // biome-ignore lint/style/useAtIndex: NodeListOf doesn't support .at()
-    const last = focusable[focusable.length - 1];
-
-    if (!(first && last)) {
+    if (!publicKey) {
+      setError(
+        "Missing publicKey. Provide it as a prop or via RefletProvider."
+      );
       return;
     }
 
-    if (e.shiftKey && document.activeElement === first) {
-      e.preventDefault();
-      last.focus();
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault();
-      first.focus();
+    if (!title.trim()) {
+      setError(labels.required);
+      return;
     }
-  }, []);
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const client = new Reflet({ baseUrl, publicKey, user, userToken });
+      const result = await client.create({
+        description: buildDescription(),
+        title: title.trim(),
+      });
+
+      setIsSuccess(true);
+      onSubmit?.(result);
+      setTimeout(handleClose, AUTO_CLOSE_DELAY);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong. Please try again."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return {
-    category,
     description,
     dialogRef,
     email,
     error,
     handleClose,
     handleSubmit,
-    handleTrapFocus,
     honeypot,
     isAnonymous,
     isClosing,
     isSubmitting,
     isSuccess,
     labels,
-    setCategory,
     setDescription,
     setEmail,
     setError,

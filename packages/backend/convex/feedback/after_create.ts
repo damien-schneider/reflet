@@ -45,7 +45,7 @@ export async function scheduleAfterCreate(
     await ctx.scheduler.runAfter(
       0,
       internal.feedback.auto_tagging_actions.processAutoTagging,
-      { feedbackId }
+      { applyModeration: true, feedbackId }
     );
   }
   if (options.aiEnrichment) {
@@ -59,6 +59,10 @@ export async function scheduleAfterCreate(
       internal.feedback.draft_reply.generateDraftReplyAction,
       { feedbackId }
     );
+  }
+
+  if (options.autoTagging) {
+    return;
   }
 
   const feedback = await ctx.db.get(feedbackId);

@@ -7,16 +7,20 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@ctrl-ui/react/ui/collapsible";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@ctrl-ui/react/ui/tooltip";
 import {
   CaretDown,
   ClockCounterClockwise,
   GithubLogo,
   Lightning,
-  Spinner,
   X,
 } from "@phosphor-icons/react";
 import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
 import {
   GROUPING_OPTIONS,
   type GroupingStrategy,
@@ -47,14 +51,23 @@ export function TriggerView({
 }: TriggerViewProps) {
   return (
     <div className="relative mb-6 rounded-xl border-2 border-muted-foreground/20 border-dashed p-8">
-      <button
-        aria-label="Dismiss"
-        className="absolute top-3 right-3 rounded-md p-1 text-muted-foreground transition-colors hover:text-foreground"
-        onClick={onDismiss}
-        type="button"
-      >
-        <X className="h-4 w-4" />
-      </button>
+      <Tooltip>
+        <TooltipTrigger
+          aria-label="Dismiss"
+          render={
+            <Button
+              className="absolute top-3 right-3"
+              iconOnly
+              onClick={onDismiss}
+              size="md"
+              variant="ghost"
+            />
+          }
+        >
+          <X className="h-4 w-4" />
+        </TooltipTrigger>
+        <TooltipContent>Dismiss</TooltipContent>
+      </Tooltip>
 
       <div className="flex flex-col items-center gap-4 text-center">
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
@@ -71,7 +84,7 @@ export function TriggerView({
 
         {error && (
           <div className="w-full max-w-md rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2">
-            <p className="text-destructive text-sm">{error}</p>
+            <p className="text-destructive-text text-sm">{error}</p>
           </div>
         )}
 
@@ -92,7 +105,7 @@ export function TriggerView({
         >
           {isStarting ? (
             <>
-              <Spinner className="h-4 w-4 animate-spin" />
+              <Spinner />
               Starting...
             </>
           ) : (
@@ -111,26 +124,34 @@ export function TriggerView({
           <CollapsibleContent>
             <div className="mt-3 flex w-full max-w-sm flex-col gap-3 text-left">
               <div className="flex flex-col gap-1.5">
-                <Label className="text-muted-foreground text-xs">
+                <span
+                  className="text-muted-foreground text-xs"
+                  id="retroactive-grouping-label"
+                >
                   Group by
-                </Label>
-                <div className="inline-flex rounded-md border">
-                  {GROUPING_OPTIONS.map((option) => (
-                    <button
-                      className={cn(
-                        "px-3 py-1.5 text-xs transition-colors first:rounded-l-md last:rounded-r-md",
-                        groupingStrategy === option.value
-                          ? "bg-primary text-primary-foreground"
-                          : "text-muted-foreground hover:text-foreground"
-                      )}
-                      key={option.value}
-                      onClick={() => setGroupingStrategy(option.value)}
-                      type="button"
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
+                </span>
+                <fieldset
+                  aria-labelledby="retroactive-grouping-label"
+                  className="inline-flex min-w-0 gap-1"
+                >
+                  {GROUPING_OPTIONS.map((option) => {
+                    const selected = groupingStrategy === option.value;
+                    return (
+                      <Button
+                        active={selected}
+                        aria-pressed={selected}
+                        key={option.value}
+                        onClick={() => setGroupingStrategy(option.value)}
+                        size="sm"
+                        tone={selected ? "primary" : "neutral"}
+                        type="button"
+                        variant={selected ? "solid" : "ghost"}
+                      >
+                        {option.label}
+                      </Button>
+                    );
+                  })}
+                </fieldset>
               </div>
 
               <div className="flex items-center gap-2">
@@ -155,5 +176,3 @@ export function TriggerView({
     </div>
   );
 }
-
-// --- Progress View ---

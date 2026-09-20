@@ -27,7 +27,7 @@ export function AiMiniIndicator({
   const color = AI_INDICATOR_COLORS[type] ?? "gray";
   return (
     <TagBadge
-      className="h-5 gap-0.5 rounded-full px-1.5 font-normal text-[10px]"
+      className="h-5 gap-0.5 rounded-full px-1.5 font-normal text-caption"
       color={color}
     >
       {isAiValue && (

@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { WIDGET_MARKER } from "../core/capture";
 import {
   describeElement,
   describeRegion,
@@ -7,6 +6,7 @@ import {
 } from "../core/element-selector";
 import { getFiberFromNode, resolveComponentStack } from "../core/react-source";
 import type { FeedbackWidgetLabels } from "../types";
+import { AIM_KEYS, isWidgetOwned, stepAim } from "./floating/element-walk";
 import { ArrowIcon } from "./icons";
 import {
   onViewportChange,
@@ -26,10 +26,6 @@ interface HoverTarget {
   label: string;
   rect: DOMRect;
   region?: string;
-}
-
-function isWidgetOwned(element: Element): boolean {
-  return element.closest(`[${WIDGET_MARKER}]`) !== null;
 }
 
 /** Events raised by the picker's own note card must reach it, never be swallowed. */
@@ -105,6 +101,7 @@ export function ElementPicker({
   const noteRef = useRef<HTMLTextAreaElement>(null);
   const pinnedRef = useRef(false);
   const [view, setView] = useState(visibleViewport);
+  const aimRef = useRef<Element | null>(null);
 
   useEffect(() => onViewportChange(() => setView(visibleViewport())), []);
 
@@ -114,6 +111,10 @@ export function ElementPicker({
       noteRef.current?.focus({ preventScroll: true });
     }
   }, [pinned]);
+
+  useEffect(() => {
+    aimRef.current = target?.element ?? null;
+  }, [target]);
 
   useEffect(() => {
     const swallow = (event: Event) => {
@@ -169,11 +170,17 @@ export function ElementPicker({
       }
     };
 
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") {
+    const moveAim = (key: string, backwards: boolean) => {
+      const next = stepAim(aimRef.current, key, backwards);
+      if (!next) {
         return;
       }
-      swallow(event);
+      next.scrollIntoView({ block: "nearest", inline: "nearest" });
+      aimRef.current = next;
+      setTarget(describeTarget(next));
+    };
+
+    const onEscape = () => {
       if (pinnedRef.current) {
         setPinned(null);
         setNote("");
@@ -182,7 +189,29 @@ export function ElementPicker({
       onCancel();
     };
 
-    // Aiming and the pinned card both track the element while the page scrolls.
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        swallow(event);
+        onEscape();
+        return;
+      }
+      if (pinnedRef.current || targetsWidget(event)) {
+        return;
+      }
+      if (event.key === "Enter") {
+        swallow(event);
+        if (aimRef.current) {
+          setPinned(describeTarget(aimRef.current));
+        }
+        return;
+      }
+      if (!AIM_KEYS.includes(event.key)) {
+        return;
+      }
+      swallow(event);
+      moveAim(event.key, event.shiftKey);
+    };
+
     const onScroll = () => {
       setTarget((current) =>
         current
@@ -237,8 +266,7 @@ export function ElementPicker({
           data-pinned={pinned !== null}
           style={{
             height: rect.height,
-            left: rect.left,
-            top: rect.top,
+            translate: `${rect.left}px ${rect.top}px`,
             width: rect.width,
           }}
         />
@@ -247,10 +275,11 @@ export function ElementPicker({
         <div
           className="picker-label"
           style={{
-            left: Math.max(4, rect.left),
-            top: labelAbove
-              ? rect.top - LABEL_HEIGHT - LABEL_GAP
-              : rect.bottom + LABEL_GAP,
+            translate: `${Math.max(4, rect.left)}px ${
+              labelAbove
+                ? rect.top - LABEL_HEIGHT - LABEL_GAP
+                : rect.bottom + LABEL_GAP
+            }px`,
           }}
         >
           <strong>
@@ -316,7 +345,9 @@ export function ElementPicker({
       ) : (
         <div className="picker-hint">
           <span className="picker-instruction">
-            {labels.pickElementHint} <kbd>Esc</kbd>
+            {labels.pickElementHint} <kbd>Tab</kbd>
+            <kbd>Enter</kbd>
+            <kbd>Esc</kbd>
           </span>
           <button className="picker-cancel" onClick={onCancel} type="button">
             {labels.cancel}

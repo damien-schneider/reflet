@@ -64,7 +64,6 @@ export function ReleaseSetupWizard({
     }
   );
 
-  // Initialize targetBranch from the GitHub connection's default branch
   useEffect(() => {
     if (githubConnection?.repositoryDefaultBranch) {
       setConfig((prev) => ({
@@ -131,14 +130,13 @@ export function ReleaseSetupWizard({
         className="gap-0 overflow-hidden p-0 md:w-140 md:max-w-140"
         side="right"
       >
-        {/* Header */}
         <SheetHeader className="flex shrink-0 flex-row items-center justify-between gap-2 border-b px-4 py-3">
           <div className="flex flex-col gap-0.5">
             <SheetTitle className="flex items-center gap-2">
               <GithubLogo className="h-5 w-5" />
               Release Setup
             </SheetTitle>
-            <SheetDescription>
+            <SheetDescription className="tabular-nums">
               Step {step} of {TOTAL_STEPS} — Configure your release workflow
             </SheetDescription>
           </div>
@@ -157,7 +155,6 @@ export function ReleaseSetupWizard({
           </SheetClose>
         </SheetHeader>
 
-        {/* Progress bar */}
         <div className="flex gap-1 px-4 pt-3">
           {[1, 2, 3].map((s) => (
             <div
@@ -170,7 +167,6 @@ export function ReleaseSetupWizard({
           ))}
         </div>
 
-        {/* Step content */}
         <ScrollArea className="flex-1">
           <div className="px-4 py-4">
             {step === 1 && (
@@ -198,7 +194,6 @@ export function ReleaseSetupWizard({
           </div>
         </ScrollArea>
 
-        {/* Navigation */}
         <div className="flex shrink-0 items-center justify-between border-t px-4 py-3">
           <Button
             disabled={!canGoBack}

@@ -11,11 +11,13 @@
     "deploy": "convex deploy",
     "dev": "convex dev",
     "dev:setup": "convex dev --configure --until-success",
+    "smoke:triage": "bun scripts/smoke-triage.ts",
     "test:unit": "vitest run",
     "verify:stripe": "tsx scripts/verify-stripe-setup.ts",
     "verify:stripe:prod": "STRIPE_MODE=production tsx scripts/verify-stripe-setup.ts"
   },
   "dependencies": {
+    "@ai-sdk/typesafe-ai": "^3.0.4",
     "@convex-dev/agent": "^0.7.3",
     "@convex-dev/better-auth": "catalog:",
     "@convex-dev/rate-limiter": "^0.4.0",

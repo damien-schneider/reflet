@@ -120,7 +120,7 @@ export function DuplicateReviewPanel({
       {/* Pending Duplicates */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
-          <Warning className="size-5 text-amber-500" weight="fill" />
+          <Warning className="size-5 text-warning" weight="fill" />
           <h3 className="font-semibold text-lg">
             Pending Review ({pendingDuplicates.length})
           </h3>
@@ -130,7 +130,7 @@ export function DuplicateReviewPanel({
           <Card>
             <CardContent className="py-8 text-center">
               <CheckCircle
-                className="mx-auto mb-2 size-8 text-green-500"
+                className="mx-auto mb-2 size-8 text-success"
                 weight="fill"
               />
               <p className="text-muted-foreground text-sm">

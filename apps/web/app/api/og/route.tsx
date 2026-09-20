@@ -3,10 +3,10 @@ import type { NextRequest } from "next/server";
 import { renderHomepageOg } from "./og-homepage";
 import {
   BG_CREAM,
-  OLIVE_100,
-  OLIVE_300,
-  OLIVE_400,
-  OLIVE_600,
+  INK_SOFT,
+  RULE,
+  RULE_STRONG,
+  SURFACE,
   TEXT_DARK,
   TEXT_MUTED,
   truncate,
@@ -79,10 +79,9 @@ export async function GET(request: NextRequest) {
         width: "100%",
       }}
     >
-      {/* Decorative olive vertical accent */}
       <div
         style={{
-          background: `linear-gradient(180deg, ${OLIVE_600}, ${OLIVE_300})`,
+          background: `linear-gradient(180deg, ${INK_SOFT}, ${RULE})`,
           borderRadius: "2px",
           height: "80px",
           position: "absolute",
@@ -95,7 +94,7 @@ export async function GET(request: NextRequest) {
       {/* Bottom decorative line */}
       <div
         style={{
-          background: `linear-gradient(90deg, ${OLIVE_600} 0%, ${OLIVE_300} 40%, transparent 100%)`,
+          background: `linear-gradient(90deg, ${INK_SOFT} 0%, ${RULE} 40%, transparent 100%)`,
           bottom: "0",
           height: "4px",
           left: "0",
@@ -129,10 +128,10 @@ export async function GET(request: NextRequest) {
           <div
             style={{
               alignItems: "center",
-              background: OLIVE_100,
-              border: `1px solid ${OLIVE_300}`,
+              background: SURFACE,
+              border: `1px solid ${RULE}`,
               borderRadius: "6px",
-              color: OLIVE_600,
+              color: INK_SOFT,
               display: "flex",
               fontFamily: "Inter SemiBold",
               fontSize: "14px",
@@ -202,7 +201,7 @@ export async function GET(request: NextRequest) {
         >
           <div
             style={{
-              background: OLIVE_600,
+              background: INK_SOFT,
               borderRadius: "50%",
               height: "8px",
               width: "8px",
@@ -220,7 +219,7 @@ export async function GET(request: NextRequest) {
         </div>
         <span
           style={{
-            color: OLIVE_400,
+            color: RULE_STRONG,
             fontFamily: "Instrument Serif Italic",
             fontSize: "18px",
             fontStyle: "italic",

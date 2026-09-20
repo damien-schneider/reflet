@@ -1,9 +1,9 @@
 import { ImageResponse } from "next/og";
 import {
   BG_CREAM,
-  OLIVE_300,
-  OLIVE_400,
-  OLIVE_600,
+  INK_SOFT,
+  RULE,
+  RULE_STRONG,
   TEXT_DARK,
   TEXT_MUTED,
 } from "./og-theme";
@@ -38,7 +38,7 @@ export function renderHomepageOg({
       {/* Bottom decorative line */}
       <div
         style={{
-          background: `linear-gradient(90deg, transparent 0%, ${OLIVE_600} 30%, ${OLIVE_600} 70%, transparent 100%)`,
+          background: `linear-gradient(90deg, transparent 0%, ${INK_SOFT} 30%, ${INK_SOFT} 70%, transparent 100%)`,
           bottom: "0",
           height: "4px",
           left: "0",
@@ -89,7 +89,7 @@ export function renderHomepageOg({
           </div>
           <div
             style={{
-              color: OLIVE_400,
+              color: RULE_STRONG,
               fontFamily: "Instrument Serif Italic",
               fontSize: "36px",
               fontStyle: "italic",
@@ -113,7 +113,7 @@ export function renderHomepageOg({
       >
         <div
           style={{
-            background: OLIVE_600,
+            background: INK_SOFT,
             borderRadius: "50%",
             height: "6px",
             width: "6px",
@@ -128,10 +128,10 @@ export function renderHomepageOg({
         >
           reflet.app
         </span>
-        <span style={{ color: OLIVE_300, fontSize: "18px" }}>·</span>
+        <span style={{ color: RULE, fontSize: "18px" }}>·</span>
         <span
           style={{
-            color: OLIVE_400,
+            color: RULE_STRONG,
             fontSize: "18px",
           }}
         >

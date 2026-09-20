@@ -1,6 +1,11 @@
 "use client";
 
 import { Button } from "@ctrl-ui/react/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@ctrl-ui/react/ui/tooltip";
 import { Desktop, Moon, Sun } from "@phosphor-icons/react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
@@ -25,7 +30,7 @@ export const themeLabels: Record<Theme, string> = {
 };
 
 const isValidTheme = (value: string | undefined): value is Theme =>
-  typeof value === "string" && (themes as readonly string[]).includes(value);
+  themes.some((theme) => theme === value);
 
 const getTheme = (theme: string | undefined): Theme =>
   isValidTheme(theme) ? theme : "system";
@@ -52,91 +57,56 @@ export function useThemeToggle() {
 }
 
 export function ThemeToggle({ className }: { className?: string }) {
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const { cycleTheme, Icon, label, mounted } = useThemeToggle();
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const cycleTheme = () => {
-    const currentIndex = themes.indexOf(getTheme(theme));
-    const nextIndex = (currentIndex + 1) % themes.length;
-    setTheme(themes[nextIndex]);
-  };
-
-  // Prevent hydration mismatch
   if (!mounted) {
     return (
       <Button
-        className={cn("h-8 w-8", className)}
+        aria-label="Toggle theme"
+        className={cn("size-10", className)}
         disabled
         iconOnly
         variant="ghost"
       >
-        <Desktop className="h-4 w-4" />
-        <span className="sr-only">Toggle theme</span>
+        <Desktop className="size-4" />
       </Button>
     );
   }
 
-  const currentTheme = getTheme(theme);
-  const Icon = themeIcons[currentTheme];
+  const description = `Theme: ${label}. Activate to change it.`;
 
   return (
-    <Button
-      className={cn("h-8 w-8", className)}
-      iconOnly
-      onClick={cycleTheme}
-      title={`Theme: ${themeLabels[currentTheme]}`}
-      variant="ghost"
-    >
-      <Icon className="h-4 w-4" />
-      <span className="sr-only">
-        Theme: {themeLabels[currentTheme]}. Click to change.
-      </span>
-    </Button>
+    <Tooltip>
+      <TooltipTrigger
+        aria-label={description}
+        render={
+          <Button
+            className={cn("size-10", className)}
+            iconOnly
+            onClick={cycleTheme}
+            variant="ghost"
+          />
+        }
+      >
+        <Icon className="size-4" />
+      </TooltipTrigger>
+      <TooltipContent>{description}</TooltipContent>
+    </Tooltip>
   );
 }
 
 export function ThemeToggleWithLabel({ className }: { className?: string }) {
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const cycleTheme = () => {
-    const currentIndex = themes.indexOf(getTheme(theme));
-    const nextIndex = (currentIndex + 1) % themes.length;
-    setTheme(themes[nextIndex]);
-  };
-
-  if (!mounted) {
-    return (
-      <Button
-        className={cn("h-8 w-full justify-start gap-2 px-2", className)}
-        disabled
-        variant="ghost"
-      >
-        <Desktop className="h-4 w-4" />
-        <span className="text-sm">System</span>
-      </Button>
-    );
-  }
-
-  const currentTheme = getTheme(theme);
-  const Icon = themeIcons[currentTheme];
+  const { cycleTheme, Icon, label, mounted } = useThemeToggle();
 
   return (
     <Button
-      className={cn("h-8 w-full justify-start gap-2 px-2", className)}
+      className={cn("h-10 w-full justify-start gap-2 px-2", className)}
+      disabled={!mounted}
       onClick={cycleTheme}
       variant="ghost"
     >
-      <Icon className="h-4 w-4" />
-      <span className="text-sm">{themeLabels[currentTheme]}</span>
+      <Icon className="size-4" />
+      <span className="text-sm">{label}</span>
     </Button>
   );
 }
