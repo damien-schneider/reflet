@@ -52,7 +52,7 @@ describe("Auto-tagging database operations", () => {
     });
 
     await expect(
-      t.query(api.feedback.auto_tagging.getUntaggedFeedbackCount, {
+      t.query(api.feedback.auto_tagging.getTriageCounts, {
         organizationId: orgId,
       })
     ).rejects.toThrow("Not authenticated");
@@ -259,20 +259,146 @@ describe("Auto-tagging database operations", () => {
   });
 });
 
-describe("Auto-tagging model configuration", () => {
-  test("model fallback chain should be defined correctly", () => {
-    // Verify the models are configured correctly
-    const expectedModels = [
-      "arcee-ai/trinity-large-preview:free",
-      "upstage/solar-pro-3:free",
-      "z-ai/glm-4.7-flash",
-    ];
+describe("Triage scope selection", () => {
+  test("untriaged skips analysed and hand-tagged items, all keeps them", async () => {
+    const t = convexTest(schema, modules);
 
-    // These models should be the ones used for auto-tagging
-    // This test documents the expected configuration
-    expect(expectedModels).toHaveLength(3);
-    expect(expectedModels[0]).toContain("arcee-ai");
-    expect(expectedModels[1]).toContain("upstage");
-    expect(expectedModels[2]).toContain("z-ai");
+    const { orgId, freshId } = await t.run(async (ctx) => {
+      const orgId = await ctx.db.insert("organizations", {
+        createdAt: Date.now(),
+        isPublic: false,
+        name: "Test Org",
+        slug: "test-org-scope",
+        subscriptionStatus: "none",
+        subscriptionTier: "free",
+      });
+
+      const insertFeedback = async (
+        title: string,
+        extra: Record<string, unknown> = {}
+      ) =>
+        await ctx.db.insert("feedback", {
+          commentCount: 0,
+          createdAt: Date.now(),
+          description: "Something happened",
+          isApproved: true,
+          isPinned: false,
+          organizationId: orgId,
+          status: "open",
+          title,
+          updatedAt: Date.now(),
+          voteCount: 0,
+          ...extra,
+        });
+
+      const freshId = await insertFeedback("Fresh");
+      await insertFeedback("Analysed", { aiPriorityGeneratedAt: Date.now() });
+      await insertFeedback("Deleted", { deletedAt: Date.now() });
+
+      const handTaggedId = await insertFeedback("Hand tagged");
+      const tagId = await ctx.db.insert("tags", {
+        color: "#FF0000",
+        createdAt: Date.now(),
+        name: "Bug",
+        organizationId: orgId,
+        slug: "bug",
+        updatedAt: Date.now(),
+      });
+      await ctx.db.insert("feedbackTags", {
+        appliedByAi: false,
+        feedbackId: handTaggedId,
+        tagId,
+      });
+
+      return { freshId, orgId };
+    });
+
+    const untriaged = await t.query(
+      internal.feedback.auto_tagging.getFeedbackIdsForTriage,
+      { organizationId: orgId, scope: "untriaged" }
+    );
+    const all = await t.query(
+      internal.feedback.auto_tagging.getFeedbackIdsForTriage,
+      { organizationId: orgId, scope: "all" }
+    );
+
+    expect(untriaged).toEqual([freshId]);
+    expect(all).toHaveLength(3);
+    expect(all).toContain(freshId);
+  });
+});
+
+describe("Recompute reconciliation", () => {
+  test("drops AI tags the model no longer predicts but keeps manual ones", async () => {
+    const t = convexTest(schema, modules);
+
+    const { aiTagId, feedbackId, manualTagId, staleTagId } = await t.run(
+      async (ctx) => {
+        const orgId = await ctx.db.insert("organizations", {
+          createdAt: Date.now(),
+          isPublic: false,
+          name: "Test Org",
+          slug: "test-org-recompute",
+          subscriptionStatus: "none",
+          subscriptionTier: "free",
+        });
+
+        const feedbackId = await ctx.db.insert("feedback", {
+          commentCount: 0,
+          createdAt: Date.now(),
+          description: "Invoices are missing the VAT line",
+          isApproved: true,
+          isPinned: false,
+          organizationId: orgId,
+          status: "open",
+          title: "Invoices unusable",
+          updatedAt: Date.now(),
+          voteCount: 0,
+        });
+
+        const insertTag = async (name: string) =>
+          await ctx.db.insert("tags", {
+            color: "#FF0000",
+            createdAt: Date.now(),
+            name,
+            organizationId: orgId,
+            slug: name.toLowerCase(),
+            updatedAt: Date.now(),
+          });
+
+        const staleTagId = await insertTag("Mobile");
+        const manualTagId = await insertTag("Enterprise");
+        const aiTagId = await insertTag("Billing");
+
+        await ctx.db.insert("feedbackTags", {
+          appliedByAi: true,
+          feedbackId,
+          tagId: staleTagId,
+        });
+        await ctx.db.insert("feedbackTags", {
+          appliedByAi: false,
+          feedbackId,
+          tagId: manualTagId,
+        });
+
+        return { aiTagId, feedbackId, manualTagId, staleTagId };
+      }
+    );
+
+    await t.mutation(internal.feedback.auto_tagging_jobs.applyAutoTags, {
+      feedbackId,
+      tagIds: [aiTagId],
+    });
+
+    const tagIds = await t.run(async (ctx) => {
+      const links = await ctx.db.query("feedbackTags").collect();
+      return links
+        .filter((link) => link.feedbackId === feedbackId)
+        .map((link) => link.tagId);
+    });
+
+    expect(tagIds).toContain(aiTagId);
+    expect(tagIds).toContain(manualTagId);
+    expect(tagIds).not.toContain(staleTagId);
   });
 });

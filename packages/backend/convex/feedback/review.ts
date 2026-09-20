@@ -48,6 +48,7 @@ export const collectPendingReview = async (
     .map((feedback) => ({
       _id: feedback._id,
       aiJunk: feedback.aiJunk,
+      aiNeedsReview: feedback.aiNeedsReview,
       aiUsefulness: feedback.aiUsefulness,
       createdAt: feedback.createdAt,
       description: feedback.description,

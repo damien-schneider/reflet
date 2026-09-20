@@ -1,42 +1,60 @@
 import { v } from "convex/values";
-import type { Id } from "../_generated/dataModel";
-import { internalQuery, query } from "../_generated/server";
+import type { Doc, Id } from "../_generated/dataModel";
+import { internalQuery, type QueryCtx, query } from "../_generated/server";
 import { requireOrgMember } from "../shared/access";
+import { triageScopeValidator } from "./triage_scope";
 
-export const getUntaggedFeedbackCount = query({
+/**
+ * Single pass over an organization's live feedback: everything triage may run
+ * on, plus the subset nothing has analysed or tagged yet.
+ */
+const partitionForTriage = async (
+  ctx: QueryCtx,
+  organizationId: Id<"organizations">
+) => {
+  const feedbackItems = await ctx.db
+    .query("feedback")
+    .withIndex("by_organization", (q) => q.eq("organizationId", organizationId))
+    .collect();
+
+  const live: Doc<"feedback">[] = [];
+  const untriaged: Doc<"feedback">[] = [];
+
+  for (const feedback of feedbackItems) {
+    if (feedback.deletedAt || feedback.isMerged) {
+      continue;
+    }
+
+    live.push(feedback);
+
+    if (feedback.aiPriorityGeneratedAt) {
+      continue;
+    }
+
+    const tag = await ctx.db
+      .query("feedbackTags")
+      .withIndex("by_feedback", (q) => q.eq("feedbackId", feedback._id))
+      .first();
+
+    if (!tag) {
+      untriaged.push(feedback);
+    }
+  }
+
+  return { live, untriaged };
+};
+
+export const getTriageCounts = query({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
     await requireOrgMember(ctx, args.organizationId);
 
-    const feedbackItems = await ctx.db
-      .query("feedback")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .collect();
+    const { live, untriaged } = await partitionForTriage(
+      ctx,
+      args.organizationId
+    );
 
-    let untaggedCount = 0;
-    for (const feedback of feedbackItems) {
-      // Skip deleted or merged feedback
-      if (feedback.deletedAt || feedback.isMerged) {
-        continue;
-      }
-
-      if (feedback.aiPriorityGeneratedAt) {
-        continue;
-      }
-
-      const tags = await ctx.db
-        .query("feedbackTags")
-        .withIndex("by_feedback", (q) => q.eq("feedbackId", feedback._id))
-        .first();
-
-      if (!tags) {
-        untaggedCount++;
-      }
-    }
-
-    return untaggedCount;
+    return { all: live.length, untriaged: untriaged.length };
   },
 });
 
@@ -164,44 +182,19 @@ export const getFeedbackForAutoTagging = internalQuery({
   },
 });
 
-export const getUntaggedFeedbackIds = internalQuery({
+export const getFeedbackIdsForTriage = internalQuery({
   args: {
-    limit: v.optional(v.number()),
     organizationId: v.id("organizations"),
+    scope: triageScopeValidator,
   },
   handler: async (ctx, args): Promise<Id<"feedback">[]> => {
-    const feedbackItems = await ctx.db
-      .query("feedback")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .collect();
+    const { live, untriaged } = await partitionForTriage(
+      ctx,
+      args.organizationId
+    );
 
-    const untaggedIds: Id<"feedback">[] = [];
+    const targets = args.scope === "all" ? live : untriaged;
 
-    for (const feedback of feedbackItems) {
-      // Skip deleted or merged feedback
-      if (feedback.deletedAt || feedback.isMerged) {
-        continue;
-      }
-
-      if (feedback.aiPriorityGeneratedAt) {
-        continue;
-      }
-
-      const tag = await ctx.db
-        .query("feedbackTags")
-        .withIndex("by_feedback", (q) => q.eq("feedbackId", feedback._id))
-        .first();
-
-      if (!tag) {
-        untaggedIds.push(feedback._id);
-        if (args.limit && untaggedIds.length >= args.limit) {
-          break;
-        }
-      }
-    }
-
-    return untaggedIds;
+    return targets.map((feedback) => feedback._id);
   },
 });

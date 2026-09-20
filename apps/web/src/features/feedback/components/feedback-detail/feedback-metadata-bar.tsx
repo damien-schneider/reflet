@@ -24,6 +24,7 @@ interface FeedbackMetadataBarProps {
     | "very_complex"
     | null;
   aiComplexityReasoning?: string | null;
+  aiNeedsReview?: number | null;
   aiPriority?: "critical" | "high" | "medium" | "low" | "none" | null;
   aiPriorityReasoning?: string | null;
   aiTimeEstimate?: string | null;
@@ -77,6 +78,7 @@ export function FeedbackMetadataBar({
   aiPriorityReasoning,
   aiComplexity,
   aiComplexityReasoning,
+  aiNeedsReview,
   aiTimeEstimate,
   priority,
   complexity,
@@ -200,7 +202,6 @@ export function FeedbackMetadataBar({
         voteCount={voteCount}
       />
 
-      {/* Status */}
       <StatusDisplay
         currentStatus={currentStatus}
         isAdmin={isAdmin}
@@ -209,7 +210,6 @@ export function FeedbackMetadataBar({
         statusId={organizationStatusId}
       />
 
-      {/* Tags */}
       <TagDisplay
         availableTags={availableTags}
         feedbackTagIds={feedbackTagIds}
@@ -218,10 +218,10 @@ export function FeedbackMetadataBar({
         validTags={validTags}
       />
 
-      {/* AI Analysis (priority, complexity, time estimate) */}
       <AiAnalysisDisplay
         aiComplexity={aiComplexity}
         aiComplexityReasoning={aiComplexityReasoning}
+        aiNeedsReview={aiNeedsReview}
         aiPriority={aiPriority}
         aiPriorityReasoning={aiPriorityReasoning}
         aiTimeEstimate={aiTimeEstimate}
@@ -232,7 +232,6 @@ export function FeedbackMetadataBar({
         timeEstimate={timeEstimate}
       />
 
-      {/* Deadline */}
       {isAdmin && (
         <DeadlineDisplay
           deadline={deadline}
@@ -243,7 +242,6 @@ export function FeedbackMetadataBar({
         />
       )}
 
-      {/* Assignee */}
       <AssigneeDisplay
         assignee={assignee}
         isAdmin={isAdmin}
@@ -251,10 +249,8 @@ export function FeedbackMetadataBar({
         onAssigneeChange={handleAssigneeChange}
       />
 
-      {/* Spacer */}
       <div className="flex-1" />
 
-      {/* Copy for agents (admin only) */}
       {isAdmin && (
         <CopyForAgents
           attachments={attachments}

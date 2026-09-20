@@ -1,7 +1,13 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { toast } from "@ctrl-ui/react/ui/toast";
+import { ArrowsClockwise } from "@phosphor-icons/react";
+import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { useMutation } from "convex/react";
 
+import { NeedsReviewBadge } from "../needs-review-badge";
 import type { Complexity, Priority } from "./ai-analysis-types";
 import { ComplexityBadge } from "./complexity-badge";
 import { PriorityBadge } from "./priority-badge";
@@ -10,6 +16,7 @@ import { TimeEstimateBadge } from "./time-estimate-badge";
 export interface AiAnalysisDisplayProps {
   aiComplexity?: Complexity | null;
   aiComplexityReasoning?: string | null;
+  aiNeedsReview?: number | null;
   aiPriority?: Priority | null;
   aiPriorityReasoning?: string | null;
   aiTimeEstimate?: string | null;
@@ -26,12 +33,17 @@ export function AiAnalysisDisplay({
   aiPriorityReasoning,
   aiComplexity,
   aiComplexityReasoning,
+  aiNeedsReview,
   aiTimeEstimate,
   priority,
   complexity,
   timeEstimate,
   isAdmin,
 }: AiAnalysisDisplayProps) {
+  const recomputeAnalysis = useMutation(
+    api.feedback.auto_tagging_jobs.recomputeFeedbackAnalysis
+  );
+
   if (!isAdmin) {
     return null;
   }
@@ -40,18 +52,23 @@ export function AiAnalysisDisplay({
   const effectiveComplexity = complexity ?? aiComplexity;
   const effectiveTimeEstimate = timeEstimate ?? aiTimeEstimate;
 
-  const hasAnyAnalysis =
-    effectivePriority || effectiveComplexity || effectiveTimeEstimate;
-
-  if (!hasAnyAnalysis) {
-    return null;
-  }
-
   const isPriorityOverridden = priority !== null && priority !== aiPriority;
   const isComplexityOverridden =
     complexity !== null && complexity !== aiComplexity;
   const isTimeOverridden =
     timeEstimate !== null && timeEstimate !== aiTimeEstimate;
+
+  const handleRecompute = async () => {
+    try {
+      await recomputeAnalysis({ feedbackId });
+      toast.success("Recomputing analysis");
+    } catch (error) {
+      toast.error("Failed to recompute analysis", {
+        description:
+          error instanceof Error ? error.message : "An error occurred",
+      });
+    }
+  };
 
   return (
     <div className="flex items-center gap-1.5">
@@ -87,6 +104,16 @@ export function AiAnalysisDisplay({
           isOverridden={isTimeOverridden}
         />
       )}
+      <NeedsReviewBadge probability={aiNeedsReview} />
+      <Button
+        aria-label="Recompute AI analysis"
+        iconOnly
+        onClick={handleRecompute}
+        size="xs"
+        variant="ghost"
+      >
+        <ArrowsClockwise className="h-3.5 w-3.5" />
+      </Button>
     </div>
   );
 }

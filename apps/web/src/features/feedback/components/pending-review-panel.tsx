@@ -23,6 +23,7 @@ import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import { useState } from "react";
 import { AiMiniIndicator } from "./ai-mini-indicator";
+import { NeedsReviewBadge } from "./needs-review-badge";
 
 const PERCENTAGE_SCALE = 100;
 const LOW_USEFULNESS_PERCENTAGE = 25;
@@ -155,7 +156,13 @@ export function PendingReviewPanel({
                     {formatDistanceToNow(item.createdAt, { addSuffix: true })}
                   </CardDescription>
                 </div>
-                <HoldReason junk={item.aiJunk} usefulness={item.aiUsefulness} />
+                <div className="flex shrink-0 items-center gap-1">
+                  <HoldReason
+                    junk={item.aiJunk}
+                    usefulness={item.aiUsefulness}
+                  />
+                  <NeedsReviewBadge probability={item.aiNeedsReview} />
+                </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">

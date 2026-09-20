@@ -7,6 +7,7 @@ import { VoteButton } from "@/features/feedback/components/vote-button";
 import { cn } from "@/lib/utils";
 import { AiMiniIndicator } from "./ai-mini-indicator";
 import { FeedbackDeleteMenu } from "./feedback-delete-menu";
+import { NeedsReviewBadge, needsHumanReview } from "./needs-review-badge";
 
 interface FeedbackTag {
   _id: Id<"tags">;
@@ -123,7 +124,9 @@ export function FeedbackListItem({
                   </div>
                 )}
 
-                {(effectivePriority || effectiveComplexity) && (
+                {(effectivePriority ||
+                  effectiveComplexity ||
+                  needsHumanReview(feedback.aiNeedsReview)) && (
                   <div className="mt-1.5 flex items-center gap-1">
                     {effectivePriority && (
                       <AiMiniIndicator
@@ -139,6 +142,7 @@ export function FeedbackListItem({
                         type={effectiveComplexity}
                       />
                     )}
+                    <NeedsReviewBadge probability={feedback.aiNeedsReview} />
                   </div>
                 )}
               </div>

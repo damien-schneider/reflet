@@ -15,9 +15,10 @@ export const jev: EvaluationModel = typeSafeAi.evaluationModel("jev-1.13");
 
 const USEFULNESS_QUESTION_ID = "usefulness";
 const JUNK_QUESTION_ID = "junk";
+const NEEDS_REVIEW_QUESTION_ID = "needsReview";
 const TAG_QUESTION_PREFIX = "tag:";
 
-const REVIEW_JUNK_THRESHOLD = 0.5;
+const WITHHOLD_JUNK_THRESHOLD = 0.5;
 const MIN_TAG_PROBABILITY = 0.65;
 const MAX_TAGS_PER_FEEDBACK = 3;
 
@@ -29,9 +30,10 @@ export interface TriageTag {
 
 export interface FeedbackTriage {
   junk: number;
-  needsReview: boolean;
+  needsReview: number;
   tagIds: Id<"tags">[];
   usefulness: number;
+  withhold: boolean;
 }
 
 export const isTriageConfigured = () => Boolean(process.env.OPENROUTER_API_KEY);
@@ -56,6 +58,16 @@ const buildQuestions = (tags: TriageTag[]) => {
       },
       instructions:
         "Should this submission be withheld from a public feedback board?",
+      type: "boolean",
+    },
+    [NEEDS_REVIEW_QUESTION_ID]: {
+      criteria: {
+        false:
+          "Self-contained: what happens, where it happens, and what the author wants are clear enough to act on as-is.",
+        true: "A teammate would have to go back to the author first: the problem, the scope, or the desired outcome is missing, contradictory, or several unrelated requests are bundled together.",
+      },
+      instructions:
+        "Does a teammate need to follow up with the author before this feedback can be acted on?",
       type: "boolean",
     },
   };
@@ -95,12 +107,16 @@ export const evaluateFeedbackTriage = async (
 
   const usefulnessAnswer = answers[USEFULNESS_QUESTION_ID];
   const junkAnswer = answers[JUNK_QUESTION_ID];
-  if (usefulnessAnswer?.type !== "boolean" || junkAnswer?.type !== "boolean") {
+  const needsReviewAnswer = answers[NEEDS_REVIEW_QUESTION_ID];
+  if (
+    usefulnessAnswer?.type !== "boolean" ||
+    junkAnswer?.type !== "boolean" ||
+    needsReviewAnswer?.type !== "boolean"
+  ) {
     throw new Error(
       "Triage evaluation returned an incomplete verdict; refusing to route feedback"
     );
   }
-  const usefulness = usefulnessAnswer.probability;
 
   const tagIds = input.tags
     .map((tag) => ({
@@ -114,8 +130,9 @@ export const evaluateFeedbackTriage = async (
 
   return {
     junk: junkAnswer.probability,
-    needsReview: junkAnswer.probability >= REVIEW_JUNK_THRESHOLD,
+    needsReview: needsReviewAnswer.probability,
     tagIds,
-    usefulness,
+    usefulness: usefulnessAnswer.probability,
+    withhold: junkAnswer.probability >= WITHHOLD_JUNK_THRESHOLD,
   };
 };

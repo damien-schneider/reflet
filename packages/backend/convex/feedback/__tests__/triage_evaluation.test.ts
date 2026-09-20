@@ -37,14 +37,16 @@ const triage = (probabilities: Record<string, number>) =>
   );
 
 describe("evaluateFeedbackTriage", () => {
-  it("keeps genuine but unactionable feedback public, recording its low score", async () => {
+  it("keeps genuine but unactionable feedback public, recording its scores", async () => {
     const result = await triage({
       junk: 0.06,
+      needsReview: 0.82,
       usefulness: 0.05,
     });
 
-    expect(result.needsReview).toBe(false);
+    expect(result.withhold).toBe(false);
     expect(result.usefulness).toBe(0.05);
+    expect(result.needsReview).toBe(0.82);
   });
 
   it("withholds junk for review while still tagging it", async () => {
@@ -54,7 +56,7 @@ describe("evaluateFeedbackTriage", () => {
       usefulness: 0.03,
     });
 
-    expect(result.needsReview).toBe(true);
+    expect(result.withhold).toBe(true);
     expect(result.tagIds).toEqual([BUG]);
   });
 
@@ -67,7 +69,7 @@ describe("evaluateFeedbackTriage", () => {
       usefulness: 0.97,
     });
 
-    expect(result.needsReview).toBe(false);
+    expect(result.withhold).toBe(false);
     expect(result.tagIds).toEqual([BUG, BILLING]);
   });
 
@@ -86,7 +88,10 @@ describe("evaluateFeedbackTriage", () => {
   it("rejects rather than resolving to junk when the verdict is incomplete", async () => {
     const dropVerdict = new MockEvaluationModel({
       doEvaluate: async () => ({
-        answers: { [`tag:${BUG}`]: { probability: 0.99, type: "boolean" } },
+        answers: {
+          junk: { probability: 0.1, type: "boolean" },
+          usefulness: { probability: 0.9, type: "boolean" },
+        },
         warnings: [],
       }),
     });
@@ -99,7 +104,7 @@ describe("evaluateFeedbackTriage", () => {
     ).rejects.toThrow();
   });
 
-  it("asks one question per tag plus the usefulness gate in a single call", async () => {
+  it("asks one question per tag plus the three verdict gates in a single call", async () => {
     let asked: Record<string, unknown> = {};
 
     await evaluateFeedbackTriage(
@@ -123,6 +128,7 @@ describe("evaluateFeedbackTriage", () => {
     expect(Object.keys(asked)).toEqual([
       "usefulness",
       "junk",
+      "needsReview",
       `tag:${BUG}`,
       `tag:${BILLING}`,
       `tag:${MOBILE}`,

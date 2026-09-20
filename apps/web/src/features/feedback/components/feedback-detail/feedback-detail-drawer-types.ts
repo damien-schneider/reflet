@@ -75,6 +75,7 @@ export interface FeedbackDetailContentProps {
         aiPriorityReasoning?: string;
         aiComplexity?: ComplexityLevel;
         aiComplexityReasoning?: string;
+        aiNeedsReview?: number;
         aiTimeEstimate?: string;
         priority?: PriorityLevel;
         complexity?: ComplexityLevel;

@@ -1,17 +1,32 @@
 "use client";
 
+import {
+  AlertDialog,
+  AlertDialogClose,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@ctrl-ui/react/ui/alert-dialog";
 import { Button } from "@ctrl-ui/react/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@ctrl-ui/react/ui/dropdown-menu";
 import {
   Progress,
   ProgressIndicator,
   ProgressTrack,
 } from "@ctrl-ui/react/ui/progress";
 import { toast } from "@ctrl-ui/react/ui/toast";
-import { Sparkle } from "@phosphor-icons/react";
+import { ArrowsClockwise, DotsThree, Sparkle } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { ResultsPopover } from "./triage-results-popover";
 
@@ -106,13 +121,70 @@ function ProcessingIndicator({
   );
 }
 
+function RecomputeAllMenu({
+  onRecompute,
+  total,
+}: {
+  onRecompute: () => void;
+  total: number;
+}) {
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <Button
+              aria-label="Triage options"
+              iconOnly
+              size="xs"
+              variant="ghost"
+            >
+              <DotsThree className="h-4 w-4" />
+            </Button>
+          }
+        />
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => setIsConfirmOpen(true)}>
+            <ArrowsClockwise className="mr-2 h-4 w-4" />
+            Recompute all ({total})
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <AlertDialog onOpenChange={setIsConfirmOpen} open={isConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Recompute all analysis</AlertDialogTitle>
+            <AlertDialogDescription>
+              This re-runs triage and AI analysis on all {total} feedback items.
+              Every item costs a model call, and existing AI tags can be
+              overwritten.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogClose>Cancel</AlertDialogClose>
+            <AlertDialogClose
+              onClick={onRecompute}
+              tone="danger"
+              variant="surface"
+            >
+              Recompute all
+            </AlertDialogClose>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}
+
 export function TriagePulse({ organizationId }: TriagePulseProps) {
   const prevJobStatusRef = useRef<string | null>(null);
 
-  const untaggedCount = useQuery(
-    api.feedback.auto_tagging.getUntaggedFeedbackCount,
-    { organizationId }
-  );
+  const triageCounts = useQuery(api.feedback.auto_tagging.getTriageCounts, {
+    organizationId,
+  });
 
   const job = useQuery(api.feedback.auto_tagging.getActiveJob, {
     organizationId,
@@ -137,19 +209,19 @@ export function TriagePulse({ organizationId }: TriagePulseProps) {
 
     if (jobStatus === "completed" && wasActive) {
       if (jobFailed > 0) {
-        toast.warning("Auto-tagging completed with errors", {
-          description: `${jobSuccessful} tagged, ${jobFailed} failed`,
+        toast.warning("Triage completed with errors", {
+          description: `${jobSuccessful} analysed, ${jobFailed} failed`,
         });
       } else {
-        toast.success("Auto-tagging complete", {
-          description: `${jobSuccessful} feedback items tagged`,
+        toast.success("Triage complete", {
+          description: `${jobSuccessful} items analysed`,
         });
       }
     }
 
     if (jobStatus === "failed" && wasActive) {
-      toast.error("Auto-tagging failed", {
-        description: `${jobSuccessful} tagged, ${jobFailed} failed`,
+      toast.error("Triage failed", {
+        description: `${jobSuccessful} analysed, ${jobFailed} failed`,
       });
     }
 
@@ -160,11 +232,11 @@ export function TriagePulse({ organizationId }: TriagePulseProps) {
     job?.status === "pending" || job?.status === "processing";
   const isCompleted = job?.status === "completed" || job?.status === "failed";
 
-  const handleTriage = async () => {
+  const startTriage = async (scope: "untriaged" | "all") => {
     try {
-      await startBulkAutoTagging({ organizationId });
+      await startBulkAutoTagging({ organizationId, scope });
     } catch (error) {
-      toast.error("Failed to start auto-tagging", {
+      toast.error("Failed to start triage", {
         description:
           error instanceof Error ? error.message : "An error occurred",
       });
@@ -200,9 +272,10 @@ export function TriagePulse({ organizationId }: TriagePulseProps) {
     );
   }
 
-  const count = untaggedCount ?? 0;
-  const allTriaged = count === 0;
-  const manyUntriaged = count >= MANY_UNTAGGED_THRESHOLD;
+  const untriagedCount = triageCounts?.untriaged ?? 0;
+  const totalCount = triageCounts?.all ?? 0;
+  const allTriaged = untriagedCount === 0;
+  const manyUntriaged = untriagedCount >= MANY_UNTAGGED_THRESHOLD;
 
   let dotColor = "bg-warning";
   if (allTriaged) {
@@ -211,27 +284,39 @@ export function TriagePulse({ organizationId }: TriagePulseProps) {
     dotColor = "bg-destructive";
   }
 
+  const recomputeMenu =
+    totalCount > 0 ? (
+      <RecomputeAllMenu
+        onRecompute={() => startTriage("all")}
+        total={totalCount}
+      />
+    ) : null;
+
   if (allTriaged) {
     return (
-      <div className="flex shrink-0 items-center gap-1.5 px-2 text-muted-foreground text-xs">
-        <span className={cn("h-2 w-2 rounded-full", dotColor)} />
-        <span>All caught up</span>
+      <div className="flex shrink-0 items-center gap-1">
+        <div className="flex items-center gap-1.5 px-2 text-muted-foreground text-xs">
+          <span className={cn("h-2 w-2 rounded-full", dotColor)} />
+          <span>All caught up</span>
+        </div>
+        {recomputeMenu}
       </div>
     );
   }
 
   return (
-    <Button
-      className="shrink-0 gap-1.5"
-      onClick={handleTriage}
-      size="xs"
-      variant="surface"
-    >
-      <PulsingDot color={dotColor} />
-      <Sparkle className="h-3.5 w-3.5" />
-      <span className="tabular-nums">
-        {count} need{count === 1 ? "s" : ""} review
-      </span>
-    </Button>
+    <div className="flex shrink-0 items-center gap-1">
+      <Button
+        className="gap-1.5"
+        onClick={() => startTriage("untriaged")}
+        size="xs"
+        variant="surface"
+      >
+        <PulsingDot color={dotColor} />
+        <Sparkle className="h-3.5 w-3.5" />
+        <span className="tabular-nums">{untriagedCount} to triage</span>
+      </Button>
+      {recomputeMenu}
+    </div>
   );
 }

@@ -73,6 +73,24 @@ describe("PendingReviewPanel", () => {
     expect(screen.getByText("12% useful")).toBeInTheDocument();
   });
 
+  it("flags items the AI wants a human to follow up on", () => {
+    mockUseQuery.mockReturnValue({
+      canApprove: true,
+      items: [{ ...pendingItem, aiNeedsReview: 0.91 }],
+    });
+    renderPanel();
+    expect(screen.getByText("Needs review")).toBeInTheDocument();
+  });
+
+  it("omits the needs-review chip for a low probability", () => {
+    mockUseQuery.mockReturnValue({
+      canApprove: true,
+      items: [{ ...pendingItem, aiNeedsReview: 0.2 }],
+    });
+    renderPanel();
+    expect(screen.queryByText("Needs review")).not.toBeInTheDocument();
+  });
+
   it("approves through the shared update mutation", async () => {
     mockUseQuery.mockReturnValue({ canApprove: true, items: [pendingItem] });
     renderPanel();

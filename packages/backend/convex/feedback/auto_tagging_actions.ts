@@ -14,14 +14,15 @@ import {
   type FeedbackTriage,
   isTriageConfigured,
 } from "./triage_evaluation";
+import { triageScopeValidator } from "./triage_scope";
 
 const moderate = async (
   ctx: ActionCtx,
   feedbackId: Id<"feedback">,
-  needsReview: boolean
+  withhold: boolean
 ) => {
   await ctx.runMutation(
-    needsReview
+    withhold
       ? internal.feedback.review.holdForReview
       : internal.feedback.review.releaseAfterTriage,
     { feedbackId }
@@ -77,15 +78,13 @@ export const processAutoTagging = internalAction({
     }
 
     if (args.applyModeration) {
-      await moderate(ctx, args.feedbackId, triage.needsReview);
+      await moderate(ctx, args.feedbackId, triage.withhold);
     }
 
-    if (triage.tagIds.length > 0) {
-      await ctx.runMutation(internal.feedback.auto_tagging_jobs.applyAutoTags, {
-        feedbackId: args.feedbackId,
-        tagIds: triage.tagIds,
-      });
-    }
+    await ctx.runMutation(internal.feedback.auto_tagging_jobs.applyAutoTags, {
+      feedbackId: args.feedbackId,
+      tagIds: triage.tagIds,
+    });
 
     const systemPrompt = `You are a feedback analysis assistant. Your job is to analyze user feedback and:
 1. Assess the priority level of the feedback
@@ -130,6 +129,7 @@ Description: ${feedback.description || "(no description)"}`;
         {
           feedbackId: args.feedbackId,
           junk: triage.junk,
+          needsReview: triage.needsReview,
           usefulness: triage.usefulness,
         }
       );
@@ -146,6 +146,7 @@ Description: ${feedback.description || "(no description)"}`;
       complexityReasoning: result.complexityReasoning,
       feedbackId: args.feedbackId,
       junk: triage.junk,
+      needsReview: triage.needsReview,
       priority: result.priority,
       priorityReasoning: result.priorityReasoning,
       timeEstimate: result.timeEstimate,
@@ -164,34 +165,39 @@ Description: ${feedback.description || "(no description)"}`;
   },
 });
 
+const chunk = <T>(items: T[], size: number): T[][] =>
+  Array.from({ length: Math.ceil(items.length / size) }, (_, index) =>
+    items.slice(index * size, index * size + size)
+  );
+
+const TRIAGE_BATCH_SIZE = 8;
+
 export const processBulkAutoTagging = internalAction({
   args: {
     organizationId: v.id("organizations"),
+    scope: triageScopeValidator,
   },
   handler: async (
     ctx,
     args
   ): Promise<{ processed: number; failed: number }> => {
-    // Get all untagged feedback IDs
-    const untaggedIds = await ctx.runQuery(
-      internal.feedback.auto_tagging.getUntaggedFeedbackIds,
-      { organizationId: args.organizationId }
+    const targetIds: Id<"feedback">[] = await ctx.runQuery(
+      internal.feedback.auto_tagging.getFeedbackIdsForTriage,
+      { organizationId: args.organizationId, scope: args.scope }
     );
 
-    if (untaggedIds.length === 0) {
+    if (targetIds.length === 0) {
       return { failed: 0, processed: 0 };
     }
 
-    // Create the job
     const jobId = await ctx.runMutation(
       internal.feedback.auto_tagging_jobs.createJob,
       {
         organizationId: args.organizationId,
-        totalItems: untaggedIds.length,
+        totalItems: targetIds.length,
       }
     );
 
-    // Update status to processing
     await ctx.runMutation(
       internal.feedback.auto_tagging_jobs.updateJobProgress,
       {
@@ -203,70 +209,74 @@ export const processBulkAutoTagging = internalAction({
       }
     );
 
-    // Process all items in parallel
-    const results = await Promise.allSettled(
-      untaggedIds.map((feedbackId: Id<"feedback">) =>
-        ctx
-          .runAction(
-            internal.feedback.auto_tagging_actions.processAutoTagging,
-            {
-              applyModeration: false,
-              feedbackId,
-            }
-          )
-          .then((result) => ({ feedbackId, result }))
-      )
-    );
-
-    // Collect results
-    const errors: { feedbackId: Id<"feedback">; error: string }[] = [];
     let successfulItems = 0;
     let failedItems = 0;
 
-    for (const settled of results) {
-      if (settled.status === "fulfilled") {
-        if (settled.value.result.success) {
-          successfulItems++;
-        } else {
+    try {
+      for (const batch of chunk(targetIds, TRIAGE_BATCH_SIZE)) {
+        const outcomes = await Promise.all(
+          batch.map(async (feedbackId) => {
+            try {
+              const result = await ctx.runAction(
+                internal.feedback.auto_tagging_actions.processAutoTagging,
+                { applyModeration: false, feedbackId }
+              );
+              return result.success
+                ? { feedbackId, ok: true as const }
+                : {
+                    error: result.reason ?? "Unknown error",
+                    feedbackId,
+                    ok: false as const,
+                  };
+            } catch (err) {
+              return {
+                error: err instanceof Error ? err.message : String(err),
+                feedbackId,
+                ok: false as const,
+              };
+            }
+          })
+        );
+
+        const errors: { error: string; feedbackId: Id<"feedback"> }[] = [];
+
+        for (const outcome of outcomes) {
+          if (outcome.ok) {
+            successfulItems++;
+            continue;
+          }
+
           failedItems++;
-          errors.push({
-            error: settled.value.result.reason || "Unknown error",
-            feedbackId: settled.value.feedbackId,
-          });
+          errors.push({ error: outcome.error, feedbackId: outcome.feedbackId });
         }
-      } else {
-        failedItems++;
+
+        await ctx.runMutation(
+          internal.feedback.auto_tagging_jobs.updateJobProgress,
+          {
+            errors,
+            failedItems,
+            jobId,
+            processedItems: successfulItems + failedItems,
+            successfulItems,
+          }
+        );
       }
-    }
-
-    const processedItems = successfulItems + failedItems;
-
-    // Report errors
-    for (const error of errors) {
+    } finally {
       await ctx.runMutation(
         internal.feedback.auto_tagging_jobs.updateJobProgress,
         {
-          error,
           failedItems,
           jobId,
-          processedItems,
+          processedItems: successfulItems + failedItems,
+          status: failedItems === targetIds.length ? "failed" : "completed",
           successfulItems,
         }
       );
     }
 
-    // Mark as completed
-    await ctx.runMutation(
-      internal.feedback.auto_tagging_jobs.updateJobProgress,
-      {
-        failedItems,
-        jobId,
-        processedItems,
-        status: failedItems === untaggedIds.length ? "failed" : "completed",
-        successfulItems,
-      }
-    );
-
-    return { failed: failedItems, processed: processedItems };
+    return {
+      failed: failedItems,
+      processed: successfulItems + failedItems,
+    };
   },
 });

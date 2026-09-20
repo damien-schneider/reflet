@@ -2,7 +2,8 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { internalMutation, mutation } from "../_generated/server";
-import { getAuthUser } from "../shared/utils";
+import { requireOrgAdmin } from "../shared/access";
+import { triageScopeValidator } from "./triage_scope";
 
 export const applyAutoTags = internalMutation({
   args: {
@@ -15,26 +16,35 @@ export const applyAutoTags = internalMutation({
       return;
     }
 
-    for (const tagId of args.tagIds) {
+    const wanted = new Set<Id<"tags">>(args.tagIds);
+    const existingLinks = await ctx.db
+      .query("feedbackTags")
+      .withIndex("by_feedback", (q) => q.eq("feedbackId", args.feedbackId))
+      .collect();
+
+    for (const link of existingLinks) {
+      if (link.appliedByAi && !wanted.has(link.tagId)) {
+        await ctx.db.delete(link._id);
+      }
+    }
+
+    const linked = new Set(existingLinks.map((link) => link.tagId));
+
+    for (const tagId of wanted) {
+      if (linked.has(tagId)) {
+        continue;
+      }
+
       const tag = await ctx.db.get(tagId);
       if (!tag || tag.organizationId !== feedback.organizationId) {
         continue;
       }
 
-      const existing = await ctx.db
-        .query("feedbackTags")
-        .withIndex("by_feedback_tag", (q) =>
-          q.eq("feedbackId", args.feedbackId).eq("tagId", tagId)
-        )
-        .unique();
-
-      if (!existing) {
-        await ctx.db.insert("feedbackTags", {
-          appliedByAi: true,
-          feedbackId: args.feedbackId,
-          tagId,
-        });
-      }
+      await ctx.db.insert("feedbackTags", {
+        appliedByAi: true,
+        feedbackId: args.feedbackId,
+        tagId,
+      });
     }
   },
 });
@@ -53,6 +63,7 @@ export const saveAiAnalysis = internalMutation({
     complexityReasoning: v.optional(v.string()),
     feedbackId: v.id("feedback"),
     junk: v.optional(v.number()),
+    needsReview: v.optional(v.number()),
     priority: v.optional(
       v.union(
         v.literal("critical"),
@@ -101,6 +112,10 @@ export const saveAiAnalysis = internalMutation({
       updates.aiJunk = args.junk;
     }
 
+    if (args.needsReview !== undefined) {
+      updates.aiNeedsReview = args.needsReview;
+    }
+
     await ctx.db.patch(args.feedbackId, updates);
   },
 });
@@ -125,13 +140,17 @@ export const createJob = internalMutation({
   },
 });
 
+const MAX_RETAINED_JOB_ERRORS = 20;
+
 export const updateJobProgress = internalMutation({
   args: {
-    error: v.optional(
-      v.object({
-        error: v.string(),
-        feedbackId: v.id("feedback"),
-      })
+    errors: v.optional(
+      v.array(
+        v.object({
+          error: v.string(),
+          feedbackId: v.id("feedback"),
+        })
+      )
     ),
     failedItems: v.number(),
     jobId: v.id("autoTaggingJobs"),
@@ -172,8 +191,10 @@ export const updateJobProgress = internalMutation({
       }
     }
 
-    if (args.error) {
-      updates.errors = [...job.errors, args.error];
+    if (args.errors?.length) {
+      updates.errors = [...job.errors, ...args.errors].slice(
+        -MAX_RETAINED_JOB_ERRORS
+      );
     }
 
     await ctx.db.patch(args.jobId, updates);
@@ -183,52 +204,25 @@ export const updateJobProgress = internalMutation({
 export const dismissJob = mutation({
   args: { jobId: v.id("autoTaggingJobs") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
     const job = await ctx.db.get(args.jobId);
-
     if (!job) {
       throw new Error("Job not found");
     }
 
-    // Verify admin permission
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", job.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership || membership.role === "member") {
-      throw new Error("Only admins can dismiss jobs");
-    }
+    await requireOrgAdmin(ctx, job.organizationId, "dismiss jobs");
 
     await ctx.db.delete(args.jobId);
   },
 });
 
 export const startBulkAutoTagging = mutation({
-  args: { organizationId: v.id("organizations") },
+  args: {
+    organizationId: v.id("organizations"),
+    scope: triageScopeValidator,
+  },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    await requireOrgAdmin(ctx, args.organizationId, "run triage");
 
-    const org = await ctx.db.get(args.organizationId);
-    if (!org) {
-      throw new Error("Organization not found");
-    }
-
-    // Check admin permission
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", args.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership || membership.role === "member") {
-      throw new Error("Only admins can initiate bulk auto-tagging");
-    }
-
-    // Check if there's already an active job
     const existingJobs = await ctx.db
       .query("autoTaggingJobs")
       .withIndex("by_organization", (q) =>
@@ -241,16 +235,33 @@ export const startBulkAutoTagging = mutation({
     );
 
     if (activeJob) {
-      throw new Error("Auto-tagging is already in progress");
+      throw new Error("Triage is already in progress");
     }
 
-    // Schedule the bulk tagging action
     await ctx.scheduler.runAfter(
       0,
       internal.feedback.auto_tagging_actions.processBulkAutoTagging,
-      {
-        organizationId: args.organizationId,
-      }
+      { organizationId: args.organizationId, scope: args.scope }
+    );
+
+    return { started: true };
+  },
+});
+
+export const recomputeFeedbackAnalysis = mutation({
+  args: { feedbackId: v.id("feedback") },
+  handler: async (ctx, args) => {
+    const feedback = await ctx.db.get(args.feedbackId);
+    if (!feedback) {
+      throw new Error("Feedback not found");
+    }
+
+    await requireOrgAdmin(ctx, feedback.organizationId, "recompute analysis");
+
+    await ctx.scheduler.runAfter(
+      0,
+      internal.feedback.auto_tagging_actions.processAutoTagging,
+      { applyModeration: false, feedbackId: args.feedbackId }
     );
 
     return { started: true };

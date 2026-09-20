@@ -9,6 +9,7 @@ const AI_INDICATOR_COLORS: Record<string, string> = {
   low: "blue",
   medium: "yellow",
   moderate: "yellow",
+  needs_review: "orange",
   none: "gray",
   simple: "blue",
   trivial: "green",

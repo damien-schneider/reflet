@@ -238,6 +238,20 @@ describe("FeedbackListItem", () => {
     expect(screen.getByText("C: low")).toBeInTheDocument();
   });
 
+  it("renders the needs-review indicator without priority or complexity", () => {
+    render(
+      <FeedbackListItem feedback={makeFeedback({ aiNeedsReview: 0.82 })} />
+    );
+    expect(screen.getByText("Needs review")).toBeInTheDocument();
+  });
+
+  it("omits the needs-review indicator for a low probability", () => {
+    render(
+      <FeedbackListItem feedback={makeFeedback({ aiNeedsReview: 0.12 })} />
+    );
+    expect(screen.queryByText("Needs review")).not.toBeInTheDocument();
+  });
+
   it("prefers manual priority over AI priority", () => {
     render(
       <FeedbackListItem

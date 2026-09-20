@@ -283,6 +283,7 @@ function FeedbackDetailContent({
         <FeedbackMetadataBar
           aiComplexity={feedback.aiComplexity}
           aiComplexityReasoning={feedback.aiComplexityReasoning}
+          aiNeedsReview={feedback.aiNeedsReview}
           aiPriority={feedback.aiPriority}
           aiPriorityReasoning={feedback.aiPriorityReasoning}
           aiTimeEstimate={feedback.aiTimeEstimate}
