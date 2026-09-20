@@ -5,6 +5,27 @@ All notable changes to `reflet-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2026-09-20
+
+### Added
+
+- Point at several elements in one report — each pick gets its own screenshot, its own comment and its own outline
+- The comment written while picking is editable in that screenshot's editor
+- Sending anonymously asks for an email first, as a dialog on desktop and a drawer on phones
+
+### Changed
+
+- Element picks ship as `context.selections[]`; the single `context.selection` field is gone
+- Move and close moved inside the message field, next to the options and send buttons
+- Screenshot cards drop the Retake button — remove the capture and take a new one
+- The message field stays expanded instead of growing on focus
+
+### Fixed
+
+- Moving the panel no longer moves the collapsed launcher away from its corner
+- Hovering the move handle without pressing it no longer drags the panel
+- A picked element no longer counts as a drawing in the screenshot badge
+
 ## [0.3.5] - 2026-09-17
 
 ### Changed
