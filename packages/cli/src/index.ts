@@ -5,6 +5,7 @@ import { createInterface } from "node:readline/promises";
 import { parseArgs } from "node:util";
 import { AGENT_PROMPT } from "./agent-prompt";
 import { ADMIN_RESOURCES, runAdmin } from "./commands/admin";
+import { runAgentInstall } from "./commands/agent-install";
 import { runDoctor } from "./commands/doctor";
 import { type InitReport, runInit, SDK_PACKAGE } from "./commands/init";
 import { runLogin } from "./commands/login";
@@ -43,9 +44,12 @@ ${style.bold("Widget setup")}
   reflet doctor             check an existing setup
   reflet prompt             print the setup prompt for a coding agent
 
+${style.bold("Coding agents")}
+  reflet agent install      write the /reflet skill for Claude Code, Codex and omp
+  reflet prompt agent       print the fix-a-feedback loop for a coding agent
+
 ${style.bold("Admin API")} ${style.dim("(REFLET_API_KEY or reflet login)")}
   reflet login              store a secret key in ~/.reflet/config.json
-  reflet prompt agent       print the fix-a-feedback loop for a coding agent
   reflet <resource> <action> [args] [--flags] [--json]
   resources: ${ADMIN_RESOURCES.join(", ")}
   reflet <resource>         list its actions
@@ -60,8 +64,10 @@ ${style.bold("Options for init")}
 
 ${style.bold("Examples")}
   npx reflet-cli init --public-key fb_pub_abc --yes
+  npx reflet-cli agent install
   npx reflet-cli login --api-key fb_sec_abc
   npx reflet-cli feedback claim-next --json
+  npx reflet-cli screenshot download <id>
   npx reflet-cli feedback status <id> completed`;
 
 function install(manager: PackageManager): void {
@@ -182,6 +188,34 @@ function commandDoctor(cwd: string): number {
   return ok ? 0 : 1;
 }
 
+function commandAgentInstall(argv: string[]): number {
+  const { values } = parseArgs({
+    allowPositionals: true,
+    args: argv,
+    options: { cwd: { type: "string" }, "dry-run": { type: "boolean" } },
+  });
+  const dryRun = values["dry-run"] === true;
+  const changes = runAgentInstall({
+    cwd: values.cwd ?? process.cwd(),
+    dryRun,
+    files: nodeFileSystem,
+  });
+
+  process.stdout.write(heading(dryRun ? "Would write" : "Reflet agent setup"));
+  process.stdout.write("\n");
+  for (const change of changes) {
+    const symbol = change.status === "skipped" ? SYMBOL.warn : SYMBOL.tick;
+    const note = change.note ? style.dim(` — ${change.note}`) : "";
+    process.stdout.write(
+      indent(`${symbol} ${change.path} ${style.dim(change.status)}${note}\n`)
+    );
+  }
+  process.stdout.write(
+    `\n${indent(`Run ${style.cyan("/reflet")} in Claude Code, ${style.cyan("$reflet")} in Codex, or ask any agent to work the Reflet queue.`)}\n\n`
+  );
+  return 0;
+}
+
 export async function run(argv: string[]): Promise<number> {
   const [command, subcommand] = argv;
   if (command !== undefined && ADMIN_RESOURCES.includes(command)) {
@@ -193,6 +227,9 @@ export async function run(argv: string[]): Promise<number> {
   if (command === "prompt" && subcommand === "agent") {
     process.stdout.write(`${AGENT_PROMPT}\n`);
     return 0;
+  }
+  if (command === "agent" && subcommand === "install") {
+    return commandAgentInstall(argv.slice(2));
   }
 
   const { values } = parseArgs({

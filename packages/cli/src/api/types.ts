@@ -49,6 +49,18 @@ export interface ConfigResponse {
     description?: string;
   }>;
 }
+
+export interface ElementSelection {
+  comment?: string;
+  componentStack: string[];
+  html: string;
+  label: string;
+  rect: { height: number; width: number; x: number; y: number };
+  region?: string;
+  selector: string;
+  sourceLocation?: string;
+}
+
 export interface FeedbackReportContext {
   browser?: string;
   consoleEvents?: Array<{
@@ -64,15 +76,8 @@ export interface FeedbackReportContext {
   referrer?: string;
   screen?: { height: number; width: number };
   sdkVersion?: string;
-  selection?: {
-    componentStack: string[];
-    html: string;
-    label: string;
-    rect: { height: number; width: number; x: number; y: number };
-    region?: string;
-    selector: string;
-    sourceLocation?: string;
-  };
+  selection?: ElementSelection;
+  selections?: ElementSelection[];
   timezone?: string;
   url?: string;
   userAgent?: string;

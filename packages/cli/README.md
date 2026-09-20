@@ -53,6 +53,40 @@ would rather have the agent do the wiring.
 npx reflet-cli prompt | pbcopy
 ```
 
+### `reflet agent install`
+
+Writes the Reflet feedback workflow where coding agents look for it, so any of
+them can work the queue end to end without being told how:
+
+| File | Read by |
+| --- | --- |
+| `.agents/skills/reflet/SKILL.md` | Codex (`$reflet`), and anything following the agent-skills layout |
+| `.claude/skills/reflet/SKILL.md` | Claude Code |
+| `.omp/skills/reflet/SKILL.md` | omp |
+| `.claude/commands/reflet.md` | Claude Code, as the `/reflet` slash command |
+
+It also adds `.reflet/` to `.gitignore`, where downloaded screenshots land.
+Running it twice changes nothing. `--dry-run` and `--cwd <dir>` behave as in
+`init`. `reflet prompt agent` prints the same workflow to stdout.
+
+The workflow claims one item, reads its screenshots, element source locations
+and console errors, fixes it, opens the pull request, comments and moves the
+status — then repeats until the queue is empty.
+
+### Admin API
+
+`REFLET_API_KEY`, or `reflet login --api-key fb_sec_…` once. Every command
+prints JSON when piped or given `--json`.
+
+```bash
+npx reflet-cli feedback claim-next --json
+npx reflet-cli feedback get <id> --json
+npx reflet-cli screenshot download <id>      # → .reflet/screenshots/<id>/
+npx reflet-cli feedback status <id> completed
+```
+
+`npx reflet-cli` lists the resources, `npx reflet-cli <resource>` its actions.
+
 ## License
 
 MIT

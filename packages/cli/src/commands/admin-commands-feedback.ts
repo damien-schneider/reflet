@@ -8,6 +8,7 @@ import {
   req,
   timestamp,
 } from "./admin-flags";
+import { downloadScreenshots } from "./screenshot-download";
 
 const FEEDBACK_STATUSES = new Set([
   "open",
@@ -219,6 +220,12 @@ export const FEEDBACK_COMMANDS: Record<string, Record<string, CommandSpec>> = {
     delete: {
       args: "<screenshotId>",
       run: (c, p) => c.deleteScreenshot(arg(p, 0, "screenshotId")),
+    },
+    download: {
+      args: "<feedbackId>",
+      flags: ["out"],
+      run: (c, p, f) =>
+        downloadScreenshots(c, arg(p, 0, "feedbackId"), { out: f.out }),
     },
     list: {
       args: "<feedbackId>",
