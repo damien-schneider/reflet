@@ -1,10 +1,15 @@
 "use client";
 
+import {
+  PageBody,
+  PageHeader,
+  PageLayout,
+  PageTitle,
+} from "@ctrl-ui/react/ui/page-layout";
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import { use } from "react";
-import { H1 } from "@/components/ui/typography";
 import { PendingReviewPanel } from "@/features/feedback/components/pending-review-panel";
 
 export default function PendingReviewPage({
@@ -17,28 +22,35 @@ export default function PendingReviewPage({
 
   if (org === undefined) {
     return (
-      <div className="container mx-auto space-y-6 px-4 py-8">
-        <Skeleton className="h-10 w-48" />
-        {["a", "b", "c"].map((id) => (
-          <Skeleton className="h-32" key={id} />
-        ))}
-      </div>
+      <PageLayout scroll="page" width="wide">
+        <PageBody contentClassName="space-y-6">
+          <Skeleton className="h-10 w-48" />
+          {["a", "b", "c"].map((id) => (
+            <Skeleton className="h-32" key={id} />
+          ))}
+        </PageBody>
+      </PageLayout>
     );
   }
 
   if (org === null) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <H1>Organization not found</H1>
-      </div>
+      <PageLayout scroll="page" width="wide">
+        <PageHeader>
+          <PageTitle>Organization not found</PageTitle>
+        </PageHeader>
+      </PageLayout>
     );
   }
 
   return (
-    <div className="container mx-auto space-y-6 px-4 py-8">
-      <H1>Review</H1>
-
-      <PendingReviewPanel organizationId={org._id} orgSlug={orgSlug} />
-    </div>
+    <PageLayout scroll="page" width="wide">
+      <PageHeader>
+        <PageTitle>Review</PageTitle>
+      </PageHeader>
+      <PageBody contentClassName="space-y-6">
+        <PendingReviewPanel organizationId={org._id} orgSlug={orgSlug} />
+      </PageBody>
+    </PageLayout>
   );
 }

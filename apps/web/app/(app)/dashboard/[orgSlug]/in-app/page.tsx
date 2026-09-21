@@ -10,6 +10,12 @@ import {
   DialogTrigger,
 } from "@ctrl-ui/react/ui/dialog";
 import { Input } from "@ctrl-ui/react/ui/input";
+import {
+  PageBody,
+  PageHeader,
+  PageLayout,
+  PageTitle,
+} from "@ctrl-ui/react/ui/page-layout";
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { toast } from "@ctrl-ui/react/ui/toast";
 import { Plus } from "@phosphor-icons/react";
@@ -17,7 +23,7 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
 import { use, useState } from "react";
 import { Label } from "@/components/ui/label";
-import { H1, H3, Muted } from "@/components/ui/typography";
+import { H3, Muted } from "@/components/ui/typography";
 import { FeedbackCollectorCard } from "@/features/in-app/components/feedback-collector-card";
 import {
   WidgetCard,
@@ -87,28 +93,32 @@ export default function WidgetsPage({
 
   if (org === undefined) {
     return (
-      <div
-        aria-label="Loading in-app"
-        className="admin-container space-y-6"
-        role="status"
-      >
-        <Skeleton className="h-8 w-40" />
-        <Skeleton className="h-72 w-full" />
-      </div>
+      <PageLayout scroll="page" width="content">
+        <PageBody>
+          <div aria-label="Loading in-app" className="space-y-6" role="status">
+            <Skeleton className="h-8 w-40" />
+            <Skeleton className="h-72 w-full" />
+          </div>
+        </PageBody>
+      </PageLayout>
     );
   }
 
   if (!org) {
     return (
-      <div className="flex min-h-[50vh] items-center justify-center">
-        <div className="text-center">
-          <H3 variant="card">Organization not found</H3>
-          <Muted className="mt-2">
-            The organization you&apos;re looking for doesn&apos;t exist or you
-            don&apos;t have access.
-          </Muted>
-        </div>
-      </div>
+      <PageLayout scroll="page" width="content">
+        <PageBody>
+          <div className="flex min-h-[50vh] items-center justify-center">
+            <div className="text-center">
+              <H3 variant="card">Organization not found</H3>
+              <Muted className="mt-2">
+                The organization you&apos;re looking for doesn&apos;t exist or
+                you don&apos;t have access.
+              </Muted>
+            </div>
+          </div>
+        </PageBody>
+      </PageLayout>
     );
   }
 
@@ -135,56 +145,59 @@ export default function WidgetsPage({
   const canManageKeys = org.role === "admin" || org.role === "owner";
 
   return (
-    <div className="admin-container">
-      <H1 className="mb-8">In-app</H1>
+    <PageLayout scroll="page" width="content">
+      <PageHeader>
+        <PageTitle>In-app</PageTitle>
+      </PageHeader>
+      <PageBody>
+        <FeedbackCollectorCard
+          canManageKeys={canManageKeys}
+          isLoading={apiKeys === undefined}
+          organizationId={org._id}
+          orgSlug={orgSlug}
+          publicKey={publicKey}
+        />
 
-      <FeedbackCollectorCard
-        canManageKeys={canManageKeys}
-        isLoading={apiKeys === undefined}
-        organizationId={org._id}
-        orgSlug={orgSlug}
-        publicKey={publicKey}
-      />
-
-      <section className="mt-10 space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <H3 variant="card">Live chat</H3>
-          <Dialog onOpenChange={setIsDialogOpen} open={isDialogOpen}>
-            <DialogTrigger render={<Button size="xs" variant="surface" />}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add live chat
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create live chat</DialogTitle>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="widget-name">Name</Label>
-                  <Input
-                    id="widget-name"
-                    onChange={(e) => setWidgetName(e.target.value)}
-                    placeholder="Main Website Chat"
-                    value={widgetName}
-                  />
+        <section className="mt-10 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <H3 variant="card">Live chat</H3>
+            <Dialog onOpenChange={setIsDialogOpen} open={isDialogOpen}>
+              <DialogTrigger render={<Button size="xs" variant="surface" />}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add live chat
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Create live chat</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="widget-name">Name</Label>
+                    <Input
+                      id="widget-name"
+                      onChange={(e) => setWidgetName(e.target.value)}
+                      placeholder="Main Website Chat"
+                      value={widgetName}
+                    />
+                  </div>
                 </div>
-              </div>
-              <DialogFooter>
-                <Button
-                  disabled={!widgetName.trim() || isCreating}
-                  onClick={handleCreateWidget}
-                  tone="primary"
-                  variant="solid"
-                >
-                  {isCreating ? "Creating..." : "Create"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
+                <DialogFooter>
+                  <Button
+                    disabled={!widgetName.trim() || isCreating}
+                    onClick={handleCreateWidget}
+                    tone="primary"
+                    variant="solid"
+                  >
+                    {isCreating ? "Creating..." : "Create"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
 
-        <WidgetList orgSlug={orgSlug} widgets={widgets} />
-      </section>
-    </div>
+          <WidgetList orgSlug={orgSlug} widgets={widgets} />
+        </section>
+      </PageBody>
+    </PageLayout>
   );
 }

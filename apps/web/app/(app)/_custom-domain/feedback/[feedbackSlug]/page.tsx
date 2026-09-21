@@ -1,5 +1,6 @@
 "use client";
 
+import { PageBody, PageLayout } from "@ctrl-ui/react/ui/page-layout";
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
@@ -26,10 +27,12 @@ export default function CustomDomainFeedbackDetailPage({
 
   if (org === undefined) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <Skeleton className="mx-auto h-10 w-64" />
-        <Skeleton className="mx-auto mt-4 h-64 w-full max-w-3xl" />
-      </div>
+      <PageLayout scroll="page" width="content">
+        <PageBody>
+          <Skeleton className="mx-auto h-10 w-64" />
+          <Skeleton className="mt-4 h-64 w-full" />
+        </PageBody>
+      </PageLayout>
     );
   }
 
@@ -40,14 +43,16 @@ export default function CustomDomainFeedbackDetailPage({
   const primaryColor = org.primaryColor ?? DEFAULT_PRIMARY_COLOR;
 
   return (
-    <div className="container mx-auto max-w-3xl px-4 py-8">
-      <PublicFeedbackDetailContent
-        feedbackId={toId("feedback", feedbackSlug)}
-        isAdmin={isAdmin}
-        isMember={isMember}
-        organizationId={org._id}
-        primaryColor={primaryColor}
-      />
-    </div>
+    <PageLayout scroll="page" width="content">
+      <PageBody>
+        <PublicFeedbackDetailContent
+          feedbackId={toId("feedback", feedbackSlug)}
+          isAdmin={isAdmin}
+          isMember={isMember}
+          organizationId={org._id}
+          primaryColor={primaryColor}
+        />
+      </PageBody>
+    </PageLayout>
   );
 }

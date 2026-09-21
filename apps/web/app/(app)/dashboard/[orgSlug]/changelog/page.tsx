@@ -1,6 +1,13 @@
 "use client";
 
 import { Button } from "@ctrl-ui/react/ui/button";
+import {
+  PageActions,
+  PageBody,
+  PageHeader,
+  PageLayout,
+  PageTitle,
+} from "@ctrl-ui/react/ui/page-layout";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "@ctrl-ui/react/ui/tabs";
 import { Code, GearSix, GithubLogo, Plus } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
@@ -8,7 +15,7 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import Link from "next/link";
 import { use, useState } from "react";
-import { H1, Muted } from "@/components/ui/typography";
+import { Muted } from "@/components/ui/typography";
 import { ChangelogSettingsTab } from "@/features/changelog/components/changelog-settings-tab";
 import { ChangelogWidgetTab } from "@/features/changelog/components/changelog-widget-tab";
 import { DeleteReleaseDialog } from "@/features/changelog/components/delete-release-dialog";
@@ -123,14 +130,18 @@ export default function ChangelogPage({
 
   if (!org) {
     return (
-      <div className="flex min-h-[50vh] items-center justify-center">
-        <div className="text-center">
-          <h2 className="font-semibold text-lg">Organization not found</h2>
-          <Muted className="mt-2">
-            The organization you&apos;re looking for doesn&apos;t exist.
-          </Muted>
-        </div>
-      </div>
+      <PageLayout scroll="page" width="content">
+        <PageBody>
+          <div className="flex min-h-[50vh] items-center justify-center">
+            <div className="text-center">
+              <h2 className="font-semibold text-lg">Organization not found</h2>
+              <Muted className="mt-2">
+                The organization you&apos;re looking for doesn&apos;t exist.
+              </Muted>
+            </div>
+          </div>
+        </PageBody>
+      </PageLayout>
     );
   }
 
@@ -178,11 +189,11 @@ export default function ChangelogPage({
   };
 
   return (
-    <div className="admin-container">
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <H1>Changelog</H1>
+    <PageLayout scroll="page" width="content">
+      <PageHeader>
+        <PageTitle>Changelog</PageTitle>
         {isAdmin && (
-          <div className="flex items-center gap-2">
+          <PageActions>
             {githubAction}
             <Button
               render={<Link href={`/dashboard/${orgSlug}/changelog/new`} />}
@@ -193,104 +204,105 @@ export default function ChangelogPage({
               <span className="hidden sm:inline">Create Release</span>
               <span className="sm:hidden">New</span>
             </Button>
+          </PageActions>
+        )}
+      </PageHeader>
+      <PageBody>
+        {showSetupBanner && (
+          <div className="mb-6 flex items-center justify-between rounded-lg border border-chart-2/30 bg-chart-2/10 px-4 py-3">
+            <div className="flex items-center gap-3">
+              <GithubLogo className="h-5 w-5 text-chart-2-text" />
+              <div>
+                <p className="font-medium text-sm">Configure release sync</p>
+                <p className="text-muted-foreground text-xs">
+                  Set up how releases flow between GitHub and Reflet
+                </p>
+              </div>
+            </div>
+            <Button
+              onClick={() => setShowSetupWizard(true)}
+              size="xs"
+              variant="surface"
+            >
+              Configure
+            </Button>
           </div>
         )}
-      </div>
 
-      {showSetupBanner && (
-        <div className="mb-6 flex items-center justify-between rounded-lg border border-chart-2/30 bg-chart-2/10 px-4 py-3">
-          <div className="flex items-center gap-3">
-            <GithubLogo className="h-5 w-5 text-chart-2-text" />
-            <div>
-              <p className="font-medium text-sm">Configure release sync</p>
-              <p className="text-muted-foreground text-xs">
-                Set up how releases flow between GitHub and Reflet
-              </p>
-            </div>
-          </div>
-          <Button
-            onClick={() => setShowSetupWizard(true)}
-            size="xs"
-            variant="surface"
-          >
-            Configure
-          </Button>
-        </div>
-      )}
-
-      <Tabs onValueChange={setActiveTab} value={activeTab}>
-        <TabsList>
-          <TabsTab value="releases">
-            <Plus className="mr-2 h-4 w-4" />
-            Releases
-          </TabsTab>
-          {isAdmin && (
-            <TabsTab value="settings">
-              <GearSix className="mr-2 h-4 w-4" />
-              Settings
+        <Tabs onValueChange={setActiveTab} value={activeTab}>
+          <TabsList>
+            <TabsTab value="releases">
+              <Plus className="mr-2 h-4 w-4" />
+              Releases
             </TabsTab>
-          )}
-          <TabsTab value="widget">
-            <Code className="mr-2 h-4 w-4" />
-            Embed
-          </TabsTab>
-        </TabsList>
+            {isAdmin && (
+              <TabsTab value="settings">
+                <GearSix className="mr-2 h-4 w-4" />
+                Settings
+              </TabsTab>
+            )}
+            <TabsTab value="widget">
+              <Code className="mr-2 h-4 w-4" />
+              Embed
+            </TabsTab>
+          </TabsList>
 
-        <TabsPanel className="mt-6" value="releases">
-          {githubStatus?.isConnected && org && (
-            <RetroactiveInlineFlow organizationId={org._id} />
-          )}
-          {releases && releases.length > 0 && (
-            <RetroactiveDraftsBar orgSlug={orgSlug} releases={releases} />
-          )}
-          <ReleaseTimeline
-            isAdmin={isAdmin}
-            onDelete={setDeletingRelease}
-            onPublish={handlePublish}
-            onUnpublish={handleUnpublish}
-            orgSlug={orgSlug}
-            releases={releases ?? []}
-          />
-        </TabsPanel>
-
-        {isAdmin && (
-          <TabsPanel className="mt-6" value="settings">
-            <ChangelogSettingsTab
+          <TabsPanel className="mt-6" value="releases">
+            {githubStatus?.isConnected && org && (
+              <RetroactiveInlineFlow organizationId={org._id} />
+            )}
+            {releases && releases.length > 0 && (
+              <RetroactiveDraftsBar orgSlug={orgSlug} releases={releases} />
+            )}
+            <ReleaseTimeline
               isAdmin={isAdmin}
-              onOpenSetupWizard={() => setShowSetupWizard(true)}
-              organizationId={org._id}
+              onDelete={setDeletingRelease}
+              onPublish={handlePublish}
+              onUnpublish={handleUnpublish}
               orgSlug={orgSlug}
+              releases={releases ?? []}
             />
           </TabsPanel>
+
+          {isAdmin && (
+            <TabsPanel className="mt-6" value="settings">
+              <ChangelogSettingsTab
+                isAdmin={isAdmin}
+                onOpenSetupWizard={() => setShowSetupWizard(true)}
+                organizationId={org._id}
+                orgSlug={orgSlug}
+              />
+            </TabsPanel>
+          )}
+
+          <TabsPanel className="mt-6" value="widget">
+            <ChangelogWidgetTab
+              hasApiKeys={hasApiKeys}
+              organizationId={org._id}
+              orgSlug={orgSlug}
+              primaryColor={org.primaryColor}
+              publicKey={publicKey}
+            />
+          </TabsPanel>
+        </Tabs>
+
+        {deletingRelease && (
+          <DeleteReleaseDialog
+            onClose={() => setDeletingRelease(null)}
+            onConfirm={handleDeleteRelease}
+            open={Boolean(deletingRelease)}
+          />
         )}
 
-        <TabsPanel className="mt-6" value="widget">
-          <ChangelogWidgetTab
-            hasApiKeys={hasApiKeys}
+        {githubStatus?.isConnected && (
+          <ReleaseSetupWizard
+            onOpenChange={setShowSetupWizard}
+            open={showSetupWizard}
             organizationId={org._id}
             orgSlug={orgSlug}
-            primaryColor={org.primaryColor}
-            publicKey={publicKey}
           />
-        </TabsPanel>
-      </Tabs>
-
-      {deletingRelease && (
-        <DeleteReleaseDialog
-          onClose={() => setDeletingRelease(null)}
-          onConfirm={handleDeleteRelease}
-          open={Boolean(deletingRelease)}
-        />
-      )}
-
-      {githubStatus?.isConnected && (
-        <ReleaseSetupWizard
-          onOpenChange={setShowSetupWizard}
-          open={showSetupWizard}
-          organizationId={org._id}
-          orgSlug={orgSlug}
-        />
-      )}
-    </div>
+        )}
+      </PageBody>
+    </PageLayout>
   );
 }

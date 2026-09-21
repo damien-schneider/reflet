@@ -1,4 +1,3 @@
-import { activeSkin } from "@ctrl-ui/react/skin";
 import {
   Sidebar,
   SidebarMenu,
@@ -7,28 +6,10 @@ import {
 } from "@ctrl-ui/react/ui/sidebar";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ProjectNav } from "./project-nav";
 
 const navigation = vi.hoisted(() => ({ pathname: "/dashboard/acme" }));
-const originalIndicators = activeSkin().indicators;
-
-beforeAll(() => {
-  activeSkin().indicators = { sidebar: "none" };
-});
-
-afterAll(() => {
-  activeSkin().indicators = originalIndicators;
-});
 
 vi.mock("next/navigation", () => ({
   usePathname: () => navigation.pathname,

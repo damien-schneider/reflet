@@ -1,13 +1,19 @@
 "use client";
 
 import { Button } from "@ctrl-ui/react/ui/button";
+import {
+  PageActions,
+  PageBody,
+  PageHeader,
+  PageLayout,
+  PageTitle,
+} from "@ctrl-ui/react/ui/page-layout";
 import { ArrowSquareOut, Warning } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import Link from "next/link";
 import { use, useState } from "react";
-import { H1 } from "@/components/ui/typography";
 import { AddMonitorInput } from "@/features/status/components/add-monitor-input";
 import { IncidentCard } from "@/features/status/components/incident-card";
 import { IncidentComposer } from "@/features/status/components/incident-composer";
@@ -136,18 +142,24 @@ export default function StatusDashboardPage({
 
   if (!hasMonitors && monitors !== undefined) {
     return (
-      <div className="admin-container">
-        <H1 className="mb-8">Status</H1>
-
-        <div className="mx-auto w-full max-w-md space-y-4">
-          <GitHubConnectHint
-            description="endpoints and services from your codebase"
-            organizationId={org._id}
-            orgSlug={orgSlug}
-          />
-          <AddMonitorInput onAdd={handleAddMonitor} organizationId={org._id} />
-        </div>
-      </div>
+      <PageLayout scroll="page" width="content">
+        <PageHeader>
+          <PageTitle>Status</PageTitle>
+        </PageHeader>
+        <PageBody>
+          <div className="mx-auto w-full max-w-md space-y-4">
+            <GitHubConnectHint
+              description="endpoints and services from your codebase"
+              organizationId={org._id}
+              orgSlug={orgSlug}
+            />
+            <AddMonitorInput
+              onAdd={handleAddMonitor}
+              organizationId={org._id}
+            />
+          </div>
+        </PageBody>
+      </PageLayout>
     );
   }
 
@@ -160,10 +172,10 @@ export default function StatusDashboardPage({
   }
 
   return (
-    <div className="admin-container">
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <H1>Status</H1>
-        <div className="flex flex-wrap items-center gap-2">
+    <PageLayout scroll="page" width="content">
+      <PageHeader>
+        <PageTitle>Status</PageTitle>
+        <PageActions className="flex-wrap">
           <Button
             render={
               <Link
@@ -187,75 +199,76 @@ export default function StatusDashboardPage({
             <Warning className="mr-1.5 h-4 w-4" />
             {showComposer ? "Cancel" : "Report Incident"}
           </Button>
+        </PageActions>
+      </PageHeader>
+      <PageBody>
+        <div
+          className={`mb-6 flex items-center gap-3 rounded-lg p-4 ${getStatusBannerClass(status)}`}
+        >
+          <StatusDot pulse size="lg" status={status} />
+          <span className="font-medium text-sm">{statusLabels[status]}</span>
+          {aggregateStatus?.monitorCount !== undefined && (
+            <span className="text-muted-foreground text-xs">
+              {aggregateStatus.monitorCount} monitors
+            </span>
+          )}
         </div>
-      </div>
 
-      <div
-        className={`mb-6 flex items-center gap-3 rounded-lg p-4 ${getStatusBannerClass(status)}`}
-      >
-        <StatusDot pulse size="lg" status={status} />
-        <span className="font-medium text-sm">{statusLabels[status]}</span>
-        {aggregateStatus?.monitorCount !== undefined && (
-          <span className="text-muted-foreground text-xs">
-            {aggregateStatus.monitorCount} monitors
-          </span>
-        )}
-      </div>
-
-      {showComposer && (
-        <div className="mb-6">
-          <IncidentComposer
-            monitors={
-              monitors?.map((m) => ({ _id: m._id, name: m.name })) ?? []
-            }
-            onCancel={() => setShowComposer(false)}
-            onSubmit={handleCreateIncident}
-          />
-        </div>
-      )}
-
-      {activeIncidents && activeIncidents.length > 0 && (
-        <div className="mb-6 space-y-3">
-          <h2 className="font-semibold text-sm">Active Incidents</h2>
-          {activeIncidents.map((incident) => (
-            <IncidentCard
-              incident={incident}
-              key={incident._id}
-              onPostUpdate={handlePostUpdate}
+        {showComposer && (
+          <div className="mb-6">
+            <IncidentComposer
+              monitors={
+                monitors?.map((m) => ({ _id: m._id, name: m.name })) ?? []
+              }
+              onCancel={() => setShowComposer(false)}
+              onSubmit={handleCreateIncident}
             />
+          </div>
+        )}
+
+        {activeIncidents && activeIncidents.length > 0 && (
+          <div className="mb-6 space-y-3">
+            <h2 className="font-semibold text-sm">Active Incidents</h2>
+            {activeIncidents.map((incident) => (
+              <IncidentCard
+                incident={incident}
+                key={incident._id}
+                onPostUpdate={handlePostUpdate}
+              />
+            ))}
+          </div>
+        )}
+
+        <div className="space-y-6">
+          {[...grouped.entries()].map(([groupName, groupMonitors]) => (
+            <div key={groupName}>
+              {grouped.size > 1 && (
+                <h2 className="mb-3 font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+                  {groupName}
+                </h2>
+              )}
+              <div className="space-y-2">
+                {groupMonitors.map((monitor) => (
+                  <MonitorCard
+                    isPro={isPro}
+                    key={monitor._id}
+                    monitor={monitor}
+                    onDelete={handleDeleteMonitor}
+                    onPause={handlePauseMonitor}
+                    onResume={handleResumeMonitor}
+                    onUpdateInterval={handleUpdateInterval}
+                    uptimeData={uptimeBars?.[monitor._id]}
+                  />
+                ))}
+              </div>
+            </div>
           ))}
         </div>
-      )}
 
-      <div className="space-y-6">
-        {[...grouped.entries()].map(([groupName, groupMonitors]) => (
-          <div key={groupName}>
-            {grouped.size > 1 && (
-              <h2 className="mb-3 font-semibold text-muted-foreground text-xs uppercase tracking-wider">
-                {groupName}
-              </h2>
-            )}
-            <div className="space-y-2">
-              {groupMonitors.map((monitor) => (
-                <MonitorCard
-                  isPro={isPro}
-                  key={monitor._id}
-                  monitor={monitor}
-                  onDelete={handleDeleteMonitor}
-                  onPause={handlePauseMonitor}
-                  onResume={handleResumeMonitor}
-                  onUpdateInterval={handleUpdateInterval}
-                  uptimeData={uptimeBars?.[monitor._id]}
-                />
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-4">
-        <AddMonitorInput onAdd={handleAddMonitor} organizationId={org._id} />
-      </div>
-    </div>
+        <div className="mt-4">
+          <AddMonitorInput onAdd={handleAddMonitor} organizationId={org._id} />
+        </div>
+      </PageBody>
+    </PageLayout>
   );
 }

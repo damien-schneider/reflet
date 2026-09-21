@@ -11,6 +11,13 @@ import {
 } from "@ctrl-ui/react/ui/alert-dialog";
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
+  PageBody,
+  PageDescription,
+  PageHeader,
+  PageLayout,
+  PageTitle,
+} from "@ctrl-ui/react/ui/page-layout";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -25,7 +32,7 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import Link from "next/link";
 import { use, useState } from "react";
-import { H1, Muted, Text } from "@/components/ui/typography";
+import { Muted, Text } from "@/components/ui/typography";
 import { RetroactiveDraftItem } from "@/features/changelog/components/retroactive-draft-item";
 
 const SORT_ORDERS = ["newest", "oldest"] as const;
@@ -211,120 +218,125 @@ export default function ReviewDraftsPage({
 
   if (!org) {
     return (
-      <div className="admin-container">
-        <Skeleton className="mb-4 h-5 w-36 rounded-md" />
-        <div className="mb-8">
+      <PageLayout scroll="page" width="content">
+        <PageHeader className="flex flex-col items-start">
+          <Skeleton className="h-5 w-36 rounded-md" />
           <Skeleton className="h-9 w-80 max-w-full rounded-md" />
-          <Skeleton className="mt-2 h-5 w-52 rounded-md" />
-        </div>
-        <DraftsSkeleton />
-      </div>
+          <Skeleton className="h-5 w-52 rounded-md" />
+        </PageHeader>
+        <PageBody>
+          <DraftsSkeleton />
+        </PageBody>
+      </PageLayout>
     );
   }
 
   return (
-    <div className="admin-container">
-      <Link
-        className="mb-4 inline-flex min-h-10 items-center gap-1 text-muted-foreground text-sm hover:text-foreground"
-        href={`/dashboard/${orgSlug}/changelog`}
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Back to Changelog
-      </Link>
-
-      <div className="mb-8">
-        <H1>Review Generated Changelogs</H1>
-        <Text variant="bodySmall">
+    <PageLayout scroll="page" width="content">
+      <PageHeader className="flex flex-col items-start">
+        <Link
+          className="inline-flex min-h-10 items-center gap-1 text-muted-foreground text-sm hover:text-foreground"
+          href={`/dashboard/${orgSlug}/changelog`}
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Changelog
+        </Link>
+        <PageTitle>Review Generated Changelogs</PageTitle>
+        <PageDescription>
           <span className="tabular-nums">{drafts.length}</span> draft
           {drafts.length === 1 ? "" : "s"} ready for review
-        </Text>
-      </div>
+        </PageDescription>
+      </PageHeader>
+      <PageBody>
+        {drafts.length > 0 && (
+          <div className="sticky top-(--sticky-header-height) z-20 mb-6 flex flex-wrap items-center gap-2 rounded-lg border bg-background p-3">
+            <Button onClick={handleToggleSelectAll} size="xs" variant="surface">
+              {allSelected ? "Deselect All" : "Select All"}
+            </Button>
 
-      {drafts.length > 0 && (
-        <div className="sticky top-(--sticky-header-height) z-20 mb-6 flex flex-wrap items-center gap-2 rounded-lg border bg-background p-3">
-          <Button onClick={handleToggleSelectAll} size="xs" variant="surface">
-            {allSelected ? "Deselect All" : "Select All"}
-          </Button>
-
-          <Button
-            disabled={selectedIds.size === 0}
-            onClick={handleBulkPublish}
-            size="xs"
-            tone="primary"
-            variant="solid"
-          >
-            Publish Selected (
-            <span className="tabular-nums">{selectedIds.size}</span>)
-          </Button>
-
-          <Button
-            disabled={selectedIds.size === 0}
-            onClick={() => setDiscardDialogOpen(true)}
-            size="xs"
-            tone="danger"
-            variant="surface"
-          >
-            Discard Selected
-          </Button>
-
-          <div className="ml-auto">
-            <Select
-              onValueChange={(value) =>
-                setSortOrder(
-                  SORT_ORDERS.find((order) => order === value) ?? "newest"
-                )
-              }
-              value={sortOrder}
+            <Button
+              disabled={selectedIds.size === 0}
+              onClick={handleBulkPublish}
+              size="xs"
+              tone="primary"
+              variant="solid"
             >
-              <SelectTrigger aria-label="Sort drafts" className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {SORT_ORDERS.map((order) => (
-                  <SelectItem key={order} value={order}>
-                    {SORT_ORDER_LABELS[order]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      )}
+              Publish Selected (
+              <span className="tabular-nums">{selectedIds.size}</span>)
+            </Button>
 
-      {releases === undefined ? (
-        <DraftsSkeleton />
-      ) : (
-        <DraftsList
-          drafts={drafts}
-          onSelect={handleSelect}
-          orgSlug={orgSlug}
-          selectedIds={selectedIds}
-        />
-      )}
-
-      <AlertDialog onOpenChange={setDiscardDialogOpen} open={discardDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              Discard {selectedIds.size} draft
-              {selectedIds.size === 1 ? "" : "s"}?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              Discarded drafts are removed permanently. This cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogClose>Cancel</AlertDialogClose>
-            <AlertDialogClose
-              onClick={handleConfirmDiscard}
+            <Button
+              disabled={selectedIds.size === 0}
+              onClick={() => setDiscardDialogOpen(true)}
+              size="xs"
               tone="danger"
               variant="surface"
             >
-              Discard
-            </AlertDialogClose>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+              Discard Selected
+            </Button>
+
+            <div className="ml-auto">
+              <Select
+                onValueChange={(value) =>
+                  setSortOrder(
+                    SORT_ORDERS.find((order) => order === value) ?? "newest"
+                  )
+                }
+                value={sortOrder}
+              >
+                <SelectTrigger aria-label="Sort drafts" className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SORT_ORDERS.map((order) => (
+                    <SelectItem key={order} value={order}>
+                      {SORT_ORDER_LABELS[order]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        )}
+
+        {releases === undefined ? (
+          <DraftsSkeleton />
+        ) : (
+          <DraftsList
+            drafts={drafts}
+            onSelect={handleSelect}
+            orgSlug={orgSlug}
+            selectedIds={selectedIds}
+          />
+        )}
+
+        <AlertDialog
+          onOpenChange={setDiscardDialogOpen}
+          open={discardDialogOpen}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                Discard {selectedIds.size} draft
+                {selectedIds.size === 1 ? "" : "s"}?
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                Discarded drafts are removed permanently. This cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogClose>Cancel</AlertDialogClose>
+              <AlertDialogClose
+                onClick={handleConfirmDiscard}
+                tone="danger"
+                variant="surface"
+              >
+                Discard
+              </AlertDialogClose>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </PageBody>
+    </PageLayout>
   );
 }

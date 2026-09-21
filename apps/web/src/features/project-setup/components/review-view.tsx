@@ -8,6 +8,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@ctrl-ui/react/ui/card";
+import {
+  PageBody,
+  PageDescription,
+  PageHeader,
+  PageLayout,
+  PageTitle,
+} from "@ctrl-ui/react/ui/page-layout";
 import { toast } from "@ctrl-ui/react/ui/toast";
 import {
   Check,
@@ -24,7 +31,7 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
-import { H1, Muted, Text } from "@/components/ui/typography";
+import { Muted, Text } from "@/components/ui/typography";
 import { KeywordsSection } from "./keywords-section";
 import { LaunchBar } from "./launch-bar";
 import { MonitorsSection } from "./monitors-section";
@@ -146,15 +153,14 @@ export function ReviewView({
   const acceptedTagsCount = tags.filter((t) => t.accepted).length;
 
   return (
-    <div className="admin-container max-w-4xl">
-      <div className="mb-8">
-        <H1 className="mb-2">Review your project setup</H1>
-        <Muted>
+    <PageLayout scroll="page" width="wide">
+      <PageHeader>
+        <PageTitle>Review your project setup</PageTitle>
+        <PageDescription>
           We analyzed your repository — review and customize, then launch.
-        </Muted>
-      </div>
-
-      <div className="space-y-6">
+        </PageDescription>
+      </PageHeader>
+      <PageBody contentClassName="max-w-4xl space-y-6">
         {setup.projectOverview && (
           <Card>
             <CardHeader>
@@ -338,7 +344,7 @@ export function ReviewView({
           onLaunch={handleLaunch}
           tags={tags}
         />
-      </div>
-    </div>
+      </PageBody>
+    </PageLayout>
   );
 }

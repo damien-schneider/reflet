@@ -1,14 +1,55 @@
 "use client";
 
 import { Button } from "@ctrl-ui/react/ui/button";
+import {
+  PageBody,
+  PageDescription,
+  PageHeader,
+  PageLayout,
+  PageTitle,
+} from "@ctrl-ui/react/ui/page-layout";
 import { ArrowLeft } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import Link from "next/link";
 import { use } from "react";
-import { H1, Muted, Text } from "@/components/ui/typography";
+import { H1, Muted } from "@/components/ui/typography";
 import { ReleaseEditor } from "@/features/changelog/components/release-editor";
+
+function EditReleaseMessage({
+  children,
+  title,
+}: {
+  children: React.ReactNode;
+  title: string;
+}) {
+  return (
+    <PageLayout scroll="page" width="wide">
+      <PageBody>
+        <div className="flex min-h-[50vh] items-center justify-center">
+          <div className="text-center">
+            <H1>{title}</H1>
+            {children}
+          </div>
+        </div>
+      </PageBody>
+    </PageLayout>
+  );
+}
+
+function BackToChangelogButton({ orgSlug }: { orgSlug: string }) {
+  return (
+    <Button
+      className="mt-4"
+      render={<Link href={`/dashboard/${orgSlug}/changelog`} />}
+      variant="surface"
+    >
+      <ArrowLeft className="mr-2 h-4 w-4" />
+      Back to Changelog
+    </Button>
+  );
+}
 
 export default function EditReleasePage({
   params,
@@ -28,81 +69,59 @@ export default function EditReleasePage({
 
   if (!org) {
     return (
-      <div className="flex min-h-[50vh] items-center justify-center">
-        <div className="text-center">
-          <H1>Organization not found</H1>
-          <Muted className="mt-2">
-            The organization you&apos;re looking for doesn&apos;t exist.
-          </Muted>
-        </div>
-      </div>
+      <EditReleaseMessage title="Organization not found">
+        <Muted className="mt-2">
+          The organization you&apos;re looking for doesn&apos;t exist.
+        </Muted>
+      </EditReleaseMessage>
     );
   }
 
   if (currentMember && !isAdmin) {
     return (
-      <div className="flex min-h-[50vh] items-center justify-center">
-        <div className="text-center">
-          <H1>Access Denied</H1>
-          <Muted className="mt-2">
-            You don&apos;t have permission to edit releases.
-          </Muted>
-          <Button
-            className="mt-4"
-            render={<Link href={`/dashboard/${orgSlug}/changelog`} />}
-            variant="surface"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Changelog
-          </Button>
-        </div>
-      </div>
+      <EditReleaseMessage title="Access Denied">
+        <Muted className="mt-2">
+          You don&apos;t have permission to edit releases.
+        </Muted>
+        <BackToChangelogButton orgSlug={orgSlug} />
+      </EditReleaseMessage>
     );
   }
 
   if (!release) {
     return (
-      <div className="flex min-h-[50vh] items-center justify-center">
-        <div className="text-center">
-          <H1>Release not found</H1>
-          <Muted className="mt-2">
-            The release you&apos;re looking for doesn&apos;t exist.
-          </Muted>
-          <Button
-            className="mt-4"
-            render={<Link href={`/dashboard/${orgSlug}/changelog`} />}
-            variant="surface"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Changelog
-          </Button>
-        </div>
-      </div>
+      <EditReleaseMessage title="Release not found">
+        <Muted className="mt-2">
+          The release you&apos;re looking for doesn&apos;t exist.
+        </Muted>
+        <BackToChangelogButton orgSlug={orgSlug} />
+      </EditReleaseMessage>
     );
   }
 
   return (
-    <div className="admin-container">
-      <div className="mb-8">
+    <PageLayout scroll="page" width="wide">
+      <PageHeader className="flex flex-col items-start">
         <Link
-          className="mb-4 inline-flex items-center text-muted-foreground text-sm transition-colors hover:text-foreground"
+          className="inline-flex items-center text-muted-foreground text-sm transition-colors hover:text-foreground"
           href={`/dashboard/${orgSlug}/changelog`}
         >
           <ArrowLeft className="mr-1 h-4 w-4" />
           Back to Changelog
         </Link>
-        <H1>Edit Release</H1>
-        <Text variant="bodySmall">
+        <PageTitle>Edit Release</PageTitle>
+        <PageDescription>
           Update your release note. Changes are saved automatically as a draft.
-        </Text>
-      </div>
-
-      <ReleaseEditor
-        className="max-w-4xl"
-        organizationId={org._id}
-        orgSlug={orgSlug}
-        release={release}
-      />
-    </div>
+        </PageDescription>
+      </PageHeader>
+      <PageBody>
+        <ReleaseEditor
+          className="max-w-4xl"
+          organizationId={org._id}
+          orgSlug={orgSlug}
+          release={release}
+        />
+      </PageBody>
+    </PageLayout>
   );
 }

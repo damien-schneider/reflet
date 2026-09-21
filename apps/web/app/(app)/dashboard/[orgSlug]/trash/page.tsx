@@ -2,13 +2,19 @@
 
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button } from "@ctrl-ui/react/ui/button";
+import {
+  PageBody,
+  PageDescription,
+  PageHeader,
+  PageLayout,
+  PageTitle,
+} from "@ctrl-ui/react/ui/page-layout";
 import { ArrowCounterClockwise, Spinner, Trash } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
 import { use, useState } from "react";
-import { H1, Muted } from "@/components/ui/typography";
 
 export default function TrashPage({
   params,
@@ -35,76 +41,83 @@ export default function TrashPage({
 
   if (!org) {
     return (
-      <div className="flex min-h-[50vh] items-center justify-center">
-        <Spinner className="animate-spin" />
-      </div>
+      <PageLayout scroll="page" width="content">
+        <PageBody>
+          <div className="flex min-h-[50vh] items-center justify-center">
+            <Spinner className="animate-spin" />
+          </div>
+        </PageBody>
+      </PageLayout>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <H1>Trash</H1>
-        <Muted>Deleted items are permanently removed after 30 days.</Muted>
-      </div>
+    <PageLayout scroll="page" width="content">
+      <PageHeader>
+        <PageTitle>Trash</PageTitle>
+        <PageDescription>
+          Deleted items are permanently removed after 30 days.
+        </PageDescription>
+      </PageHeader>
+      <PageBody contentClassName="space-y-6">
+        {deletedFeedback === undefined && (
+          <div className="flex items-center justify-center py-12">
+            <Spinner className="animate-spin" />
+          </div>
+        )}
 
-      {deletedFeedback === undefined && (
-        <div className="flex items-center justify-center py-12">
-          <Spinner className="animate-spin" />
-        </div>
-      )}
+        {deletedFeedback?.length === 0 && (
+          <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed py-16 text-muted-foreground">
+            <Trash className="size-10" />
+            <p className="text-sm">No deleted feedback</p>
+          </div>
+        )}
 
-      {deletedFeedback?.length === 0 && (
-        <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed py-16 text-muted-foreground">
-          <Trash className="size-10" />
-          <p className="text-sm">No deleted feedback</p>
-        </div>
-      )}
-
-      {deletedFeedback && deletedFeedback.length > 0 && (
-        <div className="space-y-2">
-          {deletedFeedback.map((feedback) => (
-            <div
-              className="flex items-center justify-between gap-4 rounded-lg border p-4"
-              key={feedback._id}
-            >
-              <div className="min-w-0 flex-1">
-                <h3 className="truncate font-medium text-sm">
-                  {feedback.title}
-                </h3>
-                <div className="mt-1 flex items-center gap-2 text-muted-foreground text-xs">
-                  {feedback.deletedAt && (
-                    <span>
-                      Deleted{" "}
-                      {formatDistanceToNow(feedback.deletedAt, {
-                        addSuffix: true,
-                      })}
-                    </span>
-                  )}
-                  <span>
-                    <Badge variant="outline">
-                      {feedback.daysRemaining}d remaining
-                    </Badge>
-                  </span>
-                </div>
-              </div>
-              <Button
-                disabled={restoringId === feedback._id}
-                onClick={() => handleRestore(feedback._id)}
-                size="xs"
-                variant="surface"
+        {deletedFeedback && deletedFeedback.length > 0 && (
+          <div className="space-y-2">
+            {deletedFeedback.map((feedback) => (
+              <div
+                className="flex items-center justify-between gap-4 rounded-lg border p-4"
+                key={feedback._id}
               >
-                {restoringId === feedback._id ? (
-                  <Spinner className="mr-1.5 size-3.5 animate-spin" />
-                ) : (
-                  <ArrowCounterClockwise className="mr-1.5 size-3.5" />
-                )}
-                Restore
-              </Button>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="truncate font-medium text-sm">
+                    {feedback.title}
+                  </h3>
+                  <div className="mt-1 flex items-center gap-2 text-muted-foreground text-xs">
+                    {feedback.deletedAt && (
+                      <span>
+                        Deleted{" "}
+                        {formatDistanceToNow(feedback.deletedAt, {
+                          addSuffix: true,
+                        })}
+                      </span>
+                    )}
+                    <span>
+                      <Badge variant="outline">
+                        {feedback.daysRemaining}d remaining
+                      </Badge>
+                    </span>
+                  </div>
+                </div>
+                <Button
+                  disabled={restoringId === feedback._id}
+                  onClick={() => handleRestore(feedback._id)}
+                  size="xs"
+                  variant="surface"
+                >
+                  {restoringId === feedback._id ? (
+                    <Spinner className="mr-1.5 size-3.5 animate-spin" />
+                  ) : (
+                    <ArrowCounterClockwise className="mr-1.5 size-3.5" />
+                  )}
+                  Restore
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </PageBody>
+    </PageLayout>
   );
 }
