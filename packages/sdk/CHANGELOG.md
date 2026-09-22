@@ -5,6 +5,13 @@ All notable changes to `reflet-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.2] - 2026-09-22
+
+### Fixed
+
+- Keys typed in the widget no longer trigger the host page's keyboard shortcuts — Space in the message types a space instead of playing or pausing the host's video
+- Host shortcuts listening in the capture phase still run first; they should read `event.composedPath()[0]` rather than `event.target` to recognise the widget's text fields
+
 ## [0.4.1] - 2026-09-20
 
 ### Added
