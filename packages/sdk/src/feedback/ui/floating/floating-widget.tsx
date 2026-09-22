@@ -35,15 +35,21 @@ export function FloatingWidget({
     if (!showPanel || state.step !== "compose") {
       return;
     }
-    const onKeyDown = (event: globalThis.KeyboardEvent) => {
-      if (event.key === "Escape" && !event.defaultPrevented) {
+    const onKeyDown = (event: Event) => {
+      const isEscape = event instanceof KeyboardEvent && event.key === "Escape";
+      if (isEscape && !event.defaultPrevented) {
         setMinimized(true);
         requestAnimationFrame(() => launcherRef.current?.focus());
       }
     };
+    const widgetRoot = floating.rootRef.current?.getRootNode();
     document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [showPanel, state.step]);
+    widgetRoot?.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      widgetRoot?.removeEventListener("keydown", onKeyDown);
+    };
+  }, [floating.rootRef, showPanel, state.step]);
 
   return (
     <div

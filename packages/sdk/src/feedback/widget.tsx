@@ -39,8 +39,8 @@ export function RefletFeedback(props: RefletFeedbackProps) {
       }
     };
 
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
+    document.addEventListener("keydown", onKeyDown, true);
+    return () => document.removeEventListener("keydown", onKeyDown, true);
   }, [close, enabled, hotkey, isOpen, open]);
 
   if (!enabled || state.isDismissed) {

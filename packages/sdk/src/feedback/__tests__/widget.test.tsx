@@ -119,6 +119,65 @@ describe("RefletFeedback", () => {
     expect(submit.disabled).toBe(false);
   });
 
+  it("keeps keys typed in the message away from the host page's shortcuts", () => {
+    const hostShortcuts: string[] = [];
+    const recordHostKey = (event: KeyboardEvent) => {
+      hostShortcuts.push(event.type);
+    };
+    window.addEventListener("keydown", recordHostKey);
+    window.addEventListener("keyup", recordHostKey);
+    mount();
+    click(launcher());
+    const message = shadow().querySelector("textarea");
+    if (!(message instanceof HTMLTextAreaElement)) {
+      throw new Error("Message field missing");
+    }
+
+    fireEvent.keyDown(message, { key: " " });
+    fireEvent.keyUp(message, { key: " " });
+    fireEvent.keyDown(document.body, { key: " " });
+
+    window.removeEventListener("keydown", recordHostKey);
+    window.removeEventListener("keyup", recordHostKey);
+    expect(hostShortcuts).toEqual(["keydown"]);
+  });
+
+  it("minimizes the panel on Escape pressed in the message", () => {
+    mount();
+    click(launcher());
+    const message = shadow().querySelector("textarea");
+    if (!(message instanceof HTMLTextAreaElement)) {
+      throw new Error("Message field missing");
+    }
+
+    act(() => {
+      fireEvent.keyDown(message, { key: "Escape" });
+    });
+
+    expect(shadow().querySelector(".panel")).toBeNull();
+  });
+
+  it("closes on the hotkey pressed in the message", () => {
+    render(
+      <RefletFeedback
+        captureOnOpen={false}
+        hotkey="alt+f"
+        publicKey="fb_pub_test"
+      />
+    );
+    click(launcher());
+    const message = shadow().querySelector("textarea");
+    if (!(message instanceof HTMLTextAreaElement)) {
+      throw new Error("Message field missing");
+    }
+
+    act(() => {
+      fireEvent.keyDown(message, { altKey: true, key: "f" });
+    });
+
+    expect(shadow().querySelector(".panel")).toBeNull();
+  });
+
   it("keeps the draft when temporarily minimized and restored", () => {
     mount();
     click(launcher());
