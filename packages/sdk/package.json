@@ -1,6 +1,6 @@
 {
   "name": "reflet-sdk",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "Official Reflet SDK - Collect user feedback, feature requests, and bug reports from your app",
   "keywords": [
     "feedback",

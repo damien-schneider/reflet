@@ -5,6 +5,13 @@ All notable changes to `reflet-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.3] - 2026-09-22
+
+### Fixed
+
+- Host shortcuts that listen in the capture phase no longer see keys typed in the widget either — the widget stops them before the host and replays them inside its own shadow root
+- Only a host capture listener registered before `reflet-sdk/feedback` is imported still runs first
+
 ## [0.4.2] - 2026-09-22
 
 ### Fixed
