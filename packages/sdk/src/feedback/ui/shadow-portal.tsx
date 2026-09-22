@@ -4,7 +4,6 @@ import { WIDGET_MARKER } from "../core/capture";
 import { WIDGET_STYLES } from "./styles";
 
 const DARK_QUERY = "(prefers-color-scheme: dark)";
-const KEY_EVENTS = ["keydown", "keyup", "keypress"] as const;
 
 export type WidgetTheme = "auto" | "dark" | "light";
 
@@ -54,10 +53,6 @@ export function ShadowPortal({
     const host = document.createElement("div");
     host.setAttribute(WIDGET_MARKER, "");
     const root = host.attachShadow({ mode: "open" });
-    // Host shortcuts see the shadow host as target, never our text fields.
-    for (const type of KEY_EVENTS) {
-      root.addEventListener(type, (event) => event.stopPropagation());
-    }
 
     const style = document.createElement("style");
     style.textContent = WIDGET_STYLES;

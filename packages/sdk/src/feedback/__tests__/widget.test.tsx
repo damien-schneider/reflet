@@ -124,8 +124,8 @@ describe("RefletFeedback", () => {
     const recordHostKey = (event: KeyboardEvent) => {
       hostShortcuts.push(event.type);
     };
-    window.addEventListener("keydown", recordHostKey);
-    window.addEventListener("keyup", recordHostKey);
+    window.addEventListener("keydown", recordHostKey, true);
+    window.addEventListener("keyup", recordHostKey, true);
     mount();
     click(launcher());
     const message = shadow().querySelector("textarea");
@@ -137,8 +137,8 @@ describe("RefletFeedback", () => {
     fireEvent.keyUp(message, { key: " " });
     fireEvent.keyDown(document.body, { key: " " });
 
-    window.removeEventListener("keydown", recordHostKey);
-    window.removeEventListener("keyup", recordHostKey);
+    window.removeEventListener("keydown", recordHostKey, true);
+    window.removeEventListener("keyup", recordHostKey, true);
     expect(hostShortcuts).toEqual(["keydown"]);
   });
 
@@ -171,11 +171,16 @@ describe("RefletFeedback", () => {
       throw new Error("Message field missing");
     }
 
+    let hotkeyReachedBrowser = true;
     act(() => {
-      fireEvent.keyDown(message, { altKey: true, key: "f" });
+      hotkeyReachedBrowser = fireEvent.keyDown(message, {
+        altKey: true,
+        key: "f",
+      });
     });
 
     expect(shadow().querySelector(".panel")).toBeNull();
+    expect(hotkeyReachedBrowser).toBe(false);
   });
 
   it("keeps the draft when temporarily minimized and restored", () => {

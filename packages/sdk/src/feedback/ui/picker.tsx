@@ -13,6 +13,7 @@ import {
   type VisibleViewport,
   visibleViewport,
 } from "./visible-viewport";
+import { listenToKeydown, startsInWidget } from "./widget-keys";
 
 const LABEL_HEIGHT = 24;
 const LABEL_GAP = 6;
@@ -26,13 +27,6 @@ interface HoverTarget {
   label: string;
   rect: DOMRect;
   region?: string;
-}
-
-/** Events raised by the picker's own note card must reach it, never be swallowed. */
-function targetsWidget(event: Event): boolean {
-  return event
-    .composedPath()
-    .some((node) => node instanceof Element && isWidgetOwned(node));
 }
 
 function elementUnder(x: number, y: number): Element | null {
@@ -98,6 +92,7 @@ export function ElementPicker({
   const [target, setTarget] = useState<HoverTarget | null>(null);
   const [pinned, setPinned] = useState<HoverTarget | null>(null);
   const [note, setNote] = useState("");
+  const pickerRef = useRef<HTMLDivElement>(null);
   const noteRef = useRef<HTMLTextAreaElement>(null);
   const pinnedRef = useRef(false);
   const [view, setView] = useState(visibleViewport);
@@ -118,7 +113,7 @@ export function ElementPicker({
 
   useEffect(() => {
     const swallow = (event: Event) => {
-      if (targetsWidget(event)) {
+      if (startsInWidget(event)) {
         return;
       }
       event.preventDefault();
@@ -139,14 +134,14 @@ export function ElementPicker({
     };
 
     const onMove = (event: PointerEvent) => {
-      if (pinnedRef.current || targetsWidget(event)) {
+      if (pinnedRef.current || startsInWidget(event)) {
         return;
       }
       aimAt(event.clientX, event.clientY);
     };
 
     const onPointerDown = (event: PointerEvent) => {
-      if (targetsWidget(event)) {
+      if (startsInWidget(event)) {
         return;
       }
       swallow(event);
@@ -157,7 +152,7 @@ export function ElementPicker({
     };
 
     const onPointerUp = (event: PointerEvent) => {
-      if (targetsWidget(event)) {
+      if (startsInWidget(event)) {
         return;
       }
       swallow(event);
@@ -195,7 +190,7 @@ export function ElementPicker({
         onEscape();
         return;
       }
-      if (pinnedRef.current || targetsWidget(event)) {
+      if (pinnedRef.current || startsInWidget(event)) {
         return;
       }
       if (event.key === "Enter") {
@@ -232,7 +227,11 @@ export function ElementPicker({
     document.addEventListener("mousedown", swallow, true);
     document.addEventListener("mouseup", swallow, true);
     document.addEventListener("click", swallow, true);
-    document.addEventListener("keydown", onKeyDown, true);
+    const stopListeningToKeys = listenToKeydown(
+      pickerRef.current,
+      onKeyDown,
+      true
+    );
     window.addEventListener("scroll", onScroll, {
       capture: true,
       passive: true,
@@ -248,7 +247,7 @@ export function ElementPicker({
       document.removeEventListener("mousedown", swallow, true);
       document.removeEventListener("mouseup", swallow, true);
       document.removeEventListener("click", swallow, true);
-      document.removeEventListener("keydown", onKeyDown, true);
+      stopListeningToKeys();
       window.removeEventListener("scroll", onScroll, true);
       document.body.style.cursor = previousCursor;
     };
@@ -259,7 +258,7 @@ export function ElementPicker({
   const labelAbove = rect ? rect.top > LABEL_HEIGHT + LABEL_GAP : true;
 
   return (
-    <div>
+    <div ref={pickerRef}>
       {rect && (
         <div
           className="picker-box"

@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import {
   DEFAULT_WIDGET_LABELS,
   DEFAULT_WIDGET_OFFSET,
@@ -8,7 +7,7 @@ import { Annotator } from "./ui/annotator";
 import { FloatingWidget } from "./ui/floating/floating-widget";
 import { ElementPicker } from "./ui/picker";
 import { ShadowPortal } from "./ui/shadow-portal";
-import { matchesHotkey, useWidgetState } from "./ui/use-widget-state";
+import { useWidgetState } from "./ui/use-widget-state";
 
 export function RefletFeedback(props: RefletFeedbackProps) {
   const {
@@ -21,27 +20,7 @@ export function RefletFeedback(props: RefletFeedbackProps) {
 
   const labels = { ...DEFAULT_WIDGET_LABELS, ...props.labels };
   const state = useWidgetState(props);
-  const { close, isOpen, open } = state;
-
-  useEffect(() => {
-    if (!(hotkey && enabled)) {
-      return;
-    }
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (matchesHotkey(event, hotkey)) {
-        event.preventDefault();
-        if (isOpen) {
-          close();
-        } else {
-          open();
-        }
-      }
-    };
-
-    document.addEventListener("keydown", onKeyDown, true);
-    return () => document.removeEventListener("keydown", onKeyDown, true);
-  }, [close, enabled, hotkey, isOpen, open]);
+  const { isOpen } = state;
 
   if (!enabled || state.isDismissed) {
     return null;
@@ -58,7 +37,12 @@ export function RefletFeedback(props: RefletFeedbackProps) {
         className="capture-halo"
         data-active={state.isCapturing}
       />
-      <FloatingWidget labels={labels} position={position} state={state} />
+      <FloatingWidget
+        hotkey={hotkey}
+        labels={labels}
+        position={position}
+        state={state}
+      />
 
       {isOpen && state.step === "annotate" && state.activeScreenshot && (
         <Annotator

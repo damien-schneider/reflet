@@ -1,4 +1,5 @@
 import { type MouseEvent, useEffect, useRef, useState } from "react";
+import { listenToKeydown } from "../widget-keys";
 
 export function useDetailsPopover() {
   const [open, setOpen] = useState(false);
@@ -33,11 +34,15 @@ export function useDetailsPopover() {
       summaryRef.current?.focus();
     };
     document.addEventListener("pointerdown", dismissOutside);
-    document.addEventListener("keydown", dismissWithEscape, true);
+    const stopListeningToKeys = listenToKeydown(
+      detailsRef.current,
+      dismissWithEscape,
+      true
+    );
     window.addEventListener("resize", reposition);
     return () => {
       document.removeEventListener("pointerdown", dismissOutside);
-      document.removeEventListener("keydown", dismissWithEscape, true);
+      stopListeningToKeys();
       window.removeEventListener("resize", reposition);
     };
   }, []);

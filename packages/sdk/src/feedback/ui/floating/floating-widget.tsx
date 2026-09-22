@@ -4,14 +4,17 @@ import { CloseIcon, GripIcon } from "../icons";
 import { Launcher } from "../launcher";
 import { FeedbackPanel } from "../panel";
 import { SelectionOutline } from "../selection-outline";
-import type { WidgetState } from "../use-widget-state";
+import { matchesHotkey, type WidgetState } from "../use-widget-state";
+import { listenToKeydown } from "../widget-keys";
 import { useFloatingPosition } from "./use-floating-position";
 
 export function FloatingWidget({
+  hotkey,
   labels,
   position,
   state,
 }: {
+  hotkey: string | null;
   labels: FeedbackWidgetLabels;
   position: RefletFeedbackProps["position"];
   state: WidgetState;
@@ -35,21 +38,32 @@ export function FloatingWidget({
     if (!showPanel || state.step !== "compose") {
       return;
     }
-    const onKeyDown = (event: Event) => {
-      const isEscape = event instanceof KeyboardEvent && event.key === "Escape";
-      if (isEscape && !event.defaultPrevented) {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !event.defaultPrevented) {
         setMinimized(true);
         requestAnimationFrame(() => launcherRef.current?.focus());
       }
     };
-    const widgetRoot = floating.rootRef.current?.getRootNode();
-    document.addEventListener("keydown", onKeyDown);
-    widgetRoot?.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      widgetRoot?.removeEventListener("keydown", onKeyDown);
-    };
+    return listenToKeydown(floating.rootRef.current, onKeyDown);
   }, [floating.rootRef, showPanel, state.step]);
+
+  const { close, isOpen, open } = state;
+  useEffect(() => {
+    if (!hotkey) {
+      return;
+    }
+    const toggleOnHotkey = (event: KeyboardEvent) => {
+      if (matchesHotkey(event, hotkey)) {
+        event.preventDefault();
+        if (isOpen) {
+          close();
+        } else {
+          open();
+        }
+      }
+    };
+    return listenToKeydown(floating.rootRef.current, toggleOnHotkey, true);
+  }, [close, floating.rootRef, hotkey, isOpen, open]);
 
   return (
     <div
