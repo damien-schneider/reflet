@@ -5,6 +5,21 @@ All notable changes to `reflet-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-09-24
+
+### Added
+
+- Devtools for the team, development only: a draggable bar above the launcher with a movable, resizable full-height panel to pick an element and write a note on it (shown instantly as a numbered pin, stored in IndexedDB) or Shift+click it to open its source, copy notes as an agent prompt, send them to the board as internal feedback, and read the board's feedback for the current page
+- `reflet-sdk/devtools/next` and `reflet-sdk/devtools/vite`: the dev-only route behind code view and the board; it reads files inside the repository and keeps `REFLET_SECRET_KEY` on the server
+- "Clear notes" in the devtools archives every note at once; cleared notes can be restored for a day, then are deleted for good
+- `devtools` prop on `RefletFeedback` to turn the bar off
+- Internal feedback: `POST /api/v1/feedback/create` accepts `internal: true` with a secret key, and `GET /api/v1/feedback/list` accepts `pagePath` to list what was reported on one route
+
+### Fixed
+
+- Screenshots no longer wait out the widget's own animations before capturing
+- A moved widget that had to squeeze into a smaller window goes back to where it was put once the window grows again
+
 ## [0.4.3] - 2026-09-22
 
 ### Fixed
