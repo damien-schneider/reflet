@@ -42,28 +42,62 @@ function clampPosition(
   };
 }
 
-export function useFloatingPosition(
+function readStoredPosition(persistKey: string | undefined): Point | null {
+  if (!persistKey || typeof localStorage === "undefined") {
+    return null;
+  }
+  try {
+    const stored: unknown = JSON.parse(
+      localStorage.getItem(persistKey) ?? "null"
+    );
+    if (
+      typeof stored === "object" &&
+      stored !== null &&
+      "x" in stored &&
+      "y" in stored &&
+      typeof stored.x === "number" &&
+      typeof stored.y === "number"
+    ) {
+      return { x: stored.x, y: stored.y };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export function useFloatingPosition<Root extends HTMLElement = HTMLDivElement>(
   corner: RefletFeedbackProps["position"] = "bottom-right",
-  isPanelOpen = false
+  isPanelOpen = false,
+  {
+    anchorSelector = ".root",
+    persistKey,
+  }: { anchorSelector?: string; persistKey?: string } = {}
 ) {
-  const rootRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<Root>(null);
   const gesture = useRef<Point | null>(null);
-  const [position, setPosition] = useState<Point | null>(null);
+  // Where the user put it (persisted) vs. where today's window lets it sit (never persisted).
+  const [placement, setPlacement] = useState<Point | null>(() =>
+    readStoredPosition(persistKey)
+  );
+  const [fittedAnchor, setFittedAnchor] = useState<Point | null>(null);
   const [positionedPanelOpen, setPositionedPanelOpen] = useState(isPanelOpen);
   const [viewport, setViewport] = useState(visibleViewport);
   const horizontalEdge = corner.endsWith("right") ? "right" : "left";
   const verticalEdge = corner.startsWith("bottom") ? "bottom" : "top";
+  const position = fittedAnchor ?? placement;
 
   if (positionedPanelOpen !== isPanelOpen) {
     setPositionedPanelOpen(isPanelOpen);
-    setPosition(null);
+    setPlacement(null);
+    setFittedAnchor(null);
   }
 
-  const moveTo = useCallback(
-    (point: Point, bounds: DOMRect) => {
+  const anchorFor = useCallback(
+    (point: Point, bounds: DOMRect): Point => {
       const fitted = clampPosition(point, bounds);
       const visible = visibleViewport();
-      const anchor = {
+      return {
         x:
           horizontalEdge === "right"
             ? visible.left + visible.width - fitted.x - bounds.width
@@ -73,46 +107,74 @@ export function useFloatingPosition(
             ? visible.top + visible.height - fitted.y - bounds.height
             : fitted.y - visible.top,
       };
-      setPosition((current) =>
-        current?.x === anchor.x && current.y === anchor.y ? current : anchor
-      );
     },
     [horizontalEdge, verticalEdge]
   );
 
-  const keepInViewport = useCallback(() => {
-    const bounds = rootRef.current?.getBoundingClientRect();
-    if (!bounds) {
+  const moveTo = (point: Point, bounds: DOMRect) => {
+    const anchor = anchorFor(point, bounds);
+    setFittedAnchor(null);
+    setPlacement((current) =>
+      current?.x === anchor.x && current.y === anchor.y ? current : anchor
+    );
+  };
+
+  // Every render, on the layout box: an entrance transform would read as overflow.
+  useLayoutEffect(() => {
+    const root = rootRef.current;
+    if (!root || root.offsetWidth === 0) {
       return;
     }
+    const bounds = new DOMRect(
+      root.offsetLeft,
+      root.offsetTop,
+      root.offsetWidth,
+      root.offsetHeight
+    );
     const fitted = clampPosition(bounds, bounds, viewport);
     if (
       Math.abs(fitted.x - bounds.x) > 0.5 ||
       Math.abs(fitted.y - bounds.y) > 0.5
     ) {
-      moveTo(fitted, bounds);
+      const anchor = anchorFor(fitted, bounds);
+      setFittedAnchor((current) =>
+        current?.x === anchor.x && current.y === anchor.y ? current : anchor
+      );
     }
-  }, [moveTo, viewport]);
+  });
 
-  useLayoutEffect(() => {
-    keepInViewport();
-  }, [keepInViewport]);
+  /** Back to the user's placement first; the layout effect then refits it to the new room. */
   useEffect(() => {
+    const refit = () => setFittedAnchor(null);
     const observer =
-      typeof ResizeObserver === "undefined"
-        ? null
-        : new ResizeObserver(keepInViewport);
+      typeof ResizeObserver === "undefined" ? null : new ResizeObserver(refit);
     if (rootRef.current) {
       observer?.observe(rootRef.current);
     }
-    const stopListening = onViewportChange(() =>
-      setViewport(visibleViewport())
-    );
+    const stopListening = onViewportChange(() => {
+      setViewport(visibleViewport());
+      refit();
+    });
     return () => {
       observer?.disconnect();
       stopListening();
     };
-  }, [keepInViewport]);
+  }, []);
+
+  useEffect(() => {
+    if (!persistKey) {
+      return;
+    }
+    try {
+      if (placement) {
+        localStorage.setItem(persistKey, JSON.stringify(placement));
+      } else {
+        localStorage.removeItem(persistKey);
+      }
+    } catch {
+      // Storage can be full or blocked; the position just won't survive a reload.
+    }
+  }, [persistKey, placement]);
 
   const onPointerDown = (event: PointerEvent<HTMLButtonElement>) => {
     const bounds = rootRef.current?.getBoundingClientRect();
@@ -149,9 +211,9 @@ export function useFloatingPosition(
     moveTo({ x: bounds.x + direction.x, y: bounds.y + direction.y }, bounds);
   };
 
-  const viewportStyles = `.root { --rf-viewport-width: ${viewport.width}px; --rf-viewport-top: ${viewport.top}px; --rf-viewport-bottom: ${viewport.bottom}px; --rf-viewport-left: ${viewport.left}px; --rf-viewport-right: ${viewport.right}px; }`;
+  const viewportStyles = `${anchorSelector} { --rf-viewport-width: ${viewport.width}px; --rf-viewport-top: ${viewport.top}px; --rf-viewport-bottom: ${viewport.bottom}px; --rf-viewport-left: ${viewport.left}px; --rf-viewport-right: ${viewport.right}px; }`;
   const anchorStyles = position
-    ? `.root[data-moved="true"] { left: auto; right: auto; top: auto; bottom: auto; ${horizontalEdge}: ${position.x + viewport[horizontalEdge]}px; ${verticalEdge}: ${position.y + viewport[verticalEdge]}px; }`
+    ? `${anchorSelector}[data-moved="true"] { left: auto; right: auto; top: auto; bottom: auto; ${horizontalEdge}: ${position.x + viewport[horizontalEdge]}px; ${verticalEdge}: ${position.y + viewport[verticalEdge]}px; }`
     : "";
   return {
     handleProps: {
@@ -168,7 +230,14 @@ export function useFloatingPosition(
         gesture.current = null;
       },
     },
+    /** The user's own placement, independent of any temporary fit. */
+    placement,
+    /** Null while docked by CSS; non-null once moved by the user or fitted into the window. */
     position,
+    resetPosition: () => {
+      setPlacement(null);
+      setFittedAnchor(null);
+    },
     rootRef,
     styles: viewportStyles + anchorStyles,
   };

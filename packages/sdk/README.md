@@ -166,6 +166,7 @@ builds do; production builds strip React's debug data).
 | `metadata` | `Record<string, string>` | — | Extra fields merged into every report. |
 | `categories` | `("bug" \| "idea" \| "question")[]` | all three | Category chips to show. |
 | `labels` | `Partial<FeedbackWidgetLabels>` | — | Override any string for i18n. |
+| `devtools` | `boolean` | `true` | Dev-only team tools; see below. Never loaded outside `NODE_ENV=development`. |
 | `onSubmit` | `(result: { feedbackId: string }) => void` | — | Fires after a successful send. |
 
 The panel renders in a shadow root, so your CSS cannot reach it and its CSS
@@ -173,6 +174,69 @@ cannot reach your app. Screenshots are rendered from the DOM rather than through
 `getDisplayMedia`, so users are never asked for a screen-share permission —
 the trade-off is that cross-origin images without CORS headers, iframes and
 canvas content may come out blank.
+
+#### Devtools for your team (development only)
+
+In `NODE_ENV=development`, `RefletFeedback` also mounts a small devtools bar
+above its launcher; drag it by its grip anywhere, double-click the grip to put
+it back. Its panel opens full height: drag its header to move it (double-click
+to dock it back), drag its inner edge, bottom edge or corner to resize it
+(double-click a handle to reset). Position and size are remembered and refit
+whenever the window changes size. Production builds drop it at bundle time —
+the devtools chunk is never shipped to your users. Pass `devtools={false}` to
+turn it off.
+
+- **Pick** — click an element to write a note on it. The note card has a
+  "View code" button, and Shift+click (or Shift+Enter) skips the note and opens
+  the source file with the JSX element highlighted, ready to jump to in your
+  editor. Locations come from React's debug stacks resolved through the dev
+  server's source maps, Server Components included.
+- **Notes** — a note appears the moment you press Enter, as a numbered pin on
+  its element, Figma-style; click the pin to read, edit or delete it, and find
+  the same number on its card in the panel. Its source location and a
+  snapshot of the element in its page are filled in right after, even if you
+  reload first. Notes live in this browser's IndexedDB until you delete them.
+  Every change shows up at once; if saving fails, a notice says so and offers
+  to retry.
+- **Copy as prompt** — every note, with its source location, component stack,
+  selector and markup, as one Markdown prompt for a coding agent.
+- **Send to board** — notes become internal feedback: members see them with an
+  "Internal" badge, the public board never does, and an admin can make one
+  public from the dashboard.
+- **Board** — the board's feedback for the current route, with "Show on page",
+  the reporter's source location, and a code search for the element's text.
+
+Code view and the board go through one dev-only route that reads files from
+your repository and holds the secret key server-side.
+
+Next.js App Router, `app/api/reflet-devtools/[...path]/route.ts`:
+
+```ts
+export { GET, POST } from 'reflet-sdk/devtools/next';
+```
+
+The handlers answer 404 unless `NODE_ENV` is `development`, so the file is
+safe to ship. Vite:
+
+```ts
+import { refletDevtools } from 'reflet-sdk/devtools/vite';
+
+export default defineConfig({ plugins: [react(), refletDevtools()] });
+```
+
+| Env var | Purpose |
+|---------|---------|
+| `REFLET_SECRET_KEY` | Your `fb_sec_…` key, server-only. Needed to send notes and read the board. |
+| `REFLET_EDITOR` | `vscode` (default), `cursor`, `windsurf`, `zed` or `webstorm` for "Open in editor". |
+| `REFLET_API_URL` | API override, for self-hosted or local Reflet backends. |
+| `REFLET_DEVTOOLS_HOSTS` | Comma-separated dev hostnames besides localhost, e.g. `app.test`. Same as the `allowedHosts` option. |
+
+The route only answers on `localhost`, `*.localhost`, loopback IPs and the
+hostnames you allow — so a rebound DNS name pointing at your machine gets a 403
+— and only to same-origin requests carrying the devtools header. It only serves
+source files (`.ts`, `.tsx`, `.js`, `.jsx`, `.vue`, `.svelte`, `.astro`,
+`.mdx`…) inside the repository and never under `node_modules`, and only
+forwards the feedback endpoints the devtools use.
 
 ### 5. Server-Side User Signing (required for voting and commenting)
 

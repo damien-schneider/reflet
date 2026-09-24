@@ -83,7 +83,7 @@ async function pickNext(
     .collect();
   const eligible = all.filter(
     (feedback) =>
-      feedback.isApproved &&
+      (feedback.isApproved || feedback.isInternal) &&
       !feedback.deletedAt &&
       !feedback.isMerged &&
       statuses.has(feedback.status) &&

@@ -7,6 +7,7 @@ import { VoteButton } from "@/features/feedback/components/vote-button";
 import { cn } from "@/lib/utils";
 import { AiMiniIndicator } from "./ai-mini-indicator";
 import { FeedbackDeleteMenu } from "./feedback-delete-menu";
+import { InternalBadge } from "./internal-badge";
 import { NeedsReviewBadge, needsHumanReview } from "./needs-review-badge";
 
 interface FeedbackTag {
@@ -80,6 +81,7 @@ export function FeedbackListItem({
                   {feedback.isPinned && (
                     <PushPin className="mr-1 inline h-4 w-4 text-brand-text" />
                   )}
+                  {feedback.isInternal && <InternalBadge className="mr-1" />}
                   {feedback.title}
                 </h3>
 

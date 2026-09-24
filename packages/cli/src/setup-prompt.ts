@@ -123,6 +123,28 @@ through \`window.Reflet\`.
 - \`captureConsole\` — set to false to stop recording console errors.
 - \`metadata\` — a flat string record merged into every report (plan, tenant…).
 
+## 7. Dev tools for the team (React only)
+
+In development, the same widget adds a small draggable bar above the
+launcher: pick an element to write a note on it (pinned on the page, kept in the browser's
+IndexedDB) or Shift+click it to open its source, copy notes as a prompt for a
+coding agent, send them to the board as internal items that stay off the
+public board, and read the board's feedback for the current page. Production
+builds never load it; pass \`devtools={false}\` to turn it off.
+
+Code view and the board need one dev-only route:
+
+- Next.js App Router → \`app/api/reflet-devtools/[...path]/route.ts\`:
+  \`export { GET, POST } from "reflet-sdk/devtools/next";\` — the handlers
+  answer 404 unless \`NODE_ENV\` is \`development\`.
+- Vite → add \`refletDevtools()\` from \`reflet-sdk/devtools/vite\` to
+  \`plugins\`; it only runs in \`vite dev\`.
+- Anything else → skip it; notes and prompts still work without it.
+
+The route reads \`REFLET_SECRET_KEY\` (server-only, never a public prefix) to
+reach the board, and \`REFLET_EDITOR\` (vscode, cursor, windsurf, zed,
+webstorm) for "Open in editor" links.
+
 ## Constraints
 
 - Mount it exactly once. Two widgets means two floating buttons.

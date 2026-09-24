@@ -46,6 +46,14 @@
     "./server": {
       "types": "./dist/server.d.ts",
       "import": "./dist/server.js"
+    },
+    "./devtools/next": {
+      "types": "./dist/devtools-next.d.ts",
+      "import": "./dist/devtools-next.js"
+    },
+    "./devtools/vite": {
+      "types": "./dist/devtools-vite.d.ts",
+      "import": "./dist/devtools-vite.js"
     }
   },
   "main": "./dist/index.js",
@@ -78,6 +86,7 @@
     "@testing-library/user-event": "^14.6.7",
     "@types/react": "^19.3.0",
     "@types/react-dom": "19.3.0",
+    "bippy": "^0.7.3",
     "jsdom": "^30.1.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
@@ -88,13 +97,17 @@
   },
   "peerDependencies": {
     "react": "^18.0.0 || ^19.0.0",
-    "react-dom": "^18.0.0 || ^19.0.0"
+    "react-dom": "^18.0.0 || ^19.0.0",
+    "vite": ">=5.0.0"
   },
   "peerDependenciesMeta": {
     "react": {
       "optional": true
     },
     "react-dom": {
+      "optional": true
+    },
+    "vite": {
       "optional": true
     }
   },

@@ -223,6 +223,7 @@ export const feedbackTables = {
     githubIssueId: v.optional(v.string()),
     githubIssueNumber: v.optional(v.number()),
     isApproved: v.boolean(),
+    isInternal: v.optional(v.boolean()),
     isMerged: v.optional(v.boolean()),
     isPinned: v.boolean(),
     mergedIntoId: v.optional(v.id("feedback")),

@@ -43,7 +43,10 @@ export const collectPendingReview = async (
     .collect();
 
   return feedbackItems
-    .filter((feedback) => !(feedback.deletedAt || feedback.isMerged))
+    .filter(
+      (feedback) =>
+        !(feedback.deletedAt || feedback.isMerged || feedback.isInternal)
+    )
     .sort((a, b) => b.createdAt - a.createdAt)
     .map((feedback) => ({
       _id: feedback._id,

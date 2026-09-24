@@ -18,6 +18,7 @@ import {
   Calendar,
   Chat,
   DotsThreeVertical,
+  Globe,
   PushPin,
 } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
@@ -25,6 +26,7 @@ import { formatDistanceToNow } from "date-fns";
 import { TagBadge } from "@/components/tag-badge";
 import { toId } from "@/lib/convex-helpers";
 import { getTagDotColor } from "@/lib/tag-colors";
+import { InternalBadge } from "../internal-badge";
 
 interface OrganizationStatus {
   _id: Id<"organizationStatuses">;
@@ -38,7 +40,9 @@ interface PublicFeedbackHeaderProps {
   currentStatus: OrganizationStatus | undefined;
   hasVoted: boolean;
   isAdmin: boolean;
+  isInternal: boolean;
   isPinned: boolean;
+  onMakePublic: () => void;
   onStatusChange: (statusId: Id<"organizationStatuses"> | null) => void;
   onTogglePin: () => void;
   onVote: () => void;
@@ -52,6 +56,7 @@ interface PublicFeedbackHeaderProps {
 export function PublicFeedbackHeader({
   title,
   isPinned,
+  isInternal,
   createdAt,
   commentCount,
   isAdmin,
@@ -59,6 +64,7 @@ export function PublicFeedbackHeader({
   currentStatus,
   organizationStatusId,
   onStatusChange,
+  onMakePublic,
   onTogglePin,
 }: PublicFeedbackHeaderProps) {
   return (
@@ -67,6 +73,7 @@ export function PublicFeedbackHeader({
         <div className="flex items-center gap-2">
           {isPinned && isAdmin && <PushPin className="h-4 w-4 text-primary" />}
           <h2 className="font-semibold text-xl">{title}</h2>
+          {isInternal && <InternalBadge />}
         </div>
 
         <div className="mt-1 flex flex-wrap items-center gap-2 text-muted-foreground text-sm">
@@ -130,6 +137,12 @@ export function PublicFeedbackHeader({
                 <PushPin className="mr-2 h-4 w-4" />
                 {isPinned ? "Unpin" : "Pin"}
               </DropdownMenuItem>
+              {isInternal && (
+                <DropdownMenuItem onClick={onMakePublic}>
+                  <Globe className="mr-2 h-4 w-4" />
+                  Make public
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         )}

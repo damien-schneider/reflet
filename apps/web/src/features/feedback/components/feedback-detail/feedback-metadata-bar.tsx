@@ -1,10 +1,14 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Globe } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useCallback, useState } from "react";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
+import { useMakeFeedbackPublic } from "../../hooks/use-make-feedback-public";
+import { InternalBadge } from "../internal-badge";
 import { AiAnalysisDisplay } from "./ai-analysis-display";
 import { AssigneeDisplay } from "./assignee-display";
 import { CopyForAgents } from "./copy-for-agents";
@@ -52,6 +56,7 @@ interface FeedbackMetadataBarProps {
   description: string | null;
   feedbackId: Id<"feedback">;
   isAdmin: boolean;
+  isInternal?: boolean;
   organizationId: Id<"organizations">;
   organizationStatusId?: Id<"organizationStatuses"> | null;
   priority?: "critical" | "high" | "medium" | "low" | "none" | null;
@@ -70,6 +75,7 @@ export function FeedbackMetadataBar({
   organizationStatusId,
   assignee,
   isAdmin,
+  isInternal = false,
   tags: feedbackTags,
   title,
   description,
@@ -117,6 +123,7 @@ export function FeedbackMetadataBar({
   const removeTagMutation = useMutation(
     api.feedback.tag_mutations.removeFromFeedback
   );
+  const { isMakingPublic, makePublic } = useMakeFeedbackPublic(feedbackId);
 
   const currentStatus = organizationStatuses?.find(
     (s) => s._id === organizationStatusId
@@ -202,6 +209,8 @@ export function FeedbackMetadataBar({
         voteCount={voteCount}
       />
 
+      {isInternal && <InternalBadge />}
+
       <StatusDisplay
         currentStatus={currentStatus}
         isAdmin={isAdmin}
@@ -250,6 +259,19 @@ export function FeedbackMetadataBar({
       />
 
       <div className="flex-1" />
+
+      {isAdmin && isInternal && (
+        <Button
+          className="h-8 gap-1.5 px-2.5"
+          disabled={isMakingPublic}
+          onClick={makePublic}
+          size="xs"
+          variant="surface"
+        >
+          <Globe className="h-3.5 w-3.5" />
+          Make public
+        </Button>
+      )}
 
       {isAdmin && (
         <CopyForAgents

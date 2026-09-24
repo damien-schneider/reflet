@@ -64,6 +64,7 @@ export function registerFeedbackReadRoutes(http: Router): void {
           limit: parseIntParam(url.searchParams.get("limit")),
           offset: parseIntParam(url.searchParams.get("offset")),
           organizationId: auth.organizationId,
+          pagePath: url.searchParams.get("pagePath") ?? undefined,
           search: url.searchParams.get("search") ?? undefined,
           sortBy: parseEnumParam(
             url.searchParams.get("sortBy"),

@@ -5,7 +5,10 @@ import { describe, expect, test } from "vitest";
 
 import { internal } from "../../_generated/api";
 import schema from "../../schema";
+import { seedFeedback, seedOrganization } from "../../test.fixtures";
 import { modules } from "../../test.helpers";
+import { toPagePathPattern } from "../page_path";
+import { collectPendingReview } from "../review";
 
 describe("feedback API detail", () => {
   test("returns reporter details only for private API reads", async () => {
@@ -119,5 +122,100 @@ describe("feedback API detail", () => {
       { feedbackId, includePrivateContext: false, organizationId }
     );
     expect(deletedFeedbackComments).toEqual([]);
+  });
+});
+
+describe("internal feedback via the API", () => {
+  test("is readable only with private context and never enters moderation", async () => {
+    const t = convexTest(schema, modules);
+    const organizationId = await t.run(
+      async (ctx) => await seedOrganization(ctx)
+    );
+    const pageUrl = "https://app.example.com/invoices/123";
+
+    const created = await t.mutation(
+      internal.feedback.api_public_write.createFeedbackByOrganization,
+      {
+        context: { url: pageUrl },
+        description: "Totals overflow on narrow screens",
+        isInternal: true,
+        organizationId,
+        title: "Invoice totals overflow",
+      }
+    );
+    expect(created.isApproved).toBe(false);
+    const { feedbackId } = created;
+
+    const publicItem = await t.query(
+      internal.feedback.api_public_list.getFeedbackByOrganization,
+      { feedbackId, includePrivateContext: false, organizationId }
+    );
+    expect(publicItem).toBeNull();
+    const publicList = await t.query(
+      internal.feedback.api_public_list.listFeedbackByOrganization,
+      { includePrivateContext: false, organizationId }
+    );
+    expect(publicList.items).toEqual([]);
+
+    const privateItem = await t.query(
+      internal.feedback.api_public_list.getFeedbackByOrganization,
+      { feedbackId, includePrivateContext: true, organizationId }
+    );
+    expect(privateItem?.isInternal).toBe(true);
+    expect(privateItem?.context?.url).toBe(pageUrl);
+    const privateList = await t.query(
+      internal.feedback.api_public_list.listFeedbackByOrganization,
+      { includePrivateContext: true, organizationId }
+    );
+    expect(privateList.items.map((item) => item.id)).toEqual([feedbackId]);
+    expect(privateList.items[0]?.isInternal).toBe(true);
+    expect(privateList.items[0]?.context?.url).toBe(pageUrl);
+
+    const pendingReview = await t.run(
+      async (ctx) => await collectPendingReview(ctx, organizationId)
+    );
+    expect(pendingReview).toEqual([]);
+  });
+
+  test("pagePath matches the same route with different ids only", async () => {
+    const t = convexTest(schema, modules);
+    const organizationId = await t.run(async (ctx) => {
+      const orgId = await seedOrganization(ctx);
+      await seedFeedback(ctx, orgId, {
+        context: { url: "https://app.example.com/invoices/456?tab=lines" },
+        title: "invoice",
+      });
+      await seedFeedback(ctx, orgId, {
+        context: { url: "https://app.example.com/settings/team" },
+        title: "team settings",
+      });
+      await seedFeedback(ctx, orgId, { title: "no context" });
+      return orgId;
+    });
+
+    const listTitles = async (pagePath: string) => {
+      const result = await t.query(
+        internal.feedback.api_public_list.listFeedbackByOrganization,
+        { includePrivateContext: true, organizationId, pagePath }
+      );
+      return result.items.map((item) => item.title);
+    };
+
+    expect(await listTitles("/invoices/123")).toEqual(["invoice"]);
+    expect(await listTitles("/settings")).toEqual([]);
+    expect(await listTitles("/settings/team/")).toEqual(["team settings"]);
+  });
+
+  test("page path patterns treat only id-like segments as dynamic", () => {
+    expect(toPagePathPattern("https://app.example.com/")).toBe("/");
+    expect(
+      toPagePathPattern("/orgs/3f2b8c1e-9d4a-4f6b-8c2d-1a2b3c4d5e6f/billing")
+    ).toBe(toPagePathPattern("/orgs/a1b2c3d4/billing"));
+    expect(toPagePathPattern("/api/v2/users")).not.toBe(
+      toPagePathPattern("/api/v3/users")
+    );
+    expect(toPagePathPattern("/invoices/new")).not.toBe(
+      toPagePathPattern("/invoices/123")
+    );
   });
 });

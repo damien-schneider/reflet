@@ -17,6 +17,7 @@ export const createFeedbackByOrganization = internalMutation({
     context: v.optional(feedbackContextValidator),
     description: v.string(),
     externalUserId: v.optional(v.id("externalUsers")),
+    isInternal: v.optional(v.boolean()),
     organizationId: v.id("organizations"),
     tagId: v.optional(v.id("tags")),
     title: v.string(),
@@ -60,6 +61,8 @@ export const createFeedbackByOrganization = internalMutation({
     const defaultOrgStatus = orgStatuses.sort((a, b) => a.order - b.order)[0];
 
     const isAnonymous = !args.externalUserId;
+    const isInternal = args.isInternal === true;
+    const isApproved = !(isInternal || requireApproval);
     const now = Date.now();
 
     const feedbackId = await ctx.db.insert("feedback", {
@@ -68,7 +71,8 @@ export const createFeedbackByOrganization = internalMutation({
       createdAt: now,
       description: args.description,
       externalUserId: args.externalUserId,
-      isApproved: !requireApproval,
+      isApproved,
+      isInternal: isInternal || undefined,
       isPinned: false,
       organizationId: args.organizationId,
       organizationStatusId: defaultOrgStatus?._id,
@@ -103,7 +107,7 @@ export const createFeedbackByOrganization = internalMutation({
       autoTagging: !args.tagId,
     });
 
-    return { feedbackId, isApproved: !requireApproval };
+    return { feedbackId, isApproved };
   },
 });
 

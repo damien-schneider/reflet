@@ -61,6 +61,7 @@ const feedbackContextSchema = z.object({
 export const createFeedbackSchema = z.object({
   context: feedbackContextSchema.optional(),
   description: z.string().optional(),
+  internal: z.boolean().optional(),
   tagId: z.string().optional(),
   title: z.string().optional(),
 });

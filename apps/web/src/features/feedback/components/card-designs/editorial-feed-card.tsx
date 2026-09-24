@@ -21,6 +21,7 @@ import { formatDistanceToNow } from "date-fns";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { resolveTagColor } from "@/lib/tag-colors";
 import type { FeedbackItem } from "../feed-feedback-view";
+import { InternalBadge } from "../internal-badge";
 
 interface EditorialFeedFeedCardProps {
   className?: string;
@@ -65,6 +66,7 @@ export function EditorialFeedFeedCard({
             {feedback.isPinned && (
               <PushPin className="mr-1 inline h-3.5 w-3.5 text-primary" />
             )}
+            {feedback.isInternal && <InternalBadge className="mr-1" />}
             {feedback.title}
           </Button>
         </EditorialFeedTitle>

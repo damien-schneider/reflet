@@ -65,6 +65,13 @@ const PNG_NORMALIZE_TIMEOUT = 750;
 const CAPTURE_TIMEOUT = 10_000;
 const ANIMATION_SETTLE_TIMEOUT = 1000;
 
+/** The widget is excluded from every capture, so its own motion (a pulsing pin) is not worth waiting for. */
+function isWidgetAnimation(animation: Animation): boolean {
+  const target =
+    animation.effect instanceof KeyframeEffect ? animation.effect.target : null;
+  const root = target?.getRootNode();
+  return root instanceof ShadowRoot && root.host.hasAttribute(WIDGET_MARKER);
+}
 /**
  * Tiles and sections routinely animate in or reflow (grid drags, entrance
  * transitions); a capture taken mid-flight freezes them displaced. Waits for
@@ -79,7 +86,10 @@ async function waitForPageAnimations(): Promise<void> {
   while (performance.now() - start < ANIMATION_SETTLE_TIMEOUT) {
     const running = document
       .getAnimations()
-      .filter((animation) => animation.playState === "running");
+      .filter(
+        (animation) =>
+          animation.playState === "running" && !isWidgetAnimation(animation)
+      );
     if (running.length === 0) {
       return;
     }

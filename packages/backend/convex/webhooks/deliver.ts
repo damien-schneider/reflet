@@ -25,7 +25,9 @@ export const deliver = internalAction({
         organizationId: delivery.organizationId,
       }
     );
-    if (!(feedback && webhook.isActive)) {
+    const isDeliverable =
+      feedback && webhook.isActive && feedback.isInternal !== true;
+    if (!isDeliverable) {
       await ctx.runMutation(internal.webhooks.mutations.recordResult, {
         deliveryId: delivery._id,
         outcome: "skipped",

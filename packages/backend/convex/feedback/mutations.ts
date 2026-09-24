@@ -252,7 +252,11 @@ export const update = mutation({
 
     if (isAdmin) {
       const { id, organizationStatusId, status, ...updates } = args;
-      await ctx.db.patch(id, { ...updates, updatedAt: Date.now() });
+      await ctx.db.patch(id, {
+        ...updates,
+        isInternal: args.isApproved === true ? undefined : feedback.isInternal,
+        updatedAt: Date.now(),
+      });
       await changeFeedbackStatus(ctx, feedback, {
         actorId: user._id,
         organizationStatusId,

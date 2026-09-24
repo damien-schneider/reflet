@@ -114,7 +114,7 @@ export function resolveComponentStack(fiber: unknown): string[] {
   return stack;
 }
 
-function shortenSourcePath(raw: string): string {
+export function shortenSourcePath(raw: string): string {
   const path = raw
     .replace(WEBPACK_PREFIX, "")
     .replace(ORIGIN_PREFIX, "")

@@ -102,6 +102,7 @@ import type * as feedback_feature_check_model from "../feedback/feature_check_mo
 import type * as feedback_importance from "../feedback/importance.js";
 import type * as feedback_list from "../feedback/list.js";
 import type * as feedback_mutations from "../feedback/mutations.js";
+import type * as feedback_page_path from "../feedback/page_path.js";
 import type * as feedback_queries from "../feedback/queries.js";
 import type * as feedback_review from "../feedback/review.js";
 import type * as feedback_roadmap from "../feedback/roadmap.js";
@@ -355,6 +356,7 @@ declare const fullApi: ApiFromModules<{
   "feedback/importance": typeof feedback_importance;
   "feedback/list": typeof feedback_list;
   "feedback/mutations": typeof feedback_mutations;
+  "feedback/page_path": typeof feedback_page_path;
   "feedback/queries": typeof feedback_queries;
   "feedback/review": typeof feedback_review;
   "feedback/roadmap": typeof feedback_roadmap;

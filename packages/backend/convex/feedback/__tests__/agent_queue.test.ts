@@ -52,6 +52,27 @@ describe("agent queue", () => {
     ]);
   });
 
+  test("includes internal items but not items awaiting moderation", async () => {
+    const t = convexTest(schema, modules);
+    const organizationId = await t.run(async (ctx) => {
+      const id = await seedOrganization(ctx);
+      await seedFeedback(ctx, id, {
+        isApproved: false,
+        isInternal: true,
+        title: "internal",
+      });
+      await seedFeedback(ctx, id, { isApproved: false, title: "pending" });
+      return id;
+    });
+
+    const next = await t.query(internal.feedback.agent_queue.nextFeedback, {
+      organizationId,
+    });
+
+    expect(next.map((item) => item.title)).toEqual(["internal"]);
+    expect(next[0]?.isInternal).toBe(true);
+  });
+
   test("claimNext hands out distinct items and marks them in progress", async () => {
     const t = convexTest(schema, modules);
     const organizationId = await t.run(async (ctx) => {

@@ -79,6 +79,7 @@ export function FeedbackDetailDrawer({
           createdAt: listItem.createdAt,
           description: listItem.description ?? null,
           hasVoted: listItem.hasVoted,
+          isInternal: listItem.isInternal,
           organizationId: listItem.organizationId,
           organizationStatusId: listItem.organizationStatusId,
           tags: listItem.tags
@@ -296,6 +297,7 @@ function FeedbackDetailContent({
           description={feedback.description}
           feedbackId={feedbackId}
           isAdmin={isAdmin}
+          isInternal={feedback.isInternal}
           organizationId={feedback.organizationId}
           organizationStatusId={feedback.organizationStatusId}
           priority={feedback.priority}

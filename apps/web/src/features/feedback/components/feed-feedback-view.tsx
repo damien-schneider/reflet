@@ -30,6 +30,7 @@ export interface FeedbackItem {
   description?: string;
   downvoteCount?: number;
   hasVoted?: boolean;
+  isInternal?: boolean;
   isPinned?: boolean;
   milestones?: Array<{
     _id: Id<"milestones">;

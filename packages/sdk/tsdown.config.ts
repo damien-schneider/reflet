@@ -13,9 +13,11 @@ if (published !== SDK_VERSION) {
 
 export default defineConfig({
   clean: true,
-  deps: { neverBundle: ["react", "react-dom", "@zumer/snapdom"] },
+  deps: { neverBundle: ["react", "react-dom", "@zumer/snapdom", "vite"] },
   dts: true,
   entry: {
+    "devtools-next": "src/devtools/server/next.ts",
+    "devtools-vite": "src/devtools/server/vite.ts",
     feedback: "src/feedback/entry.ts",
     index: "src/index.ts",
     react: "src/react.ts",

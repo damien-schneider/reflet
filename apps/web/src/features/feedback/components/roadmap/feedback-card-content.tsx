@@ -9,6 +9,7 @@ import {
 import { TagBadge } from "@/components/tag-badge";
 import { cn } from "@/lib/utils";
 import type { FeedbackItem } from "../feed-feedback-view";
+import { InternalBadge } from "../internal-badge";
 import type { DragHandleListeners } from "./roadmap-types";
 
 interface FeedbackCardContentProps {
@@ -55,7 +56,10 @@ export function FeedbackCardContent({
           <DotsSixVertical className="h-4 w-4" weight="bold" />
         </Button>
       )}
-      <h4 className="pr-6 font-medium text-sm">{item.title}</h4>
+      <h4 className="pr-6 font-medium text-sm">
+        {item.isInternal && <InternalBadge className="mr-1" />}
+        {item.title}
+      </h4>
       {item.tags && item.tags.length > 0 && (
         <div className="mt-1 flex flex-wrap gap-1">
           {item.tags.slice(0, 2).map(

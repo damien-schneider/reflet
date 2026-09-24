@@ -21,6 +21,7 @@ import { resolveTagColor } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
 
 import type { FeedbackItem } from "../feed-feedback-view";
+import { InternalBadge } from "../internal-badge";
 
 interface SweepCornerFeedCardProps {
   className?: string;
@@ -66,6 +67,7 @@ export function SweepCornerFeedCard({
               {feedback.isPinned && (
                 <PushPin className="mr-1 inline h-3.5 w-3.5 text-primary" />
               )}
+              {feedback.isInternal && <InternalBadge className="mr-1" />}
               {feedback.title}
             </Button>
           </SweepCornerTitle>

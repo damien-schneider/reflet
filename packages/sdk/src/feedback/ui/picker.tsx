@@ -80,11 +80,19 @@ function noteStyle(rect: DOMRect, view: VisibleViewport) {
  * writes about that element right there and confirms. Aiming stays live until
  * then, which is what makes the flow usable without hover, on touch.
  */
+export interface PickerInspect {
+  /** Shown on the note card; Shift+click or Shift+Enter skips the card. */
+  label: string;
+  onInspect: (element: Element) => void;
+}
+
 export function ElementPicker({
+  inspect,
   labels,
   onCancel,
   onPick,
 }: {
+  inspect?: PickerInspect;
   labels: FeedbackWidgetLabels;
   onCancel: () => void;
   onPick: (element: Element, note: string) => void;
@@ -118,6 +126,14 @@ export function ElementPicker({
       }
       event.preventDefault();
       event.stopPropagation();
+    };
+
+    const pin = (element: Element, wantsCode: boolean) => {
+      if (wantsCode && inspect) {
+        inspect.onInspect(element);
+      } else {
+        setPinned(describeTarget(element));
+      }
     };
 
     const aimAt = (x: number, y: number) => {
@@ -161,7 +177,7 @@ export function ElementPicker({
       }
       const element = elementUnder(event.clientX, event.clientY);
       if (element) {
-        setPinned(describeTarget(element));
+        pin(element, event.shiftKey);
       }
     };
 
@@ -196,7 +212,7 @@ export function ElementPicker({
       if (event.key === "Enter") {
         swallow(event);
         if (aimRef.current) {
-          setPinned(describeTarget(aimRef.current));
+          pin(aimRef.current, event.shiftKey);
         }
         return;
       }
@@ -251,7 +267,7 @@ export function ElementPicker({
       window.removeEventListener("scroll", onScroll, true);
       document.body.style.cursor = previousCursor;
     };
-  }, [onCancel]);
+  }, [inspect, onCancel]);
 
   const shown = pinned ?? target;
   const rect = shown?.rect;
@@ -331,6 +347,15 @@ export function ElementPicker({
             >
               {labels.pickAnother}
             </button>
+            {inspect && (
+              <button
+                className="picker-cancel"
+                onClick={() => inspect.onInspect(pinned.element)}
+                type="button"
+              >
+                {inspect.label}
+              </button>
+            )}
             <button
               aria-label={labels.attachElement}
               className="submit"
@@ -346,6 +371,7 @@ export function ElementPicker({
           <span className="picker-instruction">
             {labels.pickElementHint} <kbd>Tab</kbd>
             <kbd>Enter</kbd>
+            {inspect && <kbd>⇧ Click</kbd>}
             <kbd>Esc</kbd>
           </span>
           <button className="picker-cancel" onClick={onCancel} type="button">

@@ -21,6 +21,9 @@ vi.mock("@/lib/utils", () => ({
 }));
 
 vi.mock("@phosphor-icons/react", () => ({
+  EyeSlash: ({ className }: { className?: string }) => (
+    <span className={className} data-testid="internal-icon" />
+  ),
   PushPin: ({ className }: { className?: string }) => (
     <span className={className} data-testid="pin-icon" />
   ),
@@ -190,6 +193,16 @@ describe("MinimalNotchFeedCard", () => {
       <MinimalNotchFeedCard feedback={{ ...baseFeedback, isPinned: true }} />
     );
     expect(screen.getByTestId("pin-icon")).toBeInTheDocument();
+  });
+
+  it("renders the Internal badge only for internal feedback", () => {
+    const { rerender } = render(
+      <MinimalNotchFeedCard feedback={{ ...baseFeedback, isInternal: true }} />
+    );
+    expect(screen.getByText("Internal")).toBeInTheDocument();
+
+    rerender(<MinimalNotchFeedCard feedback={baseFeedback} />);
+    expect(screen.queryByText("Internal")).not.toBeInTheDocument();
   });
 
   it("applies pinned styles to card when isPinned", () => {

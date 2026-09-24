@@ -33,6 +33,10 @@ export function registerFeedbackWriteRoutes(http: Router): void {
       }
 
       const { title, description, tagId, context } = body.data;
+      const isInternal = body.data.internal === true;
+      if (isInternal && !auth.isSecretKey) {
+        return errorResponse("Internal feedback requires a secret key", 403);
+      }
       if (!(title && description)) {
         return errorResponse("Title and description are required", 400);
       }
@@ -48,6 +52,7 @@ export function registerFeedbackWriteRoutes(http: Router): void {
           context,
           description,
           externalUserId: auth.externalUserId ?? auth.unverifiedExternalUserId,
+          isInternal,
           organizationId: auth.organizationId,
           tagId: parseOptionalId<"tags">(tagId),
           title,

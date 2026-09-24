@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { internalQuery, type QueryCtx } from "../_generated/server";
+import { toPagePathPattern } from "./page_path";
 
 const feedbackStatus = v.union(
   v.literal("open"),
@@ -117,6 +118,32 @@ async function filterByTag(
   return matches.filter((f): f is Doc<"feedback"> => f !== null);
 }
 
+function filterByPagePath(
+  items: Doc<"feedback">[],
+  pagePath: string
+): Doc<"feedback">[] {
+  const requestedPattern = toPagePathPattern(pagePath);
+  if (requestedPattern === null) {
+    return [];
+  }
+  return items.filter((f) => {
+    const url = f.context?.url;
+    return url !== undefined && toPagePathPattern(url) === requestedPattern;
+  });
+}
+
+function privateFeedbackFields(feedback: Doc<"feedback">) {
+  return {
+    assigneeId: feedback.assigneeId,
+    claimedBy: feedback.claimedBy,
+    context: feedback.context,
+    githubHtmlUrl: feedback.githubHtmlUrl,
+    githubIssueNumber: feedback.githubIssueNumber,
+    isInternal: feedback.isInternal === true,
+    syncedFromGithub: feedback.syncedFromGithub,
+  };
+}
+
 export const listFeedbackByOrganization = internalQuery({
   args: {
     externalUserId: v.optional(v.id("externalUsers")),
@@ -124,6 +151,7 @@ export const listFeedbackByOrganization = internalQuery({
     limit: v.optional(v.number()),
     offset: v.optional(v.number()),
     organizationId: v.id("organizations"),
+    pagePath: v.optional(v.string()),
     search: v.optional(v.string()),
     sortBy: v.optional(
       v.union(
@@ -143,6 +171,7 @@ export const listFeedbackByOrganization = internalQuery({
       return { hasMore: false, items: [], total: 0 };
     }
 
+    const includePrivateContext = args.includePrivateContext === true;
     const all = await ctx.db
       .query("feedback")
       .withIndex("by_organization", (q) =>
@@ -151,8 +180,15 @@ export const listFeedbackByOrganization = internalQuery({
       .collect();
 
     let feedbackItems = all.filter(
-      (f) => f.isApproved && !f.deletedAt && !f.isMerged
+      (f) =>
+        (f.isApproved || (includePrivateContext && f.isInternal)) &&
+        !f.deletedAt &&
+        !f.isMerged
     );
+
+    if (args.pagePath) {
+      feedbackItems = filterByPagePath(feedbackItems, args.pagePath);
+    }
 
     if (args.statusId) {
       feedbackItems = feedbackItems.filter(
@@ -199,10 +235,11 @@ export const listFeedbackByOrganization = internalQuery({
           : null;
 
         return {
+          ...(includePrivateContext ? privateFeedbackFields(f) : {}),
           author: await loadAuthor(
             ctx,
             f.externalUserId,
-            args.includePrivateContext === true
+            includePrivateContext
           ),
           commentCount: f.commentCount,
           completedAt: f.completedAt,
@@ -268,19 +305,8 @@ export async function shapeFeedbackDetail(
     isSubscribed = subscription !== null;
   }
 
-  const privateFields = options.includePrivateContext
-    ? {
-        assigneeId: feedback.assigneeId,
-        claimedBy: feedback.claimedBy,
-        context: feedback.context,
-        githubHtmlUrl: feedback.githubHtmlUrl,
-        githubIssueNumber: feedback.githubIssueNumber,
-        syncedFromGithub: feedback.syncedFromGithub,
-      }
-    : {};
-
   return {
-    ...privateFields,
+    ...(options.includePrivateContext ? privateFeedbackFields(feedback) : {}),
     author: await loadAuthor(
       ctx,
       feedback.externalUserId,
@@ -311,12 +337,13 @@ export const getFeedbackByOrganization = internalQuery({
     organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
+    const includePrivateContext = args.includePrivateContext === true;
     const feedback = await ctx.db.get(args.feedbackId);
     const isVisible =
       feedback &&
       !feedback.deletedAt &&
       feedback.organizationId === args.organizationId &&
-      feedback.isApproved;
+      (feedback.isApproved || (includePrivateContext && feedback.isInternal));
 
     if (!isVisible) {
       return null;
@@ -324,7 +351,7 @@ export const getFeedbackByOrganization = internalQuery({
 
     return await shapeFeedbackDetail(ctx, feedback, {
       externalUserId: args.externalUserId,
-      includePrivateContext: args.includePrivateContext === true,
+      includePrivateContext,
     });
   },
 });

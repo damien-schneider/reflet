@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-function Svg({
+export function Svg({
   children,
   className,
   size = 16,

@@ -2,9 +2,12 @@
  * @vitest-environment jsdom
  */
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+const { mockToast } = vi.hoisted(() => ({
+  mockToast: { error: vi.fn(), success: vi.fn() },
+}));
 const mockUseQuery = vi.fn();
 const mockUseMutation = vi.fn(() => vi.fn());
 
@@ -16,6 +19,7 @@ vi.mock("convex/react", () => ({
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
     feedback: {
+      mutations: { update: "feedback_mutations.update" },
       subscriptions: {
         isSubscribed: "feedback_subscriptions.isSubscribed",
         toggle: "feedback_subscriptions.toggle",
@@ -40,6 +44,10 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
       statuses: { list: "organization_statuses.list" },
     },
   },
+}));
+
+vi.mock("@ctrl-ui/react/ui/toast", () => ({
+  toast: mockToast,
 }));
 
 vi.mock("@/hooks/use-auth-guard", () => ({
@@ -491,5 +499,32 @@ describe("FeedbackMetadataBar", () => {
     render(<FeedbackMetadataBar {...baseProps} isAdmin />);
     fireEvent.click(screen.getByText("clear-deadline"));
     expect(updateAnalysisMock).toHaveBeenCalled();
+  });
+
+  it("lets admins make internal feedback public", async () => {
+    const updateFeedbackMock = vi.fn().mockResolvedValue(undefined);
+    mockUseMutation.mockReturnValue(updateFeedbackMock);
+    render(<FeedbackMetadataBar {...baseProps} isAdmin isInternal />);
+    expect(screen.getByText("Internal")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Make public" }));
+    await waitFor(() =>
+      expect(mockToast.success).toHaveBeenCalledWith("Feedback is now public")
+    );
+    expect(updateFeedbackMock).toHaveBeenCalledWith({
+      id: feedbackId,
+      isApproved: true,
+    });
+  });
+
+  it("hides Make public from non-admins and from public feedback", () => {
+    const { rerender } = render(
+      <FeedbackMetadataBar {...baseProps} isAdmin={false} isInternal />
+    );
+    expect(screen.getByText("Internal")).toBeInTheDocument();
+    expect(screen.queryByText("Make public")).not.toBeInTheDocument();
+
+    rerender(<FeedbackMetadataBar {...baseProps} isAdmin />);
+    expect(screen.queryByText("Internal")).not.toBeInTheDocument();
+    expect(screen.queryByText("Make public")).not.toBeInTheDocument();
   });
 });

@@ -108,6 +108,13 @@ const PROPS = [
     type: "Partial<FeedbackWidgetLabels>",
   },
   {
+    default: "true",
+    description:
+      "Team devtools in development: code view, notes, the board for this page. Never loaded outside NODE_ENV=development.",
+    name: "devtools",
+    type: "boolean",
+  },
+  {
     default: "—",
     description: "Fires with the created feedback id after a successful send.",
     name: "onSubmit",
@@ -138,6 +145,13 @@ const IDENTIFIED_SNIPPET = `<RefletFeedback
   metadata={{ plan: user.plan, tenant: user.orgSlug }}
   hotkey="mod+shift+f"
 />`;
+
+const DEVTOOLS_ROUTE_SNIPPET = `// app/api/reflet-devtools/[...path]/route.ts
+export { GET, POST } from "reflet-sdk/devtools/next";
+
+// vite.config.ts
+import { refletDevtools } from "reflet-sdk/devtools/vite";
+export default defineConfig({ plugins: [react(), refletDevtools()] });`;
 
 function Section({
   children,
@@ -256,6 +270,31 @@ export default function FloatingFeedbackPage() {
         </p>
         <div className="rounded-lg border border-border bg-muted/30 p-4">
           <pre className="overflow-x-auto text-sm">{IDENTIFIED_SNIPPET}</pre>
+        </div>
+      </Section>
+
+      <Section title="Devtools for your team">
+        <p className="mb-4 text-muted-foreground text-sm">
+          On your dev server, the same component adds a small bar above the
+          launcher that you can drag anywhere. Pick an element to write a note
+          on it, or Shift+click it to open its source with the JSX highlighted.
+          Copy your notes as one prompt for a coding agent, or send them to the
+          board as internal feedback that only members see. The Board tab lists
+          the feedback reported on the current page, with the element and its
+          code one click away. Production builds never ship it.
+        </p>
+        <p className="mb-4 text-muted-foreground text-sm">
+          Code view and the board go through one dev-only route that keeps{" "}
+          <InlineCode>REFLET_SECRET_KEY</InlineCode> on the server. Set{" "}
+          <InlineCode>REFLET_EDITOR</InlineCode> to{" "}
+          <InlineCode>cursor</InlineCode>, <InlineCode>zed</InlineCode>,{" "}
+          <InlineCode>windsurf</InlineCode> or <InlineCode>webstorm</InlineCode>{" "}
+          for the editor links.
+        </p>
+        <div className="rounded-lg border border-border bg-muted/30 p-4">
+          <pre className="overflow-x-auto text-sm">
+            {DEVTOOLS_ROUTE_SNIPPET}
+          </pre>
         </div>
       </Section>
 

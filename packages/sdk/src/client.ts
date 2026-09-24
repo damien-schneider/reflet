@@ -21,8 +21,7 @@ import {
   type VoteResponse,
 } from "./types";
 
-// Default to Reflet production API (HTTP routes use .convex.site)
-const DEFAULT_API_URL = "https://harmless-clam-802.convex.site";
+export const DEFAULT_API_URL = "https://harmless-clam-802.convex.site";
 
 /** btoa is Latin1-only — a name like "José" would throw. */
 function base64Utf8(value: string): string {

@@ -129,23 +129,23 @@ test("the hero uses one typeface and its controls change the reflected cards", a
     name: "Explore the product preview",
   });
   const canvas = page.locator(".hero-reflection-canvas");
+  const canvasPixels = () =>
+    canvas.screenshot({ style: "[data-reflet-widget] { display: none; }" });
   await expect(page.locator(".hero-reflection")).toHaveAttribute(
     "data-renderer",
     "webgl"
   );
   await expect(page.locator(".hero-product-scene")).toHaveCSS("opacity", "1");
-  const before = await canvas.screenshot();
+  const before = await canvasPixels();
   await controls.getByRole("button", { exact: true, name: "Planned" }).click();
   await expect(
     controls.getByRole("button", { exact: true, name: "Planned" })
   ).toHaveAttribute("aria-pressed", "true");
   await expect
-    .poll(async () => before.equals(await canvas.screenshot()))
+    .poll(async () => before.equals(await canvasPixels()))
     .toBe(false);
   await controls.getByRole("button", { exact: true, name: "An idea" }).click();
-  await expect
-    .poll(async () => before.equals(await canvas.screenshot()))
-    .toBe(true);
+  await expect.poll(async () => before.equals(await canvasPixels())).toBe(true);
 });
 
 test("the closing reflection follows the pointer and respects reduced motion", async ({

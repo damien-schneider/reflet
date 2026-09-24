@@ -6,6 +6,7 @@ export interface FeedbackListItem {
   createdAt: number;
   description?: string;
   hasVoted?: boolean;
+  isInternal?: boolean;
   organizationId: Id<"organizations">;
   organizationStatusId?: Id<"organizationStatuses">;
   tags?: Array<{
@@ -54,6 +55,7 @@ export interface FeedbackDetailContentProps {
           appliedByAi?: boolean;
         } | null>;
         hasVoted?: boolean;
+        isInternal?: boolean;
         userVoteType?: "upvote" | "downvote" | null;
         voteCount?: number;
         commentCount?: number;

@@ -10,7 +10,7 @@ import { modules } from "../../test.helpers";
 
 async function seedDelivery(
   t: ReturnType<typeof convexTest>,
-  feedbackOverrides: { isApproved?: boolean } = {}
+  feedbackOverrides: { isApproved?: boolean; isInternal?: boolean } = {}
 ) {
   return await t.run(async (ctx) => {
     const organizationId = await seedOrganization(ctx);
@@ -146,6 +146,21 @@ describe("webhook delivery", () => {
   test("skips unapproved feedback without calling the hook", async () => {
     const t = convexTest(schema, modules);
     const ids = await seedDelivery(t, { isApproved: false });
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    await t.action(internal.webhooks.deliver.deliver, {
+      deliveryId: ids.deliveryId,
+    });
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    const state = await readState(t, ids);
+    expect(state.delivery?.status).toBe("skipped");
+  });
+
+  test("skips internal feedback without calling the hook", async () => {
+    const t = convexTest(schema, modules);
+    const ids = await seedDelivery(t, { isApproved: false, isInternal: true });
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
 

@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next";
 import { Manrope } from "next/font/google";
 import Script from "next/script";
 import { Suspense } from "react";
+import { RefletFeedback } from "reflet-sdk/feedback";
 import { CookieConsentBanner } from "@/components/cookie-consent-banner";
 import { PostHogPageView } from "@/components/posthog-pageview";
 import { defaultMetadata, viewport as seoViewport } from "@/lib/seo-config";
@@ -52,6 +53,7 @@ export default function RootLayout({
         </Suspense>
         <ThemeProvider>{children}</ThemeProvider>
         <CookieConsentBanner />
+        <RefletFeedback enabled={false} />
       </body>
     </html>
   );

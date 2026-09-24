@@ -8,6 +8,7 @@ import { useMutation, useQuery } from "convex/react";
 import { useCallback, useState } from "react";
 import { TagBadge } from "@/components/tag-badge";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
+import { useMakeFeedbackPublic } from "../../hooks/use-make-feedback-public";
 
 import { PublicFeedbackComments } from "./public-feedback-comments";
 import { PublicFeedbackHeader } from "./public-feedback-header";
@@ -40,6 +41,7 @@ export function PublicFeedbackDetailContent({
     api.feedback.triage_actions.updateOrganizationStatus
   );
   const togglePin = useMutation(api.feedback.actions.togglePin);
+  const { makePublic } = useMakeFeedbackPublic(feedbackId);
 
   const [newComment, setNewComment] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
@@ -128,7 +130,9 @@ export function PublicFeedbackDetailContent({
             currentStatus={currentStatus}
             hasVoted={feedback.hasVoted}
             isAdmin={isAdmin}
+            isInternal={feedback.isInternal ?? false}
             isPinned={feedback.isPinned}
+            onMakePublic={makePublic}
             onStatusChange={handleStatusChange}
             onTogglePin={handleTogglePin}
             onVote={handleVote}

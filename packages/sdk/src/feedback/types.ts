@@ -147,6 +147,11 @@ export interface RefletFeedbackProps {
   captureConsole?: boolean;
   /** Take a screenshot of the viewport as soon as the panel opens. */
   captureOnOpen?: boolean;
+  /**
+   * Dev-only tools for your team: inspect an element's code, keep notes, read
+   * the board for the current page. Never loaded outside `NODE_ENV=development`.
+   */
+  devtools?: boolean;
   /** Let reporters hide the launcher for this many days. */
   dismissForDays?: number;
   /** Render nothing when false — lets an app gate the widget per user. */
