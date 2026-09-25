@@ -5,7 +5,11 @@ import {
   mutation,
   query,
 } from "../_generated/server";
-import { requireAuthUser, requireOrgMember } from "../shared/access";
+import {
+  isOrgMemberViewer,
+  requireAuthUser,
+  requireOrgMember,
+} from "../shared/access";
 import {
   captureSourceValidator,
   screenshotAnnotationValidator,
@@ -149,11 +153,22 @@ export const getByFeedback = query({
   },
   handler: async (ctx, args) => {
     const feedback = await ctx.db.get(args.feedbackId);
-    if (!feedback) {
+    if (!feedback || feedback.deletedAt) {
       return [];
     }
 
-    await requireOrgMember(ctx, feedback.organizationId);
+    const organization = await ctx.db.get(feedback.organizationId);
+    if (!organization) {
+      return [];
+    }
+
+    const publiclyVisible = organization.isPublic && feedback.isApproved;
+    const canViewScreenshots =
+      publiclyVisible ||
+      (await isOrgMemberViewer(ctx, feedback.organizationId));
+    if (!canViewScreenshots) {
+      return [];
+    }
 
     const screenshots = await ctx.db
       .query("feedbackScreenshots")
