@@ -39,16 +39,14 @@ const sections = [
 
 export default function DocsPage() {
   return (
-    <div className="mx-auto max-w-4xl py-12">
-      <div className="mb-10">
-        <h1 className="font-display text-4xl text-foreground leading-tight tracking-tight sm:text-5xl">
-          Reflet Documentation
-        </h1>
-        <p className="mt-2 text-base text-muted-foreground sm:text-xl">
-          Everything you need to integrate Reflet into your product. Explore the
-          SDK, widgets, and component library.
-        </p>
-      </div>
+    <div className="mx-auto max-w-3xl">
+      <h1 className="mb-2 font-display text-3xl text-foreground leading-snug tracking-tight">
+        Reflet Documentation
+      </h1>
+      <p className="mb-8 text-base text-muted-foreground sm:text-xl">
+        Everything you need to integrate Reflet into your product. Explore the
+        SDK, widgets, and component library.
+      </p>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {sections.map((section) => (

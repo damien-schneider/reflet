@@ -30,18 +30,14 @@ export const metadata: Metadata = generatePageMetadata({
 
 export default function ApiReferencePage() {
   return (
-    <div className="mx-auto max-w-4xl py-12">
-      <div className="mb-10">
-        <h1 className="font-display text-4xl text-foreground leading-tight tracking-tight sm:text-5xl">
-          REST API Reference
-        </h1>
-        <p className="mt-2 text-base text-muted-foreground sm:text-xl">
-          Full API for managing feedback, votes, comments, changelog, and
-          roadmap programmatically.
-        </p>
-      </div>
-
-      {/* Authentication */}
+    <div className="mx-auto max-w-3xl">
+      <h1 className="mb-2 font-display text-3xl text-foreground leading-snug tracking-tight">
+        REST API Reference
+      </h1>
+      <p className="mb-8 text-base text-muted-foreground sm:text-xl">
+        Full API for managing feedback, votes, comments, changelog, and roadmap
+        programmatically.
+      </p>
       <section className="mb-12">
         <h2
           className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight"
@@ -97,8 +93,6 @@ export default function ApiReferencePage() {
           .
         </p>
       </section>
-
-      {/* Base URL */}
       <section className="mb-12">
         <h2
           className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight"
@@ -121,8 +115,6 @@ export default function ApiReferencePage() {
       <EndpointsSection />
 
       <WebhooksSection />
-
-      {/* Rate Limiting */}
       <section className="mb-12">
         <h2
           className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight"
@@ -169,8 +161,6 @@ export default function ApiReferencePage() {
           </Table>
         </div>
       </section>
-
-      {/* Error Format */}
       <section className="mb-12">
         <h2
           className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight"
