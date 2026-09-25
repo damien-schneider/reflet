@@ -9,7 +9,6 @@ describe("Auto-tagging database operations", () => {
   test("should reject untagged count for anonymous callers", async () => {
     const t = convexTest(schema, modules);
 
-    // Create an organization first
     const orgId = await t.run(
       async (ctx) =>
         await ctx.db.insert("organizations", {
@@ -22,7 +21,6 @@ describe("Auto-tagging database operations", () => {
         })
     );
 
-    // Create some feedback without tags
     await t.run(async (ctx) => {
       await ctx.db.insert("feedback", {
         commentCount: 0,
@@ -61,7 +59,6 @@ describe("Auto-tagging database operations", () => {
   test("should apply tags to feedback with AI indicator", async () => {
     const t = convexTest(schema, modules);
 
-    // Create organization, feedback, and tag
     const { feedbackId, tagId } = await t.run(async (ctx) => {
       const orgId = await ctx.db.insert("organizations", {
         createdAt: Date.now(),
@@ -97,13 +94,11 @@ describe("Auto-tagging database operations", () => {
       return { feedbackId, orgId, tagId };
     });
 
-    // Apply tag using internal mutation
     await t.mutation(internal.feedback.auto_tagging_jobs.applyAutoTags, {
       feedbackId,
       tagIds: [tagId],
     });
 
-    // Verify the tag was applied with AI indicator
     const feedbackTag = await t.run(async (ctx) => {
       const allTags = await ctx.db.query("feedbackTags").collect();
       return allTags.find((t) => t.feedbackId === feedbackId);
@@ -117,7 +112,6 @@ describe("Auto-tagging database operations", () => {
   test("should not duplicate tags when applying", async () => {
     const t = convexTest(schema, modules);
 
-    // Create organization, feedback, and tag
     const { feedbackId, tagId } = await t.run(async (ctx) => {
       const orgId = await ctx.db.insert("organizations", {
         createdAt: Date.now(),
@@ -153,7 +147,6 @@ describe("Auto-tagging database operations", () => {
       return { feedbackId, tagId };
     });
 
-    // Apply the same tag twice
     await t.mutation(internal.feedback.auto_tagging_jobs.applyAutoTags, {
       feedbackId,
       tagIds: [tagId],
@@ -164,7 +157,6 @@ describe("Auto-tagging database operations", () => {
       tagIds: [tagId],
     });
 
-    // Verify only one tag entry exists
     const feedbackTags = await t.run(async (ctx) => {
       const allTags = await ctx.db.query("feedbackTags").collect();
       return allTags.filter((t) => t.feedbackId === feedbackId);
@@ -176,7 +168,6 @@ describe("Auto-tagging database operations", () => {
   test("should create and track auto-tagging job", async () => {
     const t = convexTest(schema, modules);
 
-    // Create organization
     const orgId = await t.run(
       async (ctx) =>
         await ctx.db.insert("organizations", {
@@ -189,7 +180,6 @@ describe("Auto-tagging database operations", () => {
         })
     );
 
-    // Create a job
     const jobId = await t.mutation(
       internal.feedback.auto_tagging_jobs.createJob,
       {
@@ -200,7 +190,6 @@ describe("Auto-tagging database operations", () => {
 
     expect(jobId).toBeDefined();
 
-    // Verify job was created with correct initial state
     const job = await t.run(async (ctx) => await ctx.db.get(jobId));
 
     expect(job).toBeDefined();
@@ -215,7 +204,6 @@ describe("Auto-tagging database operations", () => {
   test("should update job progress correctly", async () => {
     const t = convexTest(schema, modules);
 
-    // Create organization and job
     const { jobId } = await t.run(async (ctx) => {
       const orgId = await ctx.db.insert("organizations", {
         createdAt: Date.now(),
@@ -240,7 +228,6 @@ describe("Auto-tagging database operations", () => {
       return { jobId, orgId };
     });
 
-    // Update progress
     await t.mutation(internal.feedback.auto_tagging_jobs.updateJobProgress, {
       failedItems: 1,
       jobId,
@@ -249,7 +236,6 @@ describe("Auto-tagging database operations", () => {
       successfulItems: 2,
     });
 
-    // Verify progress was updated
     const job = await t.run(async (ctx) => await ctx.db.get(jobId));
 
     expect(job?.status).toBe("processing");
@@ -260,10 +246,10 @@ describe("Auto-tagging database operations", () => {
 });
 
 describe("Triage scope selection", () => {
-  test("untriaged skips analysed and hand-tagged items, all keeps them", async () => {
+  test("untriaged uses Jev completion, not legacy priority analysis", async () => {
     const t = convexTest(schema, modules);
 
-    const { orgId, freshId } = await t.run(async (ctx) => {
+    const { orgId, freshId, legacyPriorityId } = await t.run(async (ctx) => {
       const orgId = await ctx.db.insert("organizations", {
         createdAt: Date.now(),
         isPublic: false,
@@ -292,7 +278,10 @@ describe("Triage scope selection", () => {
         });
 
       const freshId = await insertFeedback("Fresh");
-      await insertFeedback("Analysed", { aiPriorityGeneratedAt: Date.now() });
+      const legacyPriorityId = await insertFeedback("Legacy priority", {
+        aiPriorityGeneratedAt: Date.now(),
+      });
+      await insertFeedback("Triaged", { aiUsefulnessGeneratedAt: Date.now() });
       await insertFeedback("Deleted", { deletedAt: Date.now() });
 
       const handTaggedId = await insertFeedback("Hand tagged");
@@ -310,7 +299,7 @@ describe("Triage scope selection", () => {
         tagId,
       });
 
-      return { freshId, orgId };
+      return { freshId, legacyPriorityId, orgId };
     });
 
     const untriaged = await t.query(
@@ -322,9 +311,52 @@ describe("Triage scope selection", () => {
       { organizationId: orgId, scope: "all" }
     );
 
-    expect(untriaged).toEqual([freshId]);
-    expect(all).toHaveLength(3);
+    expect(untriaged).toEqual([freshId, legacyPriorityId]);
+    expect(all).toHaveLength(4);
     expect(all).toContain(freshId);
+  });
+});
+
+describe("Jev triage persistence", () => {
+  test("saves triage scores without replacing historical priority", async () => {
+    const t = convexTest(schema, modules);
+    const feedbackId = await t.run(async (ctx) => {
+      const organizationId = await ctx.db.insert("organizations", {
+        createdAt: Date.now(),
+        isPublic: false,
+        name: "Test Org",
+        slug: "test-org-jev",
+        subscriptionStatus: "none",
+        subscriptionTier: "free",
+      });
+      return await ctx.db.insert("feedback", {
+        aiPriority: "high",
+        commentCount: 0,
+        createdAt: Date.now(),
+        description: "Checkout fails on mobile",
+        isApproved: true,
+        isPinned: false,
+        organizationId,
+        status: "open",
+        title: "Checkout failure",
+        updatedAt: Date.now(),
+        voteCount: 0,
+      });
+    });
+
+    await t.mutation(internal.feedback.auto_tagging_jobs.saveTriage, {
+      feedbackId,
+      junk: 0.08,
+      needsReview: 0.12,
+      usefulness: 0.97,
+    });
+
+    const feedback = await t.run(async (ctx) => await ctx.db.get(feedbackId));
+    expect(feedback?.aiJunk).toBe(0.08);
+    expect(feedback?.aiNeedsReview).toBe(0.12);
+    expect(feedback?.aiUsefulness).toBe(0.97);
+    expect(feedback?.aiUsefulnessGeneratedAt).toBeTypeOf("number");
+    expect(feedback?.aiPriority).toBe("high");
   });
 });
 

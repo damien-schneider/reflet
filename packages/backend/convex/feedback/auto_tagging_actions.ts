@@ -1,14 +1,7 @@
-import { generateObject } from "ai";
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { type ActionCtx, internalAction } from "../_generated/server";
-import {
-  AUTO_TAGGING_MODELS,
-  type AutoTaggingResponse,
-  autoTaggingResponseSchema,
-  openrouter,
-} from "./auto_tagging_model";
 import {
   evaluateFeedbackTriage,
   type FeedbackTriage,
@@ -86,82 +79,14 @@ export const processAutoTagging = internalAction({
       tagIds: triage.tagIds,
     });
 
-    const systemPrompt = `You are a feedback analysis assistant. Your job is to analyze user feedback and:
-1. Assess the priority level of the feedback
-2. Estimate the implementation complexity
-3. Provide a time estimate for implementation
-
-IMPORTANT:
-- Be realistic about priority, complexity, and time estimates
-- Priority levels: critical (blocking/urgent issue), high (important/impactful), medium (standard priority), low (nice-to-have), none (informational only)
-- Complexity levels: trivial (quick config change, <1 hour), simple (straightforward, 1-4 hours), moderate (some investigation needed, 1-2 days), complex (significant changes, 3-5 days), very_complex (major feature/architecture, 1+ weeks)
-- Time estimate should be a human-readable range like "2-4 hours" or "1-2 days"`;
-
-    const userPrompt = `Analyze this feedback and provide priority, complexity, and time estimate:
-
-FEEDBACK:
-Title: ${feedback.title}
-Description: ${feedback.description || "(no description)"}`;
-
-    let result: AutoTaggingResponse | null = null;
-    let lastError: Error | null = null;
-
-    for (const modelId of AUTO_TAGGING_MODELS) {
-      try {
-        const response = await generateObject({
-          model: openrouter(modelId),
-          prompt: userPrompt,
-          schema: autoTaggingResponseSchema,
-          system: systemPrompt,
-        });
-
-        result = response.object;
-        break;
-      } catch (err) {
-        console.error(`Model ${modelId} failed:`, err);
-        lastError = err instanceof Error ? err : new Error(String(err));
-      }
-    }
-
-    if (!result) {
-      await ctx.runMutation(
-        internal.feedback.auto_tagging_jobs.saveAiAnalysis,
-        {
-          feedbackId: args.feedbackId,
-          junk: triage.junk,
-          needsReview: triage.needsReview,
-          usefulness: triage.usefulness,
-        }
-      );
-
-      return {
-        reason: `All AI models failed: ${lastError?.message ?? "Unknown error"}`,
-        success: false,
-        tagCount: triage.tagIds.length,
-      };
-    }
-
-    await ctx.runMutation(internal.feedback.auto_tagging_jobs.saveAiAnalysis, {
-      complexity: result.complexity,
-      complexityReasoning: result.complexityReasoning,
+    await ctx.runMutation(internal.feedback.auto_tagging_jobs.saveTriage, {
       feedbackId: args.feedbackId,
       junk: triage.junk,
       needsReview: triage.needsReview,
-      priority: result.priority,
-      priorityReasoning: result.priorityReasoning,
-      timeEstimate: result.timeEstimate,
       usefulness: triage.usefulness,
     });
 
-    if (triage.tagIds.length > 0) {
-      return { success: true, tagCount: triage.tagIds.length };
-    }
-
-    return {
-      reason: "No tag matched confidently but analysis was saved",
-      success: true,
-      tagCount: 0,
-    };
+    return { success: true, tagCount: triage.tagIds.length };
   },
 });
 

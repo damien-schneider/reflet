@@ -6,10 +6,10 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const mockRecomputeAnalysis = vi.fn();
+const mockRecomputeTriage = vi.fn();
 
 vi.mock("convex/react", () => ({
-  useMutation: () => mockRecomputeAnalysis,
+  useMutation: () => mockRecomputeTriage,
   useQuery: vi.fn(),
 }));
 
@@ -17,8 +17,7 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
     feedback: {
       auto_tagging_jobs: {
-        recomputeFeedbackAnalysis:
-          "auto_tagging_jobs.recomputeFeedbackAnalysis",
+        recomputeFeedbackTriage: "auto_tagging_jobs.recomputeFeedbackTriage",
       },
     },
   },
@@ -51,7 +50,7 @@ vi.mock("./time-estimate-badge", () => ({
 import { AiAnalysisDisplay } from "./ai-analysis-display";
 
 const feedbackId = "f1" as Id<"feedback">;
-const RECOMPUTE_LABEL = "Recompute AI analysis";
+const RECOMPUTE_LABEL = "Recompute triage";
 
 describe("AiAnalysisDisplay", () => {
   afterEach(() => {
@@ -69,7 +68,7 @@ describe("AiAnalysisDisplay", () => {
     expect(container.innerHTML).toBe("");
   });
 
-  it("offers recompute to admins even without any analysis", () => {
+  it("offers triage to admins even without prior scores", () => {
     render(<AiAnalysisDisplay feedbackId={feedbackId} isAdmin />);
     expect(
       screen.getByRole("button", { name: RECOMPUTE_LABEL })
@@ -90,7 +89,7 @@ describe("AiAnalysisDisplay", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("recomputes analysis for the feedback when an admin clicks recompute", async () => {
+  it("recomputes triage for the feedback when an admin clicks recompute", async () => {
     render(
       <AiAnalysisDisplay aiPriority="high" feedbackId={feedbackId} isAdmin />
     );
@@ -98,19 +97,19 @@ describe("AiAnalysisDisplay", () => {
     fireEvent.click(screen.getByRole("button", { name: RECOMPUTE_LABEL }));
 
     await waitFor(() => {
-      expect(mockRecomputeAnalysis).toHaveBeenCalledWith({ feedbackId });
+      expect(mockRecomputeTriage).toHaveBeenCalledWith({ feedbackId });
     });
-    expect(toast.success).toHaveBeenCalledWith("Recomputing analysis");
+    expect(toast.success).toHaveBeenCalledWith("Recomputing triage");
   });
 
   it("reports a failed recompute", async () => {
-    mockRecomputeAnalysis.mockRejectedValueOnce(new Error("Admins only"));
+    mockRecomputeTriage.mockRejectedValueOnce(new Error("Admins only"));
 
     render(<AiAnalysisDisplay feedbackId={feedbackId} isAdmin />);
     fireEvent.click(screen.getByRole("button", { name: RECOMPUTE_LABEL }));
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith("Failed to recompute analysis", {
+      expect(toast.error).toHaveBeenCalledWith("Failed to recompute triage", {
         description: "Admins only",
       });
     });

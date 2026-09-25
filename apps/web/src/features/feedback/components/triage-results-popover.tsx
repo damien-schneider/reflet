@@ -14,13 +14,9 @@ import { useQuery } from "convex/react";
 import { useState } from "react";
 import { TagBadge } from "@/components/tag-badge";
 import { cn } from "@/lib/utils";
-import { AiMiniIndicator } from "./ai-mini-indicator";
 
-interface TaggedItem {
+interface TriagedItem {
   _id: Id<"feedback">;
-  aiComplexity?: string | null;
-  aiPriority?: string | null;
-  aiTimeEstimate?: string | null;
   tags: Array<{ _id: Id<"tags">; name: string; color: string } | null>;
   title: string;
 }
@@ -42,7 +38,7 @@ export function ResultsPopover({
   const hasFailed = failed > 0;
 
   const recentItems = useQuery(
-    api.feedback.auto_tagging.getRecentlyTaggedItems,
+    api.feedback.auto_tagging.getRecentTriageResults,
     { organizationId, since }
   );
 
@@ -72,7 +68,7 @@ export function ResultsPopover({
           <Check className="h-3.5 w-3.5" weight="bold" />
         )}
         <span className="font-medium tabular-nums">
-          {successful} tagged{hasFailed ? `, ${failed} failed` : ""}
+          {successful} triaged{hasFailed ? `, ${failed} failed` : ""}
         </span>
         <CaretRight className="h-3 w-3 opacity-60" />
       </PopoverTrigger>
@@ -80,7 +76,7 @@ export function ResultsPopover({
         <div className="flex items-center justify-between border-b px-3 py-2">
           <div className="flex items-center gap-1.5">
             <Sparkle className="h-3.5 w-3.5 text-primary" weight="fill" />
-            <span className="font-medium text-sm">Auto-tag results</span>
+            <span className="font-medium text-sm">Triage results</span>
           </div>
           <Button
             className="h-6 px-2 text-xs"
@@ -93,13 +89,11 @@ export function ResultsPopover({
         </div>
         <ScrollArea viewportClassName="max-h-64">
           <div className="divide-y">
-            {recentItems?.map((item: TaggedItem) => {
+            {recentItems?.map((item: TriagedItem) => {
               const validTags = item.tags.filter(
                 (tag): tag is NonNullable<typeof tag> => tag !== null
               );
               const hasTags = validTags.length > 0;
-              const isUncategorized =
-                !hasTags && (!item.aiPriority || item.aiPriority === "none");
 
               return (
                 <div className="px-3 py-2.5" key={item._id}>
@@ -116,7 +110,7 @@ export function ResultsPopover({
                         {tag.name}
                       </TagBadge>
                     ))}
-                    {isUncategorized && (
+                    {!hasTags && (
                       <TagBadge
                         className="h-5 border-dashed font-normal text-caption"
                         color="gray"
@@ -124,25 +118,6 @@ export function ResultsPopover({
                         Unsorted
                       </TagBadge>
                     )}
-                    {item.aiPriority && item.aiPriority !== "none" && (
-                      <AiMiniIndicator
-                        label={item.aiPriority}
-                        type={item.aiPriority}
-                      />
-                    )}
-                    {item.aiComplexity && item.aiComplexity !== "trivial" && (
-                      <AiMiniIndicator
-                        label={item.aiComplexity}
-                        type={item.aiComplexity}
-                      />
-                    )}
-                    {item.aiTimeEstimate &&
-                      item.aiTimeEstimate !== "N/A" &&
-                      item.aiTimeEstimate !== "none" && (
-                        <span className="text-micro text-muted-foreground">
-                          ~{item.aiTimeEstimate}
-                        </span>
-                      )}
                   </div>
                 </div>
               );

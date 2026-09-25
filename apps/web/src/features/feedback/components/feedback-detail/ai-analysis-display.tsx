@@ -40,8 +40,8 @@ export function AiAnalysisDisplay({
   timeEstimate,
   isAdmin,
 }: AiAnalysisDisplayProps) {
-  const recomputeAnalysis = useMutation(
-    api.feedback.auto_tagging_jobs.recomputeFeedbackAnalysis
+  const recomputeTriage = useMutation(
+    api.feedback.auto_tagging_jobs.recomputeFeedbackTriage
   );
 
   if (!isAdmin) {
@@ -60,10 +60,10 @@ export function AiAnalysisDisplay({
 
   const handleRecompute = async () => {
     try {
-      await recomputeAnalysis({ feedbackId });
-      toast.success("Recomputing analysis");
+      await recomputeTriage({ feedbackId });
+      toast.success("Recomputing triage");
     } catch (error) {
-      toast.error("Failed to recompute analysis", {
+      toast.error("Failed to recompute triage", {
         description:
           error instanceof Error ? error.message : "An error occurred",
       });
@@ -106,7 +106,7 @@ export function AiAnalysisDisplay({
       )}
       <NeedsReviewBadge probability={aiNeedsReview} />
       <Button
-        aria-label="Recompute AI analysis"
+        aria-label="Recompute triage"
         iconOnly
         onClick={handleRecompute}
         size="xs"

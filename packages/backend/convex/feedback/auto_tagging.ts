@@ -4,10 +4,6 @@ import { internalQuery, type QueryCtx, query } from "../_generated/server";
 import { requireOrgMember } from "../shared/access";
 import { triageScopeValidator } from "./triage_scope";
 
-/**
- * Single pass over an organization's live feedback: everything triage may run
- * on, plus the subset nothing has analysed or tagged yet.
- */
 const partitionForTriage = async (
   ctx: QueryCtx,
   organizationId: Id<"organizations">
@@ -27,7 +23,7 @@ const partitionForTriage = async (
 
     live.push(feedback);
 
-    if (feedback.aiPriorityGeneratedAt) {
+    if (feedback.aiUsefulnessGeneratedAt) {
       continue;
     }
 
@@ -58,7 +54,7 @@ export const getTriageCounts = query({
   },
 });
 
-export const getRecentlyTaggedItems = query({
+export const getRecentTriageResults = query({
   args: {
     organizationId: v.id("organizations"),
     since: v.number(),
@@ -73,17 +69,15 @@ export const getRecentlyTaggedItems = query({
       )
       .collect();
 
-    // Filter to items that were AI-analyzed after the given timestamp, excluding deleted/merged
-    const recentlyTagged = feedbackItems.filter(
+    const recentlyTriaged = feedbackItems.filter(
       (f) =>
         !(f.deletedAt || f.isMerged) &&
-        f.aiPriorityGeneratedAt &&
-        f.aiPriorityGeneratedAt >= args.since
+        f.aiUsefulnessGeneratedAt &&
+        f.aiUsefulnessGeneratedAt >= args.since
     );
 
-    // Get tags for each item
-    const itemsWithTags = await Promise.all(
-      recentlyTagged.map(async (f) => {
+    const triageResults = await Promise.all(
+      recentlyTriaged.map(async (f) => {
         const feedbackTags = await ctx.db
           .query("feedbackTags")
           .withIndex("by_feedback", (q) => q.eq("feedbackId", f._id))
@@ -102,16 +96,13 @@ export const getRecentlyTaggedItems = query({
 
         return {
           _id: f._id,
-          aiComplexity: f.aiComplexity,
-          aiPriority: f.aiPriority,
-          aiTimeEstimate: f.aiTimeEstimate,
           tags: tags.filter(Boolean),
           title: f.title,
         };
       })
     );
 
-    return itemsWithTags;
+    return triageResults;
   },
 });
 
@@ -131,7 +122,6 @@ export const getActiveJob = query({
       return null;
     }
 
-    // Sort by startedAt descending
     const sortedJobs = jobs.sort((a, b) => b.startedAt - a.startedAt);
     const mostRecentJob = sortedJobs[0];
 
@@ -139,7 +129,6 @@ export const getActiveJob = query({
       return null;
     }
 
-    // Return active jobs immediately
     if (
       mostRecentJob.status === "pending" ||
       mostRecentJob.status === "processing"
@@ -147,7 +136,6 @@ export const getActiveJob = query({
       return mostRecentJob;
     }
 
-    // Return recently completed/failed jobs (within 10 seconds)
     const tenSecondsAgo = Date.now() - 10_000;
     if (
       mostRecentJob.completedAt &&

@@ -100,7 +100,7 @@ function ProcessingIndicator({
           {processed}
           <span className="text-muted-foreground">/{total}</span>
         </span>
-        <span className="text-caption text-muted-foreground">tagged</span>
+        <span className="text-caption text-muted-foreground">triaged</span>
       </div>
 
       {failed > 0 && (
@@ -156,11 +156,10 @@ function RecomputeAllMenu({
       <AlertDialog onOpenChange={setIsConfirmOpen} open={isConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Recompute all analysis</AlertDialogTitle>
+            <AlertDialogTitle>Recompute all triage</AlertDialogTitle>
             <AlertDialogDescription>
-              This re-runs triage and AI analysis on all {total} feedback items.
-              Every item costs a model call, and existing AI tags can be
-              overwritten.
+              This re-runs JEV triage on all {total} feedback items. Each item
+              costs a model call, and existing AI tags can be overwritten.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

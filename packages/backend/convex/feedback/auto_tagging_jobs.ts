@@ -49,33 +49,12 @@ export const applyAutoTags = internalMutation({
   },
 });
 
-export const saveAiAnalysis = internalMutation({
+export const saveTriage = internalMutation({
   args: {
-    complexity: v.optional(
-      v.union(
-        v.literal("trivial"),
-        v.literal("simple"),
-        v.literal("moderate"),
-        v.literal("complex"),
-        v.literal("very_complex")
-      )
-    ),
-    complexityReasoning: v.optional(v.string()),
     feedbackId: v.id("feedback"),
-    junk: v.optional(v.number()),
-    needsReview: v.optional(v.number()),
-    priority: v.optional(
-      v.union(
-        v.literal("critical"),
-        v.literal("high"),
-        v.literal("medium"),
-        v.literal("low"),
-        v.literal("none")
-      )
-    ),
-    priorityReasoning: v.optional(v.string()),
-    timeEstimate: v.optional(v.string()),
-    usefulness: v.optional(v.number()),
+    junk: v.number(),
+    needsReview: v.number(),
+    usefulness: v.number(),
   },
   handler: async (ctx, args) => {
     const feedback = await ctx.db.get(args.feedbackId);
@@ -84,39 +63,13 @@ export const saveAiAnalysis = internalMutation({
     }
 
     const now = Date.now();
-    const updates: Record<string, unknown> = { updatedAt: now };
-
-    if (args.priority) {
-      updates.aiPriority = args.priority;
-      updates.aiPriorityReasoning = args.priorityReasoning;
-      updates.aiPriorityGeneratedAt = now;
-    }
-
-    if (args.complexity) {
-      updates.aiComplexity = args.complexity;
-      updates.aiComplexityReasoning = args.complexityReasoning;
-      updates.aiComplexityGeneratedAt = now;
-    }
-
-    if (args.timeEstimate) {
-      updates.aiTimeEstimate = args.timeEstimate;
-      updates.aiTimeEstimateGeneratedAt = now;
-    }
-
-    if (args.usefulness !== undefined) {
-      updates.aiUsefulness = args.usefulness;
-      updates.aiUsefulnessGeneratedAt = now;
-    }
-
-    if (args.junk !== undefined) {
-      updates.aiJunk = args.junk;
-    }
-
-    if (args.needsReview !== undefined) {
-      updates.aiNeedsReview = args.needsReview;
-    }
-
-    await ctx.db.patch(args.feedbackId, updates);
+    await ctx.db.patch(args.feedbackId, {
+      aiJunk: args.junk,
+      aiNeedsReview: args.needsReview,
+      aiUsefulness: args.usefulness,
+      aiUsefulnessGeneratedAt: now,
+      updatedAt: now,
+    });
   },
 });
 
@@ -248,7 +201,7 @@ export const startBulkAutoTagging = mutation({
   },
 });
 
-export const recomputeFeedbackAnalysis = mutation({
+export const recomputeFeedbackTriage = mutation({
   args: { feedbackId: v.id("feedback") },
   handler: async (ctx, args) => {
     const feedback = await ctx.db.get(args.feedbackId);
@@ -256,7 +209,7 @@ export const recomputeFeedbackAnalysis = mutation({
       throw new Error("Feedback not found");
     }
 
-    await requireOrgAdmin(ctx, feedback.organizationId, "recompute analysis");
+    await requireOrgAdmin(ctx, feedback.organizationId, "recompute triage");
 
     await ctx.scheduler.runAfter(
       0,
