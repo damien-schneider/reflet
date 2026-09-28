@@ -5,7 +5,7 @@ import {
   type ConsoleRecorder,
   startConsoleRecorder,
 } from "../core/console-recorder";
-import { captureElementCloseUp, highlightFor } from "../core/element-capture";
+import { highlightFor } from "../core/element-capture";
 import {
   buildElementSelection,
   MAX_SELECTION_COMMENT_LENGTH,
@@ -164,17 +164,11 @@ export function useWidgetState(props: RefletFeedbackProps) {
       DEFAULT_WIDGET_LABELS.attachmentUploadFailed,
   });
   const { resetSubmission } = submission;
-  const firstCapture = gallery.pendingCapture ?? gallery.screenshots[0];
-  const canRefreshAutomatically =
-    gallery.screenshots.length <= 1 && firstCapture?.source === "automatic";
-
   useCaptureSync(
     isOpen &&
       !submission.isEditingDisabled &&
       step === "compose" &&
-      canRefreshAutomatically &&
-      annotations.length === 0 &&
-      !gallery.screenshots.some((draft) => draft.selection) &&
+      gallery.canRefreshAutomatically &&
       props.captureOnOpen !== false,
     refreshAutomatic
   );
@@ -236,26 +230,20 @@ export function useWidgetState(props: RefletFeedbackProps) {
 
       const pick = ++pickRef.current;
       const context = collectPageContext({ sdkVersion: SDK_VERSION });
-      const [fresh, closeUp] = await Promise.all([
-        captureViewport().catch(() => null),
-        captureElementCloseUp(element).catch(() => null),
-      ]);
+      const fresh = await captureViewport().catch(() => null);
 
       if (pickRef.current !== pick) {
         releaseCapture(fresh);
-        releaseCapture(closeUp);
         return;
       }
 
       setIsElementCapturing(false);
       if (!fresh) {
-        releaseCapture(closeUp);
         setError(captureFailed);
         return;
       }
       storeScreenshot({
         annotations: [highlightFor(picked, fresh)],
-        closeUp,
         context,
         id: crypto.randomUUID(),
         image: fresh,

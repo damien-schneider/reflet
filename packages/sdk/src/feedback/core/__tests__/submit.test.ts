@@ -194,32 +194,6 @@ describe("submitWidgetFeedback", () => {
     expect(result.pendingScreenshots).toEqual([]);
   });
 
-  it("uploads a close-up next to each capture taken from the picker", async () => {
-    const { transport, saved } = stubTransport();
-    await submitWidgetFeedback(
-      transport,
-      submission({
-        screenshots: [
-          screenshot(),
-          screenshot({
-            closeUp: capture({ height: 40, width: 120 }),
-            id: "second",
-          }),
-        ],
-      })
-    );
-    expect(saved.map((entry) => entry.captureSource)).toEqual([
-      "widget",
-      "widget",
-      "element",
-    ]);
-    expect(saved.at(-1)).toMatchObject({
-      filename: "element-2.png",
-      height: 40,
-      width: 120,
-    });
-  });
-
   it("leaves the draft unsent if any image upload fails", async () => {
     const { transport, created } = stubTransport({
       uploadImage: () => Promise.reject(new Error("network down")),

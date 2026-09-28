@@ -1,12 +1,17 @@
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { captureViewport, releaseCapture } from "../core/capture";
+import { submitWidgetFeedback } from "../core/submit";
 import type { CapturedImage } from "../types";
 import { useWidgetState } from "../ui/use-widget-state";
 
 vi.mock("../core/capture", () => ({
   captureViewport: vi.fn(),
   releaseCapture: vi.fn(),
+}));
+
+vi.mock("../core/annotation-renderer", () => ({
+  renderAnnotatedImage: vi.fn(async () => screenshot()),
 }));
 
 function screenshot(): CapturedImage {
@@ -147,4 +152,70 @@ it("ignores repeated capture clicks while an image is being taken", async () => 
   });
   await waitFor(() => expect(result.current.screenshots).toHaveLength(1));
   expect(captureViewport).toHaveBeenCalledTimes(1);
+});
+
+it("submits exactly the two previews after taking a screenshot and picking an element", async () => {
+  const { result } = mount();
+  act(() => result.current.takeCapture());
+  await waitFor(() => expect(result.current.screenshots).toHaveLength(1));
+  const element = document.createElement("button");
+  element.textContent = "Viewers";
+  vi.spyOn(element, "getBoundingClientRect").mockReturnValue(
+    new DOMRect(10, 20, 120, 40)
+  );
+  await act(() => result.current.selectElement(element, "Show the viewers"));
+  expect(result.current.screenshots).toHaveLength(2);
+
+  const saveScreenshot = vi.fn(async () => ({ screenshotId: "saved" }));
+  const uploadImage = vi.fn(async () => "storage");
+  await submitWidgetFeedback(
+    {
+      create: async () => ({ feedbackId: "feedback", isApproved: true }),
+      getScreenshotUploadUrl: async () => ({
+        uploadUrl: "https://upload.test",
+      }),
+      saveScreenshot,
+      uploadImage,
+    },
+    {
+      context: {},
+      isAnonymous: false,
+      message: "Show the viewers",
+      screenshots: result.current.screenshots,
+    }
+  );
+
+  expect(saveScreenshot).toHaveBeenCalledTimes(2);
+  expect(saveScreenshot).toHaveBeenLastCalledWith(
+    expect.objectContaining({
+      annotatedStorageId: "storage",
+      annotations: [expect.objectContaining({ type: "rectangle" })],
+      filename: "screenshot-2.png",
+    })
+  );
+  expect(uploadImage).toHaveBeenCalledTimes(3);
+  expect(captureViewport).toHaveBeenCalledTimes(2);
+  expect(result.current.screenshots[1]?.selection?.comment).toBe(
+    "Show the viewers"
+  );
+});
+
+it("discards an element capture that finishes after the reporter closes the widget", async () => {
+  const { result } = mount();
+  let finishCapture: ((image: CapturedImage | null) => void) | undefined;
+  vi.mocked(captureViewport).mockReturnValue(
+    new Promise((resolve) => {
+      finishCapture = resolve;
+    })
+  );
+  const element = document.createElement("button");
+  act(() => {
+    result.current.selectElement(element);
+  });
+  act(() => result.current.close());
+  const lateCapture = screenshot();
+  await act(async () => finishCapture?.(lateCapture));
+  expect(result.current.screenshots).toEqual([]);
+  expect(result.current.isCapturing).toBe(false);
+  expect(releaseCapture).toHaveBeenCalledWith(lateCapture);
 });

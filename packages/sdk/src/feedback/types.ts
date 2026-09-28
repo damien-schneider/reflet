@@ -1,6 +1,6 @@
 import type { ElementSelection, FeedbackContext, RefletUser } from "../types";
 
-export const SDK_VERSION = "0.5.0";
+export const SDK_VERSION = "0.5.1";
 export const DEFAULT_WIDGET_OFFSET = 20;
 
 const ANNOTATION_TOOLS = [
@@ -42,7 +42,6 @@ export interface CapturedImage {
 
 export interface ScreenshotDraft {
   annotations: Annotation[];
-  closeUp?: CapturedImage | null;
   context: FeedbackContext;
   id: string;
   image: CapturedImage;

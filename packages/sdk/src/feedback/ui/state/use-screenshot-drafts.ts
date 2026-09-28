@@ -14,7 +14,6 @@ export interface CaptureRequest {
 
 function releaseDraft(draft: ScreenshotDraft | undefined): void {
   releaseCapture(draft?.image);
-  releaseCapture(draft?.closeUp);
 }
 
 export function useScreenshotDrafts(
@@ -149,12 +148,19 @@ export function useScreenshotDrafts(
     );
   }, []);
 
+  const activeScreenshot =
+    screenshots.find(({ id }) => id === activeId) ?? screenshots.at(-1) ?? null;
+  const firstCapture = pendingCapture ?? screenshots[0];
+  const canRefreshAutomatically =
+    screenshots.length <= 1 &&
+    firstCapture?.source === "automatic" &&
+    (activeScreenshot?.annotations.length ?? 0) === 0 &&
+    !screenshots.some((draft) => draft.selection);
+
   return {
-    activeScreenshot:
-      screenshots.find(({ id }) => id === activeId) ??
-      screenshots.at(-1) ??
-      null,
+    activeScreenshot,
     cancelPendingCapture,
+    canRefreshAutomatically,
     pendingCapture,
     refreshAutomatic,
     removeCapture,

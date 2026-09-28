@@ -242,10 +242,10 @@ export default function FloatingFeedbackPage() {
           </li>
           <li>
             <strong className="text-foreground">Element.</strong> Point at
-            anything on the page and the report carries a close-up of it, the
-            page region it sits in, its redacted markup, a selector that
-            resolves back to it, the React component stack, and the source file
-            and line when the build exposes them.
+            anything on the page and the report highlights it in the screenshot,
+            with the page region it sits in, its redacted markup, a selector
+            that resolves back to it, the React component stack, and the source
+            file and line when the build exposes them.
           </li>
           <li>
             <strong className="text-foreground">Page context.</strong> URL,

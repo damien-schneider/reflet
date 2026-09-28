@@ -16,8 +16,8 @@ async function prepareScreenshot(
   transport: FeedbackTransport,
   screenshot: ScreenshotDraft,
   index: number
-): Promise<PreparedScreenshot[]> {
-  const { closeUp, image, annotations, context } = screenshot;
+): Promise<PreparedScreenshot> {
+  const { image, annotations, context } = screenshot;
   const annotated =
     annotations.length > 0
       ? await renderAnnotatedImage(image, annotations)
@@ -30,34 +30,19 @@ async function prepareScreenshot(
     const annotatedStorageId = annotated
       ? await uploadImage(transport, annotated)
       : undefined;
-    const prepared: PreparedScreenshot[] = [
-      {
-        annotatedStorageId,
-        annotations:
-          annotations.length > 0 ? toWireAnnotations(annotations) : undefined,
-        captureSource: "widget",
-        filename: `screenshot-${index + 1}.png`,
-        height: image.height,
-        mimeType: image.mimeType,
-        pageUrl: context.url,
-        size: image.blob.size,
-        storageId,
-        width: image.width,
-      },
-    ];
-    if (closeUp) {
-      prepared.push({
-        captureSource: "element",
-        filename: `element-${index + 1}.png`,
-        height: closeUp.height,
-        mimeType: closeUp.mimeType,
-        pageUrl: context.url,
-        size: closeUp.blob.size,
-        storageId: await uploadImage(transport, closeUp),
-        width: closeUp.width,
-      });
-    }
-    return prepared;
+    return {
+      annotatedStorageId,
+      annotations:
+        annotations.length > 0 ? toWireAnnotations(annotations) : undefined,
+      captureSource: "widget",
+      filename: `screenshot-${index + 1}.png`,
+      height: image.height,
+      mimeType: image.mimeType,
+      pageUrl: context.url,
+      size: image.blob.size,
+      storageId,
+      width: image.width,
+    };
   } finally {
     releaseCapture(annotated);
   }
@@ -72,7 +57,7 @@ export async function uploadScreenshots(
       prepareScreenshot(transport, screenshot, index)
     )
   );
-  return results.flatMap((result) => {
+  return results.map((result) => {
     if (result.status === "rejected") {
       throw result.reason;
     }
