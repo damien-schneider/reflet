@@ -12,7 +12,6 @@ import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { capture } from "@/lib/analytics";
 import { useBoardFilters } from "../hooks/use-board-filters";
 import { useFeedbackDrawer } from "../hooks/use-feedback-drawer";
-import { BoardCustomizePopover } from "./board-customize-popover";
 import { BoardViewToggle } from "./board-view-toggle";
 import { FeedFeedbackView } from "./feed-feedback-view";
 import type { FeedbackBoardProps } from "./feedback-board";
@@ -55,8 +54,6 @@ export function FeedbackBoardContent({
   isAdmin,
   isPublic,
   defaultView = "feed",
-  cardStyle,
-  milestoneViewStyle,
 }: FeedbackBoardProps) {
   const {
     view,
@@ -230,18 +227,13 @@ export function FeedbackBoardContent({
           <div className="hidden items-center gap-2 md:flex">
             <BoardViewToggle onChange={setView} view={view} />
             {isAdmin && (
-              <>
-                <BoardCustomizePopover orgSlug={orgSlug} />
-                <ButtonLink
-                  render={
-                    <Link href={`/dashboard/${orgSlug}/feedback/review`} />
-                  }
-                  size="xs"
-                  variant="ghost"
-                >
-                  Pending review
-                </ButtonLink>
-              </>
+              <ButtonLink
+                render={<Link href={`/dashboard/${orgSlug}/feedback/review`} />}
+                size="xs"
+                variant="ghost"
+              >
+                Pending review
+              </ButtonLink>
             )}
           </div>
         </div>
@@ -254,7 +246,6 @@ export function FeedbackBoardContent({
           }}
         >
           <BoardViewToggle onChange={setView} view={view} />
-          {isAdmin && <BoardCustomizePopover orgSlug={orgSlug} />}
         </div>
 
         <FeedbackToolbar
@@ -274,7 +265,6 @@ export function FeedbackBoardContent({
           {view === "milestones" && (
             <MilestonesView
               isAdmin={isAdmin}
-              milestoneViewStyle={milestoneViewStyle}
               onFeedbackClick={openFeedback}
               organizationId={organizationId}
             />
@@ -290,7 +280,6 @@ export function FeedbackBoardContent({
           )}
           {view === "feed" && (
             <FeedFeedbackView
-              cardStyle={cardStyle}
               feedback={filteredFeedback}
               hasActiveFilters={hasActiveFilters}
               hideCompleted={hideCompleted}

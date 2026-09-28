@@ -4,11 +4,7 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { AnimatePresence, domAnimation, LazyMotion, m } from "motion/react";
 import type React from "react";
 
-import {
-  type CardStyle,
-  DEFAULT_CARD_STYLE,
-  getCardComponent,
-} from "../lib/card-styles";
+import { SweepCornerFeedCard } from "@/features/feedback/components/card-designs/sweep-corner-card";
 import { useFeedbackBoard } from "./feedback-board/feedback-board-context";
 import { FeedbackCardAdminWrapper } from "./feedback-card-admin-wrapper";
 import { FiltersBar, type SortOption } from "./filters-bar";
@@ -55,7 +51,6 @@ export interface FeedbackItem {
 }
 
 export interface FeedFeedbackViewProps {
-  cardStyle?: CardStyle;
   feedback: FeedbackItem[];
   hasActiveFilters: boolean;
   hideCompleted: boolean;
@@ -91,15 +86,12 @@ export function FeedFeedbackView({
   selectedTagIds,
   onTagChange,
   onClearFilters,
-  cardStyle,
   isAdmin,
   isMember,
   onInlineSubmit,
   inlineInputRef,
 }: FeedFeedbackViewProps) {
-  const style = cardStyle ?? DEFAULT_CARD_STYLE;
   const { onFeedbackClick } = useFeedbackBoard();
-  const CardComponent = getCardComponent(style);
   if (isLoading) {
     return (
       <div className="space-y-4 px-4">
@@ -166,7 +158,10 @@ export function FeedFeedbackView({
                 transition={{ duration: 0.2 }}
               >
                 <FeedbackCardAdminWrapper feedbackId={item._id}>
-                  <CardComponent feedback={item} onClick={onFeedbackClick} />
+                  <SweepCornerFeedCard
+                    feedback={item}
+                    onClick={onFeedbackClick}
+                  />
                 </FeedbackCardAdminWrapper>
               </m.div>
             ))}

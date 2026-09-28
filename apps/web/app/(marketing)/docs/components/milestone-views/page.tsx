@@ -77,30 +77,6 @@ export default function MilestoneViewsPage() {
           </Link>
         ))}
       </div>
-
-      <section>
-        <h2 className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight">
-          Configuration
-        </h2>
-        <div className="space-y-2 text-muted-foreground text-sm">
-          <p>
-            The milestone view style is stored in your organization&apos;s{" "}
-            <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
-              feedbackSettings.milestoneStyle
-            </code>{" "}
-            field. The default is{" "}
-            <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
-              &quot;track&quot;
-            </code>
-            .
-          </p>
-          <p>
-            Navigate to{" "}
-            <strong>Dashboard &rarr; Settings &rarr; Feedback Display</strong>{" "}
-            to change the milestone view style for your organization.
-          </p>
-        </div>
-      </section>
     </div>
   );
 }

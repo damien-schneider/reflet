@@ -93,19 +93,6 @@ export default function DashboardTimelinePage() {
           <li>Horizon badges and percentage indicators for quick scanning</li>
         </ul>
       </section>
-
-      <section>
-        <h2 className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight">
-          Configuration
-        </h2>
-        <p className="text-muted-foreground text-sm">
-          Set{" "}
-          <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
-            milestoneStyle: &quot;dashboard-timeline&quot;
-          </code>{" "}
-          in your organization&apos;s feedback settings.
-        </p>
-      </section>
     </div>
   );
 }

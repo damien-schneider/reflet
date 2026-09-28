@@ -46,7 +46,6 @@ export default function CustomDomainPage() {
     rawDefaultView === "milestones"
       ? rawDefaultView
       : "feed";
-  const milestoneViewStyle = org.feedbackSettings?.milestoneStyle ?? "track";
 
   return (
     <FeedbackBoard
@@ -54,7 +53,6 @@ export default function CustomDomainPage() {
       isAdmin={isAdmin}
       isMember={isMember}
       isPublic={org.isPublic ?? false}
-      milestoneViewStyle={milestoneViewStyle}
       organizationId={org._id}
       orgSlug={org.slug}
       primaryColor={primaryColor}

@@ -16,7 +16,6 @@ export default function PublicOrgPage({
   const { orgSlug } = use(params);
   const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
 
-  // Check if user is a member
   const membership = useQuery(
     api.organizations.members.getMembership,
     org?._id ? { organizationId: org._id } : "skip"
@@ -24,7 +23,6 @@ export default function PublicOrgPage({
   const isMember = !!membership;
   const isAdmin = membership?.role === "admin" || membership?.role === "owner";
 
-  // Loading state
   if (org === undefined) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -42,7 +40,7 @@ export default function PublicOrgPage({
   }
 
   if (!org) {
-    return null; // Layout handles 404
+    return null;
   }
 
   const primaryColor = org.primaryColor ?? DEFAULT_PRIMARY_COLOR;
@@ -53,7 +51,6 @@ export default function PublicOrgPage({
     rawDefaultView === "milestones"
       ? rawDefaultView
       : "feed";
-  const milestoneViewStyle = org.feedbackSettings?.milestoneStyle ?? "track";
 
   return (
     <FeedbackBoard
@@ -61,7 +58,6 @@ export default function PublicOrgPage({
       isAdmin={isAdmin}
       isMember={isMember}
       isPublic={org.isPublic ?? false}
-      milestoneViewStyle={milestoneViewStyle}
       organizationId={org._id}
       orgSlug={orgSlug}
       primaryColor={primaryColor}
