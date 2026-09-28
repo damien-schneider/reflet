@@ -25,9 +25,9 @@ describe("useBoardFilters", () => {
       expect(result.current.view).toBe("feed");
     });
 
-    it("returns default sortBy as votes", () => {
+    it("returns default sortBy as newest", () => {
       const { result } = renderHook(() => useBoardFilters());
-      expect(result.current.sortBy).toBe("votes");
+      expect(result.current.sortBy).toBe("newest");
     });
 
     it("returns empty selectedStatusIds", () => {
@@ -86,15 +86,15 @@ describe("useBoardFilters", () => {
     });
 
     it("parses sort from URL", () => {
-      currentSearchParams = new URLSearchParams("sort=newest");
+      currentSearchParams = new URLSearchParams("sort=votes");
       const { result } = renderHook(() => useBoardFilters());
-      expect(result.current.sortBy).toBe("newest");
+      expect(result.current.sortBy).toBe("votes");
     });
 
     it("falls back to default for invalid sort", () => {
       currentSearchParams = new URLSearchParams("sort=invalid");
       const { result } = renderHook(() => useBoardFilters());
-      expect(result.current.sortBy).toBe("votes");
+      expect(result.current.sortBy).toBe("newest");
     });
 
     it("parses status ids from URL", () => {
@@ -151,17 +151,17 @@ describe("useBoardFilters", () => {
       });
     });
 
-    it("setSortBy uses replace", () => {
+    it("setSortBy uses replace for a non-default sort", () => {
       const { result } = renderHook(() => useBoardFilters());
-      act(() => result.current.setSortBy("newest"));
-      expect(mockReplace).toHaveBeenCalledWith("/test-org/board?sort=newest", {
+      act(() => result.current.setSortBy("votes"));
+      expect(mockReplace).toHaveBeenCalledWith("/test-org/board?sort=votes", {
         scroll: false,
       });
     });
 
     it("setSortBy removes param when setting default sort", () => {
       const { result } = renderHook(() => useBoardFilters());
-      act(() => result.current.setSortBy("votes"));
+      act(() => result.current.setSortBy("newest"));
       expect(mockReplace).toHaveBeenCalledWith("/test-org/board", {
         scroll: false,
       });
@@ -284,7 +284,7 @@ describe("useBoardFilters", () => {
   describe("clearFilters", () => {
     it("removes all filter params", () => {
       currentSearchParams = new URLSearchParams(
-        "sort=newest&q=test&status=s1&tags=t1"
+        "sort=votes&q=test&status=s1&tags=t1"
       );
       const { result } = renderHook(() => useBoardFilters());
       act(() => result.current.clearFilters());
@@ -329,7 +329,7 @@ describe("useBoardFilters", () => {
     });
 
     it("is true when non-default sort is active", () => {
-      currentSearchParams = new URLSearchParams("sort=newest");
+      currentSearchParams = new URLSearchParams("sort=votes");
       const { result } = renderHook(() => useBoardFilters());
       expect(result.current.hasActiveFilters).toBe(true);
     });

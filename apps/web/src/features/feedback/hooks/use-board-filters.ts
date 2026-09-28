@@ -19,7 +19,7 @@ const URL_PARAM_KEYS = {
 } as const;
 
 const DEFAULT_VIEW: BoardView = "feed";
-const DEFAULT_SORT: SortOption = "votes";
+const DEFAULT_SORT: SortOption = "newest";
 
 function parseArrayParam<T extends string = string>(value: string | null): T[] {
   if (!value) {
