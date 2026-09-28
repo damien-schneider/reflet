@@ -6,6 +6,9 @@ vi.mock("@phosphor-icons/react", () => ({
   Bell: ({ className }: { className?: string }) => (
     <svg className={className} />
   ),
+  Code: ({ className }: { className?: string }) => (
+    <svg className={className} />
+  ),
   Envelope: ({ className }: { className?: string }) => (
     <svg className={className} />
   ),
@@ -22,13 +25,14 @@ import { AccountNav } from "./account-nav";
 describe("AccountNav", () => {
   it("renders every section as a tab", () => {
     render(<AccountNav activeTab="profile" onTabChange={vi.fn()} />);
-    expect(screen.getAllByRole("tab")).toHaveLength(4);
+    expect(screen.getAllByRole("tab")).toHaveLength(5);
     expect(screen.getByRole("tab", { name: "Profile" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Email" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Password" })).toBeInTheDocument();
     expect(
       screen.getByRole("tab", { name: "Notifications" })
     ).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Devtools" })).toBeInTheDocument();
   });
 
   it("marks only the active tab as selected", () => {

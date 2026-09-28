@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import {
   DEFAULT_WIDGET_LABELS,
   DEFAULT_WIDGET_OFFSET,
+  type FeedbackWidgetLabels,
   type RefletFeedbackProps,
 } from "./types";
 import { Annotator } from "./ui/annotator";
@@ -9,7 +10,7 @@ import { useOwnsDevtools } from "./ui/devtools-owner";
 import { FloatingWidget } from "./ui/floating/floating-widget";
 import { ElementPicker } from "./ui/picker";
 import { ShadowPortal } from "./ui/shadow-portal";
-import { useWidgetState } from "./ui/use-widget-state";
+import { useWidgetState, type WidgetState } from "./ui/use-widget-state";
 
 // Bundlers inline NODE_ENV, so production builds drop the branch and never ship the devtools chunk.
 // No `typeof process` guard: Vite replaces only this exact expression and has no `process` in the browser.
@@ -66,39 +67,7 @@ export function RefletFeedback(props: RefletFeedbackProps) {
             state={state}
           />
 
-          {isOpen && state.step === "annotate" && state.activeScreenshot && (
-            <Annotator
-              capture={state.activeScreenshot.image}
-              editor={{
-                annotations: state.annotations,
-                onChange: state.setAnnotations,
-                onDone: () => state.setStep("compose"),
-                onRetake: state.activeScreenshot.selection
-                  ? undefined
-                  : () => {
-                      state.setStep("compose");
-                      if (state.activeScreenshot) {
-                        state.retakeCapture(state.activeScreenshot.id);
-                      }
-                    },
-                trigger: state.annotationTrigger?.thumbnail,
-              }}
-              labels={labels}
-              note={
-                state.activeScreenshot.selection && {
-                  comment: state.activeScreenshot.selection.comment ?? "",
-                  onChange: (comment) => {
-                    if (state.activeScreenshot) {
-                      state.setSelectionComment(
-                        state.activeScreenshot.id,
-                        comment
-                      );
-                    }
-                  },
-                }
-              }
-            />
-          )}
+          <WidgetAnnotation labels={labels} state={state} />
 
           {isOpen && state.step === "picking" && (
             <ElementPicker
@@ -114,9 +83,49 @@ export function RefletFeedback(props: RefletFeedbackProps) {
           <DevtoolsLayer
             isWidgetOpen={showsWidget && isOpen}
             position={position}
+            publicKey={state.publicKey}
           />
         </Suspense>
       )}
     </ShadowPortal>
+  );
+}
+
+function WidgetAnnotation({
+  labels,
+  state,
+}: {
+  labels: FeedbackWidgetLabels;
+  state: WidgetState;
+}) {
+  const screenshot = state.activeScreenshot;
+  const annotating =
+    state.isOpen && state.step === "annotate" && screenshot !== null;
+  if (!(annotating && screenshot)) {
+    return null;
+  }
+  const retake = () => {
+    state.setStep("compose");
+    state.retakeCapture(screenshot.id);
+  };
+  return (
+    <Annotator
+      capture={screenshot.image}
+      editor={{
+        annotations: state.annotations,
+        onChange: state.setAnnotations,
+        onDone: () => state.setStep("compose"),
+        onRetake: screenshot.selection ? undefined : retake,
+        trigger: state.annotationTrigger?.thumbnail,
+      }}
+      labels={labels}
+      note={
+        screenshot.selection && {
+          comment: screenshot.selection.comment ?? "",
+          onChange: (comment) =>
+            state.setSelectionComment(screenshot.id, comment),
+        }
+      }
+    />
   );
 }

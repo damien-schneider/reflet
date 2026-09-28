@@ -172,7 +172,12 @@ const defaultHookReturn = {
   setApiError: mockSetApiError,
   setValue: mockSetValue,
   trigger: mockTrigger,
-  watch: mockWatch,
+  get watchedConfirmPassword() {
+    return mockWatch("confirmPassword");
+  },
+  get watchedPassword() {
+    return mockWatch("password");
+  },
 };
 
 vi.mock("./unified-auth/hooks/use-auth-form", () => ({

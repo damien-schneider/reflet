@@ -139,3 +139,16 @@ describe("AuthDivider", () => {
     expect(container.firstChild).toHaveClass("relative");
   });
 });
+
+it("returns to devtools consent after social sign-in", async () => {
+  const user = userEvent.setup();
+  const redirectTo = "/auth/devtools?state=pending-connect";
+  render(<AuthSocialProviders redirectTo={redirectTo} />);
+  await user.click(
+    screen.getByRole("button", { name: "Continue with Google" })
+  );
+  expect(mockSignInSocial).toHaveBeenCalledWith({
+    callbackURL: redirectTo,
+    provider: "google",
+  });
+});

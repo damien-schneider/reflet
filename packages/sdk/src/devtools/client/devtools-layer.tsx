@@ -11,13 +11,13 @@ import {
 } from "../../feedback/types";
 import { ElementPicker } from "../../feedback/ui/picker";
 import { SelectionOutline } from "../../feedback/ui/selection-outline";
+import { BoardTab } from "./board/board-tab";
 import { CodePanel, type CodeTarget } from "./code/code-panel";
 import { DevtoolsBar, type SheetTab } from "./devtools-bar";
 import { DevtoolsSheet } from "./devtools-sheet";
 import { DEVTOOLS_STYLES } from "./devtools-styles";
 import { locateElementSource } from "./element-source";
 import { findOnPage } from "./find-on-page";
-import { InboxPanel } from "./inbox/inbox-panel";
 import { draftNote, enrichNote, hasTriedToLocate } from "./notes/capture-note";
 import {
   type DevNote,
@@ -52,14 +52,22 @@ function titleFor(element: Element): string {
   return owner ? `<${owner}> ${label}` : label;
 }
 
-function sendBlockedReason(route: DevRouteState): string | null {
+function sendBlockedReason(
+  route: DevRouteState,
+  canConnect: boolean
+): string | null {
   if (route.kind === "checking") {
     return "Connecting to the Reflet dev route…";
   }
   if (route.kind === "missing") {
     return "Add the Reflet dev route to send notes to your board.";
   }
-  return route.status.hasSecretKey ? null : MISSING_SECRET_KEY_HINT;
+  if (route.status.board.kind !== "disconnected") {
+    return null;
+  }
+  return canConnect
+    ? "Connect to Reflet in the Board tab to send notes."
+    : MISSING_SECRET_KEY_HINT;
 }
 
 function CodeTab({
@@ -139,11 +147,13 @@ function useResumeLocating(notes: NotesSnapshot, route: DevRouteState) {
 export function DevtoolsLayer({
   isWidgetOpen,
   position,
+  publicKey,
 }: {
   isWidgetOpen: boolean;
   position: NonNullable<RefletFeedbackProps["position"]>;
+  publicKey: string | null;
 }) {
-  const route = useDevRoute();
+  const { refresh, route } = useDevRoute();
   const notes = useNotes();
   useResumeLocating(notes, route);
   const [isPicking, setIsPicking] = useState(false);
@@ -154,6 +164,11 @@ export function DevtoolsLayer({
   const edge = position.startsWith("top") ? "top" : "bottom";
   const side = position.endsWith("right") ? "right" : "left";
   const canReadSource = route.kind === "ready";
+  const canConnect =
+    route.kind === "ready" &&
+    route.status.board.kind === "disconnected" &&
+    route.status.board.canConnect &&
+    publicKey !== null;
   const isRecessed = isWidgetOpen || isPicking;
 
   const closeSheet = useCallback(() => {
@@ -235,22 +250,19 @@ export function DevtoolsLayer({
               notes={notes}
               onOpenCode={openCode}
               onShowSelector={showSelector}
-              sendBlockedReason={sendBlockedReason(route)}
+              sendBlockedReason={sendBlockedReason(route, canConnect)}
             />
           )}
-          {openTab === "inbox" && route.kind === "missing" && (
-            <MissingRouteHint purpose="see your board's feedback for this page" />
+          {openTab === "inbox" && (
+            <BoardTab
+              canConnect={canConnect}
+              onOpenCode={openCode}
+              onShowSelector={showSelector}
+              publicKey={publicKey}
+              refresh={refresh}
+              route={route}
+            />
           )}
-          {openTab === "inbox" &&
-            route.kind === "ready" &&
-            !route.status.hasSecretKey && (
-              <p className="dt-hint">{MISSING_SECRET_KEY_HINT}</p>
-            )}
-          {openTab === "inbox" &&
-            route.kind === "ready" &&
-            route.status.hasSecretKey && (
-              <InboxPanel onOpenCode={openCode} onShowSelector={showSelector} />
-            )}
           {openTab === "code" && codeLookup && (
             <CodeTab lookup={codeLookup} route={route} />
           )}

@@ -63,6 +63,12 @@ crons.daily(
   internal.status.healthCheck.cleanupOldChecks
 );
 
+crons.daily(
+  "cleanup devtools credentials",
+  { hourUTC: 3, minuteUTC: 45 },
+  internal.devtools.tokens.cleanupExpiredDevtoolsCredentials
+);
+
 crons.interval(
   "check pending domain verification",
   { minutes: 5 },

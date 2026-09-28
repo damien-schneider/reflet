@@ -224,8 +224,8 @@ test.describe("Reflet devtools under next dev", () => {
     await page.route("**/api/reflet-devtools/status", (route) =>
       route.fulfill({
         json: {
+          board: { kind: "secretKey" },
           editor: "vscode",
-          hasSecretKey: true,
           marker: "reflet-devtools",
         },
       })
@@ -312,4 +312,58 @@ test.describe("Reflet devtools under next dev", () => {
       .poll(async () => Math.round((await sheet.boundingBox())?.x ?? 0))
       .toBe(Math.round(docked.x));
   });
+});
+
+test("Board reconnects after consent and allows disconnecting by keyboard", async ({
+  page,
+}) => {
+  let connected = false;
+  await page.route("**/api/reflet-devtools/status", (route) =>
+    route.fulfill({
+      json: {
+        board: connected
+          ? {
+              kind: "connected",
+              organizationName: "Acme design and development",
+            }
+          : { canConnect: true, kind: "disconnected" },
+        editor: "vscode",
+        marker: "reflet-devtools",
+      },
+    })
+  );
+  await page.route("**/api/reflet-devtools/connect/start", (route) =>
+    route.fulfill({
+      json: { authorizeUrl: "http://localhost:3003/auth/devtools" },
+    })
+  );
+  await page.route(
+    "**/api/reflet-devtools/proxy/api/v1/feedback/list**",
+    (route) => route.fulfill({ json: { hasMore: false, items: [], total: 0 } })
+  );
+  await page.route("**/api/reflet-devtools/connect/disconnect", (route) => {
+    connected = false;
+    return route.fulfill({ json: { revoked: true } });
+  });
+  await page.goto("/sdk-demo");
+  await page
+    .getByRole("button", { name: "Board feedback on this page" })
+    .click();
+  const connectButton = page.getByRole("button", { name: "Connect to Reflet" });
+  await connectButton.focus();
+  const popupReady = page.waitForEvent("popup");
+  await page.keyboard.press("Enter");
+  const popup = await popupReady;
+  await expect(
+    page.getByRole("link", { name: "Open Reflet again" })
+  ).toBeVisible();
+  await popup.close();
+  connected = true;
+  await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+  await expect(
+    page.getByText("Connected to Acme design and development")
+  ).toBeVisible();
+  await page.getByRole("button", { exact: true, name: "Disconnect" }).focus();
+  await page.keyboard.press("Enter");
+  await expect(connectButton).toBeVisible();
 });

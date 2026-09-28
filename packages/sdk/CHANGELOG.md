@@ -5,6 +5,12 @@ All notable changes to `reflet-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Connect the devtools Board tab to Reflet without configuring a secret key. Approve access in Reflet and revoke it from the Board tab or Account → Devtools. Credentials stay on the dev server, isolated by project and backend; notes remain internal and are attributed to the connected member.
+
 ## [0.5.1] - 2026-09-28
 
 ### Fixed

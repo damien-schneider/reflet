@@ -184,6 +184,7 @@ export const getOrCreateExternalUser = internalMutation({
  */
 export const logApiRequest = internalMutation({
   args: {
+    devtoolsTokenId: v.optional(v.id("devtoolsTokens")),
     endpoint: v.string(),
     ip: v.optional(v.string()),
     method: v.string(),
@@ -194,6 +195,7 @@ export const logApiRequest = internalMutation({
   },
   handler: async (ctx, args) => {
     await ctx.db.insert("apiRequestLogs", {
+      devtoolsTokenId: args.devtoolsTokenId,
       endpoint: args.endpoint,
       ip: args.ip,
       method: args.method,
@@ -212,23 +214,36 @@ export const logApiRequest = internalMutation({
 export const checkRateLimit = internalQuery({
   args: {
     maxRequests: v.optional(v.number()), // Default 100 for public, 1000 for secret
-    organizationApiKeyId: v.id("organizationApiKeys"),
+    subject: v.union(
+      v.object({ organizationApiKeyId: v.id("organizationApiKeys") }),
+      v.object({ devtoolsTokenId: v.id("devtoolsTokens") })
+    ),
     windowMs: v.optional(v.number()), // Default 60000 (1 minute)
   },
   handler: async (ctx, args) => {
     const windowMs = args.windowMs ?? 60_000;
     const maxRequests = args.maxRequests ?? 100;
     const windowStart = Date.now() - windowMs;
+    const { subject } = args;
 
-    // Check organization API key
-    const recentRequests = await ctx.db
-      .query("apiRequestLogs")
-      .withIndex("by_org_key_time", (q) =>
-        q
-          .eq("organizationApiKeyId", args.organizationApiKeyId)
-          .gt("timestamp", windowStart)
-      )
-      .collect();
+    const recentRequests =
+      "devtoolsTokenId" in subject
+        ? await ctx.db
+            .query("apiRequestLogs")
+            .withIndex("by_devtools_token_time", (q) =>
+              q
+                .eq("devtoolsTokenId", subject.devtoolsTokenId)
+                .gt("timestamp", windowStart)
+            )
+            .collect()
+        : await ctx.db
+            .query("apiRequestLogs")
+            .withIndex("by_org_key_time", (q) =>
+              q
+                .eq("organizationApiKeyId", subject.organizationApiKeyId)
+                .gt("timestamp", windowStart)
+            )
+            .collect();
 
     return {
       allowed: recentRequests.length < maxRequests,

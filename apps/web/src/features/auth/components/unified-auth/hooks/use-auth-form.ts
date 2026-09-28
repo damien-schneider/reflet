@@ -8,8 +8,8 @@ import { useDebouncedValue } from "@tanstack/react-pacer";
 import { useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import type { Resolver } from "react-hook-form";
-import { useForm } from "react-hook-form";
+import { type UseFormReturn, useForm, useWatch } from "react-hook-form";
+import { z } from "zod";
 import { capture } from "@/lib/analytics";
 import { authClient } from "@/lib/auth-client";
 import {
@@ -36,68 +36,55 @@ export interface UseAuthFormReturn {
   register: ReturnType<typeof useForm<SignUpFormData>>["register"];
   resetMode: () => void;
   setApiError: (error: string | null) => void;
-  setEmail: (email: string) => void;
-  setPasswordMismatchError: (error: string | null) => void;
   setValue: ReturnType<typeof useForm<SignUpFormData>>["setValue"];
   trigger: ReturnType<typeof useForm<SignUpFormData>>["trigger"];
-  watch: ReturnType<typeof useForm<SignUpFormData>>["watch"];
+  watchedConfirmPassword: string;
+  watchedPassword: string;
 }
 
-export function useAuthForm(onSuccess?: () => void): UseAuthFormReturn {
+const signInFormSchema = signInSchema.extend({ confirmPassword: z.string() });
+
+export function useAuthForm(
+  onSuccess?: () => void,
+  redirectTo?: string
+): UseAuthFormReturn {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [emailChecked, setEmailChecked] = useState(false);
-  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
-  const [mode, setMode] = useState<AuthMode>(null);
+  const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
-  const [lastCheckedEmail, setLastCheckedEmail] = useState<string>("");
-  const [passwordMismatchError, setPasswordMismatchError] = useState<
-    string | null
-  >(null);
 
-  const emailExistsData = useQuery(
-    api.auth.helpers.checkEmailExists,
-    emailChecked && email ? { email } : "skip"
-  );
-
+  const form: UseFormReturn<SignUpFormData> = useForm<SignUpFormData>({
+    defaultValues: { confirmPassword: "", email: "", password: "" },
+    mode: "onChange",
+    resolver: (data, context, options) =>
+      zodResolver(mode === "signUp" ? signUpSchema : signInFormSchema)(
+        data,
+        context,
+        options
+      ),
+  });
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-    watch,
+    control,
     setValue,
     trigger,
-  } = useForm<SignUpFormData>({
-    // Pass mode via context so resolver always gets current value
-    context: { mode },
-    defaultValues: {
-      confirmPassword: "",
-      email: "",
-      password: "",
-    },
-    mode: "onChange",
-    resolver: (async (data, resolverContext, options) => {
-      try {
-        // Read mode from context (which updates on re-render) instead of closure
-        const contextWithMode = resolverContext as
-          | { mode: AuthMode }
-          | undefined;
-        const currentMode = contextWithMode?.mode;
-        const schema = currentMode === "signUp" ? signUpSchema : signInSchema;
-        const resolve = zodResolver(
-          schema
-        ) as unknown as Resolver<SignUpFormData>;
-        return await resolve(data, resolverContext, options);
-      } catch {
-        return { errors: {}, values: data };
-      }
-    }) as Resolver<SignUpFormData>,
-  });
+  } = form;
 
-  const watchedEmail = watch("email");
-  const watchedPassword = watch("password");
-  const watchedConfirmPassword = watch("confirmPassword");
+  const [watchedEmail, watchedPassword, watchedConfirmPassword] = useWatch({
+    control,
+    name: ["email", "password", "confirmPassword"],
+  });
   const [debouncedEmail] = useDebouncedValue(watchedEmail, { wait: 800 });
+  const email = isEditingEmail ? "" : debouncedEmail.trim();
+  const emailChecked = email.includes("@");
+  const emailExistsData = useQuery(
+    api.auth.helpers.checkEmailExists,
+    emailChecked ? { email } : "skip"
+  );
+  const isCheckingEmail = emailChecked && emailExistsData === undefined;
+  const knownMode = emailExistsData?.exists ? "signIn" : "signUp";
+  const mode: AuthMode = emailChecked && emailExistsData ? knownMode : null;
 
   useEffect(() => {
     if (mode === "signUp" && watchedPassword && watchedConfirmPassword) {
@@ -105,43 +92,17 @@ export function useAuthForm(onSuccess?: () => void): UseAuthFormReturn {
     }
   }, [watchedPassword, mode, trigger, watchedConfirmPassword]);
 
-  useEffect(() => {
-    if (mode !== "signUp") {
-      setPasswordMismatchError(null);
-      return;
-    }
-
-    const hasConfirmPassword = watchedConfirmPassword.length > 0;
-    const passwordsMatch = watchedPassword === watchedConfirmPassword;
-
-    if (hasConfirmPassword && !passwordsMatch) {
-      setPasswordMismatchError("Passwords do not match");
-    } else {
-      setPasswordMismatchError(null);
-    }
-  }, [mode, watchedPassword, watchedConfirmPassword]);
-
-  useEffect(() => {
-    if (emailExistsData !== undefined && emailChecked) {
-      const exists = emailExistsData.exists;
-      setMode(exists ? "signIn" : "signUp");
-      setIsCheckingEmail(false);
-      setLastCheckedEmail(email);
-    }
-  }, [emailExistsData, emailChecked, email]);
-
-  useEffect(() => {
-    const currentEmail = debouncedEmail.trim();
-
-    if (currentEmail?.includes("@") && currentEmail !== lastCheckedEmail) {
-      setEmail(currentEmail);
-      setIsCheckingEmail(true);
-      setEmailChecked(true);
-    }
-  }, [debouncedEmail, lastCheckedEmail]);
+  const passwordsMismatch =
+    mode === "signUp" &&
+    watchedConfirmPassword.length > 0 &&
+    watchedPassword !== watchedConfirmPassword;
+  const passwordMismatchError = passwordsMismatch
+    ? "Passwords do not match"
+    : null;
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setApiError(null);
+    setIsEditingEmail(false);
     setValue("email", e.target.value);
   };
 
@@ -178,7 +139,7 @@ export function useAuthForm(onSuccess?: () => void): UseAuthFormReturn {
           onSuccess: () => {
             capture("sign_in_completed", { method: "email" });
             onSuccess?.();
-            router.push("/pending-invitations");
+            router.push(redirectTo ?? "/pending-invitations");
           },
         }
       );
@@ -189,7 +150,7 @@ export function useAuthForm(onSuccess?: () => void): UseAuthFormReturn {
 
       await authClient.signUp.email(
         {
-          callbackURL: "/auth/verify-email",
+          callbackURL: redirectTo ?? "/auth/verify-email",
           email: data.email,
           name: placeholderName,
           password: data.password,
@@ -206,7 +167,7 @@ export function useAuthForm(onSuccess?: () => void): UseAuthFormReturn {
             capture("sign_up_completed", { method: "email" });
             onSuccess?.();
             if (skipEmailVerification) {
-              router.push("/pending-invitations");
+              router.push(redirectTo ?? "/pending-invitations");
               toast.success("Successfully signed up.");
             } else {
               router.push(
@@ -223,9 +184,8 @@ export function useAuthForm(onSuccess?: () => void): UseAuthFormReturn {
   };
 
   const resetMode = () => {
-    setMode(null);
-    setEmailChecked(false);
-    setEmail("");
+    setIsEditingEmail(true);
+    setValue("email", "");
   };
 
   return {
@@ -243,10 +203,9 @@ export function useAuthForm(onSuccess?: () => void): UseAuthFormReturn {
     register,
     resetMode,
     setApiError,
-    setEmail,
-    setPasswordMismatchError,
     setValue,
     trigger,
-    watch,
+    watchedConfirmPassword,
+    watchedPassword,
   };
 }

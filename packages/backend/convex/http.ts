@@ -10,6 +10,7 @@ import { registerAdminFeedbackRoutes } from "./http/admin_feedback";
 import { registerAdminManagementRoutes } from "./http/admin_management";
 import { registerAdminSurveyRoutes } from "./http/admin_surveys";
 import { registerAiApiRoutes } from "./http/ai_api";
+import { registerDevtoolsRoutes } from "./http/devtools_routes";
 import { registerGithubWebhookRoutes } from "./http/github_webhook";
 import { registerPublicApiRoutes } from "./http/public_api";
 
@@ -32,6 +33,7 @@ registerAiApiRoutes(http);
 
 // Public feedback API (v1)
 registerPublicApiRoutes(http);
+registerDevtoolsRoutes(http);
 
 // RSS feed
 http.route({

@@ -7,6 +7,8 @@ export interface DevtoolsServerOptions {
   allowedHosts?: string[];
   /** Reflet API origin. Falls back to REFLET_API_URL, then the hosted API. */
   apiUrl?: string;
+  /** Reflet web app origin for Connect. Falls back to REFLET_APP_URL, then https://www.reflet.app. */
+  appUrl?: string;
   /** Editor that "open in editor" links target. Falls back to REFLET_EDITOR. */
   editor?: EditorId;
   /** App directory source paths resolve against. Defaults to the working directory. */
@@ -20,11 +22,13 @@ export type DevtoolsEnv = Readonly<Record<string, string | undefined>>;
 export interface ResolvedDevtoolsOptions {
   allowedHosts: string[];
   apiUrl: string;
+  appUrl: string;
   editor: EditorId;
   root: string;
   secretKey: string | null;
 }
 
+const DEFAULT_APP_URL = "https://www.reflet.app";
 const DEFAULT_EDITOR: EditorId = "vscode";
 const TRAILING_SLASHES = /\/+$/;
 
@@ -56,6 +60,10 @@ export function resolveDevtoolsOptions(
     presentValue(options.apiUrl) ??
     presentValue(env.REFLET_API_URL) ??
     DEFAULT_API_URL;
+  const appUrl =
+    presentValue(options.appUrl) ??
+    presentValue(env.REFLET_APP_URL) ??
+    DEFAULT_APP_URL;
 
   return {
     allowedHosts: (
@@ -66,6 +74,7 @@ export function resolveDevtoolsOptions(
       .map((host) => host.trim().toLowerCase())
       .filter(Boolean),
     apiUrl: apiUrl.replace(TRAILING_SLASHES, ""),
+    appUrl: appUrl.replace(TRAILING_SLASHES, ""),
     editor: resolveEditor(options.editor, env.REFLET_EDITOR),
     root: resolve(presentValue(options.root) ?? process.cwd()),
     secretKey:

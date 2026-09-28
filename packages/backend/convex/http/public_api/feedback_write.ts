@@ -33,8 +33,9 @@ export function registerFeedbackWriteRoutes(http: Router): void {
       }
 
       const { title, description, tagId, context } = body.data;
-      const isInternal = body.data.internal === true;
-      if (isInternal && !auth.isSecretKey) {
+      const isInternal =
+        "devtoolsTokenId" in auth.credential || body.data.internal === true;
+      if (isInternal && !auth.hasPrivateAccess) {
         return errorResponse("Internal feedback requires a secret key", 403);
       }
       if (!(title && description)) {
@@ -49,6 +50,7 @@ export function registerFeedbackWriteRoutes(http: Router): void {
       const result = await ctx.runMutation(
         internal.feedback.api_public_write.createFeedbackByOrganization,
         {
+          authorId: auth.memberUserId,
           context,
           description,
           externalUserId: auth.externalUserId ?? auth.unverifiedExternalUserId,
@@ -62,7 +64,7 @@ export function registerFeedbackWriteRoutes(http: Router): void {
       await ctx.runMutation(internal.feedback.api_auth.logApiRequest, {
         endpoint: "/api/v1/feedback/create",
         method: "POST",
-        organizationApiKeyId: auth.organizationApiKeyId,
+        ...auth.credential,
         organizationId: auth.organizationId,
         statusCode: 201,
         userAgent: request.headers.get("User-Agent") ?? undefined,
@@ -97,7 +99,7 @@ export function registerFeedbackWriteRoutes(http: Router): void {
       const access = await checkOrganizationAccess(
         ctx,
         auth.organizationId,
-        auth.isSecretKey
+        auth.hasPrivateAccess
       );
       if (!access.allowed) {
         return access.response;

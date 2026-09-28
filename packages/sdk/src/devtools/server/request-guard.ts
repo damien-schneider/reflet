@@ -12,12 +12,11 @@ function hostnameOf(host: string): string | null {
   }
 }
 
-function isAllowedHost(hostname: string, allowedHosts: string[]): boolean {
+export function isLoopbackHostname(hostname: string): boolean {
   return (
     LOOPBACK_HOSTNAMES.includes(hostname) ||
     hostname.endsWith(".localhost") ||
-    LOOPBACK_IPV4.test(hostname) ||
-    allowedHosts.includes(hostname)
+    LOOPBACK_IPV4.test(hostname)
   );
 }
 
@@ -25,20 +24,26 @@ function isAllowedHost(hostname: string, allowedHosts: string[]): boolean {
  * The Host check stops DNS rebinding: a hostile domain resolved to 127.0.0.1
  * is same-origin with itself, so origin checks alone would let it through.
  */
-export function rejectUntrustedRequest(
+export function rejectUntrustedHost(
   request: Request,
   allowedHosts: string[]
 ): Response | null {
   const hostname = hostnameOf(
     request.headers.get("host") ?? new URL(request.url).host
   );
-  if (!(hostname && isAllowedHost(hostname, allowedHosts))) {
+  const isAllowedHost =
+    hostname !== null &&
+    (isLoopbackHostname(hostname) || allowedHosts.includes(hostname));
+  if (!isAllowedHost) {
     return errorResponse(
       "Reflet devtools only answers on localhost. Add other dev hostnames to allowedHosts or REFLET_DEVTOOLS_HOSTS.",
       403
     );
   }
+  return null;
+}
 
+export function rejectUntrustedCaller(request: Request): Response | null {
   if (request.headers.get(DEVTOOLS_REQUEST_HEADER) !== "1") {
     return errorResponse(
       `Reflet devtools requests must send the ${DEVTOOLS_REQUEST_HEADER} header.`,

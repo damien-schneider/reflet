@@ -78,7 +78,8 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
-    "@zumer/snapdom": "^3.0.0"
+    "@zumer/snapdom": "^3.0.0",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.2",

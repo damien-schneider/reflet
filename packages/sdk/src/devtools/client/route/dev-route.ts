@@ -1,11 +1,14 @@
 import type { FeedbackContext, FeedbackItem } from "../../../types";
 import {
+  type BoardAccess,
   type CodeSearchResult,
+  type ConnectStartResponse,
   DEVTOOLS_ENDPOINTS,
   DEVTOOLS_REQUEST_HEADER,
   DEVTOOLS_ROUTE_BASE,
   DEVTOOLS_STATUS_MARKER,
   type DevtoolsStatus,
+  type DisconnectResponse,
   EDITORS,
   type PROXIED_API_PATHS,
   type SourceFile,
@@ -42,14 +45,33 @@ export class DevRouteError extends Error {
   }
 }
 
+function isBoardAccess(value: unknown): value is BoardAccess {
+  if (typeof value !== "object" || value === null || !("kind" in value)) {
+    return false;
+  }
+  switch (value.kind) {
+    case "secretKey":
+      return true;
+    case "connected":
+      return (
+        "organizationName" in value &&
+        typeof value.organizationName === "string"
+      );
+    case "disconnected":
+      return "canConnect" in value && typeof value.canConnect === "boolean";
+    default:
+      return false;
+  }
+}
+
 function isDevtoolsStatus(value: unknown): value is DevtoolsStatus {
   return (
     typeof value === "object" &&
     value !== null &&
     "marker" in value &&
     value.marker === DEVTOOLS_STATUS_MARKER &&
-    "hasSecretKey" in value &&
-    typeof value.hasSecretKey === "boolean" &&
+    "board" in value &&
+    isBoardAccess(value.board) &&
     "editor" in value &&
     EDITORS.some((known) => known === value.editor)
   );
@@ -73,8 +95,8 @@ async function callDevRoute<T>(
     method: init.method ?? "GET",
   });
 
-  const body: unknown = await response.json().catch(() => null);
   if (!response.ok) {
+    const body: unknown = await response.json().catch(() => null);
     const routeError =
       typeof body === "object" && body !== null && "error" in body
         ? body.error
@@ -87,7 +109,7 @@ async function callDevRoute<T>(
     );
   }
   // Shapes owned by protocol.ts and the Reflet public API, same trust as client.ts.
-  return body as T;
+  return await response.json();
 }
 
 export async function probeDevRoute(): Promise<DevtoolsStatus | null> {
@@ -97,6 +119,22 @@ export async function probeDevRoute(): Promise<DevtoolsStatus | null> {
   } catch {
     return null;
   }
+}
+
+export function startBoardConnect(
+  publicKey: string
+): Promise<ConnectStartResponse> {
+  return callDevRoute<ConnectStartResponse>(DEVTOOLS_ENDPOINTS.connectStart, {
+    body: { publicKey },
+    method: "POST",
+  });
+}
+
+export function disconnectBoard(): Promise<DisconnectResponse> {
+  return callDevRoute<DisconnectResponse>(DEVTOOLS_ENDPOINTS.disconnect, {
+    body: {},
+    method: "POST",
+  });
 }
 
 export function fetchSourceFile(request: SourceRequest): Promise<SourceFile> {

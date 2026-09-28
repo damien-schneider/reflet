@@ -4,7 +4,7 @@ export type DevtoolsOutcome<T> =
   | { ok: true; value: T }
   | { error: string; ok: false; status: number };
 
-const JSON_RESPONSE_HEADERS = {
+export const JSON_RESPONSE_HEADERS = {
   "cache-control": "no-store",
   "content-type": "application/json; charset=utf-8",
   "x-content-type-options": "nosniff",

@@ -284,9 +284,11 @@ export default function FloatingFeedbackPage() {
           code one click away. Production builds never ship it.
         </p>
         <p className="mb-4 text-muted-foreground text-sm">
-          Code view and the board go through one dev-only route that keeps{" "}
-          <InlineCode>REFLET_SECRET_KEY</InlineCode> on the server. Set{" "}
-          <InlineCode>REFLET_EDITOR</InlineCode> to{" "}
+          Code view and the board go through one dev-only route. To reach the
+          board, click Connect to Reflet in the Board tab and approve your dev
+          server on reflet.app: it keeps a revocable token outside your
+          repository, or you can set <InlineCode>REFLET_SECRET_KEY</InlineCode>{" "}
+          on the server instead. Set <InlineCode>REFLET_EDITOR</InlineCode> to{" "}
           <InlineCode>cursor</InlineCode>, <InlineCode>zed</InlineCode>,{" "}
           <InlineCode>windsurf</InlineCode> or <InlineCode>webstorm</InlineCode>{" "}
           for the editor links.

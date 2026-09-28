@@ -207,7 +207,15 @@ turn it off.
   the reporter's source location, and a code search for the element's text.
 
 Code view and the board go through one dev-only route that reads files from
-your repository and holds the secret key server-side.
+your repository and holds the board credential server-side.
+
+To reach the board, click **Connect to Reflet** in the Board tab: sign in on
+reflet.app, approve the organization that owns the widget's key, and the dev
+server keeps a revocable token in `~/.reflet/devtools/`,
+outside the repository. That token acts as you, only reaches the devtools
+endpoints, and expires after 30 days unused; revoke it with Disconnect or from
+Account → Devtools on reflet.app. Connect works on `localhost`, `*.localhost`
+and `*.test`; elsewhere, set `REFLET_SECRET_KEY`.
 
 Next.js App Router, `app/api/reflet-devtools/[...path]/route.ts`:
 
@@ -226,9 +234,10 @@ export default defineConfig({ plugins: [react(), refletDevtools()] });
 
 | Env var | Purpose |
 |---------|---------|
-| `REFLET_SECRET_KEY` | Your `fb_sec_…` key, server-only. Needed to send notes and read the board. |
+| `REFLET_SECRET_KEY` | Your `fb_sec_…` key, server-only. Optional: replaces Connect, and wins over it when set. |
 | `REFLET_EDITOR` | `vscode` (default), `cursor`, `windsurf`, `zed` or `webstorm` for "Open in editor". |
 | `REFLET_API_URL` | API override, for self-hosted or local Reflet backends. |
+| `REFLET_APP_URL` | Web app origin Connect signs in on. Defaults to `https://www.reflet.app`. Same as the `appUrl` option. |
 | `REFLET_DEVTOOLS_HOSTS` | Comma-separated dev hostnames besides localhost, e.g. `app.test`. Same as the `allowedHosts` option. |
 
 The route only answers on `localhost`, `*.localhost`, loopback IPs and the

@@ -5,7 +5,11 @@ import { GithubLogo, GoogleLogo } from "@phosphor-icons/react";
 import { capture } from "@/lib/analytics";
 import { authClient } from "@/lib/auth-client";
 
-export function AuthSocialProviders() {
+interface AuthSocialProvidersProps {
+  redirectTo?: string;
+}
+
+export function AuthSocialProviders({ redirectTo }: AuthSocialProvidersProps) {
   return (
     <div className="mb-6 space-y-2">
       <Button
@@ -13,7 +17,7 @@ export function AuthSocialProviders() {
         onClick={() => {
           capture("sign_in_completed", { method: "google" });
           authClient.signIn.social({
-            callbackURL: "/dashboard",
+            callbackURL: redirectTo ?? "/dashboard",
             provider: "google",
           });
         }}
@@ -28,7 +32,7 @@ export function AuthSocialProviders() {
         onClick={() => {
           capture("sign_in_completed", { method: "github" });
           authClient.signIn.social({
-            callbackURL: "/dashboard",
+            callbackURL: redirectTo ?? "/dashboard",
             provider: "github",
           });
         }}

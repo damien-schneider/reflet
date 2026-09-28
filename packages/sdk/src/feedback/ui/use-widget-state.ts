@@ -93,7 +93,7 @@ export interface AnnotationTrigger {
 }
 
 export function useWidgetState(props: RefletFeedbackProps) {
-  const { client, dismissalKey, dismissForDays, isAnonymous } =
+  const { client, dismissalKey, dismissForDays, isAnonymous, publicKey } =
     useWidgetConfig(props);
 
   const [isOpen, setIsOpen] = useState(false);
@@ -318,6 +318,7 @@ export function useWidgetState(props: RefletFeedbackProps) {
     message,
     open,
     pendingCapture: gallery.pendingCapture,
+    publicKey,
     removeCapture: gallery.removeCapture,
     requestSubmit,
     retakeCapture: gallery.retakeCapture,

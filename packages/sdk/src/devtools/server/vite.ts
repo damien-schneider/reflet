@@ -31,7 +31,10 @@ function toWebRequest(
   method: string,
   body: string | undefined
 ): Request {
-  const origin = `http://${request.headers.host ?? "localhost"}`;
+  const isTls =
+    "encrypted" in request.socket && request.socket.encrypted === true;
+  const protocol = isTls ? "https" : "http";
+  const origin = `${protocol}://${request.headers.host ?? "localhost"}`;
   const url = new URL(request.originalUrl ?? request.url ?? "/", origin);
   const headers = new Headers();
   for (const [name, value] of Object.entries(request.headers)) {

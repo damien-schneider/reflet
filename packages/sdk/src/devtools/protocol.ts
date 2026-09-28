@@ -7,6 +7,9 @@ export const DEVTOOLS_ROUTE_BASE = "/api/reflet-devtools";
 export const DEVTOOLS_REQUEST_HEADER = "x-reflet-devtools";
 
 export const DEVTOOLS_ENDPOINTS = {
+  connectCallback: "/connect/callback",
+  connectStart: "/connect/start",
+  disconnect: "/connect/disconnect",
   proxy: "/proxy",
   search: "/search",
   source: "/source",
@@ -33,10 +36,23 @@ export type EditorId = (typeof EDITORS)[number];
 
 export const DEVTOOLS_STATUS_MARKER = "reflet-devtools";
 
+export type BoardAccess =
+  | { kind: "secretKey" }
+  | { kind: "connected"; organizationName: string }
+  | { canConnect: boolean; kind: "disconnected" };
+
 export interface DevtoolsStatus {
+  board: BoardAccess;
   editor: EditorId;
-  hasSecretKey: boolean;
   marker: typeof DEVTOOLS_STATUS_MARKER;
+}
+
+export interface ConnectStartResponse {
+  authorizeUrl: string;
+}
+
+export interface DisconnectResponse {
+  revoked: boolean;
 }
 
 export interface LineRange {

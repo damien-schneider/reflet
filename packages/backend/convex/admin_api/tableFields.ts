@@ -3,6 +3,7 @@ import { v } from "convex/values";
 
 export const adminApiTables = {
   apiRequestLogs: defineTable({
+    devtoolsTokenId: v.optional(v.id("devtoolsTokens")),
     endpoint: v.string(),
     ip: v.optional(v.string()),
     method: v.string(),
@@ -13,7 +14,8 @@ export const adminApiTables = {
     userAgent: v.optional(v.string()),
   })
     .index("by_organization_time", ["organizationId", "timestamp"])
-    .index("by_org_key_time", ["organizationApiKeyId", "timestamp"]),
+    .index("by_org_key_time", ["organizationApiKeyId", "timestamp"])
+    .index("by_devtools_token_time", ["devtoolsTokenId", "timestamp"]),
 
   externalUsers: defineTable({
     avatar: v.optional(v.string()),

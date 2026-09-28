@@ -23,5 +23,6 @@ export function useWidgetConfig(props: RefletFeedbackProps) {
     dismissalKey: `reflet-feedback-dismissed:${publicKey ?? "default"}:${user?.id ?? "anonymous"}`,
     dismissForDays: dismissalDuration(props.dismissForDays),
     isAnonymous: !(user || userToken),
+    publicKey: publicKey ?? null,
   };
 }

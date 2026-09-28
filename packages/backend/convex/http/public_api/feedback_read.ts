@@ -23,7 +23,7 @@ export function registerFeedbackReadRoutes(http: Router): void {
       const access = await checkOrganizationAccess(
         ctx,
         auth.organizationId,
-        auth.isSecretKey
+        auth.hasPrivateAccess
       );
       if (!access.allowed) {
         return access.response;
@@ -50,7 +50,7 @@ export function registerFeedbackReadRoutes(http: Router): void {
       const access = await checkOrganizationAccess(
         ctx,
         auth.organizationId,
-        auth.isSecretKey
+        auth.hasPrivateAccess
       );
       if (!access.allowed) {
         return access.response;
@@ -60,7 +60,7 @@ export function registerFeedbackReadRoutes(http: Router): void {
         internal.feedback.api_public_list.listFeedbackByOrganization,
         {
           externalUserId: auth.externalUserId,
-          includePrivateContext: auth.isSecretKey,
+          includePrivateContext: auth.hasPrivateAccess,
           limit: parseIntParam(url.searchParams.get("limit")),
           offset: parseIntParam(url.searchParams.get("offset")),
           organizationId: auth.organizationId,
@@ -98,7 +98,7 @@ export function registerFeedbackReadRoutes(http: Router): void {
       const access = await checkOrganizationAccess(
         ctx,
         auth.organizationId,
-        auth.isSecretKey
+        auth.hasPrivateAccess
       );
       if (!access.allowed) {
         return access.response;
@@ -109,7 +109,7 @@ export function registerFeedbackReadRoutes(http: Router): void {
         {
           externalUserId: auth.externalUserId,
           feedbackId: parseId<"feedback">(feedbackIdParam, "id"),
-          includePrivateContext: auth.isSecretKey,
+          includePrivateContext: auth.hasPrivateAccess,
           organizationId: auth.organizationId,
         }
       );
@@ -130,7 +130,7 @@ export function registerFeedbackReadRoutes(http: Router): void {
       const access = await checkOrganizationAccess(
         ctx,
         auth.organizationId,
-        auth.isSecretKey
+        auth.hasPrivateAccess
       );
       if (!access.allowed) {
         return access.response;
@@ -163,7 +163,7 @@ export function registerFeedbackReadRoutes(http: Router): void {
       const access = await checkOrganizationAccess(
         ctx,
         auth.organizationId,
-        auth.isSecretKey
+        auth.hasPrivateAccess
       );
       if (!access.allowed) {
         return access.response;
@@ -173,7 +173,7 @@ export function registerFeedbackReadRoutes(http: Router): void {
         internal.feedback.api_public.listCommentsByOrganization,
         {
           feedbackId: parseId<"feedback">(feedbackIdParam, "feedbackId"),
-          includePrivateContext: auth.isSecretKey,
+          includePrivateContext: auth.hasPrivateAccess,
           organizationId: auth.organizationId,
           sortBy: parseEnumParam(
             url.searchParams.get("sortBy"),
@@ -194,7 +194,7 @@ export function registerFeedbackReadRoutes(http: Router): void {
       const access = await checkOrganizationAccess(
         ctx,
         auth.organizationId,
-        auth.isSecretKey
+        auth.hasPrivateAccess
       );
       if (!access.allowed) {
         return access.response;
@@ -221,7 +221,7 @@ export function registerFeedbackReadRoutes(http: Router): void {
       const access = await checkOrganizationAccess(
         ctx,
         auth.organizationId,
-        auth.isSecretKey
+        auth.hasPrivateAccess
       );
       if (!access.allowed) {
         return access.response;

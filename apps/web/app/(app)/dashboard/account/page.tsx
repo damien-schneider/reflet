@@ -10,6 +10,7 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import { useState } from "react";
 import { AccountNav, type AccountTab } from "@/features/account/account-nav";
+import { DevtoolsConnectionsSection } from "@/features/account/devtools-connections-section";
 import { EmailSection } from "@/features/account/email-section";
 import { NotificationSettings } from "@/features/account/notification-settings";
 import { PasswordSection } from "@/features/account/password-section";
@@ -51,6 +52,7 @@ export default function AccountPage() {
               />
             )}
             {activeTab === "notifications" && <NotificationSettings />}
+            {activeTab === "devtools" && <DevtoolsConnectionsSection />}
           </div>
         </div>
       </PageBody>

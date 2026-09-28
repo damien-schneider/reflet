@@ -1,16 +1,16 @@
 import { PROXIED_API_PATHS } from "../protocol";
-import { errorResponse, jsonTextResponse } from "./json-response";
+import { errorResponse, JSON_RESPONSE_HEADERS } from "./json-response";
 
 type ProxiedApiPath = (typeof PROXIED_API_PATHS)[number];
 
 const CREATE_FEEDBACK_PATH: ProxiedApiPath = "/api/v1/feedback/create";
-const MISSING_SECRET_KEY_ERROR =
-  "Set REFLET_SECRET_KEY in the dev server environment to reach your Reflet board.";
+const MISSING_BOARD_ACCESS_ERROR =
+  "Connect to Reflet from the devtools Board tab, or set REFLET_SECRET_KEY in the dev server environment.";
 const BODYLESS_STATUSES = [204, 205, 304];
 
 export interface RefletProxyTarget {
   apiUrl: string;
-  secretKey: string | null;
+  token: string | null;
 }
 
 type ForwardedBody = { body: string | undefined } | { error: string };
@@ -47,7 +47,7 @@ async function readForwardedBody(
   return { body: JSON.stringify({ ...payload, internal: true }) };
 }
 
-/** Forwards an allowlisted Reflet API call with the secret key; devtools notes are always internal. */
+/** Forwards an allowlisted Reflet API call with the board token; devtools notes are always internal. */
 export async function proxyToReflet(
   request: Request,
   apiPath: string,
@@ -59,8 +59,8 @@ export async function proxyToReflet(
       404
     );
   }
-  if (!target.secretKey) {
-    return errorResponse(MISSING_SECRET_KEY_ERROR, 503);
+  if (!target.token) {
+    return errorResponse(MISSING_BOARD_ACCESS_ERROR, 503);
   }
   if (request.method !== "GET" && request.method !== "POST") {
     return errorResponse(`${request.method} is not supported here.`, 405);
@@ -78,18 +78,18 @@ export async function proxyToReflet(
       body: forwarded.body,
       headers: {
         Accept: "application/json",
-        Authorization: `Bearer ${target.secretKey}`,
+        Authorization: `Bearer ${target.token}`,
         "Content-Type": "application/json",
       },
       method: request.method,
+      signal: AbortSignal.timeout(15_000),
     });
   } catch {
     return errorResponse(`Could not reach Reflet at ${target.apiUrl}.`, 502);
   }
 
-  const text = await upstream.text();
-  return jsonTextResponse(
-    BODYLESS_STATUSES.includes(upstream.status) ? null : text,
-    upstream.status
+  return new Response(
+    BODYLESS_STATUSES.includes(upstream.status) ? null : upstream.body,
+    { headers: JSON_RESPONSE_HEADERS, status: upstream.status }
   );
 }

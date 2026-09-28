@@ -7,6 +7,7 @@ import {
   afterAll,
   afterEach,
   beforeAll,
+  beforeEach,
   describe,
   expect,
   it,
@@ -44,6 +45,10 @@ beforeAll(() => {
 
 afterAll(() => {
   rmSync(sandbox, { force: true, recursive: true });
+});
+
+beforeEach(() => {
+  vi.stubEnv("HOME", sandbox);
 });
 
 afterEach(() => {
@@ -117,15 +122,15 @@ describe("request guard", () => {
 });
 
 describe("createDevtoolsHandler", () => {
-  it("reports the editor and whether a secret key is configured", async () => {
+  it("reports the editor and the secret key as board access", async () => {
     const handler = createDevtoolsHandler(
       { root: sandbox },
       { REFLET_EDITOR: "cursor", REFLET_SECRET_KEY: SECRET_KEY }
     );
     const response = await handler(devtoolsRequest("/status"));
     expect(await response.json()).toEqual({
+      board: { kind: "secretKey" },
       editor: "cursor",
-      hasSecretKey: true,
       marker: "reflet-devtools",
     });
   });
@@ -187,7 +192,7 @@ describe("Reflet proxy", () => {
     expect(upstream).not.toHaveBeenCalled();
   });
 
-  it("asks for a secret key when none is configured", async () => {
+  it("asks for board access when neither a key nor a connection exists", async () => {
     const keyless = createDevtoolsHandler({ root: sandbox }, {});
     const response = await keyless(
       devtoolsRequest("/proxy/api/v1/feedback/list")

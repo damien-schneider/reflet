@@ -14,6 +14,7 @@ const MAX_IMPORTANCE = 4;
 
 export const createFeedbackByOrganization = internalMutation({
   args: {
+    authorId: v.optional(v.string()),
     context: v.optional(feedbackContextValidator),
     description: v.string(),
     externalUserId: v.optional(v.id("externalUsers")),
@@ -66,6 +67,7 @@ export const createFeedbackByOrganization = internalMutation({
     const now = Date.now();
 
     const feedbackId = await ctx.db.insert("feedback", {
+      authorId: args.authorId,
       commentCount: 0,
       context: args.context,
       createdAt: now,

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { DevtoolsStatus } from "../../protocol";
 import { probeDevRoute } from "./dev-route";
 
@@ -7,20 +7,29 @@ export type DevRouteState =
   | { kind: "missing" }
   | { kind: "ready"; status: DevtoolsStatus };
 
-export function useDevRoute(): DevRouteState {
-  const [state, setState] = useState<DevRouteState>({ kind: "checking" });
+/** Re-probes on window focus so a connection finished in another tab shows up; keeps the last state meanwhile. */
+export function useDevRoute(): { refresh: () => void; route: DevRouteState } {
+  const [route, setRoute] = useState<DevRouteState>({ kind: "checking" });
+  const latestProbe = useRef(0);
 
-  useEffect(() => {
-    let active = true;
+  const refresh = useCallback(() => {
+    latestProbe.current += 1;
+    const probe = latestProbe.current;
     probeDevRoute().then((status) => {
-      if (active) {
-        setState(status ? { kind: "ready", status } : { kind: "missing" });
+      if (probe === latestProbe.current) {
+        setRoute(status ? { kind: "ready", status } : { kind: "missing" });
       }
     });
-    return () => {
-      active = false;
-    };
   }, []);
 
-  return state;
+  useEffect(() => {
+    refresh();
+    window.addEventListener("focus", refresh);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      latestProbe.current += 1;
+    };
+  }, [refresh]);
+
+  return { refresh, route };
 }

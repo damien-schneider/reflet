@@ -2,6 +2,7 @@ import { defineSchema } from "convex/server";
 import { adminApiTables } from "./admin_api/tableFields";
 import { billingTables } from "./billing/tableFields";
 import { changelogTables } from "./changelog/tableFields";
+import { devtoolsTables } from "./devtools/tableFields";
 import { duplicateTables } from "./duplicates/tableFields";
 import { emailTables } from "./email/tableFields";
 import { feedbackTables } from "./feedback/tableFields";
@@ -26,6 +27,7 @@ export default defineSchema({
   ...billingTables,
   ...emailTables,
   ...adminApiTables,
+  ...devtoolsTables,
   ...duplicateTables,
   ...surveyTables,
   ...intelligenceTables,

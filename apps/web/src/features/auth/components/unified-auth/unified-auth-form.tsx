@@ -14,6 +14,7 @@ import type { SignUpFormData } from "./lib/auth-validation";
 
 interface UnifiedAuthFormProps {
   onSuccess?: () => void;
+  redirectTo?: string;
 }
 
 function isFormValid(
@@ -53,7 +54,10 @@ function getConfirmPasswordErrors(
   }
 }
 
-export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
+export default function UnifiedAuthForm({
+  onSuccess,
+  redirectTo,
+}: UnifiedAuthFormProps) {
   const {
     mode,
     apiError,
@@ -63,17 +67,15 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
     handleSubmit,
     errors,
     isSubmitting,
-    watch,
+    watchedPassword,
+    watchedConfirmPassword,
     setValue,
     trigger,
     onSubmit,
     handleEmailChange,
     isCheckingEmail,
     resetMode,
-  } = useAuthForm(onSuccess);
-
-  const watchedPassword = watch("password");
-  const watchedConfirmPassword = watch("confirmPassword");
+  } = useAuthForm(onSuccess, redirectTo);
 
   const handlePasswordChange = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -111,7 +113,7 @@ export default function UnifiedAuthForm({ onSuccess }: UnifiedAuthFormProps) {
     <div className="mx-auto w-full max-w-md p-6">
       <AuthHeader mode={mode} />
 
-      <AuthSocialProviders />
+      <AuthSocialProviders redirectTo={redirectTo} />
       <AuthDivider />
 
       <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>

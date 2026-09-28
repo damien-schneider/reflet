@@ -4,6 +4,13 @@ import {
   DEVTOOLS_STATUS_MARKER,
   type DevtoolsStatus,
 } from "../protocol";
+import { boardAccess, boardCredential } from "./connect/board-credential";
+import {
+  disconnect,
+  finishConnect,
+  startConnect,
+} from "./connect/connect-routes";
+import { removeConnection } from "./connect/connection-store";
 import {
   type DevtoolsOutcome,
   errorResponse,
@@ -16,7 +23,7 @@ import {
   resolveDevtoolsOptions,
 } from "./options";
 import { proxyToReflet } from "./reflet-proxy";
-import { rejectUntrustedRequest } from "./request-guard";
+import { rejectUntrustedCaller, rejectUntrustedHost } from "./request-guard";
 import { searchCode } from "./source/code-search";
 import { type ProjectRoots, resolveProjectRoots } from "./source/project-roots";
 import { readSourceFile } from "./source/source-file";
@@ -24,6 +31,15 @@ import { readSourceFile } from "./source/source-file";
 export type DevtoolsHandler = (request: Request) => Promise<Response>;
 
 const TRAILING_SLASHES = /\/+$/;
+
+const ENDPOINT_METHODS: Record<string, "GET" | "POST"> = {
+  [DEVTOOLS_ENDPOINTS.connectCallback]: "GET",
+  [DEVTOOLS_ENDPOINTS.connectStart]: "POST",
+  [DEVTOOLS_ENDPOINTS.disconnect]: "POST",
+  [DEVTOOLS_ENDPOINTS.search]: "GET",
+  [DEVTOOLS_ENDPOINTS.source]: "GET",
+  [DEVTOOLS_ENDPOINTS.status]: "GET",
+};
 
 function outcomeResponse<T>(outcome: DevtoolsOutcome<T>): Response {
   return outcome.ok
@@ -49,34 +65,56 @@ function readInteger(value: string | null, minimum: number): number | null {
   return Number.isInteger(parsed) && parsed >= minimum ? parsed : null;
 }
 
+async function proxyWithBoardCredential(
+  request: Request,
+  apiPath: string,
+  settings: ResolvedDevtoolsOptions
+): Promise<Response> {
+  const credential = await boardCredential(settings);
+  const response = await proxyToReflet(request, apiPath, {
+    apiUrl: settings.apiUrl,
+    token: credential?.token ?? null,
+  });
+  if (credential?.isStored && response.status === 401) {
+    await removeConnection(settings.root, settings.apiUrl, credential.token);
+  }
+  return response;
+}
+
 async function routeRequest(
   request: Request,
+  subPath: string | null,
   settings: ResolvedDevtoolsOptions,
   projectRoots: () => ProjectRoots
 ): Promise<Response> {
   const url = new URL(request.url);
-  const subPath = routeSubPath(url.pathname);
 
   if (subPath?.startsWith(`${DEVTOOLS_ENDPOINTS.proxy}/`)) {
     const apiPath = subPath.slice(DEVTOOLS_ENDPOINTS.proxy.length);
-    return await proxyToReflet(request, apiPath, settings);
+    return await proxyWithBoardCredential(request, apiPath, settings);
   }
 
-  const isReadEndpoint =
-    subPath === DEVTOOLS_ENDPOINTS.status ||
-    subPath === DEVTOOLS_ENDPOINTS.source ||
-    subPath === DEVTOOLS_ENDPOINTS.search;
-  if (isReadEndpoint && request.method !== "GET") {
-    return errorResponse(`${subPath} only answers GET requests.`, 405);
+  const requiredMethod = subPath ? ENDPOINT_METHODS[subPath] : undefined;
+  if (requiredMethod && request.method !== requiredMethod) {
+    return errorResponse(
+      `${subPath} only answers ${requiredMethod} requests.`,
+      405
+    );
   }
 
   switch (subPath) {
     case DEVTOOLS_ENDPOINTS.status:
       return jsonResponse({
+        board: await boardAccess(request, settings),
         editor: settings.editor,
-        hasSecretKey: settings.secretKey !== null,
         marker: DEVTOOLS_STATUS_MARKER,
       } satisfies DevtoolsStatus);
+    case DEVTOOLS_ENDPOINTS.connectStart:
+      return await startConnect(request, settings);
+    case DEVTOOLS_ENDPOINTS.connectCallback:
+      return await finishConnect(request, settings);
+    case DEVTOOLS_ENDPOINTS.disconnect:
+      return await disconnect(settings);
     case DEVTOOLS_ENDPOINTS.source:
       return outcomeResponse(
         await readSourceFile(
@@ -115,12 +153,22 @@ export function createDevtoolsHandler(
   };
 
   return async (request) => {
-    const rejection = rejectUntrustedRequest(request, settings.allowedHosts);
-    if (rejection) {
-      return rejection;
+    const hostRejection = rejectUntrustedHost(request, settings.allowedHosts);
+    if (hostRejection) {
+      return hostRejection;
+    }
+    const subPath = routeSubPath(new URL(request.url).pathname);
+    const isConnectCallback =
+      request.method === "GET" &&
+      subPath === DEVTOOLS_ENDPOINTS.connectCallback;
+    const callerRejection = isConnectCallback
+      ? null
+      : rejectUntrustedCaller(request);
+    if (callerRejection) {
+      return callerRejection;
     }
     try {
-      return await routeRequest(request, settings, projectRoots);
+      return await routeRequest(request, subPath, settings, projectRoots);
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);
       return errorResponse(`Reflet devtools route failed: ${reason}`, 500);

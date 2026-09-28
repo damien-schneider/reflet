@@ -1,9 +1,14 @@
 "use client";
 
 import { Tabs, TabsList, TabsTab } from "@ctrl-ui/react/ui/tabs";
-import { Bell, Envelope, LockKey, User } from "@phosphor-icons/react";
+import { Bell, Code, Envelope, LockKey, User } from "@phosphor-icons/react";
 
-export type AccountTab = "profile" | "email" | "password" | "notifications";
+export type AccountTab =
+  | "profile"
+  | "email"
+  | "password"
+  | "notifications"
+  | "devtools";
 
 interface AccountNavProps {
   activeTab: AccountTab;
@@ -15,6 +20,7 @@ const NAV_ITEMS = [
   { icon: Envelope, id: "email", label: "Email" },
   { icon: LockKey, id: "password", label: "Password" },
   { icon: Bell, id: "notifications", label: "Notifications" },
+  { icon: Code, id: "devtools", label: "Devtools" },
 ] as const;
 
 const isAccountTab = (value: string): value is AccountTab =>
@@ -32,7 +38,7 @@ export function AccountNav({ activeTab, onTabChange }: AccountNavProps) {
     >
       <TabsList
         aria-label="Account settings"
-        className="grid h-auto w-full grid-cols-2 sm:grid-cols-4 md:flex md:flex-col md:items-stretch [&_[data-slot=indicator]]:hidden"
+        className="grid h-auto w-full grid-cols-2 sm:grid-cols-5 md:flex md:flex-col md:items-stretch [&_[data-slot=indicator]]:hidden"
       >
         {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
           <TabsTab
