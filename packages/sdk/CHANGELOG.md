@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.2] - 2026-09-29
+
 ### Added
 
 - Connect the devtools Board tab to Reflet without configuring a secret key. Approve access in Reflet and revoke it from the Board tab or Account → Devtools. Credentials stay on the dev server, isolated by project and backend; notes remain internal and are attributed to the connected member.
