@@ -1,64 +1,89 @@
+import { randomUUID } from "node:crypto";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { env } from "@reflet/env/server";
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { fetchAuthAction } from "@/lib/auth-server";
 import { toOrgId } from "@/lib/convex-helpers";
+import {
+  clearConnectContext,
+  type GithubConnectContext,
+  readConnectContext,
+  writeConnectContext,
+} from "../connect-context";
 
-interface CallbackState {
-  organizationId: string | null;
-  orgSlug: string | null;
-  returnTo: string | null;
+const GITHUB_AUTHORIZE_URL = "https://github.com/login/oauth/authorize";
+const GITHUB_ACCESS_TOKEN_URL = "https://github.com/login/oauth/access_token";
+
+const accessTokenResponseSchema = z.union([
+  z.object({ access_token: z.string() }),
+  z.object({ error: z.string(), error_description: z.string().optional() }),
+]);
+
+function githubAppOAuthCredentials(): {
+  clientId: string;
+  clientSecret: string;
+} {
+  const clientId = env.GITHUB_APP_CLIENT_ID;
+  const clientSecret = env.GITHUB_APP_CLIENT_SECRET;
+  if (!(clientId && clientSecret)) {
+    throw new Error("GitHub App OAuth credentials not configured");
+  }
+  return { clientId, clientSecret };
 }
 
-function parseStateParam(stateParam: string | null): CallbackState {
-  const state: CallbackState = {
-    organizationId: null,
-    orgSlug: null,
-    returnTo: null,
-  };
-
-  if (!stateParam) {
-    return state;
-  }
-
-  try {
-    const stateData = JSON.parse(
-      Buffer.from(stateParam, "base64url").toString()
-    ) as {
-      organizationId?: string;
-      orgSlug?: string;
-      returnTo?: string;
-      timestamp: number;
-    };
-    state.organizationId = stateData.organizationId ?? null;
-    state.orgSlug = stateData.orgSlug ?? null;
-    state.returnTo = stateData.returnTo ?? null;
-  } catch {
-    // State parsing failed, caller will fall back to cookies
-  }
-
-  return state;
+/** GitHub rejects the code exchange unless both steps send the same URI. */
+function authorizationRedirectUri(requestUrl: string): string {
+  return new URL("/api/github/callback", requestUrl).toString();
 }
 
-async function createGitHubAppJwt(
-  appId: string,
-  privateKey: string
-): Promise<string> {
-  const now = Math.floor(Date.now() / 1000);
-  const payload = { exp: now + 600, iat: now - 60, iss: appId };
+async function requestUserAuthorization(
+  requestUrl: string,
+  context: GithubConnectContext
+): Promise<NextResponse> {
+  const { clientId } = githubAppOAuthCredentials();
+  const nonce = randomUUID();
+  await writeConnectContext({ ...context, nonce });
 
-  const crypto = await import("node:crypto");
-  const header = Buffer.from(
-    JSON.stringify({ alg: "RS256", typ: "JWT" })
-  ).toString("base64url");
-  const payloadBase64 = Buffer.from(JSON.stringify(payload)).toString(
-    "base64url"
+  const authorizeUrl = new URL(GITHUB_AUTHORIZE_URL);
+  authorizeUrl.searchParams.set("client_id", clientId);
+  authorizeUrl.searchParams.set(
+    "redirect_uri",
+    authorizationRedirectUri(requestUrl)
   );
-  const sign = crypto.createSign("RSA-SHA256");
-  sign.update(`${header}.${payloadBase64}`);
-  const signature = sign.sign(privateKey.replace(/\\n/g, "\n"), "base64url");
-  return `${header}.${payloadBase64}.${signature}`;
+  authorizeUrl.searchParams.set("state", nonce);
+  return NextResponse.redirect(authorizeUrl);
+}
+
+async function exchangeCodeForUserToken(
+  code: string,
+  requestUrl: string
+): Promise<string> {
+  const { clientId, clientSecret } = githubAppOAuthCredentials();
+  const response = await fetch(GITHUB_ACCESS_TOKEN_URL, {
+    body: JSON.stringify({
+      client_id: clientId,
+      client_secret: clientSecret,
+      code,
+      redirect_uri: authorizationRedirectUri(requestUrl),
+    }),
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    method: "POST",
+  });
+  if (!response.ok) {
+    throw new Error(
+      `GitHub authorization failed with status ${response.status}`
+    );
+  }
+
+  const result = accessTokenResponseSchema.parse(await response.json());
+  if ("error" in result) {
+    throw new Error(result.error_description ?? result.error);
+  }
+  return result.access_token;
 }
 
 function buildRedirectUrl(
@@ -84,96 +109,87 @@ function buildRedirectUrl(
   return redirectUrl;
 }
 
+function redirectWithError(
+  requestUrl: string,
+  error: string,
+  message?: string
+): NextResponse {
+  const redirectUrl = new URL("/dashboard", requestUrl);
+  redirectUrl.searchParams.set("error", error);
+  if (message) {
+    redirectUrl.searchParams.set("message", message);
+  }
+  return NextResponse.redirect(redirectUrl);
+}
+
 /**
- * GitHub App installation callback handler
- * Creates a user-level GitHub connection and optionally links to an org
+ * GitHub App installation and user authorization callback. The installation id
+ * GitHub appends is spoofable, so the connection is saved only after the
+ * user's own GitHub token proves access to it.
  */
 export async function GET(request: Request): Promise<NextResponse> {
   const { searchParams } = new URL(request.url);
 
-  const installationId = searchParams.get("installation_id");
-  const setupAction = searchParams.get("setup_action");
+  const storedContext = await readConnectContext();
+  if (!storedContext) {
+    return redirectWithError(request.url, "github_connection_expired");
+  }
 
-  if (!installationId) {
-    return NextResponse.redirect(
-      new URL("/dashboard?error=missing_installation_id", request.url)
+  const githubError = searchParams.get("error");
+  if (githubError) {
+    await clearConnectContext();
+    return redirectWithError(
+      request.url,
+      "github_connection_failed",
+      searchParams.get("error_description") ?? githubError
     );
   }
 
-  const state = parseStateParam(searchParams.get("state"));
-
-  // Fall back to cookies for missing state values
-  const cookieStore = await cookies();
-  if (!state.organizationId) {
-    state.organizationId =
-      cookieStore.get("github_oauth_org_id")?.value ?? null;
+  const context: GithubConnectContext = {
+    ...storedContext,
+    installationId:
+      searchParams.get("installation_id") ?? storedContext.installationId,
+    setupAction: searchParams.get("setup_action") ?? storedContext.setupAction,
+  };
+  if (!context.installationId) {
+    await clearConnectContext();
+    return redirectWithError(request.url, "missing_installation_id");
   }
 
-  cookieStore.delete("github_oauth_org_id");
+  const code = searchParams.get("code");
+  const isCodeForThisBrowser =
+    code !== null && searchParams.get("state") === storedContext.nonce;
 
   try {
-    const appId = env.GITHUB_APP_ID;
-    const privateKey = env.GITHUB_APP_PRIVATE_KEY;
-
-    if (!(appId && privateKey)) {
-      throw new Error("GitHub App credentials not configured");
+    if (!isCodeForThisBrowser) {
+      return await requestUserAuthorization(request.url, context);
     }
 
-    const jwt = await createGitHubAppJwt(appId, privateKey);
+    await clearConnectContext();
+    const githubUserToken = await exchangeCodeForUserToken(code, request.url);
+    await fetchAuthAction(api.integrations.github.actions.connectInstallation, {
+      githubUserToken,
+      installationId: context.installationId,
+      organizationId: context.organizationId
+        ? toOrgId(context.organizationId)
+        : undefined,
+    });
 
-    const installationResponse = await fetch(
-      `https://api.github.com/app/installations/${installationId}`,
-      {
-        headers: {
-          Accept: "application/vnd.github+json",
-          Authorization: `Bearer ${jwt}`,
-          "X-GitHub-Api-Version": "2022-11-28",
-        },
-      }
+    return NextResponse.redirect(
+      buildRedirectUrl(
+        request.url,
+        context.orgSlug,
+        context.returnTo,
+        context.setupAction
+      )
     );
-
-    if (!installationResponse.ok) {
-      throw new Error(
-        `Failed to fetch installation: ${installationResponse.statusText}`
-      );
-    }
-
-    const installation = (await installationResponse.json()) as {
-      account: { login: string; type: string; avatar_url: string };
-    };
-
-    await fetchAuthAction(
-      api.integrations.github.actions.saveInstallationFromCallback,
-      {
-        accountAvatarUrl: installation.account.avatar_url,
-        accountLogin: installation.account.login,
-        accountType:
-          installation.account.type === "Organization"
-            ? "organization"
-            : "user",
-        installationId,
-        organizationId: state.organizationId
-          ? toOrgId(state.organizationId)
-          : undefined,
-      }
-    );
-
-    const redirectUrl = buildRedirectUrl(
-      request.url,
-      state.orgSlug,
-      state.returnTo,
-      setupAction
-    );
-    return NextResponse.redirect(redirectUrl);
   } catch (error) {
     console.error("GitHub callback error:", error);
-    return NextResponse.redirect(
-      new URL(
-        `/dashboard?error=github_connection_failed&message=${encodeURIComponent(
-          error instanceof Error ? error.message : "Unknown error"
-        )}`,
-        request.url
-      )
+    await clearConnectContext();
+    return redirectWithError(
+      request.url,
+      "github_connection_failed",
+      error instanceof Error ? error.message : "Unknown error"
     );
   }
 }

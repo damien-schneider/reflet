@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { internalMutation, mutation } from "../../_generated/server";
 import { requireOrgAdmin } from "../../shared/access";
+import { isRepositoryAccessible } from "./user_access";
 
 export const selectRepository = mutation({
   args: {
@@ -25,6 +26,16 @@ export const selectRepository = mutation({
 
     if (!connection) {
       throw new Error("No GitHub connection found");
+    }
+
+    const canUseRepository = isRepositoryAccessible(
+      connection.accessibleRepositories ?? [],
+      { fullName: args.repositoryFullName, id: args.repositoryId }
+    );
+    if (!canUseRepository) {
+      throw new Error(
+        "This repository is not available to the GitHub account that connected Reflet. Reconnect GitHub and try again."
+      );
     }
 
     await ctx.db.patch(connection._id, {

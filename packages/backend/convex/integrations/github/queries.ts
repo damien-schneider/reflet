@@ -28,8 +28,10 @@ export const getConnection = query({
       return null;
     }
 
-    // webhookSecret verifies inbound GitHub payloads — server-side only
-    const { webhookSecret, ...safeConnection } = connection;
+    // webhookSecret verifies inbound GitHub payloads; accessibleRepositories
+    // lists the connector's private repos — both server-side only
+    const { accessibleRepositories, webhookSecret, ...safeConnection } =
+      connection;
     return safeConnection;
   },
 });

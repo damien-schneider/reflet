@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { internalMutation } from "../../_generated/server";
+import { accessibleRepository } from "./tableFields";
 
 export const saveUserInstallation = internalMutation({
   args: {
@@ -44,6 +45,7 @@ export const saveUserInstallation = internalMutation({
 
 export const linkRepoToOrg = internalMutation({
   args: {
+    accessibleRepositories: v.array(accessibleRepository),
     linkedByUserId: v.string(),
     organizationId: v.id("organizations"),
     userGithubConnectionId: v.id("userGithubConnections"),
@@ -65,6 +67,7 @@ export const linkRepoToOrg = internalMutation({
 
     if (existing) {
       await ctx.db.patch(existing._id, {
+        accessibleRepositories: args.accessibleRepositories,
         accountAvatarUrl: userConnection.accountAvatarUrl,
         accountLogin: userConnection.accountLogin,
         accountType: userConnection.accountType,
@@ -77,6 +80,7 @@ export const linkRepoToOrg = internalMutation({
     }
 
     return await ctx.db.insert("githubConnections", {
+      accessibleRepositories: args.accessibleRepositories,
       accountAvatarUrl: userConnection.accountAvatarUrl,
       accountLogin: userConnection.accountLogin,
       accountType: userConnection.accountType,

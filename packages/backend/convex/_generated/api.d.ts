@@ -148,6 +148,7 @@ import type * as integrations_github_client_actions from "../integrations/github
 import type * as integrations_github_code_search from "../integrations/github/code_search.js";
 import type * as integrations_github_github_constants from "../integrations/github/github_constants.js";
 import type * as integrations_github_github_helpers from "../integrations/github/github_helpers.js";
+import type * as integrations_github_github_pagination from "../integrations/github/github_pagination.js";
 import type * as integrations_github_installation_mutations from "../integrations/github/installation_mutations.js";
 import type * as integrations_github_issue_actions from "../integrations/github/issue_actions.js";
 import type * as integrations_github_issue_body from "../integrations/github/issue_body.js";
@@ -169,6 +170,7 @@ import type * as integrations_github_repo_actions from "../integrations/github/r
 import type * as integrations_github_repo_analysis from "../integrations/github/repo_analysis.js";
 import type * as integrations_github_sync from "../integrations/github/sync.js";
 import type * as integrations_github_tableFields from "../integrations/github/tableFields.js";
+import type * as integrations_github_user_access from "../integrations/github/user_access.js";
 import type * as integrations_github_webhook_actions from "../integrations/github/webhook_actions.js";
 import type * as integrations_github_webhook_events from "../integrations/github/webhook_events.js";
 import type * as integrations_website_references from "../integrations/website_references.js";
@@ -408,6 +410,7 @@ declare const fullApi: ApiFromModules<{
   "integrations/github/code_search": typeof integrations_github_code_search;
   "integrations/github/github_constants": typeof integrations_github_github_constants;
   "integrations/github/github_helpers": typeof integrations_github_github_helpers;
+  "integrations/github/github_pagination": typeof integrations_github_github_pagination;
   "integrations/github/installation_mutations": typeof integrations_github_installation_mutations;
   "integrations/github/issue_actions": typeof integrations_github_issue_actions;
   "integrations/github/issue_body": typeof integrations_github_issue_body;
@@ -429,6 +432,7 @@ declare const fullApi: ApiFromModules<{
   "integrations/github/repo_analysis": typeof integrations_github_repo_analysis;
   "integrations/github/sync": typeof integrations_github_sync;
   "integrations/github/tableFields": typeof integrations_github_tableFields;
+  "integrations/github/user_access": typeof integrations_github_user_access;
   "integrations/github/webhook_actions": typeof integrations_github_webhook_actions;
   "integrations/github/webhook_events": typeof integrations_github_webhook_events;
   "integrations/website_references": typeof integrations_website_references;

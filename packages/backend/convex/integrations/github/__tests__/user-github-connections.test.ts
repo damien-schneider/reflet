@@ -234,6 +234,7 @@ describe("linkRepoToOrg", () => {
     const connectionId = await t.mutation(
       internal.integrations.github.installation_mutations.linkRepoToOrg,
       {
+        accessibleRepositories: [],
         linkedByUserId: "user_A",
         organizationId: orgId,
         userGithubConnectionId: userConnectionId,
@@ -270,6 +271,7 @@ describe("linkRepoToOrg", () => {
     const firstConnectionId = await t.mutation(
       internal.integrations.github.installation_mutations.linkRepoToOrg,
       {
+        accessibleRepositories: [],
         linkedByUserId: "user_A",
         organizationId: orgId,
         userGithubConnectionId: userConnA,
@@ -290,6 +292,7 @@ describe("linkRepoToOrg", () => {
     const secondConnectionId = await t.mutation(
       internal.integrations.github.installation_mutations.linkRepoToOrg,
       {
+        accessibleRepositories: [],
         linkedByUserId: "user_B",
         organizationId: orgId,
         userGithubConnectionId: userConnB,
@@ -329,6 +332,7 @@ describe("linkRepoToOrg", () => {
       t.mutation(
         internal.integrations.github.installation_mutations.linkRepoToOrg,
         {
+          accessibleRepositories: [],
           linkedByUserId: "user_A",
           organizationId: orgId,
           userGithubConnectionId: fakeId,
@@ -361,6 +365,7 @@ describe("handleMemberRemoved", () => {
     const connectionId = await t.mutation(
       internal.integrations.github.installation_mutations.linkRepoToOrg,
       {
+        accessibleRepositories: [],
         linkedByUserId: "user_A",
         organizationId: orgId,
         userGithubConnectionId: userConn,
@@ -398,6 +403,7 @@ describe("handleMemberRemoved", () => {
     const connectionId = await t.mutation(
       internal.integrations.github.installation_mutations.linkRepoToOrg,
       {
+        accessibleRepositories: [],
         linkedByUserId: "user_B",
         organizationId: orgId,
         userGithubConnectionId: userConnB,
@@ -441,6 +447,7 @@ describe("handleInstallationDeleted (updated)", () => {
     const orgConnectionId = await t.mutation(
       internal.integrations.github.installation_mutations.linkRepoToOrg,
       {
+        accessibleRepositories: [],
         linkedByUserId: "user_A",
         organizationId: orgId,
         userGithubConnectionId: userConnId,
@@ -484,6 +491,7 @@ describe("handleInstallationDeleted (updated)", () => {
     const connId1 = await t.mutation(
       internal.integrations.github.installation_mutations.linkRepoToOrg,
       {
+        accessibleRepositories: [],
         linkedByUserId: "user_A",
         organizationId: orgId1,
         userGithubConnectionId: userConnId,
@@ -493,6 +501,7 @@ describe("handleInstallationDeleted (updated)", () => {
     const connId2 = await t.mutation(
       internal.integrations.github.installation_mutations.linkRepoToOrg,
       {
+        accessibleRepositories: [],
         linkedByUserId: "user_A",
         organizationId: orgId2,
         userGithubConnectionId: userConnId,

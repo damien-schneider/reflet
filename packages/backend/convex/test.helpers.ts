@@ -32,18 +32,32 @@ const createStripeModules = (subscriptionStatus: string | null) => ({
     }),
 });
 
-const findUser = (users: AuthTestUser[], where: { value: unknown }[]) => {
-  const id = where[0]?.value;
-  return users.find((user) => user._id === id) ?? null;
+const findAuthRecord = (
+  users: AuthTestUser[],
+  args: { model: string; where: { value: unknown }[] }
+) => {
+  const user = users.find(({ _id }) => _id === args.where[0]?.value);
+  if (!user) {
+    return null;
+  }
+  if (args.model === "session") {
+    return {
+      _id: user._id,
+      expiresAt: Number.MAX_SAFE_INTEGER,
+      userId: user._id,
+    };
+  }
+  return user;
 };
 
+/** Each user has one never-expiring session whose id is the user id. */
 const createAuthModules = (users: AuthTestUser[]) => ({
   "./_generated/api.ts": () => Promise.resolve({}),
   "./adapter.ts": () =>
     Promise.resolve({
       findOne: queryGeneric({
         args: { model: v.string(), where: v.any() },
-        handler: (_ctx, args) => findUser(users, args.where),
+        handler: (_ctx, args) => findAuthRecord(users, args),
       }),
     }),
 });

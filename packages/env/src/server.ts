@@ -7,8 +7,8 @@ export const env = createEnv({
   runtimeEnv: process.env,
   server: {
     // GitHub App configuration (optional - for org integration)
-    GITHUB_APP_ID: z.string().optional(),
-    GITHUB_APP_PRIVATE_KEY: z.string().optional(),
+    GITHUB_APP_CLIENT_ID: z.string().optional(),
+    GITHUB_APP_CLIENT_SECRET: z.string().optional(),
     GITHUB_APP_SLUG: z.string().optional(),
     // GitHub OAuth configuration (optional - for user auth)
     GITHUB_CLIENT_ID: z.string().optional(),

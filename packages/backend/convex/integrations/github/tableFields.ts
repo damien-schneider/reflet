@@ -14,8 +14,14 @@ export const promoteTrigger = v.union(
   v.literal("on_create")
 );
 
+export const accessibleRepository = v.object({
+  fullName: v.string(),
+  id: v.string(),
+});
+
 export const githubTables = {
   githubConnections: defineTable({
+    accessibleRepositories: v.optional(v.array(accessibleRepository)),
     accountAvatarUrl: v.optional(v.string()),
     accountLogin: v.string(),
     accountType: v.union(v.literal("user"), v.literal("organization")),

@@ -8,6 +8,7 @@ import { api, internal } from "../../_generated/api";
 import { action } from "../../_generated/server";
 import { randomSecretHex } from "../../shared/hmac";
 import type { GithubIssueRef } from "./issue_promote";
+import { isRepositoryAccessible } from "./user_access";
 
 interface Repository {
   defaultBranch: string;
@@ -26,21 +27,33 @@ interface Label {
 }
 
 /**
- * Fetch repositories available to the GitHub App installation.
+ * Fetch installation repositories the connecting GitHub user can access.
  */
 export const listRepositories = action({
   args: {
     organizationId: v.id("organizations"),
   },
   handler: async (ctx, args): Promise<Repository[]> => {
-    // getConnection checks auth + org membership
-    const connection = await ctx.runQuery(
+    const memberVisibleConnection = await ctx.runQuery(
       api.integrations.github.queries.getConnection,
       { organizationId: args.organizationId }
     );
+    const connection = memberVisibleConnection
+      ? await ctx.runQuery(
+          internal.integrations.github.queries.getConnectionInternal,
+          { organizationId: args.organizationId }
+        )
+      : null;
 
     if (!connection) {
       throw new Error("No GitHub connection found");
+    }
+
+    const { accessibleRepositories } = connection;
+    if (!accessibleRepositories) {
+      throw new Error(
+        "Reconnect GitHub to confirm which repositories you can access."
+      );
     }
 
     const { token } = await ctx.runAction(
@@ -53,7 +66,9 @@ export const listRepositories = action({
       { installationToken: token }
     );
 
-    return repos;
+    return repos.filter((repo) =>
+      isRepositoryAccessible(accessibleRepositories, repo)
+    );
   },
 });
 
