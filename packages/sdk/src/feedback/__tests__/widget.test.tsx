@@ -285,6 +285,71 @@ describe("RefletFeedback", () => {
     );
   });
 
+  it("keeps presses in the widget away from the host's outside-press dismissal", () => {
+    const hostSaw: string[] = [];
+    const recordHostEvent = (event: Event) => {
+      hostSaw.push(event.type);
+    };
+    const captureTypes = ["pointerdown", "mousedown", "focusin", "focusout"];
+    for (const type of captureTypes) {
+      document.addEventListener(type, recordHostEvent, true);
+    }
+    document.addEventListener("click", recordHostEvent);
+    const pageButton = document.body.appendChild(
+      document.createElement("button")
+    );
+    mount();
+    click(launcher());
+    const picker = shadow().querySelector('[aria-label="Point at an element"]');
+    if (!(picker instanceof HTMLButtonElement)) {
+      throw new Error("Picker trigger missing");
+    }
+
+    fireEvent.pointerDown(pageButton);
+    pageButton.focus();
+    const hostSawFromPage = hostSaw.splice(0);
+    act(() => {
+      fireEvent.pointerDown(picker);
+      fireEvent.mouseDown(picker);
+      picker.focus();
+      picker.click();
+    });
+
+    for (const type of captureTypes) {
+      document.removeEventListener(type, recordHostEvent, true);
+    }
+    document.removeEventListener("click", recordHostEvent);
+    pageButton.remove();
+    expect(hostSawFromPage).toEqual(["pointerdown", "focusout", "focusin"]);
+    expect(hostSaw).toEqual([]);
+    expect(shadow().querySelector(".picker-hint")).not.toBeNull();
+  });
+
+  it("closes the options popover when pressing elsewhere in the widget", () => {
+    mount();
+    click(launcher());
+    const options = shadow().querySelector(".composer-options");
+    const summary = options?.querySelector("summary");
+    const message = shadow().querySelector("textarea");
+    if (
+      !(
+        options instanceof HTMLDetailsElement &&
+        summary instanceof HTMLElement &&
+        message instanceof HTMLTextAreaElement
+      )
+    ) {
+      throw new Error("Composer options missing");
+    }
+
+    click(summary);
+    expect(options.open).toBe(true);
+
+    act(() => {
+      fireEvent.pointerDown(message);
+    });
+    expect(options.open).toBe(false);
+  });
+
   it("places the widget at the requested corner", () => {
     render(
       <RefletFeedback

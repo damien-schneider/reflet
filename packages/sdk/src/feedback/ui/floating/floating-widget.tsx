@@ -5,7 +5,7 @@ import { Launcher } from "../launcher";
 import { FeedbackPanel } from "../panel";
 import { SelectionOutline } from "../selection-outline";
 import { matchesHotkey, type WidgetState } from "../use-widget-state";
-import { listenToKeydown } from "../widget-keys";
+import { listenToKeydown } from "../widget-events";
 import { useFloatingPosition } from "./use-floating-position";
 
 export function FloatingWidget({

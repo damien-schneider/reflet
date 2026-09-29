@@ -6,6 +6,7 @@ import { PICKER_STYLES } from "./floating/picker-styles";
 
 export const WIDGET_STYLES = `
 :host {
+  pointer-events: auto;
   --rf-offset: ${DEFAULT_WIDGET_OFFSET}px;
   --rf-bg: #ffffff;
   --rf-bg-subtle: rgb(55 53 47 / 4%);

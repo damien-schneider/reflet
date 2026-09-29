@@ -1,7 +1,7 @@
 import { type ReactNode, useEffect } from "react";
 import { useFloatingPosition } from "../../feedback/ui/floating/use-floating-position";
 import { CloseIcon, TargetIcon } from "../../feedback/ui/icons";
-import { listenToKeydown } from "../../feedback/ui/widget-keys";
+import { listenToKeydown } from "../../feedback/ui/widget-events";
 import type { SheetTab } from "./devtools-bar";
 import { useSheetSize } from "./use-sheet-size";
 

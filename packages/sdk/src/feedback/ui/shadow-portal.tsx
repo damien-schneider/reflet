@@ -2,6 +2,7 @@ import { type ReactNode, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { WIDGET_MARKER } from "../core/capture";
 import { WIDGET_STYLES } from "./styles";
+import { stopClicksAtHost } from "./widget-events";
 
 const DARK_QUERY = "(prefers-color-scheme: dark)";
 
@@ -52,6 +53,7 @@ export function ShadowPortal({
   useEffect(() => {
     const host = document.createElement("div");
     host.setAttribute(WIDGET_MARKER, "");
+    stopClicksAtHost(host);
     const root = host.attachShadow({ mode: "open" });
 
     const style = document.createElement("style");

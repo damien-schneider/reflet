@@ -6,7 +6,10 @@ import {
   useState,
 } from "react";
 import { SelectionOutline } from "../../../feedback/ui/selection-outline";
-import { listenToKeydown } from "../../../feedback/ui/widget-keys";
+import {
+  listenOnPageAndWidget,
+  listenToKeydown,
+} from "../../../feedback/ui/widget-events";
 import type { CodeTarget } from "../code/code-panel";
 import { NoteCard } from "../notes/note-card";
 import type { NotesSnapshot } from "../notes/note-store";
@@ -62,7 +65,7 @@ function NotePopover({
   }, [pin.top]);
 
   useEffect(() => {
-    const closeOnOutsidePress = (event: PointerEvent) => {
+    const closeOnOutsidePress = (event: Event) => {
       const path = event.composedPath();
       const isInside = path.some(
         (node) =>
@@ -73,14 +76,19 @@ function NotePopover({
         onClose();
       }
     };
-    document.addEventListener("pointerdown", closeOnOutsidePress, true);
+    const stopOutsidePress = listenOnPageAndWidget(
+      popoverRef.current,
+      "pointerdown",
+      closeOnOutsidePress,
+      true
+    );
     const stopKeys = listenToKeydown(popoverRef.current, (event) => {
       if (event.key === "Escape") {
         onClose();
       }
     });
     return () => {
-      document.removeEventListener("pointerdown", closeOnOutsidePress, true);
+      stopOutsidePress();
       stopKeys();
     };
   }, [anchor.note.id, onClose]);

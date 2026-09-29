@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Connect the devtools Board tab to Reflet without configuring a secret key. Approve access in Reflet and revoke it from the Board tab or Account → Devtools. Credentials stay on the dev server, isolated by project and backend; notes remain internal and are attributed to the connected member.
 
+### Fixed
+
+- Using the widget no longer closes the app's open menus, popovers and pickers. Pointing at an element or attaching a screenshot keeps them open, so their content can be reported, and typing in the widget no longer loses focus to a menu's focus trap. The widget also stays clickable while a modal menu disables pointer events on the page.
+
 ## [0.5.1] - 2026-09-28
 
 ### Fixed

@@ -13,7 +13,7 @@ import {
   type VisibleViewport,
   visibleViewport,
 } from "./visible-viewport";
-import { listenToKeydown, startsInWidget } from "./widget-keys";
+import { listenToKeydown, startsInWidget } from "./widget-events";
 
 const LABEL_HEIGHT = 24;
 const LABEL_GAP = 6;
@@ -236,13 +236,13 @@ export function ElementPicker({
       );
     };
 
-    // Capture phase everywhere: the host app must not react to the pick.
-    document.addEventListener("pointermove", onMove, true);
-    document.addEventListener("pointerdown", onPointerDown, true);
-    document.addEventListener("pointerup", onPointerUp, true);
-    document.addEventListener("mousedown", swallow, true);
-    document.addEventListener("mouseup", swallow, true);
-    document.addEventListener("click", swallow, true);
+    // Window capture: runs before the host's own capture listeners on document.
+    window.addEventListener("pointermove", onMove, true);
+    window.addEventListener("pointerdown", onPointerDown, true);
+    window.addEventListener("pointerup", onPointerUp, true);
+    window.addEventListener("mousedown", swallow, true);
+    window.addEventListener("mouseup", swallow, true);
+    window.addEventListener("click", swallow, true);
     const stopListeningToKeys = listenToKeydown(
       pickerRef.current,
       onKeyDown,
@@ -257,12 +257,12 @@ export function ElementPicker({
     document.body.style.cursor = "crosshair";
 
     return () => {
-      document.removeEventListener("pointermove", onMove, true);
-      document.removeEventListener("pointerdown", onPointerDown, true);
-      document.removeEventListener("pointerup", onPointerUp, true);
-      document.removeEventListener("mousedown", swallow, true);
-      document.removeEventListener("mouseup", swallow, true);
-      document.removeEventListener("click", swallow, true);
+      window.removeEventListener("pointermove", onMove, true);
+      window.removeEventListener("pointerdown", onPointerDown, true);
+      window.removeEventListener("pointerup", onPointerUp, true);
+      window.removeEventListener("mousedown", swallow, true);
+      window.removeEventListener("mouseup", swallow, true);
+      window.removeEventListener("click", swallow, true);
       stopListeningToKeys();
       window.removeEventListener("scroll", onScroll, true);
       document.body.style.cursor = previousCursor;
