@@ -138,44 +138,39 @@ export function useSubscription(): {
   error: Error | null;
 } {
   const client = useRefletClient();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const subscribeFn = useCallback(
+    (feedbackId: string) => client.subscribe(feedbackId),
+    [client]
+  );
+  const unsubscribeFn = useCallback(
+    (feedbackId: string) => client.unsubscribe(feedbackId),
+    [client]
+  );
+  const subscription = useRefletMutation(subscribeFn);
+  const unsubscription = useRefletMutation(unsubscribeFn);
+  const { mutate: runSubscribe, reset: resetSubscribe } = subscription;
+  const { mutate: runUnsubscribe, reset: resetUnsubscribe } = unsubscription;
 
   const subscribe = useCallback(
-    async (feedbackId: string) => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        return await client.subscribe(feedbackId);
-      } catch (err) {
-        const wrapped =
-          err instanceof Error ? err : new Error("Failed to subscribe");
-        setError(wrapped);
-        throw wrapped;
-      } finally {
-        setIsLoading(false);
-      }
+    (feedbackId: string) => {
+      resetUnsubscribe();
+      return runSubscribe(feedbackId);
     },
-    [client]
+    [resetUnsubscribe, runSubscribe]
   );
 
   const unsubscribe = useCallback(
-    async (feedbackId: string) => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        return await client.unsubscribe(feedbackId);
-      } catch (err) {
-        const wrapped =
-          err instanceof Error ? err : new Error("Failed to unsubscribe");
-        setError(wrapped);
-        throw wrapped;
-      } finally {
-        setIsLoading(false);
-      }
+    (feedbackId: string) => {
+      resetSubscribe();
+      return runUnsubscribe(feedbackId);
     },
-    [client]
+    [resetSubscribe, runUnsubscribe]
   );
 
-  return { error, isLoading, subscribe, unsubscribe };
+  return {
+    error: subscription.error ?? unsubscription.error,
+    isLoading: subscription.isLoading || unsubscription.isLoading,
+    subscribe,
+    unsubscribe,
+  };
 }

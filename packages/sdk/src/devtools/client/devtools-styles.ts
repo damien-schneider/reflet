@@ -23,7 +23,7 @@ export const DEVTOOLS_STYLES = `
 @keyframes dt-pin-pulse { 50% { box-shadow: 0 0 0 2px var(--rf-bg), 0 0 0 6px color-mix(in srgb, var(--rf-accent) 30%, transparent); } }
 .dt-popover {
   position: fixed; z-index: ${REFLET_Z_INDEX.widgetRoot}; width: 320px; max-height: calc(100dvh - 24px); overflow: auto;
-  padding: 6px; border-radius: 14px;
+  inset-inline-end: auto; margin: 0; padding: 6px; border-radius: 14px; background: transparent; color: inherit;
   animation: dt-popover-in 200ms var(--rf-ease);
 }
 .dt-popover.glass::before { animation: rf-fade 180ms var(--rf-ease); }

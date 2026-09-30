@@ -21,25 +21,21 @@ function useCloseUpPreview(
       return;
     }
     let active = true;
-    let objectUrl: string | null = null;
+    let revokePreviewUrl: () => void = () => undefined;
     noteStore
       .readCloseUp(noteId)
       .then((image) => {
-        if (active && image) {
-          objectUrl = URL.createObjectURL(image.blob);
-          setPreview({
-            height: image.height,
-            url: objectUrl,
-            width: image.width,
-          });
+        if (!(active && image)) {
+          return;
         }
+        const url = URL.createObjectURL(image.blob);
+        revokePreviewUrl = () => URL.revokeObjectURL(url);
+        setPreview({ height: image.height, url, width: image.width });
       })
       .catch(() => setPreview(null));
     return () => {
       active = false;
-      if (objectUrl) {
-        URL.revokeObjectURL(objectUrl);
-      }
+      revokePreviewUrl();
     };
   }, [isLocating, noteId]);
 
@@ -68,10 +64,18 @@ function deleteNote(note: DevNote) {
     );
 }
 
-function NoteEditor({ note, onDone }: { note: DevNote; onDone: () => void }) {
-  const [text, setText] = useState(note.note);
+function NoteEditor({
+  initialText,
+  noteId,
+  onDone,
+}: {
+  initialText: string;
+  noteId: string;
+  onDone: () => void;
+}) {
+  const [text, setText] = useState(initialText);
   const save = () => {
-    saveNoteText(note.id, text.trim());
+    saveNoteText(noteId, text.trim());
     onDone();
   };
 
@@ -107,6 +111,108 @@ function NoteEditor({ note, onDone }: { note: DevNote; onDone: () => void }) {
   );
 }
 
+function NoteCardHead({
+  isSending,
+  note,
+  pinNumber,
+}: {
+  isSending: boolean;
+  note: DevNote;
+  pinNumber?: number;
+}) {
+  const { selection } = note;
+  const owner = selection.componentStack[0];
+
+  return (
+    <div className="dt-card-head">
+      {pinNumber !== undefined && (
+        <span className="dt-pin-badge" title={`Pin ${pinNumber}`}>
+          {pinNumber}
+        </span>
+      )}
+      <h3 className="dt-card-title">
+        {owner ? `<${owner}> ${selection.label}` : selection.label}
+      </h3>
+      {isSending && <span className="dt-chip">Sending…</span>}
+      {note.sent && !isSending && <span className="dt-chip">On the board</span>}
+    </div>
+  );
+}
+
+function NoteSourceLine({
+  isLocating,
+  note,
+  onOpenCode,
+}: {
+  isLocating: boolean;
+  note: DevNote;
+  onOpenCode: (target: CodeTarget) => void;
+}) {
+  const { selection, source } = note;
+
+  if (source && selection.sourceLocation) {
+    return (
+      <button
+        className="dt-source"
+        onClick={() => onOpenCode({ request: source, title: selection.label })}
+        type="button"
+      >
+        {selection.sourceLocation}
+      </button>
+    );
+  }
+  if (source) {
+    return null;
+  }
+  if (isLocating) {
+    return <p className="dt-meta">Locating source…</p>;
+  }
+  return <p className="dt-meta">{selection.region ?? selection.selector}</p>;
+}
+
+function NoteActions({
+  isSending,
+  note,
+  onEdit,
+  onShowSelector,
+  pageLink,
+}: {
+  isSending: boolean;
+  note: DevNote;
+  onEdit: () => void;
+  onShowSelector?: () => void;
+  pageLink?: boolean;
+}) {
+  return (
+    <div className="dt-actions">
+      {onShowSelector && (
+        <button className="dt-btn" onClick={onShowSelector} type="button">
+          Show on page
+        </button>
+      )}
+      {pageLink && (
+        <a className="dt-btn" href={note.capturedContext.url}>
+          Open page
+        </a>
+      )}
+      {!(note.sent || isSending) && (
+        <button className="dt-btn" onClick={onEdit} type="button">
+          Edit
+        </button>
+      )}
+      <button
+        className="dt-btn"
+        data-variant="danger"
+        disabled={isSending}
+        onClick={() => deleteNote(note)}
+        type="button"
+      >
+        Delete
+      </button>
+    </div>
+  );
+}
+
 export function NoteCard({
   isLocating,
   isSending = false,
@@ -128,8 +234,9 @@ export function NoteCard({
   const [isEditing, setIsEditing] = useState(false);
   const [isOffPage, setIsOffPage] = useState(false);
   const closeUp = useCloseUpPreview(note.id, isLocating);
-  const { selection, source } = note;
-  const owner = selection.componentStack[0];
+  const showOnPage = onShowSelector
+    ? () => setIsOffPage(!onShowSelector(note.selection.selector))
+    : undefined;
 
   return (
     <article className="dt-card" data-sent={Boolean(note.sent)}>
@@ -142,37 +249,18 @@ export function NoteCard({
           width={closeUp.width}
         />
       )}
-      <div className="dt-card-head">
-        {pinNumber !== undefined && (
-          <span className="dt-pin-badge" title={`Pin ${pinNumber}`}>
-            {pinNumber}
-          </span>
-        )}
-        <h3 className="dt-card-title">
-          {owner ? `<${owner}> ${selection.label}` : selection.label}
-        </h3>
-        {isSending && <span className="dt-chip">Sending…</span>}
-        {note.sent && !isSending && (
-          <span className="dt-chip">On the board</span>
-        )}
-      </div>
-      {source && selection.sourceLocation && (
-        <button
-          className="dt-source"
-          onClick={() =>
-            onOpenCode({ request: source, title: selection.label })
-          }
-          type="button"
-        >
-          {selection.sourceLocation}
-        </button>
-      )}
-      {!source && isLocating && <p className="dt-meta">Locating source…</p>}
-      {!(source || isLocating) && (
-        <p className="dt-meta">{selection.region ?? selection.selector}</p>
-      )}
+      <NoteCardHead isSending={isSending} note={note} pinNumber={pinNumber} />
+      <NoteSourceLine
+        isLocating={isLocating}
+        note={note}
+        onOpenCode={onOpenCode}
+      />
       {isEditing ? (
-        <NoteEditor note={note} onDone={() => setIsEditing(false)} />
+        <NoteEditor
+          initialText={note.note}
+          noteId={note.id}
+          onDone={() => setIsEditing(false)}
+        />
       ) : (
         <p className="dt-note-text">{note.note || "No comment"}</p>
       )}
@@ -180,40 +268,13 @@ export function NoteCard({
         <p className="dt-meta">The element is not on the page right now.</p>
       )}
       {!isEditing && (
-        <div className="dt-actions">
-          {onShowSelector && (
-            <button
-              className="dt-btn"
-              onClick={() => setIsOffPage(!onShowSelector(selection.selector))}
-              type="button"
-            >
-              Show on page
-            </button>
-          )}
-          {pageLink && (
-            <a className="dt-btn" href={note.capturedContext.url}>
-              Open page
-            </a>
-          )}
-          {!(note.sent || isSending) && (
-            <button
-              className="dt-btn"
-              onClick={() => setIsEditing(true)}
-              type="button"
-            >
-              Edit
-            </button>
-          )}
-          <button
-            className="dt-btn"
-            data-variant="danger"
-            disabled={isSending}
-            onClick={() => deleteNote(note)}
-            type="button"
-          >
-            Delete
-          </button>
-        </div>
+        <NoteActions
+          isSending={isSending}
+          note={note}
+          onEdit={() => setIsEditing(true)}
+          onShowSelector={showOnPage}
+          pageLink={pageLink}
+        />
       )}
     </article>
   );

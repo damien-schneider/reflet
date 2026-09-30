@@ -44,7 +44,7 @@ function NotePopover({
   onClose: () => void;
   onOpenCode: (target: CodeTarget) => void;
 }) {
-  const popoverRef = useRef<HTMLDivElement>(null);
+  const popoverRef = useRef<HTMLDialogElement>(null);
   const [top, setTop] = useState<number | null>(null);
   const pin = pinPosition(anchor);
   const fitsRight =
@@ -94,11 +94,11 @@ function NotePopover({
   }, [anchor.note.id, onClose]);
 
   return (
-    <div
+    <dialog
       aria-label={`Note ${anchor.number}`}
       className="dt-popover glass"
+      open
       ref={popoverRef}
-      role="dialog"
       style={{
         left,
         top: top ?? pin.top,
@@ -114,7 +114,7 @@ function NotePopover({
         }}
         pinNumber={anchor.number}
       />
-    </div>
+    </dialog>
   );
 }
 

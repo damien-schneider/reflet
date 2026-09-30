@@ -5,6 +5,7 @@ import {
   useEffect,
   useMemo,
   useState,
+  useSyncExternalStore,
 } from "react";
 import { Reflet } from "./client";
 import type { RefletConfig, RefletUser } from "./types";
@@ -46,6 +47,10 @@ export interface RefletProviderProps {
   userToken?: string;
 }
 
+function subscribeToNothing(): () => void {
+  return () => undefined;
+}
+
 /**
  * Provider component for Reflet SDK
  *
@@ -73,7 +78,11 @@ export function RefletProvider({
   children,
 }: RefletProviderProps) {
   const [user, setUser] = useState<RefletUser | undefined>(initialUser);
-  const [isReady, setIsReady] = useState(false);
+  const isReady = useSyncExternalStore(
+    subscribeToNothing,
+    () => true,
+    () => false
+  );
 
   const client = useMemo(() => {
     const config: RefletConfig = {
@@ -93,11 +102,6 @@ export function RefletProvider({
       client.setUser(user);
     }
   }, [client, user, userToken]);
-
-  // Mark as ready after mount
-  useEffect(() => {
-    setIsReady(true);
-  }, []);
 
   const value = useMemo(
     () => ({

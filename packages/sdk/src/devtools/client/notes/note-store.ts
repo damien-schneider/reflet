@@ -243,9 +243,10 @@ function createNoteStore() {
     getSnapshot: () => snapshot,
     patch: (noteIds: string | string[], patch: NotePatch) => {
       const ids = typeof noteIds === "string" ? [noteIds] : noteIds;
+      const patchedIds = new Set(ids);
       return mutate(
         (notes) =>
-          notes.map((note) => (ids.includes(note.id) ? patch(note) : note)),
+          notes.map((note) => (patchedIds.has(note.id) ? patch(note) : note)),
         [NOTES],
         (transaction) => {
           for (const noteId of ids) {
@@ -261,9 +262,10 @@ function createNoteStore() {
       const payload: NotePayload | undefined = await settle(store.get(noteId));
       return payload?.closeUp ?? null;
     },
-    remove: (noteIds: string[]) =>
-      mutate(
-        (notes) => notes.filter((note) => !noteIds.includes(note.id)),
+    remove: (noteIds: string[]) => {
+      const removedIds = new Set(noteIds);
+      return mutate(
+        (notes) => notes.filter((note) => !removedIds.has(note.id)),
         [NOTES, PAYLOADS],
         (transaction) => {
           for (const noteId of noteIds) {
@@ -271,7 +273,8 @@ function createNoteStore() {
             transaction.objectStore(PAYLOADS).delete(noteId);
           }
         }
-      ),
+      );
+    },
     setActivity: (noteId: string, activity: NoteActivity | null) => {
       const { [noteId]: _previous, ...others } = snapshot.activity;
       publish({

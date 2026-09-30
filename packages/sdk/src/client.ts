@@ -22,6 +22,7 @@ import {
 } from "./types";
 
 export const DEFAULT_API_URL = "https://harmless-clam-802.convex.site";
+const UNSIGNED_TOKEN_ALGORITHM = "none";
 
 /** btoa is Latin1-only — a name like "José" would throw. */
 function base64Utf8(value: string): string {
@@ -326,9 +327,32 @@ export class Reflet {
     path: string,
     body?: unknown
   ): Promise<T> {
-    let response: Response;
+    const response = await this.send(method, path, body);
+
+    if (!response.ok) {
+      return this.throwResponseError(response);
+    }
+
+    const text = await response.text();
+
+    // Successful empty body (e.g. 204 No Content) — return empty object
+    // narrowed through unknown for type-safe assertion
+    if (!text) {
+      const emptyResponse: unknown = {};
+      return emptyResponse as T;
+    }
+
+    // Standard unknown → T assertion for runtime-parsed JSON
+    return this.parseJsonSafely(text, response.status) as T;
+  }
+
+  private async send(
+    method: string,
+    path: string,
+    body?: unknown
+  ): Promise<Response> {
     try {
-      response = await fetch(`${this.baseUrl}${path}`, {
+      return await fetch(`${this.baseUrl}${path}`, {
         body: body ? JSON.stringify(body) : undefined,
         headers: this.buildHeaders(),
         method,
@@ -340,34 +364,20 @@ export class Reflet {
           : "Failed to connect";
       throw new RefletError(`Network error: ${message}`, 0);
     }
+  }
 
+  private async throwResponseError(response: Response): Promise<never> {
+    const fallbackMessage = `Request failed with status ${response.status}`;
     const text = await response.text();
-
-    // Handle empty response
     if (!text) {
-      if (!response.ok) {
-        this.throwHttpError(
-          `Request failed with status ${response.status}`,
-          response.status
-        );
-      }
-      // Successful empty body (e.g. 204 No Content) — return empty object
-      // narrowed through unknown for type-safe assertion
-      const emptyResponse: unknown = {};
-      return emptyResponse as T;
+      this.throwHttpError(fallbackMessage, response.status);
     }
 
     const data = this.parseJsonSafely(text, response.status);
-
-    if (!response.ok) {
-      const errorMessage = this.isErrorResponse(data)
-        ? data.error
-        : `Request failed with status ${response.status}`;
-      this.throwHttpError(errorMessage, response.status);
-    }
-
-    // Standard unknown → T assertion for runtime-parsed JSON
-    return data as T;
+    const errorMessage = this.isErrorResponse(data)
+      ? data.error
+      : fallbackMessage;
+    this.throwHttpError(errorMessage, response.status);
   }
 
   /**
@@ -387,7 +397,9 @@ export class Reflet {
       name: this.user.name,
     };
 
-    const header = base64Utf8(JSON.stringify({ alg: "none", typ: "JWT" }));
+    const header = base64Utf8(
+      JSON.stringify({ alg: UNSIGNED_TOKEN_ALGORITHM, typ: "JWT" })
+    );
     const payloadB64 = base64Utf8(JSON.stringify(payload));
 
     // Empty signature — the server treats this identity as unverified

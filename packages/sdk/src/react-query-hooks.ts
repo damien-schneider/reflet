@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { useRefletClient } from "./react-context";
 import type { UseQueryResult } from "./react-hooks-types";
 import type {
@@ -154,37 +160,46 @@ export function useChangelog(limit?: number): UseQueryResult<ChangelogEntry[]> {
 
 const CHANGELOG_STORAGE_KEY_PREFIX = "reflet_changelog_seen_";
 
+function subscribeToStorage(onStoreChange: () => void): () => void {
+  window.addEventListener("storage", onStoreChange);
+  return () => window.removeEventListener("storage", onStoreChange);
+}
+
+function readLastSeen(storageKey: string): number {
+  try {
+    const stored = localStorage.getItem(storageKey);
+    return stored ? Number(stored) : 0;
+  } catch {
+    return 0;
+  }
+}
+
 export function useUnreadChangelogCount(publicKey: string): {
   unreadCount: number;
   markAsRead: () => void;
 } {
   const { data: entries } = useChangelog();
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [readMark, setReadMark] = useState<{
+    storageKey: string;
+    timestamp: number;
+  } | null>(null);
 
   const storageKey = `${CHANGELOG_STORAGE_KEY_PREFIX}${publicKey}`;
+  const storedLastSeen = useSyncExternalStore(
+    subscribeToStorage,
+    () => readLastSeen(storageKey),
+    () => 0
+  );
+  const markedLastSeen =
+    readMark?.storageKey === storageKey ? readMark.timestamp : 0;
+  const lastSeen = Math.max(storedLastSeen, markedLastSeen);
 
-  useEffect(() => {
-    if (!entries || entries.length === 0) {
-      setUnreadCount(0);
-      return;
+  let unreadCount = 0;
+  for (const entry of entries ?? []) {
+    if (entry.publishedAt && entry.publishedAt > lastSeen) {
+      unreadCount++;
     }
-
-    let lastSeen = 0;
-    try {
-      const stored = localStorage.getItem(storageKey);
-      lastSeen = stored ? Number(stored) : 0;
-    } catch {
-      // localStorage unavailable
-    }
-
-    let count = 0;
-    for (const entry of entries) {
-      if (entry.publishedAt && entry.publishedAt > lastSeen) {
-        count++;
-      }
-    }
-    setUnreadCount(count);
-  }, [entries, storageKey]);
+  }
 
   const markAsRead = useCallback(() => {
     if (!entries || entries.length === 0) {
@@ -204,7 +219,7 @@ export function useUnreadChangelogCount(publicKey: string): {
       } catch {
         // localStorage unavailable
       }
-      setUnreadCount(0);
+      setReadMark({ storageKey, timestamp: latestTimestamp });
     }
   }, [entries, storageKey]);
 
