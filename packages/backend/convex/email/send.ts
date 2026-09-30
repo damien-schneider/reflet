@@ -1,5 +1,5 @@
 import { Resend, vEmailId, vOnEmailEventArgs } from "@convex-dev/resend";
-import { v } from "convex/values";
+import { type Infer, v } from "convex/values";
 import { components, internal } from "../_generated/api";
 import { internalAction, internalMutation } from "../_generated/server";
 import { normalizeEmail } from "./suppression";
@@ -8,6 +8,23 @@ export const resend: Resend = new Resend(components.resend, {
   onEmailEvent: internal.email.send.handleEmailEvent,
   testMode: false,
 });
+
+type EmailEvent = Infer<typeof vOnEmailEventArgs>["event"];
+
+const suppressionReasonFor = (
+  event: EmailEvent
+): "complaint" | "hard_bounce" | null => {
+  if (event.type === "email.complained") {
+    return "complaint";
+  }
+  if (
+    event.type === "email.bounced" &&
+    event.data.bounce.type === "Permanent"
+  ) {
+    return "hard_bounce";
+  }
+  return null;
+};
 
 export const handleEmailEvent = internalMutation({
   args: vOnEmailEventArgs,
@@ -38,6 +55,7 @@ export const handleEmailEvent = internalMutation({
       "email.complained": "complained",
       "email.delivered": "delivered",
       "email.delivery_delayed": "delivery_delayed",
+      "email.failed": "failed",
       "email.opened": "opened",
     };
     const timestampMap: Record<string, string> = {
@@ -60,14 +78,8 @@ export const handleEmailEvent = internalMutation({
       await ctx.db.patch(sendLog._id, patch);
     }
 
-    const isBounce = type === "email.bounced";
-    const isComplaint = type === "email.complained";
-
-    if (!(isBounce || isComplaint)) {
-      return;
-    }
-
-    if (!recipientEmail) {
+    const reason = suppressionReasonFor(args.event);
+    if (!(reason && recipientEmail)) {
       return;
     }
 
@@ -81,7 +93,7 @@ export const handleEmailEvent = internalMutation({
       await ctx.db.insert("emailSuppressions", {
         email: suppressedEmail,
         originalEventType: type,
-        reason: isBounce ? "hard_bounce" : "complaint",
+        reason,
         suppressedAt: now,
       });
     }

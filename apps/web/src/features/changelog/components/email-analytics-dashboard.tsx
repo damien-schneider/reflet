@@ -69,6 +69,7 @@ const STATUS_COLORS: Record<string, BadgeColor> = {
   complained: "red",
   delivered: "green",
   delivery_delayed: "yellow",
+  failed: "red",
   opened: "blue",
   sent: "neutral",
 } as const;

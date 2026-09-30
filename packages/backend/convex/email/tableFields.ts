@@ -52,7 +52,8 @@ export const emailTables = {
       v.literal("complained"),
       v.literal("opened"),
       v.literal("clicked"),
-      v.literal("delivery_delayed")
+      v.literal("delivery_delayed"),
+      v.literal("failed")
     ),
     subject: v.string(),
     to: v.string(),
