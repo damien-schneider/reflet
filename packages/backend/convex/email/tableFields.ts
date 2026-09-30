@@ -8,7 +8,8 @@ const emailEventType = v.union(
   v.literal("email.bounced"),
   v.literal("email.complained"),
   v.literal("email.opened"),
-  v.literal("email.clicked")
+  v.literal("email.clicked"),
+  v.literal("email.failed")
 );
 
 export const emailTables = {

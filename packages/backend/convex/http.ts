@@ -4,6 +4,7 @@ import { components, internal } from "./_generated/api";
 import { httpAction } from "./_generated/server";
 import { authComponent, createAuth } from "./auth/auth";
 import { generateRssFeed } from "./changelog/rss";
+import { resend } from "./email/send";
 import { registerAdminAgentRoutes } from "./http/admin_agent";
 import { registerAdminContentRoutes } from "./http/admin_content";
 import { registerAdminFeedbackRoutes } from "./http/admin_feedback";
@@ -16,26 +17,28 @@ import { registerPublicApiRoutes } from "./http/public_api";
 
 const http = httpRouter();
 
-// Better Auth routes
 authComponent.registerRoutes(http, createAuth);
 
-// Stripe webhook
 // biome-ignore lint/suspicious/noExplicitAny: @convex-dev/stripe compiled against older convex version
 registerStripeRoutes(http, components.stripe as any, {
   webhookPath: "/stripe/webhook",
 });
 
-// GitHub webhook
 registerGithubWebhookRoutes(http);
 
-// AI API (release title, feedback matching)
 registerAiApiRoutes(http);
 
-// Public feedback API (v1)
 registerPublicApiRoutes(http);
 registerDevtoolsRoutes(http);
 
-// RSS feed
+http.route({
+  handler: httpAction(
+    async (ctx, request) => await resend.handleResendEventWebhook(ctx, request)
+  ),
+  method: "POST",
+  path: "/resend-webhook",
+});
+
 http.route({
   handler: httpAction(async (ctx, request) => {
     const url = new URL(request.url);
@@ -81,7 +84,6 @@ http.route({
   path: "/rss",
 });
 
-// Admin API (v1)
 registerAdminFeedbackRoutes(http);
 registerAdminAgentRoutes(http);
 registerAdminContentRoutes(http);

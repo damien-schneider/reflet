@@ -2,17 +2,13 @@ import { Resend, vEmailId, vOnEmailEventArgs } from "@convex-dev/resend";
 import { v } from "convex/values";
 import { components, internal } from "../_generated/api";
 import { internalAction, internalMutation } from "../_generated/server";
+import { normalizeEmail } from "./suppression";
 
-// Initialize Resend component with event handling
 export const resend: Resend = new Resend(components.resend, {
-  // Handle email events (delivery, bounce, etc.)
   onEmailEvent: internal.email.send.handleEmailEvent,
-  // Disable test mode to send real emails via Resend
-  // Resend handles rate limiting and safety features
   testMode: false,
 });
 
-// Handle email status events from Resend webhooks
 export const handleEmailEvent = internalMutation({
   args: vOnEmailEventArgs,
   handler: async (ctx, args) => {
@@ -20,37 +16,22 @@ export const handleEmailEvent = internalMutation({
     const resendEmailId = String(args.id);
     const now = Date.now();
 
-    // Look up the send log entry for this email
     const sendLog = await ctx.db
       .query("emailSendLog")
       .withIndex("by_resend_id", (q) => q.eq("resendEmailId", resendEmailId))
       .first();
 
-    // Extract recipient email from event data
-    const eventData = args.event.data;
-    let recipientEmail: string | undefined;
-    if ("to" in eventData) {
-      const { to } = eventData;
-      recipientEmail = typeof to === "string" ? to : to[0];
-    }
+    const { to } = args.event.data;
+    const recipientEmail = typeof to === "string" ? to : to[0];
 
-    // Log the raw event
     await ctx.db.insert("emailEvents", {
       emailSendLogId: sendLog?._id,
-      eventType: type as
-        | "email.sent"
-        | "email.delivered"
-        | "email.delivery_delayed"
-        | "email.bounced"
-        | "email.complained"
-        | "email.opened"
-        | "email.clicked",
+      eventType: type,
       recipientEmail,
       resendEmailId,
       timestamp: now,
     });
 
-    // Update send log status
     const statusMap: Record<string, string> = {
       "email.bounced": "bounced",
       "email.clicked": "clicked",
@@ -79,7 +60,6 @@ export const handleEmailEvent = internalMutation({
       await ctx.db.patch(sendLog._id, patch);
     }
 
-    // Handle suppressions for bounces and complaints
     const isBounce = type === "email.bounced";
     const isComplaint = type === "email.complained";
 
@@ -91,14 +71,15 @@ export const handleEmailEvent = internalMutation({
       return;
     }
 
+    const suppressedEmail = normalizeEmail(recipientEmail);
     const existing = await ctx.db
       .query("emailSuppressions")
-      .withIndex("by_email", (q) => q.eq("email", recipientEmail))
+      .withIndex("by_email", (q) => q.eq("email", suppressedEmail))
       .first();
 
     if (!existing) {
       await ctx.db.insert("emailSuppressions", {
-        email: recipientEmail,
+        email: suppressedEmail,
         originalEventType: type,
         reason: isBounce ? "hard_bounce" : "complaint",
         suppressedAt: now,
@@ -107,7 +88,6 @@ export const handleEmailEvent = internalMutation({
   },
 });
 
-// Generic email sending mutation using the Resend component
 export const sendEmail = internalMutation({
   args: {
     emailType: v.optional(
@@ -152,7 +132,6 @@ export const sendEmail = internalMutation({
       to: args.to,
     });
 
-    // Log to emailSendLog if tracking params provided
     if (args.organizationId && args.emailType) {
       const recipientEmail = typeof args.to === "string" ? args.to : args.to[0];
       await ctx.db.insert("emailSendLog", {
@@ -172,7 +151,6 @@ export const sendEmail = internalMutation({
   },
 });
 
-// Batch send emails (useful for newsletters)
 export const sendBatchEmails = internalMutation({
   args: {
     emails: v.array(
@@ -215,7 +193,6 @@ export const sendBatchEmails = internalMutation({
   },
 });
 
-// Check email delivery status
 export const getEmailStatus = internalAction({
   args: {
     emailId: vEmailId,
