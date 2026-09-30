@@ -125,7 +125,7 @@ export function renderEntriesListHTML(
       entry.publishedAt && entry.publishedAt > lastSeenTimestamp
     );
     html += `
-      <button class="reflet-changelog-entry" data-entry-id="${entry.id}" type="button">
+      <button class="reflet-changelog-entry" data-entry-id="${escapeHtml(entry.id)}" type="button">
         <span class="reflet-changelog-entry-header">
           ${entry.version ? `<span class="reflet-changelog-entry-version">v${escapeHtml(entry.version)}</span>` : ""}
           ${entry.publishedAt ? `<span class="reflet-changelog-entry-date">${formatDate(entry.publishedAt)}</span>` : ""}

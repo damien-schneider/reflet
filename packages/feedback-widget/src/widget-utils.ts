@@ -27,6 +27,7 @@ export function escapeHtml(text: string): string {
 }
 
 const TOKEN_EXPIRY_SECONDS = 86_400;
+const UNSIGNED_TOKEN_ALGORITHM = "none";
 
 export function generateSimpleToken(user: {
   id: string;
@@ -40,7 +41,9 @@ export function generateSimpleToken(user: {
     id: user.id,
     name: user.name,
   };
-  const header = btoa(JSON.stringify({ alg: "none", typ: "JWT" }));
+  const header = btoa(
+    JSON.stringify({ alg: UNSIGNED_TOKEN_ALGORITHM, typ: "JWT" })
+  );
   const payloadB64 = btoa(JSON.stringify(payload));
   return `${header}.${payloadB64}.`;
 }

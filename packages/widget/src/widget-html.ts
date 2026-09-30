@@ -27,8 +27,8 @@ export function renderWidgetHTML(
       <div class="reflet-window ${positionClass}">
         <div class="reflet-header">
           <div class="reflet-header-content">
-            <h3 class="reflet-header-title">${config.welcomeMessage}</h3>
-            ${config.greetingMessage ? `<p class="reflet-header-subtitle">${config.greetingMessage}</p>` : ""}
+            <h3 class="reflet-header-title">${escapeHtml(config.welcomeMessage)}</h3>
+            ${config.greetingMessage ? `<p class="reflet-header-subtitle">${escapeHtml(config.greetingMessage)}</p>` : ""}
           </div>
           <button class="reflet-close-btn" aria-label="Close chat">
             ${closeIcon}

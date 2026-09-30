@@ -180,12 +180,12 @@ export class RefletChangelogWidget {
 
     const wrapper = document.createElement("div");
     wrapper.className = "reflet-changelog-container";
-    wrapper.innerHTML = this.getHTML();
+    wrapper.innerHTML = this.buildHTML();
     this.shadowRoot.appendChild(wrapper);
     this.attachEventListeners();
   }
 
-  private getHTML(): string {
+  private buildHTML(): string {
     const { mode } = this.config;
     const { isOpen, isLoading, entries, unreadCount, error } = this.state;
 

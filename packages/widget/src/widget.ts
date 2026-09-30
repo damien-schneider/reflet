@@ -109,12 +109,12 @@ export class RefletWidget {
 
     const wrapper = document.createElement("div");
     wrapper.className = "reflet-widget-container";
-    wrapper.innerHTML = this.getHTML();
+    wrapper.innerHTML = this.buildHTML();
     this.shadowRoot.appendChild(wrapper);
     this.attachEventListeners();
   }
 
-  private getHTML(): string {
+  private buildHTML(): string {
     const { config, isOpen, messages, unreadCount, isLoading } = this.state;
     if (!config) {
       return "";

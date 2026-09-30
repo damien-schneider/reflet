@@ -29,8 +29,18 @@ export function formatDate(timestamp: number): string {
   });
 }
 
+const HTML_SPECIAL_CHARS = /[&<>"']/g;
+const HTML_ENTITIES: Record<string, string> = {
+  "'": "&#39;",
+  '"': "&quot;",
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+};
+
 export function escapeHtml(text: string): string {
-  const div = document.createElement("div");
-  div.textContent = text;
-  return div.innerHTML;
+  return text.replace(
+    HTML_SPECIAL_CHARS,
+    (char) => HTML_ENTITIES[char] ?? char
+  );
 }
