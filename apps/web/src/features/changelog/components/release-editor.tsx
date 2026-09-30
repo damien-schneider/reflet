@@ -71,6 +71,7 @@ export function ReleaseEditor({
     initialReleaseId: release?._id ?? null,
     organizationId,
     title,
+    userVersion,
     version,
   });
 

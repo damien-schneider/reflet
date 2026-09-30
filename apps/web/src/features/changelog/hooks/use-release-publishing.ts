@@ -5,6 +5,7 @@ import type { OptimisticLocalStore } from "convex/browser";
 import { useMutation } from "convex/react";
 import { format } from "date-fns";
 import { useState } from "react";
+import { UNTITLED_RELEASE_TITLE } from "@/features/changelog/hooks/use-auto-save-release";
 import { capture } from "@/lib/analytics";
 import type { FeedbackLinkStatus } from "../components/feedback-section-header";
 
@@ -84,7 +85,7 @@ export function useReleasePublishing({
   const saveDraft = async (): Promise<Id<"releases">> => {
     const fields = {
       description: draft.description.trim() || undefined,
-      title: draft.title.trim() || "Untitled release",
+      title: draft.title.trim() || UNTITLED_RELEASE_TITLE,
       version: draft.version.trim() || undefined,
     };
     if (releaseId) {

@@ -1,3 +1,4 @@
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { toId } from "@/lib/convex-helpers";
@@ -18,19 +19,31 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
 vi.mock("@ctrl-ui/react/ui/toast", () => ({ toast: { error: vi.fn() } }));
 
 const organizationId = toId("organizations", "org_1");
+const existingReleaseId = toId("releases", "rel_existing");
 
-function renderAutoSave(initial: { title: string; version: string }) {
+interface EditorState {
+  title: string;
+  userVersion: string | null;
+  version: string;
+}
+
+function renderAutoSave(
+  initial: EditorState,
+  initialReleaseId: Id<"releases"> | null = null
+) {
   return renderHook(
-    (draft) =>
+    (state: EditorState) =>
       useAutoSaveRelease({
         description: "",
-        initialReleaseId: null,
+        initialReleaseId,
         organizationId,
-        ...draft,
+        ...state,
       }),
     { initialProps: initial }
   );
 }
+
+const flushDebounce = () => act(() => vi.advanceTimersByTimeAsync(1000));
 
 describe("useAutoSaveRelease", () => {
   beforeEach(() => {
@@ -44,21 +57,54 @@ describe("useAutoSaveRelease", () => {
   });
 
   it("does not create a draft when only the suggested version arrives", async () => {
-    const { rerender } = renderAutoSave({ title: "", version: "" });
-    rerender({ title: "", version: "v1.2.0" });
-    await act(() => vi.advanceTimersByTimeAsync(1000));
+    const { rerender } = renderAutoSave({
+      title: "",
+      userVersion: null,
+      version: "",
+    });
+    rerender({ title: "", userVersion: null, version: "v1.2.0" });
+    await flushDebounce();
     expect(createRelease).not.toHaveBeenCalled();
   });
 
-  it("creates the draft once the user writes a title", async () => {
-    const { rerender } = renderAutoSave({ title: "", version: "v1.2.0" });
-    rerender({ title: "Faster search", version: "v1.2.0" });
-    await act(() => vi.advanceTimersByTimeAsync(1000));
+  it("does not write a suggested version into an opened unversioned draft", async () => {
+    const { rerender } = renderAutoSave(
+      { title: "Faster search", userVersion: null, version: "" },
+      existingReleaseId
+    );
+    rerender({ title: "Faster search", userVersion: null, version: "v1.2.0" });
+    await flushDebounce();
+    expect(updateRelease).not.toHaveBeenCalled();
+  });
+
+  it("creates the draft with the suggested version once the user writes a title", async () => {
+    const { rerender } = renderAutoSave({
+      title: "",
+      userVersion: null,
+      version: "v1.2.0",
+    });
+    rerender({ title: "Faster search", userVersion: null, version: "v1.2.0" });
+    await flushDebounce();
     expect(createRelease).toHaveBeenCalledWith({
       description: undefined,
       organizationId,
       title: "Faster search",
       version: "v1.2.0",
+    });
+  });
+
+  it("saves a version the user picks on its own", async () => {
+    const { rerender } = renderAutoSave(
+      { title: "", userVersion: null, version: "v1.2.0" },
+      existingReleaseId
+    );
+    rerender({ title: "", userVersion: "v2.0.0", version: "v2.0.0" });
+    await flushDebounce();
+    expect(updateRelease).toHaveBeenCalledWith({
+      description: undefined,
+      id: existingReleaseId,
+      title: "Untitled release",
+      version: "v2.0.0",
     });
   });
 });

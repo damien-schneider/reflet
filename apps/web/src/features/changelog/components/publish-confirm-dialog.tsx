@@ -24,6 +24,7 @@ import { useQuery } from "convex/react";
 import { format } from "date-fns";
 import Link from "next/link";
 import { useState } from "react";
+import { UNTITLED_RELEASE_TITLE } from "@/features/changelog/hooks/use-auto-save-release";
 import { STATUS_CONFIG } from "@/lib/constants";
 
 import type { FeedbackLinkStatus } from "./feedback-section-header";
@@ -155,7 +156,7 @@ function PublishReleaseSummary({
   return (
     <div className="flex items-start justify-between gap-3 rounded-lg border p-3">
       <p className="min-w-0 text-pretty font-medium text-sm">
-        {title || "Untitled release"}
+        {title || UNTITLED_RELEASE_TITLE}
       </p>
       {version && (
         <Badge className="shrink-0 tabular-nums" size="sm" variant="outline">
@@ -305,6 +306,11 @@ function PublishModeTabs({
         {isScheduleValid && scheduledDate && (
           <p className="mt-2 text-muted-foreground text-xs tabular-nums">
             Goes live {format(scheduledDate, "MMM d, yyyy 'at' h:mm a")}
+          </p>
+        )}
+        {!isScheduleValid && scheduledDate && (
+          <p className="mt-2 text-destructive-text text-xs" role="alert">
+            That time has passed. Pick a later one.
           </p>
         )}
       </TabsPanel>

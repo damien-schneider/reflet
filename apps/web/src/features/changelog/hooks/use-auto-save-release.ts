@@ -8,18 +8,14 @@ export type SaveStatus = "idle" | "saving" | "saved" | "error";
 
 const AUTO_SAVE_DEBOUNCE_MS = 500;
 const SAVED_DISPLAY_MS = 2000;
+export const UNTITLED_RELEASE_TITLE = "Untitled release";
 
 interface UseAutoSaveReleaseOptions {
   description: string;
   initialReleaseId: Id<"releases"> | null;
   organizationId: Id<"organizations">;
   title: string;
-  version: string;
-}
-
-interface ReleaseDraft {
-  description: string;
-  title: string;
+  userVersion: string | null;
   version: string;
 }
 
@@ -32,6 +28,7 @@ export function useAutoSaveRelease({
   organizationId,
   initialReleaseId,
   title,
+  userVersion,
   version,
   description,
 }: UseAutoSaveReleaseOptions): UseAutoSaveReleaseResult {
@@ -44,24 +41,19 @@ export function useAutoSaveRelease({
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const isFirstEditRef = useRef(true);
 
-  const autoSave = useEffectEvent(async (draft: ReleaseDraft) => {
+  const autoSave = useEffectEvent(async () => {
     setSaveStatus("saving");
+    const draft = {
+      description: description.trim() || undefined,
+      title: title.trim() || UNTITLED_RELEASE_TITLE,
+      version: version.trim() || undefined,
+    };
 
     try {
       if (releaseId) {
-        await updateRelease({
-          description: draft.description || undefined,
-          id: releaseId,
-          title: draft.title || "Untitled release",
-          version: draft.version || undefined,
-        });
+        await updateRelease({ ...draft, id: releaseId });
       } else {
-        const newId = await createRelease({
-          description: draft.description || undefined,
-          organizationId,
-          title: draft.title || "Untitled release",
-          version: draft.version || undefined,
-        });
+        const newId = await createRelease({ ...draft, organizationId });
         setReleaseId(newId);
       }
       setSaveStatus("saved");
@@ -82,20 +74,17 @@ export function useAutoSaveRelease({
       return;
     }
 
-    const draft: ReleaseDraft = {
-      description: description.trim(),
-      title: title.trim(),
-      version: version.trim(),
-    };
-
-    if (!(draft.title || draft.description)) {
+    const hasUserContent = Boolean(
+      title.trim() || description.trim() || userVersion?.trim()
+    );
+    if (!hasUserContent) {
       return;
     }
 
-    const timer = setTimeout(() => autoSave(draft), AUTO_SAVE_DEBOUNCE_MS);
+    const timer = setTimeout(() => autoSave(), AUTO_SAVE_DEBOUNCE_MS);
 
     return () => clearTimeout(timer);
-  }, [description, title, version]);
+  }, [description, title, userVersion]);
 
   return { releaseId, saveStatus };
 }
