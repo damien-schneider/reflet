@@ -13,10 +13,6 @@ const openrouter = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY,
 });
 
-/**
- * Suggest feedback items that are related to a release based on its content.
- * Uses AI to match release notes against open feedback.
- */
 export const suggestLinkedFeedback = action({
   args: {
     releaseId: v.id("releases"),
@@ -37,33 +33,32 @@ export const suggestLinkedFeedback = action({
       throw new Error("Not authenticated");
     }
 
+    const organizationId = await ctx.runQuery(
+      internal.changelog.ai_matching_helpers.getReleaseOrganizationId,
+      { releaseId: args.releaseId }
+    );
+    if (!organizationId) {
+      return { suggestions: [] };
+    }
+
+    await ctx.runMutation(internal.ai.usage_gate.consumeAiGenerationForUser, {
+      organizationId,
+      userId: user._id,
+    });
+
     const data = await ctx.runQuery(
       internal.changelog.ai_matching_helpers.getReleaseAndFeedback,
       { releaseId: args.releaseId }
     );
 
-    if (!data) {
+    if (!data || data.feedbackItems.length === 0) {
       return { suggestions: [] };
     }
 
-    const { release, feedbackItems } = data as {
-      release: { title: string; description?: string | null };
-      feedbackItems: {
-        _id: string;
-        title: string;
-        description?: string | null;
-        status: string;
-        voteCount: number;
-      }[];
-    };
-
-    if (feedbackItems.length === 0) {
-      return { suggestions: [] };
-    }
-
+    const { release, feedbackItems } = data;
     const feedbackList = feedbackItems
       .map(
-        (f: { title: string; description?: string | null }, i: number) =>
+        (f, i) =>
           `[${i}] "${f.title}"${f.description ? `: ${f.description.slice(0, 100)}` : ""}`
       )
       .join("\n");
@@ -110,4 +105,14 @@ Response format: [0, 3, 7]`;
       return { suggestions: [] };
     }
   },
+  returns: v.object({
+    suggestions: v.array(
+      v.object({
+        feedbackId: v.string(),
+        status: v.string(),
+        title: v.string(),
+        voteCount: v.number(),
+      })
+    ),
+  }),
 });

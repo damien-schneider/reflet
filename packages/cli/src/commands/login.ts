@@ -7,7 +7,7 @@ import {
   resolveApiUrl,
   writeStoredConfig,
 } from "../config";
-import { SYMBOL, style } from "../render";
+import { SYMBOL, style, terminalSafe } from "../render";
 
 async function askForSecretKey(): Promise<string> {
   const rl = createInterface({ input: process.stdin, output: process.stdout });
@@ -54,7 +54,7 @@ export async function runLogin(argv: string[]): Promise<number> {
     apiUrl: values["api-url"],
   });
   process.stdout.write(
-    `${SYMBOL.tick} Logged in to ${style.bold(organization.name)} ${style.dim(`(${CONFIG_PATH})`)}\n`
+    `${SYMBOL.tick} Logged in to ${style.bold(terminalSafe(organization.name))} ${style.dim(`(${CONFIG_PATH})`)}\n`
   );
   return 0;
 }

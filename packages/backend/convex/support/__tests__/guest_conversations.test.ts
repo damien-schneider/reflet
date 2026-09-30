@@ -5,7 +5,10 @@ import { api } from "../../_generated/api";
 import type { Id } from "../../_generated/dataModel";
 import { setupTest } from "../../test.helpers";
 
-const GUEST = { email: "guest@example.com", id: "guest_abc" };
+const GUEST = {
+  email: "guest@example.com",
+  id: "5f0c2f0e-8a1b-4c7d-9e2f-3a4b5c6d7e8f",
+};
 
 const seedOrg = async (
   t: ReturnType<typeof convexTest>,
@@ -107,7 +110,7 @@ describe("guest support conversations", () => {
     });
     await t.mutation(api.support.conversations.create, {
       guestEmail: "other@example.com",
-      guestId: "guest_other",
+      guestId: "9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d",
       initialMessage: "Theirs",
       organizationId,
     });
@@ -288,5 +291,29 @@ describe("guest support conversations", () => {
     expect(messages[0].isRead).toBe(false);
     expect(messages[0].isOwnMessage).toBe(true);
     expect(messages[0].sender?.email).toBe(GUEST.email);
+  });
+
+  test("keeps guest conversations out of the registered-user namespace", async () => {
+    const organizationId = await seedOrg(t, true);
+
+    await expect(
+      t.mutation(api.support.conversations.create, {
+        guestEmail: GUEST.email,
+        guestId: "victim_user_id",
+        initialMessage: "Planted",
+        organizationId,
+      })
+    ).rejects.toThrow("Invalid guest session");
+
+    const conversationId = await t.mutation(api.support.conversations.create, {
+      guestEmail: GUEST.email,
+      guestId: GUEST.id,
+      initialMessage: "Hello",
+      organizationId,
+    });
+    const conversation = await t.run(
+      async (ctx) => await ctx.db.get(conversationId)
+    );
+    expect(conversation?.userId).toBe(`guest:${GUEST.id}`);
   });
 });

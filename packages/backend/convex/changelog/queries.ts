@@ -1,6 +1,11 @@
 import { v } from "convex/values";
-import type { Id } from "../_generated/dataModel";
+import type { Doc, Id } from "../_generated/dataModel";
 import { type QueryCtx, query } from "../_generated/server";
+import {
+  isFeedbackPubliclyVisible,
+  projectFeedbackFor,
+} from "../feedback/public_projection";
+import { toPublicOrganization } from "../organizations/queries";
 import { isOrgMemberViewer } from "../shared/access";
 import {
   compareSemver,
@@ -11,8 +16,13 @@ import {
 
 async function withLinkedFeedback(
   ctx: QueryCtx,
-  releaseId: Id<"releases">
+  options: {
+    isMember: boolean;
+    org: Doc<"organizations">;
+    releaseId: Id<"releases">;
+  }
 ): Promise<{ _id: Id<"feedback">; status: string; title: string }[]> {
+  const { isMember, org, releaseId } = options;
   const links = await ctx.db
     .query("releaseFeedback")
     .withIndex("by_release", (q) => q.eq("releaseId", releaseId))
@@ -21,7 +31,10 @@ async function withLinkedFeedback(
   const feedback = await Promise.all(
     links.map(async (link) => {
       const item = await ctx.db.get(link.feedbackId);
-      return item
+      const isVisible =
+        item?.organizationId === org._id &&
+        (isMember || isFeedbackPubliclyVisible(org, item));
+      return item && isVisible
         ? { _id: item._id, status: item.status, title: item.title }
         : null;
     })
@@ -78,7 +91,11 @@ export const list = query({
 
     return await Promise.all(
       releases.map(async (release) => {
-        const feedback = await withLinkedFeedback(ctx, release._id);
+        const feedback = await withLinkedFeedback(ctx, {
+          isMember,
+          org,
+          releaseId: release._id,
+        });
 
         let commitCount = 0;
         if (isMember) {
@@ -122,7 +139,10 @@ export const get = query({
     const feedbackItems = await Promise.all(
       links.map(async (link) => {
         const feedback = await ctx.db.get(link.feedbackId);
-        if (!feedback) {
+        const isVisible =
+          feedback?.organizationId === org._id &&
+          (isMember || isFeedbackPubliclyVisible(org, feedback));
+        if (!(feedback && isVisible)) {
           return null;
         }
 
@@ -135,7 +155,10 @@ export const get = query({
           feedbackTags.map((ft) => ctx.db.get(ft.tagId))
         );
 
-        return { ...feedback, tags: tags.filter((tag) => tag !== null) };
+        return {
+          ...projectFeedbackFor(feedback, isMember),
+          tags: tags.filter((tag) => tag !== null),
+        };
       })
     );
 
@@ -143,7 +166,7 @@ export const get = query({
       ...release,
       feedbackItems: feedbackItems.filter((item) => item !== null),
       isMember,
-      organization: org,
+      organization: isMember ? org : toPublicOrganization(org),
     };
   },
 });
@@ -156,9 +179,8 @@ export const listPublished = query({
       return [];
     }
 
-    if (
-      !(org.isPublic || (await isOrgMemberViewer(ctx, args.organizationId)))
-    ) {
+    const isMember = await isOrgMemberViewer(ctx, args.organizationId);
+    if (!(org.isPublic || isMember)) {
       return [];
     }
 
@@ -177,7 +199,11 @@ export const listPublished = query({
       publishedReleases.map(async (release) => ({
         ...release,
         content: release.description || "",
-        feedback: await withLinkedFeedback(ctx, release._id),
+        feedback: await withLinkedFeedback(ctx, {
+          isMember,
+          org,
+          releaseId: release._id,
+        }),
       }))
     );
   },

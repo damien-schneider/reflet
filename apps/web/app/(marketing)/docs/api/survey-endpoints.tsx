@@ -62,8 +62,13 @@ const START_RESPONSE: EndpointDefinition = {
   "respondentId": "visitor_8f2c",
   "pageUrl": "https://app.acme.com/dashboard"
 }`,
-  description:
-    "Start a response. Fails while the survey isn’t active or once it reaches its response cap.",
+  description: (
+    <>
+      Start a response. Fails while the survey isn’t active or once it reaches
+      its response cap. Counts against the{" "}
+      <DocsLink href="#rate-limiting">write rate limit</DocsLink>.
+    </>
+  ),
   id: "start-response",
   method: "POST",
   params: [

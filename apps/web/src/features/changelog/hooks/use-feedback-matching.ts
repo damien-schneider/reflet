@@ -4,6 +4,9 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useState } from "react";
 import type { CommitInfo } from "../components/generate-from-commits";
 
+const MAX_COMMITS_FOR_AI = 100;
+const MAX_FEEDBACK_FOR_AI = 100;
+
 interface FeedbackCandidate {
   _id: Id<"feedback">;
   description?: string;
@@ -32,27 +35,34 @@ interface UseFeedbackMatchingResult {
 }
 
 async function requestMatches(
+  organizationId: Id<"organizations">,
   releaseNotes: string,
-  commits: CommitInfo[],
-  feedbackItems: FeedbackCandidate[]
+  {
+    commits,
+    feedbackItems,
+  }: {
+    commits: CommitInfo[];
+    feedbackItems: FeedbackCandidate[];
+  }
 ): Promise<FeedbackMatch[]> {
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_CONVEX_SITE_URL ?? ""}/api/ai/match-release-feedback`,
     {
       body: JSON.stringify({
-        commits: commits.map((c) => ({
+        commits: commits.slice(0, MAX_COMMITS_FOR_AI).map((c) => ({
           author: c.author,
           fullMessage: c.fullMessage,
           message: c.message,
           sha: c.sha,
         })),
-        feedbackItems: feedbackItems.map((f) => ({
+        feedbackItems: feedbackItems.slice(0, MAX_FEEDBACK_FOR_AI).map((f) => ({
           description: f.description,
           id: f._id,
           status: f.status,
           tags: f.tags.map((t) => t.name),
           title: f.title,
         })),
+        organizationId,
         releaseNotes,
       }),
       headers: { "Content-Type": "application/json" },
@@ -74,7 +84,9 @@ async function requestMatches(
   return data.matches;
 }
 
-export function useFeedbackMatching(): UseFeedbackMatchingResult {
+export function useFeedbackMatching(
+  organizationId: Id<"organizations">
+): UseFeedbackMatchingResult {
   const [matches, setMatches] = useState<FeedbackMatch[]>([]);
   const [isMatching, setIsMatching] = useState(false);
   const [matchError, setMatchError] = useState<string | null>(null);
@@ -96,7 +108,10 @@ export function useFeedbackMatching(): UseFeedbackMatchingResult {
     let result: FeedbackMatch[] = [];
     let failure: unknown = null;
     try {
-      result = await requestMatches(releaseNotes, commits, feedbackItems);
+      result = await requestMatches(organizationId, releaseNotes, {
+        commits,
+        feedbackItems,
+      });
     } catch (error) {
       failure = error;
     }

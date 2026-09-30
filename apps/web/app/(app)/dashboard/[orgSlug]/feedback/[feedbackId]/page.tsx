@@ -35,7 +35,7 @@ export default function FeedbackDetailPage({
     return <FeedbackDetailSkeleton />;
   }
 
-  if (org === null) {
+  if (org === null || org.role === null) {
     return <OrgNotFound />;
   }
 

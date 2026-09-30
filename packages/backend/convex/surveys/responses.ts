@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import type { Doc } from "../_generated/dataModel";
 import { internalMutation, internalQuery } from "../_generated/server";
 import {
   answerValueValidator,
@@ -11,6 +12,14 @@ import {
 
 const STALE_RESPONSE_HOURS = 24;
 const STALE_RESPONSE_BATCH = 200;
+
+const completionPercent = (completed: number, total: number): number =>
+  total > 0 ? Math.round((completed / total) * 100) : 0;
+
+// Surveys created before completedCount existed only stored the rounded rate.
+const completedSoFar = (survey: Doc<"surveys">): number =>
+  survey.completedCount ??
+  Math.round((survey.completionRate * survey.responseCount) / 100);
 
 export const startResponse = internalMutation({
   args: {
@@ -34,6 +43,13 @@ export const startResponse = internalMutation({
     if (survey.maxResponses && survey.responseCount >= survey.maxResponses) {
       throw new Error("Survey has reached maximum responses");
     }
+
+    const responseCount = survey.responseCount + 1;
+    await ctx.db.patch(survey._id, {
+      completionRate: completionPercent(completedSoFar(survey), responseCount),
+      responseCount,
+      updatedAt: Date.now(),
+    });
 
     return await ctx.db.insert("surveyResponses", {
       externalUserId: args.externalUserId,
@@ -109,6 +125,9 @@ export const completeResponse = internalMutation({
     if (!response || response.organizationId !== args.organizationId) {
       throw new Error("Response not found");
     }
+    if (response.status === "completed") {
+      return null;
+    }
 
     await ctx.db.patch(args.responseId, {
       completedAt: Date.now(),
@@ -117,21 +136,12 @@ export const completeResponse = internalMutation({
 
     const survey = await ctx.db.get(response.surveyId);
     if (survey) {
-      const totalResponses = await ctx.db
-        .query("surveyResponses")
-        .withIndex("by_survey", (q) => q.eq("surveyId", response.surveyId))
-        .collect();
-
-      const completedCount = totalResponses.filter(
-        (r) => r.status === "completed"
-      ).length;
-
-      await ctx.db.patch(response.surveyId, {
-        completionRate:
-          totalResponses.length > 0
-            ? Math.round((completedCount / totalResponses.length) * 100)
-            : 0,
-        responseCount: totalResponses.length,
+      const completedCount = completedSoFar(survey) + 1;
+      const responseCount = Math.max(survey.responseCount, completedCount);
+      await ctx.db.patch(survey._id, {
+        completedCount,
+        completionRate: completionPercent(completedCount, responseCount),
+        responseCount,
         updatedAt: Date.now(),
       });
     }

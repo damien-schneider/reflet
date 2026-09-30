@@ -59,7 +59,7 @@ export function ChangelogSettingsTab({
     organizationId: string;
   } | null>(null);
 
-  const settings = org?.changelogSettings;
+  const settings = org?.role ? org.changelogSettings : undefined;
   const isGitHubConnected = githubStatus?.isConnected === true;
   const autoSyncReleases = githubStatus?.autoSyncEnabled === true;
   const isSyncConfigured =

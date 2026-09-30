@@ -1,22 +1,15 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import {
-  internalAction,
   internalMutation,
   internalQuery,
   mutation,
   query,
 } from "../_generated/server";
+import { assertPublicHttpUrl } from "../shared/outbound/public_fetch";
 import { getAuthUser } from "../shared/utils";
 
-// Top-level regex patterns
 const TRAILING_SLASH_REGEX = /\/$/;
-const TITLE_REGEX = /<title[^>]*>([^<]+)<\/title>/i;
-const META_DESC_REGEX =
-  /<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i;
-const SCRIPT_TAG_REGEX = /<script[^>]*>[\s\S]*?<\/script>/gi;
-const STYLE_TAG_REGEX = /<style[^>]*>[\s\S]*?<\/style>/gi;
-const HTML_TAG_REGEX = /<[^>]+>/g;
 
 // ============================================
 // QUERIES
@@ -80,16 +73,7 @@ export const create = mutation({
       throw new Error("Only admins can add website references");
     }
 
-    // Validate URL format
-    let parsedUrl: URL;
-    try {
-      parsedUrl = new URL(args.url);
-      if (!["http:", "https:"].includes(parsedUrl.protocol)) {
-        throw new Error("URL must use http or https protocol");
-      }
-    } catch {
-      throw new Error("Invalid URL format");
-    }
+    const parsedUrl = assertPublicHttpUrl(args.url);
 
     // Normalize URL (remove trailing slash, etc.)
     const normalizedUrl =
@@ -122,7 +106,7 @@ export const create = mutation({
     // Schedule scraping
     await ctx.scheduler.runAfter(
       0,
-      internal.integrations.website_references.scrapeWebsite,
+      internal.integrations.website_reference_scrape.scrapeWebsite,
       {
         referenceId,
       }
@@ -196,7 +180,7 @@ export const refresh = mutation({
     // Schedule scraping
     await ctx.scheduler.runAfter(
       0,
-      internal.integrations.website_references.scrapeWebsite,
+      internal.integrations.website_reference_scrape.scrapeWebsite,
       {
         referenceId: args.id,
       }
@@ -237,106 +221,6 @@ export const updateStatus = internalMutation({
       updatedAt: now,
       ...(status === "success" ? { lastFetchedAt: now } : {}),
     });
-  },
-});
-
-// ============================================
-// ACTIONS
-// ============================================
-
-/**
- * Scrape a website and extract content
- */
-export const scrapeWebsite = internalAction({
-  args: { referenceId: v.id("websiteReferences") },
-  handler: async (ctx, args) => {
-    // Get the reference
-    const reference = await ctx.runQuery(
-      internal.integrations.website_references.getReference,
-      { id: args.referenceId }
-    );
-
-    if (!reference) {
-      return;
-    }
-
-    // Update status to fetching
-    await ctx.runMutation(
-      internal.integrations.website_references.updateStatus,
-      {
-        id: args.referenceId,
-        status: "fetching",
-      }
-    );
-
-    try {
-      // Fetch the webpage
-      const response = await fetch(reference.url, {
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (compatible; RefletBot/1.0; +https://reflet.app)",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const html = await response.text();
-
-      // Extract title
-      const titleMatch = html.match(TITLE_REGEX);
-      const title = titleMatch?.[1]?.trim() || undefined;
-
-      // Extract meta description
-      const descMatch = html.match(META_DESC_REGEX);
-      const description = descMatch?.[1]?.trim() || undefined;
-
-      // Extract main content (simplified)
-      let content = html
-        // Remove scripts and styles
-        .replace(SCRIPT_TAG_REGEX, "")
-        .replace(STYLE_TAG_REGEX, "")
-        // Remove HTML tags
-        .replace(HTML_TAG_REGEX, " ")
-        // Decode HTML entities
-        .replace(/&nbsp;/g, " ")
-        .replace(/&amp;/g, "&")
-        .replace(/&lt;/g, "<")
-        .replace(/&gt;/g, ">")
-        .replace(/&quot;/g, '"')
-        // Clean up whitespace
-        .replace(/\s+/g, " ")
-        .trim();
-
-      // Limit content length
-      const maxLength = 5000;
-      if (content.length > maxLength) {
-        content = `${content.slice(0, maxLength)}...`;
-      }
-
-      // Save the results
-      await ctx.runMutation(
-        internal.integrations.website_references.updateStatus,
-        {
-          description,
-          id: args.referenceId,
-          scrapedContent: content,
-          status: "success",
-          title,
-        }
-      );
-    } catch (error) {
-      await ctx.runMutation(
-        internal.integrations.website_references.updateStatus,
-        {
-          errorMessage:
-            error instanceof Error ? error.message : "Unknown error",
-          id: args.referenceId,
-          status: "error",
-        }
-      );
-    }
   },
 });
 

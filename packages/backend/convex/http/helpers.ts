@@ -35,6 +35,18 @@ export function errorResponse(error: string, status = 400): Response {
   return jsonResponse({ error }, status);
 }
 
+const CONVEX_UNCAUGHT_PREFIX_PATTERN = /^Uncaught \w*Error: /;
+
+/** Keeps the thrown message but drops the stack Convex appends across function boundaries. */
+export function clientErrorMessage(error: unknown): string {
+  const firstLine =
+    error instanceof Error ? (error.message.split("\n")[0] ?? "") : "";
+  return (
+    firstLine.replace(CONVEX_UNCAUGHT_PREFIX_PATTERN, "") ||
+    "Internal server error"
+  );
+}
+
 export function corsPreflightResponse(): Response {
   return new Response(null, { headers: CORS_HEADERS, status: 204 });
 }
@@ -210,10 +222,7 @@ export function adminGet(
       }
       return jsonResponse(data);
     } catch (error) {
-      return errorResponse(
-        error instanceof Error ? error.message : "Internal server error",
-        500
-      );
+      return errorResponse(clientErrorMessage(error), 500);
     }
   });
 }
@@ -240,10 +249,7 @@ export function adminPost(
       const data = await handler(ctx, authResult.auth, bodyResult.body);
       return jsonResponse(data);
     } catch (error) {
-      return errorResponse(
-        error instanceof Error ? error.message : "Internal server error",
-        500
-      );
+      return errorResponse(clientErrorMessage(error), 500);
     }
   });
 }

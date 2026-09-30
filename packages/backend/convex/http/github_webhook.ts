@@ -12,9 +12,13 @@ type Router = ReturnType<typeof httpRouter>;
 
 const webhookInstallationSchema = z.object({ id: z.number() });
 
-const releasePayloadSchema = z.object({
-  action: z.string(),
+const repositoryEventSchema = z.object({
   installation: webhookInstallationSchema,
+  repository: z.object({ full_name: z.string(), id: z.number() }),
+});
+
+const releasePayloadSchema = repositoryEventSchema.extend({
+  action: z.string(),
   release: z.object({
     body: z.string().nullable(),
     created_at: z.string(),
@@ -28,9 +32,8 @@ const releasePayloadSchema = z.object({
   }),
 });
 
-const issuePayloadSchema = z.object({
+const issuePayloadSchema = repositoryEventSchema.extend({
   action: z.string(),
-  installation: webhookInstallationSchema,
   issue: z.object({
     assignees: z.array(z.object({ login: z.string() })),
     body: z.string().nullable(),
@@ -49,9 +52,8 @@ const issuePayloadSchema = z.object({
   }),
 });
 
-const pullRequestPayloadSchema = z.object({
+const pullRequestPayloadSchema = repositoryEventSchema.extend({
   action: z.string(),
-  installation: webhookInstallationSchema,
   pull_request: z.object({
     base: z.object({ ref: z.string() }),
     body: z.string().nullable(),
@@ -72,6 +74,8 @@ const pullRequestPayloadSchema = z.object({
 // ============================================
 
 type WebhookCtx = Parameters<Parameters<typeof httpAction>[0]>[0];
+type RepositoryEvent = z.infer<typeof repositoryEventSchema>;
+type SignatureSource = "app" | "repository";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -82,6 +86,16 @@ function webhookJson(data: unknown, status = 200): Response {
     headers: { "Content-Type": "application/json" },
     status,
   });
+}
+
+function findRepositoryConnection(ctx: WebhookCtx, event: RepositoryEvent) {
+  return ctx.runQuery(
+    internal.integrations.github.queries.getConnectionForRepository,
+    {
+      installationId: String(event.installation.id),
+      repositoryId: String(event.repository.id),
+    }
+  );
 }
 
 async function verifyWebhookSignature(
@@ -119,13 +133,9 @@ async function handleReleaseWebhook(
   ctx: WebhookCtx,
   payload: Record<string, unknown>
 ): Promise<Response> {
-  const { release, action, installation } = releasePayloadSchema.parse(payload);
-  const installationId = String(installation.id);
-
-  const connection = await ctx.runQuery(
-    internal.integrations.github.queries.getConnectionByInstallation,
-    { installationId }
-  );
+  const event = releasePayloadSchema.parse(payload);
+  const { release, action } = event;
+  const connection = await findRepositoryConnection(ctx, event);
 
   if (connection) {
     await ctx.runMutation(
@@ -158,13 +168,9 @@ async function handleIssueWebhook(
   ctx: WebhookCtx,
   payload: Record<string, unknown>
 ): Promise<Response> {
-  const { issue, action, installation } = issuePayloadSchema.parse(payload);
-  const installationId = String(installation.id);
-
-  const connection = await ctx.runQuery(
-    internal.integrations.github.queries.getConnectionByInstallation,
-    { installationId }
-  );
+  const event = issuePayloadSchema.parse(payload);
+  const { issue, action } = event;
+  const connection = await findRepositoryConnection(ctx, event);
 
   if (connection) {
     await ctx.runMutation(
@@ -203,19 +209,14 @@ async function handlePullRequestWebhook(
   ctx: WebhookCtx,
   payload: Record<string, unknown>
 ): Promise<Response> {
-  const { pull_request, action, installation } =
-    pullRequestPayloadSchema.parse(payload);
+  const event = pullRequestPayloadSchema.parse(payload);
+  const { pull_request, action } = event;
 
   if (action !== "closed" || !pull_request.merged) {
     return webhookJson({ action: "pr_ignored", success: true });
   }
 
-  const installationId = String(installation.id);
-
-  const connection = await ctx.runQuery(
-    internal.integrations.github.queries.getConnectionByInstallation,
-    { installationId }
-  );
+  const connection = await findRepositoryConnection(ctx, event);
 
   if (connection) {
     await ctx.runMutation(
@@ -247,42 +248,37 @@ async function handlePullRequestWebhook(
 // SIGNATURE VERIFICATION
 // ============================================
 
-async function isSignatureValid(
+async function verifySignatureSource(
   ctx: WebhookCtx,
   body: string,
   signature: string | null,
   payload: Record<string, unknown>
-): Promise<boolean> {
+): Promise<SignatureSource | null> {
   if (!signature) {
-    return false;
+    return null;
   }
 
   const appSecret = process.env.GITHUB_WEBHOOK_SECRET;
   if (appSecret && (await verifyWebhookSignature(body, signature, appSecret))) {
-    return true;
+    return "app";
   }
 
-  const installation = webhookInstallationSchema.safeParse(
-    payload.installation
-  );
-  if (!installation.success) {
-    return false;
+  const event = repositoryEventSchema.safeParse(payload);
+  if (!event.success) {
+    return null;
   }
 
-  const connection = await ctx.runQuery(
-    internal.integrations.github.queries.getConnectionByInstallation,
-    { installationId: String(installation.data.id) }
-  );
-
+  const connection = await findRepositoryConnection(ctx, event.data);
   if (!connection?.webhookSecret) {
-    return false;
+    return null;
   }
 
-  return await verifyWebhookSignature(
+  const isValid = await verifyWebhookSignature(
     body,
     signature,
     connection.webhookSecret
   );
+  return isValid ? "repository" : null;
 }
 
 // ============================================
@@ -338,8 +334,18 @@ export function registerGithubWebhookRoutes(http: Router): void {
           return webhookJson({ error: "Invalid webhook payload" }, 400);
         }
 
-        if (!(await isSignatureValid(ctx, body, signature, parsed))) {
+        const source = await verifySignatureSource(
+          ctx,
+          body,
+          signature,
+          parsed
+        );
+        if (!source) {
           return webhookJson({ error: "Invalid webhook signature" }, 401);
+        }
+        // A per-repository secret must not unlink every org on the installation.
+        if (eventType === "installation" && source !== "app") {
+          return webhookJson({ event: eventType, success: true });
         }
 
         return await routeWebhookEvent(ctx, eventType, parsed);

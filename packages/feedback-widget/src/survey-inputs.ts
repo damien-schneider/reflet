@@ -1,5 +1,5 @@
-import { escapeHtml } from "./survey-html";
 import type { SurveyQuestion } from "./types";
+import { escapeHtml } from "./widget-utils";
 
 type AnswerValue = string | number | boolean | string[];
 
@@ -79,7 +79,7 @@ export function renderTextInput(
     typeof currentValue === "string" ? escapeHtml(currentValue) : "";
   const charCount = typeof currentValue === "string" ? currentValue.length : 0;
   return `
-    <textarea class="reflet-survey-textarea" placeholder="${placeholder}" maxlength="${maxLength}" data-question="${question._id}" aria-label="${escapeHtml(question.title)}">${value}</textarea>
+    <textarea class="reflet-survey-textarea" placeholder="${placeholder}" maxlength="${maxLength}" data-question="${escapeHtml(question._id)}" aria-label="${escapeHtml(question.title)}">${value}</textarea>
     <div class="reflet-char-count" aria-live="polite">${charCount}/${maxLength}</div>
   `;
 }
@@ -93,7 +93,7 @@ export function renderSingleChoiceInput(
     .map(
       (choice) =>
         `<label class="reflet-choice-item ${currentValue === choice ? "selected" : ""}">
-          <input type="radio" name="q_${question._id}" value="${escapeHtml(choice)}" ${currentValue === choice ? "checked" : ""} />
+          <input type="radio" name="q_${escapeHtml(question._id)}" value="${escapeHtml(choice)}" ${currentValue === choice ? "checked" : ""} />
           <span>${escapeHtml(choice)}</span>
         </label>`
     )
@@ -110,7 +110,7 @@ export function renderMultipleChoiceInput(
     .map(
       (choice) =>
         `<label class="reflet-choice-item ${selectedValues.includes(choice) ? "selected" : ""}">
-          <input type="checkbox" name="q_${question._id}" value="${escapeHtml(choice)}" ${selectedValues.includes(choice) ? "checked" : ""} />
+          <input type="checkbox" name="q_${escapeHtml(question._id)}" value="${escapeHtml(choice)}" ${selectedValues.includes(choice) ? "checked" : ""} />
           <span>${escapeHtml(choice)}</span>
         </label>`
     )

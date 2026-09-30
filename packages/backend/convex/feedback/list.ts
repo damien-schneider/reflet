@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
+import { projectFeedbackFor } from "./public_projection";
 import { isCompletedStatusName } from "./status_utils";
 
 // Helper to sort feedback
@@ -227,7 +228,7 @@ export const listByOrganization = query({
         : null;
 
       return {
-        ...f,
+        ...projectFeedbackFor(f, isMember),
         downvoteCount,
         hasVoted,
         organizationStatus: orgStatus
@@ -360,11 +361,12 @@ export const listForRoadmapByOrganization = query({
             milestoneFeedbackLinks.map(async (mf) => ctx.db.get(mf.milestoneId))
           )
         ).filter(
-          (m): m is NonNullable<typeof m> => m !== null && m !== undefined
+          (m): m is NonNullable<typeof m> =>
+            m !== null && m !== undefined && (isMember || m.isPublic)
         );
 
         return {
-          ...f,
+          ...projectFeedbackFor(f, isMember),
           downvoteCount,
           hasVoted,
           milestones: milestones.map((m) => ({

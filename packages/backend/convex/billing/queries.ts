@@ -12,6 +12,7 @@ export const PLAN_LIMITS = {
     customDomain: false,
     maxFeedback: 100,
     maxMembers: 3,
+    maxMonitors: 10,
     minCheckIntervalMinutes: 5,
     prioritySupport: false,
   },
@@ -21,6 +22,7 @@ export const PLAN_LIMITS = {
     customDomain: true,
     maxFeedback: 5000,
     maxMembers: Number.POSITIVE_INFINITY, // Unlimited
+    maxMonitors: 100,
     minCheckIntervalMinutes: 1,
     prioritySupport: true,
   },
@@ -94,8 +96,6 @@ export const getStatus = query({
     return {
       // Only owner can upgrade/checkout
       canManageBilling: isOwner,
-      // All members can view the billing portal
-      canViewBilling: true,
       isOwner,
       limits,
       status: subscription?.status ?? "none",

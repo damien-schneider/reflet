@@ -288,9 +288,10 @@ export function registerAdminContentRoutes(http: Router): void {
   });
 
   http.route({
-    handler: adminPost(async (ctx, _auth, body) =>
+    handler: adminPost(async (ctx, { organizationId }, body) =>
       ctx.runMutation(internal.admin_api.duplicates.resolveDuplicate, {
         action: requireStr(body.action, "action") as "confirm" | "reject",
+        organizationId,
         pairId: parseId<"duplicatePairs">(str(body.pairId), "pairId"),
         resolvedBy: "api-admin",
       })
@@ -300,9 +301,10 @@ export function registerAdminContentRoutes(http: Router): void {
   });
 
   http.route({
-    handler: adminPost(async (ctx, _auth, body) =>
+    handler: adminPost(async (ctx, { organizationId }, body) =>
       ctx.runMutation(internal.admin_api.duplicates.mergeFeedback, {
         mergedBy: "api-admin",
+        organizationId,
         pairId: body.pairId
           ? parseId<"duplicatePairs">(str(body.pairId), "pairId")
           : undefined,

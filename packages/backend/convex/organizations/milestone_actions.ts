@@ -71,15 +71,12 @@ export const reorder = mutation({
     }
 
     const now = Date.now();
-    for (let i = 0; i < args.milestoneIds.length; i++) {
-      const milestoneId = args.milestoneIds[i];
-      if (!milestoneId) {
-        continue;
+    for (const [order, milestoneId] of args.milestoneIds.entries()) {
+      const milestone = await ctx.db.get(milestoneId);
+      if (milestone?.organizationId !== first.organizationId) {
+        throw new Error("Milestone not found");
       }
-      await ctx.db.patch(milestoneId, {
-        order: i,
-        updatedAt: now,
-      });
+      await ctx.db.patch(milestoneId, { order, updatedAt: now });
     }
 
     return true;
@@ -108,6 +105,11 @@ export const addFeedback = mutation({
 
     if (!membership || membership.role === "member") {
       throw new Error("Only admins can link feedback to milestones");
+    }
+
+    const feedback = await ctx.db.get(args.feedbackId);
+    if (feedback?.organizationId !== milestone.organizationId) {
+      throw new Error("Feedback not found");
     }
 
     // Check for duplicates

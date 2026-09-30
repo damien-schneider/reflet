@@ -1,5 +1,14 @@
 import { v } from "convex/values";
+import type { Doc, Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
+
+/** Org-wide incidents (no monitors) are announcements; others need a public monitor. */
+const isPublicIncident = (
+  incident: Doc<"statusIncidents">,
+  publicMonitorIds: Set<Id<"statusMonitors">>
+): boolean =>
+  incident.affectedMonitorIds.length === 0 ||
+  incident.affectedMonitorIds.some((id) => publicMonitorIds.has(id));
 
 // ============================================
 // PUBLIC QUERIES (no auth required)
@@ -34,7 +43,12 @@ export const getPublicStatus = query({
       .withIndex("by_org_status", (q) => q.eq("organizationId", org._id))
       .collect();
 
-    const activeIncidents = allIncidents.filter((i) => i.status !== "resolved");
+    const publicMonitorIds = new Set(
+      monitors.filter((m) => m.isPublic).map((m) => m._id)
+    );
+    const activeIncidents = allIncidents.filter(
+      (i) => i.status !== "resolved" && isPublicIncident(i, publicMonitorIds)
+    );
 
     // Get updates for active incidents
     const activeWithUpdates = await Promise.all(
@@ -157,14 +171,18 @@ export const getPublicIncidentHistory = query({
       )
       .collect();
 
-    const resolved = incidents.filter((i) => i.status === "resolved");
-
     const monitors = await ctx.db
       .query("statusMonitors")
       .withIndex("by_organization", (q) => q.eq("organizationId", org._id))
       .collect();
 
-    const monitorNameMap = new Map(monitors.map((m) => [m._id, m.name]));
+    const monitorNameMap = new Map(
+      monitors.filter((m) => m.isPublic).map((m) => [m._id, m.name])
+    );
+    const publicMonitorIds = new Set(monitorNameMap.keys());
+    const resolved = incidents.filter(
+      (i) => i.status === "resolved" && isPublicIncident(i, publicMonitorIds)
+    );
 
     const withUpdates = await Promise.all(
       resolved.map(async (incident) => {

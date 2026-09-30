@@ -121,6 +121,7 @@ export function AcceptInvitationContent({
 
   return (
     <PendingInvitation
+      email={invitation.email}
       organizationName={invitation.organizationName}
       role={invitation.role}
       token={token}
@@ -129,10 +130,12 @@ export function AcceptInvitationContent({
 }
 
 function PendingInvitation({
+  email,
   organizationName,
   role,
   token,
 }: {
+  email: string;
   organizationName: string;
   role: string;
   token: string;
@@ -163,7 +166,8 @@ function PendingInvitation({
       description={
         <>
           You’ve been invited to join <strong>{organizationName}</strong> as{" "}
-          {role === "admin" ? "an admin" : "a member"}.
+          {role === "admin" ? "an admin" : "a member"}. This invitation is for{" "}
+          <strong>{email}</strong>.
         </>
       }
       icon={<UsersThree aria-hidden className="size-6" />}
@@ -198,7 +202,7 @@ function PendingInvitation({
       ) : (
         <div className="flex w-full flex-col gap-4">
           <p className="text-body text-muted-foreground">
-            Sign in or create an account to accept this invitation.
+            Sign in or create an account with {email} to accept this invitation.
           </p>
           <UnifiedAuthForm />
         </div>

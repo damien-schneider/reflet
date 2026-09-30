@@ -194,8 +194,9 @@ function PublishEffects({
     { organizationId }
   );
 
-  const pushToGithub =
-    orgData?.changelogSettings?.pushToGithubOnPublish === true;
+  const pushToGithub = Boolean(
+    orgData?.role && orgData.changelogSettings?.pushToGithubOnPublish
+  );
   const hasGithub = githubStatus?.isConnected && githubStatus?.hasRepository;
   const willMoveFeedback =
     linkedFeedbackCount > 0 && feedbackLinkStatus !== "keep";

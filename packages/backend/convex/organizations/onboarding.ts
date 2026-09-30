@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { mutation, query } from "../_generated/server";
-import { getAuthUser } from "../shared/utils";
+import { requireOrgMember } from "../shared/access";
 
 const ONBOARDING_STEPS = [
   "boardCreated",
@@ -80,7 +80,7 @@ const stepsValidator = v.object({
 export const getProgress = query({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const { user } = await requireOrgMember(ctx, args.organizationId);
 
     const progress = await ctx.db
       .query("onboardingProgress")
@@ -133,7 +133,7 @@ export const getProgress = query({
 export const syncAutoDetectedProgress = mutation({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const { user } = await requireOrgMember(ctx, args.organizationId);
 
     const detected = await detectStepsFromOrgData(ctx, args.organizationId);
 
@@ -208,7 +208,7 @@ export const completeStep = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const { user } = await requireOrgMember(ctx, args.organizationId);
 
     const progress = await ctx.db
       .query("onboardingProgress")
@@ -250,7 +250,7 @@ export const completeStep = mutation({
 export const dismiss = mutation({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const { user } = await requireOrgMember(ctx, args.organizationId);
 
     const progress = await ctx.db
       .query("onboardingProgress")

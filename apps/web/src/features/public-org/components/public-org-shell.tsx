@@ -9,7 +9,7 @@ import {
   Chat as MessageSquare,
 } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
-import type { Doc } from "@reflet/backend/convex/_generated/dataModel";
+import type { PublicOrganization } from "@reflet/backend/convex/organizations/queries";
 import { env } from "@reflet/env/web";
 import { useQuery } from "convex/react";
 import Image from "next/image";
@@ -76,7 +76,7 @@ function MobileNavLink({
 interface PublicOrgShellProps {
   basePath: string;
   children: React.ReactNode;
-  org: Doc<"organizations">;
+  org: PublicOrganization;
   orgSlug: string;
 }
 

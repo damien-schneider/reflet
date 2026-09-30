@@ -1,8 +1,11 @@
 import { v } from "convex/values";
+import type { Doc, Id } from "../_generated/dataModel";
 import {
   internalMutation,
   internalQuery,
+  type MutationCtx,
   mutation,
+  type QueryCtx,
   query,
 } from "../_generated/server";
 import {
@@ -14,6 +17,89 @@ import {
   captureSourceValidator,
   screenshotAnnotationValidator,
 } from "./tableFields";
+
+const MAX_SCREENSHOT_BYTES = 10 * 1024 * 1024;
+const ATTACH_WINDOW_MS = 30 * 60 * 1000;
+const MAX_PUBLIC_SCREENSHOTS_PER_FEEDBACK = 10;
+const SCREENSHOT_CONTENT_TYPES: Record<string, true> = {
+  "image/avif": true,
+  "image/gif": true,
+  "image/jpeg": true,
+  "image/png": true,
+  "image/webp": true,
+};
+
+async function isStorageAttached(
+  ctx: QueryCtx,
+  storageId: Id<"_storage">
+): Promise<boolean> {
+  const asOriginal = await ctx.db
+    .query("feedbackScreenshots")
+    .withIndex("by_storage", (q) => q.eq("storageId", storageId))
+    .first();
+  if (asOriginal) {
+    return true;
+  }
+  const asAnnotated = await ctx.db
+    .query("feedbackScreenshots")
+    .withIndex("by_annotated_storage", (q) =>
+      q.eq("annotatedStorageId", storageId)
+    )
+    .first();
+  return asAnnotated !== null;
+}
+
+// Storage is shared across tenants: only accept a just-uploaded, unattached image.
+async function requireFreshImageUpload(
+  ctx: MutationCtx,
+  storageId: Id<"_storage">
+): Promise<{ contentType: string; size: number }> {
+  const file = await ctx.db.system.get(storageId);
+  if (
+    !file ||
+    Date.now() - file._creationTime > ATTACH_WINDOW_MS ||
+    (await isStorageAttached(ctx, storageId))
+  ) {
+    throw new Error("Upload not found");
+  }
+  const contentType = file.contentType ?? "";
+  if (!SCREENSHOT_CONTENT_TYPES[contentType]) {
+    throw new Error("Screenshots must be PNG, JPEG, WebP, GIF or AVIF images");
+  }
+  if (file.size > MAX_SCREENSHOT_BYTES) {
+    throw new Error("Screenshots must be 10 MB or smaller");
+  }
+  return { contentType, size: file.size };
+}
+
+async function requirePublicScreenshotSlot(
+  ctx: MutationCtx,
+  feedbackId: Id<"feedback">
+): Promise<void> {
+  const attached = await ctx.db
+    .query("feedbackScreenshots")
+    .withIndex("by_feedback", (q) => q.eq("feedbackId", feedbackId))
+    .take(MAX_PUBLIC_SCREENSHOTS_PER_FEEDBACK);
+  if (attached.length >= MAX_PUBLIC_SCREENSHOTS_PER_FEEDBACK) {
+    throw new Error("This feedback already has the maximum screenshots");
+  }
+}
+
+export async function deleteScreenshotRecord(
+  ctx: MutationCtx,
+  screenshot: Doc<"feedbackScreenshots">
+): Promise<void> {
+  await ctx.db.delete(screenshot._id);
+  const storageIds = new Set([screenshot.storageId]);
+  if (screenshot.annotatedStorageId) {
+    storageIds.add(screenshot.annotatedStorageId);
+  }
+  for (const storageId of storageIds) {
+    if (!(await isStorageAttached(ctx, storageId))) {
+      await ctx.storage.delete(storageId);
+    }
+  }
+}
 
 export const generateUploadUrl = mutation({
   args: {},
@@ -50,6 +136,7 @@ export const saveScreenshot = mutation({
     }
 
     const { user } = await requireOrgMember(ctx, feedback.organizationId);
+    const upload = await requireFreshImageUpload(ctx, args.storageId);
 
     return await ctx.db.insert("feedbackScreenshots", {
       annotations: args.annotations,
@@ -58,10 +145,10 @@ export const saveScreenshot = mutation({
       feedbackId: args.feedbackId,
       filename: args.filename,
       height: args.height,
-      mimeType: args.mimeType,
+      mimeType: upload.contentType,
       organizationId: feedback.organizationId,
       pageUrl: args.pageUrl,
-      size: args.size,
+      size: upload.size,
       storageId: args.storageId,
       uploadedBy: user._id,
       width: args.width,
@@ -79,10 +166,9 @@ export const saveScreenshotPublic = internalMutation({
     feedbackId: v.id("feedback"),
     filename: v.string(),
     height: v.optional(v.number()),
-    mimeType: v.string(),
     organizationId: v.id("organizations"),
     pageUrl: v.optional(v.string()),
-    size: v.number(),
+    requireReporter: v.boolean(),
     storageId: v.id("_storage"),
     width: v.optional(v.number()),
   },
@@ -92,15 +178,32 @@ export const saveScreenshotPublic = internalMutation({
       throw new Error("Feedback not found");
     }
 
+    const isFreshReport =
+      feedback.externalUserId === args.externalUserId &&
+      Date.now() - feedback._creationTime <= ATTACH_WINDOW_MS;
+    if (args.requireReporter && !isFreshReport) {
+      throw new Error(
+        "Screenshots can only be attached by the reporter right after submitting"
+      );
+    }
+
     const existing = await ctx.db
       .query("feedbackScreenshots")
-      .withIndex("by_feedback", (query) =>
-        query.eq("feedbackId", args.feedbackId)
-      )
-      .filter((query) => query.eq(query.field("storageId"), args.storageId))
-      .unique();
-    if (existing) {
+      .withIndex("by_storage", (q) => q.eq("storageId", args.storageId))
+      .first();
+    if (existing?.feedbackId === args.feedbackId) {
       return existing._id;
+    }
+
+    if (args.requireReporter) {
+      await requirePublicScreenshotSlot(ctx, args.feedbackId);
+    }
+    if (args.annotatedStorageId === args.storageId) {
+      throw new Error("The annotated image must be a separate upload");
+    }
+    const upload = await requireFreshImageUpload(ctx, args.storageId);
+    if (args.annotatedStorageId) {
+      await requireFreshImageUpload(ctx, args.annotatedStorageId);
     }
 
     return await ctx.db.insert("feedbackScreenshots", {
@@ -112,39 +215,15 @@ export const saveScreenshotPublic = internalMutation({
       feedbackId: args.feedbackId,
       filename: args.filename,
       height: args.height,
-      mimeType: args.mimeType,
+      mimeType: upload.contentType,
       organizationId: feedback.organizationId,
       pageUrl: args.pageUrl,
-      size: args.size,
+      size: upload.size,
       storageId: args.storageId,
       width: args.width,
     });
   },
   returns: v.id("feedbackScreenshots"),
-});
-
-export const updateAnnotations = mutation({
-  args: {
-    annotatedStorageId: v.optional(v.id("_storage")),
-    annotations: v.array(screenshotAnnotationValidator),
-    screenshotId: v.id("feedbackScreenshots"),
-  },
-  handler: async (ctx, args) => {
-    const screenshot = await ctx.db.get(args.screenshotId);
-    if (!screenshot) {
-      throw new Error("Screenshot not found");
-    }
-
-    await requireOrgMember(ctx, screenshot.organizationId);
-
-    await ctx.db.patch(args.screenshotId, {
-      annotatedStorageId: args.annotatedStorageId,
-      annotations: args.annotations,
-    });
-
-    return null;
-  },
-  returns: v.null(),
 });
 
 export const getByFeedback = query({
@@ -178,7 +257,6 @@ export const getByFeedback = query({
     return await Promise.all(
       screenshots.map(async (s) => ({
         _id: s._id,
-        annotatedStorageId: s.annotatedStorageId,
         annotatedUrl: s.annotatedStorageId
           ? await ctx.storage.getUrl(s.annotatedStorageId)
           : null,
@@ -190,7 +268,6 @@ export const getByFeedback = query({
         mimeType: s.mimeType,
         pageUrl: s.pageUrl,
         size: s.size,
-        storageId: s.storageId,
         url: await ctx.storage.getUrl(s.storageId),
         width: s.width,
       }))
@@ -199,7 +276,6 @@ export const getByFeedback = query({
   returns: v.array(
     v.object({
       _id: v.id("feedbackScreenshots"),
-      annotatedStorageId: v.optional(v.id("_storage")),
       annotatedUrl: v.union(v.string(), v.null()),
       annotations: v.optional(v.array(screenshotAnnotationValidator)),
       captureSource: captureSourceValidator,
@@ -209,7 +285,6 @@ export const getByFeedback = query({
       mimeType: v.string(),
       pageUrl: v.optional(v.string()),
       size: v.number(),
-      storageId: v.id("_storage"),
       url: v.union(v.string(), v.null()),
       width: v.optional(v.number()),
     })
@@ -260,13 +335,7 @@ export const deleteScreenshot = mutation({
     }
 
     await requireOrgMember(ctx, screenshot.organizationId);
-
-    await ctx.storage.delete(screenshot.storageId);
-    if (screenshot.annotatedStorageId) {
-      await ctx.storage.delete(screenshot.annotatedStorageId);
-    }
-
-    await ctx.db.delete(args.screenshotId);
+    await deleteScreenshotRecord(ctx, screenshot);
 
     return null;
   },

@@ -1,20 +1,16 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { mutation, query } from "../_generated/server";
+import { MAX_TITLE_LENGTH } from "../shared/constants";
+import { assertPublicHttpUrl } from "../shared/outbound/public_fetch";
+import { rateLimiter } from "../shared/rate_limits";
 import { getAuthUser } from "../shared/utils";
+import { validateInputLength } from "../shared/validators";
 
-const validateUrl = (url: string): string => {
-  let parsedUrl: URL;
-  try {
-    parsedUrl = new URL(url);
-    if (!["http:", "https:"].includes(parsedUrl.protocol)) {
-      throw new Error("URL must use http or https protocol");
-    }
-  } catch {
-    throw new Error("Invalid URL format");
-  }
-  return parsedUrl.href;
-};
+const MAX_COMPETITORS_PER_ORG = 20;
+const MAX_COMPETITOR_DESCRIPTION_LENGTH = 2000;
+
+const validateUrl = (url: string): string => assertPublicHttpUrl(url).href;
 
 /**
  * List all competitors for an organization
@@ -105,7 +101,13 @@ export const create = mutation({
       throw new Error("Only admins can add competitors");
     }
 
-    // Validate URL format
+    validateInputLength(args.name, MAX_TITLE_LENGTH, "Name");
+    validateInputLength(
+      args.description,
+      MAX_COMPETITOR_DESCRIPTION_LENGTH,
+      "Description"
+    );
+
     const websiteUrl = validateUrl(args.websiteUrl);
 
     const changelogUrl = args.changelogUrl
@@ -118,6 +120,23 @@ export const create = mutation({
     const featuresUrl = args.featuresUrl
       ? validateUrl(args.featuresUrl)
       : undefined;
+
+    const existing = await ctx.db
+      .query("competitors")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .take(MAX_COMPETITORS_PER_ORG);
+    if (existing.length >= MAX_COMPETITORS_PER_ORG) {
+      throw new Error(
+        `You can track up to ${MAX_COMPETITORS_PER_ORG} competitors. Remove one to add another.`
+      );
+    }
+
+    await rateLimiter.limit(ctx, "competitorScrapePerOrg", {
+      key: args.organizationId,
+      throws: true,
+    });
 
     const now = Date.now();
 
@@ -180,10 +199,16 @@ export const update = mutation({
       throw new Error("Only admins can update competitors");
     }
 
+    validateInputLength(args.name, MAX_TITLE_LENGTH, "Name");
+    validateInputLength(
+      args.description,
+      MAX_COMPETITOR_DESCRIPTION_LENGTH,
+      "Description"
+    );
+
     const updates: Record<string, unknown> = {
       updatedAt: Date.now(),
     };
-
     if (args.name !== undefined) {
       updates.name = args.name;
     }

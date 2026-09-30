@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 // Top-level regex patterns
-const TITLE_REGEX = /<title[^>]*>([^<]+)<\/title>/i;
 const SCRIPT_TAG_REGEX = /<script[^>]*>[\s\S]*?<\/script>/gi;
 const STYLE_TAG_REGEX = /<style[^>]*>[\s\S]*?<\/style>/gi;
 const HTML_TAG_REGEX = /<[^>]+>/g;
@@ -103,7 +102,7 @@ export const extractSection = (content: string, key: string): string => {
 /**
  * Extract text content from HTML, stripping tags, scripts, and styles
  */
-const extractTextFromHtml = (html: string): string => {
+export const extractTextFromHtml = (html: string): string => {
   let content = html
     .replace(SCRIPT_TAG_REGEX, "")
     .replace(STYLE_TAG_REGEX, "")
@@ -121,29 +120,4 @@ const extractTextFromHtml = (html: string): string => {
   }
 
   return content;
-};
-
-/**
- * Fetch a URL and return the extracted text content
- */
-export const fetchAndExtract = async (
-  url: string
-): Promise<{ content: string; title?: string }> => {
-  const response = await fetch(url, {
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (compatible; RefletBot/1.0; +https://reflet.app)",
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-  }
-
-  const html = await response.text();
-  const titleMatch = html.match(TITLE_REGEX);
-  const title = titleMatch?.[1]?.trim() || undefined;
-  const content = extractTextFromHtml(html);
-
-  return { content, title };
 };

@@ -1,17 +1,17 @@
-import { v } from "convex/values";
+import { type Infer, v } from "convex/values";
 import { components } from "../_generated/api";
 import { mutation, query } from "../_generated/server";
-import { MAX_SUPPORT_MESSAGE_LENGTH } from "../shared/constants";
+import {
+  MAX_SUPPORT_MESSAGE_LENGTH,
+  MAX_URL_LENGTH,
+  MAX_USER_AGENT_LENGTH,
+  MAX_VISITOR_ID_LENGTH,
+} from "../shared/constants";
+import { randomSecretHex } from "../shared/hmac";
+import { rateLimiter } from "../shared/rate_limits";
 import { validateInputLength } from "../shared/validators";
 
-function generateVisitorId(): string {
-  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-  let result = "v_";
-  for (let i = 0; i < 12; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
-}
+const VISITOR_ID_RANDOM_BYTES = 12;
 
 export const getConfig = query({
   args: {
@@ -64,19 +64,32 @@ export const getConfig = query({
   },
 });
 
+const conversationMetadataValidator = v.object({
+  referrer: v.optional(v.string()),
+  url: v.optional(v.string()),
+  userAgent: v.optional(v.string()),
+});
+
+function clipMetadata(
+  metadata: Infer<typeof conversationMetadataValidator>
+): Infer<typeof conversationMetadataValidator> {
+  return {
+    referrer: metadata.referrer?.slice(0, MAX_URL_LENGTH),
+    url: metadata.url?.slice(0, MAX_URL_LENGTH),
+    userAgent: metadata.userAgent?.slice(0, MAX_USER_AGENT_LENGTH),
+  };
+}
+
 export const getOrCreateConversation = mutation({
   args: {
-    metadata: v.optional(
-      v.object({
-        referrer: v.optional(v.string()),
-        url: v.optional(v.string()),
-        userAgent: v.optional(v.string()),
-      })
-    ),
+    metadata: v.optional(conversationMetadataValidator),
     visitorId: v.string(),
     widgetId: v.string(),
   },
   handler: async (ctx, args) => {
+    validateInputLength(args.visitorId, MAX_VISITOR_ID_LENGTH, "Visitor ID");
+    const metadata = args.metadata && clipMetadata(args.metadata);
+
     const widget = await ctx.db
       .query("widgets")
       .withIndex("by_widget_id", (q) => q.eq("widgetId", args.widgetId))
@@ -96,7 +109,7 @@ export const getOrCreateConversation = mutation({
     if (existingWidgetConv) {
       await ctx.db.patch(existingWidgetConv._id, {
         lastSeenAt: Date.now(),
-        metadata: args.metadata ?? existingWidgetConv.metadata,
+        metadata: metadata ?? existingWidgetConv.metadata,
       });
 
       return {
@@ -107,7 +120,17 @@ export const getOrCreateConversation = mutation({
     }
 
     const now = Date.now();
-    const visitorId = args.visitorId || generateVisitorId();
+    const visitorId =
+      args.visitorId || `v_${randomSecretHex(VISITOR_ID_RANDOM_BYTES)}`;
+
+    await rateLimiter.limit(ctx, "widgetConversationPerVisitor", {
+      key: `${widget._id}:${visitorId}`,
+      throws: true,
+    });
+    await rateLimiter.limit(ctx, "widgetConversationPerWidget", {
+      key: widget._id,
+      throws: true,
+    });
 
     const conversationId = await ctx.db.insert("supportConversations", {
       adminUnreadCount: 0,
@@ -126,7 +149,7 @@ export const getOrCreateConversation = mutation({
       conversationId,
       createdAt: now,
       lastSeenAt: now,
-      metadata: args.metadata,
+      metadata,
       visitorId,
       widgetId: widget._id,
     });
@@ -148,6 +171,7 @@ export const sendMessage = mutation({
   },
   handler: async (ctx, args) => {
     validateInputLength(args.body, MAX_SUPPORT_MESSAGE_LENGTH, "Message");
+    validateInputLength(args.visitorId, MAX_VISITOR_ID_LENGTH, "Visitor ID");
 
     const widget = await ctx.db
       .query("widgets")
@@ -173,6 +197,14 @@ export const sendMessage = mutation({
     if (!conversation) {
       throw new Error("Conversation not found");
     }
+    await rateLimiter.limit(ctx, "widgetMessagePerVisitor", {
+      key: `${widget._id}:${args.visitorId}`,
+      throws: true,
+    });
+    await rateLimiter.limit(ctx, "widgetMessagePerWidget", {
+      key: widget._id,
+      throws: true,
+    });
 
     const now = Date.now();
 

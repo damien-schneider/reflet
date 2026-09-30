@@ -1,12 +1,16 @@
 /**
  * User-facing actions for the GitHub integration.
  * Called directly from the React client via useAction().
- * Auth is verified by calling getConnection (which checks org membership).
+ * Reads check org membership via getConnection; writes require an org admin.
  */
 import { v } from "convex/values";
 import { api, internal } from "../../_generated/api";
+import type { Doc, Id } from "../../_generated/dataModel";
+import type { ActionCtx } from "../../_generated/server";
 import { action } from "../../_generated/server";
+import { authComponent } from "../../auth/auth";
 import { randomSecretHex } from "../../shared/hmac";
+import { isOrgAdmin } from "../../shared/membership";
 import type { GithubIssueRef } from "./issue_promote";
 import { isRepositoryAccessible } from "./user_access";
 
@@ -24,6 +28,36 @@ interface Label {
   description: string | null;
   id: string;
   name: string;
+}
+
+async function requireAdminConnection(
+  ctx: ActionCtx,
+  organizationId: Id<"organizations">
+): Promise<Doc<"githubConnections"> & { repositoryFullName: string }> {
+  const user = await authComponent.safeGetAuthUser(ctx);
+  if (!user) {
+    throw new Error("Not authenticated");
+  }
+  const membership = await ctx.runQuery(
+    internal.shared.access.membershipForUser,
+    { organizationId, userId: user._id }
+  );
+  if (!isOrgAdmin(membership?.role)) {
+    throw new Error("Only admins can manage the GitHub integration");
+  }
+
+  const connection = await ctx.runQuery(
+    internal.integrations.github.queries.getConnectionInternal,
+    { organizationId }
+  );
+  if (!connection) {
+    throw new Error("No GitHub connection found");
+  }
+  const { repositoryFullName } = connection;
+  if (!repositoryFullName) {
+    throw new Error("No repository connected");
+  }
+  return { ...connection, repositoryFullName };
 }
 
 /**
@@ -118,18 +152,7 @@ export const syncReleases = action({
     organizationId: v.id("organizations"),
   },
   handler: async (ctx, args): Promise<{ success: boolean; synced: number }> => {
-    const connection = await ctx.runQuery(
-      api.integrations.github.queries.getConnection,
-      { organizationId: args.organizationId }
-    );
-
-    if (!connection) {
-      throw new Error("No GitHub connection found");
-    }
-
-    if (!connection.repositoryFullName) {
-      throw new Error("No repository connected");
-    }
+    const connection = await requireAdminConnection(ctx, args.organizationId);
 
     await ctx.runMutation(
       internal.integrations.github.release_mutations.updateSyncStatus,
@@ -188,18 +211,7 @@ export const syncIssues = action({
     ctx,
     args
   ): Promise<{ success: boolean; synced: number; imported: number }> => {
-    const connection = await ctx.runQuery(
-      api.integrations.github.queries.getConnection,
-      { organizationId: args.organizationId }
-    );
-
-    if (!connection) {
-      throw new Error("No GitHub connection found");
-    }
-
-    if (!connection.repositoryFullName) {
-      throw new Error("No repository connected");
-    }
+    const connection = await requireAdminConnection(ctx, args.organizationId);
 
     await ctx.runMutation(
       internal.integrations.github.issue_sync.updateIssuesSyncStatus,
@@ -265,18 +277,7 @@ export const setupWebhook = action({
     ctx,
     args
   ): Promise<{ success: boolean; webhook: { id: string } }> => {
-    const connection = await ctx.runQuery(
-      api.integrations.github.queries.getConnection,
-      { organizationId: args.organizationId }
-    );
-
-    if (!connection) {
-      throw new Error("No GitHub connection found");
-    }
-
-    if (!connection.repositoryFullName) {
-      throw new Error("No repository connected");
-    }
+    const connection = await requireAdminConnection(ctx, args.organizationId);
 
     if (connection.webhookId) {
       return { success: true, webhook: { id: connection.webhookId } };
@@ -302,11 +303,14 @@ export const setupWebhook = action({
       }
     );
 
-    await ctx.runMutation(api.integrations.github.mutations.updateWebhook, {
-      organizationId: args.organizationId,
-      webhookId: webhookResult.webhookId,
-      webhookSecret,
-    });
+    await ctx.runMutation(
+      internal.integrations.github.mutations.updateWebhook,
+      {
+        connectionId: connection._id,
+        webhookId: webhookResult.webhookId,
+        webhookSecret,
+      }
+    );
 
     return { success: true, webhook: { id: webhookResult.webhookId } };
   },

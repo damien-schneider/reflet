@@ -1,8 +1,8 @@
 import type { FeedbackApi } from "./api";
-import { escapeHtml } from "./survey-html";
 import { renderQuestionInput } from "./survey-inputs";
 import { renderComplete, renderError } from "./survey-screens";
 import type { SurveyCallbacks, SurveyData, SurveyQuestion } from "./types";
+import { escapeHtml } from "./widget-utils";
 
 type AnswerValue = string | number | boolean | string[];
 

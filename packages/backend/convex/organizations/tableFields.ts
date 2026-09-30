@@ -132,6 +132,7 @@ export const organizationTables = {
     createdAt: v.number(),
     customCss: v.optional(v.string()),
     customDomain: v.optional(v.string()),
+    customDomainChallengeToken: v.optional(v.string()),
     customDomainError: v.optional(v.string()),
     customDomainLastCheckedAt: v.optional(v.number()),
     customDomainStatus: v.optional(domainStatus),
@@ -195,6 +196,7 @@ export const organizationTables = {
     supportEnabled: v.optional(v.boolean()),
   })
     .index("by_slug", ["slug"])
+    .index("by_public", ["isPublic"])
     .index("by_custom_domain", ["customDomain"])
     .index("by_stripe_customer", ["stripeCustomerId"])
     .searchIndex("search_name", { searchField: "name" }),

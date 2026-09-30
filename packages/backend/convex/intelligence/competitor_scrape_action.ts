@@ -1,20 +1,44 @@
+"use node";
+
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { type ActionCtx, internalAction } from "../_generated/server";
+import { describeFetchFailure } from "../shared/outbound/public_fetch";
+import { fetchPublicUrlPinned } from "../shared/outbound/public_fetch_node";
 import {
   buildUrlEntries,
   EXTRACTION_MODELS,
   extractSection,
+  extractTextFromHtml,
   type FeatureExtractionResponse,
   featureExtractionSchema,
-  fetchAndExtract,
   PROFILE_MODEL,
   type ProfileResponse,
   profileSchema,
   type UrlEntry,
 } from "./competitor_scrape";
 import { generateStructured } from "./structured_output";
+
+const MAX_HTML_BYTES = 1_000_000;
+const FETCH_TIMEOUT_MS = 15_000;
+
+class HttpStatusError extends Error {}
+
+const fetchPageText = async (url: string): Promise<string> => {
+  const response = await fetchPublicUrlPinned(url, {
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (compatible; RefletBot/1.0; +https://reflet.app)",
+    },
+    maxBytes: MAX_HTML_BYTES,
+    timeoutMs: FETCH_TIMEOUT_MS,
+  });
+  if (!response.ok) {
+    throw new HttpStatusError(`HTTP ${response.status}`);
+  }
+  return extractTextFromHtml(response.text);
+};
 
 /**
  * Scrape all URLs and return content map with stats
@@ -34,11 +58,13 @@ const scrapeAllUrls = async (
 
   for (const entry of urlEntries) {
     try {
-      const { content } = await fetchAndExtract(entry.url);
-      scrapedContent[entry.key] = content;
+      scrapedContent[entry.key] = await fetchPageText(entry.url);
       processed++;
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Fetch failed";
+      const message =
+        error instanceof HttpStatusError
+          ? error.message
+          : describeFetchFailure(error);
       errorMessages.push(`${entry.key} (${entry.url}): ${message}`);
       errors++;
     }

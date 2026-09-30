@@ -1,4 +1,4 @@
-import { DEFAULT_STATUS_COLOR } from "./color-utils";
+import { chipColor } from "./color-utils";
 import {
   backIcon,
   closeIcon,
@@ -158,16 +158,16 @@ function renderFeedbackCardHTML(
   item: FeedbackItem,
   features: WidgetConfig["features"]
 ): string {
-  const statusColor = item.boardStatus?.color ?? DEFAULT_STATUS_COLOR;
+  const statusColor = chipColor(item.boardStatus?.color);
 
   return `
     <div class="reflet-feedback-card">
-      <button class="reflet-feedback-open" data-feedback-id="${item.id}" type="button" aria-label="${escapeHtml(item.title)}"></button>
+      <button class="reflet-feedback-open" data-feedback-id="${escapeHtml(item.id)}" type="button" aria-label="${escapeHtml(item.title)}"></button>
       <div class="reflet-feedback-row">
         ${
           features?.voting
             ? `
-          <button class="reflet-vote-btn ${item.hasVoted ? "voted" : ""}" data-vote-id="${item.id}" type="button" aria-label="Upvote">
+          <button class="reflet-vote-btn ${item.hasVoted ? "voted" : ""}" data-vote-id="${escapeHtml(item.id)}" type="button" aria-label="Upvote">
             <span class="reflet-vote-icon">${upvoteIcon}</span>
             <span class="reflet-vote-count">${item.voteCount}</span>
           </button>
@@ -200,7 +200,7 @@ function renderFeedbackCardHTML(
               ${item.tags
                 .map(
                   (tag) =>
-                    `<span class="reflet-tag" style="--reflet-chip-color: ${tag.color}">${escapeHtml(tag.name)}</span>`
+                    `<span class="reflet-tag" style="--reflet-chip-color: ${chipColor(tag.color)}">${escapeHtml(tag.name)}</span>`
                 )
                 .join("")}
             </div>
@@ -219,8 +219,7 @@ function renderFeedbackDetailHTML(state: WidgetState): string {
     return "";
   }
 
-  const statusColor =
-    selectedFeedback.boardStatus?.color ?? DEFAULT_STATUS_COLOR;
+  const statusColor = chipColor(selectedFeedback.boardStatus?.color);
 
   return `
     <button class="reflet-back-btn" data-action="back" type="button">

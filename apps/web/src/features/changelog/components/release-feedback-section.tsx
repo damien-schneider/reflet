@@ -83,7 +83,7 @@ export function ReleaseFeedbackSection({
   );
 
   const { matches, isMatching, matchError, matchFeedback, clearMatches } =
-    useFeedbackMatching();
+    useFeedbackMatching(organizationId);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [hasAutoTriggered, setHasAutoTriggered] = useState(false);

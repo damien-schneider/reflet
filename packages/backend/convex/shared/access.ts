@@ -67,3 +67,20 @@ export const isOrgMemberViewer = async (
   }
   return (await getOrgMembership(ctx, organizationId, user._id)) !== null;
 };
+
+const superAdminEmails = (): string[] =>
+  (process.env.SUPER_ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+
+export const isSuperAdminEmail = (email: string): boolean =>
+  superAdminEmails().includes(email.toLowerCase());
+
+export const assertSuperAdmin = async (ctx: QueryCtx): Promise<AuthUser> => {
+  const user = await requireAuthUser(ctx);
+  if (!isSuperAdminEmail(user.email)) {
+    throw new Error("Not authorized");
+  }
+  return user;
+};

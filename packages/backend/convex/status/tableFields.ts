@@ -90,6 +90,7 @@ export const statusTables = {
     .index("by_org_status", ["organizationId", "status"]),
 
   statusSubscribers: defineTable({
+    confirmationToken: v.optional(v.string()),
     email: v.string(),
     organizationId: v.id("organizations"),
     subscribedAt: v.number(),
@@ -97,5 +98,6 @@ export const statusTables = {
   })
     .index("by_organization", ["organizationId"])
     .index("by_email_org", ["email", "organizationId"])
-    .index("by_unsubscribe_token", ["unsubscribeToken"]),
+    .index("by_unsubscribe_token", ["unsubscribeToken"])
+    .index("by_confirmation_token", ["confirmationToken"]),
 };

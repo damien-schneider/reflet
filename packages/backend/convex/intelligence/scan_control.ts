@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { mutation, query } from "../_generated/server";
 import { requireOrgMember } from "../shared/access";
+import { rateLimiter } from "../shared/rate_limits";
 import { getAuthUser } from "../shared/utils";
 
 export const getActiveScan = query({
@@ -141,7 +142,11 @@ export const startManualScan = mutation({
       throw new Error("A scan is already in progress");
     }
 
-    // Create a master tracking job
+    await rateLimiter.limit(ctx, "intelligenceScanPerOrg", {
+      key: args.organizationId,
+      throws: true,
+    });
+
     const now = Date.now();
     const masterJobId = await ctx.db.insert("intelligenceJobs", {
       organizationId: args.organizationId,
@@ -186,6 +191,10 @@ export const dismissScan = mutation({
       throw new Error("Only admins can dismiss scan jobs");
     }
 
+    if (job.status === "pending" || job.status === "processing") {
+      throw new Error("Cancel the scan before dismissing it");
+    }
+
     await ctx.db.patch(args.jobId, { dismissedAt: Date.now() });
   },
 });
@@ -206,7 +215,6 @@ export const cancelScan = mutation({
       throw new Error("Only admins can cancel scans");
     }
 
-    // Delete all pending/processing jobs for this org
     const jobs = await ctx.db
       .query("intelligenceJobs")
       .withIndex("by_organization", (q) =>
@@ -218,8 +226,15 @@ export const cancelScan = mutation({
       (j) => j.status === "pending" || j.status === "processing"
     );
 
+    const now = Date.now();
     for (const job of activeJobs) {
-      await ctx.db.delete(job._id);
+      await ctx.db.patch(job._id, {
+        completedAt: now,
+        currentStep: "Scan cancelled",
+        dismissedAt: now,
+        errorMessage: "Scan cancelled",
+        status: "failed",
+      });
     }
 
     return { cancelled: activeJobs.length };

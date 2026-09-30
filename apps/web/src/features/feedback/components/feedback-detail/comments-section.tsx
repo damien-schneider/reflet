@@ -213,7 +213,7 @@ interface RawComment {
   _id: Id<"comments">;
   author?: {
     name?: string;
-    email: string;
+    email?: string;
     image?: string;
   };
   body: string;

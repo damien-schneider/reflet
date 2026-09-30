@@ -10,7 +10,7 @@ import { runDoctor } from "./commands/doctor";
 import { type InitReport, runInit, SDK_PACKAGE } from "./commands/init";
 import { runLogin } from "./commands/login";
 import { nodeFileSystem, type PackageManager } from "./project";
-import { heading, indent, SYMBOL, style } from "./render";
+import { heading, indent, SYMBOL, style, terminalSafe } from "./render";
 import { SETUP_PROMPT } from "./setup-prompt";
 import { isWidgetPosition, WIDGET_POSITIONS } from "./widget-position";
 
@@ -277,7 +277,7 @@ try {
   process.exitCode = await run(process.argv.slice(2));
 } catch (error) {
   process.stderr.write(
-    `${SYMBOL.cross} ${error instanceof Error ? error.message : String(error)}\n`
+    `${SYMBOL.cross} ${terminalSafe(error instanceof Error ? error.message : String(error))}\n`
   );
   process.exitCode = 1;
 }

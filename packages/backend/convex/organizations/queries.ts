@@ -1,6 +1,11 @@
-import { v } from "convex/values";
+import { type Infer, v } from "convex/values";
+import type { Doc } from "../_generated/dataModel";
+import type { QueryCtx } from "../_generated/server";
 import { query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
+import { getOrgMembership } from "../shared/membership";
+import { memberRole } from "../shared/validators";
+import { organizationTables } from "./tableFields";
 
 // Subscription plan limits
 export const PLAN_LIMITS = {
@@ -57,43 +62,72 @@ export const list = query({
   },
 });
 
-/**
- * Get a single organization by ID
- */
+const organizationFields = organizationTables.organizations.validator.fields;
+
+export const publicOrganizationValidator = v.object({
+  _creationTime: v.number(),
+  _id: v.id("organizations"),
+  feedbackSettings: organizationFields.feedbackSettings,
+  hideBranding: organizationFields.hideBranding,
+  isPublic: organizationFields.isPublic,
+  logo: organizationFields.logo,
+  name: organizationFields.name,
+  primaryColor: organizationFields.primaryColor,
+  slug: organizationFields.slug,
+  supportEnabled: organizationFields.supportEnabled,
+});
+
+export type PublicOrganization = Infer<typeof publicOrganizationValidator>;
+
+export const toPublicOrganization = (
+  org: Doc<"organizations">
+): PublicOrganization => ({
+  _creationTime: org._creationTime,
+  _id: org._id,
+  feedbackSettings: org.feedbackSettings,
+  hideBranding: org.hideBranding,
+  isPublic: org.isPublic,
+  logo: org.logo,
+  name: org.name,
+  primaryColor: org.primaryColor,
+  slug: org.slug,
+  supportEnabled: org.supportEnabled,
+});
+
+const viewOrganization = async (ctx: QueryCtx, org: Doc<"organizations">) => {
+  const user = await authComponent.safeGetAuthUser(ctx);
+  const membership = user
+    ? await getOrgMembership(ctx, org._id, user._id)
+    : null;
+  if (membership) {
+    return { ...org, role: membership.role };
+  }
+  if (org.isPublic) {
+    return { ...toPublicOrganization(org), role: null };
+  }
+  return null;
+};
+
+const organizationViewValidator = v.union(
+  v.null(),
+  v.object({
+    ...organizationFields,
+    _creationTime: v.number(),
+    _id: v.id("organizations"),
+    role: memberRole,
+  }),
+  v.object({ ...publicOrganizationValidator.fields, role: v.null() })
+);
+
 export const get = query({
   args: { id: v.id("organizations") },
   handler: async (ctx, args) => {
     const org = await ctx.db.get(args.id);
-    if (!org) {
-      return null;
-    }
-
-    const user = await authComponent.safeGetAuthUser(ctx);
-    if (!org.isPublic && user) {
-      const membership = await ctx.db
-        .query("organizationMembers")
-        .withIndex("by_org_user", (q) =>
-          q.eq("organizationId", args.id).eq("userId", user._id)
-        )
-        .unique();
-
-      if (!membership) {
-        return null;
-      }
-      return { ...org, role: membership.role };
-    }
-
-    if (org.isPublic) {
-      return org;
-    }
-
-    return null;
+    return org ? await viewOrganization(ctx, org) : null;
   },
+  returns: organizationViewValidator,
 });
 
-/**
- * Get organization by slug
- */
 export const getBySlug = query({
   args: { slug: v.string() },
   handler: async (ctx, args) => {
@@ -101,43 +135,7 @@ export const getBySlug = query({
       .query("organizations")
       .withIndex("by_slug", (q) => q.eq("slug", args.slug))
       .unique();
-
-    if (!org) {
-      return null;
-    }
-
-    const user = await authComponent.safeGetAuthUser(ctx);
-
-    if (org.isPublic) {
-      if (user) {
-        const membership = await ctx.db
-          .query("organizationMembers")
-          .withIndex("by_org_user", (q) =>
-            q.eq("organizationId", org._id).eq("userId", user._id)
-          )
-          .unique();
-
-        if (membership) {
-          return { ...org, role: membership.role };
-        }
-      }
-      return { ...org, role: null };
-    }
-
-    if (!user) {
-      return null;
-    }
-
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", org._id).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership) {
-      return null;
-    }
-    return { ...org, role: membership.role };
+    return org ? await viewOrganization(ctx, org) : null;
   },
+  returns: organizationViewValidator,
 });

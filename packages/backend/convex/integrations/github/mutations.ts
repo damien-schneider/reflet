@@ -49,34 +49,21 @@ export const selectRepository = mutation({
   },
 });
 
-export const updateWebhook = mutation({
+export const updateWebhook = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
+    connectionId: v.id("githubConnections"),
     webhookId: v.string(),
     webhookSecret: v.string(),
   },
   handler: async (ctx, args) => {
-    await requireOrgAdmin(ctx, args.organizationId, "configure webhook");
-
-    const connection = await ctx.db
-      .query("githubConnections")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .first();
-
-    if (!connection) {
-      throw new Error("No GitHub connection found");
-    }
-
-    await ctx.db.patch(connection._id, {
+    await ctx.db.patch(args.connectionId, {
       updatedAt: Date.now(),
       webhookId: args.webhookId,
       webhookSecret: args.webhookSecret,
     });
-
-    return connection._id;
+    return null;
   },
+  returns: v.null(),
 });
 
 export const toggleAutoSync = mutation({

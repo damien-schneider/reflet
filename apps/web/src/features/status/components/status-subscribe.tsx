@@ -24,7 +24,7 @@ export function StatusSubscribe({
     <EmailSubscribeForm
       className={className}
       onSubscribe={handleSubscribe}
-      successMessage="You’re subscribed to status updates."
+      successMessage="Check your inbox to confirm your subscription."
       variant="inline"
     />
   );

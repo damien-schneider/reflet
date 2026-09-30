@@ -26,6 +26,7 @@ export const adminApiTables = {
     metadata: v.optional(v.any()),
     name: v.optional(v.string()),
     organizationId: v.id("organizations"),
+    verified: v.optional(v.boolean()),
   })
     .index("by_organization_external", ["organizationId", "externalId"])
     .index("by_organization_email", ["organizationId", "email"]),

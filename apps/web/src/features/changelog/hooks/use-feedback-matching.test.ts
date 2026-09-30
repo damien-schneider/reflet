@@ -4,6 +4,7 @@ import { useFeedbackMatching } from "./use-feedback-matching";
 
 type Id<T extends string> = string & { __tableName: T };
 const feedbackId = (id: string) => id as Id<"feedback">;
+const organizationId = "org1" as Id<"organizations">;
 
 const makeCandidate = (id: string, status = "open") => ({
   _id: feedbackId(id),
@@ -30,7 +31,7 @@ describe("useFeedbackMatching", () => {
   });
 
   it("starts with empty matches and not matching", () => {
-    const { result } = renderHook(() => useFeedbackMatching());
+    const { result } = renderHook(() => useFeedbackMatching(organizationId));
     expect(result.current.matches).toEqual([]);
     expect(result.current.isMatching).toBe(false);
     expect(result.current.matchError).toBeNull();
@@ -43,7 +44,7 @@ describe("useFeedbackMatching", () => {
     });
     vi.spyOn(globalThis, "fetch").mockReturnValue(fetchPromise);
 
-    const { result } = renderHook(() => useFeedbackMatching());
+    const { result } = renderHook(() => useFeedbackMatching(organizationId));
 
     act(() => {
       result.current.matchFeedback("release notes", [], [makeCandidate("f1")]);
@@ -72,7 +73,7 @@ describe("useFeedbackMatching", () => {
       return Response.json(callCount === 1 ? firstResponse : secondResponse);
     });
 
-    const { result } = renderHook(() => useFeedbackMatching());
+    const { result } = renderHook(() => useFeedbackMatching(organizationId));
 
     // First match
     await act(async () => {
@@ -116,7 +117,7 @@ describe("useFeedbackMatching", () => {
   });
 
   it("returns empty matches for empty feedback list", async () => {
-    const { result } = renderHook(() => useFeedbackMatching());
+    const { result } = renderHook(() => useFeedbackMatching(organizationId));
 
     await act(async () => {
       await result.current.matchFeedback("release notes", [], []);
@@ -131,7 +132,7 @@ describe("useFeedbackMatching", () => {
       new Response("Server error", { status: 500 })
     );
 
-    const { result } = renderHook(() => useFeedbackMatching());
+    const { result } = renderHook(() => useFeedbackMatching(organizationId));
 
     await act(async () => {
       await result.current.matchFeedback(
@@ -148,7 +149,7 @@ describe("useFeedbackMatching", () => {
   it("sets matchError on network failure", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("Network error"));
 
-    const { result } = renderHook(() => useFeedbackMatching());
+    const { result } = renderHook(() => useFeedbackMatching(organizationId));
 
     await act(async () => {
       await result.current.matchFeedback(
@@ -171,7 +172,7 @@ describe("useFeedbackMatching", () => {
       )
     );
 
-    const { result } = renderHook(() => useFeedbackMatching());
+    const { result } = renderHook(() => useFeedbackMatching(organizationId));
 
     await act(async () => {
       await result.current.matchFeedback(
@@ -196,7 +197,7 @@ describe("useFeedbackMatching", () => {
       .spyOn(globalThis, "fetch")
       .mockResolvedValue(Response.json(makeApiResponse([])));
 
-    const { result } = renderHook(() => useFeedbackMatching());
+    const { result } = renderHook(() => useFeedbackMatching(organizationId));
 
     await act(async () => {
       await result.current.matchFeedback(
@@ -241,6 +242,7 @@ describe("useFeedbackMatching", () => {
             title: "Dark mode please",
           },
         ],
+        organizationId: "org1",
         releaseNotes: "Added dark mode",
       }),
       headers: { "Content-Type": "application/json" },
@@ -259,7 +261,7 @@ describe("useFeedbackMatching", () => {
       )
     );
 
-    const { result } = renderHook(() => useFeedbackMatching());
+    const { result } = renderHook(() => useFeedbackMatching(organizationId));
 
     await act(async () => {
       await result.current.matchFeedback(
@@ -282,7 +284,7 @@ describe("useFeedbackMatching", () => {
       new Error("Network error")
     );
 
-    const { result } = renderHook(() => useFeedbackMatching());
+    const { result } = renderHook(() => useFeedbackMatching(organizationId));
 
     await act(async () => {
       await result.current.matchFeedback(

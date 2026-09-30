@@ -117,6 +117,7 @@ export function MembersSection({
       </SettingsSection>
 
       <InviteMemberDialog
+        canInviteAdmins={currentMember?.role === "owner"}
         onOpenChange={setIsInviteDialogOpen}
         open={isInviteDialogOpen}
         organizationId={organizationId}

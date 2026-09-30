@@ -156,7 +156,8 @@ export const runScheduledScans = internalAction({
  * then runs synthesis, priority boost, and notifications.
  */
 /**
- * Update the master scan job status and stats
+ * Update the master scan job status and stats. Returns false once the job is
+ * gone or finished (e.g. cancelled), which tells the pipeline to stop.
  */
 export const updateMasterJob = internalMutation({
   args: {
@@ -179,8 +180,9 @@ export const updateMasterJob = internalMutation({
   },
   handler: async (ctx, args) => {
     const job = await ctx.db.get(args.jobId);
-    if (!job) {
-      return;
+    const isRunning = job?.status === "pending" || job?.status === "processing";
+    if (!isRunning) {
+      return false;
     }
 
     const updates: Record<string, unknown> = { status: args.status };
@@ -198,7 +200,9 @@ export const updateMasterJob = internalMutation({
     }
 
     await ctx.db.patch(args.jobId, updates);
+    return true;
   },
+  returns: v.boolean(),
 });
 
 /** Extract a human-readable error message from an unknown error */

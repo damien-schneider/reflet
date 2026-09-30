@@ -12,6 +12,7 @@
     "./templates/changelog-notification-email": "./src/templates/changelog-notification-email.tsx",
     "./templates/weekly-digest-email": "./src/templates/weekly-digest-email.tsx",
     "./templates/feedback-shipped-email": "./src/templates/feedback-shipped-email.tsx",
+    "./templates/subscription-confirmation-email": "./src/templates/subscription-confirmation-email.tsx",
     "./templates/styles": "./src/templates/styles.ts"
   },
   "scripts": {

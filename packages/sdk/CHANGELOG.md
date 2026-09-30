@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- The devtools Vite plugin refuses requests from other machines, and the devtools route rejects requests without a same-origin `Sec-Fetch-Site` header unless they come to a plain-HTTP hostname you allowed. Next.js apps must run `next dev -H 127.0.0.1`: see the devtools setup in the README.
+- "Copy as prompt" on board feedback now keeps the page URL and element details inside the untrusted `<user_report>` block, so a reporter cannot write text that looks like instructions from your team.
+
 ## [0.5.2] - 2026-09-29
 
 ### Added

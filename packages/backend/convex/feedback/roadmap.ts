@@ -1,17 +1,24 @@
 import { v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { mutation, query } from "../_generated/server";
+import { isOrgMemberViewer } from "../shared/access";
 import { getAuthUser } from "../shared/utils";
+import { projectFeedbackFor } from "./public_projection";
 
-/**
- * Get roadmap items for an organization
- */
 export const list = query({
   args: {
     organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
-    // Only show approved, non-deleted items in the roadmap
+    const org = await ctx.db.get(args.organizationId);
+    if (!org) {
+      return [];
+    }
+    const isMember = await isOrgMemberViewer(ctx, args.organizationId);
+    if (!(isMember || org.isPublic)) {
+      return [];
+    }
+
     const feedbackItemsRaw = (
       await ctx.db
         .query("feedback")
@@ -33,7 +40,7 @@ export const list = query({
           feedbackTags.map(async (ft) => ctx.db.get(ft.tagId))
         );
         return {
-          ...f,
+          ...projectFeedbackFor(f, isMember),
           tags: tags.filter(Boolean),
         };
       })

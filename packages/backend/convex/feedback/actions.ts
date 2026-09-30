@@ -2,8 +2,20 @@ import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
 import { PLAN_LIMITS } from "../organizations/queries";
+import { isOrgMemberViewer } from "../shared/access";
+import {
+  MAX_DESCRIPTION_LENGTH,
+  MAX_EMAIL_LENGTH,
+  MAX_TITLE_LENGTH,
+  MAX_URL_LENGTH,
+} from "../shared/constants";
+import { rateLimiter } from "../shared/rate_limits";
 import { getAuthUser } from "../shared/utils";
+import { validateInputLength } from "../shared/validators";
 import { scheduleAfterCreate } from "./after_create";
+import { projectFeedbackFor } from "./public_projection";
+
+const MAX_PUBLIC_ATTACHMENTS = 10;
 
 export const listPublic = query({
   args: {
@@ -25,6 +37,7 @@ export const listPublic = query({
     }
 
     const user = await authComponent.safeGetAuthUser(ctx);
+    const isMember = await isOrgMemberViewer(ctx, args.organizationId);
 
     // Get approved feedback only
     let feedbackItems = await ctx.db
@@ -98,7 +111,7 @@ export const listPublic = query({
         }
 
         return {
-          ...f,
+          ...projectFeedbackFor(f, isMember),
           hasVoted,
           tags: tags.filter(Boolean),
         };
@@ -122,6 +135,24 @@ export const createPublicOrg = mutation({
     if (!org?.isPublic) {
       throw new Error("Organization not found or not public");
     }
+    validateInputLength(args.title, MAX_TITLE_LENGTH, "Title");
+    validateInputLength(
+      args.description,
+      MAX_DESCRIPTION_LENGTH,
+      "Description"
+    );
+    validateInputLength(args.email, MAX_EMAIL_LENGTH, "Email");
+    const attachments = args.attachments ?? [];
+    if (attachments.length > MAX_PUBLIC_ATTACHMENTS) {
+      throw new Error(`At most ${MAX_PUBLIC_ATTACHMENTS} attachments allowed`);
+    }
+    for (const url of attachments) {
+      validateInputLength(url, MAX_URL_LENGTH, "Attachment URL");
+    }
+    await rateLimiter.limit(ctx, "anonymousFeedbackPerOrg", {
+      key: args.organizationId,
+      throws: true,
+    });
 
     // Check feedback limit (excluding soft-deleted)
     const existingFeedback = await ctx.db
@@ -151,13 +182,14 @@ export const createPublicOrg = mutation({
       .collect();
     const defaultOrgStatus = orgStatuses.sort((a, b) => a.order - b.order)[0];
 
+    const isApproved = !org.feedbackSettings?.requireApproval;
     const feedbackId = await ctx.db.insert("feedback", {
       attachments: args.attachments,
       authorId: user?._id || `anonymous:${args.email || "unknown"}`,
       commentCount: 0,
       createdAt: now,
       description: args.description || "",
-      isApproved: !org.feedbackSettings?.requireApproval,
+      isApproved,
       isPinned: false,
       organizationId: args.organizationId,
       organizationStatusId: defaultOrgStatus?._id,

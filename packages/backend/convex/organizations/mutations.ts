@@ -1,24 +1,124 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
+import type { Id } from "../_generated/dataModel";
+import type { MutationCtx } from "../_generated/server";
 import { internalMutation, mutation } from "../_generated/server";
 import { versionIncrementValidator } from "../changelog/semver";
 import { getAuthUser } from "../shared/utils";
+import { assertValidSlug, deriveSlugFromName, slugify } from "./slug";
 
-// Helper to generate slug from name
-const generateSlug = (name: string): string =>
-  name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
+const DEFAULT_STATUSES = [
+  { color: "#6b7280", icon: "clock", name: "Backlog", order: 0 },
+  { color: "#3b82f6", icon: "calendar", name: "Planned", order: 1 },
+  { color: "#8b5cf6", icon: "spinner", name: "In Progress", order: 2 },
+  { color: "#22c55e", icon: "check-circle", name: "Done", order: 3 },
+] as const;
 
-// ============================================
-// INTERNAL MUTATIONS (for testing and internal use)
-// ============================================
+const DEFAULT_TAGS = [
+  {
+    color: "#3b82f6",
+    description: "New feature suggestions and ideas",
+    name: "Feature Request",
+    slug: "feature-request",
+  },
+  {
+    color: "#ef4444",
+    description: "Issues and problems to be fixed",
+    name: "Bug Report",
+    slug: "bug-report",
+  },
+  {
+    color: "#8b5cf6",
+    description: "Improvements to existing features",
+    name: "Enhancement",
+    slug: "enhancement",
+  },
+  {
+    color: "#f59e0b",
+    description: "Questions and support requests",
+    name: "Question",
+    slug: "question",
+  },
+] as const;
 
-/**
- * Internal mutation to create an organization with explicit user ID.
- * This enables testing without authentication mocking.
- */
+const assertSlugAvailable = async (
+  ctx: MutationCtx,
+  slug: string
+): Promise<void> => {
+  assertValidSlug(slug);
+  const existingOrg = await ctx.db
+    .query("organizations")
+    .withIndex("by_slug", (q) => q.eq("slug", slug))
+    .unique();
+  if (existingOrg) {
+    throw new Error("This slug is already taken");
+  }
+};
+
+export const resolveSlugUpdate = async (
+  ctx: MutationCtx,
+  options: { current: string; requested: string | undefined }
+): Promise<string> => {
+  const { current, requested } = options;
+  if (requested === undefined || requested === current) {
+    return current;
+  }
+  const slug = slugify(requested);
+  if (slug !== current) {
+    await assertSlugAvailable(ctx, slug);
+  }
+  return slug;
+};
+
+const insertOrganization = async (
+  ctx: MutationCtx,
+  options: { isPublic?: boolean; name: string; slug?: string; userId: string }
+): Promise<Id<"organizations">> => {
+  const slug = options.slug
+    ? slugify(options.slug)
+    : deriveSlugFromName(options.name);
+  await assertSlugAvailable(ctx, slug);
+
+  const now = Date.now();
+  const organizationId = await ctx.db.insert("organizations", {
+    createdAt: now,
+    isPublic: options.isPublic ?? false,
+    name: options.name,
+    slug,
+    subscriptionStatus: "none",
+    subscriptionTier: "free",
+  });
+
+  await ctx.db.insert("organizationMembers", {
+    createdAt: now,
+    organizationId,
+    role: "owner",
+    userId: options.userId,
+  });
+
+  for (const status of DEFAULT_STATUSES) {
+    await ctx.db.insert("organizationStatuses", {
+      ...status,
+      createdAt: now,
+      organizationId,
+      updatedAt: now,
+    });
+  }
+
+  for (const tag of DEFAULT_TAGS) {
+    await ctx.db.insert("tags", {
+      ...tag,
+      createdAt: now,
+      isDoneStatus: false,
+      isRoadmapLane: false,
+      organizationId,
+      updatedAt: now,
+    });
+  }
+
+  return organizationId;
+};
+
 export const createOrganization = internalMutation({
   args: {
     isPublic: v.optional(v.boolean()),
@@ -26,98 +126,8 @@ export const createOrganization = internalMutation({
     slug: v.optional(v.string()),
     userId: v.string(),
   },
-  handler: async (ctx, args) => {
-    const slug = args.slug || generateSlug(args.name);
-
-    const existingOrg = await ctx.db
-      .query("organizations")
-      .withIndex("by_slug", (q) => q.eq("slug", slug))
-      .unique();
-
-    if (existingOrg) {
-      throw new Error("This slug is already taken");
-    }
-
-    const now = Date.now();
-
-    const orgId = await ctx.db.insert("organizations", {
-      createdAt: now,
-      isPublic: args.isPublic ?? false,
-      name: args.name,
-      slug,
-      subscriptionStatus: "none",
-      subscriptionTier: "free",
-    });
-
-    await ctx.db.insert("organizationMembers", {
-      createdAt: now,
-      organizationId: orgId,
-      role: "owner",
-      userId: args.userId,
-    });
-
-    const DEFAULT_STATUSES = [
-      { color: "#6b7280", icon: "clock", name: "Backlog", order: 0 },
-      { color: "#3b82f6", icon: "calendar", name: "Planned", order: 1 },
-      { color: "#8b5cf6", icon: "spinner", name: "In Progress", order: 2 },
-      { color: "#22c55e", icon: "check-circle", name: "Done", order: 3 },
-    ];
-
-    for (const status of DEFAULT_STATUSES) {
-      await ctx.db.insert("organizationStatuses", {
-        color: status.color,
-        createdAt: now,
-        icon: status.icon,
-        name: status.name,
-        order: status.order,
-        organizationId: orgId,
-        updatedAt: now,
-      });
-    }
-
-    const DEFAULT_TAGS = [
-      {
-        color: "#3b82f6",
-        description: "New feature suggestions and ideas",
-        name: "Feature Request",
-        slug: "feature-request",
-      },
-      {
-        color: "#ef4444",
-        description: "Issues and problems to be fixed",
-        name: "Bug Report",
-        slug: "bug-report",
-      },
-      {
-        color: "#8b5cf6",
-        description: "Improvements to existing features",
-        name: "Enhancement",
-        slug: "enhancement",
-      },
-      {
-        color: "#f59e0b",
-        description: "Questions and support requests",
-        name: "Question",
-        slug: "question",
-      },
-    ];
-
-    for (const tag of DEFAULT_TAGS) {
-      await ctx.db.insert("tags", {
-        color: tag.color,
-        createdAt: now,
-        description: tag.description,
-        isDoneStatus: false,
-        isRoadmapLane: false,
-        name: tag.name,
-        organizationId: orgId,
-        slug: tag.slug,
-        updatedAt: now,
-      });
-    }
-
-    return orgId;
-  },
+  handler: async (ctx, args) => await insertOrganization(ctx, args),
+  returns: v.id("organizations"),
 });
 
 /**
@@ -134,29 +144,20 @@ export const updateOrganizationSlug = internalMutation({
       throw new Error("Organization not found");
     }
 
-    if (args.slug !== org.slug) {
-      const existingOrg = await ctx.db
-        .query("organizations")
-        .withIndex("by_slug", (q) => q.eq("slug", args.slug))
-        .unique();
-
-      if (existingOrg) {
-        throw new Error("This slug is already taken");
-      }
-    }
-
-    await ctx.db.patch(args.id, { slug: args.slug });
+    const slug = await resolveSlugUpdate(ctx, {
+      current: org.slug,
+      requested: args.slug,
+    });
+    await ctx.db.patch(args.id, { slug });
     return args.id;
   },
+  returns: v.id("organizations"),
 });
 
 // ============================================
 // MUTATIONS
 // ============================================
 
-/**
- * Create a new organization
- */
 export const create = mutation({
   args: {
     isPublic: v.optional(v.boolean()),
@@ -165,98 +166,9 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
-
-    const slug = args.slug || generateSlug(args.name);
-
-    const existingOrg = await ctx.db
-      .query("organizations")
-      .withIndex("by_slug", (q) => q.eq("slug", slug))
-      .unique();
-
-    if (existingOrg) {
-      throw new Error("This slug is already taken");
-    }
-
-    const now = Date.now();
-
-    const orgId = await ctx.db.insert("organizations", {
-      createdAt: now,
-      isPublic: args.isPublic ?? false,
-      name: args.name,
-      slug,
-      subscriptionStatus: "none",
-      subscriptionTier: "free",
-    });
-
-    await ctx.db.insert("organizationMembers", {
-      createdAt: now,
-      organizationId: orgId,
-      role: "owner",
-      userId: user._id,
-    });
-
-    const DEFAULT_STATUSES = [
-      { color: "#6b7280", icon: "clock", name: "Backlog", order: 0 },
-      { color: "#3b82f6", icon: "calendar", name: "Planned", order: 1 },
-      { color: "#8b5cf6", icon: "spinner", name: "In Progress", order: 2 },
-      { color: "#22c55e", icon: "check-circle", name: "Done", order: 3 },
-    ];
-
-    for (const status of DEFAULT_STATUSES) {
-      await ctx.db.insert("organizationStatuses", {
-        color: status.color,
-        createdAt: now,
-        icon: status.icon,
-        name: status.name,
-        order: status.order,
-        organizationId: orgId,
-        updatedAt: now,
-      });
-    }
-
-    const DEFAULT_TAGS = [
-      {
-        color: "#3b82f6",
-        description: "New feature suggestions and ideas",
-        name: "Feature Request",
-        slug: "feature-request",
-      },
-      {
-        color: "#ef4444",
-        description: "Issues and problems to be fixed",
-        name: "Bug Report",
-        slug: "bug-report",
-      },
-      {
-        color: "#8b5cf6",
-        description: "Improvements to existing features",
-        name: "Enhancement",
-        slug: "enhancement",
-      },
-      {
-        color: "#f59e0b",
-        description: "Questions and support requests",
-        name: "Question",
-        slug: "question",
-      },
-    ];
-
-    for (const tag of DEFAULT_TAGS) {
-      await ctx.db.insert("tags", {
-        color: tag.color,
-        createdAt: now,
-        description: tag.description,
-        isDoneStatus: false,
-        isRoadmapLane: false,
-        name: tag.name,
-        organizationId: orgId,
-        slug: tag.slug,
-        updatedAt: now,
-      });
-    }
-
-    return orgId;
+    return await insertOrganization(ctx, { ...args, userId: user._id });
   },
+  returns: v.id("organizations"),
 });
 
 /**
@@ -345,21 +257,13 @@ export const update = mutation({
       }
     }
 
-    const newSlug = args.slug;
-    if (newSlug && newSlug !== org.slug) {
-      const existingOrg = await ctx.db
-        .query("organizations")
-        .withIndex("by_slug", (q) => q.eq("slug", newSlug))
-        .unique();
-
-      if (existingOrg) {
-        throw new Error("This slug is already taken");
-      }
-    }
-
     const { id, changelogSettings, feedbackSettings, ...updates } = args;
     await ctx.db.patch(id, {
       ...updates,
+      slug: await resolveSlugUpdate(ctx, {
+        current: org.slug,
+        requested: args.slug,
+      }),
       ...(changelogSettings && {
         changelogSettings: { ...org.changelogSettings, ...changelogSettings },
       }),

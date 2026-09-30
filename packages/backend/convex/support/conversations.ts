@@ -19,6 +19,9 @@ const byMostRecent = (
   b: { lastMessageAt: number }
 ) => b.lastMessageAt - a.lastMessageAt;
 
+const GUEST_ID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export const listForUser = query({
   args: {
     organizationId: v.id("organizations"),
@@ -36,7 +39,7 @@ export const listForUser = query({
       )
       .collect();
 
-    return conversations.sort(byMostRecent);
+    return conversations.filter((c) => !c.guestId).sort(byMostRecent);
   },
   returns: v.array(supportConversationDoc),
 });
@@ -76,7 +79,9 @@ export const getUnreadCountForUser = query({
       )
       .collect();
 
-    return conversations.reduce((acc, conv) => acc + conv.userUnreadCount, 0);
+    return conversations
+      .filter((c) => !c.guestId)
+      .reduce((acc, conv) => acc + conv.userUnreadCount, 0);
   },
   returns: v.number(),
 });
@@ -134,6 +139,9 @@ export const create = mutation({
     if (guest && !isValidEmail(guest.email)) {
       throw new Error("A valid guest email is required");
     }
+    if (guest && !GUEST_ID_PATTERN.test(guest.id)) {
+      throw new Error("Invalid guest session");
+    }
 
     const body = args.initialMessage.trim();
     if (!body) {
@@ -150,10 +158,7 @@ export const create = mutation({
       throw new Error("Support is not enabled for this organization");
     }
 
-    const senderId = user?._id ?? guest?.id;
-    if (!senderId) {
-      throw new Error("Either authentication or guest email is required");
-    }
+    const senderId = user ? user._id : `guest:${guest?.id}`;
 
     const now = Date.now();
 

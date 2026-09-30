@@ -1,7 +1,7 @@
 import type { httpRouter } from "convex/server";
 import { internal } from "../../_generated/api";
 import { jsonResponse, parseId } from "../helpers";
-import { parseEnumParam } from "./auth";
+import { checkWriteQuota, parseEnumParam } from "./auth";
 import { publicApiRoute, readJsonBody } from "./route";
 import {
   completeSurveyResponseSchema,
@@ -39,6 +39,15 @@ export function registerSurveyRoutes(http: Router): void {
       const body = await readJsonBody(request, startSurveyResponseSchema);
       if (!body.success) {
         return body.response;
+      }
+
+      const quota = await checkWriteQuota(
+        ctx,
+        auth,
+        "publicApiSurveyStartPerPublicKey"
+      );
+      if (!quota.allowed) {
+        return quota.response;
       }
 
       const responseId = await ctx.runMutation(

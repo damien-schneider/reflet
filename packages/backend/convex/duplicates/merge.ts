@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
-import { requireOrgMember } from "../shared/access";
+import { requireOrgAdmin, requireOrgMember } from "../shared/access";
 import { getAuthUser } from "../shared/utils";
 import { feedbackStatus } from "../shared/validators";
 
@@ -107,7 +107,9 @@ export const mergeFeedback = mutation({
     targetFeedbackId: v.id("feedback"),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    if (args.sourceFeedbackId === args.targetFeedbackId) {
+      throw new Error("Cannot merge feedback into itself");
+    }
 
     const source = await ctx.db.get(args.sourceFeedbackId);
     const target = await ctx.db.get(args.targetFeedbackId);
@@ -120,7 +122,23 @@ export const mergeFeedback = mutation({
       throw new Error("Cannot merge feedback from different organizations");
     }
 
-    await requireOrgMember(ctx, source.organizationId);
+    const { user } = await requireOrgAdmin(
+      ctx,
+      source.organizationId,
+      "merge feedback"
+    );
+
+    if (args.pairId) {
+      const pair = await ctx.db.get(args.pairId);
+      const pairIds = [pair?.feedbackIdA, pair?.feedbackIdB];
+      const pairMatches =
+        pair?.organizationId === source.organizationId &&
+        pairIds.includes(source._id) &&
+        pairIds.includes(target._id);
+      if (!pairMatches) {
+        throw new Error("Duplicate pair does not match these feedback items");
+      }
+    }
 
     // Transfer votes from source to target
     const sourceVotes = await ctx.db

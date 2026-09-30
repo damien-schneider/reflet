@@ -224,7 +224,16 @@ export { GET, POST } from 'reflet-sdk/devtools/next';
 ```
 
 The handlers answer 404 unless `NODE_ENV` is `development`, so the file is
-safe to ship. Vite:
+safe to ship. `next dev` listens on every network interface by default, and a
+route handler cannot see who is calling, so bind it to loopback — otherwise
+anyone on your Wi-Fi can read your source through the route:
+
+```json
+"dev": "next dev -H 127.0.0.1"
+```
+
+Vite listens on localhost unless you pass `--host`, and the plugin refuses
+requests that do not come from this machine either way. Vite:
 
 ```ts
 import { refletDevtools } from 'reflet-sdk/devtools/vite';
@@ -242,7 +251,9 @@ export default defineConfig({ plugins: [react(), refletDevtools()] });
 
 The route only answers on `localhost`, `*.localhost`, loopback IPs and the
 hostnames you allow — so a rebound DNS name pointing at your machine gets a 403
-— and only to same-origin requests carrying the devtools header. It only serves
+— and only to same-origin browser requests (`Sec-Fetch-Site`) carrying the
+devtools header. These checks stop other sites in your browser, not other
+machines: that is what the loopback binding is for. It only serves
 source files (`.ts`, `.tsx`, `.js`, `.jsx`, `.vue`, `.svelte`, `.astro`,
 `.mdx`…) inside the repository and never under `node_modules`, and only
 forwards the feedback endpoints the devtools use.

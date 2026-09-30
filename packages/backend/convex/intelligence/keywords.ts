@@ -1,6 +1,11 @@
 import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 import { getAuthUser } from "../shared/utils";
+import { validateInputLength } from "../shared/validators";
+
+const MAX_KEYWORDS_PER_ORG = 50;
+const MAX_KEYWORD_LENGTH = 100;
+const MAX_SUBREDDIT_LENGTH = 50;
 
 /**
  * List all keywords for an organization
@@ -58,6 +63,9 @@ export const create = mutation({
       throw new Error("Only admins can add keywords");
     }
 
+    validateInputLength(args.keyword.trim(), MAX_KEYWORD_LENGTH, "Keyword");
+    validateInputLength(args.subreddit, MAX_SUBREDDIT_LENGTH, "Subreddit");
+
     // Check for duplicates (same keyword + source + subreddit for same org)
     const existing = await ctx.db
       .query("intelligenceKeywords")
@@ -72,6 +80,12 @@ export const create = mutation({
         k.source === args.source &&
         k.subreddit === args.subreddit
     );
+
+    if (existing.length >= MAX_KEYWORDS_PER_ORG) {
+      throw new Error(
+        `You can track up to ${MAX_KEYWORDS_PER_ORG} keywords. Remove one to add another.`
+      );
+    }
 
     if (isDuplicate) {
       throw new Error(
@@ -122,6 +136,9 @@ export const update = mutation({
     if (!membership || membership.role === "member") {
       throw new Error("Only admins can update keywords");
     }
+
+    validateInputLength(args.keyword?.trim(), MAX_KEYWORD_LENGTH, "Keyword");
+    validateInputLength(args.subreddit, MAX_SUBREDDIT_LENGTH, "Subreddit");
 
     const updates: Record<string, unknown> = {};
 

@@ -1,6 +1,9 @@
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { internalMutation, internalQuery } from "../_generated/server";
+import { randomSecretHex } from "../shared/hmac";
+
+const API_KEY_RANDOM_BYTES = 24;
 
 export interface ApiKeyValidation {
   error?: string;
@@ -12,33 +15,8 @@ export interface ApiKeyValidation {
   success: boolean;
 }
 
-export interface ExternalUserContext {
-  email?: string;
-  externalId: string;
-  externalUserId: Id<"externalUsers">;
-  name?: string;
-}
-
-export interface ApiAuthResult {
-  error?: string;
-  externalUser?: ExternalUserContext;
-  isSecretKey?: boolean;
-  organizationApiKeyId?: Id<"organizationApiKeys">;
-  organizationId?: Id<"organizations">;
-  statusCode?: number;
-  success: boolean;
-}
-
-/**
- * Generate a random API key
- */
 export function generateApiKey(prefix: "fb_pub" | "fb_sec"): string {
-  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-  let result = `${prefix}_`;
-  for (let i = 0; i < 24; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
+  return `${prefix}_${randomSecretHex(API_KEY_RANDOM_BYTES)}`;
 }
 
 /**
@@ -116,23 +94,19 @@ export const validateApiKey = internalQuery({
   },
 });
 
-/**
- * Get or create external user
- */
+/** Unsigned tokens never edit a user and never resolve to one a signed token marked `verified`. */
 export const getOrCreateExternalUser = internalMutation({
   args: {
-    avatar: v.optional(v.string()),
     email: v.optional(v.string()),
     externalId: v.string(),
-    metadata: v.optional(v.any()),
     name: v.optional(v.string()),
     organizationId: v.id("organizations"),
+    verified: v.boolean(),
   },
-  handler: async (ctx, args): Promise<ExternalUserContext> => {
-    const { organizationId, externalId, email, name, avatar, metadata } = args;
+  handler: async (ctx, args) => {
+    const { organizationId, externalId, email, name, verified } = args;
     const now = Date.now();
 
-    // Check for existing user by organization
     const existingUser = await ctx.db
       .query("externalUsers")
       .withIndex("by_organization_external", (q) =>
@@ -140,117 +114,29 @@ export const getOrCreateExternalUser = internalMutation({
       )
       .unique();
 
-    if (existingUser) {
-      // Update last seen and any changed fields
-      await ctx.db.patch(existingUser._id, {
-        avatar: avatar ?? existingUser.avatar,
-        email: email ?? existingUser.email,
-        lastSeenAt: now,
-        metadata: metadata ?? existingUser.metadata,
-        name: name ?? existingUser.name,
-      });
-
-      return {
-        email: email ?? existingUser.email,
-        externalId: existingUser.externalId,
-        externalUserId: existingUser._id,
-        name: name ?? existingUser.name,
-      };
+    if (existingUser && !verified) {
+      return existingUser.verified ? null : existingUser._id;
     }
 
-    // Create new external user at organization level
-    const newUserId = await ctx.db.insert("externalUsers", {
-      avatar,
+    if (existingUser) {
+      await ctx.db.patch(existingUser._id, {
+        email: email ?? existingUser.email,
+        lastSeenAt: now,
+        name: name ?? existingUser.name,
+        verified: true,
+      });
+      return existingUser._id;
+    }
+
+    return await ctx.db.insert("externalUsers", {
       createdAt: now,
       email,
       externalId,
       lastSeenAt: now,
-      metadata,
       name,
       organizationId,
-    });
-
-    return {
-      email,
-      externalId,
-      externalUserId: newUserId,
-      name,
-    };
-  },
-});
-
-/**
- * Log an API request (for rate limiting and analytics)
- */
-export const logApiRequest = internalMutation({
-  args: {
-    devtoolsTokenId: v.optional(v.id("devtoolsTokens")),
-    endpoint: v.string(),
-    ip: v.optional(v.string()),
-    method: v.string(),
-    organizationApiKeyId: v.optional(v.id("organizationApiKeys")),
-    organizationId: v.id("organizations"),
-    statusCode: v.number(),
-    userAgent: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.insert("apiRequestLogs", {
-      devtoolsTokenId: args.devtoolsTokenId,
-      endpoint: args.endpoint,
-      ip: args.ip,
-      method: args.method,
-      organizationApiKeyId: args.organizationApiKeyId,
-      organizationId: args.organizationId,
-      statusCode: args.statusCode,
-      timestamp: Date.now(),
-      userAgent: args.userAgent,
+      verified,
     });
   },
-});
-
-/**
- * Check rate limit for an API key
- */
-export const checkRateLimit = internalQuery({
-  args: {
-    maxRequests: v.optional(v.number()), // Default 100 for public, 1000 for secret
-    subject: v.union(
-      v.object({ organizationApiKeyId: v.id("organizationApiKeys") }),
-      v.object({ devtoolsTokenId: v.id("devtoolsTokens") })
-    ),
-    windowMs: v.optional(v.number()), // Default 60000 (1 minute)
-  },
-  handler: async (ctx, args) => {
-    const windowMs = args.windowMs ?? 60_000;
-    const maxRequests = args.maxRequests ?? 100;
-    const windowStart = Date.now() - windowMs;
-    const { subject } = args;
-
-    const recentRequests =
-      "devtoolsTokenId" in subject
-        ? await ctx.db
-            .query("apiRequestLogs")
-            .withIndex("by_devtools_token_time", (q) =>
-              q
-                .eq("devtoolsTokenId", subject.devtoolsTokenId)
-                .gt("timestamp", windowStart)
-            )
-            .collect()
-        : await ctx.db
-            .query("apiRequestLogs")
-            .withIndex("by_org_key_time", (q) =>
-              q
-                .eq("organizationApiKeyId", subject.organizationApiKeyId)
-                .gt("timestamp", windowStart)
-            )
-            .collect();
-
-    return {
-      allowed: recentRequests.length < maxRequests,
-      current: recentRequests.length,
-      limit: maxRequests,
-      remaining: Math.max(0, maxRequests - recentRequests.length),
-      resetAt: windowStart + windowMs,
-    };
-  },
+  returns: v.union(v.id("externalUsers"), v.null()),
 });

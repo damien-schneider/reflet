@@ -292,7 +292,9 @@ export const feedbackTables = {
     width: v.optional(v.number()),
   })
     .index("by_feedback", ["feedbackId"])
-    .index("by_organization", ["organizationId"]),
+    .index("by_organization", ["organizationId"])
+    .index("by_storage", ["storageId"])
+    .index("by_annotated_storage", ["annotatedStorageId"]),
 
   feedbackSubscriptions: defineTable({
     createdAt: v.number(),

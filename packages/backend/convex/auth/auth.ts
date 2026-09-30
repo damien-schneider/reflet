@@ -4,6 +4,7 @@ import { betterAuth } from "better-auth";
 import { components, internal } from "../_generated/api";
 import type { DataModel } from "../_generated/dataModel";
 import authConfig from "../auth.config";
+import { createAuthEmailRateLimitHook } from "./email_rate_limit";
 
 // GitHub OAuth configuration (optional)
 const githubClientId = process.env.GITHUB_CLIENT_ID;
@@ -38,12 +39,8 @@ function createAuth(ctx: GenericCtx<DataModel>) {
         user: { email: string; name: string };
         url: string;
       }) => {
-        console.log("=== PASSWORD RESET EMAIL CALLBACK INVOKED ===");
-        console.log("[Auth] User:", user.email);
-        console.log("[Auth] Reset URL:", url);
-
         if (!("scheduler" in ctx)) {
-          console.error("[Auth] ERROR: Context does not have scheduler");
+          console.error("[Auth] Cannot schedule password reset email");
           return;
         }
 
@@ -57,7 +54,6 @@ function createAuth(ctx: GenericCtx<DataModel>) {
               userName: user.name,
             }
           );
-          console.log("[Auth] Password reset email scheduled successfully");
         } catch (error: unknown) {
           console.error(
             "[Auth] Failed to schedule password reset email:",
@@ -77,21 +73,12 @@ function createAuth(ctx: GenericCtx<DataModel>) {
         user: { email: string; name: string };
         url: string;
       }) => {
-        console.log("=== VERIFICATION EMAIL CALLBACK INVOKED ===");
-        console.log("[Auth] User:", JSON.stringify(user));
-        console.log("[Auth] URL:", url);
-        console.log("[Auth] Context has scheduler:", "scheduler" in ctx);
-
         if (!("scheduler" in ctx)) {
-          console.error(
-            "[Auth] ERROR: Context does not have scheduler - cannot send email"
-          );
-          console.error("[Auth] Context keys:", Object.keys(ctx));
+          console.error("[Auth] Cannot schedule verification email");
           return;
         }
 
         try {
-          console.log("[Auth] Scheduling verification email via Resend...");
           await ctx.scheduler.runAfter(
             0,
             internal.email.renderer.sendVerificationEmail,
@@ -101,11 +88,13 @@ function createAuth(ctx: GenericCtx<DataModel>) {
               verificationUrl: url,
             }
           );
-          console.log("[Auth] Verification email scheduled successfully");
         } catch (error: unknown) {
           console.error("[Auth] Failed to schedule verification email:", error);
         }
       },
+    },
+    hooks: {
+      before: createAuthEmailRateLimitHook(ctx),
     },
     plugins: [
       convex({

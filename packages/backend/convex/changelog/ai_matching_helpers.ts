@@ -1,11 +1,16 @@
 import { v } from "convex/values";
 import { internalQuery } from "../_generated/server";
+import { feedbackStatus } from "../shared/validators";
 
 const MAX_FEEDBACK_ITEMS = 50;
 
-/**
- * Get release data and open feedback items for AI matching.
- */
+export const getReleaseOrganizationId = internalQuery({
+  args: { releaseId: v.id("releases") },
+  handler: async (ctx, args) =>
+    (await ctx.db.get(args.releaseId))?.organizationId ?? null,
+  returns: v.union(v.id("organizations"), v.null()),
+});
+
 export const getReleaseAndFeedback = internalQuery({
   args: { releaseId: v.id("releases") },
   handler: async (ctx, args) => {
@@ -14,7 +19,6 @@ export const getReleaseAndFeedback = internalQuery({
       return null;
     }
 
-    // Get existing linked feedback to exclude
     const existingLinks = await ctx.db
       .query("releaseFeedback")
       .withIndex("by_release", (q) => q.eq("releaseId", args.releaseId))
@@ -24,7 +28,6 @@ export const getReleaseAndFeedback = internalQuery({
       existingLinks.map((l) => l.feedbackId.toString())
     );
 
-    // Get open/planned feedback for this org (not already linked)
     const allFeedback = await ctx.db
       .query("feedback")
       .withIndex("by_organization", (q) =>
@@ -55,4 +58,22 @@ export const getReleaseAndFeedback = internalQuery({
       },
     };
   },
+  returns: v.union(
+    v.null(),
+    v.object({
+      feedbackItems: v.array(
+        v.object({
+          _id: v.id("feedback"),
+          description: v.string(),
+          status: feedbackStatus,
+          title: v.string(),
+          voteCount: v.number(),
+        })
+      ),
+      release: v.object({
+        description: v.optional(v.string()),
+        title: v.string(),
+      }),
+    })
+  ),
 });

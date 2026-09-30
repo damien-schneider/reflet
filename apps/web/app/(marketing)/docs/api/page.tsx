@@ -133,7 +133,11 @@ function AuthenticationSection() {
           </DocsLink>
           . An unsigned token, like the one the SDK builds from its{" "}
           <InlineCode>user</InlineCode> option, only credits new feedback and
-          survey responses to that user.
+          survey responses to that user. It never changes a user’s saved name or
+          email. Once a signed token is used for a user ID, unsigned tokens for
+          that ID are ignored. For users last identified by a signed token
+          before this protection shipped, it applies from their next signed
+          request.
         </DocsText>
         <CodeBlock
           code={`Authorization: Bearer fb_pub_your_public_key
@@ -168,11 +172,15 @@ export default function ApiReferencePage() {
 
       <DocsSection id="rate-limiting" sections={SECTIONS}>
         <DocsText>
-          Each key can create 30 feedback items per minute with a public key, or
-          300 with a secret key. While a key is over that limit, creating
-          feedback, commenting and uploading or saving screenshots return{" "}
-          <InlineCode>429</InlineCode>. Reads, votes, subscriptions and surveys
-          aren’t rate limited, and responses carry no rate-limit headers.
+          A public key can create 30 feedback items or comments per minute,
+          start 600 survey responses per minute and request 300 screenshot
+          upload URLs per minute; each limit is separate. A secret key shares
+          300 writes per minute across all of these. While a key is over a
+          limit, those requests return <InlineCode>429</InlineCode>. Saving a
+          screenshot isn’t rate limited, but a public key can attach at most 10
+          screenshots per feedback item. Reads, votes, subscriptions and survey
+          answers aren’t rate limited, and responses carry no rate-limit
+          headers.
         </DocsText>
       </DocsSection>
 

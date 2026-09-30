@@ -52,7 +52,8 @@ export const githubTables = {
     webhookSecret: v.optional(v.string()),
   })
     .index("by_organization", ["organizationId"])
-    .index("by_installation", ["installationId"]),
+    .index("by_installation", ["installationId"])
+    .index("by_installation_repository", ["installationId", "repositoryId"]),
 
   githubIssues: defineTable({
     body: v.optional(v.string()),

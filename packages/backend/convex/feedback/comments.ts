@@ -4,6 +4,10 @@ import { mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
 import { MAX_COMMENT_LENGTH } from "../shared/constants";
 import { validateInputLength } from "../shared/validators";
+import {
+  canViewFeedback,
+  isFeedbackPubliclyVisible,
+} from "./public_projection";
 
 // Helper to get authenticated user
 const getAuthUser = async (
@@ -53,8 +57,7 @@ export const list = query({
       isMember = !!membership;
     }
 
-    // Check visibility: member OR org is public
-    if (!(isMember || org.isPublic)) {
+    if (!(isMember || isFeedbackPubliclyVisible(org, feedback))) {
       return [];
     }
 
@@ -82,7 +85,7 @@ export const list = query({
           ...comment,
           author: author
             ? {
-                email: author.email,
+                email: isMember ? author.email : undefined,
                 image: author.image || undefined,
                 name: author.name || undefined,
               }
@@ -94,14 +97,6 @@ export const list = query({
 
     return withAuthors;
   },
-});
-
-/**
- * Get a single comment
- */
-export const get = query({
-  args: { id: v.id("comments") },
-  handler: async (ctx, args) => await ctx.db.get(args.id),
 });
 
 // ============================================
@@ -128,23 +123,7 @@ export const create = mutation({
       throw new Error("Feedback not found");
     }
 
-    const org = await ctx.db.get(feedback.organizationId);
-    if (!org) {
-      throw new Error("Organization not found");
-    }
-
-    // Check access
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", feedback.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    const isMember = !!membership;
-
-    // Check visibility: member OR org is public
-    if (!(isMember || org.isPublic)) {
+    if (!(await canViewFeedback(ctx, feedback))) {
       throw new Error("You don't have access to comment on this feedback");
     }
 

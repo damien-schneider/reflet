@@ -7,12 +7,10 @@ import {
 } from "../../devtools/constants";
 import { hashSecretKey } from "../../feedback/api_auth";
 import { verifyUserToken } from "../../feedback/user_token";
+import { rateLimiter } from "../../shared/rate_limits";
 import { errorResponse } from "../helpers";
 
 export type PublicApiCtx = Parameters<Parameters<typeof httpAction>[0]>[0];
-
-const PUBLIC_KEY_WRITES_PER_MINUTE = 30;
-const SECRET_KEY_WRITES_PER_MINUTE = 300;
 
 export type ApiCredential =
   | { organizationApiKeyId: Id<"organizationApiKeys"> }
@@ -99,28 +97,38 @@ export async function checkOrganizationAccess(
   return found;
 }
 
+type PublicKeyWriteLimit =
+  | "publicApiScreenshotUploadPerPublicKey"
+  | "publicApiSurveyStartPerPublicKey"
+  | "publicApiWritePerPublicKey";
+
 // Widget ingest: a public key may write into a private org, never read from it.
 export async function checkWriteQuota(
   ctx: PublicApiCtx,
-  auth: ApiAuthContext
+  auth: ApiAuthContext,
+  publicKeyLimit: PublicKeyWriteLimit = "publicApiWritePerPublicKey"
 ): Promise<AccessCheck> {
   const found = await checkOrganizationExists(ctx, auth.organizationId);
   if (!found.allowed) {
     return found;
   }
 
-  const quota = await ctx.runQuery(internal.feedback.api_auth.checkRateLimit, {
-    maxRequests: auth.hasPrivateAccess
-      ? SECRET_KEY_WRITES_PER_MINUTE
-      : PUBLIC_KEY_WRITES_PER_MINUTE,
-    subject: auth.credential,
-  });
+  const { ok } = await rateLimiter.limit(
+    ctx,
+    auth.hasPrivateAccess ? "publicApiWritePerSecretKey" : publicKeyLimit,
+    {
+      key:
+        "devtoolsTokenId" in auth.credential
+          ? auth.credential.devtoolsTokenId
+          : auth.credential.organizationApiKeyId,
+    }
+  );
 
-  if (!quota.allowed) {
+  if (!ok) {
     return {
       allowed: false,
       response: errorResponse(
-        "Too many reports from this key. Try again in a minute.",
+        "Too many requests from this key. Try again in a minute.",
         429
       ),
     };
@@ -232,19 +240,20 @@ export async function authenticateApiRequest(
       validation.secretKeyHash ?? ""
     );
     if (decoded) {
-      const externalUser = await ctx.runMutation(
+      const resolvedId = await ctx.runMutation(
         internal.feedback.api_auth.getOrCreateExternalUser,
         {
           email: decoded.user.email,
           externalId: decoded.user.id,
           name: decoded.user.name,
           organizationId,
+          verified: decoded.verified,
         }
       );
       if (decoded.verified) {
-        externalUserId = externalUser.externalUserId;
+        externalUserId = resolvedId ?? undefined;
       } else {
-        unverifiedExternalUserId = externalUser.externalUserId;
+        unverifiedExternalUserId = resolvedId ?? undefined;
       }
     }
   }

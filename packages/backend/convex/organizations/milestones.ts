@@ -1,6 +1,8 @@
 import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
+import { isFeedbackPubliclyVisible } from "../feedback/public_projection";
+import { isOrgMemberViewer } from "../shared/access";
 import { getAuthUser } from "../shared/utils";
 
 const TIME_HORIZON_ORDER = [
@@ -77,7 +79,11 @@ export const list = query({
         const feedbackItems = await Promise.all(
           junctions.map(async (j) => {
             const fb = await ctx.db.get(j.feedbackId);
-            if (!fb) {
+            const isVisible =
+              fb?.organizationId === org._id &&
+              (isMember ||
+                (isFeedbackPubliclyVisible(org, fb) && !fb.isMerged));
+            if (!(fb && isVisible)) {
               return null;
             }
             return {
@@ -132,6 +138,15 @@ export const get = query({
       return null;
     }
 
+    const org = await ctx.db.get(milestone.organizationId);
+    if (!org) {
+      return null;
+    }
+    const isMember = await isOrgMemberViewer(ctx, org._id);
+    if (!(isMember || (org.isPublic && milestone.isPublic))) {
+      return null;
+    }
+
     const junctions = await ctx.db
       .query("milestoneFeedback")
       .withIndex("by_milestone", (q) => q.eq("milestoneId", args.id))
@@ -140,7 +155,10 @@ export const get = query({
     const feedbackItems = await Promise.all(
       junctions.map(async (j) => {
         const fb = await ctx.db.get(j.feedbackId);
-        if (!fb) {
+        const isVisible =
+          fb?.organizationId === org._id &&
+          (isMember || (isFeedbackPubliclyVisible(org, fb) && !fb.isMerged));
+        if (!(fb && isVisible)) {
           return null;
         }
 

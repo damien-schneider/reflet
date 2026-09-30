@@ -1,6 +1,8 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
-import { getAuthUser } from "../shared/utils";
+import { requireOrgAdmin } from "../shared/access";
+
+const ANALYTICS_ACTION = "view email analytics";
 
 const MILLISECONDS_PER_DAY = 86_400_000;
 
@@ -10,7 +12,7 @@ export const getEmailStats = query({
     organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
-    await getAuthUser(ctx);
+    await requireOrgAdmin(ctx, args.organizationId, ANALYTICS_ACTION);
 
     const days = args.days ?? 30;
     const since = Date.now() - days * MILLISECONDS_PER_DAY;
@@ -95,7 +97,7 @@ export const getEmailStatsByType = query({
     organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
-    await getAuthUser(ctx);
+    await requireOrgAdmin(ctx, args.organizationId, ANALYTICS_ACTION);
 
     const days = args.days ?? 30;
     const since = Date.now() - days * MILLISECONDS_PER_DAY;
@@ -154,7 +156,7 @@ export const getEmailTimeline = query({
     organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
-    await getAuthUser(ctx);
+    await requireOrgAdmin(ctx, args.organizationId, ANALYTICS_ACTION);
 
     const days = args.days ?? 30;
     const since = Date.now() - days * MILLISECONDS_PER_DAY;
@@ -213,7 +215,7 @@ export const getRecentEmails = query({
     organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
-    await getAuthUser(ctx);
+    await requireOrgAdmin(ctx, args.organizationId, ANALYTICS_ACTION);
 
     const limit = Math.min(args.limit ?? 50, 100);
 
@@ -257,7 +259,11 @@ export const getReleaseEmailStats = query({
     releaseId: v.id("releases"),
   },
   handler: async (ctx, args) => {
-    await getAuthUser(ctx);
+    const release = await ctx.db.get(args.releaseId);
+    if (!release) {
+      throw new Error("Release not found");
+    }
+    await requireOrgAdmin(ctx, release.organizationId, ANALYTICS_ACTION);
 
     const logs = await ctx.db
       .query("emailSendLog")

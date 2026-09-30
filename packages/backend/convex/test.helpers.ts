@@ -1,5 +1,6 @@
 /// <reference types="vite/client" />
 
+import rateLimiterTest from "@convex-dev/rate-limiter/test";
 import { defineSchema, queryGeneric } from "convex/server";
 import { v } from "convex/values";
 import { convexTest } from "convex-test";
@@ -11,6 +12,7 @@ export const modules = import.meta.glob("./**/*.*s");
 export interface AuthTestUser {
   _id: string;
   email: string;
+  emailVerified?: boolean;
   image?: string;
   name?: string;
 }
@@ -77,5 +79,6 @@ export const setupTest = ({
     defineSchema({}),
     createAuthModules(authUsers)
   );
+  rateLimiterTest.register(test);
   return test;
 };

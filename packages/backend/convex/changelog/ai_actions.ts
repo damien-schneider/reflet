@@ -10,6 +10,8 @@ const openrouter = createOpenRouter({
 });
 
 const MAX_COMMITS_FOR_CONTEXT = 80;
+const MAX_TITLE_OUTPUT_TOKENS = 100;
+const MAX_MATCH_OUTPUT_TOKENS = 4000;
 const MAX_FEEDBACK_CANDIDATES = 100;
 const JSON_OBJECT_REGEX = /\{[\s\S]*\}/;
 
@@ -37,6 +39,7 @@ Instructions:
 - Do not use quotes around the title`;
 
     const result = await generateText({
+      maxOutputTokens: MAX_TITLE_OUTPUT_TOKENS,
       model: openrouter("anthropic/claude-sonnet-4"),
       prompt,
     });
@@ -121,6 +124,7 @@ For each match, respond ONLY with a valid JSON object (no markdown, no code fenc
 Sort results by confidence (high first, then medium, then low).`;
 
     const result = await generateText({
+      maxOutputTokens: MAX_MATCH_OUTPUT_TOKENS,
       model: openrouter("anthropic/claude-sonnet-4"),
       prompt,
     });

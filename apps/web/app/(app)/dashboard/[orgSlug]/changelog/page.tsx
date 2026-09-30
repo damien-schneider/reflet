@@ -30,7 +30,7 @@ export default function ChangelogPage({
   const { orgSlug } = use(params);
   const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
 
-  if (org === null) {
+  if (org === null || org?.role === null) {
     return <OrgNotFound />;
   }
 

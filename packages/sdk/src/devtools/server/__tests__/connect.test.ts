@@ -46,6 +46,7 @@ const handler = createDevtoolsHandler(
 function devtoolsRequest(path: string, init: RequestInit = {}): Request {
   const headers = new Headers(init.headers);
   headers.set(DEVTOOLS_REQUEST_HEADER, "1");
+  headers.set("sec-fetch-site", "same-origin");
   return new Request(`${ORIGIN}${DEVTOOLS_ROUTE_BASE}${path}`, {
     ...init,
     headers,

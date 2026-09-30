@@ -2,6 +2,10 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
 import { hmacSha256Hex } from "../shared/hmac";
+import {
+  describeFetchFailure,
+  fetchPublicUrl,
+} from "../shared/outbound/public_fetch";
 
 const DELIVERY_TIMEOUT_MS = 10_000;
 
@@ -47,18 +51,23 @@ export const deliver = internalAction({
     const abort = new AbortController();
     const timeout = setTimeout(() => abort.abort(), DELIVERY_TIMEOUT_MS);
     try {
-      const response = await fetch(webhook.url, {
-        body,
-        headers: {
-          "Content-Type": "application/json",
-          "User-Agent": "Reflet-Webhooks/1.0",
-          "X-Reflet-Delivery": delivery._id,
-          "X-Reflet-Event": delivery.event,
-          "X-Reflet-Signature": `sha256=${signature}`,
+      const { response } = await fetchPublicUrl(
+        webhook.url,
+        {
+          body,
+          headers: {
+            "Content-Type": "application/json",
+            "User-Agent": "Reflet-Webhooks/1.0",
+            "X-Reflet-Delivery": delivery._id,
+            "X-Reflet-Event": delivery.event,
+            "X-Reflet-Signature": `sha256=${signature}`,
+          },
+          method: "POST",
+          signal: abort.signal,
         },
-        method: "POST",
-        signal: abort.signal,
-      });
+        { followRedirects: false }
+      );
+      await response.body?.cancel();
       await ctx.runMutation(internal.webhooks.mutations.recordResult, {
         deliveryId: delivery._id,
         error: response.ok ? undefined : `HTTP ${response.status}`,
@@ -68,7 +77,7 @@ export const deliver = internalAction({
     } catch (error) {
       await ctx.runMutation(internal.webhooks.mutations.recordResult, {
         deliveryId: delivery._id,
-        error: error instanceof Error ? error.message : "Request failed",
+        error: describeFetchFailure(error),
         outcome: "failed",
       });
     } finally {

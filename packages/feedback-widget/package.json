@@ -21,11 +21,14 @@
     "build": "vite build",
     "check-types": "tsc --noEmit",
     "dev": "vite build --watch",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:unit": "vitest run"
   },
   "devDependencies": {
     "@types/node": "^26.1.2",
+    "jsdom": "^30.1.0",
     "typescript": "catalog:",
-    "vite": "catalog:"
+    "vite": "catalog:",
+    "vitest": "catalog:"
   }
 }

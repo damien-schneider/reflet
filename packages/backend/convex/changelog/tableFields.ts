@@ -4,6 +4,7 @@ import { feedbackStatus } from "../shared/validators";
 
 export const changelogTables = {
   changelogSubscribers: defineTable({
+    confirmationToken: v.optional(v.string()),
     email: v.optional(v.string()),
     organizationId: v.id("organizations"),
     subscribedAt: v.number(),
@@ -14,7 +15,8 @@ export const changelogTables = {
     .index("by_organization", ["organizationId"])
     .index("by_user_org", ["userId", "organizationId"])
     .index("by_email_org", ["email", "organizationId"])
-    .index("by_unsubscribe_token", ["unsubscribeToken"]),
+    .index("by_unsubscribe_token", ["unsubscribeToken"])
+    .index("by_confirmation_token", ["confirmationToken"]),
 
   releaseCommits: defineTable({
     commits: v.array(

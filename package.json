@@ -34,6 +34,8 @@
     "test:unit": "turbo run test:unit"
   },
   "overrides": {
+    "dompurify": "^3.4.16",
+    "next": "^16.3.8",
     "prosemirror-model": "^1.25.11",
     "prosemirror-state": "^1.4.4",
     "prosemirror-transform": "^1.12.0",

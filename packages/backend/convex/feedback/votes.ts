@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { components, internal } from "../_generated/api";
 import { mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
+import { canViewFeedback } from "./public_projection";
 
 const voteCounters = new ShardedCounter(components.shardedCounter, {
   defaultShards: 8,
@@ -135,21 +136,7 @@ export const toggle = mutation({
       throw new Error("Feedback not found");
     }
 
-    const org = await ctx.db.get(feedback.organizationId);
-    if (!org) {
-      throw new Error("Organization not found");
-    }
-
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", feedback.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    // Check visibility: member OR org is public
-    const hasAccess = !!membership || org.isPublic;
-    if (!hasAccess) {
+    if (!(await canViewFeedback(ctx, feedback))) {
       throw new Error("You don't have access to vote on this feedback");
     }
 

@@ -1,8 +1,9 @@
 import { v } from "convex/values";
-import { mutation, query } from "../_generated/server";
+import type { Doc } from "../_generated/dataModel";
+import { type MutationCtx, mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
+import { canViewFeedback } from "./public_projection";
 
-// Helper to get authenticated user
 const getAuthUser = async (
   ctx: Parameters<typeof authComponent.safeGetAuthUser>[0]
 ) => {
@@ -11,6 +12,15 @@ const getAuthUser = async (
     throw new Error("Not authenticated");
   }
   return user;
+};
+
+const assertCanSubscribe = async (
+  ctx: MutationCtx,
+  feedback: Doc<"feedback">
+): Promise<void> => {
+  if (!(await canViewFeedback(ctx, feedback))) {
+    throw new Error("You don't have access to subscribe to this feedback");
+  }
 };
 
 // ============================================
@@ -128,26 +138,6 @@ export const toggle = mutation({
     if (!feedback) {
       throw new Error("Feedback not found");
     }
-
-    const org = await ctx.db.get(feedback.organizationId);
-    if (!org) {
-      throw new Error("Organization not found");
-    }
-
-    // Check access - member or public org
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", feedback.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    const isMember = !!membership;
-
-    if (!(isMember || org.isPublic)) {
-      throw new Error("You don't have access to subscribe to this feedback");
-    }
-
     // Check if already subscribed
     const existingSubscription = await ctx.db
       .query("feedbackSubscriptions")
@@ -162,7 +152,7 @@ export const toggle = mutation({
       return { subscribed: false };
     }
 
-    // Subscribe
+    await assertCanSubscribe(ctx, feedback);
     await ctx.db.insert("feedbackSubscriptions", {
       createdAt: Date.now(),
       feedbackId: args.feedbackId,
@@ -185,7 +175,7 @@ export const subscribe = mutation({
     if (!feedback) {
       throw new Error("Feedback not found");
     }
-
+    await assertCanSubscribe(ctx, feedback);
     // Check if already subscribed
     const existingSubscription = await ctx.db
       .query("feedbackSubscriptions")

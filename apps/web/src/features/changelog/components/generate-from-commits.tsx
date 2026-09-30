@@ -18,6 +18,9 @@ import { capture } from "@/lib/analytics";
 
 const GENERATE_HINT =
   "Generate release notes from recent code changes on GitHub";
+const MAX_COMMITS_FOR_AI = 100;
+const MAX_FILES_FOR_AI = 50;
+const TOO_MANY_REQUESTS = 429;
 
 export interface CommitInfo {
   author: string;
@@ -93,7 +96,7 @@ export function GenerateFromCommits({
   const hasRepository = Boolean(githubConnection?.repositoryFullName);
   const repoFullName = githubConnection?.repositoryFullName ?? "";
   const targetBranch =
-    org?.changelogSettings?.targetBranch ??
+    (org?.role ? org.changelogSettings?.targetBranch : undefined) ??
     githubConnection?.repositoryDefaultBranch ??
     "main";
 
@@ -146,18 +149,18 @@ export function GenerateFromCommits({
     const currentTag = version.trim();
     const response = await fetch("/api/ai/generate-release-notes", {
       body: JSON.stringify({
-        commits: commits.map((c) => ({
+        commits: commits.slice(0, MAX_COMMITS_FOR_AI).map((c) => ({
           author: c.author,
-          fullMessage: c.fullMessage,
           message: c.message,
           sha: c.sha,
         })),
-        files: files?.map((f) => ({
+        files: files?.slice(0, MAX_FILES_FOR_AI).map((f) => ({
           additions: f.additions,
           deletions: f.deletions,
           filename: f.filename,
           status: f.status,
         })),
+        organizationId,
         previousVersion: previousTag ?? undefined,
         repositoryName: repoFullName,
         version: currentTag || undefined,
@@ -167,6 +170,9 @@ export function GenerateFromCommits({
       signal: abortController.signal,
     });
 
+    if (response.status === TOO_MANY_REQUESTS) {
+      throw new Error("AI generation limit reached. Try again later.");
+    }
     if (!(response.ok && response.body)) {
       throw new Error("Failed to start AI generation");
     }
@@ -196,6 +202,7 @@ export function GenerateFromCommits({
       {
         body: JSON.stringify({
           description,
+          organizationId,
           version: version.trim() || undefined,
         }),
         headers: { "Content-Type": "application/json" },

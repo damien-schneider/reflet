@@ -1,23 +1,9 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { mutation } from "../_generated/server";
+import { randomSecretHex } from "../shared/hmac";
 import { getAuthUser } from "../shared/utils";
 import { validateDomainFormat } from "./vercel";
-
-const RESERVED_SUBDOMAINS = [
-  "www",
-  "app",
-  "api",
-  "admin",
-  "mail",
-  "smtp",
-  "ftp",
-  "ns1",
-  "ns2",
-  "staging",
-  "dev",
-  "test",
-] as const;
 
 const ROOT_DOMAIN = "reflet.app";
 
@@ -40,13 +26,6 @@ export const addDomain = mutation({
     // Reject *.reflet.app subdomains
     if (domain.endsWith(`.${ROOT_DOMAIN}`) || domain === ROOT_DOMAIN) {
       throw new Error("Cannot use reflet.app subdomains as a custom domain.");
-    }
-
-    // Reject reserved domains
-    for (const reserved of RESERVED_SUBDOMAINS) {
-      if (domain === `${reserved}.${ROOT_DOMAIN}`) {
-        throw new Error("This domain is reserved and cannot be used.");
-      }
     }
 
     // Auth: verify membership and admin/owner role
@@ -92,13 +71,27 @@ export const addDomain = mutation({
       throw new Error("This domain is already in use by another organization.");
     }
 
-    // Set domain on org and schedule Vercel API action
+    const previousDomain = org.customDomain;
+    const isSameDomain = previousDomain === domain;
+
     await ctx.db.patch(args.organizationId, {
       customDomain: domain,
+      customDomainChallengeToken:
+        isSameDomain && org.customDomainChallengeToken
+          ? org.customDomainChallengeToken
+          : randomSecretHex(),
       customDomainError: undefined,
       customDomainStatus: "pending_verification",
       customDomainVerification: undefined,
     });
+
+    if (previousDomain && !isSameDomain) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.domains.actions.removeDomainAction,
+        { domain: previousDomain, organizationId: args.organizationId }
+      );
+    }
 
     await ctx.scheduler.runAfter(0, internal.domains.actions.addDomainAction, {
       domain,

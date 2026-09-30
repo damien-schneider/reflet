@@ -1,5 +1,5 @@
-import { escapeHtml } from "./survey-html";
 import type { SurveyData } from "./types";
+import { escapeHtml } from "./widget-utils";
 
 const AUTO_CLOSE_DELAY_MS = 5000;
 

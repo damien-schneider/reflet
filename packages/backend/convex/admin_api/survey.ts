@@ -69,11 +69,12 @@ export const listSurveys = internalQuery({
 
 export const getSurvey = internalQuery({
   args: {
+    organizationId: v.id("organizations"),
     surveyId: v.id("surveys"),
   },
   handler: async (ctx, args) => {
     const survey = await ctx.db.get(args.surveyId);
-    if (!survey) {
+    if (!survey || survey.organizationId !== args.organizationId) {
       return null;
     }
 
@@ -197,6 +198,7 @@ export const updateSurvey = internalMutation({
   args: {
     description: v.optional(v.string()),
     maxResponses: v.optional(v.number()),
+    organizationId: v.id("organizations"),
     surveyId: v.id("surveys"),
     title: v.optional(v.string()),
     triggerConfig: triggerConfigValidator,
@@ -204,11 +206,11 @@ export const updateSurvey = internalMutation({
   },
   handler: async (ctx, args) => {
     const survey = await ctx.db.get(args.surveyId);
-    if (!survey) {
+    if (!survey || survey.organizationId !== args.organizationId) {
       throw new Error("Survey not found");
     }
 
-    const { surveyId, ...updates } = args;
+    const { surveyId, organizationId: _organizationId, ...updates } = args;
     const filteredUpdates: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(updates)) {
       if (value !== undefined) {
@@ -228,12 +230,13 @@ export const updateSurvey = internalMutation({
 
 export const updateSurveyStatus = internalMutation({
   args: {
+    organizationId: v.id("organizations"),
     status: surveyStatusValidator,
     surveyId: v.id("surveys"),
   },
   handler: async (ctx, args) => {
     const survey = await ctx.db.get(args.surveyId);
-    if (!survey) {
+    if (!survey || survey.organizationId !== args.organizationId) {
       throw new Error("Survey not found");
     }
 

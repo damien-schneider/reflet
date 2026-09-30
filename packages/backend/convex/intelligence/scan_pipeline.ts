@@ -3,6 +3,8 @@ import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { type ActionCtx, internalAction } from "../_generated/server";
 
+class ScanCancelledError extends Error {}
+
 const extractErrorMessage = (error: unknown): string => {
   if (error instanceof Error) {
     return error.message;
@@ -49,7 +51,7 @@ const countStep = (
   }
 };
 
-/** Update the master job's current step (fire-and-forget) */
+/** Update the master job's current step; throws once the scan was cancelled. */
 const reportProgress = async (
   ctx: ActionCtx,
   masterJobId: Id<"intelligenceJobs"> | undefined,
@@ -59,7 +61,7 @@ const reportProgress = async (
   if (!masterJobId) {
     return;
   }
-  await ctx
+  const isRunning = await ctx
     .runMutation(internal.intelligence.crons.updateMasterJob, {
       currentStep,
       jobId: masterJobId,
@@ -70,9 +72,10 @@ const reportProgress = async (
       },
       status: "processing",
     })
-    .catch(() => {
-      // Progress update failure is non-critical
-    });
+    .catch(() => true);
+  if (!isRunning) {
+    throw new ScanCancelledError();
+  }
 };
 
 /** Run community + competitor pipelines with progress reporting */
@@ -212,6 +215,21 @@ const runPipelines = async (
   return stats;
 };
 
+/** Marks the master job as processing; false when it was cancelled before starting. */
+const markScanStarted = async (
+  ctx: ActionCtx,
+  masterJobId: Id<"intelligenceJobs"> | undefined
+): Promise<boolean> => {
+  if (!masterJobId) {
+    return true;
+  }
+  return await ctx.runMutation(internal.intelligence.crons.updateMasterJob, {
+    currentStep: "Initializing scan...",
+    jobId: masterJobId,
+    status: "processing",
+  });
+};
+
 export const runOrgScan = internalAction({
   args: {
     masterJobId: v.optional(v.id("intelligenceJobs")),
@@ -220,13 +238,8 @@ export const runOrgScan = internalAction({
   handler: async (ctx, args) => {
     const { masterJobId } = args;
 
-    // Mark master job as processing
-    if (masterJobId) {
-      await ctx.runMutation(internal.intelligence.crons.updateMasterJob, {
-        currentStep: "Initializing scan...",
-        jobId: masterJobId,
-        status: "processing",
-      });
+    if (!(await markScanStarted(ctx, masterJobId))) {
+      return;
     }
 
     const config = await ctx.runQuery(internal.intelligence.crons.getConfig, {
@@ -280,7 +293,7 @@ export const runOrgScan = internalAction({
         });
       }
     } catch (error: unknown) {
-      if (masterJobId) {
+      if (masterJobId && !(error instanceof ScanCancelledError)) {
         await ctx
           .runMutation(internal.intelligence.crons.updateMasterJob, {
             currentStep: "Unexpected error",

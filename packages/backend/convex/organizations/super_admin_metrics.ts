@@ -1,26 +1,7 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
-import { getAuthUser } from "../shared/utils";
-
-const getSuperAdminEmails = (): string[] => {
-  const raw = process.env.SUPER_ADMIN_EMAILS ?? "";
-  return raw
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-};
-
-const assertSuperAdmin = async (
-  ctx: Parameters<typeof getAuthUser>[0]
-): Promise<{ _id: string; email: string; name: string }> => {
-  const user = await getAuthUser(ctx);
-  const allowedEmails = getSuperAdminEmails();
-  if (!allowedEmails.includes(user.email.toLowerCase())) {
-    throw new Error("Not authorized");
-  }
-  return user;
-};
+import { assertSuperAdmin } from "../shared/access";
 
 export const getTopVotedFeedback = query({
   args: { limit: v.optional(v.number()) },

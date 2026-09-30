@@ -1,5 +1,10 @@
 import { v } from "convex/values";
 import { internalQuery, query } from "../_generated/server";
+import {
+  publicOrganizationValidator,
+  toPublicOrganization,
+} from "../organizations/queries";
+import { isOrgAdmin } from "../shared/membership";
 import { getAuthUser } from "../shared/utils";
 
 export const getByCustomDomain = query({
@@ -24,9 +29,9 @@ export const getByCustomDomain = query({
       return null;
     }
 
-    return org;
+    return toPublicOrganization(org);
   },
-  returns: v.any(), // Recursive type — Convex validators cannot express Doc<"organizations"> with optional nested objects
+  returns: v.union(v.null(), publicOrganizationValidator),
 });
 
 export const getDomainStatus = query({
@@ -52,6 +57,9 @@ export const getDomainStatus = query({
 
     return {
       customDomain: org.customDomain,
+      customDomainChallengeToken: isOrgAdmin(membership.role)
+        ? org.customDomainChallengeToken
+        : undefined,
       customDomainError: org.customDomainError,
       customDomainLastCheckedAt: org.customDomainLastCheckedAt,
       customDomainStatus: org.customDomainStatus,
@@ -63,6 +71,7 @@ export const getDomainStatus = query({
     v.null(),
     v.object({
       customDomain: v.optional(v.string()),
+      customDomainChallengeToken: v.optional(v.string()),
       customDomainError: v.optional(v.string()),
       customDomainLastCheckedAt: v.optional(v.number()),
       customDomainStatus: v.optional(

@@ -202,24 +202,31 @@ const SCREENSHOT_UPLOAD_URL: EndpointDefinition = {
 };
 
 const SAVE_SCREENSHOT: EndpointDefinition = {
-  access: <>Public or secret key. {RATE_LIMITED}</>,
+  access: <>Public or secret key.</>,
   body: `{
   "feedbackId": "jd7f2k9m1qz8x4c6v0bn3t5w",
   "storageId": "kg2a…",
-  "mimeType": "image/png",
   "width": 1440,
   "height": 900,
   "pageUrl": "https://app.acme.com/settings"
 }`,
-  description: "Attach an uploaded screenshot to a feedback item.",
+  description: (
+    <>
+      Attach an uploaded screenshot to a feedback item. The upload must be a
+      PNG, JPEG, WebP, GIF or AVIF image of 10 MB or less, uploaded in the last
+      30 minutes and not attached anywhere else; type and size are read from the
+      upload. With a public key, only the reporter (same{" "}
+      <InlineCode>X-User-Token</InlineCode> user, or anonymous for anonymous
+      reports) can attach, within 30 minutes of creating the feedback, and at
+      most 10 screenshots per feedback item.
+    </>
+  ),
   id: "save-screenshot",
   method: "POST",
   params: [
     FEEDBACK_ID_PARAM,
     param("storageId", "string", "Required. From the upload response."),
     param("filename", "string", "Defaults to screenshot.png."),
-    param("mimeType", "string", "Defaults to image/png."),
-    param("size", "number", "File size in bytes."),
     param("width", "number", "Image width in pixels."),
     param("height", "number", "Image height in pixels."),
     param("pageUrl", "string", "Page the screenshot was taken on."),

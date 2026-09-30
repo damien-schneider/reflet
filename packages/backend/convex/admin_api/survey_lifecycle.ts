@@ -3,11 +3,12 @@ import { internalMutation } from "../_generated/server";
 
 export const deleteSurvey = internalMutation({
   args: {
+    organizationId: v.id("organizations"),
     surveyId: v.id("surveys"),
   },
   handler: async (ctx, args) => {
     const survey = await ctx.db.get(args.surveyId);
-    if (!survey) {
+    if (!survey || survey.organizationId !== args.organizationId) {
       throw new Error("Survey not found");
     }
 
@@ -43,12 +44,13 @@ export const deleteSurvey = internalMutation({
 
 export const duplicateSurvey = internalMutation({
   args: {
+    organizationId: v.id("organizations"),
     surveyId: v.id("surveys"),
     title: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const survey = await ctx.db.get(args.surveyId);
-    if (!survey) {
+    if (!survey || survey.organizationId !== args.organizationId) {
       throw new Error("Survey not found");
     }
 

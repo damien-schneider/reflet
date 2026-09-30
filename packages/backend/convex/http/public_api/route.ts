@@ -1,6 +1,6 @@
 import type { z } from "zod";
 import { httpAction } from "../../_generated/server";
-import { errorResponse } from "../helpers";
+import { clientErrorMessage, errorResponse } from "../helpers";
 import {
   type ApiAuthContext,
   authenticateApiRequest,
@@ -33,10 +33,7 @@ export function publicApiRoute(
         url: new URL(request.url),
       });
     } catch (error) {
-      return errorResponse(
-        error instanceof Error ? error.message : "Internal server error",
-        500
-      );
+      return errorResponse(clientErrorMessage(error), 500);
     }
   });
 }

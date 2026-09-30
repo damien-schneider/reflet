@@ -61,15 +61,6 @@ export function registerFeedbackWriteRoutes(http: Router): void {
         }
       );
 
-      await ctx.runMutation(internal.feedback.api_auth.logApiRequest, {
-        endpoint: "/api/v1/feedback/create",
-        method: "POST",
-        ...auth.credential,
-        organizationId: auth.organizationId,
-        statusCode: 201,
-        userAgent: request.headers.get("User-Agent") ?? undefined,
-      });
-
       return jsonResponse(result, 201);
     }),
     method: "POST",
@@ -233,7 +224,11 @@ export function registerFeedbackWriteRoutes(http: Router): void {
   // POST /api/v1/feedback/screenshot/upload-url - Generate upload URL for screenshot
   http.route({
     handler: publicApiRoute(async ({ auth, ctx }) => {
-      const quota = await checkWriteQuota(ctx, auth);
+      const quota = await checkWriteQuota(
+        ctx,
+        auth,
+        "publicApiScreenshotUploadPerPublicKey"
+      );
       if (!quota.allowed) {
         return quota.response;
       }
@@ -257,11 +252,6 @@ export function registerFeedbackWriteRoutes(http: Router): void {
         return errorResponse("feedbackId and storageId are required", 400);
       }
 
-      const quota = await checkWriteQuota(ctx, auth);
-      if (!quota.allowed) {
-        return quota.response;
-      }
-
       const screenshotId = await ctx.runMutation(
         internal.feedback.screenshots.saveScreenshotPublic,
         {
@@ -272,10 +262,9 @@ export function registerFeedbackWriteRoutes(http: Router): void {
           feedbackId: parseId<"feedback">(body.data.feedbackId, "feedbackId"),
           filename: body.data.filename ?? "screenshot.png",
           height: body.data.height,
-          mimeType: body.data.mimeType ?? "image/png",
           organizationId: auth.organizationId,
           pageUrl: body.data.pageUrl,
-          size: body.data.size ?? 0,
+          requireReporter: !auth.hasPrivateAccess,
           storageId: parseStorageId(body.data.storageId, "storageId"),
           width: body.data.width,
         }

@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
+import { isOrgMemberViewer } from "../shared/access";
 
 // ============================================
 // QUERIES
@@ -59,31 +60,14 @@ export const list = query({
   },
 });
 
-/**
- * Get roadmap lanes (tags configured as lanes)
- */
-export const getRoadmapLanes = query({
-  args: { organizationId: v.id("organizations") },
-  handler: async (ctx, args) => {
-    const tags = await ctx.db
-      .query("tags")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .filter((q) => q.eq(q.field("isRoadmapLane"), true))
-      .collect();
-
-    return tags.sort((a, b) => (a.laneOrder ?? 0) - (b.laneOrder ?? 0));
-  },
-});
-
-/**
- * Get roadmap configuration (lanes for display)
- * Returns { lanes: Tag[] } for compatibility with roadmap page
- */
 export const getRoadmapConfig = query({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
+    const org = await ctx.db.get(args.organizationId);
+    if (!(org && (org.isPublic || (await isOrgMemberViewer(ctx, org._id))))) {
+      return { lanes: [] };
+    }
+
     const tags = await ctx.db
       .query("tags")
       .withIndex("by_organization", (q) =>
@@ -95,27 +79,5 @@ export const getRoadmapConfig = query({
     const lanes = tags.sort((a, b) => (a.laneOrder ?? 0) - (b.laneOrder ?? 0));
 
     return { lanes };
-  },
-});
-
-/**
- * Get tags for a specific feedback item
- */
-export const getForFeedback = query({
-  args: { feedbackId: v.id("feedback") },
-  handler: async (ctx, args) => {
-    const feedbackTags = await ctx.db
-      .query("feedbackTags")
-      .withIndex("by_feedback", (q) => q.eq("feedbackId", args.feedbackId))
-      .collect();
-
-    const tags = await Promise.all(
-      feedbackTags.map(async (ft) => {
-        const tag = await ctx.db.get(ft.tagId);
-        return tag;
-      })
-    );
-
-    return tags.filter(Boolean);
   },
 });

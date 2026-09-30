@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
 import { getAuthUser } from "../shared/utils";
+import { canViewFeedback } from "./public_projection";
 
 // Helper to generate slug from name
 const DEFAULT_TAGS = [
@@ -143,6 +144,13 @@ export const listPublic = query({
 export const getForFeedback = query({
   args: { feedbackId: v.id("feedback") },
   handler: async (ctx, args) => {
+    const feedback = await ctx.db.get(args.feedbackId);
+    if (!feedback) {
+      return [];
+    }
+    if (!(await canViewFeedback(ctx, feedback))) {
+      return [];
+    }
     const feedbackTags = await ctx.db
       .query("feedbackTags")
       .withIndex("by_feedback", (q) => q.eq("feedbackId", args.feedbackId))

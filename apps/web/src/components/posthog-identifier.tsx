@@ -37,6 +37,7 @@ export function PostHogIdentifier() {
   }, [posthog, session?.user?.id, session?.user?.email, session?.user?.name]);
 
   // Set organization group when org context changes
+  const subscriptionTier = org?.role ? org.subscriptionTier : undefined;
   useEffect(() => {
     const orgId = org?._id;
     if (!orgId || orgId === lastGroupedOrgId.current) {
@@ -46,10 +47,10 @@ export function PostHogIdentifier() {
     posthog.group("organization", orgId, {
       name: org.name,
       slug: org.slug,
-      subscription_tier: org.subscriptionTier,
+      subscription_tier: subscriptionTier,
     });
     lastGroupedOrgId.current = orgId;
-  }, [posthog, org?._id, org?.name, org?.slug, org?.subscriptionTier]);
+  }, [posthog, org?._id, org?.name, org?.slug, subscriptionTier]);
 
   // Clear refs when user logs out (reset handled in sign-out handlers)
   useEffect(() => {

@@ -38,7 +38,10 @@ export default function DuplicateReviewPage({
         {org === undefined ? (
           <ReviewQueueSkeleton />
         ) : (
-          <DuplicateReviewPanel organizationId={org._id} />
+          <DuplicateReviewPanel
+            canMerge={org.role === "admin" || org.role === "owner"}
+            organizationId={org._id}
+          />
         )}
       </PageBody>
     </PageLayout>

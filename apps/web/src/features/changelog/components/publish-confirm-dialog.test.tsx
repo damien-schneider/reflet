@@ -261,6 +261,7 @@ describe("PublishConfirmDialog", () => {
       if (queryName === "organizations:get") {
         return {
           changelogSettings: { pushToGithubOnPublish: true },
+          role: "owner",
         };
       }
       if (queryName === "github:getConnectionStatus") {
@@ -285,6 +286,7 @@ describe("PublishConfirmDialog", () => {
       if (queryName === "organizations:get") {
         return {
           changelogSettings: { pushToGithubOnPublish: true },
+          role: "owner",
         };
       }
       if (queryName === "github:getConnectionStatus") {
@@ -306,6 +308,7 @@ describe("PublishConfirmDialog", () => {
       if (queryName === "organizations:get") {
         return {
           changelogSettings: { pushToGithubOnPublish: true },
+          role: "owner",
         };
       }
       if (queryName === "github:getConnectionStatus") {

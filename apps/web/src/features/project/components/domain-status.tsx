@@ -89,14 +89,25 @@ function DnsRecordRow({ record }: { record: DnsRecord }) {
 }
 
 export function DnsInstructions({
+  challengeToken,
   domain,
   verification,
 }: {
+  challengeToken?: string;
   domain: string;
   verification?: Array<DnsRecord & { reason?: string }>;
 }) {
   const records: DnsRecord[] = [
     { domain, type: "CNAME", value: CNAME_TARGET },
+    ...(challengeToken
+      ? [
+          {
+            domain: `_reflet-challenge.${domain}`,
+            type: "TXT",
+            value: challengeToken,
+          },
+        ]
+      : []),
     ...(verification ?? []),
   ];
 

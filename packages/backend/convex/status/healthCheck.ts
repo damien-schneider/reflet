@@ -1,26 +1,55 @@
-import { v } from "convex/values";
+import { paginationOptsValidator } from "convex/server";
+import { type Infer, v } from "convex/values";
 import { components, internal } from "../_generated/api";
 import {
+  type ActionCtx,
   internalAction,
   internalMutation,
   internalQuery,
 } from "../_generated/server";
 import { PLAN_LIMITS } from "../billing/queries";
+import {
+  DnsResolutionUnavailableError,
+  describeFetchFailure,
+  fetchPublicUrl,
+} from "../shared/outbound/public_fetch";
+import { monitorMethod } from "./tableFields";
+
+const MONITOR_PAGE_SIZE = 200;
+const CHECK_BATCH_SIZE = 10;
+const CHECK_TIMEOUT_MS = 10_000;
+
+const dueMonitor = v.object({
+  _id: v.id("statusMonitors"),
+  method: v.optional(monitorMethod),
+  name: v.string(),
+  organizationId: v.id("organizations"),
+  url: v.string(),
+});
+
+type DueMonitor = Infer<typeof dueMonitor>;
+
+const dueMonitorsPage = v.object({
+  continueCursor: v.string(),
+  isDone: v.boolean(),
+  monitors: v.array(dueMonitor),
+});
 
 // ============================================
 // INTERNAL QUERIES
 // ============================================
 
-export const getActiveMonitors = internalQuery({
-  args: {},
-  handler: async (ctx) => {
+export const getDueMonitorsPage = internalQuery({
+  args: { paginationOpts: paginationOptsValidator },
+  handler: async (ctx, args) => {
     const now = Date.now();
-    const monitors = await ctx.db.query("statusMonitors").collect();
+    const page = await ctx.db
+      .query("statusMonitors")
+      .paginate(args.paginationOpts);
 
-    // Batch-fetch subscription status per org to enforce tier minimums
-    const orgTierCache = new Map<string, number>();
+    const orgMinInterval = new Map<string, number>();
     const getOrgMinInterval = async (orgId: string): Promise<number> => {
-      const cached = orgTierCache.get(orgId);
+      const cached = orgMinInterval.get(orgId);
       if (cached !== undefined) {
         return cached;
       }
@@ -29,50 +58,42 @@ export const getActiveMonitors = internalQuery({
         { orgId }
       );
       const hasActiveSub =
-        subscription &&
-        (subscription.status === "active" ||
-          subscription.status === "trialing");
+        subscription?.status === "active" ||
+        subscription?.status === "trialing";
       const min = hasActiveSub
         ? PLAN_LIMITS.pro.minCheckIntervalMinutes
         : PLAN_LIMITS.free.minCheckIntervalMinutes;
-      orgTierCache.set(orgId, min);
+      orgMinInterval.set(orgId, min);
       return min;
     };
 
-    const results: typeof monitors = [];
-    for (const m of monitors) {
+    const monitors: DueMonitor[] = [];
+    for (const m of page.page) {
       if (m.status === "paused") {
         continue;
       }
       // Enforce tier minimum even if stored value is lower (e.g. after downgrade)
       const tierMin = await getOrgMinInterval(m.organizationId);
       const effectiveInterval = Math.max(m.checkIntervalMinutes, tierMin);
-
-      if (m.lastCheckedAt) {
-        const nextCheckAt = m.lastCheckedAt + effectiveInterval * 60 * 1000;
-        if (now < nextCheckAt) {
-          continue;
-        }
+      const isDue =
+        !m.lastCheckedAt || now >= m.lastCheckedAt + effectiveInterval * 60_000;
+      if (isDue) {
+        monitors.push({
+          _id: m._id,
+          method: m.method,
+          name: m.name,
+          organizationId: m.organizationId,
+          url: m.url,
+        });
       }
-      results.push(m);
     }
-    return results;
+    return {
+      continueCursor: page.continueCursor,
+      isDone: page.isDone,
+      monitors,
+    };
   },
-});
-
-export const getActiveIncidentForMonitor = internalQuery({
-  args: { monitorId: v.id("statusMonitors") },
-  handler: async (ctx, args) => {
-    const incidents = await ctx.db.query("statusIncidents").collect();
-
-    return (
-      incidents.find(
-        (i) =>
-          i.status !== "resolved" &&
-          i.affectedMonitorIds.includes(args.monitorId)
-      ) ?? null
-    );
-  },
+  returns: dueMonitorsPage,
 });
 
 // ============================================
@@ -251,78 +272,113 @@ export const cleanupOldChecks = internalMutation({
 });
 
 // ============================================
-// MAIN CRON ACTION
+// CRON ACTIONS
 // ============================================
 
+interface ProbeResult {
+  errorMessage?: string;
+  isUp: boolean;
+  responseTimeMs: number;
+  statusCode?: number;
+}
+
+const probeMonitor = async (
+  monitor: DueMonitor
+): Promise<ProbeResult | null> => {
+  const startTime = Date.now();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), CHECK_TIMEOUT_MS);
+  try {
+    const { response, requestDurationMs } = await fetchPublicUrl(monitor.url, {
+      method: monitor.method ?? "HEAD",
+      signal: controller.signal,
+    });
+    await response.body?.cancel();
+    return {
+      isUp: response.status >= 200 && response.status < 400,
+      responseTimeMs: requestDurationMs,
+      statusCode: response.status,
+    };
+  } catch (error) {
+    if (error instanceof DnsResolutionUnavailableError) {
+      return null;
+    }
+    return {
+      errorMessage: describeFetchFailure(error),
+      isUp: false,
+      responseTimeMs: Date.now() - startTime,
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
+};
+
+const checkMonitor = async (
+  ctx: ActionCtx,
+  monitor: DueMonitor
+): Promise<void> => {
+  const probe = await probeMonitor(monitor);
+  if (!probe) {
+    return;
+  }
+
+  const result = await ctx.runMutation(
+    internal.status.healthCheck.recordCheck,
+    {
+      ...probe,
+      monitorId: monitor._id,
+      organizationId: monitor.organizationId,
+    }
+  );
+
+  const incidentArgs = {
+    monitorId: monitor._id,
+    monitorName: monitor.name,
+    organizationId: monitor.organizationId,
+  };
+  if (result && "shouldAlert" in result && result.shouldAlert) {
+    await ctx.runMutation(
+      internal.status.healthCheck.autoCreateIncident,
+      incidentArgs
+    );
+  }
+  if (result && "recovered" in result && result.recovered) {
+    await ctx.runMutation(
+      internal.status.healthCheck.autoResolveIncident,
+      incidentArgs
+    );
+  }
+};
+
+export const checkMonitorBatch = internalAction({
+  args: { monitors: v.array(dueMonitor) },
+  handler: async (ctx, args) => {
+    await Promise.all(args.monitors.map((m) => checkMonitor(ctx, m)));
+  },
+  returns: v.null(),
+});
+
+/** Fans due monitors out into small scheduled batches so one tenant's slow targets can't stall the rest. */
 export const runHealthChecks = internalAction({
   args: {},
   handler: async (ctx) => {
-    const monitors = await ctx.runQuery(
-      internal.status.healthCheck.getActiveMonitors,
-      {}
-    );
-
-    for (const monitor of monitors) {
-      const method = monitor.method ?? "HEAD";
-      const startTime = Date.now();
-
-      let isUp = false;
-      let statusCode: number | undefined;
-      let responseTimeMs: number | undefined;
-      let errorMessage: string | undefined;
-
-      try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 10_000);
-
-        const response = await fetch(monitor.url, {
-          method,
-          redirect: "follow",
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeout);
-        statusCode = response.status;
-        responseTimeMs = Date.now() - startTime;
-        isUp = statusCode >= 200 && statusCode < 400;
-      } catch (err) {
-        responseTimeMs = Date.now() - startTime;
-        errorMessage = err instanceof Error ? err.message : "Unknown error";
-      }
-
-      const result = await ctx.runMutation(
-        internal.status.healthCheck.recordCheck,
-        {
-          errorMessage,
-          isUp,
-          monitorId: monitor._id,
-          organizationId: monitor.organizationId,
-          responseTimeMs,
-          statusCode,
-        }
+    let cursor: string | null = null;
+    let isDone = false;
+    while (!isDone) {
+      const page: Infer<typeof dueMonitorsPage> = await ctx.runQuery(
+        internal.status.healthCheck.getDueMonitorsPage,
+        { paginationOpts: { cursor, numItems: MONITOR_PAGE_SIZE } }
       );
-
-      if (!result) {
-        continue;
+      for (let i = 0; i < page.monitors.length; i += CHECK_BATCH_SIZE) {
+        await ctx.scheduler.runAfter(
+          0,
+          internal.status.healthCheck.checkMonitorBatch,
+          { monitors: page.monitors.slice(i, i + CHECK_BATCH_SIZE) }
+        );
       }
-
-      // Auto-create incident if threshold reached
-      if ("shouldAlert" in result && result.shouldAlert) {
-        await ctx.runMutation(internal.status.healthCheck.autoCreateIncident, {
-          monitorId: monitor._id,
-          monitorName: monitor.name,
-          organizationId: monitor.organizationId,
-        });
-      }
-
-      // Auto-resolve if monitor recovered
-      if ("recovered" in result && result.recovered) {
-        await ctx.runMutation(internal.status.healthCheck.autoResolveIncident, {
-          monitorId: monitor._id,
-          monitorName: monitor.name,
-          organizationId: monitor.organizationId,
-        });
-      }
+      cursor = page.continueCursor;
+      isDone = page.isDone;
     }
   },
+  returns: v.null(),
 });

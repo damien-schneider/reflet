@@ -17,8 +17,14 @@ export interface WidgetColors {
   textMuted: string;
 }
 
-export const DEFAULT_STATUS_COLOR = "#6b7280";
+const DEFAULT_STATUS_COLOR = "#6b7280";
 export const DEFAULT_PRIMARY_COLOR = "#6366f1";
+
+const CHIP_COLOR = /^(?:#(?:[0-9a-f]{3}|[0-9a-f]{6})|[a-z]+)$/i;
+
+export function chipColor(color: string | undefined): string {
+  return color && CHIP_COLOR.test(color) ? color : DEFAULT_STATUS_COLOR;
+}
 
 export function createWidgetColors(
   primaryColor: string,

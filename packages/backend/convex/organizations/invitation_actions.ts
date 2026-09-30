@@ -1,14 +1,14 @@
 import { v } from "convex/values";
-import { internal } from "../_generated/api";
 import { mutation } from "../_generated/server";
+import { normalizeEmail } from "../email/suppression";
 import { getAuthUser } from "../shared/utils";
+import { scheduleInvitationEmail } from "./invitations";
 import { PLAN_LIMITS } from "./queries";
 
-const siteUrl = process.env.SITE_URL ?? "";
+// Deployments that skip email verification never set emailVerified for password sign-ups.
+const emailVerificationRequired =
+  process.env.SKIP_EMAIL_VERIFICATION !== "true";
 
-/**
- * List pending invitations for an organization
- */
 export const accept = mutation({
   args: { token: v.string() },
   handler: async (ctx, args) => {
@@ -32,6 +32,13 @@ export const accept = mutation({
       // Mark as expired
       await ctx.db.patch(invitation._id, { status: "expired" });
       throw new Error("This invitation has expired");
+    }
+
+    if (normalizeEmail(user.email) !== invitation.email) {
+      throw new Error("This invitation was sent to a different email address");
+    }
+    if (emailVerificationRequired && !user.emailVerified) {
+      throw new Error("Verify your email address to accept this invitation");
     }
 
     // Check if already a member
@@ -155,28 +162,12 @@ export const resend = mutation({
       throw new Error("Organization not found");
     }
 
-    // Get inviter's name
-    const inviterName = user.name ?? user.email ?? "Un membre";
-
-    // Build the invitation accept URL
-    const acceptUrl = `${siteUrl}/invite/${invitation.token}`;
-
-    // Update lastSentAt
     await ctx.db.patch(invitation._id, { lastSentAt: Date.now() });
-
-    // Schedule the invitation email (invitations are only for admin/member roles)
-    const emailRole = invitation.role as "admin" | "member";
-    await ctx.scheduler.runAfter(
-      0,
-      internal.email.renderer.sendInvitationEmail,
-      {
-        acceptUrl,
-        inviterName,
-        organizationName: org.name,
-        role: emailRole,
-        to: invitation.email,
-      }
-    );
+    await scheduleInvitationEmail(ctx, {
+      invitation,
+      inviter: user,
+      organizationName: org.name,
+    });
 
     return { success: true };
   },

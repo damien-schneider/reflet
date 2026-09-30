@@ -2,6 +2,7 @@
 
 import { render } from "@react-email/render";
 import { InvitationEmail } from "@reflet/email/templates/invitation-email";
+import { SubscriptionConfirmationEmail } from "@reflet/email/templates/subscription-confirmation-email";
 import { VerificationEmail } from "@reflet/email/templates/verification-email";
 import { WelcomeEmail } from "@reflet/email/templates/welcome-email";
 import { v } from "convex/values";
@@ -228,6 +229,43 @@ export const sendChangelogNotificationEmail = internalAction({
       to: args.to,
     });
   },
+});
+
+export const sendSubscriptionConfirmationEmail = internalAction({
+  args: {
+    confirmUrl: v.string(),
+    list: v.union(v.literal("changelog"), v.literal("status")),
+    organizationName: v.string(),
+    to: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const isSuppressed = await ctx.runQuery(
+      internal.email.suppression.isEmailSuppressed,
+      { email: args.to }
+    );
+    if (isSuppressed) {
+      return null;
+    }
+
+    const component = SubscriptionConfirmationEmail({
+      confirmUrl: args.confirmUrl,
+      list: args.list,
+      organizationName: args.organizationName,
+    });
+    const html = await render(component);
+    const text = await render(component, { plainText: true });
+
+    await ctx.runMutation(internal.email.send.sendEmail, {
+      from: defaultFrom,
+      html,
+      replyTo: SUPPORT_EMAIL,
+      subject: `Confirmez votre abonnement à ${args.organizationName}`,
+      text,
+      to: args.to,
+    });
+    return null;
+  },
+  returns: v.null(),
 });
 
 // Send weekly digest email using react-email template

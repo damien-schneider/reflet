@@ -36,7 +36,10 @@ export const getActiveIncidents = query({
         return {
           ...incident,
           affectedMonitors: monitors
-            .filter((m): m is NonNullable<typeof m> => m !== null)
+            .filter(
+              (m): m is NonNullable<typeof m> =>
+                m?.organizationId === incident.organizationId
+            )
             .map((m) => ({ _id: m._id, name: m.name, url: m.url })),
           updates: updates.sort((a, b) => b.createdAt - a.createdAt),
         };
@@ -79,8 +82,10 @@ export const getIncidentHistory = query({
         return {
           ...incident,
           affectedMonitors: monitors
-            .filter(Boolean)
-            .filter((m): m is NonNullable<typeof m> => m !== null)
+            .filter(
+              (m): m is NonNullable<typeof m> =>
+                m?.organizationId === incident.organizationId
+            )
             .map((m) => ({ _id: m._id, name: m.name })),
           updates: updates.sort((a, b) => a.createdAt - b.createdAt),
         };
@@ -113,7 +118,10 @@ export const getIncidentWithUpdates = query({
     return {
       ...incident,
       affectedMonitors: monitors
-        .filter((m): m is NonNullable<typeof m> => m !== null)
+        .filter(
+          (m): m is NonNullable<typeof m> =>
+            m?.organizationId === incident.organizationId
+        )
         .map((m) => ({ _id: m._id, name: m.name, url: m.url })),
       updates: updates.sort((a, b) => a.createdAt - b.createdAt),
     };
@@ -134,6 +142,13 @@ export const createIncident = mutation({
   },
   handler: async (ctx, args) => {
     await requireOrgAdmin(ctx, args.organizationId, "declare incidents");
+
+    for (const monitorId of args.affectedMonitorIds) {
+      const monitor = await ctx.db.get(monitorId);
+      if (monitor?.organizationId !== args.organizationId) {
+        throw new Error("Monitor not found");
+      }
+    }
 
     const now = Date.now();
 

@@ -28,6 +28,9 @@ function devtoolsRequest(path: string, init: RequestInit = {}): Request {
   if (!headers.has(DEVTOOLS_REQUEST_HEADER)) {
     headers.set(DEVTOOLS_REQUEST_HEADER, "1");
   }
+  if (!headers.has("sec-fetch-site")) {
+    headers.set("sec-fetch-site", "same-origin");
+  }
   return new Request(`${ORIGIN}${DEVTOOLS_ROUTE_BASE}${path}`, {
     ...init,
     headers,
@@ -80,6 +83,15 @@ describe("request guard", () => {
     const response = await handler(
       devtoolsRequest("/status", {
         headers: { "sec-fetch-site": "cross-site" },
+      })
+    );
+    expect(response.status).toBe(403);
+  });
+
+  it("rejects a non-browser caller on a loopback Host that omits Sec-Fetch-Site", async () => {
+    const response = await handler(
+      new Request(`${ORIGIN}${DEVTOOLS_ROUTE_BASE}/search?q=Ship`, {
+        headers: { [DEVTOOLS_REQUEST_HEADER]: "1", host: "localhost:3000" },
       })
     );
     expect(response.status).toBe(403);

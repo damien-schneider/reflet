@@ -73,12 +73,13 @@ export const listPendingDuplicates = internalQuery({
 export const resolveDuplicate = internalMutation({
   args: {
     action: v.union(v.literal("confirm"), v.literal("reject")),
+    organizationId: v.id("organizations"),
     pairId: v.id("duplicatePairs"),
     resolvedBy: v.string(),
   },
   handler: async (ctx, args) => {
     const pair = await ctx.db.get(args.pairId);
-    if (!pair) {
+    if (!pair || pair.organizationId !== args.organizationId) {
       throw new Error("Duplicate pair not found");
     }
 
@@ -96,6 +97,7 @@ export const resolveDuplicate = internalMutation({
 export const mergeFeedback = internalMutation({
   args: {
     mergedBy: v.string(),
+    organizationId: v.id("organizations"),
     pairId: v.optional(v.id("duplicatePairs")),
     sourceFeedbackId: v.id("feedback"),
     targetFeedbackId: v.id("feedback"),
@@ -104,12 +106,19 @@ export const mergeFeedback = internalMutation({
     const source = await ctx.db.get(args.sourceFeedbackId);
     const target = await ctx.db.get(args.targetFeedbackId);
 
-    if (!(source && target)) {
+    if (
+      !(source && target) ||
+      source.organizationId !== args.organizationId ||
+      target.organizationId !== args.organizationId
+    ) {
       throw new Error("Feedback not found");
     }
 
-    if (source.organizationId !== target.organizationId) {
-      throw new Error("Cannot merge feedback from different organizations");
+    if (args.pairId) {
+      const pair = await ctx.db.get(args.pairId);
+      if (!pair || pair.organizationId !== args.organizationId) {
+        throw new Error("Duplicate pair not found");
+      }
     }
 
     // Transfer votes

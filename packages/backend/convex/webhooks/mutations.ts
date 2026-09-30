@@ -8,6 +8,7 @@ import {
 } from "../_generated/server";
 import { requireOrgAdmin } from "../shared/access";
 import { randomSecretHex } from "../shared/hmac";
+import { assertPublicHttpUrl } from "../shared/outbound/public_fetch";
 import { type WebhookEvent, webhookEvent } from "./tableFields";
 
 const RETRY_DELAYS_MS = [60_000, 600_000];
@@ -48,18 +49,6 @@ export async function emitWebhookEvent(
   }
 }
 
-function assertHttpUrl(url: string): void {
-  let parsed: URL;
-  try {
-    parsed = new URL(url);
-  } catch {
-    throw new Error("Webhook URL must be a valid URL");
-  }
-  if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
-    throw new Error("Webhook URL must use http or https");
-  }
-}
-
 export const create = mutation({
   args: {
     description: v.optional(v.string()),
@@ -69,7 +58,7 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     await requireOrgAdmin(ctx, args.organizationId, "manage webhooks");
-    assertHttpUrl(args.url);
+    assertPublicHttpUrl(args.url);
     if (args.events.length === 0) {
       throw new Error("Select at least one event");
     }
@@ -107,7 +96,7 @@ export const update = mutation({
     }
     await requireOrgAdmin(ctx, webhook.organizationId, "manage webhooks");
     if (args.url !== undefined) {
-      assertHttpUrl(args.url);
+      assertPublicHttpUrl(args.url);
     }
     if (args.events !== undefined && args.events.length === 0) {
       throw new Error("Select at least one event");

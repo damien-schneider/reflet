@@ -42,8 +42,12 @@ export function AddMonitorInput({ onAdd }: AddMonitorInputProps) {
       await onAdd(fullUrl, extractNameFromUrl(fullUrl));
       setUrl("");
       setIsAdding(false);
-    } catch {
-      toast.error("Couldn’t add the monitor. Try again.");
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Couldn’t add the monitor. Try again."
+      );
     }
     setIsSaving(false);
   };

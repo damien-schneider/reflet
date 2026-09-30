@@ -145,20 +145,24 @@ export async function GET(request: Request): Promise<NextResponse> {
     );
   }
 
-  const context: GithubConnectContext = {
-    ...storedContext,
-    installationId:
-      searchParams.get("installation_id") ?? storedContext.installationId,
-    setupAction: searchParams.get("setup_action") ?? storedContext.setupAction,
-  };
+  const isStateForThisBrowser =
+    searchParams.get("state") === storedContext.nonce;
+  const context: GithubConnectContext = isStateForThisBrowser
+    ? {
+        ...storedContext,
+        installationId:
+          searchParams.get("installation_id") ?? storedContext.installationId,
+        setupAction:
+          searchParams.get("setup_action") ?? storedContext.setupAction,
+      }
+    : storedContext;
   if (!context.installationId) {
     await clearConnectContext();
     return redirectWithError(request.url, "missing_installation_id");
   }
 
   const code = searchParams.get("code");
-  const isCodeForThisBrowser =
-    code !== null && searchParams.get("state") === storedContext.nonce;
+  const isCodeForThisBrowser = code !== null && isStateForThisBrowser;
 
   try {
     if (!isCodeForThisBrowser) {

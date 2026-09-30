@@ -4,6 +4,7 @@ import { DEVTOOLS_ROUTE_BASE } from "../protocol";
 import { createDevtoolsHandler, type DevtoolsHandler } from "./handler";
 import { errorResponse } from "./json-response";
 import type { DevtoolsServerOptions } from "./options";
+import { isLoopbackAddress } from "./request-guard";
 
 export type { DevtoolsServerOptions } from "./options";
 
@@ -64,6 +65,13 @@ async function serveDevtoolsRequest(
   request: Connect.IncomingMessage,
   serverResponse: ServerResponse
 ): Promise<void> {
+  if (!isLoopbackAddress(request.socket.remoteAddress)) {
+    await sendWebResponse(
+      errorResponse("Reflet devtools only answers this machine.", 403),
+      serverResponse
+    );
+    return;
+  }
   const method = request.method ?? "GET";
   const hasBody = method !== "GET" && method !== "HEAD";
   const body = hasBody ? await readBody(request) : undefined;

@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { mutation, query } from "../_generated/server";
+import { isOrgMemberViewer, requireOrgMember } from "../shared/access";
 import { getAuthUser } from "../shared/utils";
 
 // Default statuses to create for new organizations (used as roadmap columns)
@@ -21,6 +22,9 @@ export const list = query({
     if (!org) {
       return [];
     }
+    if (!(org.isPublic || (await isOrgMemberViewer(ctx, org._id)))) {
+      return [];
+    }
 
     const statuses = await ctx.db
       .query("organizationStatuses")
@@ -35,7 +39,19 @@ export const list = query({
 
 export const get = query({
   args: { id: v.id("organizationStatuses") },
-  handler: (ctx, args) => ctx.db.get(args.id),
+  handler: async (ctx, args) => {
+    const status = await ctx.db.get(args.id);
+    if (!status) {
+      return null;
+    }
+    const org = await ctx.db.get(status.organizationId);
+    if (!org) {
+      return null;
+    }
+    const canView =
+      org.isPublic || (await isOrgMemberViewer(ctx, status.organizationId));
+    return canView ? status : null;
+  },
 });
 
 export const createDefaults = mutation({
@@ -95,28 +111,17 @@ export const createDefaults = mutation({
 export const ensureDefaults = mutation({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    const org = await ctx.db.get(args.organizationId);
-    if (!org) {
-      throw new Error("Organization not found");
-    }
+    await requireOrgMember(ctx, args.organizationId);
 
-    // Check if statuses already exist
     const existingStatuses = await ctx.db
       .query("organizationStatuses")
       .withIndex("by_organization", (q) =>
         q.eq("organizationId", args.organizationId)
       )
-      .first();
+      .collect();
 
-    if (existingStatuses) {
-      // Already has statuses, return the list
-      const allStatuses = await ctx.db
-        .query("organizationStatuses")
-        .withIndex("by_organization", (q) =>
-          q.eq("organizationId", args.organizationId)
-        )
-        .collect();
-      return allStatuses.sort((a, b) => a.order - b.order);
+    if (existingStatuses.length > 0) {
+      return existingStatuses.sort((a, b) => a.order - b.order);
     }
 
     // Create default statuses

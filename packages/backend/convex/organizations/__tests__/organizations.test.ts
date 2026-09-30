@@ -86,6 +86,48 @@ describe("Organization slug uniqueness", () => {
   });
 });
 
+describe("Organization slug derived from name", () => {
+  const VALID_SLUG = /^[a-z0-9](?:[a-z0-9-]{0,46}[a-z0-9])$/;
+
+  test.each([
+    ["Test", /^test-[a-z0-9]{6}$/],
+    ["X", /^x-[a-z0-9]{6}$/],
+    ["!!!", /^org-[a-z0-9]{6}$/],
+    ["Acme Labs", /^acme-labs$/],
+  ])("creates %s with a usable slug", async (name, expected) => {
+    const t = convexTest(schema, modules);
+    const orgId = await t.mutation(
+      internal.organizations.mutations.createOrganization,
+      { name, userId: "user_123" }
+    );
+    const org = await t.run((ctx) => ctx.db.get(orgId));
+    expect(org?.slug).toMatch(expected);
+  });
+
+  test("truncates long names to a valid 48-char slug", async () => {
+    const t = convexTest(schema, modules);
+    const name = `${"a".repeat(47)} ${"b".repeat(12)}`;
+    const orgId = await t.mutation(
+      internal.organizations.mutations.createOrganization,
+      { name, userId: "user_123" }
+    );
+    const org = await t.run((ctx) => ctx.db.get(orgId));
+    expect(org?.slug).toBe("a".repeat(47));
+    expect(org?.slug).toMatch(VALID_SLUG);
+  });
+
+  test("still rejects an explicitly requested reserved slug", async () => {
+    const t = convexTest(schema, modules);
+    await expect(
+      t.mutation(internal.organizations.mutations.createOrganization, {
+        name: "Anything",
+        slug: "test",
+        userId: "user_123",
+      })
+    ).rejects.toThrow("This slug is reserved");
+  });
+});
+
 describe("Organization slug update", () => {
   test("should allow changing slug to a unique value", async () => {
     const t = convexTest(schema, modules);

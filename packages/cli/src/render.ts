@@ -33,6 +33,12 @@ export function indent(text: string, width = 2): string {
     .join("\n");
 }
 
+const CONTROL_EXCEPT_LAYOUT = /[^\P{Cc}\n\t]/gu;
+
+export function terminalSafe(text: string): string {
+  return text.replace(CONTROL_EXCEPT_LAYOUT, "\uFFFD");
+}
+
 type Cell = string | number | boolean | null | undefined;
 
 function isCell(value: unknown): value is Cell {
@@ -40,7 +46,9 @@ function isCell(value: unknown): value is Cell {
 }
 
 function cellText(value: Cell): string {
-  return value === null || value === undefined ? "" : String(value);
+  return value === null || value === undefined
+    ? ""
+    : terminalSafe(String(value));
 }
 
 export function table(rows: Record<string, unknown>[]): string {

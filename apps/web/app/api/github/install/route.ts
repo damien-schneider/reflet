@@ -8,6 +8,14 @@ import { writeConnectContext } from "../connect-context";
  * session on the callback, so no user id travels through GitHub.
  */
 export async function GET(request: Request): Promise<NextResponse> {
+  const fetchSite = request.headers.get("sec-fetch-site");
+  if (fetchSite === "cross-site" || fetchSite === "same-site") {
+    return NextResponse.json(
+      { error: "GitHub connection must start from Reflet" },
+      { status: 403 }
+    );
+  }
+
   const { searchParams } = new URL(request.url);
 
   const githubAppSlug = env.GITHUB_APP_SLUG;

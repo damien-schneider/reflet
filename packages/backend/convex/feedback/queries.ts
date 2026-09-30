@@ -3,6 +3,8 @@ import type { Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
+import { toPublicOrganization } from "../organizations/queries";
+import { projectFeedbackFor } from "./public_projection";
 
 // ============================================
 // HELPERS
@@ -69,14 +71,15 @@ const getUserVoteInfo = async (
 
 const resolveUserProfile = async (
   ctx: QueryCtx,
-  userId: string
+  userId: string,
+  includeEmail: boolean
 ): Promise<UserProfile | null> => {
   const userData = await authComponent.getAnyUserById(ctx, userId);
   if (!userData) {
     return null;
   }
   return {
-    email: userData.email ?? "",
+    email: includeEmail ? (userData.email ?? "") : undefined,
     image: userData.image ?? null,
     name: userData.name ?? null,
   };
@@ -200,27 +203,25 @@ export const get = query({
       : null;
 
     const author = feedback.authorId
-      ? await resolveUserProfile(ctx, feedback.authorId)
+      ? await resolveUserProfile(ctx, feedback.authorId, isMember)
       : null;
 
     let assignee: ({ id: string } & UserProfile) | null = null;
-    if (feedback.assigneeId) {
-      const profile = await resolveUserProfile(ctx, feedback.assigneeId);
+    if (isMember && feedback.assigneeId) {
+      const profile = await resolveUserProfile(ctx, feedback.assigneeId, true);
       if (profile) {
         assignee = { id: feedback.assigneeId, ...profile };
       }
     }
 
     return {
-      ...feedback,
+      ...projectFeedbackFor(feedback, isMember),
       assignee,
       author,
-      // Widget context carries the reporter's environment — members only.
-      context: isMember ? feedback.context : undefined,
       hasVoted,
       isAuthor: user?._id === feedback.authorId,
       isMember,
-      organization: org,
+      organization: isMember ? org : toPublicOrganization(org),
       organizationStatus,
       role,
       tags,

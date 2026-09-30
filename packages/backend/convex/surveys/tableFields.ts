@@ -123,6 +123,7 @@ export const surveyTables = {
     .index("by_survey_status", ["surveyId", "status"])
     .index("by_organization", ["organizationId"]),
   surveys: defineTable({
+    completedCount: v.optional(v.number()),
     completionRate: v.number(),
     createdAt: v.number(),
     createdBy: v.string(),

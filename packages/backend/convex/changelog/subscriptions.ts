@@ -6,8 +6,13 @@ import {
   query,
 } from "../_generated/server";
 import { authComponent } from "../auth/auth";
+import {
+  isCallerVerifiedEmail,
+  normalizeSubscriberEmail,
+  sendSubscriptionConfirmation,
+} from "../email/subscription_confirmation";
+import { rateLimiter } from "../shared/rate_limits";
 import { getAuthUser } from "../shared/utils";
-import { isValidEmail } from "../shared/validators";
 
 function generateUnsubscribeToken(): string {
   return crypto.randomUUID();
@@ -42,7 +47,9 @@ export const getSubscriberCount = query({
       )
       .collect();
 
-    return subscribers.length;
+    return subscribers.filter(
+      (subscriber) => subscriber.confirmationToken === undefined
+    ).length;
   },
 });
 
@@ -128,7 +135,7 @@ export const unsubscribe = mutation({
 });
 
 /**
- * Subscribe to changelog by email (for anonymous users)
+ * Subscribe to changelog by email; anonymous addresses stay pending until confirmed
  */
 export const subscribeByEmail = mutation({
   args: {
@@ -136,38 +143,80 @@ export const subscribeByEmail = mutation({
     organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
-    const normalizedEmail = args.email.toLowerCase();
-
-    if (!isValidEmail(normalizedEmail)) {
-      throw new Error("Invalid email format");
-    }
-
+    const email = normalizeSubscriberEmail(args.email);
     const org = await ctx.db.get(args.organizationId);
     if (!org) {
       throw new Error("Organization not found");
     }
+    await rateLimiter.limit(ctx, "emailSubscriptionPerOrg", {
+      key: args.organizationId,
+      throws: true,
+    });
 
-    // Check if already subscribed by email
     const existing = await ctx.db
       .query("changelogSubscribers")
       .withIndex("by_email_org", (q) =>
-        q.eq("email", normalizedEmail).eq("organizationId", args.organizationId)
+        q.eq("email", email).eq("organizationId", args.organizationId)
       )
       .first();
+    const isVerifiedOwner = await isCallerVerifiedEmail(ctx, email);
 
-    if (existing) {
-      return existing._id;
+    const isConfirmed =
+      existing !== null && existing.confirmationToken === undefined;
+    if (isConfirmed) {
+      return null;
+    }
+    if (existing && isVerifiedOwner) {
+      await ctx.db.patch(existing._id, { confirmationToken: undefined });
+      return null;
     }
 
-    const subscriberId = await ctx.db.insert("changelogSubscribers", {
-      email: normalizedEmail,
-      organizationId: args.organizationId,
-      subscribedAt: Date.now(),
-      unsubscribeToken: generateUnsubscribeToken(),
-    });
-
-    return subscriberId;
+    const confirmationToken =
+      existing?.confirmationToken ??
+      (isVerifiedOwner ? undefined : crypto.randomUUID());
+    if (!existing) {
+      await ctx.db.insert("changelogSubscribers", {
+        confirmationToken,
+        email,
+        organizationId: args.organizationId,
+        subscribedAt: Date.now(),
+        unsubscribeToken: generateUnsubscribeToken(),
+      });
+    }
+    if (confirmationToken) {
+      await sendSubscriptionConfirmation(ctx, {
+        email,
+        list: "changelog",
+        organizationName: org.name,
+        token: confirmationToken,
+      });
+    }
+    return null;
   },
+  returns: v.null(),
+});
+
+/**
+ * Confirm a pending email subscription (double opt-in link)
+ */
+export const confirmByToken = mutation({
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    const subscription = await ctx.db
+      .query("changelogSubscribers")
+      .withIndex("by_confirmation_token", (q) =>
+        q.eq("confirmationToken", args.token)
+      )
+      .unique();
+
+    if (!subscription) {
+      throw new Error("Invalid or expired confirmation link");
+    }
+
+    await ctx.db.patch(subscription._id, { confirmationToken: undefined });
+    return null;
+  },
+  returns: v.null(),
 });
 
 /**
@@ -196,19 +245,37 @@ export const unsubscribeByToken = mutation({
 });
 
 /**
- * Get all subscribers for an organization (internal use only)
+ * Get confirmed subscribers for an organization (internal use only)
  */
 export const getSubscribersByOrganization = internalQuery({
   args: {
     organizationId: v.id("organizations"),
   },
-  handler: async (ctx, args) =>
-    await ctx.db
+  handler: async (ctx, args) => {
+    const subscribers = await ctx.db
       .query("changelogSubscribers")
       .withIndex("by_organization", (q) =>
         q.eq("organizationId", args.organizationId)
       )
-      .collect(),
+      .collect();
+
+    return subscribers
+      .filter((subscriber) => subscriber.confirmationToken === undefined)
+      .map(({ _id, email, unsubscribeToken, userId }) => ({
+        _id,
+        email,
+        unsubscribeToken,
+        userId,
+      }));
+  },
+  returns: v.array(
+    v.object({
+      _id: v.id("changelogSubscribers"),
+      email: v.optional(v.string()),
+      unsubscribeToken: v.string(),
+      userId: v.optional(v.string()),
+    })
+  ),
 });
 
 /**

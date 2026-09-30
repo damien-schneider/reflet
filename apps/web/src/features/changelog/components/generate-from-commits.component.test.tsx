@@ -428,6 +428,7 @@ describe("GenerateFromCommits component", () => {
       const firstCallBody = JSON.parse(
         (fetchSpy.mock.calls[0]?.[1] as RequestInit)?.body as string
       );
+      expect(firstCallBody.organizationId).toBe("org1");
       expect(firstCallBody.version).toBe("1.0.0");
       expect(firstCallBody.repositoryName).toBe("owner/repo");
       expect(firstCallBody.commits).toHaveLength(2);
@@ -555,6 +556,7 @@ describe("GenerateFromCommits component", () => {
         .mockReturnValueOnce({
           changelogSettings: { targetBranch: "develop" },
           name: "Org",
+          role: "owner",
         })
         .mockReturnValueOnce({
           installationId: "inst-123",
@@ -810,6 +812,7 @@ describe("GenerateFromCommits component", () => {
           (titleCall?.[1] as RequestInit)?.body as string
         );
         expect(body.description).toBe("description");
+        expect(body.organizationId).toBe("org1");
         expect(body.version).toBe("1.0.0");
       });
     });

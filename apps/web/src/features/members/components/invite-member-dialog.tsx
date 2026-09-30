@@ -37,12 +37,14 @@ const ROLE_OPTIONS = [
 ] as const;
 
 interface InviteMemberDialogProps {
+  canInviteAdmins: boolean;
   onOpenChange: (open: boolean) => void;
   open: boolean;
   organizationId: Id<"organizations">;
 }
 
 export function InviteMemberDialog({
+  canInviteAdmins,
   organizationId,
   open,
   onOpenChange,
@@ -70,6 +72,7 @@ export function InviteMemberDialog({
           />
         ) : (
           <InviteForm
+            canInviteAdmins={canInviteAdmins}
             onCancel={() => onOpenChange(false)}
             onSent={setSentInvite}
             organizationId={organizationId}
@@ -81,10 +84,12 @@ export function InviteMemberDialog({
 }
 
 function InviteForm({
+  canInviteAdmins,
   onCancel,
   onSent,
   organizationId,
 }: {
+  canInviteAdmins: boolean;
   onCancel: () => void;
   onSent: (invite: { email: string; token: string }) => void;
   organizationId: Id<"organizations">;
@@ -151,7 +156,7 @@ function InviteForm({
             {error}
           </FieldError>
         </Field>
-        <RoleField onChange={setRole} value={role} />
+        {canInviteAdmins ? <RoleField onChange={setRole} value={role} /> : null}
         <DialogFooter>
           <Button onClick={onCancel} type="button" variant="surface">
             Cancel

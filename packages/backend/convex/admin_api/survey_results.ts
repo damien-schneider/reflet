@@ -5,9 +5,15 @@ import { computeAverage, computeDistribution } from "./survey_analytics";
 
 export const getAnalytics = internalQuery({
   args: {
+    organizationId: v.id("organizations"),
     surveyId: v.id("surveys"),
   },
   handler: async (ctx, args) => {
+    const survey = await ctx.db.get(args.surveyId);
+    if (!survey || survey.organizationId !== args.organizationId) {
+      throw new Error("Survey not found");
+    }
+
     const responses = await ctx.db
       .query("surveyResponses")
       .withIndex("by_survey", (q) => q.eq("surveyId", args.surveyId))
@@ -77,6 +83,7 @@ export const getAnalytics = internalQuery({
 export const listResponses = internalQuery({
   args: {
     limit: v.optional(v.number()),
+    organizationId: v.id("organizations"),
     status: v.optional(
       v.union(
         v.literal("in_progress"),
@@ -87,6 +94,11 @@ export const listResponses = internalQuery({
     surveyId: v.id("surveys"),
   },
   handler: async (ctx, args) => {
+    const survey = await ctx.db.get(args.surveyId);
+    if (!survey || survey.organizationId !== args.organizationId) {
+      throw new Error("Survey not found");
+    }
+
     const pageSize = Math.min(args.limit ?? 50, 100);
 
     const allResponses = await ctx.db

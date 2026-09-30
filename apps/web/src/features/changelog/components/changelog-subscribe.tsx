@@ -113,7 +113,7 @@ function EmailSubscribe({
     <EmailSubscribeForm
       className={className}
       onSubscribe={handleEmailSubscribe}
-      successMessage="Subscribed. You’ll get an email when a release ships."
+      successMessage="Check your inbox to confirm your subscription."
       variant="inline"
     />
   );

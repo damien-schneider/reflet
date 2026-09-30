@@ -106,7 +106,6 @@ function PriceDisplay({
 
 function PlanActions({
   canManageBilling,
-  canViewBilling,
   isCurrentPlan,
   isUpgrade,
   isLoading,
@@ -116,7 +115,6 @@ function PlanActions({
   onManageSubscription,
 }: {
   canManageBilling: boolean;
-  canViewBilling: boolean;
   isCurrentPlan: boolean;
   isUpgrade: boolean;
   isLoading: string | null;
@@ -125,7 +123,7 @@ function PlanActions({
   onUpgrade: () => void;
   onManageSubscription: () => void;
 }) {
-  if (isCurrentPlan && planId === "pro" && canViewBilling) {
+  if (isCurrentPlan && planId === "pro" && canManageBilling) {
     return (
       <div className="mt-auto">
         <Button
@@ -195,7 +193,6 @@ export function PlanCard({
   selectedInterval,
   isLoading,
   canManageBilling,
-  canViewBilling,
   subscription,
   onUpgrade,
   onManageSubscription,
@@ -205,7 +202,6 @@ export function PlanCard({
   selectedInterval: BillingInterval;
   isLoading: string | null;
   canManageBilling: boolean;
-  canViewBilling: boolean;
   subscription: SubscriptionData | null;
   onUpgrade: (priceKey: PriceKey) => void;
   onManageSubscription: () => void;
@@ -290,7 +286,6 @@ export function PlanCard({
 
         <PlanActions
           canManageBilling={canManageBilling}
-          canViewBilling={canViewBilling}
           isCurrentPlan={isCurrentPlan}
           isLoading={isLoading}
           isUpgrade={isUpgrade}

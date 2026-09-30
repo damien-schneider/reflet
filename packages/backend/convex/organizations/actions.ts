@@ -1,6 +1,8 @@
 import { v } from "convex/values";
+import { internal } from "../_generated/api";
 import { mutation, query } from "../_generated/server";
 import { getAuthUser } from "../shared/utils";
+import { resolveSlugUpdate } from "./mutations";
 
 /**
  * Update organization settings (admin/owner only)
@@ -32,23 +34,13 @@ export const update = mutation({
       throw new Error("Organization not found");
     }
 
-    // Validate slug uniqueness if changing
-    const newSlug = args.slug;
-    if (newSlug && newSlug !== org.slug) {
-      const existingOrg = await ctx.db
-        .query("organizations")
-        .withIndex("by_slug", (q) => q.eq("slug", newSlug))
-        .unique();
-
-      if (existingOrg) {
-        throw new Error("This slug is already taken");
-      }
-    }
-
     await ctx.db.patch(args.organizationId, {
       isPublic: args.isPublic ?? false,
       name: args.name,
-      slug: newSlug ?? org.slug,
+      slug: await resolveSlugUpdate(ctx, {
+        current: org.slug,
+        requested: args.slug,
+      }),
     });
 
     return args.organizationId;
@@ -128,6 +120,15 @@ export const remove = mutation({
 
     if (membership?.role !== "owner") {
       throw new Error("Only the owner can delete an organization");
+    }
+
+    const org = await ctx.db.get(args.id);
+    if (org?.customDomain) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.domains.actions.removeDomainAction,
+        { domain: org.customDomain, organizationId: args.id }
+      );
     }
 
     // Delete all related data

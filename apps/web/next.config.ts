@@ -1,8 +1,9 @@
 import createMDX from "@next/mdx";
 import { withPostHogConfig } from "@posthog/nextjs-config";
+import { env } from "@reflet/env/web";
 import type { NextConfig } from "next";
 
-import "@reflet/env/web";
+const convexUrl = new URL(env.NEXT_PUBLIC_CONVEX_URL);
 
 const nextConfig: NextConfig = {
   // Rust MDX stays serializable under Turbopack
@@ -53,6 +54,10 @@ const nextConfig: NextConfig = {
             value: "SAMEORIGIN",
           },
           {
+            key: "Content-Security-Policy",
+            value: "base-uri 'self'; object-src 'none'; frame-ancestors 'self'",
+          },
+          {
             key: "X-Content-Type-Options",
             value: "nosniff",
           },
@@ -82,8 +87,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
       },
       {
-        hostname: "*.convex.cloud",
-        protocol: "https",
+        hostname: convexUrl.hostname,
+        pathname: "/api/storage/**",
+        port: convexUrl.port,
+        protocol: convexUrl.protocol === "http:" ? "http" : "https",
       },
     ],
   },

@@ -122,15 +122,12 @@ export const reorder = mutation({
     }
 
     const now = Date.now();
-    for (let i = 0; i < args.statusIds.length; i++) {
-      const statusId = args.statusIds[i];
-      if (!statusId) {
-        continue;
+    for (const [order, statusId] of args.statusIds.entries()) {
+      const status = await ctx.db.get(statusId);
+      if (status?.organizationId !== args.organizationId) {
+        throw new Error("Status not found");
       }
-      await ctx.db.patch(statusId, {
-        order: i,
-        updatedAt: now,
-      });
+      await ctx.db.patch(statusId, { order, updatedAt: now });
     }
 
     return true;

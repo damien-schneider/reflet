@@ -115,7 +115,6 @@ export function BillingSection({
           {PLANS.map((plan) => (
             <PlanCard
               canManageBilling={subscriptionStatus.canManageBilling}
-              canViewBilling={subscriptionStatus.canViewBilling}
               currentTier={currentTier}
               isLoading={isLoading}
               key={plan.id}

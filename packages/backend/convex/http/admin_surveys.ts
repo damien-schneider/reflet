@@ -44,8 +44,9 @@ export function registerAdminSurveyRoutes(http: Router): void {
   });
 
   http.route({
-    handler: adminGet((ctx, _auth, url) =>
+    handler: adminGet((ctx, { organizationId }, url) =>
       ctx.runQuery(internal.admin_api.survey.getSurvey, {
+        organizationId,
         surveyId: parseId<"surveys">(url.searchParams.get("id"), "id"),
       })
     ),
@@ -106,8 +107,9 @@ export function registerAdminSurveyRoutes(http: Router): void {
   });
 
   http.route({
-    handler: adminPost((ctx, _auth, body) =>
+    handler: adminPost((ctx, { organizationId }, body) =>
       ctx.runMutation(internal.admin_api.survey.updateSurveyStatus, {
+        organizationId,
         status: requireStr(body.status, "status") as
           | "draft"
           | "active"
@@ -121,8 +123,9 @@ export function registerAdminSurveyRoutes(http: Router): void {
   });
 
   http.route({
-    handler: adminPost((ctx, _auth, body) =>
+    handler: adminPost((ctx, { organizationId }, body) =>
       ctx.runMutation(internal.admin_api.survey_lifecycle.deleteSurvey, {
+        organizationId,
         surveyId: parseId<"surveys">(str(body.surveyId), "surveyId"),
       })
     ),
@@ -131,8 +134,9 @@ export function registerAdminSurveyRoutes(http: Router): void {
   });
 
   http.route({
-    handler: adminGet((ctx, _auth, url) =>
+    handler: adminGet((ctx, { organizationId }, url) =>
       ctx.runQuery(internal.admin_api.survey_results.getAnalytics, {
+        organizationId,
         surveyId: parseId<"surveys">(url.searchParams.get("id"), "id"),
       })
     ),
@@ -141,8 +145,9 @@ export function registerAdminSurveyRoutes(http: Router): void {
   });
 
   http.route({
-    handler: adminPost((ctx, _auth, body) =>
+    handler: adminPost((ctx, { organizationId }, body) =>
       ctx.runMutation(internal.admin_api.survey_lifecycle.duplicateSurvey, {
+        organizationId,
         surveyId: parseId<"surveys">(str(body.surveyId), "surveyId"),
         title: str(body.title),
       })
@@ -152,10 +157,11 @@ export function registerAdminSurveyRoutes(http: Router): void {
   });
 
   http.route({
-    handler: adminPost((ctx, _auth, body) =>
+    handler: adminPost((ctx, { organizationId }, body) =>
       ctx.runMutation(internal.admin_api.survey.updateSurvey, {
         description: str(body.description),
         maxResponses: num(body.maxResponses),
+        organizationId,
         surveyId: parseId<"surveys">(str(body.surveyId), "surveyId"),
         title: str(body.title),
         triggerConfig: body.triggerConfig as
@@ -179,11 +185,12 @@ export function registerAdminSurveyRoutes(http: Router): void {
   });
 
   http.route({
-    handler: adminGet((ctx, _auth, url) => {
+    handler: adminGet((ctx, { organizationId }, url) => {
       const statusParam = url.searchParams.get("status");
       const limitParam = url.searchParams.get("limit");
       return ctx.runQuery(internal.admin_api.survey_results.listResponses, {
         limit: limitParam ? Number.parseInt(limitParam, 10) : undefined,
+        organizationId,
         status: (statusParam ?? undefined) as
           | "in_progress"
           | "completed"

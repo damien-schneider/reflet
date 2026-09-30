@@ -242,8 +242,10 @@ function GoodToKnow() {
         or a secret key.
       </li>
       <li>
-        A public key is capped at 30 reports per minute. Past that the API
-        answers <InlineCode>429</InlineCode> and the panel shows the error.
+        A public key can send 30 reports per minute, shared by every visitor.
+        Screenshot uploads don’t count toward that, and a report takes at most
+        10 screenshots. Past the limit the API answers{" "}
+        <InlineCode>429</InlineCode> and the panel shows the error.
       </li>
     </DocsList>
   );

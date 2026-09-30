@@ -279,18 +279,34 @@ export const getOrgAvailableInstallations = internalQuery({
   },
 });
 
-/**
- * Internal query to get GitHub connection by installation ID
- */
-export const getConnectionByInstallation = internalQuery({
-  args: { installationId: v.string() },
-  handler: async (ctx, args) =>
-    await ctx.db
+export const getConnectionForRepository = internalQuery({
+  args: { installationId: v.string(), repositoryId: v.string() },
+  handler: async (ctx, args) => {
+    const connection = await ctx.db
       .query("githubConnections")
-      .withIndex("by_installation", (q) =>
-        q.eq("installationId", args.installationId)
+      .withIndex("by_installation_repository", (q) =>
+        q
+          .eq("installationId", args.installationId)
+          .eq("repositoryId", args.repositoryId)
       )
-      .first(),
+      .first();
+    if (!connection) {
+      return null;
+    }
+    return {
+      _id: connection._id,
+      organizationId: connection.organizationId,
+      webhookSecret: connection.webhookSecret,
+    };
+  },
+  returns: v.union(
+    v.null(),
+    v.object({
+      _id: v.id("githubConnections"),
+      organizationId: v.id("organizations"),
+      webhookSecret: v.optional(v.string()),
+    })
+  ),
 });
 
 /**

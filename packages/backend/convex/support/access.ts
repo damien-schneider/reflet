@@ -23,7 +23,7 @@ export const resolveConversationAccess = async (
       user._id
     );
     const isAdmin = isOrgAdmin(membership?.role);
-    const isOwner = conversation.userId === user._id;
+    const isOwner = !conversation.guestId && conversation.userId === user._id;
 
     if (!(isAdmin || isOwner)) {
       return null;
@@ -32,7 +32,7 @@ export const resolveConversationAccess = async (
   }
 
   if (guestId && conversation.guestId === guestId) {
-    return { isAdmin: false, isOwner: true, viewerId: guestId };
+    return { isAdmin: false, isOwner: true, viewerId: conversation.userId };
   }
 
   return null;

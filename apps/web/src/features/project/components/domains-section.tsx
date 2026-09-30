@@ -84,6 +84,7 @@ export function DomainsSection({
             {isLoading || isPro ? null : <ProUpsell orgSlug={orgSlug} />}
             {!isLoading && isPro && customDomain && domainStatus ? (
               <CustomDomainDetails
+                challengeToken={domainStatus.customDomainChallengeToken}
                 domain={customDomain}
                 error={domainStatus.customDomainError}
                 isAdmin={isAdmin}
@@ -203,6 +204,7 @@ function AddDomainForm({
 }
 
 interface CustomDomainDetailsProps {
+  challengeToken?: string;
   domain: string;
   error?: string;
   isAdmin: boolean;
@@ -213,6 +215,7 @@ interface CustomDomainDetailsProps {
 }
 
 function CustomDomainDetails({
+  challengeToken,
   domain,
   error,
   isAdmin,
@@ -280,7 +283,11 @@ function CustomDomainDetails({
       ) : null}
 
       {status === "active" ? null : (
-        <DnsInstructions domain={domain} verification={verification} />
+        <DnsInstructions
+          challengeToken={challengeToken}
+          domain={domain}
+          verification={verification}
+        />
       )}
     </>
   );

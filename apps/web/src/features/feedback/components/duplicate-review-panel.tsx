@@ -51,12 +51,14 @@ function formatStatus(status: string) {
 function FeedbackSide({
   feedback,
   other,
+  canMerge,
   disabled,
   isKeeping,
   onKeep,
 }: {
   feedback: PairFeedback;
   other: PairFeedback;
+  canMerge: boolean;
   disabled: boolean;
   isKeeping: boolean;
   onKeep: () => void;
@@ -79,27 +81,31 @@ function FeedbackSide({
           </span>
         </div>
       </div>
-      <Button
-        aria-label={`Keep “${feedback.title}” and merge “${other.title}” into it`}
-        className="self-start"
-        disabled={disabled}
-        onClick={onKeep}
-        size="xs"
-        variant="surface"
-      >
-        <GitMerge aria-hidden className="size-3.5" />
-        {isKeeping ? "Merging…" : "Keep this one"}
-      </Button>
+      {canMerge && (
+        <Button
+          aria-label={`Keep “${feedback.title}” and merge “${other.title}” into it`}
+          className="self-start"
+          disabled={disabled}
+          onClick={onKeep}
+          size="xs"
+          variant="surface"
+        >
+          <GitMerge aria-hidden className="size-3.5" />
+          {isKeeping ? "Merging…" : "Keep this one"}
+        </Button>
+      )}
     </div>
   );
 }
 
 function DuplicatePairCard({
   pair,
+  canMerge,
   pendingAction,
   onAction,
 }: {
   pair: DuplicatePair;
+  canMerge: boolean;
   pendingAction: PairAction | null;
   onAction: (pair: DuplicatePair, action: PairAction) => void;
 }) {
@@ -126,6 +132,7 @@ function DuplicatePairCard({
       <CardContent className="space-y-3">
         <div className="grid gap-3 sm:grid-cols-2">
           <FeedbackSide
+            canMerge={canMerge}
             disabled={busy}
             feedback={pair.feedbackA}
             isKeeping={pendingAction === "keepA"}
@@ -133,6 +140,7 @@ function DuplicatePairCard({
             other={pair.feedbackB}
           />
           <FeedbackSide
+            canMerge={canMerge}
             disabled={busy}
             feedback={pair.feedbackB}
             isKeeping={pendingAction === "keepB"}
@@ -142,7 +150,9 @@ function DuplicatePairCard({
         </div>
         <div className="flex items-center justify-between gap-3 border-t pt-3">
           <p className="text-muted-foreground text-xs">
-            Votes and subscribers move to the one you keep.
+            {canMerge
+              ? "Votes and subscribers move to the one you keep."
+              : "Only admins can merge posts."}
           </p>
           <Button
             disabled={busy}
@@ -247,8 +257,10 @@ function useDuplicateActions() {
 }
 
 export function DuplicateReviewPanel({
+  canMerge,
   organizationId,
 }: {
+  canMerge: boolean;
   organizationId: Id<"organizations">;
 }) {
   const pendingDuplicates = useQuery(
@@ -273,6 +285,7 @@ export function DuplicateReviewPanel({
         ) : (
           pendingDuplicates.map((pair) => (
             <DuplicatePairCard
+              canMerge={canMerge}
               key={pair._id}
               onAction={runAction}
               pair={pair}

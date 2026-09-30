@@ -1,11 +1,17 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
+import type { Doc } from "../_generated/dataModel";
+import type { MutationCtx } from "../_generated/server";
 import { mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
-import { getAuthUser } from "../shared/utils";
+import { normalizeEmail } from "../email/suppression";
+import { type AuthUser, requireOrgAdmin } from "../shared/access";
+import { rateLimiter } from "../shared/rate_limits";
+import { isValidEmail } from "../shared/validators";
 import { PLAN_LIMITS } from "./queries";
 
 const siteUrl = process.env.SITE_URL ?? "";
+const INVITATION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 /**
  * List pending invitations for an organization
@@ -104,6 +110,81 @@ export const getByToken = query({
   },
 });
 
+const assertInvitationSlotAvailable = async (
+  ctx: MutationCtx,
+  options: { email: string; org: Doc<"organizations"> }
+): Promise<void> => {
+  const { email, org } = options;
+  const currentMembers = await ctx.db
+    .query("organizationMembers")
+    .withIndex("by_organization", (q) => q.eq("organizationId", org._id))
+    .collect();
+  const pendingInvitations = await ctx.db
+    .query("invitations")
+    .withIndex("by_organization", (q) => q.eq("organizationId", org._id))
+    .filter((q) => q.eq(q.field("status"), "pending"))
+    .collect();
+
+  const limit = PLAN_LIMITS[org.subscriptionTier].maxMembers;
+  if (currentMembers.length + pendingInvitations.length >= limit) {
+    throw new Error(
+      `Member limit reached. Your ${org.subscriptionTier} plan allows ${limit} members.`
+    );
+  }
+
+  if (pendingInvitations.some((invitation) => invitation.email === email)) {
+    throw new Error("An invitation has already been sent to this email");
+  }
+
+  for (const member of currentMembers) {
+    const memberUser = await authComponent.getAnyUserById(ctx, member.userId);
+    if (memberUser?.email?.toLowerCase() === email) {
+      throw new Error("This person is already a member of this organization");
+    }
+  }
+};
+
+export const scheduleInvitationEmail = async (
+  ctx: MutationCtx,
+  options: {
+    invitation: Pick<
+      Doc<"invitations">,
+      "email" | "organizationId" | "role" | "token"
+    >;
+    inviter: AuthUser;
+    organizationName: string;
+  }
+): Promise<void> => {
+  const { invitation, inviter, organizationName } = options;
+  if (invitation.role === "owner") {
+    throw new Error("Owner invitations are not supported");
+  }
+  await rateLimiter.limit(ctx, "invitationEmailPerOrg", {
+    key: invitation.organizationId,
+    throws: true,
+  });
+  await rateLimiter.limit(ctx, "invitationEmailPerUser", {
+    key: inviter._id,
+    throws: true,
+  });
+
+  const suppressed = await ctx.runQuery(
+    internal.email.suppression.isEmailSuppressed,
+    { email: invitation.email }
+  );
+  if (suppressed) {
+    return;
+  }
+
+  await ctx.scheduler.runAfter(0, internal.email.renderer.sendInvitationEmail, {
+    acceptUrl: `${siteUrl}/invite/${invitation.token}`,
+    inviterName: inviter.name ?? inviter.email ?? "Un membre",
+    organizationName,
+    role: invitation.role,
+    to: invitation.email,
+  });
+};
+
 export const create = mutation({
   args: {
     email: v.string(),
@@ -111,112 +192,51 @@ export const create = mutation({
     role: v.union(v.literal("admin"), v.literal("member")),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
-
-    // Check admin/owner permission
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", args.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership || membership.role === "member") {
-      throw new Error("You don't have permission to invite members");
+    const { membership, user } = await requireOrgAdmin(
+      ctx,
+      args.organizationId,
+      "invite members"
+    );
+    if (args.role === "admin" && membership.role !== "owner") {
+      throw new Error("Only the owner can invite admins");
     }
 
-    // Get organization to check subscription limits
+    const email = normalizeEmail(args.email);
+    if (!isValidEmail(email)) {
+      throw new Error("Invalid email address");
+    }
+
     const org = await ctx.db.get(args.organizationId);
     if (!org) {
       throw new Error("Organization not found");
     }
+    await assertInvitationSlotAvailable(ctx, { email, org });
 
-    // Check member limit
-    const currentMembers = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .collect();
-
-    const pendingInvitations = await ctx.db
-      .query("invitations")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .filter((q) => q.eq(q.field("status"), "pending"))
-      .collect();
-
-    const totalPending = currentMembers.length + pendingInvitations.length;
-    const limit = PLAN_LIMITS[org.subscriptionTier].maxMembers;
-
-    if (totalPending >= limit) {
-      throw new Error(
-        `Member limit reached. Your ${org.subscriptionTier} plan allows ${limit} members.`
-      );
-    }
-
-    // Check if there's already a pending invitation for this email
-    const existingInvitation = await ctx.db
-      .query("invitations")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("email"), args.email.toLowerCase()),
-          q.eq(q.field("status"), "pending")
-        )
-      )
-      .unique();
-
-    if (existingInvitation) {
-      throw new Error("An invitation has already been sent to this email");
-    }
-
-    // Check if email already belongs to an existing member
-    const normalizedEmail = args.email.toLowerCase();
-    for (const member of currentMembers) {
-      const memberUser = await authComponent.getAnyUserById(ctx, member.userId);
-      if (memberUser?.email?.toLowerCase() === normalizedEmail) {
-        throw new Error("This person is already a member of this organization");
-      }
-    }
-
-    // Generate unique token
-    const token = crypto.randomUUID();
-
-    // Create invitation (expires in 7 days)
-    const invitationId = await ctx.db.insert("invitations", {
-      createdAt: Date.now(),
-      email: args.email.toLowerCase(),
-      expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
-      inviterId: user._id,
+    const invitation = {
+      email,
       organizationId: args.organizationId,
       role: args.role,
+      token: crypto.randomUUID(),
+    };
+    const now = Date.now();
+    const invitationId = await ctx.db.insert("invitations", {
+      ...invitation,
+      createdAt: now,
+      expiresAt: now + INVITATION_TTL_MS,
+      inviterId: user._id,
       status: "pending",
-      token,
     });
 
-    // Get inviter's name from their user record
-    const inviterName = user.name ?? user.email ?? "Un membre";
+    await scheduleInvitationEmail(ctx, {
+      invitation,
+      inviter: user,
+      organizationName: org.name,
+    });
 
-    // Build the invitation accept URL
-    const acceptUrl = `${siteUrl}/invite/${token}`;
-
-    // Schedule the invitation email
-    await ctx.scheduler.runAfter(
-      0,
-      internal.email.renderer.sendInvitationEmail,
-      {
-        acceptUrl,
-        inviterName,
-        organizationName: org.name,
-        role: args.role,
-        to: args.email.toLowerCase(),
-      }
-    );
-
-    return { invitationId, token };
+    return { invitationId, token: invitation.token };
   },
+  returns: v.object({
+    invitationId: v.id("invitations"),
+    token: v.string(),
+  }),
 });

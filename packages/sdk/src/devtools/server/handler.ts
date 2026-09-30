@@ -163,7 +163,7 @@ export function createDevtoolsHandler(
       subPath === DEVTOOLS_ENDPOINTS.connectCallback;
     const callerRejection = isConnectCallback
       ? null
-      : rejectUntrustedCaller(request);
+      : rejectUntrustedCaller(request, settings.allowedHosts);
     if (callerRejection) {
       return callerRejection;
     }

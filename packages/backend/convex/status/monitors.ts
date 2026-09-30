@@ -1,8 +1,11 @@
 import { v } from "convex/values";
-import { components } from "../_generated/api";
+import { internal } from "../_generated/api";
 import { mutation, query } from "../_generated/server";
 import { PLAN_LIMITS } from "../billing/queries";
 import { requireOrgAdmin, requireOrgMember } from "../shared/access";
+import { MAX_TITLE_LENGTH } from "../shared/constants";
+import { assertPublicHttpUrl } from "../shared/outbound/public_fetch";
+import { validateInputLength } from "../shared/validators";
 import { monitorMethod, monitorStatus } from "./tableFields";
 
 // ============================================
@@ -87,7 +90,9 @@ export const getAggregateStatus = query({
       )
       .collect();
 
-    const publicMonitors = monitors.filter((m) => m.status !== "paused");
+    const publicMonitors = monitors.filter(
+      (m) => m.isPublic && m.status !== "paused"
+    );
 
     if (publicMonitors.length === 0) {
       return { monitorCount: 0, status: "no_monitors" as const };
@@ -189,22 +194,32 @@ export const createMonitor = mutation({
   },
   handler: async (ctx, args) => {
     await requireOrgAdmin(ctx, args.organizationId, "create monitors");
+    validateInputLength(args.name, MAX_TITLE_LENGTH, "Name");
+    assertPublicHttpUrl(args.url);
+
+    const tier = await ctx.runQuery(
+      internal.billing.internal.getOrgEffectiveTier,
+      { organizationId: args.organizationId }
+    );
+    const limits = PLAN_LIMITS[tier];
+    const existing = await ctx.db
+      .query("statusMonitors")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .take(limits.maxMonitors);
+    if (existing.length >= limits.maxMonitors) {
+      throw new Error(
+        `Your plan allows up to ${limits.maxMonitors} monitors. Remove one or upgrade to add more.`
+      );
+    }
 
     const now = Date.now();
-
-    // Determine tier minimum check interval
-    const subscription = await ctx.runQuery(
-      components.stripe.public.getSubscriptionByOrgId,
-      { orgId: args.organizationId }
-    );
-    const hasActiveSub =
-      subscription &&
-      (subscription.status === "active" || subscription.status === "trialing");
-    const minInterval = hasActiveSub
-      ? PLAN_LIMITS.pro.minCheckIntervalMinutes
-      : PLAN_LIMITS.free.minCheckIntervalMinutes;
     const requestedInterval = args.checkIntervalMinutes ?? 5;
-    const checkIntervalMinutes = Math.max(requestedInterval, minInterval);
+    const checkIntervalMinutes = Math.max(
+      requestedInterval,
+      limits.minCheckIntervalMinutes
+    );
 
     return await ctx.db.insert("statusMonitors", {
       alertThreshold: args.alertThreshold ?? 3,
@@ -247,26 +262,24 @@ export const updateMonitor = mutation({
 
     await requireOrgAdmin(ctx, monitor.organizationId, "update monitors");
 
+    validateInputLength(args.name, MAX_TITLE_LENGTH, "Name");
+    if (args.url !== undefined) {
+      assertPublicHttpUrl(args.url);
+    }
+
     const filtered = Object.fromEntries(
       Object.entries(updates).filter(([, val]) => val !== undefined)
     );
 
     // Clamp checkIntervalMinutes to tier minimum if being updated
     if (args.checkIntervalMinutes !== undefined) {
-      const subscription = await ctx.runQuery(
-        components.stripe.public.getSubscriptionByOrgId,
-        { orgId: monitor.organizationId }
+      const tier = await ctx.runQuery(
+        internal.billing.internal.getOrgEffectiveTier,
+        { organizationId: monitor.organizationId }
       );
-      const hasActiveSub =
-        subscription &&
-        (subscription.status === "active" ||
-          subscription.status === "trialing");
-      const minInterval = hasActiveSub
-        ? PLAN_LIMITS.pro.minCheckIntervalMinutes
-        : PLAN_LIMITS.free.minCheckIntervalMinutes;
       filtered.checkIntervalMinutes = Math.max(
         args.checkIntervalMinutes,
-        minInterval
+        PLAN_LIMITS[tier].minCheckIntervalMinutes
       );
     }
 

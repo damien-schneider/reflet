@@ -119,6 +119,7 @@ vi.mock("@ctrl-ui/react/ui/input", () => ({
 describe("InviteMemberDialog", () => {
   const mockOnOpenChange = vi.fn();
   const defaultProps = {
+    canInviteAdmins: true,
     onOpenChange: mockOnOpenChange,
     open: true,
     organizationId: "org123" as unknown as Id<"organizations">,

@@ -8,6 +8,28 @@ import { hmacSha256Hex } from "../../shared/hmac";
 import { seedFeedback, seedOrganization } from "../../test.fixtures";
 import { modules } from "../../test.helpers";
 
+const DNS_ENDPOINT = "https://cloudflare-dns.com";
+const PUBLIC_ADDRESS = "93.184.216.34";
+
+/** Stubs fetch: DNS lookups resolve to `resolvedAddress`, everything else is the hook. */
+const stubFetch = (
+  hookResponse: () => Response,
+  resolvedAddress = PUBLIC_ADDRESS
+) => {
+  const fetchMock = vi.fn(async (input: URL | string, _init?: RequestInit) =>
+    String(input).startsWith(DNS_ENDPOINT)
+      ? Response.json({ Answer: [{ data: resolvedAddress, type: 1 }] })
+      : hookResponse()
+  );
+  vi.stubGlobal("fetch", fetchMock);
+  return {
+    hookCalls: () =>
+      fetchMock.mock.calls.filter(
+        ([input]) => !String(input).startsWith(DNS_ENDPOINT)
+      ),
+  };
+};
+
 async function seedDelivery(
   t: ReturnType<typeof convexTest>,
   feedbackOverrides: { isApproved?: boolean; isInternal?: boolean } = {}
@@ -65,22 +87,18 @@ describe("webhook delivery", () => {
   test("posts a signed payload and records success", async () => {
     const t = convexTest(schema, modules);
     const ids = await seedDelivery(t);
-    const fetchMock = vi.fn(async () => new Response("ok", { status: 200 }));
-    vi.stubGlobal("fetch", fetchMock);
+    const { hookCalls } = stubFetch(() => new Response("ok", { status: 200 }));
 
     await t.action(internal.webhooks.deliver.deliver, {
       deliveryId: ids.deliveryId,
     });
 
-    const [url, init] = fetchMock.mock.calls[0] as unknown as [
-      string,
-      RequestInit,
-    ];
-    const headers = init.headers as Record<string, string>;
-    const body = init.body as string;
-    expect(url).toBe("https://example.com/hook");
-    expect(headers["X-Reflet-Event"]).toBe("feedback.created");
-    expect(headers["X-Reflet-Signature"]).toBe(
+    const [url, init] = hookCalls()[0] ?? [];
+    const headers = new Headers(init?.headers);
+    const body = String(init?.body);
+    expect(String(url)).toBe("https://example.com/hook");
+    expect(headers.get("X-Reflet-Event")).toBe("feedback.created");
+    expect(headers.get("X-Reflet-Signature")).toBe(
       `sha256=${await hmacSha256Hex("shh", body)}`
     );
     expect(JSON.parse(body).data.feedback.title).toBe("Draft lost on save");
@@ -93,10 +111,7 @@ describe("webhook delivery", () => {
   test("retries twice then fails, counting consecutive failures", async () => {
     const t = convexTest(schema, modules);
     const ids = await seedDelivery(t);
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => new Response("nope", { status: 500 }))
-    );
+    stubFetch(() => new Response("nope", { status: 500 }));
 
     await t.action(internal.webhooks.deliver.deliver, {
       deliveryId: ids.deliveryId,
@@ -127,12 +142,9 @@ describe("webhook delivery", () => {
     await t.run(async (ctx) => {
       await ctx.db.patch(ids.webhookId, { consecutiveFailures: 19 });
     });
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => {
-        throw new Error("ECONNREFUSED");
-      })
-    );
+    stubFetch(() => {
+      throw new Error("connect ECONNREFUSED 203.0.113.9:443");
+    });
 
     await t.action(internal.webhooks.deliver.deliver, {
       deliveryId: ids.deliveryId,
@@ -140,7 +152,26 @@ describe("webhook delivery", () => {
 
     const state = await readState(t, ids);
     expect(state.webhook?.isActive).toBe(false);
-    expect(state.delivery?.lastError).toBe("ECONNREFUSED");
+    expect(state.delivery?.lastError).toBe("Request failed");
+  });
+
+  test("refuses to post to a hook whose host resolves to a private address", async () => {
+    const t = convexTest(schema, modules);
+    const ids = await seedDelivery(t);
+    const { hookCalls } = stubFetch(
+      () => new Response("internal", { status: 200 }),
+      "169.254.169.254"
+    );
+
+    await t.action(internal.webhooks.deliver.deliver, {
+      deliveryId: ids.deliveryId,
+    });
+
+    expect(hookCalls()).toHaveLength(0);
+    const state = await readState(t, ids);
+    expect(state.delivery?.lastError).toBe(
+      "URL must point to a public address"
+    );
   });
 
   test("skips unapproved feedback without calling the hook", async () => {

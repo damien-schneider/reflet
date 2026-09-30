@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "../_generated/server";
+import { deleteScreenshotRecord } from "../feedback/screenshots";
 import { captureSourceValidator } from "../feedback/tableFields";
 
 export const listScreenshots = internalQuery({
@@ -61,12 +62,7 @@ export const deleteScreenshot = internalMutation({
       throw new Error("Screenshot not found");
     }
 
-    await ctx.storage.delete(screenshot.storageId);
-    if (screenshot.annotatedStorageId) {
-      await ctx.storage.delete(screenshot.annotatedStorageId);
-    }
-
-    await ctx.db.delete(args.screenshotId);
+    await deleteScreenshotRecord(ctx, screenshot);
 
     return null;
   },

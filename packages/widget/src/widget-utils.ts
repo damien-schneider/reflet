@@ -1,13 +1,11 @@
-const VISITOR_ID_LENGTH = 12;
-const VISITOR_ID_CHARS = "abcdefghijklmnopqrstuvwxyz0123456789";
+const VISITOR_ID_BYTES = 16;
 
 export function generateVisitorId(): string {
-  let result = "v_";
-  for (let i = 0; i < VISITOR_ID_LENGTH; i++) {
-    result +=
-      VISITOR_ID_CHARS[Math.floor(Math.random() * VISITOR_ID_CHARS.length)];
-  }
-  return result;
+  const bytes = crypto.getRandomValues(new Uint8Array(VISITOR_ID_BYTES));
+  const hex = Array.from(bytes, (byte) =>
+    byte.toString(16).padStart(2, "0")
+  ).join("");
+  return `v_${hex}`;
 }
 
 export function formatTime(timestamp: number): string {

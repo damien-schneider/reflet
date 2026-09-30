@@ -5,6 +5,7 @@ import webpush from "web-push";
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { internalAction } from "../_generated/server";
+import { isAllowedPushEndpoint } from "./push_queries";
 
 // Notification type preference mapping
 const NOTIFICATION_TYPE_PREFERENCE_MAP: Record<string, string> = {
@@ -75,9 +76,7 @@ async function sendToSubscription(
     return { expired: false, success: true };
   } catch (error: unknown) {
     const statusCode =
-      error instanceof Error && "statusCode" in error
-        ? (error as { statusCode: number }).statusCode
-        : 0;
+      error instanceof Error && "statusCode" in error ? error.statusCode : 0;
 
     if (statusCode === 410 || statusCode === 404) {
       return { expired: true, success: false };
@@ -149,6 +148,10 @@ export const sendPushNotification = internalAction({
     const expiredIds: Id<"pushSubscriptions">[] = [];
 
     for (const subscription of subscriptions) {
+      if (!isAllowedPushEndpoint(subscription.endpoint)) {
+        expiredIds.push(subscription._id);
+        continue;
+      }
       const result = await sendToSubscription(subscription, payload);
       if (result.success) {
         sent++;
