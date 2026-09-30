@@ -86,12 +86,12 @@
     --cui-button-hover-shadow: none;
   }
 
-  /* --input, not the depth ring: a field edge is an affordance, so it clears
-     3:1 against the surface it sits on. --border stays for separation only. */
+  /* Same recessed well as the tabs list: fill + inner shadow, no outline.
+     The focus ring border still appears on focus. */
   :root[data-theme="reflet"]
   :where([data-control-family="field"][data-control="true"]) {
     --cui-field-background: var(--secondary);
-    --cui-field-border-color: var(--input);
+    --cui-field-border-color: transparent;
     --cui-field-focus-border-color: var(--focus-ring);
     --cui-field-shadow: var(--reflet-recess);
     --cui-field-font-size: 1rem;
