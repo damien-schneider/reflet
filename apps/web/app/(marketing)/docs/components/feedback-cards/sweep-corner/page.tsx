@@ -1,31 +1,20 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
-
 import type { Metadata } from "next";
 
-import {
-  CodeBlock,
-  ComponentPreview,
-  InstallTabs,
-} from "@/components/docs/component-preview";
 import { SWEEP_CORNER_CODE } from "@/components/docs/feedback-card-codes";
 import { SweepCornerPreview } from "@/components/docs/feedback-card-previews";
-import type { PropDefinition } from "@/components/docs/props-table";
-import { PropsTable } from "@/components/docs/props-table";
-import { InlineCode } from "@/components/ui/typography";
+import {
+  RegistryDocPage,
+  type Subcomponent,
+} from "@/components/docs/registry-doc-page";
+import { voteRootProps } from "@/components/docs/vote-root-props";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
   description:
     "A feedback card with a corner vote badge and sweep animation effect.",
   path: "/docs/components/feedback-cards/sweep-corner",
-  title: "Sweep Corner - Feedback Card",
+  title: "Sweep corner – feedback card",
 });
-
-const SOURCE_CODE = readFileSync(
-  join(process.cwd(), "../../packages/ui/registry/feedback-sweep-corner.tsx"),
-  "utf-8"
-);
 
 const IMPORT_CODE = `import {
   SweepCorner,
@@ -38,64 +27,44 @@ const IMPORT_CODE = `import {
   SweepCornerTitle,
 } from "@/components/ui/feedback-sweep-corner";`;
 
-const SUBCOMPONENTS: {
-  description: string;
-  name: string;
-  props: PropDefinition[];
-}[] = [
+const FEATURES = [
+  "Corner badge with up and down vote buttons and a net count that rolls on change.",
+  "A gradient sweeps across the footer each time the vote changes.",
+  "Works uncontrolled out of the box, or controlled from your own vote state.",
+  "Tag pills read the --tag-* color tokens installed with the component.",
+] as const;
+
+const SUBCOMPONENTS: readonly Subcomponent[] = [
   {
-    description: "Root provider. Manages vote state via React context.",
+    description:
+      "Root. Holds vote state and shares it with the badge and footer through React context.",
     name: "SweepCorner",
-    props: [
-      {
-        description: "Initial upvote count.",
-        name: "defaultUpvotes",
-        required: true,
-        type: "number",
-      },
-      {
-        description: "Initial downvote count.",
-        name: "defaultDownvotes",
-        required: true,
-        type: "number",
-      },
-      {
-        description: "Callback fired when the vote changes.",
-        name: "onVoteChange",
-        required: false,
-        type: "(voteType: VoteType) => void",
-      },
-    ],
+    props: voteRootProps({
+      description: "Called with the new vote after an uncontrolled vote.",
+      name: "onVoteChange",
+      type: '(voteType: "upvote" | "downvote" | null) => void',
+    }),
   },
   {
-    description:
-      "Card container with rounded border, hover shadow, and transition.",
+    description: "Card surface with border and hover shadow.",
     name: "SweepCornerCard",
-    props: [],
   },
   {
-    description:
-      "Content area with padding. Leaves right padding for the badge.",
+    description: "Padded content area that leaves room for the corner badge.",
     name: "SweepCornerContent",
-    props: [],
   },
+  { description: "Title, rendered as an h3.", name: "SweepCornerTitle" },
   {
-    description: "Heading rendered as an h3.",
-    name: "SweepCornerTitle",
-    props: [],
-  },
-  {
-    description: "Flex-wrap container for tag pills.",
+    description: "Wrapping row for tag pills.",
     name: "SweepCornerTags",
-    props: [],
   },
   {
-    description: "Individual colored tag pill.",
+    description: "A colored tag pill.",
     name: "SweepCornerTag",
     props: [
       {
         description:
-          "Color key: blue, brown, green, orange, pink, purple, red, yellow, gray, or default.",
+          "Color key: blue, brown, green, orange, pink, purple, red, yellow, gray or default.",
         name: "color",
         required: true,
         type: "string",
@@ -104,23 +73,22 @@ const SUBCOMPONENTS: {
   },
   {
     description:
-      "Corner vote badge with animated up/down buttons and net count. Reads vote state from context.",
+      "Corner vote badge with up and down buttons and the net count. Reads vote state from context.",
     name: "SweepCornerBadge",
-    props: [],
   },
   {
     description:
-      "Footer with comment count, time, vote stats, and sweep animation on vote.",
+      "Footer with comment count, time, vote totals and upvote share. Plays the sweep when the user votes.",
     name: "SweepCornerFooter",
     props: [
       {
-        description: "Comment count.",
+        description: "Number of comments.",
         name: "comments",
         required: true,
         type: "number",
       },
       {
-        description: 'Relative time string, e.g. "3 days ago".',
+        description: 'Relative time, e.g. "3 days ago".',
         name: "time",
         required: true,
         type: "string",
@@ -131,65 +99,15 @@ const SUBCOMPONENTS: {
 
 export default function SweepCornerPage() {
   return (
-    <div className="mx-auto max-w-3xl">
-      <h1 className="mb-2 font-display text-3xl text-foreground leading-snug tracking-tight">
-        Sweep Corner
-      </h1>
-      <p className="mb-8 text-base text-muted-foreground sm:text-xl">
-        A feedback card with a corner vote badge featuring animated up/down
-        buttons and a gradient sweep effect on vote.
-      </p>
-
-      <section className="mb-10">
-        <h2 className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight">
-          Preview
-        </h2>
-        <ComponentPreview code={`${IMPORT_CODE}\n\n${SWEEP_CORNER_CODE}`}>
-          <SweepCornerPreview />
-        </ComponentPreview>
-      </section>
-
-      <section className="mb-10">
-        <h2 className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight">
-          Installation
-        </h2>
-        <InstallTabs
-          cliCommand="npx shadcn add https://www.reflet.app/r/feedback-sweep-corner.json"
-          manualCode={SOURCE_CODE}
-        />
-      </section>
-
-      <section className="mb-10">
-        <h2 className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight">
-          Usage
-        </h2>
-        <CodeBlock code={IMPORT_CODE} />
-        <div className="h-4" />
-        <CodeBlock code={SWEEP_CORNER_CODE} />
-      </section>
-
-      <section>
-        <h2 className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight">
-          API Reference
-        </h2>
-        <div className="space-y-8">
-          {SUBCOMPONENTS.map((comp) => (
-            <div key={comp.name}>
-              <h3 className="mb-2 font-semibold text-sm">
-                <InlineCode>{comp.name}</InlineCode>
-              </h3>
-              <p className="mb-3 text-muted-foreground text-sm">
-                {comp.description}
-              </p>
-              {comp.props.length > 0 && <PropsTable props={comp.props} />}
-            </div>
-          ))}
-        </div>
-        <p className="mt-4 text-muted-foreground text-xs">
-          All sub-components also accept <InlineCode>className</InlineCode> and{" "}
-          <InlineCode>children</InlineCode> props unless noted otherwise.
-        </p>
-      </section>
-    </div>
+    <RegistryDocPage
+      description="A feedback card with a corner vote badge. A gradient sweeps across the card whenever the vote changes."
+      features={FEATURES}
+      importCode={IMPORT_CODE}
+      preview={<SweepCornerPreview />}
+      registryName="feedback-sweep-corner"
+      subcomponents={SUBCOMPONENTS}
+      title="Sweep Corner"
+      usageCode={SWEEP_CORNER_CODE}
+    />
   );
 }

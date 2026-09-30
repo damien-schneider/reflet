@@ -1,166 +1,150 @@
 "use client";
 
-import { Button } from "@ctrl-ui/react/ui/button";
+import { Button, ButtonLink } from "@ctrl-ui/react/ui/button";
 import { Field, FieldError, FieldLabel } from "@ctrl-ui/react/ui/field";
 import { Input } from "@ctrl-ui/react/ui/input";
 import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { EnvelopeSimple } from "@phosphor-icons/react";
 import Link from "next/link";
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { H1, Muted } from "@/components/ui/typography";
+import {
+  AuthPageShell,
+  AuthStatus,
+} from "@/features/auth/components/auth-page-shell";
 import { authClient } from "@/lib/auth-client";
 
 const forgotPasswordSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  email: z.string().email("Enter a valid email address, like name@example.com"),
 });
 
 type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 
-export default function ForgotPasswordPage() {
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [submittedEmail, setSubmittedEmail] = useState("");
-  const [apiError, setApiError] = useState<string | null>(null);
+const SEND_ERROR_MESSAGE =
+  "Unable to send the reset link. Check your connection and try again.";
+
+function ForgotPasswordContent() {
+  const prefilledEmail = useSearchParams().get("email") ?? "";
+  const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
 
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<ForgotPasswordFormData>({
-    defaultValues: {
-      email: "",
-    },
+    defaultValues: { email: prefilledEmail },
+    mode: "onTouched",
     resolver: zodResolver(forgotPasswordSchema),
   });
 
   const onSubmit = async (data: ForgotPasswordFormData) => {
-    setApiError(null);
-
     try {
       const result = await authClient.requestPasswordReset({
         email: data.email,
         redirectTo: "/auth/reset-password",
       });
-
       if (result.error) {
-        setApiError(
-          result.error.message ?? "An error occurred. Please try again."
+        setError(
+          "email",
+          { message: result.error.message ?? SEND_ERROR_MESSAGE },
+          { shouldFocus: true }
         );
         return;
       }
-
       setSubmittedEmail(data.email);
-      setIsSubmitted(true);
     } catch {
-      setApiError("An error occurred. Please try again.");
+      setError("email", { message: SEND_ERROR_MESSAGE }, { shouldFocus: true });
     }
   };
 
-  if (isSubmitted) {
+  if (submittedEmail) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="w-full max-w-md p-6 text-center">
-          <div className="mb-6 flex justify-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-secondary">
-              <svg
-                aria-label="Email icon"
-                className="h-8 w-8 text-brand-text"
-                fill="none"
-                role="img"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                />
-              </svg>
-            </div>
-          </div>
-          <H1 className="mb-2" variant="page">
-            Check your inbox
-          </H1>
-          <Muted className="mb-2">
-            If an account exists with the email address:
-          </Muted>
-          <p className="mb-6 font-medium text-foreground">{submittedEmail}</p>
-          <Muted className="mb-6">
-            You will receive an email with a link to reset your password. Also
-            check your spam folder.
-          </Muted>
-          <Link href="/">
-            <Button variant="surface">Back to home</Button>
-          </Link>
-        </div>
-      </div>
+      <AuthStatus
+        actions={
+          <ButtonLink render={<Link href="/dashboard" />} variant="surface">
+            Back to sign in
+          </ButtonLink>
+        }
+        icon={EnvelopeSimple}
+        title="Check your inbox"
+        tone="brand"
+      >
+        If an account exists for{" "}
+        <span className="break-all font-medium text-foreground">
+          {submittedEmail}
+        </span>
+        , you’ll get an email with a link to reset your password. Can’t find it?
+        Check your spam folder.
+      </AuthStatus>
     );
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="w-full max-w-md p-6">
-        <H1 className="mb-2 text-center" variant="page">
-          Forgot password
-        </H1>
-        <Muted className="mb-6 text-center">
-          Enter your email address to receive a reset link.
-        </Muted>
+    <AuthPageShell>
+      <H1 className="mb-2 text-center" variant="page">
+        Reset your password
+      </H1>
+      <Muted className="mb-6 text-center">
+        Enter your account email and we’ll send you a reset link.
+      </Muted>
 
-        <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
-          <Field className="relative">
-            <FieldLabel htmlFor="email">Email</FieldLabel>
-            <Input
-              disabled={isSubmitting}
-              id="email"
-              type="email"
-              {...register("email")}
-            />
-            <FieldError
-              className="absolute top-full left-0"
-              match={Boolean(errors.email?.message)}
-            >
-              {errors.email?.message}
-            </FieldError>
-          </Field>
-
-          {apiError && (
-            <Field>
-              <FieldError className="mt-2" match>
-                {apiError}
-              </FieldError>
-            </Field>
-          )}
-
-          <Button
-            className="mt-6 w-full"
+      <form className="space-y-2" noValidate onSubmit={handleSubmit(onSubmit)}>
+        <Field invalid={Boolean(errors.email)}>
+          <FieldLabel htmlFor="email">Email</FieldLabel>
+          <Input
+            autoCapitalize="none"
+            autoComplete="email"
             disabled={isSubmitting}
-            tone="primary"
-            type="submit"
-            variant="solid"
-          >
-            {isSubmitting ? (
-              <>
-                <Spinner className="mr-2 h-4 w-4" />
-                Sending...
-              </>
-            ) : (
-              "Send reset link"
-            )}
-          </Button>
+            id="email"
+            placeholder="name@example.com"
+            spellCheck={false}
+            type="email"
+            {...register("email")}
+          />
+          <FieldError match={Boolean(errors.email?.message)}>
+            {errors.email?.message}
+          </FieldError>
+        </Field>
 
-          <div className="text-center">
-            <Link
-              className="font-medium text-brand-text text-sm hover:underline"
-              href="/"
-            >
-              Back to sign in
-            </Link>
-          </div>
-        </form>
-      </div>
-    </div>
+        <Button
+          className="w-full"
+          disabled={isSubmitting}
+          tone="primary"
+          type="submit"
+          variant="solid"
+        >
+          {isSubmitting && <Spinner data-icon="inline-start" size="xs" />}
+          {isSubmitting ? "Sending…" : "Send reset link"}
+        </Button>
+
+        <div className="pt-4 text-center">
+          <Link
+            className="font-medium text-brand-text text-sm hover:underline"
+            href="/dashboard"
+          >
+            Back to sign in
+          </Link>
+        </div>
+      </form>
+    </AuthPageShell>
+  );
+}
+
+export default function ForgotPasswordPage() {
+  return (
+    <Suspense
+      fallback={
+        <AuthPageShell className="flex justify-center">
+          <Spinner size="lg" />
+        </AuthPageShell>
+      }
+    >
+      <ForgotPasswordContent />
+    </Suspense>
   );
 }

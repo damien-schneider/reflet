@@ -1,234 +1,200 @@
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@ctrl-ui/react/ui/table";
 import type { Metadata } from "next";
 
+import { CodeBlock } from "@/components/docs/code-block";
+import {
+  DocsLink,
+  DocsNote,
+  DocsPage,
+  DocsSection,
+  DocsSubsection,
+  DocsText,
+} from "@/components/docs/docs-page";
+import { ReferenceTable } from "@/components/docs/reference-table";
+import { InlineCode } from "@/components/ui/typography";
 import { generatePageMetadata } from "@/lib/seo-config";
-import { codeBlockClass } from "./code-block-class";
+import { BASE_URL } from "./endpoint-data";
 import { EndpointsSection } from "./endpoints-section";
 import { WebhooksSection } from "./webhooks-section";
 
 export const metadata: Metadata = generatePageMetadata({
   description:
-    "Full API for managing feedback, votes, comments, changelog, and roadmap programmatically.",
+    "Read and post feedback, votes, comments, screenshots and survey responses, and read the roadmap and changelog over HTTP.",
   keywords: [
     "rest api",
     "api reference",
     "feedback api",
     "changelog api",
     "roadmap api",
-    "endpoints",
+    "survey api",
+    "webhooks",
   ],
   path: "/docs/api",
-  title: "REST API Reference",
+  title: "REST API reference",
 });
+
+const SECTIONS = [
+  { id: "authentication", label: "Authentication" },
+  { id: "base-url", label: "Base URL" },
+  { id: "endpoints", label: "Endpoints" },
+  { id: "webhooks", label: "Webhooks" },
+  { id: "rate-limiting", label: "Rate limiting" },
+  { id: "errors", label: "Errors" },
+] as const;
+
+const KEY_COLUMNS = [
+  { kind: "name", label: "Key" },
+  { kind: "text", label: "Use it for" },
+] as const;
+
+const KEY_ROWS = [
+  {
+    cells: [
+      "fb_pub_…",
+      "Browsers and apps. Reads public organizations, posts feedback and screenshots into any organization, answers surveys.",
+    ],
+    key: "public",
+  },
+  {
+    cells: [
+      "fb_sec_…",
+      "Your server only. Everything a public key does, plus private organizations, internal feedback and private fields.",
+    ],
+    key: "secret",
+  },
+] as const;
+
+const ERROR_ROWS = [
+  {
+    cells: [
+      "400",
+      "Bad request",
+      "Invalid JSON body or a missing required field.",
+    ],
+    key: "400",
+  },
+  {
+    cells: [
+      "401",
+      "Unauthorized",
+      "Missing or invalid API key, or the endpoint needs a signed user token.",
+    ],
+    key: "401",
+  },
+  {
+    cells: [
+      "403",
+      "Forbidden",
+      "A public key on a private organization, or internal feedback without the secret key.",
+    ],
+    key: "403",
+  },
+  {
+    cells: ["404", "Not found", "The organization or feedback doesn’t exist."],
+    key: "404",
+  },
+  {
+    cells: ["429", "Rate limited", "Too many writes. Retry after a minute."],
+    key: "429",
+  },
+  {
+    cells: [
+      "500",
+      "Server error",
+      "The request was rejected while processing, e.g. an unknown ID. The message says why.",
+    ],
+    key: "500",
+  },
+] as const;
+
+function AuthenticationSection() {
+  return (
+    <DocsSection id="authentication" sections={SECTIONS}>
+      <DocsText>
+        Send your key in the <InlineCode>Authorization</InlineCode> header on
+        every request, whichever key it is. The key also picks the organization,
+        so no endpoint takes an organization ID.
+      </DocsText>
+      <CodeBlock code="Authorization: Bearer fb_pub_your_public_key" />
+      <ReferenceTable columns={KEY_COLUMNS} rows={KEY_ROWS} />
+      <DocsNote>
+        Create keys in{" "}
+        <strong className="font-medium text-foreground">
+          Dashboard → Project → API keys
+        </strong>
+        . Never ship the secret key to a browser.
+      </DocsNote>
+      <DocsSubsection id="user-token" title="User token">
+        <DocsText>
+          To act as one of your users, add their token in{" "}
+          <InlineCode>X-User-Token</InlineCode>. Voting, commenting and
+          subscribing need a token signed on your server; see{" "}
+          <DocsLink href="/docs/sdk/installation#user-signing">
+            server-side user signing
+          </DocsLink>
+          . An unsigned token, like the one the SDK builds from its{" "}
+          <InlineCode>user</InlineCode> option, only credits new feedback and
+          survey responses to that user.
+        </DocsText>
+        <CodeBlock
+          code={`Authorization: Bearer fb_pub_your_public_key
+X-User-Token: <token signed on your server>`}
+        />
+      </DocsSubsection>
+    </DocsSection>
+  );
+}
 
 export default function ApiReferencePage() {
   return (
-    <div className="mx-auto max-w-3xl">
-      <h1 className="mb-2 font-display text-3xl text-foreground leading-snug tracking-tight">
-        REST API Reference
-      </h1>
-      <p className="mb-8 text-base text-muted-foreground sm:text-xl">
-        Full API for managing feedback, votes, comments, changelog, and roadmap
-        programmatically.
-      </p>
-      <section className="mb-12">
-        <h2
-          className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight"
-          id="authentication"
-        >
-          Authentication
-        </h2>
-        <p className="mb-4 text-muted-foreground text-sm">
-          Reflet uses two types of API keys to separate read and write
-          operations.
-        </p>
-        <div className="space-y-4">
-          <div className="rounded-lg border border-border p-4">
-            <h3 className="mb-1 font-semibold text-sm">
-              Public Key{" "}
-              <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
-                pk_...
-              </code>
-            </h3>
-            <p className="text-muted-foreground text-sm">
-              Passed as a query parameter. Used for read-only operations that
-              are safe to call from client-side code.
-            </p>
-            <pre className={`mt-3 ${codeBlockClass}`}>
-              <code>GET /api/v1/feedback?publicKey=pk_your_public_key</code>
-            </pre>
-          </div>
-          <div className="rounded-lg border border-border p-4">
-            <h3 className="mb-1 font-semibold text-sm">
-              Secret Key{" "}
-              <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
-                sk_...
-              </code>
-            </h3>
-            <p className="text-muted-foreground text-sm">
-              Passed as an{" "}
-              <code className="rounded bg-muted px-1 py-0.5 text-xs">
-                Authorization
-              </code>{" "}
-              header. Used for write operations and should only be used from
-              server-side code.
-            </p>
-            <pre className={`mt-3 ${codeBlockClass}`}>
-              <code>Authorization: Bearer sk_your_secret_key</code>
-            </pre>
-          </div>
-        </div>
-        <p className="mt-4 rounded-lg border border-border bg-muted/30 p-3 text-muted-foreground text-sm">
-          Get your API keys from{" "}
-          <strong className="text-foreground">
-            Dashboard &gt; Settings &gt; API Keys
-          </strong>
-          .
-        </p>
-      </section>
-      <section className="mb-12">
-        <h2
-          className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight"
-          id="base-url"
-        >
-          Base URL
-        </h2>
-        <pre className={codeBlockClass}>
-          <code>https://your-deployment.convex.site/api/v1</code>
-        </pre>
-        <p className="mt-3 text-muted-foreground text-sm">
-          This is the Convex HTTP endpoint for your deployment. Replace{" "}
-          <code className="rounded bg-muted px-1 py-0.5 text-xs">
-            your-deployment
-          </code>{" "}
-          with your actual Convex deployment URL.
-        </p>
-      </section>
+    <DocsPage
+      description="Read and post feedback, votes, comments, screenshots and survey responses, and read the roadmap and changelog over HTTP."
+      sections={SECTIONS}
+      title="REST API reference"
+    >
+      <AuthenticationSection />
 
-      <EndpointsSection />
+      <DocsSection id="base-url" sections={SECTIONS}>
+        <CodeBlock code={BASE_URL} />
+        <DocsText>
+          Every path below is relative to this URL. It’s the same one the SDK
+          and CLI call by default. Self-hosting? Use your own Convex
+          deployment’s <InlineCode>.convex.site</InlineCode> URL instead.
+        </DocsText>
+      </DocsSection>
 
-      <WebhooksSection />
-      <section className="mb-12">
-        <h2
-          className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight"
-          id="rate-limiting"
-        >
-          Rate Limiting
-        </h2>
-        <p className="mb-4 text-muted-foreground text-sm">
-          API requests are rate limited per API key. When you exceed the limit,
-          requests will return a{" "}
-          <code className="rounded bg-muted px-1 py-0.5 text-xs">429</code>{" "}
-          status code. Check the response headers to monitor your usage.
-        </p>
-        <div className="overflow-hidden rounded-lg border border-border">
-          <Table className="text-sm">
-            <TableHeader>
-              <TableRow>
-                <TableHead>Header</TableHead>
-                <TableHead>Description</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody className="text-muted-foreground">
-              <TableRow>
-                <TableCell>
-                  <code className="text-foreground text-xs">
-                    X-RateLimit-Limit
-                  </code>
-                </TableCell>
-                <TableCell className="whitespace-normal">
-                  Maximum number of requests allowed per window.
-                </TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>
-                  <code className="text-foreground text-xs">
-                    X-RateLimit-Remaining
-                  </code>
-                </TableCell>
-                <TableCell className="whitespace-normal">
-                  Number of requests remaining in the current window.
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </div>
-      </section>
-      <section className="mb-12">
-        <h2
-          className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight"
-          id="errors"
-        >
-          Errors
-        </h2>
-        <p className="mb-4 text-muted-foreground text-sm">
-          All error responses follow a consistent JSON format with an{" "}
-          <code className="rounded bg-muted px-1 py-0.5 text-xs">error</code>{" "}
+      <EndpointsSection sections={SECTIONS} />
+
+      <WebhooksSection sections={SECTIONS} />
+
+      <DocsSection id="rate-limiting" sections={SECTIONS}>
+        <DocsText>
+          Each key can create 30 feedback items per minute with a public key, or
+          300 with a secret key. While a key is over that limit, creating
+          feedback, commenting and uploading or saving screenshots return{" "}
+          <InlineCode>429</InlineCode>. Reads, votes, subscriptions and surveys
+          aren’t rate limited, and responses carry no rate-limit headers.
+        </DocsText>
+      </DocsSection>
+
+      <DocsSection id="errors" sections={SECTIONS}>
+        <DocsText>
+          Every error response is JSON with an <InlineCode>error</InlineCode>{" "}
           field describing the issue.
-        </p>
-        <pre className={`mb-6 ${codeBlockClass}`}>
-          <code>{`{
-  "error": "Error message description"
-}`}</code>
-        </pre>
-        <div className="overflow-hidden rounded-lg border border-border">
-          <Table className="text-sm">
-            <TableHeader>
-              <TableRow>
-                <TableHead>Status Code</TableHead>
-                <TableHead>Meaning</TableHead>
-                <TableHead>Description</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody className="text-muted-foreground">
-              <TableRow>
-                <TableCell>
-                  <code className="text-foreground text-xs">400</code>
-                </TableCell>
-                <TableCell>Bad Request</TableCell>
-                <TableCell className="whitespace-normal">
-                  The request body or parameters are invalid.
-                </TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>
-                  <code className="text-foreground text-xs">401</code>
-                </TableCell>
-                <TableCell>Unauthorized</TableCell>
-                <TableCell className="whitespace-normal">
-                  Missing or invalid API key.
-                </TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>
-                  <code className="text-foreground text-xs">404</code>
-                </TableCell>
-                <TableCell>Not Found</TableCell>
-                <TableCell className="whitespace-normal">
-                  The requested resource does not exist.
-                </TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>
-                  <code className="text-foreground text-xs">429</code>
-                </TableCell>
-                <TableCell>Rate Limited</TableCell>
-                <TableCell className="whitespace-normal">
-                  Too many requests. Wait and retry after the rate limit window
-                  resets.
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </div>
-      </section>
-    </div>
+        </DocsText>
+        <CodeBlock
+          code={`{
+  "error": "Feedback ID is required"
+}`}
+        />
+        <ReferenceTable
+          columns={[
+            { kind: "name", label: "Status code" },
+            { kind: "text", label: "Meaning" },
+            { kind: "text", label: "Description" },
+          ]}
+          rows={ERROR_ROWS}
+        />
+      </DocsSection>
+    </DocsPage>
   );
 }

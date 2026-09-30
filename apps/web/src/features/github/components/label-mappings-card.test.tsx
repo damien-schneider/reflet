@@ -188,14 +188,14 @@ describe("LabelMappingsSection", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows Add Mapping button for admin", () => {
+  it("shows Add mapping button for admin", () => {
     render(<LabelMappingsSection {...defaultProps} />);
-    expect(screen.getByText("Add Mapping")).toBeInTheDocument();
+    expect(screen.getByText("Add mapping")).toBeInTheDocument();
   });
 
-  it("hides Add Mapping button for non-admin", () => {
+  it("hides Add mapping button for non-admin", () => {
     render(<LabelMappingsSection {...defaultProps} isAdmin={false} />);
-    expect(screen.queryByText("Add Mapping")).toBeNull();
+    expect(screen.queryByText("Add mapping")).toBeNull();
   });
 
   it("renders mappings when provided", () => {
@@ -293,12 +293,12 @@ describe("LabelMappingsSection", () => {
     expect(onDeleteMapping).toHaveBeenCalledWith("map1");
   });
 
-  it("opens dialog when Add Mapping clicked", async () => {
+  it("opens dialog when Add mapping clicked", async () => {
     const user = userEvent.setup();
     render(<LabelMappingsSection {...defaultProps} />);
-    await user.click(screen.getByText("Add Mapping"));
+    await user.click(screen.getByText("Add mapping"));
     expect(screen.getByTestId("dialog")).toBeInTheDocument();
-    expect(screen.getByText("Add Label Mapping")).toBeInTheDocument();
+    expect(screen.getByText("Add label mapping")).toBeInTheDocument();
   });
 
   it("calls onFetchLabels when dialog opens with no labels", async () => {
@@ -307,7 +307,7 @@ describe("LabelMappingsSection", () => {
     render(
       <LabelMappingsSection {...defaultProps} onFetchLabels={onFetchLabels} />
     );
-    await user.click(screen.getByText("Add Mapping"));
+    await user.click(screen.getByText("Add mapping"));
     expect(onFetchLabels).toHaveBeenCalled();
   });
 });

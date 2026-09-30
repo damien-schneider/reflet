@@ -108,12 +108,14 @@ vi.mock("next/link", () => ({
 
 // Mock date-fns
 vi.mock("date-fns", () => ({
+  format: () => "January 1, 2026 at 12:00 PM",
   formatDistanceToNow: () => "1 day ago",
 }));
 
 // Mock phosphor icons
 vi.mock("@phosphor-icons/react", () => ({
   ArrowLeft: () => <span data-testid="arrow-left" />,
+  Buildings: () => <span data-testid="buildings" />,
   CaretUp: () => <span data-testid="caret-up" />,
   ChatCircle: () => <span data-testid="chat-circle" />,
   GithubLogo: () => <span data-testid="github-logo" />,
@@ -174,31 +176,41 @@ vi.mock("@ctrl-ui/react/ui/badge", () => ({
   ),
 }));
 
-vi.mock("@ctrl-ui/react/ui/button", () => ({
-  Button: ({
-    children,
-    onClick,
-    variant,
-    size,
-    className,
-  }: {
-    children?: React.ReactNode;
-    onClick?: () => void;
-    variant?: string;
-    size?: string;
-    className?: string;
-  }) => (
-    <button
-      className={className}
-      data-size={size}
-      data-variant={variant}
-      onClick={onClick}
-      type="button"
-    >
-      {children}
-    </button>
-  ),
-}));
+vi.mock("@ctrl-ui/react/ui/button", async () => {
+  const { cloneElement } = await vi.importActual<typeof React>("react");
+  return {
+    Button: ({
+      children,
+      onClick,
+      variant,
+      size,
+      className,
+    }: {
+      children?: React.ReactNode;
+      onClick?: () => void;
+      variant?: string;
+      size?: string;
+      className?: string;
+    }) => (
+      <button
+        className={className}
+        data-size={size}
+        data-variant={variant}
+        onClick={onClick}
+        type="button"
+      >
+        {children}
+      </button>
+    ),
+    ButtonLink: ({
+      children,
+      render,
+    }: {
+      children?: React.ReactNode;
+      render: React.ReactElement;
+    }) => cloneElement(render, undefined, children),
+  };
+});
 
 vi.mock("@ctrl-ui/react/ui/avatar", () => ({
   Avatar: ({
@@ -419,8 +431,13 @@ describe("FeedbackDetailPage", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("Feedback not found")).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: "Feedback not found" })
+      ).toBeInTheDocument();
     });
+    expect(
+      screen.getByRole("link", { name: "Back to feedback" })
+    ).toHaveAttribute("href", "/dashboard/my-organization");
   });
 
   it("should have a back link to the dashboard", async () => {
@@ -552,8 +569,13 @@ describe("FeedbackDetailPage", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("Organization not found")).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: "Organization not found" })
+      ).toBeInTheDocument();
     });
+    expect(
+      screen.getByRole("link", { name: "Back to dashboard" })
+    ).toHaveAttribute("href", "/dashboard");
   });
 
   it("should display comments when they exist", async () => {
@@ -628,9 +650,7 @@ describe("FeedbackDetailPage", () => {
     );
 
     await waitFor(() => {
-      expect(
-        screen.getByText("No comments yet. Be the first to comment.")
-      ).toBeInTheDocument();
+      expect(screen.getByText("No comments yet.")).toBeInTheDocument();
     });
   });
 

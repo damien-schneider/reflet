@@ -1,13 +1,23 @@
 "use client";
 
 import { Button } from "@ctrl-ui/react/ui/button";
-import { Spinner } from "@ctrl-ui/react/ui/spinner";
-import { Trash } from "@phosphor-icons/react";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@ctrl-ui/react/ui/empty";
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
+import { Plugs } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
+import { format } from "date-fns";
 import { useState } from "react";
-import { H3, Muted } from "@/components/ui/typography";
+import { SettingsSection } from "@/features/project/components/settings-page";
+
+const LAST_USED_DATE_FORMAT = "MMM d, yyyy";
 
 export function DevtoolsConnectionsSection() {
   const connections = useQuery(api.devtools.tokens.listMine);
@@ -26,56 +36,81 @@ export function DevtoolsConnectionsSection() {
       setError(
         revokeError instanceof Error
           ? revokeError.message
-          : "Failed to disconnect. Try again."
+          : "Couldn’t revoke the connection. Try again."
       );
     }
     setPendingToken(null);
   };
 
   return (
-    <section className="space-y-4">
-      <div className="space-y-1">
-        <H3 variant="section">Connected dev servers</H3>
-        <Muted>
-          Dev servers you connected from the Reflet devtools Board tab. Each can
-          read and add internal feedback on its organization's board as you.
-          Connections unused for 30 days expire.
-        </Muted>
-      </div>
-
-      {error && (
-        <p className="text-destructive text-sm" role="alert">
+    <SettingsSection
+      description="Dev servers you connected from the Reflet devtools Board tab. Each can read and add internal feedback on its organization’s board as you. Connections unused for 30 days expire."
+      title="Connected dev servers"
+    >
+      {error ? (
+        <p className="text-body text-destructive-text" role="alert">
           {error}
         </p>
-      )}
-      {connections === undefined && <Spinner className="h-6 w-6" />}
+      ) : null}
 
-      {connections?.length === 0 && <Muted>No dev servers connected.</Muted>}
+      {connections === undefined ? (
+        <Skeleton className="h-18 w-full rounded-(--radius-panel)" />
+      ) : null}
 
-      {connections?.map((connection) => (
-        <div
-          className="flex items-center justify-between gap-4 rounded-lg border p-4"
-          key={connection._id}
-        >
-          <div className="min-w-0">
-            <h4 className="truncate font-medium">{connection.label}</h4>
-            <p className="text-muted-foreground text-sm">
-              {connection.organizationName} · Last used{" "}
-              {new Date(connection.lastUsedAt).toISOString().slice(0, 10)}
-            </p>
-          </div>
-          <Button
-            aria-busy={pendingToken === connection._id}
-            aria-label={`Revoke ${connection.label}`}
-            disabled={pendingToken !== null}
-            iconOnly
-            onClick={() => revokeConnection(connection._id)}
-            variant="ghost"
-          >
-            <Trash className="h-4 w-4 text-destructive" />
-          </Button>
-        </div>
-      ))}
-    </section>
+      {connections?.length === 0 ? (
+        <Empty className="rounded-(--radius-panel) border border-dashed">
+          <EmptyHeader>
+            <EmptyMedia>
+              <Plugs aria-hidden className="size-6" />
+            </EmptyMedia>
+            <EmptyTitle>No dev servers connected</EmptyTitle>
+            <EmptyDescription>
+              Open the Board tab in Reflet devtools on your dev server to
+              connect it.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      ) : null}
+
+      {connections && connections.length > 0 ? (
+        <ul className="divide-y rounded-(--radius-panel) border">
+          {connections.map((connection) => {
+            const isPending = pendingToken === connection._id;
+            return (
+              <li
+                className="flex items-center justify-between gap-4 p-4"
+                key={connection._id}
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-label" title={connection.label}>
+                    {connection.label}
+                  </p>
+                  <p className="text-caption text-muted-foreground">
+                    {connection.organizationName} · Last used{" "}
+                    <time
+                      className="tabular-nums"
+                      dateTime={new Date(connection.lastUsedAt).toISOString()}
+                    >
+                      {format(connection.lastUsedAt, LAST_USED_DATE_FORMAT)}
+                    </time>
+                  </p>
+                </div>
+                <Button
+                  aria-busy={isPending || undefined}
+                  aria-label={`Revoke ${connection.label}`}
+                  disabled={pendingToken !== null}
+                  onClick={() => revokeConnection(connection._id)}
+                  size="sm"
+                  tone="danger"
+                  variant="ghost"
+                >
+                  {isPending ? "Revoking…" : "Revoke"}
+                </Button>
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
+    </SettingsSection>
   );
 }

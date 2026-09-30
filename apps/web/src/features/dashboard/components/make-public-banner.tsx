@@ -1,7 +1,9 @@
 "use client";
 
 import { Button } from "@ctrl-ui/react/ui/button";
-import { Globe, Spinner } from "@phosphor-icons/react";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
+import { toast } from "@ctrl-ui/react/ui/toast";
+import { Globe } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
@@ -15,16 +17,28 @@ export function MakePublicBanner({ orgId }: MakePublicBannerProps) {
   const updateOrg = useMutation(api.organizations.mutations.update);
   const [isMakingPublic, setIsMakingPublic] = useState(false);
 
+  const setVisibility = async (isPublic: boolean) => {
+    await updateOrg({ id: orgId, isPublic });
+  };
+
   const handleMakePublic = async () => {
     setIsMakingPublic(true);
     try {
-      await updateOrg({
-        id: orgId,
-        isPublic: true,
+      await setVisibility(true);
+      toast("Organization is now public", {
+        actionProps: {
+          children: "Undo",
+          onClick: () => {
+            setVisibility(false).catch(() => {
+              toast.error("Couldn’t make the organization private. Try again.");
+            });
+          },
+        },
       });
-    } finally {
-      setIsMakingPublic(false);
+    } catch {
+      toast.error("Couldn’t make the organization public. Try again.");
     }
+    setIsMakingPublic(false);
   };
 
   return (
@@ -37,11 +51,15 @@ export function MakePublicBanner({ orgId }: MakePublicBannerProps) {
         variant="ghost"
       >
         {isMakingPublic ? (
-          <Spinner className="size-4 animate-spin" />
+          <Spinner data-icon="inline-start" size="xs" />
         ) : (
-          <Globe className="size-4" />
+          <Globe
+            aria-hidden="true"
+            className="size-4"
+            data-icon="inline-start"
+          />
         )}
-        {isMakingPublic ? "Making public..." : "Make public"}
+        {isMakingPublic ? "Making public…" : "Make organization public"}
       </Button>
     </div>
   );

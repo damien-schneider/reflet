@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import userEvent, { type UserEvent } from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@hookform/resolvers/zod", () => ({
@@ -27,27 +27,11 @@ vi.mock("@ctrl-ui/react/ui/button", () => ({
   }: {
     children: React.ReactNode;
     disabled?: boolean;
-    type?: string;
+    type?: "button" | "submit";
   }) => (
-    <button disabled={disabled} type={type as "button" | "submit"}>
+    <button disabled={disabled} type={type}>
       {children}
     </button>
-  ),
-}));
-
-vi.mock("@ctrl-ui/react/ui/card", () => ({
-  Card: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  CardContent: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  CardDescription: ({ children }: { children: React.ReactNode }) => (
-    <p>{children}</p>
-  ),
-  CardHeader: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  CardTitle: ({ children }: { children: React.ReactNode }) => (
-    <h2>{children}</h2>
   ),
 }));
 
@@ -55,264 +39,114 @@ vi.mock("@/features/account/password-input-field", () => ({
   PasswordInputField: ({
     id,
     label,
-    placeholder,
     showPassword,
     onTogglePassword,
+    register,
   }: {
     id: string;
     label: string;
-    placeholder?: string;
     showPassword?: boolean;
     onTogglePassword?: () => void;
-    register?: unknown;
-    error?: unknown;
+    register: {
+      name: string;
+      onChange: (event: unknown) => void;
+      onBlur: (event: unknown) => void;
+      ref: (instance: HTMLInputElement | null) => void;
+    };
   }) => (
-    <div data-testid={`password-field-${id}`}>
+    <div>
       <label htmlFor={id}>{label}</label>
-      <input
-        id={id}
-        placeholder={placeholder}
-        type={showPassword ? "text" : "password"}
-      />
-      {onTogglePassword ? (
-        <button
-          data-testid={`toggle-${id}`}
-          onClick={onTogglePassword}
-          type="button"
-        >
-          toggle
-        </button>
-      ) : null}
+      <input id={id} type={showPassword ? "text" : "password"} {...register} />
+      <button
+        data-testid={`toggle-${id}`}
+        onClick={onTogglePassword}
+        type="button"
+      >
+        toggle
+      </button>
     </div>
   ),
 }));
 
-vi.mock("@phosphor-icons/react", () => ({
-  Check: ({ className }: { className?: string }) => (
-    <svg className={className} />
-  ),
-}));
-
+import { toast } from "@ctrl-ui/react/ui/toast";
+import { authClient } from "@/lib/auth-client";
 import { PasswordSection } from "./password-section";
 
+const fillForm = async (user: UserEvent) => {
+  await user.type(screen.getByLabelText("Current password"), "oldpassword1");
+  await user.type(screen.getByLabelText("New password"), "newpassword1");
+  await user.type(
+    screen.getByLabelText("Confirm new password"),
+    "newpassword1"
+  );
+  await user.click(screen.getByRole("button", { name: "Update password" }));
+};
+
 describe("PasswordSection", () => {
-  it("renders card title", () => {
-    render(<PasswordSection isLoading={false} setIsLoading={vi.fn()} />);
-    expect(screen.getByText("Password")).toBeInTheDocument();
-  });
-
-  it("renders all three password fields", () => {
-    render(<PasswordSection isLoading={false} setIsLoading={vi.fn()} />);
-    expect(
-      screen.getByTestId("password-field-currentPassword")
-    ).toBeInTheDocument();
-    expect(
-      screen.getByTestId("password-field-newPassword")
-    ).toBeInTheDocument();
-    expect(
-      screen.getByTestId("password-field-confirmPassword")
-    ).toBeInTheDocument();
-  });
-
-  it("renders password hint text", () => {
-    render(<PasswordSection isLoading={false} setIsLoading={vi.fn()} />);
-    expect(
-      screen.getByText("Password must be at least 8 characters")
-    ).toBeInTheDocument();
-  });
-
-  it("renders Update Password button", () => {
-    render(<PasswordSection isLoading={false} setIsLoading={vi.fn()} />);
-    expect(screen.getByText("Update Password")).toBeInTheDocument();
-  });
-
-  it("disables button when isLoading is true", () => {
+  it("disables submit and shows progress while a change is in flight", () => {
     render(<PasswordSection isLoading={true} setIsLoading={vi.fn()} />);
-    expect(screen.getByText("Update Password")).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Updating…" })).toBeDisabled();
   });
 
-  it("renders all password field labels", () => {
-    render(<PasswordSection isLoading={false} setIsLoading={vi.fn()} />);
-    expect(screen.getByText("Current Password")).toBeInTheDocument();
-    expect(screen.getByText("New Password")).toBeInTheDocument();
-    expect(screen.getByText("Confirm New Password")).toBeInTheDocument();
-  });
-
-  it("renders password field placeholders", () => {
-    render(<PasswordSection isLoading={false} setIsLoading={vi.fn()} />);
-    expect(
-      screen.getByPlaceholderText("Enter your current password")
-    ).toBeInTheDocument();
-    expect(
-      screen.getByPlaceholderText("Enter your new password")
-    ).toBeInTheDocument();
-    expect(
-      screen.getByPlaceholderText("Confirm your new password")
-    ).toBeInTheDocument();
-  });
-
-  it("allows typing in password inputs", async () => {
+  it("submits the current and new password", async () => {
     const user = userEvent.setup();
     render(<PasswordSection isLoading={false} setIsLoading={vi.fn()} />);
-    const currentInput = screen.getByPlaceholderText(
-      "Enter your current password"
-    );
-    await user.type(currentInput, "oldpass");
-    expect(currentInput).toHaveValue("oldpass");
+    await fillForm(user);
+    expect(authClient.changePassword).toHaveBeenCalledWith({
+      currentPassword: "oldpassword1",
+      newPassword: "newpassword1",
+    });
   });
 
-  it("submits form and calls authClient.changePassword", async () => {
-    const { authClient } = await import("@/lib/auth-client");
-    const setIsLoading = vi.fn();
-    const user = userEvent.setup();
-    render(<PasswordSection isLoading={false} setIsLoading={setIsLoading} />);
-    await user.type(
-      screen.getByPlaceholderText("Enter your current password"),
-      "oldpassword1"
-    );
-    await user.type(
-      screen.getByPlaceholderText("Enter your new password"),
-      "newpassword1"
-    );
-    await user.type(
-      screen.getByPlaceholderText("Confirm your new password"),
-      "newpassword1"
-    );
-    await user.click(screen.getByText("Update Password"));
-    expect(authClient.changePassword).toHaveBeenCalled();
-  });
-
-  it("shows error toast on password change failure", async () => {
-    const { authClient } = await import("@/lib/auth-client");
-    const { toast } = await import("@ctrl-ui/react/ui/toast");
+  it("shows the server error when the change fails", async () => {
     vi.mocked(authClient.changePassword).mockRejectedValueOnce(
       new Error("Wrong password")
     );
     const user = userEvent.setup();
     render(<PasswordSection isLoading={false} setIsLoading={vi.fn()} />);
-    await user.type(
-      screen.getByPlaceholderText("Enter your current password"),
-      "wrongpass1"
-    );
-    await user.type(
-      screen.getByPlaceholderText("Enter your new password"),
-      "newpassword1"
-    );
-    await user.type(
-      screen.getByPlaceholderText("Confirm your new password"),
-      "newpassword1"
-    );
-    await user.click(screen.getByText("Update Password"));
+    await fillForm(user);
     expect(toast.error).toHaveBeenCalledWith("Wrong password");
   });
 
-  it("button has submit type", () => {
-    render(<PasswordSection isLoading={false} setIsLoading={vi.fn()} />);
-    expect(
-      screen.getByText("Update Password").closest("button")
-    ).toHaveAttribute("type", "submit");
-  });
-
-  it("enables button when isLoading is false", () => {
-    render(<PasswordSection isLoading={false} setIsLoading={vi.fn()} />);
-    expect(screen.getByText("Update Password")).not.toBeDisabled();
-  });
-
-  it("shows success toast on successful password change", async () => {
-    const { authClient } = await import("@/lib/auth-client");
-    const { toast } = await import("@ctrl-ui/react/ui/toast");
-    vi.mocked(authClient.changePassword).mockResolvedValueOnce({} as never);
-    const user = userEvent.setup();
-    render(<PasswordSection isLoading={false} setIsLoading={vi.fn()} />);
-    await user.type(
-      screen.getByPlaceholderText("Enter your current password"),
-      "oldpassword1"
-    );
-    await user.type(
-      screen.getByPlaceholderText("Enter your new password"),
-      "newpassword1"
-    );
-    await user.type(
-      screen.getByPlaceholderText("Confirm your new password"),
-      "newpassword1"
-    );
-    await user.click(screen.getByText("Update Password"));
-    expect(toast.success).toHaveBeenCalled();
-  });
-
-  it("shows generic error toast for non-Error exceptions", async () => {
-    const { authClient } = await import("@/lib/auth-client");
-    const { toast } = await import("@ctrl-ui/react/ui/toast");
+  it("falls back to a generic error for non-Error rejections", async () => {
     vi.mocked(authClient.changePassword).mockRejectedValueOnce("string error");
     const user = userEvent.setup();
     render(<PasswordSection isLoading={false} setIsLoading={vi.fn()} />);
-    await user.type(
-      screen.getByPlaceholderText("Enter your current password"),
-      "wrongpass1"
-    );
-    await user.type(
-      screen.getByPlaceholderText("Enter your new password"),
-      "newpassword1"
-    );
-    await user.type(
-      screen.getByPlaceholderText("Confirm your new password"),
-      "newpassword1"
-    );
-    await user.click(screen.getByText("Update Password"));
+    await fillForm(user);
     expect(toast.error).toHaveBeenCalledWith("Failed to update password");
   });
 
-  it("calls setIsLoading(true) then setIsLoading(false) on submit", async () => {
-    const { authClient } = await import("@/lib/auth-client");
-    vi.mocked(authClient.changePassword).mockResolvedValueOnce({} as never);
+  it("confirms a successful change", async () => {
+    const user = userEvent.setup();
+    render(<PasswordSection isLoading={false} setIsLoading={vi.fn()} />);
+    await fillForm(user);
+    expect(toast.success).toHaveBeenCalled();
+  });
+
+  it("toggles loading around the request", async () => {
     const setIsLoading = vi.fn();
     const user = userEvent.setup();
     render(<PasswordSection isLoading={false} setIsLoading={setIsLoading} />);
-    await user.type(
-      screen.getByPlaceholderText("Enter your current password"),
-      "oldpassword1"
-    );
-    await user.type(
-      screen.getByPlaceholderText("Enter your new password"),
-      "newpassword1"
-    );
-    await user.type(
-      screen.getByPlaceholderText("Confirm your new password"),
-      "newpassword1"
-    );
-    await user.click(screen.getByText("Update Password"));
-    expect(setIsLoading).toHaveBeenCalledWith(true);
-    expect(setIsLoading).toHaveBeenCalledWith(false);
+    await fillForm(user);
+    expect(setIsLoading).toHaveBeenNthCalledWith(1, true);
+    expect(setIsLoading).toHaveBeenLastCalledWith(false);
   });
 
-  it("toggles current password visibility", async () => {
+  it("reveals each password field independently", async () => {
     const user = userEvent.setup();
     render(<PasswordSection isLoading={false} setIsLoading={vi.fn()} />);
-    const currentInput = screen.getByPlaceholderText(
-      "Enter your current password"
-    );
-    expect(currentInput).toHaveAttribute("type", "password");
-    await user.click(screen.getByTestId("toggle-currentPassword"));
-    expect(currentInput).toHaveAttribute("type", "text");
-  });
-
-  it("toggles new password visibility", async () => {
-    const user = userEvent.setup();
-    render(<PasswordSection isLoading={false} setIsLoading={vi.fn()} />);
-    const newInput = screen.getByPlaceholderText("Enter your new password");
-    expect(newInput).toHaveAttribute("type", "password");
     await user.click(screen.getByTestId("toggle-newPassword"));
-    expect(newInput).toHaveAttribute("type", "text");
-  });
-
-  it("toggles confirm password visibility", async () => {
-    const user = userEvent.setup();
-    render(<PasswordSection isLoading={false} setIsLoading={vi.fn()} />);
-    const confirmInput = screen.getByPlaceholderText(
-      "Confirm your new password"
+    expect(screen.getByLabelText("New password")).toHaveAttribute(
+      "type",
+      "text"
     );
-    expect(confirmInput).toHaveAttribute("type", "password");
-    await user.click(screen.getByTestId("toggle-confirmPassword"));
-    expect(confirmInput).toHaveAttribute("type", "text");
+    expect(screen.getByLabelText("Current password")).toHaveAttribute(
+      "type",
+      "password"
+    );
+    expect(screen.getByLabelText("Confirm new password")).toHaveAttribute(
+      "type",
+      "password"
+    );
   });
 });

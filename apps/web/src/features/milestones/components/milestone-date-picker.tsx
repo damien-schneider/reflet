@@ -47,12 +47,15 @@ export function MilestoneDatePicker({
   return (
     <Popover onOpenChange={setOpen} open={open}>
       <PopoverTrigger
-        className={cn(
-          "inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-xs transition-colors hover:bg-accent",
-          colorClass
-        )}
+        render={
+          <Button
+            className={cn("tabular-nums", colorClass)}
+            type="button"
+            variant="surface"
+          />
+        }
       >
-        <CalendarBlank className="h-3.5 w-3.5" />
+        <CalendarBlank aria-hidden />
         {selectedDate ? format(selectedDate, "MMM d, yyyy") : "Set deadline"}
       </PopoverTrigger>
       <PopoverContent align="start" className="w-auto p-0">
@@ -62,11 +65,12 @@ export function MilestoneDatePicker({
           selected={selectedDate}
         />
         {value !== undefined && (
-          <div className="border-t px-3 py-2">
+          <div className="border-t p-2">
             <Button
-              className="h-6 w-full text-xs"
+              className="w-full"
               onClick={handleClear}
               size="xs"
+              type="button"
               variant="ghost"
             >
               Clear deadline

@@ -7,8 +7,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@ctrl-ui/react/ui/card";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@ctrl-ui/react/ui/empty";
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "@ctrl-ui/react/ui/tabs";
+import { ArrowSquareOut } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
@@ -16,15 +23,19 @@ import { useState } from "react";
 import { Text } from "@/components/ui/typography";
 import { KeywordManager } from "@/features/intelligence/components/keyword-manager";
 
-// ============================================
-// COMMUNITY TAB
-// ============================================
+const SOURCE_FILTERS = ["all", "reddit", "web"] as const;
+type SourceFilter = (typeof SOURCE_FILTERS)[number];
+
+const isSourceFilter = (value: unknown): value is SourceFilter =>
+  SOURCE_FILTERS.some((filter) => filter === value);
+
+const VISIBLE_SIGNALS = 5;
 
 const SIGNAL_TYPE_LABELS: Record<string, string> = {
-  competitor_update: "Competitor Update",
-  feature_request: "Feature Request",
-  market_trend: "Market Trend",
-  pain_point: "Pain Point",
+  competitor_update: "Competitor update",
+  feature_request: "Feature request",
+  market_trend: "Market trend",
+  pain_point: "Pain point",
 };
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -48,7 +59,11 @@ function SentimentBar({
   }
 
   return (
-    <div className="flex h-2 w-full overflow-hidden rounded-full">
+    <div
+      aria-label={`Sentiment: ${positive} positive, ${neutral} neutral, ${negative} negative`}
+      className="flex h-2 w-full min-w-24 overflow-hidden rounded-full"
+      role="img"
+    >
       {positive > 0 && (
         <div
           className="bg-success"
@@ -76,66 +91,76 @@ export function CommunityTab({
 }: {
   organizationId: Id<"organizations">;
 }) {
-  const [sourceFilter, setSourceFilter] = useState("all");
+  const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
 
   const signalGroups = useQuery(api.intelligence.community.getSignalsByTopic, {
     organizationId,
-    source: sourceFilter as "reddit" | "web" | "all",
+    source: sourceFilter,
   });
 
   const trending = useQuery(api.intelligence.community.getTrendingTopics, {
     organizationId,
   });
 
+  const stats =
+    trending && !Array.isArray(trending) && trending.totalSignals > 0
+      ? [
+          { label: "Signals this week", value: trending.totalSignals },
+          { label: "Pain points", value: trending.topPainPoints.length },
+          {
+            label: "Feature requests",
+            value: trending.topFeatureRequests.length,
+          },
+        ]
+      : null;
+
   return (
     <div className="space-y-6">
-      {/* Trending Overview */}
-      {trending && !Array.isArray(trending) && trending.totalSignals > 0 && (
+      {stats && trending && !Array.isArray(trending) && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {stats.map((stat) => (
+            <Card key={stat.label}>
+              <CardContent>
+                <dl className="flex flex-col-reverse gap-1">
+                  <dt className="text-muted-foreground text-sm">
+                    {stat.label}
+                  </dt>
+                  <dd className="font-semibold text-heading-2 tabular-nums">
+                    {stat.value}
+                  </dd>
+                </dl>
+              </CardContent>
+            </Card>
+          ))}
           <Card>
-            <CardContent className="pt-6">
-              <div className="font-bold text-2xl">{trending.totalSignals}</div>
-              <Text variant="bodySmall">Signals this week</Text>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="font-bold text-2xl">
-                {trending.topPainPoints.length}
-              </div>
-              <Text variant="bodySmall">Pain points detected</Text>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="font-bold text-2xl">
-                {trending.topFeatureRequests.length}
-              </div>
-              <Text variant="bodySmall">Feature requests found</Text>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <SentimentBar
-                negative={trending.sentimentOverview.negative}
-                neutral={trending.sentimentOverview.neutral}
-                positive={trending.sentimentOverview.positive}
-              />
-              <Text className="mt-2" variant="bodySmall">
-                Sentiment overview
-              </Text>
+            <CardContent>
+              <dl className="flex flex-col-reverse gap-2">
+                <dt className="text-muted-foreground text-sm">Sentiment</dt>
+                <dd>
+                  <SentimentBar
+                    negative={trending.sentimentOverview.negative}
+                    neutral={trending.sentimentOverview.neutral}
+                    positive={trending.sentimentOverview.positive}
+                  />
+                </dd>
+              </dl>
             </CardContent>
           </Card>
         </div>
       )}
 
-      {/* Keywords management */}
       <KeywordManager organizationId={organizationId} />
 
-      {/* Signal feed */}
-      <Tabs onValueChange={setSourceFilter} value={sourceFilter}>
+      <Tabs
+        onValueChange={(value) => {
+          if (isSourceFilter(value)) {
+            setSourceFilter(value);
+          }
+        }}
+        value={sourceFilter}
+      >
         <TabsList>
-          <TabsTab value="all">All Sources</TabsTab>
+          <TabsTab value="all">All sources</TabsTab>
           <TabsTab value="reddit">Reddit</TabsTab>
           <TabsTab value="web">Web</TabsTab>
         </TabsList>
@@ -172,9 +197,17 @@ function SignalGroupsList({
 }) {
   if (signalGroups === undefined) {
     return (
-      <div className="space-y-4">
-        {["a", "b", "c"].map((id) => (
-          <Skeleton className="h-32 w-full" key={id} />
+      <div aria-label="Loading signals" className="space-y-6" role="status">
+        {["a", "b"].map((id) => (
+          <Card key={id}>
+            <CardHeader>
+              <Skeleton className="h-5 w-40" />
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-20 w-full" />
+            </CardContent>
+          </Card>
         ))}
       </div>
     );
@@ -182,12 +215,14 @@ function SignalGroupsList({
 
   if (signalGroups.length === 0) {
     return (
-      <div className="flex min-h-[30vh] items-center justify-center text-center">
-        <Text variant="bodySmall">
-          No community signals yet. Add keywords and enable scanning in the
-          Settings tab.
-        </Text>
-      </div>
+      <Empty className="rounded-lg border border-dashed py-16">
+        <EmptyHeader>
+          <EmptyTitle>No community signals yet</EmptyTitle>
+          <EmptyDescription>
+            Add keywords above, then run a scan to find discussions about them.
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     );
   }
 
@@ -196,12 +231,14 @@ function SignalGroupsList({
       {signalGroups.map((group) => (
         <Card key={group.keyword}>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>{group.keyword}</CardTitle>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline">
-                  {group.signals.length} signal
-                  {group.signals.length === 1 ? "" : "s"}
+            <div className="flex items-center justify-between gap-4">
+              <CardTitle className="min-w-0 truncate" title={group.keyword}>
+                {group.keyword}
+              </CardTitle>
+              <div className="flex shrink-0 items-center gap-3">
+                <Badge size="sm" variant="outline">
+                  <span className="tabular-nums">{group.signals.length}</span>{" "}
+                  signal{group.signals.length === 1 ? "" : "s"}
                 </Badge>
                 <SentimentBar
                   negative={group.sentimentBreakdown.negative}
@@ -212,45 +249,45 @@ function SignalGroupsList({
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {group.signals.slice(0, 5).map((signal) => (
-                <div
-                  className="flex items-start gap-3 rounded-md border p-3"
-                  key={signal._id}
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline">
-                        {SOURCE_LABELS[signal.source] ?? signal.source}
-                      </Badge>
-                      <Badge>
-                        {SIGNAL_TYPE_LABELS[signal.signalType] ??
-                          signal.signalType}
-                      </Badge>
-                    </div>
-                    <p className="mt-1 font-medium text-sm">{signal.title}</p>
-                    <p className="mt-1 line-clamp-2 text-muted-foreground text-xs">
-                      {signal.content}
-                    </p>
-                    {signal.url && (
-                      <a
-                        className="mt-1 inline-block text-brand-text text-xs hover:underline"
-                        href={signal.url}
-                        rel="noopener"
-                        target="_blank"
-                      >
-                        View source
-                      </a>
-                    )}
+            <ul className="space-y-3">
+              {group.signals.slice(0, VISIBLE_SIGNALS).map((signal) => (
+                <li className="rounded-md border p-3" key={signal._id}>
+                  <div className="flex items-center gap-2">
+                    <Badge size="sm" variant="outline">
+                      {SOURCE_LABELS[signal.source] ?? signal.source}
+                    </Badge>
+                    <Badge size="sm">
+                      {SIGNAL_TYPE_LABELS[signal.signalType] ??
+                        signal.signalType}
+                    </Badge>
                   </div>
-                </div>
+                  <p className="mt-2 font-medium text-sm">{signal.title}</p>
+                  <p className="mt-1 line-clamp-2 text-pretty text-muted-foreground text-xs">
+                    {signal.content}
+                  </p>
+                  {signal.url && (
+                    <a
+                      className="mt-2 inline-flex items-center gap-1 text-brand-text text-xs underline-offset-2 hover:underline"
+                      href={signal.url}
+                      rel="noopener noreferrer"
+                      target="_blank"
+                    >
+                      View source
+                      <ArrowSquareOut aria-hidden className="size-3" />
+                      <span className="sr-only">(opens in a new tab)</span>
+                    </a>
+                  )}
+                </li>
               ))}
-              {group.signals.length > 5 && (
-                <Text className="text-center" variant="bodySmall">
-                  +{group.signals.length - 5} more signals
-                </Text>
-              )}
-            </div>
+            </ul>
+            {group.signals.length > VISIBLE_SIGNALS && (
+              <Text
+                className="mt-3 text-center tabular-nums"
+                variant="bodySmall"
+              >
+                {group.signals.length - VISIBLE_SIGNALS} more not shown
+              </Text>
+            )}
           </CardContent>
         </Card>
       ))}

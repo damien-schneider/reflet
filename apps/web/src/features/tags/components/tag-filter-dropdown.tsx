@@ -11,12 +11,15 @@ import {
   CommandList,
   CommandSeparator,
 } from "@ctrl-ui/react/ui/command";
+import { Field, FieldError, FieldLabel } from "@ctrl-ui/react/ui/field";
 import { Input } from "@ctrl-ui/react/ui/input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@ctrl-ui/react/ui/popover";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import {
   Check,
   Pencil,
@@ -27,11 +30,11 @@ import {
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
-import { useCallback, useMemo, useState } from "react";
+import { type FormEvent, useId, useState } from "react";
 import { NotionColorPicker } from "@/components/ui/notion-color-picker";
 import {
   getRandomTagColor,
-  getTagDotColor,
+  getTagSwatchClass,
   isValidTagColor,
   migrateHexToNamedColor,
   type TagColor,
@@ -55,135 +58,189 @@ interface TagFilterDropdownProps {
   tags: Tag[];
 }
 
-interface TagEditButtonProps {
+interface TagEditFormProps {
+  onClose: () => void;
+  onDelete: () => void;
   tag: Tag;
 }
 
-function TagEditButton({ tag }: TagEditButtonProps) {
-  const [open, setOpen] = useState(false);
-  const [editedName, setEditedName] = useState(tag.name);
-  const [editedColor, setEditedColor] = useState<TagColor>(
+function TagEditForm({ tag, onClose, onDelete }: TagEditFormProps) {
+  const updateTag = useMutation(api.organizations.tag_manager_actions.update);
+  const nameId = useId();
+  const errorId = `${nameId}-error`;
+  const [name, setName] = useState(tag.name);
+  const [color, setColor] = useState<TagColor>(
     isValidTagColor(tag.color) ? tag.color : migrateHexToNamedColor(tag.color)
   );
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const updateTag = useMutation(api.organizations.tag_manager_actions.update);
-
-  const handleOpenChange = useCallback(
-    (isOpen: boolean) => {
-      setOpen(isOpen);
-      if (isOpen) {
-        setEditedName(tag.name);
-        setEditedColor(
-          isValidTagColor(tag.color)
-            ? tag.color
-            : migrateHexToNamedColor(tag.color)
-        );
-      }
-    },
-    [tag.name, tag.color]
-  );
-
-  const handleSave = useCallback(async () => {
-    const trimmedName = editedName.trim();
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const trimmedName = name.trim();
     if (!trimmedName) {
-      setOpen(false);
+      setError("Give the tag a name.");
       return;
     }
-
-    const hasNameChanged = trimmedName !== tag.name;
-    const hasColorChanged = editedColor !== tag.color;
-
-    if (hasNameChanged || hasColorChanged) {
-      await updateTag({
-        color: editedColor,
-        id: tag._id,
-        name: trimmedName,
-      });
+    if (trimmedName === tag.name && color === tag.color) {
+      onClose();
+      return;
     }
-    setOpen(false);
-  }, [editedName, editedColor, tag._id, tag.name, tag.color, updateTag]);
+    setIsSaving(true);
+    try {
+      await updateTag({ color, id: tag._id, name: trimmedName });
+      onClose();
+    } catch {
+      setError("Couldn’t save the tag. Try again.");
+    }
+    setIsSaving(false);
+  };
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        handleSave();
-      } else if (e.key === "Escape") {
-        setOpen(false);
-      }
-    },
-    [handleSave]
+  return (
+    <form className="space-y-3" noValidate onSubmit={handleSubmit}>
+      <Field invalid={Boolean(error)}>
+        <FieldLabel htmlFor={nameId}>Name</FieldLabel>
+        <Input
+          aria-describedby={error ? errorId : undefined}
+          autoComplete="off"
+          autoFocus
+          disabled={isSaving}
+          id={nameId}
+          onChange={(e) => {
+            setName(e.target.value);
+            setError(null);
+          }}
+          size="sm"
+          value={name}
+        />
+        <FieldError id={errorId} match={Boolean(error)}>
+          {error}
+        </FieldError>
+      </Field>
+
+      <NotionColorPicker onChange={setColor} value={color} />
+
+      <div className="flex items-center justify-between gap-2 pt-1">
+        <Button
+          disabled={isSaving}
+          onClick={onDelete}
+          size="xs"
+          tone="danger"
+          variant="ghost"
+        >
+          <Trash aria-hidden data-icon="inline-start" />
+          Delete
+        </Button>
+        <div className="flex gap-1">
+          <Button
+            disabled={isSaving}
+            onClick={onClose}
+            size="xs"
+            variant="ghost"
+          >
+            Cancel
+          </Button>
+          <Button
+            disabled={isSaving}
+            size="xs"
+            tone="primary"
+            type="submit"
+            variant="solid"
+          >
+            {isSaving && <Spinner data-icon="inline-start" size="xs" />}
+            Save
+          </Button>
+        </div>
+      </div>
+    </form>
   );
+}
 
-  const handleDeleteSuccess = useCallback(() => {
-    setShowDeleteDialog(false);
-    setOpen(false);
-  }, []);
+function TagEditButton({ tag }: { tag: Tag }) {
+  const [open, setOpen] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   return (
     <>
-      <Popover onOpenChange={handleOpenChange} open={open}>
+      <Popover onOpenChange={setOpen} open={open}>
         <PopoverTrigger
-          className="flex h-5 w-5 items-center justify-center rounded opacity-0 hover:bg-accent hover:opacity-100 group-data-[selected=true]/command-item:opacity-100"
           onClick={(e) => e.stopPropagation()}
-          render={(props) => <button {...props} type="button" />}
-        >
-          <Pencil className="h-3 w-3" />
-        </PopoverTrigger>
-        <PopoverContent align="start" className="w-56 p-3" side="right">
-          <div className="space-y-3">
-            <Input
-              autoFocus
-              className="h-8"
-              onChange={(e) => setEditedName(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Tag name"
-              value={editedName}
+          render={
+            <Button
+              aria-label={`Edit ${tag.name}`}
+              className="opacity-0 focus-visible:opacity-100 group-hover/command-item:opacity-100 group-data-[selected=true]/command-item:opacity-100"
+              iconOnly
+              size="xs"
+              variant="ghost"
             />
-
-            <NotionColorPicker onChange={setEditedColor} value={editedColor} />
-
-            <div className="flex items-center justify-between gap-2 pt-1">
-              <Button
-                className="h-7 px-2 text-destructive hover:text-destructive"
-                onClick={() => setShowDeleteDialog(true)}
-                size="xs"
-                variant="ghost"
-              >
-                <Trash className="mr-1 h-3.5 w-3.5" />
-                Delete
-              </Button>
-              <div className="flex gap-1">
-                <Button
-                  className="h-7"
-                  onClick={() => setOpen(false)}
-                  size="xs"
-                  variant="ghost"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  className="h-7"
-                  onClick={handleSave}
-                  size="xs"
-                  tone="primary"
-                  variant="solid"
-                >
-                  Save
-                </Button>
-              </div>
-            </div>
-          </div>
+          }
+        >
+          <Pencil aria-hidden />
+        </PopoverTrigger>
+        <PopoverContent align="start" className="w-60 p-3" side="right">
+          <TagEditForm
+            onClose={() => setOpen(false)}
+            onDelete={() => setShowDeleteDialog(true)}
+            tag={tag}
+          />
         </PopoverContent>
       </Popover>
 
       <DeleteTagDialog
         onOpenChange={setShowDeleteDialog}
-        onSuccess={handleDeleteSuccess}
-        tagId={showDeleteDialog ? tag._id : null}
+        onSuccess={() => {
+          setShowDeleteDialog(false);
+          setOpen(false);
+        }}
+        tag={showDeleteDialog ? tag : null}
       />
     </>
+  );
+}
+
+interface TagOptionProps {
+  isAdmin: boolean;
+  isSelected: boolean;
+  onSelect: () => void;
+  tag: Tag;
+}
+
+function TagOption({ tag, isSelected, isAdmin, onSelect }: TagOptionProps) {
+  return (
+    <CommandItem
+      className="flex items-center gap-2"
+      data-checked={isSelected}
+      onSelect={onSelect}
+      value={tag._id}
+    >
+      <span
+        aria-hidden="true"
+        className={cn(
+          "flex size-4 shrink-0 items-center justify-center rounded-sm border",
+          isSelected
+            ? "border-primary bg-primary text-primary-foreground"
+            : "border-muted-foreground/30"
+        )}
+      >
+        {isSelected && <Check className="size-3" weight="bold" />}
+      </span>
+      <span
+        aria-hidden="true"
+        className={cn(
+          "size-2 shrink-0 rounded-full",
+          getTagSwatchClass(tag.color)
+        )}
+      />
+      <span className="min-w-0 flex-1 truncate" title={tag.name}>
+        {tag.icon && (
+          <span aria-hidden="true" className="mr-1">
+            {tag.icon}
+          </span>
+        )}
+        {tag.name}
+      </span>
+      {isAdmin && <TagEditButton tag={tag} />}
+    </CommandItem>
   );
 }
 
@@ -197,30 +254,22 @@ export function TagFilterDropdown({
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [isCreating, setIsCreating] = useState(false);
-
   const createTag = useMutation(api.organizations.tag_manager_actions.create);
 
-  const filteredTags = useMemo(() => {
-    if (!searchValue.trim()) {
-      return tags;
-    }
-    const search = searchValue.toLowerCase();
-    return tags.filter((tag) => tag.name.toLowerCase().includes(search));
-  }, [tags, searchValue]);
+  const search = searchValue.trim().toLowerCase();
+  const filteredTags = search
+    ? tags.filter((tag) => tag.name.toLowerCase().includes(search))
+    : tags;
+  const selectedTagSet = new Set(selectedTagIds);
+  const canCreateTag =
+    isAdmin &&
+    search !== "" &&
+    !tags.some((tag) => tag.name.toLowerCase() === search);
 
-  const canCreateTag = useMemo(() => {
-    if (!(isAdmin && searchValue.trim())) {
-      return false;
-    }
-    const search = searchValue.toLowerCase().trim();
-    return !tags.some((tag) => tag.name.toLowerCase() === search);
-  }, [isAdmin, searchValue, tags]);
-
-  const handleCreateTag = useCallback(async () => {
+  const handleCreateTag = async () => {
     if (!canCreateTag || isCreating) {
       return;
     }
-
     setIsCreating(true);
     try {
       await createTag({
@@ -229,80 +278,45 @@ export function TagFilterDropdown({
         organizationId,
       });
       setSearchValue("");
-    } finally {
-      setIsCreating(false);
+    } catch {
+      toast.error("Couldn’t create the tag. Try again.");
     }
-  }, [canCreateTag, isCreating, createTag, organizationId, searchValue]);
-
-  const handleTagSelect = useCallback(
-    (tagId: string) => {
-      const isSelected = selectedTagIds.includes(tagId);
-      onTagChange(tagId, !isSelected);
-    },
-    [selectedTagIds, onTagChange]
-  );
+    setIsCreating(false);
+  };
 
   return (
     <Popover onOpenChange={setOpen} open={open}>
-      <PopoverTrigger
-        className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-3 py-2 font-medium text-sm hover:bg-accent hover:text-accent-foreground"
-        render={(props) => <button {...props} type="button" />}
-      >
-        <TagIcon className="h-4 w-4" />
+      <PopoverTrigger render={<Button size="sm" variant="surface" />}>
+        <TagIcon aria-hidden data-icon="inline-start" />
         Tags
         {selectedTagIds.length > 0 && (
-          <Badge className="ml-1">{selectedTagIds.length}</Badge>
+          <Badge className="tabular-nums" size="sm">
+            {selectedTagIds.length}
+          </Badge>
         )}
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-56 p-0">
+      <PopoverContent align="start" className="w-60 p-0">
         <Command shouldFilter={false}>
           <CommandInput
             onValueChange={setSearchValue}
-            placeholder="Search or create tags..."
+            placeholder={isAdmin ? "Search or create tags…" : "Search tags…"}
             value={searchValue}
           />
           <CommandList>
             <CommandEmpty>
-              {isAdmin ? (
-                <span className="text-muted-foreground">
-                  No tags found. Type to create.
-                </span>
-              ) : (
-                <span className="text-muted-foreground">No tags found.</span>
-              )}
+              {isAdmin ? "No tags found. Type to create." : "No tags found."}
             </CommandEmpty>
             <CommandGroup>
               {filteredTags.map((tag) => {
-                const isSelected = selectedTagIds.includes(tag._id);
-
+                const isSelected = selectedTagSet.has(tag._id);
                 return (
-                  <CommandItem
-                    className="flex items-center gap-2"
-                    data-checked={isSelected}
+                  <TagOption
+                    isAdmin={isAdmin}
+                    isSelected={isSelected}
                     key={tag._id}
-                    onSelect={() => handleTagSelect(tag._id)}
-                    value={tag._id}
-                  >
-                    <div
-                      className={cn(
-                        "flex h-4 w-4 shrink-0 items-center justify-center rounded border",
-                        isSelected
-                          ? "border-primary bg-primary text-primary-foreground"
-                          : "border-muted-foreground/30"
-                      )}
-                    >
-                      {isSelected && <Check className="h-3 w-3" />}
-                    </div>
-                    <div
-                      className="h-2.5 w-2.5 shrink-0 rounded-full"
-                      style={{ backgroundColor: getTagDotColor(tag.color) }}
-                    />
-                    <span className="flex-1 truncate">
-                      {tag.icon && <span className="mr-1">{tag.icon}</span>}
-                      {tag.name}
-                    </span>
-                    {isAdmin && <TagEditButton tag={tag} />}
-                  </CommandItem>
+                    onSelect={() => onTagChange(tag._id, !isSelected)}
+                    tag={tag}
+                  />
                 );
               })}
             </CommandGroup>
@@ -317,8 +331,14 @@ export function TagFilterDropdown({
                     onSelect={handleCreateTag}
                     value={`create-${searchValue}`}
                   >
-                    <Plus className="h-4 w-4" />
-                    <span>Create &quot;{searchValue.trim()}&quot;</span>
+                    {isCreating ? (
+                      <Spinner size="xs" />
+                    ) : (
+                      <Plus aria-hidden className="size-4" />
+                    )}
+                    <span className="min-w-0 truncate">
+                      Create “{searchValue.trim()}”
+                    </span>
                   </CommandItem>
                 </CommandGroup>
               </>

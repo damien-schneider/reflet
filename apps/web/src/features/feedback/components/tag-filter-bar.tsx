@@ -52,7 +52,7 @@ function TagButton({
 
   const button = (
     <TagPill active={isSelected} color={tag.color} onClick={onClick}>
-      {tag.icon && <span className="mr-1">{tag.icon}</span>}
+      {tag.icon && <span aria-hidden="true">{tag.icon}</span>}
       {tag.name}
     </TagPill>
   );
@@ -99,17 +99,17 @@ export function TagFilterBar({
   const isAllSelected = selectedTagId === null;
 
   const [showCreatePopover, setShowCreatePopover] = useState(false);
-  const [deletingTagId, setDeletingTagId] = useState<Id<"tags"> | null>(null);
+  const [deletingTag, setDeletingTag] = useState<Tag | null>(null);
 
   const handleCreateSuccess = () => {
     setShowCreatePopover(false);
   };
 
   const handleDeleteSuccess = () => {
-    if (deletingTagId === selectedTagId) {
+    if (deletingTag?._id === selectedTagId) {
       onTagSelect(null);
     }
-    setDeletingTagId(null);
+    setDeletingTag(null);
   };
 
   return (
@@ -122,11 +122,7 @@ export function TagFilterBar({
         <div className="flex w-max items-center gap-2">
           {isAdmin && <TriagePulse organizationId={organizationId} />}
 
-          <TagPill
-            active={isAllSelected}
-            color="gray"
-            onClick={() => onTagSelect(null)}
-          >
+          <TagPill active={isAllSelected} onClick={() => onTagSelect(null)}>
             All
           </TagPill>
 
@@ -138,7 +134,7 @@ export function TagFilterBar({
               onClick={() =>
                 onTagSelect(selectedTagId === tag._id ? null : tag._id)
               }
-              onDelete={() => setDeletingTagId(tag._id)}
+              onDelete={() => setDeletingTag(tag)}
               organizationId={organizationId}
               tag={tag}
             />
@@ -156,9 +152,9 @@ export function TagFilterBar({
       </ScrollArea>
 
       <DeleteTagDialog
-        onOpenChange={(open) => !open && setDeletingTagId(null)}
+        onOpenChange={(open) => !open && setDeletingTag(null)}
         onSuccess={handleDeleteSuccess}
-        tagId={deletingTagId}
+        tag={deletingTag}
       />
     </>
   );

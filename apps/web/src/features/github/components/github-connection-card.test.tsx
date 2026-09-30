@@ -9,11 +9,37 @@ vi.mock("@phosphor-icons/react", () => ({
   GithubLogo: ({ className }: { className?: string }) => (
     <span className={className} data-testid="icon-github" />
   ),
-  Spinner: ({ className }: { className?: string }) => (
-    <span className={className} data-testid="icon-spinner" />
+  Warning: ({ className }: { className?: string }) => (
+    <span className={className} data-testid="icon-warning" />
   ),
-  X: ({ className }: { className?: string }) => (
-    <span className={className} data-testid="icon-x" />
+}));
+
+vi.mock("@ctrl-ui/react/ui/spinner", () => ({
+  Spinner: () => <span data-testid="icon-spinner" />,
+}));
+
+vi.mock("@ctrl-ui/react/ui/alert-dialog", () => ({
+  AlertDialog: ({
+    children,
+    open,
+  }: {
+    children: React.ReactNode;
+    open: boolean;
+  }) => (open ? <div role="alertdialog">{children}</div> : null),
+  AlertDialogContent: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  AlertDialogDescription: ({ children }: { children: React.ReactNode }) => (
+    <p>{children}</p>
+  ),
+  AlertDialogFooter: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  AlertDialogHeader: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  AlertDialogTitle: ({ children }: { children: React.ReactNode }) => (
+    <h2>{children}</h2>
   ),
 }));
 
@@ -34,22 +60,28 @@ vi.mock("@ctrl-ui/react/ui/button", () => ({
     children,
     onClick,
     disabled,
-    render,
   }: {
     children: React.ReactNode;
     onClick?: () => void;
     disabled?: boolean;
-    render?: React.ReactElement;
-  }) =>
-    render ? (
-      <a href={(render.props as { href?: string }).href} onClick={onClick}>
-        {children}
-      </a>
-    ) : (
-      <button disabled={disabled} onClick={onClick} type="button">
-        {children}
-      </button>
-    ),
+  }) => (
+    <button disabled={disabled} onClick={onClick} type="button">
+      {children}
+    </button>
+  ),
+  ButtonLink: ({
+    children,
+    onClick,
+    render,
+  }: {
+    children: React.ReactNode;
+    onClick?: () => void;
+    render?: React.ReactElement<{ href?: string }>;
+  }) => (
+    <a href={render?.props.href} onClick={onClick}>
+      {children}
+    </a>
+  ),
 }));
 
 vi.mock("@/components/ui/typography", () => ({
@@ -77,12 +109,14 @@ vi.mock("@/components/ui/typography", () => ({
     children,
     variant,
     className,
+    title,
   }: {
     children: React.ReactNode;
     variant?: string;
     className?: string;
+    title?: string;
   }) => (
-    <span className={className} data-variant={variant}>
+    <span className={className} data-variant={variant} title={title}>
       {children}
     </span>
   ),
@@ -117,8 +151,9 @@ describe("GitHubConnectionSection", () => {
       />
     );
     expect(
-      screen.getByText("Contact an admin to connect GitHub.")
+      screen.getByText(/Only admins can connect GitHub/)
     ).toBeInTheDocument();
+    expect(screen.queryByText("Connect GitHub")).toBeNull();
   });
 
   it("renders connected state with account login", () => {
@@ -169,7 +204,7 @@ describe("GitHubConnectionSection", () => {
     expect(link).toHaveAttribute("href", "/api/github/install?test=1");
   });
 
-  it("calls onDisconnect when disconnect button clicked", async () => {
+  it("disconnects only after the admin confirms", async () => {
     const onDisconnect = vi.fn();
     const user = userEvent.setup();
     render(
@@ -183,8 +218,77 @@ describe("GitHubConnectionSection", () => {
         onDisconnect={onDisconnect}
       />
     );
-    await user.click(screen.getByText("Disconnect"));
-    expect(onDisconnect).toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "Disconnect" }));
+    expect(onDisconnect).not.toHaveBeenCalled();
+    expect(screen.getByText("Disconnect GitHub?")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Disconnect GitHub" }));
+    expect(onDisconnect).toHaveBeenCalledOnce();
+  });
+
+  it("cancelling the confirmation keeps GitHub connected", async () => {
+    const onDisconnect = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <GitHubConnectionSection
+        accountLogin="octocat"
+        isAdmin
+        isConnected
+        isDisconnecting={false}
+        onDisconnect={onDisconnect}
+      />
+    );
+    await user.click(screen.getByRole("button", { name: "Disconnect" }));
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(onDisconnect).not.toHaveBeenCalled();
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+  });
+
+  it("shows a disabled connect button until the install link is ready", () => {
+    render(
+      <GitHubConnectionSection
+        isAdmin
+        isConnected={false}
+        isDisconnecting={false}
+        onDisconnect={vi.fn()}
+      />
+    );
+    expect(
+      screen.getByRole("button", { name: "Connect GitHub" })
+    ).toBeDisabled();
+  });
+
+  it("tells admins how to recover when the connecting teammate left", () => {
+    render(
+      <GitHubConnectionSection
+        connectHref="/api/github/install?test=1"
+        isAdmin
+        isConnected={false}
+        isDisconnecting={false}
+        isOwnerLeft
+        onDisconnect={vi.fn()}
+      />
+    );
+    expect(screen.getByText("GitHub connection lost")).toBeInTheDocument();
+    expect(screen.getByText("Reconnect GitHub").closest("a")).toHaveAttribute(
+      "href",
+      "/api/github/install?test=1"
+    );
+  });
+
+  it("points non-admins to an admin when the connecting teammate left", () => {
+    render(
+      <GitHubConnectionSection
+        isAdmin={false}
+        isConnected={false}
+        isDisconnecting={false}
+        isOwnerLeft
+        onDisconnect={vi.fn()}
+      />
+    );
+    expect(
+      screen.getByText(/Ask an admin to reconnect GitHub/)
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Reconnect GitHub")).toBeNull();
   });
 
   it("disables disconnect button when disconnecting", () => {

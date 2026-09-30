@@ -1,5 +1,6 @@
 "use client";
 
+import { Alert, AlertDescription, AlertTitle } from "@ctrl-ui/react/ui/alert";
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Combobox,
@@ -9,7 +10,18 @@ import {
   ComboboxItem,
   ComboboxList,
 } from "@ctrl-ui/react/ui/combobox";
-import { GitBranch, Globe, Lock, Plug, Spinner } from "@phosphor-icons/react";
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
+import { toast } from "@ctrl-ui/react/ui/toast";
+import {
+  ArrowsClockwise,
+  GitBranch,
+  Globe,
+  Lock,
+  Plug,
+  Warning,
+} from "@phosphor-icons/react";
+import { useState } from "react";
 import { Text } from "@/components/ui/typography";
 
 type SearchableRepository = Repository & { searchText: string };
@@ -55,7 +67,8 @@ interface RepositorySelectorCardProps {
   isAdmin: boolean;
   loadingRepos: boolean;
   onChangeRepository: () => void;
-  onConnectRepository: () => void;
+  onConnectRepository: () => Promise<void> | void;
+  onRetry?: () => void;
   onSelectRepo: (value: string) => void;
   repositories: Repository[];
   repositoryFullName?: string;
@@ -73,18 +86,19 @@ export function RepositorySelectorSection({
   onSelectRepo,
   onConnectRepository,
   onChangeRepository,
+  onRetry,
 }: RepositorySelectorCardProps) {
-  const flatRepositories = repositories.map((repo) => ({
-    ...repo,
-    searchText: getRepositorySearchText(repo),
-  }));
-
   if (hasRepository) {
     return (
-      <div className="flex items-center justify-between rounded-lg border bg-muted/50 px-4 py-3">
-        <div className="flex items-center gap-2">
-          <GitBranch className="h-4 w-4 text-muted-foreground" />
-          <Text className="font-medium">{repositoryFullName}</Text>
+      <div className="flex items-center justify-between gap-3 rounded-lg border bg-muted/50 px-4 py-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <GitBranch
+            aria-hidden="true"
+            className="size-4 shrink-0 text-muted-foreground"
+          />
+          <Text className="truncate font-medium" title={repositoryFullName}>
+            {repositoryFullName}
+          </Text>
         </div>
         {isAdmin ? (
           <Button onClick={onChangeRepository} size="xs" variant="ghost">
@@ -97,9 +111,10 @@ export function RepositorySelectorSection({
 
   if (loadingRepos) {
     return (
-      <div className="flex items-center gap-2">
-        <Spinner className="h-4 w-4 animate-spin" />
-        <Text variant="bodySmall">Loading repositories...</Text>
+      <div aria-busy="true" className="space-y-3" role="status">
+        <span className="sr-only">Loading repositories…</span>
+        <Skeleton className="h-9 w-full" />
+        {isAdmin ? <Skeleton className="h-9 w-40" /> : null}
       </div>
     );
   }
@@ -107,65 +122,151 @@ export function RepositorySelectorSection({
   return (
     <div className="space-y-3">
       {error ? (
-        <div className="rounded-md border border-destructive/50 bg-destructive/10 px-4 py-3">
-          <Text className="text-destructive" variant="bodySmall">
-            {error}
-          </Text>
-        </div>
+        <Alert variant="destructive">
+          <Warning aria-hidden="true" />
+          <AlertTitle>Unable to load repositories</AlertTitle>
+          <AlertDescription>
+            <p className="text-pretty">{error}</p>
+            {onRetry ? (
+              <Button
+                className="mt-3"
+                onClick={onRetry}
+                size="xs"
+                variant="surface"
+              >
+                <ArrowsClockwise
+                  aria-hidden="true"
+                  className="size-4"
+                  data-icon="inline-start"
+                />
+                Try again
+              </Button>
+            ) : null}
+          </AlertDescription>
+        </Alert>
       ) : null}
-      <Combobox
-        autoHighlight
-        filter={(repo, query) =>
-          !query || repo.searchText.includes(query.toLowerCase())
-        }
-        items={flatRepositories}
-        itemToStringLabel={(repo) => getRepositoryDisplayText(repo)}
-        onValueChange={(value) => {
-          if (value) {
-            onSelectRepo(value.id);
-          }
-        }}
-        value={
-          selectedRepo
-            ? (flatRepositories.find((r) => r.id === selectedRepo) ?? null)
-            : null
-        }
-      >
-        <ComboboxInput placeholder="Search repositories..." />
-        <ComboboxContent>
-          <ComboboxList<SearchableRepository>>
-            {(repo) => (
-              <ComboboxItem key={repo.id} value={repo}>
-                <div className="flex items-center gap-2">
-                  {repo.isPrivate ? (
-                    <Lock className="h-4 w-4 text-muted-foreground" />
-                  ) : (
-                    <Globe className="h-4 w-4 text-muted-foreground" />
-                  )}
-                  <div className="flex flex-col">
-                    <span>{getRepositoryDisplayText(repo)}</span>
-                    <span className="text-muted-foreground text-xs">
-                      {repo.fullName}
-                    </span>
-                  </div>
-                </div>
-              </ComboboxItem>
-            )}
-          </ComboboxList>
-          <ComboboxEmpty>No repositories found</ComboboxEmpty>
-        </ComboboxContent>
-      </Combobox>
+      <RepositoryCombobox
+        onSelectRepo={onSelectRepo}
+        repositories={repositories}
+        selectedRepo={selectedRepo}
+      />
       {isAdmin ? (
-        <Button
+        <ConnectRepositoryButton
           disabled={!selectedRepo}
-          onClick={onConnectRepository}
-          tone="primary"
-          variant="solid"
-        >
-          <Plug className="mr-2 h-4 w-4" />
-          Connect Repository
-        </Button>
+          onConnectRepository={onConnectRepository}
+        />
       ) : null}
     </div>
+  );
+}
+
+function RepositoryCombobox({
+  onSelectRepo,
+  repositories,
+  selectedRepo,
+}: Pick<
+  RepositorySelectorCardProps,
+  "onSelectRepo" | "repositories" | "selectedRepo"
+>) {
+  const flatRepositories = repositories.map((repo) => ({
+    ...repo,
+    searchText: getRepositorySearchText(repo),
+  }));
+
+  return (
+    <Combobox
+      autoHighlight
+      filter={(repo, query) =>
+        !query || repo.searchText.includes(query.toLowerCase())
+      }
+      items={flatRepositories}
+      itemToStringLabel={(repo) => getRepositoryDisplayText(repo)}
+      onValueChange={(value) => {
+        if (value) {
+          onSelectRepo(value.id);
+        }
+      }}
+      value={
+        selectedRepo
+          ? (flatRepositories.find((r) => r.id === selectedRepo) ?? null)
+          : null
+      }
+    >
+      <ComboboxInput
+        aria-label="Repository"
+        placeholder="Search repositories…"
+      />
+      <ComboboxContent>
+        <ComboboxList<SearchableRepository>>
+          {(repo) => (
+            <ComboboxItem key={repo.id} value={repo}>
+              <div className="flex min-w-0 items-center gap-2">
+                {repo.isPrivate ? (
+                  <Lock
+                    aria-label="Private"
+                    className="size-4 shrink-0 text-muted-foreground"
+                    role="img"
+                  />
+                ) : (
+                  <Globe
+                    aria-label="Public"
+                    className="size-4 shrink-0 text-muted-foreground"
+                    role="img"
+                  />
+                )}
+                <div className="flex min-w-0 flex-col">
+                  <span className="truncate">
+                    {getRepositoryDisplayText(repo)}
+                  </span>
+                  <span
+                    className="truncate text-muted-foreground text-xs"
+                    title={repo.fullName}
+                  >
+                    {repo.fullName}
+                  </span>
+                </div>
+              </div>
+            </ComboboxItem>
+          )}
+        </ComboboxList>
+        <ComboboxEmpty>No repositories found</ComboboxEmpty>
+      </ComboboxContent>
+    </Combobox>
+  );
+}
+
+function ConnectRepositoryButton({
+  disabled,
+  onConnectRepository,
+}: {
+  disabled: boolean;
+  onConnectRepository: () => Promise<void> | void;
+}) {
+  const [isConnecting, setIsConnecting] = useState(false);
+
+  const handleConnect = async () => {
+    setIsConnecting(true);
+    try {
+      await onConnectRepository();
+    } catch {
+      toast.error("Unable to connect the repository. Try again.");
+    }
+    setIsConnecting(false);
+  };
+
+  return (
+    <Button
+      disabled={disabled || isConnecting}
+      onClick={handleConnect}
+      tone="primary"
+      variant="solid"
+    >
+      {isConnecting ? (
+        <Spinner data-icon="inline-start" size="xs" />
+      ) : (
+        <Plug aria-hidden="true" className="size-4" data-icon="inline-start" />
+      )}
+      Connect repository
+    </Button>
   );
 }

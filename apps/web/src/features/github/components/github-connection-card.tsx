@@ -1,11 +1,24 @@
 "use client";
 
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@ctrl-ui/react/ui/alert-dialog";
 import { Badge } from "@ctrl-ui/react/ui/badge";
-import { Button } from "@ctrl-ui/react/ui/button";
-import { Check, GithubLogo, Spinner, Warning, X } from "@phosphor-icons/react";
+import { Button, ButtonLink } from "@ctrl-ui/react/ui/button";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
+import { Check, GithubLogo, Warning } from "@phosphor-icons/react";
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 import { Muted, Text } from "@/components/ui/typography";
+
+const ADMIN_ONLY_COPY =
+  "Only admins can connect GitHub. Ask an admin in your organization to connect it.";
 
 interface GitHubConnectionCardProps {
   accountAvatarUrl?: string;
@@ -32,26 +45,27 @@ export function GitHubConnectionSection({
 }: GitHubConnectionCardProps) {
   if (isOwnerLeft) {
     return (
-      <div className="space-y-3">
-        <div className="flex items-center gap-3">
-          <Warning className="h-5 w-5 text-warning" />
+      <div className="flex flex-col items-start gap-3">
+        <div className="flex items-center gap-2">
+          <Warning aria-hidden="true" className="size-5 text-warning-text" />
           <Text className="font-medium">GitHub connection lost</Text>
-          <Badge variant="outline">Disconnected</Badge>
+          <Badge size="sm" variant="outline">
+            Disconnected
+          </Badge>
         </div>
-        <Muted>
-          The team member who linked this repository is no longer part of the
-          organization. An admin with GitHub connected can re-link it.
+        <Muted className="text-pretty">
+          The teammate who connected GitHub left this organization, so syncing
+          has stopped.{" "}
+          {isAdmin
+            ? "Reconnect GitHub with your account to resume."
+            : "Ask an admin to reconnect GitHub."}
         </Muted>
-        {isAdmin && connectHref ? (
-          <Button
-            onClick={onConnectClick}
-            render={<Link href={connectHref} />}
-            tone="primary"
-            variant="solid"
-          >
-            <GithubLogo className="mr-2 h-4 w-4" />
-            Re-link GitHub
-          </Button>
+        {isAdmin ? (
+          <ConnectGitHubButton
+            connectHref={connectHref}
+            label="Reconnect GitHub"
+            onConnectClick={onConnectClick}
+          />
         ) : null}
       </div>
     );
@@ -59,56 +73,158 @@ export function GitHubConnectionSection({
 
   if (isConnected) {
     return (
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-3">
           {accountAvatarUrl ? (
             <Image
-              alt={accountLogin || "GitHub"}
-              className="rounded-full"
+              alt=""
+              className="size-8 shrink-0 rounded-full outline outline-1 outline-black/10 -outline-offset-1 dark:outline-white/10"
               height={32}
               src={accountAvatarUrl}
               width={32}
             />
-          ) : null}
-          <Text className="font-medium">{accountLogin}</Text>
-          <Badge>
-            <Check className="mr-1 h-3 w-3" />
+          ) : (
+            <GithubLogo
+              aria-hidden="true"
+              className="size-8 shrink-0 text-muted-foreground"
+            />
+          )}
+          <Text className="truncate font-medium" title={accountLogin}>
+            {accountLogin ?? "GitHub account"}
+          </Text>
+          <Badge color="green" size="sm">
+            <Check aria-hidden="true" />
             Connected
           </Badge>
         </div>
         {isAdmin ? (
-          <Button
-            disabled={isDisconnecting}
-            onClick={onDisconnect}
-            size="xs"
-            variant="ghost"
-          >
-            {isDisconnecting ? (
-              <Spinner className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <X className="mr-2 h-4 w-4" />
-            )}
-            Disconnect
-          </Button>
+          <DisconnectGitHubButton
+            isDisconnecting={isDisconnecting}
+            onDisconnect={onDisconnect}
+          />
         ) : null}
       </div>
     );
   }
 
   return (
-    <div>
-      {isAdmin && connectHref ? (
-        <Button
-          onClick={onConnectClick}
-          render={<Link href={connectHref} />}
-          tone="primary"
-          variant="solid"
-        >
-          <GithubLogo className="mr-2 h-4 w-4" />
-          Connect GitHub
-        </Button>
+    <div className="flex flex-col items-start gap-3">
+      <Muted className="text-pretty">
+        GitHub isn’t connected yet.{" "}
+        {isAdmin
+          ? "Connect it to sync releases and issues with a repository."
+          : ADMIN_ONLY_COPY}
+      </Muted>
+      {isAdmin ? (
+        <ConnectGitHubButton
+          connectHref={connectHref}
+          label="Connect GitHub"
+          onConnectClick={onConnectClick}
+        />
       ) : null}
-      {isAdmin ? null : <Muted>Contact an admin to connect GitHub.</Muted>}
     </div>
+  );
+}
+
+function ConnectGitHubButton({
+  connectHref,
+  label,
+  onConnectClick,
+}: {
+  connectHref?: string;
+  label: string;
+  onConnectClick?: () => void;
+}) {
+  if (!connectHref) {
+    return (
+      <Button disabled tone="primary" variant="solid">
+        <GithubLogo
+          aria-hidden="true"
+          className="size-4"
+          data-icon="inline-start"
+        />
+        {label}
+      </Button>
+    );
+  }
+
+  return (
+    <ButtonLink
+      onClick={onConnectClick}
+      render={<Link href={connectHref} />}
+      tone="primary"
+      variant="solid"
+    >
+      <GithubLogo
+        aria-hidden="true"
+        className="size-4"
+        data-icon="inline-start"
+      />
+      {label}
+    </ButtonLink>
+  );
+}
+
+function DisconnectGitHubButton({
+  isDisconnecting,
+  onDisconnect,
+}: {
+  isDisconnecting: boolean;
+  onDisconnect: () => void;
+}) {
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+
+  return (
+    <>
+      <Button
+        disabled={isDisconnecting}
+        onClick={() => setIsConfirmOpen(true)}
+        size="xs"
+        variant="ghost"
+      >
+        Disconnect
+      </Button>
+      <AlertDialog
+        onOpenChange={(nextOpen) => {
+          if (!isDisconnecting) {
+            setIsConfirmOpen(nextOpen);
+          }
+        }}
+        open={isConfirmOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-balance">
+              Disconnect GitHub?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-pretty">
+              Releases and issues stop syncing, and Reflet forgets the releases
+              it synced from GitHub. Releases already in your changelog stay.
+              You can reconnect anytime.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button
+              disabled={isDisconnecting}
+              onClick={() => setIsConfirmOpen(false)}
+              variant="surface"
+            >
+              Cancel
+            </Button>
+            <Button
+              disabled={isDisconnecting}
+              onClick={onDisconnect}
+              tone="danger"
+              variant="surface"
+            >
+              {isDisconnecting ? (
+                <Spinner data-icon="inline-start" size="xs" />
+              ) : null}
+              Disconnect GitHub
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

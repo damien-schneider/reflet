@@ -23,11 +23,15 @@ export function buildSuggestedFeedback(
     status: string;
     match: FeedbackMatch;
   }> = [];
+  const feedbackById = new Map<
+    string,
+    NonNullable<typeof availableFeedback>[number]
+  >((availableFeedback ?? []).map((f) => [f._id, f]));
   for (const m of matches) {
     if (linkedIds.has(m.feedbackId as Id<"feedback">)) {
       continue;
     }
-    const feedback = availableFeedback?.find((f) => f._id === m.feedbackId);
+    const feedback = feedbackById.get(m.feedbackId);
     if (feedback) {
       results.push({ ...feedback, match: m });
     }

@@ -3,11 +3,13 @@ import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from "@ctrl-ui/react/ui/card";
 import { Checkbox } from "@ctrl-ui/react/ui/checkbox";
 import { Binoculars } from "@phosphor-icons/react";
+import { useId } from "react";
 import type { SuggestedKeyword } from "./setup-types";
 
 interface KeywordsSectionProps {
@@ -21,47 +23,58 @@ export function KeywordsSection({
   onToggle,
   onToggleAll,
 }: KeywordsSectionProps) {
+  const idPrefix = useId();
+
   if (keywords.length === 0) {
     return null;
   }
 
   const acceptedCount = keywords.filter((k) => k.accepted).length;
+  const allAccepted = acceptedCount === keywords.length;
 
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Binoculars className="size-4" />
-            Intelligence Keywords ({keywords.length} found)
-          </CardTitle>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Binoculars aria-hidden className="size-4" />
+              Intelligence keywords
+            </CardTitle>
+            <CardDescription className="tabular-nums">
+              {acceptedCount} of {keywords.length} selected
+            </CardDescription>
+          </div>
           <Button
-            onClick={() => onToggleAll(acceptedCount < keywords.length)}
+            onClick={() => onToggleAll(!allAccepted)}
             size="xs"
             variant="ghost"
           >
-            {acceptedCount === keywords.length ? "Deselect all" : "Select all"}
+            {allAccepted ? "Deselect all" : "Select all"}
           </Button>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-2">
+        <ul className="space-y-1">
           {keywords.map((keyword, index) => (
-            <div
-              className="flex items-center gap-3 rounded-md p-2 hover:bg-muted/50"
-              key={keyword.keyword}
-            >
-              <Checkbox
-                checked={keyword.accepted}
-                onCheckedChange={() => onToggle(index)}
-              />
-              <span className="flex-1 font-medium text-sm">
-                &quot;{keyword.keyword}&quot;
-              </span>
-              <Badge>{keyword.category}</Badge>
-            </div>
+            <li key={keyword.keyword}>
+              <label
+                className="flex cursor-pointer items-center gap-3 rounded-md p-2 hover:bg-muted/50"
+                htmlFor={`${idPrefix}-${index}`}
+              >
+                <Checkbox
+                  checked={keyword.accepted}
+                  id={`${idPrefix}-${index}`}
+                  onCheckedChange={() => onToggle(index)}
+                />
+                <span className="min-w-0 flex-1 truncate font-medium text-sm">
+                  “{keyword.keyword}”
+                </span>
+                <Badge size="sm">{keyword.category}</Badge>
+              </label>
+            </li>
           ))}
-        </div>
+        </ul>
       </CardContent>
     </Card>
   );

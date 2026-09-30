@@ -12,22 +12,84 @@ import {
   DialogTrigger,
 } from "@ctrl-ui/react/ui/dialog";
 import { Input } from "@ctrl-ui/react/ui/input";
-import { toast } from "@ctrl-ui/react/ui/toast";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import { Plus } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, type ReactNode, useId, useState } from "react";
 import { Label } from "@/components/ui/label";
 
 const URL_PATTERN = /^https?:\/\/.+\..+/;
 
-const isValidUrl = (value: string): boolean => {
-  if (!value.trim()) {
-    return true;
-  }
-  return URL_PATTERN.test(value);
+const EMPTY_FORM = {
+  changelogUrl: "",
+  description: "",
+  featuresUrl: "",
+  name: "",
+  pricingUrl: "",
+  websiteUrl: "",
 };
+type FormValues = typeof EMPTY_FORM;
+type UrlKey = "websiteUrl" | "changelogUrl" | "pricingUrl" | "featuresUrl";
+
+const OPTIONAL_URL_FIELDS = [
+  {
+    key: "changelogUrl",
+    label: "Changelog URL",
+    placeholder: "https://example.com/changelog",
+  },
+  {
+    key: "pricingUrl",
+    label: "Pricing URL",
+    placeholder: "https://example.com/pricing",
+  },
+  {
+    key: "featuresUrl",
+    label: "Features URL",
+    placeholder: "https://example.com/features",
+  },
+] as const;
+
+const urlError = (value: string, required: boolean): string | null => {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return required ? "Enter the competitor’s website." : null;
+  }
+  return URL_PATTERN.test(trimmed)
+    ? null
+    : "Enter a full URL starting with https://";
+};
+
+function FieldBlock({
+  id,
+  label,
+  error,
+  children,
+}: {
+  id: string;
+  label: ReactNode;
+  error?: string | null;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <Label htmlFor={id}>{label}</Label>
+      {children}
+      {error && (
+        <p className="text-destructive-text text-xs" id={`${id}-error`}>
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+const optionalLabel = (text: string) => (
+  <>
+    {text} <span className="font-normal text-muted-foreground">(optional)</span>
+  </>
+);
 
 interface AddCompetitorDialogProps {
   organizationId: Id<"organizations">;
@@ -37,206 +99,170 @@ export function AddCompetitorDialog({
   organizationId,
 }: AddCompetitorDialogProps) {
   const createCompetitor = useMutation(api.intelligence.competitors.create);
+  const formId = useId();
 
   const [isOpen, setIsOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
-  const [name, setName] = useState("");
-  const [websiteUrl, setWebsiteUrl] = useState("");
-  const [description, setDescription] = useState("");
-  const [changelogUrl, setChangelogUrl] = useState("");
-  const [pricingUrl, setPricingUrl] = useState("");
-  const [featuresUrl, setFeaturesUrl] = useState("");
+  const [values, setValues] = useState<FormValues>(EMPTY_FORM);
+  const [touched, setTouched] = useState<Partial<Record<UrlKey, boolean>>>({});
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const resetForm = () => {
-    setName("");
-    setWebsiteUrl("");
-    setDescription("");
-    setChangelogUrl("");
-    setPricingUrl("");
-    setFeaturesUrl("");
+  const setField = (key: keyof FormValues, value: string) =>
+    setValues((prev) => ({ ...prev, [key]: value }));
+
+  const errorFor = (key: UrlKey) =>
+    touched[key] ? urlError(values[key], key === "websiteUrl") : null;
+
+  const urlInputProps = (key: UrlKey) => {
+    const error = errorFor(key);
+    return {
+      "aria-describedby": error ? `${formId}-${key}-error` : undefined,
+      "aria-invalid": error ? true : undefined,
+      autoCapitalize: "none",
+      autoComplete: "url",
+      id: `${formId}-${key}`,
+      inputMode: "url",
+      onBlur: () => setTouched((prev) => ({ ...prev, [key]: true })),
+      onChange: (e: { target: { value: string } }) =>
+        setField(key, e.target.value),
+      spellCheck: false,
+      type: "url",
+      value: values[key],
+    } as const;
   };
-
-  const urlFieldsValid =
-    isValidUrl(websiteUrl) &&
-    isValidUrl(changelogUrl) &&
-    isValidUrl(pricingUrl) &&
-    isValidUrl(featuresUrl);
-
-  const canSubmit =
-    name.trim() !== "" &&
-    websiteUrl.trim() !== "" &&
-    urlFieldsValid &&
-    !isCreating;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-
-    if (!canSubmit) {
+    setTouched({
+      changelogUrl: true,
+      featuresUrl: true,
+      pricingUrl: true,
+      websiteUrl: true,
+    });
+    const hasUrlError =
+      urlError(values.websiteUrl, true) !== null ||
+      OPTIONAL_URL_FIELDS.some(({ key }) => urlError(values[key], false));
+    if (!values.name.trim() || hasUrlError || isCreating) {
       return;
     }
 
+    const competitor = {
+      changelogUrl: values.changelogUrl.trim() || undefined,
+      description: values.description.trim() || undefined,
+      featuresUrl: values.featuresUrl.trim() || undefined,
+      name: values.name.trim(),
+      organizationId,
+      pricingUrl: values.pricingUrl.trim() || undefined,
+      websiteUrl: values.websiteUrl.trim(),
+    };
     setIsCreating(true);
+    setSubmitError(null);
     try {
-      await createCompetitor({
-        changelogUrl: changelogUrl.trim() || undefined,
-        description: description.trim() || undefined,
-        featuresUrl: featuresUrl.trim() || undefined,
-        name: name.trim(),
-        organizationId,
-        pricingUrl: pricingUrl.trim() || undefined,
-        websiteUrl: websiteUrl.trim(),
-      });
-
-      toast.success("Competitor added");
-      setIsOpen(false);
-      resetForm();
+      await createCompetitor(competitor);
+      handleOpenChange(false);
     } catch (error) {
-      toast.error("Failed to add competitor", {
-        description:
-          error instanceof Error ? error.message : "An error occurred",
-      });
-    } finally {
-      setIsCreating(false);
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : "Couldn’t add the competitor. Try again."
+      );
+    }
+    setIsCreating(false);
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (!open) {
+      setValues(EMPTY_FORM);
+      setTouched({});
+      setSubmitError(null);
     }
   };
 
   return (
-    <Dialog
-      onOpenChange={(open) => {
-        setIsOpen(open);
-        if (!open) {
-          resetForm();
-        }
-      }}
-      open={isOpen}
-    >
-      <DialogTrigger className="inline-flex h-8 items-center justify-center gap-2 rounded-md bg-primary px-3 font-medium text-primary-foreground text-sm shadow-sm hover:bg-primary/90">
-        <Plus className="mr-1.5 size-4" />
-        Add Competitor
+    <Dialog onOpenChange={handleOpenChange} open={isOpen}>
+      <DialogTrigger render={<Button tone="primary" variant="solid" />}>
+        <Plus data-icon="inline-start" />
+        Add competitor
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add Competitor</DialogTitle>
+          <DialogTitle>Add competitor</DialogTitle>
           <DialogDescription>
-            Track a competitor to receive intelligence insights.
+            Track a competitor to get insights on their product and pricing.
           </DialogDescription>
         </DialogHeader>
-        <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="competitor-name">Name</Label>
+        <form
+          className="flex flex-col gap-4"
+          id={formId}
+          noValidate
+          onSubmit={handleSubmit}
+        >
+          <FieldBlock id={`${formId}-name`} label="Name">
             <Input
+              autoComplete="organization"
               autoFocus
-              id="competitor-name"
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Acme Corp"
+              id={`${formId}-name`}
+              onChange={(e) => setField("name", e.target.value)}
+              placeholder="Acme"
               required
-              value={name}
+              value={values.name}
             />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="competitor-website">Website URL</Label>
+          </FieldBlock>
+          <FieldBlock
+            error={errorFor("websiteUrl")}
+            id={`${formId}-websiteUrl`}
+            label="Website URL"
+          >
             <Input
-              id="competitor-website"
-              onChange={(e) => setWebsiteUrl(e.target.value)}
               placeholder="https://example.com"
               required
-              type="url"
-              value={websiteUrl}
+              {...urlInputProps("websiteUrl")}
             />
-            {websiteUrl && !isValidUrl(websiteUrl) && (
-              <p className="text-destructive text-xs">
-                Please enter a valid URL starting with http:// or https://
-              </p>
-            )}
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="competitor-description">
-              Description{" "}
-              <span className="font-normal text-muted-foreground">
-                (optional)
-              </span>
-            </Label>
+          </FieldBlock>
+          <FieldBlock
+            id={`${formId}-description`}
+            label={optionalLabel("Description")}
+          >
             <Input
-              id="competitor-description"
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Brief description of this competitor"
-              value={description}
+              id={`${formId}-description`}
+              onChange={(e) => setField("description", e.target.value)}
+              placeholder="What they sell and who to"
+              value={values.description}
             />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="competitor-changelog">
-              Changelog URL{" "}
-              <span className="font-normal text-muted-foreground">
-                (optional)
-              </span>
-            </Label>
-            <Input
-              id="competitor-changelog"
-              onChange={(e) => setChangelogUrl(e.target.value)}
-              placeholder="https://example.com/changelog"
-              type="url"
-              value={changelogUrl}
-            />
-            {changelogUrl && !isValidUrl(changelogUrl) && (
-              <p className="text-destructive text-xs">
-                Please enter a valid URL
-              </p>
-            )}
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="competitor-pricing">
-              Pricing URL{" "}
-              <span className="font-normal text-muted-foreground">
-                (optional)
-              </span>
-            </Label>
-            <Input
-              id="competitor-pricing"
-              onChange={(e) => setPricingUrl(e.target.value)}
-              placeholder="https://example.com/pricing"
-              type="url"
-              value={pricingUrl}
-            />
-            {pricingUrl && !isValidUrl(pricingUrl) && (
-              <p className="text-destructive text-xs">
-                Please enter a valid URL
-              </p>
-            )}
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="competitor-features">
-              Features URL{" "}
-              <span className="font-normal text-muted-foreground">
-                (optional)
-              </span>
-            </Label>
-            <Input
-              id="competitor-features"
-              onChange={(e) => setFeaturesUrl(e.target.value)}
-              placeholder="https://example.com/features"
-              type="url"
-              value={featuresUrl}
-            />
-            {featuresUrl && !isValidUrl(featuresUrl) && (
-              <p className="text-destructive text-xs">
-                Please enter a valid URL
-              </p>
-            )}
-          </div>
-          <DialogFooter>
-            <DialogClose className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-4 font-medium text-sm shadow-sm hover:bg-accent hover:text-accent-foreground">
-              Cancel
-            </DialogClose>
-            <Button
-              disabled={!canSubmit}
-              tone="primary"
-              type="submit"
-              variant="solid"
+          </FieldBlock>
+          {OPTIONAL_URL_FIELDS.map((field) => (
+            <FieldBlock
+              error={errorFor(field.key)}
+              id={`${formId}-${field.key}`}
+              key={field.key}
+              label={optionalLabel(field.label)}
             >
-              {isCreating ? "Adding..." : "Add Competitor"}
-            </Button>
-          </DialogFooter>
+              <Input
+                placeholder={field.placeholder}
+                {...urlInputProps(field.key)}
+              />
+            </FieldBlock>
+          ))}
+          {submitError && (
+            <p className="text-destructive-text text-sm" role="alert">
+              {submitError}
+            </p>
+          )}
         </form>
+        <DialogFooter>
+          <DialogClose variant="surface">Cancel</DialogClose>
+          <Button
+            disabled={isCreating}
+            form={formId}
+            tone="primary"
+            type="submit"
+            variant="solid"
+          >
+            {isCreating && <Spinner data-icon="inline-start" size="xs" />}
+            {isCreating ? "Adding…" : "Add competitor"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

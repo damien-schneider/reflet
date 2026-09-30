@@ -1,23 +1,49 @@
 "use client";
 
 import { Button } from "@ctrl-ui/react/ui/button";
-import { useEffect, useState } from "react";
-import { cn } from "@/lib/utils";
-import type { CommandListProps } from "./command-items";
+import {
+  type Ref,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
+import type { CommandListHandle, CommandListProps } from "./command-items";
 
 export function CommandList({
   items,
   command,
-  onRegisterKeyHandler,
-}: CommandListProps) {
+  ref,
+}: CommandListProps & { ref?: Ref<CommandListHandle> }) {
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [previousItems, setPreviousItems] = useState(items);
+  const menuRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  if (previousItems !== items) {
+    setPreviousItems(items);
     setSelectedIndex(0);
-  }, [items]);
+  }
 
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent): boolean => {
+    const menu = menuRef.current;
+    const active = menu?.querySelector<HTMLElement>('[data-active="true"]');
+    if (!(menu && active)) {
+      return;
+    }
+    const activeBottom = active.offsetTop + active.offsetHeight;
+    if (active.offsetTop < menu.scrollTop) {
+      menu.scrollTop = active.offsetTop;
+    } else if (activeBottom > menu.scrollTop + menu.clientHeight) {
+      menu.scrollTop = activeBottom - menu.clientHeight;
+    }
+  }, [selectedIndex]);
+
+  useImperativeHandle(ref, () => ({
+    onKeyDown: ({ event }: { event: KeyboardEvent }): boolean => {
+      if (items.length === 0) {
+        return false;
+      }
+
       if (event.key === "ArrowUp") {
         setSelectedIndex((prev) => (prev + items.length - 1) % items.length);
         return true;
@@ -39,10 +65,8 @@ export function CommandList({
       }
 
       return false;
-    };
-
-    onRegisterKeyHandler(handleKeyDown);
-  }, [items, command, selectedIndex, onRegisterKeyHandler]);
+    },
+  }));
 
   if (items.length === 0) {
     return null;
@@ -50,19 +74,21 @@ export function CommandList({
 
   return (
     <div
-      className="bg-popover text-popover-foreground max-h-72 overflow-y-auto rounded-xl border p-1 shadow-lg"
+      aria-label="Insert block"
+      className="relative max-h-72 w-72 overflow-y-auto p-1"
+      data-control-family="popup"
+      data-popup-part="surface"
+      data-popup-static=""
       data-slot="slash-command-menu"
+      ref={menuRef}
+      role="group"
     >
       {items.map((item, index) => {
         const Icon = item.icon;
-        const isSelected = selectedIndex === index;
         return (
           <Button
-            active={isSelected}
-            className={cn(
-              "h-auto w-full justify-start gap-2 rounded-lg px-2 py-1.5 text-left text-sm",
-              isSelected && "bg-muted"
-            )}
+            active={selectedIndex === index}
+            className="h-auto w-full justify-start py-1.5 text-left"
             key={item.title}
             onClick={(event) => {
               event.preventDefault();
@@ -72,15 +98,16 @@ export function CommandList({
             onMouseDown={(event) => {
               event.preventDefault();
             }}
-            size="md"
+            onMouseMove={() => setSelectedIndex(index)}
+            tabIndex={-1}
             variant="ghost"
           >
-            <span className="flex h-8 w-8 items-center justify-center rounded-md border bg-background">
-              <Icon className="h-4 w-4" />
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-md border bg-background">
+              <Icon aria-hidden="true" className="size-4" />
             </span>
-            <span className="block">
+            <span className="min-w-0">
               <span className="block font-medium">{item.title}</span>
-              <span className="block text-muted-foreground text-xs">
+              <span className="block truncate text-muted-foreground text-xs">
                 {item.description}
               </span>
             </span>

@@ -21,7 +21,7 @@ async function createOrgWithSupportEnabled(
     timeout: 15_000,
   });
   await page.getByRole("switch", { name: "Make organization public" }).click();
-  await page.getByRole("button", { exact: true, name: "Save Changes" }).click();
+  await page.getByRole("button", { exact: true, name: "Save changes" }).click();
   await expect(page.getByText("Saved")).toBeVisible({ timeout: 15_000 });
 
   await page.goto(`/dashboard/${slug}/inbox`);
@@ -30,7 +30,7 @@ async function createOrgWithSupportEnabled(
     .getByRole("switch", { name: "Enable public support page" })
     .click();
   await expect(
-    page.getByText("Your inbox is private", { exact: false })
+    page.getByRole("button", { name: "Make inbox public" })
   ).toBeHidden({ timeout: 10_000 });
 
   return slug;
@@ -73,8 +73,8 @@ test.describe("Public support page", () => {
       guest.getByRole("heading", { name: "Contact Support" })
     ).toBeVisible({ timeout: 15_000 });
 
-    await guest.getByPlaceholder("Your email *").fill("guest@example.com");
-    await guest.getByPlaceholder("Subject (optional)").fill("Broken export");
+    await guest.getByLabel("Email").fill("guest@example.com");
+    await guest.getByLabel("Subject (optional)").fill("Broken export");
     await guest
       .getByPlaceholder("What do you need help with?")
       .fill("My CSV export is empty.");
@@ -104,8 +104,8 @@ test.describe("Public support page", () => {
     const guestContext = await browser.newContext();
     const guest = await guestContext.newPage();
     await guest.goto(`/${slug}/support`);
-    await guest.getByPlaceholder("Your email *").fill("inbox@example.com");
-    await guest.getByPlaceholder("Subject (optional)").fill("Needs a human");
+    await guest.getByLabel("Email").fill("inbox@example.com");
+    await guest.getByLabel("Subject (optional)").fill("Needs a human");
     await guest
       .getByPlaceholder("What do you need help with?")
       .fill("Please call me back.");

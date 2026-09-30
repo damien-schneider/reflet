@@ -1,58 +1,26 @@
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@ctrl-ui/react/ui/table";
 import type { Metadata } from "next";
 
+import { CodeBlock } from "@/components/docs/code-block";
+import { DocsPage, DocsSection, DocsText } from "@/components/docs/docs-page";
+import { InstallCommand } from "@/components/docs/install-command";
+import { PropsTable } from "@/components/docs/props-table";
 import { InlineCode } from "@/components/ui/typography";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
   description: "Install and configure the Reflet SDK in your application.",
   path: "/docs/sdk/installation",
-  title: "SDK Installation",
+  title: "SDK installation",
 });
 
-export default function SdkInstallationPage() {
-  return (
-    <div className="mx-auto max-w-3xl">
-      <h1 className="mb-2 font-display text-3xl text-foreground leading-snug tracking-tight">
-        SDK Installation
-      </h1>
-      <p className="mb-8 text-base text-muted-foreground sm:text-xl">
-        Install the Reflet SDK and configure it for your project.
-      </p>
+const SECTIONS = [
+  { id: "install", label: "Install" },
+  { id: "configuration", label: "Configuration" },
+  { id: "options", label: "Configuration options" },
+  { id: "user-signing", label: "Server-side user signing" },
+] as const;
 
-      <section className="mb-10">
-        <h2 className="mb-3 font-display text-2xl text-foreground leading-snug tracking-tight">
-          Install
-        </h2>
-        <div className="space-y-2">
-          <div className="rounded-lg bg-muted px-4 py-3">
-            <code className="text-muted-foreground text-sm">
-              npm install reflet-sdk
-            </code>
-          </div>
-          <p className="text-muted-foreground text-xs">
-            Also works with yarn, pnpm, and bun.
-          </p>
-        </div>
-      </section>
-
-      <section className="mb-10">
-        <h2 className="mb-3 font-display text-2xl text-foreground leading-snug tracking-tight">
-          Configuration
-        </h2>
-        <p className="mb-4 text-muted-foreground text-sm">
-          Create a client instance with your public API key:
-        </p>
-        <div className="rounded-lg border border-border bg-muted/30 p-4">
-          <pre className="overflow-x-auto text-sm">
-            {`import { Reflet } from "reflet-sdk";
+const CONFIG = `import { Reflet } from "reflet-sdk";
 
 const reflet = new Reflet({
   publicKey: "fb_pub_xxx", // from your Reflet dashboard
@@ -61,86 +29,9 @@ const reflet = new Reflet({
     email: "user@example.com",
     name: "Jane Doe",
   },
-});`}
-          </pre>
-        </div>
-      </section>
+});`;
 
-      <section className="mb-10">
-        <h2 className="mb-3 font-display text-2xl text-foreground leading-snug tracking-tight">
-          Configuration options
-        </h2>
-        <div className="overflow-hidden rounded-lg border border-border">
-          <Table className="text-sm">
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-xs">Option</TableHead>
-                <TableHead className="text-xs">Type</TableHead>
-                <TableHead className="text-xs">Description</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <TableRow>
-                <TableCell>
-                  <InlineCode>publicKey</InlineCode>
-                </TableCell>
-                <TableCell>
-                  <InlineCode>string</InlineCode>
-                </TableCell>
-                <TableCell className="whitespace-normal text-muted-foreground text-xs">
-                  Your organization&apos;s public API key (fb_pub_xxx).
-                  Required.
-                </TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>
-                  <InlineCode>user</InlineCode>
-                </TableCell>
-                <TableCell>
-                  <InlineCode>RefletUser</InlineCode>
-                </TableCell>
-                <TableCell className="whitespace-normal text-muted-foreground text-xs">
-                  User identification for SSO. Optional.
-                </TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>
-                  <InlineCode>userToken</InlineCode>
-                </TableCell>
-                <TableCell>
-                  <InlineCode>string</InlineCode>
-                </TableCell>
-                <TableCell className="whitespace-normal text-muted-foreground text-xs">
-                  Pre-signed user token (alternative to user object). Optional.
-                </TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>
-                  <InlineCode>baseUrl</InlineCode>
-                </TableCell>
-                <TableCell>
-                  <InlineCode>string</InlineCode>
-                </TableCell>
-                <TableCell className="whitespace-normal text-muted-foreground text-xs">
-                  API base URL. Defaults to Reflet production API. Optional.
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </div>
-      </section>
-
-      <section>
-        <h2 className="mb-3 font-display text-2xl text-foreground leading-snug tracking-tight">
-          Server-side user signing
-        </h2>
-        <p className="mb-4 text-muted-foreground text-sm">
-          For secure SSO, sign the user on your server and pass the token to the
-          client:
-        </p>
-        <div className="rounded-lg border border-border bg-muted/30 p-4">
-          <pre className="overflow-x-auto text-sm">
-            {`// Server
+const SIGNING = `// Server
 import { signUser } from "reflet-sdk/server";
 
 const { token } = signUser(
@@ -152,10 +43,62 @@ const { token } = signUser(
 const reflet = new Reflet({
   publicKey: "fb_pub_xxx",
   userToken: token, // from your server
-});`}
-          </pre>
-        </div>
-      </section>
-    </div>
+});`;
+
+const OPTIONS = [
+  {
+    description: "Your organization’s public API key, starting with fb_pub_.",
+    name: "publicKey",
+    required: true,
+    type: "string",
+  },
+  {
+    description: "Identifies the current user for SSO.",
+    name: "user",
+    type: "RefletUser",
+  },
+  {
+    description: "A token signed on your server. Use instead of user.",
+    name: "userToken",
+    type: "string",
+  },
+  {
+    default: "Reflet production API",
+    description: "Where requests are sent.",
+    name: "baseUrl",
+    type: "string",
+  },
+] as const;
+
+export default function SdkInstallationPage() {
+  return (
+    <DocsPage
+      description="Install the Reflet SDK and configure it for your project."
+      sections={SECTIONS}
+      title="SDK installation"
+    >
+      <DocsSection id="install" sections={SECTIONS}>
+        <InstallCommand command="npm install reflet-sdk" />
+        <DocsText>Also works with yarn, pnpm and bun.</DocsText>
+      </DocsSection>
+
+      <DocsSection id="configuration" sections={SECTIONS}>
+        <DocsText>Create a client with your public API key.</DocsText>
+        <CodeBlock code={CONFIG} />
+      </DocsSection>
+
+      <DocsSection id="options" sections={SECTIONS}>
+        <PropsTable props={OPTIONS} />
+      </DocsSection>
+
+      <DocsSection id="user-signing" sections={SECTIONS}>
+        <DocsText>
+          For secure SSO, sign the user on your server with your secret key and
+          pass the resulting token to the client as{" "}
+          <InlineCode>userToken</InlineCode>.
+        </DocsText>
+        <CodeBlock code={SIGNING} />
+      </DocsSection>
+    </DocsPage>
   );
 }

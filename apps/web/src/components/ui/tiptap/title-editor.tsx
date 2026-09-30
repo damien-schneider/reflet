@@ -8,7 +8,15 @@ import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import "./styles.css";
 
+const toTitleDoc = (text: string) => ({
+  content: text
+    ? [{ content: [{ text, type: "text" }], type: "paragraph" }]
+    : [{ type: "paragraph" }],
+  type: "doc",
+});
+
 interface TiptapTitleEditorProps {
+  "aria-label"?: string;
   autoFocus?: boolean;
   className?: string;
   disabled?: boolean;
@@ -30,6 +38,7 @@ export function TiptapTitleEditor({
   autoFocus = false,
   onEnter,
   onSubmit,
+  "aria-label": ariaLabel = "Title",
 }: TiptapTitleEditorProps) {
   const onEnterRef = useRef(onEnter);
   const onSubmitRef = useRef(onSubmit);
@@ -44,11 +53,14 @@ export function TiptapTitleEditor({
 
   const editor = useEditor({
     autofocus: autoFocus,
-    content: value ? `<p>${value}</p>` : "",
+    content: toTitleDoc(value),
     editable: !disabled,
     editorProps: {
       attributes: {
+        "aria-label": ariaLabel,
+        "aria-multiline": "false",
         class: "tiptap-title-editor outline-none w-full",
+        role: "textbox",
       },
       handleKeyDown: (_view, event) => {
         if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
@@ -94,7 +106,7 @@ export function TiptapTitleEditor({
 
     const currentText = editor.getText();
     if (value !== currentText) {
-      editor.commands.setContent(value ? `<p>${value}</p>` : "");
+      editor.commands.setContent(toTitleDoc(value));
     }
   }, [editor, value]);
 

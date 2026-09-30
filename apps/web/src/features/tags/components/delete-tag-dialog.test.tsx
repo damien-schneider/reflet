@@ -1,169 +1,86 @@
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-const mockUseMutation = vi.fn();
+const mockDeleteTag = vi.fn();
 
 vi.mock("convex/react", () => ({
-  useMutation: (...args: unknown[]) => mockUseMutation(...args),
+  useMutation: () => mockDeleteTag,
 }));
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
-  api: {
-    organizations: {
-      tag_manager_actions: {
-        remove: "organizations:tag_manager_actions:remove",
-      },
-    },
-  },
-}));
-
-vi.mock("@ctrl-ui/react/ui/button", () => ({
-  Button: ({
-    children,
-    onClick,
-    tone,
-    variant,
-    ...props
-  }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
-    tone?: string;
-    variant?: string;
-  }) => (
-    <button
-      data-tone={tone}
-      data-variant={variant}
-      onClick={onClick}
-      type="button"
-      {...props}
-    >
-      {children}
-    </button>
-  ),
-}));
-
-vi.mock("@ctrl-ui/react/ui/dialog", () => ({
-  Dialog: ({
-    children,
-    open,
-    onOpenChange,
-  }: {
-    children: React.ReactNode;
-    open: boolean;
-    onOpenChange: (val: boolean) => void;
-  }) =>
-    open ? (
-      <div data-testid="dialog" onClick={() => onOpenChange(false)}>
-        {children}
-      </div>
-    ) : null,
-  DialogContent: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="dialog-content">{children}</div>
-  ),
-  DialogDescription: ({ children }: { children: React.ReactNode }) => (
-    <p data-testid="dialog-description">{children}</p>
-  ),
-  DialogFooter: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="dialog-footer">{children}</div>
-  ),
-  DialogHeader: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="dialog-header">{children}</div>
-  ),
-  DialogTitle: ({ children }: { children: React.ReactNode }) => (
-    <h2 data-testid="dialog-title">{children}</h2>
-  ),
+  api: { organizations: { tag_manager_actions: { remove: "remove" } } },
 }));
 
 import { DeleteTagDialog } from "./delete-tag-dialog";
+
+const TAG = { _id: "tag1" as Id<"tags">, name: "Bug" };
 
 afterEach(() => {
   vi.clearAllMocks();
 });
 
+function renderDialog(tag: typeof TAG | null = TAG) {
+  const onOpenChange = vi.fn();
+  const onSuccess = vi.fn();
+  render(
+    <DeleteTagDialog
+      onOpenChange={onOpenChange}
+      onSuccess={onSuccess}
+      tag={tag}
+    />
+  );
+  return { onOpenChange, onSuccess };
+}
+
 describe("DeleteTagDialog", () => {
-  const mockDeleteTag = vi.fn().mockResolvedValue(undefined);
-  const defaultProps = {
-    onOpenChange: vi.fn(),
-    onSuccess: vi.fn(),
-    tagId: "tag1" as Id<"tags">,
-  };
-
-  beforeEach(() => {
-    mockUseMutation.mockReturnValue(mockDeleteTag);
+  it("stays closed without a tag", () => {
+    renderDialog(null);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
-  it("renders dialog when tagId is provided", () => {
-    render(<DeleteTagDialog {...defaultProps} />);
-    expect(screen.getByTestId("dialog")).toBeInTheDocument();
+  it("names the tag and the consequence", () => {
+    renderDialog();
+    expect(
+      screen.getByRole("heading", { name: "Delete “Bug”?" })
+    ).toBeVisible();
+    expect(screen.getByText(/removed from every feedback item/)).toBeVisible();
   });
 
-  it("does not render dialog when tagId is null", () => {
-    render(<DeleteTagDialog {...defaultProps} tagId={null} />);
-    expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
-  });
+  it("deletes the tag and reports success", async () => {
+    mockDeleteTag.mockResolvedValue(undefined);
+    const { onSuccess } = renderDialog();
 
-  it("displays correct title", () => {
-    render(<DeleteTagDialog {...defaultProps} />);
-    expect(screen.getByTestId("dialog-title")).toHaveTextContent("Delete tag");
-  });
+    fireEvent.click(screen.getByRole("button", { name: "Delete tag" }));
 
-  it("displays warning description", () => {
-    render(<DeleteTagDialog {...defaultProps} />);
-    expect(screen.getByTestId("dialog-description")).toHaveTextContent(
-      "Are you sure you want to delete this tag?"
-    );
-    expect(screen.getByTestId("dialog-description")).toHaveTextContent(
-      "removed from all feedback items"
-    );
-    expect(screen.getByTestId("dialog-description")).toHaveTextContent(
-      "cannot be undone"
-    );
-  });
-
-  it("renders Cancel and Delete buttons", () => {
-    render(<DeleteTagDialog {...defaultProps} />);
-    expect(screen.getByText("Cancel")).toBeInTheDocument();
-    expect(screen.getByText("Delete")).toBeInTheDocument();
-  });
-
-  it("calls onOpenChange(false) when Cancel is clicked", () => {
-    const onOpenChange = vi.fn();
-    render(<DeleteTagDialog {...defaultProps} onOpenChange={onOpenChange} />);
-    fireEvent.click(screen.getByText("Cancel"));
-    expect(onOpenChange).toHaveBeenCalledWith(false);
-  });
-
-  it("calls deleteTag mutation when Delete is clicked", async () => {
-    render(<DeleteTagDialog {...defaultProps} />);
-    fireEvent.click(screen.getByText("Delete"));
     expect(mockDeleteTag).toHaveBeenCalledWith({ id: "tag1" });
+    await waitFor(() => expect(onSuccess).toHaveBeenCalled());
   });
 
-  it("calls onSuccess after successful deletion", async () => {
-    const onSuccess = vi.fn();
-    render(<DeleteTagDialog {...defaultProps} onSuccess={onSuccess} />);
-    fireEvent.click(screen.getByText("Delete"));
-    await vi.waitFor(() => {
-      expect(onSuccess).toHaveBeenCalledOnce();
-    });
+  it("disables both actions while deleting", () => {
+    mockDeleteTag.mockReturnValue(Promise.withResolvers<void>().promise);
+    renderDialog();
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete tag" }));
+
+    expect(screen.getByRole("button", { name: /Delete tag/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeDisabled();
   });
 
-  it("does not call deleteTag when tagId is null and Delete is somehow clicked", async () => {
-    // Edge case: should not happen in practice but tests guard
-    render(<DeleteTagDialog {...defaultProps} tagId={null} />);
-    // Dialog won't render, so delete can't be clicked
-    expect(screen.queryByText("Delete")).not.toBeInTheDocument();
+  it("shows a recoverable error when deletion fails", async () => {
+    mockDeleteTag.mockRejectedValue(new Error("network"));
+    const { onSuccess } = renderDialog();
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete tag" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/try again/);
+    expect(onSuccess).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Delete tag" })).toBeEnabled();
   });
 
-  it("has danger tone on Delete button", () => {
-    render(<DeleteTagDialog {...defaultProps} />);
-    expect(screen.getByText("Delete")).toHaveAttribute("data-tone", "danger");
-  });
-
-  it("has surface variant on Cancel button", () => {
-    render(<DeleteTagDialog {...defaultProps} />);
-    expect(screen.getByText("Cancel")).toHaveAttribute(
-      "data-variant",
-      "surface"
-    );
+  it("closes on Cancel", () => {
+    const { onOpenChange } = renderDialog();
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 });

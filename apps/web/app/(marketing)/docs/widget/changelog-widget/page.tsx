@@ -1,65 +1,39 @@
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@ctrl-ui/react/ui/table";
 import type { Metadata } from "next";
 
-import { InlineCode } from "@/components/ui/typography";
+import { CodeBlock } from "@/components/docs/code-block";
+import {
+  DocsList,
+  DocsPage,
+  DocsSection,
+  DocsText,
+} from "@/components/docs/docs-page";
+import { ReferenceTable } from "@/components/docs/reference-table";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
   description:
     "Display recent changelog entries in a popover with unread notification badges.",
   path: "/docs/widget/changelog-widget",
-  title: "Changelog Widget",
+  title: "Changelog widget",
 });
 
-export default function ChangelogWidgetPage() {
-  return (
-    <div className="mx-auto max-w-3xl">
-      <h1 className="mb-2 font-display text-3xl text-foreground leading-snug tracking-tight">
-        Changelog Widget
-      </h1>
-      <p className="mb-8 text-base text-muted-foreground sm:text-xl">
-        Show recent updates and changelog entries in a popover. Automatically
-        tracks unread entries with a notification badge.
-      </p>
+const SECTIONS = [
+  { id: "script-tag", label: "Script tag embed" },
+  { id: "react", label: "React component" },
+  { id: "features", label: "Features" },
+  { id: "configuration", label: "Configuration" },
+] as const;
 
-      <section className="mb-10">
-        <h2 className="mb-3 font-display text-2xl text-foreground leading-snug tracking-tight">
-          Script tag embed
-        </h2>
-        <p className="mb-4 text-muted-foreground text-sm">
-          Add this script tag to render the changelog widget:
-        </p>
-        <div className="rounded-lg border border-border bg-muted/30 p-4">
-          <pre className="overflow-x-auto text-sm">
-            {`<script
+const SCRIPT_TAG = `<script
   src="https://www.reflet.app/widget/changelog.js"
   data-key="fb_pub_xxx"
   data-trigger="changelog-button"
   async
 ></script>
 
-<button id="changelog-button">What's new</button>`}
-          </pre>
-        </div>
-      </section>
+<button id="changelog-button">What's new</button>`;
 
-      <section className="mb-10">
-        <h2 className="mb-3 font-display text-2xl text-foreground leading-snug tracking-tight">
-          React component
-        </h2>
-        <p className="mb-4 text-muted-foreground text-sm">
-          For React projects, use the SDK&apos;s ChangelogWidget component:
-        </p>
-        <div className="rounded-lg border border-border bg-muted/30 p-4">
-          <pre className="overflow-x-auto text-sm">
-            {`import { RefletProvider, ChangelogWidget } from "reflet-sdk/react";
+const REACT_USAGE = `import { RefletProvider, ChangelogWidget } from "reflet-sdk/react";
 
 function App() {
   return (
@@ -69,71 +43,80 @@ function App() {
       </ChangelogWidget>
     </RefletProvider>
   );
-}`}
-          </pre>
-        </div>
-      </section>
+}`;
 
-      <section className="mb-10">
-        <h2 className="mb-3 font-display text-2xl text-foreground leading-snug tracking-tight">
-          Features
-        </h2>
-        <ul className="list-inside list-disc space-y-2 text-muted-foreground text-sm">
+const COLUMNS = [
+  { kind: "name", label: "Attribute / prop" },
+  { kind: "code", label: "Values" },
+  { kind: "text", label: "Description" },
+] as const;
+
+const ROWS = [
+  {
+    cells: [
+      "data-key / publicKey",
+      "string",
+      "Your organization’s public API key. Required.",
+    ],
+    key: "key",
+  },
+  {
+    cells: [
+      "data-trigger / trigger",
+      "string (element ID)",
+      "ID of the element that opens the popover. Script tag only.",
+    ],
+    key: "trigger",
+  },
+  {
+    cells: [
+      "data-limit / limit",
+      "number",
+      "Maximum number of entries shown. Defaults to 10.",
+    ],
+    key: "limit",
+  },
+] as const;
+
+export default function ChangelogWidgetPage() {
+  return (
+    <DocsPage
+      description="Show recent updates in a popover. A badge counts the entries each visitor hasn’t read yet."
+      sections={SECTIONS}
+      title="Changelog widget"
+    >
+      <DocsSection id="script-tag" sections={SECTIONS}>
+        <DocsText>
+          Add this script tag, then point it at the button that should open the
+          popover.
+        </DocsText>
+        <CodeBlock code={SCRIPT_TAG} />
+      </DocsSection>
+
+      <DocsSection id="react" sections={SECTIONS}>
+        <DocsText>
+          In React projects, wrap your trigger in the SDK’s ChangelogWidget
+          component.
+        </DocsText>
+        <CodeBlock code={REACT_USAGE} />
+      </DocsSection>
+
+      <DocsSection id="features" sections={SECTIONS}>
+        <DocsList>
           <li>
-            Popover displays recent changelog entries with title, description,
-            and date
+            The popover lists recent entries with title, description and date.
           </li>
-          <li>Unread badge shows count of entries the user hasn&apos;t seen</li>
-          <li>Read state is tracked locally and persisted across sessions</li>
-          <li>Entries link back to the full changelog page</li>
-        </ul>
-      </section>
+          <li>An unread badge counts the entries the visitor hasn’t seen.</li>
+          <li>
+            Read state is stored in the browser and survives new sessions.
+          </li>
+          <li>Each entry links back to the full changelog page.</li>
+        </DocsList>
+      </DocsSection>
 
-      <section>
-        <h2 className="mb-3 font-display text-2xl text-foreground leading-snug tracking-tight">
-          Configuration
-        </h2>
-        <div className="overflow-hidden rounded-lg border border-border">
-          <Table className="text-sm">
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-xs">Attribute / Prop</TableHead>
-                <TableHead className="text-xs">Values</TableHead>
-                <TableHead className="text-xs">Description</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <TableRow>
-                <TableCell>
-                  <InlineCode>data-key / publicKey</InlineCode>
-                </TableCell>
-                <TableCell className="text-xs">string</TableCell>
-                <TableCell className="whitespace-normal text-muted-foreground text-xs">
-                  Your organization&apos;s public API key. Required.
-                </TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>
-                  <InlineCode>data-trigger / trigger</InlineCode>
-                </TableCell>
-                <TableCell className="text-xs">string (element ID)</TableCell>
-                <TableCell className="whitespace-normal text-muted-foreground text-xs">
-                  ID of the element that opens the popover. Script tag only.
-                </TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>
-                  <InlineCode>data-limit / limit</InlineCode>
-                </TableCell>
-                <TableCell className="text-xs">number</TableCell>
-                <TableCell className="whitespace-normal text-muted-foreground text-xs">
-                  Max entries to display. Default: 10.
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </div>
-      </section>
-    </div>
+      <DocsSection id="configuration" sections={SECTIONS}>
+        <ReferenceTable columns={COLUMNS} rows={ROWS} />
+      </DocsSection>
+    </DocsPage>
   );
 }

@@ -24,8 +24,10 @@ export function PushNotificationPrompt() {
   const { isSupported, permissionState, isSubscribed, subscribe } =
     usePushNotifications();
   const [isEnabling, setIsEnabling] = useState(false);
+  const [isDismissed, setIsDismissed] = useState(false);
 
   const shouldHide =
+    isDismissed ||
     preferences === undefined ||
     preferences.pushPromptDismissed ||
     preferences.pushEnabled ||
@@ -41,64 +43,66 @@ export function PushNotificationPrompt() {
     setIsEnabling(true);
     try {
       const success = await subscribe();
-      if (!success) {
-        toast.error("Enable notifications in your browser settings.");
-        return;
+      if (success) {
+        await updatePreferences({ pushEnabled: true });
+        await dismissPrompt();
+      } else {
+        toast.error(
+          "Your browser blocked notifications. Allow them in site settings."
+        );
       }
-      await updatePreferences({ pushEnabled: true });
-      await dismissPrompt();
-      toast.success("Push notifications enabled");
     } catch {
-      toast.error("Couldn’t enable notifications");
-    } finally {
-      setIsEnabling(false);
+      toast.error("Couldn’t turn on notifications. Try again.");
     }
+    setIsEnabling(false);
   };
 
   const handleDismiss = async () => {
+    setIsDismissed(true);
     try {
       await dismissPrompt();
     } catch {
-      toast.error("Couldn’t dismiss this prompt");
+      setIsDismissed(false);
+      toast.error("Couldn’t hide this prompt. Try again.");
     }
   };
 
   return (
-    <div className="px-4 pt-2 sm:px-6">
+    <aside aria-label="Browser notifications" className="px-4 pt-2 sm:px-6">
       <div className="flex min-h-12 items-center gap-3 border-border border-b py-2">
         <BellRinging
-          className="size-4 shrink-0 text-brand-text"
-          weight="duotone"
+          aria-hidden="true"
+          className="size-4 shrink-0 text-muted-foreground"
         />
-        <p className="min-w-0 flex-1 font-medium text-sm">
-          Get feedback updates
+        <p className="min-w-0 flex-1 text-pretty text-sm">
+          Get browser notifications for new comments, messages, and status
+          changes.
         </p>
         <Button
-          className="min-h-10"
           disabled={isEnabling}
           onClick={handleEnable}
-          size="xs"
-          variant="ghost"
+          size="sm"
+          variant="surface"
         >
-          {isEnabling ? "Enabling…" : "Enable"}
+          {isEnabling ? "Turning on…" : "Turn on"}
         </Button>
         <Tooltip>
           <TooltipTrigger
             render={
               <Button
                 aria-label="Dismiss notification prompt"
-                className="size-10"
                 iconOnly
                 onClick={handleDismiss}
+                size="sm"
                 variant="ghost"
               />
             }
           >
-            <X className="size-4" />
+            <X aria-hidden="true" className="size-4" />
           </TooltipTrigger>
           <TooltipContent>Dismiss</TooltipContent>
         </Tooltip>
       </div>
-    </div>
+    </aside>
   );
 }

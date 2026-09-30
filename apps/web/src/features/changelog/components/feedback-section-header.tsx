@@ -12,24 +12,26 @@ import {
 import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import { Check, Sparkle } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { useId } from "react";
+import { type FeedbackStatus, STATUS_CONFIG } from "@/lib/constants";
 
-export type FeedbackLinkStatus =
-  | "keep"
-  | "open"
-  | "under_review"
-  | "planned"
-  | "in_progress"
-  | "completed"
-  | "closed";
+export type FeedbackLinkStatus = "keep" | FeedbackStatus;
+
+const LINK_STATUS_ORDER = [
+  "completed",
+  "closed",
+  "in_progress",
+  "planned",
+  "open",
+] as const satisfies readonly FeedbackStatus[];
 
 const LINK_STATUS_OPTIONS = [
   { label: "Keep current status", value: "keep" },
-  { label: "Completed", value: "completed" },
-  { label: "Closed", value: "closed" },
-  { label: "In Progress", value: "in_progress" },
-  { label: "Planned", value: "planned" },
-  { label: "Open", value: "open" },
-] as const;
+  ...LINK_STATUS_ORDER.map((value) => ({
+    label: STATUS_CONFIG[value].label,
+    value,
+  })),
+];
 
 interface FeedbackSectionHeaderProps {
   availableFeedback: Array<{ _id: Id<"feedback"> }> | undefined;
@@ -52,20 +54,23 @@ export function FeedbackSectionHeader({
   onLinkStatusChange,
   onTriggerMatching,
 }: FeedbackSectionHeaderProps) {
+  const linkStatusLabelId = useId();
+
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <h3 className="flex items-center gap-1.5 font-medium text-sm">
-          <Check className="h-4 w-4 text-muted-foreground" />
-          Linked Feedback
+          <Check aria-hidden="true" className="size-4 text-muted-foreground" />
+          Linked feedback
           {linkedCount > 0 && (
-            <Badge className="text-xs tabular-nums">{linkedCount}</Badge>
+            <Badge className="tabular-nums" size="sm">
+              {linkedCount}
+            </Badge>
           )}
         </h3>
 
         {releaseId && (
           <Button
-            className="h-7 gap-1 text-xs"
             disabled={
               isMatching ||
               !description.trim() ||
@@ -79,12 +84,12 @@ export function FeedbackSectionHeader({
           >
             {isMatching ? (
               <>
-                <Spinner size="xs" />
-                Finding...
+                <Spinner data-icon="inline-start" size="xs" />
+                Finding…
               </>
             ) : (
               <>
-                <Sparkle className="h-3 w-3" />
+                <Sparkle aria-hidden="true" className="size-3.5" />
                 Find related
               </>
             )}
@@ -93,17 +98,21 @@ export function FeedbackSectionHeader({
       </div>
 
       {releaseId && (
-        <div className="flex items-center gap-2">
-          <span className="text-muted-foreground text-xs">
-            Set status on link:
+        <div className="flex flex-wrap items-center gap-2">
+          <span
+            className="text-muted-foreground text-xs"
+            id={linkStatusLabelId}
+          >
+            Status after linking
           </span>
           <Select<FeedbackLinkStatus>
             onValueChange={onLinkStatusChange}
             value={linkStatus}
           >
             <SelectTrigger
-              aria-label="Set status on link"
-              className="h-7 w-44 text-xs"
+              aria-labelledby={linkStatusLabelId}
+              className="w-44"
+              size="xs"
             >
               <SelectValue />
             </SelectTrigger>

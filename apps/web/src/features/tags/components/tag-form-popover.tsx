@@ -1,36 +1,21 @@
 "use client";
 
 import { Button } from "@ctrl-ui/react/ui/button";
-import { Input } from "@ctrl-ui/react/ui/input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@ctrl-ui/react/ui/popover";
 import { Plus } from "@phosphor-icons/react";
-import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { useMutation } from "convex/react";
-import type React from "react";
-import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
-import { EmojiPicker } from "@/components/ui/emoji-picker";
-import { NotionColorPicker } from "@/components/ui/notion-color-picker";
-import {
-  isValidTagColor,
-  migrateHexToNamedColor,
-  type TagColor,
-} from "@/lib/tag-colors";
+import type { HTMLAttributes, ReactNode, Ref } from "react";
+
+import { type EditableTag, TagForm } from "./tag-form";
 
 interface TagFormPopoverProps {
-  /** When true, the trigger won't open the popover on click (use for context menu controlled popovers) */
+  /** Controlled externally (e.g. from a context menu): the trigger itself never opens the popover. */
   disableTriggerClick?: boolean;
-  editingTag?: {
-    _id: Id<"tags">;
-    name: string;
-    color: string;
-    icon?: string;
-  } | null;
+  editingTag?: EditableTag | null;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
   open: boolean;
@@ -47,140 +32,38 @@ export function TagFormPopover({
   trigger,
   disableTriggerClick = false,
 }: TagFormPopoverProps) {
-  const createTag = useMutation(api.organizations.tag_manager_actions.create);
-  const updateTag = useMutation(api.organizations.tag_manager_actions.update);
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState<{
-    name: string;
-    color: TagColor;
-    icon?: string;
-  }>({
-    color: "blue",
-    icon: undefined,
-    name: "",
-  });
-
-  useEffect(() => {
-    if (editingTag) {
-      const color = isValidTagColor(editingTag.color)
-        ? editingTag.color
-        : migrateHexToNamedColor(editingTag.color);
-      setFormData({
-        color,
-        icon: editingTag.icon,
-        name: editingTag.name,
-      });
-    } else {
-      setFormData({
-        color: "blue",
-        icon: undefined,
-        name: "",
-      });
-    }
-  }, [editingTag]);
-
-  const handleSubmit = async () => {
-    if (!formData.name.trim()) {
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      if (editingTag) {
-        await updateTag({
-          color: formData.color,
-          icon: formData.icon,
-          id: editingTag._id,
-          name: formData.name.trim(),
-        });
-      } else {
-        await createTag({
-          color: formData.color,
-          icon: formData.icon,
-          name: formData.name.trim(),
-          organizationId,
-        });
-      }
-      onSuccess();
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit();
-    }
-  };
-
-  const popoverForm = (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2">
-        <EmojiPicker
-          onChange={(icon) => setFormData({ ...formData, icon })}
-          value={formData.icon}
-        />
-        <Input
-          autoFocus
-          className="h-8 flex-1"
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          onKeyDown={handleKeyDown}
-          placeholder="Tag name..."
-          value={formData.name}
-        />
-      </div>
-      <NotionColorPicker
-        onChange={(color) => setFormData({ ...formData, color })}
-        value={formData.color}
+  const content = (
+    <PopoverContent align="start" className="w-72 p-3">
+      <TagForm
+        editingTag={editingTag}
+        key={editingTag?._id ?? "new"}
+        layout="popover"
+        onCancel={() => onOpenChange(false)}
+        onSuccess={onSuccess}
+        organizationId={organizationId}
       />
-      <div className="flex justify-end gap-2 pt-1">
-        <Button
-          className="h-7 text-xs"
-          onClick={() => onOpenChange(false)}
-          size="xs"
-          variant="ghost"
-        >
-          Cancel
-        </Button>
-        <Button
-          className="h-7 text-xs"
-          disabled={isSubmitting || !formData.name.trim()}
-          onClick={handleSubmit}
-          size="xs"
-          tone="primary"
-          variant="solid"
-        >
-          {isSubmitting ? "Saving..." : ""}
-          {!isSubmitting && editingTag ? "Save" : ""}
-          {isSubmitting || editingTag ? "" : "Create"}
-        </Button>
-      </div>
-    </div>
+    </PopoverContent>
   );
 
-  // When disableTriggerClick is true, wrap in a span that stops click propagation
-  // This is controlled externally (e.g., by context menu) so we intentionally block trigger clicks
   if (disableTriggerClick && trigger) {
     return (
       <Popover onOpenChange={onOpenChange} open={open}>
         <PopoverTrigger
           nativeButton={false}
           render={(
-            props: React.HTMLAttributes<HTMLElement> & {
-              ref?: React.Ref<HTMLElement>;
-            }
+            props: HTMLAttributes<HTMLElement> & { ref?: Ref<HTMLElement> }
           ) => {
-            // Strip click/keyboard handlers to prevent the popover from opening
-            // on trigger interaction — the popover is controlled externally
-            const { onClick: _click, onKeyDown: _keyDown, ...rest } = props;
+            const {
+              onClick: _click,
+              onKeyDown: _keyDown,
+              role: _role,
+              tabIndex: _tabIndex,
+              ...rest
+            } = props;
             return <span {...rest}>{trigger}</span>;
           }}
         />
-        <PopoverContent align="start" className="w-[280px] p-3">
-          {popoverForm}
-        </PopoverContent>
+        {content}
       </Popover>
     );
   }
@@ -188,24 +71,13 @@ export function TagFormPopover({
   return (
     <Popover onOpenChange={onOpenChange} open={open}>
       <PopoverTrigger
-        render={(
-          props: React.HTMLAttributes<HTMLElement> & {
-            ref?: React.Ref<HTMLButtonElement>;
-          }
-        ) => (
-          <button
-            {...props}
-            aria-label="Add tag"
-            className="flex shrink-0 items-center justify-center rounded-full bg-muted px-2 py-1 text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
-            type="button"
-          >
-            <Plus className="h-4 w-4" />
-          </button>
-        )}
-      />
-      <PopoverContent align="start" className="w-[280px] p-3">
-        {popoverForm}
-      </PopoverContent>
+        render={
+          <Button aria-label="Create tag" iconOnly size="xs" variant="ghost" />
+        }
+      >
+        <Plus aria-hidden />
+      </PopoverTrigger>
+      {content}
     </Popover>
   );
 }

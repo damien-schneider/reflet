@@ -1,8 +1,5 @@
-import { Badge } from "@ctrl-ui/react/ui/badge";
-import { Button } from "@ctrl-ui/react/ui/button";
 import Link from "next/link";
 import { JsonLd } from "@/components/json-ld";
-import { H1, Lead, Muted } from "@/components/ui/typography";
 import type { BlogPostMeta } from "@/lib/blog";
 import { formatDate, getCategoryLabel } from "@/lib/blog";
 import {
@@ -17,25 +14,30 @@ interface BlogPostLayoutProps {
   slug: string;
 }
 
-export function BlogPostLayout({ meta, slug, children }: BlogPostLayoutProps) {
-  const jsonLd =
-    meta.category === "comparison"
-      ? getComparisonJsonLd({
-          competitorName: slug.replace("reflet-vs-", "").replace(/-/g, " "),
-          description: meta.description,
-          slug,
-          title: meta.title,
-        })
-      : getBlogPostJsonLd({
-          author: meta.author,
-          datePublished: meta.date,
-          description: meta.description,
-          ogImage: meta.ogImage,
-          slug,
-          tags: meta.tags,
-          title: meta.title,
-        });
+const COMPARISON_PREFIX = "reflet-vs-";
+const HYPHENS = /-/g;
 
+function getPostJsonLd(meta: BlogPostMeta, slug: string) {
+  if (meta.category === "comparison") {
+    return getComparisonJsonLd({
+      competitorName: slug.replace(COMPARISON_PREFIX, "").replace(HYPHENS, " "),
+      description: meta.description,
+      slug,
+      title: meta.title,
+    });
+  }
+  return getBlogPostJsonLd({
+    author: meta.author,
+    datePublished: meta.date,
+    description: meta.description,
+    ogImage: meta.ogImage,
+    slug,
+    tags: meta.tags,
+    title: meta.title,
+  });
+}
+
+export function BlogPostLayout({ meta, slug, children }: BlogPostLayoutProps) {
   const breadcrumbJsonLd = getBreadcrumbJsonLd([
     { name: "Home", path: "/" },
     { name: "Blog", path: "/blog" },
@@ -43,76 +45,54 @@ export function BlogPostLayout({ meta, slug, children }: BlogPostLayoutProps) {
   ]);
 
   return (
-    <article className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
-      <JsonLd data={jsonLd} />
+    <article className="marketing-section pt-12 md:pt-20">
+      <JsonLd data={getPostJsonLd(meta, slug)} />
       <JsonLd data={breadcrumbJsonLd} />
 
-      {/* Header */}
-      <header className="mb-10">
-        <div className="mb-4 flex items-center gap-3">
-          <Badge>{getCategoryLabel(meta.category)}</Badge>
-          <Muted>{meta.readingTime}</Muted>
-        </div>
-        <H1 className="mb-4" variant="page">
-          {meta.title}
-        </H1>
-        <Lead className="mb-6">{meta.description}</Lead>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-subtle font-bold text-brand-text">
-              {meta.author
-                .split(" ")
-                .map((n) => n[0])
-                .join("")}
-            </div>
-            <div>
-              <span className="font-medium">{meta.author}</span>
-              {meta.authorRole && (
-                <span className="ml-1 text-muted-foreground text-sm">
-                  ({meta.authorRole})
-                </span>
-              )}
-              <Muted className="block">{formatDate(meta.date)}</Muted>
-            </div>
-          </div>
-        </div>
-      </header>
+      <div className="mx-auto max-w-prose">
+        <header className="mb-12 border-(--marketing-hairline) border-b pb-10">
+          <nav aria-label="Breadcrumb" className="marketing-kicker">
+            <Link className="marketing-text-link" href="/blog">
+              Blog
+            </Link>
+            <span aria-hidden="true"> / </span>
+            <span>{getCategoryLabel(meta.category)}</span>
+          </nav>
+          <h1 className="text-balance text-display md:text-[2.75rem]">
+            {meta.title}
+          </h1>
+          <p className="mt-5 text-pretty text-body-lg text-muted-foreground leading-relaxed">
+            {meta.description}
+          </p>
+          <p className="mt-6 flex flex-wrap gap-x-2 text-body text-muted-foreground">
+            <span>
+              <span className="text-foreground">{meta.author}</span>
+              {meta.authorRole ? `, ${meta.authorRole}` : null}
+            </span>
+            <span aria-hidden="true">·</span>
+            <time className="tabular-nums" dateTime={meta.date}>
+              {formatDate(meta.date)}
+            </time>
+            <span aria-hidden="true">·</span>
+            <span>{meta.readingTime}</span>
+          </p>
+        </header>
 
-      {/* Content */}
-      <div className="max-w-none">{children}</div>
+        <div>{children}</div>
 
-      {/* Footer CTA */}
-      <footer className="mt-12 rounded-xl border border-border bg-muted/50 p-8 text-center">
-        <p className="mb-4 font-display font-semibold text-2xl">
-          Ready to streamline your product feedback?
-        </p>
-        <p className="mb-6 text-muted-foreground">
-          Start collecting and organizing feedback with Reflet today.
-        </p>
-        <div className="flex justify-center gap-4">
-          <Link href="/dashboard">
-            <Button size="md" tone="primary" variant="solid">
-              Start Free Trial
-            </Button>
-          </Link>
-          <Link href="/pricing">
-            <Button size="md" variant="surface">
-              View Pricing
-            </Button>
-          </Link>
-        </div>
-      </footer>
-
-      {/* Tags */}
-      {meta.tags.length > 0 && (
-        <div className="mt-8 flex flex-wrap gap-2">
-          {meta.tags.map((tag) => (
-            <Badge key={tag} variant="outline">
-              {tag}
-            </Badge>
-          ))}
-        </div>
-      )}
+        {meta.tags.length > 0 ? (
+          <footer className="mt-14 border-(--marketing-hairline) border-t pt-8">
+            <h2 className="sr-only">Tags</h2>
+            <ul className="flex flex-wrap gap-2">
+              {meta.tags.map((tag) => (
+                <li className="marketing-status" key={tag}>
+                  {tag}
+                </li>
+              ))}
+            </ul>
+          </footer>
+        ) : null}
+      </div>
     </article>
   );
 }

@@ -1,35 +1,18 @@
 "use client";
 
-import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@ctrl-ui/react/ui/dialog";
-import { Input } from "@ctrl-ui/react/ui/input";
-import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { useMutation } from "convex/react";
-import { useEffect, useState } from "react";
-import { EmojiPicker } from "@/components/ui/emoji-picker";
-import { Label } from "@/components/ui/label";
-import { NotionColorPicker } from "@/components/ui/notion-color-picker";
-import {
-  isValidTagColor,
-  migrateHexToNamedColor,
-  type TagColor,
-} from "@/lib/tag-colors";
+
+import { type EditableTag, TagForm } from "./tag-form";
 
 interface TagFormDialogProps {
-  editingTag: {
-    _id: Id<"tags">;
-    name: string;
-    color: string;
-    icon?: string;
-  } | null;
+  editingTag: EditableTag | null;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
   open: boolean;
@@ -43,85 +26,6 @@ export function TagFormDialog({
   onOpenChange,
   onSuccess,
 }: TagFormDialogProps) {
-  const createTag = useMutation(api.organizations.tag_manager_actions.create);
-  const updateTag = useMutation(api.organizations.tag_manager_actions.update);
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState<{
-    name: string;
-    color: TagColor;
-    icon?: string;
-  }>({
-    color: "blue",
-    icon: undefined,
-    name: "",
-  });
-
-  useEffect(() => {
-    if (editingTag) {
-      // Migrate old hex colors to new named colors
-      const color = isValidTagColor(editingTag.color)
-        ? editingTag.color
-        : migrateHexToNamedColor(editingTag.color);
-      setFormData({
-        color,
-        icon: editingTag.icon,
-        name: editingTag.name,
-      });
-    } else {
-      setFormData({
-        color: "blue",
-        icon: undefined,
-        name: "",
-      });
-    }
-  }, [editingTag]);
-
-  const handleCreateTag = async () => {
-    if (!formData.name.trim()) {
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      await createTag({
-        color: formData.color,
-        icon: formData.icon,
-        name: formData.name.trim(),
-        organizationId,
-      });
-      onSuccess();
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleUpdateTag = async () => {
-    if (!editingTag) {
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      await updateTag({
-        color: formData.color,
-        icon: formData.icon,
-        id: editingTag._id,
-        name: formData.name.trim(),
-      });
-      onSuccess();
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  let buttonLabel = "Create";
-  if (isSubmitting) {
-    buttonLabel = "Saving...";
-  } else if (editingTag) {
-    buttonLabel = "Save";
-  }
-
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent>
@@ -129,48 +33,18 @@ export function TagFormDialog({
           <DialogTitle>{editingTag ? "Edit tag" : "Create tag"}</DialogTitle>
           <DialogDescription>
             {editingTag
-              ? "Update the tag details."
-              : "Create a new tag to categorize feedback."}
+              ? "Changes apply everywhere this tag is used."
+              : "Tags group related feedback so you can filter it."}
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="flex items-center gap-3">
-            <EmojiPicker
-              onChange={(icon) => setFormData({ ...formData, icon })}
-              value={formData.icon}
-            />
-            <div className="flex-1">
-              <Label className="sr-only" htmlFor="name">
-                Name
-              </Label>
-              <Input
-                id="name"
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                placeholder="Tag name..."
-                value={formData.name}
-              />
-            </div>
-          </div>
-          <NotionColorPicker
-            onChange={(color) => setFormData({ ...formData, color })}
-            value={formData.color}
-          />
-        </div>
-        <DialogFooter>
-          <Button onClick={() => onOpenChange(false)} variant="surface">
-            Cancel
-          </Button>
-          <Button
-            disabled={isSubmitting}
-            onClick={editingTag ? handleUpdateTag : handleCreateTag}
-            tone="primary"
-            variant="solid"
-          >
-            {buttonLabel}
-          </Button>
-        </DialogFooter>
+        <TagForm
+          editingTag={editingTag}
+          key={editingTag?._id ?? "new"}
+          layout="dialog"
+          onCancel={() => onOpenChange(false)}
+          onSuccess={onSuccess}
+          organizationId={organizationId}
+        />
       </DialogContent>
     </Dialog>
   );

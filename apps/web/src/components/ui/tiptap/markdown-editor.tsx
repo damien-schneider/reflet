@@ -70,6 +70,55 @@ function CharacterCounter({
   );
 }
 
+interface EditorFooterProps extends Omit<CharacterCounterProps, "maxLength"> {
+  isUploading: boolean;
+  maxLength?: number;
+  uploadProgress: string | null;
+}
+
+function EditorFooter({
+  isUploading,
+  uploadProgress,
+  maxLength,
+  ...counter
+}: EditorFooterProps) {
+  return (
+    <div className="mt-2 flex items-center justify-between text-xs">
+      <span aria-live="polite" className="text-muted-foreground" role="status">
+        {isUploading ? uploadProgress : null}
+      </span>
+      {maxLength ? (
+        <CharacterCounter maxLength={maxLength} {...counter} />
+      ) : null}
+    </div>
+  );
+}
+
+interface ContainerStyleOptions {
+  className?: string;
+  disabled: boolean;
+  isInteractive: boolean;
+  minimal: boolean;
+}
+
+function getContainerClassName({
+  className,
+  disabled,
+  isInteractive,
+  minimal,
+}: ContainerStyleOptions) {
+  if (minimal) {
+    return cn("w-full", disabled && "cursor-not-allowed opacity-50", className);
+  }
+  return cn(
+    "border-input dark:bg-input/30 rounded-lg border bg-transparent px-2.5 py-2 text-base md:text-sm",
+    isInteractive &&
+      "focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]",
+    disabled && "bg-input/50 dark:bg-input/80 cursor-not-allowed opacity-50",
+    className
+  );
+}
+
 interface TiptapMarkdownEditorProps {
   autoFocus?: boolean;
   className?: string;
@@ -87,7 +136,7 @@ interface TiptapMarkdownEditorProps {
 export function TiptapMarkdownEditor({
   value,
   onChange,
-  placeholder = "Write something... Type '/' for commands",
+  placeholder = "Write something… Type / for commands",
   disabled = false,
   className,
   maxLength,
@@ -121,36 +170,31 @@ export function TiptapMarkdownEditor({
     value,
   });
 
+  const isInteractive = editable && !disabled;
+
   const handleContainerClick = () => {
-    if (editable && !disabled) {
+    if (isInteractive) {
       editor?.commands.focus();
     }
   };
 
-  const containerClassName = cn(
-    minimal
-      ? "w-full"
-      : "border-input dark:bg-input/30 rounded-lg border bg-transparent px-2.5 py-2 text-base transition-colors md:text-sm",
-    !minimal &&
-      editable &&
-      !disabled &&
-      "focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]",
-    !minimal && disabled && "bg-input/50 dark:bg-input/80",
-    disabled && "cursor-not-allowed opacity-50",
-    className
-  );
-
-  const showFooter = minimal ? Boolean(isUploading || maxLength) : true;
+  const showFooter = !minimal || isUploading || Boolean(maxLength);
 
   return (
     <div
-      className={containerClassName}
+      className={getContainerClassName({
+        className,
+        disabled,
+        isInteractive,
+        minimal,
+      })}
       data-slot="tiptap-markdown-editor"
       onClick={handleContainerClick}
+      role="presentation"
     >
       <div className="relative">
         <EditorContent editor={editor} />
-        {editor && editable && !disabled && <ImageBubbleMenu editor={editor} />}
+        {editor && isInteractive && <ImageBubbleMenu editor={editor} />}
       </div>
 
       <MediaFileInputs
@@ -161,21 +205,14 @@ export function TiptapMarkdownEditor({
       />
 
       {showFooter && (
-        <div className="mt-2 flex items-center justify-between text-xs">
-          {isUploading ? (
-            <span className="text-muted-foreground">{uploadProgress}</span>
-          ) : (
-            <span />
-          )}
-          {maxLength ? (
-            <CharacterCounter
-              characterCount={characterCount}
-              isAtLimit={isAtLimit}
-              isNearLimit={isNearLimit}
-              maxLength={maxLength}
-            />
-          ) : null}
-        </div>
+        <EditorFooter
+          characterCount={characterCount}
+          isAtLimit={isAtLimit}
+          isNearLimit={isNearLimit}
+          isUploading={isUploading}
+          maxLength={maxLength}
+          uploadProgress={uploadProgress}
+        />
       )}
     </div>
   );

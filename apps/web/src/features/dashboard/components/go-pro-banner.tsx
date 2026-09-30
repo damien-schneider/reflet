@@ -14,8 +14,8 @@ export function GoProBanner({ orgSlug }: GoProBannerProps) {
         render={<Link href={`/dashboard/${orgSlug}/project/billing`} />}
         size="xs"
       >
-        <Crown className="size-4" />
-        Upgrade
+        <Crown aria-hidden="true" className="size-4" data-icon="inline-start" />
+        Upgrade to Pro
       </ButtonLink>
     </div>
   );

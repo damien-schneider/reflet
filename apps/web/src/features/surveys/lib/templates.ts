@@ -1,8 +1,8 @@
 import { getDefaultConfig } from "@/features/surveys/lib/constants";
-import type { QuestionType } from "@/store/surveys";
+import type { QuestionConfig, QuestionType } from "@/store/surveys";
 
 interface TemplateQuestion {
-  config?: Record<string, unknown>;
+  config?: QuestionConfig;
   description?: string;
   required: boolean;
   title: string;
@@ -11,7 +11,6 @@ interface TemplateQuestion {
 
 interface SurveyTemplate {
   description: string;
-  icon: string;
   id: SurveyTemplateId;
   name: string;
   questions: TemplateQuestion[];
@@ -29,14 +28,12 @@ export type SurveyTemplateId =
 export const SURVEY_TEMPLATES: SurveyTemplate[] = [
   {
     description: "Start from scratch",
-    icon: "📄",
     id: "blank",
-    name: "Blank Survey",
+    name: "Blank survey",
     questions: [],
   },
   {
     description: "Measure customer loyalty with a standard NPS survey",
-    icon: "📊",
     id: "nps",
     name: "Net Promoter Score",
     questions: [
@@ -52,7 +49,7 @@ export const SURVEY_TEMPLATES: SurveyTemplate[] = [
         type: "nps",
       },
       {
-        config: { maxLength: 500, placeholder: "Tell us more..." },
+        config: { maxLength: 500, placeholder: "Tell us more…" },
         required: false,
         title: "What is the primary reason for your score?",
         type: "text",
@@ -61,9 +58,8 @@ export const SURVEY_TEMPLATES: SurveyTemplate[] = [
   },
   {
     description: "Measure overall satisfaction with your product or service",
-    icon: "⭐",
     id: "csat",
-    name: "Customer Satisfaction",
+    name: "Customer satisfaction",
     questions: [
       {
         config: {
@@ -92,7 +88,7 @@ export const SURVEY_TEMPLATES: SurveyTemplate[] = [
         type: "single_choice",
       },
       {
-        config: { maxLength: 1000, placeholder: "Your suggestions..." },
+        config: { maxLength: 1000, placeholder: "Your suggestions…" },
         required: false,
         title: "How can we improve your experience?",
         type: "text",
@@ -101,9 +97,8 @@ export const SURVEY_TEMPLATES: SurveyTemplate[] = [
   },
   {
     description: "Collect general feedback about your product experience",
-    icon: "💬",
     id: "product_feedback",
-    name: "Product Feedback",
+    name: "Product feedback",
     questions: [
       {
         config: {
@@ -128,7 +123,7 @@ export const SURVEY_TEMPLATES: SurveyTemplate[] = [
           ],
         },
         required: true,
-        title: "What features do you use most? (Select all that apply)",
+        title: "Which features do you use most? (Select all that apply)",
         type: "multiple_choice",
       },
       {
@@ -137,7 +132,7 @@ export const SURVEY_TEMPLATES: SurveyTemplate[] = [
         type: "boolean",
       },
       {
-        config: { maxLength: 1000, placeholder: "Share your thoughts..." },
+        config: { maxLength: 1000, placeholder: "Share your thoughts…" },
         required: false,
         title: "Any additional comments or suggestions?",
         type: "text",
@@ -146,9 +141,8 @@ export const SURVEY_TEMPLATES: SurveyTemplate[] = [
   },
   {
     description: "Prioritize features based on user demand",
-    icon: "🚀",
     id: "feature_request",
-    name: "Feature Request",
+    name: "Feature request",
     questions: [
       {
         config: {
@@ -168,10 +162,10 @@ export const SURVEY_TEMPLATES: SurveyTemplate[] = [
       {
         config: {
           maxLength: 2000,
-          placeholder: "Be as specific as possible...",
+          placeholder: "Be as specific as possible…",
         },
         required: true,
-        title: "Describe the feature or improvement you'd like to see",
+        title: "Describe the feature or improvement you’d like to see",
         type: "text",
       },
       {
@@ -181,7 +175,7 @@ export const SURVEY_TEMPLATES: SurveyTemplate[] = [
           minLabel: "Nice to have",
           minValue: 1,
         },
-        description: "1 = Nice to have, 5 = Critical",
+        description: "1 = nice to have, 5 = critical",
         required: true,
         title: "How important is this to your workflow?",
         type: "rating",
@@ -190,9 +184,8 @@ export const SURVEY_TEMPLATES: SurveyTemplate[] = [
   },
   {
     description: "Evaluate new user experience and setup flow",
-    icon: "👋",
     id: "onboarding",
-    name: "Onboarding Experience",
+    name: "Onboarding experience",
     questions: [
       {
         config: {
@@ -226,7 +219,7 @@ export const SURVEY_TEMPLATES: SurveyTemplate[] = [
         type: "single_choice",
       },
       {
-        config: { maxLength: 500, placeholder: "Any friction points..." },
+        config: { maxLength: 500, placeholder: "Any friction points…" },
         required: false,
         title: "What almost stopped you from signing up?",
         type: "text",
@@ -235,9 +228,8 @@ export const SURVEY_TEMPLATES: SurveyTemplate[] = [
   },
   {
     description: "Understand why users might leave",
-    icon: "🔄",
     id: "churn",
-    name: "Churn Prevention",
+    name: "Churn prevention",
     questions: [
       {
         config: {
@@ -252,7 +244,7 @@ export const SURVEY_TEMPLATES: SurveyTemplate[] = [
           ],
         },
         required: true,
-        title: "What is the main reason you're considering leaving?",
+        title: "What is the main reason you’re considering leaving?",
         type: "single_choice",
       },
       {
@@ -267,7 +259,7 @@ export const SURVEY_TEMPLATES: SurveyTemplate[] = [
         type: "rating",
       },
       {
-        config: { maxLength: 1000, placeholder: "Tell us what we can do..." },
+        config: { maxLength: 1000, placeholder: "Tell us what we can do…" },
         required: false,
         title: "What would make you stay?",
         type: "text",

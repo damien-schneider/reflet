@@ -1,5 +1,6 @@
 "use client";
 
+import { Alert, AlertDescription } from "@ctrl-ui/react/ui/alert";
 import {
   Dialog,
   DialogContent,
@@ -24,16 +25,16 @@ export function AuthDialog() {
     <Dialog onOpenChange={setIsOpen} open={isOpen}>
       <DialogContent className="max-w-md p-0">
         <DialogHeader className="sr-only">
-          <DialogTitle>Authentication</DialogTitle>
+          <DialogTitle>Sign in to Reflet</DialogTitle>
           <DialogDescription>Sign in or create an account</DialogDescription>
         </DialogHeader>
         {message && (
-          <div className="px-6 pt-6 pb-0">
-            <div className="rounded-lg border border-border bg-secondary p-4">
-              <p className="text-center text-muted-foreground text-sm">
+          <div className="px-6 pt-6">
+            <Alert>
+              <AlertDescription className="text-center">
                 {message}
-              </p>
-            </div>
+              </AlertDescription>
+            </Alert>
           </div>
         )}
         <UnifiedAuthForm onSuccess={closeDialog} />

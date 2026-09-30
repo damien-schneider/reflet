@@ -1,6 +1,12 @@
 "use client";
 
-import { Progress } from "@ctrl-ui/react/ui/progress";
+import {
+  Progress,
+  ProgressIndicator,
+  ProgressLabel,
+  ProgressTrack,
+  ProgressValue,
+} from "@ctrl-ui/react/ui/progress";
 import {
   CheckCircle,
   Circle,
@@ -8,6 +14,7 @@ import {
   WarningCircle,
 } from "@phosphor-icons/react";
 import { H1, Muted, Text } from "@/components/ui/typography";
+import { cn } from "@/lib/utils";
 
 interface Step {
   error?: string;
@@ -18,26 +25,46 @@ interface Step {
 }
 
 interface AnalyzingViewProps {
-  repositoryFullName: string;
+  repositoryFullName: string | undefined;
   steps: Step[];
 }
 
+const STATUS_TEXT: Record<Step["status"], string> = {
+  done: "Done",
+  error: "Failed",
+  pending: "Waiting",
+  running: "In progress",
+};
+
 function StepIcon({ status }: { status: Step["status"] }) {
   if (status === "done") {
-    return <CheckCircle className="size-5 text-success" weight="fill" />;
+    return (
+      <CheckCircle
+        aria-hidden
+        className="size-5 text-success-text"
+        weight="fill"
+      />
+    );
   }
   if (status === "running") {
     return (
       <CircleNotch
-        className="size-5 animate-spin text-brand-text"
+        aria-hidden
+        className="size-5 text-brand-text motion-safe:animate-spin"
         weight="bold"
       />
     );
   }
   if (status === "error") {
-    return <WarningCircle className="size-5 text-destructive" weight="fill" />;
+    return (
+      <WarningCircle
+        aria-hidden
+        className="size-5 text-destructive-text"
+        weight="fill"
+      />
+    );
   }
-  return <Circle className="size-5 text-muted-foreground/40" />;
+  return <Circle aria-hidden className="size-5 text-muted-foreground/40" />;
 }
 
 export function AnalyzingView({
@@ -45,60 +72,71 @@ export function AnalyzingView({
   steps,
 }: AnalyzingViewProps) {
   const completedCount = steps.filter((s) => s.status === "done").length;
-  const totalCount = steps.length;
-  const progressPercent = Math.round((completedCount / totalCount) * 100);
+  const currentStep = steps.find((s) => s.status === "running");
 
   return (
     <div>
       <div className="mb-8 text-center">
-        <H1 className="mb-2">Setting up {repositoryFullName}</H1>
-        <Muted>
-          AI is analyzing your codebase. This takes about 30 seconds.
+        <H1 className="mb-2 text-balance">
+          {repositoryFullName
+            ? `Analyzing ${repositoryFullName}`
+            : "Analyzing your repository"}
+        </H1>
+        <Muted className="text-pretty">
+          This usually takes about 30 seconds.
         </Muted>
       </div>
 
-      <div className="space-y-3">
+      <ol className="space-y-1">
         {steps.map((step) => (
-          <div className="flex items-start gap-3 rounded-lg p-2" key={step.key}>
-            <div className="mt-0.5">
+          <li className="flex items-start gap-3 rounded-lg p-2" key={step.key}>
+            <span className="mt-0.5">
               <StepIcon status={step.status} />
-            </div>
-            <div className="flex-1">
+            </span>
+            <div className="min-w-0 flex-1">
               <Text
-                className={
-                  step.status === "pending"
-                    ? "text-muted-foreground"
-                    : undefined
-                }
+                className={cn(
+                  step.status === "pending" && "text-muted-foreground"
+                )}
                 variant="bodySmall"
               >
                 {step.label}
+                <span className="sr-only"> ({STATUS_TEXT[step.status]})</span>
               </Text>
               {step.summary && step.status === "done" && (
-                <Muted className="mt-0.5 text-xs">→ {step.summary}</Muted>
+                <Muted className="mt-0.5 text-caption">{step.summary}</Muted>
               )}
               {step.error && step.status === "error" && (
                 <Text
-                  className="mt-0.5 text-destructive text-xs"
+                  className="mt-0.5 text-caption text-destructive-text"
                   variant="bodySmall"
                 >
                   {step.error}
                 </Text>
               )}
             </div>
-            <span className="text-muted-foreground text-xs">
-              {step.status === "done" && "done"}
-              {step.status === "running" && "running"}
-              {step.status === "error" && "error"}
-            </span>
-          </div>
+          </li>
         ))}
-      </div>
+      </ol>
 
-      <div className="mt-6">
-        <Progress className="h-2" value={progressPercent} />
-        <Muted className="mt-2 text-center text-xs">{progressPercent}%</Muted>
-      </div>
+      <Progress
+        className="mt-6 gap-2"
+        max={Math.max(steps.length, 1)}
+        value={completedCount}
+      >
+        <div className="flex items-center justify-between text-muted-foreground text-sm">
+          <ProgressLabel aria-live="polite">
+            {currentStep?.label ??
+              (completedCount === steps.length ? "Finishing up…" : "Starting…")}
+          </ProgressLabel>
+          <ProgressValue className="tabular-nums">
+            {() => `${completedCount} of ${steps.length}`}
+          </ProgressValue>
+        </div>
+        <ProgressTrack>
+          <ProgressIndicator />
+        </ProgressTrack>
+      </Progress>
     </div>
   );
 }

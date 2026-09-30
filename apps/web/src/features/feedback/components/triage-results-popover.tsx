@@ -4,9 +4,11 @@ import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Popover,
   PopoverContent,
+  PopoverTitle,
   PopoverTrigger,
 } from "@ctrl-ui/react/ui/popover";
 import { ScrollArea } from "@ctrl-ui/react/ui/scroll-area";
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { CaretRight, Check, Sparkle, Warning } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
@@ -20,6 +22,8 @@ interface TriagedItem {
   tags: Array<{ _id: Id<"tags">; name: string; color: string } | null>;
   title: string;
 }
+
+const RESULT_SKELETON_WIDTHS = ["w-3/4", "w-2/3", "w-4/5"] as const;
 
 export function ResultsPopover({
   failed,
@@ -49,109 +53,88 @@ export function ResultsPopover({
 
   return (
     <Popover onOpenChange={setIsOpen} open={isOpen}>
-      <PopoverTrigger
-        render={
-          <Button
-            className={cn(
-              "h-auto shrink-0 gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors duration-300",
-              hasFailed
-                ? "border-warning/30 bg-warning-subtle text-warning-text"
-                : "border-success/30 bg-success-subtle text-success-text"
-            )}
-            variant="surface"
-          />
-        }
-      >
+      <PopoverTrigger render={<Button size="xs" variant="surface" />}>
         {hasFailed ? (
-          <Warning className="h-3.5 w-3.5" weight="bold" />
+          <Warning
+            aria-hidden
+            className="size-3.5 text-warning-text"
+            weight="bold"
+          />
         ) : (
-          <Check className="h-3.5 w-3.5" weight="bold" />
+          <Check
+            aria-hidden
+            className="size-3.5 text-success-text"
+            weight="bold"
+          />
         )}
-        <span className="font-medium tabular-nums">
+        <span className="tabular-nums">
           {successful} triaged{hasFailed ? `, ${failed} failed` : ""}
         </span>
-        <CaretRight className="h-3 w-3 opacity-60" />
+        <CaretRight aria-hidden className="size-3 text-muted-foreground" />
       </PopoverTrigger>
       <PopoverContent align="start" className="w-80 p-0">
         <div className="flex items-center justify-between border-b px-3 py-2">
-          <div className="flex items-center gap-1.5">
-            <Sparkle className="h-3.5 w-3.5 text-primary" weight="fill" />
-            <span className="font-medium text-sm">Triage results</span>
-          </div>
-          <Button
-            className="h-6 px-2 text-xs"
-            onClick={handleDismiss}
-            size="xs"
-            variant="ghost"
-          >
+          <PopoverTitle className="flex items-center gap-1.5 font-medium text-sm">
+            <Sparkle
+              aria-hidden
+              className="size-3.5 text-primary"
+              weight="fill"
+            />
+            Triage results
+          </PopoverTitle>
+          <Button onClick={handleDismiss} size="xs" variant="ghost">
             Dismiss
           </Button>
         </div>
         <ScrollArea viewportClassName="max-h-64">
-          <div className="divide-y">
+          <ul className="divide-y">
             {recentItems?.map((item: TriagedItem) => {
               const validTags = item.tags.filter(
                 (tag): tag is NonNullable<typeof tag> => tag !== null
               );
-              const hasTags = validTags.length > 0;
 
               return (
-                <div className="px-3 py-2.5" key={item._id}>
-                  <p className="line-clamp-1 font-medium text-sm">
+                <li className="px-3 py-2.5" key={item._id}>
+                  <p
+                    className="truncate font-medium text-sm"
+                    title={item.title}
+                  >
                     {item.title}
                   </p>
                   <div className="mt-1.5 flex flex-wrap items-center gap-1">
                     {validTags.map((tag) => (
-                      <TagBadge
-                        className="h-5 font-normal text-caption"
-                        color={tag.color}
-                        key={tag._id}
-                      >
+                      <TagBadge color={tag.color} key={tag._id} size="sm">
                         {tag.name}
                       </TagBadge>
                     ))}
-                    {!hasTags && (
-                      <TagBadge
-                        className="h-5 border-dashed font-normal text-caption"
-                        color="gray"
-                      >
+                    {validTags.length === 0 && (
+                      <TagBadge size="sm" variant="outline">
                         Unsorted
                       </TagBadge>
                     )}
                   </div>
-                </div>
+                </li>
               );
             })}
-            {recentItems?.length === 0 && (
-              <p className="px-3 py-4 text-center text-muted-foreground text-sm">
-                No items were tagged in this run.
-              </p>
-            )}
-            {recentItems === undefined && (
-              <div className="space-y-3 px-3 py-3">
-                <div className="space-y-1.5">
-                  <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
+          </ul>
+          {recentItems?.length === 0 && (
+            <p className="px-3 py-4 text-center text-muted-foreground text-sm">
+              No items were tagged in this run.
+            </p>
+          )}
+          {recentItems === undefined && (
+            <div aria-busy="true" className="space-y-3 p-3">
+              {RESULT_SKELETON_WIDTHS.map((width) => (
+                <div className="space-y-1.5" key={width}>
+                  <Skeleton className={cn("h-4", width)} />
                   <div className="flex gap-1">
-                    <div className="h-4 w-12 animate-pulse rounded-full bg-muted" />
-                    <div className="h-4 w-16 animate-pulse rounded-full bg-muted" />
+                    <Skeleton className="h-4 w-12" />
+                    <Skeleton className="h-4 w-16" />
                   </div>
                 </div>
-                <div className="space-y-1.5">
-                  <div className="h-4 w-2/3 animate-pulse rounded bg-muted" />
-                  <div className="flex gap-1">
-                    <div className="h-4 w-14 animate-pulse rounded-full bg-muted" />
-                    <div className="h-4 w-10 animate-pulse rounded-full bg-muted" />
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <div className="h-4 w-4/5 animate-pulse rounded bg-muted" />
-                  <div className="flex gap-1">
-                    <div className="h-4 w-12 animate-pulse rounded-full bg-muted" />
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </ScrollArea>
       </PopoverContent>
     </Popover>

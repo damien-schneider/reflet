@@ -1,6 +1,7 @@
 "use client";
 
 import { Clock } from "@phosphor-icons/react";
+import { format } from "date-fns";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -32,15 +33,19 @@ export function ScheduleCountdown({
   scheduledAt,
   className,
 }: ScheduleCountdownProps) {
-  const [remaining, setRemaining] = useState(scheduledAt - Date.now());
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setRemaining(scheduledAt - Date.now());
+      setNow(Date.now());
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [scheduledAt]);
+  }, []);
+
+  const remaining = scheduledAt - now;
+
+  const scheduledLabel = format(scheduledAt, "MMM d, yyyy 'at' h:mm a");
 
   if (remaining <= 0) {
     return (
@@ -49,9 +54,10 @@ export function ScheduleCountdown({
           "flex items-center gap-1 text-warning-text text-xs",
           className
         )}
+        title={scheduledLabel}
       >
-        <Clock className="h-3.5 w-3.5" />
-        Publishing...
+        <Clock aria-hidden="true" className="size-3.5" />
+        Publishing…
       </span>
     );
   }
@@ -63,11 +69,12 @@ export function ScheduleCountdown({
     <span
       className={cn(
         "flex items-center gap-1 text-xs tabular-nums",
-        isUrgent ? "animate-pulse text-warning-text" : "text-muted-foreground",
+        isUrgent ? "text-warning-text" : "text-muted-foreground",
         className
       )}
+      title={scheduledLabel}
     >
-      <Clock className="h-3.5 w-3.5" />
+      <Clock aria-hidden="true" className="size-3.5" />
       Publishing in {formatCountdown(remaining)}
     </span>
   );

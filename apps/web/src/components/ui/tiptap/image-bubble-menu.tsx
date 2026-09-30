@@ -13,8 +13,8 @@ import {
   TextAlignRight,
 } from "@phosphor-icons/react";
 import type { Editor } from "@tiptap/core";
+import type * as React from "react";
 import { useEffect, useState } from "react";
-import { cn } from "@/lib/utils";
 import type { ImageAlignment } from "./image-extension";
 
 const ALIGNMENTS: readonly {
@@ -28,6 +28,11 @@ const ALIGNMENTS: readonly {
 ];
 
 const BUBBLE_OFFSET_Y = 40;
+
+const TOOLBAR_KEY_STEPS: Readonly<Record<string, number>> = {
+  ArrowLeft: -1,
+  ArrowRight: 1,
+};
 
 interface ImageBubbleMenuProps {
   editor: Editor;
@@ -94,12 +99,36 @@ export function ImageBubbleMenu({ editor }: ImageBubbleMenuProps) {
     return null;
   }
 
+  const handleToolbarKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    const step = TOOLBAR_KEY_STEPS[event.key];
+    if (step === undefined) {
+      return;
+    }
+    const buttons = Array.from(
+      event.currentTarget.querySelectorAll<HTMLButtonElement>("button")
+    );
+    const currentIndex = buttons.findIndex(
+      (button) => button === document.activeElement
+    );
+    const nextIndex = (currentIndex + step + buttons.length) % buttons.length;
+    event.preventDefault();
+    buttons[nextIndex]?.focus();
+  };
+
   return (
     <div
       className="tiptap-image-bubble-menu pointer-events-auto absolute z-50 -translate-x-1/2"
       style={{ left: position.left, top: position.top }}
     >
-      <div className="flex items-center gap-1 rounded-lg border bg-background p-1 shadow-lg">
+      <div
+        aria-label="Image alignment"
+        className="flex items-center gap-0.5 p-1"
+        data-control-family="popup"
+        data-popup-part="surface"
+        data-popup-static=""
+        onKeyDown={handleToolbarKeyDown}
+        role="toolbar"
+      >
         {ALIGNMENTS.map(({ icon: Icon, label, value }) => (
           <Tooltip key={value}>
             <TooltipTrigger
@@ -108,10 +137,6 @@ export function ImageBubbleMenu({ editor }: ImageBubbleMenuProps) {
               render={
                 <Button
                   active={currentAlign === value}
-                  className={cn(
-                    "rounded",
-                    currentAlign === value && "bg-muted text-primary"
-                  )}
                   iconOnly
                   onClick={() => {
                     editor
@@ -120,11 +145,13 @@ export function ImageBubbleMenu({ editor }: ImageBubbleMenuProps) {
                       .updateAttributes("image", { align: value })
                       .run();
                   }}
+                  size="sm"
+                  tabIndex={currentAlign === value ? 0 : -1}
                   variant="ghost"
                 />
               }
             >
-              <Icon className="h-4 w-4" />
+              <Icon aria-hidden="true" className="size-4" />
             </TooltipTrigger>
             <TooltipContent>{label}</TooltipContent>
           </Tooltip>

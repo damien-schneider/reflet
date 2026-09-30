@@ -10,12 +10,12 @@ interface ErrorProps {
 export default function DashboardError({ error, reset }: ErrorProps) {
   return (
     <ErrorPage
-      description="We encountered an error loading the dashboard. Please try again."
+      description="This page didn’t load. Try again, or go back to your dashboard."
       error={error}
+      homeHref="/dashboard"
+      homeLabel="Back to dashboard"
       onRetry={reset}
       showError={process.env.NODE_ENV === "development"}
-      showHomeLink={false}
-      title="Dashboard error"
     />
   );
 }

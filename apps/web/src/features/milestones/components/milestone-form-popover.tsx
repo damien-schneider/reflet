@@ -14,11 +14,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@ctrl-ui/react/ui/select";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@ctrl-ui/react/ui/tooltip";
+import { Plus } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
@@ -88,16 +90,10 @@ export function MilestoneFormPopover({
       setTargetDate(undefined);
       onCreated?.();
       onOpenChange(false);
-    } finally {
-      setIsSubmitting(false);
+    } catch {
+      toast.error("Couldn’t create the milestone. Try again.");
     }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit();
-    }
+    setIsSubmitting(false);
   };
 
   const horizonLabel = TIME_HORIZON_CONFIG[defaultTimeHorizon].label;
@@ -113,22 +109,29 @@ export function MilestoneFormPopover({
               className={triggerClassName}
               type="button"
             >
-              <span className="leading-none">+</span>
+              <Plus aria-hidden className="size-3.5" />
             </PopoverTrigger>
           }
         />
         <TooltipContent>{addLabel}</TooltipContent>
       </Tooltip>
       <PopoverContent align="start" className="w-[280px] p-3">
-        <div className="space-y-3">
+        <form
+          className="space-y-3"
+          onSubmit={(event) => {
+            event.preventDefault();
+            handleSubmit();
+          }}
+        >
           <div className="flex items-center gap-2">
             <EmojiPicker onChange={setEmoji} value={emoji} />
             <Input
+              aria-label="Milestone name"
+              autoComplete="off"
               autoFocus
-              className="h-8 flex-1"
+              className="flex-1"
               onChange={(e) => setName(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Milestone name..."
+              placeholder="Milestone name…"
               value={name}
             />
           </div>
@@ -144,7 +147,7 @@ export function MilestoneFormPopover({
               }}
               value={timeHorizon}
             >
-              <SelectTrigger className="h-8 text-xs">
+              <SelectTrigger aria-label="Time horizon">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -161,25 +164,24 @@ export function MilestoneFormPopover({
 
           <div className="flex justify-end gap-2 pt-1">
             <Button
-              className="h-7 text-xs"
               onClick={() => onOpenChange(false)}
               size="xs"
+              type="button"
               variant="ghost"
             >
               Cancel
             </Button>
             <Button
-              className="h-7 text-xs"
               disabled={isSubmitting || !name.trim()}
-              onClick={handleSubmit}
               size="xs"
               tone="primary"
+              type="submit"
               variant="solid"
             >
-              {isSubmitting ? "Creating..." : "Create"}
+              {isSubmitting ? "Creating…" : "Create"}
             </Button>
           </div>
-        </div>
+        </form>
       </PopoverContent>
     </Popover>
   );

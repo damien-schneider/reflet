@@ -1,22 +1,25 @@
 "use client";
 
+import { Alert, AlertDescription, AlertTitle } from "@ctrl-ui/react/ui/alert";
 import { Button } from "@ctrl-ui/react/ui/button";
+import { Card, CardContent } from "@ctrl-ui/react/ui/card";
 import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@ctrl-ui/react/ui/card";
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@ctrl-ui/react/ui/empty";
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
-import { ArrowsClockwise, Sparkle } from "@phosphor-icons/react";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
+import { toast } from "@ctrl-ui/react/ui/toast";
+import { Sparkle, WarningCircle } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
-import { Muted, Text } from "@/components/ui/typography";
+import { SettingsSection } from "./settings-page";
 
 type AnalysisField =
   | "summary"
@@ -46,67 +49,92 @@ export function RepoAnalysisPanel({
   const isAnalyzing =
     latestAnalysis?.status === "pending" ||
     latestAnalysis?.status === "in_progress";
+  const isBusy = isAnalyzing || isStarting;
+  let actionLabel = latestAnalysis ? "Analyze again" : "Analyze repository";
+  if (isBusy) {
+    actionLabel = "Analyzing…";
+  }
 
   const handleStartAnalysis = async () => {
     setIsStarting(true);
     try {
       await startAnalysis({ organizationId });
-    } finally {
-      setIsStarting(false);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Couldn’t start the analysis"
+      );
     }
+    setIsStarting(false);
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Repository Analysis</CardTitle>
-        <CardDescription>
-          AI-powered analysis of your repository
-        </CardDescription>
-        {isAdmin ? (
-          <CardAction>
-            <Button
-              disabled={isAnalyzing || isStarting}
-              onClick={handleStartAnalysis}
-              size="xs"
-              variant="surface"
-            >
-              {isAnalyzing || isStarting ? (
-                <ArrowsClockwise className="mr-1.5 h-4 w-4 animate-spin" />
-              ) : (
-                <Sparkle className="mr-1.5 h-4 w-4" />
-              )}
-              {latestAnalysis ? "Re-analyse" : "Analyse Repo"}
-            </Button>
-          </CardAction>
-        ) : null}
-      </CardHeader>
-      <CardContent>
-        {isAnalyzing ? <AnalysisLoadingState /> : null}
+    <SettingsSection
+      actions={
+        isAdmin ? (
+          <Button
+            disabled={isBusy}
+            onClick={handleStartAnalysis}
+            size="sm"
+            variant="surface"
+          >
+            {isBusy ? (
+              <Spinner aria-hidden data-icon="inline-start" size="xs" />
+            ) : (
+              <Sparkle aria-hidden />
+            )}
+            {actionLabel}
+          </Button>
+        ) : null
+      }
+      description="An AI summary of your repository, used as context for feedback."
+      title="Repository analysis"
+    >
+      <Card>
+        <CardContent aria-busy={isAnalyzing} aria-live="polite">
+          {isAnalyzing || latestAnalysis === undefined ? (
+            <AnalysisLoadingState />
+          ) : null}
 
-        {latestAnalysis?.status === "error" ? (
-          <div className="rounded-md border border-destructive/50 bg-destructive/5 p-4">
-            <Text className="text-destructive" variant="bodySmall">
-              Analysis failed: {latestAnalysis.error ?? "Unknown error"}
-            </Text>
-          </div>
-        ) : null}
+          {latestAnalysis?.status === "error" ? (
+            <Alert variant="destructive">
+              <WarningCircle aria-hidden />
+              <AlertTitle>Analysis failed</AlertTitle>
+              <AlertDescription>
+                {latestAnalysis.error ?? "Something went wrong. Try again."}
+              </AlertDescription>
+            </Alert>
+          ) : null}
 
-        {latestAnalysis?.status === "completed" ? (
-          <AnalysisResults
-            analysis={latestAnalysis}
-            isAdmin={isAdmin}
-            organizationId={organizationId}
-          />
-        ) : null}
+          {latestAnalysis?.status === "completed" ? (
+            <AnalysisResults
+              analysis={latestAnalysis}
+              isAdmin={isAdmin}
+              organizationId={organizationId}
+            />
+          ) : null}
 
-        {latestAnalysis || isAnalyzing ? null : (
-          <div className="py-4 text-center">
-            <Muted>Nothing yet</Muted>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+          {latestAnalysis === null ? <AnalysisEmpty isAdmin={isAdmin} /> : null}
+        </CardContent>
+      </Card>
+    </SettingsSection>
+  );
+}
+
+function AnalysisEmpty({ isAdmin }: { isAdmin: boolean }) {
+  return (
+    <Empty>
+      <EmptyHeader>
+        <EmptyMedia>
+          <Sparkle aria-hidden className="size-6" />
+        </EmptyMedia>
+        <EmptyTitle>No analysis yet</EmptyTitle>
+        <EmptyDescription>
+          {isAdmin
+            ? "Analyze the repository to summarize its stack, architecture and features."
+            : "An admin can analyze the repository to summarize its stack and features."}
+        </EmptyDescription>
+      </EmptyHeader>
+    </Empty>
   );
 }
 
@@ -114,9 +142,9 @@ const SKELETON_IDS = ["summary", "tech-stack", "architecture", "features"];
 
 function AnalysisLoadingState() {
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       {SKELETON_IDS.map((id) => (
-        <div className="space-y-2" key={id}>
+        <div className="flex flex-col gap-2" key={id}>
           <Skeleton className="h-5 w-24" />
           <Skeleton className="h-4 w-full" />
           <Skeleton className="h-4 w-3/4" />
@@ -155,7 +183,7 @@ function AnalysisResults({
     title: string;
   }[] = [
     { content: analysis.summary, field: "summary", title: "Summary" },
-    { content: analysis.techStack, field: "techStack", title: "Tech Stack" },
+    { content: analysis.techStack, field: "techStack", title: "Tech stack" },
     {
       content: analysis.architecture,
       field: "architecture",
@@ -165,34 +193,28 @@ function AnalysisResults({
     {
       content: analysis.repoStructure,
       field: "repoStructure",
-      title: "Repository Structure",
+      title: "Repository structure",
     },
   ];
 
   const sections = allSections.filter((s) => s.content);
 
-  const handleSectionChange = async (field: AnalysisField, value: string) => {
-    await updateSection({
-      field,
-      organizationId,
-      value,
-    });
-  };
-
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       {sections.map((section) => (
-        <div className="space-y-2" key={section.field}>
-          <Text className="font-medium text-sm">{section.title}</Text>
+        <div className="flex flex-col gap-2" key={section.field}>
+          <h3 className="text-heading-4">{section.title}</h3>
           {isAdmin ? (
             <TiptapMarkdownEditor
               onChange={(value: string) =>
-                handleSectionChange(section.field, value)
+                updateSection({ field: section.field, organizationId, value })
               }
               value={section.content ?? ""}
             />
           ) : (
-            <Text variant="bodySmall">{section.content}</Text>
+            <p className="text-pretty text-body text-muted-foreground">
+              {section.content}
+            </p>
           )}
         </div>
       ))}

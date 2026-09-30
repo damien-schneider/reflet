@@ -9,17 +9,34 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@ctrl-ui/react/ui/dialog";
+import { Field, FieldError, FieldLabel } from "@ctrl-ui/react/ui/field";
 import { Input } from "@ctrl-ui/react/ui/input";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { useState } from "react";
-import { Label } from "@/components/ui/label";
+
+const ALLOWED_PROTOCOLS = ["http:", "https:"];
 
 interface AddWebsiteDialogProps {
   onOpenChange: (open: boolean) => void;
   open: boolean;
   organizationId: Id<"organizations">;
+}
+
+function validateUrl(value: string): string | null {
+  if (!value) {
+    return "Enter a URL";
+  }
+  try {
+    if (!ALLOWED_PROTOCOLS.includes(new URL(value).protocol)) {
+      return "Use a URL that starts with http:// or https://";
+    }
+  } catch {
+    return "Enter a valid URL, like https://example.com/docs";
+  }
+  return null;
 }
 
 export function AddWebsiteDialog({
@@ -37,39 +54,22 @@ export function AddWebsiteDialog({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-
     const trimmedUrl = url.trim();
-    if (!trimmedUrl) {
-      setError("Please enter a URL");
-      return;
-    }
-
-    // Basic URL validation
-    try {
-      const parsedUrl = new URL(trimmedUrl);
-      if (!["http:", "https:"].includes(parsedUrl.protocol)) {
-        setError("URL must use http or https protocol");
-        return;
-      }
-    } catch {
-      setError("Please enter a valid URL");
+    const validationError = validateUrl(trimmedUrl);
+    setError(validationError);
+    if (validationError) {
       return;
     }
 
     setIsSubmitting(true);
     try {
-      await createReference({
-        organizationId,
-        url: trimmedUrl,
-      });
+      await createReference({ organizationId, url: trimmedUrl });
       setUrl("");
       onOpenChange(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to add website");
-    } finally {
-      setIsSubmitting(false);
+      setError(err instanceof Error ? err.message : "Couldn’t add the website");
     }
+    setIsSubmitting(false);
   };
 
   const handleClose = () => {
@@ -82,31 +82,45 @@ export function AddWebsiteDialog({
     <Dialog onOpenChange={handleClose} open={open}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add Website Reference</DialogTitle>
+          <DialogTitle>Add website reference</DialogTitle>
           <DialogDescription>
-            Add a website URL to provide additional context for AI
-            clarifications. The content will be scraped and used to enhance
-            feedback analysis.
+            Reflet reads the page and uses it as context when the AI clarifies
+            and analyzes feedback.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="url">Website URL</Label>
-              <Input
-                id="url"
-                onChange={(e) => {
-                  setUrl(e.target.value);
-                  setError(null);
-                }}
-                placeholder="https://example.com/docs"
-                type="url"
-                value={url}
-              />
-              {error && <p className="text-destructive text-sm">{error}</p>}
-            </div>
-          </div>
+        <form
+          className="flex flex-col gap-4"
+          noValidate
+          onSubmit={handleSubmit}
+        >
+          <Field>
+            <FieldLabel htmlFor="website-reference-url">Website URL</FieldLabel>
+            <Input
+              aria-describedby={
+                error ? "website-reference-url-error" : undefined
+              }
+              aria-invalid={error ? true : undefined}
+              autoComplete="url"
+              id="website-reference-url"
+              inputMode="url"
+              onChange={(e) => {
+                setUrl(e.target.value);
+                setError(null);
+              }}
+              placeholder="https://example.com/docs"
+              spellCheck={false}
+              type="url"
+              value={url}
+            />
+            <FieldError
+              id="website-reference-url-error"
+              match={error !== null}
+              role="alert"
+            >
+              {error}
+            </FieldError>
+          </Field>
 
           <DialogFooter>
             <Button onClick={handleClose} type="button" variant="surface">
@@ -118,7 +132,10 @@ export function AddWebsiteDialog({
               type="submit"
               variant="solid"
             >
-              {isSubmitting ? "Adding..." : "Add Website"}
+              {isSubmitting ? (
+                <Spinner aria-hidden data-icon="inline-start" size="xs" />
+              ) : null}
+              {isSubmitting ? "Adding…" : "Add website"}
             </Button>
           </DialogFooter>
         </form>

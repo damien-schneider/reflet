@@ -2,9 +2,8 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { buildAgentPrompt } from "./copy-for-agents";
+import { buildAgentPrompt } from "./agent-prompt";
 
-// Mock dependencies for CopyForAgents component tests
 const mockUseQuery = vi.fn();
 vi.mock("convex/react", () => ({
   useQuery: (...args: unknown[]) => mockUseQuery(...args),

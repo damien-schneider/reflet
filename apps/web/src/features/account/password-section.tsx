@@ -3,21 +3,22 @@
 import { Button } from "@ctrl-ui/react/ui/button";
 import { toast } from "@ctrl-ui/react/ui/toast";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check } from "@phosphor-icons/react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { H3, Text } from "@/components/ui/typography";
 import {
   type UpdatePasswordForm,
   updatePasswordSchema,
 } from "@/features/account/account-schemas";
 import { PasswordInputField } from "@/features/account/password-input-field";
+import { SettingsSection } from "@/features/project/components/settings-page";
 import { authClient } from "@/lib/auth-client";
 
 interface PasswordSectionProps {
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
 }
+
+type VisibleField = "current" | "new" | "confirm";
 
 export function PasswordSection({
   isLoading,
@@ -34,15 +35,16 @@ export function PasswordSection({
       currentPassword: "",
       newPassword: "",
     },
-    mode: "onChange",
+    mode: "onTouched",
     resolver: zodResolver(updatePasswordSchema),
   });
 
-  const [showPassword, setShowPassword] = useState({
-    confirm: false,
-    current: false,
-    new: false,
-  });
+  const [visibleFields, setVisibleFields] = useState<
+    Record<VisibleField, boolean>
+  >({ confirm: false, current: false, new: false });
+
+  const toggleVisibility = (field: VisibleField) =>
+    setVisibleFields((prev) => ({ ...prev, [field]: !prev[field] }));
 
   const handleUpdatePassword = async (data: UpdatePasswordForm) => {
     setIsLoading(true);
@@ -51,82 +53,61 @@ export function PasswordSection({
         currentPassword: data.currentPassword,
         newPassword: data.newPassword,
       });
-      toast.success("Password updated successfully");
+      toast.success("Password updated");
       resetPassword();
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to update password"
       );
-    } finally {
-      setIsLoading(false);
     }
+    setIsLoading(false);
   };
 
   return (
-    <section className="space-y-6">
-      <H3 variant="section">Password</H3>
-
+    <SettingsSection description="Use at least 8 characters." title="Password">
       <form
-        className="space-y-4"
+        className="flex max-w-md flex-col gap-4"
+        noValidate
         onSubmit={handleSubmitPassword(handleUpdatePassword)}
       >
         <PasswordInputField
+          autoComplete="current-password"
           error={passwordErrors.currentPassword}
           id="currentPassword"
-          label="Current Password"
-          onTogglePassword={() =>
-            setShowPassword((prev) => ({
-              ...prev,
-              current: !prev.current,
-            }))
-          }
-          placeholder="Enter your current password"
+          label="Current password"
+          onTogglePassword={() => toggleVisibility("current")}
           register={registerPassword("currentPassword")}
-          showPassword={showPassword.current}
+          showPassword={visibleFields.current}
         />
-
         <PasswordInputField
+          autoComplete="new-password"
           error={passwordErrors.newPassword}
           id="newPassword"
-          label="New Password"
-          onTogglePassword={() =>
-            setShowPassword((prev) => ({
-              ...prev,
-              new: !prev.new,
-            }))
-          }
-          placeholder="Enter your new password"
+          label="New password"
+          onTogglePassword={() => toggleVisibility("new")}
           register={registerPassword("newPassword")}
-          showPassword={showPassword.new}
+          showPassword={visibleFields.new}
         />
-        <Text variant="caption">Password must be at least 8 characters</Text>
-
         <PasswordInputField
+          autoComplete="new-password"
           error={passwordErrors.confirmPassword}
           id="confirmPassword"
-          label="Confirm New Password"
-          onTogglePassword={() =>
-            setShowPassword((prev) => ({
-              ...prev,
-              confirm: !prev.confirm,
-            }))
-          }
-          placeholder="Confirm your new password"
+          label="Confirm new password"
+          onTogglePassword={() => toggleVisibility("confirm")}
           register={registerPassword("confirmPassword")}
-          showPassword={showPassword.confirm}
+          showPassword={visibleFields.confirm}
         />
-
-        <Button
-          className="w-full md:w-auto"
-          disabled={isLoading}
-          tone="primary"
-          type="submit"
-          variant="solid"
-        >
-          <Check className="mr-2 size-4" />
-          Update Password
-        </Button>
+        <div>
+          <Button
+            disabled={isLoading}
+            tone="primary"
+            type="submit"
+            variant="solid"
+          >
+            {isLoading ? "Updating…" : "Update password"}
+          </Button>
+        </div>
       </form>
-    </section>
+    </SettingsSection>
   );
 }

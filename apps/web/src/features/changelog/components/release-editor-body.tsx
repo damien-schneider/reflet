@@ -49,7 +49,7 @@ export function ReleaseEditorBody({
           autoFocus
           disabled={isSubmitting || isStreaming}
           onChange={onTitleChange}
-          placeholder="What's New in v1.0"
+          placeholder="What’s new in v1.0"
           value={title}
         />
       </div>
@@ -58,7 +58,10 @@ export function ReleaseEditorBody({
 
       <div className="flex-1 overflow-y-auto px-6 py-4">
         {isStreaming ? (
-          <div className="prose prose-sm dark:prose-invert max-w-none">
+          <div
+            aria-busy="true"
+            className="prose prose-sm dark:prose-invert max-w-none"
+          >
             <Streamdown caret="block" isAnimating mode="streaming">
               {streamedContent}
             </Streamdown>
@@ -68,7 +71,7 @@ export function ReleaseEditorBody({
             disabled={isSubmitting}
             minimal
             onChange={onDescriptionChange}
-            placeholder="Describe what's new in this release... Type '/' for commands, or drag and drop images/videos"
+            placeholder="Describe what’s new. Type / for blocks, or drop images and videos here."
             value={description}
           />
         )}

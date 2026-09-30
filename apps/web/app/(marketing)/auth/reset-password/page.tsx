@@ -1,304 +1,196 @@
 "use client";
 
-import { Button } from "@ctrl-ui/react/ui/button";
-import { Field, FieldError, FieldLabel } from "@ctrl-ui/react/ui/field";
+import { Button, ButtonLink } from "@ctrl-ui/react/ui/button";
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+} from "@ctrl-ui/react/ui/field";
 import { Input } from "@ctrl-ui/react/ui/input";
 import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { CheckCircle, WarningCircle } from "@phosphor-icons/react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { H1, Muted } from "@/components/ui/typography";
+import {
+  AuthPageShell,
+  AuthStatus,
+} from "@/features/auth/components/auth-page-shell";
 import { authClient } from "@/lib/auth-client";
+
+const MIN_PASSWORD_LENGTH = 8;
+const PASSWORD_LENGTH_MESSAGE = `Use at least ${MIN_PASSWORD_LENGTH} characters`;
+const RESET_ERROR_MESSAGE =
+  "Unable to reset your password. Check your connection and try again.";
 
 const resetPasswordSchema = z
   .object({
-    confirmPassword: z
-      .string()
-      .min(8, "Password must be at least 8 characters"),
-    password: z.string().min(8, "Password must be at least 8 characters"),
+    confirmPassword: z.string().min(1, "Re-enter your new password"),
+    password: z.string().min(MIN_PASSWORD_LENGTH, PASSWORD_LENGTH_MESSAGE),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
+    message: "Passwords don’t match",
     path: ["confirmPassword"],
   });
 
 type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 
 function ResetPasswordContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
-  const error = searchParams.get("error");
+  const linkError = searchParams.get("error");
 
-  const [status, setStatus] = useState<
-    "form" | "success" | "error" | "invalid"
-  >("form");
+  const [isDone, setIsDone] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-    watch,
   } = useForm<ResetPasswordFormData>({
-    defaultValues: {
-      confirmPassword: "",
-      password: "",
-    },
+    defaultValues: { confirmPassword: "", password: "" },
+    mode: "onTouched",
     resolver: zodResolver(resetPasswordSchema),
   });
 
-  const watchedPassword = watch("password");
-  const watchedConfirmPassword = watch("confirmPassword");
+  if (linkError || !token) {
+    return (
+      <AuthStatus
+        actions={
+          <ButtonLink
+            render={<Link href="/auth/forgot-password" />}
+            tone="primary"
+            variant="solid"
+          >
+            Request a new link
+          </ButtonLink>
+        }
+        icon={WarningCircle}
+        title="This link doesn’t work"
+        tone="destructive"
+      >
+        {linkError && linkError !== "invalid_token"
+          ? "Something went wrong with this reset link. Request a new one to continue."
+          : "This reset link is invalid or has expired. Request a new one to continue."}
+      </AuthStatus>
+    );
+  }
 
-  useEffect(() => {
-    if (error) {
-      setStatus("error");
-      setApiError(
-        error === "invalid_token"
-          ? "The reset link is invalid or has expired."
-          : "An error occurred."
-      );
-    } else if (!token) {
-      setStatus("invalid");
-    }
-  }, [error, token]);
+  if (isDone) {
+    return (
+      <AuthStatus
+        actions={
+          <ButtonLink
+            render={<Link href="/dashboard" />}
+            tone="primary"
+            variant="solid"
+          >
+            Sign in
+          </ButtonLink>
+        }
+        icon={CheckCircle}
+        title="Password updated"
+        tone="success"
+      >
+        Your password has been reset. Sign in with your new password.
+      </AuthStatus>
+    );
+  }
 
   const onSubmit = async (data: ResetPasswordFormData) => {
-    if (!token) {
-      setApiError("Reset token is missing.");
-      return;
-    }
-
     setApiError(null);
-
     try {
       const result = await authClient.resetPassword({
         newPassword: data.password,
         token,
       });
-
       if (result.error) {
-        setApiError(
-          result.error.message ?? "An error occurred. Please try again."
-        );
+        setApiError(result.error.message ?? RESET_ERROR_MESSAGE);
         return;
       }
-
-      setStatus("success");
+      setIsDone(true);
     } catch {
-      setApiError("An error occurred. Please try again.");
+      setApiError(RESET_ERROR_MESSAGE);
     }
   };
 
-  const isFormValid = () =>
-    watchedPassword.length >= 8 &&
-    watchedConfirmPassword.length >= 8 &&
-    watchedPassword === watchedConfirmPassword;
-
-  if (status === "invalid") {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="w-full max-w-md p-6 text-center">
-          <div className="mb-6 flex justify-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive-subtle">
-              <svg
-                aria-label="Error icon"
-                className="h-8 w-8 text-destructive-text"
-                fill="none"
-                role="img"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  d="M6 18L18 6M6 6l12 12"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                />
-              </svg>
-            </div>
-          </div>
-          <H1 className="mb-2" variant="page">
-            Invalid link
-          </H1>
-          <Muted className="mb-6">
-            This reset link is invalid. Please request a new link.
-          </Muted>
-          <Link href="/auth/forgot-password">
-            <Button tone="primary" variant="solid">
-              Request a new link
-            </Button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  if (status === "error") {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="w-full max-w-md p-6 text-center">
-          <div className="mb-6 flex justify-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive-subtle">
-              <svg
-                aria-label="Error icon"
-                className="h-8 w-8 text-destructive-text"
-                fill="none"
-                role="img"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  d="M6 18L18 6M6 6l12 12"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                />
-              </svg>
-            </div>
-          </div>
-          <H1 className="mb-2" variant="page">
-            Error
-          </H1>
-          <Muted className="mb-6">
-            {apiError ?? "The reset link is invalid or has expired."}
-          </Muted>
-          <Link href="/auth/forgot-password">
-            <Button tone="primary" variant="solid">
-              Request a new link
-            </Button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  if (status === "success") {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="w-full max-w-md p-6 text-center">
-          <div className="mb-6 flex justify-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-success-subtle">
-              <svg
-                aria-label="Success icon"
-                className="h-8 w-8 text-success-text"
-                fill="none"
-                role="img"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  d="M5 13l4 4L19 7"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                />
-              </svg>
-            </div>
-          </div>
-          <H1 className="mb-2" variant="page">
-            Password reset
-          </H1>
-          <Muted className="mb-6">
-            Your password has been successfully reset. You can now sign in with
-            your new password.
-          </Muted>
-          <Button
-            className="w-full"
-            onClick={() => router.push("/")}
-            tone="primary"
-            variant="solid"
-          >
-            Sign in
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="w-full max-w-md p-6">
-        <H1 className="mb-2 text-center" variant="page">
-          New password
-        </H1>
-        <Muted className="mb-6 text-center">
-          Choose a new password for your account.
-        </Muted>
+    <AuthPageShell>
+      <H1 className="mb-2 text-center" variant="page">
+        Choose a new password
+      </H1>
+      <Muted className="mb-6 text-center">
+        You’ll use it the next time you sign in.
+      </Muted>
 
-        <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
-          <Field className="relative">
-            <FieldLabel htmlFor="password">New password</FieldLabel>
-            <Input
-              disabled={isSubmitting}
-              id="password"
-              type="password"
-              {...register("password")}
-            />
-            <FieldError
-              className="absolute top-full left-0"
-              match={Boolean(errors.password?.message)}
-            >
-              {errors.password?.message}
-            </FieldError>
-          </Field>
-
-          <Field className="relative">
-            <FieldLabel htmlFor="confirmPassword">Confirm password</FieldLabel>
-            <Input
-              disabled={isSubmitting}
-              id="confirmPassword"
-              type="password"
-              {...register("confirmPassword")}
-            />
-            <FieldError
-              className="absolute top-full left-0"
-              match={Boolean(errors.confirmPassword?.message)}
-            >
-              {errors.confirmPassword?.message}
-            </FieldError>
-          </Field>
-
-          {apiError && (
-            <Field>
-              <FieldError className="mt-2" match>
-                {apiError}
-              </FieldError>
-            </Field>
+      <form className="space-y-2" noValidate onSubmit={handleSubmit(onSubmit)}>
+        <Field invalid={Boolean(errors.password)}>
+          <FieldLabel htmlFor="password">New password</FieldLabel>
+          <Input
+            autoComplete="new-password"
+            disabled={isSubmitting}
+            id="password"
+            type="password"
+            {...register("password")}
+          />
+          {errors.password ? (
+            <FieldError match>{errors.password.message}</FieldError>
+          ) : (
+            <FieldDescription className="min-h-[1lh] text-caption">
+              {PASSWORD_LENGTH_MESSAGE}.
+            </FieldDescription>
           )}
+        </Field>
 
-          <Button
-            className="mt-6 w-full"
-            disabled={isSubmitting || !isFormValid()}
-            tone="primary"
-            type="submit"
-            variant="solid"
+        <Field invalid={Boolean(errors.confirmPassword)}>
+          <FieldLabel htmlFor="confirmPassword">
+            Confirm new password
+          </FieldLabel>
+          <Input
+            autoComplete="new-password"
+            disabled={isSubmitting}
+            id="confirmPassword"
+            type="password"
+            {...register("confirmPassword")}
+          />
+          <FieldError match={Boolean(errors.confirmPassword?.message)}>
+            {errors.confirmPassword?.message}
+          </FieldError>
+        </Field>
+
+        <p
+          className="min-h-[1lh] text-caption text-destructive-text"
+          role="alert"
+        >
+          {apiError}
+        </p>
+
+        <Button
+          className="w-full"
+          disabled={isSubmitting}
+          tone="primary"
+          type="submit"
+          variant="solid"
+        >
+          {isSubmitting && <Spinner data-icon="inline-start" size="xs" />}
+          {isSubmitting ? "Resetting…" : "Reset password"}
+        </Button>
+
+        <div className="pt-4 text-center">
+          <Link
+            className="font-medium text-brand-text text-sm hover:underline"
+            href="/dashboard"
           >
-            {isSubmitting ? (
-              <>
-                <Spinner className="mr-2 h-4 w-4" />
-                Resetting...
-              </>
-            ) : (
-              "Reset password"
-            )}
-          </Button>
-
-          <div className="text-center">
-            <Link
-              className="font-medium text-brand-text text-sm hover:underline"
-              href="/"
-            >
-              Back to sign in
-            </Link>
-          </div>
-        </form>
-      </div>
-    </div>
+            Back to sign in
+          </Link>
+        </div>
+      </form>
+    </AuthPageShell>
   );
 }
 
@@ -306,9 +198,9 @@ export default function ResetPasswordPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center">
-          <Spinner className="h-8 w-8" />
-        </div>
+        <AuthPageShell className="flex justify-center">
+          <Spinner size="lg" />
+        </AuthPageShell>
       }
     >
       <ResetPasswordContent />

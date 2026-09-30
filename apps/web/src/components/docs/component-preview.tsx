@@ -1,63 +1,15 @@
 "use client";
 
-import { Button } from "@ctrl-ui/react/ui/button";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "@ctrl-ui/react/ui/tabs";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@ctrl-ui/react/ui/tooltip";
-import { Check, Copy } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
 import { useState } from "react";
-
+import { CopyButton } from "@/components/copy-button";
 import { cn } from "@/lib/utils";
-import { useCopyFeedback } from "./use-copy-feedback";
+import { CodeSurface } from "./code-block";
 
-function CopyButton({ text, className }: { text: string; className?: string }) {
-  const { copied, copy } = useCopyFeedback();
-  const label = copied ? "Copied" : "Copy to clipboard";
-
-  return (
-    <Tooltip>
-      <TooltipTrigger
-        render={
-          <Button
-            aria-label={label}
-            className={cn("size-10", copied && "text-success-text", className)}
-            iconOnly
-            onClick={() => copy(text)}
-            size="sm"
-            variant="ghost"
-          >
-            {copied ? (
-              <Check className="size-3.5" weight="bold" />
-            ) : (
-              <Copy className="size-3.5" />
-            )}
-          </Button>
-        }
-      />
-      <TooltipContent>{label}</TooltipContent>
-    </Tooltip>
-  );
-}
-
-function CodeSurface({
-  code,
-  maxHeightClassName,
-}: {
-  code: string;
-  maxHeightClassName?: string;
-}) {
-  return (
-    <div className="overflow-auto bg-band p-4">
-      <pre className={cn("text-sm leading-relaxed", maxHeightClassName)}>
-        <code className="text-band-foreground">{code}</code>
-      </pre>
-    </div>
-  );
-}
+const FRAME = "overflow-hidden rounded-lg border border-border";
+const TAB_BAR =
+  "flex items-center justify-between gap-2 border-border border-b bg-card p-1.5";
 
 interface ComponentPreviewProps {
   children: ReactNode;
@@ -76,50 +28,26 @@ function ComponentPreview({
 
   return (
     <Tabs
-      className={cn(
-        "overflow-hidden rounded-lg border border-border",
-        className
-      )}
+      className={cn(FRAME, className)}
       onValueChange={setActiveTab}
       value={activeTab}
     >
-      <div className="flex items-center justify-between border-border border-b bg-muted/30 pr-2">
-        <TabsList className="border-none bg-transparent">
+      <div className={TAB_BAR}>
+        <TabsList size="sm">
           <TabsTab value="preview">Preview</TabsTab>
           <TabsTab value="code">Code</TabsTab>
         </TabsList>
-        {activeTab === "code" && <CopyButton text={code} />}
+        {activeTab === "code" && <CopyButton label="Copy code" value={code} />}
       </div>
       <TabsPanel value="preview">
-        <div className="flex min-h-[200px] items-center justify-center bg-background p-8">
+        <div className="flex min-h-52 items-center justify-center bg-background p-6 sm:p-8">
           {children}
         </div>
       </TabsPanel>
-      <TabsPanel value="code">
-        <CodeSurface code={code} />
+      <TabsPanel className="bg-secondary" value="code">
+        <CodeSurface code={code} maxHeightClassName="max-h-[28rem]" />
       </TabsPanel>
     </Tabs>
-  );
-}
-
-interface CodeBlockProps {
-  className?: string;
-  code: string;
-}
-
-function CodeBlock({ code, className }: CodeBlockProps) {
-  return (
-    <div
-      className={cn(
-        "relative overflow-hidden rounded-lg border border-border",
-        className
-      )}
-    >
-      <div className="absolute top-2 right-2 z-10">
-        <CopyButton text={code} />
-      </div>
-      <CodeSurface code={code} />
-    </div>
   );
 }
 
@@ -133,31 +61,32 @@ type InstallTab = "cli" | "manual";
 
 function InstallTabs({ cliCommand, manualCode, className }: InstallTabsProps) {
   const [activeTab, setActiveTab] = useState<InstallTab>("cli");
+  const isCli = activeTab === "cli";
 
   return (
     <Tabs
-      className={cn(
-        "overflow-hidden rounded-lg border border-border",
-        className
-      )}
+      className={cn(FRAME, className)}
       onValueChange={setActiveTab}
       value={activeTab}
     >
-      <div className="flex items-center justify-between border-border border-b bg-muted/30 pr-2">
-        <TabsList className="border-none bg-transparent">
+      <div className={TAB_BAR}>
+        <TabsList size="sm">
           <TabsTab value="cli">CLI</TabsTab>
           <TabsTab value="manual">Manual</TabsTab>
         </TabsList>
-        <CopyButton text={activeTab === "cli" ? cliCommand : manualCode} />
+        <CopyButton
+          label={isCli ? "Copy command" : "Copy source"}
+          value={isCli ? cliCommand : manualCode}
+        />
       </div>
-      <TabsPanel value="cli">
+      <TabsPanel className="bg-secondary" value="cli">
         <CodeSurface code={cliCommand} />
       </TabsPanel>
-      <TabsPanel value="manual">
-        <CodeSurface code={manualCode} maxHeightClassName="max-h-[400px]" />
+      <TabsPanel className="bg-secondary" value="manual">
+        <CodeSurface code={manualCode} maxHeightClassName="max-h-[28rem]" />
       </TabsPanel>
     </Tabs>
   );
 }
 
-export { CodeBlock, ComponentPreview, CopyButton, InstallTabs };
+export { ComponentPreview, InstallTabs };

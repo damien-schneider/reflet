@@ -71,7 +71,7 @@ describe("repository selection", () => {
 
   it("waits for repositories before offering selection", () => {
     renderSelector({ loadingRepos: true });
-    expect(screen.getByText("Loading repositories...")).toBeVisible();
+    expect(screen.getByText("Loading repositories…")).toBeVisible();
     expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
   });
 
@@ -86,7 +86,7 @@ describe("repository selection", () => {
   it("requires a selection before connecting", async () => {
     const user = userEvent.setup();
     const { onConnectRepository } = renderSelector();
-    const connect = screen.getByRole("button", { name: "Connect Repository" });
+    const connect = screen.getByRole("button", { name: "Connect repository" });
     expect(connect).toBeDisabled();
     await user.click(connect);
     expect(onConnectRepository).not.toHaveBeenCalled();
@@ -101,9 +101,17 @@ describe("repository selection", () => {
     expect(screen.getByText("Connection failed. Try again.")).toBeVisible();
     expect(screen.getByRole("combobox")).toHaveValue("Control Ui");
     await user.click(
-      screen.getByRole("button", { name: "Connect Repository" })
+      screen.getByRole("button", { name: "Connect repository" })
     );
     expect(onConnectRepository).toHaveBeenCalledOnce();
+  });
+
+  it("offers a retry when repositories fail to load", async () => {
+    const user = userEvent.setup();
+    const onRetry = vi.fn();
+    renderSelector({ error: "GitHub didn’t respond.", onRetry });
+    await user.click(screen.getByRole("button", { name: "Try again" }));
+    expect(onRetry).toHaveBeenCalledOnce();
   });
 
   it("lets an admin change the connected repository", async () => {
@@ -127,7 +135,7 @@ describe("repository selection", () => {
         repositoryFullName: "acme/control-ui",
       });
       expect(
-        screen.queryByRole("button", { name: "Connect Repository" })
+        screen.queryByRole("button", { name: "Connect repository" })
       ).not.toBeInTheDocument();
       expect(
         screen.queryByRole("button", { name: "Change" })

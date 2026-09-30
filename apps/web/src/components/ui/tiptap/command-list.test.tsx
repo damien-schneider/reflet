@@ -1,5 +1,7 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
+import { createRef, type RefObject } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { CommandListHandle } from "./command-items";
 
 vi.mock("@/lib/utils", () => ({
   cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
@@ -34,6 +36,11 @@ const createMockItems = () => [
   },
 ];
 
+const pressKey = (ref: RefObject<CommandListHandle | null>, key: string) =>
+  ref.current?.onKeyDown({
+    event: new KeyboardEvent("keydown", { cancelable: true, key }),
+  });
+
 describe("CommandList", () => {
   let CommandList: typeof import("./command-list").CommandList;
 
@@ -44,25 +51,13 @@ describe("CommandList", () => {
   });
 
   it("returns null when items array is empty", () => {
-    const { container } = render(
-      <CommandList
-        command={vi.fn()}
-        items={[]}
-        onRegisterKeyHandler={vi.fn()}
-      />
-    );
+    const { container } = render(<CommandList command={vi.fn()} items={[]} />);
     expect(container.innerHTML).toBe("");
   });
 
   it("renders all items with titles and descriptions", () => {
     const items = createMockItems();
-    render(
-      <CommandList
-        command={vi.fn()}
-        items={items}
-        onRegisterKeyHandler={vi.fn()}
-      />
-    );
+    render(<CommandList command={vi.fn()} items={items} />);
 
     expect(screen.getByText("Heading 1")).toBeInTheDocument();
     expect(screen.getByText("Large section heading")).toBeInTheDocument();
@@ -74,13 +69,7 @@ describe("CommandList", () => {
 
   it("renders icons for each item", () => {
     const items = createMockItems();
-    render(
-      <CommandList
-        command={vi.fn()}
-        items={items}
-        onRegisterKeyHandler={vi.fn()}
-      />
-    );
+    render(<CommandList command={vi.fn()} items={items} />);
 
     expect(screen.getByTestId("icon-heading-1")).toBeInTheDocument();
     expect(screen.getByTestId("icon-bullet-list")).toBeInTheDocument();
@@ -89,13 +78,7 @@ describe("CommandList", () => {
 
   it("renders the container with data-slot attribute", () => {
     const items = createMockItems();
-    render(
-      <CommandList
-        command={vi.fn()}
-        items={items}
-        onRegisterKeyHandler={vi.fn()}
-      />
-    );
+    render(<CommandList command={vi.fn()} items={items} />);
 
     const menu = document.querySelector('[data-slot="slash-command-menu"]');
     expect(menu).toBeInTheDocument();
@@ -103,28 +86,17 @@ describe("CommandList", () => {
 
   it("highlights first item by default", () => {
     const items = createMockItems();
-    render(
-      <CommandList
-        command={vi.fn()}
-        items={items}
-        onRegisterKeyHandler={vi.fn()}
-      />
-    );
+    render(<CommandList command={vi.fn()} items={items} />);
 
     const buttons = screen.getAllByRole("button");
-    expect(buttons[0].className).toContain("bg-muted");
+    expect(buttons[0]).toHaveAttribute("data-active", "true");
+    expect(buttons[1]).not.toHaveAttribute("data-active", "true");
   });
 
   it("calls command with correct item on click", () => {
     const items = createMockItems();
     const command = vi.fn();
-    render(
-      <CommandList
-        command={command}
-        items={items}
-        onRegisterKeyHandler={vi.fn()}
-      />
-    );
+    render(<CommandList command={command} items={items} />);
 
     fireEvent.click(screen.getByText("Bullet List"));
     expect(command).toHaveBeenCalledWith(items[1]);
@@ -132,13 +104,7 @@ describe("CommandList", () => {
 
   it("prevents default on mouseDown", () => {
     const items = createMockItems();
-    render(
-      <CommandList
-        command={vi.fn()}
-        items={items}
-        onRegisterKeyHandler={vi.fn()}
-      />
-    );
+    render(<CommandList command={vi.fn()} items={items} />);
 
     const button = screen.getAllByRole("button")[0];
     const event = new MouseEvent("mousedown", { bubbles: true });
@@ -147,151 +113,98 @@ describe("CommandList", () => {
     expect(preventDefaultSpy).toHaveBeenCalled();
   });
 
-  it("registers keyboard handler on mount", () => {
-    const items = createMockItems();
-    const onRegisterKeyHandler = vi.fn();
+  it("exposes a keyboard handle via ref", () => {
+    const ref = createRef<CommandListHandle>();
     render(
-      <CommandList
-        command={vi.fn()}
-        items={items}
-        onRegisterKeyHandler={onRegisterKeyHandler}
-      />
+      <CommandList command={vi.fn()} items={createMockItems()} ref={ref} />
     );
 
-    expect(onRegisterKeyHandler).toHaveBeenCalledWith(expect.any(Function));
+    expect(ref.current?.onKeyDown).toEqual(expect.any(Function));
   });
 
   describe("keyboard navigation", () => {
     it("ArrowDown moves selection down", () => {
-      const items = createMockItems();
-      let keyHandler: (event: KeyboardEvent) => boolean = () => false;
-      const onRegisterKeyHandler = (
-        handler: (event: KeyboardEvent) => boolean
-      ) => {
-        keyHandler = handler;
-      };
-
+      const ref = createRef<CommandListHandle>();
       render(
-        <CommandList
-          command={vi.fn()}
-          items={items}
-          onRegisterKeyHandler={onRegisterKeyHandler}
-        />
+        <CommandList command={vi.fn()} items={createMockItems()} ref={ref} />
       );
 
-      const result = keyHandler(
-        new KeyboardEvent("keydown", { key: "ArrowDown" })
-      );
+      let result: boolean | undefined = false;
+      act(() => {
+        result = pressKey(ref, "ArrowDown");
+      });
       expect(result).toBe(true);
+      expect(screen.getAllByRole("button")[1]).toHaveAttribute(
+        "data-active",
+        "true"
+      );
     });
 
     it("ArrowUp moves selection up (wraps around)", () => {
-      const items = createMockItems();
-      let keyHandler: (event: KeyboardEvent) => boolean = () => false;
-      const onRegisterKeyHandler = (
-        handler: (event: KeyboardEvent) => boolean
-      ) => {
-        keyHandler = handler;
-      };
-
+      const ref = createRef<CommandListHandle>();
       render(
-        <CommandList
-          command={vi.fn()}
-          items={items}
-          onRegisterKeyHandler={onRegisterKeyHandler}
-        />
+        <CommandList command={vi.fn()} items={createMockItems()} ref={ref} />
       );
 
-      const result = keyHandler(
-        new KeyboardEvent("keydown", { key: "ArrowUp" })
-      );
+      let result: boolean | undefined = false;
+      act(() => {
+        result = pressKey(ref, "ArrowUp");
+      });
       expect(result).toBe(true);
+      expect(screen.getAllByRole("button")[2]).toHaveAttribute(
+        "data-active",
+        "true"
+      );
     });
 
     it("Enter selects the current item", () => {
       const items = createMockItems();
       const command = vi.fn();
-      let keyHandler: (event: KeyboardEvent) => boolean = () => false;
-      const onRegisterKeyHandler = (
-        handler: (event: KeyboardEvent) => boolean
-      ) => {
-        keyHandler = handler;
-      };
+      const ref = createRef<CommandListHandle>();
+      render(<CommandList command={command} items={items} ref={ref} />);
 
-      render(
-        <CommandList
-          command={command}
-          items={items}
-          onRegisterKeyHandler={onRegisterKeyHandler}
-        />
-      );
+      expect(pressKey(ref, "Enter")).toBe(true);
+      expect(command).toHaveBeenCalledWith(items[0]);
+    });
+
+    it("lets Enter through when no command matches", () => {
+      const ref = createRef<CommandListHandle>();
+      render(<CommandList command={vi.fn()} items={[]} ref={ref} />);
 
       const event = new KeyboardEvent("keydown", {
         cancelable: true,
         key: "Enter",
       });
-      const result = keyHandler(event);
-      expect(result).toBe(true);
-      expect(command).toHaveBeenCalledWith(items[0]);
+      expect(ref.current?.onKeyDown({ event })).toBe(false);
+      expect(event.defaultPrevented).toBe(false);
     });
 
     it("unhandled key returns false", () => {
-      const items = createMockItems();
-      let keyHandler: (event: KeyboardEvent) => boolean = () => false;
-      const onRegisterKeyHandler = (
-        handler: (event: KeyboardEvent) => boolean
-      ) => {
-        keyHandler = handler;
-      };
-
+      const ref = createRef<CommandListHandle>();
       render(
-        <CommandList
-          command={vi.fn()}
-          items={items}
-          onRegisterKeyHandler={onRegisterKeyHandler}
-        />
+        <CommandList command={vi.fn()} items={createMockItems()} ref={ref} />
       );
 
-      const result = keyHandler(new KeyboardEvent("keydown", { key: "Tab" }));
-      expect(result).toBe(false);
+      expect(pressKey(ref, "Tab")).toBe(false);
     });
   });
 
   it("resets selected index when items change", () => {
     const items = createMockItems();
     const command = vi.fn();
-    let keyHandler: (event: KeyboardEvent) => boolean = () => false;
-    const onRegisterKeyHandler = (
-      handler: (event: KeyboardEvent) => boolean
-    ) => {
-      keyHandler = handler;
-    };
-
+    const ref = createRef<CommandListHandle>();
     const { rerender } = render(
-      <CommandList
-        command={command}
-        items={items}
-        onRegisterKeyHandler={onRegisterKeyHandler}
-      />
+      <CommandList command={command} items={items} ref={ref} />
     );
 
-    // Move down
-    keyHandler(new KeyboardEvent("keydown", { key: "ArrowDown" }));
+    act(() => {
+      pressKey(ref, "ArrowDown");
+    });
 
-    // Change items
     const newItems = [items[0]];
-    rerender(
-      <CommandList
-        command={command}
-        items={newItems}
-        onRegisterKeyHandler={onRegisterKeyHandler}
-      />
-    );
+    rerender(<CommandList command={command} items={newItems} ref={ref} />);
 
-    // After items change, selection should reset to 0
-    keyHandler(
-      new KeyboardEvent("keydown", { cancelable: true, key: "Enter" })
-    );
+    pressKey(ref, "Enter");
     expect(command).toHaveBeenCalledWith(newItems[0]);
   });
 });

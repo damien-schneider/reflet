@@ -1,12 +1,17 @@
 export type GroupingStrategy = "auto" | "tags" | "weekly";
 
-export const ACTIVE_STATUSES = [
+const ACTIVE_STATUSES = [
   "pending",
   "fetching_tags",
   "fetching_commits",
   "generating",
   "creating_releases",
 ] as const;
+
+export const isActiveStatus = (
+  status: string
+): status is (typeof ACTIVE_STATUSES)[number] =>
+  ACTIVE_STATUSES.some((active) => active === status);
 
 export const PHASE_STEPS = [
   { key: "fetching_tags", label: "Fetching tags" },

@@ -4,13 +4,13 @@ import { toast } from "@ctrl-ui/react/ui/toast";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 
 interface UseAgentApiKeyProps {
   organizationId: Id<"organizations">;
 }
 
-interface UseAgentApiKeyReturn {
+export interface UseAgentApiKeyReturn {
   clearSecretKey: () => void;
   handleGenerate: () => Promise<void>;
   hasExistingKey: boolean | undefined;
@@ -33,7 +33,7 @@ export function useAgentApiKey({
 
   const hasExistingKey = apiKeys === undefined ? undefined : apiKeys.length > 0;
 
-  const handleGenerate = useCallback(async () => {
+  const handleGenerate = async () => {
     setIsGenerating(true);
     try {
       const result = await generateApiKeysMutation({
@@ -41,22 +41,16 @@ export function useAgentApiKey({
         organizationId,
       });
       setNewSecretKey(result.secretKey);
-      toast.success("API key generated");
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to generate API key"
+        error instanceof Error ? error.message : "Couldn’t generate an API key"
       );
-    } finally {
-      setIsGenerating(false);
     }
-  }, [organizationId, generateApiKeysMutation]);
-
-  const clearSecretKey = useCallback(() => {
-    setNewSecretKey(null);
-  }, []);
+    setIsGenerating(false);
+  };
 
   return {
-    clearSecretKey,
+    clearSecretKey: () => setNewSecretKey(null),
     handleGenerate,
     hasExistingKey,
     isGenerating,

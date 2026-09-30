@@ -188,7 +188,7 @@ describe("TagCard", () => {
     const deleteItem = items.find((item) =>
       item.textContent?.includes("Delete")
     );
-    expect(deleteItem).toHaveClass("text-destructive");
+    expect(deleteItem).toHaveClass("menu-item-danger");
   });
 
   it("shows trash icon in delete option", () => {

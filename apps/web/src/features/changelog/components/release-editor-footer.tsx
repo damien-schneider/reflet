@@ -1,17 +1,17 @@
+import { Alert, AlertDescription, AlertTitle } from "@ctrl-ui/react/ui/alert";
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import { Check, CloudArrowUp, WarningCircle } from "@phosphor-icons/react";
 import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
 import Link from "next/link";
 import { buildGitHubInstallUrl } from "@/features/github/lib/github-install-url";
-import { cn } from "@/lib/utils";
 
-export function pushButtonLabel(status?: string): string {
+function pushButtonLabel(status?: string): string {
   if (status === "pending") {
     return "Pushing…";
   }
   if (status === "failed") {
-    return "Retry Push to GitHub";
+    return "Retry push to GitHub";
   }
   return "Push to GitHub";
 }
@@ -55,112 +55,167 @@ export function ReleaseEditorFooter({
   onCancel,
   userId,
 }: ReleaseEditorFooterProps) {
-  const getPublishLabel = (): string => {
-    if (isPublished) {
-      return "Unpublish";
-    }
-    if (isScheduled) {
-      return "Cancel Schedule";
-    }
-    return "Publish";
-  };
+  const githubHtmlUrl = isLinkedToGithub ? release?.githubHtmlUrl : undefined;
 
-  const getPrimaryAction = () => {
-    if (isPublished) {
-      return onUnpublish;
-    }
-    if (isScheduled) {
-      return onCancelSchedule;
-    }
-    return onPublish;
-  };
-
-  const publishButtonLabel = getPublishLabel();
-
-  const handlePrimaryAction = getPrimaryAction();
   return (
-    <div
-      className={cn("border-t bg-muted/30 px-6 py-4", "flex flex-col gap-3")}
-    >
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <Button
+    <div className="flex flex-col gap-3 border-t bg-muted/30 px-6 py-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <PrimaryPublishButton
             disabled={isSubmitting || isStreaming || titleEmpty}
-            onClick={handlePrimaryAction}
-            size="sm"
-            tone={isPublished || isScheduled ? "neutral" : "primary"}
-            type="button"
-            variant={isPublished || isScheduled ? "surface" : "solid"}
-          >
-            {publishButtonLabel}
-          </Button>
+            isPublished={isPublished}
+            isScheduled={isScheduled}
+            isSubmitting={isSubmitting}
+            onCancelSchedule={onCancelSchedule}
+            onPublish={onPublish}
+            onUnpublish={onUnpublish}
+          />
 
           {canPushToGithub && (
-            <Button
-              disabled={isSubmitting || release?.githubPushStatus === "pending"}
-              onClick={onPushToGithub}
-              size="xs"
-              type="button"
-              variant="surface"
-            >
-              {release?.githubPushStatus === "pending" ? (
-                <Spinner className="mr-1.5" size="xs" />
-              ) : (
-                <CloudArrowUp className="mr-1.5 h-3.5 w-3.5" />
-              )}
-              {pushButtonLabel(release?.githubPushStatus)}
-            </Button>
+            <PushToGithubButton
+              isSubmitting={isSubmitting}
+              onPushToGithub={onPushToGithub}
+              pushStatus={release?.githubPushStatus}
+            />
           )}
 
-          {isLinkedToGithub && release?.githubHtmlUrl && (
-            <a
-              className="flex items-center gap-1.5 text-sm text-success-text"
-              href={release.githubHtmlUrl}
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              <Check className="h-3.5 w-3.5" />
-              Linked to GitHub
-            </a>
-          )}
+          {githubHtmlUrl && <ViewOnGithubLink href={githubHtmlUrl} />}
         </div>
 
         <Button
           disabled={isSubmitting || isStreaming}
           onClick={onCancel}
-          size="xs"
+          size="sm"
           type="button"
-          variant="surface"
+          variant="ghost"
         >
-          Cancel
+          Done
         </Button>
       </div>
 
       {isPermissionError && (
-        <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2.5">
-          <WarningCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
-          <div className="text-sm">
-            <p className="font-medium text-destructive">
-              GitHub permissions insufficient
-            </p>
-            <p className="mt-0.5 text-muted-foreground">
-              Reconnect your GitHub App to grant the required permissions.
-            </p>
-            <Link
-              className="mt-1 inline-block font-medium text-primary text-xs hover:underline"
-              href={
-                buildGitHubInstallUrl({
-                  organizationId,
-                  orgSlug,
-                  userId,
-                }) ?? "#"
-              }
-            >
-              Reconnect GitHub
-            </Link>
-          </div>
-        </div>
+        <GithubPermissionAlert
+          reconnectUrl={buildGitHubInstallUrl({
+            organizationId,
+            orgSlug,
+            userId,
+          })}
+        />
       )}
     </div>
+  );
+}
+
+interface PrimaryPublishButtonProps {
+  disabled: boolean;
+  isPublished: boolean;
+  isScheduled: boolean;
+  isSubmitting: boolean;
+  onCancelSchedule: () => void;
+  onPublish: () => void;
+  onUnpublish: () => void;
+}
+
+function PrimaryPublishButton({
+  disabled,
+  isPublished,
+  isScheduled,
+  isSubmitting,
+  onCancelSchedule,
+  onPublish,
+  onUnpublish,
+}: PrimaryPublishButtonProps) {
+  const isLive = isPublished || isScheduled;
+  let label = "Publish";
+  let handleClick = onPublish;
+  if (isPublished) {
+    label = "Unpublish";
+    handleClick = onUnpublish;
+  } else if (isScheduled) {
+    label = "Cancel schedule";
+    handleClick = onCancelSchedule;
+  }
+
+  return (
+    <Button
+      disabled={disabled}
+      onClick={handleClick}
+      size="sm"
+      tone={isLive ? "neutral" : "primary"}
+      type="button"
+      variant={isLive ? "surface" : "solid"}
+    >
+      {isSubmitting ? <Spinner data-icon="inline-start" size="xs" /> : null}
+      {label}
+    </Button>
+  );
+}
+
+function PushToGithubButton({
+  isSubmitting,
+  onPushToGithub,
+  pushStatus,
+}: {
+  isSubmitting: boolean;
+  onPushToGithub: () => void;
+  pushStatus?: string;
+}) {
+  const isPushPending = pushStatus === "pending";
+
+  return (
+    <Button
+      disabled={isSubmitting || isPushPending}
+      onClick={onPushToGithub}
+      size="sm"
+      type="button"
+      variant="surface"
+    >
+      {isPushPending ? (
+        <Spinner data-icon="inline-start" size="xs" />
+      ) : (
+        <CloudArrowUp aria-hidden="true" className="size-4" />
+      )}
+      {pushButtonLabel(pushStatus)}
+    </Button>
+  );
+}
+
+function ViewOnGithubLink({ href }: { href: string }) {
+  return (
+    <a
+      className="flex items-center gap-1.5 text-sm text-success-text underline-offset-4 hover:underline"
+      href={href}
+      rel="noopener noreferrer"
+      target="_blank"
+    >
+      <Check aria-hidden="true" className="size-3.5" />
+      View on GitHub
+    </a>
+  );
+}
+
+function GithubPermissionAlert({
+  reconnectUrl,
+}: {
+  reconnectUrl: string | undefined;
+}) {
+  return (
+    <Alert variant="destructive">
+      <WarningCircle aria-hidden="true" />
+      <AlertTitle>GitHub can’t accept this release</AlertTitle>
+      <AlertDescription>
+        The Reflet GitHub App is missing permissions.{" "}
+        {reconnectUrl ? (
+          <Link
+            className="font-medium underline underline-offset-4"
+            href={reconnectUrl}
+          >
+            Reconnect GitHub
+          </Link>
+        ) : (
+          "Reconnect it from project settings to push releases."
+        )}
+      </AlertDescription>
+    </Alert>
   );
 }

@@ -5,7 +5,7 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import Image from "next/image";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { TiptapTitleEditor } from "@/components/ui/tiptap/title-editor";
 
@@ -38,42 +38,24 @@ export function FeedbackContent({
 }: FeedbackContentProps) {
   const updateFeedback = useMutation(api.feedback.mutations.update);
 
-  // Local state for unsaved changes
   const [editedTitle, setEditedTitle] = useState(title);
   const [editedDescription, setEditedDescription] = useState(description);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [syncedProps, setSyncedProps] = useState({ description, title });
 
-  // Sync local state when props change
-  useEffect(() => {
+  if (syncedProps.title !== title || syncedProps.description !== description) {
+    setSyncedProps({ description, title });
     setEditedTitle(title);
     setEditedDescription(description);
-    setHasUnsavedChanges(false);
-  }, [title, description]);
+  }
 
-  const handleTitleChange = useCallback(
-    (newTitle: string) => {
-      setEditedTitle(newTitle);
-      setHasUnsavedChanges(
-        newTitle !== title || editedDescription !== description
-      );
-    },
-    [title, description, editedDescription]
-  );
+  const hasUnsavedChanges =
+    editedTitle !== title || editedDescription !== description;
 
-  const handleDescriptionChange = useCallback(
-    (newDescription: string) => {
-      setEditedDescription(newDescription);
-      setHasUnsavedChanges(
-        editedTitle !== title || newDescription !== description
-      );
-    },
-    [title, description, editedTitle]
-  );
-
-  const handleSave = useCallback(async () => {
+  const handleSave = async () => {
+    const trimmedTitle = editedTitle.trim();
     const updates: { title?: string; description?: string } = {};
-    if (editedTitle.trim() !== title) {
-      updates.title = editedTitle.trim();
+    if (trimmedTitle !== title) {
+      updates.title = trimmedTitle;
     }
     if (editedDescription !== description) {
       updates.description = editedDescription;
@@ -81,21 +63,13 @@ export function FeedbackContent({
     if (Object.keys(updates).length > 0) {
       await updateFeedback({ id: feedbackId, ...updates });
     }
-    setHasUnsavedChanges(false);
-  }, [
-    feedbackId,
-    editedTitle,
-    editedDescription,
-    title,
-    description,
-    updateFeedback,
-  ]);
+    setEditedTitle(trimmedTitle);
+  };
 
-  const handleCancel = useCallback(() => {
+  const handleCancel = () => {
     setEditedTitle(title);
     setEditedDescription(description);
-    setHasUnsavedChanges(false);
-  }, [title, description]);
+  };
 
   return (
     <div className="space-y-4">
@@ -103,7 +77,7 @@ export function FeedbackContent({
       <TiptapTitleEditor
         className="font-semibold text-xl leading-tight"
         disabled={!isAdmin}
-        onChange={handleTitleChange}
+        onChange={setEditedTitle}
         placeholder="Untitled"
         value={editedTitle}
       />
@@ -114,9 +88,9 @@ export function FeedbackContent({
           className="min-h-[60px]"
           editable={isAdmin}
           minimal
-          onChange={handleDescriptionChange}
+          onChange={setEditedDescription}
           placeholder={
-            isAdmin ? "Add a description..." : "No description provided."
+            isAdmin ? "Add a description…" : "No description provided."
           }
           value={editedDescription}
         />

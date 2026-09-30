@@ -2,14 +2,18 @@
 
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
+
+const subscribeToHostname = () => () => undefined;
+const getHostname = () => window.location.hostname;
+const getServerHostname = () => null;
 
 export function useCustomDomainOrg() {
-  const [hostname, setHostname] = useState<string | null>(null);
-
-  useEffect(() => {
-    setHostname(window.location.hostname);
-  }, []);
+  const hostname = useSyncExternalStore(
+    subscribeToHostname,
+    getHostname,
+    getServerHostname
+  );
 
   const org = useQuery(
     api.domains.queries.getByCustomDomain,

@@ -25,10 +25,10 @@ describe("Slash Command", () => {
       expect(commands.find((c) => c.title === "Heading 1")).toBeDefined();
       expect(commands.find((c) => c.title === "Heading 2")).toBeDefined();
       expect(commands.find((c) => c.title === "Heading 3")).toBeDefined();
-      expect(commands.find((c) => c.title === "Bullet List")).toBeDefined();
-      expect(commands.find((c) => c.title === "Numbered List")).toBeDefined();
+      expect(commands.find((c) => c.title === "Bullet list")).toBeDefined();
+      expect(commands.find((c) => c.title === "Numbered list")).toBeDefined();
       expect(commands.find((c) => c.title === "Quote")).toBeDefined();
-      expect(commands.find((c) => c.title === "Code Block")).toBeDefined();
+      expect(commands.find((c) => c.title === "Code block")).toBeDefined();
       expect(commands.find((c) => c.title === "Divider")).toBeDefined();
       expect(commands.find((c) => c.title === "Image")).toBeUndefined();
       expect(commands.find((c) => c.title === "Video")).toBeUndefined();

@@ -1,17 +1,55 @@
 "use client";
 
+import { Alert, AlertDescription } from "@ctrl-ui/react/ui/alert";
 import { Button } from "@ctrl-ui/react/ui/button";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@ctrl-ui/react/ui/empty";
 import { Spinner } from "@ctrl-ui/react/ui/spinner";
+import { CheckCircle, Clock, UsersThree, XCircle } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { H1, Muted } from "@/components/ui/typography";
 import UnifiedAuthForm from "@/features/auth/components/unified-auth/unified-auth-form";
 import { authClient } from "@/lib/auth-client";
 
 interface AcceptInvitationContentProps {
   token: string;
+}
+
+interface InvitationStateProps {
+  children?: React.ReactNode;
+  description: React.ReactNode;
+  icon: React.ReactNode;
+  title: React.ReactNode;
+}
+
+function InvitationState({
+  children,
+  description,
+  icon,
+  title,
+}: InvitationStateProps) {
+  return (
+    <main className="flex min-h-dvh items-center justify-center p-6">
+      <Empty className="w-full max-w-md">
+        <EmptyHeader>
+          <EmptyMedia>{icon}</EmptyMedia>
+          <EmptyTitle aria-level={1} role="heading">
+            {title}
+          </EmptyTitle>
+          <EmptyDescription>{description}</EmptyDescription>
+        </EmptyHeader>
+        {children ? <EmptyContent>{children}</EmptyContent> : null}
+      </Empty>
+    </main>
+  );
 }
 
 export function AcceptInvitationContent({
@@ -21,6 +59,85 @@ export function AcceptInvitationContent({
   const invitation = useQuery(api.organizations.invitations.getByToken, {
     token,
   });
+  const [openedAt] = useState(Date.now);
+
+  if (invitation === undefined) {
+    return (
+      <main
+        aria-busy="true"
+        className="flex min-h-dvh flex-col items-center justify-center gap-3"
+      >
+        <Spinner size="md" />
+        <p className="text-body text-muted-foreground">Loading invitation…</p>
+      </main>
+    );
+  }
+
+  if (invitation === null) {
+    return (
+      <InvitationState
+        description="This invitation doesn’t exist or was canceled."
+        icon={<XCircle aria-hidden className="size-6" />}
+        title="Invalid invitation"
+      >
+        <Button onClick={() => router.push("/")} variant="surface">
+          Go to homepage
+        </Button>
+      </InvitationState>
+    );
+  }
+
+  if (invitation.expiresAt < openedAt) {
+    return (
+      <InvitationState
+        description="This invitation has expired. Ask an organization admin to send a new one."
+        icon={<Clock aria-hidden className="size-6" />}
+        title="Invitation expired"
+      >
+        <Button onClick={() => router.push("/")} variant="surface">
+          Go to homepage
+        </Button>
+      </InvitationState>
+    );
+  }
+
+  if (invitation.status === "accepted") {
+    return (
+      <InvitationState
+        description="This invitation was already accepted. You may already be a member of this organization."
+        icon={<CheckCircle aria-hidden className="size-6" />}
+        title="Invitation already accepted"
+      >
+        <Button
+          onClick={() => router.push("/dashboard")}
+          tone="primary"
+          variant="solid"
+        >
+          Go to dashboard
+        </Button>
+      </InvitationState>
+    );
+  }
+
+  return (
+    <PendingInvitation
+      organizationName={invitation.organizationName}
+      role={invitation.role}
+      token={token}
+    />
+  );
+}
+
+function PendingInvitation({
+  organizationName,
+  role,
+  token,
+}: {
+  organizationName: string;
+  role: string;
+  token: string;
+}) {
+  const router = useRouter();
   const acceptInvitation = useMutation(
     api.organizations.invitation_actions.accept
   );
@@ -29,217 +146,63 @@ export function AcceptInvitationContent({
   const { data: session } = authClient.useSession();
   const isAuthenticated = Boolean(session?.user?.id);
 
-  const handleAcceptInvitation = async () => {
+  const handleAccept = async () => {
     setIsAccepting(true);
     setError(null);
     try {
       await acceptInvitation({ token });
       router.push("/dashboard");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Une erreur est survenue");
+      setError(err instanceof Error ? err.message : "Something went wrong");
       setIsAccepting(false);
     }
   };
 
-  // Loading state
-  if (invitation === undefined) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Spinner className="h-8 w-8" />
-          <Muted>Chargement de l'invitation...</Muted>
-        </div>
-      </div>
-    );
-  }
-
-  // Invalid token
-  if (invitation === null) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="w-full max-w-md p-6 text-center">
-          <div className="mb-6 flex justify-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive-subtle">
-              <svg
-                aria-label="Icône erreur"
-                className="h-8 w-8 text-destructive-text"
-                fill="none"
-                role="img"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  d="M6 18L18 6M6 6l12 12"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                />
-              </svg>
-            </div>
-          </div>
-          <H1 className="mb-2" variant="page">
-            Invitation invalide
-          </H1>
-          <Muted className="mb-6">
-            Cette invitation n'existe pas ou a été annulée.
-          </Muted>
-          <Button onClick={() => router.push("/")} variant="surface">
-            Retour à l'accueil
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  // Check if expired
-  const isExpired = invitation.expiresAt < Date.now();
-  if (isExpired) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="w-full max-w-md p-6 text-center">
-          <div className="mb-6 flex justify-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-warning-subtle">
-              <svg
-                aria-label="Icône expirée"
-                className="h-8 w-8 text-warning-text"
-                fill="none"
-                role="img"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                />
-              </svg>
-            </div>
-          </div>
-          <H1 className="mb-2" variant="page">
-            Invitation expirée
-          </H1>
-          <Muted className="mb-6">
-            Cette invitation a expiré. Veuillez demander une nouvelle invitation
-            à l'administrateur de l'organisation.
-          </Muted>
-          <Button onClick={() => router.push("/")} variant="surface">
-            Retour à l'accueil
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  // Already accepted
-  if (invitation.status === "accepted") {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="w-full max-w-md p-6 text-center">
-          <div className="mb-6 flex justify-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-secondary">
-              <svg
-                aria-label="Icône information"
-                className="h-8 w-8 text-brand-text"
-                fill="none"
-                role="img"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                />
-              </svg>
-            </div>
-          </div>
-          <H1 className="mb-2" variant="page">
-            Invitation déjà acceptée
-          </H1>
-          <Muted className="mb-6">
-            Cette invitation a déjà été acceptée. Vous êtes peut-être déjà
-            membre de cette organisation.
-          </Muted>
+  return (
+    <InvitationState
+      description={
+        <>
+          You’ve been invited to join <strong>{organizationName}</strong> as{" "}
+          {role === "admin" ? "an admin" : "a member"}.
+        </>
+      }
+      icon={<UsersThree aria-hidden className="size-6" />}
+      title={`Join ${organizationName}`}
+    >
+      {error ? (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
+      {isAuthenticated ? (
+        <div className="flex w-full flex-col gap-2">
           <Button
-            onClick={() => router.push("/dashboard")}
+            disabled={isAccepting}
+            onClick={handleAccept}
             tone="primary"
             variant="solid"
           >
-            Aller au tableau de bord
+            {isAccepting ? (
+              <Spinner aria-hidden data-icon="inline-start" size="xs" />
+            ) : null}
+            {isAccepting ? "Accepting…" : "Accept invitation"}
+          </Button>
+          <Button
+            disabled={isAccepting}
+            onClick={() => router.push("/")}
+            variant="surface"
+          >
+            Decline
           </Button>
         </div>
-      </div>
-    );
-  }
-
-  const roleLabel = invitation.role === "admin" ? "administrateur" : "membre";
-
-  return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="w-full max-w-md p-6 text-center">
-        <div className="mb-6 flex justify-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-success-subtle">
-            <svg
-              aria-label="Icône invitation"
-              className="h-8 w-8 text-success-text"
-              fill="none"
-              role="img"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-              />
-            </svg>
-          </div>
+      ) : (
+        <div className="flex w-full flex-col gap-4">
+          <p className="text-body text-muted-foreground">
+            Sign in or create an account to accept this invitation.
+          </p>
+          <UnifiedAuthForm />
         </div>
-        <H1 className="mb-2" variant="page">
-          Rejoindre {invitation.organizationName}
-        </H1>
-        <Muted className="mb-6">
-          Vous avez été invité à rejoindre l'organisation{" "}
-          <strong>{invitation.organizationName}</strong> en tant que {roleLabel}
-          .
-        </Muted>
-        {error && (
-          <div className="mb-4 rounded-md bg-destructive-subtle p-3 text-destructive-text text-sm">
-            {error}
-          </div>
-        )}
-        {isAuthenticated ? (
-          <div className="flex flex-col gap-3">
-            <Button
-              disabled={isAccepting}
-              onClick={handleAcceptInvitation}
-              tone="primary"
-              variant="solid"
-            >
-              {isAccepting
-                ? "Acceptation en cours..."
-                : "Accepter l'invitation"}
-            </Button>
-            <Button
-              disabled={isAccepting}
-              onClick={() => router.push("/")}
-              variant="surface"
-            >
-              Refuser
-            </Button>
-          </div>
-        ) : (
-          <div className="mt-8">
-            <Muted className="mb-4">
-              Connectez-vous ou créez un compte pour accepter cette invitation.
-            </Muted>
-            <UnifiedAuthForm />
-          </div>
-        )}
-      </div>
-    </div>
+      )}
+    </InvitationState>
   );
 }

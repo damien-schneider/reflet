@@ -1,18 +1,26 @@
 "use client";
 
-import { Button } from "@ctrl-ui/react/ui/button";
+import { Kbd, KbdGroup } from "@ctrl-ui/react/ui/kbd";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from "@ctrl-ui/react/ui/sidebar";
-import { Buildings, CaretRight } from "@phosphor-icons/react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@ctrl-ui/react/ui/tooltip";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import { useAtom } from "jotai";
 import Link from "next/link";
-import { useParams, usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import {
+  RedirectType,
+  redirect,
+  useParams,
+  usePathname,
+} from "next/navigation";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -22,19 +30,19 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { H2, Muted } from "@/components/ui/typography";
 import { CommandPalette } from "@/features/command-palette/components/command-palette";
+import { useModifierKeyLabel } from "@/features/command-palette/hooks/use-modifier-key-label";
 import { DashboardSidebar } from "@/features/dashboard/components/dashboard-sidebar";
+import { OrgNotFound } from "@/features/dashboard/components/org-not-found";
 import { PushNotificationPrompt } from "@/features/dashboard/components/push-notification-prompt";
-import { OrgAvatar } from "@/features/organizations/components/org-avatar";
-import { OrganizationSwitcher } from "@/features/organizations/components/organization-switcher";
 import { sidebarOpenAtom } from "@/store/dashboard-atoms";
+import { OrgPicker, OrgPickerSkeleton, WelcomeState } from "./dashboard-states";
 import { computeDashboardNavigation } from "./use-dashboard-navigation";
 
 const routeLabels: Record<string, string> = {
   account: "Account",
   agents: "Agents & CLI",
-  "api-keys": "API Keys",
+  "api-keys": "API keys",
   billing: "Billing",
   changelog: "Changelog",
   domains: "Domains",
@@ -50,7 +58,7 @@ const routeLabels: Record<string, string> = {
   roadmap: "Roadmap",
   setup: "Setup",
   status: "Status",
-  "super-admin": "Super Admin",
+  "super-admin": "Super admin",
   surveys: "Surveys",
   tags: "Tags",
   trash: "Trash",
@@ -159,26 +167,36 @@ function DashboardBreadcrumb({
   const breadcrumbItems = buildBreadcrumbItems(orgSlug, org, relevantSegments);
 
   return (
-    <Breadcrumb>
-      <BreadcrumbList>
+    <Breadcrumb className="min-w-0">
+      <BreadcrumbList className="flex-nowrap">
         {breadcrumbItems.flatMap((item, index) => {
           const isLast = index === breadcrumbItems.length - 1;
           const elements: React.ReactNode[] = [];
 
           if (index > 0) {
             elements.push(
-              <BreadcrumbSeparator key={`separator-${item.href}`} />
+              <BreadcrumbSeparator
+                className="hidden sm:inline-flex"
+                key={`separator-${item.href}`}
+              />
             );
           }
 
           elements.push(
-            <BreadcrumbItem key={item.href}>
+            <BreadcrumbItem
+              className={isLast ? "min-w-0" : "hidden min-w-0 sm:inline-flex"}
+              key={item.href}
+            >
               {isLast ? (
-                <BreadcrumbPage>{item.label}</BreadcrumbPage>
+                <BreadcrumbPage className="truncate" title={item.label}>
+                  {item.label}
+                </BreadcrumbPage>
               ) : (
                 <BreadcrumbLink
+                  className="max-w-48 truncate"
                   href={item.href}
                   render={(props) => <Link href={item.href} {...props} />}
+                  title={item.label}
                 >
                   {item.label}
                 </BreadcrumbLink>
@@ -197,7 +215,6 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
   const params = useParams();
   const rawOrgSlug = params?.orgSlug;
   const orgSlug = typeof rawOrgSlug === "string" ? rawOrgSlug : undefined;
-  const router = useRouter();
   const pathname = usePathname();
   const organizations = useQuery(api.organizations.queries.list);
   const org = useQuery(
@@ -205,6 +222,7 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
     orgSlug ? { slug: orgSlug } : "skip"
   );
   const [sidebarOpen, setSidebarOpen] = useAtom(sidebarOpenAtom);
+  const modifierKey = useModifierKeyLabel();
 
   const isAdmin = org?.role === "admin" || org?.role === "owner";
 
@@ -216,11 +234,30 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
   const { redirectTo, orgNotAccessible, hasOrganizations } =
     computeDashboardNavigation({ org, organizations, orgSlug });
 
-  useEffect(() => {
-    if (redirectTo && !isNonOrgRoute) {
-      router.replace(redirectTo);
+  if (redirectTo && !isNonOrgRoute) {
+    redirect(redirectTo, RedirectType.replace);
+  }
+
+  const renderOrgRoute = () => {
+    if (orgSlug) {
+      return orgNotAccessible ? (
+        <OrgNotFound />
+      ) : (
+        <>
+          <PushNotificationPrompt />
+          {children}
+        </>
+      );
     }
-  }, [router, redirectTo, isNonOrgRoute]);
+    if (organizations === undefined || redirectTo) {
+      return <OrgPickerSkeleton />;
+    }
+    return hasOrganizations ? (
+      <OrgPicker organizations={organizations} />
+    ) : (
+      <WelcomeState />
+    );
+  };
 
   return (
     <SidebarProvider onOpenChange={setSidebarOpen} open={sidebarOpen}>
@@ -228,95 +265,25 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
       <DashboardSidebar orgSlug={orgSlug} pathname={pathname ?? ""} />
       <SidebarInset className="min-w-0">
         <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-border/60 border-b bg-background/80 px-4 backdrop-blur-md">
-          <div className="flex items-center gap-2">
-            <SidebarTrigger className="lg:hidden" />
-            <div className="flex flex-1 items-center gap-2">
-              <DashboardBreadcrumb
-                orgSlug={orgSlug}
-                pathname={pathname ?? ""}
-              />
-            </div>
+          <Tooltip>
+            <TooltipTrigger render={<SidebarTrigger />} />
+            <TooltipContent>
+              <span className="flex items-center gap-2">
+                Toggle sidebar
+                <KbdGroup>
+                  <Kbd>{modifierKey}</Kbd>
+                  <Kbd>B</Kbd>
+                </KbdGroup>
+              </span>
+            </TooltipContent>
+          </Tooltip>
+          <div className="flex min-w-0 flex-1 items-center">
+            <DashboardBreadcrumb orgSlug={orgSlug} pathname={pathname ?? ""} />
           </div>
-          <ThemeToggle className="ml-auto shrink-0" />
+          <ThemeToggle className="shrink-0" />
         </header>
 
-        {isNonOrgRoute ? (
-          children
-        ) : (
-          <>
-            {!orgSlug && hasOrganizations ? (
-              <div className="flex min-h-[calc(100svh-3.5rem)] items-center justify-center p-6">
-                <div className="w-full max-w-sm">
-                  <H2 className="mb-8 text-center">Select an organization</H2>
-                  <nav
-                    aria-label="Organizations"
-                    className="flex flex-col gap-2"
-                  >
-                    {organizations?.map((org) =>
-                      org ? (
-                        <Link
-                          className="group flex items-center gap-3 rounded-xl bg-card p-3 ring-1 ring-foreground/10 transition-shadow hover:ring-ring"
-                          href={`/dashboard/${org.slug}`}
-                          key={org._id}
-                        >
-                          <OrgAvatar org={org} size="lg" />
-                          <span className="flex-1 truncate font-medium text-sm">
-                            {org.name}
-                          </span>
-                          <CaretRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-                        </Link>
-                      ) : null
-                    )}
-                  </nav>
-                </div>
-              </div>
-            ) : null}
-
-            {!orgSlug && organizations?.length === 0 ? (
-              <div className="flex min-h-[calc(100svh-3.5rem)] items-center justify-center p-6">
-                <div className="w-full max-w-sm">
-                  <H2 className="mb-8 text-center">Welcome to Reflet</H2>
-                  <OrganizationSwitcher currentOrgSlug={undefined} />
-                </div>
-              </div>
-            ) : null}
-
-            {orgSlug && orgNotAccessible ? (
-              <div className="flex min-h-[calc(100svh-3.5rem)] items-center justify-center p-6">
-                <div className="w-full max-w-sm text-center">
-                  <div className="mb-6 flex justify-center">
-                    <div className="flex size-14 items-center justify-center rounded-2xl bg-destructive/10">
-                      <Buildings
-                        className="size-7 text-destructive-text"
-                        weight="duotone"
-                      />
-                    </div>
-                  </div>
-                  <H2>Organization not accessible</H2>
-                  <Muted className="mt-2">
-                    You don&apos;t have access to this organization, or it
-                    doesn&apos;t exist.
-                  </Muted>
-                  <Button
-                    className="mt-6"
-                    render={<Link href="/dashboard" />}
-                    tone="primary"
-                    variant="solid"
-                  >
-                    Back to dashboard
-                  </Button>
-                </div>
-              </div>
-            ) : null}
-
-            {orgSlug && !orgNotAccessible ? (
-              <>
-                <PushNotificationPrompt />
-                {children}
-              </>
-            ) : null}
-          </>
-        )}
+        {isNonOrgRoute ? children : renderOrgRoute()}
       </SidebarInset>
     </SidebarProvider>
   );

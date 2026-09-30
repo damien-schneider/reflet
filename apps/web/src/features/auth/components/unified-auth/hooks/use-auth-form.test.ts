@@ -475,7 +475,7 @@ describe("useAuthForm - onSubmit", () => {
       });
     });
 
-    expect(result.current.apiError).toBe("Please verify your email");
+    expect(result.current.apiError).toBe("Enter your email to continue");
   });
 
   it("calls authClient.signIn.email and navigates on signIn success", async () => {

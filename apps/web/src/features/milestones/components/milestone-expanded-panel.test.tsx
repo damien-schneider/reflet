@@ -218,7 +218,7 @@ describe("MilestoneExpandedPanel", () => {
     expect(screen.getByText("Feedback Two")).toBeInTheDocument();
   });
 
-  it("shows Linked Feedback count", () => {
+  it("shows Linked feedback count", () => {
     render(
       <MilestoneExpandedPanel
         isAdmin
@@ -226,7 +226,7 @@ describe("MilestoneExpandedPanel", () => {
         organizationId={"org1" as never}
       />
     );
-    expect(screen.getByText("Linked Feedback (2)")).toBeInTheDocument();
+    expect(screen.getByText("Linked feedback (2)")).toBeInTheDocument();
   });
 
   it("shows search input for admin", () => {
@@ -238,7 +238,7 @@ describe("MilestoneExpandedPanel", () => {
       />
     );
     expect(
-      screen.getByPlaceholderText("Search feedback to link...")
+      screen.getByPlaceholderText("Search feedback to link…")
     ).toBeInTheDocument();
   });
 
@@ -251,7 +251,7 @@ describe("MilestoneExpandedPanel", () => {
       />
     );
     expect(
-      screen.queryByPlaceholderText("Search feedback to link...")
+      screen.queryByPlaceholderText("Search feedback to link…")
     ).toBeNull();
   });
 
@@ -298,7 +298,7 @@ describe("MilestoneExpandedPanel", () => {
       />
     );
     expect(screen.getByText("Feedback One")).toBeInTheDocument();
-    expect(screen.getByText("Linked Feedback (2)")).toBeInTheDocument();
+    expect(screen.getByText("Linked feedback (2)")).toBeInTheDocument();
   });
 
   it("search input filters displayed unlinked feedback", async () => {
@@ -310,9 +310,7 @@ describe("MilestoneExpandedPanel", () => {
         organizationId={"org1" as never}
       />
     );
-    const searchInput = screen.getByPlaceholderText(
-      "Search feedback to link..."
-    );
+    const searchInput = screen.getByPlaceholderText("Search feedback to link…");
     await user.type(searchInput, "Unlinked");
     expect(searchInput).toHaveValue("Unlinked");
   });

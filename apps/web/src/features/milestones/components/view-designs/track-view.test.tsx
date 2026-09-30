@@ -52,7 +52,9 @@ vi.mock("motion/react", () => ({
   AnimatePresence: ({ children }: { children: React.ReactNode }) => (
     <>{children}</>
   ),
-  motion: {
+  domAnimation: {},
+  LazyMotion: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  m: {
     button: ({
       children,
       className,
@@ -77,6 +79,7 @@ vi.mock("motion/react", () => ({
       [key: string]: unknown;
     }) => <div className={className}>{children}</div>,
   },
+  useReducedMotion: () => false,
 }));
 
 vi.mock("@ctrl-ui/react/ui/scroll-area", () => ({
@@ -286,6 +289,18 @@ describe("TrackView", () => {
       />
     );
     expect(screen.queryByTestId("form-popover")).toBeNull();
+  });
+
+  it("tells visitors when there are no milestones to show", () => {
+    queryResult = [];
+    render(
+      <TrackView
+        isAdmin={false}
+        onFeedbackClick={vi.fn()}
+        organizationId={"org1" as never}
+      />
+    );
+    expect(screen.getByText("No milestones yet")).toBeInTheDocument();
   });
 
   it("renders scroll area on desktop", () => {

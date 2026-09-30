@@ -1,14 +1,6 @@
 "use client";
 
-import {
-  AlertDialog,
-  AlertDialogClose,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@ctrl-ui/react/ui/alert-dialog";
+import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button, ButtonLink } from "@ctrl-ui/react/ui/button";
 import { Checkbox } from "@ctrl-ui/react/ui/checkbox";
 import { toast } from "@ctrl-ui/react/ui/toast";
@@ -24,6 +16,7 @@ import { useMutation } from "convex/react";
 import { format } from "date-fns";
 import Link from "next/link";
 import { useState } from "react";
+import { DestructiveConfirmDialog } from "@/components/ui/destructive-confirm-dialog";
 import { cn } from "@/lib/utils";
 
 interface RetroactiveDraftItemProps {
@@ -62,18 +55,16 @@ export function RetroactiveDraftItem({
         releaseIds: [release._id],
         useHistoricalDates: true,
       });
-      toast.success("Release published");
     } catch {
-      toast.error("Failed to publish release");
+      toast.error("Couldn’t publish this release. Try again.");
     }
   };
 
   const handleDiscard = async () => {
     try {
       await discardDrafts({ releaseIds: [release._id] });
-      toast.success("Draft discarded");
     } catch {
-      toast.error("Failed to discard draft");
+      toast.error("Couldn’t discard this draft. Try again.");
     }
   };
 
@@ -85,7 +76,7 @@ export function RetroactiveDraftItem({
       )}
     >
       <Checkbox
-        aria-label={selected ? "Deselect release" : "Select release"}
+        aria-label={`Select ${release.title}`}
         checked={selected}
         className="mt-1"
         onCheckedChange={(checked) => onSelect(release._id, checked)}
@@ -94,15 +85,17 @@ export function RetroactiveDraftItem({
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           {release.version && (
-            <span className="rounded-full bg-muted px-2 py-0.5 font-mono text-xs tabular-nums">
+            <Badge className="font-mono tabular-nums" size="sm">
               {release.version}
-            </span>
+            </Badge>
           )}
-          <span className="truncate font-medium">{release.title}</span>
+          <span className="truncate font-medium" title={release.title}>
+            {release.title}
+          </span>
         </div>
 
         {release.description && (
-          <p className="mt-1 line-clamp-2 text-muted-foreground text-sm">
+          <p className="mt-1 line-clamp-2 text-pretty text-muted-foreground text-sm">
             {release.description}
           </p>
         )}
@@ -134,7 +127,7 @@ export function RetroactiveDraftItem({
               />
             }
           >
-            <PencilSimple className="h-4 w-4" />
+            <PencilSimple aria-hidden className="size-4" />
           </TooltipTrigger>
           <TooltipContent>Edit release</TooltipContent>
         </Tooltip>
@@ -151,7 +144,7 @@ export function RetroactiveDraftItem({
               />
             }
           >
-            <CloudArrowUp className="h-4 w-4" />
+            <CloudArrowUp aria-hidden className="size-4" />
           </TooltipTrigger>
           <TooltipContent>Publish release</TooltipContent>
         </Tooltip>
@@ -169,33 +162,20 @@ export function RetroactiveDraftItem({
               />
             }
           >
-            <Trash className="h-4 w-4" />
+            <Trash aria-hidden className="size-4" />
           </TooltipTrigger>
           <TooltipContent>Discard release</TooltipContent>
         </Tooltip>
       </div>
 
-      <AlertDialog onOpenChange={setIsDiscardOpen} open={isDiscardOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Discard draft</AlertDialogTitle>
-            <AlertDialogDescription>
-              This draft release will be deleted permanently. This action cannot
-              be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogClose>Cancel</AlertDialogClose>
-            <AlertDialogClose
-              onClick={handleDiscard}
-              tone="danger"
-              variant="surface"
-            >
-              Discard
-            </AlertDialogClose>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DestructiveConfirmDialog
+        confirmLabel="Discard"
+        description="This draft release will be deleted permanently. You can’t undo this."
+        onConfirm={handleDiscard}
+        onOpenChange={setIsDiscardOpen}
+        open={isDiscardOpen}
+        title="Discard draft"
+      />
     </div>
   );
 }

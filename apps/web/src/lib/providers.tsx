@@ -6,7 +6,7 @@ import { ConvexReactClient } from "convex/react";
 import dynamic from "next/dynamic";
 import type { PostHog } from "posthog-js";
 import { useEffect, useState } from "react";
-import { hasAnalyticsConsent } from "@/components/cookie-consent-banner";
+import { hasAnalyticsConsent } from "@/lib/cookie-consent";
 import { authClient } from "./auth-client";
 
 const PostHogIdentifier = dynamic(
@@ -28,6 +28,25 @@ const isPostHogConfigured =
   Boolean(env.NEXT_PUBLIC_POSTHOG_KEY) &&
   process.env.NODE_ENV !== "development";
 
+interface PostHogBundle {
+  client: PostHog;
+  Provider: React.ComponentType<{
+    client: PostHog;
+    children: React.ReactNode;
+  }>;
+}
+
+async function loadPostHog(): Promise<PostHogBundle> {
+  const [posthogModule, reactModule] = await Promise.all([
+    import("posthog-js"),
+    import("posthog-js/react"),
+  ]);
+  return {
+    client: posthogModule.default,
+    Provider: reactModule.PostHogProvider,
+  };
+}
+
 export function Providers({
   children,
   initialToken,
@@ -35,22 +54,25 @@ export function Providers({
   children: React.ReactNode;
   initialToken?: string;
 }) {
-  const [posthogClient, setPosthogClient] = useState<PostHog | null>(null);
-  const [PostHogProviderComp, setPostHogProviderComp] =
-    useState<React.ComponentType<{
-      client: PostHog;
-      children: React.ReactNode;
-    }> | null>(null);
+  const [posthog, setPosthog] = useState<PostHogBundle | null>(null);
 
   useEffect(() => {
-    if (isPostHogConfigured && hasAnalyticsConsent()) {
-      Promise.all([import("posthog-js"), import("posthog-js/react")]).then(
-        ([posthogModule, reactModule]) => {
-          setPosthogClient(posthogModule.default);
-          setPostHogProviderComp(() => reactModule.PostHogProvider);
-        }
-      );
+    if (!(isPostHogConfigured && hasAnalyticsConsent())) {
+      return;
     }
+    let cancelled = false;
+    loadPostHog()
+      .then((bundle) => {
+        if (!cancelled) {
+          setPosthog(bundle);
+        }
+      })
+      .catch(() => {
+        setPosthog(null);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const isPostHogEnabled = isPostHogConfigured && hasAnalyticsConsent();
@@ -62,16 +84,14 @@ export function Providers({
       client={convex}
       initialToken={initialToken}
     >
-      {isPostHogEnabled && posthogClient && <PostHogIdentifier />}
+      {isPostHogEnabled && posthog && <PostHogIdentifier />}
       {children}
     </ConvexBetterAuthProvider>
   );
 
-  if (!(PostHogProviderComp && posthogClient)) {
+  if (!posthog) {
     return inner;
   }
 
-  return (
-    <PostHogProviderComp client={posthogClient}>{inner}</PostHogProviderComp>
-  );
+  return <posthog.Provider client={posthog.client}>{inner}</posthog.Provider>;
 }

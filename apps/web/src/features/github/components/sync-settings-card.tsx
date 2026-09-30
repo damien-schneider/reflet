@@ -2,12 +2,13 @@
 
 import { Alert, AlertDescription, AlertTitle } from "@ctrl-ui/react/ui/alert";
 import { Button } from "@ctrl-ui/react/ui/button";
-import { Switch } from "@ctrl-ui/react/ui/switch";
-import { ArrowsClockwise, Spinner, Warning, X } from "@phosphor-icons/react";
-import { Label } from "@/components/ui/label";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
+import { ArrowsClockwise, Warning, X } from "@phosphor-icons/react";
+import { format } from "date-fns";
 import { Text } from "@/components/ui/typography";
 
 import { GitHubPermissionErrorAlert } from "./github-permission-error-alert";
+import { SettingSwitchRow } from "./setting-switch-row";
 
 interface SyncSettingsCardProps {
   autoSyncEnabled: boolean;
@@ -22,6 +23,51 @@ interface SyncSettingsCardProps {
   onToggleAutoSync: (enabled: boolean) => void;
 }
 
+const ERROR_TITLE = "Unable to turn on auto-sync";
+
+function SyncSettingsError({
+  error,
+  onClearError,
+  onResyncGitHub,
+}: Pick<SyncSettingsCardProps, "onClearError" | "onResyncGitHub"> & {
+  error: { code: string; message: string };
+}) {
+  if (error.code === "GITHUB_PERMISSION_DENIED" && onResyncGitHub) {
+    return (
+      <GitHubPermissionErrorAlert
+        message="The Reflet GitHub App can’t create webhooks on this repository yet."
+        onDismiss={onClearError}
+        onResync={onResyncGitHub}
+        title={ERROR_TITLE}
+      />
+    );
+  }
+
+  return (
+    <Alert className="pr-10" variant="destructive">
+      <Warning aria-hidden="true" />
+      <AlertTitle>{ERROR_TITLE}</AlertTitle>
+      <AlertDescription>
+        <p className="text-pretty">{error.message}</p>
+        {error.code === "LOCALHOST_NOT_SUPPORTED" ? (
+          <p className="mt-2 text-pretty text-muted-foreground">
+            Try again in a deployed environment or use a tunneling service like
+            ngrok for local development.
+          </p>
+        ) : null}
+      </AlertDescription>
+      {onClearError ? (
+        <div className="absolute top-2 right-2">
+          <Button iconOnly onClick={onClearError} size="xs" variant="ghost">
+            <X aria-hidden="true" className="size-4" />
+            <span className="sr-only">Dismiss</span>
+          </Button>
+        </div>
+      ) : null}
+    </Alert>
+  );
+}
+
 export function SyncSettingsSection({
   autoSyncEnabled,
   lastSyncAt,
@@ -34,95 +80,60 @@ export function SyncSettingsSection({
   onClearError,
   onResyncGitHub,
 }: SyncSettingsCardProps) {
-  const renderError = () => {
-    if (!error) {
-      return null;
-    }
-
-    const isPermissionError = error.code === "GITHUB_PERMISSION_DENIED";
-    const isLocalhostError = error.code === "LOCALHOST_NOT_SUPPORTED";
-
-    if (isPermissionError && onResyncGitHub) {
-      return (
-        <GitHubPermissionErrorAlert
-          message="The GitHub App is missing the required webhook permissions."
-          onDismiss={onClearError}
-          onResync={onResyncGitHub}
-          title="Auto-sync setup failed"
-        />
-      );
-    }
-
-    return (
-      <Alert className="mb-4 pr-10" variant="destructive">
-        <Warning className="h-4 w-4" />
-        <AlertTitle>Auto-sync setup failed</AlertTitle>
-        <AlertDescription>
-          <p>{error.message}</p>
-          {isLocalhostError ? (
-            <p className="mt-2 text-muted-foreground">
-              Try again in a deployed environment or use a tunneling service
-              like ngrok for local development.
-            </p>
-          ) : null}
-        </AlertDescription>
-        {onClearError ? (
-          <div className="absolute top-2 right-2">
-            <Button
-              className="h-6 w-6"
-              iconOnly
-              onClick={onClearError}
-              variant="ghost"
-            >
-              <X className="h-4 w-4" />
-              <span className="sr-only">Dismiss</span>
-            </Button>
-          </div>
-        ) : null}
-      </Alert>
-    );
-  };
-
   return (
     <div className="space-y-4">
-      {renderError()}
+      {error ? (
+        <SyncSettingsError
+          error={error}
+          onClearError={onClearError}
+          onResyncGitHub={onResyncGitHub}
+        />
+      ) : null}
 
-      <div className="flex items-center justify-between">
-        <div className="flex-1">
-          <Label htmlFor="auto-sync">Auto-sync releases</Label>
-          <Text className="text-muted-foreground text-sm">
-            Automatically import new releases to your changelog
-          </Text>
-        </div>
-        <div className="flex items-center gap-2">
-          {isSettingUp ? (
-            <Spinner className="h-4 w-4 animate-spin text-muted-foreground" />
-          ) : null}
-          <Switch
-            checked={autoSyncEnabled}
-            disabled={!isAdmin || isSettingUp}
-            id="auto-sync"
-            onCheckedChange={onToggleAutoSync}
-          />
-        </div>
-      </div>
+      <SettingSwitchRow
+        checked={autoSyncEnabled}
+        description="Automatically import new releases to your changelog"
+        disabled={!isAdmin || isSettingUp}
+        id="auto-sync"
+        label="Auto-sync releases"
+        onCheckedChange={onToggleAutoSync}
+        status={
+          isSettingUp ? (
+            <>
+              <Spinner size="xs" />
+              <span className="sr-only" role="status">
+                Turning on auto-sync…
+              </span>
+            </>
+          ) : null
+        }
+      />
 
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         {isAdmin ? (
           <Button disabled={isSyncing} onClick={onSyncNow} variant="surface">
             {isSyncing ? (
-              <Spinner className="mr-2 h-4 w-4 animate-spin" />
+              <Spinner data-icon="inline-start" size="xs" />
             ) : (
-              <ArrowsClockwise className="mr-2 h-4 w-4" />
+              <ArrowsClockwise
+                aria-hidden="true"
+                className="size-4"
+                data-icon="inline-start"
+              />
             )}
-            Sync Now
+            Sync now
           </Button>
         ) : null}
-        {lastSyncAt ? (
-          <Text className="text-muted-foreground text-sm">
-            Last synced: {new Date(lastSyncAt).toLocaleString()}
-          </Text>
-        ) : null}
+        <Text
+          aria-live="polite"
+          className="text-muted-foreground tabular-nums"
+          variant="bodySmall"
+        >
+          {isSyncing ? "Syncing releases…" : null}
+          {!isSyncing && lastSyncAt
+            ? `Last synced ${format(lastSyncAt, "PPp")}`
+            : null}
+        </Text>
       </div>
     </div>
   );

@@ -48,6 +48,7 @@
   font-weight: 500;
   line-height: 1.06;
   letter-spacing: -0.065em;
+  text-wrap: balance;
 }
 :where(.marketing-hero h1 > span) {
   display: inline-block;
@@ -66,12 +67,6 @@
   align-items: flex-start;
   margin-top: 34px;
 }
-:where(.hero-actions [data-control-family="button"]) {
-  --cui-button-height: 50px;
-  --cui-button-radius: 16px;
-  --cui-button-padding-inline: 26px;
-  font-size: 14px;
-}
 :where(.hero-story-links) {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -82,9 +77,9 @@
   display: flex;
   gap: 14px;
   align-items: center;
+  min-height: 44px;
   padding: 24px 22px;
-  font-size: 12px;
-  transition: background var(--marketing-duration);
+  font-size: 13px;
 }
 :where(.hero-story-links a + a) {
   border-left: 1px solid var(--marketing-hairline);
@@ -95,16 +90,17 @@
   color: var(--feature-color);
 }
 :where(.hero-story-links svg) {
+  flex-shrink: 0;
   margin-left: auto;
   color: var(--muted-foreground);
-  transition: translate var(--marketing-duration) var(--marketing-ease);
 }
-:where(.hero-story-links a:hover) {
-  background: var(--marketing-signal-soft);
-}
-:where(.hero-story-links a:hover svg) {
-  color: var(--feature-color);
-  translate: 2px -2px;
+@media (hover: hover) and (pointer: fine) {
+  :where(.hero-story-links a:hover) {
+    background: var(--marketing-signal-soft);
+  }
+  :where(.hero-story-links a:hover svg) {
+    color: var(--feature-color);
+  }
 }
 @media (max-width: 1050px) {
   :where(.marketing-hero) {
@@ -132,10 +128,11 @@
   }
   :where(.hero-editorial-line) {
     padding: 26px 0 16px;
-    font-size: 10px;
+    font-size: 12px;
   }
   :where(.hero-editorial-line > span) {
-    max-width: 160px;
+    max-width: 190px;
+    text-wrap: balance;
   }
   :where(.hero-open-source) {
     gap: 5px;
@@ -164,7 +161,7 @@
     margin-inline: 4px;
   }
   :where(.hero-story-links a) {
-    padding: 18px 0;
+    padding: 16px 0;
   }
   :where(.hero-story-links a + a) {
     border-top: 1px solid var(--marketing-hairline);
@@ -172,38 +169,37 @@
   }
 }
 @media (prefers-reduced-motion: no-preference) {
-  :where(.hero-canvas[data-reveal="visible"] .hero-editorial-line),
-  :where(.hero-canvas[data-reveal="visible"] h1 > span),
-  :where(.hero-canvas[data-reveal="visible"] .marketing-hero-copy > p),
-  :where(.hero-canvas[data-reveal="visible"] .hero-actions) {
-    animation: marketing-reveal var(--marketing-reveal-duration)
-      var(--marketing-reveal-ease) var(--hero-arrival-delay, 0ms) backwards;
+  :where(.hero-canvas[data-intro="play"])
+    :where(.hero-editorial-line, .marketing-hero-copy > p, .hero-actions) {
+    animation: marketing-intro var(--marketing-intro-duration)
+      var(--marketing-intro-ease) var(--hero-arrival-delay, 0ms) backwards;
   }
-  :where(.hero-canvas[data-reveal="visible"] h1 > span) {
-    animation-name: marketing-heading-unveil;
+  :where(.hero-canvas[data-intro="play"] h1 > span) {
+    animation: marketing-heading-unveil var(--marketing-intro-duration)
+      var(--marketing-intro-ease) var(--hero-arrival-delay, 0ms) backwards;
   }
   :where(.marketing-hero h1 > span:first-child) {
-    --hero-arrival-delay: 60ms;
+    --hero-arrival-delay: 40ms;
   }
   :where(.marketing-hero h1 > span:last-child) {
-    --hero-arrival-delay: 150ms;
+    --hero-arrival-delay: 110ms;
   }
   :where(.marketing-hero-copy > p) {
-    --hero-arrival-delay: 280ms;
+    --hero-arrival-delay: 200ms;
   }
   :where(.hero-actions) {
-    --hero-arrival-delay: 390ms;
+    --hero-arrival-delay: 280ms;
   }
-  :where(.hero-canvas[data-reveal="visible"] .hero-product-scene) {
-    animation: hero-scene-arrive 1100ms var(--marketing-reveal-ease) 220ms
+  :where(.hero-canvas[data-intro="play"] .hero-product-scene) {
+    animation: hero-scene-arrive 760ms var(--marketing-intro-ease) 160ms
       backwards;
   }
 }
 @keyframes hero-scene-arrive {
   from {
     opacity: 0;
-    translate: 0 32px;
-    scale: 0.975;
+    translate: 0 20px;
+    scale: 0.98;
   }
   to {
     opacity: 1;

@@ -32,8 +32,6 @@ import {
   TableRow,
 } from "@ctrl-ui/react/ui/table";
 import {
-  ArrowDown,
-  ArrowUp,
   ChartBar,
   EnvelopeSimple,
   Eye,
@@ -43,7 +41,8 @@ import {
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
-import { formatDistanceToNow } from "date-fns";
+import type { FunctionReturnType } from "convex/server";
+import { format, formatDistanceToNow } from "date-fns";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -58,7 +57,7 @@ const EMAIL_TYPE_LABELS: Record<string, string> = {
   feedback_shipped: "Shipped",
   invitation: "Invitation",
   other: "Other",
-  password_reset: "Password Reset",
+  password_reset: "Password reset",
   verification: "Verification",
   weekly_digest: "Digest",
   welcome: "Welcome",
@@ -74,59 +73,85 @@ const STATUS_COLORS: Record<string, BadgeColor> = {
   sent: "neutral",
 } as const;
 
+const HIGH_BOUNCE_RATE = 0.05;
+const STAT_CARD_IDS = ["sent", "opened", "clicked", "bounced"] as const;
+
+type EmailTypeRows = FunctionReturnType<
+  typeof api.email.analytics.getEmailStatsByType
+>;
+type RecentEmails = FunctionReturnType<
+  typeof api.email.analytics.getRecentEmails
+>;
+
 function formatPercent(value: number): string {
   return `${(value * 100).toFixed(1)}%`;
 }
 
 function StatCard({
-  title,
-  value,
-  subtext,
   icon: Icon,
-  trend,
+  stat,
+  warn,
 }: {
-  icon: React.ElementType;
-  subtext?: string;
-  title: string;
-  trend?: "up" | "down" | "neutral";
-  value: string | number;
+  icon: typeof EnvelopeSimple;
+  stat: { detail: string; title: string; value: number };
+  warn?: boolean;
 }) {
   return (
     <Card>
       <CardContent className="flex items-center gap-4 p-4">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
-          <Icon className="h-5 w-5 text-muted-foreground" />
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+          <Icon aria-hidden className="size-5 text-muted-foreground" />
         </div>
         <div className="min-w-0">
-          <p className="truncate text-muted-foreground text-sm">{title}</p>
-          <div className="flex items-center gap-2">
-            <p className="font-semibold text-2xl tabular-nums">{value}</p>
-            {trend && trend !== "neutral" && (
-              <span
-                className={cn(
-                  "flex items-center text-xs",
-                  trend === "up" ? "text-success-text" : "text-destructive-text"
-                )}
-              >
-                {trend === "up" ? (
-                  <ArrowUp aria-hidden className="h-3 w-3" />
-                ) : (
-                  <ArrowDown aria-hidden className="h-3 w-3" />
-                )}
-                <span className="sr-only">
-                  {trend === "up" ? "Trending up" : "Trending down"}
-                </span>
-              </span>
+          <p className="truncate text-muted-foreground text-sm">{stat.title}</p>
+          <p className="font-semibold text-2xl tabular-nums">
+            {stat.value.toLocaleString()}
+          </p>
+          <p
+            className={cn(
+              "flex items-center gap-1 text-xs tabular-nums",
+              warn ? "text-warning-text" : "text-muted-foreground"
             )}
-          </div>
-          {subtext && (
-            <p className="text-muted-foreground text-xs tabular-nums">
-              {subtext}
-            </p>
-          )}
+          >
+            {warn && <Warning aria-hidden className="size-3" />}
+            {stat.detail}
+            {warn && <span className="sr-only"> (above 5%)</span>}
+          </p>
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function DashboardSkeleton() {
+  return (
+    <div aria-busy="true" className="space-y-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {STAT_CARD_IDS.map((id) => (
+          <Card key={id}>
+            <CardContent className="flex items-center gap-4 p-4">
+              <Skeleton className="size-10" />
+              <div className="space-y-2">
+                <Skeleton className="h-3.5 w-20" />
+                <Skeleton className="h-6 w-14" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-3.5 w-56" />
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {["a", "b", "c", "d", "e"].map((id) => (
+            <Skeleton className="h-8 w-full" key={id} />
+          ))}
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
@@ -155,31 +180,11 @@ export function EmailAnalyticsDashboard({
   const isLoading =
     stats === undefined || byType === undefined || recentEmails === undefined;
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {["a", "b", "c", "d"].map((id) => (
-            <Skeleton className="h-24" key={id} />
-          ))}
-        </div>
-        <Skeleton className="h-64" />
-        <Skeleton className="h-96" />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-semibold text-lg">Email Analytics</h2>
-          <p className="text-muted-foreground text-sm">
-            Track delivery, opens, and engagement for your notification emails.
-          </p>
-        </div>
+      <div className="flex justify-end">
         <Select onValueChange={(v) => setDays(Number(v))} value={String(days)}>
-          <SelectTrigger aria-label="Time range" className="w-40">
+          <SelectTrigger aria-label="Time range" className="w-40" size="sm">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -192,147 +197,179 @@ export function EmailAnalyticsDashboard({
         </Select>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          icon={EnvelopeSimple}
-          subtext={`${stats.delivered} delivered`}
-          title="Emails Sent"
-          value={stats.total}
-        />
-        <StatCard
-          icon={Eye}
-          subtext={formatPercent(stats.openRate)}
-          title="Open Rate"
-          value={stats.opened}
-        />
-        <StatCard
-          icon={LinkSimple}
-          subtext={formatPercent(stats.clickRate)}
-          title="Click Rate"
-          value={stats.clicked}
-        />
-        <StatCard
-          icon={Warning}
-          subtext={formatPercent(stats.bounceRate)}
-          title="Bounce Rate"
-          trend={stats.bounceRate > 0.05 ? "down" : "neutral"}
-          value={stats.bounced}
-        />
-      </div>
+      {isLoading ? (
+        <DashboardSkeleton />
+      ) : (
+        <>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <StatCard
+              icon={EnvelopeSimple}
+              stat={{
+                detail: `${stats.delivered.toLocaleString()} delivered`,
+                title: "Sent",
+                value: stats.total,
+              }}
+            />
+            <StatCard
+              icon={Eye}
+              stat={{
+                detail: `${formatPercent(stats.openRate)} open rate`,
+                title: "Opened",
+                value: stats.opened,
+              }}
+            />
+            <StatCard
+              icon={LinkSimple}
+              stat={{
+                detail: `${formatPercent(stats.clickRate)} click rate`,
+                title: "Clicked",
+                value: stats.clicked,
+              }}
+            />
+            <StatCard
+              icon={Warning}
+              stat={{
+                detail: `${formatPercent(stats.bounceRate)} bounce rate`,
+                title: "Bounced",
+                value: stats.bounced,
+              }}
+              warn={stats.bounceRate > HIGH_BOUNCE_RATE}
+            />
+          </div>
 
-      {byType.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <ChartBar className="h-4 w-4" />
-              By Email Type
-            </CardTitle>
-            <CardDescription>
-              Performance breakdown by notification type
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Type</TableHead>
-                  <TableHead className="text-right">Sent</TableHead>
-                  <TableHead className="text-right">Delivered</TableHead>
-                  <TableHead className="text-right">Opened</TableHead>
-                  <TableHead className="text-right">Bounced</TableHead>
-                  <TableHead className="text-right">Open Rate</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {byType.map((row) => (
-                  <TableRow key={row.emailType}>
-                    <TableCell className="font-medium">
-                      {EMAIL_TYPE_LABELS[row.emailType] ?? row.emailType}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {row.total}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {row.delivered}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {row.opened}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {row.bounced}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {row.delivered > 0
-                        ? formatPercent(row.opened / row.delivered)
-                        : "—"}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+          {byType.length > 0 && <ByTypeTable rows={byType} />}
+          <RecentEmailsCard emails={recentEmails} />
+        </>
       )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <EnvelopeSimple className="h-4 w-4" />
-            Recent Emails
-          </CardTitle>
-          <CardDescription>
-            Latest emails sent from your organization
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {recentEmails.length === 0 ? (
-            <Empty>
-              <EmptyHeader>
-                <EmptyMedia>
-                  <EnvelopeSimple className="h-6 w-6" />
-                </EmptyMedia>
-                <EmptyTitle>No emails sent yet</EmptyTitle>
-                <EmptyDescription>
-                  Publish a release to start sending notifications.
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Recipient</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Sent</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recentEmails.map((email) => (
-                  <TableRow key={email._id}>
-                    <TableCell className="max-w-48 truncate font-mono text-sm">
-                      {email.to}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">
-                        {EMAIL_TYPE_LABELS[email.emailType] ?? email.emailType}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge color={STATUS_COLORS[email.status] ?? "neutral"}>
-                        {email.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right text-muted-foreground text-sm">
-                      {formatDistanceToNow(email.sentAt, { addSuffix: true })}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
     </div>
+  );
+}
+
+function ByTypeTable({ rows }: { rows: EmailTypeRows }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <ChartBar aria-hidden className="size-4" />
+          By email type
+        </CardTitle>
+        <CardDescription>Performance by notification type</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Type</TableHead>
+              <TableHead className="text-right">Sent</TableHead>
+              <TableHead className="text-right">Delivered</TableHead>
+              <TableHead className="text-right">Opened</TableHead>
+              <TableHead className="text-right">Bounced</TableHead>
+              <TableHead className="text-right">Open rate</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map((row) => (
+              <TableRow key={row.emailType}>
+                <TableCell className="font-medium">
+                  {EMAIL_TYPE_LABELS[row.emailType] ?? row.emailType}
+                </TableCell>
+                <TableCell className="text-right tabular-nums">
+                  {row.total.toLocaleString()}
+                </TableCell>
+                <TableCell className="text-right tabular-nums">
+                  {row.delivered.toLocaleString()}
+                </TableCell>
+                <TableCell className="text-right tabular-nums">
+                  {row.opened.toLocaleString()}
+                </TableCell>
+                <TableCell className="text-right tabular-nums">
+                  {row.bounced.toLocaleString()}
+                </TableCell>
+                <TableCell className="text-right tabular-nums">
+                  {row.delivered > 0
+                    ? formatPercent(row.opened / row.delivered)
+                    : "—"}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+}
+
+function RecentEmailsCard({ emails }: { emails: RecentEmails }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <EnvelopeSimple aria-hidden className="size-4" />
+          Recent emails
+        </CardTitle>
+        <CardDescription>
+          Latest emails sent from your organization
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {emails.length === 0 ? (
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia>
+                <EnvelopeSimple aria-hidden className="size-6" />
+              </EmptyMedia>
+              <EmptyTitle>No emails sent yet</EmptyTitle>
+              <EmptyDescription>
+                Publish a release to start sending notifications.
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Recipient</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Sent</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {emails.map((email) => (
+                <TableRow key={email._id}>
+                  <TableCell
+                    className="max-w-48 truncate font-mono text-sm"
+                    title={email.to}
+                  >
+                    {email.to}
+                  </TableCell>
+                  <TableCell>
+                    <Badge size="sm" variant="outline">
+                      {EMAIL_TYPE_LABELS[email.emailType] ?? email.emailType}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      color={STATUS_COLORS[email.status] ?? "neutral"}
+                      size="sm"
+                    >
+                      {email.status.replaceAll("_", " ")}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right text-muted-foreground text-sm tabular-nums">
+                    <time
+                      dateTime={new Date(email.sentAt).toISOString()}
+                      title={format(email.sentAt, "MMM d, yyyy, h:mm a")}
+                    >
+                      {formatDistanceToNow(email.sentAt, { addSuffix: true })}
+                    </time>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
   );
 }

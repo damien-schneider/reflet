@@ -168,7 +168,7 @@ describe("ReleaseItem", () => {
       publishedAt: 1_700_000_000_000,
     });
     render(<ReleaseItem orgSlug="test-org" release={release} />);
-    expect(screen.getByText("Shipped Features")).toBeInTheDocument();
+    expect(screen.getByText("Shipped features")).toBeInTheDocument();
     expect(screen.getByText("Dark Mode")).toBeInTheDocument();
     expect(screen.getByText("Export PDF")).toBeInTheDocument();
   });
@@ -188,7 +188,7 @@ describe("ReleaseItem", () => {
       publishedAt: 1_700_000_000_000,
     });
     render(<ReleaseItem orgSlug="test-org" release={release} />);
-    expect(screen.queryByText("Shipped Features")).not.toBeInTheDocument();
+    expect(screen.queryByText("Shipped features")).not.toBeInTheDocument();
   });
 
   it("does not show admin actions when isAdmin is false", () => {
@@ -248,7 +248,7 @@ describe("ReleaseItem", () => {
   it("calls onDelete when Delete is clicked", () => {
     const onDelete = vi.fn();
     render(<ReleaseItem {...defaultProps} isAdmin onDelete={onDelete} />);
-    fireEvent.click(screen.getByText("Delete"));
+    fireEvent.click(screen.getByText("Delete…"));
     expect(onDelete).toHaveBeenCalledOnce();
   });
 

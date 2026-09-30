@@ -7,9 +7,10 @@ vi.mock("@phosphor-icons/react", () => ({
     <span className={className} data-testid="icon-sync" />
   ),
   Bug: () => <span data-testid="icon-bug" />,
-  Spinner: ({ className }: { className?: string }) => (
-    <span className={className} data-testid="icon-spinner" />
-  ),
+}));
+
+vi.mock("@ctrl-ui/react/ui/spinner", () => ({
+  Spinner: () => <span data-testid="icon-spinner" />,
 }));
 
 vi.mock("@ctrl-ui/react/ui/badge", () => ({
@@ -204,14 +205,14 @@ describe("IssuesSyncSection", () => {
     expect(onToggleSync).toHaveBeenCalledWith(true, true);
   });
 
-  it("shows Sync Issues Now button for admin when enabled", () => {
+  it("shows Sync issues now button for admin when enabled", () => {
     render(<IssuesSyncSection {...defaultProps} isEnabled />);
-    expect(screen.getByText("Sync Issues Now")).toBeInTheDocument();
+    expect(screen.getByText("Sync issues now")).toBeInTheDocument();
   });
 
-  it("hides Sync Issues Now button for non-admin", () => {
+  it("hides Sync issues now button for non-admin", () => {
     render(<IssuesSyncSection {...defaultProps} isAdmin={false} isEnabled />);
-    expect(screen.queryByText("Sync Issues Now")).toBeNull();
+    expect(screen.queryByText("Sync issues now")).toBeNull();
   });
 
   it("calls onSyncNow when sync button clicked", async () => {
@@ -220,13 +221,13 @@ describe("IssuesSyncSection", () => {
     render(
       <IssuesSyncSection {...defaultProps} isEnabled onSyncNow={onSyncNow} />
     );
-    await user.click(screen.getByText("Sync Issues Now"));
+    await user.click(screen.getByText("Sync issues now"));
     expect(onSyncNow).toHaveBeenCalled();
   });
 
   it("disables sync button when syncing", () => {
     render(<IssuesSyncSection {...defaultProps} isEnabled isSyncing />);
-    const btn = screen.getByText("Sync Issues Now").closest("button");
+    const btn = screen.getByText("Sync issues now").closest("button");
     expect(btn).toBeDisabled();
     expect(screen.getByTestId("icon-spinner")).toBeInTheDocument();
   });
@@ -243,7 +244,7 @@ describe("IssuesSyncSection", () => {
     render(
       <IssuesSyncSection {...defaultProps} isEnabled lastSyncStatus="error" />
     );
-    expect(screen.getByText("Error")).toBeInTheDocument();
+    expect(screen.getByText("Last sync failed")).toBeInTheDocument();
   });
 
   it("disables switch for non-admin", () => {

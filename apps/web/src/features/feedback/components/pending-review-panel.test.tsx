@@ -64,7 +64,7 @@ describe("PendingReviewPanel", () => {
   it("renders the empty state when nothing is pending", () => {
     mockUseQuery.mockReturnValue({ canApprove: true, items: [] });
     renderPanel();
-    expect(screen.getByText("Nothing waiting for review")).toBeInTheDocument();
+    expect(screen.getByText("All caught up")).toBeInTheDocument();
   });
 
   it("shows the usefulness probability as a percentage", () => {
@@ -105,15 +105,34 @@ describe("PendingReviewPanel", () => {
     );
   });
 
-  it("dismisses through the shared remove mutation", async () => {
+  it("dismisses through the shared remove mutation after confirming", async () => {
     mockUseQuery.mockReturnValue({ canApprove: true, items: [pendingItem] });
     renderPanel();
     fireEvent.click(
       screen.getByRole("button", { name: "Dismiss Broken export" })
     );
+    expect(mockRemoveFeedback).not.toHaveBeenCalled();
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Dismiss feedback" })
+    );
     await waitFor(() =>
       expect(mockRemoveFeedback).toHaveBeenCalledWith({ id: feedbackId })
     );
+  });
+
+  it("approves every pending item at once", async () => {
+    const secondId = "fb2" as Id<"feedback">;
+    mockUseQuery.mockReturnValue({
+      canApprove: true,
+      items: [pendingItem, { ...pendingItem, _id: secondId, title: "Slow" }],
+    });
+    renderPanel();
+    fireEvent.click(screen.getByRole("button", { name: /Approve all 2/ }));
+    await waitFor(() => expect(mockUpdateFeedback).toHaveBeenCalledTimes(2));
+    expect(mockUpdateFeedback).toHaveBeenCalledWith({
+      id: secondId,
+      isApproved: true,
+    });
   });
 
   it("hides the approve control from members who cannot approve", () => {

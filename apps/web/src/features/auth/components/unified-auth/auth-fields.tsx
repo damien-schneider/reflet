@@ -22,28 +22,35 @@ export function AuthEmailField({
   onEmailChange,
 }: AuthEmailFieldProps) {
   return (
-    <Field className="relative">
-      <FieldLabel className="justify-between" htmlFor="email">
-        Email
-        {isCheckingEmail && (
-          <div className="inline-flex w-fit! gap-1 text-muted-foreground text-xs">
-            <Spinner />
-            <p className="">Checking email...</p>
-          </div>
-        )}
-      </FieldLabel>
+    <Field invalid={Boolean(errors.email)}>
+      <div className="flex w-full items-baseline justify-between gap-2">
+        <FieldLabel htmlFor="email">Email</FieldLabel>
+        <span
+          aria-live="polite"
+          className="inline-flex items-center gap-1 text-muted-foreground text-xs"
+        >
+          {isCheckingEmail && (
+            <>
+              <Spinner size="xs" />
+              Checking…
+            </>
+          )}
+        </span>
+      </div>
       <Input
+        autoCapitalize="none"
+        autoComplete="email"
         data-testid="email-input"
         id="email"
+        inputMode="email"
+        placeholder="name@example.com"
+        spellCheck={false}
         type="email"
         {...register("email")}
         disabled={isSubmitting}
         onChange={onEmailChange}
       />
-      <FieldError
-        className="absolute top-full left-0"
-        match={Boolean(errors.email?.message)}
-      >
+      <FieldError match={Boolean(errors.email?.message)}>
         {errors.email?.message}
       </FieldError>
     </Field>
@@ -78,22 +85,21 @@ export function AuthPasswordField({
   isSignUp,
 }: AuthPasswordFieldProps) {
   const remainingChars = MIN_PASSWORD_LENGTH - passwordLength;
-  // Only show password length hint for new account creation, not for sign-in
-  // (existing users may have shorter passwords)
+  // Existing accounts may predate the 8-character minimum, so the hint is sign-up only.
   const showHint = isSignUp && passwordLength > 0 && remainingChars > 0;
 
   return (
-    <Field className="relative">
-      <FieldLabel className="justify-between" htmlFor="password">
-        Password
+    <Field invalid={Boolean(errors.password)}>
+      <div className="flex w-full items-baseline justify-between gap-2">
+        <FieldLabel htmlFor="password">Password</FieldLabel>
         {showHint && (
-          <span className="text-muted-foreground text-xs">
-            {remainingChars} more character{remainingChars === 1 ? "" : "s"}{" "}
-            needed
+          <span className="text-muted-foreground text-xs tabular-nums">
+            {remainingChars} more character{remainingChars === 1 ? "" : "s"}
           </span>
         )}
-      </FieldLabel>
+      </div>
       <Input
+        autoComplete={isSignUp ? "new-password" : "current-password"}
         data-testid="password-input"
         id="password"
         type="password"
@@ -101,10 +107,7 @@ export function AuthPasswordField({
         disabled={isSubmitting}
         onChange={(e) => onPasswordChange(e, setValue, trigger)}
       />
-      <FieldError
-        className="absolute top-full left-0"
-        match={Boolean(errors.password?.message)}
-      >
+      <FieldError match={Boolean(errors.password?.message)}>
         {errors.password?.message}
       </FieldError>
     </Field>

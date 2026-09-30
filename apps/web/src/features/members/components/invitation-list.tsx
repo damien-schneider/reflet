@@ -1,11 +1,15 @@
 import { Button } from "@ctrl-ui/react/ui/button";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import { ArrowClockwise, Check } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
-import { useEffect, useState } from "react";
+import { format } from "date-fns";
+import { useEffect, useRef, useState } from "react";
 
-const RESEND_COOLDOWN_MS = 60 * 1000; // 60 seconds - must match backend
+const RESEND_COOLDOWN_MS = 60 * 1000; // must match the backend cooldown
+const JUST_SENT_MS = 2000;
+const MS_PER_SECOND = 1000;
 
 interface InvitationInfo {
   _creationTime: number;
@@ -21,7 +25,7 @@ interface InvitationListProps {
 
 interface InvitationItemProps {
   invitation: InvitationInfo;
-  onCancel: (id: Id<"invitations">) => void;
+  onCancel: (id: Id<"invitations">) => Promise<void>;
   onResend: (id: Id<"invitations">) => Promise<void>;
 }
 
@@ -37,31 +41,47 @@ function ResendButtonContent({
   if (justSent) {
     return (
       <>
-        <Check className="mr-1 h-4 w-4" />
+        <Check aria-hidden />
         Sent
       </>
     );
   }
-
   if (isResending) {
     return (
       <>
-        <ArrowClockwise className="mr-1 h-4 w-4 animate-spin" />
-        Sending...
+        <ArrowClockwise aria-hidden className="motion-safe:animate-spin" />
+        Sending…
       </>
     );
   }
-
   if (remainingSeconds > 0) {
-    return `Resend in ${remainingSeconds}s`;
+    return <span className="tabular-nums">Resend in {remainingSeconds}s</span>;
   }
-
   return (
     <>
-      <ArrowClockwise className="mr-1 h-4 w-4" />
+      <ArrowClockwise aria-hidden />
       Resend
     </>
   );
+}
+
+function useResendCooldown(invitation: InvitationInfo) {
+  const [remainingSeconds, setRemainingSeconds] = useState(0);
+
+  useEffect(() => {
+    const updateTimer = () => {
+      const lastSent = invitation.lastSentAt ?? invitation._creationTime;
+      const elapsed = Date.now() - lastSent;
+      setRemainingSeconds(
+        Math.max(0, Math.ceil((RESEND_COOLDOWN_MS - elapsed) / MS_PER_SECOND))
+      );
+    };
+    updateTimer();
+    const interval = setInterval(updateTimer, MS_PER_SECOND);
+    return () => clearInterval(interval);
+  }, [invitation.lastSentAt, invitation._creationTime]);
+
+  return remainingSeconds;
 }
 
 function InvitationItem({
@@ -70,50 +90,66 @@ function InvitationItem({
   onResend,
 }: InvitationItemProps) {
   const [isResending, setIsResending] = useState(false);
+  const [isCanceling, setIsCanceling] = useState(false);
   const [justSent, setJustSent] = useState(false);
-  const [remainingSeconds, setRemainingSeconds] = useState(0);
+  const justSentTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined
+  );
+  const remainingSeconds = useResendCooldown(invitation);
 
-  useEffect(() => {
-    const updateTimer = () => {
-      const lastSent = invitation.lastSentAt ?? invitation._creationTime;
-      const elapsed = Date.now() - lastSent;
-      setRemainingSeconds(
-        Math.max(0, Math.ceil((RESEND_COOLDOWN_MS - elapsed) / 1000))
-      );
-    };
-
-    updateTimer();
-    const interval = setInterval(updateTimer, 1000);
-    return () => clearInterval(interval);
-  }, [invitation.lastSentAt, invitation._creationTime]);
+  useEffect(() => () => clearTimeout(justSentTimerRef.current), []);
 
   const handleResend = async () => {
     setIsResending(true);
     try {
       await onResend(invitation._id);
       setJustSent(true);
-      setTimeout(() => setJustSent(false), 2000);
-    } finally {
-      setIsResending(false);
+      justSentTimerRef.current = setTimeout(
+        () => setJustSent(false),
+        JUST_SENT_MS
+      );
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Couldn’t resend the invite"
+      );
+    }
+    setIsResending(false);
+  };
+
+  const handleCancel = async () => {
+    setIsCanceling(true);
+    try {
+      await onCancel(invitation._id);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Couldn’t cancel the invite"
+      );
+      setIsCanceling(false);
     }
   };
 
-  const canResend = remainingSeconds === 0 && !isResending && !justSent;
+  const canResend =
+    remainingSeconds === 0 && !isResending && !justSent && !isCanceling;
 
   return (
-    <div className="flex items-center justify-between py-4">
-      <div>
-        <p className="font-medium">{invitation.email}</p>
-        <p className="text-muted-foreground text-sm">
-          Invited as {invitation.role} •{" "}
-          {new Date(invitation._creationTime).toLocaleDateString()}
+    <li className="flex items-center justify-between gap-4 py-3">
+      <div className="flex min-w-0 flex-col">
+        <p className="truncate font-medium text-label">{invitation.email}</p>
+        <p className="text-caption text-muted-foreground">
+          Invited as {invitation.role} ·{" "}
+          <time
+            className="tabular-nums"
+            dateTime={new Date(invitation._creationTime).toISOString()}
+          >
+            {format(invitation._creationTime, "PP")}
+          </time>
         </p>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex shrink-0 items-center gap-2">
         <Button
           disabled={!canResend}
           onClick={handleResend}
-          size="xs"
+          size="sm"
           variant="surface"
         >
           <ResendButtonContent
@@ -123,14 +159,16 @@ function InvitationItem({
           />
         </Button>
         <Button
-          onClick={() => onCancel(invitation._id)}
-          size="xs"
+          aria-label={`Cancel invitation for ${invitation.email}`}
+          disabled={isCanceling}
+          onClick={handleCancel}
+          size="sm"
           variant="ghost"
         >
-          Cancel
+          {isCanceling ? "Canceling…" : "Cancel"}
         </Button>
       </div>
-    </div>
+    </li>
   );
 }
 
@@ -142,28 +180,24 @@ export function InvitationList({ invitations }: InvitationListProps) {
     api.organizations.invitation_actions.resend
   );
 
-  const handleCancelInvitation = (invitationId: Id<"invitations">) => {
-    cancelInvitation({ invitationId });
-  };
-
-  const handleResendInvitation = async (invitationId: Id<"invitations">) => {
-    await resendInvitation({ invitationId });
-  };
-
   if (!invitations || invitations.length === 0) {
     return null;
   }
 
   return (
-    <div className="divide-y">
+    <ul className="divide-y">
       {invitations.map((invitation) => (
         <InvitationItem
           invitation={invitation}
           key={invitation._id}
-          onCancel={handleCancelInvitation}
-          onResend={handleResendInvitation}
+          onCancel={async (invitationId) => {
+            await cancelInvitation({ invitationId });
+          }}
+          onResend={async (invitationId) => {
+            await resendInvitation({ invitationId });
+          }}
         />
       ))}
-    </div>
+    </ul>
   );
 }

@@ -1,7 +1,21 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@ctrl-ui/react/ui/empty";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { AnimatePresence, domAnimation, LazyMotion, m } from "motion/react";
+import {
+  AnimatePresence,
+  domAnimation,
+  LazyMotion,
+  MotionConfig,
+  m,
+} from "motion/react";
 import type React from "react";
 
 import { SweepCornerFeedCard } from "@/features/feedback/components/card-designs/sweep-corner-card";
@@ -15,6 +29,8 @@ import type {
 import { InlineFeedbackInput } from "./inline-feedback-input";
 
 export type { SortOption } from "./filters-bar";
+
+const EASE_OUT = [0.23, 1, 0.32, 1] as const;
 
 export interface FeedbackItem {
   _id: Id<"feedback">;
@@ -56,7 +72,6 @@ export interface FeedFeedbackViewProps {
   hideCompleted: boolean;
   inlineInputRef?: React.Ref<InlineFeedbackInputHandle>;
   isAdmin: boolean;
-  isLoading: boolean;
   isMember: boolean;
   onClearFilters: () => void;
   onHideCompletedToggle: () => void;
@@ -68,12 +83,67 @@ export interface FeedFeedbackViewProps {
   selectedTagIds: string[];
   sortBy: SortOption;
   statuses: Array<{ _id: string; name: string; color?: string }>;
-  tags: Array<{ _id: string; name: string; color: string }>;
+  tags: Array<{ _id: Id<"tags">; name: string; color: string; icon?: string }>;
+}
+
+function FeedEmptyState({
+  hasActiveFilters,
+  hideCompleted,
+  onClearFilters,
+  onHideCompletedToggle,
+}: Pick<
+  FeedFeedbackViewProps,
+  | "hasActiveFilters"
+  | "hideCompleted"
+  | "onClearFilters"
+  | "onHideCompletedToggle"
+>) {
+  if (hasActiveFilters) {
+    return (
+      <Empty>
+        <EmptyHeader>
+          <EmptyTitle>No feedback matches these filters</EmptyTitle>
+          <EmptyDescription>
+            Try another search, or clear the filters to see everything.
+          </EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <Button onClick={onClearFilters} size="sm" variant="surface">
+            Clear filters
+          </Button>
+        </EmptyContent>
+      </Empty>
+    );
+  }
+
+  if (hideCompleted) {
+    return (
+      <Empty>
+        <EmptyHeader>
+          <EmptyTitle>No open feedback</EmptyTitle>
+          <EmptyDescription>Completed feedback is hidden.</EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <Button onClick={onHideCompletedToggle} size="sm" variant="surface">
+            Show completed
+          </Button>
+        </EmptyContent>
+      </Empty>
+    );
+  }
+
+  return (
+    <Empty>
+      <EmptyHeader>
+        <EmptyTitle>No feedback yet</EmptyTitle>
+        <EmptyDescription>Share the first idea above.</EmptyDescription>
+      </EmptyHeader>
+    </Empty>
+  );
 }
 
 export function FeedFeedbackView({
   feedback,
-  isLoading,
   hasActiveFilters,
   hideCompleted,
   sortBy,
@@ -91,82 +161,64 @@ export function FeedFeedbackView({
   onInlineSubmit,
   inlineInputRef,
 }: FeedFeedbackViewProps) {
-  const { onFeedbackClick } = useFeedbackBoard();
-  if (isLoading) {
-    return (
-      <div className="space-y-4 px-4">
-        {["a", "b", "c"].map((id) => (
-          <div className="h-32 animate-pulse rounded-lg bg-muted" key={id} />
-        ))}
-      </div>
-    );
-  }
-
-  const filtersBarProps = {
-    hideCompleted,
-    onClearFilters,
-    onHideCompletedToggle,
-    onSortChange,
-    onStatusChange,
-    onTagChange,
-    selectedStatusIds,
-    selectedTagIds,
-    sortBy,
-    statuses,
-    tags,
-  };
-
-  if (feedback.length === 0) {
-    return (
-      <>
-        <FiltersBar {...filtersBarProps} />
-        <div className="space-y-4 px-4">
-          <InlineFeedbackInput
-            isAdmin={isAdmin}
-            isMember={isMember}
-            onSubmit={onInlineSubmit}
-            ref={inlineInputRef}
-            tags={tags}
-          />
-          {hasActiveFilters && (
-            <p className="py-8 text-center text-muted-foreground">
-              Nothing matches your search or filters.
-            </p>
-          )}
-        </div>
-      </>
-    );
-  }
+  const { onFeedbackClick, onVote } = useFeedbackBoard();
 
   return (
     <>
-      <FiltersBar {...filtersBarProps} />
+      <FiltersBar
+        hideCompleted={hideCompleted}
+        onClearFilters={onClearFilters}
+        onHideCompletedToggle={onHideCompletedToggle}
+        onSortChange={onSortChange}
+        onStatusChange={onStatusChange}
+        onTagChange={onTagChange}
+        selectedStatusIds={selectedStatusIds}
+        selectedTagIds={selectedTagIds}
+        sortBy={sortBy}
+        statuses={statuses}
+        tags={tags}
+      />
       <div className="space-y-4 px-4">
         <InlineFeedbackInput
+          isAdmin={isAdmin}
           isMember={isMember}
           onSubmit={onInlineSubmit}
           ref={inlineInputRef}
+          tags={tags}
         />
         <LazyMotion features={domAnimation}>
-          <AnimatePresence mode="popLayout">
-            {feedback.map((item) => (
-              <m.div
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                initial={{ opacity: 0, scale: 0.95 }}
-                key={item._id}
-                transition={{ duration: 0.2 }}
-              >
-                <FeedbackCardAdminWrapper feedbackId={item._id}>
-                  <SweepCornerFeedCard
-                    feedback={item}
-                    onClick={onFeedbackClick}
-                  />
-                </FeedbackCardAdminWrapper>
-              </m.div>
-            ))}
-          </AnimatePresence>
+          <MotionConfig reducedMotion="user">
+            <ul aria-label="Feedback" className="space-y-4 empty:hidden">
+              <AnimatePresence initial={false} mode="popLayout">
+                {feedback.map((item) => (
+                  <m.li
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.98 }}
+                    initial={{ opacity: 0, scale: 0.98 }}
+                    key={item._id}
+                    transition={{ duration: 0.18, ease: EASE_OUT }}
+                  >
+                    <FeedbackCardAdminWrapper feedbackId={item._id}>
+                      <SweepCornerFeedCard
+                        feedback={item}
+                        onClick={onFeedbackClick}
+                        onVote={onVote}
+                      />
+                    </FeedbackCardAdminWrapper>
+                  </m.li>
+                ))}
+              </AnimatePresence>
+            </ul>
+          </MotionConfig>
         </LazyMotion>
+        {feedback.length === 0 && (
+          <FeedEmptyState
+            hasActiveFilters={hasActiveFilters}
+            hideCompleted={hideCompleted}
+            onClearFilters={onClearFilters}
+            onHideCompletedToggle={onHideCompletedToggle}
+          />
+        )}
       </div>
     </>
   );

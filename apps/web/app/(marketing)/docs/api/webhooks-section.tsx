@@ -1,11 +1,20 @@
-import { Table, TableBody, TableCell, TableRow } from "@ctrl-ui/react/ui/table";
-import { codeBlockClass } from "./code-block-class";
+import { CodeBlock } from "@/components/docs/code-block";
+import {
+  DocsLink,
+  DocsNote,
+  DocsSection,
+  type DocsSections,
+  DocsSubsection,
+  DocsText,
+} from "@/components/docs/docs-page";
+import { ReferenceTable } from "@/components/docs/reference-table";
+import { InlineCode } from "@/components/ui/typography";
 
 const EVENTS = [
   ["feedback.created", "Feedback became visible (created and approved)."],
   [
     "feedback.status_changed",
-    "Status moved — by a member, the API, an agent, GitHub, or a release.",
+    "The status or custom status changed: by a member, the API, an agent, GitHub, a release or the automatic close of stale feedback.",
   ],
   [
     "feedback.github_issue_created",
@@ -14,20 +23,30 @@ const EVENTS = [
 ] as const;
 
 const PAYLOAD_EXAMPLE = `{
-  "id": "delivery id",
+  "id": "kd4n…",
   "event": "feedback.status_changed",
-  "createdAt": 1726200000000,
-  "organizationId": "…",
+  "createdAt": 1757500000000,
+  "organizationId": "k57e4b1n8q2x9c0r3t6w5y7z1m",
   "data": {
     "feedback": {
       "id": "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79",
       "title": "Draft lost on save",
+      "description": "Typing in the editor and hitting save clears the draft.",
       "status": "in_progress",
+      "organizationStatus": { "id": "kx73…", "name": "In Progress", "color": "#8b5cf6" },
+      "tags": [{ "id": "kt32…", "name": "Bug", "slug": "bug", "color": "red" }],
+      "author": { "name": "Jane Doe", "email": "jane@acme.com", "isExternal": true },
+      "voteCount": 12,
+      "commentCount": 3,
+      "isPinned": false,
+      "isInternal": false,
+      "assigneeId": "user_42",
+      "claimedBy": "agent@ci",
       "githubIssueNumber": 42,
       "githubHtmlUrl": "https://github.com/acme/app/issues/42",
-      "claimedBy": "agent@ci",
-      "tags": [{ "id": "…", "name": "bug", "slug": "bug", "color": "#f00" }],
-      "context": { "url": "https://app.acme.com/editor", "browser": "Chrome 128" }
+      "context": { "url": "https://app.acme.com/editor", "browser": "Chrome 128" },
+      "createdAt": 1757100000000,
+      "updatedAt": 1757500000000
     }
   }
 }`;
@@ -40,73 +59,64 @@ export function verifyReflet(rawBody: string, signature: string, secret: string)
     timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
 }`;
 
-export function WebhooksSection() {
+const EVENT_COLUMNS = [
+  { kind: "name", label: "Event" },
+  { kind: "text", label: "Sent when" },
+] as const;
+
+export function WebhooksSection({ sections }: { sections: DocsSections }) {
   return (
-    <section className="mb-12">
-      <h2
-        className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight"
-        id="webhooks"
-      >
-        Webhooks
-      </h2>
-      <p className="mb-4 text-muted-foreground text-sm">
-        Reflet POSTs a JSON payload to your endpoint when feedback changes.
-        Register endpoints from{" "}
-        <strong className="text-foreground">
-          Dashboard &gt; Project &gt; API keys &gt; Webhooks
+    <DocsSection id="webhooks" sections={sections}>
+      <DocsText>
+        Reflet POSTs a JSON payload to your endpoint when feedback changes. Add
+        endpoints in the Webhooks section of{" "}
+        <strong className="font-medium text-foreground">
+          Dashboard → Project → API keys
         </strong>
         . Each webhook has its own signing secret, shown once at creation.
-      </p>
+      </DocsText>
 
-      <h3 className="mb-2 font-semibold text-sm">Events</h3>
-      <div className="mb-6 overflow-hidden rounded-lg border border-border">
-        <Table className="text-sm">
-          <TableBody>
-            {EVENTS.map(([event, description]) => (
-              <TableRow key={event}>
-                <TableCell>
-                  <code className="text-foreground text-xs">{event}</code>
-                </TableCell>
-                <TableCell className="whitespace-normal text-muted-foreground">
-                  {description}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+      <DocsSubsection id="webhook-events" title="Events">
+        <ReferenceTable
+          columns={EVENT_COLUMNS}
+          rows={EVENTS.map(([event, description]) => ({
+            cells: [event, description],
+            key: event,
+          }))}
+        />
+      </DocsSubsection>
 
-      <h3 className="mb-2 font-semibold text-sm">Request</h3>
-      <p className="mb-2 text-muted-foreground text-sm">
-        Headers:{" "}
-        <code className="rounded bg-muted px-1 py-0.5 text-xs">
-          X-Reflet-Event
-        </code>
-        ,{" "}
-        <code className="rounded bg-muted px-1 py-0.5 text-xs">
-          X-Reflet-Delivery
-        </code>{" "}
-        (unique per attempt series, use it to dedupe) and{" "}
-        <code className="rounded bg-muted px-1 py-0.5 text-xs">
-          X-Reflet-Signature
-        </code>{" "}
-        (<code className="rounded bg-muted px-1 py-0.5 text-xs">sha256=</code>
-        HMAC-SHA256 of the raw body with the webhook secret).
-      </p>
-      <pre className={`mb-6 ${codeBlockClass}`}>
-        <code>{PAYLOAD_EXAMPLE}</code>
-      </pre>
+      <DocsSubsection id="webhook-request" title="Request">
+        <DocsText>
+          Headers: <InlineCode>Content-Type: application/json</InlineCode>,{" "}
+          <InlineCode>User-Agent: Reflet-Webhooks/1.0</InlineCode>,{" "}
+          <InlineCode>X-Reflet-Event</InlineCode>,{" "}
+          <InlineCode>X-Reflet-Delivery</InlineCode> (the same on every retry,
+          use it to dedupe) and <InlineCode>X-Reflet-Signature</InlineCode> (
+          <InlineCode>sha256=</InlineCode> followed by the hex HMAC-SHA256 of
+          the raw body, keyed with the webhook secret).
+        </DocsText>
+        <DocsText>
+          <InlineCode>data.feedback</InlineCode> has the same shape as{" "}
+          <DocsLink href="#get-feedback">
+            <InlineCode>GET /feedback/item</InlineCode>
+          </DocsLink>{" "}
+          with a secret key, including the author’s email and the private
+          fields.
+        </DocsText>
+        <CodeBlock code={PAYLOAD_EXAMPLE} title="Payload" />
+      </DocsSubsection>
 
-      <h3 className="mb-2 font-semibold text-sm">Verify the signature</h3>
-      <pre className={`mb-6 ${codeBlockClass}`}>
-        <code>{VERIFY_EXAMPLE}</code>
-      </pre>
+      <DocsSubsection id="webhook-verify" title="Verify the signature">
+        <CodeBlock code={VERIFY_EXAMPLE} />
+      </DocsSubsection>
 
-      <p className="rounded-lg border border-border bg-muted/30 p-3 text-muted-foreground text-sm">
-        Respond with any 2xx within 10 seconds. Failures retry after 1 minute
-        and again after 10 minutes; a webhook that fails 20 deliveries in a row
-        is disabled until you re-enable it. Only approved feedback is delivered.
-      </p>
-    </section>
+      <DocsNote>
+        Respond with any 2xx within 10 seconds. A failed delivery is retried
+        after 1 minute and again after 10 minutes. A webhook is disabled after
+        20 failed attempts in a row, retries included; re-enabling it resets the
+        count. Only approved, non-internal feedback is delivered.
+      </DocsNote>
+    </DocsSection>
   );
 }

@@ -1,6 +1,15 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
+import { CodeBlock } from "@/components/docs/code-block";
+import {
+  DocsLink,
+  DocsList,
+  DocsPage,
+  DocsSection,
+  DocsSubsection,
+  DocsText,
+} from "@/components/docs/docs-page";
+import { InstallCommand } from "@/components/docs/install-command";
 import { InlineCode } from "@/components/ui/typography";
 import { generatePageMetadata } from "@/lib/seo-config";
 
@@ -8,147 +17,113 @@ export const metadata: Metadata = generatePageMetadata({
   description:
     "How to install Reflet UI components into your project using the shadcn registry.",
   path: "/docs/components/installation",
-  title: "Component Installation",
+  title: "Component installation",
 });
+
+const SECTIONS = [
+  { id: "prerequisites", label: "Prerequisites" },
+  { id: "install", label: "Install a component" },
+  { id: "installed-files", label: "What gets installed" },
+  { id: "usage", label: "Usage" },
+  { id: "reflet-data", label: "Connect to Reflet data" },
+] as const;
+
+const REGISTRY_ITEMS = [
+  { label: "Sweep Corner", name: "feedback-sweep-corner" },
+  { label: "Minimal Notch", name: "feedback-minimal-notch" },
+  { label: "Editorial Feed", name: "feedback-editorial-feed" },
+  { label: "Horizontal Track", name: "milestone-track-view" },
+  { label: "Editorial Accordion", name: "milestone-editorial-accordion" },
+  { label: "Dashboard Timeline", name: "milestone-dashboard-timeline" },
+] as const;
+
+const FILE_TREE = `components/
+  ui/
+    feedback-sweep-corner.tsx
+    feedback-minimal-notch.tsx
+    feedback-editorial-feed.tsx`;
+
+const USAGE = `import {
+  SweepCorner,
+  SweepCornerBadge,
+  SweepCornerCard,
+  SweepCornerContent,
+  SweepCornerFooter,
+  SweepCornerTitle,
+} from "@/components/ui/feedback-sweep-corner";
+
+<SweepCorner defaultUpvotes={42} onVoteChange={(vote) => console.log(vote)}>
+  <SweepCornerCard>
+    <SweepCornerContent>
+      <SweepCornerTitle>Add dark mode support</SweepCornerTitle>
+    </SweepCornerContent>
+    <SweepCornerBadge />
+    <SweepCornerFooter comments={7} time="1 day ago" />
+  </SweepCornerCard>
+</SweepCorner>`;
 
 export default function InstallationPage() {
   return (
-    <div className="mx-auto max-w-3xl">
-      <h1 className="mb-2 font-display text-3xl text-foreground leading-snug tracking-tight">
-        Installation
-      </h1>
-      <p className="mb-8 text-base text-muted-foreground sm:text-xl">
-        Add Reflet UI components to any project that uses shadcn/ui.
-      </p>
-
-      <section className="mb-10">
-        <h2 className="mb-3 font-display text-2xl text-foreground leading-snug tracking-tight">
-          Prerequisites
-        </h2>
-        <ul className="list-inside list-disc space-y-2 text-muted-foreground text-sm">
+    <DocsPage
+      description="Add Reflet UI components to any project that uses shadcn/ui."
+      sections={SECTIONS}
+      title="Installation"
+    >
+      <DocsSection id="prerequisites" sections={SECTIONS}>
+        <DocsList>
           <li>
             A project with{" "}
-            <a
-              className="font-medium text-foreground underline underline-offset-4"
-              href="https://ui.shadcn.com/docs/installation"
-              rel="noopener noreferrer"
-              target="_blank"
-            >
+            <DocsLink href="https://ui.shadcn.com/docs/installation">
               shadcn/ui initialized
-            </a>
+            </DocsLink>
           </li>
           <li>React 18 or 19</li>
           <li>Tailwind CSS v4</li>
-        </ul>
-      </section>
+        </DocsList>
+      </DocsSection>
 
-      <section className="mb-10">
-        <h2 className="mb-3 font-display text-2xl text-foreground leading-snug tracking-tight">
-          Install a component
-        </h2>
-        <p className="mb-4 text-muted-foreground text-sm">
-          Use the shadcn CLI to install components directly from the Reflet
-          registry:
-        </p>
-        <div className="space-y-3">
-          <CodeBlock
-            command="npx shadcn add https://www.reflet.app/r/feedback-sweep-corner.json"
-            label="Sweep Corner"
-          />
-          <CodeBlock
-            command="npx shadcn add https://www.reflet.app/r/feedback-minimal-notch.json"
-            label="Minimal Notch"
-          />
-          <CodeBlock
-            command="npx shadcn add https://www.reflet.app/r/feedback-editorial-feed.json"
-            label="Editorial Feed"
-          />
-        </div>
-      </section>
+      <DocsSection id="install" sections={SECTIONS}>
+        <DocsText>
+          Install any component from the Reflet registry with the shadcn CLI.
+        </DocsText>
+        {REGISTRY_ITEMS.map((item) => (
+          <DocsSubsection key={item.name} title={item.label}>
+            <InstallCommand
+              command={`npx shadcn add https://www.reflet.app/r/${item.name}.json`}
+            />
+          </DocsSubsection>
+        ))}
+      </DocsSection>
 
-      <section className="mb-10">
-        <h2 className="mb-3 font-display text-2xl text-foreground leading-snug tracking-tight">
-          What gets installed
-        </h2>
-        <p className="mb-4 text-muted-foreground text-sm">
-          Each command creates a component file in your{" "}
-          <InlineCode>components/ui/</InlineCode> directory. The component is
-          fully self-contained — no external runtime dependencies beyond what
-          shadcn already provides.
-        </p>
-        <div className="rounded-lg border border-border bg-muted/30 p-4">
-          <pre className="text-muted-foreground text-sm">
-            {`components/
-  ui/
-    feedback-sweep-corner.tsx    ← installed component
-    feedback-minimal-notch.tsx
-    feedback-editorial-feed.tsx`}
-          </pre>
-        </div>
-      </section>
+      <DocsSection id="installed-files" sections={SECTIONS}>
+        <DocsText>
+          Each command adds one component file to your{" "}
+          <InlineCode>components/ui/</InlineCode> directory, adds the{" "}
+          <InlineCode>--tag-*</InlineCode> color tokens to your CSS, and
+          installs the packages the component needs:{" "}
+          <InlineCode>motion</InlineCode>, <InlineCode>clsx</InlineCode>,{" "}
+          <InlineCode>tailwind-merge</InlineCode> and, for the feedback cards,{" "}
+          <InlineCode>@phosphor-icons/react</InlineCode>.
+        </DocsText>
+        <CodeBlock code={FILE_TREE} title="Project tree" />
+      </DocsSection>
 
-      <section className="mb-10">
-        <h2 className="mb-3 font-display text-2xl text-foreground leading-snug tracking-tight">
-          Usage
-        </h2>
-        <p className="mb-4 text-muted-foreground text-sm">
-          Import and use the component with your data:
-        </p>
-        <div className="rounded-lg border border-border bg-muted/30 p-4">
-          <pre className="overflow-x-auto text-sm">
-            {`import { FeedbackSweepCorner } from "@/components/ui/feedback-sweep-corner";
+      <DocsSection id="usage" sections={SECTIONS}>
+        <DocsText>
+          Compose the subcomponents and pass your data as children and props.
+        </DocsText>
+        <CodeBlock code={USAGE} />
+      </DocsSection>
 
-const item = {
-  id: "1",
-  title: "Add dark mode support",
-  description: "Would love to see a dark mode option.",
-  status: "planned",
-  voteCount: 42,
-  commentCount: 7,
-  hasVoted: false,
-  createdAt: Date.now() - 86400000,
-  tags: [{ id: "1", name: "UI", color: "blue" }],
-  organizationStatus: { id: "s1", name: "Planned", color: "purple" },
-  author: { name: "Jane", isExternal: true },
-};
-
-<FeedbackSweepCorner
-  item={item}
-  onVote={(id) => console.log("voted", id)}
-/>`}
-          </pre>
-        </div>
-      </section>
-
-      <section>
-        <h2 className="mb-3 font-display text-2xl text-foreground leading-snug tracking-tight">
-          Connecting to Reflet SDK
-        </h2>
-        <p className="text-muted-foreground text-sm">
-          These components are presentational — they accept data via props and
-          don&apos;t depend on any backend. To connect them to live Reflet data,
-          use the{" "}
-          <Link
-            className="font-medium text-foreground underline underline-offset-4"
-            href="/docs/sdk"
-          >
-            Reflet SDK
-          </Link>{" "}
-          hooks like <InlineCode>useFeedbackList()</InlineCode> and pass the
-          items as props.
-        </p>
-      </section>
-    </div>
-  );
-}
-
-function CodeBlock({ label, command }: { label: string; command: string }) {
-  return (
-    <div>
-      <p className="mb-1 font-medium text-foreground text-xs">{label}</p>
-      <div className="rounded-lg bg-muted px-4 py-3">
-        <code className="text-muted-foreground text-sm">{command}</code>
-      </div>
-    </div>
+      <DocsSection id="reflet-data" sections={SECTIONS}>
+        <DocsText>
+          These components are presentational: they take data through props and
+          don’t call any backend. To show live Reflet data, fetch it with{" "}
+          <DocsLink href="/docs/sdk/react-hooks">Reflet SDK hooks</DocsLink>{" "}
+          such as <InlineCode>useFeedbackList()</InlineCode> and pass the items
+          in.
+        </DocsText>
+      </DocsSection>
+    </DocsPage>
   );
 }

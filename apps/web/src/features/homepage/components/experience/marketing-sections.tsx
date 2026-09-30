@@ -3,13 +3,12 @@ import Link from "next/link";
 import { FeatureExplorer } from "@/features/homepage/components/experience/features/feature-explorer";
 import { MARKETING_FAQ } from "@/features/homepage/components/experience/marketing-faq-data";
 import { MarketingSectionIntro } from "@/features/homepage/components/experience/marketing-section-intro";
-import { SectionReveal } from "@/features/homepage/components/experience/motion/section-reveal";
 
 export function MarketingSections() {
   return (
     <section className="marketing-section marketing-features" id="features">
       <MarketingSectionIntro
-        kicker="A conversation worth having"
+        kicker="Features"
         title={
           <>
             Feedback that
@@ -18,14 +17,11 @@ export function MarketingSections() {
           </>
         }
       >
-        Collect. Plan. Ship. Keep everyone in the loop.
+        Collect requests in your app, plan them with your team, and let people
+        know when they ship.
       </MarketingSectionIntro>
-      <SectionReveal>
-        <FeatureExplorer />
-      </SectionReveal>
-      <SectionReveal>
-        <DeveloperIntegration />
-      </SectionReveal>
+      <FeatureExplorer />
+      <DeveloperIntegration />
     </section>
   );
 }
@@ -33,15 +29,11 @@ export function MarketingSections() {
 export function MarketingFaq() {
   return (
     <section className="marketing-section marketing-faq">
-      <SectionReveal sequence>
-        <span className="marketing-kicker">A few good questions</span>
-        <h2>
-          Before you
-          <br />
-          come full circle.
-        </h2>
-      </SectionReveal>
-      <SectionReveal sequence>
+      <div>
+        <span className="marketing-kicker">FAQ</span>
+        <h2>Common questions</h2>
+      </div>
+      <div>
         {MARKETING_FAQ.map((item) => (
           <details key={item.question}>
             <summary>
@@ -51,7 +43,7 @@ export function MarketingFaq() {
             <p>{item.answer}</p>
           </details>
         ))}
-      </SectionReveal>
+      </div>
     </section>
   );
 }
@@ -60,12 +52,8 @@ function DeveloperIntegration() {
   return (
     <article className="marketing-developer">
       <div>
-        <span className="marketing-kicker">At home in your product</span>
-        <h3>
-          Your app.
-          <br />
-          Your feedback experience.
-        </h3>
+        <span className="marketing-kicker">For developers</span>
+        <h3>Put feedback inside your app.</h3>
         <p>
           Use the React SDK to put feedback where it makes sense. Build your own
           experience with the API on Pro.
@@ -75,7 +63,7 @@ function DeveloperIntegration() {
           <ArrowUpRight aria-hidden="true" size={14} />
         </Link>
       </div>
-      <div className="marketing-code">
+      <figure aria-label="React SDK setup example" className="marketing-code">
         <div>
           <span>
             <Code2 aria-hidden="true" size={14} /> your-app.tsx
@@ -89,7 +77,7 @@ function DeveloperIntegration() {
             }
           </code>
         </pre>
-      </div>
+      </figure>
     </article>
   );
 }

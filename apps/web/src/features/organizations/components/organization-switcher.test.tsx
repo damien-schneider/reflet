@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -62,15 +62,18 @@ vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
     disabled,
+    form,
     onClick,
-    ...rest
+    type = "button",
   }: {
     children: React.ReactNode;
     disabled?: boolean;
+    form?: string;
     onClick?: () => void;
+    type?: "button" | "submit";
     [key: string]: unknown;
   }) => (
-    <button disabled={disabled} onClick={onClick} type="button">
+    <button disabled={disabled} form={form} onClick={onClick} type={type}>
       {children}
     </button>
   ),
@@ -149,16 +152,6 @@ vi.mock("@ctrl-ui/react/ui/input", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/label", () => ({
-  Label: ({
-    children,
-    htmlFor,
-  }: {
-    children: React.ReactNode;
-    htmlFor?: string;
-  }) => <label htmlFor={htmlFor}>{children}</label>,
-}));
-
 vi.mock("@phosphor-icons/react", () => ({
   CaretUpDown: ({ className }: { className?: string }) => (
     <svg className={className} />
@@ -184,7 +177,7 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
   },
 }));
 
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { OrganizationSwitcher } from "./organization-switcher";
 
 afterEach(() => {
@@ -222,7 +215,7 @@ describe("OrganizationSwitcher", () => {
   it("renders loading state when organizations is undefined", () => {
     vi.mocked(useQuery).mockReturnValue(undefined);
     render(<OrganizationSwitcher currentOrgSlug="acme" />);
-    expect(screen.getByText("Loading...")).toBeInTheDocument();
+    expect(screen.getByText("Loading…")).toBeInTheDocument();
   });
 
   it("shows create dialog when Create organization is clicked", async () => {
@@ -255,8 +248,9 @@ describe("OrganizationSwitcher", () => {
       },
     ]);
     render(<OrganizationSwitcher currentOrgSlug="beta" />);
-    const images = screen.getAllByAltText("Beta Corp");
-    expect(images.length).toBeGreaterThanOrEqual(1);
+    expect(
+      document.querySelector('img[src="https://example.com/logo.png"]')
+    ).toBeInTheDocument();
   });
 
   it("renders first letter fallback when no logo", () => {
@@ -275,16 +269,6 @@ describe("OrganizationSwitcher", () => {
     render(<OrganizationSwitcher currentOrgSlug="acme" />);
     await user.click(screen.getByText("Create organization"));
     expect(screen.getByPlaceholderText("My Company")).toBeInTheDocument();
-  });
-
-  it("renders create dialog with Create button", async () => {
-    vi.mocked(useQuery).mockReturnValue([
-      { _id: "org1", logo: null, name: "Acme", slug: "acme" },
-    ]);
-    const user = userEvent.setup();
-    render(<OrganizationSwitcher currentOrgSlug="acme" />);
-    await user.click(screen.getByText("Create organization"));
-    expect(screen.getByText("Create")).toBeInTheDocument();
   });
 
   it("allows typing in create org input", async () => {
@@ -360,9 +344,8 @@ describe("OrganizationSwitcher", () => {
     expect(screen.getByText("Create organization")).toBeInTheDocument();
   });
 
-  it("does not create org when name is empty", async () => {
+  it("explains and does not create org when name is empty", async () => {
     const createOrgMock = vi.fn();
-    const { useMutation } = await import("convex/react");
     vi.mocked(useMutation).mockReturnValue(createOrgMock);
     vi.mocked(useQuery).mockReturnValue([
       { _id: "org1", logo: null, name: "Acme", slug: "acme" },
@@ -370,13 +353,18 @@ describe("OrganizationSwitcher", () => {
     const user = userEvent.setup();
     render(<OrganizationSwitcher currentOrgSlug="acme" />);
     await user.click(screen.getByText("Create organization"));
-    await user.click(screen.getByText("Create"));
+    const dialog = screen.getByTestId("dialog");
+    await user.click(
+      within(dialog).getByRole("button", { name: "Create organization" })
+    );
     expect(createOrgMock).not.toHaveBeenCalled();
+    expect(
+      within(dialog).getByText("Enter an organization name")
+    ).toBeInTheDocument();
   });
 
   it("creates org and navigates to dashboard on success", async () => {
     const createOrgMock = vi.fn().mockResolvedValue({ _id: "new-org" });
-    const { useMutation } = await import("convex/react");
     vi.mocked(useMutation).mockReturnValue(createOrgMock);
     vi.mocked(useQuery).mockReturnValue([
       { _id: "org1", logo: null, name: "Acme", slug: "acme" },
@@ -385,18 +373,20 @@ describe("OrganizationSwitcher", () => {
     render(<OrganizationSwitcher currentOrgSlug="acme" />);
     await user.click(screen.getByText("Create organization"));
     await user.type(screen.getByPlaceholderText("My Company"), "New Org");
-    await user.click(screen.getByText("Create"));
+    await user.click(
+      within(screen.getByTestId("dialog")).getByRole("button", {
+        name: "Create organization",
+      })
+    );
     expect(createOrgMock).toHaveBeenCalledWith({ name: "New Org" });
     expect(mockPush).toHaveBeenCalledWith("/dashboard");
   });
 
-  it("shows error toast on create org failure", async () => {
+  it("shows the server error next to the name field on failure", async () => {
     const createOrgMock = vi
       .fn()
       .mockRejectedValue(new Error("Duplicate name"));
-    const { useMutation } = await import("convex/react");
     vi.mocked(useMutation).mockReturnValue(createOrgMock);
-    const { toast } = await import("@ctrl-ui/react/ui/toast");
     vi.mocked(useQuery).mockReturnValue([
       { _id: "org1", logo: null, name: "Acme", slug: "acme" },
     ]);
@@ -404,15 +394,14 @@ describe("OrganizationSwitcher", () => {
     render(<OrganizationSwitcher currentOrgSlug="acme" />);
     await user.click(screen.getByText("Create organization"));
     await user.type(screen.getByPlaceholderText("My Company"), "Acme");
-    await user.click(screen.getByText("Create"));
-    expect(toast.error).toHaveBeenCalledWith("Duplicate name");
+    await user.keyboard("{Enter}");
+    expect(await screen.findByText("Duplicate name")).toBeInTheDocument();
+    expect(screen.getByTestId("dialog")).toBeInTheDocument();
   });
 
-  it("shows generic error toast for non-Error exceptions", async () => {
+  it("shows a generic inline error for non-Error exceptions", async () => {
     const createOrgMock = vi.fn().mockRejectedValue("string error");
-    const { useMutation } = await import("convex/react");
     vi.mocked(useMutation).mockReturnValue(createOrgMock);
-    const { toast } = await import("@ctrl-ui/react/ui/toast");
     vi.mocked(useQuery).mockReturnValue([
       { _id: "org1", logo: null, name: "Acme", slug: "acme" },
     ]);
@@ -420,13 +409,14 @@ describe("OrganizationSwitcher", () => {
     render(<OrganizationSwitcher currentOrgSlug="acme" />);
     await user.click(screen.getByText("Create organization"));
     await user.type(screen.getByPlaceholderText("My Company"), "New Org");
-    await user.click(screen.getByText("Create"));
-    expect(toast.error).toHaveBeenCalledWith("Failed to create organization");
+    await user.keyboard("{Enter}");
+    expect(
+      await screen.findByText("Unable to create the organization. Try again.")
+    ).toBeInTheDocument();
   });
 
   it("submits on Enter key in the input", async () => {
     const createOrgMock = vi.fn().mockResolvedValue({ _id: "new-org" });
-    const { useMutation } = await import("convex/react");
     vi.mocked(useMutation).mockReturnValue(createOrgMock);
     vi.mocked(useQuery).mockReturnValue([
       { _id: "org1", logo: null, name: "Acme", slug: "acme" },

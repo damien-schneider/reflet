@@ -41,12 +41,16 @@ const FEATURE_PREVIEWS = [
 
 export function FeatureExplorer() {
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [interacted, setInteracted] = useState(false);
   const selected = FEATURE_PREVIEWS[selectedIndex];
   return (
-    <div className="feature-explorer">
+    <div className="feature-explorer" data-interacted={interacted}>
       <div className="feature-explorer-copy">
         <FeatureChoices
-          onSelect={setSelectedIndex}
+          onSelect={(index) => {
+            setInteracted(true);
+            setSelectedIndex(index);
+          }}
           selectedIndex={selectedIndex}
         />
         <p aria-live="polite" className="feature-mobile-description">

@@ -1,20 +1,23 @@
 "use client";
 
 import { Button } from "@ctrl-ui/react/ui/button";
-import { Field, FieldError, FieldLabel } from "@ctrl-ui/react/ui/field";
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+} from "@ctrl-ui/react/ui/field";
 import { Input } from "@ctrl-ui/react/ui/input";
-import { Separator } from "@ctrl-ui/react/ui/separator";
 import { toast } from "@ctrl-ui/react/ui/toast";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, Envelope, Trash, User } from "@phosphor-icons/react";
+import { User, X } from "@phosphor-icons/react";
 import Image from "next/image";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { H3, Muted, Text } from "@/components/ui/typography";
+import { useForm, useWatch } from "react-hook-form";
 import {
   type UpdateProfileForm,
   updateProfileSchema,
 } from "@/features/account/account-schemas";
+import { SettingsSection } from "@/features/project/components/settings-page";
 import { authClient } from "@/lib/auth-client";
 
 interface ProfileSectionProps {
@@ -30,60 +33,87 @@ export function ProfileSection({
   isLoading,
   setIsLoading,
 }: ProfileSectionProps) {
-  const [avatarUrl, setAvatarUrl] = useState("");
-
   const {
-    register: registerProfile,
-    handleSubmit: handleSubmitProfile,
-    formState: { errors: profileErrors, isDirty: isProfileDirty },
-    reset: resetProfile,
+    control,
+    register,
+    handleSubmit,
+    formState: { errors, isDirty },
+    reset,
+    setValue,
   } = useForm<UpdateProfileForm>({
-    defaultValues: {
-      avatarUrl: "",
-      name: user?.name ?? "",
-    },
-    mode: "onChange",
+    defaultValues: { avatarUrl: "", name: user?.name ?? "" },
+    mode: "onTouched",
     resolver: zodResolver(updateProfileSchema),
   });
+
+  const avatarUrl = useWatch({ control, name: "avatarUrl" }) ?? "";
+  const previewSrc = avatarUrl || user?.image;
+  const displayName = user?.name || "Your profile";
 
   const handleUpdateProfile = async (data: UpdateProfileForm) => {
     setIsLoading(true);
     try {
       await authClient.updateUser({
-        image: avatarUrl || undefined,
+        image: data.avatarUrl || undefined,
         name: data.name,
       });
-      toast.success("Profile updated successfully");
-      resetProfile();
-      setAvatarUrl("");
+      reset({ avatarUrl: "", name: data.name });
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to update profile"
       );
-    } finally {
-      setIsLoading(false);
     }
+    setIsLoading(false);
   };
 
-  const currentAvatar = avatarUrl || user?.image;
-
   return (
-    <section className="space-y-6">
-      <H3 variant="section">Profile</H3>
+    <SettingsSection
+      description="Your name and avatar across Reflet."
+      title="Profile"
+    >
+      <div className="flex items-center gap-4">
+        {previewSrc ? (
+          <Image
+            alt="Avatar preview"
+            className="size-14 shrink-0 rounded-full object-cover outline-1 outline-black/10 -outline-offset-1 dark:outline-white/10"
+            height={56}
+            src={previewSrc}
+            unoptimized
+            width={56}
+          />
+        ) : (
+          <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-muted">
+            <User aria-hidden className="size-6 text-muted-foreground" />
+          </div>
+        )}
+        <div className="min-w-0">
+          <p className="truncate text-label">{displayName}</p>
+          {user?.email ? (
+            <p
+              className="truncate text-caption text-muted-foreground"
+              title={user.email}
+            >
+              {user.email}
+            </p>
+          ) : null}
+        </div>
+      </div>
 
       <form
-        className="space-y-4"
-        onSubmit={handleSubmitProfile(handleUpdateProfile)}
+        className="flex max-w-md flex-col gap-4"
+        noValidate
+        onSubmit={handleSubmit(handleUpdateProfile)}
       >
         <Field>
           <FieldLabel htmlFor="name">Name</FieldLabel>
           <Input
+            aria-invalid={Boolean(errors.name) || undefined}
+            autoComplete="name"
             id="name"
-            {...registerProfile("name")}
-            defaultValue={user?.name ?? ""}
+            {...register("name")}
           />
-          <FieldError match={Boolean(profileErrors.name?.message)}>
-            {profileErrors.name?.message}
+          <FieldError match={Boolean(errors.name?.message)}>
+            {errors.name?.message}
           </FieldError>
         </Field>
 
@@ -91,70 +121,46 @@ export function ProfileSection({
           <FieldLabel htmlFor="avatarUrl">Avatar URL</FieldLabel>
           <div className="flex gap-2">
             <Input
+              aria-invalid={Boolean(errors.avatarUrl) || undefined}
+              autoComplete="photo"
               id="avatarUrl"
+              inputMode="url"
               placeholder="https://example.com/avatar.jpg"
-              {...registerProfile("avatarUrl")}
-              onChange={(e) => setAvatarUrl(e.target.value)}
-              value={avatarUrl}
+              spellCheck={false}
+              type="url"
+              {...register("avatarUrl")}
             />
-            {avatarUrl && (
+            {avatarUrl ? (
               <Button
+                aria-label="Clear avatar URL"
                 iconOnly
-                onClick={() => setAvatarUrl("")}
+                onClick={() => setValue("avatarUrl", "", { shouldDirty: true })}
                 type="button"
                 variant="ghost"
               >
-                <Trash className="size-4" />
+                <X />
               </Button>
-            )}
+            ) : null}
           </div>
-          <FieldError match={Boolean(profileErrors.avatarUrl?.message)}>
-            {profileErrors.avatarUrl?.message}
+          <FieldDescription>
+            Leave empty to keep your current avatar.
+          </FieldDescription>
+          <FieldError match={Boolean(errors.avatarUrl?.message)}>
+            {errors.avatarUrl?.message}
           </FieldError>
         </Field>
 
-        {currentAvatar && (
-          <div className="flex items-center gap-4 rounded-lg border p-4">
-            <Image
-              alt="Avatar preview"
-              className="size-16 rounded-none object-cover"
-              height={64}
-              src={currentAvatar}
-              width={64}
-            />
-            <div className="text-sm">
-              <Text variant="label">Avatar Preview</Text>
-              <Text variant="caption">{currentAvatar.slice(0, 50)}...</Text>
-            </div>
-          </div>
-        )}
-
-        <Separator />
-
-        <div className="flex items-center gap-4 rounded-lg bg-muted p-4">
-          <div className="flex size-12 items-center justify-center rounded-none bg-background">
-            <User className="h-5 w-5 text-muted-foreground" />
-          </div>
-          <div className="flex-1">
-            <Text variant="label">{user?.name ?? "User"}</Text>
-            <div className="flex items-center gap-1 text-muted-foreground text-sm">
-              <Envelope className="h-3 w-3" />
-              <Muted as="span">{user?.email ?? ""}</Muted>
-            </div>
-          </div>
+        <div>
+          <Button
+            disabled={isLoading || !isDirty}
+            tone="primary"
+            type="submit"
+            variant="solid"
+          >
+            {isLoading ? "Saving…" : "Save changes"}
+          </Button>
         </div>
-
-        <Button
-          className="w-full md:w-auto"
-          disabled={isLoading || !isProfileDirty}
-          tone="primary"
-          type="submit"
-          variant="solid"
-        >
-          <Check className="mr-2 size-4" />
-          Save Changes
-        </Button>
       </form>
-    </section>
+    </SettingsSection>
   );
 }

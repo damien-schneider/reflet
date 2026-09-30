@@ -3,7 +3,7 @@
 import { usePathname, useSearchParams } from "next/navigation";
 import posthog from "posthog-js";
 import { useEffect, useRef } from "react";
-import { hasAnalyticsConsent } from "@/components/cookie-consent-banner";
+import { hasAnalyticsConsent } from "@/lib/cookie-consent";
 
 export function PostHogPageView() {
   const pathname = usePathname();

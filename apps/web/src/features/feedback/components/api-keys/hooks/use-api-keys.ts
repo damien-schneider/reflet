@@ -4,251 +4,115 @@ import { toast } from "@ctrl-ui/react/ui/toast";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 
-interface UseApiKeysProps {
-  organizationId: Id<"organizations">;
+export type ApiKeyId = Id<"organizationApiKeys">;
+
+export interface ApiKeyListItem {
+  allowedDomains?: string[];
+  apiKeyId: ApiKeyId;
+  createdAt: number;
+  isActive: boolean;
+  lastUsedAt?: number;
+  name: string;
+  publicKey: string;
 }
 
-interface UseApiKeysReturn {
-  // Data
-  apiKeys: ReturnType<
-    typeof useQuery<typeof api.feedback.api_admin.getApiKeys>
-  >;
-  copyToClipboard: (text: string, label: string) => void;
-  domainInput: string;
-  handleAddDomain: (
-    apiKeyId: Id<"organizationApiKeys">,
-    currentDomains: string[]
-  ) => Promise<void>;
-  handleDeleteKey: () => Promise<void>;
-
-  // Handlers
-  handleGenerateKeys: () => Promise<void>;
-  handleRegenerateSecretKey: () => Promise<void>;
-  handleRemoveDomain: (
-    apiKeyId: Id<"organizationApiKeys">,
-    currentDomains: string[],
-    domain: string
-  ) => Promise<void>;
-  handleToggleActive: (
-    apiKeyId: Id<"organizationApiKeys">,
-    isActive: boolean
-  ) => Promise<void>;
-  isGenerating: boolean;
-  isRegenerating: boolean;
-  keyToDelete: Id<"organizationApiKeys"> | null;
-  newKeyName: string;
+export interface UseApiKeysReturn {
+  apiKeys: ApiKeyListItem[] | undefined;
+  dismissSecret: () => void;
+  generate: (name: string) => Promise<boolean>;
   newSecretKey: string | null;
-  selectedKeyId: Id<"organizationApiKeys"> | null;
-  setDomainInput: (value: string) => void;
-  setIsGenerating: (value: boolean) => void;
-  setIsRegenerating: (value: boolean) => void;
-  setKeyToDelete: (value: Id<"organizationApiKeys"> | null) => void;
-  setNewKeyName: (value: string) => void;
-  setNewSecretKey: (value: string | null) => void;
-  setSelectedKeyId: (value: Id<"organizationApiKeys"> | null) => void;
-  setShowDeleteDialog: (value: boolean) => void;
-  setShowRegenerateDialog: (value: boolean) => void;
-  setShowSecretKey: (value: boolean) => void;
-  showDeleteDialog: boolean;
-  showRegenerateDialog: boolean;
-
-  // State
-  showSecretKey: boolean;
+  regenerate: (apiKeyId: ApiKeyId) => Promise<boolean>;
+  remove: (apiKeyId: ApiKeyId) => Promise<boolean>;
+  setActive: (apiKeyId: ApiKeyId, isActive: boolean) => Promise<void>;
+  setAllowedDomains: (
+    apiKeyId: ApiKeyId,
+    allowedDomains: string[]
+  ) => Promise<boolean>;
 }
 
-export function useApiKeys({
-  organizationId,
-}: UseApiKeysProps): UseApiKeysReturn {
+function reportError(error: unknown, fallback: string): void {
+  toast.error(error instanceof Error ? error.message : fallback);
+}
+
+export function useApiKeys(
+  organizationId: Id<"organizations">
+): UseApiKeysReturn {
   const apiKeys = useQuery(api.feedback.api_admin.getApiKeys, {
     organizationId,
   });
-  const generateApiKeysMutation = useMutation(
-    api.feedback.api_admin.generateApiKeys
-  );
-  const regenerateSecretKeyMutation = useMutation(
+  const generateMutation = useMutation(api.feedback.api_admin.generateApiKeys);
+  const regenerateMutation = useMutation(
     api.feedback.api_admin.regenerateSecretKey
   );
-  const updateApiKeySettingsMutation = useMutation(
+  const updateMutation = useMutation(
     api.feedback.api_admin.updateApiKeySettings
   );
-  const deleteApiKeyMutation = useMutation(api.feedback.api_admin.deleteApiKey);
-
-  const [showSecretKey, setShowSecretKey] = useState(false);
+  const deleteMutation = useMutation(api.feedback.api_admin.deleteApiKey);
   const [newSecretKey, setNewSecretKey] = useState<string | null>(null);
-  const [isRegenerating, setIsRegenerating] = useState(false);
-  const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
-  const [selectedKeyId, setSelectedKeyId] =
-    useState<Id<"organizationApiKeys"> | null>(null);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [keyToDelete, setKeyToDelete] =
-    useState<Id<"organizationApiKeys"> | null>(null);
-  const [domainInput, setDomainInput] = useState("");
-  const [newKeyName, setNewKeyName] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
 
-  const handleGenerateKeys = useCallback(async () => {
-    if (!newKeyName.trim()) {
-      toast.error("Please enter a name for the API key");
-      return;
-    }
-    setIsGenerating(true);
+  const generate = async (name: string) => {
     try {
-      const result = await generateApiKeysMutation({
-        name: newKeyName.trim(),
-        organizationId,
-      });
+      const result = await generateMutation({ name, organizationId });
       setNewSecretKey(result.secretKey);
-      setNewKeyName("");
-      toast.success("API keys generated successfully");
+      return true;
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to generate API keys"
-      );
-    } finally {
-      setIsGenerating(false);
+      reportError(error, "Couldn’t create the API key");
+      return false;
     }
-  }, [organizationId, newKeyName, generateApiKeysMutation]);
+  };
 
-  const handleRegenerateSecretKey = useCallback(async () => {
-    if (!selectedKeyId) {
-      return;
-    }
-    setIsRegenerating(true);
+  const regenerate = async (apiKeyId: ApiKeyId) => {
     try {
-      const result = await regenerateSecretKeyMutation({
-        apiKeyId: selectedKeyId,
-        organizationId,
-      });
+      const result = await regenerateMutation({ apiKeyId, organizationId });
       setNewSecretKey(result.secretKey);
-      setShowRegenerateDialog(false);
-      toast.success("Secret key regenerated successfully");
+      return true;
     } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to regenerate secret key"
-      );
-    } finally {
-      setIsRegenerating(false);
+      reportError(error, "Couldn’t regenerate the secret key");
+      return false;
     }
-  }, [organizationId, selectedKeyId, regenerateSecretKeyMutation]);
+  };
 
-  const handleToggleActive = useCallback(
-    async (apiKeyId: Id<"organizationApiKeys">, isActive: boolean) => {
-      try {
-        await updateApiKeySettingsMutation({
-          apiKeyId,
-          isActive,
-          organizationId,
-        });
-        toast.success(isActive ? "API key activated" : "API key deactivated");
-      } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Failed to update settings"
-        );
-      }
-    },
-    [organizationId, updateApiKeySettingsMutation]
-  );
-
-  const handleDeleteKey = useCallback(async () => {
-    if (!keyToDelete) {
-      return;
-    }
+  const remove = async (apiKeyId: ApiKeyId) => {
     try {
-      await deleteApiKeyMutation({ apiKeyId: keyToDelete, organizationId });
-      setShowDeleteDialog(false);
-      setKeyToDelete(null);
-      toast.success("API key deleted");
+      await deleteMutation({ apiKeyId, organizationId });
+      return true;
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to delete API key"
-      );
+      reportError(error, "Couldn’t delete the API key");
+      return false;
     }
-  }, [organizationId, keyToDelete, deleteApiKeyMutation]);
+  };
 
-  const handleAddDomain = useCallback(
-    async (apiKeyId: Id<"organizationApiKeys">, currentDomains: string[]) => {
-      if (!domainInput.trim()) {
-        return;
-      }
+  const setActive = async (apiKeyId: ApiKeyId, isActive: boolean) => {
+    try {
+      await updateMutation({ apiKeyId, isActive, organizationId });
+    } catch (error) {
+      reportError(error, "Couldn’t update the API key");
+    }
+  };
 
-      const newDomains = [...currentDomains, domainInput.trim()];
-      try {
-        await updateApiKeySettingsMutation({
-          allowedDomains: newDomains,
-          apiKeyId,
-          organizationId,
-        });
-        setDomainInput("");
-        toast.success("Domain added");
-      } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Failed to add domain"
-        );
-      }
-    },
-    [organizationId, domainInput, updateApiKeySettingsMutation]
-  );
-
-  const handleRemoveDomain = useCallback(
-    async (
-      apiKeyId: Id<"organizationApiKeys">,
-      currentDomains: string[],
-      domain: string
-    ) => {
-      const newDomains = currentDomains.filter((d: string) => d !== domain);
-      try {
-        await updateApiKeySettingsMutation({
-          allowedDomains: newDomains,
-          apiKeyId,
-          organizationId,
-        });
-        toast.success("Domain removed");
-      } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Failed to remove domain"
-        );
-      }
-    },
-    [organizationId, updateApiKeySettingsMutation]
-  );
-
-  const copyToClipboard = useCallback((text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success(`${label} copied to clipboard`);
-  }, []);
+  const setAllowedDomains = async (
+    apiKeyId: ApiKeyId,
+    allowedDomains: string[]
+  ) => {
+    try {
+      await updateMutation({ allowedDomains, apiKeyId, organizationId });
+      return true;
+    } catch (error) {
+      reportError(error, "Couldn’t update allowed domains");
+      return false;
+    }
+  };
 
   return {
     apiKeys,
-    copyToClipboard,
-    domainInput,
-    handleAddDomain,
-    handleDeleteKey,
-    handleGenerateKeys,
-    handleRegenerateSecretKey,
-    handleRemoveDomain,
-    handleToggleActive,
-    isGenerating,
-    isRegenerating,
-    keyToDelete,
-    newKeyName,
+    dismissSecret: () => setNewSecretKey(null),
+    generate,
     newSecretKey,
-    selectedKeyId,
-    setDomainInput,
-    setIsGenerating,
-    setIsRegenerating,
-    setKeyToDelete,
-    setNewKeyName,
-    setNewSecretKey,
-    setSelectedKeyId,
-    setShowDeleteDialog,
-    setShowRegenerateDialog,
-    setShowSecretKey,
-    showDeleteDialog,
-    showRegenerateDialog,
-    showSecretKey,
+    regenerate,
+    remove,
+    setActive,
+    setAllowedDomains,
   };
 }

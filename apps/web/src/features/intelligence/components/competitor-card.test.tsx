@@ -84,7 +84,7 @@ describe("CompetitorCard", () => {
 
   it("renders website link with rel noopener", () => {
     render(<CompetitorCard {...baseProps} />);
-    const link = screen.getByText("https://acme.com");
+    const link = screen.getByText("acme.com");
     expect(link.closest("a")).toHaveAttribute("rel", "noopener");
     expect(link.closest("a")).toHaveAttribute("target", "_blank");
   });
@@ -208,7 +208,7 @@ describe("CompetitorCard", () => {
     const user = userEvent.setup();
     render(<CompetitorCard {...baseProps} />);
     await user.click(screen.getByText("Remove"));
-    expect(screen.getByText("Confirm Remove")).toBeInTheDocument();
+    expect(screen.getByText("Remove competitor")).toBeInTheDocument();
     expect(screen.getByText("Cancel")).toBeInTheDocument();
   });
 
@@ -217,7 +217,7 @@ describe("CompetitorCard", () => {
     const onRemove = vi.fn();
     render(<CompetitorCard {...baseProps} onRemove={onRemove} />);
     await user.click(screen.getByText("Remove"));
-    await user.click(screen.getByText("Confirm Remove"));
+    await user.click(screen.getByText("Remove competitor"));
     expect(onRemove).toHaveBeenCalledOnce();
   });
 
@@ -233,6 +233,6 @@ describe("CompetitorCard", () => {
 
   it("shows last scraped time", () => {
     render(<CompetitorCard {...baseProps} />);
-    expect(screen.getByText("Scanned 2h ago")).toBeInTheDocument();
+    expect(screen.getByText("Scanned about 2 hours ago")).toBeInTheDocument();
   });
 });

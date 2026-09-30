@@ -90,10 +90,10 @@ export function ReleaseFeedbackSection({
   const [linkStatus, setLinkStatus] = useState<FeedbackLinkStatus>("completed");
   const autoLinkInProgress = useRef(false);
   const wasMatchingRef = useRef(false);
-  const linkStatusRef = useRef(linkStatus);
-  linkStatusRef.current = linkStatus;
+  const linkStatusRef = useRef<FeedbackLinkStatus>("completed");
 
   const handleLinkStatusChange = (status: FeedbackLinkStatus) => {
+    linkStatusRef.current = status;
     setLinkStatus(status);
     onLinkStatusChange?.(status);
   };
@@ -169,7 +169,7 @@ export function ReleaseFeedbackSection({
       }
       if (failed > 0) {
         toast.error(
-          `Failed to auto-link ${failed} feedback item${failed === 1 ? "" : "s"}`
+          `Couldn’t link ${failed} feedback item${failed === 1 ? "" : "s"}. Link them from search.`
         );
       }
 
@@ -184,7 +184,7 @@ export function ReleaseFeedbackSection({
 
   useEffect(() => {
     if (matchError) {
-      toast.error(`Failed to find related feedback: ${matchError}`);
+      toast.error(`Unable to find related feedback: ${matchError}`);
       wasMatchingRef.current = false;
       return;
     }
@@ -218,10 +218,11 @@ export function ReleaseFeedbackSection({
     }
     try {
       await unlinkFeedback({ feedbackId, releaseId });
-      toast.success("Feedback unlinked");
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to unlink feedback"
+        error instanceof Error
+          ? error.message
+          : "Unable to unlink feedback. Try again."
       );
     }
   };
@@ -233,11 +234,12 @@ export function ReleaseFeedbackSection({
     try {
       const statusToSet = linkStatus === "keep" ? undefined : linkStatus;
       await linkFeedback({ feedbackId, newStatus: statusToSet, releaseId });
-      toast.success("Feedback linked");
       setSearchQuery("");
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to link feedback"
+        error instanceof Error
+          ? error.message
+          : "Unable to link feedback. Try again."
       );
     }
   };
@@ -279,10 +281,10 @@ export function ReleaseFeedbackSection({
       )}
 
       {linkedFeedback.length === 0 && !isMatching && (
-        <p className="text-muted-foreground text-xs">
+        <p className="text-pretty text-muted-foreground text-xs">
           {releaseId
-            ? "No feedback linked yet. Use AI to find related items, or search manually."
-            : "Save as draft first to link feedback items."}
+            ? "Nothing linked yet. Find related feedback, or search for it."
+            : "Start writing to save a draft, then link feedback."}
         </p>
       )}
     </div>

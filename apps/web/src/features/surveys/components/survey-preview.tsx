@@ -2,33 +2,42 @@
 
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
-  ChartBar,
-  CheckSquare,
-  RadioButton,
-  Star,
-  TextAa,
-  ToggleLeft,
-} from "@phosphor-icons/react";
-import { useState } from "react";
-import { H3, Muted, Text } from "@/components/ui/typography";
-import type { QuestionType, SurveyQuestion } from "@/store/surveys";
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@ctrl-ui/react/ui/empty";
+import {
+  Progress,
+  ProgressIndicator,
+  ProgressTrack,
+} from "@ctrl-ui/react/ui/progress";
+import { type ComponentType, useState } from "react";
+import { H3, Text } from "@/components/ui/typography";
+import { RequiredMark } from "@/features/surveys/components/required-mark";
 import {
   BooleanInput,
   MultipleChoiceInput,
   NpsInput,
+  type QuestionInputProps,
   RatingInput,
   SingleChoiceInput,
   TextInput,
-} from "./survey-preview-inputs";
+} from "@/features/surveys/components/survey-preview-inputs";
+import { QUESTION_TYPE_ICONS } from "@/features/surveys/lib/question-type-icons";
+import type { QuestionType, SurveyQuestion } from "@/store/surveys";
 
-const ICON_MAP = {
-  boolean: ToggleLeft,
-  multiple_choice: CheckSquare,
-  nps: ChartBar,
-  rating: Star,
-  single_choice: RadioButton,
-  text: TextAa,
-} as const;
+const QUESTION_INPUTS: Record<
+  QuestionType,
+  ComponentType<QuestionInputProps>
+> = {
+  boolean: BooleanInput,
+  multiple_choice: MultipleChoiceInput,
+  nps: NpsInput,
+  rating: RatingInput,
+  single_choice: SingleChoiceInput,
+  text: TextInput,
+};
 
 interface SurveyPreviewProps {
   description?: string;
@@ -46,58 +55,68 @@ export function SurveyPreview({
 
   if (questions.length === 0) {
     return (
-      <div className="flex items-center justify-center rounded-lg border border-dashed p-12">
-        <Muted>Add questions to see a preview</Muted>
-      </div>
+      <Empty className="rounded-lg border border-dashed py-12">
+        <EmptyHeader>
+          <EmptyTitle>Nothing to preview yet</EmptyTitle>
+          <EmptyDescription>
+            Questions you add appear here as respondents will see them.
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     );
   }
 
-  const currentQuestion = questions[currentIndex];
-  if (!currentQuestion) {
-    return null;
-  }
-
-  const isLast = currentIndex === questions.length - 1;
-  const isFirst = currentIndex === 0;
-  const progressPct = ((currentIndex + 1) / questions.length) * 100;
+  const index = Math.min(currentIndex, questions.length - 1);
+  const question = questions[index];
+  const isLast = index === questions.length - 1;
 
   return (
-    <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
+    <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
       <div className="border-b bg-muted/30 p-4">
-        <H3>{title}</H3>
+        <H3 className="text-pretty">{title}</H3>
         {description ? (
-          <Text className="mt-1" variant="bodySmall">
+          <Text
+            className="mt-1 text-pretty text-muted-foreground"
+            variant="bodySmall"
+          >
             {description}
           </Text>
         ) : null}
-        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted">
-          <div
-            className="h-full rounded-full bg-primary transition-[width] duration-300"
-            style={{ width: `${progressPct}%` }}
-          />
-        </div>
-        <Muted className="mt-1.5">
-          Question {currentIndex + 1} of {questions.length}
-        </Muted>
+        <Progress
+          aria-label="Survey progress"
+          className="mt-3"
+          max={questions.length}
+          value={index + 1}
+        >
+          <ProgressTrack>
+            <ProgressIndicator />
+          </ProgressTrack>
+        </Progress>
+        <p
+          aria-live="polite"
+          className="mt-1.5 text-muted-foreground text-sm tabular-nums"
+        >
+          Question {index + 1} of {questions.length}
+        </p>
       </div>
 
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <PreviewQuestion
-          answer={answers.get(currentQuestion._id)}
-          onAnswer={(val) => {
+          answer={answers.get(question._id)}
+          onAnswer={(value) => {
             const next = new Map(answers);
-            next.set(currentQuestion._id, val);
+            next.set(question._id, value);
             setAnswers(next);
           }}
-          question={currentQuestion}
+          question={question}
         />
       </div>
 
       <div className="flex items-center justify-between border-t bg-muted/30 p-4">
         <Button
-          disabled={isFirst}
-          onClick={() => setCurrentIndex((i) => i - 1)}
-          size="xs"
+          disabled={index === 0}
+          onClick={() => setCurrentIndex(index - 1)}
+          size="sm"
           variant="surface"
         >
           Back
@@ -107,11 +126,11 @@ export function SurveyPreview({
             if (isLast) {
               setCurrentIndex(0);
               setAnswers(new Map());
-            } else {
-              setCurrentIndex((i) => i + 1);
+              return;
             }
+            setCurrentIndex(index + 1);
           }}
-          size="xs"
+          size="sm"
           tone="primary"
           variant="solid"
         >
@@ -129,59 +148,36 @@ interface PreviewQuestionProps {
 }
 
 function PreviewQuestion({ question, answer, onAnswer }: PreviewQuestionProps) {
-  const Icon = ICON_MAP[question.type];
+  const Icon = QUESTION_TYPE_ICONS[question.type];
+  const QuestionInput = QUESTION_INPUTS[question.type];
 
   return (
     <div>
       <div className="mb-4 flex items-start gap-2">
-        <Icon className="mt-0.5 size-5 text-muted-foreground" />
-        <div>
-          <p className="font-medium">
+        <Icon
+          aria-hidden
+          className="mt-0.5 size-5 shrink-0 text-muted-foreground"
+        />
+        <div className="min-w-0">
+          <p className="text-pretty font-medium">
             {question.title}
-            {question.required ? (
-              <span className="ml-1 text-destructive">*</span>
-            ) : null}
+            {question.required ? <RequiredMark /> : null}
           </p>
           {question.description ? (
-            <p className="mt-0.5 text-muted-foreground text-sm">
+            <p className="mt-0.5 text-pretty text-muted-foreground text-sm">
               {question.description}
             </p>
           ) : null}
         </div>
       </div>
 
-      <div className="ml-7">
+      <div className="sm:ml-7">
         <QuestionInput
           answer={answer}
           config={question.config}
           onAnswer={onAnswer}
-          type={question.type}
         />
       </div>
     </div>
   );
-}
-
-interface QuestionInputProps {
-  answer: unknown;
-  config?: SurveyQuestion["config"];
-  onAnswer: (value: unknown) => void;
-  type: QuestionType;
-}
-
-const QUESTION_INPUT_COMPONENTS: Record<
-  QuestionType,
-  (props: Omit<QuestionInputProps, "type">) => React.ReactNode
-> = {
-  boolean: BooleanInput,
-  multiple_choice: MultipleChoiceInput,
-  nps: NpsInput,
-  rating: RatingInput,
-  single_choice: SingleChoiceInput,
-  text: TextInput,
-};
-
-function QuestionInput({ type, ...rest }: QuestionInputProps) {
-  const Component = QUESTION_INPUT_COMPONENTS[type];
-  return Component ? Component(rest) : null;
 }

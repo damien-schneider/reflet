@@ -1,10 +1,5 @@
 import type { Plan } from "./billing-types";
 
-// ============================================
-// PLAN CONFIGURATION
-// Extensible structure for future plans
-// ============================================
-
 export const PLANS: Plan[] = [
   {
     description: "For individuals and small teams getting started",
@@ -20,10 +15,10 @@ export const PLANS: Plan[] = [
     ],
     id: "free",
     name: "Free",
-    prices: [{ amount: 0, currency: "€", interval: "monthly", priceKey: "" }],
+    prices: [{ amount: 0, currency: "€", interval: "monthly", priceKey: null }],
   },
   {
-    badge: "Most Popular",
+    badge: "Most popular",
     description: "For growing teams that need more power",
     features: [
       { highlight: true, included: true, label: "Unlimited team members" },
@@ -55,12 +50,3 @@ export const PLANS: Plan[] = [
     ],
   },
 ];
-
-export const DEFAULT_LIMITS: import("./billing-types").LimitsData = {
-  apiAccess: false,
-  customBranding: false,
-  customDomain: false,
-  maxFeedback: 100,
-  maxMembers: 3,
-  prioritySupport: false,
-};

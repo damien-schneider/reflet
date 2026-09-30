@@ -1,16 +1,6 @@
 "use client";
 
-import {
-  AlertDialog,
-  AlertDialogClose,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@ctrl-ui/react/ui/alert-dialog";
 import { Badge } from "@ctrl-ui/react/ui/badge";
-import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Card,
   CardContent,
@@ -26,14 +16,21 @@ import {
   DropdownMenuTrigger,
 } from "@ctrl-ui/react/ui/dropdown-menu";
 import { toast } from "@ctrl-ui/react/ui/toast";
-import { Check, Copy, Gear, Power, Trash } from "@phosphor-icons/react";
+import { DotsThreeVertical, Gear, Power, Trash } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Doc } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { useState } from "react";
+import { CopyButton } from "@/components/copy-button";
+import { DestructiveConfirmDialog } from "@/components/ui/destructive-confirm-dialog";
 import { Muted, Text } from "@/components/ui/typography";
 
 import { WidgetSettingsDialog } from "./widget-settings-dialog";
+
+const POSITION_LABELS = {
+  "bottom-left": "Bottom left",
+  "bottom-right": "Bottom right",
+} as const;
 
 export type WidgetWithSettings = Doc<"widgets"> & {
   settings: Doc<"widgetSettings"> | null;
@@ -46,130 +43,124 @@ interface WidgetCardProps {
 }
 
 export function WidgetCard({ widget }: WidgetCardProps) {
-  const [copied, setCopied] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const updateWidget = useMutation(api.widget.admin.update);
   const removeWidget = useMutation(api.widget.admin_settings.remove);
 
   const embedCode = `<script src="https://cdn.reflet.app/widget/v1.js" data-widget-id="${widget.widgetId}"></script>`;
-
-  const copyEmbedCode = async () => {
-    await navigator.clipboard.writeText(embedCode);
-    setCopied(true);
-    toast.success("Embed code copied to clipboard");
-    setTimeout(() => setCopied(false), 2000);
-  };
+  const embedLabelId = `embed-code-${widget._id}`;
 
   const toggleActive = async () => {
-    const successMessage = widget.isActive
-      ? "Widget deactivated"
-      : "Widget activated";
     try {
       await updateWidget({
         isActive: !widget.isActive,
         widgetId: widget._id,
       });
-      toast.success(successMessage);
     } catch {
-      toast.error("Failed to update widget");
+      toast.error(
+        widget.isActive
+          ? "Couldn’t deactivate the chat. Try again."
+          : "Couldn’t activate the chat. Try again."
+      );
     }
   };
 
   const handleDelete = async () => {
     try {
       await removeWidget({ widgetId: widget._id });
-      setShowDeleteDialog(false);
-      toast.success("Widget deleted");
     } catch {
-      toast.error("Failed to delete widget");
+      toast.error("Couldn’t delete the chat. Try again.");
     }
   };
 
   return (
     <>
       <Card>
-        <CardHeader className="pb-2">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-2">
-              <CardTitle className="text-lg">{widget.name}</CardTitle>
-              <Badge>{widget.isActive ? "Active" : "Inactive"}</Badge>
+        <CardHeader>
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-2">
+              <CardTitle className="truncate">{widget.name}</CardTitle>
+              <Badge color={widget.isActive ? "green" : "neutral"} size="sm">
+                {widget.isActive ? "Active" : "Inactive"}
+              </Badge>
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger
-                render={(props: React.ComponentProps<"button">) => (
-                  <Button {...props} iconOnly variant="ghost">
-                    <Gear className="h-4 w-4" />
-                  </Button>
-                )}
-              />
+                aria-label={`Actions for ${widget.name}`}
+                iconOnly
+                variant="ghost"
+              >
+                <DotsThreeVertical aria-hidden className="size-4" />
+              </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => setSettingsOpen(true)}>
-                  <Gear className="mr-2 h-4 w-4" />
+                  <Gear aria-hidden className="size-4" />
                   Settings
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={toggleActive}>
-                  <Power className="mr-2 h-4 w-4" />
+                  <Power aria-hidden className="size-4" />
                   {widget.isActive ? "Deactivate" : "Activate"}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  className="text-destructive"
+                  className="menu-item-danger"
                   onClick={() => setShowDeleteDialog(true)}
                 >
-                  <Trash className="mr-2 h-4 w-4" />
+                  <Trash aria-hidden className="size-4" />
                   Delete
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          <CardDescription>
+          <CardDescription className="tabular-nums">
             {widget.conversationCount} conversation
             {widget.conversationCount === 1 ? "" : "s"}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Text className="mb-2 font-medium" variant="bodySmall">
-              Embed Code
+            <Text
+              className="mb-2 font-medium"
+              id={embedLabelId}
+              variant="bodySmall"
+            >
+              Embed code
             </Text>
-            <div className="relative">
-              <pre className="overflow-x-auto rounded-md bg-muted p-3 font-mono text-xs">
+            <figure aria-labelledby={embedLabelId} className="relative">
+              <pre className="overflow-x-auto rounded-md bg-muted p-3 pr-12 font-mono text-xs">
                 {embedCode}
               </pre>
-              <Button
-                className="absolute top-2 right-2"
-                iconOnly
-                onClick={copyEmbedCode}
-                variant="ghost"
-              >
-                {copied ? (
-                  <Check className="h-4 w-4 text-success" />
-                ) : (
-                  <Copy className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
+              <div className="absolute top-1 right-1">
+                <CopyButton
+                  label="Copy embed code"
+                  size="md"
+                  value={embedCode}
+                />
+              </div>
+            </figure>
             <Muted className="mt-1 text-xs">
-              Add this script tag to your website&apos;s HTML
+              Add this script tag to your site’s HTML.
             </Muted>
           </div>
 
-          {widget.settings && (
-            <div className="flex flex-wrap gap-2 text-xs">
-              <div
-                className="flex items-center gap-1.5 rounded-full px-2 py-1"
-                style={{ backgroundColor: `${widget.settings.primaryColor}20` }}
-              >
-                <div
-                  className="h-3 w-3 rounded-full"
+          {widget.settings ? (
+            <div className="flex flex-wrap gap-2">
+              <Badge size="sm" variant="outline">
+                <span
+                  aria-hidden
+                  className="size-3 rounded-full outline outline-1 outline-foreground/10 -outline-offset-1"
                   style={{ backgroundColor: widget.settings.primaryColor }}
                 />
-                <span>{widget.settings.primaryColor}</span>
-              </div>
-              <Badge variant="outline">{widget.settings.position}</Badge>
+                <span className="font-mono">
+                  {widget.settings.primaryColor}
+                </span>
+              </Badge>
+              <Badge size="sm" variant="outline">
+                {POSITION_LABELS[widget.settings.position]}
+              </Badge>
             </div>
-          )}
+          ) : null}
         </CardContent>
       </Card>
 
@@ -179,27 +170,14 @@ export function WidgetCard({ widget }: WidgetCardProps) {
         widget={widget}
       />
 
-      <AlertDialog onOpenChange={setShowDeleteDialog} open={showDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete widget</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this widget? This action cannot be
-              undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogClose>Cancel</AlertDialogClose>
-            <AlertDialogClose
-              onClick={handleDelete}
-              tone="danger"
-              variant="surface"
-            >
-              Delete
-            </AlertDialogClose>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DestructiveConfirmDialog
+        confirmLabel="Delete chat"
+        description="The embed code stops working and all of its conversations are deleted. This can’t be undone."
+        onConfirm={handleDelete}
+        onOpenChange={setShowDeleteDialog}
+        open={showDeleteDialog}
+        title={`Delete ${widget.name}?`}
+      />
     </>
   );
 }

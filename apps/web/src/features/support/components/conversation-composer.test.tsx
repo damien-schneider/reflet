@@ -14,18 +14,41 @@ vi.mock("@ctrl-ui/react/ui/textarea", () => ({
   ),
 }));
 
+vi.mock("@ctrl-ui/react/ui/field", () => ({
+  Field: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  FieldError: ({
+    children,
+    id,
+    match,
+  }: {
+    children: React.ReactNode;
+    id?: string;
+    match?: boolean;
+  }) => (match ? <p id={id}>{children}</p> : null),
+  FieldLabel: ({
+    children,
+    htmlFor,
+  }: {
+    children: React.ReactNode;
+    htmlFor?: string;
+  }) => <label htmlFor={htmlFor}>{children}</label>,
+}));
+
+vi.mock("@ctrl-ui/react/ui/spinner", () => ({
+  Spinner: () => <svg data-testid="spinner" />,
+}));
+
 vi.mock("@ctrl-ui/react/ui/button", () => ({
   Button: ({
     children,
-    onClick,
     disabled,
-    ...props
+    type,
   }: {
     children: React.ReactNode;
-    onClick?: () => void;
     disabled?: boolean;
-  } & Record<string, unknown>) => (
-    <button disabled={disabled} onClick={onClick} type="button" {...props}>
+    type?: "submit" | "button";
+  }) => (
+    <button disabled={disabled} type={type === "submit" ? "submit" : "button"}>
       {children}
     </button>
   ),
@@ -42,43 +65,17 @@ vi.mock("@/lib/utils", () => ({
 import { ConversationComposer } from "./conversation-composer";
 
 describe("ConversationComposer", () => {
-  it("shows collapsed state with placeholder", () => {
-    render(<ConversationComposer isSubmitting={false} onSubmit={vi.fn()} />);
-    expect(
-      screen.getByPlaceholderText("What do you need help with?")
-    ).toBeInTheDocument();
-  });
-
-  it("expands to show subject and send button on focus", async () => {
-    const user = userEvent.setup();
-    render(<ConversationComposer isSubmitting={false} onSubmit={vi.fn()} />);
-    await user.click(
-      screen.getByPlaceholderText("What do you need help with?")
-    );
-    expect(
-      screen.getByPlaceholderText("Subject (optional)")
-    ).toBeInTheDocument();
-    expect(screen.getByText("Send")).toBeInTheDocument();
-  });
-
-  it("calls onSubmit with subject and message", async () => {
+  it("submits the trimmed subject and message", async () => {
     const user = userEvent.setup();
     const onSubmit = vi.fn();
     render(<ConversationComposer isSubmitting={false} onSubmit={onSubmit} />);
 
-    await user.click(
-      screen.getByPlaceholderText("What do you need help with?")
-    );
-
     await user.type(
-      screen.getByPlaceholderText("Subject (optional)"),
-      "Billing issue"
+      screen.getByLabelText("Subject (optional)"),
+      " Billing issue "
     );
-    await user.type(
-      screen.getByPlaceholderText("What do you need help with?"),
-      "I need help"
-    );
-    await user.click(screen.getByText("Send"));
+    await user.type(screen.getByLabelText("Message"), "I need help");
+    await user.click(screen.getByRole("button", { name: "Send" }));
 
     expect(onSubmit).toHaveBeenCalledWith({
       email: undefined,
@@ -87,54 +84,67 @@ describe("ConversationComposer", () => {
     });
   });
 
-  it("disables send when message is empty", async () => {
-    const user = userEvent.setup();
-    render(<ConversationComposer isSubmitting={false} onSubmit={vi.fn()} />);
-    await user.click(
-      screen.getByPlaceholderText("What do you need help with?")
-    );
-    expect(screen.getByText("Send").closest("button")).toBeDisabled();
-  });
-
-  it("disables form when isSubmitting", () => {
-    render(<ConversationComposer isSubmitting={true} onSubmit={vi.fn()} />);
-    expect(
-      screen.getByPlaceholderText("What do you need help with?")
-    ).toBeDisabled();
-  });
-
-  it("shows email field for guests and requires it to send", async () => {
+  it("explains an empty message instead of submitting", async () => {
     const user = userEvent.setup();
     const onSubmit = vi.fn();
-    const onGuestEmailChange = vi.fn();
+    render(<ConversationComposer isSubmitting={false} onSubmit={onSubmit} />);
+
+    await user.click(screen.getByRole("button", { name: "Send" }));
+
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(
+      screen.getByText("Describe what you need help with.")
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Message")).toHaveFocus();
+  });
+
+  it("submits with Cmd+Enter from the message field", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+    render(<ConversationComposer isSubmitting={false} onSubmit={onSubmit} />);
+
+    await user.type(
+      screen.getByLabelText("Message"),
+      "Hi{Meta>}{Enter}{/Meta}"
+    );
+
+    expect(onSubmit).toHaveBeenCalledOnce();
+  });
+
+  it("blocks sending and shows progress while submitting", () => {
+    render(<ConversationComposer isSubmitting={true} onSubmit={vi.fn()} />);
+    expect(screen.getByRole("button", { name: "Send" })).toBeDisabled();
+    expect(screen.getByTestId("spinner")).toBeInTheDocument();
+  });
+
+  it("requires a valid email from guests", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
     render(
       <ConversationComposer
-        alwaysExpanded
-        guestEmail=""
+        guestEmail="not-an-email"
         isGuest
         isSubmitting={false}
-        onGuestEmailChange={onGuestEmailChange}
+        onGuestEmailChange={vi.fn()}
         onSubmit={onSubmit}
       />
     );
 
-    expect(screen.getByPlaceholderText("Your email *")).toBeInTheDocument();
+    await user.type(screen.getByLabelText("Message"), "I need help");
+    await user.click(screen.getByRole("button", { name: "Send" }));
 
-    await user.type(
-      screen.getByPlaceholderText("What do you need help with?"),
-      "I need help"
-    );
-
-    // Send should be disabled without email
-    expect(screen.getByText("Send").closest("button")).toBeDisabled();
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(
+      screen.getByText("Enter your email so the team can reply.")
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Email")).toHaveFocus();
   });
 
-  it("calls onSubmit with email for guests", async () => {
+  it("submits the guest email", async () => {
     const user = userEvent.setup();
     const onSubmit = vi.fn();
     render(
       <ConversationComposer
-        alwaysExpanded
         guestEmail="test@example.com"
         isGuest
         isSubmitting={false}
@@ -143,16 +153,26 @@ describe("ConversationComposer", () => {
       />
     );
 
-    await user.type(
-      screen.getByPlaceholderText("What do you need help with?"),
-      "I need help"
-    );
-    await user.click(screen.getByText("Send"));
+    await user.type(screen.getByLabelText("Message"), "I need help");
+    await user.click(screen.getByRole("button", { name: "Send" }));
 
     expect(onSubmit).toHaveBeenCalledWith({
       email: "test@example.com",
       message: "I need help",
       subject: "",
     });
+  });
+
+  it("announces a server error", () => {
+    render(
+      <ConversationComposer
+        error="Your message could not be sent."
+        isSubmitting={false}
+        onSubmit={vi.fn()}
+      />
+    );
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Your message could not be sent."
+    );
   });
 });

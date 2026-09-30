@@ -21,7 +21,7 @@ export function ShortcutHintBar({
   return (
     <div
       className={cn(
-        "flex items-center gap-4 border-t bg-muted/30 px-4 py-1.5 text-muted-foreground text-xs",
+        "flex pointer-coarse:hidden flex-wrap items-center gap-x-4 gap-y-1 border-t bg-muted/30 px-4 py-1.5 text-muted-foreground text-xs",
         className
       )}
     >

@@ -59,7 +59,7 @@ function JourneyIntroduction() {
   return (
     <div className="marketing-section journey-introduction">
       <MarketingSectionIntro
-        kicker="The feedback loop, in motion"
+        kicker="How it works"
         title={
           <>
             One small idea.

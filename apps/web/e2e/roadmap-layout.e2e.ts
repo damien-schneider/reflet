@@ -44,7 +44,7 @@ test("roadmap columns stay side by side and scroll within the board", async ({
     });
   }
 
-  const addColumn = roadmap.getByRole("button", { name: "Add Column" });
+  const addColumn = roadmap.getByRole("button", { name: "Add column" });
   await addColumn.focus();
   await expect(addColumn).toBeFocused();
   expect(

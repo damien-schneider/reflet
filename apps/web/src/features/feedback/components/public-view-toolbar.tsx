@@ -1,5 +1,6 @@
 "use client";
 
+import { ButtonLink } from "@ctrl-ui/react/ui/button";
 import { ArrowLeft } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
@@ -12,7 +13,6 @@ interface PublicViewToolbarProps {
 export function PublicViewToolbar({ orgSlug }: PublicViewToolbarProps) {
   const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
 
-  // Only show if user is authenticated and is a team member/owner
   const isTeamMember =
     org?.role === "owner" || org?.role === "admin" || org?.role === "member";
 
@@ -21,20 +21,19 @@ export function PublicViewToolbar({ orgSlug }: PublicViewToolbarProps) {
   }
 
   return (
-    <div className="fixed bottom-4 left-1/2 z-50 w-full max-w-fit -translate-x-1/2 px-4 sm:px-0">
-      <Link
-        className="flex cursor-pointer items-center gap-2 rounded-lg border bg-background px-2.5 py-1 shadow-md transition-colors hover:bg-muted"
-        href={`/dashboard/${orgSlug}`}
-        prefetch={true}
+    <div className="pointer-events-none fixed inset-x-0 bottom-[calc(var(--mobile-nav-offset,env(safe-area-inset-bottom))+4.25rem)] z-50 flex justify-start px-4 md:bottom-4 md:justify-center">
+      <ButtonLink
+        className="pointer-events-auto shadow-(--reflet-popup-shadow)"
+        render={<Link href={`/dashboard/${orgSlug}`} prefetch />}
+        size="sm"
+        variant="surface"
       >
-        <span className="flex items-center gap-1 font-medium text-xs">
-          <ArrowLeft className="h-3 w-3" />
-          <span className="inline">Dashboard</span>
+        <ArrowLeft data-icon="inline-start" />
+        <span>Dashboard</span>
+        <span className="hidden text-muted-foreground sm:inline">
+          Public view
         </span>
-        <span className="whitespace-nowrap text-muted-foreground text-xs">
-          You are in the public view
-        </span>
-      </Link>
+      </ButtonLink>
     </div>
   );
 }

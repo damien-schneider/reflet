@@ -8,10 +8,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@ctrl-ui/react/ui/popover";
-import { CalendarBlank, Clock, Globe } from "@phosphor-icons/react";
+import { CalendarBlank, Globe } from "@phosphor-icons/react";
 import { format } from "date-fns";
 import { useState } from "react";
-import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
 interface SchedulePickerProps {
@@ -21,16 +20,26 @@ interface SchedulePickerProps {
 }
 
 const TIMEZONE_PREVIEWS = [
-  { label: "EST", offset: -5 },
-  { label: "GMT", offset: 0 },
-  { label: "CET", offset: 1 },
-  { label: "JST", offset: 9 },
+  { city: "New York", timeZone: "America/New_York" },
+  { city: "London", timeZone: "Europe/London" },
+  { city: "Paris", timeZone: "Europe/Paris" },
+  { city: "Tokyo", timeZone: "Asia/Tokyo" },
 ] as const;
 
-function formatTimeInTimezone(date: Date, offsetHours: number): string {
-  const utcMs = date.getTime() + date.getTimezoneOffset() * 60_000;
-  const targetDate = new Date(utcMs + offsetHours * 3_600_000);
-  return format(targetDate, "h:mm a");
+function formatTimeInTimezone(date: Date, timeZone: string): string {
+  return new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone,
+    timeZoneName: "short",
+  }).format(date);
+}
+
+function combineDateAndTime(date: Date, time: string): Date {
+  const [hours, minutes] = time.split(":").map(Number);
+  const combined = new Date(date);
+  combined.setHours(hours, minutes, 0, 0);
+  return combined;
 }
 
 export function SchedulePicker({
@@ -38,48 +47,36 @@ export function SchedulePicker({
   onChange,
   disabled,
 }: SchedulePickerProps) {
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(() =>
     value ? new Date(value) : undefined
   );
   const [timeValue, setTimeValue] = useState(
     value ? format(value, "HH:mm") : "09:00"
   );
+  const [checkedAt, setCheckedAt] = useState(() => Date.now());
 
   const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   const handleDateSelect = (date: Date | undefined) => {
     setSelectedDate(date);
-    if (date) {
-      const [hours, minutes] = timeValue.split(":").map(Number);
-      const combined = new Date(date);
-      combined.setHours(hours, minutes, 0, 0);
-      onChange(combined);
-    } else {
-      onChange(undefined);
-    }
+    setCheckedAt(Date.now());
+    onChange(date ? combineDateAndTime(date, timeValue) : undefined);
   };
 
   const handleTimeChange = (newTime: string) => {
     setTimeValue(newTime);
+    setCheckedAt(Date.now());
     if (selectedDate) {
-      const [hours, minutes] = newTime.split(":").map(Number);
-      const combined = new Date(selectedDate);
-      combined.setHours(hours, minutes, 0, 0);
-      onChange(combined);
+      onChange(combineDateAndTime(selectedDate, newTime));
     }
   };
 
   const combinedDate =
     selectedDate && timeValue
-      ? (() => {
-          const [hours, minutes] = timeValue.split(":").map(Number);
-          const d = new Date(selectedDate);
-          d.setHours(hours, minutes, 0, 0);
-          return d;
-        })()
+      ? combineDateAndTime(selectedDate, timeValue)
       : undefined;
 
-  const isInPast = combinedDate ? combinedDate.getTime() <= Date.now() : false;
+  const isInPast = combinedDate ? combinedDate.getTime() <= checkedAt : false;
 
   return (
     <div className="space-y-3">
@@ -89,14 +86,14 @@ export function SchedulePicker({
             render={
               <Button
                 className={cn(
-                  "w-full justify-start font-normal",
+                  "min-w-0 flex-1 justify-start tabular-nums",
                   !selectedDate && "text-muted-foreground"
                 )}
                 disabled={disabled}
                 size="sm"
                 variant="surface"
               >
-                <CalendarBlank className="mr-2 h-4 w-4" />
+                <CalendarBlank aria-hidden="true" className="size-4" />
                 {selectedDate
                   ? format(selectedDate, "MMM d, yyyy")
                   : "Pick date"}
@@ -115,43 +112,43 @@ export function SchedulePicker({
           </PopoverContent>
         </Popover>
 
-        <div className="relative">
-          <Clock className="absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            aria-label="Publish time"
-            className="w-28 pl-8 tabular-nums"
-            disabled={disabled}
-            onChange={(e) => handleTimeChange(e.target.value)}
-            type="time"
-            value={timeValue}
-          />
-        </div>
+        <Input
+          aria-label="Publish time"
+          className="w-32 tabular-nums"
+          disabled={disabled}
+          onChange={(e) => handleTimeChange(e.target.value)}
+          size="sm"
+          type="time"
+          value={timeValue}
+        />
       </div>
 
       <div className="flex items-center gap-1.5 text-muted-foreground text-xs">
-        <Globe className="h-3.5 w-3.5" />
-        <span>{userTimezone}</span>
+        <Globe aria-hidden="true" className="size-3.5" />
+        <span>Your time zone: {userTimezone}</span>
       </div>
 
       {combinedDate && !isInPast && (
         <div className="rounded-md border bg-muted/30 px-3 py-2">
-          <Label className="mb-1.5 block text-muted-foreground text-xs">
-            Preview in other timezones
-          </Label>
-          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
+          <p className="mb-1.5 text-muted-foreground text-xs">
+            Same moment elsewhere
+          </p>
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
             {TIMEZONE_PREVIEWS.map((tz) => (
-              <span className="tabular-nums" key={tz.label}>
-                <span className="font-medium">{tz.label}:</span>{" "}
-                {formatTimeInTimezone(combinedDate, tz.offset)}
-              </span>
+              <div className="flex justify-between gap-2" key={tz.timeZone}>
+                <dt className="text-muted-foreground">{tz.city}</dt>
+                <dd className="tabular-nums">
+                  {formatTimeInTimezone(combinedDate, tz.timeZone)}
+                </dd>
+              </div>
             ))}
-          </div>
+          </dl>
         </div>
       )}
 
       {isInPast && (
-        <p className="text-destructive-text text-xs">
-          Scheduled time must be in the future
+        <p className="text-destructive-text text-xs" role="status">
+          Pick a time in the future.
         </p>
       )}
     </div>

@@ -1,9 +1,10 @@
 import { Button } from "@ctrl-ui/react/ui/button";
-import { Input } from "@ctrl-ui/react/ui/input";
 import {
-  MagnifyingGlass as MagnifyingGlassIcon,
-  Plus,
-} from "@phosphor-icons/react";
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@ctrl-ui/react/ui/input-group";
+import { MagnifyingGlass, Plus } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import type { RefObject } from "react";
 import type { InlineFeedbackInputHandle } from "../inline-feedback-input";
@@ -38,29 +39,37 @@ export const FeedbackToolbar = ({
   <>
     {showSearch && (
       <div className="mx-auto max-w-3xl px-4 pb-3">
-        <div className="relative w-full sm:w-64">
-          <MagnifyingGlassIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            className="h-10 rounded-full border-0 bg-muted pr-4 pl-10"
+        <InputGroup className="w-full sm:w-64">
+          <InputGroupAddon>
+            <MagnifyingGlass
+              aria-hidden
+              className="size-4 text-muted-foreground"
+            />
+          </InputGroupAddon>
+          <InputGroupInput
+            aria-label="Search feedback"
+            autoComplete="off"
             onChange={(event) => onSearchChange(event.target.value)}
-            placeholder="Search feedback"
+            placeholder="Search feedback…"
+            spellCheck={false}
+            type="search"
             value={searchQuery}
           />
-        </div>
+        </InputGroup>
       </div>
     )}
 
     {!inlineInputRef && (
-      <div className="fixed right-4 bottom-4 z-50 md:right-8 md:bottom-8">
+      <div className="fixed right-4 bottom-[calc(var(--mobile-nav-offset,env(safe-area-inset-bottom))+4.25rem)] z-50 md:right-8 md:bottom-8">
         <Button
-          className="h-12 rounded-full shadow-lg"
+          className="shadow-(--reflet-popup-shadow)"
           onClick={onSubmitClick}
-          size="md"
+          size="lg"
           tone="primary"
           variant="solid"
         >
-          <Plus className="h-4 w-4" />
-          Submit Feedback
+          <Plus data-icon="inline-start" />
+          Submit feedback
         </Button>
       </div>
     )}

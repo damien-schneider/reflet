@@ -31,7 +31,7 @@ interface TiptapInlineEditorProps {
 export function TiptapInlineEditor({
   value,
   onChange,
-  placeholder = "Write something...",
+  placeholder = "Write something…",
   disabled = false,
   className,
   maxLength,
@@ -123,7 +123,7 @@ export function TiptapInlineEditor({
   return (
     <div
       className={cn(
-        "border-input dark:bg-input/30 rounded-lg border bg-transparent px-2.5 py-2 text-base transition-colors md:text-sm",
+        "border-input dark:bg-input/30 rounded-lg border bg-transparent px-2.5 py-2 text-base md:text-sm",
         "focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]",
         disabled &&
           "bg-input/50 dark:bg-input/80 cursor-not-allowed opacity-50",
@@ -134,7 +134,7 @@ export function TiptapInlineEditor({
     >
       <EditorContent editor={editor} />
 
-      {maxLength && (
+      {maxLength ? (
         <div
           className={cn(
             "mt-1 text-right text-xs tabular-nums",
@@ -145,7 +145,7 @@ export function TiptapInlineEditor({
         >
           {characterCount}/{maxLength}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

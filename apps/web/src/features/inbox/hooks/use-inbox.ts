@@ -50,8 +50,9 @@ export function useInbox(orgSlug: string) {
 
   const [statusFilter, setStatusFilter] = useState(DEFAULT_STATUS_FILTER);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedId, setSelectedId] =
-    useState<Id<"supportConversations"> | null>(null);
+  const [chosenId, setSelectedId] = useState<Id<"supportConversations"> | null>(
+    null
+  );
 
   const conversations = useQuery(
     api.support.admin.list,
@@ -62,6 +63,17 @@ export function useInbox(orgSlug: string) {
         }
       : "skip"
   );
+
+  const visibleConversations: ConversationSummary[] | undefined =
+    conversations?.filter((conversation) =>
+      matchesConversationSearch(conversation, searchQuery)
+    );
+  const firstVisibleId = visibleConversations?.[0]?._id;
+  const chosenIsVisible = visibleConversations?.some(
+    (conversation) => conversation._id === chosenId
+  );
+  const selectedId =
+    firstVisibleId && !chosenIsVisible ? firstVisibleId : chosenId;
 
   const selectedConversation = useQuery(
     api.support.conversations.get,
@@ -79,11 +91,6 @@ export function useInbox(orgSlug: string) {
   const assignConversation = useMutation(api.support.admin.assign);
   const updateSupportSettings = useMutation(api.support.settings.update);
 
-  const visibleConversations: ConversationSummary[] | undefined =
-    conversations?.filter((conversation) =>
-      matchesConversationSearch(conversation, searchQuery)
-    );
-
   const hasUnreadFromUser = messages?.some(
     (message) => !message.isRead && message.senderType === "user"
   );
@@ -94,22 +101,16 @@ export function useInbox(orgSlug: string) {
     }
   }, [selectedId, hasUnreadFromUser, markAsRead]);
 
-  const firstVisibleId = visibleConversations?.[0]?._id;
-  const selectionIsVisible = visibleConversations?.some(
-    (conversation) => conversation._id === selectedId
-  );
-
-  useEffect(() => {
-    if (firstVisibleId && !selectionIsVisible) {
-      setSelectedId(firstVisibleId);
-    }
-  }, [firstVisibleId, selectionIsVisible]);
-
   return {
+    clearFilters: () => {
+      setSearchQuery("");
+      setStatusFilter([]);
+    },
     conversations: visibleConversations,
-    isAdmin: membership
-      ? membership.role === "admin" || membership.role === "owner"
-      : undefined,
+    isAdmin:
+      membership === undefined
+        ? undefined
+        : membership?.role === "admin" || membership?.role === "owner",
     members: toTeamMembers(members),
     messages,
     org,

@@ -27,17 +27,17 @@ export function SettingsPopover({
   return (
     <Popover>
       <PopoverTrigger render={<Button size="xs" variant="surface" />}>
-        <Gear className="h-4 w-4" />
+        <Gear aria-hidden />
         Settings
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80">
         <PopoverHeader>
-          <PopoverTitle>Inbox Settings</PopoverTitle>
+          <PopoverTitle>Inbox settings</PopoverTitle>
           <PopoverDescription>
-            Configure your public support page
+            Let visitors start conversations from your public board.
           </PopoverDescription>
         </PopoverHeader>
-        <div className="flex items-center justify-between pt-1">
+        <div className="flex items-center justify-between gap-4 pt-1">
           <Label htmlFor="support-popover-toggle">
             Enable public support page
           </Label>

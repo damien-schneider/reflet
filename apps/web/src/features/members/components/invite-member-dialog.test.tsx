@@ -41,6 +41,7 @@ vi.mock("@ctrl-ui/react/ui/button", () => ({
     variant,
     className,
     size,
+    type,
   }: {
     children: React.ReactNode;
     onClick?: () => void;
@@ -49,6 +50,7 @@ vi.mock("@ctrl-ui/react/ui/button", () => ({
     variant?: string;
     className?: string;
     size?: string;
+    type?: "button" | "submit";
   }) => (
     <button
       className={className}
@@ -56,7 +58,7 @@ vi.mock("@ctrl-ui/react/ui/button", () => ({
       data-testid={iconOnly ? "copy-button" : `button-${variant ?? "quiet"}`}
       disabled={disabled}
       onClick={onClick}
-      type="button"
+      type={type ?? "button"}
     >
       {children}
     </button>
@@ -112,44 +114,6 @@ vi.mock("@ctrl-ui/react/ui/input", () => ({
       value={value}
     />
   ),
-}));
-
-vi.mock("@/components/ui/label", () => ({
-  Label: ({
-    children,
-    htmlFor,
-  }: {
-    children: React.ReactNode;
-    htmlFor?: string;
-  }) => <label htmlFor={htmlFor}>{children}</label>,
-}));
-
-vi.mock("@ctrl-ui/react/ui/select", () => ({
-  Select: ({
-    children,
-    value,
-  }: {
-    children: React.ReactNode;
-    value?: string;
-  }) => (
-    <div data-testid="select" data-value={value}>
-      {children}
-    </div>
-  ),
-  SelectContent: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="select-content">{children}</div>
-  ),
-  SelectItem: ({
-    children,
-    value,
-  }: {
-    children: React.ReactNode;
-    value?: string;
-  }) => <div data-testid={`select-item-${value}`}>{children}</div>,
-  SelectTrigger: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="select-trigger">{children}</div>
-  ),
-  SelectValue: () => <span data-testid="select-value" />,
 }));
 
 describe("InviteMemberDialog", () => {

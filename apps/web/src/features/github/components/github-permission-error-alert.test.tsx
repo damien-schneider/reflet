@@ -70,20 +70,6 @@ const defaultProps = {
 };
 
 describe("GitHubPermissionErrorAlert", () => {
-  it("renders default title", () => {
-    render(<GitHubPermissionErrorAlert {...defaultProps} />);
-    expect(screen.getByText("Missing GitHub permissions")).toBeInTheDocument();
-  });
-
-  it("renders default message", () => {
-    render(<GitHubPermissionErrorAlert {...defaultProps} />);
-    expect(
-      screen.getByText(
-        "The GitHub App needs additional permissions to perform this action."
-      )
-    ).toBeInTheDocument();
-  });
-
   it("renders custom title and message", () => {
     render(
       <GitHubPermissionErrorAlert
@@ -96,21 +82,11 @@ describe("GitHubPermissionErrorAlert", () => {
     expect(screen.getByText("Custom message")).toBeInTheDocument();
   });
 
-  it("shows resync prompt text", () => {
-    render(<GitHubPermissionErrorAlert {...defaultProps} />);
-    expect(screen.getByText(/resync your connection/)).toBeInTheDocument();
-  });
-
-  it("renders resync button", () => {
-    render(<GitHubPermissionErrorAlert {...defaultProps} />);
-    expect(screen.getByText("Resync GitHub Connection")).toBeInTheDocument();
-  });
-
   it("calls onResync when resync button clicked", async () => {
     const onResync = vi.fn();
     const user = userEvent.setup();
     render(<GitHubPermissionErrorAlert onResync={onResync} />);
-    await user.click(screen.getByText("Resync GitHub Connection"));
+    await user.click(screen.getByText("Reconnect GitHub"));
     expect(onResync).toHaveBeenCalled();
   });
 

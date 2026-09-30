@@ -2,8 +2,12 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@ctrl-ui/react/ui/avatar";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { format } from "date-fns";
 import { getInitials } from "@/features/support/lib/initials";
 import { cn } from "@/lib/utils";
+
+const REACTION_CHIP =
+  "flex items-center gap-1 rounded-full px-2 py-0.5 text-xs";
 
 interface MessageSender {
   email?: string;
@@ -73,12 +77,12 @@ export function MessageBubble({
       )}
     >
       {showAvatar ? (
-        <Avatar className="h-8 w-8 shrink-0">
-          <AvatarImage alt={displayName} src={sender?.image} />
-          <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+        <Avatar className="size-8">
+          <AvatarImage alt="" src={sender?.image} />
+          <AvatarFallback>{initials}</AvatarFallback>
         </Avatar>
       ) : (
-        <div className="w-8 shrink-0" />
+        <div aria-hidden className="w-8 shrink-0" />
       )}
 
       <div
@@ -88,17 +92,11 @@ export function MessageBubble({
         )}
       >
         {showAvatar && (
-          <span
-            className={cn(
-              "text-muted-foreground text-xs",
-              isOwnMessage ? "text-right" : "text-left"
-            )}
-          >
-            {isOwnMessage ? "You" : displayName}
-            {senderType === "admin" && !isOwnMessage && (
-              <span className="ml-1 text-primary">(Support)</span>
-            )}
-          </span>
+          <SenderLabel
+            displayName={displayName}
+            isAdmin={senderType === "admin"}
+            isOwnMessage={isOwnMessage}
+          />
         )}
 
         <div
@@ -111,70 +109,118 @@ export function MessageBubble({
         >
           <p className="whitespace-pre-wrap break-words">{body}</p>
 
-          {messageId && onAddReaction && reactions.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-1">
-              {reactions.map((reaction) => {
-                const hasUserReacted = reaction.userIds.includes(
-                  currentUserId ?? ""
-                );
-                return (
-                  <button
-                    className={cn(
-                      "flex items-center gap-1 rounded-full px-2 py-0.5 text-xs transition-colors",
-                      isOwnMessage
-                        ? "bg-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/30"
-                        : "bg-muted-foreground/10 text-foreground hover:bg-muted-foreground/20",
-                      hasUserReacted &&
-                        (isOwnMessage
-                          ? "ring-2 ring-primary-foreground/50"
-                          : "ring-2 ring-primary")
-                    )}
-                    key={reaction.emoji}
-                    onClick={() => handleReactionClick(reaction.emoji)}
-                    type="button"
-                  >
-                    <span>{reaction.emoji}</span>
-                    <span className="font-medium">{reaction.count}</span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          {messageId && onAddReaction && (
-            <button
-              className={cn(
-                "mt-2 flex items-center gap-1 self-start rounded-full px-2 py-0.5 text-xs transition-colors",
-                isOwnMessage
-                  ? "bg-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/30"
-                  : "bg-muted-foreground/10 text-foreground hover:bg-muted-foreground/20"
-              )}
-              onClick={() => handleReactionClick("👍")}
-              type="button"
-            >
-              <span>👍</span>
-              <span
-                className={cn(
-                  isOwnMessage
-                    ? "text-primary-foreground"
-                    : "text-muted-foreground"
-                )}
-              >
-                React
-              </span>
-            </button>
-          )}
+          {messageId && onAddReaction ? (
+            <MessageReactions
+              currentUserId={currentUserId}
+              isOwnMessage={isOwnMessage}
+              onReactionClick={handleReactionClick}
+              reactions={reactions}
+            />
+          ) : null}
         </div>
 
-        {showTimestamp && timestamp && (
-          <span className="text-caption text-muted-foreground/70">
-            {new Date(timestamp).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </span>
-        )}
+        {showTimestamp && timestamp ? (
+          <time
+            className="text-caption text-muted-foreground tabular-nums"
+            dateTime={new Date(timestamp).toISOString()}
+            title={format(timestamp, "PPpp")}
+          >
+            {format(timestamp, "hh:mm a")}
+          </time>
+        ) : null}
       </div>
     </div>
+  );
+}
+
+function SenderLabel({
+  displayName,
+  isAdmin,
+  isOwnMessage,
+}: {
+  displayName: string;
+  isAdmin: boolean;
+  isOwnMessage: boolean;
+}) {
+  return (
+    <span
+      className={cn(
+        "text-muted-foreground text-xs",
+        isOwnMessage ? "text-right" : "text-left"
+      )}
+    >
+      {isOwnMessage ? "You" : displayName}
+      {isAdmin && !isOwnMessage && (
+        <span className="ml-1 text-brand-text">(Support)</span>
+      )}
+    </span>
+  );
+}
+
+interface MessageReactionsProps {
+  currentUserId?: string;
+  isOwnMessage: boolean;
+  onReactionClick: (emoji: string) => void;
+  reactions: MessageReaction[];
+}
+
+function MessageReactions({
+  currentUserId,
+  isOwnMessage,
+  onReactionClick,
+  reactions,
+}: MessageReactionsProps) {
+  const chipTone = isOwnMessage
+    ? "bg-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/30"
+    : "bg-muted-foreground/10 text-foreground hover:bg-muted-foreground/20";
+  const reactedRing = isOwnMessage
+    ? "ring-2 ring-primary-foreground/50"
+    : "ring-2 ring-primary";
+
+  return (
+    <>
+      {reactions.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1">
+          {reactions.map((reaction) => {
+            const hasUserReacted = reaction.userIds.includes(
+              currentUserId ?? ""
+            );
+            return (
+              <button
+                aria-pressed={hasUserReacted}
+                className={cn(
+                  REACTION_CHIP,
+                  chipTone,
+                  hasUserReacted && reactedRing
+                )}
+                key={reaction.emoji}
+                onClick={() => onReactionClick(reaction.emoji)}
+                type="button"
+              >
+                <span>{reaction.emoji}</span>
+                <span className="font-medium tabular-nums">
+                  {reaction.count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      <button
+        className={cn(REACTION_CHIP, "mt-2 self-start", chipTone)}
+        onClick={() => onReactionClick("👍")}
+        type="button"
+      >
+        <span aria-hidden>👍</span>
+        <span
+          className={cn(
+            isOwnMessage ? "text-primary-foreground" : "text-muted-foreground"
+          )}
+        >
+          React
+        </span>
+      </button>
+    </>
   );
 }

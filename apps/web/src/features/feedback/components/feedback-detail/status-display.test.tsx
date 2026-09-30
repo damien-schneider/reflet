@@ -5,14 +5,17 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import type * as tagColors from "@/lib/tag-colors";
+
+type TagColorsModule = typeof tagColors;
 
 vi.mock("@/lib/convex-helpers", () => ({
   toId: (_table: string, id: string) => id,
 }));
 
-vi.mock("@/lib/tag-colors", () => ({
+vi.mock("@/lib/tag-colors", async (importOriginal) => ({
+  ...(await importOriginal<TagColorsModule>()),
   getTagSwatchClass: (color: string) => `swatch-${color}`,
-  resolveTagColor: (color: string) => color,
 }));
 
 let capturedOnValueChange: ((value: string) => void) | undefined;

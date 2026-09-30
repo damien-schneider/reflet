@@ -1,7 +1,13 @@
 "use client";
 
-import { Card, CardContent } from "@ctrl-ui/react/ui/card";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@ctrl-ui/react/ui/empty";
 import { ScrollArea } from "@ctrl-ui/react/ui/scroll-area";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import {
   closestCorners,
   DndContext,
@@ -18,8 +24,14 @@ import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
-import { AnimatePresence, LayoutGroup, motion } from "motion/react";
-import { useCallback, useMemo, useState } from "react";
+import {
+  domMax,
+  LayoutGroup,
+  LazyMotion,
+  m,
+  useReducedMotion,
+} from "motion/react";
+import { useState } from "react";
 import { toId } from "@/lib/convex-helpers";
 import type { FeedbackItem } from "./feed-feedback-view";
 import { AddColumnInline } from "./roadmap/add-column-inline";
@@ -34,6 +46,90 @@ import type {
 
 export type { RoadmapViewProps } from "./roadmap/roadmap-types";
 
+const POINTER_ACTIVATION_DISTANCE_PX = 8;
+const TOUCH_ACTIVATION_DELAY_MS = 300;
+const TOUCH_ACTIVATION_TOLERANCE_PX = 5;
+
+function DragPreview({ item }: { item: FeedbackItem }) {
+  const shouldReduceMotion = useReducedMotion();
+  return (
+    <m.div
+      animate={shouldReduceMotion ? undefined : { rotate: 2, scale: 1.02 }}
+      className="w-64 cursor-grabbing"
+      initial={shouldReduceMotion ? false : { rotate: 0, scale: 1 }}
+      transition={{ bounce: 0, duration: 0.2, type: "spring" }}
+    >
+      <FeedbackCardContent isOverlay item={item} />
+    </m.div>
+  );
+}
+
+function useRoadmapMove({
+  feedback,
+  statuses,
+  isAdmin,
+}: Pick<RoadmapViewProps, "feedback" | "statuses" | "isAdmin">) {
+  const [optimisticUpdates, setOptimisticUpdates] = useState<
+    Map<Id<"feedback">, OptimisticUpdate>
+  >(new Map());
+  const updateFeedbackStatus = useMutation(
+    api.feedback.triage_actions.updateOrganizationStatus
+  );
+
+  const optimisticFeedback =
+    optimisticUpdates.size === 0
+      ? feedback
+      : feedback.map((item) => {
+          const update = optimisticUpdates.get(item._id);
+          return update
+            ? { ...item, organizationStatusId: update.newStatusId }
+            : item;
+        });
+
+  const moveOnDrop = async ({ active, over }: DragEndEvent) => {
+    if (!(over && isAdmin)) {
+      return;
+    }
+
+    const feedbackId = toId("feedback", active.id);
+    const targetItem = feedback.find((f) => f._id === over.id);
+    const droppedOnColumn = statuses.find((s) => s._id === over.id);
+    const finalStatusId =
+      droppedOnColumn?._id ?? targetItem?.organizationStatusId;
+
+    if (!finalStatusId) {
+      return;
+    }
+
+    const currentItem = feedback.find((f) => f._id === feedbackId);
+    if (currentItem?.organizationStatusId === finalStatusId) {
+      return;
+    }
+
+    setOptimisticUpdates((prev) =>
+      new Map(prev).set(feedbackId, { feedbackId, newStatusId: finalStatusId })
+    );
+
+    try {
+      await updateFeedbackStatus({
+        feedbackId,
+        organizationStatusId: finalStatusId,
+      });
+    } catch {
+      toast.error(
+        `Couldn’t move “${currentItem?.title ?? "this feedback"}”. It’s back where it was.`
+      );
+    }
+    setOptimisticUpdates((prev) => {
+      const next = new Map(prev);
+      next.delete(feedbackId);
+      return next;
+    });
+  };
+
+  return { moveOnDrop, optimisticFeedback };
+}
+
 export function RoadmapView({
   feedback,
   statuses,
@@ -47,41 +143,20 @@ export function RoadmapView({
     color: string;
   } | null>(null);
   const [activeItem, setActiveItem] = useState<FeedbackItem | null>(null);
-  const [optimisticUpdates, setOptimisticUpdates] = useState<
-    Map<Id<"feedback">, OptimisticUpdate>
-  >(new Map());
-
-  const updateFeedbackStatus = useMutation(
-    api.feedback.triage_actions.updateOrganizationStatus
-  );
-
-  const optimisticFeedback = useMemo(() => {
-    if (optimisticUpdates.size === 0) {
-      return feedback;
-    }
-
-    return feedback.map((item) => {
-      const update = optimisticUpdates.get(item._id);
-      if (update) {
-        return {
-          ...item,
-          organizationStatusId: update.newStatusId,
-        };
-      }
-      return item;
-    });
-  }, [feedback, optimisticUpdates]);
+  const { moveOnDrop, optimisticFeedback } = useRoadmapMove({
+    feedback,
+    isAdmin,
+    statuses,
+  });
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
+      activationConstraint: { distance: POINTER_ACTIVATION_DISTANCE_PX },
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 300,
-        tolerance: 5,
+        delay: TOUCH_ACTIVATION_DELAY_MS,
+        tolerance: TOUCH_ACTIVATION_TOLERANCE_PX,
       },
     }),
     useSensor(KeyboardSensor, {
@@ -89,107 +164,58 @@ export function RoadmapView({
     })
   );
 
-  const announcements = useMemo(
-    () => createAnnouncements(feedback, statuses),
-    [feedback, statuses]
-  );
+  const handleDragStart = ({ active }: DragStartEvent) => {
+    setActiveItem(feedback.find((f) => f._id === active.id) ?? null);
+  };
 
-  const handleDragStart = useCallback(
-    (event: DragStartEvent) => {
-      const { active } = event;
-      const item = feedback.find((f) => f._id === active.id);
-      if (item) {
-        setActiveItem(item);
-      }
-    },
-    [feedback]
-  );
-
-  const handleDragEnd = useCallback(
-    async (event: DragEndEvent) => {
-      const { active, over } = event;
-      setActiveItem(null);
-
-      if (!(over && isAdmin)) {
-        return;
-      }
-
-      const feedbackId = toId("feedback", active.id);
-      const targetItem = feedback.find((f) => f._id === over.id);
-      const targetStatusId = targetItem?.organizationStatusId;
-
-      const droppedOnColumn = statuses.find((s) => s._id === over.id);
-      const finalStatusId = droppedOnColumn?._id ?? targetStatusId;
-
-      if (!finalStatusId) {
-        return;
-      }
-
-      const currentItem = feedback.find((f) => f._id === feedbackId);
-      if (currentItem?.organizationStatusId === finalStatusId) {
-        return;
-      }
-
-      setOptimisticUpdates((prev) => {
-        const next = new Map(prev);
-        next.set(feedbackId, { feedbackId, newStatusId: finalStatusId });
-        return next;
-      });
-
-      try {
-        await updateFeedbackStatus({
-          feedbackId,
-          organizationStatusId: finalStatusId,
-        });
-      } finally {
-        setOptimisticUpdates((prev) => {
-          const next = new Map(prev);
-          next.delete(feedbackId);
-          return next;
-        });
-      }
-    },
-    [isAdmin, feedback, statuses, updateFeedbackStatus]
-  );
+  const handleDragEnd = async (event: DragEndEvent) => {
+    setActiveItem(null);
+    await moveOnDrop(event);
+  };
 
   if (statuses.length === 0) {
     return (
-      <Card>
-        <CardContent className="py-8 text-center">
-          <p className="text-muted-foreground">
-            No statuses configured. Statuses are used as roadmap columns.
-          </p>
-        </CardContent>
-      </Card>
+      <Empty>
+        <EmptyHeader>
+          <EmptyTitle>No statuses configured</EmptyTitle>
+          <EmptyDescription>
+            Each status becomes a roadmap column.
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     );
   }
 
   return (
     <>
-      <LayoutGroup>
-        <DndContext
-          accessibility={{ announcements }}
-          collisionDetection={closestCorners}
-          onDragEnd={handleDragEnd}
-          onDragStart={handleDragStart}
-          sensors={sensors}
-        >
-          <ScrollArea
-            lockAxis="y"
-            viewportClassName="pb-4 pl-[max(1rem,calc(50vw-35rem))] pr-4"
-            viewportProps={{ "aria-label": "Roadmap columns", role: "region" }}
+      <LazyMotion features={domMax}>
+        <LayoutGroup>
+          <DndContext
+            accessibility={{
+              announcements: createAnnouncements(feedback, statuses),
+            }}
+            collisionDetection={closestCorners}
+            onDragCancel={() => setActiveItem(null)}
+            onDragEnd={handleDragEnd}
+            onDragStart={handleDragStart}
+            sensors={sensors}
           >
-            <div className="flex min-h-[70vh] w-max gap-4">
-              {statuses.map((status) => {
-                const statusFeedback = optimisticFeedback.filter(
-                  (f) => f.organizationStatusId === status._id
-                );
-
-                return (
+            <ScrollArea
+              lockAxis="y"
+              viewportClassName="pb-4 pl-[max(1rem,calc(50vw-35rem))] pr-4"
+              viewportProps={{
+                "aria-label": "Roadmap columns",
+                role: "region",
+              }}
+            >
+              <div className="flex min-h-[70vh] w-max gap-4">
+                {statuses.map((status) => (
                   <DroppableColumn
                     isAdmin={isAdmin}
                     isDragging={activeItem !== null}
-                    items={statusFeedback}
+                    items={optimisticFeedback.filter(
+                      (f) => f.organizationStatusId === status._id
+                    )}
                     key={status._id}
                     onDeleteClick={() =>
                       setDeleteDialogStatus({
@@ -201,35 +227,18 @@ export function RoadmapView({
                     onFeedbackClick={onFeedbackClick}
                     status={status}
                   />
-                );
-              })}
+                ))}
 
-              {isAdmin && <AddColumnInline organizationId={organizationId} />}
-            </div>
-          </ScrollArea>
+                {isAdmin && <AddColumnInline organizationId={organizationId} />}
+              </div>
+            </ScrollArea>
 
-          <DragOverlay dropAnimation={null}>
-            <AnimatePresence mode="popLayout">
-              {activeItem && (
-                <motion.div
-                  animate={{
-                    boxShadow:
-                      "0 25px 50px -12px oklch(from var(--shadow-color) l c h / 0.25)",
-                    rotate: 3,
-                    scale: 1.05,
-                  }}
-                  className="w-64"
-                  exit={{ opacity: 0, rotate: 0, scale: 1 }}
-                  initial={{ rotate: 0, scale: 1 }}
-                  transition={{ damping: 25, stiffness: 300, type: "spring" }}
-                >
-                  <FeedbackCardContent isOverlay item={activeItem} />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </DragOverlay>
-        </DndContext>
-      </LayoutGroup>
+            <DragOverlay dropAnimation={null}>
+              {activeItem && <DragPreview item={activeItem} />}
+            </DragOverlay>
+          </DndContext>
+        </LayoutGroup>
+      </LazyMotion>
 
       <ColumnDeleteDialog
         feedbackCount={

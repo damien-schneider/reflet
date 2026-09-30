@@ -17,6 +17,36 @@ function validateImageFile(file: File): Error | null {
   return null;
 }
 
+async function postImage(
+  file: File,
+  generateUploadUrl: () => Promise<string>
+): Promise<Id<"_storage">> {
+  const uploadUrl = await generateUploadUrl();
+  const response = await fetch(uploadUrl, {
+    body: file,
+    headers: {
+      "Content-Type": file.type,
+    },
+    method: "POST",
+  });
+  if (!response.ok) {
+    throw new Error("Failed to upload image");
+  }
+  const { storageId }: { storageId: Id<"_storage"> } = await response.json();
+  return storageId;
+}
+
+async function resolveStorageUrl(
+  storageId: Id<"_storage">,
+  getStorageUrl: (args: { storageId: Id<"_storage"> }) => Promise<string | null>
+): Promise<string> {
+  const url = await getStorageUrl({ storageId });
+  if (!url) {
+    throw new Error("Failed to get storage URL");
+  }
+  return url;
+}
+
 interface UseImageUploadOptions {
   onError?: (error: Error) => void;
   onSuccess?: (url: string) => void;
@@ -47,40 +77,21 @@ export function useImageUpload({
 
     setIsUploading(true);
 
+    let url: string | null = null;
     try {
-      const uploadUrl = await generateUploadUrl();
-      const response = await fetch(uploadUrl, {
-        body: file,
-        headers: {
-          "Content-Type": file.type,
-        },
-        method: "POST",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to upload image");
-      }
-
-      const { storageId }: { storageId: Id<"_storage"> } =
-        await response.json();
+      const storageId = await postImage(file, generateUploadUrl);
       setLastStorageId(storageId);
-
-      const url = await getStorageUrl({ storageId });
-
-      if (!url) {
-        throw new Error("Failed to get storage URL");
-      }
-
-      onSuccess?.(url);
-      return url;
+      url = await resolveStorageUrl(storageId, getStorageUrl);
     } catch (err) {
       const error =
         err instanceof Error ? err : new Error("Failed to upload image");
       onError?.(error);
-      return null;
-    } finally {
-      setIsUploading(false);
     }
+    setIsUploading(false);
+    if (url) {
+      onSuccess?.(url);
+    }
+    return url;
   };
 
   const handlePaste = async (event: ClipboardEvent): Promise<string | null> => {

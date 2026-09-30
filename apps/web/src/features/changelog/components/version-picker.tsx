@@ -8,56 +8,28 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@ctrl-ui/react/ui/tooltip";
-import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { useQuery } from "convex/react";
-import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
+import type { VersionSuggestions } from "./version-suggestions";
 
 const AUTO_VERSION_HINT =
-  "Version is managed automatically. Use the buttons below or disable auto-versioning in settings.";
+  "Reflet picks the version. Use the buttons below, or turn off auto-versioning in settings.";
 
 interface VersionPickerProps {
   className?: string;
   disabled?: boolean;
-  /** The release being edited — excluded from "latest" computation */
-  excludeReleaseId?: Id<"releases">;
   onChange: (version: string) => void;
-  organizationId: Id<"organizations">;
   value: string;
+  versionSuggestions: VersionSuggestions;
 }
 
 export function VersionPicker({
-  organizationId,
-  excludeReleaseId,
+  versionSuggestions,
   value,
   onChange,
   disabled,
   className,
 }: VersionPickerProps) {
-  const versionSuggestions = useQuery(api.changelog.queries.getNextVersion, {
-    excludeReleaseId,
-    organizationId,
-  });
-
   const isAutoVersioning = versionSuggestions?.autoVersioning !== false;
-  const hasAppliedDefault = useRef(false);
-
-  useEffect(() => {
-    if (hasAppliedDefault.current || value || !isAutoVersioning) {
-      return;
-    }
-    if (!versionSuggestions) {
-      return;
-    }
-
-    const defaultVersion =
-      versionSuggestions[versionSuggestions.defaultIncrement ?? "patch"];
-    if (defaultVersion) {
-      hasAppliedDefault.current = true;
-      onChange(defaultVersion);
-    }
-  }, [versionSuggestions, value, isAutoVersioning, onChange]);
 
   const increments = [
     { label: "Patch", version: versionSuggestions?.patch },
@@ -71,11 +43,12 @@ export function VersionPicker({
   const versionInput = (
     <Input
       aria-label="Release version"
-      className="h-7 w-28 text-xs tabular-nums"
+      className="w-28 tabular-nums"
       disabled={disabled}
       onChange={(e) => onChange(e.target.value)}
       placeholder="v1.0.0"
       readOnly={isAutoVersioning}
+      size="xs"
       value={value}
     />
   );
@@ -92,8 +65,8 @@ export function VersionPicker({
           versionInput
         )}
         {versionSuggestions?.current && (
-          <Badge className="text-caption tabular-nums" variant="outline">
-            latest: {versionSuggestions.current}
+          <Badge className="tabular-nums" size="sm" variant="outline">
+            Latest: {versionSuggestions.current}
           </Badge>
         )}
       </div>
@@ -101,10 +74,11 @@ export function VersionPicker({
         <div className="flex items-center gap-1">
           {increments.map((increment) => (
             <Button
-              className="h-5 px-1.5 text-caption tabular-nums"
+              aria-pressed={value === increment.version}
+              className="tabular-nums"
               key={increment.label}
               onClick={() => onChange(increment.version)}
-              size="sm"
+              size="xs"
               tone={value === increment.version ? "primary" : "neutral"}
               type="button"
               variant={value === increment.version ? "solid" : "ghost"}

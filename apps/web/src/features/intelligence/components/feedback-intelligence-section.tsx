@@ -10,15 +10,22 @@ import { Binoculars, CaretDown, CaretRight } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { TagBadge } from "@/components/tag-badge";
 
 const TYPE_LABEL: Record<string, string> = {
   battlecard: "Battlecard",
-  competitive_alert: "Competitive Alert",
-  feature_suggestion: "Feature Suggestion",
-  market_opportunity: "Market Opportunity",
-  risk_warning: "Risk Warning",
+  competitive_alert: "Competitive alert",
+  feature_suggestion: "Feature suggestion",
+  market_opportunity: "Market opportunity",
+  risk_warning: "Risk warning",
+};
+
+const PRIORITY_LABEL: Record<string, string> = {
+  critical: "Critical",
+  high: "High",
+  low: "Low",
+  medium: "Medium",
 };
 
 const PRIORITY_COLOR: Record<string, string> = {
@@ -38,6 +45,7 @@ export const FeedbackIntelligenceSection = (
 ) => {
   const { feedbackId } = props;
   const [isOpen, setIsOpen] = useState(false);
+  const contentId = useId();
 
   const insights = useQuery(
     api.intelligence.feedback_integration.getInsightsForFeedback,
@@ -65,87 +73,88 @@ export const FeedbackIntelligenceSection = (
     return null;
   }
 
-  const toggleOpen = () => {
-    setIsOpen((prev) => !prev);
-  };
-
   return (
     <Card>
       <CardHeader>
         <button
-          className="flex w-full items-center gap-2 text-left"
-          onClick={toggleOpen}
+          aria-controls={contentId}
+          aria-expanded={isOpen}
+          className="flex w-full items-center gap-2 rounded-sm text-left focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2"
+          onClick={() => setIsOpen((prev) => !prev)}
           type="button"
         >
           {isOpen ? (
-            <CaretDown className="size-4 text-muted-foreground" />
+            <CaretDown aria-hidden className="size-4 text-muted-foreground" />
           ) : (
-            <CaretRight className="size-4 text-muted-foreground" />
+            <CaretRight aria-hidden className="size-4 text-muted-foreground" />
           )}
-          <Binoculars className="size-4 text-muted-foreground" />
-          <CardTitle className="text-sm">Intelligence</CardTitle>
+          <Binoculars aria-hidden className="size-4 text-muted-foreground" />
+          <CardTitle>Intelligence</CardTitle>
           {hasInsights && (
             <TagBadge color="blue">
-              {insights.length} insight{insights.length === 1 ? "" : "s"}
+              <span className="tabular-nums">{insights.length}</span> insight
+              {insights.length === 1 ? "" : "s"}
             </TagBadge>
           )}
         </button>
       </CardHeader>
 
       {isOpen && (
-        <CardContent className="space-y-4">
-          {/* Related Insights */}
+        <CardContent className="space-y-4" id={contentId}>
           {hasInsights && (
-            <div className="space-y-2">
-              <p className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
-                Related Insights
-              </p>
-              {insights.map((insight: NonNullable<typeof insights>[number]) => (
-                <div
-                  className="flex items-start gap-2 rounded-md border p-2"
-                  key={insight._id}
-                >
-                  <div className="flex flex-1 flex-col gap-1">
-                    <div className="flex items-center gap-1.5">
-                      <TagBadge
-                        color={PRIORITY_COLOR[insight.priority] ?? "gray"}
-                      >
-                        {insight.priority}
-                      </TagBadge>
-                      <TagBadge color="blue">
-                        {TYPE_LABEL[insight.type] ?? insight.type}
-                      </TagBadge>
-                    </div>
-                    <p className="font-medium text-sm">{insight.title}</p>
-                    <p className="text-muted-foreground text-xs">
-                      {insight.summary}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <section className="space-y-2">
+              <h4 className="font-medium text-muted-foreground text-xs">
+                Related insights
+              </h4>
+              <ul className="space-y-2">
+                {insights.map(
+                  (insight: NonNullable<typeof insights>[number]) => (
+                    <li
+                      className="flex flex-col gap-1 rounded-md border p-2"
+                      key={insight._id}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <TagBadge
+                          color={PRIORITY_COLOR[insight.priority] ?? "gray"}
+                        >
+                          {PRIORITY_LABEL[insight.priority] ?? insight.priority}
+                        </TagBadge>
+                        <TagBadge color="blue">
+                          {TYPE_LABEL[insight.type] ?? insight.type}
+                        </TagBadge>
+                      </div>
+                      <p className="font-medium text-sm">{insight.title}</p>
+                      <p className="text-pretty text-muted-foreground text-xs">
+                        {insight.summary}
+                      </p>
+                    </li>
+                  )
+                )}
+              </ul>
+            </section>
           )}
 
-          {/* Community Signals */}
           {hasSignals && (
-            <div className="space-y-1">
-              <p className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
-                Community Signals
-              </p>
+            <section className="space-y-1">
+              <h4 className="font-medium text-muted-foreground text-xs">
+                Community signals
+              </h4>
               <p className="text-sm">
-                <span className="font-semibold">{signals.length}</span> related
-                signal{signals.length === 1 ? "" : "s"} from the community
+                <span className="font-semibold tabular-nums">
+                  {signals.length}
+                </span>{" "}
+                related signal{signals.length === 1 ? "" : "s"} from the
+                community
               </p>
-            </div>
+            </section>
           )}
 
-          {/* Competitor Status */}
           {hasCompetitorData && (
-            <div className="space-y-1">
-              <p className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
-                Competitor Status
-              </p>
-              <p className="text-sm">
+            <section className="space-y-1">
+              <h4 className="font-medium text-muted-foreground text-xs">
+                Competitor status
+              </h4>
+              <p className="text-sm tabular-nums">
                 <span className="font-semibold">
                   {competitorStatus.competitorsWithFeature}
                 </span>{" "}
@@ -155,7 +164,7 @@ export const FeedbackIntelligenceSection = (
                 </span>{" "}
                 competitors have this feature
               </p>
-            </div>
+            </section>
           )}
         </CardContent>
       )}

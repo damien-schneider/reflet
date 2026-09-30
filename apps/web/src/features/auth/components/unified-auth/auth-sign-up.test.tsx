@@ -8,7 +8,9 @@ vi.mock("motion/react", () => ({
   AnimatePresence: ({ children }: { children: React.ReactNode }) => (
     <>{children}</>
   ),
-  motion: {
+  domAnimation: {},
+  LazyMotion: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  m: {
     div: ({
       children,
       className,
@@ -49,9 +51,11 @@ vi.mock("./lib/auth-validation", () => ({
 import { AuthHeader } from "./auth-sign-up";
 
 describe("AuthHeader", () => {
-  it("renders Authentication title when mode is null", () => {
+  it("renders a neutral title before the email is recognized", () => {
     render(<AuthHeader mode={null} />);
-    expect(screen.getByText("Authentication")).toBeInTheDocument();
+    expect(
+      screen.getByText("Sign in or create an account")
+    ).toBeInTheDocument();
   });
 
   it("renders Welcome back when mode is signIn", () => {
@@ -59,29 +63,8 @@ describe("AuthHeader", () => {
     expect(screen.getByText("Welcome back")).toBeInTheDocument();
   });
 
-  it("renders Create an account when mode is signUp", () => {
+  it("renders Create your account when mode is signUp", () => {
     render(<AuthHeader mode="signUp" />);
-    expect(screen.getByText("Create an account")).toBeInTheDocument();
-  });
-
-  it("renders description for null mode", () => {
-    render(<AuthHeader mode={null} />);
-    expect(
-      screen.getByText("Enter your email to continue")
-    ).toBeInTheDocument();
-  });
-
-  it("renders description for signIn mode", () => {
-    render(<AuthHeader mode="signIn" />);
-    expect(
-      screen.getByText("Sign in with your email and password")
-    ).toBeInTheDocument();
-  });
-
-  it("renders description for signUp mode", () => {
-    render(<AuthHeader mode="signUp" />);
-    expect(
-      screen.getByText("Complete the information to create your account")
-    ).toBeInTheDocument();
+    expect(screen.getByText("Create your account")).toBeInTheDocument();
   });
 });

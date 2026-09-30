@@ -65,16 +65,6 @@
   --cui-popup-item-highlight-foreground: var(--destructive-text);
 }
 
-.tag-badge-brown {
-  --cui-badge-background: oklch(0.916 0.017 45);
-  --cui-badge-foreground: oklch(0.426 0.045 45);
-}
-
-.dark .tag-badge-brown {
-  --cui-badge-background: oklch(0.37 0.02 45);
-  --cui-badge-foreground: oklch(0.75 0.062 45);
-}
-
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -97,6 +87,10 @@
 
   :where(h1, h2, h3) {
     text-wrap: balance;
+  }
+
+  :where(p, li, blockquote, figcaption) {
+    text-wrap: pretty;
   }
 
   :where(

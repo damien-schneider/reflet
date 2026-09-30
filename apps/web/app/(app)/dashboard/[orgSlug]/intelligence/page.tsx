@@ -12,30 +12,43 @@ import { GearSix, Hash, Lightbulb, Users } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import { use, useState } from "react";
+import { OrgNotFound } from "@/features/dashboard/components/org-not-found";
 import { IntelligenceSettings } from "@/features/intelligence/components/intelligence-settings";
 import { CommunityTab } from "./community-tab";
 import { CompetitorsTab } from "./competitors-tab";
 import { InsightsTab } from "./insights-tab";
 
+const TABS = ["insights", "community", "competitors", "settings"] as const;
+
 export default function IntelligencePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ orgSlug: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }) {
   const { orgSlug } = use(params);
+  const { tab } = use(searchParams);
   const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
   const config = useQuery(
     api.intelligence.config.get,
     org ? { organizationId: org._id } : "skip"
   );
   const [selectedTab, setSelectedTab] = useState<string | null>(null);
-  const activeTab = selectedTab ?? "insights";
+  const initialTab = TABS.find((value) => value === tab) ?? "insights";
+  const activeTab = selectedTab ?? initialTab;
 
-  if (!org) {
+  if (org === null) {
+    return <OrgNotFound />;
+  }
+  if (org === undefined) {
     return (
       <PageLayout scroll="page" width="content">
+        <PageHeader>
+          <Skeleton className="h-9 w-44" />
+        </PageHeader>
         <PageBody>
-          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-64 w-full rounded-lg" />
         </PageBody>
       </PageLayout>
     );
@@ -75,19 +88,19 @@ export default function IntelligencePage({
         <Tabs onValueChange={setSelectedTab} value={activeTab}>
           <TabsList>
             <TabsTab value="insights">
-              <Lightbulb className="mr-1.5 h-4 w-4" />
+              <Lightbulb aria-hidden className="size-4" />
               Insights
             </TabsTab>
             <TabsTab value="community">
-              <Hash className="mr-1.5 h-4 w-4" />
+              <Hash aria-hidden className="size-4" />
               Community
             </TabsTab>
             <TabsTab value="competitors">
-              <Users className="mr-1.5 h-4 w-4" />
+              <Users aria-hidden className="size-4" />
               Competitors
             </TabsTab>
             <TabsTab value="settings">
-              <GearSix className="mr-1.5 h-4 w-4" />
+              <GearSix aria-hidden className="size-4" />
               Settings
             </TabsTab>
           </TabsList>

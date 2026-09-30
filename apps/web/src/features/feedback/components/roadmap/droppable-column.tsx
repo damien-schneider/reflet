@@ -7,6 +7,9 @@ import { DraggableFeedbackCard } from "./draggable-feedback-card";
 import { RoadmapColumnHeader } from "./roadmap-column-header";
 import type { DroppableColumnProps } from "./roadmap-types";
 
+const IDLE_TINT_PERCENT = 3;
+const OVER_TINT_PERCENT = 12;
+
 export function DroppableColumn({
   status,
   items,
@@ -23,16 +26,19 @@ export function DroppableColumn({
     id: status._id,
   });
 
-  const bgOpacity = isOver ? 16 : 3;
-
   return (
-    <div
+    <section
+      aria-label={status.name}
       className={cn(
-        "group w-72 shrink-0 rounded-lg p-4 transition-colors duration-200"
+        "group w-72 shrink-0 rounded-lg p-4 outline-2 outline-transparent -outline-offset-2 transition-[background-color,outline-color] duration-(--duration-fast) ease-(--ease-standard)",
+        isOver && "outline-dashed outline-ring/50"
       )}
       ref={setNodeRef}
       style={{
-        backgroundColor: withAlpha(getTagDotColor(status.color), bgOpacity),
+        backgroundColor: withAlpha(
+          getTagDotColor(status.color),
+          isOver ? OVER_TINT_PERCENT : IDLE_TINT_PERCENT
+        ),
       }}
     >
       <RoadmapColumnHeader
@@ -44,7 +50,7 @@ export function DroppableColumn({
         statusId={status._id}
       />
       <div
-        className="min-h-[100px] space-y-2"
+        className="min-h-24 space-y-2"
         data-dragging={isDragging ? "true" : "false"}
       >
         {items.map((item) => (
@@ -58,14 +64,15 @@ export function DroppableColumn({
         {items.length === 0 && (
           <p
             className={cn(
-              "py-4 text-center text-muted-foreground text-sm transition-colors",
-              isOver && "text-primary"
+              "flex min-h-24 items-center justify-center rounded-md border border-transparent border-dashed text-muted-foreground text-sm",
+              isDragging && "border-border",
+              isOver && "text-foreground"
             )}
           >
-            {isOver ? "Drop here" : "No items"}
+            {isDragging ? "Drop here" : "Nothing here yet"}
           </p>
         )}
       </div>
-    </div>
+    </section>
   );
 }

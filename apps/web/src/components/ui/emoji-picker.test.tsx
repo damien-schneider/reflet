@@ -242,7 +242,7 @@ describe("EmojiPicker", () => {
     // Should show search input
     const searchInput = screen.getByTestId("emoji-search");
     expect(searchInput).toBeInTheDocument();
-    expect(searchInput).toHaveAttribute("placeholder", "Search emoji...");
+    expect(searchInput).toHaveAttribute("placeholder", "Search emoji…");
   });
 
   it("renders category headers in the emoji list", () => {

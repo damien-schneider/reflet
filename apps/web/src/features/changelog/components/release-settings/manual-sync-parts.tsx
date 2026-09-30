@@ -4,32 +4,8 @@ import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import { CheckCircle, WarningCircle } from "@phosphor-icons/react";
+import { format, formatDistanceToNow } from "date-fns";
 import type { ElementType, ReactNode } from "react";
-import { Label } from "@/components/ui/label";
-
-function formatRelativeTime(timestamp: number): string {
-  const seconds = Math.floor((Date.now() - timestamp) / 1000);
-  if (seconds < 60) {
-    return "just now";
-  }
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) {
-    return `${minutes}m ago`;
-  }
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) {
-    return `${hours}h ago`;
-  }
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
-}
-
-export function pushButtonLabel(status?: string): string {
-  if (status === "failed") {
-    return "Retry";
-  }
-  return "Push";
-}
 
 export function SyncStatusIndicator({
   lastSyncAt,
@@ -50,7 +26,7 @@ export function SyncStatusIndicator({
   if (lastSyncStatus === "error") {
     return (
       <span className="flex items-center gap-1.5 text-destructive-text text-xs">
-        <WarningCircle className="h-3 w-3" />
+        <WarningCircle aria-hidden className="size-3" />
         Sync failed
       </span>
     );
@@ -59,8 +35,14 @@ export function SyncStatusIndicator({
   if (lastSyncAt) {
     return (
       <span className="flex items-center gap-1.5 text-muted-foreground text-xs tabular-nums">
-        <CheckCircle className="h-3 w-3" />
-        Synced {formatRelativeTime(lastSyncAt)}
+        <CheckCircle aria-hidden className="size-3" />
+        Synced{" "}
+        <time
+          dateTime={new Date(lastSyncAt).toISOString()}
+          title={format(lastSyncAt, "MMM d, yyyy, h:mm a")}
+        >
+          {formatDistanceToNow(lastSyncAt, { addSuffix: true })}
+        </time>
       </span>
     );
   }
@@ -76,12 +58,12 @@ export function SyncLoadingSkeleton() {
           <Skeleton className="h-4 w-24" />
           <Skeleton className="h-3 w-48" />
         </div>
-        <Skeleton className="h-8 w-36 rounded-md" />
+        <Skeleton className="h-8 w-36" />
       </div>
       <div className="space-y-2 pt-2">
         <Skeleton className="h-3 w-40" />
-        <Skeleton className="h-10 w-full rounded" />
-        <Skeleton className="h-10 w-full rounded" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
       </div>
     </div>
   );
@@ -98,10 +80,10 @@ export function SyncGroup({
 }) {
   return (
     <div className="space-y-1.5">
-      <Label className="text-muted-foreground text-xs tabular-nums">
-        <Icon className="mr-1 inline h-3.5 w-3.5" />
+      <p className="flex items-center gap-1 text-muted-foreground text-xs">
+        <Icon aria-hidden className="size-3.5" />
         {label}
-      </Label>
+      </p>
       {children}
     </div>
   );
@@ -125,13 +107,16 @@ export function SyncRow({
       <div className="flex items-center gap-2 overflow-hidden">
         {label && (
           <Badge
-            className="shrink-0 font-mono text-caption tabular-nums"
+            className="shrink-0 font-mono tabular-nums"
+            size="sm"
             variant={outlined ? "outline" : "default"}
           >
             {label}
           </Badge>
         )}
-        <span className="truncate text-sm">{title}</span>
+        <span className="truncate text-sm" title={title}>
+          {title}
+        </span>
         {children}
       </div>
       {action}

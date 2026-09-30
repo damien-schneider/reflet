@@ -13,6 +13,7 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import Link from "next/link";
 import { useState } from "react";
+import { CopyButton } from "@/components/copy-button";
 import { DEFAULT_PRIMARY_COLOR } from "@/lib/branding";
 import { cn } from "@/lib/utils";
 import { generateChangelogWidgetPrompt } from "../lib/generate-changelog-widget-prompt";
@@ -54,9 +55,13 @@ const MODE_HINTS: Record<WidgetMode, string> = {
 
 const TRIGGER_CODE = `<button data-reflet-changelog>What's New</button>`;
 
-function copyToClipboard(text: string, label: string) {
-  navigator.clipboard.writeText(text);
-  toast.success(`${label} copied to clipboard`);
+async function copyPrompt(prompt: string) {
+  try {
+    await navigator.clipboard.writeText(prompt);
+    toast.success("AI prompt copied to clipboard");
+  } catch {
+    toast.error("Couldn’t copy. Select the prompt and copy it manually.");
+  }
 }
 
 function buildScriptTagCode({
@@ -123,19 +128,12 @@ function CodeSnippet({
 }) {
   return (
     <div className="relative mt-3">
-      <Button
-        className="absolute top-3 right-3 z-10"
-        onClick={() => copyToClipboard(code, label)}
-        size="xs"
-        tone="primary"
-        variant="surface"
-      >
-        <Copy className="mr-2 h-4 w-4" />
-        Copy
-      </Button>
+      <div className="absolute top-1.5 right-1.5 z-10">
+        <CopyButton label={label} value={code} />
+      </div>
       <pre
         className={cn(
-          "overflow-x-auto rounded-lg bg-muted p-4 font-mono text-sm",
+          "overflow-x-auto rounded-lg bg-muted p-4 pr-12 font-mono text-sm",
           scroll && "max-h-64 overflow-auto whitespace-pre-wrap"
         )}
       >
@@ -174,29 +172,31 @@ function ApiKeysBanner({
   return (
     <div className="rounded-lg border border-border bg-warning-subtle p-4">
       <div className="flex items-start gap-3">
-        <Warning className="mt-0.5 h-5 w-5 text-warning-text" />
+        <Warning aria-hidden className="mt-0.5 size-5 text-warning-text" />
         <div className="flex-1">
           <h4 className="font-medium text-warning-text">API keys required</h4>
-          <p className="mt-1 text-muted-foreground text-sm">
+          <p className="mt-1 text-pretty text-muted-foreground text-sm">
             Generate API keys to get your public key. The embed code below uses
             a placeholder until keys are created.
           </p>
           <div className="mt-3 flex items-center gap-2">
             <Input
+              aria-label="Key name"
               className="max-w-xs"
               onChange={(e) => setKeyName(e.target.value)}
-              placeholder="Key name (e.g., Production)"
+              placeholder="Key name (e.g. Production)"
+              size="sm"
               value={keyName}
             />
             <Button
               disabled={isGenerating}
               onClick={handleGenerateKeys}
-              size="xs"
+              size="sm"
               tone="primary"
               variant="solid"
             >
-              <Key className="mr-2 h-4 w-4" />
-              {isGenerating ? "Generating..." : "Generate API Keys"}
+              <Key aria-hidden className="size-4" />
+              {isGenerating ? "Generating…" : "Generate API keys"}
             </Button>
           </div>
         </div>
@@ -230,30 +230,29 @@ function AiPromptSection({ prompt }: { prompt: string }) {
     <div>
       <div className="rounded-lg border border-border bg-brand-subtle p-4">
         <div className="flex items-start gap-3">
-          <Robot className="mt-0.5 h-5 w-5 text-brand-text" />
+          <Robot aria-hidden className="mt-0.5 size-5 text-brand-text" />
           <div className="flex-1">
             <h4 className="font-medium text-brand-text">
-              AI Integration Prompt
+              AI integration prompt
             </h4>
-            <p className="mt-1 text-muted-foreground text-sm">
-              Copy this prompt and paste it into Claude Code, Cursor, or any AI
-              coding assistant to automatically integrate the changelog widget
-              into your project.
+            <p className="mt-1 text-pretty text-muted-foreground text-sm">
+              Paste this prompt into Claude Code, Cursor, or any AI coding
+              assistant to add the changelog widget to your project.
             </p>
           </div>
         </div>
       </div>
 
-      <CodeSnippet code={prompt} label="AI prompt" scroll />
+      <CodeSnippet code={prompt} label="Copy AI prompt" scroll />
 
       <Button
         className="mt-3 w-full"
-        onClick={() => copyToClipboard(prompt, "AI prompt")}
+        onClick={() => copyPrompt(prompt)}
         tone="primary"
         variant="solid"
       >
-        <Copy className="mr-2 h-4 w-4" />
-        Copy Full AI Prompt
+        <Copy aria-hidden data-icon="inline-start" />
+        Copy full AI prompt
       </Button>
     </div>
   );
@@ -278,7 +277,7 @@ export function ChangelogWidgetTab({
       {hasApiKeys ? null : <ApiKeysBanner organizationId={organizationId} />}
 
       <div>
-        <h3 className="font-semibold text-lg">Embed Configuration</h3>
+        <h3 className="font-semibold text-lg">Embed configuration</h3>
         <p className="mt-1 text-muted-foreground">
           Customize the widget appearance. The embed code below updates
           automatically.
@@ -319,8 +318,8 @@ export function ChangelogWidgetTab({
             }}
             value={position}
           >
-            <option value="bottom-right">Bottom Right</option>
-            <option value="bottom-left">Bottom Left</option>
+            <option value="bottom-right">Bottom right</option>
+            <option value="bottom-left">Bottom left</option>
           </SelectField>
 
           <SelectField
@@ -341,12 +340,13 @@ export function ChangelogWidgetTab({
 
         <div className="mt-4 flex items-center gap-2 text-muted-foreground text-sm">
           <div
-            className="h-4 w-4 rounded-full border"
+            aria-hidden
+            className="size-4 rounded-full outline outline-1 outline-black/10 -outline-offset-1 dark:outline-white/10"
             style={{ backgroundColor: brandColor }}
           />
           <span>
             Brand color:{" "}
-            <code className="rounded bg-muted px-1.5 py-0.5 text-xs tabular-nums">
+            <code className="rounded-sm bg-muted px-1.5 py-0.5 font-mono text-xs tabular-nums">
               {brandColor}
             </code>
           </span>
@@ -360,11 +360,14 @@ export function ChangelogWidgetTab({
       </div>
 
       <div>
-        <h3 className="font-semibold text-lg">Script Tag</h3>
+        <h3 className="font-semibold text-lg">Script tag</h3>
         <p className="mt-1 text-muted-foreground">
           Add this script to your HTML. Works with any website.
         </p>
-        <CodeSnippet code={buildScriptTagCode(config)} label="Script tag" />
+        <CodeSnippet
+          code={buildScriptTagCode(config)}
+          label="Copy script tag"
+        />
       </div>
 
       <div>
@@ -372,17 +375,17 @@ export function ChangelogWidgetTab({
         <p className="mt-1 text-muted-foreground">
           Use the React component for React or Next.js projects.
         </p>
-        <CodeSnippet code={buildReactCode(config)} label="React code" />
+        <CodeSnippet code={buildReactCode(config)} label="Copy React code" />
       </div>
 
       {mode === "trigger" && (
         <div>
-          <h3 className="font-semibold text-lg">Trigger Element</h3>
+          <h3 className="font-semibold text-lg">Trigger element</h3>
           <p className="mt-1 text-muted-foreground">
             Add this attribute to any button or element to open the changelog on
             click.
           </p>
-          <CodeSnippet code={TRIGGER_CODE} label="Trigger code" />
+          <CodeSnippet code={TRIGGER_CODE} label="Copy trigger code" />
         </div>
       )}
 

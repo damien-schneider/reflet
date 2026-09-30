@@ -1,7 +1,14 @@
 import type { Metadata } from "next";
 import { SETUP_PROMPT } from "reflet-cli/prompt";
 
+import { CodeBlock } from "@/components/docs/code-block";
 import { CopyBlock } from "@/components/docs/copy-block";
+import {
+  DocsList,
+  DocsPage,
+  DocsSection,
+  DocsText,
+} from "@/components/docs/docs-page";
 import { InstallCommand } from "@/components/docs/install-command";
 import { PropsTable } from "@/components/docs/props-table";
 import { InlineCode } from "@/components/ui/typography";
@@ -11,7 +18,7 @@ export const metadata: Metadata = generatePageMetadata({
   description:
     "A floating feedback button for React apps: automatic screenshot, drawing tools, element picker and full page context on every report.",
   path: "/docs/widget/floating-feedback",
-  title: "Floating Feedback Button",
+  title: "Floating feedback button",
 });
 
 const PROPS = [
@@ -153,196 +160,192 @@ export { GET, POST } from "reflet-sdk/devtools/next";
 import { refletDevtools } from "reflet-sdk/devtools/vite";
 export default defineConfig({ plugins: [react(), refletDevtools()] });`;
 
-function Section({
-  children,
-  title,
-}: {
-  children: React.ReactNode;
-  title: string;
-}) {
+const SECTIONS = [
+  { id: "install", label: "Install" },
+  { id: "manual-setup", label: "Or wire it up yourself" },
+  { id: "agent-setup", label: "Set it up with your coding agent" },
+  { id: "report-contents", label: "What ends up on a report" },
+  { id: "props", label: "Props" },
+  { id: "identified-users", label: "Identified users" },
+  { id: "devtools", label: "Devtools for your team" },
+  { id: "good-to-know", label: "Good to know" },
+] as const;
+
+function ReportContents() {
   return (
-    <section className="mb-10">
-      <h2 className="mb-3 font-display text-2xl text-foreground leading-snug tracking-tight">
-        {title}
-      </h2>
-      {children}
-    </section>
+    <DocsList>
+      <li>
+        <strong className="text-foreground">Screenshot.</strong> Rendered from
+        the DOM, so there is no screen-share permission prompt. The widget
+        leaves itself out of its own capture.
+      </li>
+      <li>
+        <strong className="text-foreground">Drawing.</strong> Pen, arrow, box,
+        highlight and a redaction tool that pixelates a region before anything
+        leaves the browser. Both the clean and the annotated image are stored.
+      </li>
+      <li>
+        <strong className="text-foreground">Element.</strong> Point at anything
+        on the page and the report highlights it in the screenshot, with the
+        page region it sits in, its redacted markup, a selector that resolves
+        back to it, the React component stack, and the source file and line when
+        the build exposes them.
+      </li>
+      <li>
+        <strong className="text-foreground">Page context.</strong> URL, title,
+        browser, OS, device, viewport, locale and timezone.
+      </li>
+      <li>
+        <strong className="text-foreground">Console.</strong> The last 30 errors
+        and warnings the page logged, including uncaught errors and rejected
+        promises.
+      </li>
+    </DocsList>
+  );
+}
+
+function GoodToKnow() {
+  return (
+    <DocsList>
+      <li>
+        The panel lives in a shadow root. Your CSS can’t reach it and its CSS
+        can’t reach your app.
+      </li>
+      <li>
+        Component names and source locations come from React’s debug data.
+        Development and preview builds give you{" "}
+        <InlineCode>src/billing/invoice-row.tsx:42:7</InlineCode>. Production
+        builds strip that, so reports fall back to the component stack and the
+        selector.
+      </li>
+      <li>
+        Screenshots are rendered from the DOM. Cross-origin images without CORS
+        headers, iframes and canvas content may come out blank.
+      </li>
+      <li>
+        A failed screenshot upload never loses the written report. The feedback
+        is created first and the image is attached after.
+      </li>
+      <li>
+        The markup of a picked element is scrubbed before it leaves the browser:
+        typed-in values, emails and token-shaped strings are replaced. Mark a
+        subtree with <InlineCode>data-reflet-redact</InlineCode> to keep its
+        contents out of reports entirely.
+      </li>
+      <li>
+        Report context is only visible to members of your organization, not to
+        visitors on a public board.
+      </li>
+      <li>
+        Your organization doesn’t have to be public. The public key writes
+        reports and nothing else; reading the board still needs a member session
+        or a secret key.
+      </li>
+      <li>
+        A public key is capped at 30 reports per minute. Past that the API
+        answers <InlineCode>429</InlineCode> and the panel shows the error.
+      </li>
+    </DocsList>
+  );
+}
+
+function DevtoolsSection() {
+  return (
+    <DocsSection id="devtools" sections={SECTIONS}>
+      <DocsText>
+        On your dev server, the same component adds a small bar above the
+        launcher that you can drag anywhere. Pick an element to write a note on
+        it, or Shift-click it to open its source with the JSX highlighted. Copy
+        your notes as one prompt for a coding agent, or send them to the board
+        as internal feedback that only members see. The Board tab lists the
+        feedback reported on the current page, with the element and its code one
+        click away. Production builds never ship it.
+      </DocsText>
+      <DocsText>
+        Code view and the board go through one dev-only route. To reach the
+        board, click Connect to Reflet in the Board tab and approve your dev
+        server on reflet.app: it keeps a revocable token outside your
+        repository. You can also set <InlineCode>REFLET_SECRET_KEY</InlineCode>{" "}
+        on the server instead. Set <InlineCode>REFLET_EDITOR</InlineCode> to{" "}
+        <InlineCode>cursor</InlineCode>, <InlineCode>zed</InlineCode>,{" "}
+        <InlineCode>windsurf</InlineCode> or <InlineCode>webstorm</InlineCode>{" "}
+        for the editor links.
+      </DocsText>
+      <CodeBlock code={DEVTOOLS_ROUTE_SNIPPET} />
+    </DocsSection>
   );
 }
 
 export default function FloatingFeedbackPage() {
   return (
-    <div className="mx-auto max-w-3xl">
-      <h1 className="mb-2 font-display text-3xl text-foreground leading-snug tracking-tight">
-        Floating Feedback Button
-      </h1>
-      <p className="mb-8 text-base text-muted-foreground sm:text-xl">
-        One component drops a feedback button into your app. Every report
-        arrives with a screenshot of what the user was looking at, whatever they
-        drew on it, the page they were on, and — when they point at one — the
-        React component behind the element.
-      </p>
-
-      <Section title="Install">
-        <p className="mb-4 text-muted-foreground text-sm">
+    <DocsPage
+      description="One component drops a feedback button into your app. Every report arrives with a screenshot of what the user was looking at, whatever they drew on it, the page they were on and, when they point at one, the React component behind the element."
+      sections={SECTIONS}
+      title="Floating feedback button"
+    >
+      <DocsSection id="install" sections={SECTIONS}>
+        <DocsText>
           The CLI installs the SDK, mounts the widget in your app entry file and
           writes the key to the right env file. It detects Next.js (both
-          routers), Vite and React Router, and never edits a file it cannot
-          place the widget in.
-        </p>
+          routers), Vite and React Router, and never edits a file it can’t place
+          the widget in.
+        </DocsText>
         <InstallCommand command="npx reflet-cli init" />
-        <p className="mt-3 text-muted-foreground text-xs">
+        <DocsText>
           Non-interactive, for scripts and agents:{" "}
           <InlineCode>
             npx reflet-cli init --public-key fb_pub_xxx --yes
           </InlineCode>
           . Check an existing setup with{" "}
           <InlineCode>npx reflet-cli doctor</InlineCode>.
-        </p>
-      </Section>
+        </DocsText>
+      </DocsSection>
 
-      <Section title="Or wire it up yourself">
-        <p className="mb-4 text-muted-foreground text-sm">
+      <DocsSection id="manual-setup" sections={SECTIONS}>
+        <DocsText>
           Mount it once, as the last child of your app shell. The entry ships
           its own <InlineCode>&quot;use client&quot;</InlineCode> directive, so
           a Next.js layout can stay a Server Component.
-        </p>
-        <div className="rounded-lg border border-border bg-muted/30 p-4">
-          <pre className="overflow-x-auto text-sm">{MANUAL_SNIPPET}</pre>
-        </div>
-        <p className="mt-3 text-muted-foreground text-xs">
+        </DocsText>
+        <CodeBlock code={MANUAL_SNIPPET} />
+        <DocsText>
           With Vite, read the key from{" "}
           <InlineCode>import.meta.env.VITE_REFLET_PUBLIC_KEY</InlineCode>{" "}
           instead, and render the widget next to{" "}
           <InlineCode>&lt;App /&gt;</InlineCode>.
-        </p>
-      </Section>
+        </DocsText>
+      </DocsSection>
 
-      <Section title="Set it up with your coding agent">
-        <p className="mb-4 text-muted-foreground text-sm">
+      <DocsSection id="agent-setup" sections={SECTIONS}>
+        <DocsText>
           Paste this into Claude Code, Cursor or any agent working in the repo.
-          It is the same text <InlineCode>npx reflet-cli prompt</InlineCode>{" "}
+          It’s the same text <InlineCode>npx reflet-cli prompt</InlineCode>{" "}
           prints.
-        </p>
+        </DocsText>
         <CopyBlock content={SETUP_PROMPT} label="Setup prompt" />
-      </Section>
+      </DocsSection>
 
-      <Section title="What ends up on a report">
-        <ul className="space-y-2 text-muted-foreground text-sm">
-          <li>
-            <strong className="text-foreground">Screenshot.</strong> Rendered
-            from the DOM, so there is no screen-share permission prompt. The
-            widget excludes itself from its own capture.
-          </li>
-          <li>
-            <strong className="text-foreground">Drawing.</strong> Pen, arrow,
-            box, highlight and a redaction tool that pixelates a region before
-            anything leaves the browser. Both the clean and the annotated image
-            are stored.
-          </li>
-          <li>
-            <strong className="text-foreground">Element.</strong> Point at
-            anything on the page and the report highlights it in the screenshot,
-            with the page region it sits in, its redacted markup, a selector
-            that resolves back to it, the React component stack, and the source
-            file and line when the build exposes them.
-          </li>
-          <li>
-            <strong className="text-foreground">Page context.</strong> URL,
-            title, browser, OS, device, viewport, locale and timezone.
-          </li>
-          <li>
-            <strong className="text-foreground">Console.</strong> The last 30
-            errors and warnings the page logged, including uncaught errors and
-            rejected promises.
-          </li>
-        </ul>
-      </Section>
+      <DocsSection id="report-contents" sections={SECTIONS}>
+        <ReportContents />
+      </DocsSection>
 
-      <Section title="Props">
+      <DocsSection id="props" sections={SECTIONS}>
         <PropsTable props={PROPS} />
-      </Section>
+      </DocsSection>
 
-      <Section title="Identified users">
-        <p className="mb-4 text-muted-foreground text-sm">
+      <DocsSection id="identified-users" sections={SECTIONS}>
+        <DocsText>
           Pass the current user and the widget stops asking for an email. Add
           your own metadata to slice reports by plan, tenant or release.
-        </p>
-        <div className="rounded-lg border border-border bg-muted/30 p-4">
-          <pre className="overflow-x-auto text-sm">{IDENTIFIED_SNIPPET}</pre>
-        </div>
-      </Section>
+        </DocsText>
+        <CodeBlock code={IDENTIFIED_SNIPPET} />
+      </DocsSection>
 
-      <Section title="Devtools for your team">
-        <p className="mb-4 text-muted-foreground text-sm">
-          On your dev server, the same component adds a small bar above the
-          launcher that you can drag anywhere. Pick an element to write a note
-          on it, or Shift+click it to open its source with the JSX highlighted.
-          Copy your notes as one prompt for a coding agent, or send them to the
-          board as internal feedback that only members see. The Board tab lists
-          the feedback reported on the current page, with the element and its
-          code one click away. Production builds never ship it.
-        </p>
-        <p className="mb-4 text-muted-foreground text-sm">
-          Code view and the board go through one dev-only route. To reach the
-          board, click Connect to Reflet in the Board tab and approve your dev
-          server on reflet.app: it keeps a revocable token outside your
-          repository, or you can set <InlineCode>REFLET_SECRET_KEY</InlineCode>{" "}
-          on the server instead. Set <InlineCode>REFLET_EDITOR</InlineCode> to{" "}
-          <InlineCode>cursor</InlineCode>, <InlineCode>zed</InlineCode>,{" "}
-          <InlineCode>windsurf</InlineCode> or <InlineCode>webstorm</InlineCode>{" "}
-          for the editor links.
-        </p>
-        <div className="rounded-lg border border-border bg-muted/30 p-4">
-          <pre className="overflow-x-auto text-sm">
-            {DEVTOOLS_ROUTE_SNIPPET}
-          </pre>
-        </div>
-      </Section>
+      <DevtoolsSection />
 
-      <Section title="Good to know">
-        <ul className="space-y-2 text-muted-foreground text-sm">
-          <li>
-            The panel lives in a shadow root. Your CSS cannot reach it and its
-            CSS cannot reach your app.
-          </li>
-          <li>
-            Component names and source locations come from React&apos;s debug
-            data. Development and preview builds give you{" "}
-            <InlineCode>src/billing/invoice-row.tsx:42:7</InlineCode> —
-            production builds strip that, so reports fall back to the component
-            stack and the selector.
-          </li>
-          <li>
-            Screenshots are rendered from the DOM. Cross-origin images without
-            CORS headers, iframes and canvas content may come out blank.
-          </li>
-          <li>
-            A failed screenshot upload never loses the written report — the
-            feedback is created first, the image is attached after.
-          </li>
-          <li>
-            The markup of a picked element is scrubbed before it leaves the
-            browser: typed-in values, emails and token-shaped strings are
-            replaced. Mark a subtree with{" "}
-            <InlineCode>data-reflet-redact</InlineCode> to keep its contents out
-            of reports entirely.
-          </li>
-          <li>
-            Report context is only visible to members of your organization, not
-            to visitors on a public board.
-          </li>
-          <li>
-            Your organization does not have to be public. The public key writes
-            reports and nothing else — reading the board still needs a member
-            session or a secret key.
-          </li>
-          <li>
-            A public key is capped at 30 reports per minute. Past that the API
-            answers <InlineCode>429</InlineCode> and the panel shows the error.
-          </li>
-        </ul>
-      </Section>
-    </div>
+      <DocsSection id="good-to-know" sections={SECTIONS}>
+        <GoodToKnow />
+      </DocsSection>
+    </DocsPage>
   );
 }

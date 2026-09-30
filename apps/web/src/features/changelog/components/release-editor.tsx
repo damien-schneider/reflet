@@ -1,20 +1,19 @@
-import { toast } from "@ctrl-ui/react/ui/toast";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
-import { useMutation, useQuery } from "convex/react";
-import { format } from "date-fns";
+import { useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { capture } from "@/lib/analytics";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { useAutoSaveRelease } from "../hooks/use-auto-save-release";
 import { useReleaseCommits } from "../hooks/use-release-commits";
+import { useReleasePublishing } from "../hooks/use-release-publishing";
 import type { FeedbackLinkStatus } from "./feedback-section-header";
 import { PublishConfirmDialog } from "./publish-confirm-dialog";
 import { ReleaseEditorBody } from "./release-editor-body";
 import { ReleaseEditorFooter } from "./release-editor-footer";
 import { ReleaseEditorToolbar } from "./release-editor-toolbar";
+import { getSuggestedVersion } from "./version-suggestions";
 
 interface ReleaseEditorProps {
   className?: string;
@@ -31,51 +30,6 @@ export function ReleaseEditor({
 }: ReleaseEditorProps) {
   const router = useRouter();
   const { data: sessionData } = authClient.useSession();
-  const updateRelease = useMutation(api.changelog.mutations.update);
-  const createRelease = useMutation(api.changelog.mutations.create);
-  const publishRelease = useMutation(
-    api.changelog.actions.publish
-  ).withOptimisticUpdate((localStore, args) => {
-    const current = localStore.getQuery(api.changelog.queries.get, {
-      id: args.id,
-    });
-    if (!current) {
-      return;
-    }
-    localStore.setQuery(
-      api.changelog.queries.get,
-      { id: args.id },
-      {
-        ...current,
-        publishedAt: Date.now(),
-      }
-    );
-  });
-
-  const unpublishRelease = useMutation(
-    api.changelog.actions.unpublish
-  ).withOptimisticUpdate((localStore, args) => {
-    const current = localStore.getQuery(api.changelog.queries.get, {
-      id: args.id,
-    });
-    if (!current) {
-      return;
-    }
-    localStore.setQuery(
-      api.changelog.queries.get,
-      { id: args.id },
-      {
-        ...current,
-        publishedAt: undefined,
-      }
-    );
-  });
-
-  const schedulePublish = useMutation(api.changelog.scheduling.schedulePublish);
-  const cancelSchedule = useMutation(
-    api.changelog.scheduling.cancelScheduledPublish
-  );
-  const pushToGithub = useMutation(api.changelog.actions.pushToGithub);
   const githubConnection = useQuery(
     api.integrations.github.queries.getConnection,
     {
@@ -94,9 +48,15 @@ export function ReleaseEditor({
     release?.githubPushErrorType === "permission_denied";
 
   const [title, setTitle] = useState(release?.title ?? "");
-  const [version, setVersion] = useState(release?.version ?? "");
+  const [userVersion, setVersion] = useState<string | null>(
+    release?.version || null
+  );
+  const versionSuggestions = useQuery(api.changelog.queries.getNextVersion, {
+    excludeReleaseId: release?._id,
+    organizationId,
+  });
+  const version = userVersion ?? getSuggestedVersion(versionSuggestions);
   const [description, setDescription] = useState(release?.description ?? "");
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPublishConfirm, setShowPublishConfirm] = useState(false);
 
   const [isStreaming, setIsStreaming] = useState(false);
@@ -149,152 +109,23 @@ export function ReleaseEditor({
     setTitle(generatedTitle);
   };
 
-  const handlePublish = async () => {
-    if (!title.trim()) {
-      toast.error("Title is required to publish");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      let idToPublish = releaseId;
-
-      if (idToPublish) {
-        await updateRelease({
-          description: description.trim() || undefined,
-          id: idToPublish,
-          title: title.trim() || "Untitled Release",
-          version: version.trim() || undefined,
-        });
-      } else {
-        idToPublish = await createRelease({
-          description: description.trim() || undefined,
-          organizationId,
-          title: title.trim() || "Untitled Release",
-          version: version.trim() || undefined,
-        });
-      }
-
-      await publishRelease({
-        feedbackStatus:
-          feedbackLinkStatus === "keep" ? undefined : feedbackLinkStatus,
-        id: idToPublish,
-      });
-      capture("release_published", {
-        has_version: Boolean(version.trim()),
-      });
+  const {
+    handleCancelSchedule,
+    handlePublish,
+    handlePushToGithub,
+    handleSchedule,
+    handleUnpublish,
+    isSubmitting,
+  } = useReleasePublishing({
+    draft: { description, title, version },
+    feedbackLinkStatus,
+    onDone: () => {
       setShowPublishConfirm(false);
-      toast.success("Release published!");
       navigateToChangelog();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to publish");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleSchedule = async (scheduledAt: number) => {
-    if (!title.trim()) {
-      toast.error("Title is required to schedule");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      let idToSchedule = releaseId;
-
-      if (idToSchedule) {
-        await updateRelease({
-          description: description.trim() || undefined,
-          id: idToSchedule,
-          title: title.trim() || "Untitled Release",
-          version: version.trim() || undefined,
-        });
-      } else {
-        idToSchedule = await createRelease({
-          description: description.trim() || undefined,
-          organizationId,
-          title: title.trim() || "Untitled Release",
-          version: version.trim() || undefined,
-        });
-      }
-
-      await schedulePublish({
-        feedbackStatus:
-          feedbackLinkStatus === "keep" ? undefined : feedbackLinkStatus,
-        id: idToSchedule,
-        scheduledPublishAt: scheduledAt,
-      });
-      capture("release_scheduled", {
-        has_version: Boolean(version.trim()),
-      });
-      setShowPublishConfirm(false);
-      toast.success(
-        `Release scheduled for ${format(scheduledAt, "MMM d, yyyy 'at' h:mm a")}`
-      );
-      navigateToChangelog();
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to schedule"
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleCancelSchedule = async () => {
-    if (!releaseId) {
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      await cancelSchedule({ id: releaseId });
-      toast.success("Schedule cancelled");
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to cancel schedule"
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleUnpublish = async () => {
-    if (!releaseId) {
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      await unpublishRelease({ id: releaseId });
-      toast.success("Release unpublished");
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to unpublish"
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handlePushToGithub = async () => {
-    if (!releaseId) {
-      return;
-    }
-    try {
-      await pushToGithub({ releaseId });
-      toast.success("Push to GitHub scheduled");
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to push to GitHub"
-      );
-    }
-  };
-
-  const handleCancel = () => {
-    router.push(`/dashboard/${orgSlug}/changelog`);
-  };
+    },
+    organizationId,
+    releaseId,
+  });
 
   return (
     <div
@@ -322,6 +153,7 @@ export function ReleaseEditor({
           saveStatus={saveStatus}
           setVersion={setVersion}
           version={version}
+          versionSuggestions={versionSuggestions}
         />
         <ReleaseEditorBody
           commits={commits}
@@ -348,7 +180,7 @@ export function ReleaseEditor({
           isScheduled={isScheduled}
           isStreaming={isStreaming}
           isSubmitting={isSubmitting}
-          onCancel={handleCancel}
+          onCancel={navigateToChangelog}
           onCancelSchedule={handleCancelSchedule}
           onPublish={() => setShowPublishConfirm(true)}
           onPushToGithub={handlePushToGithub}

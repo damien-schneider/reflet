@@ -20,6 +20,9 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
 }));
 
 vi.mock("@phosphor-icons/react", () => ({
+  Check: ({ className }: { className?: string }) => (
+    <svg className={className} />
+  ),
   Copy: ({ className }: { className?: string }) => (
     <svg className={className} data-testid="copy-icon" />
   ),
@@ -31,6 +34,9 @@ vi.mock("@phosphor-icons/react", () => ({
   ),
   Warning: ({ className }: { className?: string }) => (
     <svg className={className} data-testid="warning-icon" />
+  ),
+  WarningCircle: ({ className }: { className?: string }) => (
+    <svg className={className} />
   ),
 }));
 
@@ -140,12 +146,12 @@ describe("ChangelogWidgetTab", () => {
 
   it("renders embed configuration section", () => {
     render(<ChangelogWidgetTab {...defaultProps} />);
-    expect(screen.getByText("Embed Configuration")).toBeInTheDocument();
+    expect(screen.getByText("Embed configuration")).toBeInTheDocument();
   });
 
   it("renders script tag section", () => {
     render(<ChangelogWidgetTab {...defaultProps} />);
-    expect(screen.getByText("Script Tag")).toBeInTheDocument();
+    expect(screen.getByText("Script tag")).toBeInTheDocument();
   });
 
   it("renders react SDK section", () => {
@@ -155,7 +161,7 @@ describe("ChangelogWidgetTab", () => {
 
   it("renders AI integration prompt section", () => {
     render(<ChangelogWidgetTab {...defaultProps} />);
-    expect(screen.getByText("AI Integration Prompt")).toBeInTheDocument();
+    expect(screen.getByText("AI integration prompt")).toBeInTheDocument();
   });
 
   it("does not show API keys warning when hasApiKeys is true", () => {
@@ -170,12 +176,12 @@ describe("ChangelogWidgetTab", () => {
 
   it("shows generate API keys button when no keys", () => {
     render(<ChangelogWidgetTab {...defaultProps} hasApiKeys={false} />);
-    expect(screen.getByText("Generate API Keys")).toBeInTheDocument();
+    expect(screen.getByText("Generate API keys")).toBeInTheDocument();
   });
 
   it("calls generateApiKeys mutation on button click", async () => {
     render(<ChangelogWidgetTab {...defaultProps} hasApiKeys={false} />);
-    fireEvent.click(screen.getByText("Generate API Keys"));
+    fireEvent.click(screen.getByText("Generate API keys"));
     expect(mockGenerateKeys).toHaveBeenCalledWith({
       name: "Default",
       organizationId: ORG_ID,
@@ -184,9 +190,9 @@ describe("ChangelogWidgetTab", () => {
 
   it("uses custom key name when provided", () => {
     render(<ChangelogWidgetTab {...defaultProps} hasApiKeys={false} />);
-    const input = screen.getByPlaceholderText("Key name (e.g., Production)");
+    const input = screen.getByPlaceholderText("Key name (e.g. Production)");
     fireEvent.change(input, { target: { value: "My Key" } });
-    fireEvent.click(screen.getByText("Generate API Keys"));
+    fireEvent.click(screen.getByText("Generate API keys"));
     expect(mockGenerateKeys).toHaveBeenCalledWith({
       name: "My Key",
       organizationId: ORG_ID,
@@ -205,23 +211,20 @@ describe("ChangelogWidgetTab", () => {
     expect(screen.getByText(/publicKey="pk_test_123"/)).toBeInTheDocument();
   });
 
-  it("handles copy to clipboard", () => {
+  it("copies the script tag", async () => {
     render(<ChangelogWidgetTab {...defaultProps} />);
-    const copyButtons = screen.getAllByText("Copy");
-    fireEvent.click(copyButtons[0]);
-    expect(mockWriteText).toHaveBeenCalled();
-    expect(mockToast.success).toHaveBeenCalledWith(
-      "Script tag copied to clipboard"
+    fireEvent.click(screen.getByRole("button", { name: "Copy script tag" }));
+    expect(mockWriteText).toHaveBeenCalledWith(
+      expect.stringContaining('data-public-key="pk_test_123"')
     );
+    expect(await screen.findByText("Copied to clipboard")).toBeInTheDocument();
   });
 
-  it("copies React code to clipboard", () => {
+  it("copies the React code", () => {
     render(<ChangelogWidgetTab {...defaultProps} />);
-    const copyButtons = screen.getAllByText("Copy");
-    fireEvent.click(copyButtons[1]);
-    expect(mockWriteText).toHaveBeenCalled();
-    expect(mockToast.success).toHaveBeenCalledWith(
-      "React code copied to clipboard"
+    fireEvent.click(screen.getByRole("button", { name: "Copy React code" }));
+    expect(mockWriteText).toHaveBeenCalledWith(
+      expect.stringContaining("<ChangelogWidget")
     );
   });
 
@@ -240,10 +243,10 @@ describe("ChangelogWidgetTab", () => {
 
   it("shows trigger element section when mode is trigger", () => {
     render(<ChangelogWidgetTab {...defaultProps} />);
-    expect(screen.queryByText("Trigger Element")).not.toBeInTheDocument();
+    expect(screen.queryByText("Trigger element")).not.toBeInTheDocument();
     const modeSelect = screen.getByLabelText("Mode");
     fireEvent.change(modeSelect, { target: { value: "trigger" } });
-    expect(screen.getByText("Trigger Element")).toBeInTheDocument();
+    expect(screen.getByText("Trigger element")).toBeInTheDocument();
   });
 
   it("disables position select when mode is trigger", () => {
@@ -274,12 +277,14 @@ describe("ChangelogWidgetTab", () => {
     expect(screen.getByText("Change in branding settings")).toBeInTheDocument();
   });
 
-  it("copies AI prompt to clipboard", () => {
+  it("copies AI prompt to clipboard", async () => {
     render(<ChangelogWidgetTab {...defaultProps} />);
-    fireEvent.click(screen.getByText("Copy Full AI Prompt"));
+    fireEvent.click(screen.getByText("Copy full AI prompt"));
     expect(mockWriteText).toHaveBeenCalledWith("MOCK_PROMPT_pk_test_123");
-    expect(mockToast.success).toHaveBeenCalledWith(
-      "AI prompt copied to clipboard"
+    await vi.waitFor(() =>
+      expect(mockToast.success).toHaveBeenCalledWith(
+        "AI prompt copied to clipboard"
+      )
     );
   });
 

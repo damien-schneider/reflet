@@ -1,92 +1,89 @@
 "use client";
 
-import { Button } from "@ctrl-ui/react/ui/button";
+import { Button, ButtonLink } from "@ctrl-ui/react/ui/button";
 import { Spinner } from "@ctrl-ui/react/ui/spinner";
-import { toast } from "@ctrl-ui/react/ui/toast";
-import { useRouter, useSearchParams } from "next/navigation";
+import { EnvelopeSimple } from "@phosphor-icons/react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
-import { H1, Muted } from "@/components/ui/typography";
+import {
+  AuthPageShell,
+  AuthStatus,
+} from "@/features/auth/components/auth-page-shell";
 import { authClient } from "@/lib/auth-client";
 
+type ResendState = "idle" | "sending" | "sent" | "failed";
+
+const RESEND_MESSAGES: Record<ResendState, string> = {
+  failed: "Unable to send the email. Check your connection and try again.",
+  idle: "",
+  sending: "",
+  sent: "Email sent. Check your inbox for the new link.",
+};
+
 function CheckEmailContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const email = searchParams.get("email");
-  const [isResending, setIsResending] = useState(false);
+  const email = useSearchParams().get("email");
+  const [resendState, setResendState] = useState<ResendState>("idle");
 
   const handleResendEmail = async () => {
     if (!email) {
-      toast.error("Email address not found.");
       return;
     }
-
-    setIsResending(true);
+    setResendState("sending");
     try {
       await authClient.sendVerificationEmail({
         callbackURL: "/auth/verify-email",
         email,
       });
-      toast.success("Verification email resent.");
+      setResendState("sent");
     } catch {
-      toast.error("Unable to send email. Please try again.");
-    } finally {
-      setIsResending(false);
+      setResendState("failed");
     }
   };
 
+  const isSending = resendState === "sending";
+
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="w-full max-w-md p-6 text-center">
-        <div className="mb-6 flex justify-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-secondary">
-            <svg
-              aria-label="Email icon"
-              className="h-8 w-8 text-brand-text"
-              fill="none"
-              role="img"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+    <AuthStatus
+      actions={
+        <>
+          {email && (
+            <Button
+              disabled={isSending}
+              onClick={handleResendEmail}
+              tone="primary"
+              variant="solid"
             >
-              <path
-                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-              />
-            </svg>
-          </div>
-        </div>
-        <H1 className="mb-2" variant="page">
-          Check your inbox
-        </H1>
-        <Muted className="mb-2">We have sent a verification email to:</Muted>
-        {email && <p className="mb-6 font-medium text-foreground">{email}</p>}
-        <Muted className="mb-6">
-          Click the link in the email to activate your account. If you can't
-          find the email, check your spam folder.
-        </Muted>
-        <div className="flex flex-col gap-3">
-          <Button
-            disabled={isResending || !email}
-            onClick={handleResendEmail}
-            tone="primary"
-            variant="solid"
+              {isSending && <Spinner data-icon="inline-start" size="xs" />}
+              {isSending ? "Sending…" : "Resend verification email"}
+            </Button>
+          )}
+          <p
+            aria-live="polite"
+            className="min-h-[1lh] text-muted-foreground text-sm"
           >
-            {isResending ? (
-              <>
-                <Spinner className="mr-2 h-4 w-4" />
-                Sending...
-              </>
-            ) : (
-              "Resend verification email"
-            )}
-          </Button>
-          <Button onClick={() => router.push("/")} variant="surface">
+            {RESEND_MESSAGES[resendState]}
+          </p>
+          <ButtonLink render={<Link href="/" />} variant="surface">
             Back to home
-          </Button>
-        </div>
-      </div>
-    </div>
+          </ButtonLink>
+        </>
+      }
+      icon={EnvelopeSimple}
+      title="Check your inbox"
+      tone="brand"
+    >
+      {email ? (
+        <>
+          We sent a verification link to{" "}
+          <span className="break-all font-medium text-foreground">{email}</span>
+          . Open it to activate your account. Can’t find it? Check your spam
+          folder.
+        </>
+      ) : (
+        "We sent you a verification link. Open it to activate your account. Can’t find it? Check your spam folder."
+      )}
+    </AuthStatus>
   );
 }
 
@@ -94,9 +91,9 @@ export default function CheckEmailPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center">
-          <Spinner className="h-8 w-8" />
-        </div>
+        <AuthPageShell className="flex justify-center">
+          <Spinner size="lg" />
+        </AuthPageShell>
       }
     >
       <CheckEmailContent />

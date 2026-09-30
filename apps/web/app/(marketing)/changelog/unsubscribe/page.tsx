@@ -1,144 +1,119 @@
 "use client";
 
-import { Button } from "@ctrl-ui/react/ui/button";
+import { ButtonLink } from "@ctrl-ui/react/ui/button";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@ctrl-ui/react/ui/empty";
 import { Spinner } from "@ctrl-ui/react/ui/spinner";
+import { CheckCircle, WarningCircle } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useMutation } from "convex/react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
-import { H1, Muted } from "@/components/ui/typography";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
+
+type UnsubscribeStatus = "loading" | "success" | "error";
+
+const MISSING_TOKEN_MESSAGE =
+  "This link is missing its token. Use the unsubscribe link from your latest changelog email.";
+
+function UnsubscribePending() {
+  return (
+    <main className="flex min-h-dvh items-center justify-center p-6">
+      <div className="flex flex-col items-center gap-3" role="status">
+        <Spinner size="lg" />
+        <p className="text-muted-foreground text-sm">Unsubscribing…</p>
+      </div>
+    </main>
+  );
+}
 
 function UnsubscribeContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const [status, setStatus] = useState<"loading" | "success" | "error">(
-    "loading"
-  );
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
   const token = searchParams.get("token");
-  const unsubscribeMutation = useMutation(
+  const [status, setStatus] = useState<UnsubscribeStatus>(
+    token ? "loading" : "error"
+  );
+  const [errorMessage, setErrorMessage] = useState<string>(
+    MISSING_TOKEN_MESSAGE
+  );
+  const unsubscribeByToken = useMutation(
     api.changelog.subscriptions.unsubscribeByToken
   );
+  const requestedTokenRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!token) {
-      setStatus("error");
-      setErrorMessage("Invalid unsubscribe link. Please check your email.");
+    if (!token || requestedTokenRef.current === token) {
       return;
     }
+    requestedTokenRef.current = token;
 
-    unsubscribeMutation({ token })
-      .then(() => {
-        setStatus("success");
-      })
-      .catch((error: Error) => {
+    unsubscribeByToken({ token })
+      .then(() => setStatus("success"))
+      .catch((error: unknown) => {
         setStatus("error");
         setErrorMessage(
-          error.message ?? "An error occurred while unsubscribing."
+          error instanceof Error && error.message
+            ? error.message
+            : "This link may have expired. Use the link from your latest changelog email."
         );
       });
-  }, [token, unsubscribeMutation]);
+  }, [token, unsubscribeByToken]);
 
   if (status === "loading") {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Spinner className="h-8 w-8" />
-          <Muted>Processing...</Muted>
-        </div>
-      </div>
-    );
+    return <UnsubscribePending />;
   }
 
-  if (status === "error") {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="w-full max-w-md p-6 text-center">
-          <div className="mb-6 flex justify-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive-subtle">
-              <svg
-                aria-label="Error icon"
-                className="h-8 w-8 text-destructive-text"
-                fill="none"
-                role="img"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  d="M6 18L18 6M6 6l12 12"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                />
-              </svg>
-            </div>
-          </div>
-          <H1 className="mb-2" variant="page">
-            Unsubscribe failed
-          </H1>
-          <Muted className="mb-6">
-            {errorMessage ?? "The unsubscribe link is invalid or has expired."}
-          </Muted>
-          <Button onClick={() => router.push("/")} variant="surface">
-            Back to home
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  const isSuccess = status === "success";
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="w-full max-w-md p-6 text-center">
-        <div className="mb-6 flex justify-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-success-subtle">
-            <svg
-              aria-label="Success icon"
-              className="h-8 w-8 text-success-text"
-              fill="none"
-              role="img"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                d="M5 13l4 4L19 7"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
+    <main className="flex min-h-dvh items-center justify-center p-6">
+      <Empty className="max-w-md">
+        <EmptyHeader>
+          <EmptyMedia>
+            {isSuccess ? (
+              <CheckCircle
+                aria-hidden="true"
+                className="size-10 text-success-text"
+                weight="duotone"
               />
-            </svg>
-          </div>
-        </div>
-        <H1 className="mb-2" variant="page">
-          Unsubscribed
-        </H1>
-        <Muted className="mb-6">
-          You have been successfully unsubscribed from changelog updates. You
-          will no longer receive email notifications.
-        </Muted>
-        <Button
-          className="w-full"
-          onClick={() => router.push("/")}
-          tone="primary"
-          variant="solid"
-        >
-          Back to home
-        </Button>
-      </div>
-    </div>
+            ) : (
+              <WarningCircle
+                aria-hidden="true"
+                className="size-10 text-destructive-text"
+                weight="duotone"
+              />
+            )}
+          </EmptyMedia>
+          <EmptyTitle>
+            <h1>
+              {isSuccess ? "You’re unsubscribed" : "Couldn’t unsubscribe"}
+            </h1>
+          </EmptyTitle>
+          <EmptyDescription className="text-pretty">
+            {isSuccess
+              ? "You won’t get changelog emails from this product anymore."
+              : errorMessage}
+          </EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <ButtonLink render={<Link href="/" />} variant="surface">
+            Go to homepage
+          </ButtonLink>
+        </EmptyContent>
+      </Empty>
+    </main>
   );
 }
 
 export default function UnsubscribePage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-screen items-center justify-center">
-          <Spinner className="h-8 w-8" />
-        </div>
-      }
-    >
+    <Suspense fallback={<UnsubscribePending />}>
       <UnsubscribeContent />
     </Suspense>
   );

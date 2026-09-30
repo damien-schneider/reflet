@@ -1,12 +1,13 @@
 "use client";
 
-import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
-import Link from "next/link";
 import { use } from "react";
-import { H1 } from "@/components/ui/typography";
 import { PublicOrgShell } from "@/features/public-org/components/public-org-shell";
+import {
+  PublicOrgNotFound,
+  PublicOrgShellSkeleton,
+} from "@/features/public-org/components/public-org-states";
 
 export default function PublicOrgLayoutClient({
   children,
@@ -19,24 +20,17 @@ export default function PublicOrgLayoutClient({
   const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
 
   if (org === undefined) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Spinner />
-      </div>
-    );
+    return <PublicOrgShellSkeleton />;
   }
 
   if (org === null) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center">
-        <H1 variant="page">Organization not found</H1>
-        <Link
-          className="mt-4 text-brand-text underline underline-offset-4 transition-colors hover:text-foreground"
-          href="/"
-        >
-          Go back home
-        </Link>
-      </div>
+      <PublicOrgNotFound
+        description="Check the link, or ask the team that shared it for the right address."
+        homeHref="/"
+        homeLabel="Go to homepage"
+        title="Organization not found"
+      />
     );
   }
 

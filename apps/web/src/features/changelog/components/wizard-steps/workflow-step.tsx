@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@ctrl-ui/react/ui/button";
+import { Badge } from "@ctrl-ui/react/ui/badge";
 import {
   Collapsible,
   CollapsibleContent,
@@ -19,6 +19,7 @@ import {
   CheckCircle,
   GitBranch,
   Lightning,
+  LockSimple,
   PencilSimple,
   Sparkle,
 } from "@phosphor-icons/react";
@@ -90,8 +91,11 @@ export function WorkflowStep({
   onBranchChange,
   organizationId,
 }: WorkflowStepProps) {
-  const [branches, setBranches] = useState<BranchInfo[]>([]);
-  const [isLoadingBranches, setIsLoadingBranches] = useState(false);
+  const [loadedBranches, setLoadedBranches] = useState<{
+    failed: boolean;
+    list: BranchInfo[];
+    organizationId: string;
+  } | null>(null);
 
   const githubConnection = useQuery(
     api.integrations.github.queries.getConnection,
@@ -108,42 +112,42 @@ export function WorkflowStep({
     githubConnection?.repositoryFullName && githubConnection?.installationId
   );
   const needsGitHub = value !== "manual";
+  const shouldLoadBranches = isConnected && needsGitHub;
+  const branches = loadedBranches?.list ?? [];
+  const branchesFailed = loadedBranches?.failed ?? false;
+  const isLoadingBranches =
+    shouldLoadBranches && loadedBranches?.organizationId !== organizationId;
 
   useEffect(() => {
-    if (!(isConnected && needsGitHub)) {
+    if (!shouldLoadBranches) {
       return;
     }
 
     let cancelled = false;
-    setIsLoadingBranches(true);
     listBranches({ organizationId }).then(
-      (result) => {
-        if (cancelled) {
-          return;
+      (list) => {
+        if (!cancelled) {
+          setLoadedBranches({ failed: false, list, organizationId });
         }
-        setBranches(result);
-        setIsLoadingBranches(false);
       },
       () => {
-        if (cancelled) {
-          return;
+        if (!cancelled) {
+          setLoadedBranches({ failed: true, list: [], organizationId });
         }
-        setBranches([]);
-        setIsLoadingBranches(false);
       }
     );
 
     return () => {
       cancelled = true;
     };
-  }, [isConnected, needsGitHub, listBranches, organizationId]);
+  }, [shouldLoadBranches, listBranches, organizationId]);
 
   return (
     <div className="space-y-3">
-      <p className="text-muted-foreground text-sm">
-        How do you want to manage your releases?
-      </p>
-      <div className="grid gap-2">
+      <fieldset className="grid min-w-0 gap-2">
+        <legend className="mb-3 text-pretty text-muted-foreground text-sm">
+          How do you want to manage your releases?
+        </legend>
         {WORKFLOW_OPTIONS.map((option) => (
           <WorkflowCard
             key={option.id}
@@ -152,11 +156,12 @@ export function WorkflowStep({
             selected={value === option.id}
           />
         ))}
-      </div>
+      </fieldset>
 
       {needsGitHub && isConnected && (
         <ConnectedBranchSelector
           branches={branches}
+          failed={branchesFailed}
           isLoading={isLoadingBranches}
           onBranchChange={onBranchChange}
           repoFullName={githubConnection?.repositoryFullName ?? ""}
@@ -181,24 +186,23 @@ function WorkflowCard({
   return (
     <div
       className={cn(
-        "rounded-lg border transition-colors",
+        "rounded-lg border transition-colors duration-(--duration-fast) has-focus-visible:ring-2 has-focus-visible:ring-ring",
         selected ? "border-primary bg-primary/5" : "border-border"
       )}
     >
-      <Button
-        active={selected}
-        aria-pressed={selected}
-        className={cn(
-          "h-auto w-full items-start justify-start gap-3 rounded-lg p-3 text-left",
-          !selected && "hover:border-primary/50"
-        )}
-        onClick={() => onChange(option.id)}
-        type="button"
-        variant="quiet"
-      >
+      <label className="flex cursor-pointer items-start gap-3 p-3">
+        <input
+          checked={selected}
+          className="sr-only"
+          name="release-workflow"
+          onChange={() => onChange(option.id)}
+          type="radio"
+          value={option.id}
+        />
         <option.icon
+          aria-hidden
           className={cn(
-            "mt-0.5 h-5 w-5 flex-shrink-0",
+            "mt-0.5 size-5 shrink-0",
             selected ? "text-primary" : "text-muted-foreground"
           )}
           weight={selected ? "fill" : "regular"}
@@ -207,23 +211,22 @@ function WorkflowCard({
           <span className="flex items-center gap-2">
             <span className="font-medium text-sm">{option.title}</span>
             {"badge" in option && option.badge && (
-              <span className="rounded-full bg-primary/10 px-2 py-0.5 font-medium text-caption text-primary">
-                {option.badge}
-              </span>
+              <Badge size="sm">{option.badge}</Badge>
             )}
           </span>
-          <span className="mt-0.5 block text-muted-foreground text-xs">
+          <span className="mt-0.5 block text-pretty text-muted-foreground text-xs">
             {option.description}
           </span>
         </span>
-      </Button>
+      </label>
 
       {selected && (
         <Collapsible onOpenChange={setHowItWorksOpen} open={howItWorksOpen}>
-          <CollapsibleTrigger className="flex w-full items-center gap-1 border-t px-3 py-2 text-muted-foreground text-xs transition-colors hover:text-foreground">
+          <CollapsibleTrigger className="flex w-full items-center gap-1 border-t px-3 py-2 text-muted-foreground text-xs hover:text-foreground">
             <CaretDown
+              aria-hidden
               className={cn(
-                "h-3 w-3 transition-transform",
+                "size-3 transition-transform duration-(--duration-base) ease-(--ease-standard)",
                 howItWorksOpen && "rotate-180"
               )}
             />
@@ -236,7 +239,7 @@ function WorkflowCard({
                   className="flex items-start gap-2 text-muted-foreground text-xs"
                   key={step}
                 >
-                  <span className="mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-muted font-medium text-micro tabular-nums">
+                  <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-muted font-medium text-micro tabular-nums">
                     {i + 1}
                   </span>
                   {step}
@@ -252,12 +255,14 @@ function WorkflowCard({
 
 function ConnectedBranchSelector({
   branches,
+  failed,
   isLoading,
   onBranchChange,
   repoFullName,
   targetBranch,
 }: {
   branches: BranchInfo[];
+  failed: boolean;
   isLoading: boolean;
   onBranchChange: (branch: string) => void;
   repoFullName: string;
@@ -266,20 +271,24 @@ function ConnectedBranchSelector({
   return (
     <div className="space-y-2 rounded-lg border border-border bg-success-subtle p-3">
       <div className="flex items-center gap-2">
-        <CheckCircle className="h-4 w-4 text-success-text" />
-        <p className="font-medium text-success-text text-xs">
+        <CheckCircle aria-hidden className="size-4 text-success-text" />
+        <p className="min-w-0 truncate font-medium text-success-text text-xs">
           Connected to {repoFullName}
         </p>
       </div>
 
       <div className="flex items-center gap-3">
-        <GitBranch className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+        <GitBranch
+          aria-hidden
+          className="size-4 shrink-0 text-muted-foreground"
+        />
         <div className="flex flex-1 items-center gap-2">
           <Label className="whitespace-nowrap text-xs" htmlFor="target-branch">
             Target branch
           </Label>
           <BranchInput
             branches={branches}
+            failed={failed}
             isLoading={isLoading}
             onBranchChange={onBranchChange}
             targetBranch={targetBranch}
@@ -292,18 +301,23 @@ function ConnectedBranchSelector({
 
 function BranchInput({
   branches,
+  failed,
   isLoading,
   onBranchChange,
   targetBranch,
 }: {
   branches: BranchInfo[];
+  failed: boolean;
   isLoading: boolean;
   onBranchChange: (branch: string) => void;
   targetBranch: string;
 }) {
   if (isLoading) {
     return (
-      <div className="flex h-7 flex-1 items-center gap-1.5 text-muted-foreground text-xs">
+      <div
+        aria-live="polite"
+        className="flex h-7 flex-1 items-center gap-1.5 text-muted-foreground text-xs"
+      >
         <Spinner size="xs" />
         Loading branches…
       </div>
@@ -320,14 +334,19 @@ function BranchInput({
         }}
         value={targetBranch}
       >
-        <SelectTrigger className="h-7 flex-1 text-xs" id="target-branch">
+        <SelectTrigger className="flex-1" id="target-branch" size="xs">
           <SelectValue placeholder="Select branch" />
         </SelectTrigger>
         <SelectContent>
           {branches.map((branch) => (
             <SelectItem key={branch.name} value={branch.name}>
               {branch.name}
-              {branch.isProtected ? " 🔒" : ""}
+              {branch.isProtected && (
+                <LockSimple
+                  aria-label="Protected"
+                  className="size-3.5 text-muted-foreground"
+                />
+              )}
             </SelectItem>
           ))}
         </SelectContent>
@@ -337,7 +356,8 @@ function BranchInput({
 
   return (
     <p className="text-muted-foreground text-xs">
-      Using: <span className="font-mono">{targetBranch}</span>
+      {failed ? "Couldn’t load branches. Using " : "Using "}
+      <span className="font-mono">{targetBranch}</span>
     </p>
   );
 }

@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-const AUTH_INITIAL_HEADING = "Authentication";
+const AUTH_INITIAL_HEADING = "Sign in or create an account";
 
 // URL pattern for dashboard
 const DASHBOARD_URL_PATTERN = /\/dashboard/;

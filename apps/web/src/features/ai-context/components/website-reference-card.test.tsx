@@ -48,16 +48,21 @@ vi.mock("@ctrl-ui/react/ui/button", () => ({
     children,
     disabled,
     onClick,
-    title,
+    "aria-label": ariaLabel,
   }: {
     children: React.ReactNode;
     disabled?: boolean;
     onClick?: () => void;
-    title?: string;
+    "aria-label"?: string;
     size?: string;
     variant?: string;
   }) => (
-    <button disabled={disabled} onClick={onClick} title={title} type="button">
+    <button
+      aria-label={ariaLabel}
+      disabled={disabled}
+      onClick={onClick}
+      type="button"
+    >
       {children}
     </button>
   ),
@@ -149,9 +154,9 @@ describe("WebsiteReferenceCard", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders Success badge for success status", () => {
+  it("renders Fetched badge for success status", () => {
     render(<WebsiteReferenceCard isAdmin={false} reference={baseReference} />);
-    expect(screen.getByText("Success")).toBeInTheDocument();
+    expect(screen.getByText("Fetched")).toBeInTheDocument();
   });
 
   it("renders Fetching badge for pending status", () => {
@@ -161,7 +166,7 @@ describe("WebsiteReferenceCard", () => {
         reference={{ ...baseReference, status: "pending" }}
       />
     );
-    expect(screen.getByText("Fetching...")).toBeInTheDocument();
+    expect(screen.getByText("Fetching…")).toBeInTheDocument();
   });
 
   it("renders Fetching badge for fetching status", () => {
@@ -171,10 +176,10 @@ describe("WebsiteReferenceCard", () => {
         reference={{ ...baseReference, status: "fetching" }}
       />
     );
-    expect(screen.getByText("Fetching...")).toBeInTheDocument();
+    expect(screen.getByText("Fetching…")).toBeInTheDocument();
   });
 
-  it("renders Error badge for error status", () => {
+  it("renders Failed badge and the error message for error status", () => {
     render(
       <WebsiteReferenceCard
         isAdmin={false}
@@ -185,31 +190,37 @@ describe("WebsiteReferenceCard", () => {
         }}
       />
     );
-    expect(screen.getByText("Error")).toBeInTheDocument();
+    expect(screen.getByText("Failed")).toBeInTheDocument();
+    expect(screen.getByText("Failed to fetch")).toBeInTheDocument();
   });
 
   it("renders last fetched date for success status", () => {
     render(<WebsiteReferenceCard isAdmin={false} reference={baseReference} />);
-    expect(screen.getByText(/Last fetched:/)).toBeInTheDocument();
+    expect(screen.getByText(/Last fetched/)).toBeInTheDocument();
   });
 
   it("does not show admin actions for non-admins", () => {
     render(<WebsiteReferenceCard isAdmin={false} reference={baseReference} />);
-    expect(screen.queryByTitle("Refresh")).not.toBeInTheDocument();
-    expect(screen.queryByTitle("Delete")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 
   it("shows admin refresh and delete buttons for admins", () => {
     render(<WebsiteReferenceCard isAdmin={true} reference={baseReference} />);
-    expect(screen.getByTitle("Refresh")).toBeInTheDocument();
-    expect(screen.getByTitle("Delete")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Refresh Getting Started Guide" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Remove Getting Started Guide" })
+    ).toBeInTheDocument();
   });
 
   it("calls refresh mutation when refresh is clicked", async () => {
     const user = userEvent.setup();
     render(<WebsiteReferenceCard isAdmin={true} reference={baseReference} />);
 
-    await user.click(screen.getByTitle("Refresh"));
+    await user.click(
+      screen.getByRole("button", { name: "Refresh Getting Started Guide" })
+    );
     expect(mockRefresh).toHaveBeenCalledWith({ id: "ref1" });
   });
 
@@ -217,7 +228,9 @@ describe("WebsiteReferenceCard", () => {
     const user = userEvent.setup();
     render(<WebsiteReferenceCard isAdmin={true} reference={baseReference} />);
 
-    await user.click(screen.getByTitle("Delete"));
+    await user.click(
+      screen.getByRole("button", { name: "Remove Getting Started Guide" })
+    );
     expect(mockRemove).toHaveBeenCalledWith({ id: "ref1" });
   });
 
@@ -228,7 +241,9 @@ describe("WebsiteReferenceCard", () => {
         reference={{ ...baseReference, status: "pending" }}
       />
     );
-    expect(screen.getByTitle("Refresh")).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Refresh Getting Started Guide" })
+    ).toBeDisabled();
   });
 
   it("has noopener noreferrer on external link", () => {

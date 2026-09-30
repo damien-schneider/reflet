@@ -19,9 +19,9 @@ export type SortOption = "newest" | "oldest" | "most_votes" | "most_comments";
 // Status options for selects/dropdowns
 export const STATUS_OPTIONS: { value: FeedbackStatus; label: string }[] = [
   { label: "Open", value: "open" },
-  { label: "Under Review", value: "under_review" },
+  { label: "Under review", value: "under_review" },
   { label: "Planned", value: "planned" },
-  { label: "In Progress", value: "in_progress" },
+  { label: "In progress", value: "in_progress" },
   { label: "Completed", value: "completed" },
   { label: "Closed", value: "closed" },
 ];
@@ -38,10 +38,10 @@ export const STATUS_CONFIG: Record<
 > = {
   closed: { color: "neutral", label: "Closed" },
   completed: { color: "green", label: "Completed" },
-  in_progress: { color: "blue", label: "In Progress" },
+  in_progress: { color: "blue", label: "In progress" },
   open: { color: "blue", label: "Open", variant: "outline" },
   planned: { color: "purple", label: "Planned" },
-  under_review: { color: "yellow", label: "Under Review" },
+  under_review: { color: "yellow", label: "Under review" },
 };
 
 // Lane array for iteration (excluding completed for kanban)

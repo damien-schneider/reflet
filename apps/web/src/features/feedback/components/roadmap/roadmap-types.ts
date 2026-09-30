@@ -15,14 +15,9 @@ export interface RoadmapViewProps {
 
 export interface DraggableFeedbackCardProps {
   isAdmin: boolean;
-  isDragging?: boolean;
-  isOverlay?: boolean;
   item: FeedbackItem;
   onFeedbackClick: (feedbackId: string) => void;
 }
-
-export type DragHandleListeners =
-  import("@dnd-kit/core").DraggableSyntheticListeners;
 
 export interface DroppableColumnProps {
   isAdmin: boolean;

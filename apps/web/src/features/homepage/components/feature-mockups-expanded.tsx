@@ -1,10 +1,3 @@
-"use client";
-
-/*
- * Shared feature mini-UI mockups.
- * Used on both /features and the landing page bento grid.
- */
-
 import {
   ChatCircleDots,
   Code,
@@ -13,11 +6,12 @@ import {
   Lightning,
   Sparkle,
   Tag,
-} from "@phosphor-icons/react";
+} from "@phosphor-icons/react/dist/ssr";
 
 import { TagBadge } from "@/components/tag-badge";
 
-// ─── Expanded AI Mockup (for features page) ─────────────────────────────────
+const MOCKUP_PANEL =
+  "overflow-hidden rounded-[28px] border border-(--marketing-edge) bg-card shadow-(--marketing-float-shadow)";
 
 export function ExpandedAiMockup() {
   const aiAutoTags = [
@@ -26,7 +20,7 @@ export function ExpandedAiMockup() {
   ];
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
+    <div className={MOCKUP_PANEL}>
       <div className="flex items-center justify-between border-border border-b px-5 py-3">
         <div className="flex items-center gap-2">
           <Sparkle className="text-chart-4-text" size={15} weight="fill" />
@@ -89,12 +83,9 @@ export function ExpandedAiMockup() {
                 Vim keybindings support
               </span>
             </div>
-            <button
-              className="rounded-md bg-brand px-2 py-1 font-medium text-brand-foreground text-caption transition-colors hover:bg-brand/90"
-              type="button"
-            >
+            <span className="rounded-md bg-(--marketing-action-background) px-2 py-1 font-medium text-(--marketing-action-foreground) text-caption">
               Merge
-            </button>
+            </span>
           </div>
         </div>
       </div>
@@ -102,25 +93,27 @@ export function ExpandedAiMockup() {
   );
 }
 
-// ─── Expanded Widget Mockup (with code snippet) ─────────────────────────────
-
 const CODE_LINES = [
-  { hl: true, text: "import { RefletProvider, FeedbackButton }" },
-  { hl: true, text: "  from 'reflet-sdk/react'" },
-  { hl: false, text: "" },
-  { hl: false, text: "export function App() {" },
-  { hl: false, text: "  return (" },
-  { hl: true, text: '    <RefletProvider publicKey="pk_live_…a3f">' },
-  { hl: true, text: "      <FeedbackButton />" },
-  { hl: true, text: "    </RefletProvider>" },
-  { hl: false, text: "  )" },
-  { hl: false, text: "}" },
+  { hl: true, number: 1, text: "import {" },
+  { hl: true, number: 2, text: "  RefletProvider," },
+  { hl: true, number: 3, text: "  FeedbackButton," },
+  { hl: true, number: 4, text: "} from 'reflet-sdk/react'" },
+  { hl: false, number: 5, text: "" },
+  { hl: false, number: 6, text: "export function App() {" },
+  { hl: false, number: 7, text: "  return (" },
+  { hl: true, number: 8, text: "    <RefletProvider" },
+  { hl: true, number: 9, text: '      publicKey="fb_pub_…"' },
+  { hl: true, number: 10, text: "    >" },
+  { hl: true, number: 11, text: "      <FeedbackButton />" },
+  { hl: true, number: 12, text: "    </RefletProvider>" },
+  { hl: false, number: 13, text: "  )" },
+  { hl: false, number: 14, text: "}" },
 ] as const;
 
 export function ExpandedWidgetMockup() {
   return (
     <div className="space-y-4">
-      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
+      <div className={MOCKUP_PANEL}>
         <div className="flex items-center gap-3 border-border border-b bg-muted px-4 py-2.5">
           <div className="flex gap-1.5">
             <div className="size-2.5 rounded-full bg-destructive/60" />
@@ -133,16 +126,20 @@ export function ExpandedWidgetMockup() {
         </div>
         <div className="p-4">
           <pre className="font-mono text-label leading-6">
-            {CODE_LINES.map((line, i) => (
+            {CODE_LINES.map((line) => (
               <div
-                className={line.hl ? "rounded bg-brand-subtle" : ""}
-                key={`code-${i.toString()}`}
+                className={
+                  line.hl ? "rounded bg-(--marketing-signal-soft)" : ""
+                }
+                key={line.number}
               >
-                <span className="mr-4 inline-block w-4 select-none text-right text-caption text-muted-foreground/40">
-                  {i + 1}
+                <span className="me-4 inline-block w-4 select-none text-end text-caption text-muted-foreground/60 tabular-nums">
+                  {line.number}
                 </span>
                 <span
-                  className={line.hl ? "text-brand-text" : "text-foreground/80"}
+                  className={
+                    line.hl ? "text-(--marketing-signal)" : "text-foreground/80"
+                  }
                 >
                   {line.text}
                 </span>
@@ -153,13 +150,13 @@ export function ExpandedWidgetMockup() {
       </div>
       <div className="flex items-center justify-end gap-3 pr-2">
         <span className="text-label text-muted-foreground">Result →</span>
-        <div className="flex h-10 items-center gap-2 rounded-full bg-brand px-4 shadow-lg">
+        <div className="flex h-10 items-center gap-2 rounded-full bg-(--marketing-action-background) px-4 shadow-(--marketing-action-shadow)">
           <ChatCircleDots
-            className="text-brand-foreground"
+            className="text-(--marketing-action-foreground)"
             size={16}
             weight="fill"
           />
-          <span className="font-medium text-brand-foreground text-label">
+          <span className="font-medium text-(--marketing-action-foreground) text-label">
             Feedback
           </span>
         </div>
@@ -168,12 +165,10 @@ export function ExpandedWidgetMockup() {
   );
 }
 
-// ─── Expanded GitHub Sync Mockup ─────────────────────────────────────────────
-
 export function ExpandedGithubMockup() {
   return (
     <div className="space-y-3">
-      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
+      <div className={MOCKUP_PANEL}>
         <div className="flex items-center gap-2 border-border border-b px-4 py-3">
           <GithubLogo className="text-foreground" size={15} weight="fill" />
           <span className="font-semibold text-foreground text-label">
@@ -226,15 +221,13 @@ export function ExpandedGithubMockup() {
   );
 }
 
-// ─── Expanded Realtime Mockup ────────────────────────────────────────────────
-
 export function ExpandedRealtimeMockup() {
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
+    <div className={MOCKUP_PANEL}>
       <div className="flex items-center justify-between border-border border-b px-4 py-3">
         <div className="flex items-center gap-2">
           <div className="relative size-2">
-            <div className="absolute inset-0 animate-ping rounded-full bg-success/60" />
+            <div className="absolute inset-0 rounded-full bg-success/60 motion-safe:animate-ping" />
             <div className="relative size-2 rounded-full bg-success" />
           </div>
           <span className="font-semibold text-label text-success-text">
@@ -286,109 +279,56 @@ export function ExpandedRealtimeMockup() {
   );
 }
 
-// ─── Expanded API Mockup ─────────────────────────────────────────────────────
+const API_ENDPOINTS = [
+  {
+    method: "GET",
+    note: "List all",
+    path: "/api/v1/feedback",
+    tone: "text-chart-1-text",
+  },
+  {
+    method: "POST",
+    note: "Create",
+    path: "/api/v1/feedback",
+    tone: "text-chart-2-text",
+  },
+  {
+    method: "PATCH",
+    note: "Update",
+    path: "/api/v1/feedback/:id",
+    tone: "text-chart-3-text",
+  },
+] as const;
+
+const WEBHOOK_EVENTS = [
+  "feedback.created",
+  "status.changed",
+  "vote.added",
+] as const;
 
 export function ExpandedApiMockup() {
   return (
-    <div className="overflow-hidden rounded-2xl border border-border shadow-xl">
-      <div className="bg-band p-5">
-        <pre className="font-mono text-caption leading-6">
-          <div className="mb-3 text-band-muted-foreground/70">
-            # Feedback endpoints
+    <div className={MOCKUP_PANEL}>
+      <div className="grid grid-cols-[auto_1fr_auto] gap-x-4 p-6 font-mono text-label leading-8">
+        <span className="col-span-3 text-muted-foreground">
+          # Feedback endpoints
+        </span>
+        {API_ENDPOINTS.map((endpoint) => (
+          <div className="contents" key={endpoint.method}>
+            <span className={endpoint.tone}>{endpoint.method}</span>
+            <span className="truncate text-foreground">{endpoint.path}</span>
+            <span className="text-muted-foreground"># {endpoint.note}</span>
           </div>
-          <div>
-            <span className="text-chart-1-text">GET </span>
-            <span className="text-band-muted-foreground">/api/v1/feedback</span>
-            <span className="ml-4 text-band-muted-foreground"># List all</span>
+        ))}
+        <span className="col-span-3 mt-3 border-(--marketing-hairline) border-t pt-3 text-muted-foreground">
+          # Webhooks
+        </span>
+        {WEBHOOK_EVENTS.map((event) => (
+          <div className="contents" key={event}>
+            <span className="text-chart-4-text">HOOK</span>
+            <span className="col-span-2 text-foreground">{event}</span>
           </div>
-          <div>
-            <span className="text-chart-2-text">POST </span>
-            <span className="text-band-muted-foreground">/api/v1/feedback</span>
-            <span className="ml-4 text-band-muted-foreground"># Create</span>
-          </div>
-          <div>
-            <span className="text-chart-3-text">PATCH</span>
-            <span className="text-band-muted-foreground">
-              {" "}
-              /api/v1/feedback/:id
-            </span>
-            <span className="ml-2 text-band-muted-foreground"># Update</span>
-          </div>
-          <div className="mt-3 border-border border-t pt-3 text-band-muted-foreground/70">
-            # Webhooks
-          </div>
-          <div>
-            <span className="text-chart-4-text">HOOK </span>
-            <span className="text-band-muted-foreground">feedback.created</span>
-          </div>
-          <div>
-            <span className="text-chart-4-text">HOOK </span>
-            <span className="text-band-muted-foreground">status.changed</span>
-          </div>
-          <div>
-            <span className="text-chart-4-text">HOOK </span>
-            <span className="text-band-muted-foreground">vote.added</span>
-          </div>
-        </pre>
-      </div>
-    </div>
-  );
-}
-
-// ─── Expanded Integrations Mockup ────────────────────────────────────────────
-
-export function ExpandedIntegrationsMockup() {
-  return (
-    <div className="space-y-3">
-      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
-        <div className="divide-y divide-border">
-          <div className="flex items-center gap-3 px-4 py-3">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-chart-4">
-              <span className="font-bold text-background text-caption">S</span>
-            </div>
-            <div className="flex-1">
-              <span className="block font-medium text-foreground text-label">
-                Slack
-              </span>
-              <span className="text-caption text-muted-foreground">
-                #feedback — New request: &quot;Add dark mode&quot;
-              </span>
-            </div>
-            <TagBadge color="green">Connected</TagBadge>
-          </div>
-          <div className="flex items-center gap-3 px-4 py-3">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-chart-2">
-              <span className="font-bold text-background text-caption">D</span>
-            </div>
-            <div className="flex-1">
-              <span className="block font-medium text-foreground text-label">
-                Discord
-              </span>
-              <span className="text-caption text-muted-foreground">
-                #updates — New vote on &quot;Dark mode support&quot;
-              </span>
-            </div>
-            <TagBadge color="green">Connected</TagBadge>
-          </div>
-          <div className="flex items-center gap-3 px-4 py-3">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-brand">
-              <Lightning
-                className="text-brand-foreground"
-                size={13}
-                weight="fill"
-              />
-            </div>
-            <div className="flex-1">
-              <span className="block font-medium text-foreground text-label">
-                Webhooks
-              </span>
-              <span className="text-caption text-muted-foreground">
-                POST https://api.your-app.com/hooks
-              </span>
-            </div>
-            <TagBadge color="green">Active</TagBadge>
-          </div>
-        </div>
+        ))}
       </div>
     </div>
   );

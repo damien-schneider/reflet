@@ -4,15 +4,20 @@ import Link from "next/link";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { RefletMark } from "@/features/homepage/components/experience/branding/reflet-mark";
 
+export const MARKETING_MAIN_ID = "main-content";
+
 export function MarketingNavigation() {
   return (
     <header className="marketing-navigation">
+      <a className="marketing-skip-link" href={`#${MARKETING_MAIN_ID}`}>
+        Skip to content
+      </a>
       <Link aria-label="Reflet home" className="marketing-wordmark" href="/">
         <RefletMark />
         reflet
       </Link>
       <nav aria-label="Main navigation">
-        <Link href="/#story">The story</Link>
+        <Link href="/#story">How it works</Link>
         <Link href="/pricing">Pricing</Link>
         <Link className="marketing-docs-link" href="/docs">
           Docs

@@ -136,16 +136,14 @@ describe("ReleaseSetupWizard", () => {
     expect(screen.queryByTestId("sheet")).not.toBeInTheDocument();
   });
 
-  it("shows Release Setup title", () => {
+  it("shows Release setup title", () => {
     render(<ReleaseSetupWizard {...baseProps} />);
-    expect(screen.getByText("Release Setup")).toBeInTheDocument();
+    expect(screen.getByText("Release setup")).toBeInTheDocument();
   });
 
   it("shows step 1 of 3 description", () => {
     render(<ReleaseSetupWizard {...baseProps} />);
-    expect(
-      screen.getByText(/Step 1 of 3 — Configure your release workflow/)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Step 1 of 3/)).toBeInTheDocument();
   });
 
   it("renders WorkflowStep on step 1", () => {
@@ -169,12 +167,12 @@ describe("ReleaseSetupWizard", () => {
     expect(screen.getByTestId("configure-step")).toBeInTheDocument();
   });
 
-  it("navigates to step 3 and shows Complete Setup", () => {
+  it("navigates to step 3 and shows Complete setup", () => {
     render(<ReleaseSetupWizard {...baseProps} />);
     fireEvent.click(screen.getByText("Next"));
     fireEvent.click(screen.getByText("Next"));
     expect(screen.getByTestId("setup-method-step")).toBeInTheDocument();
-    expect(screen.getByText("Complete Setup")).toBeInTheDocument();
+    expect(screen.getByText("Complete setup")).toBeInTheDocument();
   });
 
   it("navigates back from step 2 to step 1", () => {
@@ -185,10 +183,12 @@ describe("ReleaseSetupWizard", () => {
     expect(screen.getByTestId("workflow-step")).toBeInTheDocument();
   });
 
-  it("renders progress bar segments", () => {
+  it("marks the current step in the progress list", () => {
     const { container } = render(<ReleaseSetupWizard {...baseProps} />);
-    const progressSegments = container.querySelectorAll(".rounded-full");
-    expect(progressSegments.length).toBe(3);
+    fireEvent.click(screen.getByText("Next"));
+    const items = container.querySelectorAll("ol li");
+    expect(items[1]).toHaveAttribute("aria-current", "step");
+    expect(items[0]).not.toHaveAttribute("aria-current");
   });
 
   it("renders github logo icon", () => {
@@ -220,13 +220,13 @@ describe("ReleaseSetupWizard", () => {
     expect(screen.getByText(/Step 3 of 3/)).toBeInTheDocument();
   });
 
-  it("calls handleComplete on Complete Setup click", () => {
+  it("calls handleComplete on Complete setup click", () => {
     const mockMutation = vi.fn().mockResolvedValue(undefined);
     mockUseMutation.mockReturnValue(mockMutation);
     render(<ReleaseSetupWizard {...baseProps} />);
     fireEvent.click(screen.getByText("Next"));
     fireEvent.click(screen.getByText("Next"));
-    fireEvent.click(screen.getByText("Complete Setup"));
+    fireEvent.click(screen.getByText("Complete setup"));
     expect(mockMutation).toHaveBeenCalled();
   });
 

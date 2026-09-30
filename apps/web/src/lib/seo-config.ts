@@ -4,7 +4,8 @@ export const BASE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.reflet.app";
 export const SITE_NAME = "Reflet";
 const DEFAULT_TITLE =
-  "Reflet - The Feedback Platform for Developer-Led SaaS Teams";
+  "Reflet – The feedback platform for developer-led SaaS teams";
+const TITLE_TEMPLATE = `%s | ${SITE_NAME}`;
 export const DEFAULT_DESCRIPTION =
   "Ship what users actually want. Reflet helps developer-led SaaS teams collect feedback, prioritize with voting, auto-triage with AI, and close the loop with changelogs — from first request to shipped feature.";
 
@@ -80,12 +81,12 @@ export const defaultMetadata: Metadata = {
   },
   generator: "Next.js",
   keywords: DEFAULT_KEYWORDS,
-  metadataBase: new URL(BASE_URL),
+  metadataBase: URL.parse(BASE_URL) ?? URL.parse("https://www.reflet.app"),
   openGraph: {
     description: DEFAULT_DESCRIPTION,
     images: [
       {
-        alt: "Reflet - Product Feedback & Roadmap Platform",
+        alt: "Reflet – Product feedback and roadmap platform",
         height: 630,
         type: "image/png",
         url: DEFAULT_OG_IMAGE,
@@ -114,7 +115,7 @@ export const defaultMetadata: Metadata = {
   },
   title: {
     default: DEFAULT_TITLE,
-    template: `%s | ${SITE_NAME}`,
+    template: TITLE_TEMPLATE,
   },
   twitter: {
     card: "summary_large_image",
@@ -183,7 +184,9 @@ export function generatePageMetadata(options: {
   // or when it already contains the brand name.
   const needsAbsoluteTitle =
     title.length > 51 || title.toLowerCase().includes("reflet");
-  const titleValue = needsAbsoluteTitle ? { absolute: title } : title;
+  const titleValue = needsAbsoluteTitle
+    ? { absolute: title }
+    : { default: title, template: TITLE_TEMPLATE };
 
   return {
     alternates: {
@@ -219,45 +222,4 @@ export function generatePageMetadata(options: {
       title,
     },
   };
-}
-
-/**
- * Generate metadata for organization public pages
- */
-export function generateOrgMetadata(options: {
-  orgName: string;
-  orgSlug: string;
-  page: "feedback" | "roadmap" | "changelog" | "feedback-item";
-  description?: string;
-  feedbackId?: string;
-}): Metadata {
-  const { orgName, orgSlug, page, description, feedbackId } = options;
-
-  const titles = {
-    changelog: `${orgName} - Changelog & Updates`,
-    feedback: `${orgName} - Feature Requests & Feedback`,
-    "feedback-item": `Feedback | ${orgName}`,
-    roadmap: `${orgName} - Product Roadmap`,
-  } as const;
-
-  const descriptions = {
-    changelog: `Stay up to date with the latest updates and improvements from ${orgName}.`,
-    feedback: `Submit feature requests and feedback for ${orgName}. Vote on ideas and help shape the product.`,
-    "feedback-item": `View feature requests and feedback for ${orgName}.`,
-    roadmap: `See what ${orgName} is working on and what's coming next. Transparent product roadmap.`,
-  } as const;
-
-  const paths = {
-    changelog: `/${orgSlug}/changelog`,
-    feedback: `/${orgSlug}`,
-    "feedback-item": `/${orgSlug}/feedback/${feedbackId ?? ""}`,
-    roadmap: `/${orgSlug}/roadmap`,
-  } as const;
-
-  return generatePageMetadata({
-    description: description ?? descriptions[page],
-    keywords: [orgName, page, "product updates"],
-    path: paths[page],
-    title: titles[page],
-  });
 }

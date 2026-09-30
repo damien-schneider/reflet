@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Empty,
   EmptyDescription,
@@ -11,9 +10,13 @@ import {
 import {
   Popover,
   PopoverContent,
+  PopoverDescription,
+  PopoverHeader,
+  PopoverTitle,
   PopoverTrigger,
 } from "@ctrl-ui/react/ui/popover";
 import { ScrollArea } from "@ctrl-ui/react/ui/scroll-area";
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import {
   Bell,
   Binoculars,
@@ -26,7 +29,7 @@ import {
 } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
-import { formatDistanceToNow } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -68,6 +71,8 @@ const notificationColors: Record<NotificationType, string> = {
   vote_milestone: "text-warning-text",
 };
 
+const SKELETON_ROWS = ["first", "second", "third"] as const;
+
 interface NotificationItemProps {
   notification: {
     _id: string;
@@ -82,137 +87,149 @@ interface NotificationItemProps {
 
 function NotificationItem({ notification }: NotificationItemProps) {
   const Icon = notificationIcons[notification.type];
-  const iconColor = notificationColors[notification.type];
+  const isInvitation =
+    notification.type === "invitation" && notification.invitationToken;
 
   const content = (
-    <div
-      className={cn(
-        "flex gap-3 rounded-md p-3 transition-colors hover:bg-accent",
-        !notification.isRead && "bg-accent/50"
-      )}
-    >
-      <div
+    <>
+      <span
+        aria-hidden="true"
         className={cn(
-          "flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted",
-          iconColor
+          "flex size-8 shrink-0 items-center justify-center rounded-full bg-muted",
+          notificationColors[notification.type]
         )}
       >
-        <Icon className="h-4 w-4" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="font-medium text-sm leading-tight">
+        <Icon className="size-4" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-pretty font-medium text-sm leading-tight">
+          {notification.isRead ? null : (
+            <span className="sr-only">Unread: </span>
+          )}
           {notification.title}
-        </p>
-        <p className="mt-0.5 line-clamp-2 text-muted-foreground text-xs">
+        </span>
+        <span className="mt-0.5 line-clamp-2 text-pretty text-muted-foreground text-xs">
           {notification.message}
-        </p>
-        <p className="mt-1 text-caption text-muted-foreground">
+        </span>
+        <time
+          className="mt-1 block text-caption text-muted-foreground"
+          dateTime={new Date(notification.createdAt).toISOString()}
+          title={format(notification.createdAt, "PPp")}
+        >
           {formatDistanceToNow(notification.createdAt, { addSuffix: true })}
-        </p>
-      </div>
-      {!notification.isRead && (
-        <div className="h-2 w-2 shrink-0 rounded-full bg-brand" />
+        </time>
+      </span>
+      {notification.isRead ? null : (
+        <span
+          aria-hidden="true"
+          className="mt-1.5 size-2 shrink-0 rounded-full bg-brand"
+        />
       )}
-    </div>
+    </>
   );
 
-  if (notification.type === "invitation" && notification.invitationToken) {
+  const rowClassName = cn(
+    "flex gap-3 rounded-(--radius-popup-item) p-3",
+    !notification.isRead && "bg-accent/50"
+  );
+
+  if (isInvitation) {
     return (
-      <Link href={`/invite/${notification.invitationToken}`}>{content}</Link>
+      <li>
+        <Link
+          className={cn(rowClassName, "hover:bg-accent")}
+          href={`/invite/${notification.invitationToken}`}
+        >
+          {content}
+        </Link>
+      </li>
     );
   }
 
-  return content;
+  return <li className={rowClassName}>{content}</li>;
+}
+
+function NotificationsSkeleton() {
+  return (
+    <div aria-hidden="true" className="space-y-1 p-2">
+      {SKELETON_ROWS.map((row) => (
+        <div className="flex gap-3 p-3" key={row}>
+          <Skeleton className="size-8 shrink-0 rounded-full" />
+          <div className="flex-1 space-y-1.5">
+            <Skeleton className="h-3.5 w-3/4" />
+            <Skeleton className="h-3 w-full" />
+            <Skeleton className="h-2.5 w-16" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function NotificationsEmpty() {
+  return (
+    <Empty className="h-full">
+      <EmptyHeader>
+        <EmptyMedia>
+          <Bell />
+        </EmptyMedia>
+        <EmptyTitle>No notifications yet</EmptyTitle>
+        <EmptyDescription>
+          New feedback, comments, and status changes will show up here.
+        </EmptyDescription>
+      </EmptyHeader>
+    </Empty>
+  );
+}
+
+function UnreadSummary({ unreadCount }: { unreadCount: number | undefined }) {
+  if (unreadCount === undefined) {
+    return <Skeleton aria-hidden="true" className="mt-1 h-3 w-20" />;
+  }
+  return (
+    <PopoverDescription className="text-muted-foreground text-xs">
+      {unreadCount === 0 ? (
+        "You’re all caught up"
+      ) : (
+        <>
+          <span className="tabular-nums">{unreadCount}</span> unread
+        </>
+      )}
+    </PopoverDescription>
+  );
 }
 
 export function NotificationsPopover({
-  className,
   render,
 }: {
-  className?: string;
-  render?: React.ComponentProps<typeof PopoverTrigger>["render"];
+  render: React.ComponentProps<typeof PopoverTrigger>["render"];
 }) {
   const notifications = useQuery(api.notifications.queries.list, { limit: 10 });
   const unreadCount = useQuery(api.notifications.queries.getUnreadCount);
-  const hasUnread = unreadCount !== undefined && unreadCount > 0;
 
   return (
     <Popover>
-      {render ? (
-        <PopoverTrigger render={render} />
-      ) : (
-        <PopoverTrigger
-          render={
-            <Button
-              aria-label={
-                hasUnread
-                  ? `Notifications, ${unreadCount} unread`
-                  : "Notifications"
-              }
-              className={cn("relative size-8", className)}
-              iconOnly
-              size="sm"
-              variant="ghost"
-            >
-              <Bell className="h-4 w-4" />
-              {hasUnread ? (
-                <span
-                  aria-hidden="true"
-                  className="-top-0.5 -right-0.5 absolute flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-micro font-medium text-brand-foreground tabular-nums"
-                >
-                  {unreadCount > 9 ? "9+" : unreadCount}
-                </span>
-              ) : null}
-            </Button>
-          }
-        />
-      )}
-      <PopoverContent align="end" className="w-80 p-0" side="right">
-        <div className="border-b px-4 py-3">
-          <h3 className="font-semibold text-sm">Notifications</h3>
-          {hasUnread ? (
-            <p className="text-muted-foreground text-xs">
-              <span className="tabular-nums">{unreadCount}</span> notification
-              {unreadCount !== 1 && "s"} non lue{unreadCount !== 1 && "s"}
-            </p>
-          ) : (
-            <p className="text-muted-foreground text-xs">Vous êtes à jour</p>
-          )}
-        </div>
+      <PopoverTrigger render={render} />
+      <PopoverContent align="end" className="w-80" padding="none" side="right">
+        <PopoverHeader className="border-b px-4 py-3">
+          <PopoverTitle className="font-semibold text-sm">
+            Notifications
+          </PopoverTitle>
+          <UnreadSummary unreadCount={unreadCount} />
+        </PopoverHeader>
         <ScrollArea className="h-75">
+          {notifications === undefined ? <NotificationsSkeleton /> : null}
+          {notifications?.length === 0 ? <NotificationsEmpty /> : null}
           {notifications && notifications.length > 0 ? (
-            <div className="space-y-1 p-2">
+            <ul className="space-y-1 p-2">
               {notifications.map((notification) => (
                 <NotificationItem
                   key={notification._id}
-                  notification={{
-                    _id: notification._id,
-                    createdAt: notification.createdAt,
-                    invitationToken: notification.invitationToken,
-                    isRead: notification.isRead,
-                    message: notification.message,
-                    title: notification.title,
-                    type: notification.type,
-                  }}
+                  notification={notification}
                 />
               ))}
-            </div>
-          ) : (
-            <Empty className="h-full p-8 text-center">
-              <EmptyHeader>
-                <EmptyMedia>
-                  <Bell className="h-8 w-8 text-muted-foreground/50" />
-                </EmptyMedia>
-                <EmptyTitle className="mt-2 text-muted-foreground text-sm">
-                  Aucune notification
-                </EmptyTitle>
-                <EmptyDescription className="mt-1 text-muted-foreground/70 text-xs">
-                  Vous serez notifié des nouveaux feedbacks, commentaires et
-                  mises à jour
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
-          )}
+            </ul>
+          ) : null}
         </ScrollArea>
       </PopoverContent>
     </Popover>

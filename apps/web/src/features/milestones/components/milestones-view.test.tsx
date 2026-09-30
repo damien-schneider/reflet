@@ -70,7 +70,9 @@ vi.mock("motion/react", () => ({
   AnimatePresence: ({ children }: { children: React.ReactNode }) => (
     <>{children}</>
   ),
-  motion: new Proxy(
+  domAnimation: {},
+  LazyMotion: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  m: new Proxy(
     {},
     {
       get:
@@ -108,6 +110,7 @@ vi.mock("motion/react", () => ({
         },
     }
   ),
+  useReducedMotion: () => false,
 }));
 
 // Mock ScrollArea with ref forwarding and data-slot viewport attribute

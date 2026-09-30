@@ -9,40 +9,6 @@ async function placeInViewport(target: Locator, viewportTop: number) {
   }, viewportTop);
 }
 
-async function readOpacity(target: Locator) {
-  return Number(
-    await target.evaluate((element) => getComputedStyle(element).opacity)
-  );
-}
-
-async function expectArrival(target: Locator) {
-  await expect.poll(() => readOpacity(target)).toBeLessThan(0.95);
-  await expect(target).toHaveCSS("opacity", "1");
-}
-
-test("homepage sections replay their entrance from both scroll directions", async ({
-  page,
-}) => {
-  await page.setViewportSize({ height: 1000, width: 1440 });
-  await page.goto("/");
-  const group = page.locator(".marketing-features .marketing-section-intro");
-  const heading = group.getByRole("heading");
-  await placeInViewport(group, 1100);
-  await page.waitForTimeout(150);
-  await placeInViewport(group, 350);
-  await expectArrival(heading);
-  await placeInViewport(group, 200);
-  await expect(heading).toHaveCSS("opacity", "1");
-  for (const outsideTop of [-600, 1100]) {
-    await placeInViewport(group, outsideTop);
-    await page.waitForTimeout(150);
-    await placeInViewport(group, 350);
-    await expectArrival(heading);
-  }
-  await page.evaluate(() => window.scrollTo({ behavior: "instant", top: 0 }));
-  await expectArrival(page.locator(".marketing-hero h1 > :first-child"));
-});
-
 test("feature choices preserve layout and the user's draft", async ({
   page,
 }) => {
@@ -83,14 +49,14 @@ test("reduced motion keeps content still and billing immediately usable", async 
   await page.goto("/pricing");
   const heading = page.getByRole("heading", { level: 1 });
   await expect(heading).toHaveCSS("opacity", "1");
-  const group = page.locator(".marketing-faq > [data-reveal]").first();
+  const group = page.locator(".marketing-faq > div").first();
   await placeInViewport(group, 700);
   await expect(group.getByRole("heading")).toHaveCSS("translate", "none");
   await page.getByRole("button", { exact: true, name: "Monthly" }).click();
   await expect(page.getByTestId("pro-price")).toContainText("€15");
 });
 
-test("navigation responds to keyboard focus and cards respond to hover", async ({
+test("navigation links show their underline on keyboard focus", async ({
   page,
 }) => {
   await page.goto("/pricing");
@@ -105,11 +71,6 @@ test("navigation responds to keyboard focus and cards respond to hover", async (
       )
     )
     .toBe(1);
-  const card = page.locator('.marketing-plan[data-plan="pro"]');
-  await card.hover();
-  await expect(card).toHaveCSS("translate", "0px -3px");
-  await page.mouse.move(0, 0);
-  await expect(card).toHaveCSS("translate", "0px");
 });
 
 test("the hero uses one typeface and its controls change the reflected cards", async ({

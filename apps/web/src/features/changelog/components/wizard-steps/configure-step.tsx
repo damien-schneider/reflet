@@ -1,5 +1,6 @@
 "use client";
 
+import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Input } from "@ctrl-ui/react/ui/input";
 import {
@@ -46,11 +47,7 @@ function VersioningSection({ config, onChange }: ConfigureStepProps) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
-        <div>
-          <Label className="text-sm" htmlFor="auto-version">
-            Auto-suggest version
-          </Label>
-        </div>
+        <Label htmlFor="auto-version">Auto-suggest version</Label>
         <Switch
           checked={config.autoVersioning}
           id="auto-version"
@@ -68,10 +65,11 @@ function VersioningSection({ config, onChange }: ConfigureStepProps) {
               Prefix
             </Label>
             <Input
-              className="h-8 w-16 text-sm"
+              className="w-16"
               id="version-prefix"
               onChange={(e) => onChange({ versionPrefix: e.target.value })}
               placeholder="v"
+              size="sm"
               value={config.versionPrefix}
             />
           </div>
@@ -112,20 +110,18 @@ function VersioningSection({ config, onChange }: ConfigureStepProps) {
 function AiPoweredConfig({ config, onChange }: ConfigureStepProps) {
   return (
     <div className="space-y-4">
-      <p className="text-muted-foreground text-xs">
+      <p className="text-pretty text-muted-foreground text-xs">
         Reflet compares commits since your last tag on{" "}
-        <code className="rounded bg-muted px-1">{config.targetBranch}</code> and
-        generates notes with AI.
+        <code className="rounded-sm bg-muted px-1 font-mono">
+          {config.targetBranch}
+        </code>{" "}
+        and generates notes with AI.
       </p>
 
       <VersioningSection config={config} onChange={onChange} />
 
       <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
-        <div>
-          <Label className="text-sm" htmlFor="push-to-github">
-            Create GitHub Release on publish
-          </Label>
-        </div>
+        <Label htmlFor="push-to-github">Create GitHub Release on publish</Label>
         <Switch
           checked={config.pushToGithubOnPublish}
           id="push-to-github"
@@ -153,22 +149,22 @@ function AutomatedConfig({ config, onChange }: ConfigureStepProps) {
   return (
     <div className="space-y-4">
       <div className="space-y-2 rounded-lg border p-3">
-        <p className="font-medium text-sm">Conventional Commits</p>
+        <h3 className="font-medium text-sm">Conventional Commits</h3>
         <div className="space-y-1">
           {CONVENTIONAL_COMMIT_EXAMPLES.map((example) => (
             <div
               className="flex items-center justify-between gap-2"
               key={example.prefix}
             >
-              <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-caption">
+              <code className="rounded-sm bg-muted px-1.5 py-0.5 font-mono text-caption">
                 {example.prefix}
               </code>
               <span className="flex-1 text-muted-foreground text-xs">
                 {example.description}
               </span>
-              <span className="rounded-full bg-muted px-2 py-0.5 text-caption text-muted-foreground">
+              <Badge size="sm" variant="outline">
                 {example.bump}
-              </span>
+              </Badge>
             </div>
           ))}
         </div>
@@ -179,7 +175,8 @@ function AutomatedConfig({ config, onChange }: ConfigureStepProps) {
           target="_blank"
         >
           Read the Conventional Commits guide
-          <ArrowSquareOut className="h-3 w-3" />
+          <ArrowSquareOut aria-hidden className="size-3" />
+          <span className="sr-only">(opens in a new tab)</span>
         </a>
       </div>
 
@@ -192,21 +189,20 @@ function AutomatedConfig({ config, onChange }: ConfigureStepProps) {
             Prefix
           </Label>
           <Input
-            className="h-8 w-16 text-sm"
+            className="w-16"
             id="version-prefix-auto"
             onChange={(e) => onChange({ versionPrefix: e.target.value })}
             placeholder="v"
+            size="sm"
             value={config.versionPrefix}
           />
         </div>
       </div>
 
       <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
-        <div>
-          <Label className="text-sm" htmlFor="auto-publish-imported">
-            Auto-publish imported releases
-          </Label>
-        </div>
+        <Label htmlFor="auto-publish-imported">
+          Auto-publish imported releases
+        </Label>
         <Switch
           checked={config.autoPublishImported}
           id="auto-publish-imported"
@@ -223,11 +219,7 @@ function ManualConfig({ config, onChange }: ConfigureStepProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
-        <div>
-          <Label className="text-sm" htmlFor="manual-sync">
-            Sync with GitHub
-          </Label>
-        </div>
+        <Label htmlFor="manual-sync">Sync with GitHub</Label>
         <Switch
           checked={config.manualSyncEnabled}
           id="manual-sync"
@@ -254,7 +246,7 @@ function ManualConfig({ config, onChange }: ConfigureStepProps) {
               }}
               value={config.manualSyncDirection}
             >
-              <SelectTrigger className="h-8 text-sm" id="sync-direction">
+              <SelectTrigger id="sync-direction" size="sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -266,11 +258,9 @@ function ManualConfig({ config, onChange }: ConfigureStepProps) {
           </div>
 
           <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
-            <div>
-              <Label className="text-sm" htmlFor="manual-auto-publish">
-                Auto-publish imported releases
-              </Label>
-            </div>
+            <Label htmlFor="manual-auto-publish">
+              Auto-publish imported releases
+            </Label>
             <Switch
               checked={config.autoPublishImported}
               id="manual-auto-publish"

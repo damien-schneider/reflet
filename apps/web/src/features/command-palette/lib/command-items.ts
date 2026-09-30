@@ -1,10 +1,13 @@
 import {
+  Binoculars,
   Chat,
   ChatCircle,
+  ClipboardText,
   Code,
   Cube,
   FileText,
   Heartbeat,
+  Trash,
   User,
 } from "@phosphor-icons/react";
 import type { CommandItem } from "./types";
@@ -29,7 +32,6 @@ export const commandItems: CommandItem[] = [
     id: "changelog",
     keywords: ["changelog", "releases", "updates", "announcements"],
     label: "Changelog",
-    requiresAdmin: true,
     requiresOrg: true,
   },
   {
@@ -66,6 +68,39 @@ export const commandItems: CommandItem[] = [
     requiresOrg: true,
   },
   {
+    description: "Create and review in-app surveys",
+    group: "navigation",
+    href: "/dashboard/$orgSlug/surveys",
+    icon: ClipboardText,
+    id: "surveys",
+    keywords: ["surveys", "nps", "questions", "responses", "polls"],
+    label: "Surveys",
+    requiresAdmin: true,
+    requiresOrg: true,
+  },
+  {
+    description: "Competitor and market insights",
+    group: "navigation",
+    href: "/dashboard/$orgSlug/intelligence",
+    icon: Binoculars,
+    id: "intelligence",
+    keywords: ["intelligence", "competitors", "market", "insights", "ai"],
+    label: "Intelligence",
+    requiresAdmin: true,
+    requiresOrg: true,
+  },
+  {
+    description: "Restore or permanently delete feedback",
+    group: "navigation",
+    href: "/dashboard/$orgSlug/trash",
+    icon: Trash,
+    id: "trash",
+    keywords: ["trash", "deleted", "restore", "bin"],
+    label: "Trash",
+    requiresAdmin: true,
+    requiresOrg: true,
+  },
+  {
     description: "Project settings and configuration",
     group: "navigation",
     href: "/dashboard/$orgSlug/project",
@@ -87,7 +122,6 @@ export const commandItems: CommandItem[] = [
       "cli",
     ],
     label: "Project",
-    requiresAdmin: true,
     requiresOrg: true,
   },
 
@@ -104,6 +138,6 @@ export const commandItems: CommandItem[] = [
 ];
 
 export const groupLabels: Record<string, string> = {
-  actions: "Actions",
+  actions: "Account",
   navigation: "Pages",
 };

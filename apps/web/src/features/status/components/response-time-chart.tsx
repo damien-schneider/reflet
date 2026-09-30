@@ -2,11 +2,12 @@
 
 import {
   Card,
+  CardAction,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@ctrl-ui/react/ui/card";
-import { useMemo } from "react";
+import { format } from "date-fns";
 import { CartesianGrid, Line, LineChart, XAxis } from "recharts";
 import {
   type ChartConfig,
@@ -14,6 +15,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { formatLatency } from "../lib/status-meta";
 
 interface ResponseTimeChartProps {
   lastResponseTimeMs?: number;
@@ -27,7 +29,7 @@ interface ResponseTimeChartProps {
 const chartConfig = {
   responseTime: {
     color: "var(--chart-1)",
-    label: "Response Time",
+    label: "Response time",
   },
 } satisfies ChartConfig;
 
@@ -35,24 +37,15 @@ export function ResponseTimeChart({
   recentChecks,
   lastResponseTimeMs,
 }: ResponseTimeChartProps) {
-  const chartData = useMemo(
-    () =>
-      recentChecks
-        .filter((c) => c.responseTimeMs !== undefined && c.responseTimeMs > 0)
-        .map((c) => ({
-          date: new Date(c.checkedAt).toLocaleDateString("en-US", {
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-            month: "short",
-          }),
-          responseTime: c.responseTimeMs,
-          time: new Date(c.checkedAt).toLocaleTimeString("en-US", {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-        })),
-    [recentChecks]
+  const chartData = recentChecks.flatMap((check) =>
+    check.responseTimeMs !== undefined && check.responseTimeMs > 0
+      ? [
+          {
+            date: format(check.checkedAt, "MMM d, hh:mm a"),
+            responseTime: check.responseTimeMs,
+          },
+        ]
+      : []
   );
 
   if (chartData.length === 0) {
@@ -60,33 +53,30 @@ export function ResponseTimeChart({
   }
 
   return (
-    <Card className="py-4 sm:py-6">
-      <CardHeader className="flex flex-row items-center justify-between px-4 py-0 sm:px-6">
-        <CardTitle className="font-medium text-muted-foreground text-sm sm:text-base">
-          Response Time
-        </CardTitle>
-        <span className="font-semibold text-base tabular-nums sm:text-lg">
-          {lastResponseTimeMs === undefined ? "—" : `${lastResponseTimeMs}ms`}
-        </span>
+    <Card>
+      <CardHeader>
+        <CardTitle>Response time</CardTitle>
+        <CardAction className="font-semibold tabular-nums">
+          {lastResponseTimeMs === undefined
+            ? "No data yet"
+            : formatLatency(lastResponseTimeMs)}
+        </CardAction>
       </CardHeader>
-      <CardContent className="px-4 pt-4 pb-0 sm:px-6">
-        <ChartContainer className="h-[80px] w-full" config={chartConfig}>
+      <CardContent>
+        <ChartContainer className="h-20 w-full" config={chartConfig}>
           <LineChart
             data={chartData}
             margin={{ bottom: 0, left: 4, right: 4, top: 4 }}
+            title="Response time, last 24 hours"
           >
             <CartesianGrid strokeDasharray="3 3" vertical={false} />
-            <XAxis axisLine={false} dataKey="time" hide tickLine={false} />
+            <XAxis dataKey="date" hide />
             <ChartTooltip
               content={
                 <ChartTooltipContent
-                  formatter={(value) => `${value}ms`}
-                  labelFormatter={(_, payload) => {
-                    if (payload?.[0]?.payload?.date) {
-                      return payload[0].payload.date;
-                    }
-                    return "";
-                  }}
+                  formatter={(value) =>
+                    typeof value === "number" ? formatLatency(value) : value
+                  }
                   nameKey="responseTime"
                 />
               }
@@ -94,14 +84,15 @@ export function ResponseTimeChart({
             <Line
               dataKey="responseTime"
               dot={false}
+              isAnimationActive={false}
               stroke="var(--color-responseTime)"
               strokeWidth={2}
               type="monotone"
             />
           </LineChart>
         </ChartContainer>
-        <div className="mt-2 flex items-center justify-between text-caption text-muted-foreground sm:text-label">
-          <span>24h ago</span>
+        <div className="mt-2 flex items-center justify-between text-caption text-muted-foreground">
+          <span>24 h ago</span>
           <span>Now</span>
         </div>
       </CardContent>

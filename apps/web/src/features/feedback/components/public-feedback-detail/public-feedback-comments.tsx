@@ -1,13 +1,15 @@
 "use client";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@ctrl-ui/react/ui/avatar";
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { Textarea } from "@ctrl-ui/react/ui/textarea";
 import { PaperPlaneRight } from "@phosphor-icons/react";
-import { formatDistanceToNow } from "date-fns";
 import { useHotkeys } from "react-hotkeys-hook";
+import {
+  CommentAvatar,
+  CommentTimestamp,
+} from "../feedback-detail/comment-meta";
 
 interface CommentAuthor {
   email?: string;
@@ -33,6 +35,31 @@ interface PublicFeedbackCommentsProps {
   onSubmitComment: () => void;
 }
 
+function useSubmitCommentHotkey(canSubmit: boolean, onSubmit: () => void) {
+  useHotkeys(
+    "mod+enter",
+    () => {
+      if (canSubmit) {
+        onSubmit();
+      }
+    },
+    { enabled: canSubmit, enableOnFormTags: true },
+    [canSubmit, onSubmit]
+  );
+}
+
+function buildRepliesMap(comments: Comment[]) {
+  const repliesMap = new Map<string, Comment[]>();
+  for (const c of comments) {
+    if (c.parentId) {
+      const existing = repliesMap.get(c.parentId) ?? [];
+      existing.push(c);
+      repliesMap.set(c.parentId, existing);
+    }
+  }
+  return repliesMap;
+}
+
 export function PublicFeedbackComments({
   comments,
   isAuthenticated,
@@ -42,93 +69,131 @@ export function PublicFeedbackComments({
   onSubmitComment,
 }: PublicFeedbackCommentsProps) {
   const canSubmit = Boolean(newComment.trim()) && !isSubmittingComment;
-
-  useHotkeys(
-    "mod+enter",
-    () => {
-      if (canSubmit) {
-        onSubmitComment();
-      }
-    },
-    { enabled: canSubmit, enableOnFormTags: true },
-    [canSubmit, onSubmitComment]
-  );
-
-  const topLevelComments = comments?.filter((c) => !c.parentId) || [];
-  const repliesMap = new Map<string, Comment[]>();
-  for (const c of comments ?? []) {
-    if (c.parentId) {
-      const existing = repliesMap.get(c.parentId) ?? [];
-      existing.push(c);
-      repliesMap.set(c.parentId, existing);
-    }
-  }
+  useSubmitCommentHotkey(canSubmit, onSubmitComment);
 
   return (
     <div>
-      <h3 className="mb-4 font-medium tabular-nums">
-        Comments ({comments?.length || 0})
-      </h3>
+      <CommentsHeading comments={comments} />
 
       {isAuthenticated ? (
-        <div className="mb-6 flex gap-2">
-          <Textarea
-            className="flex-1"
-            onChange={(e) => onNewCommentChange(e.target.value)}
-            placeholder="Write a comment..."
-            rows={2}
-            value={newComment}
-          />
-          <Button
-            className="self-end"
-            disabled={!newComment.trim() || isSubmittingComment}
-            iconOnly
-            onClick={onSubmitComment}
-            tone="primary"
-            variant="solid"
-          >
-            <PaperPlaneRight className="h-4 w-4" />
-          </Button>
-        </div>
+        <CommentComposer
+          canSubmit={canSubmit}
+          isSubmittingComment={isSubmittingComment}
+          newComment={newComment}
+          onNewCommentChange={onNewCommentChange}
+          onSubmitComment={onSubmitComment}
+        />
       ) : (
         <Button
-          className="mb-6 h-auto w-full rounded-md border border-dashed p-4 text-center text-muted-foreground text-sm transition-colors hover:border-primary/50 hover:text-foreground"
+          className="mb-6 w-full"
           onClick={onSubmitComment}
-          variant="quiet"
+          variant="surface"
         >
           Sign in to leave a comment
         </Button>
       )}
 
-      {comments === undefined && (
-        <div className="space-y-4">
-          {[1, 2].map((i) => (
-            <div className="flex gap-3" key={i}>
-              <Skeleton className="h-8 w-8 rounded-full" />
-              <div className="flex-1 space-y-2">
-                <Skeleton className="h-4 w-1/4" />
-                <Skeleton className="h-12 w-full" />
-              </div>
-            </div>
-          ))}
+      <CommentsBody comments={comments} />
+    </div>
+  );
+}
+
+function CommentsHeading({ comments }: { comments: Comment[] | undefined }) {
+  return (
+    <h3 className="mb-4 font-medium text-sm">
+      Discussion
+      {comments && comments.length > 0 && (
+        <span className="ml-2 text-muted-foreground tabular-nums">
+          ({comments.length})
+        </span>
+      )}
+    </h3>
+  );
+}
+
+interface CommentComposerProps {
+  canSubmit: boolean;
+  isSubmittingComment: boolean;
+  newComment: string;
+  onNewCommentChange: (value: string) => void;
+  onSubmitComment: () => void;
+}
+
+function CommentComposer({
+  canSubmit,
+  isSubmittingComment,
+  newComment,
+  onNewCommentChange,
+  onSubmitComment,
+}: CommentComposerProps) {
+  return (
+    <div className="mb-6 space-y-2">
+      <Textarea
+        aria-label="Comment"
+        onChange={(e) => onNewCommentChange(e.target.value)}
+        placeholder="Write a comment…"
+        rows={3}
+        value={newComment}
+      />
+      <div className="flex items-center justify-end gap-2">
+        <span className="mr-auto pointer-fine:inline hidden text-muted-foreground text-xs">
+          <kbd className="font-sans">⌘ Enter</kbd> to post
+        </span>
+        <Button
+          disabled={!canSubmit}
+          onClick={onSubmitComment}
+          size="sm"
+          tone="primary"
+          variant="solid"
+        >
+          <PaperPlaneRight className="size-3.5" />
+          {isSubmittingComment ? "Posting…" : "Post"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function CommentsSkeleton() {
+  return (
+    <div aria-busy="true" className="space-y-4">
+      {[1, 2].map((i) => (
+        <div className="flex gap-3" key={i}>
+          <Skeleton className="size-8 shrink-0 rounded-full" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-4 w-1/4" />
+            <Skeleton className="h-12 w-full" />
+          </div>
         </div>
-      )}
-      {comments !== undefined && topLevelComments.length === 0 && (
-        <p className="py-8 text-center text-muted-foreground">
-          No comments yet. Be the first to comment!
-        </p>
-      )}
-      {comments !== undefined && topLevelComments.length > 0 && (
-        <div className="space-y-4">
-          {topLevelComments.map((comment) => (
-            <PublicCommentItem
-              comment={comment}
-              key={comment._id}
-              repliesMap={repliesMap}
-            />
-          ))}
-        </div>
-      )}
+      ))}
+    </div>
+  );
+}
+
+function CommentsBody({ comments }: { comments: Comment[] | undefined }) {
+  if (comments === undefined) {
+    return <CommentsSkeleton />;
+  }
+
+  const topLevelComments = comments.filter((c) => !c.parentId);
+  if (topLevelComments.length === 0) {
+    return (
+      <p className="py-8 text-center text-muted-foreground text-sm">
+        No comments yet.
+      </p>
+    );
+  }
+
+  const repliesMap = buildRepliesMap(comments);
+  return (
+    <div className="space-y-4">
+      {topLevelComments.map((comment) => (
+        <PublicCommentItem
+          comment={comment}
+          key={comment._id}
+          repliesMap={repliesMap}
+        />
+      ))}
     </div>
   );
 }
@@ -146,30 +211,27 @@ function PublicCommentItem({
 
   return (
     <div className="group flex gap-3">
-      <Avatar className={isReply ? "h-6 w-6" : "h-8 w-8"}>
-        <AvatarImage src={comment.author?.image} />
-        <AvatarFallback className={isReply ? "text-xs" : ""}>
-          {comment.author?.name?.charAt(0) || "?"}
-        </AvatarFallback>
-      </Avatar>
+      <CommentAvatar
+        image={comment.author?.image}
+        isReply={isReply}
+        name={comment.author?.name || comment.author?.email || "?"}
+      />
 
-      <div className="flex-1">
+      <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span className="font-medium text-sm">
+          <span className="truncate font-medium text-sm">
             {comment.author?.name || comment.author?.email || "Anonymous"}
           </span>
-          {comment.isOfficial && <Badge className="text-xs">Official</Badge>}
-          <span className="text-muted-foreground text-xs">
-            {formatDistanceToNow(comment.createdAt, {
-              addSuffix: true,
-            })}
-          </span>
+          {comment.isOfficial && <Badge size="sm">Official</Badge>}
+          <CommentTimestamp createdAt={comment.createdAt} />
         </div>
 
-        <p className="mt-1 whitespace-pre-wrap text-sm">{comment.body}</p>
+        <p className="mt-1 whitespace-pre-wrap text-pretty text-sm leading-relaxed">
+          {comment.body}
+        </p>
 
         {replies.length > 0 && (
-          <div className="mt-4 space-y-3 border-l-2 pl-4">
+          <div className="mt-4 space-y-3 border-border border-l-2 pl-4">
             {replies.map((reply) => (
               <PublicCommentItem
                 comment={reply}

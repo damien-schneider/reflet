@@ -11,6 +11,7 @@ import { Eye, EyeSlash } from "@phosphor-icons/react";
 import type { UseFormRegisterReturn } from "react-hook-form";
 
 interface PasswordInputProps {
+  autoComplete: "current-password" | "new-password";
   error?: { message?: string };
   id: string;
   label: string;
@@ -21,6 +22,7 @@ interface PasswordInputProps {
 }
 
 export function PasswordInputField({
+  autoComplete,
   id,
   label,
   showPassword,
@@ -29,23 +31,19 @@ export function PasswordInputField({
   placeholder,
   error,
 }: PasswordInputProps) {
-  const { onChange, onBlur, ref: registerRef, ...restRegister } = register;
+  const hasError = Boolean(error?.message);
   return (
     <Field>
       <FieldLabel htmlFor={id}>{label}</FieldLabel>
       <InputGroup>
         <InputGroupInput
+          aria-invalid={hasError || undefined}
+          autoComplete={autoComplete}
           id={id}
-          onBlur={(e) => {
-            onBlur(e);
-          }}
-          onChange={(e) => {
-            onChange(e);
-          }}
           placeholder={placeholder}
-          ref={registerRef}
+          spellCheck={false}
           type={showPassword ? "text" : "password"}
-          {...restRegister}
+          {...register}
         />
         <InputGroupAddon className="ml-auto">
           <Button
@@ -60,7 +58,7 @@ export function PasswordInputField({
           </Button>
         </InputGroupAddon>
       </InputGroup>
-      <FieldError match={Boolean(error?.message)}>{error?.message}</FieldError>
+      <FieldError match={hasError}>{error?.message}</FieldError>
     </Field>
   );
 }

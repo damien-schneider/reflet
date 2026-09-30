@@ -1,7 +1,8 @@
 "use client";
 
+import { toast } from "@ctrl-ui/react/ui/toast";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { useCallback, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { capture } from "@/lib/analytics";
 import type { FeedbackItem } from "../feed-feedback-view";
 
@@ -76,63 +77,53 @@ export function useOptimisticVotes({
   >(new Map());
   const pendingVotesRef = useRef<Set<string>>(new Set());
 
-  const handleToggleVote = useCallback(
-    async (
-      e: React.MouseEvent,
-      feedbackId: Id<"feedback">,
-      voteType: "upvote" | "downvote"
-    ) => {
-      e.stopPropagation();
+  const clearOptimisticVote = (feedbackId: Id<"feedback">) => {
+    setOptimisticVotes((prev) => {
+      const next = new Map(prev);
+      next.delete(feedbackId);
+      return next;
+    });
+  };
 
-      if (!isAuthenticated) {
-        authGuard(() => undefined);
-        return;
-      }
+  const handleToggleVote = async (
+    feedbackId: Id<"feedback">,
+    voteType: "upvote" | "downvote"
+  ) => {
+    if (!isAuthenticated) {
+      authGuard(() => undefined);
+      return;
+    }
 
-      const currentFeedback = feedback?.find((f) => f._id === feedbackId);
-      const optimisticState = optimisticVotes.get(feedbackId);
-      const currentVoteType =
-        optimisticState?.voteType ?? currentFeedback?.userVoteType ?? null;
+    if (pendingVotesRef.current.has(feedbackId)) {
+      return;
+    }
+    pendingVotesRef.current.add(feedbackId);
 
-      if (pendingVotesRef.current.has(feedbackId)) {
-        return;
-      }
-      pendingVotesRef.current.add(feedbackId);
+    const currentFeedback = feedback?.find((f) => f._id === feedbackId);
+    const currentVoteType =
+      optimisticVotes.get(feedbackId)?.voteType ??
+      currentFeedback?.userVoteType ??
+      null;
+    const newVoteType = currentVoteType === voteType ? null : voteType;
 
-      const newVoteType = currentVoteType === voteType ? null : voteType;
+    capture("feedback_voted", {
+      action: newVoteType === null ? "remove" : "add",
+    });
 
-      capture("feedback_voted", {
-        action: currentVoteType === voteType ? "remove" : "add",
-      });
+    setOptimisticVotes((prev) => {
+      const next = new Map(prev);
+      next.set(feedbackId, { pending: true, voteType: newVoteType });
+      return next;
+    });
 
-      setOptimisticVotes((prev) => {
-        const next = new Map(prev);
-        next.set(feedbackId, { pending: true, voteType: newVoteType });
-        return next;
-      });
-
-      try {
-        await toggleVoteMutation({
-          feedbackId,
-          voteType,
-        });
-      } catch {
-        setOptimisticVotes((prev) => {
-          const next = new Map(prev);
-          next.delete(feedbackId);
-          return next;
-        });
-      } finally {
-        pendingVotesRef.current.delete(feedbackId);
-        setOptimisticVotes((prev) => {
-          const next = new Map(prev);
-          next.delete(feedbackId);
-          return next;
-        });
-      }
-    },
-    [feedback, optimisticVotes, toggleVoteMutation, isAuthenticated, authGuard]
-  );
+    try {
+      await toggleVoteMutation({ feedbackId, voteType });
+    } catch {
+      toast.error("Your vote didn’t go through. Try again.");
+    }
+    pendingVotesRef.current.delete(feedbackId);
+    clearOptimisticVote(feedbackId);
+  };
 
   return { handleToggleVote, optimisticVotes } as const;
 }

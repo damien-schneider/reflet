@@ -6,10 +6,7 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 import { CompletionSummary } from "./retroactive-completion";
-import {
-  ACTIVE_STATUSES,
-  type GroupingStrategy,
-} from "./retroactive-constants";
+import { type GroupingStrategy, isActiveStatus } from "./retroactive-constants";
 import { ProgressView } from "./retroactive-progress-view";
 import { TriggerView } from "./retroactive-trigger-view";
 
@@ -25,6 +22,7 @@ export function RetroactiveInlineFlow({
     useState<GroupingStrategy>("auto");
   const [skipExisting, setSkipExisting] = useState(true);
   const [isStarting, setIsStarting] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   const job = useQuery(api.changelog.retroactive.getRetroactiveJob, {
     organizationId,
@@ -44,9 +42,7 @@ export function RetroactiveInlineFlow({
   );
 
   const isJobActive =
-    job !== null &&
-    job !== undefined &&
-    ACTIVE_STATUSES.includes(job.status as (typeof ACTIVE_STATUSES)[number]);
+    job !== null && job !== undefined && isActiveStatus(job.status);
 
   const isJobTerminal =
     job?.status === "completed" ||
@@ -72,28 +68,35 @@ export function RetroactiveInlineFlow({
       const message =
         error instanceof Error
           ? error.message
-          : "Failed to start changelog generation";
+          : "Couldn’t start generation. Try again.";
       toast.error(message);
-    } finally {
-      setIsStarting(false);
     }
+    setIsStarting(false);
   };
 
   const handleCancel = async () => {
     if (!job?._id) {
       return;
     }
+    setIsCancelling(true);
     try {
       await cancelJob({ jobId: job._id });
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Failed to cancel";
+        error instanceof Error ? error.message : "Couldn’t cancel. Try again.";
       toast.error(message);
     }
+    setIsCancelling(false);
   };
 
   if (isJobActive) {
-    return <ProgressView job={job} onCancel={handleCancel} />;
+    return (
+      <ProgressView
+        isCancelling={isCancelling}
+        job={job}
+        onCancel={handleCancel}
+      />
+    );
   }
 
   if (job?.status === "completed") {

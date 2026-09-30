@@ -28,7 +28,7 @@ export async function generateMetadata({
         description,
         keywords: [meta.orgName, "feedback", "feature request", meta.status],
         path: `/${orgSlug}/feedback/${feedbackId}`,
-        title: `${meta.title} | ${meta.orgName}`,
+        title: `${meta.title} – ${meta.orgName}`,
       });
     }
   } catch {
@@ -39,7 +39,7 @@ export async function generateMetadata({
     description: `View feedback and feature requests for ${orgSlug}.`,
     keywords: ["feedback", "feature request", orgSlug],
     path: `/${orgSlug}/feedback/${feedbackId}`,
-    title: `Feedback | ${orgSlug}`,
+    title: `Feedback – ${orgSlug}`,
   });
 }
 

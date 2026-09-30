@@ -1,31 +1,20 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
-
 import type { Metadata } from "next";
 
-import {
-  CodeBlock,
-  ComponentPreview,
-  InstallTabs,
-} from "@/components/docs/component-preview";
 import { EDITORIAL_FEED_CODE } from "@/components/docs/feedback-card-codes";
 import { EditorialFeedPreview } from "@/components/docs/feedback-card-previews";
-import type { PropDefinition } from "@/components/docs/props-table";
-import { PropsTable } from "@/components/docs/props-table";
-import { InlineCode } from "@/components/ui/typography";
+import {
+  RegistryDocPage,
+  type Subcomponent,
+} from "@/components/docs/registry-doc-page";
+import { voteRootProps } from "@/components/docs/vote-root-props";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
   description:
-    "A rich editorial feedback layout with margin vote annotations and stacked list items.",
+    "An editorial-style feedback list with margin vote annotations and vertical rules.",
   path: "/docs/components/feedback-cards/editorial-feed",
-  title: "Editorial Feed - Feedback Card",
+  title: "Editorial feed – feedback card",
 });
-
-const SOURCE_CODE = readFileSync(
-  join(process.cwd(), "../../packages/ui/registry/feedback-editorial-feed.tsx"),
-  "utf-8"
-);
 
 const IMPORT_CODE = `import {
   EditorialFeed,
@@ -41,88 +30,53 @@ const IMPORT_CODE = `import {
   EditorialFeedVote,
 } from "@/components/ui/feedback-editorial-feed";`;
 
-const SUBCOMPONENTS: {
-  description: string;
-  name: string;
-  props: PropDefinition[];
-}[] = [
-  {
-    description: "List container with vertical dividers between items.",
-    name: "EditorialFeed",
-    props: [],
-  },
+const FEATURES = [
+  "Stacked list layout with votes set in the margin, like annotations.",
+  "A vertical rule separates the vote column from the content.",
+  "Each item keeps its own vote state, uncontrolled or controlled.",
+] as const;
+
+const SUBCOMPONENTS: readonly Subcomponent[] = [
+  { description: "List container for feed items.", name: "EditorialFeed" },
   {
     description:
-      "Individual feed item. Provides vote context for child sub-components.",
+      "One feedback row. Holds that item’s vote state and shares it with EditorialFeedVote.",
     name: "EditorialFeedItem",
-    props: [
-      {
-        description: "Initial upvote count. Defaults to 0.",
-        name: "defaultUpvotes",
-        required: false,
-        type: "number",
-      },
-      {
-        description: "Initial downvote count. Defaults to 0.",
-        name: "defaultDownvotes",
-        required: false,
-        type: "number",
-      },
-      {
-        description: "Callback fired when the vote changes.",
-        name: "onVoteChange",
-        required: false,
-        type: "(upvotes, downvotes) => void",
-      },
-    ],
+    props: voteRootProps({
+      description: "Called with the new totals after an uncontrolled vote.",
+      name: "onVoteChange",
+      type: "(upvotes: number, downvotes: number) => void",
+    }),
   },
   {
     description:
-      "Absolute-positioned vote annotation in the left margin with animated up/down buttons.",
+      "Margin vote column with up and down buttons. Reads vote state from the item.",
     name: "EditorialFeedVote",
-    props: [],
   },
   {
-    description:
-      "Thin vertical rule separating the vote margin from the content.",
+    description: "Vertical rule between the vote column and the content.",
     name: "EditorialFeedRule",
-    props: [],
   },
+  { description: "Content column.", name: "EditorialFeedContent" },
+  { description: "Item title.", name: "EditorialFeedTitle" },
   {
-    description: "Wrapper for the title and meta content area.",
-    name: "EditorialFeedContent",
-    props: [],
-  },
-  {
-    description: "Editorial-style heading with display font.",
-    name: "EditorialFeedTitle",
-    props: [],
-  },
-  {
-    description: "Flex row for status, tags, comments, and time metadata.",
+    description: "Row for status, tags, comments and time.",
     name: "EditorialFeedMeta",
-    props: [],
   },
   {
-    description: "Colored status badge pill.",
+    description: "Colored status label.",
     name: "EditorialFeedStatus",
     props: [
       {
-        description:
-          'Color key: blue, brown, green, orange, pink, purple, red, yellow, gray, or default. Defaults to "gray".',
+        description: "Status color key.",
         name: "color",
-        required: false,
         type: "StatusColor",
       },
     ],
   },
+  { description: "Plain tag label.", name: "EditorialFeedTag" },
   {
-    description: "Italic tag prefixed with #.",
-    name: "EditorialFeedTag",
-    props: [],
-  },
-  {
-    description: "Comment count with dot separator.",
+    description: "Comment count.",
     name: "EditorialFeedComments",
     props: [
       {
@@ -133,74 +87,20 @@ const SUBCOMPONENTS: {
       },
     ],
   },
-  {
-    description: "Italic timestamp text.",
-    name: "EditorialFeedTime",
-    props: [],
-  },
+  { description: "Relative time label.", name: "EditorialFeedTime" },
 ];
 
 export default function EditorialFeedPage() {
   return (
-    <div className="mx-auto max-w-3xl">
-      <h1 className="mb-2 font-display text-3xl text-foreground leading-snug tracking-tight">
-        Editorial Feed
-      </h1>
-      <p className="mb-8 text-base text-muted-foreground sm:text-xl">
-        A rich editorial layout with margin vote annotations, vertical rules,
-        and stacked feed items. Inspired by blog and editorial design.
-      </p>
-
-      <section className="mb-10">
-        <h2 className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight">
-          Preview
-        </h2>
-        <ComponentPreview code={`${IMPORT_CODE}\n\n${EDITORIAL_FEED_CODE}`}>
-          <EditorialFeedPreview />
-        </ComponentPreview>
-      </section>
-
-      <section className="mb-10">
-        <h2 className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight">
-          Installation
-        </h2>
-        <InstallTabs
-          cliCommand="npx shadcn add https://www.reflet.app/r/feedback-editorial-feed.json"
-          manualCode={SOURCE_CODE}
-        />
-      </section>
-
-      <section className="mb-10">
-        <h2 className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight">
-          Usage
-        </h2>
-        <CodeBlock code={IMPORT_CODE} />
-        <div className="h-4" />
-        <CodeBlock code={EDITORIAL_FEED_CODE} />
-      </section>
-
-      <section>
-        <h2 className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight">
-          API Reference
-        </h2>
-        <div className="space-y-8">
-          {SUBCOMPONENTS.map((comp) => (
-            <div key={comp.name}>
-              <h3 className="mb-2 font-semibold text-sm">
-                <InlineCode>{comp.name}</InlineCode>
-              </h3>
-              <p className="mb-3 text-muted-foreground text-sm">
-                {comp.description}
-              </p>
-              {comp.props.length > 0 && <PropsTable props={comp.props} />}
-            </div>
-          ))}
-        </div>
-        <p className="mt-4 text-muted-foreground text-xs">
-          All sub-components also accept <InlineCode>className</InlineCode> and{" "}
-          <InlineCode>children</InlineCode> props unless noted otherwise.
-        </p>
-      </section>
-    </div>
+    <RegistryDocPage
+      description="A stacked, editorial list of feedback with votes set in the margin and a vertical rule beside each item."
+      features={FEATURES}
+      importCode={IMPORT_CODE}
+      preview={<EditorialFeedPreview />}
+      registryName="feedback-editorial-feed"
+      subcomponents={SUBCOMPONENTS}
+      title="Editorial Feed"
+      usageCode={EDITORIAL_FEED_CODE}
+    />
   );
 }

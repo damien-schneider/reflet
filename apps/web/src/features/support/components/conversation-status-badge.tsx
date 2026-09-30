@@ -6,7 +6,6 @@ import {
   CONVERSATION_STATUS_META,
   isConversationStatus,
 } from "@/features/support/lib/conversation-status";
-import { cn } from "@/lib/utils";
 
 interface ConversationStatusBadgeProps {
   className?: string;
@@ -14,10 +13,7 @@ interface ConversationStatusBadgeProps {
   status: string;
 }
 
-const UNKNOWN_STATUS = {
-  badgeClassName: "bg-muted text-muted-foreground",
-  icon: Circle,
-};
+const UNKNOWN_STATUS = { badgeColor: "neutral", icon: Circle } as const;
 
 export function ConversationStatusBadge({
   status,
@@ -31,8 +27,8 @@ export function ConversationStatusBadge({
   const Icon = meta.icon;
 
   return (
-    <Badge className={cn(meta.badgeClassName, className)}>
-      {showIcon && <Icon className="h-3 w-3" weight="fill" />}
+    <Badge className={className} color={meta.badgeColor} size="sm">
+      {showIcon && <Icon aria-hidden className="size-3" weight="fill" />}
       {meta.label}
     </Badge>
   );

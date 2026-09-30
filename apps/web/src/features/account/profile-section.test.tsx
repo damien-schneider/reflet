@@ -37,40 +37,30 @@ vi.mock("@ctrl-ui/react/ui/button", () => ({
     disabled,
     type,
     onClick,
+    "aria-label": ariaLabel,
   }: {
     children: React.ReactNode;
     disabled?: boolean;
-    type?: string;
+    type?: "button" | "submit";
     onClick?: () => void;
+    "aria-label"?: string;
   }) => (
     <button
+      aria-label={ariaLabel}
       disabled={disabled}
       onClick={onClick}
-      type={type as "button" | "submit"}
+      type={type}
     >
       {children}
     </button>
   ),
 }));
 
-vi.mock("@ctrl-ui/react/ui/card", () => ({
-  Card: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  CardContent: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  CardDescription: ({ children }: { children: React.ReactNode }) => (
-    <p>{children}</p>
-  ),
-  CardHeader: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  CardTitle: ({ children }: { children: React.ReactNode }) => (
-    <h2>{children}</h2>
-  ),
-}));
-
 vi.mock("@ctrl-ui/react/ui/field", () => ({
   Field: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  FieldDescription: ({ children }: { children: React.ReactNode }) => (
+    <p>{children}</p>
+  ),
   FieldError: () => null,
   FieldLabel: ({
     children,
@@ -87,25 +77,13 @@ vi.mock("@ctrl-ui/react/ui/input", () => ({
   ),
 }));
 
-vi.mock("@ctrl-ui/react/ui/separator", () => ({
-  Separator: () => <hr />,
-}));
-
 vi.mock("@phosphor-icons/react", () => ({
-  Check: ({ className }: { className?: string }) => (
-    <svg className={className} />
-  ),
-  Envelope: ({ className }: { className?: string }) => (
-    <svg className={className} />
-  ),
-  Trash: ({ className }: { className?: string }) => (
-    <svg className={className} />
-  ),
-  User: ({ className }: { className?: string }) => (
-    <svg className={className} />
-  ),
+  User: () => <svg />,
+  X: () => <svg />,
 }));
 
+import { toast } from "@ctrl-ui/react/ui/toast";
+import { authClient } from "@/lib/auth-client";
 import { ProfileSection } from "./profile-section";
 
 const user = { email: "john@test.com", image: null, name: "John Doe" };
@@ -149,7 +127,7 @@ describe("ProfileSection", () => {
     expect(screen.getByText("john@test.com")).toBeInTheDocument();
   });
 
-  it("shows User fallback when name is missing", () => {
+  it("shows a neutral fallback when the name is missing", () => {
     render(
       <ProfileSection
         isLoading={false}
@@ -157,21 +135,21 @@ describe("ProfileSection", () => {
         user={undefined}
       />
     );
-    expect(screen.getByText("User")).toBeInTheDocument();
+    expect(screen.getByText("Your profile")).toBeInTheDocument();
   });
 
-  it("renders Save Changes button", () => {
+  it("keeps save disabled until the form changes", () => {
     render(
       <ProfileSection isLoading={false} setIsLoading={vi.fn()} user={user} />
     );
-    expect(screen.getByText("Save Changes")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save changes" })).toBeDisabled();
   });
 
-  it("disables Save Changes when isLoading", () => {
+  it("shows progress while saving", () => {
     render(
       <ProfileSection isLoading={true} setIsLoading={vi.fn()} user={user} />
     );
-    expect(screen.getByText("Save Changes")).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Saving…" })).toBeDisabled();
   });
 
   it("renders avatar preview when user has image", () => {
@@ -188,7 +166,6 @@ describe("ProfileSection", () => {
       />
     );
     expect(screen.getByAltText("Avatar preview")).toBeInTheDocument();
-    expect(screen.getByText("Avatar Preview")).toBeInTheDocument();
   });
 
   it("does not show avatar preview when no image", () => {
@@ -218,7 +195,7 @@ describe("ProfileSection", () => {
     expect(screen.getByAltText("Avatar preview")).toBeInTheDocument();
   });
 
-  it("clears avatar URL when trash button is clicked", async () => {
+  it("clears avatar URL when the clear button is clicked", async () => {
     const u = userEvent.setup();
     render(
       <ProfileSection isLoading={false} setIsLoading={vi.fn()} user={user} />
@@ -226,17 +203,11 @@ describe("ProfileSection", () => {
     const input = screen.getByPlaceholderText("https://example.com/avatar.jpg");
     await u.type(input, "https://example.com/new.jpg");
     expect(screen.getByAltText("Avatar preview")).toBeInTheDocument();
-    const buttons = screen.getAllByRole("button");
-    const trashButton = buttons.find(
-      (btn) => btn.querySelector("svg") && btn.textContent === ""
-    );
-    expect(trashButton).toBeDefined();
-    await u.click(trashButton!);
+    await u.click(screen.getByRole("button", { name: "Clear avatar URL" }));
     expect(screen.queryByAltText("Avatar preview")).not.toBeInTheDocument();
   });
 
   it("submits form and calls authClient.updateUser", async () => {
-    const { authClient } = await import("@/lib/auth-client");
     const u = userEvent.setup();
     const setIsLoading = vi.fn();
     render(
@@ -249,13 +220,11 @@ describe("ProfileSection", () => {
     const nameInput = screen.getByDisplayValue("John Doe");
     await u.clear(nameInput);
     await u.type(nameInput, "Jane Doe");
-    await u.click(screen.getByText("Save Changes"));
+    await u.click(screen.getByRole("button", { name: "Save changes" }));
     expect(authClient.updateUser).toHaveBeenCalled();
   });
 
   it("shows error toast on profile update failure", async () => {
-    const { authClient } = await import("@/lib/auth-client");
-    const { toast } = await import("@ctrl-ui/react/ui/toast");
     vi.mocked(authClient.updateUser).mockRejectedValueOnce(
       new Error("Update failed")
     );
@@ -266,7 +235,7 @@ describe("ProfileSection", () => {
     const nameInput = screen.getByDisplayValue("John Doe");
     await u.clear(nameInput);
     await u.type(nameInput, "New Name");
-    await u.click(screen.getByText("Save Changes"));
+    await u.click(screen.getByRole("button", { name: "Save changes" }));
     expect(toast.error).toHaveBeenCalledWith("Update failed");
   });
 });

@@ -1,11 +1,4 @@
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@ctrl-ui/react/ui/table";
+import { ReferenceTable } from "./reference-table";
 
 interface PropDefinition {
   default?: string;
@@ -16,61 +9,56 @@ interface PropDefinition {
 }
 
 interface PropsTableProps {
-  props: PropDefinition[];
+  props: readonly PropDefinition[];
+}
+
+const NAME = { kind: "name", label: "Prop" } as const;
+const TYPE = { kind: "code", label: "Type" } as const;
+const DEFAULT = { kind: "code", label: "Default" } as const;
+const DESCRIPTION = { kind: "text", label: "Description" } as const;
+
+function PropName({ prop }: { prop: PropDefinition }) {
+  return (
+    <span className="flex flex-col gap-0.5">
+      <code>{prop.name}</code>
+      {prop.required && (
+        <span className="font-sans text-caption text-muted-foreground">
+          Required
+        </span>
+      )}
+    </span>
+  );
+}
+
+function toPropRow(prop: PropDefinition, showDefaults: boolean) {
+  const name = <PropName prop={prop} />;
+  const fallback = (
+    <>
+      <span aria-hidden>—</span>
+      <span className="sr-only">None</span>
+    </>
+  );
+  const hasDefault = prop.default !== undefined && prop.default !== "—";
+  const defaultCell = hasDefault ? prop.default : fallback;
+  return {
+    cells: showDefaults
+      ? [name, prop.type, defaultCell, prop.description]
+      : [name, prop.type, prop.description],
+    key: prop.name,
+  };
 }
 
 function PropsTable({ props }: PropsTableProps) {
   const showDefaults = props.some((prop) => prop.default !== undefined);
+  const columns = showDefaults
+    ? [NAME, TYPE, DEFAULT, DESCRIPTION]
+    : [NAME, TYPE, DESCRIPTION];
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-border">
-      <Table className="w-full text-sm">
-        <TableHeader>
-          <TableRow className="bg-muted/50">
-            <TableHead className="text-foreground">Prop</TableHead>
-            <TableHead className="text-foreground">Type</TableHead>
-            {showDefaults && (
-              <TableHead className="text-foreground">Default</TableHead>
-            )}
-            <TableHead className="text-foreground">Description</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {props.map((prop) => (
-            <TableRow key={prop.name}>
-              <TableCell className="align-top">
-                <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-foreground text-sm">
-                  {prop.name}
-                </code>
-                {prop.required && (
-                  <span className="ml-1 text-destructive-text">
-                    <span aria-hidden="true">*</span>
-                    <span className="sr-only">required</span>
-                  </span>
-                )}
-              </TableCell>
-              <TableCell className="align-top">
-                <code className="font-mono text-muted-foreground text-sm">
-                  {prop.type}
-                </code>
-              </TableCell>
-              {showDefaults && (
-                <TableCell className="align-top text-muted-foreground">
-                  {prop.default ? (
-                    <code className="font-mono text-sm">{prop.default}</code>
-                  ) : (
-                    <span className="text-muted-foreground/60">-</span>
-                  )}
-                </TableCell>
-              )}
-              <TableCell className="align-top text-muted-foreground">
-                {prop.description}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+    <ReferenceTable
+      columns={columns}
+      rows={props.map((prop) => toPropRow(prop, showDefaults))}
+    />
   );
 }
 

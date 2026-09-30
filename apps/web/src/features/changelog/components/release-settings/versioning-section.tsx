@@ -38,36 +38,40 @@ export const VersioningSection = ({
 }: VersioningSectionProps) => (
   <div className="space-y-4 rounded-lg border p-4">
     <div className="flex items-center gap-3">
-      <Tag className="h-5 w-5 text-muted-foreground" />
-      <p className="font-medium text-sm">Versioning</p>
+      <Tag aria-hidden className="size-5 text-muted-foreground" />
+      <h3 className="font-medium text-sm">Versioning</h3>
     </div>
 
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <Label className="text-sm">Auto-versioning</Label>
+        <Label htmlFor="settings-auto-versioning">Auto-versioning</Label>
         <Switch
           checked={autoVersioning !== false}
           disabled={!isAdmin || isSaving}
+          id="settings-auto-versioning"
           onCheckedChange={(checked) => onUpdate({ autoVersioning: checked })}
         />
       </div>
 
       <div className="flex items-center gap-4">
         <div className="flex-1">
-          <Label className="text-xs" htmlFor="version-prefix">
+          <Label className="text-xs" htmlFor="settings-version-prefix">
             Version prefix
           </Label>
           <Input
-            className="mt-1 h-8"
+            className="mt-1"
             defaultValue={versionPrefix ?? "v"}
             disabled={!isAdmin || isSaving}
-            id="version-prefix"
+            id="settings-version-prefix"
             onBlur={(e) => onUpdate({ versionPrefix: e.target.value })}
             placeholder="v"
+            size="sm"
           />
         </div>
         <div className="flex-1">
-          <Label className="text-xs">Default increment</Label>
+          <Label className="text-xs" htmlFor="settings-default-increment">
+            Default increment
+          </Label>
           <Select
             defaultValue={versionIncrement ?? "patch"}
             disabled={!isAdmin || isSaving}
@@ -78,7 +82,11 @@ export const VersioningSection = ({
               }
             }}
           >
-            <SelectTrigger aria-label="Default increment" className="mt-1 h-8">
+            <SelectTrigger
+              className="mt-1"
+              id="settings-default-increment"
+              size="sm"
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

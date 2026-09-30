@@ -1,26 +1,33 @@
 "use client";
 
-import {
-  AlertDialog,
-  AlertDialogClose,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@ctrl-ui/react/ui/alert-dialog";
+import { Alert, AlertDescription, AlertTitle } from "@ctrl-ui/react/ui/alert";
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button, ButtonLink } from "@ctrl-ui/react/ui/button";
+import { Card, CardContent } from "@ctrl-ui/react/ui/card";
+import { Field, FieldError, FieldLabel } from "@ctrl-ui/react/ui/field";
 import { Input } from "@ctrl-ui/react/ui/input";
-import { ArrowsClockwise, Trash } from "@phosphor-icons/react";
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
+import { toast } from "@ctrl-ui/react/ui/toast";
+import {
+  ArrowsClockwise,
+  CheckCircle,
+  Trash,
+  WarningCircle,
+} from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import Link from "next/link";
 import { useState } from "react";
-import { Muted, Text } from "@/components/ui/typography";
-import { DnsInstructions, DomainStatusBadge } from "./domain-status";
+import { CopyButton } from "@/components/copy-button";
+import { DestructiveConfirmDialog } from "@/components/ui/destructive-confirm-dialog";
+import {
+  DnsInstructions,
+  type DomainStatus,
+  DomainStatusBadge,
+} from "./domain-status";
+import { SettingsPage, SettingsSection } from "./settings-page";
 
 const DOMAIN_FORMAT_REGEX =
   /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/;
@@ -42,207 +49,287 @@ export function DomainsSection({
   const billingStatus = useQuery(api.billing.queries.getStatus, {
     organizationId,
   });
+  const subdomain = `${orgSlug}.reflet.app`;
+  const isLoading = domainStatus === undefined || billingStatus === undefined;
+  const isPro = billingStatus?.tier === "pro";
+  const customDomain = domainStatus?.customDomain;
 
+  return (
+    <SettingsPage
+      description="Where your public roadmap, changelog and feedback board live."
+      title="Domains"
+    >
+      <SettingsSection title="Subdomain">
+        <Card>
+          <CardContent className="flex items-center justify-between gap-4">
+            <div className="flex min-w-0 items-center gap-1">
+              <code className="truncate font-mono text-label">{subdomain}</code>
+              <CopyButton label="Copy subdomain" size="xs" value={subdomain} />
+            </div>
+            <Badge color="green">
+              <CheckCircle aria-hidden />
+              Active
+            </Badge>
+          </CardContent>
+        </Card>
+      </SettingsSection>
+
+      <SettingsSection
+        description="Serve your portal from a domain you own, like feedback.example.com."
+        title="Custom domain"
+      >
+        <Card>
+          <CardContent className="flex flex-col gap-4">
+            {isLoading ? <Skeleton aria-busy="true" className="h-9" /> : null}
+            {isLoading || isPro ? null : <ProUpsell orgSlug={orgSlug} />}
+            {!isLoading && isPro && customDomain && domainStatus ? (
+              <CustomDomainDetails
+                domain={customDomain}
+                error={domainStatus.customDomainError}
+                isAdmin={isAdmin}
+                organizationId={organizationId}
+                status={domainStatus.customDomainStatus}
+                subdomain={subdomain}
+                verification={domainStatus.customDomainVerification}
+              />
+            ) : null}
+            {!isLoading && isPro && !customDomain ? (
+              <AddDomainForm
+                isAdmin={isAdmin}
+                organizationId={organizationId}
+              />
+            ) : null}
+          </CardContent>
+        </Card>
+      </SettingsSection>
+    </SettingsPage>
+  );
+}
+
+function ProUpsell({ orgSlug }: { orgSlug: string }) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <p className="text-body text-muted-foreground">
+        Custom domains are part of Pro.
+      </p>
+      <ButtonLink
+        render={<Link href={`/dashboard/${orgSlug}/project/billing`} />}
+        size="sm"
+        variant="surface"
+      >
+        Compare plans
+      </ButtonLink>
+    </div>
+  );
+}
+
+function AddDomainForm({
+  isAdmin,
+  organizationId,
+}: {
+  isAdmin: boolean;
+  organizationId: Id<"organizations">;
+}) {
   const addDomain = useMutation(api.domains.publicMutations.addDomain);
-  const removeDomainMutation = useMutation(
-    api.domains.publicMutations.removeDomain
-  );
-  const checkVerification = useMutation(
-    api.domains.publicMutations.checkVerification
-  );
-
   const [domainInput, setDomainInput] = useState("");
   const [isAdding, setIsAdding] = useState(false);
-  const [isChecking, setIsChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const isPro = billingStatus?.tier === "pro";
-  const hasDomain = !!domainStatus?.customDomain;
-
-  const handleAddDomain = async () => {
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     const domain = domainInput.toLowerCase().trim();
-
     if (!DOMAIN_FORMAT_REGEX.test(domain)) {
-      setError("Please enter a valid domain (e.g. feedback.example.com).");
+      setError("Enter a domain like feedback.example.com");
       return;
     }
-
     setIsAdding(true);
     setError(null);
-
     try {
       await addDomain({ domain, organizationId });
       setDomainInput("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to add domain.");
-    } finally {
-      setIsAdding(false);
+      setError(err instanceof Error ? err.message : "Couldn’t add the domain");
     }
+    setIsAdding(false);
   };
 
-  const handleRemoveDomain = async () => {
-    try {
-      await removeDomainMutation({ organizationId });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to remove domain.");
-    }
-  };
+  return (
+    <form noValidate onSubmit={handleSubmit}>
+      <Field>
+        <FieldLabel htmlFor="custom-domain">Domain</FieldLabel>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Input
+            aria-describedby="custom-domain-error"
+            aria-invalid={error ? true : undefined}
+            autoCapitalize="none"
+            disabled={!isAdmin}
+            id="custom-domain"
+            inputMode="url"
+            onChange={(event) => {
+              setDomainInput(event.target.value);
+              setError(null);
+            }}
+            placeholder="feedback.example.com"
+            spellCheck={false}
+            value={domainInput}
+          />
+          <Button
+            disabled={!isAdmin || isAdding || !domainInput.trim()}
+            tone="primary"
+            type="submit"
+            variant="solid"
+          >
+            {isAdding ? (
+              <Spinner aria-hidden data-icon="inline-start" size="xs" />
+            ) : null}
+            {isAdding ? "Adding…" : "Add domain"}
+          </Button>
+        </div>
+        <FieldError
+          id="custom-domain-error"
+          match={error !== null}
+          role="alert"
+        >
+          {error}
+        </FieldError>
+        {isAdmin ? null : (
+          <p className="text-caption text-muted-foreground">
+            Only admins and owners can manage custom domains.
+          </p>
+        )}
+      </Field>
+    </form>
+  );
+}
+
+interface CustomDomainDetailsProps {
+  domain: string;
+  error?: string;
+  isAdmin: boolean;
+  organizationId: Id<"organizations">;
+  status?: DomainStatus;
+  subdomain: string;
+  verification?: Array<{ domain: string; type: string; value: string }>;
+}
+
+function CustomDomainDetails({
+  domain,
+  error,
+  isAdmin,
+  organizationId,
+  status,
+  subdomain,
+  verification,
+}: CustomDomainDetailsProps) {
+  const checkVerification = useMutation(
+    api.domains.publicMutations.checkVerification
+  );
+  const [isChecking, setIsChecking] = useState(false);
+  const isVerifiable = status !== "active" && status !== "removing";
 
   const handleCheckVerification = async () => {
     setIsChecking(true);
     try {
       await checkVerification({ organizationId });
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to check verification."
+      toast.error(
+        err instanceof Error ? err.message : "Couldn’t check verification"
       );
-    } finally {
-      setIsChecking(false);
     }
-  };
-
-  const copyToClipboard = async (text: string) => {
-    await navigator.clipboard.writeText(text);
+    setIsChecking(false);
   };
 
   return (
-    <div className="space-y-8">
-      <h1 className="font-semibold text-lg">Domains</h1>
-
-      <section className="flex items-center justify-between gap-4">
-        <div className="space-y-2">
-          <h2 className="font-medium text-sm">Subdomain</h2>
-          <code className="inline-block rounded-md bg-muted px-3 py-1.5 text-sm">
-            {orgSlug}.reflet.app
-          </code>
+    <>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <code className="break-all font-mono text-label">{domain}</code>
+          {status ? <DomainStatusBadge status={status} /> : null}
         </div>
-        <Badge variant="default">Active</Badge>
-      </section>
-
-      <section className="space-y-4 border-t pt-8">
-        <h2 className="font-medium text-sm">Custom domain</h2>
-        {isPro ? null : (
-          <div className="flex items-center justify-between gap-4">
-            <Muted>Available on Pro</Muted>
-            <ButtonLink
-              render={<Link href={`/dashboard/${orgSlug}/project/billing`} />}
-              size="xs"
+        <div className="flex flex-wrap items-center gap-2">
+          {isVerifiable ? (
+            <Button
+              disabled={isChecking}
+              onClick={handleCheckVerification}
+              size="sm"
               variant="surface"
             >
-              Upgrade
-            </ButtonLink>
-          </div>
-        )}
-        {isPro && hasDomain && (
-          <div className="space-y-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex min-w-0 flex-wrap items-center gap-2">
-                <code className="max-w-full overflow-x-auto rounded-md bg-muted px-3 py-1.5 text-sm">
-                  {domainStatus.customDomain}
-                </code>
-                {domainStatus.customDomainStatus && (
-                  <DomainStatusBadge status={domainStatus.customDomainStatus} />
-                )}
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                {domainStatus.customDomainStatus !== "active" &&
-                  domainStatus.customDomainStatus !== "removing" && (
-                    <Button
-                      disabled={isChecking}
-                      onClick={handleCheckVerification}
-                      size="xs"
-                      variant="surface"
-                    >
-                      <ArrowsClockwise
-                        className={`h-4 w-4 ${isChecking ? "animate-spin" : ""}`}
-                      />
-                      Check verification
-                    </Button>
-                  )}
-                <AlertDialog>
-                  <AlertDialogTrigger
-                    className="inline-flex h-8 items-center justify-center gap-2 rounded-md bg-destructive px-3 text-destructive-foreground text-xs shadow-xs hover:bg-destructive/90 disabled:pointer-events-none disabled:opacity-50"
-                    disabled={
-                      !isAdmin || domainStatus.customDomainStatus === "removing"
-                    }
-                  >
-                    <Trash className="h-4 w-4" />
-                    Remove
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Remove custom domain</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This will remove {domainStatus.customDomain} from your
-                        organization. Your portal will still be accessible via{" "}
-                        {orgSlug}.reflet.app.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogClose>Cancel</AlertDialogClose>
-                      <AlertDialogClose
-                        onClick={handleRemoveDomain}
-                        tone="danger"
-                        variant="surface"
-                      >
-                        Remove domain
-                      </AlertDialogClose>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
-            </div>
+              {isChecking ? (
+                <Spinner aria-hidden data-icon="inline-start" size="xs" />
+              ) : (
+                <ArrowsClockwise aria-hidden />
+              )}
+              {isChecking ? "Checking…" : "Check verification"}
+            </Button>
+          ) : null}
+          <RemoveDomainButton
+            disabled={!isAdmin || status === "removing"}
+            domain={domain}
+            organizationId={organizationId}
+            subdomain={subdomain}
+          />
+        </div>
+      </div>
 
-            {domainStatus.customDomainError && (
-              <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3">
-                <Text className="text-destructive text-sm">
-                  {domainStatus.customDomainError}
-                </Text>
-              </div>
-            )}
+      {error ? (
+        <Alert variant="destructive">
+          <WarningCircle aria-hidden />
+          <AlertTitle>Domain configuration problem</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
 
-            {domainStatus.customDomainStatus !== "active" && (
-              <DnsInstructions
-                domain={domainStatus.customDomain ?? ""}
-                onCopy={copyToClipboard}
-                verification={domainStatus.customDomainVerification}
-              />
-            )}
+      {status === "active" ? null : (
+        <DnsInstructions domain={domain} verification={verification} />
+      )}
+    </>
+  );
+}
 
-            {error && <Text className="text-destructive text-sm">{error}</Text>}
-          </div>
-        )}
+function RemoveDomainButton({
+  disabled,
+  domain,
+  organizationId,
+  subdomain,
+}: {
+  disabled: boolean;
+  domain: string;
+  organizationId: Id<"organizations">;
+  subdomain: string;
+}) {
+  const removeDomain = useMutation(api.domains.publicMutations.removeDomain);
+  const [open, setOpen] = useState(false);
 
-        {isPro && !hasDomain ? (
-          <div className="space-y-4">
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Input
-                disabled={!isAdmin}
-                onChange={(event) => {
-                  setDomainInput(event.target.value);
-                  setError(null);
-                }}
-                placeholder="feedback.example.com"
-                value={domainInput}
-              />
-              <Button
-                disabled={!isAdmin || isAdding || !domainInput.trim()}
-                onClick={handleAddDomain}
-                tone="primary"
-                variant="solid"
-              >
-                {isAdding ? "Adding..." : "Add domain"}
-              </Button>
-            </div>
-            {error ? (
-              <Text className="text-destructive text-sm">{error}</Text>
-            ) : null}
-            {isAdmin ? null : (
-              <Muted>Only admins and owners can manage custom domains.</Muted>
-            )}
-          </div>
-        ) : null}
-      </section>
-    </div>
+  const handleRemove = async () => {
+    try {
+      await removeDomain({ organizationId });
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Couldn’t remove the domain"
+      );
+    }
+  };
+
+  return (
+    <>
+      <Button
+        disabled={disabled}
+        onClick={() => setOpen(true)}
+        size="sm"
+        tone="danger"
+        variant="surface"
+      >
+        <Trash aria-hidden />
+        Remove
+      </Button>
+      <DestructiveConfirmDialog
+        confirmLabel="Remove domain"
+        description={`Links to ${domain} stop working. Your portal stays available at ${subdomain}.`}
+        onConfirm={handleRemove}
+        onOpenChange={setOpen}
+        open={open}
+        title={`Remove ${domain}?`}
+      />
+    </>
   );
 }

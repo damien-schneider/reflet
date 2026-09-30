@@ -1,11 +1,18 @@
 "use client";
 
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@ctrl-ui/react/ui/empty";
 import { Separator } from "@ctrl-ui/react/ui/separator";
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { TagBadge } from "@/components/tag-badge";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { useMakeFeedbackPublic } from "../../hooks/use-make-feedback-public";
@@ -49,28 +56,27 @@ export function PublicFeedbackDetailContent({
     message: "Sign in to comment on this feedback",
   });
 
-  const handleVote = useCallback(async () => {
+  const handleVote = async () => {
     await toggleVote({ feedbackId, voteType: "upvote" });
-  }, [feedbackId, toggleVote]);
+  };
 
-  const handleStatusChange = useCallback(
-    async (statusId: Id<"organizationStatuses"> | null) => {
-      if (!statusId) {
-        return;
-      }
-      await updateFeedbackStatus({
-        feedbackId,
-        organizationStatusId: statusId,
-      });
-    },
-    [feedbackId, updateFeedbackStatus]
-  );
+  const handleStatusChange = async (
+    statusId: Id<"organizationStatuses"> | null
+  ) => {
+    if (!statusId) {
+      return;
+    }
+    await updateFeedbackStatus({
+      feedbackId,
+      organizationStatusId: statusId,
+    });
+  };
 
-  const handleTogglePin = useCallback(async () => {
+  const handleTogglePin = async () => {
     await togglePin({ id: feedbackId });
-  }, [feedbackId, togglePin]);
+  };
 
-  const handleSubmitComment = useCallback(() => {
+  const handleSubmitComment = () => {
     const trimmedComment = newComment.trim();
     if (!trimmedComment) {
       return;
@@ -80,11 +86,12 @@ export function PublicFeedbackDetailContent({
       try {
         await createComment({ body: trimmedComment, feedbackId });
         setNewComment("");
-      } finally {
-        setIsSubmittingComment(false);
+      } catch {
+        toast.error("Couldn’t post your comment. Try again.");
       }
+      setIsSubmittingComment(false);
     });
-  }, [feedbackId, newComment, createComment, guard]);
+  };
 
   const isLoading = feedback === undefined;
   const currentStatus = organizationStatuses?.find(
@@ -93,7 +100,8 @@ export function PublicFeedbackDetailContent({
 
   if (isLoading) {
     return (
-      <div className="p-6">
+      <div aria-busy="true" className="p-6">
+        <span className="sr-only">Loading feedback…</span>
         <div className="flex items-start gap-4">
           <Skeleton className="h-14 w-12" />
           <div className="flex-1 space-y-2">
@@ -107,15 +115,20 @@ export function PublicFeedbackDetailContent({
 
   if (!feedback) {
     return (
-      <div className="p-6 text-center text-muted-foreground">
-        Feedback not found
-      </div>
+      <Empty>
+        <EmptyHeader>
+          <EmptyTitle>Feedback not found</EmptyTitle>
+          <EmptyDescription>
+            It may have been deleted, or the link is wrong.
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     );
   }
 
   return (
     <div className="flex max-h-[90vh] flex-col">
-      <div className="flex items-start justify-between border-b p-6">
+      <div className="border-b p-6">
         <div className="flex items-start gap-4">
           <PublicFeedbackVoting
             hasVoted={feedback.hasVoted}
@@ -147,24 +160,20 @@ export function PublicFeedbackDetailContent({
 
       <div className="flex-1 overflow-y-auto p-6">
         <div className="mb-6">
-          <h3 className="mb-2 font-medium">Description</h3>
-          <p className="whitespace-pre-wrap text-muted-foreground">
+          <h3 className="mb-2 font-medium text-sm">Description</h3>
+          <p className="max-w-prose whitespace-pre-wrap text-pretty text-muted-foreground">
             {feedback.description || "No description provided."}
           </p>
         </div>
 
         {feedback.tags && feedback.tags.length > 0 && (
           <div className="mb-6">
-            <h3 className="mb-2 font-medium">Tags</h3>
+            <h3 className="mb-2 font-medium text-sm">Tags</h3>
             <div className="flex flex-wrap gap-2">
               {feedback.tags
                 .filter((tag): tag is NonNullable<typeof tag> => tag !== null)
                 .map((tag) => (
-                  <TagBadge
-                    className="font-normal"
-                    color={tag.color}
-                    key={tag._id}
-                  >
+                  <TagBadge color={tag.color} key={tag._id}>
                     {tag.icon && <span>{tag.icon}</span>}
                     {tag.name}
                   </TagBadge>

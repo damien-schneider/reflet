@@ -86,16 +86,13 @@
   translate: -50% 0;
 }
 :where(.hero-preview-controls [data-control-family="button"]) {
-  --cui-button-height: 28px;
   --cui-button-radius: 12px;
-  font-size: 11px;
-}
-:where(.hero-preview-controls [aria-pressed="true"]) {
-  background: var(--card);
-  box-shadow: var(--marketing-panel);
+  --cui-button-active-background: var(--card);
+  --cui-button-active-hover-background: var(--card);
+  --cui-button-active-shadow: var(--marketing-panel);
 }
 @media (prefers-reduced-motion: no-preference) {
   :where(.hero-preview-card) {
-    transition: transform 700ms var(--marketing-reveal-ease);
+    transition: transform 420ms var(--marketing-move-ease);
   }
 }

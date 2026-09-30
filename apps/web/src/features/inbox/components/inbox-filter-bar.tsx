@@ -1,11 +1,19 @@
 "use client";
 
-import { Input } from "@ctrl-ui/react/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@ctrl-ui/react/ui/input-group";
+import {
+  PageActions,
+  PageHeader,
+  PageTitle,
+} from "@ctrl-ui/react/ui/page-layout";
 import { Toggle } from "@ctrl-ui/react/ui/toggle";
 import { MagnifyingGlass } from "@phosphor-icons/react";
 import type React from "react";
 import type { RefObject } from "react";
-import { H1 } from "@/components/ui/typography";
 import {
   CONVERSATION_STATUS_META,
   CONVERSATION_STATUSES,
@@ -31,36 +39,48 @@ export function InboxFilterBar({
 }: InboxFilterBarProps) {
   return (
     <div className="border-b p-4">
-      <div className="flex items-center justify-between">
-        <H1 variant="page">Inbox</H1>
-        <div className="flex items-center gap-2">{children}</div>
-      </div>
+      <PageHeader>
+        <PageTitle>Inbox</PageTitle>
+        <PageActions>{children}</PageActions>
+      </PageHeader>
 
       <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="flex flex-wrap items-center gap-1">
+        <fieldset
+          aria-label="Filter by status"
+          className="flex min-w-0 flex-wrap items-center gap-1"
+        >
           {CONVERSATION_STATUSES.map((status) => (
             <Toggle
               key={status}
               onPressedChange={() => onToggleStatusFilter(status)}
               pressed={statusFilter.includes(status)}
+              showCheck
               value={status}
             >
               {CONVERSATION_STATUS_META[status].label}
             </Toggle>
           ))}
-        </div>
+        </fieldset>
 
-        <div className="relative w-full sm:ml-auto sm:w-56">
-          <MagnifyingGlass className="absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
+        <InputGroup className="w-full sm:ml-auto sm:w-64" size="sm">
+          <InputGroupAddon>
+            <MagnifyingGlass
+              aria-hidden
+              className="size-4 text-muted-foreground"
+            />
+          </InputGroupAddon>
+          <InputGroupInput
+            aria-keyshortcuts="/"
             aria-label="Search conversations"
-            className="h-8 pl-8 text-sm"
+            autoComplete="off"
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Search conversations..."
+            placeholder="Search conversations…"
             ref={searchInputRef}
+            spellCheck={false}
+            type="search"
             value={searchQuery}
           />
-        </div>
+        </InputGroup>
       </div>
     </div>
   );

@@ -15,6 +15,11 @@ const COPIED_RESET_MS = 2000;
 
 type CopyTarget = "command" | "prompt";
 
+const COPIED_MESSAGES: Record<CopyTarget, string> = {
+  command: "Install command copied",
+  prompt: "Setup prompt copied",
+};
+
 interface FeedbackCollectorCardProps {
   canManageKeys: boolean;
   isLoading: boolean;
@@ -30,7 +35,9 @@ function useCopy() {
     try {
       await navigator.clipboard.writeText(value);
     } catch {
-      toast.error("Your browser blocked the clipboard");
+      toast.error(
+        "Your browser blocked the clipboard. Select the text and copy it manually."
+      );
       return;
     }
     setCopied(target);
@@ -43,58 +50,82 @@ function useCopy() {
   return { copied, copy };
 }
 
+function CopyIcon({ copied }: { copied: boolean }) {
+  return copied ? (
+    <Check aria-hidden className="size-4" />
+  ) : (
+    <Copy aria-hidden className="size-4" />
+  );
+}
+
 function InstallPanel({ publicKey }: { publicKey: string }) {
   const { copied, copy } = useCopy();
   const setupPrompt = generateSetupPrompt(publicKey);
   const installCommand = `npx reflet-cli init --public-key ${publicKey} --yes`;
 
   return (
-    <div className="overflow-hidden rounded-lg border">
-      <div className="relative border-b">
-        <pre className="max-h-28 overflow-hidden whitespace-pre-wrap p-4 pr-40 font-sans text-muted-foreground text-xs leading-relaxed [mask-image:linear-gradient(to_bottom,#000_45%,transparent)]">
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="font-medium text-sm">
+            With an AI coding agent
+            <span className="font-normal text-muted-foreground">
+              {" "}
+              · paste this prompt into Claude Code, Cursor or similar
+            </span>
+          </p>
+          <Button
+            onClick={() => copy("prompt", setupPrompt)}
+            size="sm"
+            tone="primary"
+            variant="solid"
+          >
+            <CopyIcon copied={copied === "prompt"} />
+            {copied === "prompt" ? "Copied" : "Copy prompt"}
+          </Button>
+        </div>
+        <pre className="max-h-28 overflow-hidden whitespace-pre-wrap rounded-lg border p-4 font-sans text-muted-foreground text-xs leading-relaxed [mask-image:linear-gradient(to_bottom,#000_45%,transparent)]">
           {setupPrompt}
         </pre>
-        <Button
-          className="absolute top-3 right-3 min-h-11"
-          onClick={() => copy("prompt", setupPrompt)}
-          size="xs"
-          tone="primary"
-          variant="solid"
-        >
-          {copied === "prompt" ? (
-            <Check className="mr-2 h-4 w-4" />
-          ) : (
-            <Copy className="mr-2 h-4 w-4" />
-          )}
-          {copied === "prompt" ? "Copied" : "Copy prompt"}
-        </Button>
       </div>
-      <div className="flex min-w-0 items-center gap-2 p-2">
-        <code className="min-w-0 flex-1 overflow-x-auto whitespace-nowrap px-2 text-xs">
-          {installCommand}
-        </code>
-        <Button
-          aria-label="Copy install command"
-          className="size-11 shrink-0"
-          iconOnly
-          onClick={() => copy("command", installCommand)}
-          variant="ghost"
-        >
-          {copied === "command" ? (
-            <Check className="h-4 w-4" />
-          ) : (
-            <Copy className="h-4 w-4" />
-          )}
-        </Button>
+      <div className="space-y-2">
+        <p className="font-medium text-sm">
+          Or from your terminal
+          <span className="font-normal text-muted-foreground">
+            {" "}
+            · run this in your project folder
+          </span>
+        </p>
+        <div className="flex min-w-0 items-center gap-2 rounded-lg border p-1 pl-3">
+          <code className="min-w-0 flex-1 overflow-x-auto whitespace-nowrap text-xs">
+            {installCommand}
+          </code>
+          <Button
+            aria-label={
+              copied === "command" ? "Copied" : "Copy install command"
+            }
+            className="shrink-0"
+            iconOnly
+            onClick={() => copy("command", installCommand)}
+            variant="ghost"
+          >
+            <CopyIcon copied={copied === "command"} />
+          </Button>
+        </div>
       </div>
+      <span aria-live="polite" className="sr-only">
+        {copied ? COPIED_MESSAGES[copied] : ""}
+      </span>
     </div>
   );
 }
 
 function NoKeyPanel({
+  canManageKeys,
   orgSlug,
   waiting,
 }: {
+  canManageKeys: boolean;
   orgSlug: string;
   waiting: boolean;
 }) {
@@ -111,14 +142,26 @@ function NoKeyPanel({
     );
   }
 
+  if (!canManageKeys) {
+    return (
+      <Muted className="rounded-lg border border-dashed p-4">
+        Setup needs a public key. Ask an organization admin to create one.
+      </Muted>
+    );
+  }
+
   return (
-    <ButtonLink
-      className="min-h-11"
-      render={<Link href={`/dashboard/${orgSlug}/project/api-keys`} />}
-      variant="surface"
-    >
-      Create public key
-    </ButtonLink>
+    <div className="flex flex-wrap items-center gap-3 rounded-lg border border-dashed p-4">
+      <Muted className="flex-1">
+        Setup needs a public key, and we couldn’t create one automatically.
+      </Muted>
+      <ButtonLink
+        render={<Link href={`/dashboard/${orgSlug}/project/api-keys`} />}
+        variant="surface"
+      >
+        Create public key
+      </ButtonLink>
+    </div>
   );
 }
 
@@ -142,22 +185,22 @@ export function FeedbackCollectorCard({
   }, [ensurePublicKey, needsKey, organizationId]);
 
   return (
-    <section className="space-y-4">
+    <section aria-labelledby="feedback-collector-heading" className="space-y-4">
       <div className="space-y-1">
-        <div className="flex items-center justify-between gap-3">
-          <H3 variant="card">Feedback collector</H3>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <H3 id="feedback-collector-heading" variant="card">
+            Feedback collector
+          </H3>
           <div className="flex items-center gap-2">
             <ButtonLink
-              className="min-h-11"
               render={<Link href="/sdk-demo" rel="noopener" target="_blank" />}
-              size="xs"
+              size="sm"
               variant="surface"
             >
               Try it
-              <ArrowSquareOut className="ml-2 h-4 w-4" />
+              <ArrowSquareOut aria-hidden className="size-4" />
             </ButtonLink>
             <ButtonLink
-              className="min-h-11"
               render={
                 <Link
                   href="/docs/widget/floating-feedback"
@@ -165,14 +208,15 @@ export function FeedbackCollectorCard({
                   target="_blank"
                 />
               }
-              size="xs"
+              size="sm"
+              variant="ghost"
             >
               View docs
-              <ArrowSquareOut className="ml-2 h-4 w-4" />
+              <ArrowSquareOut aria-hidden className="size-4" />
             </ButtonLink>
           </div>
         </div>
-        <Muted className="max-w-xl text-sm">
+        <Muted className="max-w-xl text-pretty">
           A floating button in your app. Each report carries the screenshot, the
           console and the element the user pointed at.
         </Muted>
@@ -181,7 +225,11 @@ export function FeedbackCollectorCard({
       {publicKey ? (
         <InstallPanel publicKey={publicKey} />
       ) : (
-        <NoKeyPanel orgSlug={orgSlug} waiting={isLoading || needsKey} />
+        <NoKeyPanel
+          canManageKeys={canManageKeys}
+          orgSlug={orgSlug}
+          waiting={isLoading || needsKey}
+        />
       )}
     </section>
   );

@@ -10,7 +10,7 @@ export async function generateMetadata({
   const { orgSlug } = await params;
 
   return generatePageMetadata({
-    description: `See what ${orgSlug} is working on and what's coming next. Transparent product roadmap with planned features and development progress.`,
+    description: `See what ${orgSlug} is working on and what’s coming next. Transparent product roadmap with planned features and development progress.`,
     keywords: [
       "roadmap",
       "product roadmap",
@@ -19,7 +19,7 @@ export async function generateMetadata({
       orgSlug,
     ],
     path: `/${orgSlug}/roadmap`,
-    title: `${orgSlug} - Product Roadmap`,
+    title: `Roadmap – ${orgSlug}`,
   });
 }
 

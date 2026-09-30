@@ -113,17 +113,30 @@ describe("ReleaseTimeline", () => {
 
   it("shows empty state when releases array is empty", () => {
     render(<ReleaseTimeline orgSlug="test-org" releases={[]} />);
-    expect(screen.getByText("No releases")).toBeInTheDocument();
+    expect(screen.getByText("No releases yet")).toBeInTheDocument();
   });
 
-  it("hides public helper copy for admins", () => {
+  it("shows admin empty-state copy to admins", () => {
     render(<ReleaseTimeline isAdmin orgSlug="test-org" releases={[]} />);
-    expect(screen.queryByText("Check back soon.")).not.toBeInTheDocument();
+    expect(
+      screen.getByText("Write your first release to tell users what shipped.")
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("Subscribe to hear about the first release.")
+    ).not.toBeInTheDocument();
   });
 
   it("shows public empty-state copy", () => {
     render(<ReleaseTimeline orgSlug="test-org" releases={[]} />);
-    expect(screen.getByText("Check back soon.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Subscribe to hear about the first release.")
+    ).toBeInTheDocument();
+  });
+
+  it("shows a loading state instead of the empty state while releases load", () => {
+    render(<ReleaseTimeline orgSlug="test-org" releases={undefined} />);
+    expect(screen.getByRole("status")).toHaveTextContent("Loading releases…");
+    expect(screen.queryByText("No releases yet")).not.toBeInTheDocument();
   });
 
   it("renders emptyAction in empty state", () => {

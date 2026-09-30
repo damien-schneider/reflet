@@ -31,6 +31,49 @@ interface UseFeedbackMatchingResult {
   ) => Promise<void>;
 }
 
+async function requestMatches(
+  releaseNotes: string,
+  commits: CommitInfo[],
+  feedbackItems: FeedbackCandidate[]
+): Promise<FeedbackMatch[]> {
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_CONVEX_SITE_URL ?? ""}/api/ai/match-release-feedback`,
+    {
+      body: JSON.stringify({
+        commits: commits.map((c) => ({
+          author: c.author,
+          fullMessage: c.fullMessage,
+          message: c.message,
+          sha: c.sha,
+        })),
+        feedbackItems: feedbackItems.map((f) => ({
+          description: f.description,
+          id: f._id,
+          status: f.status,
+          tags: f.tags.map((t) => t.name),
+          title: f.title,
+        })),
+        releaseNotes,
+      }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    }
+  );
+  if (!response.ok) {
+    throw new Error("Failed to match feedback");
+  }
+  const data: unknown = await response.json();
+  if (
+    !data ||
+    typeof data !== "object" ||
+    !("matches" in data) ||
+    !Array.isArray(data.matches)
+  ) {
+    throw new Error("Failed to match feedback");
+  }
+  return data.matches;
+}
+
 export function useFeedbackMatching(): UseFeedbackMatchingResult {
   const [matches, setMatches] = useState<FeedbackMatch[]>([]);
   const [isMatching, setIsMatching] = useState(false);
@@ -50,61 +93,21 @@ export function useFeedbackMatching(): UseFeedbackMatchingResult {
     setMatchError(null);
     setMatches([]);
 
+    let result: FeedbackMatch[] = [];
+    let failure: unknown = null;
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_CONVEX_SITE_URL ?? ""}/api/ai/match-release-feedback`,
-        {
-          body: JSON.stringify({
-            commits: commits.map((c) => ({
-              author: c.author,
-              fullMessage: c.fullMessage,
-              message: c.message,
-              sha: c.sha,
-            })),
-            feedbackItems: feedbackItems.map((f) => ({
-              description: f.description,
-              id: f._id,
-              status: f.status,
-              tags: f.tags.map((t) => t.name),
-              title: f.title,
-            })),
-            releaseNotes,
-          }),
-          headers: { "Content-Type": "application/json" },
-          method: "POST",
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to match feedback");
-      }
-
-      const data: unknown = await response.json();
-
-      if (
-        !data ||
-        typeof data !== "object" ||
-        !("matches" in data) ||
-        !Array.isArray(data.matches)
-      ) {
-        throw new Error("Failed to match feedback");
-      }
-
-      if (
-        data &&
-        typeof data === "object" &&
-        "matches" in data &&
-        Array.isArray(data.matches)
-      ) {
-        setMatches(data.matches as FeedbackMatch[]);
-      }
+      result = await requestMatches(releaseNotes, commits, feedbackItems);
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Failed to match feedback";
-      setMatchError(message);
-    } finally {
-      setIsMatching(false);
+      failure = error;
     }
+    if (failure === null) {
+      setMatches(result);
+    } else {
+      setMatchError(
+        failure instanceof Error ? failure.message : "Failed to match feedback"
+      );
+    }
+    setIsMatching(false);
   };
 
   const clearMatches = () => {

@@ -1,10 +1,13 @@
 "use client";
 
 import { Button } from "@ctrl-ui/react/ui/button";
-import { Input } from "@ctrl-ui/react/ui/input";
-import { toast } from "@ctrl-ui/react/ui/toast";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@ctrl-ui/react/ui/input-group";
 import { Bell, Envelope } from "@phosphor-icons/react";
-import { useState } from "react";
+import { type FormEvent, useId, useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface EmailSubscribeFormProps {
@@ -21,77 +24,93 @@ export function EmailSubscribeForm({
   className,
   description,
   onSubscribe,
-  placeholder = "your@email.com",
-  successMessage = "Subscribed! You'll receive email notifications.",
+  placeholder = "you@company.com",
+  successMessage = "Subscribed. You’ll get an email when there’s news.",
   title,
   variant = "card",
 }: EmailSubscribeFormProps) {
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const errorId = useId();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!email.trim()) {
-      toast.error("Email is required");
-      return;
-    }
-
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError(null);
     setIsSubmitting(true);
     try {
       await onSubscribe(email.trim());
-      toast.success(successMessage);
       setEmail("");
       setIsSubscribed(true);
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to subscribe"
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : "Couldn’t subscribe. Check the address and try again."
       );
-    } finally {
-      setIsSubmitting(false);
     }
+    setIsSubmitting(false);
   };
 
   const isCard = variant === "card";
+  const cardClassName = "rounded-(--radius-panel) border border-border p-4";
 
   if (isSubscribed) {
-    if (!isCard) {
-      return (
-        <p className={cn("text-success-text text-sm", className)}>
-          {successMessage}
-        </p>
-      );
-    }
     return (
-      <div className={cn("rounded-lg border p-4", className)}>
-        <p className="text-success-text text-sm">{successMessage}</p>
-      </div>
+      <p
+        className={cn(
+          "text-body text-success-text",
+          isCard && cardClassName,
+          className
+        )}
+        role="status"
+      >
+        {successMessage}
+      </p>
     );
   }
 
   const form = (
-    <form className="flex gap-2" onSubmit={handleSubmit}>
-      <div className="relative flex-1">
-        <Envelope className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          className="pl-9"
+    <form className="flex flex-col gap-2" onSubmit={handleSubmit}>
+      <div className="flex gap-2">
+        <InputGroup className="min-w-0 flex-1">
+          <InputGroupAddon>
+            <Envelope aria-hidden className="size-4 text-muted-foreground" />
+          </InputGroupAddon>
+          <InputGroupInput
+            aria-describedby={error ? errorId : undefined}
+            aria-invalid={error ? true : undefined}
+            aria-label="Email address"
+            autoComplete="email"
+            name="email"
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder={placeholder}
+            readOnly={isSubmitting}
+            required
+            type="email"
+            value={email}
+          />
+        </InputGroup>
+        <Button
           disabled={isSubmitting}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder={placeholder}
-          type="email"
-          value={email}
-        />
+          tone="primary"
+          type="submit"
+          variant="solid"
+        >
+          <Bell aria-hidden data-icon="inline-start" />
+          {isSubmitting ? "Subscribing…" : "Subscribe"}
+        </Button>
       </div>
-      <Button
-        disabled={isSubmitting || !email.trim()}
-        tone="primary"
-        type="submit"
-        variant="solid"
-      >
-        <Bell className="mr-2 h-4 w-4" />
-        Subscribe
-      </Button>
+      {error ? (
+        <p
+          className="text-body text-destructive-text"
+          id={errorId}
+          role="alert"
+        >
+          {error}
+        </p>
+      ) : null}
     </form>
   );
 
@@ -100,11 +119,11 @@ export function EmailSubscribeForm({
   }
 
   return (
-    <div className={cn("rounded-lg border p-4", className)}>
-      {title && <p className="mb-1 font-medium text-sm">{title}</p>}
-      {description && (
-        <p className="mb-2 text-muted-foreground text-xs">{description}</p>
-      )}
+    <div className={cn(cardClassName, className)}>
+      {title ? <p className="mb-1 font-medium text-body">{title}</p> : null}
+      {description ? (
+        <p className="mb-3 text-label text-muted-foreground">{description}</p>
+      ) : null}
       {form}
     </div>
   );

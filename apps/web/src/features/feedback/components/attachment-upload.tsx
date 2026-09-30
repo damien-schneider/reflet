@@ -1,7 +1,5 @@
 "use client";
 
-import { Button } from "@ctrl-ui/react/ui/button";
-import { Input } from "@ctrl-ui/react/ui/input";
 import {
   Tooltip,
   TooltipContent,
@@ -43,8 +41,8 @@ function DropzoneLabel({
   if (isUploading) {
     return (
       <>
-        <Spinner className="h-4 w-4 animate-spin" />
-        <span>Uploading...</span>
+        <Spinner aria-hidden className="size-4 motion-safe:animate-spin" />
+        <span>Uploading…</span>
       </>
     );
   }
@@ -52,19 +50,19 @@ function DropzoneLabel({
   if (isDragging) {
     return (
       <>
-        <ImageIcon className="h-4 w-4" />
-        <span>Drop images here</span>
+        <ImageIcon aria-hidden className="size-4" />
+        <span>Drop images to attach</span>
       </>
     );
   }
 
   return (
     <>
-      <Paperclip className="h-4 w-4" />
+      <Paperclip aria-hidden className="size-4" />
       <span>Attach images</span>
       {attachmentsCount > 0 && (
-        <span className="text-muted-foreground/60 text-xs tabular-nums">
-          ({attachmentsCount}/{maxAttachments})
+        <span className="text-muted-foreground text-xs tabular-nums">
+          {attachmentsCount}/{maxAttachments}
         </span>
       )}
     </>
@@ -85,10 +83,6 @@ export function AttachmentUpload({
     onError: (err) => {
       setError(err.message);
     },
-    onSuccess: (url) => {
-      onAttachmentsChange([...attachments, url]);
-      setError(null);
-    },
   });
 
   const canAddMore = attachments.length < maxAttachments && !disabled;
@@ -98,12 +92,19 @@ export function AttachmentUpload({
     const remaining = maxAttachments - attachments.length;
     const filesToUpload = fileArray.slice(0, remaining);
 
-    for (const file of filesToUpload) {
-      await uploadImage(file);
+    const uploaded = await Promise.all(
+      filesToUpload.map((file) => uploadImage(file))
+    );
+    const urls = uploaded.filter((url): url is string => url !== null);
+    if (urls.length > 0) {
+      onAttachmentsChange([...attachments, ...urls]);
+      setError(null);
     }
 
     if (fileArray.length > remaining) {
-      setError(`Maximum ${maxAttachments} attachments allowed`);
+      setError(
+        `You can attach up to ${maxAttachments} images. Remove one to add another.`
+      );
     }
   };
 
@@ -154,15 +155,15 @@ export function AttachmentUpload({
   return (
     <div className="space-y-2">
       {attachments.length > 0 && (
-        <div className="flex flex-wrap gap-2">
+        <ul aria-label="Attachments" className="flex flex-wrap gap-2">
           {attachments.map((url, index) => (
-            <div
-              className="group relative h-16 w-16 overflow-hidden rounded-md border bg-muted"
+            <li
+              className="group relative size-16 rounded-md bg-muted"
               key={url}
             >
               <NextImage
                 alt={`Attachment ${index + 1}`}
-                className="object-cover outline outline-1 outline-black/10 -outline-offset-1 dark:outline-white/10"
+                className="rounded-md object-cover outline outline-1 outline-black/10 -outline-offset-1 dark:outline-white/10"
                 fill
                 sizes="64px"
                 src={url}
@@ -171,48 +172,49 @@ export function AttachmentUpload({
                 <TooltipTrigger
                   aria-label={`Remove attachment ${index + 1}`}
                   render={
-                    <Button
-                      className="pointer-events-none pointer-coarse:pointer-events-auto absolute top-0.5 right-0.5 h-5 w-5 rounded-full bg-foreground/70 p-0 text-background opacity-0 pointer-coarse:opacity-100 transition-opacity group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100"
-                      iconOnly
+                    <button
+                      className="pointer-events-none pointer-coarse:pointer-events-auto absolute top-0.5 right-0.5 flex size-5 cursor-pointer items-center justify-center rounded-full bg-foreground/70 text-background opacity-0 pointer-coarse:opacity-100 outline-none transition-opacity duration-(--duration-fast) before:absolute before:-inset-1.5 focus-visible:pointer-events-auto focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring group-hover:pointer-events-auto group-hover:opacity-100"
+                      disabled={disabled}
                       onClick={() => handleRemove(index)}
-                      variant="quiet"
+                      type="button"
                     />
                   }
                 >
-                  <X className="h-3 w-3" weight="bold" />
+                  <X aria-hidden className="size-3" weight="bold" />
                 </TooltipTrigger>
                 <TooltipContent>Remove attachment</TooltipContent>
               </Tooltip>
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
 
       {canAddMore && (
         <>
-          <Input
+          <input
             accept={ACCEPTED_IMAGE_TYPES}
-            aria-label="Attach images"
+            aria-hidden="true"
             className="hidden"
             multiple
             onChange={handleInputChange}
             ref={inputRef}
+            tabIndex={-1}
             type="file"
           />
-          <Button
+          <button
+            aria-busy={isUploading || undefined}
             className={cn(
-              "h-auto w-full justify-start gap-2 rounded-md border border-dashed px-3 py-2 text-muted-foreground text-sm transition-colors",
+              "flex w-full cursor-pointer items-center gap-2 rounded-md border border-dashed px-3 py-2 text-left text-muted-foreground text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60",
               isDragging
                 ? "border-primary bg-primary/5 text-primary"
-                : "border-muted-foreground/25 hover:border-muted-foreground/50 hover:bg-muted/50",
-              disabled && "cursor-not-allowed opacity-60"
+                : "border-muted-foreground/25 hover:border-muted-foreground/50 hover:bg-muted/50"
             )}
             disabled={disabled}
             onClick={handleClick}
             onDragLeave={handleDragLeave}
             onDragOver={handleDragOver}
             onDrop={handleDrop}
-            variant="quiet"
+            type="button"
           >
             <DropzoneLabel
               attachmentsCount={attachments.length}
@@ -220,11 +222,15 @@ export function AttachmentUpload({
               isUploading={isUploading}
               maxAttachments={maxAttachments}
             />
-          </Button>
+          </button>
         </>
       )}
 
-      {error && <p className="text-destructive text-xs">{error}</p>}
+      {error && (
+        <p className="text-destructive-text text-xs" role="alert">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

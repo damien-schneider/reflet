@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
+import { DocsCardGrid } from "@/components/docs/docs-card-grid";
+import { DocsPage, DocsSection, DocsText } from "@/components/docs/docs-page";
 import { AllMilestoneViewsPreview } from "@/components/docs/milestone-view-previews";
 import { generatePageMetadata } from "@/lib/seo-config";
 
@@ -9,25 +10,28 @@ export const metadata: Metadata = generatePageMetadata({
     "Three visual styles for displaying milestone timelines on your feedback board.",
   keywords: ["milestones", "timeline", "views", "roadmap", "progress"],
   path: "/docs/components/milestone-views",
-  title: "Milestone Views",
+  title: "Milestone views",
 });
+
+const SECTIONS = [
+  { id: "overview", label: "Overview" },
+  { id: "views", label: "Views" },
+] as const;
 
 const VIEWS = [
   {
-    description:
-      "Default horizontal track grouped by time horizons with pinch-to-zoom support.",
+    description: "Milestones on a horizontal track, grouped by time horizon.",
     href: "/docs/components/milestone-views/track",
     title: "Horizontal Track",
   },
   {
     description:
-      "Serif typography with a percentage column and color-wash accordion expansion.",
+      "Serif list with a percentage column. Open a row for its progress ring.",
     href: "/docs/components/milestone-views/editorial-accordion",
     title: "Editorial Accordion",
   },
   {
-    description:
-      "KPI summary bar at top with a vertical timeline and sweep animation on click.",
+    description: "Summary bar of overall progress above a vertical timeline.",
     href: "/docs/components/milestone-views/dashboard-timeline",
     title: "Dashboard Timeline",
   },
@@ -35,48 +39,25 @@ const VIEWS = [
 
 export default function MilestoneViewsPage() {
   return (
-    <div className="mx-auto max-w-3xl">
-      <h1 className="mb-2 font-display text-3xl text-foreground leading-snug tracking-tight">
-        Milestone Views
-      </h1>
-      <p className="mb-8 text-base text-muted-foreground sm:text-xl">
-        Three visual styles for displaying milestone timelines. Each style can
-        be configured per-organization in the dashboard settings.
-      </p>
-
-      <section className="mb-10">
-        <h2 className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight">
-          Overview
-        </h2>
-        <p className="mb-6 text-muted-foreground text-sm">
-          Each view renders the same milestone data with a different visual
-          treatment. Admins can switch between styles in Settings &rarr;
-          Feedback Display. The selected style applies to both the dashboard and
-          public board.
-        </p>
-        <div className="overflow-hidden rounded-lg border border-border">
-          <div className="flex min-h-[200px] items-center justify-center bg-background p-8">
-            <AllMilestoneViewsPreview />
-          </div>
+    <DocsPage
+      description="Three visual styles for milestone timelines. Each renders the same milestone data."
+      sections={SECTIONS}
+      title="Milestone views"
+    >
+      <DocsSection id="overview" sections={SECTIONS}>
+        <DocsText>
+          In Reflet, admins pick a style in Settings → Feedback Display, and it
+          applies to both the dashboard and the public board. Installed from the
+          registry, each view is a standalone component you render yourself.
+        </DocsText>
+        <div className="rounded-lg border border-border bg-background p-4 sm:p-6">
+          <AllMilestoneViewsPreview />
         </div>
-      </section>
+      </DocsSection>
 
-      <div className="mb-10 grid gap-4 sm:grid-cols-3">
-        {VIEWS.map((view) => (
-          <Link
-            className="group rounded-xl border border-border bg-card p-5 transition-[border-color,box-shadow] hover:border-foreground/20 hover:shadow-sm"
-            href={view.href}
-            key={view.href}
-          >
-            <h3 className="mb-1 font-semibold text-sm transition-colors group-hover:text-primary">
-              {view.title}
-            </h3>
-            <p className="text-muted-foreground text-xs leading-relaxed">
-              {view.description}
-            </p>
-          </Link>
-        ))}
-      </div>
-    </div>
+      <DocsSection id="views" sections={SECTIONS}>
+        <DocsCardGrid headingLevel="h3" items={VIEWS} />
+      </DocsSection>
+    </DocsPage>
   );
 }

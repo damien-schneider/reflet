@@ -170,6 +170,9 @@ vi.mock("@phosphor-icons/react", () => ({
   Copy: ({ className }: { className?: string }) => (
     <svg className={className} data-testid="copy-icon" />
   ),
+  DotsThreeVertical: ({ className }: { className?: string }) => (
+    <svg className={className} />
+  ),
   Gear: ({ className }: { className?: string }) => (
     <svg className={className} />
   ),
@@ -177,6 +180,9 @@ vi.mock("@phosphor-icons/react", () => ({
     <svg className={className} />
   ),
   Trash: ({ className }: { className?: string }) => (
+    <svg className={className} />
+  ),
+  WarningCircle: ({ className }: { className?: string }) => (
     <svg className={className} />
   ),
 }));
@@ -248,7 +254,7 @@ describe("WidgetCard", () => {
 
   it("renders embed code", () => {
     render(<WidgetCard orgSlug="test" widget={baseWidget} />);
-    expect(screen.getByText("Embed Code")).toBeInTheDocument();
+    expect(screen.getByText("Embed code")).toBeInTheDocument();
     expect(
       screen.getByText(/data-widget-id="widget-abc-123"/)
     ).toBeInTheDocument();
@@ -279,25 +285,24 @@ describe("WidgetCard", () => {
   it("renders widget settings color and position", () => {
     render(<WidgetCard orgSlug="test" widget={baseWidget} />);
     expect(screen.getByText("#5c6d4f")).toBeInTheDocument();
-    expect(screen.getByText("bottom-right")).toBeInTheDocument();
+    expect(screen.getByText("Bottom right")).toBeInTheDocument();
   });
 
   it("copies embed code to clipboard on icon click", async () => {
+    const user = userEvent.setup();
+    const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, "clipboard", {
       configurable: true,
-      value: { writeText: vi.fn().mockResolvedValue(undefined) },
+      value: { writeText },
       writable: true,
     });
-    const { toast } = await import("@ctrl-ui/react/ui/toast");
-    const user = userEvent.setup();
     render(<WidgetCard orgSlug="test" widget={baseWidget} />);
-    const copyIcon = screen.getByTestId("copy-icon");
-    const button = copyIcon.closest("button");
-    expect(button).toBeInTheDocument();
+    const button = screen.getByTestId("copy-icon").closest("button");
     await user.click(button!);
-    expect(toast.success).toHaveBeenCalledWith(
-      "Embed code copied to clipboard"
+    expect(writeText).toHaveBeenCalledWith(
+      expect.stringContaining('data-widget-id="widget-abc-123"')
     );
+    expect(await screen.findByText("Copied to clipboard")).toBeInTheDocument();
   });
 
   it("calls mutation when Deactivate is clicked", async () => {
@@ -321,9 +326,7 @@ describe("WidgetCard", () => {
     render(<WidgetCard orgSlug="test" widget={baseWidget} />);
     await user.click(screen.getByText("Delete"));
     expect(screen.getByTestId("alert-dialog")).toBeInTheDocument();
-    expect(
-      screen.getByText(/Are you sure you want to delete/)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/embed code stops working/)).toBeInTheDocument();
   });
 
   it("shows 0 conversations", () => {
@@ -382,9 +385,7 @@ describe("WidgetCard", () => {
     const user = userEvent.setup();
     render(<WidgetCard orgSlug="test" widget={baseWidget} />);
     await user.click(screen.getByText("Delete"));
-    expect(
-      screen.getByText(/Are you sure you want to delete/)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/embed code stops working/)).toBeInTheDocument();
     expect(screen.getByText("Support Widget")).toBeInTheDocument();
   });
 });

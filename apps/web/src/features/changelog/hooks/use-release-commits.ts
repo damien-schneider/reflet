@@ -9,9 +9,11 @@ export function useReleaseCommits(releaseId: Id<"releases"> | null) {
     api.changelog.release_commits.saveReleaseCommits
   );
 
-  const [commits, setCommits] = useState<CommitInfo[]>([]);
-  const [files, setFiles] = useState<FileInfo[] | undefined>(undefined);
-  const [previousTag, setPreviousTag] = useState<string | undefined>(undefined);
+  const [fetched, setFetched] = useState<{
+    commits: CommitInfo[];
+    files: FileInfo[] | undefined;
+    previousTag: string | undefined;
+  } | null>(null);
   const hasSavedRef = useRef(false);
 
   const persistedCommits = useQuery(
@@ -19,30 +21,29 @@ export function useReleaseCommits(releaseId: Id<"releases"> | null) {
     releaseId ? { releaseId } : "skip"
   );
 
-  // Sync persisted commits into local state on initial load
-  useEffect(() => {
-    if (persistedCommits && commits.length === 0) {
-      setCommits(persistedCommits.commits);
-      setFiles(persistedCommits.files ?? undefined);
-      setPreviousTag(persistedCommits.previousTag ?? undefined);
-    }
-  }, [persistedCommits, commits.length]);
+  const hasFetchedCommits = (fetched?.commits.length ?? 0) > 0;
+  const commits =
+    (hasFetchedCommits ? fetched?.commits : persistedCommits?.commits) ?? [];
+  const files = hasFetchedCommits
+    ? fetched?.files
+    : (persistedCommits?.files ?? undefined);
+  const previousTag = hasFetchedCommits
+    ? fetched?.previousTag
+    : (persistedCommits?.previousTag ?? undefined);
 
-  // Save unsaved commits when releaseId becomes available (handles race condition
-  // where commits are fetched before auto-save creates the release)
   useEffect(() => {
-    if (releaseId && commits.length > 0 && !hasSavedRef.current) {
+    if (
+      releaseId &&
+      fetched &&
+      fetched.commits.length > 0 &&
+      !hasSavedRef.current
+    ) {
       hasSavedRef.current = true;
-      saveReleaseCommits({
-        commits,
-        files,
-        previousTag,
-        releaseId,
-      }).catch(() => {
+      saveReleaseCommits({ ...fetched, releaseId }).catch(() => {
         hasSavedRef.current = false;
       });
     }
-  }, [releaseId, commits, files, previousTag, saveReleaseCommits]);
+  }, [releaseId, fetched, saveReleaseCommits]);
 
   const handleCommitsFetched = (
     fetchedCommits: CommitInfo[],
@@ -50,9 +51,11 @@ export function useReleaseCommits(releaseId: Id<"releases"> | null) {
     fetchedPreviousTag: string | null
   ) => {
     hasSavedRef.current = false;
-    setCommits(fetchedCommits);
-    setFiles(fetchedFiles);
-    setPreviousTag(fetchedPreviousTag ?? undefined);
+    setFetched({
+      commits: fetchedCommits,
+      files: fetchedFiles,
+      previousTag: fetchedPreviousTag ?? undefined,
+    });
 
     if (releaseId) {
       hasSavedRef.current = true;

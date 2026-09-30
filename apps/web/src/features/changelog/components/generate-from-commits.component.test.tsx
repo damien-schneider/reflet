@@ -252,10 +252,10 @@ describe("GenerateFromCommits component", () => {
       expect(screen.getByTestId("info-icon")).toBeInTheDocument();
     });
 
-    it("renders AI Generate button when fully connected", () => {
+    it("renders Generate with AI button when fully connected", () => {
       connectedQuery();
       render(<GenerateFromCommits {...defaultProps} />);
-      expect(screen.getByText("AI Generate")).toBeInTheDocument();
+      expect(screen.getByText("Generate with AI")).toBeInTheDocument();
     });
 
     it("renders lightning icon in default state", () => {
@@ -267,30 +267,30 @@ describe("GenerateFromCommits component", () => {
     it("renders button as disabled when disabled prop is true", () => {
       connectedQuery();
       render(<GenerateFromCommits {...defaultProps} disabled />);
-      expect(screen.getByText("AI Generate").closest("button")).toBeDisabled();
+      expect(
+        screen.getByText("Generate with AI").closest("button")
+      ).toBeDisabled();
     });
 
     it("renders button as enabled when disabled prop is false", () => {
       connectedQuery();
       render(<GenerateFromCommits {...defaultProps} disabled={false} />);
       expect(
-        screen.getByText("AI Generate").closest("button")
+        screen.getByText("Generate with AI").closest("button")
       ).not.toBeDisabled();
     });
 
     it("renders Generating text with spinner when isStreaming", () => {
       connectedQuery();
       render(<GenerateFromCommits {...defaultProps} isStreaming />);
-      expect(screen.getByText("Generating...")).toBeInTheDocument();
+      expect(screen.getByText("Generating…")).toBeInTheDocument();
       expect(screen.getByRole("status")).toBeInTheDocument();
     });
 
     it("button is disabled when isStreaming", () => {
       connectedQuery();
       render(<GenerateFromCommits {...defaultProps} isStreaming />);
-      expect(
-        screen.getByText("Generating...").closest("button")
-      ).toBeDisabled();
+      expect(screen.getByText("Generating…").closest("button")).toBeDisabled();
     });
   });
 
@@ -304,7 +304,7 @@ describe("GenerateFromCommits component", () => {
       mockListRecent.mockResolvedValue([]);
 
       render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("AI Generate"));
+      await user.click(screen.getByText("Generate with AI"));
 
       await vi.waitFor(() => {
         expect(toast.info).toHaveBeenCalledWith(
@@ -338,7 +338,7 @@ describe("GenerateFromCommits component", () => {
         .mockResolvedValueOnce(Response.json({ title: "New Feature Release" }));
 
       render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("AI Generate"));
+      await user.click(screen.getByText("Generate with AI"));
 
       await vi.waitFor(() => {
         expect(defaultProps.onStreamStart).toHaveBeenCalled();
@@ -366,7 +366,7 @@ describe("GenerateFromCommits component", () => {
         .mockResolvedValueOnce(Response.json({ title: "Title" }));
 
       render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("AI Generate"));
+      await user.click(screen.getByText("Generate with AI"));
 
       await vi.waitFor(() => {
         expect(toast.success).toHaveBeenCalledWith("Generated from 1 commit");
@@ -390,7 +390,7 @@ describe("GenerateFromCommits component", () => {
         .mockResolvedValueOnce(Response.json({ title: "Title" }));
 
       render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("AI Generate"));
+      await user.click(screen.getByText("Generate with AI"));
 
       await vi.waitFor(() => {
         expect(defaultProps.onStreamChunk).toHaveBeenCalled();
@@ -413,7 +413,7 @@ describe("GenerateFromCommits component", () => {
         .mockResolvedValueOnce(Response.json({ title: "Title" }));
 
       render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("AI Generate"));
+      await user.click(screen.getByText("Generate with AI"));
 
       await vi.waitFor(() => {
         expect(fetchSpy).toHaveBeenCalledWith(
@@ -451,7 +451,7 @@ describe("GenerateFromCommits component", () => {
         .mockResolvedValueOnce(Response.json({ title: "Title" }));
 
       render(<GenerateFromCommits {...props} />);
-      await user.click(screen.getByText("AI Generate"));
+      await user.click(screen.getByText("Generate with AI"));
 
       await vi.waitFor(() => {
         expect(mockListCommits).toHaveBeenCalledWith(
@@ -478,7 +478,7 @@ describe("GenerateFromCommits component", () => {
         .mockResolvedValueOnce(Response.json({ title: "Title" }));
 
       render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("AI Generate"));
+      await user.click(screen.getByText("Generate with AI"));
 
       await vi.waitFor(() => {
         expect(mockListCommits).toHaveBeenCalledWith(
@@ -508,7 +508,7 @@ describe("GenerateFromCommits component", () => {
         .mockResolvedValueOnce(Response.json({ title: "Title" }));
 
       render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("AI Generate"));
+      await user.click(screen.getByText("Generate with AI"));
 
       await vi.waitFor(() => {
         expect(mockListRecent).toHaveBeenCalledWith(
@@ -533,7 +533,7 @@ describe("GenerateFromCommits component", () => {
         .mockResolvedValueOnce(Response.json({ title: "Title" }));
 
       render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("AI Generate"));
+      await user.click(screen.getByText("Generate with AI"));
 
       await vi.waitFor(() => {
         expect(fetchSpy).toHaveBeenCalled();
@@ -567,7 +567,7 @@ describe("GenerateFromCommits component", () => {
         .mockResolvedValueOnce(Response.json({ title: "Title" }));
 
       render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("AI Generate"));
+      await user.click(screen.getByText("Generate with AI"));
 
       await vi.waitFor(() => {
         expect(mockListRecent).toHaveBeenCalledWith(
@@ -595,7 +595,7 @@ describe("GenerateFromCommits component", () => {
         .mockResolvedValueOnce(Response.json({ title: "Title" }));
 
       render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("AI Generate"));
+      await user.click(screen.getByText("Generate with AI"));
 
       await vi.waitFor(() => {
         expect(mockListRecent).toHaveBeenCalledWith(
@@ -617,7 +617,7 @@ describe("GenerateFromCommits component", () => {
       mockListTags.mockRejectedValue(new Error("Tags fetch failed"));
 
       render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("AI Generate"));
+      await user.click(screen.getByText("Generate with AI"));
 
       await vi.waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith("Tags fetch failed");
@@ -631,7 +631,7 @@ describe("GenerateFromCommits component", () => {
       mockListTags.mockRejectedValue("something broke");
 
       render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("AI Generate"));
+      await user.click(screen.getByText("Generate with AI"));
 
       await vi.waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith("Failed to generate notes");
@@ -646,7 +646,7 @@ describe("GenerateFromCommits component", () => {
       mockListTags.mockRejectedValue(abortError);
 
       render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("AI Generate"));
+      await user.click(screen.getByText("Generate with AI"));
 
       await vi.waitFor(() => {
         expect(mockListTags).toHaveBeenCalled();
@@ -675,7 +675,7 @@ describe("GenerateFromCommits component", () => {
       } as never);
 
       render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("AI Generate"));
+      await user.click(screen.getByText("Generate with AI"));
 
       await vi.waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith(
@@ -701,7 +701,7 @@ describe("GenerateFromCommits component", () => {
       } as never);
 
       render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("AI Generate"));
+      await user.click(screen.getByText("Generate with AI"));
 
       await vi.waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith(
@@ -717,7 +717,7 @@ describe("GenerateFromCommits component", () => {
       mockListTags.mockRejectedValue(new Error("fail"));
 
       render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("AI Generate"));
+      await user.click(screen.getByText("Generate with AI"));
 
       await vi.waitFor(() => {
         expect(defaultProps.onComplete).toHaveBeenCalledWith("");
@@ -732,7 +732,7 @@ describe("GenerateFromCommits component", () => {
       mockListCommits.mockRejectedValue(new Error("Commits fetch failed"));
 
       render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("AI Generate"));
+      await user.click(screen.getByText("Generate with AI"));
 
       await vi.waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith("Commits fetch failed");
@@ -749,7 +749,7 @@ describe("GenerateFromCommits component", () => {
       );
 
       render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("AI Generate"));
+      await user.click(screen.getByText("Generate with AI"));
 
       await vi.waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith("Recent commits fetch failed");
@@ -777,7 +777,7 @@ describe("GenerateFromCommits component", () => {
         .mockResolvedValueOnce(Response.json({ title: "My Title" }));
 
       render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("AI Generate"));
+      await user.click(screen.getByText("Generate with AI"));
 
       await vi.waitFor(() => {
         expect(defaultProps.onTitleGenerated).toHaveBeenCalledWith("My Title");
@@ -799,7 +799,7 @@ describe("GenerateFromCommits component", () => {
         .mockResolvedValueOnce(Response.json({ title: "Title" }));
 
       render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("AI Generate"));
+      await user.click(screen.getByText("Generate with AI"));
 
       await vi.waitFor(() => {
         const titleCall = fetchSpy.mock.calls.find(
@@ -826,7 +826,7 @@ describe("GenerateFromCommits component", () => {
         .mockResolvedValueOnce(new Response(null, { status: 500 }));
 
       render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("AI Generate"));
+      await user.click(screen.getByText("Generate with AI"));
 
       await vi.waitFor(() => {
         expect(defaultProps.onComplete).toHaveBeenCalled();
@@ -848,7 +848,7 @@ describe("GenerateFromCommits component", () => {
         .mockResolvedValueOnce(Response.json({ other: "data" }));
 
       render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("AI Generate"));
+      await user.click(screen.getByText("Generate with AI"));
 
       await vi.waitFor(() => {
         expect(defaultProps.onComplete).toHaveBeenCalled();
@@ -870,7 +870,7 @@ describe("GenerateFromCommits component", () => {
         .mockResolvedValueOnce(Response.json({ title: 123 }));
 
       render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("AI Generate"));
+      await user.click(screen.getByText("Generate with AI"));
 
       await vi.waitFor(() => {
         expect(defaultProps.onComplete).toHaveBeenCalled();
@@ -892,7 +892,7 @@ describe("GenerateFromCommits component", () => {
         .mockRejectedValueOnce(new Error("Network error"));
 
       render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("AI Generate"));
+      await user.click(screen.getByText("Generate with AI"));
 
       await vi.waitFor(() => {
         expect(defaultProps.onComplete).toHaveBeenCalled();
@@ -915,7 +915,7 @@ describe("GenerateFromCommits component", () => {
         .mockResolvedValueOnce(Response.json({ title: "Title" }));
 
       render(<GenerateFromCommits {...defaultProps} version="" />);
-      await user.click(screen.getByText("AI Generate"));
+      await user.click(screen.getByText("Generate with AI"));
 
       await vi.waitFor(() => {
         const titleCall = fetchSpy.mock.calls.find(
@@ -953,7 +953,7 @@ describe("GenerateFromCommits component", () => {
         .mockResolvedValueOnce(Response.json({ title: "Title" }));
 
       render(<GenerateFromCommits {...defaultProps} version="  1.0.0  " />);
-      await user.click(screen.getByText("AI Generate"));
+      await user.click(screen.getByText("Generate with AI"));
 
       await vi.waitFor(() => {
         expect(mockListCommits).toHaveBeenCalled();
@@ -973,7 +973,7 @@ describe("GenerateFromCommits component", () => {
         .mockResolvedValueOnce(Response.json({ title: "Title" }));
 
       render(<GenerateFromCommits {...defaultProps} version="" />);
-      await user.click(screen.getByText("AI Generate"));
+      await user.click(screen.getByText("Generate with AI"));
 
       await vi.waitFor(() => {
         const releaseCall = fetchSpy.mock.calls.find(
@@ -1000,7 +1000,7 @@ describe("GenerateFromCommits component", () => {
         .mockResolvedValueOnce(Response.json({ title: "Title" }));
 
       render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("AI Generate"));
+      await user.click(screen.getByText("Generate with AI"));
 
       await vi.waitFor(() => {
         const releaseCall = fetchSpy.mock.calls.find(
@@ -1039,7 +1039,7 @@ describe("GenerateFromCommits component", () => {
         .mockResolvedValueOnce(Response.json({ title: "Title" }));
 
       render(<GenerateFromCommits {...defaultProps} version="v0.9.0" />);
-      await user.click(screen.getByText("AI Generate"));
+      await user.click(screen.getByText("Generate with AI"));
 
       await vi.waitFor(() => {
         expect(mockListCommits).toHaveBeenCalledWith(
@@ -1068,7 +1068,7 @@ describe("GenerateFromCommits component", () => {
         .mockResolvedValueOnce(Response.json({ title: "Title" }));
 
       render(<GenerateFromCommits {...defaultProps} version="3.0.0" />);
-      await user.click(screen.getByText("AI Generate"));
+      await user.click(screen.getByText("Generate with AI"));
 
       await vi.waitFor(() => {
         expect(mockListCommits).toHaveBeenCalledWith(
@@ -1097,7 +1097,7 @@ describe("GenerateFromCommits component", () => {
         .mockResolvedValueOnce(Response.json({ title: "Title" }));
 
       render(<GenerateFromCommits {...defaultProps} version="" />);
-      await user.click(screen.getByText("AI Generate"));
+      await user.click(screen.getByText("Generate with AI"));
 
       await vi.waitFor(() => {
         expect(mockListCommits).toHaveBeenCalledWith(
@@ -1123,7 +1123,7 @@ describe("GenerateFromCommits component", () => {
         .mockResolvedValueOnce(Response.json({ title: "Title" }));
 
       render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("AI Generate"));
+      await user.click(screen.getByText("Generate with AI"));
 
       await vi.waitFor(() => {
         expect(mockListCommits).toHaveBeenCalledWith(
@@ -1150,7 +1150,7 @@ describe("GenerateFromCommits component", () => {
         .mockResolvedValueOnce(Response.json({ title: "Title" }));
 
       render(<GenerateFromCommits {...defaultProps} version="1.0.0" />);
-      await user.click(screen.getByText("AI Generate"));
+      await user.click(screen.getByText("Generate with AI"));
 
       await vi.waitFor(() => {
         expect(mockListCommits).toHaveBeenCalledWith(
@@ -1183,7 +1183,7 @@ describe("GenerateFromCommits component", () => {
         .mockResolvedValueOnce(Response.json({ title: "Title" }));
 
       render(<GenerateFromCommits {...defaultProps} version="1.0.0" />);
-      await user.click(screen.getByText("AI Generate"));
+      await user.click(screen.getByText("Generate with AI"));
 
       await vi.waitFor(() => {
         expect(mockListCommits).toHaveBeenCalledWith(
@@ -1210,7 +1210,7 @@ describe("GenerateFromCommits component", () => {
         .mockResolvedValueOnce(Response.json({ title: "Title" }));
 
       render(<GenerateFromCommits {...defaultProps} version="99.0.0" />);
-      await user.click(screen.getByText("AI Generate"));
+      await user.click(screen.getByText("Generate with AI"));
 
       await vi.waitFor(() => {
         expect(mockListCommits).toHaveBeenCalledWith(
@@ -1239,7 +1239,7 @@ describe("GenerateFromCommits component", () => {
       mockListTags.mockRejectedValue(new Error("fail"));
 
       render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("AI Generate"));
+      await user.click(screen.getByText("Generate with AI"));
 
       await vi.waitFor(() => {
         expect(toast.error).toHaveBeenCalled();
@@ -1261,7 +1261,7 @@ describe("GenerateFromCommits component", () => {
       mockListRecent.mockResolvedValue([]);
 
       render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("AI Generate"));
+      await user.click(screen.getByText("Generate with AI"));
 
       await vi.waitFor(() => {
         expect(toast.info).toHaveBeenCalled();

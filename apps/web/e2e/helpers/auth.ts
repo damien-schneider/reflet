@@ -1,7 +1,7 @@
 import { expect, type Page } from "@playwright/test";
 
-export const AUTH_INITIAL_HEADING = "Authentication";
-export const AUTH_SIGNUP_HEADING = "Create an account";
+export const AUTH_INITIAL_HEADING = "Sign in or create an account";
+export const AUTH_SIGNUP_HEADING = "Create your account";
 export const AUTH_SIGNIN_HEADING = "Welcome back";
 export const DASHBOARD_REGEX = /\/dashboard/;
 const ORG_DASHBOARD_REGEX = /\/dashboard\/[^/]+/;
@@ -28,7 +28,7 @@ export async function signUpNewUser(page: Page, user: TestUser) {
 
   await page.getByTestId("password-input").fill(user.password);
   await page.getByTestId("confirm-password-input").fill(user.password);
-  await page.getByRole("button", { name: "Create my account" }).click();
+  await page.getByRole("button", { name: "Create account" }).click();
 }
 
 export async function signInUser(page: Page, user: TestUser) {
@@ -79,8 +79,8 @@ export async function createOrganization(page: Page, name: string) {
 
   const dialog = page.getByRole("dialog", { name: "Create organization" });
   await expect(dialog).toBeVisible({ timeout: 10_000 });
-  await dialog.locator("#name").fill(name);
-  await dialog.getByRole("button", { name: "Create" }).click();
+  await dialog.getByLabel("Organization name").fill(name);
+  await dialog.getByRole("button", { name: "Create organization" }).click();
   await expect(dialog).not.toBeVisible({ timeout: 15_000 });
 
   await page.waitForURL(ORG_DASHBOARD_REGEX, { timeout: 15_000 });

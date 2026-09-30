@@ -1,6 +1,9 @@
 import { Badge, type BadgeProps } from "@ctrl-ui/react/ui/badge";
-import { resolveTagColor, type TagColor } from "@/lib/tag-colors";
-import { cn } from "@/lib/utils";
+import {
+  getTagColorValues,
+  resolveTagColor,
+  type TagColor,
+} from "@/lib/tag-colors";
 
 const SKIN_COLOR: Record<TagColor, BadgeProps["color"]> = {
   blue: "blue",
@@ -17,13 +20,28 @@ const SKIN_COLOR: Record<TagColor, BadgeProps["color"]> = {
 
 type TagBadgeProps = Omit<BadgeProps, "color"> & { color?: string };
 
-export function TagBadge({ color, className, ...props }: TagBadgeProps) {
+function tagKnobs(
+  color: TagColor,
+  variant: BadgeProps["variant"]
+): BadgeProps["style"] {
+  if (color === "default" || color === "gray") {
+    return;
+  }
+  const { bg, text } = getTagColorValues(color);
+  if (variant === "outline") {
+    return { "--cui-badge-foreground": text };
+  }
+  return { "--cui-badge-background": bg, "--cui-badge-foreground": text };
+}
+
+export function TagBadge({ color, style, variant, ...props }: TagBadgeProps) {
   const resolved = resolveTagColor(color ?? "default");
 
   return (
     <Badge
-      className={cn(resolved === "brown" && "tag-badge-brown", className)}
       color={SKIN_COLOR[resolved]}
+      style={{ ...tagKnobs(resolved, variant), ...style }}
+      variant={variant}
       {...props}
     />
   );

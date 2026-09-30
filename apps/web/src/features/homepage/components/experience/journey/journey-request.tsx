@@ -66,7 +66,7 @@ export function JourneyRequest({
         <h4>{released ? "Saved views are here." : "Save my favorite views"}</h4>
         <p>
           {released
-            ? "Your workspace, just the way you left it. Save your filters and get back to what matters."
+            ? "Save your filters once, then open them again in one click."
             : "I set up the same filters every morning. Could I save a view and come back to it?"}
         </p>
       </div>

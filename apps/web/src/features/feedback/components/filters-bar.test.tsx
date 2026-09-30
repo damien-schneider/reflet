@@ -129,7 +129,7 @@ describe("FiltersBar", () => {
 
   it("renders sort dropdown with current sort label", () => {
     render(<FiltersBar {...defaultProps} />);
-    expect(screen.getAllByText("Most Votes").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Most votes").length).toBeGreaterThan(0);
   });
 
   it("renders all sort options", () => {
@@ -152,7 +152,7 @@ describe("FiltersBar", () => {
 
   it("shows correct label for comments sort", () => {
     render(<FiltersBar {...defaultProps} sortBy="comments" />);
-    expect(screen.getAllByText("Most Comments").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Most comments").length).toBeGreaterThan(0);
   });
 
   it("passes hideCompleted to filter dropdown", () => {

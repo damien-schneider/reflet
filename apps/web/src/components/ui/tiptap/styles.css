@@ -1,6 +1,3 @@
-/* Tiptap Editor Styles */
-
-/* Placeholder styling */
 .tiptap-inline-editor .is-editor-empty:first-child::before,
 .tiptap-markdown-editor .is-editor-empty:first-child::before {
   float: left;
@@ -10,7 +7,6 @@
   content: attr(data-placeholder);
 }
 
-/* Link styling */
 .tiptap-link {
   color: var(--primary);
   text-decoration: underline;
@@ -22,19 +18,16 @@
   text-decoration-thickness: 2px;
 }
 
-/* Image styling */
 .tiptap-image {
   max-width: 100%;
   height: auto;
   margin: 1rem 0;
   cursor: pointer;
+  outline: 1px solid color-mix(in oklch, var(--foreground) 10%, transparent);
+  outline-offset: -1px;
   border-radius: var(--radius);
-  box-shadow: inset 0 0 0 1px
-    color-mix(in srgb, var(--foreground) 10%, transparent);
-  transition: outline 0.15s ease;
 }
 
-/* Image alignment */
 .tiptap-image[data-align="left"] {
   display: block;
   margin-right: auto;
@@ -53,13 +46,11 @@
   margin-left: auto;
 }
 
-/* Selected image state */
 .ProseMirror-selectednode.tiptap-image {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
 
-/* Image wrapper container */
 .tiptap-image-wrapper {
   position: relative;
   display: block;
@@ -91,7 +82,6 @@
   margin: 0;
 }
 
-/* Image error placeholder */
 .tiptap-image-error {
   display: none;
   gap: 0.5rem;
@@ -116,13 +106,12 @@
   display: none;
 }
 
-/* Resize handles container */
 .tiptap-resize-handles {
   position: absolute;
   inset: 0;
   pointer-events: none;
   opacity: 0;
-  transition: opacity 0.15s ease;
+  transition: opacity var(--duration-fast) var(--ease-standard);
 }
 
 .tiptap-image-wrapper:hover .tiptap-resize-handles,
@@ -131,7 +120,6 @@
   opacity: 1;
 }
 
-/* Resize handles */
 .tiptap-resize-handle {
   position: absolute;
   width: 8px;
@@ -140,14 +128,12 @@
   background: var(--background);
   border: 1.5px solid var(--brand-text);
   border-radius: 2px;
-  transition:
-    transform 0.1s ease,
-    background-color 0.1s ease;
 }
 
-.tiptap-resize-handle:hover {
-  background: var(--secondary);
-  transform: scale(1.2);
+@media (hover: hover) and (pointer: fine) {
+  .tiptap-resize-handle:hover {
+    background: var(--secondary);
+  }
 }
 
 .tiptap-resize-handle.top-left {
@@ -174,7 +160,6 @@
   cursor: nwse-resize;
 }
 
-/* Touch-friendly resize handles */
 @media (pointer: coarse) {
   .tiptap-resize-handle {
     width: 20px;
@@ -202,13 +187,11 @@
     bottom: -10px;
   }
 
-  /* Always show handles on touch devices (no hover) */
   .tiptap-image-wrapper .tiptap-resize-handles {
     opacity: 1;
   }
 }
 
-/* Resizing state */
 .tiptap-image-wrapper[data-resizing="true"] {
   user-select: none;
 }
@@ -217,44 +200,36 @@
   pointer-events: none;
 }
 
-/* Image bubble menu */
-.tiptap-image-bubble-menu {
-  animation: fadeIn 0.15s ease;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Base typography for markdown editor and renderer */
-.tiptap-markdown-editor,
-.tiptap-renderer {
+.tiptap-markdown-editor {
   font-size: 0.875rem;
   line-height: 1.625;
   color: var(--foreground);
 }
 
-/* Headings - Uses Instrument Serif (font-display) to match app typography */
+.tiptap-renderer {
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  color: var(--foreground);
+  text-wrap: pretty;
+}
+
 .tiptap-markdown-editor h1,
 .tiptap-markdown-editor h2,
 .tiptap-markdown-editor h3,
 .tiptap-renderer h1,
+.tiptap-minimal-editor h1,
 .tiptap-renderer h2,
-.tiptap-renderer h3 {
+.tiptap-minimal-editor h2,
+.tiptap-renderer h3,
+.tiptap-minimal-editor h3 {
   font-family: var(--font-display);
   font-variation-settings: var(--font-display--font-variation-settings);
   text-wrap: balance;
 }
 
 .tiptap-markdown-editor h1,
-.tiptap-renderer h1 {
+.tiptap-renderer h1,
+.tiptap-minimal-editor h1 {
   margin-top: 1.5rem;
   margin-bottom: 0.75rem;
   font-size: 1.25rem;
@@ -264,7 +239,8 @@
 }
 
 .tiptap-markdown-editor h2,
-.tiptap-renderer h2 {
+.tiptap-renderer h2,
+.tiptap-minimal-editor h2 {
   margin-top: 1.25rem;
   margin-bottom: 0.5rem;
   font-size: 1.125rem;
@@ -274,7 +250,8 @@
 }
 
 .tiptap-markdown-editor h3,
-.tiptap-renderer h3 {
+.tiptap-renderer h3,
+.tiptap-minimal-editor h3 {
   margin-top: 1rem;
   margin-bottom: 0.5rem;
   font-size: 1rem;
@@ -283,48 +260,53 @@
   letter-spacing: -0.025em;
 }
 
-/* First heading shouldn't have top margin */
 .tiptap-markdown-editor > h1:first-child,
 .tiptap-markdown-editor > h2:first-child,
 .tiptap-markdown-editor > h3:first-child,
 .tiptap-renderer > h1:first-child,
+.tiptap-minimal-editor > h1:first-child,
 .tiptap-renderer > h2:first-child,
-.tiptap-renderer > h3:first-child {
+.tiptap-minimal-editor > h2:first-child,
+.tiptap-renderer > h3:first-child,
+.tiptap-minimal-editor > h3:first-child {
   margin-top: 0;
 }
 
-/* Paragraphs */
 .tiptap-markdown-editor p,
-.tiptap-renderer p {
+.tiptap-renderer p,
+.tiptap-minimal-editor p {
   margin-top: 0.5rem;
   margin-bottom: 0.5rem;
 }
 
 .tiptap-markdown-editor p:first-child,
-.tiptap-renderer p:first-child {
+.tiptap-renderer p:first-child,
+.tiptap-minimal-editor p:first-child {
   margin-top: 0;
 }
 
 .tiptap-markdown-editor p:last-child,
-.tiptap-renderer p:last-child {
+.tiptap-renderer p:last-child,
+.tiptap-minimal-editor p:last-child {
   margin-bottom: 0;
 }
 
-/* Bold and italic */
 .tiptap-markdown-editor strong,
-.tiptap-renderer strong {
+.tiptap-renderer strong,
+.tiptap-minimal-editor strong {
   font-weight: 600;
   letter-spacing: -0.01em;
 }
 
 .tiptap-markdown-editor em,
-.tiptap-renderer em {
+.tiptap-renderer em,
+.tiptap-minimal-editor em {
   font-style: italic;
 }
 
-/* Lists */
 .tiptap-markdown-editor ul,
-.tiptap-renderer ul {
+.tiptap-renderer ul,
+.tiptap-minimal-editor ul {
   padding-left: 1.5rem;
   margin-top: 0.5rem;
   margin-bottom: 0.5rem;
@@ -332,7 +314,8 @@
 }
 
 .tiptap-markdown-editor ol,
-.tiptap-renderer ol {
+.tiptap-renderer ol,
+.tiptap-minimal-editor ol {
   padding-left: 1.5rem;
   margin-top: 0.5rem;
   margin-bottom: 0.5rem;
@@ -340,28 +323,31 @@
 }
 
 .tiptap-markdown-editor li,
-.tiptap-renderer li {
+.tiptap-renderer li,
+.tiptap-minimal-editor li {
   margin-top: 0.25rem;
   margin-bottom: 0.25rem;
 }
 
 .tiptap-markdown-editor li p,
-.tiptap-renderer li p {
+.tiptap-renderer li p,
+.tiptap-minimal-editor li p {
   margin-top: 0;
   margin-bottom: 0;
 }
 
-/* Nested lists */
 .tiptap-markdown-editor ul ul,
 .tiptap-markdown-editor ol ul,
 .tiptap-renderer ul ul,
-.tiptap-renderer ol ul {
+.tiptap-minimal-editor ul ul,
+.tiptap-renderer ol ul,
+.tiptap-minimal-editor ol ul {
   list-style-type: circle;
 }
 
-/* Blockquote */
 .tiptap-markdown-editor blockquote,
-.tiptap-renderer blockquote {
+.tiptap-renderer blockquote,
+.tiptap-minimal-editor blockquote {
   padding-left: 1rem;
   margin-top: 1rem;
   margin-bottom: 1rem;
@@ -370,20 +356,19 @@
   border-left: 2px solid var(--border);
 }
 
-/* Inline code */
 .tiptap-markdown-editor code,
-.tiptap-renderer code {
+.tiptap-renderer code,
+.tiptap-minimal-editor code {
   padding: 0.125rem 0.25rem;
-  font-family:
-    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-family: var(--font-mono, ui-monospace, monospace);
   font-size: 0.875em;
   background-color: var(--muted);
   border-radius: 0.25rem;
 }
 
-/* Code blocks */
 .tiptap-markdown-editor pre,
-.tiptap-renderer pre {
+.tiptap-renderer pre,
+.tiptap-minimal-editor pre {
   padding: 0.75rem;
   margin-top: 0.75rem;
   margin-bottom: 0.75rem;
@@ -393,7 +378,8 @@
 }
 
 .tiptap-markdown-editor pre code,
-.tiptap-renderer pre code {
+.tiptap-renderer pre code,
+.tiptap-minimal-editor pre code {
   padding: 0;
   font-size: 0.875rem;
   line-height: 1.625;
@@ -401,29 +387,27 @@
   border-radius: 0;
 }
 
-/* Horizontal rule */
 .tiptap-markdown-editor hr,
-.tiptap-renderer hr {
+.tiptap-renderer hr,
+.tiptap-minimal-editor hr {
   margin-top: 1.5rem;
   margin-bottom: 1.5rem;
   border: none;
   border-top: 1px solid var(--border);
 }
 
-/* Focus styling */
 .tiptap-markdown-editor:focus,
 .tiptap-inline-editor:focus {
   outline: none;
 }
 
-/* Selection styling */
 .tiptap-markdown-editor ::selection,
 .tiptap-inline-editor ::selection,
-.tiptap-renderer ::selection {
+.tiptap-renderer ::selection,
+.tiptap-minimal-editor ::selection {
   background-color: color-mix(in oklch, var(--primary) 30%, transparent);
 }
 
-/* ProseMirror specific */
 .ProseMirror {
   outline: none;
 }
@@ -432,10 +416,6 @@
   margin-top: 0.5em;
 }
 
-/* Title editor styling - minimal, borderless
- * Inherits font-size from parent for flexibility
- * Default size is 1.5rem (set on parent wrapper)
- */
 .tiptap-title-editor {
   font-size: inherit;
   font-weight: inherit;
@@ -457,15 +437,15 @@
   opacity: 0.6;
 }
 
-/* Video styling */
 .tiptap-video {
   max-width: 100%;
   height: auto;
   margin: 1rem 0;
+  outline: 1px solid color-mix(in oklch, var(--foreground) 10%, transparent);
+  outline-offset: -1px;
   border-radius: var(--radius);
 }
 
-/* Minimal editor variant - no border, document-like */
 .tiptap-minimal-editor {
   padding: 0.75rem;
   font-size: 0.9375rem;
@@ -480,150 +460,4 @@
   pointer-events: none;
   content: attr(data-placeholder);
   opacity: 0.5;
-}
-
-/* Minimal editor headings - Uses Instrument Serif (font-display) to match app typography */
-.tiptap-minimal-editor h1,
-.tiptap-minimal-editor h2,
-.tiptap-minimal-editor h3 {
-  font-family: var(--font-display);
-  font-variation-settings: var(--font-display--font-variation-settings);
-  text-wrap: balance;
-}
-
-.tiptap-minimal-editor h1 {
-  margin-top: 1.5rem;
-  margin-bottom: 0.75rem;
-  font-size: 1.25rem;
-  font-weight: 500;
-  line-height: 1.25;
-  letter-spacing: -0.025em;
-}
-
-.tiptap-minimal-editor h2 {
-  margin-top: 1.25rem;
-  margin-bottom: 0.5rem;
-  font-size: 1.125rem;
-  font-weight: 500;
-  line-height: 1.375;
-  letter-spacing: -0.025em;
-}
-
-.tiptap-minimal-editor h3 {
-  margin-top: 1rem;
-  margin-bottom: 0.5rem;
-  font-size: 1rem;
-  font-weight: 500;
-  line-height: 1.5;
-  letter-spacing: -0.025em;
-}
-
-.tiptap-minimal-editor > h1:first-child,
-.tiptap-minimal-editor > h2:first-child,
-.tiptap-minimal-editor > h3:first-child {
-  margin-top: 0;
-}
-
-/* Minimal editor paragraphs */
-.tiptap-minimal-editor p {
-  margin-top: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.tiptap-minimal-editor p:first-child {
-  margin-top: 0;
-}
-
-.tiptap-minimal-editor p:last-child {
-  margin-bottom: 0;
-}
-
-/* Minimal editor text styling */
-.tiptap-minimal-editor strong {
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
-
-.tiptap-minimal-editor em {
-  font-style: italic;
-}
-
-/* Minimal editor lists */
-.tiptap-minimal-editor ul {
-  padding-left: 1.5rem;
-  margin-top: 0.5rem;
-  margin-bottom: 0.5rem;
-  list-style-type: disc;
-}
-
-.tiptap-minimal-editor ol {
-  padding-left: 1.5rem;
-  margin-top: 0.5rem;
-  margin-bottom: 0.5rem;
-  list-style-type: decimal;
-}
-
-.tiptap-minimal-editor li {
-  margin-top: 0.25rem;
-  margin-bottom: 0.25rem;
-}
-
-.tiptap-minimal-editor li p {
-  margin-top: 0;
-  margin-bottom: 0;
-}
-
-.tiptap-minimal-editor ul ul,
-.tiptap-minimal-editor ol ul {
-  list-style-type: circle;
-}
-
-/* Minimal editor blockquote */
-.tiptap-minimal-editor blockquote {
-  padding-left: 1rem;
-  margin-top: 1rem;
-  margin-bottom: 1rem;
-  font-style: italic;
-  color: var(--muted-foreground);
-  border-left: 2px solid var(--border);
-}
-
-/* Minimal editor code */
-.tiptap-minimal-editor code {
-  padding: 0.125rem 0.25rem;
-  font-family:
-    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
-  font-size: 0.875em;
-  background-color: var(--muted);
-  border-radius: 0.25rem;
-}
-
-.tiptap-minimal-editor pre {
-  padding: 0.75rem;
-  margin-top: 0.75rem;
-  margin-bottom: 0.75rem;
-  overflow-x: auto;
-  background-color: var(--muted);
-  border-radius: var(--radius);
-}
-
-.tiptap-minimal-editor pre code {
-  padding: 0;
-  font-size: 0.875rem;
-  line-height: 1.625;
-  background-color: transparent;
-  border-radius: 0;
-}
-
-/* Minimal editor horizontal rule */
-.tiptap-minimal-editor hr {
-  margin-top: 1.5rem;
-  margin-bottom: 1.5rem;
-  border: none;
-  border-top: 1px solid var(--border);
-}
-
-/* Minimal editor selection */
-.tiptap-minimal-editor ::selection {
-  background-color: color-mix(in oklch, var(--primary) 30%, transparent);
 }

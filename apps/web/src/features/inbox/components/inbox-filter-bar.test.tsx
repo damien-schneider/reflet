@@ -26,15 +26,28 @@ vi.mock("@ctrl-ui/react/ui/toggle", () => ({
   ),
 }));
 
-vi.mock("@ctrl-ui/react/ui/input", () => ({
-  Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => (
+vi.mock("@ctrl-ui/react/ui/input-group", () => ({
+  InputGroup: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  InputGroupAddon: ({ children }: { children: React.ReactNode }) => (
+    <span>{children}</span>
+  ),
+  InputGroupInput: (props: React.InputHTMLAttributes<HTMLInputElement>) => (
     <input {...props} />
   ),
 }));
 
-vi.mock("@/components/ui/typography", () => ({
-  H1: ({ children }: { children: React.ReactNode }) => <h1>{children}</h1>,
-  Muted: ({ children }: { children: React.ReactNode }) => <p>{children}</p>,
+vi.mock("@ctrl-ui/react/ui/page-layout", () => ({
+  PageActions: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  PageHeader: ({ children }: { children: React.ReactNode }) => (
+    <header>{children}</header>
+  ),
+  PageTitle: ({ children }: { children: React.ReactNode }) => (
+    <h1>{children}</h1>
+  ),
 }));
 
 vi.mock("@phosphor-icons/react", () => ({
@@ -93,7 +106,7 @@ describe("InboxFilterBar", () => {
   it("renders a search input", () => {
     render(<InboxFilterBar {...defaultProps} />);
     expect(
-      screen.getByPlaceholderText("Search conversations...")
+      screen.getByRole("searchbox", { name: "Search conversations" })
     ).toBeInTheDocument();
   });
 
@@ -102,7 +115,7 @@ describe("InboxFilterBar", () => {
     const onSearch = vi.fn();
     render(<InboxFilterBar {...defaultProps} onSearchChange={onSearch} />);
     await user.type(
-      screen.getByPlaceholderText("Search conversations..."),
+      screen.getByRole("searchbox", { name: "Search conversations" }),
       "billing"
     );
     expect(onSearch).toHaveBeenCalled();

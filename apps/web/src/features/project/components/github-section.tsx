@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent } from "@ctrl-ui/react/ui/card";
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import {
   useWebsiteReferenceDialog,
@@ -17,6 +18,10 @@ import { useGitHubSettings } from "@/features/github/hooks/use-github-settings";
 import { useGitHubSettingsMutations } from "@/features/github/hooks/use-github-settings-mutations";
 import { useGitHubSettingsQueries } from "@/features/github/hooks/use-github-settings-queries";
 import { RepoAnalysisPanel } from "./repo-analysis-panel";
+import { SettingsPage, SettingsSection } from "./settings-page";
+
+const PAGE_DESCRIPTION =
+  "Sync releases and issues with a repository, and give the AI context about your product.";
 
 interface GitHubSectionProps {
   isAdmin: boolean;
@@ -83,12 +88,25 @@ export function GitHubSection({
     userId,
   });
 
-  return (
-    <div className="space-y-8">
-      <h1 className="font-semibold text-lg">GitHub</h1>
+  if (queries.connectionStatus === undefined) {
+    return (
+      <SettingsPage description={PAGE_DESCRIPTION} title="GitHub">
+        <div aria-busy="true" className="flex flex-col gap-4">
+          <Skeleton className="h-6 w-32" />
+          <div className="flex items-center gap-3">
+            <Skeleton className="size-8 rounded-full" />
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-5 w-20" />
+          </div>
+          <Skeleton className="h-12 w-full" />
+        </div>
+      </SettingsPage>
+    );
+  }
 
-      <section className="space-y-4">
-        <h2 className="font-medium text-sm">Connection</h2>
+  return (
+    <SettingsPage description={PAGE_DESCRIPTION} title="GitHub">
+      <SettingsSection title="Connection">
         <GitHubConnectionSection
           accountAvatarUrl={queries.connectionStatus?.accountAvatarUrl}
           accountLogin={queries.connectionStatus?.accountLogin}
@@ -108,43 +126,48 @@ export function GitHubSection({
             loadingRepos={settings.loadingRepos}
             onChangeRepository={settings.handleChangeRepository}
             onConnectRepository={settings.handleSelectRepository}
+            onRetry={settings.fetchRepositories}
             onSelectRepo={settings.setSelectedRepo}
             repositories={settings.repositories}
             repositoryFullName={repoFullName}
             selectedRepo={settings.selectedRepo}
           />
         ) : null}
-      </section>
+      </SettingsSection>
 
       {hasRepository ? (
-        <GitHubRepoDetails
-          isAdmin={isAdmin}
-          isSyncingIssues={settings.isSyncingIssues}
-          queries={queries}
-          settings={settings}
-        />
+        <SettingsSection title="Releases and issues">
+          <GitHubRepoDetails
+            isAdmin={isAdmin}
+            isSyncingIssues={settings.isSyncingIssues}
+            queries={queries}
+            settings={settings}
+          />
+        </SettingsSection>
       ) : null}
 
       {hasRepository ? (
         <RepoAnalysisPanel isAdmin={isAdmin} organizationId={organizationId} />
       ) : null}
 
-      <section className="space-y-4 border-t pt-8">
-        <div className="flex items-center justify-between gap-4">
-          <h2 className="font-medium text-sm">Website references</h2>
-          {isAdmin ? (
+      <SettingsSection
+        actions={
+          isAdmin ? (
             <WebsiteReferenceAddButton
               onOpen={() => websiteDialog.setIsOpen(true)}
             />
-          ) : null}
-        </div>
+          ) : null
+        }
+        description="Pages the AI reads for extra context when clarifying feedback."
+        title="Website references"
+      >
         <WebsiteReferenceList
           dialogState={websiteDialog}
           isAdmin={isAdmin}
           organizationId={organizationId}
         />
-      </section>
-    </div>
+      </SettingsSection>
+    </SettingsPage>
   );
 }
 
@@ -160,18 +183,22 @@ function GitHubRepoDetails({
   settings: ReturnType<typeof useGitHubSettings>;
 }) {
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-4">
       <Card>
         <CardContent className="space-y-6">
           <SyncSettingsSection
             autoSyncEnabled={queries.connectionStatus?.autoSyncEnabled ?? false}
+            error={settings.webhookSetupError}
             isAdmin={isAdmin}
+            isSettingUp={settings.isSettingUp}
             isSyncing={settings.isSyncing}
             lastSyncAt={queries.connectionStatus?.lastSyncAt}
+            onClearError={settings.clearWebhookSetupError}
+            onResyncGitHub={settings.handleConnectNavigate}
             onSyncNow={settings.handleSyncReleases}
             onToggleAutoSync={settings.handleToggleAutoSync}
           />
-          <SyncedReleasesSection releases={queries.githubReleases ?? []} />
+          <SyncedReleasesSection releases={queries.githubReleases} />
         </CardContent>
       </Card>
 

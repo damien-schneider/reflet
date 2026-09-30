@@ -34,8 +34,8 @@ vi.mock("@ctrl-ui/react/ui/button", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/typography", () => ({
-  Muted: ({ children }: { children: React.ReactNode }) => <p>{children}</p>,
+vi.mock("@ctrl-ui/react/ui/skeleton", () => ({
+  Skeleton: () => <div />,
 }));
 
 vi.mock("@ctrl-ui/react/ui/card", () => ({
@@ -50,9 +50,8 @@ vi.mock("@ctrl-ui/react/ui/card", () => ({
 }));
 
 vi.mock("@phosphor-icons/react", () => ({
-  Plus: ({ className }: { className?: string }) => (
-    <svg className={className} />
-  ),
+  Globe: () => <svg />,
+  Plus: () => <svg />,
 }));
 
 vi.mock("./add-website-dialog", () => ({
@@ -80,16 +79,19 @@ import { WebsiteReferenceList } from "./website-reference-list";
 const mockDialogState = { isOpen: false, setIsOpen: vi.fn() };
 
 describe("WebsiteReferenceList", () => {
-  it("renders loading spinner when data is undefined", () => {
+  it("renders a loading skeleton when data is undefined", () => {
     vi.mocked(useQuery).mockReturnValue(undefined);
-    const { container } = render(
+    render(
       <WebsiteReferenceList
         dialogState={mockDialogState}
         isAdmin={true}
         organizationId={"org1" as never}
       />
     );
-    expect(container.querySelector(".animate-spin")).toBeInTheDocument();
+    expect(screen.getByTestId("website-references-loading")).toHaveAttribute(
+      "aria-busy",
+      "true"
+    );
   });
 
   it("renders empty state when no references", () => {
@@ -101,7 +103,7 @@ describe("WebsiteReferenceList", () => {
         organizationId={"org1" as never}
       />
     );
-    expect(screen.getByText("Nothing yet")).toBeInTheDocument();
+    expect(screen.getByText("No website references")).toBeInTheDocument();
   });
 
   it("renders references list", () => {

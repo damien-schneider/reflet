@@ -282,13 +282,13 @@ describe("useBoardFilters", () => {
   });
 
   describe("clearFilters", () => {
-    it("removes all filter params", () => {
+    it("removes filter params but keeps a non-default sort", () => {
       currentSearchParams = new URLSearchParams(
-        "sort=votes&q=test&status=s1&tags=t1"
+        "sort=votes&q=test&status=s1&tags=t1&hide_completed=0"
       );
       const { result } = renderHook(() => useBoardFilters());
       act(() => result.current.clearFilters());
-      expect(mockReplace).toHaveBeenCalledWith("/test-org/board", {
+      expect(mockReplace).toHaveBeenCalledWith("/test-org/board?sort=votes", {
         scroll: false,
       });
     });
@@ -328,10 +328,10 @@ describe("useBoardFilters", () => {
       expect(result.current.hasActiveFilters).toBe(true);
     });
 
-    it("is true when non-default sort is active", () => {
+    it("is false when only a non-default sort is set", () => {
       currentSearchParams = new URLSearchParams("sort=votes");
       const { result } = renderHook(() => useBoardFilters());
-      expect(result.current.hasActiveFilters).toBe(true);
+      expect(result.current.hasActiveFilters).toBe(false);
     });
 
     it("is false when only view is set", () => {

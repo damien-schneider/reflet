@@ -1,6 +1,11 @@
 "use client";
 
-import { Tabs, TabsList, TabsTab } from "@ctrl-ui/react/ui/tabs";
+import {
+  Tabs,
+  TabsList,
+  type TabsListProps,
+  TabsTab,
+} from "@ctrl-ui/react/ui/tabs";
 import { Flag, GridFour, List } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
@@ -18,6 +23,7 @@ const isBoardView = (value: string): value is BoardView =>
 interface BoardViewToggleProps {
   className?: string;
   onChange: (view: BoardView) => void;
+  size?: TabsListProps["size"];
   view: BoardView;
 }
 
@@ -25,6 +31,7 @@ export function BoardViewToggle({
   view,
   onChange,
   className,
+  size,
 }: BoardViewToggleProps) {
   return (
     <Tabs
@@ -36,18 +43,18 @@ export function BoardViewToggle({
       }}
       value={view}
     >
-      <TabsList className="h-10">
-        <TabsTab className="h-8 gap-2 px-4" value="feed">
-          <List className="h-4 w-4" />
-          <span>List</span>
+      <TabsList aria-label="Board view" size={size}>
+        <TabsTab value="feed">
+          <List aria-hidden className="size-4" />
+          List
         </TabsTab>
-        <TabsTab className="h-8 gap-2 px-4" value="roadmap">
-          <GridFour className="h-4 w-4" />
-          <span>Roadmap</span>
+        <TabsTab value="roadmap">
+          <GridFour aria-hidden className="size-4" />
+          Roadmap
         </TabsTab>
-        <TabsTab className="h-8 gap-2 px-4" value="milestones">
-          <Flag className="h-4 w-4" />
-          <span>Timeline</span>
+        <TabsTab value="milestones">
+          <Flag aria-hidden className="size-4" />
+          Timeline
         </TabsTab>
       </TabsList>
     </Tabs>

@@ -1,7 +1,6 @@
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@ctrl-ui/react/ui/avatar";
-import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Select,
@@ -12,16 +11,16 @@ import {
 } from "@ctrl-ui/react/ui/select";
 import {
   ArrowLeft,
-  CaretUp,
   ChatCircle,
   GithubLogo,
   PushPin,
   User,
 } from "@phosphor-icons/react";
-import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
+import { TagBadge } from "@/components/tag-badge";
 import { H1 } from "@/components/ui/typography";
-import { cn } from "@/lib/utils";
+import { CommentTimestamp } from "@/features/feedback/components/feedback-detail/comment-meta";
+import { PublicFeedbackVoting } from "@/features/feedback/components/public-feedback-detail/public-feedback-voting";
 
 interface FeedbackHeaderProps {
   assignee?: {
@@ -84,84 +83,50 @@ export function FeedbackHeader({
         className="mb-4 inline-flex items-center text-muted-foreground text-sm hover:text-foreground"
         href={`/dashboard/${orgSlug}`}
       >
-        <ArrowLeft className="mr-2 h-4 w-4" />
+        <ArrowLeft className="mr-2 size-4" />
         Back
       </Link>
 
       <div className="flex gap-4">
-        <button
-          className={cn(
-            "flex shrink-0 flex-col items-center rounded-lg border p-3 transition-colors",
-            hasVoted
-              ? "border-primary bg-primary/10 text-primary"
-              : "border-border hover:border-primary"
-          )}
-          onClick={onVote}
-          style={
-            hasVoted
-              ? {
-                  backgroundColor: `${primaryColor}15`,
-                  borderColor: primaryColor,
-                  color: primaryColor,
-                }
-              : undefined
-          }
-          type="button"
-        >
-          <CaretUp className="h-5 w-5" />
-          <span className="font-semibold">{voteCount}</span>
-        </button>
+        <PublicFeedbackVoting
+          hasVoted={hasVoted ?? false}
+          onVote={onVote}
+          primaryColor={primaryColor}
+          voteCount={voteCount}
+        />
 
-        <div className="flex-1">
+        <div className="min-w-0 flex-1">
           <div className="flex items-start gap-2">
             {isPinned && (
               <PushPin
-                className="mt-1 h-5 w-5 shrink-0 text-primary"
+                aria-label="Pinned"
+                className="mt-1 size-5 shrink-0 text-primary"
                 weight="fill"
               />
             )}
-            <H1 variant="page">{title}</H1>
+            <H1 className="text-balance" variant="page">
+              {title}
+            </H1>
           </div>
 
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            {status && (
-              <Badge
-                className="font-normal"
-                style={{
-                  backgroundColor: `${status.color}15`,
-                  borderColor: `${status.color}30`,
-                  color: status.color,
-                }}
-                variant="outline"
-              >
-                {status.name}
-              </Badge>
-            )}
+            {status && <TagBadge color={status.color}>{status.name}</TagBadge>}
             {tags?.map(
               (tag) =>
                 tag && (
-                  <Badge
-                    className="font-normal"
-                    key={tag._id}
-                    style={{
-                      backgroundColor: `${tag.color}15`,
-                      borderColor: `${tag.color}30`,
-                      color: tag.color,
-                    }}
-                    variant="outline"
-                  >
+                  <TagBadge color={tag.color} key={tag._id} variant="outline">
                     {tag.name}
-                  </Badge>
+                  </TagBadge>
                 )
             )}
           </div>
 
           <div className="mt-2 flex flex-wrap items-center gap-4 text-muted-foreground text-sm">
-            <span className="flex items-center gap-1">
-              <ChatCircle className="h-4 w-4" />
-              {commentCount} comments
+            <span className="flex items-center gap-1 tabular-nums">
+              <ChatCircle aria-hidden className="size-4" />
+              {commentCount} {commentCount === 1 ? "comment" : "comments"}
             </span>
-            <span>{formatDistanceToNow(createdAt, { addSuffix: true })}</span>
+            <CommentTimestamp createdAt={createdAt} />
             <FeedbackAssigneeSelector
               assignee={assignee}
               isAdmin={isAdmin}
@@ -194,10 +159,11 @@ function GithubIssueLink({
       <a
         className="flex items-center gap-1 hover:text-foreground"
         href={githubIssue.url}
-        rel="noopener"
+        rel="noopener noreferrer"
         target="_blank"
       >
-        <GithubLogo className="h-4 w-4" />#{githubIssue.number}
+        <GithubLogo aria-hidden className="size-4" />
+        <span className="tabular-nums">#{githubIssue.number}</span>
       </a>
     );
   }
@@ -211,8 +177,8 @@ function GithubIssueLink({
       size="xs"
       variant="surface"
     >
-      <GithubLogo className="mr-1.5 h-4 w-4" />
-      {isCreating ? "Creating issue..." : "Send to GitHub"}
+      <GithubLogo className="size-3.5" />
+      {isCreating ? "Creating issue…" : "Send to GitHub"}
     </Button>
   );
 }
@@ -254,11 +220,15 @@ export function FeedbackAssigneeSelector({
         }}
         value={assignee?.id ?? "unassigned"}
       >
-        <SelectTrigger className="h-7 w-auto min-w-36 gap-2 border-dashed text-sm">
+        <SelectTrigger
+          aria-label="Assignee"
+          className="w-auto min-w-36"
+          size="xs"
+        >
           <SelectValue placeholder="Assignee">
             {assignee ? (
               <div className="flex items-center gap-1.5">
-                <Avatar className="h-4 w-4">
+                <Avatar className="size-4 outline outline-1 outline-black/10 -outline-offset-1 dark:outline-white/10">
                   <AvatarImage src={assignee.image ?? undefined} />
                   <AvatarFallback className="text-micro">
                     {assignee.name?.charAt(0) ?? "?"}
@@ -284,7 +254,7 @@ export function FeedbackAssigneeSelector({
           {members.map((member) => (
             <SelectItem key={member.userId} value={member.userId}>
               <div className="flex items-center gap-2">
-                <Avatar className="h-5 w-5">
+                <Avatar className="size-5 outline outline-1 outline-black/10 -outline-offset-1 dark:outline-white/10">
                   <AvatarImage src={member.user?.image ?? undefined} />
                   <AvatarFallback className="text-micro">
                     {member.user?.name?.charAt(0) ?? "?"}

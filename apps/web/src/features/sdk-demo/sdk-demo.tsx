@@ -1,13 +1,15 @@
 "use client";
 
+import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button } from "@ctrl-ui/react/ui/button";
+import { Card } from "@ctrl-ui/react/ui/card";
 import {
   ArrowDown,
   ArrowUpRight,
   CreditCard,
   Stack,
 } from "@phosphor-icons/react";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { RefletFeedback } from "reflet-sdk/feedback";
 
 const INVOICES = [
@@ -21,11 +23,11 @@ function DemoSidebar() {
   return (
     <aside className="hidden w-56 shrink-0 flex-col border-border border-r bg-muted/20 p-6 md:flex">
       <div className="mb-12 flex items-center gap-3 font-semibold text-lg">
-        <Stack size={24} weight="duotone" />
+        <Stack aria-hidden size={24} weight="duotone" />
         Forma
       </div>
-      <span className="mb-4 font-medium text-muted-foreground text-xs">
-        WORKSPACE
+      <span className="mb-4 font-medium text-caption text-muted-foreground">
+        Workspace
       </span>
       <nav aria-label="Workspace" className="flex flex-col gap-2 text-sm">
         <a
@@ -45,7 +47,7 @@ function DemoSidebar() {
           className="flex items-center gap-2 rounded-lg bg-muted px-3 py-2 font-medium"
           href="#invoices"
         >
-          <CreditCard size={16} />
+          <CreditCard aria-hidden size={16} />
           Billing
         </a>
       </nav>
@@ -59,38 +61,46 @@ function DemoSidebar() {
 
 function BillingOverview() {
   const [showPlan, setShowPlan] = useState(false);
+  const planDetailsId = useId();
   return (
     <section className="grid gap-4 sm:grid-cols-2" id="plan">
-      <div className="rounded-xl border border-border bg-card p-5 sm:p-6">
+      <Card className="p-5 sm:p-6">
         <div className="flex items-center justify-between">
           <span className="text-muted-foreground text-sm">Current plan</span>
-          <span className="rounded-full bg-primary/10 px-2.5 py-1 text-primary text-xs">
+          <Badge color="green" size="sm">
             Active
-          </span>
+          </Badge>
         </div>
         <div className="mt-5 flex items-baseline gap-2">
           <h2 className="font-semibold text-3xl tracking-tight">Pro</h2>
-          <span className="text-muted-foreground text-sm">€49 / month</span>
+          <span className="text-muted-foreground text-sm tabular-nums">
+            €49 / month
+          </span>
         </div>
         <p className="mt-2 text-muted-foreground text-sm">
           Everything your studio needs to do its best work.
         </p>
         <Button
+          aria-controls={planDetailsId}
+          aria-expanded={showPlan}
           className="mt-5"
           onClick={() => setShowPlan(!showPlan)}
           variant="surface"
         >
           {showPlan ? "Hide plan details" : "Manage plan"}
-          <ArrowUpRight size={14} />
+          <ArrowUpRight aria-hidden data-icon="inline-end" size={14} />
         </Button>
         {showPlan && (
-          <p className="mt-4 text-muted-foreground text-sm">
+          <p
+            className="mt-4 text-pretty text-muted-foreground text-sm"
+            id={planDetailsId}
+          >
             3 members, unlimited projects and 100 GB of storage. This workspace
             is a demo.
           </p>
         )}
-      </div>
-      <div className="rounded-xl border border-border bg-card p-5 sm:p-6">
+      </Card>
+      <Card className="p-5 sm:p-6">
         <span className="text-muted-foreground text-sm">Payment method</span>
         <div className="mt-6 flex items-center gap-3">
           <span className="rounded-md border border-border px-3 py-2 font-semibold text-xs italic">
@@ -98,7 +108,7 @@ function BillingOverview() {
           </span>
           <div>
             <p className="font-medium text-sm">Visa ending in 4242</p>
-            <p className="mt-1 text-muted-foreground text-xs">
+            <p className="mt-1 text-muted-foreground text-xs tabular-nums">
               Expires 08/2028
             </p>
           </div>
@@ -106,7 +116,7 @@ function BillingOverview() {
         <p className="mt-6 text-muted-foreground text-sm">
           Your next invoice is on October 1, 2026.
         </p>
-      </div>
+      </Card>
     </section>
   );
 }
@@ -121,7 +131,7 @@ function InvoiceHistory() {
         </h2>
         <span className="text-muted-foreground text-xs">2026</span>
       </div>
-      <div className="divide-y divide-border rounded-xl border border-border bg-card">
+      <Card className="divide-y divide-border">
         {INVOICES.map((invoice) => (
           <div
             className="flex items-center gap-4 px-4 py-5 sm:px-6"
@@ -129,11 +139,17 @@ function InvoiceHistory() {
           >
             <div className="min-w-0 flex-1">
               <p className="font-medium text-sm">{invoice.date}</p>
-              <p className="mt-1 text-muted-foreground text-xs">{invoice.id}</p>
+              <p className="mt-1 text-muted-foreground text-xs tabular-nums">
+                {invoice.id}
+              </p>
             </div>
-            <span className="hidden rounded-full bg-muted px-2.5 py-1 text-muted-foreground text-xs sm:inline-flex">
+            <Badge
+              className="hidden sm:inline-flex"
+              size="sm"
+              variant="outline"
+            >
               Paid
-            </span>
+            </Badge>
             <span className="text-right font-medium text-sm tabular-nums sm:w-28">
               {invoice.amount}
             </span>
@@ -143,17 +159,16 @@ function InvoiceHistory() {
               onClick={() => setDownloaded(invoice.id)}
               variant="ghost"
             >
-              <ArrowDown size={18} />
+              <ArrowDown aria-hidden size={18} />
             </Button>
           </div>
         ))}
-      </div>
-      {downloaded && (
-        <p className="mt-3 text-muted-foreground text-sm" role="status">
-          {downloaded} is a sample invoice. Downloads are available in a
-          connected workspace.
-        </p>
-      )}
+      </Card>
+      <p className="mt-3 min-h-5 text-muted-foreground text-sm" role="status">
+        {downloaded
+          ? `${downloaded} is a sample invoice. Downloads work in a connected workspace.`
+          : null}
+      </p>
     </section>
   );
 }
@@ -168,16 +183,14 @@ export function SdkDemo() {
             <span className="hidden sm:inline">Workspace / </span>
             <span className="text-foreground">Billing</span>
           </span>
-          <span className="rounded-full border border-border px-3 py-1 text-muted-foreground text-xs">
-            SDK preview · no data sent
-          </span>
+          <Badge variant="outline">SDK preview · no data sent</Badge>
         </header>
         <main className="mx-auto max-w-5xl px-6 pt-8 pb-64 sm:px-10 sm:pt-12">
           <div className="mb-8">
-            <p className="mb-2 text-muted-foreground text-xs">
-              STUDIO WORKSPACE
+            <p className="mb-2 text-caption text-muted-foreground">
+              Studio workspace
             </p>
-            <h1 className="font-semibold text-3xl tracking-tight">
+            <h1 className="text-balance font-semibold text-3xl tracking-tight">
               Plans & billing
             </h1>
             <p className="mt-3 text-muted-foreground text-sm">

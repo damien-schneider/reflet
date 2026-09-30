@@ -39,7 +39,7 @@
     padding: 20px;
   }
   :where(.marketing-code pre) {
-    font-size: 10px;
+    font-size: 11px;
   }
   :where(.marketing-plan) {
     padding: 28px;
@@ -56,13 +56,11 @@
   }
   :where(.marketing-footer) {
     flex-direction: column;
-    gap: 26px;
-    align-items: flex-start;
-    padding: 40px 24px;
+    gap: 36px;
+    padding: 44px 24px calc(40px + env(safe-area-inset-bottom));
   }
-  :where(.marketing-footer nav) {
-    flex-wrap: wrap;
-    gap: 20px;
+  :where(.marketing-footer-links) {
+    gap: 48px;
   }
 }
 @media (max-width: 440px) {

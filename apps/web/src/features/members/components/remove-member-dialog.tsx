@@ -7,6 +7,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@ctrl-ui/react/ui/dialog";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
+import { toast } from "@ctrl-ui/react/ui/toast";
+import { useState } from "react";
 
 interface RemoveMemberDialogProps {
   member: { id: string; name: string } | null;
@@ -19,22 +22,44 @@ export function RemoveMemberDialog({
   onClose,
   onConfirm,
 }: RemoveMemberDialogProps) {
+  const [isRemoving, setIsRemoving] = useState(false);
+
+  const handleConfirm = async () => {
+    setIsRemoving(true);
+    try {
+      await onConfirm();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Couldn’t remove the member"
+      );
+    }
+    setIsRemoving(false);
+  };
+
   return (
     <Dialog onOpenChange={() => onClose()} open={!!member}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Remove member</DialogTitle>
           <DialogDescription>
-            Are you sure you want to remove <strong>{member?.name}</strong> from
-            this organization? They will lose access to all boards and data.
+            Remove <strong>{member?.name}</strong> from this organization? They
+            lose access to its boards and data right away.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button onClick={onClose} variant="surface">
             Cancel
           </Button>
-          <Button onClick={onConfirm} tone="danger" variant="surface">
-            Remove member
+          <Button
+            disabled={isRemoving}
+            onClick={handleConfirm}
+            tone="danger"
+            variant="solid"
+          >
+            {isRemoving ? (
+              <Spinner aria-hidden data-icon="inline-start" size="xs" />
+            ) : null}
+            {isRemoving ? "Removing…" : "Remove member"}
           </Button>
         </DialogFooter>
       </DialogContent>

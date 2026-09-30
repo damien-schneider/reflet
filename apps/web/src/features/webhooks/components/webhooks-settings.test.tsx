@@ -91,7 +91,7 @@ describe("WebhooksSettings", () => {
       url: "https://example.com/hook",
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "I've saved it" }));
+    fireEvent.click(screen.getByRole("button", { name: "I’ve saved it" }));
     expect(screen.queryByText("whsec_once")).toBeNull();
   });
 

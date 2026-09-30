@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "@ctrl-ui/react/ui/toast";
 import { useDebouncedCallback } from "@tanstack/react-pacer";
 import { type Editor, useEditor as useTiptapEditor } from "@tiptap/react";
 import { useEffect, useRef } from "react";
@@ -12,6 +13,10 @@ const getMarkdown = (storage: unknown): string => {
   };
   return storageWithMarkdown?.markdown?.getMarkdown?.() ?? "";
 };
+
+function useEditorExtensions(options: Parameters<typeof createExtensions>[0]) {
+  return createExtensions(options);
+}
 
 interface UseTiptapMarkdownEditorOptions {
   autoFocus?: boolean;
@@ -51,7 +56,7 @@ export function useTiptapMarkdownEditor(
   const {
     value,
     onChange,
-    placeholder = "Write something... Type '/' for commands",
+    placeholder = "Write something… Type / for commands",
     disabled = false,
     maxLength,
     autoFocus = false,
@@ -79,7 +84,7 @@ export function useTiptapMarkdownEditor(
 
   const { uploadMedia, isUploading, uploadProgress } = useMediaUpload({
     onError: (error: Error) => {
-      console.error("Media upload failed:", error);
+      toast.error(error.message);
     },
     onSuccess: (result: MediaUploadResult) => {
       const ed = editorRef.current;
@@ -90,9 +95,7 @@ export function useTiptapMarkdownEditor(
       } else if (result.type === "video") {
         ed.chain()
           .focus()
-          .insertContent(
-            `<p><video src="${result.url}" controls class="tiptap-video"></video></p>`
-          )
+          .insertContent({ attrs: { src: result.url }, type: "video" })
           .run();
       }
     },
@@ -120,7 +123,7 @@ export function useTiptapMarkdownEditor(
     onSubmitRef.current?.();
   };
 
-  const extensions = createExtensions({
+  const extensions = useEditorExtensions({
     maxLength,
     onImageUpload: handleImageUpload,
     onSubmit: onSubmit ? handleSubmit : undefined,

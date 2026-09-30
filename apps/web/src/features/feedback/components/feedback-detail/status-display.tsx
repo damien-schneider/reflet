@@ -1,4 +1,3 @@
-import { Button } from "@ctrl-ui/react/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,31 +36,28 @@ export function StatusDisplay({
       <DropdownMenu>
         {currentStatus ? (
           <DropdownMenuTrigger
-            aria-label="Change status"
+            aria-label={`Status: ${currentStatus.name}. Change status`}
+            className="select-none"
             render={
-              <Button className="h-auto select-none p-0" variant="quiet" />
-            }
-          >
-            <TagBadge
-              className="h-8 rounded-full px-3 font-normal text-xs"
-              color={currentStatus.color}
-            >
-              {currentStatus.name}
-              <CaretDown className="h-3 w-3 opacity-70" />
-            </TagBadge>
-          </DropdownMenuTrigger>
-        ) : (
-          <DropdownMenuTrigger
-            aria-label="Change status"
-            render={
-              <Button
-                className="h-8 w-auto select-none gap-1.5 rounded-full border border-input border-dashed px-3 text-sm transition-colors"
-                variant="quiet"
+              <TagBadge
+                color={currentStatus.color}
+                render={<button type="button" />}
               />
             }
           >
-            <span className="text-muted-foreground text-xs">Status</span>
-            <CaretDown className="h-3.5 w-3.5 text-muted-foreground" />
+            {currentStatus.name}
+            <CaretDown aria-hidden className="opacity-70" />
+          </DropdownMenuTrigger>
+        ) : (
+          <DropdownMenuTrigger
+            aria-label="Set status"
+            className="select-none"
+            render={
+              <TagBadge render={<button type="button" />} variant="outline" />
+            }
+          >
+            <span>Status</span>
+            <CaretDown aria-hidden />
           </DropdownMenuTrigger>
         )}
         <DropdownMenuContent align="start" className="w-48">
@@ -73,9 +69,10 @@ export function StatusDisplay({
           >
             {organizationStatuses.map((status) => (
               <DropdownMenuRadioItem key={status._id} value={status._id}>
-                <div
+                <span
+                  aria-hidden
                   className={cn(
-                    "h-3 w-3 shrink-0 rounded-full border",
+                    "size-2.5 shrink-0 rounded-full",
                     getTagSwatchClass(status.color)
                   )}
                 />
@@ -90,12 +87,7 @@ export function StatusDisplay({
 
   if (currentStatus) {
     return (
-      <TagBadge
-        className="rounded-full px-2 py-0.5 font-normal text-xs"
-        color={currentStatus.color}
-      >
-        {currentStatus.name}
-      </TagBadge>
+      <TagBadge color={currentStatus.color}>{currentStatus.name}</TagBadge>
     );
   }
 

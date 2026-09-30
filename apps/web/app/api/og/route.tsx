@@ -225,7 +225,7 @@ export async function GET(request: NextRequest) {
             fontStyle: "italic",
           }}
         >
-          Product Feedback & Roadmap Platform
+          Product feedback and roadmap platform
         </span>
       </div>
     </div>,

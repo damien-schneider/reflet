@@ -1,17 +1,17 @@
 import { ButtonLink } from "@ctrl-ui/react/ui/button";
 import { ArrowDown, ArrowUpRight, GitBranch } from "lucide-react";
 import Link from "next/link";
+import { HeroIntro } from "@/features/homepage/components/experience/hero/hero-intro";
 import { HeroReflection } from "@/features/homepage/components/experience/hero/reflection/hero-reflection";
 import { journeyAnchorId } from "@/features/homepage/components/experience/journey/journey-data";
-import { SectionReveal } from "@/features/homepage/components/experience/motion/section-reveal";
 import "@/features/homepage/components/experience/hero/hero.css";
 
 export function MarketingHero() {
   return (
-    <section className="marketing-hero">
-      <SectionReveal className="hero-canvas">
+    <section aria-labelledby="marketing-hero-title" className="marketing-hero">
+      <HeroIntro>
         <div className="hero-editorial-line">
-          <span>A little feedback. A lasting impression.</span>
+          <span>Feedback, roadmap and changelog in one place.</span>
           <a
             className="hero-open-source"
             href="https://github.com/damien-schneider/reflet"
@@ -22,20 +22,21 @@ export function MarketingHero() {
         </div>
         <div className="hero-main">
           <div className="marketing-hero-copy">
-            <h1>
+            <h1 id="marketing-hero-title">
               <span>Listen closely.</span>
               <br />
               <span>Build what matters.</span>
             </h1>
-            <p>Turn feedback into your next great release.</p>
+            <p>
+              Collect feedback inside your app, plan it in the open, and tell
+              people when it ships.
+            </p>
             <HeroActions />
           </div>
           <HeroReflection />
         </div>
-      </SectionReveal>
-      <SectionReveal>
-        <HeroStoryLinks />
-      </SectionReveal>
+      </HeroIntro>
+      <HeroStoryLinks />
     </section>
   );
 }
@@ -49,36 +50,44 @@ function HeroActions() {
         tone="primary"
         variant="solid"
       >
-        Start your feedback loop <ArrowUpRight aria-hidden="true" size={16} />
+        Start for free <ArrowUpRight aria-hidden="true" size={16} />
       </ButtonLink>
       <a
         className="marketing-text-link"
         href={`#${journeyAnchorId("capture")}`}
       >
-        Explore the feedback loop <ArrowDown aria-hidden="true" size={14} />
+        See how it works <ArrowDown aria-hidden="true" size={14} />
       </a>
     </div>
   );
 }
 
+const STORY_LINKS = [
+  {
+    feature: "collect",
+    label: "Collect ideas where they happen",
+    step: "capture",
+  },
+  { feature: "plan", label: "Plan in the open", step: "planned" },
+  { feature: "release", label: "Tell people it shipped", step: "notify" },
+] as const;
+
 function HeroStoryLinks() {
   return (
     <nav aria-label="Your feedback loop" className="hero-story-links">
-      <a data-feature="collect" href={`#${journeyAnchorId("capture")}`}>
-        <span className="hero-story-number">01</span>
-        <span>Every idea starts somewhere.</span>
-        <ArrowUpRight aria-hidden="true" size={15} />
-      </a>
-      <a data-feature="plan" href={`#${journeyAnchorId("planned")}`}>
-        <span className="hero-story-number">02</span>
-        <span>Give it a little direction.</span>
-        <ArrowUpRight aria-hidden="true" size={15} />
-      </a>
-      <a data-feature="release" href={`#${journeyAnchorId("notify")}`}>
-        <span className="hero-story-number">03</span>
-        <span>Bring the good news back.</span>
-        <ArrowUpRight aria-hidden="true" size={15} />
-      </a>
+      {STORY_LINKS.map((link, index) => (
+        <a
+          data-feature={link.feature}
+          href={`#${journeyAnchorId(link.step)}`}
+          key={link.step}
+        >
+          <span className="hero-story-number">
+            {String(index + 1).padStart(2, "0")}
+          </span>
+          <span>{link.label}</span>
+          <ArrowDown aria-hidden="true" size={15} />
+        </a>
+      ))}
     </nav>
   );
 }

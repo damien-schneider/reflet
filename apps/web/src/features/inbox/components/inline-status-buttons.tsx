@@ -20,7 +20,13 @@ export function InlineStatusButtons({
   className,
 }: InlineStatusButtonsProps) {
   return (
-    <div className={cn("inline-flex items-center gap-1", className)}>
+    <fieldset
+      aria-label="Conversation status"
+      className={cn(
+        "inline-flex min-w-0 flex-wrap items-center gap-1",
+        className
+      )}
+    >
       {CONVERSATION_STATUSES.map((status) => {
         const meta = CONVERSATION_STATUS_META[status];
         const Icon = meta.icon;
@@ -28,7 +34,6 @@ export function InlineStatusButtons({
 
         return (
           <Toggle
-            className={cn("gap-1 text-xs", meta.toggleClassName)}
             key={status}
             onPressedChange={() => {
               if (!isActive) {
@@ -38,11 +43,11 @@ export function InlineStatusButtons({
             pressed={isActive}
             value={status}
           >
-            <Icon className="h-3.5 w-3.5" />
+            <Icon aria-hidden weight={isActive ? "fill" : "regular"} />
             {meta.label}
           </Toggle>
         );
       })}
-    </div>
+    </fieldset>
   );
 }

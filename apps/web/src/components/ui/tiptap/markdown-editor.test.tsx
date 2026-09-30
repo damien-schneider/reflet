@@ -362,10 +362,10 @@ describe("TiptapMarkdownEditor", () => {
       useTiptapMarkdownEditor.mockReturnValueOnce({
         ...mockHookReturn,
         isUploading: true,
-        uploadProgress: "Uploading... 50%",
+        uploadProgress: "Uploading image…",
       });
       render(<TiptapMarkdownEditor onChange={() => {}} value="content" />);
-      expect(screen.getByText("Uploading... 50%")).toBeInTheDocument();
+      expect(screen.getByText("Uploading image…")).toBeInTheDocument();
     });
   });
 

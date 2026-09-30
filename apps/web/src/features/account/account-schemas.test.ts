@@ -32,7 +32,7 @@ describe("updateProfileSchema", () => {
     const result = updateProfileSchema.safeParse({ name: "" });
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].message).toBe("Name is required");
+      expect(result.error.issues[0].path).toEqual(["name"]);
     }
   });
 
@@ -48,7 +48,7 @@ describe("updateProfileSchema", () => {
     });
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].message).toBe("Invalid URL");
+      expect(result.error.issues[0].path).toEqual(["avatarUrl"]);
     }
   });
 
@@ -73,7 +73,7 @@ describe("updateEmailSchema", () => {
     const result = updateEmailSchema.safeParse({ newEmail: "not-an-email" });
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].message).toBe("Invalid email");
+      expect(result.error.issues[0].path).toEqual(["newEmail"]);
     }
   });
 
@@ -107,9 +107,7 @@ describe("updatePasswordSchema", () => {
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(
-        result.error.issues.some(
-          (i) => i.message === "Current password is required"
-        )
+        result.error.issues.some((i) => i.path[0] === "currentPassword")
       ).toBe(true);
     }
   });
@@ -122,11 +120,9 @@ describe("updatePasswordSchema", () => {
     });
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(
-        result.error.issues.some((i) =>
-          i.message.includes("at least 8 characters")
-        )
-      ).toBe(true);
+      expect(result.error.issues.some((i) => i.path[0] === "newPassword")).toBe(
+        true
+      );
     }
   });
 
@@ -138,9 +134,10 @@ describe("updatePasswordSchema", () => {
     });
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(
-        result.error.issues.some((i) => i.message === "Passwords do not match")
-      ).toBe(true);
+      const mismatch = result.error.issues.find(
+        (i) => i.message === "Passwords don’t match"
+      );
+      expect(mismatch?.path).toEqual(["confirmPassword"]);
     }
   });
 
@@ -153,9 +150,7 @@ describe("updatePasswordSchema", () => {
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(
-        result.error.issues.some(
-          (i) => i.message === "Please confirm your password"
-        )
+        result.error.issues.some((i) => i.path[0] === "confirmPassword")
       ).toBe(true);
     }
   });

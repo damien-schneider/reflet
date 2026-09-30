@@ -77,7 +77,8 @@ describe("agent-config", () => {
       expect(result).toBe(true);
       expect(windowOpenSpy).toHaveBeenCalledWith(
         expect.stringContaining("cursor://anysphere.cursor-tools/openComposer"),
-        "_blank"
+        "_blank",
+        "noopener,noreferrer"
       );
     });
 
@@ -92,7 +93,8 @@ describe("agent-config", () => {
       expect(result).toBe(true);
       expect(windowOpenSpy).toHaveBeenCalledWith(
         expect.stringContaining("vscode://GitHub.copilot-chat/openChat"),
-        "_blank"
+        "_blank",
+        "noopener,noreferrer"
       );
     });
 
@@ -101,7 +103,8 @@ describe("agent-config", () => {
       expect(result).toBe(true);
       expect(windowOpenSpy).toHaveBeenCalledWith(
         expect.stringContaining("windsurf://codeium.windsurf/openChat"),
-        "_blank"
+        "_blank",
+        "noopener,noreferrer"
       );
     });
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { Tabs, TabsList, TabsTab } from "@ctrl-ui/react/ui/tabs";
-import { Bell, Code, Envelope, LockKey, User } from "@phosphor-icons/react";
 
 export type AccountTab =
   | "profile"
@@ -16,11 +15,11 @@ interface AccountNavProps {
 }
 
 const NAV_ITEMS = [
-  { icon: User, id: "profile", label: "Profile" },
-  { icon: Envelope, id: "email", label: "Email" },
-  { icon: LockKey, id: "password", label: "Password" },
-  { icon: Bell, id: "notifications", label: "Notifications" },
-  { icon: Code, id: "devtools", label: "Devtools" },
+  { id: "profile", label: "Profile" },
+  { id: "email", label: "Email" },
+  { id: "password", label: "Password" },
+  { id: "notifications", label: "Notifications" },
+  { id: "devtools", label: "Devtools" },
 ] as const;
 
 const isAccountTab = (value: string): value is AccountTab =>
@@ -28,29 +27,23 @@ const isAccountTab = (value: string): value is AccountTab =>
 
 export function AccountNav({ activeTab, onTabChange }: AccountNavProps) {
   return (
-    <Tabs
-      onValueChange={(value) => {
-        if (isAccountTab(value)) {
-          onTabChange(value);
-        }
-      }}
-      value={activeTab}
-    >
-      <TabsList
-        aria-label="Account settings"
-        className="grid h-auto w-full grid-cols-2 sm:grid-cols-5 md:flex md:flex-col md:items-stretch [&_[data-slot=indicator]]:hidden"
+    <div className="-mx-1 overflow-x-auto px-1 pb-1">
+      <Tabs
+        onValueChange={(value) => {
+          if (isAccountTab(value)) {
+            onTabChange(value);
+          }
+        }}
+        value={activeTab}
       >
-        {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
-          <TabsTab
-            className="min-h-10 w-full justify-start gap-3 px-3 aria-selected:bg-accent aria-selected:text-accent-foreground"
-            key={id}
-            value={id}
-          >
-            <Icon className="size-4" />
-            {label}
-          </TabsTab>
-        ))}
-      </TabsList>
-    </Tabs>
+        <TabsList aria-label="Account settings">
+          {NAV_ITEMS.map(({ id, label }) => (
+            <TabsTab key={id} value={id}>
+              {label}
+            </TabsTab>
+          ))}
+        </TabsList>
+      </Tabs>
+    </div>
   );
 }

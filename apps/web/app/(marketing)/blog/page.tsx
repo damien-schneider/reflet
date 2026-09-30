@@ -1,69 +1,59 @@
-import { Badge } from "@ctrl-ui/react/ui/badge";
 import Link from "next/link";
-import { H1, H3, Lead, Muted, Text } from "@/components/ui/typography";
+import { MarketingPageIntro } from "@/features/homepage/components/marketing-subpage";
 import { formatDate, getAllBlogPosts, getCategoryLabel } from "@/lib/blog";
 
 export default async function BlogIndexPage() {
   const posts = await getAllBlogPosts();
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
-      <div className="mb-12 text-center">
-        <H1 className="mb-4" variant="page">
-          Reflet Blog
-        </H1>
-        <Lead>
-          Guides, tutorials, and best practices for product feedback management.
-        </Lead>
-      </div>
+    <div className="marketing-section pt-16 md:pt-24">
+      <MarketingPageIntro
+        align="start"
+        kicker="Blog"
+        title="Notes on listening to users"
+      >
+        Guides and comparisons on collecting feedback, planning roadmaps, and
+        telling users what shipped.
+      </MarketingPageIntro>
 
       {posts.length === 0 ? (
-        <div className="py-12 text-center">
-          <Text className="text-muted-foreground">
-            No blog posts yet. Check back soon!
-          </Text>
-        </div>
+        <p className="border-(--marketing-hairline) border-t py-16 text-body-lg text-muted-foreground">
+          No posts yet.
+        </p>
       ) : (
-        <div className="space-y-8">
+        <ol className="divide-y divide-(--marketing-hairline) border-(--marketing-hairline) border-t">
           {posts.map((post) => (
-            <article
-              className="group rounded-xl border border-border bg-card p-6 transition-colors hover:border-foreground/20"
-              key={post.slug}
-            >
-              <Link href={`/blog/${post.slug}`}>
-                <div className="mb-3 flex items-center gap-3">
-                  <Badge>{getCategoryLabel(post.meta.category)}</Badge>
-                  <Muted>{post.meta.readingTime}</Muted>
+            <li key={post.slug}>
+              <article className="group relative grid gap-3 py-8 md:grid-cols-[12rem_1fr] md:gap-12">
+                <p className="flex flex-wrap gap-x-2 text-body text-muted-foreground md:flex-col md:gap-1">
+                  <time className="tabular-nums" dateTime={post.meta.date}>
+                    {formatDate(post.meta.date)}
+                  </time>
+                  <span aria-hidden="true" className="md:hidden">
+                    ·
+                  </span>
+                  <span>
+                    {getCategoryLabel(post.meta.category)} ·{" "}
+                    {post.meta.readingTime}
+                  </span>
+                </p>
+                <div className="max-w-[65ch]">
+                  <h2 className="text-balance text-heading-2 tracking-[-0.02em]">
+                    <Link
+                      className="after:absolute after:inset-0 group-hover:underline group-hover:decoration-from-font group-hover:underline-offset-4"
+                      href={`/blog/${post.slug}`}
+                    >
+                      {post.meta.title}
+                    </Link>
+                  </h2>
+                  <p className="mt-2 line-clamp-2 text-pretty text-body-lg text-muted-foreground leading-relaxed">
+                    {post.meta.description}
+                  </p>
                 </div>
-                <H3
-                  className="mb-2 transition-colors group-hover:text-brand-text"
-                  variant="cardBold"
-                >
-                  {post.meta.title}
-                </H3>
-                <Text className="mb-4 line-clamp-2 text-muted-foreground">
-                  {post.meta.description}
-                </Text>
-                <div className="flex items-center gap-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-subtle font-bold text-brand-text text-xs">
-                    {post.meta.author
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
-                  </div>
-                  <div>
-                    <span className="font-medium text-sm">
-                      {post.meta.author}
-                    </span>
-                    <span className="ml-2 text-muted-foreground text-sm">
-                      {formatDate(post.meta.date)}
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            </article>
+              </article>
+            </li>
           ))}
-        </div>
+        </ol>
       )}
     </div>
   );

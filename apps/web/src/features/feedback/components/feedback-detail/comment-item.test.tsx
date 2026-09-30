@@ -182,12 +182,14 @@ describe("CommentItem", () => {
     expect(mockUpdateComment).not.toHaveBeenCalled();
   });
 
-  it("calls deleteComment when Delete is clicked", async () => {
+  it("deletes the comment only after confirmation", async () => {
     mockDeleteComment.mockResolvedValue(undefined);
     render(<CommentItem comment={makeComment()} />);
     const dotsButton = screen.getByRole("button", { name: "Comment actions" });
     fireEvent.click(dotsButton);
     fireEvent.click(screen.getByText("Delete"));
+    expect(mockDeleteComment).not.toHaveBeenCalled();
+    fireEvent.click(await screen.findByText("Delete comment"));
     await waitFor(() => {
       expect(mockDeleteComment).toHaveBeenCalledWith({ id: "c1" });
     });
@@ -196,17 +198,17 @@ describe("CommentItem", () => {
   it("shows reply input when Reply is clicked", () => {
     render(<CommentItem comment={makeComment()} />);
     fireEvent.click(screen.getByText("Reply"));
-    expect(screen.getByPlaceholderText("Write a reply...")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Write a reply…")).toBeInTheDocument();
   });
 
   it("cancels reply input", () => {
     render(<CommentItem comment={makeComment()} />);
     fireEvent.click(screen.getByText("Reply"));
-    expect(screen.getByPlaceholderText("Write a reply...")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Write a reply…")).toBeInTheDocument();
     // Click the Cancel button in reply section
     fireEvent.click(screen.getAllByText("Cancel")[0]);
     expect(
-      screen.queryByPlaceholderText("Write a reply...")
+      screen.queryByPlaceholderText("Write a reply…")
     ).not.toBeInTheDocument();
   });
 
@@ -216,7 +218,7 @@ describe("CommentItem", () => {
     // Open reply
     fireEvent.click(screen.getByText("Reply"));
     // Type into mock editor
-    const replyEditor = screen.getByPlaceholderText("Write a reply...");
+    const replyEditor = screen.getByPlaceholderText("Write a reply…");
     fireEvent.change(replyEditor, { target: { value: "My reply" } });
     // Trigger onSubmit via Enter key on the mock editor
     fireEvent.keyDown(replyEditor, { key: "Enter" });
@@ -233,15 +235,6 @@ describe("CommentItem", () => {
     // The reply submit button is the one that is disabled (empty content)
     const disabledBtns = buttons.filter((btn) => btn.hasAttribute("disabled"));
     expect(disabledBtns.length).toBeGreaterThan(0);
-  });
-
-  it("renders with isReply styling (smaller avatar)", () => {
-    const { container } = render(
-      <CommentItem comment={makeComment()} isReply />
-    );
-    // The avatar should have h-6 w-6 class for replies
-    const avatar = container.querySelector(".h-6.w-6");
-    expect(avatar).toBeInTheDocument();
   });
 
   it("shows ? fallback when author has no name", () => {

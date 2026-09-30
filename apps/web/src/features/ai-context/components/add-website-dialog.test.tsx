@@ -73,16 +73,6 @@ vi.mock("@ctrl-ui/react/ui/input", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/label", () => ({
-  Label: ({
-    children,
-    htmlFor,
-  }: {
-    children: React.ReactNode;
-    htmlFor?: string;
-  }) => <label htmlFor={htmlFor}>{children}</label>,
-}));
-
 import { AddWebsiteDialog } from "./add-website-dialog";
 
 afterEach(() => {
@@ -98,31 +88,31 @@ const baseProps = {
 describe("AddWebsiteDialog", () => {
   it("renders when open", () => {
     render(<AddWebsiteDialog {...baseProps} />);
-    expect(screen.getByText("Add Website Reference")).toBeInTheDocument();
+    expect(screen.getByText("Add website reference")).toBeInTheDocument();
   });
 
   it("does not render when closed", () => {
     render(<AddWebsiteDialog {...baseProps} open={false} />);
-    expect(screen.queryByText("Add Website Reference")).not.toBeInTheDocument();
+    expect(screen.queryByText("Add website reference")).not.toBeInTheDocument();
   });
 
   it("renders URL input field", () => {
     render(<AddWebsiteDialog {...baseProps} />);
-    expect(screen.getByText("Website URL")).toBeInTheDocument();
+    expect(screen.getByLabelText("Website URL")).toBeInTheDocument();
     expect(
       screen.getByPlaceholderText("https://example.com/docs")
     ).toBeInTheDocument();
   });
 
-  it("renders Cancel and Add Website buttons", () => {
+  it("renders Cancel and Add website buttons", () => {
     render(<AddWebsiteDialog {...baseProps} />);
     expect(screen.getByText("Cancel")).toBeInTheDocument();
-    expect(screen.getByText("Add Website")).toBeInTheDocument();
+    expect(screen.getByText("Add website")).toBeInTheDocument();
   });
 
   it("disables Add button when URL is empty", () => {
     render(<AddWebsiteDialog {...baseProps} />);
-    expect(screen.getByText("Add Website")).toBeDisabled();
+    expect(screen.getByText("Add website")).toBeDisabled();
   });
 
   it("enables Add button when URL has content", async () => {
@@ -133,7 +123,7 @@ describe("AddWebsiteDialog", () => {
       screen.getByPlaceholderText("https://example.com/docs"),
       "https://example.com"
     );
-    expect(screen.getByText("Add Website")).not.toBeDisabled();
+    expect(screen.getByText("Add website")).not.toBeDisabled();
   });
 
   it("shows error for invalid URL", async () => {
@@ -144,9 +134,11 @@ describe("AddWebsiteDialog", () => {
       screen.getByPlaceholderText("https://example.com/docs"),
       "not-a-url"
     );
-    fireEvent.submit(screen.getByText("Add Website").closest("form")!);
+    fireEvent.submit(screen.getByText("Add website").closest("form")!);
 
-    expect(screen.getByText("Please enter a valid URL")).toBeInTheDocument();
+    expect(
+      screen.getByText("Enter a valid URL, like https://example.com/docs")
+    ).toBeInTheDocument();
   });
 
   it("shows error for non-http protocol", async () => {
@@ -157,10 +149,10 @@ describe("AddWebsiteDialog", () => {
       screen.getByPlaceholderText("https://example.com/docs"),
       "ftp://example.com"
     );
-    fireEvent.submit(screen.getByText("Add Website").closest("form")!);
+    fireEvent.submit(screen.getByText("Add website").closest("form")!);
 
     expect(
-      screen.getByText("URL must use http or https protocol")
+      screen.getByText("Use a URL that starts with http:// or https://")
     ).toBeInTheDocument();
   });
 
@@ -174,7 +166,7 @@ describe("AddWebsiteDialog", () => {
     );
     fireEvent.submit(container.querySelector("form")!);
 
-    expect(screen.getByText("Please enter a URL")).toBeInTheDocument();
+    expect(screen.getByText("Enter a URL")).toBeInTheDocument();
   });
 
   it("calls createReference with valid URL", async () => {
@@ -185,7 +177,7 @@ describe("AddWebsiteDialog", () => {
       screen.getByPlaceholderText("https://example.com/docs"),
       "https://example.com/docs"
     );
-    await user.click(screen.getByText("Add Website"));
+    await user.click(screen.getByText("Add website"));
 
     expect(mockCreateReference).toHaveBeenCalledWith({
       organizationId: "org1",
@@ -209,11 +201,13 @@ describe("AddWebsiteDialog", () => {
     const input = screen.getByPlaceholderText("https://example.com/docs");
     await user.type(input, "invalid");
     fireEvent.submit(input.closest("form")!);
-    expect(screen.getByText("Please enter a valid URL")).toBeInTheDocument();
+    expect(
+      screen.getByText("Enter a valid URL, like https://example.com/docs")
+    ).toBeInTheDocument();
 
     await user.type(input, "x");
     expect(
-      screen.queryByText("Please enter a valid URL")
+      screen.queryByText("Enter a valid URL, like https://example.com/docs")
     ).not.toBeInTheDocument();
   });
 });

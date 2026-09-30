@@ -25,7 +25,7 @@ export interface BlogPost {
   slug: string;
 }
 
-const BLOG_DIR = path.join(process.cwd(), "app/blog/(posts)");
+const BLOG_DIR = path.join(process.cwd(), "app/(marketing)/blog/(posts)");
 
 export async function getAllBlogPosts(): Promise<BlogPost[]> {
   if (!fs.existsSync(BLOG_DIR)) {
@@ -37,10 +37,11 @@ export async function getAllBlogPosts(): Promise<BlogPost[]> {
     .filter((dirent) => dirent.isDirectory())
     .map((dirent) => dirent.name);
 
+  const entries = await Promise.all(
+    slugs.map(async (slug) => ({ meta: await getBlogPostMeta(slug), slug }))
+  );
   const posts: BlogPost[] = [];
-
-  for (const slug of slugs) {
-    const meta = await getBlogPostMeta(slug);
+  for (const { meta, slug } of entries) {
     if (meta) {
       posts.push({ meta, slug });
     }
@@ -66,7 +67,9 @@ export async function getBlogPostMeta(
   slug: string
 ): Promise<BlogPostMeta | null> {
   try {
-    const { meta } = await import(`@app/blog/(posts)/${slug}/page.mdx`);
+    const { meta } = await import(
+      `@app/(marketing)/blog/(posts)/${slug}/page.mdx`
+    );
     return isBlogPostMeta(meta) ? meta : null;
   } catch {
     return null;

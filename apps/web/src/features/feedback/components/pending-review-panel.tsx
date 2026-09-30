@@ -8,22 +8,23 @@ import {
   CardDescription,
   CardHeader,
 } from "@ctrl-ui/react/ui/card";
-import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { toast } from "@ctrl-ui/react/ui/toast";
-import {
-  ArrowSquareOut,
-  CheckCircle,
-  Sparkle,
-  Trash,
-} from "@phosphor-icons/react";
+import { ArrowSquareOut, CheckCircle, Trash } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import { useState } from "react";
+import { DestructiveConfirmDialog } from "@/components/ui/destructive-confirm-dialog";
 import { AiMiniIndicator } from "./ai-mini-indicator";
 import { NeedsReviewBadge } from "./needs-review-badge";
+import {
+  AllCaughtUp,
+  ReviewQueueSkeleton,
+  ReviewSectionHeader,
+  StatusAnnouncer,
+} from "./review-queue-parts";
 
 const PERCENTAGE_SCALE = 100;
 const LOW_USEFULNESS_PERCENTAGE = 25;
@@ -35,9 +36,32 @@ const SOURCE_LABELS = {
   widget: "Widget",
 } as const;
 
+interface PendingItem {
+  _id: Id<"feedback">;
+  aiJunk?: number;
+  aiNeedsReview?: number;
+  aiUsefulness?: number;
+  createdAt: number;
+  description?: string;
+  source?: keyof typeof SOURCE_LABELS;
+  title: string;
+}
+
+type PendingAction = "approve" | "dismiss";
+
 interface PendingReviewPanelProps {
   organizationId: Id<"organizations">;
   orgSlug: string;
+}
+
+function usefulnessType(percentage: number) {
+  if (percentage < LOW_USEFULNESS_PERCENTAGE) {
+    return "none";
+  }
+  if (percentage < MEDIUM_USEFULNESS_PERCENTAGE) {
+    return "medium";
+  }
+  return "high";
 }
 
 function HoldReason({
@@ -61,17 +85,184 @@ function HoldReason({
   }
 
   const percentage = Math.round(usefulness * PERCENTAGE_SCALE);
-  const type = (() => {
-    if (percentage < LOW_USEFULNESS_PERCENTAGE) {
-      return "none";
-    }
-    if (percentage < MEDIUM_USEFULNESS_PERCENTAGE) {
-      return "medium";
-    }
-    return "high";
-  })();
+  return (
+    <AiMiniIndicator
+      label={`${percentage}% useful`}
+      type={usefulnessType(percentage)}
+    />
+  );
+}
 
-  return <AiMiniIndicator label={`${percentage}% useful`} type={type} />;
+interface PendingReviewCardProps {
+  canApprove: boolean;
+  disabled: boolean;
+  item: PendingItem;
+  onApprove: () => void;
+  onDismiss: () => void;
+  orgSlug: string;
+  pendingAction: PendingAction | null;
+}
+
+function PendingReviewCard({
+  canApprove,
+  disabled,
+  item,
+  onApprove,
+  onDismiss,
+  orgSlug,
+  pendingAction,
+}: PendingReviewCardProps) {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 space-y-1">
+            <h3 className="text-pretty font-medium text-sm leading-tight">
+              {item.title}
+            </h3>
+            <CardDescription>
+              Submitted{" "}
+              {formatDistanceToNow(item.createdAt, { addSuffix: true })}
+              {item.source && ` · ${SOURCE_LABELS[item.source]}`}
+            </CardDescription>
+          </div>
+          <div className="flex shrink-0 items-center gap-1">
+            <HoldReason junk={item.aiJunk} usefulness={item.aiUsefulness} />
+            <NeedsReviewBadge probability={item.aiNeedsReview} />
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {item.description ? (
+          <p className="line-clamp-2 text-pretty text-muted-foreground text-sm">
+            {item.description}
+          </p>
+        ) : (
+          <Badge variant="outline">No description</Badge>
+        )}
+
+        <div className="flex items-center gap-2 border-t pt-3">
+          {canApprove && (
+            <>
+              <Button
+                aria-label={`Approve ${item.title}`}
+                disabled={disabled}
+                onClick={onApprove}
+                size="xs"
+                tone="primary"
+                variant="solid"
+              >
+                <CheckCircle aria-hidden className="size-3.5" />
+                {pendingAction === "approve" ? "Approving…" : "Approve"}
+              </Button>
+              <Button
+                aria-label={`Dismiss ${item.title}`}
+                disabled={disabled}
+                onClick={onDismiss}
+                size="xs"
+                tone="danger"
+                variant="ghost"
+              >
+                <Trash aria-hidden className="size-3.5" />
+                {pendingAction === "dismiss" ? "Dismissing…" : "Dismiss"}
+              </Button>
+            </>
+          )}
+          <ButtonLink
+            aria-label={`Open ${item.title}`}
+            className="ml-auto"
+            render={
+              <Link href={`/dashboard/${orgSlug}/feedback/${item._id}`} />
+            }
+            size="xs"
+            variant="ghost"
+          >
+            <ArrowSquareOut aria-hidden className="size-3.5" />
+            Open
+          </ButtonLink>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function DismissConfirmDialog({
+  item,
+  onClose,
+  onConfirm,
+}: {
+  item: PendingItem | null;
+  onClose: () => void;
+  onConfirm: (item: PendingItem) => void;
+}) {
+  return (
+    <DestructiveConfirmDialog
+      confirmLabel="Dismiss feedback"
+      description={
+        <>
+          “{item?.title}” will be deleted and won’t appear on the board. This
+          can’t be undone.
+        </>
+      }
+      onConfirm={() => item && onConfirm(item)}
+      onOpenChange={(open) => !open && onClose()}
+      open={item !== null}
+      title="Dismiss this feedback?"
+    />
+  );
+}
+
+function usePendingReviewActions() {
+  const updateFeedback = useMutation(api.feedback.mutations.update);
+  const removeFeedback = useMutation(api.feedback.actions.remove);
+  const [pending, setPending] = useState<{
+    action: PendingAction;
+    id: Id<"feedback">;
+  } | null>(null);
+  const [isApprovingAll, setIsApprovingAll] = useState(false);
+  const [announcement, setAnnouncement] = useState("");
+
+  const run = async (
+    item: PendingItem,
+    action: PendingAction,
+    doneLabel: string
+  ) => {
+    setPending({ action, id: item._id });
+    try {
+      if (action === "approve") {
+        await updateFeedback({ id: item._id, isApproved: true });
+      } else {
+        await removeFeedback({ id: item._id });
+      }
+      setAnnouncement(`${doneLabel} “${item.title}”`);
+    } catch {
+      toast.error(`Couldn’t ${action} “${item.title}”. Try again.`);
+    }
+    setPending(null);
+  };
+
+  const approveAll = async (items: PendingItem[]) => {
+    setIsApprovingAll(true);
+    const results = await Promise.allSettled(
+      items.map((item) => updateFeedback({ id: item._id, isApproved: true }))
+    );
+    const failed = results.filter((r) => r.status === "rejected").length;
+    if (failed > 0) {
+      toast.error(`Couldn’t approve ${failed} of ${items.length}. Try again.`);
+    } else {
+      setAnnouncement(`Approved ${items.length} items`);
+    }
+    setIsApprovingAll(false);
+  };
+
+  return {
+    announcement,
+    approve: (item: PendingItem) => run(item, "approve", "Approved"),
+    approveAll,
+    dismiss: (item: PendingItem) => run(item, "dismiss", "Dismissed"),
+    isApprovingAll,
+    pending,
+  };
 }
 
 export function PendingReviewPanel({
@@ -81,144 +272,65 @@ export function PendingReviewPanel({
   const pendingReview = useQuery(api.feedback.review.listPendingReview, {
     organizationId,
   });
-  const updateFeedback = useMutation(api.feedback.mutations.update);
-  const removeFeedback = useMutation(api.feedback.actions.remove);
-  const [pendingId, setPendingId] = useState<Id<"feedback"> | null>(null);
-
-  const handleApprove = async (id: Id<"feedback">) => {
-    setPendingId(id);
-    try {
-      await updateFeedback({ id, isApproved: true });
-      toast.success("Feedback approved");
-    } catch {
-      toast.error("Failed to approve feedback");
-    } finally {
-      setPendingId(null);
-    }
-  };
-
-  const handleDismiss = async (id: Id<"feedback">) => {
-    setPendingId(id);
-    try {
-      await removeFeedback({ id });
-      toast.success("Feedback dismissed");
-    } catch {
-      toast.error("Failed to dismiss feedback");
-    } finally {
-      setPendingId(null);
-    }
-  };
+  const actions = usePendingReviewActions();
+  const [dismissTarget, setDismissTarget] = useState<PendingItem | null>(null);
 
   if (pendingReview === undefined) {
-    return (
-      <div className="space-y-4">
-        {["a", "b", "c"].map((id) => (
-          <Skeleton className="h-32" key={id} />
-        ))}
-      </div>
-    );
+    return <ReviewQueueSkeleton />;
   }
 
   const { canApprove, items } = pendingReview;
+  const showApproveAll = canApprove && items.length > 1;
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Sparkle className="size-5 text-primary" weight="fill" />
-        <h3 className="font-semibold text-lg">
-          Pending review ({items.length})
-        </h3>
-      </div>
+    <section className="space-y-4">
+      <ReviewSectionHeader
+        action={
+          showApproveAll && (
+            <Button
+              disabled={actions.isApprovingAll || actions.pending !== null}
+              onClick={() => actions.approveAll(items)}
+              size="xs"
+              variant="surface"
+            >
+              <CheckCircle aria-hidden className="size-3.5" />
+              {actions.isApprovingAll
+                ? "Approving…"
+                : `Approve all ${items.length}`}
+            </Button>
+          )
+        }
+        count={items.length}
+        title="Pending review"
+      />
 
       {items.length === 0 ? (
-        <Card>
-          <CardContent className="py-8 text-center">
-            <CheckCircle
-              className="mx-auto mb-2 size-8 text-success"
-              weight="fill"
-            />
-            <p className="text-muted-foreground text-sm">
-              Nothing waiting for review
-            </p>
-          </CardContent>
-        </Card>
+        <AllCaughtUp description="Feedback the AI holds back for a human check shows up here." />
       ) : (
         items.map((item) => (
-          <Card key={item._id}>
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between gap-3">
-                <div className="space-y-1">
-                  <p className="font-medium text-sm leading-tight">
-                    {item.title}
-                  </p>
-                  <CardDescription>
-                    Submitted{" "}
-                    {formatDistanceToNow(item.createdAt, { addSuffix: true })}
-                  </CardDescription>
-                </div>
-                <div className="flex shrink-0 items-center gap-1">
-                  <HoldReason
-                    junk={item.aiJunk}
-                    usefulness={item.aiUsefulness}
-                  />
-                  <NeedsReviewBadge probability={item.aiNeedsReview} />
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="line-clamp-2 text-muted-foreground text-xs">
-                {item.description || "No description"}
-              </p>
-
-              {item.source && (
-                <Badge className="text-xs" variant="outline">
-                  {SOURCE_LABELS[item.source]}
-                </Badge>
-              )}
-
-              <div className="flex items-center gap-2 border-t pt-3">
-                {canApprove && (
-                  <>
-                    <Button
-                      aria-label={`Approve ${item.title}`}
-                      disabled={pendingId === item._id}
-                      onClick={() => handleApprove(item._id)}
-                      size="xs"
-                      tone="primary"
-                      variant="solid"
-                    >
-                      <CheckCircle className="mr-1 size-3.5" />
-                      Approve
-                    </Button>
-                    <Button
-                      aria-label={`Dismiss ${item.title}`}
-                      disabled={pendingId === item._id}
-                      onClick={() => handleDismiss(item._id)}
-                      size="xs"
-                      tone="danger"
-                      variant="ghost"
-                    >
-                      <Trash className="mr-1 size-3.5" />
-                      Dismiss
-                    </Button>
-                  </>
-                )}
-                <ButtonLink
-                  aria-label={`Open ${item.title}`}
-                  render={
-                    <Link href={`/dashboard/${orgSlug}/feedback/${item._id}`} />
-                  }
-                  size="xs"
-                  variant="ghost"
-                >
-                  <ArrowSquareOut className="mr-1 size-3.5" />
-                  Open
-                </ButtonLink>
-              </div>
-            </CardContent>
-          </Card>
+          <PendingReviewCard
+            canApprove={canApprove}
+            disabled={
+              actions.isApprovingAll || actions.pending?.id === item._id
+            }
+            item={item}
+            key={item._id}
+            onApprove={() => actions.approve(item)}
+            onDismiss={() => setDismissTarget(item)}
+            orgSlug={orgSlug}
+            pendingAction={
+              actions.pending?.id === item._id ? actions.pending.action : null
+            }
+          />
         ))
       )}
-    </div>
+
+      <DismissConfirmDialog
+        item={dismissTarget}
+        onClose={() => setDismissTarget(null)}
+        onConfirm={actions.dismiss}
+      />
+      <StatusAnnouncer message={actions.announcement} />
+    </section>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { MotionConfig, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { AuthEmailField, AuthPasswordField } from "./auth-fields";
 import {
@@ -10,7 +11,7 @@ import { AuthHelperText, AuthSubmitButton } from "./auth-sign-in";
 import { AuthHeader } from "./auth-sign-up";
 import { AuthDivider, AuthSocialProviders } from "./auth-social-providers";
 import { type AuthMode, useAuthForm } from "./hooks/use-auth-form";
-import type { SignUpFormData } from "./lib/auth-validation";
+import { revealTransition, type SignUpFormData } from "./lib/auth-validation";
 
 interface UnifiedAuthFormProps {
   onSuccess?: () => void;
@@ -44,12 +45,13 @@ function isFormValid(
 
 function getConfirmPasswordErrors(
   passwordMismatchError: string | null,
-  confirmPasswordError?: { message?: string }
+  confirmPasswordError: { message?: string } | undefined,
+  confirmIsSettled: boolean
 ): Array<{ message?: string }> | undefined {
   if (passwordMismatchError) {
     return [{ message: passwordMismatchError }];
   }
-  if (confirmPasswordError) {
+  if (confirmPasswordError && confirmIsSettled) {
     return [confirmPasswordError];
   }
 }
@@ -60,6 +62,7 @@ export default function UnifiedAuthForm({
 }: UnifiedAuthFormProps) {
   const {
     mode,
+    email,
     apiError,
     setApiError,
     passwordMismatchError,
@@ -76,6 +79,7 @@ export default function UnifiedAuthForm({
     isCheckingEmail,
     resetMode,
   } = useAuthForm(onSuccess, redirectTo);
+  const shouldReduceMotion = useReducedMotion();
 
   const handlePasswordChange = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -84,7 +88,10 @@ export default function UnifiedAuthForm({
   ) => {
     setApiError(null);
     setFormValue("password", e.target.value);
-    triggerValidation("password");
+    // Re-validate only to clear an error already shown; the length hint guides first attempts.
+    if (errors.password) {
+      triggerValidation("password");
+    }
   };
 
   const handleConfirmPasswordChange = (
@@ -99,7 +106,9 @@ export default function UnifiedAuthForm({
 
   const confirmPasswordErrors = getConfirmPasswordErrors(
     passwordMismatchError,
-    errors.confirmPassword
+    errors.confirmPassword,
+    watchedConfirmPassword.length === 0 ||
+      !watchedPassword.startsWith(watchedConfirmPassword)
   );
 
   const formIsValid = isFormValid(
@@ -110,76 +119,88 @@ export default function UnifiedAuthForm({
   );
 
   return (
-    <div className="mx-auto w-full max-w-md p-6">
-      <AuthHeader mode={mode} />
+    <MotionConfig
+      transition={shouldReduceMotion ? { duration: 0 } : revealTransition}
+    >
+      <div className="mx-auto w-full max-w-md p-6">
+        <AuthHeader mode={mode} />
 
-      <AuthSocialProviders redirectTo={redirectTo} />
-      <AuthDivider />
+        <AuthSocialProviders redirectTo={redirectTo} />
+        <AuthDivider />
 
-      <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
-        <AuthEmailField
-          errors={errors}
-          isCheckingEmail={isCheckingEmail}
-          isSubmitting={isSubmitting}
-          onEmailChange={handleEmailChange}
-          register={register}
-        />
+        <form
+          className="space-y-2"
+          noValidate
+          onSubmit={handleSubmit(onSubmit)}
+        >
+          <AuthEmailField
+            errors={errors}
+            isCheckingEmail={isCheckingEmail}
+            isSubmitting={isSubmitting}
+            onEmailChange={handleEmailChange}
+            register={register}
+          />
 
-        <AuthPasswordField
-          errors={errors}
-          isSignUp={mode === "signUp"}
-          isSubmitting={isSubmitting}
-          onPasswordChange={handlePasswordChange}
-          passwordLength={watchedPassword.length}
-          register={register}
-          setValue={setValue}
-          trigger={trigger}
-        />
+          <AuthPasswordField
+            errors={errors}
+            isSignUp={mode === "signUp"}
+            isSubmitting={isSubmitting}
+            onPasswordChange={handlePasswordChange}
+            passwordLength={watchedPassword.length}
+            register={register}
+            setValue={setValue}
+            trigger={trigger}
+          />
 
-        <AuthForgotPasswordLink mode={mode} />
+          <AuthForgotPasswordLink email={email} mode={mode} />
 
-        <AuthConfirmPassword
-          confirmPasswordErrors={confirmPasswordErrors}
-          isSubmitting={isSubmitting}
-          mode={mode}
-          onConfirmPasswordChange={handleConfirmPasswordChange}
-          register={register}
-          setValue={setValue}
-          trigger={trigger}
-        />
+          <AuthConfirmPassword
+            confirmPasswordErrors={confirmPasswordErrors}
+            isSubmitting={isSubmitting}
+            mode={mode}
+            onConfirmPasswordChange={handleConfirmPasswordChange}
+            register={register}
+            setValue={setValue}
+            trigger={trigger}
+          />
 
-        <AuthSubmitButton
-          apiError={apiError}
-          isCheckingEmail={isCheckingEmail}
-          isFormValid={formIsValid}
-          isSubmitting={isSubmitting}
-          mode={mode}
-        />
+          <AuthSubmitButton
+            apiError={apiError}
+            isCheckingEmail={isCheckingEmail}
+            isFormValid={formIsValid}
+            isSubmitting={isSubmitting}
+            mode={mode}
+          />
 
-        {mode === "signUp" && (
-          <p className="text-center text-muted-foreground text-xs">
-            By creating an account, you agree to our{" "}
-            <Link
-              className="underline hover:text-foreground"
-              href="/terms"
-              target="_blank"
-            >
-              Terms of Service
-            </Link>{" "}
-            and{" "}
-            <Link
-              className="underline hover:text-foreground"
-              href="/privacy"
-              target="_blank"
-            >
-              Privacy Policy
-            </Link>
-            .
-          </p>
-        )}
+          {mode === "signUp" && (
+            <p className="pt-2 text-center text-muted-foreground text-xs">
+              By creating an account, you agree to our{" "}
+              <Link
+                className="underline hover:text-foreground"
+                href="/terms"
+                rel="noopener"
+                target="_blank"
+              >
+                Terms of Service
+              </Link>{" "}
+              and{" "}
+              <Link
+                className="underline hover:text-foreground"
+                href="/privacy"
+                rel="noopener"
+                target="_blank"
+              >
+                Privacy Policy
+              </Link>
+              .
+            </p>
+          )}
 
-        <AuthHelperText mode={mode} onResetMode={resetMode} />
-      </form>
-    </div>
+          <div className="pt-4">
+            <AuthHelperText mode={mode} onResetMode={resetMode} />
+          </div>
+        </form>
+      </div>
+    </MotionConfig>
   );
 }

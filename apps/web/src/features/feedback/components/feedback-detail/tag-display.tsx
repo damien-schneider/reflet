@@ -44,16 +44,12 @@ export function TagDisplay({
     return (
       <div className="flex items-center gap-1.5">
         {validTags.map((tag) => (
-          <TagBadge
-            className="h-8 gap-1 rounded-full px-3 font-normal text-xs"
-            color={tag.color}
-            key={tag._id}
-          >
+          <TagBadge color={tag.color} key={tag._id}>
             {tag.icon && <span>{tag.icon}</span>}
             {tag.name}
             {tag.appliedByAi && (
               <>
-                <Sparkle className="h-3 w-3 opacity-60" weight="fill" />
+                <Sparkle aria-hidden className="opacity-60" weight="fill" />
                 <span className="sr-only">Applied by AI</span>
               </>
             )}
@@ -68,7 +64,7 @@ export function TagDisplay({
                   />
                 }
               >
-                <X className="h-2.5 w-2.5" />
+                <X aria-hidden className="size-2.5" />
               </TooltipTrigger>
               <TooltipContent>{`Remove ${tag.name}`}</TooltipContent>
             </Tooltip>
@@ -77,16 +73,14 @@ export function TagDisplay({
         <DropdownMenu>
           <DropdownMenuTrigger
             aria-label="Add tags"
+            className="select-none"
             render={
-              <Button
-                className="h-8 w-auto select-none gap-1.5 rounded-full border border-input border-dashed px-3 text-sm transition-colors"
-                variant="quiet"
-              />
+              <TagBadge render={<button type="button" />} variant="outline" />
             }
           >
-            <Tag className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-muted-foreground text-xs">Tags</span>
-            <CaretDown className="h-3.5 w-3.5 text-muted-foreground" />
+            <Tag aria-hidden />
+            <span>Tags</span>
+            <CaretDown aria-hidden />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-48">
             {availableTags.map((tag) => {
@@ -97,9 +91,10 @@ export function TagDisplay({
                   key={tag._id}
                   onCheckedChange={() => onToggleTag(tag._id, isApplied)}
                 >
-                  <div
+                  <span
+                    aria-hidden
                     className={cn(
-                      "h-3 w-3 shrink-0 rounded-sm border",
+                      "size-2.5 shrink-0 rounded-full",
                       getTagSwatchClass(tag.color)
                     )}
                   />
@@ -118,16 +113,12 @@ export function TagDisplay({
     return (
       <div className="flex items-center gap-1.5">
         {validTags.map((tag) => (
-          <TagBadge
-            className="rounded-full px-2 py-0.5 font-normal text-xs"
-            color={tag.color}
-            key={tag._id}
-          >
+          <TagBadge color={tag.color} key={tag._id}>
             {tag.icon && <span>{tag.icon}</span>}
             {tag.name}
             {tag.appliedByAi && (
               <>
-                <Sparkle className="h-3 w-3 opacity-60" weight="fill" />
+                <Sparkle aria-hidden className="opacity-60" weight="fill" />
                 <span className="sr-only">Applied by AI</span>
               </>
             )}

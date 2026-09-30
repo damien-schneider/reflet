@@ -1,11 +1,18 @@
 "use client";
 
+import { toast } from "@ctrl-ui/react/ui/toast";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useAction } from "convex/react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { buildGitHubInstallUrl } from "@/features/github/lib/github-install-url";
+import {
+  runOrToast,
+  toWebhookSetupError,
+  type WebhookSetupError,
+} from "@/features/github/lib/github-settings-errors";
 import { capture } from "@/lib/analytics";
+import { useGitHubRepositories } from "./use-github-repositories";
 
 type IssueStatus =
   | "open"
@@ -16,15 +23,6 @@ type IssueStatus =
   | "closed";
 
 type PromoteTrigger = "manual" | "on_status" | "on_create";
-
-interface Repository {
-  defaultBranch: string;
-  description: string | null;
-  fullName: string;
-  id: string;
-  isPrivate: boolean;
-  name: string;
-}
 
 interface GitHubLabel {
   color: string;
@@ -90,8 +88,6 @@ export function useGitHubSettings({
   upsertLabelMapping,
   deleteLabelMapping,
 }: UseGitHubSettingsProps) {
-  const [repositories, setRepositories] = useState<Repository[]>([]);
-  const [loadingRepos, setLoadingRepos] = useState(false);
   const [selectedRepo, setSelectedRepo] = useState<string>("");
   const [isSyncing, setIsSyncing] = useState(false);
   const [isSettingUp, setIsSettingUp] = useState(false);
@@ -100,15 +96,11 @@ export function useGitHubSettings({
   const [githubLabels, setGithubLabels] = useState<GitHubLabel[]>([]);
   const [isLoadingLabels, setIsLoadingLabels] = useState(false);
   const [isChangingRepository, setIsChangingRepository] = useState(false);
-  const [webhookSetupError, setWebhookSetupError] = useState<{
-    code: string;
-    message: string;
-  } | null>(null);
-  const [repoError, setRepoError] = useState<string | null>(null);
+  const [webhookSetupError, setWebhookSetupError] =
+    useState<WebhookSetupError | null>(null);
+  const { fetchRepositories, loadingRepos, repoError, repositories } =
+    useGitHubRepositories({ hasRepository, isConnected, orgId });
 
-  const listRepositoriesAction = useAction(
-    api.integrations.github.client_actions.listRepositories
-  );
   const listLabelsAction = useAction(
     api.integrations.github.client_actions.listLabels
   );
@@ -122,38 +114,6 @@ export function useGitHubSettings({
     api.integrations.github.client_actions.setupWebhook
   );
 
-  const fetchRepositories = useCallback(async () => {
-    if (!(orgId && isConnected)) {
-      return;
-    }
-    setLoadingRepos(true);
-    setRepoError(null);
-    try {
-      const repos = await listRepositoriesAction({
-        organizationId: orgId,
-      });
-      setRepositories(repos);
-      if (repos.length === 0) {
-        setRepoError(
-          "No repositories found. Make sure the GitHub App has access to at least one repository in your GitHub App installation settings."
-        );
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      setRepoError(message);
-      console.error("Error fetching repositories:", error);
-    } finally {
-      setLoadingRepos(false);
-    }
-  }, [orgId, isConnected, listRepositoriesAction]);
-
-  // Auto-fetch repositories when connected but no repo selected
-  useEffect(() => {
-    if (isConnected && !hasRepository) {
-      fetchRepositories();
-    }
-  }, [isConnected, hasRepository, fetchRepositories]);
-
   const fetchLabels = useCallback(async () => {
     if (!(orgId && hasRepository)) {
       return;
@@ -162,11 +122,10 @@ export function useGitHubSettings({
     try {
       const labels = await listLabelsAction({ organizationId: orgId });
       setGithubLabels(labels);
-    } catch (error) {
-      console.error("Error fetching labels:", error);
-    } finally {
-      setIsLoadingLabels(false);
+    } catch {
+      toast.error("Unable to load GitHub labels. Try again.");
     }
+    setIsLoadingLabels(false);
   }, [orgId, hasRepository, listLabelsAction]);
 
   const connectHref = buildGitHubInstallUrl({
@@ -200,13 +159,17 @@ export function useGitHubSettings({
     if (!repo) {
       return;
     }
-    await selectRepository({
-      defaultBranch: repo.defaultBranch,
-      organizationId: orgId,
-      repositoryFullName: repo.fullName,
-      repositoryId: repo.id,
-    });
-    setIsChangingRepository(false);
+    try {
+      await selectRepository({
+        defaultBranch: repo.defaultBranch,
+        organizationId: orgId,
+        repositoryFullName: repo.fullName,
+        repositoryId: repo.id,
+      });
+      setIsChangingRepository(false);
+    } catch {
+      toast.error("Unable to connect the repository. Try again.");
+    }
   }, [orgId, selectedRepo, repositories, selectRepository]);
 
   const handleSyncReleases = useCallback(async () => {
@@ -214,13 +177,11 @@ export function useGitHubSettings({
       return;
     }
     setIsSyncing(true);
-    try {
-      await syncReleasesAction({ organizationId: orgId });
-    } catch (error) {
-      console.error("Error syncing releases:", error);
-    } finally {
-      setIsSyncing(false);
-    }
+    await runOrToast(
+      () => syncReleasesAction({ organizationId: orgId }),
+      "Unable to sync releases. Try again."
+    );
+    setIsSyncing(false);
   }, [orgId, syncReleasesAction]);
 
   const handleSyncIssues = useCallback(async () => {
@@ -228,13 +189,11 @@ export function useGitHubSettings({
       return;
     }
     setIsSyncingIssues(true);
-    try {
-      await syncIssuesAction({ organizationId: orgId, state: "all" });
-    } catch (error) {
-      console.error("Error syncing issues:", error);
-    } finally {
-      setIsSyncingIssues(false);
-    }
+    await runOrToast(
+      () => syncIssuesAction({ organizationId: orgId, state: "all" }),
+      "Unable to sync issues. Try again."
+    );
+    setIsSyncingIssues(false);
   }, [orgId, syncIssuesAction]);
 
   const handleSetup = useCallback(async () => {
@@ -246,15 +205,9 @@ export function useGitHubSettings({
     try {
       await setupWebhookAction({ organizationId: orgId });
     } catch (error) {
-      console.error("Error setting up:", error);
-      const message = error instanceof Error ? error.message : "Unknown error";
-      setWebhookSetupError({
-        code: "SETUP_FAILED",
-        message,
-      });
-    } finally {
-      setIsSettingUp(false);
+      setWebhookSetupError(toWebhookSetupError(error));
     }
+    setIsSettingUp(false);
   }, [orgId, setupWebhookAction]);
 
   const clearWebhookSetupError = useCallback(() => {
@@ -266,13 +219,11 @@ export function useGitHubSettings({
       return;
     }
     setIsDisconnecting(true);
-    try {
-      await disconnect({ organizationId: orgId });
-    } catch (error) {
-      console.error("Error disconnecting:", error);
-    } finally {
-      setIsDisconnecting(false);
-    }
+    await runOrToast(
+      () => disconnect({ organizationId: orgId }),
+      "Unable to disconnect GitHub. Try again."
+    );
+    setIsDisconnecting(false);
   }, [orgId, disconnect]);
 
   const handleToggleAutoSync = useCallback(
@@ -281,27 +232,23 @@ export function useGitHubSettings({
         return;
       }
 
-      // When enabling auto-sync and webhook doesn't exist, set it up first
       if (enabled && !hasWebhook) {
         setIsSettingUp(true);
         setWebhookSetupError(null);
         try {
           await setupWebhookAction({ organizationId: orgId });
         } catch (error) {
-          console.error("Error setting up webhook:", error);
-          const message =
-            error instanceof Error ? error.message : "Unknown error";
-          setWebhookSetupError({
-            code: "SETUP_FAILED",
-            message,
-          });
+          setWebhookSetupError(toWebhookSetupError(error));
           setIsSettingUp(false);
           return;
         }
         setIsSettingUp(false);
       }
 
-      await toggleAutoSync({ enabled, organizationId: orgId });
+      await runOrToast(
+        () => toggleAutoSync({ enabled, organizationId: orgId }),
+        "Unable to update auto-sync. Try again."
+      );
     },
     [orgId, toggleAutoSync, hasWebhook, setupWebhookAction]
   );
@@ -311,7 +258,10 @@ export function useGitHubSettings({
       if (!orgId) {
         return;
       }
-      await toggleIssuesSync({ autoSync, enabled, organizationId: orgId });
+      await runOrToast(
+        () => toggleIssuesSync({ autoSync, enabled, organizationId: orgId }),
+        "Unable to update issue sync. Try again."
+      );
     },
     [orgId, toggleIssuesSync]
   );
@@ -321,11 +271,15 @@ export function useGitHubSettings({
       if (!orgId) {
         return;
       }
-      await setPromoteTrigger({
-        organizationId: orgId,
-        promoteStatus,
-        promoteTrigger,
-      });
+      await runOrToast(
+        () =>
+          setPromoteTrigger({
+            organizationId: orgId,
+            promoteStatus,
+            promoteTrigger,
+          }),
+        "Unable to update when GitHub issues are created. Try again."
+      );
     },
     [orgId, setPromoteTrigger]
   );
@@ -342,20 +296,25 @@ export function useGitHubSettings({
       if (!orgId) {
         return;
       }
-      await upsertLabelMapping({
-        organizationId: orgId,
-        ...mapping,
-        targetTagId: mapping.targetTagId,
-      });
+      await runOrToast(
+        () =>
+          upsertLabelMapping({
+            organizationId: orgId,
+            ...mapping,
+            targetTagId: mapping.targetTagId,
+          }),
+        "Unable to add the label mapping. Try again."
+      );
     },
     [orgId, upsertLabelMapping]
   );
 
   const handleDeleteLabelMapping = useCallback(
     async (mappingId: Id<"githubLabelMappings">) => {
-      await deleteLabelMapping({
-        mappingId,
-      });
+      await runOrToast(
+        () => deleteLabelMapping({ mappingId }),
+        "Unable to remove the label mapping. Try again."
+      );
     },
     [deleteLabelMapping]
   );
@@ -364,7 +323,6 @@ export function useGitHubSettings({
     clearWebhookSetupError,
     connectHref,
     fetchLabels,
-    // Handlers
     fetchRepositories,
     githubLabels,
     handleAddLabelMapping,
@@ -388,10 +346,8 @@ export function useGitHubSettings({
     isSyncingIssues,
     loadingRepos,
     repoError,
-    // State
     repositories,
     selectedRepo,
-    // Setters
     setSelectedRepo,
     webhookSetupError,
   };

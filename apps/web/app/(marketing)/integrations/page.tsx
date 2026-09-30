@@ -1,23 +1,13 @@
-import {
-  ArrowsClockwise,
-  Bell,
-  ChatTeardrop,
-  Code,
-  DiscordLogo,
-  EnvelopeSimple,
-  GithubLogo,
-  Kanban,
-  Layout,
-  Lightning,
-  Robot,
-  TerminalWindow,
-} from "@phosphor-icons/react/dist/ssr";
+import { ButtonLink } from "@ctrl-ui/react/ui/button";
+import { ArrowUpRight } from "lucide-react";
 import type { Metadata } from "next";
-import Link from "next/link";
 
-import { H1, H2, H3, Lead } from "@/components/ui/typography";
-import Footer from "@/features/homepage/components/footer";
-import Navbar from "@/features/homepage/components/navbar";
+import {
+  MarketingPageIntro,
+  MarketingSubpage,
+  type MarketingTopic,
+  MarketingTopicGroup,
+} from "@/features/homepage/components/marketing-subpage";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
@@ -37,213 +27,140 @@ export const metadata: Metadata = generatePageMetadata({
   title: "Integrations",
 });
 
-interface Integration {
-  description: string;
-  href?: string;
-  icon: typeof GithubLogo;
-  id: string;
-  title: string;
-}
-
-const AVAILABLE_INTEGRATIONS: Integration[] = [
+const BUILD_INTEGRATIONS: MarketingTopic[] = [
   {
     description:
-      "Sync issues and releases bi-directionally. Import GitHub issues as feedback, auto-publish releases as changelog entries.",
-    href: "/docs",
-    icon: GithubLogo,
+      "Import GitHub issues as feedback and publish releases as changelog entries. Issues and releases sync both ways.",
     id: "github",
+    link: { href: "/docs", label: "GitHub setup guide" },
     title: "GitHub",
   },
   {
     description:
-      "First-class TypeScript SDK with React hooks. useFeedbackList(), useVote(), useChangelog() - embed feedback natively in your app.",
-    href: "/docs/sdk",
-    icon: Code,
+      "A TypeScript SDK with React hooks like useFeedbackList(), useVote() and useChangelog(), so feedback lives inside your app.",
     id: "sdk",
-    title: "SDK & React Hooks",
+    link: { href: "/docs/sdk", label: "SDK docs" },
+    title: "SDK and React hooks",
   },
   {
     description:
-      "Full CRUD API for feedback, votes, comments, changelog, and roadmap. Authenticate with API keys.",
-    href: "/docs/api",
-    icon: TerminalWindow,
+      "Read and write feedback, votes, comments, changelog, and roadmap. Authenticate with API keys.",
     id: "api",
+    link: { href: "/docs/api", label: "API reference" },
     title: "REST API",
   },
   {
     description:
-      "Drop-in feedback and changelog widgets. One script tag, works on any site.",
-    href: "/docs/widget",
-    icon: Layout,
+      "Feedback and changelog widgets you add with one script tag, on any site.",
     id: "widgets",
-    title: "Embeddable Widgets",
+    link: { href: "/docs/widget", label: "Widget docs" },
+    title: "Embeddable widgets",
   },
   {
     description:
-      "Automatic email notifications for new feedback, status changes, and changelog updates via Resend.",
-    icon: EnvelopeSimple,
-    id: "email",
-    title: "Email Notifications",
-  },
-  {
-    description:
-      "Browser push notifications to keep your team and users informed in real-time.",
-    icon: Bell,
-    id: "push",
-    title: "Web Push",
-  },
-  {
-    description:
-      "One command for Claude Code, Cursor, Codex or CI to claim the next feedback, fix it and close it: npx reflet-cli.",
-    href: "/docs/cli",
-    icon: Robot,
+      "One command for Claude Code, Cursor, Codex, or CI to claim the next piece of feedback, fix it, and close it: npx reflet-cli.",
     id: "cli",
+    link: { href: "/docs/cli", label: "CLI docs" },
     title: "CLI for agents",
   },
-] as const;
+];
 
-const COMING_SOON_INTEGRATIONS: Integration[] = [
+const NOTIFICATION_INTEGRATIONS: MarketingTopic[] = [
   {
     description:
-      "Get notified in Slack when feedback is submitted, voted on, or changes status.",
-    icon: ChatTeardrop,
+      "Emails for new feedback, status changes, and changelog updates, sent through Resend.",
+    id: "email",
+    title: "Email notifications",
+  },
+  {
+    description:
+      "Browser push notifications keep your team and your users up to date as things change.",
+    id: "push",
+    title: "Web push",
+  },
+];
+
+const COMING_SOON = "Coming soon";
+
+const UPCOMING_INTEGRATIONS: MarketingTopic[] = [
+  {
+    description:
+      "A Slack message when feedback is submitted, voted on, or changes status.",
     id: "slack",
+    status: COMING_SOON,
     title: "Slack",
   },
   {
     description:
-      "Create Linear issues from feedback. Status syncs bi-directionally.",
-    icon: Lightning,
+      "Create Linear issues from feedback, with status synced both ways.",
     id: "linear",
+    status: COMING_SOON,
     title: "Linear",
   },
   {
-    description: "Push feedback to Jira. Sync statuses across both tools.",
-    icon: Kanban,
+    description: "Push feedback to Jira and keep statuses in sync.",
     id: "jira",
+    status: COMING_SOON,
     title: "Jira",
   },
   {
     description:
       "Feedback notifications and slash commands for your Discord community.",
-    icon: DiscordLogo,
     id: "discord",
+    status: COMING_SOON,
     title: "Discord",
   },
   {
     description: "Connect Reflet to 5,000+ apps with triggers and actions.",
-    icon: ArrowsClockwise,
     id: "zapier",
+    status: COMING_SOON,
     title: "Zapier",
   },
-] as const;
-
-function AvailableCard({ integration }: { integration: Integration }) {
-  const Icon = integration.icon;
-
-  const content = (
-    <div className="rounded-2xl border border-border bg-card p-8 shadow-sm transition-shadow hover:shadow-md">
-      <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-muted text-foreground">
-        <Icon size={24} />
-      </div>
-      <H3 className="mb-3" variant="card">
-        {integration.title}
-      </H3>
-      <p className="text-muted-foreground text-sm leading-relaxed">
-        {integration.description}
-      </p>
-      {integration.href ? (
-        <span className="mt-4 inline-block font-medium text-brand-text text-sm underline underline-offset-4 transition-colors hover:text-brand-text/80">
-          View docs
-        </span>
-      ) : null}
-    </div>
-  );
-
-  if (integration.href) {
-    return <Link href={integration.href}>{content}</Link>;
-  }
-
-  return content;
-}
-
-function ComingSoonCard({ integration }: { integration: Integration }) {
-  const Icon = integration.icon;
-
-  return (
-    <div className="rounded-2xl border border-border bg-card/50 p-8 opacity-70 shadow-sm">
-      <div className="mb-6 flex items-center justify-between">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted text-muted-foreground">
-          <Icon size={24} />
-        </div>
-        <span className="rounded-full bg-muted px-3 py-1 font-medium text-muted-foreground text-xs">
-          Coming soon
-        </span>
-      </div>
-      <H3 className="mb-3 text-muted-foreground" variant="card">
-        {integration.title}
-      </H3>
-      <p className="text-muted-foreground/70 text-sm leading-relaxed">
-        {integration.description}
-      </p>
-    </div>
-  );
-}
+];
 
 export default function IntegrationsPage() {
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <Navbar />
-      <main className="flex-1">
-        <section className="mx-auto max-w-7xl px-4 pt-16 pb-12 sm:px-6 lg:px-8">
-          <H1 className="mb-6 max-w-3xl" variant="page">
-            Connect Reflet to your workflow
-          </H1>
-          <Lead className="max-w-2xl">
-            Native integrations, a public API, and an SDK so you can embed
-            feedback anywhere.
-          </Lead>
-        </section>
-
-        <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
-          <H2 className="mb-8" variant="default">
-            Available now
-          </H2>
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {AVAILABLE_INTEGRATIONS.map((integration) => (
-              <AvailableCard integration={integration} key={integration.id} />
-            ))}
-          </div>
-        </section>
-
-        <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
-          <H2 className="mb-8" variant="default">
-            Coming soon
-          </H2>
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {COMING_SOON_INTEGRATIONS.map((integration) => (
-              <ComingSoonCard integration={integration} key={integration.id} />
-            ))}
-          </div>
-        </section>
-
-        <section className="mx-auto max-w-7xl px-4 pb-24 sm:px-6 lg:px-8">
-          <div className="rounded-2xl border border-border bg-card p-8 text-center sm:p-12">
-            <H2 className="mb-8" variant="default">
-              Need a specific integration?
-            </H2>
-            <a
-              className="inline-flex items-center justify-center rounded-full bg-primary px-8 py-3 font-medium text-primary-foreground text-sm transition-opacity hover:opacity-90"
+    <MarketingSubpage>
+      <div className="marketing-section pt-16 md:pt-24">
+        <MarketingPageIntro
+          actions={
+            <ButtonLink
               href="https://www.reflet.app/reflet"
               rel="noopener noreferrer"
+              size="lg"
               target="_blank"
+              tone="primary"
+              variant="solid"
             >
-              Request an integration
-            </a>
-          </div>
-        </section>
-      </main>
-      <Footer />
-    </div>
+              Request an integration{" "}
+              <ArrowUpRight aria-hidden="true" size={15} />
+            </ButtonLink>
+          }
+          align="start"
+          kicker="Integrations"
+          title="Connect Reflet to your workflow"
+        >
+          Native integrations, a public API, and an SDK, so feedback shows up
+          wherever your team already works.
+        </MarketingPageIntro>
+        <MarketingTopicGroup
+          title="Build with Reflet"
+          topics={BUILD_INTEGRATIONS}
+        >
+          Available today, each with its own guide in the docs.
+        </MarketingTopicGroup>
+        <MarketingTopicGroup
+          title="Stay notified"
+          topics={NOTIFICATION_INTEGRATIONS}
+        />
+        <MarketingTopicGroup
+          title="On the roadmap"
+          topics={UPCOMING_INTEGRATIONS}
+        >
+          Tell us which one you need on the public board. Votes decide what
+          ships first.
+        </MarketingTopicGroup>
+      </div>
+    </MarketingSubpage>
   );
 }

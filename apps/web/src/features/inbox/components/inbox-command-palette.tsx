@@ -37,14 +37,14 @@ export function InboxCommandPalette({
 
   return (
     <CommandDialog
-      description="Search for actions"
+      description="Run an inbox action"
       onOpenChange={onOpenChange}
       open={open}
-      title="Inbox Commands"
+      title="Inbox commands"
     >
-      <CommandInput placeholder="Type a command..." />
+      <CommandInput placeholder="Type a command…" />
       <CommandList>
-        <CommandEmpty>No commands found.</CommandEmpty>
+        <CommandEmpty>No matching commands</CommandEmpty>
 
         {hasSelectedConversation && (
           <CommandGroup heading="Actions">

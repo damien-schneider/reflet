@@ -21,7 +21,7 @@ export default function manifest(): MetadataRoute.Manifest {
         type: "image/png",
       },
     ],
-    name: "Reflet - Product Feedback & Roadmap Platform",
+    name: "Reflet – Product feedback and roadmap platform",
     orientation: "portrait-primary",
     short_name: "Reflet",
     start_url: "/",

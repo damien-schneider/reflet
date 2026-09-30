@@ -1,115 +1,129 @@
-import { Button } from "@ctrl-ui/react/ui/button";
 import { Card } from "@ctrl-ui/react/ui/card";
-import {
-  CaretUp,
-  ChatCircle,
-  DotsSixVertical,
-  Sparkle,
-} from "@phosphor-icons/react";
+import { CaretUp, ChatCircle, Sparkle } from "@phosphor-icons/react";
+import type { ReactNode } from "react";
 import { TagBadge } from "@/components/tag-badge";
 import { cn } from "@/lib/utils";
 import type { FeedbackItem } from "../feed-feedback-view";
 import { InternalBadge } from "../internal-badge";
-import type { DragHandleListeners } from "./roadmap-types";
+
+const MAX_VISIBLE_TAGS = 2;
+const MAX_VISIBLE_MILESTONES = 2;
 
 interface FeedbackCardContentProps {
-  dragHandleAttributes?: React.HTMLAttributes<HTMLButtonElement>;
-  dragHandleListeners?: DragHandleListeners;
-  isAdmin?: boolean;
+  dragHandle?: ReactNode;
   isDragging?: boolean;
   isOverlay?: boolean;
   item: FeedbackItem;
+  onOpen?: () => void;
+}
+
+function CardTitle({
+  item,
+  onOpen,
+}: {
+  item: FeedbackItem;
+  onOpen?: () => void;
+}) {
+  const content = (
+    <>
+      {item.isInternal && <InternalBadge className="mr-1" />}
+      {item.title}
+    </>
+  );
+
+  if (!onOpen) {
+    return <h4 className="text-pretty font-medium text-sm">{content}</h4>;
+  }
+
+  return (
+    <h4 className="text-pretty font-medium text-sm">
+      <button
+        className="text-left outline-none after:absolute after:inset-0 after:rounded-[inherit] focus-visible:after:ring-2 focus-visible:after:ring-ring"
+        onClick={onOpen}
+        type="button"
+      >
+        {content}
+      </button>
+    </h4>
+  );
+}
+
+function CardMilestones({
+  milestones,
+}: {
+  milestones: NonNullable<FeedbackItem["milestones"]>;
+}) {
+  const hidden = milestones.length - MAX_VISIBLE_MILESTONES;
+  return (
+    <div className="flex gap-1">
+      {milestones.slice(0, MAX_VISIBLE_MILESTONES).map((m) => (
+        <span aria-label={m.name} className="text-xs" key={m._id} role="img">
+          {m.emoji ?? "🏁"}
+        </span>
+      ))}
+      {hidden > 0 && (
+        <span className="text-micro text-muted-foreground tabular-nums">
+          +{hidden}
+        </span>
+      )}
+    </div>
+  );
 }
 
 export function FeedbackCardContent({
   item,
   isDragging,
   isOverlay,
-  isAdmin,
-  dragHandleListeners,
-  dragHandleAttributes,
+  dragHandle,
+  onOpen,
 }: FeedbackCardContentProps) {
+  const tags =
+    item.tags?.filter((tag): tag is NonNullable<typeof tag> => tag !== null) ??
+    [];
+
   return (
     <Card
       className={cn(
-        "relative p-3 transition-[transform,background-color,box-shadow] duration-200",
-        "hover:scale-[1.02] hover:bg-accent/50 hover:shadow-md",
-        isDragging && "opacity-50 ring-2 ring-primary",
-        isOverlay && "shadow-xl ring-2 ring-primary"
+        "relative gap-2 p-3",
+        onOpen && "hover:bg-accent/50",
+        isDragging && "opacity-40",
+        isOverlay && "shadow-(--reflet-popup-shadow)"
       )}
     >
-      {isAdmin && dragHandleListeners && (
-        <Button
-          {...dragHandleAttributes}
-          {...dragHandleListeners}
-          aria-label="Drag to reorder"
-          className={cn(
-            "absolute top-1/2 right-1 -translate-y-1/2",
-            "hidden md:flex",
-            "h-6 w-6 rounded text-muted-foreground/50",
-            "hover:bg-muted hover:text-muted-foreground",
-            "cursor-grab active:cursor-grabbing",
-            "pointer-events-auto touch-none"
-          )}
-          variant="quiet"
-        >
-          <DotsSixVertical className="h-4 w-4" weight="bold" />
-        </Button>
-      )}
-      <h4 className="pr-6 font-medium text-sm">
-        {item.isInternal && <InternalBadge className="mr-1" />}
-        {item.title}
-      </h4>
-      {item.tags && item.tags.length > 0 && (
-        <div className="mt-1 flex flex-wrap gap-1">
-          {item.tags.slice(0, 2).map(
-            (tag) =>
-              tag && (
-                <TagBadge
-                  className="font-normal text-caption"
-                  color={tag.color}
-                  key={tag._id}
-                >
-                  {tag.icon && <span>{tag.icon}</span>}
-                  {tag.name}
-                  {tag.appliedByAi && (
-                    <>
-                      <Sparkle
-                        className="h-2.5 w-2.5 opacity-60"
-                        weight="fill"
-                      />
-                      <span className="sr-only">Applied by AI</span>
-                    </>
-                  )}
-                </TagBadge>
-              )
-          )}
+      {dragHandle}
+      <div className={cn(dragHandle && "pr-6")}>
+        <CardTitle item={item} onOpen={onOpen} />
+      </div>
+      {tags.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {tags.slice(0, MAX_VISIBLE_TAGS).map((tag) => (
+            <TagBadge color={tag.color} key={tag._id} size="sm">
+              {tag.icon && <span>{tag.icon}</span>}
+              {tag.name}
+              {tag.appliedByAi && (
+                <>
+                  <Sparkle aria-hidden className="opacity-60" weight="fill" />
+                  <span className="sr-only">Applied by AI</span>
+                </>
+              )}
+            </TagBadge>
+          ))}
         </div>
       )}
       {item.milestones && item.milestones.length > 0 && (
-        <div className="mt-1 flex gap-1">
-          {item.milestones.slice(0, 2).map((m) => (
-            <span
-              aria-label={m.name}
-              className="text-xs"
-              key={m._id}
-              role="img"
-            >
-              {m.emoji ?? "🏁"}
-            </span>
-          ))}
-          {item.milestones.length > 2 && (
-            <span className="text-micro text-muted-foreground">
-              +{item.milestones.length - 2}
-            </span>
-          )}
-        </div>
+        <CardMilestones milestones={item.milestones} />
       )}
-      <div className="mt-2 flex items-center gap-2 text-muted-foreground text-xs">
-        <CaretUp className="h-3 w-3" />
-        <span className="tabular-nums">{item.voteCount}</span>
-        <ChatCircle className="ml-2 h-3 w-3" />
-        <span className="tabular-nums">{item.commentCount}</span>
+      <div className="flex items-center gap-3 text-muted-foreground text-xs">
+        <span className="flex items-center gap-1">
+          <CaretUp aria-hidden className="size-3" />
+          <span className="tabular-nums">{item.voteCount}</span>
+          <span className="sr-only">votes</span>
+        </span>
+        <span className="flex items-center gap-1">
+          <ChatCircle aria-hidden className="size-3" />
+          <span className="tabular-nums">{item.commentCount}</span>
+          <span className="sr-only">comments</span>
+        </span>
       </div>
     </Card>
   );

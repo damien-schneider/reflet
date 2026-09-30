@@ -19,10 +19,10 @@ export function PublicFeedbackVoting({
 }: PublicFeedbackVotingProps) {
   return (
     <Button
-      aria-label={hasVoted ? "Remove vote" : "Upvote"}
+      aria-label={`${hasVoted ? "Remove vote" : "Upvote"}, ${voteCount} ${voteCount === 1 ? "vote" : "votes"}`}
       aria-pressed={hasVoted}
       className={cn(
-        "h-auto flex-col rounded-lg border p-3 transition-colors hover:bg-accent",
+        "h-auto flex-col rounded-lg border p-3 hover:bg-accent",
         hasVoted && "border-primary bg-primary/10 text-primary"
       )}
       onClick={onVote}

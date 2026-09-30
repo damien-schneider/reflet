@@ -1,28 +1,54 @@
-import { Button } from "@ctrl-ui/react/ui/button";
-import { Card, CardContent } from "@ctrl-ui/react/ui/card";
+import { ButtonLink } from "@ctrl-ui/react/ui/button";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@ctrl-ui/react/ui/empty";
+import { PageBody, PageLayout } from "@ctrl-ui/react/ui/page-layout";
 import { ChatCircle } from "@phosphor-icons/react";
-import Link from "next/link";
-import { H3, Muted } from "@/components/ui/typography";
 
-interface SupportUnavailableProps {
-  backHref: string;
+interface SupportNoticeProps {
+  action?: { href: string; label: string };
+  description: string;
+  title: string;
 }
 
-export function SupportUnavailable({ backHref }: SupportUnavailableProps) {
+function SupportNotice({ action, description, title }: SupportNoticeProps) {
   return (
-    <div className="container mx-auto px-4 py-8">
-      <Card className="mx-auto max-w-md">
-        <CardContent className="flex flex-col items-center justify-center py-12">
-          <ChatCircle className="mb-4 h-12 w-12 text-muted-foreground" />
-          <H3>Support unavailable</H3>
-          <Muted className="text-center">
-            Support messaging is not enabled for this organization.
-          </Muted>
-          <Link className="mt-4" href={backHref}>
-            <Button variant="surface">Go back</Button>
-          </Link>
-        </CardContent>
-      </Card>
-    </div>
+    <PageLayout scroll="page" width="prose">
+      <PageBody>
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia>
+              <ChatCircle aria-hidden />
+            </EmptyMedia>
+            <EmptyTitle>
+              <h1>{title}</h1>
+            </EmptyTitle>
+            <EmptyDescription>{description}</EmptyDescription>
+          </EmptyHeader>
+          {action && (
+            <EmptyContent>
+              <ButtonLink href={action.href} variant="surface">
+                {action.label}
+              </ButtonLink>
+            </EmptyContent>
+          )}
+        </Empty>
+      </PageBody>
+    </PageLayout>
+  );
+}
+
+export function SupportUnavailable({ backHref }: { backHref: string }) {
+  return (
+    <SupportNotice
+      action={{ href: backHref, label: "Back to the board" }}
+      description="This organization hasn’t turned on support messaging."
+      title="Support unavailable"
+    />
   );
 }

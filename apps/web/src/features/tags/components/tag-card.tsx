@@ -55,10 +55,10 @@ export function TagCard({ tag, isAdmin, onEdit, onDelete }: TagCardProps) {
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={onEdit}>Edit</DropdownMenuItem>
                 <DropdownMenuItem
-                  className="text-destructive"
+                  className="menu-item-danger"
                   onClick={onDelete}
                 >
-                  <Trash className="mr-2 h-4 w-4" />
+                  <Trash aria-hidden />
                   Delete
                 </DropdownMenuItem>
               </DropdownMenuContent>

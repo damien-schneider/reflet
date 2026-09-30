@@ -7,21 +7,34 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@ctrl-ui/react/ui/dialog";
+import { Field, FieldError, FieldLabel } from "@ctrl-ui/react/ui/field";
 import { Input } from "@ctrl-ui/react/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@ctrl-ui/react/ui/select";
-import { Check, Copy, Shield, User } from "@phosphor-icons/react";
+import { Radio, RadioGroup } from "@ctrl-ui/react/ui/radio-group";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
+import { Shield, User } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
-import { useEffect, useState } from "react";
-import { Label } from "@/components/ui/label";
+import { useState } from "react";
+import { CopyButton } from "@/components/copy-button";
 import { capture } from "@/lib/analytics";
+
+type InviteRole = "admin" | "member";
+
+const ROLE_OPTIONS = [
+  {
+    description: "Views boards and submits feedback.",
+    icon: User,
+    label: "Member",
+    value: "member",
+  },
+  {
+    description: "Also manages boards, tags and members.",
+    icon: Shield,
+    label: "Admin",
+    value: "admin",
+  },
+] as const;
 
 interface InviteMemberDialogProps {
   onOpenChange: (open: boolean) => void;
@@ -29,184 +42,215 @@ interface InviteMemberDialogProps {
   organizationId: Id<"organizations">;
 }
 
-type DialogState = "form" | "success";
-
 export function InviteMemberDialog({
   organizationId,
   open,
   onOpenChange,
 }: InviteMemberDialogProps) {
-  const inviteMember = useMutation(api.organizations.invitations.create);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<"admin" | "member">("member");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [dialogState, setDialogState] = useState<DialogState>("form");
-  const [invitationToken, setInvitationToken] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
-
-  // Reset state when dialog closes
-  useEffect(() => {
+  const [sentInvite, setSentInvite] = useState<{
+    email: string;
+    token: string;
+  } | null>(null);
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
     if (!open) {
-      setInviteEmail("");
-      setInviteRole("member");
-      setIsSubmitting(false);
-      setDialogState("form");
-      setInvitationToken(null);
-      setCopied(false);
+      setSentInvite(null);
     }
-  }, [open]);
-
-  const handleInvite = async () => {
-    if (!inviteEmail.trim()) {
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const result = await inviteMember({
-        email: inviteEmail.trim().toLowerCase(),
-        organizationId,
-        role: inviteRole,
-      });
-      capture("member_invited", { role: inviteRole });
-      setInvitationToken(result.token);
-      setDialogState("success");
-    } catch (error) {
-      console.error("Failed to invite member:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleCopyLink = async () => {
-    if (!invitationToken) {
-      return;
-    }
-
-    const inviteUrl = `${window.location.origin}/invite/${invitationToken}`;
-    try {
-      await navigator.clipboard.writeText(inviteUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
-      console.error("Failed to copy link:", error);
-    }
-  };
-
-  const handleClose = () => {
-    onOpenChange(false);
-  };
-
-  if (dialogState === "success") {
-    const inviteUrl = `${typeof window === "undefined" ? "" : window.location.origin}/invite/${invitationToken}`;
-
-    return (
-      <Dialog onOpenChange={onOpenChange} open={open}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Invitation sent!</DialogTitle>
-            <DialogDescription>
-              An invitation has been sent to {inviteEmail}. You can also share
-              the link below.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="invite-link">Invitation link</Label>
-              <div className="flex gap-2">
-                <Input
-                  className="flex-1"
-                  id="invite-link"
-                  readOnly
-                  value={inviteUrl}
-                />
-                <Button iconOnly onClick={handleCopyLink} variant="surface">
-                  {copied ? (
-                    <Check className="h-4 w-4" />
-                  ) : (
-                    <Copy className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-              <p className="text-muted-foreground text-xs">
-                {copied ? "Copied!" : "Copy link to share with your colleague"}
-              </p>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button onClick={handleClose} tone="primary" variant="solid">
-              Done
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    );
   }
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Invite member</DialogTitle>
-          <DialogDescription>
-            Invite a new member to your organization.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="email">Email address</Label>
-            <Input
-              id="email"
-              onChange={(e) => setInviteEmail(e.target.value)}
-              placeholder="colleague@example.com"
-              type="email"
-              value={inviteEmail}
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label>Role</Label>
-            <Select
-              onValueChange={(v) => setInviteRole(v as "admin" | "member")}
-              value={inviteRole}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="member">
-                  <div className="flex items-center gap-2">
-                    <User className="h-4 w-4" />
-                    Member
-                  </div>
-                </SelectItem>
-                <SelectItem value="admin">
-                  <div className="flex items-center gap-2">
-                    <Shield className="h-4 w-4" />
-                    Admin
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-muted-foreground text-xs">
-              Admins can manage boards, tags, and members. Members can only view
-              and submit feedback.
-            </p>
-          </div>
-        </div>
+        {sentInvite ? (
+          <InviteSuccess
+            email={sentInvite.email}
+            onDone={() => onOpenChange(false)}
+            token={sentInvite.token}
+          />
+        ) : (
+          <InviteForm
+            onCancel={() => onOpenChange(false)}
+            onSent={setSentInvite}
+            organizationId={organizationId}
+          />
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function InviteForm({
+  onCancel,
+  onSent,
+  organizationId,
+}: {
+  onCancel: () => void;
+  onSent: (invite: { email: string; token: string }) => void;
+  organizationId: Id<"organizations">;
+}) {
+  const inviteMember = useMutation(api.organizations.invitations.create);
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState<InviteRole>("member");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail) {
+      setError("Enter an email address");
+      return;
+    }
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const result = await inviteMember({
+        email: normalizedEmail,
+        organizationId,
+        role,
+      });
+      capture("member_invited", { role });
+      onSent({ email: normalizedEmail, token: result.token });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn’t send the invite");
+    }
+    setIsSubmitting(false);
+  };
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle>Invite member</DialogTitle>
+        <DialogDescription>
+          They’ll get an email with a link to join your organization.
+        </DialogDescription>
+      </DialogHeader>
+      <form className="flex flex-col gap-4" noValidate onSubmit={handleSubmit}>
+        <Field>
+          <FieldLabel htmlFor="email">Email address</FieldLabel>
+          <Input
+            aria-describedby="invite-email-error"
+            aria-invalid={error ? true : undefined}
+            autoComplete="off"
+            id="email"
+            onChange={(event) => {
+              setEmail(event.target.value);
+              setError(null);
+            }}
+            placeholder="colleague@example.com"
+            spellCheck={false}
+            type="email"
+            value={email}
+          />
+          <FieldError
+            id="invite-email-error"
+            match={error !== null}
+            role="alert"
+          >
+            {error}
+          </FieldError>
+        </Field>
+        <RoleField onChange={setRole} value={role} />
         <DialogFooter>
-          <Button onClick={() => onOpenChange(false)} variant="surface">
+          <Button onClick={onCancel} type="button" variant="surface">
             Cancel
           </Button>
           <Button
             disabled={isSubmitting}
-            onClick={handleInvite}
             tone="primary"
+            type="submit"
             variant="solid"
           >
-            {isSubmitting ? "Sending..." : "Send invitation"}
+            {isSubmitting ? (
+              <Spinner aria-hidden data-icon="inline-start" size="xs" />
+            ) : null}
+            {isSubmitting ? "Sending…" : "Send invitation"}
           </Button>
         </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      </form>
+    </>
+  );
+}
+
+function RoleField({
+  onChange,
+  value,
+}: {
+  onChange: (role: InviteRole) => void;
+  value: InviteRole;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="font-medium text-label" id="invite-role-label">
+        Role
+      </span>
+      <RadioGroup<InviteRole>
+        aria-labelledby="invite-role-label"
+        className="grid gap-2 sm:grid-cols-2"
+        onValueChange={onChange}
+        value={value}
+      >
+        {ROLE_OPTIONS.map((option) => (
+          <label
+            className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3"
+            htmlFor={`invite-role-${option.value}`}
+            key={option.value}
+          >
+            <Radio id={`invite-role-${option.value}`} value={option.value} />
+            <span className="flex flex-col gap-0.5">
+              <span className="flex items-center gap-1.5 font-medium text-label">
+                <option.icon aria-hidden className="size-4" />
+                {option.label}
+              </span>
+              <span className="text-caption text-muted-foreground">
+                {option.description}
+              </span>
+            </span>
+          </label>
+        ))}
+      </RadioGroup>
+    </div>
+  );
+}
+
+function InviteSuccess({
+  email,
+  onDone,
+  token,
+}: {
+  email: string;
+  onDone: () => void;
+  token: string;
+}) {
+  const inviteUrl = `${typeof window === "undefined" ? "" : window.location.origin}/invite/${token}`;
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle>Invitation sent</DialogTitle>
+        <DialogDescription>
+          We emailed {email}. You can also share the link directly.
+        </DialogDescription>
+      </DialogHeader>
+      <Field>
+        <FieldLabel htmlFor="invite-link">Invitation link</FieldLabel>
+        <div className="flex items-center gap-2">
+          <Input
+            className="flex-1 font-mono"
+            id="invite-link"
+            onFocus={(event) => event.target.select()}
+            readOnly
+            value={inviteUrl}
+          />
+          <CopyButton label="Copy invitation link" value={inviteUrl} />
+        </div>
+      </Field>
+      <DialogFooter>
+        <Button onClick={onDone} tone="primary" variant="solid">
+          Done
+        </Button>
+      </DialogFooter>
+    </>
   );
 }

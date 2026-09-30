@@ -6,9 +6,9 @@ import {
   TableHeader,
   TableRow,
 } from "@ctrl-ui/react/ui/table";
-import { Check, Minus, X } from "lucide-react";
+import { Check, CheckCheck, Minus, X } from "lucide-react";
 
-import { H3 } from "@/components/ui/typography";
+import { cn } from "@/lib/utils";
 
 type FeatureValue = "yes" | "no" | "partial" | "strong" | string;
 
@@ -24,37 +24,34 @@ interface ComparisonTableProps {
   features: Feature[];
 }
 
+const FEATURE_MARKS = {
+  no: { icon: X, label: "No", tone: "text-muted-foreground" },
+  partial: { icon: Minus, label: "Partial", tone: "text-warning-text" },
+  strong: {
+    icon: CheckCheck,
+    label: "Yes, a strength",
+    tone: "text-success-text",
+  },
+  yes: { icon: Check, label: "Yes", tone: "text-success-text" },
+} as const;
+
+function isMarkedValue(
+  value: FeatureValue
+): value is keyof typeof FEATURE_MARKS {
+  return value in FEATURE_MARKS;
+}
+
 function FeatureCell({ value }: { value: FeatureValue }) {
-  if (value === "yes") {
-    return (
-      <span className="flex items-center justify-center text-success-text">
-        <Check className="h-5 w-5" />
-      </span>
-    );
+  if (!isMarkedValue(value)) {
+    return <span className="text-body">{value}</span>;
   }
-  if (value === "strong") {
-    return (
-      <span className="flex items-center justify-center text-success-text">
-        <Check className="h-5 w-5 stroke-[3]" />
-        <Check className="-ml-2 h-5 w-5 stroke-[3]" />
-      </span>
-    );
-  }
-  if (value === "no") {
-    return (
-      <span className="flex items-center justify-center text-destructive-text">
-        <X className="h-5 w-5" />
-      </span>
-    );
-  }
-  if (value === "partial") {
-    return (
-      <span className="flex items-center justify-center text-warning-text">
-        <Minus className="h-5 w-5" />
-      </span>
-    );
-  }
-  return <span className="text-center text-sm">{value}</span>;
+  const { icon: Icon, label, tone } = FEATURE_MARKS[value];
+  return (
+    <span className={cn("inline-flex justify-center", tone)}>
+      <Icon aria-hidden="true" className="size-5" />
+      <span className="sr-only">{label}</span>
+    </span>
+  );
 }
 
 export function ComparisonTable({
@@ -62,42 +59,32 @@ export function ComparisonTable({
   features,
 }: ComparisonTableProps) {
   return (
-    <div className="my-8 overflow-hidden rounded-xl border border-border">
+    <div className="my-8 overflow-x-auto tabular-nums">
       <Table>
         <TableHeader>
-          <TableRow className="bg-muted">
-            <TableHead className="px-6 py-4 font-semibold">Feature</TableHead>
-            <TableHead className="w-32 px-6 py-4 text-center font-semibold">
-              <span className="flex items-center justify-center gap-2">
-                <span className="flex h-6 w-6 items-center justify-center rounded bg-brand font-bold text-brand-foreground text-caption">
-                  R
-                </span>
-                Reflet
-              </span>
-            </TableHead>
-            <TableHead className="w-32 px-6 py-4 text-center font-semibold">
-              {competitorName}
-            </TableHead>
+          <TableRow>
+            <TableHead>Feature</TableHead>
+            <TableHead className="w-32 text-center">Reflet</TableHead>
+            <TableHead className="w-32 text-center">{competitorName}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {features.map((feature, index) => (
-            <TableRow
-              className={index % 2 === 0 ? "bg-card" : "bg-muted/30"}
-              key={feature.name}
-            >
-              <TableCell className="whitespace-normal px-6 py-4">
-                <div className="font-medium">{feature.name}</div>
-                {feature.description && (
-                  <div className="mt-1 text-muted-foreground text-sm">
+          {features.map((feature) => (
+            <TableRow key={feature.name}>
+              <TableCell className="whitespace-normal">
+                <span className="block font-medium text-foreground">
+                  {feature.name}
+                </span>
+                {feature.description ? (
+                  <span className="mt-1 block text-muted-foreground">
                     {feature.description}
-                  </div>
-                )}
+                  </span>
+                ) : null}
               </TableCell>
-              <TableCell className="px-6 py-4">
+              <TableCell className="text-center">
                 <FeatureCell value={feature.reflet} />
               </TableCell>
-              <TableCell className="px-6 py-4">
+              <TableCell className="text-center">
                 <FeatureCell value={feature.competitor} />
               </TableCell>
             </TableRow>
@@ -108,18 +95,57 @@ export function ComparisonTable({
   );
 }
 
+interface PlanPricing {
+  enterprise?: string;
+  free: string;
+  paid: string;
+}
+
 interface PricingComparisonProps {
   competitorName: string;
-  competitorPricing: {
-    free: string;
-    paid: string;
-    enterprise?: string;
-  };
-  refletPricing: {
-    free: string;
-    paid: string;
-    enterprise?: string;
-  };
+  competitorPricing: PlanPricing;
+  refletPricing: PlanPricing;
+}
+
+function PricingCard({
+  highlighted,
+  name,
+  pricing,
+}: {
+  highlighted?: boolean;
+  name: string;
+  pricing: PlanPricing;
+}) {
+  const rows = [
+    { label: "Free tier", value: pricing.free },
+    { label: "Paid plans", value: pricing.paid },
+    ...(pricing.enterprise
+      ? [{ label: "Enterprise", value: pricing.enterprise }]
+      : []),
+  ];
+
+  return (
+    <div
+      className={cn(
+        "rounded-(--radius-panel) p-6",
+        highlighted
+          ? "bg-card shadow-(--marketing-float-shadow)"
+          : "bg-secondary"
+      )}
+    >
+      <p className="mb-4 text-foreground text-heading-3">{name}</p>
+      <dl className="space-y-2 text-body">
+        {rows.map((row) => (
+          <div className="flex justify-between gap-4" key={row.label}>
+            <dt className="text-muted-foreground">{row.label}</dt>
+            <dd className="text-end font-medium text-foreground tabular-nums">
+              {row.value}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
 }
 
 export function PricingComparison({
@@ -128,57 +154,14 @@ export function PricingComparison({
   competitorPricing,
 }: PricingComparisonProps) {
   return (
-    <div className="my-8">
-      <H3 className="mb-4">Pricing Comparison</H3>
+    <section className="my-8">
+      <h3 className="mb-4 text-foreground text-heading-3">
+        Pricing comparison
+      </h3>
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-xl border-2 border-brand bg-card p-6">
-          <div className="mb-4 flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded bg-brand font-bold text-brand-foreground text-sm">
-              R
-            </span>
-            <span className="font-semibold text-lg">Reflet</span>
-          </div>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span>Free tier</span>
-              <span className="font-medium">{refletPricing.free}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Paid plans</span>
-              <span className="font-medium">{refletPricing.paid}</span>
-            </div>
-            {refletPricing.enterprise && (
-              <div className="flex justify-between">
-                <span>Enterprise</span>
-                <span className="font-medium">{refletPricing.enterprise}</span>
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="rounded-xl border border-border bg-card p-6">
-          <div className="mb-4 flex items-center gap-2">
-            <span className="font-semibold text-lg">{competitorName}</span>
-          </div>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span>Free tier</span>
-              <span className="font-medium">{competitorPricing.free}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Paid plans</span>
-              <span className="font-medium">{competitorPricing.paid}</span>
-            </div>
-            {competitorPricing.enterprise && (
-              <div className="flex justify-between">
-                <span>Enterprise</span>
-                <span className="font-medium">
-                  {competitorPricing.enterprise}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
+        <PricingCard highlighted name="Reflet" pricing={refletPricing} />
+        <PricingCard name={competitorName} pricing={competitorPricing} />
       </div>
-    </div>
+    </section>
   );
 }

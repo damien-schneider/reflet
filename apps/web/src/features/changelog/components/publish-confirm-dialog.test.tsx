@@ -100,6 +100,10 @@ vi.mock("@ctrl-ui/react/ui/button", () => ({
   ),
 }));
 
+vi.mock("@ctrl-ui/react/ui/spinner", () => ({
+  Spinner: () => <span data-testid="spinner" />,
+}));
+
 vi.mock("@ctrl-ui/react/ui/dialog", () => ({
   Dialog: ({
     children,
@@ -187,7 +191,7 @@ describe("PublishConfirmDialog", () => {
   it("displays the dialog title", () => {
     render(<PublishConfirmDialog {...defaultProps} />);
     expect(screen.getByTestId("dialog-title")).toHaveTextContent(
-      "Publish Release"
+      "Publish release"
     );
   });
 
@@ -201,9 +205,9 @@ describe("PublishConfirmDialog", () => {
     expect(screen.getByText("2.0.0")).toBeInTheDocument();
   });
 
-  it("shows Untitled Release when title is empty", () => {
+  it("shows Untitled release when title is empty", () => {
     render(<PublishConfirmDialog {...defaultProps} title="" />);
-    expect(screen.getByText("Untitled Release")).toBeInTheDocument();
+    expect(screen.getByText("Untitled release")).toBeInTheDocument();
   });
 
   it("does not show version badge when version is empty", () => {

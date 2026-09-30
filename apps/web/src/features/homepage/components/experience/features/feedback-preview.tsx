@@ -101,7 +101,6 @@ function FeedbackSend({ canSubmit }: { canSubmit: boolean }) {
     <div className="feature-widget-footer">
       <span className="marketing-status">Feature request</span>
       <Button
-        aria-label="Send preview feedback"
         disabled={!canSubmit}
         size="sm"
         tone="primary"

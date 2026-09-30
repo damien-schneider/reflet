@@ -2,9 +2,9 @@ import { toast } from "@ctrl-ui/react/ui/toast";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 
-type SaveStatus = "idle" | "saving" | "saved";
+export type SaveStatus = "idle" | "saving" | "saved" | "error";
 
 const AUTO_SAVE_DEBOUNCE_MS = 500;
 const SAVED_DISPLAY_MS = 2000;
@@ -44,7 +44,7 @@ export function useAutoSaveRelease({
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const isFirstEditRef = useRef(true);
 
-  const autoSave = async (draft: ReleaseDraft) => {
+  const autoSave = useEffectEvent(async (draft: ReleaseDraft) => {
     setSaveStatus("saving");
 
     try {
@@ -52,14 +52,14 @@ export function useAutoSaveRelease({
         await updateRelease({
           description: draft.description || undefined,
           id: releaseId,
-          title: draft.title || "Untitled Release",
+          title: draft.title || "Untitled release",
           version: draft.version || undefined,
         });
       } else {
         const newId = await createRelease({
           description: draft.description || undefined,
           organizationId,
-          title: draft.title || "Untitled Release",
+          title: draft.title || "Untitled release",
           version: draft.version || undefined,
         });
         setReleaseId(newId);
@@ -67,15 +67,14 @@ export function useAutoSaveRelease({
       setSaveStatus("saved");
       setTimeout(() => setSaveStatus("idle"), SAVED_DISPLAY_MS);
     } catch (error) {
-      setSaveStatus("idle");
+      setSaveStatus("error");
       toast.error(
-        error instanceof Error ? error.message : "Failed to save draft"
+        error instanceof Error
+          ? error.message
+          : "Unable to save the draft. Check your connection."
       );
     }
-  };
-
-  const autoSaveRef = useRef(autoSave);
-  autoSaveRef.current = autoSave;
+  });
 
   useEffect(() => {
     if (isFirstEditRef.current) {
@@ -89,14 +88,11 @@ export function useAutoSaveRelease({
       version: version.trim(),
     };
 
-    if (!(draft.title || draft.version || draft.description)) {
+    if (!(draft.title || draft.description)) {
       return;
     }
 
-    const timer = setTimeout(
-      () => autoSaveRef.current(draft),
-      AUTO_SAVE_DEBOUNCE_MS
-    );
+    const timer = setTimeout(() => autoSave(draft), AUTO_SAVE_DEBOUNCE_MS);
 
     return () => clearTimeout(timer);
   }, [description, title, version]);

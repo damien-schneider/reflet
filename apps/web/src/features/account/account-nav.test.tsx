@@ -2,24 +2,6 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@phosphor-icons/react", () => ({
-  Bell: ({ className }: { className?: string }) => (
-    <svg className={className} />
-  ),
-  Code: ({ className }: { className?: string }) => (
-    <svg className={className} />
-  ),
-  Envelope: ({ className }: { className?: string }) => (
-    <svg className={className} />
-  ),
-  LockKey: ({ className }: { className?: string }) => (
-    <svg className={className} />
-  ),
-  User: ({ className }: { className?: string }) => (
-    <svg className={className} />
-  ),
-}));
-
 import { AccountNav } from "./account-nav";
 
 describe("AccountNav", () => {

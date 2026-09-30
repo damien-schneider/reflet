@@ -165,7 +165,7 @@ describe("useGitHubSettings", () => {
     });
   });
 
-  it("handleSetup sets error on failure", async () => {
+  it("handleSetup reports a generic failure without leaking raw errors", async () => {
     mockSetupWebhook.mockRejectedValueOnce(new Error("Details"));
 
     const { result } = renderHook(() => useGitHubSettings(defaultProps));
@@ -174,10 +174,26 @@ describe("useGitHubSettings", () => {
       await result.current.handleSetup();
     });
 
-    expect(result.current.webhookSetupError).toEqual({
-      code: "SETUP_FAILED",
-      message: "Details",
+    expect(result.current.webhookSetupError?.code).toBe("SETUP_FAILED");
+    expect(result.current.webhookSetupError?.message).not.toContain("Details");
+  });
+
+  it("handleSetup flags missing GitHub permissions so the UI can offer a reconnect", async () => {
+    mockSetupWebhook.mockRejectedValueOnce(
+      new Error(
+        "Failed to create webhook: Forbidden - Resource not accessible by integration"
+      )
+    );
+
+    const { result } = renderHook(() => useGitHubSettings(defaultProps));
+
+    await act(async () => {
+      await result.current.handleSetup();
     });
+
+    expect(result.current.webhookSetupError?.code).toBe(
+      "GITHUB_PERMISSION_DENIED"
+    );
   });
 
   it("clearWebhookSetupError clears the error", async () => {

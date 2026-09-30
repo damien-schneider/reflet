@@ -1,5 +1,5 @@
 import posthog from "posthog-js";
-import { hasAnalyticsConsent } from "@/components/cookie-consent-banner";
+import { hasAnalyticsConsent } from "@/lib/cookie-consent";
 
 interface AnalyticsEvents {
   // Feature adoption

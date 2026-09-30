@@ -1,18 +1,10 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { useParams, useRouter } from "next/navigation";
-import { useEffect } from "react";
-
-export default function IntelligenceSettingsRedirect() {
-  const params = useParams();
-  const router = useRouter();
-  const orgSlug = typeof params?.orgSlug === "string" ? params.orgSlug : "";
-
-  useEffect(() => {
-    if (orgSlug) {
-      router.replace(`/dashboard/${orgSlug}/intelligence`);
-    }
-  }, [orgSlug, router]);
-
-  return null;
+export default async function IntelligenceSettingsRedirect({
+  params,
+}: {
+  params: Promise<{ orgSlug: string }>;
+}) {
+  const { orgSlug } = await params;
+  redirect(`/dashboard/${orgSlug}/intelligence?tab=settings`);
 }

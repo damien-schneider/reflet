@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@ctrl-ui/react/ui/button";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import {
   ArrowsClockwise,
   CaretDown,
@@ -33,9 +34,10 @@ export function InlineClarification({ feedbackId }: InlineClarificationProps) {
     setIsRegenerating(true);
     try {
       await initiateClarification({ feedbackId });
-    } finally {
-      setIsRegenerating(false);
+    } catch {
+      toast.error("Couldn’t regenerate the clarification. Try again.");
     }
+    setIsRegenerating(false);
   };
 
   if (!status?.hasAiClarification) {
@@ -80,8 +82,8 @@ export function InlineClarification({ feedbackId }: InlineClarificationProps) {
             >
               {isRegenerating ? (
                 <>
-                  <ArrowsClockwise className="mr-0.5 h-3 w-3 animate-spin" />
-                  Regenerating...
+                  <ArrowsClockwise className="mr-0.5 h-3 w-3 motion-safe:animate-spin" />
+                  Regenerating…
                 </>
               ) : (
                 "Regenerate"

@@ -7,7 +7,12 @@ import Suggestion, {
   type SuggestionProps,
 } from "@tiptap/suggestion";
 import tippy, { type Instance as TippyInstance } from "tippy.js";
-import { type CommandItem, createSlashCommands } from "./command-items";
+import {
+  type CommandItem,
+  type CommandListHandle,
+  type CommandListProps,
+  createSlashCommands,
+} from "./command-items";
 import { CommandList } from "./command-list";
 
 // Z-index for slash menu popup - must be higher than dialogs (z-50 = 50) to work inside them
@@ -59,15 +64,14 @@ const createSuggestion = ({
   },
 
   render: () => {
-    let component: ReactRenderer | null = null;
+    let component: ReactRenderer<CommandListHandle, CommandListProps> | null =
+      null;
     let popup: TippyInstance[] | null = null;
-    let keyboardHandler: ((event: KeyboardEvent) => boolean) | null = null;
 
     return {
       onExit: () => {
         popup?.[0]?.destroy();
         component?.destroy();
-        keyboardHandler = null;
       },
 
       onKeyDown: (props: { event: KeyboardEvent }) => {
@@ -76,11 +80,7 @@ const createSuggestion = ({
           return true;
         }
 
-        if (keyboardHandler) {
-          return keyboardHandler(props.event);
-        }
-
-        return false;
+        return component?.ref?.onKeyDown(props) ?? false;
       },
       onStart: (props: SuggestionProps<CommandItem>) => {
         component = new ReactRenderer(CommandList, {
@@ -88,24 +88,21 @@ const createSuggestion = ({
           props: {
             command: props.command,
             items: props.items,
-            onRegisterKeyHandler: (
-              handler: (event: KeyboardEvent) => boolean
-            ) => {
-              keyboardHandler = handler;
-            },
           },
         });
 
-        if (!props.clientRect) {
+        const { clientRect } = props;
+        if (!clientRect) {
           return;
         }
 
         const appendTarget = findAppendTarget(props.editor.view.dom);
-
         popup = tippy("body", {
+          animation: false,
           appendTo: () => appendTarget,
           content: component.element,
-          getReferenceClientRect: props.clientRect as () => DOMRect,
+          duration: 0,
+          getReferenceClientRect: () => clientRect() ?? new DOMRect(),
           interactive: true,
           placement: "bottom-start",
           showOnCreate: true,
@@ -118,19 +115,15 @@ const createSuggestion = ({
         component?.updateProps({
           command: props.command,
           items: props.items,
-          onRegisterKeyHandler: (
-            handler: (event: KeyboardEvent) => boolean
-          ) => {
-            keyboardHandler = handler;
-          },
         });
 
-        if (!props.clientRect) {
+        const { clientRect } = props;
+        if (!clientRect) {
           return;
         }
 
         popup?.[0]?.setProps({
-          getReferenceClientRect: props.clientRect as () => DOMRect,
+          getReferenceClientRect: () => clientRect() ?? new DOMRect(),
         });
       },
     };

@@ -7,107 +7,96 @@ import { ArrowsClockwise, MagnifyingGlass, X } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
+import type { FunctionReturnType } from "convex/server";
+import { format, formatDistanceToNow } from "date-fns";
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 
-const formatRelativeTime = (timestamp: number): string => {
-  const now = Date.now();
-  const diffMs = now - timestamp;
-  const diffMinutes = Math.floor(diffMs / 1000 / 60);
-  const diffHours = Math.floor(diffMinutes / 60);
-  const diffDays = Math.floor(diffHours / 24);
+const noop = () => undefined;
 
-  if (diffDays > 0) {
-    return `${diffDays}d ago`;
-  }
-  if (diffHours > 0) {
-    return `${diffHours}h ago`;
-  }
-  if (diffMinutes > 0) {
-    return `${diffMinutes}m ago`;
-  }
-  return "just now";
+const MS_PER_SECOND = 1000;
+
+const subscribeToSecondTick = (onTick: () => void) => {
+  const intervalId = setInterval(onTick, MS_PER_SECOND);
+  return () => clearInterval(intervalId);
 };
 
-/** Non-fatal error swallower for fire-and-forget mutations */
-const noop = () => {
-  // Intentionally empty — dismiss/cancel failures are non-critical
-};
+const readNowInSeconds = () => Math.floor(Date.now() / MS_PER_SECOND);
+
+type ActiveScan = FunctionReturnType<
+  typeof api.intelligence.scan_control.getActiveScan
+>;
 
 const getProgressText = (
-  status: string,
-  elapsedSeconds: number,
-  currentStep?: string,
-  stats?: { itemsProcessed: number; errors: number }
+  job: ActiveScan | undefined,
+  elapsedSeconds: number
 ): string => {
-  if (currentStep) {
-    return currentStep;
+  if (job?.currentStep) {
+    return job.currentStep;
   }
-  if (status === "pending" && elapsedSeconds < 10) {
-    return "Starting scan...";
+  if ((job?.status ?? "pending") === "pending" && elapsedSeconds < 10) {
+    return "Starting scan…";
   }
-  if (stats) {
-    const parts = [`${stats.itemsProcessed} steps completed`];
-    if (stats.errors > 0) {
-      parts.push(`${stats.errors} errors`);
+  if (job?.stats) {
+    const { errors, itemsProcessed } = job.stats;
+    const parts = [`${itemsProcessed} steps done`];
+    if (errors > 0) {
+      parts.push(`${errors} ${errors === 1 ? "error" : "errors"}`);
     }
     return parts.join(", ");
   }
-  return `Scanning... (${elapsedSeconds}s)`;
+  return `Scanning… ${elapsedSeconds}s`;
 };
 
-interface ScanStatusBannerProps {
-  organizationId: Id<"organizations">;
-  orgSlug: string;
-}
+const showScanOutcomeToast = (
+  status: string | null,
+  job: ActiveScan | undefined
+): boolean => {
+  if (status === "completed") {
+    const stats = job?.stats;
+    if (stats && stats.itemsProcessed > 0) {
+      toast.success("Scan complete", {
+        description: `${stats.itemsProcessed} steps done, ${stats.errors} ${stats.errors === 1 ? "error" : "errors"}`,
+      });
+    } else {
+      toast.info("Scan complete, no new signals", {
+        description: "Add more keywords or competitors to widen the scan.",
+      });
+    }
+    return true;
+  }
+  if (status === "failed") {
+    toast.error("Scan failed", {
+      description:
+        job?.errorMessage ??
+        "Check your OpenRouter API key in intelligence settings, then run it again.",
+    });
+    return true;
+  }
+  return false;
+};
 
-export const ScanStatusBanner = ({
-  organizationId,
-  orgSlug,
-}: ScanStatusBannerProps) => {
+function useScanOutcomeNotifications(
+  organizationId: Id<"organizations">,
+  job: ActiveScan | undefined
+) {
   const prevJobStatusRef = useRef<string | null>(null);
-
-  const config = useQuery(api.intelligence.config.get, {
-    organizationId,
-  });
-
-  const job = useQuery(api.intelligence.scan_control.getActiveScan, {
-    organizationId,
-  });
-
-  const keywords = useQuery(api.intelligence.keywords.list, {
-    organizationId,
-  });
-
-  const competitors = useQuery(api.intelligence.competitors.list, {
-    organizationId,
-  });
-
-  const hasKeywords = keywords && keywords.length > 0;
-  const hasCompetitors = competitors && competitors.length > 0;
-  const canScan = hasKeywords || hasCompetitors;
-
-  const startManualScan = useMutation(
-    api.intelligence.scan_control.startManualScan
-  );
   const dismissScan = useMutation(api.intelligence.scan_control.dismissScan);
   const cancelScan = useMutation(api.intelligence.scan_control.cancelScan);
 
   const jobStatus = job?.status ?? null;
   const isStale = job !== null && job !== undefined && "_stale" in job;
 
-  // Auto-cancel stale jobs (stuck >2min)
   useEffect(() => {
     if (!(isStale && job)) {
       return;
     }
-    toast.error("Intelligence scan timed out", {
-      description: "The scan took too long and was cancelled automatically.",
+    toast.error("Scan timed out", {
+      description: "It ran for over 2 minutes and was stopped. Run it again.",
     });
     cancelScan({ organizationId }).catch(noop);
   }, [isStale, job, cancelScan, organizationId]);
 
-  // Fire toast on status transitions
   useEffect(() => {
     const prevStatus = prevJobStatusRef.current;
     if (prevStatus === jobStatus) {
@@ -120,131 +109,179 @@ export const ScanStatusBanner = ({
       return;
     }
 
-    if (jobStatus === "completed") {
-      const stats = job?.stats;
-      if (stats && stats.itemsProcessed > 0) {
-        toast.success("Intelligence scan complete", {
-          description: `${stats.itemsProcessed} steps completed, ${stats.errors} errors`,
-        });
-      } else {
-        toast.info("Scan complete — no new signals found", {
-          description:
-            "Try adding more keywords or competitors for better results.",
-        });
-      }
-      if (job) {
-        dismissScan({ jobId: job._id }).catch(noop);
-      }
-    } else if (jobStatus === "failed") {
-      toast.error("Intelligence scan failed", {
-        description:
-          job?.errorMessage ??
-          "Check your OpenRouter API key and intelligence settings.",
-      });
-      if (job) {
-        dismissScan({ jobId: job._id }).catch(noop);
-      }
+    const finished = showScanOutcomeToast(jobStatus, job);
+    if (finished && job) {
+      dismissScan({ jobId: job._id }).catch(noop);
     }
   }, [jobStatus, job, dismissScan]);
 
-  const handleStartScan = async () => {
-    try {
-      await startManualScan({ organizationId });
-      toast.success("Intelligence scan started");
-    } catch (error) {
-      toast.error("Failed to start scan", {
-        description:
-          error instanceof Error ? error.message : "An error occurred",
-      });
-    }
-  };
+  const isProcessing = jobStatus === "pending" || jobStatus === "processing";
+  return isProcessing && !isStale;
+}
+
+function ScanProgressCard({
+  job,
+  organizationId,
+}: {
+  job: ActiveScan | undefined;
+  organizationId: Id<"organizations">;
+}) {
+  const cancelScan = useMutation(api.intelligence.scan_control.cancelScan);
+  const nowInSeconds = useSyncExternalStore(
+    subscribeToSecondTick,
+    readNowInSeconds,
+    () => null
+  );
+  const elapsedSeconds =
+    job && nowInSeconds !== null
+      ? Math.max(0, nowInSeconds - Math.floor(job.startedAt / MS_PER_SECOND))
+      : 0;
 
   const handleCancelScan = async () => {
     try {
       await cancelScan({ organizationId });
-      toast.success("Scan cancelled");
     } catch (error) {
-      toast.error("Failed to cancel scan", {
+      toast.error("Couldn’t cancel the scan", {
         description:
-          error instanceof Error ? error.message : "An error occurred",
+          error instanceof Error ? error.message : "Try again in a moment.",
       });
     }
   };
 
-  const isProcessing = jobStatus === "pending" || jobStatus === "processing";
+  return (
+    <Card className="mb-6">
+      <CardContent className="flex items-center gap-3 py-3">
+        <ArrowsClockwise
+          aria-hidden
+          className="size-5 shrink-0 text-primary motion-safe:animate-spin"
+        />
+        <div
+          aria-live="polite"
+          className="flex min-w-0 flex-1 flex-col"
+          role="status"
+        >
+          <span className="font-medium text-sm">Scan in progress</span>
+          <span className="truncate text-muted-foreground text-xs tabular-nums">
+            {getProgressText(job, elapsedSeconds)}
+          </span>
+        </div>
+        <Button
+          className="shrink-0"
+          onClick={handleCancelScan}
+          size="xs"
+          variant="ghost"
+        >
+          <X data-icon="inline-start" />
+          Cancel scan
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
 
-  if (isProcessing && !isStale) {
-    const elapsedSeconds = job
-      ? Math.floor((Date.now() - job.startedAt) / 1000)
-      : 0;
+function ScanSourcesHint({ orgSlug }: { orgSlug: string }) {
+  return (
+    <span className="text-muted-foreground text-xs">
+      Add{" "}
+      <Link
+        className="underline underline-offset-2 hover:text-foreground"
+        href={`/dashboard/${orgSlug}/intelligence?tab=community`}
+      >
+        keywords
+      </Link>{" "}
+      or{" "}
+      <Link
+        className="underline underline-offset-2 hover:text-foreground"
+        href={`/dashboard/${orgSlug}/intelligence?tab=competitors`}
+      >
+        competitors
+      </Link>{" "}
+      to run a scan.
+    </span>
+  );
+}
 
-    return (
-      <Card className="mb-6">
-        <CardContent className="flex items-center gap-3 py-3">
-          <ArrowsClockwise className="h-5 w-5 animate-spin text-primary" />
-          <div className="flex flex-1 flex-col">
-            <span className="font-medium text-sm">
-              Intelligence scan in progress...
-            </span>
-            <span className="text-muted-foreground text-xs">
-              {getProgressText(
-                job?.status ?? "pending",
-                elapsedSeconds,
-                job?.currentStep ?? undefined,
-                job?.stats ?? undefined
-              )}
-            </span>
-          </div>
-          <Button
-            className="shrink-0"
-            onClick={handleCancelScan}
-            size="xs"
-            variant="ghost"
-          >
-            <X className="h-4 w-4" />
-            Cancel
-          </Button>
-        </CardContent>
-      </Card>
-    );
-  }
+function LastScanTime({ lastScanAt }: { lastScanAt: number }) {
+  return (
+    <span className="text-muted-foreground text-xs tabular-nums">
+      Last scan{" "}
+      <time
+        dateTime={new Date(lastScanAt).toISOString()}
+        title={format(lastScanAt, "PPpp")}
+      >
+        {formatDistanceToNow(lastScanAt, { addSuffix: true })}
+      </time>
+    </span>
+  );
+}
+
+function ScanIdleActions({
+  organizationId,
+  orgSlug,
+}: {
+  organizationId: Id<"organizations">;
+  orgSlug: string;
+}) {
+  const config = useQuery(api.intelligence.config.get, { organizationId });
+  const keywords = useQuery(api.intelligence.keywords.list, { organizationId });
+  const competitors = useQuery(api.intelligence.competitors.list, {
+    organizationId,
+  });
+  const startManualScan = useMutation(
+    api.intelligence.scan_control.startManualScan
+  );
+
+  const canScan = Boolean(keywords?.length || competitors?.length);
+  const sourcesLoaded = keywords !== undefined && competitors !== undefined;
+
+  const handleStartScan = async () => {
+    try {
+      await startManualScan({ organizationId });
+    } catch (error) {
+      toast.error("Couldn’t start the scan", {
+        description:
+          error instanceof Error ? error.message : "Try again in a moment.",
+      });
+    }
+  };
 
   return (
-    <div className="mb-6 flex items-center gap-3">
+    <div className="mb-6 flex flex-wrap items-center gap-3">
       <Button
-        className="shrink-0 gap-1.5"
+        className="shrink-0"
         disabled={!canScan}
         onClick={handleStartScan}
         size="xs"
         variant="surface"
       >
-        <MagnifyingGlass className="h-4 w-4" />
-        <span>Run Scan Now</span>
+        <MagnifyingGlass data-icon="inline-start" />
+        Run scan
       </Button>
-      {!canScan && (
-        <span className="text-muted-foreground text-xs">
-          Add{" "}
-          <Link
-            className="underline hover:text-foreground"
-            href={`/dashboard/${orgSlug}/intelligence/community`}
-          >
-            keywords
-          </Link>{" "}
-          or{" "}
-          <Link
-            className="underline hover:text-foreground"
-            href={`/dashboard/${orgSlug}/intelligence/competitors`}
-          >
-            competitors
-          </Link>{" "}
-          first to run a scan
-        </span>
-      )}
+      {sourcesLoaded && !canScan && <ScanSourcesHint orgSlug={orgSlug} />}
       {canScan && config?.lastScanAt && (
-        <span className="text-muted-foreground text-xs">
-          Last scan: {formatRelativeTime(config.lastScanAt)}
-        </span>
+        <LastScanTime lastScanAt={config.lastScanAt} />
       )}
     </div>
   );
+}
+
+interface ScanStatusBannerProps {
+  organizationId: Id<"organizations">;
+  orgSlug: string;
+}
+
+export const ScanStatusBanner = ({
+  organizationId,
+  orgSlug,
+}: ScanStatusBannerProps) => {
+  const job = useQuery(api.intelligence.scan_control.getActiveScan, {
+    organizationId,
+  });
+  const isScanning = useScanOutcomeNotifications(organizationId, job);
+
+  if (isScanning) {
+    return <ScanProgressCard job={job} organizationId={organizationId} />;
+  }
+
+  return <ScanIdleActions organizationId={organizationId} orgSlug={orgSlug} />;
 };

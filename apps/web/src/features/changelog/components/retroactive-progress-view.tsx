@@ -35,11 +35,16 @@ interface JobData {
 }
 
 interface ProgressViewProps {
+  isCancelling: boolean;
   job: JobData;
   onCancel: () => void;
 }
 
-export function ProgressView({ job, onCancel }: ProgressViewProps) {
+export function ProgressView({
+  isCancelling,
+  job,
+  onCancel,
+}: ProgressViewProps) {
   const processedGroups =
     job.groups?.filter(
       (g) => g.status === "generated" || g.status === "created"
@@ -55,20 +60,29 @@ export function ProgressView({ job, onCancel }: ProgressViewProps) {
   );
 
   return (
-    <div className="mb-6 rounded-xl border p-5">
+    <section
+      aria-label="Changelog generation"
+      className="mb-6 rounded-xl border p-5"
+    >
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Spinner className="text-primary" />
-            <div>
-              <h3 className="font-medium text-sm">Generating changelog...</h3>
+            <div aria-live="polite">
+              <h3 className="font-medium text-sm">Generating changelog…</h3>
               <p className="text-muted-foreground text-xs">
-                {job.currentStep ?? "Processing..."}
+                {job.currentStep ?? "Processing…"}
               </p>
             </div>
           </div>
-          <Button onClick={onCancel} size="sm" type="button" variant="ghost">
-            Cancel
+          <Button
+            disabled={isCancelling}
+            onClick={onCancel}
+            size="sm"
+            type="button"
+            variant="ghost"
+          >
+            {isCancelling ? "Cancelling…" : "Cancel"}
           </Button>
         </div>
 
@@ -90,10 +104,10 @@ export function ProgressView({ job, onCancel }: ProgressViewProps) {
         <div className="flex flex-col gap-1.5">
           <Progress
             aria-label="Release generation progress"
-            value={progressPercent}
+            value={totalGroups > 0 ? progressPercent : null}
           >
-            <ProgressTrack className="h-1.5 w-full rounded-full bg-muted">
-              <ProgressIndicator className="h-full rounded-full bg-primary" />
+            <ProgressTrack>
+              <ProgressIndicator />
             </ProgressTrack>
           </Progress>
           {totalGroups > 0 && (
@@ -113,13 +127,17 @@ export function ProgressView({ job, onCancel }: ProgressViewProps) {
                 <span
                   aria-hidden="true"
                   className={cn(
-                    "h-2 w-2 rounded-full transition-colors",
+                    "size-2 rounded-full transition-colors",
                     isCompleted && "bg-success",
                     isActive && "bg-primary",
                     !(isCompleted || isActive) && "bg-muted-foreground/20"
                   )}
                 />
-                <span className="sr-only">{step.label}</span>
+                <span className="sr-only">
+                  {step.label}
+                  {isCompleted && " (done)"}
+                  {isActive && " (in progress)"}
+                </span>
                 {index < PHASE_STEPS.length - 1 && (
                   <span
                     aria-hidden="true"
@@ -136,23 +154,30 @@ export function ProgressView({ job, onCancel }: ProgressViewProps) {
 
         {job.groups && job.groups.length > 0 && (
           <Collapsible>
-            <CollapsibleTrigger className="group flex items-center gap-1 text-muted-foreground text-xs transition-colors hover:text-foreground">
+            <CollapsibleTrigger className="group flex items-center gap-1 text-muted-foreground text-xs hover:text-foreground">
               View groups
-              <CaretDown className="h-3 w-3 transition-transform group-data-panel-open:rotate-180" />
+              <CaretDown
+                aria-hidden
+                className="size-3 transition-transform duration-(--duration-base) ease-(--ease-standard) group-data-panel-open:rotate-180"
+              />
             </CollapsibleTrigger>
             <CollapsibleContent>
               <div className="mt-2 max-h-48 space-y-1 overflow-y-auto">
                 {job.groups.map((group) => (
                   <div
-                    className="flex items-center justify-between rounded px-2 py-1 text-xs"
+                    className="flex items-center justify-between rounded-sm px-2 py-1 text-xs"
                     key={group.id}
                   >
-                    <span className="truncate text-foreground">
+                    <span
+                      className="truncate text-foreground"
+                      title={group.title}
+                    >
                       {group.title}
                     </span>
                     <div className="flex shrink-0 items-center gap-2">
                       <span className="text-muted-foreground tabular-nums">
-                        {group.commitCount} commits
+                        {group.commitCount} commit
+                        {group.commitCount === 1 ? "" : "s"}
                       </span>
                       <GroupStatusDot status={group.status} />
                     </div>
@@ -163,6 +188,6 @@ export function ProgressView({ job, onCancel }: ProgressViewProps) {
           </Collapsible>
         )}
       </div>
-    </div>
+    </section>
   );
 }

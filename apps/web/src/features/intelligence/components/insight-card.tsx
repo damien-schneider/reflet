@@ -8,47 +8,21 @@ import {
   CardTitle,
 } from "@ctrl-ui/react/ui/card";
 import { ArrowRight, X } from "@phosphor-icons/react";
+import { format, formatDistanceToNow } from "date-fns";
 import { TagBadge } from "@/components/tag-badge";
 
-const PRIORITY_VARIANT: Record<string, "red" | "orange" | "yellow" | "gray"> = {
+const PRIORITY_COLOR: Record<string, "red" | "orange" | "yellow" | "gray"> = {
   critical: "red",
   high: "orange",
   low: "gray",
   medium: "yellow",
 };
 
-const TYPE_VARIANT: Record<string, "blue" | "red" | "green" | "orange"> = {
-  competitive_alert: "red",
-  feature_suggestion: "blue",
-  market_opportunity: "green",
-  risk_warning: "orange",
-};
-
 const TYPE_LABEL: Record<string, string> = {
-  competitive_alert: "Competitive Alert",
-  feature_suggestion: "Feature Suggestion",
-  market_opportunity: "Market Opportunity",
-  risk_warning: "Risk Warning",
-};
-
-const formatRelativeTime = (timestamp: number): string => {
-  const now = Date.now();
-  const diffMs = now - timestamp;
-  const diffSeconds = Math.floor(diffMs / 1000);
-  const diffMinutes = Math.floor(diffSeconds / 60);
-  const diffHours = Math.floor(diffMinutes / 60);
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffDays > 0) {
-    return `${diffDays}d ago`;
-  }
-  if (diffHours > 0) {
-    return `${diffHours}h ago`;
-  }
-  if (diffMinutes > 0) {
-    return `${diffMinutes}m ago`;
-  }
-  return "just now";
+  competitive_alert: "Competitive alert",
+  feature_suggestion: "Feature suggestion",
+  market_opportunity: "Market opportunity",
+  risk_warning: "Risk warning",
 };
 
 interface InsightCardProps {
@@ -72,50 +46,69 @@ export function InsightCard({
   onDismiss,
   onConvert,
 }: InsightCardProps) {
-  const priorityVariant = PRIORITY_VARIANT[insight.priority] ?? "gray";
-  const typeVariant = TYPE_VARIANT[insight.type] ?? "blue";
-  const typeLabel = TYPE_LABEL[insight.type] ?? insight.type;
-
+  const priorityLabel =
+    insight.priority.charAt(0).toUpperCase() + insight.priority.slice(1);
+  const isConverted = insight.status === "converted_to_feedback";
   const canConvert =
-    insight.suggestedFeedbackTitle !== undefined &&
-    insight.status !== "converted_to_feedback";
+    insight.suggestedFeedbackTitle !== undefined && !isConverted;
   const canDismiss = insight.status !== "dismissed";
+  const createdAt = new Date(insight.createdAt);
 
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex flex-col gap-1.5">
-            <div className="flex items-center gap-2">
-              <TagBadge color={typeVariant}>{typeLabel}</TagBadge>
-              <TagBadge color={priorityVariant}>
-                {insight.priority.charAt(0).toUpperCase() +
-                  insight.priority.slice(1)}
-              </TagBadge>
-            </div>
-            <CardTitle>{insight.title}</CardTitle>
+        <div className="flex items-center justify-between gap-2 text-muted-foreground text-xs">
+          <div className="flex min-w-0 items-center gap-2">
+            <TagBadge
+              color={PRIORITY_COLOR[insight.priority] ?? "gray"}
+              size="sm"
+            >
+              {priorityLabel}
+            </TagBadge>
+            <span className="truncate">
+              {TYPE_LABEL[insight.type] ?? insight.type}
+            </span>
           </div>
-          <span className="shrink-0 text-muted-foreground text-xs">
-            {formatRelativeTime(insight.createdAt)}
-          </span>
+          <time
+            className="shrink-0 tabular-nums"
+            dateTime={createdAt.toISOString()}
+            title={format(createdAt, "PPpp")}
+          >
+            {formatDistanceToNow(insight.createdAt, { addSuffix: true })}
+          </time>
         </div>
+        <CardTitle className="text-pretty">{insight.title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-muted-foreground text-sm">{insight.summary}</p>
-        <div className="mt-3 flex items-center gap-2">
-          {canConvert && (
-            <Button onClick={onConvert} size="xs" variant="surface">
-              <ArrowRight data-icon="inline-start" />
-              Convert to Feedback
-            </Button>
-          )}
-          {canDismiss && (
-            <Button onClick={onDismiss} size="xs" variant="ghost">
-              <X data-icon="inline-start" />
-              Dismiss
-            </Button>
-          )}
-        </div>
+        <p className="text-pretty text-muted-foreground text-sm">
+          {insight.summary}
+        </p>
+        {isConverted ? (
+          <p className="mt-3 text-muted-foreground text-xs">
+            Converted to feedback
+          </p>
+        ) : null}
+        {canConvert || canDismiss ? (
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            {canConvert ? (
+              <Button
+                onClick={onConvert}
+                size="sm"
+                title={`Creates “${insight.suggestedFeedbackTitle}”`}
+                variant="surface"
+              >
+                <ArrowRight data-icon="inline-start" />
+                Convert to feedback
+              </Button>
+            ) : null}
+            {canDismiss ? (
+              <Button onClick={onDismiss} size="sm" variant="ghost">
+                <X data-icon="inline-start" />
+                Dismiss
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
       </CardContent>
     </Card>
   );

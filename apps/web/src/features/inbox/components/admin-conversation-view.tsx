@@ -1,10 +1,17 @@
 "use client";
 
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@ctrl-ui/react/ui/empty";
 import { ChatCircle } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import type { RefObject } from "react";
 
-import { H2, H3, Muted, Text } from "@/components/ui/typography";
+import { H2, Text } from "@/components/ui/typography";
 import { AssignMemberDropdown } from "@/features/inbox/components/assign-member-dropdown";
 import { InlineStatusButtons } from "@/features/inbox/components/inline-status-buttons";
 import { MessageInput } from "@/features/support/components/message-input";
@@ -63,27 +70,29 @@ export function AdminConversationView({
   const canReply =
     isConversationStatus(conversation.status) &&
     isConversationEditable(conversation.status);
+  const title = conversation.subject || "Support conversation";
+  const senderName =
+    conversation.user?.name ??
+    conversation.guestEmail ??
+    conversation.user?.email ??
+    "Unknown user";
 
   return (
     <>
-      <div className="flex items-center justify-between border-b px-6 py-4">
-        <div>
-          <H2 variant="card">
-            {conversation.subject || "Support Conversation"}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b px-6 py-4">
+        <div className="min-w-0">
+          <H2 className="truncate" title={title} variant="card">
+            {title}
           </H2>
-          <Text variant="bodySmall">
-            From:{" "}
-            {conversation.user?.name ??
-              conversation.guestEmail ??
-              conversation.user?.email ??
-              "Unknown User"}
+          <Text className="truncate text-muted-foreground" variant="bodySmall">
+            From: {senderName}
             {conversation.guestEmail && !conversation.user?.name && (
-              <span className="ml-1 text-muted-foreground">(guest)</span>
+              <span className="ml-1">(guest)</span>
             )}
           </Text>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <AssignMemberDropdown
             assignedTo={conversation.assignedTo}
             members={teamMembers}
@@ -97,14 +106,19 @@ export function AdminConversationView({
         </div>
       </div>
 
-      <MessageList conversationId={conversation._id} messages={messages} />
+      <MessageList
+        conversationId={conversation._id}
+        key={conversation._id}
+        messages={messages}
+      />
 
       <MessageInput
-        autoFocus
         disabled={!canReply}
+        key={`reply-${conversation._id}`}
+        label="Reply"
         onSend={actions.onSendMessage}
         placeholder={
-          canReply ? "Type your reply..." : "Reopen this conversation to reply"
+          canReply ? "Write a reply…" : "Reopen this conversation to reply"
         }
         ref={replyRef}
       />
@@ -120,14 +134,20 @@ export function EmptyConversationState({
   hasConversations,
 }: EmptyConversationStateProps) {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
-      <ChatCircle className="h-12 w-12 text-muted-foreground" />
-      <H3>{hasConversations ? "Select a conversation" : "No conversations"}</H3>
-      <Muted>
-        {hasConversations
-          ? "Choose a conversation from the sidebar to view messages"
-          : "No support requests have been submitted yet."}
-      </Muted>
-    </div>
+    <Empty>
+      <EmptyHeader>
+        <EmptyMedia>
+          <ChatCircle aria-hidden />
+        </EmptyMedia>
+        <EmptyTitle>
+          {hasConversations ? "Select a conversation" : "No conversations"}
+        </EmptyTitle>
+        <EmptyDescription>
+          {hasConversations
+            ? "Pick a conversation from the list to read and reply."
+            : "No support requests have been submitted yet."}
+        </EmptyDescription>
+      </EmptyHeader>
+    </Empty>
   );
 }

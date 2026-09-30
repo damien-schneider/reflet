@@ -1,11 +1,13 @@
 "use client";
 
+import { toast } from "@ctrl-ui/react/ui/toast";
 import { CheckCircle, PencilSimple, Trash } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
-import { motion } from "motion/react";
+import { domAnimation, LazyMotion, m, useReducedMotion } from "motion/react";
 import { useState } from "react";
+import { DestructiveConfirmDialog } from "@/components/ui/destructive-confirm-dialog";
 import type { TimeHorizon } from "@/lib/milestone-constants";
 import { getDeadlineInfo } from "@/lib/milestone-deadline";
 import { getTagColorValues } from "@/lib/tag-colors";
@@ -43,6 +45,7 @@ interface MilestoneSegmentProps {
 
 const HATCH_PATTERN_ID = "milestone-hatch";
 const HATCH_OPACITY = 0.08;
+const INDICATOR_EASE = [0.2, 0, 0, 1] as const;
 
 export function MilestoneSegment({
   milestone,
@@ -57,6 +60,8 @@ export function MilestoneSegment({
   const patternId = `${HATCH_PATTERN_ID}-${milestone._id}`;
 
   const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const shouldReduceMotion = useReducedMotion();
 
   const updateMilestone = useMutation(api.organizations.milestones.update);
   const removeMilestone = useMutation(
@@ -77,7 +82,7 @@ export function MilestoneSegment({
       : [
           {
             icon: <CheckCircle />,
-            label: "Mark as Complete",
+            label: "Mark as complete",
             run: async () => {
               await updateMilestone({ id: milestone._id, status: "completed" });
             },
@@ -87,18 +92,29 @@ export function MilestoneSegment({
       danger: true,
       icon: <Trash />,
       label: "Delete",
-      run: async () => {
-        await removeMilestone({ id: milestone._id });
-      },
+      run: () => setDeleteOpen(true),
     },
   ];
+
+  const handleDelete = async () => {
+    try {
+      await removeMilestone({ id: milestone._id });
+    } catch {
+      toast.error("Couldn’t delete the milestone. Try again.");
+    }
+  };
+
+  const indicatorTransition = shouldReduceMotion
+    ? { duration: 0 }
+    : { duration: 0.3, ease: INDICATOR_EASE };
 
   const isOverdue = deadlineInfo?.status === "overdue";
   const overdueSuffix = isOverdue ? `, ${deadlineInfo.relativeLabel}` : "";
 
   const segment = (
     <div className={cn("group/seg relative", className)}>
-      <motion.button
+      <button
+        aria-expanded={isActive}
         aria-label={`${milestone.name}: ${percentage}% complete (${completed} of ${total})${overdueSuffix}`}
         className={cn(
           "relative h-10 w-full overflow-hidden rounded-sm bg-(--segment-fill)",
@@ -166,13 +182,13 @@ export function MilestoneSegment({
           </span>
         </span>
 
-        <motion.div
-          animate={{ width: `${percentage}%` }}
-          className="absolute bottom-0 left-0 h-[2px] bg-band-foreground/30"
+        <m.div
+          animate={{ scaleX: percentage / 100 }}
+          className="absolute bottom-0 left-0 h-[2px] w-full origin-left bg-band-foreground/30"
           initial={false}
-          transition={{ damping: 30, stiffness: 200, type: "spring" }}
+          transition={indicatorTransition}
         />
-      </motion.button>
+      </button>
 
       {isOverdue && (
         <span
@@ -182,12 +198,12 @@ export function MilestoneSegment({
       )}
 
       {isActive && (
-        <motion.div
-          animate={{ width: "60%" }}
-          className="absolute bottom-0.5 left-1/2 h-0.5 -translate-x-1/2 rounded-full bg-(--segment-fill)"
-          initial={{ width: 0 }}
+        <m.div
+          animate={{ scaleX: 1 }}
+          className="absolute bottom-0.5 left-[20%] h-0.5 w-[60%] rounded-full bg-(--segment-fill)"
+          initial={{ scaleX: 0 }}
           style={{ "--segment-fill": colorValues.text }}
-          transition={{ damping: 25, stiffness: 300, type: "spring" }}
+          transition={indicatorTransition}
         />
       )}
 
@@ -201,17 +217,25 @@ export function MilestoneSegment({
   );
 
   if (!isAdmin) {
-    return segment;
+    return <LazyMotion features={domAnimation}>{segment}</LazyMotion>;
   }
 
   return (
-    <>
+    <LazyMotion features={domAnimation}>
       <MilestoneContextMenu actions={actions}>{segment}</MilestoneContextMenu>
       <MilestoneEditDialog
         milestone={milestone}
         onOpenChange={setEditOpen}
         open={editOpen}
       />
-    </>
+      <DestructiveConfirmDialog
+        confirmLabel="Delete milestone"
+        description="Linked feedback stays on the board. This can’t be undone."
+        onConfirm={handleDelete}
+        onOpenChange={setDeleteOpen}
+        open={deleteOpen}
+        title={`Delete “${milestone.name}”?`}
+      />
+    </LazyMotion>
   );
 }

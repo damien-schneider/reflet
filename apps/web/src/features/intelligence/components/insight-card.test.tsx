@@ -94,22 +94,22 @@ describe("InsightCard", () => {
 
   it("renders the type badge", () => {
     render(<InsightCard {...baseProps} />);
-    expect(screen.getByText("Feature Suggestion")).toBeInTheDocument();
+    expect(screen.getByText("Feature suggestion")).toBeInTheDocument();
   });
 
   it("renders relative time display", () => {
     render(<InsightCard {...baseProps} />);
-    expect(screen.getByText("1h ago")).toBeInTheDocument();
+    expect(screen.getByText("about 1 hour ago")).toBeInTheDocument();
   });
 
-  it("shows 'just now' for very recent insights", () => {
+  it("shows sub-minute time for very recent insights", () => {
     render(
       <InsightCard
         {...baseProps}
         insight={{ ...baseInsight, createdAt: Date.now() }}
       />
     );
-    expect(screen.getByText("just now")).toBeInTheDocument();
+    expect(screen.getByText("less than a minute ago")).toBeInTheDocument();
   });
 
   it("shows days ago for older insights", () => {
@@ -122,14 +122,14 @@ describe("InsightCard", () => {
         }}
       />
     );
-    expect(screen.getByText("3d ago")).toBeInTheDocument();
+    expect(screen.getByText("3 days ago")).toBeInTheDocument();
   });
 
-  it("calls onConvert when Convert to Feedback button is clicked", async () => {
+  it("calls onConvert when Convert to feedback button is clicked", async () => {
     const user = userEvent.setup();
     const onConvert = vi.fn();
     render(<InsightCard {...baseProps} onConvert={onConvert} />);
-    await user.click(screen.getByText("Convert to Feedback"));
+    await user.click(screen.getByText("Convert to feedback"));
     expect(onConvert).toHaveBeenCalledOnce();
   });
 
@@ -141,14 +141,14 @@ describe("InsightCard", () => {
     expect(onDismiss).toHaveBeenCalledOnce();
   });
 
-  it("hides Convert to Feedback when status is converted_to_feedback", () => {
+  it("hides Convert to feedback when status is converted_to_feedback", () => {
     render(
       <InsightCard
         {...baseProps}
         insight={{ ...baseInsight, status: "converted_to_feedback" }}
       />
     );
-    expect(screen.queryByText("Convert to Feedback")).not.toBeInTheDocument();
+    expect(screen.queryByText("Convert to feedback")).not.toBeInTheDocument();
     // Dismiss is still visible because status is not "dismissed"
     expect(screen.getByText("Dismiss")).toBeInTheDocument();
   });
@@ -162,7 +162,7 @@ describe("InsightCard", () => {
     );
     expect(screen.queryByText("Dismiss")).not.toBeInTheDocument();
     // Convert is still visible because status is not "converted_to_feedback"
-    expect(screen.getByText("Convert to Feedback")).toBeInTheDocument();
+    expect(screen.getByText("Convert to feedback")).toBeInTheDocument();
   });
 
   it("hides both buttons when status is dismissed and no suggestedFeedbackTitle", () => {
@@ -176,18 +176,18 @@ describe("InsightCard", () => {
         }}
       />
     );
-    expect(screen.queryByText("Convert to Feedback")).not.toBeInTheDocument();
+    expect(screen.queryByText("Convert to feedback")).not.toBeInTheDocument();
     expect(screen.queryByText("Dismiss")).not.toBeInTheDocument();
   });
 
-  it("hides Convert to Feedback when suggestedFeedbackTitle is undefined", () => {
+  it("hides Convert to feedback when suggestedFeedbackTitle is undefined", () => {
     render(
       <InsightCard
         {...baseProps}
         insight={{ ...baseInsight, suggestedFeedbackTitle: undefined }}
       />
     );
-    expect(screen.queryByText("Convert to Feedback")).not.toBeInTheDocument();
+    expect(screen.queryByText("Convert to feedback")).not.toBeInTheDocument();
     expect(screen.getByText("Dismiss")).toBeInTheDocument();
   });
 
@@ -201,16 +201,13 @@ describe("InsightCard", () => {
     expect(screen.getByText("Critical")).toHaveAttribute("data-color", "red");
   });
 
-  it("renders correct type badge color for competitive_alert", () => {
+  it("labels the competitive_alert type", () => {
     render(
       <InsightCard
         {...baseProps}
         insight={{ ...baseInsight, type: "competitive_alert" }}
       />
     );
-    expect(screen.getByText("Competitive Alert")).toHaveAttribute(
-      "data-color",
-      "red"
-    );
+    expect(screen.getByText("Competitive alert")).toBeInTheDocument();
   });
 });

@@ -7,6 +7,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@ctrl-ui/react/ui/popover";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import {
   Tooltip,
   TooltipContent,
@@ -16,13 +17,12 @@ import { Check, Palette, Trash, X } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { NotionColorPicker } from "@/components/ui/notion-color-picker";
 import { TiptapTitleEditor } from "@/components/ui/tiptap/title-editor";
 import {
   getTagTextColor,
-  isValidTagColor,
-  migrateHexToNamedColor,
+  resolveTagColor,
   type TagColor,
 } from "@/lib/tag-colors";
 
@@ -35,6 +35,28 @@ interface RoadmapColumnHeaderProps {
   statusId: Id<"organizationStatuses">;
 }
 
+function IconAction({
+  label,
+  onClick,
+  children,
+}: {
+  label: string;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        aria-label={label}
+        render={<Button iconOnly onClick={onClick} size="xs" variant="ghost" />}
+      >
+        {children}
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
 export function RoadmapColumnHeader({
   statusId,
   name,
@@ -44,64 +66,49 @@ export function RoadmapColumnHeader({
   onDelete,
 }: RoadmapColumnHeaderProps) {
   const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
-  const [editedName, setEditedName] = useState(name);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [draftName, setDraftName] = useState<string | null>(null);
 
   const updateStatus = useMutation(api.organizations.status_mutations.update);
 
-  const displayColor: TagColor = isValidTagColor(color)
-    ? color
-    : migrateHexToNamedColor(color);
+  const displayColor = resolveTagColor(color);
   const textColor = getTagTextColor(displayColor);
-
-  useEffect(() => {
-    setEditedName(name);
-    setHasUnsavedChanges(false);
-  }, [name]);
-
-  const handleNameChange = (newName: string) => {
-    setEditedName(newName);
-    setHasUnsavedChanges(newName !== name);
-  };
+  const hasUnsavedChanges = draftName !== null && draftName !== name;
 
   const handleSave = async () => {
-    const trimmedName = editedName.trim();
-    if (trimmedName && trimmedName !== name) {
-      await updateStatus({ id: statusId, name: trimmedName });
+    const trimmedName = draftName?.trim();
+    try {
+      if (trimmedName && trimmedName !== name) {
+        await updateStatus({ id: statusId, name: trimmedName });
+      }
+      setDraftName(null);
+    } catch {
+      toast.error("Couldn’t rename this column. Try again.");
     }
-    setHasUnsavedChanges(false);
-  };
-
-  const handleCancel = () => {
-    setEditedName(name);
-    setHasUnsavedChanges(false);
   };
 
   const handleColorChange = async (newColor: TagColor) => {
-    await updateStatus({ color: newColor, id: statusId });
-    setIsColorPickerOpen(false);
+    try {
+      await updateStatus({ color: newColor, id: statusId });
+      setIsColorPickerOpen(false);
+    } catch {
+      toast.error("Couldn’t change the color. Try again.");
+    }
   };
 
   return (
-    <div className="mb-3 flex items-center gap-2">
+    <div className="mb-3 flex items-center gap-1.5">
       {isAdmin && (
         <Popover onOpenChange={setIsColorPickerOpen} open={isColorPickerOpen}>
           <Tooltip>
             <TooltipTrigger
-              aria-label="Change color"
+              aria-label={`Change ${name} color`}
               render={
                 <PopoverTrigger
-                  render={
-                    <Button
-                      className="h-5 w-5 shrink-0 rounded transition-opacity hover:opacity-70"
-                      style={{ color: textColor }}
-                      variant="quiet"
-                    />
-                  }
+                  render={<Button iconOnly size="xs" variant="ghost" />}
                 />
               }
             >
-              <Palette className="h-4 w-4" weight="fill" />
+              <Palette aria-hidden style={{ color: textColor }} weight="fill" />
             </TooltipTrigger>
             <TooltipContent>Change color</TooltipContent>
           </Tooltip>
@@ -115,69 +122,49 @@ export function RoadmapColumnHeader({
       )}
 
       <TiptapTitleEditor
-        className="flex-1 font-semibold text-xs tracking-wide"
+        className="min-w-0 flex-1 font-semibold text-xs tracking-wide"
         disabled={!isAdmin}
-        onChange={handleNameChange}
+        onChange={setDraftName}
         placeholder="Status name"
         style={{ color: textColor }}
-        value={editedName}
+        value={draftName ?? name}
       />
 
       {hasUnsavedChanges && isAdmin ? (
         <>
-          <Tooltip>
-            <TooltipTrigger
-              aria-label="Save status name"
-              render={
-                <Button
-                  className="h-6 w-6 shrink-0"
-                  iconOnly
-                  onClick={handleSave}
-                  variant="ghost"
-                />
-              }
-            >
-              <Check className="h-3 w-3" />
-            </TooltipTrigger>
-            <TooltipContent>Save</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger
-              aria-label="Discard status name changes"
-              render={
-                <Button
-                  className="h-6 w-6 shrink-0"
-                  iconOnly
-                  onClick={handleCancel}
-                  variant="ghost"
-                />
-              }
-            >
-              <X className="h-3 w-3" />
-            </TooltipTrigger>
-            <TooltipContent>Cancel</TooltipContent>
-          </Tooltip>
+          <IconAction label="Save name" onClick={handleSave}>
+            <Check aria-hidden />
+          </IconAction>
+          <IconAction
+            label="Discard changes"
+            onClick={() => setDraftName(null)}
+          >
+            <X aria-hidden />
+          </IconAction>
         </>
       ) : (
         <>
-          <Badge className="ml-auto shrink-0 tabular-nums">{count}</Badge>
-
+          <Badge className="ml-auto tabular-nums" size="sm">
+            {count}
+          </Badge>
           {isAdmin && (
             <Tooltip>
               <TooltipTrigger
-                aria-label={`Delete ${name} status`}
+                aria-label={`Delete ${name} column`}
                 render={
                   <Button
-                    className="pointer-fine:pointer-events-none h-6 w-6 shrink-0 text-destructive pointer-fine:opacity-0 transition-opacity focus-visible:pointer-events-auto focus-visible:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100"
+                    className="pointer-fine:opacity-0 focus-visible:opacity-100 group-focus-within:opacity-100 group-hover:opacity-100"
                     iconOnly
                     onClick={onDelete}
+                    size="xs"
+                    tone="danger"
                     variant="ghost"
                   />
                 }
               >
-                <Trash className="h-3 w-3" />
+                <Trash aria-hidden />
               </TooltipTrigger>
-              <TooltipContent>Delete status</TooltipContent>
+              <TooltipContent>Delete column</TooltipContent>
             </Tooltip>
           )}
         </>

@@ -27,17 +27,6 @@ vi.mock("@ctrl-ui/react/ui/scroll-area", () => ({
   }) => <div className={className}>{children}</div>,
 }));
 
-vi.mock("@/components/ui/typography", () => ({
-  Text: ({
-    children,
-    className,
-  }: {
-    children: React.ReactNode;
-    className?: string;
-    variant?: string;
-  }) => <p className={className}>{children}</p>,
-}));
-
 vi.mock("@/lib/utils", () => ({
   cn: (...classes: unknown[]) => classes.filter(Boolean).join(" "),
 }));
@@ -73,11 +62,11 @@ const mockConversation = (overrides = {}) => ({
 
 describe("ConversationList", () => {
   it("renders the loading skeleton while conversations are undefined", () => {
-    const { container } = render(
-      <ConversationList conversations={undefined} onSelect={vi.fn()} />
-    );
+    render(<ConversationList conversations={undefined} onSelect={vi.fn()} />);
     expect(screen.queryByText("No conversations")).not.toBeInTheDocument();
-    expect(container.querySelectorAll(".animate-pulse")).toHaveLength(5);
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Loading conversations…"
+    );
   });
 
   it("renders empty state when conversations array is empty", () => {
@@ -135,7 +124,7 @@ describe("ConversationList", () => {
     expect(screen.getByText("test@example.com")).toBeInTheDocument();
   });
 
-  it("shows Unknown User when user info is missing", () => {
+  it("shows Unknown user when user info is missing", () => {
     const conversations = [
       mockConversation({
         _id: "conv3" as Id<"supportConversations">,
@@ -145,7 +134,7 @@ describe("ConversationList", () => {
     render(
       <ConversationList conversations={conversations} onSelect={vi.fn()} />
     );
-    expect(screen.getByText("Unknown User")).toBeInTheDocument();
+    expect(screen.getByText("Unknown user")).toBeInTheDocument();
   });
 
   it("shows unread badge for admin when adminUnreadCount > 0", () => {

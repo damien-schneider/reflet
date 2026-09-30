@@ -38,18 +38,21 @@ vi.mock("@ctrl-ui/react/ui/button", () => ({
     children,
     onClick,
     className,
+    disabled,
     variant,
     type,
   }: {
     children: React.ReactNode;
     onClick?: () => void;
     className?: string;
+    disabled?: boolean;
     variant?: string;
     type?: string;
   }) => (
     <button
       className={className}
       data-variant={variant}
+      disabled={disabled}
       onClick={onClick}
       type={type as "button" | "submit"}
     >
@@ -120,23 +123,21 @@ describe("AuthSocialProviders", () => {
       expect(button).toHaveAttribute("type", "button");
     }
   });
+
+  it("disables both providers while redirecting so the flow can't start twice", async () => {
+    const user = userEvent.setup();
+    render(<AuthSocialProviders />);
+    await user.click(screen.getByText("Continue with Google"));
+    for (const button of screen.getAllByRole("button")) {
+      expect(button).toBeDisabled();
+    }
+  });
 });
 
 describe("AuthDivider", () => {
   it("renders divider text", () => {
     render(<AuthDivider />);
     expect(screen.getByText("Or continue with email")).toBeInTheDocument();
-  });
-
-  it("renders border separator line", () => {
-    const { container } = render(<AuthDivider />);
-    const borderLine = container.querySelector(".border-t");
-    expect(borderLine).toBeInTheDocument();
-  });
-
-  it("has correct styling classes", () => {
-    const { container } = render(<AuthDivider />);
-    expect(container.firstChild).toHaveClass("relative");
   });
 });
 

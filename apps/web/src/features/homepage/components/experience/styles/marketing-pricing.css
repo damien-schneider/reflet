@@ -34,7 +34,8 @@
   background: var(--card);
   border-radius: 10px;
   box-shadow: var(--marketing-float-shadow);
-  transition: translate var(--marketing-duration) var(--marketing-ease);
+  transition: translate var(--marketing-panel-duration)
+    var(--marketing-move-ease);
 }
 :where(
   .marketing-billing-toggle[data-interval="yearly"] .marketing-billing-indicator
@@ -77,8 +78,10 @@
 }
 :where(.marketing-plan > p) {
   margin-top: 12px;
-  font-size: 13px;
+  font-size: 14px;
+  line-height: 1.6;
   color: var(--muted-foreground);
+  text-wrap: pretty;
 }
 :where(.marketing-plan-price) {
   display: flex;
@@ -112,7 +115,7 @@
   display: flex;
   gap: 12px;
   align-items: center;
-  font-size: 13px;
+  font-size: 14px;
 }
 :where(.marketing-plan li > svg) {
   color: var(--muted-foreground);

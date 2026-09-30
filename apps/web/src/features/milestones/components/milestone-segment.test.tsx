@@ -101,30 +101,9 @@ vi.mock("@ctrl-ui/react/ui/dropdown-menu", () => {
 });
 
 vi.mock("motion/react", () => ({
-  motion: {
-    button: ({
-      children,
-      onClick,
-      className,
-      style,
-      ...rest
-    }: {
-      children: React.ReactNode;
-      onClick?: () => void;
-      className?: string;
-      style?: React.CSSProperties;
-      [key: string]: unknown;
-    }) => (
-      <button
-        aria-label={rest["aria-label"] as string}
-        className={className}
-        onClick={onClick}
-        style={style}
-        type="button"
-      >
-        {children}
-      </button>
-    ),
+  domAnimation: {},
+  LazyMotion: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  m: {
     div: ({
       children,
       className,
@@ -139,6 +118,7 @@ vi.mock("motion/react", () => ({
       </div>
     ),
   },
+  useReducedMotion: () => false,
 }));
 
 vi.mock("@ctrl-ui/react/ui/context-menu", () => ({
@@ -198,12 +178,14 @@ vi.mock("@ctrl-ui/react/ui/button", () => ({
     children,
     onClick,
     disabled,
+    type = "button",
   }: {
     children: React.ReactNode;
     onClick?: () => void;
     disabled?: boolean;
+    type?: "button" | "submit";
   }) => (
-    <button disabled={disabled} onClick={onClick} type="button">
+    <button disabled={disabled} onClick={onClick} type={type}>
       {children}
     </button>
   ),
@@ -425,7 +407,7 @@ describe("MilestoneSegment", () => {
     expect(screen.getByText("Edit")).toBeInTheDocument();
   });
 
-  it("context menu shows Mark as Complete for active milestones", () => {
+  it("context menu shows Mark as complete for active milestones", () => {
     render(
       <MilestoneSegment
         isActive={false}
@@ -434,10 +416,10 @@ describe("MilestoneSegment", () => {
         onClick={vi.fn()}
       />
     );
-    expect(screen.getByText("Mark as Complete")).toBeInTheDocument();
+    expect(screen.getByText("Mark as complete")).toBeInTheDocument();
   });
 
-  it("context menu hides Mark as Complete for completed milestones", () => {
+  it("context menu hides Mark as complete for completed milestones", () => {
     render(
       <MilestoneSegment
         isActive={false}
@@ -446,7 +428,7 @@ describe("MilestoneSegment", () => {
         onClick={vi.fn()}
       />
     );
-    expect(screen.queryByText("Mark as Complete")).toBeNull();
+    expect(screen.queryByText("Mark as complete")).toBeNull();
   });
 
   it("context menu shows Delete option", () => {
@@ -486,10 +468,10 @@ describe("MilestoneSegment", () => {
     );
     await user.click(screen.getByText("Edit"));
     expect(screen.getByTestId("dialog")).toBeInTheDocument();
-    expect(screen.getByText("Edit Milestone")).toBeInTheDocument();
+    expect(screen.getByText("Edit milestone")).toBeInTheDocument();
   });
 
-  it("calls updateMilestone for Mark as Complete", async () => {
+  it("calls updateMilestone for Mark as complete", async () => {
     const user = userEvent.setup();
     render(
       <MilestoneSegment
@@ -499,7 +481,7 @@ describe("MilestoneSegment", () => {
         onClick={vi.fn()}
       />
     );
-    await user.click(screen.getByText("Mark as Complete"));
+    await user.click(screen.getByText("Mark as complete"));
     expect(mockUpdateMilestone).toHaveBeenCalledWith(
       expect.objectContaining({ status: "completed" })
     );
@@ -516,12 +498,16 @@ describe("MilestoneSegment", () => {
       />
     );
     await user.click(screen.getByText("Delete"));
+    expect(mockRemoveMilestone).not.toHaveBeenCalled();
+    await user.click(
+      await screen.findByRole("button", { name: "Delete milestone" })
+    );
     expect(mockRemoveMilestone).toHaveBeenCalledWith(
       expect.objectContaining({ id: "ms1" })
     );
   });
 
-  it("renders completed milestone without Mark as Complete option", () => {
+  it("renders completed milestone without Mark as complete option", () => {
     render(
       <MilestoneSegment
         isActive={false}
@@ -530,7 +516,7 @@ describe("MilestoneSegment", () => {
         onClick={vi.fn()}
       />
     );
-    expect(screen.queryByText("Mark as Complete")).toBeNull();
+    expect(screen.queryByText("Mark as complete")).toBeNull();
     expect(screen.getByText("Delete")).toBeInTheDocument();
   });
 
@@ -604,7 +590,6 @@ describe("MilestoneSegment", () => {
       />
     );
     const buttons = screen.getAllByRole("button");
-    // The first button is the motion.button segment
     await user.click(buttons[0]);
     expect(onClick).toHaveBeenCalled();
   });

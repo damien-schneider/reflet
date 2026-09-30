@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
+import { DocsCardGrid } from "@/components/docs/docs-card-grid";
+import { DocsList, DocsPage, DocsSection } from "@/components/docs/docs-page";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
@@ -8,66 +9,61 @@ export const metadata: Metadata = generatePageMetadata({
     "Drop-in feedback and changelog widgets for your website. Embed with a single script tag.",
   keywords: ["widget", "feedback widget", "changelog widget", "embed"],
   path: "/docs/widget",
-  title: "Widgets Overview",
+  title: "Widgets overview",
 });
+
+const SECTIONS = [
+  { id: "widgets", label: "Available widgets" },
+  { id: "how-it-works", label: "How widgets work" },
+] as const;
+
+const WIDGETS = [
+  {
+    description:
+      "A React component that files reports with a screenshot, drawings and the element the user pointed at.",
+    href: "/docs/widget/floating-feedback",
+    title: "Floating feedback button",
+  },
+  {
+    description:
+      "A script-tag button that opens a form for feature requests, bug reports and general feedback.",
+    href: "/docs/widget/feedback-widget",
+    title: "Feedback widget",
+  },
+  {
+    description:
+      "Recent changelog entries in a popover, with a badge for unread updates.",
+    href: "/docs/widget/changelog-widget",
+    title: "Changelog widget",
+  },
+] as const;
 
 export default function WidgetOverviewPage() {
   return (
-    <div className="mx-auto max-w-3xl">
-      <h1 className="mb-2 font-display text-3xl text-foreground leading-snug tracking-tight">
-        Widgets
-      </h1>
-      <p className="mb-8 text-base text-muted-foreground sm:text-xl">
-        Drop-in widgets that embed directly into your website. Add feedback
-        collection or changelog announcements with minimal code.
-      </p>
+    <DocsPage
+      description="Drop-in widgets that embed directly into your website. Add feedback collection or changelog announcements with a few lines of code."
+      sections={SECTIONS}
+      title="Widgets"
+    >
+      <DocsSection id="widgets" sections={SECTIONS}>
+        <DocsCardGrid headingLevel="h3" items={WIDGETS} />
+      </DocsSection>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Link
-          className="group rounded-xl border border-border bg-card p-5 transition-[border-color,box-shadow] hover:border-foreground/20 hover:shadow-sm"
-          href="/docs/widget/feedback-widget"
-        >
-          <h2 className="mb-1 font-semibold text-sm transition-colors group-hover:text-primary">
-            Feedback Widget
-          </h2>
-          <p className="text-muted-foreground text-xs leading-relaxed">
-            A floating button that opens a feedback form. Collects feature
-            requests, bug reports, and general feedback.
-          </p>
-        </Link>
-        <Link
-          className="group rounded-xl border border-border bg-card p-5 transition-[border-color,box-shadow] hover:border-foreground/20 hover:shadow-sm"
-          href="/docs/widget/changelog-widget"
-        >
-          <h2 className="mb-1 font-semibold text-sm transition-colors group-hover:text-primary">
-            Changelog Widget
-          </h2>
-          <p className="text-muted-foreground text-xs leading-relaxed">
-            Shows recent changelog entries in a popover. Highlights unread
-            updates with a notification badge.
-          </p>
-        </Link>
-      </div>
-
-      <section className="mt-12">
-        <h2 className="mb-3 font-display text-2xl text-foreground leading-snug tracking-tight">
-          How widgets work
-        </h2>
-        <ul className="list-inside list-disc space-y-2 text-muted-foreground text-sm">
+      <DocsSection id="how-it-works" sections={SECTIONS}>
+        <DocsList>
           <li>
-            Widgets are framework-agnostic — they work with React, Vue, plain
-            HTML, or any stack
-          </li>
-          <li>Each widget loads as a self-contained bundle via a script tag</li>
-          <li>
-            Widgets connect to your Reflet organization using your public API
-            key
+            Framework-agnostic: they work with React, Vue, plain HTML or any
+            other stack.
           </li>
           <li>
-            For React projects, dedicated components are available via the SDK
+            Each widget loads as a self-contained bundle from a script tag.
           </li>
-        </ul>
-      </section>
-    </div>
+          <li>
+            Widgets connect to your organization with your public API key.
+          </li>
+          <li>React projects can use dedicated components from the SDK.</li>
+        </DocsList>
+      </DocsSection>
+    </DocsPage>
   );
 }

@@ -1,10 +1,10 @@
 "use client";
 
-import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import type { BoardView as BoardViewType } from "@/features/feedback/components/board-view-toggle";
 import { FeedbackBoard } from "@/features/feedback/components/feedback-board";
+import { LoadingState } from "@/features/feedback/components/feedback-board/board-states";
 import { useCustomDomainOrg } from "@/features/public-org/hooks/use-custom-domain-org";
 import { DEFAULT_PRIMARY_COLOR } from "@/lib/branding";
 
@@ -18,20 +18,8 @@ export default function CustomDomainPage() {
   const isMember = !!membership;
   const isAdmin = membership?.role === "admin" || membership?.role === "owner";
 
-  if (org === undefined) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8 text-center">
-          <Skeleton className="mx-auto h-10 w-64" />
-          <Skeleton className="mx-auto mt-2 h-5 w-96" />
-        </div>
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <Skeleton className="h-32 w-full" key={i} />
-          ))}
-        </div>
-      </div>
-    );
+  if (org === undefined || (org && membership === undefined)) {
+    return <LoadingState />;
   }
 
   if (!org) {

@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
-import {
-  CodeBlock,
-  ComponentPreview,
-} from "@/components/docs/component-preview";
+import { CodeBlock } from "@/components/docs/code-block";
+import { DocsCardGrid } from "@/components/docs/docs-card-grid";
+import { DocsPage, DocsSection, DocsText } from "@/components/docs/docs-page";
 import { AllCardsPreview } from "@/components/docs/feedback-card-previews";
-import { InlineCode } from "@/components/ui/typography";
+import { InstallCommand } from "@/components/docs/install-command";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
@@ -14,155 +12,106 @@ export const metadata: Metadata = generatePageMetadata({
     "Pre-made UI components for feedback boards, roadmaps, and timelines. Install via shadcn registry.",
   keywords: ["components", "shadcn", "registry", "feedback cards", "ui"],
   path: "/docs/components",
-  title: "Component Library",
+  title: "Component library",
 });
+
+const SECTIONS = [
+  { id: "quick-install", label: "Quick install" },
+  { id: "feedback-cards", label: "Feedback cards" },
+  { id: "milestone-views", label: "Milestone views" },
+  { id: "composable-api", label: "Composable API" },
+  { id: "get-started", label: "Get started" },
+] as const;
 
 const CARDS = [
   {
     description:
-      "Corner vote badge with animated up/down buttons and sweep gradient effect.",
+      "Corner vote badge with animated buttons and a gradient sweep on vote.",
     href: "/docs/components/feedback-cards/sweep-corner",
     title: "Sweep Corner",
   },
   {
-    description:
-      "Side vote column with an animated glowing notch bar and status badges.",
+    description: "Side vote column with a notch bar that lights up on vote.",
     href: "/docs/components/feedback-cards/minimal-notch",
     title: "Minimal Notch",
   },
   {
-    description:
-      "Stacked editorial layout with margin vote annotations and vertical rules.",
+    description: "Stacked editorial list with votes set in the margin.",
     href: "/docs/components/feedback-cards/editorial-feed",
     title: "Editorial Feed",
   },
 ] as const;
 
-const OVERVIEW_CODE = `import {
-  SweepCorner,
-  SweepCornerBadge,
-  SweepCornerCard,
-  SweepCornerContent,
-  SweepCornerFooter,
-  SweepCornerTag,
-  SweepCornerTags,
-  SweepCornerTitle,
-} from "@/components/ui/feedback-sweep-corner";
+const GUIDES = [
+  {
+    description: "Add components to your project with the shadcn CLI.",
+    href: "/docs/components/installation",
+    title: "Installation",
+  },
+  {
+    description: "How the components pick up your theme’s CSS variables.",
+    href: "/docs/components/theming",
+    title: "Theming",
+  },
+] as const;
 
-import {
-  MinimalNotch,
-  MinimalNotchCard,
-  MinimalNotchMeta,
-  MinimalNotchStatus,
-  MinimalNotchTag,
-  MinimalNotchTags,
-  MinimalNotchTitle,
-  MinimalNotchVote,
-} from "@/components/ui/feedback-minimal-notch";
-
-import {
-  EditorialFeed,
-  EditorialFeedComments,
-  EditorialFeedContent,
-  EditorialFeedItem,
-  EditorialFeedMeta,
-  EditorialFeedRule,
-  EditorialFeedStatus,
-  EditorialFeedTag,
-  EditorialFeedTime,
-  EditorialFeedTitle,
-  EditorialFeedVote,
-} from "@/components/ui/feedback-editorial-feed";`;
+const COMPOSE_CODE = `<SweepCorner defaultUpvotes={42}>
+  <SweepCornerCard>
+    <SweepCornerContent>
+      <SweepCornerTitle>Add dark mode</SweepCornerTitle>
+    </SweepCornerContent>
+    <SweepCornerBadge />
+    <SweepCornerFooter comments={5} time="2 days ago" />
+  </SweepCornerCard>
+</SweepCorner>`;
 
 export default function ComponentsOverviewPage() {
   return (
-    <div className="mx-auto max-w-3xl">
-      <h1 className="mb-2 font-display text-3xl text-foreground leading-snug tracking-tight">
-        Component Library
-      </h1>
-      <p className="mb-8 text-base text-muted-foreground sm:text-xl">
-        Pre-made UI components you can install directly into your project via
-        the shadcn registry. Each component is composable, theme-aware, and
-        works with any shadcn-based project.
-      </p>
+    <DocsPage
+      description="Components you install straight into your project from the shadcn registry. Each one is composable, follows your theme and works in any shadcn-based project."
+      sections={SECTIONS}
+      title="Component library"
+    >
+      <DocsSection id="quick-install" sections={SECTIONS}>
+        <InstallCommand command="npx shadcn add https://www.reflet.app/r/feedback-sweep-corner.json" />
+      </DocsSection>
 
-      <div className="mb-8 rounded-lg border border-border bg-muted/30 p-4">
-        <h2 className="mb-1 font-semibold text-sm">Quick install</h2>
-        <p className="text-muted-foreground text-xs">
-          <InlineCode>
-            npx shadcn add https://www.reflet.app/r/feedback-sweep-corner.json
-          </InlineCode>
-        </p>
-      </div>
-
-      <section className="mb-10">
-        <h2 className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight">
-          Feedback Cards
-        </h2>
-        <p className="mb-6 text-muted-foreground text-sm">
-          Three distinct visual styles for displaying feedback items. Each uses
-          a composable sub-component API and manages vote state internally via
-          React context.
-        </p>
-        <ComponentPreview code={OVERVIEW_CODE}>
+      <DocsSection id="feedback-cards" sections={SECTIONS}>
+        <DocsText>
+          Three visual styles for feedback items. Each keeps its vote state in
+          React context and exposes composable subcomponents.
+        </DocsText>
+        <div className="rounded-lg border border-border bg-background p-4 sm:p-6">
           <AllCardsPreview />
-        </ComponentPreview>
-      </section>
-
-      <div className="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {CARDS.map((card) => (
-          <Link
-            className="group rounded-xl border border-border bg-card p-5 transition-[border-color,box-shadow] hover:border-foreground/20 hover:shadow-sm"
-            href={card.href}
-            key={card.href}
-          >
-            <h3 className="mb-1 font-semibold text-sm transition-colors group-hover:text-primary">
-              {card.title}
-            </h3>
-            <p className="text-muted-foreground text-xs leading-relaxed">
-              {card.description}
-            </p>
-          </Link>
-        ))}
-      </div>
-
-      <section className="mb-10">
-        <h2 className="mb-4 font-display text-2xl text-foreground leading-snug tracking-tight">
-          Composable API
-        </h2>
-        <p className="mb-4 text-muted-foreground text-sm">
-          Each component exports multiple named sub-components that you compose
-          together. This gives you full control over layout and content while
-          the root provider manages shared state.
-        </p>
-        <CodeBlock code={OVERVIEW_CODE} />
-      </section>
-
-      <div className="space-y-4">
-        <h2 className="font-display text-2xl text-foreground leading-snug tracking-tight">
-          Getting Started
-        </h2>
-        <div className="space-y-2 text-muted-foreground text-sm">
-          <p>
-            <Link
-              className="font-medium text-foreground underline underline-offset-4"
-              href="/docs/components/installation"
-            >
-              Installation guide
-            </Link>{" "}
-            — how to add components to your project.
-          </p>
-          <p>
-            <Link
-              className="font-medium text-foreground underline underline-offset-4"
-              href="/docs/components/theming"
-            >
-              Theming guide
-            </Link>{" "}
-            — how components adapt to your theme via CSS variables.
-          </p>
         </div>
-      </div>
-    </div>
+        <DocsCardGrid headingLevel="h3" items={CARDS} />
+      </DocsSection>
+
+      <DocsSection id="milestone-views" sections={SECTIONS}>
+        <DocsCardGrid
+          headingLevel="h3"
+          items={[
+            {
+              description:
+                "Three ways to show roadmap milestones: a track, an accordion and a timeline.",
+              href: "/docs/components/milestone-views",
+              title: "Milestone views",
+            },
+          ]}
+        />
+      </DocsSection>
+
+      <DocsSection id="composable-api" sections={SECTIONS}>
+        <DocsText>
+          Each component exports named subcomponents that you arrange yourself.
+          You control layout and content while the root keeps the shared state.
+        </DocsText>
+        <CodeBlock code={COMPOSE_CODE} />
+      </DocsSection>
+
+      <DocsSection id="get-started" sections={SECTIONS}>
+        <DocsCardGrid headingLevel="h3" items={GUIDES} />
+      </DocsSection>
+    </DocsPage>
   );
 }

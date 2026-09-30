@@ -12,35 +12,33 @@ interface GitHubPermissionErrorAlertProps {
 }
 
 export function GitHubPermissionErrorAlert({
-  title = "Missing GitHub permissions",
-  message = "The GitHub App needs additional permissions to perform this action.",
+  title = "GitHub needs more permissions",
+  message = "The Reflet GitHub App isn’t allowed to do this yet.",
   onResync,
   onDismiss,
 }: GitHubPermissionErrorAlertProps) {
   return (
-    <Alert className="mb-4 pr-10" variant="destructive">
-      <Warning className="h-4 w-4" />
+    <Alert className="pr-10" variant="destructive">
+      <Warning aria-hidden="true" />
       <AlertTitle>{title}</AlertTitle>
       <AlertDescription>
-        <p>{message}</p>
-        <p className="mt-2 text-muted-foreground">
-          New permissions have been added to the GitHub App. Please resync your
-          connection to grant these permissions.
+        <p className="text-pretty">{message}</p>
+        <p className="mt-2 text-pretty text-muted-foreground">
+          Reconnect GitHub and approve the new permissions, then try again.
         </p>
         <Button className="mt-3" onClick={onResync} size="xs" variant="surface">
-          <ArrowsClockwise className="mr-2 h-4 w-4" />
-          Resync GitHub Connection
+          <ArrowsClockwise
+            aria-hidden="true"
+            className="size-4"
+            data-icon="inline-start"
+          />
+          Reconnect GitHub
         </Button>
       </AlertDescription>
       {onDismiss ? (
         <div className="absolute top-2 right-2">
-          <Button
-            className="h-6 w-6"
-            iconOnly
-            onClick={onDismiss}
-            variant="ghost"
-          >
-            <X className="h-4 w-4" />
+          <Button iconOnly onClick={onDismiss} size="xs" variant="ghost">
+            <X aria-hidden="true" className="size-4" />
             <span className="sr-only">Dismiss</span>
           </Button>
         </div>

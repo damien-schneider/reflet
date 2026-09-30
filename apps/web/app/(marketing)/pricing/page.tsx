@@ -1,9 +1,7 @@
-import { MarketingFooter } from "@/features/homepage/components/experience/marketing-footer";
-import { MarketingNavigation } from "@/features/homepage/components/experience/marketing-navigation";
 import { MarketingPricing } from "@/features/homepage/components/experience/marketing-pricing";
 import { MarketingFaq } from "@/features/homepage/components/experience/marketing-sections";
+import { MarketingSubpage } from "@/features/homepage/components/marketing-subpage";
 import { generatePageMetadata } from "@/lib/seo-config";
-import "@/features/homepage/components/experience/marketing.css";
 
 export const metadata = generatePageMetadata({
   description:
@@ -16,18 +14,14 @@ export const metadata = generatePageMetadata({
     "open source",
   ],
   path: "/pricing",
-  title: "Pricing | Reflet",
+  title: "Pricing",
 });
 
 export default function PricingPage() {
   return (
-    <div className="marketing-page">
-      <MarketingNavigation />
-      <main>
-        <MarketingPricing standalone />
-        <MarketingFaq />
-      </main>
-      <MarketingFooter />
-    </div>
+    <MarketingSubpage>
+      <MarketingPricing standalone />
+      <MarketingFaq />
+    </MarketingSubpage>
   );
 }

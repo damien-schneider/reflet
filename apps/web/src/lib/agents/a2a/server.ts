@@ -15,13 +15,11 @@ import { rejectUntrustedAgentRequest } from "@/lib/agents/request-origin";
 import { DOCUMENTATION_AGENT } from "./card";
 import { documentationRequestHandler } from "./request-handler";
 
-const rpcEnvelope = z
-  .object({
-    id: z.union([z.string(), z.number().int(), z.null()]).optional(),
-    jsonrpc: z.literal("2.0"),
-    method: z.string().min(1),
-  })
-  .passthrough();
+const rpcEnvelope = z.looseObject({
+  id: z.union([z.string(), z.number().int(), z.null()]).optional(),
+  jsonrpc: z.literal("2.0"),
+  method: z.string().min(1),
+});
 
 const transport = new JsonRpcTransportHandler(documentationRequestHandler);
 const MAX_MESSAGE_CHARS = 65_536;

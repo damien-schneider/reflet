@@ -8,7 +8,9 @@ vi.mock("motion/react", () => ({
   AnimatePresence: ({ children }: { children: React.ReactNode }) => (
     <>{children}</>
   ),
-  motion: {
+  domAnimation: {},
+  LazyMotion: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  m: {
     div: ({
       children,
       className,
@@ -29,19 +31,6 @@ vi.mock("@ctrl-ui/react/ui/button", () => ({
       {children}
     </button>
   ),
-}));
-
-vi.mock("@ctrl-ui/react/ui/field", () => ({
-  Field: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  FieldError: ({
-    children,
-    className,
-    match,
-  }: {
-    children?: React.ReactNode;
-    className?: string;
-    match?: boolean;
-  }) => (match ? <span className={className}>{children}</span> : null),
 }));
 
 vi.mock("./lib/auth-validation", () => ({
@@ -73,14 +62,14 @@ describe("AuthSubmitButton", () => {
     expect(screen.getByText("Sign in")).toBeInTheDocument();
   });
 
-  it("renders Create my account when mode is signUp", () => {
+  it("renders Create account when mode is signUp", () => {
     render(<AuthSubmitButton {...baseProps} mode="signUp" />);
-    expect(screen.getByText("Create my account")).toBeInTheDocument();
+    expect(screen.getByText("Create account")).toBeInTheDocument();
   });
 
-  it("renders Loading... when isSubmitting", () => {
-    render(<AuthSubmitButton {...baseProps} isSubmitting />);
-    expect(screen.getByText("Loading...")).toBeInTheDocument();
+  it("names the pending action while submitting", () => {
+    render(<AuthSubmitButton {...baseProps} isSubmitting mode="signIn" />);
+    expect(screen.getByText("Signing in…")).toBeInTheDocument();
   });
 
   it("disables button when isSubmitting", () => {
@@ -117,7 +106,7 @@ describe("AuthSubmitButton", () => {
 describe("AuthHelperText", () => {
   it("renders sign-in helper text with reset link", () => {
     render(<AuthHelperText mode="signIn" onResetMode={vi.fn()} />);
-    expect(screen.getByText(/Don't have an account\?/)).toBeInTheDocument();
+    expect(screen.getByText(/Not you\?/)).toBeInTheDocument();
     expect(screen.getByText("Use a different email")).toBeInTheDocument();
   });
 

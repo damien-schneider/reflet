@@ -1,5 +1,4 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@ctrl-ui/react/ui/avatar";
-import { Button } from "@ctrl-ui/react/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,6 +7,7 @@ import {
   DropdownMenuTrigger,
 } from "@ctrl-ui/react/ui/dropdown-menu";
 import { CaretDown, User } from "@phosphor-icons/react";
+import { TagBadge } from "@/components/tag-badge";
 
 interface AssigneeDisplayProps {
   assignee?: {
@@ -43,30 +43,30 @@ export function AssigneeDisplay({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        aria-label="Change assignee"
+        aria-label={
+          assignee
+            ? `Assignee: ${assignee.name ?? assignee.email ?? "Unknown"}. Change assignee`
+            : "Set assignee"
+        }
+        className="select-none"
         render={
-          <Button
-            className="h-8 w-auto select-none gap-2 rounded-full border border-input border-dashed px-3 text-sm transition-colors"
-            variant="quiet"
-          />
+          <TagBadge render={<button type="button" />} variant="outline" />
         }
       >
         {assignee ? (
-          <div className="flex items-center gap-1.5">
-            <Avatar className="h-4 w-4">
+          <>
+            <Avatar className="size-3.5">
               <AvatarImage src={assignee.image ?? undefined} />
               <AvatarFallback className="text-micro">
                 {assignee.name?.charAt(0) ?? "?"}
               </AvatarFallback>
             </Avatar>
-            <span className="text-xs">
-              {assignee.name ?? assignee.email ?? "Unknown"}
-            </span>
-          </div>
+            <span>{assignee.name ?? assignee.email ?? "Unknown"}</span>
+          </>
         ) : (
-          <span className="text-muted-foreground text-xs">Assignee</span>
+          <span>Assignee</span>
         )}
-        <CaretDown className="h-3.5 w-3.5 text-muted-foreground" />
+        <CaretDown aria-hidden />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-52">
         <DropdownMenuRadioGroup

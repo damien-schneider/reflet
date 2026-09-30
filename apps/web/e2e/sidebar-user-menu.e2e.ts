@@ -12,7 +12,9 @@ test.describe("Sidebar User Menu", () => {
 
     await openUserMenu(page, user);
 
-    await expect(page.getByText("My Account")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText("Account settings")).toBeVisible({
+      timeout: 10_000,
+    });
     await expect(page.getByText("Sign out")).toBeVisible({ timeout: 10_000 });
   });
 });

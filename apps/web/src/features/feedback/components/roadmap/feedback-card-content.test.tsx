@@ -8,7 +8,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 vi.mock("@phosphor-icons/react", () => ({
   CaretUp: () => <svg data-testid="caret-up-icon" />,
   ChatCircle: () => <svg data-testid="chat-icon" />,
-  DotsSixVertical: () => <svg data-testid="dots-icon" />,
   Sparkle: ({ className }: { className?: string }) => (
     <svg className={className} data-testid="sparkle-icon" />
   ),
@@ -110,50 +109,14 @@ describe("FeedbackCardContent", () => {
     expect(screen.getByText("Applied by AI")).toBeInTheDocument();
   });
 
-  it("applies isDragging styles", () => {
-    const { container } = render(
-      <FeedbackCardContent isDragging item={makeItem()} />
-    );
-    const card = container.firstChild as HTMLElement;
-    expect(card.className).toContain("opacity-50");
-  });
+  it("makes the title a button only when the card can be opened", () => {
+    const { rerender } = render(<FeedbackCardContent item={makeItem()} />);
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
 
-  it("applies isOverlay styles", () => {
-    const { container } = render(
-      <FeedbackCardContent isOverlay item={makeItem()} />
-    );
-    const card = container.firstChild as HTMLElement;
-    expect(card.className).toContain("shadow-xl");
-  });
-
-  it("renders drag handle for admin with listeners", () => {
-    const listeners = { onPointerDown: vi.fn() };
-    const attributes = { "aria-label": "Drag to reorder" };
-    render(
-      <FeedbackCardContent
-        dragHandleAttributes={attributes as never}
-        dragHandleListeners={listeners as never}
-        isAdmin
-        item={makeItem()}
-      />
-    );
+    rerender(<FeedbackCardContent item={makeItem()} onOpen={vi.fn()} />);
     expect(
-      screen.getByRole("button", { name: "Drag to reorder" })
+      screen.getByRole("button", { name: "Test feedback" })
     ).toBeInTheDocument();
-  });
-
-  it("does not render drag handle when not admin", () => {
-    render(<FeedbackCardContent isAdmin={false} item={makeItem()} />);
-    expect(
-      screen.queryByRole("button", { name: "Drag to reorder" })
-    ).not.toBeInTheDocument();
-  });
-
-  it("does not render drag handle when no listeners provided", () => {
-    render(<FeedbackCardContent isAdmin item={makeItem()} />);
-    expect(
-      screen.queryByRole("button", { name: "Drag to reorder" })
-    ).not.toBeInTheDocument();
   });
 
   it("renders milestones when present", () => {

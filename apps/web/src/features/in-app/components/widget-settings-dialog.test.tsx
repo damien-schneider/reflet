@@ -179,7 +179,7 @@ describe("WidgetSettingsDialog", () => {
         widget={baseWidget}
       />
     );
-    expect(screen.getByText("Widget Settings")).toBeInTheDocument();
+    expect(screen.getByText("Chat settings")).toBeInTheDocument();
   });
 
   it("does not render when closed", () => {
@@ -190,7 +190,7 @@ describe("WidgetSettingsDialog", () => {
         widget={baseWidget}
       />
     );
-    expect(screen.queryByText("Widget Settings")).not.toBeInTheDocument();
+    expect(screen.queryByText("Chat settings")).not.toBeInTheDocument();
   });
 
   it("renders all setting fields", () => {
@@ -201,13 +201,13 @@ describe("WidgetSettingsDialog", () => {
         widget={baseWidget}
       />
     );
-    expect(screen.getByText("Primary Color")).toBeInTheDocument();
+    expect(screen.getByText("Primary color")).toBeInTheDocument();
     expect(screen.getByText("Position")).toBeInTheDocument();
-    expect(screen.getByText("Welcome Message")).toBeInTheDocument();
+    expect(screen.getByText("Welcome message")).toBeInTheDocument();
     expect(screen.getByText("Subtitle (optional)")).toBeInTheDocument();
-    expect(screen.getByText("Z-Index")).toBeInTheDocument();
-    expect(screen.getByText("Show Launcher")).toBeInTheDocument();
-    expect(screen.getByText("Auto Open")).toBeInTheDocument();
+    expect(screen.getByText("Z-index")).toBeInTheDocument();
+    expect(screen.getByText("Show launcher")).toBeInTheDocument();
+    expect(screen.getByText("Open automatically")).toBeInTheDocument();
   });
 
   it("renders Cancel and Save buttons", () => {
@@ -219,7 +219,7 @@ describe("WidgetSettingsDialog", () => {
       />
     );
     expect(screen.getByText("Cancel")).toBeInTheDocument();
-    expect(screen.getByText("Save Changes")).toBeInTheDocument();
+    expect(screen.getByText("Save changes")).toBeInTheDocument();
   });
 
   it("populates fields with widget settings", () => {
@@ -255,8 +255,8 @@ describe("WidgetSettingsDialog", () => {
         widget={baseWidget}
       />
     );
-    expect(screen.getByText("Bottom Right")).toBeInTheDocument();
-    expect(screen.getByText("Bottom Left")).toBeInTheDocument();
+    expect(screen.getByText("Bottom right")).toBeInTheDocument();
+    expect(screen.getByText("Bottom left")).toBeInTheDocument();
   });
 
   it("renders Show Launcher switch", () => {
@@ -290,7 +290,7 @@ describe("WidgetSettingsDialog", () => {
         widget={widgetNoSettings}
       />
     );
-    expect(screen.getByText("Widget Settings")).toBeInTheDocument();
+    expect(screen.getByText("Chat settings")).toBeInTheDocument();
   });
 
   it("allows typing in welcome message input", async () => {
@@ -334,7 +334,7 @@ describe("WidgetSettingsDialog", () => {
         widget={baseWidget}
       />
     );
-    const zIndexInput = screen.getByLabelText("Z-Index");
+    const zIndexInput = screen.getByLabelText("Z-index");
     await user.clear(zIndexInput);
     await user.type(zIndexInput, "5000");
     expect(zIndexInput).toHaveValue("5000");
@@ -385,11 +385,11 @@ describe("WidgetSettingsDialog", () => {
       />
     );
     expect(
-      screen.getByText(/Customize the appearance and behavior/)
+      screen.getByText(/looks and behaves on your site/)
     ).toBeInTheDocument();
   });
 
-  it("renders Save Changes button", () => {
+  it("renders Save changes button", () => {
     render(
       <WidgetSettingsDialog
         onOpenChange={vi.fn()}
@@ -397,7 +397,7 @@ describe("WidgetSettingsDialog", () => {
         widget={baseWidget}
       />
     );
-    expect(screen.getByText("Save Changes")).toBeInTheDocument();
+    expect(screen.getByText("Save changes")).toBeInTheDocument();
   });
 
   it("renders Cancel button", () => {
@@ -492,7 +492,7 @@ describe("WidgetSettingsDialog", () => {
     expect(screen.queryByText("Position")).not.toBeInTheDocument();
   });
 
-  it("calls mutation and closes dialog on Save Changes", async () => {
+  it("calls mutation and closes dialog on Save changes", async () => {
     const { __mockMutationFn } = (await import("convex/react")) as {
       __mockMutationFn: ReturnType<typeof vi.fn>;
     };
@@ -506,7 +506,7 @@ describe("WidgetSettingsDialog", () => {
         widget={baseWidget}
       />
     );
-    await user.click(screen.getByText("Save Changes"));
+    await user.click(screen.getByText("Save changes"));
     expect(__mockMutationFn).toHaveBeenCalledWith(
       expect.objectContaining({
         autoOpen: false,
@@ -518,7 +518,7 @@ describe("WidgetSettingsDialog", () => {
         zIndex: 9999,
       })
     );
-    expect(toast.success).toHaveBeenCalledWith("Widget settings saved");
+    expect(toast.success).toHaveBeenCalledWith("Chat settings saved");
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
@@ -536,8 +536,10 @@ describe("WidgetSettingsDialog", () => {
         widget={baseWidget}
       />
     );
-    await user.click(screen.getByText("Save Changes"));
-    expect(toast.error).toHaveBeenCalledWith("Failed to save settings");
+    await user.click(screen.getByText("Save changes"));
+    expect(toast.error).toHaveBeenCalledWith(
+      "Couldn’t save settings. Try again."
+    );
   });
 
   it("converts empty greeting message to undefined", async () => {
@@ -556,7 +558,7 @@ describe("WidgetSettingsDialog", () => {
         widget={widgetNoGreeting}
       />
     );
-    await user.click(screen.getByText("Save Changes"));
+    await user.click(screen.getByText("Save changes"));
     expect(__mockMutationFn).toHaveBeenCalledWith(
       expect.objectContaining({
         greetingMessage: undefined,
@@ -564,7 +566,7 @@ describe("WidgetSettingsDialog", () => {
     );
   });
 
-  it("shows Saving... text while save is in progress", async () => {
+  it("shows Saving… text while save is in progress", async () => {
     const { __mockMutationFn } = (await import("convex/react")) as {
       __mockMutationFn: ReturnType<typeof vi.fn>;
     };
@@ -582,8 +584,8 @@ describe("WidgetSettingsDialog", () => {
         widget={baseWidget}
       />
     );
-    await user.click(screen.getByText("Save Changes"));
-    expect(screen.getByText("Saving...")).toBeInTheDocument();
+    await user.click(screen.getByText("Save changes"));
+    expect(screen.getByText("Saving…")).toBeInTheDocument();
     resolveFn?.();
   });
 });

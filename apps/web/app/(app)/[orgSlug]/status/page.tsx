@@ -20,7 +20,7 @@ export async function generateMetadata({
       orgSlug,
     ],
     path: `/${orgSlug}/status`,
-    title: `${orgSlug} - System Status`,
+    title: `System status – ${orgSlug}`,
   });
 }
 

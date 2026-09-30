@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@ctrl-ui/react/ui/button";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import { Sparkle } from "@phosphor-icons/react";
 import { Muted } from "@/components/ui/typography";
 import type {
@@ -10,8 +11,16 @@ import type {
   SuggestedTag,
 } from "./setup-types";
 
+function countLabel(count: number, noun: string): string | null {
+  if (count === 0) {
+    return null;
+  }
+  return `${count} ${noun}${count === 1 ? "" : "s"}`;
+}
+
 export function LaunchBar({
   changelogConfig,
+  error,
   isApplying,
   monitors,
   keywords,
@@ -19,48 +28,52 @@ export function LaunchBar({
   onLaunch,
 }: {
   changelogConfig?: ChangelogConfig;
+  error: string | null;
   isApplying: boolean;
   monitors: SuggestedMonitor[];
   keywords: SuggestedKeyword[];
   tags: SuggestedTag[];
   onLaunch: () => void;
 }) {
-  const monitorsCount = monitors.filter((m) => m.accepted).length;
-  const keywordsCount = keywords.filter((k) => k.accepted).length;
-  const tagsCount = tags.filter((t) => t.accepted).length;
-
-  const parts: string[] = [];
-  if (monitorsCount > 0) {
-    parts.push(`${monitorsCount} monitor${monitorsCount === 1 ? "" : "s"}`);
-  }
-  if (keywordsCount > 0) {
-    parts.push(`${keywordsCount} keyword${keywordsCount === 1 ? "" : "s"}`);
-  }
-  if (tagsCount > 0) {
-    parts.push(`${tagsCount} tag${tagsCount === 1 ? "" : "s"}`);
-  }
-  if (changelogConfig) {
-    parts.push("changelog config");
-  }
+  const parts = [
+    countLabel(monitors.filter((m) => m.accepted).length, "monitor"),
+    countLabel(keywords.filter((k) => k.accepted).length, "keyword"),
+    countLabel(tags.filter((t) => t.accepted).length, "tag"),
+    changelogConfig ? "changelog settings" : null,
+  ].filter((part) => part !== null);
 
   const summary =
     parts.length > 0
-      ? `This will create ${parts.join(", ")}`
-      : "No items selected";
+      ? `Adds ${parts.join(", ")}.`
+      : "Nothing selected. Select at least one suggestion, or launch an empty project.";
 
   return (
-    <div className="sticky bottom-4 rounded-xl border bg-background/95 p-4 shadow-lg backdrop-blur-sm">
-      <div className="flex items-center justify-between">
-        <Muted className="text-xs">{summary}</Muted>
+    <div className="sticky bottom-4 rounded-xl border bg-background p-4 shadow-lg">
+      <div className="flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <Muted aria-live="polite" className="text-pretty text-sm">
+            {summary}
+          </Muted>
+          {error && (
+            <p className="text-destructive-text text-sm" role="alert">
+              {error}
+            </p>
+          )}
+        </div>
         <Button
+          className="shrink-0"
           disabled={isApplying}
           onClick={onLaunch}
           size="md"
           tone="primary"
           variant="solid"
         >
-          <Sparkle className="mr-2 size-4" />
-          {isApplying ? "Launching..." : "Launch Project"}
+          {isApplying ? (
+            <Spinner data-icon="inline-start" size="xs" />
+          ) : (
+            <Sparkle aria-hidden data-icon="inline-start" />
+          )}
+          {isApplying ? "Launching…" : "Launch project"}
         </Button>
       </div>
     </div>

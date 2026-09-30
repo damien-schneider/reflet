@@ -1,6 +1,5 @@
 "use client";
 
-import { toast } from "@ctrl-ui/react/ui/toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { env } from "@reflet/env/web";
@@ -67,6 +66,7 @@ export function useAuthForm(
     handleSubmit,
     formState: { errors, isSubmitting },
     control,
+    setFocus,
     setValue,
     trigger,
   } = form;
@@ -92,10 +92,11 @@ export function useAuthForm(
     }
   }, [watchedPassword, mode, trigger, watchedConfirmPassword]);
 
+  // While the confirmation is still a prefix of the password the user is mid-typing; don't flag it yet.
   const passwordsMismatch =
     mode === "signUp" &&
     watchedConfirmPassword.length > 0 &&
-    watchedPassword !== watchedConfirmPassword;
+    !watchedPassword.startsWith(watchedConfirmPassword);
   const passwordMismatchError = passwordsMismatch
     ? "Passwords do not match"
     : null;
@@ -110,7 +111,7 @@ export function useAuthForm(
     setApiError(null);
 
     if (!mode) {
-      setApiError("Please verify your email");
+      setApiError("Enter your email to continue");
       return;
     }
 
@@ -134,7 +135,13 @@ export function useAuthForm(
               );
               return;
             }
-            setApiError(formatAuthError(message || "Sign in error"));
+            setApiError(
+              formatAuthError(
+                message ||
+                  "Unable to sign in. Check your connection and try again."
+              )
+            );
+            setFocus("password");
           },
           onSuccess: () => {
             capture("sign_in_completed", { method: "email" });
@@ -159,24 +166,20 @@ export function useAuthForm(
           onError: (error) => {
             setApiError(
               formatAuthError(
-                error.error.message || error.error.statusText || "Sign up error"
+                error.error.message ||
+                  error.error.statusText ||
+                  "Unable to create your account. Check your connection and try again."
               )
             );
           },
           onSuccess: () => {
             capture("sign_up_completed", { method: "email" });
             onSuccess?.();
-            if (skipEmailVerification) {
-              router.push(redirectTo ?? "/pending-invitations");
-              toast.success("Successfully signed up.");
-            } else {
-              router.push(
-                `/auth/check-email?email=${encodeURIComponent(data.email)}`
-              );
-              toast.success(
-                "Successfully signed up. Check your email to activate your account."
-              );
-            }
+            router.push(
+              skipEmailVerification
+                ? (redirectTo ?? "/pending-invitations")
+                : `/auth/check-email?email=${encodeURIComponent(data.email)}`
+            );
           },
         }
       );
@@ -186,6 +189,7 @@ export function useAuthForm(
   const resetMode = () => {
     setIsEditingEmail(true);
     setValue("email", "");
+    setFocus("email");
   };
 
   return {

@@ -4,34 +4,21 @@ import { Button } from "@ctrl-ui/react/ui/button";
 import { Input } from "@ctrl-ui/react/ui/input";
 import { Switch } from "@ctrl-ui/react/ui/switch";
 import { Textarea } from "@ctrl-ui/react/ui/textarea";
-import {
-  ChartBar,
-  CheckSquare,
-  Plus,
-  RadioButton,
-  Star,
-  TextAa,
-  ToggleLeft,
-} from "@phosphor-icons/react";
-import { useState } from "react";
+import { toast } from "@ctrl-ui/react/ui/toast";
+import { Plus } from "@phosphor-icons/react";
+import { type FormEvent, useId, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { QuestionInputPreview } from "@/features/surveys/components/question-input-preview";
+import { RequiredMark } from "@/features/surveys/components/required-mark";
 import {
   getDefaultConfig,
   getDefaultTitle,
   QUESTION_TYPE_DESCRIPTIONS,
   QUESTION_TYPE_LABELS,
 } from "@/features/surveys/lib/constants";
+import { QUESTION_TYPE_ICONS } from "@/features/surveys/lib/question-type-icons";
+import { cn } from "@/lib/utils";
 import type { QuestionConfig, QuestionType } from "@/store/surveys";
-
-const QUESTION_TYPE_ICON_MAP = {
-  boolean: ToggleLeft,
-  multiple_choice: CheckSquare,
-  nps: ChartBar,
-  rating: Star,
-  single_choice: RadioButton,
-  text: TextAa,
-} as const;
 
 const QUESTION_TYPES: QuestionType[] = [
   "rating",
@@ -42,281 +29,300 @@ const QUESTION_TYPES: QuestionType[] = [
   "boolean",
 ];
 
-// ---------------------------------------------------------------------------
-// Add Question Panel — replaces the old generic dialog
-// ---------------------------------------------------------------------------
+const DEFAULT_CHOICES = "Option 1\nOption 2\nOption 3";
 
-type AddStep = "pick-type" | "configure";
+export interface NewQuestion {
+  config?: QuestionConfig;
+  description?: string;
+  required: boolean;
+  title: string;
+  type: QuestionType;
+}
 
 interface AddQuestionPanelProps {
-  onAdd: (question: {
-    choices?: string[];
-    config: Record<string, unknown> | undefined;
-    description?: string;
-    required: boolean;
-    title: string;
-    type: QuestionType;
-  }) => void;
+  onAdd: (question: NewQuestion) => Promise<void>;
   onCancel: () => void;
 }
 
+function buildConfig(
+  type: QuestionType,
+  fields: { choices: string; maxLabel: string | null; minLabel: string | null }
+): QuestionConfig | undefined {
+  const hasChoices = type === "single_choice" || type === "multiple_choice";
+  const parsedChoices = hasChoices
+    ? fields.choices
+        .split("\n")
+        .map((c) => c.trim())
+        .filter(Boolean)
+    : undefined;
+  const base = getDefaultConfig(type, parsedChoices);
+  if (!(base && (type === "rating" || type === "nps"))) {
+    return base;
+  }
+  return {
+    ...base,
+    maxLabel: fields.maxLabel ?? base.maxLabel,
+    minLabel: fields.minLabel ?? base.minLabel,
+  };
+}
+
 export function AddQuestionPanel({ onAdd, onCancel }: AddQuestionPanelProps) {
-  const [step, setStep] = useState<AddStep>("pick-type");
-  const [selectedType, setSelectedType] = useState<QuestionType>("rating");
-  const [title, setTitle] = useState("");
+  const id = useId();
+  const [type, setType] = useState<QuestionType>("rating");
+  const [customTitle, setCustomTitle] = useState<string | null>(null);
   const [description, setDescription] = useState("");
   const [required, setRequired] = useState(true);
-  const [choices, setChoices] = useState("Option 1\nOption 2\nOption 3");
-  const [minLabel, setMinLabel] = useState("");
-  const [maxLabel, setMaxLabel] = useState("");
+  const [choices, setChoices] = useState(DEFAULT_CHOICES);
+  const [minLabel, setMinLabel] = useState<string | null>(null);
+  const [maxLabel, setMaxLabel] = useState<string | null>(null);
+  const [isAdding, setIsAdding] = useState(false);
 
-  const handleSelectType = (type: QuestionType) => {
-    setSelectedType(type);
-    setTitle(getDefaultTitle(type));
-    const config = getDefaultConfig(type);
-    setMinLabel((config?.minLabel as string) ?? "");
-    setMaxLabel((config?.maxLabel as string) ?? "");
-    if (type === "single_choice" || type === "multiple_choice") {
-      setChoices(
-        (config?.choices as string[])?.join("\n") ??
-          "Option 1\nOption 2\nOption 3"
-      );
-    }
-    setStep("configure");
-  };
+  const title = customTitle ?? getDefaultTitle(type);
+  const config = buildConfig(type, { choices, maxLabel, minLabel });
 
-  const buildConfig = (): Record<string, unknown> | undefined => {
-    const hasChoices =
-      selectedType === "single_choice" || selectedType === "multiple_choice";
-    const parsedChoices = hasChoices
-      ? choices
-          .split("\n")
-          .map((c) => c.trim())
-          .filter(Boolean)
-      : undefined;
-    const base = getDefaultConfig(selectedType, parsedChoices);
-    if (!base) {
-      return;
-    }
-
-    if (selectedType === "rating" || selectedType === "nps") {
-      return {
-        ...base,
-        maxLabel: maxLabel || base.maxLabel,
-        minLabel: minLabel || base.minLabel,
-      };
-    }
-    return base;
-  };
-
-  const handleSubmit = () => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     if (!title.trim()) {
       return;
     }
-    onAdd({
-      config: buildConfig(),
+    const question = {
+      config,
       description: description.trim() || undefined,
       required,
       title: title.trim(),
-      type: selectedType,
-    });
+      type,
+    };
+    setIsAdding(true);
+    try {
+      await onAdd(question);
+    } catch {
+      toast.error("Couldn’t add the question. Try again.");
+    }
+    setIsAdding(false);
   };
 
-  // Preview config for the live preview
-  const previewConfig = buildConfig();
-
-  if (step === "pick-type") {
-    return (
-      <div className="overflow-hidden rounded-xl border border-primary/40 border-dashed bg-card">
-        <div className="border-b bg-muted/30 px-5 py-3">
-          <div className="flex items-center justify-between">
-            <p className="font-medium text-sm">Choose a question type</p>
-            <Button onClick={onCancel} size="xs" variant="ghost">
-              Cancel
-            </Button>
-          </div>
-        </div>
-        <div className="grid grid-cols-3 gap-3 p-5">
-          {QUESTION_TYPES.map((type) => {
-            const Icon = QUESTION_TYPE_ICON_MAP[type];
-            return (
-              <button
-                className="group/type flex flex-col items-start gap-2 rounded-lg border p-4 text-left transition-colors hover:border-primary/50 hover:bg-primary/5"
-                key={type}
-                onClick={() => handleSelectType(type)}
-                type="button"
-              >
-                <div className="flex size-9 items-center justify-center rounded-lg bg-muted transition-colors group-hover/type:bg-primary/10">
-                  <Icon className="size-5 text-muted-foreground transition-colors group-hover/type:text-primary" />
-                </div>
-                <div>
-                  <p className="font-medium text-sm">
-                    {QUESTION_TYPE_LABELS[type]}
-                  </p>
-                  <p className="mt-0.5 text-muted-foreground text-xs leading-snug">
-                    {QUESTION_TYPE_DESCRIPTIONS[type]}
-                  </p>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    );
-  }
-
-  // Step 2: Configure — side-by-side form + live preview
-  const hasChoices =
-    selectedType === "single_choice" || selectedType === "multiple_choice";
-  const hasRange = selectedType === "rating" || selectedType === "nps";
-
   return (
-    <div className="overflow-hidden rounded-xl border border-primary/40 border-dashed bg-card">
-      <div className="border-b bg-muted/30 px-5 py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button
-              className="text-muted-foreground text-sm hover:text-foreground"
-              onClick={() => setStep("pick-type")}
-              type="button"
-            >
-              Change type
-            </button>
-            <span className="text-muted-foreground/40">|</span>
-            <div className="flex items-center gap-1.5">
-              {(() => {
-                const Icon = QUESTION_TYPE_ICON_MAP[selectedType];
-                return <Icon className="size-4 text-primary" />;
-              })()}
-              <span className="font-medium text-sm">
-                {QUESTION_TYPE_LABELS[selectedType]}
-              </span>
-            </div>
-          </div>
-          <Button onClick={onCancel} size="xs" variant="ghost">
-            Cancel
-          </Button>
-        </div>
+    <form
+      aria-labelledby={`${id}-heading`}
+      className="@container overflow-hidden rounded-lg border bg-card"
+      onSubmit={handleSubmit}
+    >
+      <div className="flex items-center justify-between gap-2 border-b bg-muted/30 px-4 py-2">
+        <h3 className="font-medium text-sm" id={`${id}-heading`}>
+          New question
+        </h3>
+        <Button onClick={onCancel} size="sm" variant="ghost">
+          Cancel
+        </Button>
       </div>
 
-      <div className="grid grid-cols-2 divide-x">
-        {/* Left: Configuration form */}
-        <div className="flex flex-col gap-4 p-5">
+      <div className="grid @2xl:grid-cols-2 @2xl:divide-x">
+        <div className="flex flex-col gap-4 p-4">
+          <QuestionTypePicker
+            id={id}
+            onChange={(next) => {
+              setType(next);
+              setMinLabel(null);
+              setMaxLabel(null);
+            }}
+            value={type}
+          />
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="new-q-title">Question</Label>
+            <Label htmlFor={`${id}-title`}>Question</Label>
             <Input
               autoFocus
-              id="new-q-title"
-              onChange={(e) => setTitle(e.target.value)}
+              id={`${id}-title`}
+              onChange={(e) => setCustomTitle(e.target.value)}
               placeholder="e.g. How satisfied are you?"
               value={title}
             />
           </div>
-
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="new-q-desc">
+            <Label htmlFor={`${id}-desc`}>
               Description{" "}
               <span className="font-normal text-muted-foreground">
                 (optional)
               </span>
             </Label>
             <Input
-              id="new-q-desc"
+              id={`${id}-desc`}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Additional context for respondents"
+              placeholder="Extra context for respondents"
               value={description}
             />
           </div>
-
-          {hasChoices ? (
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="new-q-choices">Choices (one per line)</Label>
-              <Textarea
-                id="new-q-choices"
-                onChange={(e) => setChoices(e.target.value)}
-                placeholder={"Option A\nOption B\nOption C"}
-                rows={4}
-                value={choices}
-              />
-            </div>
-          ) : null}
-
-          {hasRange ? (
-            <div className="grid grid-cols-2 gap-3">
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="new-q-min-label">Low label</Label>
-                <Input
-                  id="new-q-min-label"
-                  onChange={(e) => setMinLabel(e.target.value)}
-                  placeholder="e.g. Poor"
-                  value={minLabel}
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="new-q-max-label">High label</Label>
-                <Input
-                  id="new-q-max-label"
-                  onChange={(e) => setMaxLabel(e.target.value)}
-                  placeholder="e.g. Excellent"
-                  value={maxLabel}
-                />
-              </div>
-            </div>
-          ) : null}
-
+          <TypeSpecificFields
+            choices={choices}
+            config={config}
+            id={id}
+            onChoicesChange={setChoices}
+            onMaxLabelChange={setMaxLabel}
+            onMinLabelChange={setMinLabel}
+            type={type}
+          />
           <div className="flex items-center gap-2">
             <Switch
               checked={required}
-              id="new-q-required"
+              id={`${id}-required`}
               onCheckedChange={setRequired}
             />
-            <Label htmlFor="new-q-required">Required</Label>
+            <Label htmlFor={`${id}-required`}>Required</Label>
           </div>
-
-          <div className="mt-2 flex items-center gap-2">
+          <div>
             <Button
-              disabled={!title.trim()}
-              onClick={handleSubmit}
-              size="xs"
+              disabled={!title.trim() || isAdding}
               tone="primary"
+              type="submit"
               variant="solid"
             >
-              <Plus className="mr-1.5 size-4" />
-              Add Question
+              <Plus aria-hidden className="size-4" />
+              {isAdding ? "Adding…" : "Add question"}
             </Button>
           </div>
         </div>
 
-        {/* Right: Live preview */}
-        <div className="bg-muted/20 p-5">
-          <p className="mb-3 font-medium text-muted-foreground text-xs uppercase tracking-wider">
+        <section
+          aria-label="Question preview"
+          className="border-t @2xl:border-t-0 bg-muted/20 p-4"
+        >
+          <p className="mb-3 font-medium text-muted-foreground text-sm">
             Preview
           </p>
-          <div className="rounded-lg border bg-card p-5 shadow-sm">
-            <p className="font-medium">
+          <div className="rounded-lg border bg-card p-4 shadow-xs">
+            <p className="text-pretty font-medium">
               {title || "Your question here"}
-              {required ? (
-                <span className="ml-1 text-destructive">*</span>
-              ) : null}
+              {required ? <RequiredMark /> : null}
             </p>
             {description ? (
-              <p className="mt-1 text-muted-foreground text-sm">
+              <p className="mt-1 text-pretty text-muted-foreground text-sm">
                 {description}
               </p>
             ) : null}
             <div className="mt-4">
-              <QuestionInputPreview
-                config={previewConfig as QuestionConfig | undefined}
-                type={selectedType}
-              />
+              <QuestionInputPreview config={config} type={type} />
             </div>
           </div>
-        </div>
+        </section>
       </div>
+    </form>
+  );
+}
+
+function QuestionTypePicker({
+  id,
+  value,
+  onChange,
+}: {
+  id: string;
+  onChange: (type: QuestionType) => void;
+  value: QuestionType;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="font-medium text-sm" id={`${id}-type`}>
+        Type
+      </span>
+      <div
+        aria-describedby={`${id}-type-hint`}
+        aria-labelledby={`${id}-type`}
+        className="grid @md:grid-cols-3 grid-cols-2 gap-2"
+        role="radiogroup"
+      >
+        {QUESTION_TYPES.map((option) => {
+          const Icon = QUESTION_TYPE_ICONS[option];
+          return (
+            <label
+              className={cn(
+                "flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-accent/50",
+                "has-checked:border-primary has-checked:bg-primary/5",
+                "has-focus-visible:outline-2 has-focus-visible:outline-ring has-focus-visible:outline-offset-2"
+              )}
+              key={option}
+            >
+              <input
+                checked={value === option}
+                className="sr-only"
+                name={`${id}-type`}
+                onChange={() => onChange(option)}
+                type="radio"
+                value={option}
+              />
+              <Icon
+                aria-hidden
+                className={cn(
+                  "size-4 shrink-0",
+                  value === option ? "text-primary" : "text-muted-foreground"
+                )}
+              />
+              <span className="truncate">{QUESTION_TYPE_LABELS[option]}</span>
+            </label>
+          );
+        })}
+      </div>
+      <p className="text-muted-foreground text-xs" id={`${id}-type-hint`}>
+        {QUESTION_TYPE_DESCRIPTIONS[value]}
+      </p>
     </div>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Sortable wrapper
-// ---------------------------------------------------------------------------
+function TypeSpecificFields({
+  id,
+  type,
+  config,
+  choices,
+  onChoicesChange,
+  onMinLabelChange,
+  onMaxLabelChange,
+}: {
+  choices: string;
+  config: QuestionConfig | undefined;
+  id: string;
+  onChoicesChange: (value: string) => void;
+  onMaxLabelChange: (value: string) => void;
+  onMinLabelChange: (value: string) => void;
+  type: QuestionType;
+}) {
+  if (type === "single_choice" || type === "multiple_choice") {
+    return (
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor={`${id}-choices`}>Choices</Label>
+        <Textarea
+          aria-describedby={`${id}-choices-hint`}
+          id={`${id}-choices`}
+          onChange={(e) => onChoicesChange(e.target.value)}
+          rows={4}
+          value={choices}
+        />
+        <p className="text-muted-foreground text-xs" id={`${id}-choices-hint`}>
+          One choice per line.
+        </p>
+      </div>
+    );
+  }
+  if (type === "rating" || type === "nps") {
+    return (
+      <div className="grid @sm:grid-cols-2 grid-cols-1 gap-3">
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor={`${id}-min-label`}>Low label</Label>
+          <Input
+            id={`${id}-min-label`}
+            onChange={(e) => onMinLabelChange(e.target.value)}
+            placeholder="e.g. Poor"
+            value={config?.minLabel ?? ""}
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor={`${id}-max-label`}>High label</Label>
+          <Input
+            id={`${id}-max-label`}
+            onChange={(e) => onMaxLabelChange(e.target.value)}
+            placeholder="e.g. Excellent"
+            value={config?.maxLabel ?? ""}
+          />
+        </div>
+      </div>
+    );
+  }
+  return null;
+}

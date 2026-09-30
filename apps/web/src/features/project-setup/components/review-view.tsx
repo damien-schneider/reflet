@@ -1,7 +1,5 @@
 "use client";
 
-import { Badge } from "@ctrl-ui/react/ui/badge";
-import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Card,
   CardContent,
@@ -15,26 +13,17 @@ import {
   PageLayout,
   PageTitle,
 } from "@ctrl-ui/react/ui/page-layout";
-import { toast } from "@ctrl-ui/react/ui/toast";
-import {
-  Check,
-  Copy,
-  FileText,
-  Lightning,
-  Robot,
-  Sparkle,
-  Tag,
-  X,
-} from "@phosphor-icons/react";
+import { Robot, Sparkle } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { Muted, Text } from "@/components/ui/typography";
 import { KeywordsSection } from "./keywords-section";
 import { LaunchBar } from "./launch-bar";
 import { MonitorsSection } from "./monitors-section";
+import { ChangelogCard, PromptsCard, TagsCard } from "./review-sections";
 import type {
   SetupData,
   SuggestedKeyword,
@@ -48,11 +37,19 @@ interface ReviewViewProps {
   setup: SetupData;
 }
 
-const WORKFLOW_LABELS = {
-  ai_powered: "AI-Powered",
-  automated: "Automated",
-  manual: "Manual",
-} as const;
+interface Acceptable {
+  accepted: boolean;
+}
+
+function toggleAt<T extends Acceptable>(items: T[], index: number): T[] {
+  return items.map((item, i) =>
+    i === index ? { ...item, accepted: !item.accepted } : item
+  );
+}
+
+function setAllAccepted<T extends Acceptable>(items: T[], accepted: boolean) {
+  return items.map((item) => ({ ...item, accepted }));
+}
 
 export function ReviewView({
   organizationId,
@@ -61,7 +58,7 @@ export function ReviewView({
 }: ReviewViewProps) {
   const router = useRouter();
   const [isApplying, setIsApplying] = useState(false);
-
+  const [launchError, setLaunchError] = useState<string | null>(null);
   const [monitors, setMonitors] = useState<SuggestedMonitor[]>(
     setup.suggestedMonitors ?? []
   );
@@ -74,46 +71,12 @@ export function ReviewView({
     api.integrations.github.project_setup.applySetupResults
   );
 
-  const toggleMonitor = useCallback((index: number) => {
-    setMonitors((prev) =>
-      prev.map((m, i) => (i === index ? { ...m, accepted: !m.accepted } : m))
-    );
-  }, []);
-
-  const toggleKeyword = useCallback((index: number) => {
-    setKeywords((prev) =>
-      prev.map((k, i) => (i === index ? { ...k, accepted: !k.accepted } : k))
-    );
-  }, []);
-
-  const toggleTag = useCallback((index: number) => {
-    setTags((prev) =>
-      prev.map((t, i) => (i === index ? { ...t, accepted: !t.accepted } : t))
-    );
-  }, []);
-
-  const toggleAllMonitors = useCallback((accepted: boolean) => {
-    setMonitors((prev) => prev.map((m) => ({ ...m, accepted })));
-  }, []);
-
-  const toggleAllKeywords = useCallback((accepted: boolean) => {
-    setKeywords((prev) => prev.map((k) => ({ ...k, accepted })));
-  }, []);
-
-  const toggleAllTags = useCallback((accepted: boolean) => {
-    setTags((prev) => prev.map((t) => ({ ...t, accepted })));
-  }, []);
-
-  const copyToClipboard = useCallback(async (text: string) => {
-    await navigator.clipboard.writeText(text);
-    toast.success("Copied to clipboard");
-  }, []);
-
   const handleLaunch = async () => {
     if (isApplying) {
       return;
     }
     setIsApplying(true);
+    setLaunchError(null);
     try {
       await applySetupResults({
         acceptedKeywords: keywords
@@ -135,209 +98,96 @@ export function ReviewView({
         organizationId,
         setupId: setup._id,
       });
-
-      toast.success("Project configured successfully!");
       router.push(`/dashboard/${orgSlug}/project`);
     } catch (error: unknown) {
-      toast.error("Failed to apply setup", {
-        description:
-          error instanceof Error
-            ? error.message
-            : "An unexpected error occurred",
-      });
-    } finally {
-      setIsApplying(false);
+      setLaunchError(
+        error instanceof Error
+          ? error.message
+          : "Couldn’t launch the project. Your selections are kept; try again."
+      );
     }
+    setIsApplying(false);
   };
-
-  const acceptedTagsCount = tags.filter((t) => t.accepted).length;
 
   return (
     <PageLayout scroll="page" width="wide">
       <PageHeader>
         <PageTitle>Review your project setup</PageTitle>
         <PageDescription>
-          We analyzed your repository — review and customize, then launch.
+          Reflet suggested these from your repository. Keep what fits, then
+          launch.
         </PageDescription>
       </PageHeader>
       <PageBody contentClassName="max-w-4xl space-y-6">
         {setup.projectOverview && (
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Sparkle className="size-4" />
-                Project Overview
+              <CardTitle className="flex items-center gap-2">
+                <Sparkle aria-hidden className="size-4" />
+                Project overview
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <Text variant="bodySmall">{setup.projectOverview}</Text>
+              <Text className="text-pretty" variant="bodySmall">
+                {setup.projectOverview}
+              </Text>
             </CardContent>
           </Card>
         )}
 
         <MonitorsSection
           monitors={monitors}
-          onToggle={toggleMonitor}
-          onToggleAll={toggleAllMonitors}
+          onToggle={(index) => setMonitors((prev) => toggleAt(prev, index))}
+          onToggleAll={(accepted) =>
+            setMonitors((prev) => setAllAccepted(prev, accepted))
+          }
         />
 
         <KeywordsSection
           keywords={keywords}
-          onToggle={toggleKeyword}
-          onToggleAll={toggleAllKeywords}
+          onToggle={(index) => setKeywords((prev) => toggleAt(prev, index))}
+          onToggleAll={(accepted) =>
+            setKeywords((prev) => setAllAccepted(prev, accepted))
+          }
         />
 
         {setup.changelogConfig && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <FileText className="size-4" />
-                Changelog
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {setup.changelogConfig.releaseCount !== undefined &&
-                  setup.changelogConfig.releaseCount > 0 && (
-                    <Text variant="bodySmall">
-                      Detected {setup.changelogConfig.releaseCount} existing
-                      releases
-                      {setup.changelogConfig.hasConventionalCommits &&
-                        " with semver tags"}
-                    </Text>
-                  )}
-                <div className="flex flex-wrap gap-2">
-                  <Badge
-                    variant={
-                      setup.changelogConfig.workflow === "ai_powered"
-                        ? "default"
-                        : "outline"
-                    }
-                  >
-                    {WORKFLOW_LABELS[setup.changelogConfig.workflow]}
-                  </Badge>
-                  {setup.changelogConfig.versionPrefix && (
-                    <Badge variant="outline">
-                      Prefix: {setup.changelogConfig.versionPrefix}
-                    </Badge>
-                  )}
-                  <Badge variant="outline">
-                    Branch: {setup.changelogConfig.targetBranch}
-                  </Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <ChangelogCard config={setup.changelogConfig} />
         )}
 
-        {tags.length > 0 && (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Tag className="size-4" />
-                  Tags ({tags.length} suggested)
-                </CardTitle>
-                <Button
-                  onClick={() => toggleAllTags(acceptedTagsCount < tags.length)}
-                  size="xs"
-                  variant="ghost"
-                >
-                  {acceptedTagsCount === tags.length
-                    ? "Deselect all"
-                    : "Select all"}
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {tags.map((tag, index) => (
-                  <button
-                    className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm transition-colors ${
-                      tag.accepted
-                        ? "border-foreground/20 bg-foreground/5"
-                        : "border-transparent bg-muted/50 text-muted-foreground"
-                    }`}
-                    key={tag.name}
-                    onClick={() => toggleTag(index)}
-                    type="button"
-                  >
-                    <span
-                      className="size-2.5 rounded-full"
-                      style={{ backgroundColor: tag.color }}
-                    />
-                    {tag.name}
-                    {tag.accepted ? (
-                      <Check className="size-3" />
-                    ) : (
-                      <X className="size-3" />
-                    )}
-                  </button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        <TagsCard
+          onToggle={(index) => setTags((prev) => toggleAt(prev, index))}
+          onToggleAll={(accepted) =>
+            setTags((prev) => setAllAccepted(prev, accepted))
+          }
+          tags={tags}
+        />
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Robot className="size-4" />
+            <CardTitle className="flex items-center gap-2">
+              <Robot aria-hidden className="size-4" />
               Agents &amp; CLI
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <Text className="mb-2" variant="bodySmall">
+            <Text className="mb-2 text-pretty" variant="bodySmall">
               A coding agent can claim feedback, fix it and open the pull
-              request through the reflet CLI. Generate a secret key after
-              launching, from Project → Agents &amp; CLI.
+              request through the Reflet CLI. After launch, generate a secret
+              key in Project → Agents &amp; CLI.
             </Text>
-            <Muted className="text-xs">
+            <Muted className="text-caption">
               Works with any agent that can run a shell: Claude Code, Cursor,
               Codex, CI jobs.
             </Muted>
           </CardContent>
         </Card>
 
-        {setup.suggestedPrompts && setup.suggestedPrompts.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Lightning className="size-4" />
-                AI Prompts ({setup.suggestedPrompts.length} personalized)
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {setup.suggestedPrompts.slice(0, 3).map((prompt) => (
-                  <div
-                    className="flex items-start justify-between gap-3 rounded-md bg-muted/50 p-3"
-                    key={prompt.title}
-                  >
-                    <div className="flex-1">
-                      <Text className="font-medium text-xs">
-                        {prompt.title}
-                      </Text>
-                      <Muted className="mt-0.5 line-clamp-2 text-xs">
-                        {prompt.prompt}
-                      </Muted>
-                    </div>
-                    <Button
-                      onClick={() => copyToClipboard(prompt.prompt)}
-                      size="xs"
-                      variant="ghost"
-                    >
-                      <Copy className="size-3.5" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        <PromptsCard prompts={setup.suggestedPrompts ?? []} />
 
         <LaunchBar
           changelogConfig={setup.changelogConfig}
+          error={launchError}
           isApplying={isApplying}
           keywords={keywords}
           monitors={monitors}

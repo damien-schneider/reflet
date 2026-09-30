@@ -2,11 +2,13 @@
 
 import { toast } from "@ctrl-ui/react/ui/toast";
 import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 
-type CreateWebhookInput = Omit<
+export type WebhookListItem = Omit<Doc<"organizationWebhooks">, "secret">;
+
+export type CreateWebhookInput = Omit<
   Parameters<
     ReturnType<typeof useMutation<typeof api.webhooks.mutations.create>>
   >[0],
@@ -29,56 +31,40 @@ export function useWebhooks(organizationId: Id<"organizations">) {
   const [newSecret, setNewSecret] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
-  const create = useCallback(
-    async (input: CreateWebhookInput): Promise<boolean> => {
-      setIsCreating(true);
-      try {
-        const result = await createMutation({ organizationId, ...input });
-        setNewSecret(result.secret);
-        toast.success("Webhook created");
-        return true;
-      } catch (error) {
-        reportError(error, "Failed to create webhook");
-        return false;
-      } finally {
-        setIsCreating(false);
-      }
-    },
-    [createMutation, organizationId]
-  );
-
-  const setActive = useCallback(
-    async (webhookId: Id<"organizationWebhooks">, isActive: boolean) => {
-      try {
-        await updateMutation({ isActive, webhookId });
-      } catch (error) {
-        reportError(error, "Failed to update webhook");
-      }
-    },
-    [updateMutation]
-  );
-
-  const remove = useCallback(
-    async (webhookId: Id<"organizationWebhooks">) => {
-      try {
-        await removeMutation({ webhookId });
-        toast.success("Webhook deleted");
-      } catch (error) {
-        reportError(error, "Failed to delete webhook");
-      }
-    },
-    [removeMutation]
-  );
-
-  const copySecret = useCallback(() => {
-    if (newSecret) {
-      navigator.clipboard.writeText(newSecret);
-      toast.success("Secret copied to clipboard");
+  const create = async (input: CreateWebhookInput): Promise<boolean> => {
+    setIsCreating(true);
+    let created = false;
+    try {
+      const result = await createMutation({ organizationId, ...input });
+      setNewSecret(result.secret);
+      created = true;
+    } catch (error) {
+      reportError(error, "Couldn’t create the webhook");
     }
-  }, [newSecret]);
+    setIsCreating(false);
+    return created;
+  };
+
+  const setActive = async (
+    webhookId: Id<"organizationWebhooks">,
+    isActive: boolean
+  ) => {
+    try {
+      await updateMutation({ isActive, webhookId });
+    } catch (error) {
+      reportError(error, "Couldn’t update the webhook");
+    }
+  };
+
+  const remove = async (webhookId: Id<"organizationWebhooks">) => {
+    try {
+      await removeMutation({ webhookId });
+    } catch (error) {
+      reportError(error, "Couldn’t delete the webhook");
+    }
+  };
 
   return {
-    copySecret,
     create,
     deliveries,
     dismissSecret: () => setNewSecret(null),

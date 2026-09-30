@@ -8,244 +8,283 @@ import {
   CardDescription,
   CardHeader,
 } from "@ctrl-ui/react/ui/card";
-import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { toast } from "@ctrl-ui/react/ui/toast";
-import {
-  ArrowRight,
-  CheckCircle,
-  GitMerge,
-  Warning,
-  XCircle,
-} from "@phosphor-icons/react";
+import { GitMerge, XCircle } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
+import { useState } from "react";
+import {
+  AllCaughtUp,
+  ReviewQueueSkeleton,
+  ReviewSectionHeader,
+  StatusAnnouncer,
+} from "./review-queue-parts";
 
-type OrganizationId = Id<"organizations">;
+const PERCENTAGE_SCALE = 100;
+const HIGH_SIMILARITY_PERCENTAGE = 90;
 
-function SimilarityBadge({ score }: { score: number }) {
-  const percentage = Math.round(score * 100);
-  const color = (() => {
-    if (percentage >= 90) {
-      return "red";
-    }
-    if (percentage >= 75) {
-      return "orange";
-    }
-    return "neutral";
-  })();
-
-  return <Badge color={color}>{percentage}% similar</Badge>;
+interface PairFeedback {
+  _id: Id<"feedback">;
+  description: string;
+  status: string;
+  title: string;
+  voteCount: number;
 }
 
-function FeedbackPreview({
-  title,
-  description,
-  voteCount,
-  status,
+interface DuplicatePair {
+  _id: Id<"duplicatePairs">;
+  detectedAt: number;
+  feedbackA: PairFeedback;
+  feedbackB: PairFeedback;
+  similarityScore: number;
+}
+
+type PairAction = "keepA" | "keepB" | "reject";
+
+function formatStatus(status: string) {
+  const words = status.replaceAll("_", " ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+function FeedbackSide({
+  feedback,
+  other,
+  disabled,
+  isKeeping,
+  onKeep,
 }: {
-  title: string;
-  description: string;
-  voteCount: number;
-  status: string;
+  feedback: PairFeedback;
+  other: PairFeedback;
+  disabled: boolean;
+  isKeeping: boolean;
+  onKeep: () => void;
 }) {
   return (
-    <div className="space-y-1.5">
-      <p className="font-medium text-sm leading-tight">{title}</p>
-      <p className="line-clamp-2 text-muted-foreground text-xs">
-        {description || "No description"}
-      </p>
-      <div className="flex items-center gap-2">
-        <Badge className="text-xs" variant="outline">
-          {status.replace("_", " ")}
-        </Badge>
-        <span className="text-muted-foreground text-xs">
-          {voteCount} {voteCount === 1 ? "vote" : "votes"}
-        </span>
+    <div className="flex min-w-0 flex-col gap-3 rounded-lg border p-3">
+      <div className="min-w-0 flex-1 space-y-1.5">
+        <h3 className="text-pretty font-medium text-sm leading-tight">
+          {feedback.title}
+        </h3>
+        {feedback.description && (
+          <p className="line-clamp-3 text-pretty text-muted-foreground text-sm">
+            {feedback.description}
+          </p>
+        )}
+        <div className="flex items-center gap-2">
+          <Badge variant="outline">{formatStatus(feedback.status)}</Badge>
+          <span className="text-muted-foreground text-xs tabular-nums">
+            {feedback.voteCount} {feedback.voteCount === 1 ? "vote" : "votes"}
+          </span>
+        </div>
       </div>
+      <Button
+        aria-label={`Keep “${feedback.title}” and merge “${other.title}” into it`}
+        className="self-start"
+        disabled={disabled}
+        onClick={onKeep}
+        size="xs"
+        variant="surface"
+      >
+        <GitMerge aria-hidden className="size-3.5" />
+        {isKeeping ? "Merging…" : "Keep this one"}
+      </Button>
     </div>
   );
+}
+
+function DuplicatePairCard({
+  pair,
+  pendingAction,
+  onAction,
+}: {
+  pair: DuplicatePair;
+  pendingAction: PairAction | null;
+  onAction: (pair: DuplicatePair, action: PairAction) => void;
+}) {
+  const percentage = Math.round(pair.similarityScore * PERCENTAGE_SCALE);
+  const busy = pendingAction !== null;
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Badge
+            className="tabular-nums"
+            color={
+              percentage >= HIGH_SIMILARITY_PERCENTAGE ? "orange" : "neutral"
+            }
+          >
+            {percentage}% similar
+          </Badge>
+          <CardDescription>
+            Detected {formatDistanceToNow(pair.detectedAt, { addSuffix: true })}
+          </CardDescription>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <FeedbackSide
+            disabled={busy}
+            feedback={pair.feedbackA}
+            isKeeping={pendingAction === "keepA"}
+            onKeep={() => onAction(pair, "keepA")}
+            other={pair.feedbackB}
+          />
+          <FeedbackSide
+            disabled={busy}
+            feedback={pair.feedbackB}
+            isKeeping={pendingAction === "keepB"}
+            onKeep={() => onAction(pair, "keepB")}
+            other={pair.feedbackA}
+          />
+        </div>
+        <div className="flex items-center justify-between gap-3 border-t pt-3">
+          <p className="text-muted-foreground text-xs">
+            Votes and subscribers move to the one you keep.
+          </p>
+          <Button
+            disabled={busy}
+            onClick={() => onAction(pair, "reject")}
+            size="xs"
+            variant="ghost"
+          >
+            <XCircle aria-hidden className="size-3.5" />
+            {pendingAction === "reject" ? "Dismissing…" : "Not a duplicate"}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function MergeHistory({
+  organizationId,
+}: {
+  organizationId: Id<"organizations">;
+}) {
+  const mergeHistory = useQuery(api.duplicates.merge.getMergeHistory, {
+    organizationId,
+  });
+
+  if (!mergeHistory || mergeHistory.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="space-y-4">
+      <ReviewSectionHeader title="Recent merges" />
+      <Card>
+        <CardContent className="divide-y p-0">
+          {mergeHistory.map((entry) => (
+            <div
+              className="flex items-center justify-between gap-4 px-4 py-3"
+              key={entry._id}
+            >
+              <div className="min-w-0 space-y-0.5">
+                <p
+                  className="truncate font-medium text-sm"
+                  title={entry.sourceTitle}
+                >
+                  {entry.sourceTitle}
+                </p>
+                <p className="text-muted-foreground text-xs tabular-nums">
+                  {entry.sourceVoteCount}{" "}
+                  {entry.sourceVoteCount === 1 ? "vote" : "votes"} transferred
+                </p>
+              </div>
+              <time
+                className="shrink-0 text-muted-foreground text-xs"
+                dateTime={new Date(entry.mergedAt).toISOString()}
+              >
+                {formatDistanceToNow(entry.mergedAt, { addSuffix: true })}
+              </time>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    </section>
+  );
+}
+
+function useDuplicateActions() {
+  const resolveDuplicate = useMutation(api.duplicates.merge.resolveDuplicate);
+  const mergeFeedback = useMutation(api.duplicates.merge.mergeFeedback);
+  const [pending, setPending] = useState<{
+    action: PairAction;
+    pairId: Id<"duplicatePairs">;
+  } | null>(null);
+  const [announcement, setAnnouncement] = useState("");
+
+  const runAction = async (pair: DuplicatePair, action: PairAction) => {
+    setPending({ action, pairId: pair._id });
+    try {
+      if (action === "reject") {
+        await resolveDuplicate({ action: "reject", pairId: pair._id });
+        setAnnouncement("Marked as not a duplicate");
+      } else {
+        const kept = action === "keepA" ? pair.feedbackA : pair.feedbackB;
+        const merged = action === "keepA" ? pair.feedbackB : pair.feedbackA;
+        await mergeFeedback({
+          pairId: pair._id,
+          sourceFeedbackId: merged._id,
+          targetFeedbackId: kept._id,
+        });
+        setAnnouncement(`Merged into “${kept.title}”`);
+      }
+    } catch {
+      toast.error(
+        action === "reject"
+          ? "Couldn’t dismiss this pair. Try again."
+          : "Couldn’t merge this pair. Try again."
+      );
+    }
+    setPending(null);
+  };
+
+  return { announcement, pending, runAction };
 }
 
 export function DuplicateReviewPanel({
   organizationId,
 }: {
-  organizationId: OrganizationId;
+  organizationId: Id<"organizations">;
 }) {
   const pendingDuplicates = useQuery(
     api.duplicates.merge.getPendingDuplicates,
     { organizationId }
   );
-  const mergeHistory = useQuery(api.duplicates.merge.getMergeHistory, {
-    organizationId,
-  });
-  const resolveDuplicate = useMutation(api.duplicates.merge.resolveDuplicate);
-  const mergeFeedback = useMutation(api.duplicates.merge.mergeFeedback);
-
-  const handleReject = async (pairId: Id<"duplicatePairs">) => {
-    try {
-      await resolveDuplicate({ action: "reject", pairId });
-      toast.success("Duplicate pair dismissed");
-    } catch {
-      toast.error("Failed to dismiss duplicate pair");
-    }
-  };
-
-  const handleMerge = async (
-    sourceFeedbackId: Id<"feedback">,
-    targetFeedbackId: Id<"feedback">,
-    pairId: Id<"duplicatePairs">
-  ) => {
-    try {
-      await mergeFeedback({ pairId, sourceFeedbackId, targetFeedbackId });
-      toast.success("Feedback merged successfully");
-    } catch {
-      toast.error("Failed to merge feedback");
-    }
-  };
+  const { announcement, pending, runAction } = useDuplicateActions();
 
   if (pendingDuplicates === undefined) {
-    return (
-      <div className="space-y-4">
-        {["a", "b", "c"].map((id) => (
-          <Skeleton className="h-32" key={id} />
-        ))}
-      </div>
-    );
+    return <ReviewQueueSkeleton />;
   }
 
   return (
-    <div className="space-y-6">
-      {/* Pending Duplicates */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Warning className="size-5 text-warning" weight="fill" />
-          <h3 className="font-semibold text-lg">
-            Pending Review ({pendingDuplicates.length})
-          </h3>
-        </div>
-
+    <div className="space-y-8">
+      <section className="space-y-4">
+        <ReviewSectionHeader
+          count={pendingDuplicates.length}
+          title="Possible duplicates"
+        />
         {pendingDuplicates.length === 0 ? (
-          <Card>
-            <CardContent className="py-8 text-center">
-              <CheckCircle
-                className="mx-auto mb-2 size-8 text-success"
-                weight="fill"
-              />
-              <p className="text-muted-foreground text-sm">
-                No duplicate pairs pending review
-              </p>
-            </CardContent>
-          </Card>
+          <AllCaughtUp description="When two posts look alike, they show up here side by side." />
         ) : (
           pendingDuplicates.map((pair) => (
-            <Card key={pair._id}>
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <SimilarityBadge score={pair.similarityScore} />
-                    <CardDescription>
-                      Detected{" "}
-                      {formatDistanceToNow(pair.detectedAt, {
-                        addSuffix: true,
-                      })}
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-4">
-                  <FeedbackPreview
-                    description={pair.feedbackA.description}
-                    status={pair.feedbackA.status}
-                    title={pair.feedbackA.title}
-                    voteCount={pair.feedbackA.voteCount}
-                  />
-                  <ArrowRight className="mt-2 size-4 text-muted-foreground" />
-                  <FeedbackPreview
-                    description={pair.feedbackB.description}
-                    status={pair.feedbackB.status}
-                    title={pair.feedbackB.title}
-                    voteCount={pair.feedbackB.voteCount}
-                  />
-                </div>
-
-                <div className="flex items-center gap-2 border-t pt-3">
-                  <Button
-                    onClick={() =>
-                      handleMerge(
-                        pair.feedbackA._id,
-                        pair.feedbackB._id,
-                        pair._id
-                      )
-                    }
-                    size="xs"
-                    tone="primary"
-                    variant="solid"
-                  >
-                    <GitMerge className="mr-1 size-3.5" />
-                    Merge A → B
-                  </Button>
-                  <Button
-                    onClick={() =>
-                      handleMerge(
-                        pair.feedbackB._id,
-                        pair.feedbackA._id,
-                        pair._id
-                      )
-                    }
-                    size="xs"
-                    variant="surface"
-                  >
-                    <GitMerge className="mr-1 size-3.5" />
-                    Merge B → A
-                  </Button>
-                  <Button
-                    onClick={() => handleReject(pair._id)}
-                    size="xs"
-                    variant="ghost"
-                  >
-                    <XCircle className="mr-1 size-3.5" />
-                    Not Duplicate
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <DuplicatePairCard
+              key={pair._id}
+              onAction={runAction}
+              pair={pair}
+              pendingAction={
+                pending?.pairId === pair._id ? pending.action : null
+              }
+            />
           ))
         )}
-      </div>
-
-      {/* Merge History */}
-      {mergeHistory && mergeHistory.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <GitMerge className="size-5 text-muted-foreground" />
-            <h3 className="font-semibold text-lg">Recent Merges</h3>
-          </div>
-
-          <Card>
-            <CardContent className="divide-y p-0">
-              {mergeHistory.map((entry) => (
-                <div
-                  className="flex items-center justify-between px-4 py-3"
-                  key={entry._id}
-                >
-                  <div className="space-y-0.5">
-                    <p className="font-medium text-sm">{entry.sourceTitle}</p>
-                    <p className="text-muted-foreground text-xs">
-                      {entry.sourceVoteCount} votes transferred
-                    </p>
-                  </div>
-                  <span className="text-muted-foreground text-xs">
-                    {formatDistanceToNow(entry.mergedAt, { addSuffix: true })}
-                  </span>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      </section>
+      <MergeHistory organizationId={organizationId} />
+      <StatusAnnouncer message={announcement} />
     </div>
   );
 }

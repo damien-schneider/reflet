@@ -4,36 +4,9 @@ import { Button } from "@ctrl-ui/react/ui/button";
 import { Input } from "@ctrl-ui/react/ui/input";
 import { Check, MagnifyingGlass, X } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { TagBadge } from "@/components/tag-badge";
+import { FeedbackStatusBadge } from "./feedback-status-badge";
 
-const STATUS_LABELS: Record<string, string> = {
-  closed: "Closed",
-  completed: "Completed",
-  in_progress: "In Progress",
-  open: "Open",
-  planned: "Planned",
-  under_review: "Under Review",
-};
-
-const STATUS_COLORS: Record<string, string> = {
-  closed: "gray",
-  completed: "green",
-  in_progress: "yellow",
-  open: "blue",
-  planned: "purple",
-  under_review: "orange",
-};
-
-function StatusBadge({ status }: { status: string }) {
-  return (
-    <TagBadge
-      className="shrink-0 text-xs"
-      color={STATUS_COLORS[status] ?? "gray"}
-    >
-      {STATUS_LABELS[status] ?? status}
-    </TagBadge>
-  );
-}
+const MAX_SEARCH_RESULTS = 8;
 
 interface LinkedFeedbackListProps {
   items: Array<{ _id: Id<"feedback">; title: string; status: string }>;
@@ -47,31 +20,36 @@ export function LinkedFeedbackList({
   onUnlink,
 }: LinkedFeedbackListProps) {
   return (
-    <div className="space-y-1">
+    <ul className="space-y-1">
       {items.map((item) => (
-        <div
-          className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted/50"
+        <li
+          className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm"
           key={item._id}
         >
-          <Check className="h-3.5 w-3.5 shrink-0 text-success-text" />
-          <span className="min-w-0 flex-1 truncate">{item.title}</span>
-          <StatusBadge status={item.status} />
+          <Check
+            aria-hidden="true"
+            className="size-3.5 shrink-0 text-success-text"
+          />
+          <span className="min-w-0 flex-1 truncate" title={item.title}>
+            {item.title}
+          </span>
+          <FeedbackStatusBadge status={item.status} />
           {releaseId && (
             <Button
               aria-label={`Unlink ${item.title}`}
-              className="shrink-0 text-muted-foreground hover:text-destructive-text"
+              className="shrink-0"
               iconOnly
               onClick={() => onUnlink(item._id)}
               size="xs"
               type="button"
               variant="ghost"
             >
-              <X className="h-3 w-3" />
+              <X aria-hidden="true" className="size-3" />
             </Button>
           )}
-        </div>
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }
 
@@ -92,33 +70,53 @@ export function FeedbackSearchInput({
   searchResults,
   onLink,
 }: FeedbackSearchInputProps) {
+  const hasQuery = searchQuery.trim().length > 0;
+
   return (
     <div className="relative">
       <div className="relative">
-        <MagnifyingGlass className="absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+        <MagnifyingGlass
+          aria-hidden="true"
+          className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground"
+        />
         <Input
           aria-label="Search feedback to link"
-          className="h-8 border-transparent bg-transparent pl-8 text-sm shadow-none focus-visible:border-input"
+          className="pl-8"
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search feedback to link..."
+          placeholder="Search feedback to link…"
+          size="sm"
+          type="search"
           value={searchQuery}
         />
       </div>
-      {searchResults.length > 0 && (
-        <div className="absolute right-0 left-0 z-20 mt-1 max-h-40 overflow-y-auto rounded-lg border bg-popover p-1 shadow-md">
-          {searchResults.slice(0, 8).map((item) => (
-            <Button
-              className="w-full justify-start gap-2 text-left font-normal"
-              key={item._id}
-              onClick={() => onLink(item._id)}
-              size="sm"
-              type="button"
-              variant="ghost"
-            >
-              <span className="min-w-0 flex-1 truncate">{item.title}</span>
-              <StatusBadge status={item.status} />
-            </Button>
-          ))}
+      {hasQuery && (
+        <div
+          className="absolute right-0 left-0 z-20 mt-1 max-h-40 overflow-y-auto p-1"
+          data-control-family="popup"
+          data-popup-part="surface"
+          data-popup-static=""
+        >
+          {searchResults.length === 0 ? (
+            <p className="px-2 py-1.5 text-muted-foreground text-sm">
+              No feedback matches “{searchQuery.trim()}”.
+            </p>
+          ) : (
+            searchResults.slice(0, MAX_SEARCH_RESULTS).map((item) => (
+              <Button
+                className="w-full justify-start text-left"
+                key={item._id}
+                onClick={() => onLink(item._id)}
+                size="sm"
+                type="button"
+                variant="ghost"
+              >
+                <span className="min-w-0 flex-1 truncate" title={item.title}>
+                  {item.title}
+                </span>
+                <FeedbackStatusBadge status={item.status} />
+              </Button>
+            ))
+          )}
         </div>
       )}
     </div>

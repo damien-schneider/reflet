@@ -1,17 +1,19 @@
 "use client";
 
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@ctrl-ui/react/ui/empty";
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { toast } from "@ctrl-ui/react/ui/toast";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { Text } from "@/components/ui/typography";
 import { AddCompetitorDialog } from "@/features/intelligence/components/add-competitor-dialog";
 import { CompetitorCard } from "@/features/intelligence/components/competitor-card";
-
-// ============================================
-// COMPETITORS TAB
-// ============================================
 
 export function CompetitorsTab({
   organizationId,
@@ -29,17 +31,20 @@ export function CompetitorsTab({
   const handleRemove = async (competitorId: Id<"competitors">) => {
     try {
       await removeCompetitor({ id: competitorId });
-      toast.success("Competitor removed");
     } catch {
-      toast.error("Failed to remove competitor");
+      toast.error("Couldn’t remove the competitor. Try again.");
     }
   };
 
   if (competitors === undefined) {
     return (
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div
+        aria-label="Loading competitors"
+        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+        role="status"
+      >
         {["a", "b", "c"].map((id) => (
-          <Skeleton className="h-48 w-full" key={id} />
+          <Skeleton className="h-48 w-full rounded-lg" key={id} />
         ))}
       </div>
     );
@@ -47,14 +52,17 @@ export function CompetitorsTab({
 
   if (competitors.length === 0) {
     return (
-      <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-        <Text variant="bodyLarge">No competitors tracked yet</Text>
-        <Text className="mt-2 max-w-md" variant="bodySmall">
-          Add your first competitor to start getting AI-powered competitive
-          intelligence, SWOT analysis, and feature gap detection.
-        </Text>
-        <AddCompetitorDialog organizationId={organizationId} />
-      </div>
+      <Empty className="rounded-lg border border-dashed py-16">
+        <EmptyHeader>
+          <EmptyTitle>No competitors tracked yet</EmptyTitle>
+          <EmptyDescription>
+            Add a competitor to get SWOT analysis and feature gap detection.
+          </EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <AddCompetitorDialog organizationId={organizationId} />
+        </EmptyContent>
+      </Empty>
     );
   }
 

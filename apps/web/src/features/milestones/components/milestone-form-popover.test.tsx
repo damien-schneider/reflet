@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const mockCreateMilestone = vi.fn();
@@ -145,9 +146,7 @@ describe("MilestoneFormPopover", () => {
     render(<MilestoneFormPopover {...defaultProps} />);
 
     expect(screen.getByTestId("emoji-picker")).toBeInTheDocument();
-    expect(
-      screen.getByPlaceholderText("Milestone name...")
-    ).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Milestone name…")).toBeInTheDocument();
     expect(screen.getByTestId("color-picker")).toBeInTheDocument();
   });
 
@@ -162,7 +161,7 @@ describe("MilestoneFormPopover", () => {
     mockCreateMilestone.mockResolvedValue(undefined);
     render(<MilestoneFormPopover {...defaultProps} />);
 
-    const nameInput = screen.getByPlaceholderText("Milestone name...");
+    const nameInput = screen.getByPlaceholderText("Milestone name…");
     fireEvent.change(nameInput, { target: { value: "New milestone" } });
 
     const createButton = screen.getByText("Create");
@@ -201,13 +200,13 @@ describe("MilestoneFormPopover", () => {
     expect(mockCreateMilestone).not.toHaveBeenCalled();
   });
 
-  it("should submit on Enter key", async () => {
+  it("should submit the form with Enter", async () => {
     mockCreateMilestone.mockResolvedValue(undefined);
+    const user = userEvent.setup();
     render(<MilestoneFormPopover {...defaultProps} />);
 
-    const nameInput = screen.getByPlaceholderText("Milestone name...");
-    fireEvent.change(nameInput, { target: { value: "Quick milestone" } });
-    fireEvent.keyDown(nameInput, { key: "Enter" });
+    const nameInput = screen.getByRole("textbox", { name: "Milestone name" });
+    await user.type(nameInput, "Quick milestone{Enter}");
 
     await waitFor(() => {
       expect(mockCreateMilestone).toHaveBeenCalledTimes(1);
@@ -223,7 +222,7 @@ describe("MilestoneFormPopover", () => {
       />
     );
 
-    const nameInput = screen.getByPlaceholderText("Milestone name...");
+    const nameInput = screen.getByPlaceholderText("Milestone name…");
     fireEvent.change(nameInput, { target: { value: "Test" } });
     fireEvent.click(screen.getByText("Create"));
 

@@ -6,13 +6,20 @@ import { RefletMark } from "@/features/homepage/components/experience/branding/r
 import { useMotionPreference } from "@/features/homepage/components/experience/motion/use-motion-preference";
 import "@/features/homepage/components/experience/branding/closing-reflection.css";
 
-export function ClosingReflection({ children }: { children: ReactNode }) {
+export function ClosingReflection({
+  children,
+  titleId,
+}: {
+  children: ReactNode;
+  titleId: string;
+}) {
   const reducedMotion = useMotionPreference();
   const pointerX = useSpring(0, { damping: 24, stiffness: 130 });
   const pointerY = useSpring(0, { damping: 24, stiffness: 130 });
   return (
     <LazyMotion features={domAnimation} strict>
       <m.section
+        aria-labelledby={titleId}
         className="marketing-closing"
         onPointerLeave={() => {
           pointerX.set(0);

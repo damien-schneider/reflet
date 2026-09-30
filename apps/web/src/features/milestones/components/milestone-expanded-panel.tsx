@@ -2,12 +2,12 @@
 
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Input } from "@ctrl-ui/react/ui/input";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import { CalendarBlank, MagnifyingGlass, X } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { AnimatePresence, motion } from "motion/react";
-import { useCallback, useState } from "react";
+import { type ComponentProps, useState } from "react";
 import { TagBadge } from "@/components/tag-badge";
 import {
   getDeadlineBadgeStyles,
@@ -24,59 +24,246 @@ interface MilestoneExpandedPanelProps {
   organizationId: Id<"organizations">;
 }
 
-export function MilestoneExpandedPanel({
+interface LinkedFeedback {
+  _id: Id<"feedback">;
+  organizationStatus?: { color: string; name: string } | null;
+  title: string;
+  voteCount: number;
+}
+
+function formatVotes(count: number) {
+  return `${count} ${count === 1 ? "vote" : "votes"}`;
+}
+
+function LinkedFeedbackRow({
+  feedback,
+  onOpen,
+  onRemove,
+}: {
+  feedback: LinkedFeedback;
+  onOpen?: () => void;
+  onRemove?: () => void;
+}) {
+  return (
+    <li className="group flex items-center gap-2 rounded-md p-1.5 hover:bg-accent/50">
+      <button
+        className="min-w-0 flex-1 text-left text-sm"
+        onClick={onOpen}
+        type="button"
+      >
+        <span className="line-clamp-1">{feedback.title}</span>
+        <span className="flex items-center gap-2 text-muted-foreground text-xs">
+          {feedback.organizationStatus && (
+            <TagBadge color={feedback.organizationStatus.color} size="sm">
+              {feedback.organizationStatus.name}
+            </TagBadge>
+          )}
+          <span className="tabular-nums">
+            {formatVotes(feedback.voteCount)}
+          </span>
+        </span>
+      </button>
+      {onRemove && (
+        <Button
+          aria-label={`Unlink ${feedback.title}`}
+          className="pointer-fine:opacity-0 focus-visible:opacity-100 group-hover:opacity-100"
+          iconOnly
+          onClick={onRemove}
+          size="xs"
+          variant="ghost"
+        >
+          <X aria-hidden />
+        </Button>
+      )}
+    </li>
+  );
+}
+
+function MilestoneStats({
+  progress,
+  targetDate,
+  status,
+}: {
+  progress: ComponentProps<typeof MilestoneProgressRing>["progress"];
+  status: string;
+  targetDate?: number;
+}) {
+  const deadlineInfo = getDeadlineInfo(targetDate, status);
+  const deadlineBadgeStyles = deadlineInfo
+    ? getDeadlineBadgeStyles(deadlineInfo.status)
+    : null;
+
+  return (
+    <div className="flex shrink-0 flex-col items-center gap-1 text-muted-foreground text-xs tabular-nums">
+      <MilestoneProgressRing progress={progress} size={48} />
+      <p>
+        {progress.completed}/{progress.total} done
+      </p>
+      {progress.inProgress > 0 && <p>{progress.inProgress} in progress</p>}
+      {deadlineInfo && deadlineBadgeStyles && (
+        <div
+          className={cn(
+            "mt-1 flex flex-col items-center gap-0.5 rounded-md border px-2 py-1",
+            deadlineBadgeStyles.bg,
+            deadlineBadgeStyles.border,
+            deadlineBadgeStyles.text
+          )}
+        >
+          <span className="flex items-center gap-1">
+            <CalendarBlank aria-hidden className="size-3" />
+            {deadlineInfo.label}
+          </span>
+          <span className="text-caption">{deadlineInfo.relativeLabel}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LinkCandidateList({
+  candidates,
+  onLink,
+}: {
+  candidates: LinkedFeedback[];
+  onLink: (feedbackId: Id<"feedback">) => void;
+}) {
+  return (
+    <div className="max-h-36 space-y-1 overflow-y-auto rounded-md border p-1">
+      {candidates.map((fb) => (
+        <button
+          className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm transition-colors hover:bg-accent/50"
+          key={fb._id}
+          onClick={() => onLink(fb._id)}
+          type="button"
+        >
+          <span className="min-w-0 flex-1 truncate">{fb.title}</span>
+          <span className="shrink-0 text-muted-foreground text-xs tabular-nums">
+            {formatVotes(fb.voteCount)}
+          </span>
+        </button>
+      ))}
+      {candidates.length === 0 && (
+        <p className="py-2 text-center text-muted-foreground text-xs">
+          No matching feedback
+        </p>
+      )}
+    </div>
+  );
+}
+
+function FeedbackLinkSearch({
   milestoneId,
   organizationId,
-  isAdmin,
-  onFeedbackClick,
-}: MilestoneExpandedPanelProps) {
+  linkedFeedbackIds,
+}: {
+  linkedFeedbackIds: Set<Id<"feedback">>;
+  milestoneId: Id<"milestones">;
+  organizationId: Id<"organizations">;
+}) {
   const [searchQuery, setSearchQuery] = useState("");
-
-  const milestone = useQuery(api.organizations.milestones.get, {
-    id: milestoneId,
-  });
-
   const allFeedback = useQuery(api.feedback.list.listByOrganization, {
     limit: 20,
     organizationId,
     search: searchQuery.trim() || undefined,
     sortBy: "votes",
   });
-
   const addFeedback = useMutation(
     api.organizations.milestone_actions.addFeedback
   );
-  const removeFeedbackMutation = useMutation(
+
+  const handleAddFeedback = async (feedbackId: Id<"feedback">) => {
+    try {
+      await addFeedback({ feedbackId, milestoneId });
+      setSearchQuery("");
+    } catch {
+      toast.error("Couldn’t link that feedback. Try again.");
+    }
+  };
+
+  return (
+    <>
+      <div className="relative mb-1">
+        <MagnifyingGlass
+          aria-hidden
+          className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+        />
+        <Input
+          aria-label="Search feedback to link"
+          className="pl-9"
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search feedback to link…"
+          type="search"
+          value={searchQuery}
+        />
+      </div>
+      {searchQuery && (
+        <LinkCandidateList
+          candidates={
+            allFeedback?.filter((f) => !linkedFeedbackIds.has(f._id)) ?? []
+          }
+          onLink={handleAddFeedback}
+        />
+      )}
+    </>
+  );
+}
+
+function LinkedFeedbackSection({
+  linkedFeedback,
+  milestoneId,
+  organizationId,
+  isAdmin,
+  onFeedbackClick,
+}: MilestoneExpandedPanelProps & { linkedFeedback: LinkedFeedback[] }) {
+  const removeFeedback = useMutation(
     api.organizations.milestone_actions.removeFeedback
   );
 
-  const handleAddFeedback = useCallback(
-    async (feedbackId: Id<"feedback">) => {
-      await addFeedback({
-        feedbackId,
-        milestoneId,
-      });
-      setSearchQuery("");
-    },
-    [milestoneId, addFeedback]
-  );
+  const handleRemoveFeedback = async (feedbackId: Id<"feedback">) => {
+    try {
+      await removeFeedback({ feedbackId, milestoneId });
+    } catch {
+      toast.error("Couldn’t unlink that feedback. Try again.");
+    }
+  };
 
-  const handleRemoveFeedback = useCallback(
-    async (feedbackId: Id<"feedback">) => {
-      await removeFeedbackMutation({
-        feedbackId,
-        milestoneId,
-      });
-    },
-    [milestoneId, removeFeedbackMutation]
-  );
+  return (
+    <div className="min-w-0 flex-1">
+      <h4 className="mb-2 font-medium text-muted-foreground text-xs tabular-nums">
+        Linked feedback ({linkedFeedback.length})
+      </h4>
 
-  const handleSearchChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setSearchQuery(e.target.value);
-    },
-    []
+      <ul className="mb-3 max-h-40 space-y-1 overflow-y-auto">
+        {linkedFeedback.map((fb) => (
+          <LinkedFeedbackRow
+            feedback={fb}
+            key={fb._id}
+            onOpen={() => onFeedbackClick?.(fb._id)}
+            onRemove={isAdmin ? () => handleRemoveFeedback(fb._id) : undefined}
+          />
+        ))}
+      </ul>
+      {isAdmin && linkedFeedback.length === 0 && (
+        <p className="mb-3 py-2 text-center text-muted-foreground text-xs">
+          No feedback linked yet
+        </p>
+      )}
+
+      {isAdmin && (
+        <FeedbackLinkSearch
+          linkedFeedbackIds={new Set(linkedFeedback.map((f) => f._id))}
+          milestoneId={milestoneId}
+          organizationId={organizationId}
+        />
+      )}
+    </div>
   );
+}
+
+export function MilestoneExpandedPanel(props: MilestoneExpandedPanelProps) {
+  const milestone = useQuery(api.organizations.milestones.get, {
+    id: props.milestoneId,
+  });
 
   if (!milestone) {
     return null;
@@ -87,197 +274,23 @@ export function MilestoneExpandedPanel({
       (fb): fb is NonNullable<typeof fb> => fb !== null && fb !== undefined
     ) ?? [];
 
-  const linkedFeedbackIds = new Set(linkedFeedback.map((f) => f._id));
-  const unlinkedFeedback =
-    allFeedback?.filter((f) => !linkedFeedbackIds.has(f._id)) ?? [];
-
-  const deadlineInfo = getDeadlineInfo(
-    milestone.targetDate,
-    milestone.status ?? "active"
-  );
-  const deadlineBadgeStyles = deadlineInfo
-    ? getDeadlineBadgeStyles(deadlineInfo.status)
-    : null;
-
   return (
-    <AnimatePresence>
-      <motion.div
-        animate={{ opacity: 1, y: 0 }}
-        className="relative p-4"
-        exit={{ opacity: 0, y: -8 }}
-        initial={{ opacity: 0, y: -8 }}
-        transition={{ duration: 0.2, ease: "easeOut" }}
-      >
-        <div className="flex items-start gap-6">
-          {/* Left side: description */}
-          {milestone.description && (
-            <div className="min-w-0 flex-1">
-              <p className="text-muted-foreground text-sm">
-                {milestone.description}
-              </p>
-            </div>
-          )}
+    <div className="flex items-start gap-6 p-4">
+      {milestone.description && (
+        <p className="min-w-0 flex-1 text-pretty text-muted-foreground text-sm">
+          {milestone.description}
+        </p>
+      )}
 
-          {/* Center: progress ring + stats */}
-          <div className="flex shrink-0 flex-col items-center gap-1">
-            <MilestoneProgressRing progress={milestone.progress} size={48} />
-            <p className="text-muted-foreground text-xs">
-              {milestone.progress.completed}/{milestone.progress.total} done
-            </p>
-            {milestone.progress.inProgress > 0 && (
-              <p className="text-muted-foreground text-xs">
-                {milestone.progress.inProgress} in progress
-              </p>
-            )}
-            {deadlineInfo && deadlineBadgeStyles && (
-              <div
-                className={cn(
-                  "mt-1 flex flex-col items-center gap-0.5 rounded-md border px-2 py-1",
-                  deadlineBadgeStyles.bg,
-                  deadlineBadgeStyles.border
-                )}
-              >
-                <span
-                  className={cn(
-                    "flex items-center gap-1 text-xs",
-                    deadlineBadgeStyles.text
-                  )}
-                >
-                  <CalendarBlank className="h-3 w-3" />
-                  {deadlineInfo.label}
-                </span>
-                <span className={cn("text-caption", deadlineBadgeStyles.text)}>
-                  {deadlineInfo.relativeLabel}
-                </span>
-              </div>
-            )}
-          </div>
+      <MilestoneStats
+        progress={milestone.progress}
+        status={milestone.status ?? "active"}
+        targetDate={milestone.targetDate}
+      />
 
-          {/* Right side: linked feedback + admin controls */}
-          {isAdmin && (
-            <div className="min-w-0 flex-1">
-              <h4 className="mb-2 font-medium text-muted-foreground text-xs uppercase tracking-wider">
-                Linked Feedback ({linkedFeedback.length})
-              </h4>
-
-              {/* Linked feedback list */}
-              <div className="mb-3 max-h-40 space-y-1 overflow-y-auto">
-                {linkedFeedback.map((fb) => (
-                  <div
-                    className="group flex items-center gap-2 rounded-md p-1.5 hover:bg-accent/50"
-                    key={fb._id}
-                  >
-                    <button
-                      className="min-w-0 flex-1 text-left text-sm"
-                      onClick={() => onFeedbackClick?.(fb._id)}
-                      type="button"
-                    >
-                      <span className="line-clamp-1">{fb.title}</span>
-                      <span className="flex items-center gap-2 text-muted-foreground text-xs">
-                        {fb.organizationStatus && (
-                          <TagBadge
-                            className="font-normal text-caption"
-                            color={fb.organizationStatus.color}
-                          >
-                            {fb.organizationStatus.name}
-                          </TagBadge>
-                        )}
-                        <span>{fb.voteCount} votes</span>
-                      </span>
-                    </button>
-                    <Button
-                      className="h-6 w-6 opacity-0 group-hover:opacity-100"
-                      iconOnly
-                      onClick={() => handleRemoveFeedback(fb._id)}
-                      type="button"
-                      variant="ghost"
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                ))}
-                {linkedFeedback.length === 0 && (
-                  <p className="py-2 text-center text-muted-foreground text-xs">
-                    No feedback linked yet
-                  </p>
-                )}
-              </div>
-
-              {/* Search to add feedback */}
-              <div className="relative mb-1">
-                <MagnifyingGlass className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  className="pl-9"
-                  onChange={handleSearchChange}
-                  placeholder="Search feedback to link..."
-                  value={searchQuery}
-                />
-              </div>
-              {searchQuery && (
-                <div className="max-h-36 space-y-1 overflow-y-auto rounded-md border p-1">
-                  {unlinkedFeedback.map((fb) => (
-                    <button
-                      className={cn(
-                        "flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm",
-                        "transition-colors hover:bg-accent/50"
-                      )}
-                      key={fb._id}
-                      onClick={() => handleAddFeedback(fb._id)}
-                      type="button"
-                    >
-                      <span className="min-w-0 flex-1 truncate">
-                        {fb.title}
-                      </span>
-                      <span className="shrink-0 text-muted-foreground text-xs">
-                        {fb.voteCount} votes
-                      </span>
-                    </button>
-                  ))}
-                  {unlinkedFeedback.length === 0 && (
-                    <p className="py-2 text-center text-muted-foreground text-xs">
-                      No matching feedback found
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Non-admin: show linked feedback as read-only */}
-          {!isAdmin && linkedFeedback.length > 0 && (
-            <div className="min-w-0 flex-1">
-              <h4 className="mb-2 font-medium text-muted-foreground text-xs uppercase tracking-wider">
-                Linked Feedback ({linkedFeedback.length})
-              </h4>
-              <div className="max-h-40 space-y-1 overflow-y-auto">
-                {linkedFeedback.map((fb) => (
-                  <button
-                    className="flex w-full items-center gap-2 rounded-md p-1.5 text-left hover:bg-accent/50"
-                    key={fb._id}
-                    onClick={() => onFeedbackClick?.(fb._id)}
-                    type="button"
-                  >
-                    <span className="min-w-0 flex-1 text-sm">
-                      <span className="line-clamp-1">{fb.title}</span>
-                      <span className="flex items-center gap-2 text-muted-foreground text-xs">
-                        {fb.organizationStatus && (
-                          <TagBadge
-                            className="font-normal text-caption"
-                            color={fb.organizationStatus.color}
-                          >
-                            {fb.organizationStatus.name}
-                          </TagBadge>
-                        )}
-                        <span>{fb.voteCount} votes</span>
-                      </span>
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </motion.div>
-    </AnimatePresence>
+      {(props.isAdmin || linkedFeedback.length > 0) && (
+        <LinkedFeedbackSection {...props} linkedFeedback={linkedFeedback} />
+      )}
+    </div>
   );
 }

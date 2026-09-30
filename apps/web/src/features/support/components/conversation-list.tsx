@@ -1,12 +1,19 @@
 "use client";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@ctrl-ui/react/ui/avatar";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@ctrl-ui/react/ui/empty";
 import { ScrollArea } from "@ctrl-ui/react/ui/scroll-area";
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { ChatCircle } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { formatDistanceToNow } from "date-fns";
-import { useEffect, useRef } from "react";
-import { Text } from "@/components/ui/typography";
+import { format, formatDistanceToNowStrict } from "date-fns";
+import { type ReactNode, useEffect, useRef } from "react";
 import { HoverQuickActions } from "@/features/inbox/components/hover-quick-actions";
 import { ConversationStatusBadge } from "@/features/support/components/conversation-status-badge";
 import { getInitials } from "@/features/support/lib/initials";
@@ -39,10 +46,24 @@ interface ConversationListProps {
   activeId?: Id<"supportConversations">;
   className?: string;
   conversations: ConversationSummary[] | undefined;
+  emptyState?: ReactNode;
   isAdmin?: boolean;
   onSelect: (conversation: ConversationSummary) => void;
   quickActions?: QuickActions;
   selectedId?: Id<"supportConversations">;
+}
+
+const MAX_DISPLAYED_UNREAD = 99;
+
+function UnreadCount({ count }: { count: number }) {
+  return (
+    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-brand px-1.5 font-medium text-brand-foreground text-caption tabular-nums">
+      <span>
+        {count > MAX_DISPLAYED_UNREAD ? `${MAX_DISPLAYED_UNREAD}+` : count}
+      </span>
+      <span className="sr-only"> unread</span>
+    </span>
+  );
 }
 
 function ConversationRow({
@@ -62,11 +83,12 @@ function ConversationRow({
 }) {
   const rowRef = useRef<HTMLLIElement>(null);
   const user = conversation.user;
-  const displayName = user?.name || user?.email || "Unknown User";
+  const displayName = user?.name || user?.email || "Unknown user";
   const unreadCount = isAdmin
     ? conversation.adminUnreadCount
     : conversation.userUnreadCount;
   const hasUnread = unreadCount > 0;
+  const lastMessageDate = new Date(conversation.lastMessageAt);
 
   useEffect(() => {
     if (isActive) {
@@ -77,41 +99,45 @@ function ConversationRow({
   return (
     <li
       className={cn(
-        "group/conversation relative rounded-lg transition-colors hover:bg-accent",
+        "group/conversation relative rounded-lg hover:bg-accent",
+        hasUnread && "bg-accent/50",
         isSelected && "bg-accent",
-        isActive && "ring-2 ring-ring",
-        hasUnread && !isSelected && "bg-accent/50"
+        isActive && "ring-2 ring-ring"
       )}
       data-active={isActive}
       ref={rowRef}
     >
       <button
+        aria-current={isSelected ? "true" : undefined}
         className="flex w-full items-start gap-3 rounded-lg p-3 text-left"
         onClick={onSelect}
         type="button"
       >
-        <Avatar className="h-10 w-10 shrink-0">
-          <AvatarImage alt={displayName} src={user?.image} />
+        <Avatar className="size-10">
+          <AvatarImage alt="" src={user?.image} />
           <AvatarFallback>
             {getInitials(user?.name, user?.email)}
           </AvatarFallback>
         </Avatar>
 
         <div className="min-w-0 flex-1">
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex items-baseline justify-between gap-2">
             <span
               className={cn(
                 "truncate text-sm",
                 hasUnread ? "font-semibold" : "font-medium"
               )}
+              title={displayName}
             >
               {displayName}
             </span>
-            <span className="shrink-0 text-caption text-muted-foreground">
-              {formatDistanceToNow(conversation.lastMessageAt, {
-                addSuffix: false,
-              })}
-            </span>
+            <time
+              className="shrink-0 text-caption text-muted-foreground tabular-nums"
+              dateTime={lastMessageDate.toISOString()}
+              title={format(lastMessageDate, "PPpp")}
+            >
+              {formatDistanceToNowStrict(lastMessageDate)}
+            </time>
           </div>
 
           {conversation.subject && (
@@ -120,15 +146,19 @@ function ConversationRow({
                 "mt-0.5 truncate text-xs",
                 hasUnread ? "text-foreground" : "text-muted-foreground"
               )}
+              title={conversation.subject}
             >
               {conversation.subject}
             </p>
           )}
 
           {conversation.lastMessagePreview && (
-            <Text className="mt-0.5 line-clamp-1" variant="caption">
+            <p
+              className="mt-0.5 truncate text-muted-foreground text-xs"
+              title={conversation.lastMessagePreview}
+            >
               {conversation.lastMessagePreview}
-            </Text>
+            </p>
           )}
 
           <div className="mt-1.5 flex items-center gap-2">
@@ -136,18 +166,14 @@ function ConversationRow({
               showIcon={false}
               status={conversation.status}
             />
-            {hasUnread && (
-              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-brand px-1.5 font-medium text-brand-foreground text-caption">
-                {unreadCount > 99 ? "99+" : unreadCount}
-              </span>
-            )}
+            {hasUnread && <UnreadCount count={unreadCount} />}
           </div>
         </div>
       </button>
 
       {isAdmin && quickActions && (
         <HoverQuickActions
-          className="absolute top-2 right-2"
+          className="absolute right-2 bottom-2"
           onAssignToMe={() => quickActions.onAssign(conversation._id)}
           onClose={() => quickActions.onClose(conversation._id)}
           onResolve={() => quickActions.onResolve(conversation._id)}
@@ -161,22 +187,39 @@ const SKELETON_ROWS = ["one", "two", "three", "four", "five"];
 
 function ConversationListSkeleton({ className }: { className?: string }) {
   return (
-    <div className={cn("flex flex-1 flex-col", className)}>
-      <div className="space-y-2 p-2">
+    <div className={cn("flex flex-1 flex-col", className)} role="status">
+      <span className="sr-only">Loading conversations…</span>
+      <ul aria-hidden className="space-y-1 p-2">
         {SKELETON_ROWS.map((row) => (
-          <div
-            className="flex animate-pulse items-start gap-3 rounded-lg p-3"
-            key={row}
-          >
-            <div className="h-10 w-10 shrink-0 rounded-full bg-muted" />
-            <div className="flex-1 space-y-2">
-              <div className="h-4 w-3/4 rounded bg-muted" />
-              <div className="h-3 w-1/2 rounded bg-muted" />
+          <li className="flex items-start gap-3 p-3" key={row}>
+            <Skeleton className="size-10 shrink-0 rounded-full" />
+            <div className="flex-1 space-y-2 pt-0.5">
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-3 w-1/2" />
+              <Skeleton className="h-3 w-5/6" />
             </div>
-          </div>
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
+  );
+}
+
+function ConversationListEmpty({ isAdmin }: { isAdmin: boolean }) {
+  return (
+    <Empty>
+      <EmptyHeader>
+        <EmptyMedia>
+          <ChatCircle aria-hidden />
+        </EmptyMedia>
+        <EmptyTitle>No conversations</EmptyTitle>
+        <EmptyDescription>
+          {isAdmin
+            ? "No support requests yet"
+            : "Start a new conversation to get help"}
+        </EmptyDescription>
+      </EmptyHeader>
+    </Empty>
   );
 }
 
@@ -187,6 +230,7 @@ export function ConversationList({
   onSelect,
   isAdmin = false,
   className,
+  emptyState,
   quickActions,
 }: ConversationListProps) {
   if (!conversations) {
@@ -196,26 +240,14 @@ export function ConversationList({
   if (conversations.length === 0) {
     return (
       <div className={cn("flex flex-1 items-center justify-center", className)}>
-        <div className="flex flex-col items-center gap-3 p-4 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-            <ChatCircle className="h-6 w-6 text-muted-foreground" />
-          </div>
-          <div>
-            <Text variant="label">No conversations</Text>
-            <Text className="mt-0.5" variant="caption">
-              {isAdmin
-                ? "No support requests yet"
-                : "Start a new conversation to get help"}
-            </Text>
-          </div>
-        </div>
+        {emptyState ?? <ConversationListEmpty isAdmin={isAdmin} />}
       </div>
     );
   }
 
   return (
     <ScrollArea className={cn("flex-1", className)}>
-      <ul className="space-y-1 p-2">
+      <ul aria-label="Conversations" className="space-y-1 p-2">
         {conversations.map((conversation) => (
           <ConversationRow
             conversation={conversation}

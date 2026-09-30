@@ -16,7 +16,7 @@ export function SuperAdminDashboard() {
   return (
     <PageLayout scroll="page" width="wide">
       <PageHeader>
-        <PageTitle>Super Admin</PageTitle>
+        <PageTitle>Super admin</PageTitle>
       </PageHeader>
       <PageBody contentClassName="space-y-6">
         <Tabs defaultValue="overview">

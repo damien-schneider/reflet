@@ -44,9 +44,9 @@ vi.mock("@/components/ui/typography", () => ({
 import { SyncedReleasesSection } from "./synced-releases-card";
 
 describe("SyncedReleasesSection", () => {
-  it("returns null for empty releases", () => {
-    const { container } = render(<SyncedReleasesSection releases={[]} />);
-    expect(container.innerHTML).toBe("");
+  it("tells the user how to get releases when none are synced", () => {
+    render(<SyncedReleasesSection releases={[]} />);
+    expect(screen.getByText(/No releases synced yet/)).toBeInTheDocument();
   });
 
   it("renders release content", () => {

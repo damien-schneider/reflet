@@ -135,7 +135,7 @@ export function renderHomepageOg({
             fontSize: "18px",
           }}
         >
-          Product Feedback & Roadmap Platform
+          Product feedback and roadmap platform
         </span>
       </div>
     </div>,

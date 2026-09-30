@@ -42,12 +42,12 @@ describe("createSlashCommands", () => {
 
   it("includes Bullet List command", () => {
     const commands = createSlashCommands();
-    expect(commands.find((c) => c.title === "Bullet List")).toBeDefined();
+    expect(commands.find((c) => c.title === "Bullet list")).toBeDefined();
   });
 
   it("includes Numbered List command", () => {
     const commands = createSlashCommands();
-    expect(commands.find((c) => c.title === "Numbered List")).toBeDefined();
+    expect(commands.find((c) => c.title === "Numbered list")).toBeDefined();
   });
 
   it("includes Quote command", () => {
@@ -57,7 +57,7 @@ describe("createSlashCommands", () => {
 
   it("includes Code Block command", () => {
     const commands = createSlashCommands();
-    expect(commands.find((c) => c.title === "Code Block")).toBeDefined();
+    expect(commands.find((c) => c.title === "Code block")).toBeDefined();
   });
 
   it("includes Divider command", () => {
@@ -131,7 +131,7 @@ describe("createSlashCommands", () => {
   it("Bullet List command calls toggleBulletList", () => {
     const commands = createSlashCommands();
     const bullet = commands.find(
-      (c) => c.title === "Bullet List"
+      (c) => c.title === "Bullet list"
     ) as CommandItem;
     const { chain, _chain } = createMockEditor();
     bullet.command({ editor: { chain } as any, range: defaultRange });
@@ -141,7 +141,7 @@ describe("createSlashCommands", () => {
   it("Numbered List command calls toggleOrderedList", () => {
     const commands = createSlashCommands();
     const numbered = commands.find(
-      (c) => c.title === "Numbered List"
+      (c) => c.title === "Numbered list"
     ) as CommandItem;
     const { chain, _chain } = createMockEditor();
     numbered.command({ editor: { chain } as any, range: defaultRange });
@@ -158,7 +158,7 @@ describe("createSlashCommands", () => {
 
   it("Code Block command calls toggleCodeBlock", () => {
     const commands = createSlashCommands();
-    const code = commands.find((c) => c.title === "Code Block") as CommandItem;
+    const code = commands.find((c) => c.title === "Code block") as CommandItem;
     const { chain, _chain } = createMockEditor();
     code.command({ editor: { chain } as any, range: defaultRange });
     expect(_chain.toggleCodeBlock).toHaveBeenCalled();

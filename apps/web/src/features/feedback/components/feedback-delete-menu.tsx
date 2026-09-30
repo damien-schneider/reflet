@@ -1,25 +1,18 @@
 "use client";
 
 import {
-  AlertDialog,
-  AlertDialogClose,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@ctrl-ui/react/ui/alert-dialog";
-import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@ctrl-ui/react/ui/context-menu";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import { Trash } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { type ReactNode, useState } from "react";
+import { DestructiveConfirmDialog } from "@/components/ui/destructive-confirm-dialog";
 
 interface FeedbackDeleteMenuProps {
   canDelete: boolean;
@@ -36,8 +29,11 @@ export function FeedbackDeleteMenu({
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   const handleDelete = async () => {
-    await deleteFeedback({ id: feedbackId });
-    setIsConfirmOpen(false);
+    try {
+      await deleteFeedback({ id: feedbackId });
+    } catch {
+      toast.error("Couldn’t move this feedback to trash. Try again.");
+    }
   };
 
   if (!canDelete) {
@@ -53,33 +49,20 @@ export function FeedbackDeleteMenu({
             className="menu-item-danger"
             onClick={() => setIsConfirmOpen(true)}
           >
-            <Trash className="mr-2 h-4 w-4" />
-            Delete
+            <Trash aria-hidden data-icon="inline-start" />
+            Move to trash
           </ContextMenuItem>
         </ContextMenuContent>
       </ContextMenu>
 
-      <AlertDialog onOpenChange={setIsConfirmOpen} open={isConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete feedback</AlertDialogTitle>
-            <AlertDialogDescription>
-              This feedback will be moved to trash. You can restore it within 30
-              days.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogClose>Cancel</AlertDialogClose>
-            <AlertDialogClose
-              onClick={handleDelete}
-              tone="danger"
-              variant="surface"
-            >
-              Move to trash
-            </AlertDialogClose>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DestructiveConfirmDialog
+        confirmLabel="Move to trash"
+        description="It disappears from the board, with its comments and votes. You can restore it from the trash within 30 days."
+        onConfirm={handleDelete}
+        onOpenChange={setIsConfirmOpen}
+        open={isConfirmOpen}
+        title="Move feedback to trash?"
+      />
     </>
   );
 }

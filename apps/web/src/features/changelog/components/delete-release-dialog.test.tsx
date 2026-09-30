@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@ctrl-ui/react/ui/button", () => ({
@@ -24,8 +24,16 @@ vi.mock("@ctrl-ui/react/ui/button", () => ({
   ),
 }));
 
-vi.mock("@ctrl-ui/react/ui/dialog", () => ({
-  Dialog: ({
+vi.mock("@ctrl-ui/react/ui/spinner", () => ({
+  Spinner: () => <span data-testid="spinner" />,
+}));
+
+vi.mock("@ctrl-ui/react/ui/toast", () => ({
+  toast: { error: vi.fn() },
+}));
+
+vi.mock("@ctrl-ui/react/ui/alert-dialog", () => ({
+  AlertDialog: ({
     children,
     open,
     onOpenChange,
@@ -39,19 +47,19 @@ vi.mock("@ctrl-ui/react/ui/dialog", () => ({
         {children}
       </div>
     ) : null,
-  DialogContent: ({ children }: { children: React.ReactNode }) => (
+  AlertDialogContent: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="dialog-content">{children}</div>
   ),
-  DialogDescription: ({ children }: { children: React.ReactNode }) => (
+  AlertDialogDescription: ({ children }: { children: React.ReactNode }) => (
     <p data-testid="dialog-description">{children}</p>
   ),
-  DialogFooter: ({ children }: { children: React.ReactNode }) => (
+  AlertDialogFooter: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="dialog-footer">{children}</div>
   ),
-  DialogHeader: ({ children }: { children: React.ReactNode }) => (
+  AlertDialogHeader: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="dialog-header">{children}</div>
   ),
-  DialogTitle: ({ children }: { children: React.ReactNode }) => (
+  AlertDialogTitle: ({ children }: { children: React.ReactNode }) => (
     <h2 data-testid="dialog-title">{children}</h2>
   ),
 }));
@@ -69,7 +77,14 @@ describe("DeleteReleaseDialog", () => {
     render(<DeleteReleaseDialog {...defaultProps} />);
     expect(screen.getByTestId("dialog")).toBeInTheDocument();
     expect(screen.getByTestId("dialog-title")).toHaveTextContent(
-      "Delete release"
+      "Delete this release?"
+    );
+  });
+
+  it("names the release in the title when provided", () => {
+    render(<DeleteReleaseDialog {...defaultProps} releaseTitle="v2 launch" />);
+    expect(screen.getByTestId("dialog-title")).toHaveTextContent(
+      "Delete “v2 launch”?"
     );
   });
 
@@ -81,17 +96,32 @@ describe("DeleteReleaseDialog", () => {
   it("displays the confirmation message", () => {
     render(<DeleteReleaseDialog {...defaultProps} />);
     expect(screen.getByTestId("dialog-description")).toHaveTextContent(
-      "Are you sure you want to delete this release?"
-    );
-    expect(screen.getByTestId("dialog-description")).toHaveTextContent(
-      "cannot be undone"
+      "can’t be undone"
     );
   });
 
   it("renders Cancel and Delete buttons", () => {
     render(<DeleteReleaseDialog {...defaultProps} />);
     expect(screen.getByText("Cancel")).toBeInTheDocument();
-    expect(screen.getByText("Delete")).toBeInTheDocument();
+    expect(screen.getByText("Delete release")).toBeInTheDocument();
+  });
+
+  it("disables both actions while the delete is pending", async () => {
+    let resolveDelete: () => void = () => undefined;
+    const onConfirm = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveDelete = resolve;
+        })
+    );
+    render(<DeleteReleaseDialog {...defaultProps} onConfirm={onConfirm} />);
+    fireEvent.click(screen.getByText("Delete release"));
+    expect(screen.getByText("Delete release")).toBeDisabled();
+    expect(screen.getByText("Cancel")).toBeDisabled();
+    resolveDelete();
+    await waitFor(() =>
+      expect(screen.getByText("Delete release")).not.toBeDisabled()
+    );
   });
 
   it("calls onClose when Cancel is clicked", () => {
@@ -104,13 +134,16 @@ describe("DeleteReleaseDialog", () => {
   it("calls onConfirm when Delete is clicked", () => {
     const onConfirm = vi.fn().mockResolvedValue(undefined);
     render(<DeleteReleaseDialog {...defaultProps} onConfirm={onConfirm} />);
-    fireEvent.click(screen.getByText("Delete"));
+    fireEvent.click(screen.getByText("Delete release"));
     expect(onConfirm).toHaveBeenCalledOnce();
   });
 
   it("has danger tone on Delete button", () => {
     render(<DeleteReleaseDialog {...defaultProps} />);
-    expect(screen.getByText("Delete")).toHaveAttribute("data-tone", "danger");
+    expect(screen.getByText("Delete release")).toHaveAttribute(
+      "data-tone",
+      "danger"
+    );
   });
 
   it("has surface variant on Cancel button", () => {

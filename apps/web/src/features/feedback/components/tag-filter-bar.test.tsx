@@ -41,17 +41,17 @@ vi.mock("./triage-pulse", () => ({
 
 vi.mock("@/features/tags/components/delete-tag-dialog", () => ({
   DeleteTagDialog: ({
-    tagId,
+    tag,
     onOpenChange,
     onSuccess,
   }: {
-    tagId: string | null;
+    tag: { _id: string } | null;
     onOpenChange: (open: boolean) => void;
     onSuccess: () => void;
   }) =>
-    tagId ? (
+    tag ? (
       <div data-testid="delete-tag-dialog">
-        <span data-testid="delete-tag-id">{tagId}</span>
+        <span data-testid="delete-tag-id">{tag._id}</span>
         <button data-testid="delete-confirm" onClick={onSuccess} type="button">
           Confirm Delete
         </button>

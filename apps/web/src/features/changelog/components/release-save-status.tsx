@@ -1,38 +1,64 @@
 "use client";
 
 import { Spinner } from "@ctrl-ui/react/ui/spinner";
-import { Check } from "@phosphor-icons/react";
+import { Check, WarningCircle } from "@phosphor-icons/react";
+import type { SaveStatus as SaveStatusValue } from "../hooks/use-auto-save-release";
 
-export function SaveStatus({
+function SaveStatusLabel({
   isPublished,
   releaseId,
   saveStatus,
 }: {
   isPublished: boolean;
   releaseId?: string | null;
-  saveStatus: "saving" | "saved" | "idle";
+  saveStatus: SaveStatusValue;
 }) {
   if (saveStatus === "saving") {
     return (
-      <span className="flex items-center gap-1 text-muted-foreground text-sm">
-        <Spinner size="sm" />
-        Saving...
-      </span>
+      <>
+        <Spinner size="xs" />
+        Saving…
+      </>
     );
   }
 
   if (saveStatus === "saved") {
     return (
-      <span className="flex items-center gap-1 text-sm text-success-text">
-        <Check className="h-4 w-4" />
+      <span className="inline-flex items-center gap-1 text-success-text">
+        <Check aria-hidden="true" className="size-3.5" />
         Saved
       </span>
     );
   }
 
+  if (saveStatus === "error") {
+    return (
+      <span className="inline-flex items-center gap-1 text-destructive-text">
+        <WarningCircle aria-hidden="true" className="size-3.5" />
+        Not saved
+      </span>
+    );
+  }
+
   if (releaseId && !isPublished) {
-    return <span className="text-muted-foreground text-sm">Draft</span>;
+    return "Draft";
   }
 
   return null;
+}
+
+export function SaveStatus(props: {
+  isPublished: boolean;
+  releaseId?: string | null;
+  saveStatus: SaveStatusValue;
+}) {
+  return (
+    <span
+      aria-live="polite"
+      className="inline-flex min-w-20 items-center justify-end gap-1.5 text-muted-foreground text-sm"
+      role="status"
+    >
+      <SaveStatusLabel {...props} />
+    </span>
+  );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Tooltip,
@@ -8,10 +9,12 @@ import {
 } from "@ctrl-ui/react/ui/tooltip";
 import { Clock, X } from "@phosphor-icons/react";
 import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
+import type { SaveStatus as SaveStatusValue } from "../hooks/use-auto-save-release";
 import { GenerateFromCommits } from "./generate-from-commits";
 import { SaveStatus } from "./release-save-status";
 import { ScheduleCountdown } from "./schedule-countdown";
 import { VersionPicker } from "./version-picker";
+import type { VersionSuggestions } from "./version-suggestions";
 
 interface ReleaseEditorToolbarProps {
   handleCancelSchedule: () => void;
@@ -30,9 +33,10 @@ interface ReleaseEditorToolbarProps {
   orgSlug: string;
   release?: Doc<"releases">;
   releaseId: Id<"releases"> | null;
-  saveStatus: "saving" | "saved" | "idle";
+  saveStatus: SaveStatusValue;
   setVersion: (value: string) => void;
   version: string;
+  versionSuggestions: VersionSuggestions;
 }
 
 export function ReleaseEditorToolbar({
@@ -53,15 +57,15 @@ export function ReleaseEditorToolbar({
   saveStatus,
   setVersion,
   version,
+  versionSuggestions,
 }: ReleaseEditorToolbarProps) {
   return (
-    <div className="flex items-center gap-2 px-6 pt-4">
+    <div className="flex flex-wrap items-center gap-2 px-6 pt-4">
       <VersionPicker
         disabled={isSubmitting || isStreaming}
-        excludeReleaseId={release?._id}
         onChange={setVersion}
-        organizationId={organizationId}
         value={version}
+        versionSuggestions={versionSuggestions}
       />
       <GenerateFromCommits
         disabled={isSubmitting}
@@ -77,23 +81,22 @@ export function ReleaseEditorToolbar({
         version={version}
       />
       {isPublished && (
-        <span className="rounded-full bg-success-subtle px-2 py-0.5 text-success-text text-xs">
+        <Badge color="green" size="sm">
           Published
-        </span>
+        </Badge>
       )}
       {isScheduled && !isPublished && release?.scheduledPublishAt && (
         <div className="flex items-center gap-2">
-          <span className="flex items-center gap-1 rounded-full bg-warning-subtle px-2 py-0.5 text-warning-text text-xs">
-            <Clock className="h-3 w-3" />
+          <Badge color="yellow" size="sm">
+            <Clock aria-hidden="true" className="size-3" />
             Scheduled
-          </span>
+          </Badge>
           <ScheduleCountdown scheduledAt={release.scheduledPublishAt} />
           <Tooltip>
             <TooltipTrigger
               render={
                 <Button
                   aria-label="Cancel schedule"
-                  className="size-7"
                   disabled={isSubmitting}
                   iconOnly
                   onClick={handleCancelSchedule}
@@ -101,7 +104,7 @@ export function ReleaseEditorToolbar({
                   type="button"
                   variant="ghost"
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <X aria-hidden="true" className="size-3.5" />
                 </Button>
               }
             />

@@ -1,11 +1,26 @@
 "use client";
 
 import { Button } from "@ctrl-ui/react/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@ctrl-ui/react/ui/card";
+import {
+  Field,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+} from "@ctrl-ui/react/ui/field";
 import { Input } from "@ctrl-ui/react/ui/input";
 import { Textarea } from "@ctrl-ui/react/ui/textarea";
+import { toast } from "@ctrl-ui/react/ui/toast";
+import { Toggle } from "@ctrl-ui/react/ui/toggle";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { useState } from "react";
-import { cn } from "@/lib/utils";
+import { type FormEvent, useId, useState } from "react";
+
+type IncidentSeverity = "minor" | "major" | "critical";
 
 interface Monitor {
   _id: Id<"statusMonitors">;
@@ -17,28 +32,19 @@ interface IncidentComposerProps {
   onCancel: () => void;
   onSubmit: (data: {
     title: string;
-    severity: "minor" | "major" | "critical";
+    severity: IncidentSeverity;
     affectedMonitorIds: Id<"statusMonitors">[];
     message: string;
-  }) => void;
+  }) => Promise<void>;
 }
 
-const severityOptions = [
-  {
-    color: "bg-warning-subtle text-warning-text",
-    label: "Minor",
-    value: "minor" as const,
-  },
-  {
-    color: "bg-warning/25 text-warning-text",
-    label: "Major",
-    value: "major" as const,
-  },
-  {
-    color: "bg-destructive-subtle text-destructive-text",
-    label: "Critical",
-    value: "critical" as const,
-  },
+const SEVERITY_OPTIONS: ReadonlyArray<{
+  label: string;
+  value: IncidentSeverity;
+}> = [
+  { label: "Minor", value: "minor" },
+  { label: "Major", value: "major" },
+  { label: "Critical", value: "critical" },
 ];
 
 export function IncidentComposer({
@@ -47,13 +53,16 @@ export function IncidentComposer({
   onCancel,
 }: IncidentComposerProps) {
   const [title, setTitle] = useState("");
-  const [severity, setSeverity] = useState<"minor" | "major" | "critical">(
-    "major"
-  );
+  const [severity, setSeverity] = useState<IncidentSeverity>("major");
   const [selectedMonitors, setSelectedMonitors] = useState<
     Set<Id<"statusMonitors">>
   >(new Set());
   const [message, setMessage] = useState("");
+  const [isPublishing, setIsPublishing] = useState(false);
+  const messageId = useId();
+
+  const canPublish =
+    title.trim() !== "" && message.trim() !== "" && selectedMonitors.size > 0;
 
   const toggleMonitor = (id: Id<"statusMonitors">) => {
     const next = new Set(selectedMonitors);
@@ -65,111 +74,108 @@ export function IncidentComposer({
     setSelectedMonitors(next);
   };
 
-  const handleSubmit = () => {
-    if (!(title.trim() && message.trim()) || selectedMonitors.size === 0) {
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!canPublish || isPublishing) {
       return;
     }
-
-    onSubmit({
-      affectedMonitorIds: [...selectedMonitors],
-      message: message.trim(),
-      severity,
-      title: title.trim(),
-    });
+    setIsPublishing(true);
+    try {
+      await onSubmit({
+        affectedMonitorIds: [...selectedMonitors],
+        message: message.trim(),
+        severity,
+        title: title.trim(),
+      });
+    } catch {
+      toast.error("Couldn’t publish the incident. Try again.");
+    }
+    setIsPublishing(false);
   };
 
   return (
-    <div className="rounded-lg border border-destructive/30 bg-card p-4">
-      <h3 className="mb-3 font-semibold text-sm">Declare Incident</h3>
+    <Card>
+      <CardHeader>
+        <CardTitle>Report an incident</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          <Field>
+            <FieldLabel>Title</FieldLabel>
+            <Input
+              autoFocus
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Checkout API is returning errors"
+              value={title}
+            />
+          </Field>
 
-      <div className="space-y-3">
-        <Input
-          autoFocus
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="What's happening?"
-          value={title}
-        />
-
-        <div>
-          <p className="mb-1.5 text-muted-foreground text-xs">
-            Affected services
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {monitors.map((m) => {
-              const selected = selectedMonitors.has(m._id);
-              return (
-                <Button
-                  active={selected}
-                  aria-pressed={selected}
-                  className={cn(
-                    "h-auto rounded-full border px-3 py-1 text-xs",
-                    selected
-                      ? "border-destructive bg-destructive-subtle text-destructive-text"
-                      : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
-                  )}
+          <FieldSet>
+            <FieldLegend>Affected services</FieldLegend>
+            <div className="flex flex-wrap gap-1.5">
+              {monitors.map((m) => (
+                <Toggle
                   key={m._id}
-                  onClick={() => toggleMonitor(m._id)}
-                  type="button"
-                  variant="quiet"
+                  onPressedChange={() => toggleMonitor(m._id)}
+                  pressed={selectedMonitors.has(m._id)}
+                  size="xs"
+                  value={m._id}
                 >
                   {m.name}
-                </Button>
-              );
-            })}
-          </div>
-        </div>
+                </Toggle>
+              ))}
+            </div>
+          </FieldSet>
 
-        <div>
-          <p className="mb-1.5 text-muted-foreground text-xs">Severity</p>
-          <div className="flex gap-1.5">
-            {severityOptions.map((opt) => {
-              const selected = severity === opt.value;
-              return (
-                <Button
-                  active={selected}
-                  aria-pressed={selected}
-                  className={cn(
-                    "h-auto rounded-full px-3 py-1 text-xs",
-                    selected
-                      ? opt.color
-                      : "bg-muted text-muted-foreground hover:text-foreground"
-                  )}
+          <FieldSet>
+            <FieldLegend>Severity</FieldLegend>
+            <div className="flex flex-wrap gap-1.5">
+              {SEVERITY_OPTIONS.map((opt) => (
+                <Toggle
                   key={opt.value}
-                  onClick={() => setSeverity(opt.value)}
-                  type="button"
-                  variant="quiet"
+                  onPressedChange={() => setSeverity(opt.value)}
+                  pressed={severity === opt.value}
+                  size="xs"
+                  value={opt.value}
                 >
                   {opt.label}
-                </Button>
-              );
-            })}
+                </Toggle>
+              ))}
+            </div>
+          </FieldSet>
+
+          <Field>
+            <FieldLabel htmlFor={messageId}>Message for your users</FieldLabel>
+            <Textarea
+              id={messageId}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                  e.currentTarget.form?.requestSubmit();
+                }
+              }}
+              placeholder="We’re investigating elevated error rates and will post an update within 30 minutes."
+              rows={3}
+              value={message}
+            />
+          </Field>
+
+          <div className="flex items-center justify-end gap-2">
+            <Button onClick={onCancel} size="sm" variant="ghost">
+              Cancel
+            </Button>
+            <Button
+              disabled={!canPublish || isPublishing}
+              size="sm"
+              tone="primary"
+              type="submit"
+              variant="solid"
+            >
+              {isPublishing ? "Publishing…" : "Publish incident"}
+            </Button>
           </div>
-        </div>
-
-        <Textarea
-          onChange={(e) => setMessage(e.target.value)}
-          placeholder="What do your users need to know?"
-          rows={3}
-          value={message}
-        />
-
-        <div className="flex items-center justify-end gap-2">
-          <Button onClick={onCancel} size="xs" variant="ghost">
-            Cancel
-          </Button>
-          <Button
-            disabled={
-              !(title.trim() && message.trim()) || selectedMonitors.size === 0
-            }
-            onClick={handleSubmit}
-            size="xs"
-            tone="danger"
-            variant="surface"
-          >
-            Publish Incident
-          </Button>
-        </div>
-      </div>
-    </div>
+        </form>
+      </CardContent>
+    </Card>
   );
 }

@@ -38,8 +38,8 @@ const LOGO_POLICY = {
 } as const;
 
 const REJECTION_MESSAGES: Record<string, string> = {
-  "file-invalid-type": "Please upload a PNG, JPG, SVG, or WebP image",
-  "file-too-large": `Image must be smaller than ${MAX_SIZE_MB}MB`,
+  "file-invalid-type": "Upload a PNG, JPG, SVG, or WebP image",
+  "file-too-large": `Use an image smaller than ${MAX_SIZE_MB} MB`,
 };
 
 function DropzoneBody({
@@ -55,7 +55,7 @@ function DropzoneBody({
     return (
       <div className="flex flex-col items-center gap-2">
         <Spinner size="lg" />
-        <Muted>Uploading...</Muted>
+        <Muted>Uploading…</Muted>
       </div>
     );
   }
@@ -68,6 +68,7 @@ function DropzoneBody({
             alt="Organization logo"
             className="object-contain outline outline-1 outline-black/10 -outline-offset-1 dark:outline-white/10"
             fill
+            sizes="128px"
             src={currentLogo}
           />
         </div>
@@ -80,9 +81,9 @@ function DropzoneBody({
     <div className="flex flex-col items-center gap-2">
       <div className="rounded-full bg-muted p-3">
         {isDragActive ? (
-          <Upload className="h-6 w-6 text-brand-text" />
+          <Upload aria-hidden className="size-6 text-brand-text" />
         ) : (
-          <ImageIcon className="h-6 w-6 text-muted-foreground" />
+          <ImageIcon aria-hidden className="size-6 text-muted-foreground" />
         )}
       </div>
       <div className="text-center">
@@ -90,7 +91,7 @@ function DropzoneBody({
           {isDragActive ? "Drop to upload" : "Click or drag to upload"}
         </Muted>
         <Muted className="text-caption">
-          PNG, JPG, SVG, WebP (max {MAX_SIZE_MB}MB)
+          PNG, JPG, SVG or WebP, up to {MAX_SIZE_MB} MB
         </Muted>
       </div>
     </div>
@@ -143,7 +144,11 @@ export function LogoUploader({
         </DropzoneArea>
       </Dropzone>
 
-      {error && <p className="text-destructive-text text-sm">{error}</p>}
+      {error && (
+        <p className="text-destructive-text text-sm" role="alert">
+          {error}
+        </p>
+      )}
 
       {currentLogo && !isUploading && (
         <Button
@@ -156,7 +161,7 @@ export function LogoUploader({
           type="button"
           variant="surface"
         >
-          <Trash className="mr-2 h-4 w-4" />
+          <Trash aria-hidden className="size-4" />
           Remove logo
         </Button>
       )}

@@ -4,7 +4,7 @@ import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import { use } from "react";
-import { H2, Muted } from "@/components/ui/typography";
+import { OrgNotFound } from "@/features/dashboard/components/org-not-found";
 import { FeedbackBoard } from "@/features/feedback/components/feedback-board";
 
 export default function OrgDashboard({
@@ -24,10 +24,11 @@ export default function OrgDashboard({
 
   if (org === undefined) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8 text-center">
-          <Skeleton className="mx-auto h-10 w-64" />
-          <Skeleton className="mx-auto mt-2 h-5 w-96" />
+      <div aria-busy="true" className="container mx-auto px-4 py-8">
+        <span className="sr-only">Loading feedback…</span>
+        <div className="mb-8 flex flex-col items-center gap-2">
+          <Skeleton className="h-10 w-64 max-w-full" />
+          <Skeleton className="h-5 w-96 max-w-full" />
         </div>
         <div className="space-y-4">
           {["a", "b", "c"].map((id) => (
@@ -38,18 +39,8 @@ export default function OrgDashboard({
     );
   }
 
-  if (!org) {
-    return (
-      <div className="flex min-h-[50vh] items-center justify-center">
-        <div className="text-center">
-          <H2 variant="card">Organization not found</H2>
-          <Muted className="mt-2">
-            The organization you&apos;re looking for doesn&apos;t exist or you
-            don&apos;t have access.
-          </Muted>
-        </div>
-      </div>
-    );
+  if (org === null) {
+    return <OrgNotFound />;
   }
 
   const primaryColor = org.primaryColor;

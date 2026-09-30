@@ -280,7 +280,7 @@ export function GenerateFromCommits({
         className="flex items-center gap-1 text-muted-foreground text-xs hover:text-foreground"
         href={`/dashboard/${orgSlug}/project/github`}
       >
-        <Info className="h-3 w-3" />
+        <Info aria-hidden className="size-3" />
         Connect a repository to generate
       </Link>
     );
@@ -293,8 +293,6 @@ export function GenerateFromCommits({
       <TooltipTrigger
         render={
           <Button
-            aria-label={GENERATE_HINT}
-            className="h-7 gap-1 text-xs"
             disabled={isDisabled}
             onClick={handleGenerate}
             size="xs"
@@ -303,13 +301,13 @@ export function GenerateFromCommits({
           >
             {isFetchingCommits || isStreaming ? (
               <>
-                <Spinner size="xs" />
-                {isFetchingCommits ? "Fetching..." : "Generating..."}
+                <Spinner data-icon="inline-start" size="xs" />
+                {isFetchingCommits ? "Fetching…" : "Generating…"}
               </>
             ) : (
               <>
-                <Lightning className="h-3 w-3" />
-                AI Generate
+                <Lightning aria-hidden className="size-3" />
+                Generate with AI
               </>
             )}
           </Button>

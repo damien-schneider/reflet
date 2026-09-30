@@ -46,11 +46,11 @@ function RatingPreview({
 
   return (
     <div>
-      <div className="flex gap-1.5">
+      <div className="flex flex-wrap gap-1.5">
         {values.map((val) => (
           <div
             className={cn(
-              "flex items-center justify-center rounded-lg border text-muted-foreground",
+              "flex items-center justify-center rounded-lg border text-muted-foreground tabular-nums",
               buttonSize
             )}
             key={val}
@@ -81,11 +81,11 @@ function NpsPreview({
 
   return (
     <div>
-      <div className="flex gap-1">
+      <div className="flex flex-wrap gap-1">
         {values.map((val) => (
           <div
             className={cn(
-              "flex items-center justify-center rounded border",
+              "flex items-center justify-center rounded border tabular-nums",
               buttonSize,
               val <= 6 && "text-destructive-text/70",
               val > 6 && val <= 8 && "text-warning-text/70",
@@ -121,7 +121,7 @@ function TextPreview({
         compact ? "px-3 py-2 text-xs" : "px-4 py-3 text-sm"
       )}
     >
-      {config?.placeholder ?? "Your answer..."}
+      {config?.placeholder ?? "Your answer…"}
     </div>
   );
 }
@@ -152,7 +152,7 @@ function SingleChoicePreview({
         </div>
       ))}
       {remaining > 0 ? (
-        <span className="pl-1 text-muted-foreground text-xs">
+        <span className="pl-1 text-muted-foreground text-xs tabular-nums">
           +{remaining} more
         </span>
       ) : null}
@@ -186,7 +186,7 @@ function MultipleChoicePreview({
         </div>
       ))}
       {remaining > 0 ? (
-        <span className="pl-1 text-muted-foreground text-xs">
+        <span className="pl-1 text-muted-foreground text-xs tabular-nums">
           +{remaining} more
         </span>
       ) : null}

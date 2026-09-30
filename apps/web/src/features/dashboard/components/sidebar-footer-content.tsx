@@ -3,28 +3,24 @@
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@ctrl-ui/react/ui/dropdown-menu";
 import { SidebarMenuButton, SidebarMenuItem } from "@ctrl-ui/react/ui/sidebar";
-import {
-  ArrowUpRight,
-  Bell,
-  Check,
-  CircleHalf,
-  Globe,
-} from "@phosphor-icons/react";
+import { ArrowUpRight, Bell, CircleHalf, Globe } from "@phosphor-icons/react";
+import { api } from "@reflet/backend/convex/_generated/api";
+import { useQuery } from "convex/react";
 import Link from "next/link";
 import type * as React from "react";
 import { NotificationsPopover } from "@/components/ui/notifications-popover";
 import {
-  type Theme,
   themeIcons,
   themeLabels,
   themes as themeOptions,
-  useThemeToggle,
-} from "@/components/ui/theme-toggle";
-import { cn } from "@/lib/utils";
+} from "@/components/ui/theme-options";
+import { useThemeToggle } from "@/components/ui/theme-toggle";
+import { NavBadge } from "./nav-badge";
 
 interface SidebarFooterContentProps {
   isPublic?: boolean;
@@ -35,7 +31,12 @@ export function SidebarFooterContent({
   orgSlug,
   isPublic,
 }: SidebarFooterContentProps) {
-  const { mounted: themeMounted, setTheme, currentTheme } = useThemeToggle();
+  const { setTheme, currentTheme, label: themeLabel } = useThemeToggle();
+  const unreadCount = useQuery(api.notifications.queries.getUnreadCount);
+  const hasUnread = unreadCount !== undefined && unreadCount > 0;
+  const notificationsLabel = hasUnread
+    ? `Notifications, ${unreadCount} unread`
+    : "Notifications";
 
   return (
     <>
@@ -44,10 +45,14 @@ export function SidebarFooterContent({
           render={(props: React.ComponentProps<"button">) => (
             <SidebarMenuButton
               {...props}
-              className={cn(props.className, "text-start")}
+              aria-label={notificationsLabel}
+              tooltip={notificationsLabel}
             >
-              <Bell className="h-4 w-4" />
+              <Bell aria-hidden="true" />
               <span className="flex-1">Notifications</span>
+              {hasUnread ? (
+                <NavBadge count={unreadCount} tone="attention" />
+              ) : null}
             </SidebarMenuButton>
           )}
         />
@@ -56,13 +61,12 @@ export function SidebarFooterContent({
         <DropdownMenu>
           <DropdownMenuTrigger
             render={(props: React.ComponentProps<"button">) => (
-              <SidebarMenuButton
-                {...props}
-                className={cn(props.className, "text-start")}
-                disabled={!themeMounted}
-              >
-                <CircleHalf className="h-4 w-4" />
+              <SidebarMenuButton {...props} tooltip={`Theme: ${themeLabel}`}>
+                <CircleHalf aria-hidden="true" />
                 <span className="flex-1">Theme</span>
+                <span className="text-muted-foreground text-xs group-data-[collapsible=icon]:hidden">
+                  {themeLabel}
+                </span>
               </SidebarMenuButton>
             )}
           />
@@ -72,32 +76,38 @@ export function SidebarFooterContent({
             side="top"
             sideOffset={4}
           >
-            {themeOptions.map((t: Theme) => {
-              const Icon = themeIcons[t];
-              return (
-                <DropdownMenuItem key={t} onClick={() => setTheme(t)}>
-                  <Icon className="mr-2 h-4 w-4" />
-                  <span className="flex-1">{themeLabels[t]}</span>
-                  {currentTheme === t && <Check className="ml-auto h-4 w-4" />}
-                </DropdownMenuItem>
-              );
-            })}
+            <DropdownMenuRadioGroup
+              onValueChange={(value) => setTheme(String(value))}
+              value={currentTheme}
+            >
+              {themeOptions.map((theme) => {
+                const Icon = themeIcons[theme];
+                return (
+                  <DropdownMenuRadioItem key={theme} value={theme}>
+                    <Icon aria-hidden="true" className="size-4" />
+                    {themeLabels[theme]}
+                  </DropdownMenuRadioItem>
+                );
+              })}
+            </DropdownMenuRadioGroup>
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
-      {orgSlug && isPublic && (
+      {orgSlug && isPublic ? (
         <SidebarMenuItem>
           <SidebarMenuButton
             render={
               <Link href={`/${orgSlug}`} rel="noopener" target="_blank" />
             }
+            tooltip="Open public page"
           >
-            <Globe className="h-4 w-4" />
-            <span className="flex-1">Go to public page</span>
-            <ArrowUpRight className="ml-auto size-4" />
+            <Globe aria-hidden="true" />
+            <span className="flex-1">Open public page</span>
+            <ArrowUpRight aria-hidden="true" className="ml-auto" />
+            <span className="sr-only">(opens in a new tab)</span>
           </SidebarMenuButton>
         </SidebarMenuItem>
-      )}
+      ) : null}
     </>
   );
 }

@@ -72,7 +72,7 @@ interface ErrorDisplayProps extends VariantProps<typeof errorDisplayVariants> {
 
 export function ErrorDisplay({
   title = "Something went wrong",
-  description = "An unexpected error occurred. Please try again.",
+  description = "This didn’t load. Try again in a moment.",
   error,
   onRetry,
   retryLabel = "Try again",
@@ -82,13 +82,15 @@ export function ErrorDisplay({
 }: ErrorDisplayProps) {
   return (
     <div className={cn(errorDisplayVariants({ size }), className)} role="alert">
-      <div className="rounded-full bg-destructive/10 p-3">
+      <div aria-hidden="true" className="rounded-full bg-destructive/10 p-3">
         <Warning className={iconVariants({ size })} weight="fill" />
       </div>
 
       <div className="space-y-1">
-        <h3 className={titleVariants({ size })}>{title}</h3>
-        <p className={descriptionVariants({ size })}>{description}</p>
+        <h3 className={cn(titleVariants({ size }), "text-balance")}>{title}</h3>
+        <p className={cn(descriptionVariants({ size }), "text-pretty")}>
+          {description}
+        </p>
       </div>
 
       {showError && error?.message && (
@@ -104,7 +106,11 @@ export function ErrorDisplay({
           size={size === "sm" ? "xs" : "sm"}
           variant="surface"
         >
-          <ArrowClockwise className="size-4" data-icon="inline-start" />
+          <ArrowClockwise
+            aria-hidden="true"
+            className="size-4"
+            data-icon="inline-start"
+          />
           {retryLabel}
         </Button>
       )}

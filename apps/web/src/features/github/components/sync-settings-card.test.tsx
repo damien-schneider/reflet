@@ -6,15 +6,16 @@ vi.mock("@phosphor-icons/react", () => ({
   ArrowsClockwise: ({ className }: { className?: string }) => (
     <span className={className} data-testid="icon-arrows" />
   ),
-  Spinner: ({ className }: { className?: string }) => (
-    <span className={className} data-testid="icon-spinner" />
-  ),
   Warning: ({ className }: { className?: string }) => (
     <span className={className} data-testid="icon-warning" />
   ),
   X: ({ className }: { className?: string }) => (
     <span className={className} data-testid="icon-x" />
   ),
+}));
+
+vi.mock("@ctrl-ui/react/ui/spinner", () => ({
+  Spinner: () => <span data-testid="icon-spinner" />,
 }));
 
 vi.mock("@ctrl-ui/react/ui/alert", () => ({
@@ -194,38 +195,38 @@ describe("SyncSettingsSection", () => {
     expect(onToggleAutoSync).toHaveBeenCalledWith(true);
   });
 
-  it("shows Sync Now button for admin", () => {
+  it("shows Sync now button for admin", () => {
     render(<SyncSettingsSection {...defaultProps} />);
-    expect(screen.getByText("Sync Now")).toBeInTheDocument();
+    expect(screen.getByText("Sync now")).toBeInTheDocument();
   });
 
-  it("hides Sync Now button for non-admin", () => {
+  it("hides Sync now button for non-admin", () => {
     render(<SyncSettingsSection {...defaultProps} isAdmin={false} />);
-    expect(screen.queryByText("Sync Now")).toBeNull();
+    expect(screen.queryByText("Sync now")).toBeNull();
   });
 
-  it("disables Sync Now button when syncing", () => {
+  it("disables Sync now button when syncing", () => {
     render(<SyncSettingsSection {...defaultProps} isSyncing />);
-    expect(screen.getByText("Sync Now").closest("button")).toBeDisabled();
+    expect(screen.getByText("Sync now").closest("button")).toBeDisabled();
   });
 
-  it("calls onSyncNow when Sync Now clicked", async () => {
+  it("calls onSyncNow when Sync now clicked", async () => {
     const onSyncNow = vi.fn();
     const user = userEvent.setup();
     render(<SyncSettingsSection {...defaultProps} onSyncNow={onSyncNow} />);
-    await user.click(screen.getByText("Sync Now"));
+    await user.click(screen.getByText("Sync now"));
     expect(onSyncNow).toHaveBeenCalled();
   });
 
   it("shows last synced time when provided", () => {
     const lastSyncAt = new Date("2025-01-15T10:30:00Z").getTime();
     render(<SyncSettingsSection {...defaultProps} lastSyncAt={lastSyncAt} />);
-    expect(screen.getByText(/Last synced:/)).toBeInTheDocument();
+    expect(screen.getByText(/Last synced/)).toBeInTheDocument();
   });
 
   it("does not show last synced time when not provided", () => {
     render(<SyncSettingsSection {...defaultProps} />);
-    expect(screen.queryByText(/Last synced:/)).toBeNull();
+    expect(screen.queryByText(/Last synced/)).toBeNull();
   });
 
   it("shows spinner when setting up", () => {
@@ -248,7 +249,7 @@ describe("SyncSettingsSection", () => {
       />
     );
     expect(screen.getByTestId("permission-error-alert")).toBeInTheDocument();
-    expect(screen.getByText("Auto-sync setup failed")).toBeInTheDocument();
+    expect(screen.getByText("Unable to turn on auto-sync")).toBeInTheDocument();
   });
 
   it("shows localhost error with additional message", () => {
@@ -299,7 +300,7 @@ describe("SyncSettingsSection", () => {
     expect(onClearError).toHaveBeenCalled();
   });
 
-  it("shows syncing spinner inside the Sync Now button", () => {
+  it("shows syncing spinner inside the Sync now button", () => {
     render(<SyncSettingsSection {...defaultProps} isSyncing />);
     expect(screen.getByTestId("icon-spinner")).toBeInTheDocument();
   });
@@ -358,11 +359,6 @@ describe("SyncSettingsSection", () => {
     expect(screen.getByTestId("icon-spinner")).toBeInTheDocument();
   });
 
-  it("hides Sync Now button for non-admin", () => {
-    render(<SyncSettingsSection {...defaultProps} isAdmin={false} />);
-    expect(screen.queryByText("Sync Now")).not.toBeInTheDocument();
-  });
-
   it("shows last synced text for non-admin", () => {
     const syncDate = new Date("2024-01-15T10:30:00").getTime();
     render(
@@ -372,7 +368,7 @@ describe("SyncSettingsSection", () => {
         lastSyncAt={syncDate}
       />
     );
-    expect(screen.getByText(/Last synced:/)).toBeInTheDocument();
+    expect(screen.getByText(/Last synced/)).toBeInTheDocument();
   });
 
   it("renders sync controls", () => {
@@ -443,16 +439,16 @@ describe("SyncSettingsSection", () => {
     expect(screen.getByText("Denied")).toBeInTheDocument();
   });
 
-  it("shows spinner icon inside Sync Now button when syncing", () => {
+  it("shows spinner icon inside Sync now button when syncing", () => {
     render(<SyncSettingsSection {...defaultProps} isSyncing />);
-    const syncButton = screen.getByText("Sync Now").closest("button");
+    const syncButton = screen.getByText("Sync now").closest("button");
     expect(syncButton).toBeInTheDocument();
     expect(screen.getByTestId("icon-spinner")).toBeInTheDocument();
   });
 
-  it("shows arrows icon inside Sync Now button when not syncing", () => {
+  it("shows arrows icon inside Sync now button when not syncing", () => {
     render(<SyncSettingsSection {...defaultProps} />);
-    const syncButton = screen.getByText("Sync Now").closest("button");
+    const syncButton = screen.getByText("Sync now").closest("button");
     expect(syncButton).toBeInTheDocument();
     const arrowsIcon = syncButton?.querySelector('[data-testid="icon-arrows"]');
     expect(arrowsIcon).toBeInTheDocument();
@@ -481,7 +477,7 @@ describe("SyncSettingsSection", () => {
         onClearError={vi.fn()}
       />
     );
-    expect(screen.getByText("Auto-sync setup failed")).toBeInTheDocument();
+    expect(screen.getByText("Unable to turn on auto-sync")).toBeInTheDocument();
     expect(screen.getByText("Oops")).toBeInTheDocument();
   });
 });

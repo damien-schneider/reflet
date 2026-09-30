@@ -3,18 +3,69 @@
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@ctrl-ui/react/ui/empty";
+import {
   PageBody,
   PageDescription,
   PageHeader,
   PageLayout,
   PageTitle,
 } from "@ctrl-ui/react/ui/page-layout";
-import { ArrowCounterClockwise, Spinner, Trash } from "@phosphor-icons/react";
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
+import { toast } from "@ctrl-ui/react/ui/toast";
+import { ArrowCounterClockwise, Trash } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { formatDistanceToNow } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { use, useState } from "react";
+import { OrgNotFound } from "@/features/dashboard/components/org-not-found";
+
+const SKELETON_ROWS = ["a", "b", "c"] as const;
+const URGENT_DAYS_REMAINING = 3;
+
+function TrashSkeleton() {
+  return (
+    <ul aria-busy="true" className="space-y-2">
+      <li className="sr-only">Loading deleted feedback…</li>
+      {SKELETON_ROWS.map((row) => (
+        <li
+          className="flex items-center justify-between gap-4 rounded-lg border p-4"
+          key={row}
+        >
+          <div className="min-w-0 flex-1 space-y-2">
+            <Skeleton className="h-4 w-2/3" />
+            <Skeleton className="h-3 w-40" />
+          </div>
+          <Skeleton className="h-7 w-20" />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function TrashEmpty() {
+  return (
+    <Empty className="border border-dashed">
+      <EmptyHeader>
+        <EmptyMedia>
+          <Trash aria-hidden="true" />
+        </EmptyMedia>
+        <EmptyTitle>Trash is empty</EmptyTitle>
+        <EmptyDescription className="text-pretty">
+          Deleted feedback lands here for 30 days, so you can restore it if you
+          change your mind.
+        </EmptyDescription>
+      </EmptyHeader>
+    </Empty>
+  );
+}
 
 export default function TrashPage({
   params,
@@ -34,21 +85,86 @@ export default function TrashPage({
     setRestoringId(feedbackId);
     try {
       await restoreFeedback({ id: feedbackId });
-    } finally {
-      setRestoringId(null);
+    } catch {
+      toast.error("Couldn’t restore this feedback. Try again.");
     }
+    setRestoringId(null);
   };
 
-  if (!org) {
+  const renderBody = () => {
+    if (deletedFeedback === undefined) {
+      return <TrashSkeleton />;
+    }
+    if (deletedFeedback.length === 0) {
+      return <TrashEmpty />;
+    }
     return (
-      <PageLayout scroll="page" width="content">
-        <PageBody>
-          <div className="flex min-h-[50vh] items-center justify-center">
-            <Spinner className="animate-spin" />
-          </div>
-        </PageBody>
-      </PageLayout>
+      <ul className="space-y-2">
+        {deletedFeedback.map((feedback) => {
+          const isRestoring = restoringId === feedback._id;
+          return (
+            <li
+              className="flex items-center justify-between gap-4 rounded-lg border p-4"
+              key={feedback._id}
+            >
+              <div className="min-w-0 flex-1">
+                <h2 className="truncate font-medium text-sm">
+                  {feedback.title}
+                </h2>
+                <div className="mt-1 flex flex-wrap items-center gap-2 text-muted-foreground text-xs">
+                  {feedback.deletedAt ? (
+                    <time
+                      dateTime={new Date(feedback.deletedAt).toISOString()}
+                      title={format(feedback.deletedAt, "PPpp")}
+                    >
+                      Deleted{" "}
+                      {formatDistanceToNow(feedback.deletedAt, {
+                        addSuffix: true,
+                      })}
+                    </time>
+                  ) : null}
+                  <Badge
+                    className="tabular-nums"
+                    color={
+                      feedback.daysRemaining <= URGENT_DAYS_REMAINING
+                        ? "orange"
+                        : "neutral"
+                    }
+                    variant="outline"
+                  >
+                    {feedback.daysRemaining === 1
+                      ? "1 day left"
+                      : `${feedback.daysRemaining} days left`}
+                  </Badge>
+                </div>
+              </div>
+              <Button
+                aria-label={`Restore ${feedback.title}`}
+                disabled={isRestoring}
+                onClick={() => handleRestore(feedback._id)}
+                size="sm"
+                variant="surface"
+              >
+                {isRestoring ? (
+                  <Spinner data-icon="inline-start" size="xs" />
+                ) : (
+                  <ArrowCounterClockwise
+                    aria-hidden="true"
+                    className="size-4"
+                    data-icon="inline-start"
+                  />
+                )}
+                {isRestoring ? "Restoring…" : "Restore"}
+              </Button>
+            </li>
+          );
+        })}
+      </ul>
     );
+  };
+
+  if (org === null) {
+    return <OrgNotFound />;
   }
 
   return (
@@ -56,68 +172,11 @@ export default function TrashPage({
       <PageHeader>
         <PageTitle>Trash</PageTitle>
         <PageDescription>
-          Deleted items are permanently removed after 30 days.
+          Deleted feedback is removed for good after 30 days. Restore anything
+          you still need.
         </PageDescription>
       </PageHeader>
-      <PageBody contentClassName="space-y-6">
-        {deletedFeedback === undefined && (
-          <div className="flex items-center justify-center py-12">
-            <Spinner className="animate-spin" />
-          </div>
-        )}
-
-        {deletedFeedback?.length === 0 && (
-          <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed py-16 text-muted-foreground">
-            <Trash className="size-10" />
-            <p className="text-sm">No deleted feedback</p>
-          </div>
-        )}
-
-        {deletedFeedback && deletedFeedback.length > 0 && (
-          <div className="space-y-2">
-            {deletedFeedback.map((feedback) => (
-              <div
-                className="flex items-center justify-between gap-4 rounded-lg border p-4"
-                key={feedback._id}
-              >
-                <div className="min-w-0 flex-1">
-                  <h3 className="truncate font-medium text-sm">
-                    {feedback.title}
-                  </h3>
-                  <div className="mt-1 flex items-center gap-2 text-muted-foreground text-xs">
-                    {feedback.deletedAt && (
-                      <span>
-                        Deleted{" "}
-                        {formatDistanceToNow(feedback.deletedAt, {
-                          addSuffix: true,
-                        })}
-                      </span>
-                    )}
-                    <span>
-                      <Badge variant="outline">
-                        {feedback.daysRemaining}d remaining
-                      </Badge>
-                    </span>
-                  </div>
-                </div>
-                <Button
-                  disabled={restoringId === feedback._id}
-                  onClick={() => handleRestore(feedback._id)}
-                  size="xs"
-                  variant="surface"
-                >
-                  {restoringId === feedback._id ? (
-                    <Spinner className="mr-1.5 size-3.5 animate-spin" />
-                  ) : (
-                    <ArrowCounterClockwise className="mr-1.5 size-3.5" />
-                  )}
-                  Restore
-                </Button>
-              </div>
-            ))}
-          </div>
-        )}
-      </PageBody>
+      <PageBody>{renderBody()}</PageBody>
     </PageLayout>
   );
 }

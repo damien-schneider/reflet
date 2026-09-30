@@ -15,7 +15,7 @@ async function createPublicOrg(page: Page) {
     timeout: 30_000,
   });
   await page.getByRole("switch", { name: "Make organization public" }).click();
-  await page.getByRole("button", { exact: true, name: "Save Changes" }).click();
+  await page.getByRole("button", { exact: true, name: "Save changes" }).click();
   await expect(page.getByText("Saved")).toBeVisible({ timeout: 15_000 });
 
   return slug;

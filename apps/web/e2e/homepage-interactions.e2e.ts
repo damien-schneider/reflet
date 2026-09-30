@@ -54,10 +54,12 @@ test("the hero leads into the product story without leaving the page", async ({
     "Listen closely.Build what matters."
   );
   await expect(
-    page.getByRole("link", { name: "Start your feedback loop" })
+    page
+      .locator(".marketing-hero")
+      .getByRole("link", { name: "Start for free" })
   ).toHaveAttribute("href", "/dashboard");
   await page
-    .getByRole("link", { exact: true, name: "Explore the feedback loop" })
+    .getByRole("link", { exact: true, name: "See how it works" })
     .click();
   await expect(page.getByTestId("feedback-journey")).toHaveAttribute(
     "data-step",
@@ -77,7 +79,7 @@ test("the interactive widget previews a user's own idea", async ({ page }) => {
     preview.locator('.feature-preview-body[data-active="true"]')
   ).toHaveCSS("opacity", "1");
   await preview.getByLabel("Your idea").fill("Remember my dashboard filters");
-  await preview.getByRole("button", { name: "Send preview feedback" }).click();
+  await preview.getByRole("button", { name: "Send idea" }).click();
   await expect(preview.getByRole("status")).toContainText(
     "Remember my dashboard filters"
   );
@@ -89,7 +91,7 @@ test("the interactive widget previews a user's own idea", async ({ page }) => {
   await expect(preview.getByLabel("Your idea")).toBeFocused();
   await preview.getByLabel("Your idea").fill("   ");
   await expect(
-    preview.getByRole("button", { name: "Send preview feedback" })
+    preview.getByRole("button", { name: "Send idea" })
   ).toBeDisabled();
 });
 
@@ -100,9 +102,7 @@ test("reduced-motion hero links open their matching story step", async ({
   await page.goto("/");
   const story = page.getByTestId("feedback-journey");
   await expect(story).toHaveAttribute("data-reduced-motion", "true");
-  await page
-    .getByRole("link", { name: "02 Give it a little direction." })
-    .click();
+  await page.getByRole("link", { name: "02 Plan in the open" }).click();
   await expect(page).toHaveURL(PLANNED_HASH);
   await expect(story).toHaveAttribute("data-step", "planned");
   await story.getByRole("link", { name: "Full circle" }).click();
@@ -136,9 +136,8 @@ test("feature selectors and the FAQ work with a keyboard", async ({ page }) => {
   await question.focus();
   await question.press("Enter");
   await expect(
-    page.getByText(
-      "AI helps your team understand and organize incoming requests.",
-      { exact: false }
-    )
+    page.getByText("AI suggests tags and groups related requests.", {
+      exact: false,
+    })
   ).toBeVisible();
 });

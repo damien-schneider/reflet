@@ -1,13 +1,20 @@
 "use client";
 
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@ctrl-ui/react/ui/empty";
 import { ScrollArea } from "@ctrl-ui/react/ui/scroll-area";
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { ChatCircle } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { format, isToday, isYesterday } from "date-fns";
 import { useEffect, useRef } from "react";
-import { Text } from "@/components/ui/typography";
 import { MessageBubble } from "@/features/support/components/message-bubble";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
@@ -38,6 +45,36 @@ interface MessageListProps {
 }
 
 const GROUPING_WINDOW_MS = 5 * 60 * 1000;
+const PINNED_TO_BOTTOM_THRESHOLD_PX = 80;
+const SKELETON_BUBBLES = [
+  { id: "a", isOwn: false, width: "w-2/3" },
+  { id: "b", isOwn: true, width: "w-1/2" },
+  { id: "c", isOwn: false, width: "w-3/5" },
+] as const;
+
+function MessageListSkeleton({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn("flex flex-1 flex-col gap-4 p-4", className)}
+      role="status"
+    >
+      <span className="sr-only">Loading messages…</span>
+      {SKELETON_BUBBLES.map((bubble) => (
+        <div
+          aria-hidden
+          className={cn(
+            "flex gap-2.5",
+            bubble.isOwn ? "flex-row-reverse" : "flex-row"
+          )}
+          key={bubble.id}
+        >
+          <Skeleton className="size-8 shrink-0 rounded-full" />
+          <Skeleton className={cn("h-12 rounded-2xl", bubble.width)} />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 function formatDateHeader(timestamp: number): string {
   const date = new Date(timestamp);
@@ -87,7 +124,8 @@ export function MessageList({
   guestId,
   className,
 }: MessageListProps) {
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const isPinnedToBottomRef = useRef(true);
 
   const { data: session } = authClient.useSession();
   const currentUserId = session?.user?.id;
@@ -105,53 +143,62 @@ export function MessageList({
   );
 
   const messagesLength = messages?.length ?? 0;
+  const lastMessageIsOwn = messages?.at(-1)?.isOwnMessage ?? false;
 
   useEffect(() => {
-    if (messagesLength > 0) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const viewport = viewportRef.current;
+    const shouldFollow = isPinnedToBottomRef.current || lastMessageIsOwn;
+    if (viewport && messagesLength > 0 && shouldFollow) {
+      viewport.scrollTop = viewport.scrollHeight;
     }
-  }, [messagesLength]);
+  }, [messagesLength, lastMessageIsOwn]);
 
   if (!messages) {
-    return (
-      <div className={cn("flex flex-1 items-center justify-center", className)}>
-        <div className="flex flex-col items-center gap-2 text-muted-foreground">
-          <div className="h-8 w-8 animate-pulse rounded-full bg-muted" />
-          <span className="text-sm">Loading messages...</span>
-        </div>
-      </div>
-    );
+    return <MessageListSkeleton className={className} />;
   }
 
   if (messages.length === 0) {
     return (
       <div className={cn("flex flex-1 items-center justify-center", className)}>
-        <div className="flex flex-col items-center gap-3 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-            <ChatCircle className="h-6 w-6 text-muted-foreground" />
-          </div>
-          <div>
-            <Text variant="label">No messages yet</Text>
-            <Text className="mt-0.5" variant="caption">
-              Start the conversation by sending a message
-            </Text>
-          </div>
-        </div>
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia>
+              <ChatCircle aria-hidden />
+            </EmptyMedia>
+            <EmptyTitle>No messages yet</EmptyTitle>
+            <EmptyDescription>
+              Send a message to start the conversation.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       </div>
     );
   }
 
   return (
-    <ScrollArea className={cn("flex-1", className)}>
-      <div className="flex flex-col gap-4 p-4">
+    <ScrollArea
+      className={cn("flex-1", className)}
+      viewportProps={{
+        onScroll: (event) => {
+          const viewport = event.currentTarget;
+          isPinnedToBottomRef.current =
+            viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight <
+            PINNED_TO_BOTTOM_THRESHOLD_PX;
+        },
+      }}
+      viewportRef={viewportRef}
+    >
+      <div aria-label="Messages" className="flex flex-col gap-4 p-4" role="log">
         {groupMessagesByDate(messages).map(([dateKey, dayMessages]) => (
-          <div className="flex flex-col gap-3" key={dateKey}>
+          <section
+            aria-label={formatDateHeader(dayMessages[0].createdAt)}
+            className="flex flex-col gap-3"
+            key={dateKey}
+          >
             <div className="flex items-center justify-center">
-              <div className="rounded-full bg-muted px-3 py-1">
-                <span className="font-medium text-muted-foreground text-xs">
-                  {formatDateHeader(dayMessages[0].createdAt)}
-                </span>
-              </div>
+              <span className="rounded-full bg-muted px-3 py-1 font-medium text-muted-foreground text-xs">
+                {formatDateHeader(dayMessages[0].createdAt)}
+              </span>
             </div>
 
             {dayMessages.map((message, index) => {
@@ -186,9 +233,8 @@ export function MessageList({
                 />
               );
             })}
-          </div>
+          </section>
         ))}
-        <div ref={messagesEndRef} />
       </div>
     </ScrollArea>
   );

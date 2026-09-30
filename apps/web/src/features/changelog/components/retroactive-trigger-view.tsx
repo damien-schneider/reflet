@@ -50,7 +50,7 @@ export function TriggerView({
   setSkipExisting,
 }: TriggerViewProps) {
   return (
-    <div className="relative mb-6 rounded-xl border-2 border-muted-foreground/20 border-dashed p-8">
+    <div className="relative mb-6 rounded-xl border-2 border-border border-dashed p-8">
       <Tooltip>
         <TooltipTrigger
           aria-label="Dismiss"
@@ -59,39 +59,49 @@ export function TriggerView({
               className="absolute top-3 right-3"
               iconOnly
               onClick={onDismiss}
-              size="md"
+              size="sm"
               variant="ghost"
             />
           }
         >
-          <X className="h-4 w-4" />
+          <X aria-hidden className="size-4" />
         </TooltipTrigger>
         <TooltipContent>Dismiss</TooltipContent>
       </Tooltip>
 
       <div className="flex flex-col items-center gap-4 text-center">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-          <ClockCounterClockwise className="h-6 w-6 text-primary" />
+        <div className="flex size-12 items-center justify-center rounded-full bg-brand-subtle">
+          <ClockCounterClockwise
+            aria-hidden
+            className="size-6 text-brand-text"
+          />
         </div>
 
         <div>
-          <h3 className="font-semibold text-lg">Generate your changelog</h3>
-          <p className="mx-auto mt-1 max-w-md text-muted-foreground text-sm">
-            Import past releases from your git history. We&apos;ll create draft
-            entries you can review before publishing.
+          <h3 className="text-balance font-semibold text-lg">
+            Generate your changelog
+          </h3>
+          <p className="mx-auto mt-1 max-w-md text-pretty text-muted-foreground text-sm">
+            Import past releases from your git history. We’ll create drafts you
+            can review before publishing.
           </p>
         </div>
 
         {error && (
-          <div className="w-full max-w-md rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2">
-            <p className="text-destructive-text text-sm">{error}</p>
+          <div
+            className="w-full max-w-md rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2"
+            role="alert"
+          >
+            <p className="text-pretty text-destructive-text text-sm">{error}</p>
           </div>
         )}
 
         {repoName && (
-          <div className="flex items-center gap-2 text-muted-foreground text-sm">
-            <GithubLogo className="h-4 w-4" />
-            <span>{repoName}</span>
+          <div className="flex min-w-0 items-center gap-2 text-muted-foreground text-sm">
+            <GithubLogo aria-hidden className="size-4 shrink-0" />
+            <span className="truncate" title={repoName}>
+              {repoName}
+            </span>
           </div>
         )}
 
@@ -105,21 +115,24 @@ export function TriggerView({
         >
           {isStarting ? (
             <>
-              <Spinner />
-              Starting...
+              <Spinner data-icon="inline-start" size="xs" />
+              Starting…
             </>
           ) : (
             <>
-              <Lightning className="h-4 w-4" />
-              Generate
+              <Lightning aria-hidden className="size-4" />
+              Generate changelog
             </>
           )}
         </Button>
 
         <Collapsible>
-          <CollapsibleTrigger className="group flex items-center gap-1 text-muted-foreground text-xs transition-colors hover:text-foreground">
+          <CollapsibleTrigger className="group flex items-center gap-1 text-muted-foreground text-xs hover:text-foreground">
             Options
-            <CaretDown className="h-3 w-3 transition-transform group-data-panel-open:rotate-180" />
+            <CaretDown
+              aria-hidden
+              className="size-3 transition-transform duration-(--duration-base) ease-(--ease-standard) group-data-panel-open:rotate-180"
+            />
           </CollapsibleTrigger>
           <CollapsibleContent>
             <div className="mt-3 flex w-full max-w-sm flex-col gap-3 text-left">

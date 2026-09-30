@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { beforeAll, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("convex/react", () => ({
   useMutation: vi.fn(() => vi.fn()),
@@ -26,17 +26,6 @@ vi.mock("@ctrl-ui/react/ui/scroll-area", () => ({
       {children}
     </div>
   ),
-}));
-
-vi.mock("@/components/ui/typography", () => ({
-  Text: ({
-    children,
-    className,
-  }: {
-    children: React.ReactNode;
-    className?: string;
-    variant?: string;
-  }) => <p className={className}>{children}</p>,
 }));
 
 vi.mock("@/lib/utils", () => ({
@@ -69,10 +58,6 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
 
 import { MessageList } from "./message-list";
 
-beforeAll(() => {
-  Element.prototype.scrollIntoView = vi.fn();
-});
-
 const createMessage = (overrides = {}) => ({
   _id: "msg1" as never,
   body: "Test message",
@@ -89,7 +74,7 @@ const baseProps = { conversationId: "conv1" as never };
 describe("MessageList", () => {
   it("renders the loading state while messages are undefined", () => {
     render(<MessageList {...baseProps} messages={undefined} />);
-    expect(screen.getByText("Loading messages...")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("Loading messages…");
     expect(screen.queryByText("No messages yet")).not.toBeInTheDocument();
   });
 

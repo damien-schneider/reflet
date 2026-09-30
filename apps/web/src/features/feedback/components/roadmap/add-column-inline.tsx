@@ -7,18 +7,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@ctrl-ui/react/ui/popover";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@ctrl-ui/react/ui/tooltip";
-import { Check, Plus, X } from "@phosphor-icons/react";
+import { toast } from "@ctrl-ui/react/ui/toast";
+import { Plus } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
-import { useRef, useState } from "react";
+import { type FormEvent, useState } from "react";
 import { NotionColorPicker } from "@/components/ui/notion-color-picker";
-import { getTagDotColor, type TagColor } from "@/lib/tag-colors";
+import { getTagSwatchClass, type TagColor } from "@/lib/tag-colors";
+import { cn } from "@/lib/utils";
 
 interface AddColumnInlineProps {
   organizationId: Id<"organizations">;
@@ -29,79 +26,63 @@ export function AddColumnInline({ organizationId }: AddColumnInlineProps) {
   const [name, setName] = useState("");
   const [color, setColor] = useState<TagColor>("blue");
   const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const createStatus = useMutation(api.organizations.status_mutations.create);
 
-  const handleStartAdding = () => {
-    setIsAdding(true);
+  const reset = () => {
+    setIsAdding(false);
     setName("");
     setColor("blue");
-    setTimeout(() => inputRef.current?.focus(), 0);
   };
 
-  const handleCancel = () => {
-    setIsAdding(false);
-    setName("");
-  };
-
-  const handleSave = async () => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     const trimmedName = name.trim();
     if (!trimmedName) {
-      handleCancel();
       return;
     }
-
-    await createStatus({
-      color,
-      name: trimmedName,
-      organizationId,
-    });
-
-    setIsAdding(false);
-    setName("");
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleSave();
-    } else if (e.key === "Escape") {
-      handleCancel();
+    setIsSaving(true);
+    try {
+      await createStatus({ color, name: trimmedName, organizationId });
+      reset();
+    } catch {
+      toast.error("Couldn’t add the column. Try again.");
     }
+    setIsSaving(false);
   };
 
   if (!isAdding) {
     return (
       <div className="w-72 shrink-0">
         <Button
-          className="h-full min-h-[200px] w-full border-2 border-dashed"
-          onClick={handleStartAdding}
+          className="h-full min-h-48 w-full border border-dashed"
+          onClick={() => setIsAdding(true)}
           variant="ghost"
         >
-          <Plus className="mr-2 h-5 w-5" />
-          Add Column
+          <Plus aria-hidden />
+          Add column
         </Button>
       </div>
     );
   }
 
   return (
-    <div className="w-72 shrink-0 rounded-lg border bg-muted/30 p-4">
-      <div className="mb-3 flex items-center gap-2">
+    <form
+      className="grid w-72 shrink-0 content-start gap-3 rounded-lg border bg-muted/30 p-4"
+      onSubmit={handleSubmit}
+    >
+      <div className="flex items-center gap-2">
         <Popover onOpenChange={setIsColorPickerOpen} open={isColorPickerOpen}>
-          <Tooltip>
-            <TooltipTrigger
-              aria-label="Choose color"
-              render={
-                <PopoverTrigger
-                  className="h-3 w-3 shrink-0 rounded-full transition-transform hover:scale-110"
-                  style={{ backgroundColor: getTagDotColor(color) }}
-                />
-              }
+          <PopoverTrigger
+            aria-label="Column color"
+            render={<Button iconOnly size="sm" variant="surface" />}
+          >
+            <span
+              aria-hidden
+              className={cn("size-3 rounded-full", getTagSwatchClass(color))}
             />
-            <TooltipContent>Choose color</TooltipContent>
-          </Tooltip>
+          </PopoverTrigger>
           <PopoverContent align="start" className="w-[200px] p-2">
             <NotionColorPicker
               onChange={(newColor) => {
@@ -112,54 +93,34 @@ export function AddColumnInline({ organizationId }: AddColumnInlineProps) {
             />
           </PopoverContent>
         </Popover>
-
         <Input
           aria-label="Column name"
-          className="h-7 flex-1 px-2 py-1 text-sm"
-          onChange={(e) => setName(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Column name..."
-          ref={inputRef}
+          autoComplete="off"
+          autoFocus
+          className="flex-1"
+          onChange={(event) => setName(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              reset();
+            }
+          }}
+          placeholder="e.g. Up next"
           value={name}
         />
-
-        <Tooltip>
-          <TooltipTrigger
-            aria-label="Create column"
-            render={
-              <Button
-                className="h-6 w-6"
-                iconOnly
-                onClick={handleSave}
-                variant="ghost"
-              />
-            }
-          >
-            <Check className="h-3 w-3" />
-          </TooltipTrigger>
-          <TooltipContent>Create column</TooltipContent>
-        </Tooltip>
-        <Tooltip>
-          <TooltipTrigger
-            aria-label="Cancel"
-            render={
-              <Button
-                className="h-6 w-6"
-                iconOnly
-                onClick={handleCancel}
-                variant="ghost"
-              />
-            }
-          >
-            <X className="h-3 w-3" />
-          </TooltipTrigger>
-          <TooltipContent>Cancel</TooltipContent>
-        </Tooltip>
       </div>
-
-      <div className="py-8 text-center text-muted-foreground text-sm">
-        Enter column name and press Enter
+      <div className="flex justify-end gap-2">
+        <Button onClick={reset} size="xs" type="button" variant="ghost">
+          Cancel
+        </Button>
+        <Button
+          disabled={isSaving || !name.trim()}
+          size="xs"
+          type="submit"
+          variant="solid"
+        >
+          {isSaving ? "Adding…" : "Add column"}
+        </Button>
       </div>
-    </div>
+    </form>
   );
 }

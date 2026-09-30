@@ -349,7 +349,8 @@ describe("command-suggestion", () => {
       expect(mockHide).toHaveBeenCalled();
     });
 
-    it("onKeyDown delegates to keyboardHandler for non-Escape keys", async () => {
+    it("onKeyDown delegates to the component ref for non-Escape keys", async () => {
+      const { ReactRenderer } = await import("@tiptap/react");
       const { createSlashCommandExtension } = await import(
         "./command-suggestion"
       );
@@ -371,11 +372,14 @@ describe("command-suggestion", () => {
         items: [],
       } as never);
 
-      // Without a registered keyboard handler, should return false
-      const result = renderResult.onKeyDown({
-        event: new KeyboardEvent("keydown", { key: "ArrowDown" }),
-      });
-      expect(result).toBe(false);
+      const event = new KeyboardEvent("keydown", { key: "ArrowDown" });
+      expect(renderResult.onKeyDown({ event })).toBe(false);
+
+      const onKeyDown = vi.fn(() => true);
+      const instance = vi.mocked(ReactRenderer).mock.results.at(-1)?.value;
+      instance.ref = { onKeyDown };
+      expect(renderResult.onKeyDown({ event })).toBe(true);
+      expect(onKeyDown).toHaveBeenCalledWith({ event });
     });
 
     it("onExit cleans up popup and component", async () => {

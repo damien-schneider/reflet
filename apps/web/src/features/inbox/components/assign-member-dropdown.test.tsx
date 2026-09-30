@@ -26,48 +26,59 @@ vi.mock("@ctrl-ui/react/ui/button", () => ({
   ),
 }));
 
-vi.mock("@ctrl-ui/react/ui/dropdown-menu", () => ({
-  DropdownMenu: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  DropdownMenuContent: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  DropdownMenuGroup: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  DropdownMenuItem: ({
-    children,
-    onClick,
-    className,
-  }: {
-    children: React.ReactNode;
-    onClick?: () => void;
-    className?: string;
-  }) => (
-    <button className={className} onClick={onClick} type="button">
-      {children}
-    </button>
-  ),
-  DropdownMenuLabel: ({ children }: { children: React.ReactNode }) => (
-    <span>{children}</span>
-  ),
-  DropdownMenuSeparator: () => <hr />,
-  DropdownMenuTrigger: ({
-    children,
-    render: Render,
-    disabled,
-  }: {
-    children?: React.ReactNode;
-    render?: React.ReactNode;
-    disabled?: boolean;
-  }) => (
-    <div data-disabled={disabled}>
-      {Render}
-      {children}
-    </div>
-  ),
-}));
+vi.mock("@ctrl-ui/react/ui/dropdown-menu", () => {
+  let changeRadioValue: (value: string) => void = () => undefined;
+  return {
+    DropdownMenu: ({ children }: { children: React.ReactNode }) => (
+      <div>{children}</div>
+    ),
+    DropdownMenuContent: ({ children }: { children: React.ReactNode }) => (
+      <div>{children}</div>
+    ),
+    DropdownMenuGroup: ({ children }: { children: React.ReactNode }) => (
+      <div>{children}</div>
+    ),
+    DropdownMenuLabel: ({ children }: { children: React.ReactNode }) => (
+      <span>{children}</span>
+    ),
+    DropdownMenuRadioGroup: ({
+      children,
+      onValueChange,
+    }: {
+      children: React.ReactNode;
+      onValueChange: (value: string) => void;
+    }) => {
+      changeRadioValue = onValueChange;
+      return <div>{children}</div>;
+    },
+    DropdownMenuRadioItem: ({
+      children,
+      value,
+    }: {
+      children: React.ReactNode;
+      value: string;
+    }) => (
+      <button onClick={() => changeRadioValue(value)} type="button">
+        {children}
+      </button>
+    ),
+    DropdownMenuSeparator: () => <hr />,
+    DropdownMenuTrigger: ({
+      children,
+      render: Render,
+      disabled,
+    }: {
+      children?: React.ReactNode;
+      render?: React.ReactNode;
+      disabled?: boolean;
+    }) => (
+      <div data-disabled={disabled}>
+        {Render}
+        {children}
+      </div>
+    ),
+  };
+});
 
 vi.mock("@/lib/utils", () => ({
   cn: (...classes: unknown[]) => classes.filter(Boolean).join(" "),

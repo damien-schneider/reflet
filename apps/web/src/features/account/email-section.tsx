@@ -3,16 +3,15 @@
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Field, FieldError, FieldLabel } from "@ctrl-ui/react/ui/field";
 import { Input } from "@ctrl-ui/react/ui/input";
-import { Separator } from "@ctrl-ui/react/ui/separator";
 import { toast } from "@ctrl-ui/react/ui/toast";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, Envelope } from "@phosphor-icons/react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { H3, Muted, Text } from "@/components/ui/typography";
 import {
   type UpdateEmailForm,
   updateEmailSchema,
 } from "@/features/account/account-schemas";
+import { SettingsSection } from "@/features/project/components/settings-page";
 import { authClient } from "@/lib/auth-client";
 
 interface EmailSectionProps {
@@ -26,16 +25,15 @@ export function EmailSection({
   isLoading,
   setIsLoading,
 }: EmailSectionProps) {
+  const [requestedEmail, setRequestedEmail] = useState<string | null>(null);
   const {
-    register: registerEmail,
-    handleSubmit: handleSubmitEmail,
-    formState: { errors: emailErrors },
-    reset: resetEmail,
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
   } = useForm<UpdateEmailForm>({
-    defaultValues: {
-      newEmail: "",
-    },
-    mode: "onChange",
+    defaultValues: { newEmail: "" },
+    mode: "onTouched",
     resolver: zodResolver(updateEmailSchema),
   });
 
@@ -46,61 +44,73 @@ export function EmailSection({
         callbackURL: `${window.location.origin}/dashboard/account`,
         newEmail: data.newEmail,
       });
-      toast.success("Email updated. Please check your inbox for verification.");
-      resetEmail();
+      setRequestedEmail(data.newEmail);
+      reset();
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to update email"
       );
-    } finally {
-      setIsLoading(false);
     }
+    setIsLoading(false);
   };
 
+  const currentEmail = user?.email;
+
   return (
-    <section className="space-y-6">
-      <H3 variant="section">Email</H3>
-
-      <div className="flex items-center gap-4 rounded-lg bg-muted p-4">
-        <div className="flex size-12 items-center justify-center rounded-none bg-background">
-          <Envelope className="h-5 w-5 text-muted-foreground" />
-        </div>
-        <div className="flex-1">
-          <Muted>Current Email</Muted>
-          <Text variant="label">{user?.email ?? "N/A"}</Text>
-        </div>
-      </div>
-
-      <Separator />
-
+    <SettingsSection
+      description={
+        currentEmail ? (
+          <>
+            You sign in with{" "}
+            <span className="text-foreground">{currentEmail}</span>.
+          </>
+        ) : (
+          "No email address is linked to this account."
+        )
+      }
+      title="Email"
+    >
       <form
-        className="space-y-4"
-        onSubmit={handleSubmitEmail(handleUpdateEmail)}
+        className="flex max-w-md flex-col gap-4"
+        noValidate
+        onSubmit={handleSubmit(handleUpdateEmail)}
       >
         <Field>
-          <FieldLabel htmlFor="newEmail">New Email</FieldLabel>
+          <FieldLabel htmlFor="newEmail">New email</FieldLabel>
           <Input
+            aria-invalid={Boolean(errors.newEmail) || undefined}
+            autoComplete="email"
             id="newEmail"
             placeholder="new@example.com"
+            spellCheck={false}
             type="email"
-            {...registerEmail("newEmail")}
+            {...register("newEmail")}
           />
-          <FieldError match={Boolean(emailErrors.newEmail?.message)}>
-            {emailErrors.newEmail?.message}
+          <FieldError match={Boolean(errors.newEmail?.message)}>
+            {errors.newEmail?.message}
           </FieldError>
         </Field>
 
-        <Button
-          className="w-full md:w-auto"
-          disabled={isLoading}
-          tone="primary"
-          type="submit"
-          variant="solid"
+        <output
+          aria-live="polite"
+          className="text-body text-muted-foreground empty:hidden"
         >
-          <Check className="mr-2 size-4" />
-          Update Email
-        </Button>
+          {requestedEmail
+            ? `Check ${requestedEmail} for a link to confirm the change.`
+            : null}
+        </output>
+
+        <div>
+          <Button
+            disabled={isLoading}
+            tone="primary"
+            type="submit"
+            variant="solid"
+          >
+            {isLoading ? "Sending…" : "Change email"}
+          </Button>
+        </div>
       </form>
-    </section>
+    </SettingsSection>
   );
 }

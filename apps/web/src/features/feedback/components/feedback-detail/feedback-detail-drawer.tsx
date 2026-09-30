@@ -1,33 +1,14 @@
 "use client";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@ctrl-ui/react/ui/avatar";
-import { Button } from "@ctrl-ui/react/ui/button";
 import { ScrollArea } from "@ctrl-ui/react/ui/scroll-area";
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@ctrl-ui/react/ui/sheet";
-import { Spinner } from "@ctrl-ui/react/ui/spinner";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@ctrl-ui/react/ui/tooltip";
-import { CalendarBlank, CaretLeft, CaretRight, X } from "@phosphor-icons/react";
-import { api } from "@reflet/backend/convex/_generated/api";
+import { Sheet, SheetContent } from "@ctrl-ui/react/ui/sheet";
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { useQuery } from "convex/react";
-import { formatDistanceToNow } from "date-fns";
-import { useHotkeys } from "react-hotkeys-hook";
 import { ScreenshotGallery } from "../screenshot-gallery";
 import { CommentsSection } from "./comments-section";
-import { isCompositeWidgetFocused } from "./composite-widget-focus";
 import { FeatureCheck } from "./feature-check";
 import { FeedbackContent } from "./feedback-content";
+import { FeedbackDetailDrawerHeader } from "./feedback-detail-drawer-header";
 import type {
   FeedbackDetailContentProps,
   FeedbackDetailDrawerProps,
@@ -36,6 +17,10 @@ import type {
 import { FeedbackMetadataBar } from "./feedback-metadata-bar";
 import { InlineClarification } from "./inline-clarification";
 import { ReportContext } from "./report-context";
+import {
+  useDrawerFeedback,
+  useDrawerNavigationHotkeys,
+} from "./use-feedback-detail-drawer";
 
 const EMPTY_FEEDBACK_LIST: FeedbackListItem[] = [];
 const EMPTY_FEEDBACK_IDS: Id<"feedback">[] = [];
@@ -59,87 +44,16 @@ export function FeedbackDetailDrawer({
   onPrevious,
   onNext,
 }: FeedbackDetailDrawerProps) {
-  const feedbackDetails = useQuery(
-    api.feedback.queries.get,
-    feedbackId ? { id: feedbackId } : "skip"
-  );
+  const feedback = useDrawerFeedback(feedbackId, feedbackList);
 
-  const listItem = feedbackId
-    ? feedbackList.find((f) => f._id === feedbackId)
-    : null;
+  useDrawerNavigationHotkeys({
+    hasNext,
+    hasPrevious,
+    isOpen,
+    onNext,
+    onPrevious,
+  });
 
-  const feedback =
-    feedbackDetails ??
-    (listItem && feedbackId
-      ? {
-          _id: feedbackId,
-          assignee: null,
-          author: null,
-          commentCount: listItem.commentCount,
-          createdAt: listItem.createdAt,
-          description: listItem.description ?? null,
-          hasVoted: listItem.hasVoted,
-          isInternal: listItem.isInternal,
-          organizationId: listItem.organizationId,
-          organizationStatusId: listItem.organizationStatusId,
-          tags: listItem.tags
-            ?.filter((t): t is NonNullable<typeof t> => t !== null)
-            .map((t) => ({
-              _id: t._id,
-              color: t.color,
-              name: t.name,
-            })),
-          title: listItem.title,
-          userVoteType: listItem.userVoteType,
-          voteCount: listItem.voteCount,
-        }
-      : null);
-
-  useHotkeys(
-    "j",
-    () => {
-      if (!isCompositeWidgetFocused()) {
-        onNext?.();
-      }
-    },
-    { enabled: isOpen && hasNext },
-    [isOpen, hasNext, onNext]
-  );
-
-  useHotkeys(
-    "k",
-    () => {
-      if (!isCompositeWidgetFocused()) {
-        onPrevious?.();
-      }
-    },
-    { enabled: isOpen && hasPrevious },
-    [isOpen, hasPrevious, onPrevious]
-  );
-
-  useHotkeys(
-    "ArrowDown",
-    () => {
-      if (!isCompositeWidgetFocused()) {
-        onNext?.();
-      }
-    },
-    { enabled: isOpen && hasNext },
-    [isOpen, hasNext, onNext]
-  );
-
-  useHotkeys(
-    "ArrowUp",
-    () => {
-      if (!isCompositeWidgetFocused()) {
-        onPrevious?.();
-      }
-    },
-    { enabled: isOpen && hasPrevious },
-    [isOpen, hasPrevious, onPrevious]
-  );
-
-  const showNavigation = feedbackIds.length > 1;
   const isLoading = feedbackId && !feedback;
 
   return (
@@ -148,106 +62,18 @@ export function FeedbackDetailDrawer({
         className="gap-0 overflow-hidden p-0 md:w-[70vw] md:max-w-[70vw]"
         side="right"
       >
-        <SheetHeader className="flex shrink-0 flex-row items-center justify-between gap-2 border-b px-4 py-3">
-          <SheetTitle className="sr-only">Feedback Details</SheetTitle>
-          <SheetDescription className="sr-only">
-            View and manage feedback details
-          </SheetDescription>
-
-          <div className="flex items-center gap-3">
-            {feedback?.author && (
-              <div className="flex items-center gap-1.5">
-                <Avatar className="h-5 w-5">
-                  <AvatarImage src={feedback.author.image ?? undefined} />
-                  <AvatarFallback className="text-micro">
-                    {feedback.author.name?.charAt(0) ?? "?"}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="text-muted-foreground text-xs">
-                  <span className="sr-only">Posted by </span>
-                  {feedback.author.name ?? "Anonymous"}
-                </span>
-              </div>
-            )}
-
-            {feedback?.createdAt && (
-              <time
-                className="flex items-center gap-1 text-muted-foreground text-xs"
-                dateTime={new Date(feedback.createdAt).toISOString()}
-              >
-                <CalendarBlank className="h-3.5 w-3.5" />
-                {formatDistanceToNow(feedback.createdAt, {
-                  addSuffix: true,
-                })}
-                <span className="sr-only">
-                  {new Date(feedback.createdAt).toLocaleDateString("en-US", {
-                    day: "numeric",
-                    hour: "numeric",
-                    minute: "2-digit",
-                    month: "long",
-                    year: "numeric",
-                  })}
-                </span>
-              </time>
-            )}
-          </div>
-
-          <div className="flex-1" />
-
-          <div className="flex items-center gap-1">
-            {showNavigation && (
-              <>
-                <Tooltip>
-                  <TooltipTrigger
-                    aria-label="Previous feedback"
-                    render={
-                      <Button
-                        disabled={!hasPrevious}
-                        iconOnly
-                        onClick={onPrevious}
-                        size="xs"
-                        variant="ghost"
-                      />
-                    }
-                  >
-                    <CaretLeft className="h-4 w-4" />
-                  </TooltipTrigger>
-                  <TooltipContent>Previous (k or arrow up)</TooltipContent>
-                </Tooltip>
-                <span className="min-w-12 text-center text-muted-foreground text-xs tabular-nums">
-                  {currentIndex >= 0 ? currentIndex + 1 : "-"} /{" "}
-                  {feedbackIds.length}
-                </span>
-                <Tooltip>
-                  <TooltipTrigger
-                    aria-label="Next feedback"
-                    render={
-                      <Button
-                        disabled={!hasNext}
-                        iconOnly
-                        onClick={onNext}
-                        size="xs"
-                        variant="ghost"
-                      />
-                    }
-                  >
-                    <CaretRight className="h-4 w-4" />
-                  </TooltipTrigger>
-                  <TooltipContent>Next (j or arrow down)</TooltipContent>
-                </Tooltip>
-              </>
-            )}
-          </div>
-
-          <SheetClose
-            render={
-              <Button iconOnly onClick={onClose} size="xs" variant="ghost" />
-            }
-          >
-            <X className="h-4 w-4" />
-            <span className="sr-only">Close</span>
-          </SheetClose>
-        </SheetHeader>
+        <FeedbackDetailDrawerHeader
+          author={feedback?.author}
+          createdAt={feedback?.createdAt}
+          currentIndex={currentIndex}
+          hasNext={hasNext}
+          hasPrevious={hasPrevious}
+          onNext={onNext}
+          onPrevious={onPrevious}
+          showNavigation={feedbackIds.length > 1}
+          title={feedback?.title}
+          total={feedbackIds.length}
+        />
 
         <FeedbackDetailContent
           feedback={feedback}
@@ -260,52 +86,78 @@ export function FeedbackDetailDrawer({
   );
 }
 
-function FeedbackDetailContent({
-  isLoading,
+type LoadedFeedback = NonNullable<FeedbackDetailContentProps["feedback"]>;
+
+interface LoadedFeedbackProps {
+  feedback: LoadedFeedback;
+  feedbackId: Id<"feedback">;
+  isAdmin: boolean;
+}
+
+function FeedbackDetailSkeleton() {
+  return (
+    <div aria-busy="true" className="space-y-4 px-6 py-5">
+      <span className="sr-only">Loading feedback…</span>
+      <Skeleton className="h-7 w-2/3" />
+      <div className="flex gap-2">
+        <Skeleton className="h-8 w-24 rounded-full" />
+        <Skeleton className="h-8 w-24 rounded-full" />
+        <Skeleton className="h-8 w-24 rounded-full" />
+      </div>
+      <Skeleton className="h-4 w-full" />
+      <Skeleton className="h-4 w-5/6" />
+      <Skeleton className="h-4 w-3/4" />
+    </div>
+  );
+}
+
+function FeedbackDetailMetadata({
   feedback,
   feedbackId,
   isAdmin,
-}: FeedbackDetailContentProps) {
-  if (isLoading) {
-    return (
-      <div className="flex flex-1 items-center justify-center">
-        <Spinner className="size-8 text-muted-foreground" />
-      </div>
-    );
-  }
+}: LoadedFeedbackProps) {
+  return (
+    <FeedbackMetadataBar
+      aiComplexity={feedback.aiComplexity}
+      aiComplexityReasoning={feedback.aiComplexityReasoning}
+      aiNeedsReview={feedback.aiNeedsReview}
+      aiPriority={feedback.aiPriority}
+      aiPriorityReasoning={feedback.aiPriorityReasoning}
+      aiTimeEstimate={feedback.aiTimeEstimate}
+      assignee={feedback.assignee}
+      attachments={feedback.attachments}
+      author={feedback.author}
+      complexity={feedback.complexity}
+      createdAt={feedback.createdAt}
+      deadline={feedback.deadline}
+      description={feedback.description}
+      feedbackId={feedbackId}
+      isAdmin={isAdmin}
+      isInternal={feedback.isInternal}
+      organizationId={feedback.organizationId}
+      organizationStatusId={feedback.organizationStatusId}
+      priority={feedback.priority}
+      tags={feedback.tags}
+      timeEstimate={feedback.timeEstimate}
+      title={feedback.title}
+      userVoteType={feedback.userVoteType ?? null}
+      voteCount={feedback.voteCount ?? 0}
+    />
+  );
+}
 
-  if (!(feedback && feedbackId)) {
-    return null;
-  }
-
+function FeedbackDetailBody({
+  feedback,
+  feedbackId,
+  isAdmin,
+}: LoadedFeedbackProps) {
   return (
     <ScrollArea className="flex-1">
       <div className="flex flex-col">
-        <FeedbackMetadataBar
-          aiComplexity={feedback.aiComplexity}
-          aiComplexityReasoning={feedback.aiComplexityReasoning}
-          aiNeedsReview={feedback.aiNeedsReview}
-          aiPriority={feedback.aiPriority}
-          aiPriorityReasoning={feedback.aiPriorityReasoning}
-          aiTimeEstimate={feedback.aiTimeEstimate}
-          assignee={feedback.assignee}
-          attachments={feedback.attachments}
-          author={feedback.author}
-          complexity={feedback.complexity}
-          createdAt={feedback.createdAt}
-          deadline={feedback.deadline}
-          description={feedback.description}
+        <FeedbackDetailMetadata
+          feedback={feedback}
           feedbackId={feedbackId}
           isAdmin={isAdmin}
-          isInternal={feedback.isInternal}
-          organizationId={feedback.organizationId}
-          organizationStatusId={feedback.organizationStatusId}
-          priority={feedback.priority}
-          tags={feedback.tags}
-          timeEstimate={feedback.timeEstimate}
-          title={feedback.title}
-          userVoteType={feedback.userVoteType ?? null}
-          voteCount={feedback.voteCount ?? 0}
         />
 
         <div className="min-h-[60vh] px-6 py-4">
@@ -348,5 +200,28 @@ function FeedbackDetailContent({
         </div>
       </div>
     </ScrollArea>
+  );
+}
+
+function FeedbackDetailContent({
+  isLoading,
+  feedback,
+  feedbackId,
+  isAdmin,
+}: FeedbackDetailContentProps) {
+  if (isLoading) {
+    return <FeedbackDetailSkeleton />;
+  }
+
+  if (!(feedback && feedbackId)) {
+    return null;
+  }
+
+  return (
+    <FeedbackDetailBody
+      feedback={feedback}
+      feedbackId={feedbackId}
+      isAdmin={isAdmin}
+    />
   );
 }

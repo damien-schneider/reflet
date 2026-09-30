@@ -2,7 +2,9 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("motion/react", () => ({
-  motion: {
+  domAnimation: {},
+  LazyMotion: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  m: {
     circle: ({
       style: _style,
       ...props
@@ -23,6 +25,7 @@ vi.mock("motion/react", () => ({
     }) => <span className={className}>{children}</span>,
   },
   useMotionValue: () => ({ get: () => 0, set: vi.fn() }),
+  useReducedMotion: () => false,
   useSpring: (val: unknown) => val,
   useTransform: (_val: unknown, fn: (v: number) => unknown) => fn(0),
 }));

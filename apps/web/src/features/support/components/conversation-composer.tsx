@@ -1,15 +1,17 @@
 "use client";
 
 import { Button } from "@ctrl-ui/react/ui/button";
+import { Field, FieldError, FieldLabel } from "@ctrl-ui/react/ui/field";
 import { Input } from "@ctrl-ui/react/ui/input";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import { Textarea } from "@ctrl-ui/react/ui/textarea";
 import { PaperPlaneRight } from "@phosphor-icons/react";
-import { useState } from "react";
+import { useId, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface ConversationComposerProps {
-  alwaysExpanded?: boolean;
   className?: string;
+  error?: string | null;
   guestEmail?: string;
   isGuest?: boolean;
   isSubmitting: boolean;
@@ -21,24 +23,46 @@ interface ConversationComposerProps {
   }) => void;
 }
 
+const EMAIL_PATTERN = /^\S+@\S+\.\S+$/;
+
 export function ConversationComposer({
-  alwaysExpanded = false,
-  isSubmitting,
-  onSubmit,
   className,
-  isGuest,
+  error,
   guestEmail = "",
+  isGuest = false,
+  isSubmitting,
   onGuestEmailChange,
+  onSubmit,
 }: ConversationComposerProps) {
-  const [expanded, setExpanded] = useState(alwaysExpanded);
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const messageRef = useRef<HTMLTextAreaElement>(null);
+  const ids = { email: useId(), message: useId(), subject: useId() };
 
-  const hasValidEmail = !isGuest || guestEmail.includes("@");
-  const canSend = message.trim().length > 0 && !isSubmitting && hasValidEmail;
+  const emailError =
+    isGuest && !EMAIL_PATTERN.test(guestEmail.trim())
+      ? "Enter your email so the team can reply."
+      : null;
+  const messageError = message.trim()
+    ? null
+    : "Describe what you need help with.";
+  const visibleEmailError = hasAttemptedSubmit ? emailError : null;
+  const visibleMessageError = hasAttemptedSubmit ? messageError : null;
 
-  const handleSubmit = () => {
-    if (!canSend) {
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (isSubmitting) {
+      return;
+    }
+    setHasAttemptedSubmit(true);
+    if (emailError) {
+      emailRef.current?.focus();
+      return;
+    }
+    if (messageError) {
+      messageRef.current?.focus();
       return;
     }
     onSubmit({
@@ -46,76 +70,101 @@ export function ConversationComposer({
       message: message.trim(),
       subject: subject.trim(),
     });
-    setSubject("");
-    setMessage("");
-    if (!alwaysExpanded) {
-      setExpanded(false);
-    }
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
       event.preventDefault();
-      handleSubmit();
+      event.currentTarget.form?.requestSubmit();
     }
   };
 
   return (
-    <div
-      className={cn(
-        "rounded-lg border bg-card p-3 transition-[box-shadow]",
-        expanded && "ring-1 ring-ring",
-        className
-      )}
+    <form
+      className={cn("flex flex-col gap-3", className)}
+      noValidate
+      onSubmit={handleSubmit}
     >
-      {expanded && isGuest && (
-        <Input
-          className="mb-2 border-0 bg-transparent px-0 text-sm shadow-none focus-visible:ring-0"
-          disabled={isSubmitting}
-          onChange={(e) => onGuestEmailChange?.(e.target.value)}
-          placeholder="Your email *"
-          type="email"
-          value={guestEmail}
-        />
+      {isGuest && (
+        <Field invalid={Boolean(visibleEmailError)}>
+          <FieldLabel htmlFor={ids.email}>Email</FieldLabel>
+          <Input
+            aria-describedby={
+              visibleEmailError ? `${ids.email}-error` : undefined
+            }
+            aria-invalid={Boolean(visibleEmailError)}
+            autoComplete="email"
+            id={ids.email}
+            onChange={(e) => onGuestEmailChange?.(e.target.value)}
+            placeholder="you@example.com"
+            ref={emailRef}
+            type="email"
+            value={guestEmail}
+          />
+          <FieldError
+            id={`${ids.email}-error`}
+            match={Boolean(visibleEmailError)}
+          >
+            {visibleEmailError}
+          </FieldError>
+        </Field>
       )}
-      {expanded && (
+
+      <Field>
+        <FieldLabel htmlFor={ids.subject}>Subject (optional)</FieldLabel>
         <Input
-          className="mb-2 border-0 bg-transparent px-0 text-sm shadow-none focus-visible:ring-0"
-          disabled={isSubmitting}
+          id={ids.subject}
           onChange={(e) => setSubject(e.target.value)}
-          placeholder="Subject (optional)"
+          placeholder="Export stopped working"
           value={subject}
         />
-      )}
+      </Field>
 
-      <Textarea
-        className={cn(
-          "min-h-10 resize-none border-0 bg-transparent px-0 shadow-none focus-visible:ring-0",
-          expanded ? "min-h-20" : "min-h-10"
+      <Field invalid={Boolean(visibleMessageError)}>
+        <FieldLabel htmlFor={ids.message}>Message</FieldLabel>
+        <Textarea
+          aria-describedby={
+            visibleMessageError ? `${ids.message}-error` : undefined
+          }
+          aria-invalid={Boolean(visibleMessageError)}
+          className="field-sizing-content max-h-64 min-h-24 resize-none"
+          id={ids.message}
+          onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="What do you need help with?"
+          ref={messageRef}
+          rows={4}
+          value={message}
+        />
+        <FieldError
+          id={`${ids.message}-error`}
+          match={Boolean(visibleMessageError)}
+        >
+          {visibleMessageError}
+        </FieldError>
+      </Field>
+
+      <div className="flex flex-wrap items-center justify-end gap-3">
+        {error && (
+          <p className="mr-auto text-destructive text-sm" role="alert">
+            {error}
+          </p>
         )}
-        disabled={isSubmitting}
-        onChange={(e) => setMessage(e.target.value)}
-        onFocus={() => setExpanded(true)}
-        onKeyDown={handleKeyDown}
-        placeholder="What do you need help with?"
-        rows={expanded ? 3 : 1}
-        value={message}
-      />
-
-      {expanded && (
-        <div className="mt-2 flex items-center justify-end">
-          <Button
-            disabled={!canSend}
-            onClick={handleSubmit}
-            size="xs"
-            tone="primary"
-            variant="solid"
-          >
-            <PaperPlaneRight className="h-4 w-4" weight="fill" />
-            Send
-          </Button>
-        </div>
-      )}
-    </div>
+        <Button
+          aria-busy={isSubmitting}
+          disabled={isSubmitting}
+          tone="primary"
+          type="submit"
+          variant="solid"
+        >
+          {isSubmitting ? (
+            <Spinner aria-hidden data-icon="inline-start" size="xs" />
+          ) : (
+            <PaperPlaneRight aria-hidden weight="fill" />
+          )}
+          Send
+        </Button>
+      </div>
+    </form>
   );
 }

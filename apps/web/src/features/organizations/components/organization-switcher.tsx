@@ -14,20 +14,22 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@ctrl-ui/react/ui/dropdown-menu";
+import { Field, FieldError, FieldLabel } from "@ctrl-ui/react/ui/field";
 import { Input } from "@ctrl-ui/react/ui/input";
-import { toast } from "@ctrl-ui/react/ui/toast";
 import { CaretUpDown, Check, Plus } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { Label } from "@/components/ui/label";
+import { type FormEvent, useEffect, useState } from "react";
 import { OrgAvatar } from "./org-avatar";
 
 interface OrganizationSwitcherProps {
   currentOrgSlug?: string;
 }
+
+const TRIGGER_CLASS =
+  "w-full justify-between group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0";
 
 export function OrganizationSwitcher({
   currentOrgSlug,
@@ -37,6 +39,7 @@ export function OrganizationSwitcher({
   const createOrg = useMutation(api.organizations.mutations.create);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newOrgName, setNewOrgName] = useState("");
+  const [createError, setCreateError] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
   const currentOrg = organizations?.find((org) => org?.slug === currentOrgSlug);
@@ -51,57 +54,72 @@ export function OrganizationSwitcher({
     }
   }, [organizations, currentOrgSlug, router]);
 
-  const handleCreateOrg = async () => {
-    if (!newOrgName.trim()) {
+  const handleDialogOpenChange = (open: boolean) => {
+    setShowCreateDialog(open);
+    if (!open) {
+      setNewOrgName("");
+      setCreateError(null);
+    }
+  };
+
+  const handleCreateOrg = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const name = newOrgName.trim();
+    if (!name) {
+      setCreateError("Enter an organization name");
       return;
     }
 
     setIsCreating(true);
+    setCreateError(null);
     try {
-      await createOrg({ name: newOrgName.trim() });
-      setShowCreateDialog(false);
-      setNewOrgName("");
+      await createOrg({ name });
+      handleDialogOpenChange(false);
       router.push("/dashboard");
     } catch (error) {
-      const message =
+      setCreateError(
         error instanceof Error
           ? error.message
-          : "Failed to create organization";
-      toast.error(message);
-    } finally {
-      setIsCreating(false);
+          : "Unable to create the organization. Try again."
+      );
     }
+    setIsCreating(false);
   };
 
   if (!organizations) {
     return (
-      <Button
-        className="w-full justify-between group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0"
-        disabled
-        variant="surface"
-      >
+      <Button className={TRIGGER_CLASS} disabled variant="surface">
         <OrgAvatar org={null} size="sm" />
-        <span className="group-data-[collapsible=icon]:hidden">Loading...</span>
+        <span className="group-data-[collapsible=icon]:hidden">Loading…</span>
       </Button>
     );
   }
+
+  const currentOrgName = currentOrg?.name ?? "Select organization";
 
   return (
     <>
       <DropdownMenu>
         <Button
-          className="w-full justify-between group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0"
+          aria-label={`Switch organization. Current: ${currentOrgName}`}
+          className={TRIGGER_CLASS}
           render={<Menu.Trigger />}
           size="md"
           variant="surface"
         >
           <span className="flex min-w-0 flex-1 items-center gap-2 group-data-[collapsible=icon]:flex-none">
             <OrgAvatar org={currentOrg} size="sm" />
-            <span className="truncate group-data-[collapsible=icon]:hidden">
-              {currentOrg?.name || "Select organization"}
+            <span
+              className="truncate group-data-[collapsible=icon]:hidden"
+              title={currentOrgName}
+            >
+              {currentOrgName}
             </span>
           </span>
-          <CaretUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 group-data-[collapsible=icon]:hidden" />
+          <CaretUpDown
+            aria-hidden
+            className="size-4 shrink-0 text-muted-foreground group-data-[collapsible=icon]:hidden"
+          />
         </Button>
         <DropdownMenuContent align="start" className="w-50">
           {organizations.map((org) =>
@@ -110,13 +128,21 @@ export function OrganizationSwitcher({
                 className="flex items-center justify-between"
                 key={org._id}
                 render={(props) => (
-                  <Link href={`/dashboard/${org.slug}`} {...props}>
-                    <span className="flex items-center gap-2 truncate">
+                  <Link
+                    aria-current={
+                      org.slug === currentOrgSlug ? "page" : undefined
+                    }
+                    href={`/dashboard/${org.slug}`}
+                    {...props}
+                  >
+                    <span className="flex min-w-0 items-center gap-2">
                       <OrgAvatar org={org} size="sm" />
-                      <span className="truncate">{org.name}</span>
+                      <span className="truncate" title={org.name}>
+                        {org.name}
+                      </span>
                     </span>
                     {org.slug === currentOrgSlug && (
-                      <Check className="h-4 w-4 shrink-0" />
+                      <Check aria-hidden className="size-4 shrink-0" />
                     )}
                   </Link>
                 )}
@@ -125,50 +151,61 @@ export function OrganizationSwitcher({
           )}
           {organizations.length > 0 && <DropdownMenuSeparator />}
           <DropdownMenuItem onClick={() => setShowCreateDialog(true)}>
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus aria-hidden className="size-4" />
             Create organization
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <Dialog onOpenChange={setShowCreateDialog} open={showCreateDialog}>
+      <Dialog onOpenChange={handleDialogOpenChange} open={showCreateDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Create organization</DialogTitle>
             <DialogDescription>
-              Create a new organization to start collecting feedback.
+              An organization holds your boards, changelog and team.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="name">Organization name</Label>
+          <form
+            id="create-organization-form"
+            noValidate
+            onSubmit={handleCreateOrg}
+          >
+            <Field invalid={Boolean(createError)}>
+              <FieldLabel htmlFor="new-organization-name">
+                Organization name
+              </FieldLabel>
               <Input
-                id="name"
-                onChange={(e) => setNewOrgName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    handleCreateOrg();
-                  }
+                autoComplete="organization"
+                disabled={isCreating}
+                id="new-organization-name"
+                onChange={(e) => {
+                  setNewOrgName(e.target.value);
+                  setCreateError(null);
                 }}
                 placeholder="My Company"
                 value={newOrgName}
               />
-            </div>
-          </div>
+              <FieldError match={Boolean(createError)}>
+                {createError}
+              </FieldError>
+            </Field>
+          </form>
           <DialogFooter>
             <Button
-              onClick={() => setShowCreateDialog(false)}
+              onClick={() => handleDialogOpenChange(false)}
+              type="button"
               variant="surface"
             >
               Cancel
             </Button>
             <Button
               disabled={isCreating}
-              onClick={handleCreateOrg}
+              form="create-organization-form"
               tone="primary"
+              type="submit"
               variant="solid"
             >
-              {isCreating ? "Creating..." : "Create"}
+              {isCreating ? "Creating…" : "Create organization"}
             </Button>
           </DialogFooter>
         </DialogContent>

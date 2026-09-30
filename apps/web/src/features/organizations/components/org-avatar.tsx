@@ -25,7 +25,7 @@ export function OrgAvatar({ org, size, className }: OrgAvatarProps) {
   if (org?.logo) {
     return (
       <Image
-        alt={org.name}
+        alt=""
         className={cn(
           "shrink-0 object-contain outline outline-1 outline-black/10 -outline-offset-1 dark:outline-white/10",
           IMAGE_CLASS[size],
@@ -40,6 +40,7 @@ export function OrgAvatar({ org, size, className }: OrgAvatarProps) {
 
   return (
     <span
+      aria-hidden
       className={cn(
         "flex shrink-0 items-center justify-center bg-secondary text-brand-text",
         BOX_CLASS[size],

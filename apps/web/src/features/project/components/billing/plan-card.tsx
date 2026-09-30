@@ -1,9 +1,9 @@
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button } from "@ctrl-ui/react/ui/button";
+import { Card } from "@ctrl-ui/react/ui/card";
 import NumberFlow from "@number-flow/react";
-import { Check, Crown, Sparkle, Warning } from "@phosphor-icons/react";
+import { Check, Crown, Minus, Sparkle, Warning } from "@phosphor-icons/react";
 import { TagBadge } from "@/components/tag-badge";
-import { H3, Muted, Text } from "@/components/ui/typography";
 import { cn } from "@/lib/utils";
 
 import type {
@@ -11,12 +11,11 @@ import type {
   Plan,
   PlanPrice,
   PlanTier,
+  PriceKey,
   SubscriptionData,
 } from "./billing-types";
 
-// ============================================
-// SUB-COMPONENTS
-// ============================================
+const PRICE_TIMING = { duration: 300, easing: "ease-out" } as const;
 
 function FeatureItem({
   label,
@@ -28,20 +27,22 @@ function FeatureItem({
   highlight?: boolean;
 }) {
   return (
-    <li className="flex items-center gap-2 text-sm">
+    <li className="flex items-center gap-2 text-body">
       {included ? (
         <Check
+          aria-hidden
           className={cn(
-            "h-4 w-4 shrink-0",
+            "size-4 shrink-0",
             highlight ? "text-success-text" : "text-muted-foreground"
           )}
           weight="bold"
         />
       ) : (
-        <span className="h-4 w-4 shrink-0" />
+        <Minus aria-hidden className="size-4 shrink-0 text-muted-foreground" />
       )}
-      <span className={included ? "" : "text-muted-foreground/50"}>
+      <span className={included ? undefined : "text-muted-foreground"}>
         {label}
+        {included ? null : <span className="sr-only"> (not included)</span>}
       </span>
     </li>
   );
@@ -56,13 +57,9 @@ function PriceDisplay({
 }) {
   if (price.amount === 0) {
     return (
-      <div className="relative flex flex-col gap-1 pb-6">
-        <div className="flex items-baseline gap-1">
-          <span className="font-bold text-3xl">Free</span>
-        </div>
-        <span className="absolute bottom-0 left-0 text-muted-foreground text-sm opacity-0">
-          Placeholder
-        </span>
+      <div className="flex flex-col gap-1">
+        <span className="font-semibold text-heading-1">Free</span>
+        <span className="text-caption text-muted-foreground">Free forever</span>
       </div>
     );
   }
@@ -76,37 +73,32 @@ function PriceDisplay({
   const showYearlyDetails = isYearly && price.savings && isSelected;
 
   return (
-    <div className="relative flex flex-col gap-1 pb-6">
-      <div className="flex items-baseline gap-1">
-        <span className="font-bold text-3xl">
+    <div className="flex flex-col gap-1">
+      <div className="flex flex-wrap items-baseline gap-1">
+        <span className="font-semibold text-heading-1 tabular-nums">
           {price.currency}
-          <NumberFlow
-            transformTiming={{ duration: 400, easing: "ease-out" }}
-            value={displayAmount}
-          />
+          <NumberFlow transformTiming={PRICE_TIMING} value={displayAmount} />
         </span>
-        <span className="text-muted-foreground">/mo</span>
+        <span className="text-body text-muted-foreground">/mo</span>
         {price.savings && (
           <TagBadge
-            className={`ml-2 transition-opacity ${showYearlyDetails ? "opacity-100" : "opacity-0"}`}
+            aria-hidden={!showYearlyDetails}
+            className={cn(
+              "ml-2 transition-opacity duration-(--duration-base) ease-(--ease-standard) motion-reduce:transition-none",
+              showYearlyDetails ? "opacity-100" : "opacity-0"
+            )}
             color="green"
           >
             Save {price.currency}
-            <NumberFlow
-              transformTiming={{ duration: 400, easing: "ease-out" }}
-              value={price.savings}
-            />
+            <NumberFlow transformTiming={PRICE_TIMING} value={price.savings} />
             /yr
           </TagBadge>
         )}
       </div>
-      <span
-        className={`absolute bottom-0 left-0 text-muted-foreground text-sm transition-opacity ${
-          isYearly ? "opacity-100" : "opacity-0"
-        }`}
-      >
-        Billed yearly ({price.currency}
-        {price.amount})
+      <span className="text-caption text-muted-foreground tabular-nums">
+        {isYearly
+          ? `Billed yearly (${price.currency}${price.amount})`
+          : "Billed monthly"}
       </span>
     </div>
   );
@@ -129,11 +121,10 @@ function PlanActions({
   isUpgrade: boolean;
   isLoading: string | null;
   planId: PlanTier;
-  priceKey: string;
+  priceKey: PriceKey | null;
   onUpgrade: () => void;
   onManageSubscription: () => void;
 }) {
-  // Show manage subscription button for Pro plan - any member can view the portal
   if (isCurrentPlan && planId === "pro" && canViewBilling) {
     return (
       <div className="mt-auto">
@@ -143,23 +134,19 @@ function PlanActions({
           onClick={onManageSubscription}
           variant="surface"
         >
-          {isLoading === "portal" ? "Opening..." : "Manage Subscription"}
+          {isLoading === "portal" ? "Opening…" : "Manage subscription"}
         </Button>
       </div>
     );
   }
 
-  // Only owners can upgrade
   if (!canManageBilling) {
     if (isUpgrade) {
       return (
         <div className="mt-auto">
-          <Text
-            className="text-center text-muted-foreground"
-            variant="bodySmall"
-          >
+          <p className="text-center text-body text-muted-foreground">
             Only the organization owner can upgrade
-          </Text>
+          </p>
         </div>
       );
     }
@@ -170,7 +157,7 @@ function PlanActions({
     return (
       <div className="mt-auto">
         <Button className="w-full" disabled variant="surface">
-          Current Plan
+          Current plan
         </Button>
       </div>
     );
@@ -187,10 +174,10 @@ function PlanActions({
           variant="solid"
         >
           {isLoading === priceKey ? (
-            "Redirecting..."
+            "Redirecting…"
           ) : (
             <>
-              <Crown className="mr-2 h-4 w-4" weight="fill" />
+              <Crown aria-hidden data-icon="inline-start" weight="fill" />
               Upgrade to Pro
             </>
           )}
@@ -201,10 +188,6 @@ function PlanActions({
 
   return null;
 }
-
-// ============================================
-// MAIN COMPONENT
-// ============================================
 
 export function PlanCard({
   plan,
@@ -224,7 +207,7 @@ export function PlanCard({
   canManageBilling: boolean;
   canViewBilling: boolean;
   subscription: SubscriptionData | null;
-  onUpgrade: (priceKey: string) => void;
+  onUpgrade: (priceKey: PriceKey) => void;
   onManageSubscription: () => void;
 }) {
   const isCurrentPlan = plan.id === currentTier;
@@ -233,9 +216,10 @@ export function PlanCard({
   const isUpgrade = plan.id === "pro" && currentTier === "free";
 
   return (
-    <div
+    <Card
+      aria-current={isCurrentPlan ? "true" : undefined}
       className={cn(
-        "relative flex flex-col rounded-xl border bg-card p-6 text-card-foreground shadow-sm",
+        "relative flex flex-col gap-6 p-6",
         plan.highlighted && "ring-2 ring-ring"
       )}
     >
@@ -245,21 +229,27 @@ export function PlanCard({
         </div>
       )}
 
-      <div className="mb-4">
+      <div className="flex flex-col gap-1">
         <div className="flex items-center gap-2">
           {plan.id === "pro" ? (
-            <Crown className="h-5 w-5 text-warning-text" weight="fill" />
+            <Crown
+              aria-hidden
+              className="size-5 text-warning-text"
+              weight="fill"
+            />
           ) : (
-            <Sparkle className="h-5 w-5 text-muted-foreground" />
+            <Sparkle aria-hidden className="size-5 text-muted-foreground" />
           )}
-          <H3 variant="section">{plan.name}</H3>
+          <h3 className="text-balance text-heading-4">{plan.name}</h3>
           {isCurrentPlan && (
-            <Badge className="ml-auto" variant="outline">
-              Current Plan
+            <Badge className="ml-auto" color="green" size="sm">
+              Current plan
             </Badge>
           )}
         </div>
-        <Muted>{plan.description}</Muted>
+        <p className="text-pretty text-body text-muted-foreground">
+          {plan.description}
+        </p>
       </div>
 
       <div className="flex flex-1 flex-col gap-6">
@@ -280,25 +270,24 @@ export function PlanCard({
         </ul>
 
         {isCurrentPlan && plan.id === "pro" && subscription && (
-          <div className="rounded-lg border bg-muted/30 p-3">
+          <div className="rounded-(--radius-field) border bg-muted/30 p-3 text-body">
             {subscription.cancelAtPeriodEnd ? (
               <div className="flex items-center gap-2 text-warning-text">
-                <Warning className="h-4 w-4" weight="fill" />
-                <Text variant="bodySmall">
+                <Warning aria-hidden className="size-4" weight="fill" />
+                <p>
                   Cancels on{" "}
                   {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
-                </Text>
+                </p>
               </div>
             ) : (
-              <Text className="text-muted-foreground" variant="bodySmall">
+              <p className="text-muted-foreground">
                 Renews on{" "}
                 {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
-              </Text>
+              </p>
             )}
           </div>
         )}
 
-        {/* Actions */}
         <PlanActions
           canManageBilling={canManageBilling}
           canViewBilling={canViewBilling}
@@ -306,11 +295,15 @@ export function PlanCard({
           isLoading={isLoading}
           isUpgrade={isUpgrade}
           onManageSubscription={onManageSubscription}
-          onUpgrade={() => onUpgrade(price.priceKey)}
+          onUpgrade={() => {
+            if (price.priceKey) {
+              onUpgrade(price.priceKey);
+            }
+          }}
           planId={plan.id}
           priceKey={price.priceKey}
         />
       </div>
-    </div>
+    </Card>
   );
 }

@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@ctrl-ui/react/ui/dropdown-menu";
 import { SortAscending as SortAscendingIcon } from "@phosphor-icons/react";
+import { countActiveFilters } from "./feedback-board/count-active-filters";
 import { FilterDropdown } from "./feedback-board/filter-dropdown";
 
 export type SortOption = "votes" | "newest" | "oldest" | "comments";
@@ -24,10 +25,10 @@ const isSortOption = (value: string): value is SortOption =>
   SORT_OPTIONS.some((o) => o === value);
 
 const sortLabels: Record<SortOption, string> = {
-  comments: "Most Comments",
+  comments: "Most comments",
   newest: "Newest",
   oldest: "Oldest",
-  votes: "Most Votes",
+  votes: "Most votes",
 };
 
 export interface FiltersBarProps {
@@ -57,24 +58,39 @@ export function FiltersBar({
   onTagChange,
   onClearFilters,
 }: FiltersBarProps) {
+  const hasActiveFilters =
+    countActiveFilters({ hideCompleted, selectedStatusIds, selectedTagIds }) >
+    0;
+
   return (
     <div className="mx-auto mb-4 max-w-3xl px-4">
       <div className="flex items-center justify-between gap-2">
-        <FilterDropdown
-          hideCompleted={hideCompleted}
-          onClearFilters={onClearFilters}
-          onHideCompletedToggle={onHideCompletedToggle}
-          onStatusChange={onStatusChange}
-          onTagChange={onTagChange}
-          selectedStatusIds={selectedStatusIds}
-          selectedTagIds={selectedTagIds}
-          statuses={statuses}
-          tags={tags}
-        />
+        <div className="flex items-center gap-1">
+          <FilterDropdown
+            hideCompleted={hideCompleted}
+            onClearFilters={onClearFilters}
+            onHideCompletedToggle={onHideCompletedToggle}
+            onStatusChange={onStatusChange}
+            onTagChange={onTagChange}
+            selectedStatusIds={selectedStatusIds}
+            selectedTagIds={selectedTagIds}
+            statuses={statuses}
+            tags={tags}
+          />
+          {hasActiveFilters && (
+            <Button onClick={onClearFilters} size="sm" variant="ghost">
+              Clear
+            </Button>
+          )}
+        </div>
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
-              <Button size="xs" variant="ghost">
+              <Button
+                aria-label={`Sort: ${sortLabels[sortBy]}`}
+                size="sm"
+                variant="ghost"
+              >
                 <SortAscendingIcon data-icon="inline-start" />
                 {sortLabels[sortBy]}
               </Button>
@@ -89,18 +105,11 @@ export function FiltersBar({
               }}
               value={sortBy}
             >
-              <DropdownMenuRadioItem value="votes">
-                Most Votes
-              </DropdownMenuRadioItem>
-              <DropdownMenuRadioItem value="newest">
-                Newest
-              </DropdownMenuRadioItem>
-              <DropdownMenuRadioItem value="oldest">
-                Oldest
-              </DropdownMenuRadioItem>
-              <DropdownMenuRadioItem value="comments">
-                Most Comments
-              </DropdownMenuRadioItem>
+              {SORT_OPTIONS.map((option) => (
+                <DropdownMenuRadioItem key={option} value={option}>
+                  {sortLabels[option]}
+                </DropdownMenuRadioItem>
+              ))}
             </DropdownMenuRadioGroup>
           </DropdownMenuContent>
         </DropdownMenu>

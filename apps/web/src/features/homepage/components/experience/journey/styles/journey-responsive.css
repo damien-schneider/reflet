@@ -3,7 +3,7 @@
     padding: 24px 18px 20px;
   }
   :where(.journey-heading) {
-    min-height: 135px;
+    min-height: 160px;
     margin-bottom: 20px;
   }
   :where(.journey-step-copy) {
@@ -16,7 +16,7 @@
   }
   :where(.journey-step-copy > p) {
     max-width: 440px;
-    font-size: 11px;
+    font-size: 13px;
   }
   :where(.journey-step-count) {
     margin-bottom: 8px;
@@ -224,7 +224,7 @@
     padding-block: 16px;
   }
   :where(.journey-heading) {
-    min-height: 115px;
+    min-height: 135px;
     margin-bottom: 14px;
   }
   :where(.journey-step-copy) {
@@ -234,8 +234,8 @@
     font-size: 22px;
   }
   :where(.journey-step-copy > p) {
-    font-size: 10px;
-    line-height: 1.6;
+    font-size: 12px;
+    line-height: 1.5;
   }
   :where(.journey-scene-body) {
     height: 300px;

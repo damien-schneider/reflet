@@ -1,6 +1,14 @@
 "use client";
 
-import { Button } from "@ctrl-ui/react/ui/button";
+import { Button, ButtonLink } from "@ctrl-ui/react/ui/button";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@ctrl-ui/react/ui/empty";
 import {
   PageActions,
   PageBody,
@@ -8,38 +16,49 @@ import {
   PageLayout,
   PageTitle,
 } from "@ctrl-ui/react/ui/page-layout";
-import { ArrowSquareOut, Warning } from "@phosphor-icons/react";
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
+import { ArrowSquareOut, Pulse, Warning } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import Link from "next/link";
+import type { FunctionReturnType } from "convex/server";
 import { use, useState } from "react";
+import { OrgNotFound } from "@/features/dashboard/components/org-not-found";
 import { AddMonitorInput } from "@/features/status/components/add-monitor-input";
-import { IncidentCard } from "@/features/status/components/incident-card";
 import { IncidentComposer } from "@/features/status/components/incident-composer";
-import { MonitorCard } from "@/features/status/components/monitor-card";
-import { StatusDot } from "@/features/status/components/status-dot";
 import { GitHubConnectHint } from "@/shared/components/github-connect-hint";
+import {
+  ActiveIncidents,
+  MonitorGroups,
+  OverallStatusBanner,
+} from "./status-dashboard-sections";
 
-const statusLabels = {
-  degraded: "Degraded Performance",
-  major_outage: "Major Outage",
-  no_monitors: "No Monitors",
-  operational: "All Systems Operational",
-} as const;
+type Monitor = FunctionReturnType<
+  typeof api.status.monitors.listMonitors
+>[number];
 
-const getStatusBannerClass = (status: string): string => {
-  if (status === "operational") {
-    return "bg-success-subtle";
-  }
-  if (status === "degraded") {
-    return "bg-warning-subtle";
-  }
-  if (status === "major_outage") {
-    return "bg-destructive-subtle";
-  }
-  return "bg-muted";
-};
+const SKELETON_MONITOR_KEYS = ["first", "second", "third"] as const;
+
+function StatusDashboardSkeleton() {
+  return (
+    <PageLayout scroll="page" width="content">
+      <PageHeader>
+        <PageTitle>Status</PageTitle>
+      </PageHeader>
+      <PageBody>
+        <div aria-busy className="space-y-6">
+          <Skeleton className="h-14 w-full rounded-(--radius-panel)" />
+          {SKELETON_MONITOR_KEYS.map((key) => (
+            <div className="space-y-3" key={key}>
+              <Skeleton className="h-18 w-full rounded-(--radius-panel)" />
+              <Skeleton className="h-36 w-full rounded-(--radius-panel)" />
+            </div>
+          ))}
+        </div>
+      </PageBody>
+    </PageLayout>
+  );
+}
 
 export default function StatusDashboardPage({
   params,
@@ -49,224 +68,151 @@ export default function StatusDashboardPage({
   const { orgSlug } = use(params);
   const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
 
-  const monitors = useQuery(
-    api.status.monitors.listMonitors,
-    org?._id ? { organizationId: org._id } : "skip"
-  );
+  if (org === null) {
+    return <OrgNotFound />;
+  }
 
-  const aggregateStatus = useQuery(
-    api.status.monitors.getAggregateStatus,
-    org?._id ? { organizationId: org._id } : "skip"
-  );
+  if (org === undefined) {
+    return <StatusDashboardSkeleton />;
+  }
 
-  const uptimeBars = useQuery(
-    api.status.monitors.getMonitorsUptimeBars,
-    org?._id ? { organizationId: org._id } : "skip"
-  );
+  return <StatusDashboard organizationId={org._id} orgSlug={orgSlug} />;
+}
 
-  const activeIncidents = useQuery(
-    api.status.incidents.getActiveIncidents,
-    org?._id ? { organizationId: org._id } : "skip"
-  );
-
-  const billingStatus = useQuery(
-    api.billing.queries.getStatus,
-    org?._id ? { organizationId: org._id } : "skip"
-  );
-  const isPro = billingStatus?.tier === "pro";
-
+function StatusDashboard({
+  organizationId,
+  orgSlug,
+}: {
+  organizationId: Id<"organizations">;
+  orgSlug: string;
+}) {
+  const monitors = useQuery(api.status.monitors.listMonitors, {
+    organizationId,
+  });
   const createMonitor = useMutation(api.status.monitors.createMonitor);
-  const updateMonitor = useMutation(api.status.monitors.updateMonitor);
-  const deleteMonitor = useMutation(api.status.monitors.deleteMonitor);
-  const createIncident = useMutation(api.status.incidents.createIncident);
-  const postIncidentUpdate = useMutation(
-    api.status.incidents.postIncidentUpdate
-  );
 
-  const [showComposer, setShowComposer] = useState(false);
-
-  if (!org) {
-    return null;
+  if (monitors === undefined) {
+    return <StatusDashboardSkeleton />;
   }
 
   const handleAddMonitor = async (url: string, name: string) => {
-    await createMonitor({
-      name,
-      organizationId: org._id,
-      url,
-    });
+    await createMonitor({ name, organizationId, url });
   };
 
-  const handlePauseMonitor = async (monitorId: Id<"statusMonitors">) => {
-    await updateMonitor({ monitorId, status: "paused" });
-  };
-
-  const handleResumeMonitor = async (monitorId: Id<"statusMonitors">) => {
-    await updateMonitor({ monitorId, status: "operational" });
-  };
-
-  const handleDeleteMonitor = async (monitorId: Id<"statusMonitors">) => {
-    await deleteMonitor({ monitorId });
-  };
-
-  const handleUpdateInterval = async (
-    monitorId: Id<"statusMonitors">,
-    checkIntervalMinutes: number
-  ) => {
-    await updateMonitor({ checkIntervalMinutes, monitorId });
-  };
-
-  const handleCreateIncident = async (data: {
-    title: string;
-    severity: "minor" | "major" | "critical";
-    affectedMonitorIds: Id<"statusMonitors">[];
-    message: string;
-  }) => {
-    await createIncident({
-      organizationId: org._id,
-      ...data,
-    });
-    setShowComposer(false);
-  };
-
-  const handlePostUpdate = async (
-    incidentId: Id<"statusIncidents">,
-    status: "investigating" | "identified" | "monitoring" | "resolved",
-    message: string
-  ) => {
-    await postIncidentUpdate({ incidentId, message, status });
-  };
-
-  const hasMonitors = monitors && monitors.length > 0;
-  const status = aggregateStatus?.status ?? "no_monitors";
-
-  if (!hasMonitors && monitors !== undefined) {
+  if (monitors.length === 0) {
     return (
-      <PageLayout scroll="page" width="content">
-        <PageHeader>
-          <PageTitle>Status</PageTitle>
-        </PageHeader>
-        <PageBody>
-          <div className="mx-auto w-full max-w-md space-y-4">
-            <GitHubConnectHint
-              description="endpoints and services from your codebase"
-              organizationId={org._id}
-              orgSlug={orgSlug}
-            />
-            <AddMonitorInput
-              onAdd={handleAddMonitor}
-              organizationId={org._id}
-            />
-          </div>
-        </PageBody>
-      </PageLayout>
+      <NoMonitorsState
+        onAddMonitor={handleAddMonitor}
+        organizationId={organizationId}
+        orgSlug={orgSlug}
+      />
     );
   }
 
-  const grouped = new Map<string, NonNullable<typeof monitors>>();
-  for (const m of monitors ?? []) {
-    const group = m.groupName ?? "Ungrouped";
-    const existing = grouped.get(group) ?? [];
-    existing.push(m);
-    grouped.set(group, existing);
-  }
+  return (
+    <MonitorsDashboard
+      monitors={monitors}
+      onAddMonitor={handleAddMonitor}
+      scope={{ organizationId, orgSlug }}
+    />
+  );
+}
+
+function NoMonitorsState({
+  onAddMonitor,
+  organizationId,
+  orgSlug,
+}: {
+  onAddMonitor: (url: string, name: string) => Promise<void>;
+  organizationId: Id<"organizations">;
+  orgSlug: string;
+}) {
+  return (
+    <PageLayout scroll="page" width="content">
+      <PageHeader>
+        <PageTitle>Status</PageTitle>
+      </PageHeader>
+      <PageBody>
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia>
+              <Pulse aria-hidden className="size-6" />
+            </EmptyMedia>
+            <EmptyTitle>No monitors yet</EmptyTitle>
+            <EmptyDescription>
+              Add a URL and we’ll check it around the clock, then publish its
+              uptime on your status page.
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent className="w-full max-w-md space-y-4">
+            <AddMonitorInput onAdd={onAddMonitor} />
+            <GitHubConnectHint
+              description="Reflet suggests endpoints to monitor from your codebase."
+              organizationId={organizationId}
+              orgSlug={orgSlug}
+            />
+          </EmptyContent>
+        </Empty>
+      </PageBody>
+    </PageLayout>
+  );
+}
+
+function MonitorsDashboard({
+  monitors,
+  onAddMonitor,
+  scope,
+}: {
+  monitors: Monitor[];
+  onAddMonitor: (url: string, name: string) => Promise<void>;
+  scope: { organizationId: Id<"organizations">; orgSlug: string };
+}) {
+  const { organizationId, orgSlug } = scope;
+  const createIncident = useMutation(api.status.incidents.createIncident);
+  const [showComposer, setShowComposer] = useState(false);
 
   return (
     <PageLayout scroll="page" width="content">
       <PageHeader>
         <PageTitle>Status</PageTitle>
         <PageActions className="flex-wrap">
-          <Button
-            render={
-              <Link
-                href={`/${orgSlug}/status`}
-                rel="noopener"
-                target="_blank"
-              />
-            }
-            size="xs"
+          <ButtonLink
+            href={`/${orgSlug}/status`}
+            rel="noopener"
+            size="sm"
+            target="_blank"
             variant="surface"
           >
-            <ArrowSquareOut className="mr-1.5 h-4 w-4" />
-            Public Page
-          </Button>
+            <ArrowSquareOut />
+            View public page
+          </ButtonLink>
           <Button
+            aria-expanded={showComposer}
             onClick={() => setShowComposer(!showComposer)}
             size="sm"
-            tone={showComposer ? "neutral" : "danger"}
             variant="surface"
           >
-            <Warning className="mr-1.5 h-4 w-4" />
-            {showComposer ? "Cancel" : "Report Incident"}
+            <Warning />
+            Report incident
           </Button>
         </PageActions>
       </PageHeader>
       <PageBody>
-        <div
-          className={`mb-6 flex items-center gap-3 rounded-lg p-4 ${getStatusBannerClass(status)}`}
-        >
-          <StatusDot pulse size="lg" status={status} />
-          <span className="font-medium text-sm">{statusLabels[status]}</span>
-          {aggregateStatus?.monitorCount !== undefined && (
-            <span className="text-muted-foreground text-xs">
-              {aggregateStatus.monitorCount} monitors
-            </span>
-          )}
-        </div>
-
-        {showComposer && (
-          <div className="mb-6">
+        <div className="space-y-8">
+          <OverallStatusBanner organizationId={organizationId} />
+          {showComposer && (
             <IncidentComposer
-              monitors={
-                monitors?.map((m) => ({ _id: m._id, name: m.name })) ?? []
-              }
+              monitors={monitors.map((m) => ({ _id: m._id, name: m.name }))}
               onCancel={() => setShowComposer(false)}
-              onSubmit={handleCreateIncident}
+              onSubmit={async (data) => {
+                await createIncident({ organizationId, ...data });
+                setShowComposer(false);
+              }}
             />
-          </div>
-        )}
-
-        {activeIncidents && activeIncidents.length > 0 && (
-          <div className="mb-6 space-y-3">
-            <h2 className="font-semibold text-sm">Active Incidents</h2>
-            {activeIncidents.map((incident) => (
-              <IncidentCard
-                incident={incident}
-                key={incident._id}
-                onPostUpdate={handlePostUpdate}
-              />
-            ))}
-          </div>
-        )}
-
-        <div className="space-y-6">
-          {[...grouped.entries()].map(([groupName, groupMonitors]) => (
-            <div key={groupName}>
-              {grouped.size > 1 && (
-                <h2 className="mb-3 font-semibold text-muted-foreground text-xs uppercase tracking-wider">
-                  {groupName}
-                </h2>
-              )}
-              <div className="space-y-2">
-                {groupMonitors.map((monitor) => (
-                  <MonitorCard
-                    isPro={isPro}
-                    key={monitor._id}
-                    monitor={monitor}
-                    onDelete={handleDeleteMonitor}
-                    onPause={handlePauseMonitor}
-                    onResume={handleResumeMonitor}
-                    onUpdateInterval={handleUpdateInterval}
-                    uptimeData={uptimeBars?.[monitor._id]}
-                  />
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-4">
-          <AddMonitorInput onAdd={handleAddMonitor} organizationId={org._id} />
+          )}
+          <ActiveIncidents organizationId={organizationId} />
+          <MonitorGroups monitors={monitors} organizationId={organizationId} />
+          <AddMonitorInput onAdd={onAddMonitor} />
         </div>
       </PageBody>
     </PageLayout>

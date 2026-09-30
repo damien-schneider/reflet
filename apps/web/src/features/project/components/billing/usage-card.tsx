@@ -1,16 +1,22 @@
 import {
-  Progress,
-  ProgressLabel,
-  ProgressValue,
-} from "@ctrl-ui/react/ui/progress";
-import { ChartBar, CheckCircle } from "@phosphor-icons/react";
-import { H3, Muted, Text } from "@/components/ui/typography";
+  Meter,
+  MeterIndicator,
+  MeterLabel,
+  MeterTrack,
+  MeterValue,
+} from "@ctrl-ui/react/ui/meter";
+import { CheckCircle, MinusCircle } from "@phosphor-icons/react";
+import { SettingsSection } from "../settings-page";
 
 import type { LimitsData, UsageData } from "./billing-types";
 
-// ============================================
-// SUB-COMPONENTS
-// ============================================
+const NEAR_LIMIT_RATIO = 0.8;
+const AT_LIMIT_STYLE = {
+  "--cui-range-indicator-background": "var(--destructive)",
+} as const;
+const NEAR_LIMIT_STYLE = {
+  "--cui-range-indicator-background": "var(--warning)",
+} as const;
 
 function UsageProgress({
   label,
@@ -27,32 +33,44 @@ function UsageProgress({
   atLimitMessage: string;
   nearLimitMessage: string;
 }) {
-  const percentage = isUnlimited ? 0 : Math.min((current / max) * 100, 100);
   const isAtLimit = !isUnlimited && current >= max;
-  const isNearLimit = !isUnlimited && current >= max * 0.8 && !isAtLimit;
+  const isNearLimit =
+    !(isUnlimited || isAtLimit) && current >= max * NEAR_LIMIT_RATIO;
+  const meterMax = isUnlimited ? Math.max(current, 1) : max;
+  let indicatorStyle:
+    | typeof AT_LIMIT_STYLE
+    | typeof NEAR_LIMIT_STYLE
+    | undefined;
+  if (isAtLimit) {
+    indicatorStyle = AT_LIMIT_STYLE;
+  } else if (isNearLimit) {
+    indicatorStyle = NEAR_LIMIT_STYLE;
+  }
 
   return (
-    <div>
-      <Progress
-        className={isAtLimit ? "[&>div]:bg-destructive" : ""}
-        value={percentage}
+    <div className="flex flex-col gap-1.5">
+      <Meter
+        getAriaValueText={() =>
+          isUnlimited ? `${current}, unlimited` : `${current} of ${max}`
+        }
+        max={meterMax}
+        value={isUnlimited ? 0 : Math.min(current, max)}
       >
-        <ProgressLabel>{label}</ProgressLabel>
-        <ProgressValue>
+        <MeterLabel>{label}</MeterLabel>
+        <MeterValue className="tabular-nums">
           {() =>
-            isUnlimited ? `${current} (unlimited)` : `${current} / ${max}`
+            isUnlimited ? `${current} · Unlimited` : `${current} / ${max}`
           }
-        </ProgressValue>
-      </Progress>
+        </MeterValue>
+        <MeterTrack>
+          <MeterIndicator style={indicatorStyle} />
+        </MeterTrack>
+      </Meter>
       {isAtLimit && (
-        <Text className="mt-1 text-destructive-text" variant="bodySmall">
-          {atLimitMessage}
-        </Text>
+        <p className="text-body text-destructive-text">{atLimitMessage}</p>
       )}
       {isNearLimit && (
-        <Text className="mt-1 text-warning-text" variant="bodySmall">
-          {nearLimitMessage}
-        </Text>
+        <p className="text-body text-warning-text">{nearLimitMessage}</p>
       )}
     </div>
   );
@@ -66,24 +84,28 @@ function FeatureStatus({
   enabled: boolean;
 }) {
   return (
-    <div className="flex items-center gap-2">
-      <CheckCircle
-        className={`h-4 w-4 ${enabled ? "text-success" : "text-muted-foreground/30"}`}
-        weight="fill"
-      />
-      <Text
-        className={enabled ? "" : "text-muted-foreground/50"}
-        variant="bodySmall"
-      >
+    <li className="flex items-center gap-2 text-body">
+      {enabled ? (
+        <CheckCircle
+          aria-hidden
+          className="size-4 shrink-0 text-success-text"
+          weight="fill"
+        />
+      ) : (
+        <MinusCircle
+          aria-hidden
+          className="size-4 shrink-0 text-muted-foreground"
+        />
+      )}
+      <span className={enabled ? undefined : "text-muted-foreground"}>
         {label}
-      </Text>
-    </div>
+        <span className="sr-only">
+          {enabled ? " (included)" : " (not included)"}
+        </span>
+      </span>
+    </li>
   );
 }
-
-// ============================================
-// MAIN COMPONENT
-// ============================================
 
 export function UsageSection({
   isPro,
@@ -95,44 +117,39 @@ export function UsageSection({
   limits: LimitsData;
 }) {
   return (
-    <section className="space-y-6">
-      <div>
-        <div className="flex items-center gap-2">
-          <ChartBar className="h-5 w-5" />
-          <H3 variant="section">Usage</H3>
-        </div>
-        <Muted>Track your organization&apos;s usage against plan limits</Muted>
-      </div>
-
-      <UsageProgress
-        atLimitMessage="Limit reached. Upgrade to Pro for unlimited members."
-        current={usage.members}
-        isUnlimited={isPro}
-        label="Team members"
-        max={limits.maxMembers}
-        nearLimitMessage="Approaching limit. Consider upgrading to Pro."
-      />
-
-      <UsageProgress
-        atLimitMessage="Limit reached. Upgrade to Pro for 5,000 feedback items."
-        current={usage.feedback}
-        label="Feedback items"
-        max={limits.maxFeedback}
-        nearLimitMessage="Approaching limit. Consider upgrading to Pro."
-      />
-
-      <div className="grid grid-cols-2 gap-4 border-t pt-4">
-        <FeatureStatus
-          enabled={limits.customBranding}
-          label="Custom Branding"
+    <SettingsSection
+      description="Your organization’s usage against plan limits."
+      title="Usage"
+    >
+      <div className="flex flex-col gap-6">
+        <UsageProgress
+          atLimitMessage="Limit reached. Upgrade to Pro for unlimited members."
+          current={usage.members}
+          isUnlimited={isPro}
+          label="Team members"
+          max={limits.maxMembers}
+          nearLimitMessage="Almost at your limit. Upgrade to Pro for unlimited members."
         />
-        <FeatureStatus enabled={limits.customDomain} label="Custom Domain" />
-        <FeatureStatus enabled={limits.apiAccess} label="API Access" />
-        <FeatureStatus
-          enabled={limits.prioritySupport}
-          label="Priority Support"
+        <UsageProgress
+          atLimitMessage="Limit reached. Upgrade to Pro for 5,000 feedback items."
+          current={usage.feedback}
+          label="Feedback items"
+          max={limits.maxFeedback}
+          nearLimitMessage="Almost at your limit. Upgrade to Pro for 5,000 feedback items."
         />
+        <ul className="grid grid-cols-1 gap-3 border-t pt-4 sm:grid-cols-2">
+          <FeatureStatus
+            enabled={limits.customBranding}
+            label="Custom branding"
+          />
+          <FeatureStatus enabled={limits.customDomain} label="Custom domain" />
+          <FeatureStatus enabled={limits.apiAccess} label="API access" />
+          <FeatureStatus
+            enabled={limits.prioritySupport}
+            label="Priority support"
+          />
+        </ul>
       </div>
-    </section>
+    </SettingsSection>
   );
 }

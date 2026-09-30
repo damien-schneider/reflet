@@ -84,6 +84,9 @@ vi.mock("@ctrl-ui/react/ui/field", () => ({
       {children}
     </label>
   ),
+  FieldSeparator: ({ children }: { children?: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
 }));
 
 vi.mock("@reflet/env/web", () => ({

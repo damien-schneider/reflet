@@ -1,20 +1,29 @@
 "use client";
 
-import { Button } from "@ctrl-ui/react/ui/button";
+import { Badge } from "@ctrl-ui/react/ui/badge";
+import { Card, CardContent } from "@ctrl-ui/react/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@ctrl-ui/react/ui/dropdown-menu";
-import {
-  DotsThree,
-  Lightning,
-  Pause,
-  Play,
-  Trash,
-} from "@phosphor-icons/react";
+import { DotsThree, Pause, Play, Trash } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { useState } from "react";
+import { DestructiveConfirmDialog } from "@/components/ui/destructive-confirm-dialog";
+import { cn } from "@/lib/utils";
+import {
+  formatLatency,
+  MONITOR_STATUS_LABEL,
+  MONITOR_STATUS_TEXT_CLASS,
+  type MonitorStatus,
+} from "../lib/status-meta";
 import { ResponseTimeChart } from "./response-time-chart";
 import { StatusDot } from "./status-dot";
 import { UptimeBar } from "./uptime-bar";
@@ -25,10 +34,10 @@ interface UptimeData {
 }
 
 const CHECK_INTERVALS = [
-  { label: "1 min", value: 1 },
-  { label: "5 min", value: 5 },
-  { label: "10 min", value: 10 },
-  { label: "30 min", value: 30 },
+  { label: "Every minute", value: 1 },
+  { label: "Every 5 minutes", value: 5 },
+  { label: "Every 10 minutes", value: 10 },
+  { label: "Every 30 minutes", value: 30 },
 ] as const;
 
 interface MonitorCardProps {
@@ -37,7 +46,7 @@ interface MonitorCardProps {
     _id: Id<"statusMonitors">;
     name: string;
     url: string;
-    status: "operational" | "degraded" | "major_outage" | "paused";
+    status: MonitorStatus;
     lastResponseTimeMs?: number;
     checkIntervalMinutes: number;
     recentChecks: Array<{
@@ -53,20 +62,6 @@ interface MonitorCardProps {
   uptimeData?: UptimeData;
 }
 
-const statusLabels = {
-  degraded: "Degraded",
-  major_outage: "Major Outage",
-  operational: "Operational",
-  paused: "Paused",
-} as const;
-
-const statusLabelStyles = {
-  degraded: "text-warning-text",
-  major_outage: "text-destructive-text",
-  operational: "text-success-text",
-  paused: "text-muted-foreground",
-} as const;
-
 export function MonitorCard({
   monitor,
   onPause,
@@ -76,137 +71,130 @@ export function MonitorCard({
   isPro,
   uptimeData,
 }: MonitorCardProps) {
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const canChangeInterval = isPro && onUpdateInterval;
+
   return (
-    <div className="space-y-3">
-      {/* Monitor header card */}
-      <div className="rounded-lg border bg-card p-4">
-        <div className="flex items-center gap-3">
+    <section aria-label={monitor.name} className="space-y-3">
+      <Card>
+        <CardContent className="flex items-center gap-3">
           <StatusDot status={monitor.status} />
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <span className="truncate font-medium text-sm">
+            <div className="flex items-baseline gap-2">
+              <h3 className="truncate font-medium text-sm" title={monitor.name}>
                 {monitor.name}
-              </span>
+              </h3>
               <span
-                className={`font-medium text-xs ${statusLabelStyles[monitor.status]}`}
+                className={cn(
+                  "shrink-0 font-medium text-xs",
+                  MONITOR_STATUS_TEXT_CLASS[monitor.status]
+                )}
               >
-                {statusLabels[monitor.status]}
+                {MONITOR_STATUS_LABEL[monitor.status]}
               </span>
             </div>
-            <p className="truncate text-muted-foreground text-xs">
+            <p
+              className="truncate text-muted-foreground text-xs"
+              title={monitor.url}
+            >
               {monitor.url}
             </p>
           </div>
 
           <div className="hidden items-center gap-3 sm:flex">
             {monitor.lastResponseTimeMs !== undefined && (
-              <span className="font-mono text-muted-foreground text-xs">
-                {monitor.lastResponseTimeMs}ms
+              <span className="text-muted-foreground text-xs tabular-nums">
+                {formatLatency(monitor.lastResponseTimeMs)}
               </span>
             )}
-            <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground text-xs">
-              {monitor.checkIntervalMinutes}m
-            </span>
+            <Badge size="sm" variant="outline">
+              <span className="tabular-nums">
+                {monitor.checkIntervalMinutes}
+              </span>{" "}
+              min
+            </Badge>
           </div>
 
           <DropdownMenu>
             <DropdownMenuTrigger
-              render={(props) => (
-                <Button
-                  {...props}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    props.onClick?.(e);
-                  }}
-                  size="xs"
-                  variant="ghost"
-                >
-                  <DotsThree className="h-4 w-4" />
-                </Button>
-              )}
-            />
+              aria-label={`Actions for ${monitor.name}`}
+              iconOnly
+              size="sm"
+              variant="ghost"
+            >
+              <DotsThree />
+            </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               {monitor.status === "paused" ? (
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onResume(monitor._id);
-                  }}
-                >
-                  <Play className="mr-2 h-4 w-4" />
-                  Resume
+                <DropdownMenuItem onClick={() => onResume(monitor._id)}>
+                  <Play className="size-4" />
+                  Resume checks
                 </DropdownMenuItem>
               ) : (
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onPause(monitor._id);
-                  }}
-                >
-                  <Pause className="mr-2 h-4 w-4" />
-                  Pause
+                <DropdownMenuItem onClick={() => onPause(monitor._id)}>
+                  <Pause className="size-4" />
+                  Pause checks
                 </DropdownMenuItem>
               )}
-              {isPro && onUpdateInterval && (
+              {canChangeInterval && (
                 <>
-                  <div className="px-2 py-1.5 text-muted-foreground text-xs">
-                    <Lightning className="mr-1 inline h-3 w-3" />
-                    Check interval
-                  </div>
-                  {CHECK_INTERVALS.map((interval) => (
-                    <DropdownMenuItem
-                      key={interval.value}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onUpdateInterval(monitor._id, interval.value);
-                      }}
-                    >
-                      <span
-                        className={
-                          monitor.checkIntervalMinutes === interval.value
-                            ? "font-semibold"
-                            : ""
+                  <DropdownMenuSeparator />
+                  <DropdownMenuGroup>
+                    <DropdownMenuLabel>Check interval</DropdownMenuLabel>
+                    <DropdownMenuRadioGroup
+                      onValueChange={(value: unknown) => {
+                        if (typeof value === "number") {
+                          onUpdateInterval(monitor._id, value);
                         }
-                      >
-                        {interval.label}
-                        {monitor.checkIntervalMinutes === interval.value &&
-                          " (current)"}
-                      </span>
-                    </DropdownMenuItem>
-                  ))}
+                      }}
+                      value={monitor.checkIntervalMinutes}
+                    >
+                      {CHECK_INTERVALS.map((interval) => (
+                        <DropdownMenuRadioItem
+                          key={interval.value}
+                          value={interval.value}
+                        >
+                          {interval.label}
+                        </DropdownMenuRadioItem>
+                      ))}
+                    </DropdownMenuRadioGroup>
+                  </DropdownMenuGroup>
                 </>
               )}
+              <DropdownMenuSeparator />
               <DropdownMenuItem
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(monitor._id);
-                }}
+                className="menu-item-danger"
+                onClick={() => setIsConfirmOpen(true)}
               >
-                <Trash className="mr-2 h-4 w-4" />
-                Delete
+                <Trash className="size-4" />
+                Delete monitor
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
-      {/* Metric cards: uptime + response time side by side */}
-      <div className="grid grid-cols-1 gap-3">
-        {uptimeData && (
-          <UptimeBar
-            days={uptimeData.days}
-            label="Uptime"
-            overallUptime={uptimeData.overallUptime}
-            variant="card"
-          />
-        )}
-        {monitor.recentChecks.length > 0 && (
-          <ResponseTimeChart
-            lastResponseTimeMs={monitor.lastResponseTimeMs}
-            recentChecks={monitor.recentChecks}
-          />
-        )}
-      </div>
-    </div>
+      {uptimeData && (
+        <UptimeBar
+          days={uptimeData.days}
+          overallUptime={uptimeData.overallUptime}
+        />
+      )}
+      {monitor.recentChecks.length > 0 && (
+        <ResponseTimeChart
+          lastResponseTimeMs={monitor.lastResponseTimeMs}
+          recentChecks={monitor.recentChecks}
+        />
+      )}
+
+      <DestructiveConfirmDialog
+        confirmLabel="Delete monitor"
+        description="Checks stop and the monitor disappears from your public status page. This can’t be undone."
+        onConfirm={() => onDelete(monitor._id)}
+        onOpenChange={setIsConfirmOpen}
+        open={isConfirmOpen}
+        title={`Delete ${monitor.name}?`}
+      />
+    </section>
   );
 }

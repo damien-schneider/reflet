@@ -1,20 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const mockToggleVote = vi.fn().mockResolvedValue(undefined);
-const mockAuthGuard = vi.fn((cb: () => void) => cb());
-
-vi.mock("convex/react", () => ({
-  useMutation: () => mockToggleVote,
-}));
-
-vi.mock("@reflet/backend/convex/_generated/api", () => ({
-  api: { feedback: { votes: { toggle: "votes:toggle" } } },
-}));
-
-vi.mock("@/hooks/use-auth-guard", () => ({
-  useAuthGuard: () => ({ guard: mockAuthGuard }),
-}));
+const mockVote = vi.fn();
 
 vi.mock("@/lib/utils", () => ({
   cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
@@ -135,22 +122,22 @@ const baseFeedback = {
 
 describe("SweepCornerFeedCard", () => {
   it("renders title", () => {
-    render(<SweepCornerFeedCard feedback={baseFeedback} />);
+    render(<SweepCornerFeedCard feedback={baseFeedback} onVote={mockVote} />);
     expect(screen.getByText("Test Feedback")).toBeInTheDocument();
   });
 
   it("renders comment count in footer", () => {
-    render(<SweepCornerFeedCard feedback={baseFeedback} />);
+    render(<SweepCornerFeedCard feedback={baseFeedback} onVote={mockVote} />);
     expect(screen.getByTestId("comments")).toHaveTextContent("4");
   });
 
   it("renders badge", () => {
-    render(<SweepCornerFeedCard feedback={baseFeedback} />);
+    render(<SweepCornerFeedCard feedback={baseFeedback} onVote={mockVote} />);
     expect(screen.getByTestId("badge")).toBeInTheDocument();
   });
 
   it("passes upvotes and downvotes", () => {
-    render(<SweepCornerFeedCard feedback={baseFeedback} />);
+    render(<SweepCornerFeedCard feedback={baseFeedback} onVote={mockVote} />);
     const sweep = screen.getByTestId("sweep");
     expect(sweep).toHaveAttribute("data-upvotes", "6");
     expect(sweep).toHaveAttribute("data-downvotes", "4");
@@ -158,40 +145,45 @@ describe("SweepCornerFeedCard", () => {
 
   it("calls onClick when clicked", () => {
     const onClick = vi.fn();
-    render(<SweepCornerFeedCard feedback={baseFeedback} onClick={onClick} />);
+    render(
+      <SweepCornerFeedCard
+        feedback={baseFeedback}
+        onClick={onClick}
+        onVote={mockVote}
+      />
+    );
     fireEvent.click(screen.getByRole("button", { name: /test feedback/i }));
     expect(onClick).toHaveBeenCalledWith("f1");
   });
 
-  it("handles upvote through authGuard", () => {
-    render(<SweepCornerFeedCard feedback={baseFeedback} />);
+  it("forwards upvote with the feedback id", () => {
+    render(<SweepCornerFeedCard feedback={baseFeedback} onVote={mockVote} />);
     fireEvent.click(screen.getByText("upvote-btn"));
-    expect(mockAuthGuard).toHaveBeenCalled();
-    expect(mockToggleVote).toHaveBeenCalledWith({
-      feedbackId: "f1",
-      voteType: "upvote",
-    });
+    expect(mockVote).toHaveBeenCalledWith("f1", "upvote");
   });
 
-  it("handles downvote through authGuard", () => {
-    render(<SweepCornerFeedCard feedback={baseFeedback} />);
+  it("forwards downvote with the feedback id", () => {
+    render(<SweepCornerFeedCard feedback={baseFeedback} onVote={mockVote} />);
     fireEvent.click(screen.getByText("downvote-btn"));
-    expect(mockToggleVote).toHaveBeenCalledWith({
-      feedbackId: "f1",
-      voteType: "downvote",
-    });
+    expect(mockVote).toHaveBeenCalledWith("f1", "downvote");
   });
 
   it("renders pinned icon when isPinned", () => {
     render(
-      <SweepCornerFeedCard feedback={{ ...baseFeedback, isPinned: true }} />
+      <SweepCornerFeedCard
+        feedback={{ ...baseFeedback, isPinned: true }}
+        onVote={mockVote}
+      />
     );
     expect(screen.getByTestId("pin-icon")).toBeInTheDocument();
   });
 
   it("applies pinned styles to card", () => {
     render(
-      <SweepCornerFeedCard feedback={{ ...baseFeedback, isPinned: true }} />
+      <SweepCornerFeedCard
+        feedback={{ ...baseFeedback, isPinned: true }}
+        onVote={mockVote}
+      />
     );
     expect(screen.getByTestId("sweep-card").className).toContain(
       "border-primary/50"
@@ -199,7 +191,7 @@ describe("SweepCornerFeedCard", () => {
   });
 
   it("does not render pin icon when not pinned", () => {
-    render(<SweepCornerFeedCard feedback={baseFeedback} />);
+    render(<SweepCornerFeedCard feedback={baseFeedback} onVote={mockVote} />);
     expect(screen.queryByTestId("pin-icon")).not.toBeInTheDocument();
   });
 
@@ -210,6 +202,7 @@ describe("SweepCornerFeedCard", () => {
           ...baseFeedback,
           organizationStatus: { color: "green", name: "Done" },
         }}
+        onVote={mockVote}
       />
     );
     const tags = screen.getAllByTestId("tag");
@@ -219,7 +212,7 @@ describe("SweepCornerFeedCard", () => {
   });
 
   it("does not render status when absent", () => {
-    render(<SweepCornerFeedCard feedback={baseFeedback} />);
+    render(<SweepCornerFeedCard feedback={baseFeedback} onVote={mockVote} />);
     expect(screen.queryByTestId("tag")).not.toBeInTheDocument();
   });
 
@@ -233,6 +226,7 @@ describe("SweepCornerFeedCard", () => {
             { _id: "t2" as Id<"tags">, color: "blue", name: "Feature" },
           ],
         }}
+        onVote={mockVote}
       />
     );
     expect(screen.getByTestId("tags")).toBeInTheDocument();
@@ -241,7 +235,7 @@ describe("SweepCornerFeedCard", () => {
   });
 
   it("does not render tags section when tags empty", () => {
-    render(<SweepCornerFeedCard feedback={baseFeedback} />);
+    render(<SweepCornerFeedCard feedback={baseFeedback} onVote={mockVote} />);
     expect(screen.queryByTestId("tags")).not.toBeInTheDocument();
   });
 
@@ -254,6 +248,7 @@ describe("SweepCornerFeedCard", () => {
             { _id: "t1" as Id<"tags">, color: "red", icon: "🐛", name: "Bug" },
           ],
         }}
+        onVote={mockVote}
       />
     );
     expect(screen.getByText("🐛")).toBeInTheDocument();
@@ -273,6 +268,7 @@ describe("SweepCornerFeedCard", () => {
             },
           ],
         }}
+        onVote={mockVote}
       />
     );
     expect(screen.getByTestId("sparkle-icon")).toBeInTheDocument();
@@ -285,6 +281,7 @@ describe("SweepCornerFeedCard", () => {
           ...baseFeedback,
           tags: [null, { _id: "t1" as Id<"tags">, color: "red", name: "Bug" }],
         }}
+        onVote={mockVote}
       />
     );
     expect(screen.getByText("Bug")).toBeInTheDocument();
@@ -294,6 +291,7 @@ describe("SweepCornerFeedCard", () => {
     render(
       <SweepCornerFeedCard
         feedback={{ ...baseFeedback, upvoteCount: undefined }}
+        onVote={mockVote}
       />
     );
     expect(screen.getByTestId("sweep")).toHaveAttribute("data-upvotes", "10");
@@ -303,6 +301,7 @@ describe("SweepCornerFeedCard", () => {
     render(
       <SweepCornerFeedCard
         feedback={{ ...baseFeedback, userVoteType: "upvote" }}
+        onVote={mockVote}
       />
     );
     expect(screen.getByTestId("sweep")).toHaveAttribute(
@@ -312,17 +311,23 @@ describe("SweepCornerFeedCard", () => {
   });
 
   it("does not crash without onClick", () => {
-    render(<SweepCornerFeedCard feedback={baseFeedback} />);
+    render(<SweepCornerFeedCard feedback={baseFeedback} onVote={mockVote} />);
     fireEvent.click(screen.getByRole("button", { name: /test feedback/i }));
   });
 
   it("applies custom className", () => {
-    render(<SweepCornerFeedCard className="my-cls" feedback={baseFeedback} />);
+    render(
+      <SweepCornerFeedCard
+        className="my-cls"
+        feedback={baseFeedback}
+        onVote={mockVote}
+      />
+    );
     expect(screen.getByTestId("sweep")).toHaveClass("my-cls");
   });
 
   it("renders time in footer", () => {
-    render(<SweepCornerFeedCard feedback={baseFeedback} />);
+    render(<SweepCornerFeedCard feedback={baseFeedback} onVote={mockVote} />);
     expect(screen.getByTestId("time")).toBeInTheDocument();
   });
 });

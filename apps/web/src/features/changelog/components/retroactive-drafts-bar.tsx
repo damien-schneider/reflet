@@ -7,6 +7,7 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import Link from "next/link";
+import { useState } from "react";
 
 interface RetroactiveDraftsBarProps {
   orgSlug: string;
@@ -24,6 +25,7 @@ export function RetroactiveDraftsBar({
   const publishDrafts = useMutation(
     api.changelog.retroactive.publishRetroactiveDrafts
   );
+  const [isPublishing, setIsPublishing] = useState(false);
 
   const retroactiveDrafts = releases.filter(
     (r) => r.retroactivelyGenerated === true && r.publishedAt === undefined
@@ -34,6 +36,7 @@ export function RetroactiveDraftsBar({
   }
 
   const handlePublishAll = async () => {
+    setIsPublishing(true);
     try {
       await publishDrafts({
         releaseIds: retroactiveDrafts.map((r) => r._id),
@@ -43,8 +46,9 @@ export function RetroactiveDraftsBar({
         `Published ${retroactiveDrafts.length} release${retroactiveDrafts.length === 1 ? "" : "s"}`
       );
     } catch {
-      toast.error("Failed to publish releases");
+      toast.error("Couldn’t publish releases. Try again.");
     }
+    setIsPublishing(false);
   };
 
   return (
@@ -61,18 +65,19 @@ export function RetroactiveDraftsBar({
           size="xs"
           variant="surface"
         >
-          <Eye className="h-4 w-4" />
-          Review First
+          <Eye aria-hidden className="size-4" />
+          Review first
         </ButtonLink>
         <Button
+          disabled={isPublishing}
           onClick={handlePublishAll}
           size="xs"
           tone="primary"
           type="button"
           variant="solid"
         >
-          <CloudArrowUp className="h-4 w-4" />
-          Publish All
+          <CloudArrowUp aria-hidden className="size-4" />
+          {isPublishing ? "Publishing…" : "Publish all"}
         </Button>
       </div>
     </div>

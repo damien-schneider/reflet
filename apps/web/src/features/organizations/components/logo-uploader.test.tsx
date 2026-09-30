@@ -34,7 +34,7 @@ describe("LogoUploader", () => {
   it("prompts for a logo when none is set", () => {
     render(<LogoUploader onLogoChange={vi.fn()} />);
     expect(screen.getByText("Click or drag to upload")).toBeInTheDocument();
-    expect(screen.getByText(/PNG, JPG, SVG, WebP/)).toBeInTheDocument();
+    expect(screen.getByText(/PNG, JPG, SVG or WebP/)).toBeInTheDocument();
     expect(screen.queryByText("Remove logo")).not.toBeInTheDocument();
   });
 
@@ -102,7 +102,7 @@ describe("LogoUploader", () => {
     });
 
     expect(
-      await screen.findByText("Please upload a PNG, JPG, SVG, or WebP image")
+      await screen.findByText("Upload a PNG, JPG, SVG, or WebP image")
     ).toBeInTheDocument();
   });
 
@@ -115,7 +115,7 @@ describe("LogoUploader", () => {
     await user.upload(screen.getByLabelText("Logo file input"), tooBig);
 
     expect(
-      await screen.findByText("Image must be smaller than 2MB")
+      await screen.findByText("Use an image smaller than 2 MB")
     ).toBeInTheDocument();
   });
 

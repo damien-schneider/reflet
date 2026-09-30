@@ -1,8 +1,6 @@
 "use client";
 
-import { Button } from "@ctrl-ui/react/ui/button";
 import { PushPin, Sparkle } from "@phosphor-icons/react";
-import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import {
   SweepCorner,
@@ -14,9 +12,7 @@ import {
   SweepCornerTags,
   SweepCornerTitle,
 } from "@reflet/ui/feedback-sweep-corner";
-import { useMutation } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
-import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { resolveTagColor } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
 
@@ -27,31 +23,23 @@ interface SweepCornerFeedCardProps {
   className?: string;
   feedback: FeedbackItem;
   onClick?: (feedbackId: Id<"feedback">) => void;
+  onVote: (feedbackId: Id<"feedback">, voteType: "upvote" | "downvote") => void;
 }
 
 export function SweepCornerFeedCard({
   feedback,
   onClick,
+  onVote,
   className,
 }: SweepCornerFeedCardProps) {
-  const { guard: authGuard } = useAuthGuard({
-    message: "Sign in to vote on this feedback",
-  });
-  const toggleVote = useMutation(api.feedback.votes.toggle);
   const tags = (feedback.tags ?? []).filter(Boolean);
-
-  const handleVote = (direction: "upvote" | "downvote") => {
-    authGuard(async () => {
-      await toggleVote({ feedbackId: feedback._id, voteType: direction });
-    });
-  };
 
   return (
     <SweepCorner
       className={className}
       downvotes={feedback.downvoteCount ?? 0}
-      onVote={handleVote}
-      upvotes={feedback.upvoteCount ?? feedback.voteCount ?? 0}
+      onVote={(direction) => onVote(feedback._id, direction)}
+      upvotes={feedback.upvoteCount ?? feedback.voteCount}
       voteType={feedback.userVoteType ?? null}
     >
       <SweepCornerCardUI
@@ -59,17 +47,24 @@ export function SweepCornerFeedCard({
       >
         <SweepCornerContent>
           <SweepCornerTitle>
-            <Button
-              className="static h-auto w-full cursor-pointer justify-start whitespace-normal p-0 text-left font-medium text-sm leading-snug after:absolute after:inset-0 after:content-['']"
+            <button
+              className="wrap-anywhere w-full cursor-pointer text-pretty text-left outline-none after:absolute after:inset-0 after:rounded-xl focus-visible:after:ring-2 focus-visible:after:ring-ring"
               onClick={() => onClick?.(feedback._id)}
-              variant="quiet"
+              type="button"
             >
               {feedback.isPinned && (
-                <PushPin className="mr-1 inline h-3.5 w-3.5 text-primary" />
+                <>
+                  <PushPin
+                    aria-hidden
+                    className="mr-1 inline size-3.5 align-[-2px] text-primary"
+                    weight="fill"
+                  />
+                  <span className="sr-only">Pinned: </span>
+                </>
               )}
               {feedback.isInternal && <InternalBadge className="mr-1" />}
               {feedback.title}
-            </Button>
+            </button>
           </SweepCornerTitle>
           {feedback.organizationStatus && (
             <SweepCornerTag

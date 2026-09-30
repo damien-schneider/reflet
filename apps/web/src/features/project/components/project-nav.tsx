@@ -19,7 +19,7 @@ import { useState } from "react";
 const PROJECT_SECTIONS = [
   { id: "github", label: "GitHub" },
   { id: "agents", label: "Agents & CLI" },
-  { id: "api-keys", label: "API Keys" },
+  { id: "api-keys", label: "API keys" },
   { id: "general", label: "Organization" },
   { id: "domains", label: "Domains" },
   { id: "members", label: "Members" },

@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "@tiptap/extension-link";
+import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { useEffect } from "react";
 import { Markdown } from "tiptap-markdown";
 import { cn } from "@/lib/utils";
 import { ImageExtension } from "./image-extension";
+import { ReadOnlyVideoExtension } from "./video-extension";
 import "./styles.css";
 
 const getMarkdown = (storage: unknown): string => {
@@ -15,6 +17,8 @@ const getMarkdown = (storage: unknown): string => {
   };
   return storageWithMarkdown?.markdown?.getMarkdown?.() ?? "";
 };
+
+const alignOf = (node: ProseMirrorNode): string => node.attrs.align || "center";
 
 interface MarkdownRendererProps {
   className?: string;
@@ -57,21 +61,16 @@ export function MarkdownRenderer({
           return ({ node }) => {
             const container = document.createElement("div");
             container.classList.add("tiptap-image-wrapper");
-            container.setAttribute("data-align", node.attrs.align || "center");
+            container.setAttribute("data-align", alignOf(node));
 
             const img = document.createElement("img");
             img.src = node.attrs.src;
             img.alt = node.attrs.alt || "";
             img.title = node.attrs.title || "";
-            img.classList.add(
-              "tiptap-image",
-              "outline",
-              "outline-1",
-              "-outline-offset-1",
-              "outline-black/10",
-              "dark:outline-white/10"
-            );
-            img.setAttribute("data-align", node.attrs.align || "center");
+            img.loading = "lazy";
+            img.decoding = "async";
+            img.classList.add("tiptap-image");
+            img.setAttribute("data-align", alignOf(node));
             if (node.attrs.width) {
               img.style.width = `${node.attrs.width}px`;
             }
@@ -106,16 +105,12 @@ export function MarkdownRenderer({
                 }
                 img.src = updatedNode.attrs.src;
                 img.alt = updatedNode.attrs.alt || "";
-                img.setAttribute(
-                  "data-align",
-                  updatedNode.attrs.align || "center"
-                );
-                container.setAttribute(
-                  "data-align",
-                  updatedNode.attrs.align || "center"
-                );
+                img.setAttribute("data-align", alignOf(updatedNode));
+                container.setAttribute("data-align", alignOf(updatedNode));
                 if (updatedNode.attrs.width) {
                   img.style.width = `${updatedNode.attrs.width}px`;
+                } else {
+                  img.style.removeProperty("width");
                 }
                 return true;
               },
@@ -123,6 +118,7 @@ export function MarkdownRenderer({
           };
         },
       }),
+      ReadOnlyVideoExtension,
       Markdown.configure({
         html: false,
       }),

@@ -2,6 +2,7 @@
 
 import {
   PageBody,
+  PageDescription,
   PageHeader,
   PageLayout,
   PageTitle,
@@ -11,6 +12,7 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import { use } from "react";
 import { EmailAnalyticsDashboard } from "@/features/changelog/components/email-analytics-dashboard";
+import { OrgNotFound } from "@/features/dashboard/components/org-not-found";
 
 export default function EmailAnalyticsPage({
   params,
@@ -23,8 +25,11 @@ export default function EmailAnalyticsPage({
   if (org === undefined) {
     return (
       <PageLayout scroll="page" width="wide">
+        <PageHeader>
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-72 max-w-full" />
+        </PageHeader>
         <PageBody contentClassName="space-y-6">
-          <Skeleton className="h-10 w-48" />
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {["a", "b", "c", "d"].map((id) => (
               <Skeleton className="h-24" key={id} />
@@ -36,19 +41,16 @@ export default function EmailAnalyticsPage({
   }
 
   if (org === null) {
-    return (
-      <PageLayout scroll="page" width="wide">
-        <PageHeader>
-          <PageTitle>Organization not found</PageTitle>
-        </PageHeader>
-      </PageLayout>
-    );
+    return <OrgNotFound />;
   }
 
   return (
     <PageLayout scroll="page" width="wide">
       <PageHeader>
-        <PageTitle>Email Analytics</PageTitle>
+        <PageTitle>Email analytics</PageTitle>
+        <PageDescription>
+          Delivery, opens, and clicks for your notification emails.
+        </PageDescription>
       </PageHeader>
       <PageBody contentClassName="space-y-6">
         <EmailAnalyticsDashboard organizationId={org._id} />

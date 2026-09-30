@@ -7,12 +7,19 @@ import {
   CardHeader,
   CardTitle,
 } from "@ctrl-ui/react/ui/card";
-import { ArrowLeft, CheckCircle } from "@phosphor-icons/react";
+import {
+  PageBody,
+  PageDescription,
+  PageHeader,
+  PageLayout,
+  PageTitle,
+} from "@ctrl-ui/react/ui/page-layout";
+import { ArrowLeft } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
-import { H1, Lead, Muted } from "@/components/ui/typography";
+import { PublicOrgNotFound } from "@/features/public-org/components/public-org-states";
 import { ConversationComposer } from "@/features/support/components/conversation-composer";
 import { ConversationList } from "@/features/support/components/conversation-list";
 import { SupportLoadingState } from "@/features/support/components/support-loading-state";
@@ -28,37 +35,10 @@ interface SupportCenterProps {
 
 export function SupportCenter({ backHref, org }: SupportCenterProps) {
   const { data: session } = authClient.useSession();
-  const isGuest = !session?.user;
-
-  const orgSlug = org?.slug ?? "";
-  const { guestEmail, guestId, saveGuestSession } = useGuestSession(orgSlug);
-  const [pendingEmail, setPendingEmail] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [openConversationId, setOpenConversationId] =
-    useState<Id<"supportConversations"> | null>(null);
-
   const supportSettings = useQuery(
     api.support.settings.get,
     org?._id ? { organizationId: org._id } : "skip"
   );
-
-  const userConversations = useQuery(
-    api.support.conversations.listForUser,
-    org?._id && !isGuest ? { organizationId: org._id } : "skip"
-  );
-
-  const guestConversations = useQuery(
-    api.support.conversations.listForGuest,
-    org?._id && isGuest && guestId
-      ? { guestId, organizationId: org._id }
-      : "skip"
-  );
-
-  const createConversation = useMutation(api.support.conversations.create);
-
-  const conversations = isGuest ? guestConversations : userConversations;
-  const email = pendingEmail || guestEmail || "";
 
   if (org === undefined || supportSettings === undefined) {
     return <SupportLoadingState />;
@@ -66,12 +46,12 @@ export function SupportCenter({ backHref, org }: SupportCenterProps) {
 
   if (org === null) {
     return (
-      <div className="container mx-auto px-4 py-16 text-center">
-        <H1 variant="page">Organization not found</H1>
-        <Muted className="mt-2">
-          This support page doesn&apos;t exist or is no longer available.
-        </Muted>
-      </div>
+      <PublicOrgNotFound
+        description="Check the link, or ask the team that shared it for the right address."
+        homeHref="/"
+        homeLabel="Go to homepage"
+        title="Organization not found"
+      />
     );
   }
 
@@ -79,15 +59,40 @@ export function SupportCenter({ backHref, org }: SupportCenterProps) {
     return <SupportUnavailable backHref={backHref} />;
   }
 
+  return <SupportConversations isGuest={!session?.user} org={org} />;
+}
+
+interface SupportConversationsProps {
+  isGuest: boolean;
+  org: { _id: Id<"organizations">; slug: string };
+}
+
+function SupportConversations({ isGuest, org }: SupportConversationsProps) {
+  const { guestEmail, guestId, saveGuestSession } = useGuestSession(org.slug);
+  const [pendingEmail, setPendingEmail] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [openConversationId, setOpenConversationId] =
+    useState<Id<"supportConversations"> | null>(null);
+
+  const userConversations = useQuery(
+    api.support.conversations.listForUser,
+    isGuest ? "skip" : { organizationId: org._id }
+  );
+  const guestConversations = useQuery(
+    api.support.conversations.listForGuest,
+    isGuest && guestId ? { guestId, organizationId: org._id } : "skip"
+  );
+  const createConversation = useMutation(api.support.conversations.create);
+
+  const conversations = isGuest ? guestConversations : userConversations;
+  const email = pendingEmail || guestEmail || "";
+
   const handleSubmit = async (data: {
     subject: string;
     message: string;
     email?: string;
   }) => {
-    if (!data.message.trim()) {
-      return;
-    }
-
     setIsSubmitting(true);
     setSubmitError(null);
     try {
@@ -106,78 +111,79 @@ export function SupportCenter({ backHref, org }: SupportCenterProps) {
       });
       setOpenConversationId(conversationId);
     } catch {
-      setSubmitError("Your message could not be sent. Try again.");
-    } finally {
-      setIsSubmitting(false);
+      setSubmitError("Message not sent. Check your connection and try again.");
     }
+    setIsSubmitting(false);
   };
 
   if (openConversationId) {
     return (
-      <div className="container mx-auto max-w-2xl px-4 py-8">
-        <Button
-          className="mb-4"
-          onClick={() => setOpenConversationId(null)}
-          size="xs"
-          variant="ghost"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          All conversations
-        </Button>
-        <SupportThread
-          conversationId={openConversationId}
-          guestId={guestId ?? undefined}
-        />
-      </div>
+      <OpenConversation
+        conversationId={openConversationId}
+        guestId={guestId ?? undefined}
+        onBack={() => setOpenConversationId(null)}
+      />
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8 text-center">
-        <H1 variant="page">Contact Support</H1>
-        <Lead>Get help from our team</Lead>
-      </div>
+    <PageLayout scroll="page" width="prose">
+      <PageHeader>
+        <PageTitle>Contact Support</PageTitle>
+        <PageDescription>
+          Send a message. Replies from the team show up on this page.
+        </PageDescription>
+      </PageHeader>
+      <PageBody>
+        <div className="flex flex-col gap-8">
+          <ConversationComposer
+            error={submitError}
+            guestEmail={email}
+            isGuest={isGuest}
+            isSubmitting={isSubmitting}
+            onGuestEmailChange={setPendingEmail}
+            onSubmit={handleSubmit}
+          />
 
-      <div className="mx-auto flex max-w-lg flex-col gap-6">
-        <ConversationComposer
-          alwaysExpanded
-          guestEmail={email}
-          isGuest={isGuest}
-          isSubmitting={isSubmitting}
-          onGuestEmailChange={setPendingEmail}
-          onSubmit={handleSubmit}
-        />
+          {conversations && conversations.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Your conversations</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <ConversationList
+                  conversations={conversations}
+                  onSelect={(conversation) =>
+                    setOpenConversationId(conversation._id)
+                  }
+                />
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </PageBody>
+    </PageLayout>
+  );
+}
 
-        {submitError && (
-          <p className="text-destructive text-sm" role="alert">
-            {submitError}
-          </p>
-        )}
-
-        {conversations && conversations.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Your conversations</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <ConversationList
-                conversations={conversations}
-                onSelect={(conversation) =>
-                  setOpenConversationId(conversation._id)
-                }
-              />
-            </CardContent>
-          </Card>
-        )}
-
-        {conversations?.length === 0 && (
-          <p className="flex items-center justify-center gap-2 text-muted-foreground text-sm">
-            <CheckCircle className="h-4 w-4" />
-            Replies from the team will show up here.
-          </p>
-        )}
-      </div>
-    </div>
+function OpenConversation({
+  conversationId,
+  guestId,
+  onBack,
+}: {
+  conversationId: Id<"supportConversations">;
+  guestId: string | undefined;
+  onBack: () => void;
+}) {
+  return (
+    <PageLayout scroll="page" width="prose">
+      <PageBody>
+        <Button className="mb-4" onClick={onBack} size="xs" variant="ghost">
+          <ArrowLeft aria-hidden />
+          All conversations
+        </Button>
+        <SupportThread conversationId={conversationId} guestId={guestId} />
+      </PageBody>
+    </PageLayout>
   );
 }

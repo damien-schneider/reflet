@@ -11,6 +11,7 @@ import { ImageExtension } from "./image-extension";
 import { createImageNodeView } from "./image-node-view";
 import { createSlashCommandExtension } from "./slash-command";
 import type { useMediaUpload } from "./use-media-upload";
+import { VideoExtension } from "./video-extension";
 
 export interface CreateExtensionsOptions {
   maxLength?: number;
@@ -67,6 +68,7 @@ export function createExtensions(options: CreateExtensionsOptions) {
           createImageNodeView({ editor, getPos, node });
       },
     }),
+    VideoExtension,
     Typography,
     ...(maxLength
       ? [

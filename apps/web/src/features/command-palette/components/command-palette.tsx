@@ -17,24 +17,11 @@ interface CommandPaletteProps {
   orgSlug?: string;
 }
 
-function filterCommandItems(
-  items: CommandItemType[],
-  search: string
-): CommandItemType[] {
-  if (!search) {
-    return items;
-  }
+function matchesSearch(item: CommandItemType, search: string): boolean {
   const searchLower = search.toLowerCase();
-  return items.filter((item) => {
-    const labelMatch = item.label.toLowerCase().includes(searchLower);
-    const keywordMatch = item.keywords.some((keyword) =>
-      keyword.toLowerCase().includes(searchLower)
-    );
-    const descriptionMatch = item.description
-      ?.toLowerCase()
-      .includes(searchLower);
-    return labelMatch || keywordMatch || descriptionMatch;
-  });
+  return [item.label, item.description ?? "", ...item.keywords].some((text) =>
+    text.toLowerCase().includes(searchLower)
+  );
 }
 
 export function CommandPalette({ orgSlug, isAdmin }: CommandPaletteProps) {
@@ -43,38 +30,33 @@ export function CommandPalette({ orgSlug, isAdmin }: CommandPaletteProps) {
     orgSlug,
   });
 
-  const groupedItems = filteredItems.reduce<Record<string, CommandItemType[]>>(
-    (acc, item) => {
-      const group = item.group;
-      if (!acc[group]) {
-        acc[group] = [];
-      }
-      acc[group].push(item);
-      return acc;
-    },
-    {}
-  );
+  const groupedItems = new Map<string, CommandItemType[]>();
+  for (const item of filteredItems) {
+    const group = groupedItems.get(item.group);
+    if (group) {
+      group.push(item);
+    } else {
+      groupedItems.set(item.group, [item]);
+    }
+  }
 
   return (
     <CommandDialog
       commandProps={{
         filter: (value, search) => {
           const item = filteredItems.find((i) => i.id === value);
-          if (!item) {
-            return 0;
-          }
-          return filterCommandItems([item], search).length > 0 ? 1 : 0;
+          return item && matchesSearch(item, search) ? 1 : 0;
         },
       }}
-      description="Search for pages and settings"
+      description="Jump to a page or setting"
       onOpenChange={setIsOpen}
       open={isOpen}
-      title="Command Palette"
+      title="Command palette"
     >
-      <CommandInput placeholder="Search pages and settings..." />
+      <CommandInput placeholder="Search pages and settings…" />
       <CommandList>
-        <CommandEmpty>No results found.</CommandEmpty>
-        {Object.entries(groupedItems).map(([group, items]) => (
+        <CommandEmpty description="Try another word, like “inbox” or “billing”." />
+        {[...groupedItems].map(([group, items]) => (
           <CommandGroup heading={groupLabels[group] ?? group} key={group}>
             {items.map((item) => (
               <CommandItem
@@ -82,10 +64,10 @@ export function CommandPalette({ orgSlug, isAdmin }: CommandPaletteProps) {
                 onSelect={() => handleSelect(item)}
                 value={item.id}
               >
-                <item.icon className="size-4" />
-                <span className="flex-1">{item.label}</span>
+                <item.icon aria-hidden="true" className="size-4" />
+                <span className="flex-1 truncate">{item.label}</span>
                 {item.description ? (
-                  <span className="text-muted-foreground text-xs">
+                  <span className="hidden truncate text-muted-foreground text-xs sm:inline">
                     {item.description}
                   </span>
                 ) : null}

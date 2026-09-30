@@ -89,22 +89,23 @@ export function WidgetSettingsDialog({
   );
 
   const handleSave = async () => {
+    const settings = {
+      autoOpen,
+      greetingMessage: greetingMessage || undefined,
+      position,
+      primaryColor,
+      showLauncher,
+      welcomeMessage,
+      widgetId: widget._id,
+      zIndex,
+    };
     setIsSaving(true);
     try {
-      await updateSettings({
-        autoOpen,
-        greetingMessage: greetingMessage || undefined,
-        position,
-        primaryColor,
-        showLauncher,
-        welcomeMessage,
-        widgetId: widget._id,
-        zIndex,
-      });
-      toast.success("Widget settings saved");
+      await updateSettings(settings);
+      toast.success("Chat settings saved");
       onOpenChange(false);
     } catch {
-      toast.error("Failed to save settings");
+      toast.error("Couldn’t save settings. Try again.");
     }
     setIsSaving(false);
   };
@@ -113,15 +114,15 @@ export function WidgetSettingsDialog({
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Widget Settings</DialogTitle>
+          <DialogTitle>Chat settings</DialogTitle>
           <DialogDescription>
-            Customize the appearance and behavior of your chat widget.
+            Customize how {widget.name} looks and behaves on your site.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4 py-4">
+        <div className="grid gap-4">
           <Field>
-            <FieldLabel htmlFor="primary-color">Primary Color</FieldLabel>
+            <FieldLabel htmlFor="primary-color">Primary color</FieldLabel>
             <ColorPicker
               disabled={isSaving}
               format="hex"
@@ -142,7 +143,7 @@ export function WidgetSettingsDialog({
               </ColorPickerContent>
             </ColorPicker>
             <FieldDescription>
-              The main color used for the widget bubble and header
+              Used for the chat bubble and header.
             </FieldDescription>
           </Field>
 
@@ -160,17 +161,17 @@ export function WidgetSettingsDialog({
                 <SelectValue placeholder="Select position" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="bottom-right">Bottom Right</SelectItem>
-                <SelectItem value="bottom-left">Bottom Left</SelectItem>
+                <SelectItem value="bottom-right">Bottom right</SelectItem>
+                <SelectItem value="bottom-left">Bottom left</SelectItem>
               </SelectContent>
             </Select>
             <FieldDescription>
-              Where the widget bubble appears on the page
+              Where the chat bubble appears on the page.
             </FieldDescription>
           </Field>
 
           <Field>
-            <FieldLabel htmlFor="welcome-message">Welcome Message</FieldLabel>
+            <FieldLabel htmlFor="welcome-message">Welcome message</FieldLabel>
             <Input
               disabled={isSaving}
               id="welcome-message"
@@ -181,7 +182,7 @@ export function WidgetSettingsDialog({
               value={welcomeMessage}
             />
             <FieldDescription>
-              The greeting shown at the top of the chat window
+              The greeting shown at the top of the chat window.
             </FieldDescription>
           </Field>
 
@@ -199,12 +200,12 @@ export function WidgetSettingsDialog({
               value={greetingMessage}
             />
             <FieldDescription>
-              A secondary message shown below the welcome message
+              Shown below the welcome message.
             </FieldDescription>
           </Field>
 
           <Field>
-            <FieldLabel htmlFor="z-index">Z-Index</FieldLabel>
+            <FieldLabel htmlFor="z-index">Z-index</FieldLabel>
             <NumberField
               disabled={isSaving}
               format={{ useGrouping: false }}
@@ -215,27 +216,28 @@ export function WidgetSettingsDialog({
             >
               <NumberFieldGroup>
                 <NumberFieldDecrement aria-label="Decrease z-index">
-                  <Minus />
+                  <Minus aria-hidden />
                 </NumberFieldDecrement>
                 <NumberFieldInput className="tabular-nums" />
                 <NumberFieldIncrement aria-label="Increase z-index">
-                  <Plus />
+                  <Plus aria-hidden />
                 </NumberFieldIncrement>
               </NumberFieldGroup>
             </NumberField>
             <FieldDescription>
-              Higher values place the widget above other elements
+              Raise it if the chat appears behind other elements on your site.
             </FieldDescription>
           </Field>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4">
             <div>
-              <Label htmlFor="show-launcher">Show Launcher</Label>
-              <Muted className="text-caption">
-                Display the chat bubble on the page
+              <Label htmlFor="show-launcher">Show launcher</Label>
+              <Muted className="text-caption" id="show-launcher-hint">
+                Display the chat bubble on the page.
               </Muted>
             </div>
             <Switch
+              aria-describedby="show-launcher-hint"
               checked={showLauncher}
               disabled={isSaving}
               id="show-launcher"
@@ -243,14 +245,15 @@ export function WidgetSettingsDialog({
             />
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4">
             <div>
-              <Label htmlFor="auto-open">Auto Open</Label>
-              <Muted className="text-caption">
-                Automatically open the chat on page load
+              <Label htmlFor="auto-open">Open automatically</Label>
+              <Muted className="text-caption" id="auto-open-hint">
+                Open the chat as soon as the page loads.
               </Muted>
             </div>
             <Switch
+              aria-describedby="auto-open-hint"
               checked={autoOpen}
               disabled={isSaving}
               id="auto-open"
@@ -273,7 +276,7 @@ export function WidgetSettingsDialog({
             tone="primary"
             variant="solid"
           >
-            {isSaving ? "Saving..." : "Save Changes"}
+            {isSaving ? "Saving…" : "Save changes"}
           </Button>
         </DialogFooter>
       </DialogContent>

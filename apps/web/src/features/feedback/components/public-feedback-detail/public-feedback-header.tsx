@@ -22,10 +22,10 @@ import {
   PushPin,
 } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { formatDistanceToNow } from "date-fns";
 import { TagBadge } from "@/components/tag-badge";
 import { toId } from "@/lib/convex-helpers";
 import { getTagDotColor } from "@/lib/tag-colors";
+import { CommentTimestamp } from "../feedback-detail/comment-meta";
 import { InternalBadge } from "../internal-badge";
 
 interface OrganizationStatus {
@@ -68,29 +68,32 @@ export function PublicFeedbackHeader({
   onTogglePin,
 }: PublicFeedbackHeaderProps) {
   return (
-    <div className="flex items-start justify-between border-b p-6">
-      <div className="flex-1">
+    <div className="flex min-w-0 flex-1 items-start justify-between gap-4">
+      <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          {isPinned && isAdmin && <PushPin className="h-4 w-4 text-primary" />}
-          <h2 className="font-semibold text-xl">{title}</h2>
+          {isPinned && isAdmin && (
+            <PushPin
+              aria-label="Pinned"
+              className="size-4 shrink-0 text-primary"
+            />
+          )}
+          <h2 className="text-balance font-semibold text-xl">{title}</h2>
           {isInternal && <InternalBadge />}
         </div>
 
-        <div className="mt-1 flex flex-wrap items-center gap-2 text-muted-foreground text-sm">
+        <div className="mt-1 flex flex-wrap items-center gap-3 text-muted-foreground text-sm">
           <span className="flex items-center gap-1">
-            <Calendar className="h-3 w-3" />
-            {formatDistanceToNow(createdAt, {
-              addSuffix: true,
-            })}
+            <Calendar aria-hidden className="size-3.5" />
+            <CommentTimestamp createdAt={createdAt} />
           </span>
-          <span className="flex items-center gap-1">
-            <Chat className="h-3 w-3" />
-            {commentCount} comments
+          <span className="flex items-center gap-1 tabular-nums">
+            <Chat aria-hidden className="size-3.5" />
+            {commentCount} {commentCount === 1 ? "comment" : "comments"}
           </span>
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex shrink-0 items-center gap-2">
         {isAdmin && organizationStatuses && organizationStatuses.length > 0 ? (
           <Select
             onValueChange={(value) =>
@@ -98,14 +101,14 @@ export function PublicFeedbackHeader({
             }
             value={organizationStatusId ?? ""}
           >
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Select status" />
+            <SelectTrigger aria-label="Status" className="w-40" size="sm">
+              <SelectValue placeholder="Set status" />
             </SelectTrigger>
             <SelectContent>
               {organizationStatuses.map((status) => (
                 <SelectItem key={status._id} value={status._id}>
                   <div className="flex items-center gap-2">
-                    <div
+                    <span
                       className="h-2 w-2 rounded-full"
                       style={{ backgroundColor: getTagDotColor(status.color) }}
                     />
@@ -126,8 +129,9 @@ export function PublicFeedbackHeader({
         {isAdmin && (
           <DropdownMenu>
             <DropdownMenuTrigger
+              aria-label="Feedback actions"
               render={(props) => (
-                <Button {...props} iconOnly variant="ghost">
+                <Button {...props} iconOnly size="sm" variant="ghost">
                   <DotsThreeVertical className="h-4 w-4" />
                 </Button>
               )}

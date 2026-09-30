@@ -169,7 +169,7 @@ describe("AdminConversationView", () => {
         })}
       />
     );
-    expect(screen.getByText("Support Conversation")).toBeInTheDocument();
+    expect(screen.getByText("Support conversation")).toBeInTheDocument();
   });
 
   it("renders user name", () => {
@@ -177,7 +177,7 @@ describe("AdminConversationView", () => {
     expect(screen.getByText(/Test User/)).toBeInTheDocument();
   });
 
-  it("shows Unknown User when user name is missing", () => {
+  it("shows Unknown user when user name is missing", () => {
     render(
       <AdminConversationView
         {...makeProps({
@@ -185,7 +185,7 @@ describe("AdminConversationView", () => {
         })}
       />
     );
-    expect(screen.getByText(/Unknown User/)).toBeInTheDocument();
+    expect(screen.getByText(/Unknown user/)).toBeInTheDocument();
   });
 
   it("shows guest email for guest conversations", () => {
@@ -274,9 +274,7 @@ describe("EmptyConversationState", () => {
     render(<EmptyConversationState hasConversations={true} />);
     expect(screen.getByText("Select a conversation")).toBeInTheDocument();
     expect(
-      screen.getByText(
-        "Choose a conversation from the sidebar to view messages"
-      )
+      screen.getByText("Pick a conversation from the list to read and reply.")
     ).toBeInTheDocument();
   });
 

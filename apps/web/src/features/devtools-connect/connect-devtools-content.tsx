@@ -9,6 +9,7 @@ import { useAction, useQuery } from "convex/react";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { H1, Muted } from "@/components/ui/typography";
+import { AuthPageShell } from "@/features/auth/components/auth-page-shell";
 import UnifiedAuthForm from "@/features/auth/components/unified-auth/unified-auth-form";
 
 interface ConnectDevtoolsContentProps {
@@ -94,14 +95,18 @@ function ConnectTarget({ request }: { request: ConnectRequest }) {
 
   if (target.kind === "signedOut") {
     return (
-      <ConnectShell>
-        <Muted>Sign in to connect your dev server.</Muted>
+      <AuthPageShell>
+        <Muted className="text-center">
+          Sign in to connect your dev server.
+        </Muted>
         <UnifiedAuthForm redirectTo={authReturnPath(request)} />
-      </ConnectShell>
+      </AuthPageShell>
     );
   }
   if (target.kind === "unknownKey") {
-    return <ConnectNotice message="This widget key isn't active on Reflet." />;
+    return (
+      <ConnectNotice message="This widget key isn’t active on Reflet. Copy the key again from your widget settings, then restart the connection from the devtools Board tab." />
+    );
   }
   if (target.kind === "notMember") {
     return (
@@ -169,16 +174,17 @@ function ConsentView({
       <H1 className="mb-2" variant="page">
         {CONNECT_TITLE}
       </H1>
-      <Muted className="mb-6">
+      <Muted className="mb-6 text-pretty">
         Reflet devtools on <strong>{request.serverOrigin}</strong> will read and
-        add internal feedback on <strong>{organizationName}</strong>'s board as
+        add internal feedback on <strong>{organizationName}</strong>’s board as
         you. Only continue if you just clicked Connect in your own dev server.
       </Muted>
-      {error && (
-        <p className="mb-4 text-destructive text-sm" role="alert">
-          {error}
-        </p>
-      )}
+      <p
+        className="mb-4 min-h-[1lh] text-destructive-text text-sm"
+        role="alert"
+      >
+        {error}
+      </p>
       <div className="flex flex-col gap-3">
         <Button
           disabled={isApproving}
@@ -186,7 +192,8 @@ function ConsentView({
           tone="primary"
           variant="solid"
         >
-          Connect
+          {isApproving && <Spinner data-icon="inline-start" size="xs" />}
+          {isApproving ? "Connecting…" : "Connect"}
         </Button>
         <Button
           disabled={isApproving}
@@ -214,16 +221,12 @@ function ConnectNotice({ message }: { message: string }) {
 function ConnectProgress({ label }: { label?: string }) {
   return (
     <div className="flex flex-col items-center gap-4">
-      <Spinner className="h-8 w-8" />
-      {label && <Muted>{label}</Muted>}
+      <Spinner size="lg" />
+      {label && <Muted aria-live="polite">{label}</Muted>}
     </div>
   );
 }
 
 function ConnectShell({ children }: { children: ReactNode }) {
-  return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="w-full max-w-md p-6 text-center">{children}</div>
-    </div>
-  );
+  return <AuthPageShell className="text-center">{children}</AuthPageShell>;
 }

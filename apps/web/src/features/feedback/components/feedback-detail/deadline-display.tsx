@@ -10,7 +10,6 @@ import {
 import { CalendarCheck, X } from "@phosphor-icons/react";
 import { format, isPast, isToday } from "date-fns";
 import { TagBadge } from "@/components/tag-badge";
-import { cn } from "@/lib/utils";
 
 export function DeadlineDisplay({
   deadline,
@@ -35,33 +34,28 @@ export function DeadlineDisplay({
     <Popover onOpenChange={onOpenChange} open={isOpen}>
       {hasDeadline && deadlineDate ? (
         <PopoverTrigger
-          aria-label="Change deadline"
-          render={<Button className="h-auto select-none p-0" variant="quiet" />}
-        >
-          <TagBadge
-            className={cn(
-              "h-8 gap-1 rounded-full px-3 font-normal text-xs",
-              isOverdue &&
-                "border-destructive/30 bg-destructive/10 text-destructive"
-            )}
-            color={isOverdue ? "red" : "purple"}
-          >
-            <CalendarCheck className="h-3 w-3" />
-            <span>{format(deadlineDate, "MMM d")}</span>
-          </TagBadge>
-        </PopoverTrigger>
-      ) : (
-        <PopoverTrigger
-          aria-label="Change deadline"
+          aria-label={`Deadline ${format(deadlineDate, "MMMM d")}${isOverdue ? ", overdue" : ""}. Change deadline`}
+          className="select-none"
           render={
-            <Button
-              className="h-8 select-none gap-1.5 rounded-full border border-input border-dashed px-3 text-xs transition-colors"
-              variant="quiet"
+            <TagBadge
+              color={isOverdue ? "red" : "purple"}
+              render={<button type="button" />}
             />
           }
         >
-          <CalendarCheck className="h-3 w-3 text-muted-foreground" />
-          <span className="text-muted-foreground">Deadline</span>
+          <CalendarCheck aria-hidden />
+          <span>{format(deadlineDate, "MMM d")}</span>
+        </PopoverTrigger>
+      ) : (
+        <PopoverTrigger
+          aria-label="Set deadline"
+          className="select-none"
+          render={
+            <TagBadge render={<button type="button" />} variant="outline" />
+          }
+        >
+          <CalendarCheck aria-hidden />
+          <span>Deadline</span>
         </PopoverTrigger>
       )}
       <PopoverContent align="start" className="w-auto p-2" sideOffset={4}>

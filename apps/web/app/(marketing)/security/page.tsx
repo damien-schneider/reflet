@@ -1,23 +1,11 @@
-import {
-  BookOpen,
-  CheckCircle,
-  Cloud,
-  DownloadSimple,
-  Fingerprint,
-  Globe,
-  IdentificationCard,
-  Key,
-  LockKey,
-  ShieldCheck,
-  Timer,
-  Users,
-} from "@phosphor-icons/react/dist/ssr";
 import type { Metadata } from "next";
-import Link from "next/link";
 
-import { H1, H2, H3, Lead } from "@/components/ui/typography";
-import Footer from "@/features/homepage/components/footer";
-import Navbar from "@/features/homepage/components/navbar";
+import {
+  MarketingPageIntro,
+  MarketingSubpage,
+  type MarketingTopic,
+  MarketingTopicGroup,
+} from "@/features/homepage/components/marketing-subpage";
 import { generatePageMetadata } from "@/lib/seo-config";
 
 export const metadata: Metadata = generatePageMetadata({
@@ -35,232 +23,131 @@ export const metadata: Metadata = generatePageMetadata({
   title: "Security",
 });
 
-const INFRASTRUCTURE = [
+const INFRASTRUCTURE: MarketingTopic[] = [
   {
     description:
-      "Your data is hosted on Convex's SOC 2 Type II compliant infrastructure. Automatic backups, zero-downtime deployments, and global edge distribution.",
-    icon: Cloud,
+      "Your data lives on Convex’s SOC 2 Type II compliant infrastructure, with automatic backups and zero-downtime deployments.",
     id: "convex-cloud",
     title: "Convex Cloud",
   },
   {
     description:
-      "The web application runs on Vercel's edge network with automatic TLS encryption, DDoS protection, and 99.99% uptime SLA.",
-    icon: Globe,
+      "The web app runs on Vercel’s edge network with automatic TLS and DDoS protection.",
     id: "vercel-edge",
     title: "Vercel Edge Network",
   },
   {
     description:
-      "All data is encrypted in transit (TLS 1.3) and at rest. API keys are hashed before storage. Session tokens use HTTP-only secure cookies.",
-    icon: LockKey,
+      "Data is encrypted in transit (TLS 1.3) and at rest. API keys are hashed before storage. Session tokens live in HTTP-only secure cookies.",
     id: "encryption",
     title: "Encryption",
   },
-] as const;
+];
 
-const AUTHENTICATION = [
+const AUTHENTICATION: MarketingTopic[] = [
   {
     description:
-      "Three permission levels: Owner, Admin, and Member. Control who can manage settings, moderate feedback, and invite team members.",
-    icon: Users,
+      "Three roles: Owner, Admin, and Member. Decide who can change settings, moderate feedback, and invite teammates.",
     id: "rbac",
-    title: "Role-Based Access Control",
+    title: "Role-based access control",
   },
   {
     description:
-      "Powered by Better-Auth with bcrypt password hashing, CSRF protection, and session management with automatic rotation.",
-    icon: ShieldCheck,
+      "Built on Better-Auth, with bcrypt password hashing, CSRF protection, and automatic session rotation.",
     id: "secure-auth",
-    title: "Secure Authentication",
+    title: "Secure authentication",
   },
   {
     description:
-      "Sign in with GitHub or Google. No passwords stored when using social login.",
-    icon: Key,
+      "Sign in with GitHub or Google. No password is stored when you use social login.",
     id: "oauth",
-    title: "OAuth Providers",
+    title: "OAuth providers",
   },
-] as const;
+];
 
-const DATA_PRIVACY = [
+const DATA_PRIVACY: MarketingTopic[] = [
   {
     description:
-      "We process data in accordance with GDPR. Users can request data export or deletion at any time.",
-    icon: Fingerprint,
+      "We process data in line with GDPR. Anyone can request an export or deletion of their data at any time.",
     id: "gdpr",
-    link: { href: "/privacy", label: "Read our Privacy Policy" },
-    title: "GDPR Compliant",
+    link: { href: "/privacy", label: "Read the privacy policy" },
+    title: "GDPR",
   },
   {
     description:
-      "Our entire codebase is open source. Audit the code yourself, run your own security analysis, or self-host for full control.",
-    icon: BookOpen,
+      "The whole codebase is public. Audit it, run your own security analysis, or self-host for full control.",
     id: "open-source",
     link: {
       external: true,
       href: "https://github.com/damien-schneider/reflet",
-      label: "View on GitHub",
+      label: "View the code on GitHub",
     },
-    title: "Open Source",
+    title: "Open source",
   },
   {
     description:
-      "Export all your feedback, votes, and changelog entries as CSV or JSON. Your data is yours, always.",
-    icon: DownloadSimple,
+      "Export your feedback, votes, and changelog entries as CSV or JSON. Your data stays yours.",
     id: "data-portability",
-    title: "Data Portability",
+    title: "Data portability",
   },
-] as const;
+];
 
-const API_SECURITY = [
+const API_SECURITY: MarketingTopic[] = [
   {
     description:
-      "Public keys for read operations, secret keys for write operations. Keys are scoped per organization.",
-    icon: IdentificationCard,
+      "Public keys for reads, secret keys for writes. Every key is scoped to one organization.",
     id: "api-key-auth",
-    title: "API Key Authentication",
+    title: "API key authentication",
   },
   {
     description:
-      "Built-in rate limiting on all API endpoints protects against abuse and ensures fair usage.",
-    icon: Timer,
+      "Every API endpoint is rate limited to protect against abuse and keep usage fair.",
     id: "rate-limiting",
-    title: "Rate Limiting",
+    title: "Rate limiting",
   },
   {
     description:
-      "All inputs validated with Zod schemas. XSS protection, SQL injection prevention (Convex's document model), and Content Security Policy headers.",
-    icon: CheckCircle,
+      "Inputs are validated with Zod schemas. XSS protection, no SQL injection surface (Convex uses a document model), and Content Security Policy headers.",
     id: "input-validation",
-    title: "Input Validation",
+    title: "Input validation",
   },
-] as const;
-
-interface SecurityCard {
-  description: string;
-  icon: React.ComponentType<{ size?: number }>;
-  id: string;
-  link?: { href: string; label: string; external?: boolean };
-  title: string;
-}
-
-const linkClassName =
-  "mt-4 inline-block font-medium text-brand-text text-sm underline underline-offset-4 transition-colors hover:text-brand-text/80";
-
-function CardLink({
-  link,
-}: {
-  link: { href: string; label: string; external?: boolean };
-}) {
-  if (link.external) {
-    return (
-      <a
-        className={linkClassName}
-        href={link.href}
-        rel="noopener noreferrer"
-        target="_blank"
-      >
-        {link.label}
-      </a>
-    );
-  }
-
-  return (
-    <Link className={linkClassName} href={link.href}>
-      {link.label}
-    </Link>
-  );
-}
-
-function SecurityCardItem({ card }: { card: SecurityCard }) {
-  const Icon = card.icon;
-
-  return (
-    <div className="rounded-2xl border border-border bg-card p-8 shadow-sm transition-shadow hover:shadow-md">
-      <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-muted text-foreground">
-        <Icon size={24} />
-      </div>
-      <H3 className="mb-3" variant="card">
-        {card.title}
-      </H3>
-      <p className="text-muted-foreground text-sm leading-relaxed">
-        {card.description}
-      </p>
-      {card.link ? <CardLink link={card.link} /> : null}
-    </div>
-  );
-}
+];
 
 export default function SecurityPage() {
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <Navbar />
-      <main className="flex-1">
-        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-          <header className="mb-20">
-            <H1 variant="page">Built on trust, secured by design</H1>
-            <Lead className="mt-4 max-w-2xl">
-              Your feedback data is sensitive. Here&apos;s how we protect it.
-            </Lead>
-          </header>
-
-          <section className="mb-20">
-            <H2 className="mb-10" variant="section">
-              Infrastructure
-            </H2>
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-              {INFRASTRUCTURE.map((card) => (
-                <SecurityCardItem card={card} key={card.id} />
-              ))}
-            </div>
-          </section>
-
-          <section className="mb-20">
-            <H2 className="mb-10" variant="section">
-              Authentication & Access
-            </H2>
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-              {AUTHENTICATION.map((card) => (
-                <SecurityCardItem card={card} key={card.id} />
-              ))}
-            </div>
-          </section>
-
-          <section className="mb-20">
-            <H2 className="mb-10" variant="section">
-              Data & Privacy
-            </H2>
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-              {DATA_PRIVACY.map((card) => (
-                <SecurityCardItem card={card} key={card.id} />
-              ))}
-            </div>
-          </section>
-
-          <section className="mb-20">
-            <H2 className="mb-10" variant="section">
-              API Security
-            </H2>
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-              {API_SECURITY.map((card) => (
-                <SecurityCardItem card={card} key={card.id} />
-              ))}
-            </div>
-          </section>
-
-          <section className="rounded-2xl border border-border bg-card p-8 text-center sm:p-12">
-            <H2 className="mb-8">Have security questions?</H2>
-            <a
-              className="inline-block font-medium text-brand-text text-sm underline underline-offset-4 transition-colors hover:text-brand-text/80"
-              href="mailto:security@reflet.app"
-            >
-              Contact our team
-            </a>
-          </section>
-        </div>
-      </main>
-      <Footer />
-    </div>
+    <MarketingSubpage>
+      <div className="marketing-section pt-16 md:pt-24">
+        <MarketingPageIntro
+          align="start"
+          kicker="Security"
+          title="How we protect your feedback data"
+        >
+          Feedback often holds what your customers would only tell you. Here is
+          how Reflet keeps it safe.
+        </MarketingPageIntro>
+        <MarketingTopicGroup title="Infrastructure" topics={INFRASTRUCTURE} />
+        <MarketingTopicGroup
+          title="Authentication and access"
+          topics={AUTHENTICATION}
+        />
+        <MarketingTopicGroup title="Data and privacy" topics={DATA_PRIVACY} />
+        <MarketingTopicGroup title="API security" topics={API_SECURITY} />
+        <MarketingTopicGroup
+          title="Questions?"
+          topics={[
+            {
+              description:
+                "Found a vulnerability or need details for a security review? Write to us and a person will answer.",
+              id: "contact",
+              link: {
+                href: "mailto:security@reflet.app",
+                label: "security@reflet.app",
+              },
+              title: "Talk to the team",
+            },
+          ]}
+        />
+      </div>
+    </MarketingSubpage>
   );
 }

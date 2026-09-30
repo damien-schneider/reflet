@@ -145,7 +145,6 @@
   background: var(--secondary);
   border-radius: 22px;
   box-shadow: var(--marketing-inset);
-  transition: background var(--marketing-duration);
 }
 :where(.journey-board-column[data-current="true"]) {
   background: var(--secondary);

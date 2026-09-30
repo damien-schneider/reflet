@@ -33,7 +33,6 @@ import { buildGitHubInstallUrl } from "@/features/github/lib/github-install-url"
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import {
-  pushButtonLabel,
   SyncGroup,
   SyncLoadingSkeleton,
   SyncRow,
@@ -46,6 +45,13 @@ interface ManualSyncSectionProps {
   lastSyncStatus?: string;
   organizationId: Id<"organizations">;
   orgSlug: string;
+}
+
+function getPushLabel(isPushing: boolean, status: string | undefined) {
+  if (isPushing) {
+    return "Pushing…";
+  }
+  return status === "failed" ? "Retry" : "Push";
 }
 
 export const ManualSyncSection = ({
@@ -91,9 +97,8 @@ export const ManualSyncSection = ({
       toast.success("Release imported");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to import");
-    } finally {
-      setImportingId(null);
     }
+    setImportingId(null);
   };
 
   const handlePush = async (releaseId: Id<"releases">) => {
@@ -103,9 +108,8 @@ export const ManualSyncSection = ({
       toast.success("Push scheduled");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to push");
-    } finally {
-      setPushingId(null);
     }
+    setPushingId(null);
   };
 
   if (!syncStatus) {
@@ -120,9 +124,9 @@ export const ManualSyncSection = ({
       <div className="flex items-center justify-between">
         <div className="space-y-0.5">
           <div className="flex items-center gap-2">
-            <p className="font-medium text-sm">Release Sync</p>
+            <h3 className="font-medium text-sm">Release sync</h3>
             {totalCount > 0 && (
-              <Badge className="px-1.5 py-0 text-micro tabular-nums">
+              <Badge className="tabular-nums" size="sm">
                 {totalCount}
               </Badge>
             )}
@@ -139,7 +143,8 @@ export const ManualSyncSection = ({
           variant="surface"
         >
           <ArrowsClockwise
-            className={cn("mr-1.5 h-4 w-4", isSyncing && "animate-spin")}
+            aria-hidden
+            className={cn("size-4", isSyncing && "motion-safe:animate-spin")}
           />
           {isSyncing ? "Syncing…" : "Sync with GitHub"}
         </Button>
@@ -163,9 +168,9 @@ export const ManualSyncSection = ({
                       variant="ghost"
                     >
                       {importingId === gr._id ? (
-                        <Spinner className="mr-1" size="xs" />
+                        <Spinner data-icon="inline-start" size="xs" />
                       ) : (
-                        <CloudArrowDown className="mr-1 h-3 w-3" />
+                        <CloudArrowDown aria-hidden className="size-3" />
                       )}
                       {importingId === gr._id ? "Importing…" : "Import"}
                     </Button>
@@ -195,13 +200,11 @@ export const ManualSyncSection = ({
                       variant="ghost"
                     >
                       {pushingId === r._id ? (
-                        <Spinner className="mr-1" size="xs" />
+                        <Spinner data-icon="inline-start" size="xs" />
                       ) : (
-                        <CloudArrowUp className="mr-1 h-3 w-3" />
+                        <CloudArrowUp aria-hidden className="size-3" />
                       )}
-                      {pushingId === r._id
-                        ? "Pushing…"
-                        : pushButtonLabel(r.githubPushStatus)}
+                      {getPushLabel(pushingId === r._id, r.githubPushStatus)}
                     </Button>
                   }
                   key={r._id}
@@ -214,12 +217,13 @@ export const ManualSyncSection = ({
                       <TooltipTrigger
                         render={
                           <Button
-                            className="h-auto shrink-0 gap-1 px-1 py-0 text-destructive-text text-xs"
+                            className="shrink-0"
                             size="xs"
+                            tone="danger"
                             type="button"
                             variant="quiet"
                           >
-                            <WarningCircle className="h-3 w-3" />
+                            <WarningCircle aria-hidden className="size-3" />
                             Failed
                           </Button>
                         }
@@ -273,7 +277,7 @@ export const ManualSyncSection = ({
                               rel="noopener noreferrer"
                               target="_blank"
                             >
-                              <ArrowSquareOut className="h-4 w-4" />
+                              <ArrowSquareOut aria-hidden className="size-4" />
                             </a>
                           }
                         />
@@ -293,11 +297,11 @@ export const ManualSyncSection = ({
         <Empty className="border-t pt-3">
           <EmptyHeader>
             <EmptyMedia>
-              <CloudArrowDown className="h-6 w-6" />
+              <CloudArrowDown aria-hidden className="size-6" />
             </EmptyMedia>
             <EmptyTitle>No releases found</EmptyTitle>
             <EmptyDescription>
-              Click "Sync with GitHub" to fetch releases from your repository.
+              Sync with GitHub to fetch releases from your repository.
             </EmptyDescription>
           </EmptyHeader>
         </Empty>

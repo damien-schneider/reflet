@@ -24,7 +24,6 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { useState } from "react";
 import { TagBadge } from "@/components/tag-badge";
-import { cn } from "@/lib/utils";
 
 type TimeUnit = "minutes" | "hours" | "days" | "weeks";
 
@@ -152,22 +151,20 @@ export function TimeEstimateBadge({
     ? `AI suggested: ${aiTimeEstimate}`
     : `Estimated implementation time: ${effectiveEstimate}`;
 
-  const badge = (
-    <TagBadge
-      className="h-8 gap-1 rounded-full px-3 font-normal text-xs"
-      color="purple"
-    >
-      <Clock className="h-3 w-3" />
+  const badgeContent = (
+    <>
+      <Clock aria-hidden />
       <span className="tabular-nums">{effectiveEstimate}</span>
       <Sparkle
-        className={cn(
-          "h-2.5 w-2.5",
-          isOverridden ? "opacity-80" : "opacity-50"
-        )}
+        aria-hidden
+        className={isOverridden ? "opacity-80" : "opacity-50"}
         weight={isOverridden ? "fill" : "regular"}
       />
-      {isAdmin && <CaretDown className="h-3 w-3 opacity-70" />}
-    </TagBadge>
+      {isAdmin && <CaretDown aria-hidden className="opacity-70" />}
+    </>
+  );
+  const badgeButton = (
+    <TagBadge color="purple" render={<button type="button" />} />
   );
 
   const tooltip = (
@@ -181,11 +178,9 @@ export function TimeEstimateBadge({
       <Tooltip>
         <TooltipTrigger
           aria-label={`Time estimate: ${effectiveEstimate}`}
-          render={
-            <Button className="h-auto rounded-full p-0" variant="quiet" />
-          }
+          render={badgeButton}
         >
-          {badge}
+          {badgeContent}
         </TooltipTrigger>
         {tooltip}
       </Tooltip>
@@ -208,17 +203,10 @@ export function TimeEstimateBadge({
         <TooltipTrigger
           aria-label={`Time estimate: ${effectiveEstimate}. Change estimate`}
           render={
-            <PopoverTrigger
-              render={
-                <Button
-                  className="h-auto select-none rounded-full p-0"
-                  variant="quiet"
-                />
-              }
-            />
+            <PopoverTrigger className="select-none" render={badgeButton} />
           }
         >
-          {badge}
+          {badgeContent}
         </TooltipTrigger>
         {tooltip}
       </Tooltip>

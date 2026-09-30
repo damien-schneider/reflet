@@ -4,7 +4,6 @@ import {
   formatAuthError,
   signInSchema,
   signUpSchema,
-  titleVariants,
 } from "./auth-validation";
 
 describe("signInSchema", () => {
@@ -23,7 +22,9 @@ describe("signInSchema", () => {
     });
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].message).toBe("Invalid email address");
+      expect(result.error.issues[0].message).toBe(
+        "Enter a valid email address"
+      );
     }
   });
 
@@ -42,7 +43,7 @@ describe("signInSchema", () => {
     });
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0].message).toBe("Password is required");
+      expect(result.error.issues[0].message).toBe("Enter your password");
     }
   });
 
@@ -79,7 +80,7 @@ describe("signUpSchema", () => {
     expect(result.success).toBe(false);
     if (!result.success) {
       const messages = result.error.issues.map((i) => i.message);
-      expect(messages).toContain("Password must be at least 8 characters");
+      expect(messages).toContain("Use at least 8 characters");
     }
   });
 
@@ -165,13 +166,13 @@ describe("formatAuthError", () => {
 
   it("maps 'invalid email' to friendly message", () => {
     expect(formatAuthError("Invalid email provided")).toBe(
-      "Invalid email address"
+      "Enter a valid email address"
     );
   });
 
-  it("maps 'incorrect email or password'", () => {
+  it("maps 'incorrect email or password' to a recoverable message", () => {
     expect(formatAuthError("Incorrect email or password")).toBe(
-      "Incorrect email or password"
+      "Incorrect email or password. Try again or reset your password."
     );
   });
 
@@ -183,13 +184,13 @@ describe("formatAuthError", () => {
 
   it("maps 'email not verified'", () => {
     expect(formatAuthError("Email not verified")).toBe(
-      "Please verify your email before signing in."
+      "Verify your email before signing in. Check your inbox for the link."
     );
   });
 
   it("maps 'verify your email'", () => {
     expect(formatAuthError("Please verify your email first")).toBe(
-      "Please verify your email before signing in."
+      "Verify your email before signing in. Check your inbox for the link."
     );
   });
 
@@ -224,7 +225,9 @@ describe("formatAuthError", () => {
   });
 
   it("is case-insensitive for pattern matching", () => {
-    expect(formatAuthError("INVALID EMAIL")).toBe("Invalid email address");
+    expect(formatAuthError("INVALID EMAIL")).toBe(
+      "Enter a valid email address"
+    );
     expect(formatAuthError("USER ALREADY EXISTS")).toBe(
       "An account with this email already exists"
     );
@@ -248,25 +251,5 @@ describe("animationVariants", () => {
 
   it("exit has opacity 0", () => {
     expect(animationVariants.exit.opacity).toBe(0);
-  });
-});
-
-describe("titleVariants", () => {
-  it("has initial, animate, and exit states", () => {
-    expect(titleVariants).toHaveProperty("initial");
-    expect(titleVariants).toHaveProperty("animate");
-    expect(titleVariants).toHaveProperty("exit");
-  });
-
-  it("initial has y -10", () => {
-    expect(titleVariants.initial.y).toBe(-10);
-  });
-
-  it("animate has y 0", () => {
-    expect(titleVariants.animate.y).toBe(0);
-  });
-
-  it("exit has y 10", () => {
-    expect(titleVariants.exit.y).toBe(10);
   });
 });

@@ -39,9 +39,20 @@ import { MessageInput } from "./message-input";
 describe("MessageInput", () => {
   it("renders textarea with default placeholder", () => {
     render(<MessageInput onSend={vi.fn()} />);
-    expect(
-      screen.getByPlaceholderText("Type your message...")
-    ).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Write a message…")).toBeInTheDocument();
+  });
+
+  it("restores the draft and explains the failure when sending fails", async () => {
+    const user = userEvent.setup();
+    const onSend = vi.fn().mockRejectedValue(new Error("offline"));
+    render(<MessageInput onSend={onSend} />);
+
+    await user.type(screen.getByRole("textbox"), "Hello{Enter}");
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Message not sent"
+    );
+    expect(screen.getByRole("textbox")).toHaveValue("Hello");
   });
 
   it("renders with custom placeholder", () => {

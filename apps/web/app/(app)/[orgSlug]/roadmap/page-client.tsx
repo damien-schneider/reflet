@@ -1,19 +1,105 @@
 "use client";
 
 import { Badge } from "@ctrl-ui/react/ui/badge";
-import { Card, CardContent } from "@ctrl-ui/react/ui/card";
-import { CaretUp as ChevronUp } from "@phosphor-icons/react";
+import { Card } from "@ctrl-ui/react/ui/card";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@ctrl-ui/react/ui/empty";
+import {
+  PageBody,
+  PageDescription,
+  PageHeader,
+  PageLayout,
+  PageTitle,
+} from "@ctrl-ui/react/ui/page-layout";
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
+import { CaretUp } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
+import Link from "next/link";
 import { use } from "react";
-import { DEFAULT_PRIMARY_COLOR } from "@/lib/branding";
+import { TagBadge } from "@/components/tag-badge";
+import { getTagSwatchClass } from "@/lib/tag-colors";
+import { cn } from "@/lib/utils";
 
-export default function PublicRoadmapPageClient({
-  params,
+const MAX_CARD_TAGS = 2;
+const SKELETON_LANES = ["lane-a", "lane-b", "lane-c"] as const;
+
+interface RoadmapTag {
+  _id: string;
+  color: string;
+  isRoadmapLane?: boolean;
+  name: string;
+}
+
+interface RoadmapFeedback {
+  _id: string;
+  tags?: Array<RoadmapTag | null>;
+  title: string;
+  voteCount: number;
+}
+
+function LanesSkeleton() {
+  return (
+    <div aria-busy className="flex gap-4 overflow-hidden pb-4">
+      {SKELETON_LANES.map((key) => (
+        <div
+          className="grid w-80 shrink-0 content-start gap-3 rounded-lg border bg-muted/30 p-4"
+          key={key}
+        >
+          <Skeleton className="h-5 w-32" />
+          <Skeleton className="h-20" />
+          <Skeleton className="h-20" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function RoadmapCard({
+  feedback,
+  href,
 }: {
-  params: Promise<{ orgSlug: string }>;
+  feedback: RoadmapFeedback;
+  href: string;
 }) {
-  const { orgSlug } = use(params);
+  const tags =
+    feedback.tags
+      ?.filter((t): t is RoadmapTag => t !== null && !t.isRoadmapLane)
+      .slice(0, MAX_CARD_TAGS) ?? [];
+
+  return (
+    <Card className="relative gap-2 p-3 hover:bg-accent/50">
+      <h3 className="text-pretty font-medium text-sm">
+        <Link
+          className="outline-none after:absolute after:inset-0 after:rounded-[inherit] focus-visible:after:ring-2 focus-visible:after:ring-ring"
+          href={href}
+        >
+          {feedback.title}
+        </Link>
+      </h3>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex flex-wrap gap-1">
+          {tags.map((tag) => (
+            <TagBadge color={tag.color} key={tag._id} size="sm">
+              {tag.name}
+            </TagBadge>
+          ))}
+        </div>
+        <span className="flex items-center gap-1 text-muted-foreground text-xs">
+          <CaretUp aria-hidden className="size-3" />
+          <span className="tabular-nums">{feedback.voteCount}</span>
+          <span className="sr-only">votes</span>
+        </span>
+      </div>
+    </Card>
+  );
+}
+
+function RoadmapBoard({ orgSlug }: { orgSlug: string }) {
   const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
   const roadmapConfig = useQuery(
     api.organizations.tag_manager.getRoadmapConfig,
@@ -24,136 +110,98 @@ export default function PublicRoadmapPageClient({
     org?._id ? { organizationId: org._id } : "skip"
   );
 
-  if (!(org && roadmapConfig)) {
+  if (org === null) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div>Loading...</div>
-      </div>
+      <Empty>
+        <EmptyHeader>
+          <EmptyTitle>Roadmap not found</EmptyTitle>
+          <EmptyDescription>Check the link and try again.</EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     );
   }
 
-  const primaryColor = org.primaryColor ?? DEFAULT_PRIMARY_COLOR;
-  const roadmapLanes = roadmapConfig.lanes || [];
-  const allFeedback = roadmapFeedback || [];
-
-  if (roadmapLanes.length === 0) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col items-center justify-center py-12">
-          <h1 className="font-bold text-2xl">Roadmap</h1>
-          <p className="mt-2 text-muted-foreground">
-            No roadmap has been configured yet.
-          </p>
-        </div>
-      </div>
-    );
+  if (!(roadmapConfig && roadmapFeedback)) {
+    return <LanesSkeleton />;
   }
 
-  const feedbackByLane = roadmapLanes.reduce<
-    Record<string, typeof allFeedback>
-  >((acc, lane) => {
-    acc[lane._id] = allFeedback.filter((f) =>
-      f?.tags?.filter(Boolean).some((t) => t?._id === lane._id)
+  if (roadmapConfig.lanes.length === 0) {
+    return (
+      <Empty>
+        <EmptyHeader>
+          <EmptyTitle>No roadmap yet</EmptyTitle>
+          <EmptyDescription>
+            Planned work will show up here once the team publishes it.
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     );
-    return acc;
-  }, {});
+  }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8 text-center">
-        <h1 className="font-bold text-3xl">Roadmap</h1>
-        <p className="mt-2 text-muted-foreground">
-          See what we&apos;re working on and what&apos;s coming next.
-        </p>
-      </div>
-
-      <div className="flex gap-4 overflow-x-auto pb-4">
-        {roadmapLanes.map((lane) => (
-          <div
-            className="w-80 flex-shrink-0 rounded-lg border bg-muted/30 p-4"
+    <div className="flex gap-4 overflow-x-auto overscroll-x-contain pb-4">
+      {roadmapConfig.lanes.map((lane) => {
+        const items = roadmapFeedback.filter((f) =>
+          f?.tags?.some((t) => t?._id === lane._id)
+        );
+        return (
+          <section
+            aria-label={lane.name}
+            className="w-80 shrink-0 rounded-lg border bg-muted/30 p-4"
             key={lane._id}
           >
             <div className="mb-4 flex items-center gap-2">
-              <div
-                className="h-3 w-3 rounded bg-(--lane-color)"
-                style={{ "--lane-color": lane.color }}
+              <span
+                aria-hidden
+                className={cn(
+                  "size-2.5 rounded-full",
+                  getTagSwatchClass(lane.color)
+                )}
               />
-              <h3 className="font-semibold">{lane.name}</h3>
-              <Badge className="ml-auto">
-                {feedbackByLane[lane._id]?.length || 0}
+              <h2 className="font-semibold text-sm">{lane.name}</h2>
+              <Badge className="ml-auto tabular-nums" size="sm">
+                {items.length}
               </Badge>
             </div>
-            <div className="space-y-3">
-              {feedbackByLane[lane._id]?.map((feedback) => (
+            <div className="space-y-2">
+              {items.map((feedback) => (
                 <RoadmapCard
                   feedback={feedback}
+                  href={`/${orgSlug}/feedback/${feedback._id}`}
                   key={feedback._id}
-                  primaryColor={primaryColor}
                 />
               ))}
-              {(!feedbackByLane[lane._id] ||
-                feedbackByLane[lane._id].length === 0) && (
+              {items.length === 0 && (
                 <p className="py-4 text-center text-muted-foreground text-sm">
-                  No items
+                  Nothing here yet
                 </p>
               )}
             </div>
-          </div>
-        ))}
-      </div>
+          </section>
+        );
+      })}
     </div>
   );
 }
 
-interface RoadmapCardProps {
-  feedback: {
-    _id: string;
-    title: string;
-    voteCount: number;
-    tags?: Array<{
-      _id: string;
-      name: string;
-      color: string;
-      isRoadmapLane?: boolean;
-    } | null>;
-  };
-  primaryColor: string;
-}
-
-function RoadmapCard({ feedback, primaryColor }: RoadmapCardProps) {
-  const nonLaneTags =
-    feedback.tags
-      ?.filter(
-        (t): t is NonNullable<typeof t> => t !== null && !t.isRoadmapLane
-      )
-      ?.slice(0, 2) ?? [];
+export default function PublicRoadmapPageClient({
+  params,
+}: {
+  params: Promise<{ orgSlug: string }>;
+}) {
+  const { orgSlug } = use(params);
 
   return (
-    <Card className="cursor-pointer transition-[transform,background-color,box-shadow] duration-200 hover:scale-[1.02] hover:bg-accent/50 hover:shadow-md">
-      <CardContent className="p-3">
-        <h4 className="font-medium text-sm">{feedback.title}</h4>
-        <div className="mt-2 flex items-center justify-between">
-          <div className="flex flex-wrap gap-1">
-            {nonLaneTags.map((tag) => (
-              <Badge
-                className="border-(color:--tag-color) text-(color:--tag-color) text-xs"
-                key={tag._id}
-                style={{ "--tag-color": tag.color }}
-                variant="outline"
-              >
-                {tag.name}
-              </Badge>
-            ))}
-          </div>
-          <div
-            className="text-(color:--vote-color) flex items-center gap-1 text-xs"
-            style={{ "--vote-color": primaryColor }}
-          >
-            <ChevronUp className="h-3 w-3" />
-            {feedback.voteCount}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+    <PageLayout scroll="page">
+      <PageHeader>
+        <PageTitle>Roadmap</PageTitle>
+        <PageDescription>
+          What we’re working on and what’s coming next.
+        </PageDescription>
+      </PageHeader>
+      <PageBody>
+        <RoadmapBoard orgSlug={orgSlug} />
+      </PageBody>
+    </PageLayout>
   );
 }

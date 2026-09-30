@@ -1,58 +1,67 @@
 import { CircleAlert, CircleCheck, Info, Lightbulb } from "lucide-react";
+import type { ReactNode } from "react";
 
-import { Text } from "@/components/ui/typography";
 import { cn } from "@/lib/utils";
 
 type CalloutType = "info" | "tip" | "warning" | "success";
 
 interface CalloutProps {
-  children: React.ReactNode;
+  children: ReactNode;
   title?: string;
   type?: CalloutType;
 }
 
-const styles: Record<
+const CALLOUT_STYLES: Record<
   CalloutType,
-  { bg: string; border: string; icon: React.ReactNode; title: string }
+  { icon: typeof Info; iconClassName: string; surface: string; title: string }
 > = {
   info: {
-    bg: "bg-chart-2/10",
-    border: "border-chart-2/30",
-    icon: <Info className="h-5 w-5 text-chart-2-text" />,
+    icon: Info,
+    iconClassName: "text-muted-foreground",
+    surface: "bg-secondary",
     title: "Note",
   },
   success: {
-    bg: "bg-success-subtle",
-    border: "border-success/30",
-    icon: <CircleCheck className="h-5 w-5 text-success-text" />,
-    title: "Success",
+    icon: CircleCheck,
+    iconClassName: "text-success-text",
+    surface: "bg-success-subtle",
+    title: "Good to know",
   },
   tip: {
-    bg: "bg-warning-subtle",
-    border: "border-warning/30",
-    icon: <Lightbulb className="h-5 w-5 text-warning-text" />,
+    icon: Lightbulb,
+    iconClassName: "text-(--marketing-signal)",
+    surface: "bg-(--marketing-signal-soft)",
     title: "Tip",
   },
   warning: {
-    bg: "bg-destructive-subtle",
-    border: "border-destructive/30",
-    icon: <CircleAlert className="h-5 w-5 text-destructive-text" />,
-    title: "Warning",
+    icon: CircleAlert,
+    iconClassName: "text-warning-text",
+    surface: "bg-warning-subtle",
+    title: "Watch out",
   },
 };
 
 export function Callout({ type = "info", title, children }: CalloutProps) {
-  const style = styles[type];
+  const style = CALLOUT_STYLES[type];
+  const Icon = style.icon;
 
   return (
-    <div className={cn("my-6 rounded-lg border p-4", style.border, style.bg)}>
-      <div className="flex gap-3">
-        <div className="flex-shrink-0">{style.icon}</div>
-        <div>
-          <Text className="mb-1 font-semibold">{title ?? style.title}</Text>
-          <div className="text-muted-foreground text-sm">{children}</div>
-        </div>
+    <aside
+      className={cn(
+        "my-8 flex gap-3 rounded-(--radius-panel) p-5",
+        style.surface
+      )}
+    >
+      <Icon
+        aria-hidden="true"
+        className={cn("mt-1 size-4 shrink-0", style.iconClassName)}
+      />
+      <div className="min-w-0 text-body-lg text-muted-foreground leading-relaxed [&_p:last-child]:mb-0 [&_ul:last-child]:mb-0">
+        <p className="mb-1 font-semibold text-body-lg text-foreground">
+          {title ?? style.title}
+        </p>
+        {children}
       </div>
-    </div>
+    </aside>
   );
 }

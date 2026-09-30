@@ -12,29 +12,25 @@ export function BillingToggle({
   yearlySavings?: number;
 }) {
   return (
-    <div className="flex items-center justify-center gap-3">
-      <Tabs
-        onValueChange={(value) => {
-          if (value === "monthly" || value === "yearly") {
-            onChange(value);
-          }
-        }}
-        value={interval}
-      >
-        <TabsList className="h-10">
-          <TabsTab className="h-8 px-4" value="monthly">
-            Monthly
-          </TabsTab>
-          <TabsTab className="h-8 px-4" value="yearly">
-            Yearly
-            {yearlySavings ? (
-              <span className="ml-1.5 text-success-text">
-                (Save €{yearlySavings})
-              </span>
-            ) : null}
-          </TabsTab>
-        </TabsList>
-      </Tabs>
-    </div>
+    <Tabs
+      onValueChange={(value) => {
+        if (value === "monthly" || value === "yearly") {
+          onChange(value);
+        }
+      }}
+      value={interval}
+    >
+      <TabsList aria-label="Billing interval" size="md">
+        <TabsTab value="monthly">Monthly</TabsTab>
+        <TabsTab value="yearly">
+          Yearly
+          {yearlySavings ? (
+            <span className="text-success-text tabular-nums">
+              Save €{yearlySavings}
+            </span>
+          ) : null}
+        </TabsTab>
+      </TabsList>
+    </Tabs>
   );
 }

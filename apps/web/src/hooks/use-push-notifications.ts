@@ -3,12 +3,9 @@
 import { api } from "@reflet/backend/convex/_generated/api";
 import { env } from "@reflet/env/web";
 import { useMutation } from "convex/react";
-import { useCallback, useEffect, useState } from "react";
 
-/**
- * Convert a URL-safe base64 string to a Uint8Array.
- * Required for the applicationServerKey parameter of pushManager.subscribe().
- */
+import { useEffect, useState } from "react";
+
 export function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
@@ -30,12 +27,33 @@ interface PushNotificationState {
   registration: ServiceWorkerRegistration | null;
 }
 
-/**
- * Hook to manage push notification subscription lifecycle.
- * - Registers the service worker
- * - Checks current permission and subscription state
- * - Provides subscribe/unsubscribe functions that sync with Convex
- */
+async function createPushSubscriptionKeys(
+  registration: ServiceWorkerRegistration
+) {
+  const subscription = await registration.pushManager.subscribe({
+    applicationServerKey: new Uint8Array(
+      urlBase64ToUint8Array(env.NEXT_PUBLIC_VAPID_PUBLIC_KEY)
+    ),
+    userVisibleOnly: true,
+  });
+  const { endpoint, keys } = subscription.toJSON();
+  const p256dh = keys?.p256dh;
+  const auth = keys?.auth;
+  if (!(endpoint && p256dh && auth)) {
+    return null;
+  }
+  return { auth, endpoint, p256dh };
+}
+
+async function removePushSubscription(registration: ServiceWorkerRegistration) {
+  const subscription = await registration.pushManager.getSubscription();
+  if (!subscription) {
+    return null;
+  }
+  await subscription.unsubscribe();
+  return subscription.endpoint;
+}
+
 export function usePushNotifications() {
   const [state, setState] = useState<PushNotificationState>({
     isLoading: true,
@@ -52,7 +70,6 @@ export function usePushNotifications() {
     api.notifications.push_queries.unsubscribe
   );
 
-  // Register service worker and check initial state
   useEffect(() => {
     const init = async () => {
       const supported =
@@ -96,85 +113,46 @@ export function usePushNotifications() {
     init();
   }, []);
 
-  /**
-   * Request push permission and subscribe to push notifications.
-   * Sends the subscription keys to Convex for server-side push sending.
-   */
-  const subscribe = useCallback(async (): Promise<boolean> => {
+  const subscribe = async (): Promise<boolean> => {
     if (!state.registration) {
       return false;
     }
-
-    const vapidPublicKey = env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-
     try {
       const permission = await Notification.requestPermission();
-
       setState((prev) => ({ ...prev, permissionState: permission }));
-
       if (permission !== "granted") {
         return false;
       }
-
-      const reg = state.registration;
-      const subscription = await reg.pushManager.subscribe({
-        applicationServerKey: new Uint8Array(
-          urlBase64ToUint8Array(vapidPublicKey)
-        ),
-        userVisibleOnly: true,
-      });
-
-      const subscriptionJson = subscription.toJSON();
-      const { endpoint } = subscriptionJson;
-      const p256dh = subscriptionJson.keys?.p256dh;
-      const auth = subscriptionJson.keys?.auth;
-
-      if (!(endpoint && p256dh && auth)) {
+      const keys = await createPushSubscriptionKeys(state.registration);
+      if (!keys) {
         console.error("[Push] Invalid subscription keys");
         return false;
       }
-
-      // Save to Convex
-      await subscribeMutation({
-        auth,
-        endpoint,
-        p256dh,
-        userAgent: navigator.userAgent,
-      });
-
+      await subscribeMutation({ ...keys, userAgent: navigator.userAgent });
       setState((prev) => ({ ...prev, isSubscribed: true }));
       return true;
     } catch (error) {
       console.error("[Push] Subscribe failed:", error);
       return false;
     }
-  }, [state.registration, subscribeMutation]);
+  };
 
-  /**
-   * Unsubscribe from push notifications and remove from Convex.
-   */
-  const unsubscribeFromPush = useCallback(async (): Promise<boolean> => {
+  const unsubscribeFromPush = async (): Promise<boolean> => {
     if (!state.registration) {
       return false;
     }
-
     try {
-      const reg = state.registration;
-      const subscription = await reg.pushManager.getSubscription();
-
-      if (subscription) {
-        const { endpoint } = subscription;
-        await subscription.unsubscribe();
+      const endpoint = await removePushSubscription(state.registration);
+      if (endpoint) {
         await unsubscribeMutation({ endpoint });
       }
-
       setState((prev) => ({ ...prev, isSubscribed: false }));
       return true;
     } catch (error) {
       console.error("[Push] Unsubscribe failed:", error);
       return false;
     }
-  }, [state.registration, unsubscribeMutation]);
+  };
 
   return {
     isLoading: state.isLoading,

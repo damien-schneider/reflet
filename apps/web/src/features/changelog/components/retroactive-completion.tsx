@@ -27,7 +27,7 @@ interface CompletionSummaryProps {
   onDismiss: () => void;
 }
 
-export function getEmptyResultHint(
+function getEmptyResultHint(
   job: CompletionJobData,
   totalGroups: number
 ): string {
@@ -58,11 +58,10 @@ export function CompletionSummary({ job, onDismiss }: CompletionSummaryProps) {
   return (
     <div
       className={cn(
-        "relative mb-6 rounded-xl border p-5",
-        hasResults
-          ? "border-border bg-success-subtle"
-          : "border-border bg-warning-subtle"
+        "relative mb-6 rounded-xl border border-border p-5",
+        hasResults ? "bg-success-subtle" : "bg-warning-subtle"
       )}
+      role="status"
     >
       <Tooltip>
         <TooltipTrigger
@@ -72,12 +71,12 @@ export function CompletionSummary({ job, onDismiss }: CompletionSummaryProps) {
               className="absolute top-3 right-3"
               iconOnly
               onClick={onDismiss}
-              size="md"
+              size="sm"
               variant="ghost"
             />
           }
         >
-          <X className="h-4 w-4" />
+          <X aria-hidden className="size-4" />
         </TooltipTrigger>
         <TooltipContent>Dismiss</TooltipContent>
       </Tooltip>
@@ -115,14 +114,14 @@ export function CompletionSummary({ job, onDismiss }: CompletionSummaryProps) {
 export function CompletionIcon({ hasResults }: { hasResults: boolean }) {
   if (hasResults) {
     return (
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-success-subtle">
-        <Check className="h-4 w-4 text-success-text" />
+      <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-background">
+        <Check aria-hidden className="size-4 text-success-text" />
       </div>
     );
   }
   return (
-    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-warning-subtle">
-      <Warning className="h-4 w-4 text-warning-text" />
+    <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-background">
+      <Warning aria-hidden className="size-4 text-warning-text" />
     </div>
   );
 }
@@ -185,7 +184,7 @@ export function CompletionStats({
         </span>
       )}
       {errorCount > 0 && (
-        <span className="text-destructive">
+        <span className="text-destructive-text">
           <span className="font-medium tabular-nums">{errorCount}</span> errors
         </span>
       )}
@@ -216,10 +215,10 @@ export function GroupStatusDot({ status }: { status: string }) {
       <span
         aria-hidden="true"
         className={cn(
-          "h-2 w-2 rounded-full",
+          "size-2 rounded-full",
           status === "created" && "bg-success",
           status === "generated" && "bg-success",
-          status === "generating" && "animate-pulse bg-primary",
+          status === "generating" && "bg-primary motion-safe:animate-pulse",
           status === "pending" && "bg-muted-foreground/30",
           status === "skipped" && "bg-muted-foreground/30",
           status === "error" && "bg-destructive"

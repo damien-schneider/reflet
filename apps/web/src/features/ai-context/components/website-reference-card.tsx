@@ -3,19 +3,20 @@
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Card, CardContent } from "@ctrl-ui/react/ui/card";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import {
   ArrowsClockwise,
   ArrowUpRight,
   Check,
-  Spinner,
   Trash,
   Warning,
 } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
+import { format } from "date-fns";
 import { useState } from "react";
-import { cn } from "@/lib/utils";
 
 interface WebsiteReference {
   _id: Id<"websiteReferences">;
@@ -36,6 +37,67 @@ export function WebsiteReferenceCard({
   reference,
   isAdmin,
 }: WebsiteReferenceCardProps) {
+  const name = reference.title || new URL(reference.url).hostname;
+
+  return (
+    <Card>
+      <CardContent className="flex items-start justify-between gap-4">
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <a
+              className="inline-flex min-w-0 items-center gap-1 font-medium text-label underline-offset-4 hover:underline"
+              href={reference.url}
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              <span className="truncate">{name}</span>
+              <ArrowUpRight aria-hidden className="size-3 shrink-0" />
+              <span className="sr-only">(opens in a new tab)</span>
+            </a>
+            <StatusBadge status={reference.status} />
+          </div>
+
+          <p className="truncate text-caption text-muted-foreground">
+            {reference.url}
+          </p>
+
+          {reference.status === "error" && reference.errorMessage ? (
+            <p className="text-caption text-destructive-text">
+              {reference.errorMessage}
+            </p>
+          ) : null}
+
+          {reference.description ? (
+            <p className="line-clamp-2 text-pretty text-body text-muted-foreground">
+              {reference.description}
+            </p>
+          ) : null}
+
+          {reference.lastFetchedAt && reference.status === "success" ? (
+            <p className="text-caption text-muted-foreground tabular-nums">
+              Last fetched{" "}
+              <time dateTime={new Date(reference.lastFetchedAt).toISOString()}>
+                {format(reference.lastFetchedAt, "PP")}
+              </time>
+            </p>
+          ) : null}
+        </div>
+
+        {isAdmin ? (
+          <ReferenceActions name={name} reference={reference} />
+        ) : null}
+      </CardContent>
+    </Card>
+  );
+}
+
+function ReferenceActions({
+  name,
+  reference,
+}: {
+  name: string;
+  reference: WebsiteReference;
+}) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -50,132 +112,87 @@ export function WebsiteReferenceCard({
     setIsRefreshing(true);
     try {
       await refreshReference({ id: reference._id });
-    } finally {
-      setTimeout(() => setIsRefreshing(false), 500);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Couldn’t refresh the website"
+      );
     }
+    setIsRefreshing(false);
   };
 
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
       await removeReference({ id: reference._id });
-    } finally {
-      setIsDeleting(false);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Couldn’t remove the website"
+      );
     }
+    setIsDeleting(false);
   };
 
-  const isLoading =
-    reference.status === "pending" || reference.status === "fetching";
+  const isFetching =
+    isRefreshing ||
+    reference.status === "pending" ||
+    reference.status === "fetching";
 
   return (
-    <Card>
-      <CardContent className="py-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <a
-                className="flex items-center gap-1 font-medium text-sm hover:text-brand-text hover:underline"
-                href={reference.url}
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                {reference.title || new URL(reference.url).hostname}
-                <ArrowUpRight className="h-3 w-3" />
-              </a>
-              <StatusBadge
-                errorMessage={reference.errorMessage}
-                status={reference.status}
-              />
-            </div>
-
-            <p className="mt-1 truncate text-muted-foreground text-xs">
-              {reference.url}
-            </p>
-
-            {reference.description && (
-              <p className="mt-2 line-clamp-2 text-muted-foreground text-sm">
-                {reference.description}
-              </p>
-            )}
-
-            {reference.lastFetchedAt && reference.status === "success" && (
-              <p className="mt-2 text-muted-foreground/60 text-xs">
-                Last fetched:{" "}
-                {new Date(reference.lastFetchedAt).toLocaleDateString()}
-              </p>
-            )}
-          </div>
-
-          {isAdmin && (
-            <div className="flex items-center gap-1">
-              <Button
-                disabled={isLoading || isRefreshing}
-                iconOnly
-                onClick={handleRefresh}
-                size="xs"
-                title="Refresh"
-                variant="ghost"
-              >
-                <ArrowsClockwise
-                  className={cn(
-                    "h-4 w-4",
-                    (isRefreshing || isLoading) && "animate-spin"
-                  )}
-                />
-              </Button>
-              <Button
-                disabled={isDeleting}
-                iconOnly
-                onClick={handleDelete}
-                size="xs"
-                title="Delete"
-                variant="ghost"
-              >
-                {isDeleting ? (
-                  <Spinner className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Trash className="h-4 w-4 text-destructive" />
-                )}
-              </Button>
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+    <div className="flex shrink-0 items-center gap-1">
+      <Button
+        aria-label={`Refresh ${name}`}
+        disabled={isFetching}
+        iconOnly
+        onClick={handleRefresh}
+        size="sm"
+        variant="ghost"
+      >
+        {isFetching ? (
+          <Spinner aria-hidden data-icon="inline-start" size="xs" />
+        ) : (
+          <ArrowsClockwise aria-hidden />
+        )}
+      </Button>
+      <Button
+        aria-label={`Remove ${name}`}
+        disabled={isDeleting}
+        iconOnly
+        onClick={handleDelete}
+        size="sm"
+        tone="danger"
+        variant="ghost"
+      >
+        {isDeleting ? (
+          <Spinner aria-hidden data-icon="inline-start" size="xs" />
+        ) : (
+          <Trash aria-hidden />
+        )}
+      </Button>
+    </div>
   );
 }
 
-function StatusBadge({
-  status,
-  errorMessage,
-}: {
-  status: string;
-  errorMessage?: string;
-}) {
-  switch (status) {
-    case "pending":
-    case "fetching":
-      return (
-        <Badge className="text-xs">
-          <Spinner className="mr-1 h-3 w-3 animate-spin" />
-          Fetching...
-        </Badge>
-      );
-    case "success":
-      return (
-        <Badge className="bg-brand-subtle text-brand-text text-xs">
-          <Check className="mr-1 h-3 w-3" />
-          Success
-        </Badge>
-      );
-    case "error":
-      return (
-        <Badge className="text-xs" color="red" title={errorMessage}>
-          <Warning className="mr-1 h-3 w-3" />
-          Error
-        </Badge>
-      );
-    default:
-      return null;
+function StatusBadge({ status }: { status: WebsiteReference["status"] }) {
+  if (status === "success") {
+    return (
+      <Badge color="green" size="sm">
+        <Check aria-hidden />
+        Fetched
+      </Badge>
+    );
   }
+  if (status === "error") {
+    return (
+      <Badge color="red" size="sm">
+        <Warning aria-hidden />
+        Failed
+      </Badge>
+    );
+  }
+  return (
+    <Badge color="neutral" size="sm">
+      <Spinner aria-hidden size="xs" />
+      Fetching…
+    </Badge>
+  );
 }

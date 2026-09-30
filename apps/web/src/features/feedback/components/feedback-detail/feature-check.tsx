@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@ctrl-ui/react/ui/button";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import {
   ArrowsClockwise,
   CaretDown,
@@ -16,6 +17,7 @@ import {
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
+import { format } from "date-fns";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -82,9 +84,10 @@ export function FeatureCheck({
     setIsStarting(true);
     try {
       await startFeatureCheck({ feedbackId });
-    } finally {
-      setIsStarting(false);
+    } catch {
+      toast.error("Couldn’t start the feature check. Try again.");
     }
+    setIsStarting(false);
   };
 
   if (connectionStatus === undefined) {
@@ -150,8 +153,8 @@ function FeatureCheckHeader({
         >
           {isPending ? (
             <>
-              <ArrowsClockwise className="mr-1 h-3 w-3 animate-spin" />
-              Checking...
+              <ArrowsClockwise className="mr-1 h-3 w-3 motion-safe:animate-spin" />
+              Checking…
             </>
           ) : (
             <>
@@ -200,7 +203,7 @@ function FeatureCheckBody({
   if (isPending) {
     return (
       <p className="mt-2 text-muted-foreground text-xs">
-        Searching the connected GitHub repository for this feature...
+        Searching the connected GitHub repository for this feature…
       </p>
     );
   }
@@ -258,7 +261,7 @@ function FeatureCheckResult({
 
       {featureCheck.generatedAt && (
         <p className="mt-2 text-muted-foreground/60 text-xs">
-          Checked {new Date(featureCheck.generatedAt).toLocaleDateString()}
+          Checked {format(featureCheck.generatedAt, "MMM d, yyyy")}
         </p>
       )}
     </div>

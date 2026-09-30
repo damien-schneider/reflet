@@ -1,7 +1,6 @@
 "use client";
 
 import { Badge } from "@ctrl-ui/react/ui/badge";
-import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Table,
   TableBody,
@@ -11,18 +10,15 @@ import {
   TableRow,
 } from "@ctrl-ui/react/ui/table";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@ctrl-ui/react/ui/tooltip";
-import {
   ArrowsClockwise,
   CheckCircle,
-  Copy,
+  Hourglass,
   Warning,
   XCircle,
 } from "@phosphor-icons/react";
-import { Muted, Text } from "@/components/ui/typography";
+import { CopyButton } from "@/components/copy-button";
+
+const CNAME_TARGET = "cname.vercel-dns.com";
 
 const STATUS_CONFIG = {
   active: { color: "green", icon: CheckCircle, label: "Active" },
@@ -30,83 +26,89 @@ const STATUS_CONFIG = {
   invalid_configuration: {
     color: "red",
     icon: Warning,
-    label: "Invalid Configuration",
+    label: "Invalid configuration",
   },
   pending_verification: {
     color: "yellow",
-    icon: ArrowsClockwise,
-    label: "Pending Verification",
+    icon: Hourglass,
+    label: "Pending verification",
   },
   removing: {
     color: "neutral",
     icon: ArrowsClockwise,
-    label: "Removing...",
+    label: "Removing…",
   },
 } as const;
 
-export function DomainStatusBadge({
-  status,
-}: {
-  status: keyof typeof STATUS_CONFIG;
-}) {
+export type DomainStatus = keyof typeof STATUS_CONFIG;
+
+export function DomainStatusBadge({ status }: { status: DomainStatus }) {
   const config = STATUS_CONFIG[status];
   const Icon = config.icon;
 
   return (
     <Badge color={config.color}>
-      <Icon className="mr-1 h-3 w-3" />
+      <Icon aria-hidden />
       {config.label}
     </Badge>
   );
 }
 
-function CopyValueButton({
-  onCopy,
-  value,
-}: {
-  onCopy: (text: string) => void;
+interface DnsRecord {
+  domain: string;
+  type: string;
   value: string;
-}) {
+}
+
+function DnsRecordRow({ record }: { record: DnsRecord }) {
   return (
-    <Tooltip>
-      <TooltipTrigger
-        render={
-          <Button
-            aria-label={`Copy ${value}`}
-            iconOnly
-            onClick={() => onCopy(value)}
+    <TableRow>
+      <TableCell className="font-mono">{record.type}</TableCell>
+      <TableCell>
+        <div className="flex items-center gap-1">
+          <code className="break-all font-mono">{record.domain}</code>
+          <CopyButton
+            label={`Copy name ${record.domain}`}
             size="xs"
-            variant="ghost"
-          >
-            <Copy />
-          </Button>
-        }
-      />
-      <TooltipContent>Copy {value}</TooltipContent>
-    </Tooltip>
+            value={record.domain}
+          />
+        </div>
+      </TableCell>
+      <TableCell>
+        <div className="flex items-center gap-1">
+          <code className="break-all font-mono">{record.value}</code>
+          <CopyButton
+            label={`Copy value ${record.value}`}
+            size="xs"
+            value={record.value}
+          />
+        </div>
+      </TableCell>
+    </TableRow>
   );
 }
 
 export function DnsInstructions({
   domain,
-  onCopy,
   verification,
 }: {
   domain: string;
-  onCopy: (text: string) => void;
-  verification?: Array<{
-    type: string;
-    domain: string;
-    value: string;
-    reason?: string;
-  }>;
+  verification?: Array<DnsRecord & { reason?: string }>;
 }) {
+  const records: DnsRecord[] = [
+    { domain, type: "CNAME", value: CNAME_TARGET },
+    ...(verification ?? []),
+  ];
+
   return (
-    <div className="space-y-3 rounded-lg border bg-muted/50 p-4">
-      <Text className="font-medium text-sm">DNS Configuration Required</Text>
-      <Muted className="text-sm">
-        Add the following DNS record to your domain provider:
-      </Muted>
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-1">
+        <h3 className="text-heading-4">DNS configuration required</h3>
+        <p className="text-pretty text-body text-muted-foreground">
+          Add {records.length === 1 ? "this record" : "these records"} at your
+          DNS provider.
+        </p>
+      </div>
 
       <Table>
         <TableHeader>
@@ -114,61 +116,22 @@ export function DnsInstructions({
             <TableHead>Type</TableHead>
             <TableHead>Name</TableHead>
             <TableHead>Value</TableHead>
-            <TableHead>
-              <span className="sr-only">Copy</span>
-            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          <TableRow>
-            <TableCell>
-              <code className="rounded bg-background px-1.5 py-0.5 text-xs">
-                CNAME
-              </code>
-            </TableCell>
-            <TableCell>
-              <code className="rounded bg-background px-1.5 py-0.5 text-xs">
-                {domain}
-              </code>
-            </TableCell>
-            <TableCell>
-              <code className="rounded bg-background px-1.5 py-0.5 text-xs">
-                cname.vercel-dns.com
-              </code>
-            </TableCell>
-            <TableCell className="text-right">
-              <CopyValueButton onCopy={onCopy} value="cname.vercel-dns.com" />
-            </TableCell>
-          </TableRow>
-          {verification?.map((record) => (
-            <TableRow key={record.domain}>
-              <TableCell>
-                <code className="rounded bg-background px-1.5 py-0.5 text-xs">
-                  {record.type}
-                </code>
-              </TableCell>
-              <TableCell>
-                <code className="rounded bg-background px-1.5 py-0.5 text-xs">
-                  {record.domain}
-                </code>
-              </TableCell>
-              <TableCell>
-                <code className="break-all rounded bg-background px-1.5 py-0.5 text-xs">
-                  {record.value}
-                </code>
-              </TableCell>
-              <TableCell className="text-right">
-                <CopyValueButton onCopy={onCopy} value={record.value} />
-              </TableCell>
-            </TableRow>
+          {records.map((record) => (
+            <DnsRecordRow
+              key={`${record.type}:${record.domain}:${record.value}`}
+              record={record}
+            />
           ))}
         </TableBody>
       </Table>
 
-      <Muted className="text-xs">
-        DNS changes can take up to 48 hours to propagate. Click &quot;Check
-        Verification&quot; after configuring your DNS records.
-      </Muted>
+      <p className="text-pretty text-caption text-muted-foreground">
+        DNS changes can take up to 48 hours to propagate. Select “Check
+        verification” once the records are in place.
+      </p>
     </div>
   );
 }

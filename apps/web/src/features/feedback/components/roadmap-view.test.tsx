@@ -44,6 +44,7 @@ vi.mock("@dnd-kit/core", () => ({
     attributes: {},
     isDragging: false,
     listeners: disabled ? undefined : {},
+    setActivatorNodeRef: vi.fn(),
     setNodeRef: vi.fn(),
   }),
   useDroppable: () => ({ isOver: false, setNodeRef: vi.fn() }),
@@ -60,41 +61,21 @@ vi.mock("convex/react", () => ({
 
 // Mock motion/react for faster tests - preserve structure for testing
 vi.mock("motion/react", () => ({
-  AnimatePresence: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="animate-presence">{children}</div>
-  ),
+  domMax: {},
   LayoutGroup: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="layout-group">{children}</div>
   ),
-  motion: {
+  LazyMotion: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  m: {
     div: ({
       children,
-      initial,
-      animate,
-      exit,
-      transition,
       className,
-      ...props
     }: {
       children: React.ReactNode;
-      initial?: Record<string, unknown>;
-      animate?: Record<string, unknown>;
-      exit?: Record<string, unknown>;
-      transition?: Record<string, unknown>;
       className?: string;
-    }) => (
-      <div
-        className={className}
-        data-animate={JSON.stringify(animate)}
-        data-initial={JSON.stringify(initial)}
-        data-testid="motion-div"
-        data-transition={JSON.stringify(transition)}
-        {...props}
-      >
-        {children}
-      </div>
-    ),
+    }) => <div className={className}>{children}</div>,
   },
+  useReducedMotion: () => false,
 }));
 
 // Mock phosphor icons
@@ -210,11 +191,9 @@ describe("RoadmapView", () => {
     dndHandlers.onDragEnd = null;
   });
 
-  describe("Sensor Configuration", () => {
-    it("should configure KeyboardSensor for accessibility", () => {
-      // We need to verify KeyboardSensor is included in sensors
-      // This test will fail because KeyboardSensor is not currently configured
-      const { container } = render(
+  describe("Move handles", () => {
+    it("gives admins a focusable move handle on every card", () => {
+      render(
         <RoadmapView
           feedback={mockFeedback}
           isAdmin={true}
@@ -224,192 +203,12 @@ describe("RoadmapView", () => {
         />
       );
 
-      // The component should have keyboard-accessible drag handles
-      const dragHandles = container.querySelectorAll(
-        '[aria-label="Drag to reorder"]'
-      );
-      expect(dragHandles.length).toBeGreaterThan(0);
-
-      // Verify keyboard sensor is configured by checking DndContext props
-      // We'll check this via a spy on useSensors
-      // For now, we verify the presence of keyboard-navigable elements
-      for (const handle of dragHandles) {
-        expect(handle).toHaveAttribute("type", "button");
-      }
-    });
-
-    it("should configure PointerSensor with 8px activation distance", () => {
-      // This is verified by the sensor configuration in the component
-      // We test that small movements don't trigger drag (requires integration test)
-      const { container } = render(
-        <RoadmapView
-          feedback={mockFeedback}
-          isAdmin={true}
-          onFeedbackClick={vi.fn()}
-          organizationId={"org-1" as never}
-          statuses={mockStatuses}
-        />
-      );
-
-      // Component should render without crashing with proper sensor config
       expect(
-        container.querySelector('[data-testid="column-header"]')
+        screen.getByRole("button", { name: "Move Test feedback 1" })
       ).toBeInTheDocument();
-    });
-
-    it("should configure TouchSensor with 300ms delay and 5px tolerance", () => {
-      // Touch sensor configuration prevents accidental drags on mobile
-      const { container } = render(
-        <RoadmapView
-          feedback={mockFeedback}
-          isAdmin={true}
-          onFeedbackClick={vi.fn()}
-          organizationId={"org-1" as never}
-          statuses={mockStatuses}
-        />
-      );
-
-      // Component should render with touch-compatible drag handles
-      const dragHandles = container.querySelectorAll(
-        '[aria-label="Drag to reorder"]'
-      );
-      for (const handle of dragHandles) {
-        expect(handle.classList.contains("touch-none")).toBe(true);
-      }
-    });
-  });
-
-  describe("Collision Detection", () => {
-    it("should use closestCorners collision detection for kanban layout", () => {
-      // closestCorners is better for kanban boards where items move between columns
-      // This test verifies the correct algorithm is used
-      // We can't directly test this without mocking DndContext, but we can verify
-      // the component is structured correctly for column-based drops
-      const { container } = render(
-        <RoadmapView
-          feedback={mockFeedback}
-          isAdmin={true}
-          onFeedbackClick={vi.fn()}
-          organizationId={"org-1" as never}
-          statuses={mockStatuses}
-        />
-      );
-
-      // Each column should be a valid drop target
-      const columns = container.querySelectorAll('[class*="w-72"]');
-      expect(columns.length).toBe(mockStatuses.length);
-    });
-  });
-
-  describe("DragOverlay Animations", () => {
-    it("should use motion/react for DragOverlay animations", () => {
-      // Verify that the component uses motion/react (imported and configured)
-      // The actual animation happens during drag, but we verify the structure
-      const { container } = render(
-        <RoadmapView
-          feedback={mockFeedback}
-          isAdmin={true}
-          onFeedbackClick={vi.fn()}
-          organizationId={"org-1" as never}
-          statuses={mockStatuses}
-        />
-      );
-
-      // Component should render successfully with motion/react integration
-      // The DragOverlay with AnimatePresence/motion.div is rendered but empty when not dragging
-      expect(container.firstChild).toBeInTheDocument();
-
-      // Verify feedback items are rendered (motion is applied on drag)
-      expect(screen.getByText("Test feedback 1")).toBeInTheDocument();
-    });
-
-    it("should configure animation with scale(1.05) and rotate(3deg)", () => {
-      // This test verifies the animation configuration exists in the component
-      // The actual animation is applied when activeItem is set (during drag)
-      const { container } = render(
-        <RoadmapView
-          feedback={mockFeedback}
-          isAdmin={true}
-          onFeedbackClick={vi.fn()}
-          organizationId={"org-1" as never}
-          statuses={mockStatuses}
-        />
-      );
-
-      // Component renders correctly - animation will be visible during actual drag
-      expect(container.firstChild).toBeInTheDocument();
-
-      // Verify the component has draggable items that will trigger the animation
-      const dragHandles = container.querySelectorAll(
-        '[aria-label="Drag to reorder"]'
-      );
-      expect(dragHandles.length).toBeGreaterThan(0);
-    });
-
-    it("should use spring animation for smooth transitions", () => {
-      // Spring animation configuration (damping: 25, stiffness: 300) is applied
-      // during drag via motion.div transition prop
-      const { container } = render(
-        <RoadmapView
-          feedback={mockFeedback}
-          isAdmin={true}
-          onFeedbackClick={vi.fn()}
-          organizationId={"org-1" as never}
-          statuses={mockStatuses}
-        />
-      );
-
-      // Component renders correctly with spring animation configured
-      expect(container.firstChild).toBeInTheDocument();
-
-      // Verify draggable elements exist that will use spring animation
-      const feedbackCards = screen.getAllByRole("button");
-      expect(feedbackCards.length).toBeGreaterThan(0);
-    });
-  });
-
-  describe("Accessibility Announcements", () => {
-    it("should have DndContext configured with accessibility announcements", () => {
-      // DndContext should have accessibility prop with announcements
-      // This test will FAIL because announcements are not currently configured
-      const { container } = render(
-        <RoadmapView
-          feedback={mockFeedback}
-          isAdmin={true}
-          onFeedbackClick={vi.fn()}
-          organizationId={"org-1" as never}
-          statuses={mockStatuses}
-        />
-      );
-
-      // The component should render with proper ARIA attributes for accessibility
-      // Drag handles should be accessible buttons
-      const dragHandles = container.querySelectorAll(
-        '[aria-label="Drag to reorder"]'
-      );
-      expect(dragHandles.length).toBeGreaterThan(0);
-    });
-
-    it("should support keyboard drag with Space/Enter activation", () => {
-      // Keyboard users should be able to activate drag with Space or Enter
-      const { container } = render(
-        <RoadmapView
-          feedback={mockFeedback}
-          isAdmin={true}
-          onFeedbackClick={vi.fn()}
-          organizationId={"org-1" as never}
-          statuses={mockStatuses}
-        />
-      );
-
-      // Drag handles should be focusable buttons
-      const dragHandles = container.querySelectorAll(
-        '[aria-label="Drag to reorder"]'
-      );
-      for (const handle of dragHandles) {
-        expect(handle.tagName.toLowerCase()).toBe("button");
-        // Buttons are keyboard accessible by default
-      }
+      expect(
+        screen.getByRole("button", { name: "Move Test feedback 2" })
+      ).toBeInTheDocument();
     });
   });
 
@@ -489,8 +288,8 @@ describe("RoadmapView", () => {
       expect(screen.queryByTestId("add-column")).not.toBeInTheDocument();
     });
 
-    it("should NOT show drag handles for non-admin users", () => {
-      const { container } = render(
+    it("should NOT show move handles for non-admin users", () => {
+      render(
         <RoadmapView
           feedback={mockFeedback}
           isAdmin={false}
@@ -500,10 +299,9 @@ describe("RoadmapView", () => {
         />
       );
 
-      const dragHandles = container.querySelectorAll(
-        '[aria-label="Drag to reorder"]'
-      );
-      expect(dragHandles.length).toBe(0);
+      expect(
+        screen.queryByRole("button", { name: /^Move / })
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -542,103 +340,6 @@ describe("RoadmapView", () => {
       feedbackCard.click();
 
       expect(onFeedbackClick).toHaveBeenCalledWith("feedback-1");
-    });
-  });
-
-  describe("Drag Over Column Detection", () => {
-    it("should allow pointer events to pass through non-dragged cards to column", () => {
-      const { container } = render(
-        <RoadmapView
-          feedback={mockFeedback}
-          isAdmin={true}
-          onFeedbackClick={vi.fn()}
-          organizationId={"org-1" as never}
-          statuses={mockStatuses}
-        />
-      );
-
-      const cardWrappers = container.querySelectorAll('[role="button"]');
-      expect(cardWrappers.length).toBeGreaterThan(0);
-
-      for (const wrapper of cardWrappers) {
-        expect(wrapper).toBeInTheDocument();
-      }
-    });
-
-    it("should have sortable items that do NOT act as drop targets", () => {
-      const { container } = render(
-        <RoadmapView
-          feedback={mockFeedback}
-          isAdmin={true}
-          onFeedbackClick={vi.fn()}
-          organizationId={"org-1" as never}
-          statuses={mockStatuses}
-        />
-      );
-
-      const columns = container.querySelectorAll('[class*="w-72"]');
-      expect(columns.length).toBe(mockStatuses.length);
-
-      for (const column of columns) {
-        expect(column.classList.contains("transition-colors")).toBe(true);
-      }
-    });
-
-    it("should have sortable items container that can disable pointer events during drag", () => {
-      const { container } = render(
-        <RoadmapView
-          feedback={mockFeedback}
-          isAdmin={true}
-          onFeedbackClick={vi.fn()}
-          organizationId={"org-1" as never}
-          statuses={mockStatuses}
-        />
-      );
-
-      const sortableContainers = container.querySelectorAll(".space-y-2");
-      expect(sortableContainers.length).toBeGreaterThan(0);
-
-      for (const containerEl of sortableContainers) {
-        expect(containerEl).toBeInTheDocument();
-      }
-    });
-
-    it("should apply pointer-events-none class to sortable container when dragging", () => {
-      const { container } = render(
-        <RoadmapView
-          feedback={mockFeedback}
-          isAdmin={true}
-          onFeedbackClick={vi.fn()}
-          organizationId={"org-1" as never}
-          statuses={mockStatuses}
-        />
-      );
-
-      const sortableContainers = container.querySelectorAll(".space-y-2");
-
-      for (const containerEl of sortableContainers) {
-        expect(containerEl.classList.contains("pointer-events-none")).toBe(
-          false
-        );
-      }
-    });
-
-    it("should pass isDragging prop to DroppableColumn for pointer-events control", () => {
-      const { container } = render(
-        <RoadmapView
-          feedback={mockFeedback}
-          isAdmin={true}
-          onFeedbackClick={vi.fn()}
-          organizationId={"org-1" as never}
-          statuses={mockStatuses}
-        />
-      );
-
-      const sortableContainers = container.querySelectorAll(".space-y-2");
-
-      for (const containerEl of sortableContainers) {
-        expect(containerEl).toHaveAttribute("data-dragging", "false");
-      }
     });
   });
 

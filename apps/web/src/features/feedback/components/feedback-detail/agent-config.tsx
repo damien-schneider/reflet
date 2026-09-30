@@ -56,21 +56,24 @@ export function openDeepLink(agentId: string, prompt: string): boolean {
     case "cursor": {
       window.open(
         `cursor://anysphere.cursor-tools/openComposer?prompt=${encodedPrompt}`,
-        "_blank"
+        "_blank",
+        "noopener,noreferrer"
       );
       return true;
     }
     case "vscode-copilot": {
       window.open(
         `vscode://GitHub.copilot-chat/openChat?prompt=${encodedPrompt}`,
-        "_blank"
+        "_blank",
+        "noopener,noreferrer"
       );
       return true;
     }
     case "windsurf": {
       window.open(
         `windsurf://codeium.windsurf/openChat?prompt=${encodedPrompt}`,
-        "_blank"
+        "_blank",
+        "noopener,noreferrer"
       );
       return true;
     }

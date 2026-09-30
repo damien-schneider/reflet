@@ -10,7 +10,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const VERSION_PLACEHOLDER_REGEX = /v1\.0\.0/i;
 const PUBLISH_BUTTON_REGEX = /publish/i;
-const CANCEL_BUTTON_REGEX = /cancel/i;
+const DONE_BUTTON_REGEX = /^done$/i;
 
 const {
   mockPush,
@@ -316,15 +316,6 @@ describe("ReleaseEditor", () => {
     expect(publishButton).toBeInTheDocument();
   });
 
-  it("renders cancel button", () => {
-    render(<ReleaseEditor {...defaultProps} />);
-
-    const cancelButton = screen.getByRole("button", {
-      name: CANCEL_BUTTON_REGEX,
-    });
-    expect(cancelButton).toBeInTheDocument();
-  });
-
   it("renders Draft status for existing unpublished release", () => {
     render(
       <ReleaseEditor
@@ -399,12 +390,10 @@ describe("ReleaseEditor", () => {
     expect(versionInput).toBeInTheDocument();
   });
 
-  describe("Cancel navigation", () => {
-    it("navigates to changelog on cancel click", () => {
+  describe("Done navigation", () => {
+    it("navigates to changelog on done click", () => {
       render(<ReleaseEditor {...defaultProps} />);
-      fireEvent.click(
-        screen.getByRole("button", { name: CANCEL_BUTTON_REGEX })
-      );
+      fireEvent.click(screen.getByRole("button", { name: DONE_BUTTON_REGEX }));
       expect(mockPush).toHaveBeenCalledWith("/dashboard/test-org/changelog");
     });
   });
@@ -523,7 +512,7 @@ describe("ReleaseEditor", () => {
 
       await waitFor(() => {
         expect(mockToast.error).toHaveBeenCalledWith(
-          "Title is required to publish"
+          "Add a title before publishing"
         );
       });
     });
@@ -545,7 +534,7 @@ describe("ReleaseEditor", () => {
           id: "new-release-id",
         });
       });
-      expect(mockToast.success).toHaveBeenCalledWith("Release published!");
+      expect(mockToast.success).toHaveBeenCalledWith("Release published");
       expect(mockPush).toHaveBeenCalledWith("/dashboard/test-org/changelog");
     });
 
@@ -577,7 +566,7 @@ describe("ReleaseEditor", () => {
           id: "release123",
         });
       });
-      expect(mockToast.success).toHaveBeenCalledWith("Release published!");
+      expect(mockToast.success).toHaveBeenCalledWith("Release published");
     });
 
     it("shows error toast on publish failure", async () => {
@@ -633,7 +622,6 @@ describe("ReleaseEditor", () => {
           id: "release123",
         });
       });
-      expect(mockToast.success).toHaveBeenCalledWith("Release unpublished");
     });
 
     it("shows error toast on unpublish failure", async () => {
@@ -740,7 +728,7 @@ describe("ReleaseEditor", () => {
         vi.advanceTimersByTime(600);
       });
 
-      expect(screen.getByText("Saving...")).toBeInTheDocument();
+      expect(screen.getByText("Saving…")).toBeInTheDocument();
     });
 
     it("shows saved indicator after auto-save completes", async () => {

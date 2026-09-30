@@ -1,16 +1,12 @@
-// ============================================
-// BILLING TYPES
-// Shared types for billing components
-// ============================================
-
 export type BillingInterval = "monthly" | "yearly";
 export type PlanTier = "free" | "pro";
+export type PriceKey = "proMonthly" | "proYearly";
 
 export interface PlanPrice {
   amount: number;
   currency: string;
   interval: BillingInterval;
-  priceKey: string;
+  priceKey: PriceKey | null;
   savings?: number;
 }
 

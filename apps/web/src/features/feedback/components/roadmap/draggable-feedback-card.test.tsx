@@ -1,82 +1,40 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import type { FeedbackItem } from "../feed-feedback-view";
 
 let mockIsDragging = false;
 
 vi.mock("@dnd-kit/core", () => ({
-  useDraggable: ({ id, disabled }: { id: string; disabled: boolean }) => ({
-    attributes: {
-      "aria-roledescription": "draggable",
-      "data-id": id,
-      role: "button",
-    },
+  useDraggable: ({ disabled }: { id: string; disabled: boolean }) => ({
+    attributes: { "aria-roledescription": "draggable" },
     isDragging: mockIsDragging,
-    listeners: disabled ? {} : { onPointerDown: vi.fn() },
+    listeners: disabled ? undefined : { onPointerDown: vi.fn() },
+    setActivatorNodeRef: vi.fn(),
     setNodeRef: vi.fn(),
   }),
 }));
 
 vi.mock("motion/react", () => ({
-  motion: {
-    div: ({
-      children,
-      onClick,
-      onKeyDown,
-      role,
-      tabIndex,
-      className,
-      ref: _ref,
-      animate: _a,
-      initial: _i,
-      layoutId: _l,
-      transition: _t,
-      ...rest
-    }: Record<string, unknown>) => (
-      <div
-        className={className as string}
-        data-testid="motion-div"
-        onClick={onClick as React.MouseEventHandler}
-        onKeyDown={onKeyDown as React.KeyboardEventHandler}
-        role={role as string}
-        tabIndex={tabIndex as number}
-        {...rest}
-      >
-        {children as React.ReactNode}
-      </div>
-    ),
+  m: {
+    div: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   },
-}));
-
-vi.mock("./feedback-card-content", () => ({
-  FeedbackCardContent: ({
-    isAdmin,
-    isDragging,
-    item,
-  }: {
-    isAdmin: boolean;
-    isDragging: boolean;
-    item: { _id: string; title: string };
-  }) => (
-    <div
-      data-admin={isAdmin}
-      data-dragging={isDragging}
-      data-testid="card-content"
-    >
-      {item.title}
-    </div>
-  ),
+  useReducedMotion: () => false,
 }));
 
 import { DraggableFeedbackCard } from "./draggable-feedback-card";
 
-const mockItem = {
-  _id: "feedback-1",
+const item: FeedbackItem = {
+  _id: "feedback-1" as Id<"feedback">,
+  commentCount: 0,
+  createdAt: Date.now(),
   description: "Test description",
-  status: { color: "#00ff00", name: "Open" },
+  organizationId: "org-1" as Id<"organizations">,
+  tags: [],
   title: "Test Feedback",
   voteCount: 5,
-} as Parameters<typeof DraggableFeedbackCard>[0]["item"];
+};
 
 afterEach(() => {
   vi.clearAllMocks();
@@ -84,191 +42,85 @@ afterEach(() => {
 });
 
 describe("DraggableFeedbackCard", () => {
-  it("renders FeedbackCardContent with item data", () => {
+  it("opens the feedback when its title is activated", async () => {
+    const onFeedbackClick = vi.fn();
     render(
       <DraggableFeedbackCard
         isAdmin={false}
-        item={mockItem}
-        onFeedbackClick={vi.fn()}
+        item={item}
+        onFeedbackClick={onFeedbackClick}
       />
     );
-    expect(screen.getByTestId("card-content")).toBeInTheDocument();
-    expect(screen.getByText("Test Feedback")).toBeInTheDocument();
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Test Feedback" })
+    );
+
+    expect(onFeedbackClick).toHaveBeenCalledWith("feedback-1");
   });
 
-  it("calls onFeedbackClick when clicked and not dragging", async () => {
-    const onClick = vi.fn();
-    const user = userEvent.setup();
+  it("opens from the keyboard via the title button", async () => {
+    const onFeedbackClick = vi.fn();
     render(
       <DraggableFeedbackCard
         isAdmin={false}
-        item={mockItem}
-        onFeedbackClick={onClick}
+        item={item}
+        onFeedbackClick={onFeedbackClick}
       />
     );
-    await user.click(screen.getByTestId("motion-div"));
-    expect(onClick).toHaveBeenCalledWith("feedback-1");
+
+    screen.getByRole("button", { name: "Test Feedback" }).focus();
+    await userEvent.keyboard("{Enter}");
+
+    expect(onFeedbackClick).toHaveBeenCalledWith("feedback-1");
   });
 
-  it("does not call onFeedbackClick when dragging", async () => {
+  it("does not open while the card is being dragged", async () => {
     mockIsDragging = true;
-    const onClick = vi.fn();
-    const user = userEvent.setup();
+    const onFeedbackClick = vi.fn();
     render(
       <DraggableFeedbackCard
         isAdmin={true}
-        item={mockItem}
-        onFeedbackClick={onClick}
+        item={item}
+        onFeedbackClick={onFeedbackClick}
       />
     );
-    await user.click(screen.getByTestId("motion-div"));
-    expect(onClick).not.toHaveBeenCalled();
-  });
 
-  it("calls onFeedbackClick on Enter key press", () => {
-    const onClick = vi.fn();
-    render(
-      <DraggableFeedbackCard
-        isAdmin={false}
-        item={mockItem}
-        onFeedbackClick={onClick}
-      />
+    await userEvent.click(
+      screen.getByRole("button", { name: "Test Feedback" })
     );
-    fireEvent.keyDown(screen.getByTestId("motion-div"), { key: "Enter" });
-    expect(onClick).toHaveBeenCalledWith("feedback-1");
+
+    expect(onFeedbackClick).not.toHaveBeenCalled();
   });
 
-  it("calls onFeedbackClick on Space key press", () => {
-    const onClick = vi.fn();
-    render(
-      <DraggableFeedbackCard
-        isAdmin={false}
-        item={mockItem}
-        onFeedbackClick={onClick}
-      />
-    );
-    fireEvent.keyDown(screen.getByTestId("motion-div"), { key: " " });
-    expect(onClick).toHaveBeenCalledWith("feedback-1");
-  });
-
-  it("does not call onFeedbackClick on other key presses", () => {
-    const onClick = vi.fn();
-    render(
-      <DraggableFeedbackCard
-        isAdmin={false}
-        item={mockItem}
-        onFeedbackClick={onClick}
-      />
-    );
-    fireEvent.keyDown(screen.getByTestId("motion-div"), { key: "Tab" });
-    expect(onClick).not.toHaveBeenCalled();
-  });
-
-  it("passes isAdmin=true to FeedbackCardContent", () => {
+  it("gives admins a separate move handle that does not open the card", async () => {
+    const onFeedbackClick = vi.fn();
     render(
       <DraggableFeedbackCard
         isAdmin={true}
-        item={mockItem}
-        onFeedbackClick={vi.fn()}
+        item={item}
+        onFeedbackClick={onFeedbackClick}
       />
     );
-    expect(screen.getByTestId("card-content")).toHaveAttribute(
-      "data-admin",
-      "true"
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Move Test Feedback" })
     );
+
+    expect(onFeedbackClick).not.toHaveBeenCalled();
   });
 
-  it("passes isAdmin=false to FeedbackCardContent", () => {
+  it("hides the move handle from non-admins", () => {
     render(
       <DraggableFeedbackCard
         isAdmin={false}
-        item={mockItem}
+        item={item}
         onFeedbackClick={vi.fn()}
       />
     );
-    expect(screen.getByTestId("card-content")).toHaveAttribute(
-      "data-admin",
-      "false"
-    );
-  });
 
-  it("passes isDragging state to FeedbackCardContent", () => {
-    mockIsDragging = true;
-    render(
-      <DraggableFeedbackCard
-        isAdmin={true}
-        item={mockItem}
-        onFeedbackClick={vi.fn()}
-      />
-    );
-    expect(screen.getByTestId("card-content")).toHaveAttribute(
-      "data-dragging",
-      "true"
-    );
-  });
-
-  it("renders with button role for accessibility", () => {
-    render(
-      <DraggableFeedbackCard
-        isAdmin={false}
-        item={mockItem}
-        onFeedbackClick={vi.fn()}
-      />
-    );
-    expect(screen.getByTestId("motion-div")).toHaveAttribute("role", "button");
-  });
-
-  it("renders with tabIndex 0 for keyboard focus", () => {
-    render(
-      <DraggableFeedbackCard
-        isAdmin={false}
-        item={mockItem}
-        onFeedbackClick={vi.fn()}
-      />
-    );
-    expect(screen.getByTestId("motion-div")).toHaveAttribute("tabindex", "0");
-  });
-
-  it("disables drag listeners when not admin", () => {
-    render(
-      <DraggableFeedbackCard
-        isAdmin={false}
-        item={mockItem}
-        onFeedbackClick={vi.fn()}
-      />
-    );
-    // Non-admin: dnd-kit returns empty listeners, so no onPointerDown handler
-    expect(screen.getByTestId("card-content")).toBeInTheDocument();
-  });
-
-  it("applies opacity when dragging", () => {
-    mockIsDragging = true;
-    render(
-      <DraggableFeedbackCard
-        isAdmin={true}
-        item={mockItem}
-        onFeedbackClick={vi.fn()}
-      />
-    );
-    // motion.div receives animate prop — isDragging=true shows muted
-    expect(screen.getByTestId("card-content")).toHaveAttribute(
-      "data-dragging",
-      "true"
-    );
-  });
-
-  it("does not call onFeedbackClick on Enter when dragging", () => {
-    mockIsDragging = true;
-    const onClick = vi.fn();
-    render(
-      <DraggableFeedbackCard
-        isAdmin={true}
-        item={mockItem}
-        onFeedbackClick={onClick}
-      />
-    );
-    fireEvent.keyDown(screen.getByTestId("motion-div"), { key: "Enter" });
-    // keyDown handler does not check isDragging, it always calls
-    expect(onClick).toHaveBeenCalledWith("feedback-1");
+    expect(
+      screen.queryByRole("button", { name: "Move Test Feedback" })
+    ).not.toBeInTheDocument();
   });
 });

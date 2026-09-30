@@ -1,14 +1,20 @@
 "use client";
 
-import { Button, ButtonLink } from "@ctrl-ui/react/ui/button";
-import { Input } from "@ctrl-ui/react/ui/input";
-import { ArrowSquareOut, Key } from "@phosphor-icons/react";
+import { ButtonLink } from "@ctrl-ui/react/ui/button";
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
+import { ArrowSquareOut } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import Link from "next/link";
+import { useState } from "react";
 import { SecretOnceBanner } from "@/components/secret-once-banner";
-import { ApiKeyDialogs } from "./components/api-key-dialogs";
-import { ApiKeysList } from "./components/api-keys-list";
-import { useApiKeys } from "./hooks/use-api-keys";
+import { SettingsSection } from "@/features/project/components/settings-page";
+import { ApiKeyCard } from "./components/api-key-card";
+import {
+  type ApiKeyAction,
+  ApiKeyConfirmDialog,
+} from "./components/api-key-dialogs";
+import { CreateApiKeyForm } from "./components/create-api-key-form";
+import { type ApiKeyListItem, useApiKeys } from "./hooks/use-api-keys";
 
 interface ApiKeysSettingsProps {
   organizationId: Id<"organizations">;
@@ -17,115 +23,80 @@ interface ApiKeysSettingsProps {
 export function ApiKeysSettings({ organizationId }: ApiKeysSettingsProps) {
   const {
     apiKeys,
-    showSecretKey,
-    setShowSecretKey,
+    dismissSecret,
+    generate,
     newSecretKey,
-    setNewSecretKey,
-    isRegenerating,
-    showRegenerateDialog,
-    setShowRegenerateDialog,
-    setSelectedKeyId,
-    showDeleteDialog,
-    setShowDeleteDialog,
-    setKeyToDelete,
-    domainInput,
-    setDomainInput,
-    newKeyName,
-    setNewKeyName,
-    isGenerating,
-    handleGenerateKeys,
-    handleRegenerateSecretKey,
-    handleToggleActive,
-    handleDeleteKey,
-    handleAddDomain,
-    handleRemoveDomain,
-    copyToClipboard,
-  } = useApiKeys({ organizationId });
+    regenerate,
+    remove,
+    setActive,
+    setAllowedDomains,
+  } = useApiKeys(organizationId);
+  const [pending, setPending] = useState<{
+    action: ApiKeyAction;
+    apiKey: ApiKeyListItem;
+  } | null>(null);
 
-  if (apiKeys === undefined) {
-    return (
-      <div className="animate-pulse space-y-4">
-        <div className="h-8 w-32 rounded bg-muted" />
-        <div className="h-11 w-full rounded bg-muted" />
-      </div>
-    );
-  }
+  const handleConfirm = (action: ApiKeyAction, apiKey: ApiKeyListItem) =>
+    action === "delete" ? remove(apiKey.apiKeyId) : regenerate(apiKey.apiKeyId);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <h1 className="font-semibold text-lg">API keys</h1>
+    <SettingsSection
+      actions={
         <ButtonLink
           render={<Link href="/docs/sdk" rel="noopener" target="_blank" />}
-          size="xs"
+          size="sm"
+          variant="ghost"
         >
-          Docs
-          <ArrowSquareOut className="ml-2 h-4 w-4" />
+          SDK docs
+          <ArrowSquareOut aria-hidden />
         </ButtonLink>
-      </div>
-
+      }
+      description="Use a public key in the widget or SDK, and the secret key only on your server."
+      title="Keys"
+    >
       {newSecretKey ? (
         <SecretOnceBanner
-          onCopy={() => copyToClipboard(newSecretKey, "Secret key")}
-          onDismiss={() => setNewSecretKey(null)}
+          onDismiss={dismissSecret}
           secret={newSecretKey}
           title="Save your secret key now"
         />
       ) : null}
 
-      {apiKeys.length === 0 ? (
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <Input
-            className="sm:max-w-xs"
-            onChange={(event) => setNewKeyName(event.target.value)}
-            placeholder="Key name"
-            value={newKeyName}
-          />
-          <Button
-            disabled={isGenerating || !newKeyName.trim()}
-            onClick={handleGenerateKeys}
-            tone="primary"
-            variant="solid"
-          >
-            <Key className="mr-2 h-4 w-4" />
-            {isGenerating ? "Generating..." : "Generate key"}
-          </Button>
+      {apiKeys === undefined ? (
+        <div aria-busy="true" className="flex flex-col gap-3">
+          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-64 w-full" />
         </div>
       ) : (
-        <ApiKeysList
-          apiKeys={apiKeys}
-          domainInput={domainInput}
-          isGenerating={isGenerating}
-          newKeyName={newKeyName}
-          onAddDomain={handleAddDomain}
-          onCopyToClipboard={copyToClipboard}
-          onDelete={(id) => {
-            setKeyToDelete(id);
-            setShowDeleteDialog(true);
-          }}
-          onGenerateKeys={handleGenerateKeys}
-          onRegenerate={(id) => {
-            setSelectedKeyId(id);
-            setShowRegenerateDialog(true);
-          }}
-          onRemoveDomain={handleRemoveDomain}
-          onToggleActive={handleToggleActive}
-          setDomainInput={setDomainInput}
-          setNewKeyName={setNewKeyName}
-          setShowSecretKey={setShowSecretKey}
-          showSecretKey={showSecretKey}
-        />
+        <>
+          <CreateApiKeyForm hasKeys={apiKeys.length > 0} onCreate={generate} />
+          {apiKeys.length > 0 ? (
+            <ul className="flex flex-col gap-4">
+              {apiKeys.map((apiKey) => (
+                <li key={apiKey.apiKeyId}>
+                  <ApiKeyCard
+                    apiKey={apiKey}
+                    onDelete={(key) =>
+                      setPending({ action: "delete", apiKey: key })
+                    }
+                    onRegenerate={(key) =>
+                      setPending({ action: "regenerate", apiKey: key })
+                    }
+                    onSetAllowedDomains={setAllowedDomains}
+                    onToggleActive={setActive}
+                  />
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </>
       )}
 
-      <ApiKeyDialogs
-        isRegenerating={isRegenerating}
-        onDelete={handleDeleteKey}
-        onRegenerate={handleRegenerateSecretKey}
-        setShowDeleteDialog={setShowDeleteDialog}
-        setShowRegenerateDialog={setShowRegenerateDialog}
-        showDeleteDialog={showDeleteDialog}
-        showRegenerateDialog={showRegenerateDialog}
+      <ApiKeyConfirmDialog
+        onClose={() => setPending(null)}
+        onConfirm={handleConfirm}
+        pending={pending}
       />
-    </div>
+    </SettingsSection>
   );
 }

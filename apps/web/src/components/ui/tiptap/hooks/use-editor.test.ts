@@ -310,7 +310,7 @@ describe("useTiptapMarkdownEditor", () => {
     renderHook(() => useTiptapMarkdownEditor({ onChange: vi.fn(), value: "" }));
     expect(createExtensions).toHaveBeenCalledWith(
       expect.objectContaining({
-        placeholder: "Write something... Type '/' for commands",
+        placeholder: "Write something… Type / for commands",
       })
     );
   });

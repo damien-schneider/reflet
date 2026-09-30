@@ -70,9 +70,10 @@ describe("command-items", () => {
   });
 
   describe("groupLabels", () => {
-    it("has labels for all groups", () => {
-      expect(groupLabels.navigation).toBe("Pages");
-      expect(groupLabels.actions).toBe("Actions");
+    it("has a label for every group in use", () => {
+      for (const item of commandItems) {
+        expect(groupLabels[item.group]).toBeTruthy();
+      }
     });
   });
 });

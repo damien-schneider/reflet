@@ -3,12 +3,20 @@
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@ctrl-ui/react/ui/dialog";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@ctrl-ui/react/ui/empty";
 import { Input } from "@ctrl-ui/react/ui/input";
 import {
   PageBody,
@@ -20,10 +28,12 @@ import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { toast } from "@ctrl-ui/react/ui/toast";
 import { Plus } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { use, useState } from "react";
+import { type FormEvent, use, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { H3, Muted } from "@/components/ui/typography";
+import { OrgNotFound } from "@/features/dashboard/components/org-not-found";
 import { FeedbackCollectorCard } from "@/features/in-app/components/feedback-collector-card";
 import {
   WidgetCard,
@@ -52,9 +62,14 @@ function WidgetList({
 
   if (widgets.length === 0) {
     return (
-      <p className="rounded-lg border border-dashed py-12 text-center text-muted-foreground text-sm">
-        No live chat yet
-      </p>
+      <Empty className="rounded-lg border border-dashed py-12">
+        <EmptyHeader>
+          <EmptyTitle>No live chat yet</EmptyTitle>
+          <EmptyDescription>
+            Add a live chat to talk with visitors right on your site.
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     );
   }
 
@@ -64,6 +79,76 @@ function WidgetList({
         <WidgetCard key={widget._id} orgSlug={orgSlug} widget={widget} />
       ))}
     </div>
+  );
+}
+
+function CreateLiveChatDialog({
+  organizationId,
+}: {
+  organizationId: Id<"organizations">;
+}) {
+  const createWidget = useMutation(api.widget.admin.create);
+  const [isOpen, setIsOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!name.trim()) {
+      return;
+    }
+    setIsCreating(true);
+    try {
+      await createWidget({ name: name.trim(), organizationId });
+      setName("");
+      setIsOpen(false);
+    } catch {
+      toast.error("Couldn’t create the live chat. Try again.");
+    }
+    setIsCreating(false);
+  };
+
+  return (
+    <Dialog onOpenChange={setIsOpen} open={isOpen}>
+      <DialogTrigger render={<Button size="sm" variant="surface" />}>
+        <Plus aria-hidden className="size-4" />
+        Add live chat
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>New live chat</DialogTitle>
+          <DialogDescription>
+            You’ll get an embed code to add to your site.
+          </DialogDescription>
+        </DialogHeader>
+        <form
+          className="grid gap-2"
+          id="create-live-chat"
+          onSubmit={handleSubmit}
+        >
+          <Label htmlFor="widget-name">Name</Label>
+          <Input
+            autoFocus
+            id="widget-name"
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g. Main website"
+            value={name}
+          />
+        </form>
+        <DialogFooter>
+          <DialogClose variant="surface">Cancel</DialogClose>
+          <Button
+            disabled={!name.trim() || isCreating}
+            form="create-live-chat"
+            tone="primary"
+            type="submit"
+            variant="solid"
+          >
+            {isCreating ? "Creating…" : "Create live chat"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -82,11 +167,6 @@ export default function WidgetsPage({
     api.feedback.api_admin.getApiKeys,
     org?._id ? { organizationId: org._id } : "skip"
   );
-  const createWidget = useMutation(api.widget.admin.create);
-
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [widgetName, setWidgetName] = useState("");
-  const [isCreating, setIsCreating] = useState(false);
   const publicKey =
     apiKeys?.find((apiKey) => apiKey.isActive)?.publicKey ??
     apiKeys?.[0]?.publicKey;
@@ -94,55 +174,22 @@ export default function WidgetsPage({
   if (org === undefined) {
     return (
       <PageLayout scroll="page" width="content">
+        <PageHeader>
+          <Skeleton className="h-9 w-32" />
+        </PageHeader>
         <PageBody>
           <div aria-label="Loading in-app" className="space-y-6" role="status">
-            <Skeleton className="h-8 w-40" />
-            <Skeleton className="h-72 w-full" />
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-44 w-full" />
           </div>
         </PageBody>
       </PageLayout>
     );
   }
 
-  if (!org) {
-    return (
-      <PageLayout scroll="page" width="content">
-        <PageBody>
-          <div className="flex min-h-[50vh] items-center justify-center">
-            <div className="text-center">
-              <H3 variant="card">Organization not found</H3>
-              <Muted className="mt-2">
-                The organization you&apos;re looking for doesn&apos;t exist or
-                you don&apos;t have access.
-              </Muted>
-            </div>
-          </div>
-        </PageBody>
-      </PageLayout>
-    );
+  if (org === null) {
+    return <OrgNotFound />;
   }
-
-  const handleCreateWidget = async () => {
-    if (!(widgetName.trim() && org?._id)) {
-      return;
-    }
-
-    setIsCreating(true);
-    try {
-      await createWidget({
-        name: widgetName.trim(),
-        organizationId: org._id,
-      });
-      setWidgetName("");
-      setIsDialogOpen(false);
-    } catch {
-      toast.error("Failed to create live chat");
-    } finally {
-      setIsCreating(false);
-    }
-  };
-
-  const canManageKeys = org.role === "admin" || org.role === "owner";
 
   return (
     <PageLayout scroll="page" width="content">
@@ -151,48 +198,25 @@ export default function WidgetsPage({
       </PageHeader>
       <PageBody>
         <FeedbackCollectorCard
-          canManageKeys={canManageKeys}
+          canManageKeys={org.role === "admin" || org.role === "owner"}
           isLoading={apiKeys === undefined}
           organizationId={org._id}
           orgSlug={orgSlug}
           publicKey={publicKey}
         />
 
-        <section className="mt-10 space-y-4">
+        <section
+          aria-labelledby="live-chat-heading"
+          className="mt-10 space-y-4"
+        >
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <H3 variant="card">Live chat</H3>
-            <Dialog onOpenChange={setIsDialogOpen} open={isDialogOpen}>
-              <DialogTrigger render={<Button size="xs" variant="surface" />}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add live chat
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Create live chat</DialogTitle>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="widget-name">Name</Label>
-                    <Input
-                      id="widget-name"
-                      onChange={(e) => setWidgetName(e.target.value)}
-                      placeholder="Main Website Chat"
-                      value={widgetName}
-                    />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button
-                    disabled={!widgetName.trim() || isCreating}
-                    onClick={handleCreateWidget}
-                    tone="primary"
-                    variant="solid"
-                  >
-                    {isCreating ? "Creating..." : "Create"}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+            <div className="space-y-1">
+              <H3 id="live-chat-heading" variant="card">
+                Live chat
+              </H3>
+              <Muted>A chat window your visitors can open on any page.</Muted>
+            </div>
+            <CreateLiveChatDialog organizationId={org._id} />
           </div>
 
           <WidgetList orgSlug={orgSlug} widgets={widgets} />

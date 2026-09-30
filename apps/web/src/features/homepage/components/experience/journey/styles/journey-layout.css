@@ -11,7 +11,7 @@
 :where(.journey-skip) {
   width: fit-content;
   margin: auto;
-  font-size: 11px;
+  font-size: 13px;
   color: var(--muted-foreground);
 }
 :where(.journey-track) {
@@ -86,12 +86,14 @@
   font-weight: 600;
   line-height: 1.2;
   letter-spacing: -0.035em;
+  text-wrap: balance;
 }
 :where(.journey-step-copy > p) {
-  max-width: 300px;
-  font-size: 12px;
-  line-height: 1.75;
+  max-width: 340px;
+  font-size: 14px;
+  line-height: 1.6;
   color: var(--muted-foreground);
+  text-wrap: pretty;
 }
 :where(.journey-scene) {
   flex-shrink: 1;
@@ -186,18 +188,17 @@
 :where(.journey-navigation a) {
   position: relative;
   padding: 10px 12px;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted-foreground);
   white-space: nowrap;
   border-radius: 12px;
   isolation: isolate;
-  transition:
-    color var(--marketing-duration),
-    background var(--marketing-duration);
 }
-:where(.journey-navigation a:hover) {
-  color: var(--foreground);
-  background: var(--marketing-stage);
+@media (hover: hover) and (pointer: fine) {
+  :where(.journey-navigation a:hover) {
+    color: var(--foreground);
+    background: var(--marketing-stage);
+  }
 }
 :where(.journey-navigation a[aria-current="step"]) {
   color: var(--marketing-signal);

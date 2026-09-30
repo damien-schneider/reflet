@@ -9,7 +9,7 @@ import {
 } from "@ctrl-ui/react/ui/select";
 import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import { Switch } from "@ctrl-ui/react/ui/switch";
-import { GitBranch } from "@phosphor-icons/react";
+import { GitBranch, LockSimple } from "@phosphor-icons/react";
 import { Label } from "@/components/ui/label";
 import type { ChangelogSettingsUpdate } from "./types";
 
@@ -44,16 +44,19 @@ export const AutomationSection = ({
   targetBranch,
 }: AutomationSectionProps) => (
   <div className="space-y-4 rounded-lg border p-4">
-    <p className="font-medium text-sm">Automation</p>
+    <h3 className="font-medium text-sm">Automation</h3>
 
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <GitBranch className="h-4 w-4 text-muted-foreground" />
-          <Label className="text-sm">Target branch</Label>
+          <GitBranch aria-hidden className="size-4 text-muted-foreground" />
+          <Label htmlFor="settings-target-branch">Target branch</Label>
         </div>
         {isLoadingBranches ? (
-          <div className="flex h-8 w-40 items-center gap-1.5 text-muted-foreground text-xs">
+          <div
+            aria-live="polite"
+            className="flex h-8 w-40 items-center gap-1.5 text-muted-foreground text-xs"
+          >
             <Spinner size="xs" />
             Loading branches…
           </div>
@@ -68,8 +71,9 @@ export const AutomationSection = ({
             value={targetBranch ?? "main"}
           >
             <SelectTrigger
-              aria-label="Target branch"
-              className="h-8 w-40 text-xs"
+              className="w-40"
+              id="settings-target-branch"
+              size="sm"
             >
               <SelectValue placeholder="Select branch" />
             </SelectTrigger>
@@ -77,7 +81,12 @@ export const AutomationSection = ({
               {branches.map((branch) => (
                 <SelectItem key={branch.name} value={branch.name}>
                   {branch.name}
-                  {branch.isProtected ? " 🔒" : ""}
+                  {branch.isProtected && (
+                    <LockSimple
+                      aria-label="Protected"
+                      className="size-3.5 text-muted-foreground"
+                    />
+                  )}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -86,10 +95,13 @@ export const AutomationSection = ({
       </div>
 
       <div className="flex items-center justify-between">
-        <Label className="text-sm">Create GitHub Release on publish</Label>
+        <Label htmlFor="settings-push-to-github">
+          Create GitHub Release on publish
+        </Label>
         <Switch
           checked={pushToGithubOnPublish === true}
           disabled={!isAdmin || isSaving}
+          id="settings-push-to-github"
           onCheckedChange={(checked) =>
             onUpdate({ pushToGithubOnPublish: checked })
           }
@@ -97,22 +109,26 @@ export const AutomationSection = ({
       </div>
 
       <div className="flex items-center justify-between">
-        <Label className="text-sm">Import releases published on GitHub</Label>
+        <Label htmlFor="settings-auto-sync">
+          Import releases published on GitHub
+        </Label>
         <Switch
           checked={autoSyncReleases}
           disabled={!isAdmin || isSaving}
+          id="settings-auto-sync"
           onCheckedChange={onToggleAutoSync}
         />
       </div>
 
       {autoSyncReleases && (
         <div className="flex items-center justify-between border-l pl-4">
-          <Label className="text-sm">
+          <Label htmlFor="settings-auto-publish">
             Publish imported releases right away
           </Label>
           <Switch
             checked={autoPublishImported !== false}
             disabled={!isAdmin || isSaving}
+            id="settings-auto-publish"
             onCheckedChange={(checked) =>
               onUpdate({ autoPublishImported: checked })
             }

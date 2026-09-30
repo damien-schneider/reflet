@@ -1,59 +1,88 @@
 "use client";
 
 import { Button } from "@ctrl-ui/react/ui/button";
-import { Separator } from "@ctrl-ui/react/ui/separator";
 import { Switch } from "@ctrl-ui/react/ui/switch";
 import { toast } from "@ctrl-ui/react/ui/toast";
-import {
-  Bell,
-  BellRinging,
-  BellSlash,
-  ChatCircle,
-  Devices,
-  Envelope,
-  Trash,
-  TrendUp,
-  Warning,
-} from "@phosphor-icons/react";
+import { BellSlash, Warning } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
-import { useState } from "react";
-import { H3, Muted, Text } from "@/components/ui/typography";
+import { useId, useState } from "react";
+import { SettingsSection } from "@/features/project/components/settings-page";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
 
-interface NotificationTypeToggleProps {
+type NotificationTypeKey =
+  | "notifyOnStatusChange"
+  | "notifyOnNewComment"
+  | "notifyOnVoteMilestone"
+  | "notifyOnNewSupportMessage"
+  | "notifyOnInvitation";
+
+const NOTIFICATION_TYPES: {
+  key: NotificationTypeKey;
+  label: string;
+  description: string;
+}[] = [
+  {
+    description: "When the status of your feedback changes",
+    key: "notifyOnStatusChange",
+    label: "Status changes",
+  },
+  {
+    description: "When someone comments on your feedback",
+    key: "notifyOnNewComment",
+    label: "New comments",
+  },
+  {
+    description: "When your feedback reaches a vote milestone",
+    key: "notifyOnVoteMilestone",
+    label: "Vote milestones",
+  },
+  {
+    description: "When you receive a reply from support",
+    key: "notifyOnNewSupportMessage",
+    label: "Support messages",
+  },
+  {
+    description: "When you’re invited to join an organization",
+    key: "notifyOnInvitation",
+    label: "Invitations",
+  },
+];
+
+interface SwitchRowProps {
   checked: boolean;
   description: string;
   disabled: boolean;
-  icon: React.ReactNode;
   label: string;
-  onToggle: (checked: boolean) => void;
+  onCheckedChange: (checked: boolean) => void;
 }
 
-function NotificationTypeToggle({
-  label,
-  description,
-  icon,
+function SwitchRow({
   checked,
+  description,
   disabled,
-  onToggle,
-}: NotificationTypeToggleProps) {
+  label,
+  onCheckedChange,
+}: SwitchRowProps) {
+  const id = useId();
+  const descriptionId = `${id}-description`;
   return (
     <div className="flex items-center justify-between gap-4 py-3">
-      <div className="flex items-start gap-3">
-        <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md bg-muted">
-          {icon}
-        </div>
-        <div>
-          <Text variant="label">{label}</Text>
-          <Muted className="text-xs">{description}</Muted>
-        </div>
+      <div className="min-w-0">
+        <label className="text-label" htmlFor={id}>
+          {label}
+        </label>
+        <p className="text-caption text-muted-foreground" id={descriptionId}>
+          {description}
+        </p>
       </div>
       <Switch
+        aria-describedby={descriptionId}
         checked={checked}
         disabled={disabled}
-        onCheckedChange={onToggle}
+        id={id}
+        onCheckedChange={onCheckedChange}
       />
     </div>
   );
@@ -88,6 +117,8 @@ export function NotificationSettings() {
   const [isToggling, setIsToggling] = useState(false);
 
   const isPrefsLoading = preferences === undefined;
+  const pushEnabled = preferences?.pushEnabled ?? false;
+  const isPushDenied = permissionState === "denied";
 
   const handlePushToggle = async (enabled: boolean) => {
     setIsToggling(true);
@@ -96,196 +127,140 @@ export function NotificationSettings() {
         const success = await subscribe();
         if (success) {
           await updatePreferences({ pushEnabled: true });
-          toast.success("Push notifications enabled");
-        } else if (permissionState === "denied") {
+        } else if (!isPushDenied) {
           toast.error(
-            "Notifications are blocked by your browser. Please allow them in your browser settings."
+            "Couldn’t turn on push notifications. Check your browser settings and try again."
           );
-        } else {
-          toast.error("Failed to enable push notifications");
         }
       } else {
         await unsubscribe();
         await updatePreferences({ pushEnabled: false });
-        toast.success("Push notifications disabled");
       }
     } catch {
-      toast.error("Failed to update notification settings");
-    } finally {
-      setIsToggling(false);
+      toast.error("Couldn’t update push notifications. Try again.");
     }
+    setIsToggling(false);
   };
 
-  const handleTypeToggle = async (key: string, value: boolean) => {
+  const handleTypeToggle = async (key: NotificationTypeKey, value: boolean) => {
     try {
       await updatePreferences({ [key]: value });
     } catch {
-      toast.error("Failed to update preference");
+      toast.error("Couldn’t save that preference. Try again.");
     }
   };
 
   const handleRemoveDevice = async (endpoint: string) => {
     try {
       await unsubscribeMutation({ endpoint });
-      toast.success("Device removed");
     } catch {
-      toast.error("Failed to remove device");
+      toast.error("Couldn’t remove that device. Try again.");
     }
   };
 
-  const pushEnabled = preferences?.pushEnabled ?? false;
-  const isPushDenied = permissionState === "denied";
-
   return (
-    <div className="space-y-8">
-      <section className="space-y-4">
-        <H3 variant="section">Push Notifications</H3>
-
-        <div className="space-y-4">
-          {!isSupported && (
-            <div className="flex items-center gap-3 rounded-lg bg-warning-subtle p-3 text-warning-text">
-              <Warning className="size-5 shrink-0" />
-              <Text variant="bodySmall">
-                Push notifications are not supported in this browser. Try
-                installing the app as a PWA for the best experience.
-              </Text>
-            </div>
-          )}
-
-          {isPushDenied && (
-            <div className="flex items-center gap-3 rounded-lg bg-destructive-subtle p-3 text-destructive-text">
-              <BellSlash className="size-5 shrink-0" />
-              <Text variant="bodySmall">
-                Notifications are blocked by your browser. To enable them, open
-                your browser settings and allow notifications for this site.
-              </Text>
-            </div>
-          )}
-
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5 flex size-10 items-center justify-center rounded-lg bg-secondary">
-                {pushEnabled ? (
-                  <BellRinging className="size-5 text-brand-text" />
-                ) : (
-                  <Bell className="size-5 text-muted-foreground" />
-                )}
-              </div>
-              <div>
-                <Text variant="label">Enable push notifications</Text>
-                <Muted className="text-xs">
-                  {pushEnabled && isSubscribed
-                    ? "You will receive push notifications on this device"
-                    : "Turn on to receive push notifications"}
-                </Muted>
-              </div>
-            </div>
-            <Switch
-              checked={pushEnabled && isSubscribed}
-              disabled={
-                !isSupported ||
-                isPushDenied ||
-                isToggling ||
-                isPushLoading ||
-                isPrefsLoading
-              }
-              onCheckedChange={handlePushToggle}
-            />
+    <>
+      <SettingsSection
+        description="Get notified on this device, even when Reflet isn’t open."
+        title="Push notifications"
+      >
+        {isSupported ? null : (
+          <div className="flex items-start gap-3 rounded-(--radius-panel) bg-warning-subtle p-3 text-body text-warning-text">
+            <Warning aria-hidden className="mt-0.5 size-5 shrink-0" />
+            <p>
+              Push notifications are not supported in this browser. Install
+              Reflet as an app to get them.
+            </p>
           </div>
-        </div>
-      </section>
+        )}
 
-      <Separator />
+        {isPushDenied ? (
+          <div className="flex items-start gap-3 rounded-(--radius-panel) bg-destructive-subtle p-3 text-body text-destructive-text">
+            <BellSlash aria-hidden className="mt-0.5 size-5 shrink-0" />
+            <p>
+              Notifications are blocked by your browser. To turn them on, allow
+              notifications for this site in your browser settings.
+            </p>
+          </div>
+        ) : null}
 
-      <section className="space-y-4">
-        <H3 variant="section">Notification Types</H3>
+        <SwitchRow
+          checked={pushEnabled && isSubscribed}
+          description={
+            pushEnabled && isSubscribed
+              ? "You’ll get push notifications on this device."
+              : "Turn on to get push notifications on this device."
+          }
+          disabled={
+            !isSupported ||
+            isPushDenied ||
+            isToggling ||
+            isPushLoading ||
+            isPrefsLoading
+          }
+          label="Enable push notifications"
+          onCheckedChange={handlePushToggle}
+        />
+      </SettingsSection>
 
+      <SettingsSection
+        description={
+          pushEnabled
+            ? "Choose which activity sends you a notification."
+            : "Turn on push notifications to choose which activity notifies you."
+        }
+        title="Notification types"
+      >
         <div className="divide-y">
-          <NotificationTypeToggle
-            checked={preferences?.notifyOnStatusChange ?? true}
-            description="When the status of your feedback changes"
-            disabled={!pushEnabled || isPrefsLoading}
-            icon={<TrendUp className="size-4 text-muted-foreground" />}
-            label="Status changes"
-            onToggle={(v) => handleTypeToggle("notifyOnStatusChange", v)}
-          />
-          <NotificationTypeToggle
-            checked={preferences?.notifyOnNewComment ?? true}
-            description="When someone comments on your feedback"
-            disabled={!pushEnabled || isPrefsLoading}
-            icon={<ChatCircle className="size-4 text-success-text" />}
-            label="New comments"
-            onToggle={(v) => handleTypeToggle("notifyOnNewComment", v)}
-          />
-          <NotificationTypeToggle
-            checked={preferences?.notifyOnVoteMilestone ?? true}
-            description="When your feedback reaches a vote milestone"
-            disabled={!pushEnabled || isPrefsLoading}
-            icon={<TrendUp className="size-4 text-warning-text" />}
-            label="Vote milestones"
-            onToggle={(v) => handleTypeToggle("notifyOnVoteMilestone", v)}
-          />
-          <NotificationTypeToggle
-            checked={preferences?.notifyOnNewSupportMessage ?? true}
-            description="When you receive a reply from support"
-            disabled={!pushEnabled || isPrefsLoading}
-            icon={<Envelope className="size-4 text-chart-4-text" />}
-            label="Support messages"
-            onToggle={(v) => handleTypeToggle("notifyOnNewSupportMessage", v)}
-          />
-          <NotificationTypeToggle
-            checked={preferences?.notifyOnInvitation ?? true}
-            description="When you're invited to join an organization"
-            disabled={!pushEnabled || isPrefsLoading}
-            icon={<Bell className="size-4 text-muted-foreground" />}
-            label="Invitations"
-            onToggle={(v) => handleTypeToggle("notifyOnInvitation", v)}
-          />
+          {NOTIFICATION_TYPES.map((type) => (
+            <SwitchRow
+              checked={preferences?.[type.key] ?? true}
+              description={type.description}
+              disabled={!pushEnabled || isPrefsLoading}
+              key={type.key}
+              label={type.label}
+              onCheckedChange={(value) => handleTypeToggle(type.key, value)}
+            />
+          ))}
         </div>
-      </section>
+      </SettingsSection>
 
-      {subscriptions && subscriptions.length > 0 && (
-        <>
-          <Separator />
-          <section className="space-y-4">
-            <H3 variant="section">Active Devices</H3>
-
-            <div className="divide-y">
-              {subscriptions.map((sub: PushSubscriptionInfo) => (
-                <div
-                  className="flex items-center justify-between gap-4 py-3"
+      {subscriptions && subscriptions.length > 0 ? (
+        <SettingsSection
+          description="Browsers and devices that receive your push notifications."
+          title="Active devices"
+        >
+          <ul className="divide-y rounded-(--radius-panel) border">
+            {subscriptions.map((sub: PushSubscriptionInfo) => {
+              const deviceName = parseUserAgent(sub.userAgent);
+              return (
+                <li
+                  className="flex items-center justify-between gap-4 p-4"
                   key={sub._id}
                 >
-                  <div className="flex items-start gap-3">
-                    <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md bg-muted">
-                      <Devices className="size-4 text-muted-foreground" />
-                    </div>
-                    <div className="min-w-0">
-                      <Text className="truncate" variant="label">
-                        {parseUserAgent(sub.userAgent)}
-                      </Text>
-                      <Muted className="text-xs">
-                        Registered{" "}
-                        {formatDistanceToNow(sub.createdAt, {
-                          addSuffix: true,
-                        })}
-                      </Muted>
-                    </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-label">{deviceName}</p>
+                    <p className="text-caption text-muted-foreground">
+                      Added{" "}
+                      {formatDistanceToNow(sub.createdAt, { addSuffix: true })}
+                    </p>
                   </div>
                   <Button
+                    aria-label={`Remove ${deviceName}`}
                     onClick={() => handleRemoveDevice(sub.endpoint)}
-                    size="xs"
+                    size="sm"
+                    tone="danger"
                     variant="ghost"
                   >
-                    <Trash className="size-4" />
+                    Remove
                   </Button>
-                </div>
-              ))}
-            </div>
-          </section>
-        </>
-      )}
-    </div>
+                </li>
+              );
+            })}
+          </ul>
+        </SettingsSection>
+      ) : null}
+    </>
   );
 }
 
@@ -295,19 +270,12 @@ const CHROME_REGEX = /chrome/i;
 const FIREFOX_REGEX = /firefox/i;
 const SAFARI_REGEX = /safari/i;
 
-/**
- * Parse user agent string into a human-readable device name.
- */
 function parseUserAgent(userAgent?: string): string {
   if (!userAgent) {
     return "Unknown device";
   }
-
-  const isMobile = MOBILE_REGEX.test(userAgent);
-  const browser = detectBrowser(userAgent);
-  const device = isMobile ? "Mobile" : "Desktop";
-
-  return `${browser} on ${device}`;
+  const device = MOBILE_REGEX.test(userAgent) ? "Mobile" : "Desktop";
+  return `${detectBrowser(userAgent)} on ${device}`;
 }
 
 function detectBrowser(userAgent: string): string {

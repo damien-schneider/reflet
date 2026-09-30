@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@ctrl-ui/react/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,7 +19,6 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { TagBadge } from "@/components/tag-badge";
-import { cn } from "@/lib/utils";
 import type { Priority } from "./ai-analysis-types";
 import { isPriority, PRIORITY_OPTIONS } from "./ai-analysis-types";
 
@@ -80,22 +78,20 @@ export function PriorityBadge({
       ? `AI suggested: ${PRIORITY_CONFIG[aiPriority].label}`
       : reasoning;
 
-  const badge = (
-    <TagBadge
-      className="h-8 gap-1 rounded-full px-3 font-normal text-xs"
-      color={config.color}
-    >
-      <Icon className="h-3 w-3" weight="fill" />
+  const badgeContent = (
+    <>
+      <Icon aria-hidden weight="fill" />
       <span>P: {config.label}</span>
       <Sparkle
-        className={cn(
-          "h-2.5 w-2.5",
-          isOverridden ? "opacity-80" : "opacity-50"
-        )}
+        aria-hidden
+        className={isOverridden ? "opacity-80" : "opacity-50"}
         weight={isOverridden ? "fill" : "regular"}
       />
-      {isAdmin && <CaretDown className="h-3 w-3 opacity-70" />}
-    </TagBadge>
+      {isAdmin && <CaretDown aria-hidden className="opacity-70" />}
+    </>
+  );
+  const badgeButton = (
+    <TagBadge color={config.color} render={<button type="button" />} />
   );
 
   const tooltip = (
@@ -110,11 +106,9 @@ export function PriorityBadge({
       <Tooltip>
         <TooltipTrigger
           aria-label={`Priority: ${config.label}`}
-          render={
-            <Button className="h-auto rounded-full p-0" variant="quiet" />
-          }
+          render={badgeButton}
         >
-          {badge}
+          {badgeContent}
         </TooltipTrigger>
         {tooltip}
       </Tooltip>
@@ -127,17 +121,10 @@ export function PriorityBadge({
         <TooltipTrigger
           aria-label={`Priority: ${config.label}. Change priority`}
           render={
-            <DropdownMenuTrigger
-              render={
-                <Button
-                  className="h-auto select-none rounded-full p-0"
-                  variant="quiet"
-                />
-              }
-            />
+            <DropdownMenuTrigger className="select-none" render={badgeButton} />
           }
         >
-          {badge}
+          {badgeContent}
         </TooltipTrigger>
         {tooltip}
       </Tooltip>

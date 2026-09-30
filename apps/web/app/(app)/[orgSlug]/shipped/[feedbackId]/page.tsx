@@ -41,7 +41,7 @@ export async function generateMetadata({
         keywords: [meta.orgName, "shipped", "feature request", "changelog"],
         ogImage: ogUrl.toString(),
         path: `/${orgSlug}/shipped/${feedbackId}`,
-        title: `Shipped: ${meta.title} | ${meta.orgName}`,
+        title: `Shipped: ${meta.title} – ${meta.orgName}`,
       });
     }
   } catch {
@@ -52,7 +52,7 @@ export async function generateMetadata({
     description: "See what was shipped based on your feedback.",
     keywords: ["shipped", "feedback", orgSlug],
     path: `/${orgSlug}/shipped/${feedbackId}`,
-    title: `Shipped | ${orgSlug}`,
+    title: `Shipped – ${orgSlug}`,
   });
 }
 

@@ -41,8 +41,9 @@ test.describe("Organization creation", () => {
     const dialog = page.locator('[role="dialog"]');
     await expect(dialog).toBeVisible({ timeout: 10_000 });
 
-    await dialog.getByRole("button", { name: "Create" }).click();
+    await dialog.getByRole("button", { name: "Create organization" }).click();
     await expect(dialog).toBeVisible();
+    await expect(dialog.getByText("Enter an organization name")).toBeVisible();
 
     await dialog.getByRole("button", { name: "Cancel" }).click();
     await expect(dialog).not.toBeVisible({ timeout: 10_000 });

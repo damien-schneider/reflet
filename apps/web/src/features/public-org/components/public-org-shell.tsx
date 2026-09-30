@@ -5,6 +5,7 @@ import {
   ChatCircle,
   FileText,
   Heartbeat,
+  type Icon,
   Chat as MessageSquare,
 } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
@@ -13,50 +14,61 @@ import { env } from "@reflet/env/web";
 import { useQuery } from "convex/react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { H2, Text as TypographyText } from "@/components/ui/typography";
+import { usePathname } from "next/navigation";
+import { Text as TypographyText } from "@/components/ui/typography";
 import { PublicViewToolbar } from "@/features/feedback/components/public-view-toolbar";
 import { DEFAULT_PRIMARY_COLOR } from "@/lib/branding";
 import { generateColorCssVars, generateColorPalette } from "@/lib/color-utils";
 import { cn } from "@/lib/utils";
 
-function resolveTab(pathname: string, basePath: string): string {
+type SectionKey = "feedback" | "changelog" | "status" | "support";
+
+interface NavItem {
+  href: string;
+  icon: Icon;
+  key: SectionKey;
+  label: string;
+}
+
+function resolveSection(pathname: string, basePath: string): SectionKey {
   const relativePath = basePath ? pathname.replace(basePath, "") : pathname;
-  if (relativePath === "/changelog" || relativePath.startsWith("/changelog/")) {
+  const matches = (segment: string) =>
+    relativePath === `/${segment}` || relativePath.startsWith(`/${segment}/`);
+  if (matches("changelog")) {
     return "changelog";
   }
-  if (relativePath === "/support" || relativePath.startsWith("/support/")) {
+  if (matches("support")) {
     return "support";
   }
-  if (relativePath === "/status" || relativePath.startsWith("/status/")) {
+  if (matches("status")) {
     return "status";
   }
   return "feedback";
 }
 
 function MobileNavLink({
-  href,
-  icon: Icon,
+  item,
   isActive,
-  label,
 }: {
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
+  item: NavItem;
   isActive: boolean;
-  label: string;
 }) {
+  const ItemIcon = item.icon;
   return (
     <Link
       aria-current={isActive ? "page" : undefined}
       className={cn(
-        "flex flex-1 flex-col items-center gap-1 py-3 text-xs transition-colors",
-        isActive ? "font-medium text-brand-text" : "text-muted-foreground"
+        "flex min-h-14 flex-1 flex-col items-center justify-center gap-1 font-medium text-caption",
+        isActive ? "text-brand-text" : "text-muted-foreground"
       )}
-      href={href}
+      href={item.href}
     >
-      <Icon className="h-5 w-5" />
-      {label}
+      <ItemIcon
+        aria-hidden
+        className="size-5"
+        weight={isActive ? "fill" : "regular"}
+      />
+      {item.label}
     </Link>
   );
 }
@@ -75,145 +87,141 @@ export function PublicOrgShell({
   orgSlug,
 }: PublicOrgShellProps) {
   const pathname = usePathname();
-  const router = useRouter();
 
   const supportSettings = useQuery(api.support.settings.get, {
     organizationId: org._id,
   });
-
   const publicPlanFeatures = useQuery(
     api.billing.queries.getPublicPlanFeatures,
-    {
-      organizationId: org._id,
-    }
+    { organizationId: org._id }
   );
-
-  const supportEnabled = supportSettings?.supportEnabled ?? false;
-
   const statusAggregation = useQuery(api.status.monitors.getAggregateStatus, {
     organizationId: org._id,
   });
+
+  const supportEnabled = supportSettings?.supportEnabled === true;
   const statusEnabled =
     statusAggregation !== undefined &&
     statusAggregation?.status !== "no_monitors";
 
-  useEffect(() => {
-    router.prefetch(`${basePath}/`);
-    router.prefetch(`${basePath}/changelog`);
-    if (supportEnabled) {
-      router.prefetch(`${basePath}/support`);
-    }
-    if (statusEnabled) {
-      router.prefetch(`${basePath}/status`);
-    }
-  }, [router, basePath, supportEnabled, statusEnabled]);
-
-  const primaryColor = org.primaryColor ?? DEFAULT_PRIMARY_COLOR;
-  const palette = generateColorPalette(primaryColor);
+  const palette = generateColorPalette(
+    org.primaryColor ?? DEFAULT_PRIMARY_COLOR
+  );
   const colorCssVars = generateColorCssVars(palette);
+  const currentSection = resolveSection(pathname, basePath);
 
-  const currentTab = resolveTab(pathname, basePath);
-
-  const handleTabChange = (value: string | null) => {
-    if (!value) {
-      return;
-    }
-    if (value === "feedback") {
-      router.push(basePath || "/");
-    } else {
-      router.push(`${basePath}/${value}`);
-    }
-  };
+  const navItems: NavItem[] = [
+    {
+      href: basePath || "/",
+      icon: MessageSquare,
+      key: "feedback",
+      label: "Feedback",
+    },
+    {
+      href: `${basePath}/changelog`,
+      icon: FileText,
+      key: "changelog",
+      label: "Changelog",
+    },
+    ...(statusEnabled
+      ? [
+          {
+            href: `${basePath}/status`,
+            icon: Heartbeat,
+            key: "status" as const,
+            label: "Status",
+          },
+        ]
+      : []),
+    ...(supportEnabled
+      ? [
+          {
+            href: `${basePath}/support`,
+            icon: ChatCircle,
+            key: "support" as const,
+            label: "Support",
+          },
+        ]
+      : []),
+  ];
 
   return (
-    <div className="min-h-screen" style={colorCssVars}>
-      <header className="fixed z-40 mx-auto flex w-full items-center justify-between px-4 py-4">
-        <div className="flex items-center gap-3">
+    <div
+      className="min-h-screen [--mobile-nav-offset:calc(3.5rem+1px+env(safe-area-inset-bottom))] md:[--mobile-nav-offset:0px]"
+      style={colorCssVars}
+    >
+      <header className="fixed inset-x-0 top-0 z-40 flex items-center justify-between gap-4 bg-background/85 px-4 py-4 backdrop-blur-md">
+        <Link
+          aria-label={`${org.name} home`}
+          className="flex min-w-0 items-center rounded-sm"
+          href={basePath || "/"}
+        >
           {org.logo ? (
             <Image
               alt={org.name}
-              className="h-8 max-w-30 object-contain outline outline-1 outline-black/10 -outline-offset-1 dark:outline-white/10"
+              className="h-8 w-auto max-w-30 rounded-sm object-contain outline-1 outline-black/10 -outline-offset-1 dark:outline-white/10"
               height={32}
               src={org.logo}
               width={120}
             />
           ) : (
-            <H2 variant="card">{org.name}</H2>
+            <span className="truncate font-medium text-heading-4">
+              {org.name}
+            </span>
           )}
-        </div>
+        </Link>
 
-        <Tabs
-          className="hidden md:block"
-          onValueChange={handleTabChange}
-          value={currentTab}
-        >
-          <TabsList>
-            <TabsTab value="feedback">
-              <MessageSquare className="h-4 w-4" />
-              Feedback
-            </TabsTab>
-            <TabsTab value="changelog">
-              <FileText className="h-4 w-4" />
-              Changelog
-            </TabsTab>
-            {statusEnabled && (
-              <TabsTab value="status">
-                <Heartbeat className="h-4 w-4" />
-                Status
-              </TabsTab>
-            )}
-            {supportEnabled && (
-              <TabsTab value="support">
-                <ChatCircle className="h-4 w-4" />
-                Support
-              </TabsTab>
-            )}
-          </TabsList>
-        </Tabs>
+        <nav aria-label={`${org.name} sections`} className="hidden md:block">
+          <Tabs value={currentSection}>
+            <TabsList>
+              {navItems.map((item) => {
+                const ItemIcon = item.icon;
+                return (
+                  <TabsTab
+                    aria-current={
+                      currentSection === item.key ? "page" : undefined
+                    }
+                    key={item.key}
+                    nativeButton={false}
+                    render={<Link href={item.href} />}
+                    value={item.key}
+                  >
+                    <ItemIcon aria-hidden className="size-4" />
+                    {item.label}
+                  </TabsTab>
+                );
+              })}
+            </TabsList>
+          </Tabs>
+        </nav>
       </header>
 
-      <main className="min-h-[80vh] pt-22 pb-16 md:pb-0">{children}</main>
+      <main className="min-h-[80vh] pt-22 pb-(--mobile-nav-offset)">
+        {children}
+      </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t bg-background md:hidden">
-        <div className="flex items-center justify-around">
-          <MobileNavLink
-            href={basePath || "/"}
-            icon={MessageSquare}
-            isActive={currentTab === "feedback"}
-            label="Feedback"
-          />
-          <MobileNavLink
-            href={`${basePath}/changelog`}
-            icon={FileText}
-            isActive={currentTab === "changelog"}
-            label="Changelog"
-          />
-          {statusEnabled && (
+      <nav
+        aria-label={`${org.name} sections`}
+        className="fixed inset-x-0 bottom-0 z-40 border-t bg-background pb-[env(safe-area-inset-bottom)] md:hidden"
+      >
+        <div className="flex items-stretch justify-around">
+          {navItems.map((item) => (
             <MobileNavLink
-              href={`${basePath}/status`}
-              icon={Heartbeat}
-              isActive={currentTab === "status"}
-              label="Status"
+              isActive={currentSection === item.key}
+              item={item}
+              key={item.key}
             />
-          )}
-          {supportEnabled && (
-            <MobileNavLink
-              href={`${basePath}/support`}
-              icon={ChatCircle}
-              isActive={currentTab === "support"}
-              label="Support"
-            />
-          )}
+          ))}
         </div>
       </nav>
 
-      {!publicPlanFeatures?.hideBranding && (
+      {publicPlanFeatures?.hideBranding === false && (
         <footer className="py-8">
-          <div className="container mx-auto flex items-center justify-center px-4 text-muted-foreground text-sm">
+          <div className="container mx-auto flex items-center justify-center px-4 text-muted-foreground">
             <TypographyText variant="bodySmall">
               Powered by{" "}
               <Link
-                className="font-display font-medium text-brand-text text-lg underline underline-offset-4 transition-colors hover:text-brand-text/80"
+                className="font-display font-medium text-brand-text text-lg underline underline-offset-4 hover:text-brand-text/80"
                 href={env.NEXT_PUBLIC_SITE_URL ?? "https://www.reflet.app"}
                 rel="noopener"
                 target="_blank"

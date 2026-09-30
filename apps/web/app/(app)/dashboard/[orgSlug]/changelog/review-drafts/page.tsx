@@ -1,15 +1,13 @@
 "use client";
 
+import { Button, ButtonLink } from "@ctrl-ui/react/ui/button";
 import {
-  AlertDialog,
-  AlertDialogClose,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@ctrl-ui/react/ui/alert-dialog";
-import { Button } from "@ctrl-ui/react/ui/button";
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@ctrl-ui/react/ui/empty";
 import {
   PageBody,
   PageDescription,
@@ -32,8 +30,9 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import Link from "next/link";
 import { use, useState } from "react";
-import { Muted, Text } from "@/components/ui/typography";
+import { DestructiveConfirmDialog } from "@/components/ui/destructive-confirm-dialog";
 import { RetroactiveDraftItem } from "@/features/changelog/components/retroactive-draft-item";
+import { OrgNotFound } from "@/features/dashboard/components/org-not-found";
 
 const SORT_ORDERS = ["newest", "oldest"] as const;
 
@@ -62,16 +61,16 @@ function DraftsSkeleton() {
     <div className="space-y-4">
       {SKELETON_ROWS.map((row) => (
         <div className="flex items-start gap-4 rounded-lg border p-4" key={row}>
-          <Skeleton className="mt-1 size-5 shrink-0 rounded" />
+          <Skeleton className="mt-1 size-5 shrink-0" />
           <div className="min-w-0 flex-1">
-            <Skeleton className="h-6 w-64 max-w-full rounded-md" />
-            <Skeleton className="mt-1 h-5 w-full rounded-md" />
-            <Skeleton className="mt-2 h-4 w-44 rounded-md" />
+            <Skeleton className="h-6 w-64 max-w-full" />
+            <Skeleton className="mt-1 h-5 w-full" />
+            <Skeleton className="mt-2 h-4 w-44" />
           </div>
           <div className="flex shrink-0 items-center gap-1">
-            <Skeleton className="size-7 rounded-md" />
-            <Skeleton className="size-7 rounded-md" />
-            <Skeleton className="size-7 rounded-md" />
+            <Skeleton className="size-7" />
+            <Skeleton className="size-7" />
+            <Skeleton className="size-7" />
           </div>
         </div>
       ))}
@@ -92,20 +91,22 @@ function DraftsList({
 }) {
   if (drafts.length === 0) {
     return (
-      <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-        <Text variant="bodyLarge">No draft releases to review</Text>
-        <Muted className="mt-2">
-          Generated changelogs will appear here once the retroactive job
-          completes.
-        </Muted>
-        <Button
-          className="mt-6"
-          render={<Link href={`/dashboard/${orgSlug}/changelog`} />}
-          variant="surface"
-        >
-          Back to Changelog
-        </Button>
-      </div>
+      <Empty className="min-h-[40vh] rounded-lg border border-dashed">
+        <EmptyHeader>
+          <EmptyTitle>No drafts to review</EmptyTitle>
+          <EmptyDescription>
+            Generated releases show up here once the import finishes.
+          </EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <ButtonLink
+            render={<Link href={`/dashboard/${orgSlug}/changelog`} />}
+            variant="surface"
+          >
+            Back to changelog
+          </ButtonLink>
+        </EmptyContent>
+      </Empty>
     );
   }
 
@@ -167,6 +168,9 @@ export default function ReviewDraftsPage({
   );
   const [sortOrder, setSortOrder] = useState<SortOrder>("newest");
   const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<
+    "publish" | "discard" | null
+  >(null);
 
   const drafts = sortDrafts(releases, sortOrder);
   const allSelected = drafts.length > 0 && selectedIds.size === drafts.length;
@@ -193,6 +197,7 @@ export default function ReviewDraftsPage({
     }
 
     const count = selectedIds.size;
+    setPendingAction("publish");
     try {
       await publishDrafts({
         releaseIds: Array.from(selectedIds),
@@ -201,28 +206,33 @@ export default function ReviewDraftsPage({
       toast.success(`Published ${count} release${count === 1 ? "" : "s"}`);
       setSelectedIds(new Set());
     } catch {
-      toast.error("Failed to publish releases");
+      toast.error("Couldn’t publish releases. Try again.");
     }
+    setPendingAction(null);
   };
 
   const handleConfirmDiscard = async () => {
-    const count = selectedIds.size;
+    setPendingAction("discard");
     try {
       await discardDrafts({ releaseIds: Array.from(selectedIds) });
-      toast.success(`Discarded ${count} draft${count === 1 ? "" : "s"}`);
       setSelectedIds(new Set());
     } catch {
-      toast.error("Failed to discard releases");
+      toast.error("Couldn’t discard drafts. Try again.");
     }
+    setPendingAction(null);
   };
 
-  if (!org) {
+  if (org === null) {
+    return <OrgNotFound />;
+  }
+
+  if (org === undefined) {
     return (
       <PageLayout scroll="page" width="content">
         <PageHeader className="flex flex-col items-start">
-          <Skeleton className="h-5 w-36 rounded-md" />
-          <Skeleton className="h-9 w-80 max-w-full rounded-md" />
-          <Skeleton className="h-5 w-52 rounded-md" />
+          <Skeleton className="h-5 w-36" />
+          <Skeleton className="h-9 w-80 max-w-full" />
+          <Skeleton className="h-5 w-52" />
         </PageHeader>
         <PageBody>
           <DraftsSkeleton />
@@ -238,41 +248,47 @@ export default function ReviewDraftsPage({
           className="inline-flex min-h-10 items-center gap-1 text-muted-foreground text-sm hover:text-foreground"
           href={`/dashboard/${orgSlug}/changelog`}
         >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Changelog
+          <ArrowLeft aria-hidden className="size-4" />
+          Back to changelog
         </Link>
-        <PageTitle>Review Generated Changelogs</PageTitle>
+        <PageTitle>Review generated releases</PageTitle>
         <PageDescription>
-          <span className="tabular-nums">{drafts.length}</span> draft
-          {drafts.length === 1 ? "" : "s"} ready for review
+          {releases === undefined ? (
+            "Loading drafts…"
+          ) : (
+            <>
+              <span className="tabular-nums">{drafts.length}</span> draft
+              {drafts.length === 1 ? "" : "s"} ready for review
+            </>
+          )}
         </PageDescription>
       </PageHeader>
       <PageBody>
         {drafts.length > 0 && (
           <div className="sticky top-(--sticky-header-height) z-20 mb-6 flex flex-wrap items-center gap-2 rounded-lg border bg-background p-3">
             <Button onClick={handleToggleSelectAll} size="xs" variant="surface">
-              {allSelected ? "Deselect All" : "Select All"}
+              {allSelected ? "Deselect all" : "Select all"}
             </Button>
 
             <Button
-              disabled={selectedIds.size === 0}
+              disabled={selectedIds.size === 0 || pendingAction !== null}
               onClick={handleBulkPublish}
               size="xs"
               tone="primary"
               variant="solid"
             >
-              Publish Selected (
-              <span className="tabular-nums">{selectedIds.size}</span>)
+              {pendingAction === "publish" ? "Publishing…" : "Publish selected"}{" "}
+              <span className="tabular-nums">({selectedIds.size})</span>
             </Button>
 
             <Button
-              disabled={selectedIds.size === 0}
+              disabled={selectedIds.size === 0 || pendingAction !== null}
               onClick={() => setDiscardDialogOpen(true)}
               size="xs"
               tone="danger"
               variant="surface"
             >
-              Discard Selected
+              {pendingAction === "discard" ? "Discarding…" : "Discard selected"}
             </Button>
 
             <div className="ml-auto">
@@ -284,7 +300,11 @@ export default function ReviewDraftsPage({
                 }
                 value={sortOrder}
               >
-                <SelectTrigger aria-label="Sort drafts" className="w-40">
+                <SelectTrigger
+                  aria-label="Sort drafts"
+                  className="w-40"
+                  size="xs"
+                >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -310,32 +330,14 @@ export default function ReviewDraftsPage({
           />
         )}
 
-        <AlertDialog
+        <DestructiveConfirmDialog
+          confirmLabel="Discard"
+          description="Discarded drafts are removed permanently. You can’t undo this."
+          onConfirm={handleConfirmDiscard}
           onOpenChange={setDiscardDialogOpen}
           open={discardDialogOpen}
-        >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>
-                Discard {selectedIds.size} draft
-                {selectedIds.size === 1 ? "" : "s"}?
-              </AlertDialogTitle>
-              <AlertDialogDescription>
-                Discarded drafts are removed permanently. This cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogClose>Cancel</AlertDialogClose>
-              <AlertDialogClose
-                onClick={handleConfirmDiscard}
-                tone="danger"
-                variant="surface"
-              >
-                Discard
-              </AlertDialogClose>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+          title={`Discard ${selectedIds.size} draft${selectedIds.size === 1 ? "" : "s"}?`}
+        />
       </PageBody>
     </PageLayout>
   );

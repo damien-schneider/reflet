@@ -1,26 +1,31 @@
 "use client";
 
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@ctrl-ui/react/ui/empty";
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "@ctrl-ui/react/ui/tabs";
 import { toast } from "@ctrl-ui/react/ui/toast";
+import { Lightbulb } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
-import { Text } from "@/components/ui/typography";
 import { InsightCard } from "@/features/intelligence/components/insight-card";
 import { ScanStatusBanner } from "@/features/intelligence/components/scan-status-banner";
 
-const INSIGHT_STATUS_FILTERS = [
-  "new",
-  "reviewed",
-  "dismissed",
-  "converted_to_feedback",
-] as const;
-type InsightStatusFilter = (typeof INSIGHT_STATUS_FILTERS)[number];
+type InsightStatusFilter = "new" | "reviewed" | "dismissed" | "all";
 
-const isInsightStatusFilter = (value: string): value is InsightStatusFilter =>
-  (INSIGHT_STATUS_FILTERS as readonly string[]).includes(value);
+const EMPTY_TITLES: Record<InsightStatusFilter, string> = {
+  all: "No insights yet",
+  dismissed: "No dismissed insights",
+  new: "No new insights",
+  reviewed: "No reviewed insights",
+};
 
 function InsightsList({
   insights,
@@ -40,15 +45,15 @@ function InsightsList({
         createdAt: number;
       }[]
     | undefined;
-  statusFilter: string;
+  statusFilter: InsightStatusFilter;
   onDismiss: (id: Id<"intelligenceInsights">) => void;
   onConvert: (id: Id<"intelligenceInsights">) => void;
 }) {
   if (insights === undefined) {
     return (
-      <div className="space-y-4">
+      <div aria-label="Loading insights" className="space-y-4" role="status">
         {["a", "b", "c"].map((id) => (
-          <Skeleton className="h-44 w-full" key={id} />
+          <Skeleton className="h-40 w-full rounded-lg" key={id} />
         ))}
       </div>
     );
@@ -56,12 +61,19 @@ function InsightsList({
 
   if (insights.length === 0) {
     return (
-      <div className="flex min-h-[30vh] items-center justify-center text-center">
-        <Text variant="bodySmall">
-          No {statusFilter === "all" ? "" : statusFilter} insights yet. Insights
-          will appear after your next intelligence scan.
-        </Text>
-      </div>
+      <Empty className="rounded-lg border border-dashed py-16">
+        <EmptyHeader>
+          <EmptyMedia>
+            <Lightbulb aria-hidden className="size-6" />
+          </EmptyMedia>
+          <EmptyTitle>{EMPTY_TITLES[statusFilter]}</EmptyTitle>
+          <EmptyDescription>
+            {statusFilter === "dismissed"
+              ? "Insights you dismiss are kept here."
+              : "New insights appear after the next intelligence scan."}
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     );
   }
 
@@ -86,18 +98,12 @@ export function InsightsTab({
   organizationId: Id<"organizations">;
   orgSlug: string;
 }) {
-  const [statusFilter, setStatusFilter] = useState("new");
-
-  const resolvedStatusFilter = isInsightStatusFilter(statusFilter)
-    ? statusFilter
-    : undefined;
+  const [statusFilter, setStatusFilter] = useState<InsightStatusFilter>("new");
 
   const insights = useQuery(api.intelligence.insights.list, {
     organizationId,
-    status: statusFilter === "all" ? undefined : resolvedStatusFilter,
+    status: statusFilter === "all" ? undefined : statusFilter,
   });
-
-  const config = useQuery(api.intelligence.config.get, { organizationId });
 
   const dismissInsight = useMutation(api.intelligence.insights.dismiss);
   const convertToFeedback = useMutation(
@@ -107,38 +113,19 @@ export function InsightsTab({
   const handleDismiss = async (insightId: Id<"intelligenceInsights">) => {
     try {
       await dismissInsight({ insightId });
-      toast.success("Insight dismissed");
-    } catch (error: unknown) {
-      toast.error("Failed to dismiss insight", {
-        description:
-          error instanceof Error
-            ? error.message
-            : "An unexpected error occurred",
-      });
+    } catch {
+      toast.error("Couldn’t dismiss the insight. Try again.");
     }
   };
 
   const handleConvert = async (insightId: Id<"intelligenceInsights">) => {
     try {
       await convertToFeedback({ insightId });
-      toast.success("Feedback item created from insight");
-    } catch (error: unknown) {
-      toast.error("Failed to convert insight", {
-        description:
-          error instanceof Error
-            ? error.message
-            : "An unexpected error occurred",
-      });
+      toast.success("Feedback created from insight");
+    } catch {
+      toast.error("Couldn’t convert the insight. Try again.");
     }
   };
-
-  if (config === undefined) {
-    return <Skeleton className="h-32 w-full" />;
-  }
-
-  if (config === null) {
-    return null;
-  }
 
   return (
     <div className="space-y-4">
@@ -148,8 +135,8 @@ export function InsightsTab({
         <TabsList>
           <TabsTab value="new">New</TabsTab>
           <TabsTab value="reviewed">Reviewed</TabsTab>
-          <TabsTab value="all">All</TabsTab>
           <TabsTab value="dismissed">Dismissed</TabsTab>
+          <TabsTab value="all">All</TabsTab>
         </TabsList>
 
         <TabsPanel className="mt-4" value={statusFilter}>

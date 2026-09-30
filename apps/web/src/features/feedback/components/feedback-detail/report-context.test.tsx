@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { formatReportContext, type ReportContextValue } from "./report-context";
+import {
+  formatReportContext,
+  type ReportContextValue,
+} from "./report-context-format";
 
 function context(
   overrides: Partial<ReportContextValue> = {}

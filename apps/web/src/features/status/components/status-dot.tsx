@@ -1,19 +1,13 @@
-"use client";
-
-type StatusType =
-  | "operational"
-  | "degraded"
-  | "major_outage"
-  | "paused"
-  | "no_monitors";
+import { cn } from "@/lib/utils";
+import type { MonitorStatus, OverallStatus } from "../lib/status-meta";
 
 interface StatusDotProps {
   pulse?: boolean;
   size?: "sm" | "md" | "lg";
-  status: StatusType;
+  status: MonitorStatus | OverallStatus;
 }
 
-const colorMap: Record<StatusType, string> = {
+const colorMap: Record<StatusDotProps["status"], string> = {
   degraded: "bg-warning",
   major_outage: "bg-destructive",
   no_monitors: "bg-muted-foreground/40",
@@ -22,9 +16,9 @@ const colorMap: Record<StatusType, string> = {
 };
 
 const sizeMap = {
-  lg: "h-3 w-3",
-  md: "h-2.5 w-2.5",
-  sm: "h-2 w-2",
+  lg: "size-3",
+  md: "size-2.5",
+  sm: "size-2",
 };
 
 export function StatusDot({
@@ -32,14 +26,18 @@ export function StatusDot({
   size = "md",
   pulse = false,
 }: StatusDotProps) {
+  const showPulse =
+    pulse && (status === "degraded" || status === "major_outage");
+
   return (
-    <span className="relative inline-flex">
-      <span
-        className={`inline-block rounded-full ${colorMap[status]} ${sizeMap[size]}`}
-      />
-      {pulse && status !== "operational" && status !== "paused" && (
+    <span aria-hidden className="relative inline-flex shrink-0">
+      <span className={cn("rounded-full", colorMap[status], sizeMap[size])} />
+      {showPulse && (
         <span
-          className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-75 ${colorMap[status]}`}
+          className={cn(
+            "absolute inset-0 rounded-full opacity-75 motion-safe:animate-ping",
+            colorMap[status]
+          )}
         />
       )}
     </span>

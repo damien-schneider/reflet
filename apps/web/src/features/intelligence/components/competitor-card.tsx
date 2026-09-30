@@ -9,28 +9,17 @@ import {
   CardTitle,
 } from "@ctrl-ui/react/ui/card";
 import { ArrowSquareOut, Trash } from "@phosphor-icons/react";
+import { format, formatDistanceToNow } from "date-fns";
 import { useState } from "react";
 import { TagBadge } from "@/components/tag-badge";
 
-const formatRelativeTime = (timestamp: number): string => {
-  const now = Date.now();
-  const diffMs = now - timestamp;
-  const diffSeconds = Math.floor(diffMs / 1000);
-  const diffMinutes = Math.floor(diffSeconds / 60);
-  const diffHours = Math.floor(diffMinutes / 60);
-  const diffDays = Math.floor(diffHours / 24);
+const SUMMARY_MAX_LENGTH = 200;
+const WWW_PREFIX = /^www\./;
 
-  if (diffDays > 0) {
-    return `${diffDays}d ago`;
-  }
-  if (diffHours > 0) {
-    return `${diffHours}h ago`;
-  }
-  if (diffMinutes > 0) {
-    return `${diffMinutes}m ago`;
-  }
-  return "just now";
-};
+const truncate = (text: string): string =>
+  text.length > SUMMARY_MAX_LENGTH
+    ? `${text.slice(0, SUMMARY_MAX_LENGTH)}…`
+    : text;
 
 const parseAiProfileSummary = (aiProfile: string): string => {
   try {
@@ -39,9 +28,17 @@ const parseAiProfileSummary = (aiProfile: string): string => {
       typeof parsed === "object" && parsed !== null
         ? (parsed.summary ?? parsed.description ?? JSON.stringify(parsed))
         : String(parsed);
-    return summary.length > 200 ? `${summary.slice(0, 200)}...` : summary;
+    return truncate(summary);
   } catch {
-    return aiProfile.length > 200 ? `${aiProfile.slice(0, 200)}...` : aiProfile;
+    return truncate(aiProfile);
+  }
+};
+
+const getDisplayUrl = (url: string): string => {
+  try {
+    return new URL(url).hostname.replace(WWW_PREFIX, "");
+  } catch {
+    return url;
   }
 };
 
@@ -63,89 +60,110 @@ interface CompetitorCardProps {
 export function CompetitorCard({ competitor, onRemove }: CompetitorCardProps) {
   const [confirmingRemove, setConfirmingRemove] = useState(false);
 
-  const statusVariant = competitor.status === "active" ? "green" : "gray";
   const statusLabel =
     competitor.status.charAt(0).toUpperCase() + competitor.status.slice(1);
-
-  const handleRemoveClick = () => {
-    if (confirmingRemove) {
-      onRemove();
-      setConfirmingRemove(false);
-    } else {
-      setConfirmingRemove(true);
-    }
-  };
-
-  const handleCancelRemove = () => {
-    setConfirmingRemove(false);
-  };
+  const featureCount = competitor.featureList?.length ?? 0;
 
   return (
-    <Card>
+    <Card className="flex flex-col">
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
-          <div className="flex flex-col gap-1.5">
-            <div className="flex items-center gap-2">
-              <CardTitle>{competitor.name}</CardTitle>
-              <TagBadge color={statusVariant}>{statusLabel}</TagBadge>
-              {competitor.featureList && competitor.featureList.length > 0 && (
-                <Badge variant="outline">
-                  {competitor.featureList.length} feature
-                  {competitor.featureList.length === 1 ? "" : "s"}
-                </Badge>
-              )}
+          <div className="flex min-w-0 flex-col gap-1">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <CardTitle className="truncate">{competitor.name}</CardTitle>
+              <TagBadge
+                color={competitor.status === "active" ? "green" : "gray"}
+                size="sm"
+              >
+                {statusLabel}
+              </TagBadge>
             </div>
             <a
-              className="inline-flex items-center gap-1 text-muted-foreground text-sm hover:text-foreground"
+              className="inline-flex min-w-0 items-center gap-1 text-muted-foreground text-sm hover:text-foreground"
               href={competitor.websiteUrl}
               rel="noopener"
               target="_blank"
+              title={competitor.websiteUrl}
             >
-              {competitor.websiteUrl}
-              <ArrowSquareOut className="size-3.5" />
+              <span className="truncate">
+                {getDisplayUrl(competitor.websiteUrl)}
+              </span>
+              <ArrowSquareOut aria-hidden className="size-3.5 shrink-0" />
+              <span className="sr-only">(opens in a new tab)</span>
             </a>
           </div>
-          {competitor.lastScrapedAt && (
-            <span className="shrink-0 text-muted-foreground text-xs">
-              Scanned {formatRelativeTime(competitor.lastScrapedAt)}
-            </span>
-          )}
+          {featureCount > 0 ? (
+            <Badge
+              className="shrink-0 tabular-nums"
+              size="sm"
+              variant="outline"
+            >
+              {featureCount} feature{featureCount === 1 ? "" : "s"}
+            </Badge>
+          ) : null}
         </div>
       </CardHeader>
-      <CardContent>
-        {competitor.description && (
-          <p className="text-muted-foreground text-sm">
+      <CardContent className="flex flex-1 flex-col gap-3">
+        {competitor.description ? (
+          <p className="text-pretty text-muted-foreground text-sm">
             {competitor.description}
           </p>
-        )}
-        {competitor.aiProfile && (
-          <div className="mt-2 rounded-md bg-muted/50 p-3">
+        ) : null}
+        {competitor.aiProfile ? (
+          <div className="rounded-md bg-muted/50 p-3">
             <p className="font-medium text-muted-foreground text-xs">
               AI Profile
             </p>
-            <p className="mt-1 text-sm">
+            <p className="mt-1 text-pretty text-sm">
               {parseAiProfileSummary(competitor.aiProfile)}
             </p>
           </div>
-        )}
-        <div className="mt-3 flex items-center gap-2">
+        ) : null}
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-2">
+          {competitor.lastScrapedAt ? (
+            <time
+              className="text-muted-foreground text-xs tabular-nums"
+              dateTime={new Date(competitor.lastScrapedAt).toISOString()}
+              title={format(competitor.lastScrapedAt, "PPpp")}
+            >
+              Scanned{" "}
+              {formatDistanceToNow(competitor.lastScrapedAt, {
+                addSuffix: true,
+              })}
+            </time>
+          ) : (
+            <span className="text-muted-foreground text-xs">
+              Not scanned yet
+            </span>
+          )}
           {confirmingRemove ? (
-            <>
+            <div className="flex items-center gap-2">
               <Button
-                onClick={handleRemoveClick}
-                size="xs"
+                onClick={() => setConfirmingRemove(false)}
+                size="sm"
+                variant="ghost"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  onRemove();
+                  setConfirmingRemove(false);
+                }}
+                size="sm"
                 tone="danger"
                 variant="surface"
               >
                 <Trash data-icon="inline-start" />
-                Confirm Remove
+                Remove competitor
               </Button>
-              <Button onClick={handleCancelRemove} size="xs" variant="ghost">
-                Cancel
-              </Button>
-            </>
+            </div>
           ) : (
-            <Button onClick={handleRemoveClick} size="xs" variant="ghost">
+            <Button
+              onClick={() => setConfirmingRemove(true)}
+              size="sm"
+              variant="ghost"
+            >
               <Trash data-icon="inline-start" />
               Remove
             </Button>

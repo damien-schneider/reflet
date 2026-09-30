@@ -1,6 +1,7 @@
 "use client";
 
 import { Code, Cursor, Eye, SignOut, Timer } from "@phosphor-icons/react";
+import { useId } from "react";
 import {
   TRIGGER_DESCRIPTIONS,
   TRIGGER_LABELS,
@@ -25,106 +26,75 @@ const TRIGGER_ORDER: TriggerType[] = [
 ];
 
 interface TriggerPickerProps {
+  density?: "comfortable" | "compact";
+  labelledBy: string;
   onChange: (type: TriggerType) => void;
   value: TriggerType;
 }
 
-export function TriggerPicker({ value, onChange }: TriggerPickerProps) {
-  return (
-    <div className="flex flex-col gap-2">
-      {TRIGGER_ORDER.map((type) => {
-        const Icon = TRIGGER_ICON_MAP[type];
-        const isSelected = value === type;
-        const { description } = TRIGGER_DESCRIPTIONS[type];
-
-        return (
-          <button
-            className={cn(
-              "flex items-start gap-3 rounded-lg border p-3 text-left transition-[background-color,border-color,box-shadow]",
-              isSelected
-                ? "border-primary bg-primary/5 ring-1 ring-primary/20"
-                : "hover:border-foreground/20 hover:bg-accent/50"
-            )}
-            key={type}
-            onClick={() => onChange(type)}
-            type="button"
-          >
-            <div
-              className={cn(
-                "flex size-8 shrink-0 items-center justify-center rounded-md transition-colors",
-                isSelected ? "bg-primary/10" : "bg-muted"
-              )}
-            >
-              <Icon
-                className={cn(
-                  "size-4 transition-colors",
-                  isSelected ? "text-primary" : "text-muted-foreground"
-                )}
-              />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p
-                className={cn(
-                  "font-medium text-sm",
-                  isSelected && "text-primary"
-                )}
-              >
-                {TRIGGER_LABELS[type]}
-              </p>
-              <p className="mt-0.5 text-muted-foreground text-xs leading-snug">
-                {description}
-              </p>
-            </div>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-interface TriggerPickerCompactProps {
-  onChange: (type: TriggerType) => void;
-  value: TriggerType;
-}
-
-export function TriggerPickerCompact({
+export function TriggerPicker({
+  density = "comfortable",
+  labelledBy,
   value,
   onChange,
-}: TriggerPickerCompactProps) {
+}: TriggerPickerProps) {
+  const name = useId();
+  const compact = density === "compact";
+
   return (
-    <div className="grid grid-cols-2 gap-2">
+    <div
+      aria-labelledby={labelledBy}
+      className={cn(
+        compact
+          ? "grid grid-cols-1 gap-2 sm:grid-cols-2"
+          : "flex flex-col gap-2"
+      )}
+      role="radiogroup"
+    >
       {TRIGGER_ORDER.map((type) => {
         const Icon = TRIGGER_ICON_MAP[type];
         const isSelected = value === type;
-        const { description } = TRIGGER_DESCRIPTIONS[type];
 
         return (
-          <button
+          <label
             className={cn(
-              "flex items-center gap-2.5 rounded-lg border px-3 py-2.5 text-left transition-[background-color,border-color,box-shadow]",
-              isSelected
-                ? "border-primary bg-primary/5 ring-1 ring-primary/20"
-                : "hover:border-foreground/20 hover:bg-accent/50"
+              "flex cursor-pointer gap-3 rounded-lg border text-left hover:bg-accent/50",
+              "has-checked:border-primary has-checked:bg-primary/5",
+              "has-focus-visible:outline-2 has-focus-visible:outline-ring has-focus-visible:outline-offset-2",
+              compact ? "items-center px-3 py-2.5" : "items-start p-3"
             )}
             key={type}
-            onClick={() => onChange(type)}
-            type="button"
           >
+            <input
+              checked={isSelected}
+              className="sr-only"
+              name={name}
+              onChange={() => onChange(type)}
+              type="radio"
+              value={type}
+            />
             <Icon
+              aria-hidden
               className={cn(
                 "size-4 shrink-0",
+                !compact && "mt-0.5",
                 isSelected ? "text-primary" : "text-muted-foreground"
               )}
             />
-            <div className="min-w-0">
-              <p className="truncate font-medium text-xs">
+            <span className="min-w-0 flex-1">
+              <span className="block font-medium text-sm">
                 {TRIGGER_LABELS[type]}
-              </p>
-              <p className="truncate text-caption text-muted-foreground">
-                {description}
-              </p>
-            </div>
-          </button>
+              </span>
+              <span
+                className={cn(
+                  "mt-0.5 block text-pretty text-muted-foreground",
+                  compact ? "text-xs" : "text-sm"
+                )}
+              >
+                {TRIGGER_DESCRIPTIONS[type].description}
+              </span>
+            </span>
+          </label>
         );
       })}
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { Button, ButtonLink } from "@ctrl-ui/react/ui/button";
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { toast } from "@ctrl-ui/react/ui/toast";
 import { GithubLogo, MagicWand } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
@@ -53,8 +54,10 @@ export function ChangelogSettingsTab({
   );
 
   const [isSaving, setIsSaving] = useState(false);
-  const [branches, setBranches] = useState<BranchInfo[]>([]);
-  const [isLoadingBranches, setIsLoadingBranches] = useState(false);
+  const [loadedBranches, setLoadedBranches] = useState<{
+    list: BranchInfo[];
+    organizationId: string;
+  } | null>(null);
 
   const settings = org?.changelogSettings;
   const isGitHubConnected = githubStatus?.isConnected === true;
@@ -65,33 +68,32 @@ export function ChangelogSettingsTab({
   const hasRepository = Boolean(
     githubConnection?.installationId && githubConnection.repositoryFullName
   );
+  const canListBranches = isGitHubConnected && hasRepository;
+  const branches = loadedBranches?.list ?? [];
+  const isLoadingBranches =
+    canListBranches && loadedBranches?.organizationId !== organizationId;
 
   useEffect(() => {
-    if (!(isGitHubConnected && hasRepository)) {
+    if (!canListBranches) {
       return;
     }
     let cancelled = false;
-    setIsLoadingBranches(true);
-    (async () => {
+    const load = async () => {
+      let list: BranchInfo[] = [];
       try {
-        const loaded = await listBranches({ organizationId });
-        if (!cancelled) {
-          setBranches(loaded);
-        }
+        list = await listBranches({ organizationId });
       } catch {
-        if (!cancelled) {
-          setBranches([]);
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoadingBranches(false);
-        }
+        list = [];
       }
-    })();
+      if (!cancelled) {
+        setLoadedBranches({ list, organizationId });
+      }
+    };
+    load();
     return () => {
       cancelled = true;
     };
-  }, [isGitHubConnected, hasRepository, listBranches, organizationId]);
+  }, [canListBranches, listBranches, organizationId]);
 
   const handleUpdate = async (updates: ChangelogSettings) => {
     if (!org?._id) {
@@ -100,25 +102,29 @@ export function ChangelogSettingsTab({
     setIsSaving(true);
     try {
       await updateOrg({ changelogSettings: updates, id: org._id });
-      toast.success("Settings saved");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to save");
-    } finally {
-      setIsSaving(false);
+      toast.error(
+        error instanceof Error ? error.message : "Couldn’t save. Try again."
+      );
     }
+    setIsSaving(false);
   };
 
   const handleToggleAutoSync = async (enabled: boolean) => {
     setIsSaving(true);
     try {
       await toggleAutoSync({ enabled, organizationId });
-      toast.success("Settings saved");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to save");
-    } finally {
-      setIsSaving(false);
+      toast.error(
+        error instanceof Error ? error.message : "Couldn’t save. Try again."
+      );
     }
+    setIsSaving(false);
   };
+
+  if (org === undefined || githubStatus === undefined) {
+    return <SettingsTabSkeleton />;
+  }
 
   return (
     <div className="space-y-6">
@@ -136,13 +142,16 @@ export function ChangelogSettingsTab({
           <div className="rounded-lg border p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <MagicWand className="h-5 w-5 text-muted-foreground" />
+                <MagicWand
+                  aria-hidden
+                  className="size-5 text-muted-foreground"
+                />
                 <div>
-                  <p className="font-medium text-sm">GitHub Sync Wizard</p>
+                  <h3 className="font-medium text-sm">GitHub sync wizard</h3>
                   <Muted className="text-xs">
                     {isSyncConfigured
-                      ? "Re-run the guided setup"
-                      : "Set up GitHub release sync"}
+                      ? "Re-run the guided setup."
+                      : "Set up GitHub release sync step by step."}
                   </Muted>
                 </div>
               </div>
@@ -152,7 +161,7 @@ export function ChangelogSettingsTab({
                 size="xs"
                 variant="surface"
               >
-                {isSyncConfigured ? "Re-configure" : "Run Setup"}
+                {isSyncConfigured ? "Reconfigure" : "Run setup"}
               </Button>
             </div>
           </div>
@@ -182,12 +191,15 @@ export function ChangelogSettingsTab({
         <div className="rounded-lg border border-dashed p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <GithubLogo className="h-5 w-5 text-muted-foreground" />
+              <GithubLogo
+                aria-hidden
+                className="size-5 text-muted-foreground"
+              />
               <div>
-                <p className="font-medium text-sm">GitHub Sync</p>
+                <h3 className="font-medium text-sm">GitHub sync</h3>
                 <Muted className="text-xs">
-                  Connect a GitHub repository to enable release sync and
-                  AI-powered notes.
+                  Connect a GitHub repository to sync releases and generate
+                  notes with AI.
                 </Muted>
               </div>
             </div>
@@ -202,12 +214,32 @@ export function ChangelogSettingsTab({
               size="xs"
               variant="surface"
             >
-              <GithubLogo className="mr-1.5 h-4 w-4" />
+              <GithubLogo aria-hidden className="size-4" />
               Connect GitHub
             </ButtonLink>
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function SettingsTabSkeleton() {
+  return (
+    <div aria-busy="true" className="space-y-6">
+      {["versioning", "wizard", "automation"].map((id) => (
+        <div className="space-y-4 rounded-lg border p-4" key={id}>
+          <Skeleton className="h-4 w-28" />
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-4 w-48" />
+            <Skeleton className="h-5 w-9" />
+          </div>
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-4 w-40" />
+            <Skeleton className="h-8 w-40" />
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

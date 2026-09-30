@@ -1,6 +1,5 @@
 "use client";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@ctrl-ui/react/ui/avatar";
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
   DropdownMenu,
@@ -8,6 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@ctrl-ui/react/ui/dropdown-menu";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import {
   ArrowBendDownRight,
   DotsThree,
@@ -17,11 +17,12 @@ import {
 } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useMutation } from "convex/react";
-import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
+import { DestructiveConfirmDialog } from "@/components/ui/destructive-confirm-dialog";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 
 import { useFeedbackId } from "./comment-context";
+import { CommentAvatar, CommentTimestamp } from "./comment-meta";
 import type { CommentData } from "./types";
 
 interface CommentItemOwnProps {
@@ -36,25 +37,25 @@ export function CommentItem({ comment, isReply = false }: CommentItemOwnProps) {
   const [isReplying, setIsReplying] = useState(false);
   const [replyContent, setReplyContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
   const updateComment = useMutation(api.feedback.comments.update);
   const deleteComment = useMutation(api.feedback.comments.remove);
   const addReply = useMutation(api.feedback.comments.create);
 
   const handleEdit = async () => {
-    if (!editContent.trim()) {
+    const body = editContent.trim();
+    if (!body) {
       return;
     }
     setIsSubmitting(true);
     try {
-      await updateComment({
-        body: editContent.trim(),
-        id: comment.id,
-      });
+      await updateComment({ body, id: comment.id });
       setIsEditing(false);
-    } finally {
-      setIsSubmitting(false);
+    } catch {
+      toast.error("Couldn’t save your edit. Try again.");
     }
+    setIsSubmitting(false);
   };
 
   const handleDelete = async () => {
@@ -62,41 +63,36 @@ export function CommentItem({ comment, isReply = false }: CommentItemOwnProps) {
   };
 
   const handleReply = async () => {
-    if (!replyContent.trim()) {
+    const body = replyContent.trim();
+    if (!body) {
       return;
     }
     setIsSubmitting(true);
     try {
-      await addReply({
-        body: replyContent.trim(),
-        feedbackId,
-        parentId: comment.id,
-      });
+      await addReply({ body, feedbackId, parentId: comment.id });
       setReplyContent("");
       setIsReplying(false);
-    } finally {
-      setIsSubmitting(false);
+    } catch {
+      toast.error("Couldn’t post your reply. Try again.");
     }
+    setIsSubmitting(false);
   };
 
   return (
-    <div className="group rounded-lg p-3 transition-colors hover:bg-muted/30">
+    <div className="group rounded-lg p-3 hover:bg-muted/30">
       <div className="flex gap-3">
-        <Avatar className={isReply ? "h-6 w-6" : "h-8 w-8"}>
-          <AvatarImage src={comment.author?.image} />
-          <AvatarFallback className="text-xs">
-            {comment.author?.name?.charAt(0) ?? "?"}
-          </AvatarFallback>
-        </Avatar>
+        <CommentAvatar
+          image={comment.author?.image}
+          isReply={isReply}
+          name={comment.author?.name ?? "?"}
+        />
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="font-medium text-sm">
+            <span className="truncate font-medium text-sm">
               {comment.author?.name ?? "Anonymous"}
             </span>
-            <span className="text-muted-foreground text-xs">
-              {formatDistanceToNow(comment.createdAt, { addSuffix: true })}
-            </span>
+            <CommentTimestamp createdAt={comment.createdAt} />
 
             <DropdownMenu>
               <DropdownMenuTrigger
@@ -104,7 +100,7 @@ export function CommentItem({ comment, isReply = false }: CommentItemOwnProps) {
                 render={(props: React.ComponentProps<"button">) => (
                   <Button
                     {...props}
-                    className="pointer-fine:pointer-events-none ml-auto h-6 w-6 pointer-fine:opacity-0 transition-opacity focus-visible:pointer-events-auto focus-visible:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100 data-popup-open:pointer-events-auto data-popup-open:opacity-100"
+                    className="pointer-fine:pointer-events-none ml-auto pointer-fine:opacity-0 focus-visible:pointer-events-auto focus-visible:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100 data-popup-open:pointer-events-auto data-popup-open:opacity-100"
                     iconOnly
                     size="xs"
                     variant="ghost"
@@ -119,8 +115,8 @@ export function CommentItem({ comment, isReply = false }: CommentItemOwnProps) {
                   Edit
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  className="text-destructive"
-                  onClick={handleDelete}
+                  className="menu-item-danger"
+                  onClick={() => setIsConfirmingDelete(true)}
                 >
                   <Trash className="mr-2 h-4 w-4" />
                   Delete
@@ -160,23 +156,23 @@ export function CommentItem({ comment, isReply = false }: CommentItemOwnProps) {
                   tone="primary"
                   variant="solid"
                 >
-                  {isSubmitting ? "Saving..." : "Save"}
+                  {isSubmitting ? "Saving…" : "Save"}
                 </Button>
               </div>
             </div>
           ) : (
             <>
-              <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed">
+              <p className="mt-1 whitespace-pre-wrap text-pretty text-sm leading-relaxed">
                 {comment.content}
               </p>
 
               <Button
-                className="mt-2 h-auto gap-1 p-0 text-xs"
+                className="mt-1 -ml-2"
                 onClick={() => setIsReplying(true)}
                 size="xs"
-                variant="quiet"
+                variant="ghost"
               >
-                <ArrowBendDownRight className="h-3 w-3" />
+                <ArrowBendDownRight className="size-3.5" />
                 Reply
               </Button>
             </>
@@ -192,7 +188,7 @@ export function CommentItem({ comment, isReply = false }: CommentItemOwnProps) {
                   minimal
                   onChange={setReplyContent}
                   onSubmit={handleReply}
-                  placeholder="Write a reply..."
+                  placeholder="Write a reply…"
                   value={replyContent}
                 />
                 <div className="flex items-center justify-end gap-2 border-t bg-muted/50 px-3 py-2">
@@ -207,15 +203,14 @@ export function CommentItem({ comment, isReply = false }: CommentItemOwnProps) {
                     Cancel
                   </Button>
                   <Button
-                    className="gap-1"
                     disabled={!replyContent.trim() || isSubmitting}
                     onClick={handleReply}
                     size="xs"
                     tone="primary"
                     variant="solid"
                   >
-                    <PaperPlaneTilt className="h-3.5 w-3.5" />
-                    {isSubmitting ? "Posting..." : "Reply"}
+                    <PaperPlaneTilt className="size-3.5" />
+                    {isSubmitting ? "Posting…" : "Reply"}
                   </Button>
                 </div>
               </div>
@@ -223,7 +218,7 @@ export function CommentItem({ comment, isReply = false }: CommentItemOwnProps) {
           )}
 
           {comment.replies.length > 0 && (
-            <div className="mt-3 space-y-1 border-muted border-l-2 pl-3">
+            <div className="mt-3 space-y-1 border-border border-l-2 pl-3">
               {comment.replies.map((reply) => (
                 <CommentItem comment={reply} isReply key={reply.id} />
               ))}
@@ -231,6 +226,15 @@ export function CommentItem({ comment, isReply = false }: CommentItemOwnProps) {
           )}
         </div>
       </div>
+
+      <DestructiveConfirmDialog
+        confirmLabel="Delete comment"
+        description="This removes the comment for everyone. You can’t undo this."
+        onConfirm={handleDelete}
+        onOpenChange={setIsConfirmingDelete}
+        open={isConfirmingDelete}
+        title="Delete comment?"
+      />
     </div>
   );
 }

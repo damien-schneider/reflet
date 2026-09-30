@@ -24,32 +24,14 @@ vi.mock("@ctrl-ui/react/ui/button", () => ({
     children,
     disabled,
     type,
-    ...rest
   }: {
     children: React.ReactNode;
     disabled?: boolean;
-    type?: string;
-    [key: string]: unknown;
+    type?: "button" | "submit";
   }) => (
-    <button disabled={disabled} type={type as "button" | "submit"}>
+    <button disabled={disabled} type={type}>
       {children}
     </button>
-  ),
-}));
-
-vi.mock("@ctrl-ui/react/ui/card", () => ({
-  Card: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  CardContent: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  CardDescription: ({ children }: { children: React.ReactNode }) => (
-    <p>{children}</p>
-  ),
-  CardHeader: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  CardTitle: ({ children }: { children: React.ReactNode }) => (
-    <h2>{children}</h2>
   ),
 }));
 
@@ -77,166 +59,68 @@ vi.mock("@ctrl-ui/react/ui/input", () => ({
   ),
 }));
 
-vi.mock("@ctrl-ui/react/ui/separator", () => ({
-  Separator: () => <hr />,
-}));
-
-vi.mock("@phosphor-icons/react", () => ({
-  Check: ({ className }: { className?: string }) => (
-    <svg className={className} />
-  ),
-  Envelope: ({ className }: { className?: string }) => (
-    <svg className={className} />
-  ),
-}));
-
+import { toast } from "@ctrl-ui/react/ui/toast";
+import { authClient } from "@/lib/auth-client";
 import { EmailSection } from "./email-section";
 
-describe("EmailSection", () => {
-  it("renders card title", () => {
-    render(
-      <EmailSection
-        isLoading={false}
-        setIsLoading={vi.fn()}
-        user={{ email: "test@test.com" }}
-      />
-    );
-    expect(screen.getByText("Email")).toBeInTheDocument();
-  });
+const renderSection = (email: string | null | undefined, isLoading = false) =>
+  render(
+    <EmailSection
+      isLoading={isLoading}
+      setIsLoading={vi.fn()}
+      user={email === undefined ? undefined : { email }}
+    />
+  );
 
-  it("renders current email", () => {
-    render(
-      <EmailSection
-        isLoading={false}
-        setIsLoading={vi.fn()}
-        user={{ email: "current@test.com" }}
-      />
-    );
+describe("EmailSection", () => {
+  it("names the address the member signs in with", () => {
+    renderSection("current@test.com");
     expect(screen.getByText("current@test.com")).toBeInTheDocument();
   });
 
-  it("shows N/A when email is missing", () => {
-    render(
-      <EmailSection isLoading={false} setIsLoading={vi.fn()} user={undefined} />
-    );
-    expect(screen.getByText("N/A")).toBeInTheDocument();
+  it("says when no email is linked", () => {
+    renderSection(null);
+    expect(
+      screen.getByText("No email address is linked to this account.")
+    ).toBeInTheDocument();
   });
 
-  it("renders new email input", () => {
-    render(
-      <EmailSection
-        isLoading={false}
-        setIsLoading={vi.fn()}
-        user={{ email: "test@test.com" }}
-      />
+  it("labels the new email input", () => {
+    renderSection("test@test.com");
+    expect(screen.getByLabelText("New email")).toHaveAttribute(
+      "autocomplete",
+      "email"
     );
-    expect(screen.getByPlaceholderText("new@example.com")).toBeInTheDocument();
   });
 
-  it("renders Update Email button", () => {
-    render(
-      <EmailSection
-        isLoading={false}
-        setIsLoading={vi.fn()}
-        user={{ email: "test@test.com" }}
-      />
-    );
-    expect(screen.getByText("Update Email")).toBeInTheDocument();
+  it("shows progress while the change is in flight", () => {
+    renderSection("test@test.com", true);
+    expect(screen.getByRole("button", { name: "Sending…" })).toBeDisabled();
   });
 
-  it("disables button when isLoading is true", () => {
-    render(
-      <EmailSection
-        isLoading={true}
-        setIsLoading={vi.fn()}
-        user={{ email: "test@test.com" }}
-      />
-    );
-    expect(screen.getByText("Update Email")).toBeDisabled();
-  });
-
-  it("renders Current Email label", () => {
-    render(
-      <EmailSection
-        isLoading={false}
-        setIsLoading={vi.fn()}
-        user={{ email: "test@test.com" }}
-      />
-    );
-    expect(screen.getByText("Current Email")).toBeInTheDocument();
-  });
-
-  it("renders New Email label", () => {
-    render(
-      <EmailSection
-        isLoading={false}
-        setIsLoading={vi.fn()}
-        user={{ email: "test@test.com" }}
-      />
-    );
-    expect(screen.getByText("New Email")).toBeInTheDocument();
-  });
-
-  it("allows typing in email input", async () => {
+  it("requests the change and tells the member where to confirm it", async () => {
     const user = userEvent.setup();
-    render(
-      <EmailSection
-        isLoading={false}
-        setIsLoading={vi.fn()}
-        user={{ email: "test@test.com" }}
-      />
+    renderSection("test@test.com");
+    await user.type(screen.getByLabelText("New email"), "new@example.com");
+    await user.click(screen.getByRole("button", { name: "Change email" }));
+    expect(authClient.changeEmail).toHaveBeenCalledWith(
+      expect.objectContaining({ newEmail: "new@example.com" })
     );
-    const input = screen.getByPlaceholderText("new@example.com");
-    await user.type(input, "new@example.com");
-    expect(input).toHaveValue("new@example.com");
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Check new@example.com for a link to confirm the change."
+    );
+    expect(screen.getByLabelText("New email")).toHaveValue("");
   });
 
-  it("submits form and calls authClient.changeEmail", async () => {
-    const { authClient } = await import("@/lib/auth-client");
-    await import("@ctrl-ui/react/ui/toast");
-    const setIsLoading = vi.fn();
-    const user = userEvent.setup();
-    render(
-      <EmailSection
-        isLoading={false}
-        setIsLoading={setIsLoading}
-        user={{ email: "test@test.com" }}
-      />
-    );
-    const input = screen.getByPlaceholderText("new@example.com");
-    await user.type(input, "new@example.com");
-    await user.click(screen.getByText("Update Email"));
-    expect(authClient.changeEmail).toHaveBeenCalled();
-  });
-
-  it("shows error toast on failure", async () => {
-    const { authClient } = await import("@/lib/auth-client");
-    const { toast } = await import("@ctrl-ui/react/ui/toast");
+  it("shows the server error on failure", async () => {
     vi.mocked(authClient.changeEmail).mockRejectedValueOnce(
       new Error("Email taken")
     );
     const user = userEvent.setup();
-    render(
-      <EmailSection
-        isLoading={false}
-        setIsLoading={vi.fn()}
-        user={{ email: "test@test.com" }}
-      />
-    );
-    const input = screen.getByPlaceholderText("new@example.com");
-    await user.type(input, "taken@example.com");
-    await user.click(screen.getByText("Update Email"));
+    renderSection("test@test.com");
+    await user.type(screen.getByLabelText("New email"), "taken@example.com");
+    await user.click(screen.getByRole("button", { name: "Change email" }));
     expect(toast.error).toHaveBeenCalledWith("Email taken");
-  });
-
-  it("shows null email as N/A when user email is null", () => {
-    render(
-      <EmailSection
-        isLoading={false}
-        setIsLoading={vi.fn()}
-        user={{ email: null }}
-      />
-    );
-    expect(screen.getByText("N/A")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toBeEmptyDOMElement();
   });
 });

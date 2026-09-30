@@ -11,7 +11,28 @@
 :where(.marketing-page a) {
   text-underline-offset: 4px;
 }
+:where(.marketing-page main:focus) {
+  outline: none;
+}
+:where(.marketing-skip-link) {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 50;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--foreground);
+  background: var(--card);
+  border-radius: 10px;
+  box-shadow: var(--marketing-float-shadow);
+  translate: 0 calc(-100% - 24px);
+}
+:where(.marketing-skip-link:focus-visible) {
+  translate: 0 0;
+}
 :where(.marketing-navigation) {
+  position: relative;
   display: flex;
   gap: 24px;
   align-items: center;
@@ -48,10 +69,6 @@
 :where(.marketing-navigation nav a) {
   color: var(--muted-foreground);
   white-space: nowrap;
-  transition: color 160ms;
-}
-:where(.marketing-navigation nav a:hover) {
-  color: var(--foreground);
 }
 :where(.marketing-navigation-actions) {
   gap: 22px;
@@ -80,8 +97,9 @@
 :where(.marketing-closing h2) {
   font-size: clamp(36px, 4.2vw, 60px);
   font-weight: 600;
-  line-height: 1.12;
+  line-height: 1.1;
   letter-spacing: -0.04em;
+  text-wrap: balance;
 }
 :where(.marketing-section-intro h1 span),
 :where(.marketing-section-intro h2 span) {
@@ -91,8 +109,9 @@
   max-width: 490px;
   margin: 22px auto 0;
   font-size: 17px;
-  line-height: 1.7;
+  line-height: 1.65;
   color: var(--muted-foreground);
+  text-wrap: pretty;
 }
 :where(.marketing-intro-left) {
   margin-left: 0;
@@ -114,14 +133,15 @@
   font-size: 38px;
 }
 :where(.marketing-faq details) {
-  padding: 22px 0;
   border-bottom: 1px solid var(--marketing-hairline);
 }
 :where(.marketing-faq summary) {
   display: flex;
   gap: 20px;
   justify-content: space-between;
-  font-size: 14px;
+  min-height: 44px;
+  padding-block: 18px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   list-style: none;
@@ -130,10 +150,12 @@
   display: none;
 }
 :where(.marketing-faq details p) {
-  padding: 18px 28px 0 0;
-  font-size: 14px;
-  line-height: 1.8;
+  max-width: 60ch;
+  padding: 0 28px 22px 0;
+  font-size: 15px;
+  line-height: 1.7;
   color: var(--muted-foreground);
+  text-wrap: pretty;
 }
 :where(.marketing-faq details a) {
   text-decoration: underline;
@@ -149,20 +171,39 @@
 }
 :where(.marketing-footer) {
   display: flex;
-  gap: 30px;
-  align-items: center;
+  gap: 48px;
+  align-items: flex-start;
   justify-content: space-between;
   max-width: 1320px;
-  padding: 50px 40px;
+  padding: 56px 40px calc(48px + env(safe-area-inset-bottom));
   margin: auto;
 }
+:where(.marketing-footer-brand) {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
 :where(.marketing-footer p) {
-  margin-top: 8px;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--muted-foreground);
 }
-:where(.marketing-footer nav) {
+:where(.marketing-footer-links) {
   display: flex;
-  gap: 22px;
+  gap: 72px;
+}
+:where(.marketing-footer-heading) {
+  margin-bottom: 12px;
   font-size: 12px;
+  font-weight: 600;
+  color: var(--muted-foreground);
+}
+:where(.marketing-footer-links ul) {
+  display: grid;
+  gap: 2px;
+  font-size: 13px;
+}
+:where(.marketing-footer-links a) {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
 }

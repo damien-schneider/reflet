@@ -3,47 +3,33 @@
 import { Button } from "@ctrl-ui/react/ui/button";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
+import { CONSENT_KEY, getCookieConsent } from "@/lib/cookie-consent";
 import { cn } from "@/lib/utils";
 
-const CONSENT_KEY = "cookie-consent";
-
-type ConsentValue = "accepted" | "rejected";
-
-export function getCookieConsent(): ConsentValue | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-  const value = localStorage.getItem(CONSENT_KEY);
-  if (value === "accepted" || value === "rejected") {
-    return value;
-  }
-  return null;
-}
-
-export function hasAnalyticsConsent(): boolean {
-  return getCookieConsent() === "accepted";
-}
+const subscribeToNothing = () => () => undefined;
+const hasStoredConsent = () => getCookieConsent() !== null;
+const hasStoredConsentOnServer = () => true;
 
 export function CookieConsentBanner() {
   const pathname = usePathname();
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    if (getCookieConsent() === null) {
-      setVisible(true);
-    }
-  }, []);
+  const storedConsent = useSyncExternalStore(
+    subscribeToNothing,
+    hasStoredConsent,
+    hasStoredConsentOnServer
+  );
+  const [dismissed, setDismissed] = useState(false);
+  const visible = !(storedConsent || dismissed);
 
   const handleAccept = () => {
     localStorage.setItem(CONSENT_KEY, "accepted");
-    setVisible(false);
+    setDismissed(true);
     window.location.reload();
   };
 
   const handleReject = () => {
     localStorage.setItem(CONSENT_KEY, "rejected");
-    setVisible(false);
+    setDismissed(true);
   };
 
   if (!visible) {
@@ -51,32 +37,30 @@ export function CookieConsentBanner() {
   }
 
   return (
-    <div
+    <section
+      aria-label="Cookie consent"
       className={cn(
         "fixed inset-x-3 z-50",
         pathname.startsWith("/dashboard") ? "bottom-28 sm:bottom-3" : "bottom-3"
       )}
     >
-      <div className="mx-auto flex max-w-xl flex-wrap items-center gap-2 rounded-lg border border-border bg-background p-2.5 shadow-sm">
-        <p className="min-w-48 flex-1 text-muted-foreground text-sm">
-          Allow analytics cookies?{" "}
-          <Link className="underline hover:text-foreground" href="/cookies">
-            Details
+      <div className="mx-auto flex max-w-xl flex-wrap items-center gap-x-3 gap-y-2 rounded-(--radius-panel) border border-border bg-popover p-3 text-popover-foreground shadow-sm">
+        <p className="min-w-48 flex-1 text-pretty text-body text-muted-foreground">
+          Allow analytics cookies to help us improve Reflet?{" "}
+          <Link
+            className="text-foreground underline underline-offset-4"
+            href="/cookies"
+          >
+            Cookie policy
           </Link>
         </p>
         <div className="flex shrink-0 gap-2">
-          <Button
-            className="h-11 sm:h-8"
-            onClick={handleReject}
-            size="xs"
-            variant="ghost"
-          >
+          <Button onClick={handleReject} size="sm" variant="ghost">
             Decline
           </Button>
           <Button
-            className="h-11 sm:h-8"
             onClick={handleAccept}
-            size="xs"
+            size="sm"
             tone="primary"
             variant="solid"
           >
@@ -84,6 +68,6 @@ export function CookieConsentBanner() {
           </Button>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

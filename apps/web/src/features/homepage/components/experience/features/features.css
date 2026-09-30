@@ -48,7 +48,6 @@
 :where(.feature-selector-button > svg) {
   margin-top: 3px;
   opacity: 0;
-  transition: opacity var(--marketing-duration);
 }
 :where(.feature-selector-button[aria-pressed="true"] > svg) {
   color: var(--feature-color);
@@ -136,7 +135,6 @@
 :where(.feature-widget textarea) {
   min-height: 90px;
   max-height: 160px;
-  font-size: 13px;
   resize: vertical;
 }
 :where(.feature-widget-footer) {

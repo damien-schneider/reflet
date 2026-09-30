@@ -27,14 +27,14 @@ export function AiMiniIndicator({
 }) {
   const color = AI_INDICATOR_COLORS[type] ?? "gray";
   return (
-    <TagBadge
-      className="h-5 gap-0.5 rounded-full px-1.5 font-normal text-caption"
-      color={color}
-    >
+    <TagBadge color={color}>
       {isAiValue && (
-        <Sparkle className="h-2.5 w-2.5 opacity-60" weight="fill" />
+        <>
+          <Sparkle aria-hidden className="opacity-60" weight="fill" />
+          <span className="sr-only">AI suggested: </span>
+        </>
       )}
-      <span className="capitalize">{label}</span>
+      <span className="first-letter:uppercase">{label}</span>
     </TagBadge>
   );
 }

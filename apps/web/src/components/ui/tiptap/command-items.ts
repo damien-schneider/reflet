@@ -27,12 +27,10 @@ export interface CommandItem {
 export interface CommandListProps {
   command: (item: CommandItem) => void;
   items: CommandItem[];
-  /**
-   * Callback to register the keyboard handler.
-   * This is called on mount with the handler function, allowing the parent
-   * to invoke keyboard handling without relying on React refs.
-   */
-  onRegisterKeyHandler: (handler: (event: KeyboardEvent) => boolean) => void;
+}
+
+export interface CommandListHandle {
+  onKeyDown: (props: { event: KeyboardEvent }) => boolean;
 }
 
 export const createSlashCommands = (
@@ -85,7 +83,7 @@ export const createSlashCommands = (
       },
       description: "Create a bullet list",
       icon: ListBullets,
-      title: "Bullet List",
+      title: "Bullet list",
     },
     {
       command: ({ editor, range }) => {
@@ -93,7 +91,7 @@ export const createSlashCommands = (
       },
       description: "Create a numbered list",
       icon: ListNumbers,
-      title: "Numbered List",
+      title: "Numbered list",
     },
     {
       command: ({ editor, range }) => {
@@ -107,9 +105,9 @@ export const createSlashCommands = (
       command: ({ editor, range }) => {
         editor.chain().focus().deleteRange(range).toggleCodeBlock().run();
       },
-      description: "Display code with syntax highlighting",
+      description: "Insert a block of code",
       icon: Code,
-      title: "Code Block",
+      title: "Code block",
     },
     {
       command: ({ editor, range }) => {

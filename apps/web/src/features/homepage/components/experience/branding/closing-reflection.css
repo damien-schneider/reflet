@@ -52,9 +52,10 @@
 :where(.marketing-closing [data-control-family="button"]) {
   margin-top: 30px;
 }
-@media (prefers-reduced-motion: no-preference) {
-  :where(.marketing-closing:hover .closing-reflection-ripple),
-  :where(.marketing-closing:focus-within .closing-reflection-ripple) {
+@media (hover: hover) and (pointer: fine) and (
+    prefers-reduced-motion: no-preference
+  ) {
+  :where(.marketing-closing:hover .closing-reflection-ripple) {
     animation: closing-ripple 1800ms var(--marketing-ease) 2;
   }
   :where(.closing-reflection-ripple:last-child) {

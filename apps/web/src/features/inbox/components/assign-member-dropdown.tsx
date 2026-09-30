@@ -6,12 +6,14 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
-  DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@ctrl-ui/react/ui/dropdown-menu";
-import { CaretDown, User, UserCircle } from "@phosphor-icons/react";
+import { CaretDown, UserCircle } from "@phosphor-icons/react";
+import { getInitials } from "@/features/support/lib/initials";
 import { cn } from "@/lib/utils";
 
 interface TeamMember {
@@ -29,17 +31,17 @@ interface AssignMemberDropdownProps {
   onAssign: (memberId: string | undefined) => void;
 }
 
-const INITIALS_SPLIT_PATTERN = /[\s@]/;
+const UNASSIGNED = "unassigned";
 
-function getInitials(name?: string, email?: string): string {
-  const source = name || email || "?";
-  return source
-    .split(INITIALS_SPLIT_PATTERN)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
+function MemberAvatar({ member }: { member: TeamMember }) {
+  return (
+    <Avatar className="size-5">
+      <AvatarImage alt="" src={member.image} />
+      <AvatarFallback className="text-micro">
+        {getInitials(member.name, member.email)}
+      </AvatarFallback>
+    </Avatar>
+  );
 }
 
 export function AssignMemberDropdown({
@@ -55,80 +57,62 @@ export function AssignMemberDropdown({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
+        aria-label={`Assignee: ${displayName ?? "Unassigned"}`}
         disabled={disabled}
         render={
           <Button
-            className={cn("justify-between gap-2", className)}
+            className={cn("min-w-0 max-w-56", className)}
             variant="surface"
           />
         }
       >
         {assignedMember ? (
-          <div className="flex items-center gap-2">
-            <Avatar className="h-5 w-5">
-              <AvatarImage src={assignedMember.image} />
-              <AvatarFallback className="text-micro">
-                {getInitials(assignedMember.name, assignedMember.email)}
-              </AvatarFallback>
-            </Avatar>
-            <span className="truncate text-sm">{displayName}</span>
-          </div>
+          <MemberAvatar member={assignedMember} />
         ) : (
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <UserCircle className="h-4 w-4" />
-            <span className="text-sm">Unassigned</span>
-          </div>
+          <UserCircle aria-hidden />
         )}
-        <CaretDown className="h-3 w-3 shrink-0 opacity-50" />
+        <span className="min-w-0 truncate">{displayName ?? "Unassigned"}</span>
+        <CaretDown aria-hidden className="shrink-0 text-muted-foreground" />
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="start" className="w-56">
+      <DropdownMenuContent align="start" className="w-64">
         <DropdownMenuGroup>
           <DropdownMenuLabel>Assign to</DropdownMenuLabel>
-          <DropdownMenuItem
-            className={cn(!assignedTo && "bg-accent")}
-            onClick={() => onAssign(undefined)}
+          <DropdownMenuRadioGroup
+            onValueChange={(value: string) =>
+              onAssign(value === UNASSIGNED ? undefined : value)
+            }
+            value={assignedTo ?? UNASSIGNED}
           >
-            <UserCircle className="h-4 w-4 text-muted-foreground" />
-            <span>Unassigned</span>
-          </DropdownMenuItem>
+            <DropdownMenuRadioItem value={UNASSIGNED}>
+              <UserCircle aria-hidden className="text-muted-foreground" />
+              Unassigned
+            </DropdownMenuRadioItem>
 
-          <DropdownMenuSeparator />
+            {members.length > 0 && <DropdownMenuSeparator />}
 
-          {members.map((member) => {
-            const isSelected = assignedTo === member.id;
-            const memberName = member.name || member.email;
-
-            return (
-              <DropdownMenuItem
-                className={cn(isSelected && "bg-accent")}
-                key={member.id}
-                onClick={() => onAssign(member.id)}
-              >
-                <Avatar className="h-5 w-5">
-                  <AvatarImage src={member.image} />
-                  <AvatarFallback className="text-micro">
-                    {getInitials(member.name, member.email)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col">
-                  <span className="text-sm">{memberName}</span>
+            {members.map((member) => (
+              <DropdownMenuRadioItem key={member.id} value={member.id}>
+                <MemberAvatar member={member} />
+                <span className="flex min-w-0 flex-col">
+                  <span className="truncate">
+                    {member.name || member.email}
+                  </span>
                   {member.name && (
-                    <span className="text-muted-foreground text-xs">
+                    <span className="truncate text-caption text-muted-foreground">
                       {member.email}
                     </span>
                   )}
-                </div>
-              </DropdownMenuItem>
-            );
-          })}
+                </span>
+              </DropdownMenuRadioItem>
+            ))}
+          </DropdownMenuRadioGroup>
         </DropdownMenuGroup>
 
         {members.length === 0 && (
-          <div className="flex items-center justify-center gap-2 py-4 text-center text-muted-foreground">
-            <User className="h-4 w-4" />
-            <span className="text-sm">No team members</span>
-          </div>
+          <p className="px-2 py-3 text-center text-muted-foreground text-sm">
+            No team members
+          </p>
         )}
       </DropdownMenuContent>
     </DropdownMenu>

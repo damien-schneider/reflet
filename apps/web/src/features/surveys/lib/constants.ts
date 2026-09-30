@@ -1,4 +1,9 @@
-import type { QuestionType, SurveyStatus, TriggerType } from "@/store/surveys";
+import type {
+  QuestionConfig,
+  QuestionType,
+  SurveyStatus,
+  TriggerType,
+} from "@/store/surveys";
 
 export const STATUS_COLORS = {
   active: "green",
@@ -15,11 +20,11 @@ export const STATUS_LABELS = {
 } as const satisfies Record<SurveyStatus, string>;
 
 export const TRIGGER_LABELS = {
-  exit_intent: "Exit Intent",
-  feedback_submitted: "After Feedback",
+  exit_intent: "Exit intent",
+  feedback_submitted: "After feedback",
   manual: "Manual",
-  page_visit: "Page Visit",
-  time_delay: "Time Delay",
+  page_visit: "Page visit",
+  time_delay: "Time delay",
 } as const satisfies Record<TriggerType, string>;
 
 export const TRIGGER_DESCRIPTIONS: Record<
@@ -28,33 +33,33 @@ export const TRIGGER_DESCRIPTIONS: Record<
 > = {
   exit_intent: {
     description: "Appears when a user is about to leave the page",
-    hint: "Perfect for churn prevention and exit surveys",
+    hint: "Useful for exit surveys and understanding churn.",
   },
   feedback_submitted: {
     description: "Appears right after a user submits feedback",
-    hint: "Follow up with deeper questions after initial feedback",
+    hint: "Follow up with deeper questions after their first feedback.",
   },
   manual: {
-    description: "Show via API or widget SDK call",
-    hint: "Best for targeted in-app moments you control programmatically",
+    description: "Show it yourself with an API or widget SDK call",
+    hint: "For in-app moments you control from your own code.",
   },
   page_visit: {
     description: "Appears when a user visits a specific page",
-    hint: "Great for page-specific feedback like pricing or checkout",
+    hint: "Ask about a specific page, like pricing or checkout.",
   },
   time_delay: {
     description: "Appears after a user has been on the page for a while",
-    hint: "Ideal for engaged users who have spent time exploring",
+    hint: "Reaches engaged users who have spent time exploring.",
   },
 };
 
 export const QUESTION_TYPE_LABELS = {
-  boolean: "Yes / No",
-  multiple_choice: "Multiple Choice",
-  nps: "NPS (0-10)",
-  rating: "Rating Scale",
-  single_choice: "Single Choice",
-  text: "Free Text",
+  boolean: "Yes / no",
+  multiple_choice: "Multiple choice",
+  nps: "NPS (0–10)",
+  rating: "Rating scale",
+  single_choice: "Single choice",
+  text: "Free text",
 } as const satisfies Record<QuestionType, string>;
 
 export const QUESTION_TYPE_DESCRIPTIONS: Record<QuestionType, string> = {
@@ -66,19 +71,10 @@ export const QUESTION_TYPE_DESCRIPTIONS: Record<QuestionType, string> = {
   text: "Open-ended written response",
 };
 
-export const QUESTION_TYPE_ICONS = {
-  boolean: "ToggleLeft",
-  multiple_choice: "CheckSquare",
-  nps: "ChartBar",
-  rating: "Star",
-  single_choice: "RadioButton",
-  text: "TextAa",
-} as const satisfies Record<QuestionType, string>;
-
 export function getDefaultConfig(
   type: QuestionType,
   choices?: string[]
-): Record<string, unknown> | undefined {
+): QuestionConfig | undefined {
   if (type === "rating") {
     return {
       maxLabel: "Excellent",
@@ -99,7 +95,7 @@ export function getDefaultConfig(
     return { choices: choices ?? ["Option 1", "Option 2", "Option 3"] };
   }
   if (type === "text") {
-    return { maxLength: 1000, placeholder: "Your answer..." };
+    return { maxLength: 1000, placeholder: "Your answer…" };
   }
 }
 

@@ -120,7 +120,7 @@ describe("useMediaUpload", () => {
       expect(uploadResult).toBeNull();
       expect(onError).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: expect.stringContaining("smaller than 2MB"),
+          message: expect.stringContaining("smaller than 2 MB"),
         })
       );
     });
@@ -141,7 +141,7 @@ describe("useMediaUpload", () => {
       expect(uploadResult).toBeNull();
       expect(onError).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: expect.stringContaining("smaller than 10MB"),
+          message: expect.stringContaining("smaller than 10 MB"),
         })
       );
     });
@@ -161,7 +161,9 @@ describe("useMediaUpload", () => {
 
       expect(uploadResult).toBeNull();
       expect(onError).toHaveBeenCalledWith(
-        expect.objectContaining({ message: "Failed to upload image" })
+        expect.objectContaining({
+          message: "Unable to upload the image. Try again.",
+        })
       );
     });
 
@@ -178,7 +180,9 @@ describe("useMediaUpload", () => {
 
       expect(uploadResult).toBeNull();
       expect(onError).toHaveBeenCalledWith(
-        expect.objectContaining({ message: "Failed to get storage URL" })
+        expect.objectContaining({
+          message: "Unable to upload the image. Try again.",
+        })
       );
     });
 
@@ -193,7 +197,9 @@ describe("useMediaUpload", () => {
       });
 
       expect(onError).toHaveBeenCalledWith(
-        expect.objectContaining({ message: "Failed to upload image" })
+        expect.objectContaining({
+          message: "Unable to upload the image. Try again.",
+        })
       );
     });
 

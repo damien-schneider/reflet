@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
-const AUTH_INITIAL_HEADING = "Authentication";
-const AUTH_SIGNUP_HEADING = "Create an account";
+const AUTH_INITIAL_HEADING = "Sign in or create an account";
+const AUTH_SIGNUP_HEADING = "Create your account";
 
 test.describe("Auth Form Password Validation", () => {
   test.beforeEach(async ({ context }) => {

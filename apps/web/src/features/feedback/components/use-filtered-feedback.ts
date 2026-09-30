@@ -38,11 +38,13 @@ export function useFilteredFeedback({
     );
 
     // Tag filtering: single tag (from bar) takes precedence over multi-tag (from dropdown)
-    const tagIdsToFilter = selectedTagId ? [selectedTagId] : selectedTagIds;
+    const tagIdsToFilter = new Set<string>(
+      selectedTagId ? [selectedTagId] : selectedTagIds
+    );
 
-    if (tagIdsToFilter.length > 0) {
+    if (tagIdsToFilter.size > 0) {
       result = result.filter((item) =>
-        item.tags?.some((tag) => tag && tagIdsToFilter.includes(tag._id))
+        item.tags?.some((tag) => tag && tagIdsToFilter.has(tag._id))
       );
     }
 

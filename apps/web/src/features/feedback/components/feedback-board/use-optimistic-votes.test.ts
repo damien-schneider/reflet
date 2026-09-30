@@ -5,6 +5,11 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { act, renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+const mockToastError = vi.fn();
+vi.mock("@ctrl-ui/react/ui/toast", () => ({
+  toast: { error: (message: string) => mockToastError(message) },
+}));
+
 import type { FeedbackItem } from "../feed-feedback-view";
 import {
   applyOptimisticVote,
@@ -96,10 +101,6 @@ describe("applyOptimisticVote", () => {
 });
 
 describe("useOptimisticVotes", () => {
-  const mockEvent = {
-    stopPropagation: vi.fn(),
-  } as unknown as React.MouseEvent;
-
   it("calls authGuard when not authenticated", async () => {
     const authGuard = vi.fn();
     const toggleVoteMutation = vi.fn();
@@ -113,11 +114,7 @@ describe("useOptimisticVotes", () => {
     );
 
     await act(async () => {
-      await result.current.handleToggleVote(
-        mockEvent,
-        "f1" as Id<"feedback">,
-        "upvote"
-      );
+      await result.current.handleToggleVote("f1" as Id<"feedback">, "upvote");
     });
 
     expect(authGuard).toHaveBeenCalled();
@@ -136,11 +133,7 @@ describe("useOptimisticVotes", () => {
     );
 
     await act(async () => {
-      await result.current.handleToggleVote(
-        mockEvent,
-        "f1" as Id<"feedback">,
-        "upvote"
-      );
+      await result.current.handleToggleVote("f1" as Id<"feedback">, "upvote");
     });
 
     expect(toggleVoteMutation).toHaveBeenCalledWith({
@@ -161,13 +154,10 @@ describe("useOptimisticVotes", () => {
     );
 
     await act(async () => {
-      await result.current.handleToggleVote(
-        mockEvent,
-        "f1" as Id<"feedback">,
-        "upvote"
-      );
+      await result.current.handleToggleVote("f1" as Id<"feedback">, "upvote");
     });
 
     expect(result.current.optimisticVotes.size).toBe(0);
+    expect(mockToastError).toHaveBeenCalledOnce();
   });
 });

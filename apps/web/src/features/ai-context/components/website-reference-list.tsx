@@ -1,12 +1,19 @@
 "use client";
 
 import { Button } from "@ctrl-ui/react/ui/button";
-import { Plus } from "@phosphor-icons/react";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@ctrl-ui/react/ui/empty";
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
+import { Globe, Plus } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { useState } from "react";
-import { Muted } from "@/components/ui/typography";
 
 import { AddWebsiteDialog } from "./add-website-dialog";
 import { WebsiteReferenceCard } from "./website-reference-card";
@@ -23,9 +30,9 @@ export function useWebsiteReferenceDialog() {
 
 export function WebsiteReferenceAddButton({ onOpen }: { onOpen: () => void }) {
   return (
-    <Button onClick={onOpen} size="xs" variant="surface">
-      <Plus className="mr-1.5 h-4 w-4" />
-      Add Website
+    <Button onClick={onOpen} size="sm" variant="surface">
+      <Plus aria-hidden />
+      Add website
     </Button>
   );
 }
@@ -43,28 +50,41 @@ export function WebsiteReferenceList({
 
   if (references === undefined) {
     return (
-      <div className="flex justify-center py-8">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+      <div
+        aria-busy="true"
+        className="flex flex-col gap-3"
+        data-testid="website-references-loading"
+      >
+        <Skeleton className="h-20 w-full" />
+        <Skeleton className="h-20 w-full" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-3">
       {references.length === 0 ? (
-        <div className="py-4 text-center">
-          <Muted>Nothing yet</Muted>
-        </div>
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia>
+              <Globe aria-hidden className="size-6" />
+            </EmptyMedia>
+            <EmptyTitle>No website references</EmptyTitle>
+            <EmptyDescription>
+              {isAdmin
+                ? "Add docs or marketing pages so the AI understands your product."
+                : "An admin can add docs or marketing pages for extra AI context."}
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       ) : (
-        <div className="space-y-3">
-          {references.map((reference) => (
-            <WebsiteReferenceCard
-              isAdmin={isAdmin}
-              key={reference._id}
-              reference={reference}
-            />
-          ))}
-        </div>
+        references.map((reference) => (
+          <WebsiteReferenceCard
+            isAdmin={isAdmin}
+            key={reference._id}
+            reference={reference}
+          />
+        ))
       )}
 
       <AddWebsiteDialog

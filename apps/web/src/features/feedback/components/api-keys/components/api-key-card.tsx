@@ -2,181 +2,239 @@
 
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button } from "@ctrl-ui/react/ui/button";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@ctrl-ui/react/ui/card";
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+} from "@ctrl-ui/react/ui/field";
 import { Input } from "@ctrl-ui/react/ui/input";
 import { Switch } from "@ctrl-ui/react/ui/switch";
-import { Copy, Eye, EyeSlash, Plus, Trash } from "@phosphor-icons/react";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { Label } from "@/components/ui/label";
+import { ArrowsClockwise, Plus, Trash, X } from "@phosphor-icons/react";
+import { format } from "date-fns";
+import { type FormEvent, useState } from "react";
+import { CopyButton } from "@/components/copy-button";
+import type { ApiKeyId, ApiKeyListItem } from "../hooks/use-api-keys";
 
-interface ApiKey {
-  allowedDomains?: string[];
-  apiKeyId: Id<"organizationApiKeys">;
-  createdAt: number;
-  isActive: boolean;
-  lastUsedAt?: number;
-  name: string;
-  publicKey: string;
-}
+const DOMAIN_PATTERN =
+  /^(\*\.)?([a-z0-9-]+\.)+[a-z]{2,}(:\d+)?$|^localhost(:\d+)?$/i;
+const URL_PREFIX_PATTERN = /^https?:\/\//i;
+const TRAILING_SLASH_PATTERN = /\/+$/;
+const MASKED_SECRET = "fb_sec_••••••••••••••••";
+
+const DATE_FORMAT = "MMM d, yyyy";
 
 interface ApiKeyCardProps {
-  apiKey: ApiKey;
-  domainInput: string;
-  onAddDomain: (
-    apiKeyId: Id<"organizationApiKeys">,
-    currentDomains: string[]
-  ) => void;
-  onCopyToClipboard: (text: string, label: string) => void;
-  onDelete: (apiKeyId: Id<"organizationApiKeys">) => void;
-  onRegenerate: (apiKeyId: Id<"organizationApiKeys">) => void;
-  onRemoveDomain: (
-    apiKeyId: Id<"organizationApiKeys">,
-    currentDomains: string[],
-    domain: string
-  ) => void;
-  onToggleActive: (
-    apiKeyId: Id<"organizationApiKeys">,
-    isActive: boolean
-  ) => void;
-  setDomainInput: (value: string) => void;
-  setShowSecretKey: (value: boolean) => void;
-  showSecretKey: boolean;
+  apiKey: ApiKeyListItem;
+  onDelete: (apiKey: ApiKeyListItem) => void;
+  onRegenerate: (apiKey: ApiKeyListItem) => void;
+  onSetAllowedDomains: (
+    apiKeyId: ApiKeyId,
+    allowedDomains: string[]
+  ) => Promise<boolean>;
+  onToggleActive: (apiKeyId: ApiKeyId, isActive: boolean) => void;
 }
 
 export function ApiKeyCard({
   apiKey,
-  showSecretKey,
-  setShowSecretKey,
-  onToggleActive,
   onDelete,
   onRegenerate,
-  onAddDomain,
-  onRemoveDomain,
-  domainInput,
-  setDomainInput,
-  onCopyToClipboard,
+  onSetAllowedDomains,
+  onToggleActive,
 }: ApiKeyCardProps) {
+  const fieldId = `api-key-${apiKey.apiKeyId}`;
   return (
-    <div className="space-y-4 rounded-lg border p-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h4 className="font-medium">{apiKey.name}</h4>
-          <p className="text-muted-foreground text-sm">
-            Created {new Date(apiKey.createdAt).toLocaleDateString()}
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Badge>{apiKey.isActive ? "Active" : "Inactive"}</Badge>
+    <Card variant="sectioned">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          {apiKey.name}
+          {apiKey.isActive ? null : (
+            <Badge color="neutral" size="sm">
+              Inactive
+            </Badge>
+          )}
+        </CardTitle>
+        <CardDescription>
+          Created{" "}
+          <time dateTime={new Date(apiKey.createdAt).toISOString()}>
+            {format(apiKey.createdAt, DATE_FORMAT)}
+          </time>
+          {apiKey.lastUsedAt ? (
+            <>
+              {" · "}Last used{" "}
+              <time dateTime={new Date(apiKey.lastUsedAt).toISOString()}>
+                {format(apiKey.lastUsedAt, DATE_FORMAT)}
+              </time>
+            </>
+          ) : (
+            " · Never used"
+          )}
+        </CardDescription>
+        <CardAction className="flex items-center gap-2">
           <Switch
+            aria-label={`Enable ${apiKey.name}`}
             checked={apiKey.isActive}
             onCheckedChange={(checked) =>
               onToggleActive(apiKey.apiKeyId, checked)
             }
           />
           <Button
+            aria-label={`Delete ${apiKey.name}`}
             iconOnly
-            onClick={() => onDelete(apiKey.apiKeyId)}
+            onClick={() => onDelete(apiKey)}
+            size="sm"
+            tone="danger"
             variant="ghost"
           >
-            <Trash className="h-4 w-4 text-destructive" />
+            <Trash aria-hidden />
           </Button>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label>Public Key</Label>
-        <div className="flex items-center gap-2">
-          <Input className="font-mono" readOnly value={apiKey.publicKey} />
-          <Button
-            iconOnly
-            onClick={() => onCopyToClipboard(apiKey.publicKey, "Public key")}
-            variant="surface"
-          >
-            <Copy className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label>Secret Key</Label>
-        <div className="flex items-center gap-2">
-          <Input
-            className="font-mono"
-            readOnly
-            type={showSecretKey ? "text" : "password"}
-            value="fb_sec_••••••••••••••••••••••••"
-          />
-          <Button
-            iconOnly
-            onClick={() => setShowSecretKey(!showSecretKey)}
-            title={showSecretKey ? "Hide" : "Show"}
-            variant="surface"
-          >
-            {showSecretKey ? (
-              <EyeSlash className="h-4 w-4" />
-            ) : (
-              <Eye className="h-4 w-4" />
-            )}
-          </Button>
-          <Button
-            onClick={() => onRegenerate(apiKey.apiKeyId)}
-            size="xs"
-            variant="surface"
-          >
-            Regenerate
-          </Button>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label>Allowed Domains (Optional)</Label>
-        <p className="text-muted-foreground text-sm">
-          Restrict API access to specific domains. Leave empty to allow all
-          domains.
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {apiKey.allowedDomains?.map((domain: string) => (
-            <Badge
-              className="cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
-              key={domain}
-              onClick={() =>
-                onRemoveDomain(
-                  apiKey.apiKeyId,
-                  apiKey.allowedDomains ?? [],
-                  domain
-                )
-              }
+        </CardAction>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-5">
+        <Field>
+          <FieldLabel htmlFor={`${fieldId}-public`}>Public key</FieldLabel>
+          <div className="flex items-center gap-2">
+            <Input
+              className="font-mono"
+              id={`${fieldId}-public`}
+              onFocus={(event) => event.target.select()}
+              readOnly
+              value={apiKey.publicKey}
+            />
+            <CopyButton label="Copy public key" value={apiKey.publicKey} />
+          </div>
+        </Field>
+        <Field>
+          <FieldLabel htmlFor={`${fieldId}-secret`}>Secret key</FieldLabel>
+          <div className="flex items-center gap-2">
+            <Input
+              aria-describedby={`${fieldId}-secret-hint`}
+              className="font-mono"
+              id={`${fieldId}-secret`}
+              readOnly
+              value={MASKED_SECRET}
+            />
+            <Button
+              onClick={() => onRegenerate(apiKey)}
+              size="sm"
+              variant="surface"
             >
-              {domain} &times;
-            </Badge>
-          ))}
-        </div>
+              <ArrowsClockwise aria-hidden />
+              Regenerate
+            </Button>
+          </div>
+          <FieldDescription id={`${fieldId}-secret-hint`}>
+            Secret keys are shown once. Regenerate to get a new one.
+          </FieldDescription>
+        </Field>
+        <AllowedDomains
+          apiKey={apiKey}
+          fieldId={fieldId}
+          onSetAllowedDomains={onSetAllowedDomains}
+        />
+      </CardContent>
+    </Card>
+  );
+}
+
+function AllowedDomains({
+  apiKey,
+  fieldId,
+  onSetAllowedDomains,
+}: {
+  apiKey: ApiKeyListItem;
+  fieldId: string;
+  onSetAllowedDomains: ApiKeyCardProps["onSetAllowedDomains"];
+}) {
+  const [domainInput, setDomainInput] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const domains = apiKey.allowedDomains ?? [];
+  const inputId = `${fieldId}-domain`;
+
+  const handleAdd = async (event: FormEvent) => {
+    event.preventDefault();
+    const domain = domainInput
+      .trim()
+      .toLowerCase()
+      .replace(URL_PREFIX_PATTERN, "")
+      .replace(TRAILING_SLASH_PATTERN, "");
+    if (!DOMAIN_PATTERN.test(domain)) {
+      setError("Enter a domain like example.com");
+      return;
+    }
+    if (domains.includes(domain)) {
+      setError("This domain is already allowed");
+      return;
+    }
+    if (await onSetAllowedDomains(apiKey.apiKeyId, [...domains, domain])) {
+      setDomainInput("");
+    }
+  };
+
+  return (
+    <form className="flex flex-col gap-2" noValidate onSubmit={handleAdd}>
+      <Field>
+        <FieldLabel htmlFor={inputId}>Allowed domains</FieldLabel>
+        <FieldDescription>
+          Restrict requests to these domains. Leave empty to allow all.
+        </FieldDescription>
+        {domains.length > 0 ? (
+          <ul className="flex flex-wrap gap-2">
+            {domains.map((domain) => (
+              <li
+                className="flex items-center gap-1 rounded-md border border-border py-0.5 ps-2 pe-0.5 font-mono text-caption"
+                key={domain}
+              >
+                {domain}
+                <Button
+                  aria-label={`Remove ${domain}`}
+                  iconOnly
+                  onClick={() =>
+                    onSetAllowedDomains(
+                      apiKey.apiKeyId,
+                      domains.filter((item) => item !== domain)
+                    )
+                  }
+                  size="xs"
+                  variant="ghost"
+                >
+                  <X aria-hidden />
+                </Button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
         <div className="flex items-center gap-2">
           <Input
-            onChange={(e) => setDomainInput(e.target.value)}
-            onKeyDown={(e) =>
-              e.key === "Enter" &&
-              onAddDomain(apiKey.apiKeyId, apiKey.allowedDomains ?? [])
-            }
+            aria-describedby={`${inputId}-error`}
+            aria-invalid={error ? true : undefined}
+            autoComplete="off"
+            id={inputId}
+            onChange={(event) => {
+              setDomainInput(event.target.value);
+              setError(null);
+            }}
             placeholder="example.com"
+            spellCheck={false}
             value={domainInput}
           />
-          <Button
-            iconOnly
-            onClick={() =>
-              onAddDomain(apiKey.apiKeyId, apiKey.allowedDomains ?? [])
-            }
-            variant="surface"
-          >
-            <Plus className="h-4 w-4" />
+          <Button size="sm" type="submit" variant="surface">
+            <Plus aria-hidden />
+            Add
           </Button>
         </div>
-      </div>
-
-      {apiKey.lastUsedAt && (
-        <div className="text-muted-foreground text-sm">
-          Last used: {new Date(apiKey.lastUsedAt).toLocaleDateString()}
-        </div>
-      )}
-    </div>
+        <FieldError id={`${inputId}-error`} match={error !== null}>
+          {error}
+        </FieldError>
+      </Field>
+    </form>
   );
 }

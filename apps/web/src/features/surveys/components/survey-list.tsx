@@ -1,11 +1,22 @@
 "use client";
 
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@ctrl-ui/react/ui/empty";
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { ClipboardText } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { Muted } from "@/components/ui/typography";
 import { SurveyCard } from "@/features/surveys/components/survey-card";
-import type { SurveyStatus, TriggerType } from "@/store/surveys";
+import { STATUS_LABELS } from "@/features/surveys/lib/constants";
+import type {
+  SurveyStatus,
+  SurveyStatusFilter,
+  TriggerType,
+} from "@/store/surveys";
 
 interface SurveyItem {
   _id: Id<"surveys">;
@@ -23,45 +34,74 @@ interface SurveyListProps {
   onDelete: (surveyId: Id<"surveys">) => void;
   onStatusChange: (surveyId: Id<"surveys">, status: SurveyStatus) => void;
   orgSlug: string;
+  statusFilter: SurveyStatusFilter;
   surveys: SurveyItem[] | undefined;
+}
+
+export function SurveyListSkeleton() {
+  return (
+    <div
+      aria-label="Loading surveys"
+      className="flex flex-col gap-3"
+      role="status"
+    >
+      {["sk-1", "sk-2", "sk-3"].map((id) => (
+        <div className="flex flex-col gap-2 rounded-lg border p-4" key={id}>
+          <Skeleton className="h-5 w-56 max-w-full" />
+          <Skeleton className="h-4 w-80 max-w-full" />
+          <Skeleton className="h-3.5 w-96 max-w-full" />
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export function SurveyList({
   surveys,
   orgSlug,
+  statusFilter,
   onStatusChange,
   onDelete,
 }: SurveyListProps) {
   if (!surveys) {
-    return (
-      <div className="flex flex-col gap-3">
-        {["sk-1", "sk-2", "sk-3"].map((id) => (
-          <Skeleton className="h-24 w-full" key={id} />
-        ))}
-      </div>
-    );
+    return <SurveyListSkeleton />;
   }
 
   if (surveys.length === 0) {
+    const isFiltered = statusFilter !== "all";
     return (
-      <div className="flex flex-col items-center justify-center py-16">
-        <ClipboardText className="mb-4 size-12 text-muted-foreground" />
-        <Muted>No surveys found</Muted>
-      </div>
+      <Empty className="rounded-lg border border-dashed py-16">
+        <EmptyHeader>
+          <EmptyMedia>
+            <ClipboardText aria-hidden className="size-6" />
+          </EmptyMedia>
+          <EmptyTitle>
+            {isFiltered
+              ? `No ${STATUS_LABELS[statusFilter].toLowerCase()} surveys`
+              : "No surveys yet"}
+          </EmptyTitle>
+          <EmptyDescription>
+            {isFiltered
+              ? "Surveys move here when you change their status."
+              : "Create a survey to ask users questions right inside your product."}
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     );
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <ul className="flex flex-col gap-3">
       {surveys.map((survey) => (
-        <SurveyCard
-          key={survey._id}
-          onDelete={onDelete}
-          onStatusChange={onStatusChange}
-          orgSlug={orgSlug}
-          survey={survey}
-        />
+        <li key={survey._id}>
+          <SurveyCard
+            onDelete={onDelete}
+            onStatusChange={onStatusChange}
+            orgSlug={orgSlug}
+            survey={survey}
+          />
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }

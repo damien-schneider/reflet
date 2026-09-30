@@ -1,45 +1,81 @@
 "use client";
 
-import { Button } from "@ctrl-ui/react/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@ctrl-ui/react/ui/dialog";
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@ctrl-ui/react/ui/alert-dialog";
+import { Button } from "@ctrl-ui/react/ui/button";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
+import { toast } from "@ctrl-ui/react/ui/toast";
+import { useState } from "react";
 
 interface DeleteReleaseDialogProps {
   onClose: () => void;
   onConfirm: () => Promise<void>;
   open: boolean;
+  releaseTitle?: string;
 }
 
 export function DeleteReleaseDialog({
   open,
   onClose,
   onConfirm,
+  releaseTitle,
 }: DeleteReleaseDialogProps) {
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleConfirm = async () => {
+    setIsDeleting(true);
+    try {
+      await onConfirm();
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Unable to delete the release. Try again."
+      );
+    }
+    setIsDeleting(false);
+  };
+
   return (
-    <Dialog onOpenChange={(val) => !val && onClose()} open={open}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Delete release</DialogTitle>
-          <DialogDescription>
-            Are you sure you want to delete this release? This action cannot be
-            undone.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button onClick={onClose} variant="surface">
+    <AlertDialog
+      onOpenChange={(nextOpen) => {
+        if (!(nextOpen || isDeleting)) {
+          onClose();
+        }
+      }}
+      open={open}
+    >
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="text-balance">
+            Delete {releaseTitle ? `“${releaseTitle}”` : "this release"}?
+          </AlertDialogTitle>
+          <AlertDialogDescription className="text-pretty">
+            The release disappears from your changelog and linked feedback is
+            unlinked. This can’t be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <Button disabled={isDeleting} onClick={onClose} variant="surface">
             Cancel
           </Button>
-          <Button onClick={onConfirm} tone="danger" variant="surface">
-            Delete
+          <Button
+            disabled={isDeleting}
+            onClick={handleConfirm}
+            tone="danger"
+            variant="surface"
+          >
+            {isDeleting ? <Spinner data-icon="inline-start" size="xs" /> : null}
+            Delete release
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

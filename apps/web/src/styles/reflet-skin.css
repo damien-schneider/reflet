@@ -38,8 +38,12 @@
 
   /* ---------------------------------------------------------------- controls */
 
+  :root[data-theme="reflet"] :where([data-control-family="button"]) {
+    --cui-button-press-scale: 0.96;
+  }
+
   :root[data-theme="reflet"]
-  :where([data-control-family="button"][data-variant="solid"]) {
+    :where([data-control-family="button"][data-variant="solid"]) {
     --cui-button-background-image: linear-gradient(
       180deg,
       var(--reflet-solid-light),
@@ -48,7 +52,6 @@
     --cui-button-shadow: var(--reflet-solid-shadow);
     --cui-button-hover-shadow: var(--reflet-solid-shadow);
     --cui-button-press-shadow: var(--reflet-recess);
-    --cui-button-press-scale: 0.98;
   }
 
   :root[data-theme="reflet"]
@@ -148,6 +151,45 @@
   :root[data-theme="reflet"]
     :where([data-control-family="popup"][data-popup-kind="tooltip"]) {
     --cui-popup-shadow: var(--reflet-control-shadow);
+  }
+
+  /* Control UI pads the dialog header and footer but not the body; give every
+     body the same inset so content lines up with the title. */
+  :root[data-theme="reflet"]
+  :where(
+    [data-control-family="popup"]:is(
+        [data-popup-kind="dialog"],
+        [data-popup-kind="alert-dialog"]
+      )[data-slot="content"]
+      > :not([data-slot], [data-control-family])
+  ) {
+    padding-inline: calc(var(--spacing) * 4);
+  }
+
+  /* The palette is opened by keyboard many times a day: open and close it
+     without motion, backdrop and list height included. */
+  :root[data-theme="reflet"]:has(
+    [data-popup-kind="command"][data-slot="dialog-root"]
+  )
+  :where(
+    [data-control-family="popup"][data-popup-part="backdrop"],
+    [data-control-family="popup"][data-popup-part="surface"]:has(
+      > [data-popup-kind="command"]
+    ),
+    [data-popup-kind="command"][data-slot="dialog-root"]
+  ) {
+    transition: none;
+  }
+
+  :root[data-theme="reflet"] :where(.recharts-surface:focus-visible) {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-control);
+  }
+
+  :root[data-theme="reflet"] :where(label:has(> input.sr-only:focus-visible)) {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
   }
 
   /* --------------------------------------------------------------- navigation */

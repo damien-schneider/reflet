@@ -4,12 +4,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AcceptInvitationContent } from "./accept-invitation-page";
 
 // Regex patterns used in tests
-const MEMBRE_PATTERN = /membre/;
-const EXPIRED_PATTERN = /expirée/i;
+const MEMBER_ROLE_PATTERN = /as a member/;
+const EXPIRED_PATTERN = /^Invitation expired$/;
 const ALREADY_MEMBER_PATTERN = /Already a member/i;
-const ALREADY_ACCEPTED_PATTERN = /déjà acceptée/i;
-const LOGIN_PROMPT_PATTERN = /Connectez-vous.*pour accepter/i;
-const ACCEPT_INVITATION_PATTERN = /Accepter l'invitation/i;
+const ALREADY_ACCEPTED_PATTERN = /^Invitation already accepted$/;
+const LOGIN_PROMPT_PATTERN = /Sign in.*to accept/i;
+const ACCEPT_INVITATION_PATTERN = /Accept invitation/i;
 const AUTH_FORM_TESTID = "auth-form";
 
 // Mock the Convex hooks
@@ -87,11 +87,6 @@ vi.mock("@ctrl-ui/react/ui/button", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/typography", () => ({
-  H1: ({ children }: { children: React.ReactNode }) => <h1>{children}</h1>,
-  Muted: ({ children }: { children: React.ReactNode }) => <p>{children}</p>,
-}));
-
 // Helper to create authenticated session
 const createAuthenticatedSession = () => ({
   data: { user: { email: "test@example.com", id: "user-123" } },
@@ -127,7 +122,7 @@ describe("AcceptInvitationContent", () => {
 
     render(<AcceptInvitationContent token="invalid-token" />);
 
-    expect(screen.getByText("Invitation invalide")).toBeInTheDocument();
+    expect(screen.getByText("Invalid invitation")).toBeInTheDocument();
   });
 
   it("renders invitation details when valid", () => {
@@ -143,7 +138,7 @@ describe("AcceptInvitationContent", () => {
     // Check that the heading contains the org name
     expect(screen.getByRole("heading")).toHaveTextContent("Acme Corp");
     // Check role text is present
-    expect(screen.getByText(MEMBRE_PATTERN)).toBeInTheDocument();
+    expect(screen.getByText(MEMBER_ROLE_PATTERN)).toBeInTheDocument();
   });
 
   it("renders expired state for expired invitation", () => {
@@ -317,7 +312,7 @@ describe("AcceptInvitationContent", () => {
       // Should still show organization name
       expect(screen.getByRole("heading")).toHaveTextContent("Acme Corp");
       // Should show role
-      expect(screen.getByText(MEMBRE_PATTERN)).toBeInTheDocument();
+      expect(screen.getByText(MEMBER_ROLE_PATTERN)).toBeInTheDocument();
     });
   });
 });

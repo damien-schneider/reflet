@@ -14,9 +14,16 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { use, useState } from "react";
+import { OrgNotFound } from "@/features/dashboard/components/org-not-found";
 import { CreateSurveyDialog } from "@/features/surveys/components/create-survey-dialog";
-import { SurveyList } from "@/features/surveys/components/survey-list";
-import type { SurveyStatus } from "@/store/surveys";
+import {
+  SurveyList,
+  SurveyListSkeleton,
+} from "@/features/surveys/components/survey-list";
+import { STATUS_LABELS } from "@/features/surveys/lib/constants";
+import type { SurveyStatus, SurveyStatusFilter } from "@/store/surveys";
+
+const STATUS_FILTERS: SurveyStatus[] = ["draft", "active", "paused", "closed"];
 
 export default function SurveysPage({
   params,
@@ -32,7 +39,7 @@ export default function SurveysPage({
   const updateStatus = useMutation(api.surveys.mutations.updateStatus);
   const deleteSurveyMutation = useMutation(api.surveys.mutations.deleteSurvey);
 
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<SurveyStatusFilter>("all");
 
   const handleStatusChange = async (
     surveyId: Id<"surveys">,
@@ -40,18 +47,16 @@ export default function SurveysPage({
   ) => {
     try {
       await updateStatus({ status, surveyId });
-      toast.success(`Survey ${status}`);
     } catch {
-      toast.error("Failed to update status");
+      toast.error("Couldn’t change the survey status. Try again.");
     }
   };
 
   const handleDelete = async (surveyId: Id<"surveys">) => {
     try {
       await deleteSurveyMutation({ surveyId });
-      toast.success("Survey deleted");
     } catch {
-      toast.error("Failed to delete survey");
+      toast.error("Couldn’t delete the survey. Try again.");
     }
   };
 
@@ -60,11 +65,19 @@ export default function SurveysPage({
       ? surveys
       : surveys?.filter((s) => s.status === statusFilter);
 
-  if (!org) {
+  if (org === null) {
+    return <OrgNotFound />;
+  }
+
+  if (org === undefined) {
     return (
       <PageLayout scroll="page" width="content">
-        <PageBody>
-          <Skeleton className="h-8 w-48" />
+        <PageHeader>
+          <Skeleton className="h-9 w-40" />
+        </PageHeader>
+        <PageBody contentClassName="space-y-4">
+          <Skeleton className="h-9 w-80 max-w-full" />
+          <SurveyListSkeleton />
         </PageBody>
       </PageLayout>
     );
@@ -75,17 +88,18 @@ export default function SurveysPage({
       <PageHeader>
         <PageTitle>Surveys</PageTitle>
         <PageActions>
-          <CreateSurveyDialog organizationId={org._id} />
+          <CreateSurveyDialog organizationId={org._id} orgSlug={orgSlug} />
         </PageActions>
       </PageHeader>
       <PageBody>
         <Tabs onValueChange={setStatusFilter} value={statusFilter}>
           <TabsList>
             <TabsTab value="all">All</TabsTab>
-            <TabsTab value="draft">Draft</TabsTab>
-            <TabsTab value="active">Active</TabsTab>
-            <TabsTab value="paused">Paused</TabsTab>
-            <TabsTab value="closed">Closed</TabsTab>
+            {STATUS_FILTERS.map((status) => (
+              <TabsTab key={status} value={status}>
+                {STATUS_LABELS[status]}
+              </TabsTab>
+            ))}
           </TabsList>
 
           <TabsPanel className="mt-4" value={statusFilter}>
@@ -93,6 +107,7 @@ export default function SurveysPage({
               onDelete={handleDelete}
               onStatusChange={handleStatusChange}
               orgSlug={orgSlug}
+              statusFilter={statusFilter}
               surveys={filteredSurveys}
             />
           </TabsPanel>

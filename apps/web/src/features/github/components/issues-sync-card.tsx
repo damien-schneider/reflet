@@ -9,10 +9,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@ctrl-ui/react/ui/select";
-import { Switch } from "@ctrl-ui/react/ui/switch";
-import { ArrowsClockwise, Spinner } from "@phosphor-icons/react";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
+import { ArrowsClockwise } from "@phosphor-icons/react";
+import { format } from "date-fns";
 import { Label } from "@/components/ui/label";
 import { Text } from "@/components/ui/typography";
+import { SettingSwitchRow } from "./setting-switch-row";
 
 const PROMOTE_TRIGGERS = [
   { label: "Manually", value: "manual" },
@@ -76,149 +78,182 @@ export function IssuesSyncSection({
   promoteStatus,
   promoteTrigger,
 }: IssuesSyncCardProps) {
+  return (
+    <div className="space-y-4">
+      <PromoteTriggerRow
+        isAdmin={isAdmin}
+        onPromoteTriggerChange={onPromoteTriggerChange}
+        promoteStatus={promoteStatus}
+        promoteTrigger={promoteTrigger}
+      />
+
+      <SettingSwitchRow
+        checked={isEnabled}
+        description="Import GitHub issues based on label mappings"
+        disabled={!isAdmin}
+        id="issues-sync"
+        label="Sync issues from GitHub"
+        onCheckedChange={(checked) => onToggleSync(checked, autoSync)}
+      />
+
+      {isEnabled ? (
+        <>
+          <SettingSwitchRow
+            checked={autoSync}
+            description="Automatically import new issues that match label mappings"
+            disabled={!isAdmin}
+            id="auto-import-issues"
+            label="Auto-import issues"
+            onCheckedChange={(checked) => onToggleSync(isEnabled, checked)}
+          />
+
+          <dl className="grid grid-cols-3 gap-4 rounded-lg border bg-muted/50 p-4 text-center">
+            <IssueSyncStat label="Issues synced" value={syncedIssuesCount} />
+            <IssueSyncStat label="Imported to boards" value={importedCount} />
+            <IssueSyncStat label="Label mappings" value={mappingsCount} />
+          </dl>
+
+          <SyncIssuesActions
+            isAdmin={isAdmin}
+            isSyncing={isSyncing}
+            lastSyncAt={lastSyncAt}
+            lastSyncStatus={lastSyncStatus}
+            onSyncNow={onSyncNow}
+          />
+        </>
+      ) : null}
+    </div>
+  );
+}
+
+function SyncIssuesActions({
+  isAdmin,
+  isSyncing,
+  lastSyncAt,
+  lastSyncStatus,
+  onSyncNow,
+}: Pick<
+  IssuesSyncCardProps,
+  "isAdmin" | "isSyncing" | "lastSyncAt" | "lastSyncStatus" | "onSyncNow"
+>) {
+  return (
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+      {isAdmin ? (
+        <Button disabled={isSyncing} onClick={onSyncNow} variant="surface">
+          {isSyncing ? (
+            <Spinner data-icon="inline-start" size="xs" />
+          ) : (
+            <ArrowsClockwise
+              aria-hidden="true"
+              className="size-4"
+              data-icon="inline-start"
+            />
+          )}
+          Sync issues now
+        </Button>
+      ) : null}
+      <div aria-live="polite" className="flex items-center gap-2">
+        {isSyncing ? (
+          <Text className="text-muted-foreground" variant="bodySmall">
+            Syncing issues…
+          </Text>
+        ) : null}
+        {!isSyncing && lastSyncAt ? (
+          <Text
+            className="text-muted-foreground tabular-nums"
+            variant="bodySmall"
+          >
+            Last synced {format(lastSyncAt, "PPp")}
+          </Text>
+        ) : null}
+        {!isSyncing && lastSyncStatus === "error" ? (
+          <Badge color="red" size="sm">
+            Last sync failed
+          </Badge>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function PromoteTriggerRow({
+  isAdmin,
+  onPromoteTriggerChange,
+  promoteStatus,
+  promoteTrigger,
+}: Pick<
+  IssuesSyncCardProps,
+  "isAdmin" | "onPromoteTriggerChange" | "promoteStatus" | "promoteTrigger"
+>) {
   const statusForTrigger = promoteStatus ?? DEFAULT_PROMOTE_STATUS;
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <Label htmlFor="promote-trigger">Create GitHub issues</Label>
-          <Text className="text-muted-foreground text-sm">
-            When feedback becomes an issue in the connected repository
-          </Text>
-        </div>
-        <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="min-w-0">
+        <Label htmlFor="promote-trigger">Create GitHub issues</Label>
+        <Text className="text-muted-foreground" variant="bodySmall">
+          When feedback becomes an issue in the connected repository
+        </Text>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <Select
+          disabled={!isAdmin}
+          onValueChange={(value) => {
+            if (isPromoteTrigger(value)) {
+              onPromoteTriggerChange(
+                value,
+                value === "on_status" ? statusForTrigger : undefined
+              );
+            }
+          }}
+          value={promoteTrigger}
+        >
+          <SelectTrigger className="w-52" id="promote-trigger">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {PROMOTE_TRIGGERS.map((trigger) => (
+              <SelectItem key={trigger.value} value={trigger.value}>
+                {trigger.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {promoteTrigger === "on_status" ? (
           <Select
             disabled={!isAdmin}
             onValueChange={(value) => {
-              if (isPromoteTrigger(value)) {
-                onPromoteTriggerChange(
-                  value,
-                  value === "on_status" ? statusForTrigger : undefined
-                );
+              if (isPromoteStatus(value)) {
+                onPromoteTriggerChange("on_status", value);
               }
             }}
-            value={promoteTrigger}
+            value={statusForTrigger}
           >
-            <SelectTrigger className="w-52" id="promote-trigger">
+            <SelectTrigger
+              aria-label="Status that creates the issue"
+              className="w-40"
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {PROMOTE_TRIGGERS.map((trigger) => (
-                <SelectItem key={trigger.value} value={trigger.value}>
-                  {trigger.label}
+              {PROMOTE_STATUSES.map((status) => (
+                <SelectItem key={status.value} value={status.value}>
+                  {status.label}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          {promoteTrigger === "on_status" ? (
-            <Select
-              disabled={!isAdmin}
-              onValueChange={(value) => {
-                if (isPromoteStatus(value)) {
-                  onPromoteTriggerChange("on_status", value);
-                }
-              }}
-              value={statusForTrigger}
-            >
-              <SelectTrigger aria-label="Promote status" className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PROMOTE_STATUSES.map((status) => (
-                  <SelectItem key={status.value} value={status.value}>
-                    {status.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ) : null}
-        </div>
+        ) : null}
       </div>
+    </div>
+  );
+}
 
-      <div className="flex items-center justify-between">
-        <div>
-          <Label htmlFor="issues-sync">Enable issue sync</Label>
-          <Text className="text-muted-foreground text-sm">
-            Import GitHub issues based on label mappings
-          </Text>
-        </div>
-        <Switch
-          checked={isEnabled}
-          disabled={!isAdmin}
-          id="issues-sync"
-          onCheckedChange={(checked) => onToggleSync(checked, autoSync)}
-        />
-      </div>
-
-      {isEnabled ? (
-        <>
-          <div className="flex items-center justify-between">
-            <div>
-              <Label htmlFor="auto-import-issues">Auto-import issues</Label>
-              <Text className="text-muted-foreground text-sm">
-                Automatically import new issues that match label mappings
-              </Text>
-            </div>
-            <Switch
-              checked={autoSync}
-              disabled={!isAdmin}
-              id="auto-import-issues"
-              onCheckedChange={(checked) => onToggleSync(isEnabled, checked)}
-            />
-          </div>
-
-          <div className="grid grid-cols-3 gap-4 rounded-lg border bg-muted/50 p-4">
-            <div className="text-center">
-              <Text className="font-semibold text-2xl">
-                {syncedIssuesCount}
-              </Text>
-              <Text className="text-muted-foreground text-sm">
-                Issues synced
-              </Text>
-            </div>
-            <div className="text-center">
-              <Text className="font-semibold text-2xl">{importedCount}</Text>
-              <Text className="text-muted-foreground text-sm">
-                Imported to boards
-              </Text>
-            </div>
-            <div className="text-center">
-              <Text className="font-semibold text-2xl">{mappingsCount}</Text>
-              <Text className="text-muted-foreground text-sm">
-                Label mappings
-              </Text>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            {isAdmin ? (
-              <Button
-                disabled={isSyncing}
-                onClick={onSyncNow}
-                variant="surface"
-              >
-                {isSyncing ? (
-                  <Spinner className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <ArrowsClockwise className="mr-2 h-4 w-4" />
-                )}
-                Sync Issues Now
-              </Button>
-            ) : null}
-            <div className="flex items-center gap-2">
-              {lastSyncAt ? (
-                <Text className="text-muted-foreground text-sm">
-                  Last synced: {new Date(lastSyncAt).toLocaleString()}
-                </Text>
-              ) : null}
-              {lastSyncStatus === "error" ? (
-                <Badge color="red">Error</Badge>
-              ) : null}
-            </div>
-          </div>
-        </>
-      ) : null}
+function IssueSyncStat({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="flex flex-col-reverse">
+      <dt className="text-muted-foreground text-sm">{label}</dt>
+      <dd className="font-semibold text-2xl tabular-nums">{value}</dd>
     </div>
   );
 }

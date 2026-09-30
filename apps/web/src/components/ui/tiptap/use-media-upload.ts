@@ -46,16 +46,44 @@ function validateMediaFile(
   if (!mediaType) {
     return {
       error: new Error(
-        "Please upload an image (JPEG, PNG, GIF, WebP) or video (MP4, WebM, MOV)"
+        "Upload an image (JPEG, PNG, GIF, WebP) or video (MP4, WebM, MOV)."
       ),
     };
   }
   const maxSizeMB = mediaType === "image" ? limits.image : limits.video;
   if (file.size > maxSizeMB * 1024 * 1024) {
     const noun = mediaType === "image" ? "Image" : "Video";
-    return { error: new Error(`${noun} must be smaller than ${maxSizeMB}MB`) };
+    return {
+      error: new Error(`${noun} must be smaller than ${maxSizeMB} MB.`),
+    };
   }
   return { mediaType };
+}
+
+interface StorageClient {
+  generateUploadUrl: () => Promise<string>;
+  getStorageUrl: (args: {
+    storageId: Id<"_storage">;
+  }) => Promise<string | null>;
+}
+
+async function uploadToStorage(
+  file: File,
+  storage: StorageClient
+): Promise<string | null> {
+  const uploadUrl = await storage.generateUploadUrl();
+  const response = await fetch(uploadUrl, {
+    body: file,
+    headers: {
+      "Content-Type": file.type,
+    },
+    method: "POST",
+  });
+  if (!response.ok) {
+    return null;
+  }
+  const { storageId }: { storageId: Id<"_storage"> } = await response.json();
+  return storage.getStorageUrl({ storageId });
 }
 
 export function useMediaUpload({
@@ -81,42 +109,28 @@ export function useMediaUpload({
     const { mediaType } = validation;
 
     setIsUploading(true);
-    setUploadProgress(`Uploading ${mediaType}...`);
+    setUploadProgress(`Uploading ${mediaType}…`);
 
+    const fallbackError = new Error(
+      `Unable to upload the ${mediaType}. Try again.`
+    );
+    let url: string | null = null;
+    let uploadError: Error = fallbackError;
     try {
-      const uploadUrl = await generateUploadUrl();
-      const response = await fetch(uploadUrl, {
-        body: file,
-        headers: {
-          "Content-Type": file.type,
-        },
-        method: "POST",
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to upload ${mediaType}`);
-      }
-
-      const { storageId }: { storageId: Id<"_storage"> } =
-        await response.json();
-      const url = await getStorageUrl({ storageId });
-
-      if (!url) {
-        throw new Error("Failed to get storage URL");
-      }
-
-      const result: MediaUploadResult = { type: mediaType, url };
-      onSuccess?.(result);
-      return result;
+      url = await uploadToStorage(file, { generateUploadUrl, getStorageUrl });
     } catch (err) {
-      const error =
-        err instanceof Error ? err : new Error(`Failed to upload ${mediaType}`);
-      onError?.(error);
-      return null;
-    } finally {
-      setIsUploading(false);
-      setUploadProgress(null);
+      uploadError = err instanceof Error ? err : fallbackError;
     }
+    setIsUploading(false);
+    setUploadProgress(null);
+
+    if (!url) {
+      onError?.(uploadError);
+      return null;
+    }
+    const result: MediaUploadResult = { type: mediaType, url };
+    onSuccess?.(result);
+    return result;
   };
 
   const openFilePicker = (

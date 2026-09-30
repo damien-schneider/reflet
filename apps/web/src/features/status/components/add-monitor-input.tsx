@@ -2,13 +2,12 @@
 
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Input } from "@ctrl-ui/react/ui/input";
+import { toast } from "@ctrl-ui/react/ui/toast";
 import { Plus } from "@phosphor-icons/react";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { useState } from "react";
+import { type FormEvent, useState } from "react";
 
 interface AddMonitorInputProps {
-  onAdd: (url: string, name: string) => void;
-  organizationId: Id<"organizations">;
+  onAdd: (url: string, name: string) => Promise<void>;
 }
 
 const extractNameFromUrl = (url: string): string => {
@@ -28,19 +27,25 @@ const extractNameFromUrl = (url: string): string => {
 export function AddMonitorInput({ onAdd }: AddMonitorInputProps) {
   const [url, setUrl] = useState("");
   const [isAdding, setIsAdding] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
     const trimmed = url.trim();
-    if (!trimmed) {
+    if (!trimmed || isSaving) {
       return;
     }
 
     const fullUrl = trimmed.startsWith("http") ? trimmed : `https://${trimmed}`;
-    const name = extractNameFromUrl(fullUrl);
-
-    onAdd(fullUrl, name);
-    setUrl("");
-    setIsAdding(false);
+    setIsSaving(true);
+    try {
+      await onAdd(fullUrl, extractNameFromUrl(fullUrl));
+      setUrl("");
+      setIsAdding(false);
+    } catch {
+      toast.error("Couldn’t add the monitor. Try again.");
+    }
+    setIsSaving(false);
   };
 
   if (!isAdding) {
@@ -48,19 +53,23 @@ export function AddMonitorInput({ onAdd }: AddMonitorInputProps) {
       <Button
         className="w-full justify-start"
         onClick={() => setIsAdding(true)}
-        type="button"
         variant="surface"
       >
-        <Plus className="h-4 w-4" />
+        <Plus />
         Add monitor
       </Button>
     );
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <form className="flex items-center gap-2" onSubmit={handleSubmit}>
       <Input
+        aria-label="URL to monitor"
+        autoCapitalize="off"
+        autoComplete="off"
         autoFocus
+        className="min-w-0 flex-1"
+        inputMode="url"
         onBlur={() => {
           if (!url.trim()) {
             setIsAdding(false);
@@ -68,25 +77,24 @@ export function AddMonitorInput({ onAdd }: AddMonitorInputProps) {
         }}
         onChange={(event) => setUrl(event.target.value)}
         onKeyDown={(event) => {
-          if (event.key === "Enter") {
-            handleSubmit();
-          }
           if (event.key === "Escape") {
             setUrl("");
             setIsAdding(false);
           }
         }}
         placeholder="https://api.example.com/health"
+        spellCheck={false}
+        type="text"
         value={url}
       />
       <Button
-        disabled={!url.trim()}
-        onClick={handleSubmit}
+        disabled={!url.trim() || isSaving}
         tone="primary"
+        type="submit"
         variant="solid"
       >
-        Add
+        {isSaving ? "Adding…" : "Add"}
       </Button>
-    </div>
+    </form>
   );
 }

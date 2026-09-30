@@ -36,47 +36,53 @@ export function EmojiPicker({ value, onChange }: EmojiPickerProps) {
         render={(props) => (
           <Button
             {...props}
-            aria-label={value ? "Change icon" : "Pick an icon"}
-            className="size-8 p-0"
+            aria-label={
+              value ? `Change icon, current ${value}` : "Pick an icon"
+            }
             iconOnly
-            size="xs"
+            size="sm"
             variant="surface"
           >
             {value ? (
               <span className="text-base">{value}</span>
             ) : (
-              <Smiley className="size-4 text-muted-foreground" />
+              <Smiley
+                aria-hidden="true"
+                className="size-4 text-muted-foreground"
+              />
             )}
           </Button>
         )}
       />
-      <PopoverContent align="start" className="w-[320px] p-0">
+      <PopoverContent align="start" className="w-80" padding="none">
         <div className="flex flex-col">
-          {value && (
-            <Button
-              className="h-auto w-full justify-start rounded-none border-b px-3 py-2 text-left text-sm"
-              onClick={handleClear}
-              variant="ghost"
-            >
-              Remove icon
-            </Button>
-          )}
+          {value ? (
+            <div className="flex items-center justify-between gap-2 border-b px-3 py-1.5">
+              <span className="text-muted-foreground text-sm">
+                Current icon <span className="text-base">{value}</span>
+              </span>
+              <Button onClick={handleClear} size="xs" variant="ghost">
+                Remove icon
+              </Button>
+            </div>
+          ) : null}
           <FrimousseEmojiPicker.Root
-            className="h-[300px]"
+            className="h-75"
             onEmojiSelect={(emoji) => handleSelect(emoji.emoji)}
           >
             <FrimousseEmojiPicker.Search
-              className="mx-2 my-2 h-8 w-[calc(100%-16px)] rounded-md border bg-transparent px-3 text-sm outline-none placeholder:text-muted-foreground"
-              placeholder="Search emoji..."
+              aria-label="Search emoji"
+              className="mx-2 my-2 h-8 w-[calc(100%-16px)] rounded-md border bg-transparent px-3 text-base outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring sm:text-sm"
+              placeholder="Search emoji…"
             />
             <FrimousseEmojiPicker.Viewport className="h-[calc(300px-48px)] overflow-y-auto px-2 pb-2">
               <FrimousseEmojiPicker.Loading className="flex h-full items-center justify-center text-muted-foreground">
                 <Spinner />
               </FrimousseEmojiPicker.Loading>
               <FrimousseEmojiPicker.Empty className="flex h-full items-center justify-center">
-                <Empty className="p-0">
+                <Empty>
                   <EmptyHeader>
-                    <EmptyTitle>No emoji found</EmptyTitle>
+                    <EmptyTitle>No emoji match that search</EmptyTitle>
                   </EmptyHeader>
                 </Empty>
               </FrimousseEmojiPicker.Empty>
@@ -92,9 +98,8 @@ export function EmojiPicker({ value, onChange }: EmojiPickerProps) {
                     <Button
                       {...emojiProps}
                       aria-label={emoji.label}
-                      className="size-8 p-0"
                       iconOnly
-                      size="xs"
+                      size="sm"
                       variant="ghost"
                     >
                       {emoji.emoji}

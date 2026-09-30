@@ -5,8 +5,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/tag-colors", () => ({
-  getTagDotColor: (color: string) => color,
-  resolveTagColor: (color: string) => color,
+  getTagSwatchClass: (color: string) => `swatch-${color}`,
 }));
 
 vi.mock("@phosphor-icons/react", () => ({
@@ -117,7 +116,7 @@ vi.mock("@ctrl-ui/react/ui/dropdown-menu", () => ({
 import { FilterDropdown } from "./filter-dropdown";
 
 const baseProps = {
-  hideCompleted: false,
+  hideCompleted: true,
   onClearFilters: vi.fn(),
   onHideCompletedToggle: vi.fn(),
   onStatusChange: vi.fn(),
@@ -155,8 +154,8 @@ describe("FilterDropdown", () => {
     expect(screen.getByText("2")).toBeInTheDocument();
   });
 
-  it("shows badge count for hideCompleted", () => {
-    render(<FilterDropdown {...baseProps} hideCompleted />);
+  it("counts showing completed items as an active filter", () => {
+    render(<FilterDropdown {...baseProps} hideCompleted={false} />);
     expect(screen.getByText("1")).toBeInTheDocument();
   });
 
@@ -277,7 +276,7 @@ describe("FilterDropdown", () => {
     render(
       <FilterDropdown
         {...baseProps}
-        hideCompleted
+        hideCompleted={false}
         selectedStatusIds={["s1", "s2"]}
         selectedTagIds={["t1"]}
       />

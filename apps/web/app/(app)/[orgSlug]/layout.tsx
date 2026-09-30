@@ -1,5 +1,3 @@
-import { api } from "@reflet/backend/convex/_generated/api";
-import { fetchQuery } from "convex/nextjs";
 import type { Metadata } from "next";
 
 import { JsonLd } from "@/components/json-ld";
@@ -15,26 +13,11 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { orgSlug } = await params;
 
-  try {
-    const orgs = await fetchQuery(api.sitemap_public.getPublicOrgSlugs, {});
-    const org = orgs.find((o) => o.slug === orgSlug);
-    if (org) {
-      return generatePageMetadata({
-        description: `Submit feature requests and feedback for ${orgSlug}. Vote on ideas and help shape the product.`,
-        keywords: ["feedback", "feature requests", "product feedback", orgSlug],
-        path: `/${orgSlug}`,
-        title: `${orgSlug} - Feature Requests & Feedback`,
-      });
-    }
-  } catch {
-    // fall through to default
-  }
-
   return generatePageMetadata({
     description: `Submit feature requests and feedback for ${orgSlug}. Vote on ideas and help shape the product.`,
     keywords: ["feedback", "feature requests", "product feedback", orgSlug],
     path: `/${orgSlug}`,
-    title: `${orgSlug} - Feature Requests & Feedback`,
+    title: `Feedback – ${orgSlug}`,
   });
 }
 

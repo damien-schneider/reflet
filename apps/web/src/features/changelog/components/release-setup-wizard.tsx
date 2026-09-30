@@ -21,7 +21,7 @@ import {
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import {
   applyWorkflowDefaults,
@@ -34,7 +34,8 @@ import { ConfigureStep } from "./wizard-steps/configure-step";
 import { SetupMethodStep } from "./wizard-steps/setup-method-step";
 import { WorkflowStep } from "./wizard-steps/workflow-step";
 
-const TOTAL_STEPS = 3;
+const STEP_TITLES = ["Choose a workflow", "Configure", "Finish setup"] as const;
+const TOTAL_STEPS = STEP_TITLES.length;
 
 interface ReleaseSetupWizardProps {
   onOpenChange: (open: boolean) => void;
@@ -50,8 +51,15 @@ export function ReleaseSetupWizard({
   orgSlug,
 }: ReleaseSetupWizardProps) {
   const [step, setStep] = useState(1);
-  const [config, setConfig] = useState<WizardConfig>(DEFAULT_CONFIG);
+  const [draftConfig, setConfig] = useState<WizardConfig>(DEFAULT_CONFIG);
+  const [hasPickedBranch, setHasPickedBranch] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const stepRegionRef = useRef<HTMLElement>(null);
+
+  const goToStep = (next: number) => {
+    setStep(next);
+    requestAnimationFrame(() => stepRegionRef.current?.focus());
+  };
 
   const updateOrg = useMutation(api.organizations.mutations.update);
   const toggleAutoSync = useMutation(
@@ -64,17 +72,14 @@ export function ReleaseSetupWizard({
     }
   );
 
-  useEffect(() => {
-    if (githubConnection?.repositoryDefaultBranch) {
-      setConfig((prev) => ({
-        ...prev,
-        targetBranch:
-          prev.targetBranch === "main"
-            ? (githubConnection.repositoryDefaultBranch ?? "main")
-            : prev.targetBranch,
-      }));
-    }
-  }, [githubConnection?.repositoryDefaultBranch]);
+  const shouldUseDefaultBranch =
+    !hasPickedBranch && draftConfig.targetBranch === "main";
+  const config: WizardConfig = {
+    ...draftConfig,
+    targetBranch: shouldUseDefaultBranch
+      ? (githubConnection?.repositoryDefaultBranch ?? "main")
+      : draftConfig.targetBranch,
+  };
 
   const updateConfig = (partial: Partial<WizardConfig>) => {
     setConfig((prev) => ({ ...prev, ...partial }));
@@ -108,19 +113,19 @@ export function ReleaseSetupWizard({
         });
       }
 
-      toast.success("Release setup completed!");
+      toast.success("Release setup saved");
       onOpenChange(false);
       setStep(1);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to save settings"
+        error instanceof Error
+          ? error.message
+          : "Couldn’t save release settings. Try again."
       );
-    } finally {
-      setIsSaving(false);
     }
+    setIsSaving(false);
   };
 
-  const canGoNext = step < TOTAL_STEPS;
   const canGoBack = step > 1;
   const isLastStep = step === TOTAL_STEPS;
 
@@ -133,16 +138,17 @@ export function ReleaseSetupWizard({
         <SheetHeader className="flex shrink-0 flex-row items-center justify-between gap-2 border-b px-4 py-3">
           <div className="flex flex-col gap-0.5">
             <SheetTitle className="flex items-center gap-2">
-              <GithubLogo className="h-5 w-5" />
-              Release Setup
+              <GithubLogo aria-hidden className="size-5" />
+              Release setup
             </SheetTitle>
             <SheetDescription className="tabular-nums">
-              Step {step} of {TOTAL_STEPS} — Configure your release workflow
+              Step {step} of {TOTAL_STEPS} — {STEP_TITLES[step - 1]}
             </SheetDescription>
           </div>
           <SheetClose
             render={
               <Button
+                aria-label="Close"
                 iconOnly
                 onClick={() => onOpenChange(false)}
                 size="xs"
@@ -150,30 +156,41 @@ export function ReleaseSetupWizard({
               />
             }
           >
-            <X className="h-4 w-4" />
-            <span className="sr-only">Close</span>
+            <X aria-hidden className="size-4" />
           </SheetClose>
         </SheetHeader>
 
-        <div className="flex gap-1 px-4 pt-3">
-          {[1, 2, 3].map((s) => (
-            <div
-              className={cn(
-                "h-1 flex-1 rounded-full transition-colors",
-                s <= step ? "bg-primary" : "bg-muted"
-              )}
-              key={`step-${s}`}
-            />
-          ))}
-        </div>
+        <ol aria-label="Setup progress" className="flex gap-1 px-4 pt-3">
+          {STEP_TITLES.map((title, index) => {
+            const stepNumber = index + 1;
+            return (
+              <li
+                aria-current={stepNumber === step ? "step" : undefined}
+                className={cn(
+                  "h-1 flex-1 rounded-full transition-colors duration-(--duration-base) ease-(--ease-standard)",
+                  stepNumber <= step ? "bg-primary" : "bg-muted"
+                )}
+                key={title}
+              >
+                <span className="sr-only">{title}</span>
+              </li>
+            );
+          })}
+        </ol>
 
         <ScrollArea className="flex-1">
-          <div className="px-4 py-4">
+          <section
+            aria-label={STEP_TITLES[step - 1]}
+            className="px-4 py-4 outline-none"
+            ref={stepRegionRef}
+            tabIndex={-1}
+          >
             {step === 1 && (
               <WorkflowStep
-                onBranchChange={(branch) =>
-                  updateConfig({ targetBranch: branch })
-                }
+                onBranchChange={(branch) => {
+                  setHasPickedBranch(true);
+                  updateConfig({ targetBranch: branch });
+                }}
                 onChange={handleWorkflowChange}
                 organizationId={organizationId}
                 targetBranch={config.targetBranch}
@@ -191,18 +208,18 @@ export function ReleaseSetupWizard({
                 orgSlug={orgSlug}
               />
             )}
-          </div>
+          </section>
         </ScrollArea>
 
         <div className="flex shrink-0 items-center justify-between border-t px-4 py-3">
           <Button
             disabled={!canGoBack}
-            onClick={() => setStep((s) => s - 1)}
-            size="xs"
+            onClick={() => goToStep(step - 1)}
+            size="sm"
             type="button"
             variant="ghost"
           >
-            <ArrowLeft className="mr-1 h-4 w-4" />
+            <ArrowLeft aria-hidden className="size-4" />
             Back
           </Button>
 
@@ -210,25 +227,24 @@ export function ReleaseSetupWizard({
             <Button
               disabled={isSaving}
               onClick={handleComplete}
-              size="xs"
+              size="sm"
               tone="primary"
               type="button"
               variant="solid"
             >
-              <Check className="mr-1 h-4 w-4" />
-              Complete Setup
+              <Check aria-hidden className="size-4" />
+              {isSaving ? "Saving…" : "Complete setup"}
             </Button>
           ) : (
             <Button
-              disabled={!canGoNext}
-              onClick={() => setStep((s) => s + 1)}
-              size="xs"
+              onClick={() => goToStep(step + 1)}
+              size="sm"
               tone="primary"
               type="button"
               variant="solid"
             >
               Next
-              <ArrowRight className="ml-1 h-4 w-4" />
+              <ArrowRight aria-hidden className="size-4" />
             </Button>
           )}
         </div>

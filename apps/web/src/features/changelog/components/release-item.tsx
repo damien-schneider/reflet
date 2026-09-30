@@ -29,6 +29,7 @@ import Link from "next/link";
 import type * as React from "react";
 import { MarkdownRenderer } from "@/components/ui/tiptap/markdown-renderer";
 import { cn } from "@/lib/utils";
+import { FeedbackStatusBadge } from "./feedback-status-badge";
 
 interface LinkedFeedback {
   _id: Id<"feedback">;
@@ -70,13 +71,7 @@ export function ReleaseItem({
   onDelete,
 }: ReleaseItemProps) {
   const isPublished = release.publishedAt !== undefined;
-  const scheduledDate =
-    isPublished || release.scheduledPublishAt === undefined
-      ? null
-      : format(release.scheduledPublishAt, "MMM d, h:mm a");
-  const publishDate = release.publishedAt
-    ? format(release.publishedAt, "MMMM d, yyyy")
-    : null;
+  const showCommitCount = isAdmin && (release.commitCount ?? 0) > 0;
 
   return (
     <article className="relative">
@@ -88,174 +83,187 @@ export function ReleaseItem({
         )}
       >
         <div className="flex items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            {release.version && (
-              <Badge className="px-3 py-1 font-mono text-sm" variant="outline">
-                {release.version}
-              </Badge>
-            )}
-            {scheduledDate && (
-              <Badge variant="outline">
-                <Clock className="mr-1 h-3 w-3" />
-                Scheduled <span className="tabular-nums">{scheduledDate}</span>
-              </Badge>
-            )}
-            {!(isPublished || scheduledDate) && (
-              <Badge>
-                <EyeSlash className="mr-1 h-3 w-3" />
-                Draft
-              </Badge>
-            )}
-            {publishDate && (
-              <span className="flex items-center gap-1.5 text-muted-foreground text-sm">
-                <Calendar className="h-4 w-4" />
-                <time
-                  dateTime={
-                    release.publishedAt
-                      ? new Date(release.publishedAt).toISOString()
-                      : undefined
-                  }
-                >
-                  {publishDate}
-                </time>
-              </span>
-            )}
-
-            {isPublished && <GitHubStatusIndicator release={release} />}
-          </div>
-
+          <ReleaseMeta release={release} />
           {isAdmin && (
-            <div className="flex items-center gap-1 sm:gap-2">
-              <ButtonLink
-                render={
-                  <Link
-                    href={`/dashboard/${orgSlug}/changelog/${release._id}/edit`}
-                  />
-                }
-                size="xs"
-                variant="ghost"
-              >
-                <PencilSimple className="h-4 w-4" />
-                <span className="ml-1.5 hidden sm:inline">Edit</span>
-              </ButtonLink>
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  render={(props: React.ComponentProps<"button">) => (
-                    <Button
-                      {...props}
-                      aria-label="Release actions"
-                      iconOnly
-                      variant="ghost"
-                    >
-                      <DotsThreeVertical className="h-4 w-4" />
-                    </Button>
-                  )}
-                />
-                <DropdownMenuContent align="end">
-                  {isPublished ? (
-                    <DropdownMenuItem onClick={onUnpublish}>
-                      <EyeSlash className="mr-2 h-4 w-4" />
-                      Unpublish
-                    </DropdownMenuItem>
-                  ) : (
-                    <DropdownMenuItem onClick={onPublish}>
-                      <Eye className="mr-2 h-4 w-4" />
-                      Publish
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="text-destructive"
-                    onClick={onDelete}
-                  >
-                    <Trash className="mr-2 h-4 w-4" />
-                    Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            <ReleaseAdminActions
+              isPublished={isPublished}
+              onDelete={onDelete}
+              onPublish={onPublish}
+              onUnpublish={onUnpublish}
+              orgSlug={orgSlug}
+              release={release}
+            />
           )}
         </div>
       </div>
 
       <div className={cn("pt-6 pb-12", !isPublished && "opacity-70")}>
-        <h2 className="mb-4 font-semibold text-2xl md:text-3xl">
+        <h2 className="mb-4 text-balance font-semibold text-2xl md:text-3xl">
           {release.title}
         </h2>
 
         {release.description && (
-          <MarkdownRenderer content={release.description} />
+          <MarkdownRenderer
+            className="max-w-prose"
+            content={release.description}
+          />
         )}
 
-        {release.feedback && release.feedback.length > 0 && (
-          <div className="mt-8">
-            <h3 className="mb-3 font-medium text-muted-foreground text-sm uppercase tracking-wide">
-              Shipped Features
-            </h3>
-            <ul className="space-y-2">
-              {release.feedback
-                .filter((item): item is LinkedFeedback => item !== null)
-                .map((item) => (
-                  <li
-                    className="flex items-center gap-2 text-sm"
-                    key={item._id}
-                  >
-                    <Check className="h-4 w-4 shrink-0 text-success-text" />
-                    <span className="min-w-0 flex-1">{item.title}</span>
-                    {item.status && <FeedbackStatusDot status={item.status} />}
-                  </li>
-                ))}
-            </ul>
-          </div>
-        )}
+        <ShippedFeatures feedback={release.feedback} />
 
-        {isAdmin &&
-          release.commitCount !== undefined &&
-          release.commitCount > 0 && (
-            <div className="mt-4 flex items-center gap-1.5 text-muted-foreground text-xs">
-              <GitCommit className="h-3.5 w-3.5" />
-              <span>
-                <span className="tabular-nums">{release.commitCount}</span>{" "}
-                commit{release.commitCount === 1 ? "" : "s"} used
-              </span>
-            </div>
-          )}
+        {showCommitCount && (
+          <CommitCountNote commitCount={release.commitCount ?? 0} />
+        )}
       </div>
     </article>
   );
 }
 
-const STATUS_DOT_COLORS: Record<string, string> = {
-  closed: "bg-muted-foreground",
-  completed: "bg-success",
-  in_progress: "bg-warning",
-  open: "bg-chart-2",
-  planned: "bg-chart-4",
-  under_review: "bg-chart-3",
-};
+function ReleaseMeta({ release }: { release: ReleaseData }) {
+  const { publishedAt, scheduledPublishAt } = release;
+  const isPublished = publishedAt !== undefined;
+  const scheduledAt = isPublished ? undefined : scheduledPublishAt;
 
-const STATUS_LABELS: Record<string, string> = {
-  closed: "Closed",
-  completed: "Completed",
-  in_progress: "In Progress",
-  open: "Open",
-  planned: "Planned",
-  under_review: "Under Review",
-};
-
-function FeedbackStatusDot({ status }: { status: string }) {
-  const label = STATUS_LABELS[status] ?? status;
   return (
-    <span className="flex shrink-0 items-center gap-1.5 text-muted-foreground text-xs">
-      <span
-        aria-hidden="true"
-        className={cn(
-          "inline-block h-2 w-2 shrink-0 rounded-full",
-          STATUS_DOT_COLORS[status] ?? "bg-muted-foreground"
-        )}
-      />
-      {label}
-    </span>
+    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+      {release.version && (
+        <Badge className="tabular-nums" size="md" variant="outline">
+          {release.version}
+        </Badge>
+      )}
+      {scheduledAt === undefined ? null : (
+        <Badge color="yellow" size="sm">
+          <Clock aria-hidden="true" className="size-3" />
+          Scheduled{" "}
+          <span className="tabular-nums">
+            {format(scheduledAt, "MMM d, h:mm a")}
+          </span>
+        </Badge>
+      )}
+      {!isPublished && scheduledAt === undefined && (
+        <Badge size="sm">
+          <EyeSlash aria-hidden="true" className="size-3" />
+          Draft
+        </Badge>
+      )}
+      {publishedAt ? (
+        <span className="flex items-center gap-1.5 text-muted-foreground text-sm">
+          <Calendar aria-hidden="true" className="size-4" />
+          <time dateTime={new Date(publishedAt).toISOString()}>
+            {format(publishedAt, "MMMM d, yyyy")}
+          </time>
+        </span>
+      ) : null}
+
+      {isPublished && <GitHubStatusIndicator release={release} />}
+    </div>
+  );
+}
+
+interface ReleaseAdminActionsProps {
+  isPublished: boolean;
+  onDelete?: () => void;
+  onPublish?: () => void;
+  onUnpublish?: () => void;
+  orgSlug: string;
+  release: ReleaseData;
+}
+
+function ReleaseAdminActions({
+  isPublished,
+  onDelete,
+  onPublish,
+  onUnpublish,
+  orgSlug,
+  release,
+}: ReleaseAdminActionsProps) {
+  return (
+    <div className="flex items-center gap-1 sm:gap-2">
+      <ButtonLink
+        render={
+          <Link href={`/dashboard/${orgSlug}/changelog/${release._id}/edit`} />
+        }
+        size="xs"
+        variant="ghost"
+      >
+        <PencilSimple aria-hidden="true" className="size-4" />
+        <span className="sr-only sm:not-sr-only">Edit</span>
+      </ButtonLink>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={(props: React.ComponentProps<"button">) => (
+            <Button
+              {...props}
+              aria-label={`Actions for ${release.title}`}
+              iconOnly
+              size="xs"
+              variant="ghost"
+            >
+              <DotsThreeVertical aria-hidden="true" className="size-4" />
+            </Button>
+          )}
+        />
+        <DropdownMenuContent align="end">
+          {isPublished ? (
+            <DropdownMenuItem onClick={onUnpublish}>
+              <EyeSlash aria-hidden="true" className="size-4" />
+              Unpublish
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem onClick={onPublish}>
+              <Eye aria-hidden="true" className="size-4" />
+              Publish
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem className="menu-item-danger" onClick={onDelete}>
+            <Trash aria-hidden="true" className="size-4" />
+            Delete…
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+}
+
+function ShippedFeatures({ feedback }: { feedback: ReleaseData["feedback"] }) {
+  const items = (feedback ?? []).filter(
+    (item): item is LinkedFeedback => item !== null
+  );
+  if (!feedback || feedback.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mt-8 max-w-prose">
+      <h3 className="mb-3 font-medium text-muted-foreground text-sm">
+        Shipped features
+      </h3>
+      <ul className="space-y-2">
+        {items.map((item) => (
+          <li className="flex items-center gap-2 text-sm" key={item._id}>
+            <Check
+              aria-hidden="true"
+              className="size-4 shrink-0 text-success-text"
+            />
+            <span className="min-w-0 flex-1 text-pretty">{item.title}</span>
+            {item.status && <FeedbackStatusBadge status={item.status} />}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function CommitCountNote({ commitCount }: { commitCount: number }) {
+  return (
+    <div className="mt-4 flex items-center gap-1.5 text-muted-foreground text-xs">
+      <GitCommit aria-hidden="true" className="size-3.5" />
+      <span>
+        <span className="tabular-nums">{commitCount}</span> commit
+        {commitCount === 1 ? "" : "s"} used
+      </span>
+    </div>
   );
 }
 
@@ -268,18 +276,22 @@ function GitHubStatusIndicator({ release }: { release: ReleaseData }) {
         href={release.githubHtmlUrl}
         rel="noopener noreferrer"
         target="_blank"
+        title="View release on GitHub"
       >
-        <GithubLogo className="h-3.5 w-3.5" />
-        <Check className="h-3 w-3" />
+        <GithubLogo aria-hidden="true" className="size-3.5" />
+        <Check aria-hidden="true" className="size-3" />
       </a>
     );
   }
 
   if (release.githubPushStatus === "pending") {
     return (
-      <span className="flex items-center gap-1 text-muted-foreground text-xs">
-        <GithubLogo className="h-3.5 w-3.5" />
-        <Spinner className="h-3 w-3" />
+      <span
+        className="flex items-center gap-1 text-muted-foreground text-xs"
+        title="Pushing to GitHub"
+      >
+        <GithubLogo aria-hidden="true" className="size-3.5" />
+        <Spinner data-icon="inline-start" size="xs" />
         <span className="sr-only">Pushing to GitHub</span>
       </span>
     );
@@ -287,9 +299,12 @@ function GitHubStatusIndicator({ release }: { release: ReleaseData }) {
 
   if (release.githubPushStatus === "failed") {
     return (
-      <span className="flex items-center gap-1 text-destructive-text text-xs">
-        <GithubLogo className="h-3.5 w-3.5" />
-        <WarningCircle className="h-3 w-3" />
+      <span
+        className="flex items-center gap-1 text-destructive-text text-xs"
+        title="Push to GitHub failed"
+      >
+        <GithubLogo aria-hidden="true" className="size-3.5" />
+        <WarningCircle aria-hidden="true" className="size-3" />
         <span className="sr-only">Push to GitHub failed</span>
       </span>
     );

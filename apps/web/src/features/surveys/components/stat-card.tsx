@@ -1,13 +1,17 @@
+import { Card, CardContent } from "@ctrl-ui/react/ui/card";
+
 interface StatCardProps {
   label: string;
-  value: number | string;
+  value: string;
 }
 
 export function StatCard({ label, value }: StatCardProps) {
   return (
-    <div className="rounded-lg border bg-card p-4">
-      <p className="text-muted-foreground text-sm">{label}</p>
-      <p className="font-semibold text-2xl">{value}</p>
-    </div>
+    <Card>
+      <CardContent className="p-4">
+        <p className="text-muted-foreground text-sm">{label}</p>
+        <p className="mt-1 font-semibold text-2xl tabular-nums">{value}</p>
+      </CardContent>
+    </Card>
   );
 }

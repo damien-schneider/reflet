@@ -75,8 +75,12 @@ export function observeReflectionPointer(canvas: HTMLCanvasElement) {
       elapsedSeconds = seconds;
       for (const [index, impulse] of impulses.entries()) {
         const age = seconds - impulse.born;
-        const strength = age < RIPPLE_LIFETIME_SECONDS ? impulse.strength : 0;
-        uniforms.set([impulse.x, impulse.y, age, strength], index * 4);
+        const offset = index * 4;
+        uniforms[offset] = impulse.x;
+        uniforms[offset + 1] = impulse.y;
+        uniforms[offset + 2] = age;
+        uniforms[offset + 3] =
+          age < RIPPLE_LIFETIME_SECONDS ? impulse.strength : 0;
       }
       return uniforms;
     },

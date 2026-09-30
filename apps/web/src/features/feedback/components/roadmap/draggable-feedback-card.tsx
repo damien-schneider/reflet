@@ -1,5 +1,7 @@
+import { Button } from "@ctrl-ui/react/ui/button";
 import { useDraggable } from "@dnd-kit/core";
-import { motion } from "motion/react";
+import { DotsSixVertical } from "@phosphor-icons/react";
+import { m, useReducedMotion } from "motion/react";
 
 import { FeedbackCardContent } from "./feedback-card-content";
 import type { DraggableFeedbackCardProps } from "./roadmap-types";
@@ -9,50 +11,44 @@ export function DraggableFeedbackCard({
   isAdmin,
   onFeedbackClick,
 }: DraggableFeedbackCardProps) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    disabled: !isAdmin,
-    id: item._id,
-  });
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, isDragging } =
+    useDraggable({
+      disabled: !isAdmin,
+      id: item._id,
+    });
+  const shouldReduceMotion = useReducedMotion();
 
-  const handleClick = () => {
-    if (!isDragging) {
-      onFeedbackClick(item._id);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      onFeedbackClick(item._id);
-    }
-  };
+  const dragHandle = isAdmin ? (
+    <Button
+      {...attributes}
+      aria-label={`Move ${item.title}`}
+      className="absolute top-2 right-2 z-10 cursor-grab touch-none text-muted-foreground active:cursor-grabbing"
+      iconOnly
+      ref={setActivatorNodeRef}
+      size="xs"
+      variant="ghost"
+    >
+      <DotsSixVertical aria-hidden weight="bold" />
+    </Button>
+  ) : undefined;
 
   return (
-    <motion.div
-      animate={{ opacity: isDragging ? 0.4 : 1, scale: isDragging ? 0.98 : 1 }}
-      className="cursor-pointer"
-      initial={false}
-      layoutId={`feedback-card-${item._id}`}
-      onClick={handleClick}
-      onKeyDown={handleKeyDown}
+    <m.div
+      {...(isAdmin ? listeners : {})}
+      layoutId={shouldReduceMotion ? undefined : `feedback-card-${item._id}`}
       ref={setNodeRef}
-      role="button"
-      tabIndex={0}
-      transition={{ damping: 25, stiffness: 300, type: "spring" }}
+      transition={{ bounce: 0, duration: 0.25, type: "spring" }}
     >
-      {/* On mobile, apply touch listeners to the whole card for long press */}
-      <div
-        {...(isAdmin ? listeners : {})}
-        className="md:pointer-events-none md:contents"
-      >
-        <FeedbackCardContent
-          dragHandleAttributes={attributes}
-          dragHandleListeners={listeners}
-          isAdmin={isAdmin}
-          isDragging={isDragging}
-          item={item}
-        />
-      </div>
-    </motion.div>
+      <FeedbackCardContent
+        dragHandle={dragHandle}
+        isDragging={isDragging}
+        item={item}
+        onOpen={() => {
+          if (!isDragging) {
+            onFeedbackClick(item._id);
+          }
+        }}
+      />
+    </m.div>
   );
 }

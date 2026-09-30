@@ -90,12 +90,12 @@ describe("SubmitFeedbackDialog", () => {
 
   it("renders when open", () => {
     render(<SubmitFeedbackDialog {...baseProps} />);
-    expect(screen.getByText("Submit Feedback")).toBeInTheDocument();
+    expect(screen.getByText("Submit feedback")).toBeInTheDocument();
   });
 
   it("does not render when closed", () => {
     render(<SubmitFeedbackDialog {...baseProps} isOpen={false} />);
-    expect(screen.queryByText("Submit Feedback")).not.toBeInTheDocument();
+    expect(screen.queryByText("Submit feedback")).not.toBeInTheDocument();
   });
 
   it("disables submit when title is empty", () => {
@@ -130,7 +130,9 @@ describe("SubmitFeedbackDialog", () => {
         feedback={{ ...baseFeedback, title: "a".repeat(101) }}
       />
     );
-    expect(screen.getByText("Title is too long")).toBeInTheDocument();
+    expect(
+      screen.getByText("Shorten the title to 100 characters")
+    ).toBeInTheDocument();
   });
 
   it("shows email input for non-members", () => {
@@ -155,7 +157,7 @@ describe("SubmitFeedbackDialog", () => {
         isSubmitting
       />
     );
-    expect(screen.getByText("Submitting...")).toBeInTheDocument();
+    expect(screen.getByText("Submitting…")).toBeInTheDocument();
   });
 
   it("shows Cancel button", () => {
@@ -182,7 +184,7 @@ describe("SubmitFeedbackDialog", () => {
         feedback={{ ...baseFeedback, description: "Some desc" }}
       />
     );
-    expect(screen.getByText("Title is required")).toBeInTheDocument();
+    expect(screen.getByText("Add a title to submit")).toBeInTheDocument();
   });
 
   it("renders attachment upload", () => {

@@ -1,26 +1,60 @@
 "use client";
 
 import { Button } from "@ctrl-ui/react/ui/button";
+import { Kbd, KbdGroup } from "@ctrl-ui/react/ui/kbd";
+import { useSidebar } from "@ctrl-ui/react/ui/sidebar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@ctrl-ui/react/ui/tooltip";
 import { MagnifyingGlass } from "@phosphor-icons/react";
 import { useSetAtom } from "jotai";
 import { commandPaletteOpenAtom } from "@/store/dashboard-atoms";
+import { useModifierKeyLabel } from "../hooks/use-modifier-key-label";
 
 export function CommandPaletteTrigger() {
   const setOpen = useSetAtom(commandPaletteOpenAtom);
+  const { state, isMobile } = useSidebar();
+  const modifierKey = useModifierKeyLabel();
+  const isCollapsed = state === "collapsed" && !isMobile;
+  const shortcut = (
+    <KbdGroup>
+      <Kbd>{modifierKey}</Kbd>
+      <Kbd>K</Kbd>
+    </KbdGroup>
+  );
 
   return (
-    <Button
-      className="h-8 w-full justify-start gap-2 text-muted-foreground group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0"
-      onClick={() => setOpen(true)}
-      variant="surface"
-    >
-      <MagnifyingGlass className="size-4 shrink-0" />
-      <span className="flex-1 text-left group-data-[collapsible=icon]:hidden">
-        Search...
-      </span>
-      <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-medium font-mono text-micro text-muted-foreground group-data-[collapsible=icon]:hidden">
-        <span className="text-xs">⌘</span>K
-      </kbd>
-    </Button>
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Button
+            aria-keyshortcuts="Meta+K Control+K"
+            aria-label="Search"
+            className={isCollapsed ? undefined : "w-full justify-start"}
+            iconOnly={isCollapsed}
+            onClick={() => setOpen(true)}
+            variant="surface"
+          />
+        }
+      >
+        <MagnifyingGlass aria-hidden="true" className="size-4" />
+        {isCollapsed ? null : (
+          <>
+            <span className="flex-1 text-start text-muted-foreground">
+              Search…
+            </span>
+            {shortcut}
+          </>
+        )}
+      </TooltipTrigger>
+      <TooltipContent hidden={!isCollapsed} side="right">
+        <span className="flex items-center gap-2">
+          Search
+          {shortcut}
+        </span>
+      </TooltipContent>
+    </Tooltip>
   );
 }

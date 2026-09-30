@@ -32,10 +32,11 @@ export function HeroReflection() {
         >
           {PRODUCT_MOMENTS.map((item) => (
             <Button
+              active={moment === item.id}
               aria-pressed={moment === item.id}
               key={item.id}
               onClick={() => setMoment(item.id)}
-              size="sm"
+              size="xs"
               variant="ghost"
             >
               {item.label}

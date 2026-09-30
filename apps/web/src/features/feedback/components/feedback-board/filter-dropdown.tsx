@@ -14,7 +14,9 @@ import {
   DropdownMenuTrigger,
 } from "@ctrl-ui/react/ui/dropdown-menu";
 import { Funnel } from "@phosphor-icons/react";
-import { getTagDotColor } from "@/lib/tag-colors";
+import { getTagSwatchClass } from "@/lib/tag-colors";
+import { cn } from "@/lib/utils";
+import { countActiveFilters } from "./count-active-filters";
 
 interface FilterDropdownProps {
   hideCompleted: boolean;
@@ -28,6 +30,18 @@ interface FilterDropdownProps {
   tags: Array<{ _id: string; name: string; color: string }>;
 }
 
+function Swatch({ color }: { color: string }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        "mr-1.5 inline-block size-2 shrink-0 rounded-full",
+        getTagSwatchClass(color)
+      )}
+    />
+  );
+}
+
 export function FilterDropdown({
   statuses,
   selectedStatusIds,
@@ -39,8 +53,13 @@ export function FilterDropdown({
   onHideCompletedToggle,
   onClearFilters,
 }: FilterDropdownProps) {
-  const activeCount =
-    selectedStatusIds.length + selectedTagIds.length + (hideCompleted ? 1 : 0);
+  const activeCount = countActiveFilters({
+    hideCompleted,
+    selectedStatusIds,
+    selectedTagIds,
+  });
+  const selectedStatusSet = new Set<string>(selectedStatusIds);
+  const selectedTagSet = new Set<string>(selectedTagIds);
 
   return (
     <DropdownMenu>
@@ -54,38 +73,30 @@ export function FilterDropdown({
             <Funnel data-icon="inline-start" />
             Filter
             {activeCount > 0 && (
-              <Badge
-                className="ml-1 h-4 min-w-4 px-1 text-micro"
-                variant="default"
-              >
-                {activeCount}
-              </Badge>
+              <>
+                <Badge className="tabular-nums" size="sm">
+                  {activeCount}
+                </Badge>
+                <span className="sr-only">active</span>
+              </>
             )}
           </Button>
         }
       />
       <DropdownMenuContent align="start">
-        {/* Status submenu */}
         {statuses.length > 0 && (
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>Status</DropdownMenuSubTrigger>
             <DropdownMenuSubContent>
               {statuses.map((status) => (
                 <DropdownMenuCheckboxItem
-                  checked={selectedStatusIds.includes(status._id)}
+                  checked={selectedStatusSet.has(status._id)}
                   key={status._id}
                   onCheckedChange={(checked) =>
                     onStatusChange(status._id, checked)
                   }
                 >
-                  <span
-                    className="mr-1.5 inline-block size-2 shrink-0 rounded-full"
-                    style={{
-                      backgroundColor: getTagDotColor(
-                        status.color ?? "default"
-                      ),
-                    }}
-                  />
+                  <Swatch color={status.color ?? "default"} />
                   {status.name}
                 </DropdownMenuCheckboxItem>
               ))}
@@ -93,21 +104,17 @@ export function FilterDropdown({
           </DropdownMenuSub>
         )}
 
-        {/* Tag submenu */}
         {tags.length > 0 && (
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>Tag</DropdownMenuSubTrigger>
             <DropdownMenuSubContent>
               {tags.map((tag) => (
                 <DropdownMenuCheckboxItem
-                  checked={selectedTagIds.includes(tag._id)}
+                  checked={selectedTagSet.has(tag._id)}
                   key={tag._id}
                   onCheckedChange={(checked) => onTagChange(tag._id, checked)}
                 >
-                  <span
-                    className="mr-1.5 inline-block size-2 shrink-0 rounded-full"
-                    style={{ backgroundColor: getTagDotColor(tag.color) }}
-                  />
+                  <Swatch color={tag.color} />
                   {tag.name}
                 </DropdownMenuCheckboxItem>
               ))}
@@ -117,7 +124,6 @@ export function FilterDropdown({
 
         <DropdownMenuSeparator />
 
-        {/* Show completed toggle */}
         <DropdownMenuCheckboxItem
           checked={!hideCompleted}
           onCheckedChange={onHideCompletedToggle}
@@ -125,14 +131,10 @@ export function FilterDropdown({
           Show completed
         </DropdownMenuCheckboxItem>
 
-        {/* Clear all filters */}
         {activeCount > 0 && (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className="text-muted-foreground text-xs"
-              onClick={onClearFilters}
-            >
+            <DropdownMenuItem onClick={onClearFilters}>
               Clear all filters
             </DropdownMenuItem>
           </>

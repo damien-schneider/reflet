@@ -103,19 +103,27 @@ describe("TiptapTitleEditor", () => {
     expect(mockSetEditable).toHaveBeenCalledWith(false);
   });
 
-  it("syncs external value changes to editor", () => {
+  it("syncs external value changes to editor as plain text", () => {
     mockGetText.mockReturnValue("old value");
 
     const { rerender } = render(
       <TiptapTitleEditor onChange={vi.fn()} value="old value" />
     );
 
-    rerender(<TiptapTitleEditor onChange={vi.fn()} value="new value" />);
+    rerender(<TiptapTitleEditor onChange={vi.fn()} value="Fix <b> & tags" />);
 
-    expect(mockSetContent).toHaveBeenCalledWith("<p>new value</p>");
+    expect(mockSetContent).toHaveBeenCalledWith({
+      content: [
+        {
+          content: [{ text: "Fix <b> & tags", type: "text" }],
+          type: "paragraph",
+        },
+      ],
+      type: "doc",
+    });
   });
 
-  it("sets empty content when value is empty", () => {
+  it("sets an empty paragraph when value is empty", () => {
     mockGetText.mockReturnValue("some text");
 
     const { rerender } = render(
@@ -124,7 +132,10 @@ describe("TiptapTitleEditor", () => {
 
     rerender(<TiptapTitleEditor onChange={vi.fn()} value="" />);
 
-    expect(mockSetContent).toHaveBeenCalledWith("");
+    expect(mockSetContent).toHaveBeenCalledWith({
+      content: [{ type: "paragraph" }],
+      type: "doc",
+    });
   });
 
   it("calls onChange with plain text on editor update", () => {

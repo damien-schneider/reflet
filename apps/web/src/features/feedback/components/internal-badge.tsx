@@ -1,15 +1,15 @@
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { EyeSlash } from "@phosphor-icons/react";
-import { cn } from "@/lib/utils";
 
 export function InternalBadge({ className }: { className?: string }) {
   return (
     <Badge
-      className={cn("text-xs", className)}
+      className={className}
+      size="sm"
       title="Only visible to your team"
       variant="outline"
     >
-      <EyeSlash aria-hidden className="mr-1 h-3 w-3" />
+      <EyeSlash aria-hidden />
       Internal
       <span className="sr-only"> (only visible to your team)</span>
     </Badge>

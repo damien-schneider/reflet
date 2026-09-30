@@ -51,7 +51,7 @@ describe("PublicViewToolbar", () => {
     mockUseQuery.mockReturnValue({ role: "owner" });
     render(<PublicViewToolbar orgSlug="acme" />);
     expect(screen.getByText("Dashboard")).toBeInTheDocument();
-    expect(screen.getByText("You are in the public view")).toBeInTheDocument();
+    expect(screen.getByText("Public view")).toBeInTheDocument();
   });
 
   it("renders toolbar for admin", () => {

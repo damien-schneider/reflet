@@ -78,9 +78,7 @@ describe("CommentsSection", () => {
   it("shows empty state when no comments", () => {
     mockUseQuery.mockReturnValue([]);
     render(<CommentsSection feedbackId={feedbackId} />);
-    expect(
-      screen.getByText("No comments yet. Start the conversation!")
-    ).toBeInTheDocument();
+    expect(screen.getByText("No comments yet.")).toBeInTheDocument();
   });
 
   it("renders comment count", () => {
@@ -132,15 +130,13 @@ describe("CommentsSection", () => {
   it("renders AI Draft for admins", () => {
     mockUseQuery.mockReturnValue([]);
     render(<CommentsSection feedbackId={feedbackId} isAdmin />);
-    expect(screen.getByText("AI Draft")).toBeInTheDocument();
+    expect(screen.getByText("Draft reply")).toBeInTheDocument();
   });
 
-  it("handles undefined commentsData gracefully", () => {
+  it("shows a loading state instead of an empty state while comments load", () => {
     mockUseQuery.mockReturnValue(undefined);
     render(<CommentsSection feedbackId={feedbackId} />);
-    expect(
-      screen.getByText("No comments yet. Start the conversation!")
-    ).toBeInTheDocument();
+    expect(screen.queryByText("No comments yet.")).not.toBeInTheDocument();
   });
 
   it("builds nested comment tree correctly", () => {

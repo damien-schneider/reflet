@@ -53,26 +53,6 @@ vi.mock("@ctrl-ui/react/ui/button", () => ({
   ),
 }));
 
-vi.mock("@ctrl-ui/react/ui/card", () => ({
-  Card: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  CardContent: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  CardDescription: ({ children }: { children: React.ReactNode }) => (
-    <p>{children}</p>
-  ),
-  CardHeader: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
-  CardTitle: ({ children }: { children: React.ReactNode }) => (
-    <h2>{children}</h2>
-  ),
-}));
-
-vi.mock("@ctrl-ui/react/ui/separator", () => ({
-  Separator: () => <hr />,
-}));
-
 vi.mock("@ctrl-ui/react/ui/switch", () => ({
   Switch: ({
     checked,
@@ -96,70 +76,9 @@ vi.mock("@ctrl-ui/react/ui/switch", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/typography", () => ({
-  H3: ({
-    children,
-    variant,
-    className,
-  }: {
-    children: React.ReactNode;
-    variant?: string;
-    className?: string;
-  }) => (
-    <h3 className={className} data-variant={variant}>
-      {children}
-    </h3>
-  ),
-  Muted: ({
-    children,
-    className,
-  }: {
-    children: React.ReactNode;
-    className?: string;
-  }) => <span className={className}>{children}</span>,
-  Text: ({
-    children,
-    variant,
-    className,
-  }: {
-    children: React.ReactNode;
-    variant?: string;
-    className?: string;
-  }) => (
-    <span className={className} data-variant={variant}>
-      {children}
-    </span>
-  ),
-}));
-
 vi.mock("@phosphor-icons/react", () => ({
-  Bell: ({ className }: { className?: string }) => (
-    <svg className={className} />
-  ),
-  BellRinging: ({ className }: { className?: string }) => (
-    <svg className={className} />
-  ),
-  BellSlash: ({ className }: { className?: string }) => (
-    <svg className={className} />
-  ),
-  ChatCircle: ({ className }: { className?: string }) => (
-    <svg className={className} />
-  ),
-  Devices: ({ className }: { className?: string }) => (
-    <svg className={className} />
-  ),
-  Envelope: ({ className }: { className?: string }) => (
-    <svg className={className} />
-  ),
-  Trash: ({ className }: { className?: string }) => (
-    <svg className={className} />
-  ),
-  TrendUp: ({ className }: { className?: string }) => (
-    <svg className={className} />
-  ),
-  Warning: ({ className }: { className?: string }) => (
-    <svg className={className} />
-  ),
+  BellSlash: () => <svg />,
+  Warning: () => <svg />,
 }));
 
 import { useQuery } from "convex/react";
@@ -168,14 +87,14 @@ import { usePushNotifications } from "@/hooks/use-push-notifications";
 import { NotificationSettings } from "./notification-settings";
 
 describe("NotificationSettings", () => {
-  it("renders Push Notifications card", () => {
+  it("renders the push notifications section", () => {
     render(<NotificationSettings />);
-    expect(screen.getByText("Push Notifications")).toBeInTheDocument();
+    expect(screen.getByText("Push notifications")).toBeInTheDocument();
   });
 
   it("renders Notification Types card", () => {
     render(<NotificationSettings />);
-    expect(screen.getByText("Notification Types")).toBeInTheDocument();
+    expect(screen.getByText("Notification types")).toBeInTheDocument();
   });
 
   it("renders all notification type toggles", () => {
@@ -226,7 +145,7 @@ describe("NotificationSettings", () => {
 
   it("does not render Active Devices when no subscriptions", () => {
     render(<NotificationSettings />);
-    expect(screen.queryByText("Active Devices")).not.toBeInTheDocument();
+    expect(screen.queryByText("Active devices")).not.toBeInTheDocument();
   });
 
   it("renders Active Devices when subscriptions exist", () => {
@@ -249,7 +168,7 @@ describe("NotificationSettings", () => {
       ]);
 
     render(<NotificationSettings />);
-    expect(screen.getByText("Active Devices")).toBeInTheDocument();
+    expect(screen.getByText("Active devices")).toBeInTheDocument();
   });
 
   it("calls subscribe when push toggle is clicked while disabled", async () => {
@@ -332,7 +251,7 @@ describe("NotificationSettings", () => {
         },
       ]);
     render(<NotificationSettings />);
-    expect(screen.getByText("Active Devices")).toBeInTheDocument();
+    expect(screen.getByText("Active devices")).toBeInTheDocument();
     expect(screen.getByText(/Chrome on Desktop/)).toBeInTheDocument();
   });
 

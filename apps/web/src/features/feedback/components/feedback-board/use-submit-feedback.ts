@@ -55,6 +55,7 @@ export function useSubmitFeedback({
   const [newFeedback, setNewFeedback] =
     useState<NewFeedbackState>(INITIAL_FEEDBACK);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitTagId, setSubmitTagId] = useState<Id<"tags"> | undefined>();
   const [submitAssigneeId, setSubmitAssigneeId] = useState<
     string | undefined
@@ -67,6 +68,7 @@ export function useSubmitFeedback({
     }
 
     setIsSubmitting(true);
+    setSubmitError(null);
     try {
       const attachments =
         newFeedback.attachments.length > 0
@@ -104,10 +106,11 @@ export function useSubmitFeedback({
       setSubmitTagId(undefined);
       setSubmitAssigneeId(undefined);
     } catch {
-      // Error is shown by Convex client; keep drawer open so user can fix and retry
-    } finally {
-      setIsSubmitting(false);
+      setSubmitError(
+        "Couldn’t submit your feedback. Check your connection and try again."
+      );
     }
+    setIsSubmitting(false);
   };
 
   return {
@@ -118,6 +121,7 @@ export function useSubmitFeedback({
     setSubmitAssigneeId,
     setSubmitTagId,
     submitAssigneeId,
+    submitError,
     submitTagId,
   } as const;
 }

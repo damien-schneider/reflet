@@ -41,6 +41,7 @@ vi.mock("@phosphor-icons/react", () => ({
 import { PasswordInputField } from "./password-input-field";
 
 const baseProps = {
+  autoComplete: "current-password" as const,
   id: "test-password",
   label: "Password",
   onTogglePassword: vi.fn(),

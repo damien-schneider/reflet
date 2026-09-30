@@ -9,17 +9,13 @@ import {
   type FeedFeedbackViewProps,
 } from "@/features/feedback/components/feed-feedback-view";
 
-const { openFeedback, toggleVote } = vi.hoisted(() => ({
+const { openFeedback, vote } = vi.hoisted(() => ({
   openFeedback: vi.fn(),
-  toggleVote: vi.fn().mockResolvedValue(null),
+  vote: vi.fn(),
 }));
 
-vi.mock("convex/react", () => ({ useMutation: () => toggleVote }));
-vi.mock("@/hooks/use-auth-guard", () => ({
-  useAuthGuard: () => ({ guard: (action: () => void) => action() }),
-}));
 vi.mock("./feedback-board/feedback-board-context", () => ({
-  useFeedbackBoard: () => ({ onFeedbackClick: openFeedback }),
+  useFeedbackBoard: () => ({ onFeedbackClick: openFeedback, onVote: vote }),
 }));
 vi.mock("./feedback-card-admin-wrapper", () => ({
   FeedbackCardAdminWrapper: ({ children }: { children: ReactNode }) => children,
@@ -47,7 +43,6 @@ const props = {
   hasActiveFilters: false,
   hideCompleted: false,
   isAdmin: false,
-  isLoading: false,
   isMember: false,
   onClearFilters: vi.fn(),
   onHideCompletedToggle: vi.fn(),
@@ -66,9 +61,6 @@ describe("FeedFeedbackView", () => {
   it("uses Sweep Corner voting and opens feedback from the keyboard", async () => {
     const user = userEvent.setup();
     render(<FeedFeedbackView {...props} />);
-    expect(
-      screen.getByRole("button", { name: "Upvote" }).parentElement
-    ).toHaveClass("top-0", "right-0");
     await user.tab();
     expect(
       screen.getByRole("button", { name: "Allow keyboard shortcuts" })
@@ -76,7 +68,28 @@ describe("FeedFeedbackView", () => {
     await user.keyboard("{Enter}");
     expect(openFeedback).toHaveBeenCalledWith(feedbackId);
     await user.click(screen.getByRole("button", { name: "Upvote" }));
-    expect(toggleVote).toHaveBeenCalledWith({ feedbackId, voteType: "upvote" });
+    expect(vote).toHaveBeenCalledWith(feedbackId, "upvote");
     expect(openFeedback).toHaveBeenCalledTimes(1);
+  });
+
+  it("offers to clear filters when filtering leaves nothing", async () => {
+    const user = userEvent.setup();
+    const onClearFilters = vi.fn();
+    render(
+      <FeedFeedbackView
+        {...props}
+        feedback={[]}
+        hasActiveFilters
+        onClearFilters={onClearFilters}
+      />
+    );
+    await user.click(screen.getByRole("button", { name: "Clear filters" }));
+    expect(onClearFilters).toHaveBeenCalledOnce();
+  });
+
+  it("tells the user completed feedback is hidden instead of claiming the board is empty", () => {
+    render(<FeedFeedbackView {...props} feedback={[]} hideCompleted />);
+    expect(screen.getByText("No open feedback")).toBeInTheDocument();
+    expect(screen.queryByText("No feedback yet")).not.toBeInTheDocument();
   });
 });

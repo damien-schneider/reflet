@@ -1,6 +1,10 @@
 import { expect, type Locator, type Page, test } from "@playwright/test";
 
-const SECTION_HEADINGS = [/Listen closely/, /Feedback that/, /Before you/];
+const SECTION_HEADINGS = [
+  /Listen closely/,
+  /Feedback that/,
+  /Common questions/,
+];
 
 test("cursor ripples spread and settle while the pointer rests", async ({
   page,
@@ -166,7 +170,7 @@ test("the hero keeps a reflection and working links without WebGL", async ({
     "Listen closely.Build what matters."
   );
   await page
-    .getByRole("link", { exact: true, name: "Explore the feedback loop" })
+    .getByRole("link", { exact: true, name: "See how it works" })
     .click();
   await expect(page.getByTestId("feedback-journey")).toHaveAttribute(
     "data-step",

@@ -233,14 +233,16 @@ export function useBoardFilters(
 
   const clearFilters = useCallback(() => {
     const params = new URLSearchParams();
-    // Keep view param if it's not the default
     if (state.view !== defaultView) {
       params.set(URL_PARAM_KEYS.view, state.view);
+    }
+    if (state.sortBy !== DEFAULT_SORT) {
+      params.set(URL_PARAM_KEYS.sort, state.sortBy);
     }
     const queryString = params.toString();
     const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
     router.replace(newUrl, { scroll: false });
-  }, [router, pathname, state.view, defaultView]);
+  }, [router, pathname, state.view, state.sortBy, defaultView]);
 
   const setHideCompleted = useCallback(
     (hide: boolean) => {
@@ -254,8 +256,7 @@ export function useBoardFilters(
     !!state.searchQuery ||
     state.selectedStatusIds.length > 0 ||
     state.selectedTagIds.length > 0 ||
-    state.selectedTagId !== null ||
-    state.sortBy !== DEFAULT_SORT;
+    state.selectedTagId !== null;
 
   return {
     ...state,

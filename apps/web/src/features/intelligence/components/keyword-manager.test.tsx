@@ -191,7 +191,9 @@ describe("KeywordManager", () => {
     mockUseQuery.mockReturnValue(undefined);
     mockUseMutation.mockReturnValue(vi.fn());
     render(<KeywordManager organizationId="org-1" />);
-    expect(screen.getByText("Loading...")).toBeInTheDocument();
+    expect(
+      screen.getByRole("status", { name: "Loading keywords" })
+    ).toBeInTheDocument();
   });
 
   it("shows empty state when no keywords exist", () => {
@@ -200,7 +202,7 @@ describe("KeywordManager", () => {
     render(<KeywordManager organizationId="org-1" />);
     expect(
       screen.getByText(
-        "No keywords added yet. Add keywords to monitor discussions."
+        "No keywords yet. Add one to start monitoring discussions."
       )
     ).toBeInTheDocument();
   });
@@ -271,24 +273,18 @@ describe("KeywordManager", () => {
     mockUseQuery.mockReturnValue([]);
     mockUseMutation.mockReturnValue(vi.fn());
     render(<KeywordManager organizationId="org-1" />);
-    expect(
-      screen.getByPlaceholderText("Enter a keyword...")
-    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Keyword")).toBeInTheDocument();
     expect(screen.getByText("Add")).toBeInTheDocument();
   });
 
-  it("submits the form and calls createKeyword", async () => {
+  it("submits with Enter and calls createKeyword", async () => {
     const user = userEvent.setup();
     mockUseQuery.mockReturnValue([]);
     mockCreateKeyword.mockResolvedValue(undefined);
     mockUseMutation.mockReturnValue(mockCreateKeyword);
     render(<KeywordManager organizationId="org-1" />);
 
-    await user.type(
-      screen.getByPlaceholderText("Enter a keyword..."),
-      "new keyword"
-    );
-    await user.click(screen.getByText("Add"));
+    await user.type(screen.getByLabelText("Keyword"), "new keyword{Enter}");
 
     expect(mockCreateKeyword).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -296,6 +292,19 @@ describe("KeywordManager", () => {
         source: "both",
       })
     );
+  });
+
+  it("rejects a duplicate keyword inline without calling createKeyword", async () => {
+    const user = userEvent.setup();
+    mockUseQuery.mockReturnValue(sampleKeywords);
+    mockUseMutation.mockReturnValue(mockCreateKeyword);
+    render(<KeywordManager organizationId="org-1" />);
+
+    await user.type(screen.getByLabelText("Keyword"), "Product Analytics");
+    await user.click(screen.getByText("Add"));
+
+    expect(screen.getByRole("alert")).toHaveTextContent("already tracked");
+    expect(mockCreateKeyword).not.toHaveBeenCalled();
   });
 
   it("disables submit button when keyword input is empty", () => {

@@ -5,7 +5,6 @@ import NumberFlow from "@number-flow/react";
 import { ArrowUpRight, Check } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { SectionReveal } from "@/features/homepage/components/experience/motion/section-reveal";
 import { PLANS } from "@/features/project/components/billing/billing-config";
 import type {
   BillingInterval,
@@ -73,40 +72,33 @@ export function MarketingPricing({
       data-testid="marketing-pricing"
       id="pricing"
     >
-      <SectionReveal className="marketing-section-intro" sequence>
-        <span className="marketing-kicker">
-          Small start. Big possibilities.
-        </span>
+      <div className="marketing-section-intro">
+        <span className="marketing-kicker">Pricing</span>
         <Heading>
           Great products.
           <br />
           <span>Down-to-earth pricing.</span>
         </Heading>
         <p>
-          Start collecting feedback for free. Add more room and make it your own
-          when your team grows.
+          Start collecting feedback for free. Upgrade when your team needs more
+          room or your own branding.
         </p>
-      </SectionReveal>
+      </div>
       <BillingToggle interval={billingInterval} onChange={setBillingInterval} />
       <div className="marketing-plans">
         {PLANS.map((plan) => (
-          <SectionReveal key={plan.id}>
-            <PublicPlan interval={billingInterval} plan={plan} />
-          </SectionReveal>
+          <PublicPlan interval={billingInterval} key={plan.id} plan={plan} />
         ))}
       </div>
-      <SectionReveal className="marketing-open-source">
+      <div className="marketing-open-source">
         <div>
-          <strong>Your feedback. Your freedom.</strong>
-          <p>
-            Reflet is open source. Explore the code, contribute, or host it
-            yourself.
-          </p>
+          <strong>Open source</strong>
+          <p>Read the code, contribute, or host Reflet yourself.</p>
         </div>
         <a href="https://github.com/damien-schneider/reflet">
-          Explore on GitHub <span aria-hidden="true">↗</span>
+          View on GitHub <ArrowUpRight aria-hidden="true" size={14} />
         </a>
-      </SectionReveal>
+      </div>
     </section>
   );
 }

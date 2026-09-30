@@ -1,8 +1,8 @@
 "use client";
 
 import { Button } from "@ctrl-ui/react/ui/button";
-import { Field, FieldError } from "@ctrl-ui/react/ui/field";
-import { AnimatePresence, motion } from "motion/react";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
+import { AnimatePresence, domAnimation, LazyMotion, m } from "motion/react";
 import type { AuthMode } from "./hooks/use-auth-form";
 import { animationVariants } from "./lib/auth-validation";
 
@@ -15,13 +15,13 @@ interface AuthSubmitButtonProps {
 }
 
 function getButtonText(mode: AuthMode, isSubmitting: boolean): string {
-  if (isSubmitting) {
-    return "Loading...";
+  if (mode === "signIn") {
+    return isSubmitting ? "Signing in…" : "Sign in";
   }
-  if (!mode) {
-    return "Continue";
+  if (mode === "signUp") {
+    return isSubmitting ? "Creating account…" : "Create account";
   }
-  return mode === "signIn" ? "Sign in" : "Create my account";
+  return isSubmitting ? "Continuing…" : "Continue";
 }
 
 export function AuthSubmitButton({
@@ -32,25 +32,26 @@ export function AuthSubmitButton({
   apiError,
 }: AuthSubmitButtonProps) {
   return (
-    <>
-      {apiError && (
-        <Field>
-          <FieldError className="absolute" match>
-            {apiError}
-          </FieldError>
-        </Field>
-      )}
+    <div className="pt-2">
+      <p
+        className="min-h-[1lh] text-caption text-destructive-text"
+        data-testid="auth-api-error"
+        role="alert"
+      >
+        {apiError}
+      </p>
       <Button
-        className="mt-6 w-full"
+        className="mt-2 w-full"
         data-testid="submit-button"
         disabled={isSubmitting || isCheckingEmail || !isFormValid}
         tone="primary"
         type="submit"
         variant="solid"
       >
+        {isSubmitting && <Spinner data-icon="inline-start" size="xs" />}
         {getButtonText(mode, isSubmitting)}
       </Button>
-    </>
+    </div>
   );
 }
 
@@ -61,43 +62,29 @@ interface AuthHelperTextProps {
 
 export function AuthHelperText({ mode, onResetMode }: AuthHelperTextProps) {
   return (
-    <AnimatePresence>
-      {mode && (
-        <motion.div
-          animate="animate"
-          className="text-center"
-          exit="exit"
-          initial="initial"
-          transition={{ duration: 0.3, ease: "easeInOut" }}
-          variants={animationVariants}
-        >
-          <p className="text-muted-foreground text-sm">
-            {mode === "signIn" ? (
-              <>
-                Don't have an account?{" "}
-                <button
-                  className="font-medium text-brand-text hover:underline"
-                  onClick={onResetMode}
-                  type="button"
-                >
-                  Use a different email
-                </button>
-              </>
-            ) : (
-              <>
-                Already have an account?{" "}
-                <button
-                  className="font-medium text-brand-text hover:underline"
-                  onClick={onResetMode}
-                  type="button"
-                >
-                  Use a different email
-                </button>
-              </>
-            )}
-          </p>
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <LazyMotion features={domAnimation}>
+      <AnimatePresence initial={false}>
+        {mode && (
+          <m.div
+            animate="animate"
+            className="text-center"
+            exit="exit"
+            initial="initial"
+            variants={animationVariants}
+          >
+            <p className="text-muted-foreground text-sm">
+              {mode === "signIn" ? "Not you?" : "Already have an account?"}{" "}
+              <button
+                className="font-medium text-brand-text hover:underline"
+                onClick={onResetMode}
+                type="button"
+              >
+                Use a different email
+              </button>
+            </p>
+          </m.div>
+        )}
+      </AnimatePresence>
+    </LazyMotion>
   );
 }

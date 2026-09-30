@@ -1,3 +1,4 @@
+import { TooltipProvider } from "@ctrl-ui/react/ui/tooltip";
 import { env } from "@reflet/env/server";
 import type { Metadata, Viewport } from "next";
 import { Manrope } from "next/font/google";
@@ -6,6 +7,7 @@ import { Suspense } from "react";
 import { RefletFeedback } from "reflet-sdk/feedback";
 import { CookieConsentBanner } from "@/components/cookie-consent-banner";
 import { PostHogPageView } from "@/components/posthog-pageview";
+import { ThemeColorSync } from "@/components/theme-color-sync";
 import { defaultMetadata, viewport as seoViewport } from "@/lib/seo-config";
 import { ThemeProvider } from "@/lib/theme-provider";
 
@@ -51,7 +53,10 @@ export default function RootLayout({
         <Suspense fallback={null}>
           <PostHogPageView />
         </Suspense>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <ThemeColorSync />
+          <TooltipProvider>{children}</TooltipProvider>
+        </ThemeProvider>
         <CookieConsentBanner />
         <RefletFeedback enabled={false} />
       </body>
