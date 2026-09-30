@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, type Page, type TestInfo, test } from "@playwright/test";
 import {
   createOrganization,
   makeOrgName,
@@ -6,128 +6,158 @@ import {
   signUpAndLandOnDashboard,
 } from "./helpers/auth";
 
-const NAV_LINKS = [
-  { name: "Feedback", path: "" },
-  { name: "Changelog", path: "changelog" },
-  { name: "Inbox", path: "inbox" },
-] as const;
+const ACCOUNT_BUTTON_NAME = /^Account:/;
 
-test.describe("Sidebar navigation", () => {
-  test("points every workspace link at a live route", async ({ page }) => {
-    const notFound: string[] = [];
-    page.on("response", (response) => {
-      if (response.status() === 404) {
-        notFound.push(response.url());
-      }
-    });
+const GROUPS = [
+  {
+    links: [
+      "Feedback",
+      "Changelog",
+      "Inbox",
+      "Surveys",
+      "Intelligence",
+      "Status",
+    ],
+    name: "Workspace",
+  },
+  {
+    links: ["GitHub", "Agents & CLI", "API keys", "In-app"],
+    name: "Developer tools",
+  },
+  {
+    links: ["General", "Members", "Domains", "Billing", "Trash"],
+    name: "Organization",
+  },
+];
 
-    await signUpAndLandOnDashboard(page, makeTestUser("nav"));
-    const slug = await createOrganization(page, makeOrgName("Nav Org"));
-
-    for (const link of NAV_LINKS) {
-      const expected = link.path
-        ? `/dashboard/${slug}/${link.path}`
-        : `/dashboard/${slug}`;
-
-      const navLink = page
-        .getByRole("link", { name: link.name })
-        .filter({ hasText: link.name })
-        .first();
-
-      await expect(navLink).toBeVisible({ timeout: 30_000 });
-      await expect(navLink).toHaveAttribute("href", expected);
+async function checkNavigationGroups(page: Page) {
+  for (const group of GROUPS) {
+    const menu = page.getByRole("list", { exact: true, name: group.name });
+    for (const name of group.links) {
+      const link = menu.getByRole("link", { exact: true, name });
+      await link.scrollIntoViewIfNeeded();
+      await expect(link).toBeInViewport();
     }
+  }
+  await expect(
+    page.getByRole("link", { exact: true, name: "General" })
+  ).toHaveAttribute("aria-current", "page");
+  await expect(
+    page.getByRole("button", { name: ACCOUNT_BUTTON_NAME })
+  ).toBeInViewport();
+  await expect(
+    page.getByRole("link", { name: "Upgrade to Pro" })
+  ).toBeInViewport();
+}
 
-    const project = page.getByRole("button", { exact: true, name: "Project" });
-    await project.click();
-    await expect(project).toHaveAttribute("aria-expanded", "true");
-    await expect(
-      page.getByRole("list", { exact: true, name: "Project" }).getByRole("link")
-    ).toHaveCount(7);
-
-    expect(notFound).toEqual([]);
+async function checkResizableSidebar(
+  page: Page,
+  testInfo: TestInfo,
+  billingHref: string
+) {
+  const rail = page.getByRole("separator", { name: "Resize sidebar" });
+  await rail.focus();
+  await page.keyboard.press("End");
+  await expect(rail).toHaveAttribute("aria-valuenow", "420");
+  await page.keyboard.press("Home");
+  await expect(rail).toHaveAttribute("aria-valuenow", "224");
+  const bounds = await rail.boundingBox();
+  if (!bounds) {
+    throw new Error("Resize rail has no hit area");
+  }
+  await page.mouse.move(
+    bounds.x + bounds.width / 2,
+    bounds.y + bounds.height / 2
+  );
+  await page.mouse.down();
+  await page.mouse.move(300, bounds.y + bounds.height / 2);
+  await page.mouse.up();
+  await expect(rail).toHaveAttribute("aria-valuenow", "300");
+  await rail.focus();
+  await page.keyboard.press("Enter");
+  await expect(rail).toHaveAttribute("aria-valuetext", "collapsed");
+  await expect(
+    page.getByRole("link", { name: "Upgrade to Pro" })
+  ).toBeInViewport();
+  await page.getByRole("button", { name: ACCOUNT_BUTTON_NAME }).click();
+  await expect(
+    page.getByRole("menuitem", { name: "Account settings" })
+  ).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByText("Owner", { exact: true })).toBeVisible();
+  await page.screenshot({
+    animations: "disabled",
+    path: testInfo.outputPath("sidebar-collapsed.png"),
   });
+  await page.keyboard.press("ControlOrMeta+b");
+  await expect(rail).toHaveAttribute("aria-valuenow", "300");
+  await page.getByRole("link", { name: "Upgrade to Pro" }).click();
+  await expect(page).toHaveURL(billingHref);
+}
 
-  test("renders the inbox route directly", async ({ page }) => {
-    await signUpAndLandOnDashboard(page, makeTestUser("nav-inbox"));
-    const slug = await createOrganization(page, makeOrgName("Nav Inbox Org"));
-
-    await page.goto(`/dashboard/${slug}/inbox`);
-
-    await expect(page.getByRole("heading", { name: "Inbox" })).toBeVisible({
-      timeout: 30_000,
-    });
+async function openOrganizationSettings(page: Page, mobile: boolean) {
+  await signUpAndLandOnDashboard(page, makeTestUser("sidebar-nav"));
+  await page.getByRole("button", { exact: true, name: "Decline" }).click();
+  const slug = await createOrganization(page, makeOrgName("Sidebar"));
+  await page.goto(`/dashboard/${slug}/project/general`);
+  const trigger = page.getByRole("button", {
+    exact: true,
+    name: "Toggle Sidebar",
   });
-});
+  if (mobile) {
+    await trigger.click();
+  }
+  return { slug, trigger };
+}
 
 for (const viewport of [
   { height: 1000, width: 1440 },
-  { height: 1000, width: 900 },
+  { height: 720, width: 1100 },
   { height: 844, width: 390 },
+  { height: 700, width: 320 },
 ]) {
-  test(`project submenu navigation at ${viewport.width}px`, async ({
+  test(`sidebar navigation at ${viewport.width}px`, async ({
     page,
   }, testInfo) => {
     await page.setViewportSize(viewport);
-    if (viewport.width === 900) {
+    if (viewport.width === 1100 || viewport.width === 320) {
       await page.emulateMedia({ reducedMotion: "reduce" });
     }
-    await signUpAndLandOnDashboard(page, makeTestUser("project-nav"));
-    const slug = await createOrganization(page, makeOrgName("Project Nav"));
-    await page.goto(`/dashboard/${slug}/project/general`);
-
     const mobile = viewport.width < 1024;
-    const sidebarTrigger = page.getByRole("button", {
-      exact: true,
-      name: "Toggle Sidebar",
-    });
-    if (mobile) {
-      await sidebarTrigger.click();
-      await expect(
-        page.getByRole("dialog", { exact: true, name: "Sidebar" })
-      ).toBeInViewport({ ratio: 1 });
-    }
+    const { slug, trigger } = await openOrganizationSettings(page, mobile);
+    expect(
+      await page.getByRole("button", { exact: true, name: "Project" }).count()
+    ).toBe(0);
 
-    const project = page.getByRole("button", { exact: true, name: "Project" });
-    const submenu = page.getByRole("list", { exact: true, name: "Project" });
-    await expect(project).toHaveAttribute("aria-expanded", "true");
-    await expect(
-      submenu.getByRole("link", { exact: true, name: "Organization" })
-    ).toHaveAttribute("aria-current", "page");
-    await expect(
-      page.getByRole("link", { exact: true, name: "Members" })
-    ).toHaveCount(1);
+    await checkNavigationGroups(page);
+    await page
+      .getByRole("link", { exact: true, name: "Feedback" })
+      .scrollIntoViewIfNeeded();
     await page.screenshot({
       animations: "disabled",
-      path: testInfo.outputPath("project-sidebar.png"),
+      path: testInfo.outputPath("sidebar-expanded.png"),
     });
 
-    await submenu.getByRole("link", { exact: true, name: "Members" }).click();
+    await page.getByRole("link", { exact: true, name: "Members" }).click();
     await expect(page).toHaveURL(`/dashboard/${slug}/project/members`);
     if (mobile) {
       await expect(
         page.getByRole("dialog", { exact: true, name: "Sidebar" })
       ).not.toBeVisible();
-      await sidebarTrigger.click();
+      await trigger.click();
       await page.keyboard.press("Escape");
-      await expect(sidebarTrigger).toBeFocused();
+      await expect(trigger).toBeFocused();
     } else {
-      await expect(
-        submenu.getByRole("link", { exact: true, name: "Members" })
-      ).toHaveAttribute("aria-current", "page");
-      await page.keyboard.press("ControlOrMeta+b");
-      await expect(submenu).not.toBeVisible();
-      await project.click();
-      await expect(submenu).toBeVisible();
+      await checkResizableSidebar(
+        page,
+        testInfo,
+        `/dashboard/${slug}/project/billing`
+      );
     }
-
-    const hasHorizontalOverflow = await page.evaluate(
-      () => document.documentElement.scrollWidth > window.innerWidth
-    );
-    expect(hasHorizontalOverflow).toBe(false);
-    await page.screenshot({
-      animations: "disabled",
-      path: testInfo.outputPath("project-content.png"),
-    });
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth > window.innerWidth
+      )
+    ).toBe(false);
   });
 }

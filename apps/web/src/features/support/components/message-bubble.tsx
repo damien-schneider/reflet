@@ -3,7 +3,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@ctrl-ui/react/ui/avatar";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { format } from "date-fns";
-import { getInitials } from "@/features/support/lib/initials";
+import { getInitials } from "@/lib/initials";
 import { cn } from "@/lib/utils";
 
 const REACTION_CHIP =

@@ -1,4 +1,3 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@ctrl-ui/react/ui/avatar";
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
@@ -20,6 +19,8 @@ import {
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
+
+import { UserAvatar } from "@/features/account/components/user-avatar";
 
 const ROLE_CONFIG = {
   admin: { icon: Shield, label: "Admin" },
@@ -92,20 +93,11 @@ function MemberRow({
   const role = ROLE_CONFIG[member.role];
   const RoleIcon = role.icon;
   const name = member.user?.name || member.user?.email || "Unknown";
-  const initials = name
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
 
   return (
     <li className="flex items-center justify-between gap-4 py-3">
       <div className="flex min-w-0 items-center gap-3">
-        <Avatar>
-          <AvatarImage alt="" src={member.user?.image ?? undefined} />
-          <AvatarFallback>{initials}</AvatarFallback>
-        </Avatar>
+        <UserAvatar user={member.user} />
         <div className="flex min-w-0 flex-col">
           <p className="truncate font-medium text-label">{name}</p>
           {member.user?.email ? (

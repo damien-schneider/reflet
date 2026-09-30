@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@ctrl-ui/react/ui/dropdown-menu";
 import { CaretDown, UserCircle } from "@phosphor-icons/react";
-import { getInitials } from "@/features/support/lib/initials";
+import { getInitials } from "@/lib/initials";
 import { cn } from "@/lib/utils";
 
 interface TeamMember {

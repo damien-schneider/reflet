@@ -16,7 +16,7 @@ import { format, formatDistanceToNowStrict } from "date-fns";
 import { type ReactNode, useEffect, useRef } from "react";
 import { HoverQuickActions } from "@/features/inbox/components/hover-quick-actions";
 import { ConversationStatusBadge } from "@/features/support/components/conversation-status-badge";
-import { getInitials } from "@/features/support/lib/initials";
+import { getInitials } from "@/lib/initials";
 import { cn } from "@/lib/utils";
 
 interface ConversationUser {
