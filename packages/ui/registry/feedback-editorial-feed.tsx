@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowDown, ArrowUp } from "@phosphor-icons/react";
-import { MotionConfig, motion } from "motion/react";
+import { domAnimation, LazyMotion, MotionConfig, m } from "motion/react";
 import {
   createContext,
   type ReactNode,
@@ -95,44 +95,29 @@ function EditorialFeedItem({
 
   const internalVote = useCallback(
     (direction: "upvote" | "downvote") => {
-      setInternalVoteType((prev) => {
-        const isToggleOff = prev === direction;
-        const next = isToggleOff ? null : direction;
+      const next = internalVoteType === direction ? null : direction;
+      let nextUp = internalUpvotes;
+      let nextDown = internalDownvotes;
 
-        setInternalUpvotes((u) => {
-          let newUp = u;
-          if (prev === "upvote") {
-            newUp -= 1;
-          }
-          if (next === "upvote") {
-            newUp += 1;
-          }
-          return newUp;
-        });
+      if (internalVoteType === "upvote") {
+        nextUp -= 1;
+      }
+      if (internalVoteType === "downvote") {
+        nextDown -= 1;
+      }
+      if (next === "upvote") {
+        nextUp += 1;
+      }
+      if (next === "downvote") {
+        nextDown += 1;
+      }
 
-        setInternalDownvotes((d) => {
-          let newDown = d;
-          if (prev === "downvote") {
-            newDown -= 1;
-          }
-          if (next === "downvote") {
-            newDown += 1;
-          }
-          return newDown;
-        });
-
-        return next;
-      });
-
-      setInternalUpvotes((currentUp) => {
-        setInternalDownvotes((currentDown) => {
-          onVoteChange?.(currentUp, currentDown);
-          return currentDown;
-        });
-        return currentUp;
-      });
+      setInternalVoteType(next);
+      setInternalUpvotes(nextUp);
+      setInternalDownvotes(nextDown);
+      onVoteChange?.(nextUp, nextDown);
     },
-    [onVoteChange]
+    [internalVoteType, internalUpvotes, internalDownvotes, onVoteChange]
   );
 
   const contextValue = useMemo(
@@ -165,9 +150,11 @@ function EditorialFeedItem({
 
   return (
     <VoteContext.Provider value={contextValue}>
-      <MotionConfig reducedMotion="user">
-        <div className={cn("relative py-4 pl-16", className)}>{children}</div>
-      </MotionConfig>
+      <LazyMotion features={domAnimation}>
+        <MotionConfig reducedMotion="user">
+          <div className={cn("relative py-4 pl-16", className)}>{children}</div>
+        </MotionConfig>
+      </LazyMotion>
     </VoteContext.Provider>
   );
 }
@@ -177,49 +164,60 @@ function EditorialFeedVote() {
 
   return (
     <div className="absolute top-4 left-0 flex w-12 flex-col items-center gap-0.5">
-      <motion.button
+      <m.button
         aria-label={voteType === "upvote" ? "Remove upvote" : "Upvote"}
+        aria-pressed={voteType === "upvote"}
         className={cn(
-          "transition-colors",
+          "relative rounded-sm transition-colors before:absolute before:-inset-2 before:content-[''] focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
           voteType === "upvote"
             ? "text-primary"
-            : "text-muted-foreground/30 hover:text-primary"
+            : "text-muted-foreground/70 hover:text-primary"
         )}
         onClick={(e) => {
           e.stopPropagation();
           vote("upvote");
         }}
         type="button"
-        whileTap={{ scale: 0.8 }}
+        whileTap={{ scale: 0.96 }}
       >
         <ArrowUp
+          aria-hidden
           className="h-3 w-3"
           weight={voteType === "upvote" ? "bold" : "regular"}
         />
-      </motion.button>
-      <span className="text-[9px] text-muted-foreground/40 tabular-nums">
-        {upvotes}&uarr; {downvotes}&darr;
+      </m.button>
+      <span
+        aria-live="polite"
+        className="text-[10px] text-muted-foreground/70 tabular-nums"
+      >
+        {upvotes}
+        <span aria-hidden>&uarr;</span>
+        <span className="sr-only"> upvotes,</span> {downvotes}
+        <span aria-hidden>&darr;</span>
+        <span className="sr-only"> downvotes</span>
       </span>
-      <motion.button
+      <m.button
         aria-label={voteType === "downvote" ? "Remove downvote" : "Downvote"}
+        aria-pressed={voteType === "downvote"}
         className={cn(
-          "transition-colors",
+          "relative rounded-sm transition-colors before:absolute before:-inset-2 before:content-[''] focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
           voteType === "downvote"
             ? "text-destructive"
-            : "text-muted-foreground/30 hover:text-destructive"
+            : "text-muted-foreground/70 hover:text-destructive"
         )}
         onClick={(e) => {
           e.stopPropagation();
           vote("downvote");
         }}
         type="button"
-        whileTap={{ scale: 0.8 }}
+        whileTap={{ scale: 0.96 }}
       >
         <ArrowDown
+          aria-hidden
           className="h-3 w-3"
           weight={voteType === "downvote" ? "bold" : "regular"}
         />
-      </motion.button>
+      </m.button>
     </div>
   );
 }
@@ -231,6 +229,7 @@ interface EditorialFeedRuleProps {
 function EditorialFeedRule({ className }: EditorialFeedRuleProps) {
   return (
     <div
+      aria-hidden
       className={cn(
         "absolute top-0 bottom-0 left-14 w-px bg-border/20",
         className
@@ -331,7 +330,9 @@ function EditorialFeedComments({
 }: EditorialFeedCommentsProps) {
   return (
     <>
-      <span className={className}>&middot;</span>
+      <span aria-hidden className={className}>
+        &middot;
+      </span>
       <span className={className}>
         {count} {count === 1 ? "comment" : "comments"}
       </span>

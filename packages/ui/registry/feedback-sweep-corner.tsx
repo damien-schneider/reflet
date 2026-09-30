@@ -1,7 +1,13 @@
 "use client";
 
 import { CaretDown, CaretUp, Chat } from "@phosphor-icons/react";
-import { AnimatePresence, MotionConfig, motion } from "motion/react";
+import {
+  AnimatePresence,
+  domAnimation,
+  LazyMotion,
+  MotionConfig,
+  m,
+} from "motion/react";
 import type { ReactNode } from "react";
 import {
   createContext,
@@ -104,8 +110,9 @@ function AnimatedCount({
 }) {
   return (
     <AnimatePresence mode="popLayout">
-      <motion.span
+      <m.span
         animate={{ opacity: 1, y: 0 }}
+        aria-hidden
         className={cn("tabular-nums", className)}
         exit={{ opacity: 0, y: -6 }}
         initial={{ opacity: 0, y: 6 }}
@@ -113,7 +120,7 @@ function AnimatedCount({
         transition={{ damping: 20, stiffness: 400, type: "spring" }}
       >
         {value}
-      </motion.span>
+      </m.span>
     </AnimatePresence>
   );
 }
@@ -163,9 +170,11 @@ function SweepCorner({
 
   return (
     <SweepCornerContext.Provider value={contextValue}>
-      <MotionConfig reducedMotion="user">
-        <div className={cn("relative", className)}>{children}</div>
-      </MotionConfig>
+      <LazyMotion features={domAnimation}>
+        <MotionConfig reducedMotion="user">
+          <div className={cn("relative", className)}>{children}</div>
+        </MotionConfig>
+      </LazyMotion>
     </SweepCornerContext.Provider>
   );
 }
@@ -179,7 +188,7 @@ function SweepCornerCard({ children, className }: SweepCornerCardProps) {
   return (
     <div
       className={cn(
-        "rounded-xl border border-border/50 bg-card transition-[border-color,box-shadow] hover:border-border hover:shadow-sm",
+        "rounded-xl border border-border/50 bg-card hover:border-border hover:shadow-sm",
         className
       )}
     >
@@ -250,17 +259,18 @@ function SweepCornerBadge() {
   const net = upvotes - downvotes;
 
   return (
-    <motion.div
+    <m.div
       animate={{
         borderRadius: voteType ? "0 12px 0 16px" : "0 12px 0 12px",
       }}
       className="absolute top-0 right-0 flex items-center gap-0 overflow-hidden border-border/30 border-b border-l bg-card shadow-sm"
       transition={{ damping: 20, stiffness: 300, type: "spring" }}
     >
-      <motion.button
+      <m.button
         aria-label={voteType === "upvote" ? "Remove upvote" : "Upvote"}
+        aria-pressed={voteType === "upvote"}
         className={cn(
-          "relative cursor-pointer px-2.5 py-2 text-xs transition-colors",
+          "relative cursor-pointer px-2.5 py-2 text-xs transition-colors focus-visible:outline-2 focus-visible:outline-ring focus-visible:-outline-offset-2",
           voteType === "upvote"
             ? "bg-primary text-primary-foreground"
             : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -270,13 +280,14 @@ function SweepCornerBadge() {
           vote("upvote");
         }}
         type="button"
-        whileTap={{ scale: 0.85 }}
+        whileTap={{ scale: 0.96 }}
       >
         <CaretUp
+          aria-hidden
           className="h-3.5 w-3.5"
           weight={voteType === "upvote" ? "bold" : "regular"}
         />
-      </motion.button>
+      </m.button>
 
       <AnimatedCount
         className={cn(
@@ -287,11 +298,15 @@ function SweepCornerBadge() {
         )}
         value={net}
       />
+      <span aria-live="polite" className="sr-only">
+        {`${net} net votes`}
+      </span>
 
-      <motion.button
+      <m.button
         aria-label={voteType === "downvote" ? "Remove downvote" : "Downvote"}
+        aria-pressed={voteType === "downvote"}
         className={cn(
-          "relative cursor-pointer px-2.5 py-2 text-xs transition-colors",
+          "relative cursor-pointer px-2.5 py-2 text-xs transition-colors focus-visible:outline-2 focus-visible:outline-ring focus-visible:-outline-offset-2",
           voteType === "downvote"
             ? "bg-destructive text-destructive-foreground"
             : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -301,14 +316,15 @@ function SweepCornerBadge() {
           vote("downvote");
         }}
         type="button"
-        whileTap={{ scale: 0.85 }}
+        whileTap={{ scale: 0.96 }}
       >
         <CaretDown
+          aria-hidden
           className="h-3.5 w-3.5"
           weight={voteType === "downvote" ? "bold" : "regular"}
         />
-      </motion.button>
-    </motion.div>
+      </m.button>
+    </m.div>
   );
 }
 
@@ -336,8 +352,9 @@ function SweepCornerFooter({
     >
       <AnimatePresence>
         {voteType && (
-          <motion.div
+          <m.div
             animate={{ opacity: 0, x: "100%" }}
+            aria-hidden
             className={cn(
               "absolute inset-0",
               voteType === "upvote"
@@ -347,7 +364,7 @@ function SweepCornerFooter({
             exit={{ opacity: 0 }}
             initial={{ opacity: 1, x: "-100%" }}
             key={voteType}
-            transition={{ duration: 0.6, ease: "easeOut" }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
           />
         )}
       </AnimatePresence>
@@ -355,16 +372,21 @@ function SweepCornerFooter({
       <div className="relative flex items-center gap-2 px-4 py-2">
         <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
           <span className="flex items-center gap-1">
-            <Chat className="h-3 w-3" />
+            <Chat aria-hidden className="h-3 w-3" />
             {comments}
+            <span className="sr-only"> comments</span>
           </span>
           <span className="opacity-70">{time}</span>
         </div>
-        <span className="text-[9px] text-muted-foreground/30 tabular-nums">
-          {upvotes}↑ {downvotes}↓
+        <span className="text-[10px] text-muted-foreground/70 tabular-nums">
+          {upvotes}
+          <span aria-hidden>↑</span>
+          <span className="sr-only"> upvotes,</span> {downvotes}
+          <span aria-hidden>↓</span>
+          <span className="sr-only"> downvotes</span>
         </span>
-        <span className="text-[9px] text-muted-foreground/30 tabular-nums">
-          {upPercent}%
+        <span className="text-[10px] text-muted-foreground/70 tabular-nums">
+          {upPercent}%<span className="sr-only"> upvoted</span>
         </span>
       </div>
     </div>

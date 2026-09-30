@@ -1,7 +1,13 @@
 "use client";
 
 import { CaretDown, CaretUp, Chat } from "@phosphor-icons/react";
-import { AnimatePresence, MotionConfig, motion } from "motion/react";
+import {
+  AnimatePresence,
+  domAnimation,
+  LazyMotion,
+  MotionConfig,
+  m,
+} from "motion/react";
 import {
   createContext,
   type ReactNode,
@@ -158,9 +164,11 @@ function MinimalNotch({
 
   return (
     <MinimalNotchContext.Provider value={state}>
-      <MotionConfig reducedMotion="user">
-        <div className={cn("group flex gap-3", className)}>{children}</div>
-      </MotionConfig>
+      <LazyMotion features={domAnimation}>
+        <MotionConfig reducedMotion="user">
+          <div className={cn("group flex gap-3", className)}>{children}</div>
+        </MotionConfig>
+      </LazyMotion>
     </MinimalNotchContext.Provider>
   );
 }
@@ -174,7 +182,7 @@ function MinimalNotchCard({ children, className }: MinimalNotchCardProps) {
   return (
     <div
       className={cn(
-        "flex-1 rounded-xl border border-border/50 bg-card px-4 py-4 transition-[border-color,box-shadow] hover:border-border hover:shadow-sm",
+        "flex-1 rounded-xl border border-border/50 bg-card px-4 py-4 hover:border-border hover:shadow-sm",
         className
       )}
     >
@@ -276,6 +284,7 @@ function MinimalNotchMeta({
       <span className="flex items-center gap-1">
         <Chat aria-hidden className="h-3 w-3" />
         {comments}
+        <span className="sr-only"> comments</span>
       </span>
       <span className="opacity-70">{time}</span>
     </div>
@@ -296,27 +305,29 @@ function MinimalNotchVote() {
     <div className="relative flex flex-col items-center justify-center gap-0 self-stretch">
       <AnimatePresence>
         {voteType && (
-          <motion.div
+          <m.div
             animate={{ opacity: 0.5, scale: 1 }}
+            aria-hidden
             className={cn(
-              "absolute top-1/2 left-1/2 h-10 w-10 -translate-x-1/2 -translate-y-1/2 rounded-full blur-xl",
+              "pointer-events-none absolute top-1/2 left-1/2 h-10 w-10 -translate-x-1/2 -translate-y-1/2 rounded-full blur-xl",
               voteType === "upvote" ? "bg-primary/25" : "bg-destructive/25"
             )}
-            exit={{ opacity: 0, scale: 0.5 }}
-            initial={{ opacity: 0, scale: 0.5 }}
-            transition={{ duration: 0.3 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            initial={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
           />
         )}
       </AnimatePresence>
       <button
-        aria-label={
+        aria-label={`${
           voteType === "upvote" ? "Remove upvote" : "Upvote this feedback"
-        }
+        }, ${upvotes} upvotes`}
+        aria-pressed={voteType === "upvote"}
         className={cn(
-          "relative flex flex-1 flex-col items-center justify-end gap-0.5 pb-1 transition-colors duration-200",
+          "relative flex flex-1 flex-col items-center justify-end gap-0.5 pb-1 transition-colors before:absolute before:-inset-x-3 before:inset-y-0 before:content-[''] focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
           voteType === "upvote"
             ? "text-primary"
-            : "text-muted-foreground/40 hover:text-muted-foreground"
+            : "text-muted-foreground hover:text-foreground"
         )}
         onClick={(e) => {
           e.stopPropagation();
@@ -331,27 +342,35 @@ function MinimalNotchVote() {
         />
         <span className="font-medium text-[10px] tabular-nums">{upvotes}</span>
       </button>
-      <motion.div
-        animate={{
-          backgroundColor: notchColor,
-          boxShadow: voteType
-            ? `0 0 8px 1px ${notchColor}`
-            : `0 0 0px 0px ${notchColor}`,
-          height: voteType ? 4 : 3,
-          width: voteType ? 24 : 12,
-        }}
-        className="rounded-full"
-        transition={{ damping: 20, stiffness: 400, type: "spring" }}
-      />
+      <div aria-hidden className="relative h-1 w-6">
+        <m.div
+          animate={{ opacity: voteType ? 0.8 : 0 }}
+          className="absolute inset-0 rounded-full blur-[4px]"
+          initial={false}
+          style={{ backgroundColor: notchColor }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+        />
+        <m.div
+          animate={{
+            backgroundColor: notchColor,
+            scaleX: voteType ? 1 : 0.5,
+            scaleY: voteType ? 1 : 0.75,
+          }}
+          className="absolute inset-0 rounded-full"
+          initial={false}
+          transition={{ damping: 20, stiffness: 400, type: "spring" }}
+        />
+      </div>
       <button
-        aria-label={
+        aria-label={`${
           voteType === "downvote" ? "Remove downvote" : "Downvote this feedback"
-        }
+        }, ${downvotes} downvotes`}
+        aria-pressed={voteType === "downvote"}
         className={cn(
-          "relative flex flex-1 flex-col items-center justify-start gap-0.5 pt-1 transition-colors duration-200",
+          "relative flex flex-1 flex-col items-center justify-start gap-0.5 pt-1 transition-colors before:absolute before:-inset-x-3 before:inset-y-0 before:content-[''] focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-2",
           voteType === "downvote"
             ? "text-destructive"
-            : "text-muted-foreground/40 hover:text-muted-foreground"
+            : "text-muted-foreground hover:text-foreground"
         )}
         onClick={(e) => {
           e.stopPropagation();
