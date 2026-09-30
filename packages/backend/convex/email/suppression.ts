@@ -1,9 +1,6 @@
 import { v } from "convex/values";
 import { internalQuery, mutation, query } from "../_generated/server";
-import { assertSuperAdmin } from "../shared/access";
-import { isValidEmail } from "../shared/validators";
-
-const LIST_LIMIT = 200;
+import { getAuthUser } from "../shared/utils";
 
 export const normalizeEmail = (email: string): string =>
   email.trim().toLowerCase();
@@ -22,39 +19,47 @@ export const isEmailSuppressed = internalQuery({
 });
 
 export const listSuppressions = query({
-  args: {},
-  handler: async (ctx) => {
-    await assertSuperAdmin(ctx);
-    return await ctx.db
-      .query("emailSuppressions")
-      .order("desc")
-      .take(LIST_LIMIT);
+  args: {
+    organizationId: v.id("organizations"),
   },
-  returns: v.array(
-    v.object({
-      _creationTime: v.number(),
-      _id: v.id("emailSuppressions"),
-      email: v.string(),
-      originalEventType: v.string(),
-      reason: v.union(
-        v.literal("hard_bounce"),
-        v.literal("complaint"),
-        v.literal("manual")
-      ),
-      suppressedAt: v.number(),
-    })
-  ),
+  handler: async (ctx, args) => {
+    const user = await getAuthUser(ctx);
+
+    const membership = await ctx.db
+      .query("organizationMembers")
+      .withIndex("by_org_user", (q) =>
+        q.eq("organizationId", args.organizationId).eq("userId", user._id)
+      )
+      .unique();
+
+    if (!membership || membership.role === "member") {
+      throw new Error("Only admins can view suppressions");
+    }
+
+    return await ctx.db.query("emailSuppressions").order("desc").take(200);
+  },
 });
 
 export const addSuppression = mutation({
-  args: { email: v.string() },
+  args: {
+    email: v.string(),
+    organizationId: v.id("organizations"),
+  },
   handler: async (ctx, args) => {
-    await assertSuperAdmin(ctx);
+    const user = await getAuthUser(ctx);
+
+    const membership = await ctx.db
+      .query("organizationMembers")
+      .withIndex("by_org_user", (q) =>
+        q.eq("organizationId", args.organizationId).eq("userId", user._id)
+      )
+      .unique();
+
+    if (!membership || membership.role === "member") {
+      throw new Error("Only admins can manage suppressions");
+    }
 
     const normalizedEmail = normalizeEmail(args.email);
-    if (!isValidEmail(normalizedEmail)) {
-      throw new Error("Invalid email address");
-    }
 
     const existing = await ctx.db
       .query("emailSuppressions")
@@ -72,13 +77,26 @@ export const addSuppression = mutation({
       suppressedAt: Date.now(),
     });
   },
-  returns: v.id("emailSuppressions"),
 });
 
 export const removeSuppression = mutation({
-  args: { suppressionId: v.id("emailSuppressions") },
+  args: {
+    organizationId: v.id("organizations"),
+    suppressionId: v.id("emailSuppressions"),
+  },
   handler: async (ctx, args) => {
-    await assertSuperAdmin(ctx);
+    const user = await getAuthUser(ctx);
+
+    const membership = await ctx.db
+      .query("organizationMembers")
+      .withIndex("by_org_user", (q) =>
+        q.eq("organizationId", args.organizationId).eq("userId", user._id)
+      )
+      .unique();
+
+    if (!membership || membership.role === "member") {
+      throw new Error("Only admins can manage suppressions");
+    }
 
     const suppression = await ctx.db.get(args.suppressionId);
     if (!suppression) {
@@ -86,7 +104,5 @@ export const removeSuppression = mutation({
     }
 
     await ctx.db.delete(args.suppressionId);
-    return null;
   },
-  returns: v.null(),
 });
