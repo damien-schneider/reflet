@@ -16,13 +16,14 @@ import { format, formatDistanceToNow } from "date-fns";
 import dynamic from "next/dynamic";
 import { useState } from "react";
 import { StatCard } from "./stat-card";
+import { TrendChartsSkeleton } from "./trend-charts-skeleton";
 
 const SuperAdminTrendCharts = dynamic(
   () =>
     import("./super-admin-trend-charts").then((module) => ({
       default: module.SuperAdminTrendCharts,
     })),
-  { ssr: false }
+  { loading: () => <TrendChartsSkeleton />, ssr: false }
 );
 
 const TIME_RANGE_DAYS = { "7d": 7, "30d": 30 } as const;

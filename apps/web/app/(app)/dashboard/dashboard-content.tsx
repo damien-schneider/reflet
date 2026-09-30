@@ -15,12 +15,8 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import { useAtom } from "jotai";
 import Link from "next/link";
-import {
-  RedirectType,
-  redirect,
-  useParams,
-  usePathname,
-} from "next/navigation";
+import { useParams, usePathname, useRouter } from "next/navigation";
+import { useEffect } from "react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -211,6 +207,15 @@ function DashboardBreadcrumb({
   );
 }
 
+function useReplaceRoute(target: string | null) {
+  const router = useRouter();
+  useEffect(() => {
+    if (target) {
+      router.replace(target);
+    }
+  }, [router, target]);
+}
+
 export function DashboardContent({ children }: { children: React.ReactNode }) {
   const params = useParams();
   const rawOrgSlug = params?.orgSlug;
@@ -234,9 +239,7 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
   const { redirectTo, orgNotAccessible, hasOrganizations } =
     computeDashboardNavigation({ org, organizations, orgSlug });
 
-  if (redirectTo && !isNonOrgRoute) {
-    redirect(redirectTo, RedirectType.replace);
-  }
+  useReplaceRoute(redirectTo && !isNonOrgRoute ? redirectTo : null);
 
   const renderOrgRoute = () => {
     if (orgSlug) {

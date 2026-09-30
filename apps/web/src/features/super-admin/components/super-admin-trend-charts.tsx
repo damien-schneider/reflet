@@ -6,7 +6,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@ctrl-ui/react/ui/card";
-import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import {
   Area,
   AreaChart,
@@ -24,6 +23,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { TrendChartsSkeleton } from "./trend-charts-skeleton";
 
 const growthChartConfig = {
   organizations: { color: "var(--chart-2)", label: "New organizations" },
@@ -83,12 +83,7 @@ export function SuperAdminTrendCharts({
   trends: TrendPoint[] | undefined;
 }) {
   if (!trends) {
-    return (
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Skeleton className="h-80 rounded-(--radius-panel)" />
-        <Skeleton className="h-80 rounded-(--radius-panel)" />
-      </div>
-    );
+    return <TrendChartsSkeleton />;
   }
 
   const chartData = trends.map((point) => ({
