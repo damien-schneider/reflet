@@ -3,24 +3,28 @@
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
+import type { FunctionReturnType } from "convex/server";
 import { useEffect, useState } from "react";
-import type { ConversationSummary } from "@/features/support/components/conversation-list";
-import { matchesConversationSearch } from "@/features/support/lib/conversation-search";
-import type { ConversationStatus } from "@/features/support/lib/conversation-status";
+import { matchesConversationSearch } from "@/features/inbox/lib/conversation-search";
+import {
+  type InboxView,
+  statusesInView,
+} from "@/features/inbox/lib/inbox-views";
 
-const DEFAULT_STATUS_FILTER: ConversationStatus[] = ["open", "awaiting_reply"];
+export type InboxConversation = FunctionReturnType<
+  typeof api.support.admin.list
+>[number];
 
-interface Member {
-  role: string;
-  user: {
-    name: string | null;
-    email: string | null;
-    image: string | null;
-  } | null;
-  userId: string;
+export interface TeamMember {
+  email: string;
+  id: string;
+  image?: string;
+  name?: string;
 }
 
-function toTeamMembers(members: Member[] | undefined) {
+type OrgMembers = FunctionReturnType<typeof api.organizations.members.list>;
+
+function toTeamMembers(members: OrgMembers | undefined): TeamMember[] {
   return (members ?? [])
     .filter((m) => m.role === "admin" || m.role === "owner")
     .map((m) => ({
@@ -48,7 +52,7 @@ export function useInbox(orgSlug: string) {
     organizationId ? { organizationId } : "skip"
   );
 
-  const [statusFilter, setStatusFilter] = useState(DEFAULT_STATUS_FILTER);
+  const [view, setView] = useState<InboxView>("open");
   const [searchQuery, setSearchQuery] = useState("");
   const [chosenId, setSelectedId] = useState<Id<"supportConversations"> | null>(
     null
@@ -56,18 +60,12 @@ export function useInbox(orgSlug: string) {
 
   const conversations = useQuery(
     api.support.admin.list,
-    organizationId
-      ? {
-          organizationId,
-          status: statusFilter.length > 0 ? statusFilter : undefined,
-        }
-      : "skip"
+    organizationId ? { organizationId, status: statusesInView(view) } : "skip"
   );
 
-  const visibleConversations: ConversationSummary[] | undefined =
-    conversations?.filter((conversation) =>
-      matchesConversationSearch(conversation, searchQuery)
-    );
+  const visibleConversations = conversations?.filter((conversation) =>
+    matchesConversationSearch(conversation, searchQuery)
+  );
   const firstVisibleId = visibleConversations?.[0]?._id;
   const chosenIsVisible = visibleConversations?.some(
     (conversation) => conversation._id === chosenId
@@ -102,10 +100,6 @@ export function useInbox(orgSlug: string) {
   }, [selectedId, hasUnreadFromUser, markAsRead]);
 
   return {
-    clearFilters: () => {
-      setSearchQuery("");
-      setStatusFilter([]);
-    },
     conversations: visibleConversations,
     isAdmin:
       membership === undefined
@@ -119,14 +113,9 @@ export function useInbox(orgSlug: string) {
     selectedId,
     setSearchQuery,
     setSelectedId,
-    statusFilter,
+    setView,
     supportEnabled: supportSettings?.supportEnabled,
-    toggleStatusFilter: (status: ConversationStatus) =>
-      setStatusFilter((prev) =>
-        prev.includes(status)
-          ? prev.filter((s) => s !== status)
-          : [...prev, status]
-      ),
+    view,
     viewerId: membership?.userId,
     write: {
       assignConversation,

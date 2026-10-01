@@ -5,6 +5,7 @@ import type { useInbox } from "@/features/inbox/hooks/use-inbox";
 import type { ConversationStatus } from "@/features/support/lib/conversation-status";
 
 export type InboxState = ReturnType<typeof useInbox>;
+type InboxWrite = InboxState["write"];
 
 async function withFailureToast(
   action: () => Promise<unknown>,
@@ -17,32 +18,28 @@ async function withFailureToast(
   }
 }
 
-export function useInboxActions(inbox: InboxState) {
-  const { conversations, selectedId, write } = inbox;
-
-  const updateStatus = (
-    id: Id<"supportConversations">,
-    status: ConversationStatus
-  ) =>
+const conversationMutations = (write: InboxWrite) => ({
+  assign: (id: Id<"supportConversations">, assignedTo: string | undefined) =>
+    withFailureToast(
+      () => write.assignConversation({ assignedTo, id }),
+      "Couldn’t change the assignee. Try again."
+    ),
+  updateStatus: (id: Id<"supportConversations">, status: ConversationStatus) =>
     withFailureToast(
       () => write.updateStatus({ id, status }),
       "Couldn’t update the status. Try again."
-    );
+    ),
+});
+
+export function useInboxActions(inbox: InboxState) {
+  const { conversations, selectedId, viewerId, write } = inbox;
+  const { assign, updateStatus } = conversationMutations(write);
 
   const changeStatus = async (status: ConversationStatus) => {
     if (selectedId) {
       await updateStatus(selectedId, status);
     }
   };
-
-  const assign = (
-    id: Id<"supportConversations">,
-    assignedTo: string | undefined
-  ) =>
-    withFailureToast(
-      () => write.assignConversation({ assignedTo, id }),
-      "Couldn’t change the assignee. Try again."
-    );
 
   const moveSelection = (offset: number) => {
     if (!conversations || conversations.length === 0) {
@@ -56,7 +53,31 @@ export function useInboxActions(inbox: InboxState) {
     inbox.setSelectedId(conversations[next]._id);
   };
 
-  return { assign, changeStatus, moveSelection, updateStatus };
+  const selectedConversationActions = {
+    onAssign: async (memberId: string | undefined) => {
+      if (selectedId) {
+        await assign(selectedId, memberId);
+      }
+    },
+    onSendMessage: async (body: string) => {
+      if (selectedId) {
+        await write.sendMessage({ body, conversationId: selectedId });
+      }
+    },
+    onStatusChange: changeStatus,
+  };
+
+  const quickActions = {
+    onAssignToMe: (id: Id<"supportConversations">) =>
+      viewerId ? assign(id, viewerId) : undefined,
+    onStatusChange: updateStatus,
+  };
+
+  return {
+    moveSelection,
+    quickActions,
+    selectedConversationActions,
+  };
 }
 
 export function useSupportToggle(

@@ -1,25 +1,12 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
-import type { Doc } from "../_generated/dataModel";
-import type { QueryCtx } from "../_generated/server";
 import { action, internalMutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
-import { hashSecretKey } from "../feedback/api_auth";
+import { findActivePublicApiKey, hashSecretKey } from "../feedback/api_auth";
 import { randomSecretHex } from "../shared/hmac";
 import { getOrgMembership } from "../shared/membership";
 import { BASE64URL_SHA256, CONNECT_CODE_TTL_MS } from "./constants";
 import { isAllowedRedirectUri } from "./redirect_uri";
-
-const activeApiKeyFor = async (
-  ctx: QueryCtx,
-  publicKey: string
-): Promise<Doc<"organizationApiKeys"> | null> => {
-  const key = await ctx.db
-    .query("organizationApiKeys")
-    .withIndex("by_public_key", (q) => q.eq("publicKey", publicKey))
-    .unique();
-  return key?.isActive ? key : null;
-};
 
 export const getConnectTarget = query({
   args: { publicKey: v.string() },
@@ -28,7 +15,7 @@ export const getConnectTarget = query({
     if (!user) {
       return { kind: "signedOut" } as const;
     }
-    const key = await activeApiKeyFor(ctx, args.publicKey);
+    const key = await findActivePublicApiKey(ctx, args.publicKey);
     if (!key) {
       return { kind: "unknownKey" } as const;
     }
@@ -96,7 +83,7 @@ export const storeConnectCode = internalMutation({
     userId: v.string(),
   },
   handler: async (ctx, args) => {
-    const key = await activeApiKeyFor(ctx, args.publicKey);
+    const key = await findActivePublicApiKey(ctx, args.publicKey);
     if (!key) {
       throw new Error("This widget key isn't active on Reflet.");
     }

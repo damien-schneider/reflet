@@ -32,6 +32,7 @@ import { DashboardSidebar } from "@/features/dashboard/components/dashboard-side
 import { OrgNotFound } from "@/features/dashboard/components/org-not-found";
 import { PushNotificationPrompt } from "@/features/dashboard/components/push-notification-prompt";
 import { DashboardFeedback } from "@/features/dashboard/components/support/dashboard-feedback";
+import { DashboardSupport } from "@/features/dashboard/components/support/dashboard-support";
 import { sidebarOpenAtom } from "@/store/dashboard-atoms";
 import { OrgPicker, OrgPickerSkeleton, WelcomeState } from "./dashboard-states";
 import { computeDashboardNavigation } from "./use-dashboard-navigation";
@@ -285,6 +286,7 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
             <DashboardBreadcrumb orgSlug={orgSlug} pathname={pathname ?? ""} />
           </div>
           <DashboardFeedback />
+          <DashboardSupport />
           <ThemeToggle className="shrink-0" />
         </header>
 

@@ -18,13 +18,13 @@ export function DashboardFeedback() {
       renderTrigger={(props) => (
         <Button
           {...props}
-          aria-label="Send feedback to Reflet"
+          aria-label="Give feedback to Reflet"
           className="shrink-0"
-          iconOnly
-          title="Send feedback to Reflet"
+          size="sm"
           variant="ghost"
         >
-          <ChatTeardropText className="size-4" />
+          <ChatTeardropText aria-hidden />
+          <span className="hidden sm:inline">Give feedback</span>
         </Button>
       )}
       theme={theme}

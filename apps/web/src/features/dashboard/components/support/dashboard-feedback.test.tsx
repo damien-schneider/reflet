@@ -32,7 +32,7 @@ beforeEach(() => fixture.widget.mockClear());
 it("reports to Reflet with the signed-in identity and app theme", () => {
   render(<DashboardFeedback />);
   expect(
-    screen.getByRole("button", { name: "Send feedback to Reflet" })
+    screen.getByRole("button", { name: "Give feedback to Reflet" })
   ).toBeVisible();
   expect(fixture.widget).toHaveBeenCalledWith(
     expect.objectContaining({

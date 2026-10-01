@@ -10,6 +10,7 @@ import { requireConversationAccess, resolveConversationAccess } from "./access";
 import { resolveMessageSenders } from "./people";
 import {
   buildMessagePreview,
+  type SupportMessageSender,
   supportMessageReactions,
   supportMessageWithSender,
 } from "./validators";
@@ -57,9 +58,10 @@ export const list = query({
         .map((message) => message.senderId)
         .filter((senderId) => senderId !== guestSenderId)
     );
-    const guestSender = conversation.guestEmail
-      ? { email: conversation.guestEmail, id: conversation.userId }
-      : undefined;
+    const guestSender: SupportMessageSender | undefined =
+      conversation.guestEmail
+        ? { email: conversation.guestEmail, id: conversation.userId }
+        : undefined;
 
     return messages.map((message) => ({
       ...message,

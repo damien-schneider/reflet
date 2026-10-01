@@ -4,13 +4,13 @@ import { Kbd } from "@ctrl-ui/react/ui/kbd";
 import { cn } from "@/lib/utils";
 
 interface ShortcutHintBarProps {
+  canActOnSelection: boolean;
   className?: string;
-  hasSelectedConversation: boolean;
   visible: boolean;
 }
 
 export function ShortcutHintBar({
-  hasSelectedConversation,
+  canActOnSelection,
   visible,
   className,
 }: ShortcutHintBarProps) {
@@ -30,7 +30,7 @@ export function ShortcutHintBar({
         <Kbd>K</Kbd> navigate
       </span>
 
-      {hasSelectedConversation && (
+      {canActOnSelection && (
         <>
           <span className="flex items-center gap-1.5">
             <Kbd>R</Kbd> reply

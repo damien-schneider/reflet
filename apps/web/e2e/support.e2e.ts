@@ -6,6 +6,10 @@ import {
   signUpAndLandOnDashboard,
 } from "./helpers/auth";
 
+const PUBLIC_PAGE_CONTROL = /Public support page/;
+const PUBLIC_PAGE_CONTROL_ON = /Public support page\s*On/;
+const NEEDS_A_HUMAN_ROW = /Needs a human/;
+
 async function createOrgWithSupportEnabled(
   page: import("@playwright/test").Page
 ) {
@@ -20,18 +24,21 @@ async function createOrgWithSupportEnabled(
   await expect(page.locator("#org-slug")).toHaveValue(slug, {
     timeout: 15_000,
   });
-  await page.getByRole("switch", { name: "Make organization public" }).click();
-  await page.getByRole("button", { exact: true, name: "Save changes" }).click();
-  await expect(page.getByText("Saved")).toBeVisible({ timeout: 15_000 });
+  const visibility = page.getByRole("switch", {
+    name: "Make organization public",
+  });
+  await visibility.click();
+  await expect(visibility).toBeChecked({ timeout: 15_000 });
+  await expect(visibility).toBeEnabled({ timeout: 15_000 });
 
   await page.goto(`/dashboard/${slug}/inbox`);
-  await page.getByRole("button", { exact: true, name: "Settings" }).click();
+  await page.getByRole("button", { name: PUBLIC_PAGE_CONTROL }).click();
   await page
-    .getByRole("switch", { name: "Enable public support page" })
+    .getByRole("switch", { name: "Accept messages from visitors" })
     .click();
   await expect(
-    page.getByRole("button", { name: "Make inbox public" })
-  ).toBeHidden({ timeout: 10_000 });
+    page.getByRole("button", { name: PUBLIC_PAGE_CONTROL_ON })
+  ).toBeVisible({ timeout: 10_000 });
 
   return slug;
 }
@@ -70,7 +77,7 @@ test.describe("Public support page", () => {
 
     await guest.goto(`/${slug}/support`);
     await expect(
-      guest.getByRole("heading", { name: "Contact Support" })
+      guest.getByRole("heading", { name: "Contact support" })
     ).toBeVisible({ timeout: 15_000 });
 
     await guest.getByLabel("Email").fill("guest@example.com");
@@ -80,10 +87,13 @@ test.describe("Public support page", () => {
       .fill("My CSV export is empty.");
     await guest.getByRole("button", { exact: true, name: "Send" }).click();
 
-    await expect(guest.getByText("Broken export")).toBeVisible({
+    await expect(guest.getByRole("textbox", { name: "Reply" })).toBeVisible({
       timeout: 15_000,
     });
-    await expect(guest.getByText("My CSV export is empty.")).toBeVisible();
+    await expect(guest.getByText("Broken export")).toBeVisible();
+    await expect(
+      guest.getByRole("article").filter({ hasText: "My CSV export is empty." })
+    ).toBeVisible();
 
     await guest
       .getByRole("button", { exact: true, name: "All conversations" })
@@ -110,15 +120,17 @@ test.describe("Public support page", () => {
       .getByPlaceholder("What do you need help with?")
       .fill("Please call me back.");
     await guest.getByRole("button", { exact: true, name: "Send" }).click();
-    await expect(guest.getByText("Please call me back.")).toBeVisible({
-      timeout: 15_000,
-    });
+    await expect(
+      guest.getByRole("article").filter({ hasText: "Please call me back." })
+    ).toBeVisible({ timeout: 15_000 });
     await guestContext.close();
 
     await page.goto(`/dashboard/${slug}/inbox`);
-    await expect(page.getByText("Needs a human").first()).toBeVisible({
-      timeout: 20_000,
-    });
-    await expect(page.getByText("Please call me back.").first()).toBeVisible();
+    const request = page.getByRole("button", { name: NEEDS_A_HUMAN_ROW });
+    await expect(request).toBeVisible({ timeout: 20_000 });
+    await request.click();
+    await expect(
+      page.getByRole("article").filter({ hasText: "Please call me back." })
+    ).toBeVisible();
   });
 });

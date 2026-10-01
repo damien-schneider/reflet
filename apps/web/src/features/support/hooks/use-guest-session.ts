@@ -8,14 +8,21 @@ const guestSessionSchema = z.object({
   guestId: z.string(),
 });
 
-type GuestSession = z.infer<typeof guestSessionSchema>;
+type StoredGuestSession = z.infer<typeof guestSessionSchema>;
+
+export interface GuestSession {
+  clearGuestSession: () => void;
+  guestEmail: string | null;
+  guestId: string | null;
+  saveGuestSession: (email: string) => string;
+}
 
 const listenersByKey = new Map<string, Set<() => void>>();
-const snapshotCache = new Map<string, GuestSession | null>();
+const snapshotCache = new Map<string, StoredGuestSession | null>();
 
 const getStorageKey = (orgSlug: string) => `support_guest_${orgSlug}`;
 
-function parseSession(raw: string | null): GuestSession | null {
+function parseSession(raw: string | null): StoredGuestSession | null {
   if (!raw) {
     return null;
   }
@@ -28,7 +35,7 @@ function parseSession(raw: string | null): GuestSession | null {
 }
 
 // useSyncExternalStore requires a stable snapshot reference between changes
-function readSession(key: string): GuestSession | null {
+function readSession(key: string): StoredGuestSession | null {
   if (typeof window === "undefined") {
     return null;
   }
@@ -48,7 +55,7 @@ function subscribe(key: string, onStoreChange: () => void) {
   };
 }
 
-function writeSession(key: string, session: GuestSession | null) {
+function writeSession(key: string, session: StoredGuestSession | null) {
   if (session) {
     localStorage.setItem(key, JSON.stringify(session));
   } else {
@@ -61,7 +68,7 @@ function writeSession(key: string, session: GuestSession | null) {
   }
 }
 
-export function useGuestSession(orgSlug: string) {
+export function useGuestSession(orgSlug: string): GuestSession {
   const key = getStorageKey(orgSlug);
 
   const session = useSyncExternalStore(

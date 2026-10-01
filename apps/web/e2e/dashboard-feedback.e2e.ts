@@ -12,7 +12,7 @@ test("the dashboard opens Reflet feedback with a screenshot and resumes the draf
   );
   const user = makeTestUser("reflet-dogfood");
   await signUpAndLandOnDashboard(page, user);
-  const trigger = page.getByRole("button", { name: "Send feedback to Reflet" });
+  const trigger = page.getByRole("button", { name: "Give feedback to Reflet" });
   await expect(trigger).toHaveCount(1);
   await trigger.click();
   await expect(page.locator(".screenshot-preview")).toBeVisible({

@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { type Infer, v } from "convex/values";
 import { SUPPORT_PREVIEW_LENGTH } from "../shared/constants";
 import {
   supportConversationStatus,
@@ -48,6 +48,15 @@ export const supportConversationDetail = v.object({
   user: v.optional(supportPersonInfo),
 });
 
+export const supportMessageSender = v.object({
+  email: v.string(),
+  id: v.string(),
+  image: v.optional(v.string()),
+  name: v.optional(v.string()),
+});
+
+export type SupportMessageSender = Infer<typeof supportMessageSender>;
+
 export const supportMessageWithSender = v.object({
   _creationTime: v.number(),
   _id: v.id("supportMessages"),
@@ -56,14 +65,7 @@ export const supportMessageWithSender = v.object({
   createdAt: v.number(),
   isOwnMessage: v.boolean(),
   isRead: v.boolean(),
-  sender: v.optional(
-    v.object({
-      email: v.string(),
-      id: v.string(),
-      image: v.optional(v.string()),
-      name: v.optional(v.string()),
-    })
-  ),
+  sender: v.optional(supportMessageSender),
   senderId: v.string(),
   senderType: supportMessageSenderType,
 });

@@ -3,31 +3,29 @@
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Empty,
-  EmptyContent,
   EmptyDescription,
   EmptyHeader,
   EmptyTitle,
 } from "@ctrl-ui/react/ui/empty";
-import { ArrowLeft, Globe } from "@phosphor-icons/react";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import {
-  type ComponentProps,
-  type RefObject,
-  use,
-  useRef,
-  useState,
-} from "react";
+  PageActions,
+  PageHeader,
+  PageTitle,
+} from "@ctrl-ui/react/ui/page-layout";
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
+import { ArrowLeft } from "@phosphor-icons/react";
+import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { type ComponentProps, use, useState } from "react";
 import { OrgNotFound } from "@/features/dashboard/components/org-not-found";
 import {
   AdminConversationView,
-  EmptyConversationState,
-} from "@/features/inbox/components/admin-conversation-view";
-import { InboxCommandPalette } from "@/features/inbox/components/inbox-command-palette";
-import { InboxFilterBar } from "@/features/inbox/components/inbox-filter-bar";
-import { SettingsPopover } from "@/features/inbox/components/settings-popover";
+  SelectConversationPrompt,
+} from "@/features/inbox/components/conversation/admin-conversation-view";
+import { InboxListPane } from "@/features/inbox/components/list/inbox-list-pane";
+import { PublicPageControl } from "@/features/inbox/components/public-page-control";
 import { ShortcutHintBar } from "@/features/inbox/components/shortcut-hint-bar";
 import { useInbox } from "@/features/inbox/hooks/use-inbox";
-import { ConversationList } from "@/features/support/components/conversation-list";
+import { acceptsReplies } from "@/features/support/lib/conversation-status";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { cn } from "@/lib/utils";
 import {
@@ -36,128 +34,7 @@ import {
   useSupportToggle,
 } from "./use-inbox-actions";
 
-function InboxNotice({ body, title }: { body: string; title: string }) {
-  return (
-    <Empty className="min-h-[50vh]">
-      <EmptyHeader>
-        <EmptyTitle>
-          <h1>{title}</h1>
-        </EmptyTitle>
-        <EmptyDescription>{body}</EmptyDescription>
-      </EmptyHeader>
-    </Empty>
-  );
-}
-
-function InboxLoading() {
-  return (
-    <div className="flex h-full">
-      <ConversationList
-        className="w-full border-r md:w-80 md:flex-none"
-        conversations={undefined}
-        isAdmin
-        onSelect={() => undefined}
-      />
-    </div>
-  );
-}
-
-function FilteredEmptyState({
-  onClearFilters,
-  searchQuery,
-}: {
-  onClearFilters: () => void;
-  searchQuery: string;
-}) {
-  const trimmedQuery = searchQuery.trim();
-  return (
-    <Empty>
-      <EmptyHeader>
-        <EmptyTitle>No matching conversations</EmptyTitle>
-        <EmptyDescription>
-          {trimmedQuery
-            ? `Nothing matches “${trimmedQuery}” with these statuses.`
-            : "Nothing has the selected statuses."}
-        </EmptyDescription>
-      </EmptyHeader>
-      <EmptyContent>
-        <Button onClick={onClearFilters} variant="surface">
-          Clear filters
-        </Button>
-      </EmptyContent>
-    </Empty>
-  );
-}
-
 type ConversationViewProps = ComponentProps<typeof AdminConversationView>;
-
-function ConversationCountStatus({ count }: { count: number | undefined }) {
-  const noun = count === 1 ? "conversation" : "conversations";
-  return (
-    <p className="sr-only" role="status">
-      {count === undefined ? "" : `${count} ${noun}`}
-    </p>
-  );
-}
-
-function ConversationPane({
-  conversation,
-  isVisible,
-  messages,
-  onAssign,
-  onBack,
-  onSendMessage,
-  onStatusChange,
-  replyRef,
-  teamMembers,
-}: {
-  conversation: ConversationViewProps["conversation"] | null | undefined;
-  isVisible: boolean;
-  messages: ConversationViewProps["messages"];
-  onAssign: (
-    id: Id<"supportConversations">,
-    memberId: string | undefined
-  ) => Promise<void>;
-  onBack: () => void;
-  onSendMessage: (
-    conversationId: Id<"supportConversations">,
-    body: string
-  ) => Promise<void>;
-  onStatusChange: ConversationViewProps["actions"]["onStatusChange"];
-  replyRef: RefObject<HTMLTextAreaElement | null>;
-  teamMembers: ConversationViewProps["teamMembers"];
-}) {
-  return (
-    <div
-      className={cn(
-        "min-w-0 flex-1 flex-col",
-        isVisible ? "flex" : "hidden md:flex"
-      )}
-    >
-      <div className="border-b p-2 md:hidden">
-        <Button onClick={onBack} variant="ghost">
-          <ArrowLeft aria-hidden />
-          All conversations
-        </Button>
-      </div>
-      {conversation ? (
-        <AdminConversationView
-          actions={{
-            onAssign: (memberId) => onAssign(conversation._id, memberId),
-            onSendMessage: (body) => onSendMessage(conversation._id, body),
-            onStatusChange,
-          }}
-          conversation={conversation}
-          messages={messages}
-          replyRef={replyRef}
-          teamMembers={teamMembers}
-        />
-      ) : (
-        <EmptyConversationState hasConversations />
-      )}
-    </div>
-  );
-}
 
 export default function InboxPage({
   params,
@@ -169,7 +46,13 @@ export default function InboxPage({
   const { isAdmin, org } = inbox;
 
   if (org === undefined || (org !== null && isAdmin === undefined)) {
-    return <InboxLoading />;
+    return (
+      <div className="flex h-full flex-col gap-3 p-4" role="status">
+        <span className="sr-only">Loading inbox…</span>
+        <Skeleton aria-hidden className="h-8 w-40" />
+        <Skeleton aria-hidden className="h-full w-full md:w-80" />
+      </div>
+    );
   }
 
   if (org === null) {
@@ -178,168 +61,175 @@ export default function InboxPage({
 
   if (!isAdmin) {
     return (
-      <InboxNotice
-        body="Only admins and owners can open the inbox. Ask an owner to change your role."
-        title="No access to the inbox"
-      />
+      <Empty className="min-h-[50vh]">
+        <EmptyHeader>
+          <EmptyTitle>
+            <h1>No access to the inbox</h1>
+          </EmptyTitle>
+          <EmptyDescription>
+            Only admins and owners can open the inbox. Ask an owner to change
+            your role.
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     );
   }
 
-  return <InboxWorkspace inbox={inbox} organizationId={org._id} />;
+  return <InboxWorkspace inbox={inbox} org={org} />;
 }
 
 function InboxWorkspace({
   inbox,
-  organizationId,
+  org,
 }: {
   inbox: InboxState;
-  organizationId: Id<"organizations">;
+  org: { _id: Id<"organizations">; slug: string };
 }) {
-  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [showHints, setShowHints] = useState(true);
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const replyRef = useRef<HTMLTextAreaElement>(null);
   const actions = useInboxActions(inbox);
-  const support = useSupportToggle(inbox, organizationId);
-  const { changeStatus } = actions;
-  const hasSelectedConversation = inbox.selectedId !== null;
-  const supportEnabled = inbox.supportEnabled ?? false;
 
   useKeyboardShortcuts({
-    "/": () => searchInputRef.current?.focus(),
-    c: () => changeStatus("closed"),
-    e: () => changeStatus("resolved"),
     j: () => actions.moveSelection(1),
     k: () => actions.moveSelection(-1),
-    "meta+k": () => setCommandPaletteOpen(true),
-    r: () => replyRef.current?.focus(),
     "shift+/": () => setShowHints((prev) => !prev),
   });
 
   return (
     <div className="flex h-full flex-col">
-      <InboxFilterBar
-        onSearchChange={inbox.setSearchQuery}
-        onToggleStatusFilter={inbox.toggleStatusFilter}
-        searchInputRef={searchInputRef}
-        searchQuery={inbox.searchQuery}
-        statusFilter={inbox.statusFilter}
-      >
-        {inbox.supportEnabled === false && (
-          <MakePublicButton
-            isSaving={support.isSaving}
-            onClick={() => support.toggleSupport(true)}
-          />
-        )}
-        <SettingsPopover
-          isSaving={support.isSaving}
-          onToggle={support.toggleSupport}
-          supportEnabled={supportEnabled}
-        />
-      </InboxFilterBar>
-      <ConversationCountStatus count={inbox.conversations?.length} />
-      <InboxPanes actions={actions} inbox={inbox} replyRef={replyRef} />
+      <InboxHeader inbox={inbox} org={org} />
+      <InboxPanes actions={actions} inbox={inbox} />
       <ShortcutHintBar
-        hasSelectedConversation={hasSelectedConversation}
+        canActOnSelection={
+          inbox.selectedConversation
+            ? acceptsReplies(inbox.selectedConversation.status)
+            : false
+        }
         visible={showHints}
       />
-      <InboxCommandPalette
-        hasSelectedConversation={hasSelectedConversation}
-        onClose={() => changeStatus("closed")}
-        onOpenChange={setCommandPaletteOpen}
-        onResolve={() => changeStatus("resolved")}
-        onToggleSupport={() => support.toggleSupport(!inbox.supportEnabled)}
-        open={commandPaletteOpen}
-        supportEnabled={supportEnabled}
-      />
     </div>
-  );
-}
-
-function MakePublicButton({
-  isSaving,
-  onClick,
-}: {
-  isSaving: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <Button
-      disabled={isSaving}
-      onClick={onClick}
-      tone="primary"
-      variant="solid"
-    >
-      <Globe aria-hidden />
-      {isSaving ? "Making public…" : "Make inbox public"}
-    </Button>
   );
 }
 
 function InboxPanes({
   actions,
   inbox,
-  replyRef,
 }: {
   actions: ReturnType<typeof useInboxActions>;
   inbox: InboxState;
-  replyRef: RefObject<HTMLTextAreaElement | null>;
 }) {
   const [mobilePane, setMobilePane] = useState<"list" | "conversation">("list");
-  const { conversations, searchQuery, selectedId, viewerId } = inbox;
-  const hasConversations = (conversations?.length ?? 0) > 0;
-  const isFiltering =
-    searchQuery.trim() !== "" || inbox.statusFilter.length > 0;
 
   return (
     <div className="flex min-h-0 flex-1">
       <div
         className={cn(
-          "w-full shrink-0 border-r md:block",
-          hasConversations ? "md:w-80" : "md:w-full",
+          "w-full shrink-0 border-r md:block md:w-80",
           mobilePane === "list" ? "block" : "hidden"
         )}
       >
-        <ConversationList
-          activeId={selectedId ?? undefined}
-          conversations={conversations}
-          emptyState={
-            isFiltering ? (
-              <FilteredEmptyState
-                onClearFilters={inbox.clearFilters}
-                searchQuery={searchQuery}
-              />
-            ) : undefined
-          }
-          isAdmin
-          onSelect={(conversation) => {
-            inbox.setSelectedId(conversation._id);
-            setMobilePane("conversation");
+        <InboxListPane
+          list={{
+            conversations: inbox.conversations,
+            quickActions: actions.quickActions,
+            selection: {
+              activeId: inbox.selectedId,
+              onSelect: (id) => {
+                inbox.setSelectedId(id);
+                setMobilePane("conversation");
+              },
+            },
           }}
-          quickActions={{
-            onAssign: (id) =>
-              viewerId ? actions.assign(id, viewerId) : undefined,
-            onClose: (id) => actions.updateStatus(id, "closed"),
-            onResolve: (id) => actions.updateStatus(id, "resolved"),
-          }}
-          selectedId={selectedId ?? undefined}
+          search={{ onChange: inbox.setSearchQuery, query: inbox.searchQuery }}
+          views={{ current: inbox.view, onChange: inbox.setView }}
         />
       </div>
+      <ConversationPane
+        controls={{
+          actions: actions.selectedConversationActions,
+          members: inbox.members,
+        }}
+        detail={{
+          conversation: inbox.selectedConversation,
+          hasConversations: (inbox.conversations?.length ?? 0) > 0,
+          messages: inbox.messages,
+        }}
+        mobile={{
+          isVisible: mobilePane === "conversation",
+          onBack: () => setMobilePane("list"),
+        }}
+      />
+    </div>
+  );
+}
 
-      {hasConversations && (
-        <ConversationPane
-          conversation={inbox.selectedConversation}
-          isVisible={mobilePane === "conversation"}
-          messages={inbox.messages}
-          onAssign={actions.assign}
-          onBack={() => setMobilePane("list")}
-          onSendMessage={async (conversationId, body) => {
-            await inbox.write.sendMessage({ body, conversationId });
-          }}
-          onStatusChange={actions.changeStatus}
-          replyRef={replyRef}
-          teamMembers={inbox.members}
+function InboxHeader({
+  inbox,
+  org,
+}: {
+  inbox: InboxState;
+  org: { _id: Id<"organizations">; slug: string };
+}) {
+  const support = useSupportToggle(inbox, org._id);
+  const count = inbox.conversations?.length;
+
+  return (
+    <>
+      <PageHeader className="border-b px-4 py-3">
+        <PageTitle>Inbox</PageTitle>
+        <PageActions>
+          <PublicPageControl
+            onToggle={support.toggleSupport}
+            publicHref={`/${org.slug}/support`}
+            setting={{
+              enabled: inbox.supportEnabled ?? false,
+              isSaving: support.isSaving,
+            }}
+          />
+        </PageActions>
+      </PageHeader>
+      <p className="sr-only" role="status">
+        {count === undefined
+          ? ""
+          : `${count} ${count === 1 ? "conversation" : "conversations"}`}
+      </p>
+    </>
+  );
+}
+
+function ConversationPane({
+  controls,
+  detail,
+  mobile,
+}: {
+  controls: ConversationViewProps["controls"];
+  detail: {
+    conversation: ConversationViewProps["conversation"] | null | undefined;
+    hasConversations: boolean;
+    messages: ConversationViewProps["messages"];
+  };
+  mobile: { isVisible: boolean; onBack: () => void };
+}) {
+  return (
+    <div
+      className={cn(
+        "min-w-0 flex-1 flex-col",
+        mobile.isVisible ? "flex" : "hidden md:flex"
+      )}
+    >
+      <div className="border-b p-2 md:hidden">
+        <Button onClick={mobile.onBack} size="sm" variant="ghost">
+          <ArrowLeft aria-hidden />
+          All conversations
+        </Button>
+      </div>
+      {detail.conversation ? (
+        <AdminConversationView
+          controls={controls}
+          conversation={detail.conversation}
+          messages={detail.messages}
         />
+      ) : (
+        detail.hasConversations && <SelectConversationPrompt />
       )}
     </div>
   );

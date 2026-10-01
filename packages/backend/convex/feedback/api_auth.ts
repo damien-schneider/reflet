@@ -1,9 +1,21 @@
 import { v } from "convex/values";
-import type { Id } from "../_generated/dataModel";
+import type { Doc, Id } from "../_generated/dataModel";
+import type { QueryCtx } from "../_generated/server";
 import { internalMutation, internalQuery } from "../_generated/server";
 import { randomSecretHex } from "../shared/hmac";
 
 const API_KEY_RANDOM_BYTES = 24;
+
+export const findActivePublicApiKey = async (
+  ctx: QueryCtx,
+  publicKey: string
+): Promise<Doc<"organizationApiKeys"> | null> => {
+  const key = await ctx.db
+    .query("organizationApiKeys")
+    .withIndex("by_public_key", (q) => q.eq("publicKey", publicKey))
+    .unique();
+  return key?.isActive ? key : null;
+};
 
 export interface ApiKeyValidation {
   error?: string;

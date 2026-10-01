@@ -14,20 +14,20 @@ vi.mock("@/lib/utils", () => ({
 import { ShortcutHintBar } from "./shortcut-hint-bar";
 
 describe("ShortcutHintBar", () => {
-  it("renders navigation hints when no conversation is selected", () => {
-    render(<ShortcutHintBar hasSelectedConversation={false} visible={true} />);
+  it("renders navigation hints when nothing can be acted on", () => {
+    render(<ShortcutHintBar canActOnSelection={false} visible={true} />);
     expect(screen.getByText("navigate")).toBeInTheDocument();
   });
 
-  it("renders action hints when a conversation is selected", () => {
-    render(<ShortcutHintBar hasSelectedConversation={true} visible={true} />);
+  it("renders action hints when the selected conversation is editable", () => {
+    render(<ShortcutHintBar canActOnSelection={true} visible={true} />);
     expect(screen.getByText("reply")).toBeInTheDocument();
     expect(screen.getByText("resolve")).toBeInTheDocument();
   });
 
   it("is hidden when visible is false", () => {
     const { container } = render(
-      <ShortcutHintBar hasSelectedConversation={false} visible={false} />
+      <ShortcutHintBar canActOnSelection={false} visible={false} />
     );
     expect(container.firstChild).toBeNull();
   });

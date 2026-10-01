@@ -10,7 +10,7 @@ export function SupportLoadingState() {
   return (
     <PageLayout scroll="page" width="prose">
       <PageHeader>
-        <PageTitle>Contact Support</PageTitle>
+        <PageTitle>Contact support</PageTitle>
         <Skeleton className="h-4 w-64 max-w-full" />
       </PageHeader>
       <PageBody>
