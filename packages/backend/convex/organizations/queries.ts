@@ -7,6 +7,10 @@ import { getOrgMembership } from "../shared/membership";
 import { memberRole } from "../shared/validators";
 import { organizationTables } from "./tableFields";
 
+export type MemberOrganization = Doc<"organizations"> & {
+  role: Infer<typeof memberRole>;
+};
+
 export const list = query({
   args: {},
   handler: async (ctx) => {
@@ -21,16 +25,18 @@ export const list = query({
       .collect();
 
     const organizations = await Promise.all(
-      memberships.map(async (membership) => {
-        const org = await ctx.db.get(membership.organizationId);
-        if (!org) {
-          return null;
+      memberships.map(
+        async (membership): Promise<MemberOrganization | null> => {
+          const org = await ctx.db.get(membership.organizationId);
+          if (!org) {
+            return null;
+          }
+          return {
+            ...org,
+            role: membership.role,
+          };
         }
-        return {
-          ...org,
-          role: membership.role,
-        };
-      })
+      )
     );
 
     return organizations.filter(Boolean);

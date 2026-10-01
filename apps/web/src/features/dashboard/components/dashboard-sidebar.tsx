@@ -11,9 +11,8 @@ import {
 } from "@ctrl-ui/react/ui/sidebar";
 import { ShieldStar } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import type { MemberOrganization } from "@reflet/backend/convex/organizations/queries";
 import { useQuery } from "convex/react";
-import type { FunctionReturnType } from "convex/server";
 import Link from "next/link";
 import { CommandPaletteTrigger } from "@/features/command-palette/components/command-palette-trigger";
 import { MakePublicBanner } from "@/features/dashboard/components/make-public-banner";
@@ -22,6 +21,7 @@ import { OrgNavigation } from "@/features/dashboard/components/navigation/org-na
 import { UpgradeLink } from "@/features/dashboard/components/navigation/upgrade-link";
 import { SidebarFooterContent } from "@/features/dashboard/components/sidebar-footer-content";
 import { OrganizationSwitcher } from "@/features/organizations/components/organization-switcher";
+import { useMemberOrganization } from "@/features/organizations/hooks/use-member-organization";
 
 const SUPER_ADMIN_PATH = "/dashboard/super-admin";
 
@@ -51,22 +51,13 @@ function SuperAdminItem({ pathname }: { pathname: string }) {
   );
 }
 
-function AdminActions({
-  organizationId,
-  orgSlug,
-  isPublic,
-}: {
-  organizationId: Id<"organizations">;
-  orgSlug: string;
-  isPublic: boolean | undefined;
-}) {
-  const subscription = useQuery(api.billing.queries.getStatus, {
-    organizationId,
-  });
+function AdminActions({ org }: { org: MemberOrganization }) {
   return (
     <>
-      {isPublic ? null : <MakePublicBanner orgId={organizationId} />}
-      {subscription?.tier === "free" ? <UpgradeLink orgSlug={orgSlug} /> : null}
+      {org.isPublic ? null : <MakePublicBanner orgId={org._id} />}
+      {org.subscriptionTier === "free" ? (
+        <UpgradeLink orgSlug={org.slug} />
+      ) : null}
     </>
   );
 }
@@ -76,21 +67,13 @@ function DashboardFooter({
   isAdmin,
   pathname,
 }: {
-  org:
-    | FunctionReturnType<typeof api.organizations.queries.getBySlug>
-    | undefined;
+  org: MemberOrganization | undefined;
   isAdmin: boolean;
   pathname: string;
 }) {
   return (
     <SidebarFooter>
-      {org && isAdmin ? (
-        <AdminActions
-          isPublic={org.isPublic}
-          organizationId={org._id}
-          orgSlug={org.slug}
-        />
-      ) : null}
+      {org && isAdmin ? <AdminActions org={org} /> : null}
       <SidebarMenu>
         <SuperAdminItem pathname={pathname} />
         <SidebarFooterContent isPublic={org?.isPublic} orgSlug={org?.slug} />
@@ -107,10 +90,7 @@ export function DashboardSidebar({
   orgSlug?: string;
   pathname: string;
 }) {
-  const org = useQuery(
-    api.organizations.queries.getBySlug,
-    orgSlug ? { slug: orgSlug } : "skip"
-  );
+  const org = useMemberOrganization(orgSlug);
   const isAdmin = org?.role === "admin" || org?.role === "owner";
   return (
     <Sidebar collapsible="icon">

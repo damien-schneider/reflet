@@ -33,6 +33,7 @@ import { OrgNotFound } from "@/features/dashboard/components/org-not-found";
 import { PushNotificationPrompt } from "@/features/dashboard/components/push-notification-prompt";
 import { DashboardFeedback } from "@/features/dashboard/components/support/dashboard-feedback";
 import { DashboardSupport } from "@/features/dashboard/components/support/dashboard-support";
+import { useMemberOrganization } from "@/features/organizations/hooks/use-member-organization";
 import { sidebarOpenAtom } from "@/store/dashboard-atoms";
 import { OrgPicker, OrgPickerSkeleton, WelcomeState } from "./dashboard-states";
 import { computeDashboardNavigation } from "./use-dashboard-navigation";
@@ -156,10 +157,7 @@ function DashboardBreadcrumb({
   orgSlug?: string;
   pathname: string;
 }) {
-  const org = useQuery(
-    api.organizations.queries.getBySlug,
-    orgSlug ? { slug: orgSlug } : "skip"
-  );
+  const org = useMemberOrganization(orgSlug);
 
   const relevantSegments = getRelevantPathSegments(pathname);
   const breadcrumbItems = buildBreadcrumbItems(orgSlug, org, relevantSegments);
@@ -231,7 +229,8 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useAtom(sidebarOpenAtom);
   const modifierKey = useModifierKeyLabel();
 
-  const isAdmin = org?.role === "admin" || org?.role === "owner";
+  const currentOrg = useMemberOrganization(orgSlug);
+  const isAdmin = currentOrg?.role === "admin" || currentOrg?.role === "owner";
 
   const relevantSegments = getRelevantPathSegments(pathname ?? "");
   const isNonOrgRoute = NON_ORG_ROUTES.some(

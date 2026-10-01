@@ -16,15 +16,16 @@ vi.mock("convex/react", () => ({
           image: "/jane.png",
           name: "Jane Doe",
         };
-      case "organizations/queries:getBySlug":
-        return {
-          _id: "org1",
-          isPublic: true,
-          role: session.role,
-          slug: "acme",
-        };
-      case "billing/queries:getStatus":
-        return { tier: session.tier };
+      case "organizations/queries:list":
+        return [
+          {
+            _id: "org1",
+            isPublic: true,
+            role: session.role,
+            slug: "acme",
+            subscriptionTier: session.tier,
+          },
+        ];
       case "organizations/super_admin:isSuperAdmin":
         return false;
       default:
