@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
 import { assertSuperAdmin } from "../shared/access";
+import { nonUserActorName } from "../shared/actors";
 
 export const getTopVotedFeedback = query({
   args: { limit: v.optional(v.number()) },
@@ -54,9 +55,14 @@ export const getRecentActivity = query({
       .order("desc")
       .take(limit);
 
-    // Batch fetch org names and user names
     const orgIds = [...new Set(recentActivity.map((a) => a.organizationId))];
-    const userIds = [...new Set(recentActivity.map((a) => a.authorId))];
+    const userIds = [
+      ...new Set(
+        recentActivity
+          .map((a) => a.authorId)
+          .filter((authorId) => nonUserActorName(authorId) === undefined)
+      ),
+    ];
 
     const orgMap = new Map<string, string>();
     const userMap = new Map<string, string>();
@@ -82,7 +88,8 @@ export const getRecentActivity = query({
       createdAt: a.createdAt,
       details: a.details,
       organizationName: orgMap.get(a.organizationId) ?? "Unknown",
-      userName: userMap.get(a.authorId) ?? "Unknown",
+      userName:
+        nonUserActorName(a.authorId) ?? userMap.get(a.authorId) ?? "Unknown",
     }));
   },
 });

@@ -250,6 +250,7 @@ import type * as organizations_tag_manager from "../organizations/tag_manager.js
 import type * as organizations_tag_manager_actions from "../organizations/tag_manager_actions.js";
 import type * as privateData from "../privateData.js";
 import type * as shared_access from "../shared/access.js";
+import type * as shared_actors from "../shared/actors.js";
 import type * as shared_constants from "../shared/constants.js";
 import type * as shared_hmac from "../shared/hmac.js";
 import type * as shared_membership from "../shared/membership.js";
@@ -539,6 +540,7 @@ declare const fullApi: ApiFromModules<{
   "organizations/tag_manager_actions": typeof organizations_tag_manager_actions;
   privateData: typeof privateData;
   "shared/access": typeof shared_access;
+  "shared/actors": typeof shared_actors;
   "shared/constants": typeof shared_constants;
   "shared/hmac": typeof shared_hmac;
   "shared/membership": typeof shared_membership;
