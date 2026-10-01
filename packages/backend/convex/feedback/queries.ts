@@ -4,7 +4,10 @@ import type { QueryCtx } from "../_generated/server";
 import { query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
 import { toPublicOrganization } from "../organizations/queries";
-import { projectFeedbackFor } from "./public_projection";
+import {
+  isFeedbackPubliclyVisible,
+  projectFeedbackFor,
+} from "./public_projection";
 
 interface UserProfile {
   email?: string;
@@ -98,7 +101,7 @@ export const getPublicMeta = query({
       return null;
     }
 
-    if (!feedback.isApproved) {
+    if (!isFeedbackPubliclyVisible(org, feedback)) {
       return null;
     }
 
@@ -126,7 +129,7 @@ export const getShippedMeta = query({
       return null;
     }
 
-    if (!feedback.isApproved) {
+    if (!isFeedbackPubliclyVisible(org, feedback)) {
       return null;
     }
 
@@ -177,7 +180,7 @@ export const get = query({
     if (!(isMember || org.isPublic)) {
       return null;
     }
-    if (!(isMember || feedback.isApproved)) {
+    if (!(isMember || isFeedbackPubliclyVisible(org, feedback))) {
       return null;
     }
 

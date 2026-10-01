@@ -50,11 +50,11 @@ export function BoardViewToggle({
         </TabsTab>
         <TabsTab value="roadmap">
           <GridFour aria-hidden className="size-4" />
-          Roadmap
+          Board
         </TabsTab>
         <TabsTab value="milestones">
           <Flag aria-hidden className="size-4" />
-          Timeline
+          Milestones
         </TabsTab>
       </TabsList>
     </Tabs>

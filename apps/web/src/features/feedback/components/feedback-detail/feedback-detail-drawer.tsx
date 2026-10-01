@@ -12,7 +12,6 @@ import { FeedbackDetailDrawerHeader } from "./feedback-detail-drawer-header";
 import type {
   FeedbackDetailContentProps,
   FeedbackDetailDrawerProps,
-  FeedbackListItem,
 } from "./feedback-detail-drawer-types";
 import { FeedbackMetadataBar } from "./feedback-metadata-bar";
 import { InlineClarification } from "./inline-clarification";
@@ -22,13 +21,11 @@ import {
   useDrawerNavigationHotkeys,
 } from "./use-feedback-detail-drawer";
 
-const EMPTY_FEEDBACK_LIST: FeedbackListItem[] = [];
 const EMPTY_FEEDBACK_IDS: Id<"feedback">[] = [];
 
 export type {
   FeedbackDetailContentProps,
   FeedbackDetailDrawerProps,
-  FeedbackListItem,
 } from "./feedback-detail-drawer-types";
 
 export function FeedbackDetailDrawer({
@@ -36,7 +33,6 @@ export function FeedbackDetailDrawer({
   isOpen,
   onClose,
   isAdmin = false,
-  feedbackList = EMPTY_FEEDBACK_LIST,
   feedbackIds = EMPTY_FEEDBACK_IDS,
   currentIndex = -1,
   hasPrevious = false,
@@ -44,7 +40,7 @@ export function FeedbackDetailDrawer({
   onPrevious,
   onNext,
 }: FeedbackDetailDrawerProps) {
-  const feedback = useDrawerFeedback(feedbackId, feedbackList);
+  const feedback = useDrawerFeedback(feedbackId);
 
   useDrawerNavigationHotkeys({
     hasNext,
@@ -111,39 +107,8 @@ function FeedbackDetailSkeleton() {
   );
 }
 
-function FeedbackDetailMetadata({
-  feedback,
-  feedbackId,
-  isAdmin,
-}: LoadedFeedbackProps) {
-  return (
-    <FeedbackMetadataBar
-      aiComplexity={feedback.aiComplexity}
-      aiComplexityReasoning={feedback.aiComplexityReasoning}
-      aiNeedsReview={feedback.aiNeedsReview}
-      aiPriority={feedback.aiPriority}
-      aiPriorityReasoning={feedback.aiPriorityReasoning}
-      aiTimeEstimate={feedback.aiTimeEstimate}
-      assignee={feedback.assignee}
-      attachments={feedback.attachments}
-      author={feedback.author}
-      complexity={feedback.complexity}
-      createdAt={feedback.createdAt}
-      deadline={feedback.deadline}
-      description={feedback.description}
-      feedbackId={feedbackId}
-      isAdmin={isAdmin}
-      isInternal={feedback.isInternal}
-      organizationId={feedback.organizationId}
-      organizationStatusId={feedback.organizationStatusId}
-      priority={feedback.priority}
-      tags={feedback.tags}
-      timeEstimate={feedback.timeEstimate}
-      title={feedback.title}
-      userVoteType={feedback.userVoteType ?? null}
-      voteCount={feedback.voteCount ?? 0}
-    />
-  );
+function FeedbackDetailMetadata({ feedback, isAdmin }: LoadedFeedbackProps) {
+  return <FeedbackMetadataBar feedback={feedback} isAdmin={isAdmin} />;
 }
 
 function FeedbackDetailBody({

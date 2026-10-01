@@ -1,21 +1,23 @@
 /**
  * @vitest-environment jsdom
  */
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { toId } from "@/lib/convex-helpers";
+import type { Tag } from "../tag-filter-bar";
 
 vi.mock("../tag-filter-bar", () => ({
   TagFilterBar: ({
     tags,
-    selectedTagId,
+    selectedTagIds,
   }: {
     tags: unknown[];
-    selectedTagId: string | null;
+    selectedTagIds: string[];
   }) => (
     <div data-testid="tag-filter-bar">
-      Tags: {tags.length}, selected: {selectedTagId ?? "none"}
+      Tags: {tags.length}, selected: {selectedTagIds.join(",") || "none"}
     </div>
   ),
 }));
@@ -24,14 +26,15 @@ import { FeedbackToolbar } from "./feedback-toolbar";
 
 const baseProps = {
   isAdmin: false,
+  onClearTags: vi.fn(),
   onSearchChange: vi.fn(),
   onSubmitClick: vi.fn(),
-  onTagSelect: vi.fn(),
-  organizationId: "org1" as Id<"organizations">,
+  onTagChange: vi.fn(),
+  organizationId: toId("organizations", "org1"),
   searchQuery: "",
-  selectedTagId: null,
+  selectedTagIds: [],
   showSearch: true,
-  tags: [] as Array<{ _id: Id<"tags">; name: string; color: string }>,
+  tags: [] satisfies Tag[],
 };
 
 describe("FeedbackToolbar", () => {
@@ -72,7 +75,7 @@ describe("FeedbackToolbar", () => {
     render(
       <FeedbackToolbar
         {...baseProps}
-        tags={[{ _id: "t1" as Id<"tags">, color: "red", name: "Bug" }]}
+        tags={[{ _id: toId("tags", "t1"), color: "red", name: "Bug" }]}
       />
     );
     expect(screen.getByTestId("tag-filter-bar")).toBeInTheDocument();

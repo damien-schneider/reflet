@@ -7,11 +7,9 @@ import { modules } from "../../test.helpers";
 
 import { createOrg } from "./test_helpers";
 
-const testSchema = schema as any;
-
 describe("admin_api_statuses", () => {
   test("createStatus should create with auto-incremented order", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
     const orgId = await createOrg(t);
 
     await t.mutation(internal.admin_api.statuses.createStatus, {
@@ -38,7 +36,7 @@ describe("admin_api_statuses", () => {
   });
 
   test("listStatuses should return statuses for org only", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
     const orgId = await createOrg(t);
     const otherOrgId = await t.run(async (ctx) =>
       ctx.db.insert("organizations", {
@@ -70,7 +68,7 @@ describe("admin_api_statuses", () => {
   });
 
   test("updateStatus should update fields", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
     const orgId = await createOrg(t);
 
     const { id: statusId } = await t.mutation(
@@ -93,7 +91,7 @@ describe("admin_api_statuses", () => {
   });
 
   test("updateStatus should reject wrong org", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
     const orgId = await createOrg(t);
     const otherOrgId = await t.run(async (ctx) =>
       ctx.db.insert("organizations", {
@@ -120,8 +118,8 @@ describe("admin_api_statuses", () => {
     ).rejects.toThrow("Status not found");
   });
 
-  test("deleteStatus should remove and clear feedback references", async () => {
-    const t = convexTest(testSchema, modules);
+  test("deleteStatus keeps the lifecycle by moving feedback to an equivalent column", async () => {
+    const t = convexTest(schema, modules);
     const orgId = await createOrg(t);
 
     const { id: statusId } = await t.mutation(
@@ -129,7 +127,6 @@ describe("admin_api_statuses", () => {
       { color: "#F00", name: "ToDelete", organizationId: orgId }
     );
 
-    // Create feedback that references this status
     const feedbackId = await t.run(async (ctx) =>
       ctx.db.insert("feedback", {
         commentCount: 0,
@@ -146,17 +143,19 @@ describe("admin_api_statuses", () => {
       })
     );
 
+    const replacement = await t.mutation(
+      internal.admin_api.statuses.createStatus,
+      { color: "gray", name: "Replacement", organizationId: orgId }
+    );
     await t.mutation(internal.admin_api.statuses.deleteStatus, {
       organizationId: orgId,
       statusId,
     });
 
-    // Status should be deleted
     const deleted = await t.run(async (ctx) => ctx.db.get(statusId));
     expect(deleted).toBeNull();
 
-    // Feedback should have organizationStatusId cleared
     const feedback = await t.run(async (ctx) => ctx.db.get(feedbackId));
-    expect(feedback?.organizationStatusId).toBeUndefined();
+    expect(feedback?.organizationStatusId).toBe(replacement.id);
   });
 });

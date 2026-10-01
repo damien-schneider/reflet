@@ -33,6 +33,7 @@ function useBoardQueries(
     organizationId,
   });
   const tags = useQuery(api.feedback.tags.list, { organizationId });
+  const selectedStatusIds = new Set(filters.selectedStatusIds);
   const hasExplicitStatusFilter = filters.selectedStatusIds.length > 0;
   const feedback = useQuery(api.feedback.list.listByOrganization, {
     hideCompleted:
@@ -40,7 +41,11 @@ function useBoardQueries(
     organizationId,
     search: filters.searchQuery.trim() || undefined,
     sortBy: filters.sortBy,
-    statusIds: hasExplicitStatusFilter ? filters.selectedStatusIds : undefined,
+    statusIds: hasExplicitStatusFilter
+      ? orgStatuses
+          ?.filter((column) => selectedStatusIds.has(column._id))
+          .map((column) => column._id)
+      : undefined,
   });
 
   const [previousFeedback, setPreviousFeedback] = useState<NonNullable<
@@ -152,7 +157,6 @@ function useVotedFeedback(
     feedback: queries.feedback,
     optimisticVotes,
     previousFeedback: queries.previousFeedback,
-    selectedTagId: filters.selectedTagId,
     selectedTagIds: filters.selectedTagIds,
     sortBy: filters.sortBy,
   });

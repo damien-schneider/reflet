@@ -1,19 +1,25 @@
+import { toId } from "@/lib/convex-helpers";
+
+vi.mock(
+  "@/features/feedback/components/feedback-detail/feedback-metadata-bar",
+  () => ({ FeedbackMetadataBar: () => null })
+);
+
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-// Mock feedback data
 const mockFeedback = {
-  _id: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+  _id: toId("feedback", "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79"),
   commentCount: 2,
   createdAt: Date.now() - 86_400_000,
   description: "Test feedback description",
   hasVoted: false,
   isAuthor: false,
   isPinned: false,
-  organizationId: "org-1" as Id<"organizations">,
-  organizationStatusId: "status-1" as Id<"organizationStatuses">,
+  organizationId: toId("organizations", "org-1"),
+  organizationStatusId: toId("organizationStatuses", "status-1"),
   role: "member" as const,
   tags: [{ _id: "tag1", color: "#ff0000", name: "Bug" }],
   title: "Test Feedback Title",
@@ -21,7 +27,7 @@ const mockFeedback = {
 };
 
 const mockOrg = {
-  _id: "org-1" as Id<"organizations">,
+  _id: toId("organizations", "org-1"),
   isPublic: true,
   name: "My Organization",
   primaryColor: "#6366f1",
@@ -31,7 +37,7 @@ const mockOrg = {
 
 const mockStatuses = [
   {
-    _id: "status-1" as Id<"organizationStatuses">,
+    _id: toId("organizationStatuses", "status-1"),
     color: "#6b7280",
     name: "New",
     order: 0,
@@ -81,7 +87,6 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
   },
 }));
 
-// Mock React.use for async params
 vi.mock("react", async () => {
   const actual = await vi.importActual<typeof React>("react");
   return {
@@ -89,13 +94,12 @@ vi.mock("react", async () => {
     use: (
       _promise: Promise<{ orgSlug: string; feedbackId: Id<"feedback"> }>
     ) => ({
-      feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+      feedbackId: toId("feedback", "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79"),
       orgSlug: "my-organization",
     }),
   };
 });
 
-// Mock next/link
 vi.mock("next/link", () => ({
   default: ({
     children,
@@ -106,13 +110,11 @@ vi.mock("next/link", () => ({
   }) => <a href={href}>{children}</a>,
 }));
 
-// Mock date-fns
 vi.mock("date-fns", () => ({
   format: () => "January 1, 2026 at 12:00 PM",
   formatDistanceToNow: () => "1 day ago",
 }));
 
-// Mock phosphor icons
 vi.mock("@phosphor-icons/react", () => ({
   ArrowLeft: () => <span data-testid="arrow-left" />,
   Buildings: () => <span data-testid="buildings" />,
@@ -123,7 +125,6 @@ vi.mock("@phosphor-icons/react", () => ({
   User: () => <span data-testid="user-icon" />,
 }));
 
-// Mock UI components
 vi.mock("@ctrl-ui/react/ui/card", () => ({
   Card: ({
     children,
@@ -290,7 +291,6 @@ vi.mock("@/lib/utils", () => ({
     args.filter((arg) => typeof arg === "string").join(" "),
 }));
 
-// Import component after mocks
 import FeedbackDetailPage from "./page";
 
 describe("FeedbackDetailPage", () => {
@@ -332,7 +332,7 @@ describe("FeedbackDetailPage", () => {
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+          feedbackId: toId("feedback", "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79"),
           orgSlug: "my-organization",
         })}
       />
@@ -347,7 +347,7 @@ describe("FeedbackDetailPage", () => {
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+          feedbackId: toId("feedback", "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79"),
           orgSlug: "my-organization",
         })}
       />
@@ -362,7 +362,7 @@ describe("FeedbackDetailPage", () => {
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+          feedbackId: toId("feedback", "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79"),
           orgSlug: "my-organization",
         })}
       />
@@ -377,7 +377,7 @@ describe("FeedbackDetailPage", () => {
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+          feedbackId: toId("feedback", "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79"),
           orgSlug: "my-organization",
         })}
       />
@@ -392,7 +392,7 @@ describe("FeedbackDetailPage", () => {
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+          feedbackId: toId("feedback", "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79"),
           orgSlug: "my-organization",
         })}
       />
@@ -404,7 +404,6 @@ describe("FeedbackDetailPage", () => {
   });
 
   it("should show not found message when feedback is null", async () => {
-    // Override mock for this test
     mockUseQuery.mockImplementation((queryFn, args) => {
       if (args === "skip") {
         return;
@@ -424,7 +423,7 @@ describe("FeedbackDetailPage", () => {
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          feedbackId: "nonexistent-id" as Id<"feedback">,
+          feedbackId: toId("feedback", "nonexistent-id"),
           orgSlug: "my-organization",
         })}
       />
@@ -444,7 +443,7 @@ describe("FeedbackDetailPage", () => {
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+          feedbackId: toId("feedback", "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79"),
           orgSlug: "my-organization",
         })}
       />
@@ -465,12 +464,12 @@ describe("FeedbackDetailPage", () => {
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+          feedbackId: toId("feedback", "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79"),
           orgSlug: "my-organization",
         })}
       />
     );
-    // When all queries return undefined, page should not crash
+
     expect(document.body).toBeInTheDocument();
   });
 
@@ -478,7 +477,7 @@ describe("FeedbackDetailPage", () => {
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+          feedbackId: toId("feedback", "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79"),
           orgSlug: "my-organization",
         })}
       />
@@ -521,7 +520,7 @@ describe("FeedbackDetailPage", () => {
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+          feedbackId: toId("feedback", "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79"),
           orgSlug: "my-organization",
         })}
       />
@@ -536,7 +535,7 @@ describe("FeedbackDetailPage", () => {
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+          feedbackId: toId("feedback", "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79"),
           orgSlug: "my-organization",
         })}
       />
@@ -562,7 +561,7 @@ describe("FeedbackDetailPage", () => {
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+          feedbackId: toId("feedback", "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79"),
           orgSlug: "nonexistent-org",
         })}
       />
@@ -625,7 +624,7 @@ describe("FeedbackDetailPage", () => {
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+          feedbackId: toId("feedback", "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79"),
           orgSlug: "my-organization",
         })}
       />
@@ -643,7 +642,7 @@ describe("FeedbackDetailPage", () => {
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+          feedbackId: toId("feedback", "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79"),
           orgSlug: "my-organization",
         })}
       />
@@ -661,7 +660,7 @@ describe("FeedbackDetailPage", () => {
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+          feedbackId: toId("feedback", "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79"),
           orgSlug: "my-organization",
         })}
       />
@@ -709,7 +708,7 @@ describe("FeedbackDetailPage", () => {
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+          feedbackId: toId("feedback", "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79"),
           orgSlug: "my-organization",
         })}
       />
@@ -760,7 +759,7 @@ describe("FeedbackDetailPage", () => {
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+          feedbackId: toId("feedback", "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79"),
           orgSlug: "my-organization",
         })}
       />
@@ -803,7 +802,7 @@ describe("FeedbackDetailPage", () => {
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+          feedbackId: toId("feedback", "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79"),
           orgSlug: "my-organization",
         })}
       />
@@ -858,7 +857,7 @@ describe("FeedbackDetailPage", () => {
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+          feedbackId: toId("feedback", "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79"),
           orgSlug: "my-organization",
         })}
       />
@@ -910,7 +909,7 @@ describe("FeedbackDetailPage", () => {
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+          feedbackId: toId("feedback", "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79"),
           orgSlug: "my-organization",
         })}
       />
@@ -953,7 +952,7 @@ describe("FeedbackDetailPage", () => {
     render(
       <FeedbackDetailPage
         params={Promise.resolve({
-          feedbackId: "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79" as Id<"feedback">,
+          feedbackId: toId("feedback", "js7cqbnxcv3zrgt3jj0ef3gnt17zcz79"),
           orgSlug: "my-organization",
         })}
       />

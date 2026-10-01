@@ -1,35 +1,30 @@
 /**
  * @vitest-environment jsdom
  */
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { toId } from "@/lib/convex-helpers";
 
-const { mockRemoveFeedback, mockToast, mockUpdateFeedback } = vi.hoisted(
-  () => ({
-    mockRemoveFeedback: vi.fn().mockResolvedValue(undefined),
-    mockToast: {
-      error: vi.fn(),
-      success: vi.fn(),
-    },
-    mockUpdateFeedback: vi.fn().mockResolvedValue(undefined),
-  })
-);
+const { mockToast, mockUpdateFeedback } = vi.hoisted(() => ({
+  mockToast: {
+    error: vi.fn(),
+    success: vi.fn(),
+  },
+  mockUpdateFeedback: vi.fn().mockResolvedValue(undefined),
+}));
 const mockUseQuery = vi.fn();
 
 vi.mock("convex/react", () => ({
-  useMutation: (reference: unknown) =>
-    reference === "feedback_actions.remove"
-      ? mockRemoveFeedback
-      : mockUpdateFeedback,
+  useMutation: () => mockUpdateFeedback,
   useQuery: (...args: unknown[]) => mockUseQuery(...args),
 }));
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
     feedback: {
-      actions: { remove: "feedback_actions.remove" },
       mutations: { update: "feedback_mutations.update" },
+      publication: { setState: "feedback_publication.setState" },
       review: { listPendingReview: "feedback_review.listPendingReview" },
     },
   },
@@ -41,8 +36,8 @@ vi.mock("@ctrl-ui/react/ui/toast", () => ({
 
 import { PendingReviewPanel } from "./pending-review-panel";
 
-const organizationId = "org1" as Id<"organizations">;
-const feedbackId = "fb1" as Id<"feedback">;
+const organizationId = toId("organizations", "org1");
+const feedbackId = toId("feedback", "fb1");
 
 const pendingItem = {
   _id: feedbackId,
@@ -79,7 +74,18 @@ describe("PendingReviewPanel", () => {
       items: [{ ...pendingItem, aiNeedsReview: 0.91 }],
     });
     renderPanel();
-    expect(screen.getByText("Needs review")).toBeInTheDocument();
+    expect(screen.getByText("Needs clarification")).toBeInTheDocument();
+  });
+
+  it("hides the clarification warning after an explicit human correction", () => {
+    mockUseQuery.mockReturnValue({
+      canApprove: true,
+      items: [
+        { ...pendingItem, aiNeedsReview: 0.91, needsClarification: false },
+      ],
+    });
+    renderPanel();
+    expect(screen.queryByText("Needs clarification")).not.toBeInTheDocument();
   });
 
   it("omits the needs-review chip for a low probability", () => {
@@ -88,7 +94,7 @@ describe("PendingReviewPanel", () => {
       items: [{ ...pendingItem, aiNeedsReview: 0.2 }],
     });
     renderPanel();
-    expect(screen.queryByText("Needs review")).not.toBeInTheDocument();
+    expect(screen.queryByText("Needs clarification")).not.toBeInTheDocument();
   });
 
   it("approves through the shared update mutation", async () => {
@@ -99,8 +105,8 @@ describe("PendingReviewPanel", () => {
     );
     await waitFor(() =>
       expect(mockUpdateFeedback).toHaveBeenCalledWith({
-        id: feedbackId,
-        isApproved: true,
+        feedbackId,
+        state: "approved",
       })
     );
   });
@@ -109,19 +115,22 @@ describe("PendingReviewPanel", () => {
     mockUseQuery.mockReturnValue({ canApprove: true, items: [pendingItem] });
     renderPanel();
     fireEvent.click(
-      screen.getByRole("button", { name: "Dismiss Broken export" })
+      screen.getByRole("button", { name: "Reject Broken export" })
     );
-    expect(mockRemoveFeedback).not.toHaveBeenCalled();
+    expect(mockUpdateFeedback).not.toHaveBeenCalled();
     fireEvent.click(
-      await screen.findByRole("button", { name: "Dismiss feedback" })
+      await screen.findByRole("button", { name: "Reject and archive" })
     );
     await waitFor(() =>
-      expect(mockRemoveFeedback).toHaveBeenCalledWith({ id: feedbackId })
+      expect(mockUpdateFeedback).toHaveBeenCalledWith({
+        feedbackId,
+        state: "rejected",
+      })
     );
   });
 
   it("approves every pending item at once", async () => {
-    const secondId = "fb2" as Id<"feedback">;
+    const secondId = toId("feedback", "fb2");
     mockUseQuery.mockReturnValue({
       canApprove: true,
       items: [pendingItem, { ...pendingItem, _id: secondId, title: "Slow" }],
@@ -130,8 +139,8 @@ describe("PendingReviewPanel", () => {
     fireEvent.click(screen.getByRole("button", { name: /Approve all 2/ }));
     await waitFor(() => expect(mockUpdateFeedback).toHaveBeenCalledTimes(2));
     expect(mockUpdateFeedback).toHaveBeenCalledWith({
-      id: secondId,
-      isApproved: true,
+      feedbackId: secondId,
+      state: "approved",
     });
   });
 

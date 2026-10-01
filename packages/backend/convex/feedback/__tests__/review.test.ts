@@ -1,8 +1,9 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
-import { api, internal } from "../../_generated/api";
+import { api } from "../../_generated/api";
 import schema from "../../schema";
+import { applyRecordedTriage } from "../../test.fixtures";
 import { modules } from "../../test.helpers";
 import { collectPendingReview } from "../review";
 
@@ -48,7 +49,11 @@ describe("Feedback review queue", () => {
     });
     expect(before.map((item) => item._id)).toContain(feedbackId);
 
-    await t.mutation(internal.feedback.review.holdForReview, { feedbackId });
+    await applyRecordedTriage(t, {
+      applyModeration: true,
+      feedbackId,
+      junk: 0.99,
+    });
 
     const after = await t.query(api.feedback.list.listByOrganization, {
       organizationId,

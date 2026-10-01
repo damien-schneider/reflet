@@ -81,9 +81,18 @@ function useRoadmapMove({
       ? feedback
       : feedback.map((item) => {
           const update = optimisticUpdates.get(item._id);
-          return update
-            ? { ...item, organizationStatusId: update.newStatusId }
-            : item;
+          const target = update
+            ? statuses.find((column) => column._id === update.newStatusId)
+            : undefined;
+          if (!target) {
+            return item;
+          }
+          return {
+            ...item,
+            organizationStatus: target,
+            organizationStatusId: target._id,
+            status: target.semanticStatus ?? item.status,
+          };
         });
 
   const moveOnDrop = async ({ active, over }: DragEndEvent) => {

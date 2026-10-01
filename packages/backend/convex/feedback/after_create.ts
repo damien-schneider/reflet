@@ -2,11 +2,15 @@ import { internal } from "../_generated/api";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { emitWebhookEvent } from "../webhooks/mutations";
+import { isFeedbackPublishable } from "./property_values";
 
 export async function afterApproval(
   ctx: MutationCtx,
   feedback: Doc<"feedback">
 ): Promise<void> {
+  if (!isFeedbackPublishable(feedback)) {
+    return;
+  }
   await emitWebhookEvent(ctx, {
     event: "feedback.created",
     feedbackId: feedback._id,

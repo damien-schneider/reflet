@@ -1,10 +1,11 @@
 /**
  * @vitest-environment jsdom
  */
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { toId } from "@/lib/convex-helpers";
 
 vi.mock("convex/react", () => ({
   useMutation: vi.fn(() => vi.fn()),
@@ -75,11 +76,11 @@ vi.mock("@/features/tags/components/tag-form-popover", () => ({
 import type { Tag } from "./tag-filter-bar";
 import { TagFilterBar } from "./tag-filter-bar";
 
-const organizationId = "org1" as Id<"organizations">;
+const organizationId = toId("organizations", "org1");
 const tags: Tag[] = [
-  { _id: "t1" as Id<"tags">, color: "red", icon: "🐛", name: "Bug" },
-  { _id: "t2" as Id<"tags">, color: "blue", name: "Feature" },
-  { _id: "t3" as Id<"tags">, color: "green", icon: "✨", name: "UX" },
+  { _id: toId("tags", "t1"), color: "red", icon: "🐛", name: "Bug" },
+  { _id: toId("tags", "t2"), color: "blue", name: "Feature" },
+  { _id: toId("tags", "t3"), color: "green", icon: "✨", name: "UX" },
 ];
 
 describe("TagFilterBar", () => {
@@ -91,9 +92,10 @@ describe("TagFilterBar", () => {
     render(
       <TagFilterBar
         isAdmin={false}
-        onTagSelect={vi.fn()}
+        onClearTags={vi.fn()}
+        onTagChange={vi.fn()}
         organizationId={organizationId}
-        selectedTagId={null}
+        selectedTagIds={[]}
         tags={tags}
       />
     );
@@ -104,9 +106,10 @@ describe("TagFilterBar", () => {
     render(
       <TagFilterBar
         isAdmin={false}
-        onTagSelect={vi.fn()}
+        onClearTags={vi.fn()}
+        onTagChange={vi.fn()}
         organizationId={organizationId}
-        selectedTagId={null}
+        selectedTagIds={[]}
         tags={tags}
       />
     );
@@ -119,9 +122,10 @@ describe("TagFilterBar", () => {
     render(
       <TagFilterBar
         isAdmin={false}
-        onTagSelect={vi.fn()}
+        onClearTags={vi.fn()}
+        onTagChange={vi.fn()}
         organizationId={organizationId}
-        selectedTagId={null}
+        selectedTagIds={[]}
         tags={tags}
       />
     );
@@ -135,14 +139,15 @@ describe("TagFilterBar", () => {
     render(
       <TagFilterBar
         isAdmin={false}
-        onTagSelect={onTagSelect}
+        onClearTags={() => onTagSelect()}
+        onTagChange={onTagSelect}
         organizationId={organizationId}
-        selectedTagId="t1"
+        selectedTagIds={["t1"]}
         tags={tags}
       />
     );
     await user.click(screen.getByText("All"));
-    expect(onTagSelect).toHaveBeenCalledWith(null);
+    expect(onTagSelect).toHaveBeenCalledWith();
   });
 
   it("calls onTagSelect with tag id when tag clicked", async () => {
@@ -151,14 +156,15 @@ describe("TagFilterBar", () => {
     render(
       <TagFilterBar
         isAdmin={false}
-        onTagSelect={onTagSelect}
+        onClearTags={() => onTagSelect()}
+        onTagChange={onTagSelect}
         organizationId={organizationId}
-        selectedTagId={null}
+        selectedTagIds={[]}
         tags={tags}
       />
     );
     await user.click(screen.getByText("Bug"));
-    expect(onTagSelect).toHaveBeenCalledWith("t1");
+    expect(onTagSelect).toHaveBeenCalledWith("t1", true);
   });
 
   it("deselects tag when clicking already selected tag", async () => {
@@ -167,23 +173,25 @@ describe("TagFilterBar", () => {
     render(
       <TagFilterBar
         isAdmin={false}
-        onTagSelect={onTagSelect}
+        onClearTags={() => onTagSelect()}
+        onTagChange={onTagSelect}
         organizationId={organizationId}
-        selectedTagId="t1"
+        selectedTagIds={["t1"]}
         tags={tags}
       />
     );
     await user.click(screen.getByText("Bug"));
-    expect(onTagSelect).toHaveBeenCalledWith(null);
+    expect(onTagSelect).toHaveBeenCalledWith("t1", false);
   });
 
   it("shows TriagePulse for admin", () => {
     render(
       <TagFilterBar
         isAdmin
-        onTagSelect={vi.fn()}
+        onClearTags={vi.fn()}
+        onTagChange={vi.fn()}
         organizationId={organizationId}
-        selectedTagId={null}
+        selectedTagIds={[]}
         tags={tags}
       />
     );
@@ -194,9 +202,10 @@ describe("TagFilterBar", () => {
     render(
       <TagFilterBar
         isAdmin={false}
-        onTagSelect={vi.fn()}
+        onClearTags={vi.fn()}
+        onTagChange={vi.fn()}
         organizationId={organizationId}
-        selectedTagId={null}
+        selectedTagIds={[]}
         tags={tags}
       />
     );
@@ -207,9 +216,10 @@ describe("TagFilterBar", () => {
     render(
       <TagFilterBar
         isAdmin
-        onTagSelect={vi.fn()}
+        onClearTags={vi.fn()}
+        onTagChange={vi.fn()}
         organizationId={organizationId}
-        selectedTagId={null}
+        selectedTagIds={[]}
         tags={tags}
       />
     );
@@ -221,9 +231,10 @@ describe("TagFilterBar", () => {
     render(
       <TagFilterBar
         isAdmin={false}
-        onTagSelect={vi.fn()}
+        onClearTags={vi.fn()}
+        onTagChange={vi.fn()}
         organizationId={organizationId}
-        selectedTagId={null}
+        selectedTagIds={[]}
         tags={[]}
       />
     );
@@ -235,9 +246,10 @@ describe("TagFilterBar", () => {
     render(
       <TagFilterBar
         isAdmin
-        onTagSelect={vi.fn()}
+        onClearTags={vi.fn()}
+        onTagChange={vi.fn()}
         organizationId={organizationId}
-        selectedTagId={null}
+        selectedTagIds={[]}
         tags={tags}
       />
     );
@@ -251,9 +263,10 @@ describe("TagFilterBar", () => {
     render(
       <TagFilterBar
         isAdmin={false}
-        onTagSelect={vi.fn()}
+        onClearTags={vi.fn()}
+        onTagChange={vi.fn()}
         organizationId={organizationId}
-        selectedTagId={null}
+        selectedTagIds={[]}
         tags={tags}
       />
     );
@@ -265,9 +278,10 @@ describe("TagFilterBar", () => {
     render(
       <TagFilterBar
         isAdmin
-        onTagSelect={vi.fn()}
+        onClearTags={vi.fn()}
+        onTagChange={vi.fn()}
         organizationId={organizationId}
-        selectedTagId={null}
+        selectedTagIds={[]}
         tags={tags}
       />
     );
@@ -283,15 +297,16 @@ describe("TagFilterBar", () => {
     render(
       <TagFilterBar
         isAdmin
-        onTagSelect={onTagSelect}
+        onClearTags={() => onTagSelect()}
+        onTagChange={onTagSelect}
         organizationId={organizationId}
-        selectedTagId="t1"
+        selectedTagIds={["t1"]}
         tags={tags}
       />
     );
     const deleteButtons = screen.getAllByText("Delete tag");
     await user.click(deleteButtons[0]);
     await user.click(screen.getByTestId("delete-confirm"));
-    expect(onTagSelect).toHaveBeenCalledWith(null);
+    expect(onTagSelect).toHaveBeenCalledWith("t1", false);
   });
 });

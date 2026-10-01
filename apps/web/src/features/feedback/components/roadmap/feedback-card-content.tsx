@@ -1,10 +1,12 @@
+import { Button } from "@ctrl-ui/react/ui/button";
 import { Card } from "@ctrl-ui/react/ui/card";
 import { CaretUp, ChatCircle, Sparkle } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
 import { TagBadge } from "@/components/tag-badge";
+import { FeedbackPropertiesPopover } from "@/features/feedback/components/properties/feedback-properties-popover";
+import { FeedbackPropertySummary } from "@/features/feedback/components/properties/feedback-property-summary";
 import { cn } from "@/lib/utils";
 import type { FeedbackItem } from "../feed-feedback-view";
-import { InternalBadge } from "../internal-badge";
 
 const MAX_VISIBLE_TAGS = 2;
 const MAX_VISIBLE_MILESTONES = 2;
@@ -24,12 +26,7 @@ function CardTitle({
   item: FeedbackItem;
   onOpen?: () => void;
 }) {
-  const content = (
-    <>
-      {item.isInternal && <InternalBadge className="mr-1" />}
-      {item.title}
-    </>
-  );
+  const content = <>{item.title}</>;
 
   if (!onOpen) {
     return <h4 className="text-pretty font-medium text-sm">{content}</h4>;
@@ -37,13 +34,13 @@ function CardTitle({
 
   return (
     <h4 className="text-pretty font-medium text-sm">
-      <button
-        className="text-left outline-none after:absolute after:inset-0 after:rounded-[inherit] focus-visible:after:ring-2 focus-visible:after:ring-ring"
+      <Button
+        className="h-auto justify-start whitespace-normal px-0 py-0 text-left font-[inherit] text-inherit outline-none after:absolute after:inset-0 after:rounded-[inherit] hover:bg-transparent focus-visible:after:ring-2 focus-visible:after:ring-ring"
         onClick={onOpen}
-        type="button"
+        variant="ghost"
       >
         {content}
-      </button>
+      </Button>
     </h4>
   );
 }
@@ -94,6 +91,8 @@ export function FeedbackCardContent({
       <div className={cn(dragHandle && "pr-6")}>
         <CardTitle item={item} onOpen={onOpen} />
       </div>
+      <FeedbackPropertySummary feedback={item} />
+      {item.isMember && <FeedbackPropertiesPopover feedbackId={item._id} />}
       {tags.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {tags.slice(0, MAX_VISIBLE_TAGS).map((tag) => (

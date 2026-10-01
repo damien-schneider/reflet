@@ -26,7 +26,6 @@ import { TagBadge } from "@/components/tag-badge";
 import { toId } from "@/lib/convex-helpers";
 import { getTagDotColor } from "@/lib/tag-colors";
 import { CommentTimestamp } from "../feedback-detail/comment-meta";
-import { InternalBadge } from "../internal-badge";
 
 interface OrganizationStatus {
   _id: Id<"organizationStatuses">;
@@ -78,7 +77,6 @@ export function PublicFeedbackHeader({
             />
           )}
           <h2 className="text-balance font-semibold text-xl">{title}</h2>
-          {isInternal && <InternalBadge />}
         </div>
 
         <div className="mt-1 flex flex-wrap items-center gap-3 text-muted-foreground text-sm">

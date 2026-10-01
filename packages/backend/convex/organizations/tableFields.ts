@@ -112,6 +112,7 @@ export const organizationTables = {
     name: v.string(),
     order: v.number(),
     organizationId: v.id("organizations"),
+    semanticStatus: v.optional(feedbackStatus),
     updatedAt: v.number(),
   })
     .index("by_organization", ["organizationId"])
@@ -122,7 +123,7 @@ export const organizationTables = {
         autoPublishImported: v.optional(v.boolean()),
         autoVersioning: v.optional(v.boolean()),
         pushToGithubOnPublish: v.optional(v.boolean()),
-        // Unused: drop once migrations/strip_sync_direction has run everywhere.
+
         syncDirection: v.optional(v.string()),
         targetBranch: v.optional(v.string()),
         versionIncrement: v.optional(v.string()),

@@ -1,21 +1,33 @@
 import { Experimental_EvaluationMockModelV4 as MockEvaluationModel } from "ai/test";
+import { convexTest } from "convex-test";
 import { describe, expect, it } from "vitest";
-import type { Id } from "../../_generated/dataModel";
-import { evaluateFeedbackTriage, type TriageTag } from "../triage_evaluation";
+import schema from "../../schema";
+import { seedOrganization } from "../../test.fixtures";
+import { modules } from "../../test.helpers";
+import { evaluateFeedbackTriage } from "../triage_evaluation";
+import type { TriageTag } from "../triage_questions";
 
-const tagId = (suffix: string) => suffix as Id<"tags">;
-
-const BUG = tagId("tag_bug");
-const BILLING = tagId("tag_billing");
-const MOBILE = tagId("tag_mobile");
-const DOCS = tagId("tag_docs");
-
-const tags: TriageTag[] = [
-  { _id: BUG, name: "Bug" },
-  { _id: BILLING, description: "Charges, invoices, refunds", name: "Billing" },
-  { _id: MOBILE, name: "Mobile" },
-  { _id: DOCS, name: "Docs" },
-];
+const tags: TriageTag[] = await convexTest(schema, modules).run(async (ctx) => {
+  const organizationId = await seedOrganization(ctx);
+  return Promise.all(
+    ["Bug", "Billing", "Mobile", "Docs"].map(async (name) => {
+      const _id = await ctx.db.insert("tags", {
+        color: "blue",
+        createdAt: Date.now(),
+        name,
+        organizationId,
+        slug: name.toLowerCase(),
+      });
+      return {
+        _id,
+        description:
+          name === "Billing" ? "Charges, invoices, refunds" : undefined,
+        name,
+      };
+    })
+  );
+});
+const [BUG, BILLING, MOBILE, DOCS] = tags.map((tag) => tag._id);
 
 const mockJev = (probabilities: Record<string, number>) =>
   new MockEvaluationModel({
@@ -137,13 +149,19 @@ describe("evaluateFeedbackTriage", () => {
   });
 
   it("sends both criteria branches, which the API rejects a question without", async () => {
-    let asked: Record<string, { criteria?: Record<string, unknown> }> = {};
+    let asked: Parameters<
+      NonNullable<
+        NonNullable<
+          ConstructorParameters<typeof MockEvaluationModel>[0]
+        >["doEvaluate"]
+      >
+    >[0]["questions"] = {};
 
     await evaluateFeedbackTriage(
       { description: "Checkout fails", tags, title: "Broken checkout" },
       new MockEvaluationModel({
         doEvaluate: async ({ questions }) => {
-          asked = questions as typeof asked;
+          asked = questions;
           return {
             answers: Object.fromEntries(
               Object.keys(questions).map((id) => [

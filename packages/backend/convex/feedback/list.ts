@@ -1,10 +1,12 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
-import { projectFeedbackFor } from "./public_projection";
-import { isCompletedStatusName } from "./status_utils";
+import {
+  isFeedbackPubliclyVisible,
+  projectFeedbackFor,
+} from "./public_projection";
+import { isFinishedStatus } from "./status_utils";
 
-// Helper to sort feedback
 const sortFeedback = <
   T extends {
     voteCount: number;
@@ -33,7 +35,7 @@ const sortFeedback = <
     default:
       break;
   }
-  // Pinned items first
+
   sorted.sort((a, b) => {
     if (a.isPinned && !b.isPinned) {
       return -1;
@@ -46,9 +48,6 @@ const sortFeedback = <
   return sorted;
 };
 
-/**
- * List feedback for an organization with filtering and sorting
- */
 export const listByOrganization = query({
   args: {
     hideCompleted: v.optional(v.boolean()),
@@ -74,7 +73,6 @@ export const listByOrganization = query({
 
     const user = await authComponent.safeGetAuthUser(ctx);
 
-    // Check access
     let isMember = false;
     if (user) {
       const membership = await ctx.db
@@ -90,7 +88,6 @@ export const listByOrganization = query({
       return [];
     }
 
-    // Get all organization statuses for enrichment
     const orgStatuses = await ctx.db
       .query("organizationStatuses")
       .withIndex("by_organization", (q) =>
@@ -99,7 +96,6 @@ export const listByOrganization = query({
       .collect();
     const statusMap = new Map(orgStatuses.map((s) => [s._id, s]));
 
-    // Get all feedback for the organization (excluding soft-deleted and merged)
     let feedbackItems = (
       await ctx.db
         .query("feedback")
@@ -109,7 +105,6 @@ export const listByOrganization = query({
         .collect()
     ).filter((f) => !(f.deletedAt || f.isMerged));
 
-    // Filter by statusIds (any of the selected statuses)
     if (args.statusIds && args.statusIds.length > 0) {
       const statusIdSet = new Set<string>(args.statusIds);
       feedbackItems = feedbackItems.filter(
@@ -117,37 +112,16 @@ export const listByOrganization = query({
       );
     }
 
-    // Filter out completed items when hideCompleted is true
     if (args.hideCompleted) {
-      const completedOrgStatusIds = new Set(
-        orgStatuses
-          .filter((s) => isCompletedStatusName(s.name))
-          .map((s) => s._id)
-      );
-
-      feedbackItems = feedbackItems.filter((f) => {
-        // Exclude if the organizationStatusId is a completed status
-        if (
-          f.organizationStatusId &&
-          completedOrgStatusIds.has(f.organizationStatusId)
-        ) {
-          return false;
-        }
-        // Exclude if the status enum is "completed" or "closed" (catches items
-        // without organizationStatusId, e.g. GitHub-synced feedback)
-        if (f.status === "completed" || f.status === "closed") {
-          return false;
-        }
-        return true;
-      });
+      feedbackItems = feedbackItems.filter((f) => !isFinishedStatus(f.status));
     }
 
-    // Filter non-approved for non-members
     if (!isMember) {
-      feedbackItems = feedbackItems.filter((f) => f.isApproved);
+      feedbackItems = feedbackItems.filter((f) =>
+        isFeedbackPubliclyVisible(org, f)
+      );
     }
 
-    // Filter by tags (any of the selected tags - "or" semantics)
     if (args.tagIds && args.tagIds.length > 0) {
       const selectedTagIds = new Set<string>(args.tagIds);
       const feedbackWithTags = await Promise.all(
@@ -157,15 +131,16 @@ export const listByOrganization = query({
             .withIndex("by_feedback", (q) => q.eq("feedbackId", f._id))
             .collect();
           const tagIds = tags.map((t) => t.tagId);
-          // Check if feedback has ANY of the selected tags
+
           const hasAnyTag = tagIds.some((tagId) => selectedTagIds.has(tagId));
           return hasAnyTag ? f : null;
         })
       );
-      feedbackItems = feedbackWithTags.filter(Boolean) as typeof feedbackItems;
+      feedbackItems = feedbackWithTags.filter(
+        (item): item is NonNullable<typeof item> => item !== null
+      );
     }
 
-    // Search filter
     if (args.search) {
       const searchLower = args.search.toLowerCase();
       feedbackItems = feedbackItems.filter(
@@ -175,17 +150,13 @@ export const listByOrganization = query({
       );
     }
 
-    // Sort
     feedbackItems = sortFeedback(feedbackItems, args.sortBy ?? "votes");
 
-    // Limit
     if (args.limit) {
       feedbackItems = feedbackItems.slice(0, args.limit);
     }
 
-    // Enrich with org status info and user vote status
     const enrichFeedback = async (f: (typeof feedbackItems)[0]) => {
-      // Get tags
       const feedbackTags = await ctx.db
         .query("feedbackTags")
         .withIndex("by_feedback", (q) => q.eq("feedbackId", f._id))
@@ -200,7 +171,6 @@ export const listByOrganization = query({
         })
       );
 
-      // Get all votes
       const allVotes = await ctx.db
         .query("feedbackVotes")
         .withIndex("by_feedback", (q) => q.eq("feedbackId", f._id))
@@ -213,7 +183,6 @@ export const listByOrganization = query({
         (v) => v.voteType === "downvote"
       ).length;
 
-      // Get user vote status
       let hasVoted = false;
       let userVoteType: "upvote" | "downvote" | null = null;
       if (user) {
@@ -222,15 +191,23 @@ export const listByOrganization = query({
         userVoteType = userVote?.voteType ?? null;
       }
 
-      // Get organization status info
       const orgStatus = f.organizationStatusId
         ? statusMap.get(f.organizationStatusId)
         : null;
 
       return {
         ...projectFeedbackFor(f, isMember),
+        assignee:
+          isMember && f.assigneeId
+            ? await authComponent
+                .getAnyUserById(ctx, f.assigneeId)
+                .then((profile) =>
+                  profile ? { name: profile.name ?? null } : null
+                )
+            : null,
         downvoteCount,
         hasVoted,
+        isMember,
         organizationStatus: orgStatus
           ? {
               color: orgStatus.color,
@@ -245,149 +222,5 @@ export const listByOrganization = query({
     };
 
     return Promise.all(feedbackItems.map(enrichFeedback));
-  },
-});
-
-/**
- * List feedback for roadmap view - organization-based
- */
-export const listForRoadmapByOrganization = query({
-  args: {
-    organizationId: v.id("organizations"),
-    tagIds: v.optional(v.array(v.id("tags"))),
-  },
-  handler: async (ctx, args) => {
-    const user = await authComponent.safeGetAuthUser(ctx);
-
-    const org = await ctx.db.get(args.organizationId);
-    if (!org) {
-      return [];
-    }
-
-    // Check access
-    let isMember = false;
-    if (user) {
-      const membership = await ctx.db
-        .query("organizationMembers")
-        .withIndex("by_org_user", (q) =>
-          q.eq("organizationId", args.organizationId).eq("userId", user._id)
-        )
-        .unique();
-      isMember = !!membership;
-    }
-
-    if (!(isMember || org.isPublic)) {
-      return [];
-    }
-
-    // Get all feedback for the organization (excluding soft-deleted and merged)
-    let feedbackItems = (
-      await ctx.db
-        .query("feedback")
-        .withIndex("by_organization", (q) =>
-          q.eq("organizationId", args.organizationId)
-        )
-        .collect()
-    ).filter((f) => !(f.deletedAt || f.isMerged));
-
-    // Filter to only approved items for non-members
-    feedbackItems = isMember
-      ? feedbackItems
-      : feedbackItems.filter((f) => f.isApproved);
-
-    // Filter by tags (any of the selected tags - "or" semantics)
-    if (args.tagIds && args.tagIds.length > 0) {
-      const selectedTagIds = new Set<string>(args.tagIds);
-      const feedbackWithTags = await Promise.all(
-        feedbackItems.map(async (f) => {
-          const tags = await ctx.db
-            .query("feedbackTags")
-            .withIndex("by_feedback", (q) => q.eq("feedbackId", f._id))
-            .collect();
-          const tagIds = tags.map((t) => t.tagId);
-          const hasAnyTag = tagIds.some((tagId) => selectedTagIds.has(tagId));
-          return hasAnyTag ? f : null;
-        })
-      );
-      feedbackItems = feedbackWithTags.filter(Boolean) as typeof feedbackItems;
-    }
-
-    // Add vote status and tags
-    const feedbackWithDetails = await Promise.all(
-      feedbackItems.map(async (f) => {
-        // Get tags
-        const feedbackTags = await ctx.db
-          .query("feedbackTags")
-          .withIndex("by_feedback", (q) => q.eq("feedbackId", f._id))
-          .collect();
-        const tags = await Promise.all(
-          feedbackTags.map(async (ft) => ctx.db.get(ft.tagId))
-        );
-
-        // Get organization status
-        const orgStatus = f.organizationStatusId
-          ? await ctx.db.get(f.organizationStatusId)
-          : null;
-
-        // Get all votes for this feedback
-        const allVotes = await ctx.db
-          .query("feedbackVotes")
-          .withIndex("by_feedback", (q) => q.eq("feedbackId", f._id))
-          .collect();
-
-        const upvoteCount = allVotes.filter(
-          (v) => v.voteType === "upvote"
-        ).length;
-        const downvoteCount = allVotes.filter(
-          (v) => v.voteType === "downvote"
-        ).length;
-
-        // Check if user voted
-        let hasVoted = false;
-        let userVoteType: "upvote" | "downvote" | null = null;
-        if (user) {
-          const userVote = allVotes.find((v) => v.userId === user._id);
-          hasVoted = !!userVote;
-          userVoteType = userVote?.voteType ?? null;
-        }
-
-        // Get milestones linked to this feedback
-        const milestoneFeedbackLinks = await ctx.db
-          .query("milestoneFeedback")
-          .withIndex("by_feedback", (q) => q.eq("feedbackId", f._id))
-          .collect();
-        const milestones = (
-          await Promise.all(
-            milestoneFeedbackLinks.map(async (mf) => ctx.db.get(mf.milestoneId))
-          )
-        ).filter(
-          (m): m is NonNullable<typeof m> =>
-            m !== null && m !== undefined && (isMember || m.isPublic)
-        );
-
-        return {
-          ...projectFeedbackFor(f, isMember),
-          downvoteCount,
-          hasVoted,
-          milestones: milestones.map((m) => ({
-            _id: m._id,
-            emoji: m.emoji,
-            name: m.name,
-          })),
-          organizationStatus: orgStatus
-            ? {
-                color: orgStatus.color,
-                icon: orgStatus.icon,
-                name: orgStatus.name,
-              }
-            : null,
-          tags: tags.filter(Boolean),
-          upvoteCount,
-          userVoteType,
-        };
-      })
-    );
-
-    return feedbackWithDetails;
   },
 });

@@ -3,6 +3,7 @@ import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { api, internal } from "../../_generated/api";
 import schema from "../../schema";
+import { applyRecordedTriage } from "../../test.fixtures";
 import { modules } from "../../test.helpers";
 
 describe("Auto-tagging database operations", () => {
@@ -94,7 +95,7 @@ describe("Auto-tagging database operations", () => {
       return { feedbackId, orgId, tagId };
     });
 
-    await t.mutation(internal.feedback.auto_tagging_jobs.applyAutoTags, {
+    await applyRecordedTriage(t, {
       feedbackId,
       tagIds: [tagId],
     });
@@ -147,12 +148,12 @@ describe("Auto-tagging database operations", () => {
       return { feedbackId, tagId };
     });
 
-    await t.mutation(internal.feedback.auto_tagging_jobs.applyAutoTags, {
+    await applyRecordedTriage(t, {
       feedbackId,
       tagIds: [tagId],
     });
 
-    await t.mutation(internal.feedback.auto_tagging_jobs.applyAutoTags, {
+    await applyRecordedTriage(t, {
       feedbackId,
       tagIds: [tagId],
     });
@@ -249,58 +250,61 @@ describe("Triage scope selection", () => {
   test("untriaged uses Jev completion, not legacy priority analysis", async () => {
     const t = convexTest(schema, modules);
 
-    const { orgId, freshId, legacyPriorityId } = await t.run(async (ctx) => {
-      const orgId = await ctx.db.insert("organizations", {
-        createdAt: Date.now(),
-        isPublic: false,
-        name: "Test Org",
-        slug: "test-org-scope",
-        subscriptionStatus: "none",
-        subscriptionTier: "free",
-      });
-
-      const insertFeedback = async (
-        title: string,
-        extra: Record<string, unknown> = {}
-      ) =>
-        await ctx.db.insert("feedback", {
-          commentCount: 0,
+    const { orgId, freshId, legacyPriorityId, handTaggedId, tagId } =
+      await t.run(async (ctx) => {
+        const orgId = await ctx.db.insert("organizations", {
           createdAt: Date.now(),
-          description: "Something happened",
-          isApproved: true,
-          isPinned: false,
-          organizationId: orgId,
-          status: "open",
-          title,
-          updatedAt: Date.now(),
-          voteCount: 0,
-          ...extra,
+          isPublic: false,
+          name: "Test Org",
+          slug: "test-org-scope",
+          subscriptionStatus: "none",
+          subscriptionTier: "free",
         });
 
-      const freshId = await insertFeedback("Fresh");
-      const legacyPriorityId = await insertFeedback("Legacy priority", {
-        aiPriorityGeneratedAt: Date.now(),
-      });
-      await insertFeedback("Triaged", { aiUsefulnessGeneratedAt: Date.now() });
-      await insertFeedback("Deleted", { deletedAt: Date.now() });
+        const insertFeedback = async (
+          title: string,
+          extra: Record<string, unknown> = {}
+        ) =>
+          await ctx.db.insert("feedback", {
+            commentCount: 0,
+            createdAt: Date.now(),
+            description: "Something happened",
+            isApproved: true,
+            isPinned: false,
+            organizationId: orgId,
+            status: "open",
+            title,
+            updatedAt: Date.now(),
+            voteCount: 0,
+            ...extra,
+          });
 
-      const handTaggedId = await insertFeedback("Hand tagged");
-      const tagId = await ctx.db.insert("tags", {
-        color: "#FF0000",
-        createdAt: Date.now(),
-        name: "Bug",
-        organizationId: orgId,
-        slug: "bug",
-        updatedAt: Date.now(),
-      });
-      await ctx.db.insert("feedbackTags", {
-        appliedByAi: false,
-        feedbackId: handTaggedId,
-        tagId,
-      });
+        const freshId = await insertFeedback("Fresh");
+        const legacyPriorityId = await insertFeedback("Legacy priority", {
+          aiPriorityGeneratedAt: Date.now(),
+        });
+        await insertFeedback("Triaged", {
+          aiUsefulnessGeneratedAt: Date.now(),
+        });
+        await insertFeedback("Deleted", { deletedAt: Date.now() });
 
-      return { freshId, legacyPriorityId, orgId };
-    });
+        const handTaggedId = await insertFeedback("Hand tagged");
+        const tagId = await ctx.db.insert("tags", {
+          color: "#FF0000",
+          createdAt: Date.now(),
+          name: "Bug",
+          organizationId: orgId,
+          slug: "bug",
+          updatedAt: Date.now(),
+        });
+        await ctx.db.insert("feedbackTags", {
+          appliedByAi: false,
+          feedbackId: handTaggedId,
+          tagId,
+        });
+
+        return { freshId, handTaggedId, legacyPriorityId, orgId, tagId };
+      });
 
     const untriaged = await t.query(
       internal.feedback.auto_tagging.getFeedbackIdsForTriage,
@@ -311,7 +315,18 @@ describe("Triage scope selection", () => {
       { organizationId: orgId, scope: "all" }
     );
 
-    expect(untriaged).toEqual([freshId, legacyPriorityId]);
+    expect(untriaged).toEqual([freshId, legacyPriorityId, handTaggedId]);
+    await applyRecordedTriage(t, { feedbackId: handTaggedId, tagIds: [] });
+    expect(
+      await t.run((ctx) =>
+        ctx.db
+          .query("feedbackTags")
+          .withIndex("by_feedback", (query) =>
+            query.eq("feedbackId", handTaggedId)
+          )
+          .collect()
+      )
+    ).toMatchObject([{ appliedByAi: false, tagId }]);
     expect(all).toHaveLength(4);
     expect(all).toContain(freshId);
   });
@@ -344,7 +359,7 @@ describe("Jev triage persistence", () => {
       });
     });
 
-    await t.mutation(internal.feedback.auto_tagging_jobs.saveTriage, {
+    await applyRecordedTriage(t, {
       feedbackId,
       junk: 0.08,
       needsReview: 0.12,
@@ -417,7 +432,7 @@ describe("Recompute reconciliation", () => {
       }
     );
 
-    await t.mutation(internal.feedback.auto_tagging_jobs.applyAutoTags, {
+    await applyRecordedTriage(t, {
       feedbackId,
       tagIds: [aiTagId],
     });

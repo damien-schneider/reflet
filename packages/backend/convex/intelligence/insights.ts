@@ -1,11 +1,9 @@
 import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
+import { statusFieldsFor } from "../feedback/status_target";
 import { getAuthUser } from "../shared/utils";
 import { insightStatus, insightType } from "./tableFields";
 
-/**
- * List insights for an organization with optional filters
- */
 export const list = query({
   args: {
     limit: v.optional(v.number()),
@@ -49,9 +47,6 @@ export const list = query({
   },
 });
 
-/**
- * Get a single insight by ID
- */
 export const get = query({
   args: {
     insightId: v.id("intelligenceInsights"),
@@ -79,9 +74,6 @@ export const get = query({
   },
 });
 
-/**
- * Get signals linked to an insight
- */
 export const getSignalsForInsight = query({
   args: {
     insightId: v.id("intelligenceInsights"),
@@ -113,9 +105,6 @@ export const getSignalsForInsight = query({
   },
 });
 
-/**
- * Dismiss an insight (admin only)
- */
 export const dismiss = mutation({
   args: {
     insightId: v.id("intelligenceInsights"),
@@ -143,9 +132,6 @@ export const dismiss = mutation({
   },
 });
 
-/**
- * Mark an insight as reviewed (admin only)
- */
 export const markReviewed = mutation({
   args: {
     insightId: v.id("intelligenceInsights"),
@@ -173,9 +159,6 @@ export const markReviewed = mutation({
   },
 });
 
-/**
- * Convert an insight to a feedback item (admin only)
- */
 export const convertToFeedback = mutation({
   args: {
     insightId: v.id("intelligenceInsights"),
@@ -213,7 +196,10 @@ export const convertToFeedback = mutation({
       isPinned: false,
       organizationId: insight.organizationId,
       source: "api",
-      status: "open",
+      ...(await statusFieldsFor(ctx, {
+        organizationId: insight.organizationId,
+        status: "open",
+      })),
       title: insight.suggestedFeedbackTitle,
       updatedAt: now,
       voteCount: 0,

@@ -10,12 +10,13 @@ import {
 import { toast } from "@ctrl-ui/react/ui/toast";
 import { Plus } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { type FormEvent, useState } from "react";
 import { NotionColorPicker } from "@/components/ui/notion-color-picker";
 import { getTagSwatchClass, type TagColor } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
+import { StatusMeaningSelect } from "./status-meaning-select";
 
 interface AddColumnInlineProps {
   organizationId: Id<"organizations">;
@@ -23,6 +24,8 @@ interface AddColumnInlineProps {
 
 export function AddColumnInline({ organizationId }: AddColumnInlineProps) {
   const [isAdding, setIsAdding] = useState(false);
+  const [semanticStatus, setSemanticStatus] =
+    useState<Doc<"feedback">["status"]>("open");
   const [name, setName] = useState("");
   const [color, setColor] = useState<TagColor>("blue");
   const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
@@ -34,6 +37,7 @@ export function AddColumnInline({ organizationId }: AddColumnInlineProps) {
     setIsAdding(false);
     setName("");
     setColor("blue");
+    setSemanticStatus("open");
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -44,7 +48,12 @@ export function AddColumnInline({ organizationId }: AddColumnInlineProps) {
     }
     setIsSaving(true);
     try {
-      await createStatus({ color, name: trimmedName, organizationId });
+      await createStatus({
+        color,
+        name: trimmedName,
+        organizationId,
+        semanticStatus,
+      });
       reset();
     } catch {
       toast.error("Couldn’t add the column. Try again.");
@@ -108,6 +117,13 @@ export function AddColumnInline({ organizationId }: AddColumnInlineProps) {
           value={name}
         />
       </div>
+      <StatusMeaningSelect
+        onChange={setSemanticStatus}
+        value={semanticStatus}
+      />
+      <p className="text-muted-foreground text-xs">
+        Renaming the column will keep this lifecycle meaning.
+      </p>
       <div className="flex justify-end gap-2">
         <Button onClick={reset} size="xs" type="button" variant="ghost">
           Cancel

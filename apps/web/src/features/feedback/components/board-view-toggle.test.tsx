@@ -2,15 +2,12 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { type BoardView, BoardViewToggle } from "./board-view-toggle";
 
-// Mock phosphor icons (component imports Flag, GridFour, List)
 vi.mock("@phosphor-icons/react", () => ({
   Flag: () => <svg data-testid="flag-icon" />,
   GridFour: () => <svg data-testid="layout-grid-icon" />,
   List: () => <svg data-testid="list-icon" />,
 }));
 
-// Mock motion/react to avoid animation issues in tests
-// TabsList uses LayoutGroup and motion.span internally
 vi.mock("motion/react", () => ({
   LayoutGroup: ({ children }: { children?: React.ReactNode }) => (
     <>{children}</>
@@ -46,21 +43,21 @@ describe("BoardViewToggle", () => {
     render(<BoardViewToggle onChange={onChange} view="roadmap" />);
 
     expect(screen.getByText("List")).toBeInTheDocument();
-    expect(screen.getByText("Roadmap")).toBeInTheDocument();
-    expect(screen.getByText("Timeline")).toBeInTheDocument();
+    expect(screen.getByText("Board")).toBeInTheDocument();
+    expect(screen.getByText("Milestones")).toBeInTheDocument();
   });
 
   it("should mark roadmap tab as selected when view is roadmap", () => {
     const onChange = vi.fn();
     render(<BoardViewToggle onChange={onChange} view="roadmap" />);
 
-    const roadmapButton = getButtonByText("Roadmap");
+    const roadmapButton = getButtonByText("Board");
     expect(roadmapButton).toHaveAttribute("aria-selected", "true");
 
     const feedButton = getButtonByText("List");
     expect(feedButton).toHaveAttribute("aria-selected", "false");
 
-    const milestonesButton = getButtonByText("Timeline");
+    const milestonesButton = getButtonByText("Milestones");
     expect(milestonesButton).toHaveAttribute("aria-selected", "false");
   });
 
@@ -71,7 +68,7 @@ describe("BoardViewToggle", () => {
     const feedButton = getButtonByText("List");
     expect(feedButton).toHaveAttribute("aria-selected", "true");
 
-    const roadmapButton = getButtonByText("Roadmap");
+    const roadmapButton = getButtonByText("Board");
     expect(roadmapButton).toHaveAttribute("aria-selected", "false");
   });
 
@@ -79,7 +76,7 @@ describe("BoardViewToggle", () => {
     const onChange = vi.fn();
     render(<BoardViewToggle onChange={onChange} view="feed" />);
 
-    const roadmapButton = getButtonByText("Roadmap");
+    const roadmapButton = getButtonByText("Board");
     fireEvent.click(roadmapButton);
 
     expect(onChange).toHaveBeenCalledTimes(1);
@@ -101,7 +98,7 @@ describe("BoardViewToggle", () => {
     const onChange = vi.fn();
     render(<BoardViewToggle onChange={onChange} view="roadmap" />);
 
-    const timelineButton = getButtonByText("Timeline");
+    const timelineButton = getButtonByText("Milestones");
     fireEvent.click(timelineButton);
 
     expect(onChange).toHaveBeenCalledTimes(1);
@@ -137,18 +134,15 @@ describe("BoardViewToggle", () => {
       <BoardViewToggle onChange={onChange} view="roadmap" />
     );
 
-    // Click a different tab to trigger onChange
     const feedButton = getButtonByText("List");
     fireEvent.click(feedButton);
 
     expect(onChange).toHaveBeenCalledTimes(1);
     expect(onChange).toHaveBeenCalledWith("feed");
 
-    // Rerender with updated view
     rerender(<BoardViewToggle onChange={onChange} view="feed" />);
 
-    // Click another different tab
-    const timelineButton = getButtonByText("Timeline");
+    const timelineButton = getButtonByText("Milestones");
     fireEvent.click(timelineButton);
 
     expect(onChange).toHaveBeenCalledTimes(2);
@@ -159,11 +153,9 @@ describe("BoardViewToggle", () => {
     const onChange = vi.fn();
     render(<BoardViewToggle onChange={onChange} view="roadmap" />);
 
-    const roadmapButton = getButtonByText("Roadmap");
+    const roadmapButton = getButtonByText("Board");
     fireEvent.click(roadmapButton);
 
-    // base-ui Tabs with controlled value does not fire onValueChange
-    // when clicking the already-selected tab
     expect(onChange).not.toHaveBeenCalled();
   });
 });

@@ -25,9 +25,10 @@ export interface Tag {
 
 interface TagFilterBarProps {
   isAdmin: boolean;
-  onTagSelect: (tagId: string | null) => void;
+  onClearTags: () => void;
+  onTagChange: (id: string, checked: boolean) => void;
   organizationId: Id<"organizations">;
-  selectedTagId: string | null;
+  selectedTagIds: string[];
   tags: Tag[];
 }
 
@@ -92,11 +93,13 @@ function TagButton({
 export function TagFilterBar({
   organizationId,
   tags,
-  selectedTagId,
-  onTagSelect,
+  selectedTagIds,
+  onTagChange,
+  onClearTags,
   isAdmin,
 }: TagFilterBarProps) {
-  const isAllSelected = selectedTagId === null;
+  const selectedTags = new Set(selectedTagIds);
+  const isAllSelected = selectedTagIds.length === 0;
 
   const [showCreatePopover, setShowCreatePopover] = useState(false);
   const [deletingTag, setDeletingTag] = useState<Tag | null>(null);
@@ -106,8 +109,8 @@ export function TagFilterBar({
   };
 
   const handleDeleteSuccess = () => {
-    if (deletingTag?._id === selectedTagId) {
-      onTagSelect(null);
+    if (deletingTag && selectedTags.has(deletingTag._id)) {
+      onTagChange(deletingTag._id, false);
     }
     setDeletingTag(null);
   };
@@ -122,18 +125,16 @@ export function TagFilterBar({
         <div className="flex w-max items-center gap-2">
           {isAdmin && <TriagePulse organizationId={organizationId} />}
 
-          <TagPill active={isAllSelected} onClick={() => onTagSelect(null)}>
+          <TagPill active={isAllSelected} onClick={onClearTags}>
             All
           </TagPill>
 
           {tags.map((tag) => (
             <TagButton
               isAdmin={isAdmin}
-              isSelected={selectedTagId === tag._id}
+              isSelected={selectedTags.has(tag._id)}
               key={tag._id}
-              onClick={() =>
-                onTagSelect(selectedTagId === tag._id ? null : tag._id)
-              }
+              onClick={() => onTagChange(tag._id, !selectedTags.has(tag._id))}
               onDelete={() => setDeletingTag(tag)}
               organizationId={organizationId}
               tag={tag}

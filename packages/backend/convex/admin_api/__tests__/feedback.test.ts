@@ -7,11 +7,9 @@ import { modules } from "../../test.helpers";
 
 import { createFeedback, createOrg } from "./test_helpers";
 
-const testSchema = schema as any;
-
 describe("admin_api_feedback - updateFeedback", () => {
   test("should update title and description", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
     const orgId = await createOrg(t);
     const feedbackId = await createFeedback(t, orgId);
 
@@ -28,7 +26,7 @@ describe("admin_api_feedback - updateFeedback", () => {
   });
 
   test("should reject wrong org", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
     const orgId = await createOrg(t);
     const otherOrgId = await t.run(async (ctx) =>
       ctx.db.insert("organizations", {
@@ -54,7 +52,7 @@ describe("admin_api_feedback - updateFeedback", () => {
 
 describe("admin_api_feedback - deleteFeedback / restoreFeedback", () => {
   test("should soft-delete with deletedAt timestamp", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
     const orgId = await createOrg(t);
     const feedbackId = await createFeedback(t, orgId);
 
@@ -68,7 +66,7 @@ describe("admin_api_feedback - deleteFeedback / restoreFeedback", () => {
   });
 
   test("restore should clear deletedAt", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
     const orgId = await createOrg(t);
     const feedbackId = await createFeedback(t, orgId);
 
@@ -87,7 +85,7 @@ describe("admin_api_feedback - deleteFeedback / restoreFeedback", () => {
   });
 
   test("restore should fail if not deleted", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
     const orgId = await createOrg(t);
     const feedbackId = await createFeedback(t, orgId);
 
@@ -102,7 +100,7 @@ describe("admin_api_feedback - deleteFeedback / restoreFeedback", () => {
 
 describe("admin_api_feedback - assignFeedback", () => {
   test("should assign a member", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
     const orgId = await createOrg(t);
     const feedbackId = await createFeedback(t, orgId);
 
@@ -126,7 +124,7 @@ describe("admin_api_feedback - assignFeedback", () => {
   });
 
   test("should unassign when assigneeId is undefined", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
     const orgId = await createOrg(t);
     const feedbackId = await createFeedback(t, orgId);
 
@@ -140,7 +138,7 @@ describe("admin_api_feedback - assignFeedback", () => {
   });
 
   test("should reject non-member assignee", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
     const orgId = await createOrg(t);
     const feedbackId = await createFeedback(t, orgId);
 
@@ -156,7 +154,7 @@ describe("admin_api_feedback - assignFeedback", () => {
 
 describe("admin_api_feedback - setFeedbackStatus", () => {
   test("should set built-in status", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
     const orgId = await createOrg(t);
     const feedbackId = await createFeedback(t, orgId);
 
@@ -171,7 +169,7 @@ describe("admin_api_feedback - setFeedbackStatus", () => {
   });
 
   test("should set completedAt when status is completed", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
     const orgId = await createOrg(t);
     const feedbackId = await createFeedback(t, orgId);
 
@@ -187,7 +185,7 @@ describe("admin_api_feedback - setFeedbackStatus", () => {
   });
 
   test("should set organization status by ID", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
     const orgId = await createOrg(t);
     const feedbackId = await createFeedback(t, orgId);
 
@@ -198,6 +196,7 @@ describe("admin_api_feedback - setFeedbackStatus", () => {
         name: "In Review",
         order: 0,
         organizationId: orgId,
+        semanticStatus: "under_review",
         updatedAt: Date.now(),
       })
     );
@@ -213,7 +212,7 @@ describe("admin_api_feedback - setFeedbackStatus", () => {
   });
 
   test("should reject status from wrong org", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
     const orgId = await createOrg(t);
     const otherOrgId = await t.run(async (ctx) =>
       ctx.db.insert("organizations", {
@@ -250,7 +249,7 @@ describe("admin_api_feedback - setFeedbackStatus", () => {
 
 describe("admin_api_feedback - updateFeedbackTags", () => {
   test("should add and remove tags", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
     const orgId = await createOrg(t);
     const feedbackId = await createFeedback(t, orgId);
 
@@ -275,7 +274,6 @@ describe("admin_api_feedback - updateFeedbackTags", () => {
       })
     );
 
-    // Add both tags
     await t.mutation(internal.admin_api.feedback.updateFeedbackTags, {
       addTagIds: [tag1Id, tag2Id],
       feedbackId,
@@ -285,14 +283,11 @@ describe("admin_api_feedback - updateFeedbackTags", () => {
     let tags = await t.run(async (ctx) =>
       ctx.db
         .query("feedbackTags")
-        .withIndex("by_feedback" as never, (q: any) =>
-          q.eq("feedbackId", feedbackId)
-        )
+        .withIndex("by_feedback", (q) => q.eq("feedbackId", feedbackId))
         .collect()
     );
     expect(tags).toHaveLength(2);
 
-    // Remove one tag
     await t.mutation(internal.admin_api.feedback.updateFeedbackTags, {
       feedbackId,
       organizationId: orgId,
@@ -302,9 +297,7 @@ describe("admin_api_feedback - updateFeedbackTags", () => {
     tags = await t.run(async (ctx) =>
       ctx.db
         .query("feedbackTags")
-        .withIndex("by_feedback" as never, (q: any) =>
-          q.eq("feedbackId", feedbackId)
-        )
+        .withIndex("by_feedback", (q) => q.eq("feedbackId", feedbackId))
         .collect()
     );
     expect(tags).toHaveLength(1);
@@ -312,7 +305,7 @@ describe("admin_api_feedback - updateFeedbackTags", () => {
   });
 
   test("should not duplicate tags on re-add", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
     const orgId = await createOrg(t);
     const feedbackId = await createFeedback(t, orgId);
 
@@ -346,7 +339,7 @@ describe("admin_api_feedback - updateFeedbackTags", () => {
   });
 
   test("should reject tag from wrong org", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
     const orgId = await createOrg(t);
     const otherOrgId = await t.run(async (ctx) =>
       ctx.db.insert("organizations", {
@@ -377,13 +370,13 @@ describe("admin_api_feedback - updateFeedbackTags", () => {
         feedbackId,
         organizationId: orgId,
       })
-    ).rejects.toThrow("not found");
+    ).rejects.toThrow("this organization");
   });
 });
 
 describe("admin_api_feedback - updateFeedbackAnalysis", () => {
   test("should update priority, complexity, and timeEstimate", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
     const orgId = await createOrg(t);
     const feedbackId = await createFeedback(t, orgId);
 
@@ -404,7 +397,7 @@ describe("admin_api_feedback - updateFeedbackAnalysis", () => {
 
 describe("admin_api_feedback - comment mutations", () => {
   test("updateComment should update body", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
     const orgId = await createOrg(t);
     const feedbackId = await createFeedback(t, orgId);
 
@@ -429,7 +422,7 @@ describe("admin_api_feedback - comment mutations", () => {
   });
 
   test("updateComment should reject comment from other org", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
     const orgId = await createOrg(t);
     const otherOrgId = await t.run(async (ctx) =>
       ctx.db.insert("organizations", {
@@ -463,11 +456,10 @@ describe("admin_api_feedback - comment mutations", () => {
   });
 
   test("deleteComment should remove comment, replies, and update count", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
     const orgId = await createOrg(t);
     const feedbackId = await createFeedback(t, orgId);
 
-    // Set commentCount to 3
     await t.run(async (ctx) => ctx.db.patch(feedbackId, { commentCount: 3 }));
 
     const commentId = await t.run(async (ctx) =>
@@ -480,7 +472,6 @@ describe("admin_api_feedback - comment mutations", () => {
       })
     );
 
-    // Create a reply
     await t.run(async (ctx) =>
       ctx.db.insert("comments", {
         body: "Reply",
@@ -503,12 +494,12 @@ describe("admin_api_feedback - comment mutations", () => {
     expect(remaining).toHaveLength(0);
 
     const fb = await t.run(async (ctx) => ctx.db.get(feedbackId));
-    // 3 - 1 (parent) - 1 (reply) = 1
+
     expect(fb?.commentCount).toBe(1);
   });
 
   test("markCommentOfficial should toggle isOfficial", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = convexTest(schema, modules);
     const orgId = await createOrg(t);
     const feedbackId = await createFeedback(t, orgId);
 

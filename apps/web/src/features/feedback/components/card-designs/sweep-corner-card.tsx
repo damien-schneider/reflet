@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@ctrl-ui/react/ui/button";
+
 import { PushPin, Sparkle } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import {
@@ -13,11 +15,12 @@ import {
   SweepCornerTitle,
 } from "@reflet/ui/feedback-sweep-corner";
 import { formatDistanceToNow } from "date-fns";
+import { FeedbackPropertiesPopover } from "@/features/feedback/components/properties/feedback-properties-popover";
+import { FeedbackPropertySummary } from "@/features/feedback/components/properties/feedback-property-summary";
 import { resolveTagColor } from "@/lib/tag-colors";
 import { cn } from "@/lib/utils";
 
 import type { FeedbackItem } from "../feed-feedback-view";
-import { InternalBadge } from "../internal-badge";
 
 interface SweepCornerFeedCardProps {
   className?: string;
@@ -47,10 +50,10 @@ export function SweepCornerFeedCard({
       >
         <SweepCornerContent>
           <SweepCornerTitle>
-            <button
-              className="wrap-anywhere w-full cursor-pointer text-pretty text-left outline-none after:absolute after:inset-0 after:rounded-xl focus-visible:after:ring-2 focus-visible:after:ring-ring"
+            <Button
+              className="wrap-anywhere h-auto w-full cursor-pointer justify-start whitespace-normal text-pretty px-0 py-0 text-left font-[inherit] text-inherit outline-none after:absolute after:inset-0 after:rounded-xl hover:bg-transparent focus-visible:after:ring-2 focus-visible:after:ring-ring"
               onClick={() => onClick?.(feedback._id)}
-              type="button"
+              variant="ghost"
             >
               {feedback.isPinned && (
                 <>
@@ -62,16 +65,12 @@ export function SweepCornerFeedCard({
                   <span className="sr-only">Pinned: </span>
                 </>
               )}
-              {feedback.isInternal && <InternalBadge className="mr-1" />}
               {feedback.title}
-            </button>
+            </Button>
           </SweepCornerTitle>
-          {feedback.organizationStatus && (
-            <SweepCornerTag
-              color={resolveTagColor(feedback.organizationStatus.color)}
-            >
-              {feedback.organizationStatus.name}
-            </SweepCornerTag>
+          <FeedbackPropertySummary feedback={feedback} />
+          {feedback.isMember && (
+            <FeedbackPropertiesPopover feedbackId={feedback._id} />
           )}
           {tags.length > 0 && (
             <SweepCornerTags>

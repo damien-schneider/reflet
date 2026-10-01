@@ -34,57 +34,9 @@ export interface FeedbackDetailDrawerProps {
   onPrevious?: () => void;
 }
 
-export type PriorityLevel = "critical" | "high" | "medium" | "low" | "none";
-export type ComplexityLevel =
-  | "trivial"
-  | "simple"
-  | "moderate"
-  | "complex"
-  | "very_complex";
-
 export interface FeedbackDetailContentProps {
   feedback:
-    | {
-        _id: Id<"feedback">;
-        title: string;
-        description: string | null;
-        tags?: Array<{
-          _id: Id<"tags">;
-          name: string;
-          color: string;
-          appliedByAi?: boolean;
-        } | null>;
-        hasVoted?: boolean;
-        isInternal?: boolean;
-        userVoteType?: "upvote" | "downvote" | null;
-        voteCount?: number;
-        commentCount?: number;
-        organizationStatusId?: Id<"organizationStatuses"> | null;
-        createdAt: number;
-        author?: {
-          name?: string | null;
-          email?: string;
-          image?: string | null;
-        } | null;
-        assignee?: {
-          id: string;
-          name?: string | null;
-          email?: string;
-          image?: string | null;
-        } | null;
-        organizationId: Id<"organizations">;
-        aiPriority?: PriorityLevel;
-        aiPriorityReasoning?: string;
-        aiComplexity?: ComplexityLevel;
-        aiComplexityReasoning?: string;
-        aiNeedsReview?: number;
-        aiTimeEstimate?: string;
-        priority?: PriorityLevel;
-        complexity?: ComplexityLevel;
-        timeEstimate?: string;
-        deadline?: number;
-        attachments?: string[];
-      }
+    | import("@/features/feedback/components/properties/property-types").FeedbackDetail
     | null
     | undefined;
   feedbackId: Id<"feedback"> | null;

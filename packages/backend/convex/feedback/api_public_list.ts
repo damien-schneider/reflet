@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { internalQuery, type QueryCtx } from "../_generated/server";
 import { toPagePathPattern } from "./page_path";
+import { isFeedbackPublishable } from "./property_values";
 
 const feedbackStatus = v.union(
   v.literal("open"),
@@ -181,7 +182,7 @@ export const listFeedbackByOrganization = internalQuery({
 
     let feedbackItems = all.filter(
       (f) =>
-        (f.isApproved || (includePrivateContext && f.isInternal)) &&
+        (isFeedbackPublishable(f) || (includePrivateContext && f.isInternal)) &&
         !f.deletedAt &&
         !f.isMerged
     );
@@ -343,7 +344,8 @@ export const getFeedbackByOrganization = internalQuery({
       feedback &&
       !feedback.deletedAt &&
       feedback.organizationId === args.organizationId &&
-      (feedback.isApproved || (includePrivateContext && feedback.isInternal));
+      (isFeedbackPublishable(feedback) ||
+        (includePrivateContext && feedback.isInternal));
 
     if (!isVisible) {
       return null;

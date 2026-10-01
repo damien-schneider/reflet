@@ -4,17 +4,8 @@ import { mutation, query } from "../_generated/server";
 import { isOrgMemberViewer, requireOrgMember } from "../shared/access";
 import { getAuthUser } from "../shared/utils";
 
-// Default statuses to create for new organizations (used as roadmap columns)
-const DEFAULT_STATUSES = [
-  { color: "#6b7280", icon: "clock", name: "Backlog", order: 0 },
-  { color: "#3b82f6", icon: "calendar", name: "Planned", order: 1 },
-  { color: "#8b5cf6", icon: "spinner", name: "In Progress", order: 2 },
-  { color: "#22c55e", icon: "check-circle", name: "Done", order: 3 },
-] as const;
+import { DEFAULT_STATUSES } from "./status_definitions";
 
-/**
- * List all statuses for an organization (ordered)
- */
 export const list = query({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
@@ -64,7 +55,6 @@ export const createDefaults = mutation({
       throw new Error("Organization not found");
     }
 
-    // Check membership
     const membership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>
@@ -76,7 +66,6 @@ export const createDefaults = mutation({
       throw new Error("You are not a member of this organization");
     }
 
-    // Check if statuses already exist
     const existingStatuses = await ctx.db
       .query("organizationStatuses")
       .withIndex("by_organization", (q) =>
@@ -93,10 +82,8 @@ export const createDefaults = mutation({
 
     for (const status of DEFAULT_STATUSES) {
       const id = await ctx.db.insert("organizationStatuses", {
-        color: status.color,
+        ...status,
         createdAt: now,
-        icon: status.icon,
-        name: status.name,
         order: status.order,
         organizationId: args.organizationId,
         updatedAt: now,
@@ -124,11 +111,11 @@ export const ensureDefaults = mutation({
       return existingStatuses.sort((a, b) => a.order - b.order);
     }
 
-    // Create default statuses
     const now = Date.now();
     const createdStatuses: Array<{
       _id: Id<"organizationStatuses">;
       organizationId: Id<"organizations">;
+      semanticStatus?: import("../shared/validators").FeedbackStatusValue;
       name: string;
       color: string;
       icon: string;
@@ -139,20 +126,16 @@ export const ensureDefaults = mutation({
 
     for (const status of DEFAULT_STATUSES) {
       const id = await ctx.db.insert("organizationStatuses", {
-        color: status.color,
+        ...status,
         createdAt: now,
-        icon: status.icon,
-        name: status.name,
         order: status.order,
         organizationId: args.organizationId,
         updatedAt: now,
       });
       createdStatuses.push({
         _id: id,
-        color: status.color,
+        ...status,
         createdAt: now,
-        icon: status.icon,
-        name: status.name,
         order: status.order,
         organizationId: args.organizationId,
         updatedAt: now,

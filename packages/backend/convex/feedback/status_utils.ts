@@ -1,42 +1,7 @@
-export type FeedbackStatusEnum =
-  | "open"
-  | "under_review"
-  | "planned"
-  | "in_progress"
-  | "completed"
-  | "closed";
+import { statusGroup } from "../organizations/status_definitions";
+import type { FeedbackStatusValue } from "../shared/validators";
 
-const COMPLETED_STATUS_ENUMS = new Set<FeedbackStatusEnum>([
-  "completed",
-  "closed",
-]);
-
-const STATUS_NAME_MAP: Record<string, FeedbackStatusEnum> = {
-  archived: "closed",
-  closed: "closed",
-  completed: "completed",
-  done: "completed",
-  inprogress: "in_progress",
-  open: "open",
-  planned: "planned",
-  resolved: "closed",
-  underreview: "under_review",
+export const isFinishedStatus = (status: FeedbackStatusValue): boolean => {
+  const group = statusGroup(status);
+  return group === "completed" || group === "closed";
 };
-
-/**
- * Map custom status name to the corresponding enum value.
- * This ensures the status field stays in sync with organizationStatusId.
- */
-export const mapStatusNameToEnum = (statusName: string): FeedbackStatusEnum => {
-  const normalizedName = statusName.toLowerCase().replace(/[\s_-]/g, "");
-  return STATUS_NAME_MAP[normalizedName] ?? "open";
-};
-
-export const isFinishedStatus = (status: FeedbackStatusEnum): boolean =>
-  COMPLETED_STATUS_ENUMS.has(status);
-
-/**
- * Check whether a status name maps to a "completed" or "closed" enum value.
- */
-export const isCompletedStatusName = (statusName: string): boolean =>
-  COMPLETED_STATUS_ENUMS.has(mapStatusNameToEnum(statusName));

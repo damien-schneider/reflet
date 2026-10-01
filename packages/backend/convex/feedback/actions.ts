@@ -13,7 +13,12 @@ import { rateLimiter } from "../shared/rate_limits";
 import { getAuthUser } from "../shared/utils";
 import { validateInputLength } from "../shared/validators";
 import { scheduleAfterCreate } from "./after_create";
-import { projectFeedbackFor } from "./public_projection";
+import { archiveFeedback } from "./archive_feedback";
+import {
+  isFeedbackPubliclyVisible,
+  projectFeedbackFor,
+} from "./public_projection";
+import { statusFieldsFor } from "./status_target";
 
 const MAX_PUBLIC_ATTACHMENTS = 10;
 
@@ -39,7 +44,6 @@ export const listPublic = query({
     const user = await authComponent.safeGetAuthUser(ctx);
     const isMember = await isOrgMemberViewer(ctx, args.organizationId);
 
-    // Get approved feedback only
     let feedbackItems = await ctx.db
       .query("feedback")
       .withIndex("by_organization", (q) =>
@@ -48,10 +52,9 @@ export const listPublic = query({
       .collect();
 
     feedbackItems = feedbackItems.filter(
-      (f) => f.isApproved && !f.deletedAt && !f.isMerged
+      (f) => isFeedbackPubliclyVisible(org, f) && !f.isMerged
     );
 
-    // Sort
     const sortBy = args.sortBy || "votes";
     switch (sortBy) {
       case "votes":
@@ -70,7 +73,6 @@ export const listPublic = query({
         break;
     }
 
-    // Pinned items first
     feedbackItems.sort((a, b) => {
       if (a.isPinned && !b.isPinned) {
         return -1;
@@ -81,15 +83,12 @@ export const listPublic = query({
       return 0;
     });
 
-    // Limit
     if (args.limit) {
       feedbackItems = feedbackItems.slice(0, args.limit);
     }
 
-    // Add tags and vote status
     const feedbackWithDetails = await Promise.all(
       feedbackItems.map(async (f) => {
-        // Get tags
         const feedbackTags = await ctx.db
           .query("feedbackTags")
           .withIndex("by_feedback", (q) => q.eq("feedbackId", f._id))
@@ -98,7 +97,6 @@ export const listPublic = query({
           feedbackTags.map(async (ft) => ctx.db.get(ft.tagId))
         );
 
-        // Check if user voted
         let hasVoted = false;
         if (user) {
           const vote = await ctx.db
@@ -154,7 +152,6 @@ export const createPublicOrg = mutation({
       throws: true,
     });
 
-    // Check feedback limit (excluding soft-deleted)
     const existingFeedback = await ctx.db
       .query("feedback")
       .withIndex("by_organization", (q) =>
@@ -173,16 +170,7 @@ export const createPublicOrg = mutation({
     const user = await authComponent.safeGetAuthUser(ctx);
     const now = Date.now();
 
-    // Get the default org status (first status by order, usually "Open")
-    const orgStatuses = await ctx.db
-      .query("organizationStatuses")
-      .withIndex("by_org_order", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .collect();
-    const defaultOrgStatus = orgStatuses.sort((a, b) => a.order - b.order)[0];
-
-    const isApproved = !org.feedbackSettings?.requireApproval;
+    const isApproved = false;
     const feedbackId = await ctx.db.insert("feedback", {
       attachments: args.attachments,
       authorId: user?._id || `anonymous:${args.email || "unknown"}`,
@@ -192,8 +180,10 @@ export const createPublicOrg = mutation({
       isApproved,
       isPinned: false,
       organizationId: args.organizationId,
-      organizationStatusId: defaultOrgStatus?._id,
-      status: org.feedbackSettings?.defaultStatus || "open",
+      ...(await statusFieldsFor(ctx, {
+        organizationId: args.organizationId,
+        status: org.feedbackSettings?.defaultStatus ?? "open",
+      })),
       title: args.title,
       updatedAt: now,
       voteCount: 0,
@@ -218,7 +208,6 @@ export const togglePin = mutation({
       throw new Error("Feedback not found");
     }
 
-    // Check admin permission
     const membership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>
@@ -253,7 +242,6 @@ export const remove = mutation({
       throw new Error("Feedback is already deleted");
     }
 
-    // Check permissions
     const membership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>
@@ -269,11 +257,7 @@ export const remove = mutation({
       throw new Error("You don't have permission to delete this feedback");
     }
 
-    const now = Date.now();
-    await ctx.db.patch(args.id, {
-      deletedAt: now,
-      updatedAt: now,
-    });
+    await archiveFeedback(ctx, args.id);
 
     return true;
   },
@@ -293,7 +277,6 @@ export const restore = mutation({
       throw new Error("Feedback is not deleted");
     }
 
-    // Check admin permission
     const membership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>

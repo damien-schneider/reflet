@@ -14,12 +14,13 @@ import { TagFilterBar } from "../tag-filter-bar";
 interface FeedbackToolbarProps {
   inlineInputRef?: RefObject<InlineFeedbackInputHandle | null>;
   isAdmin: boolean;
+  onClearTags: () => void;
   onSearchChange: (value: string) => void;
   onSubmitClick: () => void;
-  onTagSelect: (tagId: string | null) => void;
+  onTagChange: (id: string, checked: boolean) => void;
   organizationId: Id<"organizations">;
   searchQuery: string;
-  selectedTagId: string | null;
+  selectedTagIds: string[];
   showSearch: boolean;
   tags: Tag[];
 }
@@ -31,8 +32,9 @@ export const FeedbackToolbar = ({
   tags,
   isAdmin,
   organizationId,
-  selectedTagId,
-  onTagSelect,
+  selectedTagIds,
+  onTagChange,
+  onClearTags,
   inlineInputRef,
   showSearch,
 }: FeedbackToolbarProps) => (
@@ -77,9 +79,10 @@ export const FeedbackToolbar = ({
     {(tags.length > 0 || isAdmin) && (
       <TagFilterBar
         isAdmin={isAdmin}
-        onTagSelect={onTagSelect}
+        onClearTags={onClearTags}
+        onTagChange={onTagChange}
         organizationId={organizationId}
-        selectedTagId={selectedTagId}
+        selectedTagIds={selectedTagIds}
         tags={tags}
       />
     )}

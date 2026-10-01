@@ -1,35 +1,8 @@
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
-import { internalMutation, type QueryCtx, query } from "../_generated/server";
+import { type QueryCtx, query } from "../_generated/server";
 import { requireOrgMember } from "../shared/access";
-import { afterApproval } from "./after_create";
-
-export const holdForReview = internalMutation({
-  args: { feedbackId: v.id("feedback") },
-  handler: async (ctx, args) => {
-    const feedback = await ctx.db.get(args.feedbackId);
-    if (!feedback?.isApproved) {
-      return;
-    }
-
-    await ctx.db.patch(args.feedbackId, {
-      isApproved: false,
-      updatedAt: Date.now(),
-    });
-  },
-});
-
-export const releaseAfterTriage = internalMutation({
-  args: { feedbackId: v.id("feedback") },
-  handler: async (ctx, args) => {
-    const feedback = await ctx.db.get(args.feedbackId);
-    if (!feedback?.isApproved) {
-      return;
-    }
-
-    await afterApproval(ctx, feedback);
-  },
-});
+import { publicationState } from "./property_values";
 
 export const collectPendingReview = async (
   ctx: QueryCtx,
@@ -45,7 +18,8 @@ export const collectPendingReview = async (
   return feedbackItems
     .filter(
       (feedback) =>
-        !(feedback.deletedAt || feedback.isMerged || feedback.isInternal)
+        !(feedback.deletedAt || feedback.isMerged) &&
+        publicationState(feedback) === "pending"
     )
     .sort((a, b) => b.createdAt - a.createdAt)
     .map((feedback) => ({
@@ -55,6 +29,7 @@ export const collectPendingReview = async (
       aiUsefulness: feedback.aiUsefulness,
       createdAt: feedback.createdAt,
       description: feedback.description,
+      needsClarification: feedback.needsClarification,
       source: feedback.source,
       title: feedback.title,
     }));

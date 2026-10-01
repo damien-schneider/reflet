@@ -1,26 +1,13 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
-import { type ActionCtx, internalAction } from "../_generated/server";
+import { internalAction } from "../_generated/server";
 import {
   evaluateFeedbackTriage,
   type FeedbackTriage,
   isTriageConfigured,
 } from "./triage_evaluation";
 import { triageScopeValidator } from "./triage_scope";
-
-const moderate = async (
-  ctx: ActionCtx,
-  feedbackId: Id<"feedback">,
-  withhold: boolean
-) => {
-  await ctx.runMutation(
-    withhold
-      ? internal.feedback.review.holdForReview
-      : internal.feedback.review.releaseAfterTriage,
-    { feedbackId }
-  );
-};
 
 export const processAutoTagging = internalAction({
   args: { applyModeration: v.boolean(), feedbackId: v.id("feedback") },
@@ -37,16 +24,23 @@ export const processAutoTagging = internalAction({
       return { reason: "Feedback not found", success: false, tagCount: 0 };
     }
 
-    const releaseUntriaged = async () => {
-      if (args.applyModeration) {
-        await moderate(ctx, args.feedbackId, false);
-      }
-    };
-
     const { feedback, tags } = data;
+    const runId = await ctx.runMutation(internal.feedback.triage_runs.start, {
+      applyModeration: args.applyModeration,
+      feedbackId: args.feedbackId,
+      input: { description: feedback.description, title: feedback.title },
+      tags: tags.map((tag) => ({
+        _id: tag._id,
+        description: tag.description,
+        name: tag.name,
+      })),
+    });
 
     if (!isTriageConfigured()) {
-      await releaseUntriaged();
+      await ctx.runMutation(internal.feedback.triage_runs.fail, {
+        error: "OPENROUTER_API_KEY is not set",
+        runId,
+      });
       return {
         reason: "OPENROUTER_API_KEY is not set; triage is required for tagging",
         success: false,
@@ -62,7 +56,10 @@ export const processAutoTagging = internalAction({
         title: feedback.title,
       });
     } catch (err) {
-      await releaseUntriaged();
+      await ctx.runMutation(internal.feedback.triage_runs.fail, {
+        error: err instanceof Error ? err.message : String(err),
+        runId,
+      });
       return {
         reason: `Triage evaluation failed: ${err instanceof Error ? err.message : String(err)}`,
         success: false,
@@ -70,24 +67,30 @@ export const processAutoTagging = internalAction({
       };
     }
 
-    if (args.applyModeration) {
-      await moderate(ctx, args.feedbackId, triage.withhold);
-    }
-
-    await ctx.runMutation(internal.feedback.auto_tagging_jobs.applyAutoTags, {
-      feedbackId: args.feedbackId,
-      tagIds: triage.tagIds,
-    });
-
-    await ctx.runMutation(internal.feedback.auto_tagging_jobs.saveTriage, {
-      feedbackId: args.feedbackId,
-      junk: triage.junk,
-      needsReview: triage.needsReview,
-      usefulness: triage.usefulness,
-    });
-
-    return { success: true, tagCount: triage.tagIds.length };
+    const applied = await ctx.runMutation(
+      internal.feedback.triage_runs.complete,
+      {
+        answers: triage.answers,
+        junk: triage.junk,
+        needsReview: triage.needsReview,
+        runId,
+        tagIds: triage.tagIds,
+        usefulness: triage.usefulness,
+      }
+    );
+    return applied
+      ? { success: true, tagCount: triage.tagIds.length }
+      : {
+          reason: "Input changed or a newer analysis superseded this run",
+          success: false,
+          tagCount: 0,
+        };
   },
+  returns: v.object({
+    reason: v.optional(v.string()),
+    success: v.boolean(),
+    tagCount: v.number(),
+  }),
 });
 
 const chunk = <T>(items: T[], size: number): T[][] =>
@@ -204,4 +207,5 @@ export const processBulkAutoTagging = internalAction({
       processed: successfulItems + failedItems,
     };
   },
+  returns: v.object({ failed: v.number(), processed: v.number() }),
 });

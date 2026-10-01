@@ -2,7 +2,6 @@ import { defineTable } from "convex/server";
 import { v } from "convex/values";
 import { feedbackStatus } from "../shared/validators";
 
-/** How a screenshot got here. `element` is the close-up of a picked element. */
 export const captureSourceValidator = v.union(
   v.literal("widget"),
   v.literal("element"),
@@ -10,7 +9,6 @@ export const captureSourceValidator = v.union(
   v.literal("paste")
 );
 
-/** One drawing on a screenshot. `points` is only used by the pen tool. */
 export const screenshotAnnotationValidator = v.object({
   color: v.optional(v.string()),
   endX: v.optional(v.number()),
@@ -32,7 +30,6 @@ export const screenshotAnnotationValidator = v.object({
   y: v.number(),
 });
 
-/** One element a reporter pointed at, with the note they attached to it. */
 export const elementSelectionValidator = v.object({
   comment: v.optional(v.string()),
   componentStack: v.array(v.string()),
@@ -50,10 +47,6 @@ export const elementSelectionValidator = v.object({
   text: v.optional(v.string()),
 });
 
-/**
- * Where and how a report was written, as captured by the SDK widget.
- * Every field is optional: older clients and the dashboard send nothing.
- */
 export const feedbackContextValidator = v.object({
   browser: v.optional(v.string()),
   consoleEvents: v.optional(
@@ -193,6 +186,7 @@ export const feedbackTables = {
     ),
     aiPriorityGeneratedAt: v.optional(v.number()),
     aiPriorityReasoning: v.optional(v.string()),
+    aiTagExclusions: v.optional(v.array(v.id("tags"))),
     aiTimeEstimate: v.optional(v.string()),
     aiTimeEstimateGeneratedAt: v.optional(v.number()),
     aiUsefulness: v.optional(v.number()),
@@ -206,6 +200,7 @@ export const feedbackTables = {
     completedAt: v.optional(v.number()),
     complexity: v.optional(
       v.union(
+        v.null(),
         v.literal("trivial"),
         v.literal("simple"),
         v.literal("moderate"),
@@ -227,10 +222,12 @@ export const feedbackTables = {
     isMerged: v.optional(v.boolean()),
     isPinned: v.boolean(),
     mergedIntoId: v.optional(v.id("feedback")),
+    needsClarification: v.optional(v.boolean()),
     organizationId: v.id("organizations"),
     organizationStatusId: v.optional(v.id("organizationStatuses")),
     priority: v.optional(
       v.union(
+        v.null(),
         v.literal("critical"),
         v.literal("high"),
         v.literal("medium"),
@@ -238,13 +235,16 @@ export const feedbackTables = {
         v.literal("none")
       )
     ),
+    publicationRejectedAt: v.optional(v.number()),
+    publicationReviewedAt: v.optional(v.number()),
+    publicationReviewedBy: v.optional(v.string()),
     roadmapOrder: v.optional(v.number()),
     source: v.optional(
       v.union(v.literal("web"), v.literal("api"), v.literal("widget"))
     ),
     status: feedbackStatus,
     syncedFromGithub: v.optional(v.boolean()),
-    timeEstimate: v.optional(v.string()),
+    timeEstimate: v.optional(v.union(v.string(), v.null())),
     title: v.string(),
     updatedAt: v.number(),
     voteCount: v.number(),

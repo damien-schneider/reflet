@@ -1,96 +1,41 @@
 "use client";
 
-import { Button } from "@ctrl-ui/react/ui/button";
-import { Globe } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { useCallback, useState } from "react";
+import { useState } from "react";
+import type { FeedbackDetail } from "@/features/feedback/components/properties/property-types";
+import { PublicationProperty } from "@/features/feedback/components/properties/publication-property";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
-import { useMakeFeedbackPublic } from "../../hooks/use-make-feedback-public";
-import { InternalBadge } from "../internal-badge";
 import { AiAnalysisDisplay } from "./ai-analysis-display";
 import { AssigneeDisplay } from "./assignee-display";
 import { CopyForAgents } from "./copy-for-agents";
 import { DeadlineDisplay } from "./deadline-display";
-import type { FeedbackTag } from "./feedback-metadata-types";
 import { StatusDisplay } from "./status-display";
 import { SubscribeButton } from "./subscribe-button";
 import { TagDisplay } from "./tag-display";
 import { VoteButtons } from "./vote-buttons";
 
-interface FeedbackMetadataBarProps {
-  aiComplexity?:
-    | "trivial"
-    | "simple"
-    | "moderate"
-    | "complex"
-    | "very_complex"
-    | null;
-  aiComplexityReasoning?: string | null;
-  aiNeedsReview?: number | null;
-  aiPriority?: "critical" | "high" | "medium" | "low" | "none" | null;
-  aiPriorityReasoning?: string | null;
-  aiTimeEstimate?: string | null;
-  assignee?: {
-    id: string;
-    name?: string | null;
-    email?: string;
-    image?: string | null;
-  } | null;
-  attachments?: string[];
-  author?: {
-    name?: string | null;
-    email?: string;
-    image?: string | null;
-  } | null;
-  complexity?:
-    | "trivial"
-    | "simple"
-    | "moderate"
-    | "complex"
-    | "very_complex"
-    | null;
-  createdAt: number;
-  deadline?: number | null;
-  description: string | null;
-  feedbackId: Id<"feedback">;
-  isAdmin: boolean;
-  isInternal?: boolean;
-  organizationId: Id<"organizations">;
-  organizationStatusId?: Id<"organizationStatuses"> | null;
-  priority?: "critical" | "high" | "medium" | "low" | "none" | null;
-  tags?: Array<FeedbackTag | null>;
-  timeEstimate?: string | null;
-  title: string;
-  userVoteType: "upvote" | "downvote" | null;
-  voteCount: number;
-}
-
 export function FeedbackMetadataBar({
-  feedbackId,
-  organizationId,
-  voteCount,
-  userVoteType,
-  organizationStatusId,
-  assignee,
+  feedback,
   isAdmin,
-  isInternal = false,
-  tags: feedbackTags,
-  title,
-  description,
-  attachments,
-  aiPriority,
-  aiPriorityReasoning,
-  aiComplexity,
-  aiComplexityReasoning,
-  aiNeedsReview,
-  aiTimeEstimate,
-  priority,
-  complexity,
-  timeEstimate,
-  deadline,
-}: FeedbackMetadataBarProps) {
+}: {
+  feedback: FeedbackDetail;
+  isAdmin: boolean;
+}) {
+  const {
+    _id: feedbackId,
+    organizationId,
+    organizationStatusId,
+    assignee,
+    tags: feedbackTags,
+    title,
+    description,
+    attachments,
+    deadline,
+    voteCount,
+    userVoteType,
+  } = feedback;
   const { guard: authGuard, isAuthenticated } = useAuthGuard({
     message: "Sign in to vote on this feedback",
   });
@@ -123,83 +68,72 @@ export function FeedbackMetadataBar({
   const removeTagMutation = useMutation(
     api.feedback.tag_mutations.removeFromFeedback
   );
-  const { isMakingPublic, makePublic } = useMakeFeedbackPublic(feedbackId);
 
   const currentStatus = organizationStatuses?.find(
     (s) => s._id === organizationStatusId
   );
 
   const validTags = (feedbackTags ?? []).filter(
-    (t): t is FeedbackTag => t !== null
+    (t): t is NonNullable<typeof t> => t !== null
   );
   const feedbackTagIds = new Set(validTags.map((t) => t._id));
 
-  const handleVote = useCallback(
-    async (voteType: "upvote" | "downvote") => {
-      if (!isAuthenticated) {
-        authGuard(() => undefined);
-        return;
-      }
-      await toggleVote({ feedbackId, voteType });
-    },
-    [feedbackId, toggleVote, isAuthenticated, authGuard]
-  );
+  const handleVote = async (voteType: "upvote" | "downvote") => {
+    if (!isAuthenticated) {
+      authGuard(() => undefined);
+      return;
+    }
+    await toggleVote({ feedbackId, voteType });
+  };
 
-  const handleStatusChange = useCallback(
-    async (statusId: Id<"organizationStatuses"> | null) => {
-      if (statusId) {
-        await updateStatus({
-          feedbackId,
-          organizationStatusId: statusId,
-        });
-      }
-    },
-    [feedbackId, updateStatus]
-  );
-
-  const handleAssigneeChange = useCallback(
-    async (assigneeId: string) => {
-      await assignFeedback({
-        assigneeId: assigneeId === "unassigned" ? undefined : assigneeId,
+  const handleStatusChange = async (
+    statusId: Id<"organizationStatuses"> | null
+  ) => {
+    if (statusId) {
+      await updateStatus({
         feedbackId,
+        organizationStatusId: statusId,
       });
-    },
-    [feedbackId, assignFeedback]
-  );
+    }
+  };
 
-  const handleToggleTag = useCallback(
-    async (tagId: Id<"tags">, isCurrentlyApplied: boolean) => {
-      if (isCurrentlyApplied) {
-        await removeTagMutation({ feedbackId, tagId });
-      } else {
-        await addTagMutation({ feedbackId, tagId });
-      }
-    },
-    [feedbackId, addTagMutation, removeTagMutation]
-  );
+  const handleAssigneeChange = async (assigneeId: string) => {
+    await assignFeedback({
+      assigneeId: assigneeId === "unassigned" ? undefined : assigneeId,
+      feedbackId,
+    });
+  };
+
+  const handleToggleTag = async (
+    tagId: Id<"tags">,
+    isCurrentlyApplied: boolean
+  ) => {
+    if (isCurrentlyApplied) {
+      await removeTagMutation({ feedbackId, tagId });
+    } else {
+      await addTagMutation({ feedbackId, tagId });
+    }
+  };
 
   const [deadlineOpen, setDeadlineOpen] = useState(false);
 
-  const handleDeadlineChange = useCallback(
-    async (date: Date) => {
-      await updateAnalysis({ deadline: date.getTime(), feedbackId });
-      setDeadlineOpen(false);
-    },
-    [feedbackId, updateAnalysis]
-  );
+  const handleDeadlineChange = async (date: Date) => {
+    await updateAnalysis({ deadline: date.getTime(), feedbackId });
+    setDeadlineOpen(false);
+  };
 
-  const handleDeadlineClear = useCallback(async () => {
+  const handleDeadlineClear = async () => {
     await updateAnalysis({ clearDeadline: true, feedbackId });
     setDeadlineOpen(false);
-  }, [feedbackId, updateAnalysis]);
+  };
 
-  const handleToggleSubscription = useCallback(async () => {
+  const handleToggleSubscription = async () => {
     if (!isAuthenticated) {
       authGuard(() => undefined);
       return;
     }
     await toggleSubscription({ feedbackId });
-  }, [feedbackId, toggleSubscription, isAuthenticated, authGuard]);
+  };
 
   return (
     <div className="flex flex-wrap items-center gap-3 border-b bg-muted/30 px-6 py-3">
@@ -209,11 +143,20 @@ export function FeedbackMetadataBar({
         voteCount={voteCount}
       />
 
-      {isInternal && <InternalBadge />}
+      {feedback.isMember && (
+        <PublicationProperty
+          editable={isAdmin}
+          feedbackId={feedbackId}
+          publication={{
+            ...feedback,
+            organizationIsPublic: feedback.organization.isPublic,
+          }}
+        />
+      )}
 
       <StatusDisplay
         currentStatus={currentStatus}
-        isAdmin={isAdmin}
+        isAdmin={feedback.isMember}
         onStatusChange={handleStatusChange}
         organizationStatuses={organizationStatuses}
         statusId={organizationStatusId}
@@ -227,19 +170,13 @@ export function FeedbackMetadataBar({
         validTags={validTags}
       />
 
-      <AiAnalysisDisplay
-        aiComplexity={aiComplexity}
-        aiComplexityReasoning={aiComplexityReasoning}
-        aiNeedsReview={aiNeedsReview}
-        aiPriority={aiPriority}
-        aiPriorityReasoning={aiPriorityReasoning}
-        aiTimeEstimate={aiTimeEstimate}
-        complexity={complexity}
-        feedbackId={feedbackId}
-        isAdmin={isAdmin}
-        priority={priority}
-        timeEstimate={timeEstimate}
-      />
+      {feedback.isMember && (
+        <AiAnalysisDisplay
+          {...feedback}
+          feedbackId={feedbackId}
+          isAdmin={isAdmin}
+        />
+      )}
 
       {isAdmin && (
         <DeadlineDisplay
@@ -259,19 +196,6 @@ export function FeedbackMetadataBar({
       />
 
       <div className="flex-1" />
-
-      {isAdmin && isInternal && (
-        <Button
-          className="h-8 gap-1.5 px-2.5"
-          disabled={isMakingPublic}
-          onClick={makePublic}
-          size="xs"
-          variant="surface"
-        >
-          <Globe className="h-3.5 w-3.5" />
-          Make public
-        </Button>
-      )}
 
       {isAdmin && (
         <CopyForAgents

@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { internalQuery } from "../_generated/server";
+import { isFeedbackPubliclyVisible } from "./public_projection";
 
 const DEFAULT_CHANGELOG_LIMIT = 20;
 const MAX_SIMILAR_RESULTS = 5;
@@ -170,7 +171,7 @@ export const getRoadmapByOrganization = internalQuery({
       .collect();
 
     const approvedFeedback = feedbackItems.filter(
-      (f) => f.isApproved && !f.deletedAt && !f.isMerged
+      (f) => isFeedbackPubliclyVisible(org, f) && !f.isMerged
     );
 
     const lanes = sortedStatuses.map((status) => ({
@@ -225,7 +226,7 @@ export const getChangelogByOrganization = internalQuery({
         const feedbackItems = await Promise.all(
           releaseFeedback.map(async (rf) => {
             const feedback = await ctx.db.get(rf.feedbackId);
-            return feedback
+            return feedback && isFeedbackPubliclyVisible(org, feedback)
               ? {
                   id: feedback._id,
                   status: feedback.status,
@@ -260,6 +261,7 @@ export const searchSimilarFeedback = internalQuery({
       return [];
     }
 
+    const org = await ctx.db.get(args.organizationId);
     const results = await ctx.db
       .query("feedback")
       .withSearchIndex("search_title", (q) =>
@@ -268,7 +270,7 @@ export const searchSimilarFeedback = internalQuery({
       .take(MAX_SIMILAR_RESULTS);
 
     return results
-      .filter((f) => f.isApproved && !f.deletedAt && !f.isMerged)
+      .filter((f) => isFeedbackPubliclyVisible(org, f) && !f.isMerged)
       .map((f) => ({
         _id: f._id,
         status: f.status,

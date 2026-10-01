@@ -5,14 +5,14 @@ import { useMutation } from "convex/react";
 import { useState } from "react";
 
 export function useMakeFeedbackPublic(feedbackId: Id<"feedback">) {
-  const updateFeedback = useMutation(api.feedback.mutations.update);
+  const updateFeedback = useMutation(api.feedback.publication.setState);
   const [isMakingPublic, setIsMakingPublic] = useState(false);
 
   const makePublic = async () => {
     setIsMakingPublic(true);
     try {
-      await updateFeedback({ id: feedbackId, isApproved: true });
-      toast.success("Feedback is now public");
+      await updateFeedback({ feedbackId, state: "approved" });
+      toast.success("Feedback approved for publication");
     } catch {
       toast.error("Failed to make feedback public");
     }

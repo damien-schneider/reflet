@@ -13,7 +13,7 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
-import { TagBadge } from "@/components/tag-badge";
+import { FeedbackMetadataBar } from "@/features/feedback/components/feedback-detail/feedback-metadata-bar";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { useMakeFeedbackPublic } from "../../hooks/use-make-feedback-public";
 
@@ -158,6 +158,7 @@ export function PublicFeedbackDetailContent({
         </div>
       </div>
 
+      <FeedbackMetadataBar feedback={feedback} isAdmin={isAdmin} />
       <div className="flex-1 overflow-y-auto p-6">
         <div className="mb-6">
           <h3 className="mb-2 font-medium text-sm">Description</h3>
@@ -165,22 +166,6 @@ export function PublicFeedbackDetailContent({
             {feedback.description || "No description provided."}
           </p>
         </div>
-
-        {feedback.tags && feedback.tags.length > 0 && (
-          <div className="mb-6">
-            <h3 className="mb-2 font-medium text-sm">Tags</h3>
-            <div className="flex flex-wrap gap-2">
-              {feedback.tags
-                .filter((tag): tag is NonNullable<typeof tag> => tag !== null)
-                .map((tag) => (
-                  <TagBadge color={tag.color} key={tag._id}>
-                    {tag.icon && <span>{tag.icon}</span>}
-                    {tag.name}
-                  </TagBadge>
-                ))}
-            </div>
-          </div>
-        )}
 
         <Separator className="my-6" />
 

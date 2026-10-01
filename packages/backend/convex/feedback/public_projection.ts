@@ -1,17 +1,12 @@
 import type { Doc } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { isOrgMemberViewer } from "../shared/access";
+import { isFeedbackPublishable } from "./property_values";
 
 export const isFeedbackPubliclyVisible = (
   org: Doc<"organizations"> | null,
   feedback: Doc<"feedback">
-): boolean =>
-  Boolean(
-    org?.isPublic &&
-      feedback.isApproved &&
-      !feedback.deletedAt &&
-      !feedback.isInternal
-  );
+): boolean => Boolean(org?.isPublic && isFeedbackPublishable(feedback));
 
 export const canViewFeedback = async (
   ctx: QueryCtx,

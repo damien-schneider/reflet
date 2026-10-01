@@ -27,14 +27,7 @@ const partitionForTriage = async (
       continue;
     }
 
-    const tag = await ctx.db
-      .query("feedbackTags")
-      .withIndex("by_feedback", (q) => q.eq("feedbackId", feedback._id))
-      .first();
-
-    if (!tag) {
-      untriaged.push(feedback);
-    }
+    untriaged.push(feedback);
   }
 
   return { live, untriaged };

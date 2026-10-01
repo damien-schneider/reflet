@@ -1,98 +1,8 @@
 import { v } from "convex/values";
+import type { Doc } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
 import { getAuthUser } from "../shared/utils";
 import { changeFeedbackStatus } from "./status_change";
-
-export const addTag = mutation({
-  args: {
-    feedbackId: v.id("feedback"),
-    tagId: v.id("tags"),
-  },
-  handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
-
-    const feedback = await ctx.db.get(args.feedbackId);
-    if (!feedback) {
-      throw new Error("Feedback not found");
-    }
-
-    const tag = await ctx.db.get(args.tagId);
-    if (!tag || tag.organizationId !== feedback.organizationId) {
-      throw new Error("Tag not found");
-    }
-
-    // Check admin permission
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", feedback.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership || membership.role === "member") {
-      throw new Error("Only admins can manage tags");
-    }
-
-    // Check if already tagged
-    const existing = await ctx.db
-      .query("feedbackTags")
-      .withIndex("by_feedback_tag", (q) =>
-        q.eq("feedbackId", args.feedbackId).eq("tagId", args.tagId)
-      )
-      .unique();
-
-    if (existing) {
-      return existing._id;
-    }
-
-    const linkId = await ctx.db.insert("feedbackTags", {
-      feedbackId: args.feedbackId,
-      tagId: args.tagId,
-    });
-
-    return linkId;
-  },
-});
-
-export const removeTag = mutation({
-  args: {
-    feedbackId: v.id("feedback"),
-    tagId: v.id("tags"),
-  },
-  handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
-
-    const feedback = await ctx.db.get(args.feedbackId);
-    if (!feedback) {
-      throw new Error("Feedback not found");
-    }
-
-    // Check admin permission
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", feedback.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership || membership.role === "member") {
-      throw new Error("Only admins can manage tags");
-    }
-
-    const link = await ctx.db
-      .query("feedbackTags")
-      .withIndex("by_feedback_tag", (q) =>
-        q.eq("feedbackId", args.feedbackId).eq("tagId", args.tagId)
-      )
-      .unique();
-
-    if (link) {
-      await ctx.db.delete(link._id);
-    }
-
-    return true;
-  },
-});
 
 export const updateOrganizationStatus = mutation({
   args: {
@@ -107,7 +17,6 @@ export const updateOrganizationStatus = mutation({
       throw new Error("Feedback not found");
     }
 
-    // Check membership (members can update status)
     const membership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>
@@ -142,7 +51,6 @@ export const assign = mutation({
       throw new Error("Feedback not found");
     }
 
-    // Check admin permission
     const membership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>
@@ -154,7 +62,6 @@ export const assign = mutation({
       throw new Error("Only admins can assign feedback");
     }
 
-    // If assigning to someone, verify they are a member of the org
     if (args.assigneeId) {
       const assigneeId = args.assigneeId;
       const assigneeMembership = await ctx.db
@@ -197,6 +104,7 @@ export const updateAnalysis = mutation({
     ),
     deadline: v.optional(v.number()),
     feedbackId: v.id("feedback"),
+    needsClarification: v.optional(v.boolean()),
     priority: v.optional(
       v.union(
         v.literal("critical"),
@@ -206,6 +114,10 @@ export const updateAnalysis = mutation({
         v.literal("none")
       )
     ),
+    resetClarification: v.optional(v.boolean()),
+    resetComplexity: v.optional(v.boolean()),
+    resetPriority: v.optional(v.boolean()),
+    resetTimeEstimate: v.optional(v.boolean()),
     timeEstimate: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -216,7 +128,6 @@ export const updateAnalysis = mutation({
       throw new Error("Feedback not found");
     }
 
-    // Check admin permission
     const membership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>
@@ -228,14 +139,18 @@ export const updateAnalysis = mutation({
       throw new Error("Only admins can update analysis values");
     }
 
-    const updates: Record<string, unknown> = { updatedAt: Date.now() };
-    if (args.clearPriority) {
+    const updates: Partial<Doc<"feedback">> = { updatedAt: Date.now() };
+    if (args.resetPriority) {
       updates.priority = undefined;
+    } else if (args.clearPriority) {
+      updates.priority = null;
     } else if (args.priority !== undefined) {
       updates.priority = args.priority;
     }
-    if (args.clearComplexity) {
+    if (args.resetComplexity) {
       updates.complexity = undefined;
+    } else if (args.clearComplexity) {
+      updates.complexity = null;
     } else if (args.complexity !== undefined) {
       updates.complexity = args.complexity;
     }
@@ -244,12 +159,19 @@ export const updateAnalysis = mutation({
     } else if (args.deadline !== undefined) {
       updates.deadline = args.deadline;
     }
-    if (args.clearTimeEstimate) {
+    if (args.resetTimeEstimate) {
       updates.timeEstimate = undefined;
+    } else if (args.clearTimeEstimate) {
+      updates.timeEstimate = null;
     } else if (args.timeEstimate !== undefined) {
       updates.timeEstimate = args.timeEstimate;
     }
 
+    if (args.resetClarification) {
+      updates.needsClarification = undefined;
+    } else if (args.needsClarification !== undefined) {
+      updates.needsClarification = args.needsClarification;
+    }
     await ctx.db.patch(args.feedbackId, updates);
 
     return args.feedbackId;

@@ -13,6 +13,7 @@ import { FeedbackBoardProvider } from "./feedback-board/feedback-board-context";
 import { FeedbackToolbar } from "./feedback-board/feedback-toolbar";
 import { useFeedbackBoardState } from "./feedback-board/use-feedback-board-state";
 import { FeedbackDetailDrawer } from "./feedback-detail/feedback-detail-drawer";
+import { FiltersBar } from "./filters-bar";
 import { RoadmapView } from "./roadmap-view";
 import { SubmitFeedbackDialog } from "./submit-feedback-dialog";
 
@@ -99,23 +100,36 @@ export function FeedbackBoardContent(props: FeedbackBoardProps) {
           view={filters.view}
         />
 
-        <FeedbackToolbar
-          inlineInputRef={
-            filters.view === "feed" ? board.inlineInputRef : undefined
-          }
-          isAdmin={isAdmin}
-          onSearchChange={filters.setSearchQuery}
-          onSubmitClick={filters.openSubmitDrawer}
-          onTagSelect={filters.setSelectedTagId}
-          organizationId={organizationId}
-          searchQuery={filters.searchQuery}
-          selectedTagId={filters.selectedTagId}
-          showSearch={
-            board.filteredFeedback.length > 0 || filters.searchQuery.length > 0
-          }
-          tags={board.tags}
-        />
+        {filters.view !== "milestones" && (
+          <>
+            <FeedbackToolbar
+              inlineInputRef={
+                filters.view === "feed" ? board.inlineInputRef : undefined
+              }
+              isAdmin={isAdmin}
+              onClearTags={() => filters.setSelectedTagIds([])}
+              onSearchChange={filters.setSearchQuery}
+              onSubmitClick={filters.openSubmitDrawer}
+              onTagChange={filters.handleTagChange}
+              organizationId={organizationId}
+              searchQuery={filters.searchQuery}
+              selectedTagIds={filters.selectedTagIds}
+              showSearch={
+                board.filteredFeedback.length > 0 ||
+                filters.searchQuery.length > 0
+              }
+              tags={board.tags}
+            />
 
+            <FiltersBar {...board.feedProps} />
+          </>
+        )}
+        {filters.view === "milestones" && (
+          <p className="mx-auto mb-4 max-w-3xl px-4 text-muted-foreground text-sm">
+            Milestones group planned work. Feedback filters apply to List and
+            Board.
+          </p>
+        )}
         <BoardViewPanel
           panels={{
             feed: <FeedFeedbackView {...board.feedProps} />,

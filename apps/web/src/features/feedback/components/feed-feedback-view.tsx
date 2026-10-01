@@ -8,7 +8,7 @@ import {
   EmptyHeader,
   EmptyTitle,
 } from "@ctrl-ui/react/ui/empty";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
 import {
   AnimatePresence,
   domAnimation,
@@ -21,7 +21,7 @@ import type React from "react";
 import { SweepCornerFeedCard } from "@/features/feedback/components/card-designs/sweep-corner-card";
 import { useFeedbackBoard } from "./feedback-board/feedback-board-context";
 import { FeedbackCardAdminWrapper } from "./feedback-card-admin-wrapper";
-import { FiltersBar, type SortOption } from "./filters-bar";
+import type { SortOption } from "./filters-bar";
 import type {
   InlineFeedbackInputHandle,
   InlineSubmitData,
@@ -34,25 +34,34 @@ const EASE_OUT = [0.23, 1, 0.32, 1] as const;
 
 export interface FeedbackItem {
   _id: Id<"feedback">;
-  aiComplexity?: string | null;
-  aiPriority?: string | null;
+  aiComplexity?: Doc<"feedback">["aiComplexity"];
+  aiJunk?: number;
+  aiNeedsReview?: number;
+  aiPriority?: Doc<"feedback">["aiPriority"];
+  assignee?: { name?: string | null } | null;
+  assigneeId?: string;
   commentCount: number;
-  complexity?: string | null;
+  complexity?: Doc<"feedback">["complexity"];
   createdAt: number;
   description?: string;
   downvoteCount?: number;
   hasVoted?: boolean;
+  isApproved?: boolean;
   isInternal?: boolean;
+  isMember?: boolean;
   isPinned?: boolean;
   milestones?: Array<{
     _id: Id<"milestones">;
     name: string;
     emoji?: string;
   }>;
+  needsClarification?: boolean;
   organizationId: Id<"organizations">;
   organizationStatus?: { name: string; color: string; icon?: string } | null;
   organizationStatusId?: Id<"organizationStatuses">;
-  priority?: string | null;
+  priority?: Doc<"feedback">["priority"];
+  publicationRejectedAt?: number;
+  status?: Doc<"feedback">["status"];
   tags?: Array<{
     _id: Id<"tags">;
     name: string;
@@ -146,15 +155,8 @@ export function FeedFeedbackView({
   feedback,
   hasActiveFilters,
   hideCompleted,
-  sortBy,
-  onSortChange,
   onHideCompletedToggle,
-  statuses,
-  selectedStatusIds,
-  onStatusChange,
   tags,
-  selectedTagIds,
-  onTagChange,
   onClearFilters,
   isAdmin,
   isMember,
@@ -164,62 +166,47 @@ export function FeedFeedbackView({
   const { onFeedbackClick, onVote } = useFeedbackBoard();
 
   return (
-    <>
-      <FiltersBar
-        hideCompleted={hideCompleted}
-        onClearFilters={onClearFilters}
-        onHideCompletedToggle={onHideCompletedToggle}
-        onSortChange={onSortChange}
-        onStatusChange={onStatusChange}
-        onTagChange={onTagChange}
-        selectedStatusIds={selectedStatusIds}
-        selectedTagIds={selectedTagIds}
-        sortBy={sortBy}
-        statuses={statuses}
+    <div className="space-y-4 px-4">
+      <InlineFeedbackInput
+        isAdmin={isAdmin}
+        isMember={isMember}
+        onSubmit={onInlineSubmit}
+        ref={inlineInputRef}
         tags={tags}
       />
-      <div className="space-y-4 px-4">
-        <InlineFeedbackInput
-          isAdmin={isAdmin}
-          isMember={isMember}
-          onSubmit={onInlineSubmit}
-          ref={inlineInputRef}
-          tags={tags}
+      <LazyMotion features={domAnimation}>
+        <MotionConfig reducedMotion="user">
+          <ul aria-label="Feedback" className="space-y-4 empty:hidden">
+            <AnimatePresence initial={false} mode="popLayout">
+              {feedback.map((item) => (
+                <m.li
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.98 }}
+                  initial={{ opacity: 0, scale: 0.98 }}
+                  key={item._id}
+                  transition={{ duration: 0.18, ease: EASE_OUT }}
+                >
+                  <FeedbackCardAdminWrapper feedbackId={item._id}>
+                    <SweepCornerFeedCard
+                      feedback={item}
+                      onClick={onFeedbackClick}
+                      onVote={onVote}
+                    />
+                  </FeedbackCardAdminWrapper>
+                </m.li>
+              ))}
+            </AnimatePresence>
+          </ul>
+        </MotionConfig>
+      </LazyMotion>
+      {feedback.length === 0 && (
+        <FeedEmptyState
+          hasActiveFilters={hasActiveFilters}
+          hideCompleted={hideCompleted}
+          onClearFilters={onClearFilters}
+          onHideCompletedToggle={onHideCompletedToggle}
         />
-        <LazyMotion features={domAnimation}>
-          <MotionConfig reducedMotion="user">
-            <ul aria-label="Feedback" className="space-y-4 empty:hidden">
-              <AnimatePresence initial={false} mode="popLayout">
-                {feedback.map((item) => (
-                  <m.li
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.98 }}
-                    initial={{ opacity: 0, scale: 0.98 }}
-                    key={item._id}
-                    transition={{ duration: 0.18, ease: EASE_OUT }}
-                  >
-                    <FeedbackCardAdminWrapper feedbackId={item._id}>
-                      <SweepCornerFeedCard
-                        feedback={item}
-                        onClick={onFeedbackClick}
-                        onVote={onVote}
-                      />
-                    </FeedbackCardAdminWrapper>
-                  </m.li>
-                ))}
-              </AnimatePresence>
-            </ul>
-          </MotionConfig>
-        </LazyMotion>
-        {feedback.length === 0 && (
-          <FeedEmptyState
-            hasActiveFilters={hasActiveFilters}
-            hideCompleted={hideCompleted}
-            onClearFilters={onClearFilters}
-            onHideCompletedToggle={onHideCompletedToggle}
-          />
-        )}
-      </div>
-    </>
+      )}
+    </div>
   );
 }

@@ -6,6 +6,7 @@ import { devtoolsTables } from "./devtools/tableFields";
 import { duplicateTables } from "./duplicates/tableFields";
 import { emailTables } from "./email/tableFields";
 import { feedbackTables } from "./feedback/tableFields";
+import { triageTables } from "./feedback/triage_contract";
 import { githubTables } from "./integrations/github/tableFields";
 import { intelligenceTables } from "./intelligence/tableFields";
 import { notificationTables } from "./notifications/tableFields";
@@ -19,6 +20,7 @@ import { widgetTables } from "./widget/tableFields";
 export default defineSchema({
   ...organizationTables,
   ...feedbackTables,
+  ...triageTables,
   ...changelogTables,
   ...notificationTables,
   ...supportTables,

@@ -2,7 +2,6 @@ import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useBoardFilters } from "./use-board-filters";
 
-// Mock next/navigation
 const mockReplace = vi.fn();
 const mockPush = vi.fn();
 let currentSearchParams = new URLSearchParams();
@@ -38,11 +37,6 @@ describe("useBoardFilters", () => {
     it("returns empty selectedTagIds", () => {
       const { result } = renderHook(() => useBoardFilters());
       expect(result.current.selectedTagIds).toEqual([]);
-    });
-
-    it("returns null selectedTagId", () => {
-      const { result } = renderHook(() => useBoardFilters());
-      expect(result.current.selectedTagId).toBeNull();
     });
 
     it("returns empty searchQuery", () => {
@@ -112,7 +106,7 @@ describe("useBoardFilters", () => {
     it("parses single tag from URL", () => {
       currentSearchParams = new URLSearchParams("tag=t1");
       const { result } = renderHook(() => useBoardFilters());
-      expect(result.current.selectedTagId).toBe("t1");
+      expect(result.current.selectedTagIds).toEqual(["t1"]);
     });
 
     it("parses search query from URL", () => {
@@ -219,15 +213,15 @@ describe("useBoardFilters", () => {
 
     it("setSelectedTagId updates URL", () => {
       const { result } = renderHook(() => useBoardFilters());
-      act(() => result.current.setSelectedTagId("t1"));
-      expect(mockReplace).toHaveBeenCalledWith("/test-org/board?tag=t1", {
+      act(() => result.current.setSelectedTagIds(["t1"]));
+      expect(mockReplace).toHaveBeenCalledWith("/test-org/board?tags=t1", {
         scroll: false,
       });
     });
 
     it("setSelectedTagId removes param when null", () => {
       const { result } = renderHook(() => useBoardFilters());
-      act(() => result.current.setSelectedTagId(null));
+      act(() => result.current.setSelectedTagIds([]));
       expect(mockReplace).toHaveBeenCalledWith("/test-org/board", {
         scroll: false,
       });
@@ -346,5 +340,18 @@ describe("useBoardFilters", () => {
       const { result } = renderHook(() => useBoardFilters("roadmap"));
       expect(result.current.view).toBe("roadmap");
     });
+  });
+});
+
+describe("one tag selection across controls and layouts", () => {
+  it("normalizes both URL tag inputs into the same selection without precedence", () => {
+    currentSearchParams = new URLSearchParams("tag=t1&tags=t2&view=roadmap");
+    const { result } = renderHook(() => useBoardFilters());
+    expect(result.current.selectedTagIds).toEqual(["t2", "t1"]);
+    act(() => result.current.setSelectedTagIds(["t3"]));
+    const url = mockReplace.mock.calls.at(-1)?.[0];
+    expect(url).toContain("tags=t3");
+    expect(url).not.toContain("tag=");
+    expect(url).toContain("view=roadmap");
   });
 });

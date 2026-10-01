@@ -1,6 +1,9 @@
 import { v } from "convex/values";
+import type { Doc } from "../_generated/dataModel";
 import { internalMutation } from "../_generated/server";
+import { archiveFeedback } from "../feedback/archive_feedback";
 import { changeFeedbackStatus } from "../feedback/status_change";
+import { confirmTag, refuseTag } from "../feedback/tag_decisions";
 import {
   MAX_COMMENT_LENGTH,
   MAX_DESCRIPTION_LENGTH,
@@ -61,7 +64,7 @@ export const updateFeedback = internalMutation({
       "Description"
     );
 
-    const updates: Record<string, unknown> = { updatedAt: Date.now() };
+    const updates: Partial<Doc<"feedback">> = { updatedAt: Date.now() };
     if (args.title !== undefined) {
       updates.title = args.title;
     }
@@ -85,10 +88,7 @@ export const deleteFeedback = internalMutation({
     if (!feedback || feedback.organizationId !== args.organizationId) {
       throw new Error("Feedback not found");
     }
-    await ctx.db.patch(args.feedbackId, {
-      deletedAt: Date.now(),
-      updatedAt: Date.now(),
-    });
+    await archiveFeedback(ctx, feedback._id);
     return { success: true };
   },
   returns: v.object({ success: v.boolean() }),
@@ -129,12 +129,11 @@ export const assignFeedback = internalMutation({
     }
 
     if (args.assigneeId) {
+      const assigneeId = args.assigneeId;
       const member = await ctx.db
         .query("organizationMembers")
         .withIndex("by_org_user", (q) =>
-          q
-            .eq("organizationId", args.organizationId)
-            .eq("userId", args.assigneeId as string)
+          q.eq("organizationId", args.organizationId).eq("userId", assigneeId)
         )
         .unique();
       if (!member) {
@@ -188,40 +187,16 @@ export const updateFeedbackTags = internalMutation({
       throw new Error("Feedback not found");
     }
 
-    // Add tags
-    if (args.addTagIds) {
-      for (const tagId of args.addTagIds) {
-        const tag = await ctx.db.get(tagId);
-        if (!tag || tag.organizationId !== args.organizationId) {
-          throw new Error(`Tag ${tagId} not found`);
-        }
-        const existing = await ctx.db
-          .query("feedbackTags")
-          .withIndex("by_feedback_tag", (q) =>
-            q.eq("feedbackId", args.feedbackId).eq("tagId", tagId)
-          )
-          .unique();
-        if (!existing) {
-          await ctx.db.insert("feedbackTags", {
-            feedbackId: args.feedbackId,
-            tagId,
-          });
-        }
+    for (const tagId of args.addTagIds ?? []) {
+      const current = await ctx.db.get(feedback._id);
+      if (current) {
+        await confirmTag(ctx, current, tagId);
       }
     }
-
-    // Remove tags
-    if (args.removeTagIds) {
-      for (const tagId of args.removeTagIds) {
-        const existing = await ctx.db
-          .query("feedbackTags")
-          .withIndex("by_feedback_tag", (q) =>
-            q.eq("feedbackId", args.feedbackId).eq("tagId", tagId)
-          )
-          .unique();
-        if (existing) {
-          await ctx.db.delete(existing._id);
-        }
+    for (const tagId of args.removeTagIds ?? []) {
+      const current = await ctx.db.get(feedback._id);
+      if (current) {
+        await refuseTag(ctx, current, tagId);
       }
     }
 
@@ -245,7 +220,7 @@ export const updateFeedbackAnalysis = internalMutation({
       throw new Error("Feedback not found");
     }
 
-    const updates: Record<string, unknown> = { updatedAt: Date.now() };
+    const updates: Partial<Doc<"feedback">> = { updatedAt: Date.now() };
     if (args.priority !== undefined) {
       updates.priority = args.priority;
     }

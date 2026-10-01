@@ -1,9 +1,9 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
-import { internal } from "../../_generated/api";
 import schema from "../../schema";
 import {
+  applyRecordedTriage,
   scheduledFunctionNames,
   seedFeedback,
   seedGithubConnection,
@@ -71,7 +71,7 @@ describe("scheduleAfterCreate", () => {
     const feedbackId = await t.run(async (ctx) => {
       const orgId = await seedOrganization(ctx);
       await seedGithubConnection(ctx, orgId, { promoteTrigger: "on_create" });
-      const id = await seedFeedback(ctx, orgId);
+      const id = await seedFeedback(ctx, orgId, { isApproved: false });
       await scheduleAfterCreate(ctx, id, {
         aiEnrichment: false,
         autoTagging: true,
@@ -86,9 +86,7 @@ describe("scheduleAfterCreate", () => {
       deferred.filter((name) => name.includes("promoteFeedback"))
     ).toHaveLength(0);
 
-    await t.mutation(internal.feedback.review.releaseAfterTriage, {
-      feedbackId,
-    });
+    await applyRecordedTriage(t, { applyModeration: true, feedbackId });
 
     const released = await t.run(
       async (ctx) => await scheduledFunctionNames(ctx)

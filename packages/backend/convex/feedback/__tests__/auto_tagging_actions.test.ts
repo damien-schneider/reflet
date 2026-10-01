@@ -6,6 +6,11 @@ import { modules } from "../../test.helpers";
 
 vi.mock("../triage_evaluation", () => ({
   evaluateFeedbackTriage: vi.fn(async () => ({
+    answers: [
+      { probability: 0.04, questionId: "junk" },
+      { probability: 0.83, questionId: "needsReview" },
+      { probability: 0.94, questionId: "usefulness" },
+    ],
     junk: 0.04,
     needsReview: 0.83,
     tagIds: [],
@@ -52,5 +57,20 @@ describe("feedback triage action", () => {
     expect(feedback?.aiNeedsReview).toBe(0.83);
     expect(feedback?.aiJunk).toBe(0.04);
     expect(feedback?.aiPriority).toBeUndefined();
+    const runs = await t.run((ctx) =>
+      ctx.db.query("feedbackTriageRuns").collect()
+    );
+    expect(runs).toMatchObject([
+      {
+        input: {
+          description: "Checkout fails on mobile",
+          title: "Checkout failure",
+        },
+        model: "jev-1.13",
+        status: "completed",
+      },
+    ]);
+    expect(runs[0].questions).toHaveLength(3);
+    expect(runs[0].answers).toHaveLength(3);
   });
 });

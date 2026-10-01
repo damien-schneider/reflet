@@ -4,42 +4,10 @@ import type { Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { internalMutation, mutation } from "../_generated/server";
 import { versionIncrementValidator } from "../changelog/semver";
+import { DEFAULT_TAGS } from "../feedback/tag_definitions";
 import { getAuthUser } from "../shared/utils";
 import { assertValidSlug, deriveSlugFromName, slugify } from "./slug";
-
-const DEFAULT_STATUSES = [
-  { color: "#6b7280", icon: "clock", name: "Backlog", order: 0 },
-  { color: "#3b82f6", icon: "calendar", name: "Planned", order: 1 },
-  { color: "#8b5cf6", icon: "spinner", name: "In Progress", order: 2 },
-  { color: "#22c55e", icon: "check-circle", name: "Done", order: 3 },
-] as const;
-
-const DEFAULT_TAGS = [
-  {
-    color: "#3b82f6",
-    description: "New feature suggestions and ideas",
-    name: "Feature Request",
-    slug: "feature-request",
-  },
-  {
-    color: "#ef4444",
-    description: "Issues and problems to be fixed",
-    name: "Bug Report",
-    slug: "bug-report",
-  },
-  {
-    color: "#8b5cf6",
-    description: "Improvements to existing features",
-    name: "Enhancement",
-    slug: "enhancement",
-  },
-  {
-    color: "#f59e0b",
-    description: "Questions and support requests",
-    name: "Question",
-    slug: "question",
-  },
-] as const;
+import { DEFAULT_STATUSES } from "./status_definitions";
 
 const assertSlugAvailable = async (
   ctx: MutationCtx,
@@ -109,8 +77,6 @@ const insertOrganization = async (
     await ctx.db.insert("tags", {
       ...tag,
       createdAt: now,
-      isDoneStatus: false,
-      isRoadmapLane: false,
       organizationId,
       updatedAt: now,
     });
@@ -130,9 +96,6 @@ export const createOrganization = internalMutation({
   returns: v.id("organizations"),
 });
 
-/**
- * Internal mutation to update an organization's slug.
- */
 export const updateOrganizationSlug = internalMutation({
   args: {
     id: v.id("organizations"),
@@ -154,10 +117,6 @@ export const updateOrganizationSlug = internalMutation({
   returns: v.id("organizations"),
 });
 
-// ============================================
-// MUTATIONS
-// ============================================
-
 export const create = mutation({
   args: {
     isPublic: v.optional(v.boolean()),
@@ -171,9 +130,6 @@ export const create = mutation({
   returns: v.id("organizations"),
 });
 
-/**
- * Update organization settings
- */
 export const update = mutation({
   args: {
     changelogSettings: v.optional(

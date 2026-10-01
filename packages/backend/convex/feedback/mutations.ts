@@ -6,49 +6,15 @@ import { mutation } from "../_generated/server";
 import { PLAN_LIMITS } from "../organizations/queries";
 import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from "../shared/constants";
 import { getAuthUser } from "../shared/utils";
-import {
-  type FeedbackStatusValue,
-  feedbackStatus,
-  isFeedbackStatusValue,
-  validateInputLength,
-} from "../shared/validators";
+import { feedbackStatus, validateInputLength } from "../shared/validators";
 import { afterApproval, scheduleAfterCreate } from "./after_create";
 import { changeFeedbackStatus } from "./status_change";
-
-// ============================================
-// HELPERS
-// ============================================
-
-const resolveTagSettings = async (
-  ctx: MutationCtx,
-  tagId: Id<"tags"> | undefined,
-  organizationId: Id<"organizations">
-): Promise<{
-  requireApproval: boolean;
-  defaultStatus: FeedbackStatusValue;
-}> => {
-  if (!tagId) {
-    return { defaultStatus: "open", requireApproval: false };
-  }
-
-  const tag = await ctx.db.get(tagId);
-  if (!tag || tag.organizationId !== organizationId) {
-    return { defaultStatus: "open", requireApproval: false };
-  }
-
-  return {
-    defaultStatus: isFeedbackStatusValue(tag.settings?.defaultStatus)
-      ? tag.settings.defaultStatus
-      : "open",
-    requireApproval: tag.settings?.requireApproval ?? false,
-  };
-};
+import { statusFieldsFor } from "./status_target";
 
 const validateCreateAccess = async (
   ctx: MutationCtx,
   org: { _id: Id<"organizations">; isPublic: boolean },
-  userId: string,
-  tagId?: Id<"tags">
+  userId: string
 ): Promise<void> => {
   const membership = await ctx.db
     .query("organizationMembers")
@@ -56,16 +22,7 @@ const validateCreateAccess = async (
       q.eq("organizationId", org._id).eq("userId", userId)
     )
     .unique();
-
-  const isMember = !!membership;
-  let hasAccess = isMember || org.isPublic;
-
-  if (tagId && !isMember) {
-    const tag = await ctx.db.get(tagId);
-    hasAccess = hasAccess && (tag?.settings?.isPublic ?? false);
-  }
-
-  if (!hasAccess) {
+  if (!(membership || org.isPublic)) {
     throw new Error("You don't have access to submit feedback");
   }
 };
@@ -89,25 +46,6 @@ const enforceFeedbackLimit = async (
   }
 };
 
-const getDefaultOrganizationStatusId = async (
-  ctx: MutationCtx,
-  orgId: Id<"organizations">
-): Promise<Id<"organizationStatuses"> | undefined> => {
-  const orgStatuses = await ctx.db
-    .query("organizationStatuses")
-    .withIndex("by_org_order", (q) => q.eq("organizationId", orgId))
-    .collect();
-  const sorted = orgStatuses.sort((a, b) => a.order - b.order);
-  return sorted[0]?._id;
-};
-
-// ============================================
-// MUTATIONS
-// ============================================
-
-/**
- * Create new feedback
- */
 export const create = mutation({
   args: {
     attachments: v.optional(v.array(v.string())),
@@ -126,37 +64,18 @@ export const create = mutation({
       "Description"
     );
 
-    const tagSettings = await resolveTagSettings(
-      ctx,
-      args.tagId,
-      args.organizationId
-    );
-
     const org = await ctx.db.get(args.organizationId);
     if (!org) {
       throw new Error("Organization not found");
     }
 
-    const requireApproval =
-      tagSettings.requireApproval ||
-      (org.feedbackSettings?.requireApproval ?? false);
-    const defaultStatus =
-      tagSettings.defaultStatus ||
-      (isFeedbackStatusValue(org.feedbackSettings?.defaultStatus)
-        ? org.feedbackSettings.defaultStatus
-        : "open");
-
-    await validateCreateAccess(ctx, org, user._id, args.tagId);
+    const defaultStatus = org.feedbackSettings?.defaultStatus ?? "open";
+    await validateCreateAccess(ctx, org, user._id);
     const effectiveTier = await ctx.runQuery(
       internal.billing.internal.getOrgEffectiveTier,
       { organizationId: org._id }
     );
     await enforceFeedbackLimit(ctx, org._id, effectiveTier);
-
-    const defaultOrgStatusId = await getDefaultOrganizationStatusId(
-      ctx,
-      org._id
-    );
 
     const now = Date.now();
     const feedbackId = await ctx.db.insert("feedback", {
@@ -165,11 +84,13 @@ export const create = mutation({
       commentCount: 0,
       createdAt: now,
       description: args.description,
-      isApproved: !requireApproval,
+      isApproved: false,
       isPinned: false,
       organizationId: org._id,
-      organizationStatusId: defaultOrgStatusId,
-      status: defaultStatus,
+      ...(await statusFieldsFor(ctx, {
+        organizationId: org._id,
+        status: defaultStatus,
+      })),
       title: args.title,
       updatedAt: now,
       voteCount: 1,
@@ -194,16 +115,13 @@ export const create = mutation({
 
     await scheduleAfterCreate(ctx, feedbackId, {
       aiEnrichment: true,
-      autoTagging: !args.tagId,
+      autoTagging: true,
     });
 
     return feedbackId;
   },
 });
 
-/**
- * Update feedback (author can update title/description, admin can update all)
- */
 export const update = mutation({
   args: {
     attachments: v.optional(v.array(v.string())),
@@ -254,7 +172,13 @@ export const update = mutation({
       const { id, organizationStatusId, status, ...updates } = args;
       await ctx.db.patch(id, {
         ...updates,
-        isInternal: args.isApproved === true ? undefined : feedback.isInternal,
+        ...(args.isApproved === undefined
+          ? {}
+          : {
+              publicationRejectedAt: undefined,
+              publicationReviewedAt: Date.now(),
+              publicationReviewedBy: user._id,
+            }),
         updatedAt: Date.now(),
       });
       await changeFeedbackStatus(ctx, feedback, {

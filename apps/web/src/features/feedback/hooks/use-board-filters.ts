@@ -1,277 +1,129 @@
 "use client";
 
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useMemo } from "react";
+import type { BoardView } from "@/features/feedback/components/board-view-toggle";
+import type { SortOption } from "@/features/feedback/components/filters-bar";
 
-import type { BoardView } from "../components/board-view-toggle";
-import type { SortOption } from "../components/filters-bar";
-
-const URL_PARAM_KEYS = {
-  hideCompleted: "hide_completed", // "0" = show completed; absent = hide (default)
-  newFeedback: "new", // Submit feedback drawer
-  search: "q",
-  sort: "sort",
-  status: "status",
-  tag: "tag", // Single tag filter (from tag filter bar)
-  tags: "tags",
-  view: "view",
-} as const;
-
-const DEFAULT_VIEW: BoardView = "feed";
 const DEFAULT_SORT: SortOption = "newest";
-
-function parseArrayParam<T extends string = string>(value: string | null): T[] {
-  if (!value) {
-    return [];
-  }
-  return value.split(",").filter(Boolean) as T[];
-}
-
-function parseIdParam<T extends string>(value: string | null): T | null {
-  if (!value) {
-    return null;
-  }
-  return value as T;
-}
-
-function serializeArrayParam(values: string[]): string | null {
-  if (values.length === 0) {
-    return null;
-  }
-  return values.join(",");
-}
+const parseSelection = (value: string | null) =>
+  value?.split(",").filter(Boolean) ?? [];
 
 export interface BoardFiltersState {
-  hideCompleted: boolean; // Hide the highest-order (Done) status by default
+  hideCompleted: boolean;
   searchQuery: string;
-  selectedStatusIds: Id<"organizationStatuses">[];
-  selectedTagId: Id<"tags"> | null; // Single tag filter (from tag filter bar)
-  selectedTagIds: Id<"tags">[];
-  showSubmitDrawer: boolean; // Submit feedback drawer state
+  selectedStatusIds: string[];
+  selectedTagIds: string[];
+  showSubmitDrawer: boolean;
   sortBy: SortOption;
   view: BoardView;
 }
-
 export interface BoardFiltersActions {
   clearFilters: () => void;
   closeSubmitDrawer: () => void;
-  handleStatusChange: (statusId: string, checked: boolean) => void;
-  handleTagChange: (tagId: string, checked: boolean) => void;
+  handleStatusChange: (id: string, checked: boolean) => void;
+  handleTagChange: (id: string, checked: boolean) => void;
   hasActiveFilters: boolean;
   openSubmitDrawer: () => void;
   setHideCompleted: (hide: boolean) => void;
   setSearchQuery: (query: string) => void;
   setSelectedStatusIds: (ids: string[]) => void;
-  setSelectedTagId: (id: string | null) => void; // Single tag filter (from tag filter bar)
   setSelectedTagIds: (ids: string[]) => void;
   setSortBy: (sort: SortOption) => void;
   setView: (view: BoardView) => void;
 }
 
+function selectedIdsAfterToggle(ids: string[], id: string, checked: boolean) {
+  return checked
+    ? [...new Set([...ids, id])]
+    : ids.filter((selected) => selected !== id);
+}
+
 export function useBoardFilters(
-  defaultView: BoardView = DEFAULT_VIEW
+  defaultView: BoardView = "feed"
 ): BoardFiltersState & BoardFiltersActions {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const viewParam = searchParams.get("view");
+  const view =
+    viewParam === "feed" ||
+    viewParam === "roadmap" ||
+    viewParam === "milestones"
+      ? viewParam
+      : defaultView;
+  const sortParam = searchParams.get("sort");
+  const sortBy =
+    sortParam === "votes" ||
+    sortParam === "newest" ||
+    sortParam === "oldest" ||
+    sortParam === "comments"
+      ? sortParam
+      : DEFAULT_SORT;
+  const selectedTagIds = [
+    ...new Set([
+      ...parseSelection(searchParams.get("tags")),
+      ...parseSelection(searchParams.get("tag")),
+    ]),
+  ];
+  const selectedStatusIds = parseSelection(searchParams.get("status"));
+  const searchQuery = searchParams.get("q") ?? "";
 
-  // Parse current state from URL
-  const state = useMemo((): BoardFiltersState => {
-    const viewParam = searchParams.get(URL_PARAM_KEYS.view);
-    const view =
-      viewParam === "roadmap" ||
-      viewParam === "feed" ||
-      viewParam === "milestones"
-        ? viewParam
-        : defaultView;
-
-    const sortParam = searchParams.get(URL_PARAM_KEYS.sort);
-    const sortBy =
-      sortParam === "votes" ||
-      sortParam === "newest" ||
-      sortParam === "oldest" ||
-      sortParam === "comments"
-        ? sortParam
-        : DEFAULT_SORT;
-
-    return {
-      // Default true (hide); set "0" in URL to show completed
-      hideCompleted: searchParams.get(URL_PARAM_KEYS.hideCompleted) !== "0",
-      searchQuery: searchParams.get(URL_PARAM_KEYS.search) ?? "",
-      selectedStatusIds: parseArrayParam<Id<"organizationStatuses">>(
-        searchParams.get(URL_PARAM_KEYS.status)
-      ),
-      selectedTagId: parseIdParam<Id<"tags">>(
-        searchParams.get(URL_PARAM_KEYS.tag)
-      ),
-      selectedTagIds: parseArrayParam<Id<"tags">>(
-        searchParams.get(URL_PARAM_KEYS.tags)
-      ),
-      showSubmitDrawer: searchParams.get(URL_PARAM_KEYS.newFeedback) === "1",
-      sortBy,
-      view,
-    };
-  }, [searchParams, defaultView]);
-
-  // Helper to update URL params
-  const updateParams = useCallback(
-    (updates: Partial<Record<keyof typeof URL_PARAM_KEYS, string | null>>) => {
-      const params = new URLSearchParams(searchParams.toString());
-
-      for (const [key, value] of Object.entries(updates)) {
-        const paramKey = URL_PARAM_KEYS[key as keyof typeof URL_PARAM_KEYS];
-        if (value === null || value === "") {
-          params.delete(paramKey);
-        } else {
-          params.set(paramKey, value);
-        }
-      }
-
-      const queryString = params.toString();
-      const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
-      router.replace(newUrl, { scroll: false });
-    },
-    [router, pathname, searchParams]
-  );
-
-  // Helper to push to history (for view changes that should be navigable with back/forward)
-  const pushParams = useCallback(
-    (updates: Partial<Record<keyof typeof URL_PARAM_KEYS, string | null>>) => {
-      const params = new URLSearchParams(searchParams.toString());
-
-      for (const [key, value] of Object.entries(updates)) {
-        const paramKey = URL_PARAM_KEYS[key as keyof typeof URL_PARAM_KEYS];
-        if (value === null || value === "") {
-          params.delete(paramKey);
-        } else {
-          params.set(paramKey, value);
-        }
-      }
-
-      const queryString = params.toString();
-      const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
-      router.push(newUrl, { scroll: false });
-    },
-    [router, pathname, searchParams]
-  );
-
-  // Actions
-  const setView = useCallback(
-    (view: BoardView) => {
-      pushParams({ view: view === defaultView ? null : view });
-    },
-    [pushParams, defaultView]
-  );
-
-  const setSortBy = useCallback(
-    (sort: SortOption) => {
-      updateParams({ sort: sort === DEFAULT_SORT ? null : sort });
-    },
-    [updateParams]
-  );
-
-  const setSelectedStatusIds = useCallback(
-    (ids: string[]) => {
-      updateParams({ status: serializeArrayParam(ids) });
-    },
-    [updateParams]
-  );
-
-  const setSelectedTagIds = useCallback(
-    (ids: string[]) => {
-      updateParams({ tags: serializeArrayParam(ids) });
-    },
-    [updateParams]
-  );
-
-  const setSelectedTagId = useCallback(
-    (id: string | null) => {
-      updateParams({ tag: id });
-    },
-    [updateParams]
-  );
-
-  const setSearchQuery = useCallback(
-    (query: string) => {
-      updateParams({ search: query || null });
-    },
-    [updateParams]
-  );
-
-  const openSubmitDrawer = useCallback(() => {
-    pushParams({ newFeedback: "1" });
-  }, [pushParams]);
-
-  const closeSubmitDrawer = useCallback(() => {
+  function navigate(updates: Record<string, string | null>, push = false) {
     const params = new URLSearchParams(searchParams.toString());
-    params.delete(URL_PARAM_KEYS.newFeedback);
-    const queryString = params.toString();
-    const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
-    router.replace(newUrl, { scroll: false });
-  }, [router, pathname, searchParams]);
-
-  const handleStatusChange = useCallback(
-    (statusId: string, checked: boolean) => {
-      const newIds = checked
-        ? [...state.selectedStatusIds, statusId]
-        : state.selectedStatusIds.filter((id) => id !== statusId);
-      setSelectedStatusIds(newIds);
-    },
-    [state.selectedStatusIds, setSelectedStatusIds]
-  );
-
-  const handleTagChange = useCallback(
-    (tagId: string, checked: boolean) => {
-      const newIds = checked
-        ? [...state.selectedTagIds, tagId]
-        : state.selectedTagIds.filter((id) => id !== tagId);
-      setSelectedTagIds(newIds);
-    },
-    [state.selectedTagIds, setSelectedTagIds]
-  );
-
-  const clearFilters = useCallback(() => {
-    const params = new URLSearchParams();
-    if (state.view !== defaultView) {
-      params.set(URL_PARAM_KEYS.view, state.view);
+    for (const [key, value] of Object.entries(updates)) {
+      if (value) {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
     }
-    if (state.sortBy !== DEFAULT_SORT) {
-      params.set(URL_PARAM_KEYS.sort, state.sortBy);
+    const query = params.toString();
+    const url = query ? `${pathname}?${query}` : pathname;
+    if (push) {
+      router.push(url, { scroll: false });
+    } else {
+      router.replace(url, { scroll: false });
     }
-    const queryString = params.toString();
-    const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
-    router.replace(newUrl, { scroll: false });
-  }, [router, pathname, state.view, state.sortBy, defaultView]);
-
-  const setHideCompleted = useCallback(
-    (hide: boolean) => {
-      // "hide" is the default, so only store "0" (show) in the URL
-      updateParams({ hideCompleted: hide ? null : "0" });
-    },
-    [updateParams]
-  );
-
-  const hasActiveFilters =
-    !!state.searchQuery ||
-    state.selectedStatusIds.length > 0 ||
-    state.selectedTagIds.length > 0 ||
-    state.selectedTagId !== null;
-
+  }
+  const setSelectedTagIds = (ids: string[]) =>
+    navigate({ tag: null, tags: ids.join(",") });
+  const setSelectedStatusIds = (ids: string[]) =>
+    navigate({ status: ids.join(",") });
   return {
-    ...state,
-    clearFilters,
-    closeSubmitDrawer,
-    handleStatusChange,
-    handleTagChange,
-    hasActiveFilters,
-    openSubmitDrawer,
-    setHideCompleted,
-    setSearchQuery,
+    clearFilters: () =>
+      navigate({
+        hide_completed: null,
+        new: null,
+        q: null,
+        status: null,
+        tag: null,
+        tags: null,
+      }),
+    closeSubmitDrawer: () => navigate({ new: null }),
+    handleStatusChange: (id, checked) =>
+      setSelectedStatusIds(
+        selectedIdsAfterToggle(selectedStatusIds, id, checked)
+      ),
+    handleTagChange: (id, checked) =>
+      setSelectedTagIds(selectedIdsAfterToggle(selectedTagIds, id, checked)),
+    hasActiveFilters: Boolean(
+      searchQuery || selectedStatusIds.length || selectedTagIds.length
+    ),
+    hideCompleted: searchParams.get("hide_completed") !== "0",
+    openSubmitDrawer: () => navigate({ new: "1" }, true),
+    searchQuery,
+    selectedStatusIds,
+    selectedTagIds,
+    setHideCompleted: (hide) => navigate({ hide_completed: hide ? null : "0" }),
+    setSearchQuery: (query) => navigate({ q: query }),
     setSelectedStatusIds,
-    setSelectedTagId,
     setSelectedTagIds,
-    setSortBy,
-    setView,
+    setSortBy: (next) =>
+      navigate({ sort: next === DEFAULT_SORT ? null : next }),
+    setView: (next) =>
+      navigate({ view: next === defaultView ? null : next }, true),
+    showSubmitDrawer: searchParams.get("new") === "1",
+    sortBy,
+    view,
   };
 }

@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { getAuthUser } from "../shared/utils";
+import { confirmTag, refuseTag } from "./tag_decisions";
 
 const generateSlug = (name: string): string =>
   name
@@ -19,7 +20,6 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
-    // Check admin/owner permission
     const membership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>
@@ -31,10 +31,8 @@ export const create = mutation({
       throw new Error("Only admins can create tags");
     }
 
-    // Generate or validate slug
     let slug = args.slug ?? generateSlug(args.name);
 
-    // Ensure slug is unique within the organization
     const existingTag = await ctx.db
       .query("tags")
       .withIndex("by_org_slug", (q) =>
@@ -77,7 +75,6 @@ export const update = mutation({
       throw new Error("Tag not found");
     }
 
-    // Check admin/owner permission
     const membership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>
@@ -89,7 +86,6 @@ export const update = mutation({
       throw new Error("Only admins can update tags");
     }
 
-    // Handle slug uniqueness if changing
     if (args.slug && args.slug !== tag.slug) {
       const newSlug = args.slug;
       const existingTag = await ctx.db
@@ -121,7 +117,6 @@ export const remove = mutation({
       throw new Error("Tag not found");
     }
 
-    // Check admin/owner permission
     const membership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>
@@ -133,7 +128,6 @@ export const remove = mutation({
       throw new Error("Only admins can delete tags");
     }
 
-    // Remove tag from all feedback
     const feedbackTags = await ctx.db
       .query("feedbackTags")
       .withIndex("by_tag", (q) => q.eq("tagId", args.id))
@@ -166,12 +160,10 @@ export const addToFeedback = mutation({
       throw new Error("Tag not found");
     }
 
-    // Verify tag belongs to same org
     if (tag.organizationId !== feedback.organizationId) {
       throw new Error("Tag does not belong to this organization");
     }
 
-    // Check membership
     const membership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>
@@ -183,24 +175,7 @@ export const addToFeedback = mutation({
       throw new Error("Only admins can add tags to feedback");
     }
 
-    // Check if already added
-    const existing = await ctx.db
-      .query("feedbackTags")
-      .withIndex("by_feedback_tag", (q) =>
-        q.eq("feedbackId", args.feedbackId).eq("tagId", args.tagId)
-      )
-      .unique();
-
-    if (existing) {
-      return existing._id;
-    }
-
-    const id = await ctx.db.insert("feedbackTags", {
-      feedbackId: args.feedbackId,
-      tagId: args.tagId,
-    });
-
-    return id;
+    return confirmTag(ctx, feedback, args.tagId);
   },
 });
 
@@ -217,7 +192,6 @@ export const removeFromFeedback = mutation({
       throw new Error("Feedback not found");
     }
 
-    // Check membership
     const membership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>
@@ -229,16 +203,7 @@ export const removeFromFeedback = mutation({
       throw new Error("Only admins can remove tags from feedback");
     }
 
-    const feedbackTag = await ctx.db
-      .query("feedbackTags")
-      .withIndex("by_feedback_tag", (q) =>
-        q.eq("feedbackId", args.feedbackId).eq("tagId", args.tagId)
-      )
-      .unique();
-
-    if (feedbackTag) {
-      await ctx.db.delete(feedbackTag._id);
-    }
+    await refuseTag(ctx, feedback, args.tagId);
 
     return true;
   },

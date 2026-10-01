@@ -9,6 +9,7 @@ import {
 import { PRIORITY_RANK } from "../intelligence/feedback_integration";
 import { feedbackStatus } from "../shared/validators";
 import { shapeFeedbackDetail } from "./api_public_list";
+import { resolvePropertyValue } from "./property_values";
 import { changeFeedbackStatus } from "./status_change";
 
 export const CLAIM_TTL_MS = 2 * 60 * 60 * 1000;
@@ -41,7 +42,12 @@ function claimIsLive(feedback: Doc<"feedback">, now: number): boolean {
 }
 
 function priorityRank(feedback: Doc<"feedback">): number {
-  return PRIORITY_RANK[feedback.priority ?? feedback.aiPriority ?? "none"] ?? 0;
+  return (
+    PRIORITY_RANK[
+      resolvePropertyValue(feedback.priority, feedback.aiPriority).value ??
+        "none"
+    ] ?? 0
+  );
 }
 
 function compareQueueOrder(a: Doc<"feedback">, b: Doc<"feedback">): number {
@@ -74,7 +80,6 @@ async function pickNext(
   );
   const tagIds = new Set(filter.tagIds ?? []);
 
-  // ponytail: full org scan, add a by_org_status index if queues grow past a few thousand items
   const all = await ctx.db
     .query("feedback")
     .withIndex("by_organization", (q) =>

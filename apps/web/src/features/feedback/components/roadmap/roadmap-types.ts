@@ -1,4 +1,4 @@
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
 import type { FeedbackItem } from "../feed-feedback-view";
 
 export interface RoadmapViewProps {
@@ -7,6 +7,7 @@ export interface RoadmapViewProps {
   onFeedbackClick: (feedbackId: string) => void;
   organizationId: Id<"organizations">;
   statuses: Array<{
+    semanticStatus?: Doc<"feedback">["status"];
     _id: Id<"organizationStatuses">;
     name: string;
     color: string;
@@ -25,7 +26,10 @@ export interface DroppableColumnProps {
   items: FeedbackItem[];
   onDeleteClick: () => void;
   onFeedbackClick: (feedbackId: string) => void;
-  status: { _id: Id<"organizationStatuses">; name: string; color: string };
+  status: Pick<
+    Doc<"organizationStatuses">,
+    "_id" | "name" | "color" | "semanticStatus"
+  >;
 }
 
 export interface OptimisticUpdate {

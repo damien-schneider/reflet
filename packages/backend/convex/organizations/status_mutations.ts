@@ -2,17 +2,15 @@ import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { changeFeedbackStatus } from "../feedback/status_change";
 import { getAuthUser } from "../shared/utils";
+import { feedbackStatus } from "../shared/validators";
 
-// Default statuses to create for new organizations (used as roadmap columns)
-/**
- * List all statuses for an organization (ordered)
- */
 export const create = mutation({
   args: {
     color: v.string(),
     icon: v.optional(v.string()),
     name: v.string(),
     organizationId: v.id("organizations"),
+    semanticStatus: v.optional(feedbackStatus),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -22,7 +20,6 @@ export const create = mutation({
       throw new Error("Organization not found");
     }
 
-    // Check membership (admin/owner only)
     const membership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>
@@ -34,7 +31,6 @@ export const create = mutation({
       throw new Error("Only admins can create statuses");
     }
 
-    // Get highest order
     const statuses = await ctx.db
       .query("organizationStatuses")
       .withIndex("by_organization", (q) =>
@@ -52,6 +48,7 @@ export const create = mutation({
       name: args.name,
       order: maxOrder + 1,
       organizationId: args.organizationId,
+      semanticStatus: args.semanticStatus ?? "open",
       updatedAt: now,
     });
 
@@ -65,6 +62,7 @@ export const update = mutation({
     icon: v.optional(v.string()),
     id: v.id("organizationStatuses"),
     name: v.optional(v.string()),
+    semanticStatus: v.optional(feedbackStatus),
   },
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
@@ -74,7 +72,6 @@ export const update = mutation({
       throw new Error("Status not found");
     }
 
-    // Check membership (admin/owner only)
     const membership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>
@@ -86,6 +83,15 @@ export const update = mutation({
       throw new Error("Only admins can update statuses");
     }
 
+    if (
+      args.semanticStatus &&
+      status.semanticStatus &&
+      args.semanticStatus !== status.semanticStatus
+    ) {
+      throw new Error(
+        "Lifecycle meaning is stable; create a new status to change it"
+      );
+    }
     const { id, ...updates } = args;
     await ctx.db.patch(id, {
       ...updates,
@@ -109,7 +115,6 @@ export const reorder = mutation({
       throw new Error("Organization not found");
     }
 
-    // Check membership (admin/owner only)
     const membership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>
@@ -156,7 +161,6 @@ export const remove = mutation({
       throw new Error("Statuses must be from the same organization");
     }
 
-    // Check membership (admin/owner only)
     const membership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>
@@ -168,7 +172,6 @@ export const remove = mutation({
       throw new Error("Only admins can delete statuses");
     }
 
-    // Move all feedback to target status
     const feedbackItems = await ctx.db
       .query("feedback")
       .withIndex("by_org_status_id", (q) =>
@@ -184,7 +187,6 @@ export const remove = mutation({
       });
     }
 
-    // Delete the status
     await ctx.db.delete(args.id);
 
     return true;

@@ -4,53 +4,18 @@ import { authComponent } from "../auth/auth";
 import { getAuthUser } from "../shared/utils";
 import { canViewFeedback } from "./public_projection";
 
-// Helper to generate slug from name
-const DEFAULT_TAGS = [
-  {
-    color: "#3b82f6",
-    description: "New feature suggestions and ideas",
-    name: "Feature Request",
-    slug: "feature-request",
-  },
-  {
-    color: "#ef4444",
-    description: "Issues and problems to be fixed",
-    name: "Bug Report",
-    slug: "bug-report",
-  },
-  {
-    color: "#8b5cf6",
-    description: "Improvements to existing features",
-    name: "Enhancement",
-    slug: "enhancement",
-  },
-  {
-    color: "#f59e0b",
-    description: "Questions and support requests",
-    name: "Question",
-    slug: "question",
-  },
-] as const;
+import { DEFAULT_TAGS } from "./tag_definitions";
 
-// ============================================
-// QUERIES
-// ============================================
-
-/**
- * List all tags for an organization
- */
 export const list = query({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
     const user = await authComponent.safeGetAuthUser(ctx);
 
-    // Get organization
     const org = await ctx.db.get(args.organizationId);
     if (!org) {
       return [];
     }
 
-    // Check access
     let isMember = false;
     if (user) {
       const membership = await ctx.db
@@ -73,7 +38,6 @@ export const list = query({
       )
       .collect();
 
-    // Sort alphabetically by name
     return tags.sort((a, b) => a.name.localeCompare(b.name));
   },
 });
@@ -100,7 +64,6 @@ export const getBySlug = query({
       return null;
     }
 
-    // Tags are accessible if org is public or user is a member
     const user = await authComponent.safeGetAuthUser(ctx);
 
     let isMember = false;
@@ -177,7 +140,6 @@ export const createDefaults = mutation({
       throw new Error("Organization not found");
     }
 
-    // Check membership
     const membership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>
@@ -189,7 +151,6 @@ export const createDefaults = mutation({
       throw new Error("You are not a member of this organization");
     }
 
-    // Check if tags already exist
     const existingTags = await ctx.db
       .query("tags")
       .withIndex("by_organization", (q) =>

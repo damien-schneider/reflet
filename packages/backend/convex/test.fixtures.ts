@@ -1,3 +1,4 @@
+import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
 
@@ -84,4 +85,66 @@ export async function scheduledFunctionNames(
 ): Promise<string[]> {
   const scheduled = await ctx.db.system.query("_scheduled_functions").collect();
   return scheduled.map((job) => job.name);
+}
+
+export async function applyRecordedTriage(
+  t: import("./test.helpers").TestContext,
+  input: {
+    feedbackId: Id<"feedback">;
+    tagIds?: Id<"tags">[];
+    applyModeration?: boolean;
+    junk?: number;
+    needsReview?: number;
+    usefulness?: number;
+  }
+) {
+  const snapshot = await t.run(async (ctx) => {
+    const feedback = await ctx.db.get(input.feedbackId);
+    if (!feedback) {
+      throw new Error("Feedback not found");
+    }
+    const tags = await ctx.db
+      .query("tags")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", feedback.organizationId)
+      )
+      .collect();
+    return {
+      feedback,
+      tags: tags.map((tag) => ({
+        _id: tag._id,
+        description: tag.description,
+        name: tag.name,
+      })),
+    };
+  });
+  const runId = await t.mutation(internal.feedback.triage_runs.start, {
+    applyModeration: input.applyModeration ?? false,
+    feedbackId: input.feedbackId,
+    input: {
+      description: snapshot.feedback.description,
+      title: snapshot.feedback.title,
+    },
+    tags: snapshot.tags,
+  });
+  const tagIds = input.tagIds ?? [];
+  const junk = input.junk ?? 0;
+  const needsReview = input.needsReview ?? 0;
+  const usefulness = input.usefulness ?? 1;
+  return t.mutation(internal.feedback.triage_runs.complete, {
+    answers: [
+      { probability: junk, questionId: "junk" },
+      { probability: needsReview, questionId: "needsReview" },
+      { probability: usefulness, questionId: "usefulness" },
+      ...snapshot.tags.map((tag) => ({
+        probability: tagIds.includes(tag._id) ? 0.9 : 0.1,
+        questionId: `tag:${tag._id}`,
+      })),
+    ],
+    junk,
+    needsReview,
+    runId,
+    tagIds,
+    usefulness,
+  });
 }

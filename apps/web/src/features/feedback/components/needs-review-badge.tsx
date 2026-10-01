@@ -1,9 +1,9 @@
+import { NEEDS_CLARIFICATION_THRESHOLD } from "@reflet/backend/convex/feedback/property_values";
 import { AiMiniIndicator } from "./ai-mini-indicator";
 
-const NEEDS_REVIEW_THRESHOLD = 0.75;
-
 const needsHumanReview = (probability?: number | null) =>
-  typeof probability === "number" && probability >= NEEDS_REVIEW_THRESHOLD;
+  typeof probability === "number" &&
+  probability >= NEEDS_CLARIFICATION_THRESHOLD;
 
 export function NeedsReviewBadge({
   probability,
@@ -14,5 +14,5 @@ export function NeedsReviewBadge({
     return null;
   }
 
-  return <AiMiniIndicator label="Needs review" type="needs_review" />;
+  return <AiMiniIndicator label="Needs clarification" type="needs_review" />;
 }

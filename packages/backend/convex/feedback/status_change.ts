@@ -3,7 +3,8 @@ import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import type { FeedbackStatusValue } from "../shared/validators";
 import { emitWebhookEvent } from "../webhooks/mutations";
-import { isFinishedStatus, mapStatusNameToEnum } from "./status_utils";
+import { resolveStatusTarget } from "./status_target";
+import { isFinishedStatus } from "./status_utils";
 
 export type StatusChangeSource =
   | "user"
@@ -20,39 +21,6 @@ export interface StatusChange {
   organizationStatusId?: Id<"organizationStatuses"> | null;
   source: StatusChangeSource;
   status?: FeedbackStatusValue;
-}
-
-async function resolveTarget(
-  ctx: MutationCtx,
-  feedback: Doc<"feedback">,
-  change: StatusChange
-): Promise<{
-  organizationStatusId: Id<"organizationStatuses"> | undefined;
-  status: FeedbackStatusValue;
-}> {
-  if (change.organizationStatusId === undefined) {
-    return {
-      organizationStatusId: feedback.organizationStatusId,
-      status: change.status ?? feedback.status,
-    };
-  }
-  if (change.organizationStatusId === null) {
-    return {
-      organizationStatusId: undefined,
-      status: change.status ?? feedback.status,
-    };
-  }
-  const organizationStatus = await ctx.db.get(change.organizationStatusId);
-  if (
-    !organizationStatus ||
-    organizationStatus.organizationId !== feedback.organizationId
-  ) {
-    throw new Error("Invalid status for this organization");
-  }
-  return {
-    organizationStatusId: organizationStatus._id,
-    status: change.status ?? mapStatusNameToEnum(organizationStatus.name),
-  };
 }
 
 async function scheduleGithubSideEffects(
@@ -117,7 +85,7 @@ export async function changeFeedbackStatus(
   feedback: Doc<"feedback">,
   change: StatusChange
 ): Promise<boolean> {
-  const target = await resolveTarget(ctx, feedback, change);
+  const target = await resolveStatusTarget(ctx, feedback, change);
   const statusChanged = target.status !== feedback.status;
   const organizationStatusChanged =
     target.organizationStatusId !== feedback.organizationStatusId;

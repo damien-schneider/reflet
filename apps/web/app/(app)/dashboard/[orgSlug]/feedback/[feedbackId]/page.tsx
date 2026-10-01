@@ -19,6 +19,7 @@ import Link from "next/link";
 import { use } from "react";
 import { Muted } from "@/components/ui/typography";
 import { OrgNotFound } from "@/features/dashboard/components/org-not-found";
+import { FeedbackMetadataBar } from "@/features/feedback/components/feedback-detail/feedback-metadata-bar";
 import { useCreateGithubIssue } from "@/features/github/hooks/use-create-github-issue";
 import { DEFAULT_PRIMARY_COLOR } from "@/lib/branding";
 import { FeedbackHeader } from "./feedback-header";
@@ -66,6 +67,10 @@ function FeedbackDetail({
     <div className="flex h-full flex-col">
       <FeedbackDetailHeader feedback={feedback} org={org} orgSlug={orgSlug} />
 
+      <FeedbackMetadataBar
+        feedback={feedback}
+        isAdmin={feedback.role === "admin" || feedback.role === "owner"}
+      />
       <div className="flex-1 overflow-auto p-6">
         <div className="mx-auto max-w-3xl">
           {feedback.description && (

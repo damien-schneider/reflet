@@ -73,15 +73,15 @@ test("an anonymous caller gets nothing from a private org's roadmap", async () =
   const t = setupTest({ authUsers: [MEMBER] });
   const { feedbackId, organizationId } = await seed(t, false);
 
-  expect(await t.query(api.feedback.roadmap.list, { organizationId })).toEqual(
-    []
-  );
+  expect(
+    await t.query(api.feedback.list.listByOrganization, { organizationId })
+  ).toEqual([]);
   expect(
     await t.query(api.feedback.tags.getForFeedback, { feedbackId })
   ).toEqual([]);
 
   const member = t.withIdentity({ sessionId: MEMBER._id, subject: MEMBER._id });
-  const own = await member.query(api.feedback.roadmap.list, {
+  const own = await member.query(api.feedback.list.listByOrganization, {
     organizationId,
   });
   expect(own).toHaveLength(1);
@@ -97,11 +97,8 @@ test("public queries hide private fields and emails from non-members", async () 
   });
 
   const lists = await Promise.all([
-    outsider.query(api.feedback.roadmap.list, { organizationId }),
     outsider.query(api.feedback.list.listByOrganization, { organizationId }),
-    outsider.query(api.feedback.list.listForRoadmapByOrganization, {
-      organizationId,
-    }),
+    outsider.query(api.feedback.list.listByOrganization, { organizationId }),
     t.query(api.feedback.actions.listPublic, { organizationId }),
   ]);
   for (const items of lists) {
@@ -252,4 +249,28 @@ test("non-members cannot comment on or vote for unapproved feedback", async () =
   });
   const feedback = await t.run((ctx) => ctx.db.get(feedbackId));
   expect(feedback?.commentCount).toBe(2);
+});
+
+test("internal approved feedback stays private across overview, detail and metadata", async () => {
+  const t = setupTest({ authUsers: [MEMBER] });
+  const { feedbackId, organizationId } = await seed(t, true);
+  await t.run((ctx) => ctx.db.patch(feedbackId, { isInternal: true }));
+  expect(
+    await t.query(api.feedback.list.listByOrganization, { organizationId })
+  ).toEqual([]);
+  expect(
+    await t.query(api.feedback.queries.get, { id: feedbackId })
+  ).toBeNull();
+  expect(
+    await t.query(api.feedback.queries.getPublicMeta, { id: feedbackId })
+  ).toBeNull();
+  expect(
+    await t.query(api.feedback.queries.getShippedMeta, { id: feedbackId })
+  ).toBeNull();
+  const member = t.withIdentity({ sessionId: MEMBER._id, subject: MEMBER._id });
+  await member.mutation(api.feedback.mutations.update, {
+    id: feedbackId,
+    isApproved: true,
+  });
+  expect((await t.run((ctx) => ctx.db.get(feedbackId)))?.isInternal).toBe(true);
 });

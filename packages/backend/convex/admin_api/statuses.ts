@@ -1,9 +1,7 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "../_generated/server";
-
-// ============================================
-// STATUS QUERIES
-// ============================================
+import { changeFeedbackStatus } from "../feedback/status_change";
+import { feedbackStatus } from "../shared/validators";
 
 export const listStatuses = internalQuery({
   args: {
@@ -23,13 +21,10 @@ export const listStatuses = internalQuery({
       id: s._id,
       name: s.name,
       order: s.order,
+      semanticStatus: s.semanticStatus,
     }));
   },
 });
-
-// ============================================
-// STATUS MUTATIONS
-// ============================================
 
 export const createStatus = internalMutation({
   args: {
@@ -37,6 +32,7 @@ export const createStatus = internalMutation({
     icon: v.optional(v.string()),
     name: v.string(),
     organizationId: v.id("organizations"),
+    semanticStatus: v.optional(feedbackStatus),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
@@ -55,6 +51,7 @@ export const createStatus = internalMutation({
       name: args.name,
       order: maxOrder + 1,
       organizationId: args.organizationId,
+      semanticStatus: args.semanticStatus ?? "open",
       updatedAt: now,
     });
 
@@ -105,7 +102,21 @@ export const deleteStatus = internalMutation({
       throw new Error("Status not found");
     }
 
-    // Unset this status from any feedback that uses it
+    const columns = await ctx.db
+      .query("organizationStatuses")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .collect();
+    if (
+      !columns.some(
+        (column) =>
+          column._id !== args.statusId &&
+          column.semanticStatus === status.semanticStatus
+      )
+    ) {
+      throw new Error("Keep at least one column for this lifecycle state");
+    }
     const orgFeedback = await ctx.db
       .query("feedback")
       .withIndex("by_organization", (q) =>
@@ -115,9 +126,18 @@ export const deleteStatus = internalMutation({
 
     for (const f of orgFeedback) {
       if (f.organizationStatusId === args.statusId) {
-        await ctx.db.patch(f._id, {
-          organizationStatusId: undefined,
-          updatedAt: Date.now(),
+        const replacement = columns.find(
+          (column) =>
+            column._id !== args.statusId &&
+            column.semanticStatus === status.semanticStatus
+        );
+        if (!replacement) {
+          throw new Error("No replacement column");
+        }
+        await changeFeedbackStatus(ctx, f, {
+          actorId: "api",
+          organizationStatusId: replacement._id,
+          source: "api",
         });
       }
     }

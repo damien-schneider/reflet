@@ -12,13 +12,14 @@ import { toast } from "@ctrl-ui/react/ui/toast";
 import { ArrowSquareOut, CheckCircle, Trash } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { clarificationValue } from "@reflet/backend/convex/feedback/property_values";
+import { WITHHOLD_JUNK_THRESHOLD } from "@reflet/backend/convex/feedback/triage_questions";
 import { useMutation, useQuery } from "convex/react";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import { useState } from "react";
 import { DestructiveConfirmDialog } from "@/components/ui/destructive-confirm-dialog";
 import { AiMiniIndicator } from "./ai-mini-indicator";
-import { NeedsReviewBadge } from "./needs-review-badge";
 import {
   AllCaughtUp,
   ReviewQueueSkeleton,
@@ -43,6 +44,7 @@ interface PendingItem {
   aiUsefulness?: number;
   createdAt: number;
   description?: string;
+  needsClarification?: boolean;
   source?: keyof typeof SOURCE_LABELS;
   title: string;
 }
@@ -71,10 +73,10 @@ function HoldReason({
   junk?: number;
   usefulness?: number;
 }) {
-  if (junk !== undefined) {
+  if (junk !== undefined && junk >= WITHHOLD_JUNK_THRESHOLD) {
     return (
       <AiMiniIndicator
-        label={`${Math.round(junk * PERCENTAGE_SCALE)}% likely junk`}
+        label={`JEV suggests rejection · ${Math.round(junk * PERCENTAGE_SCALE)}%`}
         type="high"
       />
     );
@@ -128,7 +130,11 @@ function PendingReviewCard({
           </div>
           <div className="flex shrink-0 items-center gap-1">
             <HoldReason junk={item.aiJunk} usefulness={item.aiUsefulness} />
-            <NeedsReviewBadge probability={item.aiNeedsReview} />
+            {clarificationValue(item).value && (
+              <Badge size="sm" variant="outline">
+                Needs clarification
+              </Badge>
+            )}
           </div>
         </div>
       </CardHeader>
@@ -156,7 +162,7 @@ function PendingReviewCard({
                 {pendingAction === "approve" ? "Approving…" : "Approve"}
               </Button>
               <Button
-                aria-label={`Dismiss ${item.title}`}
+                aria-label={`Reject ${item.title}`}
                 disabled={disabled}
                 onClick={onDismiss}
                 size="xs"
@@ -164,7 +170,7 @@ function PendingReviewCard({
                 variant="ghost"
               >
                 <Trash aria-hidden className="size-3.5" />
-                {pendingAction === "dismiss" ? "Dismissing…" : "Dismiss"}
+                {pendingAction === "dismiss" ? "Archiving…" : "Reject"}
               </Button>
             </>
           )}
@@ -197,24 +203,23 @@ function DismissConfirmDialog({
 }) {
   return (
     <DestructiveConfirmDialog
-      confirmLabel="Dismiss feedback"
+      confirmLabel="Reject and archive"
       description={
         <>
-          “{item?.title}” will be deleted and won’t appear on the board. This
-          can’t be undone.
+          “{item?.title}” will be rejected for publication and archived in
+          Trash. An admin can restore it.
         </>
       }
       onConfirm={() => item && onConfirm(item)}
       onOpenChange={(open) => !open && onClose()}
       open={item !== null}
-      title="Dismiss this feedback?"
+      title="Reject this feedback?"
     />
   );
 }
 
 function usePendingReviewActions() {
-  const updateFeedback = useMutation(api.feedback.mutations.update);
-  const removeFeedback = useMutation(api.feedback.actions.remove);
+  const setPublication = useMutation(api.feedback.publication.setState);
   const [pending, setPending] = useState<{
     action: PendingAction;
     id: Id<"feedback">;
@@ -230,9 +235,9 @@ function usePendingReviewActions() {
     setPending({ action, id: item._id });
     try {
       if (action === "approve") {
-        await updateFeedback({ id: item._id, isApproved: true });
+        await setPublication({ feedbackId: item._id, state: "approved" });
       } else {
-        await removeFeedback({ id: item._id });
+        await setPublication({ feedbackId: item._id, state: "rejected" });
       }
       setAnnouncement(`${doneLabel} “${item.title}”`);
     } catch {
@@ -244,7 +249,9 @@ function usePendingReviewActions() {
   const approveAll = async (items: PendingItem[]) => {
     setIsApprovingAll(true);
     const results = await Promise.allSettled(
-      items.map((item) => updateFeedback({ id: item._id, isApproved: true }))
+      items.map((item) =>
+        setPublication({ feedbackId: item._id, state: "approved" })
+      )
     );
     const failed = results.filter((r) => r.status === "rejected").length;
     if (failed > 0) {

@@ -128,3 +128,26 @@ describe("agent queue", () => {
     expect(own.claimedBy).toBe("agent-1");
   });
 });
+
+test("an explicit human priority removal prevents the AI proposal from ranking the queue", async () => {
+  const t = convexTest(schema, modules);
+  const { organizationId, manuallyPrioritizedId } = await t.run(async (ctx) => {
+    const organizationId = await seedOrganization(ctx);
+    await seedFeedback(ctx, organizationId, {
+      aiPriority: "critical",
+      priority: null,
+      title: "AI critical, manually cleared",
+      voteCount: 1,
+    });
+    const manuallyPrioritizedId = await seedFeedback(ctx, organizationId, {
+      priority: "high",
+      title: "Human high",
+      voteCount: 0,
+    });
+    return { manuallyPrioritizedId, organizationId };
+  });
+  const next = await t.query(internal.feedback.agent_queue.nextFeedback, {
+    organizationId,
+  });
+  expect(next[0].id).toBe(manuallyPrioritizedId);
+});

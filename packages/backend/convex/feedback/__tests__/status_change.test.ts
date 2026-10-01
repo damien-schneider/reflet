@@ -13,7 +13,55 @@ import { modules } from "../../test.helpers";
 import { changeFeedbackStatus } from "../status_change";
 
 describe("changeFeedbackStatus", () => {
-  test("sets completedAt on completion, clears it on reopen, logs each change", async () => {
+  test("finishing moves out of Backlog and moving back reopens", async () => {
+    const t = convexTest(schema, modules);
+    await t.run(async (ctx) => {
+      const organizationId = await seedOrganization(ctx);
+      const now = Date.now();
+      const backlogId = await ctx.db.insert("organizationStatuses", {
+        color: "gray",
+        createdAt: now,
+        name: "Backlog",
+        order: 0,
+        organizationId,
+        semanticStatus: "open",
+        updatedAt: now,
+      });
+      const doneId = await ctx.db.insert("organizationStatuses", {
+        color: "green",
+        createdAt: now,
+        name: "Livré",
+        order: 1,
+        organizationId,
+        semanticStatus: "completed",
+        updatedAt: now,
+      });
+      const feedbackId = await seedFeedback(ctx, organizationId, {
+        organizationStatusId: backlogId,
+      });
+      const feedback = await ctx.db.get(feedbackId);
+      if (!feedback) {
+        throw new Error("seed failed");
+      }
+      await changeFeedbackStatus(ctx, feedback, {
+        actorId: "system",
+        source: "github",
+        status: "completed",
+      });
+      const completed = await ctx.db.get(feedbackId);
+      expect(completed?.organizationStatusId).toBe(doneId);
+      if (!completed) {
+        throw new Error("missing feedback");
+      }
+      await changeFeedbackStatus(ctx, completed, {
+        actorId: "user-1",
+        organizationStatusId: backlogId,
+        source: "user",
+      });
+      expect((await ctx.db.get(feedbackId))?.status).toBe("open");
+    });
+  });
+  test("clears the current completion date on reopen and logs each change", async () => {
     const t = convexTest(schema, modules);
 
     const result = await t.run(async (ctx) => {
@@ -70,6 +118,20 @@ describe("changeFeedbackStatus", () => {
     const result = await t.run(async (ctx) => {
       const organizationId = await seedOrganization(ctx);
       const feedbackId = await seedFeedback(ctx, organizationId);
+      const initial = await ctx.db.get(feedbackId);
+      if (!initial) {
+        throw new Error("seed failed");
+      }
+      await changeFeedbackStatus(ctx, initial, {
+        actorId: "system",
+        source: "user",
+        status: "open",
+      });
+      await Promise.all(
+        (await ctx.db.query("activityLogs").collect()).map((log) =>
+          ctx.db.delete(log._id)
+        )
+      );
       const feedback = await ctx.db.get(feedbackId);
       if (!feedback) {
         throw new Error("seed failed");
@@ -87,7 +149,7 @@ describe("changeFeedbackStatus", () => {
     expect(result.logs).toHaveLength(0);
   });
 
-  test("derives the enum from the org status name and rejects foreign statuses", async () => {
+  test("uses stable lifecycle semantics after renaming and rejects foreign statuses", async () => {
     const t = convexTest(schema, modules);
 
     await t.run(async (ctx) => {
@@ -99,17 +161,19 @@ describe("changeFeedbackStatus", () => {
       const inProgressId = await ctx.db.insert("organizationStatuses", {
         color: "#000",
         createdAt: now,
-        name: "In Progress",
+        name: "En cours",
         order: 1,
         organizationId,
+        semanticStatus: "in_progress",
         updatedAt: now,
       });
       const foreignStatusId = await ctx.db.insert("organizationStatuses", {
         color: "#000",
         createdAt: now,
-        name: "Done",
+        name: "Livré",
         order: 1,
         organizationId: otherOrganizationId,
+        semanticStatus: "completed",
         updatedAt: now,
       });
       const feedbackId = await seedFeedback(ctx, organizationId);

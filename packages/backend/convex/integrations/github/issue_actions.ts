@@ -1,13 +1,42 @@
 import { v } from "convex/values";
+import { z } from "zod";
 import type { Id } from "../../_generated/dataModel";
 import {
   internalAction,
   internalMutation,
   type MutationCtx,
 } from "../../_generated/server";
+import { statusFieldsFor } from "../../feedback/status_target";
 import { GITHUB_API_URL, githubApiHeaders } from "./github_constants";
 import { feedbackIdFromIssueBody } from "./issue_body";
 import { attachIssueToFeedback } from "./issue_promote";
+
+const githubLabelsResponse = z.array(
+  z.object({
+    color: z.string(),
+    description: z.string().nullable(),
+    id: z.number(),
+    name: z.string(),
+  })
+);
+const githubIssuesResponse = z.array(
+  z.object({
+    assignees: z.array(z.object({ login: z.string() })),
+    body: z.string().nullable(),
+    closed_at: z.string().nullable(),
+    created_at: z.string(),
+    html_url: z.url(),
+    id: z.number(),
+    labels: z.array(z.object({ color: z.string(), name: z.string() })),
+    milestone: z.object({ title: z.string() }).nullable(),
+    number: z.number(),
+    pull_request: z.unknown().optional(),
+    state: z.enum(["open", "closed"]),
+    title: z.string(),
+    updated_at: z.string(),
+    user: z.object({ avatar_url: z.url(), login: z.string() }).nullable(),
+  })
+);
 
 export const fetchIssues = internalAction({
   args: {
@@ -36,24 +65,8 @@ export const fetchIssues = internalAction({
       throw new Error(`Failed to fetch issues: ${response.statusText}`);
     }
 
-    const issues = (await response.json()) as Array<{
-      id: number;
-      number: number;
-      title: string;
-      body: string | null;
-      html_url: string;
-      state: "open" | "closed";
-      labels: Array<{ name: string; color: string }>;
-      user: { login: string; avatar_url: string } | null;
-      milestone: { title: string } | null;
-      assignees: Array<{ login: string }>;
-      created_at: string;
-      updated_at: string;
-      closed_at: string | null;
-      pull_request?: unknown; // Filter out pull requests
-    }>;
+    const issues = githubIssuesResponse.parse(await response.json());
 
-    // Filter out pull requests (they have a pull_request key)
     const actualIssues = issues.filter((issue) => !issue.pull_request);
 
     return actualIssues.map((issue) => ({
@@ -77,9 +90,6 @@ export const fetchIssues = internalAction({
   },
 });
 
-/**
- * Fetch labels from a GitHub repository
- */
 export const fetchLabels = internalAction({
   args: {
     installationToken: v.string(),
@@ -95,12 +105,7 @@ export const fetchLabels = internalAction({
       throw new Error(`Failed to fetch labels: ${response.statusText}`);
     }
 
-    const labels = (await response.json()) as Array<{
-      id: number;
-      name: string;
-      color: string;
-      description: string | null;
-    }>;
+    const labels = githubLabelsResponse.parse(await response.json());
 
     return labels.map((label) => ({
       color: label.color,
@@ -199,7 +204,10 @@ export const autoImportIssueToFeedback = internalMutation({
         isApproved: true,
         isPinned: false,
         organizationId: args.organizationId,
-        status: feedbackStatus,
+        ...(await statusFieldsFor(ctx, {
+          organizationId: args.organizationId,
+          status: feedbackStatus,
+        })),
         syncedFromGithub: true,
         title: args.issue.title,
         updatedAt: now,

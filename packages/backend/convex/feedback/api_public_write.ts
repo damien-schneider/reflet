@@ -7,6 +7,7 @@ import {
 } from "../shared/constants";
 import { validateInputLength } from "../shared/validators";
 import { scheduleAfterCreate } from "./after_create";
+import { statusFieldsFor } from "./status_target";
 import { feedbackContextValidator } from "./tableFields";
 
 const MIN_IMPORTANCE = 1;
@@ -36,34 +37,11 @@ export const createFeedbackByOrganization = internalMutation({
       throw new Error("Organization not found");
     }
 
-    let requireApproval = org.feedbackSettings?.requireApproval ?? false;
-    let defaultStatus:
-      | "open"
-      | "under_review"
-      | "planned"
-      | "in_progress"
-      | "completed"
-      | "closed" = org.feedbackSettings?.defaultStatus ?? "open";
-
-    if (args.tagId) {
-      const tag = await ctx.db.get(args.tagId);
-      if (tag && tag.organizationId === args.organizationId) {
-        requireApproval = tag.settings?.requireApproval ?? requireApproval;
-        defaultStatus = tag.settings?.defaultStatus ?? defaultStatus;
-      }
-    }
-
-    const orgStatuses = await ctx.db
-      .query("organizationStatuses")
-      .withIndex("by_org_order", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .collect();
-    const defaultOrgStatus = orgStatuses.sort((a, b) => a.order - b.order)[0];
+    const defaultStatus = org.feedbackSettings?.defaultStatus ?? "open";
 
     const isAnonymous = !args.externalUserId;
     const isInternal = args.isInternal === true;
-    const isApproved = !(isInternal || requireApproval);
+    const isApproved = false;
     const now = Date.now();
 
     const feedbackId = await ctx.db.insert("feedback", {
@@ -77,9 +55,11 @@ export const createFeedbackByOrganization = internalMutation({
       isInternal: isInternal || undefined,
       isPinned: false,
       organizationId: args.organizationId,
-      organizationStatusId: defaultOrgStatus?._id,
       source: "api",
-      status: defaultStatus,
+      ...(await statusFieldsFor(ctx, {
+        organizationId: args.organizationId,
+        status: defaultStatus,
+      })),
       title: args.title,
       updatedAt: now,
       voteCount: isAnonymous ? 0 : 1,
@@ -101,12 +81,20 @@ export const createFeedbackByOrganization = internalMutation({
     }
 
     if (args.tagId) {
-      await ctx.db.insert("feedbackTags", { feedbackId, tagId: args.tagId });
+      const tag = await ctx.db.get(args.tagId);
+      if (!tag || tag.organizationId !== org._id) {
+        throw new Error("Category does not belong to this organization");
+      }
+      await ctx.db.insert("feedbackTags", {
+        appliedByAi: false,
+        feedbackId,
+        tagId: args.tagId,
+      });
     }
 
     await scheduleAfterCreate(ctx, feedbackId, {
       aiEnrichment: false,
-      autoTagging: !args.tagId,
+      autoTagging: true,
     });
 
     return { feedbackId, isApproved };
@@ -302,8 +290,6 @@ export const setImportanceByOrganization = internalMutation({
       throw new Error("Feedback does not belong to this organization");
     }
 
-    // importance votes are keyed by dashboard userId — external users get a
-    // prefixed pseudo-id, so there is no index to look them up by
     const existingVotes = await ctx.db
       .query("feedbackImportanceVotes")
       .withIndex("by_feedback", (q) => q.eq("feedbackId", args.feedbackId))

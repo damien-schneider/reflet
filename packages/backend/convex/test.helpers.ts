@@ -6,7 +6,6 @@ import { v } from "convex/values";
 import { convexTest } from "convex-test";
 import schema from "./schema";
 
-// glob stays at convex/ root — Vite drops nested test ancestors from ../../ globs
 export const modules = import.meta.glob("./**/*.*s");
 
 export interface AuthTestUser {
@@ -52,7 +51,6 @@ const findAuthRecord = (
   return user;
 };
 
-/** Each user has one never-expiring session whose id is the user id. */
 const createAuthModules = (users: AuthTestUser[]) => ({
   "./_generated/api.ts": () => Promise.resolve({}),
   "./adapter.ts": () =>
@@ -82,3 +80,5 @@ export const setupTest = ({
   rateLimiterTest.register(test);
   return test;
 };
+
+export type TestContext = ReturnType<typeof setupTest>;

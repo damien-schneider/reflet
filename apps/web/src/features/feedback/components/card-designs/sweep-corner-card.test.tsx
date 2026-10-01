@@ -94,29 +94,24 @@ vi.mock("@reflet/ui/feedback-sweep-corner", () => ({
   ),
 }));
 
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { toId } from "@/lib/convex-helpers";
+import type { FeedbackItem } from "../feed-feedback-view";
 import { SweepCornerFeedCard } from "./sweep-corner-card";
 
 afterEach(() => {
   vi.clearAllMocks();
 });
 
-const baseFeedback = {
-  _id: "f1" as Id<"feedback">,
+const baseFeedback: FeedbackItem = {
+  _id: toId("feedback", "f1"),
   commentCount: 4,
   createdAt: Date.now() - 60_000,
   downvoteCount: 4,
-  organizationId: "org1" as Id<"organizations">,
-  tags: [] as Array<{
-    _id: Id<"tags">;
-    name: string;
-    color: string;
-    icon?: string;
-    appliedByAi?: boolean;
-  } | null>,
+  organizationId: toId("organizations", "org1"),
+  tags: [],
   title: "Test Feedback",
   upvoteCount: 6,
-  userVoteType: null as "upvote" | "downvote" | null,
+  userVoteType: null,
   voteCount: 10,
 };
 
@@ -205,10 +200,7 @@ describe("SweepCornerFeedCard", () => {
         onVote={mockVote}
       />
     );
-    const tags = screen.getAllByTestId("tag");
-    const statusTag = tags.find((t) => t.textContent?.includes("Done"));
-    expect(statusTag).toBeDefined();
-    expect(statusTag).toHaveAttribute("data-color", "green");
+    expect(screen.getByText("Done")).toBeInTheDocument();
   });
 
   it("does not render status when absent", () => {
@@ -222,8 +214,8 @@ describe("SweepCornerFeedCard", () => {
         feedback={{
           ...baseFeedback,
           tags: [
-            { _id: "t1" as Id<"tags">, color: "red", name: "Bug" },
-            { _id: "t2" as Id<"tags">, color: "blue", name: "Feature" },
+            { _id: toId("tags", "t1"), color: "red", name: "Bug" },
+            { _id: toId("tags", "t2"), color: "blue", name: "Feature" },
           ],
         }}
         onVote={mockVote}
@@ -245,7 +237,7 @@ describe("SweepCornerFeedCard", () => {
         feedback={{
           ...baseFeedback,
           tags: [
-            { _id: "t1" as Id<"tags">, color: "red", icon: "🐛", name: "Bug" },
+            { _id: toId("tags", "t1"), color: "red", icon: "🐛", name: "Bug" },
           ],
         }}
         onVote={mockVote}
@@ -261,7 +253,7 @@ describe("SweepCornerFeedCard", () => {
           ...baseFeedback,
           tags: [
             {
-              _id: "t1" as Id<"tags">,
+              _id: toId("tags", "t1"),
               appliedByAi: true,
               color: "purple",
               name: "AI",
@@ -279,7 +271,7 @@ describe("SweepCornerFeedCard", () => {
       <SweepCornerFeedCard
         feedback={{
           ...baseFeedback,
-          tags: [null, { _id: "t1" as Id<"tags">, color: "red", name: "Bug" }],
+          tags: [null, { _id: toId("tags", "t1"), color: "red", name: "Bug" }],
         }}
         onVote={mockVote}
       />

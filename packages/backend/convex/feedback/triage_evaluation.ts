@@ -1,34 +1,32 @@
 import { createTypeSafeAi } from "@ai-sdk/typesafe-ai";
+import { env } from "@reflet/env/convex";
 import {
   type Experimental_EvaluationModel as EvaluationModel,
-  type Experimental_EvaluationQuestion as EvaluationQuestion,
   experimental_evaluate as evaluate,
 } from "ai";
 import type { Id } from "../_generated/dataModel";
 
 const typeSafeAi = createTypeSafeAi({
-  apiKey: process.env.OPENROUTER_API_KEY,
+  apiKey: env.OPENROUTER_API_KEY,
   baseURL: "https://openrouter.ai/api/v1",
 });
 
-export const jev: EvaluationModel = typeSafeAi.evaluationModel("jev-1.13");
+export const jev: EvaluationModel = typeSafeAi.evaluationModel(TRIAGE_MODEL);
 
-const USEFULNESS_QUESTION_ID = "usefulness";
-const JUNK_QUESTION_ID = "junk";
-const NEEDS_REVIEW_QUESTION_ID = "needsReview";
-const TAG_QUESTION_PREFIX = "tag:";
-
-const WITHHOLD_JUNK_THRESHOLD = 0.5;
-const MIN_TAG_PROBABILITY = 0.65;
-const MAX_TAGS_PER_FEEDBACK = 3;
-
-export interface TriageTag {
-  _id: Id<"tags">;
-  description?: string;
-  name: string;
-}
-
+import {
+  buildQuestions,
+  JUNK_QUESTION_ID,
+  MAX_TAGS_PER_FEEDBACK,
+  MIN_TAG_PROBABILITY,
+  NEEDS_REVIEW_QUESTION_ID,
+  TAG_QUESTION_PREFIX,
+  TRIAGE_MODEL,
+  type TriageTag,
+  USEFULNESS_QUESTION_ID,
+  WITHHOLD_JUNK_THRESHOLD,
+} from "./triage_questions";
 export interface FeedbackTriage {
+  answers: { questionId: string; probability: number }[];
   junk: number;
   needsReview: number;
   tagIds: Id<"tags">[];
@@ -36,55 +34,7 @@ export interface FeedbackTriage {
   withhold: boolean;
 }
 
-export const isTriageConfigured = () => Boolean(process.env.OPENROUTER_API_KEY);
-
-const buildQuestions = (tags: TriageTag[]) => {
-  const questions: Record<string, EvaluationQuestion> = {
-    [USEFULNESS_QUESTION_ID]: {
-      criteria: {
-        false:
-          "Praise, thanks, or a remark with no problem or request attached, or content that is not about the product at all.",
-        true: "A bug report, feature request, complaint, question, or suggestion a product team could act on.",
-      },
-      instructions:
-        "Is this genuine product feedback that a product team could act on?",
-      type: "boolean",
-    },
-    [JUNK_QUESTION_ID]: {
-      criteria: {
-        false:
-          "Anything written in good faith by a real user about the product, including pure praise, thanks, complaints, and vague or low-effort reports.",
-        true: "Advertising, promotional links, phishing, a throwaway test entry, empty filler, or gibberish with no meaning.",
-      },
-      instructions:
-        "Should this submission be withheld from a public feedback board?",
-      type: "boolean",
-    },
-    [NEEDS_REVIEW_QUESTION_ID]: {
-      criteria: {
-        false:
-          "Self-contained: what happens, where it happens, and what the author wants are clear enough to act on as-is.",
-        true: "A teammate would have to go back to the author first: the problem, the scope, or the desired outcome is missing, contradictory, or several unrelated requests are bundled together.",
-      },
-      instructions:
-        "Does a teammate need to follow up with the author before this feedback can be acted on?",
-      type: "boolean",
-    },
-  };
-
-  for (const tag of tags) {
-    questions[`${TAG_QUESTION_PREFIX}${tag._id}`] = {
-      criteria: {
-        false: `The feedback is not about ${tag.name}.`,
-        true: `The feedback is clearly about ${tag.name}.`,
-      },
-      instructions: `Does this feedback belong to the "${tag.name}" category?${tag.description ? ` ${tag.name} covers: ${tag.description}.` : ""}`,
-      type: "boolean",
-    };
-  }
-
-  return questions;
-};
+export const isTriageConfigured = () => Boolean(env.OPENROUTER_API_KEY);
 
 export const evaluateFeedbackTriage = async (
   input: {
@@ -102,8 +52,19 @@ export const evaluateFeedbackTriage = async (
 
   const probabilityOf = (questionId: string) => {
     const answer = answers[questionId];
-    return answer?.type === "boolean" ? answer.probability : 0;
+    if (
+      answer?.type !== "boolean" ||
+      !Number.isFinite(answer.probability) ||
+      answer.probability < 0 ||
+      answer.probability > 1
+    ) {
+      throw new Error(`Missing or invalid triage answer: ${questionId}`);
+    }
+    return answer.probability;
   };
+  for (const questionId of Object.keys(buildQuestions(input.tags))) {
+    probabilityOf(questionId);
+  }
 
   const usefulnessAnswer = answers[USEFULNESS_QUESTION_ID];
   const junkAnswer = answers[JUNK_QUESTION_ID];
@@ -129,6 +90,17 @@ export const evaluateFeedbackTriage = async (
     .map((candidate) => candidate.tagId);
 
   return {
+    answers: Object.entries(answers).map(([questionId, answer]) => {
+      if (
+        answer.type !== "boolean" ||
+        !Number.isFinite(answer.probability) ||
+        answer.probability < 0 ||
+        answer.probability > 1
+      ) {
+        throw new Error("Invalid triage probability");
+      }
+      return { probability: answer.probability, questionId };
+    }),
     junk: junkAnswer.probability,
     needsReview: needsReviewAnswer.probability,
     tagIds,
