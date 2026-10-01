@@ -7,6 +7,7 @@ import {
   type QueryCtx,
 } from "../_generated/server";
 import { PRIORITY_RANK } from "../intelligence/feedback_integration";
+import { agentActorId } from "../shared/actors";
 import { feedbackStatus } from "../shared/validators";
 import { shapeFeedbackDetail } from "./api_public_list";
 import { resolvePropertyValue } from "./property_values";
@@ -122,7 +123,7 @@ async function claim(
     updatedAt: now,
   });
   await changeFeedbackStatus(ctx, feedback, {
-    actorId: claimedBy,
+    actorId: agentActorId(claimedBy),
     source: "agent",
     status: "in_progress",
   });

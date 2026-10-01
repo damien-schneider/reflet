@@ -8,6 +8,7 @@ import {
   internalQuery,
   type MutationCtx,
 } from "../../_generated/server";
+import { SYSTEM_ACTOR_ID } from "../../shared/actors";
 import { emitWebhookEvent } from "../../webhooks/mutations";
 import { GITHUB_API_URL, githubApiHeaders } from "./github_constants";
 import { buildIssueBody } from "./issue_body";
@@ -47,7 +48,7 @@ export async function attachIssueToFeedback(
   });
   await ctx.db.insert("activityLogs", {
     action: "github_issue_linked",
-    authorId: "system",
+    authorId: SYSTEM_ACTOR_ID,
     createdAt: now,
     details: JSON.stringify({
       htmlUrl: issue.htmlUrl,

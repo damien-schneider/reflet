@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { internalMutation, mutation } from "../../_generated/server";
 import { statusFieldsFor } from "../../feedback/status_target";
 import { requireOrgAdmin } from "../../shared/access";
+import { SYSTEM_ACTOR_ID } from "../../shared/actors";
 
 export const upsertLabelMapping = mutation({
   args: {
@@ -159,7 +160,7 @@ export const autoImportIssuesByLabel = internalMutation({
         }
 
         const feedbackId = await ctx.db.insert("feedback", {
-          authorId: "system", // System-created
+          authorId: SYSTEM_ACTOR_ID,
           commentCount: 0,
           createdAt: now,
           description: issue.body ?? "",

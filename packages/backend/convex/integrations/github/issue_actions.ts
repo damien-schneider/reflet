@@ -7,6 +7,7 @@ import {
   type MutationCtx,
 } from "../../_generated/server";
 import { statusFieldsFor } from "../../feedback/status_target";
+import { SYSTEM_ACTOR_ID } from "../../shared/actors";
 import { GITHUB_API_URL, githubApiHeaders } from "./github_constants";
 import { feedbackIdFromIssueBody } from "./issue_body";
 import { attachIssueToFeedback } from "./issue_promote";
@@ -194,7 +195,7 @@ export const autoImportIssueToFeedback = internalMutation({
           : (mapping.defaultStatus ?? "open");
 
       const feedbackId = await ctx.db.insert("feedback", {
-        authorId: "system",
+        authorId: SYSTEM_ACTOR_ID,
         commentCount: 0,
         createdAt: now,
         description: args.issue.body ?? "",

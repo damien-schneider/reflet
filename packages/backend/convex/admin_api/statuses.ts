@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "../_generated/server";
 import { changeFeedbackStatus } from "../feedback/status_change";
+import { API_ACTOR_ID } from "../shared/actors";
 import { feedbackStatus } from "../shared/validators";
 
 export const listStatuses = internalQuery({
@@ -135,7 +136,7 @@ export const deleteStatus = internalMutation({
           throw new Error("No replacement column");
         }
         await changeFeedbackStatus(ctx, f, {
-          actorId: "api",
+          actorId: API_ACTOR_ID,
           organizationStatusId: replacement._id,
           source: "api",
         });

@@ -4,6 +4,7 @@ import type { Id } from "../../_generated/dataModel";
 import { internalMutation, type MutationCtx } from "../../_generated/server";
 import { changeFeedbackStatus } from "../../feedback/status_change";
 import { isFinishedStatus } from "../../feedback/status_utils";
+import { SYSTEM_ACTOR_ID } from "../../shared/actors";
 import type { FeedbackStatusValue } from "../../shared/validators";
 
 interface IncomingIssue {
@@ -47,7 +48,7 @@ async function syncLinkedFeedback(
   const status = statusFromIssue(feedback.status, action, issue);
   if (status) {
     await changeFeedbackStatus(ctx, feedback, {
-      actorId: "system",
+      actorId: SYSTEM_ACTOR_ID,
       details: { issueNumber: issue.number },
       source: "github",
       status,
@@ -342,7 +343,7 @@ export const processPullRequestWebhook = internalMutation({
       }
 
       const changed = await changeFeedbackStatus(ctx, feedback, {
-        actorId: "system",
+        actorId: SYSTEM_ACTOR_ID,
         details: { prNumber: pullRequest.number, prUrl: pullRequest.htmlUrl },
         source: "github",
         status: "completed",

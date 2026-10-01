@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { internalMutation, mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
+import { SYSTEM_ACTOR_ID } from "../shared/actors";
 import { changeFeedbackStatus } from "./status_change";
 
 const MS_PER_DAY = 86_400_000;
@@ -117,7 +118,7 @@ export const archiveStaleFeedback = internalMutation({
         }
 
         await changeFeedbackStatus(ctx, item, {
-          actorId: "system",
+          actorId: SYSTEM_ACTOR_ID,
           source: "stale",
           status: "closed",
         });

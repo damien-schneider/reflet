@@ -1,6 +1,7 @@
 import { afterEach, expect, test, vi } from "vitest";
 import { api } from "../../_generated/api";
 import { authComponent } from "../../auth/auth";
+import { SYSTEM_ACTOR_ID } from "../../shared/actors";
 import { seedFeedback, seedOrganization } from "../../test.fixtures";
 import { setupTest } from "../../test.helpers";
 
@@ -19,8 +20,10 @@ test.each([
   { authorId: "anonymous:unknown", isMember: false },
   { authorId: "anonymous:test@example.com", isMember: true },
   { authorId: "anonymous:unknown", isMember: true },
+  { authorId: SYSTEM_ACTOR_ID, isMember: false },
+  { authorId: SYSTEM_ACTOR_ID, isMember: true },
 ])(
-  "anonymous feedback opens with author $authorId for member=$isMember",
+  "non-user feedback opens with author $authorId for member=$isMember",
   async ({ authorId, isMember }) => {
     const testClient = setupTest({ authUsers: [MEMBER] });
     const feedbackId = await testClient.run(async (ctx) => {

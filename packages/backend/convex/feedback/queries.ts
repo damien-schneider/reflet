@@ -4,6 +4,7 @@ import type { QueryCtx } from "../_generated/server";
 import { query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
 import { toPublicOrganization } from "../organizations/queries";
+import { nonUserActorName } from "../shared/actors";
 import { getFeedbackCategories } from "./categories/visibility";
 import {
   isFeedbackPubliclyVisible,
@@ -52,7 +53,7 @@ const resolveUserProfile = async (
   userId: string,
   includeEmail: boolean
 ): Promise<UserProfile | null> => {
-  if (userId.startsWith("anonymous:")) {
+  if (userId.startsWith("anonymous:") || nonUserActorName(userId)) {
     return null;
   }
 

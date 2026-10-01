@@ -8,6 +8,7 @@ import {
 } from "../feedback/publication";
 import { changeFeedbackStatus } from "../feedback/status_change";
 import { confirmTag, refuseTag } from "../feedback/tag_decisions";
+import { API_ACTOR_ID } from "../shared/actors";
 import {
   MAX_COMMENT_LENGTH,
   MAX_DESCRIPTION_LENGTH,
@@ -168,7 +169,7 @@ export const setFeedbackStatus = internalMutation({
     }
 
     await changeFeedbackStatus(ctx, feedback, {
-      actorId: "api",
+      actorId: API_ACTOR_ID,
       organizationStatusId: args.statusId,
       source: "api",
       status: args.status,
@@ -194,7 +195,7 @@ export const setFeedbackPublication = internalMutation({
       throw new Error("Feedback not found");
     }
     await changePublication(ctx, feedback, {
-      actorId: "api",
+      actorId: API_ACTOR_ID,
       state: args.state,
     });
     return { success: true };
