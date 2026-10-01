@@ -7,7 +7,10 @@ import {
 } from "../_generated/server";
 import { requireOrgMember } from "../shared/access";
 import { afterApproval } from "./after_create";
-import { NEEDS_CLARIFICATION_THRESHOLD } from "./property_values";
+import {
+  NEEDS_CLARIFICATION_THRESHOLD,
+  publicationState,
+} from "./property_values";
 import {
   triageAnswer,
   triageInput,
@@ -31,7 +34,6 @@ import {
 
 export const start = internalMutation({
   args: {
-    applyModeration: v.boolean(),
     feedbackId: v.id("feedback"),
     input: triageInput,
     tags: v.array(triageTag),
@@ -43,6 +45,9 @@ export const start = internalMutation({
     }
     return ctx.db.insert("feedbackTriageRuns", {
       ...args,
+      applyModeration:
+        publicationState(feedback) === "pending" &&
+        feedback.publicationReviewedAt === undefined,
       criteriaVersion: TRIAGE_CRITERIA_VERSION,
       inputVersion: TRIAGE_INPUT_VERSION,
       model: TRIAGE_MODEL,

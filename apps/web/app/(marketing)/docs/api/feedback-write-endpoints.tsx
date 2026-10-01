@@ -51,7 +51,8 @@ const CREATE_FEEDBACK: EndpointDefinition = {
       it. Publish or reject it yourself with the secret key:{" "}
       <InlineCode>POST /api/v1/admin/feedback/publication</InlineCode> with{" "}
       <InlineCode>{`{ "feedbackId", "state": "approved" | "rejected" }`}</InlineCode>
-      .
+      . Rejecting archives the item, so it leaves every read until someone
+      restores it.
     </>
   ),
   params: [

@@ -146,7 +146,7 @@ export const recomputeFeedbackTriage = mutation({
     await ctx.scheduler.runAfter(
       0,
       internal.feedback.auto_tagging_actions.processAutoTagging,
-      { applyModeration: false, feedbackId: args.feedbackId }
+      { feedbackId: args.feedbackId }
     );
 
     return { started: true };

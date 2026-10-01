@@ -86,7 +86,7 @@ describe("scheduleAfterCreate", () => {
       deferred.filter((name) => name.includes("promoteFeedback"))
     ).toHaveLength(0);
 
-    await applyRecordedTriage(t, { applyModeration: true, feedbackId });
+    await applyRecordedTriage(t, { feedbackId });
 
     const released = await t.run(
       async (ctx) => await scheduledFunctionNames(ctx)

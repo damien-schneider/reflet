@@ -4,13 +4,12 @@ import type { Id } from "../_generated/dataModel";
 import { internalAction } from "../_generated/server";
 import {
   evaluateFeedbackTriage,
-  type FeedbackTriage,
   isTriageConfigured,
 } from "./triage_evaluation";
 import { triageScopeValidator } from "./triage_scope";
 
 export const processAutoTagging = internalAction({
-  args: { applyModeration: v.boolean(), feedbackId: v.id("feedback") },
+  args: { feedbackId: v.id("feedback") },
   handler: async (
     ctx,
     args
@@ -26,7 +25,6 @@ export const processAutoTagging = internalAction({
 
     const { feedback, tags } = data;
     const runId = await ctx.runMutation(internal.feedback.triage_runs.start, {
-      applyModeration: args.applyModeration,
       feedbackId: args.feedbackId,
       input: { description: feedback.description, title: feedback.title },
       tags: tags.map((tag) => ({
@@ -48,38 +46,37 @@ export const processAutoTagging = internalAction({
       };
     }
 
-    let triage: FeedbackTriage;
+    let applied: boolean;
+    let tagCount: number;
     try {
-      triage = await evaluateFeedbackTriage({
+      const triage = await evaluateFeedbackTriage({
         description: feedback.description,
         tags,
         title: feedback.title,
       });
-    } catch (err) {
-      await ctx.runMutation(internal.feedback.triage_runs.fail, {
-        error: err instanceof Error ? err.message : String(err),
-        runId,
-      });
-      return {
-        reason: `Triage evaluation failed: ${err instanceof Error ? err.message : String(err)}`,
-        success: false,
-        tagCount: 0,
-      };
-    }
-
-    const applied = await ctx.runMutation(
-      internal.feedback.triage_runs.complete,
-      {
+      applied = await ctx.runMutation(internal.feedback.triage_runs.complete, {
         answers: triage.answers,
         junk: triage.junk,
         needsReview: triage.needsReview,
         runId,
         tagIds: triage.tagIds,
         usefulness: triage.usefulness,
-      }
-    );
+      });
+      tagCount = triage.tagIds.length;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      await ctx.runMutation(internal.feedback.triage_runs.fail, {
+        error: message,
+        runId,
+      });
+      return {
+        reason: `Triage failed: ${message}`,
+        success: false,
+        tagCount: 0,
+      };
+    }
     return applied
-      ? { success: true, tagCount: triage.tagIds.length }
+      ? { success: true, tagCount }
       : {
           reason: "Input changed or a newer analysis superseded this run",
           success: false,
@@ -147,7 +144,7 @@ export const processBulkAutoTagging = internalAction({
             try {
               const result = await ctx.runAction(
                 internal.feedback.auto_tagging_actions.processAutoTagging,
-                { applyModeration: false, feedbackId }
+                { feedbackId }
               );
               return result.success
                 ? { feedbackId, ok: true as const }

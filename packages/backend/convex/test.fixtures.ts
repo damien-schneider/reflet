@@ -92,7 +92,6 @@ export async function applyRecordedTriage(
   input: {
     feedbackId: Id<"feedback">;
     tagIds?: Id<"tags">[];
-    applyModeration?: boolean;
     junk?: number;
     needsReview?: number;
     usefulness?: number;
@@ -100,7 +99,6 @@ export async function applyRecordedTriage(
 ) {
   const snapshot = await recordedTriageSnapshot(t, input.feedbackId);
   const runId = await t.mutation(internal.feedback.triage_runs.start, {
-    applyModeration: input.applyModeration ?? false,
     feedbackId: input.feedbackId,
     input: {
       description: snapshot.feedback.description,

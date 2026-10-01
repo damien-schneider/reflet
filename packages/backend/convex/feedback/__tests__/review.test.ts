@@ -25,7 +25,7 @@ const seedOrganization = async () => {
 };
 
 describe("Feedback review queue", () => {
-  test("holding low-usefulness feedback removes it from the public board", async () => {
+  test("a submission JEV flags as junk stays off the public board and waits in review", async () => {
     const { organizationId, t } = await seedOrganization();
 
     const feedbackId = await t.run(
@@ -34,7 +34,7 @@ describe("Feedback review queue", () => {
           commentCount: 0,
           createdAt: Date.now(),
           description: "buy cheap watches",
-          isApproved: true,
+          isApproved: false,
           isPinned: false,
           organizationId,
           status: "open",
@@ -44,16 +44,7 @@ describe("Feedback review queue", () => {
         })
     );
 
-    const before = await t.query(api.feedback.list.listByOrganization, {
-      organizationId,
-    });
-    expect(before.map((item) => item._id)).toContain(feedbackId);
-
-    await applyRecordedTriage(t, {
-      applyModeration: true,
-      feedbackId,
-      junk: 0.99,
-    });
+    await applyRecordedTriage(t, { feedbackId, junk: 0.99 });
 
     const after = await t.query(api.feedback.list.listByOrganization, {
       organizationId,

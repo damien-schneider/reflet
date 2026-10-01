@@ -1,6 +1,7 @@
 import type { httpRouter } from "convex/server";
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
+import { publicationStateValidator } from "../feedback/publication";
 import {
   adminPost,
   corsOptionsHandler,
@@ -11,8 +12,13 @@ import {
   str,
   strArr,
 } from "./helpers";
+import { parseEnumParam } from "./public_api/auth";
 
 type Router = ReturnType<typeof httpRouter>;
+
+const PUBLICATION_STATES = publicationStateValidator.members.map(
+  (member) => member.value
+);
 
 const ADMIN_FEEDBACK_PATHS = [
   "/api/v1/admin/feedback/update",
@@ -99,17 +105,22 @@ export function registerAdminFeedbackRoutes(http: Router): void {
   });
 
   http.route({
-    handler: adminPost(async (ctx, { organizationId }, body) =>
-      ctx.runMutation(internal.admin_api.feedback.setFeedbackPublication, {
-        feedbackId: parseId<"feedback">(str(body.feedbackId), "feedbackId"),
-        organizationId,
-        state: requireStr(body.state, "state") as
-          | "internal"
-          | "pending"
-          | "approved"
-          | "rejected",
-      })
-    ),
+    handler: adminPost(async (ctx, { organizationId }, body) => {
+      const state = parseEnumParam(str(body.state) ?? null, PUBLICATION_STATES);
+      if (!state) {
+        throw new Error(
+          `Invalid state: expected one of ${PUBLICATION_STATES.join(", ")}`
+        );
+      }
+      return await ctx.runMutation(
+        internal.admin_api.feedback.setFeedbackPublication,
+        {
+          feedbackId: parseId<"feedback">(str(body.feedbackId), "feedbackId"),
+          organizationId,
+          state,
+        }
+      );
+    }),
     method: "POST",
     path: "/api/v1/admin/feedback/publication",
   });

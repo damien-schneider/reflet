@@ -37,7 +37,6 @@ async function startRun(t: TestContext, feedbackId: Id<"feedback">) {
     throw new Error("Feedback not found");
   }
   return t.mutation(internal.feedback.triage_runs.start, {
-    applyModeration: true,
     feedbackId,
     input: { description: feedback.description, title: feedback.title },
     tags: [],
@@ -140,18 +139,21 @@ test("edited input and superseded runs cannot apply obsolete scores", async () =
   ).toBeUndefined();
 });
 const readItem = (
-  s: {
+  submitted: {
     t: TestContext;
     feedbackId: Id<"feedback">;
     organizationId: Id<"organizations">;
   },
   includePrivateContext: boolean
 ) =>
-  s.t.query(internal.feedback.api_public_list.getFeedbackByOrganization, {
-    feedbackId: s.feedbackId,
-    includePrivateContext,
-    organizationId: s.organizationId,
-  });
+  submitted.t.query(
+    internal.feedback.api_public_list.getFeedbackByOrganization,
+    {
+      feedbackId: submitted.feedbackId,
+      includePrivateContext,
+      organizationId: submitted.organizationId,
+    }
+  );
 test("a failed triage falls back to the organization's approval policy", async () => {
   const open = await submission();
   await open.t.mutation(internal.feedback.triage_runs.fail, {

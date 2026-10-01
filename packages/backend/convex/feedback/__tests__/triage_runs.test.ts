@@ -18,7 +18,6 @@ test("a category deleted while JEV runs is not recorded as applied", async () =>
     return { feedbackId, tagId };
   });
   const runId = await t.mutation(internal.feedback.triage_runs.start, {
-    applyModeration: false,
     feedbackId,
     input: {
       description: "Clicking save loses the draft",

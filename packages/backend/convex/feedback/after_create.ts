@@ -49,7 +49,7 @@ export async function scheduleAfterCreate(
     await ctx.scheduler.runAfter(
       0,
       internal.feedback.auto_tagging_actions.processAutoTagging,
-      { applyModeration: true, feedbackId }
+      { feedbackId }
     );
   }
   if (options.aiEnrichment) {
