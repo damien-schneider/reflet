@@ -150,7 +150,7 @@
     },
     "packages/cli": {
       "name": "reflet-cli",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "bin": {
         "reflet": "./dist/index.js",
         "reflet-cli": "./dist/index.js",
@@ -213,7 +213,7 @@
     },
     "packages/sdk": {
       "name": "reflet-sdk",
-      "version": "0.5.2",
+      "version": "0.6.0",
       "dependencies": {
         "@base-ui/react": "^1.8.0",
         "@zumer/snapdom": "^3.0.0",
