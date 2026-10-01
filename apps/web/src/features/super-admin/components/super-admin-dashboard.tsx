@@ -7,6 +7,7 @@ import {
   PageTitle,
 } from "@ctrl-ui/react/ui/page-layout";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "@ctrl-ui/react/ui/tabs";
+import { SuperAdminCustomers } from "./super-admin-customers";
 import { SuperAdminFeedback } from "./super-admin-feedback";
 import { SuperAdminOrganizations } from "./super-admin-organizations";
 import { SuperAdminOverview } from "./super-admin-overview";
@@ -22,6 +23,7 @@ export function SuperAdminDashboard() {
         <Tabs defaultValue="overview">
           <TabsList>
             <TabsTab value="overview">Overview</TabsTab>
+            <TabsTab value="customers">Customers</TabsTab>
             <TabsTab value="users">Users</TabsTab>
             <TabsTab value="organizations">Organizations</TabsTab>
             <TabsTab value="feedback">Feedback</TabsTab>
@@ -29,6 +31,10 @@ export function SuperAdminDashboard() {
 
           <TabsPanel value="overview">
             <SuperAdminOverview />
+          </TabsPanel>
+
+          <TabsPanel value="customers">
+            <SuperAdminCustomers />
           </TabsPanel>
 
           <TabsPanel value="users">

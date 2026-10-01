@@ -2,6 +2,7 @@ import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
+import { getOrgSubscription, planTierFor } from "../billing/org_subscription";
 import { assertSuperAdmin, isSuperAdminEmail } from "../shared/access";
 
 export const isSuperAdmin = query({
@@ -123,10 +124,9 @@ export const listOrganizations = query({
       .order("desc")
       .paginate(args.paginationOpts);
 
-    // Enrich each page item with member/feedback counts via indexed queries
     const enrichedPage = await Promise.all(
       result.page.map(async (org) => {
-        const [members, feedback] = await Promise.all([
+        const [members, feedback, subscription] = await Promise.all([
           ctx.db
             .query("organizationMembers")
             .withIndex("by_organization", (q) =>
@@ -139,6 +139,7 @@ export const listOrganizations = query({
               q.eq("organizationId", org._id)
             )
             .collect(),
+          getOrgSubscription(ctx, org._id),
         ]);
 
         const activeFeedbackCount = feedback.filter((f) => !f.deletedAt).length;
@@ -146,13 +147,15 @@ export const listOrganizations = query({
         return {
           _id: org._id,
           createdAt: org.createdAt,
+          customDomain: org.customDomain,
           feedbackCount: activeFeedbackCount,
           isPublic: org.isPublic,
           memberCount: members.length,
           name: org.name,
           slug: org.slug,
-          subscriptionStatus: org.subscriptionStatus,
-          subscriptionTier: org.subscriptionTier,
+          stripeCustomerId: org.stripeCustomerId,
+          subscriptionStatus: subscription?.status ?? "none",
+          subscriptionTier: planTierFor(subscription),
         };
       })
     );

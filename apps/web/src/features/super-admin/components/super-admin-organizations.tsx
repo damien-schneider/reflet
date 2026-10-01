@@ -1,6 +1,6 @@
 "use client";
 
-import { Badge, type BadgeProps } from "@ctrl-ui/react/ui/badge";
+import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Table,
@@ -12,7 +12,9 @@ import {
 } from "@ctrl-ui/react/ui/table";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { usePaginatedQuery } from "convex/react";
+import Link from "next/link";
 import { useState } from "react";
+import { SubscriptionStatusBadge } from "./subscription-status-badge";
 import {
   AdminDate,
   EmptyTableRow,
@@ -21,17 +23,6 @@ import {
 } from "./super-admin-table";
 
 const PAGE_SIZE = 20;
-
-const SUBSCRIPTION_STATUS: Record<
-  string,
-  { color: BadgeProps["color"]; label: string }
-> = {
-  active: { color: "blue", label: "Active" },
-  canceled: { color: "neutral", label: "Canceled" },
-  none: { color: "neutral", label: "None" },
-  past_due: { color: "orange", label: "Past due" },
-  trialing: { color: "purple", label: "Trialing" },
-};
 
 export function SuperAdminOrganizations() {
   const [search, setSearch] = useState("");
@@ -88,41 +79,60 @@ export function SuperAdminOrganizations() {
                 }
               />
             ) : (
-              orgs.map((org) => {
-                const statusMeta = SUBSCRIPTION_STATUS[
-                  org.subscriptionStatus
-                ] ?? { color: "neutral", label: org.subscriptionStatus };
-                return (
-                  <TableRow key={org._id}>
-                    <TableCell className="font-medium">{org.name}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {org.slug}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        color={
-                          org.subscriptionTier === "pro" ? "green" : "neutral"
-                        }
+              orgs.map((org) => (
+                <TableRow key={org._id}>
+                  <TableCell className="font-medium">
+                    <Link
+                      className="underline-offset-4 hover:underline"
+                      href={`/${org.slug}`}
+                      rel="noopener"
+                      target="_blank"
+                    >
+                      {org.name}
+                    </Link>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {org.slug}
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      color={
+                        org.subscriptionTier === "pro" ? "green" : "neutral"
+                      }
+                    >
+                      {org.subscriptionTier === "pro" ? "Pro" : "Free"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {org.stripeCustomerId ? (
+                      <Link
+                        className="underline-offset-4 hover:underline"
+                        href={`https://dashboard.stripe.com/customers/${org.stripeCustomerId}`}
+                        rel="noopener"
+                        target="_blank"
                       >
-                        {org.subscriptionTier === "pro" ? "Pro" : "Free"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge color={statusMeta.color}>{statusMeta.label}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {org.memberCount}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {org.feedbackCount}
-                    </TableCell>
-                    <TableCell>{org.isPublic ? "Yes" : "No"}</TableCell>
-                    <TableCell className="text-right text-muted-foreground">
-                      <AdminDate timestamp={org.createdAt} />
-                    </TableCell>
-                  </TableRow>
-                );
-              })
+                        <SubscriptionStatusBadge
+                          status={org.subscriptionStatus}
+                        />
+                      </Link>
+                    ) : (
+                      <SubscriptionStatusBadge
+                        status={org.subscriptionStatus}
+                      />
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {org.memberCount}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {org.feedbackCount}
+                  </TableCell>
+                  <TableCell>{org.isPublic ? "Yes" : "No"}</TableCell>
+                  <TableCell className="text-right text-muted-foreground">
+                    <AdminDate timestamp={org.createdAt} />
+                  </TableCell>
+                </TableRow>
+              ))
             )}
           </TableBody>
         </Table>

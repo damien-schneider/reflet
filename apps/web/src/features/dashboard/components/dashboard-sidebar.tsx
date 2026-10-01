@@ -4,39 +4,50 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
   SidebarRail,
+  useSidebar,
 } from "@ctrl-ui/react/ui/sidebar";
 import { ShieldStar } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
+import Link from "next/link";
 import { CommandPaletteTrigger } from "@/features/command-palette/components/command-palette-trigger";
 import { MakePublicBanner } from "@/features/dashboard/components/make-public-banner";
 import { AccountMenu } from "@/features/dashboard/components/navigation/account-menu";
-import { NavGroup } from "@/features/dashboard/components/navigation/nav-group";
 import { OrgNavigation } from "@/features/dashboard/components/navigation/org-navigation";
 import { UpgradeLink } from "@/features/dashboard/components/navigation/upgrade-link";
 import { SidebarFooterContent } from "@/features/dashboard/components/sidebar-footer-content";
 import { OrganizationSwitcher } from "@/features/organizations/components/organization-switcher";
 
-function PlatformNav({ pathname }: { pathname: string }) {
+const SUPER_ADMIN_PATH = "/dashboard/super-admin";
+
+function SuperAdminItem({ pathname }: { pathname: string }) {
+  const { isMobile } = useSidebar();
   const isSuperAdmin = useQuery(api.organizations.super_admin.isSuperAdmin);
+  const isActive = pathname.startsWith(SUPER_ADMIN_PATH);
   if (!isSuperAdmin) {
     return null;
   }
   return (
-    <NavGroup
-      items={[
-        {
-          href: "/dashboard/super-admin",
-          icon: ShieldStar,
-          label: "Super admin",
-        },
-      ]}
-      label="Platform"
-      pathname={pathname}
-    />
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        aria-current={isActive ? "page" : undefined}
+        className="group-data-[collapsible=icon]:justify-center"
+        isActive={isActive}
+        render={<Link href={SUPER_ADMIN_PATH} />}
+        size={isMobile ? "default" : "sm"}
+        tooltip="Super admin"
+      >
+        <ShieldStar aria-hidden="true" />
+        <span className="flex-1 group-data-[collapsible=icon]:sr-only">
+          Super admin
+        </span>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
   );
 }
 
@@ -63,11 +74,13 @@ function AdminActions({
 function DashboardFooter({
   org,
   isAdmin,
+  pathname,
 }: {
   org:
     | FunctionReturnType<typeof api.organizations.queries.getBySlug>
     | undefined;
   isAdmin: boolean;
+  pathname: string;
 }) {
   return (
     <SidebarFooter>
@@ -79,6 +92,7 @@ function DashboardFooter({
         />
       ) : null}
       <SidebarMenu>
+        <SuperAdminItem pathname={pathname} />
         <SidebarFooterContent isPublic={org?.isPublic} orgSlug={org?.slug} />
         <AccountMenu />
       </SidebarMenu>
@@ -115,9 +129,8 @@ export function DashboardSidebar({
             Select an organization to get started.
           </p>
         )}
-        <PlatformNav pathname={pathname} />
       </SidebarContent>
-      <DashboardFooter isAdmin={isAdmin} org={org} />
+      <DashboardFooter isAdmin={isAdmin} org={org} pathname={pathname} />
       <SidebarRail resizable />
     </Sidebar>
   );
