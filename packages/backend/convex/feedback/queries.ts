@@ -6,10 +6,6 @@ import { authComponent } from "../auth/auth";
 import { toPublicOrganization } from "../organizations/queries";
 import { projectFeedbackFor } from "./public_projection";
 
-// ============================================
-// HELPERS
-// ============================================
-
 interface UserProfile {
   email?: string;
   image?: string | null;
@@ -74,6 +70,10 @@ const resolveUserProfile = async (
   userId: string,
   includeEmail: boolean
 ): Promise<UserProfile | null> => {
+  if (userId.startsWith("anonymous:")) {
+    return null;
+  }
+
   const userData = await authComponent.getAnyUserById(ctx, userId);
   if (!userData) {
     return null;
@@ -85,14 +85,6 @@ const resolveUserProfile = async (
   };
 };
 
-// ============================================
-// QUERIES
-// ============================================
-
-/**
- * Get minimal public metadata for a feedback item (no auth required).
- * Used for server-side SEO metadata generation.
- */
 export const getPublicMeta = query({
   args: { id: v.id("feedback") },
   handler: async (ctx, args) => {
@@ -163,9 +155,6 @@ export const getShippedMeta = query({
   },
 });
 
-/**
- * Get a single feedback item by ID
- */
 export const get = query({
   args: { id: v.id("feedback") },
   handler: async (ctx, args) => {
