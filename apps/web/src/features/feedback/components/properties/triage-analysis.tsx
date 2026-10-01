@@ -120,14 +120,14 @@ function AnalysisHistory({ feedbackId }: { feedbackId: Id<"feedback"> }) {
   if (runs === undefined) {
     return (
       <p className="text-muted-foreground text-sm" role="status">
-        Loading JEV analysis…
+        Loading AI analysis…
       </p>
     );
   }
   if (runs.length === 0) {
     return (
       <p className="text-muted-foreground text-sm">
-        No recorded JEV run. Historical scores have no saved input or criteria;
+        No recorded AI run. Historical scores have no saved input or criteria;
         recompute to record a complete analysis.
       </p>
     );
@@ -153,14 +153,14 @@ export function TriageAnalysis({
   return (
     <Popover onOpenChange={setOpen} open={open}>
       <PopoverTrigger render={<Button size="xs" variant="ghost" />}>
-        JEV analysis
+        View analysis
       </PopoverTrigger>
       <PopoverContent
         align="start"
         className="max-h-[70vh] w-96 max-w-[calc(100vw-2rem)] space-y-3 overflow-y-auto"
       >
         <div className="flex items-center justify-between">
-          <p className="font-medium text-sm">JEV analysis</p>
+          <p className="font-medium text-sm">AI analysis</p>
           {editable && (
             <Button
               disabled={starting}
@@ -173,10 +173,10 @@ export function TriageAnalysis({
           )}
         </div>
         <p className="text-muted-foreground text-xs">
-          JEV assesses product usefulness, junk, clarification and categories.
-          It does not choose a responsible teammate, change the internal
-          audience, complete work or estimate implementation effort. Human
-          corrections survive recompute.
+          AI assesses product usefulness, junk, clarification and categories. It
+          does not choose a responsible teammate, change the internal audience,
+          complete work or estimate implementation effort. Human corrections
+          survive recompute.
         </p>
         {open && <AnalysisHistory feedbackId={feedbackId} />}
       </PopoverContent>
@@ -193,7 +193,7 @@ function useTriageRecompute(feedbackId: Id<"feedback">) {
     setStarting(true);
     try {
       await recompute({ feedbackId });
-      toast.success("JEV analysis queued");
+      toast.success("AI analysis queued");
     } catch (error) {
       toast.error("Could not recompute triage", {
         description: error instanceof Error ? error.message : "Try again",

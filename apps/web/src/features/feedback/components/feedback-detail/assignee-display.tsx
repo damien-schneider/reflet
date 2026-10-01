@@ -48,7 +48,7 @@ export function AssigneeDisplay({
             ? `Assignee: ${assignee.name ?? assignee.email ?? "Unknown"}. Change assignee`
             : "Set assignee"
         }
-        className="select-none"
+        className="max-w-full select-none"
         render={
           <TagBadge render={<button type="button" />} variant="outline" />
         }
@@ -61,7 +61,12 @@ export function AssigneeDisplay({
                 {assignee.name?.charAt(0) ?? "?"}
               </AvatarFallback>
             </Avatar>
-            <span>{assignee.name ?? assignee.email ?? "Unknown"}</span>
+            <span
+              className="truncate"
+              title={assignee.name ?? assignee.email ?? undefined}
+            >
+              {assignee.name ?? assignee.email ?? "Unknown"}
+            </span>
           </>
         ) : (
           <span>Assignee</span>

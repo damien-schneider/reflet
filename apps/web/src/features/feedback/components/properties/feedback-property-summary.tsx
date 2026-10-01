@@ -3,12 +3,22 @@ import { Sparkle } from "@phosphor-icons/react";
 import {
   clarificationValue,
   PUBLICATION_LABELS,
+  type PublicationState,
   publicationState,
 } from "@reflet/backend/convex/feedback/property_values";
 import { WITHHOLD_JUNK_THRESHOLD } from "@reflet/backend/convex/feedback/triage_questions";
 import { STATUS_DEFINITIONS } from "@reflet/backend/convex/organizations/status_definitions";
 import { TagBadge } from "@/components/tag-badge";
 import type { FeedbackItem } from "@/features/feedback/components/feed-feedback-view";
+import { AiRejectionBadge } from "@/features/feedback/components/properties/presentation/ai-rejection-badge";
+import type { TagColor } from "@/lib/tag-colors";
+
+const PUBLICATION_COLORS = {
+  approved: "green",
+  internal: "gray",
+  pending: "yellow",
+  rejected: "red",
+} satisfies Record<PublicationState, TagColor>;
 
 export function FeedbackPropertySummary({
   feedback,
@@ -23,11 +33,7 @@ export function FeedbackPropertySummary({
       aria-label="Feedback properties"
       className="flex flex-wrap items-center gap-1.5"
     >
-      {status && (
-        <TagBadge color={status.color} size="sm">
-          {status.name}
-        </TagBadge>
-      )}
+      {status && <TagBadge color={status.color}>{status.name}</TagBadge>}
       {feedback.isMember && <MemberPropertySummary feedback={feedback} />}
     </fieldset>
   );
@@ -35,38 +41,32 @@ export function FeedbackPropertySummary({
 
 function MemberPropertySummary({ feedback }: { feedback: FeedbackItem }) {
   const clarification = clarificationValue(feedback);
+  const publicationStatus =
+    feedback.isApproved === undefined
+      ? undefined
+      : publicationState({ ...feedback, isApproved: feedback.isApproved });
   return (
     <>
-      <Badge size="sm" variant="outline">
+      <Badge variant="outline">
         {feedback.assignee?.name ??
           (feedback.assigneeId ? "Assigned teammate" : "Unassigned")}
       </Badge>
-      {feedback.isApproved !== undefined && (
-        <Badge size="sm" variant="outline">
-          {
-            PUBLICATION_LABELS[
-              publicationState({
-                ...feedback,
-                isApproved: feedback.isApproved,
-              })
-            ]
-          }
-        </Badge>
+      {publicationStatus && (
+        <TagBadge color={PUBLICATION_COLORS[publicationStatus]}>
+          {PUBLICATION_LABELS[publicationStatus]}
+        </TagBadge>
       )}
       {feedback.aiJunk !== undefined &&
         feedback.aiJunk >= WITHHOLD_JUNK_THRESHOLD && (
-          <Badge size="sm" variant="outline">
-            <Sparkle aria-hidden className="size-3" />
-            JEV suggests rejection · {Math.round(feedback.aiJunk * 100)}%
-          </Badge>
+          <AiRejectionBadge probability={feedback.aiJunk} />
         )}
       {clarification.value && (
-        <Badge size="sm" variant="outline">
+        <TagBadge color="orange">
           {clarification.origin === "ai" && (
             <Sparkle aria-hidden className="size-3" />
           )}
           Needs clarification
-        </Badge>
+        </TagBadge>
       )}
     </>
   );

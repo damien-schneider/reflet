@@ -42,11 +42,13 @@ export function TagDisplay({
 }: TagDisplayProps) {
   if (isAdmin && availableTags) {
     return (
-      <div className="flex items-center gap-1.5">
+      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
         {validTags.map((tag) => (
-          <TagBadge color={tag.color} key={tag._id}>
+          <TagBadge className="max-w-full" color={tag.color} key={tag._id}>
             {tag.icon && <span>{tag.icon}</span>}
-            {tag.name}
+            <span className="truncate" title={tag.name}>
+              {tag.name}
+            </span>
             {tag.appliedByAi && (
               <>
                 <Sparkle aria-hidden className="opacity-60" weight="fill" />
@@ -111,11 +113,13 @@ export function TagDisplay({
 
   if (validTags.length > 0) {
     return (
-      <div className="flex items-center gap-1.5">
+      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
         {validTags.map((tag) => (
-          <TagBadge color={tag.color} key={tag._id}>
+          <TagBadge className="max-w-full" color={tag.color} key={tag._id}>
             {tag.icon && <span>{tag.icon}</span>}
-            {tag.name}
+            <span className="truncate" title={tag.name}>
+              {tag.name}
+            </span>
             {tag.appliedByAi && (
               <>
                 <Sparkle aria-hidden className="opacity-60" weight="fill" />

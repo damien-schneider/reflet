@@ -7,7 +7,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-  useSidebar,
 } from "@ctrl-ui/react/ui/sidebar";
 import { ShieldStar } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
@@ -26,7 +25,6 @@ import { useMemberOrganization } from "@/features/organizations/hooks/use-member
 const SUPER_ADMIN_PATH = "/dashboard/super-admin";
 
 function SuperAdminItem({ pathname }: { pathname: string }) {
-  const { isMobile } = useSidebar();
   const isSuperAdmin = useQuery(api.organizations.super_admin.isSuperAdmin);
   const isActive = pathname.startsWith(SUPER_ADMIN_PATH);
   if (!isSuperAdmin) {
@@ -39,7 +37,6 @@ function SuperAdminItem({ pathname }: { pathname: string }) {
         className="group-data-[collapsible=icon]:justify-center"
         isActive={isActive}
         render={<Link href={SUPER_ADMIN_PATH} />}
-        size={isMobile ? "default" : "sm"}
         tooltip="Super admin"
       >
         <ShieldStar aria-hidden="true" />

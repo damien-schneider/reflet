@@ -8,7 +8,7 @@ import { Crown } from "@phosphor-icons/react";
 import Link from "next/link";
 
 export function UpgradeLink({ orgSlug }: { orgSlug: string }) {
-  const { isMobile, setOpenMobile } = useSidebar();
+  const { setOpenMobile } = useSidebar();
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -20,7 +20,6 @@ export function UpgradeLink({ orgSlug }: { orgSlug: string }) {
               onNavigate={() => setOpenMobile(false)}
             />
           }
-          size={isMobile ? "default" : "sm"}
           tooltip="Upgrade to Pro"
           variant="outline"
         >

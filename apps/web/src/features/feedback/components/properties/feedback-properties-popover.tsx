@@ -38,6 +38,7 @@ function LoadedProperties({ feedbackId }: { feedbackId: Id<"feedback"> }) {
       <FeedbackMetadataBar
         feedback={feedback}
         isAdmin={feedback.role === "admin" || feedback.role === "owner"}
+        layout="panel"
       />
     </Suspense>
   );
@@ -58,7 +59,7 @@ export function FeedbackPropertiesPopover({
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        className="w-96 max-w-[calc(100vw-2rem)] p-0"
+        className="max-h-[min(44rem,80dvh)] w-104 max-w-[calc(100vw-2rem)] overflow-y-auto p-0"
         onClick={(event) => event.stopPropagation()}
       >
         {open && <LoadedProperties feedbackId={feedbackId} />}

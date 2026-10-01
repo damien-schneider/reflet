@@ -24,7 +24,7 @@ function NavLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
   const name = item.badge
     ? `${item.label}, ${item.badge.count} ${item.badge.label}`
     : item.label;
-  const { isMobile, setOpenMobile } = useSidebar();
+  const { setOpenMobile } = useSidebar();
 
   return (
     <SidebarMenuItem>
@@ -36,7 +36,6 @@ function NavLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
         render={
           <Link href={item.href} onNavigate={() => setOpenMobile(false)} />
         }
-        size={isMobile ? "default" : "sm"}
         tooltip={name}
       >
         <item.icon aria-hidden="true" />

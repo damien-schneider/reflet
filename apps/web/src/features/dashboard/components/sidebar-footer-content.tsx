@@ -7,11 +7,7 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@ctrl-ui/react/ui/dropdown-menu";
-import {
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
-} from "@ctrl-ui/react/ui/sidebar";
+import { SidebarMenuButton, SidebarMenuItem } from "@ctrl-ui/react/ui/sidebar";
 import { ArrowUpRight, Bell, CircleHalf, Globe } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
@@ -32,7 +28,6 @@ interface SidebarFooterContentProps {
 }
 
 function NotificationsItem() {
-  const { isMobile } = useSidebar();
   const unreadCount = useQuery(api.notifications.queries.getUnreadCount);
   const hasUnread = unreadCount !== undefined && unreadCount > 0;
   const notificationsLabel = hasUnread
@@ -47,7 +42,6 @@ function NotificationsItem() {
             {...props}
             aria-label={notificationsLabel}
             className="group-data-[collapsible=icon]:justify-center"
-            size={isMobile ? "default" : "sm"}
             tooltip={notificationsLabel}
           >
             <Bell aria-hidden="true" />
@@ -77,7 +71,6 @@ function ThemeChoices() {
 }
 
 function ThemeItem() {
-  const { isMobile } = useSidebar();
   const { setTheme, currentTheme, label: themeLabel } = useThemeToggle();
   return (
     <SidebarMenuItem>
@@ -87,7 +80,6 @@ function ThemeItem() {
             <SidebarMenuButton
               {...props}
               className="group-data-[collapsible=icon]:justify-center"
-              size={isMobile ? "default" : "sm"}
               tooltip={`Theme: ${themeLabel}`}
             >
               <CircleHalf aria-hidden="true" />
@@ -122,7 +114,6 @@ export function SidebarFooterContent({
   orgSlug,
   isPublic,
 }: SidebarFooterContentProps) {
-  const { isMobile } = useSidebar();
   return (
     <>
       <NotificationsItem />
@@ -134,7 +125,6 @@ export function SidebarFooterContent({
             render={
               <Link href={`/${orgSlug}`} rel="noopener" target="_blank" />
             }
-            size={isMobile ? "default" : "sm"}
             tooltip="Open public page"
           >
             <Globe aria-hidden="true" />

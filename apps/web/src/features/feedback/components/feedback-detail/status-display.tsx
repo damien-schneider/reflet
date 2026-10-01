@@ -37,7 +37,7 @@ export function StatusDisplay({
         {currentStatus ? (
           <DropdownMenuTrigger
             aria-label={`Status: ${currentStatus.name}. Change status`}
-            className="select-none"
+            className="max-w-full select-none"
             render={
               <TagBadge
                 color={currentStatus.color}
@@ -45,7 +45,9 @@ export function StatusDisplay({
               />
             }
           >
-            {currentStatus.name}
+            <span className="truncate" title={currentStatus.name}>
+              {currentStatus.name}
+            </span>
             <CaretDown aria-hidden className="opacity-70" />
           </DropdownMenuTrigger>
         ) : (
@@ -87,7 +89,11 @@ export function StatusDisplay({
 
   if (currentStatus) {
     return (
-      <TagBadge color={currentStatus.color}>{currentStatus.name}</TagBadge>
+      <TagBadge className="max-w-full" color={currentStatus.color}>
+        <span className="truncate" title={currentStatus.name}>
+          {currentStatus.name}
+        </span>
+      </TagBadge>
     );
   }
 

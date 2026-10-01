@@ -12,9 +12,11 @@ import { cn } from "@/lib/utils";
 export function SubscribeButton({
   isSubscribed,
   onToggle,
+  showLabel = false,
 }: {
   isSubscribed: boolean | undefined;
   onToggle: () => void;
+  showLabel?: boolean;
 }) {
   const label =
     isSubscribed === true ? "Unsubscribe from updates" : "Subscribe to updates";
@@ -26,8 +28,12 @@ export function SubscribeButton({
         aria-pressed={isSubscribed === true}
         render={
           <Button
-            className={cn("h-8 w-8", isSubscribed === true && "text-primary")}
-            iconOnly
+            className={cn(
+              "h-8",
+              !showLabel && "w-8",
+              isSubscribed === true && "text-primary"
+            )}
+            iconOnly={!showLabel}
             onClick={onToggle}
             size="xs"
             variant="ghost"
@@ -38,6 +44,9 @@ export function SubscribeButton({
           <Bell className="h-4 w-4" weight="fill" />
         ) : (
           <BellSlash className="h-4 w-4" />
+        )}
+        {showLabel && (
+          <span>{isSubscribed === true ? "Following" : "Follow updates"}</span>
         )}
       </TooltipTrigger>
       <TooltipContent>{label}</TooltipContent>

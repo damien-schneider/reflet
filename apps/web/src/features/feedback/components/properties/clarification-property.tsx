@@ -52,7 +52,7 @@ function ClarificationDescription({
 }) {
   const effective = clarificationValue(feedback);
   const origin = {
-    ai: "JEV assessment",
+    ai: "AI assessment",
     human: "Human decision",
     unset: "No assessment",
   }[effective.origin];
@@ -69,7 +69,7 @@ function ClarificationDescription({
       </p>
       {feedback.aiNeedsReview !== undefined && (
         <p className="text-muted-foreground text-xs">
-          JEV follow-up probability: {Math.round(feedback.aiNeedsReview * 100)}%
+          AI follow-up probability: {Math.round(feedback.aiNeedsReview * 100)}%
         </p>
       )}
     </>
@@ -95,7 +95,7 @@ function ClarificationActions({
       </Button>
       {effective.origin === "human" && (
         <Button onClick={() => decide(undefined)} size="xs" variant="ghost">
-          Use JEV assessment
+          Use AI assessment
         </Button>
       )}
     </div>

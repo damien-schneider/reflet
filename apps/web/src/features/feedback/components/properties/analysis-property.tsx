@@ -39,7 +39,8 @@ export function AnalysisProperty({
         render={<Button size="xs" variant="surface" />}
       >
         {effective.origin === "ai" && <Sparkle aria-hidden />}
-        {label}: {valueLabel}
+        <span data-property-label>{label}: </span>
+        {valueLabel}
       </PopoverTrigger>
       <PopoverContent align="start" className="w-72 space-y-3">
         <AnalysisPropertyDescription name={name} values={values} />

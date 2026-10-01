@@ -37,6 +37,7 @@ async function checkNavigationGroups(page: Page) {
       const link = menu.getByRole("link", { exact: true, name });
       await link.scrollIntoViewIfNeeded();
       await expect(link).toBeInViewport();
+      await expect(link).toHaveCSS("font-size", "14px");
     }
   }
   await expect(

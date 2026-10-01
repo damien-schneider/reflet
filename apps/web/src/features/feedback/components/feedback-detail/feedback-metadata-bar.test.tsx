@@ -1,4 +1,5 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { expect, test, vi } from "vitest";
 import type { FeedbackDetail } from "@/features/feedback/components/properties/property-types";
 import { toId } from "@/lib/convex-helpers";
@@ -78,4 +79,42 @@ test("public detail omits private team assessments", () => {
   expect(
     screen.queryByRole("button", { name: "Internal" })
   ).not.toBeInTheDocument();
+});
+
+test("the properties panel names each field and returns focus after inspecting publication", async () => {
+  render(
+    <FeedbackMetadataBar
+      feedback={{ ...feedback, aiJunk: 0.92 }}
+      isAdmin
+      layout="panel"
+    />
+  );
+  const publication = screen.getByRole("group", { name: "Publication" });
+  const publicationTrigger = within(publication).getByRole("button", {
+    name: "Internal",
+  });
+  expect(screen.getByRole("group", { name: "Status" })).toBeInTheDocument();
+  expect(screen.getByRole("group", { name: "Assignee" })).toBeInTheDocument();
+  expect(screen.getByRole("group", { name: "Deadline" })).toBeInTheDocument();
+  expect(
+    within(screen.getByRole("group", { name: "Priority" })).getByRole(
+      "button",
+      { name: "Priority: High. Human decision" }
+    )
+  ).toBeInTheDocument();
+  await userEvent.tab();
+  await userEvent.tab();
+  await userEvent.tab();
+  expect(publicationTrigger).toHaveFocus();
+  await userEvent.keyboard("{Enter}");
+  expect(screen.getByText("Visible to the team")).toBeVisible();
+  await userEvent.keyboard("{Escape}");
+  expect(publicationTrigger).toHaveFocus();
+  const rejectionTrigger = within(
+    screen.getByRole("group", { name: "AI rejection" })
+  ).getByRole("button", { name: "AI suggests rejection: 92%" });
+  await userEvent.click(rejectionTrigger);
+  expect(screen.getByText("Discard recommendation")).toBeVisible();
+  await userEvent.keyboard("{Escape}");
+  expect(rejectionTrigger).toHaveFocus();
 });

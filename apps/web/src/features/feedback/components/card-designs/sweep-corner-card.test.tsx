@@ -126,11 +126,6 @@ describe("SweepCornerFeedCard", () => {
     expect(screen.getByTestId("comments")).toHaveTextContent("4");
   });
 
-  it("renders badge", () => {
-    render(<SweepCornerFeedCard feedback={baseFeedback} onVote={mockVote} />);
-    expect(screen.getByTestId("badge")).toBeInTheDocument();
-  });
-
   it("passes upvotes and downvotes", () => {
     render(<SweepCornerFeedCard feedback={baseFeedback} onVote={mockVote} />);
     const sweep = screen.getByTestId("sweep");
@@ -201,6 +196,80 @@ describe("SweepCornerFeedCard", () => {
       />
     );
     expect(screen.getByText("Done")).toBeInTheDocument();
+  });
+
+  it.each([
+    { color: "green", isApproved: true, label: "Approved for publication" },
+    { color: "yellow", isApproved: false, label: "Pending publication review" },
+    {
+      color: "red",
+      isApproved: false,
+      label: "Publication rejected",
+      publicationRejectedAt: 1,
+    },
+    {
+      color: "neutral",
+      isApproved: true,
+      isInternal: true,
+      label: "Internal",
+    },
+  ])(
+    "distinguishes $label with its publication tone",
+    ({ color, label, ...publication }) => {
+      render(
+        <SweepCornerFeedCard
+          feedback={{ ...baseFeedback, ...publication, isMember: true }}
+          onVote={mockVote}
+        />
+      );
+      expect(screen.getByText(label)).toHaveAttribute("data-color", color);
+    }
+  );
+
+  it("distinguishes clarification from a suggested rejection", () => {
+    render(
+      <SweepCornerFeedCard
+        feedback={{
+          ...baseFeedback,
+          aiJunk: 0.92,
+          aiNeedsReview: 0.85,
+          isMember: true,
+        }}
+        onVote={mockVote}
+      />
+    );
+    expect(screen.getByText("Needs clarification")).toHaveAttribute(
+      "data-color",
+      "orange"
+    );
+    expect(screen.getByText("92%")).toHaveAttribute("data-color", "red");
+    expect(screen.getByText("AI suggests rejection:")).toBeInTheDocument();
+    expect(screen.getByText("Unassigned")).toHaveAttribute(
+      "data-color",
+      "neutral"
+    );
+  });
+
+  it("keeps team publication and triage properties off public cards", () => {
+    render(
+      <SweepCornerFeedCard
+        feedback={{
+          ...baseFeedback,
+          aiJunk: 0.92,
+          aiNeedsReview: 0.85,
+          isApproved: false,
+          isMember: false,
+          organizationStatus: { color: "green", name: "Done" },
+        }}
+        onVote={mockVote}
+      />
+    );
+    expect(screen.getByText("Done")).toBeInTheDocument();
+    expect(
+      screen.queryByText("Pending publication review")
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Needs clarification")).not.toBeInTheDocument();
+    expect(screen.queryByText("92%")).not.toBeInTheDocument();
   });
 
   it("does not render status when absent", () => {
