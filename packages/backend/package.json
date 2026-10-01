@@ -27,7 +27,6 @@
     "@openrouter/ai-sdk-provider": "^3.0.0",
     "@react-email/render": "^2.1.0",
     "@reflet/email": "workspace:*",
-    "@reflet/env": "workspace:*",
     "ai": "^7.0.105",
     "better-auth": "catalog:",
     "convex": "catalog:",

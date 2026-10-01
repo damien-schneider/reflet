@@ -1,5 +1,4 @@
 import { createTypeSafeAi } from "@ai-sdk/typesafe-ai";
-import { env } from "@reflet/env/convex";
 import {
   type Experimental_EvaluationModel as EvaluationModel,
   experimental_evaluate as evaluate,
@@ -7,7 +6,7 @@ import {
 import type { Id } from "../_generated/dataModel";
 
 const typeSafeAi = createTypeSafeAi({
-  apiKey: env.OPENROUTER_API_KEY,
+  apiKey: process.env.OPENROUTER_API_KEY,
   baseURL: "https://openrouter.ai/api/v1",
 });
 
@@ -34,7 +33,7 @@ export interface FeedbackTriage {
   withhold: boolean;
 }
 
-export const isTriageConfigured = () => Boolean(env.OPENROUTER_API_KEY);
+export const isTriageConfigured = () => Boolean(process.env.OPENROUTER_API_KEY);
 
 export const evaluateFeedbackTriage = async (
   input: {

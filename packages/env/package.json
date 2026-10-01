@@ -5,8 +5,7 @@
   "type": "module",
   "exports": {
     "./web": "./src/web.ts",
-    "./server": "./src/server.ts",
-    "./convex": "./src/convex.ts"
+    "./server": "./src/server.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit"
