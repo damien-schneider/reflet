@@ -1,9 +1,11 @@
 import { createClient, type GenericCtx } from "@convex-dev/better-auth";
 import { convex } from "@convex-dev/better-auth/plugins";
 import { betterAuth } from "better-auth";
+import { ConvexError } from "convex/values";
 import { components, internal } from "../_generated/api";
 import type { DataModel } from "../_generated/dataModel";
 import authConfig from "../auth.config";
+import { PLATFORM_ADMIN_ISSUER } from "../shared/platform_admin";
 import { createAuthEmailRateLimitHook } from "./email_rate_limit";
 
 // GitHub OAuth configuration (optional)
@@ -21,7 +23,26 @@ const siteUrl = process.env.SITE_URL ?? "";
 const additionalOrigins =
   process.env.ADDITIONAL_TRUSTED_ORIGINS?.split(",").filter(Boolean) ?? [];
 
-export const authComponent = createClient<DataModel>(components.betterAuth);
+const betterAuthClient = createClient<DataModel>(components.betterAuth);
+
+type AuthUserCtx = Parameters<typeof betterAuthClient.safeGetAuthUser>[0];
+
+const isPlatformAdminCaller = async (ctx: AuthUserCtx): Promise<boolean> =>
+  (await ctx.auth.getUserIdentity())?.issuer === PLATFORM_ADMIN_ISSUER;
+
+export const authComponent = {
+  ...betterAuthClient,
+  getAuthUser: async (ctx: AuthUserCtx) => {
+    if (await isPlatformAdminCaller(ctx)) {
+      throw new ConvexError("Unauthenticated");
+    }
+    return await betterAuthClient.getAuthUser(ctx);
+  },
+  safeGetAuthUser: async (ctx: AuthUserCtx) =>
+    (await isPlatformAdminCaller(ctx))
+      ? undefined
+      : await betterAuthClient.safeGetAuthUser(ctx),
+};
 
 function createAuth(ctx: GenericCtx<DataModel>) {
   return betterAuth({

@@ -124,6 +124,17 @@ test("a token from another issuer without a session is not a super admin", async
   ).toBe(false);
 });
 
+test("a platform admin token never resolves to a user, even with that user's id and a live session", async () => {
+  const t = await setup();
+  const forged = t.withIdentity({
+    issuer: PLATFORM_ADMIN_ISSUER,
+    sessionId: SUPER_ADMIN._id,
+    subject: CUSTOMER_OWNER._id,
+  });
+
+  expect(await forged.query(api.auth.queries.getCurrentUser, {})).toBeNull();
+});
+
 test("a signed-in user listed in SUPER_ADMIN_EMAILS stays a super admin, others do not", async () => {
   const t = await setup();
   const signedInAs = (userId: string) =>
