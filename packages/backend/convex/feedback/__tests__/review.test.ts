@@ -25,36 +25,38 @@ const seedOrganization = async () => {
 };
 
 describe("Feedback review queue", () => {
-  test("a submission JEV flags as junk stays off the public board and waits in review", async () => {
+  test("triage publishes a clean submission and holds a junk one for review", async () => {
     const { organizationId, t } = await seedOrganization();
+    const submit = (title: string) =>
+      t.run(
+        async (ctx) =>
+          await ctx.db.insert("feedback", {
+            commentCount: 0,
+            createdAt: Date.now(),
+            description: title,
+            isApproved: false,
+            isPinned: false,
+            organizationId,
+            status: "open",
+            title,
+            updatedAt: Date.now(),
+            voteCount: 0,
+          })
+      );
+    const junkId = await submit("buy cheap watches");
+    const cleanId = await submit("Export button does nothing");
 
-    const feedbackId = await t.run(
-      async (ctx) =>
-        await ctx.db.insert("feedback", {
-          commentCount: 0,
-          createdAt: Date.now(),
-          description: "buy cheap watches",
-          isApproved: false,
-          isPinned: false,
-          organizationId,
-          status: "open",
-          title: "Promo",
-          updatedAt: Date.now(),
-          voteCount: 0,
-        })
-    );
+    await applyRecordedTriage(t, { feedbackId: junkId, junk: 0.99 });
+    await applyRecordedTriage(t, { feedbackId: cleanId, junk: 0.01 });
 
-    await applyRecordedTriage(t, { feedbackId, junk: 0.99 });
-
-    const after = await t.query(api.feedback.list.listByOrganization, {
+    const board = await t.query(api.feedback.list.listByOrganization, {
       organizationId,
     });
-    expect(after.map((item) => item._id)).not.toContain(feedbackId);
-
+    expect(board.map((item) => item._id)).toEqual([cleanId]);
     const queued = await t.run(
       async (ctx) => await collectPendingReview(ctx, organizationId)
     );
-    expect(queued.map((item) => item._id)).toEqual([feedbackId]);
+    expect(queued.map((item) => item._id)).toEqual([junkId]);
   });
 
   test("pending review is not readable by anonymous visitors", async () => {
