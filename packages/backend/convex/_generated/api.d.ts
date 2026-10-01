@@ -256,6 +256,7 @@ import type * as shared_membership from "../shared/membership.js";
 import type * as shared_outbound_ip_ranges from "../shared/outbound/ip_ranges.js";
 import type * as shared_outbound_public_fetch from "../shared/outbound/public_fetch.js";
 import type * as shared_outbound_public_fetch_node from "../shared/outbound/public_fetch_node.js";
+import type * as shared_platform_admin from "../shared/platform_admin.js";
 import type * as shared_rate_limits from "../shared/rate_limits.js";
 import type * as shared_text_formatters from "../shared/text_formatters.js";
 import type * as shared_utils from "../shared/utils.js";
@@ -545,6 +546,7 @@ declare const fullApi: ApiFromModules<{
   "shared/outbound/ip_ranges": typeof shared_outbound_ip_ranges;
   "shared/outbound/public_fetch": typeof shared_outbound_public_fetch;
   "shared/outbound/public_fetch_node": typeof shared_outbound_public_fetch_node;
+  "shared/platform_admin": typeof shared_platform_admin;
   "shared/rate_limits": typeof shared_rate_limits;
   "shared/text_formatters": typeof shared_text_formatters;
   "shared/utils": typeof shared_utils;

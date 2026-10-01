@@ -3,6 +3,7 @@ import { query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
 import { assertSuperAdmin } from "../shared/access";
 import { nonUserActorName } from "../shared/actors";
+import { feedbackStatus, subscriptionStatus } from "../shared/validators";
 
 export const getTopVotedFeedback = query({
   args: { limit: v.optional(v.number()) },
@@ -40,6 +41,17 @@ export const getTopVotedFeedback = query({
       voteCount: f.voteCount,
     }));
   },
+  returns: v.array(
+    v.object({
+      _id: v.id("feedback"),
+      commentCount: v.number(),
+      createdAt: v.number(),
+      organizationName: v.string(),
+      status: feedbackStatus,
+      title: v.string(),
+      voteCount: v.number(),
+    })
+  ),
 });
 
 export const getRecentActivity = query({
@@ -92,6 +104,16 @@ export const getRecentActivity = query({
         nonUserActorName(a.authorId) ?? userMap.get(a.authorId) ?? "Unknown",
     }));
   },
+  returns: v.array(
+    v.object({
+      _id: v.id("activityLogs"),
+      action: v.string(),
+      createdAt: v.number(),
+      details: v.optional(v.string()),
+      organizationName: v.string(),
+      userName: v.string(),
+    })
+  ),
 });
 
 export const getTrends = query({
@@ -212,6 +234,17 @@ export const getTrends = query({
       };
     });
   },
+  returns: v.array(
+    v.object({
+      comments: v.number(),
+      date: v.string(),
+      feedback: v.number(),
+      organizations: v.number(),
+      subscriptions: v.number(),
+      users: v.number(),
+      votes: v.number(),
+    })
+  ),
 });
 
 export const getRevenueSummary = query({
@@ -249,4 +282,23 @@ export const getRevenueSummary = query({
       ),
     };
   },
+  returns: v.object({
+    freeCount: v.number(),
+    proCount: v.number(),
+    proOrganizations: v.array(
+      v.object({
+        _id: v.id("organizations"),
+        createdAt: v.number(),
+        name: v.string(),
+        slug: v.string(),
+        subscriptionStatus,
+      })
+    ),
+    statusBreakdown: v.array(
+      v.object({
+        count: v.number(),
+        status: v.string(),
+      })
+    ),
+  }),
 });

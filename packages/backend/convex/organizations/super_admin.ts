@@ -1,19 +1,18 @@
-import { paginationOptsValidator } from "convex/server";
+import {
+  paginationOptsValidator,
+  paginationResultValidator,
+} from "convex/server";
 import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
 import { getOrgSubscription, planTierFor } from "../billing/org_subscription";
-import { assertSuperAdmin, isSuperAdminEmail } from "../shared/access";
+import { assertSuperAdmin, isSuperAdminCaller } from "../shared/access";
+import { subscriptionTier } from "../shared/validators";
 
 export const isSuperAdmin = query({
   args: {},
-  handler: async (ctx) => {
-    const user = await authComponent.safeGetAuthUser(ctx);
-    if (!user) {
-      return false;
-    }
-    return isSuperAdminEmail(user.email);
-  },
+  handler: async (ctx) => await isSuperAdminCaller(ctx),
+  returns: v.boolean(),
 });
 
 export const getDashboardStats = query({
@@ -45,6 +44,14 @@ export const getDashboardStats = query({
       totalVotes: allVotes.length,
     };
   },
+  returns: v.object({
+    activeProSubscriptions: v.number(),
+    totalComments: v.number(),
+    totalFeedback: v.number(),
+    totalOrganizations: v.number(),
+    totalUsers: v.number(),
+    totalVotes: v.number(),
+  }),
 });
 
 export const listUsers = query({
@@ -112,6 +119,20 @@ export const listUsers = query({
       totalPages: Math.ceil(totalCount / pageSize),
     };
   },
+  returns: v.object({
+    items: v.array(
+      v.object({
+        email: v.string(),
+        id: v.string(),
+        image: v.union(v.string(), v.null()),
+        joinedAt: v.number(),
+        name: v.string(),
+        organizationCount: v.number(),
+      })
+    ),
+    totalCount: v.number(),
+    totalPages: v.number(),
+  }),
 });
 
 export const listOrganizations = query({
@@ -165,4 +186,19 @@ export const listOrganizations = query({
       page: enrichedPage,
     };
   },
+  returns: paginationResultValidator(
+    v.object({
+      _id: v.id("organizations"),
+      createdAt: v.number(),
+      customDomain: v.optional(v.string()),
+      feedbackCount: v.number(),
+      isPublic: v.boolean(),
+      memberCount: v.number(),
+      name: v.string(),
+      slug: v.string(),
+      stripeCustomerId: v.optional(v.string()),
+      subscriptionStatus: v.string(),
+      subscriptionTier,
+    })
+  ),
 });

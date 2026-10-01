@@ -4,6 +4,7 @@ import type { QueryCtx } from "../_generated/server";
 import { internalQuery } from "../_generated/server";
 import { authComponent } from "../auth/auth";
 import { getOrgMembership, isOrgAdmin } from "./membership";
+import { PLATFORM_ADMIN_ISSUER } from "./platform_admin";
 
 export type AuthUser = NonNullable<
   Awaited<ReturnType<typeof authComponent.safeGetAuthUser>>
@@ -74,13 +75,17 @@ const superAdminEmails = (): string[] =>
     .map((email) => email.trim().toLowerCase())
     .filter(Boolean);
 
-export const isSuperAdminEmail = (email: string): boolean =>
-  superAdminEmails().includes(email.toLowerCase());
+export const isSuperAdminCaller = async (ctx: QueryCtx): Promise<boolean> => {
+  const identity = await ctx.auth.getUserIdentity();
+  if (identity?.issuer === PLATFORM_ADMIN_ISSUER) {
+    return true;
+  }
+  const user = await authComponent.safeGetAuthUser(ctx);
+  return user ? superAdminEmails().includes(user.email.toLowerCase()) : false;
+};
 
-export const assertSuperAdmin = async (ctx: QueryCtx): Promise<AuthUser> => {
-  const user = await requireAuthUser(ctx);
-  if (!isSuperAdminEmail(user.email)) {
+export const assertSuperAdmin = async (ctx: QueryCtx): Promise<void> => {
+  if (!(await isSuperAdminCaller(ctx))) {
     throw new Error("Not authorized");
   }
-  return user;
 };

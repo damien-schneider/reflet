@@ -34,7 +34,16 @@ const createStripeModules = (subscriptionStatus: string | null) => ({
         handler: () =>
           subscriptionStatus === null
             ? []
-            : [{ currentPeriodEnd: 0, status: subscriptionStatus }],
+            : [
+                {
+                  cancelAtPeriodEnd: false,
+                  currentPeriodEnd: 0,
+                  priceId: "price_test",
+                  status: subscriptionStatus,
+                  stripeCustomerId: "cus_test",
+                  stripeSubscriptionId: "sub_test",
+                },
+              ],
       }),
     }),
 });

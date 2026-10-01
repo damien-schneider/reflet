@@ -1,3 +1,4 @@
+import { type Infer, v } from "convex/values";
 import { components } from "../_generated/api";
 import type { Doc } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
@@ -11,8 +12,15 @@ import {
 import { STRIPE_PRICES } from "../billing/stripe";
 import { stripeTimestampToMs } from "../billing/utils";
 import { assertSuperAdmin } from "../shared/access";
+import { subscriptionTier } from "../shared/validators";
 
-const billingIntervalOf = (priceId: string) => {
+const billingInterval = v.union(
+  v.literal("yearly"),
+  v.literal("monthly"),
+  v.literal("unknown")
+);
+
+const billingIntervalOf = (priceId: string): Infer<typeof billingInterval> => {
   if (priceId === STRIPE_PRICES.proYearly) {
     return "yearly";
   }
@@ -173,4 +181,43 @@ export const listCustomers = query({
       })
     );
   },
+  returns: v.array(
+    v.object({
+      _id: v.id("organizations"),
+      createdAt: v.number(),
+      customDomain: v.optional(v.string()),
+      isPublic: v.boolean(),
+      name: v.string(),
+      owner: v.union(
+        v.object({ email: v.string(), name: v.string() }),
+        v.null()
+      ),
+      slug: v.string(),
+      stripeCustomerId: v.optional(v.string()),
+      subscription: v.union(
+        v.object({
+          billingInterval,
+          cancelAtPeriodEnd: v.boolean(),
+          currentPeriodEnd: v.number(),
+          lastPaidInvoice: v.union(
+            v.object({ amountPaidCents: v.number(), paidAt: v.number() }),
+            v.null()
+          ),
+          status: v.string(),
+          stripeSubscriptionId: v.string(),
+        }),
+        v.null()
+      ),
+      tier: subscriptionTier,
+      usage: v.object({
+        feedback: v.number(),
+        githubConnected: v.boolean(),
+        lastActivityAt: v.optional(v.number()),
+        lastFeedbackAt: v.optional(v.number()),
+        members: v.number(),
+        monitors: v.number(),
+        publishedReleases: v.number(),
+      }),
+    })
+  ),
 });
