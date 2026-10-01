@@ -1,10 +1,13 @@
 import { v } from "convex/values";
-import { components } from "../_generated/api";
 import { query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
+import {
+  getOrgSubscription,
+  getOrgTier,
+  planTierFor,
+} from "./org_subscription";
 import { stripeTimestampToMs } from "./utils";
 
-// Plan limits for Free vs Pro tiers
 export const PLAN_LIMITS = {
   free: {
     apiAccess: false,
@@ -28,16 +31,6 @@ export const PLAN_LIMITS = {
   },
 } as const;
 
-type PlanTier = keyof typeof PLAN_LIMITS;
-
-// ============================================
-// QUERIES
-// ============================================
-
-/**
- * Get subscription status for an organization
- * Uses org-based subscription model (subscription belongs to org, not user)
- */
 export const getStatus = query({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
@@ -46,7 +39,6 @@ export const getStatus = query({
       return null;
     }
 
-    // Check membership
     const membership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>
@@ -63,19 +55,9 @@ export const getStatus = query({
       return null;
     }
 
-    // Query Stripe component for org's subscription
-    const subscription = await ctx.runQuery(
-      components.stripe.public.getSubscriptionByOrgId,
-      { orgId: args.organizationId }
-    );
+    const subscription = await getOrgSubscription(ctx, args.organizationId);
+    const tier = planTierFor(subscription);
 
-    // Determine tier based on subscription status
-    const hasActiveSubscription =
-      subscription &&
-      (subscription.status === "active" || subscription.status === "trialing");
-    const tier: PlanTier = hasActiveSubscription ? "pro" : "free";
-
-    // Get current usage
     const members = await ctx.db
       .query("organizationMembers")
       .withIndex("by_organization", (q) =>
@@ -94,7 +76,6 @@ export const getStatus = query({
     const isOwner = membership.role === "owner";
 
     return {
-      // Only owner can upgrade/checkout
       canManageBilling: isOwner,
       isOwner,
       limits,
@@ -119,9 +100,6 @@ export const getStatus = query({
   },
 });
 
-/**
- * Check if organization can perform an action based on limits
- */
 export const checkLimit = query({
   args: {
     action: v.union(
@@ -144,17 +122,7 @@ export const checkLimit = query({
       return { allowed: false, reason: "Organization not found" };
     }
 
-    // Query Stripe component for org's subscription
-    const subscription = await ctx.runQuery(
-      components.stripe.public.getSubscriptionByOrgId,
-      { orgId: args.organizationId }
-    );
-
-    // Determine tier based on subscription status
-    const hasActiveSubscription =
-      subscription &&
-      (subscription.status === "active" || subscription.status === "trialing");
-    const tier: PlanTier = hasActiveSubscription ? "pro" : "free";
+    const tier = await getOrgTier(ctx, args.organizationId);
     const limits = PLAN_LIMITS[tier];
 
     switch (args.action) {
@@ -242,11 +210,7 @@ export const checkLimit = query({
   },
 });
 
-/**
- * Public query: get plan features for an org without requiring auth.
- * Used by public-facing pages (public board, changelog, widget) that need to
- * know if branding should be hidden. Does NOT expose billing details.
- */
+// Public, no auth: must never expose billing details.
 export const getPublicPlanFeatures = query({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
@@ -255,16 +219,10 @@ export const getPublicPlanFeatures = query({
       return { hideBranding: false };
     }
 
-    const subscription = await ctx.runQuery(
-      components.stripe.public.getSubscriptionByOrgId,
-      { orgId: args.organizationId }
-    );
-    const isPro =
-      subscription &&
-      (subscription.status === "active" || subscription.status === "trialing");
+    const tier = await getOrgTier(ctx, args.organizationId);
 
     return {
-      hideBranding: org.hideBranding === true && Boolean(isPro),
+      hideBranding: org.hideBranding === true && tier === "pro",
     };
   },
   returns: v.object({ hideBranding: v.boolean() }),

@@ -4,18 +4,16 @@ import type { Doc } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
+import { getOrgTier } from "../billing/org_subscription";
+import { PLAN_LIMITS } from "../billing/queries";
 import { normalizeEmail } from "../email/suppression";
 import { type AuthUser, requireOrgAdmin } from "../shared/access";
 import { rateLimiter } from "../shared/rate_limits";
 import { isValidEmail } from "../shared/validators";
-import { PLAN_LIMITS } from "./queries";
 
 const siteUrl = process.env.SITE_URL ?? "";
 const INVITATION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
-/**
- * List pending invitations for an organization
- */
 export const listPending = query({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
@@ -24,7 +22,6 @@ export const listPending = query({
       return [];
     }
 
-    // Verify user has admin/owner role
     const membership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>
@@ -36,7 +33,6 @@ export const listPending = query({
       return [];
     }
 
-    // Get pending invitations
     const invitations = await ctx.db
       .query("invitations")
       .withIndex("by_organization", (q) =>
@@ -69,7 +65,6 @@ export const listMyPendingInvitations = query({
       )
       .collect();
 
-    // Fetch organization names for each invitation
     const invitationsWithOrg = await Promise.all(
       invitations.map(async (invitation) => {
         const org = await ctx.db.get(invitation.organizationId);
@@ -97,7 +92,6 @@ export const getByToken = query({
       return null;
     }
 
-    // Get organization name
     const org = await ctx.db.get(invitation.organizationId);
     if (!org) {
       return null;
@@ -125,10 +119,11 @@ const assertInvitationSlotAvailable = async (
     .filter((q) => q.eq(q.field("status"), "pending"))
     .collect();
 
-  const limit = PLAN_LIMITS[org.subscriptionTier].maxMembers;
+  const tier = await getOrgTier(ctx, org._id);
+  const limit = PLAN_LIMITS[tier].maxMembers;
   if (currentMembers.length + pendingInvitations.length >= limit) {
     throw new Error(
-      `Member limit reached. Your ${org.subscriptionTier} plan allows ${limit} members.`
+      `Member limit reached. Your ${tier} plan allows ${limit} members.`
     );
   }
 

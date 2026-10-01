@@ -1,11 +1,8 @@
 import { v } from "convex/values";
-import { components } from "../_generated/api";
 import { internalMutation, internalQuery } from "../_generated/server";
+import { subscriptionStatus } from "../shared/validators";
+import { getOrgSubscription, planTierFor } from "./org_subscription";
 
-/**
- * Get organization by ID
- * Internal query used by subscription actions
- */
 export const getOrg = internalQuery({
   args: {
     organizationId: v.id("organizations"),
@@ -13,10 +10,6 @@ export const getOrg = internalQuery({
   handler: async (ctx, args) => await ctx.db.get(args.organizationId),
 });
 
-/**
- * Set Stripe customer ID on an organization
- * Internal mutation used when creating a new Stripe customer
- */
 export const setOrgStripeCustomer = internalMutation({
   args: {
     organizationId: v.id("organizations"),
@@ -29,47 +22,27 @@ export const setOrgStripeCustomer = internalMutation({
   },
 });
 
-/**
- * Update organization subscription status
- * Called by webhook handlers when subscription status changes
- */
-export const updateOrgSubscriptionStatus = internalMutation({
-  args: {
-    organizationId: v.id("organizations"),
-    stripeSubscriptionId: v.optional(v.string()),
-    subscriptionStatus: v.union(
-      v.literal("active"),
-      v.literal("trialing"),
-      v.literal("past_due"),
-      v.literal("canceled"),
-      v.literal("none")
-    ),
-    subscriptionTier: v.union(v.literal("free"), v.literal("pro")),
-  },
+export const syncOrgSubscription = internalMutation({
+  args: { organizationId: v.string() },
   handler: async (ctx, args) => {
-    await ctx.db.patch(args.organizationId, {
-      stripeSubscriptionId: args.stripeSubscriptionId,
-      subscriptionStatus: args.subscriptionStatus,
-      subscriptionTier: args.subscriptionTier,
-    });
-  },
-});
-
-/**
- * Get the effective subscription tier for an organization based on real-time Stripe data.
- * This is the source of truth for feature gating — do NOT use org.subscriptionTier directly.
- */
-export const getOrgEffectiveTier = internalQuery({
-  args: { organizationId: v.id("organizations") },
-  handler: async (ctx, args) => {
-    const subscription = await ctx.runQuery(
-      components.stripe.public.getSubscriptionByOrgId,
-      { orgId: args.organizationId }
+    const organizationId = ctx.db.normalizeId(
+      "organizations",
+      args.organizationId
     );
-    const hasActiveSubscription =
-      subscription &&
-      (subscription.status === "active" || subscription.status === "trialing");
-    return hasActiveSubscription ? "pro" : "free";
+    const org = organizationId ? await ctx.db.get(organizationId) : null;
+    if (!org) {
+      return null;
+    }
+    const subscription = await getOrgSubscription(ctx, org._id);
+    const knownStatus = subscriptionStatus.members.find(
+      (member) => member.value === subscription?.status
+    );
+    await ctx.db.patch(org._id, {
+      stripeSubscriptionId: subscription?.stripeSubscriptionId,
+      subscriptionStatus: knownStatus?.value ?? "none",
+      subscriptionTier: planTierFor(subscription),
+    });
+    return null;
   },
-  returns: v.union(v.literal("free"), v.literal("pro")),
+  returns: v.null(),
 });

@@ -1,16 +1,12 @@
 import { v } from "convex/values";
-import { internal } from "../_generated/api";
 import { mutation, query } from "../_generated/server";
+import { getOrgTier } from "../billing/org_subscription";
 import { PLAN_LIMITS } from "../billing/queries";
 import { requireOrgAdmin, requireOrgMember } from "../shared/access";
 import { MAX_TITLE_LENGTH } from "../shared/constants";
 import { assertPublicHttpUrl } from "../shared/outbound/public_fetch";
 import { validateInputLength } from "../shared/validators";
 import { monitorMethod, monitorStatus } from "./tableFields";
-
-// ============================================
-// QUERIES
-// ============================================
 
 export const listMonitors = query({
   args: { organizationId: v.id("organizations") },
@@ -24,7 +20,6 @@ export const listMonitors = query({
       )
       .collect();
 
-    // Fetch recent checks for sparklines (last 24h)
     const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
     const monitorsWithChecks = await Promise.all(
       monitors.map(async (monitor) => {
@@ -55,7 +50,6 @@ export const getMonitorWithHistory = query({
 
     await requireOrgMember(ctx, monitor.organizationId);
 
-    // Last 7 days of checks
     const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
     const checks = await ctx.db
       .query("statusChecks")
@@ -64,7 +58,6 @@ export const getMonitorWithHistory = query({
       )
       .collect();
 
-    // Related incidents
     const incidents = await ctx.db
       .query("statusIncidents")
       .withIndex("by_organization", (q) =>
@@ -177,10 +170,6 @@ export const getMonitorsUptimeBars = query({
   },
 });
 
-// ============================================
-// MUTATIONS
-// ============================================
-
 export const createMonitor = mutation({
   args: {
     alertThreshold: v.optional(v.number()),
@@ -197,10 +186,7 @@ export const createMonitor = mutation({
     validateInputLength(args.name, MAX_TITLE_LENGTH, "Name");
     assertPublicHttpUrl(args.url);
 
-    const tier = await ctx.runQuery(
-      internal.billing.internal.getOrgEffectiveTier,
-      { organizationId: args.organizationId }
-    );
+    const tier = await getOrgTier(ctx, args.organizationId);
     const limits = PLAN_LIMITS[tier];
     const existing = await ctx.db
       .query("statusMonitors")
@@ -271,12 +257,8 @@ export const updateMonitor = mutation({
       Object.entries(updates).filter(([, val]) => val !== undefined)
     );
 
-    // Clamp checkIntervalMinutes to tier minimum if being updated
     if (args.checkIntervalMinutes !== undefined) {
-      const tier = await ctx.runQuery(
-        internal.billing.internal.getOrgEffectiveTier,
-        { organizationId: monitor.organizationId }
-      );
+      const tier = await getOrgTier(ctx, monitor.organizationId);
       filtered.checkIntervalMinutes = Math.max(
         args.checkIntervalMinutes,
         PLAN_LIMITS[tier].minCheckIntervalMinutes

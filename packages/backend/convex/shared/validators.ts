@@ -1,16 +1,16 @@
 import { type Infer, v } from "convex/values";
 
-// ============================================
-// SCHEMA VALIDATORS (shared across domains)
-// ============================================
-
 export const subscriptionTier = v.union(v.literal("free"), v.literal("pro"));
 export const subscriptionStatus = v.union(
-  v.literal("active"),
+  v.literal("none"),
+  v.literal("incomplete"),
+  v.literal("incomplete_expired"),
   v.literal("trialing"),
+  v.literal("active"),
   v.literal("past_due"),
   v.literal("canceled"),
-  v.literal("none")
+  v.literal("unpaid"),
+  v.literal("paused")
 );
 
 export const memberRole = v.union(
@@ -109,18 +109,11 @@ export const domainStatus = v.union(
   v.literal("error")
 );
 
-// ============================================
-// INPUT VALIDATORS
-// ============================================
-
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const isValidEmail = (email: string): boolean =>
   EMAIL_PATTERN.test(email);
 
-/**
- * Validate input length to prevent DoS
- */
 export const validateInputLength = (
   input: string | undefined | null,
   maxLength: number,

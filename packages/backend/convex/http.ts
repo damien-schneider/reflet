@@ -1,7 +1,8 @@
 import { registerRoutes as registerStripeRoutes } from "@convex-dev/stripe";
 import { httpRouter } from "convex/server";
+import type Stripe from "stripe";
 import { components, internal } from "./_generated/api";
-import { httpAction } from "./_generated/server";
+import { type ActionCtx, httpAction } from "./_generated/server";
 import { authComponent, createAuth } from "./auth/auth";
 import { generateRssFeed } from "./changelog/rss";
 import { resend } from "./email/send";
@@ -19,8 +20,38 @@ const http = httpRouter();
 
 authComponent.registerRoutes(http, createAuth);
 
+const syncSubscribedOrg = async (
+  ctx: Pick<ActionCtx, "runMutation">,
+  event:
+    | Stripe.CustomerSubscriptionCreatedEvent
+    | Stripe.CustomerSubscriptionDeletedEvent
+    | Stripe.CustomerSubscriptionUpdatedEvent
+): Promise<void> => {
+  const organizationId = event.data.object.metadata.orgId;
+  if (!organizationId) {
+    return;
+  }
+  try {
+    await ctx.runMutation(internal.billing.internal.syncOrgSubscription, {
+      organizationId,
+    });
+  } catch (error) {
+    // A 500 here makes Stripe retry, then disable the endpoint for all billing events.
+    console.error("[Stripe webhook] org subscription sync failed", {
+      error,
+      eventId: event.id,
+      organizationId,
+    });
+  }
+};
+
 // biome-ignore lint/suspicious/noExplicitAny: @convex-dev/stripe compiled against older convex version
 registerStripeRoutes(http, components.stripe as any, {
+  events: {
+    "customer.subscription.created": syncSubscribedOrg,
+    "customer.subscription.deleted": syncSubscribedOrg,
+    "customer.subscription.updated": syncSubscribedOrg,
+  },
   webhookPath: "/stripe/webhook",
 });
 

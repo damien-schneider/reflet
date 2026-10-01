@@ -7,31 +7,6 @@ import { getOrgMembership } from "../shared/membership";
 import { memberRole } from "../shared/validators";
 import { organizationTables } from "./tableFields";
 
-// Subscription plan limits
-export const PLAN_LIMITS = {
-  free: {
-    apiAccess: false,
-    customBranding: false,
-    maxBoards: 1,
-    maxFeedbackPerBoard: 100,
-    maxMembers: 3,
-  },
-  pro: {
-    apiAccess: true,
-    customBranding: true,
-    maxBoards: 5,
-    maxFeedbackPerBoard: 1000,
-    maxMembers: 10,
-  },
-} as const;
-
-// ============================================
-// QUERIES
-// ============================================
-
-/**
- * List all organizations the current user is a member of
- */
 export const list = query({
   args: {},
   handler: async (ctx) => {

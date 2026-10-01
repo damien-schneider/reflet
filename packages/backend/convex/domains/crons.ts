@@ -1,6 +1,7 @@
 import { v } from "convex/values";
-import { components, internal } from "../_generated/api";
+import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
+import { getOrgTier } from "../billing/org_subscription";
 
 const MAX_DOMAINS_PER_CHECK = 10;
 const RECENTLY_CHECKED_THRESHOLD_MS = 3 * 60 * 1000; // 3 minutes
@@ -29,23 +30,14 @@ export const checkPendingDomains = internalAction({
       });
     }
 
-    // Check active domains for subscription downgrades
     const activeDomainOrgs = await ctx.runQuery(
       internal.domains.queries.getActiveDomainOrgs,
       {}
     );
 
     for (const org of activeDomainOrgs) {
-      const subscription = await ctx.runQuery(
-        components.stripe.public.getSubscriptionByOrgId,
-        { orgId: org.organizationId }
-      );
-
-      const hasProSubscription =
-        subscription?.status === "active" ||
-        subscription?.status === "trialing";
-
-      if (!hasProSubscription) {
+      const tier = await getOrgTier(ctx, org.organizationId);
+      if (tier !== "pro") {
         await ctx.runAction(internal.domains.actions.removeDomainAction, {
           domain: org.domain,
           organizationId: org.organizationId,

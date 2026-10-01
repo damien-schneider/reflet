@@ -4,6 +4,7 @@ import { v } from "convex/values";
 import { components, internal } from "../_generated/api";
 import type { ActionCtx } from "../_generated/server";
 import { internalAction } from "../_generated/server";
+import { getOrgTier } from "../billing/org_subscription";
 import { stripHtml } from "../shared/text_formatters";
 
 const BATCH_SIZE = 10;
@@ -118,10 +119,6 @@ async function processSubscriberBatch(
   return { errors, sent };
 }
 
-/**
- * Send release notification emails to all subscribers
- * Only sends emails if the organization is on Pro tier
- */
 export const sendReleaseNotifications = internalAction({
   args: {
     releaseId: v.id("releases"),
@@ -153,11 +150,8 @@ export const sendReleaseNotifications = internalAction({
       return { error: "Organization not found", success: false };
     }
 
-    const effectiveTier = await ctx.runQuery(
-      internal.billing.internal.getOrgEffectiveTier,
-      { organizationId: release.organizationId }
-    );
-    if (effectiveTier !== "pro") {
+    const tier = await getOrgTier(ctx, release.organizationId);
+    if (tier !== "pro") {
       console.log(
         "[Changelog Notifications] Skipping - organization is not on Pro tier"
       );

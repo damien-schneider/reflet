@@ -1,8 +1,8 @@
 import { v } from "convex/values";
-import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { internalMutation, mutation } from "../_generated/server";
+import { getOrgTier } from "../billing/org_subscription";
 import { versionIncrementValidator } from "../changelog/semver";
 import { DEFAULT_TAGS } from "../feedback/tag_definitions";
 import { getAuthUser } from "../shared/utils";
@@ -204,11 +204,8 @@ export const update = mutation({
     }
 
     if (args.primaryColor || args.customCss) {
-      const effectiveTier = await ctx.runQuery(
-        internal.billing.internal.getOrgEffectiveTier,
-        { organizationId: args.id }
-      );
-      if (effectiveTier !== "pro") {
+      const tier = await getOrgTier(ctx, args.id);
+      if (tier !== "pro") {
         throw new Error("Custom branding requires a Pro subscription");
       }
     }

@@ -1,6 +1,6 @@
 import { type Infer, v } from "convex/values";
-import { components } from "../_generated/api";
 import { mutation, query } from "../_generated/server";
+import { getOrgTier } from "../billing/org_subscription";
 import {
   MAX_SUPPORT_MESSAGE_LENGTH,
   MAX_URL_LENGTH,
@@ -41,18 +41,12 @@ export const getConfig = query({
       return null;
     }
 
-    const subscription = await ctx.runQuery(
-      components.stripe.public.getSubscriptionByOrgId,
-      { orgId: widget.organizationId }
-    );
-    const isPro =
-      subscription &&
-      (subscription.status === "active" || subscription.status === "trialing");
+    const tier = await getOrgTier(ctx, widget.organizationId);
 
     return {
       autoOpen: settings.autoOpen,
       greetingMessage: settings.greetingMessage,
-      hideBranding: org.hideBranding === true && Boolean(isPro),
+      hideBranding: org.hideBranding === true && tier === "pro",
       organizationName: org.name,
       position: settings.position,
       primaryColor: settings.primaryColor,

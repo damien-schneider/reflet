@@ -18,10 +18,13 @@ const LINK_HOLDER = {
 };
 const INVITATION_BURST = 20;
 
-const setup = async () => {
-  const t = setupTest({ authUsers: [OWNER, ADMIN, INVITEE, LINK_HOLDER] });
+const setup = async (stripeSubscriptionStatus: string | null = "active") => {
+  const t = setupTest({
+    authUsers: [OWNER, ADMIN, INVITEE, LINK_HOLDER],
+    stripeSubscriptionStatus,
+  });
   const organizationId = await t.run(async (ctx) => {
-    const orgId = await seedOrganization(ctx, { subscriptionTier: "pro" });
+    const orgId = await seedOrganization(ctx);
     for (const [user, role] of [
       [OWNER, "owner"],
       [ADMIN, "admin"],
@@ -118,4 +121,35 @@ test("cancelling invitations does not refill the invitation email budget", async
       role: "member",
     })
   ).rejects.toThrow("RateLimited");
+});
+
+test("a paying org invites past the free member limit", async () => {
+  const { as, organizationId } = await setup("active");
+  const owner = as(OWNER._id);
+
+  for (const email of ["third@acme.test", "fourth@acme.test"]) {
+    await owner.mutation(api.organizations.invitations.create, {
+      email,
+      organizationId,
+      role: "member",
+    });
+  }
+});
+
+test("a free org stops at three members including pending invitations", async () => {
+  const { as, organizationId } = await setup(null);
+  const owner = as(OWNER._id);
+  await owner.mutation(api.organizations.invitations.create, {
+    email: "third@acme.test",
+    organizationId,
+    role: "member",
+  });
+
+  await expect(
+    owner.mutation(api.organizations.invitations.create, {
+      email: "fourth@acme.test",
+      organizationId,
+      role: "member",
+    })
+  ).rejects.toThrow("Member limit reached. Your free plan allows 3 members.");
 });

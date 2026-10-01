@@ -1,9 +1,9 @@
 import { v } from "convex/values";
-import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { mutation } from "../_generated/server";
-import { PLAN_LIMITS } from "../organizations/queries";
+import { getOrgTier } from "../billing/org_subscription";
+import { PLAN_LIMITS } from "../billing/queries";
 import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from "../shared/constants";
 import { getAuthUser } from "../shared/utils";
 import { feedbackStatus, validateInputLength } from "../shared/validators";
@@ -29,8 +29,7 @@ const validateCreateAccess = async (
 
 const enforceFeedbackLimit = async (
   ctx: MutationCtx,
-  orgId: Id<"organizations">,
-  subscriptionTier: keyof typeof PLAN_LIMITS
+  orgId: Id<"organizations">
 ): Promise<void> => {
   const existingFeedback = await ctx.db
     .query("feedback")
@@ -38,7 +37,7 @@ const enforceFeedbackLimit = async (
     .collect();
   const activeFeedback = existingFeedback.filter((f) => !f.deletedAt);
 
-  const limit = PLAN_LIMITS[subscriptionTier].maxFeedbackPerBoard * 10;
+  const limit = PLAN_LIMITS[await getOrgTier(ctx, orgId)].maxFeedback;
   if (activeFeedback.length >= limit) {
     throw new Error(
       `Feedback limit reached. This organization allows ${limit} feedback items.`
@@ -71,11 +70,7 @@ export const create = mutation({
 
     const defaultStatus = org.feedbackSettings?.defaultStatus ?? "open";
     await validateCreateAccess(ctx, org, user._id);
-    const effectiveTier = await ctx.runQuery(
-      internal.billing.internal.getOrgEffectiveTier,
-      { organizationId: org._id }
-    );
-    await enforceFeedbackLimit(ctx, org._id, effectiveTier);
+    await enforceFeedbackLimit(ctx, org._id);
 
     const now = Date.now();
     const feedbackId = await ctx.db.insert("feedback", {

@@ -1,22 +1,14 @@
 import { v } from "convex/values";
-import { components, internal } from "../_generated/api";
+import { internal } from "../_generated/api";
 import { action } from "../_generated/server";
 import { getAuthUser } from "../shared/utils";
+import { getOrgSubscription } from "./org_subscription";
 import {
   createCheckoutSessionWithPromoCodes,
   STRIPE_PRICES,
   stripeClient,
 } from "./stripe";
 
-// ============================================
-// ACTIONS - Org-based subscription management
-// Only the organization owner can manage billing
-// ============================================
-
-/**
- * Create a Stripe Checkout session for subscription
- * Only the org owner can upgrade the organization
- */
 export const createCheckoutSession = action({
   args: {
     cancelUrl: v.string(),
@@ -27,7 +19,6 @@ export const createCheckoutSession = action({
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
-    // Verify user is the owner of this organization
     const membership = await ctx.runQuery(
       internal.shared.access.membershipForUser,
       {
@@ -44,7 +35,6 @@ export const createCheckoutSession = action({
       throw new Error("Only the organization owner can manage billing");
     }
 
-    // Get org details
     const org = await ctx.runQuery(internal.billing.internal.getOrg, {
       organizationId: args.organizationId,
     });
@@ -53,7 +43,6 @@ export const createCheckoutSession = action({
       throw new Error("Organization not found");
     }
 
-    // Get price ID based on the selected plan
     const priceId = STRIPE_PRICES[args.priceKey];
     if (!priceId) {
       throw new Error(
@@ -61,27 +50,22 @@ export const createCheckoutSession = action({
       );
     }
 
-    // Get or create Stripe customer for this ORGANIZATION
-    // We use the org ID as the identifier, with owner's email as contact
     let customerId = org.stripeCustomerId;
 
     if (!customerId) {
       const result = await stripeClient.getOrCreateCustomer(ctx, {
         email: user.email,
         name: org.name,
-        // Use org ID as the customer identifier (not user ID)
         userId: args.organizationId,
       });
       customerId = result.customerId;
 
-      // Store customerId on the org
       await ctx.runMutation(internal.billing.internal.setOrgStripeCustomer, {
         organizationId: args.organizationId,
         stripeCustomerId: customerId,
       });
     }
 
-    // Create checkout session with promotion codes enabled
     const result = await createCheckoutSessionWithPromoCodes({
       cancelUrl: args.cancelUrl,
       customerId,
@@ -97,10 +81,6 @@ export const createCheckoutSession = action({
   },
 });
 
-/**
- * Create a Stripe Customer Portal session for managing billing
- * Only the org owner can access the billing portal
- */
 export const createCustomerPortalSession = action({
   args: {
     organizationId: v.id("organizations"),
@@ -121,7 +101,6 @@ export const createCustomerPortalSession = action({
       throw new Error("Only the organization owner can manage billing");
     }
 
-    // Get org to find Stripe customer ID
     const org = await ctx.runQuery(internal.billing.internal.getOrg, {
       organizationId: args.organizationId,
     });
@@ -130,7 +109,6 @@ export const createCustomerPortalSession = action({
       throw new Error("No billing account found. Please subscribe first.");
     }
 
-    // Create customer portal session
     const result = await stripeClient.createCustomerPortalSession(ctx, {
       customerId: org.stripeCustomerId,
       returnUrl: args.returnUrl,
@@ -142,10 +120,6 @@ export const createCustomerPortalSession = action({
   },
 });
 
-/**
- * Cancel the organization's subscription
- * Only the org owner can cancel
- */
 export const cancelSubscription = action({
   args: {
     cancelAtPeriodEnd: v.optional(v.boolean()),
@@ -154,7 +128,6 @@ export const cancelSubscription = action({
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
-    // Verify user is the owner
     const membership = await ctx.runQuery(
       internal.shared.access.membershipForUser,
       {
@@ -169,11 +142,7 @@ export const cancelSubscription = action({
       );
     }
 
-    // Get org's subscription
-    const subscription = await ctx.runQuery(
-      components.stripe.public.getSubscriptionByOrgId,
-      { orgId: args.organizationId }
-    );
+    const subscription = await getOrgSubscription(ctx, args.organizationId);
 
     if (!subscription) {
       throw new Error("No active subscription found");
@@ -188,10 +157,6 @@ export const cancelSubscription = action({
   },
 });
 
-/**
- * Reactivate a subscription that was set to cancel at period end
- * Only the org owner can reactivate
- */
 export const reactivateSubscription = action({
   args: {
     organizationId: v.id("organizations"),
@@ -199,7 +164,6 @@ export const reactivateSubscription = action({
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
-    // Verify user is the owner
     const membership = await ctx.runQuery(
       internal.shared.access.membershipForUser,
       {
@@ -214,11 +178,7 @@ export const reactivateSubscription = action({
       );
     }
 
-    // Get org's subscription
-    const subscription = await ctx.runQuery(
-      components.stripe.public.getSubscriptionByOrgId,
-      { orgId: args.organizationId }
-    );
+    const subscription = await getOrgSubscription(ctx, args.organizationId);
 
     if (!subscription) {
       throw new Error("No subscription found");

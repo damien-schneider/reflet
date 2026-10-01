@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { mutation } from "../_generated/server";
+import { getOrgTier } from "../billing/org_subscription";
 import { randomSecretHex } from "../shared/hmac";
 import { getAuthUser } from "../shared/utils";
 import { validateDomainFormat } from "./vercel";
@@ -16,19 +17,16 @@ export const addDomain = mutation({
     const user = await getAuthUser(ctx);
     const domain = args.domain.toLowerCase().trim();
 
-    // Validate domain format
     if (!validateDomainFormat(domain)) {
       throw new Error(
         "Invalid domain format. Please enter a valid domain like feedback.example.com."
       );
     }
 
-    // Reject *.reflet.app subdomains
     if (domain.endsWith(`.${ROOT_DOMAIN}`) || domain === ROOT_DOMAIN) {
       throw new Error("Cannot use reflet.app subdomains as a custom domain.");
     }
 
-    // Auth: verify membership and admin/owner role
     const membership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>
@@ -44,24 +42,18 @@ export const addDomain = mutation({
       throw new Error("Only admins and owners can manage custom domains.");
     }
 
-    // Check org exists
     const org = await ctx.db.get(args.organizationId);
     if (!org) {
       throw new Error("Organization not found.");
     }
 
-    // Billing gate: only Pro orgs can add custom domains
-    const effectiveTier = await ctx.runQuery(
-      internal.billing.internal.getOrgEffectiveTier,
-      { organizationId: args.organizationId }
-    );
-    if (effectiveTier !== "pro") {
+    const tier = await getOrgTier(ctx, args.organizationId);
+    if (tier !== "pro") {
       throw new Error(
         "Custom domains are a Pro feature. Upgrade your plan to add a custom domain."
       );
     }
 
-    // Uniqueness check: no other org should use this domain
     const existingOrg = await ctx.db
       .query("organizations")
       .withIndex("by_custom_domain", (q) => q.eq("customDomain", domain))
@@ -106,7 +98,6 @@ export const removeDomain = mutation({
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
-    // Auth: verify membership and admin/owner role
     const membership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>
@@ -133,7 +124,6 @@ export const removeDomain = mutation({
 
     const domain = org.customDomain;
 
-    // Mark as removing
     await ctx.db.patch(args.organizationId, {
       customDomainError: undefined,
       customDomainStatus: "removing",
@@ -156,7 +146,6 @@ export const checkVerification = mutation({
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
-    // Auth: verify membership and admin/owner role
     const membership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>

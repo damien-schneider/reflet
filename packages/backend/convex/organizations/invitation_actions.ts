@@ -1,9 +1,10 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
+import { getOrgTier } from "../billing/org_subscription";
+import { PLAN_LIMITS } from "../billing/queries";
 import { normalizeEmail } from "../email/suppression";
 import { getAuthUser } from "../shared/utils";
 import { scheduleInvitationEmail } from "./invitations";
-import { PLAN_LIMITS } from "./queries";
 
 // Deployments that skip email verification never set emailVerified for password sign-ups.
 const emailVerificationRequired =
@@ -14,7 +15,6 @@ export const accept = mutation({
   handler: async (ctx, args) => {
     const user = await getAuthUser(ctx);
 
-    // Get invitation
     const invitation = await ctx.db
       .query("invitations")
       .withIndex("by_token", (q) => q.eq("token", args.token))
@@ -29,7 +29,6 @@ export const accept = mutation({
     }
 
     if (invitation.expiresAt < Date.now()) {
-      // Mark as expired
       await ctx.db.patch(invitation._id, { status: "expired" });
       throw new Error("This invitation has expired");
     }
@@ -41,7 +40,6 @@ export const accept = mutation({
       throw new Error("Verify your email address to accept this invitation");
     }
 
-    // Check if already a member
     const existingMembership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>
@@ -53,7 +51,6 @@ export const accept = mutation({
       throw new Error("You are already a member of this organization");
     }
 
-    // Check member limit again
     const org = await ctx.db.get(invitation.organizationId);
     if (!org) {
       throw new Error("Organization not found");
@@ -66,14 +63,14 @@ export const accept = mutation({
       )
       .collect();
 
-    const limit = PLAN_LIMITS[org.subscriptionTier].maxMembers;
+    const tier = await getOrgTier(ctx, org._id);
+    const limit = PLAN_LIMITS[tier].maxMembers;
     if (currentMembers.length >= limit) {
       throw new Error(
         `Cannot join: organization has reached its member limit of ${limit}`
       );
     }
 
-    // Create membership
     await ctx.db.insert("organizationMembers", {
       createdAt: Date.now(),
       organizationId: invitation.organizationId,
@@ -81,7 +78,6 @@ export const accept = mutation({
       userId: user._id,
     });
 
-    // Mark invitation as accepted
     await ctx.db.patch(invitation._id, { status: "accepted" });
 
     return invitation.organizationId;
@@ -98,7 +94,6 @@ export const cancel = mutation({
       throw new Error("Invitation not found");
     }
 
-    // Check admin/owner permission
     const membership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>
@@ -131,7 +126,6 @@ export const resend = mutation({
       throw new Error("This invitation is no longer pending");
     }
 
-    // Check admin/owner permission
     const membership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>
@@ -143,7 +137,6 @@ export const resend = mutation({
       throw new Error("You don't have permission to resend invitations");
     }
 
-    // Check cooldown
     const lastSent = invitation.lastSentAt ?? invitation.createdAt;
     const timeSinceLastSent = Date.now() - lastSent;
 
@@ -156,7 +149,6 @@ export const resend = mutation({
       );
     }
 
-    // Get organization
     const org = await ctx.db.get(invitation.organizationId);
     if (!org) {
       throw new Error("Organization not found");

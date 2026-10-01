@@ -1,12 +1,14 @@
 import { paginationOptsValidator } from "convex/server";
 import { type Infer, v } from "convex/values";
-import { components, internal } from "../_generated/api";
+import { internal } from "../_generated/api";
+import type { Id } from "../_generated/dataModel";
 import {
   type ActionCtx,
   internalAction,
   internalMutation,
   internalQuery,
 } from "../_generated/server";
+import { getOrgTier } from "../billing/org_subscription";
 import { PLAN_LIMITS } from "../billing/queries";
 import {
   DnsResolutionUnavailableError,
@@ -35,10 +37,6 @@ const dueMonitorsPage = v.object({
   monitors: v.array(dueMonitor),
 });
 
-// ============================================
-// INTERNAL QUERIES
-// ============================================
-
 export const getDueMonitorsPage = internalQuery({
   args: { paginationOpts: paginationOptsValidator },
   handler: async (ctx, args) => {
@@ -47,22 +45,16 @@ export const getDueMonitorsPage = internalQuery({
       .query("statusMonitors")
       .paginate(args.paginationOpts);
 
-    const orgMinInterval = new Map<string, number>();
-    const getOrgMinInterval = async (orgId: string): Promise<number> => {
+    const orgMinInterval = new Map<Id<"organizations">, number>();
+    const getOrgMinInterval = async (
+      orgId: Id<"organizations">
+    ): Promise<number> => {
       const cached = orgMinInterval.get(orgId);
       if (cached !== undefined) {
         return cached;
       }
-      const subscription = await ctx.runQuery(
-        components.stripe.public.getSubscriptionByOrgId,
-        { orgId }
-      );
-      const hasActiveSub =
-        subscription?.status === "active" ||
-        subscription?.status === "trialing";
-      const min = hasActiveSub
-        ? PLAN_LIMITS.pro.minCheckIntervalMinutes
-        : PLAN_LIMITS.free.minCheckIntervalMinutes;
+      const tier = await getOrgTier(ctx, orgId);
+      const min = PLAN_LIMITS[tier].minCheckIntervalMinutes;
       orgMinInterval.set(orgId, min);
       return min;
     };
@@ -95,10 +87,6 @@ export const getDueMonitorsPage = internalQuery({
   },
   returns: dueMonitorsPage,
 });
-
-// ============================================
-// INTERNAL MUTATIONS
-// ============================================
 
 export const recordCheck = internalMutation({
   args: {
@@ -170,7 +158,6 @@ export const autoCreateIncident = internalMutation({
   handler: async (ctx, args) => {
     const now = Date.now();
 
-    // Check if there's already an active incident for this monitor
     const existingIncidents = await ctx.db
       .query("statusIncidents")
       .withIndex("by_org_status", (q) =>
@@ -270,10 +257,6 @@ export const cleanupOldChecks = internalMutation({
     }
   },
 });
-
-// ============================================
-// CRON ACTIONS
-// ============================================
 
 interface ProbeResult {
   errorMessage?: string;

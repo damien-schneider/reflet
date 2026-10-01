@@ -1,7 +1,8 @@
 import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
-import { PLAN_LIMITS } from "../organizations/queries";
+import { getOrgTier } from "../billing/org_subscription";
+import { PLAN_LIMITS } from "../billing/queries";
 import { isOrgMemberViewer } from "../shared/access";
 import {
   MAX_DESCRIPTION_LENGTH,
@@ -155,7 +156,8 @@ export const createPublicOrg = mutation({
       .collect();
     const activeFeedback = existingFeedback.filter((f) => !f.deletedAt);
 
-    const limit = PLAN_LIMITS[org.subscriptionTier].maxFeedbackPerBoard;
+    const tier = await getOrgTier(ctx, org._id);
+    const limit = PLAN_LIMITS[tier].maxFeedback;
     if (activeFeedback.length >= limit) {
       throw new Error(
         `Feedback limit reached. This organization allows ${limit} feedback items.`
