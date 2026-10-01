@@ -1,9 +1,9 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { expect, test, vi } from "vitest";
+import { FeedbackMetadataBar } from "@/features/feedback/components/feedback-detail/feedback-metadata-bar";
 import type { FeedbackDetail } from "@/features/feedback/components/properties/property-types";
 import { toId } from "@/lib/convex-helpers";
-import { FeedbackMetadataBar } from "./feedback-metadata-bar";
 
 vi.mock("convex/react", () => ({
   useMutation: () => vi.fn(),
@@ -112,7 +112,7 @@ test("the properties panel names each field and returns focus after inspecting p
   expect(publicationTrigger).toHaveFocus();
   const rejectionTrigger = within(
     screen.getByRole("group", { name: "AI rejection" })
-  ).getByRole("button", { name: "AI suggests rejection: 92%" });
+  ).getByRole("button", { name: "AI junk risk: 92%" });
   await userEvent.click(rejectionTrigger);
   expect(screen.getByText("Discard recommendation")).toBeVisible();
   await userEvent.keyboard("{Escape}");

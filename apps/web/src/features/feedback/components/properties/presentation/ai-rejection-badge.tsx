@@ -14,7 +14,7 @@ export function AiRejectionBadge({
   ...props
 }: AiRejectionBadgeProps) {
   const percentage = Math.round(probability * 100);
-  const assessmentLabel = `AI suggests rejection: ${percentage}%`;
+  const assessmentLabel = `AI junk risk: ${percentage}%`;
   return (
     <TagBadge
       {...props}
@@ -23,8 +23,7 @@ export function AiRejectionBadge({
       title={assessmentLabel}
     >
       <Sparkle aria-hidden className="size-3" />
-      <span aria-hidden className="size-1.5 shrink-0 rounded-full bg-current" />
-      <span className="sr-only">AI suggests rejection: </span>
+      <span>Junk risk:</span>
       {percentage}%
     </TagBadge>
   );

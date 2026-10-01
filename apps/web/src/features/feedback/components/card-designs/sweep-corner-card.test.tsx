@@ -94,9 +94,9 @@ vi.mock("@reflet/ui/feedback-sweep-corner", () => ({
   ),
 }));
 
+import { SweepCornerFeedCard } from "@/features/feedback/components/card-designs/sweep-corner-card";
+import type { FeedbackItem } from "@/features/feedback/components/feed-feedback-view";
 import { toId } from "@/lib/convex-helpers";
-import type { FeedbackItem } from "../feed-feedback-view";
-import { SweepCornerFeedCard } from "./sweep-corner-card";
 
 afterEach(() => {
   vi.clearAllMocks();
@@ -243,7 +243,7 @@ describe("SweepCornerFeedCard", () => {
       "orange"
     );
     expect(screen.getByText("92%")).toHaveAttribute("data-color", "red");
-    expect(screen.getByText("AI suggests rejection:")).toBeInTheDocument();
+    expect(screen.getByText("Junk risk:")).toBeVisible();
     expect(screen.getByText("Unassigned")).toHaveAttribute(
       "data-color",
       "neutral"
