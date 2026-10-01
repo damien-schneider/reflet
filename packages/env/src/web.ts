@@ -7,6 +7,10 @@ export const env = createEnv({
     NEXT_PUBLIC_CONVEX_URL: z.url(),
     NEXT_PUBLIC_POSTHOG_HOST: z.url().optional(),
     NEXT_PUBLIC_POSTHOG_KEY: z.string().min(1).optional(),
+    NEXT_PUBLIC_REFLET_PUBLIC_KEY: z
+      .string()
+      .min(1)
+      .default("fb_pub_suvdslc95ykmpl5uhfbqfszq"),
     NEXT_PUBLIC_ROOT_DOMAIN: z.string().min(1).optional(),
     NEXT_PUBLIC_SITE_URL: z.url().optional(),
     NEXT_PUBLIC_SKIP_EMAIL_VERIFICATION: z.string().optional(),
@@ -19,6 +23,7 @@ export const env = createEnv({
     NEXT_PUBLIC_CONVEX_URL: process.env.NEXT_PUBLIC_CONVEX_URL,
     NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
     NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
+    NEXT_PUBLIC_REFLET_PUBLIC_KEY: process.env.NEXT_PUBLIC_REFLET_PUBLIC_KEY,
     NEXT_PUBLIC_ROOT_DOMAIN: process.env.NEXT_PUBLIC_ROOT_DOMAIN,
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
     NEXT_PUBLIC_SKIP_EMAIL_VERIFICATION:

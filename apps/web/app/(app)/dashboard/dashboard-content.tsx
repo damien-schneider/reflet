@@ -31,6 +31,7 @@ import { useModifierKeyLabel } from "@/features/command-palette/hooks/use-modifi
 import { DashboardSidebar } from "@/features/dashboard/components/dashboard-sidebar";
 import { OrgNotFound } from "@/features/dashboard/components/org-not-found";
 import { PushNotificationPrompt } from "@/features/dashboard/components/push-notification-prompt";
+import { DashboardFeedback } from "@/features/dashboard/components/support/dashboard-feedback";
 import { sidebarOpenAtom } from "@/store/dashboard-atoms";
 import { OrgPicker, OrgPickerSkeleton, WelcomeState } from "./dashboard-states";
 import { computeDashboardNavigation } from "./use-dashboard-navigation";
@@ -283,6 +284,7 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
           <div className="flex min-w-0 flex-1 items-center">
             <DashboardBreadcrumb orgSlug={orgSlug} pathname={pathname ?? ""} />
           </div>
+          <DashboardFeedback />
           <ThemeToggle className="shrink-0" />
         </header>
 

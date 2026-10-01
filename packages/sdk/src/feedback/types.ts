@@ -1,3 +1,4 @@
+import type { ReactNode, RefObject } from "react";
 import type { ElementSelection, FeedbackContext, RefletUser } from "../types";
 
 export const SDK_VERSION = "0.6.0";
@@ -24,7 +25,7 @@ export interface Annotation {
   color: string;
   end: Point;
   id: string;
-  /** Freehand path, in image pixels. Only set for the pen tool. */
+  // Image pixels; pen only.
   points?: Point[];
   start: Point;
   text?: string;
@@ -35,7 +36,7 @@ export interface CapturedImage {
   blob: Blob;
   height: number;
   mimeType: string;
-  /** Object URL owned by the caller — revoke it when the capture is dropped. */
+  // Caller revokes after capture is dropped.
   objectUrl: string;
   width: number;
 }
@@ -139,28 +140,21 @@ export const DEFAULT_WIDGET_LABELS: FeedbackWidgetLabels = {
   undo: "Undo",
 };
 
+export interface FeedbackTriggerProps {
+  onClick: () => void;
+  ref: RefObject<HTMLButtonElement | null>;
+}
+
 export interface RefletFeedbackProps {
-  /** API base URL override. Falls back to the RefletProvider value. */
   baseUrl?: string;
-  /** Record console errors and warnings to attach to bug reports. */
   captureConsole?: boolean;
-  /** Take a screenshot of the viewport as soon as the panel opens. */
   captureOnOpen?: boolean;
-  /**
-   * Dev-only tools for your team: inspect an element's code, keep notes, read
-   * the board for the current page. Never loaded outside `NODE_ENV=development`.
-   */
   devtools?: boolean;
-  /** Let reporters hide the launcher for this many days. */
   dismissForDays?: number;
-  /** Render nothing when false — lets an app gate the widget per user. */
   enabled?: boolean;
-  /** Keyboard shortcut opening the panel. Set to null to disable. */
   hotkey?: string | null;
   labels?: Partial<FeedbackWidgetLabels>;
-  /** Extra fields merged into the reported context. */
   metadata?: Record<string, string>;
-  /** Distance in px from the viewport edges. */
   offset?: number;
   onClose?: () => void;
   onDismiss?: (result: { until: number }) => void;
@@ -169,6 +163,7 @@ export interface RefletFeedbackProps {
   position?: "bottom-left" | "bottom-right" | "top-left" | "top-right";
   primaryColor?: string;
   publicKey?: string;
+  renderTrigger?: (props: FeedbackTriggerProps) => ReactNode;
   theme?: "auto" | "dark" | "light";
   user?: RefletUser;
   userToken?: string;

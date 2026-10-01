@@ -4,7 +4,6 @@ import type { Metadata, Viewport } from "next";
 import { Manrope } from "next/font/google";
 import Script from "next/script";
 import { Suspense } from "react";
-import { RefletFeedback } from "reflet-sdk/feedback";
 import { CookieConsentBanner } from "@/components/cookie-consent-banner";
 import { PostHogPageView } from "@/components/posthog-pageview";
 import { ThemeColorSync } from "@/components/theme-color-sync";
@@ -58,7 +57,6 @@ export default function RootLayout({
           <TooltipProvider>{children}</TooltipProvider>
         </ThemeProvider>
         <CookieConsentBanner />
-        <RefletFeedback enabled={false} />
       </body>
     </html>
   );

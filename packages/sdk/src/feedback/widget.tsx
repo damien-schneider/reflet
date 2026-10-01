@@ -8,12 +8,15 @@ import {
 import { Annotator } from "./ui/annotator";
 import { useOwnsDevtools } from "./ui/devtools-owner";
 import { FloatingWidget } from "./ui/floating/floating-widget";
+import {
+  useWidgetLauncher,
+  type WidgetLauncher,
+} from "./ui/floating/use-widget-launcher";
 import { ElementPicker } from "./ui/picker";
 import { ShadowPortal } from "./ui/shadow-portal";
 import { useWidgetState, type WidgetState } from "./ui/use-widget-state";
 
-// Bundlers inline NODE_ENV, so production builds drop the branch and never ship the devtools chunk.
-// No `typeof process` guard: Vite replaces only this exact expression and has no `process` in the browser.
+// Bundlers replace NODE_ENV to exclude devtools from production.
 const DevtoolsLayer =
   process.env.NODE_ENV === "development"
     ? lazy(() =>
@@ -24,70 +27,77 @@ const DevtoolsLayer =
     : null;
 
 export function RefletFeedback(props: RefletFeedbackProps) {
-  const {
-    devtools = true,
-    enabled = true,
-    hotkey = null,
-    offset = DEFAULT_WIDGET_OFFSET,
-    position = "bottom-right",
-    theme = "auto",
-  } = props;
-
-  const labels = { ...DEFAULT_WIDGET_LABELS, ...props.labels };
   const state = useWidgetState(props);
-  const { isOpen } = state;
-  const showsWidget = enabled && !state.isDismissed;
+  const launcher = useWidgetLauncher(state);
+  const showsWidget = props.enabled !== false && !state.isDismissed;
   const ownsDevtools = useOwnsDevtools(
-    devtools && DevtoolsLayer !== null,
+    props.devtools !== false && DevtoolsLayer !== null,
     showsWidget
   );
   const showsDevtools = ownsDevtools && DevtoolsLayer !== null;
-
   if (!(showsWidget || showsDevtools)) {
     return null;
   }
-
   return (
-    <ShadowPortal
-      offset={offset}
-      primaryColor={props.primaryColor}
-      theme={theme}
-    >
-      {showsWidget && (
-        <>
-          <div
-            aria-hidden="true"
-            className="capture-halo"
-            data-active={state.isCapturing}
-          />
-          <FloatingWidget
-            hotkey={hotkey}
-            labels={labels}
-            position={position}
-            state={state}
-          />
-
-          <WidgetAnnotation labels={labels} state={state} />
-
-          {isOpen && state.step === "picking" && (
-            <ElementPicker
-              labels={labels}
-              onCancel={() => state.setStep("compose")}
-              onPick={state.selectElement}
+    <>
+      {showsWidget && props.renderTrigger?.(launcher.triggerProps)}
+      <ShadowPortal
+        offset={props.offset ?? DEFAULT_WIDGET_OFFSET}
+        primaryColor={props.primaryColor}
+        theme={props.theme ?? "auto"}
+      >
+        {showsWidget && (
+          <WidgetContents launcher={launcher} props={props} state={state} />
+        )}
+        {showsDevtools && (
+          <Suspense fallback={null}>
+            <DevtoolsLayer
+              isWidgetOpen={showsWidget && state.isOpen}
+              position={props.position ?? "bottom-right"}
+              publicKey={state.publicKey}
             />
-          )}
-        </>
+          </Suspense>
+        )}
+      </ShadowPortal>
+    </>
+  );
+}
+
+function WidgetContents({
+  launcher,
+  props,
+  state,
+}: {
+  launcher: WidgetLauncher;
+  props: RefletFeedbackProps;
+  state: WidgetState;
+}) {
+  const labels = { ...DEFAULT_WIDGET_LABELS, ...props.labels };
+  return (
+    <>
+      <div
+        aria-hidden="true"
+        className="capture-halo"
+        data-active={state.isCapturing}
+      />
+      <FloatingWidget
+        config={{
+          hotkey: props.hotkey ?? null,
+          labels,
+          position: props.position ?? "bottom-right",
+        }}
+        launcher={{ ...launcher, custom: Boolean(props.renderTrigger) }}
+        state={state}
+      />
+      <WidgetAnnotation labels={labels} state={state} />
+      {state.isOpen && state.step === "picking" && (
+        <ElementPicker
+          labels={labels}
+          onCancel={() => state.setStep("compose")}
+          onPick={state.selectElement}
+        />
       )}
-      {showsDevtools && (
-        <Suspense fallback={null}>
-          <DevtoolsLayer
-            isWidgetOpen={showsWidget && isOpen}
-            position={position}
-            publicKey={state.publicKey}
-          />
-        </Suspense>
-      )}
-    </ShadowPortal>
+    </>
   );
 }
 
