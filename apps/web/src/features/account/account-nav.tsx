@@ -2,42 +2,31 @@
 
 import { Tabs, TabsList, TabsTab } from "@ctrl-ui/react/ui/tabs";
 
-export type AccountTab =
-  | "profile"
-  | "email"
-  | "password"
-  | "notifications"
-  | "devtools";
+import {
+  ACCOUNT_NAV_ITEMS,
+  type AccountTab,
+  accountTabSchema,
+} from "@/features/account/lib/account-tabs";
 
 interface AccountNavProps {
   activeTab: AccountTab;
   onTabChange: (tab: AccountTab) => void;
 }
 
-const NAV_ITEMS = [
-  { id: "profile", label: "Profile" },
-  { id: "email", label: "Email" },
-  { id: "password", label: "Password" },
-  { id: "notifications", label: "Notifications" },
-  { id: "devtools", label: "Devtools" },
-] as const;
-
-const isAccountTab = (value: string): value is AccountTab =>
-  NAV_ITEMS.some((item) => item.id === value);
-
 export function AccountNav({ activeTab, onTabChange }: AccountNavProps) {
   return (
     <div className="-mx-1 overflow-x-auto px-1 pb-1">
       <Tabs
         onValueChange={(value) => {
-          if (isAccountTab(value)) {
-            onTabChange(value);
+          const tab = accountTabSchema.safeParse(value);
+          if (tab.success) {
+            onTabChange(tab.data);
           }
         }}
         value={activeTab}
       >
         <TabsList aria-label="Account settings">
-          {NAV_ITEMS.map(({ id, label }) => (
+          {ACCOUNT_NAV_ITEMS.map(({ id, label }) => (
             <TabsTab key={id} value={id}>
               {label}
             </TabsTab>

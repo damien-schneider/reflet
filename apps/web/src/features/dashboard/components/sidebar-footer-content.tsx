@@ -7,13 +7,16 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@ctrl-ui/react/ui/dropdown-menu";
-import { SidebarMenuButton, SidebarMenuItem } from "@ctrl-ui/react/ui/sidebar";
+import {
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from "@ctrl-ui/react/ui/sidebar";
 import { ArrowUpRight, Bell, CircleHalf, Globe } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import Link from "next/link";
 import type * as React from "react";
-import { NotificationsPopover } from "@/components/ui/notifications-popover";
 import {
   themeIcons,
   themeLabels,
@@ -21,6 +24,7 @@ import {
 } from "@/components/ui/theme-options";
 import { useThemeToggle } from "@/components/ui/theme-toggle";
 import { NavBadge } from "@/features/dashboard/components/nav-badge";
+import { NotificationsPopover } from "@/features/notifications/notifications-popover";
 
 interface SidebarFooterContentProps {
   isPublic?: boolean;
@@ -28,6 +32,7 @@ interface SidebarFooterContentProps {
 }
 
 function NotificationsItem() {
+  const { setOpenMobile } = useSidebar();
   const unreadCount = useQuery(api.notifications.queries.getUnreadCount);
   const hasUnread = unreadCount !== undefined && unreadCount > 0;
   const notificationsLabel = hasUnread
@@ -37,6 +42,7 @@ function NotificationsItem() {
   return (
     <SidebarMenuItem>
       <NotificationsPopover
+        onSettingsNavigate={() => setOpenMobile(false)}
         render={(props: React.ComponentProps<"button">) => (
           <SidebarMenuButton
             {...props}

@@ -30,7 +30,6 @@ import { CommandPalette } from "@/features/command-palette/components/command-pa
 import { useModifierKeyLabel } from "@/features/command-palette/hooks/use-modifier-key-label";
 import { DashboardSidebar } from "@/features/dashboard/components/dashboard-sidebar";
 import { OrgNotFound } from "@/features/dashboard/components/org-not-found";
-import { PushNotificationPrompt } from "@/features/dashboard/components/push-notification-prompt";
 import { DashboardFeedback } from "@/features/dashboard/components/support/dashboard-feedback";
 import { DashboardSupport } from "@/features/dashboard/components/support/dashboard-support";
 import { useMemberOrganization } from "@/features/organizations/hooks/use-member-organization";
@@ -244,14 +243,7 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
 
   const renderOrgRoute = () => {
     if (orgSlug) {
-      return orgNotAccessible ? (
-        <OrgNotFound />
-      ) : (
-        <>
-          <PushNotificationPrompt />
-          {children}
-        </>
-      );
+      return orgNotAccessible ? <OrgNotFound /> : children;
     }
     if (organizations === undefined || redirectTo) {
       return <OrgPickerSkeleton />;
