@@ -158,7 +158,7 @@ svg { flex-shrink: 0; }
 }
 .capture-halo { position: fixed; inset: 0; z-index: ${REFLET_Z_INDEX.captureHalo}; pointer-events: none; opacity: 0; transition: opacity 500ms var(--rf-ease); }
 .capture-halo[data-active="true"] { opacity: 1; transition-duration: 140ms; }
-.capture-halo::before { content: ""; position: absolute; inset: 0; border-radius: 20px; box-shadow: inset 14px 0 36px -16px var(--rf-accent), inset -14px 0 36px -16px var(--rf-accent), inset 0 0 4px 1px color-mix(in srgb, var(--rf-accent) 35%, transparent); }
+.capture-halo::before { content: ""; position: absolute; inset: 0; box-shadow: inset 14px 0 36px -16px var(--rf-accent), inset -14px 0 36px -16px var(--rf-accent), inset 0 0 4px 1px color-mix(in srgb, var(--rf-accent) 35%, transparent); }
 .capture-halo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, color-mix(in srgb, var(--rf-accent) 20%, transparent), transparent 5%, transparent 95%, color-mix(in srgb, var(--rf-accent) 20%, transparent)); }
 ${COMPOSER_STYLES}
 ${ANNOTATOR_STYLES}
