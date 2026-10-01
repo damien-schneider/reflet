@@ -4,6 +4,7 @@ import type { QueryCtx } from "../_generated/server";
 import { query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
 import { toPublicOrganization } from "../organizations/queries";
+import { getFeedbackCategories } from "./categories/visibility";
 import {
   isFeedbackPubliclyVisible,
   projectFeedbackFor,
@@ -27,28 +28,6 @@ export const getMembershipInfo = async (
     )
     .unique();
   return { isMember: !!membership, role: membership?.role ?? null };
-};
-
-export const getFeedbackTags = async (
-  ctx: QueryCtx,
-  feedbackId: Id<"feedback">
-) => {
-  const feedbackTags = await ctx.db
-    .query("feedbackTags")
-    .withIndex("by_feedback", (q) => q.eq("feedbackId", feedbackId))
-    .collect();
-
-  const tags = await Promise.all(
-    feedbackTags.map(async (ft) => {
-      const tag = await ctx.db.get(ft.tagId);
-      if (!tag) {
-        return null;
-      }
-      return { ...tag, appliedByAi: ft.appliedByAi ?? false };
-    })
-  );
-
-  return tags.filter(Boolean);
 };
 
 const getUserVoteInfo = async (
@@ -184,7 +163,7 @@ export const get = query({
       return null;
     }
 
-    const tags = await getFeedbackTags(ctx, args.id);
+    const tags = await getFeedbackCategories(ctx, args.id, isMember);
 
     const { hasVoted, userVoteType } = user
       ? await getUserVoteInfo(ctx, args.id, user._id)

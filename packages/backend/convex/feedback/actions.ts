@@ -14,6 +14,7 @@ import { getAuthUser } from "../shared/utils";
 import { validateInputLength } from "../shared/validators";
 import { scheduleAfterCreate } from "./after_create";
 import { archiveFeedback } from "./archive_feedback";
+import { getFeedbackCategories } from "./categories/visibility";
 import {
   isFeedbackPubliclyVisible,
   projectFeedbackFor,
@@ -89,13 +90,7 @@ export const listPublic = query({
 
     const feedbackWithDetails = await Promise.all(
       feedbackItems.map(async (f) => {
-        const feedbackTags = await ctx.db
-          .query("feedbackTags")
-          .withIndex("by_feedback", (q) => q.eq("feedbackId", f._id))
-          .collect();
-        const tags = await Promise.all(
-          feedbackTags.map(async (ft) => ctx.db.get(ft.tagId))
-        );
+        const tags = await getFeedbackCategories(ctx, f._id, isMember);
 
         let hasVoted = false;
         if (user) {
@@ -111,7 +106,7 @@ export const listPublic = query({
         return {
           ...projectFeedbackFor(f, isMember),
           hasVoted,
-          tags: tags.filter(Boolean),
+          tags,
         };
       })
     );

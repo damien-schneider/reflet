@@ -15,7 +15,6 @@ export function FeedbackPropertySummary({
 }: {
   feedback: FeedbackItem;
 }) {
-  const clarification = clarificationValue(feedback);
   const status =
     feedback.organizationStatus ??
     (feedback.status ? STATUS_DEFINITIONS[feedback.status] : undefined);
@@ -29,41 +28,46 @@ export function FeedbackPropertySummary({
           {status.name}
         </TagBadge>
       )}
-      {feedback.isMember && (
-        <>
-          <Badge size="sm" variant="outline">
-            {feedback.assignee?.name ??
-              (feedback.assigneeId ? "Assigned teammate" : "Unassigned")}
-          </Badge>
-          {feedback.isApproved !== undefined && (
-            <Badge size="sm" variant="outline">
-              {
-                PUBLICATION_LABELS[
-                  publicationState({
-                    ...feedback,
-                    isApproved: feedback.isApproved,
-                  })
-                ]
-              }
-            </Badge>
-          )}
-          {feedback.aiJunk !== undefined &&
-            feedback.aiJunk >= WITHHOLD_JUNK_THRESHOLD && (
-              <Badge size="sm" variant="outline">
-                <Sparkle aria-hidden className="size-3" />
-                JEV suggests rejection · {Math.round(feedback.aiJunk * 100)}%
-              </Badge>
-            )}
-          {clarification.value && (
-            <Badge size="sm" variant="outline">
-              {clarification.origin === "ai" && (
-                <Sparkle aria-hidden className="size-3" />
-              )}
-              Needs clarification
-            </Badge>
-          )}
-        </>
-      )}
+      {feedback.isMember && <MemberPropertySummary feedback={feedback} />}
     </fieldset>
+  );
+}
+
+function MemberPropertySummary({ feedback }: { feedback: FeedbackItem }) {
+  const clarification = clarificationValue(feedback);
+  return (
+    <>
+      <Badge size="sm" variant="outline">
+        {feedback.assignee?.name ??
+          (feedback.assigneeId ? "Assigned teammate" : "Unassigned")}
+      </Badge>
+      {feedback.isApproved !== undefined && (
+        <Badge size="sm" variant="outline">
+          {
+            PUBLICATION_LABELS[
+              publicationState({
+                ...feedback,
+                isApproved: feedback.isApproved,
+              })
+            ]
+          }
+        </Badge>
+      )}
+      {feedback.aiJunk !== undefined &&
+        feedback.aiJunk >= WITHHOLD_JUNK_THRESHOLD && (
+          <Badge size="sm" variant="outline">
+            <Sparkle aria-hidden className="size-3" />
+            JEV suggests rejection · {Math.round(feedback.aiJunk * 100)}%
+          </Badge>
+        )}
+      {clarification.value && (
+        <Badge size="sm" variant="outline">
+          {clarification.origin === "ai" && (
+            <Sparkle aria-hidden className="size-3" />
+          )}
+          Needs clarification
+        </Badge>
+      )}
+    </>
   );
 }

@@ -13,15 +13,11 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useState } from "react";
 import { TagPill } from "@/components/tag-pill";
 import { DeleteTagDialog } from "@/features/tags/components/delete-tag-dialog";
-import { TagFormPopover } from "@/features/tags/components/tag-form-popover";
+import type { EditableTag } from "@/features/tags/components/editor/form-state";
+import { TagFormPopover } from "@/features/tags/components/editor/tag-form-popover";
 import { TriagePulse } from "./triage-pulse";
 
-export interface Tag {
-  _id: Id<"tags">;
-  color: string;
-  icon?: string;
-  name: string;
-}
+export type Tag = EditableTag;
 
 interface TagFilterBarProps {
   isAdmin: boolean;

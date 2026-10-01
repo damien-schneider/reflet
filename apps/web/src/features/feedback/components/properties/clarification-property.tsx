@@ -16,22 +16,21 @@ import {
 } from "@reflet/backend/convex/feedback/property_values";
 import { useMutation } from "convex/react";
 
-export function ClarificationProperty({
-  feedbackId,
-  feedback,
-  editable,
-}: {
-  feedbackId: Id<"feedback">;
-  feedback: Pick<Doc<"feedback">, "needsClarification" | "aiNeedsReview">;
-  editable: boolean;
-}) {
-  const effective = clarificationValue(feedback);
-  const update = useMutation(api.feedback.triage_actions.updateAnalysis);
-  let label = "Not assessed";
-  if (effective.value !== undefined) {
-    label = effective.value ? "Needs clarification" : "Ready to act";
+type ClarificationFeedback = Pick<
+  Doc<"feedback">,
+  "needsClarification" | "aiNeedsReview"
+>;
+
+function clarificationLabel(value: boolean | null | undefined) {
+  if (value === undefined) {
+    return "Not assessed";
   }
-  async function decide(value: boolean | undefined) {
+  return value ? "Needs clarification" : "Ready to act";
+}
+
+function useClarificationDecision(feedbackId: Id<"feedback">) {
+  const update = useMutation(api.feedback.triage_actions.updateAnalysis);
+  return async function decide(value: boolean | undefined) {
     try {
       await update({
         feedbackId,
@@ -43,54 +42,86 @@ export function ClarificationProperty({
         description: error instanceof Error ? error.message : "Try again",
       });
     }
-  }
+  };
+}
+
+function ClarificationDescription({
+  feedback,
+}: {
+  feedback: ClarificationFeedback;
+}) {
+  const effective = clarificationValue(feedback);
+  const origin = {
+    ai: "JEV assessment",
+    human: "Human decision",
+    unset: "No assessment",
+  }[effective.origin];
+  return (
+    <>
+      <p className="font-medium text-sm">
+        {FEEDBACK_PROPERTIES.clarification.label}
+      </p>
+      <p className="text-muted-foreground text-xs">
+        {FEEDBACK_PROPERTIES.clarification.meaning}
+      </p>
+      <p className="text-sm">
+        {origin}: {clarificationLabel(effective.value)}
+      </p>
+      {feedback.aiNeedsReview !== undefined && (
+        <p className="text-muted-foreground text-xs">
+          JEV follow-up probability: {Math.round(feedback.aiNeedsReview * 100)}%
+        </p>
+      )}
+    </>
+  );
+}
+
+function ClarificationActions({
+  feedbackId,
+  feedback,
+}: {
+  feedbackId: Id<"feedback">;
+  feedback: ClarificationFeedback;
+}) {
+  const decide = useClarificationDecision(feedbackId);
+  const effective = clarificationValue(feedback);
+  return (
+    <div className="flex flex-wrap gap-1">
+      <Button onClick={() => decide(true)} size="xs" variant="ghost">
+        Needs clarification
+      </Button>
+      <Button onClick={() => decide(false)} size="xs" variant="ghost">
+        Ready to act
+      </Button>
+      {effective.origin === "human" && (
+        <Button onClick={() => decide(undefined)} size="xs" variant="ghost">
+          Use JEV assessment
+        </Button>
+      )}
+    </div>
+  );
+}
+
+export function ClarificationProperty({
+  feedbackId,
+  feedback,
+  editable,
+}: {
+  feedbackId: Id<"feedback">;
+  feedback: ClarificationFeedback;
+  editable: boolean;
+}) {
+  const effective = clarificationValue(feedback);
   return (
     <Popover>
       <PopoverTrigger render={<Button size="xs" variant="surface" />}>
         {effective.origin === "ai" && <Sparkle aria-hidden />}
-        {label}
+        {clarificationLabel(effective.value)}
       </PopoverTrigger>
       <PopoverContent align="start" className="w-72 space-y-2">
-        <p className="font-medium text-sm">
-          {FEEDBACK_PROPERTIES.clarification.label}
-        </p>
-        <p className="text-muted-foreground text-xs">
-          {FEEDBACK_PROPERTIES.clarification.meaning}
-        </p>
-        <p className="text-sm">
-          {
-            {
-              ai: "JEV assessment",
-              human: "Human decision",
-              unset: "No assessment",
-            }[effective.origin]
-          }
-          : {label}
-        </p>
-        {feedback.aiNeedsReview !== undefined && (
-          <p className="text-muted-foreground text-xs">
-            JEV follow-up probability:{" "}
-            {Math.round(feedback.aiNeedsReview * 100)}%
-          </p>
-        )}
+        <ClarificationDescription feedback={feedback} />
         {editable && (
-          <div className="flex flex-wrap gap-1">
-            <Button onClick={() => decide(true)} size="xs" variant="ghost">
-              Needs clarification
-            </Button>
-            <Button onClick={() => decide(false)} size="xs" variant="ghost">
-              Ready to act
-            </Button>
-            {effective.origin === "human" && (
-              <Button
-                onClick={() => decide(undefined)}
-                size="xs"
-                variant="ghost"
-              >
-                Use JEV assessment
-              </Button>
-            )}
-          </div>
+          <ClarificationActions feedback={feedback} feedbackId={feedbackId} />
         )}
       </PopoverContent>
     </Popover>

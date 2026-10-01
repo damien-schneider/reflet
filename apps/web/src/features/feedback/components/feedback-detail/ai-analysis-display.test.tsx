@@ -94,3 +94,36 @@ test("an unset clarification is explicitly unassessed", async () => {
     await screen.findByText("No assessment: Not assessed")
   ).toBeInTheDocument();
 });
+
+test("a failed estimate save preserves the draft, and reopening starts from the effective value", async () => {
+  update.mockRejectedValueOnce(new Error("Save unavailable"));
+  render(
+    <AiAnalysisDisplay feedbackId={feedbackId} isAdmin timeEstimate="2 days" />
+  );
+  const trigger = screen.getByRole("button", {
+    name: "Time estimate: 2 days. Human decision",
+  });
+  fireEvent.click(trigger);
+  const input = await screen.findByRole("textbox", { name: "Time estimate" });
+  fireEvent.change(input, { target: { value: " 3 days " } });
+  fireEvent.click(screen.getByRole("button", { exact: true, name: "Save" }));
+  await waitFor(() =>
+    expect(update).toHaveBeenCalledWith({ feedbackId, timeEstimate: "3 days" })
+  );
+  await waitFor(() =>
+    expect(
+      screen.getByRole("button", { exact: true, name: "Save" })
+    ).toBeEnabled()
+  );
+  expect(input).toHaveValue(" 3 days ");
+  fireEvent.click(screen.getByRole("button", { exact: true, name: "Save" }));
+  await waitFor(() =>
+    expect(
+      screen.queryByRole("textbox", { name: "Time estimate" })
+    ).not.toBeInTheDocument()
+  );
+  fireEvent.click(trigger);
+  expect(
+    await screen.findByRole("textbox", { name: "Time estimate" })
+  ).toHaveValue("2 days");
+});

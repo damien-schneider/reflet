@@ -19,47 +19,48 @@ export interface TriageTag {
   name: string;
 }
 
-export const buildQuestions = (tags: TriageTag[]) => {
-  const questions: Record<
-    string,
-    {
-      criteria: { false: string; true: string };
-      instructions: string;
-      type: "boolean";
-    }
-  > = {
-    [USEFULNESS_QUESTION_ID]: {
-      criteria: {
-        false:
-          "Praise, thanks, or a remark with no problem or request attached, or content that is not about the product at all.",
-        true: "A bug report, feature request, complaint, question, or suggestion a product team could act on.",
-      },
-      instructions:
-        "Is this genuine product feedback that a product team could act on?",
-      type: "boolean",
+const PRODUCT_QUESTIONS: Record<
+  string,
+  {
+    criteria: { false: string; true: string };
+    instructions: string;
+    type: "boolean";
+  }
+> = {
+  [USEFULNESS_QUESTION_ID]: {
+    criteria: {
+      false:
+        "Praise, thanks, or a remark with no problem or request attached, or content that is not about the product at all.",
+      true: "A bug report, feature request, complaint, question, or suggestion a product team could act on.",
     },
-    [JUNK_QUESTION_ID]: {
-      criteria: {
-        false:
-          "Anything written in good faith by a real user about the product, including pure praise, thanks, complaints, and vague or low-effort reports.",
-        true: "Advertising, promotional links, phishing, a throwaway test entry, empty filler, or gibberish with no meaning.",
-      },
-      instructions:
-        "Should this submission be withheld from a public feedback board?",
-      type: "boolean",
+    instructions:
+      "Is this genuine product feedback that a product team could act on?",
+    type: "boolean",
+  },
+  [JUNK_QUESTION_ID]: {
+    criteria: {
+      false:
+        "Anything written in good faith by a real user about the product, including pure praise, thanks, complaints, and vague or low-effort reports.",
+      true: "Advertising, promotional links, phishing, a throwaway test entry, empty filler, or gibberish with no meaning.",
     },
-    [NEEDS_REVIEW_QUESTION_ID]: {
-      criteria: {
-        false:
-          "Self-contained: what happens, where it happens, and what the author wants are clear enough to act on as-is.",
-        true: "A teammate would have to go back to the author first: the problem, the scope, or the desired outcome is missing, contradictory, or several unrelated requests are bundled together.",
-      },
-      instructions:
-        "Does a teammate need to follow up with the author before this feedback can be acted on?",
-      type: "boolean",
+    instructions:
+      "Should this submission be withheld from a public feedback board?",
+    type: "boolean",
+  },
+  [NEEDS_REVIEW_QUESTION_ID]: {
+    criteria: {
+      false:
+        "Self-contained: what happens, where it happens, and what the author wants are clear enough to act on as-is.",
+      true: "A teammate would have to go back to the author first: the problem, the scope, or the desired outcome is missing, contradictory, or several unrelated requests are bundled together.",
     },
-  };
+    instructions:
+      "Does a teammate need to follow up with the author before this feedback can be acted on?",
+    type: "boolean",
+  },
+};
 
+export const buildQuestions = (tags: TriageTag[]) => {
+  const questions = { ...PRODUCT_QUESTIONS };
   for (const tag of tags) {
     questions[`${TAG_QUESTION_PREFIX}${tag._id}`] = {
       criteria: {

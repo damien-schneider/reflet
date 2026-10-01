@@ -101,6 +101,8 @@ import type * as feedback_archive_feedback from "../feedback/archive_feedback.js
 import type * as feedback_auto_tagging from "../feedback/auto_tagging.js";
 import type * as feedback_auto_tagging_actions from "../feedback/auto_tagging_actions.js";
 import type * as feedback_auto_tagging_jobs from "../feedback/auto_tagging_jobs.js";
+import type * as feedback_categories_audience from "../feedback/categories/audience.js";
+import type * as feedback_categories_visibility from "../feedback/categories/visibility.js";
 import type * as feedback_clarification from "../feedback/clarification.js";
 import type * as feedback_cleanup from "../feedback/cleanup.js";
 import type * as feedback_comments from "../feedback/comments.js";
@@ -384,6 +386,8 @@ declare const fullApi: ApiFromModules<{
   "feedback/auto_tagging": typeof feedback_auto_tagging;
   "feedback/auto_tagging_actions": typeof feedback_auto_tagging_actions;
   "feedback/auto_tagging_jobs": typeof feedback_auto_tagging_jobs;
+  "feedback/categories/audience": typeof feedback_categories_audience;
+  "feedback/categories/visibility": typeof feedback_categories_visibility;
   "feedback/clarification": typeof feedback_clarification;
   "feedback/cleanup": typeof feedback_cleanup;
   "feedback/comments": typeof feedback_comments;

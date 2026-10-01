@@ -9,7 +9,8 @@ import {
 } from "@ctrl-ui/react/ui/dialog";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 
-import { type EditableTag, TagForm } from "./tag-form";
+import type { EditableTag } from "@/features/tags/components/editor/form-state";
+import { TagForm } from "@/features/tags/components/editor/tag-form";
 
 interface TagFormDialogProps {
   editingTag: EditableTag | null;
@@ -38,12 +39,10 @@ export function TagFormDialog({
           </DialogDescription>
         </DialogHeader>
         <TagForm
-          editingTag={editingTag}
+          actions={{ onCancel: () => onOpenChange(false), onSuccess }}
           key={editingTag?._id ?? "new"}
           layout="dialog"
-          onCancel={() => onOpenChange(false)}
-          onSuccess={onSuccess}
-          organizationId={organizationId}
+          target={{ editingTag, organizationId }}
         />
       </DialogContent>
     </Dialog>

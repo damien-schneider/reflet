@@ -8,7 +8,7 @@ import {
 } from "@ctrl-ui/react/ui/popover";
 import { toast } from "@ctrl-ui/react/ui/toast";
 import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
 import {
   FEEDBACK_PROPERTIES,
   PUBLICATION_LABELS,
@@ -18,6 +18,13 @@ import {
 import { useMutation } from "convex/react";
 import { formatPropertyTime } from "@/features/feedback/components/properties/time/format-property-time";
 
+type PublicationValues = Pick<
+  Doc<"feedback">,
+  | "isApproved"
+  | "isInternal"
+  | "publicationRejectedAt"
+  | "publicationReviewedAt"
+> & { organizationIsPublic: boolean };
 const PUBLICATION_STATES: PublicationState[] = [
   "internal",
   "pending",
@@ -25,32 +32,88 @@ const PUBLICATION_STATES: PublicationState[] = [
   "rejected",
 ];
 
+function usePublicationDecision(feedbackId: Id<"feedback">) {
+  const setState = useMutation(api.feedback.publication.setState);
+  return async function decide(state: PublicationState) {
+    try {
+      await setState({ feedbackId, state });
+    } catch (error) {
+      toast.error("Could not update publication", {
+        description: error instanceof Error ? error.message : "Try again",
+      });
+    }
+  };
+}
+
+function PublicationVisibility({
+  publication,
+}: {
+  publication: PublicationValues;
+}) {
+  const state = publicationState(publication);
+  return (
+    <>
+      <p className="text-sm">
+        {state === "approved" && publication.organizationIsPublic
+          ? "Visible on the public board"
+          : "Visible to the team"}
+      </p>
+      {!publication.organizationIsPublic && (
+        <p className="text-muted-foreground text-xs">
+          The project is private. Approval only becomes public when the project
+          is public.
+        </p>
+      )}
+      {publication.publicationReviewedAt && (
+        <p className="text-muted-foreground text-xs">
+          Human decision ·{" "}
+          {formatPropertyTime(publication.publicationReviewedAt)}
+        </p>
+      )}
+    </>
+  );
+}
+
+function PublicationActions({
+  feedbackId,
+  state,
+}: {
+  feedbackId: Id<"feedback">;
+  state: PublicationState;
+}) {
+  const decide = usePublicationDecision(feedbackId);
+  return (
+    <>
+      <p className="text-muted-foreground text-xs">
+        Rejecting publication archives the feedback in Trash. An admin can
+        restore it.
+      </p>
+      <div className="flex flex-col items-start gap-1">
+        {PUBLICATION_STATES.map((next) => (
+          <Button
+            key={next}
+            onClick={() => decide(next)}
+            size="xs"
+            variant={state === next ? "surface" : "ghost"}
+          >
+            {PUBLICATION_LABELS[next]}
+          </Button>
+        ))}
+      </div>
+    </>
+  );
+}
+
 export function PublicationProperty({
   feedbackId,
   publication,
   editable,
 }: {
   feedbackId: Id<"feedback">;
-  publication: {
-    isApproved: boolean;
-    isInternal?: boolean;
-    publicationRejectedAt?: number;
-    organizationIsPublic: boolean;
-    publicationReviewedAt?: number;
-  };
+  publication: PublicationValues;
   editable: boolean;
 }) {
   const state = publicationState(publication);
-  const setState = useMutation(api.feedback.publication.setState);
-  async function decide(next: PublicationState) {
-    try {
-      await setState({ feedbackId, state: next });
-    } catch (error) {
-      toast.error("Could not update publication", {
-        description: error instanceof Error ? error.message : "Try again",
-      });
-    }
-  }
   return (
     <Popover>
       <PopoverTrigger render={<Button size="xs" variant="surface" />}>
@@ -63,42 +126,9 @@ export function PublicationProperty({
         <p className="text-muted-foreground text-xs">
           {FEEDBACK_PROPERTIES.publication.meaning}
         </p>
-        <p className="text-sm">
-          {state === "approved" && publication.organizationIsPublic
-            ? "Visible on the public board"
-            : "Visible to the team"}
-        </p>
-        {!publication.organizationIsPublic && (
-          <p className="text-muted-foreground text-xs">
-            The project is private. Approval only becomes public when the
-            project is public.
-          </p>
-        )}
-        {publication.publicationReviewedAt && (
-          <p className="text-muted-foreground text-xs">
-            Human decision ·{" "}
-            {formatPropertyTime(publication.publicationReviewedAt)}
-          </p>
-        )}
+        <PublicationVisibility publication={publication} />
         {editable && (
-          <p className="text-muted-foreground text-xs">
-            Rejecting publication archives the feedback in Trash. An admin can
-            restore it.
-          </p>
-        )}
-        {editable && (
-          <div className="flex flex-col items-start gap-1">
-            {PUBLICATION_STATES.map((next) => (
-              <Button
-                key={next}
-                onClick={() => decide(next)}
-                size="xs"
-                variant={state === next ? "surface" : "ghost"}
-              >
-                {PUBLICATION_LABELS[next]}
-              </Button>
-            ))}
-          </div>
+          <PublicationActions feedbackId={feedbackId} state={state} />
         )}
       </PopoverContent>
     </Popover>

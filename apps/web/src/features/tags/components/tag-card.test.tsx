@@ -1,198 +1,43 @@
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { expect, test, vi } from "vitest";
+import { TagCard } from "@/features/tags/components/tag-card";
+import { toId } from "@/lib/convex-helpers";
 
-vi.mock("@phosphor-icons/react", () => ({
-  DotsThreeVertical: () => <svg data-testid="dots-icon" />,
-  Trash: ({ className }: { className?: string }) => (
-    <svg className={className} data-testid="trash-icon" />
-  ),
-}));
+const tag = { _id: toId("tags", "tag1"), color: "red", name: "Bug" };
+const actions = { onDelete: vi.fn(), onEdit: vi.fn() };
 
-vi.mock("@ctrl-ui/react/ui/button", () => ({
-  Button: ({
-    children,
-    onClick,
-    variant,
-    size,
-    className,
-    ...props
-  }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
-    variant?: string;
-    size?: string;
-  }) => (
-    <button
-      className={className}
-      data-size={size}
-      data-variant={variant}
-      onClick={onClick}
-      type="button"
-      {...props}
-    >
-      {children}
-    </button>
-  ),
-}));
+test("an unconfigured category is displayed as Team", () => {
+  render(<TagCard actions={actions} isAdmin={false} tag={tag} />);
+  expect(screen.getByText("Bug")).toBeVisible();
+  expect(screen.getByText("Team")).toBeVisible();
+  expect(
+    screen.queryByRole("button", { name: "Actions for Bug" })
+  ).not.toBeInTheDocument();
+});
 
-vi.mock("@ctrl-ui/react/ui/card", () => ({
-  Card: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="card">{children}</div>
-  ),
-  CardHeader: ({
-    children,
-    className,
-  }: {
-    children: React.ReactNode;
-    className?: string;
-  }) => (
-    <div className={className} data-testid="card-header">
-      {children}
-    </div>
-  ),
-  CardTitle: ({
-    children,
-    className,
-  }: {
-    children: React.ReactNode;
-    className?: string;
-  }) => (
-    <h3 className={className} data-testid="card-title">
-      {children}
-    </h3>
-  ),
-}));
+test("an explicitly public category displays its audience", () => {
+  render(
+    <TagCard
+      actions={actions}
+      isAdmin={false}
+      tag={{ ...tag, settings: { isPublic: true } }}
+    />
+  );
+  expect(screen.getByText("Public")).toBeVisible();
+});
 
-vi.mock("@ctrl-ui/react/ui/dropdown-menu", () => ({
-  DropdownMenu: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="dropdown">{children}</div>
-  ),
-  DropdownMenuContent: ({
-    children,
-  }: {
-    children: React.ReactNode;
-    align?: string;
-  }) => <div data-testid="dropdown-content">{children}</div>,
-  DropdownMenuItem: ({
-    children,
-    onClick,
-    className,
-  }: {
-    children: React.ReactNode;
-    onClick?: () => void;
-    className?: string;
-  }) => (
-    <button
-      className={className}
-      data-testid="dropdown-item"
-      onClick={onClick}
-      type="button"
-    >
-      {children}
-    </button>
-  ),
-  DropdownMenuTrigger: ({
-    render,
-  }: {
-    render: (props: React.ComponentProps<"button">) => React.ReactNode;
-  }) => <>{render({})}</>,
-}));
+test("an admin can open the category editor from its menu", async () => {
+  const onEdit = vi.fn();
+  render(<TagCard actions={{ ...actions, onEdit }} isAdmin tag={tag} />);
+  fireEvent.click(screen.getByRole("button", { name: "Actions for Bug" }));
+  fireEvent.click(await screen.findByRole("menuitem", { name: "Edit" }));
+  expect(onEdit).toHaveBeenCalledOnce();
+});
 
-vi.mock("@/lib/tag-colors", () => ({
-  getTagSwatchClass: (color: string) => `swatch-${color}`,
-  resolveTagColor: (color: string) => color,
-}));
-
-vi.mock("@/lib/utils", () => ({
-  cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
-}));
-
-import { TagCard } from "./tag-card";
-
-describe("TagCard", () => {
-  const defaultTag = {
-    _id: "tag1" as Id<"tags">,
-    color: "red",
-    name: "Bug",
-  };
-
-  const defaultProps = {
-    isAdmin: false,
-    onDelete: vi.fn(),
-    onEdit: vi.fn(),
-    tag: defaultTag,
-  };
-
-  it("renders the card", () => {
-    render(<TagCard {...defaultProps} />);
-    expect(screen.getByTestId("card")).toBeInTheDocument();
-  });
-
-  it("displays the tag name", () => {
-    render(<TagCard {...defaultProps} />);
-    expect(screen.getByText("Bug")).toBeInTheDocument();
-  });
-
-  it("renders the color swatch with correct class", () => {
-    const { container } = render(<TagCard {...defaultProps} />);
-    const swatch = container.querySelector(".swatch-red");
-    expect(swatch).toBeInTheDocument();
-  });
-
-  it("does not show dropdown menu when not admin", () => {
-    render(<TagCard {...defaultProps} />);
-    expect(screen.queryByTestId("dropdown")).not.toBeInTheDocument();
-  });
-
-  it("shows dropdown menu when isAdmin is true", () => {
-    render(<TagCard {...defaultProps} isAdmin />);
-    expect(screen.getByTestId("dropdown")).toBeInTheDocument();
-  });
-
-  it("shows Edit option in admin dropdown", () => {
-    render(<TagCard {...defaultProps} isAdmin />);
-    expect(screen.getByText("Edit")).toBeInTheDocument();
-  });
-
-  it("shows Delete option in admin dropdown", () => {
-    render(<TagCard {...defaultProps} isAdmin />);
-    expect(screen.getByText("Delete")).toBeInTheDocument();
-  });
-
-  it("calls onEdit when Edit is clicked", () => {
-    const onEdit = vi.fn();
-    render(<TagCard {...defaultProps} isAdmin onEdit={onEdit} />);
-    fireEvent.click(screen.getByText("Edit"));
-    expect(onEdit).toHaveBeenCalledOnce();
-  });
-
-  it("calls onDelete when Delete is clicked", () => {
-    const onDelete = vi.fn();
-    render(<TagCard {...defaultProps} isAdmin onDelete={onDelete} />);
-    fireEvent.click(screen.getByText("Delete"));
-    expect(onDelete).toHaveBeenCalledOnce();
-  });
-
-  it("renders with different tag data", () => {
-    const tag = {
-      _id: "tag2" as Id<"tags">,
-      color: "blue",
-      name: "Feature",
-    };
-    render(<TagCard {...defaultProps} tag={tag} />);
-    expect(screen.getByText("Feature")).toBeInTheDocument();
-  });
-
-  it("applies destructive class to delete option", () => {
-    render(<TagCard {...defaultProps} isAdmin />);
-    const items = screen.getAllByTestId("dropdown-item");
-    const deleteItem = items.find((item) =>
-      item.textContent?.includes("Delete")
-    );
-    expect(deleteItem).toHaveClass("menu-item-danger");
-  });
-
-  it("shows trash icon in delete option", () => {
-    render(<TagCard {...defaultProps} isAdmin />);
-    expect(screen.getByTestId("trash-icon")).toBeInTheDocument();
-  });
+test("an admin can request category deletion from its menu", async () => {
+  const onDelete = vi.fn();
+  render(<TagCard actions={{ ...actions, onDelete }} isAdmin tag={tag} />);
+  fireEvent.click(screen.getByRole("button", { name: "Actions for Bug" }));
+  fireEvent.click(await screen.findByRole("menuitem", { name: "Delete" }));
+  expect(onDelete).toHaveBeenCalledOnce();
 });

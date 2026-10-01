@@ -5,30 +5,8 @@ import { setupTest } from "../../test.helpers";
 
 test("reconciliation preserves the fixed lifecycle and historical completion, without guessing localized column meanings", async () => {
   const t = setupTest();
-  const { organizationId, backlogId, feedbackId, reopenedId } = await t.run(
-    async (ctx) => {
-      const organizationId = await seedOrganization(ctx);
-      const backlogId = await ctx.db.insert("organizationStatuses", {
-        color: "gray",
-        createdAt: Date.now(),
-        name: "À faire",
-        order: 0,
-        organizationId,
-        updatedAt: Date.now(),
-      });
-      const feedbackId = await seedFeedback(ctx, organizationId, {
-        completedAt: 123,
-        organizationStatusId: backlogId,
-        status: "completed",
-      });
-      const reopenedId = await seedFeedback(ctx, organizationId, {
-        completedAt: 456,
-        organizationStatusId: backlogId,
-        status: "open",
-      });
-      return { backlogId, feedbackId, organizationId, reopenedId };
-    }
-  );
+  const { organizationId, backlogId, feedbackId, reopenedId } =
+    await seedInconsistentLifecycles(t);
   await expect(
     t.mutation(internal.migrations.feedback_properties.reconcile, {
       cursor: null,
@@ -62,3 +40,28 @@ test("reconciliation preserves the fixed lifecycle and historical completion, wi
   );
   expect(repeated.reconciled).toBe(0);
 });
+
+function seedInconsistentLifecycles(t: ReturnType<typeof setupTest>) {
+  return t.run(async (ctx) => {
+    const organizationId = await seedOrganization(ctx);
+    const backlogId = await ctx.db.insert("organizationStatuses", {
+      color: "gray",
+      createdAt: Date.now(),
+      name: "À faire",
+      order: 0,
+      organizationId,
+      updatedAt: Date.now(),
+    });
+    const feedbackId = await seedFeedback(ctx, organizationId, {
+      completedAt: 123,
+      organizationStatusId: backlogId,
+      status: "completed",
+    });
+    const reopenedId = await seedFeedback(ctx, organizationId, {
+      completedAt: 456,
+      organizationStatusId: backlogId,
+      status: "open",
+    });
+    return { backlogId, feedbackId, organizationId, reopenedId };
+  });
+}

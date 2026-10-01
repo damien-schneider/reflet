@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { internalQuery } from "../_generated/server";
+import { categoryVisibleToViewer } from "./categories/visibility";
 import { isFeedbackPubliclyVisible } from "./public_projection";
 
 const DEFAULT_CHANGELOG_LIMIT = 20;
@@ -33,7 +34,9 @@ export const getOrganizationConfig = internalQuery({
       )
       .collect();
 
-    const publicTags = tags.filter((t) => t.settings?.isPublic);
+    const publicTags = tags.filter((tag) =>
+      categoryVisibleToViewer(tag, false)
+    );
 
     return {
       feedbackSettings: org.feedbackSettings,

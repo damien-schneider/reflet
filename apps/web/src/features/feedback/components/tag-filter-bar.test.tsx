@@ -67,7 +67,7 @@ vi.mock("@/features/tags/components/delete-tag-dialog", () => ({
     ) : null,
 }));
 
-vi.mock("@/features/tags/components/tag-form-popover", () => ({
+vi.mock("@/features/tags/components/editor/tag-form-popover", () => ({
   TagFormPopover: ({ trigger }: { trigger?: React.ReactNode }) => (
     <div data-testid="tag-form-popover">{trigger}</div>
   ),

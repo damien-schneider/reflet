@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
+import { getFeedbackCategories } from "./categories/visibility";
 import {
   isFeedbackPubliclyVisible,
   projectFeedbackFor,
@@ -126,11 +127,8 @@ export const listByOrganization = query({
       const selectedTagIds = new Set<string>(args.tagIds);
       const feedbackWithTags = await Promise.all(
         feedbackItems.map(async (f) => {
-          const tags = await ctx.db
-            .query("feedbackTags")
-            .withIndex("by_feedback", (q) => q.eq("feedbackId", f._id))
-            .collect();
-          const tagIds = tags.map((t) => t.tagId);
+          const tags = await getFeedbackCategories(ctx, f._id, isMember);
+          const tagIds = tags.map((tag) => tag._id);
 
           const hasAnyTag = tagIds.some((tagId) => selectedTagIds.has(tagId));
           return hasAnyTag ? f : null;
@@ -157,19 +155,7 @@ export const listByOrganization = query({
     }
 
     const enrichFeedback = async (f: (typeof feedbackItems)[0]) => {
-      const feedbackTags = await ctx.db
-        .query("feedbackTags")
-        .withIndex("by_feedback", (q) => q.eq("feedbackId", f._id))
-        .collect();
-      const tags = await Promise.all(
-        feedbackTags.map(async (ft) => {
-          const tag = await ctx.db.get(ft.tagId);
-          if (!tag) {
-            return null;
-          }
-          return { ...tag, appliedByAi: ft.appliedByAi ?? false };
-        })
-      );
+      const tags = await getFeedbackCategories(ctx, f._id, isMember);
 
       const allVotes = await ctx.db
         .query("feedbackVotes")
@@ -215,7 +201,7 @@ export const listByOrganization = query({
               name: orgStatus.name,
             }
           : null,
-        tags: tags.filter(Boolean),
+        tags,
         upvoteCount,
         userVoteType,
       };

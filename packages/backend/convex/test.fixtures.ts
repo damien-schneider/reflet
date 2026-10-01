@@ -98,26 +98,7 @@ export async function applyRecordedTriage(
     usefulness?: number;
   }
 ) {
-  const snapshot = await t.run(async (ctx) => {
-    const feedback = await ctx.db.get(input.feedbackId);
-    if (!feedback) {
-      throw new Error("Feedback not found");
-    }
-    const tags = await ctx.db
-      .query("tags")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", feedback.organizationId)
-      )
-      .collect();
-    return {
-      feedback,
-      tags: tags.map((tag) => ({
-        _id: tag._id,
-        description: tag.description,
-        name: tag.name,
-      })),
-    };
-  });
+  const snapshot = await recordedTriageSnapshot(t, input.feedbackId);
   const runId = await t.mutation(internal.feedback.triage_runs.start, {
     applyModeration: input.applyModeration ?? false,
     feedbackId: input.feedbackId,
@@ -146,5 +127,31 @@ export async function applyRecordedTriage(
     runId,
     tagIds,
     usefulness,
+  });
+}
+
+function recordedTriageSnapshot(
+  t: import("./test.helpers").TestContext,
+  feedbackId: Id<"feedback">
+) {
+  return t.run(async (ctx) => {
+    const feedback = await ctx.db.get(feedbackId);
+    if (!feedback) {
+      throw new Error("Feedback not found");
+    }
+    const tags = await ctx.db
+      .query("tags")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", feedback.organizationId)
+      )
+      .collect();
+    return {
+      feedback,
+      tags: tags.map((tag) => ({
+        _id: tag._id,
+        description: tag.description,
+        name: tag.name,
+      })),
+    };
   });
 }

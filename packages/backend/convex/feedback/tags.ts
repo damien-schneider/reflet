@@ -1,7 +1,12 @@
 import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
+import { isOrgMemberViewer } from "../shared/access";
 import { getAuthUser } from "../shared/utils";
+import {
+  categoryVisibleToViewer,
+  getFeedbackCategories,
+} from "./categories/visibility";
 import { canViewFeedback } from "./public_projection";
 
 import { DEFAULT_TAGS } from "./tag_definitions";
@@ -38,7 +43,9 @@ export const list = query({
       )
       .collect();
 
-    return tags.sort((a, b) => a.name.localeCompare(b.name));
+    return tags
+      .filter((tag) => categoryVisibleToViewer(tag, isMember))
+      .sort((a, b) => a.name.localeCompare(b.name));
   },
 });
 
@@ -81,7 +88,7 @@ export const getBySlug = query({
       return null;
     }
 
-    return tag;
+    return categoryVisibleToViewer(tag, isMember) ? tag : null;
   },
 });
 
@@ -100,7 +107,9 @@ export const listPublic = query({
       )
       .collect();
 
-    return tags.sort((a, b) => a.name.localeCompare(b.name));
+    return tags
+      .filter((tag) => categoryVisibleToViewer(tag, false))
+      .sort((a, b) => a.name.localeCompare(b.name));
   },
 });
 
@@ -114,19 +123,11 @@ export const getForFeedback = query({
     if (!(await canViewFeedback(ctx, feedback))) {
       return [];
     }
-    const feedbackTags = await ctx.db
-      .query("feedbackTags")
-      .withIndex("by_feedback", (q) => q.eq("feedbackId", args.feedbackId))
-      .collect();
-
-    const tags = await Promise.all(
-      feedbackTags.map(async (ft) => {
-        const tag = await ctx.db.get(ft.tagId);
-        return tag;
-      })
+    return getFeedbackCategories(
+      ctx,
+      args.feedbackId,
+      await isOrgMemberViewer(ctx, feedback.organizationId)
     );
-
-    return tags.filter(Boolean);
   },
 });
 
@@ -159,7 +160,7 @@ export const createDefaults = mutation({
       .first();
 
     if (existingTags) {
-      return []; // Already initialized
+      return [];
     }
 
     const now = Date.now();

@@ -205,8 +205,6 @@ export const applySetupResults = mutation({
       await ctx.db.insert("tags", {
         color: tag.color,
         createdAt: now,
-        isDoneStatus: false,
-        isRoadmapLane: false,
         name: tag.name,
         organizationId: args.organizationId,
         slug,

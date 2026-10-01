@@ -14,11 +14,80 @@ import type { FunctionReturnType } from "convex/server";
 import { useState } from "react";
 import { formatPropertyTime } from "@/features/feedback/components/properties/time/format-property-time";
 
-function RunAnalysis({
-  run,
-}: {
-  run: FunctionReturnType<typeof api.feedback.triage_runs.list>[number];
-}) {
+type TriageRun = FunctionReturnType<
+  typeof api.feedback.triage_runs.list
+>[number];
+
+function RunInput({ run }: { run: TriageRun }) {
+  return (
+    <details>
+      <summary className="cursor-pointer text-sm">Actual input sent</summary>
+      <div className="mt-2 space-y-1 rounded-md bg-muted p-3 text-xs">
+        <p className="font-medium">{run.input.title}</p>
+        <p className="whitespace-pre-wrap">{run.input.description}</p>
+        <p className="text-muted-foreground">
+          Only title and description were sent as state. Category names and
+          descriptions appear in the questions below.
+        </p>
+      </div>
+    </details>
+  );
+}
+
+function RunQuestions({ run }: { run: TriageRun }) {
+  return (
+    <details>
+      <summary className="cursor-pointer text-sm">
+        Questions, criteria and probabilities
+      </summary>
+      <div className="mt-2 space-y-3">
+        {run.questions.map((question) => {
+          const answer = run.answers?.find(
+            (candidate) => candidate.questionId === question.id
+          );
+          return (
+            <div
+              className="space-y-1 rounded-md bg-muted p-3 text-xs"
+              key={question.id}
+            >
+              <p className="font-medium">{question.instructions}</p>
+              <p>Yes: {question.criteria.true}</p>
+              <p>No: {question.criteria.false}</p>
+              <p className="font-medium">
+                {answer
+                  ? `${Math.round(answer.probability * 100)}%`
+                  : "No result"}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+    </details>
+  );
+}
+
+function RunTagSuggestions({ run }: { run: TriageRun }) {
+  if (!run.suggestions) {
+    return null;
+  }
+  return (
+    <ul className="space-y-1 text-xs">
+      {run.suggestions.map((suggestion) => (
+        <li key={suggestion.tagId}>
+          {suggestion.name}: {Math.round(suggestion.probability * 100)}% ·{" "}
+          {suggestion.outcome.replaceAll("_", " ")} at run time · Now:{" "}
+          {
+            run.currentSuggestions.find(
+              (current) => current.tagId === suggestion.tagId
+            )?.currentOutcome
+          }
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function RunAnalysis({ run }: { run: TriageRun }) {
   const generatedAt = formatPropertyTime(run.completedAt ?? run.startedAt);
   return (
     <section className="space-y-3 border-b pb-3">
@@ -31,44 +100,8 @@ function RunAnalysis({
         </p>
       </div>
       {run.error && <p className="text-destructive text-sm">{run.error}</p>}
-      <details>
-        <summary className="cursor-pointer text-sm">Actual input sent</summary>
-        <div className="mt-2 space-y-1 rounded-md bg-muted p-3 text-xs">
-          <p className="font-medium">{run.input.title}</p>
-          <p className="whitespace-pre-wrap">{run.input.description}</p>
-          <p className="text-muted-foreground">
-            Only title and description were sent as state. Category names and
-            descriptions appear in the questions below.
-          </p>
-        </div>
-      </details>
-      <details>
-        <summary className="cursor-pointer text-sm">
-          Questions, criteria and probabilities
-        </summary>
-        <div className="mt-2 space-y-3">
-          {run.questions.map((question) => {
-            const answer = run.answers?.find(
-              (candidate) => candidate.questionId === question.id
-            );
-            return (
-              <div
-                className="space-y-1 rounded-md bg-muted p-3 text-xs"
-                key={question.id}
-              >
-                <p className="font-medium">{question.instructions}</p>
-                <p>Yes: {question.criteria.true}</p>
-                <p>No: {question.criteria.false}</p>
-                <p className="font-medium">
-                  {answer
-                    ? `${Math.round(answer.probability * 100)}%`
-                    : "No result"}
-                </p>
-              </div>
-            );
-          })}
-        </div>
-      </details>
+      <RunInput run={run} />
+      <RunQuestions run={run} />
       <p className="text-muted-foreground text-xs">
         Hold for publication review at {run.thresholds.junk * 100}% junk. Needs
         clarification at {run.thresholds.clarification * 100}%. Apply categories
@@ -77,21 +110,7 @@ function RunAnalysis({
       {run.publicationDecision && (
         <p className="text-xs">{run.publicationDecision}</p>
       )}
-      {run.suggestions && (
-        <ul className="space-y-1 text-xs">
-          {run.suggestions.map((suggestion) => (
-            <li key={suggestion.tagId}>
-              {suggestion.name}: {Math.round(suggestion.probability * 100)}% ·{" "}
-              {suggestion.outcome.replaceAll("_", " ")} at run time · Now:{" "}
-              {
-                run.currentSuggestions.find(
-                  (current) => current.tagId === suggestion.tagId
-                )?.currentOutcome
-              }
-            </li>
-          ))}
-        </ul>
-      )}
+      <RunTagSuggestions run={run} />
     </section>
   );
 }
@@ -130,23 +149,7 @@ export function TriageAnalysis({
   editable: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const [starting, setStarting] = useState(false);
-  const recompute = useMutation(
-    api.feedback.auto_tagging_jobs.recomputeFeedbackTriage
-  );
-  async function runTriage() {
-    setStarting(true);
-    try {
-      await recompute({ feedbackId });
-      toast.success("JEV analysis queued");
-    } catch (error) {
-      toast.error("Could not recompute triage", {
-        description: error instanceof Error ? error.message : "Try again",
-      });
-    } finally {
-      setStarting(false);
-    }
-  }
+  const { starting, runTriage } = useTriageRecompute(feedbackId);
   return (
     <Popover onOpenChange={setOpen} open={open}>
       <PopoverTrigger render={<Button size="xs" variant="ghost" />}>
@@ -179,4 +182,25 @@ export function TriageAnalysis({
       </PopoverContent>
     </Popover>
   );
+}
+
+function useTriageRecompute(feedbackId: Id<"feedback">) {
+  const [starting, setStarting] = useState(false);
+  const recompute = useMutation(
+    api.feedback.auto_tagging_jobs.recomputeFeedbackTriage
+  );
+  async function runTriage() {
+    setStarting(true);
+    try {
+      await recompute({ feedbackId });
+      toast.success("JEV analysis queued");
+    } catch (error) {
+      toast.error("Could not recompute triage", {
+        description: error instanceof Error ? error.message : "Try again",
+      });
+    } finally {
+      setStarting(false);
+    }
+  }
+  return { runTriage, starting };
 }

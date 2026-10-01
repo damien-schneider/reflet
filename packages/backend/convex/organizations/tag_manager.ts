@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
+import { categoryVisibleToViewer } from "../feedback/categories/visibility";
 
 export const list = query({
   args: { organizationId: v.id("organizations") },
@@ -34,6 +35,8 @@ export const list = query({
       )
       .collect();
 
-    return tags.sort((a, b) => a.name.localeCompare(b.name));
+    return tags
+      .filter((tag) => categoryVisibleToViewer(tag, isMember))
+      .sort((a, b) => a.name.localeCompare(b.name));
   },
 });

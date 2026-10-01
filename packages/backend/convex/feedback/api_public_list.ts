@@ -1,6 +1,10 @@
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { internalQuery, type QueryCtx } from "../_generated/server";
+import {
+  categoryVisibleToViewer,
+  getFeedbackCategories,
+} from "./categories/visibility";
 import { toPagePathPattern } from "./page_path";
 import { isFeedbackPublishable } from "./property_values";
 
@@ -23,22 +27,18 @@ interface PublicAuthor {
   name: string | undefined;
 }
 
-async function loadTags(ctx: QueryCtx, feedbackId: Id<"feedback">) {
-  const feedbackTags = await ctx.db
-    .query("feedbackTags")
-    .withIndex("by_feedback", (q) => q.eq("feedbackId", feedbackId))
-    .collect();
-
-  const tags = await Promise.all(
-    feedbackTags.map(async (ft) => {
-      const tag = await ctx.db.get(ft.tagId);
-      return tag
-        ? { color: tag.color, id: tag._id, name: tag.name, slug: tag.slug }
-        : null;
-    })
-  );
-
-  return tags.filter((tag): tag is NonNullable<typeof tag> => tag !== null);
+async function loadTags(
+  ctx: QueryCtx,
+  feedbackId: Id<"feedback">,
+  isMember: boolean
+) {
+  const tags = await getFeedbackCategories(ctx, feedbackId, isMember);
+  return tags.map((tag) => ({
+    color: tag.color,
+    id: tag._id,
+    name: tag.name,
+    slug: tag.slug,
+  }));
 }
 
 async function loadAuthor(
@@ -105,15 +105,19 @@ function sortFeedback(
 async function filterByTag(
   ctx: QueryCtx,
   items: Doc<"feedback">[],
-  tagId: Id<"tags">
+  options: { tagId: Id<"tags">; isMember: boolean }
 ): Promise<Doc<"feedback">[]> {
+  const tag = await ctx.db.get(options.tagId);
+  if (!categoryVisibleToViewer(tag, options.isMember)) {
+    return [];
+  }
   const matches = await Promise.all(
     items.map(async (f) => {
       const tags = await ctx.db
         .query("feedbackTags")
         .withIndex("by_feedback", (q) => q.eq("feedbackId", f._id))
         .collect();
-      return tags.some((t) => t.tagId === tagId) ? f : null;
+      return tags.some((t) => t.tagId === options.tagId) ? f : null;
     })
   );
   return matches.filter((f): f is Doc<"feedback"> => f !== null);
@@ -202,7 +206,10 @@ export const listFeedbackByOrganization = internalQuery({
     }
 
     if (args.tagId) {
-      feedbackItems = await filterByTag(ctx, feedbackItems, args.tagId);
+      feedbackItems = await filterByTag(ctx, feedbackItems, {
+        isMember: includePrivateContext,
+        tagId: args.tagId,
+      });
     }
 
     if (args.search) {
@@ -257,7 +264,7 @@ export const listFeedbackByOrganization = internalQuery({
               }
             : null,
           status: f.status,
-          tags: await loadTags(ctx, f._id),
+          tags: await loadTags(ctx, f._id, includePrivateContext),
           title: f.title,
           updatedAt: f.updatedAt,
           voteCount: f.voteCount,
@@ -323,7 +330,7 @@ export async function shapeFeedbackDetail(
     isSubscribed,
     organizationStatus,
     status: feedback.status,
-    tags: await loadTags(ctx, feedback._id),
+    tags: await loadTags(ctx, feedback._id, options.includePrivateContext),
     title: feedback.title,
     updatedAt: feedback.updatedAt,
     voteCount: feedback.voteCount,
