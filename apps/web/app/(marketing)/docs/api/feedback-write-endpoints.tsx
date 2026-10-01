@@ -44,10 +44,14 @@ const CREATE_FEEDBACK: EndpointDefinition = {
   method: "POST",
   note: (
     <>
-      Responds with <InlineCode>201</InlineCode>. When the board or tag requires
-      approval, <InlineCode>isApproved</InlineCode> is{" "}
-      <InlineCode>false</InlineCode> and the item stays hidden until someone
-      approves it.
+      Responds with <InlineCode>201</InlineCode> and{" "}
+      <InlineCode>isApproved: false</InlineCode>: every new item waits for
+      automatic triage, which publishes it shortly unless the board requires
+      approval or the item looks like spam. Until then only the secret key reads
+      it. Publish or reject it yourself with the secret key:{" "}
+      <InlineCode>POST /api/v1/admin/feedback/publication</InlineCode> with{" "}
+      <InlineCode>{`{ "feedbackId", "state": "approved" | "rejected" }`}</InlineCode>
+      .
     </>
   ),
   params: [
@@ -72,7 +76,7 @@ const CREATE_FEEDBACK: EndpointDefinition = {
   -d '{"title": "Add dark mode", "description": "Please add a dark mode option."}'`,
   response: `{
   "feedbackId": "jd7f2k9m1qz8x4c6v0bn3t5w",
-  "isApproved": true
+  "isApproved": false
 }`,
 };
 

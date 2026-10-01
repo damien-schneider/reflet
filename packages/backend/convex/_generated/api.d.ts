@@ -135,6 +135,7 @@ import type * as feedback_trash from "../feedback/trash.js";
 import type * as feedback_triage_actions from "../feedback/triage_actions.js";
 import type * as feedback_triage_contract from "../feedback/triage_contract.js";
 import type * as feedback_triage_evaluation from "../feedback/triage_evaluation.js";
+import type * as feedback_triage_publication from "../feedback/triage_publication.js";
 import type * as feedback_triage_questions from "../feedback/triage_questions.js";
 import type * as feedback_triage_runs from "../feedback/triage_runs.js";
 import type * as feedback_triage_scope from "../feedback/triage_scope.js";
@@ -420,6 +421,7 @@ declare const fullApi: ApiFromModules<{
   "feedback/triage_actions": typeof feedback_triage_actions;
   "feedback/triage_contract": typeof feedback_triage_contract;
   "feedback/triage_evaluation": typeof feedback_triage_evaluation;
+  "feedback/triage_publication": typeof feedback_triage_publication;
   "feedback/triage_questions": typeof feedback_triage_questions;
   "feedback/triage_runs": typeof feedback_triage_runs;
   "feedback/triage_scope": typeof feedback_triage_scope;

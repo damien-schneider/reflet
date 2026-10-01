@@ -6,7 +6,7 @@ import {
   getFeedbackCategories,
 } from "./categories/visibility";
 import { toPagePathPattern } from "./page_path";
-import { isFeedbackPublishable } from "./property_values";
+import { isFeedbackPublishable, publicationState } from "./property_values";
 
 const feedbackStatus = v.union(
   v.literal("open"),
@@ -145,6 +145,7 @@ function privateFeedbackFields(feedback: Doc<"feedback">) {
     githubHtmlUrl: feedback.githubHtmlUrl,
     githubIssueNumber: feedback.githubIssueNumber,
     isInternal: feedback.isInternal === true,
+    publication: publicationState(feedback),
     syncedFromGithub: feedback.syncedFromGithub,
   };
 }
@@ -186,7 +187,7 @@ export const listFeedbackByOrganization = internalQuery({
 
     let feedbackItems = all.filter(
       (f) =>
-        (isFeedbackPublishable(f) || (includePrivateContext && f.isInternal)) &&
+        (includePrivateContext || isFeedbackPublishable(f)) &&
         !f.deletedAt &&
         !f.isMerged
     );
@@ -351,8 +352,7 @@ export const getFeedbackByOrganization = internalQuery({
       feedback &&
       !feedback.deletedAt &&
       feedback.organizationId === args.organizationId &&
-      (isFeedbackPublishable(feedback) ||
-        (includePrivateContext && feedback.isInternal));
+      (includePrivateContext || isFeedbackPublishable(feedback));
 
     if (!isVisible) {
       return null;

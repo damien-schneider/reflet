@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { internalQuery } from "../_generated/server";
 import { categoryVisibleToViewer } from "./categories/visibility";
+import { isFeedbackPublishable } from "./property_values";
 import { isFeedbackPubliclyVisible } from "./public_projection";
 
 const DEFAULT_CHANGELOG_LIMIT = 20;
@@ -76,8 +77,8 @@ export const listCommentsByOrganization = internalQuery({
     if (
       !feedback ||
       feedback.organizationId !== args.organizationId ||
-      !feedback.isApproved ||
-      feedback.deletedAt
+      feedback.deletedAt ||
+      !(args.includePrivateContext || isFeedbackPublishable(feedback))
     ) {
       return [];
     }

@@ -13,11 +13,15 @@ const READ_ACCESS = (
 const PRIVATE_FIELDS_ACCESS = (
   <>
     {READ_ACCESS} With the secret key the response also includes internal
-    feedback and the private fields <InlineCode>context</InlineCode>,{" "}
-    <InlineCode>assigneeId</InlineCode>, <InlineCode>claimedBy</InlineCode>,{" "}
+    feedback, feedback still awaiting publication, and the private fields{" "}
+    <InlineCode>context</InlineCode>, <InlineCode>assigneeId</InlineCode>,{" "}
+    <InlineCode>claimedBy</InlineCode>,{" "}
     <InlineCode>githubIssueNumber</InlineCode>,{" "}
-    <InlineCode>githubHtmlUrl</InlineCode>, <InlineCode>isInternal</InlineCode>{" "}
-    and <InlineCode>syncedFromGithub</InlineCode>. Add a{" "}
+    <InlineCode>githubHtmlUrl</InlineCode>, <InlineCode>isInternal</InlineCode>,{" "}
+    <InlineCode>publication</InlineCode> (<InlineCode>internal</InlineCode>,{" "}
+    <InlineCode>pending</InlineCode>, <InlineCode>approved</InlineCode> or{" "}
+    <InlineCode>rejected</InlineCode>) and{" "}
+    <InlineCode>syncedFromGithub</InlineCode>. Add a{" "}
     <DocsLink href="#user-token">signed user token</DocsLink> to fill{" "}
     <InlineCode>hasVoted</InlineCode>.
   </>

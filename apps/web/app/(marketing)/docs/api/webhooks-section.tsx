@@ -40,6 +40,7 @@ const PAYLOAD_EXAMPLE = `{
       "commentCount": 3,
       "isPinned": false,
       "isInternal": false,
+      "publication": "approved",
       "assigneeId": "user_42",
       "claimedBy": "agent@ci",
       "githubIssueNumber": 42,

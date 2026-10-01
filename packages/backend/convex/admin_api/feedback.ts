@@ -2,6 +2,10 @@ import { v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { internalMutation } from "../_generated/server";
 import { archiveFeedback } from "../feedback/archive_feedback";
+import {
+  changePublication,
+  publicationStateValidator,
+} from "../feedback/publication";
 import { changeFeedbackStatus } from "../feedback/status_change";
 import { confirmTag, refuseTag } from "../feedback/tag_decisions";
 import {
@@ -168,6 +172,30 @@ export const setFeedbackStatus = internalMutation({
       organizationStatusId: args.statusId,
       source: "api",
       status: args.status,
+    });
+    return { success: true };
+  },
+  returns: v.object({ success: v.boolean() }),
+});
+
+export const setFeedbackPublication = internalMutation({
+  args: {
+    feedbackId: v.id("feedback"),
+    organizationId: v.id("organizations"),
+    state: publicationStateValidator,
+  },
+  handler: async (ctx, args) => {
+    const feedback = await ctx.db.get(args.feedbackId);
+    if (
+      !feedback ||
+      feedback.organizationId !== args.organizationId ||
+      feedback.deletedAt
+    ) {
+      throw new Error("Feedback not found");
+    }
+    await changePublication(ctx, feedback, {
+      actorId: "api",
+      state: args.state,
     });
     return { success: true };
   },

@@ -28,7 +28,7 @@ After every organization is reconciled, make `semanticStatus` required and remov
 
 ## Publication and triage
 
-New web/widget/API submissions begin pending before the asynchronous JEV assessment. A low-junk verdict uses the project's existing `requireApproval` policy. A suspected junk verdict stays pending and displays a JEV discard recommendation; it never archives or permanently deletes anything. Failure or missing JEV configuration keeps the submission pending.
+New web/widget/API submissions begin pending before the asynchronous JEV assessment. A low-junk verdict uses the project's existing `requireApproval` policy. A suspected junk verdict stays pending and displays a JEV discard recommendation; it never archives or permanently deletes anything. A failed run, including a missing `OPENROUTER_API_KEY`, applies the `requireApproval` policy without the junk check, so feedback is never held only because triage could not run. Editing the title or description while the run is in flight discards its result and starts a new moderating run on the edited text. Secret-key API reads include pending submissions with their `publication` state, and `POST /api/v1/admin/feedback/publication` sets it; webhooks deliver approved feedback only.
 
 Human approval, rejection and internal audience decisions survive recomputation. Explicit rejection archives the submission through the existing soft deletion mechanism, so it disappears from the normal board and an admin can restore it from Trash. Restoration retains the rejected publication state until an admin changes it.
 

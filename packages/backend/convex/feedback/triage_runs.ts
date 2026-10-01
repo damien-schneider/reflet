@@ -7,16 +7,18 @@ import {
 } from "../_generated/server";
 import { requireOrgMember } from "../shared/access";
 import { afterApproval } from "./after_create";
-import {
-  NEEDS_CLARIFICATION_THRESHOLD,
-  publicationState,
-} from "./property_values";
+import { NEEDS_CLARIFICATION_THRESHOLD } from "./property_values";
 import {
   triageAnswer,
   triageInput,
   triageRunFields,
   triageTag,
 } from "./triage_contract";
+import {
+  applyPolicyWithoutVerdict,
+  decidePublication,
+  retriageEditedSubmission,
+} from "./triage_publication";
 import {
   buildQuestions,
   MAX_TAGS_PER_FEEDBACK,
@@ -69,12 +71,22 @@ export const fail = internalMutation({
   args: { error: v.string(), runId: v.id("feedbackTriageRuns") },
   handler: async (ctx, args) => {
     const run = await ctx.db.get(args.runId);
-    if (run?.status === "running") {
-      await ctx.db.patch(args.runId, {
-        completedAt: Date.now(),
-        error: args.error,
-        status: "failed",
-      });
+    if (run?.status !== "running") {
+      return null;
+    }
+    const target = await runTarget(ctx, run);
+    const publicationDecision =
+      target && !target.edited
+        ? await applyPolicyWithoutVerdict(ctx, target.feedback, run)
+        : undefined;
+    await ctx.db.patch(args.runId, {
+      completedAt: Date.now(),
+      error: args.error,
+      publicationDecision,
+      status: "failed",
+    });
+    if (target?.edited) {
+      await retriageEditedSubmission(ctx, run);
     }
     return null;
   },
@@ -164,24 +176,6 @@ async function applyTagSuggestions(
   });
 }
 
-function moderationDecision(options: {
-  canModerate: boolean;
-  withhold: boolean;
-  isApproved: boolean;
-  feedback: Doc<"feedback">;
-}) {
-  if (!options.canModerate) {
-    return `Preserved ${publicationState(options.feedback)}; human audience and approval decisions are preserved`;
-  }
-  if (options.withhold) {
-    return "Held pending for publication review; JEV suggests rejection";
-  }
-  if (options.isApproved) {
-    return "Automatically approved under the project publication policy";
-  }
-  return "Kept pending; the project requires human publication approval";
-}
-
 const triageResultValidator = v.object({
   answers: v.array(triageAnswer),
   junk: v.number(),
@@ -192,23 +186,20 @@ const triageResultValidator = v.object({
 });
 type TriageResult = Infer<typeof triageResultValidator>;
 
-async function currentRunFeedback(
-  ctx: MutationCtx,
-  run: Doc<"feedbackTriageRuns">
-) {
+async function runTarget(ctx: MutationCtx, run: Doc<"feedbackTriageRuns">) {
   const feedback = await ctx.db.get(run.feedbackId);
   const latestRun = await ctx.db
     .query("feedbackTriageRuns")
     .withIndex("by_feedback", (q) => q.eq("feedbackId", run.feedbackId))
     .order("desc")
     .first();
-  const stale =
-    !feedback ||
-    feedback.deletedAt ||
-    latestRun?._id !== run._id ||
+  if (!feedback || feedback.deletedAt || latestRun?._id !== run._id) {
+    return null;
+  }
+  const edited =
     feedback.title !== run.input.title ||
     feedback.description !== run.input.description;
-  return stale ? null : feedback;
+  return { edited, feedback };
 }
 
 function validateRunAnswers(
@@ -242,15 +233,10 @@ async function saveRunVerdict(
 ) {
   const { run, result, suggestions } = options;
   const now = Date.now();
-  const canModerate =
-    run.applyModeration &&
-    !feedback.isInternal &&
-    feedback.publicationReviewedAt === undefined;
-  const withhold = result.junk >= run.thresholds.junk;
-  const organization = await ctx.db.get(feedback.organizationId);
-  const isApproved = canModerate
-    ? !(withhold || organization?.feedbackSettings?.requireApproval)
-    : feedback.isApproved;
+  const { decision, isApproved } = await decidePublication(ctx, feedback, {
+    run,
+    withhold: result.junk >= run.thresholds.junk,
+  });
   await ctx.db.patch(feedback._id, {
     aiJunk: result.junk,
     aiNeedsReview: result.needsReview,
@@ -259,18 +245,13 @@ async function saveRunVerdict(
     isApproved,
     updatedAt: now,
   });
-  if (canModerate && isApproved && !feedback.isApproved) {
+  if (isApproved && !feedback.isApproved) {
     await afterApproval(ctx, { ...feedback, isApproved });
   }
   await ctx.db.patch(run._id, {
     answers: result.answers,
     completedAt: now,
-    publicationDecision: moderationDecision({
-      canModerate,
-      feedback,
-      isApproved,
-      withhold,
-    }),
+    publicationDecision: decision,
     status: "completed",
     suggestions,
   });
@@ -283,15 +264,19 @@ export const complete = internalMutation({
     if (run?.status !== "running") {
       return false;
     }
-    const feedback = await currentRunFeedback(ctx, run);
-    if (!feedback) {
+    const target = await runTarget(ctx, run);
+    if (!target || target.edited) {
       await ctx.db.patch(run._id, {
         answers: args.answers,
         completedAt: Date.now(),
         status: "stale",
       });
+      if (target?.edited) {
+        await retriageEditedSubmission(ctx, run);
+      }
       return false;
     }
+    const { feedback } = target;
     validateRunAnswers(run, args);
     const suggestions = await applyTagSuggestions(ctx, feedback, {
       answers: args.answers,

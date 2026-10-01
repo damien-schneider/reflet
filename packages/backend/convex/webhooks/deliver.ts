@@ -30,7 +30,7 @@ export const deliver = internalAction({
       }
     );
     const isDeliverable =
-      feedback && webhook.isActive && feedback.isInternal !== true;
+      feedback?.publication === "approved" && webhook.isActive;
     if (!isDeliverable) {
       await ctx.runMutation(internal.webhooks.mutations.recordResult, {
         deliveryId: delivery._id,

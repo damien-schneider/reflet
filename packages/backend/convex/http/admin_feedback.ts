@@ -20,6 +20,7 @@ const ADMIN_FEEDBACK_PATHS = [
   "/api/v1/admin/feedback/restore",
   "/api/v1/admin/feedback/assign",
   "/api/v1/admin/feedback/set-status",
+  "/api/v1/admin/feedback/publication",
   "/api/v1/admin/feedback/update-tags",
   "/api/v1/admin/feedback/update-analysis",
   "/api/v1/admin/comment/update",
@@ -95,6 +96,22 @@ export function registerAdminFeedbackRoutes(http: Router): void {
     ),
     method: "POST",
     path: "/api/v1/admin/feedback/set-status",
+  });
+
+  http.route({
+    handler: adminPost(async (ctx, { organizationId }, body) =>
+      ctx.runMutation(internal.admin_api.feedback.setFeedbackPublication, {
+        feedbackId: parseId<"feedback">(str(body.feedbackId), "feedbackId"),
+        organizationId,
+        state: requireStr(body.state, "state") as
+          | "internal"
+          | "pending"
+          | "approved"
+          | "rejected",
+      })
+    ),
+    method: "POST",
+    path: "/api/v1/admin/feedback/publication",
   });
 
   http.route({

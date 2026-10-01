@@ -1,14 +1,21 @@
-import { expect, test } from "vitest";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { api, internal } from "../../_generated/api";
-import type { Id } from "../../_generated/dataModel";
-import { seedOrganization } from "../../test.fixtures";
+import type { Doc, Id } from "../../_generated/dataModel";
+import { scheduledFunctionNames, seedOrganization } from "../../test.fixtures";
 import { setupTest, type TestContext } from "../../test.helpers";
 
+beforeEach(() => {
+  vi.useFakeTimers();
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
+
 const admin = { _id: "admin", email: "admin@test.example", name: "Admin" };
-async function submission() {
+async function submission(organization: Partial<Doc<"organizations">> = {}) {
   const t = setupTest({ authUsers: [admin] });
   const organizationId = await t.run(async (ctx) => {
-    const organizationId = await seedOrganization(ctx);
+    const organizationId = await seedOrganization(ctx, organization);
     await ctx.db.insert("organizationMembers", {
       createdAt: Date.now(),
       organizationId,
@@ -131,4 +138,81 @@ test("edited input and superseded runs cannot apply obsolete scores", async () =
   expect(
     (await t.run((ctx) => ctx.db.get(feedbackId)))?.aiJunk
   ).toBeUndefined();
+});
+const readItem = (
+  s: {
+    t: TestContext;
+    feedbackId: Id<"feedback">;
+    organizationId: Id<"organizations">;
+  },
+  includePrivateContext: boolean
+) =>
+  s.t.query(internal.feedback.api_public_list.getFeedbackByOrganization, {
+    feedbackId: s.feedbackId,
+    includePrivateContext,
+    organizationId: s.organizationId,
+  });
+test("a failed triage falls back to the organization's approval policy", async () => {
+  const open = await submission();
+  await open.t.mutation(internal.feedback.triage_runs.fail, {
+    error: "OPENROUTER_API_KEY is not set",
+    runId: await startRun(open.t, open.feedbackId),
+  });
+  expect(await readItem(open, false)).not.toBeNull();
+
+  const gated = await submission({
+    feedbackSettings: { requireApproval: true },
+  });
+  await gated.t.mutation(internal.feedback.triage_runs.fail, {
+    error: "OPENROUTER_API_KEY is not set",
+    runId: await startRun(gated.t, gated.feedbackId),
+  });
+  expect(await readItem(gated, false)).toBeNull();
+});
+test("an edit during triage re-runs moderation on the new text", async () => {
+  const { t, feedbackId } = await submission();
+  const runId = await startRun(t, feedbackId);
+  await t.run((ctx) => ctx.db.patch(feedbackId, { title: "Edited" }));
+  const triageJobs = () =>
+    t.run(async (ctx) =>
+      (await scheduledFunctionNames(ctx)).filter((name) =>
+        name.includes("processAutoTagging")
+      )
+    );
+  const before = (await triageJobs()).length;
+  expect(await completeRun(t, runId, 0.01)).toBe(false);
+  expect(await triageJobs()).toHaveLength(before + 1);
+});
+test("the secret key reads a pending submission with its publication state", async () => {
+  const pending = await submission();
+  expect(await readItem(pending, false)).toBeNull();
+  expect(await readItem(pending, true)).toMatchObject({
+    id: pending.feedbackId,
+    publication: "pending",
+  });
+  const list = await pending.t.query(
+    internal.feedback.api_public_list.listFeedbackByOrganization,
+    { includePrivateContext: true, organizationId: pending.organizationId }
+  );
+  expect(list.items.map((item) => item.id)).toEqual([pending.feedbackId]);
+});
+test("the admin API approves a pending submission only within its organization", async () => {
+  const pending = await submission();
+  const { t, feedbackId, organizationId } = pending;
+  const otherOrganizationId = await t.run((ctx) =>
+    seedOrganization(ctx, { slug: "other" })
+  );
+  await expect(
+    t.mutation(internal.admin_api.feedback.setFeedbackPublication, {
+      feedbackId,
+      organizationId: otherOrganizationId,
+      state: "approved",
+    })
+  ).rejects.toThrow("Feedback not found");
+  await t.mutation(internal.admin_api.feedback.setFeedbackPublication, {
+    feedbackId,
+    organizationId,
+    state: "approved",
+  });
+  expect(await readItem(pending, false)).toMatchObject({ id: feedbackId });
 });
