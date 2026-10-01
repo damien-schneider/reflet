@@ -133,6 +133,12 @@ export function useGitHubSettings({
     orgSlug,
     userId,
   });
+  const anotherAccountHref = buildGitHubInstallUrl({
+    account: "new",
+    organizationId: orgId,
+    orgSlug,
+    userId,
+  });
 
   const handleConnectClick = useCallback(() => {
     capture("github_connected");
@@ -320,6 +326,7 @@ export function useGitHubSettings({
   );
 
   return {
+    anotherAccountHref,
     clearWebhookSetupError,
     connectHref,
     fetchLabels,

@@ -11,6 +11,12 @@ export interface VerifiedInstallation {
   accountAvatarUrl: string;
   accountLogin: string;
   accountType: "organization" | "user";
+  installationId: string;
+}
+
+export interface InstallationChoice {
+  previousInstallationId?: string;
+  requestedInstallationId?: string;
 }
 
 const userInstallationsPageSchema = z.object({
@@ -21,35 +27,68 @@ const userInstallationsPageSchema = z.object({
         login: z.string(),
         type: z.string(),
       }),
+      created_at: z.string(),
       id: z.number(),
     })
   ),
 });
 
+type UserInstallation = z.infer<
+  typeof userInstallationsPageSchema
+>["installations"][number];
+
 const userInstallationRepositoriesPageSchema = z.object({
   repositories: z.array(z.object({ full_name: z.string(), id: z.number() })),
 });
 
+function chooseInstallation(
+  installations: UserInstallation[],
+  { previousInstallationId, requestedInstallationId }: InstallationChoice
+): UserInstallation | null {
+  if (requestedInstallationId) {
+    const requested = installations.find(
+      (candidate) => String(candidate.id) === requestedInstallationId
+    );
+    if (!requested) {
+      throw new Error(
+        "Your GitHub account cannot access this GitHub App installation"
+      );
+    }
+    return requested;
+  }
+
+  const previous = installations.find(
+    (candidate) => String(candidate.id) === previousInstallationId
+  );
+  return (
+    previous ??
+    installations.reduce<UserInstallation | null>(
+      (newest, candidate) =>
+        newest && newest.created_at >= candidate.created_at
+          ? newest
+          : candidate,
+      null
+    )
+  );
+}
+
 /**
- * Proves with the user's own GitHub token that they can access the
- * installation — installation ids from redirects are spoofable.
+ * Picks the installation to connect from the ones the user's own GitHub token
+ * can access — installation ids from redirects are spoofable. Returns null
+ * when the user has not installed the app on any account yet.
  */
-export async function verifyInstallationAccess(
+export async function resolveUserInstallation(
   githubUserToken: string,
-  installationId: string
-): Promise<VerifiedInstallation> {
+  choice: InstallationChoice
+): Promise<VerifiedInstallation | null> {
   const installations = await fetchAllPages(
     `${GITHUB_API_URL}/user/installations?per_page=100`,
     githubUserToken,
     (page) => userInstallationsPageSchema.parse(page).installations
   );
-  const installation = installations.find(
-    (candidate) => String(candidate.id) === installationId
-  );
+  const installation = chooseInstallation(installations, choice);
   if (!installation) {
-    throw new Error(
-      "Your GitHub account cannot access this GitHub App installation"
-    );
+    return null;
   }
 
   const repositories = await fetchAllPages(
@@ -67,6 +106,7 @@ export async function verifyInstallationAccess(
     accountLogin: installation.account.login,
     accountType:
       installation.account.type === "Organization" ? "organization" : "user",
+    installationId: String(installation.id),
   };
 }
 

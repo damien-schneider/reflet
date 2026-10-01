@@ -170,15 +170,20 @@ export function SetupPage({ organizationId, orgSlug, userId }: SetupPageProps) {
     );
   }
 
+  const githubConnectParams = {
+    organizationId,
+    orgSlug,
+    returnTo: "setup",
+    userId,
+  };
   return (
     <ConnectPrompt
       actions={actions}
-      connectHref={buildGitHubInstallUrl({
-        organizationId,
-        orgSlug,
-        returnTo: "setup",
-        userId,
+      anotherAccountHref={buildGitHubInstallUrl({
+        ...githubConnectParams,
+        account: "new",
       })}
+      connectHref={buildGitHubInstallUrl(githubConnectParams)}
     />
   );
 }
@@ -269,9 +274,11 @@ function GitHubConnected({
 
 function ConnectPrompt({
   actions,
+  anotherAccountHref,
   connectHref,
 }: {
   actions: SetupActions;
+  anotherAccountHref: string | undefined;
   connectHref: string | undefined;
 }) {
   const isBusy = actions.pending !== null;
@@ -325,6 +332,15 @@ function ConnectPrompt({
               GitHub isn’t available right now
             </Button>
           )}
+          {anotherAccountHref ? (
+            <ButtonLink
+              className="mt-2 w-full"
+              render={<Link href={anotherAccountHref} />}
+              variant="ghost"
+            >
+              Use another GitHub account
+            </ButtonLink>
+          ) : null}
         </CardContent>
       </Card>
 

@@ -1,90 +1,17 @@
-import { randomUUID } from "node:crypto";
 import { api } from "@reflet/backend/convex/_generated/api";
-import { env } from "@reflet/env/server";
 import { NextResponse } from "next/server";
-import { z } from "zod";
 import { fetchAuthAction } from "@/lib/auth-server";
 import { toOrgId } from "@/lib/convex-helpers";
 import {
   clearConnectContext,
   type GithubConnectContext,
   readConnectContext,
-  writeConnectContext,
 } from "../connect-context";
-
-const GITHUB_AUTHORIZE_URL = "https://github.com/login/oauth/authorize";
-const GITHUB_ACCESS_TOKEN_URL = "https://github.com/login/oauth/access_token";
-
-const accessTokenResponseSchema = z.union([
-  z.object({ access_token: z.string() }),
-  z.object({ error: z.string(), error_description: z.string().optional() }),
-]);
-
-function githubAppOAuthCredentials(): {
-  clientId: string;
-  clientSecret: string;
-} {
-  const clientId = env.GITHUB_APP_CLIENT_ID;
-  const clientSecret = env.GITHUB_APP_CLIENT_SECRET;
-  if (!(clientId && clientSecret)) {
-    throw new Error("GitHub App OAuth credentials not configured");
-  }
-  return { clientId, clientSecret };
-}
-
-/** GitHub rejects the code exchange unless both steps send the same URI. */
-function authorizationRedirectUri(requestUrl: string): string {
-  return new URL("/api/github/callback", requestUrl).toString();
-}
-
-async function requestUserAuthorization(
-  requestUrl: string,
-  context: GithubConnectContext
-): Promise<NextResponse> {
-  const { clientId } = githubAppOAuthCredentials();
-  const nonce = randomUUID();
-  await writeConnectContext({ ...context, nonce });
-
-  const authorizeUrl = new URL(GITHUB_AUTHORIZE_URL);
-  authorizeUrl.searchParams.set("client_id", clientId);
-  authorizeUrl.searchParams.set(
-    "redirect_uri",
-    authorizationRedirectUri(requestUrl)
-  );
-  authorizeUrl.searchParams.set("state", nonce);
-  return NextResponse.redirect(authorizeUrl);
-}
-
-async function exchangeCodeForUserToken(
-  code: string,
-  requestUrl: string
-): Promise<string> {
-  const { clientId, clientSecret } = githubAppOAuthCredentials();
-  const response = await fetch(GITHUB_ACCESS_TOKEN_URL, {
-    body: JSON.stringify({
-      client_id: clientId,
-      client_secret: clientSecret,
-      code,
-      redirect_uri: authorizationRedirectUri(requestUrl),
-    }),
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
-    method: "POST",
-  });
-  if (!response.ok) {
-    throw new Error(
-      `GitHub authorization failed with status ${response.status}`
-    );
-  }
-
-  const result = accessTokenResponseSchema.parse(await response.json());
-  if ("error" in result) {
-    throw new Error(result.error_description ?? result.error);
-  }
-  return result.access_token;
-}
+import {
+  exchangeCodeForUserToken,
+  redirectToAppInstallation,
+  requestUserAuthorization,
+} from "../connect-flow";
 
 function buildRedirectUrl(
   requestUrl: string,
@@ -125,7 +52,9 @@ function redirectWithError(
 /**
  * GitHub App installation and user authorization callback. The installation id
  * GitHub appends is spoofable, so the connection is saved only after the
- * user's own GitHub token proves access to it.
+ * user's own GitHub token proves access to it. Without one, the backend picks
+ * among the installations that token can access, so accounts that already have
+ * the app installed never need GitHub's install page.
  */
 export async function GET(request: Request): Promise<NextResponse> {
   const { searchParams } = new URL(request.url);
@@ -156,9 +85,14 @@ export async function GET(request: Request): Promise<NextResponse> {
           searchParams.get("setup_action") ?? storedContext.setupAction,
       }
     : storedContext;
-  if (!context.installationId) {
+
+  if (context.setupAction === "request") {
     await clearConnectContext();
-    return redirectWithError(request.url, "missing_installation_id");
+    return redirectWithError(
+      request.url,
+      "github_connection_failed",
+      "An organization owner must approve the Reflet App installation first"
+    );
   }
 
   const code = searchParams.get("code");
@@ -169,16 +103,22 @@ export async function GET(request: Request): Promise<NextResponse> {
       return await requestUserAuthorization(request.url, context);
     }
 
-    await clearConnectContext();
     const githubUserToken = await exchangeCodeForUserToken(code, request.url);
-    await fetchAuthAction(api.integrations.github.actions.connectInstallation, {
-      githubUserToken,
-      installationId: context.installationId,
-      organizationId: context.organizationId
-        ? toOrgId(context.organizationId)
-        : undefined,
-    });
+    const connection = await fetchAuthAction(
+      api.integrations.github.actions.connectInstallation,
+      {
+        githubUserToken,
+        installationId: context.installationId ?? undefined,
+        organizationId: context.organizationId
+          ? toOrgId(context.organizationId)
+          : undefined,
+      }
+    );
+    if (connection.status === "needs_installation") {
+      return await redirectToAppInstallation(context);
+    }
 
+    await clearConnectContext();
     return NextResponse.redirect(
       buildRedirectUrl(
         request.url,

@@ -11,6 +11,7 @@ const INSTALLATION_REPOSITORIES_PATH =
   /^\/user\/installations\/(\d+)\/repositories$/;
 
 interface FakeInstallation {
+  createdAt?: string;
   id: number;
   login: string;
   repositories: { full_name: string; id: number }[];
@@ -32,6 +33,7 @@ const githubUserApiResponse = (
             login: installation.login,
             type: "User",
           },
+          created_at: installation.createdAt ?? "2024-01-01T00:00:00Z",
           id: installation.id,
         })),
       },
@@ -166,6 +168,84 @@ describe("connectInstallation", () => {
       accountLogin: "mallory-labs",
       installationId: MALLORY_INSTALLATION_ID,
       linkedByUserId: MALLORY._id,
+    });
+  });
+
+  test("asks for an install when the GitHub account has none", async () => {
+    const { mallory, orgConnection, organizationId } = await setupMalloryOrg();
+    stubGithubUserApi([[]]);
+
+    const result = await mallory.action(
+      api.integrations.github.actions.connectInstallation,
+      { githubUserToken: "mallory-token", organizationId }
+    );
+
+    expect(result).toEqual({ status: "needs_installation" });
+    expect(await orgConnection()).toBeNull();
+  });
+
+  test("reconnects the installation the user connected before over a newer one", async () => {
+    const { mallory, orgConnection, organizationId } = await setupMalloryOrg();
+    stubGithubUserApi([
+      [
+        {
+          createdAt: "2023-01-01T00:00:00Z",
+          id: Number(MALLORY_INSTALLATION_ID),
+          login: "mallory",
+          repositories: [],
+        },
+        {
+          createdAt: "2025-01-01T00:00:00Z",
+          id: 4004,
+          login: "mallory-labs",
+          repositories: [],
+        },
+      ],
+    ]);
+    await mallory.action(api.integrations.github.actions.connectInstallation, {
+      githubUserToken: "mallory-token",
+      installationId: MALLORY_INSTALLATION_ID,
+    });
+
+    await mallory.action(api.integrations.github.actions.connectInstallation, {
+      githubUserToken: "mallory-token",
+      organizationId,
+    });
+
+    expect(await orgConnection()).toMatchObject({
+      installationId: MALLORY_INSTALLATION_ID,
+    });
+  });
+
+  test("picks the newest installation when none was connected before", async () => {
+    const { mallory, orgConnection, organizationId } = await setupMalloryOrg();
+    stubGithubUserApi([
+      [
+        {
+          createdAt: "2023-01-01T00:00:00Z",
+          id: 3003,
+          login: "old",
+          repositories: [],
+        },
+      ],
+      [
+        {
+          createdAt: "2025-01-01T00:00:00Z",
+          id: 4004,
+          login: "new",
+          repositories: [],
+        },
+      ],
+    ]);
+
+    await mallory.action(api.integrations.github.actions.connectInstallation, {
+      githubUserToken: "mallory-token",
+      organizationId,
+    });
+
+    expect(await orgConnection()).toMatchObject({
+      accountLogin: "new",
+      installationId: "4004",
     });
   });
 });

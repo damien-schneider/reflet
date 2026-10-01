@@ -1,11 +1,13 @@
-import { randomUUID } from "node:crypto";
-import { env } from "@reflet/env/server";
 import { NextResponse } from "next/server";
-import { writeConnectContext } from "../connect-context";
+import {
+  redirectToAppInstallation,
+  requestUserAuthorization,
+} from "../connect-flow";
 
 /**
- * Redirect to the GitHub App installation page. The connection is bound to the
- * session on the callback, so no user id travels through GitHub.
+ * Starts a GitHub connection with user authorization, so an account that
+ * already has the app installed connects without GitHub's install page.
+ * `account=new` goes straight to the install page to add another account.
  */
 export async function GET(request: Request): Promise<NextResponse> {
   const fetchSite = request.headers.get("sec-fetch-site");
@@ -17,30 +19,16 @@ export async function GET(request: Request): Promise<NextResponse> {
   }
 
   const { searchParams } = new URL(request.url);
-
-  const githubAppSlug = env.GITHUB_APP_SLUG;
-
-  if (!githubAppSlug) {
-    return NextResponse.json(
-      { error: "GitHub App not configured" },
-      { status: 500 }
-    );
-  }
-
-  const nonce = randomUUID();
-  await writeConnectContext({
+  const step = {
     installationId: null,
-    nonce,
     organizationId: searchParams.get("organizationId"),
     orgSlug: searchParams.get("orgSlug"),
     returnTo: searchParams.get("returnTo"),
     setupAction: null,
-  });
+  };
 
-  const installUrl = new URL(
-    `https://github.com/apps/${githubAppSlug}/installations/new`
-  );
-  installUrl.searchParams.set("state", nonce);
-
-  return NextResponse.redirect(installUrl);
+  if (searchParams.get("account") === "new") {
+    return await redirectToAppInstallation(step);
+  }
+  return await requestUserAuthorization(request.url, step);
 }

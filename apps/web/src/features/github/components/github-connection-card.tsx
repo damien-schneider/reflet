@@ -23,6 +23,7 @@ const ADMIN_ONLY_COPY =
 interface GitHubConnectionCardProps {
   accountAvatarUrl?: string;
   accountLogin?: string;
+  anotherAccountHref?: string;
   connectHref?: string;
   isAdmin: boolean;
   isConnected: boolean;
@@ -37,6 +38,7 @@ export function GitHubConnectionSection({
   isOwnerLeft,
   accountLogin,
   accountAvatarUrl,
+  anotherAccountHref,
   connectHref,
   isAdmin,
   isDisconnecting,
@@ -61,7 +63,8 @@ export function GitHubConnectionSection({
             : "Ask an admin to reconnect GitHub."}
         </Muted>
         {isAdmin ? (
-          <ConnectGitHubButton
+          <ConnectGitHubActions
+            anotherAccountHref={anotherAccountHref}
             connectHref={connectHref}
             label="Reconnect GitHub"
             onConnectClick={onConnectClick}
@@ -116,11 +119,43 @@ export function GitHubConnectionSection({
           : ADMIN_ONLY_COPY}
       </Muted>
       {isAdmin ? (
-        <ConnectGitHubButton
+        <ConnectGitHubActions
+          anotherAccountHref={anotherAccountHref}
           connectHref={connectHref}
           label="Connect GitHub"
           onConnectClick={onConnectClick}
         />
+      ) : null}
+    </div>
+  );
+}
+
+function ConnectGitHubActions({
+  anotherAccountHref,
+  connectHref,
+  label,
+  onConnectClick,
+}: {
+  anotherAccountHref?: string;
+  connectHref?: string;
+  label: string;
+  onConnectClick?: () => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <ConnectGitHubButton
+        connectHref={connectHref}
+        label={label}
+        onConnectClick={onConnectClick}
+      />
+      {anotherAccountHref ? (
+        <ButtonLink
+          onClick={onConnectClick}
+          render={<Link href={anotherAccountHref} />}
+          variant="ghost"
+        >
+          Use another GitHub account
+        </ButtonLink>
       ) : null}
     </div>
   );

@@ -1,13 +1,12 @@
 import { v } from "convex/values";
 import { z } from "zod";
 import { internal } from "../../_generated/api";
-import type { Id } from "../../_generated/dataModel";
 import { action, internalAction } from "../../_generated/server";
 import { authComponent } from "../../auth/auth";
 import { isOrgAdmin } from "../../shared/membership";
 import { GITHUB_API_URL } from "./github_constants";
 import { fetchAllPages } from "./github_pagination";
-import { verifyInstallationAccess } from "./user_access";
+import { resolveUserInstallation } from "./user_access";
 
 /**
  * Connects a GitHub App installation for the authenticated caller. Only the
@@ -17,10 +16,10 @@ import { verifyInstallationAccess } from "./user_access";
 export const connectInstallation = action({
   args: {
     githubUserToken: v.string(),
-    installationId: v.string(),
+    installationId: v.optional(v.string()),
     organizationId: v.optional(v.id("organizations")),
   },
-  handler: async (ctx, args): Promise<Id<"userGithubConnections">> => {
+  handler: async (ctx, args) => {
     const user = await authComponent.safeGetAuthUser(ctx);
     if (!user) {
       throw new Error("Not authenticated");
@@ -36,12 +35,22 @@ export const connectInstallation = action({
       }
     }
 
-    const { accessibleRepositories, ...account } =
-      await verifyInstallationAccess(args.githubUserToken, args.installationId);
+    const previousConnection = await ctx.runQuery(
+      internal.integrations.github.queries.getUserGithubConnection,
+      { userId: user._id }
+    );
+    const installation = await resolveUserInstallation(args.githubUserToken, {
+      previousInstallationId: previousConnection?.installationId,
+      requestedInstallationId: args.installationId,
+    });
+    if (!installation) {
+      return { status: "needs_installation" as const };
+    }
 
+    const { accessibleRepositories, ...account } = installation;
     const userConnectionId = await ctx.runMutation(
       internal.integrations.github.installation_mutations.saveUserInstallation,
-      { ...account, installationId: args.installationId, userId: user._id }
+      { ...account, userId: user._id }
     );
 
     if (args.organizationId) {
@@ -56,8 +65,12 @@ export const connectInstallation = action({
       );
     }
 
-    return userConnectionId;
+    return { status: "connected" as const };
   },
+  returns: v.union(
+    v.object({ status: v.literal("connected") }),
+    v.object({ status: v.literal("needs_installation") })
+  ),
 });
 
 const installationRepositoriesPageSchema = z.object({
