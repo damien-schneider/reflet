@@ -24,9 +24,9 @@ const readerOf = (subscriptions: OrgSubscription[]) => ({
   runQuery: () => Promise.resolve(subscriptions),
 });
 
-test("a resubscribed org is pro even though its canceled subscription is stored first", async () => {
+test("an org keeps pro while a canceled subscription has the later period end", async () => {
   const reader = readerOf([
-    subscription("sub_canceled", "canceled", 100),
+    subscription("sub_canceled", "canceled", 300),
     subscription("sub_renewed", "active", 200),
   ]);
 

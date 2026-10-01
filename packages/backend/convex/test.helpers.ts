@@ -25,6 +25,10 @@ const createStripeModules = (subscriptionStatus: string | null) => ({
   "./_generated/api.ts": () => Promise.resolve({}),
   "./public.ts": () =>
     Promise.resolve({
+      listInvoicesByOrgId: queryGeneric({
+        args: { orgId: v.string() },
+        handler: () => [],
+      }),
       listSubscriptionsByOrgId: queryGeneric({
         args: { orgId: v.string() },
         handler: () =>

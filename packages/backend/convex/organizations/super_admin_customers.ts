@@ -1,8 +1,13 @@
+import { components } from "../_generated/api";
 import type { Doc } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
-import { getOrgSubscription } from "../billing/org_subscription";
+import {
+  getOrgSubscription,
+  type OrgSubscription,
+  planTierFor,
+} from "../billing/org_subscription";
 import { STRIPE_PRICES } from "../billing/stripe";
 import { stripeTimestampToMs } from "../billing/utils";
 import { assertSuperAdmin } from "../shared/access";
@@ -94,6 +99,37 @@ const usageOf = async (ctx: QueryCtx, org: Doc<"organizations">) => {
   };
 };
 
+const lastPaidInvoiceOf = async (
+  ctx: QueryCtx,
+  org: Doc<"organizations">,
+  subscription: OrgSubscription | null
+) => {
+  if (!subscription) {
+    return null;
+  }
+  const invoices = await ctx.runQuery(
+    components.stripe.public.listInvoicesByOrgId,
+    { orgId: org._id }
+  );
+  const lastPaid = invoices
+    .filter(
+      (invoice) =>
+        invoice.status === "paid" &&
+        invoice.stripeSubscriptionId === subscription.stripeSubscriptionId
+    )
+    .reduce<(typeof invoices)[number] | null>(
+      (latest, invoice) =>
+        latest && latest.created >= invoice.created ? latest : invoice,
+      null
+    );
+  return (
+    lastPaid && {
+      amountPaidCents: lastPaid.amountPaid,
+      paidAt: stripeTimestampToMs(lastPaid.created),
+    }
+  );
+};
+
 export const listCustomers = query({
   args: {},
   handler: async (ctx) => {
@@ -111,6 +147,7 @@ export const listCustomers = query({
           ownerOf(ctx, org),
           usageOf(ctx, org),
         ]);
+        const lastPaidInvoice = await lastPaidInvoiceOf(ctx, org, subscription);
         return {
           _id: org._id,
           createdAt: org.createdAt,
@@ -126,9 +163,11 @@ export const listCustomers = query({
             currentPeriodEnd: stripeTimestampToMs(
               subscription.currentPeriodEnd
             ),
+            lastPaidInvoice,
             status: subscription.status,
             stripeSubscriptionId: subscription.stripeSubscriptionId,
           },
+          tier: planTierFor(subscription),
           usage,
         };
       })

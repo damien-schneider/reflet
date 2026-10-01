@@ -19,12 +19,13 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import Link from "next/link";
-import { PLANS } from "@/features/project/components/billing/billing-config";
+import { useState } from "react";
 import { StatCard } from "./stat-card";
 import { SubscriptionStatusBadge } from "./subscription-status-badge";
 import {
   AdminDate,
   EmptyTableRow,
+  SuperAdminFilter,
   SuperAdminTableSkeleton,
 } from "./super-admin-table";
 
@@ -33,20 +34,34 @@ type Customer = FunctionReturnType<
 >[number];
 
 const STRIPE_CUSTOMER_URL = "https://dashboard.stripe.com/customers/";
-const PRO_PRICES = PLANS.find((plan) => plan.id === "pro")?.prices ?? [];
+const CENTS_PER_EURO = 100;
+const MONTHS_PER_YEAR = 12;
+const euroFormatter = new Intl.NumberFormat("en-IE", {
+  currency: "EUR",
+  style: "currency",
+});
 
-const isPaying = (customer: Customer) =>
-  customer.subscription?.status === "active" ||
-  customer.subscription?.status === "trialing";
+const isPaying = (customer: Customer) => customer.tier === "pro";
 
-const monthlyRevenueOf = (customer: Customer) => {
-  const interval = customer.subscription?.billingInterval;
-  const price = PRO_PRICES.find((candidate) => candidate.interval === interval);
-  if (!(price && isPaying(customer))) {
+const monthlyRevenueCentsOf = (customer: Customer) => {
+  const paidCents =
+    customer.subscription?.lastPaidInvoice?.amountPaidCents ?? 0;
+  if (!isPaying(customer)) {
     return 0;
   }
-  return interval === "yearly" ? price.amount / 12 : price.amount;
+  return customer.subscription?.billingInterval === "yearly"
+    ? paidCents / MONTHS_PER_YEAR
+    : paidCents;
 };
+
+const matchesSearch = (customer: Customer, search: string) =>
+  [
+    customer.name,
+    customer.slug,
+    customer.owner?.email,
+    customer.stripeCustomerId,
+    customer.subscription?.stripeSubscriptionId,
+  ].some((field) => field?.toLowerCase().includes(search));
 
 function ExternalLink({ href, label }: { href: string; label: string }) {
   return (
@@ -79,6 +94,15 @@ function PlanCell({ customer }: { customer: Customer }) {
       <span className="text-muted-foreground text-xs">
         {endsLabel} <AdminDate timestamp={subscription.currentPeriodEnd} />
       </span>
+      {subscription.lastPaidInvoice ? (
+        <span className="text-muted-foreground text-xs tabular-nums">
+          Last paid{" "}
+          {euroFormatter.format(
+            subscription.lastPaidInvoice.amountPaidCents / CENTS_PER_EURO
+          )}{" "}
+          <AdminDate timestamp={subscription.lastPaidInvoice.paidAt} />
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -153,6 +177,7 @@ function CustomerRow({ customer }: { customer: Customer }) {
 }
 
 export function SuperAdminCustomers() {
+  const [search, setSearch] = useState("");
   const customers = useQuery(
     api.organizations.super_admin_customers.listCustomers
   );
@@ -161,15 +186,18 @@ export function SuperAdminCustomers() {
     return <SuperAdminTableSkeleton label="Loading customers…" />;
   }
 
-  const payingFirst = [...customers].sort(
-    (a, b) =>
-      Number(isPaying(b)) - Number(isPaying(a)) ||
-      (b.subscription?.currentPeriodEnd ?? 0) -
-        (a.subscription?.currentPeriodEnd ?? 0)
-  );
+  const normalizedSearch = search.trim().toLowerCase();
+  const payingFirst = customers
+    .filter((customer) => matchesSearch(customer, normalizedSearch))
+    .sort(
+      (a, b) =>
+        Number(isPaying(b)) - Number(isPaying(a)) ||
+        (b.subscription?.currentPeriodEnd ?? 0) -
+          (a.subscription?.currentPeriodEnd ?? 0)
+    );
   const payingCount = customers.filter(isPaying).length;
-  const monthlyRevenue = customers.reduce(
-    (total, customer) => total + monthlyRevenueOf(customer),
+  const monthlyRevenueCents = customers.reduce(
+    (total, customer) => total + monthlyRevenueCentsOf(customer),
     0
   );
   const cancellingCount = customers.filter(
@@ -180,13 +208,23 @@ export function SuperAdminCustomers() {
     <div className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard icon={UsersThree} label="Paying orgs" value={payingCount} />
-        <StatCard icon={CurrencyEur} label="MRR (€)" value={monthlyRevenue} />
+        <StatCard
+          icon={CurrencyEur}
+          label="MRR from last paid invoices (€)"
+          value={Math.round(monthlyRevenueCents / CENTS_PER_EURO)}
+        />
         <StatCard
           icon={CalendarX}
           label="Cancelling at period end"
           value={cancellingCount}
         />
       </div>
+
+      <SuperAdminFilter
+        label="Search name, owner email or Stripe ID"
+        onChange={setSearch}
+        value={search}
+      />
 
       <div className="rounded-(--radius-panel) border">
         <Table>
@@ -202,7 +240,14 @@ export function SuperAdminCustomers() {
           </TableHeader>
           <TableBody>
             {payingFirst.length === 0 ? (
-              <EmptyTableRow colSpan={6} message="No customers yet." />
+              <EmptyTableRow
+                colSpan={6}
+                message={
+                  search
+                    ? "No customer matches that search."
+                    : "No customers yet."
+                }
+              />
             ) : (
               payingFirst.map((customer) => (
                 <CustomerRow customer={customer} key={customer._id} />
