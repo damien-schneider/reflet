@@ -3,11 +3,7 @@
   "files": {
     "includes": ["!.agents", "!**/.agents"]
   },
-  "extends": [
-    "ultracite/biome/core",
-    "ultracite/biome/react",
-    "ultracite/biome/remix"
-  ],
+  "extends": ["ultracite/biome/core", "ultracite/biome/react"],
   "linter": {
     "rules": {
       "complexity": {
@@ -34,9 +30,9 @@
     {
       "includes": [
         "packages/backend/convex/_generated/**/*",
-        "apps/web/playwright-report/**/*",
-        "apps/web/test-results/**/*",
-        "apps/web/public/r/**/*",
+        "**/playwright-report/**/*",
+        "**/test-results/**/*",
+        "**/public/r/**/*",
         "**/node_modules/**",
         "**/*.gen.ts"
       ],
@@ -48,7 +44,7 @@
       }
     },
     {
-      "includes": ["apps/web/src/components/ui/**/*"],
+      "includes": ["**/components/ui/**/*"],
       "linter": {
         "enabled": false
       }

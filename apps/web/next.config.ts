@@ -24,7 +24,6 @@ const nextConfig: NextConfig = {
       "cmdk",
     ],
   },
-  // biome-ignore lint/suspicious/useAwait: Next.js headers function is async
   async headers() {
     return [
       {

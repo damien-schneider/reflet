@@ -22,9 +22,8 @@
   "scripts": {
     "build": "turbo build",
     "check-types": "turbo check-types",
-    "clean": "rm -rf node_modules .turbo .next bun.lock && bun install",
+    "clean": "rm -rf node_modules .turbo .next && bun install --frozen-lockfile",
     "dev": "turbo dev",
-    "dev:native": "turbo -F native dev",
     "dev:server": "turbo -F @reflet/backend dev",
     "dev:setup": "turbo -F @reflet/backend dev:setup",
     "dev:web": "turbo -F web dev",

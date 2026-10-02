@@ -8,7 +8,7 @@
     ],
     "beforeSubmit": [
       {
-        "command": "bun x ultracite fix --unsafe && bun run check-types && cd packages/backend && bun run convex dev --once"
+        "command": "bun x ultracite fix --unsafe && bun run check-types"
       }
     ]
   }

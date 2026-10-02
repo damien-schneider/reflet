@@ -1,0 +1,13 @@
+{
+  "$schema": "../../node_modules/@biomejs/biome/configuration_schema.json",
+  "root": false,
+  "extends": [
+    "ultracite/biome/core",
+    "ultracite/biome/react",
+    "../../biome.jsonc",
+    "ultracite/biome/next"
+  ],
+  "files": {
+    "includes": ["!.agents", "!**/.agents"]
+  }
+}
