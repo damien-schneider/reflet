@@ -1,11 +1,8 @@
 "use client";
 
 import { Button } from "@ctrl-ui/react/ui/button";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "@ctrl-ui/react/ui/input-group";
+import { Input } from "@ctrl-ui/react/ui/input";
+import { InputGroup, InputGroupAddon } from "@ctrl-ui/react/ui/input-group";
 import { Bell, Envelope } from "@phosphor-icons/react";
 import { type FormEvent, useId, useState } from "react";
 import { cn } from "@/lib/utils";
@@ -78,7 +75,7 @@ export function EmailSubscribeForm({
           <InputGroupAddon>
             <Envelope aria-hidden className="size-4 text-muted-foreground" />
           </InputGroupAddon>
-          <InputGroupInput
+          <Input
             aria-describedby={error ? errorId : undefined}
             aria-invalid={error ? true : undefined}
             aria-label="Email address"

@@ -9,11 +9,7 @@ import {
   FieldLabel,
 } from "@ctrl-ui/react/ui/field";
 import { Input } from "@ctrl-ui/react/ui/input";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "@ctrl-ui/react/ui/input-group";
+import { InputGroup, InputGroupAddon } from "@ctrl-ui/react/ui/input-group";
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import { Switch } from "@ctrl-ui/react/ui/switch";
@@ -175,7 +171,7 @@ function OrganizationDetailsForm({
             <FieldLabel htmlFor="org-slug">URL</FieldLabel>
             <InputGroup data-disabled={!isAdmin || undefined}>
               <InputGroupAddon>/dashboard/</InputGroupAddon>
-              <InputGroupInput
+              <Input
                 aria-describedby="org-slug-description org-slug-error"
                 aria-invalid={error ? true : undefined}
                 autoCapitalize="none"

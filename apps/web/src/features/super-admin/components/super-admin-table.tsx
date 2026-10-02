@@ -1,10 +1,7 @@
 "use client";
 
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "@ctrl-ui/react/ui/input-group";
+import { Input } from "@ctrl-ui/react/ui/input";
+import { InputGroup, InputGroupAddon } from "@ctrl-ui/react/ui/input-group";
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { TableCell, TableRow } from "@ctrl-ui/react/ui/table";
 import { MagnifyingGlass } from "@phosphor-icons/react";
@@ -54,7 +51,7 @@ export function SuperAdminFilter({
       <InputGroupAddon>
         <MagnifyingGlass aria-hidden />
       </InputGroupAddon>
-      <InputGroupInput
+      <Input
         aria-label={label}
         autoComplete="off"
         onChange={(event) => onChange(event.target.value)}

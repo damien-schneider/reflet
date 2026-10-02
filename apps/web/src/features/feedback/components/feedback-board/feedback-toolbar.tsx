@@ -1,9 +1,6 @@
 import { Button } from "@ctrl-ui/react/ui/button";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "@ctrl-ui/react/ui/input-group";
+import { Input } from "@ctrl-ui/react/ui/input";
+import { InputGroup, InputGroupAddon } from "@ctrl-ui/react/ui/input-group";
 import { MagnifyingGlass, Plus } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import type { RefObject } from "react";
@@ -48,7 +45,7 @@ export const FeedbackToolbar = ({
               className="size-4 text-muted-foreground"
             />
           </InputGroupAddon>
-          <InputGroupInput
+          <Input
             aria-label="Search feedback"
             autoComplete="off"
             onChange={(event) => onSearchChange(event.target.value)}

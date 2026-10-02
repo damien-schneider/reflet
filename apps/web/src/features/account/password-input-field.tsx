@@ -2,11 +2,8 @@
 
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Field, FieldError, FieldLabel } from "@ctrl-ui/react/ui/field";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "@ctrl-ui/react/ui/input-group";
+import { Input } from "@ctrl-ui/react/ui/input";
+import { InputGroup, InputGroupAddon } from "@ctrl-ui/react/ui/input-group";
 import { Eye, EyeSlash } from "@phosphor-icons/react";
 import type { UseFormRegisterReturn } from "react-hook-form";
 
@@ -36,7 +33,7 @@ export function PasswordInputField({
     <Field>
       <FieldLabel htmlFor={id}>{label}</FieldLabel>
       <InputGroup>
-        <InputGroupInput
+        <Input
           aria-invalid={hasError || undefined}
           autoComplete={autoComplete}
           id={id}

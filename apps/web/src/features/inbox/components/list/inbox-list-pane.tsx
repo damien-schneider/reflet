@@ -6,11 +6,8 @@ import {
   EmptyHeader,
   EmptyTitle,
 } from "@ctrl-ui/react/ui/empty";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "@ctrl-ui/react/ui/input-group";
+import { Input } from "@ctrl-ui/react/ui/input";
+import { InputGroup, InputGroupAddon } from "@ctrl-ui/react/ui/input-group";
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "@ctrl-ui/react/ui/tabs";
 import { MagnifyingGlass } from "@phosphor-icons/react";
@@ -55,7 +52,7 @@ export function InboxListPane({ list, search, views }: InboxListPaneProps) {
               className="size-4 text-muted-foreground"
             />
           </InputGroupAddon>
-          <InputGroupInput
+          <Input
             aria-keyshortcuts="/"
             aria-label="Search conversations"
             autoComplete="off"
