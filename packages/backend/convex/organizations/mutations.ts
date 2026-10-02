@@ -1,5 +1,4 @@
 import { v } from "convex/values";
-import type { Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { internalMutation, mutation } from "../_generated/server";
 import { getOrgTier } from "../billing/org_subscription";
@@ -41,7 +40,7 @@ export const resolveSlugUpdate = async (
 const insertOrganization = async (
   ctx: MutationCtx,
   options: { isPublic?: boolean; name: string; slug?: string; userId: string }
-): Promise<Id<"organizations">> => {
+) => {
   const slug = options.slug
     ? slugify(options.slug)
     : deriveSlugFromName(options.name);
@@ -82,7 +81,7 @@ const insertOrganization = async (
     });
   }
 
-  return organizationId;
+  return { id: organizationId, slug };
 };
 
 export const createOrganization = internalMutation({
@@ -92,7 +91,7 @@ export const createOrganization = internalMutation({
     slug: v.optional(v.string()),
     userId: v.string(),
   },
-  handler: async (ctx, args) => await insertOrganization(ctx, args),
+  handler: async (ctx, args) => (await insertOrganization(ctx, args)).id,
   returns: v.id("organizations"),
 });
 
@@ -127,7 +126,7 @@ export const create = mutation({
     const user = await getAuthUser(ctx);
     return await insertOrganization(ctx, { ...args, userId: user._id });
   },
-  returns: v.id("organizations"),
+  returns: v.object({ id: v.id("organizations"), slug: v.string() }),
 });
 
 export const update = mutation({

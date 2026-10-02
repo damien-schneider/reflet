@@ -44,6 +44,7 @@ describe("computeDashboardNavigation", () => {
   describe("on /dashboard (no orgSlug)", () => {
     it("should auto-select when there is exactly one organization", () => {
       const result = computeDashboardNavigation({
+        activeOrgSlug: "my-organization",
         org: undefined,
         organizations: [makeOrg("my-organization")],
         orgSlug: undefined,
@@ -141,8 +142,6 @@ describe("computeDashboardNavigation", () => {
     });
 
     it("should never redirect when both queries return no-auth results", () => {
-      // Simulates the race condition: auth not propagated to Convex yet
-      // list returns [] (no user), getBySlug returns null (private) or {role:null} (public)
       const result = computeDashboardNavigation({
         org: null,
         organizations: [],
@@ -153,7 +152,6 @@ describe("computeDashboardNavigation", () => {
     });
 
     it("should never redirect when org has role:null and organizations empty", () => {
-      // Public org, auth not ready
       const result = computeDashboardNavigation({
         org: makeOrg("my-organization", null),
         organizations: [],
@@ -193,7 +191,6 @@ describe("computeDashboardNavigation", () => {
     });
 
     it("should be false when slug is in user list even if getBySlug returns null", () => {
-      // Race condition: list loaded with auth, getBySlug hasn't re-evaluated yet
       const result = computeDashboardNavigation({
         org: null,
         organizations: [makeOrg("my-organization")],

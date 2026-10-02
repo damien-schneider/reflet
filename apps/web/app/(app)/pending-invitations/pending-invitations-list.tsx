@@ -19,6 +19,7 @@ import { useState } from "react";
 import { H1, Muted } from "@/components/ui/typography";
 import { AuthPageShell } from "@/features/auth/components/auth-page-shell";
 import { OrgAvatar } from "@/features/organizations/components/org-avatar";
+import { useRememberOrganization } from "@/features/organizations/hooks/use-active-organization";
 
 type PendingInvitation = FunctionReturnType<
   typeof api.organizations.invitations.listMyPendingInvitations
@@ -32,6 +33,7 @@ export function PendingInvitationsList() {
   const acceptInvitation = useMutation(
     api.organizations.invitation_actions.accept
   );
+  const rememberOrganization = useRememberOrganization();
   const [acceptingToken, setAcceptingToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,10 +46,15 @@ export function PendingInvitationsList() {
   }
 
   const handleAccept = async (token: string) => {
+    if (acceptingToken !== null || !rememberOrganization) {
+      return;
+    }
     setAcceptingToken(token);
     setError(null);
     try {
-      await acceptInvitation({ token });
+      const organizationId = await acceptInvitation({ token });
+      rememberOrganization(organizationId);
+      setAcceptingToken(null);
       if (invitations.length === 1) {
         router.push("/dashboard");
       }
@@ -85,7 +92,10 @@ export function PendingInvitationsList() {
           {invitations.map((invitation) => (
             <li key={invitation._id}>
               <InvitationCard
-                acceptingToken={acceptingToken}
+                acceptance={{
+                  canAccept: Boolean(rememberOrganization),
+                  pendingToken: acceptingToken,
+                }}
                 invitation={invitation}
                 onAccept={handleAccept}
               />
@@ -104,15 +114,15 @@ export function PendingInvitationsList() {
 }
 
 function InvitationCard({
-  acceptingToken,
+  acceptance,
   invitation,
   onAccept,
 }: {
-  acceptingToken: string | null;
+  acceptance: { canAccept: boolean; pendingToken: string | null };
   invitation: PendingInvitation;
   onAccept: (token: string) => void;
 }) {
-  const isAccepting = acceptingToken === invitation.token;
+  const isAccepting = acceptance.pendingToken === invitation.token;
   const { organizationName } = invitation;
 
   return (
@@ -138,7 +148,7 @@ function InvitationCard({
         <div className="flex gap-3">
           <Button
             className="flex-1"
-            disabled={acceptingToken !== null}
+            disabled={acceptance.pendingToken !== null || !acceptance.canAccept}
             onClick={() => onAccept(invitation.token)}
             tone="primary"
             variant="solid"

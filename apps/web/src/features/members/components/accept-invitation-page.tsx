@@ -17,6 +17,7 @@ import { useMutation, useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import UnifiedAuthForm from "@/features/auth/components/unified-auth/unified-auth-form";
+import { useRememberOrganization } from "@/features/organizations/hooks/use-active-organization";
 import { authClient } from "@/lib/auth-client";
 
 interface AcceptInvitationContentProps {
@@ -144,16 +145,21 @@ function PendingInvitation({
   const acceptInvitation = useMutation(
     api.organizations.invitation_actions.accept
   );
+  const rememberOrganization = useRememberOrganization();
   const [isAccepting, setIsAccepting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { data: session } = authClient.useSession();
   const isAuthenticated = Boolean(session?.user?.id);
 
   const handleAccept = async () => {
+    if (isAccepting || !rememberOrganization) {
+      return;
+    }
     setIsAccepting(true);
     setError(null);
     try {
-      await acceptInvitation({ token });
+      const organizationId = await acceptInvitation({ token });
+      rememberOrganization(organizationId);
       router.push("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -181,7 +187,7 @@ function PendingInvitation({
       {isAuthenticated ? (
         <div className="flex w-full flex-col gap-2">
           <Button
-            disabled={isAccepting}
+            disabled={isAccepting || !rememberOrganization}
             onClick={handleAccept}
             tone="primary"
             variant="solid"

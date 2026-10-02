@@ -3,7 +3,6 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AcceptInvitationContent } from "./accept-invitation-page";
 
-// Regex patterns used in tests
 const MEMBER_ROLE_PATTERN = /as a member/;
 const EXPIRED_PATTERN = /^Invitation expired$/;
 const ALREADY_MEMBER_PATTERN = /Already a member/i;
@@ -12,16 +11,19 @@ const LOGIN_PROMPT_PATTERN = /Sign in.*to accept/i;
 const ACCEPT_INVITATION_PATTERN = /Accept invitation/i;
 const AUTH_FORM_TESTID = "auth-form";
 
-// Mock the Convex hooks
 const mockAcceptMutation = vi.fn();
 const mockInvitationQuery = vi.fn();
+const mockRememberOrganization = vi.fn();
+
+vi.mock("@/features/organizations/hooks/use-active-organization", () => ({
+  useRememberOrganization: () => mockRememberOrganization,
+}));
 
 vi.mock("convex/react", () => ({
   useMutation: () => mockAcceptMutation,
   useQuery: () => mockInvitationQuery(),
 }));
 
-// Mock auth client
 const mockUseSession = vi.fn();
 vi.mock("@/lib/auth-client", () => ({
   authClient: {
@@ -29,7 +31,6 @@ vi.mock("@/lib/auth-client", () => ({
   },
 }));
 
-// Mock the UnifiedAuthForm component
 vi.mock("@/features/auth/components/unified-auth/unified-auth-form", () => ({
   default: ({ onSuccess }: { onSuccess?: () => void }) => (
     <div data-testid={AUTH_FORM_TESTID}>
@@ -87,13 +88,11 @@ vi.mock("@ctrl-ui/react/ui/button", () => ({
   ),
 }));
 
-// Helper to create authenticated session
 const createAuthenticatedSession = () => ({
   data: { user: { email: "test@example.com", id: "user-123" } },
   isPending: false,
 });
 
-// Helper to create unauthenticated session
 const createUnauthenticatedSession = () => ({
   data: null,
   isPending: false,
@@ -105,7 +104,6 @@ describe("AcceptInvitationContent", () => {
     mockAcceptMutation.mockReset();
     mockInvitationQuery.mockReset();
     mockUseSession.mockReset();
-    // Default to authenticated for backwards compatibility with existing tests
     mockUseSession.mockReturnValue(createAuthenticatedSession());
   });
 
@@ -127,7 +125,7 @@ describe("AcceptInvitationContent", () => {
 
   it("renders invitation details when valid", () => {
     mockInvitationQuery.mockReturnValue({
-      expiresAt: Date.now() + 86_400_000, // 1 day from now
+      expiresAt: Date.now() + 86_400_000,
       organizationName: "Acme Corp",
       role: "member",
       status: "pending",
@@ -135,15 +133,13 @@ describe("AcceptInvitationContent", () => {
 
     render(<AcceptInvitationContent token="valid-token" />);
 
-    // Check that the heading contains the org name
     expect(screen.getByRole("heading")).toHaveTextContent("Acme Corp");
-    // Check role text is present
     expect(screen.getByText(MEMBER_ROLE_PATTERN)).toBeInTheDocument();
   });
 
   it("renders expired state for expired invitation", () => {
     mockInvitationQuery.mockReturnValue({
-      expiresAt: Date.now() - 86_400_000, // 1 day ago
+      expiresAt: Date.now() - 86_400_000,
       organizationName: "Acme Corp",
       role: "member",
       status: "pending",
@@ -192,6 +188,7 @@ describe("AcceptInvitationContent", () => {
     await waitFor(() => {
       expect(mockRouterPush).toHaveBeenCalledWith("/dashboard");
     });
+    expect(mockRememberOrganization).toHaveBeenCalledWith("org-id-123");
   });
 
   it("shows error message when accept fails", async () => {
@@ -239,11 +236,8 @@ describe("AcceptInvitationContent", () => {
 
       render(<AcceptInvitationContent token="valid-token" />);
 
-      // Should show auth form
       expect(screen.getByTestId(AUTH_FORM_TESTID)).toBeInTheDocument();
-      // Should show login prompt message
       expect(screen.getByText(LOGIN_PROMPT_PATTERN)).toBeInTheDocument();
-      // Should NOT show accept button
       expect(
         screen.queryByText(ACCEPT_INVITATION_PATTERN)
       ).not.toBeInTheDocument();
@@ -260,14 +254,11 @@ describe("AcceptInvitationContent", () => {
 
       render(<AcceptInvitationContent token="valid-token" />);
 
-      // Should show accept button
       expect(screen.getByText(ACCEPT_INVITATION_PATTERN)).toBeInTheDocument();
-      // Should NOT show auth form
       expect(screen.queryByTestId(AUTH_FORM_TESTID)).not.toBeInTheDocument();
     });
 
     it("does NOT auto-accept invitation after authentication - user must click accept", () => {
-      // Start unauthenticated
       mockUseSession.mockReturnValue(createUnauthenticatedSession());
       mockInvitationQuery.mockReturnValue({
         expiresAt: Date.now() + 86_400_000,
@@ -281,20 +272,15 @@ describe("AcceptInvitationContent", () => {
         <AcceptInvitationContent token="valid-token" />
       );
 
-      // Verify auth form is shown
       expect(screen.getByTestId(AUTH_FORM_TESTID)).toBeInTheDocument();
 
-      // Simulate successful authentication by updating the mock
       mockUseSession.mockReturnValue(createAuthenticatedSession());
 
-      // Rerender to trigger the effect
       rerender(<AcceptInvitationContent token="valid-token" />);
 
-      // Should NOT auto-accept - user must click the accept button
       expect(mockAcceptMutation).not.toHaveBeenCalled();
       expect(mockRouterPush).not.toHaveBeenCalled();
 
-      // Should show the accept button for the user to click
       expect(screen.getByText(ACCEPT_INVITATION_PATTERN)).toBeInTheDocument();
     });
 
@@ -309,9 +295,7 @@ describe("AcceptInvitationContent", () => {
 
       render(<AcceptInvitationContent token="valid-token" />);
 
-      // Should still show organization name
       expect(screen.getByRole("heading")).toHaveTextContent("Acme Corp");
-      // Should show role
       expect(screen.getByText(MEMBER_ROLE_PATTERN)).toBeInTheDocument();
     });
   });

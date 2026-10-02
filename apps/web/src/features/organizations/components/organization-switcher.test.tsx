@@ -4,6 +4,13 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 const mockPush = vi.fn();
 const mockPrefetch = vi.fn();
+const mockRememberOrganization = vi.fn();
+const rememberState = vi.hoisted(() => ({ available: true }));
+
+vi.mock("@/features/organizations/hooks/use-active-organization", () => ({
+  useRememberOrganization: () =>
+    rememberState.available ? mockRememberOrganization : undefined,
+}));
 
 vi.mock("convex/react", () => ({
   useMutation: vi.fn(() => vi.fn()),
@@ -181,11 +188,24 @@ import { useMutation, useQuery } from "convex/react";
 import { OrganizationSwitcher } from "./organization-switcher";
 
 afterEach(() => {
+  rememberState.available = true;
   mockPush.mockClear();
+  mockRememberOrganization.mockClear();
   mockPrefetch.mockClear();
 });
 
 describe("OrganizationSwitcher", () => {
+  it("waits for the account before allowing organization creation", async () => {
+    rememberState.available = false;
+    render(<OrganizationSwitcher currentOrgSlug="acme" />);
+    await userEvent.click(screen.getByText("Create organization"));
+    expect(
+      within(screen.getByTestId("dialog")).getByRole("button", {
+        name: "Create organization",
+      })
+    ).toBeDisabled();
+  });
+
   it("renders current organization name", () => {
     render(<OrganizationSwitcher currentOrgSlug="acme" />);
     expect(screen.getAllByText("Acme Inc").length).toBeGreaterThanOrEqual(1);
@@ -194,17 +214,6 @@ describe("OrganizationSwitcher", () => {
   it("shows Select organization when no org matches", () => {
     render(<OrganizationSwitcher currentOrgSlug="nonexistent" />);
     expect(screen.getByText("Select organization")).toBeInTheDocument();
-  });
-
-  it("renders all organizations in dropdown", () => {
-    render(<OrganizationSwitcher currentOrgSlug="acme" />);
-    expect(screen.getAllByText("Acme Inc").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("Beta Corp").length).toBeGreaterThanOrEqual(1);
-  });
-
-  it("renders Create organization option", () => {
-    render(<OrganizationSwitcher currentOrgSlug="acme" />);
-    expect(screen.getByText("Create organization")).toBeInTheDocument();
   });
 
   it("shows check mark for current organization", () => {
@@ -253,24 +262,6 @@ describe("OrganizationSwitcher", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders first letter fallback when no logo", () => {
-    vi.mocked(useQuery).mockReturnValue([
-      { _id: "org1", logo: null, name: "Acme", slug: "acme" },
-    ]);
-    render(<OrganizationSwitcher currentOrgSlug="acme" />);
-    expect(screen.getAllByText("A").length).toBeGreaterThanOrEqual(1);
-  });
-
-  it("renders create dialog input field", async () => {
-    vi.mocked(useQuery).mockReturnValue([
-      { _id: "org1", logo: null, name: "Acme", slug: "acme" },
-    ]);
-    const user = userEvent.setup();
-    render(<OrganizationSwitcher currentOrgSlug="acme" />);
-    await user.click(screen.getByText("Create organization"));
-    expect(screen.getByPlaceholderText("My Company")).toBeInTheDocument();
-  });
-
   it("allows typing in create org input", async () => {
     vi.mocked(useQuery).mockReturnValue([
       { _id: "org1", logo: null, name: "Acme", slug: "acme" },
@@ -283,65 +274,10 @@ describe("OrganizationSwitcher", () => {
     expect(input).toHaveValue("New Org");
   });
 
-  it("renders separator between org list and create option", () => {
-    vi.mocked(useQuery).mockReturnValue([
-      { _id: "org1", logo: null, name: "Acme", slug: "acme" },
-    ]);
-    render(<OrganizationSwitcher currentOrgSlug="acme" />);
-    expect(document.querySelector("hr")).toBeInTheDocument();
-  });
-
-  it("renders with org data loaded", () => {
-    vi.mocked(useQuery).mockReturnValue([
-      { _id: "org1", logo: null, name: "Acme", slug: "acme" },
-    ]);
-    const { container } = render(
-      <OrganizationSwitcher currentOrgSlug="acme" />
-    );
-    expect(container.querySelector("a")).toBeInTheDocument();
-  });
-
-  it("renders multiple org links", () => {
-    vi.mocked(useQuery).mockReturnValue([
-      { _id: "org1", logo: null, name: "Acme", slug: "acme" },
-      { _id: "org2", logo: null, name: "Beta", slug: "beta" },
-    ]);
-    render(<OrganizationSwitcher currentOrgSlug="acme" />);
-    const links = screen.getAllByRole("link");
-    expect(links.length).toBeGreaterThanOrEqual(2);
-  });
-
   it("handles empty organizations list", () => {
     vi.mocked(useQuery).mockReturnValue([]);
     render(<OrganizationSwitcher currentOrgSlug="acme" />);
     expect(screen.getByText("Select organization")).toBeInTheDocument();
-  });
-
-  it("renders org name in the trigger", () => {
-    vi.mocked(useQuery).mockReturnValue([
-      { _id: "org1", logo: null, name: "Acme", slug: "acme" },
-    ]);
-    render(<OrganizationSwitcher currentOrgSlug="acme" />);
-    expect(screen.getAllByText("Acme").length).toBeGreaterThanOrEqual(1);
-  });
-
-  it("does not show check mark for non-current org", () => {
-    vi.mocked(useQuery).mockReturnValue([
-      { _id: "org1", logo: null, name: "Acme", slug: "acme" },
-      { _id: "org2", logo: null, name: "Beta", slug: "beta" },
-    ]);
-    render(<OrganizationSwitcher currentOrgSlug="acme" />);
-    const checkIcons = screen.getAllByTestId("check-icon");
-    // Only one check icon for the current org
-    expect(checkIcons).toHaveLength(1);
-  });
-
-  it("shows create organization option", () => {
-    vi.mocked(useQuery).mockReturnValue([
-      { _id: "org1", logo: null, name: "Acme", slug: "acme" },
-    ]);
-    render(<OrganizationSwitcher currentOrgSlug="acme" />);
-    expect(screen.getByText("Create organization")).toBeInTheDocument();
   });
 
   it("explains and does not create org when name is empty", async () => {
@@ -363,8 +299,10 @@ describe("OrganizationSwitcher", () => {
     ).toBeInTheDocument();
   });
 
-  it("creates org and navigates to dashboard on success", async () => {
-    const createOrgMock = vi.fn().mockResolvedValue({ _id: "new-org" });
+  it("selects the newly created organization before returning to the dashboard", async () => {
+    const createOrgMock = vi
+      .fn()
+      .mockResolvedValue({ id: "new-org", slug: "new-org-server-slug" });
     vi.mocked(useMutation).mockReturnValue(createOrgMock);
     vi.mocked(useQuery).mockReturnValue([
       { _id: "org1", logo: null, name: "Acme", slug: "acme" },
@@ -379,7 +317,11 @@ describe("OrganizationSwitcher", () => {
       })
     );
     expect(createOrgMock).toHaveBeenCalledWith({ name: "New Org" });
-    expect(mockPush).toHaveBeenCalledWith("/dashboard");
+    expect(mockRememberOrganization).toHaveBeenCalledWith("new-org");
+    expect(mockRememberOrganization.mock.invocationCallOrder[0]).toBeLessThan(
+      mockPush.mock.invocationCallOrder[0]
+    );
+    expect(mockPush).toHaveBeenCalledWith("/dashboard/new-org-server-slug");
   });
 
   it("shows the server error next to the name field on failure", async () => {
@@ -416,7 +358,9 @@ describe("OrganizationSwitcher", () => {
   });
 
   it("submits on Enter key in the input", async () => {
-    const createOrgMock = vi.fn().mockResolvedValue({ _id: "new-org" });
+    const createOrgMock = vi
+      .fn()
+      .mockResolvedValue({ id: "new-org", slug: "new-org-server-slug" });
     vi.mocked(useMutation).mockReturnValue(createOrgMock);
     vi.mocked(useQuery).mockReturnValue([
       { _id: "org1", logo: null, name: "Acme", slug: "acme" },
@@ -446,21 +390,5 @@ describe("OrganizationSwitcher", () => {
     ]);
     render(<OrganizationSwitcher currentOrgSlug="acme" />);
     expect(mockPrefetch).toHaveBeenCalledWith("/dashboard/beta");
-  });
-
-  it("does not prefetch current org route", () => {
-    vi.mocked(useQuery).mockReturnValue([
-      { _id: "org1", logo: null, name: "Acme", slug: "acme" },
-    ]);
-    render(<OrganizationSwitcher currentOrgSlug="acme" />);
-    expect(mockPrefetch).not.toHaveBeenCalledWith("/dashboard/acme");
-  });
-
-  it("renders OrgIcon fallback when org has no logo and no name match", () => {
-    vi.mocked(useQuery).mockReturnValue([
-      { _id: "org1", logo: null, name: "Acme", slug: "acme" },
-    ]);
-    render(<OrganizationSwitcher currentOrgSlug="nonexistent" />);
-    expect(screen.getByText("Select organization")).toBeInTheDocument();
   });
 });

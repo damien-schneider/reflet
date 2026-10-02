@@ -22,6 +22,7 @@ import { useMutation, useQuery } from "convex/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useState } from "react";
+import { useRememberOrganization } from "@/features/organizations/hooks/use-active-organization";
 import { OrgAvatar } from "./org-avatar";
 
 interface OrganizationSwitcherProps {
@@ -37,6 +38,7 @@ export function OrganizationSwitcher({
   const router = useRouter();
   const organizations = useQuery(api.organizations.queries.list);
   const createOrg = useMutation(api.organizations.mutations.create);
+  const rememberOrganization = useRememberOrganization();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newOrgName, setNewOrgName] = useState("");
   const [createError, setCreateError] = useState<string | null>(null);
@@ -64,6 +66,9 @@ export function OrganizationSwitcher({
 
   const handleCreateOrg = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (isCreating || !rememberOrganization) {
+      return;
+    }
     const name = newOrgName.trim();
     if (!name) {
       setCreateError("Enter an organization name");
@@ -73,9 +78,10 @@ export function OrganizationSwitcher({
     setIsCreating(true);
     setCreateError(null);
     try {
-      await createOrg({ name });
+      const organization = await createOrg({ name });
+      rememberOrganization(organization.id);
       handleDialogOpenChange(false);
-      router.push("/dashboard");
+      router.push(`/dashboard/${organization.slug}`);
     } catch (error) {
       setCreateError(
         error instanceof Error
@@ -199,7 +205,7 @@ export function OrganizationSwitcher({
               Cancel
             </Button>
             <Button
-              disabled={isCreating}
+              disabled={isCreating || !rememberOrganization}
               form="create-organization-form"
               tone="primary"
               type="submit"

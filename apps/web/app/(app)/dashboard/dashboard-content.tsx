@@ -13,6 +13,7 @@ import {
 } from "@ctrl-ui/react/ui/tooltip";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
+import type { FunctionReturnType } from "convex/server";
 import { useAtom } from "jotai";
 import Link from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
@@ -32,6 +33,7 @@ import { DashboardSidebar } from "@/features/dashboard/components/dashboard-side
 import { OrgNotFound } from "@/features/dashboard/components/org-not-found";
 import { DashboardFeedback } from "@/features/dashboard/components/support/dashboard-feedback";
 import { DashboardSupport } from "@/features/dashboard/components/support/dashboard-support";
+import { useActiveOrganization } from "@/features/organizations/hooks/use-active-organization";
 import { useMemberOrganization } from "@/features/organizations/hooks/use-member-organization";
 import { sidebarOpenAtom } from "@/store/dashboard-atoms";
 import { OrgPicker, OrgPickerSkeleton, WelcomeState } from "./dashboard-states";
@@ -215,73 +217,132 @@ function useReplaceRoute(target: string | null) {
   }, [router, target]);
 }
 
-export function DashboardContent({ children }: { children: React.ReactNode }) {
+function useDashboardNavigation() {
   const params = useParams();
   const rawOrgSlug = params?.orgSlug;
   const orgSlug = typeof rawOrgSlug === "string" ? rawOrgSlug : undefined;
-  const pathname = usePathname();
-  const organizations = useQuery(api.organizations.queries.list);
+  const pathname = usePathname() ?? "";
+  const { activeOrganization, organizations } = useActiveOrganization(orgSlug);
   const org = useQuery(
     api.organizations.queries.getBySlug,
     orgSlug ? { slug: orgSlug } : "skip"
   );
-  const [sidebarOpen, setSidebarOpen] = useAtom(sidebarOpenAtom);
-  const modifierKey = useModifierKeyLabel();
 
-  const currentOrg = useMemberOrganization(orgSlug);
-  const isAdmin = currentOrg?.role === "admin" || currentOrg?.role === "owner";
+  const isAdmin =
+    activeOrganization?.role === "admin" ||
+    activeOrganization?.role === "owner";
+  const activeOrgSlug = activeOrganization?.slug;
 
-  const relevantSegments = getRelevantPathSegments(pathname ?? "");
+  const relevantSegments = getRelevantPathSegments(pathname);
   const isNonOrgRoute = NON_ORG_ROUTES.some(
     (route) => route === relevantSegments[0]
   );
 
   const { redirectTo, orgNotAccessible, hasOrganizations } =
-    computeDashboardNavigation({ org, organizations, orgSlug });
+    computeDashboardNavigation({ activeOrgSlug, org, organizations, orgSlug });
 
   useReplaceRoute(redirectTo && !isNonOrgRoute ? redirectTo : null);
 
-  const renderOrgRoute = () => {
-    if (orgSlug) {
-      return orgNotAccessible ? <OrgNotFound /> : children;
-    }
-    if (organizations === undefined || redirectTo) {
-      return <OrgPickerSkeleton />;
-    }
-    return hasOrganizations ? (
-      <OrgPicker organizations={organizations} />
-    ) : (
-      <WelcomeState />
-    );
+  return {
+    activeOrgSlug,
+    hasOrganizations,
+    isAdmin,
+    isNonOrgRoute,
+    organizations,
+    orgNotAccessible,
+    orgSlug,
+    pathname,
+    redirectTo,
   };
+}
+
+function DashboardHeader({
+  orgSlug,
+  pathname,
+}: {
+  orgSlug?: string;
+  pathname: string;
+}) {
+  const modifierKey = useModifierKeyLabel();
+  return (
+    <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-border/60 border-b bg-background/80 px-4 backdrop-blur-md">
+      <Tooltip>
+        <TooltipTrigger render={<SidebarTrigger />} />
+        <TooltipContent>
+          <span className="flex items-center gap-2">
+            Toggle sidebar
+            <KbdGroup>
+              <Kbd>{modifierKey}</Kbd>
+              <Kbd>B</Kbd>
+            </KbdGroup>
+          </span>
+        </TooltipContent>
+      </Tooltip>
+      <div className="flex min-w-0 flex-1 items-center">
+        <DashboardBreadcrumb orgSlug={orgSlug} pathname={pathname} />
+      </div>
+      <DashboardFeedback />
+      <DashboardSupport />
+      <ThemeToggle className="shrink-0" />
+    </header>
+  );
+}
+
+interface OrganizationPageState {
+  children: React.ReactNode;
+  hasOrganizations: boolean;
+  organizations:
+    | FunctionReturnType<typeof api.organizations.queries.list>
+    | undefined;
+  orgNotAccessible: boolean;
+  orgSlug: string | undefined;
+  redirectTo: string | null;
+}
+
+function renderOrganizationPage({
+  children,
+  hasOrganizations,
+  organizations,
+  orgNotAccessible,
+  orgSlug,
+  redirectTo,
+}: OrganizationPageState) {
+  if (orgSlug) {
+    return orgNotAccessible ? <OrgNotFound /> : children;
+  }
+  if (organizations === undefined || redirectTo) {
+    return <OrgPickerSkeleton />;
+  }
+  return hasOrganizations ? (
+    <OrgPicker organizations={organizations} />
+  ) : (
+    <WelcomeState />
+  );
+}
+
+export function DashboardContent({ children }: { children: React.ReactNode }) {
+  const navigation = useDashboardNavigation();
+  const [sidebarOpen, setSidebarOpen] = useAtom(sidebarOpenAtom);
+  const content = navigation.isNonOrgRoute
+    ? children
+    : renderOrganizationPage({ children, ...navigation });
 
   return (
     <SidebarProvider onOpenChange={setSidebarOpen} open={sidebarOpen}>
-      <CommandPalette isAdmin={isAdmin} orgSlug={orgSlug} />
-      <DashboardSidebar orgSlug={orgSlug} pathname={pathname ?? ""} />
+      <CommandPalette
+        isAdmin={navigation.isAdmin}
+        orgSlug={navigation.activeOrgSlug}
+      />
+      <DashboardSidebar
+        orgSlug={navigation.activeOrgSlug}
+        pathname={navigation.pathname}
+      />
       <SidebarInset className="min-w-0">
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-border/60 border-b bg-background/80 px-4 backdrop-blur-md">
-          <Tooltip>
-            <TooltipTrigger render={<SidebarTrigger />} />
-            <TooltipContent>
-              <span className="flex items-center gap-2">
-                Toggle sidebar
-                <KbdGroup>
-                  <Kbd>{modifierKey}</Kbd>
-                  <Kbd>B</Kbd>
-                </KbdGroup>
-              </span>
-            </TooltipContent>
-          </Tooltip>
-          <div className="flex min-w-0 flex-1 items-center">
-            <DashboardBreadcrumb orgSlug={orgSlug} pathname={pathname ?? ""} />
-          </div>
-          <DashboardFeedback />
-          <DashboardSupport />
-          <ThemeToggle className="shrink-0" />
-        </header>
-
-        {isNonOrgRoute ? children : renderOrgRoute()}
+        <DashboardHeader
+          orgSlug={navigation.orgSlug}
+          pathname={navigation.pathname}
+        />
+        {content}
       </SidebarInset>
     </SidebarProvider>
   );
