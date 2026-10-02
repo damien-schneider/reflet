@@ -113,11 +113,7 @@ export function TagFilterBar({
 
   return (
     <>
-      <ScrollArea
-        className="mx-auto max-w-3xl"
-        lockAxis="y"
-        viewportClassName="px-4 pt-1 pb-4"
-      >
+      <ScrollArea lockAxis="y" viewportClassName="pt-1 pb-4">
         <div className="flex w-max items-center gap-2">
           {isAdmin && <TriagePulse organizationId={organizationId} />}
 

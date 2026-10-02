@@ -211,7 +211,7 @@ export function RoadmapView({
           >
             <ScrollArea
               lockAxis="y"
-              viewportClassName="pb-4 pl-[max(1rem,calc(50vw-35rem))] pr-4"
+              viewportClassName="pb-4"
               viewportProps={{
                 "aria-label": "Roadmap columns",
                 role: "region",

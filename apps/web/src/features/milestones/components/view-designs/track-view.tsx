@@ -91,7 +91,7 @@ export function TrackView(view: MilestonesViewProps) {
 
   if (milestones === undefined) {
     return (
-      <div aria-busy className="space-y-3 px-4">
+      <div aria-busy className="space-y-3">
         <span className="sr-only" role="status">
           Loading milestones…
         </span>
@@ -116,7 +116,7 @@ export function TrackView(view: MilestonesViewProps) {
 
   return (
     <LazyMotion features={domAnimation}>
-      <div className="space-y-3 px-4">
+      <div className="space-y-3">
         <TrackZoomControls
           base={DEFAULT_ZONE_WIDTH}
           max={MAX_ZONE_WIDTH}

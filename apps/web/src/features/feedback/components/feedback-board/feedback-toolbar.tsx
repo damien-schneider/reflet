@@ -37,7 +37,7 @@ export const FeedbackToolbar = ({
 }: FeedbackToolbarProps) => (
   <>
     {showSearch && (
-      <div className="mx-auto max-w-3xl px-4 pb-3">
+      <div className="pb-3">
         <InputGroup className="w-full sm:w-64">
           <InputGroupAddon>
             <MagnifyingGlass

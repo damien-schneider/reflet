@@ -63,7 +63,7 @@ export function FiltersBar({
     0;
 
   return (
-    <div className="mx-auto mb-4 max-w-3xl px-4">
+    <div className="mb-4">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1">
           <FilterDropdown

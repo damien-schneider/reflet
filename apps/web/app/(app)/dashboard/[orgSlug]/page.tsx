@@ -1,11 +1,11 @@
 "use client";
 
-import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import { use } from "react";
 import { OrgNotFound } from "@/features/dashboard/components/org-not-found";
 import { FeedbackBoard } from "@/features/feedback/components/feedback-board";
+import { LoadingState } from "@/features/feedback/components/feedback-board/board-states";
 
 export default function OrgDashboard({
   params,
@@ -23,20 +23,7 @@ export default function OrgDashboard({
   const isAdmin = membership?.role === "admin" || membership?.role === "owner";
 
   if (org === undefined) {
-    return (
-      <div aria-busy="true" className="container mx-auto px-4 py-8">
-        <span className="sr-only">Loading feedback…</span>
-        <div className="mb-8 flex flex-col items-center gap-2">
-          <Skeleton className="h-10 w-64 max-w-full" />
-          <Skeleton className="h-5 w-96 max-w-full" />
-        </div>
-        <div className="space-y-4">
-          {["a", "b", "c"].map((id) => (
-            <Skeleton className="h-32 w-full" key={id} />
-          ))}
-        </div>
-      </div>
-    );
+    return <LoadingState />;
   }
 
   if (org === null) {

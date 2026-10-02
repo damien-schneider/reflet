@@ -26,7 +26,7 @@ export function FeedbackBoard({
   defaultView,
 }: FeedbackBoardProps) {
   return (
-    <Suspense fallback={<LoadingState />}>
+    <Suspense fallback={<LoadingState view={defaultView} />}>
       <FeedbackBoardContent
         defaultView={defaultView}
         isAdmin={isAdmin}

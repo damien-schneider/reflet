@@ -166,7 +166,7 @@ export function FeedFeedbackView({
   const { onFeedbackClick, onVote } = useFeedbackBoard();
 
   return (
-    <div className="space-y-4 px-4">
+    <div className="space-y-4">
       <InlineFeedbackInput
         isAdmin={isAdmin}
         isMember={isMember}

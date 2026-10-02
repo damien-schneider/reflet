@@ -40,6 +40,23 @@ test("dashboard keeps one frame for document pages, inbox panes, and denied acce
   await expect(
     page.getByRole("button", { exact: true, name: "Toggle sidebar" })
   ).toHaveAttribute("aria-expanded", "false");
+  const feedbackTitle = page.getByRole("heading", {
+    exact: true,
+    name: "Feedback",
+  });
+  await expect(feedbackTitle).toBeVisible();
+  const composer = page.getByRole("button", {
+    name: "Share an idea or suggestion…",
+  });
+  await expect(composer).toBeVisible();
+  const titleBounds = await feedbackTitle.boundingBox();
+  const composerBounds = await composer.boundingBox();
+  if (!(titleBounds && composerBounds)) {
+    throw new Error("Missing feedback content bounds");
+  }
+  expect(composerBounds.width).toBeGreaterThan(700);
+  expect(Math.abs(composerBounds.x - titleBounds.x)).toBeLessThanOrEqual(1);
+  await page.screenshot({ path: testInfo.outputPath("loaded-feedback.png") });
   await page.goto("/dashboard/super-admin");
   await expect(
     page.getByRole("heading", { name: "Super admins only" })

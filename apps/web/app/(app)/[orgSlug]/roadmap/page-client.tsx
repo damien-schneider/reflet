@@ -19,7 +19,7 @@ export default function PublicRoadmapPageClient({
     slug: orgSlug,
   });
   if (organization === undefined) {
-    return <LoadingState />;
+    return <LoadingState view="roadmap" />;
   }
   if (!organization) {
     return <PrivateOrgMessage />;

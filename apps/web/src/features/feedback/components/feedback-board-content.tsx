@@ -2,8 +2,7 @@
 
 import { ButtonLink } from "@ctrl-ui/react/ui/button";
 import Link from "next/link";
-import type { ReactNode } from "react";
-import { H1 } from "@/components/ui/typography";
+import { FeedbackPage } from "@/features/feedback/components/feedback-board/feedback-page";
 import { MilestonesView } from "@/features/milestones/components/milestones-view";
 import { type BoardView, BoardViewToggle } from "./board-view-toggle";
 import { FeedFeedbackView } from "./feed-feedback-view";
@@ -17,7 +16,7 @@ import { FiltersBar } from "./filters-bar";
 import { RoadmapView } from "./roadmap-view";
 import { SubmitFeedbackDialog } from "./submit-feedback-dialog";
 
-function BoardHeader({
+function BoardActions({
   isAdmin,
   orgSlug,
   view,
@@ -30,20 +29,17 @@ function BoardHeader({
 }) {
   return (
     <>
-      <div className="mx-auto mb-5 flex max-w-3xl items-center justify-between px-4">
-        <H1 variant="page">Feedback</H1>
-        <div className="hidden items-center gap-2 md:flex">
-          <BoardViewToggle onChange={onViewChange} size="sm" view={view} />
-          {isAdmin && (
-            <ButtonLink
-              render={<Link href={`/dashboard/${orgSlug}/feedback/review`} />}
-              size="sm"
-              variant="ghost"
-            >
-              Pending review
-            </ButtonLink>
-          )}
-        </div>
+      <div className="hidden items-center gap-2 md:flex">
+        <BoardViewToggle onChange={onViewChange} size="sm" view={view} />
+        {isAdmin && (
+          <ButtonLink
+            render={<Link href={`/dashboard/${orgSlug}/feedback/review`} />}
+            size="sm"
+            variant="ghost"
+          >
+            Pending review
+          </ButtonLink>
+        )}
       </div>
 
       <div className="pointer-events-none fixed inset-x-0 bottom-[calc(var(--mobile-nav-offset,env(safe-area-inset-bottom))+0.75rem)] z-50 flex justify-center md:hidden">
@@ -57,27 +53,13 @@ function BoardHeader({
   );
 }
 
-function BoardViewPanel({
-  view,
-  panels,
-}: {
-  panels: Record<BoardView, ReactNode>;
-  view: BoardView;
-}) {
-  return (
-    <div className={view === "feed" ? "mx-auto max-w-3xl" : ""}>
-      {panels[view]}
-    </div>
-  );
-}
-
 export function FeedbackBoardContent(props: FeedbackBoardProps) {
   const board = useFeedbackBoardState(props);
   const { filters } = board;
   const { isAdmin, organizationId } = props;
 
   if (board.isLoading) {
-    return <LoadingState />;
+    return <LoadingState view={filters.view} />;
   }
 
   if (!(props.isPublic || props.isMember)) {
@@ -92,14 +74,17 @@ export function FeedbackBoardContent(props: FeedbackBoardProps) {
       primaryColor={props.primaryColor}
       statuses={board.statuses}
     >
-      <div className="py-6">
-        <BoardHeader
-          isAdmin={isAdmin}
-          onViewChange={filters.setView}
-          orgSlug={props.orgSlug}
-          view={filters.view}
-        />
-
+      <FeedbackPage
+        actions={
+          <BoardActions
+            isAdmin={isAdmin}
+            onViewChange={filters.setView}
+            orgSlug={props.orgSlug}
+            view={filters.view}
+          />
+        }
+        view={filters.view}
+      >
         {filters.view !== "milestones" && (
           <>
             <FeedbackToolbar
@@ -125,13 +110,13 @@ export function FeedbackBoardContent(props: FeedbackBoardProps) {
           </>
         )}
         {filters.view === "milestones" && (
-          <p className="mx-auto mb-4 max-w-3xl px-4 text-muted-foreground text-sm">
+          <p className="mb-4 text-muted-foreground text-sm">
             Milestones group planned work. Feedback filters apply to List and
             Board.
           </p>
         )}
-        <BoardViewPanel
-          panels={{
+        {
+          {
             feed: <FeedFeedbackView {...board.feedProps} />,
             milestones: (
               <MilestonesView
@@ -149,13 +134,12 @@ export function FeedbackBoardContent(props: FeedbackBoardProps) {
                 statuses={board.statuses}
               />
             ),
-          }}
-          view={filters.view}
-        />
+          }[filters.view]
+        }
 
         <FeedbackDetailDrawer {...board.detailDrawerProps} />
         <SubmitFeedbackDialog {...board.submitDialogProps} />
-      </div>
+      </FeedbackPage>
     </FeedbackBoardProvider>
   );
 }

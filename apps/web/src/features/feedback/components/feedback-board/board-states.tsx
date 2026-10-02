@@ -7,6 +7,8 @@ import {
 } from "@ctrl-ui/react/ui/empty";
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { LockSimple } from "@phosphor-icons/react";
+import type { BoardView } from "@/features/feedback/components/board-view-toggle";
+import { FeedbackPage } from "@/features/feedback/components/feedback-board/feedback-page";
 
 const SKELETON_ROWS = ["a", "b", "c", "d"] as const;
 
@@ -28,32 +30,33 @@ function FeedCardSkeleton() {
   );
 }
 
-export function LoadingState() {
+export function LoadingState({ view }: { view?: BoardView }) {
   return (
-    <div aria-busy="true" className="mx-auto max-w-3xl px-4 py-6">
-      <span className="sr-only" role="status">
-        Loading feedback…
-      </span>
-      <div className="mb-5 flex items-center justify-between">
-        <Skeleton className="h-8 w-32" />
+    <FeedbackPage view={view}>
+      <div aria-busy="true">
+        <span className="sr-only" role="status">
+          Loading feedback…
+        </span>
+        <Skeleton className="mb-3 h-9 w-full sm:w-64" />
+        <Skeleton className="mb-4 h-8 w-48" />
+        <div className="mb-4 flex items-center justify-between">
+          <Skeleton className="h-8 w-20" />
+          <Skeleton className="h-8 w-24" />
+        </div>
+        <Skeleton className="mb-4 h-16 w-full rounded-xl" />
+        <div className="space-y-4">
+          {SKELETON_ROWS.map((id) => (
+            <FeedCardSkeleton key={id} />
+          ))}
+        </div>
       </div>
-      <div className="mb-4 flex items-center justify-between">
-        <Skeleton className="h-8 w-20" />
-        <Skeleton className="h-8 w-24" />
-      </div>
-      <Skeleton className="mb-4 h-16 w-full rounded-xl" />
-      <div className="space-y-4">
-        {SKELETON_ROWS.map((id) => (
-          <FeedCardSkeleton key={id} />
-        ))}
-      </div>
-    </div>
+    </FeedbackPage>
   );
 }
 
 export function PrivateOrgMessage() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12">
+    <FeedbackPage>
       <Empty>
         <EmptyHeader>
           <EmptyMedia>
@@ -65,6 +68,6 @@ export function PrivateOrgMessage() {
           </EmptyDescription>
         </EmptyHeader>
       </Empty>
-    </div>
+    </FeedbackPage>
   );
 }
