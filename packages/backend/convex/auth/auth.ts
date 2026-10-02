@@ -31,13 +31,15 @@ const isPlatformAdminCaller = async (ctx: AuthUserCtx): Promise<boolean> =>
   (await ctx.auth.getUserIdentity())?.issuer === PLATFORM_ADMIN_ISSUER;
 
 export const authComponent = {
-  ...betterAuthClient,
+  adapter: betterAuthClient.adapter,
+  getAnyUserById: betterAuthClient.getAnyUserById,
   getAuthUser: async (ctx: AuthUserCtx) => {
     if (await isPlatformAdminCaller(ctx)) {
       throw new ConvexError("Unauthenticated");
     }
     return await betterAuthClient.getAuthUser(ctx);
   },
+  registerRoutes: betterAuthClient.registerRoutes,
   safeGetAuthUser: async (ctx: AuthUserCtx) =>
     (await isPlatformAdminCaller(ctx))
       ? undefined
