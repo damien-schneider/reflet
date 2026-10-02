@@ -115,25 +115,22 @@ function renderDashboard() {
 }
 
 describe("Dashboard workspace context", () => {
-  it.each(["/dashboard/account", "/dashboard/super-admin"])(
-    "preserves organization navigation and search on %s",
-    (pathname) => {
-      const view = renderDashboard();
-      dashboard.orgSlug = undefined;
-      dashboard.pathname = pathname;
-      view.rerender(view.content());
+  it("preserves organization navigation and search on account settings", () => {
+    const view = renderDashboard();
+    dashboard.orgSlug = undefined;
+    dashboard.pathname = "/dashboard/account";
+    view.rerender(view.content());
 
-      expect(
-        screen.getByRole("heading", { name: "Account settings" })
-      ).toBeVisible();
-      expect(screen.getByRole("link", { name: "Feedback" })).toHaveAttribute(
-        "href",
-        "/dashboard/acme"
-      );
-      expect(screen.getByTestId("command-workspace")).toHaveTextContent("acme");
-      expect(dashboard.replace).not.toHaveBeenCalled();
-    }
-  );
+    expect(
+      screen.getByRole("heading", { name: "Account settings" })
+    ).toBeVisible();
+    expect(screen.getByRole("link", { name: "Feedback" })).toHaveAttribute(
+      "href",
+      "/dashboard/acme"
+    );
+    expect(screen.getByTestId("command-workspace")).toHaveTextContent("acme");
+    expect(dashboard.replace).not.toHaveBeenCalled();
+  });
 
   it("returns to the selected organization from the dashboard root", () => {
     const view = renderDashboard();

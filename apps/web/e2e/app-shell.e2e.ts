@@ -6,7 +6,7 @@ import {
   signUpAndLandOnDashboard,
 } from "./helpers/auth";
 
-test("dashboard keeps one frame for document pages, inbox panes, and denied access", async ({
+test("dashboard keeps one frame for document pages and inbox panes", async ({
   page,
 }, testInfo) => {
   test.setTimeout(120_000);
@@ -57,17 +57,4 @@ test("dashboard keeps one frame for document pages, inbox panes, and denied acce
   expect(composerBounds.width).toBeGreaterThan(700);
   expect(Math.abs(composerBounds.x - titleBounds.x)).toBeLessThanOrEqual(1);
   await page.screenshot({ path: testInfo.outputPath("loaded-feedback.png") });
-  await page.goto("/dashboard/super-admin");
-  await expect(
-    page.getByRole("heading", { name: "Super admins only" })
-  ).toBeVisible();
-  await expect(page.getByRole("main")).toHaveCount(1);
-  const pageBounds = await page
-    .locator('[data-control-family="page-layout"][data-slot="root"]')
-    .boundingBox();
-  if (!pageBounds) {
-    throw new Error("Missing page frame");
-  }
-  expect(pageBounds.y + pageBounds.height).toBeGreaterThanOrEqual(1000);
-  await page.screenshot({ path: testInfo.outputPath("denied-page.png") });
 });

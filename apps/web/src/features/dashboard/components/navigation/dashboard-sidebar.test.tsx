@@ -26,8 +26,6 @@ vi.mock("convex/react", () => ({
             subscriptionTier: session.tier,
           },
         ];
-      case "organizations/super_admin:isSuperAdmin":
-        return false;
       default:
         return 0;
     }

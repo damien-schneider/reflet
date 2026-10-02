@@ -1,10 +1,10 @@
 /// <reference types="vite/client" />
-import { afterEach, expect, test, vi } from "vitest";
+import { expect, test } from "vitest";
 import { api } from "../../_generated/api";
+import { PLATFORM_ADMIN_ISSUER } from "../../shared/platform_admin";
 import { seedOrganization } from "../../test.fixtures";
 import { setupTest } from "../../test.helpers";
 
-const PLATFORM_ADMIN = { _id: "user_platform", email: "ops@reflet.test" };
 const CUSTOMER_OWNER = {
   _id: "user_owner",
   email: "owner@customer.test",
@@ -12,9 +12,8 @@ const CUSTOMER_OWNER = {
 };
 
 const setup = async () => {
-  vi.stubEnv("SUPER_ADMIN_EMAILS", PLATFORM_ADMIN.email);
   const t = setupTest({
-    authUsers: [PLATFORM_ADMIN, CUSTOMER_OWNER],
+    authUsers: [CUSTOMER_OWNER],
     stripeSubscriptionStatus: "active",
   });
   const payingOrgId = await t.run(async (ctx) => {
@@ -31,12 +30,12 @@ const setup = async () => {
   });
   const as = (userId: string) =>
     t.withIdentity({ sessionId: userId, subject: userId });
-  return { as, payingOrgId };
+  const platformAdmin = t.withIdentity({
+    issuer: PLATFORM_ADMIN_ISSUER,
+    subject: "damien-schneider",
+  });
+  return { as, payingOrgId, platformAdmin };
 };
-
-afterEach(() => {
-  vi.unstubAllEnvs();
-});
 
 test("an org owner cannot list platform customers", async () => {
   const { as } = await setup();
@@ -49,8 +48,8 @@ test("an org owner cannot list platform customers", async () => {
 });
 
 test("customers are the orgs that reached Stripe, with their owner and live status", async () => {
-  const { as, payingOrgId } = await setup();
-  const customers = await as(PLATFORM_ADMIN._id).query(
+  const { payingOrgId, platformAdmin } = await setup();
+  const customers = await platformAdmin.query(
     api.organizations.super_admin_customers.listCustomers,
     {}
   );

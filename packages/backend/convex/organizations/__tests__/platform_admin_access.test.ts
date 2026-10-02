@@ -1,11 +1,11 @@
 /// <reference types="vite/client" />
-import { afterEach, expect, test, vi } from "vitest";
+import { expect, test } from "vitest";
 import { api } from "../../_generated/api";
 import { PLATFORM_ADMIN_ISSUER } from "../../shared/platform_admin";
 import { seedFeedback, seedOrganization } from "../../test.fixtures";
 import { setupTest } from "../../test.helpers";
 
-const SUPER_ADMIN = { _id: "user_super", email: "ops@reflet.test" };
+const OPS_USER = { _id: "user_ops", email: "ops@reflet.test" };
 const CUSTOMER_OWNER = {
   _id: "user_owner",
   email: "owner@customer.test",
@@ -14,9 +14,8 @@ const CUSTOMER_OWNER = {
 const PLATFORM_ADMIN_LOGIN = "damien-schneider";
 
 const setup = async () => {
-  vi.stubEnv("SUPER_ADMIN_EMAILS", SUPER_ADMIN.email);
   const t = setupTest({
-    authUsers: [SUPER_ADMIN, CUSTOMER_OWNER],
+    authUsers: [OPS_USER, CUSTOMER_OWNER],
     stripeSubscriptionStatus: "active",
   });
   await t.run(async (ctx) => {
@@ -62,11 +61,7 @@ const setup = async () => {
   return t;
 };
 
-afterEach(() => {
-  vi.unstubAllEnvs();
-});
-
-test("a platform admin token reads every super-admin view without a Better Auth user", async () => {
+test("a platform admin token reads every admin view without a Better Auth user", async () => {
   const t = await setup();
   const platformAdmin = t.withIdentity({
     issuer: PLATFORM_ADMIN_ISSUER,
@@ -88,7 +83,6 @@ test("a platform admin token reads every super-admin view without a Better Auth 
     platformAdmin.query(super_admin_metrics.getTrends, { days: 7 }),
   ]);
 
-  expect(await platformAdmin.query(super_admin.isSuperAdmin, {})).toBe(true);
   expect(customers).toMatchObject([
     {
       owner: { email: CUSTOMER_OWNER.email, name: CUSTOMER_OWNER.name },
@@ -109,7 +103,7 @@ test("a platform admin token reads every super-admin view without a Better Auth 
   expect(revenue).toMatchObject({ freeCount: 1, proCount: 1 });
 });
 
-test("a token from another issuer without a session is not a super admin", async () => {
+test("a token from another issuer without a session is not a platform admin", async () => {
   const t = await setup();
   const stranger = t.withIdentity({
     issuer: "https://impostor.example",
@@ -119,37 +113,30 @@ test("a token from another issuer without a session is not a super admin", async
   await expect(
     stranger.query(api.organizations.super_admin.getDashboardStats, {})
   ).rejects.toThrow("Not authorized");
-  expect(
-    await stranger.query(api.organizations.super_admin.isSuperAdmin, {})
-  ).toBe(false);
 });
 
 test("a platform admin token never resolves to a user, even with that user's id and a live session", async () => {
   const t = await setup();
   const forged = t.withIdentity({
     issuer: PLATFORM_ADMIN_ISSUER,
-    sessionId: SUPER_ADMIN._id,
+    sessionId: OPS_USER._id,
     subject: CUSTOMER_OWNER._id,
   });
 
   expect(await forged.query(api.auth.queries.getCurrentUser, {})).toBeNull();
 });
 
-test("a signed-in user listed in SUPER_ADMIN_EMAILS stays a super admin, others do not", async () => {
+test("a signed-in Better Auth user, even the ops account, is not a platform admin", async () => {
   const t = await setup();
   const signedInAs = (userId: string) =>
     t.withIdentity({ sessionId: userId, subject: userId });
 
-  expect(
-    await signedInAs(SUPER_ADMIN._id).query(
-      api.organizations.super_admin.getDashboardStats,
-      {}
-    )
-  ).toMatchObject({ totalOrganizations: 2 });
-  await expect(
-    signedInAs(CUSTOMER_OWNER._id).query(
-      api.organizations.super_admin.getDashboardStats,
-      {}
-    )
-  ).rejects.toThrow("Not authorized");
+  for (const userId of [OPS_USER._id, CUSTOMER_OWNER._id]) {
+    await expect(
+      signedInAs(userId).query(
+        api.organizations.super_admin.getDashboardStats,
+        {}
+      )
+    ).rejects.toThrow("Not authorized");
+  }
 });

@@ -1,16 +1,15 @@
 /// <reference types="vite/client" />
-import { afterEach, expect, test, vi } from "vitest";
+import { expect, test } from "vitest";
 import { api } from "../../_generated/api";
+import { PLATFORM_ADMIN_ISSUER } from "../../shared/platform_admin";
 import { seedOrganization } from "../../test.fixtures";
 import { setupTest } from "../../test.helpers";
 
 const TENANT_ADMIN = { _id: "user_tenant", email: "owner@tenant.test" };
 const OUTSIDER = { _id: "user_out", email: "out@else.test" };
-const PLATFORM_ADMIN = { _id: "user_platform", email: "ops@reflet.test" };
 
 const setup = async () => {
-  vi.stubEnv("SUPER_ADMIN_EMAILS", PLATFORM_ADMIN.email);
-  const t = setupTest({ authUsers: [TENANT_ADMIN, OUTSIDER, PLATFORM_ADMIN] });
+  const t = setupTest({ authUsers: [TENANT_ADMIN, OUTSIDER] });
   const seeded = await t.run(async (ctx) => {
     const organizationId = await seedOrganization(ctx);
     await ctx.db.insert("organizationMembers", {
@@ -47,10 +46,6 @@ const setup = async () => {
   return { ...seeded, as, t };
 };
 
-afterEach(() => {
-  vi.unstubAllEnvs();
-});
-
 test("an org owner cannot read or edit the platform-wide suppression list", async () => {
   const { as, suppressionId, t } = await setup();
   const tenant = as(TENANT_ADMIN._id);
@@ -68,7 +63,10 @@ test("an org owner cannot read or edit the platform-wide suppression list", asyn
   ).rejects.toThrow("Not authorized");
   expect(await t.run((ctx) => ctx.db.get(suppressionId))).not.toBeNull();
 
-  const platform = as(PLATFORM_ADMIN._id);
+  const platform = t.withIdentity({
+    issuer: PLATFORM_ADMIN_ISSUER,
+    subject: "damien-schneider",
+  });
   const listed = await platform.query(
     api.email.suppression.listSuppressions,
     {}

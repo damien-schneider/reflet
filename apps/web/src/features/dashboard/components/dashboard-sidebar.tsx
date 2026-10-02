@@ -4,15 +4,9 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
   SidebarRail,
 } from "@ctrl-ui/react/ui/sidebar";
-import { ShieldStar } from "@phosphor-icons/react";
-import { api } from "@reflet/backend/convex/_generated/api";
 import type { MemberOrganization } from "@reflet/backend/convex/organizations/queries";
-import { useQuery } from "convex/react";
-import Link from "next/link";
 import { CommandPaletteTrigger } from "@/features/command-palette/components/command-palette-trigger";
 import { MakePublicBanner } from "@/features/dashboard/components/make-public-banner";
 import { AccountMenu } from "@/features/dashboard/components/navigation/account-menu";
@@ -21,32 +15,6 @@ import { UpgradeLink } from "@/features/dashboard/components/navigation/upgrade-
 import { SidebarFooterContent } from "@/features/dashboard/components/sidebar-footer-content";
 import { OrganizationSwitcher } from "@/features/organizations/components/organization-switcher";
 import { useMemberOrganization } from "@/features/organizations/hooks/use-member-organization";
-
-const SUPER_ADMIN_PATH = "/dashboard/super-admin";
-
-function SuperAdminItem({ pathname }: { pathname: string }) {
-  const isSuperAdmin = useQuery(api.organizations.super_admin.isSuperAdmin);
-  const isActive = pathname.startsWith(SUPER_ADMIN_PATH);
-  if (!isSuperAdmin) {
-    return null;
-  }
-  return (
-    <SidebarMenuItem>
-      <SidebarMenuButton
-        aria-current={isActive ? "page" : undefined}
-        className="group-data-[collapsible=icon]:justify-center"
-        isActive={isActive}
-        render={<Link href={SUPER_ADMIN_PATH} />}
-        tooltip="Super admin"
-      >
-        <ShieldStar aria-hidden="true" />
-        <span className="flex-1 group-data-[collapsible=icon]:sr-only">
-          Super admin
-        </span>
-      </SidebarMenuButton>
-    </SidebarMenuItem>
-  );
-}
 
 function AdminActions({ org }: { org: MemberOrganization }) {
   return (
@@ -62,17 +30,14 @@ function AdminActions({ org }: { org: MemberOrganization }) {
 function DashboardFooter({
   org,
   isAdmin,
-  pathname,
 }: {
   org: MemberOrganization | undefined;
   isAdmin: boolean;
-  pathname: string;
 }) {
   return (
     <SidebarFooter>
       {org && isAdmin ? <AdminActions org={org} /> : null}
       <SidebarMenu>
-        <SuperAdminItem pathname={pathname} />
         <SidebarFooterContent isPublic={org?.isPublic} orgSlug={org?.slug} />
         <AccountMenu />
       </SidebarMenu>
@@ -107,7 +72,7 @@ export function DashboardSidebar({
           </p>
         )}
       </SidebarContent>
-      <DashboardFooter isAdmin={isAdmin} org={org} pathname={pathname} />
+      <DashboardFooter isAdmin={isAdmin} org={org} />
       <SidebarRail resizable />
     </Sidebar>
   );

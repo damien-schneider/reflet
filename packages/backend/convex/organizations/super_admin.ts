@@ -6,14 +6,8 @@ import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
 import { getOrgSubscription, planTierFor } from "../billing/org_subscription";
-import { assertSuperAdmin, isSuperAdminCaller } from "../shared/access";
+import { assertSuperAdmin } from "../shared/access";
 import { subscriptionTier } from "../shared/validators";
-
-export const isSuperAdmin = query({
-  args: {},
-  handler: async (ctx) => await isSuperAdminCaller(ctx),
-  returns: v.boolean(),
-});
 
 export const getDashboardStats = query({
   args: {},

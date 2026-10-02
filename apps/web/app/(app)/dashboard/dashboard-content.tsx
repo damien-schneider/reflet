@@ -53,13 +53,12 @@ const routeLabels: Record<string, string> = {
   roadmap: "Roadmap",
   setup: "Setup",
   status: "Status",
-  "super-admin": "Super admin",
   surveys: "Surveys",
   tags: "Tags",
   trash: "Trash",
 };
 
-const NON_ORG_ROUTES = ["super-admin", "account"] as const;
+const ACCOUNT_ROUTE = "account";
 
 function getRelevantPathSegments(pathname: string): string[] {
   const pathSegments = pathname.split("/").filter(Boolean);
@@ -107,9 +106,9 @@ function buildBreadcrumbItems(
   ];
 
   const firstSegment = relevantSegments[0];
-  if (firstSegment && NON_ORG_ROUTES.some((route) => route === firstSegment)) {
+  if (firstSegment === ACCOUNT_ROUTE) {
     items.push({
-      href: `/dashboard/${firstSegment}`,
+      href: `/dashboard/${ACCOUNT_ROUTE}`,
       isActive: true,
       label: routeLabels[firstSegment] ?? firstSegment,
     });
@@ -229,9 +228,7 @@ function useDashboardNavigation() {
   const activeOrgSlug = activeOrganization?.slug;
 
   const relevantSegments = getRelevantPathSegments(pathname);
-  const isNonOrgRoute = NON_ORG_ROUTES.some(
-    (route) => route === relevantSegments[0]
-  );
+  const isNonOrgRoute = relevantSegments[0] === ACCOUNT_ROUTE;
 
   const { redirectTo, orgNotAccessible, hasOrganizations } =
     computeDashboardNavigation({ activeOrgSlug, org, organizations, orgSlug });

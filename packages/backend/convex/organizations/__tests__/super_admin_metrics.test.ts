@@ -6,6 +6,7 @@ import {
   agentActorId,
   SYSTEM_ACTOR_ID,
 } from "../../shared/actors";
+import { PLATFORM_ADMIN_ISSUER } from "../../shared/platform_admin";
 import { seedOrganization } from "../../test.fixtures";
 import { setupTest } from "../../test.helpers";
 
@@ -17,11 +18,9 @@ const ADMIN = {
 
 afterEach(() => {
   vi.restoreAllMocks();
-  vi.unstubAllEnvs();
 });
 
 test("recent activity names API, system and agent actors without resolving them as users", async () => {
-  vi.stubEnv("SUPER_ADMIN_EMAILS", ADMIN.email);
   const testClient = setupTest({ authUsers: [ADMIN] });
   await testClient.run(async (ctx) => {
     const organizationId = await seedOrganization(ctx);
@@ -49,7 +48,10 @@ test("recent activity names API, system and agent actors without resolving them 
   );
 
   const activity = await testClient
-    .withIdentity({ sessionId: ADMIN._id, subject: ADMIN._id })
+    .withIdentity({
+      issuer: PLATFORM_ADMIN_ISSUER,
+      subject: "damien-schneider",
+    })
     .query(api.organizations.super_admin_metrics.getRecentActivity, {});
 
   expect(

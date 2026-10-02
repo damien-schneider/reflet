@@ -1,3 +1,4 @@
+import type { Auth } from "convex/server";
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
@@ -69,23 +70,9 @@ export const isOrgMemberViewer = async (
   return (await getOrgMembership(ctx, organizationId, user._id)) !== null;
 };
 
-const superAdminEmails = (): string[] =>
-  (process.env.SUPER_ADMIN_EMAILS ?? "")
-    .split(",")
-    .map((email) => email.trim().toLowerCase())
-    .filter(Boolean);
-
-export const isSuperAdminCaller = async (ctx: QueryCtx): Promise<boolean> => {
+export const assertSuperAdmin = async (ctx: { auth: Auth }): Promise<void> => {
   const identity = await ctx.auth.getUserIdentity();
-  if (identity?.issuer === PLATFORM_ADMIN_ISSUER) {
-    return true;
-  }
-  const user = await authComponent.safeGetAuthUser(ctx);
-  return user ? superAdminEmails().includes(user.email.toLowerCase()) : false;
-};
-
-export const assertSuperAdmin = async (ctx: QueryCtx): Promise<void> => {
-  if (!(await isSuperAdminCaller(ctx))) {
+  if (identity?.issuer !== PLATFORM_ADMIN_ISSUER) {
     throw new Error("Not authorized");
   }
 };
