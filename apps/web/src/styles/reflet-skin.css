@@ -39,7 +39,7 @@
   /* ---------------------------------------------------------------- controls */
 
   :root[data-theme="reflet"] :where([data-control-family="button"]) {
-    --cui-button-press-scale: 0.96;
+    scale: none;
   }
 
   :root[data-theme="reflet"]

@@ -263,7 +263,7 @@ function SweepCornerBadge() {
       animate={{
         borderRadius: voteType ? "0 12px 0 16px" : "0 12px 0 12px",
       }}
-      className="absolute top-0 right-0 flex items-center gap-0 overflow-hidden border-border/30 border-b border-l bg-card shadow-sm"
+      className="absolute top-0 right-0 z-20 flex items-center gap-0 overflow-hidden border-border/30 border-b border-l bg-card shadow-sm"
       transition={{ damping: 20, stiffness: 300, type: "spring" }}
     >
       <m.button
@@ -280,7 +280,6 @@ function SweepCornerBadge() {
           vote("upvote");
         }}
         type="button"
-        whileTap={{ scale: 0.96 }}
       >
         <CaretUp
           aria-hidden
@@ -316,7 +315,6 @@ function SweepCornerBadge() {
           vote("downvote");
         }}
         type="button"
-        whileTap={{ scale: 0.96 }}
       >
         <CaretDown
           aria-hidden

@@ -178,7 +178,6 @@ function EditorialFeedVote() {
           vote("upvote");
         }}
         type="button"
-        whileTap={{ scale: 0.96 }}
       >
         <ArrowUp
           aria-hidden
@@ -210,7 +209,6 @@ function EditorialFeedVote() {
           vote("downvote");
         }}
         type="button"
-        whileTap={{ scale: 0.96 }}
       >
         <ArrowDown
           aria-hidden

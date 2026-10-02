@@ -46,12 +46,15 @@ export function SweepCornerFeedCard({
       voteType={feedback.userVoteType ?? null}
     >
       <SweepCornerCardUI
-        className={cn(feedback.isPinned && "border-primary/50 bg-primary/5")}
+        className={cn(
+          "cursor-pointer",
+          feedback.isPinned && "border-primary/50 bg-primary/5"
+        )}
       >
         <SweepCornerContent>
           <SweepCornerTitle>
             <Button
-              className="wrap-anywhere h-auto w-full cursor-pointer justify-start whitespace-normal text-pretty px-0 py-0 text-left font-[inherit] text-inherit outline-none after:absolute after:inset-0 after:rounded-xl hover:bg-transparent focus-visible:after:ring-2 focus-visible:after:ring-ring"
+              className="wrap-anywhere static isolation-auto h-auto w-full cursor-pointer justify-start whitespace-normal text-pretty px-0 py-0 text-left font-[inherit] text-inherit outline-none after:absolute after:inset-0 after:z-10 after:rounded-xl hover:bg-transparent focus-visible:after:ring-2 focus-visible:after:ring-ring"
               onClick={() => onClick?.(feedback._id)}
               variant="ghost"
             >
