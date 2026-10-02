@@ -110,11 +110,30 @@ export function OrgNavigation({ organization, pathname }: OrgNavigationProps) {
   const adminArgs = id && isAdmin ? { organizationId: id } : "skip";
   const unread = useQuery(api.support.admin.getUnreadCount, adminArgs);
   const deleted = useQuery(api.feedback.trash.getDeletedCount, adminArgs);
+  return (
+    <OrgNavigationMenu
+      counts={{ deleted, unread }}
+      organization={{ isAdmin, slug }}
+      pathname={pathname}
+    />
+  );
+}
+
+export function OrgNavigationMenu({
+  counts = {},
+  organization,
+  pathname,
+}: {
+  counts?: { deleted?: number; unread?: number };
+  organization: { isAdmin: boolean; slug: string };
+  pathname: string;
+}) {
+  const { isAdmin, slug } = organization;
   const base = `/dashboard/${slug}`;
   const groups = [
-    { items: workspaceItems(base, unread), label: "Workspace" },
+    { items: workspaceItems(base, counts.unread), label: "Workspace" },
     { items: developerItems(base), label: "Developer tools" },
-    { items: organizationItems(base, deleted), label: "Organization" },
+    { items: organizationItems(base, counts.deleted), label: "Organization" },
   ];
   return groups.map(({ label, items }) => (
     <NavGroup

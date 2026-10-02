@@ -1,5 +1,6 @@
 "use client";
 
+import { DashboardShellBoundary } from "@app/(app)/dashboard/shell/dashboard-error-boundary";
 import { AppShell } from "@ctrl-ui/react/ui/app-shell";
 import { useConvexAuth } from "convex/react";
 import { useAtom } from "jotai";
@@ -41,7 +42,9 @@ export default function DashboardLayoutClient({
       {loading ? (
         <DashboardLoading />
       ) : (
-        <DashboardContent>{children}</DashboardContent>
+        <DashboardShellBoundary pathname={pathname ?? "/dashboard"}>
+          <DashboardContent>{children}</DashboardContent>
+        </DashboardShellBoundary>
       )}
     </AppShell>
   );

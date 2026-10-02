@@ -3,6 +3,7 @@ import { AppShell } from "@ctrl-ui/react/ui/app-shell";
 import { act, render, screen } from "@testing-library/react";
 import { getFunctionName } from "convex/server";
 import { createStore, Provider } from "jotai";
+import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { organizationSelectionAtom } from "@/features/organizations/lib/organization-selection";
 
@@ -100,14 +101,12 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-function renderDashboard() {
+function renderDashboard(children: ReactNode = <h1>Account settings</h1>) {
   const store = createStore();
   const content = () => (
     <Provider store={store}>
       <AppShell scroll="page">
-        <DashboardContent>
-          <h1>Account settings</h1>
-        </DashboardContent>
+        <DashboardContent>{children}</DashboardContent>
       </AppShell>
     </Provider>
   );
@@ -115,6 +114,30 @@ function renderDashboard() {
 }
 
 describe("Dashboard workspace context", () => {
+  it("keeps workspace navigation and the header when a page fails", () => {
+    let fails = true;
+    function FailingPage() {
+      if (fails) {
+        throw new Error("Inbox query failed");
+      }
+      return <h1>Inbox</h1>;
+    }
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const { container } = renderDashboard(<FailingPage />);
+
+    expect(screen.getByRole("link", { name: "Feedback" })).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Toggle sidebar" })
+    ).toBeVisible();
+    expect(
+      container.querySelector("[data-app-shell-content]")
+    ).toContainElement(screen.getByRole("alert"));
+
+    fails = false;
+    act(() => screen.getByRole("button", { name: "Try again" }).click());
+    expect(screen.getByRole("heading", { name: "Inbox" })).toBeVisible();
+  });
+
   it("preserves organization navigation and search on account settings", () => {
     const view = renderDashboard();
     dashboard.orgSlug = undefined;

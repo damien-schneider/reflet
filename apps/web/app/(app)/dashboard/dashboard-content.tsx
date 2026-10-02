@@ -1,5 +1,6 @@
 "use client";
 
+import { DashboardPageBoundary } from "@app/(app)/dashboard/shell/dashboard-error-boundary";
 import { AppShellContent, AppShellHeader } from "@ctrl-ui/react/ui/app-shell";
 import { Kbd, KbdGroup } from "@ctrl-ui/react/ui/kbd";
 import { SidebarTrigger } from "@ctrl-ui/react/ui/sidebar";
@@ -333,7 +334,7 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
           orgSlug={navigation.orgSlug}
           pathname={navigation.pathname}
         />
-        {content}
+        <DashboardPageBoundary>{content}</DashboardPageBoundary>
       </AppShellContent>
     </>
   );
