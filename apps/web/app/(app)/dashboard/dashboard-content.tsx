@@ -1,11 +1,8 @@
 "use client";
 
+import { AppShellContent, AppShellHeader } from "@ctrl-ui/react/ui/app-shell";
 import { Kbd, KbdGroup } from "@ctrl-ui/react/ui/kbd";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@ctrl-ui/react/ui/sidebar";
+import { SidebarTrigger } from "@ctrl-ui/react/ui/sidebar";
 import {
   Tooltip,
   TooltipContent,
@@ -14,7 +11,6 @@ import {
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
-import { useAtom } from "jotai";
 import Link from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -35,7 +31,6 @@ import { DashboardFeedback } from "@/features/dashboard/components/support/dashb
 import { DashboardSupport } from "@/features/dashboard/components/support/dashboard-support";
 import { useActiveOrganization } from "@/features/organizations/hooks/use-active-organization";
 import { useMemberOrganization } from "@/features/organizations/hooks/use-member-organization";
-import { sidebarOpenAtom } from "@/store/dashboard-atoms";
 import { OrgPicker, OrgPickerSkeleton, WelcomeState } from "./dashboard-states";
 import { computeDashboardNavigation } from "./use-dashboard-navigation";
 
@@ -265,7 +260,7 @@ function DashboardHeader({
 }) {
   const modifierKey = useModifierKeyLabel();
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-border/60 border-b bg-background/80 px-4 backdrop-blur-md">
+    <AppShellHeader>
       <Tooltip>
         <TooltipTrigger render={<SidebarTrigger />} />
         <TooltipContent>
@@ -284,7 +279,7 @@ function DashboardHeader({
       <DashboardFeedback />
       <DashboardSupport />
       <ThemeToggle className="shrink-0" />
-    </header>
+    </AppShellHeader>
   );
 }
 
@@ -322,13 +317,12 @@ function renderOrganizationPage({
 
 export function DashboardContent({ children }: { children: React.ReactNode }) {
   const navigation = useDashboardNavigation();
-  const [sidebarOpen, setSidebarOpen] = useAtom(sidebarOpenAtom);
   const content = navigation.isNonOrgRoute
     ? children
     : renderOrganizationPage({ children, ...navigation });
 
   return (
-    <SidebarProvider onOpenChange={setSidebarOpen} open={sidebarOpen}>
+    <>
       <CommandPalette
         isAdmin={navigation.isAdmin}
         orgSlug={navigation.activeOrgSlug}
@@ -337,13 +331,13 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
         orgSlug={navigation.activeOrgSlug}
         pathname={navigation.pathname}
       />
-      <SidebarInset className="min-w-0">
+      <AppShellContent>
         <DashboardHeader
           orgSlug={navigation.orgSlug}
           pathname={navigation.pathname}
         />
         {content}
-      </SidebarInset>
-    </SidebarProvider>
+      </AppShellContent>
+    </>
   );
 }

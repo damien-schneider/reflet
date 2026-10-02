@@ -20,7 +20,7 @@
         "@a2a-js/sdk": "1.2.0",
         "@base-ui/react": "^1.8.0",
         "@convex-dev/better-auth": "catalog:",
-        "@ctrl-ui/react": "^0.8.9",
+        "@ctrl-ui/react": "^0.8.10",
         "@daypicker/react": "^10.0.1",
         "@dnd-kit/core": "^6.3.1",
         "@dnd-kit/sortable": "^10.0.0",
@@ -446,7 +446,7 @@
 
     "@csstools/css-tokenizer": ["@csstools/css-tokenizer@4.0.0", "", {}, "sha512-QxULHAm7cNu72w97JUNCBFODFaXpbDg+dP8b/oWFAZ2MTRppA3U00Y2L1HqaS4J6yBqxwa/Y3nMBaxVKbB/NsA=="],
 
-    "@ctrl-ui/react": ["@ctrl-ui/react@0.8.9", "", { "peerDependencies": { "@base-ui/react": "^1.8.0", "@tanstack/react-virtual": "^3.14.13", "class-variance-authority": "^0.7.1", "clsx": "^2.1.1", "cmdk": "^1.1.1", "diff": "^9.0.0", "frimousse": "^0.4.0", "libphonenumber-js": "^1.13.13", "lucide-react": "^1.47.0", "prosemirror-commands": "^1.7.2", "prosemirror-history": "^1.5.0", "prosemirror-keymap": "^1.2.3", "prosemirror-model": "^1.25.11", "prosemirror-state": "^1.4.4", "prosemirror-view": "^1.42.3", "react": "^19.2.8", "react-day-picker": "^10.0.1", "react-dom": "^19.2.8", "react-email": "^6.9.5", "react-phone-number-input": "^3.4.18", "react-resizable-panels": "^4.12.4", "shiki": "^4.4.3", "streamdown": "^2.6.0", "tailwind-merge": "^3.7.0", "zod": "^4.6.5" }, "optionalPeers": ["@tanstack/react-virtual", "cmdk", "diff", "frimousse", "libphonenumber-js", "prosemirror-commands", "prosemirror-history", "prosemirror-keymap", "prosemirror-model", "prosemirror-state", "prosemirror-view", "react-day-picker", "react-email", "react-phone-number-input", "react-resizable-panels", "shiki", "streamdown", "zod"] }, "sha512-tHPsJYEeXtgdJPlHj6JDjaGh7vD0rvm/JRRYm8pYVfVQxOI/jaIJCPZ7tdzmfG0CQGX+sq3Nv0H2oAT0PZGi/Q=="],
+    "@ctrl-ui/react": ["@ctrl-ui/react@0.8.10", "", { "peerDependencies": { "@base-ui/react": "^1.8.0", "@tanstack/react-virtual": "^3.14.13", "class-variance-authority": "^0.7.1", "clsx": "^2.1.1", "cmdk": "^1.1.1", "diff": "^9.0.0", "frimousse": "^0.4.0", "libphonenumber-js": "^1.13.13", "lucide-react": "^1.47.0", "prosemirror-commands": "^1.7.2", "prosemirror-history": "^1.5.0", "prosemirror-keymap": "^1.2.3", "prosemirror-model": "^1.25.11", "prosemirror-state": "^1.4.4", "prosemirror-view": "^1.42.3", "react": "^19.2.8", "react-day-picker": "^10.0.1", "react-dom": "^19.2.8", "react-email": "^6.9.5", "react-phone-number-input": "^3.4.18", "react-resizable-panels": "^4.12.4", "shiki": "^4.4.3", "streamdown": "^2.6.0", "tailwind-merge": "^3.7.0", "zod": "^4.6.5" }, "optionalPeers": ["@tanstack/react-virtual", "cmdk", "diff", "frimousse", "libphonenumber-js", "prosemirror-commands", "prosemirror-history", "prosemirror-keymap", "prosemirror-model", "prosemirror-state", "prosemirror-view", "react-day-picker", "react-email", "react-phone-number-input", "react-resizable-panels", "shiki", "streamdown", "zod"] }, "sha512-OcR5fMA2esnwF/KML99R9/KfLAG9dNEeVGqSOhdVa+TEf4KtK12PmUwR0U96AbXIgpH0GyfIvUsD5ePpdWv6jA=="],
 
     "@date-fns/tz": ["@date-fns/tz@1.5.0", "", {}, "sha512-lwYN/vDPeNRULcepoE/LO2Pgx+7/RV+S9ARfbc9lr2DtGkOD7pAiruHvbR1RX3Qyf6ja47EWJDMsNK5vK08DJg=="],
 

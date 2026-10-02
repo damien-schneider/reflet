@@ -10,6 +10,7 @@ import {
 import {
   PageActions,
   PageHeader,
+  PageLayout,
   PageTitle,
 } from "@ctrl-ui/react/ui/page-layout";
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
@@ -47,11 +48,11 @@ export default function InboxPage({
 
   if (org === undefined || (org !== null && isAdmin === undefined)) {
     return (
-      <div className="flex h-full flex-col gap-3 p-4" role="status">
+      <PageLayout className="gap-3 p-4" role="status" width="full">
         <span className="sr-only">Loading inbox…</span>
         <Skeleton aria-hidden className="h-8 w-40" />
-        <Skeleton aria-hidden className="h-full w-full md:w-80" />
-      </div>
+        <Skeleton aria-hidden className="min-h-0 w-full flex-1 md:w-80" />
+      </PageLayout>
     );
   }
 
@@ -95,7 +96,7 @@ function InboxWorkspace({
   });
 
   return (
-    <div className="flex h-full flex-col">
+    <PageLayout width="full">
       <InboxHeader inbox={inbox} org={org} />
       <InboxPanes actions={actions} inbox={inbox} />
       <ShortcutHintBar
@@ -106,7 +107,7 @@ function InboxWorkspace({
         }
         visible={showHints}
       />
-    </div>
+    </PageLayout>
   );
 }
 

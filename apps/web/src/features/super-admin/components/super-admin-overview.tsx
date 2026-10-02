@@ -32,7 +32,6 @@ type TimeRange = keyof typeof TIME_RANGE_DAYS;
 const isTimeRange = (value: string): value is TimeRange =>
   value in TIME_RANGE_DAYS;
 
-const STAT_SKELETON_KEYS = ["a", "b", "c", "d", "e", "f"] as const;
 const ACTIVITY_SKELETON_KEYS = ["a", "b", "c", "d", "e"] as const;
 
 function RecentActivity() {
@@ -91,46 +90,30 @@ export function SuperAdminOverview() {
     days: TIME_RANGE_DAYS[timeRange],
   });
 
-  if (stats === undefined) {
-    return (
-      <div aria-busy="true" className="space-y-6">
-        <p className="sr-only" role="status">
-          Loading overview…
-        </p>
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-          {STAT_SKELETON_KEYS.map((key) => (
-            <Skeleton className="h-22 rounded-(--radius-panel)" key={key} />
-          ))}
-        </div>
-        <Skeleton className="h-80 rounded-(--radius-panel)" />
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-8">
+    <div aria-busy={stats === undefined} className="space-y-8">
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-        <StatCard icon={Users} label="Users" value={stats.totalUsers} />
+        <StatCard icon={Users} label="Users" value={stats?.totalUsers} />
         <StatCard
           icon={Buildings}
           label="Organizations"
-          value={stats.totalOrganizations}
+          value={stats?.totalOrganizations}
         />
         <StatCard
           icon={ChatCircle}
           label="Feedback"
-          value={stats.totalFeedback}
+          value={stats?.totalFeedback}
         />
         <StatCard
           icon={CreditCard}
           label="Pro subscriptions"
-          value={stats.activeProSubscriptions}
+          value={stats?.activeProSubscriptions}
         />
-        <StatCard icon={ThumbsUp} label="Votes" value={stats.totalVotes} />
+        <StatCard icon={ThumbsUp} label="Votes" value={stats?.totalVotes} />
         <StatCard
           icon={UserCircle}
           label="Comments"
-          value={stats.totalComments}
+          value={stats?.totalComments}
         />
       </div>
 

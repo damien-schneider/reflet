@@ -1,10 +1,11 @@
 import { Card, CardContent } from "@ctrl-ui/react/ui/card";
+import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import type { Icon } from "@phosphor-icons/react";
 
 interface StatCardProps {
   icon: Icon;
   label: string;
-  value: number;
+  value: number | undefined;
 }
 
 const statFormatter = new Intl.NumberFormat("en-US");
@@ -21,7 +22,14 @@ export function StatCard({ label, value, icon: IconComponent }: StatCardProps) {
             {label}
           </dt>
           <dd className="text-heading-3 tabular-nums">
-            {statFormatter.format(value)}
+            {value === undefined ? (
+              <Skeleton
+                aria-label={`Loading ${label.toLowerCase()}`}
+                className="h-7 w-16"
+              />
+            ) : (
+              statFormatter.format(value)
+            )}
           </dd>
         </dl>
       </CardContent>

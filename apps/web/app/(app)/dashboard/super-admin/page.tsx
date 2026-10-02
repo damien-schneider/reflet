@@ -9,7 +9,12 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@ctrl-ui/react/ui/empty";
-import { PageBody, PageLayout } from "@ctrl-ui/react/ui/page-layout";
+import {
+  PageBody,
+  PageHeader,
+  PageLayout,
+  PageTitle,
+} from "@ctrl-ui/react/ui/page-layout";
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { ShieldStar } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
@@ -25,11 +30,13 @@ export default function SuperAdminPage() {
   if (isSuperAdmin === undefined) {
     return (
       <PageLayout scroll="page" width="wide">
+        <PageHeader>
+          <PageTitle>Super admin</PageTitle>
+        </PageHeader>
         <PageBody aria-busy="true" contentClassName="space-y-6">
           <p className="sr-only" role="status">
             Loading…
           </p>
-          <Skeleton className="h-8 w-48" />
           <Skeleton className="h-9 w-80 max-w-full" />
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
             {STAT_SKELETON_KEYS.map((key) => (
@@ -43,8 +50,12 @@ export default function SuperAdminPage() {
 
   if (!isSuperAdmin) {
     return (
-      <main className="flex min-h-[calc(100svh-3.5rem)] items-center justify-center p-6">
-        <Empty>
+      <PageLayout
+        className="items-center justify-center p-6"
+        scroll="page"
+        width="wide"
+      >
+        <Empty className="flex-none">
           <EmptyHeader>
             <EmptyMedia>
               <ShieldStar aria-hidden className="size-6" />
@@ -63,7 +74,7 @@ export default function SuperAdminPage() {
             </ButtonLink>
           </EmptyContent>
         </Empty>
-      </main>
+      </PageLayout>
     );
   }
 

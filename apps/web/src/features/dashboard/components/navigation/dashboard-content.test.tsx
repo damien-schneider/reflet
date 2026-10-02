@@ -1,4 +1,5 @@
 import { DashboardContent } from "@app/(app)/dashboard/dashboard-content";
+import { AppShell } from "@ctrl-ui/react/ui/app-shell";
 import { act, render, screen } from "@testing-library/react";
 import { getFunctionName } from "convex/server";
 import { createStore, Provider } from "jotai";
@@ -103,9 +104,11 @@ function renderDashboard() {
   const store = createStore();
   const content = () => (
     <Provider store={store}>
-      <DashboardContent>
-        <h1>Account settings</h1>
-      </DashboardContent>
+      <AppShell scroll="page">
+        <DashboardContent>
+          <h1>Account settings</h1>
+        </DashboardContent>
+      </AppShell>
     </Provider>
   );
   return { ...render(content()), content, store };
