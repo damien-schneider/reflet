@@ -30,7 +30,7 @@ const billingIntervalOf = (priceId: string): Infer<typeof billingInterval> => {
   return "unknown";
 };
 
-const ownerOf = async (ctx: QueryCtx, org: Doc<"organizations">) => {
+export const ownerOf = async (ctx: QueryCtx, org: Doc<"organizations">) => {
   const owner = await ctx.db
     .query("organizationMembers")
     .withIndex("by_organization", (q) => q.eq("organizationId", org._id))

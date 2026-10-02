@@ -242,6 +242,7 @@ import type * as organizations_status_definitions from "../organizations/status_
 import type * as organizations_status_mutations from "../organizations/status_mutations.js";
 import type * as organizations_statuses from "../organizations/statuses.js";
 import type * as organizations_super_admin from "../organizations/super_admin.js";
+import type * as organizations_super_admin_billing from "../organizations/super_admin_billing.js";
 import type * as organizations_super_admin_customers from "../organizations/super_admin_customers.js";
 import type * as organizations_super_admin_metrics from "../organizations/super_admin_metrics.js";
 import type * as organizations_tableFields from "../organizations/tableFields.js";
@@ -532,6 +533,7 @@ declare const fullApi: ApiFromModules<{
   "organizations/status_mutations": typeof organizations_status_mutations;
   "organizations/statuses": typeof organizations_statuses;
   "organizations/super_admin": typeof organizations_super_admin;
+  "organizations/super_admin_billing": typeof organizations_super_admin_billing;
   "organizations/super_admin_customers": typeof organizations_super_admin_customers;
   "organizations/super_admin_metrics": typeof organizations_super_admin_metrics;
   "organizations/tableFields": typeof organizations_tableFields;

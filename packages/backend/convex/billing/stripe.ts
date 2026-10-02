@@ -49,3 +49,93 @@ export async function createCheckoutSessionWithPromoCodes(args: {
 
   return { sessionId: session.id, url: session.url };
 }
+
+const SECONDS_PER_DAY = 24 * 60 * 60;
+
+interface SubscriptionSummary {
+  status: string;
+  subscriptionId: string;
+}
+
+export interface MirroredSubscription {
+  cancelAt?: number;
+  cancelAtPeriodEnd: boolean;
+  currentPeriodEnd: number;
+  metadata: Record<string, string>;
+  priceId?: string;
+  quantity: number;
+  status: string;
+  stripeCustomerId: string;
+  stripeSubscriptionId: string;
+}
+
+const trialEndFromNow = (trialDays: number): number =>
+  Math.floor(Date.now() / 1000) + trialDays * SECONDS_PER_DAY;
+
+/** cancel_at pins the end even when the customer still has a saved card from a past subscription. */
+export async function createProTrialSubscription(args: {
+  customerId: string;
+  orgId: string;
+  priceId: string;
+  trialDays: number;
+}): Promise<SubscriptionSummary> {
+  const stripe = new Stripe(stripeClient.apiKey);
+  const trialEnd = trialEndFromNow(args.trialDays);
+  const subscription = await stripe.subscriptions.create({
+    cancel_at: trialEnd,
+    customer: args.customerId,
+    items: [{ price: args.priceId }],
+    metadata: { orgId: args.orgId },
+    trial_end: trialEnd,
+  });
+  return { status: subscription.status, subscriptionId: subscription.id };
+}
+
+export async function retargetTrialEnd(args: {
+  subscriptionId: string;
+  trialDays: number;
+}): Promise<SubscriptionSummary> {
+  const stripe = new Stripe(stripeClient.apiKey);
+  const trialEnd = trialEndFromNow(args.trialDays);
+  const subscription = await stripe.subscriptions.update(args.subscriptionId, {
+    cancel_at: trialEnd,
+    proration_behavior: "none",
+    trial_end: trialEnd,
+  });
+  return { status: subscription.status, subscriptionId: subscription.id };
+}
+
+/** Every Stripe subscription of the customer tagged with this org, shaped like the component's webhook mirror. */
+export async function listOrgSubscriptionsFromStripe(args: {
+  customerId: string;
+  orgId: string;
+}): Promise<MirroredSubscription[]> {
+  const stripe = new Stripe(stripeClient.apiKey);
+  const subscriptions = await stripe.subscriptions
+    .list({ customer: args.customerId, status: "all" })
+    .autoPagingToArray({ limit: 100 });
+  return subscriptions
+    .filter((subscription) => subscription.metadata.orgId === args.orgId)
+    .map((subscription) => {
+      const item = subscription.items.data[0];
+      return {
+        cancelAt: subscription.cancel_at ?? undefined,
+        cancelAtPeriodEnd: subscription.cancel_at_period_end,
+        currentPeriodEnd: item?.current_period_end ?? 0,
+        metadata: subscription.metadata,
+        priceId: item?.price.id,
+        quantity: item?.quantity ?? 1,
+        status: subscription.status,
+        stripeCustomerId: args.customerId,
+        stripeSubscriptionId: subscription.id,
+      };
+    });
+}
+
+export async function cancelSubscriptionNow(
+  subscriptionId: string
+): Promise<{ status: string }> {
+  const stripe = new Stripe(stripeClient.apiKey);
+  const subscription = await stripe.subscriptions.cancel(subscriptionId);
+  return { status: subscription.status };
+}

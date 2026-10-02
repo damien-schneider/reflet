@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 import { internalQuery, mutation, query } from "../_generated/server";
 import { assertSuperAdmin } from "../shared/access";
 import { isValidEmail } from "../shared/validators";
@@ -53,7 +53,10 @@ export const addSuppression = mutation({
 
     const normalizedEmail = normalizeEmail(args.email);
     if (!isValidEmail(normalizedEmail)) {
-      throw new Error("Invalid email address");
+      throw new ConvexError({
+        code: "INVALID_EMAIL",
+        message: "Invalid email address",
+      });
     }
 
     const existing = await ctx.db
@@ -82,7 +85,10 @@ export const removeSuppression = mutation({
 
     const suppression = await ctx.db.get(args.suppressionId);
     if (!suppression) {
-      throw new Error("Suppression not found");
+      throw new ConvexError({
+        code: "SUPPRESSION_NOT_FOUND",
+        message: "Suppression not found",
+      });
     }
 
     await ctx.db.delete(args.suppressionId);
