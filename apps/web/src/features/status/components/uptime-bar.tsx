@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import {
   Card,
   CardAction,
@@ -15,7 +16,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { cn } from "@/lib/utils";
 import { formatUptime } from "../lib/status-meta";
 
 interface DayData {

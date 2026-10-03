@@ -1,9 +1,8 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import Link from "next/link";
 import { useId } from "react";
-
-import { cn } from "@/lib/utils";
 
 interface NavLink {
   href: string;

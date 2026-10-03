@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import {
   Empty,
   EmptyDescription,
@@ -19,7 +20,6 @@ import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { Pulse } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
-import { cn } from "@/lib/utils";
 import {
   formatLatency,
   isMonitorStatus,

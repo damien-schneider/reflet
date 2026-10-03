@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
@@ -31,7 +32,6 @@ import Link from "next/link";
 import { useState } from "react";
 import { buildGitHubInstallUrl } from "@/features/github/lib/github-install-url";
 import { authClient } from "@/lib/auth-client";
-import { cn } from "@/lib/utils";
 import {
   SyncGroup,
   SyncLoadingSkeleton,

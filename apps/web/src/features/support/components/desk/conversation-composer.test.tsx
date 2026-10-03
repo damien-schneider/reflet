@@ -58,10 +58,6 @@ vi.mock("@phosphor-icons/react", () => ({
   PaperPlaneRight: () => <svg data-testid="send-icon" />,
 }));
 
-vi.mock("@/lib/utils", () => ({
-  cn: (...classes: unknown[]) => classes.filter(Boolean).join(" "),
-}));
-
 import { ConversationComposer } from "./conversation-composer";
 
 describe("ConversationComposer", () => {

@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Input } from "@ctrl-ui/react/ui/input";
 import { toast } from "@ctrl-ui/react/ui/toast";
@@ -13,7 +14,6 @@ import {
   getDeadlineBadgeStyles,
   getDeadlineInfo,
 } from "@/lib/milestone-deadline";
-import { cn } from "@/lib/utils";
 
 import { MilestoneProgressRing } from "./milestone-progress-ring";
 

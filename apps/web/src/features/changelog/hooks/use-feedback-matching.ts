@@ -1,6 +1,7 @@
 "use client";
 
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { env } from "@reflet/env/web";
 import { useState } from "react";
 import type { CommitInfo } from "../components/generate-from-commits";
 
@@ -46,7 +47,7 @@ async function requestMatches(
   }
 ): Promise<FeedbackMatch[]> {
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_CONVEX_SITE_URL ?? ""}/api/ai/match-release-feedback`,
+    `${env.NEXT_PUBLIC_CONVEX_SITE_URL}/api/ai/match-release-feedback`,
     {
       body: JSON.stringify({
         commits: commits.slice(0, MAX_COMMITS_FOR_AI).map((c) => ({

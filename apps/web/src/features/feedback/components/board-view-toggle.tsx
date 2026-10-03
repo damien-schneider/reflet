@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import {
   Tabs,
   TabsList,
@@ -7,7 +8,6 @@ import {
   TabsTab,
 } from "@ctrl-ui/react/ui/tabs";
 import { Flag, GridFour, List } from "@phosphor-icons/react";
-import { cn } from "@/lib/utils";
 
 export type BoardView = "roadmap" | "feed" | "milestones";
 

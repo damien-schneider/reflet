@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Badge, type BadgeColor } from "@ctrl-ui/react/ui/badge";
 import {
   Card,
@@ -44,7 +45,6 @@ import { useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import { format, formatDistanceToNow } from "date-fns";
 import { useState } from "react";
-import { cn } from "@/lib/utils";
 
 const TIME_RANGES = [
   { label: "Last 7 days", value: "7" },

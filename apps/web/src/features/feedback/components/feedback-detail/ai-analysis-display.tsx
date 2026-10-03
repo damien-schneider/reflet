@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
 import { AnalysisProperty } from "@/features/feedback/components/properties/analysis-property";
 import { ClarificationProperty } from "@/features/feedback/components/properties/clarification-property";
@@ -9,7 +10,6 @@ import {
   PropertyRow,
 } from "@/features/feedback/components/properties/presentation/property-row";
 import { TriageAnalysis } from "@/features/feedback/components/properties/triage-analysis";
-import { cn } from "@/lib/utils";
 
 export type AiAnalysisDisplayProps = Pick<
   Doc<"feedback">,

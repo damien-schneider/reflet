@@ -1,21 +1,16 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
+import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@ctrl-ui/react/ui/tooltip";
-import {
-  Image as ImageIcon,
-  Paperclip,
-  Spinner,
-  X,
-} from "@phosphor-icons/react";
+import { Image as ImageIcon, Paperclip, X } from "@phosphor-icons/react";
 import NextImage from "next/image";
 import { useRef, useState } from "react";
-
 import { useImageUpload } from "@/components/ui/tiptap/use-image-upload";
-import { cn } from "@/lib/utils";
 
 interface AttachmentUploadProps {
   attachments: string[];
@@ -41,7 +36,7 @@ function DropzoneLabel({
   if (isUploading) {
     return (
       <>
-        <Spinner aria-hidden className="size-4 motion-safe:animate-spin" />
+        <Spinner />
         <span>Uploading…</span>
       </>
     );

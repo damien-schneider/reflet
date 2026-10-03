@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Input } from "@ctrl-ui/react/ui/input";
 import {
@@ -15,7 +16,6 @@ import { useQuery } from "convex/react";
 import { useId } from "react";
 import { toId } from "@/lib/convex-helpers";
 import { getTagSwatchClass } from "@/lib/tag-colors";
-import { cn } from "@/lib/utils";
 import { AssigneeSelect } from "./assignee-select";
 
 export const MAX_TITLE_LENGTH = 100;

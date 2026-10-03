@@ -1,8 +1,8 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button } from "@ctrl-ui/react/ui/button";
 import { ArrowDown, ArrowUp } from "@phosphor-icons/react";
-import { cn } from "@/lib/utils";
 
 export function VoteButtons({
   voteCount,

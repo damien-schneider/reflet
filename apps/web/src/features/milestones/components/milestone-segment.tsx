@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { toast } from "@ctrl-ui/react/ui/toast";
 import { CheckCircle, PencilSimple, Trash } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
@@ -11,7 +12,6 @@ import { DestructiveConfirmDialog } from "@/components/ui/destructive-confirm-di
 import type { TimeHorizon } from "@/lib/milestone-constants";
 import { getDeadlineInfo } from "@/lib/milestone-deadline";
 import { getTagColorValues } from "@/lib/tag-colors";
-import { cn } from "@/lib/utils";
 
 import { MilestoneEditDialog } from "./milestone-edit-dialog";
 import {

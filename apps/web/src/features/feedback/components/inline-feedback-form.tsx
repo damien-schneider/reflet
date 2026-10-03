@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Input } from "@ctrl-ui/react/ui/input";
 import {
@@ -14,7 +15,6 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useId } from "react";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { getTagSwatchClass } from "@/lib/tag-colors";
-import { cn } from "@/lib/utils";
 import { AttachmentUpload } from "./attachment-upload";
 import {
   type InlineFeedbackComposerState,

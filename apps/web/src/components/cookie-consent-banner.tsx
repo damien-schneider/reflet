@@ -1,11 +1,11 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button } from "@ctrl-ui/react/ui/button";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useSyncExternalStore } from "react";
 import { CONSENT_KEY, getCookieConsent } from "@/lib/cookie-consent";
-import { cn } from "@/lib/utils";
 
 const subscribeToNothing = () => () => undefined;
 const hasStoredConsent = () => getCookieConsent() !== null;

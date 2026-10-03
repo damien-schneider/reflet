@@ -1,5 +1,6 @@
 import createMDX from "@next/mdx";
 import { withPostHogConfig } from "@posthog/nextjs-config";
+import { env as serverEnv } from "@reflet/env/server";
 import { env } from "@reflet/env/web";
 import type { NextConfig } from "next";
 
@@ -119,12 +120,12 @@ const withMDX = createMDX({});
 
 const configWithMDX = withMDX(nextConfig);
 
-const posthogApiKey = process.env.POSTHOG_PERSONAL_API_KEY;
-const posthogProjectId = process.env.POSTHOG_PROJECT_ID;
+const posthogApiKey = serverEnv.POSTHOG_PERSONAL_API_KEY;
+const posthogProjectId = serverEnv.POSTHOG_PROJECT_ID;
 
 export default posthogApiKey && posthogProjectId
   ? withPostHogConfig(configWithMDX, {
-      host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
+      host: env.NEXT_PUBLIC_POSTHOG_HOST,
       personalApiKey: posthogApiKey,
       projectId: posthogProjectId,
       sourcemaps: {

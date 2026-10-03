@@ -7,10 +7,6 @@ vi.mock("@ctrl-ui/react/ui/kbd", () => ({
   ),
 }));
 
-vi.mock("@/lib/utils", () => ({
-  cn: (...classes: unknown[]) => classes.filter(Boolean).join(" "),
-}));
-
 import { ShortcutHintBar } from "./shortcut-hint-bar";
 
 describe("ShortcutHintBar", () => {

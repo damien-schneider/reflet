@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Avatar, AvatarFallback, AvatarImage } from "@ctrl-ui/react/ui/avatar";
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
@@ -14,7 +15,6 @@ import {
 } from "@ctrl-ui/react/ui/dropdown-menu";
 import { CaretDown, UserCircle } from "@phosphor-icons/react";
 import { getInitials } from "@/lib/initials";
-import { cn } from "@/lib/utils";
 
 interface TeamMember {
   email: string;

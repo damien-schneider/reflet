@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
@@ -27,7 +28,6 @@ import { QuestionInputPreview } from "@/features/surveys/components/question-inp
 import { RequiredMark } from "@/features/surveys/components/required-mark";
 import { QUESTION_TYPE_LABELS } from "@/features/surveys/lib/constants";
 import { QUESTION_TYPE_ICONS } from "@/features/surveys/lib/question-type-icons";
-import { cn } from "@/lib/utils";
 import type { SurveyQuestion } from "@/store/surveys";
 
 interface QuestionCardProps {

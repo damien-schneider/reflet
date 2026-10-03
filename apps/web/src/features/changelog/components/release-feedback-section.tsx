@@ -1,11 +1,11 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { toast } from "@ctrl-ui/react/ui/toast";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useEffect, useRef, useState } from "react";
-import { cn } from "@/lib/utils";
 import { useFeedbackMatching } from "../hooks/use-feedback-matching";
 import { getMatchesToAutoLink } from "../lib/get-matches-to-auto-link";
 import {

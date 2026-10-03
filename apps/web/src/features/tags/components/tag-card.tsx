@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Card, CardHeader, CardTitle } from "@ctrl-ui/react/ui/card";
@@ -13,7 +14,6 @@ import { DotsThreeVertical, Trash } from "@phosphor-icons/react";
 import type { Doc } from "@reflet/backend/convex/_generated/dataModel";
 import { categoryIsPublic } from "@reflet/backend/convex/feedback/categories/audience";
 import { getTagSwatchClass } from "@/lib/tag-colors";
-import { cn } from "@/lib/utils";
 
 interface TagActions {
   onDelete: () => void;

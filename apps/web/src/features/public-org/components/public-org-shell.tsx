@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Tabs, TabsList, TabsTab } from "@ctrl-ui/react/ui/tabs";
 import {
   ChatCircle,
@@ -19,7 +20,6 @@ import { Text as TypographyText } from "@/components/ui/typography";
 import { PublicViewToolbar } from "@/features/feedback/components/public-view-toolbar";
 import { DEFAULT_PRIMARY_COLOR } from "@/lib/branding";
 import { generateColorCssVars, generateColorPalette } from "@/lib/color-utils";
-import { cn } from "@/lib/utils";
 
 type SectionKey = "feedback" | "changelog" | "status" | "support";
 

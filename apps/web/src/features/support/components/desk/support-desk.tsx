@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Card } from "@ctrl-ui/react/ui/card";
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
@@ -15,7 +16,6 @@ import {
 import { NewConversation } from "@/features/support/components/desk/new-conversation";
 import { SupportThread } from "@/features/support/components/desk/support-thread";
 import { useGuestSession } from "@/features/support/hooks/use-guest-session";
-import { cn } from "@/lib/utils";
 
 type DeskSurface = "page" | "panel";
 interface DeskOrg {

@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import {
   Binoculars,
   Chat,
@@ -12,7 +13,6 @@ import {
 import type { Doc } from "@reflet/backend/convex/_generated/dataModel";
 import { format, formatDistanceToNow } from "date-fns";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
 
 type NotificationType = Doc<"notifications">["type"];
 

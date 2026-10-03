@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Input } from "@ctrl-ui/react/ui/input";
 import { Switch } from "@ctrl-ui/react/ui/switch";
@@ -17,7 +18,6 @@ import {
   QUESTION_TYPE_LABELS,
 } from "@/features/surveys/lib/constants";
 import { QUESTION_TYPE_ICONS } from "@/features/surveys/lib/question-type-icons";
-import { cn } from "@/lib/utils";
 import type { QuestionConfig, QuestionType } from "@/store/surveys";
 
 const QUESTION_TYPES: QuestionType[] = [

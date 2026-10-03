@@ -1,12 +1,12 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import Link from "@tiptap/extension-link";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { useEffect } from "react";
 import { Markdown } from "tiptap-markdown";
-import { cn } from "@/lib/utils";
 import { ImageExtension } from "./image-extension";
 import { ReadOnlyVideoExtension } from "./video-extension";
 import "./styles.css";

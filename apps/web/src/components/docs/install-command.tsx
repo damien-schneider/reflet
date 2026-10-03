@@ -1,5 +1,5 @@
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { CopyButton } from "@/components/copy-button";
-import { cn } from "@/lib/utils";
 import { CODE_FRAME } from "./code-block";
 
 interface InstallCommandProps {

@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import {
   Collapsible,
@@ -9,7 +10,6 @@ import {
 import { CaretRight, FileCode, GitCommit, User } from "@phosphor-icons/react";
 import { format, formatDistanceToNow } from "date-fns";
 import { useState } from "react";
-import { cn } from "@/lib/utils";
 
 interface CommitInfo {
   author: string;

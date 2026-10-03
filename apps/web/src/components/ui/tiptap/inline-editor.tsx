@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import CharacterCount from "@tiptap/extension-character-count";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -7,7 +8,6 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { useEffect } from "react";
 import { Markdown } from "tiptap-markdown";
-import { cn } from "@/lib/utils";
 import "./styles.css";
 
 const getMarkdown = (storage: unknown): string => {

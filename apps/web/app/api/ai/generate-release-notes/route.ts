@@ -1,6 +1,7 @@
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { AI_ACCESS_DENIED } from "@reflet/backend/convex/ai/constants";
+import { env } from "@reflet/env/server";
 import { createTextStreamResponse, streamText, toTextStream } from "ai";
 import { ConvexError } from "convex/values";
 import { z } from "zod";
@@ -8,7 +9,7 @@ import { fetchAuthMutation, getToken } from "@/lib/auth-server";
 import { toOrgId } from "@/lib/convex-helpers";
 
 const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY,
+  apiKey: env.OPENROUTER_API_KEY,
 });
 
 const MODEL_FALLBACK_CHAIN = [
@@ -126,7 +127,7 @@ export async function POST(request: Request): Promise<Response> {
       );
     }
 
-    if (!process.env.OPENROUTER_API_KEY) {
+    if (!env.OPENROUTER_API_KEY) {
       return Response.json(
         { error: "AI service not configured" },
         { status: 503 }

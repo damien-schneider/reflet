@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
@@ -11,7 +12,6 @@ import {
 import type { FeedbackDetail } from "@/features/feedback/components/properties/property-types";
 import { PublicationProperty } from "@/features/feedback/components/properties/publication-property";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
-import { cn } from "@/lib/utils";
 import { AiAnalysisDisplay } from "./ai-analysis-display";
 import { AssigneeDisplay } from "./assignee-display";
 import { CopyForAgents } from "./copy-for-agents";

@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button, ButtonLink } from "@ctrl-ui/react/ui/button";
 import {
@@ -28,7 +29,6 @@ import { format } from "date-fns";
 import Link from "next/link";
 import type * as React from "react";
 import { MarkdownRenderer } from "@/components/ui/tiptap/markdown-renderer";
-import { cn } from "@/lib/utils";
 import { FeedbackStatusBadge } from "./feedback-status-badge";
 
 interface LinkedFeedback {

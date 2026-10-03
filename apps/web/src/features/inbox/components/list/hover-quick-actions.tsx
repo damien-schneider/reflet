@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Tooltip,
@@ -17,7 +18,6 @@ import {
   acceptsReplies,
   type ConversationStatus,
 } from "@/features/support/lib/conversation-status";
-import { cn } from "@/lib/utils";
 
 interface RowActions {
   onAssignToMe: () => void;

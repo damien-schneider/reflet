@@ -1,7 +1,7 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button } from "@ctrl-ui/react/ui/button";
-
 import { PushPin, Sparkle } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import {
@@ -18,7 +18,6 @@ import { formatDistanceToNow } from "date-fns";
 import { FeedbackPropertiesPopover } from "@/features/feedback/components/properties/feedback-properties-popover";
 import { FeedbackPropertySummary } from "@/features/feedback/components/properties/feedback-property-summary";
 import { resolveTagColor } from "@/lib/tag-colors";
-import { cn } from "@/lib/utils";
 
 import type { FeedbackItem } from "../feed-feedback-view";
 

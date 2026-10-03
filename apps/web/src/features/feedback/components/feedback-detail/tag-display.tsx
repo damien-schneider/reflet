@@ -1,3 +1,4 @@
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
   DropdownMenu,
@@ -14,7 +15,6 @@ import { CaretDown, Sparkle, Tag, X } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { TagBadge } from "@/components/tag-badge";
 import { getTagSwatchClass } from "@/lib/tag-colors";
-import { cn } from "@/lib/utils";
 
 import type { FeedbackTag } from "./feedback-metadata-types";
 

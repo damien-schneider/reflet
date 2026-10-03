@@ -1,10 +1,10 @@
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
-import { cn } from "@/lib/utils";
 import { useAutoSaveRelease } from "../hooks/use-auto-save-release";
 import { useReleaseCommits } from "../hooks/use-release-commits";
 import { useReleasePublishing } from "../hooks/use-release-publishing";

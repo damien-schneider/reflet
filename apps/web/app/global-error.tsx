@@ -2,6 +2,7 @@
 
 import { Button, ButtonLink } from "@ctrl-ui/react/ui/button";
 import { ArrowClockwise, House, Warning } from "@phosphor-icons/react";
+import { env } from "@reflet/env/web";
 import { ThemeProvider } from "@/lib/theme-provider";
 
 import "./globals.css";
@@ -38,7 +39,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
               Reflet couldn’t load. Try again, or go back to the home page.
             </p>
 
-            {process.env.NODE_ENV === "development" && error.message ? (
+            {env.NODE_ENV === "development" && error.message ? (
               <code className="mt-4 max-w-lg overflow-auto rounded-md bg-muted px-4 py-2 text-muted-foreground text-sm">
                 {error.message}
               </code>

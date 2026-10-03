@@ -7,9 +7,9 @@ import {
   ChatComposerTextarea,
   ChatComposerToolbar,
 } from "@ctrl-ui/react/chat-composer";
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { PaperPlaneRight } from "@phosphor-icons/react";
 import { type RefObject, useId, useState } from "react";
-import { cn } from "@/lib/utils";
 
 interface MessageComposerProps {
   field: {

@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button } from "@ctrl-ui/react/ui/button";
 import { ScrollArea } from "@ctrl-ui/react/ui/scroll-area";
 import {
@@ -22,7 +23,6 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useRef, useState } from "react";
-import { cn } from "@/lib/utils";
 import {
   applyWorkflowDefaults,
   DEFAULT_CONFIG,

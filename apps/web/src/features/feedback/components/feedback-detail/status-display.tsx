@@ -1,3 +1,4 @@
+import { cn } from "@ctrl-ui/react/lib/cn";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,7 +11,6 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { TagBadge } from "@/components/tag-badge";
 import { toId } from "@/lib/convex-helpers";
 import { getTagSwatchClass } from "@/lib/tag-colors";
-import { cn } from "@/lib/utils";
 
 interface StatusDisplayProps {
   currentStatus:

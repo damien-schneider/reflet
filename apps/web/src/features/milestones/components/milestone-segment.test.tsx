@@ -239,10 +239,6 @@ vi.mock("@/lib/milestone-deadline", () => ({
   getDeadlineInfo: vi.fn(() => null),
 }));
 
-vi.mock("@/lib/utils", () => ({
-  cn: (...classes: unknown[]) => classes.filter(Boolean).join(" "),
-}));
-
 vi.mock("./milestone-date-picker", () => ({
   MilestoneDatePicker: () => <div data-testid="date-picker" />,
 }));

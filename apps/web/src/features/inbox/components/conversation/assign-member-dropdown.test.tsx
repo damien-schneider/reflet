@@ -80,10 +80,6 @@ vi.mock("@ctrl-ui/react/ui/dropdown-menu", () => {
   };
 });
 
-vi.mock("@/lib/utils", () => ({
-  cn: (...classes: unknown[]) => classes.filter(Boolean).join(" "),
-}));
-
 vi.mock("@phosphor-icons/react", () => ({
   CaretDown: ({ className }: { className?: string }) => (
     <svg className={className} />

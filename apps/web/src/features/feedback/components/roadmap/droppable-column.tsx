@@ -1,6 +1,5 @@
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { useDroppable } from "@dnd-kit/core";
-
-import { cn } from "@/lib/utils";
 import { DraggableFeedbackCard } from "./draggable-feedback-card";
 import { RoadmapColumnHeader } from "./roadmap-column-header";
 import type { DroppableColumnProps } from "./roadmap-types";

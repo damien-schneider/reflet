@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Collapsible,
@@ -14,7 +15,6 @@ import {
 import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import { CaretDown } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { cn } from "@/lib/utils";
 import { GroupStatusDot, StatBadge } from "./retroactive-completion";
 import { PHASE_STEPS } from "./retroactive-constants";
 

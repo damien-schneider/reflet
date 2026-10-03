@@ -1,10 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/lib/utils", () => ({
-  cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
-}));
-
 vi.mock("@phosphor-icons/react", () => ({
   TextAlignCenter: (props: Record<string, unknown>) => (
     <svg data-testid="icon-align-center" {...props} />

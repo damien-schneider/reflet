@@ -1,3 +1,4 @@
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Avatar, AvatarFallback, AvatarImage } from "@ctrl-ui/react/ui/avatar";
 import {
   Tooltip,
@@ -5,7 +6,6 @@ import {
   TooltipTrigger,
 } from "@ctrl-ui/react/ui/tooltip";
 import { format, formatDistanceToNow } from "date-fns";
-import { cn } from "@/lib/utils";
 
 interface CommentAvatarProps {
   image?: string;

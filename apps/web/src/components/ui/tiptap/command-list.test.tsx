@@ -3,10 +3,6 @@ import { createRef, type RefObject } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { CommandListHandle } from "./command-items";
 
-vi.mock("@/lib/utils", () => ({
-  cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
-}));
-
 const createMockIcon = (name: string) => {
   const Icon = (props: Record<string, unknown>) => (
     <svg data-testid={`icon-${name}`} {...props} />

@@ -86,10 +86,6 @@ vi.mock("@/components/ui/tiptap/markdown-renderer", () => ({
   ),
 }));
 
-vi.mock("@/lib/utils", () => ({
-  cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
-}));
-
 import type { ReleaseData } from "./release-item";
 import { ReleaseItem } from "./release-item";
 

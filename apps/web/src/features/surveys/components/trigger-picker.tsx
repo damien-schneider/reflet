@@ -1,12 +1,12 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Code, Cursor, Eye, SignOut, Timer } from "@phosphor-icons/react";
 import { useId } from "react";
 import {
   TRIGGER_DESCRIPTIONS,
   TRIGGER_LABELS,
 } from "@/features/surveys/lib/constants";
-import { cn } from "@/lib/utils";
 import type { TriggerType } from "@/store/surveys";
 
 const TRIGGER_ICON_MAP = {

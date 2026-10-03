@@ -6,10 +6,6 @@ vi.mock("@phosphor-icons/react", () => ({
   CaretUp: () => <span data-testid="icon-caret-up" />,
 }));
 
-vi.mock("@/lib/utils", () => ({
-  cn: (...classes: unknown[]) => classes.filter(Boolean).join(" "),
-}));
-
 import { MilestoneFeedbackPreview } from "./milestone-feedback-preview";
 
 const makeFeedbackItem = (

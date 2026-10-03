@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Empty,
@@ -28,7 +29,6 @@ import { ShortcutHintBar } from "@/features/inbox/components/shortcut-hint-bar";
 import { useInbox } from "@/features/inbox/hooks/use-inbox";
 import { acceptsReplies } from "@/features/support/lib/conversation-status";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
-import { cn } from "@/lib/utils";
 import {
   type InboxState,
   useInboxActions,

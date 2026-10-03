@@ -1,3 +1,4 @@
+import { env } from "@reflet/env/server";
 import { cookies } from "next/headers";
 import { z } from "zod";
 
@@ -46,7 +47,7 @@ export async function writeConnectContext(
       maxAge: CONNECT_CONTEXT_MAX_AGE_SECONDS,
       path: CONNECT_CONTEXT_COOKIE_PATH,
       sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
+      secure: env.NODE_ENV === "production",
     }
   );
 }

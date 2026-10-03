@@ -1,9 +1,8 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import * as React from "react";
 import * as RechartsPrimitive from "recharts";
-
-import { cn } from "@/lib/utils";
 
 const THEMES = { dark: ".dark", light: "" } as const;
 type ChartTheme = keyof typeof THEMES;

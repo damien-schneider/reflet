@@ -81,10 +81,6 @@ vi.mock("@/lib/milestone-deadline", () => ({
   getDeadlineInfo: () => null,
 }));
 
-vi.mock("@/lib/utils", () => ({
-  cn: (...classes: unknown[]) => classes.filter(Boolean).join(" "),
-}));
-
 import { MilestoneDatePicker } from "./milestone-date-picker";
 
 describe("MilestoneDatePicker", () => {

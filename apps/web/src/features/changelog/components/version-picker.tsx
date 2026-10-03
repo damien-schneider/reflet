@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Input } from "@ctrl-ui/react/ui/input";
@@ -8,7 +9,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@ctrl-ui/react/ui/tooltip";
-import { cn } from "@/lib/utils";
 import type { VersionSuggestions } from "./version-suggestions";
 
 const AUTO_VERSION_HINT =

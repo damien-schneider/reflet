@@ -228,7 +228,7 @@ export function FeedbackAssigneeSelector({
           <SelectValue placeholder="Assignee">
             {assignee ? (
               <div className="flex items-center gap-1.5">
-                <Avatar className="size-4 outline outline-1 outline-black/10 -outline-offset-1 dark:outline-white/10">
+                <Avatar className="size-4">
                   <AvatarImage src={assignee.image ?? undefined} />
                   <AvatarFallback className="text-micro">
                     {assignee.name?.charAt(0) ?? "?"}
@@ -254,7 +254,7 @@ export function FeedbackAssigneeSelector({
           {members.map((member) => (
             <SelectItem key={member.userId} value={member.userId}>
               <div className="flex items-center gap-2">
-                <Avatar className="size-5 outline outline-1 outline-black/10 -outline-offset-1 dark:outline-white/10">
+                <Avatar className="size-5">
                   <AvatarImage src={member.user?.image ?? undefined} />
                   <AvatarFallback className="text-micro">
                     {member.user?.name?.charAt(0) ?? "?"}
@@ -277,7 +277,7 @@ export function FeedbackAssigneeSelector({
 
   return (
     <span className="flex items-center gap-1.5">
-      <Avatar className="h-4 w-4">
+      <Avatar className="size-4">
         <AvatarImage src={assignee.image ?? undefined} />
         <AvatarFallback className="text-micro">
           {assignee.name?.charAt(0) ?? "?"}

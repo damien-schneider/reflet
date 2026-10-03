@@ -30,10 +30,6 @@ vi.mock("motion/react", () => ({
   useTransform: (_val: unknown, fn: (v: number) => unknown) => fn(0),
 }));
 
-vi.mock("@/lib/utils", () => ({
-  cn: (...classes: unknown[]) => classes.filter(Boolean).join(" "),
-}));
-
 import { MilestoneProgressRing } from "./milestone-progress-ring";
 
 describe("MilestoneProgressRing", () => {

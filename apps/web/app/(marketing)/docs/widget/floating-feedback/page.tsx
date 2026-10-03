@@ -140,14 +140,14 @@ export default function RootLayout({
     <html lang="en">
       <body>
         {children}
-        <RefletFeedback publicKey={process.env.NEXT_PUBLIC_REFLET_PUBLIC_KEY} />
+        <RefletFeedback publicKey={env.NEXT_PUBLIC_REFLET_PUBLIC_KEY} />
       </body>
     </html>
   );
 }`;
 
 const IDENTIFIED_SNIPPET = `<RefletFeedback
-  publicKey={process.env.NEXT_PUBLIC_REFLET_PUBLIC_KEY}
+  publicKey={env.NEXT_PUBLIC_REFLET_PUBLIC_KEY}
   user={{ id: user.id, email: user.email, name: user.name }}
   metadata={{ plan: user.plan, tenant: user.orgSlug }}
   hotkey="mod+shift+f"

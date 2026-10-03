@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import {
   Progress,
   ProgressIndicator,
@@ -14,7 +15,6 @@ import {
   WarningCircle,
 } from "@phosphor-icons/react";
 import { H1, Muted, Text } from "@/components/ui/typography";
-import { cn } from "@/lib/utils";
 
 interface Step {
   error?: string;

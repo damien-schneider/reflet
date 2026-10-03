@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Input } from "@ctrl-ui/react/ui/input";
 import {
@@ -15,7 +16,6 @@ import { useMutation } from "convex/react";
 import { type FormEvent, useState } from "react";
 import { NotionColorPicker } from "@/components/ui/notion-color-picker";
 import { getTagSwatchClass, type TagColor } from "@/lib/tag-colors";
-import { cn } from "@/lib/utils";
 import { StatusMeaningSelect } from "./status-meaning-select";
 
 interface AddColumnInlineProps {

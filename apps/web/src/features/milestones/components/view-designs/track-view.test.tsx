@@ -108,10 +108,6 @@ vi.mock("@/lib/milestone-constants", () => ({
   TIME_HORIZONS: ["now", "next_month", "later"],
 }));
 
-vi.mock("@/lib/utils", () => ({
-  cn: (...classes: unknown[]) => classes.filter(Boolean).join(" "),
-}));
-
 vi.mock("../milestone-expanded-panel", () => ({
   MilestoneExpandedPanel: () => (
     <div data-testid="expanded-panel">Expanded</div>

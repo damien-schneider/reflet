@@ -1,10 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/lib/utils", () => ({
-  cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
-}));
-
 const mockSetContent = vi.fn();
 
 const mockEditor = {

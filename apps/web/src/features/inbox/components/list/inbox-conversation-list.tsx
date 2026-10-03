@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Avatar, AvatarFallback, AvatarImage } from "@ctrl-ui/react/ui/avatar";
 import {
   Item,
@@ -16,7 +17,6 @@ import { ConversationStatusBadge } from "@/features/support/components/conversat
 import { UnreadCount } from "@/features/support/components/unread-count";
 import type { ConversationStatus } from "@/features/support/lib/conversation-status";
 import { getInitials } from "@/lib/initials";
-import { cn } from "@/lib/utils";
 
 interface QuickActions {
   onAssignToMe: (id: Id<"supportConversations">) => void;

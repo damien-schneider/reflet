@@ -1,8 +1,8 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Textarea } from "@ctrl-ui/react/ui/textarea";
 import { Check } from "@phosphor-icons/react";
-import { cn } from "@/lib/utils";
 import type { SurveyQuestion } from "@/store/surveys";
 
 export interface QuestionInputProps {

@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@ctrl-ui/react/lib/cn";
 import type { MonitorStatus, OverallStatus } from "../lib/status-meta";
 
 interface StatusDotProps {

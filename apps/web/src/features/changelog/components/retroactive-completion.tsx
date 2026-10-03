@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Tooltip,
@@ -7,7 +8,6 @@ import {
   TooltipTrigger,
 } from "@ctrl-ui/react/ui/tooltip";
 import { Check, Warning, X } from "@phosphor-icons/react";
-import { cn } from "@/lib/utils";
 
 interface CompletionJobData {
   error?: string;

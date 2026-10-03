@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@ctrl-ui/react/lib/cn";
 import type { QuestionConfig, QuestionType } from "@/store/surveys";
 
 interface QuestionInputPreviewProps {

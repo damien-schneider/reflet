@@ -4,10 +4,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock the cn utility
-vi.mock("@/lib/utils", () => ({
-  cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
-}));
-
 // Minimum z-index required to be above dialogs (which use z-50 = 50)
 const DIALOG_Z_INDEX = 50;
 

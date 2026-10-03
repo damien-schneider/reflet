@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import {
   Item,
   ItemContent,
@@ -10,7 +11,6 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { format, formatDistanceToNowStrict } from "date-fns";
 import { ConversationStatusBadge } from "@/features/support/components/conversation-status-badge";
 import { UnreadCount } from "@/features/support/components/unread-count";
-import { cn } from "@/lib/utils";
 
 export interface CustomerConversation {
   _id: Id<"supportConversations">;

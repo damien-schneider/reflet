@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
@@ -12,7 +13,6 @@ import {
   OVERALL_STATUS_BANNER_CLASS,
   OVERALL_STATUS_MESSAGE,
 } from "@/features/status/lib/status-meta";
-import { cn } from "@/lib/utils";
 
 type Monitor = FunctionReturnType<
   typeof api.status.monitors.listMonitors

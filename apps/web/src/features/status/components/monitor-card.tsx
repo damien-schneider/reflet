@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Card, CardContent } from "@ctrl-ui/react/ui/card";
 import {
@@ -17,7 +18,6 @@ import { DotsThree, Pause, Play, Trash } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useState } from "react";
 import { DestructiveConfirmDialog } from "@/components/ui/destructive-confirm-dialog";
-import { cn } from "@/lib/utils";
 import {
   formatLatency,
   MONITOR_STATUS_LABEL,

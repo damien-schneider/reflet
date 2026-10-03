@@ -27,6 +27,11 @@ export default defineConfig({
       reporter: ["text", "text-summary", "html"],
       reportsDirectory: "./coverage",
     },
+    env: {
+      NEXT_PUBLIC_CONVEX_SITE_URL: "https://test.convex.site",
+      NEXT_PUBLIC_CONVEX_URL: "https://test.convex.cloud",
+      NEXT_PUBLIC_VAPID_PUBLIC_KEY: "test-vapid-public-key",
+    },
     environment: "jsdom",
     exclude: ["node_modules", ".next", "e2e"],
     include: ["src/**/*.test.{ts,tsx}", "**/*.test.{ts,tsx}"],

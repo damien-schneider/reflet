@@ -1,7 +1,7 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Kbd } from "@ctrl-ui/react/ui/kbd";
-import { cn } from "@/lib/utils";
 
 interface ShortcutHintBarProps {
   canActOnSelection: boolean;

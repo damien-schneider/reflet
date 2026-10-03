@@ -129,10 +129,6 @@ vi.mock("@/lib/milestone-deadline", () => ({
   getDeadlineInfo: () => null,
 }));
 
-vi.mock("@/lib/utils", () => ({
-  cn: (...classes: unknown[]) => classes.filter(Boolean).join(" "),
-}));
-
 vi.mock("./milestone-progress-ring", () => ({
   MilestoneProgressRing: ({
     progress,

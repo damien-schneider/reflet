@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Popover,
@@ -15,7 +16,6 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
 import { useState } from "react";
 import { TagBadge } from "@/components/tag-badge";
-import { cn } from "@/lib/utils";
 
 interface TriagedItem {
   _id: Id<"feedback">;
@@ -72,7 +72,7 @@ export function ResultsPopover({
         </span>
         <CaretRight aria-hidden className="size-3 text-muted-foreground" />
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-80 p-0">
+      <PopoverContent align="start" className="w-80" padding="none">
         <div className="flex items-center justify-between border-b px-3 py-2">
           <PopoverTitle className="flex items-center gap-1.5 font-medium text-sm">
             <Sparkle

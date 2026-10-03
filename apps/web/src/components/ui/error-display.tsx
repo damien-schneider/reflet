@@ -1,9 +1,9 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button } from "@ctrl-ui/react/ui/button";
 import { ArrowClockwise, Warning } from "@phosphor-icons/react";
 import { cva, type VariantProps } from "class-variance-authority";
-import { cn } from "@/lib/utils";
 
 const errorDisplayVariants = cva(
   "flex flex-col items-center justify-center text-center",

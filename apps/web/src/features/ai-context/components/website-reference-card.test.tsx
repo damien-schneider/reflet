@@ -79,10 +79,6 @@ vi.mock("@ctrl-ui/react/ui/card", () => ({
   }) => <div className={className}>{children}</div>,
 }));
 
-vi.mock("@/lib/utils", () => ({
-  cn: (...classes: unknown[]) => classes.filter(Boolean).join(" "),
-}));
-
 vi.mock("@phosphor-icons/react", () => ({
   ArrowsClockwise: ({ className }: { className?: string }) => (
     <svg className={className} data-testid="refresh-icon" />

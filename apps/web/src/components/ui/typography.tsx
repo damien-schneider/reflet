@@ -1,3 +1,4 @@
+import { cn } from "@ctrl-ui/react/lib/cn";
 import type { VariantProps } from "class-variance-authority";
 import { type ComponentPropsWithRef, type ElementType, type Ref } from "react";
 import {
@@ -7,7 +8,6 @@ import {
   leadVariants,
   textVariants,
 } from "@/components/ui/typography-variants";
-import { cn } from "@/lib/utils";
 
 type H1Props = ComponentPropsWithRef<"h1"> & VariantProps<typeof h1Variants>;
 

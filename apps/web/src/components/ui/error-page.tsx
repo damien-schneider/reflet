@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button, ButtonLink } from "@ctrl-ui/react/ui/button";
 import {
   Empty,
@@ -11,7 +12,6 @@ import {
 } from "@ctrl-ui/react/ui/empty";
 import { ArrowClockwise, House, Warning } from "@phosphor-icons/react";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
 
 interface ErrorPageProps {
   className?: string;

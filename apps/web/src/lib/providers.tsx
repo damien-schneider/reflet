@@ -25,8 +25,7 @@ if (!convexUrl) {
 const convex = new ConvexReactClient(convexUrl);
 
 const isPostHogConfigured =
-  Boolean(env.NEXT_PUBLIC_POSTHOG_KEY) &&
-  process.env.NODE_ENV !== "development";
+  Boolean(env.NEXT_PUBLIC_POSTHOG_KEY) && env.NODE_ENV !== "development";
 
 interface PostHogBundle {
   client: PostHog;

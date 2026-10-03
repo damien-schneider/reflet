@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Check } from "@phosphor-icons/react";
 import { useId } from "react";
@@ -9,7 +10,6 @@ import {
   TAG_COLORS,
   type TagColor,
 } from "@/lib/tag-colors";
-import { cn } from "@/lib/utils";
 
 interface NotionColorPickerProps {
   onChange: (color: TagColor) => void;

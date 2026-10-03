@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import {
   domAnimation,
   LazyMotion,
@@ -10,8 +11,6 @@ import {
   useTransform,
 } from "motion/react";
 import { useEffect } from "react";
-
-import { cn } from "@/lib/utils";
 
 interface MilestoneProgress {
   completed: number;

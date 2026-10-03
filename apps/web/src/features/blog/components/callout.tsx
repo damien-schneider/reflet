@@ -1,7 +1,6 @@
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { CircleAlert, CircleCheck, Info, Lightbulb } from "lucide-react";
 import type { ReactNode } from "react";
-
-import { cn } from "@/lib/utils";
 
 type CalloutType = "info" | "tip" | "warning" | "success";
 

@@ -29,5 +29,11 @@ export const env = createEnv({
     NEXT_PUBLIC_SKIP_EMAIL_VERIFICATION:
       process.env.NEXT_PUBLIC_SKIP_EMAIL_VERIFICATION,
     NEXT_PUBLIC_VAPID_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+    NODE_ENV: process.env.NODE_ENV,
+  },
+  shared: {
+    NODE_ENV: z
+      .enum(["development", "production", "test"])
+      .default("development"),
   },
 });

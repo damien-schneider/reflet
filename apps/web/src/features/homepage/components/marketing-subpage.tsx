@@ -1,3 +1,4 @@
+import { cn } from "@ctrl-ui/react/lib/cn";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { MarketingFooter } from "@/features/homepage/components/experience/marketing-footer";
@@ -5,7 +6,6 @@ import {
   MARKETING_MAIN_ID,
   MarketingNavigation,
 } from "@/features/homepage/components/experience/marketing-navigation";
-import { cn } from "@/lib/utils";
 import "@/features/homepage/components/experience/marketing.css";
 
 export function MarketingSubpage({ children }: { children: ReactNode }) {

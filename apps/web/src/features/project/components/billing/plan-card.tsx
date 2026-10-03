@@ -1,10 +1,10 @@
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Card } from "@ctrl-ui/react/ui/card";
 import NumberFlow from "@number-flow/react";
 import { Check, Crown, Minus, Sparkle, Warning } from "@phosphor-icons/react";
 import { TagBadge } from "@/components/tag-badge";
-import { cn } from "@/lib/utils";
 
 import type {
   BillingInterval,

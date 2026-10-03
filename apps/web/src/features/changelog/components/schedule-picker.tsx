@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Calendar } from "@ctrl-ui/react/ui/calendar";
 import { Input } from "@ctrl-ui/react/ui/input";
@@ -11,7 +12,6 @@ import {
 import { CalendarBlank, Globe } from "@phosphor-icons/react";
 import { format } from "date-fns";
 import { useState } from "react";
-import { cn } from "@/lib/utils";
 
 interface SchedulePickerProps {
   disabled?: boolean;
@@ -100,7 +100,7 @@ export function SchedulePicker({
               </Button>
             }
           />
-          <PopoverContent align="start" className="w-auto p-0">
+          <PopoverContent align="start" className="w-auto" padding="none">
             <Calendar
               disabled={(date) =>
                 date < new Date(new Date().setHours(0, 0, 0, 0))

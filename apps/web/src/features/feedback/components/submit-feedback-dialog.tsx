@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Sheet,
@@ -12,7 +13,6 @@ import {
 import { X } from "@phosphor-icons/react";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
 import { TiptapTitleEditor } from "@/components/ui/tiptap/title-editor";
-import { cn } from "@/lib/utils";
 import { AttachmentUpload } from "./attachment-upload";
 import {
   type FeedbackDraft,

@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@ctrl-ui/react/lib/cn";
 
 const MAX_VISIBLE_COUNT = 99;
 

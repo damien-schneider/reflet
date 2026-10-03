@@ -74,10 +74,6 @@ vi.mock("@phosphor-icons/react", () => ({
   ),
 }));
 
-vi.mock("@/lib/utils", () => ({
-  cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
-}));
-
 import { StatusDisplay } from "./status-display";
 
 const statuses = [

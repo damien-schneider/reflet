@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
@@ -15,7 +16,6 @@ import {
 } from "@ctrl-ui/react/ui/dropdown-menu";
 import { Funnel } from "@phosphor-icons/react";
 import { getTagSwatchClass } from "@/lib/tag-colors";
-import { cn } from "@/lib/utils";
 import { countActiveFilters } from "./count-active-filters";
 
 interface FilterDropdownProps {

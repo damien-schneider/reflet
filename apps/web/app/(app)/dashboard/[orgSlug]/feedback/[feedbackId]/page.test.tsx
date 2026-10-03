@@ -286,11 +286,6 @@ vi.mock("@/components/ui/typography", () => ({
   ),
 }));
 
-vi.mock("@/lib/utils", () => ({
-  cn: (...args: unknown[]) =>
-    args.filter((arg) => typeof arg === "string").join(" "),
-}));
-
 import FeedbackDetailPage from "./page";
 
 describe("FeedbackDetailPage", () => {

@@ -1,7 +1,7 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { cn } from "@/lib/utils";
 import {
   ComposerIcon,
   InlineFeedbackForm,

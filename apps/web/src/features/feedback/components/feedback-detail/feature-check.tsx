@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button } from "@ctrl-ui/react/ui/button";
 import { toast } from "@ctrl-ui/react/ui/toast";
 import {
@@ -19,7 +20,6 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { format } from "date-fns";
 import { useState } from "react";
-import { cn } from "@/lib/utils";
 
 interface FeatureCheckProps {
   feedbackId: Id<"feedback">;

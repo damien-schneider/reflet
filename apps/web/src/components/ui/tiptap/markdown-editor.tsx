@@ -1,9 +1,9 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Input } from "@ctrl-ui/react/ui/input";
 import { EditorContent } from "@tiptap/react";
 import type React from "react";
-import { cn } from "@/lib/utils";
 import { useTiptapMarkdownEditor } from "./hooks/use-editor";
 import { ImageBubbleMenu } from "./image-bubble-menu";
 import "./styles.css";

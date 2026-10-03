@@ -1,7 +1,7 @@
+import { cn } from "@ctrl-ui/react/lib/cn";
 import type { Icon } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
 import { H1, Muted } from "@/components/ui/typography";
-import { cn } from "@/lib/utils";
 
 export function AuthPageShell({
   children,

@@ -1,3 +1,4 @@
+import { env } from "@reflet/env/web";
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useFeedbackMatching } from "./use-feedback-matching";
@@ -223,31 +224,34 @@ describe("useFeedbackMatching", () => {
       );
     });
 
-    expect(fetchSpy).toHaveBeenCalledWith("/api/ai/match-release-feedback", {
-      body: JSON.stringify({
-        commits: [
-          {
-            author: "dev",
-            fullMessage: "feat: dark mode support",
-            message: "feat: dark mode",
-            sha: "abc123",
-          },
-        ],
-        feedbackItems: [
-          {
-            description: "Would love dark theme",
-            id: "f1",
-            status: "open",
-            tags: ["ui"],
-            title: "Dark mode please",
-          },
-        ],
-        organizationId: "org1",
-        releaseNotes: "Added dark mode",
-      }),
-      headers: { "Content-Type": "application/json" },
-      method: "POST",
-    });
+    expect(fetchSpy).toHaveBeenCalledWith(
+      `${env.NEXT_PUBLIC_CONVEX_SITE_URL}/api/ai/match-release-feedback`,
+      {
+        body: JSON.stringify({
+          commits: [
+            {
+              author: "dev",
+              fullMessage: "feat: dark mode support",
+              message: "feat: dark mode",
+              sha: "abc123",
+            },
+          ],
+          feedbackItems: [
+            {
+              description: "Would love dark theme",
+              id: "f1",
+              status: "open",
+              tags: ["ui"],
+              title: "Dark mode please",
+            },
+          ],
+          organizationId: "org1",
+          releaseNotes: "Added dark mode",
+        }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      }
+    );
   });
 
   it("parses valid API response with multiple confidence levels", async () => {

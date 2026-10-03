@@ -86,11 +86,6 @@ vi.mock("@ctrl-ui/react/ui/popover", () => ({
   ),
 }));
 
-vi.mock("@/lib/utils", () => ({
-  cn: (...args: unknown[]) =>
-    args.filter((a) => typeof a === "string").join(" "),
-}));
-
 import { DeadlineDisplay } from "./deadline-display";
 
 const baseProps = {

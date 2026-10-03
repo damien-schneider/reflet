@@ -82,10 +82,6 @@ vi.mock("@ctrl-ui/react/ui/scroll-area", () => ({
   ),
 }));
 
-vi.mock("@/lib/utils", () => ({
-  cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
-}));
-
 vi.mock("./wizard-steps/workflow-step", () => ({
   WorkflowStep: ({
     value,

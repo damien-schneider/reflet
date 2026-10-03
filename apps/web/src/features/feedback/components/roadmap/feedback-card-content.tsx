@@ -1,3 +1,4 @@
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Card } from "@ctrl-ui/react/ui/card";
 import { CaretUp, ChatCircle, Sparkle } from "@phosphor-icons/react";
@@ -5,7 +6,6 @@ import type { ReactNode } from "react";
 import { TagBadge } from "@/components/tag-badge";
 import { FeedbackPropertiesPopover } from "@/features/feedback/components/properties/feedback-properties-popover";
 import { FeedbackPropertySummary } from "@/features/feedback/components/properties/feedback-property-summary";
-import { cn } from "@/lib/utils";
 import type { FeedbackItem } from "../feed-feedback-view";
 
 const MAX_VISIBLE_TAGS = 2;

@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { toast } from "@ctrl-ui/react/ui/toast";
@@ -14,7 +15,6 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 import { TiptapMarkdownEditor } from "@/components/ui/tiptap/markdown-editor";
-import { cn } from "@/lib/utils";
 import { CommentProvider } from "./comment-context";
 import { CommentItem } from "./comment-item";
 import type { CommentData } from "./types";

@@ -1,3 +1,4 @@
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Alert, AlertDescription } from "@ctrl-ui/react/ui/alert";
 import {
   PageBody,
@@ -10,10 +11,8 @@ import { TableOfContents } from "@ctrl-ui/react/ui/table-of-contents";
 import { Info } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import type { ReactNode } from "react";
-
 import { HeadingAnchor } from "@/components/heading-anchor";
 import { textVariants } from "@/components/ui/typography-variants";
-import { cn } from "@/lib/utils";
 
 interface DocsSectionEntry {
   readonly id: string;

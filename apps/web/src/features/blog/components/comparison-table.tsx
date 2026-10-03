@@ -1,3 +1,4 @@
+import { cn } from "@ctrl-ui/react/lib/cn";
 import {
   Table,
   TableBody,
@@ -7,8 +8,6 @@ import {
   TableRow,
 } from "@ctrl-ui/react/ui/table";
 import { Check, CheckCheck, Minus, X } from "lucide-react";
-
-import { cn } from "@/lib/utils";
 
 type FeatureValue = "yes" | "no" | "partial" | "strong" | string;
 

@@ -65,10 +65,6 @@ vi.mock("@ctrl-ui/react/ui/input", () => ({
   ),
 }));
 
-vi.mock("@/lib/utils", () => ({
-  cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
-}));
-
 import { VersionPicker } from "./version-picker";
 import {
   getSuggestedVersion,

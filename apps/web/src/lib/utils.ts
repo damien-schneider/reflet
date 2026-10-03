@@ -1,34 +1,4 @@
-import { type ClassValue, clsx } from "clsx";
-import { extendTailwindMerge } from "tailwind-merge";
+import { cn as controlUiCn } from "@ctrl-ui/react/lib/cn";
 
-const twMerge = extendTailwindMerge({
-  extend: {
-    classGroups: {
-      "font-size": [
-        {
-          text: [
-            "micro",
-            "caption",
-            "label",
-            "body",
-            "body-lg",
-            "heading-1",
-            "heading-2",
-            "heading-3",
-            "heading-4",
-            "display",
-          ],
-        },
-      ],
-    },
-  },
-  override: {
-    conflictingClassGroups: {
-      "font-size": [],
-    },
-  },
-});
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+// shadcn registry convention: packages/ui/registry sources import cn from "@/lib/utils"
+export const cn = controlUiCn;

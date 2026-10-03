@@ -1,9 +1,9 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Clock } from "@phosphor-icons/react";
 import { format } from "date-fns";
 import { useEffect, useState } from "react";
-import { cn } from "@/lib/utils";
 
 interface ScheduleCountdownProps {
   className?: string;

@@ -128,10 +128,6 @@ vi.mock("@/lib/auth-client", () => ({
   },
 }));
 
-vi.mock("@/lib/utils", () => ({
-  cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
-}));
-
 import { toast } from "@ctrl-ui/react/ui/toast";
 import { authClient } from "@/lib/auth-client";
 import { ChangelogSubscribe } from "./changelog-subscribe";

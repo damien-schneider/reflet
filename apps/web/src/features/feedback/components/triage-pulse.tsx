@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
   DropdownMenu,
@@ -25,7 +26,6 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { useEffect, useRef, useState } from "react";
 import { DestructiveConfirmDialog } from "@/components/ui/destructive-confirm-dialog";
-import { cn } from "@/lib/utils";
 import { ResultsPopover } from "./triage-results-popover";
 
 interface TriagePulseProps {

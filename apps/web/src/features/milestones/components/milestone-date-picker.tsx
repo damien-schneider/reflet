@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Calendar } from "@ctrl-ui/react/ui/calendar";
 import {
@@ -11,7 +12,6 @@ import { CalendarBlank } from "@phosphor-icons/react";
 import { format, startOfDay } from "date-fns";
 import { useState } from "react";
 import { getDeadlineColor, getDeadlineInfo } from "@/lib/milestone-deadline";
-import { cn } from "@/lib/utils";
 
 interface MilestoneDatePickerProps {
   milestoneStatus?: string;
@@ -58,7 +58,7 @@ export function MilestoneDatePicker({
         <CalendarBlank aria-hidden />
         {selectedDate ? format(selectedDate, "MMM d, yyyy") : "Set deadline"}
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-auto p-0">
+      <PopoverContent align="start" className="w-auto" padding="none">
         <Calendar
           mode="single"
           onSelect={handleSelect}

@@ -1,8 +1,7 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { CaretUp } from "@phosphor-icons/react";
-
-import { cn } from "@/lib/utils";
 
 interface FeedbackPreviewItem {
   _id: string;

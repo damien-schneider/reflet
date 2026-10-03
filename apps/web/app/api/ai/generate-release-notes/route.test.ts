@@ -14,6 +14,10 @@ vi.mock("@/lib/auth-server", () => ({
   getToken: mockGetToken,
 }));
 
+vi.mock("@reflet/env/server", () => ({
+  env: { OPENROUTER_API_KEY: "test-key" },
+}));
+
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: { ai: { usage_gate: { consumeAiGeneration: "consumeAiGeneration" } } },
 }));
@@ -41,12 +45,10 @@ const validBody = {
 };
 
 beforeEach(() => {
-  vi.stubEnv("OPENROUTER_API_KEY", "test-key");
   mockGetToken.mockResolvedValue("session-token");
 });
 
 afterEach(() => {
-  vi.unstubAllEnvs();
   vi.clearAllMocks();
 });
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Field, FieldError, FieldLabel } from "@ctrl-ui/react/ui/field";
 import { Input } from "@ctrl-ui/react/ui/input";
@@ -7,7 +8,6 @@ import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import { Textarea } from "@ctrl-ui/react/ui/textarea";
 import { PaperPlaneRight } from "@phosphor-icons/react";
 import { useId, useRef, useState } from "react";
-import { cn } from "@/lib/utils";
 
 interface ConversationComposerProps {
   className?: string;

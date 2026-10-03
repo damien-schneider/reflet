@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
@@ -12,7 +13,6 @@ import {
 import { Check, FileText, Lightning, Tag } from "@phosphor-icons/react";
 import { CopyButton } from "@/components/copy-button";
 import { Muted, Text } from "@/components/ui/typography";
-import { cn } from "@/lib/utils";
 import type {
   ChangelogConfig,
   SuggestedPrompt,

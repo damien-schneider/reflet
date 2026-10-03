@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import {
   AlertDialog,
   AlertDialogClose,
@@ -25,7 +26,6 @@ import { useId, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { toId } from "@/lib/convex-helpers";
 import { getTagSwatchClass } from "@/lib/tag-colors";
-import { cn } from "@/lib/utils";
 
 interface ColumnDeleteDialogProps {
   feedbackCount: number;

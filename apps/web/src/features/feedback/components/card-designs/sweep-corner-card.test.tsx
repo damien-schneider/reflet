@@ -3,10 +3,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 const mockVote = vi.fn();
 
-vi.mock("@/lib/utils", () => ({
-  cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
-}));
-
 vi.mock("@phosphor-icons/react", () => ({
   PushPin: ({ className }: { className?: string }) => (
     <span className={className} data-testid="pin-icon" />

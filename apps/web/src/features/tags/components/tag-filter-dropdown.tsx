@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
@@ -39,7 +40,6 @@ import {
   migrateHexToNamedColor,
   type TagColor,
 } from "@/lib/tag-colors";
-import { cn } from "@/lib/utils";
 
 import { DeleteTagDialog } from "./delete-tag-dialog";
 
@@ -295,7 +295,7 @@ export function TagFilterDropdown({
           </Badge>
         )}
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-60 p-0">
+      <PopoverContent align="start" className="w-60" padding="none">
         <Command shouldFilter={false}>
           <CommandInput
             onValueChange={setSearchValue}

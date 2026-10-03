@@ -1,10 +1,10 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "@ctrl-ui/react/ui/tabs";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { CopyButton } from "@/components/copy-button";
-import { cn } from "@/lib/utils";
 import { CodeSurface } from "./code-block";
 
 const FRAME = "overflow-hidden rounded-lg border border-border";

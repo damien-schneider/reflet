@@ -3,7 +3,7 @@ import { fetchQuery } from "convex/nextjs";
 import type { Metadata } from "next";
 
 import { toId } from "@/lib/convex-helpers";
-import { generatePageMetadata } from "@/lib/seo-config";
+import { BASE_URL, generatePageMetadata } from "@/lib/seo-config";
 
 import ShippedCardClient from "./shipped-card-client";
 
@@ -24,10 +24,7 @@ export async function generateMetadata({
         ? `"${meta.title}" has been shipped in ${meta.releaseTitle}. See what ${meta.orgName} built based on your feedback.`
         : `"${meta.title}" has been shipped by ${meta.orgName}. You asked, we shipped.`;
 
-      const ogUrl = new URL(
-        "/api/og/shipped",
-        process.env.NEXT_PUBLIC_APP_URL ?? "https://reflet.app"
-      );
+      const ogUrl = new URL("/api/og/shipped", BASE_URL);
       ogUrl.searchParams.set("feedback", meta.title);
       if (meta.releaseTitle) {
         ogUrl.searchParams.set("release", meta.releaseTitle);

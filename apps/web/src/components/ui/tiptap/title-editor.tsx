@@ -1,11 +1,11 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import Placeholder from "@tiptap/extension-placeholder";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import type React from "react";
 import { useEffect, useRef } from "react";
-import { cn } from "@/lib/utils";
 import "./styles.css";
 
 const toTitleDoc = (text: string) => ({

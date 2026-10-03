@@ -1,5 +1,6 @@
 "use client";
 
+import { env } from "@reflet/env/web";
 import { ErrorPage } from "@/components/ui/error-page";
 
 interface ErrorProps {
@@ -12,7 +13,7 @@ export default function RootError({ error, reset }: ErrorProps) {
     <ErrorPage
       error={error}
       onRetry={reset}
-      showError={process.env.NODE_ENV === "development"}
+      showError={env.NODE_ENV === "development"}
     />
   );
 }

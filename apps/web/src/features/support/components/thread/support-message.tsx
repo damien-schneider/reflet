@@ -9,6 +9,7 @@ import {
   ChatMessageHeader,
   ChatMessageRow,
 } from "@ctrl-ui/react/chat-message";
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Avatar, AvatarFallback, AvatarImage } from "@ctrl-ui/react/ui/avatar";
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button } from "@ctrl-ui/react/ui/button";
@@ -17,7 +18,6 @@ import type { api } from "@reflet/backend/convex/_generated/api";
 import type { FunctionReturnType } from "convex/server";
 import { format } from "date-fns";
 import { getInitials } from "@/lib/initials";
-import { cn } from "@/lib/utils";
 
 export type SupportMessageData = FunctionReturnType<
   typeof api.support.messages.list

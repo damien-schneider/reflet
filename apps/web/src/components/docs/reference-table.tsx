@@ -1,3 +1,4 @@
+import { cn } from "@ctrl-ui/react/lib/cn";
 import {
   Table,
   TableBody,
@@ -7,8 +8,6 @@ import {
   TableRow,
 } from "@ctrl-ui/react/ui/table";
 import type { ReactNode } from "react";
-
-import { cn } from "@/lib/utils";
 
 /**
  * name: identifier, never wraps. code: literal values or types, may wrap.

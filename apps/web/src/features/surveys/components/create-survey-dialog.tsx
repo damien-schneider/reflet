@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button } from "@ctrl-ui/react/ui/button";
 import {
   Dialog,
@@ -37,7 +38,6 @@ import {
   createQuestionsFromTemplate,
   SURVEY_TEMPLATES,
 } from "@/features/surveys/lib/templates";
-import { cn } from "@/lib/utils";
 import type { TriggerType } from "@/store/surveys";
 
 const TEMPLATE_ICONS = {

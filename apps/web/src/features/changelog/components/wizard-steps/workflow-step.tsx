@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import {
   Collapsible,
@@ -28,7 +29,6 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useAction, useQuery } from "convex/react";
 import { useEffect, useState } from "react";
 import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
 import type { Workflow } from "../wizard-config";
 
 interface BranchInfo {

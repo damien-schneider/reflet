@@ -1,11 +1,11 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Input } from "@ctrl-ui/react/ui/input";
 import { InputGroup, InputGroupAddon } from "@ctrl-ui/react/ui/input-group";
 import { Bell, Envelope } from "@phosphor-icons/react";
 import { type FormEvent, useId, useState } from "react";
-import { cn } from "@/lib/utils";
 
 interface EmailSubscribeFormProps {
   className?: string;

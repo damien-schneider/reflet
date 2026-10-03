@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Input } from "@ctrl-ui/react/ui/input";
 import {
@@ -15,7 +16,6 @@ import Link from "next/link";
 import { useState } from "react";
 import { CopyButton } from "@/components/copy-button";
 import { DEFAULT_PRIMARY_COLOR } from "@/lib/branding";
-import { cn } from "@/lib/utils";
 import { generateChangelogWidgetPrompt } from "../lib/generate-changelog-widget-prompt";
 
 interface ChangelogWidgetTabProps {

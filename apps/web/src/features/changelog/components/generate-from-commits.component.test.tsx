@@ -1,3 +1,4 @@
+import { env } from "@reflet/env/web";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -805,7 +806,9 @@ describe("GenerateFromCommits component", () => {
 
       await vi.waitFor(() => {
         const titleCall = fetchSpy.mock.calls.find(
-          (call) => call[0] === "/api/ai/generate-release-title"
+          (call) =>
+            call[0] ===
+            `${env.NEXT_PUBLIC_CONVEX_SITE_URL}/api/ai/generate-release-title`
         );
         expect(titleCall).toBeDefined();
         const body = JSON.parse(
@@ -922,7 +925,9 @@ describe("GenerateFromCommits component", () => {
 
       await vi.waitFor(() => {
         const titleCall = fetchSpy.mock.calls.find(
-          (call) => call[0] === "/api/ai/generate-release-title"
+          (call) =>
+            call[0] ===
+            `${env.NEXT_PUBLIC_CONVEX_SITE_URL}/api/ai/generate-release-title`
         );
         expect(titleCall).toBeDefined();
         const body = JSON.parse(

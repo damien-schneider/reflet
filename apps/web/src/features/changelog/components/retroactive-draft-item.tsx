@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Button, ButtonLink } from "@ctrl-ui/react/ui/button";
 import { Checkbox } from "@ctrl-ui/react/ui/checkbox";
@@ -17,7 +18,6 @@ import { format } from "date-fns";
 import Link from "next/link";
 import { useState } from "react";
 import { DestructiveConfirmDialog } from "@/components/ui/destructive-confirm-dialog";
-import { cn } from "@/lib/utils";
 
 interface RetroactiveDraftItemProps {
   onSelect: (id: Id<"releases">, selected: boolean) => void;

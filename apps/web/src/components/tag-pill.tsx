@@ -1,9 +1,8 @@
 "use client";
 
+import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button, type ButtonProps } from "@ctrl-ui/react/ui/button";
-
 import { getTagSwatchClass, type TagColor } from "@/lib/tag-colors";
-import { cn } from "@/lib/utils";
 
 interface TagPillProps extends Omit<ButtonProps, "color" | "active"> {
   active?: boolean;

@@ -1,5 +1,5 @@
+import { cn } from "@ctrl-ui/react/lib/cn";
 import Image from "next/image";
-import { cn } from "@/lib/utils";
 
 type OrgAvatarSize = "sm" | "lg";
 
