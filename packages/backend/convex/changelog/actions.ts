@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { mutation } from "../_generated/server";
-import { getAuthUser } from "../shared/utils";
+import { requireAuthUser } from "../shared/access";
 import { applyReleaseStatusToLinkedFeedback } from "./feedback_status";
 
 export const publish = mutation({
@@ -19,7 +19,7 @@ export const publish = mutation({
     id: v.id("releases"),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const release = await ctx.db.get(args.id);
     if (!release) {
@@ -90,7 +90,7 @@ export const publish = mutation({
 export const unpublish = mutation({
   args: { id: v.id("releases") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const release = await ctx.db.get(args.id);
     if (!release) {
@@ -121,7 +121,7 @@ export const unpublish = mutation({
 export const remove = mutation({
   args: { id: v.id("releases") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const release = await ctx.db.get(args.id);
     if (!release) {
@@ -169,7 +169,7 @@ export const remove = mutation({
 export const pushToGithub = mutation({
   args: { releaseId: v.id("releases") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const release = await ctx.db.get(args.releaseId);
     if (!release) {
@@ -214,7 +214,7 @@ export const pushToGithub = mutation({
 export const triggerGithubSync = mutation({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const membership = await ctx.db
       .query("organizationMembers")

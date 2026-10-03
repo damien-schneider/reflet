@@ -1,11 +1,11 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
-import { getAuthUser } from "../shared/utils";
+import { requireAuthUser } from "../shared/access";
 
 export const remove = mutation({
   args: { id: v.id("milestones") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const milestone = await ctx.db.get(args.id);
     if (!milestone) {
@@ -43,7 +43,7 @@ export const reorder = mutation({
     milestoneIds: v.array(v.id("milestones")),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     if (args.milestoneIds.length === 0) {
       return true;
@@ -89,7 +89,7 @@ export const addFeedback = mutation({
     milestoneId: v.id("milestones"),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const milestone = await ctx.db.get(args.milestoneId);
     if (!milestone) {
@@ -139,7 +139,7 @@ export const removeFeedback = mutation({
     milestoneId: v.id("milestones"),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const milestone = await ctx.db.get(args.milestoneId);
     if (!milestone) {
@@ -175,7 +175,7 @@ export const removeFeedback = mutation({
 export const complete = mutation({
   args: { id: v.id("milestones") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const milestone = await ctx.db.get(args.id);
     if (!milestone) {

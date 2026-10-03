@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
+import { requireAuthUser } from "../shared/access";
 import { MAX_COMMENT_LENGTH } from "../shared/constants";
 import { validateInputLength } from "../shared/validators";
 import {
@@ -10,16 +11,6 @@ import {
 } from "./public_projection";
 
 // Helper to get authenticated user
-const getAuthUser = async (
-  ctx: Parameters<typeof authComponent.safeGetAuthUser>[0]
-) => {
-  const user = await authComponent.safeGetAuthUser(ctx);
-  if (!user) {
-    throw new Error("Not authenticated");
-  }
-  return user;
-};
-
 // ============================================
 // QUERIES
 // ============================================
@@ -113,7 +104,7 @@ export const create = mutation({
     parentId: v.optional(v.id("comments")),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     // Validate input length
     validateInputLength(args.body, MAX_COMMENT_LENGTH, "Comment");
@@ -190,7 +181,7 @@ export const update = mutation({
     id: v.id("comments"),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     // Validate input length
     validateInputLength(args.body, MAX_COMMENT_LENGTH, "Comment");
@@ -223,7 +214,7 @@ export const markOfficial = mutation({
     isOfficial: v.boolean(),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const comment = await ctx.db.get(args.id);
     if (!comment) {
@@ -262,7 +253,7 @@ export const markOfficial = mutation({
 export const remove = mutation({
   args: { id: v.id("comments") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const comment = await ctx.db.get(args.id);
     if (!comment) {

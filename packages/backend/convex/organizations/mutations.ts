@@ -4,7 +4,7 @@ import { internalMutation, mutation } from "../_generated/server";
 import { getOrgTier } from "../billing/org_subscription";
 import { versionIncrementValidator } from "../changelog/semver";
 import { DEFAULT_TAGS } from "../feedback/tag_definitions";
-import { getAuthUser } from "../shared/utils";
+import { requireAuthUser } from "../shared/access";
 import { assertValidSlug, deriveSlugFromName, slugify } from "./slug";
 import { DEFAULT_STATUSES } from "./status_definitions";
 
@@ -123,7 +123,7 @@ export const create = mutation({
     slug: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
     return await insertOrganization(ctx, { ...args, userId: user._id });
   },
   returns: v.object({ id: v.id("organizations"), slug: v.string() }),
@@ -184,7 +184,7 @@ export const update = mutation({
     slug: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const membership = await ctx.db
       .query("organizationMembers")

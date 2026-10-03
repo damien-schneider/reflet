@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
-import { getAuthUser } from "../shared/utils";
+import { requireAuthUser } from "../shared/access";
 
 /**
  * Start a retroactive changelog generation job
@@ -18,7 +18,7 @@ export const startRetroactiveChangelog = mutation({
     skipExistingVersions: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const membership = await ctx.db
       .query("organizationMembers")
@@ -96,7 +96,7 @@ export const cancelRetroactiveChangelog = mutation({
     jobId: v.id("retroactiveJobs"),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const job = await ctx.db.get(args.jobId);
     if (!job) {
@@ -171,7 +171,7 @@ export const publishRetroactiveDrafts = mutation({
     useHistoricalDates: v.boolean(),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     if (args.releaseIds.length === 0) {
       throw new Error("No releases provided to publish");
@@ -233,7 +233,7 @@ export const discardRetroactiveDrafts = mutation({
     releaseIds: v.array(v.id("releases")),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     if (args.releaseIds.length === 0) {
       throw new Error("No releases provided to discard");

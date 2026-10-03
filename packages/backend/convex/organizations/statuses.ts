@@ -1,8 +1,11 @@
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { mutation, query } from "../_generated/server";
-import { isOrgMemberViewer, requireOrgMember } from "../shared/access";
-import { getAuthUser } from "../shared/utils";
+import {
+  isOrgMemberViewer,
+  requireAuthUser,
+  requireOrgMember,
+} from "../shared/access";
 
 import { DEFAULT_STATUSES } from "./status_definitions";
 
@@ -48,7 +51,7 @@ export const get = query({
 export const createDefaults = mutation({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const org = await ctx.db.get(args.organizationId);
     if (!org) {

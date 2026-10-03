@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { mutation } from "../_generated/server";
-import { getAuthUser } from "../shared/utils";
+import { requireAuthUser } from "../shared/access";
 import { changeFeedbackStatus } from "./status_change";
 
 export const updateOrganizationStatus = mutation({
@@ -10,7 +10,7 @@ export const updateOrganizationStatus = mutation({
     organizationStatusId: v.optional(v.id("organizationStatuses")),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const feedback = await ctx.db.get(args.feedbackId);
     if (!feedback) {
@@ -44,7 +44,7 @@ export const assign = mutation({
     feedbackId: v.id("feedback"),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const feedback = await ctx.db.get(args.feedbackId);
     if (!feedback) {
@@ -121,7 +121,7 @@ export const updateAnalysis = mutation({
     timeEstimate: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const feedback = await ctx.db.get(args.feedbackId);
     if (!feedback) {

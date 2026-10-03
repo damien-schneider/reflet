@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
-import { getAuthUser } from "../shared/utils";
+import { requireAuthUser } from "../shared/access";
 
 const commitValidator = v.object({
   author: v.string(),
@@ -26,7 +26,7 @@ export const saveReleaseCommits = mutation({
     releaseId: v.id("releases"),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const release = await ctx.db.get(args.releaseId);
     if (!release) {

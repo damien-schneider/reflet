@@ -2,8 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
 import { isFeedbackPubliclyVisible } from "../feedback/public_projection";
-import { isOrgMemberViewer } from "../shared/access";
-import { getAuthUser } from "../shared/utils";
+import { isOrgMemberViewer, requireAuthUser } from "../shared/access";
 
 const TIME_HORIZON_ORDER = [
   "now",
@@ -221,7 +220,7 @@ export const create = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const org = await ctx.db.get(args.organizationId);
     if (!org) {
@@ -301,7 +300,7 @@ export const update = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const milestone = await ctx.db.get(args.id);
     if (!milestone) {

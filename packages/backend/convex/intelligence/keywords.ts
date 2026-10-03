@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
-import { getAuthUser } from "../shared/utils";
+import { requireAuthUser } from "../shared/access";
 import { validateInputLength } from "../shared/validators";
 
 const MAX_KEYWORDS_PER_ORG = 50;
@@ -13,7 +13,7 @@ const MAX_SUBREDDIT_LENGTH = 50;
 export const list = query({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     // Verify membership
     const membership = await ctx.db
@@ -49,7 +49,7 @@ export const create = mutation({
     subreddit: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     // Check admin permission
     const membership = await ctx.db
@@ -118,7 +118,7 @@ export const update = mutation({
     subreddit: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const existing = await ctx.db.get(args.id);
     if (!existing) {
@@ -163,7 +163,7 @@ export const update = mutation({
 export const remove = mutation({
   args: { id: v.id("intelligenceKeywords") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const keyword = await ctx.db.get(args.id);
     if (!keyword) {

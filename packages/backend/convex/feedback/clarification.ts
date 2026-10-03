@@ -8,8 +8,7 @@ import {
   query,
 } from "../_generated/server";
 import { feedbackClarificationAgent } from "../ai/agent";
-import { requireOrgMember } from "../shared/access";
-import { getAuthUser } from "../shared/utils";
+import { requireAuthUser, requireOrgMember } from "../shared/access";
 
 export const getClarificationStatus = query({
   args: { feedbackId: v.id("feedback") },
@@ -70,7 +69,7 @@ export const getFeedbackForClarification = internalQuery({
 export const initiateClarification = mutation({
   args: { feedbackId: v.id("feedback") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const feedback = await ctx.db.get(args.feedbackId);
     if (!feedback) {
@@ -208,7 +207,7 @@ Format your response as a well-structured clarification, ready to be shown to th
 export const generateCodingPrompt = query({
   args: { feedbackId: v.id("feedback") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const feedback = await ctx.db.get(args.feedbackId);
     if (!feedback) {

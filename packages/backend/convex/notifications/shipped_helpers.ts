@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { components } from "../_generated/api";
+import type { Id } from "../_generated/dataModel";
 import { internalQuery } from "../_generated/server";
 import { getOrgTier } from "../billing/org_subscription";
 export const getShippedNotificationData = internalQuery({
@@ -20,8 +21,10 @@ export const getShippedNotificationData = internalQuery({
       .withIndex("by_release", (q) => q.eq("releaseId", args.releaseId))
       .collect();
 
-    const feedbackItems: Array<{ feedbackId: string; feedbackTitle: string }> =
-      [];
+    const feedbackItems: Array<{
+      feedbackId: Id<"feedback">;
+      feedbackTitle: string;
+    }> = [];
 
     for (const link of links) {
       const feedback = await ctx.db.get(link.feedbackId);

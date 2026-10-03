@@ -4,8 +4,8 @@ import type { MutationCtx } from "../_generated/server";
 import { mutation } from "../_generated/server";
 import { getOrgTier } from "../billing/org_subscription";
 import { PLAN_LIMITS } from "../billing/queries";
+import { requireAuthUser } from "../shared/access";
 import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from "../shared/constants";
-import { getAuthUser } from "../shared/utils";
 import { feedbackStatus, validateInputLength } from "../shared/validators";
 import { afterApproval, scheduleAfterCreate } from "./after_create";
 import { changeFeedbackStatus } from "./status_change";
@@ -54,7 +54,7 @@ export const create = mutation({
     title: v.string(),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     validateInputLength(args.title, MAX_TITLE_LENGTH, "Title");
     validateInputLength(
@@ -130,7 +130,7 @@ export const update = mutation({
     title: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     if (args.title !== undefined) {
       validateInputLength(args.title, MAX_TITLE_LENGTH, "Title");

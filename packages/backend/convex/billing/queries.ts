@@ -6,7 +6,7 @@ import {
   getOrgTier,
   planTierFor,
 } from "./org_subscription";
-import { stripeTimestampToMs } from "./utils";
+import { stripeTimestampToMs } from "./stripe_timestamp";
 
 export const PLAN_LIMITS = {
   free: {

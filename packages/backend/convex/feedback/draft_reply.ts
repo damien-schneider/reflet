@@ -8,8 +8,7 @@ import {
   query,
 } from "../_generated/server";
 import { feedbackClarificationAgent } from "../ai/agent";
-import { requireOrgMember } from "../shared/access";
-import { getAuthUser } from "../shared/utils";
+import { requireAuthUser, requireOrgMember } from "../shared/access";
 
 export const getDraftReplyStatus = query({
   args: { feedbackId: v.id("feedback") },
@@ -50,7 +49,7 @@ export const getFeedbackForDraftReply = internalQuery({
 export const initiateDraftReply = mutation({
   args: { feedbackId: v.id("feedback") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const feedback = await ctx.db.get(args.feedbackId);
     if (!feedback) {
@@ -99,7 +98,7 @@ export const saveDraftReply = internalMutation({
 export const clearDraftReply = mutation({
   args: { feedbackId: v.id("feedback") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const feedback = await ctx.db.get(args.feedbackId);
     if (!feedback) {

@@ -1,10 +1,10 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { mutation, query } from "../_generated/server";
+import { requireAuthUser } from "../shared/access";
 import { MAX_TITLE_LENGTH } from "../shared/constants";
 import { assertPublicHttpUrl } from "../shared/outbound/public_fetch";
 import { rateLimiter } from "../shared/rate_limits";
-import { getAuthUser } from "../shared/utils";
 import { validateInputLength } from "../shared/validators";
 
 const MAX_COMPETITORS_PER_ORG = 20;
@@ -18,7 +18,7 @@ const validateUrl = (url: string): string => assertPublicHttpUrl(url).href;
 export const list = query({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     // Verify membership
     const membership = await ctx.db
@@ -49,7 +49,7 @@ export const list = query({
 export const get = query({
   args: { id: v.id("competitors") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const competitor = await ctx.db.get(args.id);
     if (!competitor) {
@@ -87,7 +87,7 @@ export const create = mutation({
     websiteUrl: v.string(),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     // Check admin permission
     const membership = await ctx.db
@@ -180,7 +180,7 @@ export const update = mutation({
     websiteUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const competitor = await ctx.db.get(args.id);
     if (!competitor) {
@@ -242,7 +242,7 @@ export const update = mutation({
 export const remove = mutation({
   args: { id: v.id("competitors") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const competitor = await ctx.db.get(args.id);
     if (!competitor) {
@@ -282,7 +282,7 @@ export const remove = mutation({
 export const pause = mutation({
   args: { id: v.id("competitors") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const competitor = await ctx.db.get(args.id);
     if (!competitor) {
@@ -316,7 +316,7 @@ export const pause = mutation({
 export const resume = mutation({
   args: { id: v.id("competitors") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const competitor = await ctx.db.get(args.id);
     if (!competitor) {

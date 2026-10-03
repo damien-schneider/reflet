@@ -1,9 +1,8 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { mutation, query } from "../_generated/server";
-import { requireOrgMember } from "../shared/access";
+import { requireAuthUser, requireOrgMember } from "../shared/access";
 import { rateLimiter } from "../shared/rate_limits";
-import { getAuthUser } from "../shared/utils";
 
 export const getActiveScan = query({
   args: { organizationId: v.id("organizations") },
@@ -60,7 +59,7 @@ export const getActiveScan = query({
 export const startManualScan = mutation({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     // Check admin permission
     const membership = await ctx.db
@@ -172,7 +171,7 @@ export const startManualScan = mutation({
 export const dismissScan = mutation({
   args: { jobId: v.id("intelligenceJobs") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
     const job = await ctx.db.get(args.jobId);
 
     if (!job) {
@@ -202,7 +201,7 @@ export const dismissScan = mutation({
 export const cancelScan = mutation({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const membership = await ctx.db
       .query("organizationMembers")

@@ -6,8 +6,8 @@ import {
   mutation,
   query,
 } from "../_generated/server";
+import { requireAuthUser } from "../shared/access";
 import { assertPublicHttpUrl } from "../shared/outbound/public_fetch";
-import { getAuthUser } from "../shared/utils";
 
 const TRAILING_SLASH_REGEX = /\/$/;
 
@@ -21,7 +21,7 @@ const TRAILING_SLASH_REGEX = /\/$/;
 export const list = query({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     // Verify membership
     const membership = await ctx.db
@@ -59,7 +59,7 @@ export const create = mutation({
     url: v.string(),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     // Check admin permission
     const membership = await ctx.db
@@ -122,7 +122,7 @@ export const create = mutation({
 export const remove = mutation({
   args: { id: v.id("websiteReferences") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const reference = await ctx.db.get(args.id);
     if (!reference) {
@@ -152,7 +152,7 @@ export const remove = mutation({
 export const refresh = mutation({
   args: { id: v.id("websiteReferences") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const reference = await ctx.db.get(args.id);
     if (!reference) {

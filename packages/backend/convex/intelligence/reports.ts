@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
-import { getAuthUser } from "../shared/utils";
+import { requireAuthUser } from "../shared/access";
 
 /**
  * Generate a full intelligence report for export
@@ -11,7 +11,7 @@ export const getExportReport = query({
     organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const membership = await ctx.db
       .query("organizationMembers")
@@ -150,7 +150,7 @@ export const getHistoricalTrends = query({
     organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const membership = await ctx.db
       .query("organizationMembers")

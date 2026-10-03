@@ -9,7 +9,7 @@ import {
   internalQuery,
   query,
 } from "../_generated/server";
-import { getAuthUser } from "../shared/utils";
+import { requireAuthUser } from "../shared/access";
 
 const openrouter = createOpenRouter({ apiKey: process.env.OPENROUTER_API_KEY });
 const LLM_CHECK_MODEL = "anthropic/claude-sonnet-4";
@@ -38,7 +38,7 @@ const visibilitySchema = z.object({
 export const getVisibilityResults = query({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const membership = await ctx.db
       .query("organizationMembers")

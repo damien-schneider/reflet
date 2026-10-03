@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { action } from "../_generated/server";
-import { getAuthUser } from "../shared/utils";
+import { requireAuthUser } from "../shared/access";
 import { getOrgSubscription } from "./org_subscription";
 import {
   createCheckoutSessionWithPromoCodes,
@@ -17,7 +17,7 @@ export const createCheckoutSession = action({
     successUrl: v.string(),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const membership = await ctx.runQuery(
       internal.shared.access.membershipForUser,
@@ -87,7 +87,7 @@ export const createCustomerPortalSession = action({
     returnUrl: v.string(),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const membership = await ctx.runQuery(
       internal.shared.access.membershipForUser,
@@ -126,7 +126,7 @@ export const cancelSubscription = action({
     organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const membership = await ctx.runQuery(
       internal.shared.access.membershipForUser,
@@ -162,7 +162,7 @@ export const reactivateSubscription = action({
     organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const membership = await ctx.runQuery(
       internal.shared.access.membershipForUser,

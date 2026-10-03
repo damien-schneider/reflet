@@ -11,8 +11,8 @@ import {
   normalizeSubscriberEmail,
   sendSubscriptionConfirmation,
 } from "../email/subscription_confirmation";
+import { requireAuthUser } from "../shared/access";
 import { rateLimiter } from "../shared/rate_limits";
-import { getAuthUser } from "../shared/utils";
 
 function generateUnsubscribeToken(): string {
   return crypto.randomUUID();
@@ -81,7 +81,7 @@ export const isSubscribed = query({
 export const subscribe = mutation({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const org = await ctx.db.get(args.organizationId);
     if (!org) {
@@ -117,7 +117,7 @@ export const subscribe = mutation({
 export const unsubscribe = mutation({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const subscription = await ctx.db
       .query("changelogSubscribers")

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { stripeTimestampToMs } from "../utils";
+import { stripeTimestampToMs } from "../stripe_timestamp";
 
 describe("stripeTimestampToMs", () => {
   it("converts Stripe seconds timestamp to milliseconds", () => {

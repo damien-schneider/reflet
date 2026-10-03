@@ -4,8 +4,8 @@ import {
   publicOrganizationValidator,
   toPublicOrganization,
 } from "../organizations/queries";
+import { requireAuthUser } from "../shared/access";
 import { isOrgAdmin } from "../shared/membership";
-import { getAuthUser } from "../shared/utils";
 
 export const getByCustomDomain = query({
   args: { domain: v.string() },
@@ -37,7 +37,7 @@ export const getByCustomDomain = query({
 export const getDomainStatus = query({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const membership = await ctx.db
       .query("organizationMembers")

@@ -8,7 +8,7 @@ import {
   query,
 } from "../../_generated/server";
 import { repoAnalysisAgent } from "../../ai/agent";
-import { getAuthUser } from "../../shared/utils";
+import { requireAuthUser } from "../../shared/access";
 import { fetchRepoData } from "./github_helpers";
 
 // ============================================
@@ -21,7 +21,7 @@ import { fetchRepoData } from "./github_helpers";
 export const getLatestAnalysis = query({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     // Verify membership
     const membership = await ctx.db
@@ -92,7 +92,7 @@ export const updateAnalysisSection = mutation({
     value: v.string(),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     // Check admin permission
     const membership = await ctx.db
@@ -135,7 +135,7 @@ export const updateAnalysisSection = mutation({
 export const startAnalysis = mutation({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     // Check admin permission
     const membership = await ctx.db

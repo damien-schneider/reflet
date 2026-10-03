@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 import { statusFieldsFor } from "../feedback/status_target";
-import { getAuthUser } from "../shared/utils";
+import { requireAuthUser } from "../shared/access";
 import { insightStatus, insightType } from "./tableFields";
 
 export const list = query({
@@ -12,7 +12,7 @@ export const list = query({
     type: v.optional(insightType),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const membership = await ctx.db
       .query("organizationMembers")
@@ -52,7 +52,7 @@ export const get = query({
     insightId: v.id("intelligenceInsights"),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const insight = await ctx.db.get(args.insightId);
     if (!insight) {
@@ -79,7 +79,7 @@ export const getSignalsForInsight = query({
     insightId: v.id("intelligenceInsights"),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const insight = await ctx.db.get(args.insightId);
     if (!insight) {
@@ -110,7 +110,7 @@ export const dismiss = mutation({
     insightId: v.id("intelligenceInsights"),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const insight = await ctx.db.get(args.insightId);
     if (!insight) {
@@ -137,7 +137,7 @@ export const markReviewed = mutation({
     insightId: v.id("intelligenceInsights"),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const insight = await ctx.db.get(args.insightId);
     if (!insight) {
@@ -164,7 +164,7 @@ export const convertToFeedback = mutation({
     insightId: v.id("intelligenceInsights"),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const insight = await ctx.db.get(args.insightId);
     if (!insight) {

@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
-import { getAuthUser } from "../shared/utils";
+import { requireAuthUser } from "../shared/access";
 
 const generateSlug = (name: string): string =>
   name
@@ -18,7 +18,7 @@ export const create = mutation({
     organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
     const membership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>
@@ -69,7 +69,7 @@ export const update = mutation({
     name: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const tag = await ctx.db.get(args.id);
     if (!tag) {
@@ -103,7 +103,7 @@ export const update = mutation({
 export const remove = mutation({
   args: { id: v.id("tags") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const tag = await ctx.db.get(args.id);
     if (!tag) {
@@ -140,7 +140,7 @@ export const addToFeedback = mutation({
     tagId: v.id("tags"),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const feedback = await ctx.db.get(args.feedbackId);
     if (!feedback) {
@@ -191,7 +191,7 @@ export const removeFromFeedback = mutation({
     tagId: v.id("tags"),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const feedback = await ctx.db.get(args.feedbackId);
     if (!feedback) {

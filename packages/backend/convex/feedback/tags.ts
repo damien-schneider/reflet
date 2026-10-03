@@ -1,8 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
-import { isOrgMemberViewer } from "../shared/access";
-import { getAuthUser } from "../shared/utils";
+import { isOrgMemberViewer, requireAuthUser } from "../shared/access";
 import {
   categoryVisibleToViewer,
   getFeedbackCategories,
@@ -134,7 +133,7 @@ export const getForFeedback = query({
 export const createDefaults = mutation({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const org = await ctx.db.get(args.organizationId);
     if (!org) {

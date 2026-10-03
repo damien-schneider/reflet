@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
-import { getAuthUser } from "../shared/utils";
+import { requireAuthUser } from "../shared/access";
 
 /**
  * List all members of an organization
@@ -110,7 +110,7 @@ export const remove = mutation({
     organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     // Get the membership to remove
     const memberToRemove = await ctx.db.get(args.memberId);
@@ -183,7 +183,7 @@ export const updateRole = mutation({
     role: v.union(v.literal("admin"), v.literal("member")),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const memberToUpdate = await ctx.db.get(args.memberId);
     if (!memberToUpdate) {
@@ -236,7 +236,7 @@ export const transferOwnership = mutation({
     organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     // Check current user is owner
     const currentMembership = await ctx.db
@@ -274,7 +274,7 @@ export const transferOwnership = mutation({
 export const leave = mutation({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const membership = await ctx.db
       .query("organizationMembers")

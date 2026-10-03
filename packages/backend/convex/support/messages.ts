@@ -3,8 +3,8 @@ import { internal } from "../_generated/api";
 import type { Doc } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { mutation, query } from "../_generated/server";
+import { requireAuthUser } from "../shared/access";
 import { MAX_SUPPORT_MESSAGE_LENGTH } from "../shared/constants";
-import { getAuthUser } from "../shared/utils";
 import { validateInputLength } from "../shared/validators";
 import { requireConversationAccess, resolveConversationAccess } from "./access";
 import { resolveMessageSenders } from "./people";
@@ -240,7 +240,7 @@ export const addReaction = mutation({
     messageId: v.id("supportMessages"),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
     await requireMessageAccess(ctx, args.messageId);
 
     const existingReaction = await ctx.db
@@ -275,7 +275,7 @@ export const removeReaction = mutation({
     messageId: v.id("supportMessages"),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
     await requireMessageAccess(ctx, args.messageId);
 
     const existingReaction = await ctx.db

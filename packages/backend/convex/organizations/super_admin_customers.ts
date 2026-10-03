@@ -10,7 +10,7 @@ import {
   planTierFor,
 } from "../billing/org_subscription";
 import { STRIPE_PRICES } from "../billing/stripe";
-import { stripeTimestampToMs } from "../billing/utils";
+import { stripeTimestampToMs } from "../billing/stripe_timestamp";
 import { assertSuperAdmin } from "../shared/access";
 import { subscriptionTier } from "../shared/validators";
 

@@ -7,7 +7,7 @@ import {
   internalQuery,
   query,
 } from "../_generated/server";
-import { getAuthUser } from "../shared/utils";
+import { requireAuthUser } from "../shared/access";
 
 export const PRIORITY_RANK: Record<string, number> = {
   critical: 4,
@@ -25,7 +25,7 @@ export const getInsightsForFeedback = query({
     feedbackId: v.id("feedback"),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const feedback = await ctx.db.get(args.feedbackId);
     if (!feedback) {
@@ -64,7 +64,7 @@ export const getSignalsForFeedback = query({
     feedbackId: v.id("feedback"),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const feedback = await ctx.db.get(args.feedbackId);
     if (!feedback) {
@@ -116,7 +116,7 @@ export const getCompetitorStatusForFeedback = query({
     feedbackId: v.id("feedback"),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const feedback = await ctx.db.get(args.feedbackId);
     if (!feedback) {

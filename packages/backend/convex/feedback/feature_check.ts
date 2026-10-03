@@ -6,8 +6,7 @@ import {
   mutation,
   query,
 } from "../_generated/server";
-import { requireOrgMember } from "../shared/access";
-import { getAuthUser } from "../shared/utils";
+import { requireAuthUser, requireOrgMember } from "../shared/access";
 
 // ============================================
 // QUERIES
@@ -73,7 +72,7 @@ export const getFeatureCheckStatus = query({
 export const startFeatureCheck = mutation({
   args: { feedbackId: v.id("feedback") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const feedback = await ctx.db.get(args.feedbackId);
     if (!feedback) {

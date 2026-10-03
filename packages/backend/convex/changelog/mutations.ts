@@ -1,11 +1,11 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
+import { requireAuthUser } from "../shared/access";
 import {
   MAX_CHANGELOG_VERSION_LENGTH,
   MAX_DESCRIPTION_LENGTH,
   MAX_TITLE_LENGTH,
 } from "../shared/constants";
-import { getAuthUser } from "../shared/utils";
 import { validateInputLength } from "../shared/validators";
 
 // ============================================
@@ -23,7 +23,7 @@ export const create = mutation({
     version: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     validateInputLength(args.title, MAX_TITLE_LENGTH, "Title");
     validateInputLength(
@@ -70,7 +70,7 @@ export const update = mutation({
     version: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     if (args.title !== undefined) {
       validateInputLength(args.title, MAX_TITLE_LENGTH, "Title");

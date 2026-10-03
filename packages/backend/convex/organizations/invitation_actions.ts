@@ -3,7 +3,7 @@ import { mutation } from "../_generated/server";
 import { getOrgTier } from "../billing/org_subscription";
 import { PLAN_LIMITS } from "../billing/queries";
 import { normalizeEmail } from "../email/suppression";
-import { getAuthUser } from "../shared/utils";
+import { requireAuthUser } from "../shared/access";
 import { scheduleInvitationEmail } from "./invitations";
 
 // Deployments that skip email verification never set emailVerified for password sign-ups.
@@ -13,7 +13,7 @@ const emailVerificationRequired =
 export const accept = mutation({
   args: { token: v.string() },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const invitation = await ctx.db
       .query("invitations")
@@ -87,7 +87,7 @@ export const accept = mutation({
 export const cancel = mutation({
   args: { invitationId: v.id("invitations") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const invitation = await ctx.db.get(args.invitationId);
     if (!invitation) {
@@ -115,7 +115,7 @@ const RESEND_COOLDOWN_MS = 60 * 1000; // 60 seconds
 export const resend = mutation({
   args: { invitationId: v.id("invitations") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const invitation = await ctx.db.get(args.invitationId);
     if (!invitation) {

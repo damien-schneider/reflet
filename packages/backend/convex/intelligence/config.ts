@@ -1,11 +1,11 @@
 import { v } from "convex/values";
 import { internalQuery, mutation, query } from "../_generated/server";
-import { getAuthUser } from "../shared/utils";
+import { requireAuthUser } from "../shared/access";
 
 export const get = query({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     // Verify membership
     const membership = await ctx.db
@@ -33,7 +33,7 @@ export const get = query({
 export const getOrCreate = mutation({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     // Verify membership
     const membership = await ctx.db
@@ -89,7 +89,7 @@ export const update = mutation({
     webSearchEnabled: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     // Check admin permission
     const membership = await ctx.db

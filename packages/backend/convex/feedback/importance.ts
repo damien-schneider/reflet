@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
+import { requireAuthUser } from "../shared/access";
 
 // Importance levels: 1=Not important, 2=Nice to have, 3=Important, 4=Essential
 const importanceValue = v.union(
@@ -11,16 +12,6 @@ const importanceValue = v.union(
 );
 
 // Helper to get authenticated user
-const getAuthUser = async (
-  ctx: Parameters<typeof authComponent.safeGetAuthUser>[0]
-) => {
-  const user = await authComponent.safeGetAuthUser(ctx);
-  if (!user) {
-    throw new Error("Not authenticated");
-  }
-  return user;
-};
-
 // ============================================
 // QUERIES
 // ============================================
@@ -64,7 +55,7 @@ export const vote = mutation({
     importance: importanceValue,
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const feedback = await ctx.db.get(args.feedbackId);
     if (!feedback) {
@@ -128,7 +119,7 @@ export const vote = mutation({
 export const removeVote = mutation({
   args: { feedbackId: v.id("feedback") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const existingVote = await ctx.db
       .query("feedbackImportanceVotes")

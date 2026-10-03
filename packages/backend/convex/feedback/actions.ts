@@ -3,7 +3,7 @@ import { mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
 import { getOrgTier } from "../billing/org_subscription";
 import { PLAN_LIMITS } from "../billing/queries";
-import { isOrgMemberViewer } from "../shared/access";
+import { isOrgMemberViewer, requireAuthUser } from "../shared/access";
 import {
   MAX_DESCRIPTION_LENGTH,
   MAX_EMAIL_LENGTH,
@@ -11,7 +11,6 @@ import {
   MAX_URL_LENGTH,
 } from "../shared/constants";
 import { rateLimiter } from "../shared/rate_limits";
-import { getAuthUser } from "../shared/utils";
 import { validateInputLength } from "../shared/validators";
 import { scheduleAfterCreate } from "./after_create";
 import { archiveFeedback } from "./archive_feedback";
@@ -198,7 +197,7 @@ export const createPublicOrg = mutation({
 export const togglePin = mutation({
   args: { id: v.id("feedback") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const feedback = await ctx.db.get(args.id);
     if (!feedback) {
@@ -228,7 +227,7 @@ export const togglePin = mutation({
 export const remove = mutation({
   args: { id: v.id("feedback") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const feedback = await ctx.db.get(args.id);
     if (!feedback) {
@@ -263,7 +262,7 @@ export const remove = mutation({
 export const restore = mutation({
   args: { id: v.id("feedback") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const feedback = await ctx.db.get(args.id);
     if (!feedback) {

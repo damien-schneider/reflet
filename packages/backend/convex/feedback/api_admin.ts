@@ -3,8 +3,7 @@ import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
-import { requireOrgAdmin } from "../shared/access";
-import { getAuthUser } from "../shared/utils";
+import { requireAuthUser, requireOrgAdmin } from "../shared/access";
 
 // ============================================
 // QUERIES
@@ -169,7 +168,7 @@ export const generateApiKeys = mutation({
     publicKey: string;
     secretKey: string;
   }> => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const org = await ctx.db.get(args.organizationId);
     if (!org) {
@@ -216,7 +215,7 @@ export const regenerateSecretKey = mutation({
   ): Promise<{
     secretKey: string;
   }> => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const org = await ctx.db.get(args.organizationId);
     if (!org) {
@@ -271,7 +270,7 @@ export const updateApiKeySettings = mutation({
     tagId: v.optional(v.id("tags")),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const org = await ctx.db.get(args.organizationId);
     if (!org) {
@@ -331,7 +330,7 @@ export const deleteApiKey = mutation({
     organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const org = await ctx.db.get(args.organizationId);
     if (!org) {

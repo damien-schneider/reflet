@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { changeFeedbackStatus } from "../feedback/status_change";
-import { getAuthUser } from "../shared/utils";
+import { requireAuthUser } from "../shared/access";
 import { feedbackStatus } from "../shared/validators";
 
 export const create = mutation({
@@ -13,7 +13,7 @@ export const create = mutation({
     semanticStatus: v.optional(feedbackStatus),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const org = await ctx.db.get(args.organizationId);
     if (!org) {
@@ -65,7 +65,7 @@ export const update = mutation({
     semanticStatus: v.optional(feedbackStatus),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const status = await ctx.db.get(args.id);
     if (!status) {
@@ -108,7 +108,7 @@ export const reorder = mutation({
     statusIds: v.array(v.id("organizationStatuses")),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const org = await ctx.db.get(args.organizationId);
     if (!org) {
@@ -145,7 +145,7 @@ export const remove = mutation({
     moveToStatusId: v.id("organizationStatuses"),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const status = await ctx.db.get(args.id);
     if (!status) {

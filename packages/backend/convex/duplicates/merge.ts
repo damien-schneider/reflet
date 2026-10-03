@@ -1,7 +1,10 @@
 import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
-import { requireOrgAdmin, requireOrgMember } from "../shared/access";
-import { getAuthUser } from "../shared/utils";
+import {
+  requireAuthUser,
+  requireOrgAdmin,
+  requireOrgMember,
+} from "../shared/access";
 import { feedbackStatus } from "../shared/validators";
 
 export const getPendingDuplicates = query({
@@ -80,7 +83,7 @@ export const resolveDuplicate = mutation({
     pairId: v.id("duplicatePairs"),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
     const pair = await ctx.db.get(args.pairId);
 
     if (!pair) {

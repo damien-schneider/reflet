@@ -2,8 +2,8 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { mutation } from "../_generated/server";
 import { getOrgTier } from "../billing/org_subscription";
+import { requireAuthUser } from "../shared/access";
 import { randomSecretHex } from "../shared/hmac";
-import { getAuthUser } from "../shared/utils";
 import { validateDomainFormat } from "./vercel";
 
 const ROOT_DOMAIN = "reflet.app";
@@ -14,7 +14,7 @@ export const addDomain = mutation({
     organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
     const domain = args.domain.toLowerCase().trim();
 
     if (!validateDomainFormat(domain)) {
@@ -96,7 +96,7 @@ export const addDomain = mutation({
 export const removeDomain = mutation({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const membership = await ctx.db
       .query("organizationMembers")
@@ -144,7 +144,7 @@ export const removeDomain = mutation({
 export const checkVerification = mutation({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const membership = await ctx.db
       .query("organizationMembers")

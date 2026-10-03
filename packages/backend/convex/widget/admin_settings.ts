@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
-import { authComponent } from "../auth/auth";
+import { requireAuthUser } from "../shared/access";
 
 function generateWidgetId(): string {
   const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
@@ -10,16 +10,6 @@ function generateWidgetId(): string {
   }
   return result;
 }
-
-const getAuthUser = async (
-  ctx: Parameters<typeof authComponent.safeGetAuthUser>[0]
-) => {
-  const user = await authComponent.safeGetAuthUser(ctx);
-  if (!user) {
-    throw new Error("Not authenticated");
-  }
-  return user;
-};
 
 export const updateSettings = mutation({
   args: {
@@ -35,7 +25,7 @@ export const updateSettings = mutation({
     zIndex: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const widget = await ctx.db.get(args.widgetId);
     if (!widget) {
@@ -105,7 +95,7 @@ export const remove = mutation({
     widgetId: v.id("widgets"),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const widget = await ctx.db.get(args.widgetId);
     if (!widget) {
@@ -152,7 +142,7 @@ export const regenerateWidgetId = mutation({
     widgetId: v.id("widgets"),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const widget = await ctx.db.get(args.widgetId);
     if (!widget) {

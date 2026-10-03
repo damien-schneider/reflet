@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { mutation, query } from "../_generated/server";
-import { getAuthUser } from "../shared/utils";
+import { requireAuthUser } from "../shared/access";
 import { resolveSlugUpdate } from "./mutations";
 
 /**
@@ -15,7 +15,7 @@ export const update = mutation({
     slug: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     // Check admin/owner permission
     const membership = await ctx.db
@@ -53,7 +53,7 @@ export const update = mutation({
 export const getStats = query({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
     if (!user) {
       return null;
     }
@@ -108,7 +108,7 @@ export const getStats = query({
 export const remove = mutation({
   args: { id: v.id("organizations") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     // Check user is owner
     const membership = await ctx.db

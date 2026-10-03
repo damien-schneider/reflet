@@ -17,7 +17,9 @@ export interface OrgAccess {
   user: AuthUser;
 }
 
-export const requireAuthUser = async (ctx: QueryCtx): Promise<AuthUser> => {
+export const requireAuthUser = async (
+  ctx: Parameters<typeof authComponent.safeGetAuthUser>[0]
+): Promise<AuthUser> => {
   const user = await authComponent.safeGetAuthUser(ctx);
   if (!user) {
     throw new Error("Not authenticated");
