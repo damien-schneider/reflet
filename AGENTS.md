@@ -83,7 +83,7 @@ Non-negotiable. Every file, every commit.
 - Absolute imports (`@/features/...`) — no relative `../../`
 - No backwards compat code — migrate data, then delete old code
 - No `utils.ts` / `helpers.ts` — name by domain (`formatters.ts`, `validators.ts`)
-- Don't touch `components/ui/` — Shadcn primitives, leave as-is
+- Primitives come from `@ctrl-ui/react/ui/*` — never re-create one in `components/ui/`
 - Max 8 files per folder — beyond that, extract into `features/` sub-features
 - No duplicate code — extract to shared location immediately
 - Dependency direction: `apps/` → `packages/ui/` → `packages/config/`. Never import upward.
@@ -115,12 +115,12 @@ Non-negotiable. Every file, every commit.
 
 ## Design System
 
-Import from `@reflet/ui`. No raw HTML form elements:
+Import primitives from `@ctrl-ui/react/ui/*`. No raw HTML form elements:
 
 - `<button>` → `Button` | `<input>` → `Input` | `<select>` → `Select` | `<textarea>` → `Textarea`
 
 **No one-off components** — reuse from `packages/ui/`:
-- Style with Shadcn CSS variables + variant props — no arbitrary colors/sizes
+- Style with Control UI tokens + variant props — no arbitrary colors/sizes
 - No hardcoded colors (`#fff`, `rgb(...)`, `hsl(...)`) — use design tokens (`text-primary`, `bg-muted`, etc.)
 - Pattern appears twice → extract to `packages/ui/` as reusable component
 

@@ -127,7 +127,7 @@ reflet/
 │   └── web/                      # Main web application
 │       ├── src/
 │       │   ├── components/       # React components
-│       │   │   ├── ui/          # shadcn/ui components
+│       │   │   ├── ui/          # App-specific UI pieces (typography, editors)
 │       │   │   ├── homepage/    # Landing page components
 │       │   │   └── ...
 │       │   ├── lib/             # Utilities and helpers
@@ -171,7 +171,7 @@ reflet/
 
 - **Routing**: Next.js App Router with file-based routing
 - **State Management**: Jotai (atomic state)
-- **UI Components**: shadcn/ui (Radix UI + Tailwind)
+- **UI Components**: Control UI (`@ctrl-ui/react`, Base UI + Tailwind)
 - **Server Components**: Next.js Server Components and SSR
 - **Client-Server Sync**: Convex React hooks for real-time data
 
@@ -348,7 +348,7 @@ For complete style guidelines, see [AGENTS.md](AGENTS.md).
 
 - [Next.js Docs](https://nextjs.org/docs)
 - [Convex Docs](https://docs.convex.dev)
-- [shadcn/ui](https://ui.shadcn.com)
+- [Control UI](https://control-ui.dev)
 - [Biome Docs](https://biomejs.dev)
 - [Ultracite Docs](https://ultracite.dev)
 

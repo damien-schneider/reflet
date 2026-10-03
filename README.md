@@ -86,7 +86,7 @@ Reflet is built with modern, developer-friendly technologies:
 
 - **Frontend**: React 19, Next.js (App Router)
 - **Backend**: Convex (real-time reactive backend)
-- **UI**: TailwindCSS, shadcn/ui
+- **UI**: TailwindCSS, Control UI (`@ctrl-ui/react`)
 - **Auth**: Better-Auth
 - **Build**: Turborepo, Bun
 - **Linting**: Ultracite (Biome)
