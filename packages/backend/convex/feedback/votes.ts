@@ -3,22 +3,12 @@ import { v } from "convex/values";
 import { components, internal } from "../_generated/api";
 import { mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
+import { requireAuthUser } from "../shared/access";
 import { canViewFeedback } from "./public_projection";
 
 const voteCounters = new ShardedCounter(components.shardedCounter, {
   defaultShards: 8,
 });
-
-// Helper to get authenticated user
-const getAuthUser = async (
-  ctx: Parameters<typeof authComponent.safeGetAuthUser>[0]
-) => {
-  const user = await authComponent.safeGetAuthUser(ctx);
-  if (!user) {
-    throw new Error("Not authenticated");
-  }
-  return user;
-};
 
 // ============================================
 // QUERIES
@@ -43,17 +33,6 @@ export const hasVoted = query({
       .unique();
 
     return !!vote;
-  },
-});
-
-/**
- * Get vote count for feedback
- */
-export const getCount = query({
-  args: { feedbackId: v.id("feedback") },
-  handler: async (ctx, args) => {
-    const count = await voteCounters.count(ctx, args.feedbackId);
-    return Math.round(count);
   },
 });
 
@@ -129,7 +108,7 @@ export const toggle = mutation({
     voteType: v.union(v.literal("upvote"), v.literal("downvote")),
   },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
     const feedback = await ctx.db.get(args.feedbackId);
 
     if (!feedback) {

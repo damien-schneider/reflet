@@ -216,7 +216,8 @@ export const getNextVersion = query({
   },
   handler: async (ctx, args) => {
     const org = await ctx.db.get(args.organizationId);
-    if (!org) {
+    const isMember = await isOrgMemberViewer(ctx, args.organizationId);
+    if (!(org && isMember)) {
       return {
         autoVersioning: true,
         current: null,

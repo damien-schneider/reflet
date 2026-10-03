@@ -137,9 +137,9 @@ export const sendPushNotification = internalAction({
     webpush.setVapidDetails(vapid.subject, vapid.publicKey, vapid.privateKey);
 
     const payload = JSON.stringify({
-      badge: "/icon-192x192.png",
+      badge: "/web-app-manifest-192x192.png",
       body: args.message,
-      icon: "/icon-192x192.png",
+      icon: "/web-app-manifest-192x192.png",
       title: args.title,
       url: args.url ?? "/dashboard",
     });

@@ -1,6 +1,17 @@
 // Service Worker for Push Notifications
 // This file must remain plain JS (not bundled by Next.js)
 
+const DEFAULT_URL = "/dashboard";
+
+function sameOriginUrl(candidate) {
+  try {
+    const url = new URL(candidate, self.location.origin);
+    return url.origin === self.location.origin ? url.href : DEFAULT_URL;
+  } catch {
+    return DEFAULT_URL;
+  }
+}
+
 self.addEventListener("push", (event) => {
   if (!event.data) {
     return;
@@ -12,10 +23,10 @@ self.addEventListener("push", (event) => {
 
     const options = {
       actions: [{ action: "open", title: "Open" }],
-      badge: badge || "/icon-192x192.png",
+      badge: badge || "/web-app-manifest-192x192.png",
       body: body || "",
-      data: { url: url || "/dashboard" },
-      icon: icon || "/icon-192x192.png",
+      data: { url: sameOriginUrl(url || DEFAULT_URL) },
+      icon: icon || "/web-app-manifest-192x192.png",
       vibrate: [100, 50, 100],
     };
 
@@ -27,7 +38,7 @@ self.addEventListener("push", (event) => {
     event.waitUntil(
       self.registration.showNotification("Reflet", {
         body: event.data.text(),
-        icon: "/icon-192x192.png",
+        icon: "/web-app-manifest-192x192.png",
       })
     );
   }
@@ -36,7 +47,7 @@ self.addEventListener("push", (event) => {
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
-  const url = event.notification.data?.url || "/dashboard";
+  const url = sameOriginUrl(event.notification.data?.url || DEFAULT_URL);
 
   event.waitUntil(
     self.clients

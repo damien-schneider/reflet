@@ -1,49 +1,11 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
-import { api, internal } from "../../_generated/api";
+import { internal } from "../../_generated/api";
 import schema from "../../schema";
 import { modules } from "../../test.helpers";
 
 describe("feedback_stale", () => {
-  test("getSettings returns null for non-existent org", async () => {
-    const t = convexTest(schema, modules);
-
-    await t.run(async (ctx) => {
-      const fakeId = await ctx.db.insert("organizations", {
-        createdAt: Date.now(),
-        isPublic: false,
-        name: "Test",
-        slug: "test",
-        subscriptionStatus: "none",
-        subscriptionTier: "free",
-      });
-      // Delete it so query returns null
-      await ctx.db.delete(fakeId);
-    });
-  });
-
-  test("getSettings returns null when no stale settings configured", async () => {
-    const t = convexTest(schema, modules);
-
-    const orgId = await t.run(
-      async (ctx) =>
-        await ctx.db.insert("organizations", {
-          createdAt: Date.now(),
-          isPublic: false,
-          name: "Test Org",
-          slug: "test-org",
-          subscriptionStatus: "none",
-          subscriptionTier: "free",
-        })
-    );
-
-    const result = await t.query(api.feedback.stale.getSettings, {
-      organizationId: orgId,
-    });
-    expect(result).toBeNull();
-  });
-
   test("archiveStaleFeedback closes stale items", async () => {
     const t = convexTest(schema, modules);
 

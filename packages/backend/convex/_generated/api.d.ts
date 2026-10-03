@@ -36,8 +36,8 @@ import type * as billing_internal from "../billing/internal.js";
 import type * as billing_org_subscription from "../billing/org_subscription.js";
 import type * as billing_queries from "../billing/queries.js";
 import type * as billing_stripe from "../billing/stripe.js";
+import type * as billing_stripe_timestamp from "../billing/stripe_timestamp.js";
 import type * as billing_tableFields from "../billing/tableFields.js";
-import type * as billing_utils from "../billing/utils.js";
 import type * as changelog_actions from "../changelog/actions.js";
 import type * as changelog_ai_actions from "../changelog/ai_actions.js";
 import type * as changelog_ai_matching from "../changelog/ai_matching.js";
@@ -260,7 +260,6 @@ import type * as shared_outbound_public_fetch_node from "../shared/outbound/publ
 import type * as shared_platform_admin from "../shared/platform_admin.js";
 import type * as shared_rate_limits from "../shared/rate_limits.js";
 import type * as shared_text_formatters from "../shared/text_formatters.js";
-import type * as shared_utils from "../shared/utils.js";
 import type * as shared_validators from "../shared/validators.js";
 import type * as sitemap_public from "../sitemap_public.js";
 import type * as status_healthCheck from "../status/healthCheck.js";
@@ -327,8 +326,8 @@ declare const fullApi: ApiFromModules<{
   "billing/org_subscription": typeof billing_org_subscription;
   "billing/queries": typeof billing_queries;
   "billing/stripe": typeof billing_stripe;
+  "billing/stripe_timestamp": typeof billing_stripe_timestamp;
   "billing/tableFields": typeof billing_tableFields;
-  "billing/utils": typeof billing_utils;
   "changelog/actions": typeof changelog_actions;
   "changelog/ai_actions": typeof changelog_ai_actions;
   "changelog/ai_matching": typeof changelog_ai_matching;
@@ -551,7 +550,6 @@ declare const fullApi: ApiFromModules<{
   "shared/platform_admin": typeof shared_platform_admin;
   "shared/rate_limits": typeof shared_rate_limits;
   "shared/text_formatters": typeof shared_text_formatters;
-  "shared/utils": typeof shared_utils;
   "shared/validators": typeof shared_validators;
   sitemap_public: typeof sitemap_public;
   "status/healthCheck": typeof status_healthCheck;

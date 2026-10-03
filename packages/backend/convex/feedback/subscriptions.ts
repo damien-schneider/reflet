@@ -2,17 +2,8 @@ import { v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { type MutationCtx, mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
+import { requireAuthUser } from "../shared/access";
 import { canViewFeedback } from "./public_projection";
-
-const getAuthUser = async (
-  ctx: Parameters<typeof authComponent.safeGetAuthUser>[0]
-) => {
-  const user = await authComponent.safeGetAuthUser(ctx);
-  if (!user) {
-    throw new Error("Not authenticated");
-  }
-  return user;
-};
 
 const assertCanSubscribe = async (
   ctx: MutationCtx,
@@ -46,21 +37,6 @@ export const isSubscribed = query({
       .unique();
 
     return !!subscription;
-  },
-});
-
-/**
- * Get subscriber count for a feedback
- */
-export const getSubscriberCount = query({
-  args: { feedbackId: v.id("feedback") },
-  handler: async (ctx, args) => {
-    const subscriptions = await ctx.db
-      .query("feedbackSubscriptions")
-      .withIndex("by_feedback", (q) => q.eq("feedbackId", args.feedbackId))
-      .collect();
-
-    return subscriptions.length;
   },
 });
 
@@ -132,7 +108,7 @@ export const getSubscribers = query({
 export const toggle = mutation({
   args: { feedbackId: v.id("feedback") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const feedback = await ctx.db.get(args.feedbackId);
     if (!feedback) {
@@ -169,7 +145,7 @@ export const toggle = mutation({
 export const subscribe = mutation({
   args: { feedbackId: v.id("feedback") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const feedback = await ctx.db.get(args.feedbackId);
     if (!feedback) {
@@ -205,7 +181,7 @@ export const subscribe = mutation({
 export const unsubscribe = mutation({
   args: { feedbackId: v.id("feedback") },
   handler: async (ctx, args) => {
-    const user = await getAuthUser(ctx);
+    const user = await requireAuthUser(ctx);
 
     const existingSubscription = await ctx.db
       .query("feedbackSubscriptions")
