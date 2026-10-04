@@ -61,7 +61,11 @@ export const triageRunFields = {
   }),
 };
 export const triageTables = {
-  feedbackTriageRuns: defineTable(triageRunFields).index("by_feedback", [
-    "feedbackId",
-  ]),
+  feedbackTriageRuns: defineTable(triageRunFields)
+    .index("by_feedback", ["feedbackId"])
+    .index("by_org_status_completed", [
+      "organizationId",
+      "status",
+      "completedAt",
+    ]),
 };

@@ -4,6 +4,7 @@ import {
   getOrgSubscription,
   getOrgTier,
   type OrgSubscription,
+  pendingCancellationAt,
 } from "../org_subscription";
 
 const ORG_ID = "org" as Id<"organizations">;
@@ -46,4 +47,24 @@ test("an org without an entitling subscription shows its latest one and stays fr
     stripeSubscriptionId: "sub_retrying",
   });
   expect(await getOrgTier(reader, ORG_ID)).toBe("free");
+});
+
+test("a pro subscription is pending cancellation at its scheduled date, else at period end when flagged", () => {
+  const periodEndSeconds = 1_800_000_000;
+  const scheduledSeconds = 1_790_000_000;
+  const active = subscription("sub_active", "active", periodEndSeconds);
+
+  expect(pendingCancellationAt(active)).toBeUndefined();
+  expect(pendingCancellationAt({ ...active, cancelAtPeriodEnd: true })).toBe(
+    periodEndSeconds * 1000
+  );
+  expect(pendingCancellationAt({ ...active, cancelAt: scheduledSeconds })).toBe(
+    scheduledSeconds * 1000
+  );
+  expect(
+    pendingCancellationAt({
+      ...subscription("sub_gone", "canceled", periodEndSeconds),
+      cancelAt: scheduledSeconds,
+    })
+  ).toBeUndefined();
 });

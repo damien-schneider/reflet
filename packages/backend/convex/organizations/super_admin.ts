@@ -5,9 +5,14 @@ import {
 import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
-import { getOrgSubscription, planTierFor } from "../billing/org_subscription";
+import {
+  getOrgSubscription,
+  pendingCancellationAt,
+  planTierFor,
+} from "../billing/org_subscription";
 import { assertSuperAdmin } from "../shared/access";
 import { subscriptionTier } from "../shared/validators";
+import { usageOf, usageValidator } from "./super_admin_customers";
 
 export const getDashboardStats = query({
   args: {},
@@ -141,36 +146,22 @@ export const listOrganizations = query({
 
     const enrichedPage = await Promise.all(
       result.page.map(async (org) => {
-        const [members, feedback, subscription] = await Promise.all([
-          ctx.db
-            .query("organizationMembers")
-            .withIndex("by_organization", (q) =>
-              q.eq("organizationId", org._id)
-            )
-            .collect(),
-          ctx.db
-            .query("feedback")
-            .withIndex("by_organization", (q) =>
-              q.eq("organizationId", org._id)
-            )
-            .collect(),
+        const [usage, subscription] = await Promise.all([
+          usageOf(ctx, org),
           getOrgSubscription(ctx, org._id),
         ]);
-
-        const activeFeedbackCount = feedback.filter((f) => !f.deletedAt).length;
-
         return {
           _id: org._id,
+          cancelsAt: pendingCancellationAt(subscription),
           createdAt: org.createdAt,
           customDomain: org.customDomain,
-          feedbackCount: activeFeedbackCount,
           isPublic: org.isPublic,
-          memberCount: members.length,
           name: org.name,
           slug: org.slug,
           stripeCustomerId: org.stripeCustomerId,
           subscriptionStatus: subscription?.status ?? "none",
           subscriptionTier: planTierFor(subscription),
+          usage,
         };
       })
     );
@@ -183,16 +174,16 @@ export const listOrganizations = query({
   returns: paginationResultValidator(
     v.object({
       _id: v.id("organizations"),
+      cancelsAt: v.optional(v.number()),
       createdAt: v.number(),
       customDomain: v.optional(v.string()),
-      feedbackCount: v.number(),
       isPublic: v.boolean(),
-      memberCount: v.number(),
       name: v.string(),
       slug: v.string(),
       stripeCustomerId: v.optional(v.string()),
       subscriptionStatus: v.string(),
       subscriptionTier,
+      usage: usageValidator,
     })
   ),
 });

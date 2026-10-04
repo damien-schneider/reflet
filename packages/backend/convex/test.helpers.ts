@@ -14,6 +14,7 @@ export interface AuthTestUser {
   emailVerified?: boolean;
   image?: string;
   name?: string;
+  sessionsUpdatedAt?: number[];
 }
 
 interface TestOptions {
@@ -70,6 +71,30 @@ const createAuthModules = (users: AuthTestUser[]) => ({
   "./_generated/api.ts": () => Promise.resolve({}),
   "./adapter.ts": () =>
     Promise.resolve({
+      findMany: queryGeneric({
+        args: {
+          model: v.literal("session"),
+          paginationOpts: v.any(),
+          sortBy: v.any(),
+          where: v.array(
+            v.object({
+              field: v.string(),
+              operator: v.string(),
+              value: v.string(),
+            })
+          ),
+        },
+        handler: (_ctx, args) => {
+          const user = users.find(({ _id }) => _id === args.where[0]?.value);
+          return {
+            continueCursor: "",
+            isDone: true,
+            page: (user?.sessionsUpdatedAt ?? []).map((updatedAt) => ({
+              updatedAt,
+            })),
+          };
+        },
+      }),
       findOne: queryGeneric({
         args: { model: v.string(), where: v.any() },
         handler: (_ctx, args) => findAuthRecord(users, args),

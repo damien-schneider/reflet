@@ -2,6 +2,7 @@ import type { Infer } from "convex/values";
 import { components } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import type { subscriptionTier } from "../shared/validators";
+import { stripeTimestampToMs } from "./stripe_timestamp";
 
 export interface OrgSubscription {
   cancelAt?: number;
@@ -26,6 +27,20 @@ const grantsPro = (subscription: OrgSubscription): boolean =>
 
 export const planTierFor = (subscription: OrgSubscription | null): PlanTier =>
   subscription && grantsPro(subscription) ? "pro" : "free";
+
+export const pendingCancellationAt = (
+  subscription: OrgSubscription | null
+): number | undefined => {
+  if (!(subscription && grantsPro(subscription))) {
+    return undefined;
+  }
+  if (subscription.cancelAt) {
+    return stripeTimestampToMs(subscription.cancelAt);
+  }
+  return subscription.cancelAtPeriodEnd
+    ? stripeTimestampToMs(subscription.currentPeriodEnd)
+    : undefined;
+};
 
 export const getOrgSubscription = async (
   ctx: SubscriptionReaderCtx,

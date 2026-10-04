@@ -270,6 +270,7 @@ export const getRevenueSummary = query({
       proOrganizations: proOrgs.map((o) => ({
         _id: o._id,
         createdAt: o.createdAt,
+        isPublic: o.isPublic,
         name: o.name,
         slug: o.slug,
         subscriptionStatus: o.subscriptionStatus,
@@ -289,6 +290,7 @@ export const getRevenueSummary = query({
       v.object({
         _id: v.id("organizations"),
         createdAt: v.number(),
+        isPublic: v.boolean(),
         name: v.string(),
         slug: v.string(),
         subscriptionStatus,
