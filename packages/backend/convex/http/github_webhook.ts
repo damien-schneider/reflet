@@ -2,13 +2,13 @@ import type { httpRouter } from "convex/server";
 import { z } from "zod";
 import { internal } from "../_generated/api";
 import { httpAction } from "../_generated/server";
+import {
+  githubApiReleaseSchema,
+  toGithubReleaseSnapshot,
+} from "../integrations/github/github_release_payload";
 import { hmacSha256Hex, signaturesMatch } from "../shared/hmac";
 
 type Router = ReturnType<typeof httpRouter>;
-
-// ============================================
-// ZOD SCHEMAS
-// ============================================
 
 const webhookInstallationSchema = z.object({ id: z.number() });
 
@@ -19,17 +19,7 @@ const repositoryEventSchema = z.object({
 
 const releasePayloadSchema = repositoryEventSchema.extend({
   action: z.string(),
-  release: z.object({
-    body: z.string().nullable(),
-    created_at: z.string(),
-    draft: z.boolean(),
-    html_url: z.string(),
-    id: z.number(),
-    name: z.string().nullable(),
-    prerelease: z.boolean(),
-    published_at: z.string().nullable(),
-    tag_name: z.string(),
-  }),
+  release: githubApiReleaseSchema,
 });
 
 const issuePayloadSchema = repositoryEventSchema.extend({
@@ -69,10 +59,6 @@ const pullRequestPayloadSchema = repositoryEventSchema.extend({
   }),
 });
 
-// ============================================
-// HELPERS
-// ============================================
-
 type WebhookCtx = Parameters<Parameters<typeof httpAction>[0]>[0];
 type RepositoryEvent = z.infer<typeof repositoryEventSchema>;
 type SignatureSource = "app" | "repository";
@@ -107,10 +93,6 @@ async function verifyWebhookSignature(
   return await signaturesMatch(expected, signature);
 }
 
-// ============================================
-// WEBHOOK HANDLERS
-// ============================================
-
 async function handleInstallationWebhook(
   ctx: WebhookCtx,
   payload: Record<string, unknown>
@@ -139,24 +121,11 @@ async function handleReleaseWebhook(
 
   if (connection) {
     await ctx.runMutation(
-      internal.integrations.github.webhook_events.processReleaseWebhook,
+      internal.integrations.github.release_webhook.processReleaseWebhook,
       {
         action,
         connectionId: connection._id,
-        organizationId: connection.organizationId,
-        release: {
-          body: release.body ?? undefined,
-          createdAt: new Date(release.created_at).getTime(),
-          htmlUrl: release.html_url,
-          id: String(release.id),
-          isDraft: release.draft,
-          isPrerelease: release.prerelease,
-          name: release.name ?? undefined,
-          publishedAt: release.published_at
-            ? new Date(release.published_at).getTime()
-            : undefined,
-          tagName: release.tag_name,
-        },
+        release: toGithubReleaseSnapshot(release),
       }
     );
   }
@@ -244,10 +213,6 @@ async function handlePullRequestWebhook(
   return webhookJson({ action: "pr_processed", success: true });
 }
 
-// ============================================
-// SIGNATURE VERIFICATION
-// ============================================
-
 async function verifySignatureSource(
   ctx: WebhookCtx,
   body: string,
@@ -281,10 +246,6 @@ async function verifySignatureSource(
   return isValid ? "repository" : null;
 }
 
-// ============================================
-// EVENT ROUTING
-// ============================================
-
 async function routeWebhookEvent(
   ctx: WebhookCtx,
   eventType: string,
@@ -311,10 +272,6 @@ async function routeWebhookEvent(
 
   return webhookJson({ event: eventType, success: true });
 }
-
-// ============================================
-// ROUTE REGISTRATION
-// ============================================
 
 export function registerGithubWebhookRoutes(http: Router): void {
   http.route({

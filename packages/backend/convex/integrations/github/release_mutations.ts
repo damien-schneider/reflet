@@ -1,6 +1,15 @@
 import { v } from "convex/values";
 import { internalMutation, mutation } from "../../_generated/server";
 import { requireOrgAdmin } from "../../shared/access";
+import {
+  applyGithubEdit,
+  findMirror,
+  githubReleaseSnapshotValidator,
+  importMirroredRelease,
+  removeMirror,
+  unlinkReleaseFromGithub,
+  upsertMirror,
+} from "./release_mirror";
 
 export const updateSyncStatus = internalMutation({
   args: {
@@ -25,145 +34,135 @@ export const updateSyncStatus = internalMutation({
 
 export const saveSyncedReleases = internalMutation({
   args: {
-    organizationId: v.id("organizations"),
-    releases: v.array(
-      v.object({
-        body: v.optional(v.string()),
-        createdAt: v.number(),
-        githubReleaseId: v.string(),
-        htmlUrl: v.string(),
-        isDraft: v.boolean(),
-        isPrerelease: v.boolean(),
-        name: v.optional(v.string()),
-        publishedAt: v.optional(v.number()),
-        tagName: v.string(),
-      })
-    ),
+    connectionId: v.id("githubConnections"),
+    releases: v.array(githubReleaseSnapshotValidator),
   },
   handler: async (ctx, args) => {
-    const connection = await ctx.db
-      .query("githubConnections")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .first();
-
+    const connection = await ctx.db.get(args.connectionId);
     if (!connection) {
       throw new Error("No GitHub connection found");
     }
 
-    const now = Date.now();
-
     for (const release of args.releases) {
-      const existing = await ctx.db
-        .query("githubReleases")
-        .withIndex("by_github_release_id", (q) =>
-          q
-            .eq("githubConnectionId", connection._id)
-            .eq("githubReleaseId", release.githubReleaseId)
-        )
-        .first();
-
-      if (existing) {
-        await ctx.db.patch(existing._id, {
-          body: release.body,
-          htmlUrl: release.htmlUrl,
-          isDraft: release.isDraft,
-          isPrerelease: release.isPrerelease,
-          lastSyncedAt: now,
-          name: release.name,
-          publishedAt: release.publishedAt,
-          tagName: release.tagName,
-        });
-      } else {
-        await ctx.db.insert("githubReleases", {
-          body: release.body,
-          createdAt: release.createdAt,
-          githubConnectionId: connection._id,
-          githubReleaseId: release.githubReleaseId,
-          htmlUrl: release.htmlUrl,
-          isDraft: release.isDraft,
-          isPrerelease: release.isPrerelease,
-          lastSyncedAt: now,
-          name: release.name,
-          organizationId: args.organizationId,
-          publishedAt: release.publishedAt,
-          tagName: release.tagName,
-        });
+      const { mirror, previous } = await upsertMirror(ctx, connection, release);
+      if (previous) {
+        await applyGithubEdit(ctx, previous, mirror);
       }
     }
 
+    const releaseIdsOnGithub = new Set(
+      args.releases.map((release) => release.githubReleaseId)
+    );
+    const mirrors = await ctx.db
+      .query("githubReleases")
+      .withIndex("by_connection", (q) =>
+        q.eq("githubConnectionId", connection._id)
+      )
+      .collect();
+    for (const mirror of mirrors) {
+      if (!releaseIdsOnGithub.has(mirror.githubReleaseId)) {
+        await removeMirror(ctx, mirror);
+      }
+    }
+
+    const now = Date.now();
     await ctx.db.patch(connection._id, {
       lastSyncAt: now,
+      lastSyncError: undefined,
       lastSyncStatus: "success",
       updatedAt: now,
     });
-
-    return { synced: args.releases.length };
   },
 });
 
 export const importGithubRelease = mutation({
   args: {
-    autoPublish: v.optional(v.boolean()),
     githubReleaseId: v.id("githubReleases"),
   },
   handler: async (ctx, args) => {
-    const githubRelease = await ctx.db.get(args.githubReleaseId);
-    if (!githubRelease) {
+    const mirror = await ctx.db.get(args.githubReleaseId);
+    if (!mirror) {
       throw new Error("GitHub release not found");
     }
 
-    await requireOrgAdmin(ctx, githubRelease.organizationId, "import releases");
+    const { user } = await requireOrgAdmin(
+      ctx,
+      mirror.organizationId,
+      "import releases"
+    );
 
-    const existingRelease = await ctx.db
-      .query("releases")
-      .withIndex("by_github_release", (q) =>
-        q
-          .eq("organizationId", githubRelease.organizationId)
-          .eq("githubReleaseId", githubRelease.githubReleaseId)
-      )
-      .first();
-
-    if (existingRelease) {
+    if (mirror.refletReleaseId) {
       throw new Error("This release has already been imported");
     }
+    if (mirror.isDraft) {
+      throw new Error("Draft GitHub releases can't be imported");
+    }
 
-    const now = Date.now();
-
-    const releaseId = await ctx.db.insert("releases", {
-      createdAt: now,
-      description: githubRelease.body,
-      githubHtmlUrl: githubRelease.htmlUrl,
-      githubReleaseId: githubRelease.githubReleaseId,
-      organizationId: githubRelease.organizationId,
-      publishedAt: args.autoPublish ? now : undefined,
-      syncedFromGithub: true,
-      title: githubRelease.name || githubRelease.tagName,
-      updatedAt: now,
-      version: githubRelease.tagName,
+    return await importMirroredRelease(ctx, mirror, {
+      actorId: user._id,
+      announce: false,
     });
-
-    await ctx.db.patch(args.githubReleaseId, {
-      refletReleaseId: releaseId,
-    });
-
-    return releaseId;
   },
 });
 
-export const linkGithubRelease = internalMutation({
+export const recordGithubPush = internalMutation({
   args: {
     githubHtmlUrl: v.string(),
     githubReleaseId: v.string(),
+    pushed: v.object({
+      body: v.string(),
+      name: v.string(),
+      tagName: v.string(),
+    }),
     releaseId: v.id("releases"),
+    syncedAt: v.number(),
   },
   handler: async (ctx, args) => {
-    await ctx.db.patch(args.releaseId, {
+    const release = await ctx.db.get(args.releaseId);
+    if (!release) {
+      return;
+    }
+    await ctx.db.patch(release._id, {
       githubHtmlUrl: args.githubHtmlUrl,
+      githubPushError: undefined,
+      githubPushErrorType: undefined,
+      githubPushStatus: "success",
       githubReleaseId: args.githubReleaseId,
-      updatedAt: Date.now(),
+      githubSyncedAt: args.syncedAt,
     });
+
+    const connection = await ctx.db
+      .query("githubConnections")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", release.organizationId)
+      )
+      .first();
+    const mirror =
+      connection &&
+      (await findMirror(ctx, connection._id, args.githubReleaseId));
+    if (mirror) {
+      await ctx.db.patch(mirror._id, {
+        ...args.pushed,
+        htmlUrl: args.githubHtmlUrl,
+        refletReleaseId: release._id,
+      });
+    }
+  },
+});
+
+export const clearGithubLink = internalMutation({
+  args: { releaseId: v.id("releases") },
+  handler: async (ctx, args) => {
+    await unlinkReleaseFromGithub(ctx, args.releaseId);
+    const mirrors = await ctx.db
+      .query("githubReleases")
+      .withIndex("by_reflet_release", (q) =>
+        q.eq("refletReleaseId", args.releaseId)
+      )
+      .collect();
+    for (const mirror of mirrors) {
+      await ctx.db.patch(mirror._id, { refletReleaseId: undefined });
+    }
   },
 });
 
@@ -172,18 +171,13 @@ export const updateGithubPushStatus = internalMutation({
     error: v.optional(v.string()),
     errorType: v.optional(v.string()),
     releaseId: v.id("releases"),
-    status: v.union(
-      v.literal("pending"),
-      v.literal("success"),
-      v.literal("failed")
-    ),
+    status: v.union(v.literal("pending"), v.literal("failed")),
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.releaseId, {
       githubPushError: args.error,
       githubPushErrorType: args.errorType,
       githubPushStatus: args.status,
-      updatedAt: Date.now(),
     });
   },
 });

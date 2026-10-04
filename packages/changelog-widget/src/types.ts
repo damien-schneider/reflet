@@ -42,9 +42,14 @@ export interface ChangelogWidgetState {
  */
 export interface ChangelogEntry {
   description?: string;
-  feedback: { id: string; title: string }[];
   id: string;
+  items: ChangelogLinkedItem[];
   publishedAt?: number;
   title: string;
   version?: string;
+}
+
+export interface ChangelogLinkedItem {
+  id: string;
+  title: string;
 }

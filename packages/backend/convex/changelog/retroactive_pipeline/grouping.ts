@@ -1,22 +1,18 @@
-import { type CommitData, formatCommit, type GitHubCommit } from "./github";
+import type { ReleaseCommit } from "../tableFields";
+import { formatCommit, type GitHubCommit } from "./github";
 
 export interface GroupMapValue {
-  commits: CommitData[];
+  commits: ReleaseCommit[];
   dateFrom: number;
   dateTo: number;
 }
 
 export type GroupMap = Map<string, GroupMapValue>;
 
-const VERSION_TAG_REGEX = /^v?\d/;
 const CONVENTIONAL_COMMIT_REGEX =
   /^(feat|fix|refactor|chore|docs|style|test|perf|ci|build|revert)(?:\(([^)]+)\))?[!:]?\s*/i;
 const BRACKET_AREA_REGEX = /^\[([^\]]+)\]/;
 const SLASH_AREA_REGEX = /^(\w+)\//;
-
-export function isTagVersion(groupId: string): boolean {
-  return VERSION_TAG_REGEX.test(groupId);
-}
 
 export function getISOWeekKey(date: Date): string {
   const d = new Date(
@@ -31,11 +27,17 @@ export function getISOWeekKey(date: Date): string {
 }
 
 export function groupCommitsByWeek(
-  rawCommits: GitHubCommit[]
-): Map<string, CommitData[]> {
-  const weekGroups = new Map<string, CommitData[]>();
+  rawCommits: GitHubCommit[],
+  taggedShas: Set<string>
+): Map<string, ReleaseCommit[]> {
+  const weekGroups = new Map<string, ReleaseCommit[]>();
 
   for (const commit of rawCommits) {
+    const isUntaggedMerge =
+      commit.parents.length > 1 && !taggedShas.has(commit.sha);
+    if (isUntaggedMerge) {
+      continue;
+    }
     const formatted = formatCommit(commit);
     const weekKey = getISOWeekKey(new Date(formatted.date));
 
@@ -48,7 +50,7 @@ export function groupCommitsByWeek(
 }
 
 export function buildGroupMap(
-  commitDocs: Array<{ commits: CommitData[]; groupId: string }>
+  commitDocs: Array<{ commits: ReleaseCommit[]; groupId: string }>
 ): GroupMap {
   const groupMap: GroupMap = new Map();
 
@@ -79,7 +81,7 @@ export function buildGroupMap(
  * the newer tag, anything past the newest tag lands in "unreleased".
  */
 export function groupCommitsByTagBoundaries(
-  commits: CommitData[],
+  commits: ReleaseCommit[],
   tags: Array<{ name: string; sha: string }>
 ): GroupMap {
   const result: GroupMap = new Map();
@@ -124,7 +126,7 @@ export function groupCommitsByTagBoundaries(
  * Fallback when AI clustering is unavailable: conventional-commit scope first,
  * then bracket/path prefixes, weekly buckets only as a last resort.
  */
-export function buildGroupMapFromFlat(commits: CommitData[]): GroupMap {
+export function buildGroupMapFromFlat(commits: ReleaseCommit[]): GroupMap {
   const groups: GroupMap = new Map();
 
   for (const commit of commits) {
@@ -137,7 +139,7 @@ export function buildGroupMapFromFlat(commits: CommitData[]): GroupMap {
 function addCommitToGroup(
   groups: GroupMap,
   key: string,
-  commit: CommitData
+  commit: ReleaseCommit
 ): void {
   const ts = new Date(commit.date).getTime();
   const existing = groups.get(key);
@@ -198,7 +200,7 @@ function findNearestGroup(
   return bestKey;
 }
 
-function inferGroupKey(commit: CommitData): string {
+function inferGroupKey(commit: ReleaseCommit): string {
   const match = CONVENTIONAL_COMMIT_REGEX.exec(commit.message);
   if (match) {
     const type = (match[1] ?? "").toLowerCase();

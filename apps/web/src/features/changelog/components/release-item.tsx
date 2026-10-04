@@ -74,7 +74,7 @@ export function ReleaseItem({
   const showCommitCount = isAdmin && (release.commitCount ?? 0) > 0;
 
   return (
-    <article className="relative">
+    <article className="relative scroll-mt-4" id={`release-${release._id}`}>
       <div
         className={cn(
           "sticky top-0 z-20 -mx-4 px-4 py-3 backdrop-blur-sm",

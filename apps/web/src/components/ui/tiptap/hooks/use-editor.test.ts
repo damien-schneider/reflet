@@ -141,7 +141,7 @@ describe("useTiptapMarkdownEditor", () => {
     expect(result.current.isNearLimit).toBe(false);
   });
 
-  it("syncs external value changes to editor", () => {
+  it("syncs external value changes to editor without echoing an update", () => {
     mockEditor.storage.markdown.getMarkdown.mockReturnValue("old content");
 
     const { rerender } = renderHook(
@@ -152,7 +152,9 @@ describe("useTiptapMarkdownEditor", () => {
     mockEditor.storage.markdown.getMarkdown.mockReturnValue("old content");
     rerender({ value: "new content" });
 
-    expect(mockSetContent).toHaveBeenCalledWith("new content");
+    expect(mockSetContent).toHaveBeenCalledWith("new content", {
+      emitUpdate: false,
+    });
   });
 
   it("does not sync if editor markdown matches value", () => {

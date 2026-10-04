@@ -1,12 +1,52 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
-import { mutation, query } from "../_generated/server";
+import type { Doc, Id } from "../_generated/dataModel";
+import { type MutationCtx, mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
-import { requireAuthUser } from "../shared/access";
+import { requireOrgAdmin } from "../shared/access";
+import {
+  deleteRelease,
+  publishRelease,
+  releaseSourceDate,
+} from "./release_lifecycle";
 
-/**
- * Start a retroactive changelog generation job
- */
+async function loadRetroactiveDrafts(
+  ctx: MutationCtx,
+  releaseIds: Id<"releases">[],
+  action: string
+): Promise<{ actorId: string; drafts: Doc<"releases">[] }> {
+  const drafts: Doc<"releases">[] = [];
+  for (const releaseId of releaseIds) {
+    const release = await ctx.db.get(releaseId);
+    if (!release) {
+      throw new Error("Release not found");
+    }
+    drafts.push(release);
+  }
+
+  const [firstDraft] = drafts;
+  if (!firstDraft) {
+    throw new Error(`No releases provided to ${action}`);
+  }
+  const { user } = await requireOrgAdmin(
+    ctx,
+    firstDraft.organizationId,
+    `${action} releases`
+  );
+
+  for (const draft of drafts) {
+    if (draft.organizationId !== firstDraft.organizationId) {
+      throw new Error("All releases must belong to the same organization");
+    }
+    if (!draft.retroactivelyGenerated || draft.publishedAt) {
+      throw new Error(
+        `Release "${draft.title}" is not an unpublished retroactive draft`
+      );
+    }
+  }
+  return { actorId: user._id, drafts };
+}
+
 export const startRetroactiveChangelog = mutation({
   args: {
     groupingStrategy: v.union(
@@ -18,20 +58,12 @@ export const startRetroactiveChangelog = mutation({
     skipExistingVersions: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const user = await requireAuthUser(ctx);
+    await requireOrgAdmin(
+      ctx,
+      args.organizationId,
+      "start retroactive changelog generation"
+    );
 
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", args.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership || membership.role === "member") {
-      throw new Error("Only admins can start retroactive changelog generation");
-    }
-
-    // Check no active job exists for this org
     const existingJobs = await ctx.db
       .query("retroactiveJobs")
       .withIndex("by_organization", (q) =>
@@ -50,7 +82,7 @@ export const startRetroactiveChangelog = mutation({
       );
     }
 
-    // Get GitHub connection to read targetBranch
+    const org = await ctx.db.get(args.organizationId);
     const connection = await ctx.db
       .query("githubConnections")
       .withIndex("by_organization", (q) =>
@@ -64,7 +96,10 @@ export const startRetroactiveChangelog = mutation({
       );
     }
 
-    const targetBranch = connection.repositoryDefaultBranch ?? "main";
+    const targetBranch =
+      org?.changelogSettings?.targetBranch ??
+      connection.repositoryDefaultBranch ??
+      "main";
     const skipExisting = args.skipExistingVersions ?? true;
 
     const now = Date.now();
@@ -88,31 +123,20 @@ export const startRetroactiveChangelog = mutation({
   },
 });
 
-/**
- * Cancel an active retroactive changelog job
- */
 export const cancelRetroactiveChangelog = mutation({
   args: {
     jobId: v.id("retroactiveJobs"),
   },
   handler: async (ctx, args) => {
-    const user = await requireAuthUser(ctx);
-
     const job = await ctx.db.get(args.jobId);
     if (!job) {
       throw new Error("Retroactive job not found");
     }
-
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", job.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership || membership.role === "member") {
-      throw new Error("Only admins can cancel retroactive changelog jobs");
-    }
+    await requireOrgAdmin(
+      ctx,
+      job.organizationId,
+      "cancel retroactive changelog jobs"
+    );
 
     await ctx.db.patch(args.jobId, {
       status: "cancelled",
@@ -121,9 +145,6 @@ export const cancelRetroactiveChangelog = mutation({
   },
 });
 
-/**
- * Get the most recent retroactive changelog job for an organization
- */
 export const getRetroactiveJob = query({
   args: {
     organizationId: v.id("organizations"),
@@ -156,140 +177,54 @@ export const getRetroactiveJob = query({
       return null;
     }
 
-    // Return the most recent job
     jobs.sort((a, b) => b.createdAt - a.createdAt);
     return jobs[0] ?? null;
   },
 });
 
-/**
- * Publish retroactive draft releases
- */
 export const publishRetroactiveDrafts = mutation({
   args: {
     releaseIds: v.array(v.id("releases")),
     useHistoricalDates: v.boolean(),
   },
   handler: async (ctx, args) => {
-    const user = await requireAuthUser(ctx);
-
-    if (args.releaseIds.length === 0) {
-      throw new Error("No releases provided to publish");
-    }
-
-    // Validate admin permission using the first release's organization
-    const firstRelease = await ctx.db.get(args.releaseIds[0]);
-    if (!firstRelease) {
-      throw new Error("Release not found");
-    }
-
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q
-          .eq("organizationId", firstRelease.organizationId)
-          .eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership || membership.role === "member") {
-      throw new Error("Only admins can publish releases");
-    }
+    const { actorId, drafts } = await loadRetroactiveDrafts(
+      ctx,
+      args.releaseIds,
+      "publish"
+    );
 
     const now = Date.now();
-
-    for (const releaseId of args.releaseIds) {
-      const release = await ctx.db.get(releaseId);
-      if (!release) {
-        continue;
-      }
-
-      if (release.organizationId !== firstRelease.organizationId) {
-        throw new Error("All releases must belong to the same organization");
-      }
-
-      const publishedAt = args.useHistoricalDates ? release.createdAt : now;
-
-      await ctx.db.patch(releaseId, {
+    for (const draft of drafts) {
+      const snapshot = await ctx.db
+        .query("releaseCommits")
+        .withIndex("by_release", (q) => q.eq("releaseId", draft._id))
+        .first();
+      const publishedAt = args.useHistoricalDates
+        ? releaseSourceDate(draft, snapshot)
+        : now;
+      await publishRelease(ctx, draft, {
+        actorId,
+        announce: false,
         publishedAt,
-        updatedAt: now,
       });
-
-      // Schedule notification sending for each published release
-      await ctx.scheduler.runAfter(
-        0,
-        internal.changelog.notifications.sendReleaseNotifications,
-        { releaseId }
-      );
     }
   },
 });
 
-/**
- * Discard retroactive draft releases and their associated data
- */
 export const discardRetroactiveDrafts = mutation({
   args: {
     releaseIds: v.array(v.id("releases")),
   },
   handler: async (ctx, args) => {
-    const user = await requireAuthUser(ctx);
+    const { drafts } = await loadRetroactiveDrafts(
+      ctx,
+      args.releaseIds,
+      "discard"
+    );
 
-    if (args.releaseIds.length === 0) {
-      throw new Error("No releases provided to discard");
-    }
-
-    // Validate admin permission using the first release's organization
-    const firstRelease = await ctx.db.get(args.releaseIds[0]);
-    if (!firstRelease) {
-      throw new Error("Release not found");
-    }
-
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q
-          .eq("organizationId", firstRelease.organizationId)
-          .eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership || membership.role === "member") {
-      throw new Error("Only admins can discard releases");
-    }
-
-    for (const releaseId of args.releaseIds) {
-      const release = await ctx.db.get(releaseId);
-      if (!release) {
-        continue;
-      }
-
-      if (release.organizationId !== firstRelease.organizationId) {
-        throw new Error("All releases must belong to the same organization");
-      }
-
-      // Delete associated releaseCommits
-      const commits = await ctx.db
-        .query("releaseCommits")
-        .withIndex("by_release", (q) => q.eq("releaseId", releaseId))
-        .collect();
-
-      for (const commit of commits) {
-        await ctx.db.delete(commit._id);
-      }
-
-      // Delete associated releaseFeedback links
-      const feedbackLinks = await ctx.db
-        .query("releaseFeedback")
-        .withIndex("by_release", (q) => q.eq("releaseId", releaseId))
-        .collect();
-
-      for (const link of feedbackLinks) {
-        await ctx.db.delete(link._id);
-      }
-
-      // Delete the release itself
-      await ctx.db.delete(releaseId);
+    for (const draft of drafts) {
+      await deleteRelease(ctx, draft);
     }
   },
 });

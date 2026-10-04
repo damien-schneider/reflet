@@ -39,7 +39,7 @@ export function renderCardModeHTML(
       <button class="reflet-changelog-card-dismiss" data-action="dismiss" type="button" aria-label="Dismiss">${closeIcon}</button>
       <div class="reflet-changelog-card-body">
         <div class="reflet-changelog-card-title">${escapeHtml(latest.title)}</div>
-        ${latest.version ? `<div class="reflet-changelog-card-version">v${escapeHtml(latest.version)}</div>` : ""}
+        ${latest.version ? `<div class="reflet-changelog-card-version">${escapeHtml(latest.version)}</div>` : ""}
       </div>
     </div>
   `;
@@ -127,20 +127,20 @@ export function renderEntriesListHTML(
     html += `
       <button class="reflet-changelog-entry" data-entry-id="${escapeHtml(entry.id)}" type="button">
         <span class="reflet-changelog-entry-header">
-          ${entry.version ? `<span class="reflet-changelog-entry-version">v${escapeHtml(entry.version)}</span>` : ""}
+          ${entry.version ? `<span class="reflet-changelog-entry-version">${escapeHtml(entry.version)}</span>` : ""}
           ${entry.publishedAt ? `<span class="reflet-changelog-entry-date">${formatDate(entry.publishedAt)}</span>` : ""}
           ${isNew ? `<span class="reflet-changelog-entry-new">${sparkleIcon} New</span>` : ""}
         </span>
         <span class="reflet-changelog-entry-title">${escapeHtml(entry.title)}</span>
         ${entry.description ? `<span class="reflet-changelog-entry-description">${escapeHtml(entry.description)}</span>` : ""}
         ${
-          entry.feedback.length > 0
+          entry.items.length > 0
             ? `
           <span class="reflet-changelog-entry-feedback">
-            ${entry.feedback
+            ${entry.items
               .map(
-                (fb) =>
-                  `<span class="reflet-changelog-entry-feedback-item">${externalLinkIcon} ${escapeHtml(fb.title)}</span>`
+                (item) =>
+                  `<span class="reflet-changelog-entry-feedback-item">${externalLinkIcon} ${escapeHtml(item.title)}</span>`
               )
               .join("")}
           </span>

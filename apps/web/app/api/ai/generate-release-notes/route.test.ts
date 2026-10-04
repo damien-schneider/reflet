@@ -39,9 +39,27 @@ const generate = (body: unknown) =>
     })
   );
 
+const commit = {
+  author: "dev",
+  date: "2026-01-01T00:00:00Z",
+  fullMessage: "feat: dark mode",
+  message: "feat: dark mode",
+  sha: "abc123",
+};
+
+const validSource = {
+  commits: [commit],
+  files: [],
+  headRef: "v1.0.0",
+  headSha: "abc123",
+  pullRequests: [],
+  totalCommits: 1,
+};
+
 const validBody = {
-  commits: [{ author: "dev", message: "feat: dark mode", sha: "abc123" }],
   organizationId: "org1",
+  releaseId: "release1",
+  source: validSource,
 };
 
 beforeEach(() => {
@@ -79,7 +97,10 @@ describe("POST /api/ai/generate-release-notes", () => {
   });
 
   it("rejects requests without an organization", async () => {
-    const response = await generate({ commits: validBody.commits });
+    const response = await generate({
+      releaseId: "release1",
+      source: validSource,
+    });
 
     expect(response.status).toBe(400);
     expect(mockFetchAuthMutation).not.toHaveBeenCalled();
@@ -88,7 +109,10 @@ describe("POST /api/ai/generate-release-notes", () => {
   it("rejects more commits than the context cap before spending budget", async () => {
     const response = await generate({
       ...validBody,
-      commits: Array.from({ length: 101 }, () => validBody.commits[0]),
+      source: {
+        ...validSource,
+        commits: Array.from({ length: 101 }, () => commit),
+      },
     });
 
     expect(response.status).toBe(400);
@@ -110,7 +134,10 @@ describe("POST /api/ai/generate-release-notes", () => {
 
     const response = await generate({
       ...validBody,
-      commits: [{ ...validBody.commits[0], message: "x".repeat(50_000) }],
+      source: {
+        ...validSource,
+        commits: [{ ...commit, message: "x".repeat(50_000) }],
+      },
     });
 
     expect(response.status).toBe(200);

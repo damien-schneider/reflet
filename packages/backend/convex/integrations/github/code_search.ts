@@ -1,16 +1,4 @@
-/**
- * Authenticated GitHub Code Search helpers for private repos.
- * Uses installation tokens from the GitHub App.
- */
-
-const GITHUB_API_URL = "https://api.github.com";
-
-const GITHUB_AUTH_HEADERS = (token: string) =>
-  ({
-    Accept: "application/vnd.github+json",
-    Authorization: `Bearer ${token}`,
-    "X-GitHub-Api-Version": "2022-11-28",
-  }) as const;
+import { GITHUB_API_URL, githubApiHeaders } from "./github_constants";
 
 const MAX_FILE_CONTENT_LENGTH = 10_000;
 const MAX_TREE_FILES = 500;
@@ -41,9 +29,7 @@ export async function searchCode(
   const searchQuery = `${query} repo:${repo}`;
   const url = `${GITHUB_API_URL}/search/code?q=${encodeURIComponent(searchQuery)}&per_page=${MAX_SEARCH_RESULTS_PER_QUERY}`;
 
-  const response = await fetchWithRateLimit(url, {
-    headers: GITHUB_AUTH_HEADERS(token),
-  });
+  const response = await fetchWithRateLimit(url, token);
 
   if (!response.ok) {
     if (response.status === 422) {
@@ -82,7 +68,7 @@ export async function fetchFileContent(
   const url = `${GITHUB_API_URL}/repos/${repo}/contents/${encodeURIComponent(path)}`;
 
   const response = await fetch(url, {
-    headers: GITHUB_AUTH_HEADERS(token),
+    headers: githubApiHeaders(token),
   });
 
   if (!response.ok) {
@@ -119,7 +105,7 @@ export async function fetchFileTreeAuthenticated(
   const url = `${GITHUB_API_URL}/repos/${repo}/git/trees/HEAD?recursive=1`;
 
   const response = await fetch(url, {
-    headers: GITHUB_AUTH_HEADERS(token),
+    headers: githubApiHeaders(token),
   });
 
   if (!response.ok) {
@@ -183,17 +169,15 @@ export async function searchCodeMultiQuery(
  */
 async function fetchWithRateLimit(
   url: string,
-  init: RequestInit
+  token: string
 ): Promise<Response> {
-  const response = await fetch(url, {
-    ...init,
+  const init = {
     headers: {
-      ...Object.fromEntries(
-        Object.entries((init.headers as Record<string, string>) ?? {})
-      ),
+      ...githubApiHeaders(token),
       Accept: "application/vnd.github.text-match+json",
     },
-  });
+  };
+  const response = await fetch(url, init);
 
   if (response.status === 403) {
     const retryAfter = response.headers.get("retry-after");

@@ -70,14 +70,15 @@ describe("consumeAiGeneration", () => {
   });
 });
 
-describe("suggestLinkedFeedback", () => {
+describe("matchReleaseFeedback", () => {
   test("refuses another organization's release before calling the model", async () => {
     const { as, releaseId } = await setup();
     const fetchSpy = vi.fn();
     vi.stubGlobal("fetch", fetchSpy);
 
     await expect(
-      as(OUTSIDER).action(api.changelog.ai_matching.suggestLinkedFeedback, {
+      as(OUTSIDER).action(api.changelog.ai_actions.matchReleaseFeedback, {
+        description: "Dark mode is here",
         releaseId,
       })
     ).rejects.toThrow("Only admins can use AI generation");

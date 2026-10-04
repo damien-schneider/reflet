@@ -1,161 +1,210 @@
 "use node";
 
+import { createSign } from "node:crypto";
 import { v } from "convex/values";
+import { z } from "zod";
 import { internal } from "../../_generated/api";
-import { internalAction } from "../../_generated/server";
+import type { Doc, Id } from "../../_generated/dataModel";
+import { type ActionCtx, internalAction } from "../../_generated/server";
+import { GITHUB_API_URL, githubApiHeaders } from "./github_constants";
 
-// GitHub API base URL
-const GITHUB_API_URL = "https://api.github.com";
+const HTTP_NOT_FOUND = 404;
+const HTTP_FORBIDDEN = 403;
 
-/**
- * Push a published Reflet release to GitHub as a GitHub Release.
- * Scheduled from the publish mutation when pushToGithubOnPublish is enabled.
- */
+const githubReleaseResponseSchema = z.object({
+  html_url: z.string(),
+  id: z.number(),
+});
+
+const installationTokenResponseSchema = z.object({
+  expires_at: z.string(),
+  token: z.string(),
+});
+
+interface PushFailure {
+  error: string;
+  errorType: string;
+}
+
+interface PushTarget {
+  manual: boolean;
+  release: Doc<"releases">;
+  repositoryFullName: string;
+  targetCommitish: string;
+  version: string;
+}
+
+async function markPushFailed(
+  ctx: ActionCtx,
+  releaseId: Id<"releases">,
+  failure: PushFailure
+): Promise<void> {
+  await ctx.runMutation(
+    internal.integrations.github.release_mutations.updateGithubPushStatus,
+    { ...failure, releaseId, status: "failed" }
+  );
+}
+
+async function sendReleaseToGithub(
+  ctx: ActionCtx,
+  target: PushTarget,
+  token: string
+): Promise<PushFailure | null> {
+  const { release } = target;
+  const releasesUrl = `${GITHUB_API_URL}/repos/${target.repositoryFullName}/releases`;
+  const headers = githubApiHeaders(token);
+  const pushed = {
+    body: release.description ?? "",
+    name: release.title,
+    tagName: target.version,
+  };
+  const proseFields = {
+    body: pushed.body,
+    name: pushed.name,
+    tag_name: pushed.tagName,
+  };
+  const patchRelease = (githubReleaseId: string) =>
+    fetch(`${releasesUrl}/${githubReleaseId}`, {
+      body: JSON.stringify(proseFields),
+      headers,
+      method: "PATCH",
+    });
+
+  let response = release.githubReleaseId
+    ? await patchRelease(release.githubReleaseId)
+    : null;
+  if (response?.status === HTTP_NOT_FOUND) {
+    await ctx.runMutation(
+      internal.integrations.github.release_mutations.clearGithubLink,
+      { releaseId: release._id }
+    );
+    response = null;
+  }
+
+  if (!response) {
+    const releaseWithTag = await fetch(
+      `${releasesUrl}/tags/${encodeURIComponent(target.version)}`,
+      { headers }
+    );
+    if (releaseWithTag.ok && !target.manual) {
+      return {
+        error: `A GitHub release already uses tag ${target.version}. Push manually to replace its notes.`,
+        errorType: "tag_exists",
+      };
+    }
+    response = releaseWithTag.ok
+      ? await patchRelease(
+          String(
+            githubReleaseResponseSchema.parse(await releaseWithTag.json()).id
+          )
+        )
+      : await fetch(releasesUrl, {
+          body: JSON.stringify({
+            ...proseFields,
+            draft: false,
+            prerelease: false,
+            target_commitish: target.targetCommitish,
+          }),
+          headers,
+          method: "POST",
+        });
+  }
+
+  if (!response.ok) {
+    return {
+      error: `GitHub rejected the release: ${response.status} ${await response.text()}`,
+      errorType:
+        response.status === HTTP_FORBIDDEN ? "permission_denied" : "unknown",
+    };
+  }
+
+  const githubRelease = githubReleaseResponseSchema.parse(
+    await response.json()
+  );
+  await ctx.runMutation(
+    internal.integrations.github.release_mutations.recordGithubPush,
+    {
+      githubHtmlUrl: githubRelease.html_url,
+      githubReleaseId: String(githubRelease.id),
+      pushed,
+      releaseId: release._id,
+      syncedAt: release.updatedAt,
+    }
+  );
+  return null;
+}
+
 export const pushReleaseToGithub = internalAction({
   args: {
     manual: v.optional(v.boolean()),
     releaseId: v.id("releases"),
   },
   handler: async (ctx, args) => {
-    const release = await ctx.runQuery(
-      internal.changelog.notifications_helpers.getRelease,
+    const context = await ctx.runQuery(
+      internal.integrations.github.queries.getReleasePushContext,
       { releaseId: args.releaseId }
     );
-
-    if (!release) {
-      console.error("[GitHub Push] Release not found:", args.releaseId);
+    if (!context?.organization) {
       return;
     }
+    const { connection, headSha, organization, release } = context;
+    const settings = organization.changelogSettings;
+    const manual = args.manual === true;
 
-    const org = await ctx.runQuery(
-      internal.changelog.notifications_helpers.getOrganization,
-      { organizationId: release.organizationId }
-    );
-
-    if (!org) {
-      console.error(
-        "[GitHub Push] Organization not found:",
-        release.organizationId
-      );
+    if (!manual && settings?.pushToGithubOnPublish !== true) {
       return;
     }
-
-    if (!args.manual && org.changelogSettings?.pushToGithubOnPublish !== true) {
+    if (!connection?.repositoryFullName || release.syncedFromGithub) {
       return;
     }
-
-    const connection = await ctx.runQuery(
-      internal.integrations.github.queries.getConnectionInternal,
-      { organizationId: release.organizationId }
-    );
-
-    if (!connection?.repositoryFullName) {
-      console.error(
-        "[GitHub Push] No GitHub connection or repository configured for org:",
-        release.organizationId
-      );
+    const linkedToGithubReleaseRefletDidNotAuthor =
+      release.githubReleaseId !== undefined &&
+      release.githubSyncedAt === undefined;
+    if (!manual && linkedToGithubReleaseRefletDidNotAuthor) {
       return;
     }
-
-    // Skip if this release was already synced from GitHub (avoid loops)
-    if (release.syncedFromGithub) {
+    if (!release.version) {
+      await markPushFailed(ctx, release._id, {
+        error: "Set a version before pushing — it becomes the git tag.",
+        errorType: "missing_version",
+      });
       return;
     }
-
-    // Skip if this release already has a linked GitHub release
-    if (release.githubReleaseId) {
-      return;
-    }
-
-    // Set status to pending before making the API call
-    await ctx.runMutation(
-      internal.integrations.github.release_mutations.updateGithubPushStatus,
-      {
-        releaseId: args.releaseId,
-        status: "pending",
-      }
-    );
-
-    const { token } = await ctx.runAction(
-      internal.integrations.github.node_actions.getInstallationTokenInternal,
-      { installationId: connection.installationId }
-    );
-
-    const tagName = release.version || `v${Date.now()}`;
-    const targetBranch =
-      org.changelogSettings?.targetBranch ??
-      connection.repositoryDefaultBranch ??
-      "main";
-
-    const response = await fetch(
-      `${GITHUB_API_URL}/repos/${connection.repositoryFullName}/releases`,
-      {
-        body: JSON.stringify({
-          body: release.description ?? "",
-          draft: false,
-          name: release.title,
-          prerelease: false,
-          tag_name: tagName,
-          target_commitish: targetBranch,
-        }),
-        headers: {
-          Accept: "application/vnd.github+json",
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-          "X-GitHub-Api-Version": "2022-11-28",
-        },
-        method: "POST",
-      }
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      const errorMessage = `Failed to create GitHub release: ${response.statusText} - ${errorText}`;
-      console.error(`[GitHub Push] ${errorMessage}`);
-
-      const errorType =
-        response.status === 403 ? "permission_denied" : "unknown";
-
-      await ctx.runMutation(
-        internal.integrations.github.release_mutations.updateGithubPushStatus,
-        {
-          error: errorMessage,
-          errorType,
-          releaseId: args.releaseId,
-          status: "failed",
-        }
-      );
-      return;
-    }
-
-    const githubRelease = (await response.json()) as {
-      id: number;
-      html_url: string;
-    };
-
-    // Save the GitHub release ID and URL back to the Reflet release
-    await ctx.runMutation(
-      internal.integrations.github.release_mutations.linkGithubRelease,
-      {
-        githubHtmlUrl: githubRelease.html_url,
-        githubReleaseId: String(githubRelease.id),
-        releaseId: args.releaseId,
-      }
-    );
 
     await ctx.runMutation(
       internal.integrations.github.release_mutations.updateGithubPushStatus,
-      {
-        releaseId: args.releaseId,
-        status: "success",
-      }
+      { releaseId: release._id, status: "pending" }
     );
+
+    try {
+      const { token } = await ctx.runAction(
+        internal.integrations.github.node_actions.getInstallationTokenInternal,
+        { installationId: connection.installationId }
+      );
+      const target: PushTarget = {
+        manual,
+        release,
+        repositoryFullName: connection.repositoryFullName,
+        targetCommitish:
+          headSha ??
+          settings?.targetBranch ??
+          connection.repositoryDefaultBranch ??
+          "main",
+        version: release.version,
+      };
+      const failure = await sendReleaseToGithub(ctx, target, token);
+      if (failure) {
+        await markPushFailed(ctx, release._id, failure);
+      }
+    } catch (error) {
+      await markPushFailed(ctx, release._id, {
+        error: error instanceof Error ? error.message : "Push to GitHub failed",
+        errorType: "unknown",
+      });
+    }
   },
 });
 
-/**
- * Internal version of getInstallationToken for use from other internal actions
- */
 export const getInstallationTokenInternal = internalAction({
   args: {
     installationId: v.string(),
@@ -182,8 +231,7 @@ export const getInstallationTokenInternal = internalAction({
       "base64url"
     );
 
-    const crypto = await import("node:crypto");
-    const sign = crypto.createSign("RSA-SHA256");
+    const sign = createSign("RSA-SHA256");
     sign.update(`${header}.${payloadBase64}`);
     const signature = sign.sign(privateKey.replace(/\\n/g, "\n"), "base64url");
 
@@ -192,11 +240,7 @@ export const getInstallationTokenInternal = internalAction({
     const response = await fetch(
       `${GITHUB_API_URL}/app/installations/${args.installationId}/access_tokens`,
       {
-        headers: {
-          Accept: "application/vnd.github+json",
-          Authorization: `Bearer ${jwt}`,
-          "X-GitHub-Api-Version": "2022-11-28",
-        },
+        headers: githubApiHeaders(jwt),
         method: "POST",
       }
     );
@@ -208,10 +252,7 @@ export const getInstallationTokenInternal = internalAction({
       );
     }
 
-    const data = (await response.json()) as {
-      token: string;
-      expires_at: string;
-    };
+    const data = installationTokenResponseSchema.parse(await response.json());
     return {
       expiresAt: data.expires_at,
       token: data.token,

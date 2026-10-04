@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { internalQuery } from "../_generated/server";
 import { feedbackStatus } from "../shared/validators";
+import { releaseCommitValidator } from "./tableFields";
 
 const MAX_FEEDBACK_ITEMS = 50;
 
@@ -50,17 +51,17 @@ export const getReleaseAndFeedback = internalQuery({
         voteCount: f.voteCount ?? 0,
       }));
 
-    return {
-      feedbackItems,
-      release: {
-        description: release.description,
-        title: release.title,
-      },
-    };
+    const snapshot = await ctx.db
+      .query("releaseCommits")
+      .withIndex("by_release", (q) => q.eq("releaseId", args.releaseId))
+      .first();
+
+    return { commits: snapshot?.commits ?? [], feedbackItems };
   },
   returns: v.union(
     v.null(),
     v.object({
+      commits: v.array(releaseCommitValidator),
       feedbackItems: v.array(
         v.object({
           _id: v.id("feedback"),
@@ -70,10 +71,6 @@ export const getReleaseAndFeedback = internalQuery({
           voteCount: v.number(),
         })
       ),
-      release: v.object({
-        description: v.optional(v.string()),
-        title: v.string(),
-      }),
     })
   ),
 });

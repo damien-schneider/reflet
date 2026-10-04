@@ -145,58 +145,6 @@ export const listLabels = action({
 });
 
 /**
- * Sync releases from GitHub into the database.
- */
-export const syncReleases = action({
-  args: {
-    organizationId: v.id("organizations"),
-  },
-  handler: async (ctx, args): Promise<{ success: boolean; synced: number }> => {
-    const connection = await requireAdminConnection(ctx, args.organizationId);
-
-    await ctx.runMutation(
-      internal.integrations.github.release_mutations.updateSyncStatus,
-      {
-        connectionId: connection._id,
-        status: "syncing",
-      }
-    );
-
-    try {
-      const { token } = await ctx.runAction(
-        internal.integrations.github.node_actions.getInstallationTokenInternal,
-        { installationId: connection.installationId }
-      );
-
-      const releases = await ctx.runAction(
-        internal.integrations.github.actions.fetchReleases,
-        {
-          installationToken: token,
-          repositoryFullName: connection.repositoryFullName,
-        }
-      );
-
-      await ctx.runMutation(
-        internal.integrations.github.release_mutations.saveSyncedReleases,
-        { organizationId: args.organizationId, releases }
-      );
-
-      return { success: true, synced: releases.length };
-    } catch (error) {
-      await ctx.runMutation(
-        internal.integrations.github.release_mutations.updateSyncStatus,
-        {
-          connectionId: connection._id,
-          error: error instanceof Error ? error.message : "Unknown error",
-          status: "error",
-        }
-      );
-      throw error;
-    }
-  },
-});
-
-/**
  * Sync issues from GitHub into the database.
  */
 export const syncIssues = action({

@@ -5,8 +5,25 @@ import { internal } from "../../_generated/api";
 import type { Id } from "../../_generated/dataModel";
 import type { ActionCtx } from "../../_generated/server";
 import { internalAction } from "../../_generated/server";
-import { getErrorMessage, MAX_COMMITS_PER_GROUP } from "./github";
-import { generateNotesForGroup } from "./openrouter";
+import { MAX_SOURCE_COMMITS } from "../source";
+import type { ReleaseCommit } from "../tableFields";
+import { generateReleaseProse } from "./assistant";
+import { getErrorMessage } from "./github";
+import { loadActiveJob } from "./job_state";
+
+async function loadGroupCommitsNewestFirst(
+  ctx: ActionCtx,
+  jobId: Id<"retroactiveJobs">,
+  groupId: string
+): Promise<ReleaseCommit[]> {
+  const commitDocs = await ctx.runQuery(
+    internal.changelog.retroactive_mutations.getCommitsForGroup,
+    { groupId, jobId }
+  );
+  return commitDocs
+    .flatMap((doc) => doc.commits)
+    .sort((a, b) => Date.parse(b.date) - Date.parse(a.date));
+}
 
 async function scheduleNextGroupOrFinish(
   ctx: ActionCtx,
@@ -39,12 +56,8 @@ export const generateNotesPhase = internalAction({
     jobId: v.id("retroactiveJobs"),
   },
   handler: async (ctx, args) => {
-    const job = await ctx.runQuery(
-      internal.changelog.retroactive_mutations.getJobInternal,
-      { jobId: args.jobId }
-    );
-
-    if (!job || job.status === "cancelled" || !job.groups) {
+    const job = await loadActiveJob(ctx, args.jobId);
+    if (!job?.groups) {
       return;
     }
 
@@ -74,12 +87,11 @@ export const generateNotesPhase = internalAction({
         { groupIndex: args.groupIndex, jobId: args.jobId, status: "generating" }
       );
 
-      const commitDocs = await ctx.runQuery(
-        internal.changelog.retroactive_mutations.getCommitsForGroup,
-        { groupId: group.id, jobId: args.jobId }
+      const allCommits = await loadGroupCommitsNewestFirst(
+        ctx,
+        args.jobId,
+        group.id
       );
-
-      const allCommits = commitDocs.flatMap((doc) => doc.commits);
 
       if (allCommits.length === 0) {
         await ctx.runMutation(
@@ -95,19 +107,17 @@ export const generateNotesPhase = internalAction({
         return;
       }
 
-      const apiKey = process.env.OPENROUTER_API_KEY;
-      if (!apiKey) {
-        throw new Error("OPENROUTER_API_KEY is not configured");
-      }
-
-      const { generatedTitle, generatedDescription } =
-        await generateNotesForGroup(apiKey, allCommits, group);
+      const { description, title } = await generateReleaseProse({
+        commits: allCommits.slice(0, MAX_SOURCE_COMMITS),
+        totalCommits: allCommits.length,
+        version: group.version ?? group.title,
+      });
 
       await ctx.runMutation(
         internal.changelog.retroactive_mutations.updateGroupStatus,
         {
-          generatedDescription,
-          generatedTitle,
+          generatedDescription: description,
+          generatedTitle: title || group.title,
           groupIndex: args.groupIndex,
           jobId: args.jobId,
           status: "generated",
@@ -145,12 +155,8 @@ export const generateNotesPhase = internalAction({
 export const createReleasesPhase = internalAction({
   args: { jobId: v.id("retroactiveJobs") },
   handler: async (ctx, args) => {
-    const job = await ctx.runQuery(
-      internal.changelog.retroactive_mutations.getJobInternal,
-      { jobId: args.jobId }
-    );
-
-    if (!job || job.status === "cancelled" || !job.groups) {
+    const job = await loadActiveJob(ctx, args.jobId);
+    if (!job?.groups) {
       return;
     }
 
@@ -165,41 +171,54 @@ export const createReleasesPhase = internalAction({
       );
 
       const createdReleaseIds: Id<"releases">[] = [];
+      const tags = job.tags ?? [];
 
-      for (let i = 0; i < job.groups.length; i++) {
-        const group = job.groups[i];
-        if (group?.status !== "generated") {
+      for (const [groupIndex, group] of job.groups.entries()) {
+        if (group.status !== "generated") {
           continue;
         }
+        if (!(await loadActiveJob(ctx, args.jobId))) {
+          return;
+        }
 
-        const commitDocs = await ctx.runQuery(
-          internal.changelog.retroactive_mutations.getCommitsForGroup,
-          { groupId: group.id, jobId: args.jobId }
+        const allCommits = await loadGroupCommitsNewestFirst(
+          ctx,
+          args.jobId,
+          group.id
         );
-
-        const allCommits = commitDocs.flatMap((doc) => doc.commits);
+        const tagIndex = tags.findIndex((tag) => tag.name === group.version);
+        const headTag = tags[tagIndex];
 
         const releaseId = await ctx.runMutation(
           internal.changelog.retroactive_mutations.createDraftRelease,
           {
-            commits: allCommits.slice(0, MAX_COMMITS_PER_GROUP),
             description: group.generatedDescription ?? "",
             organizationId: job.organizationId,
+            snapshot: {
+              baseRef: headTag ? tags[tagIndex + 1]?.name : undefined,
+              commits: allCommits.slice(0, MAX_SOURCE_COMMITS),
+              headRef: headTag?.name,
+              headSha: headTag?.sha,
+              totalCommits: allCommits.length,
+            },
             title: group.generatedTitle ?? group.title,
             version: group.version,
           }
         );
 
-        createdReleaseIds.push(releaseId);
-
+        if (releaseId) {
+          createdReleaseIds.push(releaseId);
+        }
         await ctx.runMutation(
           internal.changelog.retroactive_mutations.updateGroupStatus,
-          {
-            groupIndex: i,
-            jobId: args.jobId,
-            releaseId,
-            status: "created",
-          }
+          releaseId
+            ? { groupIndex, jobId: args.jobId, releaseId, status: "created" }
+            : {
+                error: `Version ${group.version} already exists`,
+                groupIndex,
+                jobId: args.jobId,
+                status: "skipped",
+              }
         );
       }
 

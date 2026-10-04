@@ -3,7 +3,7 @@
 import { toast } from "@ctrl-ui/react/ui/toast";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { useAction } from "convex/react";
+import { useAction, useMutation } from "convex/react";
 import { useCallback, useState } from "react";
 import { buildGitHubInstallUrl } from "@/features/github/lib/github-install-url";
 import {
@@ -104,8 +104,8 @@ export function useGitHubSettings({
   const listLabelsAction = useAction(
     api.integrations.github.client_actions.listLabels
   );
-  const syncReleasesAction = useAction(
-    api.integrations.github.client_actions.syncReleases
+  const triggerReleaseSync = useMutation(
+    api.changelog.actions.triggerGithubSync
   );
   const syncIssuesAction = useAction(
     api.integrations.github.client_actions.syncIssues
@@ -184,11 +184,11 @@ export function useGitHubSettings({
     }
     setIsSyncing(true);
     await runOrToast(
-      () => syncReleasesAction({ organizationId: orgId }),
+      () => triggerReleaseSync({ organizationId: orgId }),
       "Unable to sync releases. Try again."
     );
     setIsSyncing(false);
-  }, [orgId, syncReleasesAction]);
+  }, [orgId, triggerReleaseSync]);
 
   const handleSyncIssues = useCallback(async () => {
     if (!orgId) {

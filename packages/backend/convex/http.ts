@@ -12,11 +12,13 @@ import { registerAdminContentRoutes } from "./http/admin_content";
 import { registerAdminFeedbackRoutes } from "./http/admin_feedback";
 import { registerAdminManagementRoutes } from "./http/admin_management";
 import { registerAdminSurveyRoutes } from "./http/admin_surveys";
-import { registerAiApiRoutes } from "./http/ai_api";
 import { registerDevtoolsRoutes } from "./http/devtools_routes";
 import { registerGithubWebhookRoutes } from "./http/github_webhook";
 import { registerPublicApiRoutes } from "./http/public_api";
 import { registerSupportEmailRoutes } from "./support/email/http_routes";
+
+const RSS_PATH_PREFIX = "/rss/";
+const TRAILING_SLASH_PATTERN = /\/+$/;
 
 const http = httpRouter();
 
@@ -66,8 +68,6 @@ registerStripeRoutes(http, components.stripe as any, {
 
 registerGithubWebhookRoutes(http);
 
-registerAiApiRoutes(http);
-
 registerPublicApiRoutes(http);
 registerDevtoolsRoutes(http);
 
@@ -84,8 +84,9 @@ registerSupportEmailRoutes(http);
 http.route({
   handler: httpAction(async (ctx, request) => {
     const url = new URL(request.url);
-    const pathParts = url.pathname.split("/").filter(Boolean);
-    const orgSlug = pathParts[1];
+    const orgSlug = decodeURIComponent(
+      url.pathname.slice(RSS_PATH_PREFIX.length)
+    ).replace(TRAILING_SLASH_PATTERN, "");
 
     if (!orgSlug) {
       return new Response("Organization slug required", { status: 400 });
@@ -112,7 +113,8 @@ http.route({
     );
 
     const siteUrl = process.env.SITE_URL ?? "";
-    const rssXml = generateRssFeed(org, releases, siteUrl);
+    const feedUrl = `${url.origin}${RSS_PATH_PREFIX}${org.slug}`;
+    const rssXml = generateRssFeed(org, releases, siteUrl, feedUrl);
 
     return new Response(rssXml, {
       headers: {
@@ -123,7 +125,7 @@ http.route({
     });
   }),
   method: "GET",
-  path: "/rss",
+  pathPrefix: RSS_PATH_PREFIX,
 });
 
 registerAdminFeedbackRoutes(http);

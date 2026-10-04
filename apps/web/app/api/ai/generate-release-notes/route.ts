@@ -1,6 +1,13 @@
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { AI_ACCESS_DENIED } from "@reflet/backend/convex/ai/constants";
+import { RELEASE_NOTES_MODEL_CHAIN } from "@reflet/backend/convex/changelog/ai/models";
+import { buildReleaseNotesPrompt } from "@reflet/backend/convex/changelog/ai/prompts";
+import {
+  MAX_SOURCE_COMMITS,
+  MAX_SOURCE_FILES,
+  MAX_SOURCE_PULL_REQUESTS,
+} from "@reflet/backend/convex/changelog/source";
 import { env } from "@reflet/env/server";
 import { createTextStreamResponse, streamText, toTextStream } from "ai";
 import { ConvexError } from "convex/values";
@@ -12,17 +19,9 @@ const openrouter = createOpenRouter({
   apiKey: env.OPENROUTER_API_KEY,
 });
 
-const MODEL_FALLBACK_CHAIN = [
-  "qwen/qwen3.6-plus-preview:free",
-  "nvidia/nemotron-3-super-120b-a12b:free",
-  "minimax/minimax-m2.5:free",
-  "stepfun/step-3.5-flash:free",
-  "openai/gpt-5.4-mini",
-] as const;
-
-const MAX_COMMITS = 100;
-const MAX_FILES = 50;
 const MAX_COMMIT_MESSAGE_LENGTH = 2000;
+const MAX_PULL_REQUEST_BODY_LENGTH = 2000;
+const MAX_MAINTAINER_NOTES_LENGTH = 20_000;
 const MAX_FILENAME_LENGTH = 1000;
 const MAX_SHORT_FIELD_LENGTH = 200;
 const MAX_OUTPUT_TOKENS = 4000;
@@ -31,25 +30,50 @@ const shortField = z.string().max(MAX_SHORT_FIELD_LENGTH);
 const clippedText = (maxLength: number) =>
   z.string().transform((value) => value.slice(0, maxLength));
 
-const commitInputSchema = z.object({
-  author: clippedText(MAX_SHORT_FIELD_LENGTH),
-  message: clippedText(MAX_COMMIT_MESSAGE_LENGTH),
-  sha: shortField,
-});
-
-const fileInputSchema = z.object({
-  additions: z.number(),
-  deletions: z.number(),
-  filename: clippedText(MAX_FILENAME_LENGTH),
-  status: shortField,
+const sourceSchema = z.object({
+  baseRef: shortField.optional(),
+  commits: z
+    .array(
+      z.object({
+        author: clippedText(MAX_SHORT_FIELD_LENGTH),
+        date: shortField,
+        fullMessage: clippedText(MAX_COMMIT_MESSAGE_LENGTH),
+        message: clippedText(MAX_COMMIT_MESSAGE_LENGTH),
+        sha: shortField,
+      })
+    )
+    .max(MAX_SOURCE_COMMITS),
+  files: z
+    .array(
+      z.object({
+        additions: z.number(),
+        deletions: z.number(),
+        filename: clippedText(MAX_FILENAME_LENGTH),
+        status: shortField,
+      })
+    )
+    .max(MAX_SOURCE_FILES),
+  headRef: shortField,
+  headSha: shortField,
+  maintainerNotes: clippedText(MAX_MAINTAINER_NOTES_LENGTH).optional(),
+  pullRequests: z
+    .array(
+      z.object({
+        body: clippedText(MAX_PULL_REQUEST_BODY_LENGTH).optional(),
+        number: z.number(),
+        title: clippedText(MAX_SHORT_FIELD_LENGTH),
+        url: shortField,
+      })
+    )
+    .max(MAX_SOURCE_PULL_REQUESTS),
+  totalCommits: z.number(),
 });
 
 const requestBodySchema = z.object({
-  commits: z.array(commitInputSchema).max(MAX_COMMITS),
-  files: z.array(fileInputSchema).max(MAX_FILES).optional(),
   organizationId: shortField.min(1),
-  previousVersion: shortField.optional(),
+  releaseId: shortField.min(1),
   repositoryName: shortField.optional(),
+  source: sourceSchema,
   version: shortField.optional(),
 });
 
@@ -134,66 +158,31 @@ export async function POST(request: Request): Promise<Response> {
       );
     }
 
-    const body = requestBodySchema.parse(await request.json());
-    const {
-      commits,
-      files,
-      organizationId,
-      version,
-      previousVersion,
-      repositoryName,
-    } = body;
+    const { organizationId, repositoryName, source, version } =
+      requestBodySchema.parse(await request.json());
 
-    if (commits.length === 0) {
-      return Response.json({ error: "No commits provided" }, { status: 400 });
+    const hasSourceMaterial =
+      source.commits.length > 0 ||
+      source.pullRequests.length > 0 ||
+      Boolean(source.maintainerNotes);
+    if (!hasSourceMaterial) {
+      return Response.json(
+        { error: "No source material provided" },
+        { status: 400 }
+      );
     }
 
     await fetchAuthMutation(api.ai.usage_gate.consumeAiGeneration, {
       organizationId: toOrgId(organizationId),
     });
 
-    const commitSummary = commits
-      .map((c) => `- ${c.message} (${c.sha} by @${c.author})`)
-      .join("\n");
+    const prompt = buildReleaseNotesPrompt({
+      ...source,
+      repositoryName,
+      version,
+    });
 
-    const fileSummary = files
-      ? files
-          .map(
-            (f) =>
-              `- ${f.filename} (${f.status}: +${f.additions}/-${f.deletions})`
-          )
-          .join("\n")
-      : "No file change data available";
-
-    const versionInfo = version
-      ? `Version: ${version}${previousVersion ? ` (from ${previousVersion})` : ""}`
-      : "";
-
-    const repoInfo = repositoryName ? `Repository: ${repositoryName}` : "";
-
-    const prompt = `Generate professional, user-facing release notes in Markdown from the following git changes.
-
-${versionInfo}
-${repoInfo}
-
-## Commits
-${commitSummary}
-
-## Files Changed
-${fileSummary}
-
-## Instructions
-- Group changes into categories like **Features**, **Bug Fixes**, **Improvements**, **Breaking Changes** (only include categories that have items)
-- Write from the user's perspective — explain what changed and why it matters, not the implementation details
-- Use clear, concise bullet points
-- Do NOT include commit SHAs, author names, or file paths unless they add context
-- Do NOT add a title/heading — just the categorized content
-- Skip merge commits, dependency bumps, and trivial changes unless they affect users
-- If there are breaking changes, highlight them clearly
-- Keep a professional but approachable tone
-- Output only the markdown content, nothing else`;
-
-    for (const modelId of MODEL_FALLBACK_CHAIN) {
+    for (const modelId of RELEASE_NOTES_MODEL_CHAIN) {
       const stream = await openStreamForModel(modelId, prompt);
       if (stream) {
         return createTextStreamResponse({ stream });

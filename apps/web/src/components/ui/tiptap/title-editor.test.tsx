@@ -108,15 +108,18 @@ describe("TiptapTitleEditor", () => {
 
     rerender(<TiptapTitleEditor onChange={vi.fn()} value="Fix <b> & tags" />);
 
-    expect(mockSetContent).toHaveBeenCalledWith({
-      content: [
-        {
-          content: [{ text: "Fix <b> & tags", type: "text" }],
-          type: "paragraph",
-        },
-      ],
-      type: "doc",
-    });
+    expect(mockSetContent).toHaveBeenCalledWith(
+      {
+        content: [
+          {
+            content: [{ text: "Fix <b> & tags", type: "text" }],
+            type: "paragraph",
+          },
+        ],
+        type: "doc",
+      },
+      { emitUpdate: false }
+    );
   });
 
   it("sets an empty paragraph when value is empty", () => {
@@ -128,10 +131,10 @@ describe("TiptapTitleEditor", () => {
 
     rerender(<TiptapTitleEditor onChange={vi.fn()} value="" />);
 
-    expect(mockSetContent).toHaveBeenCalledWith({
-      content: [{ type: "paragraph" }],
-      type: "doc",
-    });
+    expect(mockSetContent).toHaveBeenCalledWith(
+      { content: [{ type: "paragraph" }], type: "doc" },
+      { emitUpdate: false }
+    );
   });
 
   it("calls onChange with plain text on editor update", () => {

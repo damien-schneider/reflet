@@ -8,281 +8,198 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@ctrl-ui/react/ui/tooltip";
-import { Info, Lightning } from "@phosphor-icons/react";
+import { Info, Lightning, X } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { env } from "@reflet/env/web";
-import { useAction, useQuery } from "convex/react";
+import type { ReleaseSource } from "@reflet/backend/convex/changelog/source";
+import { useAction, useMutation, useQuery } from "convex/react";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { capture } from "@/lib/analytics";
+import { describeCommitCount } from "./release-commits-list";
 
 const GENERATE_HINT =
-  "Generate release notes from recent code changes on GitHub";
-const MAX_COMMITS_FOR_AI = 100;
-const MAX_FILES_FOR_AI = 50;
-const TOO_MANY_REQUESTS = 429;
+  "Generate release notes from the code changes in this release on GitHub";
 
-export interface CommitInfo {
-  author: string;
-  date: string;
-  fullMessage: string;
-  message: string;
-  sha: string;
-}
+type GenerationPhase = "idle" | "resolving" | "writing" | "finishing";
 
-export interface FileInfo {
-  additions: number;
-  deletions: number;
-  filename: string;
-  status: string;
-}
+const PHASE_LABELS: Record<Exclude<GenerationPhase, "idle">, string> = {
+  finishing: "Saving draft…",
+  resolving: "Reading changes…",
+  writing: "Writing…",
+};
 
 interface GenerateFromCommitsProps {
   disabled?: boolean;
-  isStreaming?: boolean;
-  onCommitsFetched?: (
-    commits: CommitInfo[],
-    files: FileInfo[] | undefined,
-    previousTag: string | null
-  ) => void;
-  onComplete: (content: string) => void;
-  onStreamChunk: (content: string) => void;
-  onStreamStart: () => void;
-  onTitleGenerated: (title: string) => void;
+  onApplied: () => void;
+  onPreviewChange: (preview: string | null) => void;
   organizationId: Id<"organizations">;
   orgSlug: string;
-  releaseId: Id<"releases"> | null;
+  saveRelease: () => Promise<Id<"releases">>;
   version: string;
 }
 
+interface ReleaseNotesRequest {
+  organizationId: Id<"organizations">;
+  releaseId: Id<"releases">;
+  repositoryName?: string;
+  source: ReleaseSource;
+  version?: string;
+}
+
+async function readErrorMessage(response: Response): Promise<string> {
+  const body: unknown = await response.json().catch(() => null);
+  if (
+    body &&
+    typeof body === "object" &&
+    "error" in body &&
+    typeof body.error === "string"
+  ) {
+    return body.error;
+  }
+  return "Unable to generate release notes. Try again.";
+}
+
+async function streamReleaseNotes(
+  request: ReleaseNotesRequest,
+  signal: AbortSignal,
+  onChunk: (content: string) => void
+): Promise<string> {
+  const response = await fetch("/api/ai/generate-release-notes", {
+    body: JSON.stringify(request),
+    headers: { "Content-Type": "application/json" },
+    method: "POST",
+    signal,
+  });
+  if (!(response.ok && response.body)) {
+    throw new Error(await readErrorMessage(response));
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let content = "";
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) {
+      return content;
+    }
+    content += decoder.decode(value, { stream: true });
+    onChunk(content);
+  }
+}
+
 export function GenerateFromCommits({
+  disabled,
+  onApplied,
+  onPreviewChange,
   organizationId,
   orgSlug,
-  releaseId,
+  saveRelease,
   version,
-  onStreamStart,
-  onStreamChunk,
-  onComplete,
-  onTitleGenerated,
-  onCommitsFetched,
-  disabled,
-  isStreaming,
 }: GenerateFromCommitsProps) {
-  const [isFetchingCommits, setIsFetchingCommits] = useState(false);
+  const [phase, setPhase] = useState<GenerationPhase>("idle");
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const org = useQuery(api.organizations.queries.get, { id: organizationId });
   const githubConnection = useQuery(
     api.integrations.github.queries.getConnection,
-    {
-      organizationId,
-    }
+    { organizationId }
+  );
+  const resolveReleaseSource = useAction(
+    api.changelog.source_actions.resolveReleaseSource
+  );
+  const generateReleaseTitle = useAction(
+    api.changelog.ai_actions.generateReleaseTitle
+  );
+  const saveGeneratedDraft = useMutation(
+    api.changelog.release_drafts.saveGeneratedDraft
   );
 
-  const listTags = useAction(api.integrations.github.repo_actions.listTags);
-  const listCommitsBetweenRefs = useAction(
-    api.integrations.github.repo_actions.listCommitsBetweenRefs
-  );
-  const listRecentCommits = useAction(
-    api.integrations.github.repo_actions.listRecentCommits
-  );
+  useEffect(() => () => abortControllerRef.current?.abort(), []);
 
-  const previousReleaseCommit = useQuery(
-    api.changelog.release_commits.getLatestCommitFromPreviousRelease,
-    { excludeReleaseId: releaseId ?? undefined, organizationId }
-  );
+  const repositoryName = githubConnection?.repositoryFullName;
 
-  const hasInstallation = Boolean(githubConnection?.installationId);
-  const hasRepository = Boolean(githubConnection?.repositoryFullName);
-  const repoFullName = githubConnection?.repositoryFullName ?? "";
-  const targetBranch =
-    (org?.role ? org.changelogSettings?.targetBranch : undefined) ??
-    githubConnection?.repositoryDefaultBranch ??
-    "main";
+  const generate = async (signal: AbortSignal) => {
+    const releaseId = await saveRelease();
+    const tagName = version.trim() || undefined;
+    const source = await resolveReleaseSource({ releaseId, version: tagName });
+    signal.throwIfAborted();
 
-  const fetchGitHubChanges = async (): Promise<{
-    commits: CommitInfo[];
-    files: FileInfo[] | undefined;
-    previousTag: string | null;
-  }> => {
-    const tags = await listTags({ organizationId });
-
-    const currentTag = version.trim();
-    const previousTag = findPreviousTag(tags, currentTag);
-
-    if (previousTag) {
-      const head =
-        currentTag && tagExists(tags, currentTag) ? currentTag : targetBranch;
-      const result = await listCommitsBetweenRefs({
-        base: previousTag,
-        head,
-        organizationId,
-      });
-      return { commits: result.commits, files: result.files, previousTag };
-    }
-
-    if (previousReleaseCommit?.sha) {
-      const result = await listCommitsBetweenRefs({
-        base: previousReleaseCommit.sha,
-        head: targetBranch,
-        organizationId,
-      });
-      return { commits: result.commits, files: result.files, previousTag };
-    }
-
-    const commits = await listRecentCommits({
-      branch: targetBranch,
-      organizationId,
-      perPage: 30,
-    });
-    return { commits, files: undefined, previousTag };
-  };
-
-  const streamReleaseNotes = async (
-    commits: CommitInfo[],
-    files: FileInfo[] | undefined,
-    previousTag: string | null
-  ): Promise<string> => {
-    const abortController = new AbortController();
-    abortControllerRef.current = abortController;
-
-    const currentTag = version.trim();
-    const response = await fetch("/api/ai/generate-release-notes", {
-      body: JSON.stringify({
-        commits: commits.slice(0, MAX_COMMITS_FOR_AI).map((c) => ({
-          author: c.author,
-          message: c.message,
-          sha: c.sha,
-        })),
-        files: files?.slice(0, MAX_FILES_FOR_AI).map((f) => ({
-          additions: f.additions,
-          deletions: f.deletions,
-          filename: f.filename,
-          status: f.status,
-        })),
-        organizationId,
-        previousVersion: previousTag ?? undefined,
-        repositoryName: repoFullName,
-        version: currentTag || undefined,
-      }),
-      headers: { "Content-Type": "application/json" },
-      method: "POST",
-      signal: abortController.signal,
-    });
-
-    if (response.status === TOO_MANY_REQUESTS) {
-      throw new Error("AI generation limit reached. Try again later.");
-    }
-    if (!(response.ok && response.body)) {
-      throw new Error("Failed to start AI generation");
-    }
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let fullContent = "";
-
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) {
-        break;
-      }
-      fullContent += decoder.decode(value, { stream: true });
-      onStreamChunk(fullContent);
-    }
-
-    abortControllerRef.current = null;
-    return fullContent;
-  };
-
-  const fetchGeneratedTitle = async (
-    description: string
-  ): Promise<string | undefined> => {
-    const response = await fetch(
-      `${env.NEXT_PUBLIC_CONVEX_SITE_URL}/api/ai/generate-release-title`,
-      {
-        body: JSON.stringify({
-          description,
-          organizationId,
-          version: version.trim() || undefined,
-        }),
-        headers: { "Content-Type": "application/json" },
-        method: "POST",
-      }
-    );
-
-    if (!response.ok) {
+    const hasSourceMaterial =
+      source.commits.length > 0 ||
+      source.pullRequests.length > 0 ||
+      Boolean(source.maintainerNotes);
+    if (!hasSourceMaterial) {
+      toast.info("No changes found for this release on GitHub.");
       return;
     }
 
-    const data: unknown = await response.json();
-    if (
-      data &&
-      typeof data === "object" &&
-      "title" in data &&
-      typeof data.title === "string"
-    ) {
-      return data.title;
-    }
-  };
-
-  const applyGeneratedTitle = async (description: string) => {
-    const generated = await fetchGeneratedTitle(description).catch(
-      () => undefined
+    setPhase("writing");
+    onPreviewChange("");
+    const description = await streamReleaseNotes(
+      {
+        organizationId,
+        releaseId,
+        repositoryName,
+        source,
+        version: tagName,
+      },
+      signal,
+      onPreviewChange
     );
-    if (generated) {
-      onTitleGenerated(generated);
+
+    setPhase("finishing");
+    const title = await generateReleaseTitle({
+      description,
+      releaseId,
+      version: tagName,
+    }).catch(() => undefined);
+    signal.throwIfAborted();
+
+    const { applied } = await saveGeneratedDraft({
+      description,
+      releaseId,
+      source,
+      title,
+    });
+    capture("ai_release_notes_generated");
+    const commitCount = describeCommitCount(
+      source.commits.length,
+      source.totalCommits
+    );
+    if (applied) {
+      toast.success(`Generated from ${commitCount}`);
+      onApplied();
+      return;
     }
+    toast.success(
+      `Generated from ${commitCount}. Your edits were kept — review the draft.`
+    );
   };
 
   const handleGenerate = async () => {
-    if (!(githubConnection?.installationId && repoFullName)) {
-      toast.error("GitHub is not connected. Connect GitHub first.");
-      return;
-    }
-
-    setIsFetchingCommits(true);
-
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+    setPhase("resolving");
     try {
-      const { commits, files, previousTag } = await fetchGitHubChanges();
-
-      if (commits.length === 0) {
-        toast.info("No commits found to generate from.");
-        return;
-      }
-
-      onCommitsFetched?.(commits, files, previousTag);
-
-      setIsFetchingCommits(false);
-      onStreamStart();
-
-      const fullContent = await streamReleaseNotes(commits, files, previousTag);
-
-      onComplete(fullContent);
-      capture("ai_release_notes_generated");
-      toast.success(
-        `Generated from ${commits.length} commit${commits.length === 1 ? "" : "s"}`
-      );
-
-      applyGeneratedTitle(fullContent);
+      await generate(abortController.signal);
     } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") {
-        return;
+      if (!abortController.signal.aborted) {
+        toast.error(
+          error instanceof Error ? error.message : "Failed to generate notes"
+        );
       }
-      const message =
-        error instanceof Error ? error.message : "Failed to generate notes";
-      toast.error(message);
-      onComplete("");
     } finally {
-      setIsFetchingCommits(false);
+      abortControllerRef.current = null;
+      onPreviewChange(null);
+      setPhase("idle");
     }
   };
 
-  if (!hasInstallation) {
+  if (!githubConnection?.installationId) {
     return null;
   }
 
-  if (!hasRepository) {
+  if (!repositoryName) {
     return (
       <Link
         className="flex items-center gap-1 text-muted-foreground text-xs hover:text-foreground"
@@ -294,61 +211,47 @@ export function GenerateFromCommits({
     );
   }
 
-  const isDisabled = disabled || isFetchingCommits || isStreaming;
+  if (phase !== "idle") {
+    return (
+      <div className="flex items-center gap-1.5">
+        <span
+          aria-live="polite"
+          className="flex items-center gap-1.5 text-muted-foreground text-xs"
+          role="status"
+        >
+          <Spinner size="xs" />
+          {PHASE_LABELS[phase]}
+        </span>
+        <Button
+          onClick={() => abortControllerRef.current?.abort()}
+          size="xs"
+          type="button"
+          variant="ghost"
+        >
+          <X aria-hidden className="size-3" />
+          Cancel
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <Tooltip>
       <TooltipTrigger
         render={
           <Button
-            disabled={isDisabled}
+            disabled={disabled}
             onClick={handleGenerate}
             size="xs"
             type="button"
             variant="surface"
           >
-            {isFetchingCommits || isStreaming ? (
-              <>
-                <Spinner data-icon="inline-start" size="xs" />
-                {isFetchingCommits ? "Fetching…" : "Generating…"}
-              </>
-            ) : (
-              <>
-                <Lightning aria-hidden className="size-3" />
-                Generate with AI
-              </>
-            )}
+            <Lightning aria-hidden className="size-3" />
+            Generate with AI
           </Button>
         }
       />
       <TooltipContent>{GENERATE_HINT}</TooltipContent>
     </Tooltip>
   );
-}
-
-function findPreviousTag(
-  tags: Array<{ name: string; sha: string }>,
-  currentVersion: string
-): string | null {
-  if (tags.length === 0) {
-    return null;
-  }
-
-  if (currentVersion) {
-    const currentIndex = tags.findIndex(
-      (t) => t.name === currentVersion || t.name === `v${currentVersion}`
-    );
-
-    if (currentIndex >= 0 && currentIndex + 1 < tags.length) {
-      return tags[currentIndex + 1]?.name ?? null;
-    }
-
-    return tags[0]?.name ?? null;
-  }
-
-  return tags[0]?.name ?? null;
-}
-
-function tagExists(tags: Array<{ name: string }>, tagName: string): boolean {
-  return tags.some((t) => t.name === tagName || t.name === `v${tagName}`);
 }

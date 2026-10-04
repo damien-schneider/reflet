@@ -93,7 +93,7 @@ export const ManualSyncSection = ({
   const handleImport = async (githubReleaseId: Id<"githubReleases">) => {
     setImportingId(githubReleaseId);
     try {
-      await importRelease({ autoPublish: true, githubReleaseId });
+      await importRelease({ githubReleaseId });
       toast.success("Release imported");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to import");

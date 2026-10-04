@@ -31,7 +31,10 @@ import { useMutation, useQuery } from "convex/react";
 import Link from "next/link";
 import { use, useState } from "react";
 import { DestructiveConfirmDialog } from "@/components/ui/destructive-confirm-dialog";
-import { RetroactiveDraftItem } from "@/features/changelog/components/retroactive-draft-item";
+import {
+  type DraftRelease,
+  RetroactiveDraftItem,
+} from "@/features/changelog/components/retroactive-draft-item";
 import { OrgNotFound } from "@/features/dashboard/components/org-not-found";
 
 const SORT_ORDERS = ["newest", "oldest"] as const;
@@ -44,17 +47,6 @@ const SORT_ORDER_LABELS: Record<SortOrder, string> = {
 };
 
 const SKELETON_ROWS = ["first", "second", "third"] as const;
-
-interface DraftRelease {
-  _id: Id<"releases">;
-  commitCount: number;
-  createdAt: number;
-  description?: string;
-  publishedAt?: number;
-  retroactivelyGenerated?: boolean;
-  title: string;
-  version?: string;
-}
 
 function DraftsSkeleton() {
   return (
@@ -139,8 +131,8 @@ function sortDrafts(
     )
     .sort((a, b) =>
       sortOrder === "newest"
-        ? b.createdAt - a.createdAt
-        : a.createdAt - b.createdAt
+        ? b.sourceDate - a.sourceDate
+        : a.sourceDate - b.sourceDate
     );
 }
 

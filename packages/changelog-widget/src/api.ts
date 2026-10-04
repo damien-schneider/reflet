@@ -1,4 +1,4 @@
-import type { ChangelogEntry } from "./types";
+import type { ChangelogEntry, ChangelogLinkedItem } from "./types";
 
 declare const __CONVEX_SITE_URL__: string;
 
@@ -11,19 +11,35 @@ function isErrorResponse(data: unknown): data is { error: string } {
   );
 }
 
-function isChangelogEntryArray(data: unknown): data is ChangelogEntry[] {
+function isLinkedItem(value: unknown): value is ChangelogLinkedItem {
   return (
-    Array.isArray(data) &&
-    data.every(
-      (item): item is ChangelogEntry =>
-        typeof item === "object" &&
-        item !== null &&
-        "id" in item &&
-        typeof item.id === "string" &&
-        "title" in item &&
-        typeof item.title === "string"
-    )
+    typeof value === "object" &&
+    value !== null &&
+    "id" in value &&
+    typeof value.id === "string" &&
+    "title" in value &&
+    typeof value.title === "string"
   );
+}
+
+function isChangelogEntry(value: unknown): value is ChangelogEntry {
+  if (!isLinkedItem(value)) {
+    return false;
+  }
+  const entry: Record<string, unknown> = { ...value };
+  return (
+    (entry.description === undefined ||
+      typeof entry.description === "string") &&
+    (entry.version === undefined || typeof entry.version === "string") &&
+    (entry.publishedAt === undefined ||
+      typeof entry.publishedAt === "number") &&
+    Array.isArray(entry.items) &&
+    entry.items.every(isLinkedItem)
+  );
+}
+
+function isChangelogEntryArray(data: unknown): data is ChangelogEntry[] {
+  return Array.isArray(data) && data.every(isChangelogEntry);
 }
 
 export class ChangelogApi {

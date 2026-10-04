@@ -25,7 +25,9 @@ export const stepStatusValidator = v.union(
 );
 
 export const changelogConfigValidator = v.object({
+  // Unused: drop once migrations/rename_has_conventional_commits has run everywhere.
   hasConventionalCommits: v.optional(v.boolean()),
+  hasSemverTags: v.optional(v.boolean()),
   importExisting: v.boolean(),
   releaseCount: v.optional(v.number()),
   targetBranch: v.string(),

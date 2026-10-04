@@ -20,11 +20,11 @@ import {
 } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import { UNTITLED_RELEASE_TITLE } from "@reflet/backend/convex/changelog/release_text";
 import { useQuery } from "convex/react";
 import { format } from "date-fns";
 import Link from "next/link";
 import { useState } from "react";
-import { UNTITLED_RELEASE_TITLE } from "@/features/changelog/hooks/use-auto-save-release";
 import { STATUS_CONFIG } from "@/lib/constants";
 
 import type { FeedbackLinkStatus } from "./feedback-section-header";

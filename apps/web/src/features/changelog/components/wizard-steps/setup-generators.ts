@@ -8,11 +8,7 @@ interface PromptOptions {
   repoFullName: string;
 }
 
-export function generateAutoReleaseWorkflowYaml(
-  branch: string,
-  versionPrefix: string
-): string {
-  const tagPrefix = versionPrefix || "";
+export function generateAutoReleaseWorkflowYaml(branch: string): string {
   return `name: Release Please
 
 on:
@@ -30,7 +26,8 @@ jobs:
     steps:
       - uses: googleapis/release-please-action@v4
         with:
-          release-type: node${tagPrefix ? `\n          include-v-in-tag: ${tagPrefix === "v" ? "true" : "false"}` : ""}
+          release-type: node
+          target-branch: ${branch}
 `;
 }
 
@@ -70,12 +67,9 @@ Write your releases in Reflet — nothing to commit here.`;
 }
 
 function generateAutomatedAiPrompt(options: PromptOptions): string {
-  const { repoFullName, defaultBranch, config } = options;
+  const { repoFullName, defaultBranch } = options;
 
-  const releasePleaseYaml = generateAutoReleaseWorkflowYaml(
-    defaultBranch,
-    config.versionPrefix
-  );
+  const releasePleaseYaml = generateAutoReleaseWorkflowYaml(defaultBranch);
 
   return `Set up automated releases with conventional commits for the repository "${repoFullName}".
 
@@ -101,11 +95,12 @@ This setup uses release-please which requires conventional commit messages:
 
 ${syncContext(options)}
 - Workflow: Automated Releases — release-please opens release PRs from conventional commits, and Reflet imports the published GitHub Release
-- Version prefix: "${config.versionPrefix}"
+- Tags: release-please tags releases as v1.2.3, so Reflet versions use the "v" prefix
+- Already publishing GitHub Releases with Changesets (changesets/action) or semantic-release? Keep that tool instead of adding release-please — Reflet imports any published GitHub Release
 
 ## Important
 
-- release-please uses GitHub Actions' built-in token ($GITHUB_TOKEN) — no additional tokens or secrets needed
+- release-please uses GitHub Actions' built-in token ($GITHUB_TOKEN); enable "Allow GitHub Actions to create and approve pull requests" in the repository (or organization) Actions settings so it can open release PRs
 - This works with both public and private repositories`;
 }
 
@@ -132,7 +127,8 @@ You can enable GitHub sync later in Settings → Releases.`;
 ${syncContext(options)}
 - Workflow: Manual with sync — ${getSyncDescription(config.manualSyncDirection)}
 - Auto-versioning: ${versioningLine(config)}
-- When a GitHub Release is published, edited or deleted, the Reflet GitHub App delivers the event so Reflet stays in sync
+- With import on (GitHub → Reflet or Bidirectional), Reflet imports GitHub Releases when they are published
+- Edits made on GitHub update linked releases, or are proposed for review when the notes were already edited in Reflet; deleting a GitHub Release unlinks it and keeps the Reflet release
 
 Write your releases in Reflet or on GitHub — nothing to commit here.`;
 }

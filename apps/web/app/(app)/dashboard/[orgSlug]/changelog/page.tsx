@@ -91,7 +91,8 @@ function ChangelogContent({
   const isAdmin =
     currentMember?.role === "admin" || currentMember?.role === "owner";
   const isGithubConnected = Boolean(githubStatus?.isConnected);
-  const hasConfiguredSync = Boolean(org.changelogSettings?.syncDirection);
+  const hasConfiguredReleases =
+    org.changelogSettings?.targetBranch !== undefined;
 
   return (
     <PageLayout width="content">
@@ -105,7 +106,7 @@ function ChangelogContent({
         )}
       </PageHeader>
       <PageBody>
-        {isAdmin && isGithubConnected && !hasConfiguredSync && (
+        {isAdmin && isGithubConnected && !hasConfiguredReleases && (
           <SetupSyncBanner onSetUp={() => setShowSetupWizard(true)} />
         )}
         <ChangelogView

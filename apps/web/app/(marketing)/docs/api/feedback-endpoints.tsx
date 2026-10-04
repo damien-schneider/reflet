@@ -236,7 +236,9 @@ const GET_CHANGELOG: EndpointDefinition = {
     "Get published releases, newest first, with the feedback each one shipped.",
   id: "get-changelog",
   method: "GET",
-  params: [param("limit", "number", "Releases to return. Defaults to 20.")],
+  params: [
+    param("limit", "number", "Releases to return. Defaults to 20, max 100."),
+  ],
   path: "/feedback/changelog",
   request: `curl "${BASE_URL}/feedback/changelog?limit=5" \\
   -H "Authorization: Bearer fb_pub_xxx"`,
@@ -244,7 +246,7 @@ const GET_CHANGELOG: EndpointDefinition = {
   {
     "id": "kr11…",
     "title": "Dark mode is here",
-    "version": "2.4.0",
+    "version": "v2.4.0",
     "description": "Dark mode now follows your system setting…",
     "publishedAt": 1757500000000,
     "items": [

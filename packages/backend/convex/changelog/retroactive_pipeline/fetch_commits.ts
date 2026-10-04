@@ -1,17 +1,17 @@
 import { internal } from "../../_generated/api";
 import type { Id } from "../../_generated/dataModel";
 import type { ActionCtx } from "../../_generated/server";
+import type { GitTag } from "../source";
 import {
+  fetchComparedCommits,
   fetchGitHub,
-  formatCommit,
   GITHUB_API_URL,
   type GitHubCommit,
-  type GitHubCompareResponse,
   getErrorMessage,
-  MAX_COMMITS_PER_GROUP,
   TAG_PAIRS_PER_BATCH,
 } from "./github";
 import { groupCommitsByWeek } from "./grouping";
+import { saveGroupCommits } from "./job_state";
 
 interface PhaseArgs {
   cursor?: number;
@@ -27,7 +27,7 @@ interface PhaseArgs {
 export async function fetchCommitsByTags(
   ctx: ActionCtx,
   args: PhaseArgs,
-  tags: Array<{ name: string; sha: string }>,
+  tags: GitTag[],
   token: string,
   repoFullName: string,
   previouslyFetched: number
@@ -44,21 +44,15 @@ export async function fetchCommitsByTags(
       continue;
     }
 
-    const url = `${GITHUB_API_URL}/repos/${repoFullName}/compare/${base.sha}...${head.sha}`;
-
     try {
-      const { data } = await fetchGitHub<GitHubCompareResponse>(url, token);
-      const commits = data.commits
-        .slice(0, MAX_COMMITS_PER_GROUP)
-        .map(formatCommit);
-
-      if (commits.length > 0) {
-        await ctx.runMutation(
-          internal.changelog.retroactive_mutations.saveCommitBatch,
-          { commits, groupId: head.name, jobId: args.jobId }
-        );
-        totalFetched += commits.length;
-      }
+      const { commits } = await fetchComparedCommits(
+        token,
+        repoFullName,
+        base.sha,
+        head.sha
+      );
+      await saveGroupCommits(ctx, args.jobId, head.name, commits);
+      totalFetched += commits.length;
     } catch (error) {
       console.warn(
         `[retroactive] Failed to compare ${base.name}...${head.name}: ${getErrorMessage(error)}`
@@ -106,7 +100,8 @@ export async function fetchCommitsByTime(
   token: string,
   repoFullName: string,
   branch: string,
-  previouslyFetched: number
+  previouslyFetched: number,
+  tags: GitTag[]
 ): Promise<void> {
   let totalFetched = previouslyFetched;
   const page = (args.cursor ?? 0) + 1;
@@ -138,18 +133,12 @@ export async function fetchCommitsByTime(
     );
   }
 
-  for (const [weekKey, commits] of groupCommitsByWeek(rawCommits)) {
-    if (commits.length > 0) {
-      await ctx.runMutation(
-        internal.changelog.retroactive_mutations.saveCommitBatch,
-        {
-          commits: commits.slice(0, MAX_COMMITS_PER_GROUP),
-          groupId: weekKey,
-          jobId: args.jobId,
-        }
-      );
-      totalFetched += commits.length;
-    }
+  for (const [weekKey, commits] of groupCommitsByWeek(
+    rawCommits,
+    new Set(tags.map((tag) => tag.sha))
+  )) {
+    await saveGroupCommits(ctx, args.jobId, weekKey, commits);
+    totalFetched += commits.length;
   }
 
   await ctx.runMutation(

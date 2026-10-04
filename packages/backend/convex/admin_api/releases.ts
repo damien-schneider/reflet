@@ -1,12 +1,15 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalMutation, internalQuery } from "../_generated/server";
+import {
+  assertVersionAvailable,
+  deleteRelease as deleteReleaseCascade,
+  publishRelease as publishReleaseNow,
+  unpublishRelease as unpublishReleaseNow,
+} from "../changelog/release_lifecycle";
+import { API_ACTOR_ID } from "../shared/actors";
 import { MAX_CHANGELOG_VERSION_LENGTH } from "../shared/constants";
-import { validateInputLength } from "../shared/validators";
-
-// ============================================
-// RELEASE QUERIES
-// ============================================
+import { feedbackStatus, validateInputLength } from "../shared/validators";
 
 export const listReleases = internalQuery({
   args: {
@@ -124,10 +127,6 @@ export const getRelease = internalQuery({
   },
 });
 
-// ============================================
-// RELEASE MUTATIONS
-// ============================================
-
 export const createRelease = internalMutation({
   args: {
     description: v.optional(v.string()),
@@ -137,6 +136,7 @@ export const createRelease = internalMutation({
   },
   handler: async (ctx, args) => {
     validateInputLength(args.version, MAX_CHANGELOG_VERSION_LENGTH, "Version");
+    await assertVersionAvailable(ctx, args.organizationId, args.version);
 
     const now = Date.now();
     const id = await ctx.db.insert("releases", {
@@ -168,19 +168,15 @@ export const updateRelease = internalMutation({
     }
 
     validateInputLength(args.version, MAX_CHANGELOG_VERSION_LENGTH, "Version");
+    await assertVersionAvailable(
+      ctx,
+      args.organizationId,
+      args.version,
+      release._id
+    );
 
-    const updates: Record<string, unknown> = { updatedAt: Date.now() };
-    if (args.title !== undefined) {
-      updates.title = args.title;
-    }
-    if (args.description !== undefined) {
-      updates.description = args.description;
-    }
-    if (args.version !== undefined) {
-      updates.version = args.version;
-    }
-
-    await ctx.db.patch(args.releaseId, updates);
+    const { organizationId: _organizationId, releaseId, ...updates } = args;
+    await ctx.db.patch(releaseId, { ...updates, updatedAt: Date.now() });
     return { success: true };
   },
   returns: v.object({ success: v.boolean() }),
@@ -197,9 +193,10 @@ export const publishRelease = internalMutation({
       throw new Error("Release not found");
     }
 
-    await ctx.db.patch(args.releaseId, {
+    await publishReleaseNow(ctx, release, {
+      actorId: API_ACTOR_ID,
+      announce: true,
       publishedAt: Date.now(),
-      updatedAt: Date.now(),
     });
     return { success: true };
   },
@@ -217,10 +214,7 @@ export const unpublishRelease = internalMutation({
       throw new Error("Release not found");
     }
 
-    await ctx.db.patch(args.releaseId, {
-      publishedAt: undefined,
-      updatedAt: Date.now(),
-    });
+    await unpublishReleaseNow(ctx, release);
     return { success: true };
   },
   returns: v.object({ success: v.boolean() }),
@@ -237,16 +231,7 @@ export const deleteRelease = internalMutation({
       throw new Error("Release not found");
     }
 
-    // Remove feedback links
-    const links = await ctx.db
-      .query("releaseFeedback")
-      .withIndex("by_release", (q) => q.eq("releaseId", args.releaseId))
-      .collect();
-    for (const link of links) {
-      await ctx.db.delete(link._id);
-    }
-
-    await ctx.db.delete(args.releaseId);
+    await deleteReleaseCascade(ctx, release);
     return { success: true };
   },
   returns: v.object({ success: v.boolean() }),
@@ -294,22 +279,9 @@ export const linkReleaseFeedback = internalMutation({
   returns: v.object({ success: v.boolean() }),
 });
 
-// ============================================
-// SCHEDULING
-// ============================================
-
 export const scheduleRelease = internalMutation({
   args: {
-    feedbackStatus: v.optional(
-      v.union(
-        v.literal("open"),
-        v.literal("under_review"),
-        v.literal("planned"),
-        v.literal("in_progress"),
-        v.literal("completed"),
-        v.literal("closed")
-      )
-    ),
+    feedbackStatus: v.optional(feedbackStatus),
     organizationId: v.id("organizations"),
     releaseId: v.id("releases"),
     scheduledPublishAt: v.number(),

@@ -13,7 +13,7 @@ import {
 import { Switch } from "@ctrl-ui/react/ui/switch";
 import { ArrowSquareOut } from "@phosphor-icons/react";
 import { Label } from "@/components/ui/label";
-import type { WizardConfig } from "../wizard-config";
+import { RELEASE_PLEASE_TAG_PREFIX, type WizardConfig } from "../wizard-config";
 
 interface ConfigureStepProps {
   config: WizardConfig;
@@ -180,24 +180,15 @@ function AutomatedConfig({ config, onChange }: ConfigureStepProps) {
         </a>
       </div>
 
-      <div className="flex items-start gap-4">
-        <div className="space-y-1">
-          <Label
-            className="text-muted-foreground text-xs"
-            htmlFor="version-prefix-auto"
-          >
-            Prefix
-          </Label>
-          <Input
-            className="w-16"
-            id="version-prefix-auto"
-            onChange={(e) => onChange({ versionPrefix: e.target.value })}
-            placeholder="v"
-            size="sm"
-            value={config.versionPrefix}
-          />
-        </div>
-      </div>
+      <p className="text-pretty text-muted-foreground text-xs">
+        release-please tags releases as{" "}
+        <code className="rounded-sm bg-muted px-1 font-mono">
+          {RELEASE_PLEASE_TAG_PREFIX}1.2.3
+        </code>
+        , so Reflet versions use the same tag. Already publishing GitHub
+        Releases with Changesets or semantic-release? Keep that tool — Reflet
+        imports any published GitHub Release.
+      </p>
 
       <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
         <Label htmlFor="auto-publish-imported">

@@ -1,20 +1,14 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
-import { requireAuthUser } from "../shared/access";
+import { requireOrgAdmin } from "../shared/access";
 import {
   MAX_CHANGELOG_VERSION_LENGTH,
   MAX_DESCRIPTION_LENGTH,
   MAX_TITLE_LENGTH,
 } from "../shared/constants";
 import { validateInputLength } from "../shared/validators";
+import { assertVersionAvailable } from "./release_lifecycle";
 
-// ============================================
-// MUTATIONS
-// ============================================
-
-/**
- * Create a new release (draft)
- */
 export const create = mutation({
   args: {
     description: v.optional(v.string()),
@@ -23,8 +17,6 @@ export const create = mutation({
     version: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const user = await requireAuthUser(ctx);
-
     validateInputLength(args.title, MAX_TITLE_LENGTH, "Title");
     validateInputLength(
       args.description,
@@ -33,35 +25,21 @@ export const create = mutation({
     );
     validateInputLength(args.version, MAX_CHANGELOG_VERSION_LENGTH, "Version");
 
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", args.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership || membership.role === "member") {
-      throw new Error("Only admins can create releases");
-    }
+    await requireOrgAdmin(ctx, args.organizationId, "create releases");
+    await assertVersionAvailable(ctx, args.organizationId, args.version);
 
     const now = Date.now();
-    const releaseId = await ctx.db.insert("releases", {
+    return await ctx.db.insert("releases", {
       createdAt: now,
       description: args.description,
       organizationId: args.organizationId,
-      publishedAt: undefined,
       title: args.title,
       updatedAt: now,
       version: args.version,
     });
-
-    return releaseId;
   },
 });
 
-/**
- * Update a release
- */
 export const update = mutation({
   args: {
     description: v.optional(v.string()),
@@ -70,47 +48,28 @@ export const update = mutation({
     version: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const user = await requireAuthUser(ctx);
-
-    if (args.title !== undefined) {
-      validateInputLength(args.title, MAX_TITLE_LENGTH, "Title");
-    }
-    if (args.description !== undefined) {
-      validateInputLength(
-        args.description,
-        MAX_DESCRIPTION_LENGTH,
-        "Description"
-      );
-    }
-    if (args.version !== undefined) {
-      validateInputLength(
-        args.version,
-        MAX_CHANGELOG_VERSION_LENGTH,
-        "Version"
-      );
-    }
+    validateInputLength(args.title, MAX_TITLE_LENGTH, "Title");
+    validateInputLength(
+      args.description,
+      MAX_DESCRIPTION_LENGTH,
+      "Description"
+    );
+    validateInputLength(args.version, MAX_CHANGELOG_VERSION_LENGTH, "Version");
 
     const release = await ctx.db.get(args.id);
     if (!release) {
       throw new Error("Release not found");
     }
-
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", release.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership || membership.role === "member") {
-      throw new Error("Only admins can update releases");
-    }
+    await requireOrgAdmin(ctx, release.organizationId, "update releases");
+    await assertVersionAvailable(
+      ctx,
+      release.organizationId,
+      args.version,
+      release._id
+    );
 
     const { id, ...updates } = args;
-    await ctx.db.patch(id, {
-      ...updates,
-      updatedAt: Date.now(),
-    });
+    await ctx.db.patch(id, { ...updates, updatedAt: Date.now() });
 
     return id;
   },

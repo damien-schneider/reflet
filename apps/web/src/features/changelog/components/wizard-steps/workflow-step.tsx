@@ -60,11 +60,11 @@ const WORKFLOW_OPTIONS = [
   },
   {
     description:
-      "Automatically create versioned releases when merging to your target branch. Uses conventional commits to determine version bumps.",
+      "Your release tool publishes GitHub Releases and Reflet imports them. Works with release-please, Changesets or semantic-release.",
     howItWorks: [
-      "You use conventional commits (feat:, fix:, etc.) in your PRs",
-      "On merge, release-please creates a release PR with the correct version bump",
-      "When merged, a GitHub Release is created and synced to Reflet",
+      "You use conventional commits (feat:, fix:, etc.) or changesets in your PRs",
+      "Your release tool — release-please by default — opens a release PR with the version bump",
+      "When it publishes the GitHub Release, Reflet imports it",
     ],
     icon: Lightning,
     id: "automated" as const,

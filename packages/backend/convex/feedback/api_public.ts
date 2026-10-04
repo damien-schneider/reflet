@@ -6,6 +6,7 @@ import { isFeedbackPublishable } from "./property_values";
 import { isFeedbackPubliclyVisible } from "./public_projection";
 
 const DEFAULT_CHANGELOG_LIMIT = 20;
+const MAX_CHANGELOG_LIMIT = 100;
 const MAX_SIMILAR_RESULTS = 5;
 const MIN_SIMILAR_TITLE_LENGTH = 3;
 const WHITESPACE_REGEX = /\s+/g;
@@ -205,7 +206,11 @@ export const getChangelogByOrganization = internalQuery({
     organizationId: v.id("organizations"),
   },
   handler: async (ctx, args) => {
-    const { organizationId, limit = DEFAULT_CHANGELOG_LIMIT } = args;
+    const { organizationId } = args;
+    const limit = Math.min(
+      Math.max(args.limit ?? DEFAULT_CHANGELOG_LIMIT, 1),
+      MAX_CHANGELOG_LIMIT
+    );
 
     const org = await ctx.db.get(organizationId);
     if (!org) {
@@ -214,10 +219,9 @@ export const getChangelogByOrganization = internalQuery({
 
     const releases = await ctx.db
       .query("releases")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", organizationId)
+      .withIndex("by_published", (q) =>
+        q.eq("organizationId", organizationId).gt("publishedAt", 0)
       )
-      .filter((q) => q.neq(q.field("publishedAt"), undefined))
       .order("desc")
       .take(limit);
 

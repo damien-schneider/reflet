@@ -25,23 +25,24 @@ const SECTIONS = [
 ] as const;
 
 const SCRIPT_TAG = `<script
-  src="https://www.reflet.app/widget/changelog.js"
-  data-key="fb_pub_xxx"
-  data-trigger="changelog-button"
+  src="https://cdn.reflet.app/widget/reflet-changelog.v1.js"
+  data-public-key="fb_pub_xxx"
+  data-mode="trigger"
   async
 ></script>
 
-<button id="changelog-button">What's new</button>`;
+<button data-reflet-changelog>
+  What's new <span data-reflet-changelog-badge></span>
+</button>`;
 
-const REACT_USAGE = `import { RefletProvider, ChangelogWidget } from "reflet-sdk/react";
+const REACT_USAGE = `import { ChangelogWidget } from "reflet-sdk/react";
 
 function App() {
   return (
-    <RefletProvider publicKey="fb_pub_xxx">
-      <ChangelogWidget>
-        <button>What's new</button>
-      </ChangelogWidget>
-    </RefletProvider>
+    <>
+      <ChangelogWidget publicKey="fb_pub_xxx" mode="trigger" />
+      <button data-reflet-changelog>What's new</button>
+    </>
   );
 }`;
 
@@ -54,27 +55,67 @@ const COLUMNS = [
 const ROWS = [
   {
     cells: [
-      "data-key / publicKey",
+      "data-public-key / publicKey",
       "string",
       "Your organization’s public API key. Required.",
     ],
-    key: "key",
+    key: "public-key",
   },
   {
     cells: [
-      "data-trigger / trigger",
-      "string (element ID)",
-      "ID of the element that opens the popover. Script tag only.",
+      "data-mode / mode",
+      '"card" | "popup" | "trigger"',
+      "Floating card, modal popup, or dropdown attached to trigger elements. Defaults to card.",
     ],
-    key: "trigger",
+    key: "mode",
   },
   {
     cells: [
-      "data-limit / limit",
+      "data-trigger-selector / triggerSelector",
+      "CSS selector",
+      "Elements that open the widget in trigger mode. Defaults to [data-reflet-changelog].",
+    ],
+    key: "trigger-selector",
+  },
+  {
+    cells: [
+      "data-max-entries / maxEntries",
       "number",
       "Maximum number of entries shown. Defaults to 10.",
     ],
-    key: "limit",
+    key: "max-entries",
+  },
+  {
+    cells: [
+      "data-position / position",
+      '"bottom-right" | "bottom-left"',
+      "Corner used by card and popup modes. Defaults to bottom-right.",
+    ],
+    key: "position",
+  },
+  {
+    cells: [
+      "data-theme / theme",
+      '"light" | "dark" | "auto"',
+      "Color theme. Defaults to light.",
+    ],
+    key: "theme",
+  },
+  {
+    cells: [
+      "data-color / primaryColor",
+      "CSS color",
+      "Brand color for accents and badges.",
+    ],
+    key: "color",
+  },
+  {
+    cells: [
+      "data-auto-open / autoOpenForNew",
+      "boolean",
+      "Open automatically when there are unread entries.",
+    ],
+    key: "auto-open",
   },
 ] as const;
 
@@ -87,16 +128,17 @@ export default function ChangelogWidgetPage() {
     >
       <DocsSection id="script-tag" sections={SECTIONS}>
         <DocsText>
-          Add this script tag, then point it at the button that should open the
-          popover.
+          Add this script tag. Any element with the data-reflet-changelog
+          attribute opens the widget, and an inner data-reflet-changelog-badge
+          element shows the unread count.
         </DocsText>
         <CodeBlock code={SCRIPT_TAG} />
       </DocsSection>
 
       <DocsSection id="react" sections={SECTIONS}>
         <DocsText>
-          In React projects, wrap your trigger in the SDK’s ChangelogWidget
-          component.
+          In React projects, render the SDK’s ChangelogWidget with your public
+          key. It loads the same script and accepts the same options as props.
         </DocsText>
         <CodeBlock code={REACT_USAGE} />
       </DocsSection>
@@ -104,13 +146,17 @@ export default function ChangelogWidgetPage() {
       <DocsSection id="features" sections={SECTIONS}>
         <DocsList>
           <li>
-            The popover lists recent entries with title, description and date.
+            Each entry shows its version, date, title, description and the
+            feedback it shipped.
           </li>
           <li>An unread badge counts the entries the visitor hasn’t seen.</li>
           <li>
             Read state is stored in the browser and survives new sessions.
           </li>
-          <li>Each entry links back to the full changelog page.</li>
+          <li>
+            window.Reflet("open_changelog") and window.Reflet("close_changelog")
+            control the widget from your code.
+          </li>
         </DocsList>
       </DocsSection>
 

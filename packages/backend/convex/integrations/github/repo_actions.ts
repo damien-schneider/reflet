@@ -19,32 +19,6 @@ interface Branch {
   name: string;
 }
 
-interface Tag {
-  name: string;
-  sha: string;
-}
-
-interface Commit {
-  author: string;
-  date: string;
-  fullMessage: string;
-  message: string;
-  sha: string;
-}
-
-interface CommitComparison {
-  aheadBy: number;
-  commits: Commit[];
-  files: Array<{
-    additions: number;
-    deletions: number;
-    filename: string;
-    status: string;
-  }>;
-  status: string;
-  totalCommits: number;
-}
-
 async function requireRepoAccess(
   ctx: ActionCtx,
   organizationId: Id<"organizations">
@@ -82,69 +56,6 @@ export const listBranches = action({
     return await ctx.runAction(
       internal.integrations.github.release_actions.fetchBranches,
       { installationToken: token, repositoryFullName }
-    );
-  },
-});
-
-export const listTags = action({
-  args: { organizationId: v.id("organizations") },
-  handler: async (ctx, args): Promise<Tag[]> => {
-    const { repositoryFullName, token } = await requireRepoAccess(
-      ctx,
-      args.organizationId
-    );
-
-    return await ctx.runAction(
-      internal.integrations.github.release_actions.fetchTags,
-      { installationToken: token, repositoryFullName }
-    );
-  },
-});
-
-export const listRecentCommits = action({
-  args: {
-    branch: v.string(),
-    organizationId: v.id("organizations"),
-    perPage: v.optional(v.number()),
-  },
-  handler: async (ctx, args): Promise<Commit[]> => {
-    const { repositoryFullName, token } = await requireRepoAccess(
-      ctx,
-      args.organizationId
-    );
-
-    return await ctx.runAction(
-      internal.integrations.github.release_actions.fetchRecentCommits,
-      {
-        branch: args.branch,
-        installationToken: token,
-        perPage: args.perPage,
-        repositoryFullName,
-      }
-    );
-  },
-});
-
-export const listCommitsBetweenRefs = action({
-  args: {
-    base: v.string(),
-    head: v.string(),
-    organizationId: v.id("organizations"),
-  },
-  handler: async (ctx, args): Promise<CommitComparison> => {
-    const { repositoryFullName, token } = await requireRepoAccess(
-      ctx,
-      args.organizationId
-    );
-
-    return await ctx.runAction(
-      internal.integrations.github.release_actions.fetchCommitsBetweenRefs,
-      {
-        base: args.base,
-        head: args.head,
-        installationToken: token,
-        repositoryFullName,
-      }
     );
   },
 });

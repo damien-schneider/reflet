@@ -14,23 +14,20 @@ import { CloudArrowUp, PencilSimple, Trash } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
+import type { FunctionReturnType } from "convex/server";
 import { format } from "date-fns";
 import Link from "next/link";
 import { useState } from "react";
 import { DestructiveConfirmDialog } from "@/components/ui/destructive-confirm-dialog";
 
+export type DraftRelease = FunctionReturnType<
+  typeof api.changelog.queries.list
+>[number];
+
 interface RetroactiveDraftItemProps {
   onSelect: (id: Id<"releases">, selected: boolean) => void;
   orgSlug: string;
-  release: {
-    _id: Id<"releases">;
-    title: string;
-    description?: string;
-    version?: string;
-    createdAt: number;
-    publishedAt?: number;
-    commitCount: number;
-  };
+  release: DraftRelease;
   selected: boolean;
 }
 
@@ -104,9 +101,12 @@ export function RetroactiveDraftItem({
           <span className="tabular-nums">
             {release.commitCount} commit{release.commitCount === 1 ? "" : "s"}
           </span>
-          <span className="tabular-nums">
-            {format(new Date(release.createdAt), "MMM d, yyyy")}
-          </span>
+          <time
+            className="tabular-nums"
+            dateTime={new Date(release.sourceDate).toISOString()}
+          >
+            {format(release.sourceDate, "MMM d, yyyy")}
+          </time>
         </div>
       </div>
 

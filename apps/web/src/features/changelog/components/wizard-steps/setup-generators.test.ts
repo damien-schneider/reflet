@@ -27,10 +27,31 @@ const WORKFLOWS: WizardConfig["workflow"][] = [
   "manual",
 ];
 
+const RELEASE_PLEASE_ACTION_V4_INPUTS = [
+  "token",
+  "release-type",
+  "path",
+  "target-branch",
+  "config-file",
+  "manifest-file",
+  "repo-url",
+  "github-api-url",
+  "github-graphql-url",
+  "fork",
+  "include-component-in-tag",
+  "proxy-server",
+  "skip-github-release",
+  "skip-github-pull-request",
+  "skip-labeling",
+  "changelog-host",
+  "versioning-strategy",
+  "release-as",
+];
+
 describe("generated setup content", () => {
   it("never interpolates GitHub expressions into shell commands", () => {
     const generated = [
-      generateAutoReleaseWorkflowYaml("main", "v"),
+      generateAutoReleaseWorkflowYaml("main"),
       ...WORKFLOWS.map((workflow) =>
         generateAiPrompt(makePromptOptions({ workflow }))
       ),
@@ -55,21 +76,23 @@ describe("generated setup content", () => {
 
 describe("generateAutoReleaseWorkflowYaml", () => {
   it("targets the given branch", () => {
-    expect(generateAutoReleaseWorkflowYaml("develop", "v")).toContain(
-      "- develop"
-    );
+    const yaml = generateAutoReleaseWorkflowYaml("develop");
+    expect(yaml).toContain("- develop");
+    expect(yaml).toContain("target-branch: develop");
   });
 
-  it("includes the v tag prefix only when the prefix is v", () => {
-    expect(generateAutoReleaseWorkflowYaml("main", "v")).toContain(
-      "include-v-in-tag: true"
-    );
-    expect(generateAutoReleaseWorkflowYaml("main", "release-")).toContain(
-      "include-v-in-tag: false"
-    );
-    expect(generateAutoReleaseWorkflowYaml("main", "")).not.toContain(
-      "include-v-in-tag"
-    );
+  it("only passes inputs release-please-action@v4 accepts", () => {
+    const [, withBlock = ""] =
+      generateAutoReleaseWorkflowYaml("main").split("with:\n");
+    const inputNames = withBlock
+      .split("\n")
+      .filter((line) => line.trim() !== "")
+      .map((line) => line.trim().split(":")[0]);
+
+    expect(inputNames.length).toBeGreaterThan(0);
+    for (const inputName of inputNames) {
+      expect(RELEASE_PLEASE_ACTION_V4_INPUTS).toContain(inputName);
+    }
   });
 });
 

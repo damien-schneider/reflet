@@ -39,7 +39,7 @@ export function ChangelogCard({ config }: { config: ChangelogConfig }) {
         {releaseCount > 0 && (
           <CardDescription className="tabular-nums">
             Found {releaseCount} existing release{releaseCount === 1 ? "" : "s"}
-            {config.hasConventionalCommits && " with semver tags"}
+            {config.hasSemverTags && " with semver tags"}
           </CardDescription>
         )}
       </CardHeader>

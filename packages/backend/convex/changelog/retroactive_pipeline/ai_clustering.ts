@@ -1,18 +1,21 @@
-import { type CommitData, getErrorMessage } from "./github";
+import { z } from "zod";
+import type { ReleaseCommit } from "../tableFields";
+import { generateWithAssistant } from "./assistant";
+import { getErrorMessage } from "./github";
 import { buildGroupMapFromFlat, type GroupMap } from "./grouping";
-import { callOpenRouter } from "./openrouter";
 
-interface AIClusterGroup {
-  commits: number[];
-  title: string;
-}
+const clusterResponseSchema = z.array(
+  z.object({ commits: z.array(z.number()), title: z.string() })
+);
+
+type AIClusterGroup = z.infer<typeof clusterResponseSchema>[number];
 
 const MAX_COMMITS_FOR_CLUSTERING = 500;
 const CODE_FENCE_JSON_REGEX = /```json?\n?/g;
 const CODE_FENCE_REGEX = /```\n?/g;
 const NON_SLUG_REGEX = /[^a-z0-9]+/g;
 
-function buildClusteringPrompt(commits: CommitData[]): string {
+function buildClusteringPrompt(commits: ReleaseCommit[]): string {
   const commitList = commits
     .map((c, i) => `${i}: ${c.message} (${c.date.slice(0, 10)})`)
     .join("\n");
@@ -46,7 +49,7 @@ Return ONLY the JSON array, no markdown fences or explanation.`;
 
 function buildGroupsFromClusters(
   clusters: AIClusterGroup[],
-  commits: CommitData[]
+  commits: ReleaseCommit[]
 ): GroupMap {
   const result: GroupMap = new Map();
 
@@ -54,7 +57,7 @@ function buildGroupsFromClusters(
     const groupCommits = group.commits
       .filter((i) => i >= 0 && i < commits.length)
       .map((i) => commits[i])
-      .filter((c): c is CommitData => c !== undefined);
+      .filter((c): c is ReleaseCommit => c !== undefined);
 
     if (groupCommits.length === 0) {
       continue;
@@ -74,38 +77,18 @@ function buildGroupsFromClusters(
   return result;
 }
 
-export async function clusterCommitsWithAI(
-  commitDocs: Array<{ commits: CommitData[]; groupId: string }>
+async function clusterWithAssistant(
+  commits: ReleaseCommit[]
 ): Promise<GroupMap> {
-  const allCommits = commitDocs.flatMap((doc) => doc.commits);
-
-  if (allCommits.length === 0) {
-    return new Map();
-  }
-
-  const commitsForClustering = allCommits.slice(0, MAX_COMMITS_FOR_CLUSTERING);
-
-  const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey) {
-    return buildGroupMapFromFlat(commitsForClustering);
-  }
-
   try {
-    const raw = await callOpenRouter(
-      apiKey,
-      buildClusteringPrompt(commitsForClustering)
-    );
+    const raw = await generateWithAssistant(buildClusteringPrompt(commits));
     const cleaned = raw
       .replace(CODE_FENCE_JSON_REGEX, "")
       .replace(CODE_FENCE_REGEX, "")
       .trim();
-    const clusters = JSON.parse(cleaned) as AIClusterGroup[];
-    const result = buildGroupsFromClusters(clusters, commitsForClustering);
-
+    const clusters = clusterResponseSchema.parse(JSON.parse(cleaned));
+    const result = buildGroupsFromClusters(clusters, commits);
     if (result.size > 0) {
-      console.log(
-        `[retroactive] AI clustering created ${result.size} groups from ${commitsForClustering.length} commits`
-      );
       return result;
     }
     console.warn("[retroactive] AI clustering returned 0 valid groups");
@@ -114,9 +97,30 @@ export async function clusterCommitsWithAI(
       `[retroactive] AI clustering failed, falling back to heuristic: ${getErrorMessage(error)}`
     );
   }
+  return buildGroupMapFromFlat(commits);
+}
 
-  console.log(
-    `[retroactive] Using heuristic fallback grouping for ${commitsForClustering.length} commits`
+export async function clusterCommitsWithAI(
+  commitDocs: Array<{ commits: ReleaseCommit[]; groupId: string }>
+): Promise<GroupMap> {
+  const allCommits = commitDocs.flatMap((doc) => doc.commits);
+  if (allCommits.length === 0) {
+    return new Map();
+  }
+
+  const clustered = await clusterWithAssistant(
+    allCommits.slice(0, MAX_COMMITS_FOR_CLUSTERING)
   );
-  return buildGroupMapFromFlat(commitsForClustering);
+  const leftovers = allCommits.slice(MAX_COMMITS_FOR_CLUSTERING);
+  for (const [groupId, group] of buildGroupMapFromFlat(leftovers)) {
+    const existing = clustered.get(groupId);
+    if (!existing) {
+      clustered.set(groupId, group);
+      continue;
+    }
+    existing.commits.push(...group.commits);
+    existing.dateFrom = Math.min(existing.dateFrom, group.dateFrom);
+    existing.dateTo = Math.max(existing.dateTo, group.dateTo);
+  }
+  return clustered;
 }

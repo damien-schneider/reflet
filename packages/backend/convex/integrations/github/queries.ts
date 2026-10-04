@@ -3,10 +3,6 @@ import type { Id } from "../../_generated/dataModel";
 import { internalQuery, query } from "../../_generated/server";
 import { isOrgMemberViewer } from "../../shared/access";
 
-// ============================================
-// QUERIES
-// ============================================
-
 /**
  * Get GitHub connection for an organization
  */
@@ -116,9 +112,6 @@ export const getConnectionStatus = query({
   },
 });
 
-/**
- * Get release sync status: GitHub-only, Reflet-only, and synced releases
- */
 export const getReleaseSyncStatus = query({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
@@ -151,16 +144,8 @@ export const getReleaseSyncStatus = query({
       )
       .collect();
 
-    const linkedGithubIds = new Set(
-      refletReleases
-        .filter((r) => r.githubReleaseId)
-        .map((r) => r.githubReleaseId)
-    );
-
     const githubOnly = githubReleases
-      .filter(
-        (gr) => !(gr.refletReleaseId || linkedGithubIds.has(gr.githubReleaseId))
-      )
+      .filter((gr) => !(gr.isDraft || gr.refletReleaseId))
       .map((gr) => ({
         _id: gr._id,
         createdAt: gr.createdAt,
@@ -197,10 +182,6 @@ export const getReleaseSyncStatus = query({
     return { githubOnly, refletOnly, synced };
   },
 });
-
-// ============================================
-// INTERNAL QUERIES (called from actions, not from client)
-// ============================================
 
 /**
  * Get a user's GitHub connection by userId
@@ -323,5 +304,32 @@ export const getConnectionInternal = internalQuery({
       .first();
 
     return connection;
+  },
+});
+
+export const getReleasePushContext = internalQuery({
+  args: { releaseId: v.id("releases") },
+  handler: async (ctx, args) => {
+    const release = await ctx.db.get(args.releaseId);
+    if (!release) {
+      return null;
+    }
+    const organization = await ctx.db.get(release.organizationId);
+    const connection = await ctx.db
+      .query("githubConnections")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", release.organizationId)
+      )
+      .first();
+    const sourceSnapshot = await ctx.db
+      .query("releaseCommits")
+      .withIndex("by_release", (q) => q.eq("releaseId", release._id))
+      .first();
+    return {
+      connection,
+      headSha: sourceSnapshot?.headSha,
+      organization,
+      release,
+    };
   },
 });

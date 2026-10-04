@@ -19,6 +19,8 @@ import {
   renderTriggerModeHTML,
 } from "./widget-html";
 
+const DEFAULT_MAX_ENTRIES = 10;
+
 export class RefletChangelogWidget {
   private readonly config: ChangelogWidgetConfig;
   private readonly api: ChangelogApi;
@@ -38,14 +40,14 @@ export class RefletChangelogWidget {
 
   constructor(config: ChangelogWidgetConfig) {
     this.config = {
-      autoOpenForNew: false,
-      maxEntries: 10,
-      mode: "card",
-      position: "bottom-right",
-      primaryColor: DEFAULT_PRIMARY_COLOR,
-      theme: "light",
-      triggerSelector: "[data-reflet-changelog]",
       ...config,
+      autoOpenForNew: config.autoOpenForNew ?? false,
+      maxEntries: config.maxEntries ?? DEFAULT_MAX_ENTRIES,
+      mode: config.mode ?? "card",
+      position: config.position ?? "bottom-right",
+      primaryColor: config.primaryColor ?? DEFAULT_PRIMARY_COLOR,
+      theme: config.theme ?? "light",
+      triggerSelector: config.triggerSelector ?? "[data-reflet-changelog]",
     };
 
     this.api = new ChangelogApi(config.publicKey);

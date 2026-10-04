@@ -24,11 +24,12 @@ describe("applyWorkflowDefaults", () => {
     });
   });
 
-  test("automated imports from GitHub without pushing back", () => {
+  test("automated imports from GitHub on release-please's v tags", () => {
     expect(applyWorkflowDefaults("automated")).toEqual({
       autoPublishImported: false,
       autoSyncReleases: true,
       pushToGithubOnPublish: false,
+      versionPrefix: "v",
     });
   });
 

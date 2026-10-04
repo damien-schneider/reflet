@@ -116,6 +116,8 @@ export const githubTables = {
     tagName: v.string(),
   })
     .index("by_organization", ["organizationId"])
+    .index("by_org_tag", ["organizationId", "tagName"])
+    .index("by_reflet_release", ["refletReleaseId"])
     .index("by_connection", ["githubConnectionId"])
     .index("by_github_release_id", ["githubConnectionId", "githubReleaseId"]),
 
@@ -135,7 +137,9 @@ export const githubTables = {
   projectSetupResults: defineTable({
     changelogConfig: v.optional(
       v.object({
+        // Unused: drop once migrations/rename_has_conventional_commits has run everywhere.
         hasConventionalCommits: v.optional(v.boolean()),
+        hasSemverTags: v.optional(v.boolean()),
         importExisting: v.boolean(),
         releaseCount: v.optional(v.number()),
         // Unused: drop once migrations/strip_sync_direction has run everywhere.

@@ -15,12 +15,15 @@ const DONE_BUTTON_REGEX = /^done$/i;
 const {
   mockPush,
   mockToast,
+  mockApplyDraft,
   mockCreateRelease,
   mockUpdateRelease,
   mockPublishRelease,
   mockUnpublishRelease,
   mockOtherMutation,
+  queryResults,
 } = vi.hoisted(() => ({
+  mockApplyDraft: vi.fn(),
   mockCreateRelease: vi.fn(),
   mockOtherMutation: vi.fn(),
   mockPublishRelease: vi.fn(),
@@ -28,6 +31,7 @@ const {
   mockToast: { error: vi.fn(), success: vi.fn() },
   mockUnpublishRelease: vi.fn(),
   mockUpdateRelease: vi.fn(),
+  queryResults: new Map<string, unknown>(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -113,6 +117,7 @@ const mutationMocks: Record<string, typeof mockCreateRelease> = {
   "changelog/actions:unpublish": mockUnpublishRelease,
   "changelog/mutations:create": mockCreateRelease,
   "changelog/mutations:update": mockUpdateRelease,
+  "changelog/release_drafts:applyDraft": mockApplyDraft,
 };
 
 vi.mock("convex/react", () => ({
@@ -123,7 +128,8 @@ vi.mock("convex/react", () => ({
       withOptimisticUpdate: () => mock,
     });
   },
-  useQuery: () => null,
+  useQuery: (reference: FunctionReference<"query">) =>
+    queryResults.get(getFunctionName(reference)) ?? null,
 }));
 
 vi.mock("@/components/ui/tiptap/title-editor", () => ({
@@ -194,42 +200,31 @@ vi.mock("./publish-confirm-dialog", () => ({
 
 vi.mock("./generate-from-commits", () => ({
   GenerateFromCommits: (props: {
-    onStreamStart: () => void;
-    onStreamChunk: (c: string) => void;
-    onComplete: (c: string) => void;
-    onTitleGenerated: (t: string) => void;
     disabled: boolean;
-    isStreaming: boolean;
+    onPreviewChange: (preview: string | null) => void;
   }) => (
     <div data-testid="generate-from-commits">
       <button
         data-testid="start-stream"
-        disabled={props.disabled || props.isStreaming}
-        onClick={props.onStreamStart}
+        disabled={props.disabled}
+        onClick={() => props.onPreviewChange("")}
         type="button"
       >
         Generate
       </button>
       <button
-        data-testid="complete-stream"
-        onClick={() => props.onComplete("Generated description")}
-        type="button"
-      >
-        Complete
-      </button>
-      <button
-        data-testid="generate-title"
-        onClick={() => props.onTitleGenerated("AI Title")}
-        type="button"
-      >
-        Gen Title
-      </button>
-      <button
         data-testid="send-chunk"
-        onClick={() => props.onStreamChunk("stream chunk")}
+        onClick={() => props.onPreviewChange("stream chunk")}
         type="button"
       >
         Chunk
+      </button>
+      <button
+        data-testid="finish-stream"
+        onClick={() => props.onPreviewChange(null)}
+        type="button"
+      >
+        Finish
       </button>
     </div>
   ),
@@ -251,6 +246,8 @@ describe("ReleaseEditor", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    queryResults.clear();
+    mockApplyDraft.mockResolvedValue(null);
     mockCreateRelease.mockResolvedValue("new-release-id");
     mockUpdateRelease.mockResolvedValue(undefined);
     mockPublishRelease.mockResolvedValue(undefined);
@@ -558,14 +555,12 @@ describe("ReleaseEditor", () => {
       fireEvent.click(screen.getByTestId("confirm-publish"));
 
       await waitFor(() => {
-        expect(mockUpdateRelease).toHaveBeenCalledWith(
-          expect.objectContaining({ id: "release123" })
-        );
         expect(mockPublishRelease).toHaveBeenCalledWith({
           feedbackStatus: "completed",
           id: "release123",
         });
       });
+      expect(mockUpdateRelease).not.toHaveBeenCalled();
       expect(mockToast.success).toHaveBeenCalledWith("Release published");
     });
 
@@ -658,18 +653,11 @@ describe("ReleaseEditor", () => {
       ).not.toBeInTheDocument();
     });
 
-    it("updates description on stream complete", () => {
+    it("returns to the editor when the preview ends", () => {
       render(<ReleaseEditor {...defaultProps} />);
-      fireEvent.click(screen.getByTestId("complete-stream"));
-      expect(screen.getByTestId("description-editor")).toHaveValue(
-        "Generated description"
-      );
-    });
-
-    it("updates title on title generated", () => {
-      render(<ReleaseEditor {...defaultProps} />);
-      fireEvent.click(screen.getByTestId("generate-title"));
-      expect(screen.getByTestId("title-editor")).toHaveValue("AI Title");
+      fireEvent.click(screen.getByTestId("start-stream"));
+      fireEvent.click(screen.getByTestId("finish-stream"));
+      expect(screen.getByTestId("description-editor")).toBeInTheDocument();
     });
 
     it("shows streamed content in Streamdown", () => {
@@ -747,6 +735,49 @@ describe("ReleaseEditor", () => {
       });
 
       expect(screen.getByText("Saved")).toBeInTheDocument();
+    });
+  });
+
+  describe("Draft review", () => {
+    const editedRelease = {
+      _id: "release123",
+      description: "My edited text",
+      title: "Search",
+      version: "v1.4.0",
+    };
+
+    it("keeps edited text under a pending draft and replaces it only on Apply", async () => {
+      queryResults.set("changelog/release_drafts:getPendingDraft", {
+        _id: "draft1",
+        description: "AI text",
+        origin: "ai",
+      });
+      const { rerender } = render(
+        <ReleaseEditor {...defaultProps} release={editedRelease as never} />
+      );
+
+      expect(screen.getByTestId("description-editor")).toHaveValue(
+        "My edited text"
+      );
+      expect(screen.getByText("New AI draft ready")).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole("button", { name: "Apply" }));
+      await waitFor(() => {
+        expect(mockApplyDraft).toHaveBeenCalledWith({ draftId: "draft1" });
+      });
+
+      queryResults.delete("changelog/release_drafts:getPendingDraft");
+      queryResults.set("changelog/queries:get", {
+        ...editedRelease,
+        description: "AI text",
+        feedbackItems: [],
+      });
+      rerender(
+        <ReleaseEditor {...defaultProps} release={editedRelease as never} />
+      );
+
+      expect(screen.getByTestId("description-editor")).toHaveValue("AI text");
+      expect(screen.queryByText("New AI draft ready")).not.toBeInTheDocument();
     });
   });
 });

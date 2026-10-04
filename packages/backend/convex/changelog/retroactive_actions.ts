@@ -12,7 +12,10 @@ import {
   fetchGitHub,
   GITHUB_API_URL,
   getErrorMessage,
+  githubBranchExists,
 } from "./retroactive_pipeline/github";
+import { loadActiveJob } from "./retroactive_pipeline/job_state";
+import { sortTagsNewestFirst } from "./source";
 
 /**
  * Phase 1: fetch every tag of the connected repository.
@@ -20,12 +23,8 @@ import {
 export const fetchTagsPhase = internalAction({
   args: { jobId: v.id("retroactiveJobs") },
   handler: async (ctx, args) => {
-    const job = await ctx.runQuery(
-      internal.changelog.retroactive_mutations.getJobInternal,
-      { jobId: args.jobId }
-    );
-
-    if (!job || job.status === "cancelled") {
+    const job = await loadActiveJob(ctx, args.jobId);
+    if (!job) {
       return;
     }
 
@@ -53,16 +52,14 @@ export const fetchTagsPhase = internalAction({
         { installationId: connection.installationId }
       );
 
-      const allTags = await fetchAllTags(token, connection.repositoryFullName);
-
-      console.log(
-        `[retroactive] fetchTagsPhase: found ${allTags.length} tags for ${connection.repositoryFullName}, branch=${job.targetBranch}`
+      const allTags = sortTagsNewestFirst(
+        await fetchAllTags(token, connection.repositoryFullName)
       );
 
       await ctx.runMutation(
         internal.changelog.retroactive_mutations.updateJobProgress,
         {
-          currentStep: `Found ${allTags.length} tags`,
+          currentStep: `Found ${allTags.length} version tags`,
           jobId: args.jobId,
           tags: allTags,
           totalTags: allTags.length,
@@ -88,43 +85,35 @@ export const fetchTagsPhase = internalAction({
 });
 
 /**
- * The stored branch can be stale, so the repo's own default branch wins.
- * Doubles as the access check: a token that cannot read the repo fails here
- * with a clearer message than a later 404 on the commits endpoint.
+ * The job's branch wins when it still exists; a stale one falls back to the
+ * repo default. Doubles as the access check: a token that cannot read the repo
+ * fails here with a clearer message than a later 404 on the commits endpoint.
  */
 async function resolveEffectiveBranch(
   token: string,
   repoFullName: string,
   targetBranch: string
 ): Promise<string> {
+  let defaultBranch: string;
   try {
-    const { data: repoInfo } = await fetchGitHub<{
-      default_branch: string;
-      full_name: string;
-      permissions?: Record<string, boolean>;
-      private: boolean;
-    }>(`${GITHUB_API_URL}/repos/${repoFullName}`, token);
-
-    console.log(
-      `[retroactive] Token access verified: repo=${repoInfo.full_name}, private=${repoInfo.private}, defaultBranch=${repoInfo.default_branch}, permissions=${JSON.stringify(repoInfo.permissions)}`
+    const { data } = await fetchGitHub<{ default_branch: string }>(
+      `${GITHUB_API_URL}/repos/${repoFullName}`,
+      token
     );
-
-    if (repoInfo.default_branch && repoInfo.default_branch !== targetBranch) {
-      console.warn(
-        `[retroactive] Branch mismatch: job has "${targetBranch}" but repo default is "${repoInfo.default_branch}". Using repo default.`
-      );
-      return repoInfo.default_branch;
-    }
-
-    return targetBranch;
+    defaultBranch = data.default_branch;
   } catch (repoError) {
-    console.error(
-      `[retroactive] Token cannot access repo ${repoFullName}: ${getErrorMessage(repoError)}`
-    );
     throw new Error(
       `GitHub App cannot access ${repoFullName}. Check that the repository is included in the App's repository access settings. Error: ${getErrorMessage(repoError)}`
     );
   }
+
+  if (await githubBranchExists(token, repoFullName, targetBranch)) {
+    return targetBranch;
+  }
+  console.warn(
+    `[retroactive] Branch "${targetBranch}" not found in ${repoFullName}, using default "${defaultBranch}"`
+  );
+  return defaultBranch;
 }
 
 /**
@@ -136,12 +125,8 @@ export const fetchCommitsPhase = internalAction({
     jobId: v.id("retroactiveJobs"),
   },
   handler: async (ctx, args) => {
-    const job = await ctx.runQuery(
-      internal.changelog.retroactive_mutations.getJobInternal,
-      { jobId: args.jobId }
-    );
-
-    if (!job || job.status === "cancelled") {
+    const job = await loadActiveJob(ctx, args.jobId);
+    if (!job) {
       return;
     }
 
@@ -191,7 +176,8 @@ export const fetchCommitsPhase = internalAction({
           token,
           connection.repositoryFullName,
           effectiveBranch,
-          job.fetchedCommits ?? 0
+          job.fetchedCommits ?? 0,
+          tags
         );
         return;
       }
@@ -215,7 +201,8 @@ export const fetchCommitsPhase = internalAction({
           token,
           connection.repositoryFullName,
           effectiveBranch,
-          0
+          0,
+          tags
         );
       }
     } catch (error) {

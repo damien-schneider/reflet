@@ -233,13 +233,15 @@ Return ONLY the JSON array, no markdown.`,
 
       const releases = await fetchGitHubReleases(repositoryFullName);
       const hasReleases = releases.length > 0;
-      const hasSemver = releases.some((r) => SEMVER_TAG_REGEX.test(r.tag_name));
+      const hasSemverTags = releases.some((r) =>
+        SEMVER_TAG_REGEX.test(r.tag_name)
+      );
       const versionPrefix = releases.find((r) => r.tag_name.startsWith("v"))
         ? "v"
         : "";
 
       const changelogConfig = {
-        hasConventionalCommits: hasSemver,
+        hasSemverTags,
         importExisting: hasReleases,
         releaseCount: releases.length,
         targetBranch: defaultBranch,
@@ -254,7 +256,7 @@ Return ONLY the JSON array, no markdown.`,
           status: "done",
           stepKey: "configure_changelog",
           summary: hasReleases
-            ? `${releases.length} releases found, semver ${hasSemver ? "detected" : "not detected"}`
+            ? `${releases.length} releases found, semver ${hasSemverTags ? "detected" : "not detected"}`
             : "No releases found",
         }
       );

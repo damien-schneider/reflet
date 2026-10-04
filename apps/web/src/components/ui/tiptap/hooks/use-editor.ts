@@ -160,7 +160,9 @@ export function useTiptapMarkdownEditor(
       hasInitializedRef.current = true;
       const currentMarkdown = getMarkdown(editor.storage);
       if (initialValueRef.current !== currentMarkdown) {
-        editor.commands.setContent(initialValueRef.current);
+        editor.commands.setContent(initialValueRef.current, {
+          emitUpdate: false,
+        });
       }
     }
   }, [editor]);
@@ -169,7 +171,7 @@ export function useTiptapMarkdownEditor(
     if (!editor) return;
     const currentMarkdown = getMarkdown(editor.storage);
     if (value !== currentMarkdown) {
-      editor.commands.setContent(value);
+      editor.commands.setContent(value, { emitUpdate: false });
     }
   }, [editor, value]);
 

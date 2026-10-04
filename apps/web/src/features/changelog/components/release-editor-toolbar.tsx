@@ -18,21 +18,17 @@ import type { VersionSuggestions } from "./version-suggestions";
 
 interface ReleaseEditorToolbarProps {
   handleCancelSchedule: () => void;
-  handleCommitsFetched: Parameters<
-    typeof GenerateFromCommits
-  >[0]["onCommitsFetched"];
-  handleStreamChunk: (content: string) => void;
-  handleStreamComplete: (content: string) => void;
-  handleStreamStart: () => void;
-  handleTitleGenerated: (title: string) => void;
+  isGenerating: boolean;
   isPublished: boolean;
   isScheduled: boolean;
-  isStreaming: boolean;
   isSubmitting: boolean;
+  onGenerationApplied: () => void;
+  onPreviewChange: (preview: string | null) => void;
   organizationId: Id<"organizations">;
   orgSlug: string;
   release?: Doc<"releases">;
   releaseId: Id<"releases"> | null;
+  saveRelease: () => Promise<Id<"releases">>;
   saveStatus: SaveStatusValue;
   setVersion: (value: string) => void;
   version: string;
@@ -41,19 +37,17 @@ interface ReleaseEditorToolbarProps {
 
 export function ReleaseEditorToolbar({
   handleCancelSchedule,
-  handleCommitsFetched,
-  handleStreamChunk,
-  handleStreamComplete,
-  handleStreamStart,
-  handleTitleGenerated,
+  isGenerating,
   isPublished,
   isScheduled,
-  isStreaming,
   isSubmitting,
+  onGenerationApplied,
+  onPreviewChange,
   organizationId,
   orgSlug,
   release,
   releaseId,
+  saveRelease,
   saveStatus,
   setVersion,
   version,
@@ -62,22 +56,18 @@ export function ReleaseEditorToolbar({
   return (
     <div className="flex flex-wrap items-center gap-2 px-6 pt-4">
       <VersionPicker
-        disabled={isSubmitting || isStreaming}
+        disabled={isSubmitting || isGenerating}
         onChange={setVersion}
         value={version}
         versionSuggestions={versionSuggestions}
       />
       <GenerateFromCommits
         disabled={isSubmitting}
-        isStreaming={isStreaming}
-        onCommitsFetched={handleCommitsFetched}
-        onComplete={handleStreamComplete}
-        onStreamChunk={handleStreamChunk}
-        onStreamStart={handleStreamStart}
-        onTitleGenerated={handleTitleGenerated}
+        onApplied={onGenerationApplied}
+        onPreviewChange={onPreviewChange}
         organizationId={organizationId}
         orgSlug={orgSlug}
-        releaseId={releaseId}
+        saveRelease={saveRelease}
         version={version}
       />
       {isPublished && (

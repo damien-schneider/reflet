@@ -7,12 +7,29 @@ import {
 } from "../feedback/public_projection";
 import { toPublicOrganization } from "../organizations/queries";
 import { isOrgMemberViewer } from "../shared/access";
+import { releaseSourceDate } from "./release_lifecycle";
 import {
   compareSemver,
   isVersionIncrement,
   nextVersions,
   parseSemver,
+  type SemverParts,
 } from "./semver";
+
+const MAX_PUBLIC_RELEASES = 100;
+
+function highestVersion(
+  versions: string[]
+): { parts: SemverParts; version: string } | null {
+  let highest: { parts: SemverParts; version: string } | null = null;
+  for (const version of versions) {
+    const parts = parseSemver(version);
+    if (parts && (!highest || compareSemver(parts, highest.parts) > 0)) {
+      highest = { parts, version };
+    }
+  }
+  return highest;
+}
 
 async function withLinkedFeedback(
   ctx: QueryCtx,
@@ -97,16 +114,18 @@ export const list = query({
           releaseId: release._id,
         });
 
-        let commitCount = 0;
-        if (isMember) {
-          const commitsDoc = await ctx.db
-            .query("releaseCommits")
-            .withIndex("by_release", (q) => q.eq("releaseId", release._id))
-            .first();
-          commitCount = commitsDoc?.commits?.length ?? 0;
-        }
-
-        return { ...release, commitCount, feedback };
+        const snapshot = isMember
+          ? await ctx.db
+              .query("releaseCommits")
+              .withIndex("by_release", (q) => q.eq("releaseId", release._id))
+              .first()
+          : null;
+        return {
+          ...release,
+          commitCount: snapshot?.commits.length ?? 0,
+          feedback,
+          sourceDate: releaseSourceDate(release, snapshot),
+        };
       })
     );
   },
@@ -184,26 +203,29 @@ export const listPublished = query({
       return [];
     }
 
-    const releases = await ctx.db
+    const publishedReleases = await ctx.db
       .query("releases")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
+      .withIndex("by_published", (q) =>
+        q.eq("organizationId", args.organizationId).gt("publishedAt", 0)
       )
-      .collect();
-
-    const publishedReleases = releases
-      .filter((r) => r.publishedAt !== undefined)
-      .sort((a, b) => (b.publishedAt ?? 0) - (a.publishedAt ?? 0));
+      .order("desc")
+      .take(MAX_PUBLIC_RELEASES);
 
     return await Promise.all(
       publishedReleases.map(async (release) => ({
-        ...release,
-        content: release.description || "",
+        _creationTime: release._creationTime,
+        _id: release._id,
+        description: release.description,
         feedback: await withLinkedFeedback(ctx, {
           isMember,
           org,
           releaseId: release._id,
         }),
+        githubHtmlUrl: release.githubHtmlUrl,
+        githubReleaseId: release.githubReleaseId,
+        publishedAt: release.publishedAt,
+        title: release.title,
+        version: release.version,
       }))
     );
   },
@@ -241,34 +263,47 @@ export const getNextVersion = query({
         q.eq("organizationId", args.organizationId)
       )
       .collect();
+    const githubReleases = await ctx.db
+      .query("githubReleases")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .collect();
 
-    const publishedWithVersion = releases.filter(
-      (r) =>
-        r.publishedAt !== undefined &&
-        r.version &&
-        r._id !== args.excludeReleaseId
+    const isExcluded = (releaseId: Id<"releases"> | undefined) =>
+      args.excludeReleaseId !== undefined &&
+      releaseId === args.excludeReleaseId;
+    const candidateReleases = releases.filter(
+      (release) => !isExcluded(release._id)
+    );
+    const releasedVersions = [
+      ...candidateReleases.flatMap((release) =>
+        release.publishedAt && release.version ? [release.version] : []
+      ),
+      ...githubReleases.flatMap((githubRelease) =>
+        githubRelease.isDraft || isExcluded(githubRelease.refletReleaseId)
+          ? []
+          : [githubRelease.tagName]
+      ),
+    ];
+    const draftVersions = candidateReleases.flatMap((release) =>
+      !release.publishedAt && release.version ? [release.version] : []
     );
 
-    if (publishedWithVersion.length === 0) {
-      return {
-        autoVersioning,
-        current: null,
-        defaultIncrement,
-        ...nextVersions({ major: 0, minor: 0, patch: 0 }, prefix),
-      };
-    }
-
-    publishedWithVersion.sort((a, b) =>
-      compareSemver(parseSemver(b.version ?? ""), parseSemver(a.version ?? ""))
-    );
-
-    const latestVersion = publishedWithVersion[0]?.version ?? "";
+    const latestReleased = highestVersion(releasedVersions);
+    const highestKnown = highestVersion([
+      ...releasedVersions,
+      ...draftVersions,
+    ]);
 
     return {
       autoVersioning,
-      current: latestVersion,
+      current: latestReleased?.version ?? null,
       defaultIncrement,
-      ...nextVersions(parseSemver(latestVersion), prefix),
+      ...nextVersions(
+        highestKnown?.parts ?? { major: 0, minor: 0, patch: 0 },
+        prefix
+      ),
     };
   },
 });

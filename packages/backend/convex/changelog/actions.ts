@@ -1,87 +1,36 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { mutation } from "../_generated/server";
-import { requireAuthUser } from "../shared/access";
-import { applyReleaseStatusToLinkedFeedback } from "./feedback_status";
+import { requireOrgAdmin } from "../shared/access";
+import { feedbackStatus } from "../shared/validators";
+import {
+  deleteRelease,
+  publishRelease,
+  unpublishRelease,
+} from "./release_lifecycle";
 
 export const publish = mutation({
   args: {
-    feedbackStatus: v.optional(
-      v.union(
-        v.literal("open"),
-        v.literal("under_review"),
-        v.literal("planned"),
-        v.literal("in_progress"),
-        v.literal("completed"),
-        v.literal("closed")
-      )
-    ),
+    feedbackStatus: v.optional(feedbackStatus),
     id: v.id("releases"),
   },
   handler: async (ctx, args) => {
-    const user = await requireAuthUser(ctx);
-
     const release = await ctx.db.get(args.id);
     if (!release) {
       throw new Error("Release not found");
     }
+    const { user } = await requireOrgAdmin(
+      ctx,
+      release.organizationId,
+      "publish releases"
+    );
 
-    // Check admin permission
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", release.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership || membership.role === "member") {
-      throw new Error("Only admins can publish releases");
-    }
-
-    if (release.publishedAt) {
-      throw new Error("Release is already published");
-    }
-
-    await ctx.db.patch(args.id, {
+    await publishRelease(ctx, release, {
+      actorId: user._id,
+      announce: true,
+      feedbackStatus: args.feedbackStatus,
       publishedAt: Date.now(),
-      updatedAt: Date.now(),
     });
-
-    if (args.feedbackStatus) {
-      await applyReleaseStatusToLinkedFeedback(
-        ctx,
-        args.id,
-        args.feedbackStatus,
-        user._id
-      );
-    }
-
-    // Schedule email notifications to subscribers
-    await ctx.scheduler.runAfter(
-      0,
-      internal.changelog.notifications.sendReleaseNotifications,
-      {
-        releaseId: args.id,
-      }
-    );
-
-    // Schedule push to GitHub if enabled
-    await ctx.scheduler.runAfter(
-      0,
-      internal.integrations.github.node_actions.pushReleaseToGithub,
-      {
-        releaseId: args.id,
-      }
-    );
-
-    // Schedule shipped notifications for linked feedback voters
-    await ctx.scheduler.runAfter(
-      0,
-      internal.notifications.shipped.sendShippedNotifications,
-      {
-        releaseId: args.id,
-      }
-    );
 
     return args.id;
   },
@@ -90,29 +39,13 @@ export const publish = mutation({
 export const unpublish = mutation({
   args: { id: v.id("releases") },
   handler: async (ctx, args) => {
-    const user = await requireAuthUser(ctx);
-
     const release = await ctx.db.get(args.id);
     if (!release) {
       throw new Error("Release not found");
     }
+    await requireOrgAdmin(ctx, release.organizationId, "unpublish releases");
 
-    // Check admin permission
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", release.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership || membership.role === "member") {
-      throw new Error("Only admins can unpublish releases");
-    }
-
-    await ctx.db.patch(args.id, {
-      publishedAt: undefined,
-      updatedAt: Date.now(),
-    });
+    await unpublishRelease(ctx, release);
 
     return args.id;
   },
@@ -121,46 +54,13 @@ export const unpublish = mutation({
 export const remove = mutation({
   args: { id: v.id("releases") },
   handler: async (ctx, args) => {
-    const user = await requireAuthUser(ctx);
-
     const release = await ctx.db.get(args.id);
     if (!release) {
       throw new Error("Release not found");
     }
+    await requireOrgAdmin(ctx, release.organizationId, "delete releases");
 
-    // Check admin permission
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", release.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership || membership.role === "member") {
-      throw new Error("Only admins can delete releases");
-    }
-
-    // Delete all feedback links
-    const links = await ctx.db
-      .query("releaseFeedback")
-      .withIndex("by_release", (q) => q.eq("releaseId", args.id))
-      .collect();
-
-    for (const link of links) {
-      await ctx.db.delete(link._id);
-    }
-
-    // Delete associated commits
-    const commitDocs = await ctx.db
-      .query("releaseCommits")
-      .withIndex("by_release", (q) => q.eq("releaseId", args.id))
-      .collect();
-
-    for (const doc of commitDocs) {
-      await ctx.db.delete(doc._id);
-    }
-
-    await ctx.db.delete(args.id);
+    await deleteRelease(ctx, release);
 
     return true;
   },
@@ -169,29 +69,23 @@ export const remove = mutation({
 export const pushToGithub = mutation({
   args: { releaseId: v.id("releases") },
   handler: async (ctx, args) => {
-    const user = await requireAuthUser(ctx);
-
     const release = await ctx.db.get(args.releaseId);
     if (!release) {
       throw new Error("Release not found");
     }
+    await requireOrgAdmin(
+      ctx,
+      release.organizationId,
+      "push releases to GitHub"
+    );
 
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", release.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership || membership.role === "member") {
-      throw new Error("Only admins can push releases to GitHub");
+    if (release.githubPushStatus === "pending") {
+      throw new Error("A push to GitHub is already in progress");
+    }
+    if (release.syncedFromGithub) {
+      throw new Error("Releases imported from GitHub are edited on GitHub");
     }
 
-    if (release.githubReleaseId) {
-      throw new Error("Release is already linked to GitHub");
-    }
-
-    // Clear previous failed state before retrying
     if (release.githubPushStatus === "failed") {
       await ctx.db.patch(args.releaseId, {
         githubPushError: undefined,
@@ -214,18 +108,7 @@ export const pushToGithub = mutation({
 export const triggerGithubSync = mutation({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    const user = await requireAuthUser(ctx);
-
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", args.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership || membership.role === "member") {
-      throw new Error("Only admins can trigger sync");
-    }
+    await requireOrgAdmin(ctx, args.organizationId, "trigger sync");
 
     const connection = await ctx.db
       .query("githubConnections")

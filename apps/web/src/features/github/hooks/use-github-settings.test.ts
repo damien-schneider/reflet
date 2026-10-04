@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockListRepositories = vi.fn().mockResolvedValue([]);
 const mockListLabels = vi.fn().mockResolvedValue([]);
-const mockSyncReleases = vi.fn().mockResolvedValue(undefined);
+const mockTriggerReleaseSync = vi.fn().mockResolvedValue(undefined);
 const mockSyncIssues = vi.fn().mockResolvedValue(undefined);
 const mockSetupWebhook = vi.fn().mockResolvedValue(undefined);
 
@@ -16,9 +16,6 @@ vi.mock("convex/react", () => ({
     if (name.includes("listLabels")) {
       return mockListLabels;
     }
-    if (name.includes("syncReleases")) {
-      return mockSyncReleases;
-    }
     if (name.includes("syncIssues")) {
       return mockSyncIssues;
     }
@@ -27,10 +24,16 @@ vi.mock("convex/react", () => ({
     }
     return vi.fn();
   }),
+  useMutation: vi.fn(() => mockTriggerReleaseSync),
 }));
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
+    changelog: {
+      actions: {
+        triggerGithubSync: "changelog.actions.triggerGithubSync",
+      },
+    },
     integrations: {
       github: {
         client_actions: {
@@ -39,7 +42,6 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
             "integrations.github.client_actions.listRepositories",
           setupWebhook: "integrations.github.client_actions.setupWebhook",
           syncIssues: "integrations.github.client_actions.syncIssues",
-          syncReleases: "integrations.github.client_actions.syncReleases",
         },
       },
     },
@@ -55,7 +57,7 @@ import { useGitHubSettings } from "./use-github-settings";
 beforeEach(() => {
   mockListRepositories.mockResolvedValue([]);
   mockListLabels.mockResolvedValue([]);
-  mockSyncReleases.mockResolvedValue(undefined);
+  mockTriggerReleaseSync.mockResolvedValue(undefined);
   mockSyncIssues.mockResolvedValue(undefined);
   mockSetupWebhook.mockResolvedValue(undefined);
 });
@@ -141,14 +143,14 @@ describe("useGitHubSettings", () => {
     });
   });
 
-  it("handleSyncReleases calls syncReleases action", async () => {
+  it("handleSyncReleases schedules a release sync", async () => {
     const { result } = renderHook(() => useGitHubSettings(defaultProps));
 
     await act(async () => {
       await result.current.handleSyncReleases();
     });
 
-    expect(mockSyncReleases).toHaveBeenCalledWith({
+    expect(mockTriggerReleaseSync).toHaveBeenCalledWith({
       organizationId: "org1",
     });
   });
@@ -287,7 +289,7 @@ describe("useGitHubSettings", () => {
 
   it("does nothing when orgId is undefined", async () => {
     mockListRepositories.mockClear();
-    mockSyncReleases.mockClear();
+    mockTriggerReleaseSync.mockClear();
     mockSetupWebhook.mockClear();
     const { result } = renderHook(() =>
       useGitHubSettings({ ...defaultProps, orgId: undefined })
@@ -301,7 +303,7 @@ describe("useGitHubSettings", () => {
     });
 
     expect(mockListRepositories).not.toHaveBeenCalled();
-    expect(mockSyncReleases).not.toHaveBeenCalled();
+    expect(mockTriggerReleaseSync).not.toHaveBeenCalled();
     expect(mockSetupWebhook).not.toHaveBeenCalled();
   });
 

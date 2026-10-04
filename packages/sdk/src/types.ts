@@ -313,8 +313,8 @@ export interface RoadmapItem {
 
 export interface ChangelogEntry {
   description?: string;
-  feedback: { id: string; title: string }[];
   id: string;
+  items: { id: string; status: FeedbackStatus; title: string }[];
   publishedAt?: number;
   title: string;
   version?: string;

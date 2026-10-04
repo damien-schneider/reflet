@@ -1,57 +1,10 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
-import type { Doc } from "../_generated/dataModel";
-import {
-  internalMutation,
-  type MutationCtx,
-  mutation,
-} from "../_generated/server";
+import { internalMutation, mutation } from "../_generated/server";
 import { requireOrgAdmin } from "../shared/access";
+import { SYSTEM_ACTOR_ID } from "../shared/actors";
 import { feedbackStatus } from "../shared/validators";
-import { applyReleaseStatusToLinkedFeedback } from "./feedback_status";
-
-async function publishScheduledRelease(
-  ctx: MutationCtx,
-  release: Doc<"releases">
-): Promise<void> {
-  const now = Date.now();
-
-  await ctx.db.patch(release._id, {
-    publishedAt: now,
-    scheduledBy: undefined,
-    scheduledFeedbackStatus: undefined,
-    scheduledJobId: undefined,
-    scheduledPublishAt: undefined,
-    updatedAt: now,
-  });
-
-  if (release.scheduledFeedbackStatus) {
-    await applyReleaseStatusToLinkedFeedback(
-      ctx,
-      release._id,
-      release.scheduledFeedbackStatus,
-      release.scheduledBy ?? "system"
-    );
-  }
-
-  await ctx.scheduler.runAfter(
-    0,
-    internal.changelog.notifications.sendReleaseNotifications,
-    { releaseId: release._id }
-  );
-
-  await ctx.scheduler.runAfter(
-    0,
-    internal.integrations.github.node_actions.pushReleaseToGithub,
-    { releaseId: release._id }
-  );
-
-  await ctx.scheduler.runAfter(
-    0,
-    internal.notifications.shipped.sendShippedNotifications,
-    { releaseId: release._id }
-  );
-}
+import { publishRelease } from "./release_lifecycle";
 
 export const schedulePublish = mutation({
   args: {
@@ -148,7 +101,12 @@ export const executeScheduledPublish = internalMutation({
       return;
     }
 
-    await publishScheduledRelease(ctx, release);
+    await publishRelease(ctx, release, {
+      actorId: release.scheduledBy ?? SYSTEM_ACTOR_ID,
+      announce: true,
+      feedbackStatus: release.scheduledFeedbackStatus,
+      publishedAt: Date.now(),
+    });
   },
 });
 
@@ -166,7 +124,12 @@ export const checkMissedScheduledReleases = internalMutation({
 
     for (const release of dueReleases) {
       if (!release.publishedAt) {
-        await publishScheduledRelease(ctx, release);
+        await publishRelease(ctx, release, {
+          actorId: release.scheduledBy ?? SYSTEM_ACTOR_ID,
+          announce: true,
+          feedbackStatus: release.scheduledFeedbackStatus,
+          publishedAt: now,
+        });
       }
     }
   },

@@ -56,126 +56,6 @@ async function syncLinkedFeedback(
   }
 }
 
-export const processReleaseWebhook = internalMutation({
-  args: {
-    action: v.string(),
-    connectionId: v.id("githubConnections"),
-    organizationId: v.id("organizations"),
-    release: v.object({
-      body: v.optional(v.string()),
-      createdAt: v.number(),
-      htmlUrl: v.string(),
-      id: v.string(),
-      isDraft: v.boolean(),
-      isPrerelease: v.boolean(),
-      name: v.optional(v.string()),
-      publishedAt: v.optional(v.number()),
-      tagName: v.string(),
-    }),
-  },
-  handler: async (ctx, args) => {
-    const now = Date.now();
-
-    if (args.action === "deleted") {
-      // Find and delete the synced release
-      const existing = await ctx.db
-        .query("githubReleases")
-        .withIndex("by_github_release_id", (q) =>
-          q
-            .eq("githubConnectionId", args.connectionId)
-            .eq("githubReleaseId", args.release.id)
-        )
-        .first();
-
-      if (existing) {
-        await ctx.db.delete(existing._id);
-      }
-      return;
-    }
-
-    // Check if release already exists
-    const existing = await ctx.db
-      .query("githubReleases")
-      .withIndex("by_github_release_id", (q) =>
-        q
-          .eq("githubConnectionId", args.connectionId)
-          .eq("githubReleaseId", args.release.id)
-      )
-      .first();
-
-    if (existing) {
-      // Update existing
-      await ctx.db.patch(existing._id, {
-        body: args.release.body,
-        htmlUrl: args.release.htmlUrl,
-        isDraft: args.release.isDraft,
-        isPrerelease: args.release.isPrerelease,
-        lastSyncedAt: now,
-        name: args.release.name,
-        publishedAt: args.release.publishedAt,
-        tagName: args.release.tagName,
-      });
-    } else {
-      // Insert new
-      await ctx.db.insert("githubReleases", {
-        body: args.release.body,
-        createdAt: args.release.createdAt,
-        githubConnectionId: args.connectionId,
-        githubReleaseId: args.release.id,
-        htmlUrl: args.release.htmlUrl,
-        isDraft: args.release.isDraft,
-        isPrerelease: args.release.isPrerelease,
-        lastSyncedAt: now,
-        name: args.release.name,
-        organizationId: args.organizationId,
-        publishedAt: args.release.publishedAt,
-        tagName: args.release.tagName,
-      });
-    }
-
-    // Update connection sync status
-    await ctx.db.patch(args.connectionId, {
-      lastSyncAt: now,
-      lastSyncStatus: "success",
-      updatedAt: now,
-    });
-
-    const connection = await ctx.db.get(args.connectionId);
-    if (!(connection?.autoSyncReleases && args.action === "published")) {
-      return;
-    }
-
-    const existingRefletRelease = await ctx.db
-      .query("releases")
-      .withIndex("by_github_release", (q) =>
-        q
-          .eq("organizationId", args.organizationId)
-          .eq("githubReleaseId", args.release.id)
-      )
-      .first();
-
-    if (existingRefletRelease) {
-      return;
-    }
-
-    const org = await ctx.db.get(args.organizationId);
-    const autoPublish = org?.changelogSettings?.autoPublishImported !== false;
-
-    await ctx.db.insert("releases", {
-      createdAt: now,
-      description: args.release.body,
-      githubHtmlUrl: args.release.htmlUrl,
-      githubReleaseId: args.release.id,
-      organizationId: args.organizationId,
-      publishedAt: autoPublish ? now : undefined,
-      syncedFromGithub: true,
-      title: args.release.name || args.release.tagName,
-      updatedAt: now,
-      version: args.release.tagName,
-    });
-  },
-});
-
 export const processIssueWebhook = internalMutation({
   args: {
     action: v.string(),
@@ -221,7 +101,6 @@ export const processIssueWebhook = internalMutation({
     }
 
     if (existing) {
-      // Update existing issue
       await ctx.db.patch(existing._id, {
         body: args.issue.body,
         githubAssignees: args.issue.assignees,
@@ -246,7 +125,6 @@ export const processIssueWebhook = internalMutation({
         );
       }
     } else {
-      // Insert new issue
       const issueId = await ctx.db.insert("githubIssues", {
         body: args.issue.body,
         githubAssignees: args.issue.assignees,
@@ -267,7 +145,6 @@ export const processIssueWebhook = internalMutation({
         title: args.issue.title,
       });
 
-      // Schedule auto-import check via separate mutation
       await ctx.scheduler.runAfter(
         0,
         internal.integrations.github.issue_actions.autoImportIssueToFeedback,

@@ -1,6 +1,53 @@
 import { defineTable } from "convex/server";
-import { v } from "convex/values";
+import { type Infer, v } from "convex/values";
 import { feedbackStatus } from "../shared/validators";
+
+export const releaseCommitValidator = v.object({
+  author: v.string(),
+  date: v.string(),
+  fullMessage: v.string(),
+  message: v.string(),
+  sha: v.string(),
+});
+export type ReleaseCommit = Infer<typeof releaseCommitValidator>;
+
+export const releaseFileValidator = v.object({
+  additions: v.number(),
+  deletions: v.number(),
+  filename: v.string(),
+  status: v.string(),
+});
+export type ReleaseFile = Infer<typeof releaseFileValidator>;
+
+export const releasePullRequestValidator = v.object({
+  body: v.optional(v.string()),
+  number: v.number(),
+  title: v.string(),
+  url: v.string(),
+});
+export type ReleasePullRequest = Infer<typeof releasePullRequestValidator>;
+
+export const releaseSourceValidator = v.object({
+  baseRef: v.optional(v.string()),
+  commits: v.array(releaseCommitValidator),
+  files: v.array(releaseFileValidator),
+  headRef: v.string(),
+  headSha: v.string(),
+  maintainerNotes: v.optional(v.string()),
+  pullRequests: v.array(releasePullRequestValidator),
+  totalCommits: v.number(),
+});
+
+export const releaseDraftOriginValidator = v.union(
+  v.literal("ai"),
+  v.literal("github")
+);
+
+export const releaseDraftStatusValidator = v.union(
+  v.literal("pending"),
+  v.literal("applied"),
+  v.literal("dismissed")
+);
 
 export const changelogTables = {
   changelogSubscribers: defineTable({
@@ -19,29 +66,32 @@ export const changelogTables = {
     .index("by_confirmation_token", ["confirmationToken"]),
 
   releaseCommits: defineTable({
-    commits: v.array(
-      v.object({
-        author: v.string(),
-        date: v.string(),
-        fullMessage: v.string(),
-        message: v.string(),
-        sha: v.string(),
-      })
-    ),
+    baseRef: v.optional(v.string()),
+    commits: v.array(releaseCommitValidator),
     createdAt: v.number(),
-    files: v.optional(
-      v.array(
-        v.object({
-          additions: v.number(),
-          deletions: v.number(),
-          filename: v.string(),
-          status: v.string(),
-        })
-      )
-    ),
+    files: v.optional(v.array(releaseFileValidator)),
+    headRef: v.optional(v.string()),
+    headSha: v.optional(v.string()),
+    // Unused: drop once migrations/rename_previous_tag has run everywhere.
     previousTag: v.optional(v.string()),
+    pullRequests: v.optional(v.array(releasePullRequestValidator)),
     releaseId: v.id("releases"),
+    totalCommits: v.optional(v.number()),
   }).index("by_release", ["releaseId"]),
+
+  releaseDrafts: defineTable({
+    createdAt: v.number(),
+    description: v.string(),
+    organizationId: v.id("organizations"),
+    origin: releaseDraftOriginValidator,
+    releaseId: v.id("releases"),
+    resolvedAt: v.optional(v.number()),
+    source: v.optional(releaseSourceValidator),
+    status: releaseDraftStatusValidator,
+    title: v.optional(v.string()),
+  })
+    .index("by_release", ["releaseId"])
+    .index("by_release_status", ["releaseId", "status"]),
 
   releaseFeedback: defineTable({
     createdAt: v.number(),
@@ -61,6 +111,7 @@ export const changelogTables = {
       v.union(v.literal("pending"), v.literal("success"), v.literal("failed"))
     ),
     githubReleaseId: v.optional(v.string()),
+    githubSyncedAt: v.optional(v.number()),
     notifiedAt: v.optional(v.number()),
     organizationId: v.id("organizations"),
     publishedAt: v.optional(v.number()),
@@ -77,18 +128,11 @@ export const changelogTables = {
     .index("by_organization", ["organizationId"])
     .index("by_published", ["organizationId", "publishedAt"])
     .index("by_github_release", ["organizationId", "githubReleaseId"])
+    .index("by_org_version", ["organizationId", "version"])
     .index("by_scheduled", ["scheduledPublishAt"]),
 
   retroactiveCommits: defineTable({
-    commits: v.array(
-      v.object({
-        author: v.string(),
-        date: v.string(),
-        fullMessage: v.string(),
-        message: v.string(),
-        sha: v.string(),
-      })
-    ),
+    commits: v.array(releaseCommitValidator),
     createdAt: v.number(),
     groupId: v.string(),
     jobId: v.id("retroactiveJobs"),

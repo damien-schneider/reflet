@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { useAutoSaveRelease } from "../hooks/use-auto-save-release";
-import { useReleaseCommits } from "../hooks/use-release-commits";
 import { useReleasePublishing } from "../hooks/use-release-publishing";
 import type { FeedbackLinkStatus } from "./feedback-section-header";
 import { PublishConfirmDialog } from "./publish-confirm-dialog";
@@ -19,95 +18,61 @@ interface ReleaseEditorProps {
   className?: string;
   organizationId: Id<"organizations">;
   orgSlug: string;
-  release?: Doc<"releases">; // If provided, edit mode
+  release?: Doc<"releases">;
 }
 
 export function ReleaseEditor({
   organizationId,
   orgSlug,
-  release,
+  release: initialRelease,
   className,
 }: ReleaseEditorProps) {
   const router = useRouter();
   const { data: sessionData } = authClient.useSession();
   const githubConnection = useQuery(
     api.integrations.github.queries.getConnection,
-    {
-      organizationId,
-    }
-  );
-
-  const isPublished = release?.publishedAt !== undefined;
-  const isScheduled = !!release?.scheduledPublishAt;
-  const hasGithubConnection = !!githubConnection;
-  const isLinkedToGithub = !!release?.githubReleaseId;
-  const canPushToGithub =
-    isPublished && hasGithubConnection && !isLinkedToGithub;
-  const isPermissionError =
-    release?.githubPushStatus === "failed" &&
-    release?.githubPushErrorType === "permission_denied";
-
-  const [title, setTitle] = useState(release?.title ?? "");
-  const [userVersion, setVersion] = useState<string | null>(
-    release?.version || null
+    { organizationId }
   );
   const versionSuggestions = useQuery(api.changelog.queries.getNextVersion, {
-    excludeReleaseId: release?._id,
+    excludeReleaseId: initialRelease?._id,
     organizationId,
   });
-  const version = userVersion ?? getSuggestedVersion(versionSuggestions);
-  const [description, setDescription] = useState(release?.description ?? "");
+
+  const {
+    description,
+    discardProseEdits,
+    release,
+    releaseId,
+    saveRelease,
+    saveStatus,
+    setDescription,
+    setTitle,
+    setVersion,
+    title,
+    version,
+  } = useAutoSaveRelease({
+    initialRelease,
+    organizationId,
+    suggestedVersion: getSuggestedVersion(versionSuggestions),
+  });
+
+  const isPublished = release?.publishedAt !== undefined;
+  const isScheduled = Boolean(release?.scheduledPublishAt);
+
   const [showPublishConfirm, setShowPublishConfirm] = useState(false);
-
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [streamedContent, setStreamedContent] = useState("");
-
+  const [generatedPreview, setGeneratedPreview] = useState<string | null>(null);
   const [shouldAutoMatchFeedback, setShouldAutoMatchFeedback] = useState(false);
   const [feedbackLinkStatus, setFeedbackLinkStatus] =
     useState<FeedbackLinkStatus>("completed");
 
-  const { releaseId, saveStatus } = useAutoSaveRelease({
-    description,
-    initialReleaseId: release?._id ?? null,
-    organizationId,
-    title,
-    userVersion,
-    version,
-  });
-
-  const { commits, files, previousTag, handleCommitsFetched } =
-    useReleaseCommits(releaseId);
-
-  const releaseData = useQuery(
+  const releaseDetails = useQuery(
     api.changelog.queries.get,
     releaseId ? { id: releaseId } : "skip"
   );
-  const linkedFeedbackCount = releaseData?.feedbackItems?.length ?? 0;
+  const linkedFeedbackCount = releaseDetails?.feedbackItems.length ?? 0;
 
   const navigateToChangelog = () => {
     router.push(`/dashboard/${orgSlug}/changelog`);
-  };
-
-  const handleStreamStart = () => {
-    setIsStreaming(true);
-    setStreamedContent("");
-  };
-
-  const handleStreamChunk = (content: string) => {
-    setStreamedContent(content);
-  };
-
-  const handleStreamComplete = (content: string) => {
-    setIsStreaming(false);
-    setStreamedContent("");
-    if (content) {
-      setDescription(content);
-      setShouldAutoMatchFeedback(true);
-    }
-  };
-
-  const handleTitleGenerated = (generatedTitle: string) => {
-    setTitle(generatedTitle);
   };
 
   const {
@@ -118,15 +83,18 @@ export function ReleaseEditor({
     handleUnpublish,
     isSubmitting,
   } = useReleasePublishing({
-    draft: { description, title, version },
     feedbackLinkStatus,
     onDone: () => {
       setShowPublishConfirm(false);
       navigateToChangelog();
     },
-    organizationId,
     releaseId,
+    saveRelease,
+    title,
+    version,
   });
+
+  const isGenerating = generatedPreview !== null;
 
   return (
     <div
@@ -138,48 +106,41 @@ export function ReleaseEditor({
       <div className="flex min-h-125 flex-col">
         <ReleaseEditorToolbar
           handleCancelSchedule={handleCancelSchedule}
-          handleCommitsFetched={handleCommitsFetched}
-          handleStreamChunk={handleStreamChunk}
-          handleStreamComplete={handleStreamComplete}
-          handleStreamStart={handleStreamStart}
-          handleTitleGenerated={handleTitleGenerated}
+          isGenerating={isGenerating}
           isPublished={isPublished}
           isScheduled={isScheduled}
-          isStreaming={isStreaming}
           isSubmitting={isSubmitting}
+          onGenerationApplied={() => setShouldAutoMatchFeedback(true)}
+          onPreviewChange={setGeneratedPreview}
           organizationId={organizationId}
           orgSlug={orgSlug}
           release={release}
           releaseId={releaseId}
+          saveRelease={saveRelease}
           saveStatus={saveStatus}
           setVersion={setVersion}
           version={version}
           versionSuggestions={versionSuggestions}
         />
         <ReleaseEditorBody
-          commits={commits}
           description={description}
-          files={files}
-          isStreaming={isStreaming}
+          generatedPreview={generatedPreview}
           isSubmitting={isSubmitting}
+          onApplyDraft={discardProseEdits}
           onDescriptionChange={setDescription}
+          onFeedbackLinkStatusChange={setFeedbackLinkStatus}
           onTitleChange={setTitle}
           organizationId={organizationId}
-          previousTag={previousTag}
           releaseId={releaseId}
-          setFeedbackLinkStatus={setFeedbackLinkStatus}
           shouldAutoMatchFeedback={shouldAutoMatchFeedback}
-          streamedContent={streamedContent}
           title={title}
         />
 
         <ReleaseEditorFooter
-          canPushToGithub={canPushToGithub}
-          isLinkedToGithub={isLinkedToGithub}
-          isPermissionError={isPermissionError}
+          hasGithubConnection={Boolean(githubConnection)}
+          isGenerating={isGenerating}
           isPublished={isPublished}
           isScheduled={isScheduled}
-          isStreaming={isStreaming}
           isSubmitting={isSubmitting}
           onCancel={navigateToChangelog}
           onCancelSchedule={handleCancelSchedule}

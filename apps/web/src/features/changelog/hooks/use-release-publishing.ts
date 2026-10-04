@@ -5,22 +5,16 @@ import type { OptimisticLocalStore } from "convex/browser";
 import { useMutation } from "convex/react";
 import { format } from "date-fns";
 import { useState } from "react";
-import { UNTITLED_RELEASE_TITLE } from "@/features/changelog/hooks/use-auto-save-release";
 import { capture } from "@/lib/analytics";
 import type { FeedbackLinkStatus } from "../components/feedback-section-header";
 
-interface ReleaseDraft {
-  description: string;
-  title: string;
-  version: string;
-}
-
 interface UseReleasePublishingOptions {
-  draft: ReleaseDraft;
   feedbackLinkStatus: FeedbackLinkStatus;
   onDone: () => void;
-  organizationId: Id<"organizations">;
   releaseId: Id<"releases"> | null;
+  saveRelease: () => Promise<Id<"releases">>;
+  title: string;
+  version: string;
 }
 
 function setPublishedAt(
@@ -57,14 +51,13 @@ function markUnpublished(
 }
 
 export function useReleasePublishing({
-  draft,
   feedbackLinkStatus,
   onDone,
-  organizationId,
   releaseId,
+  saveRelease,
+  title,
+  version,
 }: UseReleasePublishingOptions) {
-  const updateRelease = useMutation(api.changelog.mutations.update);
-  const createRelease = useMutation(api.changelog.mutations.create);
   const publishRelease = useMutation(
     api.changelog.actions.publish
   ).withOptimisticUpdate(markPublishedNow);
@@ -80,20 +73,7 @@ export function useReleasePublishing({
 
   const feedbackStatus =
     feedbackLinkStatus === "keep" ? undefined : feedbackLinkStatus;
-  const hasVersion = Boolean(draft.version.trim());
-
-  const saveDraft = async (): Promise<Id<"releases">> => {
-    const fields = {
-      description: draft.description.trim() || undefined,
-      title: draft.title.trim() || UNTITLED_RELEASE_TITLE,
-      version: draft.version.trim() || undefined,
-    };
-    if (releaseId) {
-      await updateRelease({ ...fields, id: releaseId });
-      return releaseId;
-    }
-    return await createRelease({ ...fields, organizationId });
-  };
+  const hasVersion = Boolean(version.trim());
 
   const trackSubmission = async (
     task: Promise<unknown>,
@@ -109,7 +89,7 @@ export function useReleasePublishing({
   };
 
   const publishDraft = async () => {
-    const id = await saveDraft();
+    const id = await saveRelease();
     await publishRelease({ feedbackStatus, id });
     capture("release_published", { has_version: hasVersion });
     toast.success("Release published");
@@ -117,7 +97,7 @@ export function useReleasePublishing({
   };
 
   const scheduleDraft = async (scheduledAt: number) => {
-    const id = await saveDraft();
+    const id = await saveRelease();
     await schedulePublish({
       feedbackStatus,
       id,
@@ -131,7 +111,7 @@ export function useReleasePublishing({
   };
 
   const handlePublish = async () => {
-    if (!draft.title.trim()) {
+    if (!title.trim()) {
       toast.error("Add a title before publishing");
       return;
     }
@@ -139,7 +119,7 @@ export function useReleasePublishing({
   };
 
   const handleSchedule = async (scheduledAt: number) => {
-    if (!draft.title.trim()) {
+    if (!title.trim()) {
       toast.error("Add a title before scheduling");
       return;
     }
@@ -174,7 +154,7 @@ export function useReleasePublishing({
       return;
     }
     try {
-      await pushToGithub({ releaseId });
+      await pushToGithub({ releaseId: await saveRelease() });
     } catch (error) {
       toast.error(
         error instanceof Error

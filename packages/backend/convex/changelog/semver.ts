@@ -1,6 +1,7 @@
 import { type Infer, v } from "convex/values";
 
-const VERSION_PREFIX_REGEX = /^v/i;
+const SEMVER_TAG_REGEX =
+  /^(?:.*@)?[a-z_/-]*(\d+)\.(\d+)(?:\.(\d+))?(?:[-+][0-9a-z.+-]*)?$/i;
 
 export const versionIncrementValidator = v.union(
   v.literal("major"),
@@ -19,13 +20,16 @@ export interface SemverParts {
   patch: number;
 }
 
-export const parseSemver = (version: string): SemverParts => {
-  const stripped = version.replace(VERSION_PREFIX_REGEX, "");
-  const parts = stripped.split(".");
+export const parseSemver = (version: string): SemverParts | null => {
+  const match = SEMVER_TAG_REGEX.exec(version.trim());
+  if (!match) {
+    return null;
+  }
+  const [, major, minor, patch] = match;
   return {
-    major: Number.parseInt(parts[0] ?? "0", 10) || 0,
-    minor: Number.parseInt(parts[1] ?? "0", 10) || 0,
-    patch: Number.parseInt(parts[2] ?? "0", 10) || 0,
+    major: Number(major),
+    minor: Number(minor),
+    patch: Number(patch ?? 0),
   };
 };
 

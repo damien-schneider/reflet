@@ -3,26 +3,42 @@ import { Button } from "@ctrl-ui/react/ui/button";
 import { Spinner } from "@ctrl-ui/react/ui/spinner";
 import { Check, CloudArrowUp, WarningCircle } from "@phosphor-icons/react";
 import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
+import { isGithubReleaseOutdated } from "@reflet/backend/convex/integrations/github/release_sync_state";
 import Link from "next/link";
 import { buildGitHubInstallUrl } from "@/features/github/lib/github-install-url";
 
-function pushButtonLabel(status?: string): string {
-  if (status === "pending") {
+function pushButtonLabel(release: Doc<"releases">): string {
+  if (release.githubPushStatus === "pending") {
     return "Pushing…";
   }
-  if (status === "failed") {
+  if (release.githubPushStatus === "failed") {
     return "Retry push to GitHub";
+  }
+  if (release.githubReleaseId) {
+    return "Update on GitHub";
   }
   return "Push to GitHub";
 }
 
+function githubPushTarget(
+  release: Doc<"releases"> | undefined,
+  hasGithubConnection: boolean
+): Doc<"releases"> | undefined {
+  if (!(release?.publishedAt && hasGithubConnection)) {
+    return;
+  }
+  const needsPush =
+    !release.githubReleaseId ||
+    release.githubPushStatus === "failed" ||
+    isGithubReleaseOutdated(release);
+  return needsPush ? release : undefined;
+}
+
 interface ReleaseEditorFooterProps {
-  canPushToGithub: boolean;
-  isLinkedToGithub: boolean;
-  isPermissionError: boolean;
+  hasGithubConnection: boolean;
+  isGenerating: boolean;
   isPublished: boolean;
   isScheduled: boolean;
-  isStreaming: boolean;
   isSubmitting: boolean;
   onCancel: () => void;
   onCancelSchedule: () => void;
@@ -37,32 +53,36 @@ interface ReleaseEditorFooterProps {
 }
 
 export function ReleaseEditorFooter({
+  hasGithubConnection,
+  isGenerating,
   isPublished,
   isScheduled,
   isSubmitting,
-  isStreaming,
-  titleEmpty,
-  canPushToGithub,
-  isLinkedToGithub,
-  isPermissionError,
-  release,
+  onCancel,
+  onCancelSchedule,
+  onPublish,
+  onPushToGithub,
+  onUnpublish,
   organizationId,
   orgSlug,
-  onPublish,
-  onUnpublish,
-  onCancelSchedule,
-  onPushToGithub,
-  onCancel,
+  release,
+  titleEmpty,
   userId,
 }: ReleaseEditorFooterProps) {
-  const githubHtmlUrl = isLinkedToGithub ? release?.githubHtmlUrl : undefined;
+  const githubHtmlUrl = release?.githubReleaseId
+    ? release.githubHtmlUrl
+    : undefined;
+  const releaseToPush = githubPushTarget(release, hasGithubConnection);
+  const pushFailed = release?.githubPushStatus === "failed";
+  const isPermissionError =
+    pushFailed && release?.githubPushErrorType === "permission_denied";
 
   return (
     <div className="flex flex-col gap-3 border-t bg-muted/30 px-6 py-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <PrimaryPublishButton
-            disabled={isSubmitting || isStreaming || titleEmpty}
+            disabled={isSubmitting || isGenerating || titleEmpty}
             isPublished={isPublished}
             isScheduled={isScheduled}
             isSubmitting={isSubmitting}
@@ -71,11 +91,11 @@ export function ReleaseEditorFooter({
             onUnpublish={onUnpublish}
           />
 
-          {canPushToGithub && (
+          {releaseToPush && (
             <PushToGithubButton
               isSubmitting={isSubmitting}
               onPushToGithub={onPushToGithub}
-              pushStatus={release?.githubPushStatus}
+              release={releaseToPush}
             />
           )}
 
@@ -83,7 +103,7 @@ export function ReleaseEditorFooter({
         </div>
 
         <Button
-          disabled={isSubmitting || isStreaming}
+          disabled={isSubmitting || isGenerating}
           onClick={onCancel}
           size="sm"
           type="button"
@@ -101,6 +121,13 @@ export function ReleaseEditorFooter({
             userId,
           })}
         />
+      )}
+      {pushFailed && !isPermissionError && release?.githubPushError && (
+        <Alert variant="destructive">
+          <WarningCircle aria-hidden="true" />
+          <AlertTitle>GitHub push failed</AlertTitle>
+          <AlertDescription>{release.githubPushError}</AlertDescription>
+        </Alert>
       )}
     </div>
   );
@@ -154,13 +181,13 @@ function PrimaryPublishButton({
 function PushToGithubButton({
   isSubmitting,
   onPushToGithub,
-  pushStatus,
+  release,
 }: {
   isSubmitting: boolean;
   onPushToGithub: () => void;
-  pushStatus?: string;
+  release: Doc<"releases">;
 }) {
-  const isPushPending = pushStatus === "pending";
+  const isPushPending = release.githubPushStatus === "pending";
 
   return (
     <Button
@@ -175,7 +202,7 @@ function PushToGithubButton({
       ) : (
         <CloudArrowUp aria-hidden="true" className="size-4" />
       )}
-      {pushButtonLabel(pushStatus)}
+      {pushButtonLabel(release)}
     </Button>
   );
 }

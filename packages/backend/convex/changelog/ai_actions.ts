@@ -3,177 +3,138 @@
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateText } from "ai";
 import { v } from "convex/values";
-import { internalAction } from "../_generated/server";
+import { z } from "zod";
+import { internal } from "../_generated/api";
+import type { Id } from "../_generated/dataModel";
+import type { ActionCtx } from "../_generated/server";
+import { action } from "../_generated/server";
+import { requireAuthUser } from "../shared/access";
+import { RELEASE_ASSISTANT_MODEL } from "./ai/models";
+import {
+  buildFeedbackMatchPrompt,
+  buildReleaseTitlePrompt,
+} from "./ai/prompts";
 
 const openrouter = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY,
 });
 
-const MAX_COMMITS_FOR_CONTEXT = 80;
 const MAX_TITLE_OUTPUT_TOKENS = 100;
 const MAX_MATCH_OUTPUT_TOKENS = 4000;
-const MAX_FEEDBACK_CANDIDATES = 100;
 const JSON_OBJECT_REGEX = /\{[\s\S]*\}/;
 
-export const generateReleaseTitle = internalAction({
+const confidenceValidator = v.union(
+  v.literal("high"),
+  v.literal("medium"),
+  v.literal("low")
+);
+
+const matchResponseSchema = z.object({
+  matches: z.array(
+    z.object({
+      confidence: z.enum(["high", "medium", "low"]),
+      feedbackId: z.string(),
+      reason: z.string(),
+    })
+  ),
+});
+
+type FeedbackMatches = z.infer<typeof matchResponseSchema>;
+
+async function consumeReleaseAiGeneration(
+  ctx: ActionCtx,
+  releaseId: Id<"releases">
+): Promise<void> {
+  const user = await requireAuthUser(ctx);
+  const organizationId = await ctx.runQuery(
+    internal.changelog.ai_matching_helpers.getReleaseOrganizationId,
+    { releaseId }
+  );
+  if (!organizationId) {
+    throw new Error("Release not found");
+  }
+  await ctx.runMutation(internal.ai.usage_gate.consumeAiGenerationForUser, {
+    organizationId,
+    userId: user._id,
+  });
+  if (!process.env.OPENROUTER_API_KEY) {
+    throw new Error("AI service not configured");
+  }
+}
+
+export const generateReleaseTitle = action({
   args: {
     description: v.string(),
+    releaseId: v.id("releases"),
     version: v.optional(v.string()),
   },
-  handler: async (_ctx, args) => {
-    if (!process.env.OPENROUTER_API_KEY) {
-      throw new Error("AI service not configured");
-    }
-
-    const prompt = `Generate a short, catchy release title (3-8 words) for the following release notes.
-${args.version ? `Version: ${args.version}` : ""}
-
-Release notes:
-${args.description}
-
-Instructions:
-- Output ONLY the title text, nothing else
-- Do not include the version number in the title
-- Make it descriptive of the main theme of the release
-- Keep it concise and engaging
-- Do not use quotes around the title`;
-
+  handler: async (ctx, args): Promise<string> => {
+    await consumeReleaseAiGeneration(ctx, args.releaseId);
     const result = await generateText({
       maxOutputTokens: MAX_TITLE_OUTPUT_TOKENS,
-      model: openrouter("anthropic/claude-sonnet-4"),
-      prompt,
+      model: openrouter(RELEASE_ASSISTANT_MODEL),
+      prompt: buildReleaseTitlePrompt(args),
     });
-
     return result.text.trim();
   },
   returns: v.string(),
 });
 
-export const matchReleaseFeedback = internalAction({
+export const matchReleaseFeedback = action({
   args: {
-    commits: v.array(
-      v.object({
-        author: v.string(),
-        fullMessage: v.optional(v.string()),
-        message: v.string(),
-        sha: v.string(),
-      })
-    ),
-    feedbackItems: v.array(
-      v.object({
-        description: v.optional(v.string()),
-        id: v.string(),
-        status: v.string(),
-        tags: v.array(v.string()),
-        title: v.string(),
-      })
-    ),
-    releaseNotes: v.string(),
+    description: v.string(),
+    releaseId: v.id("releases"),
   },
-  handler: async (_ctx, args) => {
-    const { releaseNotes, commits, feedbackItems } = args;
-
-    if (feedbackItems.length === 0) {
-      return [];
+  handler: async (ctx, args): Promise<FeedbackMatches> => {
+    await consumeReleaseAiGeneration(ctx, args.releaseId);
+    const candidates = await ctx.runQuery(
+      internal.changelog.ai_matching_helpers.getReleaseAndFeedback,
+      { releaseId: args.releaseId }
+    );
+    if (!candidates || candidates.feedbackItems.length === 0) {
+      return { matches: [] };
     }
-
-    if (!process.env.OPENROUTER_API_KEY) {
-      throw new Error("AI service not configured");
-    }
-
-    const commitSummary = commits
-      .slice(0, MAX_COMMITS_FOR_CONTEXT)
-      .map(
-        (c) =>
-          `- ${c.message}${c.fullMessage && c.fullMessage !== c.message ? ` — ${c.fullMessage}` : ""} (${c.sha})`
-      )
-      .join("\n");
-
-    const feedbackSummary = feedbackItems
-      .slice(0, MAX_FEEDBACK_CANDIDATES)
-      .map(
-        (f) =>
-          `[${f.id}] "${f.title}"${f.description ? ` — ${f.description.slice(0, 200)}` : ""} (status: ${f.status}, tags: ${f.tags.join(", ") || "none"})`
-      )
-      .join("\n");
-
-    const prompt = `You are analyzing a software release to find which user feedback items were addressed by this release.
-
-## Release Notes
-${releaseNotes}
-
-## Commits in this Release
-${commitSummary || "No commit data available — match based on release notes only."}
-
-## Candidate Feedback Items
-${feedbackSummary}
-
-## Task
-Identify which feedback items are likely addressed, fixed, or resolved by the changes in this release.
-Match based on semantic similarity between:
-- The feedback title/description and the release notes content
-- The feedback title/description and the commit messages
-- The feedback tags and the nature of changes
-
-Be generous with matching — include items that are even partially related or tangentially addressed.
-Use "high" confidence for clearly addressed items, "medium" for likely related, and "low" for possibly related.
-
-For each match, respond ONLY with a valid JSON object (no markdown, no code fences) in this exact format:
-{"matches": [{"feedbackId": "<exact ID from brackets>", "confidence": "high|medium|low", "reason": "<max 15 words>"}]}
-
-Sort results by confidence (high first, then medium, then low).`;
 
     const result = await generateText({
       maxOutputTokens: MAX_MATCH_OUTPUT_TOKENS,
-      model: openrouter("anthropic/claude-sonnet-4"),
-      prompt,
+      model: openrouter(RELEASE_ASSISTANT_MODEL),
+      prompt: buildFeedbackMatchPrompt({
+        commits: candidates.commits,
+        description: args.description,
+        feedbackItems: candidates.feedbackItems.map((feedback) => ({
+          description: feedback.description,
+          id: feedback._id,
+          status: feedback.status,
+          title: feedback.title,
+        })),
+      }),
     });
 
-    const text = result.text.trim();
-    const jsonMatch = text.match(JSON_OBJECT_REGEX);
+    const jsonMatch = result.text.match(JSON_OBJECT_REGEX);
     if (!jsonMatch) {
       throw new Error("AI returned non-JSON response");
     }
-
-    let parsed: {
-      matches: Array<{
-        feedbackId: string;
-        confidence: string;
-        reason: string;
-      }>;
-    };
-    try {
-      parsed = JSON.parse(jsonMatch[0]) as typeof parsed;
-    } catch {
-      throw new Error("AI returned invalid JSON");
-    }
-
-    if (!Array.isArray(parsed.matches)) {
+    const parsed = matchResponseSchema.safeParse(JSON.parse(jsonMatch[0]));
+    if (!parsed.success) {
       throw new Error("AI returned invalid match format");
     }
 
-    const validIds = new Set(feedbackItems.map((f) => f.id));
-    const validConfidences = new Set(["high", "medium", "low"]);
-
-    return parsed.matches
-      .filter(
-        (m) => validIds.has(m.feedbackId) && validConfidences.has(m.confidence)
-      )
-      .map((m) => ({
-        confidence: m.confidence as "high" | "medium" | "low",
-        feedbackId: m.feedbackId,
-        reason: m.reason,
-      }));
-  },
-  returns: v.array(
-    v.object({
-      confidence: v.union(
-        v.literal("high"),
-        v.literal("medium"),
-        v.literal("low")
+    const candidateIds = new Set<string>(
+      candidates.feedbackItems.map((feedback) => feedback._id)
+    );
+    return {
+      matches: parsed.data.matches.filter((match) =>
+        candidateIds.has(match.feedbackId)
       ),
-      feedbackId: v.string(),
-      reason: v.string(),
-    })
-  ),
+    };
+  },
+  returns: v.object({
+    matches: v.array(
+      v.object({
+        confidence: confidenceValidator,
+        feedbackId: v.string(),
+        reason: v.string(),
+      })
+    ),
+  }),
 });

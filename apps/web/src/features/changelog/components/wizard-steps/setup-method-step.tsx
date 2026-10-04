@@ -68,7 +68,7 @@ export function SetupMethodStep({
 
   const hasReleaseAutomation = config.workflow === "automated";
   const displayYaml = hasReleaseAutomation
-    ? generateAutoReleaseWorkflowYaml(defaultBranch, config.versionPrefix)
+    ? generateAutoReleaseWorkflowYaml(defaultBranch)
     : null;
 
   const setupDescription = getSetupDescription(config);
@@ -178,7 +178,9 @@ export function SetupMethodStep({
               </div>
               <p className="text-caption text-muted-foreground">
                 release-please uses GitHub Actions&apos; built-in token, which
-                is automatically available. Just commit the file.
+                is automatically available. Just commit the file. Already
+                publishing GitHub Releases with Changesets or semantic-release?
+                Skip this file — Reflet imports any published GitHub Release.
               </p>
             </div>
           </TabsPanel>

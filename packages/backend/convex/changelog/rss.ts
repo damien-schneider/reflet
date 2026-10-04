@@ -17,29 +17,19 @@ export const getOrganizationBySlug = internalQuery({
       .unique(),
 });
 
-/**
- * Get published releases for an organization (internal use only)
- */
 export const getPublishedReleases = internalQuery({
   args: {
-    limit: v.optional(v.number()),
+    limit: v.number(),
     organizationId: v.id("organizations"),
   },
-  handler: async (ctx, args) => {
-    const limit = args.limit ?? 50;
-
-    const releases = await ctx.db
+  handler: async (ctx, args) =>
+    await ctx.db
       .query("releases")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
+      .withIndex("by_published", (q) =>
+        q.eq("organizationId", args.organizationId).gt("publishedAt", 0)
       )
-      .filter((q) => q.neq(q.field("publishedAt"), undefined))
       .order("desc")
-      .take(limit);
-
-    // Sort by publishedAt descending
-    return releases.sort((a, b) => (b.publishedAt ?? 0) - (a.publishedAt ?? 0));
-  },
+      .take(args.limit),
 });
 
 /**
@@ -60,10 +50,10 @@ function escapeXml(text: string): string {
 export function generateRssFeed(
   org: Doc<"organizations">,
   releases: Doc<"releases">[],
-  siteUrl: string
+  siteUrl: string,
+  feedUrl: string
 ): string {
   const channelUrl = `${siteUrl}/${org.slug}/changelog`;
-  const feedUrl = `${siteUrl}/rss/${org.slug}`;
 
   const items = releases
     .map((release) => {
@@ -81,7 +71,7 @@ export function generateRssFeed(
 
       return `    <item>
       <title>${title}</title>
-      <link>${channelUrl}</link>
+      <link>${channelUrl}#release-${release._id}</link>
       <guid isPermaLink="false">${release._id}</guid>
       <pubDate>${pubDate}</pubDate>
       <description>${description}</description>

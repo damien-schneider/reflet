@@ -1,1279 +1,226 @@
-import { env } from "@reflet/env/web";
+import type { ReleaseSource } from "@reflet/backend/convex/changelog/source";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { toId } from "@/lib/convex-helpers";
 
-const mockListTags = vi.fn();
-const mockListCommits = vi.fn();
-const mockListRecent = vi.fn();
+const {
+  mockGenerateTitle,
+  mockResolveSource,
+  mockSaveGeneratedDraft,
+  mockUseQuery,
+} = vi.hoisted(() => ({
+  mockGenerateTitle: vi.fn(),
+  mockResolveSource: vi.fn(),
+  mockSaveGeneratedDraft: vi.fn(),
+  mockUseQuery: vi.fn(),
+}));
+
+vi.mock("@reflet/backend/convex/_generated/api", () => ({
+  api: {
+    changelog: {
+      ai_actions: { generateReleaseTitle: "generateReleaseTitle" },
+      release_commits: { getReleaseCommits: "getReleaseCommits" },
+      release_drafts: { saveGeneratedDraft: "saveGeneratedDraft" },
+      source_actions: { resolveReleaseSource: "resolveReleaseSource" },
+    },
+    integrations: {
+      github: { queries: { getConnection: "getConnection" } },
+    },
+  },
+}));
 
 vi.mock("convex/react", () => ({
-  useAction: vi.fn(() => vi.fn()),
-  useQuery: vi.fn(() => undefined),
+  useAction: (reference: string) =>
+    reference === "resolveReleaseSource"
+      ? mockResolveSource
+      : mockGenerateTitle,
+  useMutation: () => mockSaveGeneratedDraft,
+  useQuery: mockUseQuery,
 }));
 
 vi.mock("next/link", () => ({
   default: ({
     children,
     href,
-    ...props
   }: {
     children: React.ReactNode;
     href: string;
-    [key: string]: unknown;
-  }) => (
-    <a href={href} {...props}>
-      {children}
-    </a>
-  ),
+  }) => <a href={href}>{children}</a>,
 }));
 
 vi.mock("@ctrl-ui/react/ui/toast", () => ({
   toast: { error: vi.fn(), info: vi.fn(), success: vi.fn() },
 }));
 
-vi.mock("@reflet/backend/convex/_generated/api", () => ({
-  api: {
-    changelog: {
-      release_commits: {
-        getLatestCommitFromPreviousRelease:
-          "changelog.release_commits.getLatestCommitFromPreviousRelease",
-      },
-    },
-    integrations: {
-      github: {
-        queries: { getConnection: "github.getConnection" },
-        repo_actions: {
-          listCommitsBetweenRefs: "github_repo_actions.listCommitsBetweenRefs",
-          listRecentCommits: "github_repo_actions.listRecentCommits",
-          listTags: "github_repo_actions.listTags",
-        },
-      },
-    },
-    organizations: {
-      queries: { get: "organizations.get" },
-    },
-  },
-}));
-
-vi.mock("@ctrl-ui/react/ui/button", () => ({
-  Button: ({
-    children,
-    disabled,
-    onClick,
-    ...rest
-  }: {
-    children: React.ReactNode;
-    disabled?: boolean;
-    onClick?: () => void;
-    [key: string]: unknown;
-  }) => (
-    <button disabled={disabled} onClick={onClick} type="button">
-      {children}
-    </button>
-  ),
-}));
-
-vi.mock("@phosphor-icons/react", () => ({
-  Info: ({ className }: { className?: string }) => (
-    <svg className={className} data-testid="info-icon" />
-  ),
-  Lightning: ({ className }: { className?: string }) => (
-    <svg className={className} data-testid="lightning-icon" />
-  ),
-  Spinner: ({ className }: { className?: string }) => (
-    <svg className={className} data-testid="spinner-icon" />
-  ),
-}));
+vi.mock("@/lib/analytics", () => ({ capture: vi.fn() }));
 
 import { toast } from "@ctrl-ui/react/ui/toast";
-import { useAction, useQuery } from "convex/react";
 import { GenerateFromCommits } from "./generate-from-commits";
 
-afterEach(() => {
-  vi.clearAllMocks();
-  vi.restoreAllMocks();
-});
+const organizationId = toId("organizations", "org_1");
+const releaseId = toId("releases", "rel_1");
 
-const defaultProps = {
-  onComplete: vi.fn(),
-  onStreamChunk: vi.fn(),
-  onStreamStart: vi.fn(),
-  onTitleGenerated: vi.fn(),
-  organizationId: "org1" as never,
-  orgSlug: "test-org",
-  version: "1.0.0",
+const source: ReleaseSource = {
+  baseRef: "v1.3.0",
+  commits: [
+    {
+      author: "ada",
+      date: "2026-01-01T00:00:00Z",
+      fullMessage: "feat: search",
+      message: "feat: search",
+      sha: "a".repeat(40),
+    },
+  ],
+  files: [],
+  headRef: "v1.4.0",
+  headSha: "a".repeat(40),
+  pullRequests: [],
+  totalCommits: 342,
 };
 
-const connectedQuery = (
-  orgOverrides?: Record<string, unknown>,
-  ghOverrides?: Record<string, unknown>
-) => {
-  vi.mocked(useQuery)
-    .mockReturnValueOnce({ name: "Test Org", ...orgOverrides })
-    .mockReturnValueOnce({
-      installationId: "inst-123",
-      repositoryDefaultBranch: "main",
-      repositoryFullName: "owner/repo",
-      ...ghOverrides,
-    });
+const props = {
+  onApplied: vi.fn(),
+  onPreviewChange: vi.fn(),
+  organizationId,
+  orgSlug: "acme",
+  saveRelease: vi.fn(),
+  version: "v1.4.0",
 };
 
-const setupActions = () => {
-  vi.mocked(useAction).mockImplementation((action: unknown) => {
-    const actionStr = String(action);
-    if (actionStr.includes("listTags")) {
-      return mockListTags;
-    }
-    if (actionStr.includes("listCommitsBetweenRefs")) {
-      return mockListCommits;
-    }
-    if (actionStr.includes("listRecentCommits")) {
-      return mockListRecent;
-    }
-    return vi.fn();
+const connectRepository = (repositoryFullName?: string) =>
+  mockUseQuery.mockReturnValue({
+    installationId: "inst_1",
+    repositoryFullName,
   });
+
+const generate = async () => {
+  render(<GenerateFromCommits {...props} />);
+  await userEvent.setup().click(screen.getByText("Generate with AI"));
 };
 
-const sampleCommits = [
-  {
-    author: "dev",
-    date: "2026-01-01",
-    fullMessage: "feat: add new feature\n\nDetailed description",
-    message: "feat: add new feature",
-    sha: "abc123",
-  },
-  {
-    author: "dev2",
-    date: "2026-01-02",
-    fullMessage: "fix: bug fix",
-    message: "fix: bug fix",
-    sha: "def456",
-  },
-];
-
-const sampleFiles = [
-  {
-    additions: 10,
-    deletions: 5,
-    filename: "src/index.ts",
-    status: "modified",
-  },
-];
-
-const sampleTags = [
-  { name: "v1.0.0", sha: "aaa" },
-  { name: "v0.9.0", sha: "bbb" },
-];
-
-const createMockStreamResponse = (chunks: string[]) => {
-  let index = 0;
-  const reader = {
-    read: vi.fn().mockImplementation(() => {
-      if (index < chunks.length) {
-        const encoder = new TextEncoder();
-        const value = encoder.encode(chunks[index]);
-        index++;
-        return Promise.resolve({ done: false, value });
-      }
-      return Promise.resolve({ done: true, value: undefined });
-    }),
-  };
-  return {
-    body: { getReader: () => reader },
-    ok: true,
-  };
-};
-
-describe("GenerateFromCommits component", () => {
-  describe("rendering branches", () => {
-    it("returns null when no installation", () => {
-      vi.mocked(useQuery)
-        .mockReturnValueOnce({ name: "Test Org" })
-        .mockReturnValueOnce({
-          installationId: null,
-          repositoryFullName: null,
-        });
-
-      const { container } = render(<GenerateFromCommits {...defaultProps} />);
-      expect(container.innerHTML).toBe("");
+describe("GenerateFromCommits", () => {
+  beforeEach(() => {
+    connectRepository("acme/app");
+    props.saveRelease.mockResolvedValue(releaseId);
+    mockResolveSource.mockResolvedValue(source);
+    mockGenerateTitle.mockResolvedValue("Faster search");
+    mockSaveGeneratedDraft.mockResolvedValue({
+      applied: true,
+      draftId: "draft_1",
     });
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response("# Release notes")
+    );
+  });
 
-    it("returns null when githubConnection is undefined", () => {
-      vi.mocked(useQuery)
-        .mockReturnValueOnce({ name: "Test Org" })
-        .mockReturnValueOnce(undefined);
+  afterEach(() => {
+    vi.clearAllMocks();
+    vi.restoreAllMocks();
+  });
 
-      const { container } = render(<GenerateFromCommits {...defaultProps} />);
-      expect(container.innerHTML).toBe("");
+  it("renders nothing without a GitHub installation", () => {
+    mockUseQuery.mockReturnValue(null);
+    const { container } = render(<GenerateFromCommits {...props} />);
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it("links to repository setup when no repository is connected", () => {
+    connectRepository();
+    render(<GenerateFromCommits {...props} />);
+    expect(
+      screen.getByText("Connect a repository to generate")
+    ).toBeInTheDocument();
+  });
+
+  it("generates from the resolved source and saves the draft once the AI succeeds", async () => {
+    await generate();
+
+    await vi.waitFor(() => expect(props.onApplied).toHaveBeenCalled());
+    expect(mockResolveSource).toHaveBeenCalledWith({
+      releaseId,
+      version: "v1.4.0",
     });
+    const [url, init] = vi.mocked(fetch).mock.calls[0] ?? [];
+    expect(url).toBe("/api/ai/generate-release-notes");
+    expect(JSON.parse(String(init?.body))).toEqual({
+      organizationId,
+      releaseId,
+      repositoryName: "acme/app",
+      source,
+      version: "v1.4.0",
+    });
+    expect(props.onPreviewChange).toHaveBeenCalledWith("# Release notes");
+    expect(mockSaveGeneratedDraft).toHaveBeenCalledWith({
+      description: "# Release notes",
+      releaseId,
+      source,
+      title: "Faster search",
+    });
+    expect(toast.success).toHaveBeenCalledWith(
+      "Generated from 1 of 342 commits"
+    );
+    expect(props.onPreviewChange).toHaveBeenLastCalledWith(null);
+  });
 
-    it("renders connect repository link when no repository", () => {
-      vi.mocked(useQuery)
-        .mockReturnValueOnce({ name: "Test Org" })
-        .mockReturnValueOnce({
-          installationId: "inst-123",
-          repositoryFullName: null,
-        });
+  it("keeps human edits when the draft is left pending", async () => {
+    mockSaveGeneratedDraft.mockResolvedValue({
+      applied: false,
+      draftId: "draft_1",
+    });
+    await generate();
 
-      render(<GenerateFromCommits {...defaultProps} />);
-      expect(
-        screen.getByText("Connect a repository to generate")
-      ).toBeInTheDocument();
-      expect(screen.getByRole("link")).toHaveAttribute(
-        "href",
-        "/dashboard/test-org/project/github"
+    await vi.waitFor(() => expect(toast.success).toHaveBeenCalled());
+    expect(props.onApplied).not.toHaveBeenCalled();
+  });
+
+  it("writes nothing when the AI request fails", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      Response.json(
+        { error: "AI generation limit reached, try again later" },
+        { status: 429 }
+      )
+    );
+    await generate();
+
+    await vi.waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(
+        "AI generation limit reached, try again later"
+      )
+    );
+    expect(mockSaveGeneratedDraft).not.toHaveBeenCalled();
+  });
+
+  it("stops without calling the AI when the release has no source material", async () => {
+    mockResolveSource.mockResolvedValue({
+      ...source,
+      commits: [],
+      totalCommits: 0,
+    });
+    await generate();
+
+    await vi.waitFor(() => expect(toast.info).toHaveBeenCalled());
+    expect(fetch).not.toHaveBeenCalled();
+    expect(mockSaveGeneratedDraft).not.toHaveBeenCalled();
+  });
+
+  it("cancels the stream and saves nothing", async () => {
+    vi.mocked(fetch).mockImplementation((_url, init) => {
+      const { promise, reject } = Promise.withResolvers<Response>();
+      init?.signal?.addEventListener("abort", () =>
+        reject(new DOMException("Aborted", "AbortError"))
       );
+      return promise;
     });
-
-    it("renders connect link with correct orgSlug", () => {
-      vi.mocked(useQuery)
-        .mockReturnValueOnce({ name: "Test Org" })
-        .mockReturnValueOnce({
-          installationId: "inst-123",
-          repositoryFullName: "",
-        });
-
-      render(<GenerateFromCommits {...defaultProps} orgSlug="my-custom-org" />);
-      expect(screen.getByRole("link")).toHaveAttribute(
-        "href",
-        "/dashboard/my-custom-org/project/github"
-      );
-    });
-
-    it("renders info icon in no-repository state", () => {
-      vi.mocked(useQuery)
-        .mockReturnValueOnce({ name: "Test Org" })
-        .mockReturnValueOnce({
-          installationId: "inst-123",
-          repositoryFullName: null,
-        });
-
-      render(<GenerateFromCommits {...defaultProps} />);
-      expect(screen.getByTestId("info-icon")).toBeInTheDocument();
-    });
-
-    it("renders Generate with AI button when fully connected", () => {
-      connectedQuery();
-      render(<GenerateFromCommits {...defaultProps} />);
-      expect(screen.getByText("Generate with AI")).toBeInTheDocument();
-    });
-
-    it("renders lightning icon in default state", () => {
-      connectedQuery();
-      render(<GenerateFromCommits {...defaultProps} />);
-      expect(screen.getByTestId("lightning-icon")).toBeInTheDocument();
-    });
-
-    it("renders button as disabled when disabled prop is true", () => {
-      connectedQuery();
-      render(<GenerateFromCommits {...defaultProps} disabled />);
-      expect(
-        screen.getByText("Generate with AI").closest("button")
-      ).toBeDisabled();
-    });
-
-    it("renders button as enabled when disabled prop is false", () => {
-      connectedQuery();
-      render(<GenerateFromCommits {...defaultProps} disabled={false} />);
-      expect(
-        screen.getByText("Generate with AI").closest("button")
-      ).not.toBeDisabled();
-    });
-
-    it("renders Generating text with spinner when isStreaming", () => {
-      connectedQuery();
-      render(<GenerateFromCommits {...defaultProps} isStreaming />);
-      expect(screen.getByText("Generating…")).toBeInTheDocument();
-      expect(screen.getByRole("status")).toBeInTheDocument();
-    });
-
-    it("button is disabled when isStreaming", () => {
-      connectedQuery();
-      render(<GenerateFromCommits {...defaultProps} isStreaming />);
-      expect(screen.getByText("Generating…").closest("button")).toBeDisabled();
-    });
-  });
-
-  describe("handleGenerate - zero commits", () => {
-    it("shows info toast when no commits found", async () => {
-      const user = userEvent.setup();
-      setupActions();
-      connectedQuery();
-
-      mockListTags.mockResolvedValue([]);
-      mockListRecent.mockResolvedValue([]);
-
-      render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("Generate with AI"));
-
-      await vi.waitFor(() => {
-        expect(toast.info).toHaveBeenCalledWith(
-          "No commits found to generate from."
-        );
-      });
-      expect(defaultProps.onStreamStart).not.toHaveBeenCalled();
-    });
-  });
-
-  describe("handleGenerate - successful generation with previous tag", () => {
-    beforeEach(() => {
-      setupActions();
-    });
-
-    it("fetches commits between tags and streams output", async () => {
-      const user = userEvent.setup();
-      connectedQuery();
-
-      mockListTags.mockResolvedValue(sampleTags);
-      mockListCommits.mockResolvedValue({
-        commits: sampleCommits,
-        files: sampleFiles,
-      });
-
-      const fetchSpy = vi.spyOn(globalThis, "fetch");
-      fetchSpy
-        .mockResolvedValueOnce(
-          createMockStreamResponse(["# Release ", "Notes"]) as never
-        )
-        .mockResolvedValueOnce(Response.json({ title: "New Feature Release" }));
-
-      render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("Generate with AI"));
-
-      await vi.waitFor(() => {
-        expect(defaultProps.onStreamStart).toHaveBeenCalled();
-      });
-
-      await vi.waitFor(() => {
-        expect(defaultProps.onComplete).toHaveBeenCalledWith("# Release Notes");
-      });
-
-      expect(toast.success).toHaveBeenCalledWith("Generated from 2 commits");
-    });
-
-    it("shows singular commit message for 1 commit", async () => {
-      const user = userEvent.setup();
-      connectedQuery();
-
-      mockListTags.mockResolvedValue(sampleTags);
-      mockListCommits.mockResolvedValue({
-        commits: [sampleCommits[0]],
-        files: [],
-      });
-
-      vi.spyOn(globalThis, "fetch")
-        .mockResolvedValueOnce(createMockStreamResponse(["content"]) as never)
-        .mockResolvedValueOnce(Response.json({ title: "Title" }));
-
-      render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("Generate with AI"));
-
-      await vi.waitFor(() => {
-        expect(toast.success).toHaveBeenCalledWith("Generated from 1 commit");
-      });
-    });
-
-    it("calls onStreamChunk with accumulated content", async () => {
-      const user = userEvent.setup();
-      connectedQuery();
-
-      mockListTags.mockResolvedValue(sampleTags);
-      mockListCommits.mockResolvedValue({
-        commits: sampleCommits,
-        files: undefined,
-      });
-
-      vi.spyOn(globalThis, "fetch")
-        .mockResolvedValueOnce(
-          createMockStreamResponse(["chunk1", "chunk2"]) as never
-        )
-        .mockResolvedValueOnce(Response.json({ title: "Title" }));
-
-      render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("Generate with AI"));
-
-      await vi.waitFor(() => {
-        expect(defaultProps.onStreamChunk).toHaveBeenCalled();
-      });
-    });
-
-    it("sends correct POST body to release notes API", async () => {
-      const user = userEvent.setup();
-      connectedQuery();
-
-      mockListTags.mockResolvedValue(sampleTags);
-      mockListCommits.mockResolvedValue({
-        commits: sampleCommits,
-        files: sampleFiles,
-      });
-
-      const fetchSpy = vi.spyOn(globalThis, "fetch");
-      fetchSpy
-        .mockResolvedValueOnce(createMockStreamResponse(["content"]) as never)
-        .mockResolvedValueOnce(Response.json({ title: "Title" }));
-
-      render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("Generate with AI"));
-
-      await vi.waitFor(() => {
-        expect(fetchSpy).toHaveBeenCalledWith(
-          "/api/ai/generate-release-notes",
-          expect.objectContaining({
-            headers: { "Content-Type": "application/json" },
-            method: "POST",
-          })
-        );
-      });
-
-      const firstCallBody = JSON.parse(
-        (fetchSpy.mock.calls[0]?.[1] as RequestInit)?.body as string
-      );
-      expect(firstCallBody.organizationId).toBe("org1");
-      expect(firstCallBody.version).toBe("1.0.0");
-      expect(firstCallBody.repositoryName).toBe("owner/repo");
-      expect(firstCallBody.commits).toHaveLength(2);
-      expect(firstCallBody.files).toHaveLength(1);
-    });
-
-    it("uses targetBranch as head when current tag not in tags list", async () => {
-      const user = userEvent.setup();
-      connectedQuery();
-
-      const props = { ...defaultProps, version: "2.0.0" };
-
-      mockListTags.mockResolvedValue(sampleTags);
-      mockListCommits.mockResolvedValue({
-        commits: sampleCommits,
-        files: undefined,
-      });
-
-      vi.spyOn(globalThis, "fetch")
-        .mockResolvedValueOnce(createMockStreamResponse(["content"]) as never)
-        .mockResolvedValueOnce(Response.json({ title: "Title" }));
-
-      render(<GenerateFromCommits {...props} />);
-      await user.click(screen.getByText("Generate with AI"));
-
-      await vi.waitFor(() => {
-        expect(mockListCommits).toHaveBeenCalledWith(
-          expect.objectContaining({
-            base: "v1.0.0",
-            head: "main",
-          })
-        );
-      });
-    });
-
-    it("uses current tag as head when tag exists", async () => {
-      const user = userEvent.setup();
-      connectedQuery();
-
-      mockListTags.mockResolvedValue(sampleTags);
-      mockListCommits.mockResolvedValue({
-        commits: sampleCommits,
-        files: undefined,
-      });
-
-      vi.spyOn(globalThis, "fetch")
-        .mockResolvedValueOnce(createMockStreamResponse(["content"]) as never)
-        .mockResolvedValueOnce(Response.json({ title: "Title" }));
-
-      render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("Generate with AI"));
-
-      await vi.waitFor(() => {
-        expect(mockListCommits).toHaveBeenCalledWith(
-          expect.objectContaining({
-            base: "v0.9.0",
-            head: "1.0.0",
-          })
-        );
-      });
-    });
-  });
-
-  describe("handleGenerate - no previous tag (fetches recent)", () => {
-    beforeEach(() => {
-      setupActions();
-    });
-
-    it("fetches recent commits when no tags exist", async () => {
-      const user = userEvent.setup();
-      connectedQuery();
-
-      mockListTags.mockResolvedValue([]);
-      mockListRecent.mockResolvedValue(sampleCommits);
-
-      vi.spyOn(globalThis, "fetch")
-        .mockResolvedValueOnce(createMockStreamResponse(["content"]) as never)
-        .mockResolvedValueOnce(Response.json({ title: "Title" }));
-
-      render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("Generate with AI"));
-
-      await vi.waitFor(() => {
-        expect(mockListRecent).toHaveBeenCalledWith(
-          expect.objectContaining({
-            branch: "main",
-            perPage: 30,
-          })
-        );
-      });
-    });
-
-    it("sends undefined files when fetching recent commits", async () => {
-      const user = userEvent.setup();
-      connectedQuery();
-
-      mockListTags.mockResolvedValue([]);
-      mockListRecent.mockResolvedValue(sampleCommits);
-
-      const fetchSpy = vi.spyOn(globalThis, "fetch");
-      fetchSpy
-        .mockResolvedValueOnce(createMockStreamResponse(["content"]) as never)
-        .mockResolvedValueOnce(Response.json({ title: "Title" }));
-
-      render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("Generate with AI"));
-
-      await vi.waitFor(() => {
-        expect(fetchSpy).toHaveBeenCalled();
-      });
-
-      const body = JSON.parse(
-        (fetchSpy.mock.calls[0]?.[1] as RequestInit)?.body as string
-      );
-      expect(body.files).toBeUndefined();
-    });
-
-    it("uses custom targetBranch from changelogSettings", async () => {
-      const user = userEvent.setup();
-      setupActions();
-      mockListTags.mockResolvedValue([]);
-      mockListRecent.mockResolvedValue(sampleCommits);
-
-      vi.mocked(useQuery)
-        .mockReturnValueOnce({
-          changelogSettings: { targetBranch: "develop" },
-          name: "Org",
-          role: "owner",
-        })
-        .mockReturnValueOnce({
-          installationId: "inst-123",
-          repositoryDefaultBranch: "main",
-          repositoryFullName: "owner/repo",
-        });
-
-      vi.spyOn(globalThis, "fetch")
-        .mockResolvedValueOnce(createMockStreamResponse(["content"]) as never)
-        .mockResolvedValueOnce(Response.json({ title: "Title" }));
-
-      render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("Generate with AI"));
-
-      await vi.waitFor(() => {
-        expect(mockListRecent).toHaveBeenCalledWith(
-          expect.objectContaining({ branch: "develop" })
-        );
-      });
-    });
-
-    it("falls back to repositoryDefaultBranch when no changelogSettings", async () => {
-      const user = userEvent.setup();
-      setupActions();
-      mockListTags.mockResolvedValue([]);
-      mockListRecent.mockResolvedValue(sampleCommits);
-
-      vi.mocked(useQuery)
-        .mockReturnValueOnce({ name: "Org" })
-        .mockReturnValueOnce({
-          installationId: "inst-123",
-          repositoryDefaultBranch: "develop",
-          repositoryFullName: "owner/repo",
-        });
-
-      vi.spyOn(globalThis, "fetch")
-        .mockResolvedValueOnce(createMockStreamResponse(["content"]) as never)
-        .mockResolvedValueOnce(Response.json({ title: "Title" }));
-
-      render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("Generate with AI"));
-
-      await vi.waitFor(() => {
-        expect(mockListRecent).toHaveBeenCalledWith(
-          expect.objectContaining({ branch: "develop" })
-        );
-      });
-    });
-  });
-
-  describe("handleGenerate - error handling", () => {
-    beforeEach(() => {
-      setupActions();
-    });
-
-    it("shows error toast when fetchTags fails", async () => {
-      const user = userEvent.setup();
-      connectedQuery();
-
-      mockListTags.mockRejectedValue(new Error("Tags fetch failed"));
-
-      render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("Generate with AI"));
-
-      await vi.waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith("Tags fetch failed");
-      });
-    });
-
-    it("shows generic error for non-Error thrown values", async () => {
-      const user = userEvent.setup();
-      connectedQuery();
-
-      mockListTags.mockRejectedValue("something broke");
-
-      render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("Generate with AI"));
-
-      await vi.waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith("Failed to generate notes");
-      });
-    });
-
-    it("silently returns on AbortError", async () => {
-      const user = userEvent.setup();
-      connectedQuery();
-
-      const abortError = new DOMException("Aborted", "AbortError");
-      mockListTags.mockRejectedValue(abortError);
-
-      render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("Generate with AI"));
-
-      await vi.waitFor(() => {
-        expect(mockListTags).toHaveBeenCalled();
-      });
-
-      // Allow async to settle
-      await new Promise((r) => setTimeout(r, 50));
-
-      expect(toast.error).not.toHaveBeenCalled();
-      expect(defaultProps.onComplete).not.toHaveBeenCalled();
-    });
-
-    it("shows error when stream response is not ok", async () => {
-      const user = userEvent.setup();
-      connectedQuery();
-
-      mockListTags.mockResolvedValue(sampleTags);
-      mockListCommits.mockResolvedValue({
-        commits: sampleCommits,
-        files: undefined,
-      });
-
-      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
-        body: null,
-        ok: false,
-      } as never);
-
-      render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("Generate with AI"));
-
-      await vi.waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith(
-          "Failed to start AI generation"
-        );
-      });
-      expect(defaultProps.onComplete).toHaveBeenCalledWith("");
-    });
-
-    it("shows error when stream response has no body", async () => {
-      const user = userEvent.setup();
-      connectedQuery();
-
-      mockListTags.mockResolvedValue(sampleTags);
-      mockListCommits.mockResolvedValue({
-        commits: sampleCommits,
-        files: undefined,
-      });
-
-      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce({
-        body: null,
-        ok: true,
-      } as never);
-
-      render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("Generate with AI"));
-
-      await vi.waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith(
-          "Failed to start AI generation"
-        );
-      });
-    });
-
-    it("calls onComplete with empty string on error", async () => {
-      const user = userEvent.setup();
-      connectedQuery();
-
-      mockListTags.mockRejectedValue(new Error("fail"));
-
-      render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("Generate with AI"));
-
-      await vi.waitFor(() => {
-        expect(defaultProps.onComplete).toHaveBeenCalledWith("");
-      });
-    });
-
-    it("shows error toast when fetchCommits fails", async () => {
-      const user = userEvent.setup();
-      connectedQuery();
-
-      mockListTags.mockResolvedValue(sampleTags);
-      mockListCommits.mockRejectedValue(new Error("Commits fetch failed"));
-
-      render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("Generate with AI"));
-
-      await vi.waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith("Commits fetch failed");
-      });
-    });
-
-    it("shows error toast when fetchRecent fails", async () => {
-      const user = userEvent.setup();
-      connectedQuery();
-
-      mockListTags.mockResolvedValue([]);
-      mockListRecent.mockRejectedValue(
-        new Error("Recent commits fetch failed")
-      );
-
-      render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("Generate with AI"));
-
-      await vi.waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith("Recent commits fetch failed");
-      });
-    });
-  });
-
-  describe("handleGenerate - title generation", () => {
-    beforeEach(() => {
-      setupActions();
-    });
-
-    it("generates title after successful stream", async () => {
-      const user = userEvent.setup();
-      connectedQuery();
-
-      mockListTags.mockResolvedValue([]);
-      mockListRecent.mockResolvedValue(sampleCommits);
-
-      const fetchSpy = vi.spyOn(globalThis, "fetch");
-      fetchSpy
-        .mockResolvedValueOnce(
-          createMockStreamResponse(["Full content"]) as never
-        )
-        .mockResolvedValueOnce(Response.json({ title: "My Title" }));
-
-      render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("Generate with AI"));
-
-      await vi.waitFor(() => {
-        expect(defaultProps.onTitleGenerated).toHaveBeenCalledWith("My Title");
-      });
-    });
-
-    it("sends correct body to title generation API", async () => {
-      const user = userEvent.setup();
-      connectedQuery();
-
-      mockListTags.mockResolvedValue([]);
-      mockListRecent.mockResolvedValue(sampleCommits);
-
-      const fetchSpy = vi.spyOn(globalThis, "fetch");
-      fetchSpy
-        .mockResolvedValueOnce(
-          createMockStreamResponse(["description"]) as never
-        )
-        .mockResolvedValueOnce(Response.json({ title: "Title" }));
-
-      render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("Generate with AI"));
-
-      await vi.waitFor(() => {
-        const titleCall = fetchSpy.mock.calls.find(
-          (call) =>
-            call[0] ===
-            `${env.NEXT_PUBLIC_CONVEX_SITE_URL}/api/ai/generate-release-title`
-        );
-        expect(titleCall).toBeDefined();
-        const body = JSON.parse(
-          (titleCall?.[1] as RequestInit)?.body as string
-        );
-        expect(body.description).toBe("description");
-        expect(body.organizationId).toBe("org1");
-        expect(body.version).toBe("1.0.0");
-      });
-    });
-
-    it("does not call onTitleGenerated when title response is not ok", async () => {
-      const user = userEvent.setup();
-      connectedQuery();
-
-      mockListTags.mockResolvedValue([]);
-      mockListRecent.mockResolvedValue(sampleCommits);
-
-      vi.spyOn(globalThis, "fetch")
-        .mockResolvedValueOnce(createMockStreamResponse(["content"]) as never)
-        .mockResolvedValueOnce(new Response(null, { status: 500 }));
-
-      render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("Generate with AI"));
-
-      await vi.waitFor(() => {
-        expect(defaultProps.onComplete).toHaveBeenCalled();
-      });
-
-      await new Promise((r) => setTimeout(r, 50));
-      expect(defaultProps.onTitleGenerated).not.toHaveBeenCalled();
-    });
-
-    it("does not call onTitleGenerated when response has no title field", async () => {
-      const user = userEvent.setup();
-      connectedQuery();
-
-      mockListTags.mockResolvedValue([]);
-      mockListRecent.mockResolvedValue(sampleCommits);
-
-      vi.spyOn(globalThis, "fetch")
-        .mockResolvedValueOnce(createMockStreamResponse(["content"]) as never)
-        .mockResolvedValueOnce(Response.json({ other: "data" }));
-
-      render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("Generate with AI"));
-
-      await vi.waitFor(() => {
-        expect(defaultProps.onComplete).toHaveBeenCalled();
-      });
-
-      await new Promise((r) => setTimeout(r, 50));
-      expect(defaultProps.onTitleGenerated).not.toHaveBeenCalled();
-    });
-
-    it("does not call onTitleGenerated when title is not a string", async () => {
-      const user = userEvent.setup();
-      connectedQuery();
-
-      mockListTags.mockResolvedValue([]);
-      mockListRecent.mockResolvedValue(sampleCommits);
-
-      vi.spyOn(globalThis, "fetch")
-        .mockResolvedValueOnce(createMockStreamResponse(["content"]) as never)
-        .mockResolvedValueOnce(Response.json({ title: 123 }));
-
-      render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("Generate with AI"));
-
-      await vi.waitFor(() => {
-        expect(defaultProps.onComplete).toHaveBeenCalled();
-      });
-
-      await new Promise((r) => setTimeout(r, 50));
-      expect(defaultProps.onTitleGenerated).not.toHaveBeenCalled();
-    });
-
-    it("silently handles title generation fetch errors", async () => {
-      const user = userEvent.setup();
-      connectedQuery();
-
-      mockListTags.mockResolvedValue([]);
-      mockListRecent.mockResolvedValue(sampleCommits);
-
-      vi.spyOn(globalThis, "fetch")
-        .mockResolvedValueOnce(createMockStreamResponse(["content"]) as never)
-        .mockRejectedValueOnce(new Error("Network error"));
-
-      render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("Generate with AI"));
-
-      await vi.waitFor(() => {
-        expect(defaultProps.onComplete).toHaveBeenCalled();
-      });
-
-      await new Promise((r) => setTimeout(r, 50));
-      expect(toast.success).toHaveBeenCalled();
-    });
-
-    it("sends undefined version when version is empty string", async () => {
-      const user = userEvent.setup();
-      connectedQuery();
-
-      mockListTags.mockResolvedValue([]);
-      mockListRecent.mockResolvedValue(sampleCommits);
-
-      const fetchSpy = vi.spyOn(globalThis, "fetch");
-      fetchSpy
-        .mockResolvedValueOnce(createMockStreamResponse(["content"]) as never)
-        .mockResolvedValueOnce(Response.json({ title: "Title" }));
-
-      render(<GenerateFromCommits {...defaultProps} version="" />);
-      await user.click(screen.getByText("Generate with AI"));
-
-      await vi.waitFor(() => {
-        const titleCall = fetchSpy.mock.calls.find(
-          (call) =>
-            call[0] ===
-            `${env.NEXT_PUBLIC_CONVEX_SITE_URL}/api/ai/generate-release-title`
-        );
-        expect(titleCall).toBeDefined();
-        const body = JSON.parse(
-          (titleCall?.[1] as RequestInit)?.body as string
-        );
-        expect(body.version).toBeUndefined();
-      });
-    });
-  });
-
-  describe("handleGenerate - version edge cases", () => {
-    beforeEach(() => {
-      setupActions();
-    });
-
-    it("trims version whitespace", async () => {
-      const user = userEvent.setup();
-      connectedQuery();
-
-      mockListTags.mockResolvedValue([
-        { name: "v1.0.0", sha: "aaa" },
-        { name: "v0.9.0", sha: "bbb" },
-      ]);
-      mockListCommits.mockResolvedValue({
-        commits: sampleCommits,
-        files: undefined,
-      });
-
-      vi.spyOn(globalThis, "fetch")
-        .mockResolvedValueOnce(createMockStreamResponse(["content"]) as never)
-        .mockResolvedValueOnce(Response.json({ title: "Title" }));
-
-      render(<GenerateFromCommits {...defaultProps} version="  1.0.0  " />);
-      await user.click(screen.getByText("Generate with AI"));
-
-      await vi.waitFor(() => {
-        expect(mockListCommits).toHaveBeenCalled();
-      });
-    });
-
-    it("sends undefined version in POST body when version is empty", async () => {
-      const user = userEvent.setup();
-      connectedQuery();
-
-      mockListTags.mockResolvedValue([]);
-      mockListRecent.mockResolvedValue(sampleCommits);
-
-      const fetchSpy = vi.spyOn(globalThis, "fetch");
-      fetchSpy
-        .mockResolvedValueOnce(createMockStreamResponse(["content"]) as never)
-        .mockResolvedValueOnce(Response.json({ title: "Title" }));
-
-      render(<GenerateFromCommits {...defaultProps} version="" />);
-      await user.click(screen.getByText("Generate with AI"));
-
-      await vi.waitFor(() => {
-        const releaseCall = fetchSpy.mock.calls.find(
-          (call) => call[0] === "/api/ai/generate-release-notes"
-        );
-        expect(releaseCall).toBeDefined();
-        const body = JSON.parse(
-          (releaseCall?.[1] as RequestInit)?.body as string
-        );
-        expect(body.version).toBeUndefined();
-      });
-    });
-
-    it("sends undefined previousVersion when no previous tag", async () => {
-      const user = userEvent.setup();
-      connectedQuery();
-
-      mockListTags.mockResolvedValue([]);
-      mockListRecent.mockResolvedValue(sampleCommits);
-
-      const fetchSpy = vi.spyOn(globalThis, "fetch");
-      fetchSpy
-        .mockResolvedValueOnce(createMockStreamResponse(["content"]) as never)
-        .mockResolvedValueOnce(Response.json({ title: "Title" }));
-
-      render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("Generate with AI"));
-
-      await vi.waitFor(() => {
-        const releaseCall = fetchSpy.mock.calls.find(
-          (call) => call[0] === "/api/ai/generate-release-notes"
-        );
-        expect(releaseCall).toBeDefined();
-        const body = JSON.parse(
-          (releaseCall?.[1] as RequestInit)?.body as string
-        );
-        expect(body.previousVersion).toBeUndefined();
-      });
-    });
-  });
-
-  describe("findPreviousTag logic (tested through component)", () => {
-    beforeEach(() => {
-      setupActions();
-    });
-
-    it("finds previous tag when current tag is in list", async () => {
-      const user = userEvent.setup();
-      connectedQuery();
-
-      mockListTags.mockResolvedValue([
-        { name: "v1.0.0", sha: "a" },
-        { name: "v0.9.0", sha: "b" },
-        { name: "v0.8.0", sha: "c" },
-      ]);
-      mockListCommits.mockResolvedValue({
-        commits: sampleCommits,
-        files: undefined,
-      });
-
-      vi.spyOn(globalThis, "fetch")
-        .mockResolvedValueOnce(createMockStreamResponse(["content"]) as never)
-        .mockResolvedValueOnce(Response.json({ title: "Title" }));
-
-      render(<GenerateFromCommits {...defaultProps} version="v0.9.0" />);
-      await user.click(screen.getByText("Generate with AI"));
-
-      await vi.waitFor(() => {
-        expect(mockListCommits).toHaveBeenCalledWith(
-          expect.objectContaining({
-            base: "v0.8.0",
-          })
-        );
-      });
-    });
-
-    it("uses first tag when current version not found in tags", async () => {
-      const user = userEvent.setup();
-      connectedQuery();
-
-      mockListTags.mockResolvedValue([
-        { name: "v2.0.0", sha: "a" },
-        { name: "v1.0.0", sha: "b" },
-      ]);
-      mockListCommits.mockResolvedValue({
-        commits: sampleCommits,
-        files: undefined,
-      });
-
-      vi.spyOn(globalThis, "fetch")
-        .mockResolvedValueOnce(createMockStreamResponse(["content"]) as never)
-        .mockResolvedValueOnce(Response.json({ title: "Title" }));
-
-      render(<GenerateFromCommits {...defaultProps} version="3.0.0" />);
-      await user.click(screen.getByText("Generate with AI"));
-
-      await vi.waitFor(() => {
-        expect(mockListCommits).toHaveBeenCalledWith(
-          expect.objectContaining({
-            base: "v2.0.0",
-          })
-        );
-      });
-    });
-
-    it("uses first tag as previousTag when no version provided", async () => {
-      const user = userEvent.setup();
-      connectedQuery();
-
-      mockListTags.mockResolvedValue([
-        { name: "v1.0.0", sha: "a" },
-        { name: "v0.9.0", sha: "b" },
-      ]);
-      mockListCommits.mockResolvedValue({
-        commits: sampleCommits,
-        files: undefined,
-      });
-
-      vi.spyOn(globalThis, "fetch")
-        .mockResolvedValueOnce(createMockStreamResponse(["content"]) as never)
-        .mockResolvedValueOnce(Response.json({ title: "Title" }));
-
-      render(<GenerateFromCommits {...defaultProps} version="" />);
-      await user.click(screen.getByText("Generate with AI"));
-
-      await vi.waitFor(() => {
-        expect(mockListCommits).toHaveBeenCalledWith(
-          expect.objectContaining({
-            base: "v1.0.0",
-          })
-        );
-      });
-    });
-
-    it("returns first tag when current is last tag in list", async () => {
-      const user = userEvent.setup();
-      connectedQuery();
-
-      mockListTags.mockResolvedValue([{ name: "v1.0.0", sha: "a" }]);
-      mockListCommits.mockResolvedValue({
-        commits: sampleCommits,
-        files: undefined,
-      });
-
-      vi.spyOn(globalThis, "fetch")
-        .mockResolvedValueOnce(createMockStreamResponse(["content"]) as never)
-        .mockResolvedValueOnce(Response.json({ title: "Title" }));
-
-      render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("Generate with AI"));
-
-      await vi.waitFor(() => {
-        expect(mockListCommits).toHaveBeenCalledWith(
-          expect.objectContaining({ base: "v1.0.0" })
-        );
-      });
-    });
-
-    it("matches v-prefixed tag for current version", async () => {
-      const user = userEvent.setup();
-      connectedQuery();
-
-      mockListTags.mockResolvedValue([
-        { name: "v1.0.0", sha: "a" },
-        { name: "v0.5.0", sha: "b" },
-      ]);
-      mockListCommits.mockResolvedValue({
-        commits: sampleCommits,
-        files: undefined,
-      });
-
-      vi.spyOn(globalThis, "fetch")
-        .mockResolvedValueOnce(createMockStreamResponse(["content"]) as never)
-        .mockResolvedValueOnce(Response.json({ title: "Title" }));
-
-      render(<GenerateFromCommits {...defaultProps} version="1.0.0" />);
-      await user.click(screen.getByText("Generate with AI"));
-
-      await vi.waitFor(() => {
-        expect(mockListCommits).toHaveBeenCalledWith(
-          expect.objectContaining({ base: "v0.5.0" })
-        );
-      });
-    });
-  });
-
-  describe("tagExists logic (tested through component)", () => {
-    beforeEach(() => {
-      setupActions();
-    });
-
-    it("uses tag as head when tag name exactly matches version", async () => {
-      const user = userEvent.setup();
-      connectedQuery();
-
-      mockListTags.mockResolvedValue([
-        { name: "1.0.0", sha: "a" },
-        { name: "0.9.0", sha: "b" },
-      ]);
-      mockListCommits.mockResolvedValue({
-        commits: sampleCommits,
-        files: undefined,
-      });
-
-      vi.spyOn(globalThis, "fetch")
-        .mockResolvedValueOnce(createMockStreamResponse(["content"]) as never)
-        .mockResolvedValueOnce(Response.json({ title: "Title" }));
-
-      render(<GenerateFromCommits {...defaultProps} version="1.0.0" />);
-      await user.click(screen.getByText("Generate with AI"));
-
-      await vi.waitFor(() => {
-        expect(mockListCommits).toHaveBeenCalledWith(
-          expect.objectContaining({ head: "1.0.0" })
-        );
-      });
-    });
-
-    it("uses targetBranch as head when tag does not exist", async () => {
-      const user = userEvent.setup();
-      connectedQuery();
-
-      mockListTags.mockResolvedValue([
-        { name: "v2.0.0", sha: "a" },
-        { name: "v1.0.0", sha: "b" },
-      ]);
-      mockListCommits.mockResolvedValue({
-        commits: sampleCommits,
-        files: undefined,
-      });
-
-      vi.spyOn(globalThis, "fetch")
-        .mockResolvedValueOnce(createMockStreamResponse(["content"]) as never)
-        .mockResolvedValueOnce(Response.json({ title: "Title" }));
-
-      render(<GenerateFromCommits {...defaultProps} version="99.0.0" />);
-      await user.click(screen.getByText("Generate with AI"));
-
-      await vi.waitFor(() => {
-        expect(mockListCommits).toHaveBeenCalledWith(
-          expect.objectContaining({ head: "main" })
-        );
-      });
-    });
-  });
-
-  describe("fetching state transitions", () => {
-    beforeEach(() => {
-      setupActions();
-    });
-
-    it("resets button state after error", async () => {
-      const user = userEvent.setup();
-      vi.mocked(useQuery)
-        .mockReturnValue({ name: "Test Org" })
-        .mockReturnValueOnce({ name: "Test Org" })
-        .mockReturnValueOnce({
-          installationId: "inst-123",
-          repositoryDefaultBranch: "main",
-          repositoryFullName: "owner/repo",
-        });
-
-      mockListTags.mockRejectedValue(new Error("fail"));
-
-      render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("Generate with AI"));
-
-      await vi.waitFor(() => {
-        expect(toast.error).toHaveBeenCalled();
-      });
-    });
-
-    it("resets button state after zero commits", async () => {
-      const user = userEvent.setup();
-      vi.mocked(useQuery)
-        .mockReturnValue({ name: "Test Org" })
-        .mockReturnValueOnce({ name: "Test Org" })
-        .mockReturnValueOnce({
-          installationId: "inst-123",
-          repositoryDefaultBranch: "main",
-          repositoryFullName: "owner/repo",
-        });
-
-      mockListTags.mockResolvedValue([]);
-      mockListRecent.mockResolvedValue([]);
-
-      render(<GenerateFromCommits {...defaultProps} />);
-      await user.click(screen.getByText("Generate with AI"));
-
-      await vi.waitFor(() => {
-        expect(toast.info).toHaveBeenCalled();
-      });
-    });
+    const user = userEvent.setup();
+    render(<GenerateFromCommits {...props} />);
+    await user.click(screen.getByText("Generate with AI"));
+    await user.click(await screen.findByText("Cancel"));
+
+    await vi.waitFor(() =>
+      expect(screen.getByText("Generate with AI")).toBeInTheDocument()
+    );
+    expect(mockSaveGeneratedDraft).not.toHaveBeenCalled();
+    expect(toast.error).not.toHaveBeenCalled();
   });
 });

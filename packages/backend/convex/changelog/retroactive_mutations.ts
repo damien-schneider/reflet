@@ -1,9 +1,24 @@
 import { v } from "convex/values";
+import type { Id } from "../_generated/dataModel";
+import type { MutationCtx } from "../_generated/server";
 import { internalMutation, internalQuery } from "../_generated/server";
+import { findReleaseByVersion } from "./release_lifecycle";
+import { releaseCommitValidator } from "./tableFields";
 
-// ============================================
-// INTERNAL QUERIES
-// ============================================
+const TERMINAL_JOB_STATUSES = new Set(["completed", "error", "cancelled"]);
+
+async function deleteJobCommits(
+  ctx: MutationCtx,
+  jobId: Id<"retroactiveJobs">
+): Promise<void> {
+  const commitDocs = await ctx.db
+    .query("retroactiveCommits")
+    .withIndex("by_job", (q) => q.eq("jobId", jobId))
+    .collect();
+  for (const commitDoc of commitDocs) {
+    await ctx.db.delete(commitDoc._id);
+  }
+}
 
 export const getJobInternal = internalQuery({
   args: { jobId: v.id("retroactiveJobs") },
@@ -24,17 +39,19 @@ export const getCommitsForGroup = internalQuery({
       .collect(),
 });
 
-export const getExistingVersions = internalQuery({
-  args: { organizationId: v.id("organizations") },
+export const listUsedVersions = internalQuery({
+  args: {
+    organizationId: v.id("organizations"),
+    versions: v.array(v.string()),
+  },
   handler: async (ctx, args) => {
-    const releases = await ctx.db
-      .query("releases")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .collect();
-
-    return releases.filter((r) => r.version).map((r) => r.version as string);
+    const used: string[] = [];
+    for (const version of args.versions) {
+      if (await findReleaseByVersion(ctx, args.organizationId, version)) {
+        used.push(version);
+      }
+    }
+    return used;
   },
 });
 
@@ -47,9 +64,12 @@ export const getAllCommitsForJob = internalQuery({
       .collect(),
 });
 
-// ============================================
-// INTERNAL MUTATIONS
-// ============================================
+export const discardJobCommits = internalMutation({
+  args: { jobId: v.id("retroactiveJobs") },
+  handler: async (ctx, args) => {
+    await deleteJobCommits(ctx, args.jobId);
+  },
+});
 
 export const deleteCommitDoc = internalMutation({
   args: { commitDocId: v.id("retroactiveCommits") },
@@ -95,6 +115,9 @@ export const updateJobProgress = internalMutation({
     }
 
     await ctx.db.patch(jobId, cleanUpdates);
+    if (updates.status && TERMINAL_JOB_STATUSES.has(updates.status)) {
+      await deleteJobCommits(ctx, jobId);
+    }
   },
 });
 
@@ -183,15 +206,7 @@ export const updateGroupStatus = internalMutation({
 
 export const saveCommitBatch = internalMutation({
   args: {
-    commits: v.array(
-      v.object({
-        author: v.string(),
-        date: v.string(),
-        fullMessage: v.string(),
-        message: v.string(),
-        sha: v.string(),
-      })
-    ),
+    commits: v.array(releaseCommitValidator),
     groupId: v.string(),
     jobId: v.id("retroactiveJobs"),
   },
@@ -207,21 +222,25 @@ export const saveCommitBatch = internalMutation({
 
 export const createDraftRelease = internalMutation({
   args: {
-    commits: v.array(
-      v.object({
-        author: v.string(),
-        date: v.string(),
-        fullMessage: v.string(),
-        message: v.string(),
-        sha: v.string(),
-      })
-    ),
     description: v.string(),
     organizationId: v.id("organizations"),
+    snapshot: v.object({
+      baseRef: v.optional(v.string()),
+      commits: v.array(releaseCommitValidator),
+      headRef: v.optional(v.string()),
+      headSha: v.optional(v.string()),
+      totalCommits: v.number(),
+    }),
     title: v.string(),
     version: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    if (
+      args.version &&
+      (await findReleaseByVersion(ctx, args.organizationId, args.version))
+    ) {
+      return null;
+    }
     const now = Date.now();
 
     const releaseId = await ctx.db.insert("releases", {
@@ -235,11 +254,23 @@ export const createDraftRelease = internalMutation({
     });
 
     await ctx.db.insert("releaseCommits", {
-      commits: args.commits,
+      ...args.snapshot,
       createdAt: now,
       releaseId,
     });
 
+    await ctx.db.insert("releaseDrafts", {
+      createdAt: now,
+      description: args.description,
+      organizationId: args.organizationId,
+      origin: "ai",
+      releaseId,
+      resolvedAt: now,
+      status: "applied",
+      title: args.title,
+    });
+
     return releaseId;
   },
+  returns: v.union(v.id("releases"), v.null()),
 });

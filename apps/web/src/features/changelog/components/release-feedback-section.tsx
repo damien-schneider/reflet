@@ -14,12 +14,10 @@ import {
 } from "./feedback-list-controls";
 import type { FeedbackLinkStatus } from "./feedback-section-header";
 import { FeedbackSectionHeader } from "./feedback-section-header";
-import type { CommitInfo } from "./generate-from-commits";
 
 interface ReleaseFeedbackSectionProps {
   autoTriggerMatching?: boolean;
   className?: string;
-  commits: CommitInfo[];
   description: string;
   onLinkStatusChange?: (status: FeedbackLinkStatus) => void;
   organizationId: Id<"organizations">;
@@ -30,7 +28,6 @@ export function ReleaseFeedbackSection({
   organizationId,
   releaseId,
   description,
-  commits,
   autoTriggerMatching,
   onLinkStatusChange,
   className,
@@ -83,7 +80,7 @@ export function ReleaseFeedbackSection({
   );
 
   const { matches, isMatching, matchError, matchFeedback, clearMatches } =
-    useFeedbackMatching(organizationId);
+    useFeedbackMatching(releaseId);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [hasAutoTriggered, setHasAutoTriggered] = useState(false);
@@ -108,8 +105,7 @@ export function ReleaseFeedbackSection({
 
   useAutoTriggerMatching({
     autoTriggerMatching,
-    availableFeedback,
-    commits,
+    availableFeedbackCount: availableFeedback?.length ?? 0,
     description,
     hasAutoTriggered,
     matchFeedback,
@@ -209,7 +205,7 @@ export function ReleaseFeedbackSection({
       toast.info("Generate release notes first to find related feedback");
       return;
     }
-    matchFeedback(description, commits, availableFeedback);
+    matchFeedback(description);
   };
 
   const handleUnlink = async (feedbackId: Id<"feedback">) => {
@@ -293,31 +289,10 @@ export function ReleaseFeedbackSection({
 
 interface AutoTriggerParams {
   autoTriggerMatching: boolean | undefined;
-  availableFeedback:
-    | Array<{
-        _id: Id<"feedback">;
-        title: string;
-        description?: string;
-        status: string;
-        voteCount: number;
-        tags: Array<{ _id: Id<"tags">; name: string }>;
-      }>
-    | undefined;
-  commits: CommitInfo[];
+  availableFeedbackCount: number;
   description: string;
   hasAutoTriggered: boolean;
-  matchFeedback: (
-    desc: string,
-    commits: CommitInfo[],
-    feedback: Array<{
-      _id: Id<"feedback">;
-      title: string;
-      description?: string;
-      status: string;
-      voteCount: number;
-      tags: Array<{ _id: Id<"tags">; name: string }>;
-    }>
-  ) => Promise<void>;
+  matchFeedback: (description: string) => Promise<void>;
   setHasAutoTriggered: (v: boolean) => void;
 }
 
@@ -325,8 +300,7 @@ function useAutoTriggerMatching({
   autoTriggerMatching,
   hasAutoTriggered,
   description,
-  commits,
-  availableFeedback,
+  availableFeedbackCount,
   setHasAutoTriggered,
   matchFeedback,
 }: AutoTriggerParams) {
@@ -335,20 +309,17 @@ function useAutoTriggerMatching({
       autoTriggerMatching &&
       !hasAutoTriggered &&
       description.trim() &&
-      commits.length > 0 &&
-      availableFeedback &&
-      availableFeedback.length > 0;
+      availableFeedbackCount > 0;
 
     if (canAutoTrigger) {
       setHasAutoTriggered(true);
-      matchFeedback(description, commits, availableFeedback);
+      matchFeedback(description);
     }
   }, [
     autoTriggerMatching,
     hasAutoTriggered,
     description,
-    commits,
-    availableFeedback,
+    availableFeedbackCount,
     setHasAutoTriggered,
     matchFeedback,
   ]);

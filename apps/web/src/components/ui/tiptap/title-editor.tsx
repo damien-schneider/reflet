@@ -106,7 +106,7 @@ export function TiptapTitleEditor({
 
     const currentText = editor.getText();
     if (value !== currentText) {
-      editor.commands.setContent(toTitleDoc(value));
+      editor.commands.setContent(toTitleDoc(value), { emitUpdate: false });
     }
   }, [editor, value]);
 

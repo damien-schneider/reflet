@@ -123,11 +123,11 @@ function initWidget(): void {
       const positionAttr = script.getAttribute("data-position");
       const themeAttr = script.getAttribute("data-theme");
 
+      const maxEntriesAttr = script.getAttribute("data-max-entries");
+
       const config: ChangelogWidgetConfig = {
         autoOpenForNew: script.getAttribute("data-auto-open") === "true",
-        maxEntries: script.getAttribute("data-max-entries")
-          ? Number(script.getAttribute("data-max-entries"))
-          : undefined,
+        maxEntries: maxEntriesAttr ? Number(maxEntriesAttr) : undefined,
         mode: isValidMode(modeAttr) ? modeAttr : "card",
         position: isValidPosition(positionAttr) ? positionAttr : "bottom-right",
         primaryColor: script.getAttribute("data-color") ?? undefined,

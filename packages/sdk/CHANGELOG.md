@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `useSurveySession(survey)` and `<SurveyCard />` to run and render surveys in your own UI, also exported from the new `reflet-sdk/surveys` entry with `previewTransport` and `SurveySession`.
 - `Reflet` client methods `getEligibleSurveys`, `startSurveyResponse`, `submitSurveyAnswer`, `completeSurveyResponse` and `dismissSurveyResponse`, and the survey types (`PublicSurvey`, `SurveyQuestion`, `AnswerValue`…).
 
+### Fixed
+
+- `ChangelogEntry` now matches what the API returns: linked feedback is in `items` (each with `id`, `title` and `status`), not `feedback`. The changelog widget no longer crashes on load and shows versions as published (`v1.2.3`, not `vv1.2.3`). Unset `ChangelogWidget` props fall back to the widget defaults instead of clearing them.
+
 ## [0.6.5] - 2026-10-04
 
 ### Changed

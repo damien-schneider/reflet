@@ -24,7 +24,12 @@ export interface WizardConfig extends SyncSettings {
   workflow: Workflow;
 }
 
-const WORKFLOW_SYNC: Record<Workflow, SyncSettings> = {
+export const RELEASE_PLEASE_TAG_PREFIX = "v";
+
+type WorkflowDefaults = SyncSettings &
+  Partial<Pick<WizardConfig, "versionPrefix">>;
+
+const WORKFLOW_DEFAULTS: Record<Workflow, WorkflowDefaults> = {
   ai_powered: {
     autoPublishImported: true,
     autoSyncReleases: false,
@@ -34,6 +39,7 @@ const WORKFLOW_SYNC: Record<Workflow, SyncSettings> = {
     autoPublishImported: false,
     autoSyncReleases: true,
     pushToGithubOnPublish: false,
+    versionPrefix: RELEASE_PLEASE_TAG_PREFIX,
   },
   manual: {
     autoPublishImported: false,
@@ -65,8 +71,8 @@ export const DEFAULT_CONFIG: WizardConfig = {
   workflow: "ai_powered",
 };
 
-export const applyWorkflowDefaults = (workflow: Workflow): SyncSettings =>
-  WORKFLOW_SYNC[workflow];
+export const applyWorkflowDefaults = (workflow: Workflow): WorkflowDefaults =>
+  WORKFLOW_DEFAULTS[workflow];
 
 export const resolveSyncSettings = (config: WizardConfig): SyncSettings => {
   const usesManualDirection =

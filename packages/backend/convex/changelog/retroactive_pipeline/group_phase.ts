@@ -5,36 +5,28 @@ import { internal } from "../../_generated/api";
 import type { Id } from "../../_generated/dataModel";
 import type { ActionCtx } from "../../_generated/server";
 import { internalAction } from "../../_generated/server";
+import type { GitTag } from "../source";
+import type { ReleaseCommit } from "../tableFields";
 import { clusterCommitsWithAI } from "./ai_clustering";
-import {
-  type CommitData,
-  getErrorMessage,
-  MAX_COMMITS_PER_GROUP,
-  MAX_GROUPS,
-} from "./github";
+import { getErrorMessage, MAX_GROUPS } from "./github";
 import {
   buildGroupMap,
   type GroupMap,
   type GroupMapValue,
   groupCommitsByTagBoundaries,
-  isTagVersion,
 } from "./grouping";
+import { loadActiveJob, saveGroupCommits } from "./job_state";
 
 interface CommitDoc {
   _id: Id<"retroactiveCommits">;
-  commits: CommitData[];
+  commits: ReleaseCommit[];
   groupId: string;
-}
-
-interface Tag {
-  name: string;
-  sha: string;
 }
 
 async function buildGroupsForStrategy(
   strategy: string,
   hasTags: boolean,
-  tags: Tag[],
+  tags: GitTag[],
   allCommitDocs: CommitDoc[],
   ctx: ActionCtx,
   jobId: Id<"retroactiveJobs">
@@ -75,37 +67,28 @@ async function resaveCommitsWithNewGroups(
     );
   }
   for (const [groupId, data] of groupMap) {
-    await ctx.runMutation(
-      internal.changelog.retroactive_mutations.saveCommitBatch,
-      {
-        commits: data.commits.slice(0, MAX_COMMITS_PER_GROUP),
-        groupId,
-        jobId,
-      }
-    );
+    await saveGroupCommits(ctx, jobId, groupId, data.commits);
   }
 }
 
 async function filterExistingVersions(
   ctx: ActionCtx,
   organizationId: Id<"organizations">,
-  entries: [string, GroupMapValue][]
+  entries: [string, GroupMapValue][],
+  tagNames: Set<string>
 ): Promise<[string, GroupMapValue][]> {
-  const existingVersions = await ctx.runQuery(
-    internal.changelog.retroactive_mutations.getExistingVersions,
-    { organizationId }
+  const usedVersions = new Set(
+    await ctx.runQuery(
+      internal.changelog.retroactive_mutations.listUsedVersions,
+      {
+        organizationId,
+        versions: entries
+          .map(([groupId]) => groupId)
+          .filter((groupId) => tagNames.has(groupId)),
+      }
+    )
   );
-  const versionSet = new Set(existingVersions);
-  const kept = entries.filter(([groupId]) => !versionSet.has(groupId));
-
-  const filtered = entries.length - kept.length;
-  if (filtered > 0) {
-    console.log(
-      `[retroactive] Filtered out ${filtered} existing versions (${existingVersions.join(", ")})`
-    );
-  }
-
-  return kept;
+  return entries.filter(([groupId]) => !usedVersions.has(groupId));
 }
 
 async function completeWithoutGroups(
@@ -131,12 +114,8 @@ async function completeWithoutGroups(
 export const groupCommitsPhase = internalAction({
   args: { jobId: v.id("retroactiveJobs") },
   handler: async (ctx, args) => {
-    const job = await ctx.runQuery(
-      internal.changelog.retroactive_mutations.getJobInternal,
-      { jobId: args.jobId }
-    );
-
-    if (!job || job.status === "cancelled") {
+    const job = await loadActiveJob(ctx, args.jobId);
+    if (!job) {
       return;
     }
 
@@ -167,6 +146,7 @@ export const groupCommitsPhase = internalAction({
       }
 
       const tags = job.tags ?? [];
+      const tagNames = new Set(tags.map((tag) => tag.name));
       const { groupMap, needsResave } = await buildGroupsForStrategy(
         job.groupingStrategy,
         tags.length > 1,
@@ -192,7 +172,8 @@ export const groupCommitsPhase = internalAction({
         groupEntries = await filterExistingVersions(
           ctx,
           job.organizationId,
-          groupEntries
+          groupEntries,
+          tagNames
         );
       }
 
@@ -210,7 +191,7 @@ export const groupCommitsPhase = internalAction({
         id: groupId,
         status: "pending" as const,
         title: groupId,
-        version: isTagVersion(groupId) ? groupId : undefined,
+        version: tagNames.has(groupId) ? groupId : undefined,
       }));
 
       await ctx.runMutation(

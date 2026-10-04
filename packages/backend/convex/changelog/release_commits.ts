@@ -1,151 +1,47 @@
 import { v } from "convex/values";
-import { mutation, query } from "../_generated/server";
-import { authComponent } from "../auth/auth";
-import { requireAuthUser } from "../shared/access";
+import type { Id } from "../_generated/dataModel";
+import type { QueryCtx } from "../_generated/server";
+import { query } from "../_generated/server";
+import { isOrgMemberViewer } from "../shared/access";
 
-const commitValidator = v.object({
-  author: v.string(),
-  date: v.string(),
-  fullMessage: v.string(),
-  message: v.string(),
-  sha: v.string(),
-});
-
-const fileValidator = v.object({
-  additions: v.number(),
-  deletions: v.number(),
-  filename: v.string(),
-  status: v.string(),
-});
-
-export const saveReleaseCommits = mutation({
-  args: {
-    commits: v.array(commitValidator),
-    files: v.optional(v.array(fileValidator)),
-    previousTag: v.optional(v.string()),
-    releaseId: v.id("releases"),
-  },
-  handler: async (ctx, args) => {
-    const user = await requireAuthUser(ctx);
-
-    const release = await ctx.db.get(args.releaseId);
-    if (!release) {
-      throw new Error("Release not found");
-    }
-
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", release.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership || membership.role === "member") {
-      throw new Error("Only admins can save release commits");
-    }
-
-    // Delete existing commits for this release
-    const existing = await ctx.db
-      .query("releaseCommits")
-      .withIndex("by_release", (q) => q.eq("releaseId", args.releaseId))
-      .collect();
-
-    for (const doc of existing) {
-      await ctx.db.delete(doc._id);
-    }
-
-    return ctx.db.insert("releaseCommits", {
-      commits: args.commits,
-      createdAt: Date.now(),
-      files: args.files,
-      previousTag: args.previousTag,
-      releaseId: args.releaseId,
-    });
-  },
-  returns: v.id("releaseCommits"),
-});
+export async function findMaintainerNotes(
+  ctx: QueryCtx,
+  organizationId: Id<"organizations">,
+  tagName: string
+): Promise<string | undefined> {
+  const mirror = await ctx.db
+    .query("githubReleases")
+    .withIndex("by_org_tag", (q) =>
+      q.eq("organizationId", organizationId).eq("tagName", tagName)
+    )
+    .first();
+  return mirror?.body || undefined;
+}
 
 export const getReleaseCommits = query({
   args: { releaseId: v.id("releases") },
   handler: async (ctx, args) => {
-    const user = await authComponent.safeGetAuthUser(ctx);
-    if (!user) {
-      return null;
-    }
-
     const release = await ctx.db.get(args.releaseId);
-    if (!release) {
+    if (!(release && (await isOrgMemberViewer(ctx, release.organizationId)))) {
       return null;
     }
 
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", release.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership) {
-      return null;
-    }
-
-    return ctx.db
+    const snapshot = await ctx.db
       .query("releaseCommits")
       .withIndex("by_release", (q) => q.eq("releaseId", args.releaseId))
       .first();
-  },
-});
-
-export const getLatestCommitFromPreviousRelease = query({
-  args: {
-    excludeReleaseId: v.optional(v.id("releases")),
-    organizationId: v.id("organizations"),
-  },
-  handler: async (ctx, args) => {
-    const user = await authComponent.safeGetAuthUser(ctx);
-    if (!user) {
+    if (!snapshot) {
       return null;
     }
-
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", args.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership) {
-      return null;
-    }
-
-    // Get published releases ordered by publishedAt descending
-    const releases = await ctx.db
-      .query("releases")
-      .withIndex("by_published", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .order("desc")
-      .collect();
-
-    for (const release of releases) {
-      if (!release.publishedAt) {
-        continue;
-      }
-      if (args.excludeReleaseId && release._id === args.excludeReleaseId) {
-        continue;
-      }
-
-      const commitDoc = await ctx.db
-        .query("releaseCommits")
-        .withIndex("by_release", (q) => q.eq("releaseId", release._id))
-        .first();
-
-      const newestCommit = commitDoc?.commits[0];
-      if (newestCommit) {
-        return { sha: newestCommit.sha };
-      }
-    }
-
-    return null;
+    return {
+      ...snapshot,
+      maintainerNotes: snapshot.headRef
+        ? await findMaintainerNotes(
+            ctx,
+            release.organizationId,
+            snapshot.headRef
+          )
+        : undefined,
+    };
   },
 });

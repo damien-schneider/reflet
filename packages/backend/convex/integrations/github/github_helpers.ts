@@ -1,6 +1,6 @@
-/**
- * Shared GitHub API helpers used by repo_analysis and project_setup
- */
+import { z } from "zod";
+import { GITHUB_API_URL, GITHUB_PUBLIC_HEADERS } from "./github_constants";
+import { githubApiReleaseSchema } from "./github_release_payload";
 
 interface RepoData {
   fileTree: string;
@@ -9,19 +9,20 @@ interface RepoData {
   rootContents: string;
 }
 
-const GITHUB_HEADERS = {
-  Accept: "application/vnd.github+json",
-  "X-GitHub-Api-Version": "2022-11-28",
-} as const;
-
 const MAX_README_LENGTH = 5000;
 const MAX_TREE_FILES = 100;
+
+const fileTreeSchema = z.object({
+  tree: z.array(z.object({ path: z.string() })).optional(),
+});
+
+const base64ContentSchema = z.object({ content: z.string().optional() });
 
 async function fetchRootContents(repositoryFullName: string): Promise<string> {
   try {
     const response = await fetch(
-      `https://api.github.com/repos/${repositoryFullName}/contents/`,
-      { headers: GITHUB_HEADERS }
+      `${GITHUB_API_URL}/repos/${repositoryFullName}/contents/`,
+      { headers: GITHUB_PUBLIC_HEADERS }
     );
     if (!response.ok) {
       return "Failed to fetch root contents";
@@ -44,19 +45,16 @@ async function fetchRootContents(repositoryFullName: string): Promise<string> {
 async function fetchFileTree(repositoryFullName: string): Promise<string> {
   try {
     const response = await fetch(
-      `https://api.github.com/repos/${repositoryFullName}/git/trees/HEAD?recursive=1`,
-      { headers: GITHUB_HEADERS }
+      `${GITHUB_API_URL}/repos/${repositoryFullName}/git/trees/HEAD?recursive=1`,
+      { headers: GITHUB_PUBLIC_HEADERS }
     );
     if (!response.ok) {
       return "Failed to fetch file tree";
     }
-    const data = (await response.json()) as {
-      tree?: Array<{ path: string; type: string }>;
-    };
-    const tree = data.tree ?? [];
-    const limitedTree = tree.slice(0, MAX_TREE_FILES);
-    let fileTree = limitedTree
-      .map((item: { path: string; type: string }) => item.path)
+    const { tree = [] } = fileTreeSchema.parse(await response.json());
+    let fileTree = tree
+      .slice(0, MAX_TREE_FILES)
+      .map((item) => item.path)
       .join("\n");
     if (tree.length > MAX_TREE_FILES) {
       fileTree += `\n... and ${tree.length - MAX_TREE_FILES} more files`;
@@ -70,17 +68,17 @@ async function fetchFileTree(repositoryFullName: string): Promise<string> {
 async function fetchReadme(repositoryFullName: string): Promise<string | null> {
   try {
     const response = await fetch(
-      `https://api.github.com/repos/${repositoryFullName}/readme`,
-      { headers: GITHUB_HEADERS }
+      `${GITHUB_API_URL}/repos/${repositoryFullName}/readme`,
+      { headers: GITHUB_PUBLIC_HEADERS }
     );
     if (!response.ok) {
       return null;
     }
-    const data = (await response.json()) as { content?: string };
-    if (!data.content) {
+    const { content } = base64ContentSchema.parse(await response.json());
+    if (!content) {
       return null;
     }
-    const readme = Buffer.from(data.content, "base64").toString("utf-8");
+    const readme = Buffer.from(content, "base64").toString("utf-8");
     if (readme.length > MAX_README_LENGTH) {
       return `${readme.slice(0, MAX_README_LENGTH)}\n...[truncated]`;
     }
@@ -95,25 +93,22 @@ async function fetchPackageJson(
 ): Promise<string | null> {
   try {
     const response = await fetch(
-      `https://api.github.com/repos/${repositoryFullName}/contents/package.json`,
-      { headers: GITHUB_HEADERS }
+      `${GITHUB_API_URL}/repos/${repositoryFullName}/contents/package.json`,
+      { headers: GITHUB_PUBLIC_HEADERS }
     );
     if (!response.ok) {
       return null;
     }
-    const data = (await response.json()) as { content?: string };
-    if (!data.content) {
+    const { content } = base64ContentSchema.parse(await response.json());
+    if (!content) {
       return null;
     }
-    return Buffer.from(data.content, "base64").toString("utf-8");
+    return Buffer.from(content, "base64").toString("utf-8");
   } catch {
     return null;
   }
 }
 
-/**
- * Fetch repository data from GitHub API (public, no auth required)
- */
 export async function fetchRepoData(
   repositoryFullName: string
 ): Promise<RepoData> {
@@ -127,38 +122,19 @@ export async function fetchRepoData(
   return { fileTree, packageJson, readme, rootContents };
 }
 
-/**
- * Fetch GitHub releases for a repository
- */
 export async function fetchGitHubReleases(
   repositoryFullName: string,
   maxResults = 30
-): Promise<
-  Array<{
-    tag_name: string;
-    name: string | null;
-    body: string | null;
-    published_at: string | null;
-    draft: boolean;
-    prerelease: boolean;
-  }>
-> {
+): Promise<z.infer<typeof githubApiReleaseSchema>[]> {
   try {
     const response = await fetch(
-      `https://api.github.com/repos/${repositoryFullName}/releases?per_page=${maxResults}`,
-      { headers: GITHUB_HEADERS }
+      `${GITHUB_API_URL}/repos/${repositoryFullName}/releases?per_page=${maxResults}`,
+      { headers: GITHUB_PUBLIC_HEADERS }
     );
     if (!response.ok) {
       return [];
     }
-    return (await response.json()) as Array<{
-      tag_name: string;
-      name: string | null;
-      body: string | null;
-      published_at: string | null;
-      draft: boolean;
-      prerelease: boolean;
-    }>;
+    return z.array(githubApiReleaseSchema).parse(await response.json());
   } catch {
     return [];
   }
