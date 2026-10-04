@@ -172,24 +172,6 @@ export const publicSurveyValidator = v.object({
   triggerType: triggerTypeValidator,
 });
 
-const legacyConditionalLogicValidator = v.optional(
-  v.object({
-    condition: v.optional(
-      v.union(
-        v.literal("equals"),
-        v.literal("not_equals"),
-        v.literal("greater_than"),
-        v.literal("less_than"),
-        v.literal("contains"),
-        v.literal("answered"),
-        v.literal("not_answered")
-      )
-    ),
-    dependsOn: v.optional(v.id("surveyQuestions")),
-    value: v.optional(ruleValueValidator),
-  })
-);
-
 export const surveyTables = {
   surveyAnswers: defineTable({
     answeredAt: v.number(),
@@ -205,7 +187,6 @@ export const surveyTables = {
     .index("by_survey_date", ["surveyId", "answeredAt"]),
 
   surveyQuestions: defineTable({
-    conditionalLogic: legacyConditionalLogicValidator,
     config: questionConfigValidator,
     description: v.optional(v.string()),
     logic: v.optional(v.array(logicRuleValidator)),

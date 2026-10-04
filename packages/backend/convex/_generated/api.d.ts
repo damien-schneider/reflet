@@ -220,7 +220,6 @@ import type * as intelligence_synthesis from "../intelligence/synthesis.js";
 import type * as intelligence_synthesis_shared from "../intelligence/synthesis_shared.js";
 import type * as intelligence_tableFields from "../intelligence/tableFields.js";
 import type * as migrations_strip_repo_analysis_product from "../migrations/strip_repo_analysis_product.js";
-import type * as migrations_strip_survey_conditional_logic from "../migrations/strip_survey_conditional_logic.js";
 import type * as migrations_strip_sync_direction from "../migrations/strip_sync_direction.js";
 import type * as notifications_preferences from "../notifications/preferences.js";
 import type * as notifications_push from "../notifications/push.js";
@@ -547,7 +546,6 @@ declare const fullApi: ApiFromModules<{
   "intelligence/synthesis_shared": typeof intelligence_synthesis_shared;
   "intelligence/tableFields": typeof intelligence_tableFields;
   "migrations/strip_repo_analysis_product": typeof migrations_strip_repo_analysis_product;
-  "migrations/strip_survey_conditional_logic": typeof migrations_strip_survey_conditional_logic;
   "migrations/strip_sync_direction": typeof migrations_strip_sync_direction;
   "notifications/preferences": typeof notifications_preferences;
   "notifications/push": typeof notifications_push;
