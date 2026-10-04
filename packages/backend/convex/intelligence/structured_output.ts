@@ -19,12 +19,14 @@ const openrouter = createOpenRouter({
  * (e.g. "Respond with ONLY valid JSON matching: { ... }").
  */
 export const generateStructured = async <T>(options: {
+  maxOutputTokens?: number;
   model: string;
   schema: z.ZodType<T>;
   system: string;
   prompt: string;
 }): Promise<T> => {
   const response = await generateText({
+    maxOutputTokens: options.maxOutputTokens,
     model: openrouter(options.model),
     prompt: options.prompt,
     system: options.system,

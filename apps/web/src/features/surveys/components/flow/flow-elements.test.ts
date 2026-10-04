@@ -9,15 +9,14 @@ const endings: SurveyEnding[] = [
   { id: "promoters", title: "Thank you!" },
 ];
 
-// Convex ids only come from a deployment; tests need plain strings in their place.
-const questionId = (id: string): QuestionId => id as QuestionId;
+const fakeQuestionId = (id: string): QuestionId => id as QuestionId;
 
 const question = (
   id: string,
   order: number,
   extra: Partial<FlowQuestion<QuestionId>> = {}
 ): FlowQuestion<QuestionId> => ({
-  _id: questionId(id),
+  _id: fakeQuestionId(id),
   order,
   required: true,
   type: "text",
@@ -32,7 +31,7 @@ const branchingFlow = [
       {
         id: "low",
         operator: "less_than",
-        target: { kind: "question", questionId: questionId("why-low") },
+        target: { kind: "question", questionId: fakeQuestionId("why-low") },
         value: 7,
       },
     ],
@@ -61,7 +60,7 @@ describe("reachableInsertAnchor", () => {
     expect(
       reachableInsertAnchor(modelOf(branchingFlow), {
         kind: "question",
-        questionId: questionId("score"),
+        questionId: fakeQuestionId("score"),
       })
     ).toEqual({ after: "score", splits: { questionId: "score" } });
   });
@@ -70,7 +69,7 @@ describe("reachableInsertAnchor", () => {
     expect(
       reachableInsertAnchor(modelOf(linearFlow), {
         kind: "question",
-        questionId: questionId("first"),
+        questionId: fakeQuestionId("first"),
       })
     ).toEqual({ after: "first" });
   });

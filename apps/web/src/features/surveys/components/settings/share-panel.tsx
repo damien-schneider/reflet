@@ -18,7 +18,6 @@ import {
   type OrgPublicKey,
   useOrgPublicKey,
 } from "@/features/surveys/components/settings/use-org-public-key";
-import { convexErrorMessage } from "@/features/surveys/lib/convex-error-message";
 import { generateSurveySetupPrompt } from "@/features/surveys/lib/generate-survey-setup-prompt";
 import type { SurveyDetail } from "@/features/surveys/lib/settings/settings-draft";
 import {
@@ -30,6 +29,7 @@ import {
   triggerCallOf,
 } from "@/features/surveys/lib/survey-install-snippets";
 import { useCopyFeedback } from "@/hooks/use-copy-feedback";
+import { convexErrorMessage } from "@/lib/convex-error-message";
 import { BASE_URL } from "@/lib/seo-config";
 
 type ShareSurvey = Pick<

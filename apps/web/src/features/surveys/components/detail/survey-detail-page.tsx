@@ -182,6 +182,7 @@ function SurveyDetail({
 
         <TabsPanel className="flex min-h-0 flex-1" value="flow">
           <SurveyFlowEditor
+            key={survey._id}
             onEditTrigger={() => setActiveTab("settings")}
             stepsOutlineContainer={isMobile ? null : stepsOutlineContainer}
             survey={survey}

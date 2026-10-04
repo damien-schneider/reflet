@@ -3,7 +3,7 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import type { FunctionArgs } from "convex/server";
-import { convexErrorMessage } from "@/features/surveys/lib/convex-error-message";
+import { convexErrorMessage } from "@/lib/convex-error-message";
 
 export type QuestionPatch = Omit<
   FunctionArgs<typeof api.surveys.mutations.updateQuestion>,

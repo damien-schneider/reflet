@@ -8,8 +8,8 @@ import {
 } from "@reflet/survey-core";
 import { useMutation } from "convex/react";
 import type { FlowModel } from "@/features/surveys/components/flow/flow-model";
-import { convexErrorMessage } from "@/features/surveys/lib/convex-error-message";
 import { createRuleId, newRule } from "@/features/surveys/lib/flow/rules";
+import { convexErrorMessage } from "@/lib/convex-error-message";
 import type {
   FlowStepRef,
   QuestionId,

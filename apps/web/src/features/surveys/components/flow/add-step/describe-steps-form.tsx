@@ -9,7 +9,7 @@ import { useAction } from "convex/react";
 import { type FormEvent, useId, useState } from "react";
 import { useFlowEditor } from "@/features/surveys/components/flow/flow-context";
 import type { InsertAnchor } from "@/features/surveys/components/flow/use-flow-actions";
-import { convexErrorMessage } from "@/features/surveys/lib/convex-error-message";
+import { convexErrorMessage } from "@/lib/convex-error-message";
 import type { QuestionId } from "@/store/surveys";
 
 interface DescribeStepsFormProps {

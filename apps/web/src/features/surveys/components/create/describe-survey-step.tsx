@@ -11,7 +11,7 @@ import type { SurveyDraft } from "@reflet/backend/convex/surveys/lib/ai_draft_sc
 import { useAction } from "convex/react";
 import { type FormEvent, useId, useState } from "react";
 import { Label } from "@/components/ui/label";
-import { convexErrorMessage } from "@/features/surveys/lib/convex-error-message";
+import { convexErrorMessage } from "@/lib/convex-error-message";
 
 interface DescribeSurveyStepProps {
   onBack: () => void;

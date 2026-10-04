@@ -16,7 +16,7 @@ import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import type { FlowIssue } from "@reflet/survey-core";
 import { useMutation } from "convex/react";
 import { useState } from "react";
-import { convexErrorMessage } from "@/features/surveys/lib/convex-error-message";
+import { convexErrorMessage } from "@/lib/convex-error-message";
 import type { SurveyStatus } from "@/store/surveys";
 
 interface StatusTransition {

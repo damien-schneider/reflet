@@ -15,6 +15,7 @@ import {
 
 const SURVEY_DRAFT_MODEL = "anthropic/claude-sonnet-4";
 const MAX_PROMPT_CHARS = 2000;
+const MAX_DRAFT_OUTPUT_TOKENS = 4000;
 
 const SURVEY_DRAFT_SYSTEM_PROMPT_WITH_FORMAT = `${SURVEY_DRAFT_SYSTEM_PROMPT}
 
@@ -26,6 +27,7 @@ const generateSurveyObject = async (
 ): Promise<GeneratedDraft> => {
   try {
     return await generateStructured({
+      maxOutputTokens: MAX_DRAFT_OUTPUT_TOKENS,
       model: SURVEY_DRAFT_MODEL,
       prompt: `Draft a survey for this request:\n"""\n${request}\n"""`,
       schema: generatedDraftSchema,

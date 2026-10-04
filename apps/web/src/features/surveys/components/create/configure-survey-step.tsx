@@ -19,7 +19,7 @@ import { useRouter } from "next/navigation";
 import { type FormEvent, useId, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { TriggerPicker } from "@/features/surveys/components/settings/trigger-picker";
-import { convexErrorMessage } from "@/features/surveys/lib/convex-error-message";
+import { convexErrorMessage } from "@/lib/convex-error-message";
 
 /** Everything a new survey starts with, whether from scratch, a template or an AI draft. */
 export interface SurveyBlueprint {

@@ -18,7 +18,6 @@ import { H3 } from "@/components/ui/typography";
 import { AudienceFields } from "@/features/surveys/components/settings/audience-fields";
 import { TriggerFields } from "@/features/surveys/components/settings/trigger-fields";
 import { TriggerPicker } from "@/features/surveys/components/settings/trigger-picker";
-import { convexErrorMessage } from "@/features/surveys/lib/convex-error-message";
 import {
   type SettingsDraft,
   type SettingsSurvey,
@@ -26,6 +25,7 @@ import {
   settingsToUpdate,
   toSettingsDraft,
 } from "@/features/surveys/lib/settings/settings-draft";
+import { convexErrorMessage } from "@/lib/convex-error-message";
 
 const POSITION_LABELS: Record<SurveyPosition, string> = {
   bottom_left: "Bottom left",

@@ -11,6 +11,7 @@ import { FlowCanvas } from "@/features/surveys/components/flow/flow-canvas";
 import {
   FlowEditorContext,
   type FlowEditorValue,
+  useClearFlowSelectionOnUnmount,
   useSelectFlowStep,
 } from "@/features/surveys/components/flow/flow-context";
 import {
@@ -97,6 +98,7 @@ export function SurveyFlowEditor({
   const model = buildFlowModel(survey, analytics);
   const actions = useFlowActions(model);
   const selectStep = useSelectFlowStep();
+  useClearFlowSelectionOnUnmount();
   const isOutlineOpen = useAtomValue(flowOutlineOpenAtom);
   const isPreviewOpen = useAtomValue(flowPreviewOpenAtom);
   const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(

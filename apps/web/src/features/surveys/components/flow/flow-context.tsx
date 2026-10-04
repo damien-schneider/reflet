@@ -1,7 +1,7 @@
 "use client";
 
 import { useSetAtom } from "jotai";
-import { createContext, use } from "react";
+import { createContext, use, useEffect } from "react";
 import type { FlowModel } from "@/features/surveys/components/flow/flow-model";
 import type { FlowActions } from "@/features/surveys/components/flow/use-flow-actions";
 import {
@@ -50,4 +50,16 @@ export function useSelectFlowStep() {
       setRevealRequest(nodeIdOf(step));
     }
   };
+}
+
+export function useClearFlowSelectionOnUnmount() {
+  const setSelected = useSetAtom(selectedFlowStepAtom);
+  const setRevealRequest = useSetAtom(flowRevealRequestAtom);
+  useEffect(
+    () => () => {
+      setSelected(null);
+      setRevealRequest(null);
+    },
+    [setSelected, setRevealRequest]
+  );
 }
