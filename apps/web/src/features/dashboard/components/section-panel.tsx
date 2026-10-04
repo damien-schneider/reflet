@@ -60,6 +60,7 @@ export function SectionPanel({
               href={backHref}
             >
               <ArrowLeft aria-hidden className="size-5" />
+              <span className="sr-only">Back to </span>
               {title}
             </Link>
           ) : (

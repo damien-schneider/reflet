@@ -69,6 +69,7 @@ function BackLink({
       href={surveyListHref(orgSlug)}
     >
       <ArrowLeft aria-hidden className="size-4" />
+      <span className="sr-only">Back to </span>
       Surveys
     </Link>
   );
