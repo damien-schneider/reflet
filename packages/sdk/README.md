@@ -190,7 +190,9 @@ turn it off.
   "View code" button, and Shift+click (or Shift+Enter) skips the note and opens
   the source file with the JSX element highlighted, ready to jump to in your
   editor. Locations come from React's debug stacks resolved through the dev
-  server's source maps, Server Components included.
+  server's source maps, Server Components included. Press ⌘C (Ctrl+C) on the
+  aimed element, or Copy on the note card, to put the element and its source on
+  the clipboard for a coding agent, without saving a note.
 - **Notes** — a note appears the moment you press Enter, as a numbered pin on
   its element, Figma-style; click the pin to read, edit or delete it, and find
   the same number on its card in the panel. Its source location and a

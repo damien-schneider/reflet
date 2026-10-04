@@ -35,6 +35,33 @@ async function describeSource(
   return withPosition(shortenSourcePath(source.fileName), source);
 }
 
+interface LocatedSource {
+  source: SourceRequest;
+  sourceLocation: string;
+}
+
+async function locateSource(
+  element: Element,
+  canReadSource: boolean
+): Promise<LocatedSource | null> {
+  const source = await locateElementSource(element).catch(() => null);
+  if (!source) {
+    return null;
+  }
+  return {
+    source,
+    sourceLocation: await describeSource(source, canReadSource),
+  };
+}
+
+function withSource(note: DevNote, located: LocatedSource): DevNote {
+  return {
+    ...note,
+    selection: { ...note.selection, sourceLocation: located.sourceLocation },
+    source: located.source,
+  };
+}
+
 /** `crypto.randomUUID` only exists in secure contexts; a phone on the LAN IP is not one. */
 function newNoteId(): string {
   const randomBytes = crypto.getRandomValues(new Uint8Array(8));
@@ -57,6 +84,17 @@ export function draftNote(element: Element, note: string): DevNote {
   };
 }
 
+/** The whole note in one go, source included: a copy has no stored note to fill in later. */
+export async function draftLocatedNote(
+  element: Element,
+  note: string,
+  canReadSource: boolean
+): Promise<DevNote> {
+  const draft = draftNote(element, note);
+  const located = await locateSource(element, canReadSource);
+  return located ? withSource(draft, located) : draft;
+}
+
 const locateAttempts = new Set<string>();
 
 /** Once per note per page load: a note whose source cannot be found is not retried in a loop. */
@@ -77,20 +115,13 @@ export async function enrichNote(
   noteStore.setActivity(noteId, "locating");
   let closeUp: CapturedImage | null = null;
   try {
-    const [source, snapshot] = await Promise.all([
-      locateElementSource(element).catch(() => null),
+    const [located, snapshot] = await Promise.all([
+      locateSource(element, canReadSource),
       captureElementSnapshot(element).catch(() => null),
     ]);
     closeUp = snapshot;
-    const sourceLocation = source
-      ? await describeSource(source, canReadSource)
-      : null;
-    if (source && sourceLocation) {
-      await noteStore.patch(noteId, (note) => ({
-        ...note,
-        selection: { ...note.selection, sourceLocation },
-        source,
-      }));
+    if (located) {
+      await noteStore.patch(noteId, (note) => withSource(note, located));
     }
     if (closeUp) {
       await noteStore.attachCloseUp(noteId, {

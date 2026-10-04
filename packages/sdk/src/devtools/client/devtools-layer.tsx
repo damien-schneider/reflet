@@ -12,13 +12,20 @@ import {
 import { ElementPicker } from "../../feedback/ui/picker";
 import { SelectionOutline } from "../../feedback/ui/selection-outline";
 import { BoardTab } from "./board/board-tab";
+import { copyToClipboard } from "./clipboard";
 import { CodePanel, type CodeTarget } from "./code/code-panel";
 import { DevtoolsBar, type SheetTab } from "./devtools-bar";
 import { DevtoolsSheet } from "./devtools-sheet";
 import { DEVTOOLS_STYLES } from "./devtools-styles";
 import { locateElementSource } from "./element-source";
 import { findOnPage } from "./find-on-page";
-import { draftNote, enrichNote, hasTriedToLocate } from "./notes/capture-note";
+import { noteAsContext } from "./notes/agent-prompt";
+import {
+  draftLocatedNote,
+  draftNote,
+  enrichNote,
+  hasTriedToLocate,
+} from "./notes/capture-note";
 import {
   type DevNote,
   isActiveNote,
@@ -28,7 +35,7 @@ import {
   useNotes,
 } from "./notes/note-store";
 import { NotesPanel } from "./notes/notes-panel";
-import { Notices, reportFailure } from "./notices";
+import { announce, Notices, reportFailure } from "./notices";
 import { NotePins } from "./pins/note-pins";
 import { MISSING_SECRET_KEY_HINT, MissingRouteHint } from "./route/route-hint";
 import { type DevRouteState, useDevRoute } from "./route/use-dev-route";
@@ -43,7 +50,7 @@ const PICKER_LABELS: FeedbackWidgetLabels = {
   attachElement: "Save note",
   elementNote: "Dev note",
   elementNotePlaceholder: "What should change here?",
-  pickElementHint: "Pick an element to note it",
+  pickElementHint: "Pick an element to note or copy it",
 };
 
 function titleFor(element: Element): string {
@@ -224,6 +231,24 @@ export function DevtoolsLayer({
     [canReadSource]
   );
 
+  const copy = useMemo(
+    () => ({
+      label: "Copy",
+      onCopy: (element: Element, text: string) => {
+        setIsPicking(false);
+        const title = titleFor(element);
+        copyToClipboard(
+          draftLocatedNote(element, text, canReadSource).then(noteAsContext)
+        )
+          .then(() => announce(`Copied ${title}`))
+          .catch((error: unknown) =>
+            reportFailure(`${title} was not copied`, error)
+          );
+      },
+    }),
+    [canReadSource]
+  );
+
   const tabs: SheetTab[] = codeLookup
     ? ["notes", "inbox", "code"]
     : ["notes", "inbox"];
@@ -284,6 +309,7 @@ export function DevtoolsLayer({
       <Notices />
       {isPicking && (
         <ElementPicker
+          copy={copy}
           inspect={inspect}
           labels={PICKER_LABELS}
           onCancel={cancelPick}

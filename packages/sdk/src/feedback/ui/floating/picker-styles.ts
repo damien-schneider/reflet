@@ -1,6 +1,8 @@
 import { REFLET_Z_INDEX } from "../../../z-index";
 
 export const PICKER_STYLES = `
+.picker { position: fixed; inset: 0; z-index: ${REFLET_Z_INDEX.elementPicker}; pointer-events: none; }
+.picker-hint, .picker-note { pointer-events: auto; }
 .picker-box {
   position: fixed;
   top: 0;
@@ -88,17 +90,15 @@ export const PICKER_STYLES = `
 .picker-cancel:hover { background: var(--rf-bg-hover); color: var(--rf-text); }
 .picker-note {
   position: fixed;
-  z-index: ${REFLET_Z_INDEX.annotatorOverlay};
   display: flex;
   flex-direction: column;
   gap: 6px;
-  width: 300px;
+  width: 320px;
   max-width: calc(100vw - 24px);
   padding: 6px 6px 6px 8px;
   border-radius: 18px;
   animation: rf-in 180ms var(--rf-ease);
 }
-.picker-note:focus-within { outline: 2px solid var(--rf-accent); outline-offset: 2px; }
 .picker-note-target {
   display: flex;
   align-items: center;
@@ -126,7 +126,9 @@ export const PICKER_STYLES = `
 }
 .picker-note textarea:focus { outline: none; }
 .picker-note textarea::placeholder { color: var(--rf-text-muted); }
-.picker-note-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.picker-note-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.picker-note .picker-cancel { padding: 0 10px; }
+.picker-note .submit { margin-left: auto; }
 @media (pointer: coarse) {
   .picker-hint { padding: 6px 8px 6px 14px; }
   .picker-hint kbd { display: none; }

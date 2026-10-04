@@ -4,6 +4,8 @@ import { GripIcon, TargetIcon } from "../../feedback/ui/icons";
 import { InboxIcon, NotesIcon } from "./devtools-icons";
 
 const BAR_POSITION_KEY = "reflet-devtools-bar-position";
+export const PICK_BUTTON_LABEL =
+  "Pick an element: note it, copy it, or Shift+click to open its code";
 
 export type SheetTab = "code" | "inbox" | "notes";
 
@@ -73,11 +75,7 @@ export function DevtoolsBar({
       >
         <GripIcon />
       </button>
-      <BarButton
-        label="Pick an element: note it, or Shift+click to open its code"
-        onClick={onPick}
-        pressed={false}
-      >
+      <BarButton label={PICK_BUTTON_LABEL} onClick={onPick} pressed={false}>
         <TargetIcon />
       </BarButton>
       <BarButton

@@ -38,6 +38,7 @@ export const DEVTOOLS_STYLES = `
   display: flex; align-items: center; gap: 6px; padding: 6px 6px 6px 14px; border-radius: 12px;
   color: var(--rf-danger); font-size: 12.5px; animation: dt-notice-in 220ms var(--rf-ease);
 }
+.dt-notice[data-kind="status"] { color: var(--rf-text); }
 .dt-notice p { flex: 1; margin: 0; overflow-wrap: anywhere; }
 .dt-notice .icon-btn { width: 30px; height: 30px; }
 .dt-bar {

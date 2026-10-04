@@ -3,9 +3,12 @@ import { CloseIcon } from "../../feedback/ui/icons";
 
 export interface Notice {
   id: number;
+  kind: "failure" | "status";
   message: string;
   retry?: () => void;
 }
+
+const STATUS_VISIBLE_MS = 2400;
 
 let notices: Notice[] = [];
 let nextNoticeId = 1;
@@ -32,8 +35,17 @@ export function reportFailure(
   const message = `${action}: ${reason}`;
   publish([
     ...notices.filter((notice) => notice.message !== message),
-    { id: nextNoticeId++, message, retry },
+    { id: nextNoticeId++, kind: "failure", message, retry },
   ]);
+}
+
+export function announce(message: string) {
+  const id = nextNoticeId++;
+  publish([
+    ...notices.filter((notice) => notice.message !== message),
+    { id, kind: "status", message },
+  ]);
+  setTimeout(() => dismissNotice(id), STATUS_VISIBLE_MS);
 }
 
 function subscribe(listener: () => void) {
@@ -53,7 +65,12 @@ export function Notices() {
   return (
     <div className="dt-notices">
       {current.map((notice) => (
-        <div className="dt-notice glass" key={notice.id} role="alert">
+        <div
+          className="dt-notice glass"
+          data-kind={notice.kind}
+          key={notice.id}
+          role={notice.kind === "failure" ? "alert" : "status"}
+        >
           <p>{notice.message}</p>
           {notice.retry && (
             <button

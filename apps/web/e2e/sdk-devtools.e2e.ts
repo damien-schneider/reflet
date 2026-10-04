@@ -39,6 +39,90 @@ test.describe("Reflet devtools under next dev", () => {
     await expect(page.locator(".dt-count")).toHaveCount(0);
   });
 
+  test("the picker stays above the page's own fixed layers", async ({
+    page,
+  }) => {
+    await page.goto("/sdk-demo");
+    await page.evaluate(() => {
+      const overlay = document.createElement("div");
+      overlay.style.cssText = "position:fixed;inset:0;z-index:10";
+      document.body.append(overlay);
+    });
+    await page.getByRole("button", { name: PICK_BUTTON }).click();
+    await page.getByRole("button", { name: "Cancel" }).click();
+
+    await expect(page.getByRole("button", { name: "Cancel" })).toHaveCount(0);
+  });
+
+  test("puts the note card beside an element taller than the window", async ({
+    page,
+  }) => {
+    await page.goto("/sdk-demo");
+    await page.evaluate(() => {
+      const sidebar = document.createElement("aside");
+      sidebar.style.cssText =
+        "position:fixed;inset:0 auto 0 0;width:320px;z-index:10;background:#eee";
+      document.body.append(sidebar);
+    });
+    await page.getByRole("button", { name: PICK_BUTTON }).click();
+    await page.mouse.click(160, 450);
+
+    const note = page.getByRole("textbox", { name: "Dev note" });
+    await expect(note).toBeFocused();
+    const card = await page.locator(".picker-note").boundingBox();
+    const viewport = page.viewportSize();
+    if (!(card && viewport)) {
+      throw new Error("Note card missing");
+    }
+    expect(card.x).toBeGreaterThanOrEqual(320);
+    expect(card.y).toBeGreaterThanOrEqual(0);
+    expect(card.y + card.height).toBeLessThanOrEqual(viewport.height);
+  });
+
+  test("keeps the note card on screen when the element covers the whole window", async ({
+    page,
+  }) => {
+    await page.goto("/sdk-demo");
+    await page.evaluate(() => {
+      const cover = document.createElement("section");
+      cover.style.cssText =
+        "position:absolute;inset:0 0 auto 0;height:3000px;z-index:10;background:#eee";
+      document.body.append(cover);
+    });
+    await page.getByRole("button", { name: PICK_BUTTON }).click();
+    await page.mouse.click(700, 450);
+
+    await expect(page.getByRole("textbox", { name: "Dev note" })).toBeFocused();
+    const card = await page.locator(".picker-note").boundingBox();
+    const viewport = page.viewportSize();
+    if (!(card && viewport)) {
+      throw new Error("Note card missing");
+    }
+    expect(card.y).toBeGreaterThanOrEqual(0);
+    expect(card.y + card.height).toBeLessThanOrEqual(viewport.height);
+  });
+
+  test("⌘C copies the aimed element with its source", async ({
+    browserName,
+    context,
+    page,
+  }) => {
+    test.skip(
+      browserName !== "chromium",
+      "Playwright grants clipboard read only in Chromium."
+    );
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    await page.goto("/sdk-demo");
+    await page.getByRole("button", { name: PICK_BUTTON }).click();
+    await page.getByRole("heading", { name: "Plans & billing" }).hover();
+    await page.keyboard.press("ControlOrMeta+C");
+
+    await expect(page.locator(".dt-notice")).toContainText("Copied");
+    const copied = await page.evaluate(() => navigator.clipboard.readText());
+    expect(copied).toContain('Element: h1 "Plans & billing"');
+    expect(copied).toContain(`Source: ${DEMO_SOURCE}:`);
+  });
+
   test("opens the panel full height and resizes it by its edges", async ({
     page,
   }) => {

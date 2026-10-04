@@ -43,17 +43,29 @@ function selectionLines(selection: ElementSelection): string[] {
   return lines;
 }
 
+function elementContext(note: DevNote): string[] {
+  return [
+    `Page: ${note.capturedContext.url ?? "unknown"}`,
+    ...selectionLines(note.selection),
+  ];
+}
+
 export function notesToPrompt(notes: DevNote[]): string {
   const sections = notes.map((note, index) =>
     [
       `## Note ${index + 1}`,
       note.note || "(no comment)",
       "",
-      `Page: ${note.capturedContext.url ?? "unknown"}`,
-      ...selectionLines(note.selection),
+      ...elementContext(note),
     ].join("\n")
   );
   return [NOTES_BRIEF, ...sections].join("\n\n");
+}
+
+/** No brief: pasted into a prompt the developer writes around it. */
+export function noteAsContext(note: DevNote): string {
+  const context = elementContext(note).join("\n");
+  return note.note ? `${note.note}\n\n${context}` : context;
 }
 
 export function boardFeedbackToPrompt(item: BoardFeedback): string {

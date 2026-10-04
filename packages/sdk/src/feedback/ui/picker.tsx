@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   describeElement,
   describeRegion,
@@ -17,7 +17,6 @@ import { listenToKeydown, startsInWidget } from "./widget-events";
 
 const LABEL_HEIGHT = 24;
 const LABEL_GAP = 6;
-const NOTE_WIDTH = 300;
 const NOTE_GAP = 10;
 const EDGE_GAP = 12;
 
@@ -47,51 +46,82 @@ function describeTarget(element: Element): HoverTarget {
   };
 }
 
-/**
- * Pins the note card to the element: below it, flipped above when the visible
- * viewport — what is left of the screen once a mobile keyboard is up — has no
- * room there. Measures against the part of the element actually on screen, so
- * picking a full-height section still leaves the card in view.
- */
-function noteStyle(rect: DOMRect, view: VisibleViewport) {
-  const left = Math.min(
-    Math.max(view.left + EDGE_GAP, rect.left),
-    Math.max(
-      view.left + EDGE_GAP,
-      view.left + view.width - NOTE_WIDTH - EDGE_GAP
-    )
-  );
-  const visibleTop = Math.max(rect.top, view.top + EDGE_GAP);
-  const visibleBottom = Math.min(
-    rect.bottom,
-    view.top + view.height - EDGE_GAP
-  );
-  const roomBelow = view.top + view.height - visibleBottom;
-  if (roomBelow > visibleTop - view.top) {
-    return { left, top: visibleBottom + NOTE_GAP };
-  }
-  return { bottom: window.innerHeight - visibleTop + NOTE_GAP, left };
+interface CardSize {
+  height: number;
+  width: number;
 }
 
-/**
- * Points at any element in the page the way a coding agent needs it: the React
- * component that owns it plus the page region it lives in. Picking never
- * commits on its own — it pins a note card to the element, so the reporter
- * writes about that element right there and confirms. Aiming stays live until
- * then, which is what makes the flow usable without hover, on touch.
- */
+function noteCardPosition(
+  rect: DOMRect,
+  view: VisibleViewport,
+  card: CardSize
+) {
+  const viewLeft = view.left + EDGE_GAP;
+  const viewRight = view.left + view.width - EDGE_GAP;
+  const viewTop = view.top + EDGE_GAP;
+  const viewBottom = view.top + view.height - EDGE_GAP;
+  const fitLeft = (left: number) =>
+    Math.max(viewLeft, Math.min(left, viewRight - card.width));
+  const fitTop = (top: number) =>
+    Math.max(viewTop, Math.min(top, viewBottom - card.height));
+
+  const below = rect.bottom + NOTE_GAP;
+  if (below >= viewTop && below + card.height <= viewBottom) {
+    return { left: fitLeft(rect.left), top: below };
+  }
+  const above = rect.top - NOTE_GAP - card.height;
+  if (above >= viewTop && rect.top <= viewBottom) {
+    return { left: fitLeft(rect.left), top: above };
+  }
+  const besideTop = fitTop(rect.top);
+  const right = rect.right + NOTE_GAP;
+  if (right + card.width <= viewRight) {
+    return { left: right, top: besideTop };
+  }
+  const left = rect.left - NOTE_GAP - card.width;
+  if (left >= viewLeft) {
+    return { left, top: besideTop };
+  }
+  return {
+    left: fitLeft(rect.left),
+    top: fitTop(Math.min(rect.bottom, viewBottom) - card.height),
+  };
+}
+
+function labelTop(rect: DOMRect, view: VisibleViewport): number {
+  const above = rect.top - LABEL_HEIGHT - LABEL_GAP;
+  if (above >= view.top) {
+    return above;
+  }
+  const below = rect.bottom + LABEL_GAP;
+  if (below + LABEL_HEIGHT <= view.top + view.height) {
+    return below;
+  }
+  return Math.max(rect.top, view.top) + LABEL_GAP;
+}
+
+const APPLE_PLATFORM = /Mac|iPhone|iPad/;
+
 export interface PickerInspect {
   /** Shown on the note card; Shift+click or Shift+Enter skips the card. */
   label: string;
   onInspect: (element: Element) => void;
 }
 
+/** ⌘C on the aimed element, or the note card's button with its note. */
+export interface PickerCopy {
+  label: string;
+  onCopy: (element: Element, note: string) => void;
+}
+
 export function ElementPicker({
+  copy,
   inspect,
   labels,
   onCancel,
   onPick,
 }: {
+  copy?: PickerCopy;
   inspect?: PickerInspect;
   labels: FeedbackWidgetLabels;
   onCancel: () => void;
@@ -100,13 +130,22 @@ export function ElementPicker({
   const [target, setTarget] = useState<HoverTarget | null>(null);
   const [pinned, setPinned] = useState<HoverTarget | null>(null);
   const [note, setNote] = useState("");
+  const [noteSize, setNoteSize] = useState<CardSize>({ height: 0, width: 0 });
   const pickerRef = useRef<HTMLDivElement>(null);
+  const noteCardRef = useRef<HTMLFormElement>(null);
   const noteRef = useRef<HTMLTextAreaElement>(null);
   const pinnedRef = useRef(false);
   const [view, setView] = useState(visibleViewport);
   const aimRef = useRef<Element | null>(null);
 
   useEffect(() => onViewportChange(() => setView(visibleViewport())), []);
+
+  useLayoutEffect(() => {
+    const card = noteCardRef.current;
+    if (pinned && card) {
+      setNoteSize({ height: card.offsetHeight, width: card.offsetWidth });
+    }
+  }, [pinned]);
 
   useEffect(() => {
     pinnedRef.current = pinned !== null;
@@ -200,13 +239,25 @@ export function ElementPicker({
       onCancel();
     };
 
+    const copyAimed = (event: KeyboardEvent): boolean => {
+      const aimed = aimRef.current;
+      const wantsCopy =
+        (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "c";
+      if (!(wantsCopy && copy && aimed)) {
+        return false;
+      }
+      swallow(event);
+      copy.onCopy(aimed, "");
+      return true;
+    };
+
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         swallow(event);
         onEscape();
         return;
       }
-      if (pinnedRef.current || startsInWidget(event)) {
+      if (pinnedRef.current || startsInWidget(event) || copyAimed(event)) {
         return;
       }
       if (event.key === "Enter") {
@@ -267,14 +318,13 @@ export function ElementPicker({
       window.removeEventListener("scroll", onScroll, true);
       document.body.style.cursor = previousCursor;
     };
-  }, [inspect, onCancel]);
+  }, [copy, inspect, onCancel]);
 
   const shown = pinned ?? target;
   const rect = shown?.rect;
-  const labelAbove = rect ? rect.top > LABEL_HEIGHT + LABEL_GAP : true;
 
   return (
-    <div ref={pickerRef}>
+    <div className="picker" ref={pickerRef}>
       {rect && (
         <div
           className="picker-box"
@@ -290,11 +340,7 @@ export function ElementPicker({
         <div
           className="picker-label"
           style={{
-            translate: `${Math.max(4, rect.left)}px ${
-              labelAbove
-                ? rect.top - LABEL_HEIGHT - LABEL_GAP
-                : rect.bottom + LABEL_GAP
-            }px`,
+            translate: `${Math.max(4, rect.left)}px ${labelTop(rect, view)}px`,
           }}
         >
           <strong>
@@ -311,7 +357,8 @@ export function ElementPicker({
             event.preventDefault();
             onPick(pinned.element, note.trim());
           }}
-          style={noteStyle(pinned.rect, view)}
+          ref={noteCardRef}
+          style={noteCardPosition(pinned.rect, view, noteSize)}
         >
           <p className="picker-note-target">
             <strong>
@@ -356,6 +403,15 @@ export function ElementPicker({
                 {inspect.label}
               </button>
             )}
+            {copy && (
+              <button
+                className="picker-cancel"
+                onClick={() => copy.onCopy(pinned.element, note.trim())}
+                type="button"
+              >
+                {copy.label}
+              </button>
+            )}
             <button
               aria-label={labels.attachElement}
               className="submit"
@@ -372,6 +428,11 @@ export function ElementPicker({
             {labels.pickElementHint} <kbd>Tab</kbd>
             <kbd>Enter</kbd>
             {inspect && <kbd>⇧ Click</kbd>}
+            {copy && (
+              <kbd>
+                {APPLE_PLATFORM.test(navigator.userAgent) ? "⌘C" : "Ctrl C"}
+              </kbd>
+            )}
             <kbd>Esc</kbd>
           </span>
           <button className="picker-cancel" onClick={onCancel} type="button">

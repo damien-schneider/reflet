@@ -257,11 +257,12 @@ function DevtoolsSection() {
       <DocsText>
         On your dev server, the same component adds a small bar above the
         launcher that you can drag anywhere. Pick an element to write a note on
-        it, or Shift-click it to open its source with the JSX highlighted. Copy
-        your notes as one prompt for a coding agent, or send them to the board
-        as internal feedback that only members see. The Board tab lists the
-        feedback reported on the current page, with the element and its code one
-        click away. Production builds never ship it.
+        it, press ⌘C to copy it with its source, or Shift-click it to open its
+        source with the JSX highlighted. Copy your notes as one prompt for a
+        coding agent, or send them to the board as internal feedback that only
+        members see. The Board tab lists the feedback reported on the current
+        page, with the element and its code one click away. Production builds
+        never ship it.
       </DocsText>
       <DocsText>
         Code view and the board go through one dev-only route. To reach the

@@ -2,7 +2,7 @@ import { type ReactNode, useEffect } from "react";
 import { useFloatingPosition } from "../../feedback/ui/floating/use-floating-position";
 import { CloseIcon, TargetIcon } from "../../feedback/ui/icons";
 import { listenToKeydown } from "../../feedback/ui/widget-events";
-import type { SheetTab } from "./devtools-bar";
+import { PICK_BUTTON_LABEL, type SheetTab } from "./devtools-bar";
 import { useSheetSize } from "./use-sheet-size";
 
 const FULL_HEIGHT = "calc(100dvh - 24px)";
@@ -99,7 +99,7 @@ export function DevtoolsSheet({
           {...floating.handleProps}
         />
         <button
-          aria-label="Pick an element: note it, or Shift+click to open its code"
+          aria-label={PICK_BUTTON_LABEL}
           className="icon-btn"
           onClick={onPick}
           title="Pick an element"
