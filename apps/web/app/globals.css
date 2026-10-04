@@ -112,11 +112,6 @@
   :where([id]) {
     scroll-margin-top: var(--sticky-header-height);
   }
-
-  .font-display {
-    font-family: var(--font-display);
-    font-variation-settings: var(--font-display--font-variation-settings);
-  }
 }
 
 @layer components {

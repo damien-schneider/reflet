@@ -20,7 +20,7 @@ export function FeedbackPage({
   return (
     <PageLayout width={view === "feed" ? "content" : "wide"}>
       <PageHeader>
-        <PageTitle>Feedback</PageTitle>
+        <PageTitle className="sr-only">Feedback</PageTitle>
         <PageActions>{actions}</PageActions>
       </PageHeader>
       <PageBody>{children}</PageBody>

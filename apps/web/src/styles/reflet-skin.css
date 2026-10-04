@@ -264,14 +264,6 @@
     --cui-page-layout-background: var(--background);
   }
 
-  :root[data-theme="reflet"]
-    :where([data-control-family="page-layout"][data-slot="title"]) {
-    font-family: var(--font-display);
-    font-size: 2rem;
-    font-weight: var(--font-display--font-weight);
-    letter-spacing: var(--font-display--letter-spacing);
-  }
-
   /* ---------------------------------------------------------------- data & text */
 
   :root[data-theme="reflet"]
