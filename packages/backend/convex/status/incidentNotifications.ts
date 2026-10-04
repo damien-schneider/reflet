@@ -3,12 +3,15 @@ import { internal } from "../_generated/api";
 import type { Doc, Id } from "../_generated/dataModel";
 import { internalMutation, type MutationCtx } from "../_generated/server";
 import { isOrgAdmin } from "../shared/membership";
+import {
+  type IncidentAlertEvent,
+  sendIncidentAlerts,
+} from "./lib/alertChannels";
 import { affectedMonitorNames, isPublicNotice } from "./lib/visibility";
 import { incidentSeverity, incidentStatus } from "./tableFields";
 
 const SUBSCRIBER_PAGE_SIZE = 100;
-/** An outage that recovers within this window never reaches subscribers, so a flapping monitor can't flood their inbox. */
-const AUTO_INCIDENT_ANNOUNCE_DELAY_MS = 5 * 60 * 1000;
+const FLAP_GRACE_BEFORE_SUBSCRIBER_EMAIL_MS = 5 * 60 * 1000;
 
 export const statusIncidentEmailFields = {
   affectedMonitorNames: v.array(v.string()),
@@ -49,6 +52,11 @@ type TeamNotificationType = "incident_detected" | "incident_resolved";
 const TEAM_NOTIFICATION_TITLES: Record<TeamNotificationType, string> = {
   incident_detected: "Incident detected",
   incident_resolved: "Incident resolved",
+};
+
+const ALERT_EVENTS: Record<TeamNotificationType, IncidentAlertEvent> = {
+  incident_detected: "incident.detected",
+  incident_resolved: "incident.resolved",
 };
 
 export const notifyIncidentChange = async (
@@ -127,7 +135,6 @@ const notifyOrgAdmins = async (
 export const statusPageUrlOf = (organization: Doc<"organizations">): string =>
   `${process.env.SITE_URL ?? ""}/${organization.slug}/status`;
 
-/** Names of the public monitors a notice touches, or null when its subscribers must not hear about it. */
 export const publicMonitorNamesFor = async (
   ctx: MutationCtx,
   organization: Doc<"organizations">,
@@ -210,7 +217,6 @@ const emailSubscribersAbout = async (
 
 type SubscriberDelivery = "now" | "after_delay" | "never";
 
-/** Subscribers follow an incident once it is announced; an automatic detection is only announced if it outlives the delay or a human posts on it. */
 const subscriberDeliveryFor = (
   incident: Doc<"statusIncidents">,
   update: Doc<"statusIncidentUpdates">,
@@ -245,6 +251,12 @@ export const fanOutIncidentChange = internalMutation({
     const teamNotificationType = teamNotificationTypeFor(update, isFirst);
     if (teamNotificationType) {
       await notifyOrgAdmins(ctx, incident, organization, teamNotificationType);
+      await sendIncidentAlerts(ctx, {
+        event: ALERT_EVENTS[teamNotificationType],
+        incident,
+        organization,
+        statusPageUrl: statusPageUrlOf(organization),
+      });
     }
 
     const delivery = subscriberDeliveryFor(incident, update, isFirst);
@@ -253,7 +265,7 @@ export const fanOutIncidentChange = internalMutation({
     }
     if (delivery === "after_delay") {
       await ctx.scheduler.runAfter(
-        AUTO_INCIDENT_ANNOUNCE_DELAY_MS,
+        FLAP_GRACE_BEFORE_SUBSCRIBER_EMAIL_MS,
         internal.status.incidentNotifications.announceIfStillOpen,
         args
       );

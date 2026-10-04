@@ -1,4 +1,5 @@
 /// <reference types="vite/client" />
+import { Readable } from "node:stream";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { internal } from "../../_generated/api";
 import type { Doc, Id } from "../../_generated/dataModel";
@@ -8,6 +9,12 @@ import { setupTest } from "../../test.helpers";
 
 const DNS_ENDPOINT = "https://cloudflare-dns.com";
 const CHECK_BATCH_SIZE = 10;
+
+const dns = vi.hoisted(() => ({ lookup: vi.fn() }));
+const https = vi.hoisted(() => ({ request: vi.fn() }));
+
+vi.mock("node:dns/promises", () => dns);
+vi.mock("node:https", () => https);
 
 const seedMonitor = (
   ctx: MutationCtx,
@@ -32,7 +39,6 @@ const seedMonitor = (
 const isDnsLookup = (input: URL | string) =>
   String(input).startsWith(DNS_ENDPOINT);
 
-/** Every hostname resolves publicly; targets answer with `answer(method, attempt)`. */
 const stubPublicInternet = (
   answer: (method: string, attempt: number) => number = () => 204
 ) => {
@@ -53,6 +59,49 @@ const stubPublicInternet = (
   return { targetRequests };
 };
 
+const servePage = (body: string) => {
+  const pageRequests: string[] = [];
+  dns.lookup.mockResolvedValue([{ address: "93.184.216.34", family: 4 }]);
+  https.request.mockImplementation(
+    (
+      url: URL,
+      options: { method?: string },
+      onResponse: (page: Readable) => void
+    ) => ({
+      end: () => {
+        pageRequests.push(`${options.method ?? "GET"} ${url.href}`);
+        onResponse(
+          Object.assign(Readable.from([Buffer.from(body)]), {
+            headers: {},
+            statusCode: 200,
+          })
+        );
+      },
+      on: vi.fn(),
+    })
+  );
+  return { pageRequests };
+};
+
+const checkDue = async (overrides: Partial<Doc<"statusMonitors">>) => {
+  vi.useFakeTimers();
+  const t = setupTest();
+  const monitorId = await t.run(async (ctx) =>
+    seedMonitor(
+      ctx,
+      await seedOrganization(ctx),
+      "https://api.example.com/health",
+      overrides
+    )
+  );
+  await t.action(internal.status.healthCheck.runHealthChecks, {});
+  await t.finishAllScheduledFunctions(vi.runAllTimers);
+  return await t.run(async (ctx) => ({
+    checks: await ctx.db.query("statusChecks").collect(),
+    monitor: await ctx.db.get(monitorId),
+  }));
+};
+
 const checkOne = async (url: string) => {
   const t = setupTest();
   const monitorId = await t.run(async (ctx) =>
@@ -69,7 +118,9 @@ const checkOne = async (url: string) => {
 
 describe("health checks", () => {
   afterEach(() => {
+    vi.useRealTimers();
     vi.unstubAllGlobals();
+    vi.resetAllMocks();
   });
 
   test("records a public URL as up", async () => {
@@ -119,6 +170,57 @@ describe("health checks", () => {
       consecutiveFailures: 1,
       status: "degraded",
     });
+  });
+
+  test("counts an unexpected status code as down once confirmed", async () => {
+    const { targetRequests } = stubPublicInternet(() => 204);
+
+    const { checks, monitor } = await checkDue({ expectedStatusCodes: [200] });
+
+    expect(targetRequests).toHaveLength(2);
+    expect(checks).toMatchObject([
+      {
+        errorMessage: "Expected status 200, got 204",
+        isUp: false,
+        statusCode: 204,
+      },
+    ]);
+    expect(monitor).toMatchObject({
+      consecutiveFailures: 1,
+      status: "degraded",
+    });
+  });
+
+  test("records a page containing the keyword as up", async () => {
+    servePage("<p>status: all systems ok</p>");
+
+    const { checks, monitor } = await checkDue({ bodyKeyword: "systems ok" });
+
+    expect(checks).toMatchObject([{ isUp: true, statusCode: 200 }]);
+    expect(monitor?.status).toBe("operational");
+  });
+
+  test("counts a page missing the keyword as down once confirmed", async () => {
+    const { pageRequests } = servePage("<p>maintenance</p>");
+
+    const { checks, monitor } = await checkDue({ bodyKeyword: "ok" });
+
+    expect(pageRequests).toHaveLength(2);
+    expect(checks).toMatchObject([
+      { errorMessage: 'Keyword "ok" not found', isUp: false, statusCode: 200 },
+    ]);
+    expect(monitor?.consecutiveFailures).toBe(1);
+  });
+
+  test("reads the body with GET when a HEAD monitor has a keyword", async () => {
+    const { targetRequests } = stubPublicInternet();
+    const { pageRequests } = servePage("ok");
+
+    const { checks } = await checkDue({ bodyKeyword: "ok", method: "HEAD" });
+
+    expect(targetRequests).toEqual([]);
+    expect(pageRequests).toEqual(["GET https://api.example.com/health"]);
+    expect(checks).toMatchObject([{ isUp: true }]);
   });
 
   test("never requests a legacy monitor pointing at the metadata service", async () => {

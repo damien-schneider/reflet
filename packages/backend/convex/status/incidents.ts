@@ -12,7 +12,6 @@ export const getActiveIncidents = query({
 
     const activeIncidents = await listActiveIncidents(ctx, args.organizationId);
 
-    // Fetch updates and monitor names for each
     const withDetails = await Promise.all(
       activeIncidents.map(async (incident) => {
         const updates = await ctx.db

@@ -52,9 +52,22 @@ export const openOutageIncident = async (
   await notifyIncidentChange(ctx, { incidentId, updateId });
 };
 
+type OutageResolution = "monitor_recovered" | "monitoring_paused";
+
+const RESOLUTION_MESSAGES: Record<
+  OutageResolution,
+  (monitorName: string) => string
+> = {
+  monitor_recovered: (monitorName) =>
+    `${monitorName} has recovered and is now operational.`,
+  monitoring_paused: (monitorName) =>
+    `Monitoring of ${monitorName} was paused, so this automated incident is closed.`,
+};
+
 export const resolveOutageIncident = async (
   ctx: MutationCtx,
-  monitor: Doc<"statusMonitors">
+  monitor: Doc<"statusMonitors">,
+  resolution: OutageResolution
 ): Promise<void> => {
   const activeIncidents = await listActiveIncidents(
     ctx,
@@ -77,7 +90,7 @@ export const resolveOutageIncident = async (
   const updateId = await ctx.db.insert("statusIncidentUpdates", {
     createdAt: now,
     incidentId: outageIncident._id,
-    message: `${monitor.name} has recovered and is now operational.`,
+    message: RESOLUTION_MESSAGES[resolution](monitor.name),
     organizationId: monitor.organizationId,
     status: "resolved",
   });

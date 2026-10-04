@@ -23,7 +23,6 @@ import {
 } from "./lib/maintenanceWindows";
 import { affectedMonitorNames } from "./lib/visibility";
 
-/** Failures during the window opened no incident, so monitors still down when it closes are reported now. */
 const reportOutagesLeftByMaintenance = async (
   ctx: MutationCtx,
   maintenance: Doc<"statusMaintenances">
@@ -166,7 +165,6 @@ export const scheduleMaintenance = mutation({
   },
 });
 
-/** An upcoming maintenance is cancelled outright; an active one ends now. */
 export const cancelMaintenance = mutation({
   args: { maintenanceId: v.id("statusMaintenances") },
   handler: async (ctx, args) => {

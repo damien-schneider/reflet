@@ -3,11 +3,22 @@
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Input } from "@ctrl-ui/react/ui/input";
 import { toast } from "@ctrl-ui/react/ui/toast";
-import { Plus } from "@phosphor-icons/react";
-import { type FormEvent, useState } from "react";
+import { ListChecks, Plus } from "@phosphor-icons/react";
+import { type FocusEvent, type FormEvent, useState } from "react";
+import {
+  EMPTY_RESPONSE_CHECKS_DRAFT,
+  type ResponseChecks,
+  ResponseChecksFields,
+  responseChecksFromDraft,
+} from "./response-checks";
+
+export interface NewMonitor extends ResponseChecks {
+  name: string;
+  url: string;
+}
 
 interface AddMonitorInputProps {
-  onAdd: (url: string, name: string) => Promise<void>;
+  onAdd: (monitor: NewMonitor) => Promise<void>;
 }
 
 const extractNameFromUrl = (url: string): string => {
@@ -28,6 +39,15 @@ export function AddMonitorInput({ onAdd }: AddMonitorInputProps) {
   const [url, setUrl] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showsChecks, setShowsChecks] = useState(false);
+  const [checksDraft, setChecksDraft] = useState(EMPTY_RESPONSE_CHECKS_DRAFT);
+
+  const closeForm = () => {
+    setUrl("");
+    setChecksDraft(EMPTY_RESPONSE_CHECKS_DRAFT);
+    setShowsChecks(false);
+    setIsAdding(false);
+  };
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -39,9 +59,12 @@ export function AddMonitorInput({ onAdd }: AddMonitorInputProps) {
     const fullUrl = trimmed.startsWith("http") ? trimmed : `https://${trimmed}`;
     setIsSaving(true);
     try {
-      await onAdd(fullUrl, extractNameFromUrl(fullUrl));
-      setUrl("");
-      setIsAdding(false);
+      await onAdd({
+        ...responseChecksFromDraft(checksDraft),
+        name: extractNameFromUrl(fullUrl),
+        url: fullUrl,
+      });
+      closeForm();
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -50,6 +73,15 @@ export function AddMonitorInput({ onAdd }: AddMonitorInputProps) {
       );
     }
     setIsSaving(false);
+  };
+
+  const handleUrlBlur = (event: FocusEvent<HTMLInputElement>) => {
+    const focusLeftForm = !event.currentTarget.form?.contains(
+      event.relatedTarget
+    );
+    if (focusLeftForm && !url.trim() && !showsChecks) {
+      closeForm();
+    }
   };
 
   if (!isAdding) {
@@ -66,39 +98,52 @@ export function AddMonitorInput({ onAdd }: AddMonitorInputProps) {
   }
 
   return (
-    <form className="flex items-center gap-2" onSubmit={handleSubmit}>
-      <Input
-        aria-label="URL to monitor"
-        autoCapitalize="off"
-        autoComplete="off"
-        autoFocus
-        className="min-w-0 flex-1"
-        inputMode="url"
-        onBlur={() => {
-          if (!url.trim()) {
-            setIsAdding(false);
-          }
-        }}
-        onChange={(event) => setUrl(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key === "Escape") {
-            setUrl("");
-            setIsAdding(false);
-          }
-        }}
-        placeholder="https://api.example.com/health"
-        spellCheck={false}
-        type="text"
-        value={url}
-      />
-      <Button
-        disabled={!url.trim() || isSaving}
-        tone="primary"
-        type="submit"
-        variant="solid"
-      >
-        {isSaving ? "Adding…" : "Add"}
-      </Button>
+    <form className="space-y-4" onSubmit={handleSubmit}>
+      <div className="flex items-center gap-2">
+        <Input
+          aria-label="URL to monitor"
+          autoCapitalize="off"
+          autoComplete="off"
+          autoFocus
+          className="min-w-0 flex-1"
+          inputMode="url"
+          onBlur={handleUrlBlur}
+          onChange={(event) => setUrl(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              closeForm();
+            }
+          }}
+          placeholder="https://api.example.com/health"
+          spellCheck={false}
+          type="text"
+          value={url}
+        />
+        <Button
+          aria-expanded={showsChecks}
+          aria-label="Response checks"
+          iconOnly
+          onClick={() => setShowsChecks(!showsChecks)}
+          type="button"
+          variant="ghost"
+        >
+          <ListChecks />
+        </Button>
+        <Button
+          disabled={!url.trim() || isSaving}
+          tone="primary"
+          type="submit"
+          variant="solid"
+        >
+          {isSaving ? "Adding…" : "Add"}
+        </Button>
+      </div>
+      {showsChecks && (
+        <ResponseChecksFields
+          draft={checksDraft}
+          onDraftChange={setChecksDraft}
+        />
+      )}
     </form>
   );
 }

@@ -17,9 +17,13 @@ const PREVIEW_STARTS_AT = Date.UTC(2026, 0, 15, 22, 0);
 const PREVIEW_DURATION_MS = 2 * 60 * 60 * 1000;
 
 const maintenanceDateFormat = new Intl.DateTimeFormat("fr-FR", {
-  dateStyle: "long",
-  timeStyle: "short",
+  day: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  month: "long",
   timeZone: "Europe/Paris",
+  timeZoneName: "short",
+  year: "numeric",
 });
 
 export function StatusMaintenanceEmail({

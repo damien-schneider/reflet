@@ -104,7 +104,7 @@ export const recordUptimeSample = async (
   );
 };
 
-/** Raw checks only cover the last 48h once pruned, so a rebuild may raise a bucket but never shrink one. */
+// Raw checks only cover 48h once pruned: a rebuild may raise a bucket, never shrink it.
 export const rebuildBucket = async (
   ctx: MutationCtx,
   table: BucketTable,

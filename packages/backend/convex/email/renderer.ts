@@ -22,7 +22,6 @@ const fromName = "Reflet";
 const defaultFrom = `${fromName} <${fromEmail}>`;
 const SUPPORT_EMAIL = "support@reflet.app";
 
-// Send verification email using react-email template
 export const sendVerificationEmail = internalAction({
   args: {
     to: v.string(),
@@ -48,7 +47,6 @@ export const sendVerificationEmail = internalAction({
   },
 });
 
-// Send password reset email using react-email template
 export const sendPasswordResetEmail = internalAction({
   args: {
     resetUrl: v.string(),
@@ -78,7 +76,6 @@ export const sendPasswordResetEmail = internalAction({
   },
 });
 
-// Send welcome email using react-email template
 export const sendWelcomeEmail = internalAction({
   args: {
     dashboardUrl: v.optional(v.string()),
@@ -109,7 +106,6 @@ export const sendWelcomeEmail = internalAction({
   },
 });
 
-// Send invitation email using react-email template
 export const sendInvitationEmail = internalAction({
   args: {
     acceptUrl: v.string(),
@@ -139,7 +135,6 @@ export const sendInvitationEmail = internalAction({
   },
 });
 
-// Generic action to render any template and send
 export const sendTemplatedEmail = internalAction({
   args: {
     replyTo: v.optional(v.union(v.string(), v.array(v.string()))),
@@ -196,7 +191,6 @@ export const sendTemplatedEmail = internalAction({
   },
 });
 
-// Send changelog notification email using react-email template
 export const sendChangelogNotificationEmail = internalAction({
   args: {
     organizationName: v.string(),
@@ -344,7 +338,6 @@ export const sendStatusMaintenanceEmail = internalAction({
   returns: v.null(),
 });
 
-// Send weekly digest email using react-email template
 export const sendWeeklyDigestEmail = internalAction({
   args: {
     dashboardUrl: v.string(),
@@ -397,7 +390,6 @@ export const sendWeeklyDigestEmail = internalAction({
   },
 });
 
-// Send feedback shipped notification email
 export const sendFeedbackShippedEmail = internalAction({
   args: {
     feedbackTitle: v.string(),

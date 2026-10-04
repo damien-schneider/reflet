@@ -8,6 +8,7 @@ import { MAX_TITLE_LENGTH } from "../shared/constants";
 import { assertPublicHttpUrl } from "../shared/outbound/public_fetch";
 import { validateInputLength } from "../shared/validators";
 import { loadLatencyByHour, loadUptimeBarsByMonitor } from "./history";
+import { resolveOutageIncident } from "./lib/autoIncidents";
 import { listActiveMaintenances } from "./lib/maintenanceWindows";
 import {
   canViewStatusPage,
@@ -16,6 +17,59 @@ import {
   withMaintenanceStatus,
 } from "./lib/visibility";
 import { monitorMethod } from "./tableFields";
+
+const MAX_EXPECTED_STATUS_CODES = 10;
+const MAX_BODY_KEYWORD_CHARS = 200;
+
+const parseExpectedStatusCodes = (
+  codes: number[] | null | undefined
+): number[] | undefined => {
+  if (!codes) {
+    return undefined;
+  }
+  const uniqueCodes = [...new Set(codes)].sort((a, b) => a - b);
+  if (uniqueCodes.length === 0) {
+    throw new Error("Add at least one expected status code");
+  }
+  if (uniqueCodes.length > MAX_EXPECTED_STATUS_CODES) {
+    throw new Error(
+      `Add at most ${MAX_EXPECTED_STATUS_CODES} expected status codes`
+    );
+  }
+  if (
+    uniqueCodes.some(
+      (code) => !Number.isInteger(code) || code < 100 || code > 599
+    )
+  ) {
+    throw new Error("Status codes must be whole numbers from 100 to 599");
+  }
+  return uniqueCodes;
+};
+
+const parseBodyKeyword = (
+  keyword: string | null | undefined
+): string | undefined => {
+  const trimmed = keyword?.trim();
+  validateInputLength(trimmed, MAX_BODY_KEYWORD_CHARS, "Keyword");
+  return trimmed || undefined;
+};
+
+const assertKeywordExpectsSuccess = ({
+  bodyKeyword,
+  expectedStatusCodes,
+}: {
+  bodyKeyword?: string;
+  expectedStatusCodes?: number[];
+}): void => {
+  const expectsNonSuccess = expectedStatusCodes?.some(
+    (code) => code < 200 || code > 299
+  );
+  if (bodyKeyword !== undefined && expectsNonSuccess) {
+    throw new Error(
+      "Keyword checks read 2xx responses only, so expected status codes must be from 200 to 299"
+    );
+  }
+};
 
 export const listMonitors = query({
   args: { organizationId: v.id("organizations") },
@@ -89,7 +143,9 @@ export const getMonitorsUptimeBars = query({
 export const createMonitor = mutation({
   args: {
     alertThreshold: v.optional(v.number()),
+    bodyKeyword: v.optional(v.string()),
     checkIntervalMinutes: v.optional(v.number()),
+    expectedStatusCodes: v.optional(v.array(v.number())),
     groupName: v.optional(v.string()),
     isPublic: v.optional(v.boolean()),
     method: v.optional(monitorMethod),
@@ -101,6 +157,11 @@ export const createMonitor = mutation({
     await requireOrgAdmin(ctx, args.organizationId, "create monitors");
     validateInputLength(args.name, MAX_TITLE_LENGTH, "Name");
     assertPublicHttpUrl(args.url);
+    const bodyKeyword = parseBodyKeyword(args.bodyKeyword);
+    const expectedStatusCodes = parseExpectedStatusCodes(
+      args.expectedStatusCodes
+    );
+    assertKeywordExpectsSuccess({ bodyKeyword, expectedStatusCodes });
 
     const tier = await getOrgTier(ctx, args.organizationId);
     const limits = PLAN_LIMITS[tier];
@@ -125,9 +186,11 @@ export const createMonitor = mutation({
 
     return await ctx.db.insert("statusMonitors", {
       alertThreshold: args.alertThreshold ?? 3,
+      bodyKeyword,
       checkIntervalMinutes,
       consecutiveFailures: 0,
       createdAt: now,
+      expectedStatusCodes,
       groupName: args.groupName,
       isPublic: args.isPublic ?? true,
       method: args.method,
@@ -143,8 +206,10 @@ export const createMonitor = mutation({
 export const updateMonitor = mutation({
   args: {
     alertThreshold: v.optional(v.number()),
+    bodyKeyword: v.optional(v.union(v.string(), v.null())),
     checkIntervalMinutes: v.optional(v.number()),
     degradedResponseTimeMs: v.optional(v.union(v.number(), v.null())),
+    expectedStatusCodes: v.optional(v.union(v.array(v.number()), v.null())),
     groupName: v.optional(v.string()),
     groupOrder: v.optional(v.number()),
     isPublic: v.optional(v.boolean()),
@@ -155,7 +220,13 @@ export const updateMonitor = mutation({
     url: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const { monitorId, degradedResponseTimeMs, ...updates } = args;
+    const {
+      bodyKeyword,
+      degradedResponseTimeMs,
+      expectedStatusCodes,
+      monitorId,
+      ...updates
+    } = args;
 
     const monitor = await ctx.db.get(monitorId);
     if (!monitor) {
@@ -174,6 +245,17 @@ export const updateMonitor = mutation({
     ) {
       throw new Error("Slow response threshold must be a positive duration");
     }
+    const responseAssertionChanges = {
+      ...(bodyKeyword === undefined
+        ? {}
+        : { bodyKeyword: parseBodyKeyword(bodyKeyword) }),
+      ...(expectedStatusCodes === undefined
+        ? {}
+        : {
+            expectedStatusCodes: parseExpectedStatusCodes(expectedStatusCodes),
+          }),
+    };
+    assertKeywordExpectsSuccess({ ...monitor, ...responseAssertionChanges });
 
     const filtered = Object.fromEntries(
       Object.entries(updates).filter(([, val]) => val !== undefined)
@@ -189,6 +271,7 @@ export const updateMonitor = mutation({
 
     await ctx.db.patch(monitorId, {
       ...filtered,
+      ...responseAssertionChanges,
       ...(degradedResponseTimeMs === undefined
         ? {}
         : { degradedResponseTimeMs: degradedResponseTimeMs ?? undefined }),
@@ -211,6 +294,9 @@ export const setMonitorPaused = mutation({
       status: args.paused ? "paused" : "operational",
       updatedAt: Date.now(),
     });
+    if (args.paused) {
+      await resolveOutageIncident(ctx, monitor, "monitoring_paused");
+    }
     return null;
   },
   returns: v.null(),

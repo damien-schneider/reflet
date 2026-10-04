@@ -116,7 +116,7 @@ describe("status monitors", () => {
     expect(status).toEqual({ monitorCount: 0, status: "no_monitors" });
   });
 
-  test("an outage incident still resolves when a down monitor was paused and resumed", async () => {
+  test("pausing a down monitor closes its outage incident on the public page", async () => {
     vi.useFakeTimers();
     const { admin, organizationId, t } = await setup();
     const monitorId = await admin.mutation(api.status.monitors.createMonitor, {
@@ -135,18 +135,15 @@ describe("status monitors", () => {
       monitorId,
       paused: true,
     });
-    await admin.mutation(api.status.monitors.setMonitorPaused, {
-      monitorId,
-      paused: false,
-    });
-    await t.mutation(internal.status.healthCheck.recordCheck, {
-      isUp: true,
-      monitorId,
-    });
 
+    const publicStatus = await t.query(
+      api.status.publicQueries.getPublicStatus,
+      { orgSlug: "acme" }
+    );
     const incidents = await t.run((ctx) =>
       ctx.db.query("statusIncidents").collect()
     );
+    expect(publicStatus?.activeIncidents).toEqual([]);
     expect(incidents).toMatchObject([{ status: "resolved" }]);
   });
 
@@ -173,6 +170,50 @@ describe("status monitors", () => {
       consecutiveFailures: 0,
       status: "degraded",
     });
+  });
+
+  test("a keyword check cannot expect a non-2xx status", async () => {
+    const { admin, organizationId } = await setup();
+
+    await expect(
+      admin.mutation(api.status.monitors.createMonitor, {
+        bodyKeyword: "ok",
+        expectedStatusCodes: [200, 301],
+        name: "API",
+        organizationId,
+        url: "https://api.example.com/",
+      })
+    ).rejects.toThrow(/200 to 299/);
+  });
+
+  test("response checks can be edited and cleared", async () => {
+    const { admin, organizationId } = await setup();
+    const monitorId = await admin.mutation(api.status.monitors.createMonitor, {
+      bodyKeyword: "  healthy  ",
+      expectedStatusCodes: [204, 200, 204],
+      name: "API",
+      organizationId,
+      url: "https://api.example.com/",
+    });
+    const listMonitor = async () =>
+      (
+        await admin.query(api.status.monitors.listMonitors, { organizationId })
+      ).find((monitor) => monitor._id === monitorId);
+
+    expect(await listMonitor()).toMatchObject({
+      bodyKeyword: "healthy",
+      expectedStatusCodes: [200, 204],
+    });
+
+    await admin.mutation(api.status.monitors.updateMonitor, {
+      bodyKeyword: null,
+      expectedStatusCodes: null,
+      monitorId,
+    });
+
+    const cleared = await listMonitor();
+    expect(cleared?.bodyKeyword).toBeUndefined();
+    expect(cleared?.expectedStatusCodes).toBeUndefined();
   });
 
   test("a private organization's status stays hidden from the public", async () => {

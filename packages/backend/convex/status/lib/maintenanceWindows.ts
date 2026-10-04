@@ -1,7 +1,6 @@
 import type { Doc, Id } from "../../_generated/dataModel";
 import type { QueryCtx } from "../../_generated/server";
 
-/** Active and upcoming maintenances: every window that has not ended at `now`. */
 export const listUnfinishedMaintenances = (
   ctx: QueryCtx,
   organizationId: Id<"organizations">,
@@ -28,7 +27,6 @@ export const listActiveMaintenances = async (
     (maintenance) => isMaintenanceActive(maintenance, now)
   );
 
-/** A maintenance without affected monitors covers the whole organization. */
 export const isUnderMaintenance = (
   activeMaintenances: Doc<"statusMaintenances">[],
   monitorId: Id<"statusMonitors">

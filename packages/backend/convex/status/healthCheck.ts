@@ -17,25 +17,24 @@ import {
 } from "../shared/outbound/public_fetch";
 import { recordUptimeSample } from "./history";
 import { openOutageIncident, resolveOutageIncident } from "./lib/autoIncidents";
-import { monitorMethod } from "./tableFields";
+import {
+  CHECK_TIMEOUT_MS,
+  type DueMonitor,
+  dueMonitor,
+  judgeStatusCode,
+  type ProbeResult,
+  probeConfirmingFailure,
+} from "./lib/probe";
+import type { monitorMethod } from "./tableFields";
 
 const MONITOR_PAGE_SIZE = 200;
 const CHECK_BATCH_SIZE = 10;
-const CHECK_TIMEOUT_MS = 10_000;
 const HEAD_REJECTION_STATUS_CODES: Record<number, true> = {
   405: true,
   501: true,
 };
-/** Checks finish up to ~25s after the minute cron fires; without slack a 1-minute monitor would only be due every 2 minutes. */
+// Checks land up to ~25s after the cron tick; without slack a 1-minute monitor runs every 2 minutes.
 const DUE_TOLERANCE_MS = 45_000;
-
-const dueMonitor = v.object({
-  _id: v.id("statusMonitors"),
-  method: v.optional(monitorMethod),
-  url: v.string(),
-});
-
-type DueMonitor = Infer<typeof dueMonitor>;
 
 const dueMonitorsPage = v.object({
   continueCursor: v.string(),
@@ -70,14 +69,19 @@ export const getDueMonitorsPage = internalQuery({
       if (m.status === "paused") {
         continue;
       }
-      // Enforce tier minimum even if stored value is lower (e.g. after downgrade)
       const tierMin = await getOrgMinInterval(m.organizationId);
       const effectiveInterval = Math.max(m.checkIntervalMinutes, tierMin);
       const isDue =
         !m.lastCheckedAt ||
         now + DUE_TOLERANCE_MS >= m.lastCheckedAt + effectiveInterval * 60_000;
       if (isDue) {
-        monitors.push({ _id: m._id, method: m.method, url: m.url });
+        monitors.push({
+          _id: m._id,
+          bodyKeyword: m.bodyKeyword,
+          expectedStatusCodes: m.expectedStatusCodes,
+          method: m.method,
+          url: m.url,
+        });
       }
     }
     return {
@@ -123,7 +127,7 @@ export const recordCheck = internalMutation({
         status: isSlow ? "degraded" : "operational",
         updatedAt: now,
       });
-      await resolveOutageIncident(ctx, monitor);
+      await resolveOutageIncident(ctx, monitor, "monitor_recovered");
       return null;
     }
 
@@ -146,28 +150,25 @@ export const recordCheck = internalMutation({
   returns: v.null(),
 });
 
-interface ProbeResult {
-  errorMessage?: string;
-  isUp: boolean;
-  responseTimeMs: number;
-  statusCode?: number;
-}
-
 const probeOnce = async (
-  url: string,
+  monitor: DueMonitor,
   method: Infer<typeof monitorMethod>
 ): Promise<ProbeResult | null> => {
   const startTime = Date.now();
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), CHECK_TIMEOUT_MS);
   try {
-    const { response, requestDurationMs } = await fetchPublicUrl(url, {
+    const { response, requestDurationMs } = await fetchPublicUrl(monitor.url, {
       method,
       signal: controller.signal,
     });
     await response.body?.cancel();
     return {
-      isUp: response.status >= 200 && response.status < 400,
+      ...judgeStatusCode(
+        monitor.expectedStatusCodes,
+        response.status,
+        response.status >= 200 && response.status < 400
+      ),
       responseTimeMs: requestDurationMs,
       statusCode: response.status,
     };
@@ -185,20 +186,15 @@ const probeOnce = async (
   }
 };
 
-/** A failure only counts once a second request confirms it; a server rejecting HEAD is confirmed with GET. */
-const probeMonitor = async (
-  monitor: DueMonitor
-): Promise<ProbeResult | null> => {
+const probeMonitor = (monitor: DueMonitor): Promise<ProbeResult | null> => {
   const method = monitor.method ?? "HEAD";
-  const firstProbe = await probeOnce(monitor.url, method);
-  if (!firstProbe || firstProbe.isUp) {
-    return firstProbe;
-  }
-  const serverRejectedHead =
-    method === "HEAD" &&
-    firstProbe.statusCode !== undefined &&
-    HEAD_REJECTION_STATUS_CODES[firstProbe.statusCode] === true;
-  return await probeOnce(monitor.url, serverRejectedHead ? "GET" : method);
+  return probeConfirmingFailure((failedProbe) => {
+    const serverRejectedHead =
+      method === "HEAD" &&
+      failedProbe?.statusCode !== undefined &&
+      HEAD_REJECTION_STATUS_CODES[failedProbe.statusCode] === true;
+    return probeOnce(monitor, serverRejectedHead ? "GET" : method);
+  });
 };
 
 const checkMonitor = async (
@@ -222,7 +218,12 @@ export const checkMonitorBatch = internalAction({
   returns: v.null(),
 });
 
-/** Fans due monitors out into small scheduled batches so one tenant's slow targets can't stall the rest. */
+const inCheckBatches = (monitors: DueMonitor[]): DueMonitor[][] =>
+  Array.from(
+    { length: Math.ceil(monitors.length / CHECK_BATCH_SIZE) },
+    (_, i) => monitors.slice(i * CHECK_BATCH_SIZE, (i + 1) * CHECK_BATCH_SIZE)
+  );
+
 export const runHealthChecks = internalAction({
   args: {},
   handler: async (ctx) => {
@@ -233,11 +234,24 @@ export const runHealthChecks = internalAction({
         internal.status.healthCheck.getDueMonitorsPage,
         { paginationOpts: { cursor, numItems: MONITOR_PAGE_SIZE } }
       );
-      for (let i = 0; i < page.monitors.length; i += CHECK_BATCH_SIZE) {
+      const keywordMonitors = page.monitors.filter(
+        (m) => m.bodyKeyword !== undefined
+      );
+      const statusMonitors = page.monitors.filter(
+        (m) => m.bodyKeyword === undefined
+      );
+      for (const monitors of inCheckBatches(statusMonitors)) {
         await ctx.scheduler.runAfter(
           0,
           internal.status.healthCheck.checkMonitorBatch,
-          { monitors: page.monitors.slice(i, i + CHECK_BATCH_SIZE) }
+          { monitors }
+        );
+      }
+      for (const monitors of inCheckBatches(keywordMonitors)) {
+        await ctx.scheduler.runAfter(
+          0,
+          internal.status.keywordProbe.checkKeywordMonitors,
+          { monitors }
         );
       }
       cursor = page.continueCursor;

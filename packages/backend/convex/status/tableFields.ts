@@ -23,6 +23,12 @@ export const incidentStatus = v.union(
   v.literal("resolved")
 );
 
+export const alertChannelKind = v.union(
+  v.literal("slack"),
+  v.literal("discord"),
+  v.literal("webhook")
+);
+
 const uptimeBucketFields = {
   bucketStart: v.number(),
   checks: v.number(),
@@ -32,6 +38,16 @@ const uptimeBucketFields = {
 };
 
 export const statusTables = {
+  statusAlertChannels: defineTable({
+    createdAt: v.number(),
+    kind: alertChannelKind,
+    label: v.optional(v.string()),
+    lastDelivery: v.optional(
+      v.object({ deliveredAt: v.number(), error: v.optional(v.string()) })
+    ),
+    organizationId: v.id("organizations"),
+    url: v.string(),
+  }).index("by_organization", ["organizationId"]),
   statusChecks: defineTable({
     checkedAt: v.number(),
     errorMessage: v.optional(v.string()),
@@ -82,10 +98,12 @@ export const statusTables = {
 
   statusMonitors: defineTable({
     alertThreshold: v.number(),
+    bodyKeyword: v.optional(v.string()),
     checkIntervalMinutes: v.number(),
     consecutiveFailures: v.number(),
     createdAt: v.number(),
     degradedResponseTimeMs: v.optional(v.number()),
+    expectedStatusCodes: v.optional(v.array(v.number())),
     groupName: v.optional(v.string()),
     groupOrder: v.optional(v.number()),
     isPublic: v.boolean(),

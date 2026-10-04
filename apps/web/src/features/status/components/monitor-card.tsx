@@ -15,7 +15,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@ctrl-ui/react/ui/dropdown-menu";
-import { DotsThree, Pause, Play, Trash } from "@phosphor-icons/react";
+import {
+  DotsThree,
+  ListChecks,
+  Pause,
+  Play,
+  Trash,
+} from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useState } from "react";
 import { DestructiveConfirmDialog } from "@/components/ui/destructive-confirm-dialog";
@@ -25,6 +31,7 @@ import {
   MONITOR_STATUS_TEXT_CLASS,
   type MonitorStatus,
 } from "../lib/status-meta";
+import { ResponseChecksDialog } from "./response-checks";
 import { ResponseTimeChart } from "./response-time-chart";
 import { StatusDot } from "./status-dot";
 import { UptimeBar } from "./uptime-bar";
@@ -52,8 +59,10 @@ const SLOW_RESPONSE_THRESHOLDS = [
 ] as const;
 
 interface MonitorChanges {
+  bodyKeyword?: string | null;
   checkIntervalMinutes?: number;
   degradedResponseTimeMs?: number | null;
+  expectedStatusCodes?: number[] | null;
   isPublic?: boolean;
 }
 
@@ -66,13 +75,18 @@ interface MonitorCardProps {
     status: MonitorStatus;
     isPublic: boolean;
     degradedResponseTimeMs?: number;
+    bodyKeyword?: string;
+    expectedStatusCodes?: number[];
     lastResponseTimeMs?: number;
     checkIntervalMinutes: number;
     latencyByHour: Array<{ hourStart: number; responseTimeMs: number }>;
   };
   onDelete: (id: Id<"statusMonitors">) => void;
   onPausedChange: (id: Id<"statusMonitors">, paused: boolean) => void;
-  onUpdate: (id: Id<"statusMonitors">, changes: MonitorChanges) => void;
+  onUpdate: (
+    id: Id<"statusMonitors">,
+    changes: MonitorChanges
+  ) => Promise<unknown>;
   uptimeData?: UptimeData;
 }
 
@@ -85,6 +99,7 @@ export function MonitorCard({
   uptimeData,
 }: MonitorCardProps) {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isChecksOpen, setIsChecksOpen] = useState(false);
 
   return (
     <section aria-label={monitor.name} className="space-y-3">
@@ -160,6 +175,10 @@ export function MonitorCard({
               >
                 Show on status page
               </DropdownMenuCheckboxItem>
+              <DropdownMenuItem onClick={() => setIsChecksOpen(true)}>
+                <ListChecks className="size-4" />
+                Edit response checks…
+              </DropdownMenuItem>
               {isPro && (
                 <>
                   <DropdownMenuSeparator />
@@ -245,6 +264,12 @@ export function MonitorCard({
         onOpenChange={setIsConfirmOpen}
         open={isConfirmOpen}
         title={`Delete ${monitor.name}?`}
+      />
+      <ResponseChecksDialog
+        monitor={monitor}
+        onOpenChange={setIsChecksOpen}
+        onSave={(changes) => onUpdate(monitor._id, changes)}
+        open={isChecksOpen}
       />
     </section>
   );

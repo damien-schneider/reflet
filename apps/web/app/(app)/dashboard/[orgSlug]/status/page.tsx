@@ -24,7 +24,11 @@ import { useMutation, useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import { use, useState } from "react";
 import { OrgNotFound } from "@/features/dashboard/components/org-not-found";
-import { AddMonitorInput } from "@/features/status/components/add-monitor-input";
+import {
+  AddMonitorInput,
+  type NewMonitor,
+} from "@/features/status/components/add-monitor-input";
+import { AlertChannels } from "@/features/status/components/alert-channels";
 import { IncidentComposer } from "@/features/status/components/incident-composer";
 import { MaintenanceComposer } from "@/features/status/components/maintenance-composer";
 import { ScheduledMaintenances } from "@/features/status/components/scheduled-maintenances";
@@ -80,13 +84,21 @@ export default function StatusDashboardPage({
     return <StatusDashboardSkeleton />;
   }
 
-  return <StatusDashboard organizationId={org._id} orgSlug={orgSlug} />;
+  return (
+    <StatusDashboard
+      isAdmin={org.role === "admin" || org.role === "owner"}
+      organizationId={org._id}
+      orgSlug={orgSlug}
+    />
+  );
 }
 
 function StatusDashboard({
+  isAdmin,
   organizationId,
   orgSlug,
 }: {
+  isAdmin: boolean;
   organizationId: Id<"organizations">;
   orgSlug: string;
 }) {
@@ -99,8 +111,8 @@ function StatusDashboard({
     return <StatusDashboardSkeleton />;
   }
 
-  const handleAddMonitor = async (url: string, name: string) => {
-    await createMonitor({ name, organizationId, url });
+  const handleAddMonitor = async (monitor: NewMonitor) => {
+    await createMonitor({ ...monitor, organizationId });
   };
 
   if (monitors.length === 0) {
@@ -117,7 +129,7 @@ function StatusDashboard({
     <MonitorsDashboard
       monitors={monitors}
       onAddMonitor={handleAddMonitor}
-      scope={{ organizationId, orgSlug }}
+      scope={{ isAdmin, organizationId, orgSlug }}
     />
   );
 }
@@ -127,7 +139,7 @@ function NoMonitorsState({
   organizationId,
   orgSlug,
 }: {
-  onAddMonitor: (url: string, name: string) => Promise<void>;
+  onAddMonitor: (monitor: NewMonitor) => Promise<void>;
   organizationId: Id<"organizations">;
   orgSlug: string;
 }) {
@@ -168,10 +180,14 @@ function MonitorsDashboard({
   scope,
 }: {
   monitors: Monitor[];
-  onAddMonitor: (url: string, name: string) => Promise<void>;
-  scope: { organizationId: Id<"organizations">; orgSlug: string };
+  onAddMonitor: (monitor: NewMonitor) => Promise<void>;
+  scope: {
+    isAdmin: boolean;
+    organizationId: Id<"organizations">;
+    orgSlug: string;
+  };
 }) {
-  const { organizationId, orgSlug } = scope;
+  const { isAdmin, organizationId, orgSlug } = scope;
   const createIncident = useMutation(api.status.incidents.createIncident);
   const scheduleMaintenance = useMutation(
     api.status.maintenances.scheduleMaintenance
@@ -243,6 +259,7 @@ function MonitorsDashboard({
           <ScheduledMaintenances organizationId={organizationId} />
           <MonitorGroups monitors={monitors} organizationId={organizationId} />
           <AddMonitorInput onAdd={onAddMonitor} />
+          <AlertChannels isAdmin={isAdmin} organizationId={organizationId} />
         </div>
       </PageBody>
     </PageLayout>

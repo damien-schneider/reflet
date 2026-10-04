@@ -108,7 +108,7 @@ export function PublicStatusView({ orgSlug }: { orgSlug: string }) {
         <PageDescription>
           Live status and 90-day uptime for every service.
         </PageDescription>
-        {org && (
+        {org?.isPublic && (
           <PageActions>
             <StatusSubscribe organizationId={org._id} />
           </PageActions>

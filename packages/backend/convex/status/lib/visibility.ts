@@ -19,7 +19,6 @@ const OVERALL_STATUS_BY_PRIORITY: Exclude<OverallStatus, "operational">[] = [
   "maintenance",
 ];
 
-/** The status page follows the organization's visibility, like every other public page; members can always preview it. */
 export const canViewStatusPage = async (
   ctx: QueryCtx,
   organization: Doc<"organizations">
@@ -29,7 +28,6 @@ export const canViewStatusPage = async (
 export const isShownOnStatusPage = (monitor: Doc<"statusMonitors">): boolean =>
   monitor.isPublic && monitor.status !== "paused";
 
-/** Planned downtime is announced as maintenance whatever the checks of an affected monitor say. */
 export const withMaintenanceStatus = (
   monitors: Doc<"statusMonitors">[],
   activeMaintenances: Doc<"statusMaintenances">[]
@@ -50,7 +48,6 @@ export const overallStatusOf = (
     shownMonitors.some((monitor) => monitor.status === status)
   ) ?? "operational";
 
-/** Org-wide incidents and maintenances (no monitors) are announcements; others need a public monitor. */
 export const isPublicNotice = (
   notice: { affectedMonitorIds: Id<"statusMonitors">[] },
   publicMonitorIds: Set<Id<"statusMonitors">>
