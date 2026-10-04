@@ -1,6 +1,9 @@
 "use client";
 
 import { ButtonLink } from "@ctrl-ui/react/ui/button";
+import { Input } from "@ctrl-ui/react/ui/input";
+import { InputGroup, InputGroupAddon } from "@ctrl-ui/react/ui/input-group";
+import { MagnifyingGlass } from "@phosphor-icons/react";
 import Link from "next/link";
 import { FeedbackPage } from "@/features/feedback/components/feedback-board/feedback-page";
 import { MilestonesView } from "@/features/milestones/components/milestones-view";
@@ -57,6 +60,9 @@ function BoardActions({
 export function FeedbackBoardContent(props: FeedbackBoardProps) {
   const board = useFeedbackBoardState(props);
   const { filters } = board;
+  const showsFeedbackFilters = filters.view !== "milestones";
+  const hasSearchableFeedback =
+    board.filteredFeedback.length > 0 || filters.searchQuery.length > 0;
   const { isAdmin, organizationId } = props;
 
   if (board.isLoading) {
@@ -84,9 +90,31 @@ export function FeedbackBoardContent(props: FeedbackBoardProps) {
             view={filters.view}
           />
         }
+        search={
+          showsFeedbackFilters &&
+          hasSearchableFeedback && (
+            <InputGroup className="w-full sm:w-64">
+              <InputGroupAddon>
+                <MagnifyingGlass
+                  aria-hidden
+                  className="size-4 text-muted-foreground"
+                />
+              </InputGroupAddon>
+              <Input
+                aria-label="Search feedback"
+                autoComplete="off"
+                onChange={(event) => filters.setSearchQuery(event.target.value)}
+                placeholder="Search feedback…"
+                spellCheck={false}
+                type="search"
+                value={filters.searchQuery}
+              />
+            </InputGroup>
+          )
+        }
         view={filters.view}
       >
-        {filters.view !== "milestones" && (
+        {showsFeedbackFilters && (
           <>
             <FeedbackToolbar
               inlineInputRef={
@@ -94,16 +122,10 @@ export function FeedbackBoardContent(props: FeedbackBoardProps) {
               }
               isAdmin={isAdmin}
               onClearTags={() => filters.setSelectedTagIds([])}
-              onSearchChange={filters.setSearchQuery}
               onSubmitClick={filters.openSubmitDrawer}
               onTagChange={filters.handleTagChange}
               organizationId={organizationId}
-              searchQuery={filters.searchQuery}
               selectedTagIds={filters.selectedTagIds}
-              showSearch={
-                board.filteredFeedback.length > 0 ||
-                filters.searchQuery.length > 0
-              }
               tags={board.tags}
             />
 

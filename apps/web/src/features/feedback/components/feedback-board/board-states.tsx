@@ -32,12 +32,14 @@ function FeedCardSkeleton() {
 
 export function LoadingState({ view }: { view?: BoardView }) {
   return (
-    <FeedbackPage view={view}>
+    <FeedbackPage
+      search={<Skeleton className="h-9 w-full sm:w-64" />}
+      view={view}
+    >
       <div aria-busy="true">
         <span className="sr-only" role="status">
           Loading feedback…
         </span>
-        <Skeleton className="mb-3 h-9 w-full sm:w-64" />
         <Skeleton className="mb-4 h-8 w-48" />
         <div className="mb-4 flex items-center justify-between">
           <Skeleton className="h-8 w-20" />
