@@ -5,6 +5,17 @@ All notable changes to `reflet-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.3] - 2026-10-04
+
+### Added
+
+- Copy an element straight from the devtools picker, React Grab style: aim at it and press ⌘C (Ctrl+C), or press Copy on the note card to include your note. The clipboard gets the element, its source location, owner components, selector and HTML.
+
+### Fixed
+
+- The element picker and its hover outline stay above every layer of the page, so elements inside a fixed sidebar or header are outlined instead of hidden under it.
+- The note card and hover label stay on screen when the picked element is taller than the window: the card tries below, above, then beside the element, and overlaps it only when nothing else fits.
+
 ## [0.6.2] - 2026-10-04
 
 ### Fixed
