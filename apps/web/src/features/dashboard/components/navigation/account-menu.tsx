@@ -37,7 +37,6 @@ function AccountTrigger(props: React.ComponentProps<typeof SidebarMenuButton>) {
     <SidebarMenuButton
       {...props}
       aria-label={`Account: ${name}`}
-      className="group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:justify-center"
       size="lg"
       tooltip={name}
     >
