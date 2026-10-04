@@ -65,7 +65,7 @@ export const update = mutation({
       ctx,
       release.organizationId,
       args.version,
-      release._id
+      release.version
     );
 
     const { id, ...updates } = args;

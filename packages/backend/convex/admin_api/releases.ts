@@ -172,7 +172,7 @@ export const updateRelease = internalMutation({
       ctx,
       args.organizationId,
       args.version,
-      release._id
+      release.version
     );
 
     const { organizationId: _organizationId, releaseId, ...updates } = args;

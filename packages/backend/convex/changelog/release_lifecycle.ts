@@ -150,13 +150,12 @@ export async function assertVersionAvailable(
   ctx: QueryCtx,
   organizationId: Id<"organizations">,
   version: string | undefined,
-  releaseId?: Id<"releases">
+  currentVersion?: string
 ): Promise<void> {
-  if (!version) {
+  if (!version || version === currentVersion) {
     return;
   }
-  const existing = await findReleaseByVersion(ctx, organizationId, version);
-  if (existing && existing._id !== releaseId) {
+  if (await findReleaseByVersion(ctx, organizationId, version)) {
     throw new Error(`Version ${version} is already used by another release`);
   }
 }

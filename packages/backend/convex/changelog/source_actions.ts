@@ -31,25 +31,28 @@ const MAX_PULL_REQUEST_BODY_LENGTH = 2000;
 const PULL_REQUESTS_PER_COMMIT = 5;
 
 const pullRequestResponseSchema = z.object({
-  data: z.object({
-    repository: z.record(
-      z.string(),
-      z
-        .object({
-          associatedPullRequests: z.object({
-            nodes: z.array(
-              z.object({
-                body: z.string().nullable(),
-                number: z.number(),
-                title: z.string(),
-                url: z.string(),
-              })
-            ),
-          }),
-        })
-        .nullable()
-    ),
-  }),
+  data: z
+    .object({
+      repository: z.record(
+        z.string(),
+        z
+          .object({
+            associatedPullRequests: z.object({
+              nodes: z.array(
+                z.object({
+                  body: z.string().nullable(),
+                  number: z.number(),
+                  title: z.string(),
+                  url: z.string(),
+                })
+              ),
+            }),
+          })
+          .nullable()
+      ),
+    })
+    .nullish(),
+  errors: z.array(z.object({ message: z.string() })).optional(),
 });
 
 async function findPreviousHeadSha(
@@ -183,7 +186,15 @@ async function fetchPullRequests(
       `GitHub GraphQL ${response.status} ${response.statusText} while loading pull requests`
     );
   }
-  const { data } = pullRequestResponseSchema.parse(await response.json());
+  const { data, errors } = pullRequestResponseSchema.parse(
+    await response.json()
+  );
+  if (!data) {
+    console.warn(
+      `GitHub GraphQL returned no pull requests: ${errors?.map((error) => error.message).join("; ")}`
+    );
+    return [];
+  }
   const byNumber = new Map<number, ReleasePullRequest>();
   for (const commitNode of Object.values(data.repository)) {
     for (const pullRequest of commitNode?.associatedPullRequests.nodes ?? []) {
