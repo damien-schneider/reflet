@@ -214,7 +214,7 @@ export function TriagePulse({ organizationId }: TriagePulseProps) {
   }
 
   if (triageCounts === undefined) {
-    return <Skeleton className="h-(--control-h-xs) w-28 shrink-0" />;
+    return <Skeleton className="h-control-xs w-28 shrink-0" />;
   }
 
   const untriagedCount = triageCounts.untriaged;

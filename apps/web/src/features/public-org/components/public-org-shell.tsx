@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@ctrl-ui/react/lib/cn";
+import { PageScrollContext } from "@ctrl-ui/react/ui/page-layout";
 import { Tabs, TabsList, TabsTab } from "@ctrl-ui/react/ui/tabs";
 import {
   ChatCircle,
@@ -197,7 +198,7 @@ export function PublicOrgShell({
       </header>
 
       <main className="min-h-[80vh] pt-22 pb-(--mobile-nav-offset)">
-        {children}
+        <PageScrollContext value="page">{children}</PageScrollContext>
       </main>
 
       <nav

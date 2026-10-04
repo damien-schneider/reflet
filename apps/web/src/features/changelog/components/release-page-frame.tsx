@@ -34,7 +34,7 @@ export function ReleasePageFrame({
   title,
 }: ReleasePageFrameProps) {
   return (
-    <PageLayout scroll="page" width="wide">
+    <PageLayout width="wide">
       <PageHeader className="flex flex-col items-start">
         <ButtonLink
           className="-ml-2"
@@ -82,7 +82,7 @@ export function ReleasePageMessage({
   title,
 }: ReleasePageMessageProps) {
   return (
-    <PageLayout scroll="page" width="wide">
+    <PageLayout width="wide">
       <PageBody>
         <Empty>
           <EmptyHeader>

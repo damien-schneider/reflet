@@ -4,8 +4,11 @@ import userEvent from "@testing-library/user-event";
 import { getFunctionName } from "convex/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DashboardSidebar } from "@/features/dashboard/components/dashboard-sidebar";
+import { OrgNavigationMenu } from "@/features/dashboard/components/navigation/org-navigation";
+import { orgSections } from "@/features/dashboard/components/navigation/org-sections";
 
 const session = vi.hoisted(() => ({ role: "owner", tier: "free" }));
+const viewport = vi.hoisted(() => ({ mobile: false }));
 
 vi.mock("convex/react", () => ({
   useQuery: (query: Parameters<typeof getFunctionName>[0]) => {
@@ -47,7 +50,10 @@ vi.mock("@/features/dashboard/components/make-public-banner", () => ({
 vi.mock("@/lib/auth-client", () => ({ authClient: { signOut: vi.fn() } }));
 vi.mock("@/lib/analytics", () => ({ capture: vi.fn() }));
 vi.mock("posthog-js", () => ({ default: { reset: vi.fn() } }));
-vi.mock("next/navigation", () => ({ usePathname: () => "/dashboard/acme" }));
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/dashboard/acme",
+  useSearchParams: () => new URLSearchParams(),
+}));
 vi.mock("@ctrl-ui/react/ui/avatar", () => ({
   Avatar: ({ children }: { children: React.ReactNode }) => (
     <span>{children}</span>
@@ -63,11 +69,12 @@ Element.prototype.getAnimations = () => [];
 beforeEach(() => {
   session.role = "owner";
   session.tier = "free";
+  viewport.mobile = false;
   vi.stubGlobal(
     "matchMedia",
     vi.fn((media: string) => ({
       addEventListener: vi.fn(),
-      matches: false,
+      matches: viewport.mobile,
       media,
       removeEventListener: vi.fn(),
     }))
@@ -82,36 +89,52 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 
-function renderSidebar(pathname = "/dashboard/acme", defaultOpen = true) {
+function renderSidebar(pathname = "/dashboard/acme") {
   return render(
-    <SidebarProvider defaultOpen={defaultOpen} persistOpen={false}>
+    <SidebarProvider open={false} persistOpen={false}>
       <DashboardSidebar orgSlug="acme" pathname={pathname} />
     </SidebarProvider>
   );
 }
 
 describe("Dashboard navigation", () => {
-  it("keeps settings visible without opening a Project disclosure", () => {
+  it("keeps one rail entry per section and marks the one holding the page", () => {
     renderSidebar("/dashboard/acme/project/members/invitations");
-    expect(screen.queryByRole("button", { name: "Project" })).toBeNull();
-    const members = screen.getByRole("link", { name: "Members" });
-    expect(members).toHaveAttribute("href", "/dashboard/acme/project/members");
-    expect(members).toHaveAttribute("aria-current", "page");
+    const settings = screen.getByRole("link", { name: "Settings" });
+    expect(settings).toHaveAttribute("href", "/dashboard/acme/project/general");
+    expect(settings).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: "Developer" })).toHaveAttribute(
+      "href",
+      "/dashboard/acme/project/github"
+    );
+    expect(screen.queryByRole("link", { name: "Members" })).toBeNull();
     expect(
       screen.getByRole("link", { exact: true, name: "Feedback" })
     ).not.toHaveAttribute("aria-current");
+  });
+
+  it("lists every page of each section in the mobile menu", () => {
+    viewport.mobile = true;
+    render(
+      <SidebarProvider persistOpen={false}>
+        <OrgNavigationMenu
+          pathname="/dashboard/acme/project/members/invitations"
+          sections={orgSections({ isAdmin: false, slug: "acme" })}
+        />
+      </SidebarProvider>
+    );
+    const settings = screen.getByRole("list", { name: "Settings" });
     expect(
-      within(screen.getByRole("list", { name: "Developer tools" })).getByRole(
-        "link",
-        { name: "GitHub" }
-      )
+      within(settings).getByRole("link", { name: "Members" })
+    ).toHaveAttribute("aria-current", "page");
+    expect(within(settings).queryByRole("link", { name: "Trash" })).toBeNull();
+    const developer = screen.getByRole("list", { name: "Developer" });
+    expect(
+      within(developer).getByRole("link", { name: "GitHub" })
     ).toBeVisible();
     expect(
-      within(screen.getByRole("list", { name: "Organization" })).getByRole(
-        "link",
-        { name: "Billing" }
-      )
-    ).toBeVisible();
+      within(developer).queryByRole("link", { name: "In-app" })
+    ).toBeNull();
   });
 
   it("shows the member photo and account menu in the footer", async () => {
@@ -129,29 +152,25 @@ describe("Dashboard navigation", () => {
     ).toBeVisible();
   });
 
-  it("keeps billing reachable when collapsed and exposes the shared resize rail", () => {
-    renderSidebar("/dashboard/acme", false);
+  it("keeps the upgrade one click away in the rail", () => {
+    renderSidebar();
     expect(
       screen.getByRole("link", { name: "Upgrade to Pro" })
     ).toHaveAttribute("href", "/dashboard/acme/project/billing");
-    expect(
-      screen.getByRole("separator", { name: "Resize sidebar" })
-    ).toHaveAttribute("aria-valuetext", "collapsed");
   });
 
   it("does not offer admin actions to members", () => {
     session.role = "member";
     renderSidebar();
     expect(screen.queryByRole("link", { name: "Inbox" })).toBeNull();
-    expect(screen.queryByRole("link", { name: "Trash" })).toBeNull();
     expect(screen.queryByRole("link", { name: "Upgrade to Pro" })).toBeNull();
-    expect(screen.getByRole("link", { name: "Members" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Settings" })).toBeVisible();
   });
-  it("keeps billing available without offering an upgrade to a paid owner", () => {
+
+  it("does not offer an upgrade to a paid owner", () => {
     session.tier = "pro";
     renderSidebar();
     expect(screen.queryByRole("link", { name: "Upgrade to Pro" })).toBeNull();
-    expect(screen.getByRole("link", { name: "Billing" })).toBeVisible();
   });
 
   it("keeps Feedback active on a feedback detail route", () => {

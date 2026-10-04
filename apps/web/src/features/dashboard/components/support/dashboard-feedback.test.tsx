@@ -1,6 +1,7 @@
+import { SidebarProvider } from "@ctrl-ui/react/ui/sidebar";
 import { render, screen } from "@testing-library/react";
 import type { RefletFeedbackProps } from "reflet-sdk/feedback";
-import { beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { DashboardFeedback } from "@/features/dashboard/components/support/dashboard-feedback";
 
 const fixture = vi.hoisted(() => ({
@@ -27,10 +28,25 @@ vi.mock("reflet-sdk/feedback", () => ({
   },
 }));
 
-beforeEach(() => fixture.widget.mockClear());
+beforeEach(() => {
+  fixture.widget.mockClear();
+  vi.stubGlobal(
+    "matchMedia",
+    vi.fn(() => ({
+      addEventListener: vi.fn(),
+      matches: false,
+      removeEventListener: vi.fn(),
+    }))
+  );
+});
+afterEach(() => vi.unstubAllGlobals());
 
 it("reports to Reflet with the signed-in identity and app theme", () => {
-  render(<DashboardFeedback />);
+  render(
+    <SidebarProvider persistOpen={false}>
+      <DashboardFeedback />
+    </SidebarProvider>
+  );
   expect(
     screen.getByRole("button", { name: "Give feedback to Reflet" })
   ).toBeVisible();

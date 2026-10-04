@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@ctrl-ui/react/ui/button";
+import { SidebarMenuButton, SidebarMenuItem } from "@ctrl-ui/react/ui/sidebar";
 import { ChatTeardropText } from "@phosphor-icons/react";
 import { env } from "@reflet/env/web";
 import { useTheme } from "next-themes";
@@ -16,16 +16,19 @@ export function DashboardFeedback() {
     <RefletFeedback
       publicKey={env.NEXT_PUBLIC_REFLET_PUBLIC_KEY}
       renderTrigger={(props) => (
-        <Button
-          {...props}
-          aria-label="Give feedback to Reflet"
-          className="shrink-0"
-          size="sm"
-          variant="ghost"
-        >
-          <ChatTeardropText aria-hidden />
-          <span className="hidden sm:inline">Give feedback</span>
-        </Button>
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            {...props}
+            aria-label="Give feedback to Reflet"
+            className="group-data-[collapsible=icon]:justify-center"
+            tooltip="Give feedback"
+          >
+            <ChatTeardropText aria-hidden />
+            <span className="group-data-[collapsible=icon]:sr-only">
+              Give feedback
+            </span>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
       )}
       theme={theme}
       user={

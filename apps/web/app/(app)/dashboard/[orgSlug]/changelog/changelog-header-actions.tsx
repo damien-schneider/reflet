@@ -1,8 +1,8 @@
 "use client";
 
-import { Button, ButtonLink } from "@ctrl-ui/react/ui/button";
+import { ButtonLink } from "@ctrl-ui/react/ui/button";
 import { PageActions } from "@ctrl-ui/react/ui/page-layout";
-import { GearSix, GithubLogo, Plus } from "@phosphor-icons/react";
+import { GithubLogo, Plus } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import Link from "next/link";
 import { buildGitHubInstallUrl } from "@/features/github/lib/github-install-url";
@@ -10,31 +10,17 @@ import { authClient } from "@/lib/auth-client";
 
 export function ChangelogHeaderActions({
   github,
-  onOpenSettings,
   orgSlug,
 }: {
   github: {
-    hasConfiguredSync: boolean;
     isConnected: boolean;
     organizationId: Id<"organizations">;
   };
-  onOpenSettings: () => void;
   orgSlug: string;
 }) {
   return (
     <PageActions>
-      {github.isConnected ? (
-        github.hasConfiguredSync && (
-          <Button
-            aria-label="Changelog settings"
-            onClick={onOpenSettings}
-            variant="ghost"
-          >
-            <GearSix aria-hidden="true" className="size-4" />
-            <span className="hidden sm:inline">Settings</span>
-          </Button>
-        )
-      ) : (
+      {github.isConnected ? null : (
         <ConnectGithubButton
           organizationId={github.organizationId}
           orgSlug={orgSlug}

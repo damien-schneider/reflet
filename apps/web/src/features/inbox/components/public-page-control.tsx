@@ -28,14 +28,22 @@ export function PublicPageControl({
 }: PublicPageControlProps) {
   return (
     <Popover>
-      <PopoverTrigger render={<Button size="sm" variant="surface" />}>
+      <PopoverTrigger
+        render={
+          <Button className="w-full justify-start" size="sm" variant="ghost" />
+        }
+      >
         <Globe aria-hidden />
         Public support page
-        <Badge color={setting.enabled ? "green" : "neutral"} size="sm">
+        <Badge
+          className="ms-auto"
+          color={setting.enabled ? "green" : "neutral"}
+          size="sm"
+        >
           {setting.enabled ? "On" : "Off"}
         </Badge>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-80">
+      <PopoverContent align="start" className="w-80" side="top">
         <PopoverHeader>
           <PopoverTitle>Public support page</PopoverTitle>
           <PopoverDescription>

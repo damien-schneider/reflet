@@ -63,7 +63,8 @@ test("shares the profile photo and fallback between the footer and members", asy
     animations: "disabled",
     path: testInfo.outputPath("sidebar-member-avatar.png"),
   });
-  await page.getByRole("button", { name: "Theme System" }).click();
+  await account.click();
+  await page.getByRole("menuitem", { name: "Theme System" }).click();
   await page.getByRole("menuitemradio", { name: "Dark" }).click();
   await expect(page.locator("html")).toHaveClass(DARK_THEME);
   await page.keyboard.press("Escape");

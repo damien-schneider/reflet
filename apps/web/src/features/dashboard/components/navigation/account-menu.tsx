@@ -2,6 +2,12 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@ctrl-ui/react/ui/dropdown-menu";
 import {
@@ -9,11 +15,17 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@ctrl-ui/react/ui/sidebar";
-import { CaretUpDown, SignOut, User } from "@phosphor-icons/react";
+import { CaretUpDown, CircleHalf, SignOut, User } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import Link from "next/link";
 import posthog from "posthog-js";
+import {
+  themeIcons,
+  themeLabels,
+  themes as themeOptions,
+} from "@/components/ui/theme-options";
+import { useThemeToggle } from "@/components/ui/theme-toggle";
 import { UserAvatar } from "@/features/account/components/user-avatar";
 import { capture } from "@/lib/analytics";
 import { authClient } from "@/lib/auth-client";
@@ -51,6 +63,35 @@ function AccountTrigger(props: React.ComponentProps<typeof SidebarMenuButton>) {
   );
 }
 
+function ThemeSubmenu() {
+  const { setTheme, currentTheme, label } = useThemeToggle();
+  return (
+    <DropdownMenuSub>
+      <DropdownMenuSubTrigger>
+        <CircleHalf aria-hidden="true" className="size-4" />
+        <span className="flex-1">Theme</span>
+        <span className="text-muted-foreground">{label}</span>
+      </DropdownMenuSubTrigger>
+      <DropdownMenuSubContent className="min-w-36">
+        <DropdownMenuRadioGroup
+          onValueChange={(value) => setTheme(String(value))}
+          value={currentTheme}
+        >
+          {themeOptions.map((theme) => {
+            const Icon = themeIcons[theme];
+            return (
+              <DropdownMenuRadioItem key={theme} value={theme}>
+                <Icon aria-hidden="true" className="size-4" />
+                {themeLabels[theme]}
+              </DropdownMenuRadioItem>
+            );
+          })}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuSubContent>
+    </DropdownMenuSub>
+  );
+}
+
 export function AccountMenu() {
   const { isMobile, setOpenMobile } = useSidebar();
   async function handleSignOut() {
@@ -80,6 +121,8 @@ export function AccountMenu() {
             <User aria-hidden="true" className="size-4" />
             Account settings
           </DropdownMenuItem>
+          <ThemeSubmenu />
+          <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleSignOut}>
             <SignOut aria-hidden="true" className="size-4" />
             Sign out

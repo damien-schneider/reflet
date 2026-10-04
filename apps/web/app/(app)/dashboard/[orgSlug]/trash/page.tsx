@@ -168,7 +168,7 @@ export default function TrashPage({
   }
 
   return (
-    <PageLayout scroll="page" width="content">
+    <PageLayout width="content">
       <PageHeader>
         <PageTitle>Trash</PageTitle>
         <PageDescription>

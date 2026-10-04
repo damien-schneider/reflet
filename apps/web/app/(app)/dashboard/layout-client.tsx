@@ -3,13 +3,12 @@
 import { DashboardShellBoundary } from "@app/(app)/dashboard/shell/dashboard-error-boundary";
 import { AppShell } from "@ctrl-ui/react/ui/app-shell";
 import { useConvexAuth } from "convex/react";
-import { useAtom } from "jotai";
 import { usePathname } from "next/navigation";
 import { useSyncExternalStore } from "react";
 import UnifiedAuthForm from "@/features/auth/components/unified-auth/unified-auth-form";
-import { sidebarOpenAtom } from "@/store/dashboard-atoms";
 import { DashboardContent } from "./dashboard-content";
 import { DashboardLoading } from "./shell/dashboard-loading";
+import { isInboxRoute } from "./shell/dashboard-workspace";
 
 const subscribeToNothing = () => () => undefined;
 
@@ -19,7 +18,6 @@ export default function DashboardLayoutClient({
   children: React.ReactNode;
 }) {
   const { isAuthenticated, isLoading } = useConvexAuth();
-  const [sidebarOpen, setSidebarOpen] = useAtom(sidebarOpenAtom);
   const pathname = usePathname();
   const isClient = useSyncExternalStore(
     subscribeToNothing,
@@ -27,7 +25,7 @@ export default function DashboardLayoutClient({
     () => false
   );
   const loading = !isClient || isLoading;
-  const scroll = pathname?.split("/")[3] === "inbox" ? "none" : "page";
+  const scroll = isInboxRoute(pathname ?? "") ? "none" : "inset";
 
   if (!(loading || isAuthenticated)) {
     return (
@@ -38,9 +36,15 @@ export default function DashboardLayoutClient({
   }
 
   return (
-    <AppShell onOpenChange={setSidebarOpen} open={sidebarOpen} scroll={scroll}>
+    <AppShell
+      defaultWidth={288}
+      open={false}
+      persistOpen={false}
+      scroll={scroll}
+      style={{ "--sidebar-width-icon": "3.5rem" }}
+    >
       {loading ? (
-        <DashboardLoading />
+        <DashboardLoading pathname={pathname ?? ""} />
       ) : (
         <DashboardShellBoundary pathname={pathname ?? "/dashboard"}>
           <DashboardContent>{children}</DashboardContent>

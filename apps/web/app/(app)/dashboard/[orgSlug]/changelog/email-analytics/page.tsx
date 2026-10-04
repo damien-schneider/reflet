@@ -24,7 +24,7 @@ export default function EmailAnalyticsPage({
 
   if (org === undefined) {
     return (
-      <PageLayout scroll="page" width="wide">
+      <PageLayout width="wide">
         <PageHeader>
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-4 w-72 max-w-full" />
@@ -45,7 +45,7 @@ export default function EmailAnalyticsPage({
   }
 
   return (
-    <PageLayout scroll="page" width="wide">
+    <PageLayout width="wide">
       <PageHeader>
         <PageTitle>Email analytics</PageTitle>
         <PageDescription>

@@ -1,100 +1,13 @@
-import {
-  Binoculars,
-  Chat,
-  ChatCircle,
-  ClipboardText,
-  Code,
-  CreditCard,
-  FileText,
-  Gear,
-  GithubLogo,
-  Globe,
-  Heartbeat,
-  Key,
-  TerminalWindow,
-  Trash,
-  Users,
-} from "@phosphor-icons/react";
+import { useSidebar } from "@ctrl-ui/react/ui/sidebar";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
+import { NavGroup } from "@/features/dashboard/components/navigation/nav-group";
 import {
-  NavGroup,
-  type NavItem,
-} from "@/features/dashboard/components/navigation/nav-group";
-
-function workspaceItems(base: string, unread: number | undefined): NavItem[] {
-  return [
-    {
-      childRoutePrefix: `${base}/feedback`,
-      href: base,
-      icon: Chat,
-      label: "Feedback",
-    },
-    { href: `${base}/changelog`, icon: FileText, label: "Changelog" },
-    {
-      adminOnly: true,
-      badge: unread
-        ? { count: unread, label: "unread", tone: "attention" }
-        : undefined,
-      href: `${base}/inbox`,
-      icon: ChatCircle,
-      label: "Inbox",
-    },
-    {
-      adminOnly: true,
-      href: `${base}/surveys`,
-      icon: ClipboardText,
-      label: "Surveys",
-    },
-    {
-      adminOnly: true,
-      href: `${base}/intelligence`,
-      icon: Binoculars,
-      label: "Intelligence",
-    },
-    {
-      adminOnly: true,
-      href: `${base}/status`,
-      icon: Heartbeat,
-      label: "Status",
-    },
-  ];
-}
-
-function developerItems(base: string): NavItem[] {
-  return [
-    { href: `${base}/project/github`, icon: GithubLogo, label: "GitHub" },
-    {
-      href: `${base}/project/agents`,
-      icon: TerminalWindow,
-      label: "Agents & CLI",
-    },
-    { href: `${base}/project/api-keys`, icon: Key, label: "API keys" },
-    { adminOnly: true, href: `${base}/in-app`, icon: Code, label: "In-app" },
-  ];
-}
-
-function organizationItems(
-  base: string,
-  deleted: number | undefined
-): NavItem[] {
-  return [
-    { href: `${base}/project/general`, icon: Gear, label: "General" },
-    { href: `${base}/project/members`, icon: Users, label: "Members" },
-    { href: `${base}/project/domains`, icon: Globe, label: "Domains" },
-    { href: `${base}/project/billing`, icon: CreditCard, label: "Billing" },
-    {
-      adminOnly: true,
-      badge: deleted
-        ? { count: deleted, label: "in trash", tone: "neutral" }
-        : undefined,
-      href: `${base}/trash`,
-      icon: Trash,
-      label: "Trash",
-    },
-  ];
-}
+  isSectionActive,
+  type NavSection,
+  orgSections,
+} from "@/features/dashboard/components/navigation/org-sections";
 
 interface OrgNavigationProps {
   organization: {
@@ -105,42 +18,62 @@ interface OrgNavigationProps {
   pathname: string;
 }
 
-export function OrgNavigation({ organization, pathname }: OrgNavigationProps) {
-  const { id, slug, isAdmin } = organization;
+export function useOrgSections({
+  id,
+  slug,
+  isAdmin,
+}: OrgNavigationProps["organization"]) {
   const adminArgs = id && isAdmin ? { organizationId: id } : "skip";
   const unread = useQuery(api.support.admin.getUnreadCount, adminArgs);
   const deleted = useQuery(api.feedback.trash.getDeletedCount, adminArgs);
+  return orgSections({ counts: { deleted, unread }, isAdmin, slug });
+}
+
+export function OrgNavigation({ organization, pathname }: OrgNavigationProps) {
   return (
     <OrgNavigationMenu
-      counts={{ deleted, unread }}
-      organization={{ isAdmin, slug }}
       pathname={pathname}
+      sections={useOrgSections(organization)}
     />
   );
 }
 
 export function OrgNavigationMenu({
-  counts = {},
-  organization,
   pathname,
+  sections,
 }: {
-  counts?: { deleted?: number; unread?: number };
-  organization: { isAdmin: boolean; slug: string };
   pathname: string;
+  sections: NavSection[];
 }) {
-  const { isAdmin, slug } = organization;
-  const base = `/dashboard/${slug}`;
-  const groups = [
-    { items: workspaceItems(base, counts.unread), label: "Workspace" },
-    { items: developerItems(base), label: "Developer tools" },
-    { items: organizationItems(base, counts.deleted), label: "Organization" },
-  ];
-  return groups.map(({ label, items }) => (
-    <NavGroup
-      items={items.filter((item) => isAdmin || !item.adminOnly)}
-      key={label}
-      label={label}
-      pathname={pathname}
-    />
-  ));
+  const { isMobile } = useSidebar();
+  const workspace = sections.filter((section) => !section.manage);
+  const manage = sections.filter((section) => section.manage);
+  const activeWorkspaceSection = workspace.find(
+    (section) => section.items && isSectionActive(section, pathname)
+  );
+
+  if (!isMobile) {
+    return (
+      <>
+        <NavGroup items={workspace} label="Workspace" pathname={pathname} />
+        <NavGroup items={manage} label="Manage" pathname={pathname} />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <NavGroup items={workspace} label="Workspace" pathname={pathname} />
+      {[activeWorkspaceSection, ...manage].map((section) =>
+        section?.items ? (
+          <NavGroup
+            items={section.items}
+            key={section.label}
+            label={section.label}
+            pathname={pathname}
+          />
+        ) : null
+      )}
+    </>
+  );
 }

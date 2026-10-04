@@ -95,7 +95,7 @@ export function TrackView(view: MilestonesViewProps) {
         <span className="sr-only" role="status">
           Loading milestones…
         </span>
-        <Skeleton className="ml-auto h-(--control-h-xs) w-28" />
+        <Skeleton className="ml-auto h-control-xs w-28" />
         <Skeleton className="h-16 rounded-xl" />
       </div>
     );

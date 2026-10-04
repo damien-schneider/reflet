@@ -8,8 +8,7 @@ import {
   PageLayout,
   PageTitle,
 } from "@ctrl-ui/react/ui/page-layout";
-import { Tabs, TabsList, TabsPanel, TabsTab } from "@ctrl-ui/react/ui/tabs";
-import { Code, GearSix, GithubLogo, Scroll } from "@phosphor-icons/react";
+import { GithubLogo } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Doc } from "@reflet/backend/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
@@ -22,12 +21,26 @@ import { OrgNotFound } from "@/features/dashboard/components/org-not-found";
 import { ChangelogHeaderActions } from "./changelog-header-actions";
 import { ReleasesPanel } from "./releases-panel";
 
+const VIEW_TITLES = {
+  releases: "Changelog",
+  settings: "Changelog settings",
+  widget: "Embed changelog",
+} as const;
+
+type ChangelogTab = keyof typeof VIEW_TITLES;
+
+const isChangelogView = (value: string | undefined): value is ChangelogTab =>
+  value !== undefined && value in VIEW_TITLES;
+
 export default function ChangelogPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ orgSlug: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }) {
   const { orgSlug } = use(params);
+  const { tab } = use(searchParams);
   const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
 
   if (org === null || org?.role === null) {
@@ -36,7 +49,7 @@ export default function ChangelogPage({
 
   if (org === undefined) {
     return (
-      <PageLayout scroll="page" width="content">
+      <PageLayout width="content">
         <PageHeader>
           <PageTitle>Changelog</PageTitle>
         </PageHeader>
@@ -47,15 +60,23 @@ export default function ChangelogPage({
     );
   }
 
-  return <ChangelogContent org={org} orgSlug={orgSlug} />;
+  return (
+    <ChangelogContent
+      org={org}
+      orgSlug={orgSlug}
+      view={isChangelogView(tab) ? tab : "releases"}
+    />
+  );
 }
 
 function ChangelogContent({
   org,
   orgSlug,
+  view,
 }: {
   org: Doc<"organizations">;
   orgSlug: string;
+  view: ChangelogTab;
 }) {
   const organizationId = org._id;
   const currentMember = useQuery(api.organizations.members.getCurrentMember, {
@@ -65,7 +86,6 @@ function ChangelogContent({
     api.integrations.github.queries.getConnectionStatus,
     { organizationId }
   );
-  const [activeTab, setActiveTab] = useState("releases");
   const [showSetupWizard, setShowSetupWizard] = useState(false);
 
   const isAdmin =
@@ -74,17 +94,12 @@ function ChangelogContent({
   const hasConfiguredSync = Boolean(org.changelogSettings?.syncDirection);
 
   return (
-    <PageLayout scroll="page" width="content">
+    <PageLayout width="content">
       <PageHeader>
-        <PageTitle>Changelog</PageTitle>
-        {isAdmin && (
+        <PageTitle>{VIEW_TITLES[view]}</PageTitle>
+        {isAdmin && view === "releases" && (
           <ChangelogHeaderActions
-            github={{
-              hasConfiguredSync,
-              isConnected: isGithubConnected,
-              organizationId,
-            }}
-            onOpenSettings={() => setActiveTab("settings")}
+            github={{ isConnected: isGithubConnected, organizationId }}
             orgSlug={orgSlug}
           />
         )}
@@ -93,14 +108,13 @@ function ChangelogContent({
         {isAdmin && isGithubConnected && !hasConfiguredSync && (
           <SetupSyncBanner onSetUp={() => setShowSetupWizard(true)} />
         )}
-        <ChangelogTabs
-          activeTab={activeTab}
+        <ChangelogView
           isAdmin={isAdmin}
           isGithubConnected={isGithubConnected}
           onOpenSetupWizard={() => setShowSetupWizard(true)}
-          onTabChange={setActiveTab}
           org={org}
           orgSlug={orgSlug}
+          view={view}
         />
         {isGithubConnected && (
           <ReleaseSetupWizard
@@ -135,22 +149,20 @@ function SetupSyncBanner({ onSetUp }: { onSetUp: () => void }) {
   );
 }
 
-function ChangelogTabs({
-  activeTab,
+function ChangelogView({
   isAdmin,
   isGithubConnected,
   onOpenSetupWizard,
-  onTabChange,
   org,
   orgSlug,
+  view,
 }: {
-  activeTab: string;
   isAdmin: boolean;
   isGithubConnected: boolean;
   onOpenSetupWizard: () => void;
-  onTabChange: (value: string) => void;
   org: Doc<"organizations">;
   orgSlug: string;
+  view: ChangelogTab;
 }) {
   const apiKeys = useQuery(api.feedback.api_admin.getApiKeys, {
     organizationId: org._id,
@@ -158,54 +170,33 @@ function ChangelogTabs({
   const hasApiKeys = apiKeys !== undefined && apiKeys.length > 0;
   const publicKey = apiKeys?.[0]?.publicKey ?? "fb_pub_xxxxxxxxxxxxxxxx";
 
+  if (view === "settings" && isAdmin) {
+    return (
+      <ChangelogSettingsTab
+        isAdmin={isAdmin}
+        onOpenSetupWizard={onOpenSetupWizard}
+        organizationId={org._id}
+        orgSlug={orgSlug}
+      />
+    );
+  }
+  if (view === "widget") {
+    return (
+      <ChangelogWidgetTab
+        hasApiKeys={hasApiKeys}
+        organizationId={org._id}
+        orgSlug={orgSlug}
+        primaryColor={org.primaryColor}
+        publicKey={publicKey}
+      />
+    );
+  }
   return (
-    <Tabs onValueChange={onTabChange} value={activeTab}>
-      <TabsList>
-        <TabsTab value="releases">
-          <Scroll aria-hidden="true" className="size-4" />
-          Releases
-        </TabsTab>
-        {isAdmin && (
-          <TabsTab value="settings">
-            <GearSix aria-hidden="true" className="size-4" />
-            Settings
-          </TabsTab>
-        )}
-        <TabsTab value="widget">
-          <Code aria-hidden="true" className="size-4" />
-          Embed
-        </TabsTab>
-      </TabsList>
-
-      <TabsPanel className="mt-6" value="releases">
-        <ReleasesPanel
-          isAdmin={isAdmin}
-          isGithubConnected={isGithubConnected}
-          organizationId={org._id}
-          orgSlug={orgSlug}
-        />
-      </TabsPanel>
-
-      {isAdmin && (
-        <TabsPanel className="mt-6" value="settings">
-          <ChangelogSettingsTab
-            isAdmin={isAdmin}
-            onOpenSetupWizard={onOpenSetupWizard}
-            organizationId={org._id}
-            orgSlug={orgSlug}
-          />
-        </TabsPanel>
-      )}
-
-      <TabsPanel className="mt-6" value="widget">
-        <ChangelogWidgetTab
-          hasApiKeys={hasApiKeys}
-          organizationId={org._id}
-          orgSlug={orgSlug}
-          primaryColor={org.primaryColor}
-          publicKey={publicKey}
-        />
-      </TabsPanel>
-    </Tabs>
+    <ReleasesPanel
+      isAdmin={isAdmin}
+      isGithubConnected={isGithubConnected}
+      organizationId={org._id}
+      orgSlug={orgSlug}
+    />
   );
 }

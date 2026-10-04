@@ -41,7 +41,7 @@ const SKELETON_MONITOR_KEYS = ["first", "second", "third"] as const;
 
 function StatusDashboardSkeleton() {
   return (
-    <PageLayout scroll="page" width="content">
+    <PageLayout width="content">
       <PageHeader>
         <PageTitle>Status</PageTitle>
       </PageHeader>
@@ -128,7 +128,7 @@ function NoMonitorsState({
   orgSlug: string;
 }) {
   return (
-    <PageLayout scroll="page" width="content">
+    <PageLayout width="content">
       <PageHeader>
         <PageTitle>Status</PageTitle>
       </PageHeader>
@@ -172,7 +172,7 @@ function MonitorsDashboard({
   const [showComposer, setShowComposer] = useState(false);
 
   return (
-    <PageLayout scroll="page" width="content">
+    <PageLayout width="content">
       <PageHeader>
         <PageTitle>Status</PageTitle>
         <PageActions className="flex-wrap">

@@ -21,7 +21,6 @@ export function UpgradeLink({ orgSlug }: { orgSlug: string }) {
             />
           }
           tooltip="Upgrade to Pro"
-          variant="outline"
         >
           <Crown aria-hidden="true" />
           <span className="group-data-[collapsible=icon]:sr-only">

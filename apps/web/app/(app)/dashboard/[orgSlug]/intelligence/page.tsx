@@ -7,18 +7,27 @@ import {
   PageTitle,
 } from "@ctrl-ui/react/ui/page-layout";
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
-import { Tabs, TabsList, TabsPanel, TabsTab } from "@ctrl-ui/react/ui/tabs";
-import { GearSix, Hash, Lightbulb, Users } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
-import { use, useState } from "react";
+import { use } from "react";
 import { OrgNotFound } from "@/features/dashboard/components/org-not-found";
 import { IntelligenceSettings } from "@/features/intelligence/components/intelligence-settings";
 import { CommunityTab } from "./community-tab";
 import { CompetitorsTab } from "./competitors-tab";
 import { InsightsTab } from "./insights-tab";
 
-const TABS = ["insights", "community", "competitors", "settings"] as const;
+const TAB_TITLES = {
+  community: "Community",
+  competitors: "Competitors",
+  insights: "Insights",
+  settings: "Intelligence settings",
+} as const;
+
+type IntelligenceTab = keyof typeof TAB_TITLES;
+
+const isIntelligenceTab = (
+  value: string | undefined
+): value is IntelligenceTab => value !== undefined && value in TAB_TITLES;
 
 export default function IntelligencePage({
   params,
@@ -34,16 +43,14 @@ export default function IntelligencePage({
     api.intelligence.config.get,
     org ? { organizationId: org._id } : "skip"
   );
-  const [selectedTab, setSelectedTab] = useState<string | null>(null);
-  const initialTab = TABS.find((value) => value === tab) ?? "insights";
-  const activeTab = selectedTab ?? initialTab;
+  const activeTab = isIntelligenceTab(tab) ? tab : "insights";
 
   if (org === null) {
     return <OrgNotFound />;
   }
   if (org === undefined) {
     return (
-      <PageLayout scroll="page" width="content">
+      <PageLayout width="content">
         <PageHeader>
           <Skeleton className="h-9 w-44" />
         </PageHeader>
@@ -55,7 +62,7 @@ export default function IntelligencePage({
   }
   if (config === undefined) {
     return (
-      <PageLayout scroll="page" width="content">
+      <PageLayout width="content">
         <PageHeader>
           <PageTitle>Intelligence</PageTitle>
         </PageHeader>
@@ -68,7 +75,7 @@ export default function IntelligencePage({
 
   if (config === null) {
     return (
-      <PageLayout scroll="page" width="content">
+      <PageLayout width="content">
         <PageHeader>
           <PageTitle>Intelligence</PageTitle>
         </PageHeader>
@@ -80,47 +87,23 @@ export default function IntelligencePage({
   }
 
   return (
-    <PageLayout scroll="page" width="content">
+    <PageLayout width="content">
       <PageHeader>
-        <PageTitle>Intelligence</PageTitle>
+        <PageTitle>{TAB_TITLES[activeTab]}</PageTitle>
       </PageHeader>
       <PageBody>
-        <Tabs onValueChange={setSelectedTab} value={activeTab}>
-          <TabsList>
-            <TabsTab value="insights">
-              <Lightbulb aria-hidden className="size-4" />
-              Insights
-            </TabsTab>
-            <TabsTab value="community">
-              <Hash aria-hidden className="size-4" />
-              Community
-            </TabsTab>
-            <TabsTab value="competitors">
-              <Users aria-hidden className="size-4" />
-              Competitors
-            </TabsTab>
-            <TabsTab value="settings">
-              <GearSix aria-hidden className="size-4" />
-              Settings
-            </TabsTab>
-          </TabsList>
-
-          <TabsPanel className="mt-6" value="insights">
-            <InsightsTab organizationId={org._id} orgSlug={orgSlug} />
-          </TabsPanel>
-
-          <TabsPanel className="mt-6" value="community">
-            <CommunityTab organizationId={org._id} />
-          </TabsPanel>
-
-          <TabsPanel className="mt-6" value="competitors">
-            <CompetitorsTab organizationId={org._id} orgSlug={orgSlug} />
-          </TabsPanel>
-
-          <TabsPanel className="mt-6" value="settings">
-            <IntelligenceSettings organizationId={org._id} />
-          </TabsPanel>
-        </Tabs>
+        {
+          {
+            community: <CommunityTab organizationId={org._id} />,
+            competitors: (
+              <CompetitorsTab organizationId={org._id} orgSlug={orgSlug} />
+            ),
+            insights: (
+              <InsightsTab organizationId={org._id} orgSlug={orgSlug} />
+            ),
+            settings: <IntelligenceSettings organizationId={org._id} />,
+          }[activeTab]
+        }
       </PageBody>
     </PageLayout>
   );

@@ -9,7 +9,11 @@ const dashboard = vi.hoisted(() => ({ fails: false }));
 vi.mock("convex/react", () => ({
   useConvexAuth: () => auth,
 }));
-vi.mock("next/navigation", () => ({ usePathname: () => "/dashboard/acme" }));
+vi.mock("next/navigation", () => ({
+  useParams: () => ({ orgSlug: "acme" }),
+  usePathname: () => "/dashboard/acme",
+  useSearchParams: () => new URLSearchParams(),
+}));
 vi.mock("@/features/auth/components/unified-auth/unified-auth-form", () => ({
   default: () => <p>Sign in</p>,
 }));
@@ -63,7 +67,6 @@ it("keeps the same shell while authentication resolves without exposing private 
   expect(screen.queryByText("Private feedback")).not.toBeInTheDocument();
   const shell = container.querySelector("[data-app-shell]");
   expect(shell).not.toBeNull();
-  fireEvent.click(screen.getByRole("button", { name: "Toggle sidebar" }));
   auth.isLoading = false;
   auth.isAuthenticated = true;
   rerender(
@@ -73,9 +76,6 @@ it("keeps the same shell while authentication resolves without exposing private 
   );
   expect(screen.getByText("Private feedback")).toBeVisible();
   expect(container.querySelector("[data-app-shell]")).toBe(shell);
-  expect(
-    screen.getByRole("button", { name: "Toggle sidebar" })
-  ).toHaveAttribute("aria-expanded", "false");
   auth.isAuthenticated = false;
   rerender(
     <DashboardLayoutClient>
@@ -106,7 +106,7 @@ it("keeps usable sidebar navigation when the dashboard layout fails", () => {
     "href",
     "/dashboard/acme"
   );
-  expect(screen.getByRole("button", { name: "Toggle sidebar" })).toBeVisible();
+  expect(screen.getByRole("button", { name: "Open navigation" })).toBeVisible();
   expect(screen.queryByText("Private inbox")).not.toBeInTheDocument();
 
   dashboard.fails = false;

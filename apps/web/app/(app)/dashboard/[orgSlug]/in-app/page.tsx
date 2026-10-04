@@ -173,7 +173,7 @@ export default function WidgetsPage({
 
   if (org === undefined) {
     return (
-      <PageLayout scroll="page" width="content">
+      <PageLayout width="content">
         <PageHeader>
           <Skeleton className="h-9 w-32" />
         </PageHeader>
@@ -192,7 +192,7 @@ export default function WidgetsPage({
   }
 
   return (
-    <PageLayout scroll="page" width="content">
+    <PageLayout width="content">
       <PageHeader>
         <PageTitle>In-app</PageTitle>
       </PageHeader>

@@ -4,9 +4,6 @@ import { atom } from "jotai";
  * Local UI state for the dashboard
  */
 
-// Sidebar state
-export const sidebarOpenAtom = atom(true);
-
 // Recent organizations (for history/switcher)
 export const recentOrgSlugsAtom = atom<string[]>([]);
 

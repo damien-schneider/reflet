@@ -85,7 +85,7 @@ test("a dashboard query error keeps a sidebar that opens on mobile", async ({
   });
 
   await page.setViewportSize({ height: 844, width: 390 });
-  await page.getByRole("button", { name: "Toggle sidebar" }).click();
+  await page.getByRole("button", { name: "Open navigation" }).click();
   await expect(feedback).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(
     390

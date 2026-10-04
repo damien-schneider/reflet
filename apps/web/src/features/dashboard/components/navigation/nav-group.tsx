@@ -1,3 +1,4 @@
+import { cn } from "@ctrl-ui/react/lib/cn";
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -9,18 +10,27 @@ import {
 } from "@ctrl-ui/react/ui/sidebar";
 import type { Icon } from "@phosphor-icons/react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { NavBadge } from "@/features/dashboard/components/nav-badge";
+import { activeNavItem } from "@/features/dashboard/components/navigation/org-sections";
 
 export interface NavItem {
   adminOnly?: boolean;
   badge?: { count: number; tone: "attention" | "neutral"; label: string };
   childRoutePrefix?: string;
   href: string;
-  icon: Icon;
+  icon?: Icon;
   label: string;
+  swatchClassName?: string;
 }
 
-function NavLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
+export function NavLink({
+  item,
+  isActive,
+}: {
+  item: NavItem;
+  isActive: boolean;
+}) {
   const name = item.badge
     ? `${item.label}, ${item.badge.count} ${item.badge.label}`
     : item.label;
@@ -38,7 +48,16 @@ function NavLink({ item, isActive }: { item: NavItem; isActive: boolean }) {
         }
         tooltip={name}
       >
-        <item.icon aria-hidden="true" />
+        {item.swatchClassName ? (
+          <span
+            aria-hidden="true"
+            className={cn(
+              "mx-1 size-2 shrink-0 rounded-full",
+              item.swatchClassName
+            )}
+          />
+        ) : null}
+        {item.icon ? <item.icon aria-hidden="true" /> : null}
         <span className="flex-1 group-data-[collapsible=icon]:sr-only">
           {item.label}
         </span>
@@ -59,12 +78,7 @@ export function NavGroup({
   items: NavItem[];
   pathname: string;
 }) {
-  const activeItem = items
-    .filter(
-      ({ href, childRoutePrefix = href }) =>
-        pathname === href || pathname.startsWith(`${childRoutePrefix}/`)
-    )
-    .sort((first, second) => second.href.length - first.href.length)[0];
+  const activeItem = activeNavItem(items, pathname, useSearchParams());
   return (
     <SidebarGroup>
       <SidebarGroupLabel>{label}</SidebarGroupLabel>

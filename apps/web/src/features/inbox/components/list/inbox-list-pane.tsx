@@ -8,11 +8,11 @@ import {
 } from "@ctrl-ui/react/ui/empty";
 import { Input } from "@ctrl-ui/react/ui/input";
 import { InputGroup, InputGroupAddon } from "@ctrl-ui/react/ui/input-group";
-import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "@ctrl-ui/react/ui/tabs";
 import { MagnifyingGlass } from "@phosphor-icons/react";
 import { type ComponentProps, useRef } from "react";
 import { InboxConversationList } from "@/features/inbox/components/list/inbox-conversation-list";
+import { ConversationRowsSkeleton } from "@/features/inbox/components/list/inbox-panel-skeleton";
 import type { InboxConversation } from "@/features/inbox/hooks/use-inbox";
 import { INBOX_VIEWS, type InboxView } from "@/features/inbox/lib/inbox-views";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
@@ -37,10 +37,10 @@ export function InboxListPane({ list, search, views }: InboxListPaneProps) {
       onValueChange={views.onChange}
       value={views.current}
     >
-      <div className="flex flex-col gap-2 border-b p-3">
-        <TabsList aria-label="Conversation views" size="sm">
+      <div className="flex flex-col gap-2 px-3 pb-3">
+        <TabsList aria-label="Conversation views" className="w-full" size="sm">
           {INBOX_VIEWS.map((view) => (
-            <TabsTab key={view.id} value={view.id}>
+            <TabsTab className="flex-1 px-2" key={view.id} value={view.id}>
               {view.label}
             </TabsTab>
           ))}
@@ -80,11 +80,9 @@ function ListBody({ list, search, views }: InboxListPaneProps) {
 
   if (conversations === undefined) {
     return (
-      <div className="flex flex-col gap-2 p-3" role="status">
+      <div role="status">
         <span className="sr-only">Loading conversations…</span>
-        <Skeleton aria-hidden className="h-16 w-full" />
-        <Skeleton aria-hidden className="h-16 w-full" />
-        <Skeleton aria-hidden className="h-16 w-full" />
+        <ConversationRowsSkeleton />
       </div>
     );
   }

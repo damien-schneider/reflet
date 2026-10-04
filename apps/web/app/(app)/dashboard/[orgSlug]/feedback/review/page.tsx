@@ -27,7 +27,7 @@ export default function PendingReviewPage({
   }
 
   return (
-    <PageLayout scroll="page" width="wide">
+    <PageLayout width="wide">
       <PageHeader>
         <PageTitle>Review</PageTitle>
         <PageDescription>

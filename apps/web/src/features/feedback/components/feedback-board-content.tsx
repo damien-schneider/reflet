@@ -33,6 +33,7 @@ function BoardActions({
         <BoardViewToggle onChange={onViewChange} size="sm" view={view} />
         {isAdmin && (
           <ButtonLink
+            className="lg:hidden"
             render={<Link href={`/dashboard/${orgSlug}/feedback/review`} />}
             size="sm"
             variant="ghost"

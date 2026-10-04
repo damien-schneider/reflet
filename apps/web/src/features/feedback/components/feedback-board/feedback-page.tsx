@@ -18,7 +18,7 @@ export function FeedbackPage({
   view?: BoardView;
 }) {
   return (
-    <PageLayout scroll="page" width={view === "feed" ? "content" : "wide"}>
+    <PageLayout width={view === "feed" ? "content" : "wide"}>
       <PageHeader>
         <PageTitle>Feedback</PageTitle>
         <PageActions>{actions}</PageActions>

@@ -16,6 +16,12 @@ import {
 } from "@ctrl-ui/react/ui/dropdown-menu";
 import { Field, FieldError, FieldLabel } from "@ctrl-ui/react/ui/field";
 import { Input } from "@ctrl-ui/react/ui/input";
+import { useSidebar } from "@ctrl-ui/react/ui/sidebar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@ctrl-ui/react/ui/tooltip";
 import { CaretUpDown, Check, Plus } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
@@ -30,12 +36,13 @@ interface OrganizationSwitcherProps {
 }
 
 const TRIGGER_CLASS =
-  "w-full justify-between group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0";
+  "w-full justify-between group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0";
 
 export function OrganizationSwitcher({
   currentOrgSlug,
 }: OrganizationSwitcherProps) {
   const router = useRouter();
+  const { isMobile, state } = useSidebar();
   const organizations = useQuery(api.organizations.queries.list);
   const createOrg = useMutation(api.organizations.mutations.create);
   const rememberOrganization = useRememberOrganization();
@@ -106,27 +113,43 @@ export function OrganizationSwitcher({
   return (
     <>
       <DropdownMenu>
-        <Button
-          aria-label={`Switch organization. Current: ${currentOrgName}`}
-          className={TRIGGER_CLASS}
-          render={<Menu.Trigger />}
-          size="md"
-          variant="surface"
-        >
-          <span className="flex min-w-0 flex-1 items-center gap-2 group-data-[collapsible=icon]:flex-none">
-            <OrgAvatar org={currentOrg} size="sm" />
-            <span
-              className="truncate group-data-[collapsible=icon]:hidden"
-              title={currentOrgName}
-            >
-              {currentOrgName}
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                aria-label={`Switch organization. Current: ${currentOrgName}`}
+                className={TRIGGER_CLASS}
+                render={<Menu.Trigger />}
+                size="md"
+                variant="surface"
+              />
+            }
+          >
+            <span className="flex min-w-0 flex-1 items-center gap-2 group-data-[collapsible=icon]:flex-none">
+              <OrgAvatar
+                className="group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:rounded-lg group-data-[collapsible=icon]:bg-brand group-data-[collapsible=icon]:text-brand-foreground group-data-[collapsible=icon]:text-heading-4"
+                org={currentOrg}
+                size="sm"
+              />
+              <span
+                className="truncate group-data-[collapsible=icon]:hidden"
+                title={currentOrgName}
+              >
+                {currentOrgName}
+              </span>
             </span>
-          </span>
-          <CaretUpDown
-            aria-hidden
-            className="size-4 shrink-0 text-muted-foreground group-data-[collapsible=icon]:hidden"
-          />
-        </Button>
+            <CaretUpDown
+              aria-hidden
+              className="size-4 shrink-0 text-muted-foreground group-data-[collapsible=icon]:hidden"
+            />
+          </TooltipTrigger>
+          <TooltipContent
+            hidden={state !== "collapsed" || isMobile}
+            side="right"
+          >
+            {currentOrgName}
+          </TooltipContent>
+        </Tooltip>
         <DropdownMenuContent align="start" className="w-50">
           {organizations.map((org) =>
             org ? (

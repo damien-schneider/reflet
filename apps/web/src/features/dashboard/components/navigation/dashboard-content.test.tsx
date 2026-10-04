@@ -1,6 +1,6 @@
 import { DashboardContent } from "@app/(app)/dashboard/dashboard-content";
 import { AppShell } from "@ctrl-ui/react/ui/app-shell";
-import { act, render, screen } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import { getFunctionName } from "convex/server";
 import { createStore, Provider } from "jotai";
 import type { ReactNode } from "react";
@@ -27,6 +27,7 @@ vi.mock("next/navigation", () => ({
   useParams: () => ({ orgSlug: dashboard.orgSlug }),
   usePathname: () => dashboard.pathname,
   useRouter: () => ({ replace: dashboard.replace }),
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 vi.mock("convex/react", () => ({
@@ -94,6 +95,14 @@ beforeEach(() => {
       removeEventListener: vi.fn(),
     }))
   );
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      observe() {}
+      disconnect() {}
+      unobserve() {}
+    }
+  );
 });
 
 afterEach(() => {
@@ -127,7 +136,7 @@ describe("Dashboard workspace context", () => {
 
     expect(screen.getByRole("link", { name: "Feedback" })).toBeVisible();
     expect(
-      screen.getByRole("button", { name: "Toggle sidebar" })
+      screen.getByRole("button", { name: "Open navigation" })
     ).toBeVisible();
     expect(
       container.querySelector("[data-app-shell-content]")
@@ -136,6 +145,23 @@ describe("Dashboard workspace context", () => {
     fails = false;
     act(() => screen.getByRole("button", { name: "Try again" }).click());
     expect(screen.getByRole("heading", { name: "Inbox" })).toBeVisible();
+  });
+
+  it("opens the section's own panel beside the page", async () => {
+    dashboard.pathname = "/dashboard/acme/project/members";
+    renderDashboard(<h1>Members</h1>);
+    const panel = await screen.findByRole("list", { name: "Settings" });
+    expect(
+      within(panel).getByRole("link", { name: "Members" })
+    ).toHaveAttribute("aria-current", "page");
+    expect(within(panel).getByRole("link", { name: "Trash" })).toBeVisible();
+  });
+
+  it("leaves pages outside a multi-page section without a panel", () => {
+    dashboard.pathname = "/dashboard/acme/changelog";
+    renderDashboard(<h1>Changelog</h1>);
+    expect(screen.queryByRole("list", { name: "Settings" })).toBeNull();
+    expect(screen.queryByRole("list", { name: "Developer" })).toBeNull();
   });
 
   it("preserves organization navigation and search on account settings", () => {

@@ -7,7 +7,7 @@
   :where([data-control-family="card"][data-slot="root"]) {
     --cui-card-radius: var(--radius-panel);
     --cui-card-border-width: 0px;
-    --cui-card-shadow: var(--reflet-panel-shadow);
+    --cui-card-shadow: none;
   }
 
   :root[data-theme="reflet"]
@@ -15,16 +15,12 @@
     --cui-alert-radius: var(--radius-panel);
     --cui-alert-background: var(--card);
     --cui-alert-border-color: transparent;
-    --cui-alert-shadow: var(--reflet-panel-shadow);
+    --cui-alert-shadow: none;
   }
 
   :root[data-theme="reflet"]
     :where([data-control-family="empty"][data-slot="root"]) {
-    --cui-empty-radius: var(--radius-panel);
-    --cui-empty-background: var(--secondary);
-    --cui-empty-border-color: var(--border);
-    --cui-empty-border-width: 1px;
-    --cui-empty-border-style: dashed;
+    --cui-empty-padding: calc(var(--spacing) * 10);
     --cui-empty-media-radius: var(--radius-control);
     --cui-empty-media-background: var(--card);
   }
@@ -209,16 +205,71 @@
 
   :root[data-theme="reflet"]
     :where([data-control-family="sidebar"][data-slot="wrapper"]) {
+    --cui-sidebar-wrapper-background: var(--sidebar);
     --cui-sidebar-inset-background: var(--background);
-    --cui-sidebar-inset-shadow: var(--reflet-panel-shadow);
+    --cui-sidebar-inset-shadow: none;
+
+    @media (width >= 64rem) {
+      --cui-sidebar-inset-background: transparent;
+    }
+  }
+
+  :root[data-theme="reflet"]:has([data-app-shell]) {
+    @media (width >= 64rem) {
+      background-color: var(--sidebar);
+    }
   }
 
   :root[data-theme="reflet"]
     :where([data-control-family="sidebar"][data-slot="root"]) {
+    --sidebar-border: transparent;
     --cui-sidebar-menu-button-radius: var(--radius-control);
-    --cui-sidebar-menu-button-active-background: var(--card);
-    --cui-sidebar-menu-button-active-shadow: var(--reflet-control-shadow);
+    --cui-sidebar-menu-button-foreground: var(--muted-foreground);
+    --cui-sidebar-menu-button-active-background: var(--active-fill);
     --cui-sidebar-group-label-foreground: var(--muted-foreground);
+  }
+
+  /* The icon rail marks where you are with a solid tile and keeps every
+     other control flat, so the active section reads first. */
+  :root[data-theme="reflet"]
+  :where(
+    [data-control-family="sidebar"][data-slot="root"][data-collapsible="icon"]
+  ) {
+    --cui-sidebar-menu-button-active-background: var(--primary);
+    --cui-sidebar-menu-button-active-foreground: var(--primary-foreground);
+  }
+
+  :root[data-theme="reflet"]
+    :where(
+      [data-collapsible="icon"]
+        [data-control-family="button"][data-variant="surface"]
+    ) {
+    --cui-button-background: transparent;
+    --cui-button-hover-background: var(--hover-fill);
+    --cui-button-background-image: none;
+    --cui-button-shadow: none;
+    --cui-button-hover-shadow: none;
+  }
+
+  :root[data-theme="reflet"]
+    :where([data-control-family="app-shell-header"][data-slot="root"]) {
+    --cui-app-shell-header-background: transparent;
+    --cui-app-shell-header-border-width: 0px;
+  }
+
+  /* ---------------------------------------------------------------- pages */
+
+  :root[data-theme="reflet"]
+  :where([data-control-family="page-layout"][data-slot="root"]) {
+    --cui-page-layout-background: var(--background);
+  }
+
+  :root[data-theme="reflet"]
+    :where([data-control-family="page-layout"][data-slot="title"]) {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: var(--font-display--font-weight);
+    letter-spacing: var(--font-display--letter-spacing);
   }
 
   /* ---------------------------------------------------------------- data & text */

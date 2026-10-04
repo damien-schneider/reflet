@@ -27,7 +27,7 @@ export default function DuplicateReviewPage({
   }
 
   return (
-    <PageLayout scroll="page" width="wide">
+    <PageLayout width="wide">
       <PageHeader>
         <PageTitle>Duplicates</PageTitle>
         <PageDescription>

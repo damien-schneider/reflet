@@ -13,7 +13,7 @@ import Link from "next/link";
 
 export function OrgNotFound() {
   return (
-    <PageLayout scroll="page" width="content">
+    <PageLayout width="content">
       <PageBody>
         <Empty className="min-h-[50vh]">
           <EmptyHeader>

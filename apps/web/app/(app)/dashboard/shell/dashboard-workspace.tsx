@@ -1,0 +1,39 @@
+import { AppShellHeader } from "@ctrl-ui/react/ui/app-shell";
+import { SidebarTrigger } from "@ctrl-ui/react/ui/sidebar";
+import { SectionPanelHost } from "@/features/dashboard/components/section-panel";
+
+export function isInboxRoute(pathname: string) {
+  return pathname.split("/")[3] === "inbox";
+}
+
+export function DashboardMobileHeader({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <AppShellHeader className="lg:hidden">
+      <SidebarTrigger label="Open navigation" />
+      <div className="flex min-w-0 flex-1 items-center">{children}</div>
+    </AppShellHeader>
+  );
+}
+
+export function DashboardWorkspace({
+  children,
+  panel,
+}: {
+  children: React.ReactNode;
+  panel: React.ReactNode;
+}) {
+  return (
+    <div className="flex min-h-0 flex-1">
+      <SectionPanelHost>
+        {panel}
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto bg-background lg:my-2 lg:me-2 lg:rounded-scene lg:border">
+          {children}
+        </div>
+      </SectionPanelHost>
+    </div>
+  );
+}

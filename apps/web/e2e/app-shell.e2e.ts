@@ -23,23 +23,17 @@ test("dashboard keeps one frame for document pages and inbox panes", async ({
     "none"
   );
   await expect(
-    page.getByRole("heading", { exact: true, name: "Inbox" })
+    page.getByRole("heading", { exact: true, level: 2, name: "Inbox" })
   ).toBeVisible();
   expect(
     await page.evaluate(() => document.documentElement.scrollHeight)
   ).toBeLessThanOrEqual(1001);
-  await page
-    .getByRole("button", { exact: true, name: "Toggle sidebar" })
-    .click();
   await page.getByRole("link", { exact: true, name: "Feedback" }).click();
   await expect(page).toHaveURL(new RegExp(`/dashboard/${slug}$`));
   await expect(page.locator("[data-app-shell]")).toHaveAttribute(
     "data-scroll",
     "page"
   );
-  await expect(
-    page.getByRole("button", { exact: true, name: "Toggle sidebar" })
-  ).toHaveAttribute("aria-expanded", "false");
   const feedbackTitle = page.getByRole("heading", {
     exact: true,
     name: "Feedback",

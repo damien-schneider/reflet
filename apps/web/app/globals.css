@@ -120,6 +120,25 @@
 }
 
 @layer components {
+  :where([data-settings-section] > *, [data-settings-section] > form > *):where(
+    [data-control-family="card"][data-slot="root"]
+  ) {
+    --cui-card-background: transparent;
+    padding-block: 0;
+  }
+
+  :where(
+      [data-settings-section] > [data-control-family="card"],
+      [data-settings-section] > form > [data-control-family="card"]
+    )
+    > :where(
+      [data-slot="header"],
+      [data-slot="content"],
+      [data-slot="footer"]
+    ) {
+    padding-inline: 0;
+  }
+
   .admin-container {
     @apply mx-auto max-w-3xl px-4 pt-12 pb-8;
   }

@@ -6,12 +6,12 @@ import {
   Sidebar,
   SidebarContent,
   SidebarHeader,
-  SidebarRail,
   SidebarTrigger,
 } from "@ctrl-ui/react/ui/sidebar";
 import { catchError, type ErrorInfo } from "next/error";
 import Link from "next/link";
 import { OrgNavigationMenu } from "@/features/dashboard/components/navigation/org-navigation";
+import { orgSections } from "@/features/dashboard/components/navigation/org-sections";
 
 function DashboardErrorShell(
   { pathname }: { pathname: string },
@@ -31,16 +31,15 @@ function DashboardErrorShell(
         <SidebarContent>
           {orgSlug && (
             <OrgNavigationMenu
-              organization={{ isAdmin: false, slug: orgSlug }}
               pathname={pathname}
+              sections={orgSections({ isAdmin: false, slug: orgSlug })}
             />
           )}
         </SidebarContent>
-        <SidebarRail resizable />
       </Sidebar>
       <AppShellContent>
-        <AppShellHeader>
-          <SidebarTrigger />
+        <AppShellHeader className="lg:hidden">
+          <SidebarTrigger label="Open navigation" />
           <span className="truncate text-muted-foreground">Dashboard</span>
         </AppShellHeader>
         <DashboardError error={error} retry={retry} />

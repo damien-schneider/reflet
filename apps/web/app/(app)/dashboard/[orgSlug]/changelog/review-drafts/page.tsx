@@ -228,7 +228,7 @@ export default function ReviewDraftsPage({
 
   if (org === undefined) {
     return (
-      <PageLayout scroll="page" width="content">
+      <PageLayout width="content">
         <PageHeader className="flex flex-col items-start">
           <Skeleton className="h-5 w-36" />
           <Skeleton className="h-9 w-80 max-w-full" />
@@ -242,7 +242,7 @@ export default function ReviewDraftsPage({
   }
 
   return (
-    <PageLayout scroll="page" width="content">
+    <PageLayout width="content">
       <PageHeader className="flex flex-col items-start">
         <Link
           className="inline-flex min-h-10 items-center gap-1 text-muted-foreground text-sm hover:text-foreground"

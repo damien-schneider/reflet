@@ -25,13 +25,13 @@ export function SettingsPage({
   width = "content",
 }: SettingsPageProps) {
   return (
-    <PageLayout scroll="page" width={width}>
+    <PageLayout width={width}>
       <PageHeader>
         <PageTitle>{title}</PageTitle>
         {description ? <PageDescription>{description}</PageDescription> : null}
         {actions ? <PageActions>{actions}</PageActions> : null}
       </PageHeader>
-      <PageBody contentClassName="flex flex-col gap-10">{children}</PageBody>
+      <PageBody contentClassName="flex flex-col gap-14">{children}</PageBody>
     </PageLayout>
   );
 }
@@ -51,7 +51,11 @@ export function SettingsSection({
 }: SettingsSectionProps) {
   const headingId = useId();
   return (
-    <section aria-labelledby={headingId} className="flex flex-col gap-4">
+    <section
+      aria-labelledby={headingId}
+      className="flex flex-col gap-5"
+      data-settings-section=""
+    >
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex min-w-0 flex-col gap-1">
           <h2 className="text-balance text-heading-3" id={headingId}>

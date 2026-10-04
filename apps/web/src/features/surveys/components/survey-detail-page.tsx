@@ -78,7 +78,7 @@ export default function SurveyDetailPage({
   };
 
   return (
-    <PageLayout scroll="page" width="wide">
+    <PageLayout width="wide">
       <PageHeader className="flex flex-col items-start">
         <BackLink orgSlug={orgSlug} />
         <div className="flex w-full flex-wrap items-start justify-between gap-4">
@@ -163,7 +163,7 @@ function SurveyDetailTabs({
 
 function SurveyDetailSkeleton() {
   return (
-    <PageLayout scroll="page" width="wide">
+    <PageLayout width="wide">
       <PageHeader className="flex flex-col items-start">
         <Skeleton className="h-5 w-32" />
         <Skeleton className="h-9 w-80 max-w-full" />
@@ -184,7 +184,7 @@ function SurveyDetailSkeleton() {
 
 function SurveyNotFound({ orgSlug }: { orgSlug: string }) {
   return (
-    <PageLayout scroll="page" width="wide">
+    <PageLayout width="wide">
       <PageHeader className="flex flex-col items-start">
         <BackLink orgSlug={orgSlug} />
       </PageHeader>

@@ -14,7 +14,7 @@ import { ProjectContext } from "@/features/project/components/project-context";
 
 function ProjectLoading() {
   return (
-    <PageLayout aria-busy="true" scroll="page" width="content">
+    <PageLayout aria-busy="true" width="content">
       <PageHeader>
         <Skeleton className="h-9 w-48" />
         <Skeleton className="h-5 w-80 max-w-full" />

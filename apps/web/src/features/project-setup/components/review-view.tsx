@@ -110,7 +110,7 @@ export function ReviewView({
   };
 
   return (
-    <PageLayout scroll="page" width="wide">
+    <PageLayout width="wide">
       <PageHeader>
         <PageTitle>Review your project setup</PageTitle>
         <PageDescription>

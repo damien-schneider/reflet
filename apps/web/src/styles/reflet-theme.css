@@ -12,7 +12,7 @@
   --text-display--font-weight: 600;
   --text-display--letter-spacing: -0.035em;
 
-  --background: oklch(0.978 0.002 90);
+  --background: oklch(0.985 0.002 90);
   --foreground: oklch(0.235 0.006 265);
   --card: oklch(1 0 0);
   --card-foreground: var(--foreground);
@@ -39,6 +39,7 @@
   --focus-ring: var(--ring);
   --primary-text: var(--brand-text);
   --canvas: oklch(0.958 0.003 90);
+  --sidebar: oklch(0.962 0.004 85);
   --destructive: oklch(0.53 0.19 28);
   --destructive-foreground: oklch(1 0 0);
   --destructive-subtle: oklch(from var(--destructive) l c h / 0.12);
@@ -51,7 +52,7 @@
   --warning-text: oklch(0.5 0.11 75);
   --warning-subtle: oklch(from var(--warning) l c h / 0.12);
 
-  --radius: 0.75rem;
+  --radius: 0.625rem;
   --radius-control: var(--radius);
   --radius-field: var(--radius);
   --radius-panel: calc(var(--radius) * 1.333333);
@@ -59,7 +60,7 @@
   --radius-popup-item: calc(var(--radius) * 0.75);
   --popover-padding: 0.375rem;
   --sticky-header-height: 3.5rem;
-  --control-h: 2.375rem;
+  --control-h: 2.125rem;
   --padding-x: 1rem;
   --padding-y: 0.625rem;
   --duration-fast: 160ms;
@@ -149,6 +150,7 @@
   --band: oklch(0.2 0.005 100);
   --ring: oklch(0.76 0.08 135);
   --canvas: oklch(0.245 0.006 80);
+  --sidebar: oklch(0.245 0.006 80);
   --destructive: oklch(0.57 0.2 28);
   --destructive-text: oklch(0.74 0.15 28);
   --success: oklch(0.74 0.14 155);

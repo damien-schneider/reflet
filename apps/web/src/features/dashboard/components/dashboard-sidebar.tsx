@@ -4,7 +4,6 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarMenu,
-  SidebarRail,
 } from "@ctrl-ui/react/ui/sidebar";
 import type { MemberOrganization } from "@reflet/backend/convex/organizations/queries";
 import { CommandPaletteTrigger } from "@/features/command-palette/components/command-palette-trigger";
@@ -73,7 +72,6 @@ export function DashboardSidebar({
         )}
       </SidebarContent>
       <DashboardFooter isAdmin={isAdmin} org={org} />
-      <SidebarRail resizable />
     </Sidebar>
   );
 }

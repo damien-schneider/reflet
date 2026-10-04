@@ -8,22 +8,19 @@ import {
   EmptyHeader,
   EmptyTitle,
 } from "@ctrl-ui/react/ui/empty";
-import {
-  PageActions,
-  PageHeader,
-  PageLayout,
-  PageTitle,
-} from "@ctrl-ui/react/ui/page-layout";
-import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
+import { PageLayout } from "@ctrl-ui/react/ui/page-layout";
+import { SidebarFooter } from "@ctrl-ui/react/ui/sidebar";
 import { ArrowLeft } from "@phosphor-icons/react";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { type ComponentProps, use, useState } from "react";
 import { OrgNotFound } from "@/features/dashboard/components/org-not-found";
+import { SectionPanel } from "@/features/dashboard/components/section-panel";
 import {
   AdminConversationView,
   SelectConversationPrompt,
 } from "@/features/inbox/components/conversation/admin-conversation-view";
 import { InboxListPane } from "@/features/inbox/components/list/inbox-list-pane";
+import { InboxPanelSkeleton } from "@/features/inbox/components/list/inbox-panel-skeleton";
 import { PublicPageControl } from "@/features/inbox/components/public-page-control";
 import { ShortcutHintBar } from "@/features/inbox/components/shortcut-hint-bar";
 import { useInbox } from "@/features/inbox/hooks/use-inbox";
@@ -48,11 +45,12 @@ export default function InboxPage({
 
   if (org === undefined || (org !== null && isAdmin === undefined)) {
     return (
-      <PageLayout className="gap-3 p-4" role="status" width="full">
-        <span className="sr-only">Loading inbox…</span>
-        <Skeleton aria-hidden className="h-8 w-40" />
-        <Skeleton aria-hidden className="min-h-0 w-full flex-1 md:w-80" />
-      </PageLayout>
+      <>
+        <InboxPanelSkeleton />
+        <p className="sr-only" role="status">
+          Loading inbox…
+        </p>
+      </>
     );
   }
 
@@ -97,8 +95,8 @@ function InboxWorkspace({
 
   return (
     <PageLayout width="full">
-      <InboxHeader inbox={inbox} org={org} />
-      <InboxPanes actions={actions} inbox={inbox} />
+      <h1 className="sr-only">Inbox</h1>
+      <InboxPanes actions={actions} inbox={inbox} org={org} />
       <ShortcutHintBar
         canActOnSelection={
           inbox.selectedConversation
@@ -114,19 +112,19 @@ function InboxWorkspace({
 function InboxPanes({
   actions,
   inbox,
+  org,
 }: {
   actions: ReturnType<typeof useInboxActions>;
   inbox: InboxState;
+  org: { _id: Id<"organizations">; slug: string };
 }) {
   const [mobilePane, setMobilePane] = useState<"list" | "conversation">("list");
 
   return (
     <div className="flex min-h-0 flex-1">
-      <div
-        className={cn(
-          "w-full shrink-0 border-r md:block md:w-80",
-          mobilePane === "list" ? "block" : "hidden"
-        )}
+      <SectionPanel
+        className={cn(mobilePane === "list" && "max-lg:flex max-lg:w-full")}
+        title="Inbox"
       >
         <InboxListPane
           list={{
@@ -143,7 +141,11 @@ function InboxPanes({
           search={{ onChange: inbox.setSearchQuery, query: inbox.searchQuery }}
           views={{ current: inbox.view, onChange: inbox.setView }}
         />
-      </div>
+        <SidebarFooter className="p-3">
+          <InboxCount inbox={inbox} />
+          <SupportPageToggle inbox={inbox} org={org} />
+        </SidebarFooter>
+      </SectionPanel>
       <ConversationPane
         controls={{
           actions: actions.selectedConversationActions,
@@ -163,7 +165,7 @@ function InboxPanes({
   );
 }
 
-function InboxHeader({
+function SupportPageToggle({
   inbox,
   org,
 }: {
@@ -171,29 +173,26 @@ function InboxHeader({
   org: { _id: Id<"organizations">; slug: string };
 }) {
   const support = useSupportToggle(inbox, org._id);
-  const count = inbox.conversations?.length;
-
   return (
-    <>
-      <PageHeader className="border-b px-4 py-3">
-        <PageTitle>Inbox</PageTitle>
-        <PageActions>
-          <PublicPageControl
-            onToggle={support.toggleSupport}
-            publicHref={`/${org.slug}/support`}
-            setting={{
-              enabled: inbox.supportEnabled ?? false,
-              isSaving: support.isSaving,
-            }}
-          />
-        </PageActions>
-      </PageHeader>
-      <p className="sr-only" role="status">
-        {count === undefined
-          ? ""
-          : `${count} ${count === 1 ? "conversation" : "conversations"}`}
-      </p>
-    </>
+    <PublicPageControl
+      onToggle={support.toggleSupport}
+      publicHref={`/${org.slug}/support`}
+      setting={{
+        enabled: inbox.supportEnabled ?? false,
+        isSaving: support.isSaving,
+      }}
+    />
+  );
+}
+
+function InboxCount({ inbox }: { inbox: InboxState }) {
+  const count = inbox.conversations?.length;
+  return (
+    <p className="sr-only" role="status">
+      {count === undefined
+        ? ""
+        : `${count} ${count === 1 ? "conversation" : "conversations"}`}
+    </p>
   );
 }
 
@@ -214,10 +213,10 @@ function ConversationPane({
     <div
       className={cn(
         "min-w-0 flex-1 flex-col",
-        mobile.isVisible ? "flex" : "hidden md:flex"
+        mobile.isVisible ? "flex" : "hidden lg:flex"
       )}
     >
-      <div className="border-b p-2 md:hidden">
+      <div className="p-2 lg:hidden">
         <Button onClick={mobile.onBack} size="sm" variant="ghost">
           <ArrowLeft aria-hidden />
           All conversations

@@ -1,14 +1,11 @@
 "use client";
 
 import { DashboardPageBoundary } from "@app/(app)/dashboard/shell/dashboard-error-boundary";
-import { AppShellContent, AppShellHeader } from "@ctrl-ui/react/ui/app-shell";
-import { Kbd, KbdGroup } from "@ctrl-ui/react/ui/kbd";
-import { SidebarTrigger } from "@ctrl-ui/react/ui/sidebar";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@ctrl-ui/react/ui/tooltip";
+  DashboardMobileHeader,
+  DashboardWorkspace,
+} from "@app/(app)/dashboard/shell/dashboard-workspace";
+import { AppShellContent } from "@ctrl-ui/react/ui/app-shell";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
@@ -23,13 +20,13 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { CommandPalette } from "@/features/command-palette/components/command-palette";
-import { useModifierKeyLabel } from "@/features/command-palette/hooks/use-modifier-key-label";
 import { DashboardSidebar } from "@/features/dashboard/components/dashboard-sidebar";
+import { useOrgSections } from "@/features/dashboard/components/navigation/org-navigation";
+import { isSectionActive } from "@/features/dashboard/components/navigation/org-sections";
 import { OrgNotFound } from "@/features/dashboard/components/org-not-found";
-import { DashboardFeedback } from "@/features/dashboard/components/support/dashboard-feedback";
-import { DashboardSupport } from "@/features/dashboard/components/support/dashboard-support";
+import { SectionNavPanel } from "@/features/dashboard/components/section-panel";
+import { FeedbackSectionPanel } from "@/features/feedback/components/feedback-section-panel";
 import { useActiveOrganization } from "@/features/organizations/hooks/use-active-organization";
 import { useMemberOrganization } from "@/features/organizations/hooks/use-member-organization";
 import { OrgPicker, OrgPickerSkeleton, WelcomeState } from "./dashboard-states";
@@ -256,28 +253,10 @@ function DashboardHeader({
   orgSlug?: string;
   pathname: string;
 }) {
-  const modifierKey = useModifierKeyLabel();
   return (
-    <AppShellHeader>
-      <Tooltip>
-        <TooltipTrigger render={<SidebarTrigger />} />
-        <TooltipContent>
-          <span className="flex items-center gap-2">
-            Toggle sidebar
-            <KbdGroup>
-              <Kbd>{modifierKey}</Kbd>
-              <Kbd>B</Kbd>
-            </KbdGroup>
-          </span>
-        </TooltipContent>
-      </Tooltip>
-      <div className="flex min-w-0 flex-1 items-center">
-        <DashboardBreadcrumb orgSlug={orgSlug} pathname={pathname} />
-      </div>
-      <DashboardFeedback />
-      <DashboardSupport />
-      <ThemeToggle className="shrink-0" />
-    </AppShellHeader>
+    <DashboardMobileHeader>
+      <DashboardBreadcrumb orgSlug={orgSlug} pathname={pathname} />
+    </DashboardMobileHeader>
   );
 }
 
@@ -313,6 +292,41 @@ function renderOrganizationPage({
   );
 }
 
+function ActiveSectionPanel({
+  isAdmin,
+  orgSlug,
+  pathname,
+}: {
+  isAdmin: boolean;
+  orgSlug: string;
+  pathname: string;
+}) {
+  const org = useMemberOrganization(orgSlug);
+  const sections = useOrgSections({ id: org?._id, isAdmin, slug: orgSlug });
+  const section = sections.find((candidate) =>
+    isSectionActive(candidate, pathname)
+  );
+  if (!section?.items) {
+    return null;
+  }
+  if (section.href === `/dashboard/${orgSlug}`) {
+    return (
+      <FeedbackSectionPanel
+        organizationId={org?._id}
+        pathname={pathname}
+        section={{ ...section, items: section.items }}
+      />
+    );
+  }
+  return (
+    <SectionNavPanel
+      groups={[{ items: section.items }]}
+      pathname={pathname}
+      title={section.label}
+    />
+  );
+}
+
 export function DashboardContent({ children }: { children: React.ReactNode }) {
   const navigation = useDashboardNavigation();
   const content = navigation.isNonOrgRoute
@@ -334,7 +348,19 @@ export function DashboardContent({ children }: { children: React.ReactNode }) {
           orgSlug={navigation.orgSlug}
           pathname={navigation.pathname}
         />
-        <DashboardPageBoundary>{content}</DashboardPageBoundary>
+        <DashboardWorkspace
+          panel={
+            navigation.activeOrgSlug ? (
+              <ActiveSectionPanel
+                isAdmin={navigation.isAdmin}
+                orgSlug={navigation.activeOrgSlug}
+                pathname={navigation.pathname}
+              />
+            ) : null
+          }
+        >
+          <DashboardPageBoundary>{content}</DashboardPageBoundary>
+        </DashboardWorkspace>
       </AppShellContent>
     </>
   );
