@@ -6,6 +6,7 @@ import Script from "next/script";
 import { Suspense } from "react";
 import { CookieConsentBanner } from "@/components/cookie-consent-banner";
 import { PostHogPageView } from "@/components/posthog-pageview";
+import { RefletDevtools } from "@/components/reflet-devtools";
 import { ThemeColorSync } from "@/components/theme-color-sync";
 import { defaultMetadata, viewport as seoViewport } from "@/lib/seo-config";
 import { ThemeProvider } from "@/lib/theme-provider";
@@ -36,12 +37,6 @@ export default function RootLayout({
     >
       <head>
         <link href="https://umami.damien-schneider.pro" rel="preconnect" />
-        {env.NODE_ENV === "development" && (
-          <Script
-            src="//unpkg.com/react-grab/dist/index.global.js"
-            strategy="lazyOnload"
-          />
-        )}
         <Script
           data-website-id="f4232b19-0136-4892-95b5-05801c29715d"
           src="https://umami.damien-schneider.pro/script.js"
@@ -56,6 +51,7 @@ export default function RootLayout({
           <ThemeColorSync />
           <TooltipProvider>{children}</TooltipProvider>
         </ThemeProvider>
+        {env.NODE_ENV === "development" && <RefletDevtools />}
         <CookieConsentBanner />
       </body>
     </html>
