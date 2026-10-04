@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { api, internal } from "../../_generated/api";
 import type { Id } from "../../_generated/dataModel";
 import { seedOrganization } from "../../test.fixtures";
@@ -309,6 +309,7 @@ describe("starting an email conversation", () => {
   });
 
   test("only the email that opens the conversation goes out without a reply prefix", async () => {
+    vi.useFakeTimers();
     const { as, organizationId, t } = await setup({ pro: true });
     await t.run((ctx) =>
       ctx.db.insert("supportSendingDomains", {
@@ -334,15 +335,19 @@ describe("starting an email conversation", () => {
       conversationId,
     });
 
-    const opensThread = async (messageId: Id<"supportMessages">) =>
-      (
-        await t.query(internal.support.email.outbound.getDeliveryContext, {
-          messageId,
-        })
-      )?.opensThread;
+    vi.stubEnv("RESEND_SUPPORT_API_KEY", "re_test");
+    for (const messageId of [opening._id, followUpId]) {
+      await t.action(internal.support.email.render.deliverAdminReply, {
+        messageId,
+      });
+    }
+    vi.unstubAllEnvs();
+    vi.useRealTimers();
 
-    expect(await opensThread(opening._id)).toBe(true);
-    expect(await opensThread(followUpId)).toBe(false);
+    const sentSubjects = await t.run(async (ctx) =>
+      (await ctx.db.query("emailSendLog").collect()).map((log) => log.subject)
+    );
+    expect(sentSubjects).toEqual(["Your trial", "Re: Your trial"]);
   });
 
   test("a member who is not an admin cannot start one", async () => {

@@ -46,7 +46,9 @@ const earlierThreadMessages = async (
         .lte("createdAt", message.createdAt)
     )
     .collect();
-  return upToMessage.filter((earlier) => earlier._id !== message._id);
+  return upToMessage.filter(
+    (earlier) => earlier._creationTime < message._creationTime
+  );
 };
 
 const threadMessageIds = async (
