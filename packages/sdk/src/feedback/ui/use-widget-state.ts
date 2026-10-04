@@ -23,7 +23,6 @@ import { useWidgetConfig } from "./state/use-widget-config";
 import { useCaptureSync } from "./use-capture-sync";
 
 const SUCCESS_CLOSE_DELAY = 2400;
-const IS_APPLE = /Mac|iPhone|iPad/;
 const MILLISECONDS_PER_DAY = 86_400_000;
 
 function readDismissedUntil(key: string): number {
@@ -50,41 +49,6 @@ function writeDismissedUntil(key: string, until: number): void {
   } catch {
     // storage blocked (private mode, quota) — dismissal just does not persist
   }
-}
-
-export function matchesHotkey(
-  event: Pick<
-    KeyboardEvent,
-    "altKey" | "ctrlKey" | "key" | "metaKey" | "shiftKey"
-  >,
-  hotkey: string,
-  platform = typeof navigator === "undefined" ? "" : navigator.platform
-): boolean {
-  const parts = hotkey
-    .toLowerCase()
-    .split("+")
-    .map((part) => part.trim());
-  const key = parts.at(-1);
-  if (!key || event.key.toLowerCase() !== key) {
-    return false;
-  }
-
-  const isApple = IS_APPLE.test(platform);
-  const wantsMod = parts.includes("mod");
-  const expected = {
-    alt: parts.includes("alt") || parts.includes("option"),
-    ctrl: parts.includes("ctrl") || (wantsMod && !isApple),
-    meta:
-      parts.includes("meta") || parts.includes("cmd") || (wantsMod && isApple),
-    shift: parts.includes("shift"),
-  };
-
-  return (
-    event.altKey === expected.alt &&
-    event.ctrlKey === expected.ctrl &&
-    event.metaKey === expected.meta &&
-    event.shiftKey === expected.shift
-  );
 }
 
 export interface AnnotationTrigger {

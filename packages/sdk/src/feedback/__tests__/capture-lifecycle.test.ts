@@ -6,6 +6,7 @@ import type { CapturedImage } from "../types";
 import { useWidgetState } from "../ui/use-widget-state";
 
 vi.mock("../core/capture", () => ({
+  capturedViewportSize: vi.fn(() => ({ height: 768, width: 1024 })),
   captureViewport: vi.fn(),
   releaseCapture: vi.fn(),
 }));

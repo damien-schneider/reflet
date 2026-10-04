@@ -1,10 +1,11 @@
 import { readFile, realpath, stat } from "node:fs/promises";
-import { extname, isAbsolute, join, relative, sep } from "node:path";
+import { extname, isAbsolute, join } from "node:path";
 import type { SourceFile } from "../../protocol";
 import { type DevtoolsOutcome, failure } from "../json-response";
 import { jsxElementLines } from "./jsx-range";
 import type { ProjectRoots } from "./project-roots";
 import { isServerFrame, mapServerFrame } from "./server-frame";
+import { workspaceRelativePath } from "./workspace-path";
 
 const MAX_SOURCE_BYTES = 1_048_576;
 const MAX_FILE_NAME_LENGTH = 2048;
@@ -29,6 +30,7 @@ const NODE_MODULES_REFUSAL =
 const QUERY_OR_HASH = /[?#].*$/;
 const TURBOPACK_MODULE_SUFFIX = /(?: \[[\w-]+\])+(?: \([\w-]+\))*$/;
 const URL_PREFIXES = [/^file:\/\//, /^https?:\/\/[^/]*/];
+const SLASH_BEFORE_DRIVE = /^\/(?=[a-z]:[\\/])/i;
 const BUNDLER_PREFIXES = [
   /^rsc:\/\/React\/[^/]+\//,
   /^webpack-internal:\/{2,}/,
@@ -93,7 +95,8 @@ export function normalizeSourceFileName(rawFileName: string): string {
     fileName = stripped;
   }
 
-  return isUrlEncoded ? decodePath(fileName) : fileName;
+  const path = isUrlEncoded ? decodePath(fileName) : fileName;
+  return path.replace(SLASH_BEFORE_DRIVE, "");
 }
 
 function candidatePaths(fileName: string, roots: ProjectRoots): string[] {
@@ -109,19 +112,6 @@ function candidatePaths(fileName: string, roots: ProjectRoots): string[] {
 
 function isSourceExtension(path: string): boolean {
   return SOURCE_EXTENSIONS.includes(extname(path).toLowerCase());
-}
-
-function workspaceRelativePath(
-  realPath: string,
-  workspaceRoot: string
-): string | null {
-  const relativePath = relative(workspaceRoot, realPath);
-  const escapes =
-    relativePath === "" ||
-    relativePath === ".." ||
-    relativePath.startsWith(`..${sep}`) ||
-    isAbsolute(relativePath);
-  return escapes ? null : relativePath.split(sep).join("/");
 }
 
 async function checkCandidate(

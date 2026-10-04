@@ -8,6 +8,7 @@ import { getFiberFromNode, resolveComponentStack } from "../core/react-source";
 import type { FeedbackWidgetLabels } from "../types";
 import { AIM_KEYS, isWidgetOwned, stepAim } from "./floating/element-walk";
 import { ArrowIcon } from "./icons";
+import { isApplePlatform, isSubmitEnter, matchesHotkey } from "./keyboard";
 import {
   onViewportChange,
   type VisibleViewport,
@@ -99,8 +100,6 @@ function labelTop(rect: DOMRect, view: VisibleViewport): number {
   }
   return Math.max(rect.top, view.top) + LABEL_GAP;
 }
-
-const APPLE_PLATFORM = /Mac|iPhone|iPad/;
 
 export interface PickerInspect {
   /** Shown on the note card; Shift+click or Shift+Enter skips the card. */
@@ -211,7 +210,8 @@ export function ElementPicker({
         return;
       }
       swallow(event);
-      if (pinnedRef.current) {
+      const isPrimaryPress = event.button === 0;
+      if (pinnedRef.current || !isPrimaryPress) {
         return;
       }
       const element = elementUnder(event.clientX, event.clientY);
@@ -241,9 +241,7 @@ export function ElementPicker({
 
     const copyAimed = (event: KeyboardEvent): boolean => {
       const aimed = aimRef.current;
-      const wantsCopy =
-        (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "c";
-      if (!(wantsCopy && copy && aimed)) {
+      if (!(copy && aimed && matchesHotkey(event, "mod+c"))) {
         return false;
       }
       swallow(event);
@@ -252,6 +250,9 @@ export function ElementPicker({
     };
 
     const onKeyDown = (event: KeyboardEvent) => {
+      if (event.isComposing) {
+        return;
+      }
       if (event.key === "Escape") {
         swallow(event);
         onEscape();
@@ -294,6 +295,7 @@ export function ElementPicker({
     window.addEventListener("mousedown", swallow, true);
     window.addEventListener("mouseup", swallow, true);
     window.addEventListener("click", swallow, true);
+    window.addEventListener("contextmenu", swallow, true);
     const stopListeningToKeys = listenToKeydown(
       pickerRef.current,
       onKeyDown,
@@ -314,6 +316,7 @@ export function ElementPicker({
       window.removeEventListener("mousedown", swallow, true);
       window.removeEventListener("mouseup", swallow, true);
       window.removeEventListener("click", swallow, true);
+      window.removeEventListener("contextmenu", swallow, true);
       stopListeningToKeys();
       window.removeEventListener("scroll", onScroll, true);
       document.body.style.cursor = previousCursor;
@@ -373,7 +376,7 @@ export function ElementPicker({
             maxLength={MAX_SELECTION_COMMENT_LENGTH}
             onChange={(event) => setNote(event.target.value)}
             onKeyDown={(event) => {
-              if (event.key === "Enter" && !event.shiftKey) {
+              if (isSubmitEnter(event.nativeEvent)) {
                 event.preventDefault();
                 onPick(pinned.element, note.trim());
               }
@@ -428,11 +431,7 @@ export function ElementPicker({
             {labels.pickElementHint} <kbd>Tab</kbd>
             <kbd>Enter</kbd>
             {inspect && <kbd>⇧ Click</kbd>}
-            {copy && (
-              <kbd>
-                {APPLE_PLATFORM.test(navigator.userAgent) ? "⌘C" : "Ctrl C"}
-              </kbd>
-            )}
+            {copy && <kbd>{isApplePlatform() ? "⌘C" : "Ctrl C"}</kbd>}
             <kbd>Esc</kbd>
           </span>
           <button className="picker-cancel" onClick={onCancel} type="button">

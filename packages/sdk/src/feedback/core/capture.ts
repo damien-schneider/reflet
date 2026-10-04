@@ -273,6 +273,15 @@ export function buildSnapdomOptions(options: {
   };
 }
 
+/** snapdom's `clip: "viewport"` box, same fallbacks: the layout viewport minus classic (Windows, Linux) scrollbars. */
+export function capturedViewportSize(): { height: number; width: number } {
+  const root = document.documentElement;
+  return {
+    height: root.clientHeight || window.innerHeight,
+    width: root.clientWidth || window.innerWidth,
+  };
+}
+
 export function fitWithin(
   size: { height: number; width: number },
   maxWidth: number

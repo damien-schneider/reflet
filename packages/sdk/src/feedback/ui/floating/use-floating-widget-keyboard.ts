@@ -1,5 +1,6 @@
 import { type RefObject, useEffect } from "react";
-import { matchesHotkey, type WidgetState } from "../use-widget-state";
+import { matchesHotkey } from "../keyboard";
+import type { WidgetState } from "../use-widget-state";
 import { listenToKeydown } from "../widget-events";
 import type { WidgetLauncher } from "./use-widget-launcher";
 

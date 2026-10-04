@@ -83,7 +83,7 @@ function NotePopover({
       true
     );
     const stopKeys = listenToKeydown(popoverRef.current, (event) => {
-      if (event.key === "Escape") {
+      if (event.key === "Escape" && !event.isComposing) {
         onClose();
       }
     });

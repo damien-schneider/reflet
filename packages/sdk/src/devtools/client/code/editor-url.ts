@@ -6,10 +6,14 @@ type EditorLink = (
   column: number
 ) => string;
 
+/** VS Code-family links want `/c:/dir/file.tsx` on Windows, `/dir/file.tsx` elsewhere. */
 const fileSchemeLink =
   (scheme: string): EditorLink =>
-  (absolutePath, line, column) =>
-    `${scheme}://file${encodeURI(absolutePath)}:${line}:${column}`;
+  (absolutePath, line, column) => {
+    const slashed = absolutePath.replaceAll("\\", "/");
+    const rooted = slashed.startsWith("/") ? slashed : `/${slashed}`;
+    return `${scheme}://file${encodeURI(rooted)}:${line}:${column}`;
+  };
 
 const EDITOR_LINKS: Record<EditorId, EditorLink> = {
   cursor: fileSchemeLink("cursor"),

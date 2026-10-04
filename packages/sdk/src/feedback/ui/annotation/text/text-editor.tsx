@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { Annotation, Point } from "../../../types";
 import { CheckIcon, CloseIcon } from "../../icons";
+import { isSubmitEnter } from "../../keyboard";
 
 export interface TextDraft {
   annotation: Annotation;
@@ -43,12 +44,15 @@ export function TextAnnotationEditor({
         }}
         onChange={(event) => setText(event.target.value)}
         onKeyDown={(event) => {
+          if (event.nativeEvent.isComposing) {
+            return;
+          }
           if (event.key === "Escape") {
             event.preventDefault();
             event.stopPropagation();
             onCancel();
           }
-          if (event.key === "Enter" && !event.shiftKey) {
+          if (isSubmitEnter(event.nativeEvent)) {
             event.preventDefault();
             onCommit(text);
           }

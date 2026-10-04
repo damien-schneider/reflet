@@ -59,6 +59,8 @@ summary::-webkit-details-marker { display: none; }
 .screenshot-attachment, .attachment-skeleton { position: relative; flex: none; margin: 0; min-width: 0; width: 128px; height: var(--rf-attachment-height); padding: 0; border-radius: 16px; animation: rf-in 260ms var(--rf-ease); }
 .screenshot-attachment { border: 0; }
 .screenshot-preview { display: block; position: relative; width: 100%; height: 100%; padding: 0; border-radius: inherit; overflow: hidden; }
+.screenshot-preview:disabled { opacity: 1; cursor: default; }
+.screenshot-preview:focus-visible { outline-offset: -2px; }
 .screenshot-preview img, .screenshot-preview canvas { width: 100%; height: 100%; display: block; object-fit: cover; object-position: top center; }
 .screenshot-preview canvas { position: absolute; inset: 0; pointer-events: none; }
 .annotation-count { position: absolute; left: 5px; bottom: 5px; min-width: 20px; padding: 2px 6px; border-radius: var(--rf-pill); font-size: 10px; font-weight: 600; font-variant-numeric: tabular-nums; text-align: center; color: var(--rf-text); }

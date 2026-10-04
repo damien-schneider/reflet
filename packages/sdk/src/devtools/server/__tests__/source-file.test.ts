@@ -14,7 +14,7 @@ import {
   type ProjectRoots,
   resolveProjectRoots,
 } from "../source/project-roots";
-import { readSourceFile } from "../source/source-file";
+import { normalizeSourceFileName, readSourceFile } from "../source/source-file";
 
 const PAGE_SOURCE = [
   "export default function Page() {",
@@ -70,6 +70,23 @@ afterAll(() => {
 describe("resolveProjectRoots", () => {
   it("uses the nearest ancestor holding .git as the workspace", () => {
     expect(roots.workspaceRoot).toBe(dirname(dirname(roots.root)));
+  });
+});
+
+describe("normalizeSourceFileName", () => {
+  it("keeps the drive of Windows paths from file URLs, Vite /@fs and URL pathnames", () => {
+    expect(normalizeSourceFileName("/@fs/C:/repo/packages/ui/x.tsx")).toBe(
+      "C:/repo/packages/ui/x.tsx"
+    );
+    expect(normalizeSourceFileName("/C:/repo/src/App.tsx")).toBe(
+      "C:/repo/src/App.tsx"
+    );
+    expect(normalizeSourceFileName("file:///C:/My%20Repo/src/App.tsx")).toBe(
+      "C:/My Repo/src/App.tsx"
+    );
+    expect(normalizeSourceFileName("file:///Users/me/src/App.tsx")).toBe(
+      "/Users/me/src/App.tsx"
+    );
   });
 });
 

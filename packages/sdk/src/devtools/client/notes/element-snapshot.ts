@@ -1,5 +1,6 @@
 import {
   capturedFromCanvas,
+  capturedViewportSize,
   captureViewport,
   releaseCapture,
 } from "../../../feedback/core/capture";
@@ -20,15 +21,18 @@ interface Box {
 }
 
 /** The element plus some room around it, grown to a readable minimum, kept inside the window. */
-function cropAround(rect: DOMRect): Box {
+function cropAround(
+  rect: DOMRect,
+  viewport: { height: number; width: number }
+): Box {
   const grow = (start: number, length: number, limit: number) => {
     const padded = Math.max(length + CROP_PADDING * 2, MIN_CROP_SIZE);
     const from = Math.max(0, start + length / 2 - padded / 2);
     const to = Math.min(limit, from + padded);
     return { from: Math.max(0, to - padded), to };
   };
-  const horizontal = grow(rect.left, rect.width, window.innerWidth);
-  const vertical = grow(rect.top, rect.height, window.innerHeight);
+  const horizontal = grow(rect.left, rect.width, viewport.width);
+  const vertical = grow(rect.top, rect.height, viewport.height);
   return {
     height: vertical.to - vertical.from,
     width: horizontal.to - horizontal.from,
@@ -65,8 +69,9 @@ export async function captureElementSnapshot(
     if (rect.width === 0 || rect.height === 0) {
       return null;
     }
-    const scale = page.width / window.innerWidth;
-    const crop = cropAround(rect);
+    const viewport = capturedViewportSize();
+    const scale = page.width / viewport.width;
+    const crop = cropAround(rect, viewport);
     const canvas = document.createElement("canvas");
     canvas.width = Math.round(crop.width * scale);
     canvas.height = Math.round(crop.height * scale);

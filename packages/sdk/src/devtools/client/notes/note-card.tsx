@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { isSubmitEnter } from "../../../feedback/ui/keyboard";
 import type { CodeTarget } from "../code/code-panel";
 import { reportFailure } from "../notices";
 import { type DevNote, noteStore } from "./note-store";
@@ -86,7 +87,7 @@ function NoteEditor({
         className="dt-field"
         onChange={(event) => setText(event.target.value)}
         onKeyDown={(event) => {
-          if (event.key === "Enter" && !event.shiftKey) {
+          if (isSubmitEnter(event.nativeEvent)) {
             event.preventDefault();
             save();
           }

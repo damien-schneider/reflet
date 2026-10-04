@@ -76,6 +76,7 @@ export interface FeedbackWidgetLabels {
   minimize: string;
   moreOptions: string;
   moveFeedback: string;
+  openScreenshot: string;
   pickAnother: string;
   pickElement: string;
   pickElementHint: string;
@@ -121,6 +122,7 @@ export const DEFAULT_WIDGET_LABELS: FeedbackWidgetLabels = {
   minimize: "Minimize feedback",
   moreOptions: "More options",
   moveFeedback: "Move feedback",
+  openScreenshot: "Open screenshot",
   pickAnother: "Pick another",
   pickElement: "Point at an element",
   pickElementHint: "Pick the element you are talking about",

@@ -1,5 +1,6 @@
 import type { ElementSelection } from "../../types";
 import type { Annotation, CapturedImage } from "../types";
+import { capturedViewportSize } from "./capture";
 
 const SELECTION_COLOR = "#4f46e5";
 const SELECTION_ANNOTATION_PREFIX = "selection-";
@@ -12,7 +13,7 @@ export function highlightFor(
   selection: ElementSelection,
   capture: CapturedImage
 ): Annotation {
-  const scale = capture.width / window.innerWidth;
+  const scale = capture.width / capturedViewportSize().width;
   const { rect } = selection;
 
   return {

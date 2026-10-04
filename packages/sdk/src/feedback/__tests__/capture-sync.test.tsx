@@ -171,6 +171,30 @@ describe("capture and page context sync", () => {
     });
   });
 
+  it("opens the screenshot when its thumbnail is clicked", async () => {
+    HTMLDialogElement.prototype.showModal = vi.fn();
+    HTMLDialogElement.prototype.close = vi.fn();
+    render(<RefletFeedback publicKey="fb_pub_test" />);
+    act(() => {
+      launcher().click();
+    });
+
+    const thumbnail = await waitFor(() => {
+      const button = shadow().querySelector('[aria-label="Open screenshot 1"]');
+      if (!(button instanceof HTMLButtonElement && !button.disabled)) {
+        throw new Error("Thumbnail not ready");
+      }
+      return button;
+    });
+    act(() => {
+      thumbnail.click();
+    });
+
+    expect(shadow().querySelector(".root")?.getAttribute("data-editing")).toBe(
+      "true"
+    );
+  });
+
   it("still submits the written feedback when every capture fails", async () => {
     vi.mocked(captureViewport).mockRejectedValue(new Error("no shot"));
 

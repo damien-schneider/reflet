@@ -43,7 +43,7 @@ export function DevtoolsSheet({
   useEffect(
     () =>
       listenToKeydown(rootRef.current, (event) => {
-        if (event.key === "Escape") {
+        if (event.key === "Escape" && !event.isComposing) {
           onClose();
         }
       }),

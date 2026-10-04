@@ -5,6 +5,21 @@ All notable changes to `reflet-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.4] - 2026-10-04
+
+### Added
+
+- Click a screenshot thumbnail in the widget to open it full size, the same view the pencil opens.
+
+### Fixed
+
+- Picked-element highlights and devtools close-ups land on the element on Windows and Linux. A classic scrollbar used to shift them left, by up to its own width near the right edge.
+- Letter hotkeys work with macOS Option (⌥F types "ƒ") and on non-Latin keyboard layouts, for both the `hotkey` prop and the picker's ⌘C / Ctrl+C.
+- Pressing Enter to confirm Japanese, Chinese or Korean input no longer submits the picker note, the devtools note or a text annotation. Pressing Escape to cancel the input no longer closes the picker note, a text annotation, the devtools panel or a note pin either.
+- Right-click no longer picks an element, and the page's context menu no longer opens while picking.
+- "Open in editor" links work for Windows paths (`vscode://file/C:/…`), and devtools resolves `file:///C:/…`, Vite `/@fs/C:/…` and `/C:/…` source frames.
+- Devtools refuses Server Component chunks on another Windows drive as outside the repository.
+
 ## [0.6.3] - 2026-10-04
 
 ### Added
