@@ -6,6 +6,11 @@ export function isInboxRoute(pathname: string) {
   return pathname.split("/")[3] === "inbox";
 }
 
+export function isSurveyDetailRoute(pathname: string) {
+  const [, , , section, surveyId] = pathname.split("/");
+  return section === "surveys" && Boolean(surveyId);
+}
+
 export function DashboardMobileHeader({
   children,
 }: {

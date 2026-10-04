@@ -8,6 +8,8 @@ import {
   SidebarMenu,
   SidebarRail,
 } from "@ctrl-ui/react/ui/sidebar";
+import { ArrowLeft } from "@phosphor-icons/react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { createContext, use, useState } from "react";
 import { createPortal } from "react-dom";
@@ -30,10 +32,12 @@ export function SectionPanelHost({ children }: { children: React.ReactNode }) {
 }
 
 export function SectionPanel({
+  backHref,
   children,
   className,
   title,
 }: {
+  backHref?: string;
   children: React.ReactNode;
   className?: string;
   title: string;
@@ -49,7 +53,19 @@ export function SectionPanel({
       label={title}
     >
       <SidebarHeader className="h-14 shrink-0 justify-center px-4">
-        <h2 className="text-heading-2 tracking-tight">{title}</h2>
+        <h2 className="text-heading-2 tracking-tight">
+          {backHref ? (
+            <Link
+              className="-ms-1 inline-flex items-center gap-1.5 rounded-md px-1 hover:text-muted-foreground"
+              href={backHref}
+            >
+              <ArrowLeft aria-hidden className="size-5" />
+              {title}
+            </Link>
+          ) : (
+            title
+          )}
+        </h2>
       </SidebarHeader>
       {children}
       <SidebarRail aria-label="Resize panel" resizable />

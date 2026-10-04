@@ -4,6 +4,7 @@ import { DashboardPageBoundary } from "@app/(app)/dashboard/shell/dashboard-erro
 import {
   DashboardMobileHeader,
   DashboardWorkspace,
+  isSurveyDetailRoute,
 } from "@app/(app)/dashboard/shell/dashboard-workspace";
 import { AppShellContent } from "@ctrl-ui/react/ui/app-shell";
 import { api } from "@reflet/backend/convex/_generated/api";
@@ -306,7 +307,7 @@ function ActiveSectionPanel({
   const section = sections.find((candidate) =>
     isSectionActive(candidate, pathname)
   );
-  if (!section?.items) {
+  if (!section?.items || isSurveyDetailRoute(pathname)) {
     return null;
   }
   if (section.href === `/dashboard/${orgSlug}`) {

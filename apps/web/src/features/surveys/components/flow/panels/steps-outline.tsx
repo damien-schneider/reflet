@@ -24,7 +24,7 @@ import { QUESTION_TYPE_ICONS } from "@/features/surveys/lib/question-type-icons"
 import { type FlowStepRef, selectedFlowStepAtom } from "@/store/surveys";
 
 /** The accessible, keyboard-first view of the flow: every step in order, with reordering. */
-export function StepsOutline() {
+export function StepsOutline({ className }: { className: string }) {
   const { actions, model } = useFlowEditor();
   const selectStep = useSelectFlowStep();
   const selection = useAtomValue(selectedFlowStepAtom);
@@ -38,10 +38,7 @@ export function StepsOutline() {
   };
 
   return (
-    <nav
-      aria-label="Steps"
-      className="flex w-64 shrink-0 flex-col border-e bg-background"
-    >
+    <nav aria-label="Steps" className={cn("flex min-h-0 flex-col", className)}>
       <h2 className="px-4 pt-3 pb-2 font-medium text-muted-foreground text-xs">
         Steps
       </h2>

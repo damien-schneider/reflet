@@ -5,6 +5,7 @@ import { ReactFlowProvider } from "@xyflow/react";
 import { useQuery } from "convex/react";
 import { useAtomValue } from "jotai";
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { DestructiveConfirmDialog } from "@/components/ui/destructive-confirm-dialog";
 import { FlowCanvas } from "@/features/surveys/components/flow/flow-canvas";
 import {
@@ -71,12 +72,22 @@ const deletionWarning = ({ answers, step }: PendingDelete): string =>
 
 interface SurveyFlowEditorProps {
   onEditTrigger: () => void;
+  stepsOutlineContainer: HTMLElement | null;
   survey: FlowSurvey;
+}
+
+function placeStepsOutline(container: HTMLElement | null) {
+  return container ? (
+    createPortal(<StepsOutline className="flex-1 border-t" />, container)
+  ) : (
+    <StepsOutline className="w-64 shrink-0 border-e bg-background" />
+  );
 }
 
 /** The Flow tab: steps outline, canvas, live preview and the selected step's inspector. */
 export function SurveyFlowEditor({
   onEditTrigger,
+  stepsOutlineContainer,
   survey,
 }: SurveyFlowEditorProps) {
   const analytics = useQuery(
@@ -128,7 +139,7 @@ export function SurveyFlowEditor({
     <FlowEditorContext value={editor}>
       <ReactFlowProvider>
         <div className="flex min-h-0 flex-1 border-t">
-          {isOutlineOpen ? <StepsOutline /> : null}
+          {isOutlineOpen ? placeStepsOutline(stepsOutlineContainer) : null}
           <div className="relative min-w-0 flex-1">
             <FlowCanvas />
             {isPreviewOpen ? <PreviewPanel /> : null}
