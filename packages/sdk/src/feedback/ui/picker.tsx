@@ -107,7 +107,7 @@ export interface PickerInspect {
   onInspect: (element: Element) => void;
 }
 
-/** ⌘C on the aimed element, or the note card's button with its note. */
+/** ⌘C on the aimed element, Enter on an empty note, or the note card's button. */
 export interface PickerCopy {
   label: string;
   onCopy: (element: Element, note: string) => void;
@@ -376,9 +376,15 @@ export function ElementPicker({
             maxLength={MAX_SELECTION_COMMENT_LENGTH}
             onChange={(event) => setNote(event.target.value)}
             onKeyDown={(event) => {
-              if (isSubmitEnter(event.nativeEvent)) {
-                event.preventDefault();
-                onPick(pinned.element, note.trim());
+              if (!isSubmitEnter(event.nativeEvent)) {
+                return;
+              }
+              event.preventDefault();
+              const trimmedNote = note.trim();
+              if (copy && !trimmedNote) {
+                copy.onCopy(pinned.element, "");
+              } else {
+                onPick(pinned.element, trimmedNote);
               }
             }}
             placeholder={labels.elementNotePlaceholder}
