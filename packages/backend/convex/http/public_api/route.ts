@@ -1,6 +1,6 @@
 import type { z } from "zod";
-import { httpAction } from "../../_generated/server";
-import { clientErrorMessage, errorResponse } from "../helpers";
+import type { httpAction } from "../../_generated/server";
+import { apiRoute, errorResponse } from "../helpers";
 import {
   type ApiAuthContext,
   authenticateApiRequest,
@@ -19,23 +19,9 @@ type PublicHandler = (args: PublicRouteArgs) => Promise<Response>;
 export function publicApiRoute(
   handler: PublicHandler
 ): ReturnType<typeof httpAction> {
-  return httpAction(async (ctx, request) => {
-    try {
-      const authResult = await authenticateApiRequest(ctx, request);
-      if (!authResult.success) {
-        return authResult.response;
-      }
-
-      return await handler({
-        auth: authResult.auth,
-        ctx,
-        request,
-        url: new URL(request.url),
-      });
-    } catch (error) {
-      return errorResponse(clientErrorMessage(error), 500);
-    }
-  });
+  return apiRoute(authenticateApiRequest, (ctx, request, auth) =>
+    handler({ auth, ctx, request, url: new URL(request.url) })
+  );
 }
 
 export async function readJsonBody<TSchema extends z.ZodType>(

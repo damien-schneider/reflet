@@ -1,6 +1,7 @@
 import { internal } from "../_generated/api";
 import type { Id, TableNames } from "../_generated/dataModel";
 import { httpAction } from "../_generated/server";
+import type { ApiCredential } from "./public_api/auth";
 
 // ============================================
 // TYPES
@@ -8,9 +9,16 @@ import { httpAction } from "../_generated/server";
 
 type ActionCtx = Parameters<Parameters<typeof httpAction>[0]>[0];
 
-export interface AdminAuth {
+export interface ApiRequestActor {
+  credential: ApiCredential;
   organizationId: Id<"organizations">;
 }
+
+export type AdminAuth = ApiRequestActor;
+
+type AuthenticationOutcome<TAuth> =
+  | { success: true; auth: TAuth }
+  | { success: false; response: Response };
 
 // ============================================
 // RESPONSE HELPERS
@@ -196,7 +204,10 @@ async function authenticateAdminRequest(
   });
 
   return {
-    auth: { organizationId: validation.organizationId },
+    auth: {
+      credential: { organizationApiKeyId: validation.organizationApiKeyId },
+      organizationId: validation.organizationId,
+    },
     success: true,
   };
 }
@@ -205,25 +216,64 @@ async function authenticateAdminRequest(
 // ROUTE FACTORIES
 // ============================================
 
-export function adminGet(
-  handler: (ctx: ActionCtx, auth: AdminAuth, url: URL) => Promise<unknown>
+const recordFailedApiRequest = async (
+  ctx: ActionCtx,
+  request: Request,
+  actor: ApiRequestActor,
+  response: Response
+): Promise<void> => {
+  if (response.status < 400) {
+    return;
+  }
+  await ctx.runMutation(internal.feedback.api_auth.logApiRequest, {
+    ...actor.credential,
+    endpoint: new URL(request.url).pathname,
+    method: request.method,
+    organizationId: actor.organizationId,
+    statusCode: response.status,
+    userAgent: request.headers.get("User-Agent") ?? undefined,
+  });
+};
+
+export function apiRoute<TAuth extends ApiRequestActor>(
+  authenticate: (
+    ctx: ActionCtx,
+    request: Request
+  ) => Promise<AuthenticationOutcome<TAuth>>,
+  respond: (ctx: ActionCtx, request: Request, auth: TAuth) => Promise<Response>
 ): ReturnType<typeof httpAction> {
   return httpAction(async (ctx, request) => {
+    let auth: TAuth;
     try {
-      const authResult = await authenticateAdminRequest(ctx, request);
+      const authResult = await authenticate(ctx, request);
       if (!authResult.success) {
         return authResult.response;
       }
-
-      const url = new URL(request.url);
-      const data = await handler(ctx, authResult.auth, url);
-      if (data === null) {
-        return errorResponse("Not found", 404);
-      }
-      return jsonResponse(data);
+      auth = authResult.auth;
     } catch (error) {
       return errorResponse(clientErrorMessage(error), 500);
     }
+
+    let response: Response;
+    try {
+      response = await respond(ctx, request, auth);
+    } catch (error) {
+      response = errorResponse(clientErrorMessage(error), 500);
+    }
+    await recordFailedApiRequest(ctx, request, auth, response);
+    return response;
+  });
+}
+
+export function adminGet(
+  handler: (ctx: ActionCtx, auth: AdminAuth, url: URL) => Promise<unknown>
+): ReturnType<typeof httpAction> {
+  return apiRoute(authenticateAdminRequest, async (ctx, request, auth) => {
+    const data = await handler(ctx, auth, new URL(request.url));
+    if (data === null) {
+      return errorResponse("Not found", 404);
+    }
+    return jsonResponse(data);
   });
 }
 
@@ -234,23 +284,12 @@ export function adminPost(
     body: Record<string, unknown>
   ) => Promise<unknown>
 ): ReturnType<typeof httpAction> {
-  return httpAction(async (ctx, request) => {
-    try {
-      const authResult = await authenticateAdminRequest(ctx, request);
-      if (!authResult.success) {
-        return authResult.response;
-      }
-
-      const bodyResult = await parseJsonBody(request);
-      if (!bodyResult.success) {
-        return bodyResult.response;
-      }
-
-      const data = await handler(ctx, authResult.auth, bodyResult.body);
-      return jsonResponse(data);
-    } catch (error) {
-      return errorResponse(clientErrorMessage(error), 500);
+  return apiRoute(authenticateAdminRequest, async (ctx, request, auth) => {
+    const bodyResult = await parseJsonBody(request);
+    if (!bodyResult.success) {
+      return bodyResult.response;
     }
+    return jsonResponse(await handler(ctx, auth, bodyResult.body));
   });
 }
 

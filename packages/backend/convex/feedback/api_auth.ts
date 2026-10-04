@@ -152,3 +152,20 @@ export const getOrCreateExternalUser = internalMutation({
   },
   returns: v.union(v.id("externalUsers"), v.null()),
 });
+
+export const logApiRequest = internalMutation({
+  args: {
+    devtoolsTokenId: v.optional(v.id("devtoolsTokens")),
+    endpoint: v.string(),
+    method: v.string(),
+    organizationApiKeyId: v.optional(v.id("organizationApiKeys")),
+    organizationId: v.id("organizations"),
+    statusCode: v.number(),
+    userAgent: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.insert("apiRequestLogs", { ...args, timestamp: Date.now() });
+    return null;
+  },
+  returns: v.null(),
+});
