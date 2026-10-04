@@ -606,34 +606,6 @@ describe("RoadmapView", () => {
       });
     });
 
-    it("refuses a drop on a column without a lifecycle meaning", async () => {
-      render(
-        <RoadmapView
-          feedback={mockFeedback}
-          isAdmin={true}
-          onFeedbackClick={vi.fn()}
-          organizationId={"org-1" as never}
-          statuses={[
-            ...mockStatuses,
-            {
-              _id: "status-legacy" as Id<"organizationStatuses">,
-              color: "#6b7280",
-              name: "Legacy",
-            },
-          ]}
-        />
-      );
-
-      await act(async () => {
-        dndHandlers.onDragEnd?.({
-          active: { id: "feedback-1" },
-          over: { id: "status-legacy" },
-        });
-      });
-
-      expect(mockUpdateFeedbackStatus).not.toHaveBeenCalled();
-    });
-
     it("applies optimistic update moving item to new column", async () => {
       mockUpdateFeedbackStatus.mockImplementation(
         () => new Promise((resolve) => setTimeout(resolve, 5000))

@@ -112,7 +112,6 @@ describe("admin_api_organization", () => {
       })
     );
 
-    // Create status
     await t.run(async (ctx) =>
       ctx.db.insert("organizationStatuses", {
         color: "#FFAA00",
@@ -120,6 +119,7 @@ describe("admin_api_organization", () => {
         name: "In Progress",
         order: 0,
         organizationId: orgId,
+        semanticStatus: "in_progress",
         updatedAt: Date.now(),
       })
     );

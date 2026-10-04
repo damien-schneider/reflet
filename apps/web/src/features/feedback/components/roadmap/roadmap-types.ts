@@ -7,7 +7,7 @@ export interface RoadmapViewProps {
   onFeedbackClick: (feedbackId: string) => void;
   organizationId: Id<"organizations">;
   statuses: Array<{
-    semanticStatus?: Doc<"feedback">["status"];
+    semanticStatus: Doc<"feedback">["status"];
     _id: Id<"organizationStatuses">;
     name: string;
     color: string;

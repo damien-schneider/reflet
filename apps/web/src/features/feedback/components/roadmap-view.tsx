@@ -92,7 +92,7 @@ function useRoadmapMove({
             ...item,
             organizationStatus: target,
             organizationStatusId: target._id,
-            status: target.semanticStatus ?? item.status,
+            status: target.semanticStatus,
           };
         });
 
@@ -113,13 +113,6 @@ function useRoadmapMove({
 
     const currentItem = feedback.find((f) => f._id === feedbackId);
     if (currentItem?.organizationStatusId === finalStatusId) {
-      return;
-    }
-
-    if (droppedOnColumn && !droppedOnColumn.semanticStatus) {
-      toast.error(
-        `Set a lifecycle meaning on “${droppedOnColumn.name}” before moving feedback into it.`
-      );
       return;
     }
 

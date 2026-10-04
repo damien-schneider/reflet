@@ -6,6 +6,7 @@ import {
   requireAuthUser,
   requireOrgMember,
 } from "../shared/access";
+import type { FeedbackStatusValue } from "../shared/validators";
 
 import { DEFAULT_STATUSES, sortColumnsByLifecycle } from "./status_definitions";
 
@@ -118,7 +119,7 @@ export const ensureDefaults = mutation({
     const createdStatuses: Array<{
       _id: Id<"organizationStatuses">;
       organizationId: Id<"organizations">;
-      semanticStatus?: import("../shared/validators").FeedbackStatusValue;
+      semanticStatus: FeedbackStatusValue;
       name: string;
       color: string;
       icon: string;

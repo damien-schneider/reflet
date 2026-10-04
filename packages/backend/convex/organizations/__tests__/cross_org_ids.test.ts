@@ -25,7 +25,12 @@ const seedTenant = async (
     userId: options.ownerId,
   });
   const statusIds: Id<"organizationStatuses">[] = [];
-  for (const [order, name] of ["Backlog", "Done"].entries()) {
+  for (const [order, [name, semanticStatus]] of (
+    [
+      ["Backlog", "open"],
+      ["Done", "completed"],
+    ] as const
+  ).entries()) {
     statusIds.push(
       await ctx.db.insert("organizationStatuses", {
         color: "#000000",
@@ -33,6 +38,7 @@ const seedTenant = async (
         name,
         order,
         organizationId,
+        semanticStatus,
         updatedAt: now,
       })
     );

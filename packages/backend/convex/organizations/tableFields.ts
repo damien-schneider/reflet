@@ -112,7 +112,7 @@ export const organizationTables = {
     name: v.string(),
     order: v.number(),
     organizationId: v.id("organizations"),
-    semanticStatus: v.optional(feedbackStatus),
+    semanticStatus: feedbackStatus,
     updatedAt: v.number(),
   })
     .index("by_organization", ["organizationId"])

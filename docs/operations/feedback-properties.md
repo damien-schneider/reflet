@@ -1,30 +1,10 @@
 # Feedback properties deployment
 
-New feedback writes its fixed lifecycle and its board column together. Existing feedback may have a completed lifecycle with a Backlog column. Renaming a column must never change its lifecycle meaning.
+New feedback writes its fixed lifecycle and its board column together. Every column has a lifecycle meaning (`semanticStatus`), and renaming a column never changes it. The board always lists columns in lifecycle order (Backlog, Under Review, Planned, In Progress, Done, Closed); the stored `order` only ranks columns sharing a meaning.
 
-The schema accepts an unset column meaning during rollout because production data has not been migrated. An unset column cannot receive feedback until an admin assigns its meaning. New columns select an explicit meaning, and established meanings cannot change.
+The one-off reconciliation that assigned meanings to legacy columns and moved feedback into the column matching its lifecycle ran on production and dev on 2026-10-04. Its endpoints are removed and the schema requires `semanticStatus`.
 
-## Reconcile existing data
-
-This operation has not been run by the implementation task. Deploy the backend before running it. Review each organization's column meanings explicitly; do not infer them from localized names.
-
-From `packages/backend`, inspect the organization:
-
-```sh
-bunx convex run --prod migrations/feedback_properties:preflight '{"organizationId":"ORG_ID"}'
-```
-
-Preflight returns a bounded sample of up to 1,000 feedbacks, column names, existing lifecycle values and conflicting feedback IDs. It is read-only. It does not prove there are no conflicts outside the sample.
-
-Supply a meaning for every column whose meaning is unset. Run the reconciliation in batches of 100, passing the returned `continueCursor` until `isDone` is true:
-
-```sh
-bunx convex run --prod migrations/feedback_properties:reconcile '{"organizationId":"ORG_ID","cursor":null,"meanings":[{"statusId":"COLUMN_ID","semanticStatus":"open"}]}'
-```
-
-The fixed feedback lifecycle is authoritative for reconciliation. A completed item moves to a column with completed meaning, creating that column if necessary. Its historical `completedAt` is preserved. A reopened item clears `completedAt`. Human properties, audience, approval, tags and activity logs are preserved. Repeating the operation is safe.
-
-After every organization is reconciled, make `semanticStatus` required and remove the migration endpoints. Old per-category `requireApproval` and `defaultStatus` settings and roadmap flags are retained only in the storage schema during this rollout; feedback creation and board filtering no longer use them as lifecycle or publication overrides. Their stored fields can be removed by a separately reviewed data migration before tightening the schema.
+Old per-category `requireApproval` and `defaultStatus` settings and roadmap flags are retained only in the storage schema; feedback creation and board filtering no longer use them as lifecycle or publication overrides. Their stored fields can be removed by a separately reviewed data migration before tightening the schema.
 
 ## Publication and triage
 

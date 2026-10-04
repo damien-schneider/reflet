@@ -51,11 +51,6 @@ export async function resolveStatusTarget(
     if (!column || column.organizationId !== feedback.organizationId) {
       throw new ConvexError("Invalid status for this organization");
     }
-    if (!column.semanticStatus) {
-      throw new ConvexError(
-        "This column needs a lifecycle meaning before feedback can move into it"
-      );
-    }
     if (
       change.status !== undefined &&
       change.status !== column.semanticStatus

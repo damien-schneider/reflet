@@ -22,7 +22,6 @@ import { useState } from "react";
 import { NotionColorPicker } from "@/components/ui/notion-color-picker";
 import { TiptapTitleEditor } from "@/components/ui/tiptap/title-editor";
 import { resolveTagColor, type TagColor } from "@/lib/tag-colors";
-import { StatusMeaningSelect } from "./status-meaning-select";
 
 interface RoadmapColumnHeaderProps {
   color: string;
@@ -30,7 +29,7 @@ interface RoadmapColumnHeaderProps {
   isAdmin: boolean;
   name: string;
   onDelete: () => void;
-  semanticStatus?: Doc<"feedback">["status"];
+  semanticStatus: Doc<"feedback">["status"];
   statusId: Id<"organizationStatuses">;
 }
 
@@ -169,25 +168,9 @@ export function RoadmapColumnHeader({
           </>
         )}
       </div>
-      {semanticStatus ? (
-        <p className="text-muted-foreground text-xs">
-          Lifecycle: {STATUS_DEFINITIONS[semanticStatus].name}
-        </p>
-      ) : null}
-      {!semanticStatus && isAdmin && (
-        <StatusMeaningSelect
-          onChange={(meaning) =>
-            updateStatus({ id: statusId, semanticStatus: meaning }).catch(() =>
-              toast.error("Could not set lifecycle meaning")
-            )
-          }
-        />
-      )}
-      {!(semanticStatus || isAdmin) && (
-        <p className="text-muted-foreground text-xs">
-          Lifecycle meaning has not been configured
-        </p>
-      )}
+      <p className="text-muted-foreground text-xs">
+        Lifecycle: {STATUS_DEFINITIONS[semanticStatus].name}
+      </p>
     </div>
   );
 }

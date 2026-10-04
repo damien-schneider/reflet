@@ -62,7 +62,6 @@ export const update = mutation({
     icon: v.optional(v.string()),
     id: v.id("organizationStatuses"),
     name: v.optional(v.string()),
-    semanticStatus: v.optional(feedbackStatus),
   },
   handler: async (ctx, args) => {
     const user = await requireAuthUser(ctx);
@@ -83,15 +82,6 @@ export const update = mutation({
       throw new Error("Only admins can update statuses");
     }
 
-    if (
-      args.semanticStatus &&
-      status.semanticStatus &&
-      args.semanticStatus !== status.semanticStatus
-    ) {
-      throw new Error(
-        "Lifecycle meaning is stable; create a new status to change it"
-      );
-    }
     const { id, ...updates } = args;
     await ctx.db.patch(id, {
       ...updates,

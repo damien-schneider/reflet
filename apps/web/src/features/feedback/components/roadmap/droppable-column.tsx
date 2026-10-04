@@ -12,7 +12,6 @@ export function DroppableColumn({
   onFeedbackClick,
   onDeleteClick,
 }: DroppableColumnProps) {
-  const acceptsFeedback = status.semanticStatus !== undefined;
   const { setNodeRef, isOver } = useDroppable({
     data: {
       statusId: status._id,
@@ -20,17 +19,13 @@ export function DroppableColumn({
     },
     id: status._id,
   });
-  const acceptsDrop = isOver && acceptsFeedback;
-  const emptyColumnHint = acceptsFeedback
-    ? "Drop here"
-    : "Set a lifecycle meaning to drop here";
 
   return (
     <section
       aria-label={status.name}
       className={cn(
         "group w-72 shrink-0 rounded-lg p-4 outline-2 outline-transparent -outline-offset-2 transition-[background-color,outline-color] duration-(--duration-fast) ease-(--ease-standard)",
-        acceptsDrop ? "bg-accent outline-dashed outline-ring/50" : "bg-muted/30"
+        isOver ? "bg-accent outline-dashed outline-ring/50" : "bg-muted/30"
       )}
       ref={setNodeRef}
     >
@@ -60,10 +55,10 @@ export function DroppableColumn({
             className={cn(
               "flex min-h-24 items-center justify-center rounded-md border border-transparent border-dashed text-muted-foreground text-sm",
               isDragging && "border-border",
-              acceptsDrop && "text-foreground"
+              isOver && "text-foreground"
             )}
           >
-            {isDragging ? emptyColumnHint : "Nothing here yet"}
+            {isDragging ? "Drop here" : "Nothing here yet"}
           </p>
         )}
       </div>

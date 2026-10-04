@@ -233,6 +233,7 @@ describe("admin_api_feedback - setFeedbackStatus", () => {
         name: "Foreign",
         order: 0,
         organizationId: otherOrgId,
+        semanticStatus: "completed",
         updatedAt: Date.now(),
       })
     );

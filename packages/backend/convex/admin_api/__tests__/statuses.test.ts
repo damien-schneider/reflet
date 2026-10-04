@@ -71,16 +71,6 @@ describe("admin_api_statuses", () => {
     const t = convexTest(schema, modules);
     const orgId = await createOrg(t);
 
-    await t.run(async (ctx) =>
-      ctx.db.insert("organizationStatuses", {
-        color: "gray",
-        createdAt: Date.now(),
-        name: "Legacy",
-        order: 0,
-        organizationId: orgId,
-        updatedAt: Date.now(),
-      })
-    );
     for (const [name, semanticStatus] of [
       ["Done", "completed"],
       ["Planned", "planned"],
@@ -104,7 +94,6 @@ describe("admin_api_statuses", () => {
       "Planned",
       "Building",
       "Done",
-      "Legacy",
     ]);
   });
 

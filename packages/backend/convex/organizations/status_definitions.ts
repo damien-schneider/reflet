@@ -48,20 +48,15 @@ const LIFECYCLE_RANK: Record<FeedbackStatusValue, number> = {
   under_review: 1,
 };
 
-const UNCONFIGURED_COLUMN_RANK = Object.keys(LIFECYCLE_RANK).length;
-
-const lifecycleRankOf = (column: { semanticStatus?: FeedbackStatusValue }) =>
-  column.semanticStatus
-    ? LIFECYCLE_RANK[column.semanticStatus]
-    : UNCONFIGURED_COLUMN_RANK;
-
 export const sortColumnsByLifecycle = <
-  Column extends { order: number; semanticStatus?: FeedbackStatusValue },
+  Column extends { order: number; semanticStatus: FeedbackStatusValue },
 >(
   columns: Column[]
 ) =>
   columns.sort(
-    (a, b) => lifecycleRankOf(a) - lifecycleRankOf(b) || a.order - b.order
+    (a, b) =>
+      LIFECYCLE_RANK[a.semanticStatus] - LIFECYCLE_RANK[b.semanticStatus] ||
+      a.order - b.order
   );
 
 export const statusGroup = (status: FeedbackStatusValue) =>
