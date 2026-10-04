@@ -1,22 +1,22 @@
 "use client";
 
-import "@xyflow/react/dist/style.css";
 import {
-  Background,
-  BackgroundVariant,
+  Flow,
+  FlowBackground,
+  FlowControls,
+  FlowPanel,
+} from "@ctrl-ui/react/ui/flow";
+import {
   type Connection,
-  Controls,
   type EdgeTypes,
+  type FitViewOptions,
   type NodeChange,
   type NodeTypes,
-  Panel,
-  ReactFlow,
   useNodesInitialized,
   useReactFlow,
 } from "@xyflow/react";
 import { useAtom, useAtomValue } from "jotai";
 import { useReducedMotion } from "motion/react";
-import { useTheme } from "next-themes";
 import { type KeyboardEvent, useEffect, useState } from "react";
 import { CanvasToolbar } from "@/features/surveys/components/flow/canvas-toolbar";
 import {
@@ -47,9 +47,9 @@ const EDGE_TYPES: EdgeTypes = { step: StepEdge };
 
 const REVEAL_DURATION_MS = 300;
 const REVEAL_PADDING = 0.8;
-const FIT_PADDING = 0.15;
 const MIN_ZOOM = 0.2;
 const MAX_ZOOM = 1.5;
+const FIT_VIEW_OPTIONS: FitViewOptions = { maxZoom: 1, padding: 0.15 };
 
 type MeasuredSizes = Record<string, { height: number; width: number }>;
 
@@ -76,7 +76,6 @@ export function FlowCanvas() {
   const { fitView } = useReactFlow();
   const nodesInitialized = useNodesInitialized();
   const reducesMotion = useReducedMotion();
-  const { resolvedTheme } = useTheme();
   const [measuredSizes, setMeasuredSizes] = useState<MeasuredSizes>({});
 
   const nodes = buildFlowNodes(
@@ -140,13 +139,12 @@ export function FlowCanvas() {
   };
 
   return (
-    <ReactFlow<SurveyFlowNode, StepFlowEdge>
-      colorMode={resolvedTheme === "dark" ? "dark" : "light"}
+    <Flow<SurveyFlowNode, StepFlowEdge>
       deleteKeyCode={null}
       edges={edges}
       edgeTypes={EDGE_TYPES}
       fitView
-      fitViewOptions={{ maxZoom: 1, padding: FIT_PADDING }}
+      fitViewOptions={FIT_VIEW_OPTIONS}
       maxZoom={MAX_ZOOM}
       minZoom={MIN_ZOOM}
       nodes={nodes}
@@ -170,17 +168,11 @@ export function FlowCanvas() {
       onNodesChange={handleNodesChange}
       onPaneClick={() => selectStep(null)}
     >
-      <Background
-        bgColor="var(--canvas)"
-        color="color-mix(in oklab, var(--muted-foreground) 35%, transparent)"
-        gap={18}
-        size={1.2}
-        variant={BackgroundVariant.Dots}
-      />
-      <Controls position="bottom-left" showInteractive={false} />
-      <Panel position="top-left">
+      <FlowBackground />
+      <FlowControls fitViewOptions={FIT_VIEW_OPTIONS} position="bottom-left" />
+      <FlowPanel position="top-left">
         <CanvasToolbar />
-      </Panel>
-    </ReactFlow>
+      </FlowPanel>
+    </Flow>
   );
 }

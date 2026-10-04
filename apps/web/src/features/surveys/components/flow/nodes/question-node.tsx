@@ -1,7 +1,8 @@
 "use client";
 
+import { FlowHandle } from "@ctrl-ui/react/ui/flow";
 import { textMaxChars } from "@reflet/survey-core";
-import { Handle, type NodeProps, Position } from "@xyflow/react";
+import { type NodeProps, Position } from "@xyflow/react";
 import { useFlowEditor } from "@/features/surveys/components/flow/flow-context";
 import type { QuestionFlowNode } from "@/features/surveys/components/flow/flow-elements";
 import { dropOffPercent } from "@/features/surveys/components/flow/flow-model";
@@ -73,7 +74,7 @@ export function QuestionNode({ data, selected }: NodeProps<QuestionFlowNode>) {
 
   return (
     <div>
-      <Handle position={Position.Left} type="target" />
+      <FlowHandle position={Position.Left} type="target" />
       <NodeCard
         badge={
           <IssueBadge issues={model.issuesByQuestion.get(question._id) ?? []} />
@@ -123,7 +124,7 @@ export function QuestionNode({ data, selected }: NodeProps<QuestionFlowNode>) {
           </NodeSection>
         ) : null}
       </NodeCard>
-      <Handle position={Position.Right} type="source" />
+      <FlowHandle position={Position.Right} type="source" />
     </div>
   );
 }

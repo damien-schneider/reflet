@@ -7,6 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@ctrl-ui/react/ui/dropdown-menu";
+import { FlowNode, FlowNodeBody, FlowNodeHeader } from "@ctrl-ui/react/ui/flow";
 import {
   DotsThree,
   type Icon,
@@ -38,34 +39,25 @@ export function NodeCard({
   title,
 }: NodeCardProps) {
   return (
-    <div
-      className={cn(
-        "flex flex-col overflow-hidden rounded-xl border bg-card text-card-foreground shadow-xs",
-        "transition-[border-color,box-shadow] duration-150 motion-reduce:transition-none",
-        isSelected
-          ? "border-primary ring-3 ring-primary/15"
-          : "hover:border-foreground/20"
-      )}
+    <FlowNode
+      selected={isSelected}
       style={{ maxHeight: FLOW_NODE_MAX_HEIGHT, width: FLOW_NODE_WIDTH }}
     >
-      <div className="flex min-h-10 items-center gap-2 py-1.5 ps-3 pe-1.5">
+      <FlowNodeHeader>
         <StepIcon
           aria-hidden
           className="size-4 shrink-0 text-muted-foreground"
         />
-        <p
-          className="min-w-0 flex-1 truncate font-medium text-sm"
-          title={title}
-        >
+        <p className="min-w-0 flex-1 truncate" title={title}>
           {title}
         </p>
         {badge}
         {menu}
-      </div>
-      <div className="mx-1.5 mb-1.5 flex min-h-0 flex-col gap-1.5 overflow-hidden rounded-lg bg-muted/60 px-2.5 py-2 text-xs">
+      </FlowNodeHeader>
+      <FlowNodeBody className="mx-1.5 mb-1.5 min-h-0 overflow-hidden rounded-lg bg-muted/60 px-2.5 py-2">
         {children}
-      </div>
-    </div>
+      </FlowNodeBody>
+    </FlowNode>
   );
 }
 

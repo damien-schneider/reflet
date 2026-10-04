@@ -1,7 +1,8 @@
 "use client";
 
+import { FlowHandle } from "@ctrl-ui/react/ui/flow";
 import { FlagCheckered } from "@phosphor-icons/react";
-import { Handle, type NodeProps, Position } from "@xyflow/react";
+import { type NodeProps, Position } from "@xyflow/react";
 import { useFlowEditor } from "@/features/surveys/components/flow/flow-context";
 import type { EndingFlowNode } from "@/features/surveys/components/flow/flow-elements";
 import {
@@ -24,7 +25,7 @@ export function EndingNode({ data, selected }: NodeProps<EndingFlowNode>) {
 
   return (
     <div>
-      <Handle position={Position.Left} type="target" />
+      <FlowHandle position={Position.Left} type="target" />
       <NodeCard
         icon={FlagCheckered}
         isSelected={selected}

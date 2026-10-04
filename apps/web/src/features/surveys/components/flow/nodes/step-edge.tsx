@@ -1,13 +1,14 @@
 "use client";
 
+import type { FlowKnobStyle } from "@ctrl-ui/react/knob-contracts/flow-knobs";
 import { cn } from "@ctrl-ui/react/lib/cn";
-import { Plus } from "@phosphor-icons/react";
 import {
-  BaseEdge,
-  EdgeLabelRenderer,
-  type EdgeProps,
-  getBezierPath,
-} from "@xyflow/react";
+  FlowEdge,
+  FlowEdgeLabel,
+  FlowEdgeLabelChip,
+} from "@ctrl-ui/react/ui/flow";
+import { Plus } from "@phosphor-icons/react";
+import { type EdgeProps, getBezierPath } from "@xyflow/react";
 import { AddStepPopover } from "@/features/surveys/components/flow/add-step/add-step-popover";
 import { useFlowEditor } from "@/features/surveys/components/flow/flow-context";
 import {
@@ -17,32 +18,15 @@ import {
 import { endingNodeId } from "@/features/surveys/lib/flow/layout";
 import { describeRule } from "@/features/surveys/lib/flow/rules";
 
-const NEUTRAL_BRANCH_COLORS = [
-  {
-    chip: "text-sky-700 ring-sky-500/40 dark:text-sky-300",
-    stroke: "var(--color-sky-500)",
-  },
-  {
-    chip: "text-violet-700 ring-violet-500/40 dark:text-violet-300",
-    stroke: "var(--color-violet-500)",
-  },
-  {
-    chip: "text-amber-700 ring-amber-500/40 dark:text-amber-300",
-    stroke: "var(--color-amber-500)",
-  },
-  {
-    chip: "text-teal-700 ring-teal-500/40 dark:text-teal-300",
-    stroke: "var(--color-teal-500)",
-  },
-  {
-    chip: "text-fuchsia-700 ring-fuchsia-500/40 dark:text-fuchsia-300",
-    stroke: "var(--color-fuchsia-500)",
-  },
-] as const;
+const BRANCH_PALETTE_SIZE = 5;
 
-const DEFAULT_COLOR = {
-  chip: "text-muted-foreground ring-border",
-  stroke: "color-mix(in oklab, var(--muted-foreground) 70%, transparent)",
+const branchKnobs = (ruleIndex: number): FlowKnobStyle => {
+  const chart = `--chart-${(ruleIndex % BRANCH_PALETTE_SIZE) + 1}`;
+  return {
+    "--cui-flow-edge-label-border-color": `oklch(from var(${chart}) l c h / 0.4)`,
+    "--cui-flow-edge-label-foreground": `var(${chart}-text)`,
+    "--cui-flow-edge-stroke": `var(${chart})`,
+  };
 };
 
 export function StepEdge({
@@ -73,12 +57,8 @@ export function StepEdge({
   const endsSurvey = model.endings.some(
     (ending) => endingNodeId(ending.id) === connection.target
   );
-  const color =
-    connection.kind === "rule"
-      ? (NEUTRAL_BRANCH_COLORS[
-          connection.ruleIndex % NEUTRAL_BRANCH_COLORS.length
-        ] ?? DEFAULT_COLOR)
-      : DEFAULT_COLOR;
+  const knobs =
+    connection.kind === "rule" ? branchKnobs(connection.ruleIndex) : undefined;
 
   let label: string | null = null;
   if (connection.kind === "rule" && source) {
@@ -97,51 +77,28 @@ export function StepEdge({
 
   return (
     <>
-      <BaseEdge
-        id={id}
-        path={path}
-        style={{
-          stroke: color.stroke,
-          strokeDasharray: endsSurvey ? "5 5" : undefined,
-          strokeWidth: 1.75,
-        }}
-      />
-      <EdgeLabelRenderer>
-        <div
-          className="nodrag nopan pointer-events-auto absolute flex items-center gap-1"
-          style={{
-            transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
-          }}
-        >
-          {label ? (
-            <span
+      <FlowEdge dashed={endsSurvey} id={id} path={path} style={knobs} />
+      <FlowEdgeLabel style={knobs} x={labelX} y={labelY}>
+        {label ? (
+          <FlowEdgeLabelChip title={label}>{label}</FlowEdgeLabelChip>
+        ) : null}
+        <AddStepPopover
+          anchor={insertAnchorFor(model, connection)}
+          trigger={
+            <button
+              aria-label={`Add a step ${placement}`}
               className={cn(
-                "max-w-40 truncate rounded-full bg-card px-2 py-0.5 font-medium text-[11px] ring-1",
-                color.chip
+                "grid size-5 place-items-center rounded-full border bg-card text-muted-foreground shadow-xs",
+                "transition-colors duration-150 hover:border-foreground/30 hover:text-foreground motion-reduce:transition-none",
+                "focus-visible:outline-2 focus-visible:outline-ring"
               )}
-              title={label}
-            >
-              {label}
-            </span>
-          ) : null}
-          <AddStepPopover
-            anchor={insertAnchorFor(model, connection)}
-            trigger={
-              <button
-                aria-label={`Add a step ${placement}`}
-                className={cn(
-                  "grid size-5 place-items-center rounded-full border bg-card text-muted-foreground shadow-xs",
-                  "transition-colors duration-150 hover:border-foreground/30 hover:text-foreground motion-reduce:transition-none",
-                  "focus-visible:outline-2 focus-visible:outline-ring"
-                )}
-                type="button"
-              />
-            }
-          >
-            <Plus aria-hidden className="size-3" weight="bold" />
-          </AddStepPopover>
-        </div>
-      </EdgeLabelRenderer>
+              type="button"
+            />
+          }
+        >
+          <Plus aria-hidden className="size-3" weight="bold" />
+        </AddStepPopover>
+      </FlowEdgeLabel>
     </>
   );
 }

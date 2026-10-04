@@ -1,8 +1,9 @@
 "use client";
 
+import { FlowHandle } from "@ctrl-ui/react/ui/flow";
 import { Lightning } from "@phosphor-icons/react";
 import type { TriggerConfig, TriggerType } from "@reflet/survey-core";
-import { Handle, type NodeProps, Position } from "@xyflow/react";
+import { type NodeProps, Position } from "@xyflow/react";
 import { useFlowEditor } from "@/features/surveys/components/flow/flow-context";
 import type { StartFlowNode } from "@/features/surveys/components/flow/flow-elements";
 import {
@@ -70,7 +71,11 @@ export function StartNode({ selected }: NodeProps<StartFlowNode>) {
           </NodeSection>
         ) : null}
       </NodeCard>
-      <Handle isConnectable={false} position={Position.Right} type="source" />
+      <FlowHandle
+        isConnectable={false}
+        position={Position.Right}
+        type="source"
+      />
     </div>
   );
 }

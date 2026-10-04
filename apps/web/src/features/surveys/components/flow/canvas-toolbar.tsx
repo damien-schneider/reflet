@@ -1,7 +1,14 @@
 "use client";
 
-import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button } from "@ctrl-ui/react/ui/button";
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from "@ctrl-ui/react/ui/combobox";
 import {
   CornersOut,
   Eye,
@@ -12,7 +19,7 @@ import {
 import { useReactFlow } from "@xyflow/react";
 import { useAtom, useAtomValue } from "jotai";
 import { useReducedMotion } from "motion/react";
-import { type KeyboardEvent, useId, useState } from "react";
+import { useState } from "react";
 import { AddStepPopover } from "@/features/surveys/components/flow/add-step/add-step-popover";
 import {
   useFlowEditor,
@@ -23,7 +30,7 @@ import { QUESTION_TYPE_ICONS } from "@/features/surveys/lib/question-type-icons"
 import {
   flowOutlineOpenAtom,
   flowPreviewOpenAtom,
-  type QuestionId,
+  type SurveyQuestion,
   selectedFlowStepAtom,
 } from "@/store/surveys";
 
@@ -105,101 +112,59 @@ function StepSearch() {
   const { model } = useFlowEditor();
   const selectStep = useSelectFlowStep();
   const [query, setQuery] = useState("");
-  const [activeIndex, setActiveIndex] = useState(0);
-  const listId = useId();
-  const normalizedQuery = query.trim().toLowerCase();
-  const matches = normalizedQuery
-    ? model.questions
-        .filter((question) =>
-          question.title.toLowerCase().includes(normalizedQuery)
-        )
-        .slice(0, MAX_SEARCH_RESULTS)
-    : [];
-  const isOpen = matches.length > 0;
-  const activeMatch = matches[Math.min(activeIndex, matches.length - 1)];
-
-  const pick = (questionId: QuestionId) => {
-    selectStep({ kind: "question", questionId }, { reveal: true });
-    setQuery("");
-  };
-
-  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-      event.preventDefault();
-      const offset = event.key === "ArrowDown" ? 1 : -1;
-      setActiveIndex(
-        (index) =>
-          (index + offset + matches.length) % Math.max(1, matches.length)
-      );
-    } else if (event.key === "Enter" && activeMatch) {
-      event.preventDefault();
-      pick(activeMatch._id);
-    } else if (event.key === "Escape") {
-      setQuery("");
-    }
-  };
 
   return (
     <div className="relative w-64">
-      <div className="flex h-9 items-center gap-2 rounded-xl border bg-card px-2.5 shadow-xs focus-within:border-ring">
-        <MagnifyingGlass
-          aria-hidden
-          className="size-4 shrink-0 text-muted-foreground"
-        />
-        <input
-          aria-activedescendant={
-            activeMatch ? `${listId}-${activeMatch._id}` : undefined
+      <MagnifyingGlass
+        aria-hidden
+        className="pointer-events-none absolute start-2.5 top-1/2 z-1 size-4 -translate-y-1/2 text-muted-foreground"
+      />
+      <Combobox
+        inputValue={query}
+        items={model.questions}
+        itemToStringLabel={(question: SurveyQuestion) => question.title}
+        limit={MAX_SEARCH_RESULTS}
+        onInputValueChange={setQuery}
+        onValueChange={(question) => {
+          if (!question) {
+            return;
           }
-          aria-autocomplete="list"
-          aria-controls={listId}
-          aria-expanded={isOpen}
+          selectStep(
+            { kind: "question", questionId: question._id },
+            { reveal: true }
+          );
+          setQuery("");
+        }}
+        value={null}
+      >
+        <ComboboxInput
           aria-label="Search steps"
-          className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-          onChange={(event) => {
-            setQuery(event.target.value);
-            setActiveIndex(0);
+          className="ps-8"
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              setQuery("");
+            }
           }}
-          onKeyDown={handleKeyDown}
           placeholder="Search steps"
-          role="combobox"
-          type="search"
-          value={query}
         />
-      </div>
-      {isOpen ? (
-        <div
-          className="absolute inset-x-0 top-full z-10 mt-1 flex flex-col gap-0.5 rounded-xl border bg-popover p-1 shadow-md"
-          id={listId}
-          role="listbox"
-        >
-          {matches.map((question) => {
-            const TypeIcon = QUESTION_TYPE_ICONS[question.type];
-            const isActive = question._id === activeMatch?._id;
-            return (
-              // biome-ignore lint/a11y/useKeyWithClickEvents: options are driven by the combobox input's arrow keys and Enter
-              <div
-                aria-selected={isActive}
-                className={cn(
-                  "flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-sm",
-                  isActive && "bg-muted"
-                )}
-                id={`${listId}-${question._id}`}
-                key={question._id}
-                onClick={() => pick(question._id)}
-                onMouseDown={(event) => event.preventDefault()}
-                role="option"
-                tabIndex={-1}
-              >
-                <TypeIcon
-                  aria-hidden
-                  className="size-4 shrink-0 text-muted-foreground"
-                />
-                <span className="truncate">{question.title}</span>
-              </div>
-            );
-          })}
-        </div>
-      ) : null}
+        <ComboboxContent>
+          <ComboboxEmpty>No matching step</ComboboxEmpty>
+          <ComboboxList>
+            {(question: SurveyQuestion) => {
+              const TypeIcon = QUESTION_TYPE_ICONS[question.type];
+              return (
+                <ComboboxItem key={question._id} value={question}>
+                  <TypeIcon
+                    aria-hidden
+                    className="me-2 size-4 shrink-0 text-muted-foreground"
+                  />
+                  <span className="truncate">{question.title}</span>
+                </ComboboxItem>
+              );
+            }}
+          </ComboboxList>
+        </ComboboxContent>
+      </Combobox>
     </div>
   );
 }
