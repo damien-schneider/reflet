@@ -5,6 +5,12 @@ All notable changes to `reflet-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.2] - 2026-10-04
+
+### Fixed
+
+- The devtools Board tab no longer dead-ends when nothing points at the current page: switch between "This page" and "Whole board", or click "Show the whole board" from the empty state, so feedback filed on other routes or other tenants' URLs stays reachable.
+
 ## [0.6.1] - 2026-10-04
 
 ### Fixed
