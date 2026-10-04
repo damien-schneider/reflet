@@ -203,8 +203,9 @@ turn it off.
 - **Send to board** — notes become internal feedback: members see them with an
   "Internal" badge, the public board never does, and an admin can make one
   public from the dashboard.
-- **Board** — the board's feedback for the current route, with "Show on page",
-  the reporter's source location, and a code search for the element's text.
+- **Board** — the board's feedback for the current route, or the whole board,
+  with "Show on page", the reporter's source location, and a code search for
+  the element's text.
 
 Code view and the board go through one dev-only route that reads files from
 your repository and holds the board credential server-side.

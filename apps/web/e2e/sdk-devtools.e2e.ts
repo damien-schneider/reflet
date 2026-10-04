@@ -346,9 +346,7 @@ test("Board reconnects after consent and allows disconnecting by keyboard", asyn
     return route.fulfill({ json: { revoked: true } });
   });
   await page.goto("/sdk-demo");
-  await page
-    .getByRole("button", { name: "Board feedback on this page" })
-    .click();
+  await page.getByRole("button", { name: "Board feedback" }).click();
   const connectButton = page.getByRole("button", { name: "Connect to Reflet" });
   await connectButton.focus();
   const popupReady = page.waitForEvent("popup");

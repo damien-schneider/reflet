@@ -89,7 +89,7 @@ export function DevtoolsBar({
         {noteCount > 0 && <span className="dt-count">{noteCount}</span>}
       </BarButton>
       <BarButton
-        label="Board feedback on this page"
+        label="Board feedback"
         onClick={() => onToggleSheet("inbox")}
         pressed={openTab === "inbox"}
       >

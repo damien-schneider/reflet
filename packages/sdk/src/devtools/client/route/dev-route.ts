@@ -19,7 +19,7 @@ export interface BoardFeedback extends FeedbackItem {
   isInternal?: boolean;
 }
 
-interface BoardFeedbackPage {
+export interface BoardFeedbackPage {
   hasMore: boolean;
   items: BoardFeedback[];
   total: number;
@@ -165,15 +165,15 @@ export function callReflet<T>(
   });
 }
 
-export async function fetchBoardFeedbackForPage(
-  pagePath: string
-): Promise<BoardFeedback[]> {
-  const page = await callReflet<BoardFeedbackPage>("/api/v1/feedback/list", {
-    query: {
-      limit: String(INBOX_PAGE_SIZE),
-      pagePath,
-      sortBy: "newest",
-    },
-  });
-  return page.items;
+export function fetchBoardFeedback(
+  pagePath: string | null
+): Promise<BoardFeedbackPage> {
+  const query: Record<string, string> = {
+    limit: String(INBOX_PAGE_SIZE),
+    sortBy: "newest",
+  };
+  if (pagePath !== null) {
+    query.pagePath = pagePath;
+  }
+  return callReflet<BoardFeedbackPage>("/api/v1/feedback/list", { query });
 }

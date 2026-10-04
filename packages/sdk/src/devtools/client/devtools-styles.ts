@@ -100,7 +100,7 @@ export const DEVTOOLS_STYLES = `
 .dt-tabs { display: flex; gap: 2px; margin-right: auto; }
 .dt-tab { height: 30px; padding: 0 11px; border-radius: var(--rf-pill); color: var(--rf-text-muted); font-weight: 500; }
 .dt-tab:hover { color: var(--rf-text); }
-.dt-tab[aria-selected="true"] { background: var(--rf-bg-hover); color: var(--rf-text); }
+.dt-tab[aria-selected="true"], .dt-tab[aria-pressed="true"] { background: var(--rf-bg-hover); color: var(--rf-text); }
 .dt-sheet-body { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 8px; padding: 10px; }
 .dt-sheet-foot {
   position: sticky; bottom: -10px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
