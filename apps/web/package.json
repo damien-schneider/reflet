@@ -2,9 +2,10 @@
   "name": "web",
   "private": true,
   "scripts": {
-    "build": "next build",
+    "build": "bun run fonts && next build",
     "check-types": "tsc --noEmit",
-    "dev": "next dev -p 3003 -H 127.0.0.1",
+    "dev": "bun run fonts && next dev -p 3003 -H 127.0.0.1",
+    "fonts": "bun scripts/fetch-switzer.ts",
     "lint": "bun x ultracite check",
     "start": "next start",
     "test:e2e": "bunx playwright test --reporter=list",

@@ -1,8 +1,10 @@
 :root[data-theme="reflet"][data-skin],
 :root[data-theme="reflet"] [data-skin] {
-  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-switzer), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-sans);
   --font-display--font-variation-settings: normal;
+  --font-display--font-weight: 350;
+  --font-display--letter-spacing: -0.05em;
   --text-label: 0.8125rem;
   --text-caption: 0.75rem;
   --text-heading-1--font-weight: 600;

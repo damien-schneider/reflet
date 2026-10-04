@@ -1,7 +1,7 @@
 import { TooltipProvider } from "@ctrl-ui/react/ui/tooltip";
 import { env } from "@reflet/env/server";
 import type { Metadata, Viewport } from "next";
-import { Manrope } from "next/font/google";
+import localFont from "next/font/local";
 import Script from "next/script";
 import { Suspense } from "react";
 import { CookieConsentBanner } from "@/components/cookie-consent-banner";
@@ -13,10 +13,21 @@ import { ThemeProvider } from "@/lib/theme-provider";
 
 import "./globals.css";
 
-const manrope = Manrope({
+const switzer = localFont({
   display: "swap",
-  subsets: ["latin"],
-  variable: "--font-manrope",
+  src: [
+    {
+      path: "../fonts/switzer/Switzer-Variable.woff2",
+      style: "normal",
+      weight: "100 900",
+    },
+    {
+      path: "../fonts/switzer/Switzer-VariableItalic.woff2",
+      style: "italic",
+      weight: "100 900",
+    },
+  ],
+  variable: "--font-switzer",
 });
 
 export const metadata: Metadata = defaultMetadata;
@@ -29,7 +40,7 @@ export default function RootLayout({
 }) {
   return (
     <html
-      className={manrope.variable}
+      className={switzer.variable}
       data-skin="refined"
       data-theme="reflet"
       lang="en"

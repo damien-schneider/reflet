@@ -67,8 +67,6 @@
 }
 :where(.marketing-plan h3) {
   font-size: 24px;
-  font-weight: 600;
-  letter-spacing: -0.04em;
 }
 :where(.marketing-plan-heading span) {
   padding: 6px 10px;

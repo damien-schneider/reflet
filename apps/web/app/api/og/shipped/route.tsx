@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import type { NextRequest } from "next/server";
+import { loadOgFonts } from "../og-fonts";
 import {
   BG_CREAM,
   BRAND,
@@ -13,28 +14,12 @@ import {
 
 export const runtime = "edge";
 
-const instrumentSerifRegular = fetch(
-  new URL("../InstrumentSerif-Regular.ttf", import.meta.url)
-).then((res) => res.arrayBuffer());
-
-const interRegular = fetch(
-  new URL("../Inter-Regular.ttf", import.meta.url)
-).then((res) => res.arrayBuffer());
-
-const interSemiBold = fetch(
-  new URL("../Inter-SemiBold.ttf", import.meta.url)
-).then((res) => res.arrayBuffer());
-
 function truncate(str: string, max: number): string {
   return str.length > max ? `${str.slice(0, max - 3)}...` : str;
 }
 
 export async function GET(request: NextRequest) {
-  const [instrumentData, interData, interSemiBoldData] = await Promise.all([
-    instrumentSerifRegular,
-    interRegular,
-    interSemiBold,
-  ]);
+  const fonts = await loadOgFonts();
 
   const { searchParams } = new URL(request.url);
   const feedbackTitle = searchParams.get("feedback") ?? "Feature request";
@@ -48,7 +33,7 @@ export async function GET(request: NextRequest) {
         background: BG_CREAM,
         display: "flex",
         flexDirection: "column",
-        fontFamily: "Inter",
+        fontFamily: "Switzer",
         height: "100%",
         justifyContent: "center",
         padding: "60px 72px",
@@ -97,8 +82,9 @@ export async function GET(request: NextRequest) {
           <span
             style={{
               color: BRAND_TEXT,
-              fontFamily: "Inter SemiBold",
+              fontFamily: "Switzer",
               fontSize: "20px",
+              fontWeight: 600,
             }}
           >
             Shipped
@@ -108,9 +94,10 @@ export async function GET(request: NextRequest) {
         <div
           style={{
             color: TEXT_DARK,
-            fontFamily: "Instrument Serif",
+            fontFamily: "Switzer",
             fontSize: "64px",
-            letterSpacing: "-0.02em",
+            fontWeight: 300,
+            letterSpacing: "-0.05em",
             lineHeight: 1.1,
             textAlign: "center",
           }}
@@ -126,7 +113,7 @@ export async function GET(request: NextRequest) {
               textAlign: "center",
             }}
           >
-            Included in {truncate(releaseTitle, 60)}
+            {`Included in ${truncate(releaseTitle, 60)}`}
           </div>
         )}
       </div>
@@ -151,8 +138,9 @@ export async function GET(request: NextRequest) {
         <span
           style={{
             color: TEXT_MUTED,
-            fontFamily: "Inter SemiBold",
+            fontFamily: "Switzer",
             fontSize: "18px",
+            fontWeight: 600,
           }}
         >
           {orgName || "reflet.app"}
@@ -164,26 +152,7 @@ export async function GET(request: NextRequest) {
       </div>
     </div>,
     {
-      fonts: [
-        {
-          data: instrumentData,
-          name: "Instrument Serif",
-          style: "normal",
-          weight: 400,
-        },
-        {
-          data: interData,
-          name: "Inter",
-          style: "normal",
-          weight: 400,
-        },
-        {
-          data: interSemiBoldData,
-          name: "Inter SemiBold",
-          style: "normal",
-          weight: 600,
-        },
-      ],
+      fonts,
       height: 630,
       width: 1200,
     }

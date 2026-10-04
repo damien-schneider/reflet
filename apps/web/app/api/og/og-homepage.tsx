@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import type { OgFonts } from "./og-fonts";
 import {
   BG_CREAM,
   INK_SOFT,
@@ -8,19 +9,7 @@ import {
   TEXT_MUTED,
 } from "./og-theme";
 
-interface OgFonts {
-  instrumentData: ArrayBuffer;
-  instrumentItalicData: ArrayBuffer;
-  interData: ArrayBuffer;
-  interSemiBoldData: ArrayBuffer;
-}
-
-export function renderHomepageOg({
-  instrumentData,
-  instrumentItalicData,
-  interData,
-  interSemiBoldData,
-}: OgFonts) {
+export function renderHomepageOg(fonts: OgFonts) {
   return new ImageResponse(
     <div
       style={{
@@ -28,7 +17,7 @@ export function renderHomepageOg({
         background: BG_CREAM,
         display: "flex",
         flexDirection: "column",
-        fontFamily: "Inter",
+        fontFamily: "Switzer",
         height: "100%",
         justifyContent: "center",
         position: "relative",
@@ -59,9 +48,10 @@ export function renderHomepageOg({
         <div
           style={{
             color: TEXT_DARK,
-            fontFamily: "Instrument Serif",
+            fontFamily: "Switzer",
             fontSize: "160px",
-            letterSpacing: "-0.03em",
+            fontWeight: 300,
+            letterSpacing: "-0.05em",
             lineHeight: 1,
           }}
         >
@@ -79,9 +69,10 @@ export function renderHomepageOg({
           <div
             style={{
               color: TEXT_MUTED,
-              fontFamily: "Instrument Serif Italic",
+              fontFamily: "Switzer",
               fontSize: "36px",
               fontStyle: "italic",
+              fontWeight: 300,
               lineHeight: 1.3,
             }}
           >
@@ -90,9 +81,10 @@ export function renderHomepageOg({
           <div
             style={{
               color: RULE_STRONG,
-              fontFamily: "Instrument Serif Italic",
+              fontFamily: "Switzer",
               fontSize: "36px",
               fontStyle: "italic",
+              fontWeight: 300,
               lineHeight: 1.3,
             }}
           >
@@ -122,8 +114,9 @@ export function renderHomepageOg({
         <span
           style={{
             color: TEXT_MUTED,
-            fontFamily: "Inter SemiBold",
+            fontFamily: "Switzer",
             fontSize: "18px",
+            fontWeight: 600,
           }}
         >
           reflet.app
@@ -140,32 +133,7 @@ export function renderHomepageOg({
       </div>
     </div>,
     {
-      fonts: [
-        {
-          data: instrumentData,
-          name: "Instrument Serif",
-          style: "normal",
-          weight: 400,
-        },
-        {
-          data: instrumentItalicData,
-          name: "Instrument Serif Italic",
-          style: "italic",
-          weight: 400,
-        },
-        {
-          data: interData,
-          name: "Inter",
-          style: "normal",
-          weight: 400,
-        },
-        {
-          data: interSemiBoldData,
-          name: "Inter SemiBold",
-          style: "normal",
-          weight: 600,
-        },
-      ],
+      fonts,
       height: 630,
       width: 1200,
     }

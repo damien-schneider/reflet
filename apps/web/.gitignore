@@ -11,6 +11,9 @@
 # Testing
 /coverage
 
+# Self-hosted fonts fetched at dev/build time (license forbids committing them)
+/fonts/
+
 # Build outputs
 /.next/
 /out/

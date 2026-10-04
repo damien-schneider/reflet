@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import type { NextRequest } from "next/server";
+import { loadOgFonts } from "./og-fonts";
 import { renderHomepageOg } from "./og-homepage";
 import {
   BG_CREAM,
@@ -14,31 +15,8 @@ import {
 
 export const runtime = "edge";
 
-// Load brand fonts (TTF files co-located with this route)
-const instrumentSerifRegular = fetch(
-  new URL("./InstrumentSerif-Regular.ttf", import.meta.url)
-).then((res) => res.arrayBuffer());
-
-const instrumentSerifItalic = fetch(
-  new URL("./InstrumentSerif-Italic.ttf", import.meta.url)
-).then((res) => res.arrayBuffer());
-
-const interRegular = fetch(
-  new URL("./Inter-Regular.ttf", import.meta.url)
-).then((res) => res.arrayBuffer());
-
-const interSemiBold = fetch(
-  new URL("./Inter-SemiBold.ttf", import.meta.url)
-).then((res) => res.arrayBuffer());
-
 export async function GET(request: NextRequest) {
-  const [instrumentData, instrumentItalicData, interData, interSemiBoldData] =
-    await Promise.all([
-      instrumentSerifRegular,
-      instrumentSerifItalic,
-      interRegular,
-      interSemiBold,
-    ]);
+  const fonts = await loadOgFonts();
 
   const { searchParams } = new URL(request.url);
   const title = searchParams.get("title") ?? "Reflet";
@@ -57,12 +35,7 @@ export async function GET(request: NextRequest) {
 
   // Homepage / brand variant — large wordmark + catch line
   if (isHomepage) {
-    return renderHomepageOg({
-      instrumentData,
-      instrumentItalicData,
-      interData,
-      interSemiBoldData,
-    });
+    return renderHomepageOg(fonts);
   }
 
   // Page / comparison variant
@@ -72,7 +45,7 @@ export async function GET(request: NextRequest) {
         background: BG_CREAM,
         display: "flex",
         flexDirection: "column",
-        fontFamily: "Inter",
+        fontFamily: "Switzer",
         height: "100%",
         padding: "60px 72px",
         position: "relative",
@@ -117,8 +90,9 @@ export async function GET(request: NextRequest) {
             alignItems: "baseline",
             color: TEXT_DARK,
             display: "flex",
-            fontFamily: "Inter SemiBold",
+            fontFamily: "Switzer",
             fontSize: "32px",
+            fontWeight: 600,
             letterSpacing: "-0.03em",
           }}
         >
@@ -133,8 +107,9 @@ export async function GET(request: NextRequest) {
               borderRadius: "6px",
               color: INK_SOFT,
               display: "flex",
-              fontFamily: "Inter SemiBold",
+              fontFamily: "Switzer",
               fontSize: "14px",
+              fontWeight: 600,
               gap: "6px",
               letterSpacing: "0.08em",
               padding: "5px 14px",
@@ -160,9 +135,10 @@ export async function GET(request: NextRequest) {
         <div
           style={{
             color: TEXT_DARK,
-            fontFamily: "Instrument Serif",
+            fontFamily: "Switzer",
             fontSize: `${titleFontSize}px`,
-            letterSpacing: "-0.02em",
+            fontWeight: 300,
+            letterSpacing: "-0.05em",
             lineHeight: 1.1,
           }}
         >
@@ -210,8 +186,9 @@ export async function GET(request: NextRequest) {
           <span
             style={{
               color: TEXT_DARK,
-              fontFamily: "Inter SemiBold",
+              fontFamily: "Switzer",
               fontSize: "18px",
+              fontWeight: 600,
             }}
           >
             reflet.app
@@ -220,9 +197,10 @@ export async function GET(request: NextRequest) {
         <span
           style={{
             color: RULE_STRONG,
-            fontFamily: "Instrument Serif Italic",
+            fontFamily: "Switzer",
             fontSize: "18px",
             fontStyle: "italic",
+            fontWeight: 300,
           }}
         >
           Product feedback and roadmap platform
@@ -230,32 +208,7 @@ export async function GET(request: NextRequest) {
       </div>
     </div>,
     {
-      fonts: [
-        {
-          data: instrumentData,
-          name: "Instrument Serif",
-          style: "normal",
-          weight: 400,
-        },
-        {
-          data: instrumentItalicData,
-          name: "Instrument Serif Italic",
-          style: "italic",
-          weight: 400,
-        },
-        {
-          data: interData,
-          name: "Inter",
-          style: "normal",
-          weight: 400,
-        },
-        {
-          data: interSemiBoldData,
-          name: "Inter SemiBold",
-          style: "normal",
-          weight: 600,
-        },
-      ],
+      fonts,
       height: 630,
       width: 1200,
     }

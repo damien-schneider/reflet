@@ -30,9 +30,7 @@
 }
 :where(.marketing-developer h3) {
   font-size: clamp(26px, 2.7vw, 38px);
-  font-weight: 600;
   line-height: 1.18;
-  letter-spacing: -0.035em;
 }
 :where(.marketing-developer p) {
   max-width: 350px;
