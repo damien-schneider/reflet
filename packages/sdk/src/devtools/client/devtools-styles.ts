@@ -45,8 +45,8 @@ export const DEVTOOLS_STYLES = `
   position: fixed; z-index: ${REFLET_Z_INDEX.devtoolsBar};
   display: flex; align-items: center; gap: 2px; padding: 3px;
   border-radius: var(--rf-pill);
-  transition: left 260ms var(--rf-ease), right 260ms var(--rf-ease);
 }
+.dt-bar[data-moved="false"] { transition: left 260ms var(--rf-ease), right 260ms var(--rf-ease); }
 .dt-bar[data-side="left"] { left: calc(var(--rf-viewport-left, 0px) + max(12px, var(--rf-offset))); }
 .dt-bar[data-side="right"] { right: calc(var(--rf-viewport-right, 0px) + max(12px, var(--rf-offset))); }
 .dt-bar[data-edge="bottom"] { bottom: calc(var(--rf-viewport-bottom, 0px) + env(safe-area-inset-bottom) + var(--dt-edge-gap)); }
