@@ -312,6 +312,7 @@ export const deleteMonitor = mutation({
 
     await requireOrgAdmin(ctx, monitor.organizationId, "delete monitors");
 
+    await resolveOutageIncident(ctx, monitor, "monitor_deleted");
     await ctx.db.delete(args.monitorId);
     await ctx.scheduler.runAfter(
       0,

@@ -147,6 +147,30 @@ describe("status monitors", () => {
     expect(incidents).toMatchObject([{ status: "resolved" }]);
   });
 
+  test("deleting a down monitor closes its outage incident on the dashboard", async () => {
+    vi.useFakeTimers();
+    const { admin, organizationId, t } = await setup();
+    const monitorId = await admin.mutation(api.status.monitors.createMonitor, {
+      name: "API",
+      organizationId,
+      url: "https://api.example.com/",
+    });
+    for (const _failure of [1, 2, 3]) {
+      await t.mutation(internal.status.healthCheck.recordCheck, {
+        isUp: false,
+        monitorId,
+      });
+    }
+
+    await admin.mutation(api.status.monitors.deleteMonitor, { monitorId });
+
+    const activeIncidents = await admin.query(
+      api.status.incidents.getActiveIncidents,
+      { organizationId }
+    );
+    expect(activeIncidents).toEqual([]);
+  });
+
   test("a slow but successful response degrades the monitor without counting a failure", async () => {
     const { admin, organizationId, t } = await setup();
     const monitorId = await admin.mutation(api.status.monitors.createMonitor, {

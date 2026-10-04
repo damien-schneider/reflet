@@ -52,12 +52,17 @@ export const openOutageIncident = async (
   await notifyIncidentChange(ctx, { incidentId, updateId });
 };
 
-type OutageResolution = "monitor_recovered" | "monitoring_paused";
+type OutageResolution =
+  | "monitor_recovered"
+  | "monitoring_paused"
+  | "monitor_deleted";
 
 const RESOLUTION_MESSAGES: Record<
   OutageResolution,
   (monitorName: string) => string
 > = {
+  monitor_deleted: (monitorName) =>
+    `${monitorName} was removed from monitoring, so this automated incident is closed.`,
   monitor_recovered: (monitorName) =>
     `${monitorName} has recovered and is now operational.`,
   monitoring_paused: (monitorName) =>
