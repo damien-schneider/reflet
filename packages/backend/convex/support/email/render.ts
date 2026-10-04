@@ -89,6 +89,7 @@ export const deliverAdminReply = internalAction({
       const senderName = context.authorName
         ? `${context.authorName} (${organizationName})`
         : organizationName;
+      const subject = context.subject ?? "Your request";
       await ctx.runMutation(internal.support.email.outbound.sendSupportEmail, {
         ...shared,
         ...(await renderBoth(
@@ -102,7 +103,7 @@ export const deliverAdminReply = internalAction({
         emailType: "support_reply",
         from: `"${sanitizedDisplayName(senderName)}" <${delivery.from}>`,
         headers: threading,
-        subject: `Re: ${context.subject ?? "Your request"}`,
+        subject: context.opensThread ? subject : `Re: ${subject}`,
       });
       return null;
     }

@@ -34,11 +34,11 @@ const customerDelivery = v.union(
   })
 );
 
-const threadMessageIds = async (
+const earlierThreadMessages = async (
   ctx: QueryCtx,
   message: Doc<"supportMessages">
-): Promise<string[]> => {
-  const earlierMessages = await ctx.db
+): Promise<Doc<"supportMessages">[]> => {
+  const upToMessage = await ctx.db
     .query("supportMessages")
     .withIndex("by_conversation_created", (q) =>
       q
@@ -46,12 +46,15 @@ const threadMessageIds = async (
         .lte("createdAt", message.createdAt)
     )
     .collect();
+  return upToMessage.filter((earlier) => earlier._id !== message._id);
+};
 
+const threadMessageIds = async (
+  ctx: QueryCtx,
+  earlierMessages: Doc<"supportMessages">[]
+): Promise<string[]> => {
   const ids: string[] = [];
   for (const earlier of earlierMessages) {
-    if (earlier._id === message._id) {
-      continue;
-    }
     if (earlier.outboundEmail?.status === "sent") {
       ids.push(earlier.outboundEmail.rfcMessageId);
     }
@@ -80,14 +83,16 @@ export const getDeliveryContext = internalQuery({
       throw new Error("Thread token missing for an admin reply");
     }
     const author = await resolveAssignedUser(ctx, message.senderId);
+    const earlierMessages = await earlierThreadMessages(ctx, message);
 
     return {
       authorName: author?.name,
       body: message.body,
       delivery: await resolveCustomerDelivery(ctx, conversation),
+      opensThread: earlierMessages.length === 0,
       organizationId: organization._id,
       organizationName: organization.name,
-      referencedMessageIds: await threadMessageIds(ctx, message),
+      referencedMessageIds: await threadMessageIds(ctx, earlierMessages),
       subject: conversation.subject,
       token,
     };
@@ -97,6 +102,7 @@ export const getDeliveryContext = internalQuery({
       authorName: v.optional(v.string()),
       body: v.string(),
       delivery: customerDelivery,
+      opensThread: v.boolean(),
       organizationId: v.id("organizations"),
       organizationName: v.string(),
       referencedMessageIds: v.array(v.string()),

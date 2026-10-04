@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 import { describe, expect, test } from "vitest";
-import { api } from "../../_generated/api";
+import { api, internal } from "../../_generated/api";
 import type { Id } from "../../_generated/dataModel";
 import { seedOrganization } from "../../test.fixtures";
 import { setupTest } from "../../test.helpers";
@@ -306,6 +306,43 @@ describe("starting an email conversation", () => {
     expect(
       messages.map((message) => [message.senderType, message.body])
     ).toEqual([["admin", draft.body]]);
+  });
+
+  test("only the email that opens the conversation goes out without a reply prefix", async () => {
+    const { as, organizationId, t } = await setup({ pro: true });
+    await t.run((ctx) =>
+      ctx.db.insert("supportSendingDomains", {
+        createdAt: Date.now(),
+        domain: "support.acme.dev",
+        fromLocalPart: "help",
+        lastCheckedAt: Date.now(),
+        organizationId,
+        records: [],
+        resendDomainId: "domain_1",
+        status: "verified",
+      })
+    );
+    const conversationId = await as(ADMIN).mutation(
+      api.support.email.compose.startEmailConversation,
+      { ...draft, organizationId }
+    );
+    const followUpId = await as(ADMIN).mutation(api.support.messages.send, {
+      body: "Any update?",
+      conversationId,
+    });
+    const [opening] = await as(ADMIN).query(api.support.messages.list, {
+      conversationId,
+    });
+
+    const opensThread = async (messageId: Id<"supportMessages">) =>
+      (
+        await t.query(internal.support.email.outbound.getDeliveryContext, {
+          messageId,
+        })
+      )?.opensThread;
+
+    expect(await opensThread(opening._id)).toBe(true);
+    expect(await opensThread(followUpId)).toBe(false);
   });
 
   test("a member who is not an admin cannot start one", async () => {
