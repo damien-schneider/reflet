@@ -1,15 +1,16 @@
 import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
-import {
-  MAX_SUPPORT_MESSAGE_LENGTH,
-  MAX_SUPPORT_SUBJECT_LENGTH,
-} from "../shared/constants";
+import { MAX_SUPPORT_SUBJECT_LENGTH } from "../shared/constants";
 import { isValidEmail, validateInputLength } from "../shared/validators";
 import { resolveConversationAccess } from "./access";
+import {
+  type ConversationCustomer,
+  createCustomerConversation,
+  requireMessageBody,
+} from "./conversation_writes";
 import { resolveAssignedUser, resolveConversationPerson } from "./people";
 import {
-  buildMessagePreview,
   supportConversationDetail,
   supportConversationDoc,
 } from "./validators";
@@ -117,7 +118,6 @@ export const get = query({
   },
   returns: v.union(supportConversationDetail, v.null()),
 });
-
 export const create = mutation({
   args: {
     guestEmail: v.optional(v.string()),
@@ -128,26 +128,9 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const user = await authComponent.safeGetAuthUser(ctx);
-    const guest =
-      args.guestId && args.guestEmail
-        ? { email: args.guestEmail, id: args.guestId }
-        : null;
+    const customer = resolveNewConversationCustomer(user?._id, args);
 
-    if (!(user || guest)) {
-      throw new Error("Either authentication or guest email is required");
-    }
-    if (guest && !isValidEmail(guest.email)) {
-      throw new Error("A valid guest email is required");
-    }
-    if (guest && !GUEST_ID_PATTERN.test(guest.id)) {
-      throw new Error("Invalid guest session");
-    }
-
-    const body = args.initialMessage.trim();
-    if (!body) {
-      throw new Error("Message cannot be empty");
-    }
-    validateInputLength(body, MAX_SUPPORT_MESSAGE_LENGTH, "Message");
+    const body = requireMessageBody(args.initialMessage);
     validateInputLength(args.subject, MAX_SUPPORT_SUBJECT_LENGTH, "Subject");
 
     const org = await ctx.db.get(args.organizationId);
@@ -158,36 +141,34 @@ export const create = mutation({
       throw new Error("Support is not enabled for this organization");
     }
 
-    const senderId = user ? user._id : `guest:${guest?.id}`;
-
-    const now = Date.now();
-
-    const conversationId = await ctx.db.insert("supportConversations", {
-      adminUnreadCount: 1,
-      assignedTo: undefined,
-      createdAt: now,
-      guestEmail: user ? undefined : guest?.email,
-      guestId: user ? undefined : guest?.id,
-      lastMessageAt: now,
-      lastMessagePreview: buildMessagePreview(body),
-      organizationId: args.organizationId,
-      status: "open",
-      subject: args.subject?.trim() || undefined,
-      updatedAt: now,
-      userId: senderId,
-      userUnreadCount: 0,
-    });
-
-    await ctx.db.insert("supportMessages", {
+    const { conversationId } = await createCustomerConversation(ctx, {
       body,
-      conversationId,
-      createdAt: now,
-      isRead: false,
-      senderId,
-      senderType: "user",
+      customer,
+      now: Date.now(),
+      organizationId: args.organizationId,
+      subject: args.subject,
     });
 
     return conversationId;
   },
   returns: v.id("supportConversations"),
 });
+
+const resolveNewConversationCustomer = (
+  userId: string | undefined,
+  args: { guestEmail?: string; guestId?: string }
+): ConversationCustomer => {
+  if (userId) {
+    return { kind: "user", userId };
+  }
+  if (!(args.guestId && args.guestEmail)) {
+    throw new Error("Either authentication or guest email is required");
+  }
+  if (!isValidEmail(args.guestEmail)) {
+    throw new Error("A valid guest email is required");
+  }
+  if (!GUEST_ID_PATTERN.test(args.guestId)) {
+    throw new Error("Invalid guest session");
+  }
+  return { guestEmail: args.guestEmail, guestId: args.guestId, kind: "guest" };
+};

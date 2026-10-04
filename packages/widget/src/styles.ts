@@ -204,6 +204,13 @@ export function getWidgetStyles(primaryColor: string, zIndex: number): string {
       opacity: 0.5;
     }
     
+    .reflet-send-error {
+      margin: 0;
+      padding: 8px 16px 0;
+      font-size: 12px;
+      color: #b91c1c;
+    }
+
     .reflet-input-container {
       padding: 12px 16px;
       border-top: 1px solid #e5e7eb;

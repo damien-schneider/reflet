@@ -1,14 +1,12 @@
 import { chatIcon, closeIcon, messageIcon, sendIcon } from "./icons";
-import type { WidgetConfig, WidgetMessage } from "./types";
+import type { WidgetConfig, WidgetMessage, WidgetState } from "./types";
 import { escapeHtml, formatTime } from "./widget-utils";
 
 export function renderWidgetHTML(
   config: WidgetConfig,
-  isOpen: boolean,
-  messages: WidgetMessage[],
-  unreadCount: number,
-  isLoading: boolean
+  state: WidgetState
 ): string {
+  const { draft, isLoading, isOpen, messages, sendFailed, unreadCount } = state;
   const positionClass = config.position;
 
   let html = "";
@@ -41,13 +39,14 @@ export function renderWidgetHTML(
           ${messages.map((msg) => renderMessageHTML(msg)).join("")}
         </div>
         
+        ${sendFailed ? '<p class="reflet-send-error" role="alert">Message not sent — try again</p>' : ""}
         <div class="reflet-input-container">
           <textarea 
             class="reflet-input" 
             placeholder="Type a message..." 
             rows="1"
             aria-label="Message input"
-          ></textarea>
+          >${escapeHtml(draft)}</textarea>
           <button class="reflet-send-btn" aria-label="Send message">
             ${sendIcon}
           </button>

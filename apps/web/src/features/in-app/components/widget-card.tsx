@@ -48,7 +48,7 @@ export function WidgetCard({ widget }: WidgetCardProps) {
   const updateWidget = useMutation(api.widget.admin.update);
   const removeWidget = useMutation(api.widget.admin_settings.remove);
 
-  const embedCode = `<script src="https://cdn.reflet.app/widget/v1.js" data-widget-id="${widget.widgetId}"></script>`;
+  const embedCode = `<script src="https://www.reflet.app/widget/reflet-widget.v1.js" data-widget-id="${widget.widgetId}"></script>`;
   const embedLabelId = `embed-code-${widget._id}`;
 
   const toggleActive = async () => {

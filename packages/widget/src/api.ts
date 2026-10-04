@@ -2,162 +2,70 @@ import type { WidgetConfig, WidgetMessage } from "./types";
 
 declare const __CONVEX_URL__: string;
 
-const CONVEX_URL =
-  typeof __CONVEX_URL__ === "undefined"
-    ? "https://grateful-butterfly-1.convex.cloud"
-    : __CONVEX_URL__;
-
-async function convexQuery<T>(
-  fnName: string,
+async function callConvex<T>(
+  kind: "query" | "mutation",
+  path: string,
   args: Record<string, unknown>
-): Promise<T | null> {
-  const url = `${CONVEX_URL}/api/query`;
-  const response = await fetch(url, {
-    body: JSON.stringify({
-      args,
-      format: "json",
-      path: fnName,
-    }),
-    headers: {
-      "Content-Type": "application/json",
-    },
+): Promise<T> {
+  const response = await fetch(`${__CONVEX_URL__}/api/${kind}`, {
+    body: JSON.stringify({ args, format: "json", path }),
+    headers: { "Content-Type": "application/json" },
     method: "POST",
   });
 
-  if (!response.ok) {
-    return null;
+  const data: unknown = await response.json().catch(() => null);
+  if (typeof data !== "object" || data === null || !("status" in data)) {
+    throw new Error(response.statusText || "Unexpected response");
   }
-
-  const data: unknown = await response.json();
-  if (
-    typeof data !== "object" ||
-    data === null ||
-    !("status" in data) ||
-    !("value" in data)
-  ) {
-    return null;
+  if (data.status !== "success" || !("value" in data)) {
+    const message =
+      "errorMessage" in data && typeof data.errorMessage === "string"
+        ? data.errorMessage
+        : response.statusText;
+    throw new Error(message);
   }
-  if (data.status === "error") {
-    return null;
-  }
-
-  return (data.value as T) ?? null;
+  return data.value as T;
 }
 
-async function convexMutation<T>(
-  fnName: string,
-  args: Record<string, unknown>
-): Promise<T | null> {
-  const url = `${CONVEX_URL}/api/mutation`;
-  const response = await fetch(url, {
-    body: JSON.stringify({
-      args,
-      format: "json",
-      path: fnName,
-    }),
-    headers: {
-      "Content-Type": "application/json",
-    },
-    method: "POST",
-  });
-
-  if (!response.ok) {
-    return null;
-  }
-
-  const data: unknown = await response.json();
-  if (
-    typeof data !== "object" ||
-    data === null ||
-    !("status" in data) ||
-    !("value" in data)
-  ) {
-    return null;
-  }
-  if (data.status === "error") {
-    return null;
-  }
-
-  return (data.value as T) ?? null;
+interface VisitorArgs {
+  visitorId: string;
+  widgetId: string;
 }
 
 export function fetchWidgetConfig(
   widgetId: string
 ): Promise<WidgetConfig | null> {
-  return convexQuery<WidgetConfig>("widget_public:getConfig", { widgetId });
+  return callConvex("query", "widget/public:getConfig", { widgetId });
 }
 
-export function getOrCreateConversation(
-  widgetId: string,
-  visitorId: string,
-  metadata?: { userAgent?: string; url?: string; referrer?: string }
-): Promise<{
-  conversationId: string;
-  visitorId: string;
-  isNew: boolean;
-} | null> {
-  return convexMutation("widget_public:getOrCreateConversation", {
-    metadata,
-    visitorId,
-    widgetId,
-  });
+export function fetchConversation(
+  visitor: VisitorArgs
+): Promise<{ conversationId: string; guestEmail?: string } | null> {
+  return callConvex("query", "widget/public:getConversation", { ...visitor });
 }
 
 export function sendMessage(
-  widgetId: string,
-  visitorId: string,
-  conversationId: string,
-  body: string
-): Promise<{ messageId: string } | null> {
-  return convexMutation("widget_public:sendMessage", {
+  visitor: VisitorArgs,
+  body: string,
+  metadata: { referrer?: string; url?: string; userAgent?: string }
+): Promise<{ conversationId: string; messageId: string }> {
+  return callConvex("mutation", "widget/public:sendMessage", {
+    ...visitor,
     body,
-    conversationId,
-    visitorId,
-    widgetId,
+    metadata,
   });
 }
 
-export async function fetchMessages(
-  widgetId: string,
-  visitorId: string,
-  conversationId: string
-): Promise<WidgetMessage[]> {
-  const result = await convexQuery<WidgetMessage[]>(
-    "widget_public:listMessages",
-    {
-      conversationId,
-      visitorId,
-      widgetId,
-    }
-  );
-  return result ?? [];
+export function fetchMessages(visitor: VisitorArgs): Promise<WidgetMessage[]> {
+  return callConvex("query", "widget/public:listMessages", { ...visitor });
 }
 
-export async function markMessagesAsRead(
-  widgetId: string,
-  visitorId: string,
-  conversationId: string
-): Promise<boolean> {
-  const result = await convexMutation<boolean>(
-    "widget_public:markMessagesAsRead",
-    {
-      conversationId,
-      visitorId,
-      widgetId,
-    }
-  );
-  return result ?? false;
-}
-
-export async function fetchUnreadCount(
-  widgetId: string,
-  visitorId: string,
-  conversationId: string
-): Promise<number> {
-  const result = await convexQuery<number>("widget_public:getUnreadCount", {
-    conversationId,
-    visitorId,
-    widgetId,
+export function markMessagesAsRead(visitor: VisitorArgs): Promise<boolean> {
+  return callConvex("mutation", "widget/public:markMessagesAsRead", {
+    ...visitor,
   });
-  return result ?? 0;
+}
+
+export function fetchUnreadCount(visitor: VisitorArgs): Promise<number> {
+  return callConvex("query", "widget/public:getUnreadCount", { ...visitor });
 }

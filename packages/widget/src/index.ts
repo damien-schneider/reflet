@@ -7,13 +7,14 @@ declare global {
   }
 }
 
+const loaderScript = document.currentScript;
+
 function initWidget(): void {
-  const script = document.currentScript;
-  if (!(script instanceof HTMLScriptElement)) {
+  if (!(loaderScript instanceof HTMLScriptElement)) {
     return;
   }
 
-  const widgetId = script.getAttribute("data-widget-id");
+  const widgetId = loaderScript.getAttribute("data-widget-id");
   if (!widgetId) {
     console.error(
       "[Reflet Widget] Missing data-widget-id attribute on script tag"

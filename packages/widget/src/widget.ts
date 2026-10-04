@@ -1,19 +1,28 @@
 import {
+  fetchConversation,
   fetchMessages,
   fetchUnreadCount,
   fetchWidgetConfig,
-  getOrCreateConversation,
   markMessagesAsRead,
   sendMessage,
 } from "./api";
 import { getWidgetStyles } from "./styles";
-import type { WidgetMessage, WidgetState } from "./types";
+import type { WidgetState } from "./types";
 import { renderWidgetHTML } from "./widget-html";
 import { generateVisitorId } from "./widget-utils";
 
 const STORAGE_KEY_VISITOR = "reflet_visitor_id";
-const STORAGE_KEY_CONVERSATION = "reflet_conversation_id";
 const POLL_INTERVAL = 5000;
+
+const readOrCreateVisitorId = (): string => {
+  const stored = localStorage.getItem(STORAGE_KEY_VISITOR);
+  if (stored) {
+    return stored;
+  }
+  const visitorId = generateVisitorId();
+  localStorage.setItem(STORAGE_KEY_VISITOR, visitorId);
+  return visitorId;
+};
 
 export class RefletWidget {
   private readonly widgetId: string;
@@ -22,27 +31,37 @@ export class RefletWidget {
   private pollTimer: number | null = null;
   private readonly state: WidgetState = {
     config: null,
-    conversationId: null,
+    draft: "",
+    hasConversation: false,
     isLoading: true,
     isOpen: false,
     messages: [],
+    sendFailed: false,
     unreadCount: 0,
-    visitorId: null,
+    visitorId: "",
   };
 
   constructor(widgetId: string) {
     this.widgetId = widgetId;
   }
 
+  private get visitor() {
+    return { visitorId: this.state.visitorId, widgetId: this.widgetId };
+  }
+
   async init(): Promise<void> {
-    const config = await fetchWidgetConfig(this.widgetId);
+    const config = await fetchWidgetConfig(this.widgetId).catch(
+      (error: unknown) => {
+        console.error("[Reflet Widget] Could not load the widget", error);
+        return null;
+      }
+    );
     if (!config) {
       return;
     }
 
     this.state.config = config;
-    this.state.visitorId = this.getOrCreateVisitorId();
-    this.state.conversationId = this.getStoredConversationId();
+    this.state.visitorId = readOrCreateVisitorId();
 
     this.createContainer();
     this.injectStyles();
@@ -52,27 +71,14 @@ export class RefletWidget {
       this.open();
     }
 
-    if (this.state.conversationId) {
-      await this.loadMessages();
+    const conversation = await fetchConversation(this.visitor).catch(
+      () => null
+    );
+    if (conversation) {
+      this.state.hasConversation = true;
+      await this.refreshUnreadCount();
       this.startPolling();
     }
-  }
-
-  private getOrCreateVisitorId(): string {
-    let visitorId = localStorage.getItem(STORAGE_KEY_VISITOR);
-    if (!visitorId) {
-      visitorId = generateVisitorId();
-      localStorage.setItem(STORAGE_KEY_VISITOR, visitorId);
-    }
-    return visitorId;
-  }
-
-  private getStoredConversationId(): string | null {
-    return localStorage.getItem(`${STORAGE_KEY_CONVERSATION}_${this.widgetId}`);
-  }
-
-  private storeConversationId(id: string): void {
-    localStorage.setItem(`${STORAGE_KEY_CONVERSATION}_${this.widgetId}`, id);
   }
 
   private createContainer(): void {
@@ -96,31 +102,17 @@ export class RefletWidget {
   }
 
   private render(): void {
-    if (!this.shadowRoot) {
+    if (!(this.shadowRoot && this.state.config)) {
       return;
     }
 
-    const existingContainer = this.shadowRoot.querySelector(
-      ".reflet-widget-container"
-    );
-    if (existingContainer) {
-      existingContainer.remove();
-    }
+    this.shadowRoot.querySelector(".reflet-widget-container")?.remove();
 
     const wrapper = document.createElement("div");
     wrapper.className = "reflet-widget-container";
-    wrapper.innerHTML = this.buildHTML();
+    wrapper.innerHTML = renderWidgetHTML(this.state.config, this.state);
     this.shadowRoot.appendChild(wrapper);
     this.attachEventListeners();
-  }
-
-  private buildHTML(): string {
-    const { config, isOpen, messages, unreadCount, isLoading } = this.state;
-    if (!config) {
-      return "";
-    }
-
-    return renderWidgetHTML(config, isOpen, messages, unreadCount, isLoading);
   }
 
   private attachEventListeners(): void {
@@ -128,55 +120,40 @@ export class RefletWidget {
       return;
     }
 
-    const launcher = this.shadowRoot.querySelector(".reflet-launcher");
-    if (launcher) {
-      launcher.addEventListener("click", () => this.open());
-    }
-
-    const closeBtn = this.shadowRoot.querySelector(".reflet-close-btn");
-    if (closeBtn) {
-      closeBtn.addEventListener("click", () => this.close());
-    }
+    this.shadowRoot
+      .querySelector(".reflet-launcher")
+      ?.addEventListener("click", () => this.open());
+    this.shadowRoot
+      .querySelector(".reflet-close-btn")
+      ?.addEventListener("click", () => this.close());
 
     const sendBtn = this.shadowRoot.querySelector(".reflet-send-btn");
     const input = this.shadowRoot.querySelector(".reflet-input");
-
-    if (sendBtn && input instanceof HTMLTextAreaElement) {
-      sendBtn.addEventListener("click", () => this.handleSend(input));
-      input.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" && !e.shiftKey) {
-          e.preventDefault();
-          this.handleSend(input);
-        }
-      });
-
-      input.addEventListener("input", () => {
-        input.style.height = "auto";
-        input.style.height = `${Math.min(input.scrollHeight, 120)}px`;
-      });
+    if (!(sendBtn && input instanceof HTMLTextAreaElement)) {
+      return;
     }
+
+    sendBtn.addEventListener("click", () => this.handleSend(input));
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        this.handleSend(input);
+      }
+    });
+    input.addEventListener("input", () => {
+      this.state.draft = input.value;
+      input.style.height = "auto";
+      input.style.height = `${Math.min(input.scrollHeight, 120)}px`;
+    });
   }
 
   private async open(): Promise<void> {
     this.state.isOpen = true;
-    this.state.isLoading = true;
+    this.state.isLoading = this.state.hasConversation;
     this.render();
 
-    if (!this.state.conversationId && this.state.visitorId) {
-      const result = await getOrCreateConversation(
-        this.widgetId,
-        this.state.visitorId,
-        {
-          referrer: document.referrer || undefined,
-          url: window.location.href,
-          userAgent: navigator.userAgent,
-        }
-      );
-
-      if (result) {
-        this.state.conversationId = result.conversationId;
-        this.storeConversationId(result.conversationId);
-      }
+    if (!this.state.hasConversation) {
+      return;
     }
 
     await this.loadMessages();
@@ -184,75 +161,80 @@ export class RefletWidget {
     this.render();
     this.scrollToBottom();
     this.startPolling();
-
-    if (this.state.conversationId && this.state.visitorId) {
-      await markMessagesAsRead(
-        this.widgetId,
-        this.state.visitorId,
-        this.state.conversationId
-      );
-      this.state.unreadCount = 0;
-    }
+    await this.markRead();
   }
 
   private close(): void {
     this.state.isOpen = false;
-    this.stopPolling();
     this.render();
   }
 
   private async handleSend(input: HTMLTextAreaElement): Promise<void> {
     const body = input.value.trim();
-    if (!(body && this.state.visitorId && this.state.conversationId)) {
+    if (!body) {
       return;
     }
 
-    input.value = "";
-    input.style.height = "auto";
-
-    const tempMessage: WidgetMessage = {
+    const tempMessageId = `temp_${Date.now()}`;
+    this.state.draft = "";
+    this.state.sendFailed = false;
+    this.state.messages.push({
       body,
       createdAt: Date.now(),
-      id: `temp_${Date.now()}`,
+      id: tempMessageId,
       isOwnMessage: true,
       senderType: "user",
-    };
-    this.state.messages.push(tempMessage);
+    });
     this.render();
     this.scrollToBottom();
 
-    const result = await sendMessage(
-      this.widgetId,
-      this.state.visitorId,
-      this.state.conversationId,
-      body
-    );
-
-    if (result) {
-      await this.loadMessages();
+    try {
+      await sendMessage(this.visitor, body, {
+        referrer: document.referrer || undefined,
+        url: window.location.href,
+        userAgent: navigator.userAgent,
+      });
+    } catch {
+      this.state.messages = this.state.messages.filter(
+        (message) => message.id !== tempMessageId
+      );
+      this.state.draft = body;
+      this.state.sendFailed = true;
       this.render();
-      this.scrollToBottom();
+      return;
     }
+
+    this.state.hasConversation = true;
+    this.startPolling();
+    await this.loadMessages();
+    this.render();
+    this.scrollToBottom();
   }
 
   private async loadMessages(): Promise<void> {
-    if (!(this.state.visitorId && this.state.conversationId)) {
-      return;
-    }
-
-    const messages = await fetchMessages(
-      this.widgetId,
-      this.state.visitorId,
-      this.state.conversationId
+    this.state.messages = await fetchMessages(this.visitor).catch(
+      () => this.state.messages
     );
-    this.state.messages = messages;
+  }
+
+  private async markRead(): Promise<void> {
+    await markMessagesAsRead(this.visitor).catch(() => false);
+    this.state.unreadCount = 0;
+  }
+
+  private async refreshUnreadCount(): Promise<void> {
+    const unreadCount = await fetchUnreadCount(this.visitor).catch(
+      () => this.state.unreadCount
+    );
+    if (unreadCount !== this.state.unreadCount) {
+      this.state.unreadCount = unreadCount;
+      this.render();
+    }
   }
 
   private scrollToBottom(): void {
-    if (!this.shadowRoot) {
-      return;
-    }
-    const messagesContainer = this.shadowRoot.querySelector(".reflet-messages");
+    const messagesContainer =
+      this.shadowRoot?.querySelector(".reflet-messages");
     if (messagesContainer) {
       messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
@@ -273,43 +255,24 @@ export class RefletWidget {
   }
 
   private async poll(): Promise<void> {
-    if (!(this.state.visitorId && this.state.conversationId)) {
+    if (!this.state.isOpen) {
+      await this.refreshUnreadCount();
       return;
     }
 
-    if (this.state.isOpen) {
-      const previousCount = this.state.messages.length;
-      await this.loadMessages();
-
-      if (this.state.messages.length > previousCount) {
-        this.render();
-        this.scrollToBottom();
-        await markMessagesAsRead(
-          this.widgetId,
-          this.state.visitorId,
-          this.state.conversationId
-        );
-      }
-    } else {
-      const unreadCount = await fetchUnreadCount(
-        this.widgetId,
-        this.state.visitorId,
-        this.state.conversationId
-      );
-
-      if (unreadCount !== this.state.unreadCount) {
-        this.state.unreadCount = unreadCount;
-        this.render();
-      }
+    const previousCount = this.state.messages.length;
+    await this.loadMessages();
+    if (this.state.messages.length > previousCount) {
+      this.render();
+      this.scrollToBottom();
+      await this.markRead();
     }
   }
 
   destroy(): void {
     this.stopPolling();
-    if (this.container) {
-      this.container.remove();
-      this.container = null;
-      this.shadowRoot = null;
-    }
+    this.container?.remove();
+    this.container = null;
+    this.shadowRoot = null;
   }
 }

@@ -2,9 +2,10 @@ import { cpSync } from "node:fs";
 import { resolve } from "node:path";
 import { defineConfig } from "vite";
 
-const CONVEX_URL =
-  process.env.NEXT_PUBLIC_CONVEX_URL ||
-  "https://grateful-butterfly-1.convex.cloud";
+const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL;
+if (!CONVEX_URL) {
+  throw new Error("NEXT_PUBLIC_CONVEX_URL is required to build the widget");
+}
 
 export default defineConfig({
   build: {
@@ -28,14 +29,10 @@ export default defineConfig({
           import.meta.dirname,
           "../../apps/web/public/widget/reflet-widget.v1.js"
         );
-        try {
-          cpSync(src, dest, { recursive: true });
-          console.log(
-            "✓ Widget copied to apps/web/public/widget/reflet-widget.v1.js"
-          );
-        } catch {
-          console.warn("⚠ Could not copy widget to web public folder");
-        }
+        cpSync(src, dest, { recursive: true });
+        console.log(
+          "✓ Widget copied to apps/web/public/widget/reflet-widget.v1.js"
+        );
       },
       name: "copy-to-web-public",
     },

@@ -21,14 +21,12 @@ export interface WidgetMessage {
 
 export interface WidgetState {
   config: WidgetConfig | null;
-  conversationId: string | null;
+  draft: string;
+  hasConversation: boolean;
   isLoading: boolean;
   isOpen: boolean;
   messages: WidgetMessage[];
+  sendFailed: boolean;
   unreadCount: number;
-  visitorId: string | null;
-}
-
-export interface ConvexClientConfig {
-  url: string;
+  visitorId: string;
 }

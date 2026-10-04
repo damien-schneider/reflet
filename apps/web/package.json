@@ -95,7 +95,9 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",
+    "@reflet/changelog-widget": "workspace:*",
     "@reflet/feedback-widget": "workspace:*",
+    "@reflet/widget": "workspace:*",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",

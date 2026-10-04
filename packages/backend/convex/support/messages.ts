@@ -4,9 +4,11 @@ import type { Doc } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { mutation, query } from "../_generated/server";
 import { requireAuthUser } from "../shared/access";
-import { MAX_SUPPORT_MESSAGE_LENGTH } from "../shared/constants";
-import { validateInputLength } from "../shared/validators";
 import { requireConversationAccess, resolveConversationAccess } from "./access";
+import {
+  appendCustomerMessage,
+  requireMessageBody,
+} from "./conversation_writes";
 import { resolveMessageSenders } from "./people";
 import {
   buildMessagePreview,
@@ -14,12 +16,6 @@ import {
   supportMessageReactions,
   supportMessageWithSender,
 } from "./validators";
-
-const REOPENED_STATUSES: Doc<"supportConversations">["status"][] = [
-  "awaiting_reply",
-  "resolved",
-  "closed",
-];
 
 export const list = query({
   args: {
@@ -101,16 +97,6 @@ const notifyUserOfAdminReply = async (
   );
 };
 
-const nextStatus = (
-  current: Doc<"supportConversations">["status"],
-  isAdminReply: boolean
-): Doc<"supportConversations">["status"] => {
-  if (isAdminReply) {
-    return "awaiting_reply";
-  }
-  return REOPENED_STATUSES.includes(current) ? "open" : current;
-};
-
 export const send = mutation({
   args: {
     body: v.string(),
@@ -129,14 +115,12 @@ export const send = mutation({
       args.guestId
     );
 
-    const body = args.body.trim();
-    if (!body) {
-      throw new Error("Message cannot be empty");
-    }
-    validateInputLength(body, MAX_SUPPORT_MESSAGE_LENGTH, "Message");
-
+    const body = requireMessageBody(args.body);
     const now = Date.now();
-    const senderType = isAdmin && !isOwner ? "admin" : "user";
+
+    if (!isAdmin || isOwner) {
+      return await appendCustomerMessage(ctx, conversation, { body, now });
+    }
 
     const messageId = await ctx.db.insert("supportMessages", {
       body,
@@ -144,25 +128,18 @@ export const send = mutation({
       createdAt: now,
       isRead: false,
       senderId: viewerId,
-      senderType,
+      senderType: "admin",
     });
-
-    const isAdminReply = senderType === "admin";
 
     await ctx.db.patch(args.conversationId, {
-      adminUnreadCount: isAdminReply
-        ? conversation.adminUnreadCount
-        : conversation.adminUnreadCount + 1,
       lastMessageAt: now,
       lastMessagePreview: buildMessagePreview(body),
-      status: nextStatus(conversation.status, isAdminReply),
+      status: "awaiting_reply",
       updatedAt: now,
-      userUnreadCount: isAdminReply
-        ? conversation.userUnreadCount + 1
-        : conversation.userUnreadCount,
+      userUnreadCount: conversation.userUnreadCount + 1,
     });
 
-    if (isAdminReply && !conversation.guestId) {
+    if (!conversation.guestId) {
       await notifyUserOfAdminReply(ctx, conversation, now);
     }
 

@@ -1,11 +1,6 @@
 import type { ChangelogEntry } from "./types";
 
-declare const __CONVEX_URL__: string;
-
-const CONVEX_URL =
-  typeof __CONVEX_URL__ === "undefined"
-    ? "https://grateful-butterfly-1.convex.cloud"
-    : __CONVEX_URL__;
+declare const __CONVEX_SITE_URL__: string;
 
 function isErrorResponse(data: unknown): data is { error: string } {
   return (
@@ -45,7 +40,7 @@ export class ChangelogApi {
     }
 
     const query = params.toString();
-    const url = `${CONVEX_URL}/api/v1/feedback/changelog${query ? `?${query}` : ""}`;
+    const url = `${__CONVEX_SITE_URL__}/api/v1/feedback/changelog${query ? `?${query}` : ""}`;
 
     const response = await fetch(url, {
       headers: {

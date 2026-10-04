@@ -285,6 +285,7 @@ import type * as status_tableFields from "../status/tableFields.js";
 import type * as storage from "../storage.js";
 import type * as support_access from "../support/access.js";
 import type * as support_admin from "../support/admin.js";
+import type * as support_conversation_writes from "../support/conversation_writes.js";
 import type * as support_conversations from "../support/conversations.js";
 import type * as support_messages from "../support/messages.js";
 import type * as support_people from "../support/people.js";
@@ -611,6 +612,7 @@ declare const fullApi: ApiFromModules<{
   storage: typeof storage;
   "support/access": typeof support_access;
   "support/admin": typeof support_admin;
+  "support/conversation_writes": typeof support_conversation_writes;
   "support/conversations": typeof support_conversations;
   "support/messages": typeof support_messages;
   "support/people": typeof support_people;

@@ -1,17 +1,20 @@
 import { type Infer, v } from "convex/values";
-import { mutation, query } from "../_generated/server";
+import type { Doc } from "../_generated/dataModel";
+import { mutation, type QueryCtx, query } from "../_generated/server";
 import { getOrgTier } from "../billing/org_subscription";
 import {
-  MAX_SUPPORT_MESSAGE_LENGTH,
   MAX_URL_LENGTH,
   MAX_USER_AGENT_LENGTH,
   MAX_VISITOR_ID_LENGTH,
 } from "../shared/constants";
-import { randomSecretHex } from "../shared/hmac";
 import { rateLimiter } from "../shared/rate_limits";
 import { validateInputLength } from "../shared/validators";
-
-const VISITOR_ID_RANDOM_BYTES = 12;
+import {
+  appendCustomerMessage,
+  createCustomerConversation,
+  newGuestCustomer,
+  requireMessageBody,
+} from "../support/conversation_writes";
 
 export const getConfig = query({
   args: {
@@ -74,125 +77,83 @@ function clipMetadata(
   };
 }
 
-export const getOrCreateConversation = mutation({
-  args: {
-    metadata: v.optional(conversationMetadataValidator),
-    visitorId: v.string(),
-    widgetId: v.string(),
-  },
+const visitorArgs = {
+  visitorId: v.string(),
+  widgetId: v.string(),
+};
+
+const findActiveWidget = async (ctx: QueryCtx, widgetId: string) => {
+  const widget = await ctx.db
+    .query("widgets")
+    .withIndex("by_widget_id", (q) => q.eq("widgetId", widgetId))
+    .unique();
+  return widget?.isActive ? widget : null;
+};
+
+const findVisitorThread = async (
+  ctx: QueryCtx,
+  widget: Doc<"widgets">,
+  visitorId: string
+) => {
+  const widgetConversation = await ctx.db
+    .query("widgetConversations")
+    .withIndex("by_widget_visitor", (q) =>
+      q.eq("widgetId", widget._id).eq("visitorId", visitorId)
+    )
+    .unique();
+  if (!widgetConversation) {
+    return null;
+  }
+  const conversation = await ctx.db.get(widgetConversation.conversationId);
+  return conversation ? { conversation, widgetConversation } : null;
+};
+
+const findVisitorConversation = async (
+  ctx: QueryCtx,
+  args: { visitorId: string; widgetId: string }
+) => {
+  const widget = await findActiveWidget(ctx, args.widgetId);
+  if (!widget) {
+    return null;
+  }
+  const thread = await findVisitorThread(ctx, widget, args.visitorId);
+  return thread?.conversation ?? null;
+};
+
+export const getConversation = query({
+  args: visitorArgs,
   handler: async (ctx, args) => {
-    validateInputLength(args.visitorId, MAX_VISITOR_ID_LENGTH, "Visitor ID");
-    const metadata = args.metadata && clipMetadata(args.metadata);
-
-    const widget = await ctx.db
-      .query("widgets")
-      .withIndex("by_widget_id", (q) => q.eq("widgetId", args.widgetId))
-      .unique();
-
-    if (!widget?.isActive) {
-      throw new Error("Widget not found or inactive");
-    }
-
-    const existingWidgetConv = await ctx.db
-      .query("widgetConversations")
-      .withIndex("by_widget_visitor", (q) =>
-        q.eq("widgetId", widget._id).eq("visitorId", args.visitorId)
-      )
-      .unique();
-
-    if (existingWidgetConv) {
-      await ctx.db.patch(existingWidgetConv._id, {
-        lastSeenAt: Date.now(),
-        metadata: metadata ?? existingWidgetConv.metadata,
-      });
-
-      return {
-        conversationId: existingWidgetConv.conversationId,
-        isNew: false,
-        visitorId: args.visitorId,
-      };
-    }
-
-    const now = Date.now();
-    const visitorId =
-      args.visitorId || `v_${randomSecretHex(VISITOR_ID_RANDOM_BYTES)}`;
-
-    await rateLimiter.limit(ctx, "widgetConversationPerVisitor", {
-      key: `${widget._id}:${visitorId}`,
-      throws: true,
-    });
-    await rateLimiter.limit(ctx, "widgetConversationPerWidget", {
-      key: widget._id,
-      throws: true,
-    });
-
-    const conversationId = await ctx.db.insert("supportConversations", {
-      adminUnreadCount: 0,
-      assignedTo: undefined,
-      createdAt: now,
-      lastMessageAt: now,
-      organizationId: widget.organizationId,
-      status: "open",
-      subject: "Widget conversation",
-      updatedAt: now,
-      userId: `widget_${visitorId}`,
-      userUnreadCount: 0,
-    });
-
-    await ctx.db.insert("widgetConversations", {
-      conversationId,
-      createdAt: now,
-      lastSeenAt: now,
-      metadata,
-      visitorId,
-      widgetId: widget._id,
-    });
-
-    return {
-      conversationId,
-      isNew: true,
-      visitorId,
-    };
+    const conversation = await findVisitorConversation(ctx, args);
+    return conversation
+      ? {
+          conversationId: conversation._id,
+          guestEmail: conversation.guestEmail,
+        }
+      : null;
   },
 });
 
 export const sendMessage = mutation({
   args: {
+    ...visitorArgs,
     body: v.string(),
-    conversationId: v.id("supportConversations"),
-    visitorId: v.string(),
-    widgetId: v.string(),
+    metadata: v.optional(conversationMetadataValidator),
   },
   handler: async (ctx, args) => {
-    validateInputLength(args.body, MAX_SUPPORT_MESSAGE_LENGTH, "Message");
     validateInputLength(args.visitorId, MAX_VISITOR_ID_LENGTH, "Visitor ID");
+    if (!args.visitorId) {
+      throw new Error("Visitor ID is required");
+    }
+    const body = requireMessageBody(args.body);
 
-    const widget = await ctx.db
-      .query("widgets")
-      .withIndex("by_widget_id", (q) => q.eq("widgetId", args.widgetId))
-      .unique();
-
-    if (!widget?.isActive) {
+    const widget = await findActiveWidget(ctx, args.widgetId);
+    if (!widget) {
       throw new Error("Widget not found or inactive");
     }
 
-    const widgetConv = await ctx.db
-      .query("widgetConversations")
-      .withIndex("by_widget_visitor", (q) =>
-        q.eq("widgetId", widget._id).eq("visitorId", args.visitorId)
-      )
-      .unique();
-
-    if (!widgetConv || widgetConv.conversationId !== args.conversationId) {
-      throw new Error("Conversation not found for this visitor");
-    }
-
-    const conversation = await ctx.db.get(args.conversationId);
-    if (!conversation) {
-      throw new Error("Conversation not found");
-    }
+    const visitorKey = `${widget._id}:${args.visitorId}`;
     await rateLimiter.limit(ctx, "widgetMessagePerVisitor", {
-      key: `${widget._id}:${args.visitorId}`,
+      key: visitorKey,
       throws: true,
     });
     await rateLimiter.limit(ctx, "widgetMessagePerWidget", {
@@ -201,121 +162,100 @@ export const sendMessage = mutation({
     });
 
     const now = Date.now();
+    const metadata = args.metadata && clipMetadata(args.metadata);
+    const thread = await findVisitorThread(ctx, widget, args.visitorId);
 
-    const messageId = await ctx.db.insert("supportMessages", {
-      body: args.body,
-      conversationId: args.conversationId,
+    if (thread) {
+      const messageId = await appendCustomerMessage(ctx, thread.conversation, {
+        body,
+        now,
+      });
+      await ctx.db.patch(thread.widgetConversation._id, {
+        lastSeenAt: now,
+        metadata: metadata ?? thread.widgetConversation.metadata,
+      });
+      return { conversationId: thread.conversation._id, messageId };
+    }
+
+    await rateLimiter.limit(ctx, "widgetConversationPerVisitor", {
+      key: visitorKey,
+      throws: true,
+    });
+    await rateLimiter.limit(ctx, "widgetConversationPerWidget", {
+      key: widget._id,
+      throws: true,
+    });
+
+    const { conversationId, messageId } = await createCustomerConversation(
+      ctx,
+      {
+        body,
+        customer: newGuestCustomer(),
+        now,
+        organizationId: widget.organizationId,
+      }
+    );
+
+    await ctx.db.insert("widgetConversations", {
+      conversationId,
       createdAt: now,
-      isRead: false,
-      senderId: `widget_${args.visitorId}`,
-      senderType: "user",
-    });
-
-    const newStatus =
-      conversation.status === "awaiting_reply" ? "open" : conversation.status;
-
-    await ctx.db.patch(args.conversationId, {
-      adminUnreadCount: conversation.adminUnreadCount + 1,
-      lastMessageAt: now,
-      status: newStatus,
-      updatedAt: now,
-    });
-
-    await ctx.db.patch(widgetConv._id, {
       lastSeenAt: now,
+      metadata,
+      visitorId: args.visitorId,
+      widgetId: widget._id,
     });
 
-    return { messageId };
+    return { conversationId, messageId };
   },
 });
 
 export const listMessages = query({
-  args: {
-    conversationId: v.id("supportConversations"),
-    visitorId: v.string(),
-    widgetId: v.string(),
-  },
+  args: visitorArgs,
   handler: async (ctx, args) => {
-    const widget = await ctx.db
-      .query("widgets")
-      .withIndex("by_widget_id", (q) => q.eq("widgetId", args.widgetId))
-      .unique();
-
-    if (!widget?.isActive) {
-      return [];
-    }
-
-    const widgetConv = await ctx.db
-      .query("widgetConversations")
-      .withIndex("by_widget_visitor", (q) =>
-        q.eq("widgetId", widget._id).eq("visitorId", args.visitorId)
-      )
-      .unique();
-
-    if (!widgetConv || widgetConv.conversationId !== args.conversationId) {
+    const conversation = await findVisitorConversation(ctx, args);
+    if (!conversation) {
       return [];
     }
 
     const messages = await ctx.db
       .query("supportMessages")
-      .withIndex("by_conversation", (q) =>
-        q.eq("conversationId", args.conversationId)
+      .withIndex("by_conversation_created", (q) =>
+        q.eq("conversationId", conversation._id)
       )
       .collect();
 
-    messages.sort((a, b) => a.createdAt - b.createdAt);
-
-    return messages.map((msg) => ({
-      body: msg.body,
-      createdAt: msg.createdAt,
-      id: msg._id,
-      isOwnMessage: msg.senderId === `widget_${args.visitorId}`,
-      senderType: msg.senderType,
+    return messages.map((message) => ({
+      body: message.body,
+      createdAt: message.createdAt,
+      id: message._id,
+      isOwnMessage: message.senderId === conversation.userId,
+      senderType: message.senderType,
     }));
   },
 });
 
 export const markMessagesAsRead = mutation({
-  args: {
-    conversationId: v.id("supportConversations"),
-    visitorId: v.string(),
-    widgetId: v.string(),
-  },
+  args: visitorArgs,
   handler: async (ctx, args) => {
-    const widget = await ctx.db
-      .query("widgets")
-      .withIndex("by_widget_id", (q) => q.eq("widgetId", args.widgetId))
-      .unique();
-
-    if (!widget?.isActive) {
-      return false;
-    }
-
-    const widgetConv = await ctx.db
-      .query("widgetConversations")
-      .withIndex("by_widget_visitor", (q) =>
-        q.eq("widgetId", widget._id).eq("visitorId", args.visitorId)
-      )
-      .unique();
-
-    if (!widgetConv || widgetConv.conversationId !== args.conversationId) {
+    const conversation = await findVisitorConversation(ctx, args);
+    if (!conversation) {
       return false;
     }
 
     const messages = await ctx.db
       .query("supportMessages")
       .withIndex("by_conversation", (q) =>
-        q.eq("conversationId", args.conversationId)
+        q.eq("conversationId", conversation._id)
       )
       .collect();
 
-    for (const message of messages) {
-      if (!message.isRead && message.senderType === "admin") {
-        await ctx.db.patch(message._id, { isRead: true });
-      }
-    }
+    await Promise.all(
+      messages
+        .filter((message) => !message.isRead && message.senderType === "admin")
+        .map((message) => ctx.db.patch(message._id, { isRead: true }))
+    );
 
-    await ctx.db.patch(args.conversationId, {
+    await ctx.db.patch(conversation._id, {
       updatedAt: Date.now(),
       userUnreadCount: 0,
     });
@@ -325,33 +265,9 @@ export const markMessagesAsRead = mutation({
 });
 
 export const getUnreadCount = query({
-  args: {
-    conversationId: v.id("supportConversations"),
-    visitorId: v.string(),
-    widgetId: v.string(),
-  },
+  args: visitorArgs,
   handler: async (ctx, args) => {
-    const widget = await ctx.db
-      .query("widgets")
-      .withIndex("by_widget_id", (q) => q.eq("widgetId", args.widgetId))
-      .unique();
-
-    if (!widget?.isActive) {
-      return 0;
-    }
-
-    const widgetConv = await ctx.db
-      .query("widgetConversations")
-      .withIndex("by_widget_visitor", (q) =>
-        q.eq("widgetId", widget._id).eq("visitorId", args.visitorId)
-      )
-      .unique();
-
-    if (!widgetConv || widgetConv.conversationId !== args.conversationId) {
-      return 0;
-    }
-
-    const conversation = await ctx.db.get(args.conversationId);
+    const conversation = await findVisitorConversation(ctx, args);
     return conversation?.userUnreadCount ?? 0;
   },
 });
