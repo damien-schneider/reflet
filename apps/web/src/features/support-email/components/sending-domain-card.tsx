@@ -166,11 +166,15 @@ function AddSendingDomainForm({
             spellCheck={false}
             value={domainInput}
           />
+          <FieldError
+            id="sending-domain-error"
+            match={error !== null}
+            role="alert"
+          >
+            {error}
+          </FieldError>
         </Field>
       </div>
-      <FieldError id="sending-domain-error" match={error !== null} role="alert">
-        {error}
-      </FieldError>
       <Button
         className="self-start"
         disabled={isAdding || !domainInput.trim() || !localPartInput.trim()}
