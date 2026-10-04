@@ -30,7 +30,7 @@ export function DashboardWorkspace({
     <div className="flex min-h-0 flex-1">
       <SectionPanelHost>
         {panel}
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto bg-background lg:my-2 lg:me-2 lg:rounded-scene lg:border">
+        <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto bg-background lg:shadow-(--reflet-workspace-shadow)">
           {children}
         </div>
       </SectionPanelHost>

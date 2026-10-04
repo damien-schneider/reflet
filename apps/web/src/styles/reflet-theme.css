@@ -89,6 +89,9 @@
     var(--reflet-light), 0 0 0 1px var(--reflet-edge),
     0 2px 3px -1px oklch(from var(--shadow-color) l c h / 0.04),
     0 12px 24px -12px oklch(from var(--shadow-color) l c h / 0.12);
+  --reflet-workspace-shadow:
+    0 0 0 1px oklch(from var(--reflet-edge) l c h / calc(alpha * 0.5)),
+    -6px 0 16px -6px oklch(from var(--shadow-color) l c h / 0.05);
   --reflet-popup-shadow:
     var(--reflet-light), 0 0 0 1px var(--reflet-edge),
     0 4px 8px -4px oklch(from var(--shadow-color) l c h / 0.12),
