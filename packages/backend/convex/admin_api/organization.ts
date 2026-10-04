@@ -1,6 +1,8 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "../_generated/server";
 import { sortColumnsByLifecycle } from "../organizations/status_definitions";
+import { logVisibilityChange } from "../organizations/visibility_log";
+import { API_ACTOR_ID } from "../shared/actors";
 
 // ============================================
 // ORGANIZATION QUERIES
@@ -123,6 +125,11 @@ export const updateOrganization = internalMutation({
       throw new Error("Organization not found");
     }
 
+    await logVisibilityChange(ctx, {
+      actorId: API_ACTOR_ID,
+      isPublic: args.isPublic,
+      organization: org,
+    });
     const updates: Record<string, unknown> = {};
     if (args.name !== undefined) {
       updates.name = args.name;

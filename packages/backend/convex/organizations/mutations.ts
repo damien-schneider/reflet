@@ -7,6 +7,7 @@ import { DEFAULT_TAGS } from "../feedback/tag_definitions";
 import { requireAuthUser } from "../shared/access";
 import { assertValidSlug, deriveSlugFromName, slugify } from "./slug";
 import { DEFAULT_STATUSES } from "./status_definitions";
+import { logVisibilityChange } from "./visibility_log";
 
 const assertSlugAvailable = async (
   ctx: MutationCtx,
@@ -209,6 +210,11 @@ export const update = mutation({
       }
     }
 
+    await logVisibilityChange(ctx, {
+      actorId: user._id,
+      isPublic: args.isPublic,
+      organization: org,
+    });
     const { id, changelogSettings, feedbackSettings, ...updates } = args;
     await ctx.db.patch(id, {
       ...updates,
