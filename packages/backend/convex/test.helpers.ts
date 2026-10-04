@@ -1,6 +1,7 @@
 /// <reference types="vite/client" />
 
 import rateLimiterTest from "@convex-dev/rate-limiter/test";
+import resendTest from "@convex-dev/resend/test";
 import { defineSchema, queryGeneric } from "convex/server";
 import { v } from "convex/values";
 import { convexTest } from "convex-test";
@@ -124,6 +125,8 @@ export const setupTest = ({
     createAuthModules(authUsers)
   );
   rateLimiterTest.register(test);
+  resendTest.register(test, "resend");
+  resendTest.register(test, "supportResend");
   return test;
 };
 

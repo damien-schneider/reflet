@@ -1,9 +1,9 @@
 "use client";
 
 import { api } from "@reflet/backend/convex/_generated/api";
-import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { matchesConversationSearch } from "@/features/inbox/lib/conversation-search";
 import {
@@ -52,26 +52,35 @@ export function useInbox(orgSlug: string) {
     organizationId ? { organizationId } : "skip"
   );
 
+  const linkedId = useSearchParams().get("conversation");
   const [view, setView] = useState<InboxView>("open");
   const [searchQuery, setSearchQuery] = useState("");
-  const [chosenId, setSelectedId] = useState<Id<"supportConversations"> | null>(
-    null
-  );
+  const [chosenId, setSelectedId] = useState<string | null>(linkedId);
+  const [lastLinkedId, setLastLinkedId] = useState(linkedId);
+  if (linkedId !== lastLinkedId) {
+    setLastLinkedId(linkedId);
+    if (linkedId) {
+      setSelectedId(linkedId);
+    }
+  }
 
   const conversations = useQuery(
     api.support.admin.list,
     organizationId ? { organizationId, status: statusesInView(view) } : "skip"
   );
+  const outboundStatus = useQuery(
+    api.support.email.compose.getOutboundStatus,
+    organizationId ? { organizationId } : "skip"
+  );
 
   const visibleConversations = conversations?.filter((conversation) =>
     matchesConversationSearch(conversation, searchQuery)
   );
-  const firstVisibleId = visibleConversations?.[0]?._id;
-  const chosenIsVisible = visibleConversations?.some(
-    (conversation) => conversation._id === chosenId
-  );
   const selectedId =
-    firstVisibleId && !chosenIsVisible ? firstVisibleId : chosenId;
+    visibleConversations?.find((conversation) => conversation._id === chosenId)
+      ?._id ??
+    visibleConversations?.[0]?._id ??
+    null;
 
   const selectedConversation = useQuery(
     api.support.conversations.get,
@@ -84,6 +93,9 @@ export function useInbox(orgSlug: string) {
   );
 
   const sendMessage = useMutation(api.support.messages.send);
+  const startEmailConversation = useMutation(
+    api.support.email.compose.startEmailConversation
+  );
   const markAsRead = useMutation(api.support.messages.markAsRead);
   const updateStatus = useMutation(api.support.admin.updateStatus);
   const assignConversation = useMutation(api.support.admin.assign);
@@ -108,6 +120,7 @@ export function useInbox(orgSlug: string) {
     members: toTeamMembers(members),
     messages,
     org,
+    outboundStatus,
     searchQuery,
     selectedConversation,
     selectedId,
@@ -120,6 +133,7 @@ export function useInbox(orgSlug: string) {
     write: {
       assignConversation,
       sendMessage,
+      startEmailConversation,
       updateStatus,
       updateSupportSettings,
     },

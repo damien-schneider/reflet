@@ -1,119 +1,25 @@
 import { Resend, vEmailId, vOnEmailEventArgs } from "@convex-dev/resend";
-import { type Infer, v } from "convex/values";
+import { v } from "convex/values";
 import { components, internal } from "../_generated/api";
 import { internalAction, internalMutation } from "../_generated/server";
-import { normalizeEmail } from "./suppression";
+import { recordEmailEvent } from "./events";
+import { emailTypeValidator } from "./tableFields";
 
 export const resend: Resend = new Resend(components.resend, {
   onEmailEvent: internal.email.send.handleEmailEvent,
   testMode: false,
 });
 
-type EmailEvent = Infer<typeof vOnEmailEventArgs>["event"];
-
-const suppressionReasonFor = (
-  event: EmailEvent
-): "complaint" | "hard_bounce" | null => {
-  if (event.type === "email.complained") {
-    return "complaint";
-  }
-  if (
-    event.type === "email.bounced" &&
-    event.data.bounce.type === "Permanent"
-  ) {
-    return "hard_bounce";
-  }
-  return null;
-};
-
 export const handleEmailEvent = internalMutation({
   args: vOnEmailEventArgs,
   handler: async (ctx, args) => {
-    const { type } = args.event;
-    const resendEmailId = String(args.id);
-    const now = Date.now();
-
-    const sendLog = await ctx.db
-      .query("emailSendLog")
-      .withIndex("by_resend_id", (q) => q.eq("resendEmailId", resendEmailId))
-      .first();
-
-    const { to } = args.event.data;
-    const recipientEmail = typeof to === "string" ? to : to[0];
-
-    await ctx.db.insert("emailEvents", {
-      emailSendLogId: sendLog?._id,
-      eventType: type,
-      recipientEmail,
-      resendEmailId,
-      timestamp: now,
-    });
-
-    const statusMap: Record<string, string> = {
-      "email.bounced": "bounced",
-      "email.clicked": "clicked",
-      "email.complained": "complained",
-      "email.delivered": "delivered",
-      "email.delivery_delayed": "delivery_delayed",
-      "email.failed": "failed",
-      "email.opened": "opened",
-    };
-    const timestampMap: Record<string, string> = {
-      "email.bounced": "bouncedAt",
-      "email.clicked": "clickedAt",
-      "email.delivered": "deliveredAt",
-      "email.opened": "openedAt",
-    };
-
-    const newStatus = sendLog ? statusMap[type] : undefined;
-
-    if (sendLog && newStatus) {
-      const patch: Record<string, unknown> = {
-        status: newStatus,
-      };
-      const timestampField = timestampMap[type];
-      if (timestampField) {
-        patch[timestampField] = now;
-      }
-      await ctx.db.patch(sendLog._id, patch);
-    }
-
-    const reason = suppressionReasonFor(args.event);
-    if (!(reason && recipientEmail)) {
-      return;
-    }
-
-    const suppressedEmail = normalizeEmail(recipientEmail);
-    const existing = await ctx.db
-      .query("emailSuppressions")
-      .withIndex("by_email", (q) => q.eq("email", suppressedEmail))
-      .first();
-
-    if (!existing) {
-      await ctx.db.insert("emailSuppressions", {
-        email: suppressedEmail,
-        originalEventType: type,
-        reason,
-        suppressedAt: now,
-      });
-    }
+    await recordEmailEvent(ctx, args, { complaintScope: "global" });
   },
 });
 
 export const sendEmail = internalMutation({
   args: {
-    emailType: v.optional(
-      v.union(
-        v.literal("changelog_notification"),
-        v.literal("feedback_shipped"),
-        v.literal("weekly_digest"),
-        v.literal("invitation"),
-        v.literal("verification"),
-        v.literal("welcome"),
-        v.literal("password_reset"),
-        v.literal("other")
-      )
-    ),
+    emailType: v.optional(emailTypeValidator),
     feedbackId: v.optional(v.id("feedback")),
     from: v.string(),
     headers: v.optional(

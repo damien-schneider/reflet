@@ -33,12 +33,16 @@
     "convex": "catalog:",
     "convex-helpers": "^0.1.124",
     "dotenv": "catalog:",
+    "email-reply-parser": "^2.3.9",
+    "html-to-text": "^10.0.1",
     "stripe": "^22.6.2",
+    "svix": "^2.6.1",
     "web-push": "^3.6.7",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@edge-runtime/vm": "^5.0.0",
+    "@types/html-to-text": "^9.0.4",
     "@types/node": "^26.1.2",
     "@types/web-push": "^3.6.4",
     "convex-test": "^0.0.58",

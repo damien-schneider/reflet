@@ -56,10 +56,11 @@ export function SupportDesk({ isGuest, org, surface }: SupportDeskProps) {
   const [openId, setOpenId] = useState<ConversationId | null>(null);
 
   if (openId) {
+    const guestId = guestSession?.guestId;
     const thread = (
       <SupportThread
         conversationId={openId}
-        guestId={guestSession?.guestId ?? undefined}
+        credential={guestId ? { guestId, kind: "guest" } : undefined}
         onBack={() => setOpenId(null)}
       />
     );

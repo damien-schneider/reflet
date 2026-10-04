@@ -1,14 +1,22 @@
 import { v } from "convex/values";
-import { internal } from "../_generated/api";
 import type { Doc } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { mutation, query } from "../_generated/server";
 import { requireAuthUser } from "../shared/access";
-import { requireConversationAccess, resolveConversationAccess } from "./access";
+import { rateLimiter } from "../shared/rate_limits";
+import {
+  requireConversationAccess,
+  resolveConversationAccess,
+  supportCredential,
+} from "./access";
+import { attachmentViewsByMessage } from "./attachments";
 import {
   appendCustomerMessage,
   requireMessageBody,
 } from "./conversation_writes";
+import { scheduleCustomerDelivery } from "./customer_delivery";
+import { requestContactConfirmationOnce } from "./email/contacts";
+import { describeMessageEmail } from "./email/message_email";
 import { resolveMessageSenders } from "./people";
 import {
   buildMessagePreview,
@@ -17,10 +25,12 @@ import {
   supportMessageWithSender,
 } from "./validators";
 
+const CUSTOMER_SENDER_ID = "customer";
+
 export const list = query({
   args: {
     conversationId: v.id("supportConversations"),
-    guestId: v.optional(v.string()),
+    credential: v.optional(supportCredential),
   },
   handler: async (ctx, args) => {
     const conversation = await ctx.db.get(args.conversationId);
@@ -31,7 +41,7 @@ export const list = query({
     const access = await resolveConversationAccess(
       ctx,
       conversation,
-      args.guestId
+      args.credential
     );
     if (!access) {
       return [];
@@ -54,54 +64,48 @@ export const list = query({
         .map((message) => message.senderId)
         .filter((senderId) => senderId !== guestSenderId)
     );
+    // the customer's sender id embeds their guest credential; only admins may see it
+    const visibleSenderId = (senderId: string) =>
+      access.isAdmin || senderId !== conversation.userId
+        ? senderId
+        : CUSTOMER_SENDER_ID;
     const guestSender: SupportMessageSender | undefined =
       conversation.guestEmail
-        ? { email: conversation.guestEmail, id: conversation.userId }
+        ? {
+            email: conversation.guestEmail,
+            id: visibleSenderId(conversation.userId),
+          }
         : undefined;
 
-    return messages.map((message) => ({
-      ...message,
-      isOwnMessage: message.senderId === access.viewerId,
-      sender: senders.get(message.senderId) ?? guestSender,
-    }));
+    const attachments = await attachmentViewsByMessage(ctx, conversation._id);
+
+    return await Promise.all(
+      messages.map(async (message) => ({
+        _creationTime: message._creationTime,
+        _id: message._id,
+        attachments: attachments.get(message._id) ?? [],
+        body: message.body,
+        conversationId: message.conversationId,
+        createdAt: message.createdAt,
+        email: access.isAdmin
+          ? await describeMessageEmail(ctx, message)
+          : undefined,
+        isOwnMessage: message.senderId === access.viewerId,
+        isRead: message.isRead,
+        sender: senders.get(message.senderId) ?? guestSender,
+        senderId: visibleSenderId(message.senderId),
+        senderType: message.senderType,
+      }))
+    );
   },
   returns: v.array(supportMessageWithSender),
 });
-
-const notifyUserOfAdminReply = async (
-  ctx: MutationCtx,
-  conversation: Doc<"supportConversations">,
-  now: number
-) => {
-  const message = `You have a new reply from support${conversation.subject ? `: ${conversation.subject}` : ""}`;
-
-  await ctx.db.insert("notifications", {
-    createdAt: now,
-    isRead: false,
-    message,
-    title: "New support message",
-    type: "new_support_message",
-    userId: conversation.userId,
-  });
-
-  await ctx.scheduler.runAfter(
-    0,
-    internal.notifications.push.sendPushNotification,
-    {
-      message,
-      title: "New support message",
-      type: "new_support_message",
-      url: "/dashboard",
-      userId: conversation.userId,
-    }
-  );
-};
 
 export const send = mutation({
   args: {
     body: v.string(),
     conversationId: v.id("supportConversations"),
-    guestId: v.optional(v.string()),
+    credential: v.optional(supportCredential),
   },
   handler: async (ctx, args) => {
     const conversation = await ctx.db.get(args.conversationId);
@@ -112,14 +116,29 @@ export const send = mutation({
     const { isAdmin, isOwner, viewerId } = await requireConversationAccess(
       ctx,
       conversation,
-      args.guestId
+      args.credential
     );
 
     const body = requireMessageBody(args.body);
     const now = Date.now();
 
     if (!isAdmin || isOwner) {
-      return await appendCustomerMessage(ctx, conversation, { body, now });
+      await rateLimiter.limit(ctx, "supportCustomerMessagePerConversation", {
+        key: conversation._id,
+        throws: true,
+      });
+      const messageId = await appendCustomerMessage(ctx, conversation, {
+        body,
+        countsAsActivity: true,
+        now,
+      });
+      if (conversation.guestId && conversation.guestEmail) {
+        await requestContactConfirmationOnce(ctx, {
+          email: conversation.guestEmail,
+          organizationId: conversation.organizationId,
+        });
+      }
+      return messageId;
     }
 
     const messageId = await ctx.db.insert("supportMessages", {
@@ -139,9 +158,7 @@ export const send = mutation({
       userUnreadCount: conversation.userUnreadCount + 1,
     });
 
-    if (!conversation.guestId) {
-      await notifyUserOfAdminReply(ctx, conversation, now);
-    }
+    await scheduleCustomerDelivery(ctx, conversation, messageId);
 
     return messageId;
   },
@@ -151,7 +168,7 @@ export const send = mutation({
 export const markAsRead = mutation({
   args: {
     conversationId: v.id("supportConversations"),
-    guestId: v.optional(v.string()),
+    credential: v.optional(supportCredential),
   },
   handler: async (ctx, args) => {
     const conversation = await ctx.db.get(args.conversationId);
@@ -162,7 +179,7 @@ export const markAsRead = mutation({
     const { isAdmin, isOwner } = await requireConversationAccess(
       ctx,
       conversation,
-      args.guestId
+      args.credential
     );
 
     const readableSenderType = isOwner ? "admin" : "user";
@@ -274,7 +291,7 @@ export const removeReaction = mutation({
 export const listReactions = query({
   args: {
     conversationId: v.id("supportConversations"),
-    guestId: v.optional(v.string()),
+    credential: v.optional(supportCredential),
   },
   handler: async (ctx, args) => {
     const conversation = await ctx.db.get(args.conversationId);
@@ -285,7 +302,7 @@ export const listReactions = query({
     const access = await resolveConversationAccess(
       ctx,
       conversation,
-      args.guestId
+      args.credential
     );
     if (!access) {
       return [];

@@ -75,4 +75,16 @@ crons.interval(
   internal.domains.crons.checkPendingDomains
 );
 
+crons.daily(
+  "cleanup support inbound emails",
+  { hourUTC: 2, minuteUTC: 45 },
+  internal.support.email.inbound.retention.cleanupInboundEmails
+);
+
+crons.interval(
+  "check support sending domains",
+  { minutes: 5 },
+  internal.support.email.domains.crons.checkSendingDomains
+);
+
 export default crons;

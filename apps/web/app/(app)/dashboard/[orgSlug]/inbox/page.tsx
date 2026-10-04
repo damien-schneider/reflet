@@ -21,10 +21,12 @@ import {
 } from "@/features/inbox/components/conversation/admin-conversation-view";
 import { InboxListPane } from "@/features/inbox/components/list/inbox-list-pane";
 import { InboxPanelSkeleton } from "@/features/inbox/components/list/inbox-panel-skeleton";
+import { NewEmailDialog } from "@/features/inbox/components/list/new-email-dialog";
 import { PublicPageControl } from "@/features/inbox/components/public-page-control";
 import { ShortcutHintBar } from "@/features/inbox/components/shortcut-hint-bar";
 import { useInbox } from "@/features/inbox/hooks/use-inbox";
 import { acceptsReplies } from "@/features/support/lib/conversation-status";
+import { SendingPausedAlert } from "@/features/support-email/components/sending-paused-alert";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import {
   type InboxState,
@@ -96,6 +98,11 @@ function InboxWorkspace({
   return (
     <PageLayout width="full">
       <h1 className="sr-only">Inbox</h1>
+      {inbox.outboundStatus?.composeBlocker === "paused" && (
+        <div className="p-3">
+          <SendingPausedAlert reason={inbox.outboundStatus.pauseReason} />
+        </div>
+      )}
       <InboxPanes actions={actions} inbox={inbox} org={org} />
       <ShortcutHintBar
         canActOnSelection={
@@ -138,6 +145,15 @@ function InboxPanes({
               },
             },
           }}
+          newEmail={
+            <NewEmailDialog
+              composeBlocker={inbox.outboundStatus?.composeBlocker}
+              onStart={(draft) =>
+                actions.startEmailConversation(org._id, draft)
+              }
+              orgSlug={org.slug}
+            />
+          }
           search={{ onChange: inbox.setSearchQuery, query: inbox.searchQuery }}
           views={{ current: inbox.view, onChange: inbox.setView }}
         />

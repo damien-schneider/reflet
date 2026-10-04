@@ -3,7 +3,7 @@
 import { describe, expect, test } from "vitest";
 import { api } from "../../_generated/api";
 import { MAX_URL_LENGTH, MAX_USER_AGENT_LENGTH } from "../../shared/constants";
-import { seedOrganization } from "../../test.fixtures";
+import { scheduledFunctionNames, seedOrganization } from "../../test.fixtures";
 import { setupTest } from "../../test.helpers";
 
 const ADMIN = { _id: "user_admin", email: "team@acme.test" };
@@ -107,5 +107,57 @@ describe("widget conversations", () => {
     expect(stored?.metadata?.url).toHaveLength(MAX_URL_LENGTH);
     expect(stored?.metadata?.referrer).toHaveLength(MAX_URL_LENGTH);
     expect(stored?.metadata?.userAgent).toHaveLength(MAX_USER_AGENT_LENGTH);
+  });
+
+  test("a visitor email is stored on the conversation and asked for confirmation", async () => {
+    const { t } = await setup();
+    const { conversationId } = await t.mutation(api.widget.public.sendMessage, {
+      ...VISITOR,
+      body: "Hello",
+    });
+
+    expect(
+      await t.mutation(api.widget.public.setEmail, {
+        ...VISITOR,
+        email: " jane@example.com ",
+      })
+    ).toEqual({ confirmationRequired: true });
+
+    expect(await t.query(api.widget.public.getConversation, VISITOR)).toEqual({
+      conversationId,
+      guestEmail: "jane@example.com",
+    });
+    expect(await t.run((ctx) => scheduledFunctionNames(ctx))).toContain(
+      "support/email/render:sendContactConfirmation"
+    );
+  });
+
+  test("an already confirmed visitor email needs no confirmation", async () => {
+    const { organizationId, t } = await setup();
+    await t.mutation(api.widget.public.sendMessage, { ...VISITOR, body: "Hi" });
+    await t.run((ctx) =>
+      ctx.db.insert("supportContacts", {
+        createdAt: Date.now(),
+        email: "jane@example.com",
+        organizationId,
+        verifiedAt: Date.now(),
+      })
+    );
+
+    expect(
+      await t.mutation(api.widget.public.setEmail, {
+        ...VISITOR,
+        email: "Jane@Example.com",
+      })
+    ).toEqual({ confirmationRequired: false });
+  });
+
+  test("an invalid visitor email is refused with a readable message", async () => {
+    const { t } = await setup();
+    await t.mutation(api.widget.public.sendMessage, { ...VISITOR, body: "Hi" });
+
+    await expect(
+      t.mutation(api.widget.public.setEmail, { ...VISITOR, email: "nope" })
+    ).rejects.toThrow("Enter a valid email address.");
   });
 });

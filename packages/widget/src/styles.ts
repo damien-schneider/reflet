@@ -211,6 +211,86 @@ export function getWidgetStyles(primaryColor: string, zIndex: number): string {
       color: #b91c1c;
     }
 
+    .reflet-attachments {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-top: 6px;
+    }
+
+    .reflet-attachment {
+      color: inherit;
+      font-size: 12px;
+      text-decoration: underline;
+      word-break: break-all;
+    }
+
+    .reflet-attachment.skipped {
+      opacity: 0.7;
+      text-decoration: none;
+    }
+
+    .reflet-email-card {
+      align-self: stretch;
+      margin: 0;
+      padding: 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      background: #f9fafb;
+    }
+
+    .reflet-email-note {
+      font-size: 13px;
+      color: #4b5563;
+    }
+
+    .reflet-email-label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .reflet-email-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .reflet-email-input {
+      flex: 1;
+      min-width: 0;
+      padding: 8px 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 16px;
+      font-family: inherit;
+      outline: none;
+    }
+
+    .reflet-email-input:focus {
+      border-color: ${primaryColor};
+    }
+
+    .reflet-email-btn {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 8px;
+      background: ${primaryColor};
+      color: white;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    .reflet-email-btn:disabled {
+      cursor: default;
+      opacity: 0.6;
+    }
+
+    .reflet-email-card .reflet-send-error {
+      padding: 8px 0 0;
+    }
+
     .reflet-input-container {
       padding: 12px 16px;
       border-top: 1px solid #e5e7eb;

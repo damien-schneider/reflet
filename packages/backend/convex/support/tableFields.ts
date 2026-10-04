@@ -4,6 +4,7 @@ import {
   supportConversationStatus,
   supportMessageSenderType,
 } from "../shared/validators";
+import { messageOutboundEmail } from "./email/tableFields";
 
 export const supportTables = {
   messageReactions: defineTable({
@@ -19,6 +20,7 @@ export const supportTables = {
     adminUnreadCount: v.number(),
     assignedTo: v.optional(v.string()),
     createdAt: v.number(),
+    customerNoticeSentAt: v.optional(v.number()),
     guestEmail: v.optional(v.string()),
     guestId: v.optional(v.string()),
     lastMessageAt: v.number(),
@@ -41,7 +43,9 @@ export const supportTables = {
     body: v.string(),
     conversationId: v.id("supportConversations"),
     createdAt: v.number(),
+    inboundEmailId: v.optional(v.id("supportInboundEmails")),
     isRead: v.boolean(),
+    outboundEmail: v.optional(messageOutboundEmail),
     senderId: v.string(),
     senderType: supportMessageSenderType,
   })

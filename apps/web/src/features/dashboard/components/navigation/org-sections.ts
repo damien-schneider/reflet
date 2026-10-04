@@ -7,6 +7,7 @@ import {
   Code,
   Copy,
   CreditCard,
+  EnvelopeSimple,
   FileText,
   Gear,
   GithubLogo,
@@ -155,6 +156,12 @@ function settingsItems(base: string, deleted?: number): NavItem[] {
     { href: `${base}/project/general`, icon: Gear, label: "General" },
     { href: `${base}/project/members`, icon: Users, label: "Members" },
     { href: `${base}/project/domains`, icon: Globe, label: "Domains" },
+    {
+      adminOnly: true,
+      href: `${base}/project/support-email`,
+      icon: EnvelopeSimple,
+      label: "Support email",
+    },
     { href: `${base}/project/billing`, icon: CreditCard, label: "Billing" },
     {
       adminOnly: true,

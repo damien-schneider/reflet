@@ -12,6 +12,7 @@ import { intelligenceTables } from "./intelligence/tableFields";
 import { notificationTables } from "./notifications/tableFields";
 import { organizationTables } from "./organizations/tableFields";
 import { statusTables } from "./status/tableFields";
+import { supportEmailTables } from "./support/email/tableFields";
 import { supportTables } from "./support/tableFields";
 import { surveyTables } from "./surveys/tableFields";
 import { webhookTables } from "./webhooks/tableFields";
@@ -24,6 +25,7 @@ export default defineSchema({
   ...changelogTables,
   ...notificationTables,
   ...supportTables,
+  ...supportEmailTables,
   ...widgetTables,
   ...githubTables,
   ...billingTables,

@@ -11,6 +11,7 @@ import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { ArrowLeft } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import type { SupportCredential } from "@reflet/backend/convex/support/access";
 import { useMutation, useQuery } from "convex/react";
 import { format } from "date-fns";
 import { useEffect } from "react";
@@ -20,22 +21,22 @@ import { MessageThread } from "@/features/support/components/thread/message-thre
 
 interface SupportThreadProps {
   conversationId: Id<"supportConversations">;
-  guestId?: string;
-  onBack: () => void;
+  credential?: SupportCredential;
+  onBack?: () => void;
 }
 
 export function SupportThread({
   conversationId,
-  guestId,
+  credential,
   onBack,
 }: SupportThreadProps) {
   const conversation = useQuery(api.support.conversations.get, {
-    guestId,
+    credential,
     id: conversationId,
   });
   const messages = useQuery(api.support.messages.list, {
     conversationId,
-    guestId,
+    credential,
   });
   const sendMessage = useMutation(api.support.messages.send);
   const markAsRead = useMutation(api.support.messages.markAsRead);
@@ -46,22 +47,24 @@ export function SupportThread({
 
   useEffect(() => {
     if (hasUnreadFromSupport) {
-      markAsRead({ conversationId, guestId });
+      markAsRead({ conversationId, credential });
     }
-  }, [conversationId, guestId, hasUnreadFromSupport, markAsRead]);
+  }, [conversationId, credential, hasUnreadFromSupport, markAsRead]);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex items-center gap-2 border-b px-2 py-2">
-        <Button
-          aria-label="All conversations"
-          iconOnly
-          onClick={onBack}
-          size="sm"
-          variant="ghost"
-        >
-          <ArrowLeft aria-hidden />
-        </Button>
+        {onBack && (
+          <Button
+            aria-label="All conversations"
+            iconOnly
+            onClick={onBack}
+            size="sm"
+            variant="ghost"
+          >
+            <ArrowLeft aria-hidden />
+          </Button>
+        )}
         <ThreadTitle conversation={conversation} />
       </div>
       {conversation === null ? (
@@ -79,11 +82,11 @@ export function SupportThread({
             <MessageComposer
               field={{ label: "Reply", placeholder: "Reply to support…" }}
               onSend={async (body) => {
-                await sendMessage({ body, conversationId, guestId });
+                await sendMessage({ body, conversationId, credential });
               }}
             />
           }
-          conversation={{ guestId, id: conversationId }}
+          conversation={{ credential, id: conversationId }}
           messages={messages}
         />
       )}

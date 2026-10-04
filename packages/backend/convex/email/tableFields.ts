@@ -12,6 +12,40 @@ const emailEventType = v.union(
   v.literal("email.failed")
 );
 
+export const emailTypeValidator = v.union(
+  v.literal("changelog_notification"),
+  v.literal("feedback_shipped"),
+  v.literal("weekly_digest"),
+  v.literal("invitation"),
+  v.literal("verification"),
+  v.literal("welcome"),
+  v.literal("password_reset"),
+  v.literal("other"),
+  v.literal("support_reply"),
+  v.literal("support_reply_notice"),
+  v.literal("support_contact_confirmation"),
+  v.literal("support_forwarding_test"),
+  v.literal("support_inbox_alert")
+);
+
+export const emailSendStatus = v.union(
+  v.literal("sent"),
+  v.literal("delivered"),
+  v.literal("bounced"),
+  v.literal("complained"),
+  v.literal("opened"),
+  v.literal("clicked"),
+  v.literal("delivery_delayed"),
+  v.literal("failed")
+);
+
+export const suppressionReason = v.union(
+  v.literal("hard_bounce"),
+  v.literal("complaint"),
+  v.literal("manual"),
+  v.literal("unsubscribed")
+);
+
 export const emailTables = {
   emailEvents: defineTable({
     emailSendLogId: v.optional(v.id("emailSendLog")),
@@ -28,33 +62,16 @@ export const emailTables = {
   emailSendLog: defineTable({
     bouncedAt: v.optional(v.number()),
     clickedAt: v.optional(v.number()),
+    complainedAt: v.optional(v.number()),
     deliveredAt: v.optional(v.number()),
-    emailType: v.union(
-      v.literal("changelog_notification"),
-      v.literal("feedback_shipped"),
-      v.literal("weekly_digest"),
-      v.literal("invitation"),
-      v.literal("verification"),
-      v.literal("welcome"),
-      v.literal("password_reset"),
-      v.literal("other")
-    ),
+    emailType: emailTypeValidator,
     feedbackId: v.optional(v.id("feedback")),
     openedAt: v.optional(v.number()),
     organizationId: v.id("organizations"),
     releaseId: v.optional(v.id("releases")),
     resendEmailId: v.optional(v.string()),
     sentAt: v.number(),
-    status: v.union(
-      v.literal("sent"),
-      v.literal("delivered"),
-      v.literal("bounced"),
-      v.literal("complained"),
-      v.literal("opened"),
-      v.literal("clicked"),
-      v.literal("delivery_delayed"),
-      v.literal("failed")
-    ),
+    status: emailSendStatus,
     subject: v.string(),
     to: v.string(),
   })
@@ -65,12 +82,9 @@ export const emailTables = {
     .index("by_resend_id", ["resendEmailId"]),
   emailSuppressions: defineTable({
     email: v.string(),
+    organizationId: v.optional(v.id("organizations")),
     originalEventType: v.string(),
-    reason: v.union(
-      v.literal("hard_bounce"),
-      v.literal("complaint"),
-      v.literal("manual")
-    ),
+    reason: suppressionReason,
     suppressedAt: v.number(),
-  }).index("by_email", ["email"]),
+  }).index("by_email_org", ["email", "organizationId"]),
 };

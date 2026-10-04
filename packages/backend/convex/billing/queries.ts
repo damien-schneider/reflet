@@ -18,6 +18,7 @@ export const PLAN_LIMITS = {
     maxMonitors: 10,
     minCheckIntervalMinutes: 5,
     prioritySupport: false,
+    supportEmailDomain: false,
   },
   pro: {
     apiAccess: true,
@@ -28,6 +29,7 @@ export const PLAN_LIMITS = {
     maxMonitors: 100,
     minCheckIntervalMinutes: 1,
     prioritySupport: true,
+    supportEmailDomain: true,
   },
 } as const;
 

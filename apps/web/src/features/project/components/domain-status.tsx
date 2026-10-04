@@ -2,21 +2,16 @@
 
 import { Badge } from "@ctrl-ui/react/ui/badge";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@ctrl-ui/react/ui/table";
-import {
   ArrowsClockwise,
   CheckCircle,
   Hourglass,
   Warning,
   XCircle,
 } from "@phosphor-icons/react";
-import { CopyButton } from "@/components/copy-button";
+import {
+  type DnsRecord,
+  DnsRecordsTable,
+} from "@/components/dns-records-table";
 
 const CNAME_TARGET = "cname.vercel-dns.com";
 
@@ -54,40 +49,6 @@ export function DomainStatusBadge({ status }: { status: DomainStatus }) {
   );
 }
 
-interface DnsRecord {
-  domain: string;
-  type: string;
-  value: string;
-}
-
-function DnsRecordRow({ record }: { record: DnsRecord }) {
-  return (
-    <TableRow>
-      <TableCell className="font-mono">{record.type}</TableCell>
-      <TableCell>
-        <div className="flex items-center gap-1">
-          <code className="break-all font-mono">{record.domain}</code>
-          <CopyButton
-            label={`Copy name ${record.domain}`}
-            size="xs"
-            value={record.domain}
-          />
-        </div>
-      </TableCell>
-      <TableCell>
-        <div className="flex items-center gap-1">
-          <code className="break-all font-mono">{record.value}</code>
-          <CopyButton
-            label={`Copy value ${record.value}`}
-            size="xs"
-            value={record.value}
-          />
-        </div>
-      </TableCell>
-    </TableRow>
-  );
-}
-
 export function DnsInstructions({
   challengeToken,
   domain,
@@ -95,20 +56,24 @@ export function DnsInstructions({
 }: {
   challengeToken?: string;
   domain: string;
-  verification?: Array<DnsRecord & { reason?: string }>;
+  verification?: Array<{ domain: string; type: string; value: string }>;
 }) {
   const records: DnsRecord[] = [
-    { domain, type: "CNAME", value: CNAME_TARGET },
+    { name: domain, type: "CNAME", value: CNAME_TARGET },
     ...(challengeToken
       ? [
           {
-            domain: `_reflet-challenge.${domain}`,
+            name: `_reflet-challenge.${domain}`,
             type: "TXT",
             value: challengeToken,
           },
         ]
       : []),
-    ...(verification ?? []),
+    ...(verification ?? []).map(({ domain: name, type, value }) => ({
+      name,
+      type,
+      value,
+    })),
   ];
 
   return (
@@ -121,23 +86,7 @@ export function DnsInstructions({
         </p>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Type</TableHead>
-            <TableHead>Name</TableHead>
-            <TableHead>Value</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {records.map((record) => (
-            <DnsRecordRow
-              key={`${record.type}:${record.domain}:${record.value}`}
-              record={record}
-            />
-          ))}
-        </TableBody>
-      </Table>
+      <DnsRecordsTable records={records} />
 
       <p className="text-pretty text-caption text-muted-foreground">
         DNS changes can take up to 48 hours to propagate. Select “Check

@@ -16,6 +16,12 @@
     "./templates/status-incident-email": "./src/templates/status-incident-email.tsx",
     "./templates/status-maintenance-email": "./src/templates/status-maintenance-email.tsx",
     "./templates/platform-alert-email": "./src/templates/platform-alert-email.tsx",
+    "./templates/support-contact-confirmation-email": "./src/templates/support-contact-confirmation-email.tsx",
+    "./templates/support-forwarding-test-email": "./src/templates/support-forwarding-test-email.tsx",
+    "./templates/support-inbox-alert-email": "./src/templates/support-inbox-alert-email.tsx",
+    "./templates/support-layout": "./src/templates/support-layout.tsx",
+    "./templates/support-reply-email": "./src/templates/support-reply-email.tsx",
+    "./templates/support-reply-notice-email": "./src/templates/support-reply-notice-email.tsx",
     "./templates/styles": "./src/templates/styles.ts"
   },
   "scripts": {

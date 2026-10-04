@@ -2,6 +2,7 @@ import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { MAX_SUPPORT_MESSAGE_LENGTH } from "../shared/constants";
 import { validateInputLength } from "../shared/validators";
+import { notifyTeamOfCustomerMessage } from "./team_notifications";
 import { buildMessagePreview } from "./validators";
 
 export const requireMessageBody = (raw: string): string => {
@@ -46,6 +47,7 @@ export const createCustomerConversation = async (
   args: {
     body: string;
     customer: ConversationCustomer;
+    inboundEmailId?: Id<"supportInboundEmails">;
     now: number;
     organizationId: Id<"organizations">;
     subject?: string;
@@ -57,6 +59,7 @@ export const createCustomerConversation = async (
   const { body, customer, now } = args;
   const senderId = customerSenderId(customer);
   const guest = customer.kind === "guest" ? customer : undefined;
+  const preview = buildMessagePreview(body);
 
   const conversationId = await ctx.db.insert("supportConversations", {
     adminUnreadCount: 1,
@@ -65,7 +68,7 @@ export const createCustomerConversation = async (
     guestEmail: guest?.guestEmail,
     guestId: guest?.guestId,
     lastMessageAt: now,
-    lastMessagePreview: buildMessagePreview(body),
+    lastMessagePreview: preview,
     organizationId: args.organizationId,
     status: "open",
     subject: args.subject?.trim() || undefined,
@@ -78,10 +81,19 @@ export const createCustomerConversation = async (
     body,
     conversationId,
     createdAt: now,
+    inboundEmailId: args.inboundEmailId,
     isRead: false,
     senderId,
     senderType: "user",
   });
+
+  const conversation = await ctx.db.get(conversationId);
+  if (conversation) {
+    await notifyTeamOfCustomerMessage(ctx, conversation, {
+      preview,
+      wasUnread: false,
+    });
+  }
 
   return { conversationId, messageId };
 };
@@ -89,7 +101,12 @@ export const createCustomerConversation = async (
 export const appendCustomerMessage = async (
   ctx: MutationCtx,
   conversation: Doc<"supportConversations">,
-  args: { body: string; now: number }
+  args: {
+    body: string;
+    countsAsActivity: boolean;
+    inboundEmailId?: Id<"supportInboundEmails">;
+    now: number;
+  }
 ): Promise<Id<"supportMessages">> => {
   const { body, now } = args;
 
@@ -97,17 +114,27 @@ export const appendCustomerMessage = async (
     body,
     conversationId: conversation._id,
     createdAt: now,
-    isRead: false,
+    inboundEmailId: args.inboundEmailId,
+    isRead: !args.countsAsActivity,
     senderId: conversation.userId,
     senderType: "user",
   });
 
+  if (!args.countsAsActivity) {
+    return messageId;
+  }
+
+  const preview = buildMessagePreview(body);
   await ctx.db.patch(conversation._id, {
     adminUnreadCount: conversation.adminUnreadCount + 1,
     lastMessageAt: now,
-    lastMessagePreview: buildMessagePreview(body),
+    lastMessagePreview: preview,
     status: statusAfterCustomerMessage(conversation.status),
     updatedAt: now,
+  });
+  await notifyTeamOfCustomerMessage(ctx, conversation, {
+    preview,
+    wasUnread: conversation.adminUnreadCount > 0,
   });
 
   return messageId;

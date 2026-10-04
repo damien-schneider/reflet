@@ -16,6 +16,7 @@ import { registerAiApiRoutes } from "./http/ai_api";
 import { registerDevtoolsRoutes } from "./http/devtools_routes";
 import { registerGithubWebhookRoutes } from "./http/github_webhook";
 import { registerPublicApiRoutes } from "./http/public_api";
+import { registerSupportEmailRoutes } from "./support/email/http_routes";
 
 const http = httpRouter();
 
@@ -77,6 +78,8 @@ http.route({
   method: "POST",
   path: "/resend-webhook",
 });
+
+registerSupportEmailRoutes(http);
 
 http.route({
   handler: httpAction(async (ctx, request) => {

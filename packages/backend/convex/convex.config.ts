@@ -12,6 +12,7 @@ app.use(agent);
 app.use(stripe);
 app.use(rateLimiter);
 app.use(resend);
+app.use(resend, { name: "supportResend" });
 app.use(shardedCounter);
 
 export default app;

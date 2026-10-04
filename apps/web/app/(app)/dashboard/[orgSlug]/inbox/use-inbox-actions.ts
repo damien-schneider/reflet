@@ -1,6 +1,7 @@
 import { toast } from "@ctrl-ui/react/ui/toast";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useState } from "react";
+import type { EmailDraft } from "@/features/inbox/components/list/new-email-dialog";
 import type { useInbox } from "@/features/inbox/hooks/use-inbox";
 import type { ConversationStatus } from "@/features/support/lib/conversation-status";
 
@@ -73,10 +74,25 @@ export function useInboxActions(inbox: InboxState) {
     onStatusChange: updateStatus,
   };
 
+  const startEmailConversation = async (
+    organizationId: Id<"organizations">,
+    draft: EmailDraft
+  ) => {
+    const conversationId = await write.startEmailConversation({
+      ...draft,
+      organizationId,
+    });
+    inbox.setView("open");
+    inbox.setSearchQuery("");
+    inbox.setSelectedId(conversationId);
+    return conversationId;
+  };
+
   return {
     moveSelection,
     quickActions,
     selectedConversationActions,
+    startEmailConversation,
   };
 }
 

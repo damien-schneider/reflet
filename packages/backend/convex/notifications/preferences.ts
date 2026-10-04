@@ -2,7 +2,9 @@ import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
 
-const DEFAULT_PREFERENCES = {
+export const DEFAULT_PREFERENCES = {
+  emailOnInboxMessage: true,
+  notifyOnInboxMessage: true,
   notifyOnIncident: true,
   notifyOnInvitation: true,
   notifyOnNewComment: true,
@@ -35,6 +37,12 @@ export const getPreferences = query({
     }
 
     return {
+      emailOnInboxMessage:
+        preferences.emailOnInboxMessage ??
+        DEFAULT_PREFERENCES.emailOnInboxMessage,
+      notifyOnInboxMessage:
+        preferences.notifyOnInboxMessage ??
+        DEFAULT_PREFERENCES.notifyOnInboxMessage,
       notifyOnIncident:
         preferences.notifyOnIncident ?? DEFAULT_PREFERENCES.notifyOnIncident,
       notifyOnInvitation: preferences.notifyOnInvitation,
@@ -54,6 +62,8 @@ export const getPreferences = query({
  */
 export const updatePreferences = mutation({
   args: {
+    emailOnInboxMessage: v.optional(v.boolean()),
+    notifyOnInboxMessage: v.optional(v.boolean()),
     notifyOnIncident: v.optional(v.boolean()),
     notifyOnInvitation: v.optional(v.boolean()),
     notifyOnNewComment: v.optional(v.boolean()),
@@ -82,6 +92,8 @@ export const updatePreferences = mutation({
 
     return await ctx.db.insert("userNotificationPreferences", {
       createdAt: now,
+      emailOnInboxMessage: args.emailOnInboxMessage,
+      notifyOnInboxMessage: args.notifyOnInboxMessage,
       notifyOnIncident:
         args.notifyOnIncident ?? DEFAULT_PREFERENCES.notifyOnIncident,
       notifyOnInvitation:

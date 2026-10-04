@@ -1,23 +1,69 @@
-import { ConvexError, v } from "convex/values";
-import { internalQuery, mutation, query } from "../_generated/server";
+import { ConvexError, type Infer, v } from "convex/values";
+import type { Id } from "../_generated/dataModel";
+import {
+  internalQuery,
+  type MutationCtx,
+  mutation,
+  type QueryCtx,
+  query,
+} from "../_generated/server";
 import { assertSuperAdmin } from "../shared/access";
 import { isValidEmail } from "../shared/validators";
+import { suppressionReason } from "./tableFields";
 
 const LIST_LIMIT = 200;
 
 export const normalizeEmail = (email: string): string =>
   email.trim().toLowerCase();
 
+const findSuppression = (
+  ctx: QueryCtx,
+  email: string,
+  organizationId: Id<"organizations"> | undefined
+) =>
+  ctx.db
+    .query("emailSuppressions")
+    .withIndex("by_email_org", (q) =>
+      q.eq("email", normalizeEmail(email)).eq("organizationId", organizationId)
+    )
+    .first();
+
+export const isSupportRecipientSuppressed = async (
+  ctx: QueryCtx,
+  email: string,
+  organizationId: Id<"organizations">
+): Promise<boolean> =>
+  (await findSuppression(ctx, email, undefined)) !== null ||
+  (await findSuppression(ctx, email, organizationId)) !== null;
+
+export const addSuppressionOnce = async (
+  ctx: MutationCtx,
+  suppression: {
+    email: string;
+    organizationId?: Id<"organizations">;
+    originalEventType: string;
+    reason: Infer<typeof suppressionReason>;
+  }
+): Promise<Id<"emailSuppressions">> => {
+  const existing = await findSuppression(
+    ctx,
+    suppression.email,
+    suppression.organizationId
+  );
+  if (existing) {
+    return existing._id;
+  }
+  return await ctx.db.insert("emailSuppressions", {
+    ...suppression,
+    email: normalizeEmail(suppression.email),
+    suppressedAt: Date.now(),
+  });
+};
+
 export const isEmailSuppressed = internalQuery({
   args: { email: v.string() },
-  handler: async (ctx, args) => {
-    const suppression = await ctx.db
-      .query("emailSuppressions")
-      .withIndex("by_email", (q) => q.eq("email", normalizeEmail(args.email)))
-      .first();
-
-    return suppression !== null;
-  },
+  handler: async (ctx, args) =>
+    (await findSuppression(ctx, args.email, undefined)) !== null,
   returns: v.boolean(),
 });
 
@@ -35,12 +81,9 @@ export const listSuppressions = query({
       _creationTime: v.number(),
       _id: v.id("emailSuppressions"),
       email: v.string(),
+      organizationId: v.optional(v.id("organizations")),
       originalEventType: v.string(),
-      reason: v.union(
-        v.literal("hard_bounce"),
-        v.literal("complaint"),
-        v.literal("manual")
-      ),
+      reason: suppressionReason,
       suppressedAt: v.number(),
     })
   ),
@@ -51,28 +94,17 @@ export const addSuppression = mutation({
   handler: async (ctx, args) => {
     await assertSuperAdmin(ctx);
 
-    const normalizedEmail = normalizeEmail(args.email);
-    if (!isValidEmail(normalizedEmail)) {
+    if (!isValidEmail(normalizeEmail(args.email))) {
       throw new ConvexError({
         code: "INVALID_EMAIL",
         message: "Invalid email address",
       });
     }
 
-    const existing = await ctx.db
-      .query("emailSuppressions")
-      .withIndex("by_email", (q) => q.eq("email", normalizedEmail))
-      .first();
-
-    if (existing) {
-      return existing._id;
-    }
-
-    return await ctx.db.insert("emailSuppressions", {
-      email: normalizedEmail,
+    return await addSuppressionOnce(ctx, {
+      email: args.email,
       originalEventType: "manual",
       reason: "manual",
-      suppressedAt: Date.now(),
     });
   },
   returns: v.id("emailSuppressions"),

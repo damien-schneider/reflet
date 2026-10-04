@@ -11,7 +11,13 @@ export interface WidgetConfig {
   zIndex: number;
 }
 
+export interface WidgetAttachment {
+  filename: string;
+  url: string | null;
+}
+
 export interface WidgetMessage {
+  attachments: WidgetAttachment[];
   body: string;
   createdAt: number;
   id: string;
@@ -19,9 +25,20 @@ export interface WidgetMessage {
   senderType: "user" | "admin";
 }
 
+export type EmailPrompt =
+  | "awaitingFirstMessage"
+  | "form"
+  | "saving"
+  | "failed"
+  | "confirmationSent"
+  | "subscribed"
+  | "emailOnFile";
+
 export interface WidgetState {
   config: WidgetConfig | null;
   draft: string;
+  emailDraft: string;
+  emailPrompt: EmailPrompt;
   hasConversation: boolean;
   isLoading: boolean;
   isOpen: boolean;

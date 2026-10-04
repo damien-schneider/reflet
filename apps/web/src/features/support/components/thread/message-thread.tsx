@@ -16,6 +16,7 @@ import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import { toast } from "@ctrl-ui/react/ui/toast";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import type { SupportCredential } from "@reflet/backend/convex/support/access";
 import { useMutation, useQuery } from "convex/react";
 import type { ReactNode } from "react";
 import {
@@ -30,7 +31,7 @@ import {
 import { authClient } from "@/lib/auth-client";
 
 interface ThreadConversation {
-  guestId?: string;
+  credential?: SupportCredential;
   id: Id<"supportConversations">;
 }
 
@@ -71,7 +72,7 @@ function ThreadMessages({
   const viewerId = session?.user?.id;
   const reactionRows = useQuery(api.support.messages.listReactions, {
     conversationId: conversation.id,
-    guestId: conversation.guestId,
+    credential: conversation.credential,
   });
   const addReaction = useMutation(api.support.messages.addReaction);
   const removeReaction = useMutation(api.support.messages.removeReaction);

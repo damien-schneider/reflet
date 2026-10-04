@@ -7,6 +7,20 @@ import { useMutation } from "convex/react";
 import { useState } from "react";
 import { ConversationComposer } from "@/features/support/components/desk/conversation-composer";
 import type { GuestSession } from "@/features/support/hooks/use-guest-session";
+import {
+  convexErrorMessage,
+  isRateLimitedError,
+} from "@/lib/convex-error-message";
+
+const SEND_FAILED_MESSAGE =
+  "Message not sent. Check your connection and try again.";
+const RATE_LIMITED_MESSAGE =
+  "You’ve sent a lot of messages in a short time. Wait a few minutes, then try again.";
+
+const startFailureMessage = (error: unknown): string =>
+  isRateLimitedError(error)
+    ? RATE_LIMITED_MESSAGE
+    : convexErrorMessage(error, SEND_FAILED_MESSAGE);
 
 interface NewConversationProps {
   flow: {
@@ -46,8 +60,8 @@ export function NewConversation({
         subject: draft.subject || undefined,
       });
       flow.onStarted(conversationId);
-    } catch {
-      setSubmitError("Message not sent. Check your connection and try again.");
+    } catch (error) {
+      setSubmitError(startFailureMessage(error));
     }
     setIsSubmitting(false);
   };

@@ -1,20 +1,23 @@
-import { type Infer, v } from "convex/values";
+import { ConvexError, type Infer, v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { mutation, type QueryCtx, query } from "../_generated/server";
 import { getOrgTier } from "../billing/org_subscription";
 import {
+  MAX_EMAIL_LENGTH,
   MAX_URL_LENGTH,
   MAX_USER_AGENT_LENGTH,
   MAX_VISITOR_ID_LENGTH,
 } from "../shared/constants";
 import { rateLimiter } from "../shared/rate_limits";
-import { validateInputLength } from "../shared/validators";
+import { isValidEmail, validateInputLength } from "../shared/validators";
+import { attachmentViewsByMessage } from "../support/attachments";
 import {
   appendCustomerMessage,
   createCustomerConversation,
   newGuestCustomer,
   requireMessageBody,
 } from "../support/conversation_writes";
+import { requestContactConfirmation } from "../support/email/contacts";
 
 export const getConfig = query({
   args: {
@@ -168,6 +171,7 @@ export const sendMessage = mutation({
     if (thread) {
       const messageId = await appendCustomerMessage(ctx, thread.conversation, {
         body,
+        countsAsActivity: true,
         now,
       });
       await ctx.db.patch(thread.widgetConversation._id, {
@@ -224,7 +228,12 @@ export const listMessages = query({
       )
       .collect();
 
+    const attachments = await attachmentViewsByMessage(ctx, conversation._id);
+
     return messages.map((message) => ({
+      attachments: (attachments.get(message._id) ?? []).map(
+        ({ filename, url }) => ({ filename, url })
+      ),
       body: message.body,
       createdAt: message.createdAt,
       id: message._id,
@@ -232,6 +241,26 @@ export const listMessages = query({
       senderType: message.senderType,
     }));
   },
+});
+
+export const setEmail = mutation({
+  args: { ...visitorArgs, email: v.string() },
+  handler: async (ctx, args) => {
+    const email = args.email.trim();
+    if (email.length > MAX_EMAIL_LENGTH || !isValidEmail(email)) {
+      throw new ConvexError("Enter a valid email address.");
+    }
+    const conversation = await findVisitorConversation(ctx, args);
+    if (!conversation) {
+      throw new Error("Send a message before adding your email");
+    }
+    await ctx.db.patch(conversation._id, { guestEmail: email });
+    return await requestContactConfirmation(ctx, {
+      email,
+      organizationId: conversation.organizationId,
+    });
+  },
+  returns: v.object({ confirmationRequired: v.boolean() }),
 });
 
 export const markMessagesAsRead = mutation({

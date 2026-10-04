@@ -4,6 +4,8 @@ import {
   supportConversationStatus,
   supportMessageSenderType,
 } from "../shared/validators";
+import { supportAttachmentView } from "./attachments";
+import { supportMessageEmail } from "./email/message_email";
 
 export const supportPersonInfo = v.object({
   email: v.string(),
@@ -24,6 +26,7 @@ export const supportConversationDoc = v.object({
   adminUnreadCount: v.number(),
   assignedTo: v.optional(v.string()),
   createdAt: v.number(),
+  customerNoticeSentAt: v.optional(v.number()),
   guestEmail: v.optional(v.string()),
   guestId: v.optional(v.string()),
   lastMessageAt: v.number(),
@@ -41,12 +44,32 @@ export const supportConversationWithUser = v.object({
   user: v.optional(supportPersonInfo),
 });
 
+export const supportEmailChannel = v.union(
+  v.object({ from: v.string(), kind: v.literal("full") }),
+  v.object({ kind: v.literal("notice") }),
+  v.object({
+    kind: v.literal("none"),
+    reason: v.union(
+      v.literal("no_email"),
+      v.literal("suppressed"),
+      v.literal("paused"),
+      v.literal("unverified_contact")
+    ),
+  })
+);
+
+export type SupportEmailChannel = Infer<typeof supportEmailChannel>;
+
 export const supportConversationDetail = v.object({
   ...supportConversationDoc.fields,
   assignedUser: v.optional(supportAssignedUser),
+  emailChannel: v.optional(supportEmailChannel),
   isAdmin: v.boolean(),
   user: v.optional(supportPersonInfo),
+  userId: v.optional(v.string()),
 });
+
+export type SupportConversationDetail = Infer<typeof supportConversationDetail>;
 
 export const supportMessageSender = v.object({
   email: v.string(),
@@ -60,9 +83,11 @@ export type SupportMessageSender = Infer<typeof supportMessageSender>;
 export const supportMessageWithSender = v.object({
   _creationTime: v.number(),
   _id: v.id("supportMessages"),
+  attachments: v.array(supportAttachmentView),
   body: v.string(),
   conversationId: v.id("supportConversations"),
   createdAt: v.number(),
+  email: v.optional(supportMessageEmail),
   isOwnMessage: v.boolean(),
   isRead: v.boolean(),
   sender: v.optional(supportMessageSender),

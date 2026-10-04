@@ -5,6 +5,7 @@ import {
   fetchWidgetConfig,
   markMessagesAsRead,
   sendMessage,
+  setEmail,
 } from "./api";
 import { getWidgetStyles } from "./styles";
 import type { WidgetState } from "./types";
@@ -32,6 +33,8 @@ export class RefletWidget {
   private readonly state: WidgetState = {
     config: null,
     draft: "",
+    emailDraft: "",
+    emailPrompt: "awaitingFirstMessage",
     hasConversation: false,
     isLoading: true,
     isOpen: false,
@@ -76,6 +79,7 @@ export class RefletWidget {
     );
     if (conversation) {
       this.state.hasConversation = true;
+      this.state.emailPrompt = conversation.guestEmail ? "emailOnFile" : "form";
       await this.refreshUnreadCount();
       this.startPolling();
     }
@@ -126,6 +130,18 @@ export class RefletWidget {
     this.shadowRoot
       .querySelector(".reflet-close-btn")
       ?.addEventListener("click", () => this.close());
+
+    const emailForm = this.shadowRoot.querySelector(".reflet-email-form");
+    const emailInput = this.shadowRoot.querySelector(".reflet-email-input");
+    if (emailForm && emailInput instanceof HTMLInputElement) {
+      emailInput.addEventListener("input", () => {
+        this.state.emailDraft = emailInput.value;
+      });
+      emailForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        this.handleEmailSubmit(emailInput.value.trim());
+      });
+    }
 
     const sendBtn = this.shadowRoot.querySelector(".reflet-send-btn");
     const input = this.shadowRoot.querySelector(".reflet-input");
@@ -179,6 +195,7 @@ export class RefletWidget {
     this.state.draft = "";
     this.state.sendFailed = false;
     this.state.messages.push({
+      attachments: [],
       body,
       createdAt: Date.now(),
       id: tempMessageId,
@@ -205,8 +222,31 @@ export class RefletWidget {
     }
 
     this.state.hasConversation = true;
+    if (this.state.emailPrompt === "awaitingFirstMessage") {
+      this.state.emailPrompt = "form";
+    }
     this.startPolling();
     await this.loadMessages();
+    this.render();
+    this.scrollToBottom();
+  }
+
+  private async handleEmailSubmit(email: string): Promise<void> {
+    if (!email) {
+      return;
+    }
+    this.state.emailDraft = email;
+    this.state.emailPrompt = "saving";
+    this.render();
+
+    try {
+      const { confirmationRequired } = await setEmail(this.visitor, email);
+      this.state.emailPrompt = confirmationRequired
+        ? "confirmationSent"
+        : "subscribed";
+    } catch {
+      this.state.emailPrompt = "failed";
+    }
     this.render();
     this.scrollToBottom();
   }

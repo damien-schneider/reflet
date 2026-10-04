@@ -4,6 +4,7 @@ import { cn } from "@ctrl-ui/react/lib/cn";
 import {
   Binoculars,
   Chat,
+  ChatsCircle,
   Envelope,
   Package,
   ShieldWarning,
@@ -28,6 +29,7 @@ const notificationIcons: Record<
   new_comment: Chat,
   new_support_message: Envelope,
   status_change: TrendUp,
+  support_inbox_message: ChatsCircle,
   vote_milestone: TrendUp,
 };
 
@@ -40,6 +42,7 @@ const notificationColors: Record<NotificationType, string> = {
   new_comment: "text-chart-1-text",
   new_support_message: "text-chart-4-text",
   status_change: "text-brand-text",
+  support_inbox_message: "text-chart-4-text",
   vote_milestone: "text-warning-text",
 };
 

@@ -9,6 +9,7 @@ const GUEST = {
   email: "guest@example.com",
   id: "5f0c2f0e-8a1b-4c7d-9e2f-3a4b5c6d7e8f",
 };
+const GUEST_CREDENTIAL = { guestId: GUEST.id, kind: "guest" } as const;
 
 const seedOrg = async (
   t: ReturnType<typeof convexTest>,
@@ -57,7 +58,7 @@ describe("guest support conversations", () => {
         initialMessage: "Hello",
         organizationId,
       })
-    ).rejects.toThrow("valid guest email");
+    ).rejects.toThrow("Enter a valid email address.");
   });
 
   test("refuses an empty message", async () => {
@@ -135,7 +136,7 @@ describe("guest support conversations", () => {
 
     expect(
       await t.query(api.support.conversations.get, {
-        guestId: "guest_intruder",
+        credential: { guestId: "guest_intruder", kind: "guest" },
         id: conversationId,
       })
     ).toBeNull();
@@ -143,14 +144,14 @@ describe("guest support conversations", () => {
     expect(
       await t.query(api.support.messages.list, {
         conversationId,
-        guestId: "guest_intruder",
+        credential: { guestId: "guest_intruder", kind: "guest" },
       })
     ).toEqual([]);
 
     expect(
       await t.query(api.support.messages.listReactions, {
         conversationId,
-        guestId: "guest_intruder",
+        credential: { guestId: "guest_intruder", kind: "guest" },
       })
     ).toEqual([]);
   });
@@ -168,7 +169,7 @@ describe("guest support conversations", () => {
       t.mutation(api.support.messages.send, {
         body: "let me in",
         conversationId,
-        guestId: "guest_intruder",
+        credential: { guestId: "guest_intruder", kind: "guest" },
       })
     ).rejects.toThrow("don't have access");
   });
@@ -189,7 +190,7 @@ describe("guest support conversations", () => {
     await t.mutation(api.support.messages.send, {
       body: "Still broken",
       conversationId,
-      guestId: GUEST.id,
+      credential: GUEST_CREDENTIAL,
     });
 
     const conversation = await t.run(
@@ -224,7 +225,7 @@ describe("guest support conversations", () => {
 
     await t.mutation(api.support.messages.markAsRead, {
       conversationId,
-      guestId: GUEST.id,
+      credential: GUEST_CREDENTIAL,
     });
 
     const { adminMessage, conversation } = await t.run(async (ctx) => ({
@@ -259,7 +260,7 @@ describe("guest support conversations", () => {
 
     const messages = await t.query(api.support.messages.list, {
       conversationId,
-      guestId: GUEST.id,
+      credential: GUEST_CREDENTIAL,
     });
 
     expect(messages.map((m) => m.senderType)).toEqual(["user", "admin"]);
@@ -279,12 +280,12 @@ describe("guest support conversations", () => {
 
     await t.mutation(api.support.messages.markAsRead, {
       conversationId,
-      guestId: GUEST.id,
+      credential: GUEST_CREDENTIAL,
     });
 
     const messages = await t.query(api.support.messages.list, {
       conversationId,
-      guestId: GUEST.id,
+      credential: GUEST_CREDENTIAL,
     });
 
     expect(messages).toHaveLength(1);

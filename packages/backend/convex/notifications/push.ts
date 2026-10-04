@@ -15,6 +15,7 @@ const NOTIFICATION_TYPE_PREFERENCE_MAP: Record<string, string> = {
   new_comment: "notifyOnNewComment",
   new_support_message: "notifyOnNewSupportMessage",
   status_change: "notifyOnStatusChange",
+  support_inbox_message: "notifyOnInboxMessage",
   vote_milestone: "notifyOnVoteMilestone",
 };
 

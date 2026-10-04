@@ -66,6 +66,16 @@ export function markMessagesAsRead(visitor: VisitorArgs): Promise<boolean> {
   });
 }
 
+export function setEmail(
+  visitor: VisitorArgs,
+  email: string
+): Promise<{ confirmationRequired: boolean }> {
+  return callConvex("mutation", "widget/public:setEmail", {
+    ...visitor,
+    email,
+  });
+}
+
 export function fetchUnreadCount(visitor: VisitorArgs): Promise<number> {
   return callConvex("query", "widget/public:getUnreadCount", { ...visitor });
 }

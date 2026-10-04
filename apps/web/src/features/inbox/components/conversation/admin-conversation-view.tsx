@@ -22,6 +22,7 @@ import { AssignMemberDropdown } from "@/features/inbox/components/conversation/a
 import type { TeamMember } from "@/features/inbox/hooks/use-inbox";
 import { ConversationStatusBadge } from "@/features/support/components/conversation-status-badge";
 import { MessageComposer } from "@/features/support/components/thread/message-composer";
+import { NOT_EMAILED_REASONS } from "@/features/support/components/thread/message-email";
 import { MessageThread } from "@/features/support/components/thread/message-thread";
 import type { SupportMessageData } from "@/features/support/components/thread/support-message";
 import {
@@ -128,6 +129,11 @@ function ConversationHeader({
             </Badge>
           )}
         </p>
+        {conversation.emailChannel && (
+          <p className="truncate text-caption text-muted-foreground">
+            {repliesLabel(conversation.emailChannel)}
+          </p>
+        )}
       </div>
       <div className="flex items-center gap-2">
         <AssignMemberDropdown
@@ -143,6 +149,19 @@ function ConversationHeader({
     </header>
   );
 }
+
+const repliesLabel = (
+  channel: NonNullable<ConversationDetail["emailChannel"]>
+): string => {
+  switch (channel.kind) {
+    case "full":
+      return `Replies: emailed in full from ${channel.from}`;
+    case "notice":
+      return "Replies: notification link from Reflet";
+    default:
+      return `Replies: not emailed — ${NOT_EMAILED_REASONS[channel.reason]}`;
+  }
+};
 
 function StatusActions({
   canReply,

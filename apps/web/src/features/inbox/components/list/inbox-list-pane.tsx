@@ -10,7 +10,7 @@ import { Input } from "@ctrl-ui/react/ui/input";
 import { InputGroup, InputGroupAddon } from "@ctrl-ui/react/ui/input-group";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "@ctrl-ui/react/ui/tabs";
 import { MagnifyingGlass } from "@phosphor-icons/react";
-import { type ComponentProps, useRef } from "react";
+import { type ComponentProps, type ReactNode, useRef } from "react";
 import { InboxConversationList } from "@/features/inbox/components/list/inbox-conversation-list";
 import { ConversationRowsSkeleton } from "@/features/inbox/components/list/inbox-panel-skeleton";
 import type { InboxConversation } from "@/features/inbox/hooks/use-inbox";
@@ -23,11 +23,17 @@ interface InboxListPaneProps {
   list: Omit<ListProps, "conversations"> & {
     conversations: InboxConversation[] | undefined;
   };
+  newEmail: ReactNode;
   search: { onChange: (query: string) => void; query: string };
   views: { current: InboxView; onChange: (view: InboxView) => void };
 }
 
-export function InboxListPane({ list, search, views }: InboxListPaneProps) {
+export function InboxListPane({
+  list,
+  newEmail,
+  search,
+  views,
+}: InboxListPaneProps) {
   const searchInputRef = useRef<HTMLInputElement>(null);
   useKeyboardShortcuts({ "/": () => searchInputRef.current?.focus() });
 
@@ -38,6 +44,7 @@ export function InboxListPane({ list, search, views }: InboxListPaneProps) {
       value={views.current}
     >
       <div className="flex flex-col gap-2 px-3 pb-3">
+        {newEmail}
         <TabsList aria-label="Conversation views" className="w-full" size="sm">
           {INBOX_VIEWS.map((view) => (
             <TabsTab className="flex-1 px-2" key={view.id} value={view.id}>
@@ -75,7 +82,11 @@ export function InboxListPane({ list, search, views }: InboxListPaneProps) {
   );
 }
 
-function ListBody({ list, search, views }: InboxListPaneProps) {
+function ListBody({
+  list,
+  search,
+  views,
+}: Omit<InboxListPaneProps, "newEmail">) {
   const { conversations, ...listProps } = list;
 
   if (conversations === undefined) {

@@ -16,8 +16,10 @@ type NotificationTypeKey =
   | "notifyOnNewComment"
   | "notifyOnVoteMilestone"
   | "notifyOnNewSupportMessage"
+  | "notifyOnInboxMessage"
   | "notifyOnInvitation"
   | "notifyOnIncident";
+type PreferenceKey = NotificationTypeKey | "emailOnInboxMessage";
 
 const NOTIFICATION_TYPES: {
   key: NotificationTypeKey;
@@ -43,6 +45,11 @@ const NOTIFICATION_TYPES: {
     description: "When you receive a reply from support",
     key: "notifyOnNewSupportMessage",
     label: "Support messages",
+  },
+  {
+    description: "When a customer writes to your organization’s support inbox",
+    key: "notifyOnInboxMessage",
+    label: "New messages in your inbox",
   },
   {
     description: "When you’re invited to join an organization",
@@ -148,7 +155,7 @@ export function NotificationSettings() {
     setIsToggling(false);
   };
 
-  const handleTypeToggle = async (key: NotificationTypeKey, value: boolean) => {
+  const handleTypeToggle = async (key: PreferenceKey, value: boolean) => {
     try {
       await updatePreferences({ [key]: value });
     } catch {
@@ -229,6 +236,21 @@ export function NotificationSettings() {
             />
           ))}
         </div>
+      </SettingsSection>
+
+      <SettingsSection
+        description="Emails Reflet sends to your account address."
+        title="Email notifications"
+      >
+        <SwitchRow
+          checked={preferences?.emailOnInboxMessage ?? true}
+          description="When a customer writes to your organization’s support inbox. One email until you open the conversation, not one per message."
+          disabled={isPrefsLoading}
+          label="Email me when a customer writes"
+          onCheckedChange={(value) =>
+            handleTypeToggle("emailOnInboxMessage", value)
+          }
+        />
       </SettingsSection>
 
       {subscriptions && subscriptions.length > 0 ? (

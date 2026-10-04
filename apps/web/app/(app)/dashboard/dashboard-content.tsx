@@ -52,6 +52,7 @@ const routeLabels: Record<string, string> = {
   roadmap: "Roadmap",
   setup: "Setup",
   status: "Status",
+  "support-email": "Support email",
   surveys: "Surveys",
   tags: "Tags",
   trash: "Trash",

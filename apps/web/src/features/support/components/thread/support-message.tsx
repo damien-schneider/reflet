@@ -17,6 +17,8 @@ import { Toggle } from "@ctrl-ui/react/ui/toggle";
 import type { api } from "@reflet/backend/convex/_generated/api";
 import type { FunctionReturnType } from "convex/server";
 import { format } from "date-fns";
+import { MessageAttachments } from "@/features/support/components/thread/message-attachments";
+import { MessageEmailMeta } from "@/features/support/components/thread/message-email";
 import { getInitials } from "@/lib/initials";
 
 export type SupportMessageData = FunctionReturnType<
@@ -49,6 +51,8 @@ export function SupportMessage({
   const senderName = sender?.name || sender?.email || "Unknown";
   const authorLabel = isOwn ? "You" : senderName;
   const showsAvatar = startsBurst && !isOwn;
+  const isAutomaticReply =
+    message.email?.direction === "inbound" && message.email.autoSubmitted;
 
   return (
     <ChatMessage
@@ -85,8 +89,25 @@ export function SupportMessage({
             </ChatMessageHeader>
           )}
           <ChatMessageContent className="whitespace-pre-wrap">
-            {message.body}
+            {isAutomaticReply ? (
+              <details>
+                <summary className="cursor-pointer text-muted-foreground">
+                  Automatic reply
+                </summary>
+                {message.body}
+              </details>
+            ) : (
+              message.body
+            )}
           </ChatMessageContent>
+          <MessageAttachments attachments={message.attachments} isOwn={isOwn} />
+          {message.email && (
+            <MessageEmailMeta
+              email={message.email}
+              isOwn={isOwn}
+              messageId={message._id}
+            />
+          )}
           <ReactionBar isOwn={isOwn} reactions={reactions} />
         </ChatMessageBody>
       </ChatMessageRow>
