@@ -19,8 +19,16 @@ import { Suspense, useEffect, useRef, useState } from "react";
 
 type UnsubscribeStatus = "loading" | "success" | "error";
 
-const MISSING_TOKEN_MESSAGE =
-  "This link is missing its token. Use the unsubscribe link from your latest changelog email.";
+const INVALID_LINK_MESSAGE =
+  "This link is incomplete. Use the unsubscribe link from your latest email.";
+
+const EXPIRED_LINK_MESSAGE =
+  "This link may have expired. Use the unsubscribe link from your latest email.";
+
+const SUCCESS_MESSAGES = {
+  changelog: "You won’t get changelog emails from this product anymore.",
+  status: "You won’t get status updates from this product anymore.",
+} as const;
 
 function UnsubscribePending() {
   return (
@@ -36,41 +44,65 @@ function UnsubscribePending() {
 function UnsubscribeContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
+  const listParam = searchParams.get("list");
+  const list =
+    listParam === "changelog" || listParam === "status" ? listParam : null;
   const [status, setStatus] = useState<UnsubscribeStatus>(
-    token ? "loading" : "error"
+    token && list ? "loading" : "error"
   );
-  const [errorMessage, setErrorMessage] = useState<string>(
-    MISSING_TOKEN_MESSAGE
-  );
-  const unsubscribeByToken = useMutation(
+  const [errorMessage, setErrorMessage] =
+    useState<string>(INVALID_LINK_MESSAGE);
+  const unsubscribeChangelog = useMutation(
     api.changelog.subscriptions.unsubscribeByToken
   );
+  const unsubscribeStatus = useMutation(api.status.subscriptions.unsubscribe);
   const requestedTokenRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!token || requestedTokenRef.current === token) {
+    if (!(token && list) || requestedTokenRef.current === token) {
       return;
     }
     requestedTokenRef.current = token;
 
-    unsubscribeByToken({ token })
+    const unsubscribe = async () => {
+      if (list === "changelog") {
+        await unsubscribeChangelog({ token });
+        return;
+      }
+      const { success } = await unsubscribeStatus({ token });
+      if (!success) {
+        throw new Error(EXPIRED_LINK_MESSAGE);
+      }
+    };
+    unsubscribe()
       .then(() => setStatus("success"))
       .catch((error: unknown) => {
         setStatus("error");
         setErrorMessage(
           error instanceof Error && error.message
             ? error.message
-            : "This link may have expired. Use the link from your latest changelog email."
+            : EXPIRED_LINK_MESSAGE
         );
       });
-  }, [token, unsubscribeByToken]);
+  }, [token, list, unsubscribeChangelog, unsubscribeStatus]);
 
   if (status === "loading") {
     return <UnsubscribePending />;
   }
 
-  const isSuccess = status === "success";
+  if (status === "success" && list) {
+    return <UnsubscribeResult isSuccess message={SUCCESS_MESSAGES[list]} />;
+  }
+  return <UnsubscribeResult isSuccess={false} message={errorMessage} />;
+}
 
+function UnsubscribeResult({
+  isSuccess,
+  message,
+}: {
+  isSuccess: boolean;
+  message: string;
+}) {
   return (
     <main className="flex min-h-dvh items-center justify-center p-6">
       <Empty className="max-w-md">
@@ -95,11 +127,7 @@ function UnsubscribeContent() {
               {isSuccess ? "You’re unsubscribed" : "Couldn’t unsubscribe"}
             </h1>
           </EmptyTitle>
-          <EmptyDescription className="text-pretty">
-            {isSuccess
-              ? "You won’t get changelog emails from this product anymore."
-              : errorMessage}
-          </EmptyDescription>
+          <EmptyDescription className="text-pretty">{message}</EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
           <ButtonLink render={<Link href="/" />} variant="surface">

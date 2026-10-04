@@ -16,7 +16,8 @@ type NotificationTypeKey =
   | "notifyOnNewComment"
   | "notifyOnVoteMilestone"
   | "notifyOnNewSupportMessage"
-  | "notifyOnInvitation";
+  | "notifyOnInvitation"
+  | "notifyOnIncident";
 
 const NOTIFICATION_TYPES: {
   key: NotificationTypeKey;
@@ -47,6 +48,11 @@ const NOTIFICATION_TYPES: {
     description: "When you’re invited to join an organization",
     key: "notifyOnInvitation",
     label: "Invitations",
+  },
+  {
+    description: "When a status page incident starts or resolves",
+    key: "notifyOnIncident",
+    label: "Incidents",
   },
 ];
 

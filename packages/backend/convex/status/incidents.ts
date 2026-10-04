@@ -1,25 +1,16 @@
 import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 import { requireOrgAdmin, requireOrgMember } from "../shared/access";
+import { notifyIncidentChange } from "./incidentNotifications";
+import { listActiveIncidents } from "./lib/activeIncidents";
 import { incidentSeverity, incidentStatus } from "./tableFields";
-
-// ============================================
-// QUERIES
-// ============================================
 
 export const getActiveIncidents = query({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
     await requireOrgMember(ctx, args.organizationId);
 
-    const incidents = await ctx.db
-      .query("statusIncidents")
-      .withIndex("by_org_status", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .collect();
-
-    const activeIncidents = incidents.filter((i) => i.status !== "resolved");
+    const activeIncidents = await listActiveIncidents(ctx, args.organizationId);
 
     // Fetch updates and monitor names for each
     const withDetails = await Promise.all(
@@ -128,10 +119,6 @@ export const getIncidentWithUpdates = query({
   },
 });
 
-// ============================================
-// MUTATIONS
-// ============================================
-
 export const createIncident = mutation({
   args: {
     affectedMonitorIds: v.array(v.id("statusMonitors")),
@@ -164,13 +151,14 @@ export const createIncident = mutation({
       updatedAt: now,
     });
 
-    await ctx.db.insert("statusIncidentUpdates", {
+    const updateId = await ctx.db.insert("statusIncidentUpdates", {
       createdAt: now,
       incidentId,
       message: args.message,
       organizationId: args.organizationId,
       status: "investigating",
     });
+    await notifyIncidentChange(ctx, { incidentId, updateId });
 
     return incidentId;
   },
@@ -202,13 +190,14 @@ export const postIncidentUpdate = mutation({
       ...(args.status === "resolved" ? { resolvedAt: now } : {}),
     });
 
-    await ctx.db.insert("statusIncidentUpdates", {
+    const updateId = await ctx.db.insert("statusIncidentUpdates", {
       createdAt: now,
       incidentId: args.incidentId,
       message: args.message,
       organizationId: incident.organizationId,
       status: args.status,
     });
+    await notifyIncidentChange(ctx, { incidentId: args.incidentId, updateId });
   },
 });
 
@@ -233,12 +222,13 @@ export const resolveIncident = mutation({
       updatedAt: now,
     });
 
-    await ctx.db.insert("statusIncidentUpdates", {
+    const updateId = await ctx.db.insert("statusIncidentUpdates", {
       createdAt: now,
       incidentId: args.incidentId,
       message: args.message ?? "This incident has been resolved.",
       organizationId: incident.organizationId,
       status: "resolved",
     });
+    await notifyIncidentChange(ctx, { incidentId: args.incidentId, updateId });
   },
 });

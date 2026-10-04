@@ -13,6 +13,8 @@
     "./templates/weekly-digest-email": "./src/templates/weekly-digest-email.tsx",
     "./templates/feedback-shipped-email": "./src/templates/feedback-shipped-email.tsx",
     "./templates/subscription-confirmation-email": "./src/templates/subscription-confirmation-email.tsx",
+    "./templates/status-incident-email": "./src/templates/status-incident-email.tsx",
+    "./templates/status-maintenance-email": "./src/templates/status-maintenance-email.tsx",
     "./templates/platform-alert-email": "./src/templates/platform-alert-email.tsx",
     "./templates/styles": "./src/templates/styles.ts"
   },

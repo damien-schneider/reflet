@@ -15,7 +15,7 @@ export const subscribe = mutation({
   handler: async (ctx, args) => {
     const email = normalizeSubscriberEmail(args.email);
     const organization = await ctx.db.get(args.organizationId);
-    if (!organization) {
+    if (!organization?.isPublic) {
       throw new Error("Organization not found");
     }
     await rateLimiter.limit(ctx, "emailSubscriptionPerOrg", {

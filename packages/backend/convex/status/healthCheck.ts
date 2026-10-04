@@ -15,17 +15,23 @@ import {
   describeFetchFailure,
   fetchPublicUrl,
 } from "../shared/outbound/public_fetch";
+import { recordUptimeSample } from "./history";
+import { openOutageIncident, resolveOutageIncident } from "./lib/autoIncidents";
 import { monitorMethod } from "./tableFields";
 
 const MONITOR_PAGE_SIZE = 200;
 const CHECK_BATCH_SIZE = 10;
 const CHECK_TIMEOUT_MS = 10_000;
+const HEAD_REJECTION_STATUS_CODES: Record<number, true> = {
+  405: true,
+  501: true,
+};
+/** Checks finish up to ~25s after the minute cron fires; without slack a 1-minute monitor would only be due every 2 minutes. */
+const DUE_TOLERANCE_MS = 45_000;
 
 const dueMonitor = v.object({
   _id: v.id("statusMonitors"),
   method: v.optional(monitorMethod),
-  name: v.string(),
-  organizationId: v.id("organizations"),
   url: v.string(),
 });
 
@@ -68,15 +74,10 @@ export const getDueMonitorsPage = internalQuery({
       const tierMin = await getOrgMinInterval(m.organizationId);
       const effectiveInterval = Math.max(m.checkIntervalMinutes, tierMin);
       const isDue =
-        !m.lastCheckedAt || now >= m.lastCheckedAt + effectiveInterval * 60_000;
+        !m.lastCheckedAt ||
+        now + DUE_TOLERANCE_MS >= m.lastCheckedAt + effectiveInterval * 60_000;
       if (isDue) {
-        monitors.push({
-          _id: m._id,
-          method: m.method,
-          name: m.name,
-          organizationId: m.organizationId,
-          url: m.url,
-        });
+        monitors.push({ _id: m._id, method: m.method, url: m.url });
       }
     }
     return {
@@ -93,169 +94,56 @@ export const recordCheck = internalMutation({
     errorMessage: v.optional(v.string()),
     isUp: v.boolean(),
     monitorId: v.id("statusMonitors"),
-    organizationId: v.id("organizations"),
     responseTimeMs: v.optional(v.number()),
     statusCode: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const now = Date.now();
-
-    await ctx.db.insert("statusChecks", {
-      checkedAt: now,
-      errorMessage: args.errorMessage,
-      isUp: args.isUp,
-      monitorId: args.monitorId,
-      organizationId: args.organizationId,
-      responseTimeMs: args.responseTimeMs,
-      statusCode: args.statusCode,
-    });
-
     const monitor = await ctx.db.get(args.monitorId);
-    if (!monitor) {
-      return;
+    if (!monitor || monitor.status === "paused") {
+      return null;
     }
 
-    if (args.isUp) {
-      const wasDown =
-        monitor.status === "major_outage" || monitor.status === "degraded";
+    const now = Date.now();
+    await ctx.db.insert("statusChecks", {
+      ...args,
+      checkedAt: now,
+      organizationId: monitor.organizationId,
+    });
+    await recordUptimeSample(ctx, { ...args, checkedAt: now });
 
-      await ctx.db.patch(args.monitorId, {
+    if (args.isUp) {
+      const isSlow =
+        monitor.degradedResponseTimeMs !== undefined &&
+        args.responseTimeMs !== undefined &&
+        args.responseTimeMs > monitor.degradedResponseTimeMs;
+      await ctx.db.patch(monitor._id, {
         consecutiveFailures: 0,
         lastCheckedAt: now,
         lastResponseTimeMs: args.responseTimeMs,
-        status: "operational",
+        status: isSlow ? "degraded" : "operational",
         updatedAt: now,
       });
-
-      return { monitorId: args.monitorId, recovered: wasDown };
+      await resolveOutageIncident(ctx, monitor);
+      return null;
     }
 
-    const newFailures = monitor.consecutiveFailures + 1;
-    const newStatus =
-      newFailures >= monitor.alertThreshold ? "major_outage" : "degraded";
-
-    await ctx.db.patch(args.monitorId, {
-      consecutiveFailures: newFailures,
+    const consecutiveFailures = monitor.consecutiveFailures + 1;
+    await ctx.db.patch(monitor._id, {
+      consecutiveFailures,
       lastCheckedAt: now,
       lastResponseTimeMs: args.responseTimeMs,
-      status: newStatus,
+      status:
+        consecutiveFailures >= monitor.alertThreshold
+          ? "major_outage"
+          : "degraded",
       updatedAt: now,
     });
-
-    return {
-      monitorId: args.monitorId,
-      shouldAlert: newFailures === monitor.alertThreshold,
-    };
-  },
-});
-
-export const autoCreateIncident = internalMutation({
-  args: {
-    monitorId: v.id("statusMonitors"),
-    monitorName: v.string(),
-    organizationId: v.id("organizations"),
-  },
-  handler: async (ctx, args) => {
-    const now = Date.now();
-
-    const existingIncidents = await ctx.db
-      .query("statusIncidents")
-      .withIndex("by_org_status", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .collect();
-
-    const hasActiveIncident = existingIncidents.some(
-      (i) =>
-        i.status !== "resolved" && i.affectedMonitorIds.includes(args.monitorId)
-    );
-
-    if (hasActiveIncident) {
-      return null;
+    if (consecutiveFailures === monitor.alertThreshold) {
+      await openOutageIncident(ctx, monitor);
     }
-
-    const incidentId = await ctx.db.insert("statusIncidents", {
-      affectedMonitorIds: [args.monitorId],
-      autoDetected: true,
-      createdAt: now,
-      organizationId: args.organizationId,
-      severity: "major",
-      startedAt: now,
-      status: "investigating",
-      title: `${args.monitorName} is experiencing issues`,
-      updatedAt: now,
-    });
-
-    await ctx.db.insert("statusIncidentUpdates", {
-      createdAt: now,
-      incidentId,
-      message: `Automated monitoring detected that ${args.monitorName} is not responding. We are investigating the issue.`,
-      organizationId: args.organizationId,
-      status: "investigating",
-    });
-
-    return incidentId;
+    return null;
   },
-});
-
-export const autoResolveIncident = internalMutation({
-  args: {
-    monitorId: v.id("statusMonitors"),
-    monitorName: v.string(),
-    organizationId: v.id("organizations"),
-  },
-  handler: async (ctx, args) => {
-    const now = Date.now();
-
-    const incidents = await ctx.db
-      .query("statusIncidents")
-      .withIndex("by_org_status", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .collect();
-
-    const activeIncident = incidents.find(
-      (i) =>
-        i.status !== "resolved" &&
-        i.autoDetected &&
-        i.affectedMonitorIds.includes(args.monitorId)
-    );
-
-    if (!activeIncident) {
-      return null;
-    }
-
-    await ctx.db.patch(activeIncident._id, {
-      resolvedAt: now,
-      status: "resolved",
-      updatedAt: now,
-    });
-
-    await ctx.db.insert("statusIncidentUpdates", {
-      createdAt: now,
-      incidentId: activeIncident._id,
-      message: `${args.monitorName} has recovered and is now operational.`,
-      organizationId: args.organizationId,
-      status: "resolved",
-    });
-
-    return activeIncident._id;
-  },
-});
-
-export const cleanupOldChecks = internalMutation({
-  args: {},
-  handler: async (ctx) => {
-    const ninetyDaysAgo = Date.now() - 90 * 24 * 60 * 60 * 1000;
-    const oldChecks = await ctx.db
-      .query("statusChecks")
-      .filter((q) => q.lt(q.field("checkedAt"), ninetyDaysAgo))
-      .take(1000);
-
-    for (const check of oldChecks) {
-      await ctx.db.delete(check._id);
-    }
-  },
+  returns: v.null(),
 });
 
 interface ProbeResult {
@@ -265,15 +153,16 @@ interface ProbeResult {
   statusCode?: number;
 }
 
-const probeMonitor = async (
-  monitor: DueMonitor
+const probeOnce = async (
+  url: string,
+  method: Infer<typeof monitorMethod>
 ): Promise<ProbeResult | null> => {
   const startTime = Date.now();
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), CHECK_TIMEOUT_MS);
   try {
-    const { response, requestDurationMs } = await fetchPublicUrl(monitor.url, {
-      method: monitor.method ?? "HEAD",
+    const { response, requestDurationMs } = await fetchPublicUrl(url, {
+      method,
       signal: controller.signal,
     });
     await response.body?.cancel();
@@ -296,40 +185,32 @@ const probeMonitor = async (
   }
 };
 
+/** A failure only counts once a second request confirms it; a server rejecting HEAD is confirmed with GET. */
+const probeMonitor = async (
+  monitor: DueMonitor
+): Promise<ProbeResult | null> => {
+  const method = monitor.method ?? "HEAD";
+  const firstProbe = await probeOnce(monitor.url, method);
+  if (!firstProbe || firstProbe.isUp) {
+    return firstProbe;
+  }
+  const serverRejectedHead =
+    method === "HEAD" &&
+    firstProbe.statusCode !== undefined &&
+    HEAD_REJECTION_STATUS_CODES[firstProbe.statusCode] === true;
+  return await probeOnce(monitor.url, serverRejectedHead ? "GET" : method);
+};
+
 const checkMonitor = async (
   ctx: ActionCtx,
   monitor: DueMonitor
 ): Promise<void> => {
   const probe = await probeMonitor(monitor);
-  if (!probe) {
-    return;
-  }
-
-  const result = await ctx.runMutation(
-    internal.status.healthCheck.recordCheck,
-    {
+  if (probe) {
+    await ctx.runMutation(internal.status.healthCheck.recordCheck, {
       ...probe,
       monitorId: monitor._id,
-      organizationId: monitor.organizationId,
-    }
-  );
-
-  const incidentArgs = {
-    monitorId: monitor._id,
-    monitorName: monitor.name,
-    organizationId: monitor.organizationId,
-  };
-  if (result && "shouldAlert" in result && result.shouldAlert) {
-    await ctx.runMutation(
-      internal.status.healthCheck.autoCreateIncident,
-      incidentArgs
-    );
-  }
-  if (result && "recovered" in result && result.recovered) {
-    await ctx.runMutation(
-      internal.status.healthCheck.autoResolveIncident,
-      incidentArgs
-    );
+    });
   }
 };
 

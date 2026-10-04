@@ -19,11 +19,7 @@ import { formatLatency } from "../lib/status-meta";
 
 interface ResponseTimeChartProps {
   lastResponseTimeMs?: number;
-  recentChecks: Array<{
-    responseTimeMs?: number;
-    checkedAt: number;
-    isUp: boolean;
-  }>;
+  latencyByHour: Array<{ hourStart: number; responseTimeMs: number }>;
 }
 
 const chartConfig = {
@@ -34,23 +30,17 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export function ResponseTimeChart({
-  recentChecks,
+  latencyByHour,
   lastResponseTimeMs,
 }: ResponseTimeChartProps) {
-  const chartData = recentChecks.flatMap((check) =>
-    check.responseTimeMs !== undefined && check.responseTimeMs > 0
-      ? [
-          {
-            date: format(check.checkedAt, "MMM d, hh:mm a"),
-            responseTime: check.responseTimeMs,
-          },
-        ]
-      : []
-  );
-
-  if (chartData.length === 0) {
+  if (latencyByHour.length === 0) {
     return null;
   }
+
+  const chartData = latencyByHour.map((hour) => ({
+    date: format(hour.hourStart, "MMM d, h a"),
+    responseTime: hour.responseTimeMs,
+  }));
 
   return (
     <Card>

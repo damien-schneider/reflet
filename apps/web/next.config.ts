@@ -100,9 +100,16 @@ const nextConfig: NextConfig = {
   reactCompiler: true,
   reactStrictMode: true,
 
-  // GEO: redirect llm.txt to llms.txt for crawlers that expect the shorter path
   redirects() {
-    return [{ destination: "/llms.txt", permanent: true, source: "/llm.txt" }];
+    return [
+      // GEO: redirect llm.txt to llms.txt for crawlers that expect the shorter path
+      { destination: "/llms.txt", permanent: true, source: "/llm.txt" },
+      {
+        destination: "/subscriptions/unsubscribe?list=changelog",
+        permanent: true,
+        source: "/changelog/unsubscribe",
+      },
+    ];
   },
 
   transpilePackages: ["@reflet/backend", "@reflet/env", "@reflet/ui"],

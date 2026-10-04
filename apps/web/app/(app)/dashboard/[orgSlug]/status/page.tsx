@@ -17,7 +17,7 @@ import {
   PageTitle,
 } from "@ctrl-ui/react/ui/page-layout";
 import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
-import { ArrowSquareOut, Pulse, Warning } from "@phosphor-icons/react";
+import { ArrowSquareOut, Pulse, Warning, Wrench } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
@@ -26,6 +26,8 @@ import { use, useState } from "react";
 import { OrgNotFound } from "@/features/dashboard/components/org-not-found";
 import { AddMonitorInput } from "@/features/status/components/add-monitor-input";
 import { IncidentComposer } from "@/features/status/components/incident-composer";
+import { MaintenanceComposer } from "@/features/status/components/maintenance-composer";
+import { ScheduledMaintenances } from "@/features/status/components/scheduled-maintenances";
 import { GitHubConnectHint } from "@/shared/components/github-connect-hint";
 import {
   ActiveIncidents,
@@ -36,6 +38,8 @@ import {
 type Monitor = FunctionReturnType<
   typeof api.status.monitors.listMonitors
 >[number];
+
+type Composer = "incident" | "maintenance";
 
 const SKELETON_MONITOR_KEYS = ["first", "second", "third"] as const;
 
@@ -169,7 +173,13 @@ function MonitorsDashboard({
 }) {
   const { organizationId, orgSlug } = scope;
   const createIncident = useMutation(api.status.incidents.createIncident);
-  const [showComposer, setShowComposer] = useState(false);
+  const scheduleMaintenance = useMutation(
+    api.status.maintenances.scheduleMaintenance
+  );
+  const [openComposer, setOpenComposer] = useState<Composer | null>(null);
+  const monitorOptions = monitors.map((m) => ({ _id: m._id, name: m.name }));
+  const toggleComposer = (composer: Composer) =>
+    setOpenComposer(openComposer === composer ? null : composer);
 
   return (
     <PageLayout width="content">
@@ -187,8 +197,17 @@ function MonitorsDashboard({
             View public page
           </ButtonLink>
           <Button
-            aria-expanded={showComposer}
-            onClick={() => setShowComposer(!showComposer)}
+            aria-expanded={openComposer === "maintenance"}
+            onClick={() => toggleComposer("maintenance")}
+            size="sm"
+            variant="surface"
+          >
+            <Wrench />
+            Schedule maintenance
+          </Button>
+          <Button
+            aria-expanded={openComposer === "incident"}
+            onClick={() => toggleComposer("incident")}
             size="sm"
             variant="surface"
           >
@@ -200,17 +219,28 @@ function MonitorsDashboard({
       <PageBody>
         <div className="space-y-8">
           <OverallStatusBanner organizationId={organizationId} />
-          {showComposer && (
+          {openComposer === "incident" && (
             <IncidentComposer
-              monitors={monitors.map((m) => ({ _id: m._id, name: m.name }))}
-              onCancel={() => setShowComposer(false)}
+              monitors={monitorOptions}
+              onCancel={() => setOpenComposer(null)}
               onSubmit={async (data) => {
                 await createIncident({ organizationId, ...data });
-                setShowComposer(false);
+                setOpenComposer(null);
+              }}
+            />
+          )}
+          {openComposer === "maintenance" && (
+            <MaintenanceComposer
+              monitors={monitorOptions}
+              onCancel={() => setOpenComposer(null)}
+              onSubmit={async (data) => {
+                await scheduleMaintenance({ organizationId, ...data });
+                setOpenComposer(null);
               }}
             />
           )}
           <ActiveIncidents organizationId={organizationId} />
+          <ScheduledMaintenances organizationId={organizationId} />
           <MonitorGroups monitors={monitors} organizationId={organizationId} />
           <AddMonitorInput onAdd={onAddMonitor} />
         </div>

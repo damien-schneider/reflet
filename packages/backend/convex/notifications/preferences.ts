@@ -3,6 +3,7 @@ import { mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
 
 const DEFAULT_PREFERENCES = {
+  notifyOnIncident: true,
   notifyOnInvitation: true,
   notifyOnNewComment: true,
   notifyOnNewSupportMessage: true,
@@ -34,6 +35,8 @@ export const getPreferences = query({
     }
 
     return {
+      notifyOnIncident:
+        preferences.notifyOnIncident ?? DEFAULT_PREFERENCES.notifyOnIncident,
       notifyOnInvitation: preferences.notifyOnInvitation,
       notifyOnNewComment: preferences.notifyOnNewComment,
       notifyOnNewSupportMessage: preferences.notifyOnNewSupportMessage,
@@ -51,6 +54,7 @@ export const getPreferences = query({
  */
 export const updatePreferences = mutation({
   args: {
+    notifyOnIncident: v.optional(v.boolean()),
     notifyOnInvitation: v.optional(v.boolean()),
     notifyOnNewComment: v.optional(v.boolean()),
     notifyOnNewSupportMessage: v.optional(v.boolean()),
@@ -72,31 +76,14 @@ export const updatePreferences = mutation({
     const now = Date.now();
 
     if (existing) {
-      const updateData: Record<string, unknown> = { updatedAt: now };
-      if (args.pushEnabled !== undefined) {
-        updateData.pushEnabled = args.pushEnabled;
-      }
-      if (args.notifyOnStatusChange !== undefined) {
-        updateData.notifyOnStatusChange = args.notifyOnStatusChange;
-      }
-      if (args.notifyOnNewComment !== undefined) {
-        updateData.notifyOnNewComment = args.notifyOnNewComment;
-      }
-      if (args.notifyOnVoteMilestone !== undefined) {
-        updateData.notifyOnVoteMilestone = args.notifyOnVoteMilestone;
-      }
-      if (args.notifyOnNewSupportMessage !== undefined) {
-        updateData.notifyOnNewSupportMessage = args.notifyOnNewSupportMessage;
-      }
-      if (args.notifyOnInvitation !== undefined) {
-        updateData.notifyOnInvitation = args.notifyOnInvitation;
-      }
-      await ctx.db.patch(existing._id, updateData);
+      await ctx.db.patch(existing._id, { ...args, updatedAt: now });
       return existing._id;
     }
 
     return await ctx.db.insert("userNotificationPreferences", {
       createdAt: now,
+      notifyOnIncident:
+        args.notifyOnIncident ?? DEFAULT_PREFERENCES.notifyOnIncident,
       notifyOnInvitation:
         args.notifyOnInvitation ?? DEFAULT_PREFERENCES.notifyOnInvitation,
       notifyOnNewComment:

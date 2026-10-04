@@ -5,6 +5,7 @@ import { Badge } from "@ctrl-ui/react/ui/badge";
 import { Card, CardContent } from "@ctrl-ui/react/ui/card";
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
@@ -40,6 +41,22 @@ const CHECK_INTERVALS = [
   { label: "Every 30 minutes", value: 30 },
 ] as const;
 
+const SLOW_RESPONSE_THRESHOLD_OFF = 0;
+
+const SLOW_RESPONSE_THRESHOLDS = [
+  { label: "Never", value: SLOW_RESPONSE_THRESHOLD_OFF },
+  { label: "Slower than 500 ms", value: 500 },
+  { label: "Slower than 1 s", value: 1000 },
+  { label: "Slower than 2 s", value: 2000 },
+  { label: "Slower than 5 s", value: 5000 },
+] as const;
+
+interface MonitorChanges {
+  checkIntervalMinutes?: number;
+  degradedResponseTimeMs?: number | null;
+  isPublic?: boolean;
+}
+
 interface MonitorCardProps {
   isPro?: boolean;
   monitor: {
@@ -47,32 +64,27 @@ interface MonitorCardProps {
     name: string;
     url: string;
     status: MonitorStatus;
+    isPublic: boolean;
+    degradedResponseTimeMs?: number;
     lastResponseTimeMs?: number;
     checkIntervalMinutes: number;
-    recentChecks: Array<{
-      responseTimeMs?: number;
-      checkedAt: number;
-      isUp: boolean;
-    }>;
+    latencyByHour: Array<{ hourStart: number; responseTimeMs: number }>;
   };
   onDelete: (id: Id<"statusMonitors">) => void;
-  onPause: (id: Id<"statusMonitors">) => void;
-  onResume: (id: Id<"statusMonitors">) => void;
-  onUpdateInterval?: (id: Id<"statusMonitors">, minutes: number) => void;
+  onPausedChange: (id: Id<"statusMonitors">, paused: boolean) => void;
+  onUpdate: (id: Id<"statusMonitors">, changes: MonitorChanges) => void;
   uptimeData?: UptimeData;
 }
 
 export function MonitorCard({
   monitor,
-  onPause,
-  onResume,
+  onPausedChange,
+  onUpdate,
   onDelete,
-  onUpdateInterval,
   isPro,
   uptimeData,
 }: MonitorCardProps) {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const canChangeInterval = isPro && onUpdateInterval;
 
   return (
     <section aria-label={monitor.name} className="space-y-3">
@@ -126,17 +138,29 @@ export function MonitorCard({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               {monitor.status === "paused" ? (
-                <DropdownMenuItem onClick={() => onResume(monitor._id)}>
+                <DropdownMenuItem
+                  onClick={() => onPausedChange(monitor._id, false)}
+                >
                   <Play className="size-4" />
                   Resume checks
                 </DropdownMenuItem>
               ) : (
-                <DropdownMenuItem onClick={() => onPause(monitor._id)}>
+                <DropdownMenuItem
+                  onClick={() => onPausedChange(monitor._id, true)}
+                >
                   <Pause className="size-4" />
                   Pause checks
                 </DropdownMenuItem>
               )}
-              {canChangeInterval && (
+              <DropdownMenuCheckboxItem
+                checked={monitor.isPublic}
+                onCheckedChange={(isPublic) =>
+                  onUpdate(monitor._id, { isPublic })
+                }
+              >
+                Show on status page
+              </DropdownMenuCheckboxItem>
+              {isPro && (
                 <>
                   <DropdownMenuSeparator />
                   <DropdownMenuGroup>
@@ -144,7 +168,9 @@ export function MonitorCard({
                     <DropdownMenuRadioGroup
                       onValueChange={(value: unknown) => {
                         if (typeof value === "number") {
-                          onUpdateInterval(monitor._id, value);
+                          onUpdate(monitor._id, {
+                            checkIntervalMinutes: value,
+                          });
                         }
                       }}
                       value={monitor.checkIntervalMinutes}
@@ -161,6 +187,33 @@ export function MonitorCard({
                   </DropdownMenuGroup>
                 </>
               )}
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>Mark as degraded</DropdownMenuLabel>
+                <DropdownMenuRadioGroup
+                  onValueChange={(value: unknown) => {
+                    if (typeof value === "number") {
+                      onUpdate(monitor._id, {
+                        degradedResponseTimeMs:
+                          value === SLOW_RESPONSE_THRESHOLD_OFF ? null : value,
+                      });
+                    }
+                  }}
+                  value={
+                    monitor.degradedResponseTimeMs ??
+                    SLOW_RESPONSE_THRESHOLD_OFF
+                  }
+                >
+                  {SLOW_RESPONSE_THRESHOLDS.map((threshold) => (
+                    <DropdownMenuRadioItem
+                      key={threshold.value}
+                      value={threshold.value}
+                    >
+                      {threshold.label}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="menu-item-danger"
@@ -180,12 +233,10 @@ export function MonitorCard({
           overallUptime={uptimeData.overallUptime}
         />
       )}
-      {monitor.recentChecks.length > 0 && (
-        <ResponseTimeChart
-          lastResponseTimeMs={monitor.lastResponseTimeMs}
-          recentChecks={monitor.recentChecks}
-        />
-      )}
+      <ResponseTimeChart
+        lastResponseTimeMs={monitor.lastResponseTimeMs}
+        latencyByHour={monitor.latencyByHour}
+      />
 
       <DestructiveConfirmDialog
         confirmLabel="Delete monitor"

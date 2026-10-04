@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { internal } from "../_generated/api";
 import { mutation, query } from "../_generated/server";
 import { getOrgTier } from "../billing/org_subscription";
 import { PLAN_LIMITS } from "../billing/queries";
@@ -6,7 +7,15 @@ import { requireOrgAdmin, requireOrgMember } from "../shared/access";
 import { MAX_TITLE_LENGTH } from "../shared/constants";
 import { assertPublicHttpUrl } from "../shared/outbound/public_fetch";
 import { validateInputLength } from "../shared/validators";
-import { monitorMethod, monitorStatus } from "./tableFields";
+import { loadLatencyByHour, loadUptimeBarsByMonitor } from "./history";
+import { listActiveMaintenances } from "./lib/maintenanceWindows";
+import {
+  canViewStatusPage,
+  isShownOnStatusPage,
+  overallStatusOf,
+  withMaintenanceStatus,
+} from "./lib/visibility";
+import { monitorMethod } from "./tableFields";
 
 export const listMonitors = query({
   args: { organizationId: v.id("organizations") },
@@ -20,62 +29,19 @@ export const listMonitors = query({
       )
       .collect();
 
-    const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
-    const monitorsWithChecks = await Promise.all(
-      monitors.map(async (monitor) => {
-        const recentChecks = await ctx.db
-          .query("statusChecks")
-          .withIndex("by_monitor_time", (q) =>
-            q.eq("monitorId", monitor._id).gte("checkedAt", oneDayAgo)
-          )
-          .collect();
-
-        return { ...monitor, recentChecks };
-      })
+    return await Promise.all(
+      monitors.map(async (monitor) => ({
+        ...monitor,
+        latencyByHour: await loadLatencyByHour(ctx, monitor._id),
+      }))
     );
-
-    return monitorsWithChecks;
-  },
-});
-
-export const getMonitorWithHistory = query({
-  args: {
-    monitorId: v.id("statusMonitors"),
-  },
-  handler: async (ctx, args) => {
-    const monitor = await ctx.db.get(args.monitorId);
-    if (!monitor) {
-      return null;
-    }
-
-    await requireOrgMember(ctx, monitor.organizationId);
-
-    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    const checks = await ctx.db
-      .query("statusChecks")
-      .withIndex("by_monitor_time", (q) =>
-        q.eq("monitorId", args.monitorId).gte("checkedAt", sevenDaysAgo)
-      )
-      .collect();
-
-    const incidents = await ctx.db
-      .query("statusIncidents")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", monitor.organizationId)
-      )
-      .collect();
-
-    const relatedIncidents = incidents.filter((i) =>
-      i.affectedMonitorIds.includes(args.monitorId)
-    );
-
-    return { ...monitor, checks, relatedIncidents };
   },
 });
 
 export const getAggregateStatus = query({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
+    const organization = await ctx.db.get(args.organizationId);
     const monitors = await ctx.db
       .query("statusMonitors")
       .withIndex("by_organization", (q) =>
@@ -83,27 +49,24 @@ export const getAggregateStatus = query({
       )
       .collect();
 
-    const publicMonitors = monitors.filter(
-      (m) => m.isPublic && m.status !== "paused"
-    );
-
-    if (publicMonitors.length === 0) {
+    if (!(organization && (await canViewStatusPage(ctx, organization)))) {
       return { monitorCount: 0, status: "no_monitors" as const };
     }
-
-    const hasMajorOutage = publicMonitors.some(
-      (m) => m.status === "major_outage"
-    );
-    const hasDegraded = publicMonitors.some((m) => m.status === "degraded");
-
-    let status: "major_outage" | "degraded" | "operational" = "operational";
-    if (hasMajorOutage) {
-      status = "major_outage";
-    } else if (hasDegraded) {
-      status = "degraded";
+    const shownMonitors = monitors.filter(isShownOnStatusPage);
+    if (shownMonitors.length === 0) {
+      return { monitorCount: 0, status: "no_monitors" as const };
     }
-
-    return { monitorCount: publicMonitors.length, status };
+    const activeMaintenances = await listActiveMaintenances(
+      ctx,
+      args.organizationId,
+      Date.now()
+    );
+    return {
+      monitorCount: shownMonitors.length,
+      status: overallStatusOf(
+        withMaintenanceStatus(shownMonitors, activeMaintenances)
+      ),
+    };
   },
 });
 
@@ -119,54 +82,7 @@ export const getMonitorsUptimeBars = query({
       )
       .collect();
 
-    const ninetyDaysAgo = Date.now() - 90 * 24 * 60 * 60 * 1000;
-
-    const results = await Promise.all(
-      monitors.map(async (monitor) => {
-        const checks = await ctx.db
-          .query("statusChecks")
-          .withIndex("by_monitor_time", (q) =>
-            q.eq("monitorId", monitor._id).gte("checkedAt", ninetyDaysAgo)
-          )
-          .collect();
-
-        const dailyBuckets = new Map<string, { total: number; up: number }>();
-        for (const check of checks) {
-          const day = new Date(check.checkedAt).toISOString().split("T")[0];
-          const bucket = dailyBuckets.get(day) ?? { total: 0, up: 0 };
-          bucket.total++;
-          if (check.isUp) {
-            bucket.up++;
-          }
-          dailyBuckets.set(day, bucket);
-        }
-
-        const days = [...dailyBuckets.entries()]
-          .map(([date, bucket]) => ({
-            date,
-            uptimePercentage:
-              bucket.total > 0
-                ? Math.round((bucket.up / bucket.total) * 10_000) / 100
-                : 100,
-          }))
-          .sort((a, b) => a.date.localeCompare(b.date));
-
-        const totalChecks = checks.length;
-        const upChecks = checks.filter((c) => c.isUp).length;
-        const overallUptime =
-          totalChecks > 0
-            ? Math.round((upChecks / totalChecks) * 10_000) / 100
-            : 100;
-
-        return {
-          days,
-          monitorId: monitor._id,
-          overallUptime,
-        };
-      })
-    );
-
-    return Object.fromEntries(results.map((r) => [r.monitorId, r]));
+    return await loadUptimeBarsByMonitor(ctx, monitors);
   },
 });
 
@@ -228,6 +144,7 @@ export const updateMonitor = mutation({
   args: {
     alertThreshold: v.optional(v.number()),
     checkIntervalMinutes: v.optional(v.number()),
+    degradedResponseTimeMs: v.optional(v.union(v.number(), v.null())),
     groupName: v.optional(v.string()),
     groupOrder: v.optional(v.number()),
     isPublic: v.optional(v.boolean()),
@@ -235,11 +152,10 @@ export const updateMonitor = mutation({
     monitorId: v.id("statusMonitors"),
     name: v.optional(v.string()),
     order: v.optional(v.number()),
-    status: v.optional(monitorStatus),
     url: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const { monitorId, ...updates } = args;
+    const { monitorId, degradedResponseTimeMs, ...updates } = args;
 
     const monitor = await ctx.db.get(monitorId);
     if (!monitor) {
@@ -251,6 +167,12 @@ export const updateMonitor = mutation({
     validateInputLength(args.name, MAX_TITLE_LENGTH, "Name");
     if (args.url !== undefined) {
       assertPublicHttpUrl(args.url);
+    }
+    if (
+      typeof degradedResponseTimeMs === "number" &&
+      !(degradedResponseTimeMs > 0)
+    ) {
+      throw new Error("Slow response threshold must be a positive duration");
     }
 
     const filtered = Object.fromEntries(
@@ -267,9 +189,31 @@ export const updateMonitor = mutation({
 
     await ctx.db.patch(monitorId, {
       ...filtered,
+      ...(degradedResponseTimeMs === undefined
+        ? {}
+        : { degradedResponseTimeMs: degradedResponseTimeMs ?? undefined }),
       updatedAt: Date.now(),
     });
   },
+});
+
+export const setMonitorPaused = mutation({
+  args: { monitorId: v.id("statusMonitors"), paused: v.boolean() },
+  handler: async (ctx, args) => {
+    const monitor = await ctx.db.get(args.monitorId);
+    if (!monitor) {
+      throw new Error("Monitor not found");
+    }
+    await requireOrgAdmin(ctx, monitor.organizationId, "pause monitors");
+
+    await ctx.db.patch(args.monitorId, {
+      consecutiveFailures: 0,
+      status: args.paused ? "paused" : "operational",
+      updatedAt: Date.now(),
+    });
+    return null;
+  },
+  returns: v.null(),
 });
 
 export const deleteMonitor = mutation({
@@ -283,6 +227,11 @@ export const deleteMonitor = mutation({
     await requireOrgAdmin(ctx, monitor.organizationId, "delete monitors");
 
     await ctx.db.delete(args.monitorId);
+    await ctx.scheduler.runAfter(
+      0,
+      internal.status.history.purgeMonitorHistory,
+      { monitorId: args.monitorId }
+    );
   },
 });
 

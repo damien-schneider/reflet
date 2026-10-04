@@ -22,13 +22,12 @@ import { api } from "@reflet/backend/convex/_generated/api";
 import { useQuery } from "convex/react";
 import {
   formatLatency,
-  isMonitorStatus,
   MONITOR_STATUS_LABEL,
   MONITOR_STATUS_TEXT_CLASS,
   OVERALL_STATUS_BANNER_CLASS,
   OVERALL_STATUS_MESSAGE,
-  toOverallStatus,
 } from "../lib/status-meta";
+import { MaintenanceList } from "./maintenance-list";
 import { ActiveIncidents, PastIncidents } from "./public-incidents";
 import { ResponseTimeChart } from "./response-time-chart";
 import { StatusDot } from "./status-dot";
@@ -100,7 +99,7 @@ export function PublicStatusView({ orgSlug }: { orgSlug: string }) {
     return <PublicStatusUnavailable />;
   }
 
-  const overallStatus = toOverallStatus(statusData.overallStatus);
+  const { overallStatus } = statusData;
 
   return (
     <PageLayout scroll="page" width="content">
@@ -129,6 +128,8 @@ export function PublicStatusView({ orgSlug }: { orgSlug: string }) {
 
           <ActiveIncidents incidents={statusData.activeIncidents} />
 
+          <MaintenanceList maintenances={statusData.maintenances} />
+
           <section aria-label="Services" className="space-y-8">
             {statusData.monitorGroups.length === 0 ? (
               <p className="text-muted-foreground text-sm">
@@ -141,15 +142,12 @@ export function PublicStatusView({ orgSlug }: { orgSlug: string }) {
               <div className="space-y-4" key={group.name}>
                 <h2 className="font-semibold text-heading-4">{group.name}</h2>
                 {group.monitors.map((monitor) => {
-                  const monitorStatus = isMonitorStatus(monitor.status)
-                    ? monitor.status
-                    : "paused";
                   const uptimeData = uptimeBars?.[monitor._id];
 
                   return (
                     <div className="space-y-3" key={monitor._id}>
                       <div className="flex items-center gap-3 px-1">
-                        <StatusDot status={monitorStatus} />
+                        <StatusDot status={monitor.status} />
                         <h3
                           className="min-w-0 flex-1 truncate font-medium text-sm"
                           title={monitor.name}
@@ -164,10 +162,10 @@ export function PublicStatusView({ orgSlug }: { orgSlug: string }) {
                         <span
                           className={cn(
                             "font-medium text-sm",
-                            MONITOR_STATUS_TEXT_CLASS[monitorStatus]
+                            MONITOR_STATUS_TEXT_CLASS[monitor.status]
                           )}
                         >
-                          {MONITOR_STATUS_LABEL[monitorStatus]}
+                          {MONITOR_STATUS_LABEL[monitor.status]}
                         </span>
                       </div>
                       {uptimeBars === undefined ? (
@@ -178,12 +176,10 @@ export function PublicStatusView({ orgSlug }: { orgSlug: string }) {
                           overallUptime={uptimeData?.overallUptime}
                         />
                       )}
-                      {monitor.recentChecks.length > 0 && (
-                        <ResponseTimeChart
-                          lastResponseTimeMs={monitor.lastResponseTimeMs}
-                          recentChecks={monitor.recentChecks}
-                        />
-                      )}
+                      <ResponseTimeChart
+                        lastResponseTimeMs={monitor.lastResponseTimeMs}
+                        latencyByHour={monitor.latencyByHour}
+                      />
                     </div>
                   );
                 })}

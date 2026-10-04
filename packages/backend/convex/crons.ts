@@ -58,9 +58,9 @@ crons.interval(
 );
 
 crons.daily(
-  "cleanup old status checks",
+  "prune status history",
   { hourUTC: 3, minuteUTC: 30 },
-  internal.status.healthCheck.cleanupOldChecks
+  internal.status.history.pruneStatusHistory
 );
 
 crons.daily(

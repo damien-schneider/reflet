@@ -19,6 +19,7 @@ export interface AuthTestUser {
 
 interface TestOptions {
   authUsers?: AuthTestUser[];
+  enforceTransactionLimits?: boolean;
   stripeSubscriptionStatus?: string | null;
 }
 
@@ -105,8 +106,13 @@ const createAuthModules = (users: AuthTestUser[]) => ({
 export const setupTest = ({
   authUsers = [],
   stripeSubscriptionStatus = null,
+  enforceTransactionLimits = false,
 }: TestOptions = {}) => {
-  const test = convexTest(schema, modules);
+  const test = convexTest({
+    modules,
+    schema,
+    transactionLimits: enforceTransactionLimits,
+  });
   test.registerComponent(
     "stripe",
     defineSchema({}),

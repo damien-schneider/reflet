@@ -2,22 +2,14 @@ export type MonitorStatus =
   | "operational"
   | "degraded"
   | "major_outage"
+  | "maintenance"
   | "paused";
 
 export type OverallStatus = Exclude<MonitorStatus, "paused"> | "no_monitors";
 
-const MONITOR_STATUSES: readonly MonitorStatus[] = [
-  "operational",
-  "degraded",
-  "major_outage",
-  "paused",
-];
-
-export const isMonitorStatus = (value: string): value is MonitorStatus =>
-  MONITOR_STATUSES.some((status) => status === value);
-
 export const MONITOR_STATUS_LABEL: Record<MonitorStatus, string> = {
   degraded: "Degraded",
+  maintenance: "Under maintenance",
   major_outage: "Major outage",
   operational: "Operational",
   paused: "Paused",
@@ -25,6 +17,7 @@ export const MONITOR_STATUS_LABEL: Record<MonitorStatus, string> = {
 
 export const MONITOR_STATUS_TEXT_CLASS: Record<MonitorStatus, string> = {
   degraded: "text-warning-text",
+  maintenance: "text-brand-text",
   major_outage: "text-destructive-text",
   operational: "text-success-text",
   paused: "text-muted-foreground",
@@ -32,6 +25,7 @@ export const MONITOR_STATUS_TEXT_CLASS: Record<MonitorStatus, string> = {
 
 export const OVERALL_STATUS_MESSAGE: Record<OverallStatus, string> = {
   degraded: "Some systems are degraded",
+  maintenance: "Scheduled maintenance in progress",
   major_outage: "Major outage in progress",
   no_monitors: "No monitors yet",
   operational: "All systems operational",
@@ -39,19 +33,10 @@ export const OVERALL_STATUS_MESSAGE: Record<OverallStatus, string> = {
 
 export const OVERALL_STATUS_BANNER_CLASS: Record<OverallStatus, string> = {
   degraded: "bg-warning-subtle text-warning-text",
+  maintenance: "bg-brand-subtle text-brand-text",
   major_outage: "bg-destructive-subtle text-destructive-text",
   no_monitors: "bg-muted text-muted-foreground",
   operational: "bg-success-subtle text-success-text",
-};
-
-export const toOverallStatus = (value: string): OverallStatus => {
-  if (value === "degraded" || value === "major_outage") {
-    return value;
-  }
-  if (value === "no_monitors") {
-    return value;
-  }
-  return "operational";
 };
 
 export const SEVERITY_BADGE_COLOR = {

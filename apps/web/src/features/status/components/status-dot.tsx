@@ -9,6 +9,7 @@ interface StatusDotProps {
 
 const colorMap: Record<StatusDotProps["status"], string> = {
   degraded: "bg-warning",
+  maintenance: "bg-brand",
   major_outage: "bg-destructive",
   no_monitors: "bg-muted-foreground/40",
   operational: "bg-success",

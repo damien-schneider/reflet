@@ -99,6 +99,7 @@ export function MonitorGroups({
     organizationId,
   });
   const updateMonitor = useMutation(api.status.monitors.updateMonitor);
+  const setMonitorPaused = useMutation(api.status.monitors.setMonitorPaused);
   const deleteMonitor = useMutation(api.status.monitors.deleteMonitor);
   const isPro = billingStatus?.tier === "pro";
 
@@ -129,14 +130,11 @@ export function MonitorGroups({
           key={monitor._id}
           monitor={monitor}
           onDelete={(monitorId) => deleteMonitor({ monitorId })}
-          onPause={(monitorId) =>
-            updateMonitor({ monitorId, status: "paused" })
+          onPausedChange={(monitorId, paused) =>
+            setMonitorPaused({ monitorId, paused })
           }
-          onResume={(monitorId) =>
-            updateMonitor({ monitorId, status: "operational" })
-          }
-          onUpdateInterval={(monitorId, checkIntervalMinutes) =>
-            updateMonitor({ checkIntervalMinutes, monitorId })
+          onUpdate={(monitorId, changes) =>
+            updateMonitor({ ...changes, monitorId })
           }
           uptimeData={uptimeBars?.[monitor._id]}
         />

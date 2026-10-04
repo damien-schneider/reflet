@@ -9,6 +9,8 @@ import { isAllowedPushEndpoint } from "./push_queries";
 
 // Notification type preference mapping
 const NOTIFICATION_TYPE_PREFERENCE_MAP: Record<string, string> = {
+  incident_detected: "notifyOnIncident",
+  incident_resolved: "notifyOnIncident",
   invitation: "notifyOnInvitation",
   new_comment: "notifyOnNewComment",
   new_support_message: "notifyOnNewSupportMessage",

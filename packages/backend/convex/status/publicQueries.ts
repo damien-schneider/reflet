@@ -1,150 +1,140 @@
 import { v } from "convex/values";
-import type { Doc, Id } from "../_generated/dataModel";
-import { query } from "../_generated/server";
+import type { Id } from "../_generated/dataModel";
+import { type QueryCtx, query } from "../_generated/server";
+import { loadLatencyByHour, loadUptimeBarsByMonitor } from "./history";
+import { listActiveIncidents } from "./lib/activeIncidents";
+import {
+  isMaintenanceActive,
+  listUnfinishedMaintenances,
+} from "./lib/maintenanceWindows";
+import {
+  affectedMonitorNames,
+  canViewStatusPage,
+  isPublicNotice,
+  isShownOnStatusPage,
+  overallStatusOf,
+  withMaintenanceStatus,
+} from "./lib/visibility";
 
-/** Org-wide incidents (no monitors) are announcements; others need a public monitor. */
-const isPublicIncident = (
-  incident: Doc<"statusIncidents">,
-  publicMonitorIds: Set<Id<"statusMonitors">>
-): boolean =>
-  incident.affectedMonitorIds.length === 0 ||
-  incident.affectedMonitorIds.some((id) => publicMonitorIds.has(id));
+const DAY_MS = 24 * 60 * 60 * 1000;
+const DEFAULT_INCIDENT_HISTORY_DAYS = 14;
+const MAX_INCIDENT_HISTORY_DAYS = 90;
+const UPCOMING_MAINTENANCE_DAYS = 14;
 
-// ============================================
-// PUBLIC QUERIES (no auth required)
-// ============================================
+const findViewableOrganization = async (ctx: QueryCtx, slug: string) => {
+  const organization = await ctx.db
+    .query("organizations")
+    .withIndex("by_slug", (q) => q.eq("slug", slug))
+    .unique();
+  if (organization && (await canViewStatusPage(ctx, organization))) {
+    return organization;
+  }
+  return null;
+};
+
+const listMonitors = (ctx: QueryCtx, organizationId: Id<"organizations">) =>
+  ctx.db
+    .query("statusMonitors")
+    .withIndex("by_organization", (q) => q.eq("organizationId", organizationId))
+    .collect();
+
+const loadUpdatesOldestFirst = async (
+  ctx: QueryCtx,
+  incidentId: Id<"statusIncidents">
+) => {
+  const updates = await ctx.db
+    .query("statusIncidentUpdates")
+    .withIndex("by_incident", (q) => q.eq("incidentId", incidentId))
+    .collect();
+  return updates
+    .sort((a, b) => a.createdAt - b.createdAt)
+    .map((update) => ({
+      createdAt: update.createdAt,
+      message: update.message,
+      status: update.status,
+    }));
+};
 
 export const getPublicStatus = query({
   args: { orgSlug: v.string() },
   handler: async (ctx, args) => {
-    // Find org by slug
-    const org = await ctx.db
-      .query("organizations")
-      .filter((q) => q.eq(q.field("slug"), args.orgSlug))
-      .unique();
-
+    const org = await findViewableOrganization(ctx, args.orgSlug);
     if (!org) {
       return null;
     }
 
-    // Get public monitors
-    const monitors = await ctx.db
-      .query("statusMonitors")
-      .withIndex("by_organization", (q) => q.eq("organizationId", org._id))
-      .collect();
-
-    const publicMonitors = monitors.filter(
-      (m) => m.isPublic && m.status !== "paused"
+    const now = Date.now();
+    const monitors = await listMonitors(ctx, org._id);
+    const publicMonitors = monitors.filter((m) => m.isPublic);
+    const publicMonitorIds = new Set(publicMonitors.map((m) => m._id));
+    const unfinishedMaintenances = await listUnfinishedMaintenances(
+      ctx,
+      org._id,
+      now
+    );
+    const shownMonitors = withMaintenanceStatus(
+      monitors.filter(isShownOnStatusPage),
+      unfinishedMaintenances.filter((m) => isMaintenanceActive(m, now))
     );
 
-    // Get active incidents
-    const allIncidents = await ctx.db
-      .query("statusIncidents")
-      .withIndex("by_org_status", (q) => q.eq("organizationId", org._id))
-      .collect();
-
-    const publicMonitorIds = new Set(
-      monitors.filter((m) => m.isPublic).map((m) => m._id)
+    const activeIncidents = (await listActiveIncidents(ctx, org._id)).filter(
+      (incident) => isPublicNotice(incident, publicMonitorIds)
     );
-    const activeIncidents = allIncidents.filter(
-      (i) => i.status !== "resolved" && isPublicIncident(i, publicMonitorIds)
-    );
-
-    // Get updates for active incidents
     const activeWithUpdates = await Promise.all(
-      activeIncidents.map(async (incident) => {
-        const updates = await ctx.db
-          .query("statusIncidentUpdates")
-          .withIndex("by_incident", (q) => q.eq("incidentId", incident._id))
-          .collect();
-
-        const affectedMonitorNames = publicMonitors
-          .filter((m) => incident.affectedMonitorIds.includes(m._id))
-          .map((m) => m.name);
-
-        return {
-          _id: incident._id,
-          affectedMonitors: affectedMonitorNames,
-          severity: incident.severity,
-          startedAt: incident.startedAt,
-          status: incident.status,
-          title: incident.title,
-          updates: updates
-            .sort((a, b) => b.createdAt - a.createdAt)
-            .map((u) => ({
-              createdAt: u.createdAt,
-              message: u.message,
-              status: u.status,
-            })),
-        };
-      })
+      activeIncidents.map(async (incident) => ({
+        _id: incident._id,
+        affectedMonitors: affectedMonitorNames(incident, shownMonitors),
+        severity: incident.severity,
+        startedAt: incident.startedAt,
+        status: incident.status,
+        title: incident.title,
+        updates: (await loadUpdatesOldestFirst(ctx, incident._id)).reverse(),
+      }))
     );
 
-    // Compute overall status
-    const hasMajorOutage = publicMonitors.some(
-      (m) => m.status === "major_outage"
-    );
-    const hasDegraded = publicMonitors.some((m) => m.status === "degraded");
-    let overallStatus = "operational";
-    if (hasMajorOutage) {
-      overallStatus = "major_outage";
-    } else if (hasDegraded) {
-      overallStatus = "degraded";
-    }
+    const upcomingCutoff = now + UPCOMING_MAINTENANCE_DAYS * DAY_MS;
+    const maintenances = unfinishedMaintenances
+      .filter(
+        (maintenance) =>
+          maintenance.startsAt <= upcomingCutoff &&
+          isPublicNotice(maintenance, publicMonitorIds)
+      )
+      .sort((a, b) => a.startsAt - b.startsAt)
+      .map((maintenance) => ({
+        _id: maintenance._id,
+        affectedMonitors: affectedMonitorNames(maintenance, publicMonitors),
+        endsAt: maintenance.endsAt,
+        isActive: isMaintenanceActive(maintenance, now),
+        message: maintenance.message,
+        startsAt: maintenance.startsAt,
+        title: maintenance.title,
+      }));
 
-    // Fetch recent checks for sparklines (last 24h)
-    const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
-
-    // Group monitors with recent checks
-    const grouped = new Map<
-      string,
-      Array<{
-        _id: string;
-        name: string;
-        status: string;
-        lastResponseTimeMs?: number;
-        recentChecks: Array<{
-          responseTimeMs?: number;
-          checkedAt: number;
-          isUp: boolean;
-        }>;
-      }>
-    >();
-
-    for (const m of publicMonitors) {
-      const recentChecks = await ctx.db
-        .query("statusChecks")
-        .withIndex("by_monitor_time", (q) =>
-          q.eq("monitorId", m._id).gte("checkedAt", oneDayAgo)
-        )
-        .collect();
-
-      const group = m.groupName ?? "Services";
-      const existing = grouped.get(group) ?? [];
-      existing.push({
+    const publicMonitorViews = await Promise.all(
+      shownMonitors.map(async (m) => ({
         _id: m._id,
+        groupName: m.groupName ?? "Services",
         lastResponseTimeMs: m.lastResponseTimeMs,
+        latencyByHour: await loadLatencyByHour(ctx, m._id),
         name: m.name,
-        recentChecks: recentChecks.map((c) => ({
-          checkedAt: c.checkedAt,
-          isUp: c.isUp,
-          responseTimeMs: c.responseTimeMs,
-        })),
         status: m.status,
-      });
-      grouped.set(group, existing);
-    }
-
-    const monitorGroups = [...grouped.entries()]
-      .map(([name, monitors]) => ({ monitors, name }))
-      .sort((a, b) => a.name.localeCompare(b.name));
+      }))
+    );
+    const groupNames = [
+      ...new Set(publicMonitorViews.map((m) => m.groupName)),
+    ].sort((a, b) => a.localeCompare(b));
+    const monitorGroups = groupNames.map((name) => ({
+      monitors: publicMonitorViews.filter((m) => m.groupName === name),
+      name,
+    }));
 
     return {
       activeIncidents: activeWithUpdates,
+      maintenances,
       monitorGroups,
       orgLogo: org.logo,
       orgName: org.name,
-      overallStatus,
+      overallStatus: overallStatusOf(shownMonitors),
     };
   },
 });
@@ -152,18 +142,16 @@ export const getPublicStatus = query({
 export const getPublicIncidentHistory = query({
   args: { days: v.optional(v.number()), orgSlug: v.string() },
   handler: async (ctx, args) => {
-    const org = await ctx.db
-      .query("organizations")
-      .filter((q) => q.eq(q.field("slug"), args.orgSlug))
-      .unique();
-
+    const org = await findViewableOrganization(ctx, args.orgSlug);
     if (!org) {
       return [];
     }
 
-    const daysBack = args.days ?? 14;
-    const cutoff = Date.now() - daysBack * 24 * 60 * 60 * 1000;
-
+    const daysBack = Math.min(
+      args.days ?? DEFAULT_INCIDENT_HISTORY_DAYS,
+      MAX_INCIDENT_HISTORY_DAYS
+    );
+    const cutoff = Date.now() - daysBack * DAY_MS;
     const incidents = await ctx.db
       .query("statusIncidents")
       .withIndex("by_org_created", (q) =>
@@ -171,188 +159,45 @@ export const getPublicIncidentHistory = query({
       )
       .collect();
 
-    const monitors = await ctx.db
-      .query("statusMonitors")
-      .withIndex("by_organization", (q) => q.eq("organizationId", org._id))
-      .collect();
-
+    const monitors = await listMonitors(ctx, org._id);
     const monitorNameMap = new Map(
       monitors.filter((m) => m.isPublic).map((m) => [m._id, m.name])
     );
     const publicMonitorIds = new Set(monitorNameMap.keys());
     const resolved = incidents.filter(
-      (i) => i.status === "resolved" && isPublicIncident(i, publicMonitorIds)
+      (i) => i.status === "resolved" && isPublicNotice(i, publicMonitorIds)
     );
 
     const withUpdates = await Promise.all(
-      resolved.map(async (incident) => {
-        const updates = await ctx.db
-          .query("statusIncidentUpdates")
-          .withIndex("by_incident", (q) => q.eq("incidentId", incident._id))
-          .collect();
-
-        return {
-          _id: incident._id,
-          affectedMonitors: incident.affectedMonitorIds
-            .map((id) => monitorNameMap.get(id))
-            .filter(Boolean),
-          resolvedAt: incident.resolvedAt,
-          severity: incident.severity,
-          startedAt: incident.startedAt,
-          title: incident.title,
-          updates: updates
-            .sort((a, b) => a.createdAt - b.createdAt)
-            .map((u) => ({
-              createdAt: u.createdAt,
-              message: u.message,
-              status: u.status,
-            })),
-        };
-      })
+      resolved.map(async (incident) => ({
+        _id: incident._id,
+        affectedMonitors: incident.affectedMonitorIds
+          .map((id) => monitorNameMap.get(id))
+          .filter(Boolean),
+        resolvedAt: incident.resolvedAt,
+        severity: incident.severity,
+        startedAt: incident.startedAt,
+        title: incident.title,
+        updates: await loadUpdatesOldestFirst(ctx, incident._id),
+      }))
     );
 
     return withUpdates.sort((a, b) => b.startedAt - a.startedAt);
   },
 });
 
-export const getMonitorUptimeHistory = query({
-  args: { monitorId: v.id("statusMonitors"), orgSlug: v.string() },
-  handler: async (ctx, args) => {
-    const org = await ctx.db
-      .query("organizations")
-      .filter((q) => q.eq(q.field("slug"), args.orgSlug))
-      .unique();
-
-    if (!org) {
-      return null;
-    }
-
-    const monitor = await ctx.db.get(args.monitorId);
-    if (!monitor || monitor.organizationId !== org._id || !monitor.isPublic) {
-      return null;
-    }
-
-    // Get 90 days of checks, aggregate by day
-    const ninetyDaysAgo = Date.now() - 90 * 24 * 60 * 60 * 1000;
-    const checks = await ctx.db
-      .query("statusChecks")
-      .withIndex("by_monitor_time", (q) =>
-        q.eq("monitorId", args.monitorId).gte("checkedAt", ninetyDaysAgo)
-      )
-      .collect();
-
-    // Aggregate into daily buckets
-    const dailyBuckets = new Map<
-      string,
-      { total: number; up: number; avgResponseTime: number }
-    >();
-
-    for (const check of checks) {
-      const day = new Date(check.checkedAt).toISOString().split("T")[0];
-      const bucket = dailyBuckets.get(day) ?? {
-        avgResponseTime: 0,
-        total: 0,
-        up: 0,
-      };
-      bucket.total++;
-      if (check.isUp) {
-        bucket.up++;
-      }
-      bucket.avgResponseTime += check.responseTimeMs ?? 0;
-      dailyBuckets.set(day, bucket);
-    }
-
-    const days = [...dailyBuckets.entries()]
-      .map(([date, bucket]) => ({
-        avgResponseTimeMs:
-          bucket.total > 0
-            ? Math.round(bucket.avgResponseTime / bucket.total)
-            : 0,
-        date,
-        totalChecks: bucket.total,
-        uptimePercentage:
-          bucket.total > 0
-            ? Math.round((bucket.up / bucket.total) * 10_000) / 100
-            : 100,
-      }))
-      .sort((a, b) => a.date.localeCompare(b.date));
-
-    return {
-      days,
-      monitorName: monitor.name,
-    };
-  },
-});
-
 export const getPublicUptimeBars = query({
   args: { orgSlug: v.string() },
   handler: async (ctx, args) => {
-    const org = await ctx.db
-      .query("organizations")
-      .filter((q) => q.eq(q.field("slug"), args.orgSlug))
-      .unique();
-
+    const org = await findViewableOrganization(ctx, args.orgSlug);
     if (!org) {
       return null;
     }
 
-    const monitors = await ctx.db
-      .query("statusMonitors")
-      .withIndex("by_organization", (q) => q.eq("organizationId", org._id))
-      .collect();
-
-    const publicMonitors = monitors.filter(
-      (m) => m.isPublic && m.status !== "paused"
+    const monitors = await listMonitors(ctx, org._id);
+    return await loadUptimeBarsByMonitor(
+      ctx,
+      monitors.filter(isShownOnStatusPage)
     );
-
-    const ninetyDaysAgo = Date.now() - 90 * 24 * 60 * 60 * 1000;
-
-    const results = await Promise.all(
-      publicMonitors.map(async (monitor) => {
-        const checks = await ctx.db
-          .query("statusChecks")
-          .withIndex("by_monitor_time", (q) =>
-            q.eq("monitorId", monitor._id).gte("checkedAt", ninetyDaysAgo)
-          )
-          .collect();
-
-        const dailyBuckets = new Map<string, { total: number; up: number }>();
-        for (const check of checks) {
-          const day = new Date(check.checkedAt).toISOString().split("T")[0];
-          const bucket = dailyBuckets.get(day) ?? { total: 0, up: 0 };
-          bucket.total++;
-          if (check.isUp) {
-            bucket.up++;
-          }
-          dailyBuckets.set(day, bucket);
-        }
-
-        const days = [...dailyBuckets.entries()]
-          .map(([date, bucket]) => ({
-            date,
-            uptimePercentage:
-              bucket.total > 0
-                ? Math.round((bucket.up / bucket.total) * 10_000) / 100
-                : 100,
-          }))
-          .sort((a, b) => a.date.localeCompare(b.date));
-
-        // Calculate overall uptime across all checks
-        const totalChecks = checks.length;
-        const upChecks = checks.filter((c) => c.isUp).length;
-        const overallUptime =
-          totalChecks > 0
-            ? Math.round((upChecks / totalChecks) * 10_000) / 100
-            : 100;
-
-        return {
-          days,
-          monitorId: monitor._id,
-          overallUptime,
-        };
-      })
-    );
-
-    return Object.fromEntries(results.map((r) => [r.monitorId, r]));
   },
 });

@@ -1,10 +1,6 @@
 import { defineTable } from "convex/server";
 import { v } from "convex/values";
 
-// ============================================
-// STATUS VALIDATORS
-// ============================================
-
 export const monitorStatus = v.union(
   v.literal("operational"),
   v.literal("degraded"),
@@ -27,9 +23,13 @@ export const incidentStatus = v.union(
   v.literal("resolved")
 );
 
-// ============================================
-// STATUS TABLES
-// ============================================
+const uptimeBucketFields = {
+  bucketStart: v.number(),
+  checks: v.number(),
+  monitorId: v.id("statusMonitors"),
+  responseTimeMsSum: v.number(),
+  upChecks: v.number(),
+};
 
 export const statusTables = {
   statusChecks: defineTable({
@@ -41,9 +41,8 @@ export const statusTables = {
     responseTimeMs: v.optional(v.number()),
     statusCode: v.optional(v.number()),
   })
-    .index("by_monitor", ["monitorId"])
     .index("by_monitor_time", ["monitorId", "checkedAt"])
-    .index("by_org_time", ["organizationId", "checkedAt"]),
+    .index("by_checked_at", ["checkedAt"]),
 
   statusIncidents: defineTable({
     affectedMonitorIds: v.array(v.id("statusMonitors")),
@@ -54,6 +53,7 @@ export const statusTables = {
     severity: incidentSeverity,
     startedAt: v.number(),
     status: incidentStatus,
+    subscribersNotifiedAt: v.optional(v.number()),
     title: v.string(),
     updatedAt: v.number(),
   })
@@ -68,11 +68,24 @@ export const statusTables = {
     organizationId: v.id("organizations"),
     status: incidentStatus,
   }).index("by_incident", ["incidentId"]),
+
+  statusMaintenances: defineTable({
+    affectedMonitorIds: v.array(v.id("statusMonitors")),
+    createdAt: v.number(),
+    endsAt: v.number(),
+    message: v.optional(v.string()),
+    organizationId: v.id("organizations"),
+    startsAt: v.number(),
+    title: v.string(),
+    updatedAt: v.number(),
+  }).index("by_org_ends", ["organizationId", "endsAt"]),
+
   statusMonitors: defineTable({
     alertThreshold: v.number(),
     checkIntervalMinutes: v.number(),
     consecutiveFailures: v.number(),
     createdAt: v.number(),
+    degradedResponseTimeMs: v.optional(v.number()),
     groupName: v.optional(v.string()),
     groupOrder: v.optional(v.number()),
     isPublic: v.boolean(),
@@ -100,4 +113,12 @@ export const statusTables = {
     .index("by_email_org", ["email", "organizationId"])
     .index("by_unsubscribe_token", ["unsubscribeToken"])
     .index("by_confirmation_token", ["confirmationToken"]),
+
+  statusUptimeDays: defineTable(uptimeBucketFields)
+    .index("by_monitor_start", ["monitorId", "bucketStart"])
+    .index("by_start", ["bucketStart"]),
+
+  statusUptimeHours: defineTable(uptimeBucketFields)
+    .index("by_monitor_start", ["monitorId", "bucketStart"])
+    .index("by_start", ["bucketStart"]),
 };

@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
-import { describe, expect, test } from "vitest";
-import { api } from "../../_generated/api";
+import { afterEach, describe, expect, test, vi } from "vitest";
+import { api, internal } from "../../_generated/api";
 import { PLAN_LIMITS } from "../../billing/queries";
 import { seedOrganization } from "../../test.fixtures";
 import { setupTest } from "../../test.helpers";
@@ -22,6 +22,10 @@ const setup = async (stripeSubscriptionStatus: string | null = null) => {
   const admin = t.withIdentity({ sessionId: ADMIN._id, subject: ADMIN._id });
   return { admin, organizationId, t };
 };
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe("status monitors", () => {
   test.each([
@@ -110,5 +114,85 @@ describe("status monitors", () => {
       organizationId,
     });
     expect(status).toEqual({ monitorCount: 0, status: "no_monitors" });
+  });
+
+  test("an outage incident still resolves when a down monitor was paused and resumed", async () => {
+    vi.useFakeTimers();
+    const { admin, organizationId, t } = await setup();
+    const monitorId = await admin.mutation(api.status.monitors.createMonitor, {
+      name: "API",
+      organizationId,
+      url: "https://api.example.com/",
+    });
+    for (const _failure of [1, 2, 3]) {
+      await t.mutation(internal.status.healthCheck.recordCheck, {
+        isUp: false,
+        monitorId,
+      });
+    }
+
+    await admin.mutation(api.status.monitors.setMonitorPaused, {
+      monitorId,
+      paused: true,
+    });
+    await admin.mutation(api.status.monitors.setMonitorPaused, {
+      monitorId,
+      paused: false,
+    });
+    await t.mutation(internal.status.healthCheck.recordCheck, {
+      isUp: true,
+      monitorId,
+    });
+
+    const incidents = await t.run((ctx) =>
+      ctx.db.query("statusIncidents").collect()
+    );
+    expect(incidents).toMatchObject([{ status: "resolved" }]);
+  });
+
+  test("a slow but successful response degrades the monitor without counting a failure", async () => {
+    const { admin, organizationId, t } = await setup();
+    const monitorId = await admin.mutation(api.status.monitors.createMonitor, {
+      name: "API",
+      organizationId,
+      url: "https://api.example.com/",
+    });
+    await admin.mutation(api.status.monitors.updateMonitor, {
+      degradedResponseTimeMs: 1000,
+      monitorId,
+    });
+
+    await t.mutation(internal.status.healthCheck.recordCheck, {
+      isUp: true,
+      monitorId,
+      responseTimeMs: 2500,
+    });
+
+    const monitor = await t.run((ctx) => ctx.db.get(monitorId));
+    expect(monitor).toMatchObject({
+      consecutiveFailures: 0,
+      status: "degraded",
+    });
+  });
+
+  test("a private organization's status stays hidden from the public", async () => {
+    const { admin, organizationId, t } = await setup();
+    await admin.mutation(api.status.monitors.createMonitor, {
+      name: "API",
+      organizationId,
+      url: "https://api.example.com/",
+    });
+    await t.run((ctx) => ctx.db.patch(organizationId, { isPublic: false }));
+
+    const publicStatus = await t.query(
+      api.status.publicQueries.getPublicStatus,
+      { orgSlug: "acme" }
+    );
+    const memberPreview = await admin.query(
+      api.status.publicQueries.getPublicStatus,
+      { orgSlug: "acme" }
+    );
+    expect(publicStatus).toBeNull();
+    expect(memberPreview?.overallStatus).toBe("operational");
   });
 });

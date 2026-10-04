@@ -3,12 +3,18 @@
 import { render } from "@react-email/render";
 import { InvitationEmail } from "@reflet/email/templates/invitation-email";
 import { PlatformAlertEmail } from "@reflet/email/templates/platform-alert-email";
+import { StatusIncidentEmail } from "@reflet/email/templates/status-incident-email";
+import { StatusMaintenanceEmail } from "@reflet/email/templates/status-maintenance-email";
 import { SubscriptionConfirmationEmail } from "@reflet/email/templates/subscription-confirmation-email";
 import { VerificationEmail } from "@reflet/email/templates/verification-email";
 import { WelcomeEmail } from "@reflet/email/templates/welcome-email";
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
-import { internalAction } from "../_generated/server";
+import { type ActionCtx, internalAction } from "../_generated/server";
+import {
+  statusIncidentEmailFields,
+  statusMaintenanceEmailFields,
+} from "../status/incidentNotifications";
 
 const fromEmail =
   process.env.RESEND_FROM_EMAIL ?? "notifications@mail.reflet.app";
@@ -263,6 +269,75 @@ export const sendSubscriptionConfirmationEmail = internalAction({
       subject: `Confirmez votre abonnement à ${args.organizationName}`,
       text,
       to: args.to,
+    });
+    return null;
+  },
+  returns: v.null(),
+});
+
+const sendStatusSubscriberEmail = async (
+  ctx: ActionCtx,
+  email: {
+    component: Parameters<typeof render>[0];
+    subject: string;
+    to: string;
+    unsubscribeUrl: string;
+  }
+): Promise<void> => {
+  const isSuppressed = await ctx.runQuery(
+    internal.email.suppression.isEmailSuppressed,
+    { email: email.to }
+  );
+  if (isSuppressed) {
+    return;
+  }
+
+  await ctx.runMutation(internal.email.send.sendEmail, {
+    from: defaultFrom,
+    headers: [
+      { name: "List-Unsubscribe", value: email.unsubscribeUrl },
+      { name: "List-Unsubscribe-Post", value: "List-Unsubscribe=One-Click" },
+    ],
+    html: await render(email.component),
+    replyTo: SUPPORT_EMAIL,
+    subject: email.subject,
+    text: await render(email.component, { plainText: true }),
+    to: email.to,
+  });
+};
+
+export const sendStatusIncidentEmail = internalAction({
+  args: {
+    ...statusIncidentEmailFields,
+    to: v.string(),
+    unsubscribeUrl: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { to, ...props } = args;
+    await sendStatusSubscriberEmail(ctx, {
+      component: StatusIncidentEmail(props),
+      subject: `${args.organizationName} - ${args.title}`,
+      to,
+      unsubscribeUrl: args.unsubscribeUrl,
+    });
+    return null;
+  },
+  returns: v.null(),
+});
+
+export const sendStatusMaintenanceEmail = internalAction({
+  args: {
+    ...statusMaintenanceEmailFields,
+    to: v.string(),
+    unsubscribeUrl: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { to, ...props } = args;
+    await sendStatusSubscriberEmail(ctx, {
+      component: StatusMaintenanceEmail(props),
+      subject: `${args.organizationName} - Maintenance planifiée : ${args.title}`,
+      to,
+      unsubscribeUrl: args.unsubscribeUrl,
     });
     return null;
   },

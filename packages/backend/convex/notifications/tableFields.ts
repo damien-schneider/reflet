@@ -29,6 +29,7 @@ export const notificationTables = {
 
   userNotificationPreferences: defineTable({
     createdAt: v.number(),
+    notifyOnIncident: v.optional(v.boolean()),
     notifyOnInvitation: v.boolean(),
     notifyOnNewComment: v.boolean(),
     notifyOnNewSupportMessage: v.boolean(),

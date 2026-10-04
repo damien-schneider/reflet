@@ -70,7 +70,7 @@ async function sendEmailToSubscriber(
     return false;
   }
 
-  const unsubscribeUrl = `${params.siteUrl}/changelog/unsubscribe?token=${subscriber.unsubscribeToken}`;
+  const unsubscribeUrl = `${params.siteUrl}/subscriptions/unsubscribe?list=changelog&token=${subscriber.unsubscribeToken}`;
 
   await ctx.runAction(internal.email.renderer.sendChangelogNotificationEmail, {
     organizationName: params.organizationName,
