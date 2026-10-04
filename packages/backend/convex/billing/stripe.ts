@@ -1,6 +1,7 @@
 import { StripeSubscriptions } from "@convex-dev/stripe";
 import Stripe from "stripe";
 import { components } from "../_generated/api";
+import { cancellationFromStripeSubscription } from "./cancellations";
 
 /**
  * Stripe client for managing subscriptions and billing
@@ -105,11 +106,16 @@ export async function retargetTrialEnd(args: {
   return { status: subscription.status, subscriptionId: subscription.id };
 }
 
-/** Every Stripe subscription of the customer tagged with this org, shaped like the component's webhook mirror. */
+export interface StripeSubscriptionSnapshot {
+  cancellation: ReturnType<typeof cancellationFromStripeSubscription>;
+  mirrored: MirroredSubscription;
+}
+
+/** Every Stripe subscription of the customer tagged with this org: the component's webhook mirror plus its cancellation, if any. */
 export async function listOrgSubscriptionsFromStripe(args: {
   customerId: string;
   orgId: string;
-}): Promise<MirroredSubscription[]> {
+}): Promise<StripeSubscriptionSnapshot[]> {
   const stripe = new Stripe(stripeClient.apiKey);
   const subscriptions = await stripe.subscriptions
     .list({ customer: args.customerId, status: "all" })
@@ -119,15 +125,18 @@ export async function listOrgSubscriptionsFromStripe(args: {
     .map((subscription) => {
       const item = subscription.items.data[0];
       return {
-        cancelAt: subscription.cancel_at ?? undefined,
-        cancelAtPeriodEnd: subscription.cancel_at_period_end,
-        currentPeriodEnd: item?.current_period_end ?? 0,
-        metadata: subscription.metadata,
-        priceId: item?.price.id,
-        quantity: item?.quantity ?? 1,
-        status: subscription.status,
-        stripeCustomerId: args.customerId,
-        stripeSubscriptionId: subscription.id,
+        cancellation: cancellationFromStripeSubscription(subscription),
+        mirrored: {
+          cancelAt: subscription.cancel_at ?? undefined,
+          cancelAtPeriodEnd: subscription.cancel_at_period_end,
+          currentPeriodEnd: item?.current_period_end ?? 0,
+          metadata: subscription.metadata,
+          priceId: item?.price.id,
+          quantity: item?.quantity ?? 1,
+          status: subscription.status,
+          stripeCustomerId: args.customerId,
+          stripeSubscriptionId: subscription.id,
+        },
       };
     });
 }
@@ -138,4 +147,37 @@ export async function cancelSubscriptionNow(
   const stripe = new Stripe(stripeClient.apiKey);
   const subscription = await stripe.subscriptions.cancel(subscriptionId);
   return { status: subscription.status };
+}
+
+const FULL_DISCOUNT_PERCENT = 100;
+
+/** Also drops a pending cancellation: the subscription renews, free, then bills again. */
+export async function grantFreeMonths(args: {
+  months: number;
+  subscriptionId: string;
+}): Promise<{ cancelAtPeriodEnd: boolean; status: string }> {
+  const stripe = new Stripe(stripeClient.apiKey);
+  const coupon = await stripe.coupons.create(
+    args.months === 1
+      ? {
+          duration: "once",
+          name: "1 free month",
+          percent_off: FULL_DISCOUNT_PERCENT,
+        }
+      : {
+          duration: "repeating",
+          duration_in_months: args.months,
+          name: `${args.months} free months`,
+          percent_off: FULL_DISCOUNT_PERCENT,
+        }
+  );
+  // ponytail: replaces any promo code already on the subscription; re-add it in Stripe if one mattered
+  const subscription = await stripe.subscriptions.update(args.subscriptionId, {
+    cancel_at_period_end: false,
+    discounts: [{ coupon: coupon.id }],
+  });
+  return {
+    cancelAtPeriodEnd: subscription.cancel_at_period_end,
+    status: subscription.status,
+  };
 }

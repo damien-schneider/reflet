@@ -41,7 +41,40 @@ test("an org owner cannot grant, sync or cancel billing through the platform adm
   await expect(
     owner.action(billing.cancelSubscription, { organizationId })
   ).rejects.toThrow("Not authorized");
+  await expect(
+    owner.action(billing.grantFreeMonths, { months: 1, organizationId })
+  ).rejects.toThrow("Not authorized");
 });
+
+test.each([0, 1.5, 13])(
+  "%d free months are refused before reaching Stripe",
+  async (months) => {
+    const { organizationId, platformAdmin } = await setup("active");
+
+    await expect(
+      platformAdmin.action(billing.grantFreeMonths, { months, organizationId })
+    ).rejects.toMatchObject({ data: { code: "INVALID_MONTHS" } });
+  }
+);
+
+test.each([
+  [null, "NO_SUBSCRIPTION"],
+  ["canceled", "NO_SUBSCRIPTION"],
+  ["trialing", "TRIALING"],
+  ["active", "NOT_MONTHLY"],
+])(
+  "free months on a %s subscription are refused with %s",
+  async (status, code) => {
+    const { organizationId, platformAdmin } = await setup(status);
+
+    await expect(
+      platformAdmin.action(billing.grantFreeMonths, {
+        months: 2,
+        organizationId,
+      })
+    ).rejects.toMatchObject({ data: { code } });
+  }
+);
 
 test.each([0, 2.5, 366])(
   "a %d-day trial is refused before reaching Stripe",

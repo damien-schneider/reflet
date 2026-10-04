@@ -2,6 +2,19 @@ import { defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export const billingTables = {
+  subscriptionCancellations: defineTable({
+    comment: v.optional(v.string()),
+    endedAt: v.optional(v.number()),
+    endsAt: v.optional(v.number()),
+    feedback: v.optional(v.string()),
+    organizationId: v.id("organizations"),
+    reason: v.optional(v.string()),
+    requestedAt: v.number(),
+    resumedAt: v.optional(v.number()),
+    stripeSubscriptionId: v.string(),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_stripe_subscription", ["stripeSubscriptionId"]),
   subscriptions: defineTable({
     cancelAtPeriodEnd: v.boolean(),
     createdAt: v.number(),

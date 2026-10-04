@@ -32,6 +32,7 @@ import type * as auth_email_rate_limit from "../auth/email_rate_limit.js";
 import type * as auth_helpers from "../auth/helpers.js";
 import type * as auth_queries from "../auth/queries.js";
 import type * as billing_actions from "../billing/actions.js";
+import type * as billing_cancellations from "../billing/cancellations.js";
 import type * as billing_internal from "../billing/internal.js";
 import type * as billing_org_subscription from "../billing/org_subscription.js";
 import type * as billing_queries from "../billing/queries.js";
@@ -324,6 +325,7 @@ declare const fullApi: ApiFromModules<{
   "auth/helpers": typeof auth_helpers;
   "auth/queries": typeof auth_queries;
   "billing/actions": typeof billing_actions;
+  "billing/cancellations": typeof billing_cancellations;
   "billing/internal": typeof billing_internal;
   "billing/org_subscription": typeof billing_org_subscription;
   "billing/queries": typeof billing_queries;

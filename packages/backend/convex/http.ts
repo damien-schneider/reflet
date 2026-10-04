@@ -4,6 +4,7 @@ import type Stripe from "stripe";
 import { components, internal } from "./_generated/api";
 import { type ActionCtx, httpAction } from "./_generated/server";
 import { authComponent, createAuth } from "./auth/auth";
+import { cancellationFromStripeSubscription } from "./billing/cancellations";
 import { generateRssFeed } from "./changelog/rss";
 import { resend } from "./email/send";
 import { registerAdminAgentRoutes } from "./http/admin_agent";
@@ -31,10 +32,17 @@ const syncSubscribedOrg = async (
   if (!organizationId) {
     return;
   }
+  const cancellation = cancellationFromStripeSubscription(event.data.object);
   try {
     await ctx.runMutation(internal.billing.internal.syncOrgSubscription, {
       organizationId,
     });
+    if (cancellation) {
+      await ctx.runMutation(
+        internal.billing.cancellations.recordSubscriptionCancellation,
+        { ...cancellation, organizationId }
+      );
+    }
   } catch (error) {
     // A 500 here makes Stripe retry, then disable the endpoint for all billing events.
     console.error("[Stripe webhook] org subscription sync failed", {

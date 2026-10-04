@@ -64,6 +64,39 @@ test("customers are the orgs that reached Stripe, with their owner and live stat
   });
 });
 
+test("a customer's latest cancellation travels with its Stripe reason", async () => {
+  const { payingOrgId, platformAdmin, t } = await setup();
+  await t.run(async (ctx) => {
+    await ctx.db.insert("subscriptionCancellations", {
+      organizationId: payingOrgId,
+      reason: "cancellation_requested",
+      requestedAt: 1,
+      resumedAt: 2,
+      stripeSubscriptionId: "sub_test",
+    });
+    await ctx.db.insert("subscriptionCancellations", {
+      comment: "Switching to Canny",
+      feedback: "switched_service",
+      organizationId: payingOrgId,
+      reason: "cancellation_requested",
+      requestedAt: 3,
+      stripeSubscriptionId: "sub_test",
+    });
+  });
+
+  const [customer] = await platformAdmin.query(
+    api.organizations.super_admin_customers.listCustomers,
+    {}
+  );
+
+  expect(customer?.latestCancellation).toEqual({
+    comment: "Switching to Canny",
+    feedback: "switched_service",
+    reason: "cancellation_requested",
+    requestedAt: 3,
+  });
+});
+
 test("customer health counts only the last day of triage failures and API errors", async () => {
   const { payingOrgId, platformAdmin, t } = await setup();
   const now = Date.now();

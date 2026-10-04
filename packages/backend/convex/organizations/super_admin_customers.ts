@@ -5,6 +5,7 @@ import type { Doc } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
+import { latestCancellationOf } from "../billing/cancellations";
 import {
   getOrgSubscription,
   type OrgSubscription,
@@ -191,6 +192,29 @@ export const usageOf = async (
   };
 };
 
+const cancellationValidator = v.object({
+  comment: v.optional(v.string()),
+  endedAt: v.optional(v.number()),
+  endsAt: v.optional(v.number()),
+  feedback: v.optional(v.string()),
+  reason: v.optional(v.string()),
+  requestedAt: v.number(),
+  resumedAt: v.optional(v.number()),
+});
+
+const cancellationSummaryOf = (
+  cancellation: Doc<"subscriptionCancellations"> | null
+): Infer<typeof cancellationValidator> | null =>
+  cancellation && {
+    comment: cancellation.comment,
+    endedAt: cancellation.endedAt,
+    endsAt: cancellation.endsAt,
+    feedback: cancellation.feedback,
+    reason: cancellation.reason,
+    requestedAt: cancellation.requestedAt,
+    resumedAt: cancellation.resumedAt,
+  };
+
 const lastPaidInvoiceOf = async (
   ctx: QueryCtx,
   org: Doc<"organizations">,
@@ -234,17 +258,20 @@ export const listCustomers = query({
 
     return await Promise.all(
       billedOrgs.map(async (org) => {
-        const [subscription, owner, usage] = await Promise.all([
-          getOrgSubscription(ctx, org._id),
-          ownerOf(ctx, org),
-          usageOf(ctx, org),
-        ]);
+        const [subscription, owner, usage, latestCancellation] =
+          await Promise.all([
+            getOrgSubscription(ctx, org._id),
+            ownerOf(ctx, org),
+            usageOf(ctx, org),
+            latestCancellationOf(ctx, org._id),
+          ]);
         const lastPaidInvoice = await lastPaidInvoiceOf(ctx, org, subscription);
         return {
           _id: org._id,
           createdAt: org.createdAt,
           customDomain: org.customDomain,
           isPublic: org.isPublic,
+          latestCancellation: cancellationSummaryOf(latestCancellation),
           name: org.name,
           owner,
           slug: org.slug,
@@ -271,6 +298,7 @@ export const listCustomers = query({
       createdAt: v.number(),
       customDomain: v.optional(v.string()),
       isPublic: v.boolean(),
+      latestCancellation: v.union(cancellationValidator, v.null()),
       name: v.string(),
       owner: v.union(
         v.object({ email: v.string(), name: v.string() }),

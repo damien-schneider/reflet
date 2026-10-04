@@ -7,6 +7,7 @@ import { getOrgSubscription, planTierFor } from "../billing/org_subscription";
 import {
   cancelSubscriptionNow,
   createProTrialSubscription,
+  grantFreeMonths as grantFreeMonthsInStripe,
   listOrgSubscriptionsFromStripe,
   retargetTrialEnd,
   STRIPE_PRICES,
@@ -17,6 +18,7 @@ import { subscriptionTier } from "../shared/validators";
 import { ownerOf } from "./super_admin_customers";
 
 const MAX_TRIAL_DAYS = 365;
+const MAX_FREE_MONTHS = 12;
 const ENDED_STATUSES: Record<string, true> = {
   canceled: true,
   incomplete_expired: true,
@@ -183,11 +185,17 @@ export const syncFromStripe = action({
       throw noSubscription();
     }
 
-    for (const subscription of subscriptions) {
+    for (const { cancellation, mirrored } of subscriptions) {
       await ctx.runMutation(
         components.stripe.private.handleSubscriptionUpdated,
-        subscription
+        mirrored
       );
+      if (cancellation) {
+        await ctx.runMutation(
+          internal.billing.cancellations.recordSubscriptionCancellation,
+          { ...cancellation, organizationId }
+        );
+      }
     }
     await ctx.runMutation(internal.billing.internal.syncOrgSubscription, {
       organizationId,
@@ -214,4 +222,47 @@ export const cancelSubscription = action({
     );
   },
   returns: v.object({ status: v.string() }),
+});
+
+export const grantFreeMonths = action({
+  args: { months: v.number(), organizationId: v.id("organizations") },
+  handler: async (
+    ctx,
+    { months, organizationId }
+  ): Promise<{ cancelAtPeriodEnd: boolean; status: string }> => {
+    await assertSuperAdmin(ctx);
+
+    if (!Number.isInteger(months) || months < 1 || months > MAX_FREE_MONTHS) {
+      throw new ConvexError({
+        code: "INVALID_MONTHS",
+        message: `months must be a whole number between 1 and ${MAX_FREE_MONTHS}`,
+      });
+    }
+
+    const subscription = await getOrgSubscription(ctx, organizationId);
+    if (!subscription || ENDED_STATUSES[subscription.status]) {
+      throw noSubscription();
+    }
+    if (subscription.status === "trialing") {
+      throw new ConvexError({
+        code: "TRIALING",
+        message: "This organization is on a trial — extend the trial instead.",
+      });
+    }
+    if (subscription.priceId !== STRIPE_PRICES.proMonthly) {
+      throw new ConvexError({
+        code: "NOT_MONTHLY",
+        message:
+          "Free months only apply to monthly subscriptions: a 100% coupon on a yearly price would free the whole year.",
+      });
+    }
+
+    return await relayingStripeFailure(() =>
+      grantFreeMonthsInStripe({
+        months,
+        subscriptionId: subscription.stripeSubscriptionId,
+      })
+    );
+  },
+  returns: v.object({ cancelAtPeriodEnd: v.boolean(), status: v.string() }),
 });
