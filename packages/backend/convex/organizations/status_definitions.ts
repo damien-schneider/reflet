@@ -39,5 +39,30 @@ export const DEFAULT_STATUSES = (
   semanticStatus,
 }));
 
+const LIFECYCLE_RANK: Record<FeedbackStatusValue, number> = {
+  closed: 5,
+  completed: 4,
+  in_progress: 3,
+  open: 0,
+  planned: 2,
+  under_review: 1,
+};
+
+const UNCONFIGURED_COLUMN_RANK = Object.keys(LIFECYCLE_RANK).length;
+
+const lifecycleRankOf = (column: { semanticStatus?: FeedbackStatusValue }) =>
+  column.semanticStatus
+    ? LIFECYCLE_RANK[column.semanticStatus]
+    : UNCONFIGURED_COLUMN_RANK;
+
+export const sortColumnsByLifecycle = <
+  Column extends { order: number; semanticStatus?: FeedbackStatusValue },
+>(
+  columns: Column[]
+) =>
+  columns.sort(
+    (a, b) => lifecycleRankOf(a) - lifecycleRankOf(b) || a.order - b.order
+  );
+
 export const statusGroup = (status: FeedbackStatusValue) =>
   STATUS_DEFINITIONS[status].group;

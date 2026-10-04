@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "../_generated/server";
+import { sortColumnsByLifecycle } from "../organizations/status_definitions";
 
 // ============================================
 // ORGANIZATION QUERIES
@@ -94,7 +95,7 @@ export const getRoadmap = internalQuery({
 
     return {
       milestones: roadmapItems,
-      statuses: statuses.map((s) => ({
+      statuses: sortColumnsByLifecycle(statuses).map((s) => ({
         color: s.color,
         icon: s.icon,
         id: s._id,

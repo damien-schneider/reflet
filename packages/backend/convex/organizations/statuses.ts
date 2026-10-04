@@ -7,7 +7,7 @@ import {
   requireOrgMember,
 } from "../shared/access";
 
-import { DEFAULT_STATUSES } from "./status_definitions";
+import { DEFAULT_STATUSES, sortColumnsByLifecycle } from "./status_definitions";
 
 export const list = query({
   args: { organizationId: v.id("organizations") },
@@ -27,7 +27,7 @@ export const list = query({
       )
       .collect();
 
-    return statuses.sort((a, b) => a.order - b.order);
+    return sortColumnsByLifecycle(statuses);
   },
 });
 
@@ -111,7 +111,7 @@ export const ensureDefaults = mutation({
       .collect();
 
     if (existingStatuses.length > 0) {
-      return existingStatuses.sort((a, b) => a.order - b.order);
+      return sortColumnsByLifecycle(existingStatuses);
     }
 
     const now = Date.now();

@@ -24,6 +24,7 @@ import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation } from "convex/react";
+import { ConvexError } from "convex/values";
 import {
   domMax,
   LayoutGroup,
@@ -115,6 +116,13 @@ function useRoadmapMove({
       return;
     }
 
+    if (droppedOnColumn && !droppedOnColumn.semanticStatus) {
+      toast.error(
+        `Set a lifecycle meaning on “${droppedOnColumn.name}” before moving feedback into it.`
+      );
+      return;
+    }
+
     setOptimisticUpdates((prev) =>
       new Map(prev).set(feedbackId, { feedbackId, newStatusId: finalStatusId })
     );
@@ -124,9 +132,14 @@ function useRoadmapMove({
         feedbackId,
         organizationStatusId: finalStatusId,
       });
-    } catch {
+    } catch (error) {
+      const serverReason =
+        error instanceof ConvexError && typeof error.data === "string"
+          ? error.data
+          : undefined;
       toast.error(
-        `Couldn’t move “${currentItem?.title ?? "this feedback"}”. It’s back where it was.`
+        `Couldn’t move “${currentItem?.title ?? "this feedback"}”. It’s back where it was.`,
+        { description: serverReason }
       );
     }
     setOptimisticUpdates((prev) => {

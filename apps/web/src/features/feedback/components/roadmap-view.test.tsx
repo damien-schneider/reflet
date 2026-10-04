@@ -146,16 +146,19 @@ const mockStatuses = [
     _id: "status-1" as Id<"organizationStatuses">,
     color: "#6b7280",
     name: "Backlog",
+    semanticStatus: "open" as const,
   },
   {
     _id: "status-2" as Id<"organizationStatuses">,
     color: "#3b82f6",
     name: "In Progress",
+    semanticStatus: "in_progress" as const,
   },
   {
     _id: "status-3" as Id<"organizationStatuses">,
     color: "#22c55e",
     name: "Done",
+    semanticStatus: "completed" as const,
   },
 ];
 
@@ -601,6 +604,34 @@ describe("RoadmapView", () => {
           organizationStatusId: "status-2",
         });
       });
+    });
+
+    it("refuses a drop on a column without a lifecycle meaning", async () => {
+      render(
+        <RoadmapView
+          feedback={mockFeedback}
+          isAdmin={true}
+          onFeedbackClick={vi.fn()}
+          organizationId={"org-1" as never}
+          statuses={[
+            ...mockStatuses,
+            {
+              _id: "status-legacy" as Id<"organizationStatuses">,
+              color: "#6b7280",
+              name: "Legacy",
+            },
+          ]}
+        />
+      );
+
+      await act(async () => {
+        dndHandlers.onDragEnd?.({
+          active: { id: "feedback-1" },
+          over: { id: "status-legacy" },
+        });
+      });
+
+      expect(mockUpdateFeedbackStatus).not.toHaveBeenCalled();
     });
 
     it("applies optimistic update moving item to new column", async () => {

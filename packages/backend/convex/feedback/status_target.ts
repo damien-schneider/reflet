@@ -1,3 +1,4 @@
+import { ConvexError } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { STATUS_DEFINITIONS } from "../organizations/status_definitions";
@@ -43,15 +44,15 @@ export async function resolveStatusTarget(
   change: StatusChange
 ) {
   if (change.organizationStatusId === null) {
-    throw new Error("Choose a status instead of clearing it");
+    throw new ConvexError("Choose a status instead of clearing it");
   }
   if (change.organizationStatusId !== undefined) {
     const column = await ctx.db.get(change.organizationStatusId);
     if (!column || column.organizationId !== feedback.organizationId) {
-      throw new Error("Invalid status for this organization");
+      throw new ConvexError("Invalid status for this organization");
     }
     if (!column.semanticStatus) {
-      throw new Error(
+      throw new ConvexError(
         "This column needs a lifecycle meaning before feedback can move into it"
       );
     }
@@ -59,7 +60,7 @@ export async function resolveStatusTarget(
       change.status !== undefined &&
       change.status !== column.semanticStatus
     ) {
-      throw new Error("Status and column disagree");
+      throw new ConvexError("Status and column disagree");
     }
     return { organizationStatusId: column._id, status: column.semanticStatus };
   }

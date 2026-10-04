@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "../_generated/server";
 import { changeFeedbackStatus } from "../feedback/status_change";
+import { sortColumnsByLifecycle } from "../organizations/status_definitions";
 import { API_ACTOR_ID } from "../shared/actors";
 import { feedbackStatus } from "../shared/validators";
 
@@ -16,7 +17,7 @@ export const listStatuses = internalQuery({
       )
       .collect();
 
-    return statuses.map((s) => ({
+    return sortColumnsByLifecycle(statuses).map((s) => ({
       color: s.color,
       icon: s.icon,
       id: s._id,

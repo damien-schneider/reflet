@@ -67,6 +67,47 @@ describe("admin_api_statuses", () => {
     expect(statuses[0].name).toBe("Ours");
   });
 
+  test("listStatuses follows the lifecycle even when Backlog was created last", async () => {
+    const t = convexTest(schema, modules);
+    const orgId = await createOrg(t);
+
+    await t.run(async (ctx) =>
+      ctx.db.insert("organizationStatuses", {
+        color: "gray",
+        createdAt: Date.now(),
+        name: "Legacy",
+        order: 0,
+        organizationId: orgId,
+        updatedAt: Date.now(),
+      })
+    );
+    for (const [name, semanticStatus] of [
+      ["Done", "completed"],
+      ["Planned", "planned"],
+      ["Building", "in_progress"],
+      ["Backlog", "open"],
+    ] as const) {
+      await t.mutation(internal.admin_api.statuses.createStatus, {
+        color: "gray",
+        name,
+        organizationId: orgId,
+        semanticStatus,
+      });
+    }
+
+    const statuses = await t.query(internal.admin_api.statuses.listStatuses, {
+      organizationId: orgId,
+    });
+
+    expect(statuses.map((status) => status.name)).toEqual([
+      "Backlog",
+      "Planned",
+      "Building",
+      "Done",
+      "Legacy",
+    ]);
+  });
+
   test("updateStatus should update fields", async () => {
     const t = convexTest(schema, modules);
     const orgId = await createOrg(t);

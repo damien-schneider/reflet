@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { internalQuery } from "../_generated/server";
+import { sortColumnsByLifecycle } from "../organizations/status_definitions";
 import { categoryVisibleToViewer } from "./categories/visibility";
 import { isFeedbackPublishable } from "./property_values";
 import { isFeedbackPubliclyVisible } from "./public_projection";
@@ -26,7 +27,7 @@ export const getOrganizationConfig = internalQuery({
       )
       .collect();
 
-    statuses.sort((a, b) => a.order - b.order);
+    sortColumnsByLifecycle(statuses);
 
     const tags = await ctx.db
       .query("tags")
@@ -165,7 +166,7 @@ export const getRoadmapByOrganization = internalQuery({
       .withIndex("by_org_order", (q) => q.eq("organizationId", organizationId))
       .collect();
 
-    const sortedStatuses = orgStatuses.sort((a, b) => a.order - b.order);
+    const sortedStatuses = sortColumnsByLifecycle(orgStatuses);
 
     const feedbackItems = await ctx.db
       .query("feedback")
