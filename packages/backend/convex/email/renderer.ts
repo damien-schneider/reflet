@@ -2,6 +2,7 @@
 
 import { render } from "@react-email/render";
 import { InvitationEmail } from "@reflet/email/templates/invitation-email";
+import { PlatformAlertEmail } from "@reflet/email/templates/platform-alert-email";
 import { SubscriptionConfirmationEmail } from "@reflet/email/templates/subscription-confirmation-email";
 import { VerificationEmail } from "@reflet/email/templates/verification-email";
 import { WelcomeEmail } from "@reflet/email/templates/welcome-email";
@@ -359,6 +360,30 @@ export const sendFeedbackShippedEmail = internalAction({
       subject: `${args.organizationName} - Your feedback has shipped!`,
       text,
       to: args.to,
+    });
+  },
+});
+
+export const sendPlatformAlertEmail = internalAction({
+  args: {
+    details: v.array(v.string()),
+    subject: v.string(),
+    title: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const component = PlatformAlertEmail({
+      details: args.details,
+      title: args.title,
+    });
+    const html = await render(component);
+    const text = await render(component, { plainText: true });
+
+    await ctx.runMutation(internal.email.send.sendEmail, {
+      from: defaultFrom,
+      html,
+      subject: `[Reflet] ${args.subject}`,
+      text,
+      to: SUPPORT_EMAIL,
     });
   },
 });

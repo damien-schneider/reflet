@@ -1,8 +1,6 @@
-import { convexTest } from "convex-test";
 import { describe, expect, test, vi } from "vitest";
 import { internal } from "../../_generated/api";
-import schema from "../../schema";
-import { modules } from "../../test.helpers";
+import { setupTest } from "../../test.helpers";
 import { evaluateFeedbackTriage } from "../triage_evaluation";
 
 vi.mock("../triage_evaluation", () => ({
@@ -23,7 +21,7 @@ vi.mock("../triage_evaluation", () => ({
 
 describe("feedback triage action", () => {
   test("finishes after JEV scores even when no tag matches", async () => {
-    const t = convexTest(schema, modules);
+    const t = setupTest();
     const feedbackId = await t.run(async (ctx) => {
       const organizationId = await ctx.db.insert("organizations", {
         createdAt: Date.now(),
@@ -77,7 +75,7 @@ describe("feedback triage action", () => {
 });
 
 test("an incomplete triage result fails the run and applies the board policy", async () => {
-  const t = convexTest(schema, modules);
+  const t = setupTest();
   const feedbackId = await t.run(async (ctx) => {
     const organizationId = await ctx.db.insert("organizations", {
       createdAt: Date.now(),

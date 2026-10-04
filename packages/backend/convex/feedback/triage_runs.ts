@@ -11,6 +11,7 @@ import {
   NEEDS_CLARIFICATION_THRESHOLD,
   publicationState,
 } from "./property_values";
+import { alertPlatformOnTriageFailure } from "./triage_alerts";
 import {
   triageAnswer,
   triageInput,
@@ -90,6 +91,7 @@ export const fail = internalMutation({
       publicationDecision,
       status: "failed",
     });
+    await alertPlatformOnTriageFailure(ctx, run, args.error);
     if (target?.edited) {
       await retriageEditedSubmission(ctx, run);
     }
