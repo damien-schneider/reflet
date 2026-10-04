@@ -1,0 +1,22 @@
+{
+  "name": "@reflet/survey-core",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Survey flow engine shared by the Reflet backend, dashboard, widget and SDK",
+  "sideEffects": false,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "test:unit": "vitest run"
+  },
+  "devDependencies": {
+    "@reflet/config": "workspace:*",
+    "jsdom": "^30.1.0",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

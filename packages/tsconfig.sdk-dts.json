@@ -1,0 +1,13 @@
+{
+  "//": "reflet-sdk type bundling only (tsdown dts.tsconfig). tsgo emits declarations only under this file's folder, and @reflet/survey-core is bundled into the SDK, so it lives above both packages.",
+  "extends": "./sdk/tsconfig.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "paths": {
+      "@reflet/survey-core": ["./survey-core/src/index.ts"],
+      "@reflet/survey-core/client": ["./survey-core/src/client.ts"]
+    }
+  },
+  "include": ["sdk/src"],
+  "exclude": ["sdk/src/**/__tests__"]
+}

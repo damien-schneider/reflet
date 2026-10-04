@@ -5,5 +5,6 @@ export const REFLET_Z_INDEX = {
   dialogContent: 2_147_482_991,
   dialogOverlay: 2_147_482_990,
   elementPicker: 2_147_483_647,
+  surveyLayer: 2_147_482_995,
   widgetRoot: 2_147_483_000,
 } as const;

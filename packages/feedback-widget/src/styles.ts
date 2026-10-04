@@ -1,7 +1,7 @@
 import { adjustBrightness, createWidgetColors } from "./color-utils";
 import { getFormStyles } from "./styles-form";
 import { getLayoutStyles } from "./styles-layout";
-import { getSurveyStyles } from "./styles-survey";
+import { getSurveyStyles } from "./survey/styles";
 
 export function getWidgetStyles(
   primaryColor: string,
@@ -22,7 +22,8 @@ export function getWidgetStyles(
       padding: 0;
     }
 
-    .reflet-feedback-container {
+    .reflet-feedback-container,
+    .reflet-survey {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       font-size: 14px;
       line-height: 1.5;
@@ -337,7 +338,8 @@ export function getWidgetStyles(
     @media (pointer: coarse), (max-width: 640px) {
       .reflet-form-input,
       .reflet-form-textarea,
-      .reflet-survey-textarea {
+      .reflet-survey-textarea,
+      .reflet-survey-other-input {
         font-size: 16px;
       }
     }
@@ -349,8 +351,7 @@ export function getWidgetStyles(
         transition-duration: 1ms !important;
       }
 
-      .reflet-spinner,
-      .reflet-btn-spinner {
+      .reflet-spinner {
         animation: none;
       }
 

@@ -51,6 +51,12 @@ const NEXT_STEPS = [
     href: "/docs/sdk/react-hooks",
     title: "React hooks",
   },
+  {
+    description:
+      "In-app NPS, CSAT and custom surveys, triggers and custom UIs.",
+    href: "/docs/sdk/surveys",
+    title: "Surveys",
+  },
 ] as const;
 
 export default function SdkOverviewPage() {
@@ -69,6 +75,7 @@ export default function SdkOverviewPage() {
         <DocsList>
           <li>List, create and vote on feedback</li>
           <li>Manage comments and subscriptions</li>
+          <li>Show in-app surveys with branching, targeting and custom UIs</li>
           <li>Fetch roadmap lanes and changelog entries</li>
           <li>React hooks with caching and optimistic updates</li>
           <li>Server-side user signing for secure SSO</li>

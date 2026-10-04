@@ -20,6 +20,7 @@ export const STATUS_LABELS = {
 } as const satisfies Record<SurveyStatus, string>;
 
 export const TRIGGER_LABELS = {
+  event: "Custom event",
   exit_intent: "Exit intent",
   feedback_submitted: "After feedback",
   manual: "Manual",
@@ -31,6 +32,10 @@ export const TRIGGER_DESCRIPTIONS: Record<
   TriggerType,
   { description: string; hint: string }
 > = {
+  event: {
+    description: "Appears when your app tracks a named event",
+    hint: "Ask right after a key moment, like finishing checkout.",
+  },
   exit_intent: {
     description: "Appears when a user is about to leave the page",
     hint: "Useful for exit surveys and understanding churn.",
@@ -59,17 +64,9 @@ export const QUESTION_TYPE_LABELS = {
   nps: "NPS (0–10)",
   rating: "Rating scale",
   single_choice: "Single choice",
+  statement: "Statement",
   text: "Free text",
 } as const satisfies Record<QuestionType, string>;
-
-export const QUESTION_TYPE_DESCRIPTIONS: Record<QuestionType, string> = {
-  boolean: "Simple yes or no",
-  multiple_choice: "Pick multiple from a list",
-  nps: "Net Promoter Score, 0 to 10",
-  rating: "Numbered scale with custom range",
-  single_choice: "Pick one from a list",
-  text: "Open-ended written response",
-};
 
 export function getDefaultConfig(
   type: QuestionType,
@@ -97,6 +94,9 @@ export function getDefaultConfig(
   if (type === "text") {
     return { maxLength: 1000, placeholder: "Your answer…" };
   }
+  if (type === "statement") {
+    return { buttonLabel: "Continue" };
+  }
 }
 
 export function getDefaultTitle(type: QuestionType): string {
@@ -106,6 +106,7 @@ export function getDefaultTitle(type: QuestionType): string {
     nps: "How likely are you to recommend us?",
     rating: "How would you rate your experience?",
     single_choice: "Which option best describes you?",
+    statement: "Thanks for helping us improve",
     text: "Tell us more about your experience",
   };
   return defaults[type];

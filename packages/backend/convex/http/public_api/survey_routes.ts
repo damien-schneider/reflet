@@ -1,55 +1,79 @@
-import type { httpRouter } from "convex/server";
+import { TRIGGER_TYPES } from "@reflet/survey-core";
+import type { HttpRouter } from "convex/server";
 import { internal } from "../../_generated/api";
-import { jsonResponse, parseId } from "../helpers";
-import { checkWriteQuota, parseEnumParam } from "./auth";
+import { errorResponse, jsonResponse } from "../helpers";
+import {
+  type ApiAuthContext,
+  checkWriteQuota,
+  type PublicApiCtx,
+  parseEnumParam,
+} from "./auth";
 import { publicApiRoute, readJsonBody } from "./route";
 import {
-  completeSurveyResponseSchema,
-  SURVEY_TRIGGER_TYPES,
+  MAX_RESPONDENT_ID_LENGTH,
   startSurveyResponseSchema,
   submitSurveyAnswerSchema,
+  surveyResponseIdSchema,
 } from "./schemas";
 
-type Router = ReturnType<typeof httpRouter>;
+const respondentIdParam = (url: URL): string | undefined =>
+  url.searchParams.get("respondentId")?.slice(0, MAX_RESPONDENT_ID_LENGTH) ||
+  undefined;
 
-export function registerSurveyRoutes(http: Router): void {
-  // GET /api/v1/surveys/active - Get active survey for widget
+const checkSurveyStartQuota = (ctx: PublicApiCtx, auth: ApiAuthContext) =>
+  checkWriteQuota(ctx, auth, "publicApiSurveyStartPerPublicKey");
+
+const checkSurveyAnswerQuota = (ctx: PublicApiCtx, auth: ApiAuthContext) =>
+  checkWriteQuota(ctx, auth, "publicApiSurveyAnswerPerPublicKey");
+
+export function registerSurveyRoutes(http: HttpRouter): void {
+  http.route({
+    handler: publicApiRoute(async ({ auth, ctx, url }) => {
+      const surveys = await ctx.runQuery(
+        internal.surveys.responses.getEligibleSurveys,
+        {
+          externalUserId: auth.externalUserId ?? auth.unverifiedExternalUserId,
+          organizationId: auth.organizationId,
+          respondentId: respondentIdParam(url),
+        }
+      );
+      return jsonResponse({ surveys });
+    }),
+    method: "GET",
+    path: "/api/v1/surveys/eligible",
+  });
+
   http.route({
     handler: publicApiRoute(async ({ auth, ctx, url }) => {
       const survey = await ctx.runQuery(
         internal.surveys.responses.getActiveSurvey,
         {
+          externalUserId: auth.externalUserId ?? auth.unverifiedExternalUserId,
           organizationId: auth.organizationId,
+          respondentId: respondentIdParam(url),
+          surveyId: url.searchParams.get("surveyId") || undefined,
           triggerType: parseEnumParam(
             url.searchParams.get("triggerType"),
-            SURVEY_TRIGGER_TYPES
+            TRIGGER_TYPES
           ),
         }
       );
-
       return jsonResponse(survey);
     }),
     method: "GET",
     path: "/api/v1/surveys/active",
   });
 
-  // POST /api/v1/surveys/respond/start - Start a survey response
   http.route({
     handler: publicApiRoute(async ({ auth, ctx, request }) => {
       const body = await readJsonBody(request, startSurveyResponseSchema);
       if (!body.success) {
         return body.response;
       }
-
-      const quota = await checkWriteQuota(
-        ctx,
-        auth,
-        "publicApiSurveyStartPerPublicKey"
-      );
+      const quota = await checkSurveyStartQuota(ctx, auth);
       if (!quota.allowed) {
         return quota.response;
       }
-
       const responseId = await ctx.runMutation(
         internal.surveys.responses.startResponse,
         {
@@ -57,66 +81,84 @@ export function registerSurveyRoutes(http: Router): void {
           organizationId: auth.organizationId,
           pageUrl: body.data.pageUrl,
           respondentId: body.data.respondentId,
-          surveyId: parseId<"surveys">(body.data.surveyId, "surveyId"),
+          surveyId: body.data.surveyId,
           userAgent: body.data.userAgent,
         }
       );
-
       return jsonResponse({ responseId });
     }),
     method: "POST",
     path: "/api/v1/surveys/respond/start",
   });
 
-  // POST /api/v1/surveys/respond/answer - Submit an answer
   http.route({
     handler: publicApiRoute(async ({ auth, ctx, request }) => {
       const body = await readJsonBody(request, submitSurveyAnswerSchema);
       if (!body.success) {
-        return body.response;
+        return errorResponse(
+          "questionId, responseId and a valid value are required",
+          400
+        );
       }
-
+      const quota = await checkSurveyAnswerQuota(ctx, auth);
+      if (!quota.allowed) {
+        return quota.response;
+      }
       const answerId = await ctx.runMutation(
         internal.surveys.responses.submitAnswer,
         {
           organizationId: auth.organizationId,
-          questionId: parseId<"surveyQuestions">(
-            body.data.questionId,
-            "questionId"
-          ),
-          responseId: parseId<"surveyResponses">(
-            body.data.responseId,
-            "responseId"
-          ),
+          questionId: body.data.questionId,
+          responseId: body.data.responseId,
           value: body.data.value,
         }
       );
-
       return jsonResponse({ answerId });
     }),
     method: "POST",
     path: "/api/v1/surveys/respond/answer",
   });
 
-  // POST /api/v1/surveys/respond/complete - Complete a survey response
   http.route({
     handler: publicApiRoute(async ({ auth, ctx, request }) => {
-      const body = await readJsonBody(request, completeSurveyResponseSchema);
+      const body = await readJsonBody(request, surveyResponseIdSchema);
       if (!body.success) {
         return body.response;
       }
-
-      await ctx.runMutation(internal.surveys.responses.completeResponse, {
-        organizationId: auth.organizationId,
-        responseId: parseId<"surveyResponses">(
-          body.data.responseId,
-          "responseId"
-        ),
-      });
-
-      return jsonResponse({ success: true });
+      const quota = await checkSurveyAnswerQuota(ctx, auth);
+      if (!quota.allowed) {
+        return quota.response;
+      }
+      const { endingId } = await ctx.runMutation(
+        internal.surveys.responses.completeResponse,
+        {
+          organizationId: auth.organizationId,
+          responseId: body.data.responseId,
+        }
+      );
+      return jsonResponse({ endingId, success: true });
     }),
     method: "POST",
     path: "/api/v1/surveys/respond/complete",
+  });
+
+  http.route({
+    handler: publicApiRoute(async ({ auth, ctx, request }) => {
+      const body = await readJsonBody(request, surveyResponseIdSchema);
+      if (!body.success) {
+        return body.response;
+      }
+      const quota = await checkSurveyStartQuota(ctx, auth);
+      if (!quota.allowed) {
+        return quota.response;
+      }
+      await ctx.runMutation(internal.surveys.responses.dismissResponse, {
+        organizationId: auth.organizationId,
+        responseId: body.data.responseId,
+      });
+      return jsonResponse({ success: true });
+    }),
+    method: "POST",
+    path: "/api/v1/surveys/respond/dismiss",
   });
 }

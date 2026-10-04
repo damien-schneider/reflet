@@ -14,7 +14,11 @@ if (published !== SDK_VERSION) {
 export default defineConfig({
   clean: true,
   deps: { neverBundle: ["react", "react-dom", "@zumer/snapdom", "vite"] },
-  dts: true,
+  dts: {
+    resolve: ["@reflet/survey-core"],
+    // tsgo emits only under the tsconfig's folder (passed as --rootDir), and the bundled survey-core sits beside the SDK, so this tsconfig lives in packages/.
+    tsconfig: "../tsconfig.sdk-dts.json",
+  },
   entry: {
     "devtools-next": "src/devtools/server/next.ts",
     "devtools-vite": "src/devtools/server/vite.ts",
@@ -22,6 +26,7 @@ export default defineConfig({
     index: "src/index.ts",
     react: "src/react.ts",
     server: "src/server.ts",
+    surveys: "src/surveys/entry.ts",
   },
   format: ["esm"],
   outExtensions: () => ({ dts: ".d.ts", js: ".js" }),

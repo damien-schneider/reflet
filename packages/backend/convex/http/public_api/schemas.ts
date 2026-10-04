@@ -124,9 +124,11 @@ const answerValueSchema = z.union([
   z.array(z.string()),
 ]);
 
+export const MAX_RESPONDENT_ID_LENGTH = 200;
+
 export const startSurveyResponseSchema = z.object({
   pageUrl: z.string().max(2000).optional(),
-  respondentId: z.string().max(200).optional(),
+  respondentId: z.string().max(MAX_RESPONDENT_ID_LENGTH).optional(),
   surveyId: z.string(),
   userAgent: z.string().max(600).optional(),
 });
@@ -134,20 +136,12 @@ export const startSurveyResponseSchema = z.object({
 export const submitSurveyAnswerSchema = z.object({
   questionId: z.string(),
   responseId: z.string(),
-  value: answerValueSchema,
+  value: answerValueSchema.nullable(),
 });
 
-export const completeSurveyResponseSchema = z.object({
+export const surveyResponseIdSchema = z.object({
   responseId: z.string(),
 });
-
-export const SURVEY_TRIGGER_TYPES = [
-  "manual",
-  "page_visit",
-  "time_delay",
-  "exit_intent",
-  "feedback_submitted",
-] as const;
 
 export const FEEDBACK_STATUSES = [
   "open",

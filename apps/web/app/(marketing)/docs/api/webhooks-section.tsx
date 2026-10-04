@@ -20,6 +20,10 @@ const EVENTS = [
     "feedback.github_issue_created",
     "A GitHub issue was created for or linked to the feedback.",
   ],
+  [
+    "survey.response.completed",
+    "A respondent finished a survey. The payload data holds the survey (id, title) and the response (channel, ending, respondent and answers) instead of feedback.",
+  ],
 ] as const;
 
 const PAYLOAD_EXAMPLE = `{

@@ -261,7 +261,68 @@ source files (`.ts`, `.tsx`, `.js`, `.jsx`, `.vue`, `.svelte`, `.astro`,
 `.mdx`…) inside the repository and never under `node_modules`, and only
 forwards the feedback endpoints the devtools use.
 
-### 5. Server-Side User Signing (required for voting and commenting)
+### 5. In-App Surveys
+
+Create surveys in the Reflet dashboard (NPS, ratings, choices, text, statements,
+branching and several endings), then mount `<RefletSurveys />` once inside the
+provider. It loads the surveys this visitor may see — schedule, response cap,
+display frequency and sampling are applied by the API — arms their triggers
+(page visit, time on page, exit intent, custom event, feedback sent through the
+SDK) and shows one at a time in its own shadow root, so your CSS never touches it.
+
+```tsx
+import { RefletProvider, RefletSurveys, useRefletSurveys } from 'reflet-sdk/react';
+
+function App() {
+  return (
+    <RefletProvider publicKey="fb_pub_xxx" user={currentUser}>
+      <YourApp />
+      <RefletSurveys
+        theme="auto"
+        onSurveyComplete={({ surveyId, endingId }) => analytics.track('survey_completed', { surveyId, endingId })}
+      />
+    </RefletProvider>
+  );
+}
+
+function CheckoutSuccess() {
+  const { track, showSurvey } = useRefletSurveys();
+  // Fires every survey whose trigger is the custom event "checkout_completed".
+  useEffect(() => track('checkout_completed'), [track]);
+  // Manual surveys show only when you ask: showSurvey('survey_id').
+  return <p>Thanks for your order!</p>;
+}
+```
+
+`track` and `showSurvey` calls made before `<RefletSurveys />` has loaded are
+queued and replayed. Anonymous visitors get a stable id in `localStorage`, so
+"show once" holds across visits; identified users (`user` / `userToken`) are
+matched across devices.
+
+| `<RefletSurveys />` prop | Description |
+|---|---|
+| `enabled` | Turn delivery off without unmounting (default `true`) |
+| `theme` | `"auto"` (default), `"light"` or `"dark"` |
+| `primaryColor` | Accent color; defaults to your organization's brand color |
+| `onSurveyStart` / `onSurveyAnswer` / `onSurveyComplete` / `onSurveyDismiss` | Lifecycle callbacks |
+
+**Your own UI.** `useSurveySession(survey)` runs the branching flow headlessly
+(`{ snapshot, setAnswer, next, back, dismiss, start }`), and `<SurveyCard
+session={session} variant="floating" | "inline" | "page" />` renders any
+session with its own scoped styles — in a page or a shadow root. Both are also
+available without the provider from `reflet-sdk/surveys`, with
+`previewTransport` to try a survey without saving answers:
+
+```tsx
+import { previewTransport, SurveyCard, useSurveySession } from 'reflet-sdk/surveys';
+
+function Preview({ survey }) {
+  const session = useSurveySession(survey, { transport: previewTransport });
+  return <SurveyCard session={session} variant="inline" />;
+}
+```
+
+### 6. Server-Side User Signing (required for voting and commenting)
 
 `user` is a client-asserted identity: the browser can claim to be anyone, so
 the API accepts it only to attribute a report or a survey answer. Voting,
@@ -449,6 +510,11 @@ const reflet = new Reflet(config: RefletConfig);
 | `getComments(feedbackId)` | Get comments for a feedback | No |
 | `subscribe(feedbackId)` | Subscribe to updates | **Yes** |
 | `unsubscribe(feedbackId)` | Unsubscribe from updates | **Yes** |
+| `getEligibleSurveys()` | Surveys this visitor may see right now | No |
+| `startSurveyResponse({ surveyId, pageUrl? })` | Open a survey response → `{ responseId }` | No |
+| `submitSurveyAnswer({ responseId, questionId, value })` | Save an answer (`value: null` clears it) | No |
+| `completeSurveyResponse(responseId)` | Finish a response → `{ endingId }` | No |
+| `dismissSurveyResponse(responseId)` | Mark a response abandoned | No |
 
 ### React Hooks
 
@@ -466,6 +532,8 @@ All hooks must be used inside a `<RefletProvider>`.
 | `useCreateFeedback()` | Create feedback mutation hook | **Yes** |
 | `useAddComment()` | Add comment mutation hook | **Yes** |
 | `useSubscription()` | Subscribe/unsubscribe hooks | **Yes** |
+| `useRefletSurveys()` | `track`, `showSurvey`, `dismissSurvey`, `activeSurveyId` for `<RefletSurveys />` | No |
+| `useSurveySession(survey, options?)` | Headless survey runner for custom UIs | No |
 
 ### Server Utilities
 

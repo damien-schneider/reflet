@@ -41,6 +41,7 @@
     "@posthog/nextjs-config": "^1.11.1",
     "@reflet/backend": "workspace:*",
     "@reflet/env": "workspace:*",
+    "@reflet/survey-core": "workspace:*",
     "@reflet/ui": "workspace:*",
     "@tabler/icons-react": "^3.46.0",
     "@tailwindcss/postcss": "^4.3.3",
@@ -56,6 +57,7 @@
     "@tiptap/react": "^3.31.3",
     "@tiptap/starter-kit": "^3.31.3",
     "@tiptap/suggestion": "^3.31.3",
+    "@xyflow/react": "^12.12.0",
     "ai": "^7.0.105",
     "babel-plugin-react-compiler": "1.0.0",
     "better-auth": "catalog:",
@@ -93,6 +95,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",
+    "@reflet/feedback-widget": "workspace:*",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",

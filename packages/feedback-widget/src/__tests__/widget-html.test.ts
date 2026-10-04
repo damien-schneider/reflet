@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderQuestionInput } from "../survey-inputs";
+import { renderQuestionInput } from "../survey/inputs";
 import type { FeedbackItem, WidgetConfig, WidgetState } from "../types";
 import { renderWidgetHTML } from "../widget-html";
 
@@ -103,16 +103,18 @@ describe("feedback widget rendering", () => {
       renderQuestionInput(
         {
           _id: "q1",
-          config: { choices: [BREAKOUT] },
+          config: { allowOther: true, choices: [BREAKOUT] },
           order: 0,
           required: false,
           title: BREAKOUT,
           type: "single_choice",
         },
-        new Map()
+        undefined,
+        { selected: true, text: BREAKOUT }
       )
     );
     expect(injectedHandlers(root)).toEqual([]);
+    expect(root.querySelector("[data-select]")?.textContent).toBe(BREAKOUT);
     expect(root.querySelector("input")?.value).toBe(BREAKOUT);
   });
 });

@@ -161,8 +161,16 @@ export const COMMAND_GROUPS = [
           "Write the /reflet queue workflow into the repository's skill folders",
       },
       {
-        command: "survey list | get | analytics | responses <id>",
+        command: "survey list [--status active] | get | analytics <id>",
         description: "Surveys",
+      },
+      {
+        command: "survey responses <id> [--status completed] [--cursor …]",
+        description: "Survey responses, paginated",
+      },
+      {
+        command: "survey create | update | status | duplicate | delete <id>",
+        description: "Manage surveys",
       },
       {
         command: "roadmap get, changelog list, config get",

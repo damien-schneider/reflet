@@ -1,6 +1,7 @@
-import type { BoardConfig, Comment, FeedbackItem, SurveyData } from "./types";
+import type { AnswerValue, PublicSurvey } from "@reflet/survey-core";
+import type { BoardConfig, Comment, FeedbackItem } from "./types";
 
-declare const __CONVEX_URL__: string;
+declare const __API_URL__: string;
 
 function isErrorResponse(data: unknown): data is { error: string } {
   return (
@@ -10,11 +11,6 @@ function isErrorResponse(data: unknown): data is { error: string } {
     typeof data.error === "string"
   );
 }
-
-const CONVEX_URL =
-  typeof __CONVEX_URL__ === "undefined"
-    ? "https://grateful-butterfly-1.convex.cloud"
-    : __CONVEX_URL__;
 
 class FeedbackApi {
   private readonly publicKey: string;
@@ -42,7 +38,7 @@ class FeedbackApi {
       headers["X-User-Token"] = this.userToken;
     }
 
-    const response = await fetch(`${CONVEX_URL}${path}`, {
+    const response = await fetch(`${__API_URL__}${path}`, {
       body: body ? JSON.stringify(body) : undefined,
       headers,
       method,
@@ -208,49 +204,49 @@ class FeedbackApi {
     });
   }
 
-  // ============================================
-  // SURVEYS
-  // ============================================
-
-  async getActiveSurvey(
-    triggerType?: string,
-    surveyId?: string
-  ): Promise<SurveyData | null> {
-    const searchParams = new URLSearchParams();
-    if (triggerType) {
-      searchParams.set("triggerType", triggerType);
-    }
-    if (surveyId) {
-      searchParams.set("surveyId", surveyId);
-    }
-    const query = searchParams.toString();
-    return await this.request(
+  async getEligibleSurveys(respondentId: string): Promise<PublicSurvey[]> {
+    const { surveys } = await this.request<{ surveys: PublicSurvey[] }>(
       "GET",
-      `/api/v1/surveys/active${query ? `?${query}` : ""}`
+      `/api/v1/surveys/eligible?respondentId=${encodeURIComponent(respondentId)}`
     );
+    return surveys;
+  }
+
+  async getActiveSurvey(params: {
+    respondentId: string;
+    surveyId: string;
+  }): Promise<PublicSurvey | null> {
+    const searchParams = new URLSearchParams(params);
+    return await this.request("GET", `/api/v1/surveys/active?${searchParams}`);
   }
 
   async startSurveyResponse(params: {
-    surveyId: string;
-    respondentId?: string;
     pageUrl?: string;
+    respondentId: string;
+    surveyId: string;
     userAgent?: string;
   }): Promise<{ responseId: string }> {
     return await this.request("POST", "/api/v1/surveys/respond/start", params);
   }
 
-  async submitSurveyAnswer(params: {
-    responseId: string;
+  async answerSurveyQuestion(params: {
     questionId: string;
-    value: string | number | boolean | string[];
-  }): Promise<{ answerId: string }> {
+    responseId: string;
+    value: AnswerValue | null;
+  }): Promise<{ answerId: string | null }> {
     return await this.request("POST", "/api/v1/surveys/respond/answer", params);
   }
 
   async completeSurveyResponse(
     responseId: string
-  ): Promise<{ success: boolean }> {
+  ): Promise<{ success: true; endingId: string }> {
     return await this.request("POST", "/api/v1/surveys/respond/complete", {
+      responseId,
+    });
+  }
+
+  async dismissSurveyResponse(responseId: string): Promise<{ success: true }> {
+    return await this.request("POST", "/api/v1/surveys/respond/dismiss", {
       responseId,
     });
   }

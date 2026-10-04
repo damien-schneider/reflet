@@ -1,6 +1,4 @@
 import { capturePageScreenshot, getPageUrl } from "./screenshot";
-import { SurveyRenderer } from "./survey-renderer";
-import type { SurveyData } from "./types";
 import { WidgetCore } from "./widget-core";
 
 export class RefletFeedbackWidget extends WidgetCore {
@@ -120,6 +118,7 @@ export class RefletFeedbackWidget extends WidgetCore {
       }
 
       this.config.onFeedbackCreated?.({ id: result.feedbackId, title });
+      this.surveys.notifyFeedbackSubmitted();
 
       // Refresh list and go back
       await this.loadFeedback();
@@ -202,79 +201,17 @@ export class RefletFeedbackWidget extends WidgetCore {
     }
   }
 
-  async checkForSurvey(triggerType?: string): Promise<void> {
-    try {
-      this.activeSurvey = await this.api.getActiveSurvey(triggerType);
-
-      if (this.activeSurvey && this.shadowRoot) {
-        this.showSurvey(this.activeSurvey);
-      }
-    } catch {
-      // Silent fail — surveys are non-critical
-    }
+  /** Records a custom event; surveys triggered by it show when eligible. */
+  track(eventName: string): void {
+    this.surveys.track(eventName);
   }
 
-  async showSurveyById(surveyId: string): Promise<void> {
-    try {
-      const survey = await this.api.getActiveSurvey(undefined, surveyId);
-      if (survey && this.shadowRoot) {
-        this.activeSurvey = survey;
-        this.showSurvey(survey);
-      }
-    } catch {
-      // Silent fail
-    }
+  /** Shows a survey by id (including manual ones). Resolves false when it can't be shown now. */
+  showSurvey(surveyId: string): Promise<boolean> {
+    return this.surveys.show(surveyId);
   }
 
   dismissSurvey(): void {
-    if (this.surveyRenderer) {
-      this.surveyRenderer.destroy();
-      this.surveyRenderer = null;
-    }
-    if (this.shadowRoot) {
-      const overlay = this.shadowRoot.querySelector(".reflet-survey-overlay");
-      if (overlay) {
-        overlay.remove();
-      }
-    }
-    this.activeSurvey = null;
-  }
-
-  get isSurveyActive(): boolean {
-    return this.activeSurvey !== null && this.surveyRenderer !== null;
-  }
-
-  protected showSurvey(survey: SurveyData): void {
-    if (!this.shadowRoot) {
-      return;
-    }
-
-    // Dismiss any existing survey first
-    this.dismissSurvey();
-
-    const surveyContainer = document.createElement("div");
-    surveyContainer.className = "reflet-survey-overlay";
-    this.shadowRoot.appendChild(surveyContainer);
-
-    this.surveyRenderer = new SurveyRenderer({
-      api: this.api,
-      callbacks: this.config.survey,
-      container: surveyContainer,
-      onComplete: () => {
-        this.surveyRenderer?.destroy();
-        surveyContainer.remove();
-        this.surveyRenderer = null;
-        this.activeSurvey = null;
-      },
-      onDismiss: () => {
-        this.surveyRenderer?.destroy();
-        surveyContainer.remove();
-        this.surveyRenderer = null;
-        this.activeSurvey = null;
-      },
-      survey,
-    });
-
-    this.surveyRenderer.start();
+    this.surveys.dismiss();
   }
 }

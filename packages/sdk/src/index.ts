@@ -71,10 +71,34 @@
  * ```
  */
 
+// Surveys
+export type {
+  AnswerValue,
+  DisplayFrequency,
+  FlowTarget,
+  LogicOperator,
+  LogicRule,
+  PublicSurvey,
+  QuestionConfig,
+  QuestionType,
+  RatingStyle,
+  SurveyDisplay,
+  SurveyEnding,
+  SurveyPosition,
+  SurveyQuestion,
+  TriggerConfig,
+  TriggerType,
+} from "@reflet/survey-core";
 // Main client
 // biome-ignore lint/performance/noBarrelFile: SDK packages need clean export API
 export { Reflet } from "./client";
-
+export type {
+  CompleteSurveyResponseResult,
+  StartSurveyResponseParams,
+  StartSurveyResponseResult,
+  SubmitSurveyAnswerParams,
+  SubmitSurveyAnswerResult,
+} from "./surveys/survey-api";
 // Types
 export type {
   AddCommentParams,

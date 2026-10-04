@@ -25,6 +25,7 @@
     "test:unit": "vitest run"
   },
   "devDependencies": {
+    "@reflet/survey-core": "workspace:*",
     "@types/node": "^26.1.2",
     "jsdom": "^30.1.0",
     "typescript": "catalog:",

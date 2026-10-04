@@ -33,8 +33,22 @@
  * ```
  */
 
-// Re-export client for advanced usage
+// Surveys
+export type {
+  AnswerValue,
+  PublicSurvey,
+  SurveyEnding,
+  SurveyPosition,
+  SurveyQuestion,
+} from "@reflet/survey-core";
+export type {
+  SurveySessionCallbacks,
+  SurveySessionSnapshot,
+  SurveyTransport,
+} from "@reflet/survey-core/client";
 // biome-ignore lint/performance/noBarrelFile: SDK packages need clean export API
+export { previewTransport, SurveySession } from "@reflet/survey-core/client";
+// Re-export client for advanced usage
 export { Reflet } from "./client";
 // Changelog Widget Component
 export { ChangelogWidget } from "./react-changelog-widget";
@@ -72,6 +86,23 @@ export {
   useRoadmap,
   useUnreadChangelogCount,
 } from "./react-query-hooks";
+export type {
+  SurveyCardProps,
+  SurveyCardVariant,
+  SurveyTheme,
+} from "./surveys/card/survey-card";
+export { SurveyCard } from "./surveys/card/survey-card";
+export { createRefletSurveyTransport } from "./surveys/client-transport";
+export type { RefletSurveysCallbacks } from "./surveys/controller";
+export type { RefletSurveysProps } from "./surveys/reflet-surveys";
+export { RefletSurveys } from "./surveys/reflet-surveys";
+export type { RefletSurveysApi } from "./surveys/use-reflet-surveys";
+export { useRefletSurveys } from "./surveys/use-reflet-surveys";
+export type {
+  SurveySessionHandle,
+  UseSurveySessionOptions,
+} from "./surveys/use-survey-session";
+export { useSurveySession } from "./surveys/use-survey-session";
 // Re-export types from main package
 export type {
   AddCommentParams,

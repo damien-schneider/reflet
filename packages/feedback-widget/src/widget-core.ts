@@ -2,8 +2,8 @@ import { createApi, type FeedbackApi } from "./api";
 import { DEFAULT_PRIMARY_COLOR } from "./color-utils";
 import { ModalFocusManager } from "./modal-focus";
 import { getWidgetStyles } from "./styles";
-import type { SurveyRenderer } from "./survey-renderer";
-import type { SurveyData, WidgetConfig, WidgetState } from "./types";
+import { SurveyController } from "./survey/controller";
+import type { WidgetConfig, WidgetState } from "./types";
 import { attachWidgetEventListeners } from "./widget-events";
 import { renderWidgetHTML } from "./widget-html";
 import { generateSimpleToken } from "./widget-utils";
@@ -18,11 +18,10 @@ export abstract class WidgetCore {
 
   protected readonly config: WidgetConfig;
   protected readonly api: FeedbackApi;
+  protected readonly surveys: SurveyController;
   protected container: HTMLElement | null = null;
   protected shadowRoot: ShadowRoot | null = null;
   protected pendingScreenshot: Blob | null = null;
-  protected activeSurvey: SurveyData | null = null;
-  protected surveyRenderer: SurveyRenderer | null = null;
   protected focusManager: ModalFocusManager | null = null;
   protected readonly state: WidgetState = {
     boardConfig: null,
@@ -52,6 +51,11 @@ export abstract class WidgetCore {
     };
 
     this.api = createApi(config.publicKey);
+    this.surveys = new SurveyController({
+      api: this.api,
+      callbacks: config.survey,
+      getRoot: () => this.shadowRoot,
+    });
 
     // Set user token if provided
     if (config.userToken) {
@@ -64,24 +68,21 @@ export abstract class WidgetCore {
   }
 
   async init(): Promise<void> {
-    try {
-      // Fetch board config
-      this.state.boardConfig = await this.api.getConfig();
-      this.state.isLoading = false;
-
-      // Create widget UI
-      this.createContainer();
-      this.injectStyles();
-      this.render();
-
-      // Load initial data
-      await this.loadFeedback();
-    } catch (error) {
-      this.state.error =
-        error instanceof Error ? error.message : "Failed to initialize widget";
-      this.state.isLoading = false;
-      this.render();
+    this.createContainer();
+    this.injectStyles();
+    if (this.config.features?.surveys !== false) {
+      this.surveys.start();
     }
+
+    try {
+      this.state.boardConfig = await this.api.getConfig();
+    } catch {
+      // Private organizations reject the public key for the board; surveys still work, so the feedback UI just stays hidden.
+      return;
+    }
+    this.state.isLoading = false;
+    this.render();
+    await this.loadFeedback();
   }
 
   protected createContainer(): void {
@@ -132,7 +133,7 @@ export abstract class WidgetCore {
   }
 
   protected render(): void {
-    if (!this.shadowRoot) {
+    if (!(this.shadowRoot && this.state.boardConfig)) {
       return;
     }
 
@@ -238,6 +239,7 @@ export abstract class WidgetCore {
   }
 
   destroy(): void {
+    this.surveys.destroy();
     this.focusManager?.release();
     this.focusManager = null;
     if (this.container && this.config.mode === "floating") {

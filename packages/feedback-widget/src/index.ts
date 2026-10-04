@@ -91,6 +91,7 @@ function initWidget(): void {
     position: config.position ?? "bottom-right",
     primaryColor: config.primaryColor,
     publicKey: config.publicKey,
+    survey: config.survey,
     targetId: config.targetId,
     theme: config.theme ?? "light",
     user: config.user,

@@ -1,67 +1,112 @@
-import { v } from "convex/values";
-import type { Doc } from "../_generated/dataModel";
-import { internalMutation, internalQuery } from "../_generated/server";
+import { ConvexError, type ObjectType, v } from "convex/values";
+import { internal } from "../_generated/api";
+import {
+  internalMutation,
+  internalQuery,
+  type QueryCtx,
+} from "../_generated/server";
+import {
+  inAppEligibilityIssue,
+  listEligibleSurveys,
+} from "./respondent/eligibility";
+import type { PublicSurveyRecord } from "./respondent/public_survey";
+import {
+  completeSurveyResponse,
+  dismissSurveyResponse,
+  loadChannelResponse,
+  saveAnswer,
+  startSurveyResponse,
+} from "./respondent/respond";
 import {
   answerValueValidator,
-  conditionalLogicValidator,
-  questionConfigValidator,
-  questionTypeValidator,
-  triggerConfigValidator,
+  publicSurveyValidator,
   triggerTypeValidator,
 } from "./tableFields";
 
-const STALE_RESPONSE_HOURS = 24;
+const STALE_RESPONSE_MS = 24 * 60 * 60 * 1000;
 const STALE_RESPONSE_BATCH = 200;
 
-const completionPercent = (completed: number, total: number): number =>
-  total > 0 ? Math.round((completed / total) * 100) : 0;
+const respondentArgs = {
+  externalUserId: v.optional(v.id("externalUsers")),
+  organizationId: v.id("organizations"),
+  respondentId: v.optional(v.string()),
+};
 
-// Surveys created before completedCount existed only stored the rounded rate.
-const completedSoFar = (survey: Doc<"surveys">): number =>
-  survey.completedCount ??
-  Math.round((survey.completionRate * survey.responseCount) / 100);
+const eligibilityArgs = {
+  ...respondentArgs,
+  surveyId: v.optional(v.string()),
+  triggerType: v.optional(triggerTypeValidator),
+};
+
+const eligibleFor = async (
+  ctx: QueryCtx,
+  args: ObjectType<typeof eligibilityArgs>
+): Promise<PublicSurveyRecord[]> => {
+  const surveyId =
+    args.surveyId === undefined
+      ? undefined
+      : ctx.db.normalizeId("surveys", args.surveyId);
+  if (surveyId === null) {
+    return [];
+  }
+  return await listEligibleSurveys(ctx, {
+    now: Date.now(),
+    organizationId: args.organizationId,
+    respondent: {
+      externalUserId: args.externalUserId,
+      respondentId: args.respondentId,
+    },
+    surveyId,
+    triggerType: args.triggerType,
+  });
+};
+
+export const getEligibleSurveys = internalQuery({
+  args: eligibilityArgs,
+  handler: async (ctx, args) => await eligibleFor(ctx, args),
+  returns: v.array(publicSurveyValidator),
+});
+
+export const getActiveSurvey = internalQuery({
+  args: eligibilityArgs,
+  handler: async (ctx, args) => {
+    const [first] = await eligibleFor(ctx, args);
+    return first ?? null;
+  },
+  returns: v.union(publicSurveyValidator, v.null()),
+});
 
 export const startResponse = internalMutation({
   args: {
-    externalUserId: v.optional(v.id("externalUsers")),
-    organizationId: v.id("organizations"),
+    ...respondentArgs,
     pageUrl: v.optional(v.string()),
-    respondentId: v.optional(v.string()),
-    surveyId: v.id("surveys"),
+    surveyId: v.string(),
     userAgent: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const survey = await ctx.db.get(args.surveyId);
+    const surveyId = ctx.db.normalizeId("surveys", args.surveyId);
+    const survey = surveyId ? await ctx.db.get(surveyId) : null;
     if (!survey || survey.organizationId !== args.organizationId) {
-      throw new Error("Survey not found");
+      throw new ConvexError("Survey not found.");
     }
-
-    if (survey.status !== "active") {
-      throw new Error("Survey is not active");
-    }
-
-    if (survey.maxResponses && survey.responseCount >= survey.maxResponses) {
-      throw new Error("Survey has reached maximum responses");
-    }
-
-    const responseCount = survey.responseCount + 1;
-    await ctx.db.patch(survey._id, {
-      completionRate: completionPercent(completedSoFar(survey), responseCount),
-      responseCount,
-      updatedAt: Date.now(),
-    });
-
-    return await ctx.db.insert("surveyResponses", {
+    const respondent = {
       externalUserId: args.externalUserId,
-      metadata: {
-        pageUrl: args.pageUrl,
-        userAgent: args.userAgent,
-      },
-      organizationId: args.organizationId,
       respondentId: args.respondentId,
-      startedAt: Date.now(),
-      status: "in_progress",
-      surveyId: args.surveyId,
+    };
+    const issue = await inAppEligibilityIssue(
+      ctx,
+      survey,
+      respondent,
+      Date.now()
+    );
+    if (issue) {
+      throw new ConvexError(issue);
+    }
+    return await startSurveyResponse(ctx, {
+      channel: "in_app",
+      metadata: { pageUrl: args.pageUrl, userAgent: args.userAgent },
+      respondent,
+      survey,
     });
   },
   returns: v.id("surveyResponses"),
@@ -70,193 +115,75 @@ export const startResponse = internalMutation({
 export const submitAnswer = internalMutation({
   args: {
     organizationId: v.id("organizations"),
-    questionId: v.id("surveyQuestions"),
-    responseId: v.id("surveyResponses"),
-    value: answerValueValidator,
+    questionId: v.string(),
+    responseId: v.string(),
+    value: v.union(answerValueValidator, v.null()),
   },
   handler: async (ctx, args) => {
-    const response = await ctx.db.get(args.responseId);
-    if (!response || response.organizationId !== args.organizationId) {
-      throw new Error("Response not found");
-    }
-
-    if (response.status !== "in_progress") {
-      throw new Error("Response is no longer accepting answers");
-    }
-
-    const question = await ctx.db.get(args.questionId);
-    if (!question || question.surveyId !== response.surveyId) {
-      throw new Error("Question not found");
-    }
-
-    const existing = await ctx.db
-      .query("surveyAnswers")
-      .withIndex("by_response", (q) => q.eq("responseId", args.responseId))
-      .filter((q) => q.eq(q.field("questionId"), args.questionId))
-      .first();
-
-    if (existing) {
-      await ctx.db.patch(existing._id, {
-        answeredAt: Date.now(),
-        value: args.value,
-      });
-      return existing._id;
-    }
-
-    return await ctx.db.insert("surveyAnswers", {
-      answeredAt: Date.now(),
-      organizationId: response.organizationId,
-      questionId: args.questionId,
+    const response = await loadChannelResponse(ctx, {
+      channel: "in_app",
+      organizationId: args.organizationId,
       responseId: args.responseId,
-      surveyId: response.surveyId,
-      value: args.value,
     });
+    return await saveAnswer(ctx, response, args.questionId, args.value);
   },
-  returns: v.id("surveyAnswers"),
+  returns: v.union(v.id("surveyAnswers"), v.null()),
 });
 
 export const completeResponse = internalMutation({
   args: {
     organizationId: v.id("organizations"),
-    responseId: v.id("surveyResponses"),
+    responseId: v.string(),
   },
   handler: async (ctx, args) => {
-    const response = await ctx.db.get(args.responseId);
-    if (!response || response.organizationId !== args.organizationId) {
-      throw new Error("Response not found");
-    }
-    if (response.status === "completed") {
-      return null;
-    }
-
-    await ctx.db.patch(args.responseId, {
-      completedAt: Date.now(),
-      status: "completed",
+    const response = await loadChannelResponse(ctx, {
+      channel: "in_app",
+      organizationId: args.organizationId,
+      responseId: args.responseId,
     });
+    return { endingId: await completeSurveyResponse(ctx, response) };
+  },
+  returns: v.object({ endingId: v.string() }),
+});
 
-    const survey = await ctx.db.get(response.surveyId);
-    if (survey) {
-      const completedCount = completedSoFar(survey) + 1;
-      const responseCount = Math.max(survey.responseCount, completedCount);
-      await ctx.db.patch(survey._id, {
-        completedCount,
-        completionRate: completionPercent(completedCount, responseCount),
-        responseCount,
-        updatedAt: Date.now(),
-      });
-    }
-
+export const dismissResponse = internalMutation({
+  args: {
+    organizationId: v.id("organizations"),
+    responseId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const response = await loadChannelResponse(ctx, {
+      channel: "in_app",
+      organizationId: args.organizationId,
+      responseId: args.responseId,
+    });
+    await dismissSurveyResponse(ctx, response);
     return null;
   },
   returns: v.null(),
 });
 
-export const getActiveSurvey = internalQuery({
-  args: {
-    organizationId: v.id("organizations"),
-    triggerType: v.optional(triggerTypeValidator),
-  },
-  handler: async (ctx, args) => {
-    const surveysQuery = args.triggerType
-      ? ctx.db
-          .query("surveys")
-          .withIndex("by_organization_status", (q) =>
-            q.eq("organizationId", args.organizationId).eq("status", "active")
-          )
-          .filter((q) => q.eq(q.field("triggerType"), args.triggerType))
-      : ctx.db
-          .query("surveys")
-          .withIndex("by_organization_status", (q) =>
-            q.eq("organizationId", args.organizationId).eq("status", "active")
-          );
-
-    const survey = await surveysQuery.first();
-
-    if (!survey) {
-      return null;
-    }
-
-    const now = Date.now();
-    if (survey.startsAt && now < survey.startsAt) {
-      return null;
-    }
-    if (survey.endsAt && now > survey.endsAt) {
-      return null;
-    }
-    if (survey.maxResponses && survey.responseCount >= survey.maxResponses) {
-      return null;
-    }
-
-    const questions = await ctx.db
-      .query("surveyQuestions")
-      .withIndex("by_survey", (q) => q.eq("surveyId", survey._id))
-      .collect();
-
-    const sortedQuestions = questions.sort((a, b) => a.order - b.order);
-
-    return {
-      _id: survey._id,
-      description: survey.description,
-      questions: sortedQuestions.map((q) => ({
-        _id: q._id,
-        conditionalLogic: q.conditionalLogic,
-        config: q.config,
-        description: q.description,
-        order: q.order,
-        required: q.required,
-        title: q.title,
-        type: q.type,
-      })),
-      title: survey.title,
-      triggerConfig: survey.triggerConfig,
-      triggerType: survey.triggerType,
-    };
-  },
-  returns: v.union(
-    v.object({
-      _id: v.id("surveys"),
-      description: v.optional(v.string()),
-      questions: v.array(
-        v.object({
-          _id: v.id("surveyQuestions"),
-          conditionalLogic: conditionalLogicValidator,
-          config: questionConfigValidator,
-          description: v.optional(v.string()),
-          order: v.number(),
-          required: v.boolean(),
-          title: v.string(),
-          type: questionTypeValidator,
-        })
-      ),
-      title: v.string(),
-      triggerConfig: triggerConfigValidator,
-      triggerType: triggerTypeValidator,
-    }),
-    v.null()
-  ),
-});
-
 export const abandonStaleResponses = internalMutation({
   args: {},
   handler: async (ctx) => {
-    const cutoff = Date.now() - STALE_RESPONSE_HOURS * 60 * 60 * 1000;
-
+    const cutoff = Date.now() - STALE_RESPONSE_MS;
     const staleResponses = await ctx.db
       .query("surveyResponses")
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("status"), "in_progress"),
-          q.lt(q.field("startedAt"), cutoff)
-        )
+      .withIndex("by_status_started", (q) =>
+        q.eq("status", "in_progress").lt("startedAt", cutoff)
       )
       .take(STALE_RESPONSE_BATCH);
 
     for (const response of staleResponses) {
-      await ctx.db.patch(response._id, {
-        status: "abandoned",
-      });
+      await ctx.db.patch(response._id, { status: "abandoned" });
     }
-
+    if (staleResponses.length === STALE_RESPONSE_BATCH) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.surveys.responses.abandonStaleResponses,
+        {}
+      );
+    }
     return { abandoned: staleResponses.length };
   },
   returns: v.object({ abandoned: v.number() }),

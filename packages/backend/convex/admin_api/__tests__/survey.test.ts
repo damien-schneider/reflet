@@ -12,9 +12,7 @@ async function setup() {
   const attackerOrgId = await createOrg(t);
   const surveyId = await t.mutation(internal.admin_api.survey.createSurvey, {
     organizationId: victimOrgId,
-    questions: [
-      { order: 0, required: true, title: "How likely?", type: "nps" },
-    ],
+    questions: [{ required: true, title: "How likely?", type: "nps" }],
     title: "Victim survey",
     triggerType: "manual",
   });
@@ -91,5 +89,73 @@ describe("admin survey API org scoping", () => {
     expect(
       await t.query(internal.admin_api.survey.getSurvey, asOwner)
     ).toBeNull();
+  });
+});
+
+describe("admin survey API on the branching model", () => {
+  test("creates from drafts with jumps and returns them with defaults applied", async () => {
+    const t = convexTest(schema, modules);
+    const organizationId = await createOrg(t);
+    const surveyId = await t.mutation(internal.admin_api.survey.createSurvey, {
+      endings: [{ id: "bye", title: "Bye" }],
+      organizationId,
+      questions: [
+        {
+          logic: [
+            {
+              id: "no",
+              operator: "equals",
+              target: { endingId: "bye", kind: "ending" },
+              value: false,
+            },
+          ],
+          required: true,
+          title: "Did it work?",
+          type: "boolean",
+        },
+        { required: false, title: "Tell us more", type: "text" },
+      ],
+      title: "Setup check",
+      triggerType: "event",
+    });
+
+    const survey = await t.query(internal.admin_api.survey.getSurvey, {
+      organizationId,
+      surveyId,
+    });
+
+    expect(survey).toMatchObject({
+      display: { frequency: "once" },
+      endings: [{ id: "bye", title: "Bye" }],
+      linkEnabled: false,
+      triggerType: "event",
+    });
+    expect(survey?.questions[0]?.logic).toEqual([
+      {
+        id: "no",
+        operator: "equals",
+        target: { endingId: "bye", kind: "ending" },
+        value: false,
+      },
+    ]);
+  });
+
+  test("refuses to activate a survey without questions", async () => {
+    const t = convexTest(schema, modules);
+    const organizationId = await createOrg(t);
+    const surveyId = await t.mutation(internal.admin_api.survey.createSurvey, {
+      organizationId,
+      questions: [],
+      title: "Empty",
+      triggerType: "manual",
+    });
+
+    await expect(
+      t.mutation(internal.admin_api.survey.updateSurveyStatus, {
+        organizationId,
+        status: "active",
+        surveyId,
+      })
+    ).rejects.toThrow("Add at least one question.");
   });
 });

@@ -1,5 +1,15 @@
 import { ContentApi } from "./client-content";
 import type {
+  SurveyAnalyticsResponse,
+  SurveyDetailResponse,
+  SurveyDisplay,
+  SurveyEnding,
+  SurveyListItem,
+  SurveyQuestionDraft,
+  SurveyResponsePage,
+  SurveyTriggerConfig,
+} from "./survey-types";
+import type {
   CreatedResponse,
   DuplicatePairResponse,
   InvitationResponse,
@@ -7,10 +17,6 @@ import type {
   OrganizationResponse,
   ScreenshotResponse,
   SuccessResponse,
-  SurveyAnalyticsResponse,
-  SurveyDetailResponse,
-  SurveyListItem,
-  SurveyResponseItem,
 } from "./types";
 
 export class RefletAdminClient extends ContentApi {
@@ -98,27 +104,10 @@ export class RefletAdminClient extends ContentApi {
     title: string;
     description?: string;
     triggerType: string;
-    triggerConfig?: {
-      pageUrl?: string;
-      delayMs?: number;
-      sampleRate?: number;
-    };
-    questions: Array<{
-      type: string;
-      title: string;
-      description?: string;
-      required?: boolean;
-      order?: number;
-      config?: {
-        minValue?: number;
-        maxValue?: number;
-        minLabel?: string;
-        maxLabel?: string;
-        choices?: string[];
-        placeholder?: string;
-        maxLength?: number;
-      };
-    }>;
+    triggerConfig?: SurveyTriggerConfig;
+    display?: SurveyDisplay;
+    endings?: SurveyEnding[];
+    questions: SurveyQuestionDraft[];
   }): Promise<string> {
     return this.request("POST", "/api/v1/admin/survey/create", params);
   }
@@ -158,12 +147,13 @@ export class RefletAdminClient extends ContentApi {
     title?: string;
     description?: string;
     triggerType?: string;
-    triggerConfig?: {
-      pageUrl?: string;
-      delayMs?: number;
-      sampleRate?: number;
-    };
-    maxResponses?: number;
+    triggerConfig?: SurveyTriggerConfig;
+    display?: SurveyDisplay;
+    endings?: SurveyEnding[];
+    linkEnabled?: boolean;
+    startsAt?: number | null;
+    endsAt?: number | null;
+    maxResponses?: number | null;
   }): Promise<null> {
     return this.request("POST", "/api/v1/admin/survey/update", params);
   }
@@ -171,10 +161,11 @@ export class RefletAdminClient extends ContentApi {
   listSurveyResponses(
     surveyId: string,
     params?: {
-      status?: "started" | "completed" | "abandoned";
+      status?: "in_progress" | "completed" | "abandoned";
       limit?: number;
+      cursor?: string;
     }
-  ): Promise<SurveyResponseItem[]> {
+  ): Promise<SurveyResponsePage> {
     const searchParams = new URLSearchParams();
     searchParams.set("id", surveyId);
     if (params?.status) {
@@ -182,6 +173,9 @@ export class RefletAdminClient extends ContentApi {
     }
     if (params?.limit) {
       searchParams.set("limit", String(params.limit));
+    }
+    if (params?.cursor) {
+      searchParams.set("cursor", params.cursor);
     }
     return this.request(
       "GET",

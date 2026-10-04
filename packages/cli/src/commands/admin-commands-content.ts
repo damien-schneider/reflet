@@ -17,7 +17,7 @@ const MILESTONE_STATUSES = ["active", "completed", "archived", "all"] as const;
 
 const SURVEY_STATUSES = ["draft", "active", "paused", "closed"] as const;
 
-const RESPONSE_STATUSES = ["started", "completed", "abandoned"] as const;
+const RESPONSE_STATUSES = ["in_progress", "completed", "abandoned"] as const;
 
 const ROLES = ["admin", "member"] as const;
 
@@ -269,9 +269,10 @@ export const CONTENT_COMMANDS: Record<string, Record<string, CommandSpec>> = {
     },
     responses: {
       args: "<surveyId>",
-      flags: ["status", "limit"],
+      flags: ["status", "limit", "cursor"],
       run: (c, p, f) =>
         c.listSurveyResponses(arg(p, 0, "surveyId"), {
+          cursor: f.cursor,
           limit: num(f.limit),
           status:
             f.status === undefined

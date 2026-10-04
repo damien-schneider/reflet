@@ -99,6 +99,7 @@ export async function checkOrganizationAccess(
 
 type PublicKeyWriteLimit =
   | "publicApiScreenshotUploadPerPublicKey"
+  | "publicApiSurveyAnswerPerPublicKey"
   | "publicApiSurveyStartPerPublicKey"
   | "publicApiWritePerPublicKey";
 

@@ -56,7 +56,7 @@ If you are searching for a UserVoice alternative — particularly one that is op
 | **API & Webhooks** | Yes (full CRUD + status webhooks) | Limited |
 | **Custom Domain** | Yes | Yes |
 | **RBAC / Permissions** | Yes | Yes |
-| **NPS Surveys** | No | Yes |
+| **NPS Surveys** | Yes (in-app NPS, CSAT & custom surveys) | Yes |
 | **Revenue-Weighted Prioritization** | No | Yes |
 | **Best For** | Startups, scale-ups, developer teams | Large enterprises with dedicated PM budgets |
 
@@ -99,7 +99,7 @@ The average UserVoice customer spends approximately $21,000 per year. Contracts 
     { name: "RBAC / Team Permissions", reflet: "yes", competitor: "yes", description: "Role-based access control" },
     { name: "Smart Notifications", reflet: "yes", competitor: "yes", description: "Notify users when status changes" },
     { name: "Full-Text Search", reflet: "yes", competitor: "yes", description: "Search across all feedback" },
-    { name: "NPS Surveys", reflet: "no", competitor: "yes", description: "Built-in Net Promoter Score surveys" },
+    { name: "NPS Surveys", reflet: "yes", competitor: "yes", description: "Built-in Net Promoter Score surveys" },
     { name: "Revenue-Weighted Prioritization", reflet: "no", competitor: "yes", description: "Weight feedback by customer ARR" },
     { name: "Salesforce Integration", reflet: "no", competitor: "yes", description: "Native CRM data sync" },
     { name: "Transparent Pricing", reflet: "yes", competitor: "no", description: "Public pricing without a sales call" },
@@ -130,6 +130,10 @@ Reflet ships a drop-in JavaScript SDK that lets you collect feedback directly in
 ```
 
 Users can submit feedback, browse the roadmap, and check the changelog without ever leaving your app. UserVoice also offers a widget, but Reflet's is designed from the ground up for developer-first embedding, with full theming support and TypeScript types.
+
+### In-App Surveys with Branching
+
+Reflet runs NPS, CSAT and custom surveys inside your product, from the same SDK or widget that collects feedback. Each answer can send respondents down a different path and lead to a different ending. Each survey targets specific pages and fires on a page visit, time on page, exit intent, a custom event or right after someone submits feedback. Display frequency, sampling, scheduling and response caps keep it from nagging users, and any survey can also be shared as a hosted link. Results show the NPS score, completion rate and drop-off per question.
 
 ### Two-Way GitHub Sync
 
@@ -174,9 +178,9 @@ You can have a Reflet feedback board running in under ten minutes. With UserVoic
 
 UserVoice's most compelling differentiator is the ability to weight feedback by customer revenue. When you connect your CRM data, you can see not just which features have the most votes, but which features are most requested by your highest-value customers. For B2B SaaS companies managing complex enterprise relationships, this is genuinely powerful. Reflet does not offer this capability.
 
-### NPS Integration
+### NPS Next to Feature Requests
 
-UserVoice includes built-in Net Promoter Score surveys, allowing you to correlate satisfaction scores with specific feature requests and product changes. If NPS tracking is a core part of your product analytics workflow, UserVoice's built-in integration removes the need for a separate tool.
+Both tools run NPS surveys. UserVoice lets you correlate satisfaction scores with specific feature requests and product changes. Reflet reports NPS, completion and drop-off per survey, but keeps survey results separate from feedback votes.
 
 ### Salesforce and CRM Ecosystem
 
@@ -220,16 +224,16 @@ If you are currently evaluating UserVoice, Reflet is a strong fit when:
 
 Reflet may not be the right fit if:
 - Revenue-weighted prioritization is central to how your PM team makes decisions
-- You need NPS surveys natively integrated into your feedback workflow
+- You need NPS scores correlated with specific feature requests
 - Your procurement process requires specific enterprise compliance certifications that UserVoice already holds
 
 ## The Bottom Line
 
 UserVoice is a capable enterprise platform, but it is explicitly designed for large organizations with large budgets. It is not a realistic option for most startups, and even for mid-market companies the cost is difficult to justify when the core feedback workflow — boards, voting, roadmap, changelog — is available elsewhere for a fraction of the price.
 
-Reflet delivers the same core feedback-to-roadmap workflow and goes further: two-way GitHub sync that automatically closes the loop between feedback and shipped features, AI-powered triage that keeps your inbox organized without manual effort, an embeddable widget SDK for in-app collection, a full REST API with status-transition webhooks, and real-time collaboration built on Convex. All of this starts free, with transparent paid plans at $15/mo and $49/mo.
+Reflet delivers the same core feedback-to-roadmap workflow and goes further: two-way GitHub sync that automatically closes the loop between feedback and shipped features, AI-powered triage that keeps your inbox organized without manual effort, an embeddable widget SDK for in-app collection and surveys, a full REST API with status-transition webhooks, and real-time collaboration built on Convex. All of this starts free, with transparent paid plans at $15/mo and $49/mo.
 
-For teams that do not specifically need UserVoice's revenue-weighting or NPS features, Reflet is a practical, modern, and significantly more capable alternative at a fraction of the cost.
+For teams that do not specifically need UserVoice's revenue weighting or Salesforce integration, Reflet is a practical, modern, and significantly more capable alternative at a fraction of the cost.
 
 ---
 

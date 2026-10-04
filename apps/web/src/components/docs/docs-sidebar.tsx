@@ -30,6 +30,7 @@ const NAV_SECTIONS: readonly NavSection[] = [
       { href: "/docs/sdk", label: "Overview" },
       { href: "/docs/sdk/installation", label: "Installation" },
       { href: "/docs/sdk/react-hooks", label: "React hooks" },
+      { href: "/docs/sdk/surveys", label: "Surveys" },
     ],
     title: "SDK",
   },

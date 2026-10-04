@@ -68,7 +68,7 @@ const ERROR_ROWS = [
     cells: [
       "400",
       "Bad request",
-      "Invalid JSON body or a missing required field.",
+      "Invalid JSON body, a missing required field, or a value the request can’t accept, such as an invalid survey answer. The message says why.",
     ],
     key: "400",
   },
@@ -173,14 +173,14 @@ export default function ApiReferencePage() {
       <DocsSection id="rate-limiting" sections={SECTIONS}>
         <DocsText>
           A public key can create 30 feedback items or comments per minute,
-          start 600 survey responses per minute and request 300 screenshot
-          upload URLs per minute; each limit is separate. A secret key shares
-          300 writes per minute across all of these. While a key is over a
-          limit, those requests return <InlineCode>429</InlineCode>. Saving a
+          start or dismiss 600 survey responses per minute, save 3,000 survey
+          answers or completions per minute and request 300 screenshot upload
+          URLs per minute; each limit is separate. A secret key shares 300
+          writes per minute across all of these. While a key is over a limit,
+          those requests return <InlineCode>429</InlineCode>. Saving a
           screenshot isn’t rate limited, but a public key can attach at most 10
-          screenshots per feedback item. Reads, votes, subscriptions and survey
-          answers aren’t rate limited, and responses carry no rate-limit
-          headers.
+          screenshots per feedback item. Reads, votes and subscriptions aren’t
+          rate limited, and responses carry no rate-limit headers.
         </DocsText>
       </DocsSection>
 

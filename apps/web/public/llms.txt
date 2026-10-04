@@ -17,6 +17,7 @@ Collect feedback through public boards and an embedded widget, organize it with 
 - [CLI documentation](https://www.reflet.app/docs/cli)
 - [API documentation](https://www.reflet.app/docs/api)
 - [SDK installation](https://www.reflet.app/docs/sdk/installation)
+- [In-app surveys with the SDK](https://www.reflet.app/docs/sdk/surveys)
 - [Feedback widget](https://www.reflet.app/docs/widget/feedback-widget)
 - [Authentication](https://www.reflet.app/auth.md)
 - [Agent skills](https://www.reflet.app/.well-known/agent-skills/index.json)

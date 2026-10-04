@@ -46,3 +46,57 @@ export const getDeliveryTarget = internalQuery({
     return { delivery, webhook };
   },
 });
+
+export const getSurveyResponsePayload = internalQuery({
+  args: {
+    organizationId: v.id("organizations"),
+    surveyResponseId: v.id("surveyResponses"),
+  },
+  handler: async (ctx, args) => {
+    const response = await ctx.db.get(args.surveyResponseId);
+    if (
+      response?.organizationId !== args.organizationId ||
+      response.status !== "completed"
+    ) {
+      return null;
+    }
+    const survey = await ctx.db.get(response.surveyId);
+    if (!survey) {
+      return null;
+    }
+    const storedAnswers = await ctx.db
+      .query("surveyAnswers")
+      .withIndex("by_response", (q) => q.eq("responseId", response._id))
+      .collect();
+    const questions = await Promise.all(
+      storedAnswers.map((answer) => ctx.db.get(answer.questionId))
+    );
+    const answers = storedAnswers.flatMap((answer, index) => {
+      const question = questions[index];
+      return question
+        ? [
+            {
+              questionId: question._id,
+              questionTitle: question.title,
+              questionType: question.type,
+              value: answer.value,
+            },
+          ]
+        : [];
+    });
+    return {
+      response: {
+        _id: response._id,
+        answers,
+        channel: response.channel ?? "in_app",
+        completedAt: response.completedAt,
+        endingId: response.endingId,
+        externalUserId: response.externalUserId,
+        pageUrl: response.metadata?.pageUrl,
+        respondentId: response.respondentId,
+        startedAt: response.startedAt,
+      },
+      survey: { _id: survey._id, title: survey.title },
+    };
+  },
+});

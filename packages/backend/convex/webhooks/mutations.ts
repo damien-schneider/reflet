@@ -14,13 +14,19 @@ import { type WebhookEvent, webhookEvent } from "./tableFields";
 const RETRY_DELAYS_MS = [60_000, 600_000];
 const CONSECUTIVE_FAILURES_BEFORE_DISABLE = 20;
 
+type WebhookSubject =
+  | {
+      event: Exclude<WebhookEvent, "survey.response.completed">;
+      feedbackId: Id<"feedback">;
+    }
+  | {
+      event: "survey.response.completed";
+      surveyResponseId: Id<"surveyResponses">;
+    };
+
 export async function emitWebhookEvent(
   ctx: MutationCtx,
-  args: {
-    event: WebhookEvent;
-    feedbackId: Id<"feedback">;
-    organizationId: Id<"organizations">;
-  }
+  args: WebhookSubject & { organizationId: Id<"organizations"> }
 ): Promise<void> {
   const webhooks = await ctx.db
     .query("organizationWebhooks")
@@ -38,7 +44,9 @@ export async function emitWebhookEvent(
       attempts: 0,
       createdAt: now,
       event: args.event,
-      feedbackId: args.feedbackId,
+      ...("feedbackId" in args
+        ? { feedbackId: args.feedbackId }
+        : { surveyResponseId: args.surveyResponseId }),
       organizationId: args.organizationId,
       status: "pending",
       webhookId: webhook._id,

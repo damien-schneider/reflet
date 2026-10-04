@@ -1,3 +1,5 @@
+import type { AnswerValue } from "@reflet/survey-core";
+
 /**
  * Widget configuration options
  */
@@ -9,6 +11,8 @@ export interface WidgetConfig {
     roadmap?: boolean;
     changelog?: boolean;
     createFeedback?: boolean;
+    /** Show in-app surveys automatically when their trigger fires. Defaults to true. */
+    surveys?: boolean;
   };
   /** Widget locale */
   locale?: string;
@@ -116,82 +120,27 @@ export interface Comment {
 }
 
 /**
- * Survey data from API
- */
-export interface SurveyData {
-  _id: string;
-  description?: string;
-  questions: SurveyQuestion[];
-  title: string;
-  triggerConfig?: {
-    pageUrl?: string;
-    delayMs?: number;
-    sampleRate?: number;
-  };
-  triggerType: string;
-}
-
-/**
- * Survey question
- */
-export interface SurveyQuestion {
-  _id: string;
-  conditionalLogic?: {
-    conditions: Array<{
-      questionId: string;
-      operator:
-        | "equals"
-        | "not_equals"
-        | "contains"
-        | "greater_than"
-        | "less_than";
-      value: string | number | boolean;
-    }>;
-    action: "show" | "skip";
-    logicType: "and" | "or";
-  };
-  config?: {
-    minValue?: number;
-    maxValue?: number;
-    minLabel?: string;
-    maxLabel?: string;
-    choices?: string[];
-    placeholder?: string;
-    maxLength?: number;
-  };
-  description?: string;
-  order: number;
-  required: boolean;
-  title: string;
-  type:
-    | "rating"
-    | "nps"
-    | "text"
-    | "single_choice"
-    | "multiple_choice"
-    | "boolean";
-}
-
-/**
  * Callbacks for survey lifecycle events
  */
 export interface SurveyCallbacks {
   onQuestionAnswer?: (data: {
     surveyId: string;
     questionId: string;
-    questionIndex: number;
-    value: string | number | boolean | string[];
+    value: AnswerValue;
   }) => void;
   onSurveyComplete?: (data: {
     surveyId: string;
     responseId: string;
-    totalQuestions: number;
-    answeredQuestions: number;
+    endingId: string;
   }) => void;
   onSurveyDismiss?: (data: {
     surveyId: string;
-    questionIndex: number;
+    responseId: string | null;
     answeredCount: number;
   }) => void;
-  onSurveyStart?: (data: { surveyId: string; title: string }) => void;
+  onSurveyStart?: (data: {
+    surveyId: string;
+    responseId: string;
+    title: string;
+  }) => void;
 }

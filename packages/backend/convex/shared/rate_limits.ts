@@ -86,6 +86,12 @@ export const rateLimiter = new RateLimiter(components.rateLimiter, {
     period: MINUTE,
     rate: 300,
   },
+  publicApiSurveyAnswerPerPublicKey: {
+    capacity: 3000,
+    kind: "token bucket",
+    period: MINUTE,
+    rate: 3000,
+  },
   publicApiSurveyStartPerPublicKey: {
     capacity: 600,
     kind: "token bucket",
@@ -109,6 +115,30 @@ export const rateLimiter = new RateLimiter(components.rateLimiter, {
     kind: "token bucket",
     period: DAY,
     rate: 5,
+  },
+  surveyLinkAnswerPerResponse: {
+    capacity: 60,
+    kind: "token bucket",
+    period: MINUTE,
+    rate: 60,
+  },
+  surveyLinkCompletePerResponse: {
+    capacity: 5,
+    kind: "token bucket",
+    period: MINUTE,
+    rate: 5,
+  },
+  surveyLinkStartPerRespondent: {
+    capacity: 10,
+    kind: "token bucket",
+    period: MINUTE,
+    rate: 10,
+  },
+  surveyLinkStartPerSurvey: {
+    capacity: 600,
+    kind: "token bucket",
+    period: MINUTE,
+    rate: 600,
   },
   widgetConversationPerVisitor: {
     capacity: 5,

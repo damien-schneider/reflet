@@ -22,6 +22,7 @@ const SECTIONS = [
   { id: "react", label: "React component" },
   { id: "configuration", label: "Configuration" },
   { id: "user-identification", label: "User identification" },
+  { id: "surveys", label: "Surveys" },
 ] as const;
 
 const SCRIPT_TAG = `<script
@@ -40,6 +41,64 @@ function App() {
     </RefletProvider>
   );
 }`;
+
+const SURVEY_CONFIG = `window.Reflet = {
+  publicKey: "fb_pub_xxx",
+  // Set to false to stop surveys from showing automatically
+  features: { surveys: true },
+  survey: {
+    onSurveyStart: ({ surveyId, responseId, title }) => {},
+    onQuestionAnswer: ({ surveyId, questionId, value }) => {},
+    onSurveyComplete: ({ surveyId, responseId, endingId }) => {},
+    onSurveyDismiss: ({ surveyId, responseId, answeredCount }) => {},
+  },
+};`;
+
+const SURVEY_METHODS = `const reflet = window.__refletFeedbackWidgetInstance;
+
+// Shows surveys whose trigger is the custom event "checkout_completed"
+reflet.track("checkout_completed");
+
+// Shows a survey on demand, including manual ones. Resolves false when it can't be shown now.
+await reflet.showSurvey("survey_id");
+
+// Closes the open survey
+reflet.dismissSurvey();`;
+
+const SURVEY_METHOD_ROWS = [
+  {
+    cells: [
+      "track(eventName)",
+      "string",
+      "Shows surveys triggered by this custom event, if the visitor is eligible.",
+    ],
+    key: "track",
+  },
+  {
+    cells: [
+      "showSurvey(surveyId)",
+      "string → Promise<boolean>",
+      "Shows one survey now. Works for manual surveys. Only one survey is open at a time.",
+    ],
+    key: "showSurvey",
+  },
+  {
+    cells: [
+      "dismissSurvey()",
+      "—",
+      "Closes the open survey and records it as dismissed.",
+    ],
+    key: "dismissSurvey",
+  },
+  {
+    cells: [
+      "features.surveys",
+      "boolean",
+      "Set to false to turn off automatic surveys. Defaults to true.",
+    ],
+    key: "features-surveys",
+  },
+] as const;
 
 const COLUMNS = [
   { kind: "name", label: "Attribute / prop" },
@@ -107,6 +166,28 @@ export default function FeedbackWidgetPage() {
             SDK installation guide
           </DocsLink>{" "}
           covers SSO user signing.
+        </DocsText>
+      </DocsSection>
+
+      <DocsSection id="surveys" sections={SECTIONS}>
+        <DocsText>
+          Active surveys show up on their own. The widget loads the surveys each
+          visitor may see, then shows one when its trigger fires: a page visit,
+          time on page, exit intent, a custom event or a submitted feedback
+          post. Display frequency, sampling, schedule and response limits come
+          from the survey settings in your dashboard. Answers branch to the
+          right next question and ending as the visitor goes.
+        </DocsText>
+        <CodeBlock code={SURVEY_CONFIG} />
+        <DocsText>
+          Use the widget instance to trigger surveys from your app.
+        </DocsText>
+        <CodeBlock code={SURVEY_METHODS} />
+        <ReferenceTable columns={COLUMNS} rows={SURVEY_METHOD_ROWS} />
+        <DocsText>
+          Building with React? The{" "}
+          <DocsLink href="/docs/sdk/surveys">SDK surveys guide</DocsLink> covers
+          the same surveys as a component, plus custom survey UIs.
         </DocsText>
       </DocsSection>
     </DocsPage>

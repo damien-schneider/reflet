@@ -8,6 +8,7 @@
       "outputs": [".next/**", "dist/**", "public/r/**"],
       "env": [
         "CONVEX_DEPLOY_KEY",
+        "NEXT_PUBLIC_CONVEX_SITE_URL",
         "OPENROUTER_API_KEY",
         "POSTHOG_PERSONAL_API_KEY",
         "POSTHOG_PROJECT_ID"

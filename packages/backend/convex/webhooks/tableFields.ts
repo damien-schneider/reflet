@@ -5,6 +5,7 @@ export const WEBHOOK_EVENTS = [
   "feedback.created",
   "feedback.status_changed",
   "feedback.github_issue_created",
+  "survey.response.completed",
 ] as const;
 
 export type WebhookEvent = (typeof WEBHOOK_EVENTS)[number];
@@ -12,7 +13,8 @@ export type WebhookEvent = (typeof WEBHOOK_EVENTS)[number];
 export const webhookEvent = v.union(
   v.literal("feedback.created"),
   v.literal("feedback.status_changed"),
-  v.literal("feedback.github_issue_created")
+  v.literal("feedback.github_issue_created"),
+  v.literal("survey.response.completed")
 );
 
 export const webhookTables = {
@@ -32,7 +34,7 @@ export const webhookTables = {
     attempts: v.number(),
     createdAt: v.number(),
     event: webhookEvent,
-    feedbackId: v.id("feedback"),
+    feedbackId: v.optional(v.id("feedback")),
     lastError: v.optional(v.string()),
     nextAttemptAt: v.optional(v.number()),
     organizationId: v.id("organizations"),
@@ -43,6 +45,7 @@ export const webhookTables = {
       v.literal("failed"),
       v.literal("skipped")
     ),
+    surveyResponseId: v.optional(v.id("surveyResponses")),
     webhookId: v.id("organizationWebhooks"),
   })
     .index("by_webhook", ["webhookId"])

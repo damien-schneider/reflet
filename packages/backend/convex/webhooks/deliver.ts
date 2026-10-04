@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
-import { internalAction } from "../_generated/server";
+import type { Doc } from "../_generated/dataModel";
+import { type ActionCtx, internalAction } from "../_generated/server";
 import { hmacSha256Hex } from "../shared/hmac";
 import {
   describeFetchFailure,
@@ -8,6 +9,33 @@ import {
 } from "../shared/outbound/public_fetch";
 
 const DELIVERY_TIMEOUT_MS = 10_000;
+
+const loadPayloadData = async (
+  ctx: ActionCtx,
+  delivery: Doc<"webhookDeliveries">
+): Promise<Record<string, unknown> | null> => {
+  if (delivery.surveyResponseId) {
+    return await ctx.runQuery(
+      internal.webhooks.queries.getSurveyResponsePayload,
+      {
+        organizationId: delivery.organizationId,
+        surveyResponseId: delivery.surveyResponseId,
+      }
+    );
+  }
+  if (!delivery.feedbackId) {
+    return null;
+  }
+  const feedback = await ctx.runQuery(
+    internal.feedback.api_public_list.getFeedbackByOrganization,
+    {
+      feedbackId: delivery.feedbackId,
+      includePrivateContext: true,
+      organizationId: delivery.organizationId,
+    }
+  );
+  return feedback?.publication === "approved" ? { feedback } : null;
+};
 
 export const deliver = internalAction({
   args: { deliveryId: v.id("webhookDeliveries") },
@@ -21,17 +49,8 @@ export const deliver = internalAction({
     }
     const { delivery, webhook } = target;
 
-    const feedback = await ctx.runQuery(
-      internal.feedback.api_public_list.getFeedbackByOrganization,
-      {
-        feedbackId: delivery.feedbackId,
-        includePrivateContext: true,
-        organizationId: delivery.organizationId,
-      }
-    );
-    const isDeliverable =
-      feedback?.publication === "approved" && webhook.isActive;
-    if (!isDeliverable) {
+    const data = await loadPayloadData(ctx, delivery);
+    if (!(data && webhook.isActive)) {
       await ctx.runMutation(internal.webhooks.mutations.recordResult, {
         deliveryId: delivery._id,
         outcome: "skipped",
@@ -41,7 +60,7 @@ export const deliver = internalAction({
 
     const body = JSON.stringify({
       createdAt: delivery.createdAt,
-      data: { feedback },
+      data,
       event: delivery.event,
       id: delivery._id,
       organizationId: delivery.organizationId,

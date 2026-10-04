@@ -112,7 +112,12 @@ const nextConfig: NextConfig = {
     ];
   },
 
-  transpilePackages: ["@reflet/backend", "@reflet/env", "@reflet/ui"],
+  transpilePackages: [
+    "@reflet/backend",
+    "@reflet/env",
+    "@reflet/survey-core",
+    "@reflet/ui",
+  ],
   turbopack: {
     resolveAlias: {
       // Browser fallbacks for Node.js modules

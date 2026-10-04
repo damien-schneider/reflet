@@ -2,9 +2,9 @@ import { cpSync } from "node:fs";
 import { resolve } from "node:path";
 import { defineConfig } from "vite";
 
-const CONVEX_URL =
-  process.env.NEXT_PUBLIC_CONVEX_URL ||
-  "https://grateful-butterfly-1.convex.cloud";
+const PRODUCTION_API_URL = "https://harmless-clam-802.convex.site";
+
+const API_URL = process.env.NEXT_PUBLIC_CONVEX_SITE_URL || PRODUCTION_API_URL;
 
 export default defineConfig({
   build: {
@@ -17,7 +17,7 @@ export default defineConfig({
     outDir: "dist",
   },
   define: {
-    __CONVEX_URL__: JSON.stringify(CONVEX_URL),
+    __API_URL__: JSON.stringify(API_URL),
     "process.env.NODE_ENV": JSON.stringify("production"),
   },
   plugins: [
@@ -28,14 +28,10 @@ export default defineConfig({
           import.meta.dirname,
           "../../apps/web/public/widget/reflet-feedback.v1.js"
         );
-        try {
-          cpSync(src, dest, { recursive: true });
-          console.log(
-            "✓ Feedback widget copied to apps/web/public/widget/reflet-feedback.v1.js"
-          );
-        } catch {
-          console.warn("⚠ Could not copy feedback widget to web public folder");
-        }
+        cpSync(src, dest, { recursive: true });
+        console.log(
+          "✓ Feedback widget copied to apps/web/public/widget/reflet-feedback.v1.js"
+        );
       },
       name: "copy-to-web-public",
     },

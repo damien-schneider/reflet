@@ -1,3 +1,11 @@
+import type { PublicSurvey } from "@reflet/survey-core";
+import { parseJsonSafely, throwResponseError } from "./http-response";
+import { surveyControllers, surveyRegistryKey } from "./surveys/registry";
+import {
+  createSurveyApi,
+  type StartSurveyResponseParams,
+  type SubmitSurveyAnswerParams,
+} from "./surveys/survey-api";
 import {
   type AddCommentParams,
   type AddCommentResponse,
@@ -9,7 +17,6 @@ import {
   type FeedbackListParams,
   type FeedbackListResponse,
   type OrganizationConfig,
-  RefletAuthError,
   type RefletConfig,
   RefletError,
   RefletNotFoundError,
@@ -20,18 +27,9 @@ import {
   type UnsubscribeResponse,
   type VoteResponse,
 } from "./types";
+import { createUnsignedUserToken } from "./user-token";
 
 export const DEFAULT_API_URL = "https://harmless-clam-802.convex.site";
-const UNSIGNED_TOKEN_ALGORITHM = "none";
-
-/** btoa is Latin1-only — a name like "José" would throw. */
-function base64Utf8(value: string): string {
-  let binary = "";
-  for (const byte of new TextEncoder().encode(value)) {
-    binary += String.fromCharCode(byte);
-  }
-  return btoa(binary);
-}
 
 /**
  * Reflet SDK Client
@@ -60,6 +58,9 @@ export class Reflet {
   private readonly baseUrl: string;
   private userToken: string | undefined;
   private user: RefletUser | undefined;
+  private readonly surveys = createSurveyApi((method, path, body) =>
+    this.request(method, path, body)
+  );
 
   constructor(config: RefletConfig) {
     this.publicKey = config.publicKey;
@@ -147,11 +148,15 @@ export class Reflet {
    * Works anonymously or with user identification
    */
   async create(params: CreateFeedbackParams): Promise<CreateFeedbackResponse> {
-    return await this.request<CreateFeedbackResponse>(
+    const created = await this.request<CreateFeedbackResponse>(
       "POST",
       "/api/v1/feedback/create",
       params
     );
+    surveyControllers
+      .get(surveyRegistryKey(this.publicKey, this.baseUrl))
+      ?.notifyFeedbackSubmitted();
+    return created;
   }
 
   /**
@@ -262,6 +267,31 @@ export class Reflet {
     return await this.request<ChangelogEntry[]>("GET", url);
   }
 
+  /** Surveys this visitor may see now; schedule, cap, frequency and sampling are applied by the API. */
+  getEligibleSurveys(): Promise<PublicSurvey[]> {
+    return this.surveys.eligible();
+  }
+
+  /** Opens a response before the first answer is saved. */
+  startSurveyResponse(params: StartSurveyResponseParams) {
+    return this.surveys.start(params);
+  }
+
+  /** Saves one answer; `value: null` clears it. */
+  submitSurveyAnswer(params: SubmitSurveyAnswerParams) {
+    return this.surveys.submitAnswer(params);
+  }
+
+  /** Finishes a response; the API walks the flow and returns the ending reached. */
+  completeSurveyResponse(responseId: string) {
+    return this.surveys.complete(responseId);
+  }
+
+  /** Marks an unfinished response abandoned. */
+  dismissSurveyResponse(responseId: string): Promise<void> {
+    return this.surveys.dismiss(responseId);
+  }
+
   /**
    * Build request headers with authentication
    */
@@ -271,52 +301,13 @@ export class Reflet {
       "Content-Type": "application/json",
     };
 
-    const token = this.userToken ?? this.generateUserToken();
+    const token =
+      this.userToken ?? (this.user && createUnsignedUserToken(this.user));
     if (token) {
       headers["X-User-Token"] = token;
     }
 
     return headers;
-  }
-
-  /**
-   * Parse JSON response text safely.
-   * Returns `unknown` — callers must narrow before use.
-   */
-  private parseJsonSafely(text: string, status: number): unknown {
-    try {
-      return JSON.parse(text);
-    } catch (parseError) {
-      throw new RefletError(
-        `Invalid response: ${parseError instanceof Error ? parseError.message : "Failed to parse JSON"}`,
-        status
-      );
-    }
-  }
-
-  /**
-   * Type guard for API error responses
-   */
-  private isErrorResponse(data: unknown): data is { error: string } {
-    return (
-      typeof data === "object" &&
-      data !== null &&
-      "error" in data &&
-      typeof (data as Record<string, unknown>).error === "string"
-    );
-  }
-
-  /**
-   * Throw appropriate error based on status code
-   */
-  private throwHttpError(message: string, status: number): never {
-    if (status === 401) {
-      throw new RefletAuthError(message);
-    }
-    if (status === 404) {
-      throw new RefletNotFoundError(message);
-    }
-    throw new RefletError(message, status);
   }
 
   /**
@@ -330,7 +321,7 @@ export class Reflet {
     const response = await this.send(method, path, body);
 
     if (!response.ok) {
-      return this.throwResponseError(response);
+      return throwResponseError(response);
     }
 
     const text = await response.text();
@@ -343,7 +334,7 @@ export class Reflet {
     }
 
     // Standard unknown → T assertion for runtime-parsed JSON
-    return this.parseJsonSafely(text, response.status) as T;
+    return parseJsonSafely(text, response.status) as T;
   }
 
   private async send(
@@ -364,45 +355,5 @@ export class Reflet {
           : "Failed to connect";
       throw new RefletError(`Network error: ${message}`, 0);
     }
-  }
-
-  private async throwResponseError(response: Response): Promise<never> {
-    const fallbackMessage = `Request failed with status ${response.status}`;
-    const text = await response.text();
-    if (!text) {
-      this.throwHttpError(fallbackMessage, response.status);
-    }
-
-    const data = this.parseJsonSafely(text, response.status);
-    const errorMessage = this.isErrorResponse(data)
-      ? data.error
-      : fallbackMessage;
-    this.throwHttpError(errorMessage, response.status);
-  }
-
-  /**
-   * Unsigned identity from the `user` option. The API attributes reports with
-   * it but refuses voting, commenting and subscribing — those need `signUser`.
-   */
-  private generateUserToken(): string | undefined {
-    if (!this.user) {
-      return;
-    }
-
-    const payload = {
-      email: this.user.email,
-      exp: Math.floor(Date.now() / 1000) + 86_400, // 24 hours
-      iat: Math.floor(Date.now() / 1000),
-      id: this.user.id,
-      name: this.user.name,
-    };
-
-    const header = base64Utf8(
-      JSON.stringify({ alg: UNSIGNED_TOKEN_ALGORITHM, typ: "JWT" })
-    );
-    const payloadB64 = base64Utf8(JSON.stringify(payload));
-
-    // Empty signature — the server treats this identity as unverified
-    return `${header}.${payloadB64}.`;
   }
 }

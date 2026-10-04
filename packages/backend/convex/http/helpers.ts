@@ -1,3 +1,4 @@
+import { ConvexError } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Id, TableNames } from "../_generated/dataModel";
 import { httpAction } from "../_generated/server";
@@ -47,6 +48,9 @@ const CONVEX_UNCAUGHT_PREFIX_PATTERN = /^Uncaught \w*Error: /;
 
 /** Keeps the thrown message but drops the stack Convex appends across function boundaries. */
 export function clientErrorMessage(error: unknown): string {
+  if (error instanceof ConvexError && typeof error.data === "string") {
+    return error.data;
+  }
   const firstLine =
     error instanceof Error ? (error.message.split("\n")[0] ?? "") : "";
   return (
@@ -258,7 +262,10 @@ export function apiRoute<TAuth extends ApiRequestActor>(
     try {
       response = await respond(ctx, request, auth);
     } catch (error) {
-      response = errorResponse(clientErrorMessage(error), 500);
+      response = errorResponse(
+        clientErrorMessage(error),
+        error instanceof ConvexError ? 400 : 500
+      );
     }
     await recordFailedApiRequest(ctx, request, auth, response);
     return response;

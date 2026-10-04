@@ -1,6 +1,7 @@
 import {
   ChartBar,
   CheckSquare,
+  Quotes,
   RadioButton,
   Star,
   TextAa,
@@ -14,5 +15,6 @@ export const QUESTION_TYPE_ICONS = {
   nps: ChartBar,
   rating: Star,
   single_choice: RadioButton,
+  statement: Quotes,
   text: TextAa,
 } as const satisfies Record<QuestionType, unknown>;

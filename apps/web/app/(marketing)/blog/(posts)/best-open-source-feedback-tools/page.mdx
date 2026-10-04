@@ -72,6 +72,7 @@ Before comparing tools, it helps to know what features actually matter for a fee
 It also exposes hooks like `useFeedbackList()` and `useVote()` for custom UI.
 
 - **Two-Way GitHub Sync** — Link feedback directly to GitHub issues. When a pull request merges, the linked feedback request automatically moves to "Shipped" and a changelog entry is generated. No other open source tool in this list offers this.
+- **In-App Surveys** — Run NPS, CSAT and custom surveys inside your product with the same SDK or widget. Answers can branch to different questions and endings, surveys fire on page visits, time on page, exit intent, custom events or submitted feedback, and display frequency and sampling keep them from nagging users. Any survey can also be shared as a hosted link, with NPS, completion and per-question drop-off in the results.
 - **Real-Time Everything** — Built on Convex — votes, comments, and status changes sync instantly across all connected users without polling or page refreshes.
 - **REST API & Webhooks** — Full CRUD API for programmatic access to all feedback data. Webhooks fire on every status transition, making it straightforward to connect Reflet to any internal workflow.
 - **Integrations** — Slack, Discord, and more. Get notified when feedback changes status or create feedback directly from Slack and Discord messages.
@@ -85,7 +86,7 @@ Reflet is licensed under the SSPL (Server Side Public License) and the source co
 
 ### Tradeoffs
 
-Reflet is newer than tools like Fider, so its community and ecosystem are still growing. NPS surveys are not currently part of the product.
+Reflet is newer than tools like Fider, so its community and ecosystem are still growing. Its surveys target by page, trigger and sample rather than by user attributes or segments.
 
 ### Pricing
 
@@ -274,7 +275,7 @@ Plane has a free self-hosted version and a free cloud tier, with paid plans for 
 
 **You want a full feedback-to-roadmap workflow with AI triage, an embeddable widget, and GitHub sync:** Reflet. It is the only tool in this list that combines feedback boards, kanban roadmap, changelog, AI-powered triage, a TypeScript SDK, two-way GitHub sync, and Slack/Discord integrations in a single cohesive real-time product.
 
-**You want surveys and in-product feedback research:** Formbricks. It is purpose-built for that use case.
+**You want surveys and in-product feedback research:** Formbricks is purpose-built for that use case, with segments based on user attributes. If you also want a feedback board, roadmap and changelog, Reflet runs in-app NPS, CSAT and custom surveys alongside them.
 
 **You need the most features and are willing to accept more setup complexity:** ClearFlask.
 

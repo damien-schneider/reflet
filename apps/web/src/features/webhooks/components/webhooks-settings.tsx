@@ -31,6 +31,7 @@ const EVENT_OPTIONS = [
   { hint: "Approved feedback appears", value: "feedback.created" },
   { hint: "A status changes", value: "feedback.status_changed" },
   { hint: "A GitHub issue is linked", value: "feedback.github_issue_created" },
+  { hint: "Someone finishes a survey", value: "survey.response.completed" },
 ] as const;
 
 type WebhookEvent = (typeof EVENT_OPTIONS)[number]["value"];

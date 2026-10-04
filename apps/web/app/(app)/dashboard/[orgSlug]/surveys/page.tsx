@@ -12,18 +12,25 @@ import { toast } from "@ctrl-ui/react/ui/toast";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
+import { ConvexError } from "convex/values";
+import { useRouter } from "next/navigation";
 import { use } from "react";
 import { OrgNotFound } from "@/features/dashboard/components/org-not-found";
-import { CreateSurveyDialog } from "@/features/surveys/components/create-survey-dialog";
+import { CreateSurveyDialog } from "@/features/surveys/components/create/create-survey-dialog";
 import {
   SurveyList,
   SurveyListSkeleton,
-} from "@/features/surveys/components/survey-list";
+} from "@/features/surveys/components/list/survey-list";
 import { STATUS_LABELS } from "@/features/surveys/lib/constants";
 import type { SurveyStatus, SurveyStatusFilter } from "@/store/surveys";
 
 const isSurveyStatus = (value: string | undefined): value is SurveyStatus =>
   value !== undefined && value in STATUS_LABELS;
+
+const serverReasonOf = (error: unknown): string | undefined =>
+  error instanceof ConvexError && typeof error.data === "string"
+    ? error.data
+    : undefined;
 
 export default function SurveysPage({
   params,
@@ -34,40 +41,62 @@ export default function SurveysPage({
 }) {
   const { orgSlug } = use(params);
   const { status } = use(searchParams);
+  const router = useRouter();
   const statusFilter: SurveyStatusFilter = isSurveyStatus(status)
     ? status
     : "all";
   const org = useQuery(api.organizations.queries.getBySlug, { slug: orgSlug });
   const surveys = useQuery(
     api.surveys.queries.list,
-    org?._id ? { organizationId: org._id } : "skip"
+    org?._id
+      ? {
+          organizationId: org._id,
+          status: statusFilter === "all" ? undefined : statusFilter,
+        }
+      : "skip"
   );
   const updateStatus = useMutation(api.surveys.mutations.updateStatus);
   const deleteSurveyMutation = useMutation(api.surveys.mutations.deleteSurvey);
+  const duplicateSurvey = useMutation(api.surveys.mutations.duplicate);
 
   const handleStatusChange = async (
     surveyId: Id<"surveys">,
-    status: SurveyStatus
+    nextStatus: SurveyStatus
   ) => {
     try {
-      await updateStatus({ status, surveyId });
-    } catch {
-      toast.error("Couldn’t change the survey status. Try again.");
+      await updateStatus({ status: nextStatus, surveyId });
+    } catch (error) {
+      toast.error("Couldn’t change the survey status.", {
+        description: serverReasonOf(error) ?? "Try again.",
+      });
     }
   };
 
   const handleDelete = async (surveyId: Id<"surveys">) => {
     try {
       await deleteSurveyMutation({ surveyId });
-    } catch {
-      toast.error("Couldn’t delete the survey. Try again.");
+    } catch (error) {
+      toast.error("Couldn’t delete the survey.", {
+        description: serverReasonOf(error) ?? "Try again.",
+      });
     }
   };
 
-  const filteredSurveys =
-    statusFilter === "all"
-      ? surveys
-      : surveys?.filter((s) => s.status === statusFilter);
+  const handleDuplicate = async (surveyId: Id<"surveys">) => {
+    try {
+      const copyId = await duplicateSurvey({ surveyId });
+      toast.success("Survey duplicated as a draft", {
+        actionProps: {
+          children: "Open",
+          onClick: () => router.push(`/dashboard/${orgSlug}/surveys/${copyId}`),
+        },
+      });
+    } catch (error) {
+      toast.error("Couldn’t duplicate the survey.", {
+        description: serverReasonOf(error) ?? "Try again.",
+      });
+    }
+  };
 
   if (org === null) {
     return <OrgNotFound />;
@@ -101,10 +130,11 @@ export default function SurveysPage({
       <PageBody>
         <SurveyList
           onDelete={handleDelete}
+          onDuplicate={handleDuplicate}
           onStatusChange={handleStatusChange}
           orgSlug={orgSlug}
           statusFilter={statusFilter}
-          surveys={filteredSurveys}
+          surveys={surveys}
         />
       </PageBody>
     </PageLayout>

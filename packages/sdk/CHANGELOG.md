@@ -5,6 +5,15 @@ All notable changes to `reflet-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- In-app surveys. Mount `<RefletSurveys />` inside `RefletProvider` and every survey the visitor is eligible for is armed — page visit (including client-side navigation), time on page, exit intent, custom events via `useRefletSurveys().track(name)`, and feedback sent from the SDK (the floating widget, `FeedbackDialog`, `useCreateFeedback` or `reflet.create`). One survey shows at a time, in a shadow root at the position set in the dashboard, with branching, several endings, Back, a progress bar, keyboard shortcuts (Enter, Escape, digits, Y/N) and light, dark or automatic theme.
+- `useRefletSurveys()` returns `track`, `showSurvey`, `dismissSurvey` and `activeSurveyId`; calls made before surveys load are queued.
+- `useSurveySession(survey)` and `<SurveyCard />` to run and render surveys in your own UI, also exported from the new `reflet-sdk/surveys` entry with `previewTransport` and `SurveySession`.
+- `Reflet` client methods `getEligibleSurveys`, `startSurveyResponse`, `submitSurveyAnswer`, `completeSurveyResponse` and `dismissSurveyResponse`, and the survey types (`PublicSurvey`, `SurveyQuestion`, `AnswerValue`…).
+
 ## [0.6.5] - 2026-10-04
 
 ### Changed

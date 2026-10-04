@@ -86,7 +86,11 @@ describe("WebhooksSettings", () => {
     });
     expect(mockCreate).toHaveBeenCalledWith({
       description: undefined,
-      events: ["feedback.created", "feedback.github_issue_created"],
+      events: [
+        "feedback.created",
+        "feedback.github_issue_created",
+        "survey.response.completed",
+      ],
       organizationId,
       url: "https://example.com/hook",
     });
@@ -112,6 +116,7 @@ describe("WebhooksSettings", () => {
       "feedback.created",
       "feedback.status_changed",
       "feedback.github_issue_created",
+      "survey.response.completed",
     ]) {
       fireEvent.click(screen.getByLabelText(event));
     }

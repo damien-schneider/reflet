@@ -22,10 +22,12 @@ const CORS_PREFLIGHT_PATHS = [
   "/api/v1/feedback/similar",
   "/api/v1/feedback/screenshot/upload-url",
   "/api/v1/feedback/screenshot/save",
+  "/api/v1/surveys/eligible",
   "/api/v1/surveys/active",
   "/api/v1/surveys/respond/start",
   "/api/v1/surveys/respond/answer",
   "/api/v1/surveys/respond/complete",
+  "/api/v1/surveys/respond/dismiss",
 ] as const;
 
 export function registerPublicApiRoutes(http: Router): void {

@@ -81,6 +81,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "monthly",
       lastModified: now,
       priority: 0.7,
+      url: `${BASE_URL}/docs/sdk/surveys`,
+    },
+    {
+      changeFrequency: "monthly",
+      lastModified: now,
+      priority: 0.7,
       url: `${BASE_URL}/docs/api`,
     },
     {
