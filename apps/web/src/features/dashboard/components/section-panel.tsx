@@ -49,7 +49,7 @@ export function SectionPanel({
       label={title}
     >
       <SidebarHeader className="h-14 shrink-0 justify-center px-4">
-        <h2 className="font-display text-heading-2 tracking-tight">{title}</h2>
+        <h2 className="text-heading-2 tracking-tight">{title}</h2>
       </SidebarHeader>
       {children}
       <SidebarRail aria-label="Resize panel" resizable />
