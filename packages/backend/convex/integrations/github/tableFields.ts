@@ -137,13 +137,9 @@ export const githubTables = {
   projectSetupResults: defineTable({
     changelogConfig: v.optional(
       v.object({
-        // Unused: drop once migrations/rename_has_conventional_commits has run everywhere.
-        hasConventionalCommits: v.optional(v.boolean()),
         hasSemverTags: v.optional(v.boolean()),
         importExisting: v.boolean(),
         releaseCount: v.optional(v.number()),
-        // Unused: drop once migrations/strip_sync_direction has run everywhere.
-        syncDirection: v.optional(v.string()),
         targetBranch: v.string(),
         versionPrefix: v.string(),
         workflow: v.union(
@@ -227,7 +223,6 @@ export const githubTables = {
     features: v.optional(v.string()),
     githubConnectionId: v.id("githubConnections"),
     organizationId: v.id("organizations"),
-    productAnalysis: v.optional(v.string()),
     repoStructure: v.optional(v.string()),
     status: repoAnalysisStatus,
     summary: v.optional(v.string()),

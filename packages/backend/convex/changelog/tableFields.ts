@@ -72,8 +72,6 @@ export const changelogTables = {
     files: v.optional(v.array(releaseFileValidator)),
     headRef: v.optional(v.string()),
     headSha: v.optional(v.string()),
-    // Unused: drop once migrations/rename_previous_tag has run everywhere.
-    previousTag: v.optional(v.string()),
     pullRequests: v.optional(v.array(releasePullRequestValidator)),
     releaseId: v.id("releases"),
     totalCommits: v.optional(v.number()),
