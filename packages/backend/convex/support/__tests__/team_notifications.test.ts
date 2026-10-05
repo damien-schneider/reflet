@@ -1,9 +1,14 @@
 /// <reference types="vite/client" />
-import { describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { api, internal } from "../../_generated/api";
 import type { Id } from "../../_generated/dataModel";
 import { seedOrganization } from "../../test.fixtures";
 import { setupTest } from "../../test.helpers";
+
+afterEach(() => {
+  vi.useRealTimers();
+  vi.unstubAllEnvs();
+});
 
 const OWNER = { _id: "user_owner", email: "owner@acme.dev" };
 const ADMIN = { _id: "user_admin", email: "admin@acme.dev" };
@@ -341,8 +346,6 @@ describe("starting an email conversation", () => {
         messageId,
       });
     }
-    vi.unstubAllEnvs();
-    vi.useRealTimers();
 
     const sentSubjects = await t.run(async (ctx) =>
       (await ctx.db.query("emailSendLog").collect()).map((log) => log.subject)
