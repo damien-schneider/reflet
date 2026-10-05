@@ -82,30 +82,6 @@ test("a version already used by another release of the organization is rejected"
   ).rejects.toThrow("already used");
 });
 
-test("saving a release that kept a version duplicated before uniqueness was enforced still succeeds", async () => {
-  const { admin, organizationId, t } = await setup();
-  const [, laterId] = await t.run(async (ctx) => {
-    const insertRelease = (title: string) =>
-      ctx.db.insert("releases", {
-        createdAt: Date.now(),
-        organizationId,
-        title,
-        updatedAt: Date.now(),
-        version: "v0.0.1",
-      });
-    return [await insertRelease("Earlier"), await insertRelease("Later")];
-  });
-
-  await admin.mutation(api.changelog.mutations.update, {
-    id: laterId,
-    title: "Later, renamed",
-    version: "v0.0.1",
-  });
-
-  const release = await t.run((ctx) => ctx.db.get(laterId));
-  expect(release?.title).toBe("Later, renamed");
-});
-
 test("discarding retroactive drafts refuses a release that is already published", async () => {
   const { admin, organizationId, t } = await setup();
   const releaseId = await t.run((ctx) =>

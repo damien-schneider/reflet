@@ -69,6 +69,7 @@ import type * as changelog_scheduling from "../changelog/scheduling.js";
 import type * as changelog_semver from "../changelog/semver.js";
 import type * as changelog_source from "../changelog/source.js";
 import type * as changelog_source_actions from "../changelog/source_actions.js";
+import type * as changelog_source_pull_requests from "../changelog/source_pull_requests.js";
 import type * as changelog_subscriptions from "../changelog/subscriptions.js";
 import type * as changelog_tableFields from "../changelog/tableFields.js";
 import type * as crons from "../crons.js";
@@ -436,6 +437,7 @@ declare const fullApi: ApiFromModules<{
   "changelog/semver": typeof changelog_semver;
   "changelog/source": typeof changelog_source;
   "changelog/source_actions": typeof changelog_source_actions;
+  "changelog/source_pull_requests": typeof changelog_source_pull_requests;
   "changelog/subscriptions": typeof changelog_subscriptions;
   "changelog/tableFields": typeof changelog_tableFields;
   crons: typeof crons;

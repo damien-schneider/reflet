@@ -1,5 +1,4 @@
 import { v } from "convex/values";
-import { z } from "zod";
 import { internal } from "../_generated/api";
 import type { Doc } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
@@ -17,43 +16,11 @@ import {
 } from "./retroactive_pipeline/github";
 import {
   MAX_SOURCE_COMMITS,
-  MAX_SOURCE_PULL_REQUESTS,
   type ReleaseSource,
   selectReleaseRange,
 } from "./source";
-import {
-  type ReleaseCommit,
-  type ReleasePullRequest,
-  releaseSourceValidator,
-} from "./tableFields";
-
-const MAX_PULL_REQUEST_BODY_LENGTH = 2000;
-const PULL_REQUESTS_PER_COMMIT = 5;
-
-const pullRequestResponseSchema = z.object({
-  data: z
-    .object({
-      repository: z.record(
-        z.string(),
-        z
-          .object({
-            associatedPullRequests: z.object({
-              nodes: z.array(
-                z.object({
-                  body: z.string().nullable(),
-                  number: z.number(),
-                  title: z.string(),
-                  url: z.string(),
-                })
-              ),
-            }),
-          })
-          .nullable()
-      ),
-    })
-    .nullish(),
-  errors: z.array(z.object({ message: z.string() })).optional(),
-});
+import { fetchPullRequestsBestEffort } from "./source_pull_requests";
+import { releaseSourceValidator } from "./tableFields";
 
 async function findPreviousHeadSha(
   ctx: QueryCtx,
@@ -155,65 +122,6 @@ async function fetchRecentCommits(
   };
 }
 
-async function fetchPullRequests(
-  token: string,
-  repoFullName: string,
-  commits: ReleaseCommit[]
-): Promise<ReleasePullRequest[]> {
-  if (commits.length === 0) {
-    return [];
-  }
-  const [owner, name] = repoFullName.split("/");
-  const commitFields = commits
-    .map(
-      (commit, index) =>
-        `c${index}: object(oid: "${commit.sha}") { ... on Commit { associatedPullRequests(first: ${PULL_REQUESTS_PER_COMMIT}) { nodes { number title body url } } } }`
-    )
-    .join("\n");
-  const response = await fetch(`${GITHUB_API_URL}/graphql`, {
-    body: JSON.stringify({
-      query: `query($owner: String!, $name: String!) { repository(owner: $owner, name: $name) { ${commitFields} } }`,
-      variables: { name, owner },
-    }),
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    method: "POST",
-  });
-  if (!response.ok) {
-    throw new Error(
-      `GitHub GraphQL ${response.status} ${response.statusText} while loading pull requests`
-    );
-  }
-  const { data, errors } = pullRequestResponseSchema.parse(
-    await response.json()
-  );
-  if (!data) {
-    console.warn(
-      `GitHub GraphQL returned no pull requests: ${errors?.map((error) => error.message).join("; ")}`
-    );
-    return [];
-  }
-  const byNumber = new Map<number, ReleasePullRequest>();
-  for (const commitNode of Object.values(data.repository)) {
-    for (const pullRequest of commitNode?.associatedPullRequests.nodes ?? []) {
-      if (byNumber.has(pullRequest.number)) {
-        continue;
-      }
-      byNumber.set(pullRequest.number, {
-        body: pullRequest.body
-          ? pullRequest.body.slice(0, MAX_PULL_REQUEST_BODY_LENGTH)
-          : undefined,
-        number: pullRequest.number,
-        title: pullRequest.title,
-        url: pullRequest.url,
-      });
-    }
-  }
-  return [...byNumber.values()].slice(0, MAX_SOURCE_PULL_REQUESTS);
-}
-
 export const resolveReleaseSource = action({
   args: { releaseId: v.id("releases"), version: v.optional(v.string()) },
   handler: async (ctx, args): Promise<ReleaseSource> => {
@@ -251,7 +159,7 @@ export const resolveReleaseSource = action({
       headRef: range.headRef,
       headSha,
       maintainerNotes: maintainerNotes ?? undefined,
-      pullRequests: await fetchPullRequests(
+      pullRequests: await fetchPullRequestsBestEffort(
         token,
         repoFullName,
         window.commits
