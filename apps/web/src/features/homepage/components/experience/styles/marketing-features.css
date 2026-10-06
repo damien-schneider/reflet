@@ -42,10 +42,9 @@
 :where(.marketing-code) {
   min-width: 0;
   padding: 22px 26px;
-  background: var(--card);
-  border: 1px solid var(--marketing-edge);
+  background: var(--marketing-stage);
   border-radius: 28px;
-  box-shadow: var(--marketing-float-shadow);
+  box-shadow: var(--marketing-inset);
 }
 :where(.marketing-code > div) {
   display: flex;

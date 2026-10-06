@@ -52,7 +52,12 @@
     gap: 22px;
   }
   :where(.marketing-closing) {
-    padding: var(--marketing-section-space) 24px;
+    grid-template-columns: 1fr;
+    gap: 36px;
+    padding: var(--marketing-section-space) 24px 64px;
+  }
+  :where(.marketing-closing-action) {
+    padding-bottom: 0;
   }
   :where(.marketing-footer) {
     flex-direction: column;

@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@ctrl-ui/react/ui/button";
 import { useEffect, useRef, useState } from "react";
 import {
   type ProductMoment,
@@ -9,11 +8,10 @@ import {
 import { observeReflection } from "@/features/homepage/components/experience/hero/reflection/observe-reflection";
 import "@/features/homepage/components/experience/hero/reflection/reflection.css";
 
-export function HeroReflection() {
+export function HeroReflection({ moment }: { moment: ProductMoment }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const previewRef = useRef<SVGSVGElement>(null);
   const [hasRenderer, setHasRenderer] = useState(false);
-  const [moment, setMoment] = useState<ProductMoment>("idea");
   useEffect(() => {
     const canvas = canvasRef.current;
     const preview = previewRef.current;
@@ -26,23 +24,6 @@ export function HeroReflection() {
     <figure className="hero-product-scene">
       <div className="hero-product-preview">
         <ProductPreview moment={moment} previewRef={previewRef} />
-        <fieldset
-          aria-label="Explore the product preview"
-          className="hero-preview-controls"
-        >
-          {PRODUCT_MOMENTS.map((item) => (
-            <Button
-              active={moment === item.id}
-              aria-pressed={moment === item.id}
-              key={item.id}
-              onClick={() => setMoment(item.id)}
-              size="xs"
-              variant="ghost"
-            >
-              {item.label}
-            </Button>
-          ))}
-        </fieldset>
       </div>
       <div
         aria-hidden="true"
@@ -57,9 +38,3 @@ export function HeroReflection() {
     </figure>
   );
 }
-
-const PRODUCT_MOMENTS = [
-  { id: "idea", label: "An idea" },
-  { id: "plan", label: "Planned" },
-  { id: "release", label: "Shipped" },
-] as const;

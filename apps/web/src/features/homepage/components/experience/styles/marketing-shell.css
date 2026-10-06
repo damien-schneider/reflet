@@ -93,8 +93,7 @@
   text-align: center;
 }
 :where(.marketing-section h1),
-:where(.marketing-section h2),
-:where(.marketing-closing h2) {
+:where(.marketing-section h2) {
   font-size: clamp(36px, 4.2vw, 60px);
   line-height: 1.1;
   text-wrap: balance;
@@ -159,13 +158,33 @@
   text-decoration: underline;
 }
 :where(.marketing-closing) {
-  padding: var(--marketing-section-space) 24px;
-  text-align: center;
-  background: var(--secondary);
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
+  gap: 40px 64px;
+  align-items: end;
+  max-width: 1320px;
+  padding: var(--marketing-section-space) 40px 88px;
+  margin: auto;
+  border-top: 1px solid var(--marketing-hairline);
 }
-:where(.marketing-closing .marketing-caption) {
-  display: block;
-  margin-top: 20px;
+:where(.marketing-closing h2) {
+  font-size: clamp(48px, 6.6vw, 96px);
+  line-height: 1.02;
+  letter-spacing: -0.065em;
+  text-wrap: balance;
+}
+:where(.marketing-closing-action) {
+  display: grid;
+  gap: 20px;
+  justify-items: start;
+  padding-bottom: 12px;
+}
+:where(.marketing-closing-action p) {
+  max-width: 300px;
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--muted-foreground);
+  text-wrap: pretty;
 }
 :where(.marketing-footer) {
   display: flex;
@@ -175,6 +194,7 @@
   max-width: 1320px;
   padding: 56px 40px calc(48px + env(safe-area-inset-bottom));
   margin: auto;
+  border-top: 1px solid var(--marketing-hairline);
 }
 :where(.marketing-footer-brand) {
   display: grid;

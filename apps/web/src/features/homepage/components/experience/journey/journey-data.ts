@@ -75,6 +75,18 @@ export const JOURNEY_CHAPTER_OFFSETS = JOURNEY_STEPS.map(
   (step) => `${-JOURNEY_CHAPTERS.indexOf(step.chapter) * 100}%`
 );
 
+export const JOURNEY_BOARD_GRID = {
+  columnWidth: 28,
+  gap: 3,
+  inset: 5,
+  rowTop: 22,
+} as const;
+
+export function journeyBoardColumnLeft(column: number) {
+  const pitch = JOURNEY_BOARD_GRID.columnWidth + JOURNEY_BOARD_GRID.gap;
+  return JOURNEY_BOARD_GRID.inset + column * pitch;
+}
+
 export function paceJourneyProgress(progress: number) {
   const position =
     Math.max(0, Math.min(1, progress)) * (JOURNEY_STEPS.length - 1);

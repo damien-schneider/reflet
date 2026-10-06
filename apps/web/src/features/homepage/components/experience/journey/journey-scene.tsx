@@ -1,8 +1,8 @@
 "use client";
 
-import { CircleDot, LockKeyhole } from "lucide-react";
 import { type MotionValue, m, useTransform } from "motion/react";
 import {
+  JOURNEY_BOARD_GRID,
   JOURNEY_CHAPTER_OFFSETS,
   JOURNEY_CHAPTERS,
   JOURNEY_PROGRESS,
@@ -16,26 +16,29 @@ import {
   TriageSurface,
 } from "@/features/homepage/components/experience/journey/journey-surfaces";
 
+const boardGridStyle = {
+  "--journey-board-column": `${JOURNEY_BOARD_GRID.columnWidth}%`,
+  "--journey-board-gap": `${JOURNEY_BOARD_GRID.gap}%`,
+  "--journey-board-inset": `${JOURNEY_BOARD_GRID.inset}%`,
+  "--journey-board-row": `${JOURNEY_BOARD_GRID.rowTop}%`,
+};
+
 export function JourneyScene({
+  caption,
   progress,
   step,
 }: {
+  caption: string;
   progress: MotionValue<number>;
   step: JourneyStep;
 }) {
-  const inApp = step.id === "capture" || step.id === "notify";
-
   return (
-    <figure
-      aria-label="Illustrative feedback journey"
-      className="journey-scene"
-      data-scene={step.id}
-    >
-      <JourneyWindowBar inApp={inApp} />
-      <div className="journey-scene-body">
+    <figure className="journey-scene">
+      <m.div className="journey-scene-body" style={boardGridStyle}>
         <JourneyChapterRail progress={progress} step={step} />
         <JourneyRequest progress={progress} step={step} />
-      </div>
+      </m.div>
+      <figcaption>{caption}</figcaption>
     </figure>
   );
 }
@@ -86,19 +89,4 @@ function JourneyChapter({
   const built =
     step.id === "done" || step.id === "release" || step.id === "notify";
   return <BoardSurface step={built ? "done" : "planned"} />;
-}
-
-function JourneyWindowBar({ inApp }: { inApp: boolean }) {
-  return (
-    <div className="journey-window-bar">
-      <span className="journey-window-brand">
-        <CircleDot aria-hidden="true" size={14} /> {inApp ? "Orbit" : "Reflet"}
-      </span>
-      <span className="journey-window-location">
-        <LockKeyhole aria-hidden="true" size={10} />{" "}
-        {inApp ? "orbit.app / workspace" : "reflet.app / orbit"}
-      </span>
-      <span>Product preview</span>
-    </div>
-  );
 }

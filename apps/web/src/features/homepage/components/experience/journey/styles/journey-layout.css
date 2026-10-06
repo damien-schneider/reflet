@@ -4,13 +4,12 @@
 :where(.journey-introduction) {
   padding-top: var(--marketing-section-space);
   padding-bottom: var(--marketing-content-space);
+  text-align: center;
 }
 :where(.journey-introduction .marketing-section-intro) {
   margin-bottom: 20px;
 }
 :where(.journey-skip) {
-  width: fit-content;
-  margin: auto;
   font-size: 13px;
   color: var(--muted-foreground);
 }
@@ -49,92 +48,55 @@
 :where(.journey-sticky) {
   position: sticky;
   top: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  max-width: 1160px;
+  display: grid;
+  grid-template-areas:
+    "copy scene"
+    "timeline scene";
+  grid-template-columns: clamp(260px, 24vw, 320px) minmax(0, 1fr);
+  column-gap: clamp(48px, 5vw, 80px);
+  align-content: center;
+  max-width: 1360px;
   height: 100svh;
-  padding: 28px 40px 18px;
+  padding: 24px 48px;
   margin: auto;
 }
-:where(.journey-heading) {
-  min-height: 100px;
-  margin-bottom: 24px;
-}
 :where(.journey-step-copy) {
-  display: flex;
-  gap: 45px;
-  align-items: center;
-  justify-content: space-between;
+  grid-area: copy;
+  align-self: start;
+  padding-top: 8px;
+  margin-bottom: 28px;
 }
-:where(.journey-step-count) {
-  display: block;
-  margin-bottom: 10px;
-  font-size: 11px;
-  font-weight: 650;
-  font-variant-numeric: tabular-nums;
-  color: var(--marketing-signal);
-}
-:where(.journey-step-count > span) {
-  margin-left: 6px;
-  font-weight: 400;
-  color: var(--muted-foreground);
-}
-:where(.journey-heading h3) {
-  max-width: 620px;
-  font-size: clamp(22px, 2.6vw, 34px);
-  font-weight: 600;
-  line-height: 1.2;
-  letter-spacing: -0.035em;
+:where(.journey-step-copy h3) {
+  font-size: clamp(26px, 2.3vw, 32px);
+  line-height: 1.15;
   text-wrap: balance;
 }
-:where(.journey-step-copy > p) {
-  max-width: 340px;
-  font-size: 14px;
+:where(.journey-step-copy p) {
+  margin-top: 16px;
+  font-size: 15px;
   line-height: 1.6;
   color: var(--muted-foreground);
   text-wrap: pretty;
 }
 :where(.journey-scene) {
-  flex-shrink: 1;
-  min-height: 0;
-  overflow: hidden;
-  background: var(--card);
-  border: 1px solid var(--marketing-edge);
-  border-radius: 32px;
-  box-shadow: var(--marketing-float-shadow);
-}
-:where(.journey-window-bar) {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  justify-content: space-between;
-  height: 46px;
-  padding: 0 20px;
-  font-size: 10px;
-  color: var(--muted-foreground);
-  background: var(--marketing-stage);
-  border-bottom: 1px solid var(--marketing-hairline);
-}
-:where(.journey-window-brand),
-:where(.journey-window-location) {
-  display: inline-flex;
-  gap: 7px;
-  align-items: center;
-}
-:where(.journey-window-brand) {
-  font-weight: 600;
-  color: var(--foreground);
-}
-:where(.journey-window-location) {
-  padding: 5px 14px;
-  background: var(--background);
-  border-radius: 7px;
+  position: relative;
+  grid-area: scene;
+  min-width: 0;
 }
 :where(.journey-scene-body) {
   position: relative;
-  height: clamp(340px, 51svh, 510px);
+  height: clamp(460px, 56svh, 540px);
   overflow: hidden;
+  background: var(--marketing-stage);
+  border-radius: 32px;
+  box-shadow: var(--marketing-inset);
+}
+:where(.journey-scene figcaption) {
+  position: absolute;
+  top: 100%;
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--muted-foreground);
 }
 :where(.journey-chapter-rail) {
   position: absolute;
@@ -149,85 +111,6 @@
   height: 100%;
   overflow: hidden;
   pointer-events: none;
-  background: var(--card);
-  border-right: 1px solid var(--marketing-hairline);
-}
-:where(.journey-navigation) {
-  position: relative;
-  display: flex;
-  gap: 4px;
-  align-items: center;
-  padding: 6px;
-  margin: 25px auto 0;
-  background: var(--marketing-stage);
-  border: 1px solid var(--marketing-edge);
-  border-radius: 17px;
-  box-shadow:
-    var(--marketing-inset),
-    0 2px 3px var(--marketing-ambient-shadow);
-}
-:where(.journey-timeline-track) {
-  position: absolute;
-  right: 18px;
-  bottom: 2px;
-  left: 18px;
-  height: 2px;
-  overflow: hidden;
-  background: var(--marketing-hairline);
-  border-radius: 2px;
-}
-:where(.journey-timeline-progress) {
-  display: block;
-  height: 100%;
-  background: var(--marketing-signal);
-  transform-origin: left;
-}
-:where(.journey-navigation a[data-complete="true"]) {
-  color: var(--foreground);
-}
-:where(.journey-navigation a) {
-  position: relative;
-  padding: 10px 12px;
-  font-size: 12px;
-  color: var(--muted-foreground);
-  white-space: nowrap;
-  border-radius: 12px;
-  isolation: isolate;
-}
-@media (hover: hover) and (pointer: fine) {
-  :where(.journey-navigation a:hover) {
-    color: var(--foreground);
-    background: var(--marketing-stage);
-  }
-}
-:where(.journey-navigation a[aria-current="step"]) {
-  color: var(--marketing-signal);
-}
-:where(.journey-nav-content) {
-  position: relative;
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-:where(.journey-nav-indicator) {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: var(--card);
-  border-radius: 12px;
-  box-shadow: var(--marketing-float-shadow);
-}
-:where(.journey-caption) {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 20px;
-  font-size: 10px;
-  color: var(--muted-foreground);
-}
-:where(.journey-caption > span:last-child) {
-  display: flex;
-  gap: 7px;
-  align-items: center;
 }
 :where(.journey-track[data-reduced-motion="true"]) {
   height: auto;
@@ -240,4 +123,23 @@
   height: auto;
   min-height: 650px;
   padding-block: 35px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  :where(
+    .journey-step-copy > *,
+    .journey-request-byline,
+    .journey-request-story
+  ) {
+    animation: journey-swap-arrive 320ms var(--marketing-ease) backwards;
+  }
+  :where(.journey-step-copy > p, .journey-request-story) {
+    animation-delay: 50ms;
+  }
+}
+@keyframes journey-swap-arrive {
+  from {
+    filter: blur(4px);
+    opacity: 0;
+    translate: 0 6px;
+  }
 }

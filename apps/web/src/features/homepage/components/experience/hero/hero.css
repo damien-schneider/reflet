@@ -43,8 +43,7 @@
   padding-bottom: 48px;
 }
 :where(.marketing-hero h1) {
-  max-width: 530px;
-  font-size: clamp(46px, 5.15vw, 76px);
+  font-size: clamp(54px, 6.6vw, 96px);
   font-weight: 500;
   line-height: 1.06;
   letter-spacing: -0.065em;
@@ -62,9 +61,9 @@
 }
 :where(.hero-actions) {
   display: flex;
-  flex-direction: column;
-  gap: 20px;
-  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px 28px;
+  align-items: center;
   margin-top: 34px;
 }
 :where(.hero-story-links) {
@@ -80,6 +79,13 @@
   min-height: 44px;
   padding: 24px 22px;
   font-size: 13px;
+  color: var(--muted-foreground);
+  transition:
+    color var(--marketing-duration) var(--marketing-ease),
+    background-color var(--marketing-duration) var(--marketing-ease);
+}
+:where(.hero-story-links a[data-active="true"]) {
+  color: var(--foreground);
 }
 :where(.hero-story-links a + a) {
   border-left: 1px solid var(--marketing-hairline);
@@ -93,9 +99,11 @@
   flex-shrink: 0;
   margin-left: auto;
   color: var(--muted-foreground);
+  transition: color var(--marketing-duration) var(--marketing-ease);
 }
 @media (hover: hover) and (pointer: fine) {
   :where(.hero-story-links a:hover) {
+    color: var(--foreground);
     background: var(--marketing-signal-soft);
   }
   :where(.hero-story-links a:hover svg) {
@@ -111,7 +119,7 @@
     gap: 0;
   }
   :where(.marketing-hero h1) {
-    font-size: clamp(44px, 5.3vw, 56px);
+    font-size: clamp(48px, 6.6vw, 70px);
   }
   :where(.marketing-hero-copy > p) {
     max-width: 310px;
@@ -143,8 +151,7 @@
     padding: 32px 0 28px;
   }
   :where(.marketing-hero h1) {
-    max-width: 460px;
-    font-size: clamp(42px, 9.8vw, 66px);
+    font-size: clamp(48px, 13.5vw, 76px);
   }
   :where(.marketing-hero-copy) {
     padding: 0 4px;
@@ -170,7 +177,12 @@
 }
 @media (prefers-reduced-motion: no-preference) {
   :where(.hero-canvas[data-intro="play"])
-    :where(.hero-editorial-line, .marketing-hero-copy > p, .hero-actions) {
+    :where(
+      .hero-editorial-line,
+      .marketing-hero-copy > p,
+      .hero-actions,
+      .hero-story-links
+    ) {
     animation: marketing-intro var(--marketing-intro-duration)
       var(--marketing-intro-ease) var(--hero-arrival-delay, 0ms) backwards;
   }
@@ -189,6 +201,9 @@
   }
   :where(.hero-actions) {
     --hero-arrival-delay: 280ms;
+  }
+  :where(.hero-story-links) {
+    --hero-arrival-delay: 360ms;
   }
   :where(.hero-canvas[data-intro="play"] .hero-product-scene) {
     animation: hero-scene-arrive 760ms var(--marketing-intro-ease) 160ms

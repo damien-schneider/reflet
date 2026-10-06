@@ -43,13 +43,16 @@
   height: 1px;
   content: "";
   background: currentColor;
+  transform-origin: right;
   scale: 0 1;
+  transition: scale var(--marketing-duration) var(--marketing-ease);
 }
 :where(.marketing-navigation nav a:is(:hover, :focus-visible))::after,
 :where(.marketing-login:is(:hover, :focus-visible))::after,
 :where(.marketing-footer nav a:is(:hover, :focus-visible))::after,
 :where(.marketing-text-link:is(:hover, :focus-visible))::after,
 :where(.marketing-open-source a:is(:hover, :focus-visible))::after {
+  transform-origin: left;
   scale: 1 1;
 }
 :where(.marketing-navigation nav a:is(:hover, :focus-visible)),
@@ -77,6 +80,7 @@
   background: var(--marketing-stage);
   border-radius: 14px;
   opacity: 0;
+  transition: opacity var(--marketing-duration) var(--marketing-ease);
 }
 :where(.marketing-faq summary:focus-visible)::before {
   opacity: 1;

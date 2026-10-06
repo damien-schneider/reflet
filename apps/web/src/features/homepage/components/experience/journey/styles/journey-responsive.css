@@ -1,39 +1,60 @@
+@media (max-width: 1119px) {
+  :where(.journey-sticky) {
+    grid-template-areas:
+      "copy"
+      "scene"
+      "timeline";
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 1160px;
+    padding: 28px 40px 18px;
+  }
+  :where(.journey-step-copy) {
+    display: flex;
+    gap: 45px;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 100px;
+    padding-top: 0;
+    margin-bottom: 24px;
+  }
+  :where(.journey-step-copy h3) {
+    max-width: 620px;
+  }
+  :where(.journey-step-copy p) {
+    max-width: 340px;
+    margin-top: 0;
+    font-size: 14px;
+  }
+  :where(.journey-scene-body) {
+    height: clamp(360px, 54svh, 540px);
+  }
+  :where(.journey-scene figcaption) {
+    position: static;
+  }
+}
 @media (max-width: 767px) {
   :where(.journey-sticky) {
     padding: 24px 18px 20px;
-  }
-  :where(.journey-heading) {
-    min-height: 160px;
-    margin-bottom: 20px;
   }
   :where(.journey-step-copy) {
     flex-direction: column;
     gap: 12px;
     align-items: flex-start;
+    justify-content: flex-start;
+    min-height: 160px;
+    margin-bottom: 20px;
   }
-  :where(.journey-heading h3) {
+  :where(.journey-step-copy h3) {
     font-size: 25px;
   }
-  :where(.journey-step-copy > p) {
+  :where(.journey-step-copy p) {
     max-width: 440px;
     font-size: 13px;
   }
-  :where(.journey-step-count) {
-    margin-bottom: 8px;
-  }
-  :where(.journey-scene) {
-    flex-shrink: 0;
+  :where(.journey-scene-body) {
+    height: clamp(340px, 47svh, 440px);
     border-radius: 24px;
   }
-  :where(.journey-scene-body) {
-    height: clamp(320px, 43svh, 410px);
-  }
-  :where(.journey-window-bar) {
-    height: 34px;
-    padding: 0 12px;
-    font-size: 8px;
-  }
-  :where(.journey-window-bar > span:last-child),
   :where(.journey-app-surface aside) {
     display: none;
   }
@@ -85,8 +106,8 @@
   :where(.journey-request-release) {
     font-size: 9px;
   }
-  :where(.journey-board-surface) {
-    padding-top: 22px;
+  :where(.journey-board-title) {
+    top: 22px;
   }
   :where(.journey-board-title strong) {
     font-size: 17px;
@@ -94,15 +115,10 @@
   :where(.journey-board-title > span) {
     font-size: 8px;
   }
-  :where(.journey-board-column) {
-    padding: 12px 8px;
-  }
   :where(.journey-board-column > div:first-child) {
     gap: 5px;
+    padding-bottom: 10px;
     font-size: 9px;
-  }
-  :where(.journey-board-column small) {
-    display: none;
   }
   :where(.journey-board-note) {
     padding: 10px;
@@ -112,11 +128,6 @@
   }
   :where(.journey-board-note > span) {
     font-size: 8px;
-  }
-  :where(.journey-ai-label) {
-    top: 10%;
-    left: 26%;
-    font-size: 11px;
   }
   :where(.journey-ai-suggestion) {
     width: 46%;
@@ -143,67 +154,39 @@
   :where(.journey-release-surface .marketing-kicker) {
     font-size: 12px;
   }
-  :where(.journey-release-date) {
-    display: none;
-  }
   :where(.journey-published) {
     bottom: 12px;
     font-size: 8px;
   }
-  :where(.journey-navigation) {
-    gap: 0;
-    align-self: center;
-    max-width: none;
-    padding: 2px 2px 22px;
-    margin-inline: 0;
-    margin-top: 22px;
-  }
-  :where(.journey-navigation)::after {
-    position: absolute;
-    right: 0;
-    bottom: 7px;
-    left: 0;
-    font-size: 10px;
-    color: var(--marketing-signal);
-    text-align: center;
-    content: attr(data-current-label);
-  }
-  :where(.journey-navigation a) {
-    display: grid;
-    flex: 0 0 44px;
-    place-items: center;
-    width: 44px;
-    height: 44px;
-    padding: 0;
-  }
-  :where(.journey-nav-content) {
-    gap: 5px;
-  }
-  :where(.journey-nav-content > span) {
-    display: none;
-  }
-  :where(.journey-caption) {
-    gap: 14px;
-    margin-top: 14px;
-    font-size: 8px;
-  }
 }
-@media (max-height: 700px) and (min-width: 768px) {
+@media (max-height: 700px) and (min-width: 768px) and (max-width: 1119px) {
   :where(.journey-sticky) {
     padding-block: 12px;
   }
-  :where(.journey-heading) {
+  :where(.journey-step-copy) {
     min-height: 70px;
     margin-bottom: 16px;
   }
   :where(.journey-scene-body) {
-    height: 340px;
+    height: 380px;
   }
-  :where(.journey-navigation) {
-    margin-top: 16px;
-  }
-  :where(.journey-caption) {
+  :where(.journey-timeline) {
     margin-top: 12px;
+  }
+}
+@media (max-height: 700px) and (min-width: 1120px) {
+  :where(.journey-step-copy h3) {
+    font-size: 26px;
+  }
+  :where(.journey-step-copy p) {
+    margin-top: 12px;
+    font-size: 14px;
+  }
+  :where(.journey-timeline a) {
+    height: 32px;
+  }
+  :where(.journey-scene-body) {
+    height: clamp(420px, 76svh, 500px);
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -223,28 +206,26 @@
   :where(.journey-sticky) {
     padding-block: 16px;
   }
-  :where(.journey-heading) {
+  :where(.journey-step-copy) {
+    gap: 8px;
     min-height: 135px;
     margin-bottom: 14px;
   }
-  :where(.journey-step-copy) {
-    gap: 8px;
-  }
-  :where(.journey-heading h3) {
+  :where(.journey-step-copy h3) {
     font-size: 22px;
   }
-  :where(.journey-step-copy > p) {
+  :where(.journey-step-copy p) {
     font-size: 12px;
     line-height: 1.5;
   }
   :where(.journey-scene-body) {
-    height: 300px;
+    height: 322px;
   }
-  :where(.journey-navigation) {
-    margin-top: 16px;
-  }
-  :where(.journey-caption) {
+  :where(.journey-scene figcaption) {
     display: none;
+  }
+  :where(.journey-timeline) {
+    margin-top: 12px;
   }
   :where(.journey-request) {
     padding: 14px;

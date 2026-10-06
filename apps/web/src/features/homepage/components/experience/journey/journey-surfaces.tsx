@@ -10,7 +10,6 @@ import {
   Home,
   LayoutGrid,
   Link2,
-  Sparkles,
   Sun,
 } from "lucide-react";
 
@@ -107,7 +106,6 @@ export function BoardSurface({ step }: { step: string }) {
             <div>
               <column.icon aria-hidden="true" size={13} />
               <strong>{column.name}</strong>
-              <small>{step === column.id ? "2" : "1"}</small>
             </div>
             <div className="journey-board-note">
               <span>{column.category}</span>
@@ -127,9 +125,6 @@ export function TriageSurface() {
   return (
     <div className="journey-triage-surface">
       <div className="journey-triage-orbit" />
-      <span className="journey-ai-label">
-        <Sparkles aria-hidden="true" size={16} /> A little help from AI
-      </span>
       <div className="journey-ai-suggestion journey-ai-related">
         <span>
           <Link2 aria-hidden="true" size={13} /> Related requests
@@ -140,9 +135,7 @@ export function TriageSurface() {
       </div>
       <div className="journey-ai-suggestion journey-ai-category">
         <span>Suggested tags</span>
-        <strong>
-          <Sparkles aria-hidden="true" size={12} /> Feature request
-        </strong>
+        <strong>Feature request</strong>
         <strong>Workspace</strong>
         <small>Your team makes the call</small>
       </div>
@@ -161,7 +154,6 @@ export function ReleaseSurface() {
           Better every day.
         </h4>
       </div>
-      <span className="journey-release-date">LATEST RELEASE</span>
       <span className="journey-published">
         <Check aria-hidden="true" size={12} /> Published to your changelog
       </span>
@@ -187,7 +179,6 @@ function AppSidebar() {
       <span>
         <LayoutGrid aria-hidden="true" size={13} /> Saved views
       </span>
-      <small>Your everyday workspace</small>
     </aside>
   );
 }

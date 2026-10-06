@@ -60,19 +60,8 @@
   background: var(--card);
   box-shadow: var(--marketing-hover-shadow);
 }
-:where(.marketing-plan-heading) {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
 :where(.marketing-plan h3) {
   font-size: 24px;
-}
-:where(.marketing-plan-heading span) {
-  padding: 6px 10px;
-  font-size: 10px;
-  background: var(--background);
-  border-radius: 999px;
 }
 :where(.marketing-plan > p) {
   margin-top: 12px;
@@ -137,6 +126,9 @@
   color: var(--muted-foreground);
 }
 :where(.marketing-open-source a) {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
   font-size: 13px;
   font-weight: 600;
   white-space: nowrap;

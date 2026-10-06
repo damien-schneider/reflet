@@ -1,16 +1,11 @@
-import { Bell, Check, Circle, Clock3, Mail, Sparkles } from "lucide-react";
+import { Bell, Check, Circle, Clock3, Mail } from "lucide-react";
 
 export function PlanPreview() {
   return (
     <div className="feature-roadmap">
       <div className="feature-roadmap-heading">
-        <span className="feature-widget-icon">
-          <Sparkles aria-hidden="true" size={20} />
-        </span>
-        <div>
-          <small>Product roadmap</small>
-          <h3>A little more you.</h3>
-        </div>
+        <small>Product roadmap</small>
+        <h3>A little more you.</h3>
       </div>
       <div className="feature-roadmap-columns">
         <div>

@@ -1,7 +1,6 @@
 import { ButtonLink } from "@ctrl-ui/react/ui/button";
 import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
-import { ClosingReflection } from "@/features/homepage/components/experience/branding/closing-reflection";
 
 const CLOSING_TITLE_ID = "marketing-closing-title";
 
@@ -31,25 +30,24 @@ const FOOTER_GROUPS = [
 export function MarketingFooter() {
   return (
     <>
-      <ClosingReflection titleId={CLOSING_TITLE_ID}>
-        <h2 id={CLOSING_TITLE_ID}>
-          Something good
-          <br />
-          starts with listening.
-        </h2>
-        <ButtonLink
-          render={<Link href="/dashboard" />}
-          size="lg"
-          tone="primary"
-          variant="solid"
-        >
-          Start collecting feedback{" "}
-          <ArrowUpRight aria-hidden="true" size={15} />
-        </ButtonLink>
-        <span className="marketing-caption">
-          Free to start. No credit card.
-        </span>
-      </ClosingReflection>
+      <section aria-labelledby={CLOSING_TITLE_ID} className="marketing-closing">
+        <h2 id={CLOSING_TITLE_ID}>They’re already asking.</h2>
+        <div className="marketing-closing-action">
+          <p>Drop Reflet into your app and start listening.</p>
+          <ButtonLink
+            render={<Link href="/dashboard" />}
+            size="lg"
+            tone="primary"
+            variant="solid"
+          >
+            Start collecting feedback{" "}
+            <ArrowUpRight aria-hidden="true" size={15} />
+          </ButtonLink>
+          <span className="marketing-caption">
+            Free to start. No credit card.
+          </span>
+        </div>
+      </section>
       <footer className="marketing-footer">
         <div className="marketing-footer-brand">
           <Link className="marketing-wordmark" href="/">

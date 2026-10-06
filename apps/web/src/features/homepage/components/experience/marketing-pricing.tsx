@@ -27,10 +27,7 @@ function PublicPlan({
   }
   return (
     <article className="marketing-plan" data-plan={plan.id}>
-      <div className="marketing-plan-heading">
-        <h3>{plan.name}</h3>
-        <span>{plan.id === "free" ? "A place to begin" : "Room to grow"}</span>
-      </div>
+      <h3>{plan.name}</h3>
       <p>{plan.description}</p>
       <PlanPriceDisplay planId={plan.id} price={price} />
       <ButtonLink

@@ -73,24 +73,6 @@
     visibility: visible;
   }
 }
-:where(.hero-preview-controls) {
-  position: absolute;
-  top: -26px;
-  left: 50%;
-  display: flex;
-  gap: 4px;
-  padding: 4px;
-  background: var(--marketing-stage);
-  border-radius: 16px;
-  box-shadow: var(--marketing-inset);
-  translate: -50% 0;
-}
-:where(.hero-preview-controls [data-control-family="button"]) {
-  --cui-button-radius: 12px;
-  --cui-button-active-background: var(--card);
-  --cui-button-active-hover-background: var(--card);
-  --cui-button-active-shadow: var(--marketing-panel);
-}
 @media (prefers-reduced-motion: no-preference) {
   :where(.hero-preview-card) {
     transition: transform 420ms var(--marketing-move-ease);

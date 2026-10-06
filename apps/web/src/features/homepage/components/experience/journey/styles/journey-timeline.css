@@ -1,0 +1,130 @@
+:where(.journey-timeline) {
+  --journey-timeline-rest: color-mix(
+    in oklch,
+    var(--foreground) 20%,
+    transparent
+  );
+  --journey-timeline-slot: calc(100% / var(--journey-step-count));
+  --journey-timeline-remaining: calc(
+    (1 - var(--journey-progress, 0)) *
+    (100% - var(--journey-timeline-slot)) +
+    var(--journey-timeline-slot) /
+    2 -
+    3px
+  );
+  position: relative;
+  display: grid;
+  grid-area: timeline;
+  align-self: end;
+}
+:where(.journey-timeline a) {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding-left: 30px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  transition: color var(--marketing-duration) var(--marketing-ease);
+}
+:where(.journey-timeline a[aria-current="step"]) {
+  color: var(--foreground);
+}
+@media (hover: hover) and (pointer: fine) {
+  :where(.journey-timeline a:hover) {
+    color: var(--foreground);
+  }
+}
+:where(.journey-timeline-track) {
+  --journey-timeline-ink: var(--journey-timeline-rest);
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: 9px;
+  pointer-events: none;
+}
+:where(.journey-timeline-passed) {
+  --journey-timeline-ink: var(--foreground);
+  position: absolute;
+  inset: 0;
+  clip-path: inset(0 0 var(--journey-timeline-remaining) 0);
+}
+:where(.journey-timeline-track, .journey-timeline-passed) {
+  background:
+    radial-gradient(
+      circle closest-side,
+      var(--journey-timeline-ink) calc(100% - 0.5px),
+      transparent
+    )
+    center / 5px var(--journey-timeline-slot) repeat-y,
+    linear-gradient(var(--journey-timeline-ink), var(--journey-timeline-ink))
+    center / 1px calc(100% - var(--journey-timeline-slot)) no-repeat;
+}
+:where(.journey-timeline-playhead) {
+  position: absolute;
+  inset: calc(var(--journey-timeline-slot) / 2) 0;
+  translate: 0 calc(var(--journey-progress, 0) * 100%);
+}
+:where(.journey-timeline-playhead)::before {
+  position: absolute;
+  top: -4.5px;
+  left: 0;
+  width: 9px;
+  height: 9px;
+  content: "";
+  background: var(--marketing-signal);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 3px var(--background),
+    0 0 0 4px color-mix(in oklch, var(--marketing-signal) 45%, transparent);
+  transition:
+    background-color 400ms var(--marketing-ease),
+    box-shadow 400ms var(--marketing-ease);
+}
+@media (max-width: 1119px) {
+  :where(.journey-timeline) {
+    grid-auto-columns: 44px;
+    grid-auto-flow: column;
+    justify-self: center;
+    padding-bottom: 22px;
+    margin-top: 22px;
+  }
+  :where(.journey-timeline)::after {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    font-size: 12px;
+    font-weight: 500;
+    text-align: center;
+    content: attr(data-current-label);
+  }
+  :where(.journey-timeline a) {
+    height: 44px;
+    padding: 0;
+  }
+  :where(.journey-timeline-label) {
+    display: none;
+  }
+  :where(.journey-timeline-track) {
+    inset: 0 0 auto;
+    width: auto;
+    height: 44px;
+  }
+  :where(.journey-timeline-passed) {
+    clip-path: inset(0 var(--journey-timeline-remaining) 0 0);
+  }
+  :where(.journey-timeline-track, .journey-timeline-passed) {
+    background-repeat: repeat-x, no-repeat;
+    background-size:
+      var(--journey-timeline-slot) 5px,
+      calc(100% - var(--journey-timeline-slot)) 1px;
+  }
+  :where(.journey-timeline-playhead) {
+    inset: 0 calc(var(--journey-timeline-slot) / 2);
+    translate: calc(var(--journey-progress, 0) * 100%) 0;
+  }
+  :where(.journey-timeline-playhead)::before {
+    top: calc(50% - 4.5px);
+    left: -4.5px;
+  }
+}

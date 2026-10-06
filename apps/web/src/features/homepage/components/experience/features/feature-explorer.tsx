@@ -1,8 +1,7 @@
 "use client";
 
 import { Button } from "@ctrl-ui/react/ui/button";
-import { ArrowUpRight, Layers, MessageCircle, Send } from "lucide-react";
-import Link from "next/link";
+import { Layers, MessageCircle, Send } from "lucide-react";
 import { useState } from "react";
 import { FeedbackPreview } from "@/features/homepage/components/experience/features/feedback-preview";
 import {
@@ -56,10 +55,6 @@ export function FeatureExplorer() {
         <p aria-live="polite" className="feature-mobile-description">
           {selected.description}
         </p>
-        <Link className="marketing-text-link" href="/docs">
-          Explore the documentation{" "}
-          <ArrowUpRight aria-hidden="true" size={14} />
-        </Link>
       </div>
       <FeaturePreview selectedIndex={selectedIndex} />
     </div>
@@ -96,7 +91,6 @@ function FeatureChoices({ selectedIndex, onSelect }: FeatureChoicesProps) {
             </strong>
             <span>{feature.description}</span>
           </span>
-          <ArrowUpRight aria-hidden="true" size={15} />
         </Button>
       ))}
     </fieldset>
