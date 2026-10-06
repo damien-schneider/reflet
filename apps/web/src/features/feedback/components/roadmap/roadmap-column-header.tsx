@@ -16,12 +16,13 @@ import {
 import { Check, Palette, Trash, X } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
+import type { TagColor } from "@reflet/backend/convex/feedback/tag_colors";
 import { STATUS_DEFINITIONS } from "@reflet/backend/convex/organizations/status_definitions";
 import { useMutation } from "convex/react";
 import { useState } from "react";
 import { NotionColorPicker } from "@/components/ui/notion-color-picker";
 import { TiptapTitleEditor } from "@/components/ui/tiptap/title-editor";
-import { resolveTagColor, type TagColor } from "@/lib/tag-colors";
+import { resolveTagColor } from "@/lib/tag-colors";
 
 interface RoadmapColumnHeaderProps {
   color: string;

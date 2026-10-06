@@ -1,10 +1,25 @@
 import { v } from "convex/values";
-import { query } from "../_generated/server";
+import type { Doc } from "../_generated/dataModel";
+import { type QueryCtx, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
 
-// ============================================
-// QUERIES
-// ============================================
+const pendingInvitationsFor = async (
+  ctx: QueryCtx,
+  email: string | undefined
+): Promise<Doc<"invitations">[]> => {
+  if (!email) {
+    return [];
+  }
+  const now = Date.now();
+  const invitations = await ctx.db
+    .query("invitations")
+    .withIndex("by_email", (q) => q.eq("email", email.toLowerCase()))
+    .collect();
+  return invitations.filter(
+    (invitation) =>
+      invitation.status === "pending" && invitation.expiresAt > now
+  );
+};
 
 /**
  * List notifications for current user
@@ -30,36 +45,21 @@ export const list = query({
       notifications = notifications.filter((n) => !n.isRead);
     }
 
-    const userEmail = user.email?.toLowerCase();
     const invitationNotifications: typeof notifications = [];
-
-    if (userEmail) {
-      const pendingInvitations = await ctx.db
-        .query("invitations")
-        .filter((q) =>
-          q.and(
-            q.eq(q.field("email"), userEmail),
-            q.eq(q.field("status"), "pending"),
-            q.gt(q.field("expiresAt"), Date.now())
-          )
-        )
-        .collect();
-
-      for (const invitation of pendingInvitations) {
-        const org = await ctx.db.get(invitation.organizationId);
-        if (org) {
-          invitationNotifications.push({
-            _creationTime: invitation.createdAt,
-            _id: `invitation-${invitation._id}` as (typeof notifications)[0]["_id"],
-            createdAt: invitation.createdAt,
-            invitationToken: invitation.token,
-            isRead: false,
-            message: `Vous avez été invité à rejoindre ${org.name} en tant que ${invitation.role === "admin" ? "administrateur" : "membre"}.`,
-            title: `Invitation à rejoindre ${org.name}`,
-            type: "invitation" as const,
-            userId: user._id,
-          });
-        }
+    for (const invitation of await pendingInvitationsFor(ctx, user.email)) {
+      const org = await ctx.db.get(invitation.organizationId);
+      if (org) {
+        invitationNotifications.push({
+          _creationTime: invitation.createdAt,
+          _id: `invitation-${invitation._id}` as (typeof notifications)[0]["_id"],
+          createdAt: invitation.createdAt,
+          invitationToken: invitation.token,
+          isRead: false,
+          message: `Vous avez été invité à rejoindre ${org.name} en tant que ${invitation.role === "admin" ? "administrateur" : "membre"}.`,
+          title: `Invitation à rejoindre ${org.name}`,
+          type: "invitation" as const,
+          userId: user._id,
+        });
       }
     }
 
@@ -94,23 +94,7 @@ export const getUnreadCount = query({
       )
       .collect();
 
-    const userEmail = user.email?.toLowerCase();
-    let pendingInvitationsCount = 0;
-
-    if (userEmail) {
-      const pendingInvitations = await ctx.db
-        .query("invitations")
-        .filter((q) =>
-          q.and(
-            q.eq(q.field("email"), userEmail),
-            q.eq(q.field("status"), "pending"),
-            q.gt(q.field("expiresAt"), Date.now())
-          )
-        )
-        .collect();
-      pendingInvitationsCount = pendingInvitations.length;
-    }
-
-    return notifications.length + pendingInvitationsCount;
+    const pendingInvitations = await pendingInvitationsFor(ctx, user.email);
+    return notifications.length + pendingInvitations.length;
   },
 });

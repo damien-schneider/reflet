@@ -6,6 +6,7 @@ import {
   mutation,
   query,
 } from "../_generated/server";
+import { consumeAiGenerationFor } from "../ai/usage_gate";
 import { requireAuthUser, requireOrgMember } from "../shared/access";
 
 // ============================================
@@ -90,6 +91,10 @@ export const startFeatureCheck = mutation({
     if (!membership || membership.role === "member") {
       throw new Error("Only admins can run feature checks");
     }
+    await consumeAiGenerationFor(ctx, {
+      organizationId: feedback.organizationId,
+      userId: user._id,
+    });
 
     // Check if already checking
     if (

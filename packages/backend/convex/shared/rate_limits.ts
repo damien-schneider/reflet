@@ -20,6 +20,12 @@ export const rateLimiter = new RateLimiter(components.rateLimiter, {
     period: HOUR,
     rate: 60,
   },
+  authEmailSendGlobal: {
+    capacity: 2000,
+    kind: "token bucket",
+    period: HOUR,
+    rate: 2000,
+  },
   authPasswordResetPerEmail: {
     capacity: 3,
     kind: "token bucket",
@@ -51,6 +57,18 @@ export const rateLimiter = new RateLimiter(components.rateLimiter, {
     rate: 20,
   },
   emailSubscriptionPerOrg: {
+    capacity: 20,
+    kind: "token bucket",
+    period: HOUR,
+    rate: 60,
+  },
+  feedbackInteractionPerUser: {
+    capacity: 30,
+    kind: "token bucket",
+    period: MINUTE,
+    rate: 30,
+  },
+  feedbackPerUser: {
     capacity: 20,
     kind: "token bucket",
     period: HOUR,
@@ -110,6 +128,12 @@ export const rateLimiter = new RateLimiter(components.rateLimiter, {
     period: MINUTE,
     rate: 300,
   },
+  storageUploadPerUser: {
+    capacity: 30,
+    kind: "token bucket",
+    period: HOUR,
+    rate: 120,
+  },
   subscriptionConfirmationPerEmail: {
     capacity: 3,
     kind: "token bucket",
@@ -121,6 +145,12 @@ export const rateLimiter = new RateLimiter(components.rateLimiter, {
     kind: "token bucket",
     period: DAY,
     rate: 3,
+  },
+  supportContactConfirmationPerRecipient: {
+    capacity: 5,
+    kind: "token bucket",
+    period: DAY,
+    rate: 5,
   },
   supportConversationPerGuestEmail: {
     capacity: 5,
@@ -218,6 +248,12 @@ export const rateLimiter = new RateLimiter(components.rateLimiter, {
     period: MINUTE,
     rate: 600,
   },
+  unsignedExternalUserPerOrg: {
+    capacity: 500,
+    kind: "token bucket",
+    period: HOUR,
+    rate: 1500,
+  },
   widgetConversationPerVisitor: {
     capacity: 5,
     kind: "token bucket",
@@ -229,6 +265,12 @@ export const rateLimiter = new RateLimiter(components.rateLimiter, {
     kind: "token bucket",
     period: HOUR,
     rate: 300,
+  },
+  widgetEmailChangePerConversation: {
+    capacity: 5,
+    kind: "token bucket",
+    period: HOUR,
+    rate: 5,
   },
   widgetMessagePerVisitor: {
     capacity: 10,

@@ -76,7 +76,6 @@ export interface FeedbackReportContext {
   referrer?: string;
   screen?: { height: number; width: number };
   sdkVersion?: string;
-  selection?: ElementSelection;
   selections?: ElementSelection[];
   timezone?: string;
   url?: string;

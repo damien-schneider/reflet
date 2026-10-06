@@ -7,7 +7,7 @@ import { getOrgMembership, isOrgAdmin } from "../shared/membership";
 import { rateLimiter } from "../shared/rate_limits";
 import { AI_ACCESS_DENIED } from "./constants";
 
-const consumeForUser = async (
+export const consumeAiGenerationFor = async (
   ctx: MutationCtx,
   {
     organizationId,
@@ -36,7 +36,7 @@ export const consumeAiGeneration = mutation({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
     const user = await requireAuthUser(ctx);
-    return await consumeForUser(ctx, {
+    return await consumeAiGenerationFor(ctx, {
       organizationId: args.organizationId,
       userId: user._id,
     });
@@ -46,6 +46,6 @@ export const consumeAiGeneration = mutation({
 
 export const consumeAiGenerationForUser = internalMutation({
   args: { organizationId: v.id("organizations"), userId: v.string() },
-  handler: async (ctx, args) => await consumeForUser(ctx, args),
+  handler: async (ctx, args) => await consumeAiGenerationFor(ctx, args),
   returns: v.null(),
 });

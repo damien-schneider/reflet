@@ -1,7 +1,7 @@
-import { Resend, vEmailId, vOnEmailEventArgs } from "@convex-dev/resend";
+import { Resend, vOnEmailEventArgs } from "@convex-dev/resend";
 import { v } from "convex/values";
 import { components, internal } from "../_generated/api";
-import { internalAction, internalMutation } from "../_generated/server";
+import { internalMutation } from "../_generated/server";
 import { recordEmailEvent } from "./events";
 import { emailTypeValidator } from "./tableFields";
 
@@ -67,53 +67,4 @@ export const sendEmail = internalMutation({
 
     return emailId;
   },
-});
-
-export const sendBatchEmails = internalMutation({
-  args: {
-    emails: v.array(
-      v.object({
-        from: v.string(),
-        headers: v.optional(
-          v.array(v.object({ name: v.string(), value: v.string() }))
-        ),
-        html: v.string(),
-        replyTo: v.optional(v.union(v.string(), v.array(v.string()))),
-        subject: v.string(),
-        text: v.optional(v.string()),
-        to: v.union(v.string(), v.array(v.string())),
-      })
-    ),
-  },
-  handler: async (ctx, args) => {
-    const emailIds: string[] = [];
-
-    for (const email of args.emails) {
-      let replyToArray: string[] | undefined;
-      if (email.replyTo) {
-        replyToArray =
-          typeof email.replyTo === "string" ? [email.replyTo] : email.replyTo;
-      }
-
-      const emailId = await resend.sendEmail(ctx, {
-        from: email.from,
-        headers: email.headers,
-        html: email.html,
-        replyTo: replyToArray,
-        subject: email.subject,
-        text: email.text,
-        to: email.to,
-      });
-      emailIds.push(emailId);
-    }
-
-    return emailIds;
-  },
-});
-
-export const getEmailStatus = internalAction({
-  args: {
-    emailId: vEmailId,
-  },
-  handler: async (ctx, args) => await resend.status(ctx, args.emailId),
 });

@@ -1,13 +1,13 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
-import type { Doc } from "../_generated/dataModel";
+import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
 import { getOrgTier } from "../billing/org_subscription";
 import { PLAN_LIMITS } from "../billing/queries";
 import { normalizeEmail } from "../email/suppression";
-import { type AuthUser, requireOrgAdmin } from "../shared/access";
+import { requireOrgAdmin } from "../shared/access";
 import { rateLimiter } from "../shared/rate_limits";
 import { isValidEmail } from "../shared/validators";
 
@@ -139,6 +139,12 @@ const assertInvitationSlotAvailable = async (
   }
 };
 
+export interface Inviter {
+  _id: string;
+  email?: string | null;
+  name?: string | null;
+}
+
 export const scheduleInvitationEmail = async (
   ctx: MutationCtx,
   options: {
@@ -146,7 +152,7 @@ export const scheduleInvitationEmail = async (
       Doc<"invitations">,
       "email" | "organizationId" | "role" | "token"
     >;
-    inviter: AuthUser;
+    inviter: Inviter;
     organizationName: string;
   }
 ): Promise<void> => {
@@ -180,6 +186,51 @@ export const scheduleInvitationEmail = async (
   });
 };
 
+/** The one path that mints an invitation: validates the address, checks the seat, sends the email. */
+export const inviteToOrganization = async (
+  ctx: MutationCtx,
+  options: {
+    email: string;
+    inviter: Inviter;
+    organizationId: Id<"organizations">;
+    role: "admin" | "member";
+  }
+): Promise<{ invitationId: Id<"invitations">; token: string }> => {
+  const email = normalizeEmail(options.email);
+  if (!isValidEmail(email)) {
+    throw new Error("Invalid email address");
+  }
+
+  const org = await ctx.db.get(options.organizationId);
+  if (!org) {
+    throw new Error("Organization not found");
+  }
+  await assertInvitationSlotAvailable(ctx, { email, org });
+
+  const invitation = {
+    email,
+    organizationId: options.organizationId,
+    role: options.role,
+    token: crypto.randomUUID(),
+  };
+  const now = Date.now();
+  const invitationId = await ctx.db.insert("invitations", {
+    ...invitation,
+    createdAt: now,
+    expiresAt: now + INVITATION_TTL_MS,
+    inviterId: options.inviter._id,
+    status: "pending",
+  });
+
+  await scheduleInvitationEmail(ctx, {
+    invitation,
+    inviter: options.inviter,
+    organizationName: org.name,
+  });
+
+  return { invitationId, token: invitation.token };
+};
+
 export const create = mutation({
   args: {
     email: v.string(),
@@ -195,40 +246,7 @@ export const create = mutation({
     if (args.role === "admin" && membership.role !== "owner") {
       throw new Error("Only the owner can invite admins");
     }
-
-    const email = normalizeEmail(args.email);
-    if (!isValidEmail(email)) {
-      throw new Error("Invalid email address");
-    }
-
-    const org = await ctx.db.get(args.organizationId);
-    if (!org) {
-      throw new Error("Organization not found");
-    }
-    await assertInvitationSlotAvailable(ctx, { email, org });
-
-    const invitation = {
-      email,
-      organizationId: args.organizationId,
-      role: args.role,
-      token: crypto.randomUUID(),
-    };
-    const now = Date.now();
-    const invitationId = await ctx.db.insert("invitations", {
-      ...invitation,
-      createdAt: now,
-      expiresAt: now + INVITATION_TTL_MS,
-      inviterId: user._id,
-      status: "pending",
-    });
-
-    await scheduleInvitationEmail(ctx, {
-      invitation,
-      inviter: user,
-      organizationName: org.name,
-    });
-
-    return { invitationId, token: invitation.token };
+    return await inviteToOrganization(ctx, { ...args, inviter: user });
   },
   returns: v.object({
     invitationId: v.id("invitations"),

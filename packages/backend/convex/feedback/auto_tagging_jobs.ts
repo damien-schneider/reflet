@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { internalMutation, mutation } from "../_generated/server";
+import { consumeAiGenerationFor } from "../ai/usage_gate";
 import { requireOrgAdmin } from "../shared/access";
 import { triageScopeValidator } from "./triage_scope";
 
@@ -106,7 +107,15 @@ export const startBulkAutoTagging = mutation({
     scope: triageScopeValidator,
   },
   handler: async (ctx, args) => {
-    await requireOrgAdmin(ctx, args.organizationId, "run triage");
+    const { user } = await requireOrgAdmin(
+      ctx,
+      args.organizationId,
+      "run triage"
+    );
+    await consumeAiGenerationFor(ctx, {
+      organizationId: args.organizationId,
+      userId: user._id,
+    });
 
     const existingJobs = await ctx.db
       .query("autoTaggingJobs")

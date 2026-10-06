@@ -5,6 +5,7 @@ import { z } from "zod";
 import { internal } from "../../_generated/api";
 import { internalAction } from "../../_generated/server";
 import { repoAnalysisAgent } from "../../ai/agent";
+import { isTagColor, TAG_COLORS } from "../../feedback/tag_colors";
 import { fetchGitHubReleases, fetchRepoData } from "./github_helpers";
 import { parseJsonArray } from "./llm_json";
 import type { ChangelogConfig } from "./project_setup_validators";
@@ -13,7 +14,12 @@ const SEMVER_TAG_REGEX = /^v?\d+\.\d+/;
 
 const MONITOR_SCHEMA = z.object({ name: z.string(), url: z.string() });
 const KEYWORD_SCHEMA = z.object({ category: z.string(), keyword: z.string() });
-const TAG_SCHEMA = z.object({ color: z.string(), name: z.string() });
+const TAG_SCHEMA = z.object({
+  color: z
+    .string()
+    .transform((color) => (isTagColor(color) ? color : "default")),
+  name: z.string(),
+});
 const PROMPT_SCHEMA = z.object({ prompt: z.string(), title: z.string() });
 
 export const runProjectSetup = internalAction({
@@ -286,9 +292,9 @@ ${projectOverview}
 
 Suggest 3-7 tags that represent the main areas of the codebase (e.g., "API", "Frontend", "Auth", "Performance", "Database", "UI/UX", "Mobile").
 
-Return a JSON array. Each tag should have: name, color (hex color string).
+Return a JSON array. Each tag should have: name, color (one of: ${TAG_COLORS.join(", ")}).
 
-Format: [{"name": "...", "color": "#..."}]
+Format: [{"name": "...", "color": "blue"}]
 Return ONLY the JSON array, no markdown.`,
         }
       );

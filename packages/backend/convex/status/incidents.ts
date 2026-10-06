@@ -1,6 +1,8 @@
 import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 import { requireOrgAdmin, requireOrgMember } from "../shared/access";
+import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from "../shared/constants";
+import { validateInputLength } from "../shared/validators";
 import { notifyIncidentChange } from "./incidentNotifications";
 import { listActiveIncidents } from "./lib/activeIncidents";
 import { incidentSeverity, incidentStatus } from "./tableFields";
@@ -40,84 +42,6 @@ export const getActiveIncidents = query({
   },
 });
 
-export const getIncidentHistory = query({
-  args: {
-    days: v.optional(v.number()),
-    organizationId: v.id("organizations"),
-  },
-  handler: async (ctx, args) => {
-    await requireOrgMember(ctx, args.organizationId);
-
-    const daysBack = args.days ?? 14;
-    const cutoff = Date.now() - daysBack * 24 * 60 * 60 * 1000;
-
-    const incidents = await ctx.db
-      .query("statusIncidents")
-      .withIndex("by_org_created", (q) =>
-        q.eq("organizationId", args.organizationId).gte("createdAt", cutoff)
-      )
-      .collect();
-
-    const withUpdates = await Promise.all(
-      incidents.map(async (incident) => {
-        const updates = await ctx.db
-          .query("statusIncidentUpdates")
-          .withIndex("by_incident", (q) => q.eq("incidentId", incident._id))
-          .collect();
-
-        const monitors = await Promise.all(
-          incident.affectedMonitorIds.map((id) => ctx.db.get(id))
-        );
-
-        return {
-          ...incident,
-          affectedMonitors: monitors
-            .filter(
-              (m): m is NonNullable<typeof m> =>
-                m?.organizationId === incident.organizationId
-            )
-            .map((m) => ({ _id: m._id, name: m.name })),
-          updates: updates.sort((a, b) => a.createdAt - b.createdAt),
-        };
-      })
-    );
-
-    return withUpdates.sort((a, b) => b.createdAt - a.createdAt);
-  },
-});
-
-export const getIncidentWithUpdates = query({
-  args: { incidentId: v.id("statusIncidents") },
-  handler: async (ctx, args) => {
-    const incident = await ctx.db.get(args.incidentId);
-    if (!incident) {
-      return null;
-    }
-
-    await requireOrgMember(ctx, incident.organizationId);
-
-    const updates = await ctx.db
-      .query("statusIncidentUpdates")
-      .withIndex("by_incident", (q) => q.eq("incidentId", args.incidentId))
-      .collect();
-
-    const monitors = await Promise.all(
-      incident.affectedMonitorIds.map((id) => ctx.db.get(id))
-    );
-
-    return {
-      ...incident,
-      affectedMonitors: monitors
-        .filter(
-          (m): m is NonNullable<typeof m> =>
-            m?.organizationId === incident.organizationId
-        )
-        .map((m) => ({ _id: m._id, name: m.name, url: m.url })),
-      updates: updates.sort((a, b) => a.createdAt - b.createdAt),
-    };
-  },
-});
-
 export const createIncident = mutation({
   args: {
     affectedMonitorIds: v.array(v.id("statusMonitors")),
@@ -128,6 +52,8 @@ export const createIncident = mutation({
   },
   handler: async (ctx, args) => {
     await requireOrgAdmin(ctx, args.organizationId, "declare incidents");
+    validateInputLength(args.title, MAX_TITLE_LENGTH, "Title");
+    validateInputLength(args.message, MAX_DESCRIPTION_LENGTH, "Message");
 
     for (const monitorId of args.affectedMonitorIds) {
       const monitor = await ctx.db.get(monitorId);
@@ -180,6 +106,7 @@ export const postIncidentUpdate = mutation({
       incident.organizationId,
       "post incident updates"
     );
+    validateInputLength(args.message, MAX_DESCRIPTION_LENGTH, "Message");
 
     const now = Date.now();
 
@@ -195,38 +122,6 @@ export const postIncidentUpdate = mutation({
       message: args.message,
       organizationId: incident.organizationId,
       status: args.status,
-    });
-    await notifyIncidentChange(ctx, { incidentId: args.incidentId, updateId });
-  },
-});
-
-export const resolveIncident = mutation({
-  args: {
-    incidentId: v.id("statusIncidents"),
-    message: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    const incident = await ctx.db.get(args.incidentId);
-    if (!incident) {
-      throw new Error("Incident not found");
-    }
-
-    await requireOrgAdmin(ctx, incident.organizationId, "resolve incidents");
-
-    const now = Date.now();
-
-    await ctx.db.patch(args.incidentId, {
-      resolvedAt: now,
-      status: "resolved",
-      updatedAt: now,
-    });
-
-    const updateId = await ctx.db.insert("statusIncidentUpdates", {
-      createdAt: now,
-      incidentId: args.incidentId,
-      message: args.message ?? "This incident has been resolved.",
-      organizationId: incident.organizationId,
-      status: "resolved",
     });
     await notifyIncidentChange(ctx, { incidentId: args.incidentId, updateId });
   },

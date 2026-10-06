@@ -1,5 +1,4 @@
 import { v } from "convex/values";
-import type { Id } from "../../_generated/dataModel";
 import { internalQuery, query } from "../../_generated/server";
 import { isOrgMemberViewer } from "../../shared/access";
 
@@ -68,9 +67,6 @@ export const listGithubReleases = query({
   },
 });
 
-/**
- * Get connection status summary for display
- */
 export const getConnectionStatus = query({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
@@ -88,7 +84,6 @@ export const getConnectionStatus = query({
     if (!connection) {
       return {
         autoSyncEnabled: false,
-        hasCiSetup: false,
         hasRepository: false,
         hasWebhook: false,
         isConnected: false,
@@ -99,7 +94,6 @@ export const getConnectionStatus = query({
       accountAvatarUrl: connection.accountAvatarUrl,
       accountLogin: connection.accountLogin,
       autoSyncEnabled: Boolean(connection.autoSyncReleases),
-      hasCiSetup: Boolean(connection.ciWorkflowCreated),
       hasRepository: Boolean(connection.repositoryId),
       hasWebhook: Boolean(connection.webhookId),
       isConnected: connection.status === "connected",
@@ -213,51 +207,6 @@ export const getUserGithubConnection = internalQuery({
     }),
     v.null()
   ),
-});
-
-/**
- * Get all available GitHub installations from org members
- * Returns installations from members who have connected their GitHub
- */
-export const getOrgAvailableInstallations = internalQuery({
-  args: { organizationId: v.id("organizations") },
-  handler: async (ctx, args) => {
-    const members = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .collect();
-
-    const installations: Array<{
-      _id: Id<"userGithubConnections">;
-      userId: string;
-      installationId: string;
-      accountType: string;
-      accountLogin: string;
-      accountAvatarUrl?: string;
-    }> = [];
-
-    for (const member of members) {
-      const connection = await ctx.db
-        .query("userGithubConnections")
-        .withIndex("by_user", (q) => q.eq("userId", member.userId))
-        .first();
-
-      if (connection && connection.status === "connected") {
-        installations.push({
-          _id: connection._id,
-          accountAvatarUrl: connection.accountAvatarUrl,
-          accountLogin: connection.accountLogin,
-          accountType: connection.accountType,
-          installationId: connection.installationId,
-          userId: connection.userId,
-        });
-      }
-    }
-
-    return installations;
-  },
 });
 
 export const getConnectionForRepository = internalQuery({

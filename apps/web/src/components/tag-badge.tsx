@@ -1,9 +1,6 @@
 import { Badge, type BadgeProps } from "@ctrl-ui/react/ui/badge";
-import {
-  getTagColorValues,
-  resolveTagColor,
-  type TagColor,
-} from "@/lib/tag-colors";
+import type { TagColor } from "@reflet/backend/convex/feedback/tag_colors";
+import { getTagColorValues, resolveTagColor } from "@/lib/tag-colors";
 
 const SKIN_COLOR: Record<TagColor, BadgeProps["color"]> = {
   blue: "blue",

@@ -15,10 +15,3 @@ export const MCP_CARD = {
   remotes: [{ type: "streamable-http", url: MCP_ENDPOINT }],
   websiteUrl: BASE_URL,
 };
-
-export const LEGACY_MCP_CARD = {
-  capabilities: { resources: {}, tools: {} },
-  description: MCP_CARD.description,
-  serverInfo: DOCUMENTATION_SERVER,
-  transport: { endpoint: MCP_ENDPOINT, type: "streamable-http" },
-};

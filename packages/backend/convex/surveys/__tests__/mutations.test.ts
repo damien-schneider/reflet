@@ -247,18 +247,17 @@ describe("editing the flow", () => {
     const { admin, love, questionsOf, surveyId } = await setup();
     const question = { required: false, title: "New", type: "text" as const };
 
-    const first = await admin.mutation(api.surveys.mutations.addQuestion, {
+    const [first] = await admin.mutation(api.surveys.mutations.insertSteps, {
       after: null,
-      question,
+      drafts: [question],
       surveyId,
     });
-    const afterLove = await admin.mutation(api.surveys.mutations.addQuestion, {
-      after: love,
-      question,
-      surveyId,
-    });
-    const last = await admin.mutation(api.surveys.mutations.addQuestion, {
-      question,
+    const [afterLove] = await admin.mutation(
+      api.surveys.mutations.insertSteps,
+      { after: love, drafts: [question], surveyId }
+    );
+    const [last] = await admin.mutation(api.surveys.mutations.insertSteps, {
+      drafts: [question],
       surveyId,
     });
 

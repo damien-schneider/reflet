@@ -92,43 +92,6 @@ export const update = mutation({
   },
 });
 
-export const reorder = mutation({
-  args: {
-    organizationId: v.id("organizations"),
-    statusIds: v.array(v.id("organizationStatuses")),
-  },
-  handler: async (ctx, args) => {
-    const user = await requireAuthUser(ctx);
-
-    const org = await ctx.db.get(args.organizationId);
-    if (!org) {
-      throw new Error("Organization not found");
-    }
-
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", args.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership || membership.role === "member") {
-      throw new Error("Only admins can reorder statuses");
-    }
-
-    const now = Date.now();
-    for (const [order, statusId] of args.statusIds.entries()) {
-      const status = await ctx.db.get(statusId);
-      if (status?.organizationId !== args.organizationId) {
-        throw new Error("Status not found");
-      }
-      await ctx.db.patch(statusId, { order, updatedAt: now });
-    }
-
-    return true;
-  },
-});
-
 export const remove = mutation({
   args: {
     id: v.id("organizationStatuses"),

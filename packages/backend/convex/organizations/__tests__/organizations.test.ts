@@ -1,88 +1,63 @@
 /// <reference types="vite/client" />
-import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
-import { internal } from "../../_generated/api";
-import schema from "../../schema";
-import { modules } from "../../test.helpers";
+import { api } from "../../_generated/api";
+import { setupTest } from "../../test.helpers";
 
-// Type assertion to work around convex-test version mismatch
+const OWNER = { _id: "user_123", email: "owner@example.com" };
+
+const setup = () => {
+  const t = setupTest({ authUsers: [OWNER] });
+  const owner = t.withIdentity({ sessionId: OWNER._id, subject: OWNER._id });
+  return { owner, t };
+};
+
+const seedOrganization = (t: ReturnType<typeof setup>["t"], slug: string) =>
+  t.run((ctx) =>
+    ctx.db.insert("organizations", {
+      createdAt: Date.now(),
+      isPublic: false,
+      name: "Existing Org",
+      slug,
+      subscriptionStatus: "none",
+      subscriptionTier: "free",
+    })
+  );
 
 describe("Organization slug uniqueness", () => {
   test("should reject creating an organization with a duplicate slug", async () => {
-    const t = convexTest(schema, modules);
+    const { owner, t } = setup();
+    await seedOrganization(t, "my-unique-slug");
 
-    // First, insert an organization directly into the database
-    await t.run(async (ctx) => {
-      await ctx.db.insert("organizations", {
-        createdAt: Date.now(),
-        isPublic: false,
-        name: "First Org",
-        slug: "my-unique-slug",
-        subscriptionStatus: "none",
-        subscriptionTier: "free",
-      });
-    });
-
-    // Attempt to create second organization with same slug - should throw
     await expect(
-      t.mutation(internal.organizations.mutations.createOrganization, {
+      owner.mutation(api.organizations.mutations.create, {
         name: "Second Org",
         slug: "my-unique-slug",
-        userId: "user_123",
       })
     ).rejects.toThrow("This slug is already taken");
   });
 
   test("should reject creating an organization with a duplicate generated slug", async () => {
-    const t = convexTest(schema, modules);
+    const { owner, t } = setup();
+    await seedOrganization(t, "my-org");
 
-    // First, insert an organization with slug "my-org"
-    await t.run(async (ctx) => {
-      await ctx.db.insert("organizations", {
-        createdAt: Date.now(),
-        isPublic: false,
-        name: "My Org",
-        slug: "my-org",
-        subscriptionStatus: "none",
-        subscriptionTier: "free",
-      });
-    });
-
-    // Create second organization with same name - should throw because generated slug would be "my-org"
     await expect(
-      t.mutation(internal.organizations.mutations.createOrganization, {
-        name: "My Org",
-        userId: "user_123",
-      })
+      owner.mutation(api.organizations.mutations.create, { name: "My Org" })
     ).rejects.toThrow("This slug is already taken");
   });
 
   test("should allow creating organizations with different slugs", async () => {
-    const t = convexTest(schema, modules);
+    const { owner } = setup();
 
-    // Create first organization
-    const firstOrgId = await t.mutation(
-      internal.organizations.mutations.createOrganization,
-      {
-        name: "First Org",
-        slug: "first-org",
-        userId: "user_123",
-      }
-    );
+    const first = await owner.mutation(api.organizations.mutations.create, {
+      name: "First Org",
+      slug: "first-org",
+    });
+    const second = await owner.mutation(api.organizations.mutations.create, {
+      name: "Second Org",
+      slug: "second-org",
+    });
 
-    // Create second organization with different slug - should succeed
-    const secondOrgId = await t.mutation(
-      internal.organizations.mutations.createOrganization,
-      {
-        name: "Second Org",
-        slug: "second-org",
-        userId: "user_123",
-      }
-    );
-
-    expect(firstOrgId).toBeDefined();
-    expect(secondOrgId).toBeDefined();
-    expect(firstOrgId).not.toBe(secondOrgId);
+    expect(first.id).not.toBe(second.id);
   });
 });
 
@@ -95,34 +70,29 @@ describe("Organization slug derived from name", () => {
     ["!!!", /^org-[a-z0-9]{6}$/],
     ["Acme Labs", /^acme-labs$/],
   ])("creates %s with a usable slug", async (name, expected) => {
-    const t = convexTest(schema, modules);
-    const orgId = await t.mutation(
-      internal.organizations.mutations.createOrganization,
-      { name, userId: "user_123" }
-    );
-    const org = await t.run((ctx) => ctx.db.get(orgId));
-    expect(org?.slug).toMatch(expected);
+    const { owner } = setup();
+    const { slug } = await owner.mutation(api.organizations.mutations.create, {
+      name,
+    });
+    expect(slug).toMatch(expected);
   });
 
   test("truncates long names to a valid 48-char slug", async () => {
-    const t = convexTest(schema, modules);
+    const { owner } = setup();
     const name = `${"a".repeat(47)} ${"b".repeat(12)}`;
-    const orgId = await t.mutation(
-      internal.organizations.mutations.createOrganization,
-      { name, userId: "user_123" }
-    );
-    const org = await t.run((ctx) => ctx.db.get(orgId));
-    expect(org?.slug).toBe("a".repeat(47));
-    expect(org?.slug).toMatch(VALID_SLUG);
+    const { slug } = await owner.mutation(api.organizations.mutations.create, {
+      name,
+    });
+    expect(slug).toBe("a".repeat(47));
+    expect(slug).toMatch(VALID_SLUG);
   });
 
   test("still rejects an explicitly requested reserved slug", async () => {
-    const t = convexTest(schema, modules);
+    const { owner } = setup();
     await expect(
-      t.mutation(internal.organizations.mutations.createOrganization, {
+      owner.mutation(api.organizations.mutations.create, {
         name: "Anything",
         slug: "test",
-        userId: "user_123",
       })
     ).rejects.toThrow("This slug is reserved");
   });
@@ -130,81 +100,48 @@ describe("Organization slug derived from name", () => {
 
 describe("Organization slug update", () => {
   test("should allow changing slug to a unique value", async () => {
-    const t = convexTest(schema, modules);
+    const { owner, t } = setup();
+    const { id } = await owner.mutation(api.organizations.mutations.create, {
+      name: "My Org",
+      slug: "my-org",
+    });
 
-    // Create an organization
-    const orgId = await t.mutation(
-      internal.organizations.mutations.createOrganization,
-      {
-        name: "My Org",
-        slug: "my-org",
-        userId: "user_123",
-      }
-    );
-
-    // Update the slug to a new unique value
-    await t.mutation(internal.organizations.mutations.updateOrganizationSlug, {
-      id: orgId,
+    await owner.mutation(api.organizations.mutations.update, {
+      id,
       slug: "new-slug",
     });
 
-    // Verify the slug was updated
-    const org = await t.run(async (ctx) => await ctx.db.get(orgId));
-
-    expect(org?.slug).toBe("new-slug");
+    expect((await t.run((ctx) => ctx.db.get(id)))?.slug).toBe("new-slug");
   });
 
   test("should reject changing slug to one that is already taken", async () => {
-    const t = convexTest(schema, modules);
-
-    // Create first organization
-    await t.mutation(internal.organizations.mutations.createOrganization, {
-      name: "First Org",
-      slug: "taken-slug",
-      userId: "user_123",
+    const { owner, t } = setup();
+    await seedOrganization(t, "taken-slug");
+    const { id } = await owner.mutation(api.organizations.mutations.create, {
+      name: "Second Org",
+      slug: "second-org",
     });
 
-    // Create second organization
-    const secondOrgId = await t.mutation(
-      internal.organizations.mutations.createOrganization,
-      {
-        name: "Second Org",
-        slug: "second-org",
-        userId: "user_123",
-      }
-    );
-
-    // Try to update second org's slug to the first org's slug - should throw
     await expect(
-      t.mutation(internal.organizations.mutations.updateOrganizationSlug, {
-        id: secondOrgId,
+      owner.mutation(api.organizations.mutations.update, {
+        id,
         slug: "taken-slug",
       })
     ).rejects.toThrow("This slug is already taken");
   });
 
   test("should allow keeping the same slug (no-op)", async () => {
-    const t = convexTest(schema, modules);
-
-    // Create an organization
-    const orgId = await t.mutation(
-      internal.organizations.mutations.createOrganization,
-      {
-        name: "My Org",
-        slug: "my-org",
-        userId: "user_123",
-      }
-    );
-
-    // Update with the same slug - should not throw
-    await t.mutation(internal.organizations.mutations.updateOrganizationSlug, {
-      id: orgId,
+    const { owner, t } = setup();
+    const { id } = await owner.mutation(api.organizations.mutations.create, {
+      name: "My Org",
       slug: "my-org",
     });
 
-    // Verify the slug is unchanged
-    const org = await t.run(async (ctx) => await ctx.db.get(orgId));
+    await owner.mutation(api.organizations.mutations.update, {
+      id,
+      slug: "my-org",
+    });
 
-    expect(org?.slug).toBe("my-org");
+    expect((await t.run((ctx) => ctx.db.get(id)))?.slug).toBe("my-org");
   });
 });

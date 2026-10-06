@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { internalMutation, internalQuery } from "../_generated/server";
+import { internalMutation } from "../_generated/server";
 import { generateApiKey, hashSecretKey } from "./api_auth";
 
 /**
@@ -60,83 +60,6 @@ export const regenerateOrganizationSecretKey = internalMutation({
     return {
       secretKey: newSecretKey, // Only returned on regeneration!
     };
-  },
-});
-
-/**
- * Get API keys info for an organization
- */
-export const getOrganizationApiKeys = internalQuery({
-  args: {
-    organizationId: v.id("organizations"),
-  },
-  handler: async (ctx, args) => {
-    const keys = await ctx.db
-      .query("organizationApiKeys")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .collect();
-
-    return keys.map((key) => ({
-      allowedDomains: key.allowedDomains,
-      apiKeyId: key._id,
-      createdAt: key.createdAt,
-      isActive: key.isActive,
-      lastUsedAt: key.lastUsedAt,
-      name: key.name,
-      publicKey: key.publicKey,
-      rateLimit: key.rateLimit,
-      tagId: key.tagId,
-    }));
-  },
-});
-
-/**
- * Update organization API key settings
- */
-export const updateOrganizationApiKeySettings = internalMutation({
-  args: {
-    allowedDomains: v.optional(v.array(v.string())),
-    apiKeyId: v.id("organizationApiKeys"),
-    isActive: v.optional(v.boolean()),
-    name: v.optional(v.string()),
-    rateLimit: v.optional(
-      v.object({
-        requestsPerMinute: v.number(),
-      })
-    ),
-    tagId: v.optional(v.id("tags")),
-  },
-  handler: async (ctx, args) => {
-    const { apiKeyId, ...updates } = args;
-
-    // Filter out undefined values
-    const filteredUpdates: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(updates)) {
-      if (value !== undefined) {
-        filteredUpdates[key] = value;
-      }
-    }
-
-    if (Object.keys(filteredUpdates).length > 0) {
-      await ctx.db.patch(apiKeyId, filteredUpdates);
-    }
-
-    return { success: true };
-  },
-});
-
-/**
- * Delete an organization API key
- */
-export const deleteOrganizationApiKey = internalMutation({
-  args: {
-    apiKeyId: v.id("organizationApiKeys"),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.delete(args.apiKeyId);
-    return { success: true };
   },
 });
 

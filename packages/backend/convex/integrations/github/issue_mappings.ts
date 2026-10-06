@@ -37,6 +37,13 @@ export const upsertLabelMapping = mutation({
       throw new Error("No GitHub connection found");
     }
 
+    if (args.targetTagId) {
+      const targetTag = await ctx.db.get(args.targetTagId);
+      if (targetTag?.organizationId !== args.organizationId) {
+        throw new Error("Tag not found");
+      }
+    }
+
     const now = Date.now();
 
     const existing = await ctx.db

@@ -1,7 +1,9 @@
-import { v } from "convex/values";
-import { mutation, query } from "../_generated/server";
+import { type Infer, v } from "convex/values";
+import type { Id } from "../_generated/dataModel";
+import { type MutationCtx, mutation, query } from "../_generated/server";
 import { requireAuthUser } from "../shared/access";
 import { validateInputLength } from "../shared/validators";
+import type { keywordSource } from "./tableFields";
 
 const MAX_KEYWORDS_PER_ORG = 50;
 const MAX_KEYWORD_LENGTH = 100;
@@ -38,6 +40,60 @@ export const list = query({
   },
 });
 
+export interface KeywordIdentity {
+  keyword: string;
+  source: Infer<typeof keywordSource>;
+  subreddit?: string;
+}
+
+export const isSameKeyword = (a: KeywordIdentity, b: KeywordIdentity) =>
+  a.keyword === b.keyword &&
+  a.source === b.source &&
+  a.subreddit === b.subreddit;
+
+export const insertKeyword = async (
+  ctx: MutationCtx,
+  args: {
+    keyword: string;
+    organizationId: Id<"organizations">;
+    source: Infer<typeof keywordSource>;
+    subreddit?: string;
+  }
+): Promise<Id<"intelligenceKeywords">> => {
+  const keyword = args.keyword.trim();
+  const subreddit = args.subreddit?.trim() || undefined;
+  validateInputLength(keyword, MAX_KEYWORD_LENGTH, "Keyword");
+  validateInputLength(subreddit, MAX_SUBREDDIT_LENGTH, "Subreddit");
+
+  const existing = await ctx.db
+    .query("intelligenceKeywords")
+    .withIndex("by_organization", (q) =>
+      q.eq("organizationId", args.organizationId)
+    )
+    .collect();
+
+  if (existing.length >= MAX_KEYWORDS_PER_ORG) {
+    throw new Error(
+      `You can track up to ${MAX_KEYWORDS_PER_ORG} keywords. Remove one to add another.`
+    );
+  }
+
+  const candidate = { keyword, source: args.source, subreddit };
+  if (existing.some((k) => isSameKeyword(k, candidate))) {
+    throw new Error(
+      "This keyword already exists with the same source and subreddit"
+    );
+  }
+
+  return await ctx.db.insert("intelligenceKeywords", {
+    createdAt: Date.now(),
+    keyword,
+    organizationId: args.organizationId,
+    source: args.source,
+    subreddit,
+  });
+};
+
 /**
  * Add a new keyword
  */
@@ -63,97 +119,7 @@ export const create = mutation({
       throw new Error("Only admins can add keywords");
     }
 
-    validateInputLength(args.keyword.trim(), MAX_KEYWORD_LENGTH, "Keyword");
-    validateInputLength(args.subreddit, MAX_SUBREDDIT_LENGTH, "Subreddit");
-
-    // Check for duplicates (same keyword + source + subreddit for same org)
-    const existing = await ctx.db
-      .query("intelligenceKeywords")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .collect();
-
-    const isDuplicate = existing.some(
-      (k) =>
-        k.keyword === args.keyword.trim() &&
-        k.source === args.source &&
-        k.subreddit === args.subreddit
-    );
-
-    if (existing.length >= MAX_KEYWORDS_PER_ORG) {
-      throw new Error(
-        `You can track up to ${MAX_KEYWORDS_PER_ORG} keywords. Remove one to add another.`
-      );
-    }
-
-    if (isDuplicate) {
-      throw new Error(
-        "This keyword already exists with the same source and subreddit"
-      );
-    }
-
-    const keywordId = await ctx.db.insert("intelligenceKeywords", {
-      createdAt: Date.now(),
-      keyword: args.keyword.trim(),
-      organizationId: args.organizationId,
-      source: args.source,
-      subreddit: args.subreddit?.trim() || undefined,
-    });
-
-    return keywordId;
-  },
-});
-
-/**
- * Update keyword fields
- */
-export const update = mutation({
-  args: {
-    id: v.id("intelligenceKeywords"),
-    keyword: v.optional(v.string()),
-    source: v.optional(
-      v.union(v.literal("reddit"), v.literal("web"), v.literal("both"))
-    ),
-    subreddit: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    const user = await requireAuthUser(ctx);
-
-    const existing = await ctx.db.get(args.id);
-    if (!existing) {
-      throw new Error("Keyword not found");
-    }
-
-    // Check admin permission
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", existing.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership || membership.role === "member") {
-      throw new Error("Only admins can update keywords");
-    }
-
-    validateInputLength(args.keyword?.trim(), MAX_KEYWORD_LENGTH, "Keyword");
-    validateInputLength(args.subreddit, MAX_SUBREDDIT_LENGTH, "Subreddit");
-
-    const updates: Record<string, unknown> = {};
-
-    if (args.keyword !== undefined) {
-      updates.keyword = args.keyword.trim();
-    }
-    if (args.source !== undefined) {
-      updates.source = args.source;
-    }
-    if (args.subreddit !== undefined) {
-      updates.subreddit = args.subreddit.trim() || undefined;
-    }
-
-    await ctx.db.patch(args.id, updates);
-    return args.id;
+    return await insertKeyword(ctx, args);
   },
 });
 

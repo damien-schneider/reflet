@@ -47,22 +47,10 @@ async function seedCategories() {
   return { ...ids, t };
 }
 
-test("category lists and slug lookup honor category visibility for visitors and members", async () => {
+test("category list honors category visibility for visitors and members", async () => {
   const { t, organizationId } = await seedCategories();
-  for (const endpoint of [
-    api.feedback.tags.list,
-    api.feedback.tags.listPublic,
-    api.organizations.tag_manager.list,
-  ]) {
-    const tags = await t.query(endpoint, { organizationId });
-    expect(tags.map((tag) => tag.name)).toEqual(["Public"]);
-  }
-  expect(
-    await t.query(api.feedback.tags.getBySlug, {
-      organizationId,
-      slug: "private",
-    })
-  ).toBeNull();
+  const tags = await t.query(api.feedback.tags.list, { organizationId });
+  expect(tags.map((tag) => tag.name)).toEqual(["Public"]);
   const signedIn = t.withIdentity({
     sessionId: member._id,
     subject: member._id,
@@ -72,32 +60,16 @@ test("category lists and slug lookup honor category visibility for visitors and 
       (tag) => tag.name
     )
   ).toEqual(["Private", "Public", "Unconfigured"]);
-  expect(
-    (
-      await signedIn.query(api.feedback.tags.getBySlug, {
-        organizationId,
-        slug: "private",
-      })
-    )?.name
-  ).toBe("Private");
 });
 
 test("public feedback projections hide team categories while member projections retain them", async () => {
   const { t, feedbackId, organizationId } = await seedCategories();
-  const lists = await Promise.all([
-    t.query(api.feedback.list.listByOrganization, { organizationId }),
-    t.query(api.feedback.actions.listPublic, { organizationId }),
-  ]);
-  for (const items of lists) {
-    expect(items[0].tags.map((tag) => tag?.name)).toEqual(["Public"]);
-  }
+  const items = await t.query(api.feedback.list.listByOrganization, {
+    organizationId,
+  });
+  expect(items[0].tags.map((tag) => tag?.name)).toEqual(["Public"]);
   expect(
     (await t.query(api.feedback.queries.get, { id: feedbackId }))?.tags.map(
-      (tag) => tag?.name
-    )
-  ).toEqual(["Public"]);
-  expect(
-    (await t.query(api.feedback.tags.getForFeedback, { feedbackId })).map(
       (tag) => tag?.name
     )
   ).toEqual(["Public"]);
@@ -153,14 +125,14 @@ test("widget projections use public categories and authorized private context re
 
 test("a visitor cannot infer private category associations by filtering with its ID", async () => {
   const { t, feedbackId, organizationId } = await seedCategories();
-  const signedIn = t.withIdentity({
-    sessionId: member._id,
-    subject: member._id,
-  });
-  const privateTag = await signedIn.query(api.feedback.tags.getBySlug, {
-    organizationId,
-    slug: "private",
-  });
+  const privateTag = await t.run((ctx) =>
+    ctx.db
+      .query("tags")
+      .withIndex("by_org_slug", (q) =>
+        q.eq("organizationId", organizationId).eq("slug", "private")
+      )
+      .unique()
+  );
   if (!privateTag) {
     throw new Error("Missing private category");
   }

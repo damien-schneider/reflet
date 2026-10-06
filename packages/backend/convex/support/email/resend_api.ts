@@ -22,8 +22,6 @@ export const resendDomainSchema = z.object({
   status: z.string(),
 });
 
-export type ResendDomain = z.infer<typeof resendDomainSchema>;
-
 const receivedAttachmentSchema = z.object({
   content_disposition: z.string().nullish(),
   content_id: z.string().nullish(),
@@ -58,8 +56,6 @@ export const receivedEmailSchema = z.object({
   text: z.string().nullish(),
   to: z.array(z.string()),
 });
-
-export type ReceivedEmail = z.infer<typeof receivedEmailSchema>;
 
 const attachmentDownloadSchema = z.object({
   content_disposition: z.string().nullish(),

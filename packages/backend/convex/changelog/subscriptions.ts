@@ -1,8 +1,9 @@
 import { v } from "convex/values";
+import type { Doc, Id } from "../_generated/dataModel";
 import {
-  internalMutation,
   internalQuery,
   mutation,
+  type QueryCtx,
   query,
 } from "../_generated/server";
 import { authComponent } from "../auth/auth";
@@ -11,12 +12,27 @@ import {
   normalizeSubscriberEmail,
   sendSubscriptionConfirmation,
 } from "../email/subscription_confirmation";
-import { requireAuthUser } from "../shared/access";
+import { isOrgMemberViewer, requireAuthUser } from "../shared/access";
 import { rateLimiter } from "../shared/rate_limits";
 
 function generateUnsubscribeToken(): string {
   return crypto.randomUUID();
 }
+
+/** Release notes reach subscribers by email, so only an audience that may read the changelog can subscribe. */
+const requireChangelogAudience = async (
+  ctx: QueryCtx,
+  organizationId: Id<"organizations">
+): Promise<Doc<"organizations">> => {
+  const org = await ctx.db.get(organizationId);
+  if (!org) {
+    throw new Error("Organization not found");
+  }
+  if (!(org.isPublic || (await isOrgMemberViewer(ctx, organizationId)))) {
+    throw new Error("Organization not found");
+  }
+  return org;
+};
 
 /**
  * Get the subscriber count for an organization (admin only)
@@ -82,11 +98,7 @@ export const subscribe = mutation({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
     const user = await requireAuthUser(ctx);
-
-    const org = await ctx.db.get(args.organizationId);
-    if (!org) {
-      throw new Error("Organization not found");
-    }
+    await requireChangelogAudience(ctx, args.organizationId);
 
     // Check if already subscribed
     const existing = await ctx.db
@@ -144,10 +156,7 @@ export const subscribeByEmail = mutation({
   },
   handler: async (ctx, args) => {
     const email = normalizeSubscriberEmail(args.email);
-    const org = await ctx.db.get(args.organizationId);
-    if (!org) {
-      throw new Error("Organization not found");
-    }
+    const org = await requireChangelogAudience(ctx, args.organizationId);
     await rateLimiter.limit(ctx, "emailSubscriptionPerOrg", {
       key: args.organizationId,
       throws: true,
@@ -276,26 +285,4 @@ export const getSubscribersByOrganization = internalQuery({
       userId: v.optional(v.string()),
     })
   ),
-});
-
-/**
- * Migrate existing subscribers to add unsubscribe tokens (internal use only)
- */
-export const migrateSubscriberTokens = internalMutation({
-  args: {},
-  handler: async (ctx) => {
-    const subscribers = await ctx.db.query("changelogSubscribers").collect();
-    let migrated = 0;
-
-    for (const subscriber of subscribers) {
-      if (!subscriber.unsubscribeToken) {
-        await ctx.db.patch(subscriber._id, {
-          unsubscribeToken: generateUnsubscribeToken(),
-        });
-        migrated++;
-      }
-    }
-
-    return { migrated, total: subscribers.length };
-  },
 });

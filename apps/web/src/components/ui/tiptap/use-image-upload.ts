@@ -2,7 +2,7 @@
 
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation } from "convex/react";
 import { useState } from "react";
 
 const MAX_IMAGE_SIZE_MB = 5;
@@ -57,16 +57,8 @@ export function useImageUpload({
   onError,
 }: UseImageUploadOptions = {}) {
   const generateUploadUrl = useMutation(api.storage.generateUploadUrl);
-  const getStorageUrl = useMutation(api.storage.getStorageUrlMutation);
+  const getStorageUrl = useMutation(api.storage.getStorageUrl);
   const [isUploading, setIsUploading] = useState(false);
-  const [lastStorageId, setLastStorageId] = useState<Id<"_storage"> | null>(
-    null
-  );
-
-  const storageUrl = useQuery(
-    api.storage.getStorageUrl,
-    lastStorageId ? { storageId: lastStorageId } : "skip"
-  );
 
   const uploadImage = async (file: File): Promise<string | null> => {
     const validationError = validateImageFile(file);
@@ -80,7 +72,6 @@ export function useImageUpload({
     let url: string | null = null;
     try {
       const storageId = await postImage(file, generateUploadUrl);
-      setLastStorageId(storageId);
       url = await resolveStorageUrl(storageId, getStorageUrl);
     } catch (err) {
       const error =
@@ -94,59 +85,5 @@ export function useImageUpload({
     return url;
   };
 
-  const handlePaste = async (event: ClipboardEvent): Promise<string | null> => {
-    const items = event.clipboardData?.items;
-    if (!items) return null;
-
-    for (const item of items) {
-      if (item.type.startsWith("image/")) {
-        const file = item.getAsFile();
-        if (file) {
-          event.preventDefault();
-          return uploadImage(file);
-        }
-      }
-    }
-
-    return null;
-  };
-
-  const handleDrop = async (event: DragEvent): Promise<string | null> => {
-    const files = event.dataTransfer?.files;
-    if (!files?.length) return null;
-
-    const file = files[0];
-    if (file?.type.startsWith("image/")) {
-      event.preventDefault();
-      return uploadImage(file);
-    }
-
-    return null;
-  };
-
-  const openFilePicker = (): Promise<string | null> =>
-    new Promise((resolve) => {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = "image/*";
-      input.onchange = async (event) => {
-        const target = event.target;
-        if (!(target instanceof HTMLInputElement)) {
-          resolve(null);
-          return;
-        }
-        const file = target.files?.[0];
-        resolve(file ? await uploadImage(file) : null);
-      };
-      input.click();
-    });
-
-  return {
-    handleDrop,
-    handlePaste,
-    isUploading,
-    openFilePicker,
-    storageUrl,
-    uploadImage,
-  };
+  return { isUploading, uploadImage };
 }

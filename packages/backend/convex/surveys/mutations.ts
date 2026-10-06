@@ -12,7 +12,7 @@ import {
   rulesUsableBy,
   stripTargets,
 } from "./editing/flow_edit";
-import { insertIndexFor, insertStepsIntoSurvey } from "./editing/insert_steps";
+import { insertStepsIntoSurvey } from "./editing/insert_steps";
 import {
   changeSurveyStatus,
   duplicateSurveyRecords,
@@ -152,43 +152,6 @@ export const duplicate = mutation({
     });
   },
   returns: v.id("surveys"),
-});
-
-export const addQuestion = mutation({
-  args: {
-    after: v.optional(v.union(v.id("surveyQuestions"), v.null())),
-    question: v.object({
-      config: questionConfigValidator,
-      description: v.optional(v.string()),
-      required: v.boolean(),
-      title: v.string(),
-      type: questionTypeValidator,
-    }),
-    surveyId: v.id("surveys"),
-  },
-  handler: async (ctx, args) => {
-    const { survey } = await loadManagedSurvey(
-      ctx,
-      args.surveyId,
-      "manage survey questions"
-    );
-    assertButtonLinksSafe({ configs: [args.question.config] });
-    const questions = await loadSortedQuestions(ctx, survey._id);
-    const insertAt = insertIndexFor(questions, args.after);
-    const questionId = await ctx.db.insert("surveyQuestions", {
-      ...args.question,
-      order: insertAt,
-      organizationId: survey.organizationId,
-      surveyId: survey._id,
-    });
-    await renumber(ctx, [
-      ...questions.slice(0, insertAt),
-      { _id: questionId, order: insertAt },
-      ...questions.slice(insertAt),
-    ]);
-    return questionId;
-  },
-  returns: v.id("surveyQuestions"),
 });
 
 /** Inserts drafted steps and their jumps in one transaction, optionally routing an existing jump through them. */

@@ -12,9 +12,12 @@ const EMAIL_LIMIT_BY_PATH = {
   "/sign-up/email": "authSignUpPerEmail",
 } as const;
 
-const isLimitedPath = (
-  path: string
-): path is keyof typeof EMAIL_LIMIT_BY_PATH => path in EMAIL_LIMIT_BY_PATH;
+type LimitedPath = keyof typeof EMAIL_LIMIT_BY_PATH;
+
+const isLimitedPath = (path: string): path is LimitedPath =>
+  path in EMAIL_LIMIT_BY_PATH;
+
+const sendsEmail = (path: LimitedPath) => path !== "/sign-in/email";
 
 const readEmail = (body: unknown): string | null => {
   if (
@@ -37,9 +40,15 @@ export async function consumeAuthEmailLimit(
   if (!(email && isLimitedPath(request.path))) {
     return { ok: true };
   }
-  return await rateLimiter.limit(ctx, EMAIL_LIMIT_BY_PATH[request.path], {
-    key: email,
-  });
+  const perEmail = await rateLimiter.limit(
+    ctx,
+    EMAIL_LIMIT_BY_PATH[request.path],
+    { key: email }
+  );
+  if (!(perEmail.ok && sendsEmail(request.path))) {
+    return perEmail;
+  }
+  return await rateLimiter.limit(ctx, "authEmailSendGlobal");
 }
 
 export const createAuthEmailRateLimitHook = (ctx: GenericCtx<DataModel>) =>

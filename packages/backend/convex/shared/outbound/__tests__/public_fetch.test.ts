@@ -5,7 +5,6 @@ import {
   DnsResolutionUnavailableError,
   fetchPublicUrl,
   NonPublicUrlError,
-  readTextUpTo,
 } from "../public_fetch";
 
 describe("isNonPublicIpAddress", () => {
@@ -34,6 +33,14 @@ describe("isNonPublicIpAddress", () => {
     "fc00::1",
     "fd12:3456::1",
     "fe80::1",
+    "fec0::1",
+    "feff::1",
+    "100::1",
+    "100::ffff:ffff:ffff:ffff",
+    "2001:10::1",
+    "2001:1f:ffff::1",
+    "2001:20::1",
+    "2001:2f::1",
     "ff02::1",
     "2001:db8::1",
     "1::2::3",
@@ -51,6 +58,8 @@ describe("isNonPublicIpAddress", () => {
     "2606:4700:4700::1111",
     "::ffff:808:808",
     "2002:808:808::1",
+    "2001:30::1",
+    "100:0:0:1::1",
   ])("treats %s as public", (address) => {
     expect(isNonPublicIpAddress(address)).toBe(false);
   });
@@ -196,12 +205,5 @@ describe("fetchPublicUrl", () => {
       ([input]) => !String(input).startsWith("https://cloudflare-dns.com")
     );
     expect(targetRequests).toHaveLength(1);
-  });
-});
-
-describe("readTextUpTo", () => {
-  test("stops reading at the byte cap", async () => {
-    const response = new Response("a".repeat(10_000));
-    expect(await readTextUpTo(response, 100)).toHaveLength(100);
   });
 });

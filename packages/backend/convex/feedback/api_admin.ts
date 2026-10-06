@@ -61,61 +61,6 @@ export const getApiKeys = query({
   },
 });
 
-/**
- * List external users for an organization (admin only)
- */
-export const listExternalUsers = query({
-  args: {
-    limit: v.optional(v.number()),
-    organizationId: v.id("organizations"),
-  },
-  handler: async (ctx, args) => {
-    const user = await authComponent.safeGetAuthUser(ctx);
-    if (!user) {
-      return [];
-    }
-
-    const org = await ctx.db.get(args.organizationId);
-    if (!org) {
-      return [];
-    }
-
-    // Check admin permissions
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", args.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership || membership.role === "member") {
-      return [];
-    }
-
-    // Get external users
-    const externalUsers = await ctx.db
-      .query("externalUsers")
-      .withIndex("by_organization_external", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .collect();
-
-    // Sort by last seen, limit
-    externalUsers.sort((a, b) => b.lastSeenAt - a.lastSeenAt);
-    const limit = args.limit ?? 100;
-
-    return externalUsers.slice(0, limit).map((u) => ({
-      avatar: u.avatar,
-      createdAt: u.createdAt,
-      email: u.email,
-      externalId: u.externalId,
-      id: u._id,
-      lastSeenAt: u.lastSeenAt,
-      name: u.name,
-    }));
-  },
-});
-
 // ============================================
 // MUTATIONS
 // ============================================

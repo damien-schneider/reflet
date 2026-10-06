@@ -47,7 +47,6 @@ export interface OrganizationConfig {
 }
 
 export interface OrganizationSettings {
-  allowAnonymousVoting?: boolean;
   defaultStatus?: FeedbackStatus;
   requireApproval?: boolean;
 }
@@ -171,8 +170,6 @@ export interface PageContext {
   pageTitle?: string;
   referrer?: string;
   screen?: { height: number; width: number };
-  /** Where the viewport sat in the page when the screenshot was taken. */
-  scroll?: { x: number; y: number };
   timezone?: string;
   url?: string;
   userAgent?: string;

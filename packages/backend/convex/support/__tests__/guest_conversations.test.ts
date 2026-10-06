@@ -3,6 +3,7 @@ import type { convexTest } from "convex-test";
 import { beforeEach, describe, expect, test } from "vitest";
 import { api } from "../../_generated/api";
 import type { Id } from "../../_generated/dataModel";
+import { scheduledFunctionNames, seedOrganization } from "../../test.fixtures";
 import { setupTest } from "../../test.helpers";
 
 const GUEST = {
@@ -267,6 +268,86 @@ describe("guest support conversations", () => {
     expect(messages[0].sender?.email).toBe(GUEST.email);
     expect(messages[0].isOwnMessage).toBe(true);
     expect(messages[1].isOwnMessage).toBe(false);
+  });
+
+  test("shows the guest a staff reply without the staff member's email or id", async () => {
+    const STAFF = { _id: "user_staff", email: "alice@acme.dev", name: "Alice" };
+    const withStaff = setupTest({ authUsers: [STAFF] });
+    const organizationId = await seedOrg(withStaff, true);
+    const conversationId = await withStaff.mutation(
+      api.support.conversations.create,
+      {
+        guestEmail: GUEST.email,
+        guestId: GUEST.id,
+        initialMessage: "First",
+        organizationId,
+      }
+    );
+    await withStaff.run(async (ctx) => {
+      await ctx.db.insert("organizationMembers", {
+        createdAt: Date.now(),
+        organizationId,
+        role: "admin",
+        userId: STAFF._id,
+      });
+      await ctx.db.insert("supportMessages", {
+        body: "On it",
+        conversationId,
+        createdAt: Date.now() + 1,
+        isRead: false,
+        senderId: STAFF._id,
+        senderType: "admin",
+      });
+    });
+
+    const [, staffReply] = await withStaff.query(api.support.messages.list, {
+      conversationId,
+      credential: GUEST_CREDENTIAL,
+    });
+    expect(staffReply).toMatchObject({
+      sender: { id: "staff-1", name: "Alice" },
+      senderId: "staff-1",
+    });
+    expect(staffReply?.sender?.email).toBeUndefined();
+
+    const [, asSeenByStaff] = await withStaff
+      .withIdentity({ sessionId: STAFF._id, subject: STAFF._id })
+      .query(api.support.messages.list, { conversationId });
+    expect(asSeenByStaff?.sender).toMatchObject({
+      email: STAFF.email,
+      id: STAFF._id,
+    });
+  });
+
+  test("confirmation emails to one address are capped across organizations", async () => {
+    const sentConfirmations = async () =>
+      (await t.run((ctx) => scheduledFunctionNames(ctx))).filter(
+        (name) => name === "support/email/render:sendContactConfirmation"
+      ).length;
+
+    for (const slug of ["org-a", "org-b", "org-c"]) {
+      const organizationId = await t.run((ctx) =>
+        seedOrganization(ctx, { slug, supportEnabled: true })
+      );
+      for (let attempt = 0; attempt < 3; attempt++) {
+        await t.mutation(api.support.conversations.create, {
+          guestEmail: GUEST.email,
+          guestId: GUEST.id,
+          initialMessage: "Hello",
+          organizationId,
+        });
+      }
+    }
+
+    expect(await sentConfirmations()).toBe(5);
+    const contactOrgSlugs = await t.run(async (ctx) => {
+      const contacts = await ctx.db.query("supportContacts").collect();
+      const organizations = await Promise.all(
+        contacts.map((contact) => ctx.db.get(contact.organizationId))
+      );
+      return organizations.map((organization) => organization?.slug);
+    });
+    expect(contactOrgSlugs).toEqual(["org-a", "org-b"]);
   });
 
   test("marks the guest's own message as read from their side", async () => {

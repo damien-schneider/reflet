@@ -210,7 +210,6 @@ export const applyPriorityBoost = internalMutation({
     if (newRank > currentRank) {
       await ctx.db.patch(args.feedbackId, {
         aiPriority: args.newPriority,
-        aiPriorityGeneratedAt: Date.now(),
         aiPriorityReasoning: args.boostReason,
       });
     }

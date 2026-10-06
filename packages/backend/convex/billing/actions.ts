@@ -2,7 +2,6 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { action } from "../_generated/server";
 import { requireAuthUser } from "../shared/access";
-import { getOrgSubscription } from "./org_subscription";
 import {
   createCheckoutSessionWithPromoCodes,
   STRIPE_PRICES,
@@ -117,77 +116,5 @@ export const createCustomerPortalSession = action({
     return {
       url: result.url,
     };
-  },
-});
-
-export const cancelSubscription = action({
-  args: {
-    cancelAtPeriodEnd: v.optional(v.boolean()),
-    organizationId: v.id("organizations"),
-  },
-  handler: async (ctx, args) => {
-    const user = await requireAuthUser(ctx);
-
-    const membership = await ctx.runQuery(
-      internal.shared.access.membershipForUser,
-      {
-        organizationId: args.organizationId,
-        userId: user._id,
-      }
-    );
-
-    if (membership?.role !== "owner") {
-      throw new Error(
-        "Only the organization owner can cancel the subscription"
-      );
-    }
-
-    const subscription = await getOrgSubscription(ctx, args.organizationId);
-
-    if (!subscription) {
-      throw new Error("No active subscription found");
-    }
-
-    await stripeClient.cancelSubscription(ctx, {
-      cancelAtPeriodEnd: args.cancelAtPeriodEnd ?? true,
-      stripeSubscriptionId: subscription.stripeSubscriptionId,
-    });
-
-    return { success: true };
-  },
-});
-
-export const reactivateSubscription = action({
-  args: {
-    organizationId: v.id("organizations"),
-  },
-  handler: async (ctx, args) => {
-    const user = await requireAuthUser(ctx);
-
-    const membership = await ctx.runQuery(
-      internal.shared.access.membershipForUser,
-      {
-        organizationId: args.organizationId,
-        userId: user._id,
-      }
-    );
-
-    if (membership?.role !== "owner") {
-      throw new Error(
-        "Only the organization owner can reactivate the subscription"
-      );
-    }
-
-    const subscription = await getOrgSubscription(ctx, args.organizationId);
-
-    if (!subscription) {
-      throw new Error("No subscription found");
-    }
-
-    await stripeClient.reactivateSubscription(ctx, {
-      stripeSubscriptionId: subscription.stripeSubscriptionId,
-    });
-
-    return { success: true };
   },
 });

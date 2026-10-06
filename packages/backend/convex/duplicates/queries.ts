@@ -67,6 +67,17 @@ export const createDuplicatePair = internalMutation({
     similarityScore: v.number(),
   },
   handler: async (ctx, args) => {
+    const [feedbackA, feedbackB] = await Promise.all([
+      ctx.db.get(args.feedbackIdA),
+      ctx.db.get(args.feedbackIdB),
+    ]);
+    const sameOrganization =
+      feedbackA?.organizationId === args.organizationId &&
+      feedbackB?.organizationId === args.organizationId;
+    if (!sameOrganization) {
+      throw new Error("Duplicate pair must stay within one organization");
+    }
+
     const existingA = await ctx.db
       .query("duplicatePairs")
       .withIndex("by_feedback_a", (q) => q.eq("feedbackIdA", args.feedbackIdA))

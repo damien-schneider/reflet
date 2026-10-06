@@ -1,6 +1,7 @@
-import { v } from "convex/values";
+import { type ObjectType, v } from "convex/values";
 import { internal } from "../_generated/api";
-import { mutation, query } from "../_generated/server";
+import type { Id } from "../_generated/dataModel";
+import { type MutationCtx, mutation, query } from "../_generated/server";
 import { getOrgTier } from "../billing/org_subscription";
 import { PLAN_LIMITS } from "../billing/queries";
 import { requireOrgAdmin, requireOrgMember } from "../shared/access";
@@ -140,66 +141,75 @@ export const getMonitorsUptimeBars = query({
   },
 });
 
+const createMonitorArgs = {
+  alertThreshold: v.optional(v.number()),
+  bodyKeyword: v.optional(v.string()),
+  checkIntervalMinutes: v.optional(v.number()),
+  expectedStatusCodes: v.optional(v.array(v.number())),
+  groupName: v.optional(v.string()),
+  isPublic: v.optional(v.boolean()),
+  method: v.optional(monitorMethod),
+  name: v.string(),
+  organizationId: v.id("organizations"),
+  url: v.string(),
+};
+
+export const insertMonitor = async (
+  ctx: MutationCtx,
+  args: ObjectType<typeof createMonitorArgs>
+): Promise<Id<"statusMonitors">> => {
+  validateInputLength(args.name, MAX_TITLE_LENGTH, "Name");
+  assertPublicHttpUrl(args.url);
+  const bodyKeyword = parseBodyKeyword(args.bodyKeyword);
+  const expectedStatusCodes = parseExpectedStatusCodes(
+    args.expectedStatusCodes
+  );
+  assertKeywordExpectsSuccess({ bodyKeyword, expectedStatusCodes });
+
+  const tier = await getOrgTier(ctx, args.organizationId);
+  const limits = PLAN_LIMITS[tier];
+  const existing = await ctx.db
+    .query("statusMonitors")
+    .withIndex("by_organization", (q) =>
+      q.eq("organizationId", args.organizationId)
+    )
+    .take(limits.maxMonitors);
+  if (existing.length >= limits.maxMonitors) {
+    throw new Error(
+      `Your plan allows up to ${limits.maxMonitors} monitors. Remove one or upgrade to add more.`
+    );
+  }
+
+  const now = Date.now();
+  const requestedInterval = args.checkIntervalMinutes ?? 5;
+  const checkIntervalMinutes = Math.max(
+    requestedInterval,
+    limits.minCheckIntervalMinutes
+  );
+
+  return await ctx.db.insert("statusMonitors", {
+    alertThreshold: args.alertThreshold ?? 3,
+    bodyKeyword,
+    checkIntervalMinutes,
+    consecutiveFailures: 0,
+    createdAt: now,
+    expectedStatusCodes,
+    groupName: args.groupName,
+    isPublic: args.isPublic ?? true,
+    method: args.method,
+    name: args.name,
+    organizationId: args.organizationId,
+    status: "operational",
+    updatedAt: now,
+    url: args.url,
+  });
+};
+
 export const createMonitor = mutation({
-  args: {
-    alertThreshold: v.optional(v.number()),
-    bodyKeyword: v.optional(v.string()),
-    checkIntervalMinutes: v.optional(v.number()),
-    expectedStatusCodes: v.optional(v.array(v.number())),
-    groupName: v.optional(v.string()),
-    isPublic: v.optional(v.boolean()),
-    method: v.optional(monitorMethod),
-    name: v.string(),
-    organizationId: v.id("organizations"),
-    url: v.string(),
-  },
+  args: createMonitorArgs,
   handler: async (ctx, args) => {
     await requireOrgAdmin(ctx, args.organizationId, "create monitors");
-    validateInputLength(args.name, MAX_TITLE_LENGTH, "Name");
-    assertPublicHttpUrl(args.url);
-    const bodyKeyword = parseBodyKeyword(args.bodyKeyword);
-    const expectedStatusCodes = parseExpectedStatusCodes(
-      args.expectedStatusCodes
-    );
-    assertKeywordExpectsSuccess({ bodyKeyword, expectedStatusCodes });
-
-    const tier = await getOrgTier(ctx, args.organizationId);
-    const limits = PLAN_LIMITS[tier];
-    const existing = await ctx.db
-      .query("statusMonitors")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .take(limits.maxMonitors);
-    if (existing.length >= limits.maxMonitors) {
-      throw new Error(
-        `Your plan allows up to ${limits.maxMonitors} monitors. Remove one or upgrade to add more.`
-      );
-    }
-
-    const now = Date.now();
-    const requestedInterval = args.checkIntervalMinutes ?? 5;
-    const checkIntervalMinutes = Math.max(
-      requestedInterval,
-      limits.minCheckIntervalMinutes
-    );
-
-    return await ctx.db.insert("statusMonitors", {
-      alertThreshold: args.alertThreshold ?? 3,
-      bodyKeyword,
-      checkIntervalMinutes,
-      consecutiveFailures: 0,
-      createdAt: now,
-      expectedStatusCodes,
-      groupName: args.groupName,
-      isPublic: args.isPublic ?? true,
-      method: args.method,
-      name: args.name,
-      organizationId: args.organizationId,
-      status: "operational",
-      updatedAt: now,
-      url: args.url,
-    });
+    return await insertMonitor(ctx, args);
   },
 });
 
@@ -319,36 +329,5 @@ export const deleteMonitor = mutation({
       internal.status.history.purgeMonitorHistory,
       { monitorId: args.monitorId }
     );
-  },
-});
-
-export const reorderMonitors = mutation({
-  args: {
-    updates: v.array(
-      v.object({
-        groupName: v.optional(v.string()),
-        groupOrder: v.optional(v.number()),
-        monitorId: v.id("statusMonitors"),
-        order: v.optional(v.number()),
-      })
-    ),
-  },
-  handler: async (ctx, args) => {
-    const now = Date.now();
-    for (const update of args.updates) {
-      const monitor = await ctx.db.get(update.monitorId);
-      if (!monitor) {
-        throw new Error("Monitor not found");
-      }
-
-      await requireOrgAdmin(ctx, monitor.organizationId, "reorder monitors");
-
-      await ctx.db.patch(update.monitorId, {
-        groupName: update.groupName,
-        groupOrder: update.groupOrder,
-        order: update.order,
-        updatedAt: now,
-      });
-    }
   },
 });

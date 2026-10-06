@@ -94,30 +94,6 @@ export const linkRepoToOrg = internalMutation({
   },
 });
 
-export const handleMemberRemoved = internalMutation({
-  args: {
-    organizationId: v.id("organizations"),
-    userId: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const connections = await ctx.db
-      .query("githubConnections")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .collect();
-
-    for (const connection of connections) {
-      if (connection.linkedByUserId === args.userId) {
-        await ctx.db.patch(connection._id, {
-          status: "owner_left",
-          updatedAt: Date.now(),
-        });
-      }
-    }
-  },
-});
-
 export const handleInstallationDeleted = internalMutation({
   args: {
     installationId: v.string(),

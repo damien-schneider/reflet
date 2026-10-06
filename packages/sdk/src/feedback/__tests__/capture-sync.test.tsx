@@ -25,7 +25,6 @@ vi.mock("../core/capture", () => ({
 
 interface CapturedCreate {
   context?: {
-    scroll?: { x: number; y: number };
     url?: string;
   };
 }
@@ -150,7 +149,6 @@ describe("capture and page context sync", () => {
     await waitFor(() => expect(createBodies).toHaveLength(1));
 
     expect(createBodies[0]?.context?.url).toContain("/billing/invoices");
-    expect(createBodies[0]?.context?.scroll).toEqual({ x: 0, y: 0 });
   });
 
   it("retakes the capture when the window is resized while composing", async () => {

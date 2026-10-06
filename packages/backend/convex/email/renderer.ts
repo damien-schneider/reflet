@@ -7,7 +7,6 @@ import { StatusIncidentEmail } from "@reflet/email/templates/status-incident-ema
 import { StatusMaintenanceEmail } from "@reflet/email/templates/status-maintenance-email";
 import { SubscriptionConfirmationEmail } from "@reflet/email/templates/subscription-confirmation-email";
 import { VerificationEmail } from "@reflet/email/templates/verification-email";
-import { WelcomeEmail } from "@reflet/email/templates/welcome-email";
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { type ActionCtx, internalAction } from "../_generated/server";
@@ -76,36 +75,6 @@ export const sendPasswordResetEmail = internalAction({
   },
 });
 
-export const sendWelcomeEmail = internalAction({
-  args: {
-    dashboardUrl: v.optional(v.string()),
-    to: v.string(),
-    userName: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    const siteUrl = process.env.SITE_URL ?? "";
-    const dashboardUrl = args.dashboardUrl
-      ? `${siteUrl}${args.dashboardUrl}`
-      : `${siteUrl}/dashboard`;
-
-    const component = WelcomeEmail({
-      dashboardUrl,
-      userName: args.userName,
-    });
-    const html = await render(component);
-    const text = await render(component, { plainText: true });
-
-    await ctx.runMutation(internal.email.send.sendEmail, {
-      from: defaultFrom,
-      html,
-      replyTo: SUPPORT_EMAIL,
-      subject: "Bienvenue sur Reflet",
-      text,
-      to: args.to,
-    });
-  },
-});
-
 export const sendInvitationEmail = internalAction({
   args: {
     acceptUrl: v.string(),
@@ -129,62 +98,6 @@ export const sendInvitationEmail = internalAction({
       html,
       replyTo: SUPPORT_EMAIL,
       subject: `Invitation à rejoindre ${args.organizationName}`,
-      text,
-      to: args.to,
-    });
-  },
-});
-
-export const sendTemplatedEmail = internalAction({
-  args: {
-    replyTo: v.optional(v.union(v.string(), v.array(v.string()))),
-    subject: v.string(),
-    template: v.union(v.literal("verification"), v.literal("welcome")),
-    templateProps: v.object({
-      dashboardUrl: v.optional(v.string()),
-      userName: v.optional(v.string()),
-      verificationUrl: v.optional(v.string()),
-    }),
-    to: v.union(v.string(), v.array(v.string())),
-  },
-  handler: async (ctx, args) => {
-    let component: React.JSX.Element;
-
-    switch (args.template) {
-      case "verification": {
-        if (!args.templateProps.verificationUrl) {
-          throw new Error("verificationUrl is required for verification email");
-        }
-        component = VerificationEmail({
-          userName: args.templateProps.userName,
-          verificationUrl: args.templateProps.verificationUrl,
-        });
-        break;
-      }
-      case "welcome": {
-        const siteUrl = process.env.SITE_URL ?? "";
-        const dashboardUrl = args.templateProps.dashboardUrl
-          ? `${siteUrl}${args.templateProps.dashboardUrl}`
-          : `${siteUrl}/dashboard`;
-
-        component = WelcomeEmail({
-          dashboardUrl,
-          userName: args.templateProps.userName,
-        });
-        break;
-      }
-      default:
-        throw new Error(`Unknown template: ${args.template}`);
-    }
-
-    const html = await render(component);
-    const text = await render(component, { plainText: true });
-
-    await ctx.runMutation(internal.email.send.sendEmail, {
-      from: defaultFrom,
-      html,
-      replyTo: args.replyTo ?? SUPPORT_EMAIL,
-      subject: args.subject,
       text,
       to: args.to,
     });

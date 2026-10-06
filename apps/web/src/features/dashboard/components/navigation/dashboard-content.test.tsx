@@ -77,6 +77,8 @@ vi.mock("@app/(app)/dashboard/dashboard-states", () => ({
   WelcomeState: () => <p>Welcome to Reflet</p>,
 }));
 
+Element.prototype.getAnimations = () => [];
+
 beforeEach(() => {
   dashboard.orgSlug = "acme";
   dashboard.organizations = [

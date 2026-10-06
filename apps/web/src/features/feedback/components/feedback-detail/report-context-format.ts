@@ -28,16 +28,13 @@ function fenceSafe(value: string): string {
 }
 
 export type ElementSelectionValue = NonNullable<
-  ReportContextValue["selection"]
->;
+  ReportContextValue["selections"]
+>[number];
 
 export function reportContextSelections(
   context: ReportContextValue
 ): ElementSelectionValue[] {
-  return [
-    ...(context.selections ?? []),
-    ...(context.selection ? [context.selection] : []),
-  ];
+  return context.selections ?? [];
 }
 
 function formatSelection(selection: ElementSelectionValue) {

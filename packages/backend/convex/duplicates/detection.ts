@@ -5,7 +5,6 @@ import { generateObject } from "ai";
 import { v } from "convex/values";
 import { z } from "zod";
 import { internal } from "../_generated/api";
-import type { Id } from "../_generated/dataModel";
 import { internalAction } from "../_generated/server";
 
 const SIMILARITY_THRESHOLD = 0.7;
@@ -98,11 +97,13 @@ Only include items that discuss the same problem or feature request. Score 0.9+ 
       return;
     }
 
+    const candidatesById = new Map(candidates.map((c) => [String(c._id), c]));
     for (const dup of result.duplicates) {
-      if (dup.similarityScore >= SIMILARITY_THRESHOLD) {
+      const candidate = candidatesById.get(dup.feedbackId);
+      if (candidate && dup.similarityScore >= SIMILARITY_THRESHOLD) {
         await ctx.runMutation(internal.duplicates.queries.createDuplicatePair, {
           feedbackIdA: args.feedbackId,
-          feedbackIdB: dup.feedbackId as Id<"feedback">,
+          feedbackIdB: candidate._id,
           organizationId: feedback.organizationId,
           similarityScore: dup.similarityScore,
         });

@@ -66,7 +66,37 @@ describe("screenshot download", () => {
       writer,
     });
 
-    expect([...written.keys()]).toEqual(["out/01-passwd"]);
+    expect([...written.keys()]).toEqual(["out/01-passwd.png"]);
+  });
+
+  it("only writes image extensions, falling back to the mime type", async () => {
+    const { writer, written } = collector();
+    const client = {
+      listScreenshots: vi.fn().mockResolvedValue([
+        screenshot({ filename: "payload.html", mimeType: "image/webp" }),
+        screenshot({ filename: "shot.JPEG", mimeType: "text/html" }),
+        screenshot({
+          filename: ".exe",
+          mimeType: "application/x-msdownload",
+        }),
+      ]),
+    };
+
+    await downloadScreenshots(client, "fb_1", {
+      fetchFile: vi
+        .fn()
+        .mockImplementation(() =>
+          Promise.resolve(new Response(new Uint8Array([1])))
+        ) as never,
+      out: "out",
+      writer,
+    });
+
+    expect([...written.keys()]).toEqual([
+      "out/01-payload.webp",
+      "out/02-shot.jpeg",
+      "out/03-exe.png",
+    ]);
   });
 
   it("reports screenshots whose file is gone instead of failing", async () => {

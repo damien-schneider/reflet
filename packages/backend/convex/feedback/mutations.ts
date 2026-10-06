@@ -1,15 +1,19 @@
 import { v } from "convex/values";
-import type { Id } from "../_generated/dataModel";
+import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { mutation } from "../_generated/server";
-import { getOrgTier } from "../billing/org_subscription";
-import { PLAN_LIMITS } from "../billing/queries";
 import { requireAuthUser } from "../shared/access";
-import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from "../shared/constants";
-import { feedbackStatus, validateInputLength } from "../shared/validators";
+import { rateLimiter } from "../shared/rate_limits";
+import { feedbackStatus } from "../shared/validators";
 import { afterApproval, scheduleAfterCreate } from "./after_create";
+import { isFeedbackPublishable } from "./property_values";
+import { changePublication } from "./publication";
 import { changeFeedbackStatus } from "./status_change";
 import { statusFieldsFor } from "./status_target";
+import {
+  enforceFeedbackLimit,
+  validateFeedbackSubmission,
+} from "./submission_limits";
 
 const validateCreateAccess = async (
   ctx: MutationCtx,
@@ -27,24 +31,6 @@ const validateCreateAccess = async (
   }
 };
 
-const enforceFeedbackLimit = async (
-  ctx: MutationCtx,
-  orgId: Id<"organizations">
-): Promise<void> => {
-  const existingFeedback = await ctx.db
-    .query("feedback")
-    .withIndex("by_organization", (q) => q.eq("organizationId", orgId))
-    .collect();
-  const activeFeedback = existingFeedback.filter((f) => !f.deletedAt);
-
-  const limit = PLAN_LIMITS[await getOrgTier(ctx, orgId)].maxFeedback;
-  if (activeFeedback.length >= limit) {
-    throw new Error(
-      `Feedback limit reached. This organization allows ${limit} feedback items.`
-    );
-  }
-};
-
 export const create = mutation({
   args: {
     attachments: v.optional(v.array(v.string())),
@@ -55,13 +41,7 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const user = await requireAuthUser(ctx);
-
-    validateInputLength(args.title, MAX_TITLE_LENGTH, "Title");
-    validateInputLength(
-      args.description,
-      MAX_DESCRIPTION_LENGTH,
-      "Description"
-    );
+    validateFeedbackSubmission(args);
 
     const org = await ctx.db.get(args.organizationId);
     if (!org) {
@@ -70,6 +50,10 @@ export const create = mutation({
 
     const defaultStatus = org.feedbackSettings?.defaultStatus ?? "open";
     await validateCreateAccess(ctx, org, user._id);
+    await rateLimiter.limit(ctx, "feedbackPerUser", {
+      key: user._id,
+      throws: true,
+    });
     await enforceFeedbackLimit(ctx, org._id);
 
     const now = Date.now();
@@ -131,17 +115,7 @@ export const update = mutation({
   },
   handler: async (ctx, args) => {
     const user = await requireAuthUser(ctx);
-
-    if (args.title !== undefined) {
-      validateInputLength(args.title, MAX_TITLE_LENGTH, "Title");
-    }
-    if (args.description !== undefined) {
-      validateInputLength(
-        args.description,
-        MAX_DESCRIPTION_LENGTH,
-        "Description"
-      );
-    }
+    validateFeedbackSubmission(args);
 
     const feedback = await ctx.db.get(args.id);
     if (!feedback) {
@@ -187,7 +161,6 @@ export const update = mutation({
         await afterApproval(ctx, { ...feedback, isApproved: true });
       }
     } else {
-      const { id, title, description } = args;
       if (
         args.status !== undefined ||
         args.organizationStatusId !== undefined ||
@@ -197,9 +170,37 @@ export const update = mutation({
       ) {
         throw new Error("Only admins can update these fields");
       }
-      await ctx.db.patch(id, { description, title, updatedAt: Date.now() });
+      await applyAuthorEdit(ctx, feedback, {
+        actorId: user._id,
+        attachments: args.attachments,
+        description: args.description,
+        title: args.title,
+      });
     }
 
     return args.id;
   },
 });
+
+const applyAuthorEdit = async (
+  ctx: MutationCtx,
+  feedback: Doc<"feedback">,
+  edit: {
+    actorId: string;
+    attachments?: string[];
+    description?: string;
+    title?: string;
+  }
+): Promise<void> => {
+  const { actorId, ...fields } = edit;
+  const changedFields = Object.fromEntries(
+    Object.entries(fields).filter(([, value]) => value !== undefined)
+  );
+  await ctx.db.patch(feedback._id, { ...changedFields, updatedAt: Date.now() });
+
+  const org = await ctx.db.get(feedback.organizationId);
+  const approvalRequired = org?.feedbackSettings?.requireApproval === true;
+  if (approvalRequired && isFeedbackPublishable(feedback)) {
+    await changePublication(ctx, feedback, { actorId, state: "pending" });
+  }
+};

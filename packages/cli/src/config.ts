@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 
@@ -35,6 +35,7 @@ export function writeStoredConfig(
   writeFileSync(path, `${JSON.stringify(config, null, 2)}\n`, {
     mode: 0o600,
   });
+  chmodSync(path, 0o600);
 }
 
 export function resolveApiKey(

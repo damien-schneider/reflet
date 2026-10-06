@@ -1,9 +1,6 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "../_generated/server";
-
-// ============================================
-// TAG QUERIES
-// ============================================
+import { tagColorValidator } from "../feedback/tag_colors";
 
 export const listTags = internalQuery({
   args: {
@@ -42,13 +39,9 @@ export const listTags = internalQuery({
   ),
 });
 
-// ============================================
-// TAG MUTATIONS
-// ============================================
-
 export const createTag = internalMutation({
   args: {
-    color: v.string(),
+    color: tagColorValidator,
     description: v.optional(v.string()),
     icon: v.optional(v.string()),
     isPublic: v.optional(v.boolean()),
@@ -91,7 +84,7 @@ export const createTag = internalMutation({
 
 export const updateTag = internalMutation({
   args: {
-    color: v.optional(v.string()),
+    color: v.optional(tagColorValidator),
     description: v.optional(v.string()),
     icon: v.optional(v.string()),
     isPublic: v.optional(v.boolean()),
@@ -143,7 +136,6 @@ export const deleteTag = internalMutation({
       throw new Error("Tag not found");
     }
 
-    // Remove tag from all feedback
     const feedbackTags = await ctx.db
       .query("feedbackTags")
       .withIndex("by_tag", (q) => q.eq("tagId", args.tagId))

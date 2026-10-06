@@ -8,6 +8,7 @@ import {
   query,
 } from "../../_generated/server";
 import { repoAnalysisAgent } from "../../ai/agent";
+import { consumeAiGenerationFor } from "../../ai/usage_gate";
 import { requireAuthUser } from "../../shared/access";
 import { fetchRepoData } from "./github_helpers";
 
@@ -148,6 +149,10 @@ export const startAnalysis = mutation({
     if (!membership || membership.role === "member") {
       throw new Error("Only admins can run repository analysis");
     }
+    await consumeAiGenerationFor(ctx, {
+      organizationId: args.organizationId,
+      userId: user._id,
+    });
 
     // Check for GitHub connection
     const connection = await ctx.db

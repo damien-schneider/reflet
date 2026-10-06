@@ -1,11 +1,8 @@
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { type QueryCtx, query } from "../_generated/server";
-import {
-  isFeedbackPubliclyVisible,
-  projectFeedbackFor,
-} from "../feedback/public_projection";
-import { toPublicOrganization } from "../organizations/queries";
+import { getFeedbackCategories } from "../feedback/categories/visibility";
+import { isFeedbackPubliclyVisible } from "../feedback/public_projection";
 import { isOrgMemberViewer } from "../shared/access";
 import { releaseSourceDate } from "./release_lifecycle";
 import {
@@ -87,9 +84,7 @@ export const list = query({
       return [];
     }
 
-    const isMember = await isOrgMemberViewer(ctx, args.organizationId);
-
-    if (!(isMember || org.isPublic)) {
+    if (!(await isOrgMemberViewer(ctx, args.organizationId))) {
       return [];
     }
 
@@ -100,7 +95,7 @@ export const list = query({
       )
       .collect();
 
-    if (!isMember || args.publishedOnly) {
+    if (args.publishedOnly) {
       releases = releases.filter((r) => r.publishedAt !== undefined);
     }
 
@@ -109,17 +104,15 @@ export const list = query({
     return await Promise.all(
       releases.map(async (release) => {
         const feedback = await withLinkedFeedback(ctx, {
-          isMember,
+          isMember: true,
           org,
           releaseId: release._id,
         });
 
-        const snapshot = isMember
-          ? await ctx.db
-              .query("releaseCommits")
-              .withIndex("by_release", (q) => q.eq("releaseId", release._id))
-              .first()
-          : null;
+        const snapshot = await ctx.db
+          .query("releaseCommits")
+          .withIndex("by_release", (q) => q.eq("releaseId", release._id))
+          .first();
         return {
           ...release,
           commitCount: snapshot?.commits.length ?? 0,
@@ -144,9 +137,7 @@ export const get = query({
       return null;
     }
 
-    const isMember = await isOrgMemberViewer(ctx, release.organizationId);
-
-    if (!(isMember || (org.isPublic && release.publishedAt))) {
+    if (!(await isOrgMemberViewer(ctx, release.organizationId))) {
       return null;
     }
 
@@ -158,25 +149,12 @@ export const get = query({
     const feedbackItems = await Promise.all(
       links.map(async (link) => {
         const feedback = await ctx.db.get(link.feedbackId);
-        const isVisible =
-          feedback?.organizationId === org._id &&
-          (isMember || isFeedbackPubliclyVisible(org, feedback));
-        if (!(feedback && isVisible)) {
+        if (feedback?.organizationId !== org._id) {
           return null;
         }
-
-        const feedbackTags = await ctx.db
-          .query("feedbackTags")
-          .withIndex("by_feedback", (q) => q.eq("feedbackId", feedback._id))
-          .collect();
-
-        const tags = await Promise.all(
-          feedbackTags.map((ft) => ctx.db.get(ft.tagId))
-        );
-
         return {
-          ...projectFeedbackFor(feedback, isMember),
-          tags: tags.filter((tag) => tag !== null),
+          ...feedback,
+          tags: await getFeedbackCategories(ctx, feedback._id, true),
         };
       })
     );
@@ -184,8 +162,8 @@ export const get = query({
     return {
       ...release,
       feedbackItems: feedbackItems.filter((item) => item !== null),
-      isMember,
-      organization: isMember ? org : toPublicOrganization(org),
+      isMember: true,
+      organization: org,
     };
   },
 });

@@ -3,13 +3,12 @@
 import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Check } from "@phosphor-icons/react";
-import { useId } from "react";
 import {
-  getTagSwatchClass,
-  TAG_COLOR_LABELS,
   TAG_COLORS,
   type TagColor,
-} from "@/lib/tag-colors";
+} from "@reflet/backend/convex/feedback/tag_colors";
+import { useId } from "react";
+import { getTagSwatchClass, TAG_COLOR_LABELS } from "@/lib/tag-colors";
 
 interface NotionColorPickerProps {
   onChange: (color: TagColor) => void;

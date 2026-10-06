@@ -9,24 +9,6 @@ export default defineConfig({
     },
   },
   test: {
-    coverage: {
-      exclude: [
-        "src/components/ui/**",
-        "src/**/*.test.{ts,tsx}",
-        "src/**/*.d.ts",
-        "src/**/types.ts",
-        "src/**/types/**",
-        "src/**/constants.ts",
-        "src/**/constants/**",
-        "src/**/*.stories.{ts,tsx}",
-        "src/env.ts",
-        "src/middleware.ts",
-      ],
-      include: ["src/**/*.{ts,tsx}"],
-      provider: "v8",
-      reporter: ["text", "text-summary", "html"],
-      reportsDirectory: "./coverage",
-    },
     env: {
       NEXT_PUBLIC_CONVEX_SITE_URL: "https://test.convex.site",
       NEXT_PUBLIC_CONVEX_URL: "https://test.convex.cloud",

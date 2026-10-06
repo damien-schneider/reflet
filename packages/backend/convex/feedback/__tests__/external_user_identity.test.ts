@@ -1,12 +1,13 @@
-import { convexTest } from "convex-test";
 import { describe, expect, it } from "vitest";
 import { internal } from "../../_generated/api";
-import schema from "../../schema";
+import { rateLimiter } from "../../shared/rate_limits";
 import { seedOrganization } from "../../test.fixtures";
-import { modules } from "../../test.helpers";
+import { setupTest } from "../../test.helpers";
+
+const UNSIGNED_USERS_PER_ORG_BURST = 500;
 
 async function setup() {
-  const t = convexTest(schema, modules);
+  const t = setupTest();
   const organizationId = await t.run((ctx) => seedOrganization(ctx));
   const identify = (
     user: { email?: string; externalId: string; name?: string },
@@ -19,7 +20,14 @@ async function setup() {
     });
   const storedUser = () =>
     t.run((ctx) => ctx.db.query("externalUsers").unique());
-  return { identify, storedUser };
+  const drainUnsignedUserBudget = (remaining: number) =>
+    t.run((ctx) =>
+      rateLimiter.limit(ctx, "unsignedExternalUserPerOrg", {
+        count: UNSIGNED_USERS_PER_ORG_BURST - remaining,
+        key: organizationId,
+      })
+    );
+  return { drainUnsignedUserBudget, identify, storedUser };
 }
 
 describe("external user identity", () => {
@@ -62,5 +70,44 @@ describe("external user identity", () => {
     expect(signedId).toBe(userId);
     expect(await storedUser()).toMatchObject({ name: "New", verified: true });
     expect(await identify({ externalId: "u7" }, false)).toBeNull();
+  });
+
+  it("drops the unsigned email and name when the signed token omits them", async () => {
+    const { identify, storedUser } = await setup();
+    await identify(
+      { email: "attacker@evil.test", externalId: "u8", name: "Support" },
+      false
+    );
+
+    await identify({ externalId: "u8" }, true);
+
+    const user = await storedUser();
+    expect(user?.email).toBeUndefined();
+    expect(user?.name).toBeUndefined();
+    expect(user?.verified).toBe(true);
+  });
+
+  it("keeps a signed profile when a later signed token omits fields", async () => {
+    const { identify, storedUser } = await setup();
+    await identify(
+      { email: "ada@acme.test", externalId: "u9", name: "Ada" },
+      true
+    );
+
+    await identify({ externalId: "u9" }, true);
+
+    expect(await storedUser()).toMatchObject({
+      email: "ada@acme.test",
+      name: "Ada",
+    });
+  });
+
+  it("stops creating unsigned users past the per-organization burst", async () => {
+    const { drainUnsignedUserBudget, identify } = await setup();
+    await drainUnsignedUserBudget(1);
+
+    expect(await identify({ externalId: "bot-last" }, false)).not.toBeNull();
+    expect(await identify({ externalId: "bot-overflow" }, false)).toBeNull();
+    expect(await identify({ externalId: "signed" }, true)).not.toBeNull();
   });
 });

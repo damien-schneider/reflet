@@ -52,9 +52,10 @@ function decoded(value: string): string {
 }
 
 /**
- * Query strings carry signed-in state (`?token=…`, `?userEmail=…`) straight
- * into stored reports and agent prompts. Values of anything credential- or
- * identity-shaped are masked; every other byte of the address stays intact.
+ * Query strings and fragments carry signed-in state (`?token=…`, `#access_token=…`)
+ * straight into stored reports and agent prompts. The fragment is dropped and
+ * values of anything credential- or identity-shaped are masked; every other
+ * byte of the address stays intact.
  */
 export function redactUrl(href: string): string {
   let url: URL;
@@ -63,6 +64,9 @@ export function redactUrl(href: string): string {
   } catch {
     return maskSecrets(href);
   }
+
+  const hashStart = href.indexOf("#");
+  const withoutHash = hashStart === -1 ? href : href.slice(0, hashStart);
 
   const pairs = url.search
     .replace(LEADING_QUESTION_MARK, "")
@@ -73,7 +77,7 @@ export function redactUrl(href: string): string {
       SENSITIVE_PARAM.test(decoded(pair.split("=")[0] ?? ""))
     )
   ) {
-    return href;
+    return withoutHash;
   }
 
   const kept = pairs.map((pair) => {
@@ -88,7 +92,7 @@ export function redactUrl(href: string): string {
   });
 
   const query = kept.join("&");
-  return `${url.origin}${url.pathname}${query ? `?${query}` : ""}${url.hash}`;
+  return `${url.origin}${url.pathname}${query ? `?${query}` : ""}`;
 }
 
 function sanitizeUrl(value: string): string {

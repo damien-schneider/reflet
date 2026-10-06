@@ -173,15 +173,17 @@ const recordGmailConfirmation = async (
 const hasInboundConversationBudget = async (
   ctx: MutationCtx,
   organizationId: Id<"organizations">,
-  from: string
+  email: ParsedInbound
 ): Promise<boolean> => {
-  const perSender = await rateLimiter.limit(
-    ctx,
-    "supportInboundNewConversationPerSender",
-    { key: `${organizationId}:${normalizeEmail(from)}` }
-  );
-  if (!perSender.ok) {
-    return false;
+  if (email.senderAuthenticated) {
+    const perSender = await rateLimiter.limit(
+      ctx,
+      "supportInboundNewConversationPerSender",
+      { key: `${organizationId}:${normalizeEmail(email.from)}` }
+    );
+    if (!perSender.ok) {
+      return false;
+    }
   }
   const perOrganization = await rateLimiter.limit(
     ctx,
@@ -204,7 +206,7 @@ const recordNewConversation = async (
       status: "rejected",
     };
   }
-  if (!(await hasInboundConversationBudget(ctx, organizationId, email.from))) {
+  if (!(await hasInboundConversationBudget(ctx, organizationId, email))) {
     return { organizationId, rejectReason: "rate_limited", status: "rejected" };
   }
   const { conversationId, messageId } = await createCustomerConversation(ctx, {
@@ -232,6 +234,13 @@ const recordAliasEmail = async (
   email: ParsedInbound
 ): Promise<InboundOutcome> => {
   if (normalizeEmail(email.from) === GMAIL_FORWARDING_SENDER) {
+    if (!email.senderAuthenticated) {
+      return {
+        organizationId: settings.organizationId,
+        rejectReason: "unauthenticated_sender",
+        status: "rejected",
+      };
+    }
     return await recordGmailConfirmation(ctx, settings, email);
   }
   const testCode = settings.forwardingTestCode;

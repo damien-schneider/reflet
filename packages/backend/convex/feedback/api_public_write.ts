@@ -1,5 +1,6 @@
-import { v } from "convex/values";
-import { internalMutation } from "../_generated/server";
+import { ConvexError, v } from "convex/values";
+import type { Doc, Id } from "../_generated/dataModel";
+import { internalMutation, type MutationCtx } from "../_generated/server";
 import {
   MAX_COMMENT_LENGTH,
   MAX_DESCRIPTION_LENGTH,
@@ -7,11 +8,38 @@ import {
 } from "../shared/constants";
 import { validateInputLength } from "../shared/validators";
 import { scheduleAfterCreate } from "./after_create";
+import { isFeedbackPubliclyVisible } from "./public_projection";
 import { statusFieldsFor } from "./status_target";
 import { feedbackContextValidator } from "./tableFields";
 
-const MIN_IMPORTANCE = 1;
-const MAX_IMPORTANCE = 4;
+const feedbackActorArgs = {
+  externalUserId: v.id("externalUsers"),
+  feedbackId: v.id("feedback"),
+  hasPrivateAccess: v.boolean(),
+  organizationId: v.id("organizations"),
+};
+
+async function requireActionableFeedback(
+  ctx: MutationCtx,
+  args: {
+    feedbackId: Id<"feedback">;
+    hasPrivateAccess: boolean;
+    organizationId: Id<"organizations">;
+  }
+): Promise<Doc<"feedback">> {
+  const feedback = await ctx.db.get(args.feedbackId);
+  const visible =
+    feedback?.organizationId === args.organizationId &&
+    (args.hasPrivateAccess ||
+      isFeedbackPubliclyVisible(
+        await ctx.db.get(args.organizationId),
+        feedback
+      ));
+  if (!(feedback && visible)) {
+    throw new ConvexError("Feedback not found");
+  }
+  return feedback;
+}
 
 export const createFeedbackByOrganization = internalMutation({
   args: {
@@ -103,22 +131,12 @@ export const createFeedbackByOrganization = internalMutation({
 
 export const voteFeedbackByOrganization = internalMutation({
   args: {
-    externalUserId: v.id("externalUsers"),
-    feedbackId: v.id("feedback"),
-    organizationId: v.id("organizations"),
+    ...feedbackActorArgs,
     voteType: v.optional(v.union(v.literal("upvote"), v.literal("downvote"))),
   },
   handler: async (ctx, args) => {
     const voteType = args.voteType ?? "upvote";
-
-    const feedback = await ctx.db.get(args.feedbackId);
-    if (!feedback) {
-      throw new Error("Feedback not found");
-    }
-
-    if (feedback.organizationId !== args.organizationId) {
-      throw new Error("Feedback does not belong to this organization");
-    }
+    const feedback = await requireActionableFeedback(ctx, args);
 
     const existingVote = await ctx.db
       .query("feedbackVotes")
@@ -159,21 +177,16 @@ export const voteFeedbackByOrganization = internalMutation({
 
 export const addCommentByOrganization = internalMutation({
   args: {
+    ...feedbackActorArgs,
     body: v.string(),
-    externalUserId: v.id("externalUsers"),
-    feedbackId: v.id("feedback"),
-    organizationId: v.id("organizations"),
     parentId: v.optional(v.id("comments")),
   },
   handler: async (ctx, args) => {
-    const { organizationId, feedbackId, body, externalUserId, parentId } = args;
+    const { feedbackId, body, externalUserId, parentId } = args;
 
     validateInputLength(body, MAX_COMMENT_LENGTH, "Comment");
 
-    const feedback = await ctx.db.get(feedbackId);
-    if (!feedback || feedback.organizationId !== organizationId) {
-      throw new Error("Feedback not found");
-    }
+    const feedback = await requireActionableFeedback(ctx, args);
 
     if (parentId) {
       const parent = await ctx.db.get(parentId);
@@ -203,18 +216,11 @@ export const addCommentByOrganization = internalMutation({
 });
 
 export const subscribeFeedbackByOrganization = internalMutation({
-  args: {
-    externalUserId: v.id("externalUsers"),
-    feedbackId: v.id("feedback"),
-    organizationId: v.id("organizations"),
-  },
+  args: feedbackActorArgs,
   handler: async (ctx, args) => {
-    const { organizationId, feedbackId, externalUserId } = args;
+    const { feedbackId, externalUserId } = args;
 
-    const feedback = await ctx.db.get(feedbackId);
-    if (!feedback || feedback.organizationId !== organizationId) {
-      throw new Error("Feedback not found");
-    }
+    await requireActionableFeedback(ctx, args);
 
     const existing = await ctx.db
       .query("feedbackSubscriptions")
@@ -238,18 +244,11 @@ export const subscribeFeedbackByOrganization = internalMutation({
 });
 
 export const unsubscribeFeedbackByOrganization = internalMutation({
-  args: {
-    externalUserId: v.id("externalUsers"),
-    feedbackId: v.id("feedback"),
-    organizationId: v.id("organizations"),
-  },
+  args: feedbackActorArgs,
   handler: async (ctx, args) => {
-    const { organizationId, feedbackId, externalUserId } = args;
+    const { feedbackId, externalUserId } = args;
 
-    const feedback = await ctx.db.get(feedbackId);
-    if (!feedback || feedback.organizationId !== organizationId) {
-      throw new Error("Feedback not found");
-    }
+    await requireActionableFeedback(ctx, args);
 
     const subscription = await ctx.db
       .query("feedbackSubscriptions")
@@ -264,57 +263,5 @@ export const unsubscribeFeedbackByOrganization = internalMutation({
     }
 
     return { unsubscribed: false };
-  },
-});
-
-export const setImportanceByOrganization = internalMutation({
-  args: {
-    externalUserId: v.id("externalUsers"),
-    feedbackId: v.id("feedback"),
-    importance: v.number(),
-    organizationId: v.id("organizations"),
-  },
-  handler: async (ctx, args) => {
-    if (args.importance < MIN_IMPORTANCE || args.importance > MAX_IMPORTANCE) {
-      throw new Error(
-        `Importance must be between ${MIN_IMPORTANCE} and ${MAX_IMPORTANCE}`
-      );
-    }
-
-    const feedback = await ctx.db.get(args.feedbackId);
-    if (!feedback) {
-      throw new Error("Feedback not found");
-    }
-
-    if (feedback.organizationId !== args.organizationId) {
-      throw new Error("Feedback does not belong to this organization");
-    }
-
-    const existingVotes = await ctx.db
-      .query("feedbackImportanceVotes")
-      .withIndex("by_feedback", (q) => q.eq("feedbackId", args.feedbackId))
-      .collect();
-
-    const externalUserId = `external_${args.externalUserId}`;
-    const existingVote = existingVotes.find((v) => v.userId === externalUserId);
-
-    const now = Date.now();
-
-    if (existingVote) {
-      await ctx.db.patch(existingVote._id, {
-        importance: args.importance,
-        updatedAt: now,
-      });
-    } else {
-      await ctx.db.insert("feedbackImportanceVotes", {
-        createdAt: now,
-        feedbackId: args.feedbackId,
-        importance: args.importance,
-        updatedAt: now,
-        userId: externalUserId,
-      });
-    }
-
-    return { importance: args.importance, success: true };
   },
 });

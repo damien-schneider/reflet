@@ -1,119 +1,17 @@
 import { v } from "convex/values";
-import { mutation, query } from "../_generated/server";
+import { mutation } from "../_generated/server";
 import { authComponent } from "../auth/auth";
-import { getOrgTier } from "../billing/org_subscription";
-import { PLAN_LIMITS } from "../billing/queries";
-import { isOrgMemberViewer, requireAuthUser } from "../shared/access";
-import {
-  MAX_DESCRIPTION_LENGTH,
-  MAX_EMAIL_LENGTH,
-  MAX_TITLE_LENGTH,
-  MAX_URL_LENGTH,
-} from "../shared/constants";
+import { requireAuthUser } from "../shared/access";
+import { MAX_EMAIL_LENGTH } from "../shared/constants";
 import { rateLimiter } from "../shared/rate_limits";
 import { validateInputLength } from "../shared/validators";
 import { scheduleAfterCreate } from "./after_create";
 import { archiveFeedback } from "./archive_feedback";
-import { getFeedbackCategories } from "./categories/visibility";
-import {
-  isFeedbackPubliclyVisible,
-  projectFeedbackFor,
-} from "./public_projection";
 import { statusFieldsFor } from "./status_target";
-
-const MAX_PUBLIC_ATTACHMENTS = 10;
-
-export const listPublic = query({
-  args: {
-    limit: v.optional(v.number()),
-    organizationId: v.id("organizations"),
-    sortBy: v.optional(
-      v.union(
-        v.literal("votes"),
-        v.literal("newest"),
-        v.literal("oldest"),
-        v.literal("comments")
-      )
-    ),
-  },
-  handler: async (ctx, args) => {
-    const org = await ctx.db.get(args.organizationId);
-    if (!org?.isPublic) {
-      return [];
-    }
-
-    const user = await authComponent.safeGetAuthUser(ctx);
-    const isMember = await isOrgMemberViewer(ctx, args.organizationId);
-
-    let feedbackItems = await ctx.db
-      .query("feedback")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .collect();
-
-    feedbackItems = feedbackItems.filter(
-      (f) => isFeedbackPubliclyVisible(org, f) && !f.isMerged
-    );
-
-    const sortBy = args.sortBy || "votes";
-    switch (sortBy) {
-      case "votes":
-        feedbackItems.sort((a, b) => b.voteCount - a.voteCount);
-        break;
-      case "newest":
-        feedbackItems.sort((a, b) => b.createdAt - a.createdAt);
-        break;
-      case "oldest":
-        feedbackItems.sort((a, b) => a.createdAt - b.createdAt);
-        break;
-      case "comments":
-        feedbackItems.sort((a, b) => b.commentCount - a.commentCount);
-        break;
-      default:
-        break;
-    }
-
-    feedbackItems.sort((a, b) => {
-      if (a.isPinned && !b.isPinned) {
-        return -1;
-      }
-      if (!a.isPinned && b.isPinned) {
-        return 1;
-      }
-      return 0;
-    });
-
-    if (args.limit) {
-      feedbackItems = feedbackItems.slice(0, args.limit);
-    }
-
-    const feedbackWithDetails = await Promise.all(
-      feedbackItems.map(async (f) => {
-        const tags = await getFeedbackCategories(ctx, f._id, isMember);
-
-        let hasVoted = false;
-        if (user) {
-          const vote = await ctx.db
-            .query("feedbackVotes")
-            .withIndex("by_feedback_user", (q) =>
-              q.eq("feedbackId", f._id).eq("userId", user._id)
-            )
-            .unique();
-          hasVoted = !!vote;
-        }
-
-        return {
-          ...projectFeedbackFor(f, isMember),
-          hasVoted,
-          tags,
-        };
-      })
-    );
-
-    return feedbackWithDetails;
-  },
-});
+import {
+  enforceFeedbackLimit,
+  validateFeedbackSubmission,
+} from "./submission_limits";
 
 export const createPublicOrg = mutation({
   args: {
@@ -128,40 +26,13 @@ export const createPublicOrg = mutation({
     if (!org?.isPublic) {
       throw new Error("Organization not found or not public");
     }
-    validateInputLength(args.title, MAX_TITLE_LENGTH, "Title");
-    validateInputLength(
-      args.description,
-      MAX_DESCRIPTION_LENGTH,
-      "Description"
-    );
+    validateFeedbackSubmission(args);
     validateInputLength(args.email, MAX_EMAIL_LENGTH, "Email");
-    const attachments = args.attachments ?? [];
-    if (attachments.length > MAX_PUBLIC_ATTACHMENTS) {
-      throw new Error(`At most ${MAX_PUBLIC_ATTACHMENTS} attachments allowed`);
-    }
-    for (const url of attachments) {
-      validateInputLength(url, MAX_URL_LENGTH, "Attachment URL");
-    }
     await rateLimiter.limit(ctx, "anonymousFeedbackPerOrg", {
       key: args.organizationId,
       throws: true,
     });
-
-    const existingFeedback = await ctx.db
-      .query("feedback")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .collect();
-    const activeFeedback = existingFeedback.filter((f) => !f.deletedAt);
-
-    const tier = await getOrgTier(ctx, org._id);
-    const limit = PLAN_LIMITS[tier].maxFeedback;
-    if (activeFeedback.length >= limit) {
-      throw new Error(
-        `Feedback limit reached. This organization allows ${limit} feedback items.`
-      );
-    }
+    await enforceFeedbackLimit(ctx, org._id);
 
     const user = await authComponent.safeGetAuthUser(ctx);
     const now = Date.now();

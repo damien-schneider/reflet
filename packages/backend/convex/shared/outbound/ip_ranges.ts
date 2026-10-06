@@ -126,11 +126,17 @@ const isNonPublicIpv6 = (hextets: number[]): boolean => {
   }
   const isLocalNat64 = first === 0x64 && second === 0xff_9b && third === 1;
   const isTeredo = first === 0x20_01 && second === 0;
+  const isOrchid = first === 0x20_01 && second >= 0x10 && second <= 0x2f;
+  const isDiscardOnly =
+    first === 0x01_00 && hextets.slice(1, 4).every((hextet) => hextet === 0);
   return (
     isLocalNat64 ||
     isTeredo ||
+    isOrchid ||
+    isDiscardOnly ||
     hasFirstHextetPrefix(first, { base: 0xfc_00, prefixLength: 7 }) ||
     hasFirstHextetPrefix(first, { base: 0xfe_80, prefixLength: 10 }) ||
+    hasFirstHextetPrefix(first, { base: 0xfe_c0, prefixLength: 10 }) ||
     hasFirstHextetPrefix(first, { base: 0xff_00, prefixLength: 8 }) ||
     (first === 0x20_01 && second === 0x0d_b8)
   );

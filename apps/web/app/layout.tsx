@@ -49,6 +49,8 @@ export default function RootLayout({
       <head>
         <link href="https://umami.damien-schneider.pro" rel="preconnect" />
         <Script
+          data-exclude-hash="true"
+          data-exclude-search="true"
           data-website-id="f4232b19-0136-4892-95b5-05801c29715d"
           src="https://umami.damien-schneider.pro/script.js"
           strategy="lazyOnload"

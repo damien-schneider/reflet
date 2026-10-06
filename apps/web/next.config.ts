@@ -118,14 +118,6 @@ const nextConfig: NextConfig = {
     "@reflet/survey-core",
     "@reflet/ui",
   ],
-  turbopack: {
-    resolveAlias: {
-      // Browser fallbacks for Node.js modules
-      fs: { browser: "./empty.ts" },
-      net: { browser: "./empty.ts" },
-      tls: { browser: "./empty.ts" },
-    },
-  },
 };
 
 const withMDX = createMDX({});

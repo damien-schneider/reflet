@@ -9,6 +9,7 @@ import { hashSecretKey } from "../../feedback/api_auth";
 import { verifyUserToken } from "../../feedback/user_token";
 import { rateLimiter } from "../../shared/rate_limits";
 import { errorResponse } from "../helpers";
+import { isRequestFromAllowedDomain } from "./allowed_domains";
 
 export type PublicApiCtx = Parameters<Parameters<typeof httpAction>[0]>[0];
 
@@ -225,6 +226,21 @@ export async function authenticateApiRequest(
   const organizationId = validation.organizationId;
   const organizationApiKeyId = validation.organizationApiKeyId;
   const hasPrivateAccess = validation.isSecretKey ?? false;
+
+  if (
+    !(
+      hasPrivateAccess ||
+      isRequestFromAllowedDomain(request, validation.allowedDomains)
+    )
+  ) {
+    return {
+      response: errorResponse(
+        "This API key is not allowed from this origin.",
+        403
+      ),
+      success: false,
+    };
+  }
 
   await ctx.runMutation(
     internal.feedback.api_keys.updateOrganizationApiKeyLastUsed,

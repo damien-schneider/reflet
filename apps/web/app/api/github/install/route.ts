@@ -10,8 +10,7 @@ import {
  * `account=new` goes straight to the install page to add another account.
  */
 export async function GET(request: Request): Promise<NextResponse> {
-  const fetchSite = request.headers.get("sec-fetch-site");
-  if (fetchSite === "cross-site" || fetchSite === "same-site") {
+  if (request.headers.get("sec-fetch-site") !== "same-origin") {
     return NextResponse.json(
       { error: "GitHub connection must start from Reflet" },
       { status: 403 }

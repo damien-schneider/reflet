@@ -7,11 +7,7 @@ import {
   parseId,
   parseStorageId,
 } from "../helpers";
-import {
-  checkOrganizationAccess,
-  checkWriteQuota,
-  parseOptionalId,
-} from "./auth";
+import { checkWriteQuota, parseOptionalId } from "./auth";
 import { publicApiRoute, readJsonBody } from "./route";
 import {
   commentBodySchema,
@@ -87,13 +83,9 @@ export function registerFeedbackWriteRoutes(http: Router): void {
         return errorResponse("Feedback ID is required", 400);
       }
 
-      const access = await checkOrganizationAccess(
-        ctx,
-        auth.organizationId,
-        auth.hasPrivateAccess
-      );
-      if (!access.allowed) {
-        return access.response;
+      const quota = await checkWriteQuota(ctx, auth);
+      if (!quota.allowed) {
+        return quota.response;
       }
 
       const result = await ctx.runMutation(
@@ -101,6 +93,7 @@ export function registerFeedbackWriteRoutes(http: Router): void {
         {
           externalUserId: auth.externalUserId,
           feedbackId: parseId<"feedback">(feedbackId, "feedbackId"),
+          hasPrivateAccess: auth.hasPrivateAccess,
           organizationId: auth.organizationId,
           voteType,
         }
@@ -142,6 +135,7 @@ export function registerFeedbackWriteRoutes(http: Router): void {
           body: body.data.body,
           externalUserId: auth.externalUserId,
           feedbackId: parseId<"feedback">(body.data.feedbackId, "feedbackId"),
+          hasPrivateAccess: auth.hasPrivateAccess,
           organizationId: auth.organizationId,
           parentId: parseOptionalId<"comments">(body.data.parentId),
         }
@@ -172,11 +166,17 @@ export function registerFeedbackWriteRoutes(http: Router): void {
         return errorResponse("Feedback ID is required", 400);
       }
 
+      const quota = await checkWriteQuota(ctx, auth);
+      if (!quota.allowed) {
+        return quota.response;
+      }
+
       const result = await ctx.runMutation(
         internal.feedback.api_public_write.subscribeFeedbackByOrganization,
         {
           externalUserId: auth.externalUserId,
           feedbackId: parseId<"feedback">(body.data.feedbackId, "feedbackId"),
+          hasPrivateAccess: auth.hasPrivateAccess,
           organizationId: auth.organizationId,
         }
       );
@@ -206,11 +206,17 @@ export function registerFeedbackWriteRoutes(http: Router): void {
         return errorResponse("Feedback ID is required", 400);
       }
 
+      const quota = await checkWriteQuota(ctx, auth);
+      if (!quota.allowed) {
+        return quota.response;
+      }
+
       const result = await ctx.runMutation(
         internal.feedback.api_public_write.unsubscribeFeedbackByOrganization,
         {
           externalUserId: auth.externalUserId,
           feedbackId: parseId<"feedback">(body.data.feedbackId, "feedbackId"),
+          hasPrivateAccess: auth.hasPrivateAccess,
           organizationId: auth.organizationId,
         }
       );

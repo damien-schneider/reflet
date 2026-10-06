@@ -23,6 +23,7 @@ import {
 import { Plus } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import type { TagColor } from "@reflet/backend/convex/feedback/tag_colors";
 import { useMutation } from "convex/react";
 import { useState } from "react";
 import { EmojiPicker } from "@/components/ui/emoji-picker";
@@ -33,7 +34,6 @@ import {
   TIME_HORIZON_CONFIG,
   TIME_HORIZONS,
 } from "@/lib/milestone-constants";
-import type { TagColor } from "@/lib/tag-colors";
 
 import { MilestoneDatePicker } from "./milestone-date-picker";
 

@@ -2,7 +2,8 @@
 
 import { cn } from "@ctrl-ui/react/lib/cn";
 import { Button, type ButtonProps } from "@ctrl-ui/react/ui/button";
-import { getTagSwatchClass, type TagColor } from "@/lib/tag-colors";
+import type { TagColor } from "@reflet/backend/convex/feedback/tag_colors";
+import { getTagSwatchClass } from "@/lib/tag-colors";
 
 interface TagPillProps extends Omit<ButtonProps, "color" | "active"> {
   active?: boolean;

@@ -7,8 +7,6 @@ const mockGenerateUploadUrl = vi
 const mockGetStorageUrl = vi
   .fn()
   .mockResolvedValue("https://storage.example.com/img.png");
-const mockQuery = vi.fn();
-
 vi.mock("convex/react", () => ({
   useMutation: vi.fn((apiRef: unknown) => {
     if (String(apiRef).includes("generateUploadUrl")) {
@@ -16,7 +14,6 @@ vi.mock("convex/react", () => ({
     }
     return mockGetStorageUrl;
   }),
-  useQuery: vi.fn(() => mockQuery()),
 }));
 
 vi.mock("@reflet/backend/convex/_generated/api", () => ({
@@ -24,7 +21,6 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
     storage: {
       generateUploadUrl: "generateUploadUrl",
       getStorageUrl: "getStorageUrl",
-      getStorageUrlMutation: "getStorageUrlMutation",
     },
   },
 }));
@@ -34,22 +30,12 @@ describe("useImageUpload", () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    mockQuery.mockReturnValue(null);
     global.fetch = vi.fn().mockResolvedValue({
       json: () => Promise.resolve({ storageId: "storage-id-123" }),
       ok: true,
     });
     const mod = await import("./use-image-upload");
     useImageUpload = mod.useImageUpload;
-  });
-
-  it("returns initial state", () => {
-    const { result } = renderHook(() => useImageUpload());
-    expect(result.current.isUploading).toBe(false);
-    expect(result.current.uploadImage).toBeInstanceOf(Function);
-    expect(result.current.handlePaste).toBeInstanceOf(Function);
-    expect(result.current.handleDrop).toBeInstanceOf(Function);
-    expect(result.current.openFilePicker).toBeInstanceOf(Function);
   });
 
   describe("uploadImage", () => {
@@ -162,149 +148,6 @@ describe("useImageUpload", () => {
       expect(onError).toHaveBeenCalledWith(
         expect.objectContaining({ message: "Failed to upload image" })
       );
-    });
-  });
-
-  describe("handlePaste", () => {
-    it("uploads pasted image", async () => {
-      const { result } = renderHook(() => useImageUpload());
-
-      const file = new File(["img"], "pasted.png", { type: "image/png" });
-      const mockGetAsFile = vi.fn(() => file);
-      const event = {
-        clipboardData: {
-          items: [{ getAsFile: mockGetAsFile, type: "image/png" }],
-        },
-        preventDefault: vi.fn(),
-      } as unknown as ClipboardEvent;
-
-      let url: string | null = null;
-      await act(async () => {
-        url = await result.current.handlePaste(event);
-      });
-
-      expect(url).toBe("https://storage.example.com/img.png");
-      expect(event.preventDefault).toHaveBeenCalled();
-    });
-
-    it("returns null when no clipboard data", async () => {
-      const { result } = renderHook(() => useImageUpload());
-
-      const event = {
-        clipboardData: null,
-      } as unknown as ClipboardEvent;
-
-      let url: string | null = null;
-      await act(async () => {
-        url = await result.current.handlePaste(event);
-      });
-
-      expect(url).toBeNull();
-    });
-
-    it("returns null when no image items in clipboard", async () => {
-      const { result } = renderHook(() => useImageUpload());
-
-      const event = {
-        clipboardData: {
-          items: [{ getAsFile: vi.fn(() => null), type: "text/plain" }],
-        },
-      } as unknown as ClipboardEvent;
-
-      let url: string | null = null;
-      await act(async () => {
-        url = await result.current.handlePaste(event);
-      });
-
-      expect(url).toBeNull();
-    });
-  });
-
-  describe("handleDrop", () => {
-    it("uploads dropped image", async () => {
-      const { result } = renderHook(() => useImageUpload());
-
-      const file = new File(["img"], "dropped.png", { type: "image/png" });
-      const event = {
-        dataTransfer: { files: [file] },
-        preventDefault: vi.fn(),
-      } as unknown as DragEvent;
-
-      let url: string | null = null;
-      await act(async () => {
-        url = await result.current.handleDrop(event);
-      });
-
-      expect(url).toBe("https://storage.example.com/img.png");
-      expect(event.preventDefault).toHaveBeenCalled();
-    });
-
-    it("returns null when no files in drop", async () => {
-      const { result } = renderHook(() => useImageUpload());
-
-      const event = {
-        dataTransfer: { files: [] },
-      } as unknown as DragEvent;
-
-      let url: string | null = null;
-      await act(async () => {
-        url = await result.current.handleDrop(event);
-      });
-
-      expect(url).toBeNull();
-    });
-
-    it("returns null when dropped file is not an image", async () => {
-      const { result } = renderHook(() => useImageUpload());
-
-      const file = new File(["data"], "doc.pdf", { type: "application/pdf" });
-      const event = {
-        dataTransfer: { files: [file] },
-      } as unknown as DragEvent;
-
-      let url: string | null = null;
-      await act(async () => {
-        url = await result.current.handleDrop(event);
-      });
-
-      expect(url).toBeNull();
-    });
-
-    it("returns null when dataTransfer is null", async () => {
-      const { result } = renderHook(() => useImageUpload());
-
-      const event = {
-        dataTransfer: null,
-      } as unknown as DragEvent;
-
-      let url: string | null = null;
-      await act(async () => {
-        url = await result.current.handleDrop(event);
-      });
-
-      expect(url).toBeNull();
-    });
-  });
-
-  describe("openFilePicker", () => {
-    it("creates file input and triggers click", async () => {
-      const { result } = renderHook(() => useImageUpload());
-
-      const mockClick = vi.fn();
-      const originalCreateElement = document.createElement.bind(document);
-      vi.spyOn(document, "createElement").mockImplementation((tag: string) => {
-        const el = originalCreateElement(tag);
-        if (tag === "input") {
-          Object.defineProperty(el, "click", { value: mockClick });
-        }
-        return el;
-      });
-
-      // Don't await - it waits for user interaction
-      result.current.openFilePicker();
-
-      expect(mockClick).toHaveBeenCalled();
-      vi.restoreAllMocks();
     });
   });
 });

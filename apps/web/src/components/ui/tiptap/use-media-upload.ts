@@ -93,7 +93,7 @@ export function useMediaUpload({
   maxVideoSizeMB = 50,
 }: UseMediaUploadOptions = {}) {
   const generateUploadUrl = useMutation(api.storage.generateUploadUrl);
-  const getStorageUrl = useMutation(api.storage.getStorageUrlMutation);
+  const getStorageUrl = useMutation(api.storage.getStorageUrl);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
 

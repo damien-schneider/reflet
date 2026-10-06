@@ -73,7 +73,7 @@ test("navigation links show their underline on keyboard focus", async ({
     .toBe(1);
 });
 
-test("the hero uses one typeface and its controls change the reflected cards", async ({
+test("the hero uses one typeface and its story links change the reflected cards", async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
@@ -86,8 +86,8 @@ test("the hero uses one typeface and its controls change the reflected cards", a
     "font-family",
     fontFamily
   );
-  const controls = page.getByRole("group", {
-    name: "Explore the product preview",
+  const storyLinks = page.getByRole("navigation", {
+    name: "Your feedback loop",
   });
   const canvas = page.locator(".hero-reflection-canvas");
   const canvasPixels = () =>
@@ -98,36 +98,18 @@ test("the hero uses one typeface and its controls change the reflected cards", a
   );
   await expect(page.locator(".hero-product-scene")).toHaveCSS("opacity", "1");
   const before = await canvasPixels();
-  await controls.getByRole("button", { exact: true, name: "Planned" }).click();
-  await expect(
-    controls.getByRole("button", { exact: true, name: "Planned" })
-  ).toHaveAttribute("aria-pressed", "true");
+  const planLink = storyLinks.getByRole("link", {
+    name: "02 Plan in the open",
+  });
+  await planLink.hover();
+  await expect(planLink).toHaveAttribute("data-active", "true");
   await expect
     .poll(async () => before.equals(await canvasPixels()))
     .toBe(false);
-  await controls.getByRole("button", { exact: true, name: "An idea" }).click();
+  await storyLinks
+    .getByRole("link", { name: "01 Collect ideas where they happen" })
+    .focus();
   await expect.poll(async () => before.equals(await canvasPixels())).toBe(true);
-});
-
-test("the closing reflection follows the pointer and respects reduced motion", async ({
-  page,
-}) => {
-  await page.goto("/");
-  const closing = page.locator(".marketing-closing");
-  const mark = closing.locator(".closing-reflection-source");
-  await closing.scrollIntoViewIfNeeded();
-  const restingTransform = await mark.evaluate(
-    (element) => getComputedStyle(element).transform
-  );
-  await closing.hover({ position: { x: 50, y: 50 } });
-  await expect
-    .poll(() => mark.evaluate((element) => getComputedStyle(element).transform))
-    .not.toBe(restingTransform);
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  await expect(mark).toHaveCSS("transform", "none");
-  await expect(
-    closing.getByRole("link", { name: "Start collecting feedback" })
-  ).toHaveAttribute("href", "/dashboard");
 });
 
 test("reduced motion survives hydration and live preference changes", async ({

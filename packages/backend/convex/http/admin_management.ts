@@ -1,4 +1,5 @@
 import type { httpRouter } from "convex/server";
+import { ConvexError } from "convex/values";
 import { internal } from "../_generated/api";
 import {
   adminGet,
@@ -196,14 +197,12 @@ export function registerAdminManagementRoutes(http: Router): void {
 
   http.route({
     handler: adminPost(async (ctx, { organizationId }, body) => {
-      const role = requireStr(body.role, "role") as "admin" | "member";
+      if (body.role !== undefined && body.role !== "member") {
+        throw new ConvexError("The API can only invite members");
+      }
       return await ctx.runMutation(
         internal.admin_api.members.createInvitation,
-        {
-          email: requireStr(body.email, "email"),
-          organizationId,
-          role,
-        }
+        { email: requireStr(body.email, "email"), organizationId }
       );
     }),
     method: "POST",

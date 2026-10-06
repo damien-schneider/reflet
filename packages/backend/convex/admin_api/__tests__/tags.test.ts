@@ -15,7 +15,7 @@ describe("admin_api_tags", () => {
     const orgId = await createOrg(t);
 
     const result = await t.mutation(internal.admin_api.tags.createTag, {
-      color: "#FF0000",
+      color: "red",
       name: "Bug Report",
       organizationId: orgId,
     });
@@ -29,7 +29,7 @@ describe("admin_api_tags", () => {
     expect(tags).toHaveLength(1);
     expect(tags[0].name).toBe("Bug Report");
     expect(tags[0].slug).toBe("bug-report");
-    expect(tags[0].color).toBe("#FF0000");
+    expect(tags[0].color).toBe("red");
   });
 
   test("createTag should reject duplicate slugs", async () => {
@@ -37,14 +37,14 @@ describe("admin_api_tags", () => {
     const orgId = await createOrg(t);
 
     await t.mutation(internal.admin_api.tags.createTag, {
-      color: "#00FF00",
+      color: "green",
       name: "Feature",
       organizationId: orgId,
     });
 
     await expect(
       t.mutation(internal.admin_api.tags.createTag, {
-        color: "#0000FF",
+        color: "blue",
         name: "Feature",
         organizationId: orgId,
       })
@@ -56,7 +56,7 @@ describe("admin_api_tags", () => {
     const orgId = await createOrg(t);
 
     await t.mutation(internal.admin_api.tags.createTag, {
-      color: "#AABBCC",
+      color: "gray",
       isPublic: true,
       name: "Public Tag",
       organizationId: orgId,
@@ -83,12 +83,12 @@ describe("admin_api_tags", () => {
     );
 
     await t.mutation(internal.admin_api.tags.createTag, {
-      color: "#111",
+      color: "orange",
       name: "Our Tag",
       organizationId: orgId,
     });
     await t.mutation(internal.admin_api.tags.createTag, {
-      color: "#222",
+      color: "pink",
       name: "Their Tag",
       organizationId: otherOrgId,
     });
@@ -105,7 +105,7 @@ describe("admin_api_tags", () => {
     const orgId = await createOrg(t);
 
     const { id } = await t.mutation(internal.admin_api.tags.createTag, {
-      color: "#000",
+      color: "default",
       name: "Old Name",
       organizationId: orgId,
     });
@@ -138,7 +138,7 @@ describe("admin_api_tags", () => {
     );
 
     const { id } = await t.mutation(internal.admin_api.tags.createTag, {
-      color: "#000",
+      color: "default",
       name: "Tag",
       organizationId: orgId,
     });
@@ -157,7 +157,7 @@ describe("admin_api_tags", () => {
     const orgId = await createOrg(t);
 
     const { id: tagId } = await t.mutation(internal.admin_api.tags.createTag, {
-      color: "#F00",
+      color: "red",
       name: "ToDelete",
       organizationId: orgId,
     });

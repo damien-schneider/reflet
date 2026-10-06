@@ -1,10 +1,6 @@
 import { expect, type Locator, type Page, test } from "@playwright/test";
 
-const SECTION_HEADINGS = [
-  /Listen closely/,
-  /Feedback that/,
-  /Common questions/,
-];
+const SECTION_HEADINGS = [/They ask/, /Feedback that/, /Common questions/];
 
 test("cursor ripples spread and settle while the pointer rests", async ({
   page,
@@ -167,7 +163,7 @@ test("the hero keeps a reflection and working links without WebGL", async ({
   );
   await expect(page.locator(".hero-reflection-fallback")).toBeVisible();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    "Listen closely.Build what matters."
+    "They ask.You ship."
   );
   await page
     .getByRole("link", { exact: true, name: "See how it works" })

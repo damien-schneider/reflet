@@ -1,4 +1,5 @@
 import type { ConsoleEvent } from "../../types";
+import { maskSecrets } from "./redact";
 
 const DEFAULT_LIMIT = 30;
 const MAX_MESSAGE_LENGTH = 1000;
@@ -34,8 +35,7 @@ function serializeArgument(value: unknown): string {
   return String(value);
 }
 
-function formatMessage(args: unknown[]): string {
-  const message = args.map(serializeArgument).join(" ");
+function clip(message: string): string {
   return message.length > MAX_MESSAGE_LENGTH
     ? `${message.slice(0, MAX_MESSAGE_LENGTH - 1)}…`
     : message;
@@ -56,7 +56,11 @@ export function startConsoleRecorder(options?: {
     if (!(active && message)) {
       return;
     }
-    buffer.push({ level, message, timestamp: Date.now() });
+    buffer.push({
+      level,
+      message: clip(maskSecrets(message)),
+      timestamp: Date.now(),
+    });
     if (buffer.length > limit) {
       buffer.splice(0, buffer.length - limit);
     }
@@ -68,7 +72,7 @@ export function startConsoleRecorder(options?: {
   for (const method of RECORDED_METHODS) {
     const original = console[method];
     const wrapper = (...args: unknown[]) => {
-      push(method, formatMessage(args));
+      push(method, args.map(serializeArgument).join(" "));
       Reflect.apply(original, console, args);
     };
     originals.set(method, original);

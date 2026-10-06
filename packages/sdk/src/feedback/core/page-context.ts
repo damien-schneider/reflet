@@ -103,9 +103,11 @@ export function collectPageContext(options?: {
     language: navigator.language,
     os: agent.os,
     pageTitle: optionalText(document.title, MAX_PAGE_TITLE_LENGTH),
-    referrer: optionalText(document.referrer, MAX_URL_LENGTH),
+    referrer: optionalText(
+      document.referrer && redactUrl(document.referrer),
+      MAX_URL_LENGTH
+    ),
     screen: { height: window.screen.height, width: window.screen.width },
-    scroll: { x: window.scrollX, y: window.scrollY },
     sdkVersion: options?.sdkVersion,
     timezone: resolveTimezone(),
     url: redactUrl(window.location.href),

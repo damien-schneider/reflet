@@ -79,7 +79,7 @@ vi.mock("tiptap-markdown", () => ({
 }));
 
 // Mock the custom extensions
-vi.mock("./slash-command", () => ({
+vi.mock("./command-suggestion", () => ({
   createSlashCommandExtension: () => ({}),
   SlashCommand: {},
 }));

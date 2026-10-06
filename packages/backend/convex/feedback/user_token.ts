@@ -4,14 +4,14 @@ const PADDING_REGEX = /[=]+$/;
 
 export interface UserTokenPayload {
   email?: string;
-  exp?: number;
+  exp: number;
   id: string;
   name?: string;
 }
 
 interface RawPayload {
   email?: string;
-  exp?: number;
+  exp?: unknown;
   id?: string;
   name?: string;
   sub?: string;
@@ -80,7 +80,8 @@ function decodePayload(payloadB64: string): UserTokenPayload | null {
   try {
     const payload: RawPayload = JSON.parse(base64UrlDecode(payloadB64));
 
-    if (payload.exp && Date.now() > payload.exp * 1000) {
+    const { exp } = payload;
+    if (typeof exp !== "number" || Date.now() > exp * 1000) {
       return null;
     }
 
@@ -89,7 +90,7 @@ function decodePayload(payloadB64: string): UserTokenPayload | null {
       return null;
     }
 
-    return { email: payload.email, exp: payload.exp, id, name: payload.name };
+    return { email: payload.email, exp, id, name: payload.name };
   } catch {
     return null;
   }

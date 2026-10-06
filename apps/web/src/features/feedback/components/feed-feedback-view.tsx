@@ -34,7 +34,6 @@ const EASE_OUT = [0.23, 1, 0.32, 1] as const;
 
 export interface FeedbackItem {
   _id: Id<"feedback">;
-  aiComplexity?: Doc<"feedback">["aiComplexity"];
   aiJunk?: number;
   aiNeedsReview?: number;
   aiPriority?: Doc<"feedback">["aiPriority"];

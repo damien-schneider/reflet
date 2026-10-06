@@ -104,26 +104,6 @@ export const recordUptimeSample = async (
   );
 };
 
-// Raw checks only cover 48h once pruned: a rebuild may raise a bucket, never shrink it.
-export const rebuildBucket = async (
-  ctx: MutationCtx,
-  table: BucketTable,
-  monitorId: Id<"statusMonitors">,
-  bucketStart: number,
-  totals: BucketTotals
-): Promise<void> => {
-  const bucket = await findBucket(ctx, table, monitorId, bucketStart);
-  if (!bucket) {
-    if (totals.checks > 0) {
-      await ctx.db.insert(table, { ...totals, bucketStart, monitorId });
-    }
-    return;
-  }
-  if (totals.checks > bucket.checks) {
-    await ctx.db.patch(bucket._id, totals);
-  }
-};
-
 const toPercentage = (upChecks: number, checks: number): number =>
   checks > 0 ? Math.round((upChecks / checks) * 10_000) / 100 : 100;
 

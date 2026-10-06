@@ -1,7 +1,6 @@
 import { GITHUB_API_URL, githubApiHeaders } from "./github_constants";
 
 const MAX_FILE_CONTENT_LENGTH = 10_000;
-const MAX_TREE_FILES = 500;
 const MAX_SEARCH_RESULTS_PER_QUERY = 10;
 const RATE_LIMIT_RETRY_MS = 10_000;
 
@@ -92,38 +91,6 @@ export async function fetchFileContent(
     : decoded;
 
   return { content, filePath: path, truncated };
-}
-
-/**
- * Fetch the full file tree of a repository (authenticated, for private repos).
- * Capped at MAX_TREE_FILES files.
- */
-export async function fetchFileTreeAuthenticated(
-  token: string,
-  repo: string
-): Promise<string> {
-  const url = `${GITHUB_API_URL}/repos/${repo}/git/trees/HEAD?recursive=1`;
-
-  const response = await fetch(url, {
-    headers: githubApiHeaders(token),
-  });
-
-  if (!response.ok) {
-    return "Failed to fetch file tree";
-  }
-
-  const data = (await response.json()) as {
-    tree?: Array<{ path: string; type: string }>;
-  };
-  const tree = data.tree ?? [];
-  const limitedTree = tree.slice(0, MAX_TREE_FILES);
-  let fileTree = limitedTree.map((item) => item.path).join("\n");
-
-  if (tree.length > MAX_TREE_FILES) {
-    fileTree += `\n... and ${tree.length - MAX_TREE_FILES} more files`;
-  }
-
-  return fileTree;
 }
 
 /**

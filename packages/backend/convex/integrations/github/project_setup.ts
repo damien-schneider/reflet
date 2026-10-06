@@ -1,20 +1,27 @@
 import { v } from "convex/values";
 import { internal } from "../../_generated/api";
 import { mutation, query } from "../../_generated/server";
+import { consumeAiGenerationFor } from "../../ai/usage_gate";
 import { versionIncrementValidator } from "../../changelog/semver";
+import { tagColorValidator } from "../../feedback/tag_colors";
+import {
+  insertKeyword,
+  isSameKeyword,
+  type KeywordIdentity,
+} from "../../intelligence/keywords";
+import { keywordSource } from "../../intelligence/tableFields";
 import {
   isOrgMemberViewer,
   requireOrgAdmin,
   requireOrgMember,
 } from "../../shared/access";
+import { insertMonitor } from "../../status/monitors";
 import {
   projectSetupResultValidator,
   SETUP_STEPS,
 } from "./project_setup_validators";
 
 const SLUG_SANITIZE_REGEX = /[^a-z0-9]+/g;
-const MONITOR_ALERT_THRESHOLD = 3;
-const MONITOR_CHECK_INTERVAL_MINUTES = 5;
 
 export const getProjectSetup = query({
   args: { organizationId: v.id("organizations") },
@@ -83,7 +90,15 @@ export const getSetupStatus = query({
 export const startProjectSetup = mutation({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    await requireOrgAdmin(ctx, args.organizationId, "run project setup");
+    const { user } = await requireOrgAdmin(
+      ctx,
+      args.organizationId,
+      "run project setup"
+    );
+    await consumeAiGenerationFor(ctx, {
+      organizationId: args.organizationId,
+      userId: user._id,
+    });
 
     const connection = await ctx.db
       .query("githubConnections")
@@ -125,14 +140,7 @@ export const startProjectSetup = mutation({
 export const applySetupResults = mutation({
   args: {
     acceptedKeywords: v.array(
-      v.object({
-        keyword: v.string(),
-        source: v.union(
-          v.literal("reddit"),
-          v.literal("web"),
-          v.literal("both")
-        ),
-      })
+      v.object({ keyword: v.string(), source: keywordSource })
     ),
     acceptedMonitors: v.array(
       v.object({
@@ -142,7 +150,7 @@ export const applySetupResults = mutation({
     ),
     acceptedTags: v.array(
       v.object({
-        color: v.string(),
+        color: tagColorValidator,
         name: v.string(),
       })
     ),
@@ -161,31 +169,36 @@ export const applySetupResults = mutation({
   },
   handler: async (ctx, args) => {
     await requireOrgAdmin(ctx, args.organizationId, "apply project setup");
+    const setup = await ctx.db.get(args.setupId);
+    if (setup?.organizationId !== args.organizationId) {
+      throw new Error("Setup not found");
+    }
 
     const now = Date.now();
 
     for (const monitor of args.acceptedMonitors) {
-      await ctx.db.insert("statusMonitors", {
-        alertThreshold: MONITOR_ALERT_THRESHOLD,
-        checkIntervalMinutes: MONITOR_CHECK_INTERVAL_MINUTES,
-        consecutiveFailures: 0,
-        createdAt: now,
-        isPublic: true,
-        name: monitor.name,
+      await insertMonitor(ctx, {
+        ...monitor,
         organizationId: args.organizationId,
-        status: "operational",
-        updatedAt: now,
-        url: monitor.url,
       });
     }
 
-    for (const keyword of args.acceptedKeywords) {
-      await ctx.db.insert("intelligenceKeywords", {
-        createdAt: now,
-        keyword: keyword.keyword,
+    const trackedKeywords: KeywordIdentity[] = await ctx.db
+      .query("intelligenceKeywords")
+      .withIndex("by_organization", (q) =>
+        q.eq("organizationId", args.organizationId)
+      )
+      .collect();
+    for (const proposal of args.acceptedKeywords) {
+      const candidate = { ...proposal, keyword: proposal.keyword.trim() };
+      if (trackedKeywords.some((k) => isSameKeyword(k, candidate))) {
+        continue;
+      }
+      await insertKeyword(ctx, {
+        ...proposal,
         organizationId: args.organizationId,
-        source: keyword.source,
       });
+      trackedKeywords.push(candidate);
     }
 
     const existingTags = await ctx.db

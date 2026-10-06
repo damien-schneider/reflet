@@ -1,13 +1,12 @@
 "use client";
 
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import posthog from "posthog-js";
 import { useEffect, useRef } from "react";
 import { hasAnalyticsConsent } from "@/lib/cookie-consent";
 
 export function PostHogPageView() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const isFirstRender = useRef(true);
 
   useEffect(() => {
@@ -18,13 +17,9 @@ export function PostHogPageView() {
     }
 
     if (pathname && hasAnalyticsConsent()) {
-      let url = window.origin + pathname;
-      if (searchParams.toString()) {
-        url = `${url}?${searchParams.toString()}`;
-      }
-      posthog.capture("$pageview", { $current_url: url });
+      posthog.capture("$pageview", { $current_url: window.origin + pathname });
     }
-  }, [pathname, searchParams]);
+  }, [pathname]);
 
   return null;
 }

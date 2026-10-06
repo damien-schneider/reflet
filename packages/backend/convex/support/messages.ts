@@ -4,6 +4,7 @@ import type { MutationCtx } from "../_generated/server";
 import { mutation, query } from "../_generated/server";
 import { requireAuthUser } from "../shared/access";
 import { rateLimiter } from "../shared/rate_limits";
+import { validateInputLength } from "../shared/validators";
 import {
   requireConversationAccess,
   resolveConversationAccess,
@@ -26,6 +27,7 @@ import {
 } from "./validators";
 
 const CUSTOMER_SENDER_ID = "customer";
+const MAX_REACTION_EMOJI_LENGTH = 16;
 
 export const list = query({
   args: {
@@ -65,10 +67,18 @@ export const list = query({
         .filter((senderId) => senderId !== guestSenderId)
     );
     // the customer's sender id embeds their guest credential; only admins may see it
-    const visibleSenderId = (senderId: string) =>
-      access.isAdmin || senderId !== conversation.userId
+    const staffAliases = new Map(
+      [...new Set(messages.map((message) => message.senderId))]
+        .filter((senderId) => senderId !== conversation.userId)
+        .map((senderId, index): [string, string] => [
+          senderId,
+          `staff-${index + 1}`,
+        ])
+    );
+    const visibleSenderId = (senderId: string): string =>
+      access.isAdmin
         ? senderId
-        : CUSTOMER_SENDER_ID;
+        : (staffAliases.get(senderId) ?? CUSTOMER_SENDER_ID);
     const guestSender: SupportMessageSender | undefined =
       conversation.guestEmail
         ? {
@@ -76,6 +86,21 @@ export const list = query({
             id: visibleSenderId(conversation.userId),
           }
         : undefined;
+    const visibleSender = (
+      senderId: string
+    ): SupportMessageSender | undefined => {
+      const sender = senders.get(senderId) ?? guestSender;
+      const hidesStaffContact =
+        !access.isAdmin && senderId !== conversation.userId;
+      if (!(sender && hidesStaffContact)) {
+        return sender;
+      }
+      return {
+        id: visibleSenderId(senderId),
+        image: sender.image,
+        name: sender.name,
+      };
+    };
 
     const attachments = await attachmentViewsByMessage(ctx, conversation._id);
 
@@ -92,7 +117,7 @@ export const list = query({
           : undefined,
         isOwnMessage: message.senderId === access.viewerId,
         isRead: message.isRead,
-        sender: senders.get(message.senderId) ?? guestSender,
+        sender: visibleSender(message.senderId),
         senderId: visibleSenderId(message.senderId),
         senderType: message.senderType,
       }))
@@ -234,6 +259,10 @@ export const addReaction = mutation({
     messageId: v.id("supportMessages"),
   },
   handler: async (ctx, args) => {
+    if (!args.emoji) {
+      throw new Error("Emoji is required");
+    }
+    validateInputLength(args.emoji, MAX_REACTION_EMOJI_LENGTH, "Emoji");
     const user = await requireAuthUser(ctx);
     await requireMessageAccess(ctx, args.messageId);
 

@@ -254,6 +254,10 @@ export const setEmail = mutation({
     if (!conversation) {
       throw new Error("Send a message before adding your email");
     }
+    await rateLimiter.limit(ctx, "widgetEmailChangePerConversation", {
+      key: conversation._id,
+      throws: true,
+    });
     await ctx.db.patch(conversation._id, { guestEmail: email });
     return await requestContactConfirmation(ctx, {
       email,

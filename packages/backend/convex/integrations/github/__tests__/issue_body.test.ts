@@ -122,29 +122,6 @@ describe("buildIssueBody", () => {
     );
   });
 
-  test("still renders a legacy singular selection", () => {
-    const body = buildIssueBody({
-      dashboardUrl: "https://reflet.app",
-      feedback: feedbackDoc({
-        context: {
-          selection: {
-            componentStack: ["InvoiceRow"],
-            html: "<button>Retry</button>",
-            label: "Retry",
-            rect: { height: 1, width: 1, x: 0, y: 0 },
-            selector: "button.retry",
-            sourceLocation: "src/invoice-row.tsx:7",
-          },
-        },
-      }),
-      screenshots: [],
-    });
-
-    expect(body).toContain("- Element: Retry (`button.retry`)");
-    expect(body).toContain("- Source: src/invoice-row.tsx:7");
-    expect(body).toContain("- Components: InvoiceRow");
-  });
-
   test("keeps only the last 10 console errors", () => {
     const consoleEvents = Array.from({ length: 12 }, (_, index) => ({
       level: "error" as const,

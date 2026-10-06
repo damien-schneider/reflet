@@ -1,12 +1,18 @@
 import { mkdirSync, writeFileSync } from "node:fs";
-import { basename, dirname } from "node:path";
+import { basename, dirname, extname } from "node:path";
 import type { RefletAdminClient } from "../api/client";
 
 export const SCREENSHOT_DIRECTORY = ".reflet/screenshots";
 
 const UNSAFE_CHARACTERS = /[^\w.-]+/g;
 const LEADING_PUNCTUATION = /^[.-]+/;
-const IMAGE_SUBTYPE = /^image\/([\w+-]+)$/;
+const IMAGE_EXTENSIONS = new Set(["png", "jpg", "jpeg", "webp", "gif"]);
+const MIME_EXTENSIONS: Record<string, string> = {
+  "image/gif": "gif",
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+};
 
 export interface BinaryWriter {
   write: (path: string, bytes: Uint8Array) => void;
@@ -40,20 +46,21 @@ interface DownloadOptions {
 
 type ScreenshotClient = Pick<RefletAdminClient, "listScreenshots">;
 
-function extensionOf(mimeType: string): string {
-  const subtype = IMAGE_SUBTYPE.exec(mimeType)?.[1];
-  return subtype === "jpeg" ? "jpg" : (subtype ?? "png");
-}
-
 function fileNameOf(
   screenshot: { filename: string; mimeType: string },
   index: number
 ): string {
-  const sanitized = basename(screenshot.filename)
-    .replace(UNSAFE_CHARACTERS, "-")
-    .replace(LEADING_PUNCTUATION, "");
-  const name = sanitized || `screenshot.${extensionOf(screenshot.mimeType)}`;
-  return `${String(index + 1).padStart(2, "0")}-${name}`;
+  const reportedName = basename(screenshot.filename);
+  const reportedExtension = extname(reportedName).slice(1).toLowerCase();
+  const extension = IMAGE_EXTENSIONS.has(reportedExtension)
+    ? reportedExtension
+    : (MIME_EXTENSIONS[screenshot.mimeType] ?? "png");
+  const stem =
+    reportedName
+      .slice(0, reportedName.length - extname(reportedName).length)
+      .replace(UNSAFE_CHARACTERS, "-")
+      .replace(LEADING_PUNCTUATION, "") || "screenshot";
+  return `${String(index + 1).padStart(2, "0")}-${stem}.${extension}`;
 }
 
 /**

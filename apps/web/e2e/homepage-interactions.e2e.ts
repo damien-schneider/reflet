@@ -51,7 +51,7 @@ test("the hero leads into the product story without leaving the page", async ({
 }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    "Listen closely.Build what matters."
+    "They ask.You ship."
   );
   await expect(
     page

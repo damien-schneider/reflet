@@ -11,7 +11,7 @@ test("one request travels from feedback to an in-app release", async ({
   });
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    "Listen closely.Build what matters."
+    "They ask.You ship."
   );
   const structuredData = await page
     .locator('script[type="application/ld+json"]')

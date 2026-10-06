@@ -7,9 +7,9 @@ import Placeholder from "@tiptap/extension-placeholder";
 import Typography from "@tiptap/extension-typography";
 import StarterKit from "@tiptap/starter-kit";
 import { Markdown } from "tiptap-markdown";
+import { createSlashCommandExtension } from "./command-suggestion";
 import { ImageExtension } from "./image-extension";
 import { createImageNodeView } from "./image-node-view";
-import { createSlashCommandExtension } from "./slash-command";
 import type { useMediaUpload } from "./use-media-upload";
 import { VideoExtension } from "./video-extension";
 

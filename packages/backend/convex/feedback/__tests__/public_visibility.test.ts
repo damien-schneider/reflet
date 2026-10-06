@@ -71,15 +71,11 @@ const PRIVATE_KEYS = [
 
 test("an anonymous caller gets nothing from a private org's roadmap", async () => {
   const t = setupTest({ authUsers: [MEMBER] });
-  const { feedbackId, organizationId } = await seed(t, false);
+  const { organizationId } = await seed(t, false);
 
   expect(
     await t.query(api.feedback.list.listByOrganization, { organizationId })
   ).toEqual([]);
-  expect(
-    await t.query(api.feedback.tags.getForFeedback, { feedbackId })
-  ).toEqual([]);
-
   const member = t.withIdentity({ sessionId: MEMBER._id, subject: MEMBER._id });
   const own = await member.query(api.feedback.list.listByOrganization, {
     organizationId,
@@ -98,8 +94,7 @@ test("public queries hide private fields and emails from non-members", async () 
 
   const lists = await Promise.all([
     outsider.query(api.feedback.list.listByOrganization, { organizationId }),
-    outsider.query(api.feedback.list.listByOrganization, { organizationId }),
-    t.query(api.feedback.actions.listPublic, { organizationId }),
+    t.query(api.feedback.list.listByOrganization, { organizationId }),
   ]);
   for (const items of lists) {
     expect(items).toHaveLength(1);

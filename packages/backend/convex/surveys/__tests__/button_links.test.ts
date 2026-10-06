@@ -41,8 +41,8 @@ describe("survey button links", () => {
       })
     ).rejects.toThrow(UNSAFE);
     await expect(
-      admin.mutation(api.surveys.mutations.addQuestion, {
-        question: statement,
+      admin.mutation(api.surveys.mutations.insertSteps, {
+        drafts: [statement],
         surveyId,
       })
     ).rejects.toThrow(UNSAFE);

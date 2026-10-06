@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import type { Id } from "../_generated/dataModel";
 import { mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
 import { requireAuthUser } from "../shared/access";
@@ -114,59 +115,6 @@ export const unlinkFeedback = mutation({
   },
 });
 
-export const getCompletedFeedback = query({
-  args: { organizationId: v.id("organizations") },
-  handler: async (ctx, args) => {
-    const user = await authComponent.safeGetAuthUser(ctx);
-    if (!user) {
-      return [];
-    }
-
-    // Check admin permission
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", args.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership || membership.role === "member") {
-      return [];
-    }
-
-    // Get completed feedback
-    const feedback = await ctx.db
-      .query("feedback")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .filter((q) => q.eq(q.field("status"), "completed"))
-      .collect();
-
-    // Get already linked feedback IDs
-    const releases = await ctx.db
-      .query("releases")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .collect();
-
-    const linkedFeedbackIds = new Set<string>();
-    for (const release of releases) {
-      const links = await ctx.db
-        .query("releaseFeedback")
-        .withIndex("by_release", (q) => q.eq("releaseId", release._id))
-        .collect();
-      for (const link of links) {
-        linkedFeedbackIds.add(link.feedbackId);
-      }
-    }
-
-    // Filter out already linked feedback
-    return feedback.filter((f) => !linkedFeedbackIds.has(f._id));
-  },
-});
-
 export const getAvailableFeedback = query({
   args: {
     excludeReleaseId: v.optional(v.id("releases")),
@@ -197,19 +145,18 @@ export const getAvailableFeedback = query({
       .filter((q) => q.eq(q.field("deletedAt"), undefined))
       .collect();
 
-    // Build set of feedback IDs linked to any release (except the excluded one)
-    const linkedFeedbackIds = new Set<string>();
-    const allLinks = await ctx.db.query("releaseFeedback").collect();
-
-    for (const link of allLinks) {
-      if (args.excludeReleaseId && link.releaseId === args.excludeReleaseId) {
-        continue;
-      }
-      linkedFeedbackIds.add(link.feedbackId);
-    }
-
+    const isLinkedElsewhere = async (feedbackId: Id<"feedback">) => {
+      const links = await ctx.db
+        .query("releaseFeedback")
+        .withIndex("by_feedback", (q) => q.eq("feedbackId", feedbackId))
+        .collect();
+      return links.some((link) => link.releaseId !== args.excludeReleaseId);
+    };
+    const linkedElsewhere = await Promise.all(
+      allFeedback.map((f) => isLinkedElsewhere(f._id))
+    );
     const availableFeedback = allFeedback.filter(
-      (f) => !linkedFeedbackIds.has(f._id)
+      (_, index) => !linkedElsewhere[index]
     );
 
     const result = await Promise.all(

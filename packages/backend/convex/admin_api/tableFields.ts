@@ -15,7 +15,8 @@ export const adminApiTables = {
   })
     .index("by_organization_time", ["organizationId", "timestamp"])
     .index("by_org_key_time", ["organizationApiKeyId", "timestamp"])
-    .index("by_devtools_token_time", ["devtoolsTokenId", "timestamp"]),
+    .index("by_devtools_token_time", ["devtoolsTokenId", "timestamp"])
+    .index("by_timestamp", ["timestamp"]),
 
   externalUsers: defineTable({
     avatar: v.optional(v.string()),

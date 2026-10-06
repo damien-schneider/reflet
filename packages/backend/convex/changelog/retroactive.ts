@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Doc, Id } from "../_generated/dataModel";
 import { type MutationCtx, mutation, query } from "../_generated/server";
+import { consumeAiGenerationFor } from "../ai/usage_gate";
 import { authComponent } from "../auth/auth";
 import { requireOrgAdmin } from "../shared/access";
 import {
@@ -58,11 +59,15 @@ export const startRetroactiveChangelog = mutation({
     skipExistingVersions: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    await requireOrgAdmin(
+    const { user } = await requireOrgAdmin(
       ctx,
       args.organizationId,
       "start retroactive changelog generation"
     );
+    await consumeAiGenerationFor(ctx, {
+      organizationId: args.organizationId,
+      userId: user._id,
+    });
 
     const existingJobs = await ctx.db
       .query("retroactiveJobs")

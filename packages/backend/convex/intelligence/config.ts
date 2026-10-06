@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { internalQuery, mutation, query } from "../_generated/server";
+import { mutation, query } from "../_generated/server";
 import { requireAuthUser } from "../shared/access";
 
 export const get = query({
@@ -122,19 +122,5 @@ export const update = mutation({
     });
 
     return await ctx.db.get(config._id);
-  },
-});
-
-export const getConfigForScan = internalQuery({
-  args: { organizationId: v.id("organizations") },
-  handler: async (ctx, args) => {
-    const config = await ctx.db
-      .query("intelligenceConfig")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .unique();
-
-    return config;
   },
 });

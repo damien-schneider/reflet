@@ -103,9 +103,6 @@ export const getDigestData = internalQuery({
   },
 });
 
-/**
- * Get members who have weekly digest enabled for a given organization.
- */
 export const getDigestRecipients = internalQuery({
   args: { organizationId: v.string() },
   handler: async (ctx, args) => {
@@ -119,18 +116,6 @@ export const getDigestRecipients = internalQuery({
     const recipients: { email: string; userId: string }[] = [];
 
     for (const member of members) {
-      // Check if user has weekly digest disabled
-      const prefs = await ctx.db
-        .query("userNotificationPreferences")
-        .withIndex("by_user", (q) => q.eq("userId", member.userId))
-        .unique();
-
-      // Default to enabled if no preference is set
-      if (prefs?.weeklyDigestEnabled === false) {
-        continue;
-      }
-
-      // Resolve email from Better Auth
       const user = (await ctx.runQuery(components.betterAuth.adapter.findOne, {
         model: "user",
         where: [{ field: "id", operator: "eq", value: member.userId }],

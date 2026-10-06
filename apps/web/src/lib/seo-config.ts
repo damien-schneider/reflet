@@ -37,15 +37,6 @@ const DEFAULT_KEYWORDS = [
   "product feedback platform",
 ];
 
-export const siteConfig = {
-  author: "Reflet Team",
-  description: DEFAULT_DESCRIPTION,
-  keywords: DEFAULT_KEYWORDS,
-  name: SITE_NAME,
-  twitterHandle: "@reflet_app",
-  url: BASE_URL,
-};
-
 export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,

@@ -13,6 +13,7 @@ import {
 import { Check, FileText, Lightning, Tag } from "@phosphor-icons/react";
 import { CopyButton } from "@/components/copy-button";
 import { Muted, Text } from "@/components/ui/typography";
+import { getTagSwatchClass } from "@/lib/tag-colors";
 import type {
   ChangelogConfig,
   SuggestedPrompt,
@@ -114,8 +115,10 @@ export function TagsCard({
             >
               <span
                 aria-hidden
-                className="size-2.5 rounded-full"
-                style={{ backgroundColor: tag.color }}
+                className={cn(
+                  "size-2.5 rounded-full",
+                  getTagSwatchClass(tag.color)
+                )}
               />
               {tag.name}
               <Check

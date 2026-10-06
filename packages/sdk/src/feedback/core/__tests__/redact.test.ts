@@ -44,9 +44,12 @@ describe("redactUrl", () => {
     expect(redacted).toContain("a=1");
   });
 
-  it("preserves the fragment", () => {
-    expect(redactUrl("https://app.test/page#billing")).toBe(
-      "https://app.test/page#billing"
+  it("drops the fragment, with or without sensitive parameters", () => {
+    expect(redactUrl("https://app.test/page?tab=a#access_token=xyz")).toBe(
+      "https://app.test/page?tab=a"
+    );
+    expect(redactUrl("https://app.test/cb?token=abc#id_token=xyz")).toBe(
+      "https://app.test/cb?token=[redacted]"
     );
   });
 

@@ -61,22 +61,6 @@ describe("competitors", () => {
     ).rejects.toThrow(/public/);
   });
 
-  test("rejects switching a competitor to an internal URL", async () => {
-    const { admin, organizationId } = await setup();
-    const id = await admin.mutation(api.intelligence.competitors.create, {
-      name: "Rival",
-      organizationId,
-      websiteUrl: "https://rival.example.com/",
-    });
-
-    await expect(
-      admin.mutation(api.intelligence.competitors.update, {
-        changelogUrl: "http://127.0.0.1/changelog",
-        id,
-      })
-    ).rejects.toThrow(/public/);
-  });
-
   test("rate limits competitor creation, which triggers paid scraping", async () => {
     const { admin, organizationId } = await setup();
     for (let i = 0; i < COMPETITOR_CREATE_BURST; i++) {

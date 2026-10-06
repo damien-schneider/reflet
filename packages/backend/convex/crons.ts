@@ -28,9 +28,9 @@ crons.interval(
 );
 
 crons.daily(
-  "cleanup old email events",
-  { hourUTC: 2, minuteUTC: 30 },
-  internal.email.health.cleanupOldEvents
+  "prune api request logs",
+  { hourUTC: 2, minuteUTC: 15 },
+  internal.feedback.api_auth.pruneApiRequestLogs
 );
 
 crons.daily(

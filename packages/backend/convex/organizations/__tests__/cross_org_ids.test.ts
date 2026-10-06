@@ -1,7 +1,6 @@
 /// <reference types="vite/client" />
 import { expect, test } from "vitest";
 import { api } from "../../_generated/api";
-import type { Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";
 import { seedFeedback, seedOrganization } from "../../test.fixtures";
 import { setupTest } from "../../test.helpers";
@@ -24,25 +23,6 @@ const seedTenant = async (
     role: "owner",
     userId: options.ownerId,
   });
-  const statusIds: Id<"organizationStatuses">[] = [];
-  for (const [order, [name, semanticStatus]] of (
-    [
-      ["Backlog", "open"],
-      ["Done", "completed"],
-    ] as const
-  ).entries()) {
-    statusIds.push(
-      await ctx.db.insert("organizationStatuses", {
-        color: "#000000",
-        createdAt: now,
-        name,
-        order,
-        organizationId,
-        semanticStatus,
-        updatedAt: now,
-      })
-    );
-  }
   const milestoneId = await ctx.db.insert("milestones", {
     color: "#000000",
     createdAt: now,
@@ -57,7 +37,7 @@ const seedTenant = async (
   const feedbackId = await seedFeedback(ctx, organizationId, {
     title: `${options.slug} private roadmap item`,
   });
-  return { feedbackId, milestoneId, organizationId, statusIds };
+  return { feedbackId, milestoneId, organizationId };
 };
 
 const setup = async () => {
@@ -85,46 +65,6 @@ const setup = async () => {
     victimOwner,
   };
 };
-
-test("status reorder rejects status ids from another org", async () => {
-  const { mallory, own, t, victim, victimOwner } = await setup();
-
-  await expect(
-    mallory.mutation(api.organizations.status_mutations.reorder, {
-      organizationId: own.organizationId,
-      statusIds: [...victim.statusIds].reverse(),
-    })
-  ).rejects.toThrow("Status not found");
-  const victimOrders = await t.run(async (ctx) =>
-    Promise.all(
-      victim.statusIds.map(async (id) => (await ctx.db.get(id))?.order)
-    )
-  );
-  expect(victimOrders).toEqual([0, 1]);
-
-  await victimOwner.mutation(api.organizations.status_mutations.reorder, {
-    organizationId: victim.organizationId,
-    statusIds: [...victim.statusIds].reverse(),
-  });
-  const reordered = await t.run(async (ctx) =>
-    Promise.all(
-      victim.statusIds.map(async (id) => (await ctx.db.get(id))?.order)
-    )
-  );
-  expect(reordered).toEqual([1, 0]);
-});
-
-test("milestone reorder rejects milestones of another org behind an owned first id", async () => {
-  const { mallory, own, t, victim } = await setup();
-
-  await expect(
-    mallory.mutation(api.organizations.milestone_actions.reorder, {
-      milestoneIds: [own.milestoneId, victim.milestoneId],
-    })
-  ).rejects.toThrow("Milestone not found");
-  const victimMilestone = await t.run((ctx) => ctx.db.get(victim.milestoneId));
-  expect(victimMilestone?.order).toBe(0);
-});
 
 test("linking another org's feedback to an owned milestone is rejected", async () => {
   const { mallory, own, victim } = await setup();

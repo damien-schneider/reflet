@@ -63,9 +63,7 @@ const isBlogPostMeta = (value: unknown): value is BlogPostMeta =>
   "tags" in value &&
   "readingTime" in value;
 
-export async function getBlogPostMeta(
-  slug: string
-): Promise<BlogPostMeta | null> {
+async function getBlogPostMeta(slug: string): Promise<BlogPostMeta | null> {
   try {
     const { meta } = await import(
       `@app/(marketing)/blog/(posts)/${slug}/page.mdx`

@@ -3,6 +3,7 @@ import { describe, expect, test } from "vitest";
 import { api } from "../../_generated/api";
 import type { Id } from "../../_generated/dataModel";
 import type { MutationCtx } from "../../_generated/server";
+import { MAX_TITLE_LENGTH } from "../../shared/constants";
 import { seedOrganization } from "../../test.fixtures";
 import { setupTest } from "../../test.helpers";
 
@@ -73,6 +74,20 @@ describe("status incidents", () => {
     ).rejects.toThrow("Monitor not found");
   });
 
+  test("refuses an oversized title", async () => {
+    const { mallory, malloryMonitorId, malloryOrgId } = await setup();
+
+    await expect(
+      mallory.mutation(api.status.incidents.createIncident, {
+        affectedMonitorIds: [malloryMonitorId],
+        message: "Investigating",
+        organizationId: malloryOrgId,
+        severity: "minor",
+        title: "x".repeat(MAX_TITLE_LENGTH + 1),
+      })
+    ).rejects.toThrow(/Title must be/);
+  });
+
   test("accepts the organization's own monitors", async () => {
     const { mallory, malloryMonitorId, malloryOrgId } = await setup();
 
@@ -87,10 +102,11 @@ describe("status incidents", () => {
       }
     );
 
-    const incident = await mallory.query(
-      api.status.incidents.getIncidentWithUpdates,
-      { incidentId }
+    const active = await mallory.query(
+      api.status.incidents.getActiveIncidents,
+      { organizationId: malloryOrgId }
     );
+    const incident = active.find((candidate) => candidate._id === incidentId);
     expect(incident?.affectedMonitors.map((m) => m._id)).toEqual([
       malloryMonitorId,
     ]);
@@ -112,15 +128,11 @@ describe("status incidents", () => {
       })
     );
 
-    const incident = await mallory.query(
-      api.status.incidents.getIncidentWithUpdates,
-      { incidentId }
-    );
     const active = await mallory.query(
       api.status.incidents.getActiveIncidents,
       { organizationId: malloryOrgId }
     );
-    expect(incident?.affectedMonitors).toEqual([]);
+    expect(active.map((incident) => incident._id)).toEqual([incidentId]);
     expect(active[0]?.affectedMonitors).toEqual([]);
   });
 });

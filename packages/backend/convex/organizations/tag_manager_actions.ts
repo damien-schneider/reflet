@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
+import { tagColorValidator } from "../feedback/tag_colors";
 import { requireAuthUser } from "../shared/access";
 
 const generateSlug = (name: string): string =>
@@ -10,7 +11,7 @@ const generateSlug = (name: string): string =>
 
 export const create = mutation({
   args: {
-    color: v.string(),
+    color: tagColorValidator,
     description: v.optional(v.string()),
     icon: v.optional(v.string()),
     isPublic: v.optional(v.boolean()),
@@ -61,7 +62,7 @@ export const create = mutation({
 
 export const update = mutation({
   args: {
-    color: v.optional(v.string()),
+    color: v.optional(tagColorValidator),
     description: v.optional(v.string()),
     icon: v.optional(v.string()),
     id: v.id("tags"),
@@ -129,96 +130,6 @@ export const remove = mutation({
     }
 
     await ctx.db.delete(args.id);
-    return true;
-  },
-  returns: v.boolean(),
-});
-
-export const addToFeedback = mutation({
-  args: {
-    feedbackId: v.id("feedback"),
-    tagId: v.id("tags"),
-  },
-  handler: async (ctx, args) => {
-    const user = await requireAuthUser(ctx);
-
-    const feedback = await ctx.db.get(args.feedbackId);
-    if (!feedback) {
-      throw new Error("Feedback not found");
-    }
-
-    const tag = await ctx.db.get(args.tagId);
-    if (!tag) {
-      throw new Error("Tag not found");
-    }
-    if (tag.organizationId !== feedback.organizationId) {
-      throw new Error("Tag does not belong to this organization");
-    }
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", feedback.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership || membership.role === "member") {
-      throw new Error("Only admins can add tags to feedback");
-    }
-    const existing = await ctx.db
-      .query("feedbackTags")
-      .withIndex("by_feedback_tag", (q) =>
-        q.eq("feedbackId", args.feedbackId).eq("tagId", args.tagId)
-      )
-      .unique();
-
-    if (existing) {
-      return existing._id;
-    }
-
-    const id = await ctx.db.insert("feedbackTags", {
-      feedbackId: args.feedbackId,
-      tagId: args.tagId,
-    });
-
-    return id;
-  },
-  returns: v.id("feedbackTags"),
-});
-
-export const removeFromFeedback = mutation({
-  args: {
-    feedbackId: v.id("feedback"),
-    tagId: v.id("tags"),
-  },
-  handler: async (ctx, args) => {
-    const user = await requireAuthUser(ctx);
-
-    const feedback = await ctx.db.get(args.feedbackId);
-    if (!feedback) {
-      throw new Error("Feedback not found");
-    }
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", feedback.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership || membership.role === "member") {
-      throw new Error("Only admins can remove tags from feedback");
-    }
-
-    const feedbackTag = await ctx.db
-      .query("feedbackTags")
-      .withIndex("by_feedback_tag", (q) =>
-        q.eq("feedbackId", args.feedbackId).eq("tagId", args.tagId)
-      )
-      .unique();
-
-    if (feedbackTag) {
-      await ctx.db.delete(feedbackTag._id);
-    }
-
     return true;
   },
   returns: v.boolean(),

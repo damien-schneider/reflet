@@ -39,7 +39,7 @@ export function proxy(request: NextRequest) {
 
   if (!(isMainApp || host.endsWith(`.${ROOT_DOMAIN}`))) {
     const url = request.nextUrl.clone();
-    url.pathname = `/_custom-domain${pathname}`;
+    url.pathname = `/custom-domain${pathname}`;
     const response = NextResponse.rewrite(url);
     response.headers.set("x-custom-domain", host);
     return response;

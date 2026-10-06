@@ -1,17 +1,13 @@
 /// <reference types="vite/client" />
-import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { internal } from "../../_generated/api";
-import schema from "../../schema";
-import { modules } from "../../test.helpers";
+import { setupTest } from "../../test.helpers";
 
 import { createOrg } from "./test_helpers";
 
-const testSchema = schema as any;
-
 describe("admin_api_members", () => {
   test("listMembers should return org members", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = setupTest();
     const orgId = await createOrg(t);
 
     await t.run(async (ctx) => {
@@ -40,17 +36,13 @@ describe("admin_api_members", () => {
     ]);
   });
 
-  test("createInvitation should create a pending invitation", async () => {
-    const t = convexTest(testSchema, modules);
+  test("createInvitation creates a normalized, member-only, pending invitation", async () => {
+    const t = setupTest();
     const orgId = await createOrg(t);
 
     const result = await t.mutation(
       internal.admin_api.members.createInvitation,
-      {
-        email: "test@example.com",
-        organizationId: orgId,
-        role: "member",
-      }
+      { email: " Test@Example.com ", organizationId: orgId }
     );
 
     expect(result.id).toBeDefined();
@@ -66,36 +58,37 @@ describe("admin_api_members", () => {
     expect(invitations[0].status).toBe("pending");
   });
 
-  test("createInvitation should reject duplicate pending invitation", async () => {
-    const t = convexTest(testSchema, modules);
+  test("createInvitation rejects invalid addresses and duplicates", async () => {
+    const t = setupTest();
     const orgId = await createOrg(t);
+
+    await expect(
+      t.mutation(internal.admin_api.members.createInvitation, {
+        email: "not-an-email",
+        organizationId: orgId,
+      })
+    ).rejects.toThrow("Invalid email address");
 
     await t.mutation(internal.admin_api.members.createInvitation, {
       email: "dup@example.com",
       organizationId: orgId,
-      role: "member",
     });
 
     await expect(
       t.mutation(internal.admin_api.members.createInvitation, {
         email: "dup@example.com",
         organizationId: orgId,
-        role: "admin",
       })
-    ).rejects.toThrow("An invitation for this email is already pending");
+    ).rejects.toThrow("An invitation has already been sent to this email");
   });
 
   test("cancelInvitation should delete pending invitation", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = setupTest();
     const orgId = await createOrg(t);
 
     const { id: invitationId } = await t.mutation(
       internal.admin_api.members.createInvitation,
-      {
-        email: "cancel@example.com",
-        organizationId: orgId,
-        role: "member",
-      }
+      { email: "cancel@example.com", organizationId: orgId }
     );
 
     await t.mutation(internal.admin_api.members.cancelInvitation, {
@@ -111,7 +104,7 @@ describe("admin_api_members", () => {
   });
 
   test("cancelInvitation should reject non-pending invitation", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = setupTest();
     const orgId = await createOrg(t);
 
     // Create invitation manually with accepted status
@@ -137,7 +130,7 @@ describe("admin_api_members", () => {
   });
 
   test("cancelInvitation should reject wrong org", async () => {
-    const t = convexTest(testSchema, modules);
+    const t = setupTest();
     const orgId = await createOrg(t);
     const otherOrgId = await t.run(async (ctx) =>
       ctx.db.insert("organizations", {
@@ -152,11 +145,7 @@ describe("admin_api_members", () => {
 
     const { id: invitationId } = await t.mutation(
       internal.admin_api.members.createInvitation,
-      {
-        email: "test@example.com",
-        organizationId: orgId,
-        role: "member",
-      }
+      { email: "test@example.com", organizationId: orgId }
     );
 
     await expect(

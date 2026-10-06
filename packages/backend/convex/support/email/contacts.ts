@@ -87,6 +87,27 @@ const upsertPendingContact = async (
   return { contactId, token };
 };
 
+const hasConfirmationEmailBudget = async (
+  ctx: MutationCtx,
+  email: string,
+  organizationId: Id<"organizations">
+): Promise<boolean> => {
+  const perOrganization = await rateLimiter.limit(
+    ctx,
+    "supportContactConfirmationPerEmail",
+    { key: `${organizationId}:${email}`, throws: false }
+  );
+  if (!perOrganization.ok) {
+    return false;
+  }
+  const acrossOrganizations = await rateLimiter.limit(
+    ctx,
+    "supportContactConfirmationPerRecipient",
+    { key: email, throws: false }
+  );
+  return acrossOrganizations.ok;
+};
+
 export const requestContactConfirmation = async (
   ctx: MutationCtx,
   args: { email: string; organizationId: Id<"organizations"> }
@@ -107,18 +128,13 @@ export const requestContactConfirmation = async (
   if (!organization) {
     throw new Error("Organization not found");
   }
+  if (!(await hasConfirmationEmailBudget(ctx, email, organizationId))) {
+    return { confirmationRequired: true };
+  }
   const { contactId, token } = await upsertPendingContact(ctx, {
     email,
     organizationId,
   });
-  const { ok } = await rateLimiter.limit(
-    ctx,
-    "supportContactConfirmationPerEmail",
-    { key: `${organizationId}:${email}`, throws: false }
-  );
-  if (!ok) {
-    return { confirmationRequired: true };
-  }
 
   await ctx.db.patch(contactId, { verificationSentAt: Date.now() });
   await ctx.scheduler.runAfter(

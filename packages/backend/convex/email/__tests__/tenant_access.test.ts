@@ -81,7 +81,7 @@ test("an org owner cannot read or edit the platform-wide suppression list", asyn
 });
 
 test("a signed-in outsider cannot read another org's email analytics", async () => {
-  const { as, organizationId, releaseId } = await setup();
+  const { as, organizationId } = await setup();
   const outsider = as(OUTSIDER._id);
 
   await expect(
@@ -90,18 +90,10 @@ test("a signed-in outsider cannot read another org's email analytics", async () 
   await expect(
     outsider.query(api.email.analytics.getEmailStats, { organizationId })
   ).rejects.toThrow("You don't have access to this organization");
-  await expect(
-    outsider.query(api.email.analytics.getReleaseEmailStats, { releaseId })
-  ).rejects.toThrow("You don't have access to this organization");
 
   const owner = as(TENANT_ADMIN._id);
   const recent = await owner.query(api.email.analytics.getRecentEmails, {
     organizationId,
   });
   expect(recent.map((email) => email.to)).toEqual(["subscriber@customer.test"]);
-  const releaseStats = await owner.query(
-    api.email.analytics.getReleaseEmailStats,
-    { releaseId }
-  );
-  expect(releaseStats.total).toBe(1);
 });

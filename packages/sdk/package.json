@@ -89,7 +89,6 @@
     "@reflet/survey-core": "workspace:*",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/react": "^16.3.3",
-    "@testing-library/user-event": "^14.6.7",
     "@types/react": "^19.3.0",
     "@types/react-dom": "19.3.0",
     "bippy": "^0.7.3",

@@ -19,6 +19,10 @@ import {
 import { toast } from "@ctrl-ui/react/ui/toast";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
+import {
+  isTagColor,
+  type TagColor,
+} from "@reflet/backend/convex/feedback/tag_colors";
 import { useMutation } from "convex/react";
 import { type FormEvent, useState } from "react";
 import { EmojiPicker } from "@/components/ui/emoji-picker";
@@ -29,8 +33,6 @@ import {
   TIME_HORIZON_CONFIG,
   TIME_HORIZONS,
 } from "@/lib/milestone-constants";
-import type { TagColor } from "@/lib/tag-colors";
-import { isValidTagColor } from "@/lib/tag-colors";
 
 import { MilestoneDatePicker } from "./milestone-date-picker";
 
@@ -63,7 +65,7 @@ function useMilestoneDraft(milestone: EditableMilestone) {
   const draft: MilestoneDraft = {
     color:
       edits.color ??
-      (isValidTagColor(milestone.color) ? milestone.color : "default"),
+      (isTagColor(milestone.color) ? milestone.color : "default"),
     emoji: "emoji" in edits ? edits.emoji : milestone.emoji,
     horizon: edits.horizon ?? milestone.timeHorizon,
     name: edits.name ?? milestone.name,

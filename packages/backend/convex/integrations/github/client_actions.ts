@@ -30,10 +30,10 @@ interface Label {
   name: string;
 }
 
-async function requireAdminConnection(
+async function requireAdminGithubConnection(
   ctx: ActionCtx,
   organizationId: Id<"organizations">
-): Promise<Doc<"githubConnections"> & { repositoryFullName: string }> {
+): Promise<Doc<"githubConnections">> {
   const user = await authComponent.safeGetAuthUser(ctx);
   if (!user) {
     throw new Error("Not authenticated");
@@ -53,6 +53,14 @@ async function requireAdminConnection(
   if (!connection) {
     throw new Error("No GitHub connection found");
   }
+  return connection;
+}
+
+async function requireAdminConnection(
+  ctx: ActionCtx,
+  organizationId: Id<"organizations">
+): Promise<Doc<"githubConnections"> & { repositoryFullName: string }> {
+  const connection = await requireAdminGithubConnection(ctx, organizationId);
   const { repositoryFullName } = connection;
   if (!repositoryFullName) {
     throw new Error("No repository connected");
@@ -68,20 +76,10 @@ export const listRepositories = action({
     organizationId: v.id("organizations"),
   },
   handler: async (ctx, args): Promise<Repository[]> => {
-    const memberVisibleConnection = await ctx.runQuery(
-      api.integrations.github.queries.getConnection,
-      { organizationId: args.organizationId }
+    const connection = await requireAdminGithubConnection(
+      ctx,
+      args.organizationId
     );
-    const connection = memberVisibleConnection
-      ? await ctx.runQuery(
-          internal.integrations.github.queries.getConnectionInternal,
-          { organizationId: args.organizationId }
-        )
-      : null;
-
-    if (!connection) {
-      throw new Error("No GitHub connection found");
-    }
 
     const { accessibleRepositories } = connection;
     if (!accessibleRepositories) {
@@ -114,18 +112,7 @@ export const listLabels = action({
     organizationId: v.id("organizations"),
   },
   handler: async (ctx, args): Promise<Label[]> => {
-    const connection = await ctx.runQuery(
-      api.integrations.github.queries.getConnection,
-      { organizationId: args.organizationId }
-    );
-
-    if (!connection) {
-      throw new Error("No GitHub connection found");
-    }
-
-    if (!connection.repositoryFullName) {
-      throw new Error("No repository connected");
-    }
+    const connection = await requireAdminConnection(ctx, args.organizationId);
 
     const { token } = await ctx.runAction(
       internal.integrations.github.node_actions.getInstallationTokenInternal,

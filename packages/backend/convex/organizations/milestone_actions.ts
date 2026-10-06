@@ -38,51 +38,6 @@ export const remove = mutation({
   },
 });
 
-export const reorder = mutation({
-  args: {
-    milestoneIds: v.array(v.id("milestones")),
-  },
-  handler: async (ctx, args) => {
-    const user = await requireAuthUser(ctx);
-
-    if (args.milestoneIds.length === 0) {
-      return true;
-    }
-
-    const firstId = args.milestoneIds[0];
-    if (!firstId) {
-      return true;
-    }
-
-    const first = await ctx.db.get(firstId);
-    if (!first) {
-      throw new Error("Milestone not found");
-    }
-
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", first.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership || membership.role === "member") {
-      throw new Error("Only admins can reorder milestones");
-    }
-
-    const now = Date.now();
-    for (const [order, milestoneId] of args.milestoneIds.entries()) {
-      const milestone = await ctx.db.get(milestoneId);
-      if (milestone?.organizationId !== first.organizationId) {
-        throw new Error("Milestone not found");
-      }
-      await ctx.db.patch(milestoneId, { order, updatedAt: now });
-    }
-
-    return true;
-  },
-});
-
 export const addFeedback = mutation({
   args: {
     feedbackId: v.id("feedback"),
@@ -169,37 +124,5 @@ export const removeFeedback = mutation({
     }
 
     return true;
-  },
-});
-
-export const complete = mutation({
-  args: { id: v.id("milestones") },
-  handler: async (ctx, args) => {
-    const user = await requireAuthUser(ctx);
-
-    const milestone = await ctx.db.get(args.id);
-    if (!milestone) {
-      throw new Error("Milestone not found");
-    }
-
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", milestone.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership || membership.role === "member") {
-      throw new Error("Only admins can complete milestones");
-    }
-
-    const now = Date.now();
-    await ctx.db.patch(args.id, {
-      completedAt: now,
-      status: "completed",
-      updatedAt: now,
-    });
-
-    return args.id;
   },
 });

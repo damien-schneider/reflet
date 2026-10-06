@@ -137,23 +137,3 @@ export const disconnect = mutation({
     return true;
   },
 });
-
-export const logWebhookEvent = internalMutation({
-  args: {
-    action: v.optional(v.string()),
-    connectionId: v.id("githubConnections"),
-    eventType: v.string(),
-    organizationId: v.id("organizations"),
-    payload: v.string(),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.insert("githubWebhookEvents", {
-      action: args.action,
-      createdAt: Date.now(),
-      eventType: args.eventType,
-      githubConnectionId: args.connectionId,
-      organizationId: args.organizationId,
-      payload: args.payload.slice(0, 10_000),
-    });
-  },
-});

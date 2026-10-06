@@ -287,6 +287,44 @@ describe("recordInbound", () => {
     expect(await t.run((ctx) => ctx.storage.getUrl(storageId))).toBeNull();
   });
 
+  test("a spoofed Gmail forwarding confirmation is rejected", async () => {
+    const { organizationId, receive, t } = await setup();
+
+    const inbound = await receive({
+      from: "forwarding-noreply@google.com",
+      fullText: "Click https://mail-settings.google.com/mail/vf-evil to allow.",
+      recipients: [ALIAS_ADDRESS],
+      senderAuthenticated: false,
+      subject: "(#1) Gmail Forwarding Confirmation",
+    });
+
+    expect(inbound).toMatchObject({
+      rejectReason: "unauthenticated_sender",
+      status: "rejected",
+    });
+    const settings = await t.run((ctx) =>
+      ctx.db
+        .query("supportEmailSettings")
+        .withIndex("by_organization", (q) =>
+          q.eq("organizationId", organizationId)
+        )
+        .unique()
+    );
+    expect(settings?.gmailConfirmation).toBeUndefined();
+  });
+
+  test("spoofed senders do not use up the real sender's conversation budget", async () => {
+    const { receive } = await setup();
+    const spoofed = { from: "victim@example.com", recipients: [ALIAS_ADDRESS] };
+
+    for (let attempt = 0; attempt < 6; attempt++) {
+      expect((await receive(spoofed)).status).toBe("created");
+    }
+
+    const genuine = await receive({ ...spoofed, senderAuthenticated: true });
+    expect(genuine.status).toBe("created");
+  });
+
   test("captures the Gmail forwarding confirmation on the alias", async () => {
     const { organizationId, receive, t } = await setup();
 
@@ -295,6 +333,7 @@ describe("recordInbound", () => {
       fullText:
         "damien@gmail.com has requested to automatically forward mail.\nTo allow, click https://mail-settings.google.com/mail/vf-%5BABC%5D-123 to confirm.",
       recipients: [ALIAS_ADDRESS],
+      senderAuthenticated: true,
       subject: "(#123456) Gmail Forwarding Confirmation",
     });
 

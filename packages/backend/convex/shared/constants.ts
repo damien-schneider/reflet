@@ -9,5 +9,6 @@ export const MAX_EMAIL_LENGTH = 254;
 export const MAX_URL_LENGTH = 2048;
 export const MAX_USER_AGENT_LENGTH = 512;
 export const MAX_VISITOR_ID_LENGTH = 128;
+export const MAX_GIT_BRANCH_LENGTH = 255;
 
 export const SUPPORT_PREVIEW_LENGTH = 140;

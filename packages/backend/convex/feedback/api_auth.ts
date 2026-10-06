@@ -3,6 +3,7 @@ import type { Doc, Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import { internalMutation, internalQuery } from "../_generated/server";
 import { randomSecretHex } from "../shared/hmac";
+import { rateLimiter } from "../shared/rate_limits";
 
 const API_KEY_RANDOM_BYTES = 24;
 
@@ -18,6 +19,8 @@ export const findActivePublicApiKey = async (
 };
 
 export interface ApiKeyValidation {
+  /** Publishable keys only: browser origins this key may be used from. Empty means any. */
+  allowedDomains?: string[];
   error?: string;
   isSecretKey?: boolean;
   organizationApiKeyId?: Id<"organizationApiKeys">;
@@ -76,6 +79,7 @@ export const validateApiKey = internalQuery({
       }
 
       return {
+        allowedDomains: orgApiKeyRecord.allowedDomains,
         isSecretKey: false,
         organizationApiKeyId: orgApiKeyRecord._id,
         organizationId: orgApiKeyRecord.organizationId,
@@ -131,13 +135,28 @@ export const getOrCreateExternalUser = internalMutation({
     }
 
     if (existingUser) {
+      const trustedProfile: Pick<
+        Doc<"externalUsers">,
+        "email" | "name"
+      > = existingUser.verified ? existingUser : {};
       await ctx.db.patch(existingUser._id, {
-        email: email ?? existingUser.email,
+        email: email ?? trustedProfile.email,
         lastSeenAt: now,
-        name: name ?? existingUser.name,
+        name: name ?? trustedProfile.name,
         verified: true,
       });
       return existingUser._id;
+    }
+
+    if (!verified) {
+      const { ok } = await rateLimiter.limit(
+        ctx,
+        "unsignedExternalUserPerOrg",
+        { key: organizationId }
+      );
+      if (!ok) {
+        return null;
+      }
     }
 
     return await ctx.db.insert("externalUsers", {
@@ -151,6 +170,25 @@ export const getOrCreateExternalUser = internalMutation({
     });
   },
   returns: v.union(v.id("externalUsers"), v.null()),
+});
+
+const API_REQUEST_LOG_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
+const PRUNE_BATCH_SIZE = 500;
+
+export const pruneApiRequestLogs = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const cutoff = Date.now() - API_REQUEST_LOG_RETENTION_MS;
+    const stale = await ctx.db
+      .query("apiRequestLogs")
+      .withIndex("by_timestamp", (q) => q.lt("timestamp", cutoff))
+      .take(PRUNE_BATCH_SIZE);
+    for (const log of stale) {
+      await ctx.db.delete(log._id);
+    }
+    return { deleted: stale.length };
+  },
+  returns: v.object({ deleted: v.number() }),
 });
 
 export const logApiRequest = internalMutation({

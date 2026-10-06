@@ -1,10 +1,12 @@
 import { v } from "convex/values";
 import type { MutationCtx } from "../_generated/server";
-import { internalMutation, mutation } from "../_generated/server";
+import { mutation } from "../_generated/server";
 import { getOrgTier } from "../billing/org_subscription";
 import { versionIncrementValidator } from "../changelog/semver";
 import { DEFAULT_TAGS } from "../feedback/tag_definitions";
 import { requireAuthUser } from "../shared/access";
+import { MAX_GIT_BRANCH_LENGTH, MAX_TITLE_LENGTH } from "../shared/constants";
+import { validateInputLength } from "../shared/validators";
 import { assertValidSlug, deriveSlugFromName, slugify } from "./slug";
 import { DEFAULT_STATUSES } from "./status_definitions";
 import { logVisibilityChange } from "./visibility_log";
@@ -85,38 +87,6 @@ const insertOrganization = async (
   return { id: organizationId, slug };
 };
 
-export const createOrganization = internalMutation({
-  args: {
-    isPublic: v.optional(v.boolean()),
-    name: v.string(),
-    slug: v.optional(v.string()),
-    userId: v.string(),
-  },
-  handler: async (ctx, args) => (await insertOrganization(ctx, args)).id,
-  returns: v.id("organizations"),
-});
-
-export const updateOrganizationSlug = internalMutation({
-  args: {
-    id: v.id("organizations"),
-    slug: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const org = await ctx.db.get(args.id);
-    if (!org) {
-      throw new Error("Organization not found");
-    }
-
-    const slug = await resolveSlugUpdate(ctx, {
-      current: org.slug,
-      requested: args.slug,
-    });
-    await ctx.db.patch(args.id, { slug });
-    return args.id;
-  },
-  returns: v.id("organizations"),
-});
-
 export const create = mutation({
   args: {
     isPublic: v.optional(v.boolean()),
@@ -130,6 +100,19 @@ export const create = mutation({
   returns: v.object({ id: v.id("organizations"), slug: v.string() }),
 });
 
+// Branch names reach GitHub as URL path segments; `..`, spaces and control characters never belong in one.
+const GIT_BRANCH_PATTERN = /^(?!.*\.\.)[A-Za-z0-9][A-Za-z0-9._/-]*$/;
+
+const assertValidGitBranch = (branch: string | undefined): void => {
+  if (branch === undefined) {
+    return;
+  }
+  validateInputLength(branch, MAX_GIT_BRANCH_LENGTH, "Target branch");
+  if (!GIT_BRANCH_PATTERN.test(branch)) {
+    throw new Error("Target branch is not a valid git branch name");
+  }
+};
+
 export const update = mutation({
   args: {
     changelogSettings: v.optional(
@@ -142,17 +125,8 @@ export const update = mutation({
         versionPrefix: v.optional(v.string()),
       })
     ),
-    customCss: v.optional(v.string()),
     feedbackSettings: v.optional(
       v.object({
-        allowAnonymousVoting: v.optional(v.boolean()),
-        cardStyle: v.optional(
-          v.union(
-            v.literal("sweep-corner"),
-            v.literal("minimal-notch"),
-            v.literal("editorial-feed")
-          )
-        ),
         defaultStatus: v.optional(
           v.union(
             v.literal("open"),
@@ -163,16 +137,8 @@ export const update = mutation({
             v.literal("closed")
           )
         ),
-        defaultTagId: v.optional(v.id("tags")),
         defaultView: v.optional(
           v.union(v.literal("roadmap"), v.literal("feed"))
-        ),
-        milestoneStyle: v.optional(
-          v.union(
-            v.literal("track"),
-            v.literal("editorial-accordion"),
-            v.literal("dashboard-timeline")
-          )
         ),
         requireApproval: v.optional(v.boolean()),
       })
@@ -198,12 +164,15 @@ export const update = mutation({
       throw new Error("You don't have permission to update this organization");
     }
 
+    validateInputLength(args.name, MAX_TITLE_LENGTH, "Name");
+    assertValidGitBranch(args.changelogSettings?.targetBranch);
+
     const org = await ctx.db.get(args.id);
     if (!org) {
       throw new Error("Organization not found");
     }
 
-    if (args.primaryColor || args.customCss) {
+    if (args.primaryColor) {
       const tier = await getOrgTier(ctx, args.id);
       if (tier !== "pro") {
         throw new Error("Custom branding requires a Pro subscription");

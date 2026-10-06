@@ -4,7 +4,9 @@ import type { MutationCtx } from "../_generated/server";
 import { internalMutation, mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
 import { requireOrgAdmin } from "../shared/access";
+import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from "../shared/constants";
 import { getOrgMembership, isOrgAdmin } from "../shared/membership";
+import { validateInputLength } from "../shared/validators";
 import { UNTITLED_RELEASE_TITLE } from "./release_text";
 import type { ReleaseSource } from "./source";
 import { releaseSourceValidator } from "./tableFields";
@@ -113,6 +115,12 @@ export const saveGeneratedDraft = mutation({
     title: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    validateInputLength(args.title, MAX_TITLE_LENGTH, "Title");
+    validateInputLength(
+      args.description,
+      MAX_DESCRIPTION_LENGTH,
+      "Description"
+    );
     const release = await requireReleaseAdmin(ctx, args.releaseId);
 
     const latestApplied = await ctx.db

@@ -2,15 +2,6 @@ import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { requireAuthUser } from "../shared/access";
 
-function generateWidgetId(): string {
-  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-  let result = "";
-  for (let i = 0; i < 9; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
-}
-
 export const updateSettings = mutation({
   args: {
     autoOpen: v.optional(v.boolean()),
@@ -134,48 +125,5 @@ export const remove = mutation({
     await ctx.db.delete(args.widgetId);
 
     return true;
-  },
-});
-
-export const regenerateWidgetId = mutation({
-  args: {
-    widgetId: v.id("widgets"),
-  },
-  handler: async (ctx, args) => {
-    const user = await requireAuthUser(ctx);
-
-    const widget = await ctx.db.get(args.widgetId);
-    if (!widget) {
-      throw new Error("Widget not found");
-    }
-
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", widget.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership || membership.role === "member") {
-      throw new Error("Only admins can manage widgets");
-    }
-
-    let newWidgetId = generateWidgetId();
-
-    const existingWidget = await ctx.db
-      .query("widgets")
-      .withIndex("by_widget_id", (q) => q.eq("widgetId", newWidgetId))
-      .unique();
-
-    if (existingWidget) {
-      newWidgetId = generateWidgetId();
-    }
-
-    await ctx.db.patch(args.widgetId, {
-      updatedAt: Date.now(),
-      widgetId: newWidgetId,
-    });
-
-    return { widgetId: newWidgetId };
   },
 });

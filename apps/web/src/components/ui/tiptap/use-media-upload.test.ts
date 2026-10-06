@@ -21,7 +21,7 @@ vi.mock("@reflet/backend/convex/_generated/api", () => ({
   api: {
     storage: {
       generateUploadUrl: "generateUploadUrl",
-      getStorageUrlMutation: "getStorageUrlMutation",
+      getStorageUrl: "getStorageUrl",
     },
   },
 }));

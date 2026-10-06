@@ -86,6 +86,23 @@ describe("signUser", () => {
     ).resolves.toBeNull();
   });
 
+  it("rejects a correctly signed token that never expires", async () => {
+    const { token } = await signUser({ id: "user_5" }, SECRET_KEY);
+    const [header] = token.split(".");
+    const eternalPayload = btoa(JSON.stringify({ id: "user_5" }))
+      .replaceAll("+", "-")
+      .replaceAll("/", "_")
+      .replace(/[=]+$/, "");
+    const signature = await hmacBase64Url(
+      `${header}.${eternalPayload}`,
+      await expectedSigningKey(SECRET_KEY)
+    );
+
+    await expect(
+      verifyUser(`${header}.${eternalPayload}.${signature}`, SECRET_KEY)
+    ).resolves.toBeNull();
+  });
+
   it("requires a user id and a secret", async () => {
     await expect(signUser({ id: "" }, SECRET_KEY)).rejects.toThrow(
       "user.id is required"

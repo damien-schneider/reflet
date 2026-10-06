@@ -95,36 +95,6 @@ export const saveDraftReply = internalMutation({
   },
 });
 
-export const clearDraftReply = mutation({
-  args: { feedbackId: v.id("feedback") },
-  handler: async (ctx, args) => {
-    const user = await requireAuthUser(ctx);
-
-    const feedback = await ctx.db.get(args.feedbackId);
-    if (!feedback) {
-      throw new Error("Feedback not found");
-    }
-
-    // Check admin permission
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", feedback.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership || membership.role === "member") {
-      throw new Error("Only admins can clear draft replies");
-    }
-
-    await ctx.db.patch(args.feedbackId, {
-      aiDraftReply: undefined,
-      aiDraftReplyGeneratedAt: undefined,
-      updatedAt: Date.now(),
-    });
-  },
-});
-
 export const generateDraftReplyAction = internalAction({
   args: { feedbackId: v.id("feedback") },
   handler: async (ctx, args) => {

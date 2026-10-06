@@ -4,10 +4,12 @@
  * reaches the browser.
  */
 import { v } from "convex/values";
-import { api, internal } from "../../_generated/api";
+import { internal } from "../../_generated/api";
 import type { Id } from "../../_generated/dataModel";
 import type { ActionCtx } from "../../_generated/server";
 import { action } from "../../_generated/server";
+import { authComponent } from "../../auth/auth";
+import { isOrgAdmin } from "../../shared/membership";
 
 interface RepoAccess {
   repositoryFullName: string;
@@ -23,12 +25,21 @@ async function requireRepoAccess(
   ctx: ActionCtx,
   organizationId: Id<"organizations">
 ): Promise<RepoAccess> {
-  // getConnection checks auth + org membership
+  const user = await authComponent.safeGetAuthUser(ctx);
+  if (!user) {
+    throw new Error("Not authenticated");
+  }
+  const membership = await ctx.runQuery(
+    internal.shared.access.membershipForUser,
+    { organizationId, userId: user._id }
+  );
+  if (!isOrgAdmin(membership?.role)) {
+    throw new Error("Only admins can browse the connected repository");
+  }
   const connection = await ctx.runQuery(
-    api.integrations.github.queries.getConnection,
+    internal.integrations.github.queries.getConnectionInternal,
     { organizationId }
   );
-
   if (!connection) {
     throw new Error("No GitHub connection found");
   }

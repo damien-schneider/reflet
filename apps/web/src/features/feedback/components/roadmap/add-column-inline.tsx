@@ -12,10 +12,11 @@ import { toast } from "@ctrl-ui/react/ui/toast";
 import { Plus } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
+import type { TagColor } from "@reflet/backend/convex/feedback/tag_colors";
 import { useMutation } from "convex/react";
 import { type FormEvent, useState } from "react";
 import { NotionColorPicker } from "@/components/ui/notion-color-picker";
-import { getTagSwatchClass, type TagColor } from "@/lib/tag-colors";
+import { getTagSwatchClass } from "@/lib/tag-colors";
 import { StatusMeaningSelect } from "./status-meaning-select";
 
 interface AddColumnInlineProps {

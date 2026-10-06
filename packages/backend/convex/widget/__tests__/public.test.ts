@@ -152,6 +152,25 @@ describe("widget conversations", () => {
     ).toEqual({ confirmationRequired: false });
   });
 
+  test("a visitor cannot keep switching the email on one conversation", async () => {
+    const { t } = await setup();
+    await t.mutation(api.widget.public.sendMessage, { ...VISITOR, body: "Hi" });
+
+    for (let attempt = 0; attempt < 5; attempt++) {
+      await t.mutation(api.widget.public.setEmail, {
+        ...VISITOR,
+        email: `target${attempt}@example.com`,
+      });
+    }
+
+    await expect(
+      t.mutation(api.widget.public.setEmail, {
+        ...VISITOR,
+        email: "target5@example.com",
+      })
+    ).rejects.toThrow(/RateLimited/);
+  });
+
   test("an invalid visitor email is refused with a readable message", async () => {
     const { t } = await setup();
     await t.mutation(api.widget.public.sendMessage, { ...VISITOR, body: "Hi" });

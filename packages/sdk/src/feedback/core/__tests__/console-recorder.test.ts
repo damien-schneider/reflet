@@ -89,9 +89,28 @@ describe("startConsoleRecorder", () => {
     });
     const recorder = record();
 
-    console.error("x".repeat(5000));
+    console.error("word ".repeat(1000));
 
     expect(recorder.events()[0]?.message.length).toBeLessThanOrEqual(1000);
+  });
+
+  it("masks emails and tokens before buffering, including window errors", () => {
+    vi.spyOn(console, "error").mockImplementation(() => {
+      // silence the test output
+    });
+    const recorder = record();
+
+    console.error("login failed for ada@example.com");
+    window.dispatchEvent(
+      new ErrorEvent("error", {
+        message: "401 bearer sk-live-abcdefabcdefabcdefabcdef1234",
+      })
+    );
+
+    expect(recorder.events().map((event) => event.message)).toEqual([
+      "login failed for [redacted]",
+      "401 bearer [redacted]",
+    ]);
   });
 
   it("captures uncaught errors reported on the window", () => {

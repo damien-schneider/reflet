@@ -1,17 +1,7 @@
-export const TAG_COLORS = [
-  "default",
-  "gray",
-  "brown",
-  "orange",
-  "yellow",
-  "green",
-  "blue",
-  "purple",
-  "pink",
-  "red",
-] as const;
-
-export type TagColor = (typeof TAG_COLORS)[number];
+import {
+  isTagColor,
+  type TagColor,
+} from "@reflet/backend/convex/feedback/tag_colors";
 
 export const TAG_COLOR_LABELS: Record<TagColor, string> = {
   blue: "Blue",
@@ -56,12 +46,8 @@ const COLOR_VALUES: Record<TagColor, ColorValue> = {
   yellow: tagValue("yellow"),
 };
 
-export function isValidTagColor(color: string): color is TagColor {
-  return TAG_COLORS.some((c) => c === color);
-}
-
 export function resolveTagColor(color: string): TagColor {
-  if (isValidTagColor(color)) {
+  if (isTagColor(color)) {
     return color;
   }
   return migrateHexToNamedColor(color);
@@ -71,24 +57,14 @@ export function getTagColorValues(color: string): ColorValue {
   return COLOR_VALUES[resolveTagColor(color)];
 }
 
-export function getTagTextColor(color: string): string {
-  return getTagColorValues(color).text;
-}
-
 export function getTagDotColor(color: string): string {
   const resolved = resolveTagColor(color);
-  if (resolved !== "default" || isValidTagColor(color)) {
+  if (resolved !== "default" || isTagColor(color)) {
     return getTagColorValues(resolved).text;
   }
   return color;
 }
 
-export function getRandomTagColor(): TagColor {
-  const colors = TAG_COLORS.filter((c) => c !== "default");
-  return colors[Math.floor(Math.random() * colors.length)] ?? "default";
-}
-
-// Dedicated tag palette classes for color swatches and dots
 const TAG_SWATCH_CLASSES: Record<TagColor, string> = {
   blue: "bg-tag-blue border-tag-blue",
   brown: "bg-tag-brown border-tag-brown",
@@ -102,13 +78,10 @@ const TAG_SWATCH_CLASSES: Record<TagColor, string> = {
   yellow: "bg-tag-yellow border-tag-yellow",
 };
 
-// Get Tailwind class for color swatch
 export function getTagSwatchClass(color: string): string {
-  const validColor = resolveTagColor(color);
-  return TAG_SWATCH_CLASSES[validColor];
+  return TAG_SWATCH_CLASSES[resolveTagColor(color)];
 }
 
-// Migration helper: convert old hex colors to new named colors
 export function migrateHexToNamedColor(hexColor: string): TagColor {
   const hexMap: Record<string, TagColor> = {
     "#3b82f6": "blue",

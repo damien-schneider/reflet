@@ -66,22 +66,6 @@ describe("collectPageContext", () => {
     expect(context.timezone).toBeTypeOf("string");
   });
 
-  it("records the scroll position the capture was taken at", () => {
-    const original = Object.getOwnPropertyDescriptor(window, "scrollY");
-    Object.defineProperty(window, "scrollY", {
-      configurable: true,
-      value: 1240,
-    });
-
-    try {
-      expect(collectPageContext().scroll).toEqual({ x: 0, y: 1240 });
-    } finally {
-      if (original) {
-        Object.defineProperty(window, "scrollY", original);
-      }
-    }
-  });
-
   it("masks sensitive query parameters in the reported url", () => {
     const restoreUrl = window.location.href;
     window.history.pushState(
@@ -108,6 +92,25 @@ describe("collectPageContext", () => {
 
     expect(context.pageTitle).toBe("Billing settings");
     expect(context.referrer).toBeUndefined();
+  });
+
+  it("redacts secrets carried by the referrer", () => {
+    Object.defineProperty(document, "referrer", {
+      configurable: true,
+      value: "https://app.example.com/reset?token=super-secret-value#access",
+    });
+    try {
+      const { referrer } = collectPageContext();
+
+      expect(referrer).toContain("https://app.example.com/reset");
+      expect(referrer).not.toContain("super-secret-value");
+      expect(referrer).not.toContain("#access");
+    } finally {
+      Object.defineProperty(document, "referrer", {
+        configurable: true,
+        value: "",
+      });
+    }
   });
 
   it("stamps the sdk version it was given", () => {

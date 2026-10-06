@@ -72,7 +72,7 @@ export const supportConversationDetail = v.object({
 export type SupportConversationDetail = Infer<typeof supportConversationDetail>;
 
 export const supportMessageSender = v.object({
-  email: v.string(),
+  email: v.optional(v.string()),
   id: v.string(),
   image: v.optional(v.string()),
   name: v.optional(v.string()),

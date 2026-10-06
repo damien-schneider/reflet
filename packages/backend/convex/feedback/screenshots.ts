@@ -2,17 +2,13 @@ import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import {
   internalMutation,
-  internalQuery,
   type MutationCtx,
   mutation,
   type QueryCtx,
   query,
 } from "../_generated/server";
-import {
-  isOrgMemberViewer,
-  requireAuthUser,
-  requireOrgMember,
-} from "../shared/access";
+import { requireAuthUser, requireOrgMember } from "../shared/access";
+import { canViewFeedback } from "./public_projection";
 import {
   captureSourceValidator,
   screenshotAnnotationValidator,
@@ -236,16 +232,7 @@ export const getByFeedback = query({
       return [];
     }
 
-    const organization = await ctx.db.get(feedback.organizationId);
-    if (!organization) {
-      return [];
-    }
-
-    const publiclyVisible = organization.isPublic && feedback.isApproved;
-    const canViewScreenshots =
-      publiclyVisible ||
-      (await isOrgMemberViewer(ctx, feedback.organizationId));
-    if (!canViewScreenshots) {
+    if (!(await canViewFeedback(ctx, feedback))) {
       return [];
     }
 
@@ -287,39 +274,6 @@ export const getByFeedback = query({
       size: v.number(),
       url: v.union(v.string(), v.null()),
       width: v.optional(v.number()),
-    })
-  ),
-});
-
-export const getByFeedbackPublic = internalQuery({
-  args: {
-    feedbackId: v.id("feedback"),
-  },
-  handler: async (ctx, args) => {
-    const screenshots = await ctx.db
-      .query("feedbackScreenshots")
-      .withIndex("by_feedback", (q) => q.eq("feedbackId", args.feedbackId))
-      .collect();
-
-    return await Promise.all(
-      screenshots.map(async (s) => ({
-        _id: s._id,
-        createdAt: s.createdAt,
-        filename: s.filename,
-        mimeType: s.mimeType,
-        url: s.annotatedStorageId
-          ? await ctx.storage.getUrl(s.annotatedStorageId)
-          : await ctx.storage.getUrl(s.storageId),
-      }))
-    );
-  },
-  returns: v.array(
-    v.object({
-      _id: v.id("feedbackScreenshots"),
-      createdAt: v.number(),
-      filename: v.string(),
-      mimeType: v.string(),
-      url: v.union(v.string(), v.null()),
     })
   ),
 });

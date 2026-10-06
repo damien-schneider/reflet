@@ -47,64 +47,6 @@ export const list = query({
   },
 });
 
-export const get = query({
-  args: {
-    insightId: v.id("intelligenceInsights"),
-  },
-  handler: async (ctx, args) => {
-    const user = await requireAuthUser(ctx);
-
-    const insight = await ctx.db.get(args.insightId);
-    if (!insight) {
-      throw new Error("Insight not found");
-    }
-
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", insight.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership) {
-      throw new Error("Not a member of this organization");
-    }
-
-    return insight;
-  },
-});
-
-export const getSignalsForInsight = query({
-  args: {
-    insightId: v.id("intelligenceInsights"),
-  },
-  handler: async (ctx, args) => {
-    const user = await requireAuthUser(ctx);
-
-    const insight = await ctx.db.get(args.insightId);
-    if (!insight) {
-      throw new Error("Insight not found");
-    }
-
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", insight.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership) {
-      throw new Error("Not a member of this organization");
-    }
-
-    const signals = await Promise.all(
-      insight.signalIds.map((signalId) => ctx.db.get(signalId))
-    );
-
-    return signals.filter(Boolean);
-  },
-});
-
 export const dismiss = mutation({
   args: {
     insightId: v.id("intelligenceInsights"),
@@ -129,33 +71,6 @@ export const dismiss = mutation({
     }
 
     await ctx.db.patch(args.insightId, { status: "dismissed" });
-  },
-});
-
-export const markReviewed = mutation({
-  args: {
-    insightId: v.id("intelligenceInsights"),
-  },
-  handler: async (ctx, args) => {
-    const user = await requireAuthUser(ctx);
-
-    const insight = await ctx.db.get(args.insightId);
-    if (!insight) {
-      throw new Error("Insight not found");
-    }
-
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", insight.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership || membership.role === "member") {
-      throw new Error("Only admins can mark insights as reviewed");
-    }
-
-    await ctx.db.patch(args.insightId, { status: "reviewed" });
   },
 });
 

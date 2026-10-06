@@ -1,11 +1,7 @@
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { mutation, query } from "../_generated/server";
-import {
-  isOrgMemberViewer,
-  requireAuthUser,
-  requireOrgMember,
-} from "../shared/access";
+import { isOrgMemberViewer, requireOrgMember } from "../shared/access";
 import type { FeedbackStatusValue } from "../shared/validators";
 
 import { DEFAULT_STATUSES, sortColumnsByLifecycle } from "./status_definitions";
@@ -29,73 +25,6 @@ export const list = query({
       .collect();
 
     return sortColumnsByLifecycle(statuses);
-  },
-});
-
-export const get = query({
-  args: { id: v.id("organizationStatuses") },
-  handler: async (ctx, args) => {
-    const status = await ctx.db.get(args.id);
-    if (!status) {
-      return null;
-    }
-    const org = await ctx.db.get(status.organizationId);
-    if (!org) {
-      return null;
-    }
-    const canView =
-      org.isPublic || (await isOrgMemberViewer(ctx, status.organizationId));
-    return canView ? status : null;
-  },
-});
-
-export const createDefaults = mutation({
-  args: { organizationId: v.id("organizations") },
-  handler: async (ctx, args) => {
-    const user = await requireAuthUser(ctx);
-
-    const org = await ctx.db.get(args.organizationId);
-    if (!org) {
-      throw new Error("Organization not found");
-    }
-
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", args.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership) {
-      throw new Error("You are not a member of this organization");
-    }
-
-    const existingStatuses = await ctx.db
-      .query("organizationStatuses")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .first();
-
-    if (existingStatuses) {
-      return []; // Already initialized
-    }
-
-    const now = Date.now();
-    const statusIds: Id<"organizationStatuses">[] = [];
-
-    for (const status of DEFAULT_STATUSES) {
-      const id = await ctx.db.insert("organizationStatuses", {
-        ...status,
-        createdAt: now,
-        order: status.order,
-        organizationId: args.organizationId,
-        updatedAt: now,
-      });
-      statusIds.push(id);
-    }
-
-    return statusIds;
   },
 });
 

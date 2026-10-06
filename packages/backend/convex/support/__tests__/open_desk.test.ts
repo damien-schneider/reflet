@@ -76,6 +76,28 @@ describe("support desk reached by public key", () => {
     ]);
   });
 
+  test.each(["", "🙂".repeat(9)])("refuses the reaction %j", async (emoji) => {
+    const { as, organizationId } = await setup({
+      isActive: true,
+      supportEnabled: true,
+    });
+    const customer = as(CUSTOMER);
+    const conversationId = await customer.mutation(
+      api.support.conversations.create,
+      { initialMessage: "Export is broken", organizationId }
+    );
+    const [message] = await customer.query(api.support.messages.list, {
+      conversationId,
+    });
+
+    await expect(
+      customer.mutation(api.support.messages.addReaction, {
+        emoji,
+        messageId: message._id,
+      })
+    ).rejects.toThrow(/Emoji/);
+  });
+
   test.each([
     { isActive: true, supportEnabled: false },
     { isActive: false, supportEnabled: true },

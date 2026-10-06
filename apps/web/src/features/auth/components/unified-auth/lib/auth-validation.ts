@@ -23,7 +23,6 @@ export const signUpSchema = z
   });
 
 export type SignUpFormData = z.infer<typeof signUpSchema>;
-export type SignInFormData = z.infer<typeof signInSchema>;
 
 const BODY_FIELD_REGEX = /\[body\.(.*?)\]/;
 

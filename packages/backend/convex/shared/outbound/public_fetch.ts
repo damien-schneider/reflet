@@ -160,30 +160,3 @@ export const describeFetchFailure = (error: unknown): string => {
   }
   return "Request failed";
 };
-
-/** Reads at most `maxBytes` of the body so a hostile server cannot exhaust memory. */
-export const readTextUpTo = async (
-  response: Response,
-  maxBytes: number
-): Promise<string> => {
-  if (!response.body) {
-    return "";
-  }
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let text = "";
-  let bytesRead = 0;
-  while (bytesRead < maxBytes) {
-    const { done, value } = await reader.read();
-    if (done) {
-      return text + decoder.decode();
-    }
-    const remaining = maxBytes - bytesRead;
-    const chunk =
-      value.byteLength > remaining ? value.subarray(0, remaining) : value;
-    bytesRead += chunk.byteLength;
-    text += decoder.decode(chunk, { stream: true });
-  }
-  await reader.cancel();
-  return text + decoder.decode();
-};

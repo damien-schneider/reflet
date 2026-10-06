@@ -2,6 +2,7 @@ import { ConvexError } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Id, TableNames } from "../_generated/dataModel";
 import { httpAction } from "../_generated/server";
+import { MAX_USER_AGENT_LENGTH } from "../shared/constants";
 import type { ApiCredential } from "./public_api/auth";
 
 // ============================================
@@ -220,13 +221,16 @@ async function authenticateAdminRequest(
 // ROUTE FACTORIES
 // ============================================
 
+const TOO_MANY_REQUESTS = 429;
+
+// A throttled caller must not turn the limiter into a write amplifier.
 const recordFailedApiRequest = async (
   ctx: ActionCtx,
   request: Request,
   actor: ApiRequestActor,
   response: Response
 ): Promise<void> => {
-  if (response.status < 400) {
+  if (response.status < 400 || response.status === TOO_MANY_REQUESTS) {
     return;
   }
   await ctx.runMutation(internal.feedback.api_auth.logApiRequest, {
@@ -235,7 +239,9 @@ const recordFailedApiRequest = async (
     method: request.method,
     organizationId: actor.organizationId,
     statusCode: response.status,
-    userAgent: request.headers.get("User-Agent") ?? undefined,
+    userAgent: request.headers
+      .get("User-Agent")
+      ?.slice(0, MAX_USER_AGENT_LENGTH),
   });
 };
 

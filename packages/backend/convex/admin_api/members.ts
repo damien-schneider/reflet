@@ -1,5 +1,7 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "../_generated/server";
+import { inviteToOrganization } from "../organizations/invitations";
+import { API_ACTOR_ID } from "../shared/actors";
 
 // ============================================
 // MEMBER QUERIES
@@ -53,48 +55,24 @@ export const listInvitations = internalQuery({
 // INVITATION MUTATIONS
 // ============================================
 
-const INVITATION_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
-
+/** A leaked secret key must not be able to mint admins, so the API only invites members. */
 export const createInvitation = internalMutation({
   args: {
     email: v.string(),
     organizationId: v.id("organizations"),
-    role: v.union(v.literal("admin"), v.literal("member")),
   },
   handler: async (ctx, args) => {
-    // Check if email is already a pending invitation
-    const existingInvitation = await ctx.db
-      .query("invitations")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("email"), args.email),
-          q.eq(q.field("status"), "pending")
-        )
-      )
-      .first();
-
-    if (existingInvitation) {
-      throw new Error("An invitation for this email is already pending");
+    const org = await ctx.db.get(args.organizationId);
+    if (!org) {
+      throw new Error("Organization not found");
     }
-
-    const now = Date.now();
-    const token = crypto.randomUUID();
-
-    const id = await ctx.db.insert("invitations", {
-      createdAt: now,
+    const { invitationId } = await inviteToOrganization(ctx, {
       email: args.email,
-      expiresAt: now + INVITATION_EXPIRY_MS,
-      inviterId: "api", // API-created invitation
+      inviter: { _id: API_ACTOR_ID, name: `${org.name} API` },
       organizationId: args.organizationId,
-      role: args.role,
-      status: "pending",
-      token,
+      role: "member",
     });
-
-    return { id };
+    return { id: invitationId };
   },
   returns: v.object({ id: v.id("invitations") }),
 });

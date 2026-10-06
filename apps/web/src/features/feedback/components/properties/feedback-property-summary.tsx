@@ -6,12 +6,12 @@ import {
   type PublicationState,
   publicationState,
 } from "@reflet/backend/convex/feedback/property_values";
+import type { TagColor } from "@reflet/backend/convex/feedback/tag_colors";
 import { WITHHOLD_JUNK_THRESHOLD } from "@reflet/backend/convex/feedback/triage_questions";
 import { STATUS_DEFINITIONS } from "@reflet/backend/convex/organizations/status_definitions";
 import { TagBadge } from "@/components/tag-badge";
 import type { FeedbackItem } from "@/features/feedback/components/feed-feedback-view";
 import { AiRejectionBadge } from "@/features/feedback/components/properties/presentation/ai-rejection-badge";
-import type { TagColor } from "@/lib/tag-colors";
 
 const PUBLICATION_COLORS = {
   approved: "green",

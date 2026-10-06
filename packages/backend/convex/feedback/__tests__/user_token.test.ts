@@ -2,6 +2,8 @@ import { describe, expect, test } from "vitest";
 import { verifyUserToken } from "../user_token";
 
 const SIGNING_KEY = "b".repeat(64);
+const ONE_HOUR_SECONDS = 3600;
+const futureExp = () => Math.floor(Date.now() / 1000) + ONE_HOUR_SECONDS;
 
 function base64Url(value: string): string {
   let binary = "";
@@ -43,23 +45,29 @@ async function signedToken(
   key = SIGNING_KEY
 ): Promise<string> {
   const header = base64Url(JSON.stringify({ alg: "HS256", typ: "JWT" }));
-  const body = base64Url(JSON.stringify(payload));
+  const body = base64Url(JSON.stringify({ exp: futureExp(), ...payload }));
   return `${header}.${body}.${await sign(`${header}.${body}`, key)}`;
 }
 
 function unsignedToken(payload: Record<string, unknown>): string {
   const header = base64Url(JSON.stringify({ alg: "none", typ: "JWT" }));
-  return `${header}.${base64Url(JSON.stringify(payload))}.`;
+  return `${header}.${base64Url(JSON.stringify({ exp: futureExp(), ...payload }))}.`;
 }
 
 describe("verifyUserToken", () => {
   test("accepts a correctly signed token as verified", async () => {
-    const token = await signedToken({ email: "a@b.c", id: "u1", name: "Ada" });
+    const exp = futureExp();
+    const token = await signedToken({
+      email: "a@b.c",
+      exp,
+      id: "u1",
+      name: "Ada",
+    });
 
     const result = await verifyUserToken(token, SIGNING_KEY);
 
     expect(result).toEqual({
-      user: { email: "a@b.c", exp: undefined, id: "u1", name: "Ada" },
+      user: { email: "a@b.c", exp, id: "u1", name: "Ada" },
       verified: true,
     });
   });
@@ -94,6 +102,12 @@ describe("verifyUserToken", () => {
       exp: Math.floor(Date.now() / 1000) - 60,
       id: "u1",
     });
+
+    expect(await verifyUserToken(token, SIGNING_KEY)).toBeNull();
+  });
+
+  test("rejects a token without an expiry", async () => {
+    const token = await signedToken({ exp: undefined, id: "u1" });
 
     expect(await verifyUserToken(token, SIGNING_KEY)).toBeNull();
   });

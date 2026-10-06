@@ -63,7 +63,7 @@ describe("agent negotiation boundaries", () => {
       })
     );
     expect(response.headers.get("x-middleware-rewrite")).toBe(
-      "https://feedback.example/_custom-domain"
+      "https://feedback.example/custom-domain"
     );
     expect(response.headers.get("content-type")).not.toBe(
       "text/markdown; charset=utf-8"

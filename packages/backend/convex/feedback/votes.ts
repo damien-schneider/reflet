@@ -1,101 +1,14 @@
 import { ShardedCounter } from "@convex-dev/sharded-counter";
 import { v } from "convex/values";
 import { components, internal } from "../_generated/api";
-import { mutation, query } from "../_generated/server";
-import { authComponent } from "../auth/auth";
+import { mutation } from "../_generated/server";
 import { requireAuthUser } from "../shared/access";
+import { rateLimiter } from "../shared/rate_limits";
 import { canViewFeedback } from "./public_projection";
 
 const voteCounters = new ShardedCounter(components.shardedCounter, {
   defaultShards: 8,
 });
-
-// ============================================
-// QUERIES
-// ============================================
-
-/**
- * Check if current user has voted on a feedback
- */
-export const hasVoted = query({
-  args: { feedbackId: v.id("feedback") },
-  handler: async (ctx, args) => {
-    const user = await authComponent.safeGetAuthUser(ctx);
-    if (!user) {
-      return false;
-    }
-
-    const vote = await ctx.db
-      .query("feedbackVotes")
-      .withIndex("by_feedback_user", (q) =>
-        q.eq("feedbackId", args.feedbackId).eq("userId", user._id)
-      )
-      .unique();
-
-    return !!vote;
-  },
-});
-
-/**
- * Get voters for a feedback (admin only)
- */
-export const getVoters = query({
-  args: { feedbackId: v.id("feedback") },
-  handler: async (ctx, args) => {
-    const user = await authComponent.safeGetAuthUser(ctx);
-    if (!user) {
-      return [];
-    }
-
-    const feedback = await ctx.db.get(args.feedbackId);
-    if (!feedback) {
-      return [];
-    }
-
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", feedback.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership || membership.role === "member") {
-      return [];
-    }
-
-    const votes = await ctx.db
-      .query("feedbackVotes")
-      .withIndex("by_feedback", (q) => q.eq("feedbackId", args.feedbackId))
-      .collect();
-
-    const voters = await Promise.all(
-      votes.map(async (vote) => {
-        const userData = vote.userId
-          ? await authComponent.getAnyUserById(ctx, vote.userId)
-          : null;
-        return {
-          id: vote._id,
-          user: userData
-            ? {
-                email: userData.email ?? "",
-                image: userData.image ?? null,
-                name: userData.name ?? null,
-              }
-            : null,
-          userId: vote.userId,
-          votedAt: vote.createdAt,
-          voteType: vote.voteType,
-        };
-      })
-    );
-
-    return voters;
-  },
-});
-
-// ============================================
-// MUTATIONS
-// ============================================
 
 const VOTE_MILESTONES = [10, 25, 50, 100, 250, 500, 1000] as const;
 
@@ -118,6 +31,10 @@ export const toggle = mutation({
     if (!(await canViewFeedback(ctx, feedback))) {
       throw new Error("You don't have access to vote on this feedback");
     }
+    await rateLimiter.limit(ctx, "feedbackInteractionPerUser", {
+      key: user._id,
+      throws: true,
+    });
 
     const existingVote = await ctx.db
       .query("feedbackVotes")

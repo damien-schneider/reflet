@@ -16,10 +16,7 @@ export type AiAnalysisDisplayProps = Pick<
   | "aiJunk"
   | "aiPriority"
   | "aiPriorityReasoning"
-  | "aiComplexity"
-  | "aiComplexityReasoning"
   | "aiNeedsReview"
-  | "aiTimeEstimate"
   | "priority"
   | "complexity"
   | "timeEstimate"
@@ -59,10 +56,8 @@ export function AiAnalysisDisplay(props: AiAnalysisDisplayProps) {
           feedbackId={props.feedbackId}
           name="complexity"
           values={{
-            ai: props.aiComplexity,
             editable: props.isAdmin,
             human: props.complexity,
-            reasoning: props.aiComplexityReasoning,
           }}
         />
       </PropertyRow>
@@ -71,7 +66,6 @@ export function AiAnalysisDisplay(props: AiAnalysisDisplayProps) {
           feedbackId={props.feedbackId}
           name="timeEstimate"
           values={{
-            ai: props.aiTimeEstimate,
             editable: props.isAdmin,
             human: props.timeEstimate,
           }}

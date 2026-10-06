@@ -41,8 +41,15 @@ const post = (body: Record<string, unknown>, headers = {}): RequestInit => ({
   method: "POST",
 });
 
+const ONE_HOUR_SECONDS = 3600;
+
 const unsignedToken = (payload: Record<string, unknown>) =>
-  `${btoa(JSON.stringify({ alg: "none" }))}.${btoa(JSON.stringify(payload))}.`;
+  `${btoa(JSON.stringify({ alg: "none" }))}.${btoa(
+    JSON.stringify({
+      exp: Math.floor(Date.now() / 1000) + ONE_HOUR_SECONDS,
+      ...payload,
+    })
+  )}.`;
 
 describe("public-key writes", () => {
   test("survey starts and screenshot uploads do not starve feedback reports", async () => {

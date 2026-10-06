@@ -9,6 +9,8 @@ import type { Id } from "../_generated/dataModel";
 import type { ActionCtx } from "../_generated/server";
 import { action } from "../_generated/server";
 import { requireAuthUser } from "../shared/access";
+import { MAX_DESCRIPTION_LENGTH } from "../shared/constants";
+import { validateInputLength } from "../shared/validators";
 import { RELEASE_ASSISTANT_MODEL } from "./ai/models";
 import {
   buildFeedbackMatchPrompt,
@@ -69,6 +71,11 @@ export const generateReleaseTitle = action({
     version: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<string> => {
+    validateInputLength(
+      args.description,
+      MAX_DESCRIPTION_LENGTH,
+      "Description"
+    );
     await consumeReleaseAiGeneration(ctx, args.releaseId);
     const result = await generateText({
       maxOutputTokens: MAX_TITLE_OUTPUT_TOKENS,
@@ -86,6 +93,11 @@ export const matchReleaseFeedback = action({
     releaseId: v.id("releases"),
   },
   handler: async (ctx, args): Promise<FeedbackMatches> => {
+    validateInputLength(
+      args.description,
+      MAX_DESCRIPTION_LENGTH,
+      "Description"
+    );
     await consumeReleaseAiGeneration(ctx, args.releaseId);
     const candidates = await ctx.runQuery(
       internal.changelog.ai_matching_helpers.getReleaseAndFeedback,

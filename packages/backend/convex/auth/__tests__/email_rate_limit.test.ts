@@ -1,11 +1,13 @@
 /// <reference types="vite/client" />
 
 import { describe, expect, test } from "vitest";
+import { rateLimiter } from "../../shared/rate_limits";
 import { setupTest } from "../../test.helpers";
 import { consumeAuthEmailLimit } from "../email_rate_limit";
 
 const SIGN_IN_ATTEMPTS_PER_WINDOW = 10;
 const RESET_REQUESTS_PER_HOUR = 3;
+const OUTBOUND_AUTH_EMAILS_PER_HOUR = 2000;
 
 describe("auth email rate limit", () => {
   test("sign-in attempts are limited per normalized email, not globally", async () => {
@@ -53,6 +55,37 @@ describe("auth email rate limit", () => {
     });
 
     expect(results.reset.ok).toBe(false);
+    expect(results.signIn.ok).toBe(true);
+  });
+
+  test("outbound auth emails share one global hourly budget, sign-ins do not", async () => {
+    const t = setupTest();
+    const results = await t.run(async (ctx) => {
+      await rateLimiter.limit(ctx, "authEmailSendGlobal", {
+        count: OUTBOUND_AUTH_EMAILS_PER_HOUR - 1,
+      });
+      const lastBudgetedReset = await consumeAuthEmailLimit(ctx, {
+        body: { email: "last@acme.test" },
+        path: "/forget-password",
+      });
+      const freshEmailReset = await consumeAuthEmailLimit(ctx, {
+        body: { email: "fresh@acme.test" },
+        path: "/forget-password",
+      });
+      const signUp = await consumeAuthEmailLimit(ctx, {
+        body: { email: "fresh@acme.test", password: "x" },
+        path: "/sign-up/email",
+      });
+      const signIn = await consumeAuthEmailLimit(ctx, {
+        body: { email: "fresh@acme.test", password: "x" },
+        path: "/sign-in/email",
+      });
+      return { freshEmailReset, lastBudgetedReset, signIn, signUp };
+    });
+
+    expect(results.lastBudgetedReset.ok).toBe(true);
+    expect(results.freshEmailReset.ok).toBe(false);
+    expect(results.signUp.ok).toBe(false);
     expect(results.signIn.ok).toBe(true);
   });
 });

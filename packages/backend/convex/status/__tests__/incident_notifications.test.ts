@@ -140,7 +140,11 @@ describe("status incident notifications", () => {
     expect(await emailedSubscribers()).toEqual([CONFIRMED, CONFIRMED]);
     expect(await teamNotifications()).toHaveLength(1);
 
-    await owner.mutation(api.status.incidents.resolveIncident, { incidentId });
+    await owner.mutation(api.status.incidents.postIncidentUpdate, {
+      incidentId,
+      message: "Fixed",
+      status: "resolved",
+    });
     await deliverNotifications();
 
     expect(await emailedSubscribers()).toEqual([

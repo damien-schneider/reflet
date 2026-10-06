@@ -4,6 +4,8 @@ import { mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
 import { requireAuthUser } from "../shared/access";
 import { MAX_COMMENT_LENGTH } from "../shared/constants";
+import { getOrgMembership, isOrgAdmin } from "../shared/membership";
+import { rateLimiter } from "../shared/rate_limits";
 import { validateInputLength } from "../shared/validators";
 import {
   canViewFeedback,
@@ -117,6 +119,10 @@ export const create = mutation({
     if (!(await canViewFeedback(ctx, feedback))) {
       throw new Error("You don't have access to comment on this feedback");
     }
+    await rateLimiter.limit(ctx, "feedbackInteractionPerUser", {
+      key: user._id,
+      throws: true,
+    });
 
     // Validate parent comment if provided
     if (args.parentId) {
@@ -191,55 +197,19 @@ export const update = mutation({
       throw new Error("Comment not found");
     }
 
-    // Only author can edit
     if (comment.authorId !== user._id) {
       throw new Error("You can only edit your own comments");
     }
 
+    const feedback = await ctx.db.get(comment.feedbackId);
+    const membership = feedback
+      ? await getOrgMembership(ctx, feedback.organizationId, user._id)
+      : null;
+    const keepsOfficialMark =
+      comment.isOfficial && isOrgAdmin(membership?.role);
     await ctx.db.patch(args.id, {
       body: args.body,
-      updatedAt: Date.now(),
-    });
-
-    return args.id;
-  },
-});
-
-/**
- * Mark comment as official (admin only)
- */
-export const markOfficial = mutation({
-  args: {
-    id: v.id("comments"),
-    isOfficial: v.boolean(),
-  },
-  handler: async (ctx, args) => {
-    const user = await requireAuthUser(ctx);
-
-    const comment = await ctx.db.get(args.id);
-    if (!comment) {
-      throw new Error("Comment not found");
-    }
-
-    const feedback = await ctx.db.get(comment.feedbackId);
-    if (!feedback) {
-      throw new Error("Feedback not found");
-    }
-
-    // Check admin permission
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", feedback.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership || membership.role === "member") {
-      throw new Error("Only admins can mark comments as official");
-    }
-
-    await ctx.db.patch(args.id, {
-      isOfficial: args.isOfficial,
+      isOfficial: keepsOfficialMark ? comment.isOfficial : undefined,
       updatedAt: Date.now(),
     });
 

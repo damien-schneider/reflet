@@ -130,8 +130,7 @@ export async function verifyUser(
       exp?: number;
     };
 
-    // Check expiration
-    if (payload.exp && Date.now() > payload.exp * 1000) {
+    if (typeof payload.exp !== "number" || Date.now() > payload.exp * 1000) {
       return null;
     }
 

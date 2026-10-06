@@ -113,16 +113,16 @@ export const getShippedMeta = query({
       return null;
     }
 
-    const releaseLink = await ctx.db
+    const releaseLinks = await ctx.db
       .query("releaseFeedback")
       .withIndex("by_feedback", (q) => q.eq("feedbackId", args.id))
-      .first();
-
+      .collect();
     let releaseTitle: string | null = null;
-    if (releaseLink) {
-      const release = await ctx.db.get(releaseLink.releaseId);
-      if (release) {
+    for (const link of releaseLinks) {
+      const release = await ctx.db.get(link.releaseId);
+      if (release?.publishedAt) {
         releaseTitle = release.title;
+        break;
       }
     }
 

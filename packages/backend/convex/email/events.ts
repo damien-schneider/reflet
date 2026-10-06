@@ -68,14 +68,6 @@ export const recordEmailEvent = async (
   const { to } = args.event.data;
   const recipientEmail = typeof to === "string" ? to : to[0];
 
-  await ctx.db.insert("emailEvents", {
-    emailSendLogId: sendLog?._id,
-    eventType: type,
-    recipientEmail,
-    resendEmailId,
-    timestamp: now,
-  });
-
   const newStatus = STATUS_BY_EVENT[type];
   if (sendLog && newStatus) {
     const timestampField = TIMESTAMP_FIELD_BY_EVENT[type];

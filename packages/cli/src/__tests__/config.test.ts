@@ -1,4 +1,10 @@
-import { mkdtempSync, readFileSync, statSync } from "node:fs";
+import {
+  chmodSync,
+  mkdtempSync,
+  readFileSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -45,6 +51,16 @@ describe("config", () => {
       apiUrl: undefined,
     });
     expect(readFileSync(path, "utf8")).toContain("fb_sec_x");
+  });
+
+  it("tightens a config file that already existed with loose permissions", () => {
+    const path = join(mkdtempSync(join(tmpdir(), "reflet-")), "config.json");
+    writeFileSync(path, "{}");
+    chmodSync(path, 0o644);
+
+    writeStoredConfig({ apiKey: "fb_sec_y" }, path);
+
+    expect((statSync(path).mode % 0o1000).toString(8)).toBe("600");
   });
 
   it("treats a corrupt file as empty", () => {

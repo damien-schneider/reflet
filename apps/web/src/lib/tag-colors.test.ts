@@ -1,14 +1,14 @@
+import {
+  isTagColor,
+  TAG_COLORS,
+} from "@reflet/backend/convex/feedback/tag_colors";
 import { describe, expect, it } from "vitest";
 import {
-  getRandomTagColor,
   getTagColorValues,
   getTagDotColor,
   getTagSwatchClass,
-  getTagTextColor,
-  isValidTagColor,
   migrateHexToNamedColor,
   TAG_COLOR_LABELS,
-  TAG_COLORS,
 } from "./tag-colors";
 
 const HARDCODED_COLOR = /#|dark:|rgb\(|oklch\(/;
@@ -50,20 +50,20 @@ describe("TAG_COLOR_LABELS", () => {
   });
 });
 
-describe("isValidTagColor", () => {
+describe("isTagColor", () => {
   it("returns true for all valid tag colors", () => {
     for (const color of TAG_COLORS) {
-      expect(isValidTagColor(color)).toBe(true);
+      expect(isTagColor(color)).toBe(true);
     }
   });
 
   it("returns false for invalid color strings", () => {
-    expect(isValidTagColor("")).toBe(false);
-    expect(isValidTagColor("invalid")).toBe(false);
-    expect(isValidTagColor("RED")).toBe(false);
-    expect(isValidTagColor("Blue")).toBe(false);
-    expect(isValidTagColor("#ff0000")).toBe(false);
-    expect(isValidTagColor(" red")).toBe(false);
+    expect(isTagColor("")).toBe(false);
+    expect(isTagColor("invalid")).toBe(false);
+    expect(isTagColor("RED")).toBe(false);
+    expect(isTagColor("Blue")).toBe(false);
+    expect(isTagColor("#ff0000")).toBe(false);
+    expect(isTagColor(" red")).toBe(false);
   });
 });
 
@@ -126,16 +126,6 @@ describe("getTagColorValues", () => {
   });
 });
 
-describe("getTagTextColor", () => {
-  it("returns the token-backed text colour", () => {
-    expect(getTagTextColor("orange")).toBe("var(--tag-orange-text)");
-  });
-
-  it("falls back to default for invalid color", () => {
-    expect(getTagTextColor("invalid")).toBe(getTagTextColor("default"));
-  });
-});
-
 describe("getTagDotColor", () => {
   it("returns the token-backed text colour for valid named colors", () => {
     expect(getTagDotColor("red")).toBe("var(--tag-red-text)");
@@ -151,19 +141,6 @@ describe("getTagDotColor", () => {
 
   it("returns the muted foreground for 'default'", () => {
     expect(getTagDotColor("default")).toBe("var(--muted-foreground)");
-  });
-});
-
-describe("getRandomTagColor", () => {
-  it("returns a valid tag color", () => {
-    const color = getRandomTagColor();
-    expect(isValidTagColor(color)).toBe(true);
-  });
-
-  it("never returns 'default'", () => {
-    for (let i = 0; i < 100; i++) {
-      expect(getRandomTagColor()).not.toBe("default");
-    }
   });
 });
 

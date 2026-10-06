@@ -44,35 +44,6 @@ export const list = query({
 });
 
 /**
- * Get a single competitor by ID
- */
-export const get = query({
-  args: { id: v.id("competitors") },
-  handler: async (ctx, args) => {
-    const user = await requireAuthUser(ctx);
-
-    const competitor = await ctx.db.get(args.id);
-    if (!competitor) {
-      return null;
-    }
-
-    // Verify membership
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", competitor.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership) {
-      return null;
-    }
-
-    return competitor;
-  },
-});
-
-/**
  * Add a new competitor
  */
 export const create = mutation({
@@ -166,77 +137,6 @@ export const create = mutation({
 });
 
 /**
- * Update competitor fields
- */
-export const update = mutation({
-  args: {
-    changelogUrl: v.optional(v.string()),
-    description: v.optional(v.string()),
-    docsUrl: v.optional(v.string()),
-    featuresUrl: v.optional(v.string()),
-    id: v.id("competitors"),
-    name: v.optional(v.string()),
-    pricingUrl: v.optional(v.string()),
-    websiteUrl: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    const user = await requireAuthUser(ctx);
-
-    const competitor = await ctx.db.get(args.id);
-    if (!competitor) {
-      throw new Error("Competitor not found");
-    }
-
-    // Check admin permission
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", competitor.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership || membership.role === "member") {
-      throw new Error("Only admins can update competitors");
-    }
-
-    validateInputLength(args.name, MAX_TITLE_LENGTH, "Name");
-    validateInputLength(
-      args.description,
-      MAX_COMPETITOR_DESCRIPTION_LENGTH,
-      "Description"
-    );
-
-    const updates: Record<string, unknown> = {
-      updatedAt: Date.now(),
-    };
-    if (args.name !== undefined) {
-      updates.name = args.name;
-    }
-    if (args.websiteUrl !== undefined) {
-      updates.websiteUrl = validateUrl(args.websiteUrl);
-    }
-    if (args.changelogUrl !== undefined) {
-      updates.changelogUrl = validateUrl(args.changelogUrl);
-    }
-    if (args.pricingUrl !== undefined) {
-      updates.pricingUrl = validateUrl(args.pricingUrl);
-    }
-    if (args.docsUrl !== undefined) {
-      updates.docsUrl = validateUrl(args.docsUrl);
-    }
-    if (args.featuresUrl !== undefined) {
-      updates.featuresUrl = validateUrl(args.featuresUrl);
-    }
-    if (args.description !== undefined) {
-      updates.description = args.description;
-    }
-
-    await ctx.db.patch(args.id, updates);
-    return args.id;
-  },
-});
-
-/**
  * Delete a competitor and related battlecards
  */
 export const remove = mutation({
@@ -272,74 +172,6 @@ export const remove = mutation({
     }
 
     await ctx.db.delete(args.id);
-    return true;
-  },
-});
-
-/**
- * Pause competitor monitoring
- */
-export const pause = mutation({
-  args: { id: v.id("competitors") },
-  handler: async (ctx, args) => {
-    const user = await requireAuthUser(ctx);
-
-    const competitor = await ctx.db.get(args.id);
-    if (!competitor) {
-      throw new Error("Competitor not found");
-    }
-
-    // Check admin permission
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", competitor.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership || membership.role === "member") {
-      throw new Error("Only admins can pause competitors");
-    }
-
-    await ctx.db.patch(args.id, {
-      status: "paused" as const,
-      updatedAt: Date.now(),
-    });
-
-    return true;
-  },
-});
-
-/**
- * Resume competitor monitoring
- */
-export const resume = mutation({
-  args: { id: v.id("competitors") },
-  handler: async (ctx, args) => {
-    const user = await requireAuthUser(ctx);
-
-    const competitor = await ctx.db.get(args.id);
-    if (!competitor) {
-      throw new Error("Competitor not found");
-    }
-
-    // Check admin permission
-    const membership = await ctx.db
-      .query("organizationMembers")
-      .withIndex("by_org_user", (q) =>
-        q.eq("organizationId", competitor.organizationId).eq("userId", user._id)
-      )
-      .unique();
-
-    if (!membership || membership.role === "member") {
-      throw new Error("Only admins can resume competitors");
-    }
-
-    await ctx.db.patch(args.id, {
-      status: "active" as const,
-      updatedAt: Date.now(),
-    });
-
     return true;
   },
 });
