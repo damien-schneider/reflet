@@ -121,17 +121,6 @@ export const disconnect = mutation({
       await ctx.db.delete(release._id);
     }
 
-    const events = await ctx.db
-      .query("githubWebhookEvents")
-      .withIndex("by_connection", (q) =>
-        q.eq("githubConnectionId", connection._id)
-      )
-      .collect();
-
-    for (const event of events) {
-      await ctx.db.delete(event._id);
-    }
-
     await ctx.db.delete(connection._id);
 
     return true;

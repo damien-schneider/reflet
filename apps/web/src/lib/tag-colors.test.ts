@@ -7,7 +7,6 @@ import {
   getTagColorValues,
   getTagDotColor,
   getTagSwatchClass,
-  migrateHexToNamedColor,
   TAG_COLOR_LABELS,
 } from "./tag-colors";
 
@@ -105,12 +104,6 @@ describe("getTagColorValues", () => {
     expect(result).toEqual(defaultResult);
   });
 
-  it("resolves known hex colors via migration", () => {
-    const result = getTagColorValues("#ef4444");
-    const redResult = getTagColorValues("red");
-    expect(result).toEqual(redResult);
-  });
-
   it("falls back to default for unknown hex colors", () => {
     const result = getTagColorValues("#123456");
     const defaultResult = getTagColorValues("default");
@@ -131,12 +124,8 @@ describe("getTagDotColor", () => {
     expect(getTagDotColor("red")).toBe("var(--tag-red-text)");
   });
 
-  it("returns the token-backed text colour for known hex via migration", () => {
-    expect(getTagDotColor("#3b82f6")).toBe("var(--tag-blue-text)");
-  });
-
-  it("returns the raw hex for unknown hex colors", () => {
-    expect(getTagDotColor("#abcdef")).toBe("#abcdef");
+  it("falls back to the muted foreground for anything outside the palette", () => {
+    expect(getTagDotColor("#3b82f6")).toBe("var(--muted-foreground)");
   });
 
   it("returns the muted foreground for 'default'", () => {
@@ -173,40 +162,5 @@ describe("getTagSwatchClass", () => {
     for (const color of TAG_COLORS) {
       expect(getTagSwatchClass(color)).not.toMatch(HARDCODED_COLOR);
     }
-  });
-});
-
-describe("migrateHexToNamedColor", () => {
-  it("maps known hex values to named colors", () => {
-    expect(migrateHexToNamedColor("#ef4444")).toBe("red");
-    expect(migrateHexToNamedColor("#f97316")).toBe("orange");
-    expect(migrateHexToNamedColor("#eab308")).toBe("yellow");
-    expect(migrateHexToNamedColor("#22c55e")).toBe("green");
-    expect(migrateHexToNamedColor("#14b8a6")).toBe("green");
-    expect(migrateHexToNamedColor("#3b82f6")).toBe("blue");
-    expect(migrateHexToNamedColor("#8b5cf6")).toBe("purple");
-    expect(migrateHexToNamedColor("#a855f7")).toBe("purple");
-    expect(migrateHexToNamedColor("#ec4899")).toBe("pink");
-    expect(migrateHexToNamedColor("#6b7280")).toBe("gray");
-  });
-
-  it("is case-insensitive", () => {
-    expect(migrateHexToNamedColor("#EF4444")).toBe("red");
-    expect(migrateHexToNamedColor("#Ef4444")).toBe("red");
-  });
-
-  it("returns 'default' for unknown hex values", () => {
-    expect(migrateHexToNamedColor("#000000")).toBe("default");
-    expect(migrateHexToNamedColor("#ffffff")).toBe("default");
-    expect(migrateHexToNamedColor("#123456")).toBe("default");
-  });
-
-  it("returns 'default' for empty string", () => {
-    expect(migrateHexToNamedColor("")).toBe("default");
-  });
-
-  it("returns 'default' for non-hex strings", () => {
-    expect(migrateHexToNamedColor("red")).toBe("default");
-    expect(migrateHexToNamedColor("not-a-color")).toBe("default");
   });
 });

@@ -47,10 +47,7 @@ const COLOR_VALUES: Record<TagColor, ColorValue> = {
 };
 
 export function resolveTagColor(color: string): TagColor {
-  if (isTagColor(color)) {
-    return color;
-  }
-  return migrateHexToNamedColor(color);
+  return isTagColor(color) ? color : "default";
 }
 
 export function getTagColorValues(color: string): ColorValue {
@@ -58,11 +55,7 @@ export function getTagColorValues(color: string): ColorValue {
 }
 
 export function getTagDotColor(color: string): string {
-  const resolved = resolveTagColor(color);
-  if (resolved !== "default" || isTagColor(color)) {
-    return getTagColorValues(resolved).text;
-  }
-  return color;
+  return getTagColorValues(color).text;
 }
 
 const TAG_SWATCH_CLASSES: Record<TagColor, string> = {
@@ -80,20 +73,4 @@ const TAG_SWATCH_CLASSES: Record<TagColor, string> = {
 
 export function getTagSwatchClass(color: string): string {
   return TAG_SWATCH_CLASSES[resolveTagColor(color)];
-}
-
-export function migrateHexToNamedColor(hexColor: string): TagColor {
-  const hexMap: Record<string, TagColor> = {
-    "#3b82f6": "blue",
-    "#6b7280": "gray",
-    "#8b5cf6": "purple",
-    "#14b8a6": "green",
-    "#22c55e": "green",
-    "#a855f7": "purple",
-    "#eab308": "yellow",
-    "#ec4899": "pink",
-    "#ef4444": "red",
-    "#f97316": "orange",
-  };
-  return hexMap[hexColor.toLowerCase()] ?? "default";
 }

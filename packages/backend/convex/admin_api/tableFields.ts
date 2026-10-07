@@ -5,7 +5,6 @@ export const adminApiTables = {
   apiRequestLogs: defineTable({
     devtoolsTokenId: v.optional(v.id("devtoolsTokens")),
     endpoint: v.string(),
-    ip: v.optional(v.string()),
     method: v.string(),
     organizationApiKeyId: v.optional(v.id("organizationApiKeys")),
     organizationId: v.id("organizations"),

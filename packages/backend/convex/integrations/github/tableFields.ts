@@ -27,9 +27,6 @@ export const githubTables = {
     accountType: v.union(v.literal("user"), v.literal("organization")),
     autoSyncIssues: v.optional(v.boolean()),
     autoSyncReleases: v.optional(v.boolean()),
-    ciBranch: v.optional(v.string()),
-    ciEnabled: v.optional(v.boolean()),
-    ciWorkflowCreated: v.optional(v.boolean()),
     createdAt: v.number(),
     installationId: v.string(),
     issuesSyncEnabled: v.optional(v.boolean()),
@@ -120,19 +117,6 @@ export const githubTables = {
     .index("by_reflet_release", ["refletReleaseId"])
     .index("by_connection", ["githubConnectionId"])
     .index("by_github_release_id", ["githubConnectionId", "githubReleaseId"]),
-
-  githubWebhookEvents: defineTable({
-    action: v.optional(v.string()),
-    createdAt: v.number(),
-    error: v.optional(v.string()),
-    eventType: v.string(),
-    githubConnectionId: v.id("githubConnections"),
-    organizationId: v.id("organizations"),
-    payload: v.string(),
-    processedAt: v.optional(v.number()),
-  })
-    .index("by_connection", ["githubConnectionId"])
-    .index("by_organization", ["organizationId"]),
 
   projectSetupResults: defineTable({
     changelogConfig: v.optional(
@@ -227,7 +211,6 @@ export const githubTables = {
     status: repoAnalysisStatus,
     summary: v.optional(v.string()),
     techStack: v.optional(v.string()),
-    threadId: v.optional(v.string()),
     updatedAt: v.number(),
   }).index("by_organization", ["organizationId"]),
   userGithubConnections: defineTable({

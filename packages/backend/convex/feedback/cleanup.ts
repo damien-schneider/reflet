@@ -68,15 +68,6 @@ export const permanentlyDeleteOldFeedback = internalMutation({
         await ctx.db.delete(notification._id);
       }
 
-      // Importance votes
-      const importanceVotes = await ctx.db
-        .query("feedbackImportanceVotes")
-        .withIndex("by_feedback", (q) => q.eq("feedbackId", feedback._id))
-        .collect();
-      for (const vote of importanceVotes) {
-        await ctx.db.delete(vote._id);
-      }
-
       // Subscriptions
       const subscriptions = await ctx.db
         .query("feedbackSubscriptions")

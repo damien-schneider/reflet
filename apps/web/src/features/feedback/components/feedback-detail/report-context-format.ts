@@ -91,11 +91,6 @@ export function formatReportContext(context: ReportContextValue): string {
     lines.push(`- **Viewport:** ${viewport}`);
   }
 
-  const { scroll } = context;
-  if (scroll && (scroll.x !== 0 || scroll.y !== 0)) {
-    lines.push(`- **Scroll:** ${scroll.x}, ${scroll.y}px`);
-  }
-
   for (const selection of reportContextSelections(context)) {
     lines.push(...formatSelection(selection));
   }

@@ -1,17 +1,6 @@
 import { defineTable } from "convex/server";
 import { v } from "convex/values";
 
-const emailEventType = v.union(
-  v.literal("email.sent"),
-  v.literal("email.delivered"),
-  v.literal("email.delivery_delayed"),
-  v.literal("email.bounced"),
-  v.literal("email.complained"),
-  v.literal("email.opened"),
-  v.literal("email.clicked"),
-  v.literal("email.failed")
-);
-
 export const emailTypeValidator = v.union(
   v.literal("changelog_notification"),
   v.literal("feedback_shipped"),
@@ -47,18 +36,6 @@ export const suppressionReason = v.union(
 );
 
 export const emailTables = {
-  emailEvents: defineTable({
-    emailSendLogId: v.optional(v.id("emailSendLog")),
-    eventType: emailEventType,
-    metadata: v.optional(v.string()),
-    recipientEmail: v.optional(v.string()),
-    resendEmailId: v.string(),
-    timestamp: v.number(),
-  })
-    .index("by_send_log", ["emailSendLogId"])
-    .index("by_resend_id", ["resendEmailId"])
-    .index("by_timestamp", ["timestamp"]),
-
   emailSendLog: defineTable({
     bouncedAt: v.optional(v.number()),
     clickedAt: v.optional(v.number()),

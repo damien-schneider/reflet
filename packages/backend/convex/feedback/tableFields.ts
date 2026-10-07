@@ -65,9 +65,7 @@ export const feedbackContextValidator = v.object({
   pageTitle: v.optional(v.string()),
   referrer: v.optional(v.string()),
   screen: v.optional(v.object({ height: v.number(), width: v.number() })),
-  scroll: v.optional(v.object({ x: v.number(), y: v.number() })),
   sdkVersion: v.optional(v.string()),
-  selection: v.optional(elementSelectionValidator),
   selections: v.optional(v.array(elementSelectionValidator)),
   timezone: v.optional(v.string()),
   url: v.optional(v.string()),
@@ -121,17 +119,6 @@ export const feedbackTables = {
   feedback: defineTable({
     aiClarification: v.optional(v.string()),
     aiClarificationGeneratedAt: v.optional(v.number()),
-    aiComplexity: v.optional(
-      v.union(
-        v.literal("trivial"),
-        v.literal("simple"),
-        v.literal("moderate"),
-        v.literal("complex"),
-        v.literal("very_complex")
-      )
-    ),
-    aiComplexityGeneratedAt: v.optional(v.number()),
-    aiComplexityReasoning: v.optional(v.string()),
     aiDifficultyGeneratedAt: v.optional(v.number()),
     aiDifficultyReasoning: v.optional(v.string()),
     aiDifficultyScore: v.optional(
@@ -184,11 +171,8 @@ export const feedbackTables = {
         v.literal("none")
       )
     ),
-    aiPriorityGeneratedAt: v.optional(v.number()),
     aiPriorityReasoning: v.optional(v.string()),
     aiTagExclusions: v.optional(v.array(v.id("tags"))),
-    aiTimeEstimate: v.optional(v.string()),
-    aiTimeEstimateGeneratedAt: v.optional(v.number()),
     aiUsefulness: v.optional(v.number()),
     aiUsefulnessGeneratedAt: v.optional(v.number()),
     assigneeId: v.optional(v.string()),
@@ -262,17 +246,6 @@ export const feedbackTables = {
       filterFields: ["organizationId"],
       searchField: "title",
     }),
-
-  feedbackImportanceVotes: defineTable({
-    createdAt: v.number(),
-    feedbackId: v.id("feedback"),
-    importance: v.number(),
-    updatedAt: v.number(),
-    userId: v.string(),
-  })
-    .index("by_feedback", ["feedbackId"])
-    .index("by_user", ["userId"])
-    .index("by_feedback_user", ["feedbackId", "userId"]),
 
   feedbackScreenshots: defineTable({
     annotatedStorageId: v.optional(v.id("_storage")),

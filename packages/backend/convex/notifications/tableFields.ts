@@ -41,6 +41,5 @@ export const notificationTables = {
     pushPromptDismissed: v.boolean(),
     updatedAt: v.number(),
     userId: v.string(),
-    weeklyDigestEnabled: v.optional(v.boolean()),
   }).index("by_user", ["userId"]),
 };

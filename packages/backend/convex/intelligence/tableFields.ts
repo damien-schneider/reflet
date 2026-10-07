@@ -142,7 +142,6 @@ export const intelligenceTables = {
   }).index("by_organization", ["organizationId"]),
 
   intelligenceInsights: defineTable({
-    competitorIds: v.optional(v.array(v.id("competitors"))),
     createdAt: v.number(),
     linkedFeedbackIds: v.optional(v.array(v.id("feedback"))),
     organizationId: v.id("organizations"),

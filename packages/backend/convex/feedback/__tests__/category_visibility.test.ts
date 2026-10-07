@@ -180,32 +180,19 @@ test("the category editor persists audience and appearance updates preserve ever
     }
   );
   expect((await t.run((ctx) => ctx.db.get(id)))?.settings?.isPublic).toBe(true);
-  await t.run((ctx) =>
-    ctx.db.patch(id, {
-      settings: {
-        defaultStatus: "planned",
-        isPublic: true,
-        requireApproval: true,
-      },
-    })
-  );
   await signedIn.mutation(api.organizations.tag_manager_actions.update, {
     color: "blue",
     id,
     name: "Renamed",
   });
   expect((await t.run((ctx) => ctx.db.get(id)))?.settings).toEqual({
-    defaultStatus: "planned",
     isPublic: true,
-    requireApproval: true,
   });
   await signedIn.mutation(api.organizations.tag_manager_actions.update, {
     id,
     isPublic: false,
   });
   expect((await t.run((ctx) => ctx.db.get(id)))?.settings).toEqual({
-    defaultStatus: "planned",
     isPublic: false,
-    requireApproval: true,
   });
 });

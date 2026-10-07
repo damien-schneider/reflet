@@ -138,17 +138,6 @@ export const handleInstallationDeleted = internalMutation({
         await ctx.db.delete(release._id);
       }
 
-      const events = await ctx.db
-        .query("githubWebhookEvents")
-        .withIndex("by_connection", (q) =>
-          q.eq("githubConnectionId", connection._id)
-        )
-        .collect();
-
-      for (const event of events) {
-        await ctx.db.delete(event._id);
-      }
-
       const mappings = await ctx.db
         .query("githubLabelMappings")
         .withIndex("by_connection", (q) =>

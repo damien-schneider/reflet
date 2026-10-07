@@ -9,7 +9,6 @@ import {
 } from "@reflet/backend/convex/feedback/tag_colors";
 import { useMutation } from "convex/react";
 import { type FormEvent, useState } from "react";
-import { migrateHexToNamedColor } from "@/lib/tag-colors";
 
 export type EditableTag = Pick<
   Doc<"tags">,
@@ -40,7 +39,7 @@ function initialColor(tag: EditableTag | null | undefined): TagColor {
   if (!tag) {
     return "blue";
   }
-  return isTagColor(tag.color) ? tag.color : migrateHexToNamedColor(tag.color);
+  return isTagColor(tag.color) ? tag.color : "default";
 }
 
 function useTagSubmission(target: TagFormTarget, onSuccess: () => void) {

@@ -20,7 +20,6 @@
     "@ai-sdk/typesafe-ai": "^3.0.4",
     "@convex-dev/agent": "^0.7.3",
     "@convex-dev/better-auth": "catalog:",
-    "@convex-dev/migrations": "^0.3.6",
     "@convex-dev/rate-limiter": "^0.4.0",
     "@convex-dev/resend": "^0.2.8",
     "@convex-dev/sharded-counter": "^0.2.1",

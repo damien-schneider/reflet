@@ -77,24 +77,6 @@ export const organizationTables = {
     .index("by_org_status", ["organizationId", "status"])
     .index("by_org_horizon", ["organizationId", "timeHorizon"]),
 
-  onboardingProgress: defineTable({
-    completedAt: v.optional(v.number()),
-    createdAt: v.number(),
-    dismissedAt: v.optional(v.number()),
-    organizationId: v.id("organizations"),
-    steps: v.object({
-      boardCreated: v.boolean(),
-      brandingCustomized: v.boolean(),
-      firstFeedbackCreated: v.boolean(),
-      githubConnected: v.boolean(),
-      teamInvited: v.boolean(),
-      widgetInstalled: v.boolean(),
-    }),
-    userId: v.string(),
-  })
-    .index("by_organization", ["organizationId"])
-    .index("by_org_user", ["organizationId", "userId"]),
-
   organizationMembers: defineTable({
     createdAt: v.number(),
     organizationId: v.id("organizations"),
@@ -129,7 +111,6 @@ export const organizationTables = {
       })
     ),
     createdAt: v.number(),
-    customCss: v.optional(v.string()),
     customDomain: v.optional(v.string()),
     customDomainChallengeToken: v.optional(v.string()),
     customDomainError: v.optional(v.string()),
@@ -147,25 +128,9 @@ export const organizationTables = {
     ),
     feedbackSettings: v.optional(
       v.object({
-        allowAnonymousVoting: v.optional(v.boolean()),
-        cardStyle: v.optional(
-          v.union(
-            v.literal("sweep-corner"),
-            v.literal("minimal-notch"),
-            v.literal("editorial-feed")
-          )
-        ),
         defaultStatus: v.optional(feedbackStatus),
-        defaultTagId: v.optional(v.id("tags")),
         defaultView: v.optional(
           v.union(v.literal("roadmap"), v.literal("feed"))
-        ),
-        milestoneStyle: v.optional(
-          v.union(
-            v.literal("track"),
-            v.literal("editorial-accordion"),
-            v.literal("dashboard-timeline")
-          )
         ),
         requireApproval: v.optional(v.boolean()),
       })
@@ -205,18 +170,9 @@ export const organizationTables = {
     createdAt: v.number(),
     description: v.optional(v.string()),
     icon: v.optional(v.string()),
-    isDoneStatus: v.optional(v.boolean()),
-    isRoadmapLane: v.optional(v.boolean()),
-    laneOrder: v.optional(v.number()),
     name: v.string(),
     organizationId: v.id("organizations"),
-    settings: v.optional(
-      v.object({
-        defaultStatus: v.optional(feedbackStatus),
-        isPublic: v.optional(v.boolean()),
-        requireApproval: v.optional(v.boolean()),
-      })
-    ),
+    settings: v.optional(v.object({ isPublic: v.optional(v.boolean()) })),
     slug: v.string(),
     updatedAt: v.optional(v.number()),
   })

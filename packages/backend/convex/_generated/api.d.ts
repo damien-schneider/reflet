@@ -226,8 +226,6 @@ import type * as intelligence_structured_output from "../intelligence/structured
 import type * as intelligence_synthesis from "../intelligence/synthesis.js";
 import type * as intelligence_synthesis_shared from "../intelligence/synthesis_shared.js";
 import type * as intelligence_tableFields from "../intelligence/tableFields.js";
-import type * as migrations_legacy_field_patches from "../migrations/legacy_field_patches.js";
-import type * as migrations_legacy_fields from "../migrations/legacy_fields.js";
 import type * as notifications_preferences from "../notifications/preferences.js";
 import type * as notifications_push from "../notifications/push.js";
 import type * as notifications_push_queries from "../notifications/push_queries.js";
@@ -587,8 +585,6 @@ declare const fullApi: ApiFromModules<{
   "intelligence/synthesis": typeof intelligence_synthesis;
   "intelligence/synthesis_shared": typeof intelligence_synthesis_shared;
   "intelligence/tableFields": typeof intelligence_tableFields;
-  "migrations/legacy_field_patches": typeof migrations_legacy_field_patches;
-  "migrations/legacy_fields": typeof migrations_legacy_fields;
   "notifications/preferences": typeof notifications_preferences;
   "notifications/push": typeof notifications_push;
   "notifications/push_queries": typeof notifications_push_queries;
@@ -758,5 +754,4 @@ export declare const components: {
   resend: import("@convex-dev/resend/_generated/component.js").ComponentApi<"resend">;
   supportResend: import("@convex-dev/resend/_generated/component.js").ComponentApi<"supportResend">;
   shardedCounter: import("@convex-dev/sharded-counter/_generated/component.js").ComponentApi<"shardedCounter">;
-  migrations: import("@convex-dev/migrations/_generated/component.js").ComponentApi<"migrations">;
 };
