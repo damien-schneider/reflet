@@ -2,7 +2,7 @@
 
 import { Button } from "@ctrl-ui/react/ui/button";
 import { Layers, MessageCircle, Send } from "lucide-react";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { FeedbackPreview } from "@/features/homepage/components/experience/features/feedback-preview";
 import {
   PlanPreview,
@@ -38,13 +38,14 @@ const FEATURE_PREVIEWS = [
   },
 ] as const;
 
-export function FeatureExplorer() {
+export function FeatureExplorer({ children }: { children: ReactNode }) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [interacted, setInteracted] = useState(false);
   const selected = FEATURE_PREVIEWS[selectedIndex];
   return (
     <div className="feature-explorer" data-interacted={interacted}>
       <div className="feature-explorer-copy">
+        {children}
         <FeatureChoices
           onSelect={(index) => {
             setInteracted(true);

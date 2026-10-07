@@ -7,20 +7,22 @@ import { MarketingSectionIntro } from "@/features/homepage/components/experience
 export function MarketingSections() {
   return (
     <section className="marketing-section marketing-features" id="features">
-      <MarketingSectionIntro
-        kicker="Features"
-        title={
-          <>
-            Feedback that
-            <br />
-            <span>goes somewhere.</span>
-          </>
-        }
-      >
-        Collect requests in your app, plan them with your team, and let people
-        know when they ship.
-      </MarketingSectionIntro>
-      <FeatureExplorer />
+      <FeatureExplorer>
+        <MarketingSectionIntro
+          align="start"
+          kicker="Features"
+          title={
+            <>
+              Feedback that
+              <br />
+              <span>goes somewhere.</span>
+            </>
+          }
+        >
+          A widget for your users, a board for your team, and a changelog for
+          everyone who asked.
+        </MarketingSectionIntro>
+      </FeatureExplorer>
       <DeveloperIntegration />
     </section>
   );
