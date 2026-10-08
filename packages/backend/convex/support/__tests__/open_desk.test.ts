@@ -98,6 +98,40 @@ describe("support desk reached by public key", () => {
     ).rejects.toThrow(/Emoji/);
   });
 
+  test("a reaction tells each viewer only whether it is theirs", async () => {
+    const { as, organizationId } = await setup({
+      isActive: true,
+      supportEnabled: true,
+    });
+    const customer = as(CUSTOMER);
+    const vendor = as(VENDOR_ADMIN);
+    const conversationId = await customer.mutation(
+      api.support.conversations.create,
+      { initialMessage: "Export is broken", organizationId }
+    );
+    const [message] = await customer.query(api.support.messages.list, {
+      conversationId,
+    });
+    await vendor.mutation(api.support.messages.addReaction, {
+      emoji: "👍",
+      messageId: message._id,
+    });
+
+    const seenBy = async (viewer: typeof vendor) =>
+      (
+        await viewer.query(api.support.messages.listReactions, {
+          conversationId,
+        })
+      ).flatMap((row) => row.reactions);
+
+    expect(await seenBy(vendor)).toEqual([
+      { count: 1, emoji: "👍", reactedByViewer: true },
+    ]);
+    expect(await seenBy(customer)).toEqual([
+      { count: 1, emoji: "👍", reactedByViewer: false },
+    ]);
+  });
+
   test.each([
     { isActive: true, supportEnabled: false },
     { isActive: false, supportEnabled: true },

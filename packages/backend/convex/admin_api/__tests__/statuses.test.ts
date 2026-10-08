@@ -13,13 +13,13 @@ describe("admin_api_statuses", () => {
     const orgId = await createOrg(t);
 
     await t.mutation(internal.admin_api.statuses.createStatus, {
-      color: "#00FF00",
+      color: "green",
       name: "Open",
       organizationId: orgId,
     });
 
     await t.mutation(internal.admin_api.statuses.createStatus, {
-      color: "#FF0000",
+      color: "red",
       name: "Closed",
       organizationId: orgId,
     });
@@ -50,12 +50,12 @@ describe("admin_api_statuses", () => {
     );
 
     await t.mutation(internal.admin_api.statuses.createStatus, {
-      color: "#111",
+      color: "gray",
       name: "Ours",
       organizationId: orgId,
     });
     await t.mutation(internal.admin_api.statuses.createStatus, {
-      color: "#222",
+      color: "blue",
       name: "Theirs",
       organizationId: otherOrgId,
     });
@@ -103,11 +103,11 @@ describe("admin_api_statuses", () => {
 
     const { id: statusId } = await t.mutation(
       internal.admin_api.statuses.createStatus,
-      { color: "#000", name: "Old", organizationId: orgId }
+      { color: "gray", name: "Old", organizationId: orgId }
     );
 
     await t.mutation(internal.admin_api.statuses.updateStatus, {
-      color: "#FFF",
+      color: "pink",
       name: "New",
       organizationId: orgId,
       statusId,
@@ -117,7 +117,7 @@ describe("admin_api_statuses", () => {
       organizationId: orgId,
     });
     expect(statuses[0].name).toBe("New");
-    expect(statuses[0].color).toBe("#FFF");
+    expect(statuses[0].color).toBe("pink");
   });
 
   test("updateStatus should reject wrong org", async () => {
@@ -136,7 +136,7 @@ describe("admin_api_statuses", () => {
 
     const { id: statusId } = await t.mutation(
       internal.admin_api.statuses.createStatus,
-      { color: "#000", name: "Status", organizationId: orgId }
+      { color: "gray", name: "Status", organizationId: orgId }
     );
 
     await expect(
@@ -154,7 +154,7 @@ describe("admin_api_statuses", () => {
 
     const { id: statusId } = await t.mutation(
       internal.admin_api.statuses.createStatus,
-      { color: "#F00", name: "ToDelete", organizationId: orgId }
+      { color: "red", name: "ToDelete", organizationId: orgId }
     );
 
     const feedbackId = await t.run(async (ctx) =>

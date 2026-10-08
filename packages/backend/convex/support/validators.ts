@@ -101,7 +101,7 @@ export const supportMessageReactions = v.object({
     v.object({
       count: v.number(),
       emoji: v.string(),
-      userIds: v.array(v.string()),
+      reactedByViewer: v.boolean(),
     })
   ),
 });

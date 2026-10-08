@@ -109,10 +109,7 @@ function ThreadMessages({
     const viewerReacted = reactionsByMessage
       .get(message._id)
       ?.some(
-        (reaction) =>
-          reaction.emoji === emoji &&
-          viewerId !== undefined &&
-          reaction.userIds.includes(viewerId)
+        (reaction) => reaction.emoji === emoji && reaction.reactedByViewer
       );
     try {
       await (viewerReacted
@@ -143,7 +140,6 @@ function ThreadMessages({
                 onToggle: viewerId
                   ? (emoji) => toggleReaction(message, emoji)
                   : undefined,
-                viewerId,
               }}
               startsBurst={startsBurst(message, day.messages[index - 1])}
             />

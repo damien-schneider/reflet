@@ -15,14 +15,14 @@ describe("admin_api_milestones", () => {
     const orgId = await createOrg(t);
 
     await t.mutation(internal.admin_api.milestones.createMilestone, {
-      color: "#111",
+      color: "gray",
       name: "First",
       organizationId: orgId,
       timeHorizon: "now",
     });
 
     await t.mutation(internal.admin_api.milestones.createMilestone, {
-      color: "#222",
+      color: "blue",
       name: "Second",
       organizationId: orgId,
       timeHorizon: "next_month",
@@ -44,7 +44,7 @@ describe("admin_api_milestones", () => {
     const orgId = await createOrg(t);
 
     await t.mutation(internal.admin_api.milestones.createMilestone, {
-      color: "#111",
+      color: "gray",
       name: "Active",
       organizationId: orgId,
       timeHorizon: "now",
@@ -53,7 +53,7 @@ describe("admin_api_milestones", () => {
     const { id: completedId } = await t.mutation(
       internal.admin_api.milestones.createMilestone,
       {
-        color: "#222",
+        color: "blue",
         name: "ToComplete",
         organizationId: orgId,
         timeHorizon: "future",
@@ -87,7 +87,7 @@ describe("admin_api_milestones", () => {
     const { id: milestoneId } = await t.mutation(
       internal.admin_api.milestones.createMilestone,
       {
-        color: "#111",
+        color: "gray",
         name: "M1",
         organizationId: orgId,
         timeHorizon: "now",
@@ -128,7 +128,7 @@ describe("admin_api_milestones", () => {
     const { id: milestoneId } = await t.mutation(
       internal.admin_api.milestones.createMilestone,
       {
-        color: "#000",
+        color: "gray",
         name: "Private",
         organizationId: orgId,
         timeHorizon: "now",
@@ -149,7 +149,7 @@ describe("admin_api_milestones", () => {
     const { id: milestoneId } = await t.mutation(
       internal.admin_api.milestones.createMilestone,
       {
-        color: "#000",
+        color: "gray",
         name: "Old",
         organizationId: orgId,
         timeHorizon: "now",
@@ -178,7 +178,7 @@ describe("admin_api_milestones", () => {
     const { id: milestoneId } = await t.mutation(
       internal.admin_api.milestones.createMilestone,
       {
-        color: "#000",
+        color: "gray",
         name: "ToComplete",
         organizationId: orgId,
         timeHorizon: "now",
@@ -202,7 +202,7 @@ describe("admin_api_milestones", () => {
     const { id: milestoneId } = await t.mutation(
       internal.admin_api.milestones.createMilestone,
       {
-        color: "#000",
+        color: "gray",
         name: "ToDelete",
         organizationId: orgId,
         timeHorizon: "now",
@@ -238,7 +238,7 @@ describe("admin_api_milestones", () => {
     const { id: milestoneId } = await t.mutation(
       internal.admin_api.milestones.createMilestone,
       {
-        color: "#000",
+        color: "gray",
         name: "MS",
         organizationId: orgId,
         timeHorizon: "now",

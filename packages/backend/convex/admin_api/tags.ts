@@ -27,7 +27,7 @@ export const listTags = internalQuery({
   },
   returns: v.array(
     v.object({
-      color: v.string(),
+      color: tagColorValidator,
       createdAt: v.number(),
       description: v.optional(v.string()),
       icon: v.optional(v.string()),

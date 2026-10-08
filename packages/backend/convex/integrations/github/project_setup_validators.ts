@@ -1,4 +1,5 @@
 import { type Infer, v } from "convex/values";
+import { tagColorValidator } from "../../feedback/tag_colors";
 
 export const SETUP_STEPS = [
   { key: "analyze_codebase", label: "Analyzing codebase" },
@@ -66,7 +67,7 @@ export const suggestedPromptsValidator = v.array(
 export const suggestedTagsValidator = v.array(
   v.object({
     accepted: v.boolean(),
-    color: v.string(),
+    color: tagColorValidator,
     name: v.string(),
   })
 );

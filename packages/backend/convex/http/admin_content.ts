@@ -1,34 +1,19 @@
 import type { httpRouter } from "convex/server";
 import { internal } from "../_generated/api";
-import { isTagColor, type TagColor } from "../feedback/tag_colors";
 import {
   adminGet,
   adminPost,
   bool,
   corsOptionsHandler,
   num,
+  optionalTagColor,
   parseId,
   requireStr,
+  requireTagColor,
   str,
 } from "./helpers";
 
 type Router = ReturnType<typeof httpRouter>;
-
-function optionalTagColor(value: unknown): TagColor | undefined {
-  const color = str(value);
-  if (color === undefined || isTagColor(color)) {
-    return color;
-  }
-  throw new Error(`Unknown tag color: ${color}`);
-}
-
-function requireTagColor(value: unknown): TagColor {
-  const color = optionalTagColor(value);
-  if (color === undefined) {
-    throw new Error("Missing required field: color");
-  }
-  return color;
-}
 
 const ADMIN_CONTENT_PATHS = [
   "/api/v1/admin/tags",
@@ -254,7 +239,7 @@ export function registerAdminContentRoutes(http: Router): void {
   http.route({
     handler: adminPost(async (ctx, { organizationId }, body) =>
       ctx.runMutation(internal.admin_api.statuses.createStatus, {
-        color: requireStr(body.color, "color"),
+        color: requireTagColor(body.color),
         icon: str(body.icon),
         name: requireStr(body.name, "name"),
         organizationId,
@@ -267,7 +252,7 @@ export function registerAdminContentRoutes(http: Router): void {
   http.route({
     handler: adminPost(async (ctx, { organizationId }, body) =>
       ctx.runMutation(internal.admin_api.statuses.updateStatus, {
-        color: str(body.color),
+        color: optionalTagColor(body.color),
         icon: str(body.icon),
         name: str(body.name),
         organizationId,

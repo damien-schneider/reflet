@@ -144,19 +144,19 @@ vi.mock("./roadmap/roadmap-column-header", () => ({
 const mockStatuses = [
   {
     _id: "status-1" as Id<"organizationStatuses">,
-    color: "#6b7280",
+    color: "gray",
     name: "Backlog",
     semanticStatus: "open" as const,
   },
   {
     _id: "status-2" as Id<"organizationStatuses">,
-    color: "#3b82f6",
+    color: "blue",
     name: "In Progress",
     semanticStatus: "in_progress" as const,
   },
   {
     _id: "status-3" as Id<"organizationStatuses">,
-    color: "#22c55e",
+    color: "green",
     name: "Done",
     semanticStatus: "completed" as const,
   },

@@ -1,5 +1,6 @@
 import { defineTable } from "convex/server";
 import { v } from "convex/values";
+import { tagColorValidator } from "../feedback/tag_colors";
 import {
   domainStatus,
   feedbackStatus,
@@ -48,7 +49,7 @@ export const organizationTables = {
     .index("by_milestone_feedback", ["milestoneId", "feedbackId"]),
 
   milestones: defineTable({
-    color: v.string(),
+    color: tagColorValidator,
     completedAt: v.optional(v.number()),
     createdAt: v.number(),
     description: v.optional(v.string()),
@@ -88,7 +89,7 @@ export const organizationTables = {
     .index("by_org_user", ["organizationId", "userId"]),
 
   organizationStatuses: defineTable({
-    color: v.string(),
+    color: tagColorValidator,
     createdAt: v.number(),
     icon: v.optional(v.string()),
     name: v.string(),
@@ -166,7 +167,7 @@ export const organizationTables = {
     .searchIndex("search_name", { searchField: "name" }),
 
   tags: defineTable({
-    color: v.string(),
+    color: tagColorValidator,
     createdAt: v.number(),
     description: v.optional(v.string()),
     icon: v.optional(v.string()),

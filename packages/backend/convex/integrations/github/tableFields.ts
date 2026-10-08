@@ -1,5 +1,6 @@
 import { defineTable } from "convex/server";
 import { v } from "convex/values";
+import { tagColorValidator } from "../../feedback/tag_colors";
 import {
   feedbackStatus,
   githubConnectionStatus,
@@ -191,7 +192,7 @@ export const githubTables = {
       v.array(
         v.object({
           accepted: v.boolean(),
-          color: v.string(),
+          color: tagColorValidator,
           name: v.string(),
         })
       )

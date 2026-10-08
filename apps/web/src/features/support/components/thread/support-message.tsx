@@ -36,7 +36,6 @@ interface SupportMessageProps {
   reactions: {
     list: MessageReactions;
     onToggle?: (emoji: string) => void;
-    viewerId?: string;
   };
   startsBurst: boolean;
 }
@@ -122,7 +121,7 @@ function ReactionBar({
   isOwn: boolean;
   reactions: SupportMessageProps["reactions"];
 }) {
-  const { list, onToggle, viewerId } = reactions;
+  const { list, onToggle } = reactions;
   const hasQuickReaction = list.some(
     (reaction) => reaction.emoji === QUICK_REACTION
   );
@@ -146,9 +145,7 @@ function ReactionBar({
           aria-label={`${reaction.emoji} ${reaction.count}`}
           key={reaction.emoji}
           onPressedChange={() => onToggle(reaction.emoji)}
-          pressed={
-            viewerId !== undefined && reaction.userIds.includes(viewerId)
-          }
+          pressed={reaction.reactedByViewer}
           size="xs"
           value={reaction.emoji}
         >

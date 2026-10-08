@@ -3,10 +3,7 @@
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Doc, Id } from "@reflet/backend/convex/_generated/dataModel";
 import { categoryIsPublic } from "@reflet/backend/convex/feedback/categories/audience";
-import {
-  isTagColor,
-  type TagColor,
-} from "@reflet/backend/convex/feedback/tag_colors";
+import type { TagColor } from "@reflet/backend/convex/feedback/tag_colors";
 import { useMutation } from "convex/react";
 import { type FormEvent, useState } from "react";
 
@@ -36,10 +33,7 @@ export interface TagFormState extends TagDraft {
 }
 
 function initialColor(tag: EditableTag | null | undefined): TagColor {
-  if (!tag) {
-    return "blue";
-  }
-  return isTagColor(tag.color) ? tag.color : "default";
+  return tag?.color ?? "blue";
 }
 
 function useTagSubmission(target: TagFormTarget, onSuccess: () => void) {

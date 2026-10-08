@@ -44,8 +44,8 @@ const GET_CONFIG: EndpointDefinition = {
   "primaryColor": "#5b5bd6",
   "feedbackSettings": { "defaultView": "feed", "requireApproval": false },
   "statuses": [
-    { "id": "kx71…", "name": "Backlog", "color": "#6b7280", "icon": "clock", "order": 0 },
-    { "id": "kx72…", "name": "Planned", "color": "#3b82f6", "icon": "calendar", "order": 1 }
+    { "id": "kx71…", "name": "Backlog", "color": "gray", "icon": "clock", "order": 0 },
+    { "id": "kx72…", "name": "Planned", "color": "blue", "icon": "calendar", "order": 1 }
   ],
   "tags": [
     { "id": "kt31…", "name": "Bug", "slug": "bug", "color": "red" }
@@ -87,7 +87,7 @@ const LIST_FEEDBACK: EndpointDefinition = {
       "title": "Add dark mode",
       "description": "Please add a dark mode option.",
       "status": "planned",
-      "organizationStatus": { "id": "kx72…", "name": "Planned", "color": "#3b82f6" },
+      "organizationStatus": { "id": "kx72…", "name": "Planned", "color": "blue" },
       "tags": [{ "id": "kt31…", "name": "Feature", "slug": "feature", "color": "blue" }],
       "author": { "name": "Jane Doe", "isExternal": true },
       "voteCount": 42,
@@ -122,7 +122,7 @@ const GET_FEEDBACK: EndpointDefinition = {
   "title": "Add dark mode",
   "description": "Please add a dark mode option.",
   "status": "planned",
-  "organizationStatus": { "id": "kx72…", "name": "Planned", "color": "#3b82f6" },
+  "organizationStatus": { "id": "kx72…", "name": "Planned", "color": "blue" },
   "tags": [],
   "author": null,
   "voteCount": 42,
@@ -216,7 +216,7 @@ const GET_ROADMAP: EndpointDefinition = {
       "id": "kx72…",
       "name": "In Progress",
       "slug": "in-progress",
-      "color": "#8b5cf6",
+      "color": "purple",
       "items": [
         {
           "id": "jd7f2k9m1qz8x4c6v0bn3t5w",

@@ -24,7 +24,7 @@ const seedTenant = async (
     userId: options.ownerId,
   });
   const milestoneId = await ctx.db.insert("milestones", {
-    color: "#000000",
+    color: "gray",
     createdAt: now,
     isPublic: true,
     name: "Q1",

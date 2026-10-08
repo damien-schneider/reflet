@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "../_generated/server";
+import { tagColorValidator } from "../feedback/tag_colors";
 
 // ============================================
 // MILESTONE TIME HORIZON VALIDATOR
@@ -126,7 +127,7 @@ export const getMilestone = internalQuery({
 
 export const createMilestone = internalMutation({
   args: {
-    color: v.string(),
+    color: tagColorValidator,
     description: v.optional(v.string()),
     emoji: v.optional(v.string()),
     isPublic: v.optional(v.boolean()),
@@ -168,7 +169,7 @@ export const createMilestone = internalMutation({
 
 export const updateMilestone = internalMutation({
   args: {
-    color: v.optional(v.string()),
+    color: v.optional(tagColorValidator),
     description: v.optional(v.string()),
     emoji: v.optional(v.string()),
     isPublic: v.optional(v.boolean()),

@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 import { authComponent } from "../auth/auth";
 import { isFeedbackPubliclyVisible } from "../feedback/public_projection";
+import { tagColorValidator } from "../feedback/tag_colors";
 import { isOrgMemberViewer, requireAuthUser } from "../shared/access";
 
 const TIME_HORIZON_ORDER = [
@@ -203,7 +204,7 @@ export const get = query({
 
 export const create = mutation({
   args: {
-    color: v.string(),
+    color: tagColorValidator,
     description: v.optional(v.string()),
     emoji: v.optional(v.string()),
     isPublic: v.optional(v.boolean()),
@@ -274,7 +275,7 @@ export const create = mutation({
 export const update = mutation({
   args: {
     clearTargetDate: v.optional(v.boolean()),
-    color: v.optional(v.string()),
+    color: v.optional(tagColorValidator),
     description: v.optional(v.string()),
     emoji: v.optional(v.string()),
     id: v.id("milestones"),

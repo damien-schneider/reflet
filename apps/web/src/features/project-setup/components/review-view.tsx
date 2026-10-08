@@ -16,7 +16,6 @@ import {
 import { Robot, Sparkle } from "@phosphor-icons/react";
 import { api } from "@reflet/backend/convex/_generated/api";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
-import { isTagColor } from "@reflet/backend/convex/feedback/tag_colors";
 import { useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -88,10 +87,7 @@ export function ReviewView({
           .map(({ url, name }) => ({ name, url })),
         acceptedTags: tags
           .filter((t) => t.accepted)
-          .map(({ name, color }) => ({
-            color: isTagColor(color) ? color : "default",
-            name,
-          })),
+          .map(({ name, color }) => ({ color, name })),
         changelogSettings: setup.changelogConfig
           ? {
               autoVersioning: setup.changelogConfig.workflow !== "manual",

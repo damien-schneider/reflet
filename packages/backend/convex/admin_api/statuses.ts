@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "../_generated/server";
 import { changeFeedbackStatus } from "../feedback/status_change";
+import { tagColorValidator } from "../feedback/tag_colors";
 import { sortColumnsByLifecycle } from "../organizations/status_definitions";
 import { API_ACTOR_ID } from "../shared/actors";
 import { feedbackStatus } from "../shared/validators";
@@ -30,7 +31,7 @@ export const listStatuses = internalQuery({
 
 export const createStatus = internalMutation({
   args: {
-    color: v.string(),
+    color: tagColorValidator,
     icon: v.optional(v.string()),
     name: v.string(),
     organizationId: v.id("organizations"),
@@ -64,7 +65,7 @@ export const createStatus = internalMutation({
 
 export const updateStatus = internalMutation({
   args: {
-    color: v.optional(v.string()),
+    color: v.optional(tagColorValidator),
     icon: v.optional(v.string()),
     name: v.optional(v.string()),
     organizationId: v.id("organizations"),

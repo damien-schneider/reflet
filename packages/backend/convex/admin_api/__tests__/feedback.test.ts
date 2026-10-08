@@ -191,7 +191,7 @@ describe("admin_api_feedback - setFeedbackStatus", () => {
 
     const statusId = await t.run(async (ctx) =>
       ctx.db.insert("organizationStatuses", {
-        color: "#FFAA00",
+        color: "orange",
         createdAt: Date.now(),
         name: "In Review",
         order: 0,
@@ -228,7 +228,7 @@ describe("admin_api_feedback - setFeedbackStatus", () => {
 
     const foreignStatusId = await t.run(async (ctx) =>
       ctx.db.insert("organizationStatuses", {
-        color: "#F00",
+        color: "red",
         createdAt: Date.now(),
         name: "Foreign",
         order: 0,
@@ -256,7 +256,7 @@ describe("admin_api_feedback - updateFeedbackTags", () => {
 
     const tag1Id = await t.run(async (ctx) =>
       ctx.db.insert("tags", {
-        color: "#F00",
+        color: "red",
         createdAt: Date.now(),
         name: "Bug",
         organizationId: orgId,
@@ -266,7 +266,7 @@ describe("admin_api_feedback - updateFeedbackTags", () => {
     );
     const tag2Id = await t.run(async (ctx) =>
       ctx.db.insert("tags", {
-        color: "#0F0",
+        color: "green",
         createdAt: Date.now(),
         name: "Feature",
         organizationId: orgId,
@@ -312,7 +312,7 @@ describe("admin_api_feedback - updateFeedbackTags", () => {
 
     const tagId = await t.run(async (ctx) =>
       ctx.db.insert("tags", {
-        color: "#000",
+        color: "gray",
         createdAt: Date.now(),
         name: "Tag",
         organizationId: orgId,
@@ -356,7 +356,7 @@ describe("admin_api_feedback - updateFeedbackTags", () => {
 
     const foreignTagId = await t.run(async (ctx) =>
       ctx.db.insert("tags", {
-        color: "#000",
+        color: "gray",
         createdAt: Date.now(),
         name: "Foreign",
         organizationId: otherOrgId,

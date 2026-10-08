@@ -37,7 +37,7 @@ const PAYLOAD_EXAMPLE = `{
       "title": "Draft lost on save",
       "description": "Typing in the editor and hitting save clears the draft.",
       "status": "in_progress",
-      "organizationStatus": { "id": "kx73…", "name": "In Progress", "color": "#8b5cf6" },
+      "organizationStatus": { "id": "kx73…", "name": "In Progress", "color": "purple" },
       "tags": [{ "id": "kt32…", "name": "Bug", "slug": "bug", "color": "red" }],
       "author": { "name": "Jane Doe", "email": "jane@acme.com", "isExternal": true },
       "voteCount": 12,

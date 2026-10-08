@@ -84,7 +84,7 @@ describe("Auto-tagging database operations", () => {
       });
 
       const tagId = await ctx.db.insert("tags", {
-        color: "#0000FF",
+        color: "blue",
         createdAt: Date.now(),
         name: "Feature",
         organizationId: orgId,
@@ -137,7 +137,7 @@ describe("Auto-tagging database operations", () => {
       });
 
       const tagId = await ctx.db.insert("tags", {
-        color: "#FF0000",
+        color: "red",
         createdAt: Date.now(),
         name: "Bug",
         organizationId: orgId,
@@ -286,7 +286,7 @@ describe("Triage scope selection", () => {
 
       const handTaggedId = await insertFeedback("Hand tagged");
       const tagId = await ctx.db.insert("tags", {
-        color: "#FF0000",
+        color: "red",
         createdAt: Date.now(),
         name: "Bug",
         organizationId: orgId,
@@ -401,7 +401,7 @@ describe("Recompute reconciliation", () => {
 
         const insertTag = async (name: string) =>
           await ctx.db.insert("tags", {
-            color: "#FF0000",
+            color: "red",
             createdAt: Date.now(),
             name,
             organizationId: orgId,

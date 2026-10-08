@@ -1,12 +1,13 @@
 import { v } from "convex/values";
 import { mutation } from "../_generated/server";
 import { changeFeedbackStatus } from "../feedback/status_change";
+import { tagColorValidator } from "../feedback/tag_colors";
 import { requireAuthUser } from "../shared/access";
 import { feedbackStatus } from "../shared/validators";
 
 export const create = mutation({
   args: {
-    color: v.string(),
+    color: tagColorValidator,
     icon: v.optional(v.string()),
     name: v.string(),
     organizationId: v.id("organizations"),
@@ -58,7 +59,7 @@ export const create = mutation({
 
 export const update = mutation({
   args: {
-    color: v.optional(v.string()),
+    color: v.optional(tagColorValidator),
     icon: v.optional(v.string()),
     id: v.id("organizationStatuses"),
     name: v.optional(v.string()),

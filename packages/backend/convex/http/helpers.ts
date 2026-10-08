@@ -2,6 +2,7 @@ import { ConvexError } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Id, TableNames } from "../_generated/dataModel";
 import { httpAction } from "../_generated/server";
+import { isTagColor, type TagColor } from "../feedback/tag_colors";
 import { MAX_USER_AGENT_LENGTH } from "../shared/constants";
 import type { ApiCredential } from "./public_api/auth";
 
@@ -104,6 +105,22 @@ export function requireStr(value: unknown, fieldName: string): string {
     throw new Error(`Missing required field: ${fieldName}`);
   }
   return value;
+}
+
+export function optionalTagColor(value: unknown): TagColor | undefined {
+  const color = str(value);
+  if (color === undefined || isTagColor(color)) {
+    return color;
+  }
+  throw new Error(`Unknown tag color: ${color}`);
+}
+
+export function requireTagColor(value: unknown): TagColor {
+  const color = optionalTagColor(value);
+  if (color === undefined) {
+    throw new Error("Missing required field: color");
+  }
+  return color;
 }
 
 export function optionalId<T extends TableNames>(

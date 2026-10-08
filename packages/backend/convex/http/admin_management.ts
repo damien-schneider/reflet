@@ -7,8 +7,10 @@ import {
   bool,
   corsOptionsHandler,
   num,
+  optionalTagColor,
   parseId,
   requireStr,
+  requireTagColor,
   str,
 } from "./helpers";
 
@@ -76,7 +78,7 @@ export function registerAdminManagementRoutes(http: Router): void {
       return await ctx.runMutation(
         internal.admin_api.milestones.createMilestone,
         {
-          color: requireStr(body.color, "color"),
+          color: requireTagColor(body.color),
           description: str(body.description),
           emoji: str(body.emoji),
           isPublic: bool(body.isPublic),
@@ -104,7 +106,7 @@ export function registerAdminManagementRoutes(http: Router): void {
       return await ctx.runMutation(
         internal.admin_api.milestones.updateMilestone,
         {
-          color: str(body.color),
+          color: optionalTagColor(body.color),
           description: str(body.description),
           emoji: str(body.emoji),
           isPublic: bool(body.isPublic),

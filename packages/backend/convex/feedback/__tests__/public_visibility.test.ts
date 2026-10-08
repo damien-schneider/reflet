@@ -162,7 +162,7 @@ const linkUnapprovedEverywhere = async (
       releaseId,
     });
     const id = await ctx.db.insert("milestones", {
-      color: "#000000",
+      color: "gray",
       createdAt: now,
       isPublic: true,
       name: "Q1",

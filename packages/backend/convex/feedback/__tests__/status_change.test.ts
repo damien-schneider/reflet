@@ -159,7 +159,7 @@ describe("changeFeedbackStatus", () => {
       });
       const now = Date.now();
       const inProgressId = await ctx.db.insert("organizationStatuses", {
-        color: "#000",
+        color: "gray",
         createdAt: now,
         name: "En cours",
         order: 1,
@@ -168,7 +168,7 @@ describe("changeFeedbackStatus", () => {
         updatedAt: now,
       });
       const foreignStatusId = await ctx.db.insert("organizationStatuses", {
-        color: "#000",
+        color: "gray",
         createdAt: now,
         name: "Livré",
         order: 1,

@@ -363,7 +363,7 @@ export const listReactions = query({
           reactions: [...byEmoji].map(([emoji, userIds]) => ({
             count: userIds.length,
             emoji,
-            userIds,
+            reactedByViewer: userIds.includes(access.viewerId),
           })),
         };
       })
