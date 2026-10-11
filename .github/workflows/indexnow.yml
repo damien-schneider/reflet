@@ -1,0 +1,33 @@
+name: IndexNow
+
+on:
+  deployment_status:
+
+concurrency:
+  group: indexnow
+  cancel-in-progress: true
+
+jobs:
+  submit-sitemap:
+    if: github.event.deployment_status.state == 'success' && github.event.deployment.environment == 'Production'
+    runs-on: ubuntu-latest
+    env:
+      SITE: https://www.reflet.app
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Let a burst of deploys settle into one submission
+        run: sleep 600
+      - run: |
+          key=$(curl -fsS "$SITE/indexnow-key.txt")
+          curl -fsS "$SITE/sitemap.xml" |
+            grep -o '<loc>[^<]*</loc>' |
+            sed -e 's/<loc>//' -e 's/<\/loc>//' |
+            jq -R . |
+            jq -s --arg host "${SITE#https://}" --arg key "$key" --arg keyLocation "$SITE/indexnow-key.txt" \
+              '{host: $host, key: $key, keyLocation: $keyLocation, urlList: .}' |
+            curl -fsS -X POST https://api.indexnow.org/indexnow \
+              -H 'Content-Type: application/json; charset=utf-8' \
+              --data-binary @- \
+              -w 'IndexNow HTTP %{http_code}\n'

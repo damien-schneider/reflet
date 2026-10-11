@@ -70,6 +70,6 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!api|_next|static|favicon.ico|ingest|sw.js|robots.txt|llms.txt|downloads|logos|r|widget|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!api|_next|static|favicon.ico|ingest|sw.js|robots.txt|llms.txt|indexnow-key.txt|downloads|logos|r|widget|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
