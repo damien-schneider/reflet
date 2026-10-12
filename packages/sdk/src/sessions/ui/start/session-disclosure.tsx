@@ -36,17 +36,15 @@ function DisclosureList() {
         </li>
         <li>
           What you click, point at and mark: element names and positions, never
-          what you type.
+          your keystrokes.
         </li>
         <li>
           Screenshots of this tab at the start, when you mark a moment and when
-          the page changes. Password fields and elements marked{" "}
-          <code>data-reflet-redact</code> are hidden.
+          the page changes. Form fields appear empty; password fields and
+          elements marked <code>data-reflet-redact</code> are hidden. Other text
+          on screen, rich-text editors included, stays visible.
         </li>
-        <li>
-          Not recorded: keystrokes, field values, other tabs or apps, network
-          calls.
-        </li>
+        <li>Not recorded: keystrokes, other tabs or apps, network calls.</li>
         <li>Pausing stops everything.</li>
         <li>A session stays private to you until you share it.</li>
       </ul>
