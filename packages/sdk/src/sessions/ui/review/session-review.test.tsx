@@ -278,7 +278,8 @@ it("shows the finished analysis even when each refresh takes longer than the pol
     },
   });
   const SLOW_ANSWER_MS = 3000;
-  const POLL_WAIT_MS = 2000;
+  const STEP_MS = 250;
+  const WATCHED_MS = 12_000;
   const answers = [analyzing, aDetail()];
   const api = fakeApi({
     detail: vi.fn(() => {
@@ -293,8 +294,8 @@ it("shows the finished analysis even when each refresh takes longer than the pol
     fakeWorkspace({ api })
   );
 
-  for (const step of [SLOW_ANSWER_MS, POLL_WAIT_MS, SLOW_ANSWER_MS]) {
-    await act(() => vi.advanceTimersByTimeAsync(step));
+  for (let elapsed = 0; elapsed < WATCHED_MS; elapsed += STEP_MS) {
+    await act(() => vi.advanceTimersByTimeAsync(STEP_MS));
   }
 
   expect(screen.getByText(NEED)).toBeTruthy();
