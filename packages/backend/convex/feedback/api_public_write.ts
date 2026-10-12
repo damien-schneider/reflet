@@ -1,4 +1,4 @@
-import { ConvexError, v } from "convex/values";
+import { ConvexError, type ObjectType, v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { internalMutation, type MutationCtx } from "../_generated/server";
 import {
@@ -41,92 +41,142 @@ async function requireActionableFeedback(
   return feedback;
 }
 
-export const createFeedbackByOrganization = internalMutation({
-  args: {
-    authorId: v.optional(v.string()),
-    context: v.optional(feedbackContextValidator),
-    description: v.string(),
-    externalUserId: v.optional(v.id("externalUsers")),
-    isInternal: v.optional(v.boolean()),
-    organizationId: v.id("organizations"),
-    tagId: v.optional(v.id("tags")),
-    title: v.string(),
-  },
-  handler: async (ctx, args) => {
-    validateInputLength(args.title, MAX_TITLE_LENGTH, "Title");
-    validateInputLength(
-      args.description,
-      MAX_DESCRIPTION_LENGTH,
-      "Description"
-    );
+const createFeedbackArgs = {
+  authorId: v.optional(v.string()),
+  context: v.optional(feedbackContextValidator),
+  description: v.string(),
+  externalUserId: v.optional(v.id("externalUsers")),
+  isInternal: v.optional(v.boolean()),
+  organizationId: v.id("organizations"),
+  tagId: v.optional(v.id("tags")),
+  title: v.string(),
+};
 
-    const org = await ctx.db.get(args.organizationId);
-    if (!org) {
-      throw new Error("Organization not found");
-    }
+async function followAsExternalAuthor(
+  ctx: MutationCtx,
+  options: { externalUserId: Id<"externalUsers">; feedbackId: Id<"feedback"> }
+): Promise<void> {
+  const createdAt = Date.now();
+  await ctx.db.insert("feedbackVotes", {
+    createdAt,
+    externalUserId: options.externalUserId,
+    feedbackId: options.feedbackId,
+    voteType: "upvote",
+  });
+  await ctx.db.insert("feedbackSubscriptions", {
+    createdAt,
+    externalUserId: options.externalUserId,
+    feedbackId: options.feedbackId,
+  });
+}
 
-    const defaultStatus = org.feedbackSettings?.defaultStatus ?? "open";
+async function applyCreationTag(
+  ctx: MutationCtx,
+  options: {
+    feedbackId: Id<"feedback">;
+    organizationId: Id<"organizations">;
+    tagId: Id<"tags">;
+  }
+): Promise<void> {
+  const tag = await ctx.db.get(options.tagId);
+  if (tag?.organizationId !== options.organizationId) {
+    throw new Error("Category does not belong to this organization");
+  }
+  await ctx.db.insert("feedbackTags", {
+    appliedByAi: false,
+    feedbackId: options.feedbackId,
+    tagId: options.tagId,
+  });
+}
 
-    const isAnonymous = !args.externalUserId;
-    const isInternal = args.isInternal === true;
-    const isApproved = false;
-    const now = Date.now();
-
-    const feedbackId = await ctx.db.insert("feedback", {
-      authorId: args.authorId,
-      commentCount: 0,
-      context: args.context,
-      createdAt: now,
-      description: args.description,
+async function applyAuthorAndTag(
+  ctx: MutationCtx,
+  options: {
+    args: Pick<
+      ObjectType<typeof createFeedbackArgs>,
+      "externalUserId" | "organizationId" | "tagId"
+    >;
+    feedbackId: Id<"feedback">;
+  }
+): Promise<void> {
+  const { args, feedbackId } = options;
+  if (args.externalUserId) {
+    await followAsExternalAuthor(ctx, {
       externalUserId: args.externalUserId,
-      isApproved,
-      isInternal: isInternal || undefined,
-      isPinned: false,
+      feedbackId,
+    });
+  }
+  if (args.tagId) {
+    await applyCreationTag(ctx, {
+      feedbackId,
       organizationId: args.organizationId,
-      source: "api",
-      ...(await statusFieldsFor(ctx, {
-        organizationId: args.organizationId,
-        status: defaultStatus,
-      })),
-      title: args.title,
-      updatedAt: now,
-      voteCount: isAnonymous ? 0 : 1,
+      tagId: args.tagId,
     });
+  }
+}
 
-    if (args.externalUserId) {
-      await ctx.db.insert("feedbackVotes", {
-        createdAt: now,
-        externalUserId: args.externalUserId,
-        feedbackId,
-        voteType: "upvote",
-      });
+async function defaultStatusOf(
+  ctx: MutationCtx,
+  organizationId: Id<"organizations">
+) {
+  const org = await ctx.db.get(organizationId);
+  if (!org) {
+    throw new Error("Organization not found");
+  }
+  return org.feedbackSettings?.defaultStatus ?? "open";
+}
 
-      await ctx.db.insert("feedbackSubscriptions", {
-        createdAt: now,
-        externalUserId: args.externalUserId,
-        feedbackId,
-      });
-    }
+export async function insertOrganizationFeedback(
+  ctx: MutationCtx,
+  args: ObjectType<typeof createFeedbackArgs> & {
+    sessionProposalId?: Id<"sessionProposals">;
+  }
+): Promise<{ feedbackId: Id<"feedback">; isApproved: boolean }> {
+  validateInputLength(args.title, MAX_TITLE_LENGTH, "Title");
+  validateInputLength(args.description, MAX_DESCRIPTION_LENGTH, "Description");
 
-    if (args.tagId) {
-      const tag = await ctx.db.get(args.tagId);
-      if (!tag || tag.organizationId !== org._id) {
-        throw new Error("Category does not belong to this organization");
-      }
-      await ctx.db.insert("feedbackTags", {
-        appliedByAi: false,
-        feedbackId,
-        tagId: args.tagId,
-      });
-    }
+  const defaultStatus = await defaultStatusOf(ctx, args.organizationId);
 
-    await scheduleAfterCreate(ctx, feedbackId, {
-      aiEnrichment: false,
-      autoTagging: true,
-    });
+  const isAnonymous = !args.externalUserId;
+  const isInternal = args.isInternal === true;
+  const isApproved = false;
+  const now = Date.now();
 
-    return { feedbackId, isApproved };
-  },
+  const feedbackId = await ctx.db.insert("feedback", {
+    authorId: args.authorId,
+    commentCount: 0,
+    context: args.context,
+    createdAt: now,
+    description: args.description,
+    externalUserId: args.externalUserId,
+    isApproved,
+    isInternal: isInternal || undefined,
+    isPinned: false,
+    organizationId: args.organizationId,
+    sessionProposalId: args.sessionProposalId,
+    source: "api",
+    ...(await statusFieldsFor(ctx, {
+      organizationId: args.organizationId,
+      status: defaultStatus,
+    })),
+    title: args.title,
+    updatedAt: now,
+    voteCount: isAnonymous ? 0 : 1,
+  });
+
+  await applyAuthorAndTag(ctx, { args, feedbackId });
+
+  await scheduleAfterCreate(ctx, feedbackId, {
+    aiEnrichment: false,
+    autoTagging: true,
+  });
+
+  return { feedbackId, isApproved };
+}
+
+export const createFeedbackByOrganization = internalMutation({
+  args: createFeedbackArgs,
+  handler: (ctx, args) => insertOrganizationFeedback(ctx, args),
 });
 
 export const voteFeedbackByOrganization = internalMutation({

@@ -4,10 +4,10 @@ import {
   internalMutation,
   type MutationCtx,
   mutation,
-  type QueryCtx,
   query,
 } from "../_generated/server";
 import { requireAuthUser, requireOrgMember } from "../shared/access";
+import { inspectFreshUpload, isStorageAttached } from "../shared/fresh_upload";
 import { canViewFeedback } from "./public_projection";
 import {
   captureSourceValidator,
@@ -17,55 +17,35 @@ import {
 const MAX_SCREENSHOT_BYTES = 10 * 1024 * 1024;
 const ATTACH_WINDOW_MS = 30 * 60 * 1000;
 const MAX_PUBLIC_SCREENSHOTS_PER_FEEDBACK = 10;
-const SCREENSHOT_CONTENT_TYPES: Record<string, true> = {
-  "image/avif": true,
-  "image/gif": true,
-  "image/jpeg": true,
-  "image/png": true,
-  "image/webp": true,
-};
+const SCREENSHOT_UPLOAD_POLICY = {
+  contentTypes: {
+    "image/avif": true,
+    "image/gif": true,
+    "image/jpeg": true,
+    "image/png": true,
+    "image/webp": true,
+  },
+  maxBytes: MAX_SCREENSHOT_BYTES,
+} as const;
+const SCREENSHOT_UPLOAD_ERRORS = {
+  content_type: "Screenshots must be PNG, JPEG, WebP, GIF or AVIF images",
+  missing: "Upload not found",
+  too_large: "Screenshots must be 10 MB or smaller",
+} as const;
 
-async function isStorageAttached(
-  ctx: QueryCtx,
-  storageId: Id<"_storage">
-): Promise<boolean> {
-  const asOriginal = await ctx.db
-    .query("feedbackScreenshots")
-    .withIndex("by_storage", (q) => q.eq("storageId", storageId))
-    .first();
-  if (asOriginal) {
-    return true;
-  }
-  const asAnnotated = await ctx.db
-    .query("feedbackScreenshots")
-    .withIndex("by_annotated_storage", (q) =>
-      q.eq("annotatedStorageId", storageId)
-    )
-    .first();
-  return asAnnotated !== null;
-}
-
-// Storage is shared across tenants: only accept a just-uploaded, unattached image.
 async function requireFreshImageUpload(
   ctx: MutationCtx,
   storageId: Id<"_storage">
 ): Promise<{ contentType: string; size: number }> {
-  const file = await ctx.db.system.get(storageId);
-  if (
-    !file ||
-    Date.now() - file._creationTime > ATTACH_WINDOW_MS ||
-    (await isStorageAttached(ctx, storageId))
-  ) {
-    throw new Error("Upload not found");
+  const upload = await inspectFreshUpload(
+    ctx,
+    storageId,
+    SCREENSHOT_UPLOAD_POLICY
+  );
+  if (!upload.ok) {
+    throw new Error(SCREENSHOT_UPLOAD_ERRORS[upload.reason]);
   }
-  const contentType = file.contentType ?? "";
-  if (!SCREENSHOT_CONTENT_TYPES[contentType]) {
-    throw new Error("Screenshots must be PNG, JPEG, WebP, GIF or AVIF images");
-  }
-  if (file.size > MAX_SCREENSHOT_BYTES) {
-    throw new Error("Screenshots must be 10 MB or smaller");
-  }
-  return { contentType, size: file.size };
+  return { contentType: upload.contentType, size: upload.size };
 }
 
 async function requirePublicScreenshotSlot(

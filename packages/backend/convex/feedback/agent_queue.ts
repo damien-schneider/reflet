@@ -42,6 +42,14 @@ function claimIsLive(feedback: Doc<"feedback">, now: number): boolean {
   );
 }
 
+// Session-derived feedback is a member's internal note, never agent work.
+export function isAgentQueueEligible(feedback: Doc<"feedback">): boolean {
+  return (
+    !(feedback.deletedAt || feedback.isMerged) &&
+    feedback.sessionProposalId === undefined
+  );
+}
+
 function priorityRank(feedback: Doc<"feedback">): number {
   return (
     PRIORITY_RANK[
@@ -90,8 +98,7 @@ async function pickNext(
   const eligible = all.filter(
     (feedback) =>
       (feedback.isApproved || feedback.isInternal) &&
-      !feedback.deletedAt &&
-      !feedback.isMerged &&
+      isAgentQueueEligible(feedback) &&
       statuses.has(feedback.status) &&
       !claimIsLive(feedback, now)
   );
@@ -167,7 +174,10 @@ export const claimFeedback = internalMutation({
   },
   handler: async (ctx, args) => {
     const feedback = await ctx.db.get(args.feedbackId);
-    if (!feedback || feedback.organizationId !== args.organizationId) {
+    const isClaimable =
+      feedback?.organizationId === args.organizationId &&
+      isAgentQueueEligible(feedback);
+    if (!(feedback && isClaimable)) {
       throw new Error("Feedback not found");
     }
     const claimedByOther =

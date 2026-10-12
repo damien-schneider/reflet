@@ -1,3 +1,5 @@
+import { SESSION_API_PATHS } from "../sessions/constants";
+
 export const DEVTOOLS_TOKEN_PREFIX = "fb_dev_";
 
 export const DEVTOOLS_TOKEN_API_PATHS = [
@@ -6,6 +8,7 @@ export const DEVTOOLS_TOKEN_API_PATHS = [
   "/api/v1/feedback/list",
   "/api/v1/feedback/screenshot/save",
   "/api/v1/feedback/screenshot/upload-url",
+  ...SESSION_API_PATHS,
 ] as const;
 
 export const CONNECT_CODE_TTL_MS = 5 * 60_000;

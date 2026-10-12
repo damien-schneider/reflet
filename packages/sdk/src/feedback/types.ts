@@ -1,7 +1,7 @@
 import type { ReactNode, RefObject } from "react";
 import type { ElementSelection, FeedbackContext, RefletUser } from "../types";
 
-export const SDK_VERSION = "0.6.5";
+export const SDK_VERSION = "0.6.6";
 export const DEFAULT_WIDGET_OFFSET = 20;
 
 const ANNOTATION_TOOLS = [
@@ -148,6 +148,8 @@ export interface FeedbackTriggerProps {
 }
 
 export interface RefletFeedbackProps {
+  /** Hosts the team sign-in page. Defaults to https://www.reflet.app. */
+  appUrl?: string;
   baseUrl?: string;
   captureConsole?: boolean;
   captureOnOpen?: boolean;
@@ -166,6 +168,8 @@ export interface RefletFeedbackProps {
   primaryColor?: string;
   publicKey?: string;
   renderTrigger?: (props: FeedbackTriggerProps) => ReactNode;
+  /** Shown once activated by the `reflet-team` URL parameter or a stored sign-in. Defaults to true. */
+  teamTools?: boolean;
   theme?: "auto" | "dark" | "light";
   user?: RefletUser;
   userToken?: string;

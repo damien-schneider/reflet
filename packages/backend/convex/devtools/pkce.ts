@@ -1,3 +1,4 @@
+export const PKCE_CODE_VERIFIER = /^[A-Za-z0-9_-]{43,128}$/;
 const BASE64_PADDING = /[=]+$/;
 
 export async function pkceChallengeFor(verifier: string): Promise<string> {

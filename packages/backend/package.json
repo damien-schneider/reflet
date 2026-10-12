@@ -11,6 +11,7 @@
     "deploy": "convex deploy",
     "dev": "convex dev",
     "dev:setup": "convex dev --configure --until-success",
+    "eval:sessions": "bun scripts/eval-sessions.ts",
     "smoke:triage": "bun scripts/smoke-triage.ts",
     "test:unit": "vitest run",
     "verify:stripe": "tsx scripts/verify-stripe-setup.ts",

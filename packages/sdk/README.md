@@ -167,6 +167,8 @@ builds do; production builds strip React's debug data).
 | `categories` | `("bug" \| "idea" \| "question")[]` | all three | Category chips to show. |
 | `labels` | `Partial<FeedbackWidgetLabels>` | — | Override any string for i18n. |
 | `devtools` | `boolean` | `true` | Dev-only team tools; see below. Never loaded outside `NODE_ENV=development`. |
+| `teamTools` | `boolean` | `true` | Lets signed-in members of your Reflet organization record sessions in production; see below. |
+| `appUrl` | `string` | `"https://www.reflet.app"` | Reflet web app origin team tools sign in on. |
 | `onSubmit` | `(result: { feedbackId: string }) => void` | — | Fires after a successful send. |
 
 The panel renders in a shadow root, so your CSS cannot reach it and its CSS
@@ -208,6 +210,13 @@ turn it off.
 - **Board** — the board's feedback for the current route, or the whole board,
   with "Show on page", the reporter's source location, and a code search for
   the element's text.
+- **Sessions** — talk through the app while you use it: Reflet records your
+  voice, what you point at and mark, and a screenshot at the start, at each
+  mark and on each page change. Finish, and Reflet transcribes the session and
+  proposes the changes you asked for. Keep, edit or dismiss each proposal, then
+  hand the kept ones off as a brief to copy into a coding agent or export as a
+  `.zip` with its screenshots. Sessions are recorded under your own name, so
+  they need Connect rather than `REFLET_SECRET_KEY`.
 
 Code view and the board go through one dev-only route that reads files from
 your repository and holds the board credential server-side.
@@ -259,7 +268,28 @@ devtools header. These checks stop other sites in your browser, not other
 machines: that is what the loopback binding is for. It only serves
 source files (`.ts`, `.tsx`, `.js`, `.jsx`, `.vue`, `.svelte`, `.astro`,
 `.mdx`…) inside the repository and never under `node_modules`, and only
-forwards the feedback endpoints the devtools use.
+forwards the feedback and session endpoints the devtools use.
+
+#### Sessions in production (team tools)
+
+Members of your Reflet organization can record sessions on your deployed app
+too; your users never see it. Open any page with `?reflet-team` once, click
+**Sign in with Reflet**, and approve the app in the popup. The browser keeps a
+token for that origin for 7 days; revoke it from Account → Team tools in your
+apps on reflet.app.
+
+Two things on your side:
+
+- The widget's public key must list the exact origin under Allowed domains
+  (API keys on reflet.app). A key without allowed domains never signs anyone in.
+- The page must allow the microphone. A `Permissions-Policy` header with
+  `microphone=()` blocks it; use `microphone=(self)`.
+
+Pass `teamTools={false}` to turn it off. Voice is transcribed by Whisper through
+OpenRouter with zero data retention, and the audio is deleted once its
+transcript is saved, within 24 hours at most. Pausing stops all collection;
+keystrokes are never recorded, form fields appear empty in screenshots, and
+password fields and elements marked `data-reflet-redact` are hidden from them.
 
 ### 5. In-App Surveys
 

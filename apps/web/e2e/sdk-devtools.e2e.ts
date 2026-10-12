@@ -4,7 +4,7 @@ const DEMO_SOURCE = "apps/web/src/features/sdk-demo/sdk-demo.tsx";
 const PICK_BUTTON = /Pick an element/;
 const FIRST_PIN = /^Note 1:/;
 const MOVE_PANEL = /Move panel/;
-const MOVE_BUTTON = /Move devtools/;
+const MOVE_BUTTON = /Move Reflet devtools/;
 
 test.describe("Reflet devtools under next dev", () => {
   test.use({ reducedMotion: "reduce", viewport: { height: 900, width: 1440 } });
@@ -391,7 +391,9 @@ test.describe("Reflet devtools under next dev", () => {
       .poll(async () => Math.round((await sheet.boundingBox())?.x ?? 0))
       .toBe(movedX);
 
-    await page.getByRole("button", { name: MOVE_PANEL }).dblclick();
+    await page
+      .getByRole("button", { name: MOVE_PANEL })
+      .dblclick({ position: { x: header.width - 60, y: 10 } });
     await expect
       .poll(async () => Math.round((await sheet.boundingBox())?.x ?? 0))
       .toBe(Math.round(docked.x));

@@ -223,6 +223,7 @@ export const feedbackTables = {
     publicationReviewedAt: v.optional(v.number()),
     publicationReviewedBy: v.optional(v.string()),
     roadmapOrder: v.optional(v.number()),
+    sessionProposalId: v.optional(v.id("sessionProposals")),
     source: v.optional(
       v.union(v.literal("web"), v.literal("api"), v.literal("widget"))
     ),
@@ -242,6 +243,7 @@ export const feedbackTables = {
     .index("by_external_user", ["externalUserId"])
     .index("by_assignee", ["organizationId", "assigneeId"])
     .index("by_merged_into", ["mergedIntoId"])
+    .index("by_session_proposal", ["sessionProposalId"])
     .searchIndex("search_title", {
       filterFields: ["organizationId"],
       searchField: "title",

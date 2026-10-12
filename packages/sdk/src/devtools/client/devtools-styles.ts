@@ -5,6 +5,7 @@ const MONO_FONT = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
 export const DEVTOOLS_STYLES = `
 .dt { font: 13px/1.45 var(--rf-font, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif); color: var(--rf-text); }
 .dt[data-recessed="true"] .dt-bar, .dt[data-recessed="true"] .dt-sheet { visibility: hidden; pointer-events: none; }
+@media (max-width: 600px) { .dt[data-sheet-open="true"] .dt-bar { visibility: hidden; pointer-events: none; } }
 .dt-pin {
   position: fixed; z-index: ${REFLET_Z_INDEX.widgetRoot}; top: 0; left: 0;
   display: flex; align-items: center; justify-content: center;

@@ -2,13 +2,12 @@ import { DEVTOOLS_CALLBACK_PATH } from "./constants";
 
 const LOOPBACK_IPV4 = /^127(?:\.\d{1,3}){3}$/;
 
-function isReservedDevHostname(hostname: string): boolean {
+export function isLoopbackHostname(hostname: string): boolean {
   return (
     hostname === "localhost" ||
     hostname === "[::1]" ||
     LOOPBACK_IPV4.test(hostname) ||
-    hostname.endsWith(".localhost") ||
-    hostname.endsWith(".test")
+    hostname.endsWith(".localhost")
   );
 }
 
@@ -20,6 +19,7 @@ export function isAllowedRedirectUri(value: string): boolean {
   } catch {
     return false;
   }
+  const hostname = url.hostname.toLowerCase();
   return (
     (url.protocol === "http:" || url.protocol === "https:") &&
     url.username === "" &&
@@ -27,6 +27,6 @@ export function isAllowedRedirectUri(value: string): boolean {
     url.hash === "" &&
     url.search === "" &&
     url.pathname === DEVTOOLS_CALLBACK_PATH &&
-    isReservedDevHostname(url.hostname.toLowerCase())
+    (isLoopbackHostname(hostname) || hostname.endsWith(".test"))
   );
 }

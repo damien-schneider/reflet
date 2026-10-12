@@ -71,7 +71,7 @@ const MAX_PAGE_TITLE_LENGTH = 300;
 const MAX_URL_LENGTH = 2000;
 const MAX_USER_AGENT_LENGTH = 600;
 
-function clip(value: string, max: number): string {
+export function clip(value: string, max: number): string {
   return value.length <= max ? value : value.slice(0, max);
 }
 

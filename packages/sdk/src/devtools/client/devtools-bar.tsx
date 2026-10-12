@@ -1,15 +1,16 @@
 import type { ReactNode } from "react";
 import { useFloatingPosition } from "../../feedback/ui/floating/use-floating-position";
 import { GripIcon, TargetIcon } from "../../feedback/ui/icons";
+import { MicIcon } from "../../sessions/ui/session-icons";
 import { InboxIcon, NotesIcon } from "./devtools-icons";
 
 const BAR_POSITION_KEY = "reflet-devtools-bar-position";
 export const PICK_BUTTON_LABEL =
   "Pick an element: note it, copy it, or Shift+click to open its code";
 
-export type SheetTab = "code" | "inbox" | "notes";
+export type SheetTab = "code" | "inbox" | "notes" | "sessions";
 
-function BarButton({
+export function BarButton({
   children,
   label,
   onClick,
@@ -35,18 +36,14 @@ function BarButton({
 }
 
 export function DevtoolsBar({
+  children,
   edge,
-  noteCount,
-  onPick,
-  onToggleSheet,
-  openTab,
+  label = "Reflet devtools",
   side,
 }: {
+  children: ReactNode;
   edge: "bottom" | "top";
-  noteCount: number;
-  onPick: () => void;
-  onToggleSheet: (tab: SheetTab) => void;
-  openTab: SheetTab | null;
+  label?: string;
   side: "left" | "right";
 }) {
   const floating = useFloatingPosition(`${edge}-${side}`, false, {
@@ -56,7 +53,7 @@ export function DevtoolsBar({
 
   return (
     <div
-      aria-label="Reflet devtools"
+      aria-label={label}
       className="dt-bar glass"
       data-edge={edge}
       data-moved={floating.position !== null}
@@ -66,7 +63,7 @@ export function DevtoolsBar({
     >
       <style>{floating.styles}</style>
       <button
-        aria-label="Move devtools (double-click to reset)"
+        aria-label={`Move ${label} (double-click to reset)`}
         className="icon-btn drag-handle dt-grip"
         onDoubleClick={floating.resetPosition}
         title="Drag to move · double-click to reset"
@@ -75,6 +72,38 @@ export function DevtoolsBar({
       >
         <GripIcon />
       </button>
+      {children}
+    </div>
+  );
+}
+
+export function SessionsBarButton({
+  isOpen,
+  onToggle,
+}: {
+  isOpen: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <BarButton label="Sessions" onClick={onToggle} pressed={isOpen}>
+      <MicIcon />
+    </BarButton>
+  );
+}
+
+export function DevtoolsBarButtons({
+  noteCount,
+  onPick,
+  onToggleSheet,
+  openTab,
+}: {
+  noteCount: number;
+  onPick: () => void;
+  onToggleSheet: (tab: SheetTab) => void;
+  openTab: SheetTab | null;
+}) {
+  return (
+    <>
       <BarButton label={PICK_BUTTON_LABEL} onClick={onPick} pressed={false}>
         <TargetIcon />
       </BarButton>
@@ -86,6 +115,10 @@ export function DevtoolsBar({
         <NotesIcon />
         {noteCount > 0 && <span className="dt-count">{noteCount}</span>}
       </BarButton>
+      <SessionsBarButton
+        isOpen={openTab === "sessions"}
+        onToggle={() => onToggleSheet("sessions")}
+      />
       <BarButton
         label="Board feedback"
         onClick={() => onToggleSheet("inbox")}
@@ -93,6 +126,6 @@ export function DevtoolsBar({
       >
         <InboxIcon />
       </BarButton>
-    </div>
+    </>
   );
 }

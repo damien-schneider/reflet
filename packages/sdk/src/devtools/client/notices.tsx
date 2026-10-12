@@ -1,14 +1,20 @@
 import { useSyncExternalStore } from "react";
 import { CloseIcon } from "../../feedback/ui/icons";
 
+export interface NoticeAction {
+  label: string;
+  run: () => void;
+}
+
 export interface Notice {
+  action?: NoticeAction;
   id: number;
   kind: "failure" | "status";
   message: string;
-  retry?: () => void;
 }
 
 const STATUS_VISIBLE_MS = 2400;
+const ACTION_VISIBLE_MS = 6000;
 
 let notices: Notice[] = [];
 let nextNoticeId = 1;
@@ -35,17 +41,26 @@ export function reportFailure(
   const message = `${action}: ${reason}`;
   publish([
     ...notices.filter((notice) => notice.message !== message),
-    { id: nextNoticeId++, kind: "failure", message, retry },
+    {
+      action: retry && { label: "Retry", run: retry },
+      id: nextNoticeId++,
+      kind: "failure",
+      message,
+    },
   ]);
 }
 
-export function announce(message: string) {
+/** An action (Undo) keeps the notice up long enough to reach it. */
+export function announce(message: string, action?: NoticeAction) {
   const id = nextNoticeId++;
   publish([
     ...notices.filter((notice) => notice.message !== message),
-    { id, kind: "status", message },
+    { action, id, kind: "status", message },
   ]);
-  setTimeout(() => dismissNotice(id), STATUS_VISIBLE_MS);
+  setTimeout(
+    () => dismissNotice(id),
+    action ? ACTION_VISIBLE_MS : STATUS_VISIBLE_MS
+  );
 }
 
 function subscribe(listener: () => void) {
@@ -59,29 +74,26 @@ export function Notices() {
     () => notices,
     () => notices
   );
-  if (current.length === 0) {
-    return null;
-  }
   return (
-    <div className="dt-notices">
+    <div aria-live="polite" className="dt-notices">
       {current.map((notice) => (
         <div
           className="dt-notice glass"
           data-kind={notice.kind}
           key={notice.id}
-          role={notice.kind === "failure" ? "alert" : "status"}
+          role={notice.kind === "failure" ? "alert" : undefined}
         >
           <p>{notice.message}</p>
-          {notice.retry && (
+          {notice.action && (
             <button
               className="dt-btn"
               onClick={() => {
                 dismissNotice(notice.id);
-                notice.retry?.();
+                notice.action?.run();
               }}
               type="button"
             >
-              Retry
+              {notice.action.label}
             </button>
           )}
           <button

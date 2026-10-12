@@ -24,10 +24,13 @@ export const generateStructured = async <T>(options: {
   schema: z.ZodType<T>;
   system: string;
   prompt: string;
+  zdr?: boolean;
 }): Promise<T> => {
   const response = await generateText({
     maxOutputTokens: options.maxOutputTokens,
-    model: openrouter(options.model),
+    model: options.zdr
+      ? openrouter(options.model, { provider: { zdr: true } })
+      : openrouter(options.model),
     prompt: options.prompt,
     system: options.system,
   });

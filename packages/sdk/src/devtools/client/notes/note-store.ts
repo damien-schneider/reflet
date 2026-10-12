@@ -1,5 +1,11 @@
 import { useSyncExternalStore } from "react";
 import type { CapturedImage } from "../../../feedback/types";
+import {
+  committed,
+  describeStorageFailure,
+  openDatabase,
+  settle,
+} from "../../../storage/indexed-db";
 import type { ElementSelection, FeedbackContext } from "../../../types";
 import type { SourceRequest } from "../route/dev-route";
 
@@ -45,29 +51,15 @@ const SERVER_SNAPSHOT: NotesSnapshot = {
   status: "loading",
 };
 
-/** Executor form: the SDK targets ES2022, before `Promise.withResolvers`. */
-function settle<T>(request: IDBRequest<T>): Promise<T> {
-  return new Promise((resolve, reject) => {
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
+function openNotesDatabase(): Promise<IDBDatabase> {
+  return openDatabase({
+    name: DATABASE_NAME,
+    upgrade: (database) => {
+      database.createObjectStore(NOTES, { keyPath: "id" });
+      database.createObjectStore(PAYLOADS, { keyPath: "noteId" });
+    },
+    version: DATABASE_VERSION,
   });
-}
-
-function committed(transaction: IDBTransaction): Promise<void> {
-  return new Promise((resolve, reject) => {
-    transaction.oncomplete = () => resolve();
-    transaction.onerror = () => reject(transaction.error);
-    transaction.onabort = () => reject(transaction.error);
-  });
-}
-
-function openDatabase(): Promise<IDBDatabase> {
-  const request = indexedDB.open(DATABASE_NAME, DATABASE_VERSION);
-  request.onupgradeneeded = () => {
-    request.result.createObjectStore(NOTES, { keyPath: "id" });
-    request.result.createObjectStore(PAYLOADS, { keyPath: "noteId" });
-  };
-  return settle(request);
 }
 
 function newestFirst(notes: DevNote[]): DevNote[] {
@@ -92,12 +84,6 @@ export function pinNumbers(
     .filter((note) => isActiveNote(note) && isNoteOnPage(note, pathname))
     .sort((a, b) => a.createdAt - b.createdAt);
   return new Map(onPage.map((note, index) => [note.id, index + 1]));
-}
-
-function describeFailure(error: unknown): string {
-  return error instanceof Error
-    ? error.message
-    : "IndexedDB is unavailable in this browser.";
 }
 
 type NotesChange = (notes: DevNote[]) => DevNote[];
@@ -133,7 +119,7 @@ function createNoteStore() {
   };
 
   const connect = () => {
-    database ??= openDatabase();
+    database ??= openNotesDatabase();
     return database;
   };
 
@@ -159,7 +145,7 @@ function createNoteStore() {
       publish({ error: null, status: "ready" });
     } catch (error) {
       stored = [];
-      publish({ error: describeFailure(error), status: "failed" });
+      publish({ error: describeStorageFailure(error), status: "failed" });
     }
   };
 
@@ -189,7 +175,7 @@ function createNoteStore() {
       channel?.postMessage("changed");
     } catch (error) {
       settleChange(null);
-      throw new Error(describeFailure(error));
+      throw new Error(describeStorageFailure(error));
     }
   };
 

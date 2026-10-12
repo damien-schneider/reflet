@@ -1,9 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { describeElement } from "../../feedback/core/element-selector";
-import {
-  getFiberFromNode,
-  resolveComponentStack,
-} from "../../feedback/core/react-source";
 import {
   DEFAULT_WIDGET_LABELS,
   type FeedbackWidgetLabels,
@@ -11,13 +6,14 @@ import {
 } from "../../feedback/types";
 import { ElementPicker } from "../../feedback/ui/picker";
 import { SelectionOutline } from "../../feedback/ui/selection-outline";
+import { RecordingLayer } from "../../sessions/ui/recording/recording-layer";
+import { SESSIONS_STYLES } from "../../sessions/ui/sessions-styles";
 import { BoardTab } from "./board/board-tab";
 import { copyToClipboard } from "./clipboard";
-import { CodePanel, type CodeTarget } from "./code/code-panel";
-import { DevtoolsBar, type SheetTab } from "./devtools-bar";
+import { CodeTab, titleFor, useCodeLookup } from "./code/code-tab";
+import { DevtoolsBar, DevtoolsBarButtons, type SheetTab } from "./devtools-bar";
 import { DevtoolsSheet } from "./devtools-sheet";
 import { DEVTOOLS_STYLES } from "./devtools-styles";
-import { locateElementSource } from "./element-source";
 import { findOnPage } from "./find-on-page";
 import { noteAsContext } from "./notes/agent-prompt";
 import {
@@ -37,13 +33,13 @@ import {
 import { NotesPanel } from "./notes/notes-panel";
 import { announce, Notices, reportFailure } from "./notices";
 import { NotePins } from "./pins/note-pins";
-import { MISSING_SECRET_KEY_HINT, MissingRouteHint } from "./route/route-hint";
+import { MISSING_SECRET_KEY_HINT } from "./route/route-hint";
 import { type DevRouteState, useDevRoute } from "./route/use-dev-route";
-
-type CodeLookup =
-  | { element: Element; kind: "locating"; title: string }
-  | { kind: "located"; target: CodeTarget }
-  | { kind: "unlocated"; title: string };
+import {
+  SessionsScope,
+  SessionsTab,
+  useDevtoolsSessions,
+} from "./sessions/devtools-sessions";
 
 const PICKER_LABELS: FeedbackWidgetLabels = {
   ...DEFAULT_WIDGET_LABELS,
@@ -52,12 +48,6 @@ const PICKER_LABELS: FeedbackWidgetLabels = {
   elementNotePlaceholder: "What should change here?",
   pickElementHint: "Pick an element to note or copy it",
 };
-
-function titleFor(element: Element): string {
-  const owner = resolveComponentStack(getFiberFromNode(element))[0];
-  const label = describeElement(element);
-  return owner ? `<${owner}> ${label}` : label;
-}
 
 function sendBlockedReason(
   route: DevRouteState,
@@ -76,39 +66,17 @@ function sendBlockedReason(
     ? "Connect to Reflet in the Board tab to send notes."
     : MISSING_SECRET_KEY_HINT;
 }
-
-function CodeTab({
-  lookup,
-  route,
-}: {
-  lookup: CodeLookup;
-  route: DevRouteState;
-}) {
-  if (route.kind === "missing") {
-    return <MissingRouteHint purpose="read your source files here" />;
-  }
-  if (lookup.kind === "locating" || route.kind === "checking") {
-    return <p className="dt-status">Locating the source…</p>;
-  }
-  if (lookup.kind === "unlocated") {
-    return (
-      <div className="dt-empty">
-        <p>{lookup.title}</p>
-        <p>
-          React did not record where this element was written: it comes from a
-          library, or this page is a production build.
-        </p>
-      </div>
-    );
-  }
-  const { request } = lookup.target;
+function canConnectBoard(route: DevRouteState, publicKey: string | null) {
   return (
-    <CodePanel
-      editor={route.status.editor}
-      key={`${request.fileName}:${request.line}:${request.column}`}
-      target={lookup.target}
-    />
+    route.kind === "ready" &&
+    route.status.board.kind === "disconnected" &&
+    route.status.board.canConnect &&
+    publicKey !== null
   );
+}
+
+function unsentNoteCount(notes: NotesSnapshot): number {
+  return notes.notes.filter((note) => isActiveNote(note) && !note.sent).length;
 }
 
 /** Shown the moment it is added; source and close-up follow, best effort. */
@@ -163,19 +131,16 @@ export function DevtoolsLayer({
   const { refresh, route } = useDevRoute();
   const notes = useNotes();
   useResumeLocating(notes, route);
+  const sessions = useDevtoolsSessions({ onUnauthorized: refresh, route });
   const [isPicking, setIsPicking] = useState(false);
   const [openTab, setOpenTab] = useState<SheetTab | null>(null);
-  const [codeLookup, setCodeLookup] = useState<CodeLookup | null>(null);
   const [highlighted, setHighlighted] = useState<Element | null>(null);
+  const { codeLookup, inspectElement, openCode } = useCodeLookup(setOpenTab);
 
   const edge = position.startsWith("top") ? "top" : "bottom";
   const side = position.endsWith("right") ? "right" : "left";
   const canReadSource = route.kind === "ready";
-  const canConnect =
-    route.kind === "ready" &&
-    route.status.board.kind === "disconnected" &&
-    route.status.board.canConnect &&
-    publicKey !== null;
+  const canConnect = canConnectBoard(route, publicKey);
   const isRecessed = isWidgetOpen || isPicking;
 
   const closeSheet = useCallback(() => {
@@ -186,11 +151,6 @@ export function DevtoolsLayer({
   const startPick = useCallback(() => setIsPicking(true), []);
   const cancelPick = useCallback(() => setIsPicking(false), []);
 
-  const openCode = useCallback((target: CodeTarget) => {
-    setCodeLookup({ kind: "located", target });
-    setOpenTab("code");
-  }, []);
-
   const showSelector = useCallback((selector: string) => {
     const element = findOnPage(selector);
     setHighlighted(element);
@@ -198,28 +158,14 @@ export function DevtoolsLayer({
     return element !== null;
   }, []);
 
-  const inspectElement = useCallback((element: Element) => {
-    setIsPicking(false);
-    const title = titleFor(element);
-    setCodeLookup({ element, kind: "locating", title });
-    setOpenTab("code");
-    locateElementSource(element)
-      .catch(() => null)
-      .then((request) =>
-        setCodeLookup((current) => {
-          const isStillWanted =
-            current?.kind === "locating" && current.element === element;
-          if (!isStillWanted) {
-            return current;
-          }
-          return request
-            ? { kind: "located", target: { request, title } }
-            : { kind: "unlocated", title };
-        })
-      );
-  }, []);
   const inspect = useMemo(
-    () => ({ label: "View code", onInspect: inspectElement }),
+    () => ({
+      label: "View code",
+      onInspect: (element: Element) => {
+        setIsPicking(false);
+        inspectElement(element);
+      },
+    }),
     [inspectElement]
   );
 
@@ -250,72 +196,95 @@ export function DevtoolsLayer({
   );
 
   const tabs: SheetTab[] = codeLookup
-    ? ["notes", "inbox", "code"]
-    : ["notes", "inbox"];
+    ? ["notes", "sessions", "inbox", "code"]
+    : ["notes", "sessions", "inbox"];
+  const writeNoteInstead = () => {
+    closeSheet();
+    startPick();
+  };
 
   return (
-    <div
-      className="dt"
-      data-recessed={isRecessed}
-      data-sheet-open={openTab !== null}
-    >
-      <style>{DEVTOOLS_STYLES}</style>
-      <NotePins isVisible={!isRecessed} notes={notes} onOpenCode={openCode} />
-      {openTab && (
-        <DevtoolsSheet
-          onClose={closeSheet}
-          onPick={startPick}
-          onSelectTab={setOpenTab}
-          side={side}
-          tab={openTab}
-          tabs={tabs}
-        >
-          {openTab === "notes" && (
-            <NotesPanel
-              notes={notes}
-              onOpenCode={openCode}
-              onShowSelector={showSelector}
-              sendBlockedReason={sendBlockedReason(route, canConnect)}
-            />
-          )}
-          {openTab === "inbox" && (
-            <BoardTab
-              canConnect={canConnect}
-              onOpenCode={openCode}
-              onShowSelector={showSelector}
-              publicKey={publicKey}
-              refresh={refresh}
-              route={route}
-            />
-          )}
-          {openTab === "code" && codeLookup && (
-            <CodeTab lookup={codeLookup} route={route} />
-          )}
-        </DevtoolsSheet>
-      )}
-      <DevtoolsBar
-        edge={edge}
-        noteCount={
-          notes.notes.filter((note) => isActiveNote(note) && !note.sent).length
-        }
-        onPick={startPick}
-        onToggleSheet={(tab) =>
-          setOpenTab((current) => (current === tab ? null : tab))
-        }
-        openTab={openTab}
-        side={side}
-      />
-      {openTab && <SelectionOutline node={highlighted} />}
-      <Notices />
-      {isPicking && (
-        <ElementPicker
-          copy={copy}
-          inspect={inspect}
-          labels={PICKER_LABELS}
-          onCancel={cancelPick}
-          onPick={writeNote}
-        />
-      )}
-    </div>
+    <SessionsScope sessions={sessions}>
+      <div
+        className="dt"
+        data-recessed={isRecessed}
+        data-sheet-open={openTab !== null}
+      >
+        <style>{`${DEVTOOLS_STYLES}${SESSIONS_STYLES}`}</style>
+        <NotePins isVisible={!isRecessed} notes={notes} onOpenCode={openCode} />
+        {openTab && (
+          <DevtoolsSheet
+            onClose={closeSheet}
+            onPick={startPick}
+            onSelectTab={setOpenTab}
+            side={side}
+            tab={openTab}
+            tabs={tabs}
+          >
+            {openTab === "notes" && (
+              <NotesPanel
+                notes={notes}
+                onOpenCode={openCode}
+                onShowSelector={showSelector}
+                sendBlockedReason={sendBlockedReason(route, canConnect)}
+              />
+            )}
+            {openTab === "inbox" && (
+              <BoardTab
+                canConnect={canConnect}
+                onOpenCode={openCode}
+                onShowSelector={showSelector}
+                publicKey={publicKey}
+                refresh={refresh}
+                route={route}
+              />
+            )}
+            {openTab === "sessions" && (
+              <SessionsTab
+                actions={{
+                  onConnect: () => setOpenTab("inbox"),
+                  onStarted: closeSheet,
+                  onWriteNote: writeNoteInstead,
+                }}
+                route={route}
+                sessions={sessions}
+              />
+            )}
+            {openTab === "code" && codeLookup && (
+              <CodeTab lookup={codeLookup} route={route} />
+            )}
+          </DevtoolsSheet>
+        )}
+        <DevtoolsBar edge={edge} side={side}>
+          <DevtoolsBarButtons
+            noteCount={unsentNoteCount(notes)}
+            onPick={startPick}
+            onToggleSheet={(tab) =>
+              setOpenTab((current) => (current === tab ? null : tab))
+            }
+            openTab={openTab}
+          />
+        </DevtoolsBar>
+        {openTab && <SelectionOutline node={highlighted} />}
+        <Notices />
+        {sessions.state.kind === "ready" && (
+          <RecordingLayer
+            onFinished={(target) => {
+              sessions.navigation.onOpen(target);
+              setOpenTab("sessions");
+            }}
+          />
+        )}
+        {isPicking && (
+          <ElementPicker
+            copy={copy}
+            inspect={inspect}
+            labels={PICKER_LABELS}
+            onCancel={cancelPick}
+            onPick={writeNote}
+          />
+        )}
+      </div>
+    </SessionsScope>
   );
 }

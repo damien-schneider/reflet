@@ -36,12 +36,14 @@ type ProxiedApiPath = (typeof PROXIED_API_PATHS)[number];
 const INBOX_PAGE_SIZE = 50;
 
 export class DevRouteError extends Error {
+  readonly body: unknown;
   readonly status: number;
 
-  constructor(message: string, status: number) {
+  constructor(message: string, details: { body: unknown; status: number }) {
     super(message);
     this.name = "DevRouteError";
-    this.status = status;
+    this.status = details.status;
+    this.body = details.body;
   }
 }
 
@@ -105,7 +107,7 @@ async function callDevRoute<T>(
       typeof routeError === "string"
         ? routeError
         : `The Reflet dev route answered ${response.status}.`,
-      response.status
+      { body, status: response.status }
     );
   }
   // Shapes owned by protocol.ts and the Reflet public API, same trust as client.ts.

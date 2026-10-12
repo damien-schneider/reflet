@@ -199,6 +199,7 @@ export const logApiRequest = internalMutation({
     organizationApiKeyId: v.optional(v.id("organizationApiKeys")),
     organizationId: v.id("organizations"),
     statusCode: v.number(),
+    teamTokenId: v.optional(v.id("teamAccessTokens")),
     userAgent: v.optional(v.string()),
   },
   handler: async (ctx, args) => {

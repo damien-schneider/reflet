@@ -15,6 +15,9 @@ import { registerAdminSurveyRoutes } from "./http/admin_surveys";
 import { registerDevtoolsRoutes } from "./http/devtools_routes";
 import { registerGithubWebhookRoutes } from "./http/github_webhook";
 import { registerPublicApiRoutes } from "./http/public_api";
+import { registerSessionCaptureRoutes } from "./http/sessions/capture_routes";
+import { registerSessionReviewRoutes } from "./http/sessions/review_routes";
+import { registerTeamAccessRoutes } from "./http/sessions/team_access_routes";
 import { registerSupportEmailRoutes } from "./support/email/http_routes";
 
 const RSS_PATH_PREFIX = "/rss/";
@@ -70,6 +73,9 @@ registerGithubWebhookRoutes(http);
 
 registerPublicApiRoutes(http);
 registerDevtoolsRoutes(http);
+registerTeamAccessRoutes(http);
+registerSessionCaptureRoutes(http);
+registerSessionReviewRoutes(http);
 
 http.route({
   handler: httpAction(

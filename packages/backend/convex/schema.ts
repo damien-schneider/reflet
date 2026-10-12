@@ -11,10 +11,12 @@ import { githubTables } from "./integrations/github/tableFields";
 import { intelligenceTables } from "./intelligence/tableFields";
 import { notificationTables } from "./notifications/tableFields";
 import { organizationTables } from "./organizations/tableFields";
+import { sessionsTables } from "./sessions/tableFields";
 import { statusTables } from "./status/tableFields";
 import { supportEmailTables } from "./support/email/tableFields";
 import { supportTables } from "./support/tableFields";
 import { surveyTables } from "./surveys/tableFields";
+import { teamAccessTables } from "./team_access/tableFields";
 import { webhookTables } from "./webhooks/tableFields";
 import { widgetTables } from "./widget/tableFields";
 
@@ -37,4 +39,6 @@ export default defineSchema({
   ...intelligenceTables,
   ...statusTables,
   ...webhookTables,
+  ...teamAccessTables,
+  ...sessionsTables,
 });

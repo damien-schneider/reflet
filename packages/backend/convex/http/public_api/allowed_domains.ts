@@ -21,6 +21,15 @@ function hostMatches(host: string, allowedDomain: string): boolean {
   return host === allowedDomain;
 }
 
+export function hostMatchesAllowedDomains(
+  host: string,
+  allowedDomains: string[]
+): boolean {
+  return allowedDomains.some((domain) =>
+    hostMatches(host, domain.toLowerCase())
+  );
+}
+
 export function isRequestFromAllowedDomain(
   request: Request,
   allowedDomains: string[] | undefined
@@ -29,8 +38,5 @@ export function isRequestFromAllowedDomain(
     return true;
   }
   const host = requestHost(request);
-  return (
-    host !== null &&
-    allowedDomains.some((domain) => hostMatches(host, domain.toLowerCase()))
-  );
+  return host !== null && hostMatchesAllowedDomains(host, allowedDomains);
 }

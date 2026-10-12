@@ -117,23 +117,23 @@ function isStorageResponse(value: unknown): value is { storageId: string } {
   );
 }
 
-export async function uploadImageBlob(
+export async function uploadBlob(
   uploadUrl: string,
-  image: Pick<CapturedImage, "blob" | "mimeType">
+  upload: Pick<CapturedImage, "blob" | "mimeType">
 ): Promise<string> {
   const response = await fetch(uploadUrl, {
-    body: image.blob,
-    headers: { "Content-Type": image.mimeType },
+    body: upload.blob,
+    headers: { "Content-Type": upload.mimeType },
     method: "POST",
   });
 
   if (!response.ok) {
-    throw new Error(`Screenshot upload failed (${response.status})`);
+    throw new Error(`Upload failed (${response.status})`);
   }
 
   const payload: unknown = await response.json();
   if (!isStorageResponse(payload)) {
-    throw new Error("Screenshot upload returned no storage id");
+    throw new Error("Upload returned no storage id");
   }
 
   return payload.storageId;
@@ -144,6 +144,6 @@ export function createFeedbackTransport(client: Reflet): FeedbackTransport {
     create: (params) => client.create(params),
     getScreenshotUploadUrl: () => client.getScreenshotUploadUrl(),
     saveScreenshot: (params) => client.saveScreenshot(params),
-    uploadImage: uploadImageBlob,
+    uploadImage: uploadBlob,
   };
 }

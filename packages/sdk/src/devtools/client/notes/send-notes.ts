@@ -1,4 +1,4 @@
-import { deriveTitle, uploadImageBlob } from "../../../feedback/core/submit";
+import { deriveTitle, uploadBlob } from "../../../feedback/core/submit";
 import type {
   CreateFeedbackResponse,
   FeedbackContext,
@@ -27,7 +27,7 @@ async function attachCloseUp(
     "/api/v1/feedback/screenshot/upload-url",
     { body: {} }
   );
-  const storageId = await uploadImageBlob(uploadUrl, closeUp);
+  const storageId = await uploadBlob(uploadUrl, closeUp);
   await callReflet("/api/v1/feedback/screenshot/save", {
     body: {
       captureSource: "element",

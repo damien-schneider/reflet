@@ -12,12 +12,18 @@ import type { ApiCredential } from "./public_api/auth";
 
 type ActionCtx = Parameters<Parameters<typeof httpAction>[0]>[0];
 
+export type RequestCredential =
+  | ApiCredential
+  | { teamTokenId: Id<"teamAccessTokens"> };
+
 export interface ApiRequestActor {
-  credential: ApiCredential;
+  credential: RequestCredential;
   organizationId: Id<"organizations">;
 }
 
-export type AdminAuth = ApiRequestActor;
+export interface AdminAuth extends ApiRequestActor {
+  credential: ApiCredential;
+}
 
 type AuthenticationOutcome<TAuth> =
   | { success: true; auth: TAuth }

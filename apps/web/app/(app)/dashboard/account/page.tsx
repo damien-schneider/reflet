@@ -13,6 +13,7 @@ import { NotificationSettings } from "@/features/account/notification-settings";
 import { PasswordSection } from "@/features/account/password-section";
 import { ProfileSection } from "@/features/account/profile-section";
 import { SettingsPage } from "@/features/project/components/settings-page";
+import { TeamToolsSection } from "@/features/team-access/team-tools-section";
 
 function AccountContent() {
   const { activeTab, setActiveTab } = useAccountTab();
@@ -54,7 +55,12 @@ function AccountSections({ activeTab }: { activeTab: AccountTab }) {
         <PasswordSection isLoading={isLoading} setIsLoading={setIsLoading} />
       ) : null}
       {activeTab === "notifications" ? <NotificationSettings /> : null}
-      {activeTab === "devtools" ? <DevtoolsConnectionsSection /> : null}
+      {activeTab === "devtools" ? (
+        <>
+          <DevtoolsConnectionsSection />
+          <TeamToolsSection />
+        </>
+      ) : null}
     </>
   );
 }

@@ -3,6 +3,10 @@ import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
 import { internal } from "../../_generated/api";
 import schema from "../../schema";
+import {
+  seedProposal,
+  seedSession,
+} from "../../sessions/__tests__/session.fixtures";
 import { seedFeedback, seedOrganization } from "../../test.fixtures";
 import { modules } from "../../test.helpers";
 import { CLAIM_TTL_MS } from "../agent_queue";
@@ -126,6 +130,51 @@ describe("agent queue", () => {
       organizationId: ids.organizationId,
     });
     expect(own.claimedBy).toBe("agent-1");
+  });
+
+  test("session-derived, deleted and merged feedback never reach agents", async () => {
+    const t = convexTest(schema, modules);
+    const ids = await t.run(async (ctx) => {
+      const organizationId = await seedOrganization(ctx);
+      const sessionId = await seedSession(ctx, {
+        authorId: "user-1",
+        organizationId,
+      });
+      const sessionProposalId = await seedProposal(ctx, {
+        _id: sessionId,
+        organizationId,
+      });
+      const fromSession = await seedFeedback(ctx, organizationId, {
+        isInternal: true,
+        sessionProposalId,
+        title: "from session",
+      });
+      const deleted = await seedFeedback(ctx, organizationId, {
+        deletedAt: Date.now(),
+        title: "deleted",
+      });
+      const merged = await seedFeedback(ctx, organizationId, {
+        isMerged: true,
+        title: "merged",
+      });
+      await seedFeedback(ctx, organizationId, { title: "eligible" });
+      return { deleted, fromSession, merged, organizationId };
+    });
+
+    const next = await t.query(internal.feedback.agent_queue.nextFeedback, {
+      organizationId: ids.organizationId,
+    });
+    expect(next.map((item) => item.title)).toEqual(["eligible"]);
+
+    for (const feedbackId of [ids.fromSession, ids.deleted, ids.merged]) {
+      await expect(
+        t.mutation(internal.feedback.agent_queue.claimFeedback, {
+          claimedBy: "agent-1",
+          feedbackId,
+          organizationId: ids.organizationId,
+        })
+      ).rejects.toThrow("Feedback not found");
+    }
   });
 });
 

@@ -9,6 +9,7 @@ export const adminApiTables = {
     organizationApiKeyId: v.optional(v.id("organizationApiKeys")),
     organizationId: v.id("organizations"),
     statusCode: v.number(),
+    teamTokenId: v.optional(v.id("teamAccessTokens")),
     timestamp: v.number(),
     userAgent: v.optional(v.string()),
   })

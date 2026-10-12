@@ -128,6 +128,30 @@ export const rateLimiter = new RateLimiter(components.rateLimiter, {
     period: MINUTE,
     rate: 300,
   },
+  sessionAnalysisPerUser: {
+    capacity: 10,
+    kind: "token bucket",
+    period: HOUR,
+    rate: 20,
+  },
+  sessionTranscriptionPerOrg: {
+    capacity: 1200,
+    kind: "token bucket",
+    period: HOUR,
+    rate: 1200,
+  },
+  sessionUploadPerMember: {
+    capacity: 120,
+    kind: "token bucket",
+    period: MINUTE,
+    rate: 120,
+  },
+  sessionWritePerMember: {
+    capacity: 600,
+    kind: "token bucket",
+    period: MINUTE,
+    rate: 600,
+  },
   storageUploadPerUser: {
     capacity: 30,
     kind: "token bucket",

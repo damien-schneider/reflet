@@ -1,4 +1,7 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useContext, useSyncExternalStore } from "react";
+import { DEFAULT_API_URL } from "../client";
+import { RefletContext } from "../react-context";
+import { hasTeamActivation } from "../sessions/team/team-activation";
 import {
   DEFAULT_WIDGET_LABELS,
   DEFAULT_WIDGET_OFFSET,
@@ -6,12 +9,16 @@ import {
   type RefletFeedbackProps,
 } from "./types";
 import { Annotator } from "./ui/annotator";
-import { useOwnsDevtools } from "./ui/devtools-owner";
 import { FloatingWidget } from "./ui/floating/floating-widget";
 import {
   useWidgetLauncher,
   type WidgetLauncher,
 } from "./ui/floating/use-widget-launcher";
+import {
+  useHasDevtoolsOnPage,
+  useOwnsDevtools,
+  useOwnsTeamTools,
+} from "./ui/page-ownership";
 import { ElementPicker } from "./ui/picker";
 import { ShadowPortal } from "./ui/shadow-portal";
 import { useWidgetState, type WidgetState } from "./ui/use-widget-state";
@@ -26,6 +33,39 @@ const DevtoolsLayer =
       )
     : null;
 
+const TeamLayer = lazy(() =>
+  import("../sessions/team/team-layer").then((module) => ({
+    default: module.TeamLayer,
+  }))
+);
+
+const DEFAULT_APP_URL = "https://www.reflet.app";
+
+const ignoreChanges = () => () => undefined;
+
+/** Activation reads the URL and storage, which only exist in the browser: the server renders without team tools. */
+function useTeamToolsKey(options: {
+  hasWidget: boolean;
+  props: RefletFeedbackProps;
+  publicKey: string | null;
+}): string | null {
+  const { props, publicKey } = options;
+  const hasDevtoolsOnPage = useHasDevtoolsOnPage();
+  const isActivated = useSyncExternalStore(
+    ignoreChanges,
+    () =>
+      props.teamTools !== false &&
+      publicKey !== null &&
+      hasTeamActivation(publicKey),
+    () => false
+  );
+  const ownsTeamTools = useOwnsTeamTools(
+    isActivated && !hasDevtoolsOnPage,
+    options.hasWidget
+  );
+  return ownsTeamTools ? publicKey : null;
+}
+
 export function RefletFeedback(props: RefletFeedbackProps) {
   const state = useWidgetState(props);
   const launcher = useWidgetLauncher(state);
@@ -35,7 +75,12 @@ export function RefletFeedback(props: RefletFeedbackProps) {
     showsWidget
   );
   const showsDevtools = ownsDevtools && DevtoolsLayer !== null;
-  if (!(showsWidget || showsDevtools)) {
+  const teamToolsKey = useTeamToolsKey({
+    hasWidget: showsWidget,
+    props,
+    publicKey: state.publicKey,
+  });
+  if (!(showsWidget || showsDevtools || teamToolsKey)) {
     return null;
   }
   return (
@@ -58,8 +103,31 @@ export function RefletFeedback(props: RefletFeedbackProps) {
             />
           </Suspense>
         )}
+        {teamToolsKey && <TeamTools props={props} publicKey={teamToolsKey} />}
       </ShadowPortal>
     </>
+  );
+}
+
+function TeamTools({
+  props,
+  publicKey,
+}: {
+  props: RefletFeedbackProps;
+  publicKey: string;
+}) {
+  const context = useContext(RefletContext);
+  return (
+    <Suspense fallback={null}>
+      <TeamLayer
+        connection={{
+          apiUrl: props.baseUrl ?? context?.baseUrl ?? DEFAULT_API_URL,
+          appUrl: props.appUrl ?? DEFAULT_APP_URL,
+          publicKey,
+        }}
+        position={props.position ?? "bottom-right"}
+      />
+    </Suspense>
   );
 }
 

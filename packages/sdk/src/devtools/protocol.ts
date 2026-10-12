@@ -1,3 +1,5 @@
+import { SESSION_API_PATHS } from "../sessions/protocol";
+
 export const DEVTOOLS_ROUTE_BASE = "/api/reflet-devtools";
 
 /**
@@ -22,6 +24,7 @@ export const PROXIED_API_PATHS = [
   "/api/v1/feedback/list",
   "/api/v1/feedback/screenshot/save",
   "/api/v1/feedback/screenshot/upload-url",
+  ...SESSION_API_PATHS,
 ] as const;
 
 export const EDITORS = [

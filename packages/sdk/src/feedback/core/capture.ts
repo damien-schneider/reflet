@@ -238,6 +238,8 @@ export interface CaptureOptions {
   element?: Element;
   excludeSelectors?: string[];
   maxWidth?: number;
+  /** Edits the detached clone, never the live page. */
+  prepareClone?: (clone: Element) => void;
   /** Hard cap for one capture attempt before falling back. Default 10s. */
   timeout?: number;
 }
@@ -250,7 +252,13 @@ interface SnapdomOptions {
   exclude: string[];
   fast: boolean;
   filter?: (element: Element) => boolean;
+  plugins: CloneHook[];
   reconcile: boolean;
+}
+
+interface CloneHook {
+  afterClone: (context: { clone?: Element | null }) => void;
+  name: string;
 }
 
 export function buildSnapdomOptions(options: {
@@ -258,8 +266,10 @@ export function buildSnapdomOptions(options: {
   element?: Element;
   excludeSelectors?: string[];
   filter?: (element: Element) => boolean;
+  prepareClone?: (clone: Element) => void;
 }): SnapdomOptions {
   const ratio = options.devicePixelRatio ?? 1;
+  const { prepareClone } = options;
 
   return {
     cache: "disabled",
@@ -269,6 +279,14 @@ export function buildSnapdomOptions(options: {
     exclude: [`[${WIDGET_MARKER}]`, ...(options.excludeSelectors ?? [])],
     fast: true,
     filter: options.filter,
+    plugins: prepareClone
+      ? [
+          {
+            afterClone: ({ clone }) => clone && prepareClone(clone),
+            name: "reflet-prepare-clone",
+          },
+        ]
+      : [],
     reconcile: true,
   };
 }
@@ -374,6 +392,7 @@ export async function captureViewport(
           filter: withoutImages
             ? (element) => element.tagName !== "IMG"
             : undefined,
+          prepareClone: options.prepareClone,
         })
       );
       attempt.catch(() => undefined);

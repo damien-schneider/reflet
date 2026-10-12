@@ -34,21 +34,42 @@ function readEventInit(event: Event): Record<string, unknown> {
   return init;
 }
 
+function shadowedCopy(event: Event, init: Record<string, unknown>): Event {
+  const copy = new Event(event.type, {
+    bubbles: event.bubbles,
+    cancelable: event.cancelable,
+  });
+  for (const [key, value] of Object.entries(init)) {
+    Object.defineProperty(copy, key, {
+      value: typeof value === "function" ? value.bind(event) : value,
+    });
+  }
+  Object.setPrototypeOf(copy, Object.getPrototypeOf(event));
+  return copy;
+}
+
+// Firefox forces composed on constructed KeyboardEvents, which would carry the replay back out to host listeners.
+function containedReplay(event: Event): Event {
+  const init = readEventInit(event);
+  const replay: Event = Reflect.construct(event.constructor, [
+    event.type,
+    {
+      ...init,
+      bubbles: event.bubbles,
+      cancelable: event.cancelable,
+      composed: false,
+    },
+  ]);
+  return replay.composed ? shadowedCopy(event, init) : replay;
+}
+
 function replayInsideWidget(event: Event): void {
   const target = event.composedPath()[0];
   if (!(target && startsInWidget(event))) {
     return;
   }
 
-  const replay: Event = Reflect.construct(event.constructor, [
-    event.type,
-    {
-      ...readEventInit(event),
-      bubbles: event.bubbles,
-      cancelable: event.cancelable,
-      composed: false,
-    },
-  ]);
+  const replay = containedReplay(event);
   event.stopImmediatePropagation();
   target.dispatchEvent(replay);
   if (replay.defaultPrevented) {

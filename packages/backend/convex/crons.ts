@@ -87,4 +87,28 @@ crons.interval(
   internal.support.email.domains.crons.checkSendingDomains
 );
 
+crons.daily(
+  "cleanup team access credentials",
+  { hourUTC: 3, minuteUTC: 50 },
+  internal.team_access.tokens.cleanupExpiredTeamCredentials
+);
+
+crons.interval(
+  "end interrupted sessions",
+  { minutes: 15 },
+  internal.sessions.lifecycle.expiry.endInterruptedSessions
+);
+
+crons.interval(
+  "expire session audio",
+  { hours: 1 },
+  internal.sessions.ai.transcription_state.expireSessionAudio
+);
+
+crons.daily(
+  "purge deleted sessions",
+  { hourUTC: 4, minuteUTC: 15 },
+  internal.sessions.lifecycle.removal.purgeTombstones
+);
+
 export default crons;

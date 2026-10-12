@@ -1,0 +1,88 @@
+export const SESSION_API_PATHS = [
+  "/api/v1/sessions/analyze",
+  "/api/v1/sessions/collection",
+  "/api/v1/sessions/delete",
+  "/api/v1/sessions/detail",
+  "/api/v1/sessions/events",
+  "/api/v1/sessions/evidence",
+  "/api/v1/sessions/handoffs",
+  "/api/v1/sessions/handoffs/delivered",
+  "/api/v1/sessions/identity",
+  "/api/v1/sessions/list",
+  "/api/v1/sessions/proposals/clarify",
+  "/api/v1/sessions/proposals/create",
+  "/api/v1/sessions/proposals/decide",
+  "/api/v1/sessions/proposals/edit",
+  "/api/v1/sessions/proposals/feedback",
+  "/api/v1/sessions/proposals/merge",
+  "/api/v1/sessions/proposals/separate",
+  "/api/v1/sessions/proposals/verify",
+  "/api/v1/sessions/segments",
+  "/api/v1/sessions/segments/correct",
+  "/api/v1/sessions/segments/retry",
+  "/api/v1/sessions/start",
+  "/api/v1/sessions/update",
+  "/api/v1/sessions/upload-url",
+] as const;
+
+export type SessionApiPath = (typeof SESSION_API_PATHS)[number];
+
+const MINUTE_MS = 60_000;
+const HOUR_MS = 60 * MINUTE_MS;
+const DAY_MS = 24 * HOUR_MS;
+
+export const SESSION_LIMITS = {
+  audioRetentionMs: DAY_MS,
+  maxDurationMs: 30 * MINUTE_MS,
+  maxEvents: 5000,
+  maxEventsPerBatch: 200,
+  maxEvidence: 60,
+  maxImageBytes: 2_500_000,
+  maxLocalBufferBytes: 60_000_000,
+  maxSegmentBytes: 1_100_000,
+  maxSegmentMs: 30_000,
+  maxSegments: 400,
+  minAutoCaptureIntervalMs: 10_000,
+  warnBeforeLimitMs: 5 * MINUTE_MS,
+} as const;
+
+export const SESSION_TEXT_LIMITS = {
+  clarification: 1000,
+  label: 160,
+  linkAccess: 200,
+  linkLabel: 120,
+  listItem: 300,
+  listItems: 8,
+  need: 300,
+  note: 1000,
+  observed: 2000,
+  pageTitle: 300,
+  response: 1000,
+  segmentText: 5000,
+  selector: 600,
+  sessionTitle: 120,
+  url: 2000,
+} as const;
+
+export const SESSION_START_PAST_TOLERANCE_MS = DAY_MS;
+export const SESSION_START_FUTURE_TOLERANCE_MS = MINUTE_MS;
+export const SESSION_INTERRUPT_AFTER_MS =
+  SESSION_LIMITS.maxDurationMs + 30 * MINUTE_MS;
+export const SESSION_TOMBSTONE_RETENTION_MS = 30 * DAY_MS;
+export const SESSION_LIST_LIMIT = 50;
+export const MAX_HANDOFF_DELIVERIES = 20;
+export const SESSION_CRON_BATCH_SIZE = 100;
+export const DEFAULT_SESSION_TITLE = "Untitled session";
+export const AUDIO_CONTENT_TYPES: Record<string, true> = { "audio/wav": true };
+export const IMAGE_CONTENT_TYPES: Record<string, true> = {
+  "image/jpeg": true,
+  "image/png": true,
+  "image/webp": true,
+};
+
+export const SESSION_MEMBER_REQUIRED =
+  "Sessions need a signed-in Reflet member. Connect from the devtools Board tab.";
+export const SESSION_NOT_FOUND = "Session not found";
+export const RECORDED_WHILE_PAUSED = "Recorded while paused";
+export const REVISION_CONFLICT =
+  "This changed since you opened it. Reload and try again.";

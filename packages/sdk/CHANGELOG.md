@@ -5,10 +5,13 @@ All notable changes to `reflet-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.6.6] - 2026-10-12
 
 ### Added
 
+- Sessions, in the devtools Sessions tab: talk through your app while you use it, and Reflet records your voice, what you point at and mark, and screenshots at the start, at each mark and on each page change. Form fields appear empty in those screenshots, and password fields, card fields and `data-reflet-redact` elements are left out. Pause stops all collection; a reload stops the recording and never turns the microphone back on. Recordings wait in IndexedDB and upload in order, so going offline or reloading loses nothing already saved.
+- After a session, Reflet transcribes it (Whisper through OpenRouter, zero data retention; audio deleted once transcribed) and proposes what you asked for, each with the quotes and screenshots behind it, what you set aside and what stays unknown. Keep, put aside, dismiss, edit, clarify or merge proposals, correct the transcript, then hand the kept ones off: copy the brief for a coding agent, export it as a `.zip` with its screenshots, or create internal feedback.
+- Team tools in production: members of your Reflet organization open a page with `?reflet-team`, sign in with Reflet in a popup, and record sessions on the deployed app. Tokens are bound to the origin and the widget's key, last 7 days and are revocable from the account page. The key must list the origin under Allowed domains. A page shows one set of team tools however many widgets it mounts, and none where the devtools already run. New `teamTools` (default `true`) and `appUrl` props on `RefletFeedback`.
 - In-app surveys. Mount `<RefletSurveys />` inside `RefletProvider` and every survey the visitor is eligible for is armed — page visit (including client-side navigation), time on page, exit intent, custom events via `useRefletSurveys().track(name)`, and feedback sent from the SDK (the floating widget, `FeedbackDialog`, `useCreateFeedback` or `reflet.create`). One survey shows at a time, in a shadow root at the position set in the dashboard, with branching, several endings, Back, a progress bar, keyboard shortcuts (Enter, Escape, digits, Y/N) and light, dark or automatic theme.
 - `useRefletSurveys()` returns `track`, `showSurvey`, `dismissSurvey` and `activeSurveyId`; calls made before surveys load are queued.
 - `useSurveySession(survey)` and `<SurveyCard />` to run and render surveys in your own UI, also exported from the new `reflet-sdk/surveys` entry with `previewTransport` and `SurveySession`.
@@ -17,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - `ChangelogEntry` now matches what the API returns: linked feedback is in `items` (each with `id`, `title` and `status`), not `feedback`. The changelog widget no longer crashes on load and shows versions as published (`v1.2.3`, not `vv1.2.3`). Unset `ChangelogWidget` props fall back to the widget defaults instead of clearing them.
+- In Firefox, keyboard handlers on the widget's and devtools' controls run again, so Enter saves a picker note, and keys typed in the widget no longer reach the host page's shortcuts. Firefox lets every key press the widget re-sent internally escape back out to the page.
 
 ## [0.6.5] - 2026-10-04
 

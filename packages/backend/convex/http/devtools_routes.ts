@@ -3,7 +3,7 @@ import { z } from "zod";
 import { internal } from "../_generated/api";
 import { httpAction } from "../_generated/server";
 import { DEVTOOLS_TOKEN_PREFIX } from "../devtools/constants";
-import { pkceChallengeFor } from "../devtools/pkce";
+import { PKCE_CODE_VERIFIER, pkceChallengeFor } from "../devtools/pkce";
 import { hashSecretKey } from "../feedback/api_auth";
 import { randomSecretHex } from "../shared/hmac";
 import { errorResponse, jsonResponse } from "./helpers";
@@ -14,7 +14,7 @@ const INVALID_CONNECT_CODE =
 
 const tokenExchangeSchema = z.object({
   code: z.string().min(1).max(200),
-  codeVerifier: z.string().regex(/^[A-Za-z0-9_-]{43,128}$/),
+  codeVerifier: z.string().regex(PKCE_CODE_VERIFIER),
   redirectUri: z.string().max(500),
 });
 

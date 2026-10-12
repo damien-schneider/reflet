@@ -13,6 +13,8 @@ import { InstallCommand } from "@/components/docs/install-command";
 import { PropsTable } from "@/components/docs/props-table";
 import { InlineCode } from "@/components/ui/typography";
 import { generatePageMetadata } from "@/lib/seo-config";
+import { SECTIONS } from "./sections";
+import { DevtoolsSection, SessionsSection } from "./team-sections";
 
 export const metadata: Metadata = generatePageMetadata({
   description:
@@ -122,6 +124,19 @@ const PROPS = [
     type: "boolean",
   },
   {
+    default: "true",
+    description:
+      "Lets signed-in members of your Reflet organization record sessions on your deployed app. Visitors never see it.",
+    name: "teamTools",
+    type: "boolean",
+  },
+  {
+    default: '"https://www.reflet.app"',
+    description: "Reflet web app origin that team tools sign in on.",
+    name: "appUrl",
+    type: "string",
+  },
+  {
     default: "—",
     description: "Fires with the created feedback id after a successful send.",
     name: "onSubmit",
@@ -152,24 +167,6 @@ const IDENTIFIED_SNIPPET = `<RefletFeedback
   metadata={{ plan: user.plan, tenant: user.orgSlug }}
   hotkey="mod+shift+f"
 />`;
-
-const DEVTOOLS_ROUTE_SNIPPET = `// app/api/reflet-devtools/[...path]/route.ts
-export { GET, POST } from "reflet-sdk/devtools/next";
-
-// vite.config.ts
-import { refletDevtools } from "reflet-sdk/devtools/vite";
-export default defineConfig({ plugins: [react(), refletDevtools()] });`;
-
-const SECTIONS = [
-  { id: "install", label: "Install" },
-  { id: "manual-setup", label: "Or wire it up yourself" },
-  { id: "agent-setup", label: "Set it up with your coding agent" },
-  { id: "report-contents", label: "What ends up on a report" },
-  { id: "props", label: "Props" },
-  { id: "identified-users", label: "Identified users" },
-  { id: "devtools", label: "Devtools for your team" },
-  { id: "good-to-know", label: "Good to know" },
-] as const;
 
 function ReportContents() {
   return (
@@ -251,34 +248,6 @@ function GoodToKnow() {
   );
 }
 
-function DevtoolsSection() {
-  return (
-    <DocsSection id="devtools" sections={SECTIONS}>
-      <DocsText>
-        On your dev server, the same component adds a small bar above the
-        launcher that you can drag anywhere. Pick an element to write a note on
-        it, press ⌘C to copy it with its source, or Shift-click it to open its
-        source with the JSX highlighted. Copy your notes as one prompt for a
-        coding agent, or send them to the board as internal feedback that only
-        members see. The Board tab lists the feedback reported on the current
-        page, with the element and its code one click away. Production builds
-        never ship it.
-      </DocsText>
-      <DocsText>
-        Code view and the board go through one dev-only route. To reach the
-        board, click Connect to Reflet in the Board tab and approve your dev
-        server on reflet.app: it keeps a revocable token outside your
-        repository. You can also set <InlineCode>REFLET_SECRET_KEY</InlineCode>{" "}
-        on the server instead. Set <InlineCode>REFLET_EDITOR</InlineCode> to{" "}
-        <InlineCode>cursor</InlineCode>, <InlineCode>zed</InlineCode>,{" "}
-        <InlineCode>windsurf</InlineCode> or <InlineCode>webstorm</InlineCode>{" "}
-        for the editor links.
-      </DocsText>
-      <CodeBlock code={DEVTOOLS_ROUTE_SNIPPET} />
-    </DocsSection>
-  );
-}
-
 export default function FloatingFeedbackPage() {
   return (
     <DocsPage
@@ -345,6 +314,8 @@ export default function FloatingFeedbackPage() {
       </DocsSection>
 
       <DevtoolsSection />
+
+      <SessionsSection />
 
       <DocsSection id="good-to-know" sections={SECTIONS}>
         <GoodToKnow />

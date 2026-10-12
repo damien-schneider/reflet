@@ -1,5 +1,11 @@
-import { act, cleanup, fireEvent, render } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  waitFor,
+} from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { RefletFeedback } from "../widget";
 
 afterEach(() => {
@@ -362,5 +368,24 @@ describe("RefletFeedback", () => {
     expect(shadow().querySelector(".root")?.getAttribute("data-position")).toBe(
       "top-left"
     );
+  });
+
+  it("mounts one set of team tools however many widgets the page has", async () => {
+    window.history.replaceState(null, "", "/?reflet-team");
+    render(
+      <>
+        <RefletFeedback enabled={false} publicKey="fb_pub_test" />
+        <RefletFeedback enabled={false} publicKey="fb_pub_test" />
+      </>
+    );
+    const signInCards = () =>
+      [...document.querySelectorAll("[data-reflet-widget]")].filter((host) =>
+        host.shadowRoot?.querySelector("#rf-team-title")
+      ).length;
+
+    await act(() => vi.dynamicImportSettled());
+    await waitFor(() => expect(signInCards()).toBeGreaterThan(0));
+    expect(signInCards()).toBe(1);
+    window.history.replaceState(null, "", "/");
   });
 });

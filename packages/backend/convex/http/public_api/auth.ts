@@ -143,11 +143,20 @@ type AuthenticationResult =
   | { success: true; auth: ApiAuthContext }
   | { success: false; response: Response };
 
-async function authenticateDevtoolsToken(
+export interface DevtoolsMember {
+  devtoolsTokenId: Id<"devtoolsTokens">;
+  organizationId: Id<"organizations">;
+  userId: string;
+}
+
+export async function verifyDevtoolsToken(
   ctx: PublicApiCtx,
   request: Request,
   token: string
-): Promise<AuthenticationResult> {
+): Promise<
+  | { success: true; member: DevtoolsMember }
+  | { success: false; response: Response }
+> {
   const { pathname } = new URL(request.url);
   if (!DEVTOOLS_TOKEN_API_PATHS.some((path) => path === pathname)) {
     return {
@@ -159,11 +168,11 @@ async function authenticateDevtoolsToken(
     };
   }
 
-  const validation = await ctx.runQuery(
+  const member = await ctx.runQuery(
     internal.devtools.tokens.validateDevtoolsToken,
     { tokenHash: await hashSecretKey(token) }
   );
-  if (!validation) {
+  if (!member) {
     return {
       response: errorResponse(
         "Invalid or expired devtools token. Reconnect from the devtools Board tab.",
@@ -174,15 +183,26 @@ async function authenticateDevtoolsToken(
   }
 
   await ctx.runMutation(internal.devtools.tokens.touchDevtoolsToken, {
-    devtoolsTokenId: validation.devtoolsTokenId,
+    devtoolsTokenId: member.devtoolsTokenId,
   });
+  return { member, success: true };
+}
 
+async function authenticateDevtoolsToken(
+  ctx: PublicApiCtx,
+  request: Request,
+  token: string
+): Promise<AuthenticationResult> {
+  const verified = await verifyDevtoolsToken(ctx, request, token);
+  if (!verified.success) {
+    return verified;
+  }
   return {
     auth: {
-      credential: { devtoolsTokenId: validation.devtoolsTokenId },
+      credential: { devtoolsTokenId: verified.member.devtoolsTokenId },
       hasPrivateAccess: true,
-      memberUserId: validation.userId,
-      organizationId: validation.organizationId,
+      memberUserId: verified.member.userId,
+      organizationId: verified.member.organizationId,
     },
     success: true,
   };

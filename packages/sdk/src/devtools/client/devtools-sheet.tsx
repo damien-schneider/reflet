@@ -1,4 +1,9 @@
-import { type ReactNode, useEffect } from "react";
+import {
+  type ReactNode,
+  type RefObject,
+  useEffect,
+  useLayoutEffect,
+} from "react";
 import { useFloatingPosition } from "../../feedback/ui/floating/use-floating-position";
 import { CloseIcon, TargetIcon } from "../../feedback/ui/icons";
 import { listenToKeydown } from "../../feedback/ui/widget-events";
@@ -11,12 +16,39 @@ const TAB_LABELS: Record<SheetTab, string> = {
   code: "Code",
   inbox: "Board",
   notes: "Notes",
+  sessions: "Sessions",
 };
 
 const SHEET_POSITION_KEY = "reflet-devtools-sheet-position";
 
+function useSheetFocus(rootRef: RefObject<HTMLElement | null>) {
+  useLayoutEffect(() => {
+    const root = rootRef.current;
+    const scope = root?.getRootNode();
+    const opener =
+      scope instanceof ShadowRoot || scope instanceof Document
+        ? scope.activeElement
+        : null;
+    const isOpenerHidden =
+      opener instanceof HTMLElement &&
+      typeof opener.checkVisibility === "function" &&
+      !opener.checkVisibility({ visibilityProperty: true });
+    if (isOpenerHidden) {
+      root
+        ?.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]')
+        ?.focus({ preventScroll: true });
+    }
+    return () => {
+      if (opener instanceof HTMLElement && opener.isConnected) {
+        opener.focus({ preventScroll: true });
+      }
+    };
+  }, [rootRef]);
+}
+
 export function DevtoolsSheet({
   children,
+  label = "Reflet devtools",
   onClose,
   onPick,
   onSelectTab,
@@ -25,8 +57,9 @@ export function DevtoolsSheet({
   tabs,
 }: {
   children: ReactNode;
+  label?: string;
   onClose: () => void;
-  onPick: () => void;
+  onPick?: () => void;
   onSelectTab: (tab: SheetTab) => void;
   side: "left" | "right";
   tab: SheetTab;
@@ -39,6 +72,7 @@ export function DevtoolsSheet({
   });
   const isMoved = floating.position !== null;
   const { rootRef } = floating;
+  useSheetFocus(rootRef);
 
   useEffect(
     () =>
@@ -52,7 +86,7 @@ export function DevtoolsSheet({
 
   return (
     <aside
-      aria-label="Reflet devtools"
+      aria-label={label}
       className="dt-sheet glass"
       data-moved={isMoved}
       data-side={side}
@@ -98,15 +132,17 @@ export function DevtoolsSheet({
           type="button"
           {...floating.handleProps}
         />
-        <button
-          aria-label={PICK_BUTTON_LABEL}
-          className="icon-btn"
-          onClick={onPick}
-          title="Pick an element"
-          type="button"
-        >
-          <TargetIcon />
-        </button>
+        {onPick && (
+          <button
+            aria-label={PICK_BUTTON_LABEL}
+            className="icon-btn"
+            onClick={onPick}
+            title="Pick an element"
+            type="button"
+          >
+            <TargetIcon />
+          </button>
+        )}
         <div className="dt-tabs" role="tablist">
           {tabs.map((option) => (
             <button
@@ -122,7 +158,7 @@ export function DevtoolsSheet({
           ))}
         </div>
         <button
-          aria-label="Close devtools panel"
+          aria-label={`Close ${label} panel`}
           className="icon-btn"
           onClick={onClose}
           title="Close"
