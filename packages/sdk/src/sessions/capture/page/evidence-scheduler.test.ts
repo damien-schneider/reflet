@@ -233,4 +233,57 @@ describe("createEvidenceScheduler", () => {
       })
     );
   });
+
+  describe("screenshots on a long hover", () => {
+    const ROOMY_LIMITS = { ...LIMITS, maxEvidence: 60 };
+
+    it("captures the hovered element when no screenshot shows this screen yet", async () => {
+      const { evidence, scheduler } = startScheduler(ROOMY_LIMITS);
+      const button = document.createElement("button");
+      button.textContent = "Save";
+      document.body.append(button);
+      const clientKey = scheduler.hovered(button);
+      await vi.runAllTimersAsync();
+      expect(evidence).toEqual([
+        expect.objectContaining({
+          clientKey,
+          element: expect.objectContaining({ role: "button" }),
+          trigger: "hover",
+        }),
+      ]);
+      button.remove();
+    });
+
+    it("skips the hover while the last screenshot still shows the same screen", async () => {
+      const { scheduler } = startScheduler(ROOMY_LIMITS);
+      scheduler.capture({ trigger: "start" });
+      await vi.advanceTimersByTimeAsync(20_000);
+      expect(scheduler.hovered(document.body)).toBeNull();
+    });
+
+    it("captures again after a click may have changed what the screen shows", async () => {
+      const { scheduler } = startScheduler(ROOMY_LIMITS);
+      scheduler.capture({ trigger: "start" });
+      await vi.advanceTimersByTimeAsync(20_000);
+      scheduler.clicked();
+      expect(scheduler.hovered(document.body)).not.toBeNull();
+    });
+
+    it("waits the auto-capture interval between two screenshots", async () => {
+      const { scheduler } = startScheduler(ROOMY_LIMITS);
+      scheduler.capture({ trigger: "start" });
+      scheduler.clicked();
+      await vi.advanceTimersByTimeAsync(9999);
+      expect(scheduler.hovered(document.body)).toBeNull();
+    });
+
+    it("leaves the last screenshots of the budget to marks and pointed elements", async () => {
+      const { scheduler } = startScheduler({ ...LIMITS, maxEvidence: 21 });
+      scheduler.capture({ trigger: "start" });
+      scheduler.clicked();
+      await vi.advanceTimersByTimeAsync(20_000);
+      expect(scheduler.hovered(document.body)).toBeNull();
+      expect(scheduler.capture({ trigger: "mark" })).not.toBeNull();
+    });
+  });
 });

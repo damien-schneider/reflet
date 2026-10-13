@@ -2,12 +2,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { SessionEvent } from "../../protocol";
 import { startInteractionRecorder } from "./interaction-recorder";
 
-function startRecording() {
+function startRecording(
+  onLongHover: (element: Element) => string | null = () => null
+) {
   const events: SessionEvent[] = [];
   const recorder = startInteractionRecorder({
     atMs: () => Date.now(),
     includeSource: false,
     onEvent: (event) => events.push(event),
+    onLongHover,
   });
   return { events, recorder };
 }
@@ -103,6 +106,36 @@ describe("startInteractionRecorder", () => {
     pointAt(byId("editor"));
     expect(events).toEqual([]);
     recorder.stop();
+  });
+
+  it("asks for a screenshot once the pointer rests 1.2 s and ties it to the hover", () => {
+    const onLongHover = vi.fn((_element: Element) => "shot-1");
+    const { events, recorder } = startRecording(onLongHover);
+    pointAt(byId("inner"));
+    vi.advanceTimersByTime(1199);
+    expect(onLongHover).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(1);
+    expect(onLongHover).toHaveBeenCalledWith(byId("save"));
+    vi.advanceTimersByTime(800);
+    pointAt(byId("editor"));
+    expect(events[0]).toMatchObject({
+      durationMs: 2000,
+      evidenceClientKey: "shot-1",
+      kind: "dwell",
+    });
+    recorder.stop();
+  });
+
+  it("asks for no screenshot when the pointer moves on before 1.2 s", () => {
+    const onLongHover = vi.fn((_element: Element) => "shot-1");
+    const { events, recorder } = startRecording(onLongHover);
+    pointAt(byId("inner"));
+    vi.advanceTimersByTime(900);
+    pointAt(byId("editor"));
+    vi.advanceTimersByTime(400);
+    recorder.stop();
+    expect(onLongHover).not.toHaveBeenCalled();
+    expect(events[0]).not.toHaveProperty("evidenceClientKey");
   });
 
   it("emits a hover still in progress when recording stops", () => {

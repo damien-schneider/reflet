@@ -63,6 +63,18 @@ const screenshot = (
 
 const passage = { endMs: 8000, startMs: 5500 };
 
+const hoverOn = (
+  label: string,
+  hover: { atMs: number; durationMs: number; evidenceClientKey?: string },
+  frame: FrameValue
+): SessionEventValue => ({
+  ...hover,
+  element: elementNamed(label),
+  frame,
+  kind: "dwell",
+  pointer: { x: 60, y: 310 },
+});
+
 describe("automatic context", () => {
   test("a phrase after a scroll links to the element clicked after the scroll, with that click's own frame", () => {
     const top = frameAt(0);
@@ -191,6 +203,54 @@ describe("automatic context", () => {
     expect(linked.context).toEqual([
       expect.objectContaining({ durationMs: 12_000, kind: "dwell" }),
     ]);
+  });
+});
+
+describe("which hovered element a passage is about", () => {
+  test("the element the pointer rested on outranks one it only crossed, without flagging the passage unclear", () => {
+    const frame = frameAt(0);
+    const linked = resolveSegmentContext({
+      events: [
+        hoverOn("Nav link", { atMs: 5600, durationMs: 800 }, frame),
+        hoverOn("Pricing card", { atMs: 6400, durationMs: 4000 }, frame),
+      ],
+      evidence: [],
+      segment: passage,
+    });
+
+    expect(linked.context.map(({ label }) => label)).toEqual([
+      "Pricing card",
+      "Nav link",
+    ]);
+    expect(linked.ambiguous).toBe(false);
+  });
+
+  test("the screenshot taken while the pointer rested on the element outlines it exactly", () => {
+    const frame = frameAt(0);
+    const linked = resolveSegmentContext({
+      events: [
+        hoverOn(
+          "Pricing card",
+          { atMs: 5600, durationMs: 3000, evidenceClientKey: "key-E-hover" },
+          frame
+        ),
+      ],
+      evidence: [
+        screenshot("E-start", { atMs: 5000, capturedAtMs: 5100, frame }),
+        screenshot("E-hover", {
+          atMs: 6800,
+          capturedAtMs: 7300,
+          frame,
+          trigger: "hover",
+        }),
+      ],
+      segment: passage,
+    });
+
+    expect(linked.context[0]).toMatchObject({
+      evidenceId: "E-hover",
+      evidenceMatch: "exact",
+    });
   });
 });
 

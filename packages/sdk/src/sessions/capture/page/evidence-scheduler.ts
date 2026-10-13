@@ -16,6 +16,7 @@ import {
 } from "../element-ref";
 
 const NAVIGATION_SETTLE_MS = 1500;
+const CAPTURES_KEPT_FOR_MARKS = 20;
 const CAPTURE_FAILED = "The page could not be captured.";
 const CAPTURE_TOO_LARGE = "The screenshot was larger than the upload limit.";
 const STOPPED_BEFORE_CAPTURE =
@@ -42,6 +43,8 @@ export interface EvidenceRequest {
 export interface EvidenceScheduler {
   cancelPending: () => void;
   capture: (request: EvidenceRequest) => string | null;
+  clicked: () => void;
+  hovered: (element: Element) => string | null;
   navigated: () => void;
 }
 
@@ -112,6 +115,13 @@ function evidenceBase(
   };
 }
 
+const showsSameScreen = (first: Frame, second: Frame): boolean =>
+  first.url === second.url &&
+  first.scrollX === second.scrollX &&
+  first.scrollY === second.scrollY &&
+  first.viewportWidth === second.viewportWidth &&
+  first.viewportHeight === second.viewportHeight;
+
 interface CollectionRun {
   hasStopped: () => boolean;
   stop: () => void;
@@ -140,6 +150,8 @@ export function createEvidenceScheduler(
   const { limits } = options;
   let captured = 0;
   let lastCaptureAtMs = Number.NEGATIVE_INFINITY;
+  let lastCapturedFrame: Frame | null = null;
+  let hasClickedSinceCapture = false;
   let navigationTimer: number | undefined;
   let previousCapture: Promise<unknown> = Promise.resolve();
   let collectionRun = startCollectionRun();
@@ -154,6 +166,8 @@ export function createEvidenceScheduler(
     captured += 1;
     const base = evidenceBase(trigger, request, options);
     lastCaptureAtMs = base.atMs;
+    lastCapturedFrame = base.frame;
+    hasClickedSinceCapture = false;
     const run = collectionRun;
     const stopped = withoutImage(base, STOPPED_BEFORE_CAPTURE);
     const rendered = previousCapture.then(() =>
@@ -169,6 +183,15 @@ export function createEvidenceScheduler(
     return base.clientKey;
   };
 
+  const isLastCaptureStale = (): boolean =>
+    lastCapturedFrame === null ||
+    hasClickedSinceCapture ||
+    !showsSameScreen(lastCapturedFrame, captureFrame());
+
+  const canAutoCapture = (): boolean =>
+    captured < limits.maxEvidence - CAPTURES_KEPT_FOR_MARKS &&
+    options.atMs() - lastCaptureAtMs >= limits.minAutoCaptureIntervalMs;
+
   return {
     cancelPending: () => {
       window.clearTimeout(navigationTimer);
@@ -176,6 +199,13 @@ export function createEvidenceScheduler(
       collectionRun = startCollectionRun();
     },
     capture: (request) => take(request.trigger, request),
+    clicked: () => {
+      hasClickedSinceCapture = true;
+    },
+    hovered: (element) =>
+      canAutoCapture() && isLastCaptureStale()
+        ? take("hover", { element })
+        : null,
     navigated: () => {
       window.clearTimeout(navigationTimer);
       navigationTimer = window.setTimeout(() => {

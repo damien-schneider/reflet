@@ -79,11 +79,20 @@ const EVIDENCE_MATCH_WINDOW_MS = 10_000;
 const EXACT_CAPTURE_TOLERANCE_MS = 1500;
 const KIND_WEIGHTS = {
   click: 0.7,
-  dwell: 0.4,
+  dwell: 0.6,
   mark: 1,
   navigation: 0.3,
   select: 1,
 } as const satisfies Record<LinkableEventKind, number>;
+const FULL_WEIGHT_HOVER_MS = 4000;
+
+const eventWeight = (event: LinkableEvent): number => {
+  if (event.kind !== "dwell") {
+    return KIND_WEIGHTS[event.kind];
+  }
+  const heldShare = Math.min(1, (event.durationMs ?? 0) / FULL_WEIGHT_HOVER_MS);
+  return KIND_WEIGHTS.dwell * heldShare;
+};
 
 const temporalProximity = (
   event: { startMs: number; endMs: number },
@@ -132,7 +141,7 @@ const toCandidate = (
   );
   return proximity === 0
     ? null
-    : { ...event, score: KIND_WEIGHTS[event.kind] * proximity };
+    : { ...event, score: eventWeight(event) * proximity };
 };
 
 export const showsSameScreen = (
@@ -166,6 +175,11 @@ const nearestSameScreen = <EvidenceId extends string>(
   return best;
 };
 
+const distanceFromEventMs = (event: LinkableEvent, atMs: number): number => {
+  const endMs = event.atMs + (event.durationMs ?? 0);
+  return Math.max(event.atMs - atMs, 0, atMs - endMs);
+};
+
 const isCoherentCapture = (
   event: LinkableEvent,
   evidence: LinkableEvidence<string>
@@ -173,7 +187,8 @@ const isCoherentCapture = (
   evidence.capturedAtMs !== undefined &&
   evidence.frame !== undefined &&
   showsSameScreen(evidence.frame, event.frame) &&
-  Math.abs(evidence.capturedAtMs - event.atMs) <= EXACT_CAPTURE_TOLERANCE_MS;
+  distanceFromEventMs(event, evidence.capturedAtMs) <=
+    EXACT_CAPTURE_TOLERANCE_MS;
 
 const evidenceFor = <EvidenceId extends string>(
   event: LinkableEvent,

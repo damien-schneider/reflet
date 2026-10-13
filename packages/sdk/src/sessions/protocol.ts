@@ -40,6 +40,7 @@ export const EVIDENCE_TRIGGERS = [
   "navigation",
   "select",
   "manual",
+  "hover",
 ] as const;
 export type EvidenceTrigger = (typeof EVIDENCE_TRIGGERS)[number];
 
@@ -154,6 +155,7 @@ export const sessionEventSchema = z.discriminatedUnion("kind", [
     atMs: z.number(),
     durationMs: z.number(),
     element: elementRefSchema,
+    evidenceClientKey: z.string().optional(),
     frame: frameSchema,
     kind: z.literal("dwell"),
     pointer: pointerSchema,

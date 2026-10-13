@@ -185,8 +185,17 @@ export class LiveSession {
         maxWavDurationMs(limits.maxSegmentBytes)
       ),
       onChunk: this.recordChunk,
-      onEvent: (event) => this.events.add(event),
+      onEvent: (event) => {
+        this.events.add(event);
+        if (event.kind === "click") {
+          this.evidence.clicked();
+        }
+      },
       onLevel: this.hooks.onLevel,
+      onLongHover: (element) =>
+        this.quota.stopped.has("evidence")
+          ? null
+          : this.evidence.hovered(element),
       onNavigate: (frame) => {
         this.events.add({ atMs: this.clock.atMs(), frame, kind: "navigation" });
         this.evidence.navigated();

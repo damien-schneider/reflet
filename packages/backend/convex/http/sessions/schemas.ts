@@ -54,6 +54,7 @@ const sessionEvent = z.discriminatedUnion("kind", [
     atMs: offsetMs,
     durationMs: offsetMs,
     element: elementRef,
+    evidenceClientKey: clientKey.optional(),
     frame,
     kind: z.literal("dwell"),
     pointer,
@@ -182,7 +183,7 @@ export const evidenceBody = z.object({
   missingReason: text(CAPS.note).optional(),
   note: text(CAPS.note).optional(),
   sessionId: id,
-  trigger: z.enum(["start", "mark", "navigation", "select", "manual"]),
+  trigger: z.enum(["start", "mark", "navigation", "select", "manual", "hover"]),
 });
 
 export const evidenceIdBody = z.object({ evidenceId: id });

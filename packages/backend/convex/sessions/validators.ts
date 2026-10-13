@@ -66,6 +66,7 @@ export const sessionEventValidator = v.union(
     atMs: v.number(),
     durationMs: v.number(),
     element: elementRefValidator,
+    evidenceClientKey: v.optional(v.string()),
     frame: frameValidator,
     kind: v.literal("dwell"),
     pointer: pointerValidator,
@@ -143,7 +144,8 @@ export const evidenceTriggerValidator = v.union(
   v.literal("mark"),
   v.literal("navigation"),
   v.literal("select"),
-  v.literal("manual")
+  v.literal("manual"),
+  v.literal("hover")
 );
 
 export const evidenceLinkValidator = v.object({

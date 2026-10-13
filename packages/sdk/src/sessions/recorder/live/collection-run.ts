@@ -95,6 +95,7 @@ export interface CollectionRunOptions {
   onChunk: (chunk: SpeechChunk) => void;
   onEvent: (event: SessionEvent) => void;
   onLevel: (level: number) => void;
+  onLongHover: (element: Element) => string | null;
   onNavigate: (frame: Frame) => void;
   voice: VoiceCapture | null;
 }

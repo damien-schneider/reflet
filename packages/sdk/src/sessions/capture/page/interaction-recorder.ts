@@ -7,6 +7,7 @@ import {
 } from "../element-ref";
 
 const MIN_DWELL_MS = 700;
+const HOVER_CAPTURE_DELAY_MS = 1200;
 const POINTER_SAMPLE_INTERVAL_MS = 100;
 const SETTLE_DEBOUNCE_MS = 400;
 
@@ -14,6 +15,7 @@ export interface InteractionRecorderOptions {
   atMs: () => number;
   includeSource: boolean;
   onEvent: (event: SessionEvent) => void;
+  onLongHover: (element: Element) => string | null;
 }
 
 export interface InteractionRecorder {
@@ -72,8 +74,17 @@ function watchDwell(options: InteractionRecorderOptions, signal: AbortSignal) {
   let hovered: Element | null = null;
   let lastSampleAt = Number.NEGATIVE_INFINITY;
   let entered: Omit<DwellEvent, "durationMs"> | null = null;
+  let hoverCaptureTimer: number | undefined;
+
+  const captureLongHover = (element: Element) => {
+    const evidenceClientKey = options.onLongHover(element);
+    if (entered && evidenceClientKey) {
+      entered = { ...entered, evidenceClientKey };
+    }
+  };
 
   const settle = () => {
+    window.clearTimeout(hoverCaptureTimer);
     if (!entered) {
       return;
     }
@@ -108,6 +119,10 @@ function watchDwell(options: InteractionRecorderOptions, signal: AbortSignal) {
         kind: "dwell",
         pointer: pointerOf(event),
       };
+      hoverCaptureTimer = window.setTimeout(
+        () => captureLongHover(element),
+        HOVER_CAPTURE_DELAY_MS
+      );
     }
   };
 

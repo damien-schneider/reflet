@@ -1,6 +1,7 @@
 import type { ElementRef, Frame, SessionEvidence } from "../../../protocol";
 
 const TRIGGER_LABELS: Record<SessionEvidence["trigger"], string> = {
+  hover: "Long hover",
   manual: "Added by hand",
   mark: "Marked moment",
   navigation: "Page change",

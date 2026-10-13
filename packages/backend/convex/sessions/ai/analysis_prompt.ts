@@ -22,6 +22,7 @@ const MAX_HANDLED_PROPOSALS = 30;
 type EvidenceTrigger = Doc<"sessionEvidence">["trigger"];
 
 const EXPLICIT_TRIGGERS: Record<EvidenceTrigger, boolean> = {
+  hover: false,
   manual: true,
   mark: true,
   navigation: false,
@@ -30,6 +31,7 @@ const EXPLICIT_TRIGGERS: Record<EvidenceTrigger, boolean> = {
 };
 
 const TRIGGER_DESCRIPTIONS: Record<EvidenceTrigger, string> = {
+  hover: "while the author rested the pointer on an element",
   manual: "added by the author",
   mark: "when the author marked the moment",
   navigation: "after a page change",
