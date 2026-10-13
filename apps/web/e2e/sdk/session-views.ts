@@ -6,6 +6,7 @@ export type Decision = "pending" | "kept" | "later" | "dismissed";
 type FieldValue = string | string[];
 
 export interface BoardSession {
+  analyzed: boolean;
   collection: Collection;
   continues: { intentionId: string; revision: number } | null;
   evidence: Record<string, unknown>[];
@@ -91,15 +92,21 @@ export function findSession(state: BoardState, sessionId: unknown) {
   return session;
 }
 
+function analysisState(session: BoardSession) {
+  if (session.analyzed) {
+    return "succeeded";
+  }
+  return session.collection === "ended" ? "waiting" : "idle";
+}
+
 export function summary(session: BoardSession, intentions: BoardIntention[]) {
-  const isAnalyzed = session.collection === "ended";
   const own = intentions.filter(({ sessionId }) => sessionId === session.id);
   return {
     analysis: {
-      analyzedRevision: isAnalyzed ? 1 : null,
+      analyzedRevision: session.analyzed ? 1 : null,
       error: null,
-      proposalCount: isAnalyzed ? own.length : null,
-      state: isAnalyzed ? "succeeded" : "idle",
+      proposalCount: session.analyzed ? own.length : null,
+      state: analysisState(session),
       transcriptRevision: 1,
       updatedAt: null,
     },
@@ -115,7 +122,7 @@ export function summary(session: BoardSession, intentions: BoardIntention[]) {
       segments: session.segments.length,
     },
     durationMs: 4000,
-    endedAt: isAnalyzed ? Date.now() : null,
+    endedAt: session.collection === "ended" ? Date.now() : null,
     id: session.id,
     isMine: true,
     startedAt: Date.now(),
@@ -265,18 +272,21 @@ export function segmentView(
 }
 
 export function evidenceView(body: Record<string, unknown>, id: string) {
+  const missingReason =
+    typeof body.missingReason === "string" ? body.missingReason : null;
+  const isAvailable = missingReason === null;
   return {
     atMs: Number(body.atMs),
-    capturedAtMs: Number(body.atMs),
+    capturedAtMs: isAvailable ? Number(body.atMs) : null,
     element: null,
     frame: null,
     id,
-    image: { height: 1, url: PIXEL_PNG, width: 1 },
+    image: isAvailable ? { height: 1, url: PIXEL_PNG, width: 1 } : null,
     kind: "screenshot",
     link: null,
-    missingReason: null,
+    missingReason,
     note: null,
-    status: "available",
+    status: isAvailable ? "available" : "missing",
     trigger: String(body.trigger),
   };
 }

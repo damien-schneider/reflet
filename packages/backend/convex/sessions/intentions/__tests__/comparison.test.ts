@@ -166,6 +166,40 @@ describe("comparing a continuation with its intention", () => {
     expect(detail.continuation?.contribution.state).toBe("ready");
   });
 
+  test("a failed comparison leaves the intention intact and runs again on retry", async () => {
+    const world = await setupIntentionWorld();
+    const recorded = await recordContinuation(world);
+    vi.mocked(generateStructured).mockRejectedValueOnce(
+      new Error("AI response was not valid JSON")
+    );
+
+    await compare(world, recorded.sessionB);
+
+    const failed = await loadDetail(world.a, recorded.sessionB);
+    expect(failed.continuation?.contribution).toMatchObject({
+      changes: [],
+      state: "failed",
+    });
+    expect(failed.continuation?.intention).toMatchObject({
+      need: SAVED_NEED,
+      revision: 2,
+    });
+    expect(failed.session.analysis.error).toBe(
+      "The AI couldn't read this session right now. Try again."
+    );
+
+    vi.mocked(generateStructured).mockResolvedValueOnce(
+      comparisonOutput([change({})])
+    );
+    await compare(world, recorded.sessionB);
+
+    const retried = await loadDetail(world.a, recorded.sessionB);
+    expect(retried.continuation?.contribution).toMatchObject({
+      state: "ready",
+    });
+    expect(retried.continuation?.contribution.changes).toHaveLength(1);
+  });
+
   test("a new comparison keeps the changes the author already decided", async () => {
     const world = await setupIntentionWorld();
     const recorded = await recordContinuation(world);

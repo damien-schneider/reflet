@@ -112,6 +112,28 @@ function evidenceBase(
   };
 }
 
+interface CollectionRun {
+  hasStopped: () => boolean;
+  stop: () => void;
+  stopped: Promise<void>;
+}
+
+function startCollectionRun(): CollectionRun {
+  let hasStopped = false;
+  let markStopped: () => void = () => undefined;
+  const stopped = new Promise<void>((resolve) => {
+    markStopped = resolve;
+  });
+  return {
+    hasStopped: () => hasStopped,
+    stop: () => {
+      hasStopped = true;
+      markStopped();
+    },
+    stopped,
+  };
+}
+
 export function createEvidenceScheduler(
   options: EvidenceSchedulerOptions
 ): EvidenceScheduler {
@@ -119,8 +141,8 @@ export function createEvidenceScheduler(
   let captured = 0;
   let lastCaptureAtMs = Number.NEGATIVE_INFINITY;
   let navigationTimer: number | undefined;
-  let previousCapture = Promise.resolve();
-  let collectionRun = 0;
+  let previousCapture: Promise<unknown> = Promise.resolve();
+  let collectionRun = startCollectionRun();
 
   const take = (
     trigger: EvidenceTrigger,
@@ -132,23 +154,26 @@ export function createEvidenceScheduler(
     captured += 1;
     const base = evidenceBase(trigger, request, options);
     lastCaptureAtMs = base.atMs;
-    const takenInRun = collectionRun;
-    const isCurrent = () => takenInRun === collectionRun;
+    const run = collectionRun;
     const stopped = withoutImage(base, STOPPED_BEFORE_CAPTURE);
-    const captureUnlessStopped = async () => {
-      const evidence = isCurrent() ? await shoot(base, options) : stopped;
-      return isCurrent() ? evidence : stopped;
-    };
-    previousCapture = previousCapture
-      .then(captureUnlessStopped)
-      .then(options.onEvidence);
+    const rendered = previousCapture.then(() =>
+      run.hasStopped() ? stopped : shoot(base, options)
+    );
+    const reported = Promise.race([
+      rendered,
+      run.stopped.then(() => stopped),
+    ]).then((evidence) =>
+      options.onEvidence(run.hasStopped() ? stopped : evidence)
+    );
+    previousCapture = Promise.all([rendered, reported]);
     return base.clientKey;
   };
 
   return {
     cancelPending: () => {
       window.clearTimeout(navigationTimer);
-      collectionRun += 1;
+      collectionRun.stop();
+      collectionRun = startCollectionRun();
     },
     capture: (request) => take(request.trigger, request),
     navigated: () => {

@@ -6,11 +6,13 @@ import {
   waitFor,
   within,
 } from "@testing-library/react";
+import { useSyncExternalStore } from "react";
 import { afterEach, expect, it, vi } from "vitest";
 import { SessionApiError } from "../../api/session-api";
 import type { SessionDetail } from "../../protocol";
 import {
   aDetail,
+  anEvidence,
   aProposal,
   aSummary,
   fakeApi,
@@ -20,6 +22,24 @@ import {
 } from "../testing/session-fixtures";
 import { SessionReview } from "./session-review";
 
+const uploads = vi.hoisted(() => {
+  const listeners = new Set<() => void>();
+  let pending = 0;
+  return {
+    get: () => pending,
+    set: (next: number) => {
+      pending = next;
+      for (const listener of listeners) {
+        listener();
+      }
+    },
+    subscribe: (listener: () => void) => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+  };
+});
+
 vi.mock("../../local/local-sessions", () => ({
   purgeAccount: vi.fn(),
   useSyncStatus: () => ({
@@ -27,12 +47,13 @@ vi.mock("../../local/local-sessions", () => ({
     isOnline: true,
     lastError: null,
     pendingBytes: 0,
-    pendingOperations: 0,
+    pendingOperations: useSyncExternalStore(uploads.subscribe, uploads.get),
   }),
 }));
 
 afterEach(() => {
   cleanup();
+  uploads.set(0);
   vi.useRealTimers();
   vi.restoreAllMocks();
 });
@@ -60,6 +81,20 @@ it("opens on the intentions", async () => {
       .getAttribute("aria-pressed")
   ).toBe("true");
   expect(screen.getByText(NEED)).toBeTruthy();
+});
+
+it("shows what finished uploading after the analysis without a reload", async () => {
+  uploads.set(1);
+  const api = await renderReview(aDetail({ evidence: [] }));
+  expect(screen.getByText("1 waiting to upload")).toBeTruthy();
+  api.detail = vi.fn().mockResolvedValue(aDetail({ evidence: [anEvidence()] }));
+
+  act(() => uploads.set(0));
+
+  expect(
+    await screen.findByRole("button", { name: "Evidence (1)" })
+  ).toBeTruthy();
+  expect(screen.queryByText("1 waiting to upload")).toBeNull();
 });
 
 it("confirms an intention and undoes it back to its previous decision", async () => {

@@ -67,7 +67,10 @@ function continuationOf(state: BoardState, session: BoardSession) {
   }
   const home = findSession(state, intention.sessionId);
   return {
-    contribution: contributionView(contribution),
+    contribution: {
+      ...contributionView(contribution),
+      state: session.analyzed ? "ready" : "analyzing",
+    },
     intention: continuedIntentionView(intention, home.title),
   };
 }
@@ -87,7 +90,6 @@ function detail(state: BoardState, session: BoardSession) {
   citeSessionSources(state);
   const history = intentionHistory(state, session);
   const contributedIds = new Set(history.flatMap((entry) => entry.evidenceIds));
-  const isEnded = session.collection === "ended";
   return {
     continuation: continuationOf(state, session),
     contributedEvidence: state.sessions
@@ -99,7 +101,7 @@ function detail(state: BoardState, session: BoardSession) {
     ),
     history,
     marks: [],
-    proposals: isEnded
+    proposals: session.analyzed
       ? state.intentions
           .filter(({ sessionId }) => sessionId === session.id)
           .map(proposalView)
@@ -123,6 +125,7 @@ function startSession(state: BoardState, body: Record<string, unknown>) {
     "intentionId" in continues &&
     "revision" in continues;
   const session: BoardSession = {
+    analyzed: false,
     collection: "recording",
     continues: isContinuation
       ? {
@@ -152,15 +155,20 @@ function updateCollection(state: BoardState, body: Record<string, unknown>) {
   const session = findSession(state, body.sessionId);
   const action = String(body.action);
   state.collectionCalls.push({ action, atMs: Number(body.atMs) });
-  if (action === "end" && session.collection !== "ended") {
+  session.collection = COLLECTION_AFTER[action] ?? session.collection;
+  return { session: summary(session, state.intentions) };
+}
+
+function analyze(state: BoardState, session: BoardSession) {
+  if (!session.analyzed) {
+    session.analyzed = true;
     if (session.continues) {
       addContribution(state, session);
     } else {
       addIntention(state, session);
     }
   }
-  session.collection = COLLECTION_AFTER[action] ?? session.collection;
-  return { session: summary(session, state.intentions) };
+  return { analysis: summary(session, state.intentions).analysis };
 }
 
 function recordEvents(state: BoardState, body: Record<string, unknown>) {
@@ -243,10 +251,7 @@ function captureResponders(
   state: BoardState
 ): Record<string, (request: BoardRequest) => unknown> {
   return {
-    analyze: ({ body }) => ({
-      analysis: summary(findSession(state, body.sessionId), state.intentions)
-        .analysis,
-    }),
+    analyze: ({ body }) => analyze(state, findSession(state, body.sessionId)),
     collection: ({ body }) => updateCollection(state, body),
     detail: ({ query }) =>
       detail(state, findSession(state, query.get("sessionId"))),

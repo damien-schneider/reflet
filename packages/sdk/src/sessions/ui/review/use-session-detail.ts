@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { reportFailure } from "../../../devtools/client/notices";
 import { SessionApiError } from "../../api/session-api";
+import { useSyncStatus } from "../../local/local-sessions";
 import type {
   SessionDetail,
   SessionEvidence,
@@ -119,6 +120,20 @@ function failedState(error: unknown, current: DetailState): DetailState {
   return { kind: "failed", message: failureMessage(error) };
 }
 
+function useLandedUploadTick(): number {
+  const { account } = useSessionWorkspace();
+  const { pendingOperations } = useSyncStatus(account.key);
+  const [seen, setSeen] = useState({ pending: pendingOperations, tick: 0 });
+  if (seen.pending !== pendingOperations) {
+    const hasLanded = pendingOperations < seen.pending;
+    setSeen({
+      pending: pendingOperations,
+      tick: hasLanded ? seen.tick + 1 : seen.tick,
+    });
+  }
+  return seen.tick;
+}
+
 export function useSessionDetail(sessionId: string): SessionDetailHandle {
   const { api, onUnauthorized } = useSessionWorkspace();
   const [state, setState] = useState<DetailState>({ kind: "loading" });
@@ -127,6 +142,7 @@ export function useSessionDetail(sessionId: string): SessionDetailHandle {
     sessionId,
   });
   const pollTick = usePollTick(state);
+  const uploadTick = useLandedUploadTick();
 
   useEffect(() => {
     let isCurrent = true;
@@ -140,7 +156,8 @@ export function useSessionDetail(sessionId: string): SessionDetailHandle {
         if (isCurrent) {
           setState((current) => failedState(error, current));
         }
-        if (isCurrent && request.count + pollTick > 0) {
+        const isRefresh = request.count + pollTick + uploadTick > 0;
+        if (isCurrent && isRefresh) {
           reportFailure("The session did not refresh", error);
         }
       }
@@ -148,7 +165,7 @@ export function useSessionDetail(sessionId: string): SessionDetailHandle {
     return () => {
       isCurrent = false;
     };
-  }, [api, onUnauthorized, request, pollTick]);
+  }, [api, onUnauthorized, request, pollTick, uploadTick]);
 
   return {
     patch: (update) =>

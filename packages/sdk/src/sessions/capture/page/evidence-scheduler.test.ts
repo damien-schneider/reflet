@@ -184,4 +184,53 @@ describe("createEvidenceScheduler", () => {
       }),
     ]);
   });
+
+  it("reports a capture cut off by the end right away, without waiting for its render", async () => {
+    vi.mocked(captureViewport).mockReturnValueOnce(
+      new Promise<CapturedImage>(() => undefined)
+    );
+    const { evidence, scheduler } = startScheduler();
+    const markKey = scheduler.capture({ trigger: "mark" });
+    await vi.advanceTimersByTimeAsync(0);
+    const queuedKey = scheduler.capture({ trigger: "select" });
+
+    scheduler.cancelPending();
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(evidence).toEqual([
+      expect.objectContaining({
+        clientKey: markKey,
+        image: null,
+        missingReason: "Recording stopped before the screenshot was taken.",
+      }),
+      expect.objectContaining({ clientKey: queuedKey, image: null }),
+    ]);
+  });
+
+  it("starts the next capture only once the interrupted render is over", async () => {
+    let finishFirstShot: (image: CapturedImage) => void = () => undefined;
+    vi.mocked(captureViewport).mockReturnValueOnce(
+      new Promise<CapturedImage>((resolve) => {
+        finishFirstShot = resolve;
+      })
+    );
+    const { evidence, scheduler } = startScheduler();
+    scheduler.capture({ trigger: "mark" });
+    await vi.advanceTimersByTimeAsync(0);
+    scheduler.cancelPending();
+    const afterResumeKey = scheduler.capture({ trigger: "mark" });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(captureViewport).toHaveBeenCalledTimes(1);
+
+    finishFirstShot(screenshot());
+    await vi.runAllTimersAsync();
+
+    expect(captureViewport).toHaveBeenCalledTimes(2);
+    expect(evidence.at(-1)).toEqual(
+      expect.objectContaining({
+        clientKey: afterResumeKey,
+        missingReason: null,
+      })
+    );
+  });
 });

@@ -108,13 +108,50 @@ it("starts a session that continues the intention it was opened from", async () 
   });
 });
 
+function analyzed(
+  detail: SessionDetail,
+  analysis: Partial<SessionDetail["session"]["analysis"]>
+): SessionDetail {
+  const { session } = detail;
+  return {
+    ...detail,
+    session: { ...session, analysis: { ...session.analysis, ...analysis } },
+  };
+}
+
 it("links back to the intention a session continues", async () => {
-  const { links } = await renderReview(continuing({ state: "analyzing" }));
+  const { links } = await renderReview(
+    analyzed(continuing({ state: "analyzing" }), { state: "running" })
+  );
 
   expect(screen.getByText(`Continues “${NEED}”`)).toBeTruthy();
   expect(screen.getByText("Comparing with revision 3…")).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Open the intention" }));
   expect(links.onOpenSession).toHaveBeenCalledWith("session_home");
+});
+
+it("shows why the comparison failed once and compares again on retry", async () => {
+  const failed = analyzed(continuing({ changes: [], state: "failed" }), {
+    error: "The AI service did not answer.",
+    state: "failed",
+  });
+  const api = fakeApi({
+    analyze: vi.fn().mockResolvedValue({
+      ...failed.session.analysis,
+      error: null,
+      state: "running",
+    }),
+  });
+  await renderReview(failed, { api });
+
+  expect(
+    screen.getByText("The comparison failed: The AI service did not answer.")
+  ).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+
+  await waitFor(() => expect(api.analyze).toHaveBeenCalledWith("session_1"));
+  expect(await screen.findByText("Comparing with revision 3…")).toBeTruthy();
+  expect(screen.queryByText(/The comparison failed/)).toBeNull();
 });
 
 it("accepts a change against the intention revision it was compared with", async () => {

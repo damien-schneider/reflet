@@ -2,6 +2,7 @@ import { useId, useState } from "react";
 import type {
   ContinuedIntention,
   SessionContinuation,
+  SessionContribution,
 } from "../../../intention-protocol";
 import type { ProposalContext } from "../proposals/proposal-details";
 import { type ChangeScope, IntentionChangeRow } from "./intention-change";
@@ -50,9 +51,11 @@ export function ContinuationHeader({
   );
 }
 
-function ContributionState({ scope }: { scope: ChangeScope }) {
-  const { actions, context, continuation } = scope;
-  const { contribution } = continuation;
+function ContributionState({
+  contribution,
+}: {
+  contribution: SessionContribution;
+}) {
   if (contribution.state === "recording") {
     return (
       <p className="dt-status">
@@ -60,30 +63,10 @@ function ContributionState({ scope }: { scope: ChangeScope }) {
       </p>
     );
   }
-  if (contribution.state === "analyzing") {
-    return (
-      <p className="dt-status">
-        Comparing with revision {contribution.baseRevision}…
-      </p>
-    );
-  }
   if (contribution.state === "no_change") {
     return <p className="dt-meta">No change to the intention</p>;
   }
-  if (contribution.state !== "failed") {
-    return null;
-  }
-  const reason = context.detail.session.analysis.error ?? "Unknown error.";
-  return (
-    <div className="dt-actions" role="alert">
-      <p className="dt-error">The comparison failed: {reason}</p>
-      {context.canEdit && (
-        <button className="dt-btn" onClick={actions.retry} type="button">
-          Try again
-        </button>
-      )}
-    </div>
-  );
+  return null;
 }
 
 function DetachContribution({ scope }: { scope: ChangeScope }) {
@@ -136,7 +119,7 @@ function ContributionBody({
   const { contribution } = scope.continuation;
   return (
     <>
-      <ContributionState scope={scope} />
+      <ContributionState contribution={contribution} />
       {contribution.stale && (
         <p className="dt-ses-banner" role="status">
           The intention changed since this comparison: it is now at revision{" "}

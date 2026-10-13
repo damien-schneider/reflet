@@ -15,6 +15,7 @@ const STOPPED_BY_RELOAD = /stopped when the page reloaded/;
 const SCREENSHOT_REMOVAL = /^Remove screenshot at/;
 const SHOW_CONTEXT = /^Show context at/;
 const MARK_SCREENSHOT = /^Screenshot · mark screenshot/;
+const SCREENSHOTS_PER_SESSION = 2;
 const CHANGED_SINCE_FIRST_BRIEF =
   /Changed since the brief of .* \(revision 1 → 2\)/;
 const FIRST_BRIEF_ROW = new RegExp(`“${PROPOSAL_NEED}” revision 1 · copied`);
@@ -59,6 +60,9 @@ async function recordMarkedPassage(page: Page, activate: Activate) {
   await expect(page.locator(RECORDING_BAR)).toContainText("00:02");
   await activate(page.getByRole("button", { name: "Mark moment" }));
   await activate(page.getByRole("button", { name: "Finish" }));
+  await expect(
+    page.getByRole("button", { name: `Evidence (${SCREENSHOTS_PER_SESSION})` })
+  ).toBeVisible();
 }
 
 async function correctPassageContext(page: Page, activate: Activate) {

@@ -16,7 +16,6 @@ export interface UpdateActions {
   answer: (text: string) => Promise<boolean>;
   decide: (changeId: string, decision: "pending" | "rejected") => void;
   detach: () => void;
-  retry: () => void;
   verify: (status: "works" | "needs_work", note: string) => void;
 }
 
@@ -109,11 +108,6 @@ function useContributionActions({
       ) {
         announce("This session's contribution was removed");
       }
-    },
-    retry: async () => {
-      await runThenReload("The comparison did not restart", () =>
-        api.analyze(sessionId)
-      );
     },
     verify: async (status, note) => {
       if (

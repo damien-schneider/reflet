@@ -17,17 +17,31 @@ function transcribingLine(detail: SessionDetail): string | null {
   return `Transcribing ${voice.length - busy.length} of ${voice.length}`;
 }
 
+function comparedRevision(detail: SessionDetail): number | null {
+  const { continuation } = detail;
+  const isComparing =
+    continuation?.intention && continuation.contribution.detachedAt === null;
+  return isComparing ? continuation.contribution.baseRevision : null;
+}
+
 function analysisLine(detail: SessionDetail): {
   action: string | null;
   text: string;
 } | null {
   const { session } = detail;
+  const revision = comparedRevision(detail);
   if (isAnalysisBusy(session)) {
-    return { action: null, text: "Reading the session…" };
+    const text =
+      revision === null
+        ? "Reading the session…"
+        : `Comparing with revision ${revision}…`;
+    return { action: null, text };
   }
   if (session.analysis.state === "failed") {
     const reason = session.analysis.error ?? "Unknown error.";
-    return { action: "Try again", text: `Analysis failed: ${reason}` };
+    const failure =
+      revision === null ? "Analysis failed" : "The comparison failed";
+    return { action: "Try again", text: `${failure}: ${reason}` };
   }
   if (isAnalysisOutdated(session)) {
     return {
