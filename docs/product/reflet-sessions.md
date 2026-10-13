@@ -1,8 +1,10 @@
-# Reflet Sessions — spécification de développement
+# Reflet Sessions — état actuel et prochains développements
 
-Date : 12 octobre 2026. Statut : cadrage prêt pour démarrer le lot 0 et le socle du lot 1 ; fonctionnalité non implémentée. Le choix de transcription et les mesures de capture du lot 0 conditionnent l'intégration réelle de la voix et la disponibilité publique.
+Mis à jour le 13 octobre 2026. **Prochaine livraison retenue : P1b + P2 + P4 — revoir le contexte, comprendre les intentions et les faire évoluer par de nouvelles sessions assistées par l'IA.** Le socle Sessions et P1 existent ; ne pas les recommencer. P3, l'enrichissement par source maps, reste une suite indépendante.
 
-Ce fichier est la référence du premier développement. La galerie des 17 propositions illustre la vision générale ; elle n'est ni le backlog de ce lot ni une spécification exhaustive de Sessions. Une copie datée de ce document accompagne son export.
+Référence inspectée : `main`, commit `982f55cf` (SDK 0.6.8). Les changements locaux annoncés en 0.6.9 sont distingués ci-dessous. « Implémenté » signifie présent dans le code inspecté ; cela ne confirme ni la publication npm ni le déploiement de cette révision. Aucun nouveau parcours en production n'a été exécuté pour cette mise à jour documentaire.
+
+Ce fichier reste la référence du développement Sessions. Les sections 3 à 7 décrivent le contrat à préserver ; la section 9 contient le travail restant, dans l'ordre. Les [décisions et mesures du lot 0](reflet-sessions-lot0.md) constituent le relevé technique initial. La galerie des 17 propositions illustre la vision générale ; elle n'est pas le backlog de cette prochaine livraison.
 
 ## 1. Le cas à réussir
 
@@ -20,20 +22,27 @@ Exemple de référence :
 
 Deux tickets indépendants créés automatiquement dans cet exemple constituent un échec.
 
-## 2. Périmètre du premier développement
+## 2. Ce qui est déjà fait
 
-| Inclus | Plus tard |
+| Capacité | État constaté dans le code |
 | --- | --- |
-| Session individuelle, réservée à un membre Reflet | Réunions à plusieurs et identification des intervenants |
-| Première livraison dans les devtools web | Accès équipe intégré dans l'application en production |
-| Voix, transcript horodaté, contexte d'interaction et captures ciblées | Enregistrement vidéo, capture d'autres applications |
-| Revue dans un panneau reprenant les composants et le thème actuels | Nouvelle navigation « Intelligence » ou refonte visuelle |
-| Clarification qui fait évoluer une proposition existante | Conversation vocale continue avec une IA qui intervient en direct |
-| Transmission manuelle d'un brief complet à Codex, Claude ou Factory | Lancement automatique et nouveau moteur d'exécution |
-| Source de code facultative quand les devtools la possèdent déjà | Indexation de la codebase par Reflet |
-| Champs permettant de rattacher une preuve externe | Nouveau recorder de replay, analytics ou connecteur PostHog complet |
+| Enregistrer dans les devtools | Démarrage, microphone, pause, reprise, fin, marque et sélection explicite d'un élément |
+| Enregistrer sur une application déployée | Outils d'équipe via `?reflet-team`, connexion Reflet par popup, origine autorisée et clé du widget ; aucun compte utilisateur hôte requis |
+| Transcription | Voix découpée et transcrite dans le cloud, segments avec début/fin, correction et reprise sur échec ; audio temporaire |
+| Contexte | Horloge commune, clics, survols prolongés, navigation, scroll, viewport, éléments et captures ciblées ; pas de trajectoire continue du curseur |
+| Association parole/contexte | Classement temporel des marques, sélections, clics et survols ; plusieurs candidats et ambiguïté signalée |
+| Extraction et revue | Besoin, observation, réponse envisagée, inconnues et sources ; garder, modifier, préciser, différer, écarter, fusionner et annuler une décision |
+| Révisions | Corrections humaines protégées et propositions à réexaminer après modification du transcript |
+| Confidentialité et reprise | Brouillons privés, partage explicite, stockage local borné et synchronisation, suppression de session et nettoyage de l'audio |
+| Transmission | Brief prévisualisé, copie, ZIP avec captures choisies, création explicite de feedbacks internes ; aucun lancement d'agent implicite |
+| Retour après changement | Vérification manuelle « Works / Needs more work » avec note sur une proposition transmise |
+| Preuve externe | Ajout manuel d'un lien ; pas de connecteur PostHog complet |
+| Source de code | Indice React facultatif dans les devtools ; le résolveur de source maps plus complet des notes n'est pas encore branché aux sessions |
+| Correctifs 0.6.8 | Suppression d'une capture individuelle et annulation de la capture de navigation en attente lors d'une pause |
 
-La première livraison dans les devtools valide la boucle avant l'authentification intégrable en production. Elle ne doit pas être présentée comme disponible dans toutes les applications ou sur mobile. Le même domaine de sessions doit pouvoir être appelé depuis une autre surface sans dépendre des routes de lecture du code.
+**En cours localement, à valider séparément :** les changements 0.6.9 inspectés annulent aussi les captures encore en file derrière une autre capture après pause/fin, écartent une capture dont le rendu se termine après la pause ou la fin, et corrigent le focus clavier lors du retrait d'une image. Ils ne sont pas comptés comme livrés.
+
+L'accès équipe en production existe déjà ; une expérience mobile complète de gestion des retours n'est pas pour autant validée. La capture reste limitée à la page web équipée du SDK. Aucun accès obligatoire au dépôt, aucune vidéo systématique et aucun moteur de développement dans Reflet.
 
 ## 3. Parcours et interface
 
@@ -60,7 +69,7 @@ La première livraison dans les devtools valide la boucle avant l'authentificati
 - Montrer les propositions courtes d'abord ; le transcript et les preuves s'ouvrent à la demande.
 - Chaque proposition contient : besoin, situation observée, réponse envisagée si exprimée, inconnues, passages sources et captures disponibles.
 - Actions : « Garder », « Modifier », « Plus tard », « Écarter ». Prévoir annulation pour une décision de revue.
-- Une précision textuelle fait évoluer la proposition concernée. Une nouvelle contribution vocale réutilise le même parcours de capture après la première boucle fonctionnelle.
+- Une précision textuelle fait évoluer la proposition concernée. La continuation vocale et le rapprochement entre plusieurs sessions restent à construire (P4).
 - L'IA suggère une fusion ; elle ne fusionne pas silencieusement des propositions déjà revues.
 - Une correction du transcript marque les propositions qui en dépendent comme à réexaminer. Une analyse plus ancienne ne remplace jamais une correction humaine plus récente.
 - « Garder » conserve une décision dans la session ; cela ne publie pas un feedback et ne permet pas à un agent de le prendre.
@@ -93,26 +102,26 @@ Tous les événements et les segments utilisent une origine temporelle de sessio
 
 L'association d'une phrase à un élément tient compte des secondes précédentes et suivantes dans la session active. En cas de doute, conserver plusieurs candidats ou demander une précision pendant la revue. Ne jamais remplacer un contexte manquant par l'écran courant.
 
-Décisions pour démarrer l'implémentation :
+Règles de collecte à préserver et limites actuelles :
 
-- Capturer le contexte structuré pendant la session uniquement. Échantillonner les déplacements ; conserver les clics et marques explicites.
+- Capturer le contexte structuré pendant la session uniquement. Les déplacements sont examinés pour détecter les survols prolongés ; cela ne constitue pas un enregistrement continu de leur trajectoire. Conserver les clics et marques explicites.
 - Réutiliser la capture DOM existante. Déclencher une capture initiale, sur marque explicite et sur changements de contexte utiles ; regrouper les captures automatiques rapprochées.
 - Ne pas envoyer chaque mouvement de souris à un modèle. Faire l'extraction des propositions à la fin, sur un contexte sélectionné et borné.
-- Ne pas stocker le DOM complet, les frappes, les valeurs des champs, les mots de passe, le presse-papiers ou des logs réseau dans ce lot.
+- Ne pas collecter le DOM complet, les frappes, les valeurs des champs comme événements, le presse-papiers ou les logs réseau. Les captures vident les champs de formulaire standards et masquent les zones configurées, mots de passe et champs de carte ; le reste du texte affiché, y compris un éditeur riche non masqué, peut rester visible. La promesse affichée doit décrire cette limite.
 - Un iframe tiers, un canvas ou une animation peuvent rester mal représentés : montrer cette limite, permettre une note explicite et ne pas inventer la preuve.
 - Une navigation SPA reste dans la session. Un rechargement complet ou une fermeture termine la collecte ; proposer la reprise du brouillon durable au retour, sans réactiver le microphone automatiquement.
 - Un onglet masqué met la collecte en pause ; aucun enregistrement d'autres onglets ou applications.
 
-Le lot 0 fixe les limites numériques (durée, octets, événements et captures) à partir de mesures. Elles sont centralisées et contrôlées côté serveur aussi. À l'approche de la limite, prévenir ; à la limite, arrêter proprement la collecte concernée et garder les données déjà acquittées. Pas de collecte ni de facture non bornées.
+Les limites numériques ont été fixées au lot 0 et sont centralisées côté serveur dans `sessions/constants.ts`. Le client reçoit ces limites. À l'approche de la limite, prévenir ; à la limite, arrêter proprement la collecte concernée et garder les données déjà acquittées. Pas de collecte ni de facture non bornées.
 
 ## 5. Confidentialité et droits
 
 - « Brouillon privé » signifie accessible à l'auteur, avec traitement technique par Reflet et ses prestataires annoncés. Cela ne signifie pas traitement exclusivement local.
 - Partager avec l'équipe est une action explicite. L'appartenance à l'organisation seule ne rend pas tous les brouillons lisibles à tous ses membres.
 - Masquer les zones sensibles configurées avant toute capture ou transmission. Le produit ne promet pas de reconnaître automatiquement toutes les données personnelles.
-- Le prestataire de transcription et ses règles de rétention doivent correspondre à la promesse affichée. Le choix est un livrable du lot 0 ; aucune promesse de suppression immédiate chez un tiers n'est présumée.
+- Le prestataire de transcription et ses règles de rétention doivent correspondre à la promesse affichée. Le choix est documenté au lot 0 ; revalider ces conditions avant de changer de fournisseur ou de routage.
 - Supprimer l'audio brut après sauvegarde durable du transcript correspondant. Une simple réponse du prestataire sans sauvegarde n'est pas suffisante.
-- Pour le pilote, plafond proposé de récupération audio : 24 heures à partir de la capture, retries inclus. Le lot 0 vérifie qu'il est réalisable de bout en bout ; sinon choisir un autre mode ou corriger explicitement la promesse avant livraison.
+- Le plafond de récupération audio retenu est de 24 heures à partir de la capture, retries inclus ; l'audio est supprimé plus tôt après sauvegarde du transcript. Préserver le nettoyage côté client et serveur lors des prochains développements.
 - Les captures, transcripts et propositions restent corrigeables et supprimables. Les extraits dérivés concernés doivent être effacés ou régénérés sans le contenu supprimé.
 - Une suppression de session annule les traitements en attente et empêche un job tardif de recréer son contenu. Les exports déjà téléchargés ou envoyés à un autre outil ne peuvent pas être rappelés ; l'interface doit le dire au moment utile.
 - Les logs techniques ne contiennent ni audio, ni transcript, ni contenu de captures. Les métriques de coût et de qualité utilisent des compteurs sans contenu.
@@ -120,7 +129,7 @@ Le lot 0 fixe les limites numériques (durée, octets, événements et captures)
 
 ## 6. Domaine et invariants
 
-Noms conceptuels, à raccorder aux conventions du dépôt avant de créer des tables :
+Responsabilités déjà matérialisées dans le domaine `sessions` ; les nouvelles interfaces doivent réutiliser ces objets :
 
 | Objet | Responsabilité |
 | --- | --- |
@@ -163,77 +172,205 @@ Invariants à tester avant les interfaces :
 
 Clavier : démarrage, pause, marque, fin, revue et copie accessibles sans souris. Fermer un panneau rend le focus au contrôle d'ouverture. La sélection d'élément ne doit pas être le seul moyen d'ajouter un contexte. Respecter le mouvement réduit et tester un panneau étroit avec des textes longs.
 
-## 8. Points d'appui vérifiés dans le dépôt
+## 8. Points d'appui dans le code
 
-Inspection du 12 octobre 2026 ; comportement déduit du code, sans validation fonctionnelle de Sessions, qui n'existe pas encore.
+Inspection du 13 octobre 2026. Chemins relatifs à la racine du dépôt ; commencer ici avant d'ajouter un nouveau mécanisme.
 
-- `packages/sdk/src/devtools/client/notes/capture-note.ts` : brouillon avec sélection et contexte de page, enrichissement facultatif par le code et une capture.
-- `packages/sdk/src/devtools/client/notes/element-snapshot.ts` : capture ciblée autour d'un élément.
-- `packages/sdk/src/devtools/client/notes/note-store.ts` : persistance locale des notes et de leurs pièces. Réutiliser les mécanismes pertinents ; ne pas dupliquer silencieusement une vérité entre notes et sessions.
-- `packages/sdk/src/feedback/core/element-selector.ts` et `page-context.ts` : sélection, contexte de page et nettoyage existants.
-- `packages/sdk/src/feedback/core/capture.ts` : capture DOM existante, sans demande de partage d'écran.
-- `packages/sdk/src/devtools/client/notes/agent-prompt.ts` : construction de contexte pour les agents. Le nouveau brief doit préserver les inconnues et fonctionner sans emplacement de source.
-- `packages/backend/convex/http/__tests__/devtools_auth.test.ts` : identité membre, notes internes et permissions spécifiques des tokens devtools.
-- `packages/backend/convex/feedback/agent_queue.ts` : `pickNext` accepte actuellement `isApproved || isInternal` ; `claimFeedback` vérifie l'organisation et la réservation, sans autorisation de développement distincte. Avant de matérialiser des feedbacks de session, traiter ce couplage sur toutes les entrées, y compris la prise par identifiant.
-- `docs/operations/feedback-properties.md` : publication, audience et cycle de vie actuels. La revue d'une proposition ne doit pas les détourner.
+| À réutiliser | Source |
+| --- | --- |
+| Horloge et pauses | `packages/sdk/src/sessions/capture/session-clock.ts` |
+| Événements, survols et coordonnées | `packages/sdk/src/sessions/capture/page/interaction-recorder.ts` |
+| Description des éléments et du viewport | `packages/sdk/src/sessions/capture/element-ref.ts` |
+| Captures bornées | `packages/sdk/src/sessions/capture/page/evidence-scheduler.ts` |
+| Marques et sélection | `packages/sdk/src/sessions/ui/recording/recording-layer.tsx` et `recording-bar.tsx` |
+| Association transcript/contexte | `packages/backend/convex/sessions/linking.ts` |
+| Transcript, captures et sources des propositions | `packages/sdk/src/sessions/ui/review/transcript/` et `proposals/` |
+| Source maps dans les devtools | `packages/sdk/src/devtools/client/element-source.ts` |
+| Indices React actuellement utilisés par Sessions | `packages/sdk/src/feedback/core/react-source.ts` |
+| Extraction, clarification et protections de révision | `packages/backend/convex/sessions/ai/` et `review/proposals.ts` |
+| Brief et sélection des preuves | `packages/backend/convex/sessions/brief.ts` et `review/handoffs.ts` |
+| Accès équipe en production | `packages/sdk/src/sessions/team/` et `packages/backend/convex/team_access/` |
+| Barrière vers les agents | `packages/backend/convex/feedback/agent_queue.ts` exclut les feedbacks liés à une proposition de session |
 
-Pas de module de transcription identifié dans la recherche ciblée SDK/backend/web. Le lot 0 doit confirmer le point d'intégration et le prestataire au lieu de supposer une capacité disponible.
+Le transcript est horodaté par segment, pas mot par mot. L'association existante utilise une fenêtre de 6 secondes avant et 2 secondes après le segment, pondère davantage marques/sélections que survols, et signale les candidats proches en score. Ces valeurs décrivent l'implémentation ; les dériver du code, ne pas les recopier en constantes dans une nouvelle vue.
 
-## 9. Ordre de réalisation
+## 9. Prochains développements, dans l'ordre
 
-### Lot 0 — vérifier les deux inconnues techniques
+Les anciens lots 0 à 3 ont produit le socle de la section 2. P1 complète ce socle dans les changements locaux. **Le périmètre à implémenter maintenant est P1b, P2 et P4, dans cet ordre, au sein d'une même livraison.** P3 n'est ni inclus ni une dépendance de P4. Aucun nouveau module de navigation n'est nécessaire.
 
-- Prototyper une session locale de 10 minutes sur une vraie application : clics, scroll, changement de route, redimensionnement, pause et arrêt.
-- Mesurer coût CPU, réactivité, mémoire, volume des événements et captures, qualité du masquage et justesse du rattachement parole/élément.
-- Évaluer la transcription français/anglais, les horodatages, latence, coût par minute, rétention et comportement sur échec. Pas d'abonnement payant ni de nouveau contrat à souscrire implicitement.
-- Écrire une décision courte dans ce dossier : un prestataire retenu, les limites de collecte, la politique de suppression réellement réalisable et les navigateurs vérifiés.
-- Si l'association implicite manque de fiabilité, privilégier les marques et sélections explicites pour le pilote. Ne pas prétendre suivre parfaitement l'intention.
+**Parcours de validation commun :** je revois « ici, je ne sais pas si c'est enregistré », corrige l'élément associé, confirme l'intention, puis lance « Continuer cette intention ». Après une deuxième session, l'IA me montre ce qu'elle propose d'ajouter ou de changer, avec ses preuves. J'accepte une précision, refuse une solution et exporte un brief qui contient la nouvelle révision du même besoin. La précédente transmission reste identifiable.
 
-### Lot 1 — une session durable dans les devtools
+**Ordre de travail :**
 
-- Tests d'accès, de pause, d'interruption, de suppression et d'idempotence avant implémentation.
-- Domaine de session, stockage borné, collecte structurée et réutilisation des captures existantes.
-- Brancher la transcription validée au lot 0, avec segmentation horodatée et suppression de l'audio.
-- Session terminable et récupérable, transcript lisible et corrigeable, aucune création de feedback implicite.
+1. Définir la responsabilité de l'intention durable, de ses révisions et des contributions de session ; réutiliser les objets existants sans dupliquer besoin, décision ou droits. Prévoir P4 avant de figer les contrats de P1b/P2.
+2. Livrer les associations corrigibles et la vue synchronisée de P1b dans les surfaces existantes.
+3. Brancher la présentation et les actions de P2 sur ces mêmes données.
+4. Implémenter la continuation, l'analyse différentielle, la validation et la vérification de P4, puis tester le parcours complet depuis les devtools et les outils d'équipe en production.
 
-### Lot 2 — extraction et revue
+### P1 — l'agent comprend ce que « ici » désignait, depuis le brief
 
-- Extraire besoin, observation, hypothèse et solution envisagée avec références aux segments et preuves.
-- Réussir l'exemple de l'historique puis de la confirmation de sauvegarde.
-- Correction, précision, fusion proposée, report, écart et annulation ; protection des révisions humaines.
-- Évaluer les formulations sur des sessions réelles consenties, en plus des tests automatisés.
+**Cas d'usage :** un agent de développement reçoit le brief d'une session. Sous chaque passage cité, il lit ce qui a été cliqué, survolé (et combien de temps), montré, marqué ou ouvert autour de ce moment, sans ouvrir les captures.
 
-### Lot 3 — première boucle complète vers l'agent
+**Livré localement :**
 
-- Brief prévisualisé puis copiable/exportable avec ses pièces choisies.
-- Création facultative de feedbacks retenus seulement après traitement du couplage avec la file d'agents.
-- Pour ce premier lot, remise manuelle à l'agent et retour manuel de vérification suffisent. Une copie ne devient pas un signal de prise en charge.
-- Refaire le parcours initial après la réalisation et ajouter le résultat au même besoin.
+- Contexte lié par citation dans le brief : sous chaque `[mm:ss]` cité, les lignes « - » reprennent le même contexte que celui fourni au modèle d'analyse, avec le sélecteur et la source quand elle est connue, et l'alias d'une capture choisie dont les métadonnées d'écran correspondent. Cette correspondance ne garantit pas un état visuel identique. Seules les fenêtres de liaison des passages transmis sont décrites (6 s avant, 2 s après) ; aucun journal complet de la session.
+- Un seul format de ligne de contexte (`contextLine` dans `packages/backend/convex/sessions/formatters.ts`) pour le prompt d'analyse et le brief. Le libellé SDK contient déjà le rôle (`button "Enregistrer"`) ; il n'est plus préfixé une deuxième fois.
+- Durée réelle des survols : le SDK mesure le temps passé sur l'élément (minimum 700 ms) au lieu d'une durée fixe. Un survol qui couvre le passage s'y rattache même s'il a commencé avant la fenêtre. Un survol en cours lors d'une pause, de la fin ou de la sortie de la fenêtre est émis avec sa durée jusque-là.
+- Instant cohérent du survol : heure, pointeur, élément et frame sont relevés au même moment, à l'entrée sur l'élément.
+- Clic clavier sans pointeur : un clic déclenché au clavier ou par script enregistre `pointer: null` au lieu d'un faux point (0,0).
 
-### Suite, après usage répété
+**Limite connue :** le nom de composant n'apparaît que si le build conserve des noms lisibles ; en production minifiée, la ligne n'a souvent que le libellé et le sélecteur. Les survols enregistrés par le SDK ≤ 0.6.9 portent tous 700 ms et s'affichent « for 0.7 s ».
 
-Accès équipe en production, adaptation mobile, lien temporel PostHog, clips vidéo choisis, reprise vocale d'une réflexion, clarification interactive et transmission intégrée. Chaque extension doit conserver les mêmes sources, révisions et autorisations.
+**Hors périmètre :** trajectoire continue du curseur, journal intégral de la session dans le brief, changement du contrat de la revue.
 
-## 10. Critères de validation du premier lot complet
+### P1b — overlay et correction humaine de l'association
 
-- [ ] Un membre commence depuis les devtools sans ouvrir un autre outil de prise de notes.
-- [ ] L'application reste utilisable pendant la session ; mesure de performance et limites documentées.
-- [ ] « Ce bouton-là » après un scroll pointe vers la bonne preuve, ou l'ambiguïté est affichée.
-- [ ] La correction « pas un historique, une confirmation » fait évoluer le besoin sans créer deux demandes contradictoires.
-- [ ] Le transcript reste corrigeable après suppression de l'audio ; les révisions affectées sont signalées.
-- [ ] Une pause ne collecte rien ; un rechargement ne réactive jamais le microphone.
-- [ ] Refus de micro, perte réseau, capture manquante, quota et échec IA ont une sortie utile et ne perdent pas les données acquittées.
-- [ ] Aucun brouillon ni élément écarté n'est accessible à un autre membre, au public ou à un agent non autorisé.
-- [ ] Une même opération rejouée ne duplique ni session, ni segment, ni proposition, ni feedback.
-- [ ] Supprimer pendant un traitement ne permet pas au job de recréer les données.
-- [ ] « Garder » ne lance pas de développement ; « Copier » ne dit pas qu'un agent travaille.
-- [ ] Une personne ou un agent disposant seulement du brief et des pièces comprend le résultat voulu sans réexplication orale.
-- [ ] L'interface reprend les composants, couleurs et panneaux actuels de Reflet ; clavier et largeur étroite vérifiés.
+**Cas d'usage :** après avoir parlé en naviguant, je sélectionne un passage et retrouve l'écran, l'élément et les gestes qui l'expliquent.
 
-Mesures du pilote : nombre de propositions correctement comprises sans reformulation, associations à corriger, idées en double, temps de revue, coût par session et perte de contexte. Le nombre de tickets générés n'est pas un critère de réussite.
+**Déjà là :** segments horodatés, candidats de contexte, captures, marques, sélection explicite et liens depuis une proposition vers ses citations.
 
-## 11. Consigne de démarrage pour l'agent de développement
+**À construire :**
 
-> Implémente Reflet Sessions à partir de `docs/product/reflet-sessions.md`. Commence par le lot 0 et les tests/invariants du lot 1, puis progresse dans l'ordre des lots 1 à 3. Réutilise les notes, captures, contexte et surfaces des devtools. La première livraison est réservée à l'équipe dans les devtools web. Préserve le parcours sans codebase, les brouillons privés, la suppression audio et la séparation entre revue et autorisation de développement. Ne transforme pas les 17 maquettes de la galerie en périmètre de ce travail. Documente les choix techniques mesurés avant d'intégrer un service externe. Respecte les instructions du dépôt et ses validations, sans commit ni push non demandés.
+- Une vue synchronisée dans la revue existante : passage sélectionné, instant, contexte d'interaction, capture associée et proposition concernée. Réutiliser les données disponibles ; ne pas recréer un recorder.
+- Sélectionner une citation ou un événement amène au même moment. Parcourir les moments précédents/suivants reste possible au clavier et dans un panneau étroit.
+- Afficher le pointeur et le contour de l'élément sur la capture uniquement si leurs repères correspondent. Conserver les dimensions originales pour adapter l'affichage ; ne pas rechercher le sélecteur dans la page actuelle.
+- Corriger une association ambiguë en choisissant un autre événement/capture, ou « contexte inconnu ». Conserver l'association humaine lors d'une nouvelle analyse, avec sa révision et sa provenance.
+- Distinguer association automatique, correction humaine et contexte explicitement inconnu. Ce dernier ne déclenche pas un nouveau rattachement automatique ; une action permet de revenir au mode automatique. Une correction concurrente demande de recharger ou de réexaminer le résultat, sans écrasement silencieux.
+- Utiliser cette même association corrigée dans la revue, l'analyse et le brief ; aucun deuxième rattachement indépendant dans l'export.
+- Différencier « sélectionné explicitement », « cliqué », « survolé » et « associé par proximité temporelle ». Une capture proche dans le temps n'est pas nécessairement le même état visuel.
+- Montrer pause, capture manquante/supprimée et changement de page. Un instant sans preuve reste sans preuve ; aucune reconstruction inventée.
 
-Les vérifications applicatives à exécuter pendant l'implémentation sont celles d'`AGENTS.md`, avec tests de comportement et E2E headless. Ce document et les aperçus ne constituent pas la preuve que la fonctionnalité fonctionne.
+**Point technique à traiter avant l'overlay :** le survol enregistre désormais un instant cohérent (P1). Une capture différée peut encore représenter un autre état que l'événement qu'elle illustre. Garantir une association explicite et cohérente ou afficher la preuve comme approximative, sans contour prétendument exact.
+
+**Hors périmètre :** lecteur audio après suppression, vidéo, replay DOM, précision mot à mot, suivi intégral du curseur. Une courte trajectoire bornée autour d'une marque ne sera ajoutée que si des sessions réelles montrent qu'elle apporte une information nécessaire.
+
+**Acceptation :** « ce bouton-là » après scroll puis redimensionnement ouvre la bonne preuve, ou indique clairement l'incertitude ; une correction tient après rechargement et nouvelle analyse. La revue fonctionne sans audio conservé et sans codebase.
+
+### P2 — présenter les intentions, avec leurs réponses possibles
+
+**Cas d'usage :** « je veux un historique » puis « en fait, je veux savoir si c'est enregistré » produit un besoin cohérent que je peux corriger.
+
+**Terminologie retenue pour la prochaine interface :**
+
+- **Session** : le moment de travail enregistré. Action : « Commencer une session ».
+- **Intention** : le résultat souhaité, interprété par l'IA puis confirmé ou corrigé par une personne.
+- **Réponse envisagée** : une manière possible d'y répondre, qui peut être modifiée sans rejeter l'intention.
+- **Preuves** : paroles, actions et captures ; une erreur reste un signal, pas automatiquement une intention ni une instruction de développement.
+
+**Déjà là :** les propositions portent `need`, `observed`, `response`, `unknowns`, les sources et les révisions. La clarification textuelle fait déjà évoluer une proposition. Réutiliser ces champs ; le changement de vocabulaire ne justifie pas une seconde table ou une migration de tous les identifiants.
+
+**À construire :** une carte orientée intention, avec résultat voulu en premier, réponse envisagée séparée, citation et contexte accessibles en un geste. Renommer les libellés de revue de façon cohérente, sans multiplier les sections. Confirmer un besoin ne valide pas automatiquement sa solution et n'autorise pas un agent.
+
+La citation ouvre le contexte de P1b. « Continuer cette intention » ouvre le parcours P4. Garder, modifier, différer, écarter, clarifier et transmettre conservent leurs règles actuelles. Afficher l'origine humaine ou IA de la formulation et les inconnues utiles ; ne pas fabriquer un score de certitude. Les libellés de l'interface, du brief et des états vides parlent le même langage, avec les traductions du produit ; les identifiants internes n'ont pas à être renommés pour cela.
+
+Exemple illustratif de la carte attendue :
+
+```text
+Intention
+Savoir que mes modifications ont été enregistrées.
+
+À 00:42–00:49
+« Ici, je ne sais jamais si c'est enregistré. »
+Paramètres · bouton Enregistrer · voir le contexte
+
+Réponse envisagée
+Afficher les états enregistrement / enregistré / échec.
+
+À vérifier
+La sauvegarde échoue-t-elle, ou manque-t-il un retour visible ?
+```
+
+**Acceptation :** changer la réponse envisagée conserve l'intention, ses preuves et sa décision ; une reformulation ne crée pas une deuxième demande contradictoire. Une intention inférée reste identifiable et corrigeable. Aucun changement purement lexical ne perd une proposition existante ou ne change les droits.
+
+### P4 — continuer la même intention avec l'IA entre les sessions
+
+**Cas d'usage :** après une modification, j'enregistre « c'est mieux, mais sur mobile le message disparaît trop vite ». Je retrouve l'intention initiale et ce qui reste à améliorer.
+
+**Déjà là :** clarification textuelle, révisions et verdict manuel « Works / Needs more work » avec note. Cela ne constitue pas encore une continuation vocale ni un dossier regroupant plusieurs sessions.
+
+**Parcours à construire :**
+
+1. Depuis la carte P2, « Continuer cette intention » rappelle le résultat voulu, la réponse envisagée et les questions ouvertes, puis lance le recorder existant sur action explicite. L'utilisateur peut préciser ou vérifier le résultat ; aucune nouvelle permission de partage ni remise à un agent implicite.
+2. À la fin, l'IA compare les nouveaux passages à la révision de départ et aux seules preuves autorisées utiles. Elle prépare une mise à jour de l'intention existante. Un sujet réellement distinct est proposé séparément, sans rattachement forcé.
+3. La revue montre « Ce qui change », les nouvelles preuves, ce qui reste incertain et les réponses possibles. Accepter, modifier, refuser ou répondre à une question reste possible sans perdre l'enregistrement. Tant que rien n'est accepté, l'intention confirmée reste intacte.
+4. L'acceptation crée une révision du même besoin, avec l'auteur de la décision et les contributions sources. Les captures s'ouvrent dans P1b ; l'historique montre ce qui a motivé l'évolution, sans recopier des tickets.
+5. Après un changement, la nouvelle session peut alimenter la vérification existante. L'IA propose « semble résolu », « encore à améliorer » ou « preuves insuffisantes », avec justification ; une personne confirme le verdict. Réalisé, disponible et effet observé restent distincts.
+
+**Travail de l'IA :**
+
+- Repérer précision, contradiction, nouvelle contrainte, changement de solution ou résultat constaté ; citer les passages qui soutiennent chaque proposition. Une hypothèse reste visible comme telle.
+- Comprendre le résultat recherché avant de reprendre une demande littérale. Proposer une réponse plus simple si elle répond au besoin, y compris expliquer, simplifier ou ne rien développer ; comparer sans inventer la faisabilité technique.
+- Poser une question ciblée quand la réponse change réellement le besoin ou la prochaine action. Réutiliser les clarifications textuelles et la continuation vocale, sans imposer un nouveau chat ni interrompre l'enregistrement.
+- Proposer un rapprochement avec une intention existante accessible quand le contexte le justifie. Montrer les raisons, laisser garder séparé et permettre d'annuler un rattachement ; aucune fusion silencieuse de décisions revues.
+- Borner le contexte et les appels par continuation avec les quotas existants, étendus seulement si nécessaire et mesurés. Un retry réutilise la même opération ; aucun traitement en boucle ou facture non bornée. Erreur et absence de changement utile ont des états distincts.
+
+**Contrat des données et des décisions :**
+
+- Une intention garde une identité durable et une seule révision courante confirmée ; chaque contribution référence sa session, ses segments et ses preuves. Une proposition de mise à jour IA reste distincte de l'état accepté. Ne pas maintenir deux copies modifiables du même besoin dans sessions et feedbacks.
+- Les gardes actuelles limitent les preuves et la fusion à une session. Ajouter un contrat explicite pour les contributions entre sessions, avec contrôle serveur de l'organisation et des droits sur chaque source ; ne pas supprimer les gardes pour contourner cette limite. Les brouillons privés restent privés.
+- Supprimer une session retire ses contributions et les dérivés concernés ; cela ne doit pas supprimer par cascade les contributions indépendantes d'autres sessions à la même intention. Définir séparément la suppression de l'intention et l'annulation d'un rattachement.
+- Montrer les extraits et preuves qui seront partagés avant d'ajouter une contribution privée à une intention d'équipe. Les résumés et questions IA héritent de la confidentialité de leurs sources. Suppression ou révocation empêche toute nouvelle lecture et tout job tardif de les réintroduire ; nettoyer les dérivés concernés.
+- Chaque analyse porte la révision de l'intention et des sources dont elle part. Si une personne les modifie entre-temps, le résultat devient à réexaminer ; il n'écrase jamais la correction récente. Acceptation, reprise et rattachement sont idempotents.
+- Un nouveau besoin confirmé peut nécessiter une nouvelle transmission. Montrer les changements depuis le dernier brief ; conserver sa version historique et les révisions envoyées. Accepter une précision n'élargit ni ne relance un mandat d'agent.
+
+**Acceptation :** deux sessions enrichissent un besoin unique sans doublon imposé ; on peut accepter une précision et refuser la réponse suggérée. Une contradiction déclenche une clarification utile, un sujet distinct reste séparé, une réponse IA tardive ne remplace pas une correction humaine. Le parcours fonctionne sans codebase ni audio conservé. Vérifier aussi accès entre comptes, partage, suppression, annulation de rattachement, retry, échec IA et brief déjà exporté.
+
+### P3 — suite séparée : repère de code facultatif
+
+**Cas d'usage :** dans les devtools, l'agent reçoit le besoin et peut retrouver plus vite le composant de l'élément montré, sans que Reflet indexe le dépôt.
+
+**Déjà là :** `describeElementRef` récupère des indices React et inclut une source sur la surface devtools ; les notes disposent d'un résolveur plus complet. Source maps et repérage du composant sont deux opérations distinctes : une source map relie une position de code généré à une position du code original, pas directement un pixel à la cause d'un bug.
+
+**À construire :**
+
+- Brancher le résolveur existant sur les éléments sélectionnés et les moments retenus. Résolution asynchrone, bornée et mise en cache par build ; aucun calcul de source map sur chaque mouvement de souris.
+- Conserver un repère compact : composant si connu, chemin relatif, ligne/colonne, identifiant de build/version/commit si disponible, méthode de résolution et état « résolu / indisponible ». Une version inconnue est affichée, pas inventée.
+- Montrer ce repère dans un détail technique replié et l'inclure dans le brief choisi. Une localisation représente le composant observé, pas une preuve de cause ou une garantie sur le fichier à modifier.
+- Résoudre côté devtools ou laisser l'agent destinataire utiliser son accès au dépôt et aux artefacts du build. L'enregistrement en production et l'analyse des intentions restent utilisables sans ces données.
+- Ne pas téléverser automatiquement les fichiers source, chemins personnels absolus ou source maps brutes. Ne pas demander de rendre les maps publiques pour activer Sessions.
+
+**Acceptation :** source disponible dans les devtools → repère versionné si la version est connue ; absence de map, composant non React, timeout ou build différent → aucune collecte bloquée, aucune fausse localisation. Un brief sans source permet toujours de comprendre et reproduire le besoin. Mesurer coût, latence et volume avant tout connecteur de symbolication en production.
+
+**Plus tard seulement :** un connecteur optionnel vers des artefacts privés si l'usage le justifie. Reflet ne devient ni un indexeur de code ni un service de gestion de source maps obligatoire.
+
+### Ensuite — connecter la boucle au reste de Reflet
+
+Ces extensions ne font pas partie de P1 à P4. Les fonctionnalités générales de support, feedback et roadmap existent déjà dans Reflet ; le travail futur est leur raccordement au même besoin et à ses preuves, pas leur reconstruction.
+
+1. **Sources communes :** relier feedback in-app, conversations support et sessions d'équipe au même besoin, puis proposer les regroupements à confirmer.
+2. **PostHog :** enrichir les liens manuels existants avec session/erreur/version et fraîcheur des données ; respecter les accès et ouvrir les preuves dans PostHog. Aucun replay ou moteur d'analytics Reflet à construire.
+3. **Délégation intégrée :** mandat explicite sur une sélection et une révision, accusé de prise en charge, questions et résultat de l'agent. Aujourd'hui le passage est manuel ; ne pas retirer la barrière de la file d'agents avant cette autorisation.
+4. **Décision et résultat :** cap du produit, options, raisons du choix, observations après livraison et réponses préparées aux personnes concernées. La faisabilité technique reste à l'agent qui possède le code.
+5. **Autres surfaces :** gestion mobile, ChatGPT et outils conversationnels, puis investigations récurrentes bornées. Réutiliser les mêmes objets, permissions et actions ; leur disponibilité n'est pas confirmée par les maquettes.
+
+## 10. Ce qui reste à vérifier avant de parler de boucle validée
+
+Les tests existants couvrent SDK, backend et E2E headless. Le lot 0 rapporte une mesure de 10 minutes avec microphone simulé, des essais courts de transcription réelle et un parcours sur backend de développement. Ce sont des preuves techniques, pas une mesure d'adoption ni une garantie pour toutes les applications.
+
+Dernier contrôle ciblé du 13 octobre : 22 tests SDK (interactions, captures, retrait d'image) et 21 tests backend (brief, liaison, prompt d'analyse) réussis sur le travail local existant. Cela ne valide pas P1b/P2/P4, encore à développer. Les contrôles globaux précédents ont été interrompus : accès réseau pour `convex codegen`, variables `NEXT_PUBLIC_CONVEX_URL` et `NEXT_PUBLIC_CONVEX_SITE_URL` absentes pour les builds widgets. Cette mise à jour de périmètre est documentaire ; elle ne relance pas les tests applicatifs ni les E2E et ne confirme aucun déploiement.
+
+Pour les prochaines livraisons :
+
+- [ ] Valider séparément les correctifs locaux 0.6.9, notamment capture en file après pause/fin, capture terminée après la pause et focus après suppression.
+- [ ] Valider P1 sur une session réelle : le brief d'un passage « ce bouton-là » permet à l'agent d'identifier l'élément sans ouvrir les captures ; survol long, clic clavier et build minifié inclus.
+- [ ] Réussir P1b avec scroll, resize, changement de route, animation/décalage de capture, pause, preuve supprimée et correction humaine de l'association.
+- [ ] Réussir P2 sur une session française et anglaise où la personne change d'avis ; mesurer doublons, associations corrigées et temps de revue.
+- [ ] Réussir P3 avec et sans source maps, avec build inconnu/différent et sans accès au dépôt.
+- [ ] Réussir P4 entre plusieurs sessions et comptes, avec partage, suppression, annulation de regroupement et brief déjà exporté.
+- [ ] Réussir le parcours P1b + P2 + P4 complet : corriger le contexte, confirmer l'intention, continuer par la voix, revoir les changements IA, accepter une précision et exporter la nouvelle révision sans modifier l'ancien brief.
+- [ ] Effectuer des sessions réelles consenties sur une application de développement et une application déployée ; transmettre le seul brief et ses pièces à un agent, puis revenir vérifier le résultat.
+- [ ] Confirmer permissions, reprise, coût, performance, clavier et affichage étroit avec les nouvelles capacités, puis vérifier les versions effectivement publiées/déployées.
+
+Le critère produit reste : une personne ou un agent comprend le résultat voulu sans réexplication orale. Le nombre de tickets générés n'est pas un critère de réussite.
+
+## 11. Consigne pour le prochain agent de développement
+
+> Implémente P1b, P2 et P4 de `docs/product/reflet-sessions.md` dans une même livraison. Le parcours attendu est : revoir un passage avec son contexte, corriger l'association, confirmer l'intention séparément de sa réponse envisagée, continuer cette intention par une nouvelle session vocale, revoir les changements proposés par l'IA puis exporter une nouvelle révision du même besoin.
+>
+> Le socle Sessions et P1 existent. Préserve les changements locaux de P1 et les correctifs de capture/focus ; vérifie leur état avant de travailler dessus. Ne recommence pas les anciens lots. Commence par le contrat de l'intention durable, des contributions entre sessions, des associations corrigées et des révisions. Réutilise les propositions, clarifications, captures, exports et surfaces existants ; un renommage en « Intentions » ne suffit pas à remplir le périmètre.
+>
+> Écris d'abord les tests des comportements critiques : association cohérente et corrigible, droits sur chaque source, continuation idempotente, correction humaine protégée contre une analyse tardive, comparaison IA sourcée et validation avant modification du besoin. Implémente P1b, puis P2, puis P4 et vérifie le parcours complet. L'IA doit proposer une évolution utile et demander une précision si nécessaire ; elle ne fusionne, ne publie et ne lance aucun travail de développement silencieusement.
+>
+> P3 et les intégrations PostHog/agents restent hors périmètre. Aucun accès obligatoire à la codebase, vidéo, audio permanent, trajectoire continue du curseur ou nouveau chat imposé. Respecte les droits, la suppression et les contrôles du dépôt, avec E2E headless et preuves des limites restantes. Ne déclare la livraison complète qu'après les critères de P1b, P2 et P4 ; aucun commit ni push sans demande explicite.
+
+Les vérifications applicatives à exécuter pendant l'implémentation sont celles d'`AGENTS.md`, avec tests de comportement et E2E headless. Le document et les aperçus ne constituent pas à eux seuls une preuve de fonctionnement.
