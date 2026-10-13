@@ -1,5 +1,11 @@
-import { useId, useState } from "react";
+import { type ReactNode, useId, useState } from "react";
+import {
+  CheckIcon,
+  CloseIcon,
+  PencilIcon,
+} from "../../../../feedback/ui/icons";
 import type { ProposalDecision, SessionProposal } from "../../../protocol";
+import { ClockIcon } from "../../session-icons";
 import { ContinueIntention } from "../continuation/continue-panel";
 import { IntentionSource } from "../moment/intention-source";
 import { useFocusWhen } from "../transcript/remove-evidence";
@@ -27,10 +33,13 @@ const FORMULATION_CHIPS: Record<SessionProposal["formulation"], string> = {
   human: "Your wording",
 };
 
-const DECISION_BUTTONS: { decision: ProposalDecision; label: string }[] = [
-  { decision: "kept", label: "Confirm" },
-  { decision: "later", label: "Later" },
-  { decision: "dismissed", label: "Dismiss" },
+const ICON_DECISIONS: {
+  decision: ProposalDecision;
+  icon: ReactNode;
+  label: string;
+}[] = [
+  { decision: "later", icon: <ClockIcon />, label: "Later" },
+  { decision: "dismissed", icon: <CloseIcon />, label: "Dismiss" },
 ];
 
 function ProposalChips({ proposal }: { proposal: SessionProposal }) {
@@ -119,23 +128,46 @@ function DecisionButtons({
   onEdit: () => void;
   proposal: SessionProposal;
 }) {
+  const decide = (decision: ProposalDecision) => () =>
+    context.actions.decide(proposal, decision);
+  const isKept = proposal.decision === "kept";
   return (
     <div className="dt-actions">
-      {DECISION_BUTTONS.map(({ decision, label }) => (
+      <button
+        aria-pressed={isKept}
+        className="dt-btn"
+        data-variant="primary"
+        disabled={isKept}
+        onClick={decide("kept")}
+        type="button"
+      >
+        <CheckIcon size={14} />
+        Confirm
+      </button>
+      {ICON_DECISIONS.map(({ decision, icon, label }) => (
         <button
+          aria-label={label}
           aria-pressed={proposal.decision === decision}
           className="dt-btn"
-          data-variant={decision === "kept" ? "primary" : undefined}
+          data-icon-only
           disabled={proposal.decision === decision}
           key={decision}
-          onClick={() => context.actions.decide(proposal, decision)}
+          onClick={decide(decision)}
+          title={label}
           type="button"
         >
-          {label}
+          {icon}
         </button>
       ))}
-      <button className="dt-btn" onClick={onEdit} type="button">
-        Edit
+      <button
+        aria-label="Edit"
+        className="dt-btn"
+        data-icon-only
+        onClick={onEdit}
+        title="Edit"
+        type="button"
+      >
+        <PencilIcon />
       </button>
     </div>
   );

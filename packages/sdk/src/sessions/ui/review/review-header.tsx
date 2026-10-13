@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { announce } from "../../../devtools/client/notices";
 import { MoreIcon } from "../../../feedback/ui/icons";
 import type { SessionDetail, SessionSummary } from "../../protocol";
 import { formatDate, shortDuration } from "../session-format";
 import { useSessionAction, useSessionWorkspace } from "../session-workspace";
+import { useOptimisticChange } from "./optimistic-change";
 import type { ReviewHandle } from "./use-session-detail";
 
 const DELETE_COPY =
@@ -11,24 +12,39 @@ const DELETE_COPY =
 
 type ReviewSession = SessionDetail["session"];
 
-function useSessionUpdate(review: ReviewHandle, sessionId: string) {
-  const { api } = useSessionWorkspace();
-  const run = useSessionAction();
-  return async (
-    failureLabel: string,
-    change: { title?: string; visibility?: SessionSummary["visibility"] }
-  ) => {
-    const updated = await run(failureLabel, () =>
-      api.update({ sessionId, ...change })
-    );
-    if (updated) {
-      review.patch((detail) => ({
-        ...detail,
-        session: { ...detail.session, ...updated },
-      }));
-    }
-    return updated !== null;
+type SessionChange = Partial<Pick<ReviewSession, "title" | "visibility">>;
+
+function withSessionFields(change: SessionChange) {
+  return (detail: SessionDetail): SessionDetail => ({
+    ...detail,
+    session: { ...detail.session, ...change },
+  });
+}
+
+function fieldsBefore(
+  session: ReviewSession,
+  change: SessionChange
+): SessionChange {
+  return {
+    ...(change.title === undefined ? {} : { title: session.title }),
+    ...(change.visibility === undefined
+      ? {}
+      : { visibility: session.visibility }),
   };
+}
+
+function useSessionUpdate(review: ReviewHandle, session: ReviewSession) {
+  const { api } = useSessionWorkspace();
+  const applyChange = useOptimisticChange(review);
+  return (failureLabel: string, change: SessionChange) =>
+    applyChange({
+      failureLabel,
+      request: () => api.update({ sessionId: session.id, ...change }),
+      rollback: withSessionFields(fieldsBefore(session, change)),
+      settle: (detail, saved: SessionSummary) =>
+        withSessionFields(saved)(detail),
+      show: withSessionFields(change),
+    });
 }
 
 function TitleEditor({
@@ -41,15 +57,14 @@ function TitleEditor({
   session: ReviewSession;
 }) {
   const [title, setTitle] = useState(session.title);
-  const update = useSessionUpdate(review, session.id);
+  const update = useSessionUpdate(review, session);
   return (
     <form
       className="dt-search"
-      onSubmit={async (event) => {
+      onSubmit={(event) => {
         event.preventDefault();
-        if (await update("The title was not saved", { title: title.trim() })) {
-          onDone();
-        }
+        update("The title was not saved", { title: title.trim() });
+        onDone();
       }}
     >
       <input
@@ -85,14 +100,18 @@ function DeleteConfirmation({
 }) {
   const { api } = useSessionWorkspace();
   const run = useSessionAction();
+  const [isDeleting, setIsDeleting] = useState(false);
   const deleteSession = async () => {
+    setIsDeleting(true);
     const deleted = await run("The session was not deleted", () =>
       api.deleteSession(sessionId)
     );
-    if (deleted !== null) {
-      announce("Session deleted");
-      onDeleted();
+    if (deleted === null) {
+      setIsDeleting(false);
+      return;
     }
+    announce("Session deleted");
+    onDeleted();
   };
   return (
     <div className="dt-ses-banner">
@@ -101,6 +120,7 @@ function DeleteConfirmation({
         <button
           className="dt-btn"
           data-variant="danger"
+          disabled={isDeleting}
           onClick={deleteSession}
           type="button"
         >
@@ -114,82 +134,96 @@ function DeleteConfirmation({
   );
 }
 
-function SessionMenu({
-  onDeleted,
-  review,
-  session,
-}: {
-  onDeleted: () => void;
-  review: ReviewHandle;
-  session: ReviewSession;
-}) {
-  const update = useSessionUpdate(review, session.id);
-  const [isConfirming, setIsConfirming] = useState(false);
-  const isShared = session.visibility === "team";
-
-  if (isConfirming) {
-    return (
-      <DeleteConfirmation
-        onCancel={() => setIsConfirming(false)}
-        onDeleted={onDeleted}
-        sessionId={session.id}
-      />
-    );
-  }
-  return (
-    <div className="dt-actions">
-      <button
-        className="dt-btn"
-        onClick={() =>
-          update("The sharing was not changed", {
-            visibility: isShared ? "private" : "team",
-          })
-        }
-        type="button"
-      >
-        {isShared ? "Make private" : "Share with team"}
-      </button>
-      <button
-        className="dt-btn"
-        data-variant="danger"
-        onClick={() => setIsConfirming(true)}
-        type="button"
-      >
-        Delete session
-      </button>
-    </div>
-  );
+function useDismissOnOutside(isOpen: boolean, close: () => void) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef(close);
+  useLayoutEffect(() => {
+    closeRef.current = close;
+  });
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+    const container = containerRef.current;
+    const closeOnOutsidePointer = (event: Event) => {
+      if (container && !event.composedPath().includes(container)) {
+        closeRef.current();
+      }
+    };
+    const closeOnEscape = (event: Event) => {
+      if (event instanceof KeyboardEvent && event.key === "Escape") {
+        event.stopPropagation();
+        closeRef.current();
+      }
+    };
+    document.addEventListener("pointerdown", closeOnOutsidePointer, true);
+    container?.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutsidePointer, true);
+      container?.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [isOpen]);
+  return containerRef;
 }
 
-function HeaderTitle({
-  isMenuOpen,
-  onRename,
-  onToggleMenu,
-  session,
-}: {
-  isMenuOpen: boolean;
+interface SessionMenuActions {
+  onDelete: () => void;
   onRename: () => void;
-  onToggleMenu: () => void;
-  session: ReviewSession;
+  onToggleSharing: () => void;
+}
+
+function SessionMenu({
+  actions,
+  isShared,
+}: {
+  actions: SessionMenuActions;
+  isShared: boolean;
 }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuId = useId();
+  const close = () => setIsOpen(false);
+  const containerRef = useDismissOnOutside(isOpen, close);
+  const choose = (action: () => void) => () => {
+    close();
+    action();
+  };
   return (
-    <div className="dt-card-head">
-      <h2 className="dt-ses-title">{session.title}</h2>
-      {session.canEdit && (
-        <>
-          <button className="dt-btn" onClick={onRename} type="button">
+    <div className="dt-ses-menu" ref={containerRef}>
+      <button
+        aria-controls={menuId}
+        aria-expanded={isOpen}
+        aria-label="Session options"
+        className="icon-btn"
+        onClick={() => setIsOpen(!isOpen)}
+        type="button"
+      >
+        <MoreIcon />
+      </button>
+      {isOpen && (
+        <div className="dt-ses-menu-list" id={menuId}>
+          <button
+            className="dt-ses-menu-item"
+            onClick={choose(actions.onRename)}
+            type="button"
+          >
             Rename
           </button>
           <button
-            aria-expanded={isMenuOpen}
-            aria-label="Session options"
-            className="icon-btn"
-            onClick={onToggleMenu}
+            className="dt-ses-menu-item"
+            onClick={choose(actions.onToggleSharing)}
             type="button"
           >
-            <MoreIcon />
+            {isShared ? "Make private" : "Share with team"}
           </button>
-        </>
+          <button
+            className="dt-ses-menu-item"
+            data-variant="danger"
+            onClick={choose(actions.onDelete)}
+            type="button"
+          >
+            Delete session
+          </button>
+        </div>
       )}
     </div>
   );
@@ -205,9 +239,17 @@ export function ReviewHeader({
   session: ReviewSession;
 }) {
   const [isRenaming, setIsRenaming] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const visibility =
-    session.visibility === "team" ? "Shared with team" : "Private";
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const update = useSessionUpdate(review, session);
+  const isShared = session.visibility === "team";
+  const menuActions: SessionMenuActions = {
+    onDelete: () => setIsConfirmingDelete(true),
+    onRename: () => setIsRenaming(true),
+    onToggleSharing: () =>
+      update("The sharing was not changed", {
+        visibility: isShared ? "private" : "team",
+      }),
+  };
   return (
     <header className="dt-ses-head">
       <button className="dt-ses-link" onClick={onBack} type="button">
@@ -220,20 +262,24 @@ export function ReviewHeader({
           session={session}
         />
       ) : (
-        <HeaderTitle
-          isMenuOpen={isMenuOpen}
-          onRename={() => setIsRenaming(true)}
-          onToggleMenu={() => setIsMenuOpen(!isMenuOpen)}
-          session={session}
-        />
+        <div className="dt-card-head">
+          <h2 className="dt-ses-title">{session.title}</h2>
+          {session.canEdit && (
+            <SessionMenu actions={menuActions} isShared={isShared} />
+          )}
+        </div>
       )}
       <p className="dt-meta">
         {formatDate(session.startedAt)} · {shortDuration(session.durationMs)} ·{" "}
-        {visibility}
+        {isShared ? "Shared with team" : "Private"}
         {session.isMine ? "" : ` · ${session.authorName ?? "A teammate"}`}
       </p>
-      {isMenuOpen && session.canEdit && (
-        <SessionMenu onDeleted={onBack} review={review} session={session} />
+      {isConfirmingDelete && session.canEdit && (
+        <DeleteConfirmation
+          onCancel={() => setIsConfirmingDelete(false)}
+          onDeleted={onBack}
+          sessionId={session.id}
+        />
       )}
     </header>
   );

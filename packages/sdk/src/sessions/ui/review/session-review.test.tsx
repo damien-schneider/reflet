@@ -124,6 +124,41 @@ it("confirms an intention and undoes it back to its previous decision", async ()
   );
 });
 
+it("shows a decision at once and puts it back with a retry when it was not saved", async () => {
+  let refuse: (error: Error) => void = () => undefined;
+  const api = fakeApi({
+    decideProposal: vi
+      .fn()
+      .mockReturnValueOnce(
+        new Promise((_resolve, reject) => {
+          refuse = reject;
+        })
+      )
+      .mockResolvedValueOnce(aProposal({ decision: "kept" })),
+  });
+  await renderReview(
+    aDetail({ proposals: [aProposal({ decision: "later" })] }),
+    api
+  );
+  const confirm = screen.getByRole("button", { name: "Confirm" });
+
+  fireEvent.click(confirm);
+  expect(confirm.getAttribute("aria-pressed")).toBe("true");
+
+  await act(async () => refuse(new Error("Offline")));
+  expect(confirm.getAttribute("aria-pressed")).toBe("false");
+  const failure = screen.getByText("The decision was not saved: Offline");
+  fireEvent.click(
+    within(failure.parentElement ?? document.body).getByRole("button", {
+      name: "Retry",
+    })
+  );
+  await waitFor(() =>
+    expect(confirm.getAttribute("aria-pressed")).toBe("true")
+  );
+  expect(api.decideProposal).toHaveBeenCalledTimes(2);
+});
+
 it("saves an edit against the revision it was made on and explains a conflict", async () => {
   const api = fakeApi({
     editProposal: vi

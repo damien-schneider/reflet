@@ -1,7 +1,12 @@
 import { announce } from "../../../../devtools/client/notices";
 import type { SessionApi } from "../../../api/session-api";
-import type { ProposalDecision, SessionProposal } from "../../../protocol";
+import type {
+  ProposalDecision,
+  SessionDetail,
+  SessionProposal,
+} from "../../../protocol";
 import { useSessionAction, useSessionWorkspace } from "../../session-workspace";
+import { useOptimisticChange } from "../optimistic-change";
 import { type ReviewHandle, withProposal } from "../use-session-detail";
 
 const NOTICE_NEED_LENGTH = 60;
@@ -48,34 +53,71 @@ function useProposalSave(review: ReviewHandle): ProposalActions["save"] {
   };
 }
 
-function decideWithUndo(
-  save: ProposalActions["save"]
-): ProposalActions["decide"] {
-  const restore = async (proposalId: string, decision: ProposalDecision) => {
-    const restored = await save("The decision was not undone", (client) =>
-      client.decideProposal({ decision, proposalId })
-    );
-    if (restored) {
-      announce("Decision undone");
-    }
-  };
+function withDecision(
+  proposalId: string,
+  decision: ProposalDecision
+): (detail: SessionDetail) => SessionDetail {
+  return (detail) => ({
+    ...detail,
+    proposals: detail.proposals.map((item) =>
+      item.id === proposalId ? { ...item, decision } : item
+    ),
+  });
+}
+
+function useDecide(review: ReviewHandle): ProposalActions["decide"] {
+  const { api } = useSessionWorkspace();
+  const applyChange = useOptimisticChange(review);
+
+  const changeDecision = (options: {
+    failureLabel: string;
+    from: ProposalDecision;
+    proposalId: string;
+    to: ProposalDecision;
+  }) =>
+    applyChange({
+      failureLabel: options.failureLabel,
+      request: () =>
+        api.decideProposal({
+          decision: options.to,
+          proposalId: options.proposalId,
+        }),
+      rollback: withDecision(options.proposalId, options.from),
+      settle: withProposal,
+      show: withDecision(options.proposalId, options.to),
+    });
 
   return async (proposal, decision) => {
     const previous = proposal.decision;
-    const updated = await save("The decision was not saved", (client) =>
-      client.decideProposal({ decision, proposalId: proposal.id })
-    );
-    if (updated) {
-      announce(`${DECISION_NOTICE[decision]} ${quotedNeed(proposal.need)}`, {
-        label: "Undo",
-        run: () => restore(proposal.id, previous),
-      });
+    const updated = await changeDecision({
+      failureLabel: "The decision was not saved",
+      from: previous,
+      proposalId: proposal.id,
+      to: decision,
+    });
+    if (!updated) {
+      return;
     }
+    announce(`${DECISION_NOTICE[decision]} ${quotedNeed(proposal.need)}`, {
+      label: "Undo",
+      run: async () => {
+        const restored = await changeDecision({
+          failureLabel: "The decision was not undone",
+          from: decision,
+          proposalId: proposal.id,
+          to: previous,
+        });
+        if (restored) {
+          announce("Decision undone");
+        }
+      },
+    });
   };
 }
 
 export function useProposalActions(review: ReviewHandle): ProposalActions {
   const save = useProposalSave(review);
+  const decide = useDecide(review);
 
   return {
     clarify: (proposal, text) =>
@@ -86,7 +128,7 @@ export function useProposalActions(review: ReviewHandle): ProposalActions {
           text,
         })
       ),
-    decide: decideWithUndo(save),
+    decide,
     merge: async (targetId, sourceIds) => {
       const merged = await save("The intentions were not merged", (client) =>
         client.mergeProposals({ sourceIds, targetId })

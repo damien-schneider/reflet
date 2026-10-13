@@ -51,6 +51,16 @@ button.dt-ses-row:hover { background: var(--rf-bg-hover); }
 
 const REVIEW_STYLES = `
 .dt-ses-title { flex: 1; min-width: 0; margin: 0; font-size: 15px; font-weight: 650; overflow-wrap: anywhere; }
+.dt-ses-menu { position: relative; flex: none; }
+.dt-ses-menu > .icon-btn { width: 30px; height: 30px; }
+.dt-ses-menu-list {
+  position: absolute; top: calc(100% + 4px); right: 0; z-index: 2; display: flex; flex-direction: column; min-width: 168px; padding: 4px;
+  border: 1px solid var(--rf-border); border-radius: var(--rf-radius-sm); background: var(--rf-bg); box-shadow: var(--rf-shadow);
+}
+.dt-ses-menu-item { display: flex; align-items: center; height: 30px; padding: 0 10px; border-radius: 6px; color: var(--rf-text); font-size: 12.5px; text-align: left; }
+.dt-ses-menu-item:hover, .dt-ses-menu-item:focus-visible { background: var(--rf-bg-hover); }
+.dt-ses-menu-item[data-variant="danger"] { color: var(--rf-danger); }
+.dt-btn[data-icon-only] { justify-content: center; width: 28px; padding: 0; }
 .dt-ses-tabs { flex-wrap: wrap; margin: 0; }
 .dt-ses-field { display: flex; flex-direction: column; gap: 3px; font-size: 11.5px; color: var(--rf-text-muted); }
 .dt-ses-need {

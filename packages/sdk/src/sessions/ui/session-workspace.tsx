@@ -209,7 +209,8 @@ export function useSessionAction() {
   const { onUnauthorized } = useSessionWorkspace();
   return async <T,>(
     failureLabel: string,
-    action: () => Promise<T>
+    action: () => Promise<T>,
+    retry?: () => void
   ): Promise<T | null> => {
     try {
       return await action();
@@ -217,7 +218,7 @@ export function useSessionAction() {
       if (isUnauthorized(error)) {
         onUnauthorized();
       } else {
-        reportFailure(failureLabel, error);
+        reportFailure(failureLabel, error, retry);
       }
       return null;
     }
