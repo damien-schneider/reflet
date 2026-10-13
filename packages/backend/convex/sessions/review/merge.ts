@@ -89,7 +89,10 @@ export const merge = internalMutation({
       revision: target.revision + 1,
       updatedAt: now,
     });
-    return await loadProposalView(ctx, target._id);
+    return await loadProposalView(ctx, {
+      proposalId: target._id,
+      viewer: args.actor,
+    });
   },
 });
 
@@ -116,6 +119,9 @@ export const separate = internalMutation({
       mergeSuggestion: undefined,
       updatedAt: now,
     });
-    return await loadProposalView(ctx, proposal._id);
+    return await loadProposalView(ctx, {
+      proposalId: proposal._id,
+      viewer: args.actor,
+    });
   },
 });

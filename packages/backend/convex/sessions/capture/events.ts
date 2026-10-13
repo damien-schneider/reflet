@@ -4,7 +4,7 @@ import { internalMutation } from "../../_generated/server";
 import { loadSession, sessionActorValidator } from "../access";
 import { SESSION_LIMITS } from "../constants";
 import { exceedsDuration, isCollectedAt } from "../lifecycle/timeline";
-import { sessionEventValidator } from "../tableFields";
+import { sessionEventValidator } from "../validators";
 
 type SessionEvent = Infer<typeof sessionEventValidator>;
 

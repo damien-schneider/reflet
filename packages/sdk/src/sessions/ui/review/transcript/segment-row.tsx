@@ -150,49 +150,61 @@ function ContextChips({ segment }: { segment: SessionSegment }) {
   );
 }
 
-function EditPassageLink({
+function SegmentLinks({
   onEdit,
+  onShowMoment,
   time,
 }: {
-  onEdit: () => void;
+  onEdit: (() => void) | null;
+  onShowMoment: (opener: HTMLElement) => void;
   time: string;
 }) {
   return (
-    <button
-      aria-label={`Edit passage at ${time}`}
-      className="dt-ses-link"
-      onClick={onEdit}
-      type="button"
-    >
-      Edit
-    </button>
+    <div className="dt-actions">
+      <button
+        aria-label={`Show context at ${time}`}
+        className="dt-ses-link"
+        onClick={(event) => onShowMoment(event.currentTarget)}
+        type="button"
+      >
+        Show context
+      </button>
+      {onEdit && (
+        <button
+          aria-label={`Edit passage at ${time}`}
+          className="dt-ses-link"
+          onClick={onEdit}
+          type="button"
+        >
+          Edit
+        </button>
+      )}
+    </div>
   );
 }
 
+export interface SegmentEditing {
+  canEdit: boolean;
+  review: ReviewHandle;
+}
+
 export function SegmentRow({
-  canEdit,
-  isFocused,
-  review,
+  editing,
+  onShowMoment,
   segment,
 }: {
-  canEdit: boolean;
-  isFocused: boolean;
-  review: ReviewHandle;
+  editing: SegmentEditing;
+  onShowMoment: (opener: HTMLElement) => void;
   segment: SessionSegment;
 }) {
+  const { canEdit, review } = editing;
   const [isEditing, setIsEditing] = useState(false);
   const time = formatClock(segment.startMs);
   const isSettled = ["done", "empty"].includes(segment.transcription.state);
   const canStartEditing = canEdit && isSettled && !isEditing;
 
   return (
-    <li
-      className="dt-ses-seg"
-      ref={
-        isFocused ? (node) => node?.focus({ preventScroll: false }) : undefined
-      }
-      tabIndex={-1}
-    >
+    <li className="dt-ses-seg">
       <span className="dt-ses-time">{time}</span>
       <div className="dt-ses-seg-body">
         {isEditing ? (
@@ -209,9 +221,11 @@ export function SegmentRow({
           />
         )}
         <ContextChips segment={segment} />
-        {canStartEditing && (
-          <EditPassageLink onEdit={() => setIsEditing(true)} time={time} />
-        )}
+        <SegmentLinks
+          onEdit={canStartEditing ? () => setIsEditing(true) : null}
+          onShowMoment={onShowMoment}
+          time={time}
+        />
       </div>
     </li>
   );

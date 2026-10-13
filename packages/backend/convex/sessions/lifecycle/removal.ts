@@ -6,6 +6,10 @@ import {
   SESSION_CRON_BATCH_SIZE,
   SESSION_TOMBSTONE_RETENTION_MS,
 } from "../constants";
+import {
+  forgetSessionIntentions,
+  removeSessionContributions,
+} from "../intentions/lifecycle";
 
 async function deleteSessionChildren(
   ctx: MutationCtx,
@@ -70,6 +74,8 @@ export const remove = internalMutation({
       actor,
       sessionId,
     });
+    await removeSessionContributions(ctx, session._id);
+    await forgetSessionIntentions(ctx, session._id);
     await deleteSessionChildren(ctx, session._id);
     const now = Date.now();
     await ctx.db.patch(session._id, {

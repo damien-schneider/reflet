@@ -7,7 +7,7 @@ import { useSessionAction, useSessionWorkspace } from "../session-workspace";
 import type { ReviewHandle } from "./use-session-detail";
 
 const DELETE_COPY =
-  "Delete this session? Its recordings, transcript and proposals are removed. Briefs you already copied or exported can't be recalled.";
+  "Delete this session? Its recordings, transcript and intentions are removed, including what later sessions added to those intentions. Briefs you already copied or exported can't be recalled.";
 
 type ReviewSession = SessionDetail["session"];
 

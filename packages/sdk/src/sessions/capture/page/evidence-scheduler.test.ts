@@ -83,6 +83,31 @@ describe("createEvidenceScheduler", () => {
     ]);
   });
 
+  it("reports the frame and time the screenshot was rendered, not requested", async () => {
+    let finishRender: (image: CapturedImage) => void = () => undefined;
+    const rendering = new Promise<CapturedImage>((resolve) => {
+      finishRender = resolve;
+    });
+    vi.mocked(captureViewport).mockReturnValueOnce(rendering);
+    const { evidence, scheduler } = startScheduler();
+    scheduler.capture({ trigger: "mark" });
+    await vi.advanceTimersByTimeAsync(3200);
+    Object.defineProperty(window, "scrollY", {
+      configurable: true,
+      value: 480,
+    });
+    finishRender(screenshot());
+    await vi.runAllTimersAsync();
+    Object.defineProperty(window, "scrollY", { configurable: true, value: 0 });
+    expect(evidence).toEqual([
+      expect.objectContaining({
+        atMs: 0,
+        capturedAtMs: 3200,
+        frame: expect.objectContaining({ scrollY: 480 }),
+      }),
+    ]);
+  });
+
   it("skips an automatic capture too close to the previous one", async () => {
     const { evidence, scheduler } = startScheduler();
     scheduler.capture({ trigger: "start" });

@@ -13,7 +13,7 @@ import {
   evidenceTriggerValidator,
   evidenceViewValidator,
   frameValidator,
-} from "../tableFields";
+} from "../validators";
 import { shapeEvidence } from "../views/detail";
 import {
   claimFreshUpload,
@@ -75,6 +75,7 @@ export const register = internalMutation({
   args: {
     actor: sessionActorValidator,
     atMs: v.number(),
+    capturedAtMs: v.optional(v.number()),
     clientKey: v.string(),
     element: v.optional(elementRefValidator),
     frame: v.optional(frameValidator),
@@ -105,6 +106,7 @@ export const register = internalMutation({
     const now = Date.now();
     const evidenceId = await ctx.db.insert("sessionEvidence", {
       atMs: args.atMs,
+      capturedAtMs: args.capturedAtMs,
       clientKey: args.clientKey,
       createdAt: now,
       element: args.element,

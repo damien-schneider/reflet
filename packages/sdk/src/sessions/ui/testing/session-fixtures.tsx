@@ -15,6 +15,7 @@ import type {
   RecorderSnapshot,
   SessionRecorder,
 } from "../../recorder/session-recorder";
+import type { ReviewLinks } from "../review/session-review";
 import {
   type SessionWorkspace,
   SessionWorkspaceProvider,
@@ -44,28 +45,37 @@ export const IDENTITY: SessionIdentity = {
 
 export function fakeApi(overrides: Partial<SessionApi> = {}): SessionApi {
   return {
+    acceptIntentionChanges: vi.fn(),
     addEvidence: vi.fn(),
     addTypedSegment: vi.fn(),
     addVoiceSegment: vi.fn(),
     analyze: vi.fn(),
+    answerIntentionQuestion: vi.fn(),
+    attachToIntention: vi.fn(),
     clarifyProposal: vi.fn(),
     collection: vi.fn(),
+    contextChoices: vi.fn(),
     correctSegment: vi.fn(),
     createFeedback: vi.fn(),
     createHandoff: vi.fn(),
     createProposal: vi.fn(),
     decideProposal: vi.fn(),
+    deleteProposal: vi.fn(),
     deleteSession: vi.fn(),
+    detachContribution: vi.fn(),
     detail: vi.fn(),
     editProposal: vi.fn(),
     events: vi.fn(),
     identity: vi.fn().mockResolvedValue(IDENTITY),
+    keepSeparate: vi.fn(),
     list: vi.fn().mockResolvedValue([]),
     markHandoffDelivered: vi.fn(),
     mergeProposals: vi.fn(),
     removeEvidence: vi.fn(),
+    reopenOrRejectChange: vi.fn(),
     retrySegment: vi.fn(),
     separateProposal: vi.fn(),
+    setSegmentContext: vi.fn(),
     start: vi.fn(),
     update: vi.fn(),
     uploadUrl: vi.fn(),
@@ -148,6 +158,10 @@ export function fakeWorkspace(
   };
 }
 
+export function reviewLinks(): ReviewLinks {
+  return { onBack: vi.fn(), onOpenSession: vi.fn(), onStarted: vi.fn() };
+}
+
 export function renderInWorkspace(
   ui: ReactNode,
   workspace: SessionWorkspace
@@ -201,13 +215,17 @@ export function aProposal(
   overrides: Partial<SessionProposal> = {}
 ): SessionProposal {
   return {
+    attachment: null,
     certainty: "clear",
     clarifications: [],
     decision: "pending",
     evidenceIds: [],
     feedbackId: null,
+    formulation: "ai",
     handedOffRevision: null,
     id: "proposal_1",
+    intentionSuggestion: null,
+    lastHandoff: null,
     mergedIntoId: null,
     mergeSuggestion: null,
     need: "Make the Save button visible on small screens",
@@ -234,6 +252,8 @@ export function aSegment(
     audioExpiresAt: null,
     context: [],
     contextAmbiguous: false,
+    contextCorrectedAt: null,
+    contextOrigin: "auto",
     endMs: 9000,
     hasAudio: false,
     id: "segment_1",
@@ -253,6 +273,7 @@ export function anEvidence(
 ): SessionEvidence {
   return {
     atMs: 134_000,
+    capturedAtMs: null,
     element: null,
     frame: null,
     id: "evidence_1",
@@ -269,8 +290,11 @@ export function anEvidence(
 
 export function aDetail(overrides: Partial<SessionDetail> = {}): SessionDetail {
   return {
+    continuation: null,
+    contributedEvidence: [],
     evidence: [],
     handoffs: [],
+    history: [],
     marks: [],
     proposals: [aProposal()],
     segments: [aSegment()],

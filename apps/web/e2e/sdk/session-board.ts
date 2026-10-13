@@ -1,11 +1,31 @@
 import type { Page, Route } from "@playwright/test";
+import {
+  addContribution,
+  addIntention,
+  citeSessionSources,
+  intentionResponders,
+} from "./intention-board";
+import {
+  type BoardRequest,
+  type BoardSession,
+  type BoardState,
+  type Collection,
+  continuedIntentionView,
+  contributionView,
+  evidenceView,
+  findSession,
+  historyEntry,
+  proposalView,
+  screenshotContext,
+  segmentView,
+  summary,
+} from "./session-views";
 
 const PROXY = "**/api/reflet-devtools/proxy/api/v1/sessions/**";
 const UPLOAD_PATH = "/__session-upload";
-const SPOKEN_TEXT = "I want to know whether my plan was saved.";
-const PROPOSAL_NEED = "Show that the plan was saved";
-const PIXEL_PNG =
-  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+export const SPOKEN_TEXT = "Ici, je ne sais pas si c'est enregistré.";
+export const CONTINUATION_TEXT =
+  "After a reload the plan is still there. A toast would help.";
 
 const LIMITS = {
   audioRetentionMs: 86_400_000,
@@ -22,160 +42,125 @@ const LIMITS = {
   warnBeforeLimitMs: 120_000,
 };
 
-type Collection = "recording" | "paused" | "ended";
-
-interface RecordedEvent {
-  atMs: number;
-  kind: string;
-}
-
-interface BoardState {
-  collection: Collection;
-  collectionCalls: { action: string; atMs: number }[];
-  decision: "pending" | "kept" | "later" | "dismissed";
-  events: RecordedEvent[];
-  evidence: Record<string, unknown>[];
-  segments: Record<string, unknown>[];
-  starts: number;
-}
-
 export interface SessionBoard {
   state: BoardState;
 }
 
-function summary(state: BoardState) {
-  const isAnalyzed = state.collection === "ended";
+function segmentsWithContext(session: BoardSession) {
+  const [firstEvidence] = session.evidence;
+  return session.segments.map((segment) =>
+    segment.contextOrigin === "auto" && firstEvidence
+      ? { ...segment, context: [screenshotContext(firstEvidence)] }
+      : segment
+  );
+}
+
+function continuationOf(state: BoardState, session: BoardSession) {
+  const contribution = state.contributions.find(
+    ({ sessionId }) => sessionId === session.id
+  );
+  const intention = state.intentions.find(
+    ({ id }) => id === contribution?.intentionId
+  );
+  if (!(contribution && intention)) {
+    return null;
+  }
+  const home = findSession(state, intention.sessionId);
   return {
-    analysis: {
-      analyzedRevision: isAnalyzed ? 1 : null,
-      error: null,
-      proposalCount: isAnalyzed ? 1 : null,
-      state: isAnalyzed ? "succeeded" : "idle",
-      transcriptRevision: 1,
-      updatedAt: null,
-    },
-    authorName: "Ada",
-    collection: state.collection,
-    counts: {
-      evidence: state.evidence.length,
-      failedSegments: 0,
-      handoffs: 0,
-      kept: state.decision === "kept" ? 1 : 0,
-      pendingSegments: 0,
-      proposals: isAnalyzed ? 1 : 0,
-      segments: state.segments.length,
-    },
-    durationMs: 4000,
-    endedAt: isAnalyzed ? Date.now() : null,
-    id: "session-1",
-    isMine: true,
-    startedAt: Date.now(),
-    surface: "devtools",
-    title: "Plans & billing",
-    visibility: "private",
+    contribution: contributionView(contribution),
+    intention: continuedIntentionView(intention, home.title),
   };
 }
 
-function proposal(state: BoardState) {
-  return {
-    certainty: "clear",
-    clarifications: [],
-    decision: state.decision,
-    evidenceIds: [],
-    feedbackId: null,
-    handedOffRevision: null,
-    id: "proposal-1",
-    mergedIntoId: null,
-    mergeSuggestion: null,
-    need: PROPOSAL_NEED,
-    needsReview: false,
-    observed: "The author saved a plan and could not tell whether it worked.",
-    origin: "ai",
-    question: null,
-    refinement: null,
-    response: null,
-    revision: 1,
-    segmentIds: state.segments.map((segment) => String(segment.id)),
-    setAside: ["A history of plans"],
-    unknowns: [],
-    updatedAt: Date.now(),
-    verification: null,
-  };
+function intentionHistory(state: BoardState, session: BoardSession) {
+  const own = state.intentions.filter(
+    ({ sessionId }) => sessionId === session.id
+  );
+  return state.contributions
+    .filter(({ intentionId }) => own.some(({ id }) => id === intentionId))
+    .map((contribution) =>
+      historyEntry(contribution, findSession(state, contribution.sessionId))
+    );
 }
 
-function detail(state: BoardState) {
+function detail(state: BoardState, session: BoardSession) {
+  citeSessionSources(state);
+  const history = intentionHistory(state, session);
+  const contributedIds = new Set(history.flatMap((entry) => entry.evidenceIds));
+  const isEnded = session.collection === "ended";
   return {
-    evidence: state.evidence,
-    handoffs: [],
+    continuation: continuationOf(state, session),
+    contributedEvidence: state.sessions
+      .flatMap(({ evidence }) => evidence)
+      .filter(({ id }) => contributedIds.has(String(id))),
+    evidence: session.evidence,
+    handoffs: state.handoffs.filter(
+      ({ sessionId }) => sessionId === session.id
+    ),
+    history,
     marks: [],
-    proposals: state.collection === "ended" ? [proposal(state)] : [],
-    segments: state.segments,
-    session: { ...summary(state), canEdit: true, gaps: [], startUrl: null },
+    proposals: isEnded
+      ? state.intentions
+          .filter(({ sessionId }) => sessionId === session.id)
+          .map(proposalView)
+      : [],
+    segments: segmentsWithContext(session),
+    session: {
+      ...summary(session, state.intentions),
+      canEdit: true,
+      gaps: [],
+      startUrl: null,
+    },
   };
 }
 
-function segment(body: Record<string, unknown>, index: number) {
-  return {
-    audioExpiresAt: null,
-    context: [],
-    contextAmbiguous: false,
-    endMs: Number(body.endMs),
-    hasAudio: false,
-    id: `segment-${index}`,
-    language: "en",
-    revision: 1,
-    source: "voice",
-    startMs: Number(body.startMs),
-    text: SPOKEN_TEXT,
-    textOrigin: "transcription",
-    transcription: { attempts: 1, error: null, state: "done" },
+function startSession(state: BoardState, body: Record<string, unknown>) {
+  state.starts += 1;
+  const { continues } = body;
+  const isContinuation =
+    typeof continues === "object" &&
+    continues !== null &&
+    "intentionId" in continues &&
+    "revision" in continues;
+  const session: BoardSession = {
+    collection: "recording",
+    continues: isContinuation
+      ? {
+          intentionId: String(continues.intentionId),
+          revision: Number(continues.revision),
+        }
+      : null,
+    evidence: [],
+    id: `session-${state.starts}`,
+    segments: [],
+    title:
+      isContinuation && typeof body.title === "string"
+        ? body.title
+        : "Plans & billing",
   };
+  state.sessions.push(session);
+  return { session: summary(session, state.intentions) };
 }
 
-function evidence(body: Record<string, unknown>, index: number) {
-  return {
-    atMs: Number(body.atMs),
-    element: null,
-    frame: null,
-    id: `evidence-${index}`,
-    image: { height: 1, url: PIXEL_PNG, width: 1 },
-    kind: "screenshot",
-    link: null,
-    missingReason: null,
-    note: null,
-    status: "available",
-    trigger: String(body.trigger),
-  };
-}
+const COLLECTION_AFTER: Record<string, Collection> = {
+  end: "ended",
+  pause: "paused",
+  resume: "recording",
+};
 
-function removeEvidence(state: BoardState, body: Record<string, unknown>) {
-  const index = state.evidence.findIndex(({ id }) => id === body.evidenceId);
-  const removed = {
-    ...state.evidence[index],
-    image: null,
-    missingReason: "Removed from the session.",
-    status: "missing",
-  };
-  state.evidence[index] = removed;
-  return { evidence: removed };
-}
-
-const BRIEF = `# Session brief: Plans & billing\n\n## Outcome wanted\n\n1. ${PROPOSAL_NEED}\n\nSet aside — do not build:\n- A history of plans\n`;
-
-function handoff() {
-  return {
-    brief: BRIEF,
-    createdAt: Date.now(),
-    deliveries: [],
-    evidenceIds: [],
-    id: "handoff-1",
-    proposals: [{ id: "proposal-1", need: PROPOSAL_NEED, revision: 1 }],
-  };
-}
-
-function readBody(route: Route): Record<string, unknown> {
-  const body: unknown = route.request().postDataJSON();
-  return typeof body === "object" && body !== null ? { ...body } : {};
+function updateCollection(state: BoardState, body: Record<string, unknown>) {
+  const session = findSession(state, body.sessionId);
+  const action = String(body.action);
+  state.collectionCalls.push({ action, atMs: Number(body.atMs) });
+  if (action === "end" && session.collection !== "ended") {
+    if (session.continues) {
+      addContribution(state, session);
+    } else {
+      addIntention(state, session);
+    }
+  }
+  session.collection = COLLECTION_AFTER[action] ?? session.collection;
+  return { session: summary(session, state.intentions) };
 }
 
 function recordEvents(state: BoardState, body: Record<string, unknown>) {
@@ -186,34 +171,88 @@ function recordEvents(state: BoardState, body: Record<string, unknown>) {
   return { accepted: events.length, dropped: 0, limitReached: false };
 }
 
-const COLLECTION_AFTER: Record<string, Collection> = {
-  end: "ended",
-  pause: "paused",
-  resume: "recording",
-};
-
-function updateCollection(state: BoardState, body: Record<string, unknown>) {
-  const action = String(body.action);
-  state.collectionCalls.push({ action, atMs: Number(body.atMs) });
-  state.collection = COLLECTION_AFTER[action] ?? state.collection;
-  return { session: summary(state) };
+function addSegment(state: BoardState, body: Record<string, unknown>) {
+  const session = findSession(state, body.sessionId);
+  const total = state.sessions.flatMap(({ segments }) => segments).length;
+  const added = segmentView(body, {
+    id: `segment-${total + 1}`,
+    text: session.continues ? CONTINUATION_TEXT : SPOKEN_TEXT,
+  });
+  session.segments.push(added);
+  return { segment: added };
 }
 
-function respond(state: BoardState, path: string, route: Route): unknown {
-  const body = readBody(route);
-  const responders: Record<string, () => unknown> = {
-    analyze: () => ({ analysis: summary(state).analysis }),
-    collection: () => updateCollection(state, body),
-    detail: () => detail(state),
-    events: () => recordEvents(state, body),
-    evidence: () => {
-      const added = evidence(body, state.evidence.length + 1);
-      state.evidence.push(added);
-      return { evidence: added };
-    },
-    "evidence/remove": () => removeEvidence(state, body),
-    handoffs: () => ({ files: [], handoff: handoff() }),
-    "handoffs/delivered": () => ({ handoff: handoff() }),
+function addEvidence(state: BoardState, body: Record<string, unknown>) {
+  const session = findSession(state, body.sessionId);
+  const total = state.sessions.flatMap(({ evidence }) => evidence).length;
+  const added = evidenceView(body, `evidence-${total + 1}`);
+  session.evidence.push(added);
+  return { evidence: added };
+}
+
+function removeEvidence(state: BoardState, body: Record<string, unknown>) {
+  for (const session of state.sessions) {
+    const index = session.evidence.findIndex(
+      ({ id }) => id === body.evidenceId
+    );
+    if (index >= 0) {
+      const removed = {
+        ...session.evidence[index],
+        image: null,
+        missingReason: "Removed from the session.",
+        status: "missing",
+      };
+      session.evidence[index] = removed;
+      return { evidence: removed };
+    }
+  }
+  throw new Error(`No evidence ${String(body.evidenceId)}`);
+}
+
+function correctedContext(session: BoardSession, choice: unknown) {
+  const evidenceId =
+    typeof choice === "object" && choice !== null && "evidenceId" in choice
+      ? choice.evidenceId
+      : null;
+  const chosen = session.evidence.find(({ id }) => id === evidenceId);
+  return chosen
+    ? { context: [screenshotContext(chosen)], contextOrigin: "human" }
+    : { context: [], contextOrigin: "unknown" };
+}
+
+function setSegmentContext(state: BoardState, body: Record<string, unknown>) {
+  const session = state.sessions.find(({ segments }) =>
+    segments.some(({ id }) => id === body.segmentId)
+  );
+  const index =
+    session?.segments.findIndex(({ id }) => id === body.segmentId) ?? -1;
+  if (!session || index < 0) {
+    throw new Error(`No segment ${String(body.segmentId)}`);
+  }
+  const corrected = {
+    ...session.segments[index],
+    ...correctedContext(session, body.choice),
+    contextCorrectedAt: Date.now(),
+    revision: Number(session.segments[index].revision) + 1,
+  };
+  session.segments[index] = corrected;
+  return { segment: corrected };
+}
+
+function captureResponders(
+  state: BoardState
+): Record<string, (request: BoardRequest) => unknown> {
+  return {
+    analyze: ({ body }) => ({
+      analysis: summary(findSession(state, body.sessionId), state.intentions)
+        .analysis,
+    }),
+    collection: ({ body }) => updateCollection(state, body),
+    detail: ({ query }) =>
+      detail(state, findSession(state, query.get("sessionId"))),
+    events: ({ body }) => recordEvents(state, body),
+    evidence: ({ body }) => addEvidence(state, body),
+    "evidence/remove": ({ body }) => removeEvidence(state, body),
     identity: () => ({
       analysisConfigured: true,
       limits: LIMITS,
@@ -222,34 +261,40 @@ function respond(state: BoardState, path: string, route: Route): unknown {
       transcriptionConfigured: true,
       user: { email: "ada@acme.test", id: "user-1", name: "Ada" },
     }),
-    list: () => ({ sessions: state.starts > 0 ? [summary(state)] : [] }),
-    "proposals/decide": () => {
-      state.decision = body.decision === "kept" ? "kept" : "pending";
-      return { proposal: proposal(state) };
-    },
-    segments: () => {
-      const added = segment(body, state.segments.length + 1);
-      state.segments.push(added);
-      return { segment: added };
-    },
-    start: () => {
-      state.starts += 1;
-      return { session: summary(state) };
-    },
+    list: () => ({
+      sessions: state.sessions
+        .map((session) => summary(session, state.intentions))
+        .reverse(),
+    }),
+    segments: ({ body }) => addSegment(state, body),
+    "segments/context": ({ body }) => setSegmentContext(state, body),
+    start: ({ body }) => startSession(state, body),
     "upload-url": () => ({ uploadUrl: UPLOAD_PATH }),
   };
-  return responders[path]?.() ?? {};
+}
+
+function readRequest(route: Route): BoardRequest {
+  const request = route.request();
+  const body: unknown = request.postDataJSON();
+  return {
+    body: typeof body === "object" && body !== null ? { ...body } : {},
+    query: new URL(request.url()).searchParams,
+  };
 }
 
 export async function mockSessionBoard(page: Page): Promise<SessionBoard> {
   const state: BoardState = {
-    collection: "recording",
     collectionCalls: [],
-    decision: "pending",
+    contributions: [],
     events: [],
-    evidence: [],
-    segments: [],
+    handoffs: [],
+    intentions: [],
+    sessions: [],
     starts: 0,
+  };
+  const responders = {
+    ...captureResponders(state),
+    ...intentionResponders(state),
   };
   await page.route("**/api/reflet-devtools/status", (route) =>
     route.fulfill({
@@ -261,10 +306,12 @@ export async function mockSessionBoard(page: Page): Promise<SessionBoard> {
     })
   );
   await page.route(PROXY, (route) => {
-    const path = new URL(route.request().url()).pathname.split(
-      "/api/v1/sessions/"
-    )[1];
-    return route.fulfill({ json: respond(state, path, route) });
+    const path =
+      new URL(route.request().url()).pathname.split("/api/v1/sessions/")[1] ??
+      "";
+    return route.fulfill({
+      json: responders[path]?.(readRequest(route)) ?? {},
+    });
   });
   await page.route(`**${UPLOAD_PATH}`, (route) =>
     route.fulfill({ json: { storageId: "storage-1" } })

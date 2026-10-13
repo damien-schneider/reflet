@@ -23,6 +23,7 @@ const STOPPED_BEFORE_CAPTURE =
 
 export interface CapturedEvidence {
   atMs: number;
+  capturedAtMs: number | null;
   clientKey: string;
   element: ElementRef | null;
   frame: Frame;
@@ -54,17 +55,24 @@ export interface EvidenceSchedulerOptions {
   onEvidence: (evidence: CapturedEvidence) => void;
 }
 
-type EvidenceBase = Omit<CapturedEvidence, "image" | "missingReason">;
+type EvidenceBase = Omit<
+  CapturedEvidence,
+  "capturedAtMs" | "image" | "missingReason"
+>;
 
-const stoppedBeforeCapture = (base: EvidenceBase): CapturedEvidence => ({
+const withoutImage = (
+  base: EvidenceBase,
+  missingReason: string
+): CapturedEvidence => ({
   ...base,
+  capturedAtMs: null,
   image: null,
-  missingReason: STOPPED_BEFORE_CAPTURE,
+  missingReason,
 });
 
 async function shoot(
   base: EvidenceBase,
-  maxImageBytes: number
+  options: EvidenceSchedulerOptions
 ): Promise<CapturedEvidence> {
   const image = await captureViewport({
     excludeSelectors: SESSION_MASK_SELECTORS,
@@ -72,13 +80,36 @@ async function shoot(
   });
   releaseCapture(image);
   if (!image) {
-    return { ...base, image: null, missingReason: CAPTURE_FAILED };
+    return withoutImage(base, CAPTURE_FAILED);
   }
-  if (image.blob.size > maxImageBytes) {
-    return { ...base, image: null, missingReason: CAPTURE_TOO_LARGE };
+  if (image.blob.size > options.limits.maxImageBytes) {
+    return withoutImage(base, CAPTURE_TOO_LARGE);
   }
   const { blob, height, width } = image;
-  return { ...base, image: { blob, height, width }, missingReason: null };
+  return {
+    ...base,
+    capturedAtMs: options.atMs(),
+    frame: captureFrame(),
+    image: { blob, height, width },
+    missingReason: null,
+  };
+}
+
+function evidenceBase(
+  trigger: EvidenceTrigger,
+  request: Omit<EvidenceRequest, "trigger">,
+  options: EvidenceSchedulerOptions
+): EvidenceBase {
+  return {
+    atMs: options.atMs(),
+    clientKey: crypto.randomUUID(),
+    element: request.element
+      ? describeElementRef(request.element, options)
+      : null,
+    frame: captureFrame(),
+    note: request.note ?? null,
+    trigger,
+  };
 }
 
 export function createEvidenceScheduler(
@@ -99,33 +130,19 @@ export function createEvidenceScheduler(
       return null;
     }
     captured += 1;
-    const atMs = options.atMs();
-    lastCaptureAtMs = atMs;
-    const clientKey = crypto.randomUUID();
-    const base = {
-      atMs,
-      clientKey,
-      element: request.element
-        ? describeElementRef(request.element, options)
-        : null,
-      frame: captureFrame(),
-      note: request.note ?? null,
-      trigger,
-    };
+    const base = evidenceBase(trigger, request, options);
+    lastCaptureAtMs = base.atMs;
     const takenInRun = collectionRun;
+    const isCurrent = () => takenInRun === collectionRun;
+    const stopped = withoutImage(base, STOPPED_BEFORE_CAPTURE);
     const captureUnlessStopped = async () => {
-      if (takenInRun !== collectionRun) {
-        return stoppedBeforeCapture(base);
-      }
-      const evidence = await shoot(base, limits.maxImageBytes);
-      return takenInRun === collectionRun
-        ? evidence
-        : stoppedBeforeCapture(base);
+      const evidence = isCurrent() ? await shoot(base, options) : stopped;
+      return isCurrent() ? evidence : stopped;
     };
     previousCapture = previousCapture
       .then(captureUnlessStopped)
       .then(options.onEvidence);
-    return clientKey;
+    return base.clientKey;
   };
 
   return {

@@ -1,13 +1,19 @@
 import type { z } from "zod";
+import type { SessionApiPath } from "../api-paths";
+import type {
+  ContinuedIntention,
+  SessionContribution,
+} from "../intention-protocol";
 import type {
   AnalysisStatus,
+  ContextChoice,
+  ContextOption,
   ElementRef,
   EvidenceLink,
   EvidenceTrigger,
   Frame,
   HandoffFile,
   ProposalDecision,
-  SessionApiPath,
   SessionDetail,
   SessionEvent,
   SessionEvidence,
@@ -20,9 +26,15 @@ import type {
   SessionSummary,
   SessionSurface,
 } from "../protocol";
-import { createProposalEndpoints } from "./proposal-endpoints";
+import {
+  createIntentionEndpoints,
+  createProposalEndpoints,
+} from "./proposal-endpoints";
 import { createRecordingEndpoints } from "./recording-endpoints";
-import { createReviewEndpoints } from "./review-endpoints";
+import {
+  createReviewEndpoints,
+  createSegmentEndpoints,
+} from "./review-endpoints";
 import { createSessionRequests } from "./session-requests";
 
 export interface SessionRequest<T> {
@@ -54,10 +66,28 @@ export class SessionApiError extends Error {
 
 export interface StartSessionBody {
   clientKey: string;
+  continues?: ContinuedIntentionRef;
   page: { title: string; url: string };
   startedAt: number;
   surface: SessionSurface;
   title?: string;
+}
+
+export interface ContinuedIntentionRef {
+  intentionId: string;
+  revision: number;
+}
+
+export interface IntentionUpdate {
+  contribution: SessionContribution;
+  intention: ContinuedIntention | null;
+}
+
+export interface AcceptChangesBody {
+  changes: { changeId: string; value?: string }[];
+  contributionId: string;
+  expectedRevision: number;
+  shareWithTeam?: boolean;
 }
 
 export interface CollectionBody {
@@ -88,6 +118,7 @@ export interface SegmentTiming {
 
 export interface AddEvidenceBody {
   atMs: number;
+  capturedAtMs?: number;
   clientKey: string;
   element?: ElementRef;
   frame?: Frame;
@@ -126,6 +157,7 @@ export interface CreateHandoffBody {
 }
 
 export interface SessionApi {
+  acceptIntentionChanges: (body: AcceptChangesBody) => Promise<IntentionUpdate>;
   addEvidence: (body: AddEvidenceBody) => Promise<SessionEvidence>;
   addTypedSegment: (
     body: SegmentTiming & { text: string }
@@ -134,12 +166,22 @@ export interface SessionApi {
     body: SegmentTiming & { audioStorageId: string }
   ) => Promise<SessionSegment>;
   analyze: (sessionId: string) => Promise<AnalysisStatus>;
+  answerIntentionQuestion: (body: {
+    contributionId: string;
+    text: string;
+  }) => Promise<IntentionUpdate>;
+  attachToIntention: (body: {
+    intentionId: string;
+    proposalId: string;
+    shareWithTeam?: boolean;
+  }) => Promise<SessionProposal>;
   clarifyProposal: (body: {
     expectedRevision: number;
     proposalId: string;
     text: string;
   }) => Promise<SessionProposal>;
   collection: (body: CollectionBody) => Promise<SessionSummary>;
+  contextChoices: (segmentId: string) => Promise<ContextOption[]>;
   correctSegment: (body: {
     expectedRevision: number;
     segmentId: string;
@@ -156,11 +198,14 @@ export interface SessionApi {
     decision: ProposalDecision;
     proposalId: string;
   }) => Promise<SessionProposal>;
+  deleteProposal: (proposalId: string) => Promise<void>;
   deleteSession: (sessionId: string) => Promise<void>;
+  detachContribution: (contributionId: string) => Promise<IntentionUpdate>;
   detail: (sessionId: string) => Promise<SessionDetail>;
   editProposal: (body: EditProposalBody) => Promise<SessionProposal>;
   events: (body: EventsBody) => Promise<EventsResult>;
   identity: () => Promise<SessionIdentity>;
+  keepSeparate: (proposalId: string) => Promise<SessionProposal>;
   list: () => Promise<SessionSummary[]>;
   markHandoffDelivered: (body: {
     handoffId: string;
@@ -171,8 +216,18 @@ export interface SessionApi {
     targetId: string;
   }) => Promise<SessionProposal>;
   removeEvidence: (evidenceId: string) => Promise<SessionEvidence>;
+  reopenOrRejectChange: (body: {
+    changeId: string;
+    contributionId: string;
+    decision: "pending" | "rejected";
+  }) => Promise<IntentionUpdate>;
   retrySegment: (segmentId: string) => Promise<SessionSegment>;
   separateProposal: (proposalId: string) => Promise<SessionProposal>;
+  setSegmentContext: (body: {
+    choice: ContextChoice;
+    expectedRevision: number;
+    segmentId: string;
+  }) => Promise<SessionSegment>;
   start: (body: StartSessionBody) => Promise<SessionSummary>;
   update: (body: {
     sessionId: string;
@@ -186,6 +241,7 @@ export interface SessionApi {
   verifyProposal: (body: {
     note?: string;
     proposalId: string;
+    sessionId?: string;
     status: "works" | "needs_work";
   }) => Promise<SessionProposal>;
 }
@@ -195,6 +251,8 @@ export function createSessionApi(transport: SessionTransport): SessionApi {
   return {
     ...createRecordingEndpoints(requests),
     ...createReviewEndpoints(requests),
+    ...createSegmentEndpoints(requests),
     ...createProposalEndpoints(requests),
+    ...createIntentionEndpoints(requests),
   };
 }

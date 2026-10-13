@@ -1,5 +1,5 @@
 import type { z } from "zod";
-import type { SessionApiPath } from "../protocol";
+import type { SessionApiPath } from "../api-paths";
 import type { SessionTransport } from "./session-api";
 
 export interface SessionRequests {

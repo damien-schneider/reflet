@@ -1,7 +1,10 @@
 import { useState } from "react";
+import { flushSync } from "react-dom";
 import type { SessionDetail } from "../../protocol";
 import { HandoffView } from "../handoff/handoff-view";
-import type { ProposalContext } from "./proposals/proposal-details";
+import { ContinuationHeader } from "./continuation/update-card";
+import { MomentView } from "./moment/moment-view";
+import type { ProposalContext, ShowMoment } from "./proposals/proposal-details";
 import { ProposalsTab } from "./proposals/proposals-tab";
 import { useProposalActions } from "./proposals/use-proposal-actions";
 import { ReviewHeader } from "./review-header";
@@ -12,6 +15,11 @@ import { type ReviewHandle, useSessionDetail } from "./use-session-detail";
 
 type ReviewTab = "evidence" | "proposals" | "transcript";
 
+interface OpenMoment {
+  opener: HTMLElement | null;
+  segmentId: string;
+}
+
 function HandoffFooter({
   detail,
   onHandOff,
@@ -19,24 +27,24 @@ function HandoffFooter({
   detail: SessionDetail;
   onHandOff: () => void;
 }) {
-  const kept = detail.proposals.filter(
+  const confirmed = detail.proposals.filter(
     (proposal) => proposal.decision === "kept" && proposal.mergedIntoId === null
   ).length;
   return (
     <div className="dt-sheet-foot">
       <button
-        aria-describedby={kept === 0 ? "rf-handoff-hint" : undefined}
+        aria-describedby={confirmed === 0 ? "rf-handoff-hint" : undefined}
         className="dt-btn"
         data-variant="primary"
-        disabled={kept === 0}
+        disabled={confirmed === 0}
         onClick={onHandOff}
         type="button"
       >
-        {kept === 0 ? "Hand off" : `Hand off ${kept} kept`}
+        {confirmed === 0 ? "Hand off" : `Hand off ${confirmed} confirmed`}
       </button>
-      {kept === 0 && (
+      {confirmed === 0 && (
         <span className="dt-status" id="rf-handoff-hint">
-          Keep a proposal to hand it off
+          Confirm an intention to hand it off
         </span>
       )}
     </div>
@@ -52,11 +60,11 @@ function ReviewTabs({
   onSelect: (tab: ReviewTab) => void;
   tab: ReviewTab;
 }) {
-  const proposalCount = detail.proposals.filter(
-    (proposal) => proposal.mergedIntoId === null
+  const intentionCount = detail.proposals.filter(
+    (proposal) => proposal.mergedIntoId === null && proposal.attachment === null
   ).length;
   const options: { label: string; value: ReviewTab }[] = [
-    { label: `Proposals (${proposalCount})`, value: "proposals" },
+    { label: `Intentions (${intentionCount})`, value: "proposals" },
     { label: "Transcript", value: "transcript" },
     { label: `Evidence (${detail.evidence.length})`, value: "evidence" },
   ];
@@ -79,14 +87,12 @@ function ReviewTabs({
 
 function ReviewTabPanel({
   context,
-  focusSegmentId,
   tab,
 }: {
   context: ProposalContext;
-  focusSegmentId: string | null;
   tab: ReviewTab;
 }) {
-  const { detail, review } = context;
+  const { detail, navigation, review } = context;
   if (tab === "proposals") {
     return <ProposalsTab context={context} />;
   }
@@ -94,42 +100,149 @@ function ReviewTabPanel({
     return (
       <TranscriptTab
         detail={detail}
-        focusSegmentId={focusSegmentId}
+        onShowMoment={navigation.onShowMoment}
         review={review}
       />
     );
   }
-  return <EvidenceTab detail={detail} review={review} />;
+  return (
+    <EvidenceTab
+      detail={detail}
+      onShowMoment={navigation.onShowMoment}
+      review={review}
+    />
+  );
 }
 
-function useReviewTab() {
+interface ReviewPlace {
+  closeMoment: (shouldReturnFocus: boolean) => void;
+  focusIntentionId: string | null;
+  moment: OpenMoment | null;
+  openIntention: (proposalId: string) => void;
+  selectTab: (tab: ReviewTab) => void;
+  showMoment: ShowMoment;
+  tab: ReviewTab;
+}
+
+function useReviewPlace(): ReviewPlace {
   const [tab, setTab] = useState<ReviewTab>("proposals");
-  const [focusSegmentId, setFocusSegmentId] = useState<string | null>(null);
-  const showSegment = (segmentId: string) => {
-    setFocusSegmentId(segmentId);
-    setTab("transcript");
+  const [focusIntentionId, setFocusIntentionId] = useState<string | null>(null);
+  const [moment, setMoment] = useState<OpenMoment | null>(null);
+
+  const closeMoment = (shouldReturnFocus: boolean) => {
+    const opener = moment?.opener;
+    flushSync(() => setMoment(null));
+    if (shouldReturnFocus && opener?.isConnected) {
+      opener.focus();
+    }
   };
-  return { focusSegmentId, setTab, showSegment, tab };
+  const showMoment: ShowMoment = (segmentId, opener) => {
+    setFocusIntentionId(null);
+    setMoment((current) => ({
+      opener: opener ?? current?.opener ?? null,
+      segmentId,
+    }));
+  };
+  return {
+    closeMoment,
+    focusIntentionId,
+    moment,
+    openIntention: (proposalId: string) => {
+      closeMoment(false);
+      setTab("proposals");
+      setFocusIntentionId(proposalId);
+    },
+    selectTab: (next: ReviewTab) => {
+      closeMoment(false);
+      setTab(next);
+    },
+    showMoment,
+    tab,
+  };
+}
+
+export interface ReviewLinks {
+  onBack: () => void;
+  onOpenSession: (sessionId: string) => void;
+  onStarted: () => void;
+}
+
+function ReviewPanels({
+  context,
+  place,
+}: {
+  context: ProposalContext;
+  place: ReviewPlace;
+}) {
+  const { detail, review } = context;
+  return (
+    <>
+      <ReviewTabs detail={detail} onSelect={place.selectTab} tab={place.tab} />
+      <div className="dt-ses-panel" hidden={place.moment !== null}>
+        <ReviewTabPanel context={context} tab={place.tab} />
+      </div>
+      {place.moment && (
+        <MomentView
+          handlers={{
+            onClose: () => place.closeMoment(true),
+            onOpenIntention: place.openIntention,
+            onShowMoment: (segmentId) => place.showMoment(segmentId),
+          }}
+          segmentId={place.moment.segmentId}
+          session={{ detail, review }}
+        />
+      )}
+    </>
+  );
+}
+
+function ReviewTop({
+  context,
+  links,
+}: {
+  context: ProposalContext;
+  links: ReviewLinks;
+}) {
+  const { detail, review } = context;
+  return (
+    <>
+      <ReviewHeader
+        onBack={links.onBack}
+        review={review}
+        session={detail.session}
+      />
+      <StatusStrip detail={detail} review={review} />
+      {detail.continuation && (
+        <ContinuationHeader
+          continuation={detail.continuation}
+          onOpenSession={links.onOpenSession}
+        />
+      )}
+    </>
+  );
 }
 
 function ReviewScreen({
   detail,
-  onBack,
+  links,
   review,
 }: {
   detail: SessionDetail;
-  onBack: () => void;
+  links: ReviewLinks;
   review: ReviewHandle;
 }) {
-  const { focusSegmentId, setTab, showSegment, tab } = useReviewTab();
+  const place = useReviewPlace();
   const [isHandingOff, setIsHandingOff] = useState(false);
-  const actions = useProposalActions(review);
-  const { canEdit } = detail.session;
   const context: ProposalContext = {
-    actions,
-    canEdit,
+    actions: useProposalActions(review),
+    canEdit: detail.session.canEdit,
     detail,
-    onShowSegment: showSegment,
+    focusIntentionId: place.focusIntentionId,
+    navigation: {
+      onOpenSession: links.onOpenSession,
+      onShowMoment: place.showMoment,
+      onStarted: links.onStarted,
+    },
     review,
   };
 
@@ -144,15 +257,9 @@ function ReviewScreen({
   }
   return (
     <>
-      <ReviewHeader onBack={onBack} review={review} session={detail.session} />
-      <StatusStrip detail={detail} review={review} />
-      <ReviewTabs detail={detail} onSelect={setTab} tab={tab} />
-      <ReviewTabPanel
-        context={context}
-        focusSegmentId={focusSegmentId}
-        tab={tab}
-      />
-      {canEdit && (
+      <ReviewTop context={context} links={links} />
+      <ReviewPanels context={context} place={place} />
+      {context.canEdit && (
         <HandoffFooter
           detail={detail}
           onHandOff={() => setIsHandingOff(true)}
@@ -163,10 +270,10 @@ function ReviewScreen({
 }
 
 export function SessionReview({
-  onBack,
+  links,
   sessionId,
 }: {
-  onBack: () => void;
+  links: ReviewLinks;
   sessionId: string;
 }) {
   const handle = useSessionDetail(sessionId);
@@ -175,9 +282,7 @@ export function SessionReview({
     return <p className="dt-status">Loading the session…</p>;
   }
   if (state.kind === "ready") {
-    return (
-      <ReviewScreen detail={state.detail} onBack={onBack} review={handle} />
-    );
+    return <ReviewScreen detail={state.detail} links={links} review={handle} />;
   }
   return (
     <div className="dt-empty">
@@ -192,7 +297,7 @@ export function SessionReview({
             Try again
           </button>
         )}
-        <button className="dt-btn" onClick={onBack} type="button">
+        <button className="dt-btn" onClick={links.onBack} type="button">
           All sessions
         </button>
       </div>

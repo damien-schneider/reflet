@@ -185,3 +185,53 @@ export function ProposalEditor({
     </form>
   );
 }
+
+export function ResponseEditor({
+  onDone,
+  proposal,
+  review,
+}: {
+  onDone: () => void;
+  proposal: SessionProposal;
+  review: ReviewHandle;
+}) {
+  const { api } = useSessionWorkspace();
+  const { isSaving, problem, save } = useGuardedSave();
+  const [response, setResponse] = useState(proposal.response ?? "");
+  const submit = () =>
+    save(async () => {
+      const saved = await api.editProposal({
+        expectedRevision: proposal.revision,
+        proposalId: proposal.id,
+        response: response.trim() || null,
+      });
+      review.patch((detail) => withProposal(detail, saved));
+      onDone();
+    });
+
+  return (
+    <form
+      className="dt-ses-form"
+      onSubmit={(event) => {
+        event.preventDefault();
+        submit();
+      }}
+    >
+      <TextField
+        label="Considered response"
+        maxLength={1000}
+        onChange={setResponse}
+        rows={3}
+        value={response}
+      />
+      {problem && (
+        <SaveProblemMessage onReload={review.reload} problem={problem} />
+      )}
+      <FormActions
+        isSubmitDisabled={isSaving}
+        onCancel={onDone}
+        submitLabel="Save response"
+      />
+    </form>
+  );
+}

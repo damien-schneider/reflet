@@ -8,6 +8,7 @@ import {
   fakeApi,
   fakeWorkspace,
   renderInWorkspace,
+  reviewLinks,
 } from "../../testing/session-fixtures";
 import { SessionReview } from "../session-review";
 
@@ -29,7 +30,7 @@ const REMOVE_LABEL = "Remove screenshot at 02:14";
 async function openEvidence(detail: SessionDetail, api = fakeApi()) {
   api.detail = vi.fn().mockResolvedValue(detail);
   renderInWorkspace(
-    <SessionReview onBack={vi.fn()} sessionId="session_1" />,
+    <SessionReview links={reviewLinks()} sessionId="session_1" />,
     fakeWorkspace({ api })
   );
   fireEvent.click(await screen.findByRole("button", { name: /^Evidence/ }));

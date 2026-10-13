@@ -1,25 +1,79 @@
 import { v } from "convex/values";
 import type { Doc } from "../../_generated/dataModel";
-import { internalMutation } from "../../_generated/server";
-import { loadSession, sessionActorValidator, sessionConflict } from "../access";
+import { internalMutation, type MutationCtx } from "../../_generated/server";
+import {
+  loadSession,
+  type SessionActor,
+  sessionActorValidator,
+  sessionConflict,
+} from "../access";
 import { DEFAULT_SESSION_TITLE } from "../constants";
-import { gapReasonValidator } from "../tableFields";
+import { linkContinuation } from "../intentions/lifecycle";
+import { gapReasonValidator } from "../validators";
 import { reloadSessionSummary, shapeSessionSummary } from "../views/summary";
 import { clampStartedAt, closeOpenGap, openGap } from "./timeline";
 
 const SESSION_ENDED = "This session has ended.";
 
+async function insertSession(
+  ctx: MutationCtx,
+  options: {
+    actor: SessionActor;
+    input: {
+      clientKey: string;
+      page: { title: string; url: string };
+      startedAt: number;
+      surface: Doc<"sessions">["surface"];
+      title?: string;
+    };
+  }
+): Promise<Doc<"sessions">> {
+  const { actor, input } = options;
+  const now = Date.now();
+  const sessionId = await ctx.db.insert("sessions", {
+    analysis: { state: "idle" },
+    authorId: actor.userId,
+    clientKey: input.clientKey,
+    collection: "recording",
+    createdAt: now,
+    gaps: [],
+    organizationId: actor.organizationId,
+    startedAt: clampStartedAt(input.startedAt, now),
+    startUrl: input.page.url,
+    surface: input.surface,
+    title:
+      input.title?.trim() || input.page.title.trim() || DEFAULT_SESSION_TITLE,
+    transcriptRevision: 0,
+    updatedAt: now,
+    usage: {
+      audioBytes: 0,
+      eventCount: 0,
+      evidenceCount: 0,
+      segmentCount: 0,
+    },
+    visibility: "private",
+  });
+  const session = await ctx.db.get(sessionId);
+  if (!session) {
+    throw new Error("Session insert failed");
+  }
+  return session;
+}
+
 export const start = internalMutation({
   args: {
     actor: sessionActorValidator,
     clientKey: v.string(),
+    continues: v.optional(
+      v.object({ intentionId: v.string(), revision: v.number() })
+    ),
     page: v.object({ title: v.string(), url: v.string() }),
     startedAt: v.number(),
     surface: v.union(v.literal("devtools"), v.literal("app")),
     title: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const { actor } = args;
+    const { actor, continues, ...input } = args;
     const existing = await ctx.db
       .query("sessions")
       .withIndex("by_org_author_client_key", (q) =>
@@ -37,33 +91,9 @@ export const start = internalMutation({
         session: await shapeSessionSummary(ctx, { actor, session: existing }),
       };
     }
-    const now = Date.now();
-    const sessionId = await ctx.db.insert("sessions", {
-      analysis: { state: "idle" },
-      authorId: actor.userId,
-      clientKey: args.clientKey,
-      collection: "recording",
-      createdAt: now,
-      gaps: [],
-      organizationId: actor.organizationId,
-      startedAt: clampStartedAt(args.startedAt, now),
-      startUrl: args.page.url,
-      surface: args.surface,
-      title:
-        args.title?.trim() || args.page.title.trim() || DEFAULT_SESSION_TITLE,
-      transcriptRevision: 0,
-      updatedAt: now,
-      usage: {
-        audioBytes: 0,
-        eventCount: 0,
-        evidenceCount: 0,
-        segmentCount: 0,
-      },
-      visibility: "private",
-    });
-    const session = await ctx.db.get(sessionId);
-    if (!session) {
-      throw new Error("Session insert failed");
+    const session = await insertSession(ctx, { actor, input });
+    if (continues) {
+      await linkContinuation(ctx, { actor, continues, session });
     }
     return { session: await shapeSessionSummary(ctx, { actor, session }) };
   },

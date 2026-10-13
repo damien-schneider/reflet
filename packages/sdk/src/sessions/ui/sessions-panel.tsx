@@ -37,7 +37,16 @@ export function SessionsPanel({
 
   if (sessionId) {
     return (
-      <SessionReview key={sessionId} onBack={back} sessionId={sessionId} />
+      <SessionReview
+        key={sessionId}
+        links={{
+          onBack: back,
+          onOpenSession: (openedId) =>
+            navigation.onOpen({ sessionId: openedId, sessionKey: null }),
+          onStarted,
+        }}
+        sessionId={sessionId}
+      />
     );
   }
   if (navigation.open) {

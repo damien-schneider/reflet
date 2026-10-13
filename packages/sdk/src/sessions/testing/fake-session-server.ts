@@ -1,6 +1,6 @@
 import { vi } from "vitest";
 import { createSessionApi, type SessionApi } from "../api/session-api";
-import type { SessionApiPath } from "../protocol";
+import type { SessionApiPath } from "../api-paths";
 
 export const SESSION_SUMMARY = {
   analysis: {

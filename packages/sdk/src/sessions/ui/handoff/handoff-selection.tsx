@@ -22,8 +22,15 @@ export function evidenceOf(
   detail: SessionDetail,
   proposals: SessionProposal[]
 ): SessionEvidence[] {
-  const cited = new Set(proposals.flatMap((proposal) => proposal.evidenceIds));
-  return detail.evidence.filter(
+  const intentionIds = new Set(proposals.map((proposal) => proposal.id));
+  const contributed = detail.history.filter(
+    (entry) => intentionIds.has(entry.intentionId) && entry.detachedAt === null
+  );
+  const cited = new Set([
+    ...proposals.flatMap((proposal) => proposal.evidenceIds),
+    ...contributed.flatMap((entry) => entry.evidenceIds),
+  ]);
+  return [...detail.evidence, ...detail.contributedEvidence].filter(
     (item) => cited.has(item.id) && item.status === "available"
   );
 }
@@ -93,7 +100,7 @@ export function HandoffChoices({
   const chosenEvidenceIds = new Set(selection.evidenceIds);
   return (
     <>
-      <ChoiceGroup legend="Proposals">
+      <ChoiceGroup legend="Intentions">
         {proposals.map((proposal) => (
           <CheckRow
             isChecked={chosenProposalIds.has(proposal.id)}

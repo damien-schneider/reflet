@@ -1,34 +1,10 @@
 import { z } from "zod";
-
-export const SESSION_API_PATHS = [
-  "/api/v1/sessions/analyze",
-  "/api/v1/sessions/collection",
-  "/api/v1/sessions/delete",
-  "/api/v1/sessions/detail",
-  "/api/v1/sessions/events",
-  "/api/v1/sessions/evidence",
-  "/api/v1/sessions/evidence/remove",
-  "/api/v1/sessions/handoffs",
-  "/api/v1/sessions/handoffs/delivered",
-  "/api/v1/sessions/identity",
-  "/api/v1/sessions/list",
-  "/api/v1/sessions/proposals/clarify",
-  "/api/v1/sessions/proposals/create",
-  "/api/v1/sessions/proposals/decide",
-  "/api/v1/sessions/proposals/edit",
-  "/api/v1/sessions/proposals/feedback",
-  "/api/v1/sessions/proposals/merge",
-  "/api/v1/sessions/proposals/separate",
-  "/api/v1/sessions/proposals/verify",
-  "/api/v1/sessions/segments",
-  "/api/v1/sessions/segments/correct",
-  "/api/v1/sessions/segments/retry",
-  "/api/v1/sessions/start",
-  "/api/v1/sessions/update",
-  "/api/v1/sessions/upload-url",
-] as const;
-
-export type SessionApiPath = (typeof SESSION_API_PATHS)[number];
+import {
+  intentionHistoryEntrySchema,
+  intentionSuggestionSchema,
+  lastHandoffSchema,
+  sessionContinuationSchema,
+} from "./intention-protocol";
 
 export const SESSION_SURFACES = ["devtools", "app"] as const;
 export type SessionSurface = (typeof SESSION_SURFACES)[number];
@@ -221,19 +197,56 @@ export const sessionGapSchema = z.object({
 });
 export type SessionGap = z.infer<typeof sessionGapSchema>;
 
+export const CONTEXT_KINDS = [
+  "mark",
+  "select",
+  "click",
+  "dwell",
+  "navigation",
+  "screenshot",
+] as const;
+export type ContextKind = (typeof CONTEXT_KINDS)[number];
+
 export const segmentContextSchema = z.object({
   atMs: z.number(),
+  durationMs: z.number().nullable(),
+  element: elementRefSchema.nullable(),
   evidenceId: z.string().nullable(),
-  kind: z.enum(["mark", "select", "click", "dwell", "navigation"]),
+  evidenceMatch: z.enum(["exact", "approximate"]).nullable(),
+  evidenceOffsetMs: z.number().nullable(),
+  frame: frameSchema.nullable(),
+  kind: z.enum(CONTEXT_KINDS),
   label: z.string(),
+  pointer: pointerSchema.nullable(),
   url: z.string().nullable(),
 });
 export type SegmentContext = z.infer<typeof segmentContextSchema>;
+
+export const contextChoiceSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("auto") }),
+  z.object({ kind: z.literal("unknown") }),
+  z.object({
+    atMs: z.number(),
+    eventKind: z.enum(["mark", "select", "click", "dwell", "navigation"]),
+    kind: z.literal("event"),
+  }),
+  z.object({ evidenceId: z.string(), kind: z.literal("evidence") }),
+]);
+export type ContextChoice = z.infer<typeof contextChoiceSchema>;
+
+export const contextOptionSchema = z.object({
+  choice: contextChoiceSchema,
+  item: segmentContextSchema,
+  selected: z.boolean(),
+});
+export type ContextOption = z.infer<typeof contextOptionSchema>;
 
 export const sessionSegmentSchema = z.object({
   audioExpiresAt: z.number().nullable(),
   context: z.array(segmentContextSchema),
   contextAmbiguous: z.boolean(),
+  contextCorrectedAt: z.number().nullable(),
+  contextOrigin: z.enum(["auto", "human", "unknown"]),
   endMs: z.number(),
   hasAudio: z.boolean(),
   id: z.string(),
@@ -260,6 +273,7 @@ export type EvidenceLink = z.infer<typeof evidenceLinkSchema>;
 
 export const sessionEvidenceSchema = z.object({
   atMs: z.number(),
+  capturedAtMs: z.number().nullable(),
   element: elementRefSchema.nullable(),
   frame: frameSchema.nullable(),
   id: z.string(),
@@ -280,13 +294,23 @@ export const sessionEvidenceSchema = z.object({
 export type SessionEvidence = z.infer<typeof sessionEvidenceSchema>;
 
 export const sessionProposalSchema = z.object({
+  attachment: z
+    .object({
+      contributionId: z.string(),
+      intentionId: z.string(),
+      need: z.string(),
+    })
+    .nullable(),
   certainty: z.enum(["clear", "uncertain"]),
   clarifications: z.array(z.object({ at: z.number(), text: z.string() })),
   decision: z.enum(PROPOSAL_DECISIONS),
   evidenceIds: z.array(z.string()),
   feedbackId: z.string().nullable(),
+  formulation: z.enum(["ai", "human"]),
   handedOffRevision: z.number().nullable(),
   id: z.string(),
+  intentionSuggestion: intentionSuggestionSchema.nullable(),
+  lastHandoff: lastHandoffSchema.nullable(),
   mergedIntoId: z.string().nullable(),
   mergeSuggestion: z
     .object({ reason: z.string(), withIds: z.array(z.string()) })
@@ -312,6 +336,7 @@ export const sessionProposalSchema = z.object({
     .object({
       at: z.number(),
       note: z.string().nullable(),
+      sessionId: z.string().nullable(),
       status: z.enum(["works", "needs_work"]),
     })
     .nullable(),
@@ -342,8 +367,11 @@ export const sessionMarkSchema = z.object({
 export type SessionMark = z.infer<typeof sessionMarkSchema>;
 
 export const sessionDetailSchema = z.object({
+  continuation: sessionContinuationSchema.nullable(),
+  contributedEvidence: z.array(sessionEvidenceSchema),
   evidence: z.array(sessionEvidenceSchema),
   handoffs: z.array(sessionHandoffSchema),
+  history: z.array(intentionHistoryEntrySchema),
   marks: z.array(sessionMarkSchema),
   proposals: z.array(sessionProposalSchema),
   segments: z.array(sessionSegmentSchema),

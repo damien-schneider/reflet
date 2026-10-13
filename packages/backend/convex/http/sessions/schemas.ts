@@ -93,6 +93,9 @@ export const sessionIdBody = z.object({ sessionId: id });
 
 export const startBody = z.object({
   clientKey,
+  continues: z
+    .object({ intentionId: id, revision: z.number().int().min(0) })
+    .optional(),
   page: z.object({ title: text(CAPS.pageTitle), url: text(CAPS.url) }),
   startedAt: finite,
   surface: z.enum(["devtools", "app"]),
@@ -145,8 +148,24 @@ export const correctSegmentBody = z.object({
 
 export const segmentIdBody = z.object({ segmentId: id });
 
+export const segmentContextBody = z.object({
+  choice: z.discriminatedUnion("kind", [
+    z.object({ kind: z.literal("auto") }),
+    z.object({ kind: z.literal("unknown") }),
+    z.object({
+      atMs: offsetMs,
+      eventKind: z.enum(["mark", "select", "click", "dwell", "navigation"]),
+      kind: z.literal("event"),
+    }),
+    z.object({ evidenceId: id, kind: z.literal("evidence") }),
+  ]),
+  expectedRevision: z.number().int().min(0),
+  segmentId: id,
+});
+
 export const evidenceBody = z.object({
   atMs: offsetMs,
+  capturedAtMs: offsetMs.optional(),
   clientKey,
   element: elementRef.optional(),
   frame: frame.optional(),
@@ -208,12 +227,13 @@ export const proposalIdBody = z.object({ proposalId: id });
 export const verifyProposalBody = z.object({
   note: text(CAPS.note).optional(),
   proposalId: id,
+  sessionId: id.optional(),
   status: z.enum(["works", "needs_work"]),
 });
 
 export const handoffBody = z.object({
   clientKey,
-  evidenceIds: z.array(id).max(SESSION_LIMITS.maxEvidence),
+  evidenceIds: z.array(id).max(MAX_IDS),
   proposalIds: z.array(id).min(1).max(MAX_IDS),
   sessionId: id,
 });
@@ -221,4 +241,35 @@ export const handoffBody = z.object({
 export const deliveredBody = z.object({
   handoffId: id,
   kind: z.enum(["copied", "exported"]),
+});
+
+const shareWithTeam = z.boolean().optional();
+
+export const acceptChangesBody = z.object({
+  changes: z
+    .array(z.object({ changeId: id, value: text(CAPS.observed).optional() }))
+    .min(1)
+    .max(MAX_IDS),
+  contributionId: id,
+  expectedRevision: z.number().int().min(0),
+  shareWithTeam,
+});
+
+export const decideChangeBody = z.object({
+  changeId: id,
+  contributionId: id,
+  decision: z.enum(["pending", "rejected"]),
+});
+
+export const answerQuestionBody = z.object({
+  contributionId: id,
+  text: requiredText(CAPS.clarification),
+});
+
+export const contributionIdBody = z.object({ contributionId: id });
+
+export const attachBody = z.object({
+  intentionId: id,
+  proposalId: id,
+  shareWithTeam,
 });

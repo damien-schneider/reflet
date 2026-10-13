@@ -1,4 +1,4 @@
-import type { SessionEvidence } from "../../../protocol";
+import type { ElementRef, Frame, SessionEvidence } from "../../../protocol";
 
 const TRIGGER_LABELS: Record<SessionEvidence["trigger"], string> = {
   manual: "Added by hand",
@@ -13,21 +13,30 @@ export function evidenceCaption(evidence: SessionEvidence): string {
   return `${TRIGGER_LABELS[evidence.trigger]}${element}`;
 }
 
-function highlightStyle(evidence: SessionEvidence) {
-  const { element, frame } = evidence;
-  if (
-    !(element && frame) ||
-    frame.viewportWidth === 0 ||
-    frame.viewportHeight === 0
-  ) {
+const hasViewport = (frame: Frame): boolean =>
+  frame.viewportWidth > 0 && frame.viewportHeight > 0;
+
+const percent = (value: number, total: number) => `${(value / total) * 100}%`;
+
+export function percentBox(rect: ElementRef["rect"], frame: Frame) {
+  if (!hasViewport(frame)) {
     return null;
   }
-  const percent = (value: number, total: number) => `${(value / total) * 100}%`;
   return {
-    height: percent(element.rect.height, frame.viewportHeight),
-    left: percent(element.rect.x, frame.viewportWidth),
-    top: percent(element.rect.y, frame.viewportHeight),
-    width: percent(element.rect.width, frame.viewportWidth),
+    height: percent(rect.height, frame.viewportHeight),
+    left: percent(rect.x, frame.viewportWidth),
+    top: percent(rect.y, frame.viewportHeight),
+    width: percent(rect.width, frame.viewportWidth),
+  };
+}
+
+export function percentPoint(point: { x: number; y: number }, frame: Frame) {
+  if (!hasViewport(frame)) {
+    return null;
+  }
+  return {
+    left: percent(point.x, frame.viewportWidth),
+    top: percent(point.y, frame.viewportHeight),
   };
 }
 
@@ -38,11 +47,11 @@ export function EvidenceThumb({
   evidence: SessionEvidence;
   isLarge?: boolean;
 }) {
-  const { image } = evidence;
+  const { element, frame, image } = evidence;
   if (!image?.url) {
     return null;
   }
-  const highlight = highlightStyle(evidence);
+  const highlight = element && frame ? percentBox(element.rect, frame) : null;
   return (
     <span className="dt-ses-shot" data-large={isLarge}>
       <img

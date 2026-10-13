@@ -1,4 +1,9 @@
-import type { ElementRefValue, SegmentContextValue } from "./linking";
+import type {
+  ContextOrigin,
+  ElementRefValue,
+  ResolvedContext,
+  SegmentContextValue,
+} from "./linking";
 
 const SESSION_TAG = /<\s*\/?\s*session_(?:transcript|data)[^>]*>/gi;
 const REMOVED_TAG = "[tag removed]";
@@ -46,11 +51,19 @@ export const CONTEXT_VERBS: Record<SegmentContextValue["kind"], string> = {
   dwell: "hovered",
   mark: "marked the moment on",
   navigation: "opened",
+  screenshot: "showed the screen",
   select: "pointed at",
 };
 
 export const AMBIGUOUS_CONTEXT_NOTE =
   "(several elements were close in time: unclear which one is meant)";
+
+const CONTEXT_ORIGIN_NOTES: Record<ContextOrigin, string | null> = {
+  auto: null,
+  human: "(the author chose this context)",
+  unknown:
+    "(the author marked the context of this passage as unknown: nothing captured explains it)",
+};
 
 export const elementSummary = (element: ElementRefValue): string => {
   const component = element.component
@@ -66,6 +79,11 @@ export const elementLocators = (element: ElementRefValue): string => {
   return `selector: ${singleLine(element.selector)}${source}`;
 };
 
+const evidenceTag = (item: SegmentContextValue<string>): string =>
+  item.evidenceMatch === "approximate"
+    ? `${item.evidenceId}, nearby screenshot, may show another state`
+    : `${item.evidenceId}`;
+
 export const contextLine = (item: SegmentContextValue<string>): string => {
   const target = item.element
     ? elementSummary(item.element)
@@ -74,6 +92,37 @@ export const contextLine = (item: SegmentContextValue<string>): string => {
     item.durationMs === null
       ? ""
       : ` for ${(item.durationMs / 1000).toFixed(1)} s`;
-  const evidence = item.evidenceId ? ` (${item.evidenceId})` : "";
+  const evidence = item.evidenceId ? ` (${evidenceTag(item)})` : "";
   return `${CONTEXT_VERBS[item.kind]} ${target}${held} at ${formatClock(item.atMs)}${onPage(item.url)}${evidence}`;
+};
+
+export const contextDescriptions = (
+  resolved: ResolvedContext<string>,
+  options: { withLocators: boolean }
+): { items: string[]; notes: string[] } => {
+  const originNote = CONTEXT_ORIGIN_NOTES[resolved.origin];
+  return {
+    items: resolved.context.map((item) => {
+      const locators =
+        options.withLocators && item.element
+          ? ` (${elementLocators(item.element)})`
+          : "";
+      return `${contextLine(item)}${locators}`;
+    }),
+    notes: [
+      ...(resolved.ambiguous ? [AMBIGUOUS_CONTEXT_NOTE] : []),
+      ...(originNote ? [originNote] : []),
+    ],
+  };
+};
+
+export const contextLines = (
+  resolved: ResolvedContext<string>,
+  options: { withLocators: boolean }
+): string[] => {
+  const { items, notes } = contextDescriptions(resolved, options);
+  return [
+    ...items.map((item) => `  - ${item}`),
+    ...notes.map((note) => `  ${note}`),
+  ];
 };

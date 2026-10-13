@@ -6,9 +6,9 @@ import {
   MAX_TITLE_LENGTH,
 } from "../../shared/constants";
 import { sessionActorValidator } from "../access";
-import { buildSessionBrief } from "../brief";
+import { buildSessionBrief } from "../brief/build";
+import { loadBriefInput } from "../brief/input";
 import { truncateText } from "../formatters";
-import { briefInputFor } from "./handoffs";
 import { loadOwnProposal } from "./proposals";
 
 export const materialize = internalMutation({
@@ -19,8 +19,8 @@ export const materialize = internalMutation({
       return { created: false, feedbackId: proposal.feedbackId };
     }
     const brief = buildSessionBrief(
-      await briefInputFor(ctx, {
-        evidenceIds: proposal.evidenceIds,
+      await loadBriefInput(ctx, {
+        chosenEvidenceIds: proposal.evidenceIds,
         proposals: [proposal],
         session,
       })

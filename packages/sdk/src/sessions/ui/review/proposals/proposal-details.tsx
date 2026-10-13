@@ -1,19 +1,36 @@
 import { useState } from "react";
 import type { SessionDetail, SessionProposal } from "../../../protocol";
 import { formatClock } from "../../session-format";
+import { IntentionHistory } from "../continuation/intention-history";
 import { EvidenceThumb } from "../transcript/evidence-thumb";
 import type { ReviewHandle } from "../use-session-detail";
+import { DeleteIntention } from "./delete-intention";
 import type { ProposalActions } from "./use-proposal-actions";
+
+export type ShowMoment = (segmentId: string, opener?: HTMLElement) => void;
+
+export interface ReviewNavigation {
+  onOpenSession: (sessionId: string) => void;
+  onShowMoment: ShowMoment;
+  onStarted: () => void;
+}
 
 export interface ProposalContext {
   actions: ProposalActions;
   canEdit: boolean;
   detail: SessionDetail;
-  onShowSegment: (segmentId: string) => void;
+  focusIntentionId: string | null;
+  navigation: ReviewNavigation;
   review: ReviewHandle;
 }
 
-function ListSection({ items, title }: { items: string[]; title: string }) {
+export function ListSection({
+  items,
+  title,
+}: {
+  items: string[];
+  title: string;
+}) {
   if (items.length === 0) {
     return null;
   }
@@ -43,7 +60,7 @@ function RefinementState({
   if (refinement?.state === "outdated") {
     return (
       <p className="dt-meta">
-        The proposal changed while it was being refined. Add your precision
+        The intention changed while it was being refined. Add your precision
         again.
       </p>
     );
@@ -100,7 +117,7 @@ function ClarifyBox({
           onClick={() => send(text.trim())}
           type="button"
         >
-          Update proposal
+          Update intention
         </button>
       </div>
       <RefinementState
@@ -136,7 +153,9 @@ function Sources({
         <button
           className="dt-ses-quote"
           key={segment.id}
-          onClick={() => context.onShowSegment(segment.id)}
+          onClick={(event) =>
+            context.navigation.onShowMoment(segment.id, event.currentTarget)
+          }
           type="button"
         >
           <span className="dt-ses-time">{formatClock(segment.startMs)}</span>
@@ -165,16 +184,13 @@ export function ProposalDetails({
         <h4 className="dt-ses-label">What you said or showed — not verified</h4>
         <p className="dt-note-text">{proposal.observed}</p>
       </section>
-      {proposal.response && (
-        <section>
-          <h4 className="dt-ses-label">Considered response</h4>
-          <p className="dt-note-text">{proposal.response}</p>
-        </section>
-      )}
       <ListSection items={proposal.setAside} title="Set aside" />
-      <ListSection items={proposal.unknowns} title="Unknowns" />
       {context.canEdit && <ClarifyBox context={context} proposal={proposal} />}
       <Sources context={context} proposal={proposal} />
+      <IntentionHistory context={context} intentionId={proposal.id} />
+      {context.canEdit && (
+        <DeleteIntention context={context} proposal={proposal} />
+      )}
     </>
   );
 }

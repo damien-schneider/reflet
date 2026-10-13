@@ -8,7 +8,7 @@ const NOTICE_NEED_LENGTH = 60;
 
 const DECISION_NOTICE: Record<ProposalDecision, string> = {
   dismissed: "Dismissed",
-  kept: "Kept",
+  kept: "Confirmed",
   later: "Saved for later",
   pending: "Back to undecided",
 };
@@ -88,7 +88,7 @@ export function useProposalActions(review: ReviewHandle): ProposalActions {
       ),
     decide: decideWithUndo(save),
     merge: async (targetId, sourceIds) => {
-      const merged = await save("The proposals were not merged", (client) =>
+      const merged = await save("The intentions were not merged", (client) =>
         client.mergeProposals({ sourceIds, targetId })
       );
       if (merged) {

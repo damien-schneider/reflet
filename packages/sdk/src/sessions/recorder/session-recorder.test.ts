@@ -128,6 +128,20 @@ describe("createSessionRecorder", () => {
     recorder.dispose();
   });
 
+  it("starts a session that continues an intention and keeps that link locally", async () => {
+    const { accountKey, recorder, server } = setup();
+    const continues = { intentionId: "proposal_1", revision: 4 };
+    await recorder.start({ continues, title: "Continue: Save button" });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(server.callsTo("/api/v1/sessions/start")).toEqual([
+      expect.objectContaining({ continues, title: "Continue: Save button" }),
+    ]);
+    expect(await store.readDrafts(accountKey)).toEqual([
+      expect.objectContaining({ continues }),
+    ]);
+    recorder.dispose();
+  });
+
   it("releases the microphone and stops listening on pause", async () => {
     const { recorder, server } = setup();
     await recorder.start({});

@@ -1,26 +1,25 @@
 import type { Doc, Id } from "../../_generated/dataModel";
 import type { QueryCtx } from "../../_generated/server";
+import type { SessionActor } from "../access";
 import { pagePath } from "../formatters";
 import {
-  linkSegmentContext,
-  type SegmentContextValue,
+  type ResolvedContext,
+  resolveStoredSegment,
   type SessionEventValue,
+  toLinkableEvidence,
 } from "../linking";
+import { loadProposalLinks, type ProposalLinks } from "./intentions";
 
 export function shapeSegment(
   segment: Doc<"sessionSegments">,
-  linked: { ambiguous: boolean; context: SegmentContextValue[] }
+  resolved: ResolvedContext<Id<"sessionEvidence">>
 ) {
   return {
     audioExpiresAt: segment.audio?.expiresAt ?? null,
-    context: linked.context.map(({ atMs, evidenceId, kind, label, url }) => ({
-      atMs,
-      evidenceId,
-      kind,
-      label,
-      url,
-    })),
-    contextAmbiguous: linked.ambiguous,
+    context: resolved.context,
+    contextAmbiguous: resolved.ambiguous,
+    contextCorrectedAt: segment.contextCorrection?.at ?? null,
+    contextOrigin: resolved.origin,
     endMs: segment.endMs,
     hasAudio: segment.audio !== undefined,
     id: segment._id,
@@ -66,19 +65,13 @@ export function shapeSegments(input: {
   evidence: Doc<"sessionEvidence">[];
   segments: Doc<"sessionSegments">[];
 }) {
-  const linkable = input.evidence.map((item) => ({
-    atMs: item.atMs,
-    frame: item.frame,
-    id: item._id,
-  }));
+  const evidence = input.evidence.map((item) =>
+    toLinkableEvidence(item, item._id)
+  );
   return input.segments.map((segment) =>
     shapeSegment(
       segment,
-      linkSegmentContext({
-        events: input.events,
-        evidence: linkable,
-        segment: { endMs: segment.endMs, startMs: segment.startMs },
-      })
+      resolveStoredSegment(segment, { events: input.events, evidence })
     )
   );
 }
@@ -104,6 +97,7 @@ export async function shapeEvidence(
 ) {
   return {
     atMs: evidence.atMs,
+    capturedAtMs: evidence.capturedAtMs ?? null,
     element: evidence.element ?? null,
     frame: evidence.frame ?? null,
     id: evidence._id,
@@ -140,14 +134,17 @@ export function handedOffRevisionOf(
 
 export function shapeProposal(
   proposal: Doc<"sessionProposals">,
-  handoffs: Doc<"sessionHandoffs">[]
+  handoffs: Doc<"sessionHandoffs">[],
+  links: ProposalLinks
 ) {
   return {
+    ...links,
     certainty: proposal.certainty,
     clarifications: proposal.clarifications,
     decision: proposal.decision,
     evidenceIds: proposal.evidenceIds,
     feedbackId: proposal.feedbackId ?? null,
+    formulation: proposal.formulation ?? proposal.origin,
     handedOffRevision: handedOffRevisionOf(proposal._id, handoffs),
     id: proposal._id,
     mergedIntoId: proposal.mergedIntoId ?? null,
@@ -173,6 +170,7 @@ export function shapeProposal(
       ? {
           at: proposal.verification.at,
           note: proposal.verification.note ?? null,
+          sessionId: proposal.verification.sessionId ?? null,
           status: proposal.verification.status,
         }
       : null,
@@ -247,15 +245,22 @@ export function shapeMarks(events: SessionEventValue[]): SessionMarkView[] {
 
 export async function loadProposalView(
   ctx: QueryCtx,
-  proposalId: Id<"sessionProposals">
+  options: { proposalId: Id<"sessionProposals">; viewer: SessionActor }
 ) {
-  const proposal = await ctx.db.get(proposalId);
-  if (!proposal) {
+  const proposal = await ctx.db.get(options.proposalId);
+  const session = proposal ? await ctx.db.get(proposal.sessionId) : null;
+  if (!(proposal && session)) {
     throw new Error("Proposal vanished during the write");
   }
   const handoffs = await ctx.db
     .query("sessionHandoffs")
     .withIndex("by_session", (q) => q.eq("sessionId", proposal.sessionId))
     .collect();
-  return { proposal: shapeProposal(proposal, handoffs) };
+  const links = await loadProposalLinks(ctx, {
+    handoffs,
+    proposal,
+    session,
+    viewer: options.viewer,
+  });
+  return { proposal: shapeProposal(proposal, handoffs, links) };
 }

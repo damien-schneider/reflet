@@ -1,4 +1,4 @@
-import { SESSION_API_PATHS } from "../sessions/protocol";
+import { SESSION_API_PATHS } from "../sessions/api-paths";
 
 export const DEVTOOLS_ROUTE_BASE = "/api/reflet-devtools";
 

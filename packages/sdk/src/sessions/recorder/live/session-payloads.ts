@@ -1,3 +1,4 @@
+import type { ContinuedIntentionRef } from "../../api/session-api";
 import {
   SPEECH_SAMPLE_RATE,
   type SpeechChunk,
@@ -10,6 +11,7 @@ import type { SessionGap, SessionSurface } from "../../protocol";
 
 export function newSessionDraft(options: {
   accountKey: string;
+  continues?: ContinuedIntentionRef;
   surface: SessionSurface;
   title: string;
 }): StoredDraft {
@@ -43,6 +45,7 @@ export function startPayload(draft: StoredDraft): OutboxPayload {
       startedAt: draft.startedAt,
       surface: draft.surface,
       ...(draft.title ? { title: draft.title } : {}),
+      ...(draft.continues ? { continues: draft.continues } : {}),
     },
     kind: "start",
   };
@@ -53,6 +56,7 @@ export function evidencePayload(captured: CapturedEvidence): OutboxPayload {
   return {
     evidence: {
       atMs: captured.atMs,
+      capturedAtMs: captured.capturedAtMs ?? undefined,
       clientKey: captured.clientKey,
       element: element ?? undefined,
       frame: captured.frame,

@@ -16,6 +16,7 @@ import { registerDevtoolsRoutes } from "./http/devtools_routes";
 import { registerGithubWebhookRoutes } from "./http/github_webhook";
 import { registerPublicApiRoutes } from "./http/public_api";
 import { registerSessionCaptureRoutes } from "./http/sessions/capture_routes";
+import { registerSessionIntentionRoutes } from "./http/sessions/intention_routes";
 import { registerSessionReviewRoutes } from "./http/sessions/review_routes";
 import { registerTeamAccessRoutes } from "./http/sessions/team_access_routes";
 import { registerSupportEmailRoutes } from "./support/email/http_routes";
@@ -76,6 +77,7 @@ registerDevtoolsRoutes(http);
 registerTeamAccessRoutes(http);
 registerSessionCaptureRoutes(http);
 registerSessionReviewRoutes(http);
+registerSessionIntentionRoutes(http);
 
 http.route({
   handler: httpAction(

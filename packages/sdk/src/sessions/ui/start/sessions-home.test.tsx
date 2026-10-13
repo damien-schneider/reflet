@@ -184,7 +184,7 @@ it("lists my sessions apart from the ones shared with the team", async () => {
   expect(
     screen.getByRole("heading", { name: "Shared with the team" })
   ).toBeTruthy();
-  expect(screen.getByText(/2 proposals · 1 kept/)).toBeTruthy();
+  expect(screen.getByText(/2 intentions · 1 confirmed/)).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: /Onboarding/ }));
   expect(onOpenSession).toHaveBeenCalledWith({
     sessionId: "session_2",

@@ -20,6 +20,7 @@ type SessionLimitKind =
   | "bytes";
 
 type SessionChildTable =
+  | "sessionContributions"
   | "sessionEvidence"
   | "sessionHandoffs"
   | "sessionProposals"

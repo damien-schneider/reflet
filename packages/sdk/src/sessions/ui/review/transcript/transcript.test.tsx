@@ -7,6 +7,7 @@ import {
   fakeApi,
   fakeWorkspace,
   renderInWorkspace,
+  reviewLinks,
 } from "../../testing/session-fixtures";
 import { SessionReview } from "../session-review";
 
@@ -26,7 +27,7 @@ afterEach(cleanup);
 async function openTranscript(detail: SessionDetail, api = fakeApi()) {
   api.detail = vi.fn().mockResolvedValue(detail);
   renderInWorkspace(
-    <SessionReview onBack={vi.fn()} sessionId="session_1" />,
+    <SessionReview links={reviewLinks()} sessionId="session_1" />,
     fakeWorkspace({ api })
   );
   fireEvent.click(await screen.findByRole("button", { name: "Transcript" }));
@@ -115,24 +116,28 @@ it("lets me type what a failed passage said", async () => {
   );
 });
 
-it("jumps from a proposal's quote to the passage it cites", async () => {
+it("lands on the same moment from an intention's quote and from the transcript", async () => {
   const api = fakeApi();
   api.detail = vi.fn().mockResolvedValue(aDetail());
   renderInWorkspace(
-    <SessionReview onBack={vi.fn()} sessionId="session_1" />,
+    <SessionReview links={reviewLinks()} sessionId="session_1" />,
     fakeWorkspace({ api })
   );
-  fireEvent.click(await screen.findByRole("button", { name: "Show details" }));
-  fireEvent.click(
-    screen.getByRole("button", { name: /I can never find the save button/ })
-  );
+  const showContext = await screen.findByRole("button", {
+    name: "Show context",
+  });
+  fireEvent.click(showContext);
 
-  expect(
-    screen
-      .getByRole("button", { name: "Transcript" })
-      .getAttribute("aria-pressed")
-  ).toBe("true");
-  expect(document.activeElement?.textContent).toContain(
-    "I can never find the save button here."
+  const heading = screen.getByRole("heading", { name: "Moment 00:02–00:09" });
+  expect(document.activeElement).toBe(heading);
+  fireEvent.keyDown(heading, { key: "Escape" });
+  expect(document.activeElement).toBe(showContext);
+
+  fireEvent.click(screen.getByRole("button", { name: "Transcript" }));
+  fireEvent.click(
+    screen.getByRole("button", { name: "Show context at 00:02" })
   );
+  expect(
+    screen.getByRole("heading", { name: "Moment 00:02–00:09" })
+  ).toBeTruthy();
 });

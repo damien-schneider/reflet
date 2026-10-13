@@ -31,6 +31,10 @@ export function shortDuration(ms: number): string {
   return seconds === 0 ? `${minutes} min` : `${minutes} min ${seconds} s`;
 }
 
+export function preciseSeconds(ms: number): string {
+  return `${(Math.abs(ms) / SECOND_MS).toFixed(1)} s`;
+}
+
 export function minutesLeft(remainingMs: number): number {
   return Math.max(1, Math.ceil(remainingMs / MINUTE_MS));
 }
@@ -70,7 +74,7 @@ export function sessionStatusLine(summary: SessionSummary): string {
   if (analysis.state === "idle") {
     return "Not analyzed yet";
   }
-  return `${countLabel(counts.proposals, "proposal")} · ${counts.kept} kept`;
+  return `${countLabel(counts.proposals, "intention")} · ${counts.kept} confirmed`;
 }
 
 export function isDetailProcessing(detail: SessionDetail): boolean {
@@ -82,9 +86,11 @@ export function isDetailProcessing(detail: SessionDetail): boolean {
   const refining = detail.proposals.some(
     (proposal) => proposal.refinement?.state === "running"
   );
+  const comparing = detail.continuation?.contribution.state === "analyzing";
   return (
     transcribing ||
     refining ||
+    comparing ||
     isAnalysisBusy(detail.session) ||
     detail.session.collection !== "ended"
   );

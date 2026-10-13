@@ -1,5 +1,8 @@
 import { useState } from "react";
-import type { RecorderSnapshot } from "../../recorder/session-recorder";
+import type {
+  RecorderSnapshot,
+  RecorderStartOptions,
+} from "../../recorder/session-recorder";
 import { useRecorderSnapshot } from "../../recorder/use-recorder-snapshot";
 import { useSessionWorkspace } from "../session-workspace";
 import { markDisclosureSeen, SessionDisclosure } from "./session-disclosure";
@@ -17,7 +20,7 @@ const IS_MICROPHONE_FAILURE: Record<StartFailure["kind"], boolean> = {
   storage: false,
 };
 
-function StartProblem({
+export function StartProblem({
   failure,
   onRetry,
   onWriteNote,
@@ -72,6 +75,41 @@ function StartActions({
   );
 }
 
+export function useRecorderStart(onStarted: () => void) {
+  const { account, recorder } = useSessionWorkspace();
+  const snapshot = useRecorderSnapshot(recorder);
+  const [hasTried, setHasTried] = useState(false);
+
+  const start = async (options: RecorderStartOptions) => {
+    markDisclosureSeen(account.key);
+    setHasTried(true);
+    await recorder.start(options);
+    if (recorder.getSnapshot().phase === "recording") {
+      onStarted();
+    }
+  };
+
+  const isRequesting = snapshot.phase === "requesting";
+  const failure =
+    hasTried && snapshot.phase === "failed" && snapshot.sessionKey === null
+      ? snapshot.failure
+      : null;
+  return {
+    failure,
+    isBusy: isRequesting || snapshot.phase === "finishing",
+    isRequesting,
+    start,
+  };
+}
+
+export function MicrophonePrompt({ isRequesting }: { isRequesting: boolean }) {
+  return (
+    <p aria-live="polite" className="dt-meta">
+      {isRequesting ? "Allow the microphone in your browser to start." : ""}
+    </p>
+  );
+}
+
 export function StartSession({
   onStarted,
   onWriteNote,
@@ -79,41 +117,24 @@ export function StartSession({
   onStarted: () => void;
   onWriteNote?: () => void;
 }) {
-  const { account, recorder } = useSessionWorkspace();
-  const snapshot = useRecorderSnapshot(recorder);
-  const [hasTried, setHasTried] = useState(false);
-
-  const start = async () => {
-    markDisclosureSeen(account.key);
-    setHasTried(true);
-    await recorder.start({});
-    if (recorder.getSnapshot().phase === "recording") {
-      onStarted();
-    }
-  };
-
-  const isRequesting = snapshot.phase === "requesting";
-  const startFailure =
-    hasTried && snapshot.phase === "failed" && snapshot.sessionKey === null
-      ? snapshot.failure
-      : null;
+  const { account } = useSessionWorkspace();
+  const { failure, isBusy, isRequesting, start } = useRecorderStart(onStarted);
+  const startBlank = () => start({});
 
   return (
     <>
       <SessionDisclosure accountKey={account.key} />
-      <p aria-live="polite" className="dt-meta">
-        {isRequesting ? "Allow the microphone in your browser to start." : ""}
-      </p>
-      {startFailure ? (
+      <MicrophonePrompt isRequesting={isRequesting} />
+      {failure ? (
         <StartProblem
-          failure={startFailure}
-          onRetry={start}
+          failure={failure}
+          onRetry={startBlank}
           onWriteNote={onWriteNote}
         />
       ) : (
         <StartActions
-          isBusy={isRequesting || snapshot.phase === "finishing"}
-          onStart={start}
+          isBusy={isBusy}
+          onStart={startBlank}
           onWriteNote={onWriteNote}
         />
       )}

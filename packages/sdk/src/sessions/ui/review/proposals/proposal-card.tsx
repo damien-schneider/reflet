@@ -1,18 +1,34 @@
 import { useId, useState } from "react";
 import type { ProposalDecision, SessionProposal } from "../../../protocol";
-import { type ProposalContext, ProposalDetails } from "./proposal-details";
-import { ProposalEditor } from "./proposal-editor";
+import { ContinueIntention } from "../continuation/continue-panel";
+import { IntentionSource } from "../moment/intention-source";
+import { useFocusWhen } from "../transcript/remove-evidence";
+import {
+  AttachedIntentionRow,
+  IntentionSuggestionBanner,
+} from "./intention-suggestion";
+import {
+  ListSection,
+  type ProposalContext,
+  ProposalDetails,
+} from "./proposal-details";
+import { ProposalEditor, ResponseEditor } from "./proposal-editor";
 import { quotedNeed } from "./use-proposal-actions";
 import { Verification } from "./verification";
 
 const DECISION_CHIPS: Partial<Record<ProposalDecision, string>> = {
   dismissed: "Dismissed",
-  kept: "Kept",
+  kept: "Confirmed",
   later: "Later",
 };
 
+const FORMULATION_CHIPS: Record<SessionProposal["formulation"], string> = {
+  ai: "AI wording",
+  human: "Your wording",
+};
+
 const DECISION_BUTTONS: { decision: ProposalDecision; label: string }[] = [
-  { decision: "kept", label: "Keep" },
+  { decision: "kept", label: "Confirm" },
   { decision: "later", label: "Later" },
   { decision: "dismissed", label: "Dismiss" },
 ];
@@ -29,15 +45,16 @@ function ProposalChips({ proposal }: { proposal: SessionProposal }) {
   }
   return (
     <div className="dt-ses-chips">
+      {decisionChip && <span className="dt-chip">{decisionChip}</span>}
+      <span className="dt-chip">{FORMULATION_CHIPS[proposal.formulation]}</span>
       {proposal.certainty === "uncertain" && (
         <span className="dt-chip">Unclear</span>
       )}
       {proposal.needsReview && (
         <span className="dt-chip" data-tone="accent">
-          Needs review
+          To re-examine
         </span>
       )}
-      {decisionChip && <span className="dt-chip">{decisionChip}</span>}
       {handoffChip && <span className="dt-chip">{handoffChip}</span>}
     </div>
   );
@@ -166,6 +183,123 @@ function DetailsDisclosure({
   );
 }
 
+function ToCheck({ proposal }: { proposal: SessionProposal }) {
+  const items = proposal.question
+    ? [...proposal.unknowns, proposal.question]
+    : proposal.unknowns;
+  return <ListSection items={items} title="To check" />;
+}
+
+function ResponseBlock({
+  context,
+  proposal,
+}: {
+  context: ProposalContext;
+  proposal: SessionProposal;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  if (isEditing) {
+    return (
+      <ResponseEditor
+        onDone={() => setIsEditing(false)}
+        proposal={proposal}
+        review={context.review}
+      />
+    );
+  }
+  if (!(proposal.response || context.canEdit)) {
+    return null;
+  }
+  return (
+    <section className="dt-ses-block">
+      <h4 className="dt-ses-label">Considered response</h4>
+      <p className={proposal.response ? "dt-note-text" : "dt-meta"}>
+        {proposal.response ?? "No considered response yet."}
+      </p>
+      {context.canEdit && (
+        <button
+          className="dt-ses-link"
+          onClick={() => setIsEditing(true)}
+          type="button"
+        >
+          Edit response
+        </button>
+      )}
+    </section>
+  );
+}
+
+function IntentionBody({
+  context,
+  disclosure,
+  proposal,
+}: {
+  context: ProposalContext;
+  disclosure: Disclosure;
+  proposal: SessionProposal;
+}) {
+  return (
+    <>
+      <p className="dt-ses-label">Intention</p>
+      <p className="dt-ses-need" data-expanded={disclosure.isExpanded}>
+        {proposal.need}
+      </p>
+      <ProposalChips proposal={proposal} />
+      <IntentionSource context={context} proposal={proposal} />
+      <ResponseBlock context={context} proposal={proposal} />
+      <ToCheck proposal={proposal} />
+    </>
+  );
+}
+
+function IntentionCard({
+  context,
+  onEdit,
+  proposal,
+}: {
+  context: ProposalContext;
+  onEdit: () => void;
+  proposal: SessionProposal;
+}) {
+  const disclosure = useDisclosure();
+  const cardRef = useFocusWhen<HTMLElement>(
+    context.focusIntentionId === proposal.id
+  );
+  return (
+    <article
+      aria-label={`Intention: ${proposal.need}`}
+      className="dt-card"
+      data-decision={proposal.decision}
+      ref={cardRef}
+      tabIndex={-1}
+    >
+      <IntentionBody
+        context={context}
+        disclosure={disclosure}
+        proposal={proposal}
+      />
+      <MergeSuggestion context={context} proposal={proposal} />
+      <IntentionSuggestionBanner context={context} proposal={proposal} />
+      {context.canEdit && (
+        <DecisionButtons
+          context={context}
+          onEdit={onEdit}
+          proposal={proposal}
+        />
+      )}
+      <ContinueIntention context={context} proposal={proposal} />
+      <DetailsDisclosure
+        context={context}
+        disclosure={disclosure}
+        proposal={proposal}
+      />
+      {context.canEdit && (
+        <Verification context={context} proposal={proposal} />
+      )}
+    </article>
+  );
+}
+
 export function ProposalCard({
   context,
   proposal,
@@ -173,9 +307,15 @@ export function ProposalCard({
   context: ProposalContext;
   proposal: SessionProposal;
 }) {
-  const disclosure = useDisclosure();
   const [isEditing, setIsEditing] = useState(false);
-
+  if (proposal.attachment) {
+    return (
+      <AttachedIntentionRow
+        attachment={proposal.attachment}
+        context={context}
+      />
+    );
+  }
   if (isEditing) {
     return (
       <article className="dt-card">
@@ -189,27 +329,10 @@ export function ProposalCard({
     );
   }
   return (
-    <article className="dt-card" data-decision={proposal.decision}>
-      <p className="dt-ses-need" data-expanded={disclosure.isExpanded}>
-        {proposal.need}
-      </p>
-      <ProposalChips proposal={proposal} />
-      <MergeSuggestion context={context} proposal={proposal} />
-      {context.canEdit && (
-        <DecisionButtons
-          context={context}
-          onEdit={() => setIsEditing(true)}
-          proposal={proposal}
-        />
-      )}
-      <DetailsDisclosure
-        context={context}
-        disclosure={disclosure}
-        proposal={proposal}
-      />
-      {context.canEdit && (
-        <Verification context={context} proposal={proposal} />
-      )}
-    </article>
+    <IntentionCard
+      context={context}
+      onEdit={() => setIsEditing(true)}
+      proposal={proposal}
+    />
   );
 }

@@ -160,7 +160,7 @@ export const register = internalMutation({
   },
 });
 
-async function flagProposalsCiting(
+export async function flagProposalsCiting(
   ctx: MutationCtx,
   segment: Doc<"sessionSegments">
 ): Promise<void> {

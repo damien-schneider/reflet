@@ -1,4 +1,5 @@
 import { REFLET_Z_INDEX } from "../../z-index";
+import { INTENTION_STYLES } from "./intention-styles";
 
 const MONO_FONT = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
 
@@ -104,4 +105,4 @@ const TEAM_STYLES = `
 .dt-bar > .dt-btn { margin-inline: 2px 4px; }
 `;
 
-export const SESSIONS_STYLES = `${RECORDING_STYLES}${LIST_STYLES}${REVIEW_STYLES}${EVIDENCE_STYLES}${TEAM_STYLES}`;
+export const SESSIONS_STYLES = `${RECORDING_STYLES}${LIST_STYLES}${REVIEW_STYLES}${EVIDENCE_STYLES}${TEAM_STYLES}${INTENTION_STYLES}`;

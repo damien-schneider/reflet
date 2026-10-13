@@ -39,8 +39,10 @@ Deux tickets indépendants créés automatiquement dans cet exemple constituent 
 | Preuve externe | Ajout manuel d'un lien ; pas de connecteur PostHog complet |
 | Source de code | Indice React facultatif dans les devtools ; le résolveur de source maps plus complet des notes n'est pas encore branché aux sessions |
 | Correctifs 0.6.8 | Suppression d'une capture individuelle et annulation de la capture de navigation en attente lors d'une pause |
-
-**En cours localement, à valider séparément :** les changements 0.6.9 inspectés annulent aussi les captures encore en file derrière une autre capture après pause/fin, écartent une capture dont le rendu se termine après la pause ou la fin, et corrigent le focus clavier lors du retrait d'une image. Ils ne sont pas comptés comme livrés.
+| Correctifs 0.6.9 | Captures en file ou encore en rendu après pause/fin enregistrées comme manquantes, focus clavier lors du retrait d'une image, durée réelle des survols |
+| Moments et associations (0.7.0) | Vue « Show context » d'un passage, contour élément/pointeur seulement si l'instant correspond, correction humaine ou « contexte inconnu » conservée après nouvelle analyse et utilisée par l'analyse et le brief |
+| Intentions (0.7.0) | Onglet Intentions, « Confirm » distinct de la réponse envisagée, origine IA/humaine de la formulation, rattachement proposé à une intention existante, suppression d'une intention |
+| Continuation (0.7.0) | « Continue this intention », comparaison IA sourcée à la révision de départ, acceptation/refus par changement, question ciblée, lecture de vérification confirmée par une personne, historique des contributions, changements depuis le dernier brief |
 
 L'accès équipe en production existe déjà ; une expérience mobile complète de gestion des retours n'est pas pour autant validée. La capture reste limitée à la page web équipée du SDK. Aucun accès obligatoire au dépôt, aucune vidéo systématique et aucun moteur de développement dans Reflet.
 
@@ -196,7 +198,7 @@ Le transcript est horodaté par segment, pas mot par mot. L'association existant
 
 ## 9. Prochains développements, dans l'ordre
 
-Les anciens lots 0 à 3 ont produit le socle de la section 2. P1 complète ce socle dans les changements locaux. **Le périmètre à implémenter maintenant est P1b, P2 et P4, dans cet ordre, au sein d'une même livraison.** P3 n'est ni inclus ni une dépendance de P4. Aucun nouveau module de navigation n'est nécessaire.
+Les anciens lots 0 à 3 ont produit le socle de la section 2, complété par P1. **P1b, P2 et P4 sont livrés ensemble dans `reflet-sdk` 0.7.0 et le backend associé.** Chaque section ci-dessous indique ce qui est livré et ses limites. P3 n'est ni inclus ni une dépendance de P4. Aucun nouveau module de navigation n'a été ajouté.
 
 **Parcours de validation commun :** je revois « ici, je ne sais pas si c'est enregistré », corrige l'élément associé, confirme l'intention, puis lance « Continuer cette intention ». Après une deuxième session, l'IA me montre ce qu'elle propose d'ajouter ou de changer, avec ses preuves. J'accepte une précision, refuse une solution et exporte un brief qui contient la nouvelle révision du même besoin. La précédente transmission reste identifiable.
 
@@ -246,6 +248,10 @@ Les anciens lots 0 à 3 ont produit le socle de la section 2. P1 complète ce so
 
 **Acceptation :** « ce bouton-là » après scroll puis redimensionnement ouvre la bonne preuve, ou indique clairement l'incertitude ; une correction tient après rechargement et nouvelle analyse. La revue fonctionne sans audio conservé et sans codebase.
 
+**Livré (0.7.0) :** « Show context » sur un passage ou une citation ouvre le moment : texte, capture, contour de l'élément et du pointeur seulement quand la capture correspond à l'instant (sinon « approximative » sans contour), gestes autour, pauses, captures supprimées et intentions qui citent ce passage. Moment précédent/suivant au clavier, Échap pour fermer. La correction choisit un autre événement ou une capture proche, « contexte inconnu » ou le retour à l'automatique ; elle porte la révision du passage, sa provenance (`contextOrigin`), survit à une nouvelle analyse et alimente l'analyse et le brief. Une correction concurrente renvoie un conflit qui demande de recharger.
+
+**Limites :** les choix proposés couvrent 30 s avant à 10 s après le passage, 20 au plus. Une navigation sans événement ni capture n'apparaît pas comme contexte automatique. La correspondance capture/instant repose sur l'horodatage de la capture ; les sessions enregistrées avec un SDK antérieur n'en ont pas et restent « approximatives ».
+
 ### P2 — présenter les intentions, avec leurs réponses possibles
 
 **Cas d'usage :** « je veux un historique » puis « en fait, je veux savoir si c'est enregistré » produit un besoin cohérent que je peux corriger.
@@ -282,6 +288,10 @@ La sauvegarde échoue-t-elle, ou manque-t-il un retour visible ?
 
 **Acceptation :** changer la réponse envisagée conserve l'intention, ses preuves et sa décision ; une reformulation ne crée pas une deuxième demande contradictoire. Une intention inférée reste identifiable et corrigeable. Aucun changement purement lexical ne perd une proposition existante ou ne change les droits.
 
+**Livré (0.7.0) :** onglet « Intentions », bouton « Confirm », « Hand off N confirmed ». La réponse envisagée se modifie seule et confirmer l'intention ne la valide pas. La carte indique si la formulation vient de l'IA ou d'une personne ; une précision IA ultérieure la marque de nouveau « IA ». L'IA peut signaler qu'une nouvelle intention correspond à une intention existante accessible, avec sa raison : « Add to this intention » (avec consentement explicite si des extraits privés deviennent visibles de l'équipe), « Keep separate », puis annulation possible. Supprimer une intention retire ce que les sessions suivantes y avaient ajouté et les copies Reflet des briefs qui l'incluaient ; un brief déjà copié ou exporté ne peut pas être rappelé.
+
+**Limites :** les identifiants internes restent `sessionProposals`/`proposal`. Les libellés du SDK sont en anglais.
+
 ### P4 — continuer la même intention avec l'IA entre les sessions
 
 **Cas d'usage :** après une modification, j'enregistre « c'est mieux, mais sur mobile le message disparaît trop vite ». Je retrouve l'intention initiale et ce qui reste à améliorer.
@@ -315,6 +325,10 @@ La sauvegarde échoue-t-elle, ou manque-t-il un retour visible ?
 
 **Acceptation :** deux sessions enrichissent un besoin unique sans doublon imposé ; on peut accepter une précision et refuser la réponse suggérée. Une contradiction déclenche une clarification utile, un sujet distinct reste séparé, une réponse IA tardive ne remplace pas une correction humaine. Le parcours fonctionne sans codebase ni audio conservé. Vérifier aussi accès entre comptes, partage, suppression, annulation de rattachement, retry, échec IA et brief déjà exporté.
 
+**Livré (0.7.0) :** « Continue this intention » rappelle besoin, réponse envisagée et questions ouvertes, puis démarre le recorder uniquement sur « Start session ». La session est liée côté serveur à la révision de départ (contribution `sessionContributions`, organisation et droits vérifiés à chaque source). À la fin, l'IA compare les nouveaux passages à cette révision et propose au plus 8 changements typés (précision, contradiction, contrainte, solution, résultat constaté), chacun avec ses citations et captures, hypothèses signalées. Chaque changement s'accepte (tel quel ou reformulé), se refuse ou se rétablit ; une acceptation crée une nouvelle révision avec l'auteur et la session source, et refuse le conflit si l'intention a changé depuis (`expectedRevision`). Une question IA se répond sans nouveau chat ; la lecture « Looks resolved / Still to improve / Not enough evidence » ne devient une vérification qu'après confirmation d'une personne. L'intention montre l'historique de ses contributions ; les captures apportées par d'autres sessions peuvent rejoindre le brief. Le brief indique « Continued in session » et les changements depuis la dernière transmission (révision 1 → 2), et les briefs précédents restent listés avec la révision transmise. Supprimer la session de continuation annule ses changements acceptés ; retirer sa contribution rétablit les champs qu'elle avait posés et que personne n'a modifiés depuis.
+
+**Limites :** une continuation d'une intention écartée, fusionnée, rattachée ou supprimée avant le démarrage est enregistrée comme session indépendante. Un résultat IA calculé sur une révision dépassée est marqué à réexaminer, jamais appliqué. Les extraits d'une contribution privée restent masqués pour l'équipe tant que leur partage n'est pas accepté. La comparaison utilise le quota d'analyse existant ; aucun quota spécifique n'a été ajouté.
+
 ### P3 — suite séparée : repère de code facultatif
 
 **Cas d'usage :** dans les devtools, l'agent reçoit le besoin et peut retrouver plus vite le composant de l'élément montré, sans que Reflet indexe le dépôt.
@@ -347,7 +361,7 @@ Ces extensions ne font pas partie de P1 à P4. Les fonctionnalités générales 
 
 Les tests existants couvrent SDK, backend et E2E headless. Le lot 0 rapporte une mesure de 10 minutes avec microphone simulé, des essais courts de transcription réelle et un parcours sur backend de développement. Ce sont des preuves techniques, pas une mesure d'adoption ni une garantie pour toutes les applications.
 
-Dernier contrôle ciblé du 13 octobre : 22 tests SDK (interactions, captures, retrait d'image) et 21 tests backend (brief, liaison, prompt d'analyse) réussis sur le travail local existant. Cela ne valide pas P1b/P2/P4, encore à développer. Les contrôles globaux précédents ont été interrompus : accès réseau pour `convex codegen`, variables `NEXT_PUBLIC_CONVEX_URL` et `NEXT_PUBLIC_CONVEX_SITE_URL` absentes pour les builds widgets. Cette mise à jour de périmètre est documentaire ; elle ne relance pas les tests applicatifs ni les E2E et ne confirme aucun déploiement.
+Contrôle de la livraison 0.7.0 (13 octobre) : tests unitaires SDK 425, backend 899 (dont continuation, comparaison IA simulée, rattachement, brief, correction de contexte, droits entre comptes, suppression) et web 1 941 réussis ; typecheck et builds réussis (builds widgets avec URLs Convex fictives). L'E2E headless `apps/web/e2e/sdk-sessions.e2e.ts` déroule le parcours commun complet sur serveur simulé, en bureau à la souris et en 390 px au clavier. La comparaison IA y est simulée : la qualité des changements proposés sur des sessions réelles reste à mesurer.
 
 Pour les prochaines livraisons :
 
@@ -357,7 +371,7 @@ Pour les prochaines livraisons :
 - [ ] Réussir P2 sur une session française et anglaise où la personne change d'avis ; mesurer doublons, associations corrigées et temps de revue.
 - [ ] Réussir P3 avec et sans source maps, avec build inconnu/différent et sans accès au dépôt.
 - [ ] Réussir P4 entre plusieurs sessions et comptes, avec partage, suppression, annulation de regroupement et brief déjà exporté.
-- [ ] Réussir le parcours P1b + P2 + P4 complet : corriger le contexte, confirmer l'intention, continuer par la voix, revoir les changements IA, accepter une précision et exporter la nouvelle révision sans modifier l'ancien brief.
+- [ ] Réussir le parcours P1b + P2 + P4 complet sur un backend réel avec transcription et analyse réelles. Réussi en E2E headless sur serveur simulé (0.7.0).
 - [ ] Effectuer des sessions réelles consenties sur une application de développement et une application déployée ; transmettre le seul brief et ses pièces à un agent, puis revenir vérifier le résultat.
 - [ ] Confirmer permissions, reprise, coût, performance, clavier et affichage étroit avec les nouvelles capacités, puis vérifier les versions effectivement publiées/déployées.
 
@@ -365,12 +379,8 @@ Le critère produit reste : une personne ou un agent comprend le résultat voulu
 
 ## 11. Consigne pour le prochain agent de développement
 
-> Implémente P1b, P2 et P4 de `docs/product/reflet-sessions.md` dans une même livraison. Le parcours attendu est : revoir un passage avec son contexte, corriger l'association, confirmer l'intention séparément de sa réponse envisagée, continuer cette intention par une nouvelle session vocale, revoir les changements proposés par l'IA puis exporter une nouvelle révision du même besoin.
+> P1b, P2 et P4 sont livrés dans `reflet-sdk` 0.7.0. Valide-les maintenant sur des sessions réelles consenties (section 10) : qualité des changements proposés par l'IA, associations corrigées, temps de revue, droits entre comptes et briefs déjà exportés. Corrige ce que ces sessions révèlent avant d'ajouter des capacités.
 >
-> Le socle Sessions et P1 existent. Préserve les changements locaux de P1 et les correctifs de capture/focus ; vérifie leur état avant de travailler dessus. Ne recommence pas les anciens lots. Commence par le contrat de l'intention durable, des contributions entre sessions, des associations corrigées et des révisions. Réutilise les propositions, clarifications, captures, exports et surfaces existants ; un renommage en « Intentions » ne suffit pas à remplir le périmètre.
->
-> Écris d'abord les tests des comportements critiques : association cohérente et corrigible, droits sur chaque source, continuation idempotente, correction humaine protégée contre une analyse tardive, comparaison IA sourcée et validation avant modification du besoin. Implémente P1b, puis P2, puis P4 et vérifie le parcours complet. L'IA doit proposer une évolution utile et demander une précision si nécessaire ; elle ne fusionne, ne publie et ne lance aucun travail de développement silencieusement.
->
-> P3 et les intégrations PostHog/agents restent hors périmètre. Aucun accès obligatoire à la codebase, vidéo, audio permanent, trajectoire continue du curseur ou nouveau chat imposé. Respecte les droits, la suppression et les contrôles du dépôt, avec E2E headless et preuves des limites restantes. Ne déclare la livraison complète qu'après les critères de P1b, P2 et P4 ; aucun commit ni push sans demande explicite.
+> P3 vient ensuite, séparément, sans en faire une dépendance des intentions. Les intégrations PostHog/agents restent hors périmètre. Aucun accès obligatoire à la codebase, vidéo, audio permanent, trajectoire continue du curseur ou nouveau chat imposé. L'IA ne fusionne, ne publie et ne lance aucun travail de développement silencieusement.
 
 Les vérifications applicatives à exécuter pendant l'implémentation sont celles d'`AGENTS.md`, avec tests de comportement et E2E headless. Le document et les aperçus ne constituent pas à eux seuls une preuve de fonctionnement.

@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { SessionHandoff } from "../../protocol";
+import { aHistoryEntry } from "../testing/intention-fixtures";
 import {
   aDetail,
   anEvidence,
@@ -189,4 +190,55 @@ it("creates internal feedback for each selected proposal", async () => {
       "Internal feedback created — agents don't pick it up from the queue; hand off the brief instead."
     )
   ).toBeTruthy();
+});
+
+it("summarizes what changed since the last brief and offers evidence added by later sessions", () => {
+  const detail = aDetail({
+    contributedEvidence: [
+      anEvidence({ atMs: 5000, id: "evidence_9", trigger: "select" }),
+    ],
+    handoffs: [HANDOFF],
+    history: [aHistoryEntry({ evidenceIds: ["evidence_9"] })],
+    proposals: [
+      aProposal({
+        decision: "kept",
+        lastHandoff: {
+          at: 1_700_000_200_000,
+          need: "Make the Save button visible",
+          response: null,
+          revision: 2,
+          unknowns: [],
+        },
+        response: "Pin the action bar",
+        revision: 4,
+      }),
+    ],
+  });
+  renderInWorkspace(
+    <HandoffView
+      detail={detail}
+      onClose={vi.fn()}
+      review={{ patch: vi.fn(), reload: vi.fn() }}
+    />,
+    fakeWorkspace()
+  );
+
+  expect(
+    screen.getByText(/Changed since the brief of .* \(revision 2 → 4\)/)
+  ).toBeTruthy();
+  expect(
+    screen.getByText(
+      "Need: Make the Save button visible → Make the Save button visible on small screens"
+    )
+  ).toBeTruthy();
+  expect(
+    screen.getByText("Considered response: — → Pin the action bar")
+  ).toBeTruthy();
+  expect(
+    screen.getByRole("checkbox", { name: /Pointed element/ })
+  ).toHaveProperty("checked", true);
+  expect(screen.getByRole("textbox", { name: /^Brief of/ })).toHaveProperty(
+    "value",
+    BRIEF
+  );
 });

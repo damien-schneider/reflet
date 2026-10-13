@@ -5,7 +5,7 @@ import {
   SESSION_START_FUTURE_TOLERANCE_MS,
   SESSION_START_PAST_TOLERANCE_MS,
 } from "../constants";
-import type { sessionGapValidator } from "../tableFields";
+import type { sessionGapValidator } from "../validators";
 
 type SessionGap = Infer<typeof sessionGapValidator>;
 type SessionTimeline = Pick<

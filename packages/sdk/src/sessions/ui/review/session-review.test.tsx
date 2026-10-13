@@ -16,6 +16,7 @@ import {
   fakeApi,
   fakeWorkspace,
   renderInWorkspace,
+  reviewLinks,
 } from "../testing/session-fixtures";
 import { SessionReview } from "./session-review";
 
@@ -42,7 +43,7 @@ async function renderReview(
 ) {
   api.detail = vi.fn().mockResolvedValue(detail);
   renderInWorkspace(
-    <SessionReview onBack={vi.fn()} sessionId="session_1" />,
+    <SessionReview links={reviewLinks()} sessionId="session_1" />,
     fakeWorkspace({ api })
   );
   await screen.findByRole("heading", { name: detail.session.title });
@@ -51,17 +52,17 @@ async function renderReview(
 
 const NEED = "Make the Save button visible on small screens";
 
-it("opens on the proposals", async () => {
+it("opens on the intentions", async () => {
   await renderReview();
   expect(
     screen
-      .getByRole("button", { name: "Proposals (1)" })
+      .getByRole("button", { name: "Intentions (1)" })
       .getAttribute("aria-pressed")
   ).toBe("true");
   expect(screen.getByText(NEED)).toBeTruthy();
 });
 
-it("keeps a proposal and undoes it back to its previous decision", async () => {
+it("confirms an intention and undoes it back to its previous decision", async () => {
   const api = fakeApi({
     decideProposal: vi
       .fn()
@@ -73,8 +74,8 @@ it("keeps a proposal and undoes it back to its previous decision", async () => {
     api
   );
 
-  fireEvent.click(screen.getByRole("button", { name: "Keep" }));
-  const notice = await screen.findByText(`Kept “${NEED}”`);
+  fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
+  const notice = await screen.findByText(`Confirmed “${NEED}”`);
   fireEvent.click(
     within(notice.parentElement ?? document.body).getByRole("button", {
       name: "Undo",
@@ -136,7 +137,7 @@ it("sends a clarification as text", async () => {
   fireEvent.change(screen.getByRole("textbox", { name: "Add a precision…" }), {
     target: { value: "Only on the checkout page" },
   });
-  fireEvent.click(screen.getByRole("button", { name: "Update proposal" }));
+  fireEvent.click(screen.getByRole("button", { name: "Update intention" }));
   await waitFor(() =>
     expect(api.clarifyProposal).toHaveBeenCalledWith({
       expectedRevision: 3,
@@ -176,7 +177,7 @@ it("merges suggested duplicates only when asked", async () => {
   );
 });
 
-it("offers to retry a failed analysis instead of claiming there were no proposals", async () => {
+it("offers to retry a failed analysis instead of claiming there were no intentions", async () => {
   const session = aSummary({
     analysis: {
       ...aSummary().analysis,
@@ -201,7 +202,7 @@ it("offers to retry a failed analysis instead of claiming there were no proposal
   await waitFor(() => expect(api.analyze).toHaveBeenCalledWith("session_1"));
 });
 
-it("explains an analysis that found nothing and lets me write the proposal", async () => {
+it("explains an analysis that found nothing and lets me write the intention", async () => {
   const api = fakeApi({
     createProposal: vi.fn().mockResolvedValue(aProposal({ origin: "human" })),
   });
@@ -209,14 +210,14 @@ it("explains an analysis that found nothing and lets me write the proposal", asy
 
   expect(
     screen.getByText(
-      "No request stood out in this session. Read the transcript or write the proposal yourself."
+      "No request stood out in this session. Read the transcript or write the intention yourself."
     )
   ).toBeTruthy();
-  fireEvent.click(screen.getByRole("button", { name: "Add a proposal" }));
+  fireEvent.click(screen.getByRole("button", { name: "Add an intention" }));
   fireEvent.change(screen.getByRole("textbox", { name: "Need" }), {
     target: { value: "Explain the pricing tiers" },
   });
-  fireEvent.click(screen.getByRole("button", { name: "Add proposal" }));
+  fireEvent.click(screen.getByRole("button", { name: "Add intention" }));
   await waitFor(() =>
     expect(api.createProposal).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -243,7 +244,7 @@ it("does not call a session empty while its recording is still uploading", async
 
   expect(
     screen.getByText(
-      "Proposals appear here once the recording has uploaded and Reflet has read it."
+      "Intentions appear here once the recording has uploaded and Reflet has read it."
     )
   ).toBeTruthy();
   expect(screen.queryByText(/Nothing was said/)).toBeNull();
@@ -257,7 +258,7 @@ it("warns that exported briefs stay out there before deleting", async () => {
   fireEvent.click(screen.getByRole("button", { name: "Delete session" }));
   expect(
     screen.getByText(
-      "Delete this session? Its recordings, transcript and proposals are removed. Briefs you already copied or exported can't be recalled."
+      "Delete this session? Its recordings, transcript and intentions are removed, including what later sessions added to those intentions. Briefs you already copied or exported can't be recalled."
     )
   ).toBeTruthy();
   expect(api.deleteSession).not.toHaveBeenCalled();
@@ -290,7 +291,7 @@ it("shows the finished analysis even when each refresh takes longer than the pol
     }),
   });
   renderInWorkspace(
-    <SessionReview onBack={vi.fn()} sessionId="session_1" />,
+    <SessionReview links={reviewLinks()} sessionId="session_1" />,
     fakeWorkspace({ api })
   );
 

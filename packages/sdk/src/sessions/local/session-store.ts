@@ -1,4 +1,8 @@
-import type { AddEvidenceBody, StartSessionBody } from "../api/session-api";
+import type {
+  AddEvidenceBody,
+  ContinuedIntentionRef,
+  StartSessionBody,
+} from "../api/session-api";
 import type {
   SessionEvent,
   SessionGap,
@@ -25,6 +29,7 @@ export interface LocalDraft {
 
 export interface StoredDraft extends LocalDraft {
   accountKey: string;
+  continues?: ContinuedIntentionRef;
   gaps: SessionGap[];
   surface: SessionSurface;
 }

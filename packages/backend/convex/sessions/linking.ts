@@ -1,17 +1,27 @@
 import type { Infer } from "convex/values";
-import type { Id } from "../_generated/dataModel";
+import type { Doc, Id } from "../_generated/dataModel";
 import { pagePath } from "./formatters";
 import type {
   elementRefValidator,
+  evidenceTriggerValidator,
   frameValidator,
+  linkableEventKindValidator,
   sessionEventValidator,
-} from "./tableFields";
+} from "./validators";
 
 export type SessionEventValue = Infer<typeof sessionEventValidator>;
 export type FrameValue = Infer<typeof frameValidator>;
 export type ElementRefValue = Infer<typeof elementRefValidator>;
+export type LinkableEventKind = Infer<typeof linkableEventKindValidator>;
 
-type ContextKind = "mark" | "select" | "click" | "dwell" | "navigation";
+type ContextKind = LinkableEventKind | "screenshot";
+export type EvidenceMatch = "exact" | "approximate";
+export type ContextOrigin = "auto" | "human" | "unknown";
+
+export type ContextPin =
+  | { kind: "unknown" }
+  | { atMs: number; eventKind: LinkableEventKind; kind: "event" }
+  | { evidenceId: string; kind: "evidence" };
 
 export interface SegmentContextValue<
   EvidenceId extends string = Id<"sessionEvidence">,
@@ -20,24 +30,44 @@ export interface SegmentContextValue<
   durationMs: number | null;
   element: ElementRefValue | null;
   evidenceId: EvidenceId | null;
+  evidenceMatch: EvidenceMatch | null;
+  evidenceOffsetMs: number | null;
+  frame: FrameValue | null;
   kind: ContextKind;
   label: string;
+  pointer: { x: number; y: number } | null;
   url: string | null;
 }
 
-interface LinkableEvidence<EvidenceId extends string> {
+export interface LinkableEvidence<EvidenceId extends string> {
   atMs: number;
-  frame: FrameValue | undefined;
-  id: EvidenceId;
+  capturedAtMs?: number;
+  clientKey: string;
+  element?: ElementRefValue;
+  frame?: FrameValue;
+  id: EvidenceId | null;
+  storedId: string;
+  trigger: Infer<typeof evidenceTriggerValidator>;
 }
 
-interface Candidate {
+export interface LinkableEvent {
   atMs: number;
   durationMs: number | null;
   element: ElementRefValue | null;
+  evidenceClientKey: string | null;
   frame: FrameValue;
-  kind: ContextKind;
+  kind: LinkableEventKind;
+  pointer: { x: number; y: number } | null;
+}
+
+interface Candidate extends LinkableEvent {
   score: number;
+}
+
+export interface ResolvedContext<EvidenceId extends string> {
+  ambiguous: boolean;
+  context: SegmentContextValue<EvidenceId>[];
+  origin: ContextOrigin;
 }
 
 export const CONTEXT_WINDOW_BEFORE_MS = 6000;
@@ -46,13 +76,14 @@ const EDGE_PROXIMITY = 0.2;
 const MAX_LINKED_ITEMS = 3;
 const AMBIGUITY_RATIO = 0.75;
 const EVIDENCE_MATCH_WINDOW_MS = 10_000;
+const EXACT_CAPTURE_TOLERANCE_MS = 1500;
 const KIND_WEIGHTS = {
   click: 0.7,
   dwell: 0.4,
   mark: 1,
   navigation: 0.3,
   select: 1,
-} as const satisfies Record<ContextKind, number>;
+} as const satisfies Record<LinkableEventKind, number>;
 
 const temporalProximity = (
   event: { startMs: number; endMs: number },
@@ -76,68 +107,139 @@ const temporalProximity = (
   return 1;
 };
 
-const linkableParts = (
+export const toLinkableEvent = (
   event: SessionEventValue
-): Omit<Candidate, "durationMs" | "score"> | null => {
+): LinkableEvent | null => {
+  const base = { durationMs: null, evidenceClientKey: null, pointer: null };
   switch (event.kind) {
     case "scroll":
     case "viewport":
       return null;
     case "navigation":
-      return { ...event, element: null };
+      return { ...base, ...event, element: null };
     default:
-      return event;
+      return { ...base, ...event };
   }
 };
 
 const toCandidate = (
-  event: SessionEventValue,
+  event: LinkableEvent,
   segment: { startMs: number; endMs: number }
 ): Candidate | null => {
-  const parts = linkableParts(event);
-  const durationMs = event.kind === "dwell" ? event.durationMs : null;
   const proximity = temporalProximity(
-    { endMs: event.atMs + (durationMs ?? 0), startMs: event.atMs },
+    { endMs: event.atMs + (event.durationMs ?? 0), startMs: event.atMs },
     segment
   );
-  if (parts === null || proximity === 0) {
-    return null;
-  }
-  const { atMs, element, frame, kind } = parts;
-  const score = KIND_WEIGHTS[kind] * proximity;
-  return { atMs, durationMs, element, frame, kind, score };
+  return proximity === 0
+    ? null
+    : { ...event, score: KIND_WEIGHTS[event.kind] * proximity };
 };
 
-const showsSameScreen = (first: FrameValue, second: FrameValue): boolean =>
+export const showsSameScreen = (
+  first: FrameValue,
+  second: FrameValue
+): boolean =>
   first.url === second.url &&
   first.scrollX === second.scrollX &&
   first.scrollY === second.scrollY &&
   first.viewportWidth === second.viewportWidth &&
   first.viewportHeight === second.viewportHeight;
 
-const matchingEvidenceId = <EvidenceId extends string>(
-  candidate: Candidate,
+const capturedAt = (evidence: LinkableEvidence<string>): number =>
+  evidence.capturedAtMs ?? evidence.atMs;
+
+const nearestSameScreen = <EvidenceId extends string>(
+  event: LinkableEvent,
   evidence: LinkableEvidence<EvidenceId>[]
-): EvidenceId | null => {
+): LinkableEvidence<EvidenceId> | null => {
   let best: LinkableEvidence<EvidenceId> | null = null;
   for (const item of evidence) {
-    const distanceMs = Math.abs(item.atMs - candidate.atMs);
+    const distanceMs = Math.abs(capturedAt(item) - event.atMs);
     const sameScreen =
-      item.frame !== undefined && showsSameScreen(item.frame, candidate.frame);
+      item.frame !== undefined && showsSameScreen(item.frame, event.frame);
     const isCloser =
-      best === null || distanceMs < Math.abs(best.atMs - candidate.atMs);
+      best === null || distanceMs < Math.abs(capturedAt(best) - event.atMs);
     if (sameScreen && distanceMs <= EVIDENCE_MATCH_WINDOW_MS && isCloser) {
       best = item;
     }
   }
-  return best?.id ?? null;
+  return best;
 };
 
-const candidateLabel = ({ element, frame }: Candidate): string => {
-  if (element) {
-    return element.label || element.selector;
+const isCoherentCapture = (
+  event: LinkableEvent,
+  evidence: LinkableEvidence<string>
+): boolean =>
+  evidence.capturedAtMs !== undefined &&
+  evidence.frame !== undefined &&
+  showsSameScreen(evidence.frame, event.frame) &&
+  Math.abs(evidence.capturedAtMs - event.atMs) <= EXACT_CAPTURE_TOLERANCE_MS;
+
+const evidenceFor = <EvidenceId extends string>(
+  event: LinkableEvent,
+  evidence: LinkableEvidence<EvidenceId>[]
+): Pick<
+  SegmentContextValue<EvidenceId>,
+  "evidenceId" | "evidenceMatch" | "evidenceOffsetMs"
+> => {
+  const explicit = event.evidenceClientKey
+    ? evidence.find((item) => item.clientKey === event.evidenceClientKey)
+    : undefined;
+  const shown = explicit ?? nearestSameScreen(event, evidence);
+  if (!shown || shown.id === null) {
+    return { evidenceId: null, evidenceMatch: null, evidenceOffsetMs: null };
   }
-  return frame.title ?? pagePath(frame.url) ?? frame.url;
+  const exact = explicit !== undefined && isCoherentCapture(event, explicit);
+  return {
+    evidenceId: shown.id,
+    evidenceMatch: exact ? "exact" : "approximate",
+    evidenceOffsetMs: capturedAt(shown) - event.atMs,
+  };
+};
+
+const frameLabel = (frame: FrameValue): string =>
+  frame.title ?? pagePath(frame.url) ?? frame.url;
+
+export const describeEvent = <EvidenceId extends string>(
+  event: LinkableEvent,
+  evidence: LinkableEvidence<EvidenceId>[]
+): SegmentContextValue<EvidenceId> => ({
+  atMs: event.atMs,
+  durationMs: event.durationMs,
+  element: event.element,
+  ...evidenceFor(event, evidence),
+  frame: event.frame,
+  kind: event.kind,
+  label: event.element
+    ? event.element.label || event.element.selector
+    : frameLabel(event.frame),
+  pointer: event.pointer,
+  url: event.frame.url,
+});
+
+export const describeEvidence = <EvidenceId extends string>(
+  shown: LinkableEvidence<EvidenceId>,
+  events: LinkableEvent[]
+): SegmentContextValue<EvidenceId> => {
+  const explicitEvent = events.find(
+    (event) => event.evidenceClientKey === shown.clientKey
+  );
+  if (explicitEvent) {
+    return describeEvent(explicitEvent, [shown]);
+  }
+  return {
+    atMs: shown.atMs,
+    durationMs: null,
+    element: null,
+    evidenceId: shown.id,
+    evidenceMatch: null,
+    evidenceOffsetMs: null,
+    frame: shown.frame ?? null,
+    kind: "screenshot",
+    label: shown.frame ? frameLabel(shown.frame) : "Screenshot",
+    pointer: null,
+    url: shown.frame?.url ?? null,
+  };
 };
 
 const strongestPerElement = (candidates: Candidate[]): Candidate[] => {
@@ -152,11 +254,11 @@ const strongestPerElement = (candidates: Candidate[]): Candidate[] => {
   return [...byElement.values()].sort((a, b) => b.score - a.score);
 };
 
-export function linkSegmentContext<EvidenceId extends string>(input: {
-  segment: { startMs: number; endMs: number };
-  events: SessionEventValue[];
+const linkAutomatically = <EvidenceId extends string>(input: {
+  events: LinkableEvent[];
   evidence: LinkableEvidence<EvidenceId>[];
-}): { context: SegmentContextValue<EvidenceId>[]; ambiguous: boolean } {
+  segment: { startMs: number; endMs: number };
+}): ResolvedContext<EvidenceId> => {
   const candidates = input.events.flatMap((event) => {
     const candidate = toCandidate(event, input.segment);
     return candidate ? [candidate] : [];
@@ -169,14 +271,84 @@ export function linkSegmentContext<EvidenceId extends string>(input: {
     second.score >= AMBIGUITY_RATIO * first.score;
   return {
     ambiguous,
-    context: ranked.map((candidate) => ({
-      atMs: candidate.atMs,
-      durationMs: candidate.durationMs,
-      element: candidate.element,
-      evidenceId: matchingEvidenceId(candidate, input.evidence),
-      kind: candidate.kind,
-      label: candidateLabel(candidate),
-      url: candidate.frame.url,
-    })),
+    context: ranked.map((candidate) =>
+      describeEvent(candidate, input.evidence)
+    ),
+    origin: "auto",
+  };
+};
+
+const pinnedContext = <EvidenceId extends string>(
+  pin: Exclude<ContextPin, { kind: "unknown" }>,
+  input: {
+    events: LinkableEvent[];
+    evidence: LinkableEvidence<EvidenceId>[];
+  }
+): SegmentContextValue<EvidenceId>[] => {
+  if (pin.kind === "event") {
+    const event = input.events.find(
+      (candidate) =>
+        candidate.atMs === pin.atMs && candidate.kind === pin.eventKind
+    );
+    return event ? [describeEvent(event, input.evidence)] : [];
+  }
+  const shown = input.evidence.find((item) => item.storedId === pin.evidenceId);
+  return shown ? [describeEvidence(shown, input.events)] : [];
+};
+
+export function resolveSegmentContext<EvidenceId extends string>(input: {
+  events: SessionEventValue[];
+  evidence: LinkableEvidence<EvidenceId>[];
+  segment: { contextCorrection?: ContextPin; endMs: number; startMs: number };
+}): ResolvedContext<EvidenceId> {
+  const events = input.events.flatMap((event) => {
+    const linkable = toLinkableEvent(event);
+    return linkable ? [linkable] : [];
+  });
+  const pin = input.segment.contextCorrection;
+  if (pin === undefined) {
+    return linkAutomatically({
+      events,
+      evidence: input.evidence,
+      segment: input.segment,
+    });
+  }
+  if (pin.kind === "unknown") {
+    return { ambiguous: false, context: [], origin: "unknown" };
+  }
+  return {
+    ambiguous: false,
+    context: pinnedContext(pin, { events, evidence: input.evidence }),
+    origin: "human",
   };
 }
+
+export const toLinkableEvidence = <EvidenceId extends string>(
+  doc: Doc<"sessionEvidence">,
+  id: EvidenceId | null
+): LinkableEvidence<EvidenceId> => ({
+  atMs: doc.atMs,
+  capturedAtMs: doc.capturedAtMs,
+  clientKey: doc.clientKey,
+  element: doc.element,
+  frame: doc.frame,
+  id,
+  storedId: doc._id,
+  trigger: doc.trigger,
+});
+
+export const resolveStoredSegment = <EvidenceId extends string>(
+  segment: Doc<"sessionSegments">,
+  sources: {
+    events: SessionEventValue[];
+    evidence: LinkableEvidence<EvidenceId>[];
+  }
+): ResolvedContext<EvidenceId> =>
+  resolveSegmentContext({
+    ...sources,
+    segment: {
+      contextCorrection: segment.contextCorrection?.choice,
+      endMs: segment.endMs,
+      startMs: segment.startMs,
+    },
+  });

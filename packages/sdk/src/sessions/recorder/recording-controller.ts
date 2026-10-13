@@ -15,6 +15,7 @@ import {
 import type {
   RecorderFailure,
   RecorderSnapshot,
+  RecorderStartOptions,
   SessionRecorder,
   SessionRecorderOptions,
 } from "./session-recorder";
@@ -151,7 +152,7 @@ export class RecordingController implements SessionRecorder {
     this.requireRecording().select(element, cleanText(note, MAX_NOTE_CHARS));
   }
 
-  async start(options: { title?: string }): Promise<void> {
+  async start(options: RecorderStartOptions): Promise<void> {
     if (this.isBusy()) {
       return;
     }
@@ -161,6 +162,7 @@ export class RecordingController implements SessionRecorder {
     }
     const draft = newSessionDraft({
       accountKey: this.options.account.key,
+      continues: options.continues,
       surface: this.options.surface,
       title: cleanText(options.title, MAX_TITLE_CHARS) ?? "",
     });

@@ -28,6 +28,7 @@ const screenshot = (
 ) => ({
   _id: id,
   atMs,
+  clientKey: `key-${id}`,
   frame: settingsFrame(),
   kind: "screenshot" as const,
   status: "available" as const,
@@ -71,9 +72,39 @@ describe("prepareAnalysisPrompt", () => {
       "S1 [00:01–00:04] Il faudrait un historique."
     );
     expect(prepared.prompt).toContain(
-      'clicked button "Enregistrer" in <SettingsForm> at 00:09 on /settings (E2)'
+      'clicked button "Enregistrer" in <SettingsForm> at 00:09 on /settings (E2, nearby screenshot, may show another state)'
     );
     expect(prepared.prompt).not.toContain("localhost");
+  });
+
+  test("uses the author's context correction instead of guessing", () => {
+    const source = ostalSource();
+    source.segments = [
+      {
+        ...segment(
+          "seg-here",
+          8000,
+          "Ici, je ne sais pas si c'est enregistré."
+        ),
+        contextCorrection: {
+          choice: { evidenceId: "ev-start", kind: "evidence" as const },
+        },
+      },
+      {
+        ...segment("seg-unclear", 9000, "Et ça aussi."),
+        contextCorrection: { choice: { kind: "unknown" as const } },
+      },
+    ];
+
+    const { prompt } = prepareAnalysisPrompt(source);
+
+    expect(prompt).toContain(
+      '  - showed the screen "Settings" at 00:00 on /settings (E1)\n  (the author chose this context)'
+    );
+    expect(prompt).not.toContain('clicked button "Enregistrer"');
+    expect(prompt).toContain(
+      "S2 [00:09–00:12] Et ça aussi.\n  (the author marked the context of this passage as unknown: nothing captured explains it)"
+    );
   });
 
   test("keeps captured text inside its data tags", () => {

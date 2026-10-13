@@ -1,14 +1,35 @@
-import { expect, type Page, test } from "@playwright/test";
+import { expect, type Locator, type Page, test } from "@playwright/test";
+import { PRECISION, PROPOSAL_NEED, SOLUTION } from "./sdk/intention-board";
 import {
+  CONTINUATION_TEXT,
   copiedText,
   fakeMicrophone,
   microphoneCalls,
   mockSessionBoard,
+  type SessionBoard,
+  SPOKEN_TEXT,
 } from "./sdk/session-board";
 
 const RECORDING_BAR = "[aria-label='Session recording']";
 const STOPPED_BY_RELOAD = /stopped when the page reloaded/;
 const SCREENSHOT_REMOVAL = /^Remove screenshot at/;
+const SHOW_CONTEXT = /^Show context at/;
+const MARK_SCREENSHOT = /^Screenshot · mark screenshot/;
+const CHANGED_SINCE_FIRST_BRIEF =
+  /Changed since the brief of .* \(revision 1 → 2\)/;
+const FIRST_BRIEF_ROW = new RegExp(`“${PROPOSAL_NEED}” revision 1 · copied`);
+const NOTHING_SENT = /Nothing is sent to an agent/;
+const SECOND_REVISION_OUTCOME = new RegExp(`${PROPOSAL_NEED} \\(revision 2\\)`);
+const PRECISION_IN_BRIEF = new RegExp(PRECISION.replace("?", "\\?"));
+const SOLUTION_IN_BRIEF = new RegExp(SOLUTION);
+
+type Activate = (target: Locator) => Promise<void>;
+
+const click: Activate = (target) => target.click();
+const pressEnter: Activate = async (target) => {
+  await target.focus();
+  await target.press("Enter");
+};
 
 async function openSessions(page: Page) {
   await page.goto("/sdk-demo");
@@ -26,10 +47,114 @@ async function startRecording(page: Page) {
   await expect(page.locator(RECORDING_BAR)).toBeVisible();
 }
 
+function firstSession(board: SessionBoard) {
+  const [session] = board.state.sessions;
+  if (!session) {
+    throw new Error("No session was started");
+  }
+  return session;
+}
+
+async function recordMarkedPassage(page: Page, activate: Activate) {
+  await expect(page.locator(RECORDING_BAR)).toContainText("00:02");
+  await activate(page.getByRole("button", { name: "Mark moment" }));
+  await activate(page.getByRole("button", { name: "Finish" }));
+}
+
+async function correctPassageContext(page: Page, activate: Activate) {
+  await activate(page.getByRole("button", { name: "Transcript" }));
+  await expect(page.getByText(SPOKEN_TEXT)).toBeVisible();
+  await activate(page.getByRole("button", { name: SHOW_CONTEXT }).first());
+  const moment = page.getByRole("region", { name: "Moment" });
+  await expect(moment.getByText("Linked automatically")).toBeVisible();
+  await activate(moment.getByRole("button", { name: "Change context" }));
+  await moment.getByRole("radio", { name: MARK_SCREENSHOT }).check();
+  await activate(moment.getByRole("button", { name: "Save context" }));
+  await expect(moment.getByText("Corrected by you")).toBeVisible();
+  await page.keyboard.press("Escape");
+}
+
+async function confirmAndHandOff(page: Page, activate: Activate) {
+  await activate(page.getByRole("button", { name: "Intentions (1)" }));
+  await activate(page.getByRole("button", { name: "Confirm" }));
+  await expect(page.getByText(`Confirmed “${PROPOSAL_NEED}”`)).toBeVisible();
+  await expect(page.getByText("No considered response yet.")).toBeVisible();
+  await activate(page.getByRole("button", { name: "Hand off 1 confirmed" }));
+  await activate(page.getByRole("button", { name: "Prepare brief" }));
+  await activate(page.getByRole("button", { name: "Copy brief" }));
+  await expect(page.getByText("Brief copied").first()).toBeVisible();
+  expect(await copiedText(page)).toContain(`${PROPOSAL_NEED} (revision 1)`);
+  await activate(page.getByRole("button", { name: "← Back to review" }));
+}
+
+async function continueIntention(page: Page, activate: Activate) {
+  await activate(page.getByRole("button", { name: "Continue this intention" }));
+  const recap = page.getByRole("region", { name: "Continue this intention" });
+  await expect(recap.getByText(NOTHING_SENT)).toBeVisible();
+  await activate(recap.getByRole("button", { name: "Start session" }));
+  await recordMarkedPassage(page, activate);
+}
+
+function changeRow(page: Page, kind: string) {
+  return page.locator("li.dt-ses-change", { hasText: kind });
+}
+
+async function decideProposedChanges(page: Page, activate: Activate) {
+  await expect(page.getByText(`Continues “${PROPOSAL_NEED}”`)).toBeVisible();
+  const precision = changeRow(page, "Precision");
+  const solution = changeRow(page, "Different solution");
+  await expect(precision.getByText(`+ ${PRECISION}`)).toBeVisible();
+  await expect(precision.getByText(CONTINUATION_TEXT)).toBeVisible();
+  await expect(precision.getByRole("img")).toHaveCount(1);
+  await expect(solution.getByText(SOLUTION)).toBeVisible();
+  await expect(solution.getByText("Hypothesis")).toBeVisible();
+
+  await activate(
+    precision.getByRole("button", { exact: true, name: "Accept" })
+  );
+  await expect(precision.getByText("Accepted")).toBeVisible();
+  await activate(solution.getByRole("button", { name: "Reject" }));
+  await expect(solution.getByText("Rejected")).toBeVisible();
+}
+
+async function handOffNewRevision(page: Page, activate: Activate) {
+  await activate(page.getByRole("button", { name: "Open the intention" }));
+  await expect(page.getByText(PRECISION).first()).toBeVisible();
+  await activate(page.getByRole("button", { name: "Hand off 1 confirmed" }));
+  await expect(page.getByText(CHANGED_SINCE_FIRST_BRIEF)).toBeVisible();
+  await expect(page.getByText(FIRST_BRIEF_ROW)).toBeVisible();
+  await activate(page.getByRole("button", { name: "Prepare brief" }));
+  const brief = page.getByRole("textbox", { exact: true, name: "Brief" });
+  await expect(brief).toHaveValue(SECOND_REVISION_OUTCOME);
+  await expect(brief).toHaveValue(PRECISION_IN_BRIEF);
+  await expect(brief).not.toHaveValue(SOLUTION_IN_BRIEF);
+}
+
+async function walkIntentionJourney(page: Page, activate: Activate) {
+  const board = await mockSessionBoard(page);
+  await fakeMicrophone(page, "granted");
+  await openSessions(page);
+  await activate(page.getByRole("button", { name: "Start session" }));
+  await recordMarkedPassage(page, activate);
+
+  await correctPassageContext(page, activate);
+  await confirmAndHandOff(page, activate);
+  const [intention] = board.state.intentions;
+  expect(intention?.decision).toBe("kept");
+  expect(intention?.response).toBeNull();
+
+  await continueIntention(page, activate);
+  await decideProposedChanges(page, activate);
+  await handOffNewRevision(page, activate);
+  expect(
+    board.state.handoffs.map(({ proposals }) => proposals[0]?.revision)
+  ).toEqual([2, 1]);
+}
+
 test.describe("Reflet sessions in the devtools", () => {
   test.use({ reducedMotion: "reduce", viewport: { height: 900, width: 1440 } });
 
-  test("records, pauses without collecting, then hands off a kept proposal", async ({
+  test("records, pauses without collecting, then hands off a confirmed intention", async ({
     page,
   }) => {
     const board = await mockSessionBoard(page);
@@ -47,8 +172,8 @@ test.describe("Reflet sessions in the devtools", () => {
     await page.getByRole("button", { name: "Mark moment" }).click();
     await page.getByRole("button", { name: "Finish" }).click();
 
-    await page.getByRole("button", { name: "Keep" }).click();
-    await page.getByRole("button", { name: "Hand off 1 kept" }).click();
+    await page.getByRole("button", { name: "Confirm" }).click();
+    await page.getByRole("button", { name: "Hand off 1 confirmed" }).click();
     await page.getByRole("button", { name: "Prepare brief" }).click();
     await page.getByRole("button", { name: "Copy brief" }).click();
     await expect(page.getByText("Brief copied").first()).toBeVisible();
@@ -70,13 +195,19 @@ test.describe("Reflet sessions in the devtools", () => {
     expect(collectedWhilePaused).toEqual([]);
   });
 
+  test("continues a confirmed intention and hands off its next revision", async ({
+    page,
+  }) => {
+    await walkIntentionJourney(page, click);
+  });
+
   test("removes one sensitive screenshot from the review", async ({ page }) => {
     const board = await mockSessionBoard(page);
     await fakeMicrophone(page, "granted");
     await openSessions(page);
     await startRecording(page);
     await page.getByRole("button", { name: "Mark moment" }).click();
-    await expect.poll(() => board.state.evidence.length).toBe(2);
+    await expect.poll(() => firstSession(board).evidence.length).toBe(2);
     await page.getByRole("button", { name: "Finish" }).click();
 
     await page.getByRole("button", { name: "Evidence (2)" }).click();
@@ -94,7 +225,7 @@ test.describe("Reflet sessions in the devtools", () => {
       })
     ).toBeFocused();
     await expect(removeButtons).toHaveCount(1);
-    expect(board.state.evidence.map(({ status }) => status)).toEqual([
+    expect(firstSession(board).evidence.map(({ status }) => status)).toEqual([
       "available",
       "missing",
     ]);
@@ -157,5 +288,11 @@ test.describe("Reflet sessions on a phone-sized window", () => {
     await expect(
       page.getByRole("button", { name: "Start session" })
     ).toBeVisible();
+  });
+
+  test("continues an intention end to end from the keyboard", async ({
+    page,
+  }) => {
+    await walkIntentionJourney(page, pressEnter);
   });
 });

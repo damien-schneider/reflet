@@ -9,16 +9,25 @@ export const SESSION_API_PATHS = [
   "/api/v1/sessions/handoffs",
   "/api/v1/sessions/handoffs/delivered",
   "/api/v1/sessions/identity",
+  "/api/v1/sessions/intentions/accept",
+  "/api/v1/sessions/intentions/answer",
+  "/api/v1/sessions/intentions/attach",
+  "/api/v1/sessions/intentions/change",
+  "/api/v1/sessions/intentions/detach",
+  "/api/v1/sessions/intentions/keep-separate",
   "/api/v1/sessions/list",
   "/api/v1/sessions/proposals/clarify",
   "/api/v1/sessions/proposals/create",
   "/api/v1/sessions/proposals/decide",
+  "/api/v1/sessions/proposals/delete",
   "/api/v1/sessions/proposals/edit",
   "/api/v1/sessions/proposals/feedback",
   "/api/v1/sessions/proposals/merge",
   "/api/v1/sessions/proposals/separate",
   "/api/v1/sessions/proposals/verify",
   "/api/v1/sessions/segments",
+  "/api/v1/sessions/segments/context",
+  "/api/v1/sessions/segments/context-choices",
   "/api/v1/sessions/segments/correct",
   "/api/v1/sessions/segments/retry",
   "/api/v1/sessions/start",
@@ -87,3 +96,10 @@ export const SESSION_NOT_FOUND = "Session not found";
 export const RECORDED_WHILE_PAUSED = "Recorded while paused";
 export const REVISION_CONFLICT =
   "This changed since you opened it. Reload and try again.";
+export const INTENTION_DELETED = "This intention was deleted.";
+export const SHARE_CONSENT_REQUIRED =
+  "This intention is shared with your team. Confirm that these passages can be shared too.";
+export const CONTRIBUTION_REMOVED =
+  "These changes were removed from the intention.";
+export const INTENTION_UNAVAILABLE =
+  "This intention can't be continued: it was set aside, merged or added to another one.";

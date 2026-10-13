@@ -1,5 +1,6 @@
 import { v } from "convex/values";
-import { internalQuery } from "../../_generated/server";
+import type { Id } from "../../_generated/dataModel";
+import { internalQuery, type QueryCtx } from "../../_generated/server";
 import { authComponent } from "../../auth/auth";
 import { loadSession, sessionActorValidator } from "../access";
 import {
@@ -8,12 +9,17 @@ import {
 } from "../ai/configuration";
 import { SESSION_LIMITS, SESSION_LIST_LIMIT } from "../constants";
 import {
+  loadContinuation,
+  loadContributedEvidence,
+  loadHistory,
+  shapeProposalList,
+} from "./continuity";
+import {
   loadSessionEvents,
   loadSessionEvidence,
   shapeEvidence,
   shapeHandoff,
   shapeMarks,
-  shapeProposal,
   shapeSegments,
 } from "./detail";
 import { shapeSessionSummary } from "./summary";
@@ -78,6 +84,24 @@ export const list = internalQuery({
   },
 });
 
+const loadSessionRecords = (ctx: QueryCtx, sessionId: Id<"sessions">) =>
+  Promise.all([
+    loadSessionEvents(ctx, sessionId),
+    loadSessionEvidence(ctx, sessionId),
+    ctx.db
+      .query("sessionSegments")
+      .withIndex("by_session_start", (q) => q.eq("sessionId", sessionId))
+      .collect(),
+    ctx.db
+      .query("sessionProposals")
+      .withIndex("by_session", (q) => q.eq("sessionId", sessionId))
+      .collect(),
+    ctx.db
+      .query("sessionHandoffs")
+      .withIndex("by_session", (q) => q.eq("sessionId", sessionId))
+      .collect(),
+  ]);
+
 export const detail = internalQuery({
   args: { actor: sessionActorValidator, sessionId: v.string() },
   handler: async (ctx, { actor, sessionId }) => {
@@ -86,36 +110,28 @@ export const detail = internalQuery({
       actor,
       sessionId,
     });
-    const [events, evidence, segments, proposals, handoffs] = await Promise.all(
-      [
-        loadSessionEvents(ctx, session._id),
-        loadSessionEvidence(ctx, session._id),
-        ctx.db
-          .query("sessionSegments")
-          .withIndex("by_session_start", (q) => q.eq("sessionId", session._id))
-          .collect(),
-        ctx.db
-          .query("sessionProposals")
-          .withIndex("by_session", (q) => q.eq("sessionId", session._id))
-          .collect(),
-        ctx.db
-          .query("sessionHandoffs")
-          .withIndex("by_session", (q) => q.eq("sessionId", session._id))
-          .collect(),
-      ]
-    );
-    const summary = await shapeSessionSummary(ctx, { actor, session });
+    const [events, evidence, segments, proposals, handoffs] =
+      await loadSessionRecords(ctx, session._id);
+    const [summary, proposalViews, continuation, history, contributedEvidence] =
+      await Promise.all([
+        shapeSessionSummary(ctx, { actor, session }),
+        shapeProposalList(ctx, { actor, handoffs, proposals, session }),
+        loadContinuation(ctx, { actor, session }),
+        loadHistory(ctx, { actor, proposals }),
+        loadContributedEvidence(ctx, { actor, proposals }),
+      ]);
     return {
+      continuation,
+      contributedEvidence,
       evidence: await Promise.all(
         evidence.map((item) => shapeEvidence(ctx, item))
       ),
       handoffs: handoffs
         .sort((a, b) => b.createdAt - a.createdAt)
         .map(shapeHandoff),
+      history,
       marks: shapeMarks(events),
-      proposals: proposals
-        .sort((a, b) => a.createdAt - b.createdAt)
-        .map((proposal) => shapeProposal(proposal, handoffs)),
+      proposals: proposalViews,
       segments: shapeSegments({ events, evidence, segments }),
       session: {
         ...summary,

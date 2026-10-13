@@ -1,3 +1,4 @@
+import type { FunctionArgs } from "convex/server";
 import { type Infer, v } from "convex/values";
 import { internal } from "../../_generated/api";
 import type { Doc, Id } from "../../_generated/dataModel";
@@ -24,6 +25,12 @@ import {
   prepareRefinementPrompt,
 } from "./analysis_prompt";
 import { ANALYSIS_NOT_CONFIGURED, isAnalysisConfigured } from "./configuration";
+import { loadContinuationTarget } from "./continuation/material";
+import {
+  generateContinuationAnalysis,
+  resolveContinuation,
+} from "./continuation/model";
+import { prepareContinuationPrompt } from "./continuation/prompt";
 
 const ANALYSIS_FAILED =
   "The AI couldn't read this session right now. Try again.";
@@ -37,8 +44,13 @@ const preparedPromptFields = {
 };
 const analysisMaterialValidator = v.object({
   ...preparedPromptFields,
+  continuation: v.union(
+    v.null(),
+    v.object({ answered: v.boolean(), intentionRevision: v.number() })
+  ),
   transcriptRevision: v.number(),
 });
+type AnalysisMaterial = Infer<typeof analysisMaterialValidator>;
 const refinementMaterialValidator = v.object(preparedPromptFields);
 
 const loadAnalysisSource = async (
@@ -88,8 +100,18 @@ export const loadAnalysisMaterial = internalQuery({
       return null;
     }
     const source = await loadAnalysisSource(ctx, session, null);
+    const target = await loadContinuationTarget(ctx, session);
+    const prepared = target
+      ? prepareContinuationPrompt(source, target.source)
+      : prepareAnalysisPrompt(source);
     return {
-      ...prepareAnalysisPrompt(source),
+      ...prepared,
+      continuation: target
+        ? {
+            answered: target.source.answers.length > 0,
+            intentionRevision: target.source.intention.revision,
+          }
+        : null,
       transcriptRevision: session.transcriptRevision,
     };
   },
@@ -129,24 +151,69 @@ const attemptGeneration = async <Output>(
   }
 };
 
+type ApplyAnalysisArgs = FunctionArgs<
+  typeof internal.sessions.ai.analysis_apply.applyAnalysis
+>;
+type GeneratedAnalysis = Pick<
+  ApplyAnalysisArgs,
+  "continuation" | "mergeGroups" | "proposals"
+>;
+
+const generateAnalysis = async (
+  material: AnalysisMaterial,
+  label: string
+): Promise<GeneratedAnalysis | null> => {
+  const { continuation } = material;
+  if (!continuation) {
+    const output = await attemptGeneration(
+      () => generateSessionAnalysis(material.prompt),
+      label
+    );
+    if (!output) {
+      return null;
+    }
+    const { mergeGroups, proposals } = resolveProposals(output, material);
+    return { mergeGroups, proposals };
+  }
+  const output = await attemptGeneration(
+    () => generateContinuationAnalysis(material.prompt),
+    label
+  );
+  if (!output) {
+    return null;
+  }
+  const resolved = resolveContinuation(output, {
+    answered: continuation.answered,
+    shown: material,
+  });
+  return {
+    continuation: {
+      intentionRevision: continuation.intentionRevision,
+      suggestions: resolved.suggestions,
+      update: resolved.update,
+    },
+    mergeGroups: resolved.mergeGroups,
+    proposals: resolved.proposals,
+  };
+};
+
 export const runAnalysis = internalAction({
   args: { runId: v.string(), sessionId: v.id("sessions") },
   handler: async (ctx, args): Promise<null> => {
-    const material: Infer<typeof analysisMaterialValidator> | null =
-      await ctx.runQuery(
-        internal.sessions.ai.analysis_run.loadAnalysisMaterial,
-        args
-      );
+    const material: AnalysisMaterial | null = await ctx.runQuery(
+      internal.sessions.ai.analysis_run.loadAnalysisMaterial,
+      args
+    );
     if (material === null) {
       return null;
     }
-    const output = isAnalysisConfigured()
-      ? await attemptGeneration(
-          () => generateSessionAnalysis(material.prompt),
+    const result = isAnalysisConfigured()
+      ? await generateAnalysis(
+          material,
           `analysis ${args.runId} of session ${args.sessionId}`
         )
       : null;
-    if (output === null) {
+    if (result === null) {
       await ctx.runMutation(internal.sessions.ai.analysis_apply.failAnalysis, {
         ...args,
         error: isAnalysisConfigured()
@@ -155,11 +222,9 @@ export const runAnalysis = internalAction({
       });
       return null;
     }
-    const { mergeGroups, proposals } = resolveProposals(output, material);
     await ctx.runMutation(internal.sessions.ai.analysis_apply.applyAnalysis, {
       ...args,
-      mergeGroups,
-      proposals,
+      ...result,
       transcriptRevision: material.transcriptRevision,
     });
     return null;

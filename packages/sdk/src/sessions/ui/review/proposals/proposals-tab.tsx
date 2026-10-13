@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { SessionDetail } from "../../../protocol";
 import { isAnalysisBusy } from "../../session-format";
+import { UpdateCard } from "../continuation/update-card";
 import { ProposalCard } from "./proposal-card";
 import type { ProposalContext } from "./proposal-details";
 import { FormActions, TextField } from "./proposal-editor";
@@ -8,21 +9,21 @@ import { FormActions, TextField } from "./proposal-editor";
 function emptyCopy(detail: SessionDetail): string {
   const { session } = detail;
   if (session.collection !== "ended") {
-    return "Proposals appear here once the recording has uploaded and Reflet has read it.";
+    return "Intentions appear here once the recording has uploaded and Reflet has read it.";
   }
   if (detail.segments.length === 0 && detail.marks.length === 0) {
     return "Nothing was said or marked in this session.";
   }
   if (isAnalysisBusy(session)) {
-    return "Proposals appear here once Reflet has read the session.";
+    return "Intentions appear here once Reflet has read the session.";
   }
   if (session.analysis.state === "failed") {
-    return "The transcript is kept. Read it, or write the proposal yourself.";
+    return "The transcript is kept. Read it, or write the intention yourself.";
   }
   if (session.analysis.state === "succeeded") {
-    return "No request stood out in this session. Read the transcript or write the proposal yourself.";
+    return "No request stood out in this session. Read the transcript or write the intention yourself.";
   }
-  return "Proposals appear here once the session is analyzed.";
+  return "Intentions appear here once the session is analyzed.";
 }
 
 function useAddProposal(context: ProposalContext, onDone: () => void) {
@@ -36,7 +37,7 @@ function useAddProposal(context: ProposalContext, onDone: () => void) {
     setIsSaving(true);
     try {
       const created = await context.actions.save(
-        "The proposal was not added",
+        "The intention was not added",
         (api) =>
           api.createProposal({
             clientKey,
@@ -91,7 +92,7 @@ function AddProposalForm({
       <FormActions
         isSubmitDisabled={isSaving || need.trim() === ""}
         onCancel={onDone}
-        submitLabel="Add proposal"
+        submitLabel="Add intention"
       />
     </form>
   );
@@ -102,9 +103,13 @@ export function ProposalsTab({ context }: { context: ProposalContext }) {
   const proposals = context.detail.proposals.filter(
     (proposal) => proposal.mergedIntoId === null
   );
+  const { continuation } = context.detail;
   return (
     <>
-      {proposals.length === 0 && (
+      {continuation && (
+        <UpdateCard context={context} continuation={continuation} />
+      )}
+      {proposals.length === 0 && !continuation && (
         <p className="dt-empty">{emptyCopy(context.detail)}</p>
       )}
       {proposals.map((proposal) => (
@@ -123,7 +128,7 @@ export function ProposalsTab({ context }: { context: ProposalContext }) {
               onClick={() => setIsAdding(true)}
               type="button"
             >
-              Add a proposal
+              Add an intention
             </button>
           </div>
         ))}

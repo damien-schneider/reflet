@@ -5,6 +5,10 @@ import {
   type MutationCtx,
   type QueryCtx,
 } from "../../_generated/server";
+import {
+  applyContinuationResult,
+  continuationResultValidator,
+} from "./continuation/apply";
 
 const TRANSCRIPT_CHANGED =
   "The transcript changed during the analysis. Analyze again.";
@@ -83,6 +87,29 @@ const proposalContent = (proposal: ResolvedProposalValue) => ({
   response: proposal.response ?? undefined,
 });
 
+export async function dropMergeSuggestionsTo(
+  ctx: MutationCtx,
+  options: {
+    proposals: Doc<"sessionProposals">[];
+    removed: Set<Id<"sessionProposals">>;
+  }
+): Promise<void> {
+  const { removed } = options;
+  for (const { _id, mergeSuggestion } of options.proposals) {
+    const citesRemoved = mergeSuggestion?.withIds.some((id) => removed.has(id));
+    if (removed.has(_id) || !(mergeSuggestion && citesRemoved)) {
+      continue;
+    }
+    const withIds = mergeSuggestion.withIds.filter((id) => !removed.has(id));
+    await ctx.db.patch(_id, {
+      mergeSuggestion:
+        withIds.length > 0
+          ? { reason: mergeSuggestion.reason, withIds }
+          : undefined,
+    });
+  }
+}
+
 const removeReplaceableProposals = async (
   ctx: MutationCtx,
   sessionId: Id<"sessions">
@@ -99,19 +126,7 @@ const removeReplaceableProposals = async (
       removed.add(proposal._id);
     }
   }
-  for (const { _id, mergeSuggestion } of proposals) {
-    const citesRemoved = mergeSuggestion?.withIds.some((id) => removed.has(id));
-    if (removed.has(_id) || !(mergeSuggestion && citesRemoved)) {
-      continue;
-    }
-    const withIds = mergeSuggestion.withIds.filter((id) => !removed.has(id));
-    await ctx.db.patch(_id, {
-      mergeSuggestion:
-        withIds.length > 0
-          ? { reason: mergeSuggestion.reason, withIds }
-          : undefined,
-    });
-  }
+  await dropMergeSuggestionsTo(ctx, { proposals, removed });
 };
 
 const insertProposals = async (
@@ -184,6 +199,7 @@ const settleFailedAnalysis = async (
 
 export const applyAnalysis = internalMutation({
   args: {
+    continuation: v.optional(continuationResultValidator),
     mergeGroups: v.array(
       v.object({ indexes: v.array(v.number()), reason: v.string() })
     ),
@@ -208,6 +224,13 @@ export const applyAnalysis = internalMutation({
       session,
     });
     await suggestMerges(ctx, insertedIds, args.mergeGroups);
+    if (args.continuation) {
+      await applyContinuationResult(ctx, {
+        insertedIds,
+        result: args.continuation,
+        session,
+      });
+    }
     await ctx.db.patch(session._id, {
       analysis: {
         analyzedRevision: args.transcriptRevision,
@@ -260,6 +283,7 @@ export const applyRefinement = internalMutation({
         content.evidenceIds.length > 0
           ? content.evidenceIds
           : proposal.evidenceIds,
+      formulation: content.need === proposal.need ? proposal.formulation : "ai",
       needsReview: false,
       refinement: undefined,
       revision: proposal.revision + 1,

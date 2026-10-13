@@ -1,4 +1,4 @@
-import type { SessionApi } from "../api/session-api";
+import type { ContinuedIntentionRef, SessionApi } from "../api/session-api";
 import type { MicrophoneFailureKind } from "../capture/audio/microphone";
 import type { SessionAccount } from "../local/session-store";
 import type {
@@ -36,6 +36,11 @@ export interface RecorderSnapshot {
   startedAt: number | null;
 }
 
+export interface RecorderStartOptions {
+  continues?: ContinuedIntentionRef;
+  title?: string;
+}
+
 export interface SessionRecorder {
   annotateMark: (key: string, note: string) => void;
   /** Stops collecting without ending the server session; the draft shows as interrupted. */
@@ -48,7 +53,7 @@ export interface SessionRecorder {
   resumeDraft: (sessionKey: string) => Promise<void>;
   select: (element: Element, note?: string) => void;
   /** Asks for the microphone before anything is stored, sent or shown as recording. */
-  start: (options: { title?: string }) => Promise<void>;
+  start: (options: RecorderStartOptions) => Promise<void>;
   subscribe: (listener: () => void) => () => void;
   subscribeLevel: (listener: (level: number) => void) => () => void;
 }

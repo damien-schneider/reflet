@@ -9,15 +9,16 @@ import {
   loadSession,
   loadSessionChild,
   requireIdsInSession,
+  type SessionActor,
   sessionActorValidator,
   sessionConflict,
 } from "../access";
-import { buildSessionBrief } from "../brief";
+import { buildSessionBrief } from "../brief/build";
+import { loadBriefInput, requireBriefEvidence } from "../brief/input";
 import { MAX_HANDOFF_DELIVERIES } from "../constants";
-import { loadSessionEvents, shapeHandoff } from "../views/detail";
-import { authorNameOf } from "../views/summary";
+import { shapeHandoff } from "../views/detail";
 
-const ONLY_KEPT = "Only kept proposals can be handed off.";
+const ONLY_KEPT = "Only confirmed intentions can be handed off.";
 
 async function resolveFiles(ctx: QueryCtx, handoff: Doc<"sessionHandoffs">) {
   const files: {
@@ -79,42 +80,6 @@ export async function loadKeptProposals(
   return proposals;
 }
 
-export async function briefInputFor(
-  ctx: QueryCtx,
-  options: {
-    evidenceIds: Id<"sessionEvidence">[];
-    proposals: Doc<"sessionProposals">[];
-    session: Doc<"sessions">;
-  }
-) {
-  const citedSegmentIds = new Set(
-    options.proposals.flatMap((proposal) => proposal.segmentIds)
-  );
-  const segments = await ctx.db
-    .query("sessionSegments")
-    .withIndex("by_session_start", (q) =>
-      q.eq("sessionId", options.session._id)
-    )
-    .collect();
-  const evidence: Doc<"sessionEvidence">[] = [];
-  for (const evidenceId of options.evidenceIds) {
-    const item = await ctx.db.get(evidenceId);
-    if (item) {
-      evidence.push(item);
-    }
-  }
-  const organization = await ctx.db.get(options.session.organizationId);
-  return {
-    authorName: await authorNameOf(ctx, options.session.authorId),
-    events: await loadSessionEvents(ctx, options.session._id),
-    evidence,
-    organizationName: organization?.name ?? "",
-    proposals: options.proposals,
-    segments: segments.filter((segment) => citedSegmentIds.has(segment._id)),
-    session: options.session,
-  };
-}
-
 async function markProposalsTouched(
   ctx: MutationCtx,
   options: { now: number; proposals: Doc<"sessionProposals">[] }
@@ -122,6 +87,51 @@ async function markProposalsTouched(
   for (const proposal of options.proposals) {
     await ctx.db.patch(proposal._id, { humanTouchedAt: options.now });
   }
+}
+
+async function insertHandoff(
+  ctx: MutationCtx,
+  options: {
+    actor: SessionActor;
+    clientKey: string;
+    evidenceIds: Id<"sessionEvidence">[];
+    proposals: Doc<"sessionProposals">[];
+    session: Doc<"sessions">;
+  }
+): Promise<Doc<"sessionHandoffs">> {
+  const { evidenceIds, proposals, session } = options;
+  const brief = buildSessionBrief(
+    await loadBriefInput(ctx, {
+      chosenEvidenceIds: evidenceIds,
+      proposals,
+      session,
+    })
+  );
+  const now = Date.now();
+  const handoffId = await ctx.db.insert("sessionHandoffs", {
+    authorId: options.actor.userId,
+    brief: brief.markdown,
+    clientKey: options.clientKey,
+    createdAt: now,
+    deliveries: [],
+    evidenceIds,
+    files: brief.files,
+    organizationId: session.organizationId,
+    proposals: proposals.map((proposal) => ({
+      need: proposal.need,
+      proposalId: proposal._id,
+      response: proposal.response ?? null,
+      revision: proposal.revision,
+      unknowns: proposal.unknowns,
+    })),
+    sessionId: session._id,
+  });
+  await markProposalsTouched(ctx, { now, proposals });
+  const handoff = await ctx.db.get(handoffId);
+  if (!handoff) {
+    throw new Error("Handoff insert failed");
+  }
+  return handoff;
 }
 
 export const create = internalMutation({
@@ -149,36 +159,18 @@ export const create = internalMutation({
       proposalIds: args.proposalIds,
       sessionId: session._id,
     });
-    const evidenceIds = await requireIdsInSession(ctx, {
+    const evidenceIds = await requireBriefEvidence(ctx, {
       ids: args.evidenceIds,
-      sessionId: session._id,
-      table: "sessionEvidence",
+      proposals,
+      session,
     });
-    const brief = buildSessionBrief(
-      await briefInputFor(ctx, { evidenceIds, proposals, session })
-    );
-    const now = Date.now();
-    const handoffId = await ctx.db.insert("sessionHandoffs", {
-      authorId: args.actor.userId,
-      brief: brief.markdown,
+    const handoff = await insertHandoff(ctx, {
+      actor: args.actor,
       clientKey: args.clientKey,
-      createdAt: now,
-      deliveries: [],
       evidenceIds,
-      files: brief.files,
-      organizationId: session.organizationId,
-      proposals: proposals.map((proposal) => ({
-        need: proposal.need,
-        proposalId: proposal._id,
-        revision: proposal.revision,
-      })),
-      sessionId: session._id,
+      proposals,
+      session,
     });
-    await markProposalsTouched(ctx, { now, proposals });
-    const handoff = await ctx.db.get(handoffId);
-    if (!handoff) {
-      throw new Error("Handoff insert failed");
-    }
     return await handoffResponse(ctx, handoff);
   },
 });

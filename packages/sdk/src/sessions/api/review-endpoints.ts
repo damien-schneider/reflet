@@ -1,6 +1,8 @@
 import { z } from "zod";
+import type { SessionApiPath } from "../api-paths";
 import {
   analysisStatusSchema,
+  contextOptionSchema,
   sessionDetailSchema,
   sessionEvidenceSchema,
   sessionIdentitySchema,
@@ -12,16 +14,22 @@ import type { SessionRequests } from "./session-requests";
 
 type ReviewEndpoints = Pick<
   SessionApi,
-  | "addTypedSegment"
   | "analyze"
-  | "correctSegment"
   | "deleteSession"
   | "detail"
   | "identity"
   | "list"
   | "removeEvidence"
-  | "retrySegment"
   | "update"
+>;
+
+type SegmentEndpoints = Pick<
+  SessionApi,
+  | "addTypedSegment"
+  | "contextChoices"
+  | "correctSegment"
+  | "retrySegment"
+  | "setSegmentContext"
 >;
 
 export function createReviewEndpoints({
@@ -29,8 +37,6 @@ export function createReviewEndpoints({
   post,
 }: SessionRequests): ReviewEndpoints {
   return {
-    addTypedSegment: async (body) =>
-      (await post("/api/v1/sessions/segments", body, segmentResponse)).segment,
     analyze: async (sessionId) =>
       (
         await post(
@@ -39,9 +45,6 @@ export function createReviewEndpoints({
           z.object({ analysis: analysisStatusSchema })
         )
       ).analysis,
-    correctSegment: async (body) =>
-      (await post("/api/v1/sessions/segments/correct", body, segmentResponse))
-        .segment,
     deleteSession: async (sessionId) => {
       await post(
         "/api/v1/sessions/delete",
@@ -67,15 +70,32 @@ export function createReviewEndpoints({
           z.object({ evidence: sessionEvidenceSchema })
         )
       ).evidence,
-    retrySegment: async (segmentId) =>
-      (
-        await post(
-          "/api/v1/sessions/segments/retry",
-          { segmentId },
-          segmentResponse
-        )
-      ).segment,
     update: async (body) =>
       (await post("/api/v1/sessions/update", body, summaryResponse)).session,
+  };
+}
+
+export function createSegmentEndpoints({
+  get,
+  post,
+}: SessionRequests): SegmentEndpoints {
+  const postSegment = async (path: SessionApiPath, body: unknown) =>
+    (await post(path, body, segmentResponse)).segment;
+  return {
+    addTypedSegment: (body) => postSegment("/api/v1/sessions/segments", body),
+    contextChoices: async (segmentId) =>
+      (
+        await get(
+          "/api/v1/sessions/segments/context-choices",
+          z.object({ options: z.array(contextOptionSchema) }),
+          { segmentId }
+        )
+      ).options,
+    correctSegment: (body) =>
+      postSegment("/api/v1/sessions/segments/correct", body),
+    retrySegment: (segmentId) =>
+      postSegment("/api/v1/sessions/segments/retry", { segmentId }),
+    setSegmentContext: (body) =>
+      postSegment("/api/v1/sessions/segments/context", body),
   };
 }

@@ -85,6 +85,13 @@ const REVIEW_ENDPOINTS: SessionEndpoint[] = [
   },
   {
     handler: sessionPost(proposalIdBody, (ctx, actor, body) =>
+      ctx.runMutation(proposals.remove, { actor, ...body })
+    ),
+    method: "POST",
+    path: "/api/v1/sessions/proposals/delete",
+  },
+  {
+    handler: sessionPost(proposalIdBody, (ctx, actor, body) =>
       ctx.runMutation(internal.sessions.review.feedback.materialize, {
         actor,
         ...body,

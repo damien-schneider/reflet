@@ -1,14 +1,18 @@
 import type { Doc } from "../../_generated/dataModel";
 import {
-  AMBIGUOUS_CONTEXT_NOTE,
-  contextLine,
+  contextLines,
   elementSummary,
   formatClock,
   onPage,
   singleLine,
   wrapUntrusted,
 } from "../formatters";
-import { linkSegmentContext, type SessionEventValue } from "../linking";
+import {
+  type ContextPin,
+  type LinkableEvidence,
+  resolveSegmentContext,
+  type SessionEventValue,
+} from "../linking";
 
 const MAX_PROMPT_SEGMENTS = 300;
 const MAX_TRANSCRIPT_CHARS = 40_000;
@@ -36,11 +40,20 @@ const TRIGGER_DESCRIPTIONS: Record<EvidenceTrigger, string> = {
 type PromptSegment<SegmentId extends string> = Pick<
   Doc<"sessionSegments">,
   "endMs" | "startMs" | "text"
-> & { _id: SegmentId };
+> & { _id: SegmentId; contextCorrection?: { choice: ContextPin } };
 
 type PromptEvidence<EvidenceId extends string> = Pick<
   Doc<"sessionEvidence">,
-  "atMs" | "element" | "frame" | "kind" | "link" | "note" | "status" | "trigger"
+  | "atMs"
+  | "capturedAtMs"
+  | "clientKey"
+  | "element"
+  | "frame"
+  | "kind"
+  | "link"
+  | "note"
+  | "status"
+  | "trigger"
 > & { _id: EvidenceId };
 
 export type HandledProposal = Pick<
@@ -123,22 +136,21 @@ const transcriptBlock = <SegmentId extends string>(options: {
   segments: PromptSegment<SegmentId>[];
   omittedCount: number;
   events: SessionEventValue[];
-  evidence: {
-    id: string;
-    atMs: number;
-    frame: Doc<"sessionEvidence">["frame"];
-  }[];
+  evidence: LinkableEvidence<string>[];
 }): string => {
   const lines = options.segments.flatMap((segment, index) => {
-    const linked = linkSegmentContext({
+    const resolved = resolveSegmentContext({
       events: options.events,
       evidence: options.evidence,
-      segment,
+      segment: {
+        contextCorrection: segment.contextCorrection?.choice,
+        endMs: segment.endMs,
+        startMs: segment.startMs,
+      },
     });
     return [
       `S${index + 1} [${formatClock(segment.startMs)}–${formatClock(segment.endMs)}] ${singleLine(segment.text)}`,
-      ...linked.context.map((item) => `  - ${contextLine(item)}`),
-      ...(linked.ambiguous ? [`  ${AMBIGUOUS_CONTEXT_NOTE}`] : []),
+      ...contextLines(resolved, { withLocators: false }),
     ];
   });
   if (options.omittedCount > 0) {
@@ -201,18 +213,29 @@ const dataBlock = (
   return wrapUntrusted("session_data", lines);
 };
 
-const prepareMaterial = <SegmentId extends string, EvidenceId extends string>(
+export const prepareMaterial = <
+  SegmentId extends string,
+  EvidenceId extends string,
+>(
   source: AnalysisSource<SegmentId, EvidenceId>
 ): PreparedPrompt<SegmentId, EvidenceId> => {
   const { included, omittedCount } = selectSegments(source.segments);
   const evidence = selectEvidence(source.evidence);
   const transcript = transcriptBlock({
     events: source.events,
-    evidence: evidence.map((item, index) => ({
-      atMs: item.atMs,
-      frame: item.frame,
-      id: `E${index + 1}`,
-    })),
+    evidence: source.evidence.map((item) => {
+      const position = evidence.indexOf(item);
+      return {
+        atMs: item.atMs,
+        capturedAtMs: item.capturedAtMs,
+        clientKey: item.clientKey,
+        element: item.element,
+        frame: item.frame,
+        id: position === -1 ? null : `E${position + 1}`,
+        storedId: item._id,
+        trigger: item.trigger,
+      };
+    }),
     omittedCount,
     segments: included,
   });

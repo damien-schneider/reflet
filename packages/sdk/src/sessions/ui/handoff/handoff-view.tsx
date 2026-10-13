@@ -9,6 +9,7 @@ import type {
 import type { ReviewHandle } from "../review/use-session-detail";
 import { useSessionAction, useSessionWorkspace } from "../session-workspace";
 import { buildBriefZip, saveBlob, zipFileName } from "./brief-export";
+import { ChangedSinceBriefs, PreviousBriefs } from "./handoff-changes";
 import {
   HandoffChoices,
   type HandoffSelection,
@@ -177,6 +178,10 @@ function SelectionStep({
         onChange={handoff.select}
         selection={handoff.selection}
       />
+      <ChangedSinceBriefs
+        detail={detail}
+        proposalIds={handoff.selection.proposalIds}
+      />
       <div className="dt-actions">
         <button
           className="dt-btn"
@@ -228,6 +233,7 @@ export function HandoffView({
         <SelectionStep detail={detail} handoff={handoff} />
       )}
       <p className="dt-meta">Copied or exported briefs can't be recalled.</p>
+      <PreviousBriefs handoffs={detail.handoffs} />
     </section>
   );
 }

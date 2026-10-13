@@ -1,167 +1,21 @@
 import { defineTable } from "convex/server";
 import { v } from "convex/values";
-
-const rectValidator = v.object({
-  height: v.number(),
-  width: v.number(),
-  x: v.number(),
-  y: v.number(),
-});
-
-export const elementRefValidator = v.object({
-  component: v.union(v.string(), v.null()),
-  label: v.string(),
-  rect: rectValidator,
-  role: v.union(v.string(), v.null()),
-  selector: v.string(),
-  source: v.union(v.string(), v.null()),
-});
-
-export const frameValidator = v.object({
-  devicePixelRatio: v.number(),
-  scrollX: v.number(),
-  scrollY: v.number(),
-  title: v.union(v.string(), v.null()),
-  url: v.string(),
-  viewportHeight: v.number(),
-  viewportWidth: v.number(),
-});
-
-const pointerValidator = v.object({ x: v.number(), y: v.number() });
-
-export const sessionEventValidator = v.union(
-  v.object({
-    atMs: v.number(),
-    frame: frameValidator,
-    kind: v.literal("navigation"),
-  }),
-  v.object({
-    atMs: v.number(),
-    element: elementRefValidator,
-    frame: frameValidator,
-    kind: v.literal("click"),
-    pointer: v.union(pointerValidator, v.null()),
-  }),
-  v.object({
-    atMs: v.number(),
-    durationMs: v.number(),
-    element: elementRefValidator,
-    frame: frameValidator,
-    kind: v.literal("dwell"),
-    pointer: pointerValidator,
-  }),
-  v.object({
-    atMs: v.number(),
-    kind: v.literal("scroll"),
-    scrollX: v.number(),
-    scrollY: v.number(),
-  }),
-  v.object({
-    atMs: v.number(),
-    devicePixelRatio: v.number(),
-    kind: v.literal("viewport"),
-    viewportHeight: v.number(),
-    viewportWidth: v.number(),
-  }),
-  v.object({
-    atMs: v.number(),
-    element: v.union(elementRefValidator, v.null()),
-    evidenceClientKey: v.union(v.string(), v.null()),
-    frame: frameValidator,
-    kind: v.literal("mark"),
-    note: v.union(v.string(), v.null()),
-  }),
-  v.object({
-    atMs: v.number(),
-    element: elementRefValidator,
-    evidenceClientKey: v.union(v.string(), v.null()),
-    frame: frameValidator,
-    kind: v.literal("select"),
-    note: v.union(v.string(), v.null()),
-  })
-);
-
-export const gapReasonValidator = v.union(
-  v.literal("paused"),
-  v.literal("hidden"),
-  v.literal("interrupted"),
-  v.literal("limit")
-);
-
-export const sessionGapValidator = v.object({
-  endMs: v.union(v.number(), v.null()),
-  reason: gapReasonValidator,
-  startMs: v.number(),
-});
-
-export const analysisStateValidator = v.union(
-  v.literal("idle"),
-  v.literal("waiting"),
-  v.literal("running"),
-  v.literal("succeeded"),
-  v.literal("failed")
-);
-
-export const transcriptionStateValidator = v.union(
-  v.literal("pending"),
-  v.literal("running"),
-  v.literal("done"),
-  v.literal("empty"),
-  v.literal("failed"),
-  v.literal("expired")
-);
-
-export const proposalDecisionValidator = v.union(
-  v.literal("pending"),
-  v.literal("kept"),
-  v.literal("later"),
-  v.literal("dismissed")
-);
-
-export const evidenceTriggerValidator = v.union(
-  v.literal("start"),
-  v.literal("mark"),
-  v.literal("navigation"),
-  v.literal("select"),
-  v.literal("manual")
-);
-
-export const evidenceLinkValidator = v.object({
-  access: v.string(),
-  label: v.string(),
-  url: v.string(),
-});
-
-const evidenceKindValidator = v.union(
-  v.literal("screenshot"),
-  v.literal("link")
-);
-
-const evidenceStatusValidator = v.union(
-  v.literal("available"),
-  v.literal("missing")
-);
-
-export const evidenceViewValidator = v.object({
-  atMs: v.number(),
-  element: v.union(elementRefValidator, v.null()),
-  frame: v.union(frameValidator, v.null()),
-  id: v.id("sessionEvidence"),
-  image: v.union(
-    v.object({
-      height: v.number(),
-      url: v.union(v.string(), v.null()),
-      width: v.number(),
-    }),
-    v.null()
-  ),
-  kind: evidenceKindValidator,
-  link: v.union(evidenceLinkValidator, v.null()),
-  missingReason: v.union(v.string(), v.null()),
-  note: v.union(v.string(), v.null()),
-  status: evidenceStatusValidator,
-  trigger: evidenceTriggerValidator,
-});
+import { intentionTables } from "./intentions/tableFields";
+import {
+  analysisStateValidator,
+  contextChoiceValidator,
+  elementRefValidator,
+  evidenceKindValidator,
+  evidenceLinkValidator,
+  evidenceStatusValidator,
+  evidenceTriggerValidator,
+  formulationValidator,
+  frameValidator,
+  proposalDecisionValidator,
+  sessionEventValidator,
+  sessionGapValidator,
+  transcriptionStateValidator,
+} from "./validators";
 
 export const sessionsTables = {
   sessionEventBatches: defineTable({
@@ -178,6 +32,7 @@ export const sessionsTables = {
 
   sessionEvidence: defineTable({
     atMs: v.number(),
+    capturedAtMs: v.optional(v.number()),
     clientKey: v.string(),
     createdAt: v.number(),
     element: v.optional(elementRefValidator),
@@ -223,7 +78,9 @@ export const sessionsTables = {
       v.object({
         need: v.string(),
         proposalId: v.id("sessionProposals"),
+        response: v.optional(v.union(v.string(), v.null())),
         revision: v.number(),
+        unknowns: v.optional(v.array(v.string())),
       })
     ),
     sessionId: v.id("sessions"),
@@ -233,6 +90,7 @@ export const sessionsTables = {
 
   sessionProposals: defineTable({
     analysisRunId: v.optional(v.string()),
+    attachedToId: v.optional(v.id("sessionProposals")),
     basedOnTranscriptRevision: v.number(),
     certainty: v.union(v.literal("clear"), v.literal("uncertain")),
     clarifications: v.array(v.object({ at: v.number(), text: v.string() })),
@@ -241,7 +99,14 @@ export const sessionsTables = {
     decision: proposalDecisionValidator,
     evidenceIds: v.array(v.id("sessionEvidence")),
     feedbackId: v.optional(v.id("feedback")),
+    formulation: v.optional(formulationValidator),
     humanTouchedAt: v.optional(v.number()),
+    intentionSuggestion: v.optional(
+      v.object({
+        intentionId: v.id("sessionProposals"),
+        reason: v.string(),
+      })
+    ),
     mergedIntoId: v.optional(v.id("sessionProposals")),
     mergeSuggestion: v.optional(
       v.object({
@@ -279,12 +144,17 @@ export const sessionsTables = {
       v.object({
         at: v.number(),
         note: v.optional(v.string()),
+        sessionId: v.optional(v.id("sessions")),
         status: v.union(v.literal("works"), v.literal("needs_work")),
       })
     ),
   })
     .index("by_session", ["sessionId"])
-    .index("by_session_client_key", ["sessionId", "clientKey"]),
+    .index("by_session_client_key", ["sessionId", "clientKey"])
+    .index("by_attached_to", ["attachedToId"])
+    .index("by_intention_suggestion", ["intentionSuggestion.intentionId"]),
+
+  ...intentionTables,
 
   sessionSegments: defineTable({
     audio: v.optional(
@@ -295,6 +165,13 @@ export const sessionsTables = {
       })
     ),
     clientKey: v.string(),
+    contextCorrection: v.optional(
+      v.object({
+        at: v.number(),
+        by: v.string(),
+        choice: contextChoiceValidator,
+      })
+    ),
     createdAt: v.number(),
     endMs: v.number(),
     language: v.optional(v.string()),
@@ -333,6 +210,12 @@ export const sessionsTables = {
       v.literal("recording"),
       v.literal("paused"),
       v.literal("ended")
+    ),
+    continues: v.optional(
+      v.object({
+        intentionId: v.id("sessionProposals"),
+        revision: v.number(),
+      })
     ),
     createdAt: v.number(),
     deletedAt: v.optional(v.number()),

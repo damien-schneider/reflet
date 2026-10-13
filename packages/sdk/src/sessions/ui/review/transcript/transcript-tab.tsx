@@ -7,6 +7,8 @@ import type {
 } from "../../../protocol";
 import { formatClock, shortDuration } from "../../session-format";
 import { useSessionAction, useSessionWorkspace } from "../../session-workspace";
+import { nearestSegmentId } from "../moment/moment-labels";
+import type { ShowMoment } from "../proposals/proposal-details";
 import { type ReviewHandle, withSegment } from "../use-session-detail";
 import { SegmentRow } from "./segment-row";
 
@@ -17,7 +19,7 @@ const GAP_LABELS: Record<SessionGap["reason"], string> = {
   paused: "Paused",
 };
 
-function gapLabel(gap: SessionGap): string {
+export function gapLabel(gap: SessionGap): string {
   const label = GAP_LABELS[gap.reason];
   return gap.endMs === null
     ? label
@@ -36,21 +38,36 @@ function markLabel(mark: SessionMark): string {
 function TimelineNote({
   atMs,
   children,
+  onShowMoment,
 }: {
   atMs: number;
   children: ReactNode;
+  onShowMoment: ((opener: HTMLElement) => void) | null;
 }) {
+  const time = formatClock(atMs);
   return (
     <li className="dt-ses-seg" data-kind="note">
-      <span className="dt-ses-time">{formatClock(atMs)}</span>
-      <p className="dt-meta">{children}</p>
+      <span className="dt-ses-time">{time}</span>
+      <div className="dt-ses-seg-body">
+        <p className="dt-meta">{children}</p>
+        {onShowMoment && (
+          <button
+            aria-label={`Show the moment at ${time}`}
+            className="dt-ses-link"
+            onClick={(event) => onShowMoment(event.currentTarget)}
+            type="button"
+          >
+            Show moment
+          </button>
+        )}
+      </div>
     </li>
   );
 }
 
 type TimelineItem =
   | { atMs: number; key: string; segment: SessionSegment }
-  | { atMs: number; key: string; label: string };
+  | { atMs: number; key: string; label: string; segmentId: string | null };
 
 interface TranscriptEditing {
   detail: SessionDetail;
@@ -68,13 +85,25 @@ function buildTimeline(detail: SessionDetail): TimelineItem[] {
       atMs: gap.startMs,
       key: `g:${gap.startMs}`,
       label: gapLabel(gap),
+      segmentId: null,
     })),
     ...detail.marks.map((mark) => ({
       atMs: mark.atMs,
       key: `m:${mark.kind}:${mark.atMs}`,
       label: markLabel(mark),
+      segmentId: nearestSegmentId(detail.segments, mark.atMs),
     })),
   ].sort((earlier, later) => earlier.atMs - later.atMs);
+}
+
+function noteMomentOpener(
+  segmentId: string | null,
+  onShowMoment: ShowMoment
+): ((opener: HTMLElement) => void) | null {
+  if (!segmentId) {
+    return null;
+  }
+  return (opener) => onShowMoment(segmentId, opener);
 }
 
 function useTypedPassage({ detail, review }: TranscriptEditing) {
@@ -133,11 +162,11 @@ function AddTypedPassage({ detail, review }: TranscriptEditing) {
 
 export function TranscriptTab({
   detail,
-  focusSegmentId,
+  onShowMoment,
   review,
 }: {
   detail: SessionDetail;
-  focusSegmentId: string | null;
+  onShowMoment: ShowMoment;
   review: ReviewHandle;
 }) {
   const { canEdit } = detail.session;
@@ -155,14 +184,17 @@ export function TranscriptTab({
         {timeline.map((item) =>
           "segment" in item ? (
             <SegmentRow
-              canEdit={canEdit}
-              isFocused={item.segment.id === focusSegmentId}
+              editing={{ canEdit, review }}
               key={item.key}
-              review={review}
+              onShowMoment={(opener) => onShowMoment(item.segment.id, opener)}
               segment={item.segment}
             />
           ) : (
-            <TimelineNote atMs={item.atMs} key={item.key}>
+            <TimelineNote
+              atMs={item.atMs}
+              key={item.key}
+              onShowMoment={noteMomentOpener(item.segmentId, onShowMoment)}
+            >
               {item.label}
             </TimelineNote>
           )
