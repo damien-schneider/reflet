@@ -274,9 +274,11 @@ forwards the feedback and session endpoints the devtools use.
 
 Members of your Reflet organization can record sessions on your deployed app
 too; your users never see it. Open any page with `?reflet-team` once, click
-**Sign in with Reflet**, and approve the app in the popup. The browser keeps a
-token for that origin for 7 days; revoke it from Account → Team tools in your
-apps on reflet.app.
+**Sign in with Reflet**, and approve the app on reflet.app: the tab comes back
+to the same page, signed in. Sign-in needs no popup, so it works whatever
+`Cross-Origin-Opener-Policy` your app sends. The browser keeps a token for that
+origin for 7 days; revoke it from Account → Team tools in your apps on
+reflet.app.
 
 Two things on your side:
 

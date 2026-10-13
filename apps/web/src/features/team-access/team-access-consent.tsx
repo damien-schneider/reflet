@@ -24,8 +24,14 @@ import {
   AuthStatus,
 } from "@/features/auth/components/auth-page-shell";
 import UnifiedAuthForm from "@/features/auth/components/unified-auth/unified-auth-form";
+import {
+  deliverTeamAccess,
+  isSameOriginUrl,
+  readOpener,
+  type TeamAccessOutcome,
+} from "./team-access-delivery";
 
-const TEAM_ACCESS_MESSAGE_TYPE = "reflet:team-access";
+const RETURN_URL_MAX_LENGTH = 2000;
 const NO_OPENER_MESSAGE =
   "Open this page with Sign in with Reflet in your app’s team tools. It can’t reach your app from here.";
 const ORIGIN_PROBLEM_TITLES = {
@@ -39,43 +45,23 @@ const teamAccessRequestSchema = z
     code_challenge: z.string().regex(BASE64URL_SHA256),
     origin: z.string().min(1).max(500),
     public_key: z.string().startsWith("fb_pub_").max(200),
+    return_to: z.string().max(RETURN_URL_MAX_LENGTH).optional(),
     state: z.string().regex(BASE64URL_SHA256),
   })
+  .refine(
+    (params) =>
+      params.return_to === undefined ||
+      isSameOriginUrl(params.return_to, params.origin)
+  )
   .transform((params) => ({
     codeChallenge: params.code_challenge,
     origin: params.origin,
     publicKey: params.public_key,
+    returnTo: params.return_to ?? null,
     state: params.state,
   }));
 
 type TeamAccessRequest = z.infer<typeof teamAccessRequestSchema>;
-
-type TeamAccessMessage = {
-  state: string;
-  type: typeof TEAM_ACCESS_MESSAGE_TYPE;
-} & ({ code: string } | { error: "cancelled" });
-
-type OpenerWindow = Pick<Window, "closed" | "postMessage">;
-
-function isOpenerWindow(value: unknown): value is OpenerWindow {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    "postMessage" in value &&
-    "closed" in value
-  );
-}
-
-function readOpener(): OpenerWindow | null {
-  const opener: unknown = window.opener;
-  return isOpenerWindow(opener) && !opener.closed ? opener : null;
-}
-
-function postToOpener(origin: string, message: TeamAccessMessage): boolean {
-  const opener = readOpener();
-  opener?.postMessage(message, origin);
-  return opener !== null;
-}
 
 const subscribeToNothing = () => () => undefined;
 
@@ -108,6 +94,7 @@ function TeamAccessGate({ request }: { request: TeamAccessRequest }) {
       origin: request.origin,
       public_key: request.publicKey,
       state: request.state,
+      ...(request.returnTo && { return_to: request.returnTo }),
     });
     return (
       <AuthPageShell>
@@ -193,6 +180,11 @@ function useConsentDecision({
   const approve = useAction(api.team_access.connect.approve);
   const [phase, setPhase] = useState<ConsentPhase>("idle");
   const [error, setError] = useState<string | null>(null);
+  const deliver = (outcome: TeamAccessOutcome) =>
+    deliverTeamAccess(
+      { origin, returnTo: request.returnTo, state: request.state },
+      outcome
+    );
 
   const allow = async () => {
     setPhase("approving");
@@ -203,15 +195,7 @@ function useConsentDecision({
         origin,
         publicKey: request.publicKey,
       });
-      const delivered = postToOpener(origin, {
-        code,
-        state: request.state,
-        type: TEAM_ACCESS_MESSAGE_TYPE,
-      });
-      setPhase(delivered ? "signedIn" : "noOpener");
-      if (delivered) {
-        window.close();
-      }
+      setPhase(deliver({ code }) === "unreachable" ? "noOpener" : "signedIn");
     } catch (approveError) {
       setError(
         approveError instanceof Error
@@ -223,16 +207,36 @@ function useConsentDecision({
   };
 
   const cancel = () => {
-    postToOpener(origin, {
-      error: "cancelled",
-      state: request.state,
-      type: TEAM_ACCESS_MESSAGE_TYPE,
-    });
+    deliver({ error: "cancelled" });
     setPhase("cancelled");
-    window.close();
   };
 
   return { allow, cancel, error, phase };
+}
+
+function AfterDecision({
+  phase,
+  target,
+}: {
+  phase: "signedIn" | "cancelled";
+  target: ConsentTarget;
+}) {
+  const host = new URL(target.origin).host;
+  const next = target.request.returnTo
+    ? `Taking you back to ${host}…`
+    : "You can close this window.";
+  if (phase === "signedIn") {
+    return (
+      <AuthStatus icon={CheckCircle} title="Signed in" tone="success">
+        You’re signed in on {host}. {next}
+      </AuthStatus>
+    );
+  }
+  return (
+    <AuthStatus icon={XCircle} title="Nothing was shared" tone="brand">
+      Team tools stay signed out. {next}
+    </AuthStatus>
+  );
 }
 
 function ConsentView(target: ConsentTarget) {
@@ -242,8 +246,9 @@ function ConsentView(target: ConsentTarget) {
     () => readOpener() !== null,
     () => true
   );
+  const canReachApp = target.request.returnTo !== null || hasOpener;
 
-  if (decision.phase === "noOpener" || !hasOpener) {
+  if (decision.phase === "noOpener" || !canReachApp) {
     return (
       <TeamAccessNotice
         icon={WarningCircle}
@@ -252,20 +257,8 @@ function ConsentView(target: ConsentTarget) {
       />
     );
   }
-  if (decision.phase === "signedIn") {
-    return (
-      <AuthStatus icon={CheckCircle} title="Signed in" tone="success">
-        You’re signed in on {new URL(target.origin).host}. You can close this
-        window.
-      </AuthStatus>
-    );
-  }
-  if (decision.phase === "cancelled") {
-    return (
-      <AuthStatus icon={XCircle} title="Nothing was shared" tone="brand">
-        Team tools stay signed out. You can close this window.
-      </AuthStatus>
-    );
+  if (decision.phase === "signedIn" || decision.phase === "cancelled") {
+    return <AfterDecision phase={decision.phase} target={target} />;
   }
   return <ConsentPrompt decision={decision} target={target} />;
 }

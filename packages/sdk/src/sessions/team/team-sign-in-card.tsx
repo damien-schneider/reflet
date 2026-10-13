@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { failureMessage } from "../ui/session-workspace";
-import { signInTeam, type TeamAccess } from "./team-auth";
+import { prepareTeamSignIn } from "./team-auth";
 
 export interface TeamConnection {
   apiUrl: string;
@@ -8,25 +8,22 @@ export interface TeamConnection {
   publicKey: string;
 }
 
-function useTeamSignIn(
-  connection: TeamConnection,
-  onSignedIn: (access: TeamAccess) => void
-) {
-  const [isSigningIn, setIsSigningIn] = useState(false);
+function useTeamSignIn(connection: TeamConnection) {
+  const [isLeaving, setIsLeaving] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
 
   const signIn = async () => {
-    setIsSigningIn(true);
+    setIsLeaving(true);
     setFailure(null);
     try {
-      onSignedIn(await signInTeam(connection));
+      window.location.assign(await prepareTeamSignIn(connection));
     } catch (error) {
       setFailure(failureMessage(error));
+      setIsLeaving(false);
     }
-    setIsSigningIn(false);
   };
 
-  return { failure, isSigningIn, signIn };
+  return { failure, isLeaving, signIn };
 }
 
 function SignInActions({
@@ -58,18 +55,15 @@ function SignInActions({
 
 export function TeamSignInCard({
   connection,
+  isFinishing,
   notice,
-  onSignedIn,
 }: {
   connection: TeamConnection;
+  isFinishing: boolean;
   notice: string | null;
-  onSignedIn: (access: TeamAccess) => void;
 }) {
   const [isHidden, setIsHidden] = useState(false);
-  const { failure, isSigningIn, signIn } = useTeamSignIn(
-    connection,
-    onSignedIn
-  );
+  const { failure, isLeaving, signIn } = useTeamSignIn(connection);
 
   if (isHidden) {
     return null;
@@ -85,14 +79,23 @@ export function TeamSignInCard({
       <p className="dt-meta">
         Only members of the app's Reflet organization can sign in.
       </p>
-      {notice && <p className="dt-meta">{notice}</p>}
+      {isFinishing && (
+        <p className="dt-meta" role="status">
+          Finishing sign-in…
+        </p>
+      )}
+      {notice && (
+        <p className="dt-meta" role="status">
+          {notice}
+        </p>
+      )}
       {failure && (
         <p className="dt-error" role="alert">
           {failure}
         </p>
       )}
       <SignInActions
-        isSigningIn={isSigningIn}
+        isSigningIn={isLeaving || isFinishing}
         onHide={() => setIsHidden(true)}
         onSignIn={signIn}
       />

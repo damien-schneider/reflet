@@ -1,4 +1,4 @@
-const TEAM_ACTIVATION_PARAM = "reflet-team";
+export const TEAM_ACTIVATION_PARAM = "reflet-team";
 const STORAGE_KEY_PREFIX = "reflet-team-access:";
 
 export function teamAccessStorageKey(publicKey: string): string {

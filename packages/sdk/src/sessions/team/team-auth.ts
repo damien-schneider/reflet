@@ -1,13 +1,16 @@
 import { z } from "zod";
 import { sessionApiErrorSchema } from "../protocol";
-import { teamAccessStorageKey } from "./team-activation";
+import { TEAM_ACTIVATION_PARAM, teamAccessStorageKey } from "./team-activation";
 
-const TEAM_ACCESS_MESSAGE_TYPE = "reflet:team-access";
-const POPUP_NAME = "reflet-team-access";
-const POPUP_WIDTH_PX = 480;
-const POPUP_HEIGHT_PX = 680;
-const POPUP_CLOSED_POLL_MS = 500;
-const SIGN_IN_TIMEOUT_MS = 5 * 60_000;
+const RETURN_CODE_PARAM = "reflet-team-code";
+const RETURN_ERROR_PARAM = "reflet-team-error";
+const RETURN_STATE_PARAM = "reflet-team-state";
+const RETURN_PARAMS = [
+  RETURN_CODE_PARAM,
+  RETURN_ERROR_PARAM,
+  RETURN_STATE_PARAM,
+];
+const PENDING_SIGN_IN_PREFIX = "reflet-team-sign-in:";
 const PKCE_RANDOM_BYTES = 32;
 const TRAILING_SLASHES = /\/+$/;
 const BASE64_PADDING = /[=]+$/;
@@ -20,25 +23,20 @@ const teamAccessSchema = z.object({
 
 export type TeamAccess = z.infer<typeof teamAccessSchema>;
 
-const teamAccessMessageSchema = z.union([
-  z.object({
-    code: z.string().min(1),
-    state: z.string(),
-    type: z.literal(TEAM_ACCESS_MESSAGE_TYPE),
-  }),
-  z.object({
-    error: z.literal("cancelled"),
-    state: z.string(),
-    type: z.literal(TEAM_ACCESS_MESSAGE_TYPE),
-  }),
-]);
+const pendingSignInSchema = z.object({
+  codeVerifier: z.string(),
+  state: z.string(),
+});
+
+type PendingSignIn = z.infer<typeof pendingSignInSchema>;
 
 const SIGN_IN_FAILURE_MESSAGES = {
   cancelled: "Sign-in was cancelled.",
   exchange_failed: "Couldn't finish signing in to Reflet. Try again.",
-  popup_blocked:
-    "Your browser blocked the Reflet sign-in window. Allow pop-ups for this site, then try again.",
-  timeout: "Signing in took too long. Try again.",
+  interrupted:
+    "This sign-in was started in another tab or has expired. Sign in again.",
+  storage_blocked:
+    "Your browser blocks storage for this site, so Reflet sign-in can't finish. Allow site data, then try again.",
 } as const;
 
 export type TeamSignInFailure = keyof typeof SIGN_IN_FAILURE_MESSAGES;
@@ -120,63 +118,44 @@ export function readTeamAccess(publicKey: string): TeamAccess | null {
   return null;
 }
 
-function centeredPopupFeatures(): string {
-  const left = Math.round(
-    window.screenX + (window.outerWidth - POPUP_WIDTH_PX) / 2
-  );
-  const top = Math.round(
-    window.screenY + (window.outerHeight - POPUP_HEIGHT_PX) / 2
-  );
-  return `popup,width=${POPUP_WIDTH_PX},height=${POPUP_HEIGHT_PX},left=${left},top=${top}`;
+function pendingSignInKey(publicKey: string): string {
+  return `${PENDING_SIGN_IN_PREFIX}${publicKey}`;
 }
 
-function waitForApprovedCode(options: {
-  appOrigin: string;
-  popup: Window;
-  state: string;
-}): Promise<string> {
-  // Executor form: the SDK targets ES2022, before `Promise.withResolvers`.
-  return new Promise((resolve, reject) => {
-    const listening = new AbortController();
-    let closedOnLastPoll = false;
-    const settle = (outcome: { code: string } | TeamSignInError) => {
-      listening.abort();
-      window.clearInterval(closedPoll);
-      window.clearTimeout(timeout);
-      if (outcome instanceof TeamSignInError) {
-        reject(outcome);
-      } else {
-        resolve(outcome.code);
-      }
-    };
-    const closedPoll = window.setInterval(() => {
-      if (closedOnLastPoll) {
-        settle(new TeamSignInError("cancelled"));
-      }
-      closedOnLastPoll = options.popup.closed;
-    }, POPUP_CLOSED_POLL_MS);
-    const timeout = window.setTimeout(() => {
-      options.popup.close();
-      settle(new TeamSignInError("timeout"));
-    }, SIGN_IN_TIMEOUT_MS);
-    window.addEventListener(
-      "message",
-      (event: MessageEvent) => {
-        if (event.origin !== options.appOrigin) {
-          return;
-        }
-        const message = teamAccessMessageSchema.safeParse(event.data);
-        if (message.success && message.data.state === options.state) {
-          settle(
-            "code" in message.data
-              ? { code: message.data.code }
-              : new TeamSignInError("cancelled")
-          );
-        }
-      },
-      { signal: listening.signal }
+function takePendingSignIn(publicKey: string): PendingSignIn | null {
+  try {
+    const key = pendingSignInKey(publicKey);
+    const raw = sessionStorage.getItem(key);
+    sessionStorage.removeItem(key);
+    const parsed = pendingSignInSchema.safeParse(
+      raw === null ? null : parseStoredJson(raw)
     );
-  });
+    return parsed.success ? parsed.data : null;
+  } catch {
+    return null;
+  }
+}
+
+function rememberPendingSignIn(publicKey: string, pending: PendingSignIn) {
+  try {
+    sessionStorage.setItem(
+      pendingSignInKey(publicKey),
+      JSON.stringify(pending)
+    );
+  } catch {
+    throw new TeamSignInError("storage_blocked");
+  }
+}
+
+function returnUrl(): string {
+  const url = new URL(window.location.href);
+  for (const param of RETURN_PARAMS) {
+    url.searchParams.delete(param);
+  }
+  if (!url.searchParams.has(TEAM_ACTIVATION_PARAM)) {
+    url.searchParams.set(TEAM_ACTIVATION_PARAM, "");
+  }
+  return url.href;
 }
 
 async function exchangeCode(options: {
@@ -213,39 +192,71 @@ async function exchangeCode(options: {
   return access.data;
 }
 
-/** Call from a click handler: the popup opens before anything is awaited so browsers don't block it. */
-export async function signInTeam(options: {
-  apiUrl: string;
+export async function prepareTeamSignIn(options: {
   appUrl: string;
   publicKey: string;
-}): Promise<TeamAccess> {
-  const popup = window.open("about:blank", POPUP_NAME, centeredPopupFeatures());
-  if (!popup) {
-    throw new TeamSignInError("popup_blocked");
-  }
-  const codeVerifier = randomBase64Url();
-  const state = randomBase64Url();
+}): Promise<string> {
+  const pending = { codeVerifier: randomBase64Url(), state: randomBase64Url() };
+  rememberPendingSignIn(options.publicKey, pending);
   const consentUrl = new URL("/auth/team", options.appUrl);
   consentUrl.search = new URLSearchParams({
-    code_challenge: await pkceChallengeFor(codeVerifier),
+    code_challenge: await pkceChallengeFor(pending.codeVerifier),
     origin: window.location.origin,
     public_key: options.publicKey,
-    state,
+    return_to: returnUrl(),
+    state: pending.state,
   }).toString();
-  popup.location.href = consentUrl.href;
+  return consentUrl.href;
+}
 
-  const code = await waitForApprovedCode({
-    appOrigin: consentUrl.origin,
-    popup,
-    state,
-  });
+export function hasTeamSignInReturn(): boolean {
+  return new URL(window.location.href).searchParams.has(RETURN_STATE_PARAM);
+}
+
+async function completeReturnedSignIn(options: {
+  apiUrl: string;
+  code: string | null;
+  pending: PendingSignIn | null;
+  publicKey: string;
+  state: string;
+}): Promise<TeamAccess> {
+  if (options.pending?.state !== options.state) {
+    throw new TeamSignInError("interrupted");
+  }
+  if (options.code === null) {
+    throw new TeamSignInError("cancelled");
+  }
   const access = await exchangeCode({
     apiUrl: options.apiUrl,
-    code,
-    codeVerifier,
+    code: options.code,
+    codeVerifier: options.pending.codeVerifier,
   });
   persistTeamAccess(options.publicKey, access);
   return access;
+}
+
+/** Strips the returned code from the address bar at once, so it is consumed by one caller only. */
+export function finishTeamSignIn(options: {
+  apiUrl: string;
+  publicKey: string;
+}): Promise<TeamAccess> | null {
+  const url = new URL(window.location.href);
+  const state = url.searchParams.get(RETURN_STATE_PARAM);
+  if (state === null) {
+    return null;
+  }
+  const code = url.searchParams.get(RETURN_CODE_PARAM);
+  for (const param of RETURN_PARAMS) {
+    url.searchParams.delete(param);
+  }
+  window.history.replaceState(window.history.state, "", url.href);
+  return completeReturnedSignIn({
+    apiUrl: options.apiUrl,
+    code,
+    pending: takePendingSignIn(options.publicKey),
+    publicKey: options.publicKey,
+    state,
+  });
 }
 
 export async function forgetTeamAccess(options: {

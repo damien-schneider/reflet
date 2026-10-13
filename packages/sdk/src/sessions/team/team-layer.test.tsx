@@ -12,16 +12,20 @@ import { TeamLayer } from "./team-layer";
 
 const mocks = vi.hoisted(() => ({
   createSessionApi: vi.fn(),
+  finishTeamSignIn: vi.fn(),
   forgetTeamAccess: vi.fn(),
+  hasTeamSignInReturn: vi.fn(),
+  prepareTeamSignIn: vi.fn(),
   purgeAccount: vi.fn(),
   readTeamAccess: vi.fn(),
-  signInTeam: vi.fn(),
 }));
 
 vi.mock("./team-auth", () => ({
+  finishTeamSignIn: mocks.finishTeamSignIn,
   forgetTeamAccess: mocks.forgetTeamAccess,
+  hasTeamSignInReturn: mocks.hasTeamSignInReturn,
+  prepareTeamSignIn: mocks.prepareTeamSignIn,
   readTeamAccess: mocks.readTeamAccess,
-  signInTeam: mocks.signInTeam,
 }));
 
 vi.mock("../api/session-api", async (importOriginal) => ({
@@ -63,6 +67,8 @@ beforeEach(() => {
   mocks.forgetTeamAccess.mockResolvedValue(undefined);
   mocks.purgeAccount.mockResolvedValue(undefined);
   mocks.readTeamAccess.mockReturnValue(null);
+  mocks.finishTeamSignIn.mockReturnValue(null);
+  mocks.hasTeamSignInReturn.mockReturnValue(false);
 });
 
 afterEach(() => {
@@ -70,12 +76,18 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
+function signInButton(): HTMLButtonElement {
+  return screen.getByRole<HTMLButtonElement>("button", {
+    name: "Sign in with Reflet",
+  });
+}
+
 function renderLayer() {
   return render(<TeamLayer connection={CONNECTION} position="bottom-right" />);
 }
 
 it("asks a signed-out member to sign in with Reflet", async () => {
-  mocks.signInTeam.mockResolvedValue(ACCESS);
+  mocks.prepareTeamSignIn.mockReturnValue(new Promise(() => undefined));
   renderLayer();
 
   expect(
@@ -85,17 +97,47 @@ it("asks a signed-out member to sign in with Reflet", async () => {
   ).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Sign in with Reflet" }));
 
-  expect(mocks.signInTeam).toHaveBeenCalledWith(CONNECTION);
-  expect(await screen.findByRole("button", { name: "Sessions" })).toBeTruthy();
+  expect(mocks.prepareTeamSignIn).toHaveBeenCalledWith(CONNECTION);
+  expect(signInButton().disabled).toBe(true);
 });
 
-it("shows why signing in failed", async () => {
-  mocks.signInTeam.mockRejectedValue(new Error("Sign-in was cancelled."));
+it("explains why sign-in could not start and lets the member try again", async () => {
+  mocks.prepareTeamSignIn.mockRejectedValue(
+    new Error("Your browser blocks storage for this site.")
+  );
   renderLayer();
 
   fireEvent.click(screen.getByRole("button", { name: "Sign in with Reflet" }));
 
+  expect((await screen.findByRole("alert")).textContent).toBe(
+    "Your browser blocks storage for this site."
+  );
+  expect(signInButton().disabled).toBe(false);
+});
+
+it("finishes signing in when the member comes back from Reflet", async () => {
+  mocks.hasTeamSignInReturn.mockReturnValue(true);
+  mocks.finishTeamSignIn.mockReturnValue(Promise.resolve(ACCESS));
+  renderLayer();
+
+  expect(screen.getByText("Finishing sign-in…")).toBeTruthy();
+  expect(await screen.findByRole("button", { name: "Sessions" })).toBeTruthy();
+  expect(mocks.finishTeamSignIn).toHaveBeenCalledWith({
+    apiUrl: CONNECTION.apiUrl,
+    publicKey: CONNECTION.publicKey,
+  });
+});
+
+it("says why a sign-in that came back from Reflet did not finish", async () => {
+  mocks.hasTeamSignInReturn.mockReturnValue(true);
+  mocks.finishTeamSignIn.mockReturnValue(
+    Promise.reject(new Error("Sign-in was cancelled."))
+  );
+  renderLayer();
+
   expect(await screen.findByText("Sign-in was cancelled.")).toBeTruthy();
+  expect(screen.queryByText("Finishing sign-in…")).toBeNull();
+  expect(signInButton().disabled).toBe(false);
 });
 
 it("hides the card for this visit", () => {

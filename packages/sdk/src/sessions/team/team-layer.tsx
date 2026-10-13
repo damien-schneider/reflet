@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BarButton,
   DevtoolsBar,
@@ -13,6 +13,7 @@ import { purgeAccount } from "../local/local-sessions";
 import { RecordingLayer } from "../ui/recording/recording-layer";
 import { PersonIcon } from "../ui/session-icons";
 import {
+  failureMessage,
   type SessionWorkspace,
   SessionWorkspaceProvider,
   useWorkspaceLoader,
@@ -21,7 +22,13 @@ import {
 import { type SessionNavigation, SessionsPanel } from "../ui/sessions-panel";
 import { SESSIONS_STYLES } from "../ui/sessions-styles";
 import type { SessionTarget } from "../ui/start/session-list";
-import { forgetTeamAccess, readTeamAccess, type TeamAccess } from "./team-auth";
+import {
+  finishTeamSignIn,
+  forgetTeamAccess,
+  hasTeamSignInReturn,
+  readTeamAccess,
+  type TeamAccess,
+} from "./team-auth";
 import { type TeamConnection, TeamSignInCard } from "./team-sign-in-card";
 
 const TEAM_TOOLS_LABEL = "Reflet team tools";
@@ -228,6 +235,18 @@ export function TeamLayer({
   const { apiUrl, publicKey } = connection;
   const [access, setAccess] = useState(() => readTeamAccess(publicKey));
   const [notice, setNotice] = useState<string | null>(null);
+  const [isFinishing, setIsFinishing] = useState(hasTeamSignInReturn);
+  useEffect(() => {
+    finishTeamSignIn({ apiUrl, publicKey })
+      ?.then(
+        (signedIn) => {
+          setAccess(signedIn);
+          setNotice(null);
+        },
+        (error: unknown) => setNotice(failureMessage(error))
+      )
+      .finally(() => setIsFinishing(false));
+  }, [apiUrl, publicKey]);
   const signOut = (reason: string | null) => {
     setAccess(null);
     setNotice(reason);
@@ -253,11 +272,8 @@ export function TeamLayer({
         >
           <TeamSignInCard
             connection={connection}
+            isFinishing={isFinishing}
             notice={notice}
-            onSignedIn={(signedIn) => {
-              setAccess(signedIn);
-              setNotice(null);
-            }}
           />
         </div>
       )}

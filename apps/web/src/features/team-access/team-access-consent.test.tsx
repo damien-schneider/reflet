@@ -7,6 +7,7 @@ import {
 } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { TeamAccessConsent } from "./team-access-consent";
+import { returnUrlFor } from "./team-access-delivery";
 
 const APP_ORIGIN = "https://app.acme.com";
 const STATE = "s".repeat(43);
@@ -46,7 +47,9 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-function renderConsent(overrides: { code_challenge?: string } = {}) {
+function renderConsent(
+  overrides: { code_challenge?: string; return_to?: string } = {}
+) {
   render(
     <TeamAccessConsent
       searchParams={{
@@ -129,4 +132,44 @@ it("keeps the member on the consent with the reason when approval fails", async 
   expect(screen.getByRole("alert")).toHaveTextContent("You're not a member");
   expect(screen.getByRole("button", { name: "Allow" })).toBeEnabled();
   expect(opener.postMessage).not.toHaveBeenCalled();
+});
+
+it("refuses to send the member back anywhere but the app that asked", () => {
+  renderConsent({ return_to: "https://evil.test/?reflet-team=" });
+  expect(screen.getByText(/Start again from your app/)).toBeTruthy();
+  expect(useQuery).not.toHaveBeenCalled();
+});
+
+it("takes the member back to the app page instead of a popup when the app asked to", async () => {
+  Object.defineProperty(window, "opener", { configurable: true, value: null });
+  approve.mockResolvedValue({ code: "one-time-code" });
+  renderConsent({ return_to: `${APP_ORIGIN}/billing?reflet-team=` });
+
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Allow" }));
+  });
+
+  expect(screen.getByText(/Taking you back to app\.acme\.com/)).toBeTruthy();
+  expect(opener.postMessage).not.toHaveBeenCalled();
+  expect(window.close).not.toHaveBeenCalled();
+});
+
+it("carries the code or the cancellation back with the state, keeping the app's own parameters", () => {
+  const target = {
+    returnTo: `${APP_ORIGIN}/billing?tab=invoices&reflet-team=`,
+    state: STATE,
+  };
+
+  const allowed = new URL(returnUrlFor(target, { code: "one-time-code" }));
+  expect(allowed.origin + allowed.pathname).toBe(`${APP_ORIGIN}/billing`);
+  expect(Object.fromEntries(allowed.searchParams)).toEqual({
+    "reflet-team": "",
+    "reflet-team-code": "one-time-code",
+    "reflet-team-state": STATE,
+    tab: "invoices",
+  });
+
+  const cancelled = new URL(returnUrlFor(target, { error: "cancelled" }));
+  expect(cancelled.searchParams.get("reflet-team-error")).toBe("cancelled");
+  expect(cancelled.searchParams.has("reflet-team-code")).toBe(false);
 });

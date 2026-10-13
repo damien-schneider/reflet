@@ -27,7 +27,7 @@ Deux tickets indépendants créés automatiquement dans cet exemple constituent 
 | Capacité | État constaté dans le code |
 | --- | --- |
 | Enregistrer dans les devtools | Démarrage, microphone, pause, reprise, fin, marque et sélection explicite d'un élément |
-| Enregistrer sur une application déployée | Outils d'équipe via `?reflet-team`, connexion Reflet par popup, origine autorisée et clé du widget ; aucun compte utilisateur hôte requis |
+| Enregistrer sur une application déployée | Outils d'équipe via `?reflet-team`, connexion Reflet par redirection (aller-retour sur reflet.app, compatible avec toute `Cross-Origin-Opener-Policy`), origine autorisée et clé du widget ; aucun compte utilisateur hôte requis |
 | Transcription | Voix découpée et transcrite dans le cloud, segments avec début/fin, correction et reprise sur échec ; audio temporaire |
 | Contexte | Horloge commune, clics, survols prolongés, navigation, scroll, viewport, éléments et captures ciblées ; pas de trajectoire continue du curseur |
 | Association parole/contexte | Classement temporel des marques, sélections, clics et survols ; plusieurs candidats et ambiguïté signalée |

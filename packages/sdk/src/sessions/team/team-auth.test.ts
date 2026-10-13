@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  finishTeamSignIn,
   forgetTeamAccess,
+  hasTeamSignInReturn,
+  prepareTeamSignIn,
   readTeamAccess,
-  signInTeam,
   TeamSignInError,
 } from "./team-auth";
 
@@ -13,27 +15,9 @@ const STORAGE_KEY = `reflet-team-access:${PUBLIC_KEY}`;
 const TOKEN = `fb_team_${"a".repeat(64)}`;
 const IN_A_WEEK = Date.now() + 7 * 24 * 60 * 60_000;
 
-interface FakePopup {
-  close: () => void;
-  closed: boolean;
-  location: { href: string };
-}
-
-let popup: FakePopup;
 const fetchMock = vi.fn<typeof fetch>();
 
 beforeEach(() => {
-  popup = {
-    close: () => {
-      popup.closed = true;
-    },
-    closed: false,
-    location: { href: "" },
-  };
-  vi.stubGlobal(
-    "open",
-    vi.fn(() => popup)
-  );
   vi.stubGlobal("fetch", fetchMock);
   fetchMock.mockResolvedValue(
     Response.json({
@@ -44,21 +28,13 @@ beforeEach(() => {
   );
 });
 afterEach(() => {
-  vi.useRealTimers();
+  vi.restoreAllMocks();
   vi.unstubAllGlobals();
   fetchMock.mockReset();
   localStorage.clear();
+  sessionStorage.clear();
   window.history.replaceState(null, "", "/");
 });
-
-async function openedConsent(): Promise<URL> {
-  await vi.waitFor(() => expect(popup.location.href).not.toBe(""));
-  return new URL(popup.location.href);
-}
-
-function postFromPopup(data: unknown, origin = APP_URL): void {
-  window.dispatchEvent(new MessageEvent("message", { data, origin }));
-}
 
 async function sha256Base64Url(value: string): Promise<string> {
   const digest = await crypto.subtle.digest(
@@ -71,35 +47,52 @@ async function sha256Base64Url(value: string): Promise<string> {
     .replaceAll("=", "");
 }
 
-const signIn = () =>
-  signInTeam({ apiUrl: API_URL, appUrl: APP_URL, publicKey: PUBLIC_KEY });
+async function leaveForConsent(path = "/billing?tab=invoices"): Promise<URL> {
+  window.history.replaceState(null, "", path);
+  return new URL(
+    await prepareTeamSignIn({ appUrl: APP_URL, publicKey: PUBLIC_KEY })
+  );
+}
 
-describe("signInTeam", () => {
-  it("only accepts the code from the Reflet origin with the matching state, then stores the exchanged access", async () => {
-    const access = signIn();
-    const consent = await openedConsent();
-    const state = consent.searchParams.get("state");
+function comeBack(consent: URL, params: Record<string, string>): void {
+  const back = new URL(consent.searchParams.get("return_to") ?? "");
+  for (const [name, value] of Object.entries(params)) {
+    back.searchParams.set(name, value);
+  }
+  window.history.replaceState(null, "", back.pathname + back.search);
+}
+
+const finish = () =>
+  finishTeamSignIn({ apiUrl: API_URL, publicKey: PUBLIC_KEY });
+
+describe("team sign-in", () => {
+  it("sends the page to Reflet and back to where the member was, then trades the code with its verifier", async () => {
+    const consent = await leaveForConsent();
 
     expect(consent.origin + consent.pathname).toBe(`${APP_URL}/auth/team`);
     expect(consent.searchParams.get("origin")).toBe(window.location.origin);
     expect(consent.searchParams.get("public_key")).toBe(PUBLIC_KEY);
-    postFromPopup(
-      { code: "forged", state, type: "reflet:team-access" },
-      "https://evil.test"
+    const returnTo = new URL(consent.searchParams.get("return_to") ?? "");
+    expect(returnTo.pathname + returnTo.search).toBe(
+      "/billing?tab=invoices&reflet-team="
     );
-    postFromPopup({
-      code: "replayed",
-      state: "other",
-      type: "reflet:team-access",
-    });
-    postFromPopup({ code: "real-code", state, type: "reflet:team-access" });
 
+    comeBack(consent, {
+      "reflet-team-code": "real-code",
+      "reflet-team-state": consent.searchParams.get("state") ?? "",
+    });
+    expect(hasTeamSignInReturn()).toBe(true);
+    const access = finish();
+
+    expect(window.location.pathname + window.location.search).toBe(
+      "/billing?tab=invoices&reflet-team="
+    );
+    expect(finish()).toBeNull();
     await expect(access).resolves.toEqual({
       expiresAt: IN_A_WEEK,
       organizationName: "Acme",
       token: TOKEN,
     });
-    expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, init] = fetchMock.mock.calls[0] ?? [];
     expect(url).toBe(`${API_URL}/api/v1/team/token`);
     const body = JSON.parse(String(init?.body));
@@ -110,40 +103,51 @@ describe("signInTeam", () => {
     expect(readTeamAccess(PUBLIC_KEY)?.token).toBe(TOKEN);
   });
 
-  it("rejects as cancelled when the member cancels in the popup", async () => {
-    const cancelled = signIn();
-    const consent = await openedConsent();
-    postFromPopup({
-      error: "cancelled",
-      state: consent.searchParams.get("state"),
-      type: "reflet:team-access",
+  it("refuses a code that comes back with another state, and keeps nothing", async () => {
+    const consent = await leaveForConsent();
+    comeBack(consent, {
+      "reflet-team-code": "planted-code",
+      "reflet-team-state": "someone-else",
     });
 
-    await expect(cancelled).rejects.toMatchObject({ reason: "cancelled" });
-  });
-
-  it("rejects as cancelled when the member closes the popup", async () => {
-    vi.useFakeTimers({
-      toFake: ["setInterval", "clearInterval", "setTimeout", "clearTimeout"],
-    });
-    const closed = signIn().catch((error: unknown) => error);
-    await openedConsent();
-    popup.closed = true;
-    await vi.advanceTimersByTimeAsync(2000);
-
-    const error = await closed;
-    expect(error).toBeInstanceOf(TeamSignInError);
-    expect(error).toMatchObject({ reason: "cancelled" });
+    await expect(finish()).rejects.toMatchObject({ reason: "interrupted" });
     expect(fetchMock).not.toHaveBeenCalled();
     expect(readTeamAccess(PUBLIC_KEY)).toBeNull();
   });
 
-  it("explains a blocked popup", async () => {
-    vi.stubGlobal(
-      "open",
-      vi.fn(() => null)
+  it("refuses a code that was not asked for from this tab", async () => {
+    window.history.replaceState(
+      null,
+      "",
+      "/?reflet-team&reflet-team-code=planted&reflet-team-state=abc"
     );
-    await expect(signIn()).rejects.toMatchObject({ reason: "popup_blocked" });
+
+    await expect(finish()).rejects.toMatchObject({ reason: "interrupted" });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("reports a cancelled consent without calling Reflet", async () => {
+    const consent = await leaveForConsent();
+    comeBack(consent, {
+      "reflet-team-error": "cancelled",
+      "reflet-team-state": consent.searchParams.get("state") ?? "",
+    });
+
+    const cancelled = await finish()?.catch((error: unknown) => error);
+    expect(cancelled).toBeInstanceOf(TeamSignInError);
+    expect(cancelled).toMatchObject({ reason: "cancelled" });
+    expect(window.location.search).toBe("?tab=invoices&reflet-team=");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("explains that sign-in cannot finish when the browser blocks storage", async () => {
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new DOMException("blocked", "SecurityError");
+    });
+
+    await expect(
+      prepareTeamSignIn({ appUrl: APP_URL, publicKey: PUBLIC_KEY })
+    ).rejects.toMatchObject({ reason: "storage_blocked" });
   });
 });
 
