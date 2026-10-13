@@ -242,10 +242,10 @@ export function DevtoolsLayer({
             {openTab === "sessions" && (
               <SessionsTab
                 actions={{
-                  onConnect: () => setOpenTab("inbox"),
                   onStarted: closeSheet,
                   onWriteNote: writeNoteInstead,
                 }}
+                connectKey={canConnect ? publicKey : null}
                 route={route}
                 sessions={sessions}
               />

@@ -96,7 +96,7 @@ export async function finishConnect(
   if (!(code && pending)) {
     return htmlPage(
       "Link expired",
-      "This connect link expired or was already used. Start again from the Board tab.",
+      "This connect link expired or was already used. Start again from the Reflet devtools.",
       400
     );
   }
@@ -149,7 +149,7 @@ export async function finishConnect(
   });
   return htmlPage(
     "Connected",
-    `Connected to ${exchange.data.organizationName}. Go back to your app: the Board tab is ready.`,
+    `Connected to ${exchange.data.organizationName}. Go back to your app: the Reflet devtools are ready.`,
     200
   );
 }

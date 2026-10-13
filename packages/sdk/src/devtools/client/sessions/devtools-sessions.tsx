@@ -10,6 +10,7 @@ import {
   SessionsPanel,
 } from "../../../sessions/ui/sessions-panel";
 import type { SessionTarget } from "../../../sessions/ui/start/session-list";
+import { ConnectPrompt } from "../route/connect-prompt";
 import { MissingRouteHint } from "../route/route-hint";
 import type { DevRouteState } from "../route/use-dev-route";
 
@@ -53,16 +54,20 @@ export function SessionsScope({
   );
 }
 
-function ConnectHint({ onConnect }: { onConnect: () => void }) {
-  return (
-    <div className="dt-empty">
-      <p>
-        Sessions are saved under your Reflet account. Connect in the Board tab.
+function SessionsConnect({ connectKey }: { connectKey: string | null }) {
+  if (connectKey === null) {
+    return (
+      <p className="dt-empty">
+        Sessions are recorded under your Reflet account. Connecting needs this
+        app on localhost with a Reflet public key.
       </p>
-      <button className="dt-btn" onClick={onConnect} type="button">
-        Open the Board tab
-      </button>
-    </div>
+    );
+  }
+  return (
+    <ConnectPrompt
+      publicKey={connectKey}
+      purpose="Sessions are recorded under your Reflet account."
+    />
   );
 }
 
@@ -97,17 +102,18 @@ function WorkspaceGate({
 }
 
 export interface SessionsTabActions {
-  onConnect: () => void;
   onStarted: () => void;
   onWriteNote?: () => void;
 }
 
 export function SessionsTab({
   actions,
+  connectKey,
   route,
   sessions,
 }: {
   actions: SessionsTabActions;
+  connectKey: string | null;
   route: DevRouteState;
   sessions: DevtoolsSessions;
 }) {
@@ -121,7 +127,7 @@ export function SessionsTab({
   }
   const { board } = route.status;
   if (board.kind === "disconnected") {
-    return <ConnectHint onConnect={actions.onConnect} />;
+    return <SessionsConnect connectKey={connectKey} />;
   }
   if (board.kind === "secretKey") {
     return (

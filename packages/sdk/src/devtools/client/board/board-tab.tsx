@@ -2,76 +2,10 @@ import { useState } from "react";
 import type { CodeTarget } from "../code/code-panel";
 import { InboxPanel } from "../inbox/inbox-panel";
 import { reportFailure } from "../notices";
-import { disconnectBoard, startBoardConnect } from "../route/dev-route";
+import { ConnectPrompt } from "../route/connect-prompt";
+import { disconnectBoard } from "../route/dev-route";
 import { MISSING_SECRET_KEY_HINT, MissingRouteHint } from "../route/route-hint";
 import type { DevRouteState } from "../route/use-dev-route";
-
-type ConnectPromptState =
-  | { kind: "idle" }
-  | { kind: "starting" }
-  | { authorizeUrl: string; kind: "waiting" };
-
-function ConnectPrompt({ publicKey }: { publicKey: string }) {
-  const [prompt, setPrompt] = useState<ConnectPromptState>({ kind: "idle" });
-
-  const connect = async () => {
-    // Opened before any await: browsers only allow popups inside the click.
-    const tab = window.open("", "_blank");
-    if (tab) {
-      tab.opener = null;
-    }
-    setPrompt({ kind: "starting" });
-    try {
-      const { authorizeUrl } = await startBoardConnect(publicKey);
-      if (tab) {
-        tab.location.href = authorizeUrl;
-      } else {
-        window.open(authorizeUrl, "_blank", "noopener");
-      }
-      setPrompt({ authorizeUrl, kind: "waiting" });
-    } catch (error) {
-      tab?.close();
-      setPrompt({ kind: "idle" });
-      reportFailure("Could not connect to Reflet", error);
-    }
-  };
-
-  if (prompt.kind === "waiting") {
-    return (
-      <div className="dt-empty">
-        <p>
-          Finish connecting in the Reflet tab. This panel updates when you come
-          back.
-        </p>
-        <a
-          className="dt-btn"
-          href={prompt.authorizeUrl}
-          rel="noopener noreferrer"
-          target="_blank"
-        >
-          Open Reflet again
-        </a>
-        <button className="dt-btn" onClick={connect} type="button">
-          Start again
-        </button>
-      </div>
-    );
-  }
-  return (
-    <div className="dt-empty">
-      <p>See this page's feedback and send notes to your board.</p>
-      <button
-        className="dt-btn"
-        data-variant="primary"
-        disabled={prompt.kind === "starting"}
-        onClick={connect}
-        type="button"
-      >
-        Connect to Reflet
-      </button>
-    </div>
-  );
-}
 
 function ConnectionBar({
   organizationName,
@@ -143,7 +77,10 @@ export function BoardTab({
   const { board } = route.status;
   if (board.kind === "disconnected") {
     return canConnect && publicKey !== null ? (
-      <ConnectPrompt publicKey={publicKey} />
+      <ConnectPrompt
+        publicKey={publicKey}
+        purpose="See this page's feedback and send notes to your board."
+      />
     ) : (
       <p className="dt-hint">{MISSING_SECRET_KEY_HINT}</p>
     );

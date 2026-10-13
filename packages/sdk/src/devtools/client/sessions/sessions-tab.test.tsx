@@ -25,11 +25,16 @@ function routeWithBoard(board: DevtoolsStatus["board"]): DevRouteState {
   };
 }
 
-function renderTab(route: DevRouteState, state: DevtoolsSessions["state"]) {
-  const actions = { onConnect: vi.fn(), onStarted: vi.fn() };
+function renderTab(
+  route: DevRouteState,
+  state: DevtoolsSessions["state"],
+  connectKey: string | null = "fb_pub_test"
+) {
+  const actions = { onStarted: vi.fn() };
   render(
     <SessionsTab
       actions={actions}
+      connectKey={connectKey}
       route={route}
       sessions={{ navigation: { onOpen: vi.fn(), open: null }, state }}
     />
@@ -37,19 +42,18 @@ function renderTab(route: DevRouteState, state: DevtoolsSessions["state"]) {
   return actions;
 }
 
-it("sends me to the Board tab to connect before recording", () => {
-  const actions = renderTab(
-    routeWithBoard({ canConnect: true, kind: "disconnected" }),
-    { kind: "idle" }
-  );
+it("offers to connect right here before recording", () => {
+  renderTab(routeWithBoard({ canConnect: true, kind: "disconnected" }), {
+    kind: "idle",
+  });
 
   expect(
-    screen.getByText(
-      "Sessions are saved under your Reflet account. Connect in the Board tab."
-    )
+    screen.getByText("Sessions are recorded under your Reflet account.")
   ).toBeTruthy();
-  fireEvent.click(screen.getByRole("button", { name: "Open the Board tab" }));
-  expect(actions.onConnect).toHaveBeenCalled();
+  expect(
+    screen.getByRole("button", { name: "Connect to Reflet" })
+  ).toBeTruthy();
+  expect(screen.queryByText(/Board tab/)).toBeNull();
 });
 
 it("explains that the secret key cannot record sessions", () => {
