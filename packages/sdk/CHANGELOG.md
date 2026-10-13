@@ -5,6 +5,23 @@ All notable changes to `reflet-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-10-13
+
+### Added
+
+- Sessions: Show context opens a passage's moment: what was said, the screenshot with the element and pointer outlined when they match that instant (marked approximate when they don't), the clicks, hovers, marks and page changes around it, and the intentions that cite it. Previous and Next moment work from the keyboard; Escape closes it.
+- Sessions: change what a passage is about. Pick another nearby event or screenshot, mark the context unknown, or go back to automatic. Your choice survives a new analysis and is what the analysis and the brief use. If someone changed it first, you're asked to reload instead of overwriting them.
+- Sessions: Continue this intention. It recalls the need, the considered response and the open questions, then starts a new session only when you click Start session. When it ends, the AI compares what you said with the revision you started from and lists what changes: precisions, contradictions, new constraints, different solutions and observed results, each with its quotes and screenshots, hypotheses labelled as such. Accept, edit then accept, reject or undo each change, answer the AI's question, or remove the whole contribution. The intention only changes when you accept, and each acceptance makes a new revision.
+- Sessions: after a change ships, the continuing session's AI reading says whether it looks resolved, still needs work or lacks evidence. You confirm the check; nothing is marked done on its own.
+- Sessions: an intention shows which later sessions continued it or were added to it, and what each one changed. Screenshots they contributed can go into the brief.
+- Sessions: when a new intention looks like one you already have, the AI says why. Add it to that intention, keep it separate, or undo.
+- Sessions: Hand off shows what changed since the last brief of each intention (revision 1 → 2, field by field), and Previous briefs name the intention and revision they carried.
+- Sessions: delete an intention, along with what later sessions added to it.
+
+### Changed
+
+- Sessions: the review talks about intentions. The Proposals tab is now Intentions, Keep is now Confirm, and the hand-off button reads "Hand off N confirmed". Confirming an intention doesn't approve its considered response, which you edit on its own. Each card says whether the AI or you wrote it.
+
 ## [0.6.9] - 2026-10-13
 
 ### Changed
