@@ -7,6 +7,7 @@ export const SESSION_API_PATHS = [
   "/api/v1/sessions/detail",
   "/api/v1/sessions/events",
   "/api/v1/sessions/evidence",
+  "/api/v1/sessions/evidence/remove",
   "/api/v1/sessions/handoffs",
   "/api/v1/sessions/handoffs/delivered",
   "/api/v1/sessions/identity",

@@ -1,7 +1,12 @@
 import { type Infer, v } from "convex/values";
 import type { Doc, Id } from "../../_generated/dataModel";
 import { internalMutation, type MutationCtx } from "../../_generated/server";
-import { loadSession, sessionActorValidator } from "../access";
+import {
+  loadSession,
+  loadSessionChild,
+  sessionActorValidator,
+  sessionConflict,
+} from "../access";
 import {
   elementRefValidator,
   evidenceLinkValidator,
@@ -127,5 +132,37 @@ export const register = internalMutation({
       throw new Error("Evidence insert failed");
     }
     return { evidence: await shapeEvidence(ctx, evidence) };
+  },
+});
+
+const REMOVED_REASON = "Removed from the session.";
+const ONLY_SCREENSHOTS = "Only screenshots can be removed.";
+
+export const remove = internalMutation({
+  args: { actor: sessionActorValidator, evidenceId: v.string() },
+  handler: async (ctx, args) => {
+    const { child: evidence, session } = await loadSessionChild(ctx, {
+      access: "write",
+      actor: args.actor,
+      id: args.evidenceId,
+      table: "sessionEvidence",
+    });
+    if (evidence.kind !== "screenshot") {
+      throw sessionConflict(ONLY_SCREENSHOTS);
+    }
+    if (evidence.image) {
+      await ctx.storage.delete(evidence.image.storageId);
+    }
+    await ctx.db.patch(evidence._id, {
+      image: undefined,
+      missingReason: REMOVED_REASON,
+      status: "missing",
+    });
+    await ctx.db.patch(session._id, { updatedAt: Date.now() });
+    const removed = await ctx.db.get(evidence._id);
+    if (!removed) {
+      throw new Error("Evidence vanished while being removed");
+    }
+    return { evidence: await shapeEvidence(ctx, removed) };
   },
 });

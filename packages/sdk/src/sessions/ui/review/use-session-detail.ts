@@ -3,6 +3,7 @@ import { reportFailure } from "../../../devtools/client/notices";
 import { SessionApiError } from "../../api/session-api";
 import type {
   SessionDetail,
+  SessionEvidence,
   SessionProposal,
   SessionSegment,
 } from "../../protocol";
@@ -61,6 +62,18 @@ export function withSegment(
   return {
     ...detail,
     segments: [...others, segment].sort((a, b) => a.startMs - b.startMs),
+  };
+}
+
+export function withEvidence(
+  detail: SessionDetail,
+  evidence: SessionEvidence
+): SessionDetail {
+  return {
+    ...detail,
+    evidence: detail.evidence.map((item) =>
+      item.id === evidence.id ? evidence : item
+    ),
   };
 }
 

@@ -4,6 +4,15 @@ import { formatClock } from "../../session-format";
 import type { ReviewHandle } from "../use-session-detail";
 import { AttachLink } from "./attach-link";
 import { EvidenceThumb, evidenceCaption } from "./evidence-thumb";
+import { RemoveEvidence } from "./remove-evidence";
+
+interface EvidenceRemoval {
+  canRemove: boolean;
+  review: ReviewHandle;
+}
+
+const isViewable = (evidence: SessionEvidence): boolean =>
+  evidence.status === "available" && Boolean(evidence.image?.url);
 
 function LinkEvidenceItem({
   link,
@@ -29,15 +38,17 @@ function LinkEvidenceItem({
 function EvidenceItem({
   evidence,
   onEnlarge,
+  removal,
 }: {
   evidence: SessionEvidence;
   onEnlarge: () => void;
+  removal: EvidenceRemoval;
 }) {
   const caption = `${formatClock(evidence.atMs)} · ${evidenceCaption(evidence)}`;
   if (evidence.link) {
     return <LinkEvidenceItem link={evidence.link} />;
   }
-  if (evidence.status === "missing" || !evidence.image?.url) {
+  if (!isViewable(evidence)) {
     return (
       <li className="dt-card">
         <p className="dt-meta">{caption}</p>
@@ -59,6 +70,9 @@ function EvidenceItem({
       </button>
       <p className="dt-meta">{caption}</p>
       {evidence.note && <p className="dt-note-text">{evidence.note}</p>}
+      {removal.canRemove && (
+        <RemoveEvidence evidence={evidence} review={removal.review} />
+      )}
     </li>
   );
 }
@@ -66,9 +80,11 @@ function EvidenceItem({
 function EnlargedEvidence({
   evidence,
   onBack,
+  removal,
 }: {
   evidence: SessionEvidence;
   onBack: () => void;
+  removal: EvidenceRemoval;
 }) {
   return (
     <>
@@ -79,6 +95,9 @@ function EnlargedEvidence({
       <p className="dt-meta">
         {formatClock(evidence.atMs)} · {evidenceCaption(evidence)}
       </p>
+      {removal.canRemove && (
+        <RemoveEvidence evidence={evidence} review={removal.review} />
+      )}
     </>
   );
 }
@@ -86,9 +105,11 @@ function EnlargedEvidence({
 function EvidenceList({
   evidence,
   onEnlarge,
+  removal,
 }: {
   evidence: SessionEvidence[];
   onEnlarge: (evidenceId: string) => void;
+  removal: EvidenceRemoval;
 }) {
   return (
     <>
@@ -101,6 +122,7 @@ function EvidenceList({
             evidence={item}
             key={item.id}
             onEnlarge={() => onEnlarge(item.id)}
+            removal={removal}
           />
         ))}
       </ul>
@@ -117,19 +139,30 @@ export function EvidenceTab({
 }) {
   const [enlargedId, setEnlargedId] = useState<string | null>(null);
   const [isAttaching, setIsAttaching] = useState(false);
-  const enlarged = detail.evidence.find((item) => item.id === enlargedId);
+  const enlarged = detail.evidence.find(
+    (item) => item.id === enlargedId && isViewable(item)
+  );
+  const removal: EvidenceRemoval = {
+    canRemove: detail.session.canEdit,
+    review,
+  };
 
   if (enlarged) {
     return (
       <EnlargedEvidence
         evidence={enlarged}
         onBack={() => setEnlargedId(null)}
+        removal={removal}
       />
     );
   }
   return (
     <>
-      <EvidenceList evidence={detail.evidence} onEnlarge={setEnlargedId} />
+      <EvidenceList
+        evidence={detail.evidence}
+        onEnlarge={setEnlargedId}
+        removal={removal}
+      />
       {detail.session.canEdit &&
         (isAttaching ? (
           <AttachLink

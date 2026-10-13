@@ -2,7 +2,11 @@
 
 import { describe, expect, test } from "vitest";
 import { z } from "zod";
-import { sessionSummarySchema } from "../../../../sdk/src/sessions/protocol";
+import {
+  sessionDetailSchema,
+  sessionEvidenceSchema,
+  sessionSummarySchema,
+} from "../../../../sdk/src/sessions/protocol";
 import { internal } from "../../_generated/api";
 import {
   SESSION_INTERRUPT_AFTER_MS,
@@ -20,6 +24,7 @@ import {
 } from "./session.fixtures";
 
 const summaryResponse = z.object({ session: sessionSummarySchema });
+const evidenceResponse = z.object({ evidence: sessionEvidenceSchema });
 
 describe("session lifecycle", () => {
   test("pause, resume and end are idempotent by state", async () => {
@@ -127,6 +132,76 @@ describe("session lifecycle", () => {
           page: { title: "Checkout", url: testFrame.url },
           startedAt: Date.now(),
           surface: "devtools",
+        })
+      ).status
+    ).toBe(409);
+  });
+
+  test("removing one screenshot deletes its file for good and leaves the rest", async () => {
+    const { a, b, t } = await setupSessionWorld();
+    const sessionId = await startSession(a);
+    const register = async (clientKey: string, storageId: string) =>
+      evidenceResponse.parse(
+        (
+          await a.post("/api/v1/sessions/evidence", {
+            atMs: 1000,
+            clientKey,
+            frame: testFrame,
+            image: { height: 10, storageId, width: 10 },
+            sessionId,
+            trigger: "mark",
+          })
+        ).body
+      ).evidence;
+    const sensitiveFile = await storeUpload(t, pngBlob());
+    const sensitive = await register("e-sensitive", sensitiveFile);
+    const kept = await register("e-kept", await storeUpload(t, pngBlob()));
+    const removal = { evidenceId: sensitive.id };
+
+    expect(
+      (await b.post("/api/v1/sessions/evidence/remove", removal)).status
+    ).toBe(404);
+    const removed = await a.post("/api/v1/sessions/evidence/remove", removal);
+    expect(removed.status).toBe(200);
+    expect(evidenceResponse.parse(removed.body).evidence).toMatchObject({
+      image: null,
+      missingReason: "Removed from the session.",
+      status: "missing",
+    });
+    expect(
+      (await a.post("/api/v1/sessions/evidence/remove", removal)).status
+    ).toBe(200);
+    const replayedUpload = await storeUpload(t, pngBlob());
+    await register("e-sensitive", replayedUpload);
+
+    const files = await t.run(async (ctx) => ({
+      removed: await ctx.db.system.get(sensitiveFile),
+      replayed: await ctx.db.system.get(replayedUpload),
+    }));
+    expect(files).toEqual({ removed: null, replayed: null });
+    const detail = sessionDetailSchema.parse(
+      (await a.get(`/api/v1/sessions/detail?sessionId=${sessionId}`)).body
+    );
+    expect(detail.evidence.map(({ id, status }) => ({ id, status }))).toEqual([
+      { id: sensitive.id, status: "missing" },
+      { id: kept.id, status: "available" },
+    ]);
+
+    const link = evidenceResponse.parse(
+      (
+        await a.post("/api/v1/sessions/evidence", {
+          atMs: 2000,
+          clientKey: "e-link",
+          link: { access: "", label: "Ticket", url: "https://tracker.test/1" },
+          sessionId,
+          trigger: "manual",
+        })
+      ).body
+    ).evidence;
+    expect(
+      (
+        await a.post("/api/v1/sessions/evidence/remove", {
+          evidenceId: link.id,
         })
       ).status
     ).toBe(409);

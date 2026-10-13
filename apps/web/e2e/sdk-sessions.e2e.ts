@@ -8,6 +8,7 @@ import {
 
 const RECORDING_BAR = "[aria-label='Session recording']";
 const STOPPED_BY_RELOAD = /stopped when the page reloaded/;
+const SCREENSHOT_REMOVAL = /^Remove screenshot at/;
 
 async function openSessions(page: Page) {
   await page.goto("/sdk-demo");
@@ -67,6 +68,34 @@ test.describe("Reflet sessions in the devtools", () => {
         pause && resume && event.atMs > pause.atMs && event.atMs < resume.atMs
     );
     expect(collectedWhilePaused).toEqual([]);
+  });
+
+  test("removes one sensitive screenshot from the review", async ({ page }) => {
+    const board = await mockSessionBoard(page);
+    await fakeMicrophone(page, "granted");
+    await openSessions(page);
+    await startRecording(page);
+    await page.getByRole("button", { name: "Mark moment" }).click();
+    await expect.poll(() => board.state.evidence.length).toBe(2);
+    await page.getByRole("button", { name: "Finish" }).click();
+
+    await page.getByRole("button", { name: "Evidence (2)" }).click();
+    const removeButtons = page.getByRole("button", {
+      name: SCREENSHOT_REMOVAL,
+    });
+    await expect(removeButtons).toHaveCount(2);
+    await removeButtons.last().click();
+    await expect(page.getByRole("button", { name: "Cancel" })).toBeFocused();
+    await page.getByRole("button", { exact: true, name: "Remove" }).click();
+
+    await expect(
+      page.getByText("Screenshot missing: Removed from the session.")
+    ).toBeVisible();
+    await expect(removeButtons).toHaveCount(1);
+    expect(board.state.evidence.map(({ status }) => status)).toEqual([
+      "available",
+      "missing",
+    ]);
   });
 
   test("a blocked microphone starts nothing and offers a typed note", async ({

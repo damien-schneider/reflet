@@ -5,6 +5,16 @@ All notable changes to `reflet-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.8] - 2026-10-12
+
+### Added
+
+- Sessions: remove a single screenshot from a session's Evidence tab, from the list or the enlarged view. The image is deleted for good and the rest of the session stays as it was. Briefs already copied or exported keep their copy.
+
+### Fixed
+
+- Sessions: pausing right after a page change no longer takes the pending screenshot of the new page.
+
 ## [0.6.7] - 2026-10-12
 
 ### Fixed

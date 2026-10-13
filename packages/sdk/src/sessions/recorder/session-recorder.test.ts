@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
+import { captureViewport } from "../../feedback/core/capture";
 import { createIndexedSessionStore } from "../local/indexed-session-store";
 import { type SessionLimits, sessionEventSchema } from "../protocol";
 import { type FakeAudio, installFakeAudio } from "../testing/fake-audio";
@@ -160,6 +161,25 @@ describe("createSessionRecorder", () => {
     expect(server.callsTo("/api/v1/sessions/segments")).toEqual([
       expect.objectContaining({ audioStorageId: "storage-1" }),
     ]);
+    recorder.dispose();
+  });
+
+  it("takes no screenshot of a page reached just before pausing", async () => {
+    const { recorder } = setup({ minAutoCaptureIntervalMs: 0 });
+    await recorder.start({});
+    await vi.advanceTimersByTimeAsync(0);
+    const startUrl = window.location.href;
+    const screenshotsBefore = vi.mocked(captureViewport).mock.calls.length;
+    window.history.pushState(null, "", "/settings/billing");
+    window.dispatchEvent(new PopStateEvent("popstate"));
+
+    recorder.pause();
+    await vi.advanceTimersByTimeAsync(5000);
+
+    expect(vi.mocked(captureViewport).mock.calls).toHaveLength(
+      screenshotsBefore
+    );
+    window.history.pushState(null, "", startUrl);
     recorder.dispose();
   });
 

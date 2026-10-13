@@ -199,7 +199,6 @@ export class LiveSession {
 
   stop(): void {
     this.stopCollecting();
-    this.evidence.cancelPending();
     this.events.stop();
   }
 
@@ -208,6 +207,7 @@ export class LiveSession {
     this.run = null;
     this.stopListening?.abort();
     this.stopListening = null;
+    this.evidence.cancelPending();
     window.clearInterval(this.tick);
     this.events.flushAll();
   }

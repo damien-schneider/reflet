@@ -4,6 +4,8 @@ const PROXY = "**/api/reflet-devtools/proxy/api/v1/sessions/**";
 const UPLOAD_PATH = "/__session-upload";
 const SPOKEN_TEXT = "I want to know whether my plan was saved.";
 const PROPOSAL_NEED = "Show that the plan was saved";
+const PIXEL_PNG =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
 
 const LIMITS = {
   audioRetentionMs: 86_400_000,
@@ -136,7 +138,7 @@ function evidence(body: Record<string, unknown>, index: number) {
     element: null,
     frame: null,
     id: `evidence-${index}`,
-    image: null,
+    image: { height: 1, url: PIXEL_PNG, width: 1 },
     kind: "screenshot",
     link: null,
     missingReason: null,
@@ -144,6 +146,18 @@ function evidence(body: Record<string, unknown>, index: number) {
     status: "available",
     trigger: String(body.trigger),
   };
+}
+
+function removeEvidence(state: BoardState, body: Record<string, unknown>) {
+  const index = state.evidence.findIndex(({ id }) => id === body.evidenceId);
+  const removed = {
+    ...state.evidence[index],
+    image: null,
+    missingReason: "Removed from the session.",
+    status: "missing",
+  };
+  state.evidence[index] = removed;
+  return { evidence: removed };
 }
 
 const BRIEF = `# Session brief: Plans & billing\n\n## Outcome wanted\n\n1. ${PROPOSAL_NEED}\n\nSet aside — do not build:\n- A history of plans\n`;
@@ -197,6 +211,7 @@ function respond(state: BoardState, path: string, route: Route): unknown {
       state.evidence.push(added);
       return { evidence: added };
     },
+    "evidence/remove": () => removeEvidence(state, body),
     handoffs: () => ({ files: [], handoff: handoff() }),
     "handoffs/delivered": () => ({ handoff: handoff() }),
     identity: () => ({

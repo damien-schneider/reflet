@@ -1,7 +1,7 @@
 import type { ReactNode, RefObject } from "react";
 import type { ElementSelection, FeedbackContext, RefletUser } from "../types";
 
-export const SDK_VERSION = "0.6.7";
+export const SDK_VERSION = "0.6.8";
 export const DEFAULT_WIDGET_OFFSET = 20;
 
 const ANNOTATION_TOOLS = [

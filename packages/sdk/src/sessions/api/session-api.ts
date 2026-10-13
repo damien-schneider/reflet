@@ -170,6 +170,7 @@ export interface SessionApi {
     sourceIds: string[];
     targetId: string;
   }) => Promise<SessionProposal>;
+  removeEvidence: (evidenceId: string) => Promise<SessionEvidence>;
   retrySegment: (segmentId: string) => Promise<SessionSegment>;
   separateProposal: (proposalId: string) => Promise<SessionProposal>;
   start: (body: StartSessionBody) => Promise<SessionSummary>;

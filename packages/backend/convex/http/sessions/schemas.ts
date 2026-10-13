@@ -166,6 +166,8 @@ export const evidenceBody = z.object({
   trigger: z.enum(["start", "mark", "navigation", "select", "manual"]),
 });
 
+export const evidenceIdBody = z.object({ evidenceId: id });
+
 export const createProposalBody = z.object({
   clientKey,
   evidenceIds: z.array(id).max(MAX_IDS).optional(),

@@ -63,6 +63,7 @@ export function fakeApi(overrides: Partial<SessionApi> = {}): SessionApi {
     list: vi.fn().mockResolvedValue([]),
     markHandoffDelivered: vi.fn(),
     mergeProposals: vi.fn(),
+    removeEvidence: vi.fn(),
     retrySegment: vi.fn(),
     separateProposal: vi.fn(),
     start: vi.fn(),

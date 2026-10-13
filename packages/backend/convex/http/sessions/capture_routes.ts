@@ -11,6 +11,7 @@ import {
   correctSegmentBody,
   eventsBody,
   evidenceBody,
+  evidenceIdBody,
   segmentBody,
   segmentIdBody,
   sessionIdBody,
@@ -143,6 +144,16 @@ const CAPTURE_ENDPOINTS: SessionEndpoint[] = [
     ),
     method: "POST",
     path: "/api/v1/sessions/evidence",
+  },
+  {
+    handler: sessionPost(evidenceIdBody, (ctx, actor, body) =>
+      ctx.runMutation(internal.sessions.capture.evidence.remove, {
+        actor,
+        ...body,
+      })
+    ),
+    method: "POST",
+    path: "/api/v1/sessions/evidence/remove",
   },
 ];
 

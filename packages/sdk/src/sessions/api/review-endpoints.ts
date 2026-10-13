@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   analysisStatusSchema,
   sessionDetailSchema,
+  sessionEvidenceSchema,
   sessionIdentitySchema,
   sessionSummarySchema,
 } from "../protocol";
@@ -18,6 +19,7 @@ type ReviewEndpoints = Pick<
   | "detail"
   | "identity"
   | "list"
+  | "removeEvidence"
   | "retrySegment"
   | "update"
 >;
@@ -57,6 +59,14 @@ export function createReviewEndpoints({
           z.object({ sessions: z.array(sessionSummarySchema) })
         )
       ).sessions,
+    removeEvidence: async (evidenceId) =>
+      (
+        await post(
+          "/api/v1/sessions/evidence/remove",
+          { evidenceId },
+          z.object({ evidence: sessionEvidenceSchema })
+        )
+      ).evidence,
     retrySegment: async (segmentId) =>
       (
         await post(
