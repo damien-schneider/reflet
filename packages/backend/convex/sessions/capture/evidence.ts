@@ -11,6 +11,7 @@ import {
   elementRefValidator,
   evidenceLinkValidator,
   evidenceTriggerValidator,
+  evidenceViewValidator,
   frameValidator,
 } from "../tableFields";
 import { shapeEvidence } from "../views/detail";
@@ -133,6 +134,7 @@ export const register = internalMutation({
     }
     return { evidence: await shapeEvidence(ctx, evidence) };
   },
+  returns: v.object({ evidence: evidenceViewValidator }),
 });
 
 const REMOVED_REASON = "Removed from the session.";
@@ -153,16 +155,14 @@ export const remove = internalMutation({
     if (evidence.image) {
       await ctx.storage.delete(evidence.image.storageId);
     }
-    await ctx.db.patch(evidence._id, {
+    const removal = {
       image: undefined,
       missingReason: REMOVED_REASON,
-      status: "missing",
-    });
+      status: "missing" as const,
+    };
+    await ctx.db.patch(evidence._id, removal);
     await ctx.db.patch(session._id, { updatedAt: Date.now() });
-    const removed = await ctx.db.get(evidence._id);
-    if (!removed) {
-      throw new Error("Evidence vanished while being removed");
-    }
-    return { evidence: await shapeEvidence(ctx, removed) };
+    return { evidence: await shapeEvidence(ctx, { ...evidence, ...removal }) };
   },
+  returns: v.object({ evidence: evidenceViewValidator }),
 });

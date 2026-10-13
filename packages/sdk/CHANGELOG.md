@@ -5,6 +5,19 @@ All notable changes to `reflet-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.9] - 2026-10-13
+
+### Changed
+
+- Sessions: hovers record how long the pointer actually stayed on an element (700 ms minimum) instead of a fixed 700 ms. A hover still in progress when you pause or finish is kept with its duration so far.
+- Sessions: a click made from the keyboard is recorded without a pointer position instead of a fake one at the top-left corner.
+
+### Fixed
+
+- Sessions: a screenshot still waiting behind another one, or still rendering, when you pause or finish is no longer kept. It's recorded as missing, so nothing on screen after the pause ends up in the session.
+- Sessions: removing a screenshot moves keyboard focus to its card, and cancelling the removal puts it back on the Remove button, instead of dropping it to the top of the page.
+- Sessions: a hover's time, pointer, element and page position are recorded from the same instant, so they can no longer describe two different states of the page.
+
 ## [0.6.8] - 2026-10-12
 
 ### Added

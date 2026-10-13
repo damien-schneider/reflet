@@ -5,7 +5,7 @@ import { startInteractionRecorder } from "./interaction-recorder";
 function startRecording() {
   const events: SessionEvent[] = [];
   const recorder = startInteractionRecorder({
-    atMs: () => 1234,
+    atMs: () => Date.now(),
     includeSource: false,
     onEvent: (event) => events.push(event),
   });
@@ -22,12 +22,17 @@ function byId(id: string): Element {
 
 function pointAt(target: Element, kind = "pointermove") {
   target.dispatchEvent(
-    new MouseEvent(kind, { bubbles: true, clientX: 12, clientY: 34 })
+    new MouseEvent(kind, {
+      bubbles: true,
+      clientX: 12,
+      clientY: 34,
+      detail: kind === "click" ? 1 : 0,
+    })
   );
 }
 
 beforeEach(() => {
-  vi.useFakeTimers();
+  vi.useFakeTimers({ now: 0 });
   document.body.innerHTML = `
     <article class="card"><button id="save"><span id="inner">Save</span></button></article>
     <div data-reflet-widget><button id="widget">Mark</button></div>
@@ -51,7 +56,7 @@ describe("startInteractionRecorder", () => {
     recorder.stop();
     expect(events).toHaveLength(1);
     expect(events[0]).toMatchObject({
-      atMs: 1234,
+      atMs: 0,
       element: { label: 'button "Save"', role: "button", selector: "#save" },
       frame: { scrollY: 420 },
       kind: "click",
@@ -68,19 +73,60 @@ describe("startInteractionRecorder", () => {
     expect(events).toEqual([]);
   });
 
-  it("emits one dwell once the pointer rests 700 ms on an element", () => {
+  it("stores no pointer for a click made from the keyboard", () => {
     const { events, recorder } = startRecording();
-    const button = byId("inner");
-    pointAt(button);
-    vi.advanceTimersByTime(699);
-    expect(events).toEqual([]);
-    vi.advanceTimersByTime(1);
-    vi.advanceTimersByTime(200);
-    pointAt(button);
-    vi.advanceTimersByTime(2000);
+    byId("inner").dispatchEvent(new MouseEvent("click", { bubbles: true }));
     recorder.stop();
+    expect(events).toEqual([expect.objectContaining({ pointer: null })]);
+  });
+
+  it("records how long the pointer stayed on an element", () => {
+    const { events, recorder } = startRecording();
+    pointAt(byId("inner"));
+    vi.advanceTimersByTime(2400);
+    pointAt(byId("editor"));
     expect(events).toHaveLength(1);
-    expect(events[0]).toMatchObject({ durationMs: 700, kind: "dwell" });
+    expect(events[0]).toMatchObject({
+      atMs: 0,
+      durationMs: 2400,
+      element: { selector: "#save" },
+      kind: "dwell",
+      pointer: { x: 12, y: 34 },
+    });
+    recorder.stop();
+  });
+
+  it("drops hovers shorter than 700 ms", () => {
+    const { events, recorder } = startRecording();
+    pointAt(byId("inner"));
+    vi.advanceTimersByTime(600);
+    pointAt(byId("editor"));
+    expect(events).toEqual([]);
+    recorder.stop();
+  });
+
+  it("emits a hover still in progress when recording stops", () => {
+    const { events, recorder } = startRecording();
+    pointAt(byId("inner"));
+    vi.advanceTimersByTime(1500);
+    recorder.stop();
+    expect(events).toEqual([
+      expect.objectContaining({ durationMs: 1500, kind: "dwell" }),
+    ]);
+  });
+
+  it("ends a hover when the pointer leaves the window", () => {
+    const { events, recorder } = startRecording();
+    pointAt(byId("inner"));
+    vi.advanceTimersByTime(900);
+    byId("inner").dispatchEvent(
+      new MouseEvent("pointerout", { bubbles: true, relatedTarget: null })
+    );
+    vi.advanceTimersByTime(3000);
+    recorder.stop();
+    expect(events).toEqual([
+      expect.objectContaining({ durationMs: 900, kind: "dwell" }),
+    ]);
   });
 
   it("debounces scrolling into one event", () => {

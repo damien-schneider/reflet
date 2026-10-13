@@ -1,15 +1,14 @@
 import type { Doc } from "../../_generated/dataModel";
 import {
+  AMBIGUOUS_CONTEXT_NOTE,
+  contextLine,
+  elementSummary,
   formatClock,
-  pagePath,
+  onPage,
   singleLine,
   wrapUntrusted,
 } from "../formatters";
-import {
-  linkSegmentContext,
-  type SegmentContextValue,
-  type SessionEventValue,
-} from "../linking";
+import { linkSegmentContext, type SessionEventValue } from "../linking";
 
 const MAX_PROMPT_SEGMENTS = 300;
 const MAX_TRANSCRIPT_CHARS = 40_000;
@@ -32,14 +31,6 @@ const TRIGGER_DESCRIPTIONS: Record<EvidenceTrigger, string> = {
   navigation: "after a page change",
   select: "when the author pointed at an element",
   start: "at session start",
-};
-
-const CONTEXT_VERBS: Record<SegmentContextValue["kind"], string> = {
-  click: "clicked",
-  dwell: "hovered",
-  mark: "marked the moment on",
-  navigation: "opened",
-  select: "pointed at",
 };
 
 type PromptSegment<SegmentId extends string> = Pick<
@@ -128,16 +119,6 @@ const selectEvidence = <EvidenceId extends string>(
     .sort((a, b) => a.atMs - b.atMs);
 };
 
-const onPage = (url: string | null | undefined): string => {
-  const path = url ? pagePath(url) : null;
-  return path ? ` on ${path}` : "";
-};
-
-const contextLine = (item: SegmentContextValue<string>): string => {
-  const evidence = item.evidenceId ? ` (${item.evidenceId})` : "";
-  return `  - ${CONTEXT_VERBS[item.kind]} "${singleLine(item.label)}" at ${formatClock(item.atMs)}${onPage(item.url)}${evidence}`;
-};
-
 const transcriptBlock = <SegmentId extends string>(options: {
   segments: PromptSegment<SegmentId>[];
   omittedCount: number;
@@ -156,12 +137,8 @@ const transcriptBlock = <SegmentId extends string>(options: {
     });
     return [
       `S${index + 1} [${formatClock(segment.startMs)}–${formatClock(segment.endMs)}] ${singleLine(segment.text)}`,
-      ...linked.context.map(contextLine),
-      ...(linked.ambiguous
-        ? [
-            "  (several elements were close in time: unclear which one is meant)",
-          ]
-        : []),
+      ...linked.context.map((item) => `  - ${contextLine(item)}`),
+      ...(linked.ambiguous ? [`  ${AMBIGUOUS_CONTEXT_NOTE}`] : []),
     ];
   });
   if (options.omittedCount > 0) {
@@ -183,8 +160,7 @@ const evidenceLine = (item: PromptEvidence<string>, alias: string): string => {
     `${head} screenshot ${TRIGGER_DESCRIPTIONS[item.trigger]}${onPage(item.frame?.url)}`,
   ];
   if (item.element) {
-    const role = item.element.role ? `${singleLine(item.element.role)} ` : "";
-    parts.push(`element: ${role}"${singleLine(item.element.label)}"`);
+    parts.push(`element: ${elementSummary(item.element)}`);
   }
   if (item.note) {
     parts.push(`author's note: "${singleLine(item.note)}"`);

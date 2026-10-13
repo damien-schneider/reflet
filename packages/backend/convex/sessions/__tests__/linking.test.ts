@@ -58,6 +58,8 @@ describe("linkSegmentContext", () => {
 
     expect(linked.context[0]).toEqual({
       atMs: 5000,
+      durationMs: null,
+      element: elementNamed("Save"),
       evidenceId: "E-scrolled",
       kind: "click",
       label: "Save",
@@ -149,5 +151,26 @@ describe("linkSegmentContext", () => {
     });
 
     expect(linked).toEqual({ ambiguous: false, context: [] });
+  });
+
+  test("a hover that started before the window and lasts through the phrase links to it with its duration", () => {
+    const linked = linkSegmentContext({
+      events: [
+        {
+          atMs: 0,
+          durationMs: 12_000,
+          element: elementNamed("Sidebar"),
+          frame: frameAt(0),
+          kind: "dwell",
+          pointer: { x: 10, y: 10 },
+        },
+      ],
+      evidence: [],
+      segment: { endMs: 11_000, startMs: 10_000 },
+    });
+
+    expect(linked.context).toEqual([
+      expect.objectContaining({ durationMs: 12_000, kind: "dwell" }),
+    ]);
   });
 });

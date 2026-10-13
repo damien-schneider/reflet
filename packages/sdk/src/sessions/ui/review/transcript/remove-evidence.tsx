@@ -8,28 +8,43 @@ import { type ReviewHandle, withEvidence } from "../use-session-detail";
 const REMOVE_COPY =
   "Remove this screenshot? The image is deleted for good. Briefs you already copied or exported can't be recalled.";
 
+export interface EvidenceRemoval {
+  canRemove: boolean;
+  onRemoved: (evidenceId: string) => void;
+  removedId: string | null;
+  review: ReviewHandle;
+}
+
+export function useFocusWhen<T extends HTMLElement>(shouldFocus: boolean) {
+  const ref = useRef<T>(null);
+  useEffect(() => {
+    if (shouldFocus) {
+      ref.current?.focus();
+    }
+  }, [shouldFocus]);
+  return ref;
+}
+
 function RemoveConfirmation({
   evidence,
   onCancel,
-  review,
+  removal,
 }: {
   evidence: SessionEvidence;
   onCancel: () => void;
-  review: ReviewHandle;
+  removal: EvidenceRemoval;
 }) {
   const { api } = useSessionWorkspace();
   const run = useSessionAction();
-  const cancelRef = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    cancelRef.current?.focus();
-  }, []);
+  const cancelRef = useFocusWhen<HTMLButtonElement>(true);
 
   const remove = async () => {
     const removed = await run("The screenshot was not removed", () =>
       api.removeEvidence(evidence.id)
     );
     if (removed !== null) {
-      review.patch((detail) => withEvidence(detail, removed));
+      removal.review.patch((detail) => withEvidence(detail, removed));
+      removal.onRemoved(removed.id);
       announce("Screenshot removed");
     }
   };
@@ -60,18 +75,23 @@ function RemoveConfirmation({
 
 export function RemoveEvidence({
   evidence,
-  review,
+  removal,
 }: {
   evidence: SessionEvidence;
-  review: ReviewHandle;
+  removal: EvidenceRemoval;
 }) {
   const [isConfirming, setIsConfirming] = useState(false);
+  const [hasCancelled, setHasCancelled] = useState(false);
+  const triggerRef = useFocusWhen<HTMLButtonElement>(hasCancelled);
   if (isConfirming) {
     return (
       <RemoveConfirmation
         evidence={evidence}
-        onCancel={() => setIsConfirming(false)}
-        review={review}
+        onCancel={() => {
+          setIsConfirming(false);
+          setHasCancelled(true);
+        }}
+        removal={removal}
       />
     );
   }
@@ -79,7 +99,11 @@ export function RemoveEvidence({
     <button
       aria-label={`Remove screenshot at ${formatClock(evidence.atMs)}`}
       className="dt-ses-link"
-      onClick={() => setIsConfirming(true)}
+      onClick={() => {
+        setIsConfirming(true);
+        setHasCancelled(false);
+      }}
+      ref={triggerRef}
       type="button"
     >
       Remove

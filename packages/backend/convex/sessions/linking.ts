@@ -9,7 +9,7 @@ import type {
 
 export type SessionEventValue = Infer<typeof sessionEventValidator>;
 export type FrameValue = Infer<typeof frameValidator>;
-type ElementRefValue = Infer<typeof elementRefValidator>;
+export type ElementRefValue = Infer<typeof elementRefValidator>;
 
 type ContextKind = "mark" | "select" | "click" | "dwell" | "navigation";
 
@@ -17,6 +17,8 @@ export interface SegmentContextValue<
   EvidenceId extends string = Id<"sessionEvidence">,
 > {
   atMs: number;
+  durationMs: number | null;
+  element: ElementRefValue | null;
   evidenceId: EvidenceId | null;
   kind: ContextKind;
   label: string;
@@ -31,14 +33,15 @@ interface LinkableEvidence<EvidenceId extends string> {
 
 interface Candidate {
   atMs: number;
+  durationMs: number | null;
   element: ElementRefValue | null;
   frame: FrameValue;
   kind: ContextKind;
   score: number;
 }
 
-const WINDOW_BEFORE_MS = 6000;
-const WINDOW_AFTER_MS = 2000;
+export const CONTEXT_WINDOW_BEFORE_MS = 6000;
+export const CONTEXT_WINDOW_AFTER_MS = 2000;
 const EDGE_PROXIMITY = 0.2;
 const MAX_LINKED_ITEMS = 3;
 const AMBIGUITY_RATIO = 0.75;
@@ -52,28 +55,30 @@ const KIND_WEIGHTS = {
 } as const satisfies Record<ContextKind, number>;
 
 const temporalProximity = (
-  atMs: number,
+  event: { startMs: number; endMs: number },
   segment: { startMs: number; endMs: number }
 ): number => {
-  if (atMs < segment.startMs - WINDOW_BEFORE_MS) {
+  if (event.endMs < segment.startMs - CONTEXT_WINDOW_BEFORE_MS) {
     return 0;
   }
-  if (atMs > segment.endMs + WINDOW_AFTER_MS) {
+  if (event.startMs > segment.endMs + CONTEXT_WINDOW_AFTER_MS) {
     return 0;
   }
   const decay = 1 - EDGE_PROXIMITY;
-  if (atMs < segment.startMs) {
-    return 1 - (decay * (segment.startMs - atMs)) / WINDOW_BEFORE_MS;
+  if (event.endMs < segment.startMs) {
+    const gapMs = segment.startMs - event.endMs;
+    return 1 - (decay * gapMs) / CONTEXT_WINDOW_BEFORE_MS;
   }
-  if (atMs > segment.endMs) {
-    return 1 - (decay * (atMs - segment.endMs)) / WINDOW_AFTER_MS;
+  if (event.startMs > segment.endMs) {
+    const gapMs = event.startMs - segment.endMs;
+    return 1 - (decay * gapMs) / CONTEXT_WINDOW_AFTER_MS;
   }
   return 1;
 };
 
 const linkableParts = (
   event: SessionEventValue
-): Omit<Candidate, "score"> | null => {
+): Omit<Candidate, "durationMs" | "score"> | null => {
   switch (event.kind) {
     case "scroll":
     case "viewport":
@@ -90,12 +95,17 @@ const toCandidate = (
   segment: { startMs: number; endMs: number }
 ): Candidate | null => {
   const parts = linkableParts(event);
-  const proximity = temporalProximity(event.atMs, segment);
+  const durationMs = event.kind === "dwell" ? event.durationMs : null;
+  const proximity = temporalProximity(
+    { endMs: event.atMs + (durationMs ?? 0), startMs: event.atMs },
+    segment
+  );
   if (parts === null || proximity === 0) {
     return null;
   }
   const { atMs, element, frame, kind } = parts;
-  return { atMs, element, frame, kind, score: KIND_WEIGHTS[kind] * proximity };
+  const score = KIND_WEIGHTS[kind] * proximity;
+  return { atMs, durationMs, element, frame, kind, score };
 };
 
 const showsSameScreen = (first: FrameValue, second: FrameValue): boolean =>
@@ -161,6 +171,8 @@ export function linkSegmentContext<EvidenceId extends string>(input: {
     ambiguous,
     context: ranked.map((candidate) => ({
       atMs: candidate.atMs,
+      durationMs: candidate.durationMs,
+      element: candidate.element,
       evidenceId: matchingEvidenceId(candidate, input.evidence),
       kind: candidate.kind,
       label: candidateLabel(candidate),

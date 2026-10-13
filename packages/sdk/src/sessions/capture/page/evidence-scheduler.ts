@@ -18,6 +18,8 @@ import {
 const NAVIGATION_SETTLE_MS = 1500;
 const CAPTURE_FAILED = "The page could not be captured.";
 const CAPTURE_TOO_LARGE = "The screenshot was larger than the upload limit.";
+const STOPPED_BEFORE_CAPTURE =
+  "Recording stopped before the screenshot was taken.";
 
 export interface CapturedEvidence {
   atMs: number;
@@ -52,8 +54,16 @@ export interface EvidenceSchedulerOptions {
   onEvidence: (evidence: CapturedEvidence) => void;
 }
 
+type EvidenceBase = Omit<CapturedEvidence, "image" | "missingReason">;
+
+const stoppedBeforeCapture = (base: EvidenceBase): CapturedEvidence => ({
+  ...base,
+  image: null,
+  missingReason: STOPPED_BEFORE_CAPTURE,
+});
+
 async function shoot(
-  base: Omit<CapturedEvidence, "image" | "missingReason">,
+  base: EvidenceBase,
   maxImageBytes: number
 ): Promise<CapturedEvidence> {
   const image = await captureViewport({
@@ -79,6 +89,7 @@ export function createEvidenceScheduler(
   let lastCaptureAtMs = Number.NEGATIVE_INFINITY;
   let navigationTimer: number | undefined;
   let previousCapture = Promise.resolve();
+  let collectionRun = 0;
 
   const take = (
     trigger: EvidenceTrigger,
@@ -101,14 +112,27 @@ export function createEvidenceScheduler(
       note: request.note ?? null,
       trigger,
     };
+    const takenInRun = collectionRun;
+    const captureUnlessStopped = async () => {
+      if (takenInRun !== collectionRun) {
+        return stoppedBeforeCapture(base);
+      }
+      const evidence = await shoot(base, limits.maxImageBytes);
+      return takenInRun === collectionRun
+        ? evidence
+        : stoppedBeforeCapture(base);
+    };
     previousCapture = previousCapture
-      .then(() => shoot(base, limits.maxImageBytes))
+      .then(captureUnlessStopped)
       .then(options.onEvidence);
     return clientKey;
   };
 
   return {
-    cancelPending: () => window.clearTimeout(navigationTimer),
+    cancelPending: () => {
+      window.clearTimeout(navigationTimer);
+      collectionRun += 1;
+    },
     capture: (request) => take(request.trigger, request),
     navigated: () => {
       window.clearTimeout(navigationTimer);

@@ -89,8 +89,10 @@ test.describe("Reflet sessions in the devtools", () => {
     await page.getByRole("button", { exact: true, name: "Remove" }).click();
 
     await expect(
-      page.getByText("Screenshot missing: Removed from the session.")
-    ).toBeVisible();
+      page.locator("li", {
+        hasText: "Screenshot missing: Removed from the session.",
+      })
+    ).toBeFocused();
     await expect(removeButtons).toHaveCount(1);
     expect(board.state.evidence.map(({ status }) => status)).toEqual([
       "available",

@@ -12,11 +12,15 @@ import {
   settingsFrame,
 } from "../ai/__tests__/session_fixtures";
 import { buildSessionBrief } from "../brief";
+import type { SessionEventValue } from "../linking";
 
 const CLOSING_TRANSCRIPT_TAG = /<\/session_transcript>/g;
 const OPENING_TRANSCRIPT_TAG = /<session_transcript>/g;
 
-async function seedOstalHandoff(options: { source: string | null }) {
+async function seedOstalHandoff(options: {
+  events?: SessionEventValue[];
+  source: string | null;
+}) {
   const t = convexTest(schema, modules);
   return await t.run(async (ctx) => {
     const session = await seedSession(ctx);
@@ -45,7 +49,7 @@ async function seedOstalHandoff(options: { source: string | null }) {
     });
     const unselected = await seedEvidence(ctx, session, {
       atMs: 2000,
-      element: { ...saveButton(), label: "Historique" },
+      element: { ...saveButton(), label: 'button "Historique"' },
       frame: settingsFrame(),
       trigger: "mark",
     });
@@ -64,6 +68,7 @@ async function seedOstalHandoff(options: { source: string | null }) {
     return {
       brief: buildSessionBrief({
         authorName: "Damien",
+        events: options.events ?? [],
         evidence: [kept],
         organizationName: "Ostal",
         proposals: [proposal],
@@ -120,7 +125,7 @@ describe("buildSessionBrief", () => {
       { evidenceId: keptId, name: "evidence/E1-0214.png" },
     ]);
     expect(brief.markdown).toContain(
-      'E1 — screenshot at 02:14 on /settings — button "Enregistrer"'
+      'E1 — screenshot at 02:14 on /settings — button "Enregistrer" in <SettingsForm> (selector: form > button[type=submit])'
     );
     expect(brief.markdown).toContain("file evidence/E1-0214.png");
     expect(brief.markdown).not.toContain("Historique");
@@ -142,5 +147,44 @@ describe("buildSessionBrief", () => {
     const { brief, proposal } = await seedOstalHandoff({ source: null });
 
     expect(brief.markdown).toContain(`${proposal._id} (revision 3)`);
+  });
+
+  test("lists what was clicked and hovered under each quote, inside the transcript fence", async () => {
+    const { brief } = await seedOstalHandoff({
+      events: [
+        {
+          atMs: 131_500,
+          durationMs: 2400,
+          element: {
+            ...saveButton(),
+            label: 'button "Annuler"',
+            selector: "#cancel",
+          },
+          frame: settingsFrame(),
+          kind: "dwell",
+          pointer: { x: 1, y: 1 },
+        },
+        {
+          atMs: 134_000,
+          element: saveButton(),
+          frame: settingsFrame(),
+          kind: "click",
+          pointer: null,
+        },
+      ],
+      source: null,
+    });
+
+    expect(brief.markdown).toContain(
+      '  - clicked button "Enregistrer" in <SettingsForm> at 02:14 on /settings (E1) (selector: form > button[type=submit])'
+    );
+    expect(brief.markdown).toContain(
+      '  - hovered button "Annuler" in <SettingsForm> for 2.4 s at 02:11 on /settings'
+    );
+    expect(brief.markdown).not.toContain("several elements were close in time");
+    const opened = brief.markdown.match(OPENING_TRANSCRIPT_TAG) ?? [];
+    const closed = brief.markdown.match(CLOSING_TRANSCRIPT_TAG) ?? [];
+    expect(closed).toHaveLength(opened.length);
+    expect(brief.markdown).not.toContain("Historique");
   });
 });

@@ -14,7 +14,7 @@ import {
 } from "../access";
 import { buildSessionBrief } from "../brief";
 import { MAX_HANDOFF_DELIVERIES } from "../constants";
-import { shapeHandoff } from "../views/detail";
+import { loadSessionEvents, shapeHandoff } from "../views/detail";
 import { authorNameOf } from "../views/summary";
 
 const ONLY_KEPT = "Only kept proposals can be handed off.";
@@ -106,6 +106,7 @@ export async function briefInputFor(
   const organization = await ctx.db.get(options.session.organizationId);
   return {
     authorName: await authorNameOf(ctx, options.session.authorId),
+    events: await loadSessionEvents(ctx, options.session._id),
     evidence,
     organizationName: organization?.name ?? "",
     proposals: options.proposals,

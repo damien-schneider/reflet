@@ -131,4 +131,32 @@ describe("createEvidenceScheduler", () => {
     await vi.advanceTimersByTimeAsync(5000);
     expect(evidence).toEqual([]);
   });
+
+  it("keeps no screenshot that finishes after collection stops", async () => {
+    let finishFirstShot: (image: CapturedImage) => void = () => undefined;
+    const firstShot = new Promise<CapturedImage>((resolve) => {
+      finishFirstShot = resolve;
+    });
+    vi.mocked(captureViewport).mockReturnValueOnce(firstShot);
+    const { evidence, scheduler } = startScheduler();
+    scheduler.capture({ trigger: "start" });
+    await vi.advanceTimersByTimeAsync(0);
+    const queuedKey = scheduler.capture({ trigger: "mark" });
+
+    scheduler.cancelPending();
+    finishFirstShot(screenshot());
+    await vi.runAllTimersAsync();
+
+    expect(captureViewport).toHaveBeenCalledTimes(1);
+    expect(evidence.map(({ image }) => image !== null)).toEqual([false, false]);
+    expect(evidence).toEqual([
+      expect.objectContaining({
+        missingReason: "Recording stopped before the screenshot was taken.",
+      }),
+      expect.objectContaining({
+        clientKey: queuedKey,
+        missingReason: "Recording stopped before the screenshot was taken.",
+      }),
+    ]);
+  });
 });

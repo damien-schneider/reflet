@@ -4,15 +4,38 @@ import { formatClock } from "../../session-format";
 import type { ReviewHandle } from "../use-session-detail";
 import { AttachLink } from "./attach-link";
 import { EvidenceThumb, evidenceCaption } from "./evidence-thumb";
-import { RemoveEvidence } from "./remove-evidence";
-
-interface EvidenceRemoval {
-  canRemove: boolean;
-  review: ReviewHandle;
-}
+import {
+  type EvidenceRemoval,
+  RemoveEvidence,
+  useFocusWhen,
+} from "./remove-evidence";
 
 const isViewable = (evidence: SessionEvidence): boolean =>
   evidence.status === "available" && Boolean(evidence.image?.url);
+
+function MissingEvidenceItem({
+  caption,
+  evidence,
+  isJustRemoved,
+}: {
+  caption: string;
+  evidence: SessionEvidence;
+  isJustRemoved: boolean;
+}) {
+  const cardRef = useFocusWhen<HTMLLIElement>(isJustRemoved);
+  return (
+    <li
+      className="dt-card"
+      ref={cardRef}
+      tabIndex={isJustRemoved ? -1 : undefined}
+    >
+      <p className="dt-meta">{caption}</p>
+      <p className="dt-meta">
+        Screenshot missing: {evidence.missingReason ?? "not captured."}
+      </p>
+    </li>
+  );
+}
 
 function LinkEvidenceItem({
   link,
@@ -50,12 +73,11 @@ function EvidenceItem({
   }
   if (!isViewable(evidence)) {
     return (
-      <li className="dt-card">
-        <p className="dt-meta">{caption}</p>
-        <p className="dt-meta">
-          Screenshot missing: {evidence.missingReason ?? "not captured."}
-        </p>
-      </li>
+      <MissingEvidenceItem
+        caption={caption}
+        evidence={evidence}
+        isJustRemoved={evidence.id === removal.removedId}
+      />
     );
   }
   return (
@@ -71,7 +93,7 @@ function EvidenceItem({
       <p className="dt-meta">{caption}</p>
       {evidence.note && <p className="dt-note-text">{evidence.note}</p>}
       {removal.canRemove && (
-        <RemoveEvidence evidence={evidence} review={removal.review} />
+        <RemoveEvidence evidence={evidence} removal={removal} />
       )}
     </li>
   );
@@ -96,7 +118,7 @@ function EnlargedEvidence({
         {formatClock(evidence.atMs)} · {evidenceCaption(evidence)}
       </p>
       {removal.canRemove && (
-        <RemoveEvidence evidence={evidence} review={removal.review} />
+        <RemoveEvidence evidence={evidence} removal={removal} />
       )}
     </>
   );
@@ -130,6 +152,36 @@ function EvidenceList({
   );
 }
 
+function AttachLinkAction({
+  detail,
+  review,
+}: {
+  detail: SessionDetail;
+  review: ReviewHandle;
+}) {
+  const [isAttaching, setIsAttaching] = useState(false);
+  if (isAttaching) {
+    return (
+      <AttachLink
+        detail={detail}
+        onDone={() => setIsAttaching(false)}
+        review={review}
+      />
+    );
+  }
+  return (
+    <div className="dt-actions">
+      <button
+        className="dt-btn"
+        onClick={() => setIsAttaching(true)}
+        type="button"
+      >
+        Attach a link
+      </button>
+    </div>
+  );
+}
+
 export function EvidenceTab({
   detail,
   review,
@@ -138,12 +190,17 @@ export function EvidenceTab({
   review: ReviewHandle;
 }) {
   const [enlargedId, setEnlargedId] = useState<string | null>(null);
-  const [isAttaching, setIsAttaching] = useState(false);
+  const [removedId, setRemovedId] = useState<string | null>(null);
   const enlarged = detail.evidence.find(
     (item) => item.id === enlargedId && isViewable(item)
   );
   const removal: EvidenceRemoval = {
     canRemove: detail.session.canEdit,
+    onRemoved: (evidenceId) => {
+      setEnlargedId(null);
+      setRemovedId(evidenceId);
+    },
+    removedId,
     review,
   };
 
@@ -163,24 +220,9 @@ export function EvidenceTab({
         onEnlarge={setEnlargedId}
         removal={removal}
       />
-      {detail.session.canEdit &&
-        (isAttaching ? (
-          <AttachLink
-            detail={detail}
-            onDone={() => setIsAttaching(false)}
-            review={review}
-          />
-        ) : (
-          <div className="dt-actions">
-            <button
-              className="dt-btn"
-              onClick={() => setIsAttaching(true)}
-              type="button"
-            >
-              Attach a link
-            </button>
-          </div>
-        ))}
+      {detail.session.canEdit && (
+        <AttachLinkAction detail={detail} review={review} />
+      )}
     </>
   );
 }

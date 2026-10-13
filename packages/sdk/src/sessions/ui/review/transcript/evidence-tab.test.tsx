@@ -56,9 +56,10 @@ it("removes one sensitive screenshot after confirming, keeping the others", asyn
   ).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Remove" }));
 
-  expect(
-    await screen.findByText("Screenshot missing: Removed from the session.")
-  ).toBeTruthy();
+  const removedCard = await screen.findByText(
+    "Screenshot missing: Removed from the session."
+  );
+  expect(document.activeElement).toBe(removedCard.closest("li"));
   expect(api.removeEvidence).toHaveBeenCalledWith("evidence_1");
   expect(screen.queryByRole("button", { name: REMOVE_LABEL })).toBeNull();
   expect(
@@ -73,7 +74,9 @@ it("keeps the screenshot when the removal is cancelled", async () => {
   fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
 
   expect(api.removeEvidence).not.toHaveBeenCalled();
-  expect(screen.getByRole("button", { name: REMOVE_LABEL })).toBeTruthy();
+  expect(document.activeElement).toBe(
+    screen.getByRole("button", { name: REMOVE_LABEL })
+  );
 });
 
 it("offers removal from the enlarged view", async () => {
@@ -88,7 +91,8 @@ it("offers removal from the enlarged view", async () => {
   fireEvent.click(screen.getByRole("button", { name: REMOVE_LABEL }));
   fireEvent.click(screen.getByRole("button", { name: "Remove" }));
 
-  expect(await screen.findByText(/^Screenshot missing/)).toBeTruthy();
+  const removedCard = await screen.findByText(/^Screenshot missing/);
+  expect(document.activeElement).toBe(removedCard.closest("li"));
   expect(screen.queryByRole("button", { name: /^Enlarge/ })).toBeNull();
 });
 

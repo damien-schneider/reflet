@@ -13,7 +13,13 @@ export function shapeSegment(
 ) {
   return {
     audioExpiresAt: segment.audio?.expiresAt ?? null,
-    context: linked.context,
+    context: linked.context.map(({ atMs, evidenceId, kind, label, url }) => ({
+      atMs,
+      evidenceId,
+      kind,
+      label,
+      url,
+    })),
     contextAmbiguous: linked.ambiguous,
     endMs: segment.endMs,
     hasAudio: segment.audio !== undefined,

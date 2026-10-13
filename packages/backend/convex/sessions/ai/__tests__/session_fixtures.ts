@@ -140,7 +140,7 @@ export const settingsFrame = (scrollY = 0) => ({
 
 export const saveButton = (source: string | null = null) => ({
   component: "SettingsForm",
-  label: "Enregistrer",
+  label: 'button "Enregistrer"',
   rect: { height: 32, width: 120, x: 40, y: 300 },
   role: "button",
   selector: "form > button[type=submit]",

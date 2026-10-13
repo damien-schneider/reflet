@@ -71,7 +71,7 @@ describe("prepareAnalysisPrompt", () => {
       "S1 [00:01–00:04] Il faudrait un historique."
     );
     expect(prepared.prompt).toContain(
-      'clicked "Enregistrer" at 00:09 on /settings (E2)'
+      'clicked button "Enregistrer" in <SettingsForm> at 00:09 on /settings (E2)'
     );
     expect(prepared.prompt).not.toContain("localhost");
   });

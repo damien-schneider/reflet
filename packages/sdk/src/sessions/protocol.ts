@@ -172,7 +172,7 @@ export const sessionEventSchema = z.discriminatedUnion("kind", [
     element: elementRefSchema,
     frame: frameSchema,
     kind: z.literal("click"),
-    pointer: pointerSchema,
+    pointer: pointerSchema.nullable(),
   }),
   z.object({
     atMs: z.number(),

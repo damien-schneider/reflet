@@ -6,7 +6,7 @@ import {
   interactiveTarget,
 } from "../element-ref";
 
-const DWELL_MS = 700;
+const MIN_DWELL_MS = 700;
 const POINTER_SAMPLE_INTERVAL_MS = 100;
 const SETTLE_DEBOUNCE_MS = 400;
 
@@ -34,10 +34,14 @@ function eventElement(event: Event): Element | null {
   return isPageRoot ? null : element;
 }
 
-function pointerOf(event: Event): { x: number; y: number } {
-  return event instanceof MouseEvent
-    ? { x: Math.round(event.clientX), y: Math.round(event.clientY) }
-    : { x: 0, y: 0 };
+type DwellEvent = Extract<SessionEvent, { kind: "dwell" }>;
+
+function pointerOf(event: MouseEvent): { x: number; y: number } {
+  return { x: Math.round(event.clientX), y: Math.round(event.clientY) };
+}
+
+function isPhysicalPointerClick(event: Event): event is MouseEvent {
+  return event instanceof MouseEvent && event.detail > 0;
 }
 
 function debounced(signal: AbortSignal, run: () => void): () => void {
@@ -58,7 +62,7 @@ function recordClick(options: InteractionRecorderOptions) {
         element: describeElementRef(element, options),
         frame: captureFrame(),
         kind: "click",
-        pointer: pointerOf(event),
+        pointer: isPhysicalPointerClick(event) ? pointerOf(event) : null,
       });
     }
   };
@@ -67,9 +71,24 @@ function recordClick(options: InteractionRecorderOptions) {
 function watchDwell(options: InteractionRecorderOptions, signal: AbortSignal) {
   let hovered: Element | null = null;
   let lastSampleAt = Number.NEGATIVE_INFINITY;
-  let dwellTimer: number | undefined;
-  signal.addEventListener("abort", () => window.clearTimeout(dwellTimer));
-  return (event: Event) => {
+  let entered: Omit<DwellEvent, "durationMs"> | null = null;
+
+  const settle = () => {
+    if (!entered) {
+      return;
+    }
+    const durationMs = options.atMs() - entered.atMs;
+    if (durationMs >= MIN_DWELL_MS) {
+      options.onEvent({ ...entered, durationMs });
+    }
+    entered = null;
+  };
+  signal.addEventListener("abort", settle);
+
+  const onPointerMove = (event: Event) => {
+    if (!(event instanceof MouseEvent)) {
+      return;
+    }
     const now = Date.now();
     if (now - lastSampleAt < POINTER_SAMPLE_INTERVAL_MS) {
       return;
@@ -79,26 +98,27 @@ function watchDwell(options: InteractionRecorderOptions, signal: AbortSignal) {
     if (element === hovered) {
       return;
     }
+    settle();
     hovered = element;
-    window.clearTimeout(dwellTimer);
-    if (!element) {
-      return;
+    if (element) {
+      entered = {
+        atMs: options.atMs(),
+        element: describeElementRef(element, options),
+        frame: captureFrame(),
+        kind: "dwell",
+        pointer: pointerOf(event),
+      };
     }
-    const atMs = options.atMs();
-    const pointer = pointerOf(event);
-    dwellTimer = window.setTimeout(
-      () =>
-        options.onEvent({
-          atMs,
-          durationMs: DWELL_MS,
-          element: describeElementRef(element, options),
-          frame: captureFrame(),
-          kind: "dwell",
-          pointer,
-        }),
-      DWELL_MS
-    );
   };
+
+  const onPointerLeaveWindow = (event: Event) => {
+    if (event instanceof MouseEvent && event.relatedTarget === null) {
+      settle();
+      hovered = null;
+    }
+  };
+
+  return { onPointerLeaveWindow, onPointerMove };
 }
 
 export function startInteractionRecorder(
@@ -125,8 +145,10 @@ export function startInteractionRecorder(
     })
   );
 
+  const dwell = watchDwell(options, signal);
   document.addEventListener("click", recordClick(options), listen);
-  document.addEventListener("pointermove", watchDwell(options, signal), listen);
+  document.addEventListener("pointermove", dwell.onPointerMove, listen);
+  document.addEventListener("pointerout", dwell.onPointerLeaveWindow, listen);
   window.addEventListener("scroll", recordScroll, listen);
   window.addEventListener("resize", recordViewport, listen);
   return { stop: () => controller.abort() };

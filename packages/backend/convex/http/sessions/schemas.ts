@@ -48,7 +48,7 @@ const sessionEvent = z.discriminatedUnion("kind", [
     element: elementRef,
     frame,
     kind: z.literal("click"),
-    pointer,
+    pointer: pointer.nullable(),
   }),
   z.object({
     atMs: offsetMs,

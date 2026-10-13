@@ -40,7 +40,7 @@ export const sessionEventValidator = v.union(
     element: elementRefValidator,
     frame: frameValidator,
     kind: v.literal("click"),
-    pointer: pointerValidator,
+    pointer: v.union(pointerValidator, v.null()),
   }),
   v.object({
     atMs: v.number(),
@@ -132,6 +132,37 @@ export const evidenceLinkValidator = v.object({
   url: v.string(),
 });
 
+const evidenceKindValidator = v.union(
+  v.literal("screenshot"),
+  v.literal("link")
+);
+
+const evidenceStatusValidator = v.union(
+  v.literal("available"),
+  v.literal("missing")
+);
+
+export const evidenceViewValidator = v.object({
+  atMs: v.number(),
+  element: v.union(elementRefValidator, v.null()),
+  frame: v.union(frameValidator, v.null()),
+  id: v.id("sessionEvidence"),
+  image: v.union(
+    v.object({
+      height: v.number(),
+      url: v.union(v.string(), v.null()),
+      width: v.number(),
+    }),
+    v.null()
+  ),
+  kind: evidenceKindValidator,
+  link: v.union(evidenceLinkValidator, v.null()),
+  missingReason: v.union(v.string(), v.null()),
+  note: v.union(v.string(), v.null()),
+  status: evidenceStatusValidator,
+  trigger: evidenceTriggerValidator,
+});
+
 export const sessionsTables = {
   sessionEventBatches: defineTable({
     clientKey: v.string(),
@@ -159,13 +190,13 @@ export const sessionsTables = {
         width: v.number(),
       })
     ),
-    kind: v.union(v.literal("screenshot"), v.literal("link")),
+    kind: evidenceKindValidator,
     link: v.optional(evidenceLinkValidator),
     missingReason: v.optional(v.string()),
     note: v.optional(v.string()),
     organizationId: v.id("organizations"),
     sessionId: v.id("sessions"),
-    status: v.union(v.literal("available"), v.literal("missing")),
+    status: evidenceStatusValidator,
     trigger: evidenceTriggerValidator,
   })
     .index("by_session_at", ["sessionId", "atMs"])
