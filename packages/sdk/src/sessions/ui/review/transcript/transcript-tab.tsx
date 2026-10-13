@@ -1,39 +1,14 @@
 import { type ReactNode, useState } from "react";
-import type {
-  SessionDetail,
-  SessionGap,
-  SessionMark,
-  SessionSegment,
-} from "../../../protocol";
-import { formatClock, shortDuration } from "../../session-format";
+import { copyToClipboard } from "../../../../devtools/client/clipboard";
+import { announce, reportFailure } from "../../../../devtools/client/notices";
+import type { SessionDetail } from "../../../protocol";
+import { formatClock } from "../../session-format";
 import { useSessionAction, useSessionWorkspace } from "../../session-workspace";
-import { nearestSegmentId } from "../moment/moment-labels";
 import type { ShowMoment } from "../proposals/proposal-details";
 import { type ReviewHandle, withSegment } from "../use-session-detail";
 import { SegmentRow } from "./segment-row";
-
-const GAP_LABELS: Record<SessionGap["reason"], string> = {
-  hidden: "Tab hidden",
-  interrupted: "Interrupted",
-  limit: "Time limit reached",
-  paused: "Paused",
-};
-
-export function gapLabel(gap: SessionGap): string {
-  const label = GAP_LABELS[gap.reason];
-  return gap.endMs === null
-    ? label
-    : `${label} · ${shortDuration(gap.endMs - gap.startMs)}`;
-}
-
-function markLabel(mark: SessionMark): string {
-  const note = mark.note ? ` — ${mark.note}` : "";
-  if (mark.kind === "navigation") {
-    return `Went to ${mark.url ?? mark.label}`;
-  }
-  const verb = mark.kind === "select" ? "Pointed at" : "Marked a moment on";
-  return `${verb} ${mark.label}${note}`;
-}
+import { buildTimeline } from "./timeline";
+import { transcriptForAgent } from "./transcript-export";
 
 function TimelineNote({
   atMs,
@@ -65,35 +40,9 @@ function TimelineNote({
   );
 }
 
-type TimelineItem =
-  | { atMs: number; key: string; segment: SessionSegment }
-  | { atMs: number; key: string; label: string; segmentId: string | null };
-
 interface TranscriptEditing {
   detail: SessionDetail;
   review: ReviewHandle;
-}
-
-function buildTimeline(detail: SessionDetail): TimelineItem[] {
-  return [
-    ...detail.segments.map((segment) => ({
-      atMs: segment.startMs,
-      key: `s:${segment.id}`,
-      segment,
-    })),
-    ...detail.session.gaps.map((gap) => ({
-      atMs: gap.startMs,
-      key: `g:${gap.startMs}`,
-      label: gapLabel(gap),
-      segmentId: null,
-    })),
-    ...detail.marks.map((mark) => ({
-      atMs: mark.atMs,
-      key: `m:${mark.kind}:${mark.atMs}`,
-      label: markLabel(mark),
-      segmentId: nearestSegmentId(detail.segments, mark.atMs),
-    })),
-  ].sort((earlier, later) => earlier.atMs - later.atMs);
 }
 
 function noteMomentOpener(
@@ -160,6 +109,14 @@ function AddTypedPassage({ detail, review }: TranscriptEditing) {
   );
 }
 
+function copyTranscript(detail: SessionDetail) {
+  copyToClipboard(Promise.resolve(transcriptForAgent(detail)))
+    .then(() => announce("Transcript copied with its screenshot links"))
+    .catch((error: unknown) =>
+      reportFailure("The transcript was not copied", error)
+    );
+}
+
 export function TranscriptTab({
   detail,
   onShowMoment,
@@ -177,8 +134,18 @@ export function TranscriptTab({
       <p className="dt-hint">
         Audio is deleted once transcribed. You can still correct the text.
       </p>
-      {timeline.length === 0 && (
+      {timeline.length === 0 ? (
         <p className="dt-empty">Nothing was said in this session.</p>
+      ) : (
+        <div className="dt-actions">
+          <button
+            className="dt-btn"
+            onClick={() => copyTranscript(detail)}
+            type="button"
+          >
+            Copy transcript
+          </button>
+        </div>
       )}
       <ol className="dt-ses-timeline">
         {timeline.map((item) =>

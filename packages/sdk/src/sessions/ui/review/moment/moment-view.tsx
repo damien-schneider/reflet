@@ -6,7 +6,7 @@ import type {
 } from "../../../protocol";
 import { formatClock } from "../../session-format";
 import { useFocusWhen } from "../transcript/remove-evidence";
-import { gapLabel } from "../transcript/transcript-tab";
+import { gapLabel } from "../transcript/timeline";
 import type { ReviewHandle } from "../use-session-detail";
 import { ContextCorrection } from "./context-correction";
 import {
