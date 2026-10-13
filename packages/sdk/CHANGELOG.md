@@ -5,6 +5,12 @@ All notable changes to `reflet-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.2] - 2026-10-13
+
+### Fixed
+
+- Team tools: Sign in with Reflet failed on every app that sends `Cross-Origin-Opener-Policy: same-origin` (a common security header, Helmet's default), reporting "Sign-in was cancelled." a second after the popup opened. With `same-origin-allow-popups` it still failed in Safari. Sign-in now moves the tab to reflet.app and back to the same page instead of using a popup, so it works whatever that header says, and pop-up blockers no longer get in the way.
+
 ## [0.7.1] - 2026-10-13
 
 ### Fixed
