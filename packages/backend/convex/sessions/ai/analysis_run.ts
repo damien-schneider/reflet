@@ -7,6 +7,7 @@ import {
   internalQuery,
   type QueryCtx,
 } from "../../_generated/server";
+import { loadSessionCapture } from "../views/detail";
 import {
   isCurrentRun,
   isReplaceableByAnalysis,
@@ -24,6 +25,7 @@ import {
   prepareAnalysisPrompt,
   prepareRefinementPrompt,
 } from "./analysis_prompt";
+import { attemptGeneration } from "./attempt_generation";
 import { ANALYSIS_NOT_CONFIGURED, isAnalysisConfigured } from "./configuration";
 import { loadContinuationTarget } from "./continuation/material";
 import {
@@ -31,6 +33,7 @@ import {
   resolveContinuation,
 } from "./continuation/model";
 import { prepareContinuationPrompt } from "./continuation/prompt";
+import { locateCallouts } from "./locate/run";
 
 const ANALYSIS_FAILED =
   "The AI couldn't read this session right now. Try again.";
@@ -51,43 +54,34 @@ const analysisMaterialValidator = v.object({
   transcriptRevision: v.number(),
 });
 type AnalysisMaterial = Infer<typeof analysisMaterialValidator>;
-const refinementMaterialValidator = v.object(preparedPromptFields);
+const refinementMaterialValidator = v.object({
+  ...preparedPromptFields,
+  sessionId: v.id("sessions"),
+});
 
 const loadAnalysisSource = async (
   ctx: QueryCtx,
   session: Doc<"sessions">,
   refinedProposalId: Id<"sessionProposals"> | null
 ): Promise<AnalysisSource<Id<"sessionSegments">, Id<"sessionEvidence">>> => {
-  const [segments, batches, evidence, proposals, handedOffIds] =
-    await Promise.all([
-      ctx.db
-        .query("sessionSegments")
-        .withIndex("by_session_start", (q) => q.eq("sessionId", session._id))
-        .collect(),
-      ctx.db
-        .query("sessionEventBatches")
-        .withIndex("by_session_start", (q) => q.eq("sessionId", session._id))
-        .collect(),
-      ctx.db
-        .query("sessionEvidence")
-        .withIndex("by_session_at", (q) => q.eq("sessionId", session._id))
-        .collect(),
-      ctx.db
-        .query("sessionProposals")
-        .withIndex("by_session", (q) => q.eq("sessionId", session._id))
-        .collect(),
-      loadHandedOffProposalIds(ctx, session._id),
-    ]);
+  const [capture, proposals, handedOffIds] = await Promise.all([
+    loadSessionCapture(ctx, session._id),
+    ctx.db
+      .query("sessionProposals")
+      .withIndex("by_session", (q) => q.eq("sessionId", session._id))
+      .collect(),
+    loadHandedOffProposalIds(ctx, session._id),
+  ]);
   return {
-    events: batches.flatMap(({ events }) => events),
-    evidence,
+    events: capture.events,
+    evidence: capture.evidence,
     handledProposals: proposals.filter(
       (proposal) =>
         proposal._id !== refinedProposalId &&
         proposal.mergedIntoId === undefined &&
         !isReplaceableByAnalysis(proposal, handedOffIds)
     ),
-    segments,
+    segments: capture.segments,
     title: session.title,
   };
 };
@@ -130,26 +124,14 @@ export const loadRefinementMaterial = internalQuery({
       target.session,
       target.proposal._id
     );
-    return prepareRefinementPrompt(source, {
+    const prepared = prepareRefinementPrompt(source, {
       ...target.proposal,
       clarification: target.refinement.text,
     });
+    return { ...prepared, sessionId: target.session._id };
   },
   returns: v.union(v.null(), refinementMaterialValidator),
 });
-
-const attemptGeneration = async <Output>(
-  generate: () => Promise<Output>,
-  label: string
-): Promise<Output | null> => {
-  try {
-    return await generate();
-  } catch (error) {
-    const errorClass = error instanceof Error ? error.name : typeof error;
-    console.error(`[sessions.ai] ${label} failed: ${errorClass}`);
-    return null;
-  }
-};
 
 type ApplyAnalysisArgs = FunctionArgs<
   typeof internal.sessions.ai.analysis_apply.applyAnalysis
@@ -222,9 +204,15 @@ export const runAnalysis = internalAction({
       });
       return null;
     }
+    const label = `analysis ${args.runId} of session ${args.sessionId}`;
     await ctx.runMutation(internal.sessions.ai.analysis_apply.applyAnalysis, {
       ...args,
       ...result,
+      proposals: await locateCallouts(ctx, {
+        label,
+        proposals: result.proposals,
+        sessionId: args.sessionId,
+      }),
       transcriptRevision: material.transcriptRevision,
     });
     return null;
@@ -262,9 +250,14 @@ export const runRefinement = internalAction({
       );
       return null;
     }
+    const [located] = await locateCallouts(ctx, {
+      label: `refinement ${args.runId} of proposal ${args.proposalId}`,
+      proposals: [proposal],
+      sessionId: material.sessionId,
+    });
     await ctx.runMutation(internal.sessions.ai.analysis_apply.applyRefinement, {
       ...args,
-      proposal,
+      proposal: located ?? proposal,
     });
     return null;
   },

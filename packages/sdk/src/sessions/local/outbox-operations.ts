@@ -32,7 +32,11 @@ export function operationBytes(payload: OutboxPayload): number {
     case "voice":
       return payload.audio?.size ?? SMALL_OPERATION_BYTES;
     case "evidence":
-      return (payload.image?.blob?.size ?? 0) + SMALL_OPERATION_BYTES;
+      return (
+        (payload.image?.blob?.size ?? 0) +
+        JSON.stringify(payload.evidence).length +
+        SMALL_OPERATION_BYTES
+      );
     case "events":
       return JSON.stringify(payload.events).length;
     default:

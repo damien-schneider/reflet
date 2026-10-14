@@ -14,11 +14,18 @@ import {
 } from "./session-views";
 
 export const PROPOSAL_NEED = "Show that the plan was saved";
+export const PROPOSAL_CALLOUT = "No sign the plan saved";
 export const PRECISION = "Does the saved plan survive a reload?";
 export const SOLUTION = "Show a toast after saving";
 
 export function addIntention(state: BoardState, session: BoardSession) {
   state.intentions.push({
+    callout: PROPOSAL_CALLOUT,
+    calloutEvidenceId:
+      session.evidence
+        .filter(({ status }) => status === "available")
+        .map(({ id }) => String(id))
+        .at(-1) ?? null,
     decision: "pending",
     id: `proposal-${state.intentions.length + 1}`,
     lastHandoff: null,

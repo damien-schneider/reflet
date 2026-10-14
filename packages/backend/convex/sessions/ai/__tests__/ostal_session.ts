@@ -11,6 +11,7 @@ export const WISH = "Il faudrait un historique.";
 export const SAVED_NEED = "Savoir que mes modifications sont enregistrées";
 
 export const proposalOutput = (need: string) => ({
+  callout: { label: "Aucune confirmation d'enregistrement", segment: "S2" },
   certainty: "clear",
   evidence: ["E1", "E9"],
   need,

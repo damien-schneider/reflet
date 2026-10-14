@@ -143,6 +143,7 @@ function useSaveContext(correction: Correction, chosen: ContextChoice | null) {
         segmentId: segment.id,
       });
       review.patch((detail) => withSegment(detail, saved));
+      review.reload();
       announce("Context corrected");
       onDone();
     });

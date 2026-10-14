@@ -25,7 +25,8 @@ export const WRITING_RULES = `How to write a proposal:
 7. certainty: "clear" when the author stated the need; "uncertain" when you had to interpret. When uncertain, question is ONE short question to the author that would settle it; otherwise question is null.
 8. segments: the aliases (S1…) of every passage that supports the proposal, including passages whose idea was set aside. evidence: the aliases (E1…) of screenshots or links that show what the proposal is about. Use only aliases that appear in the session.
 9. Never invent facts, screens, elements or wishes that are not in the session.
-10. Write need, observed, response, setAside, unknowns, question and reasons in the language the author speaks in the transcript.`;
+10. Write need, observed, response, setAside, unknowns, question, callout label and reasons in the language the author speaks in the transcript.
+11. callout: how the proposal reads pinned on the author's screen. segment is the alias (S1…) of the one passage whose captured context (preferably one with a screenshot alias) shows what the proposal is about: the passage where the author points at it, not a set-aside idea. label names what is wrong or wanted there in at most 6 words, without a trailing period (for example "Frame stops at 1280 px"). callout is null when no passage of the proposal has captured context.`;
 
 const ANALYSIS_RULES = `You turn a recorded walkthrough of a web app into a few proposals for the team that builds it.
 
@@ -50,6 +51,7 @@ For this update:
 - Keep it one proposal: do not split it.`;
 
 export const proposalOutputSchema = z.object({
+  callout: z.object({ label: z.string(), segment: z.string() }).nullable(),
   certainty: z.enum(["clear", "uncertain"]),
   evidence: z.array(z.string()),
   need: z.string(),
@@ -77,6 +79,8 @@ export interface ResolvedProposal<
   SegmentId extends string,
   EvidenceId extends string,
 > {
+  callout: string | null;
+  calloutSegmentId: SegmentId | null;
   certainty: ProposalOutput["certainty"];
   evidenceIds: EvidenceId[];
   need: string;
@@ -172,7 +176,16 @@ export const resolveProposal = <
   if (need === null) {
     return null;
   }
+  const callout = output.callout
+    ? cleanText(output.callout.label, SESSION_TEXT_LIMITS.callout)
+    : null;
+  const [calloutSegmentId = null] =
+    callout && output.callout
+      ? resolveAliases([output.callout.segment], shown.segmentIds, "S")
+      : [];
   return {
+    callout,
+    calloutSegmentId,
     certainty: output.certainty,
     evidenceIds: resolveAliases(output.evidence, shown.evidenceIds, "E"),
     need,

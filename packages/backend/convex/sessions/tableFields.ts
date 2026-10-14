@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { intentionTables } from "./intentions/tableFields";
 import {
   analysisStateValidator,
+  calloutTargetValidator,
   contextChoiceValidator,
   elementRefValidator,
   evidenceKindValidator,
@@ -53,6 +54,7 @@ export const sessionsTables = {
     sessionId: v.id("sessions"),
     status: evidenceStatusValidator,
     trigger: evidenceTriggerValidator,
+    visibleElements: v.optional(v.array(elementRefValidator)),
   })
     .index("by_session_at", ["sessionId", "atMs"])
     .index("by_session_client_key", ["sessionId", "clientKey"])
@@ -92,6 +94,9 @@ export const sessionsTables = {
     analysisRunId: v.optional(v.string()),
     attachedToId: v.optional(v.id("sessionProposals")),
     basedOnTranscriptRevision: v.number(),
+    callout: v.optional(v.string()),
+    calloutSegmentId: v.optional(v.id("sessionSegments")),
+    calloutTarget: v.optional(calloutTargetValidator),
     certainty: v.union(v.literal("clear"), v.literal("uncertain")),
     clarifications: v.array(v.object({ at: v.number(), text: v.string() })),
     clientKey: v.optional(v.string()),

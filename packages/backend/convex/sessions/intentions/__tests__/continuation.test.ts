@@ -38,7 +38,12 @@ async function continueWithProposedChanges(
     contributionId: contribution._id,
     segmentId,
   });
-  return { ...world, contributionId: contribution._id, sessionB };
+  return {
+    ...world,
+    contributionId: contribution._id,
+    contributionSessionId: contribution.sessionId,
+    sessionB,
+  };
 }
 
 const loadIntention = async (world: IntentionWorld) => {
@@ -77,6 +82,63 @@ describe("continuing an intention in a later session", () => {
       detail.continuation?.contribution.changes.map(({ decision }) => decision)
     ).toEqual(["accepted", "rejected"]);
     expect(detail.continuation?.intention?.revision).toBe(3);
+  });
+
+  test("a need reworded by accepting or detaching a change drops the callout but keeps its passage", async () => {
+    const world = await continueWithProposedChanges();
+    const reworded = {
+      ...precision,
+      field: "need" as const,
+      id: "change-need",
+      kind: "outcome" as const,
+      operation: "replace" as const,
+      value: "Être sûr que le serveur a confirmé la sauvegarde",
+    };
+    const segmentId = await seedSpokenPassage(world.t, {
+      sessionId: world.contributionSessionId,
+      startMs: 9000,
+      text: "Je veux être sûr que le serveur confirme.",
+    });
+    await world.t.run((ctx) =>
+      ctx.db.patch(world.intentionId, {
+        callout: "Aucune confirmation",
+        calloutSegmentId: segmentId,
+      })
+    );
+    await seedPendingChanges(world.t, {
+      changes: [precision, solutionChange, reworded],
+      contributionId: world.contributionId,
+      segmentId,
+    });
+
+    const accepted = await world.a.post(ACCEPT, {
+      changes: [{ changeId: reworded.id }],
+      contributionId: world.contributionId,
+      expectedRevision: 2,
+    });
+
+    expect(accepted.status).toBe(200);
+    const intention = await loadIntention(world);
+    expect(intention).toMatchObject({
+      calloutSegmentId: segmentId,
+      need: reworded.value,
+    });
+    expect(intention.callout).toBeUndefined();
+
+    await world.t.run((ctx) =>
+      ctx.db.patch(world.intentionId, { callout: "Confirmation du serveur" })
+    );
+    const detached = await world.a.post("/api/v1/sessions/intentions/detach", {
+      contributionId: world.contributionId,
+    });
+
+    expect(detached.status).toBe(200);
+    const restored = await loadIntention(world);
+    expect(restored).toMatchObject({
+      calloutSegmentId: segmentId,
+      need: SAVED_NEED,
+    });
+    expect(restored.callout).toBeUndefined();
   });
 
   test("shows on the first session which later session changed the intention", async () => {

@@ -44,6 +44,7 @@ function RemoveConfirmation({
     );
     if (removed !== null) {
       removal.review.patch((detail) => withEvidence(detail, removed));
+      removal.review.reload();
       removal.onRemoved(removed.id);
       announce("Screenshot removed");
     }

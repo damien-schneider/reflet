@@ -16,6 +16,8 @@ export interface BoardSession {
 }
 
 export interface BoardIntention {
+  callout: string | null;
+  calloutEvidenceId: string | null;
   decision: Decision;
   id: string;
   lastHandoff: { at: number; response: string | null; revision: number } | null;
@@ -72,6 +74,7 @@ export interface BoardState {
   collectionCalls: { action: string; atMs: number }[];
   contributions: BoardContribution[];
   events: { atMs: number; kind: string }[];
+  evidenceVisibleElements: unknown[];
   handoffs: BoardHandoff[];
   intentions: BoardIntention[];
   sessions: BoardSession[];
@@ -135,6 +138,11 @@ export function summary(session: BoardSession, intentions: BoardIntention[]) {
 export function proposalView(intention: BoardIntention) {
   return {
     attachment: null,
+    callout: intention.callout,
+    calloutSegmentId: intention.segmentIds[0] ?? null,
+    calloutTarget: intention.calloutEvidenceId
+      ? { element: null, evidenceId: intention.calloutEvidenceId }
+      : null,
     certainty: "clear",
     clarifications: [],
     decision: intention.decision,

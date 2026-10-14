@@ -165,6 +165,8 @@ describe("session analysis", () => {
     );
     expect(created).toMatchObject({
       analysisRunId: runId,
+      callout: "Aucune confirmation d'enregistrement",
+      calloutSegmentId: ids.correctionId,
       decision: "pending",
       evidenceIds: [ids.evidenceId],
       origin: "ai",

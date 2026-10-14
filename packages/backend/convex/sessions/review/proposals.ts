@@ -155,6 +155,7 @@ export const edit = internalMutation({
     const now = Date.now();
     const needChanged = args.need !== undefined && args.need !== proposal.need;
     await ctx.db.patch(proposal._id, {
+      callout: needChanged ? undefined : proposal.callout,
       formulation: needChanged ? "human" : proposal.formulation,
       humanTouchedAt: now,
       need: args.need ?? proposal.need,

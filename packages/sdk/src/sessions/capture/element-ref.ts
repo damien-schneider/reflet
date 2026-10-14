@@ -20,7 +20,7 @@ const MAX_URL_CHARS = 2000;
 const MAX_PAGE_TITLE_CHARS = 300;
 const NAMING_ATTRIBUTES = ["aria-label", "placeholder", "title", "name"];
 
-const INTERACTIVE_SELECTOR = [
+export const INTERACTIVE_SELECTOR = [
   "a[href]",
   "button",
   "input",

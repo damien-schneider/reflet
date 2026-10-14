@@ -14,6 +14,7 @@ import {
   describeElementRef,
   SESSION_MASK_SELECTORS,
 } from "../element-ref";
+import { visibleElements } from "./visible-elements";
 
 const NAVIGATION_SETTLE_MS = 1500;
 const CAPTURES_KEPT_FOR_MARKS = 20;
@@ -32,6 +33,7 @@ export interface CapturedEvidence {
   missingReason: string | null;
   note: string | null;
   trigger: EvidenceTrigger;
+  visibleElements: ElementRef[];
 }
 
 export interface EvidenceRequest {
@@ -53,14 +55,17 @@ export interface EvidenceSchedulerOptions {
   includeSource: boolean;
   limits: Pick<
     SessionLimits,
-    "maxEvidence" | "maxImageBytes" | "minAutoCaptureIntervalMs"
+    | "maxEvidence"
+    | "maxImageBytes"
+    | "maxVisibleElements"
+    | "minAutoCaptureIntervalMs"
   >;
   onEvidence: (evidence: CapturedEvidence) => void;
 }
 
 type EvidenceBase = Omit<
   CapturedEvidence,
-  "capturedAtMs" | "image" | "missingReason"
+  "capturedAtMs" | "image" | "missingReason" | "visibleElements"
 >;
 
 const withoutImage = (
@@ -71,15 +76,26 @@ const withoutImage = (
   capturedAtMs: null,
   image: null,
   missingReason,
+  visibleElements: [],
 });
 
 async function shoot(
   base: EvidenceBase,
   options: EvidenceSchedulerOptions
 ): Promise<CapturedEvidence> {
+  let recorded: ElementRef[] = [];
+  const max = options.limits.maxVisibleElements;
   const image = await captureViewport({
     excludeSelectors: SESSION_MASK_SELECTORS,
-    prepareClone: blankFieldValues,
+    prepareClone: (clone) => {
+      blankFieldValues(clone);
+      if (max !== undefined) {
+        recorded = visibleElements({
+          includeSource: options.includeSource,
+          max,
+        });
+      }
+    },
   });
   releaseCapture(image);
   if (!image) {
@@ -95,6 +111,7 @@ async function shoot(
     frame: captureFrame(),
     image: { blob, height, width },
     missingReason: null,
+    visibleElements: recorded,
   };
 }
 

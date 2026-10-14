@@ -10,6 +10,7 @@ import type { ProposalActions } from "./use-proposal-actions";
 export type ShowMoment = (segmentId: string, opener?: HTMLElement) => void;
 
 export interface ReviewNavigation {
+  onOpenIntention: (proposalId: string) => void;
   onOpenSession: (sessionId: string) => void;
   onShowMoment: ShowMoment;
   onStarted: () => void;

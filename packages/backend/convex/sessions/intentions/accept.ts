@@ -100,8 +100,10 @@ async function applyAccepted(
   const now = Date.now();
   const revision = intention.revision + 1;
   const result = applyChanges(valuesOf(intention), accepted);
+  const needChanged = result.values.need !== intention.need;
   await ctx.db.patch(intention._id, {
     ...intentionPatchOf(result.values),
+    callout: needChanged ? undefined : intention.callout,
     formulation: formulationAfter(options, intention.formulation),
     humanTouchedAt: now,
     revision,

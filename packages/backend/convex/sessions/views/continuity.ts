@@ -10,6 +10,7 @@ import { resolveStoredSegment, toLinkableEvidence } from "../linking";
 import {
   loadSessionEvents,
   loadSessionEvidence,
+  type SessionCapture,
   shapeEvidence,
   shapeProposal,
 } from "./detail";
@@ -23,6 +24,7 @@ export async function shapeProposalList(
   ctx: QueryCtx,
   options: {
     actor: SessionActor;
+    capture: SessionCapture;
     handoffs: Doc<"sessionHandoffs">[];
     proposals: Doc<"sessionProposals">[];
     session: Doc<"sessions">;
@@ -33,16 +35,16 @@ export async function shapeProposalList(
   );
   return await Promise.all(
     sorted.map(async (proposal) =>
-      shapeProposal(
-        proposal,
-        options.handoffs,
-        await loadProposalLinks(ctx, {
+      shapeProposal(proposal, {
+        capture: options.capture,
+        handoffs: options.handoffs,
+        links: await loadProposalLinks(ctx, {
           handoffs: options.handoffs,
           proposal,
           session: options.session,
           viewer: options.actor,
-        })
-      )
+        }),
+      })
     )
   );
 }

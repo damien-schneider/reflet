@@ -93,6 +93,10 @@ export async function detachContribution(
     if (reverted.changed || reverted.conflicted) {
       await ctx.db.patch(intention._id, {
         ...intentionPatchOf(reverted.values),
+        callout:
+          reverted.values.need === intention.need
+            ? intention.callout
+            : undefined,
         humanTouchedAt: now,
         needsReview: intention.needsReview || reverted.conflicted,
         revision: intention.revision + (reverted.changed ? 1 : 0),

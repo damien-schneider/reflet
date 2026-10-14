@@ -38,6 +38,7 @@ const LIMITS = {
   maxSegmentBytes: 1_100_000,
   maxSegmentMs: 30_000,
   maxSegments: 400,
+  maxVisibleElements: 80,
   minAutoCaptureIntervalMs: 5000,
   warnBeforeLimitMs: 120_000,
 };
@@ -194,6 +195,7 @@ function addEvidence(state: BoardState, body: Record<string, unknown>) {
   const session = findSession(state, body.sessionId);
   const total = state.sessions.flatMap(({ evidence }) => evidence).length;
   const added = evidenceView(body, `evidence-${total + 1}`);
+  state.evidenceVisibleElements.push(body.visibleElements);
   session.evidence.push(added);
   return { evidence: added };
 }
@@ -292,6 +294,7 @@ export async function mockSessionBoard(page: Page): Promise<SessionBoard> {
     collectionCalls: [],
     contributions: [],
     events: [],
+    evidenceVisibleElements: [],
     handoffs: [],
     intentions: [],
     sessions: [],

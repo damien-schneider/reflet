@@ -1,16 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { captureViewport } from "../../../feedback/core/capture";
 import type { CapturedImage } from "../../../feedback/types";
-import { blankFieldValues } from "../blank-fields";
 import { SESSION_MASK_SELECTORS } from "../element-ref";
 import {
   type CapturedEvidence,
   createEvidenceScheduler,
+  type EvidenceSchedulerOptions,
 } from "./evidence-scheduler";
 
 vi.mock("../../../feedback/core/capture", () => ({
   captureViewport: vi.fn(),
   releaseCapture: vi.fn(),
+  WIDGET_MARKER: "data-reflet-widget",
 }));
 
 const LIMITS = {
@@ -29,7 +30,7 @@ function screenshot(bytes = 100): CapturedImage {
   };
 }
 
-function startScheduler(limits = LIMITS) {
+function startScheduler(limits: EvidenceSchedulerOptions["limits"] = LIMITS) {
   const evidence: CapturedEvidence[] = [];
   const scheduler = createEvidenceScheduler({
     atMs: () => Date.now(),
@@ -48,17 +49,42 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers();
   vi.mocked(captureViewport).mockReset();
+  document.body.replaceChildren();
 });
+
+function cloneWithTypedText(): HTMLElement {
+  const clone = document.createElement("div");
+  const field = document.createElement("input");
+  field.value = "typed secret";
+  clone.append(field);
+  return clone;
+}
+
+function showButtonOnScreen(name: string): void {
+  const button = document.createElement("button");
+  button.textContent = name;
+  button.getBoundingClientRect = () => new DOMRect(10, 10, 80, 30);
+  document.body.append(button);
+}
+
+function cloneWhenCaptured(onCloned: () => void): void {
+  vi.mocked(captureViewport).mockImplementation((options) => {
+    options?.prepareClone?.(cloneWithTypedText());
+    onCloned();
+    return Promise.resolve(screenshot());
+  });
+}
 
 describe("createEvidenceScheduler", () => {
   it("captures a masked screenshot for an explicit trigger", async () => {
     const { evidence, scheduler } = startScheduler();
     const clientKey = scheduler.capture({ note: "Here", trigger: "mark" });
     await vi.runAllTimersAsync();
-    expect(captureViewport).toHaveBeenCalledWith({
-      excludeSelectors: SESSION_MASK_SELECTORS,
-      prepareClone: blankFieldValues,
-    });
+    const options = vi.mocked(captureViewport).mock.calls[0]?.[0];
+    expect(options?.excludeSelectors).toEqual(SESSION_MASK_SELECTORS);
+    const clone = cloneWithTypedText();
+    options?.prepareClone?.(clone);
+    expect(clone.querySelector("input")?.value).toBe("");
     expect(evidence).toEqual([
       expect.objectContaining({
         clientKey,
@@ -68,6 +94,29 @@ describe("createEvidenceScheduler", () => {
         trigger: "mark",
       }),
     ]);
+  });
+
+  it("records the elements on screen when the page is cloned", async () => {
+    showButtonOnScreen("Save");
+    cloneWhenCaptured(() => showButtonOnScreen("Added after the clone"));
+    const { evidence, scheduler } = startScheduler({
+      ...LIMITS,
+      maxVisibleElements: 5,
+    });
+    scheduler.capture({ trigger: "mark" });
+    await vi.runAllTimersAsync();
+    expect(evidence[0]?.visibleElements).toEqual([
+      expect.objectContaining({ label: 'button "Save"', role: "button" }),
+    ]);
+  });
+
+  it("records no elements when the limit is not set", async () => {
+    showButtonOnScreen("Save");
+    cloneWhenCaptured(() => undefined);
+    const { evidence, scheduler } = startScheduler();
+    scheduler.capture({ trigger: "mark" });
+    await vi.runAllTimersAsync();
+    expect(evidence[0]?.visibleElements).toEqual([]);
   });
 
   it("captures the page 1.5 s after the last navigation", async () => {

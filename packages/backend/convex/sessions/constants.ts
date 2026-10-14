@@ -52,11 +52,13 @@ export const SESSION_LIMITS = {
   maxSegmentBytes: 1_100_000,
   maxSegmentMs: 30_000,
   maxSegments: 400,
+  maxVisibleElements: 80,
   minAutoCaptureIntervalMs: 10_000,
   warnBeforeLimitMs: 5 * MINUTE_MS,
 } as const;
 
 export const SESSION_TEXT_LIMITS = {
+  callout: 60,
   clarification: 1000,
   label: 160,
   linkAccess: 200,

@@ -1,5 +1,10 @@
 import { expect, type Locator, type Page, test } from "@playwright/test";
-import { PRECISION, PROPOSAL_NEED, SOLUTION } from "./sdk/intention-board";
+import {
+  PRECISION,
+  PROPOSAL_CALLOUT,
+  PROPOSAL_NEED,
+  SOLUTION,
+} from "./sdk/intention-board";
 import {
   CONTINUATION_TEXT,
   copiedText,
@@ -56,9 +61,21 @@ function firstSession(board: SessionBoard) {
   return session;
 }
 
-async function recordMarkedPassage(page: Page, activate: Activate) {
+async function recordMarkedPassage(
+  page: Page,
+  activate: Activate,
+  board: SessionBoard
+) {
   await expect(page.locator(RECORDING_BAR)).toContainText("00:02");
   await activate(page.getByRole("button", { name: "Mark moment" }));
+  await expect
+    .poll(
+      () =>
+        board.state.sessions
+          .at(-1)
+          ?.evidence.filter(({ status }) => status === "available").length
+    )
+    .toBe(SCREENSHOTS_PER_SESSION);
   await activate(page.getByRole("button", { name: "Finish" }));
   await expect(
     page.getByRole("button", { name: `Evidence (${SCREENSHOTS_PER_SESSION})` })
@@ -80,8 +97,11 @@ async function correctPassageContext(page: Page, activate: Activate) {
 
 async function confirmAndHandOff(page: Page, activate: Activate) {
   await activate(page.getByRole("button", { name: "Intentions (1)" }));
-  await activate(page.getByRole("button", { name: "Confirm" }));
+  await activate(
+    page.getByRole("button", { name: `Confirm “${PROPOSAL_CALLOUT}”` })
+  );
   await expect(page.getByText(`Confirmed “${PROPOSAL_NEED}”`)).toBeVisible();
+  await activate(page.getByRole("button", { name: "Details" }));
   await expect(page.getByText("No considered response yet.")).toBeVisible();
   await activate(page.getByRole("button", { name: "Hand off 1 confirmed" }));
   await activate(page.getByRole("button", { name: "Prepare brief" }));
@@ -91,12 +111,16 @@ async function confirmAndHandOff(page: Page, activate: Activate) {
   await activate(page.getByRole("button", { name: "← Back to review" }));
 }
 
-async function continueIntention(page: Page, activate: Activate) {
+async function continueIntention(
+  page: Page,
+  activate: Activate,
+  board: SessionBoard
+) {
   await activate(page.getByRole("button", { name: "Continue this intention" }));
   const recap = page.getByRole("region", { name: "Continue this intention" });
   await expect(recap.getByText(NOTHING_SENT)).toBeVisible();
   await activate(recap.getByRole("button", { name: "Start session" }));
-  await recordMarkedPassage(page, activate);
+  await recordMarkedPassage(page, activate, board);
 }
 
 function changeRow(page: Page, kind: string) {
@@ -123,6 +147,9 @@ async function decideProposedChanges(page: Page, activate: Activate) {
 
 async function handOffNewRevision(page: Page, activate: Activate) {
   await activate(page.getByRole("button", { name: "Open the intention" }));
+  await activate(
+    page.getByRole("button", { exact: true, name: PROPOSAL_CALLOUT })
+  );
   await expect(page.getByText(PRECISION).first()).toBeVisible();
   await activate(page.getByRole("button", { name: "Hand off 1 confirmed" }));
   await expect(page.getByText(CHANGED_SINCE_FIRST_BRIEF)).toBeVisible();
@@ -139,7 +166,10 @@ async function walkIntentionJourney(page: Page, activate: Activate) {
   await fakeMicrophone(page, "granted");
   await openSessions(page);
   await activate(page.getByRole("button", { name: "Start session" }));
-  await recordMarkedPassage(page, activate);
+  await recordMarkedPassage(page, activate, board);
+  const recordedElements = JSON.stringify(board.state.evidenceVisibleElements);
+  expect(recordedElements).toContain('h1 \\"Plans & billing\\"');
+  expect(recordedElements).not.toContain("Mark moment");
 
   await correctPassageContext(page, activate);
   await confirmAndHandOff(page, activate);
@@ -147,7 +177,7 @@ async function walkIntentionJourney(page: Page, activate: Activate) {
   expect(intention?.decision).toBe("kept");
   expect(intention?.response).toBeNull();
 
-  await continueIntention(page, activate);
+  await continueIntention(page, activate, board);
   await decideProposedChanges(page, activate);
   await handOffNewRevision(page, activate);
   expect(

@@ -5,6 +5,7 @@ import {
   type MutationCtx,
   type QueryCtx,
 } from "../../_generated/server";
+import { calloutTargetValidator } from "../validators";
 import {
   applyContinuationResult,
   continuationResultValidator,
@@ -15,6 +16,9 @@ const TRANSCRIPT_CHANGED =
 const MIN_MERGE_GROUP_SIZE = 2;
 
 export const resolvedProposalValidator = v.object({
+  callout: v.union(v.string(), v.null()),
+  calloutSegmentId: v.union(v.id("sessionSegments"), v.null()),
+  calloutTarget: v.optional(calloutTargetValidator),
   certainty: v.union(v.literal("clear"), v.literal("uncertain")),
   evidenceIds: v.array(v.id("sessionEvidence")),
   need: v.string(),
@@ -83,6 +87,9 @@ export const loadRefiningProposal = async (
 
 const proposalContent = (proposal: ResolvedProposalValue) => ({
   ...proposal,
+  callout: proposal.callout ?? undefined,
+  calloutSegmentId: proposal.calloutSegmentId ?? undefined,
+  calloutTarget: proposal.calloutTarget,
   question: proposal.question ?? undefined,
   response: proposal.response ?? undefined,
 });

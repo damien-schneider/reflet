@@ -52,7 +52,7 @@ export function startPayload(draft: StoredDraft): OutboxPayload {
 }
 
 export function evidencePayload(captured: CapturedEvidence): OutboxPayload {
-  const { element, image, missingReason, note } = captured;
+  const { element, image, missingReason, note, visibleElements } = captured;
   return {
     evidence: {
       atMs: captured.atMs,
@@ -63,6 +63,7 @@ export function evidencePayload(captured: CapturedEvidence): OutboxPayload {
       missingReason: missingReason ?? undefined,
       note: note ?? undefined,
       trigger: captured.trigger,
+      visibleElements: visibleElements.length > 0 ? visibleElements : undefined,
     },
     image: image ? { ...image, storageId: null } : null,
     kind: "evidence",

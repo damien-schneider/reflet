@@ -128,6 +128,7 @@ export interface AddEvidenceBody {
   note?: string;
   sessionId: string;
   trigger: EvidenceTrigger;
+  visibleElements?: ElementRef[];
 }
 
 export interface CreateProposalBody {

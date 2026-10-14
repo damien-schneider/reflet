@@ -85,6 +85,7 @@ export const register = internalMutation({
     note: v.optional(v.string()),
     sessionId: v.string(),
     trigger: evidenceTriggerValidator,
+    visibleElements: v.optional(v.array(elementRefValidator)),
   },
   handler: async (ctx, args) => {
     const session = await loadSession(ctx, {
@@ -122,6 +123,7 @@ export const register = internalMutation({
       sessionId: session._id,
       status: isAvailable ? "available" : "missing",
       trigger: args.trigger,
+      visibleElements: args.visibleElements,
     });
     await ctx.db.patch(session._id, {
       updatedAt: now,
@@ -142,6 +144,21 @@ export const register = internalMutation({
 const REMOVED_REASON = "Removed from the session.";
 const ONLY_SCREENSHOTS = "Only screenshots can be removed.";
 
+async function forgetCalloutsOn(
+  ctx: MutationCtx,
+  evidence: Doc<"sessionEvidence">
+) {
+  const proposals = await ctx.db
+    .query("sessionProposals")
+    .withIndex("by_session", (q) => q.eq("sessionId", evidence.sessionId))
+    .collect();
+  for (const proposal of proposals) {
+    if (proposal.calloutTarget?.evidenceId === evidence._id) {
+      await ctx.db.patch(proposal._id, { calloutTarget: undefined });
+    }
+  }
+}
+
 export const remove = internalMutation({
   args: { actor: sessionActorValidator, evidenceId: v.string() },
   handler: async (ctx, args) => {
@@ -161,8 +178,10 @@ export const remove = internalMutation({
       image: undefined,
       missingReason: REMOVED_REASON,
       status: "missing" as const,
+      visibleElements: undefined,
     };
     await ctx.db.patch(evidence._id, removal);
+    await forgetCalloutsOn(ctx, evidence);
     await ctx.db.patch(session._id, { updatedAt: Date.now() });
     return { evidence: await shapeEvidence(ctx, { ...evidence, ...removal }) };
   },

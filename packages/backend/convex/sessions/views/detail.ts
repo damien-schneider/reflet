@@ -1,6 +1,7 @@
 import type { Doc, Id } from "../../_generated/dataModel";
 import type { QueryCtx } from "../../_generated/server";
 import type { SessionActor } from "../access";
+import { calloutPlacement } from "../ai/locate/candidates";
 import { pagePath } from "../formatters";
 import {
   type ResolvedContext,
@@ -60,11 +61,28 @@ export async function loadSessionEvidence(
     .collect();
 }
 
-export function shapeSegments(input: {
+export interface SessionCapture {
   events: SessionEventValue[];
   evidence: Doc<"sessionEvidence">[];
   segments: Doc<"sessionSegments">[];
-}) {
+}
+
+export async function loadSessionCapture(
+  ctx: QueryCtx,
+  sessionId: Id<"sessions">
+): Promise<SessionCapture> {
+  const [events, evidence, segments] = await Promise.all([
+    loadSessionEvents(ctx, sessionId),
+    loadSessionEvidence(ctx, sessionId),
+    ctx.db
+      .query("sessionSegments")
+      .withIndex("by_session_start", (q) => q.eq("sessionId", sessionId))
+      .collect(),
+  ]);
+  return { events, evidence, segments };
+}
+
+export function shapeSegments(input: SessionCapture) {
   const evidence = input.evidence.map((item) =>
     toLinkableEvidence(item, item._id)
   );
@@ -134,11 +152,18 @@ export function handedOffRevisionOf(
 
 export function shapeProposal(
   proposal: Doc<"sessionProposals">,
-  handoffs: Doc<"sessionHandoffs">[],
-  links: ProposalLinks
+  related: {
+    capture: SessionCapture;
+    handoffs: Doc<"sessionHandoffs">[];
+    links: ProposalLinks;
+  }
 ) {
+  const { capture, handoffs, links } = related;
   return {
     ...links,
+    callout: proposal.callout ?? null,
+    calloutSegmentId: proposal.calloutSegmentId ?? null,
+    calloutTarget: calloutPlacement(proposal, capture),
     certainty: proposal.certainty,
     clarifications: proposal.clarifications,
     decision: proposal.decision,
@@ -252,15 +277,18 @@ export async function loadProposalView(
   if (!(proposal && session)) {
     throw new Error("Proposal vanished during the write");
   }
-  const handoffs = await ctx.db
-    .query("sessionHandoffs")
-    .withIndex("by_session", (q) => q.eq("sessionId", proposal.sessionId))
-    .collect();
+  const [handoffs, capture] = await Promise.all([
+    ctx.db
+      .query("sessionHandoffs")
+      .withIndex("by_session", (q) => q.eq("sessionId", proposal.sessionId))
+      .collect(),
+    loadSessionCapture(ctx, proposal.sessionId),
+  ]);
   const links = await loadProposalLinks(ctx, {
     handoffs,
     proposal,
     session,
     viewer: options.viewer,
   });
-  return { proposal: shapeProposal(proposal, handoffs, links) };
+  return { proposal: shapeProposal(proposal, { capture, handoffs, links }) };
 }

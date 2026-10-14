@@ -11,6 +11,7 @@ import {
   reviewLinks,
 } from "../../testing/session-fixtures";
 import { SessionReview } from "../session-review";
+import { withEvidence } from "../use-session-detail";
 
 vi.mock("../../../local/local-sessions", () => ({
   purgeAccount: vi.fn(),
@@ -28,7 +29,14 @@ afterEach(cleanup);
 const REMOVE_LABEL = "Remove screenshot at 02:14";
 
 async function openEvidence(detail: SessionDetail, api = fakeApi()) {
-  api.detail = vi.fn().mockResolvedValue(detail);
+  let served = detail;
+  const { removeEvidence } = api;
+  api.removeEvidence = vi.fn(async (evidenceId: string) => {
+    const removed = await removeEvidence(evidenceId);
+    served = withEvidence(served, removed);
+    return removed;
+  });
+  api.detail = vi.fn(async () => served);
   renderInWorkspace(
     <SessionReview links={reviewLinks()} sessionId="session_1" />,
     fakeWorkspace({ api })

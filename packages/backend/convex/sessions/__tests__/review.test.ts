@@ -10,6 +10,8 @@ import {
   sessionProposalSchema,
 } from "../../../../sdk/src/sessions/protocol";
 import { internal } from "../../_generated/api";
+import type { Id } from "../../_generated/dataModel";
+import { seedSegment } from "../ai/__tests__/session_fixtures";
 import {
   pngBlob,
   type SessionClient,
@@ -65,12 +67,33 @@ describe("session review", () => {
   });
 
   test("editing needs the current revision", async () => {
-    const { a } = await setupSessionWorld();
+    const { a, t } = await setupSessionWorld();
     const sessionId = await startSession(a);
     const created = await createProposal(a, {
       clientKey: "p-1",
       need: "Keep the cart",
       sessionId,
+    });
+    const replay = await a.post("/api/v1/sessions/proposals/create", {
+      clientKey: "p-1",
+      need: "Keep the cart",
+      sessionId,
+    });
+    expect(replay.body).toMatchObject({
+      proposal: { callout: null, calloutSegmentId: null },
+    });
+    const proposalId = created.id as Id<"sessionProposals">;
+    const segmentId = await t.run(async (ctx) => {
+      const session = await ctx.db.get(sessionId as Id<"sessions">);
+      if (!session) {
+        throw new Error("Session missing");
+      }
+      const segment = await seedSegment(ctx, session);
+      await ctx.db.patch(proposalId, {
+        callout: "Panier vidé au rechargement",
+        calloutSegmentId: segment._id,
+      });
+      return segment._id;
     });
     const edit = (expectedRevision: number) =>
       a.post("/api/v1/sessions/proposals/edit", {
@@ -89,6 +112,9 @@ describe("session review", () => {
       revision: created.revision + 1,
       unknowns: ["Which devices?"],
     });
+    const stored = await t.run((ctx) => ctx.db.get(proposalId));
+    expect(stored).toMatchObject({ calloutSegmentId: segmentId });
+    expect(stored?.callout).toBeUndefined();
     expect((await edit(created.revision)).status).toBe(409);
   });
 

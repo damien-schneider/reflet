@@ -208,6 +208,7 @@ describe("prepareRefinementPrompt", () => {
 
 describe("resolveProposals", () => {
   const proposal = (segments: string[], evidence: string[]) => ({
+    callout: null,
     certainty: "clear" as const,
     evidence,
     need: "Know my changes are saved",
@@ -230,6 +231,40 @@ describe("resolveProposals", () => {
 
     expect(resolved.proposals[0]?.segmentIds).toEqual(["seg-b", "seg-a"]);
     expect(resolved.proposals[0]?.evidenceIds).toEqual(["ev-a"]);
+  });
+
+  test("resolves the callout label and its passage, keeping the label when the alias is unknown", () => {
+    const shown = { evidenceIds: [], segmentIds: ["seg-a", "seg-b"] };
+    const resolved = resolveProposals(
+      {
+        mergeSuggestions: [],
+        proposals: [
+          {
+            ...proposal(["S1"], []),
+            callout: { label: " Cadre limité à 1280 px ", segment: "S2" },
+          },
+          {
+            ...proposal(["S1"], []),
+            callout: { label: "Cadre limité à 1280 px", segment: "S9" },
+          },
+          { ...proposal(["S1"], []), callout: { label: "  ", segment: "S1" } },
+          proposal(["S1"], []),
+        ],
+      },
+      shown
+    );
+
+    expect(
+      resolved.proposals.map(({ callout, calloutSegmentId }) => ({
+        callout,
+        calloutSegmentId,
+      }))
+    ).toEqual([
+      { callout: "Cadre limité à 1280 px", calloutSegmentId: "seg-b" },
+      { callout: "Cadre limité à 1280 px", calloutSegmentId: null },
+      { callout: null, calloutSegmentId: null },
+      { callout: null, calloutSegmentId: null },
+    ]);
   });
 
   test("drops empty needs and keeps merge groups pointing at kept proposals", () => {

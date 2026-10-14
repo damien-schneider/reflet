@@ -44,6 +44,12 @@ function DisclosureList() {
           elements marked <code>data-reflet-redact</code> are hidden. Other text
           on screen, rich-text editors included, stays visible.
         </li>
+        <li>
+          With each screenshot, the names and positions of the buttons, links,
+          headings and images it shows, so the AI can frame the one you talk
+          about. Hidden elements and anything in or around typed text are left
+          out.
+        </li>
         <li>Not recorded: keystrokes, other tabs or apps, network calls.</li>
         <li>Pausing stops everything.</li>
         <li>A session stays private to you until you share it.</li>

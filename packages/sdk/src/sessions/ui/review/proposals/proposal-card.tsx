@@ -128,16 +128,19 @@ function DecisionButtons({
   onEdit: () => void;
   proposal: SessionProposal;
 }) {
-  const decide = (decision: ProposalDecision) => () =>
-    context.actions.decide(proposal, decision);
+  const decide = (decision: ProposalDecision) => () => {
+    if (proposal.decision !== decision) {
+      context.actions.decide(proposal, decision);
+    }
+  };
   const isKept = proposal.decision === "kept";
   return (
     <div className="dt-actions">
       <button
+        aria-disabled={isKept}
         aria-pressed={isKept}
         className="dt-btn"
         data-variant="primary"
-        disabled={isKept}
         onClick={decide("kept")}
         type="button"
       >
@@ -146,11 +149,11 @@ function DecisionButtons({
       </button>
       {ICON_DECISIONS.map(({ decision, icon, label }) => (
         <button
+          aria-disabled={proposal.decision === decision}
           aria-label={label}
           aria-pressed={proposal.decision === decision}
           className="dt-btn"
           data-icon-only
-          disabled={proposal.decision === decision}
           key={decision}
           onClick={decide(decision)}
           title={label}

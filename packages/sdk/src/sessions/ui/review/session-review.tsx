@@ -5,7 +5,7 @@ import { HandoffView } from "../handoff/handoff-view";
 import { ContinuationHeader } from "./continuation/update-card";
 import { MomentView } from "./moment/moment-view";
 import type { ProposalContext, ShowMoment } from "./proposals/proposal-details";
-import { ProposalsTab } from "./proposals/proposals-tab";
+import { type IntentionView, ProposalsTab } from "./proposals/proposals-tab";
 import { useProposalActions } from "./proposals/use-proposal-actions";
 import { ReviewHeader } from "./review-header";
 import { StatusStrip } from "./status-strip";
@@ -87,16 +87,22 @@ function ReviewTabs({
 
 function ReviewTabPanel({
   context,
-  tab,
+  place,
 }: {
   context: ProposalContext;
-  tab: ReviewTab;
+  place: ReviewPlace;
 }) {
   const { detail, navigation, review } = context;
-  if (tab === "proposals") {
-    return <ProposalsTab context={context} />;
+  if (place.tab === "proposals") {
+    return (
+      <ProposalsTab
+        context={context}
+        onSelectView={place.selectIntentionView}
+        view={place.intentionView}
+      />
+    );
   }
-  if (tab === "transcript") {
+  if (place.tab === "transcript") {
     return (
       <TranscriptTab
         detail={detail}
@@ -117,8 +123,10 @@ function ReviewTabPanel({
 interface ReviewPlace {
   closeMoment: (shouldReturnFocus: boolean) => void;
   focusIntentionId: string | null;
+  intentionView: IntentionView;
   moment: OpenMoment | null;
   openIntention: (proposalId: string) => void;
+  selectIntentionView: (view: IntentionView) => void;
   selectTab: (tab: ReviewTab) => void;
   showMoment: ShowMoment;
   tab: ReviewTab;
@@ -126,6 +134,7 @@ interface ReviewPlace {
 
 function useReviewPlace(): ReviewPlace {
   const [tab, setTab] = useState<ReviewTab>("proposals");
+  const [intentionView, setIntentionView] = useState<IntentionView>("screens");
   const [focusIntentionId, setFocusIntentionId] = useState<string | null>(null);
   const [moment, setMoment] = useState<OpenMoment | null>(null);
 
@@ -146,11 +155,17 @@ function useReviewPlace(): ReviewPlace {
   return {
     closeMoment,
     focusIntentionId,
+    intentionView,
     moment,
     openIntention: (proposalId: string) => {
       closeMoment(false);
       setTab("proposals");
+      setIntentionView("cards");
       setFocusIntentionId(proposalId);
+    },
+    selectIntentionView: (view: IntentionView) => {
+      setFocusIntentionId(null);
+      setIntentionView(view);
     },
     selectTab: (next: ReviewTab) => {
       closeMoment(false);
@@ -179,7 +194,7 @@ function ReviewPanels({
     <>
       <ReviewTabs detail={detail} onSelect={place.selectTab} tab={place.tab} />
       <div className="dt-ses-panel" hidden={place.moment !== null}>
-        <ReviewTabPanel context={context} tab={place.tab} />
+        <ReviewTabPanel context={context} place={place} />
       </div>
       {place.moment && (
         <MomentView
@@ -239,6 +254,7 @@ function ReviewScreen({
     detail,
     focusIntentionId: place.focusIntentionId,
     navigation: {
+      onOpenIntention: place.openIntention,
       onOpenSession: links.onOpenSession,
       onShowMoment: place.showMoment,
       onStarted: links.onStarted,

@@ -184,6 +184,10 @@ export const evidenceBody = z.object({
   note: text(CAPS.note).optional(),
   sessionId: id,
   trigger: z.enum(["start", "mark", "navigation", "select", "manual", "hover"]),
+  visibleElements: z
+    .array(elementRef)
+    .max(SESSION_LIMITS.maxVisibleElements)
+    .optional(),
 });
 
 export const evidenceIdBody = z.object({ evidenceId: id });

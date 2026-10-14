@@ -15,8 +15,7 @@ import {
   shapeProposalList,
 } from "./continuity";
 import {
-  loadSessionEvents,
-  loadSessionEvidence,
+  loadSessionCapture,
   shapeEvidence,
   shapeHandoff,
   shapeMarks,
@@ -86,12 +85,7 @@ export const list = internalQuery({
 
 const loadSessionRecords = (ctx: QueryCtx, sessionId: Id<"sessions">) =>
   Promise.all([
-    loadSessionEvents(ctx, sessionId),
-    loadSessionEvidence(ctx, sessionId),
-    ctx.db
-      .query("sessionSegments")
-      .withIndex("by_session_start", (q) => q.eq("sessionId", sessionId))
-      .collect(),
+    loadSessionCapture(ctx, sessionId),
     ctx.db
       .query("sessionProposals")
       .withIndex("by_session", (q) => q.eq("sessionId", sessionId))
@@ -110,12 +104,21 @@ export const detail = internalQuery({
       actor,
       sessionId,
     });
-    const [events, evidence, segments, proposals, handoffs] =
-      await loadSessionRecords(ctx, session._id);
+    const [capture, proposals, handoffs] = await loadSessionRecords(
+      ctx,
+      session._id
+    );
+    const { events, evidence } = capture;
     const [summary, proposalViews, continuation, history, contributedEvidence] =
       await Promise.all([
         shapeSessionSummary(ctx, { actor, session }),
-        shapeProposalList(ctx, { actor, handoffs, proposals, session }),
+        shapeProposalList(ctx, {
+          actor,
+          capture,
+          handoffs,
+          proposals,
+          session,
+        }),
         loadContinuation(ctx, { actor, session }),
         loadHistory(ctx, { actor, proposals }),
         loadContributedEvidence(ctx, { actor, proposals }),
@@ -132,7 +135,7 @@ export const detail = internalQuery({
       history,
       marks: shapeMarks(events),
       proposals: proposalViews,
-      segments: shapeSegments({ events, evidence, segments }),
+      segments: shapeSegments(capture),
       session: {
         ...summary,
         canEdit: summary.isMine,

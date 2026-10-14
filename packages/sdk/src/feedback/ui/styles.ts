@@ -88,8 +88,8 @@ export const WIDGET_STYLES = `
 .root[data-editing="true"] { visibility: hidden; pointer-events: none; }
 button, select, input, textarea { font: inherit; color: inherit; }
 button { margin: 0; cursor: pointer; border: 0; background: none; transition: scale 120ms var(--rf-ease); }
-button:disabled { cursor: not-allowed; opacity: .4; }
-button:active:not(:disabled) { scale: .97; }
+button:disabled, button[aria-disabled="true"] { cursor: not-allowed; opacity: .4; }
+button:active:not(:disabled, [aria-disabled="true"]) { scale: .97; }
 svg { flex-shrink: 0; }
 :focus-visible { outline: 2px solid var(--rf-accent); outline-offset: 3px; }
 .icon-btn, .tool {
@@ -165,6 +165,6 @@ ${ANNOTATOR_STYLES}
 ${PICKER_STYLES}
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
-  button:active:not(:disabled) { scale: 1; }
+  button:active:not(:disabled, [aria-disabled="true"]) { scale: 1; }
 }
 `;

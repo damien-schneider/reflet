@@ -26,6 +26,11 @@ export const frameValidator = v.object({
   viewportWidth: v.number(),
 });
 
+export const calloutTargetValidator = v.object({
+  element: elementRefValidator,
+  evidenceId: v.id("sessionEvidence"),
+});
+
 const pointerValidator = v.object({ x: v.number(), y: v.number() });
 
 export const linkableEventKindValidator = v.union(

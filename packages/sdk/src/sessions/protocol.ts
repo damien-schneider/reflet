@@ -55,6 +55,7 @@ export const sessionLimitsSchema = z.object({
   maxSegmentBytes: z.number(),
   maxSegmentMs: z.number(),
   maxSegments: z.number(),
+  maxVisibleElements: z.number().int().positive().optional(),
   minAutoCaptureIntervalMs: z.number(),
   warnBeforeLimitMs: z.number(),
 });
@@ -302,6 +303,11 @@ export const sessionProposalSchema = z.object({
       intentionId: z.string(),
       need: z.string(),
     })
+    .nullable(),
+  callout: z.string().nullable(),
+  calloutSegmentId: z.string().nullable(),
+  calloutTarget: z
+    .object({ element: elementRefSchema.nullable(), evidenceId: z.string() })
     .nullable(),
   certainty: z.enum(["clear", "uncertain"]),
   clarifications: z.array(z.object({ at: z.number(), text: z.string() })),

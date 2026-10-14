@@ -216,6 +216,9 @@ export function aProposal(
 ): SessionProposal {
   return {
     attachment: null,
+    callout: null,
+    calloutSegmentId: null,
+    calloutTarget: null,
     certainty: "clear",
     clarifications: [],
     decision: "pending",
