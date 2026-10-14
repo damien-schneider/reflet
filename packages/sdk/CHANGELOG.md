@@ -5,6 +5,13 @@ All notable changes to `reflet-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.3] - 2026-10-14
+
+### Added
+
+- Sessions: the Intentions tab opens On screen. Each intention is pinned on the screenshot of the moment it's about: a frame around the element, a line, a number, and a short label the AI writes (at most 6 words, in your language), with Confirm and Dismiss right on the label. A choice already made stays focusable but inactive, like on the cards; Undo in the notice reverts it. Click the label to open the full intention under Details. Intentions with no screenshot are listed below with the same buttons. Your own wording replaces the AI label: once you, an accepted change or a removed contribution rewrites the need, the label shows the need itself. Requires the matching Reflet backend.
+- Sessions: the frame goes around the element you talk about, not the one under your pointer. Each screenshot now records the names and positions of the buttons, links, headings and images it shows (masked elements and anything in or around typed text left out, at most 80), and the AI picks among them. When nothing matches, or for sessions analyzed before, the label sits on the screenshot without a frame. Removing a screenshot or correcting a passage's context moves the pin at once. The session disclosure lists this.
+
 ## [0.7.2] - 2026-10-13
 
 ### Fixed
