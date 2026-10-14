@@ -50,11 +50,11 @@ L'accès équipe en production existe déjà ; une expérience mobile complète 
 
 ### Commencer
 
-- Point d'entrée « Commencer une session » dans les devtools, proche des notes existantes.
-- Connexion Reflet et organisation actives visibles avant la capture. Une session appartient à un seul auteur et une seule organisation.
+- Point d'entrée : le bouton micro de la barre devtools ouvre le panneau sur Sessions. Le panneau a quatre onglets à icône (Board, Notes, Sessions, Code) ; la barre disparaît tant qu'il est ouvert.
+- Le compte Reflet (avatar, nom) et l'organisation active sont dans le pied du panneau, à sa racine (masqués dans une session ou un brief), avec Connecter et Déconnecter. Une session appartient à un seul auteur et une seule organisation.
 - Au premier usage, expliquer les données réellement collectées et le traitement cloud de la voix. Ne pas demander une permission de partage d'écran pour la capture DOM.
 - Demander le microphone sur action explicite. Tant qu'il n'est pas accordé, aucune session ne doit sembler enregistrer.
-- Si le microphone est refusé ou indisponible, proposer de réessayer ou de prendre une note par le parcours existant.
+- Si le microphone est refusé ou indisponible, proposer de réessayer ou d'écrire une note par le parcours existant. Hors échec, le démarrage n'offre qu'une action : « Start session ».
 - Aucun onboarding fournisseur, API key ni accès au dépôt exigé de l'utilisateur pour commencer une session configurée par Reflet.
 
 ### Pendant la session
@@ -68,7 +68,8 @@ L'accès équipe en production existe déjà ; une expérience mobile complète 
 
 ### Revoir
 
-- Montrer les propositions courtes d'abord ; le transcript et les preuves s'ouvrent à la demande.
+- Ouvrir une session remplace les onglets du panneau par un retour « Sessions » en haut ; le brief ajoute un niveau avec un retour « Session ». Le focus clavier passe au titre de la nouvelle vue. Seul le détail d'une preuve garde son retour « All evidence » dans le corps.
+- Montrer les propositions courtes d'abord ; le transcript et les preuves s'ouvrent à la demande. Les onglets Intentions, Transcript et Evidence portent une icône et un compte ; « On screen / Details » est un menu de vue à côté, pas une deuxième rangée d'onglets.
 - Chaque proposition contient : besoin, situation observée, réponse envisagée si exprimée, inconnues, passages sources et captures disponibles.
 - Actions : « Garder », « Modifier », « Plus tard », « Écarter ». Prévoir annulation pour une décision de revue.
 - Une précision textuelle fait évoluer la proposition concernée. La continuation vocale et le rapprochement entre plusieurs sessions restent à construire (P4).
@@ -79,11 +80,12 @@ L'accès équipe en production existe déjà ; une expérience mobile complète 
 
 ### Confier
 
-- Sélectionner les propositions, puis ouvrir le brief exact à transmettre.
+- Notes et sessions restent deux entrées distinctes, sans fusion de données. Elles partagent les mêmes sorties : copier pour un agent, et « Add to board ».
+- « Prepare brief » ouvre la sélection ; rien n'est partagé avant « Copy brief » ou « Download .zip ». Les briefs passés sont listés sous « Earlier briefs » avec leur date et leur état (copié, téléchargé, pas encore copié).
 - Le brief inclut le résultat voulu, les observations, les incertitudes, les propositions retenues avec leur révision et uniquement les preuves choisies.
-- « Copier le brief » ou exporter son fichier est le premier passage vers un agent. Afficher « Brief copié » ou « Brief exporté », jamais « Agent lancé » sans accusé de réception réel.
+- « Copy brief » ou « Download .zip » est le premier passage vers un agent. Afficher « Brief copied » ou « Brief downloaded », jamais « Agent lancé » sans accusé de réception réel.
 - Le brief doit être compréhensible sans accès au chat de conception ni à une URL locale. Une preuve locale nécessaire est jointe à l'export ; un lien privé externe indique son prérequis d'accès.
-- Si un utilisateur demande de créer les feedbacks correspondants, l'action doit être explicite et idempotente. Ils restent internes, avec leur lien vers la session et la proposition.
+- « Add to board » crée les feedbacks internes correspondants, intention par intention ou pour toutes les intentions confirmées. L'action est explicite et idempotente ; l'intention affiche « On the board » ensuite. Ils restent internes, avec leur lien vers la session et la proposition.
 - L'intégration ultérieure à la file d'agents doit vérifier une autorisation dédiée et son périmètre. Une publication approuvée ou un feedback interne ne suffit pas.
 - Un changement de besoin après transmission produit une nouvelle révision ; il ne modifie pas silencieusement le mandat déjà exporté ou autorisé.
 
@@ -170,7 +172,7 @@ Invariants à tester avant les interfaces :
 | Analyse échouée | Transcript conservé et action de relance ; ne pas afficher zéro besoin comme un succès |
 | Session interrompue | Au retour, proposer de revoir/reprendre le brouillon existant ; microphone arrêté |
 | Accès révoqué | Arrêt de la collecte et des transferts ; purge des caches privés du compte concerné, aucune fuite vers le compte suivant |
-| Brief exporté | Confirmation de l'export ; pas d'agent actif supposé |
+| Brief téléchargé | Confirmation du téléchargement ; pas d'agent actif supposé |
 
 Clavier : démarrage, pause, marque, fin, revue et copie accessibles sans souris. Fermer un panneau rend le focus au contrôle d'ouverture. La sélection d'élément ne doit pas être le seul moyen d'ajouter un contexte. Respecter le mouvement réduit et tester un panneau étroit avec des textes longs.
 
@@ -354,7 +356,7 @@ La sauvegarde échoue-t-elle, ou manque-t-il un retour visible ?
 Ces extensions ne font pas partie de P1 à P4. Les fonctionnalités générales de support, feedback et roadmap existent déjà dans Reflet ; le travail futur est leur raccordement au même besoin et à ses preuves, pas leur reconstruction.
 
 1. **Sources communes :** relier feedback in-app, conversations support et sessions d'équipe au même besoin, puis proposer les regroupements à confirmer.
-2. **PostHog :** enrichir les liens manuels existants avec session/erreur/version et fraîcheur des données ; respecter les accès et ouvrir les preuves dans PostHog. Aucun replay ou moteur d'analytics Reflet à construire.
+2. **PostHog :** enrichir les liens manuels existants avec session/erreur/version et fraîcheur des données ; respecter les accès et ouvrir les preuves dans PostHog. Aucun replay ou moteur d'analytics Reflet à construire. Une proposition d'import de replays PostHog et de captures annotées, en attente d'approbation, est décrite dans [`reflet-inputs.md`](./reflet-inputs.md).
 3. **Délégation intégrée :** mandat explicite sur une sélection et une révision, accusé de prise en charge, questions et résultat de l'agent. Aujourd'hui le passage est manuel ; ne pas retirer la barrière de la file d'agents avant cette autorisation.
 4. **Décision et résultat :** cap du produit, options, raisons du choix, observations après livraison et réponses préparées aux personnes concernées. La faisabilité technique reste à l'agent qui possède le code.
 5. **Autres surfaces :** gestion mobile, ChatGPT et outils conversationnels, puis investigations récurrentes bornées. Réutiliser les mêmes objets, permissions et actions ; leur disponibilité n'est pas confirmée par les maquettes.
