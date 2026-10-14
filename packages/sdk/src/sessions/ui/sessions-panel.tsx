@@ -1,12 +1,48 @@
+import { useState } from "react";
+import type { SheetPlace } from "../../devtools/client/devtools-sheet";
 import { useLocalDrafts } from "../local/local-sessions";
 import { SessionReview } from "./review/session-review";
 import { useSessionWorkspace } from "./session-workspace";
 import type { SessionTarget } from "./start/session-list";
 import { SessionsHome } from "./start/sessions-home";
 
+export type SessionPlace =
+  | { view: "home" }
+  | { target: SessionTarget; view: "brief" | "review" };
+
 export interface SessionNavigation {
-  onOpen: (target: SessionTarget | null) => void;
-  open: SessionTarget | null;
+  go: (place: SessionPlace) => void;
+  place: SessionPlace;
+}
+
+const SESSIONS_HOME: SessionPlace = { view: "home" };
+
+export function useSessionNavigation(): SessionNavigation {
+  const [place, setPlace] = useState<SessionPlace>(SESSIONS_HOME);
+  return { go: setPlace, place };
+}
+
+/** Where the panel header's back button leads; null on the sessions home. */
+export function sessionSheetPlace({
+  go,
+  place,
+}: SessionNavigation): SheetPlace | null {
+  if (place.view === "home") {
+    return null;
+  }
+  const sessionRef = place.target.sessionId ?? place.target.sessionKey ?? "";
+  if (place.view === "review") {
+    return {
+      backLabel: "Sessions",
+      id: `review:${sessionRef}`,
+      onBack: () => go(SESSIONS_HOME),
+    };
+  }
+  return {
+    backLabel: "Session",
+    id: `brief:${sessionRef}`,
+    onBack: () => go({ target: place.target, view: "review" }),
+  };
 }
 
 function useResolvedSessionId(target: SessionTarget | null): string | null {
@@ -32,40 +68,41 @@ export function SessionsPanel({
   onStarted: () => void;
   onWriteNote?: () => void;
 }) {
-  const sessionId = useResolvedSessionId(navigation.open);
-  const back = () => navigation.onOpen(null);
+  const { go, place } = navigation;
+  const target = place.view === "home" ? null : place.target;
+  const sessionId = useResolvedSessionId(target);
 
-  if (sessionId) {
+  if (!target) {
     return (
-      <SessionReview
-        key={sessionId}
-        links={{
-          onBack: back,
-          onOpenSession: (openedId) =>
-            navigation.onOpen({ sessionId: openedId, sessionKey: null }),
-          onStarted,
-        }}
-        sessionId={sessionId}
+      <SessionsHome
+        onOpenSession={(opened) => go({ target: opened, view: "review" })}
+        onStarted={onStarted}
+        onWriteNote={onWriteNote}
       />
     );
   }
-  if (navigation.open) {
+  if (!sessionId) {
     return (
-      <div className="dt-empty" role="status">
-        <p>
-          This session is still uploading. It opens here once it reaches Reflet.
-        </p>
-        <button className="dt-btn" onClick={back} type="button">
-          All sessions
-        </button>
-      </div>
+      <p className="dt-empty" role="status">
+        This session is still uploading. It opens here once it reaches Reflet.
+      </p>
     );
   }
   return (
-    <SessionsHome
-      onOpenSession={navigation.onOpen}
-      onStarted={onStarted}
-      onWriteNote={onWriteNote}
+    <SessionReview
+      isBriefOpen={place.view === "brief"}
+      key={sessionId}
+      links={{
+        onDeleted: () => go(SESSIONS_HOME),
+        onOpenBrief: () => go({ target, view: "brief" }),
+        onOpenSession: (openedId) =>
+          go({
+            target: { sessionId: openedId, sessionKey: null },
+            view: "review",
+          }),
+        onStarted,
+      }}
+      sessionId={sessionId}
     />
   );
 }

@@ -39,11 +39,33 @@ export function minutesLeft(remainingMs: number): number {
   return Math.max(1, Math.ceil(remainingMs / MINUTE_MS));
 }
 
-export function formatDate(epochMs: number): string {
-  return new Date(epochMs).toLocaleString(undefined, {
-    dateStyle: "medium",
+function startOfDay(epochMs: number, daysBack: number): number {
+  const day = new Date(epochMs);
+  day.setHours(0, 0, 0, 0);
+  day.setDate(day.getDate() - daysBack);
+  return day.getTime();
+}
+
+function dayLabel(epochMs: number, now: number): string {
+  if (epochMs >= startOfDay(now, 0)) {
+    return "Today";
+  }
+  if (epochMs >= startOfDay(now, 1)) {
+    return "Yesterday";
+  }
+  const date = new Date(epochMs);
+  const isThisYear = date.getFullYear() === new Date(now).getFullYear();
+  return date.toLocaleDateString(
+    undefined,
+    isThisYear ? { day: "numeric", month: "short" } : { dateStyle: "medium" }
+  );
+}
+
+export function formatDate(epochMs: number, now = Date.now()): string {
+  const time = new Date(epochMs).toLocaleTimeString(undefined, {
     timeStyle: "short",
   });
+  return `${dayLabel(epochMs, now)}, ${time}`;
 }
 
 export function isAnalysisBusy(summary: SessionSummary): boolean {

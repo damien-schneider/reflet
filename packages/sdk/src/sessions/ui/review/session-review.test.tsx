@@ -64,7 +64,11 @@ async function renderReview(
 ) {
   api.detail = vi.fn().mockResolvedValue(detail);
   renderInWorkspace(
-    <SessionReview links={reviewLinks()} sessionId="session_1" />,
+    <SessionReview
+      isBriefOpen={false}
+      links={reviewLinks()}
+      sessionId="session_1"
+    />,
     fakeWorkspace({ api })
   );
   await screen.findByRole("heading", { name: detail.session.title });
@@ -77,8 +81,8 @@ it("opens on the intentions", async () => {
   await renderReview();
   expect(
     screen
-      .getByRole("button", { name: "Intentions (1)" })
-      .getAttribute("aria-pressed")
+      .getByRole("tab", { name: /^Intentions/ })
+      .getAttribute("aria-selected")
   ).toBe("true");
   expect(screen.getByText(NEED)).toBeTruthy();
 });
@@ -92,7 +96,7 @@ it("shows what finished uploading after the analysis without a reload", async ()
   act(() => uploads.set(0));
 
   expect(
-    await screen.findByRole("button", { name: "Evidence (1)" })
+    await screen.findByRole("tab", { name: /^Evidence\s*1$/ })
   ).toBeTruthy();
   expect(screen.queryByText("1 waiting to upload")).toBeNull();
 });
@@ -320,15 +324,15 @@ it("does not call a session empty while its recording is still uploading", async
   expect(screen.queryByText(/Nothing was said/)).toBeNull();
 });
 
-it("warns that exported briefs stay out there before deleting", async () => {
+it("warns what goes with a session before deleting it", async () => {
   const api = fakeApi({ deleteSession: vi.fn().mockResolvedValue(undefined) });
   await renderReview(aDetail(), api);
 
   fireEvent.click(screen.getByRole("button", { name: "Session options" }));
-  fireEvent.click(screen.getByRole("button", { name: "Delete session" }));
+  fireEvent.click(screen.getByRole("menuitem", { name: "Delete session" }));
   expect(
     screen.getByText(
-      "Delete this session? Its recordings, transcript and intentions are removed, including what later sessions added to those intentions. Briefs you already copied or exported can't be recalled."
+      "Delete this session? Its recording, transcript, screenshots and intentions go, along with what later sessions added to those intentions."
     )
   ).toBeTruthy();
   expect(api.deleteSession).not.toHaveBeenCalled();
@@ -336,6 +340,80 @@ it("warns that exported briefs stay out there before deleting", async () => {
   await waitFor(() =>
     expect(api.deleteSession).toHaveBeenCalledWith("session_1")
   );
+});
+
+it("adds the confirmed intentions that are not on the board yet", async () => {
+  const api = fakeApi({
+    createFeedback: vi.fn((proposalId: string) =>
+      Promise.resolve({ created: true, feedbackId: `feedback_${proposalId}` })
+    ),
+  });
+  await renderReview(
+    aDetail({
+      proposals: [
+        aProposal({ decision: "kept" }),
+        aProposal({ decision: "kept", id: "proposal_2", need: "Rename menu" }),
+        aProposal({
+          decision: "kept",
+          feedbackId: "feedback_old",
+          id: "proposal_3",
+          need: "Already on the board",
+        }),
+        aProposal({ decision: "pending", id: "proposal_4", need: "Pending" }),
+      ],
+    }),
+    api
+  );
+
+  fireEvent.click(screen.getByRole("button", { name: "Add 2 to board" }));
+
+  expect(
+    await screen.findByText("Added 2 intentions to the board")
+  ).toBeTruthy();
+  expect(api.createFeedback).toHaveBeenCalledTimes(2);
+  expect(api.createFeedback).toHaveBeenCalledWith("proposal_1");
+  expect(api.createFeedback).toHaveBeenCalledWith("proposal_2");
+  expect(
+    screen.queryByRole("button", { name: /^Add \d+ to board$/ })
+  ).toBeNull();
+});
+
+it("opens the brief from the confirmed intentions", async () => {
+  const api = fakeApi({
+    detail: vi
+      .fn()
+      .mockResolvedValue(
+        aDetail({ proposals: [aProposal({ decision: "kept" })] })
+      ),
+  });
+  const links = reviewLinks();
+  renderInWorkspace(
+    <SessionReview isBriefOpen={false} links={links} sessionId="session_1" />,
+    fakeWorkspace({ api })
+  );
+
+  fireEvent.click(
+    await screen.findByRole("button", { name: /^Prepare brief\s*1$/ })
+  );
+
+  expect(links.onOpenBrief).toHaveBeenCalled();
+});
+
+it("asks for a confirmed intention before briefing", async () => {
+  await renderReview();
+
+  expect(screen.getByRole("button", { name: "Prepare brief" })).toHaveProperty(
+    "disabled",
+    true
+  );
+  expect(
+    screen.getByText(
+      "Confirm an intention to brief your agent or add it to the board"
+    )
+  ).toBeTruthy();
+  expect(
+    screen.queryByRole("button", { name: /^Add \d+ to board$/ })
+  ).toBeNull();
 });
 
 it("shows the finished analysis even when each refresh takes longer than the poll interval", async () => {
@@ -361,7 +439,11 @@ it("shows the finished analysis even when each refresh takes longer than the pol
     }),
   });
   renderInWorkspace(
-    <SessionReview links={reviewLinks()} sessionId="session_1" />,
+    <SessionReview
+      isBriefOpen={false}
+      links={reviewLinks()}
+      sessionId="session_1"
+    />,
     fakeWorkspace({ api })
   );
 

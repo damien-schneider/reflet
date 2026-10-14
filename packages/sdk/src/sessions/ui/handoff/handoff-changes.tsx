@@ -46,8 +46,7 @@ function ChangeSummary({
     <li className="dt-ses-row">
       <p className="dt-ses-subhead">{proposal.need}</p>
       <p className="dt-meta">
-        Changed since the brief of {formatDate(last.at)} (revision{" "}
-        {last.revision} → {proposal.revision})
+        Changed since your brief of {formatDate(last.at)}
       </p>
       <ul className="dt-ses-list">
         {differences(proposal, last).map((difference) => (
@@ -88,37 +87,48 @@ export function ChangedSinceBriefs({
   );
 }
 
+const DELIVERY_LABELS: Record<
+  SessionHandoff["deliveries"][number]["kind"],
+  string
+> = {
+  copied: "Copied",
+  exported: "Downloaded",
+};
+
 function deliveryLine(handoff: SessionHandoff): string {
   const kinds = new Set(handoff.deliveries.map((delivery) => delivery.kind));
   if (kinds.size === 0) {
-    return "not copied or exported";
+    return "Not copied yet";
   }
-  return [...kinds].join(" and ");
+  return [...kinds].map((kind) => DELIVERY_LABELS[kind]).join(", ");
 }
 
-function intentionsLine(handoff: SessionHandoff): string {
+function briefTitle(handoff: SessionHandoff): string {
   const [only, ...others] = handoff.proposals;
   if (only && others.length === 0) {
-    return `“${only.need}” revision ${only.revision}`;
+    return only.need;
   }
   return countLabel(handoff.proposals.length, "intention");
 }
 
-export function PreviousBriefs({ handoffs }: { handoffs: SessionHandoff[] }) {
+export function EarlierBriefs({ handoffs }: { handoffs: SessionHandoff[] }) {
   if (handoffs.length === 0) {
     return null;
   }
   return (
     <section className="dt-ses-form">
-      <h3 className="dt-ses-label">Previous briefs</h3>
+      <h3 className="dt-group">Earlier briefs</h3>
       <ul className="dt-ses-rows">
         {handoffs.map((handoff) => {
           const date = formatDate(handoff.createdAt);
           return (
             <li key={handoff.id}>
-              <details>
+              <details className="dt-ses-brief-entry">
                 <summary>
-                  {date} · {intentionsLine(handoff)} · {deliveryLine(handoff)}
+                  <span className="dt-card-title">{briefTitle(handoff)}</span>
+                  <span className="dt-meta">
+                    {date} · {deliveryLine(handoff)}
+                  </span>
                 </summary>
                 <textarea
                   aria-label={`Brief of ${date}`}

@@ -27,10 +27,14 @@ afterEach(cleanup);
 async function openTranscript(detail: SessionDetail, api = fakeApi()) {
   api.detail = vi.fn().mockResolvedValue(detail);
   renderInWorkspace(
-    <SessionReview links={reviewLinks()} sessionId="session_1" />,
+    <SessionReview
+      isBriefOpen={false}
+      links={reviewLinks()}
+      sessionId="session_1"
+    />,
     fakeWorkspace({ api })
   );
-  fireEvent.click(await screen.findByRole("button", { name: "Transcript" }));
+  fireEvent.click(await screen.findByRole("tab", { name: "Transcript" }));
   return api;
 }
 
@@ -120,7 +124,11 @@ it("lands on the same moment from an intention's quote and from the transcript",
   const api = fakeApi();
   api.detail = vi.fn().mockResolvedValue(aDetail());
   renderInWorkspace(
-    <SessionReview links={reviewLinks()} sessionId="session_1" />,
+    <SessionReview
+      isBriefOpen={false}
+      links={reviewLinks()}
+      sessionId="session_1"
+    />,
     fakeWorkspace({ api })
   );
   const showContext = await screen.findByRole("button", {
@@ -133,7 +141,7 @@ it("lands on the same moment from an intention's quote and from the transcript",
   fireEvent.keyDown(heading, { key: "Escape" });
   expect(document.activeElement).toBe(showContext);
 
-  fireEvent.click(screen.getByRole("button", { name: "Transcript" }));
+  fireEvent.click(screen.getByRole("tab", { name: "Transcript" }));
   fireEvent.click(
     screen.getByRole("button", { name: "Show context at 00:02" })
   );

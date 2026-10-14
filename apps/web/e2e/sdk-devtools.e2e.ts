@@ -1,10 +1,22 @@
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 
 const DEMO_SOURCE = "apps/web/src/features/sdk-demo/sdk-demo.tsx";
 const PICK_BUTTON = /Pick an element/;
 const FIRST_PIN = /^Note 1:/;
 const MOVE_PANEL = /Move panel/;
 const MOVE_BUTTON = /Move Reflet devtools/;
+const OPEN_PANEL = /^Open the Reflet panel/;
+const NOTES_TAB = /^Notes/;
+const CONNECTED_ACCOUNT = /Acme design and development$/;
+
+async function openPanel(page: Page) {
+  await page.getByRole("button", { name: OPEN_PANEL }).click();
+}
+
+async function openNotes(page: Page) {
+  await openPanel(page);
+  await page.getByRole("tab", { name: NOTES_TAB }).click();
+}
 
 test.describe("Reflet devtools under next dev", () => {
   test.use({ reducedMotion: "reduce", viewport: { height: 900, width: 1440 } });
@@ -127,7 +139,7 @@ test.describe("Reflet devtools under next dev", () => {
     page,
   }) => {
     await page.goto("/sdk-demo");
-    await page.getByRole("button", { name: "Dev notes" }).click();
+    await openPanel(page);
     const sheet = page.getByRole("complementary", { name: "Reflet devtools" });
     await expect(sheet).toBeVisible();
     const viewport = page.viewportSize();
@@ -161,7 +173,7 @@ test.describe("Reflet devtools under next dev", () => {
     );
 
     await page.reload();
-    await page.getByRole("button", { name: "Dev notes" }).click();
+    await openPanel(page);
     await expect
       .poll(async () => Math.round((await sheet.boundingBox())?.height ?? 0))
       .toBe(Math.round(opened.height - 300));
@@ -250,7 +262,7 @@ test.describe("Reflet devtools under next dev", () => {
     await page.keyboard.press("Escape");
     await expect(popover).toHaveCount(0);
 
-    await page.getByRole("button", { name: "Dev notes" }).click();
+    await openNotes(page);
     await expect(page.locator(".dt-card .dt-pin-badge")).toHaveText("1");
   });
 
@@ -264,7 +276,7 @@ test.describe("Reflet devtools under next dev", () => {
     await page.keyboard.press("Enter");
     await expect(page.getByRole("button", { name: FIRST_PIN })).toBeVisible();
 
-    await page.getByRole("button", { name: "Dev notes" }).click();
+    await openNotes(page);
     await page.getByRole("button", { name: "Clear notes" }).click();
     await expect(page.getByRole("button", { name: FIRST_PIN })).toHaveCount(0);
     await expect(page.locator(".dt-archived")).toContainText("1 cleared note");
@@ -295,8 +307,10 @@ test.describe("Reflet devtools under next dev", () => {
       });
     });
     await page.reload();
-    await page.getByRole("button", { name: "Dev notes" }).click();
-    await expect(page.getByText("No notes yet.")).toBeVisible();
+    await openNotes(page);
+    await expect(
+      page.getByRole("heading", { name: "No notes yet" })
+    ).toBeVisible();
     await expect(page.locator(".dt-archived")).toHaveCount(0);
   });
 
@@ -333,8 +347,8 @@ test.describe("Reflet devtools under next dev", () => {
       "false"
     );
 
-    await page.getByRole("button", { name: "Dev notes" }).click();
-    await page.getByRole("button", { name: "Send 1 to board" }).click();
+    await openNotes(page);
+    await page.getByRole("button", { name: "Add 1 to board" }).click();
     const notice = page.locator(".dt-notice");
     await expect(notice).toContainText('"Rename this" was not sent');
     await expect(notice).toContainText("Board is down");
@@ -350,7 +364,7 @@ test.describe("Reflet devtools under next dev", () => {
     page,
   }) => {
     await page.goto("/sdk-demo");
-    await page.getByRole("button", { name: "Dev notes" }).click();
+    await openPanel(page);
     const sheet = page.getByRole("complementary", { name: "Reflet devtools" });
     const bar = page.getByRole("toolbar", { name: "Reflet devtools" });
     const docked = await sheet.boundingBox();
@@ -360,11 +374,7 @@ test.describe("Reflet devtools under next dev", () => {
     if (!(docked && header)) {
       throw new Error("Devtools panel missing");
     }
-    await expect(bar).toBeVisible();
-    const barBox = await bar.boundingBox();
-    expect((barBox?.x ?? 0) + (barBox?.width ?? 0)).toBeLessThanOrEqual(
-      docked.x
-    );
+    await expect(bar).toBeHidden();
 
     await page.mouse.move(header.x + header.width - 60, header.y + 10);
     await page.mouse.down();
@@ -432,7 +442,7 @@ test("Board reconnects after consent and allows disconnecting by keyboard", asyn
     return route.fulfill({ json: { revoked: true } });
   });
   await page.goto("/sdk-demo");
-  await page.getByRole("button", { name: "Board feedback" }).click();
+  await openPanel(page);
   const connectButton = page.getByRole("button", { name: "Connect to Reflet" });
   await connectButton.focus();
   const popupReady = page.waitForEvent("popup");
@@ -444,10 +454,13 @@ test("Board reconnects after consent and allows disconnecting by keyboard", asyn
   await popup.close();
   connected = true;
   await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+  const account = page.getByRole("button", { name: CONNECTED_ACCOUNT });
+  await expect(account).toBeVisible();
+  await account.focus();
+  await page.keyboard.press("Enter");
   await expect(
-    page.getByText("Connected to Acme design and development")
-  ).toBeVisible();
-  await page.getByRole("button", { exact: true, name: "Disconnect" }).focus();
+    page.getByRole("menuitem", { name: "Disconnect" })
+  ).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(connectButton).toBeVisible();
 });

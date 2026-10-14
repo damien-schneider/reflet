@@ -9,7 +9,7 @@ import type {
 import type { ReviewHandle } from "../review/use-session-detail";
 import { useSessionAction, useSessionWorkspace } from "../session-workspace";
 import { buildBriefZip, saveBlob, zipFileName } from "./brief-export";
-import { ChangedSinceBriefs, PreviousBriefs } from "./handoff-changes";
+import { ChangedSinceBriefs, EarlierBriefs } from "./handoff-changes";
 import {
   HandoffChoices,
   type HandoffSelection,
@@ -36,7 +36,7 @@ function useDelivery(options: { prepared: PreparedHandoff; title: string }) {
       reportFailure(`The brief was not ${kind}`, error);
       return;
     }
-    announce(kind === "copied" ? "Brief copied" : "Brief exported");
+    announce(kind === "copied" ? "Brief copied" : "Brief downloaded");
     await run("The delivery was not recorded", () =>
       api.markHandoffDelivered({ handoffId: handoff.id, kind })
     );
@@ -82,33 +82,14 @@ function PreparedBrief({
           Copy brief
         </button>
         <button className="dt-btn" onClick={exportZip} type="button">
-          Export .zip
+          Download .zip
         </button>
         <button className="dt-btn" onClick={onChangeSelection} type="button">
-          Change selection
+          Edit selection
         </button>
       </div>
     </>
   );
-}
-
-function useInternalFeedback(proposalIds: string[]) {
-  const { api } = useSessionWorkspace();
-  const run = useSessionAction();
-  return async () => {
-    const results = await Promise.all(
-      proposalIds.map((proposalId) =>
-        run("The feedback was not created", () =>
-          api.createFeedback(proposalId)
-        )
-      )
-    );
-    if (results.every((result) => result !== null)) {
-      announce(
-        "Internal feedback created — agents don't pick it up from the queue; hand off the brief instead."
-      );
-    }
-  };
 }
 
 interface PrepareHandoff {
@@ -166,12 +147,12 @@ function SelectionStep({
   detail: SessionDetail;
   handoff: PrepareHandoff;
 }) {
-  const createFeedback = useInternalFeedback(handoff.selection.proposalIds);
-  const hasProposals = handoff.selection.proposalIds.length > 0;
+  const count = handoff.selection.proposalIds.length;
   return (
     <>
       <p className="dt-hint">
-        Coding agents get exactly the brief and files you pick here.
+        Tick what your agent should get. Nothing leaves Reflet until you copy or
+        download the brief.
       </p>
       <HandoffChoices
         detail={detail}
@@ -186,19 +167,11 @@ function SelectionStep({
         <button
           className="dt-btn"
           data-variant="primary"
-          disabled={!hasProposals || handoff.isPreparing}
+          disabled={count === 0 || handoff.isPreparing}
           onClick={handoff.prepare}
           type="button"
         >
-          Prepare brief
-        </button>
-        <button
-          className="dt-btn"
-          disabled={!hasProposals}
-          onClick={createFeedback}
-          type="button"
-        >
-          Create internal feedback
+          Build brief
         </button>
       </div>
     </>
@@ -207,21 +180,16 @@ function SelectionStep({
 
 export function HandoffView({
   detail,
-  onClose,
   review,
 }: {
   detail: SessionDetail;
-  onClose: () => void;
   review: ReviewHandle;
 }) {
   const handoff = usePrepareHandoff({ detail, review });
   return (
     <section aria-labelledby="rf-handoff-title" className="dt-ses-handoff">
-      <button className="dt-ses-link" onClick={onClose} type="button">
-        ← Back to review
-      </button>
-      <h2 className="dt-ses-title" id="rf-handoff-title">
-        Hand off
+      <h2 className="dt-ses-title" id="rf-handoff-title" tabIndex={-1}>
+        Brief for your agent
       </h2>
       {handoff.prepared ? (
         <PreparedBrief
@@ -232,8 +200,7 @@ export function HandoffView({
       ) : (
         <SelectionStep detail={detail} handoff={handoff} />
       )}
-      <p className="dt-meta">Copied or exported briefs can't be recalled.</p>
-      <PreviousBriefs handoffs={detail.handoffs} />
+      <EarlierBriefs handoffs={detail.handoffs} />
     </section>
   );
 }

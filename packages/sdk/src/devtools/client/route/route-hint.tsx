@@ -15,5 +15,7 @@ export function MissingRouteHint({ purpose }: { purpose: string }) {
   );
 }
 
-export const MISSING_SECRET_KEY_HINT =
-  "Set REFLET_SECRET_KEY (your fb_sec_ key) in the dev server environment to reach your board.";
+export const CONNECT_REQUIREMENT =
+  "Connecting to Reflet needs a public key and a local address (localhost, *.localhost or *.test).";
+
+export const MISSING_SECRET_KEY_HINT = `${CONNECT_REQUIREMENT} Or set REFLET_SECRET_KEY (your fb_sec_ key) in the dev server environment to reach your board.`;

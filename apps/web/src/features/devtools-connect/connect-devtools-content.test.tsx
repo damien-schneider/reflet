@@ -23,8 +23,6 @@ it("rejects a remote redirect before asking the member to sign in or approve", (
       state={"s".repeat(43)}
     />
   );
-  expect(
-    screen.getByText(/Start again from the devtools Board tab/)
-  ).toBeTruthy();
+  expect(screen.getByText(/Start again from the devtools panel/)).toBeTruthy();
   expect(useQuery).not.toHaveBeenCalled();
 });

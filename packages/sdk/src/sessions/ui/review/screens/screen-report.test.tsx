@@ -58,7 +58,11 @@ function twoScreensDetail(): SessionDetail {
 async function renderReport(detail: SessionDetail, api: SessionApi) {
   api.detail = vi.fn().mockResolvedValue(detail);
   renderInWorkspace(
-    <SessionReview links={reviewLinks()} sessionId="session_1" />,
+    <SessionReview
+      isBriefOpen={false}
+      links={reviewLinks()}
+      sessionId="session_1"
+    />,
     fakeWorkspace({ api })
   );
   await screen.findByRole("heading", { name: detail.session.title });
@@ -102,7 +106,7 @@ it("confirms once from the screenshot even when pressed twice, and undoes from t
   );
   expect(api.decideProposal).toHaveBeenCalledTimes(1);
   expect(
-    screen.getByRole("button", { name: "Hand off 1 confirmed" })
+    screen.getByRole("button", { name: /^Prepare brief\s*1$/ })
   ).toBeTruthy();
 
   fireEvent.click(screen.getByRole("button", { name: "Undo" }));
@@ -124,7 +128,10 @@ it("opens the full intention card from its label", async () => {
     name: "Intention: See the whole 1920×1080 canvas in OBS",
   });
   await waitFor(() => expect(document.activeElement).toBe(card));
+  fireEvent.click(screen.getByRole("button", { name: "Show intentions" }));
   expect(
-    screen.getByRole("button", { name: "Details" }).getAttribute("aria-pressed")
+    screen
+      .getByRole("menuitemradio", { name: "Details" })
+      .getAttribute("aria-checked")
   ).toBe("true");
 });

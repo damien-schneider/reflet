@@ -20,7 +20,7 @@ interface SheetSize {
 }
 
 const SIZE_KEY = "reflet-devtools-sheet-size";
-const DEFAULT_WIDTH = 440;
+const DEFAULT_WIDTH = 480;
 const MIN_WIDTH = 320;
 const MIN_HEIGHT = 240;
 const EDGE_GAP = 12;

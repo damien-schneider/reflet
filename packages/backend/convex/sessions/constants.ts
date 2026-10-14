@@ -93,7 +93,7 @@ export const IMAGE_CONTENT_TYPES: Record<string, true> = {
 };
 
 export const SESSION_MEMBER_REQUIRED =
-  "Sessions need a signed-in Reflet member. Connect from the devtools Board tab.";
+  "Sessions need a signed-in Reflet member. Connect from the devtools panel.";
 export const SESSION_NOT_FOUND = "Session not found";
 export const RECORDED_WHILE_PAUSED = "Recorded while paused";
 export const REVISION_CONFLICT =

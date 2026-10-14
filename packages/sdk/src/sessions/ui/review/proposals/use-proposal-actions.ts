@@ -5,6 +5,7 @@ import type {
   SessionDetail,
   SessionProposal,
 } from "../../../protocol";
+import { countLabel } from "../../session-format";
 import { useSessionAction, useSessionWorkspace } from "../../session-workspace";
 import { useOptimisticChange } from "../optimistic-change";
 import { type ReviewHandle, withProposal } from "../use-session-detail";
@@ -19,6 +20,7 @@ const DECISION_NOTICE: Record<ProposalDecision, string> = {
 };
 
 export interface ProposalActions {
+  addToBoard: (proposals: SessionProposal[]) => Promise<void>;
   clarify: (proposal: SessionProposal, text: string) => Promise<unknown>;
   decide: (proposal: SessionProposal, decision: ProposalDecision) => void;
   merge: (targetId: string, sourceIds: string[]) => void;
@@ -115,11 +117,55 @@ function useDecide(review: ReviewHandle): ProposalActions["decide"] {
   };
 }
 
+function withFeedbackIds(
+  feedbackIds: ReadonlyMap<string, string>
+): (detail: SessionDetail) => SessionDetail {
+  return (detail) => ({
+    ...detail,
+    proposals: detail.proposals.map((item) => {
+      const feedbackId = feedbackIds.get(item.id);
+      return feedbackId ? { ...item, feedbackId } : item;
+    }),
+  });
+}
+
+function useAddToBoard(review: ReviewHandle): ProposalActions["addToBoard"] {
+  const { api } = useSessionWorkspace();
+  const run = useSessionAction();
+  return async (proposals) => {
+    const created = await Promise.all(
+      proposals.map(async (proposal) => {
+        const result = await run(
+          `${quotedNeed(proposal.need)} was not added to the board`,
+          () => api.createFeedback(proposal.id)
+        );
+        return result ? ([proposal.id, result.feedbackId] as const) : null;
+      })
+    );
+    const added = new Map(created.flatMap((entry) => (entry ? [entry] : [])));
+    if (added.size === 0) {
+      return;
+    }
+    review.patch(withFeedbackIds(added));
+    const onlyAdded =
+      added.size === 1
+        ? proposals.find((proposal) => added.has(proposal.id))
+        : undefined;
+    announce(
+      onlyAdded
+        ? `Added ${quotedNeed(onlyAdded.need)} to the board`
+        : `Added ${countLabel(added.size, "intention")} to the board`
+    );
+  };
+}
+
 export function useProposalActions(review: ReviewHandle): ProposalActions {
   const save = useProposalSave(review);
   const decide = useDecide(review);
+  const addToBoard = useAddToBoard(review);
 
   return {
+    addToBoard,
     clarify: (proposal, text) =>
       save("The precision was not sent", (client) =>
         client.clarifyProposal({

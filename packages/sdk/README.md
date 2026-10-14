@@ -180,13 +180,16 @@ canvas content may come out blank.
 #### Devtools for your team (development only)
 
 In `NODE_ENV=development`, `RefletFeedback` also mounts a small devtools bar
-above its launcher; drag it by its grip anywhere, double-click the grip to put
-it back. Its panel opens full height: drag its header to move it (double-click
-to dock it back), drag its inner edge, bottom edge or corner to resize it
-(double-click a handle to reset). Position and size are remembered and refit
-whenever the window changes size. Production builds drop it at bundle time —
-the devtools chunk is never shipped to your users. Pass `devtools={false}` to
-turn it off.
+above its launcher: **Pick**, **Sessions** (the microphone) and the panel
+button, which reopens the panel on the tab you used last. Drag the bar by its
+grip anywhere, double-click the grip to put it back. While the panel is open
+the bar steps aside. The panel opens full height: drag its header to move it
+(double-click to dock it back), drag its inner edge, bottom edge or corner to
+resize it (double-click a handle to reset). Position and size are remembered
+and refit whenever the window changes size. Your Reflet account and
+organization sit in the panel's footer, with Connect and Disconnect. Production
+builds drop it at bundle time — the devtools chunk is never shipped to your
+users. Pass `devtools={false}` to turn it off.
 
 - **Pick** — click an element to write a note on it. The note card has a
   "View code" button, and Shift+click (or Shift+Enter) skips the note and opens
@@ -204,24 +207,27 @@ turn it off.
   to retry.
 - **Copy as prompt** — every note, with its source location, component stack,
   selector and markup, as one Markdown prompt for a coding agent.
-- **Send to board** — notes become internal feedback: members see them with an
+- **Add to board** — notes become internal feedback: members see them with an
   "Internal" badge, the public board never does, and an admin can make one
   public from the dashboard.
-- **Board** — the board's feedback for the current route, or the whole board,
-  with "Show on page", the reporter's source location, and a code search for
-  the element's text.
+- **Board** — the board's feedback for the current route, or the whole board
+  (the view menu next to the count), with "Show on page", the reporter's
+  source location, and a code search for the element's text.
 - **Sessions** — talk through the app while you use it: Reflet records your
   voice, what you point at and mark, and a screenshot at the start, at each
   mark and on each page change. Finish, and Reflet transcribes the session and
-  proposes the changes you asked for. Keep, edit or dismiss each proposal, then
-  hand the kept ones off as a brief to copy into a coding agent or export as a
-  `.zip` with its screenshots. Sessions are recorded under your own name, so
-  they need Connect rather than `REFLET_SECRET_KEY`.
+  proposes the intentions behind what you said. Confirm, edit or dismiss each
+  one. Like notes, confirmed intentions have two ways out: **Prepare brief**
+  builds a brief you copy into a coding agent or download as a `.zip` with its
+  screenshots (nothing is shared until you copy or download it), and **Add to
+  board** turns them into internal feedback, one by one or all at once.
+  Sessions are recorded under your own name, so they need Connect rather than
+  `REFLET_SECRET_KEY`.
 
 Code view and the board go through one dev-only route that reads files from
 your repository and holds the board credential server-side.
 
-To reach the board, click **Connect to Reflet** in the Board tab: sign in on
+To reach the board, click **Connect to Reflet** in the panel's footer: sign in on
 reflet.app, approve the organization that owns the widget's key, and the dev
 server keeps a revocable token in `~/.reflet/devtools/`,
 outside the repository. That token acts as you, only reaches the devtools

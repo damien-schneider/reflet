@@ -149,7 +149,7 @@ dev-only route:
   \`plugins\`; it only runs in \`vite dev\` and refuses other machines.
 - Anything else → skip it; notes and prompts still work without it.
 
-To reach the board, the developer clicks Connect to Reflet in the Board tab;
+To reach the board, the developer clicks Connect to Reflet in the devtools panel footer;
 the dev server keeps a revocable token outside the repository. Setting
 \`REFLET_SECRET_KEY\` (server-only, never a public prefix) replaces Connect.
 \`REFLET_EDITOR\` (vscode, cursor, windsurf, zed, webstorm) picks the editor

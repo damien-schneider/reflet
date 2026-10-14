@@ -171,7 +171,7 @@ describe("session access over HTTP", () => {
       expect(response).toEqual({
         body: {
           error:
-            "Sessions need a signed-in Reflet member. Connect from the devtools Board tab.",
+            "Sessions need a signed-in Reflet member. Connect from the devtools panel.",
         },
         status: 403,
       });

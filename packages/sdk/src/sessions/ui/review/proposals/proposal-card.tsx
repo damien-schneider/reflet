@@ -1,4 +1,5 @@
 import { type ReactNode, useId, useState } from "react";
+import { InboxIcon } from "../../../../devtools/client/devtools-icons";
 import {
   CheckIcon,
   CloseIcon,
@@ -45,12 +46,12 @@ const ICON_DECISIONS: {
 function ProposalChips({ proposal }: { proposal: SessionProposal }) {
   const decisionChip = DECISION_CHIPS[proposal.decision];
   const { handedOffRevision } = proposal;
-  let handoffChip: string | null = null;
+  let briefChip: string | null = null;
   if (handedOffRevision !== null) {
-    handoffChip =
+    briefChip =
       proposal.revision > handedOffRevision
-        ? "Changed since handoff"
-        : `Handed off rev ${handedOffRevision}`;
+        ? "Changed since brief"
+        : "In a brief";
   }
   return (
     <div className="dt-ses-chips">
@@ -64,7 +65,10 @@ function ProposalChips({ proposal }: { proposal: SessionProposal }) {
           To re-examine
         </span>
       )}
-      {handoffChip && <span className="dt-chip">{handoffChip}</span>}
+      {briefChip && <span className="dt-chip">{briefChip}</span>}
+      {proposal.feedbackId !== null && (
+        <span className="dt-chip">On the board</span>
+      )}
     </div>
   );
 }
@@ -172,6 +176,18 @@ function DecisionButtons({
       >
         <PencilIcon />
       </button>
+      {proposal.feedbackId === null && proposal.decision !== "dismissed" && (
+        <button
+          aria-label="Add to board"
+          className="dt-btn"
+          data-icon-only
+          onClick={() => context.actions.addToBoard([proposal])}
+          title="Add to board"
+          type="button"
+        >
+          <InboxIcon />
+        </button>
+      )}
     </div>
   );
 }

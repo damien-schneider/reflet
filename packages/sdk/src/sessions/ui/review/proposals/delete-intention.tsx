@@ -7,7 +7,7 @@ import type { ProposalContext } from "./proposal-details";
 import { quotedNeed } from "./use-proposal-actions";
 
 const DELETE_INTENTION_COPY =
-  "Delete this intention? What later sessions added to it is deleted too, along with Reflet's copies of the briefs that included it. Briefs already copied or exported can't be recalled.";
+  "Delete this intention? What later sessions added to it goes too, and so do the briefs Reflet saved that include it. Briefs you already copied or downloaded keep their text.";
 
 function DeleteConfirmation({
   context,

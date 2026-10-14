@@ -175,7 +175,7 @@ export async function verifyDevtoolsToken(
   if (!member) {
     return {
       response: errorResponse(
-        "Invalid or expired devtools token. Reconnect from the devtools Board tab.",
+        "Invalid or expired devtools token. Reconnect from the devtools panel.",
         401
       ),
       success: false,

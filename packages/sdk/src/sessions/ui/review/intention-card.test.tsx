@@ -33,7 +33,7 @@ async function renderReview(
   api.detail = vi.fn().mockResolvedValue(detail);
   const links = reviewLinks();
   renderInWorkspace(
-    <SessionReview links={links} sessionId="session_1" />,
+    <SessionReview isBriefOpen={false} links={links} sessionId="session_1" />,
     fakeWorkspace({ api })
   );
   await screen.findByRole("heading", { name: detail.session.title });
@@ -157,7 +157,11 @@ it("deletes an intention only after warning about what goes with it", async () =
 
   fireEvent.click(screen.getByRole("button", { name: "Show details" }));
   fireEvent.click(screen.getByRole("button", { name: "Delete intention" }));
-  expect(screen.getByText(/What later sessions added to it/)).toBeTruthy();
+  expect(
+    screen.getByText(
+      "Delete this intention? What later sessions added to it goes too, and so do the briefs Reflet saved that include it. Briefs you already copied or downloaded keep their text."
+    )
+  ).toBeTruthy();
   expect(api.deleteProposal).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole("button", { name: "Delete" }));
 
@@ -165,6 +169,6 @@ it("deletes an intention only after warning about what goes with it", async () =
     expect(api.deleteProposal).toHaveBeenCalledWith("proposal_1")
   );
   expect(
-    await screen.findByRole("button", { name: "Intentions (0)" })
+    await screen.findByRole("tab", { name: /^Intentions\s*0$/ })
   ).toBeTruthy();
 });

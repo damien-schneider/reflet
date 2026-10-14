@@ -40,6 +40,7 @@ export const identity = internalQuery({
       user: {
         email: user?.email || null,
         id: actor.userId,
+        image: user?.image || null,
         name: user?.name || null,
       },
     };

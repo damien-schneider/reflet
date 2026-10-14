@@ -22,7 +22,7 @@ export function DevtoolsConnectionsSection() {
 
   return (
     <SettingsSection
-      description="Dev servers you connected from the Reflet devtools Board tab. Each can read and add internal feedback on its organization’s board as you. Connections unused for 30 days expire."
+      description="Dev servers you connected from the Reflet devtools panel. Each can read and add internal feedback on its organization’s board as you. Connections unused for 30 days expire."
       title="Connected dev servers"
     >
       <RevocableAccessList
@@ -44,8 +44,8 @@ export function DevtoolsConnectionsSection() {
               </EmptyMedia>
               <EmptyTitle>No dev servers connected</EmptyTitle>
               <EmptyDescription>
-                Open the Board tab in Reflet devtools on your dev server to
-                connect it.
+                Open the Reflet devtools panel on your dev server and use
+                Connect to Reflet in its footer.
               </EmptyDescription>
             </EmptyHeader>
           </Empty>

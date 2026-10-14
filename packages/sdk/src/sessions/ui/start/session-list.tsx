@@ -173,7 +173,7 @@ export function SessionList({
         interruptedIds={interruptedIds}
         onOpen={onOpen}
         sessions={mine}
-        title="Mine"
+        title="Your sessions"
       />
       <SessionGroup
         interruptedIds={interruptedIds}

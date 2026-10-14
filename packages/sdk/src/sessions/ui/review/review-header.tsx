@@ -1,4 +1,5 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { useState } from "react";
+import { Menu, type MenuItem } from "../../../devtools/client/menu";
 import { announce } from "../../../devtools/client/notices";
 import { MoreIcon } from "../../../feedback/ui/icons";
 import type { SessionDetail, SessionSummary } from "../../protocol";
@@ -8,7 +9,7 @@ import { useOptimisticChange } from "./optimistic-change";
 import type { ReviewHandle } from "./use-session-detail";
 
 const DELETE_COPY =
-  "Delete this session? Its recordings, transcript and intentions are removed, including what later sessions added to those intentions. Briefs you already copied or exported can't be recalled.";
+  "Delete this session? Its recording, transcript, screenshots and intentions go, along with what later sessions added to those intentions.";
 
 type ReviewSession = SessionDetail["session"];
 
@@ -134,107 +135,12 @@ function DeleteConfirmation({
   );
 }
 
-function useDismissOnOutside(isOpen: boolean, close: () => void) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const closeRef = useRef(close);
-  useLayoutEffect(() => {
-    closeRef.current = close;
-  });
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-    const container = containerRef.current;
-    const closeOnOutsidePointer = (event: Event) => {
-      if (container && !event.composedPath().includes(container)) {
-        closeRef.current();
-      }
-    };
-    const closeOnEscape = (event: Event) => {
-      if (event instanceof KeyboardEvent && event.key === "Escape") {
-        event.stopPropagation();
-        closeRef.current();
-      }
-    };
-    document.addEventListener("pointerdown", closeOnOutsidePointer, true);
-    container?.addEventListener("keydown", closeOnEscape);
-    return () => {
-      document.removeEventListener("pointerdown", closeOnOutsidePointer, true);
-      container?.removeEventListener("keydown", closeOnEscape);
-    };
-  }, [isOpen]);
-  return containerRef;
-}
-
-interface SessionMenuActions {
-  onDelete: () => void;
-  onRename: () => void;
-  onToggleSharing: () => void;
-}
-
-function SessionMenu({
-  actions,
-  isShared,
-}: {
-  actions: SessionMenuActions;
-  isShared: boolean;
-}) {
-  const [isOpen, setIsOpen] = useState(false);
-  const menuId = useId();
-  const close = () => setIsOpen(false);
-  const containerRef = useDismissOnOutside(isOpen, close);
-  const choose = (action: () => void) => () => {
-    close();
-    action();
-  };
-  return (
-    <div className="dt-ses-menu" ref={containerRef}>
-      <button
-        aria-controls={menuId}
-        aria-expanded={isOpen}
-        aria-label="Session options"
-        className="icon-btn"
-        onClick={() => setIsOpen(!isOpen)}
-        type="button"
-      >
-        <MoreIcon />
-      </button>
-      {isOpen && (
-        <div className="dt-ses-menu-list" id={menuId}>
-          <button
-            className="dt-ses-menu-item"
-            onClick={choose(actions.onRename)}
-            type="button"
-          >
-            Rename
-          </button>
-          <button
-            className="dt-ses-menu-item"
-            onClick={choose(actions.onToggleSharing)}
-            type="button"
-          >
-            {isShared ? "Make private" : "Share with team"}
-          </button>
-          <button
-            className="dt-ses-menu-item"
-            data-variant="danger"
-            onClick={choose(actions.onDelete)}
-            type="button"
-          >
-            Delete session
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
 export function ReviewHeader({
-  onBack,
+  onDeleted,
   review,
   session,
 }: {
-  onBack: () => void;
+  onDeleted: () => void;
   review: ReviewHandle;
   session: ReviewSession;
 }) {
@@ -242,19 +148,23 @@ export function ReviewHeader({
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const update = useSessionUpdate(review, session);
   const isShared = session.visibility === "team";
-  const menuActions: SessionMenuActions = {
-    onDelete: () => setIsConfirmingDelete(true),
-    onRename: () => setIsRenaming(true),
-    onToggleSharing: () =>
-      update("The sharing was not changed", {
-        visibility: isShared ? "private" : "team",
-      }),
-  };
+  const menuItems: MenuItem[] = [
+    { label: "Rename", onSelect: () => setIsRenaming(true) },
+    {
+      label: isShared ? "Make private" : "Share with team",
+      onSelect: () =>
+        update("The sharing was not changed", {
+          visibility: isShared ? "private" : "team",
+        }),
+    },
+    {
+      label: "Delete session",
+      onSelect: () => setIsConfirmingDelete(true),
+      variant: "danger",
+    },
+  ];
   return (
     <header className="dt-ses-head">
-      <button className="dt-ses-link" onClick={onBack} type="button">
-        ← All sessions
-      </button>
       {isRenaming ? (
         <TitleEditor
           onDone={() => setIsRenaming(false)}
@@ -263,9 +173,18 @@ export function ReviewHeader({
         />
       ) : (
         <div className="dt-card-head">
-          <h2 className="dt-ses-title">{session.title}</h2>
+          <h2 className="dt-ses-title" tabIndex={-1}>
+            {session.title}
+          </h2>
           {session.canEdit && (
-            <SessionMenu actions={menuActions} isShared={isShared} />
+            <Menu
+              items={menuItems}
+              trigger={{
+                className: "icon-btn",
+                content: <MoreIcon />,
+                label: "Session options",
+              }}
+            />
           )}
         </div>
       )}
@@ -277,7 +196,7 @@ export function ReviewHeader({
       {isConfirmingDelete && session.canEdit && (
         <DeleteConfirmation
           onCancel={() => setIsConfirmingDelete(false)}
-          onDeleted={onBack}
+          onDeleted={onDeleted}
           sessionId={session.id}
         />
       )}

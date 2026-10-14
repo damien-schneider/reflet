@@ -1,52 +1,49 @@
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
+import { MISSING_SECRET_KEY_HINT } from "../route/route-hint";
+import type { DevRouteState } from "../route/use-dev-route";
 import { BoardTab } from "./board-tab";
 
-const { startBoardConnect } = vi.hoisted(() => ({
-  startBoardConnect: vi.fn(),
-}));
-vi.mock("../route/dev-route", () => ({
-  disconnectBoard: vi.fn(),
-  startBoardConnect,
-}));
 vi.mock("../inbox/inbox-panel", () => ({ InboxPanel: () => null }));
-vi.mock("../notices", () => ({ reportFailure: vi.fn() }));
 
-afterEach(() => {
-  cleanup();
-  vi.restoreAllMocks();
-});
+afterEach(cleanup);
 
-it("can start a new connection after cancelling or expiring the consent tab", async () => {
-  vi.spyOn(window, "open").mockReturnValue(null);
-  startBoardConnect.mockResolvedValue({
-    authorizeUrl: "https://reflet.app/auth/devtools",
-  });
+const DISCONNECTED: DevRouteState = {
+  kind: "ready",
+  status: {
+    board: { canConnect: true, kind: "disconnected" },
+    editor: "vscode",
+    marker: "reflet-devtools",
+  },
+};
+
+it("points to the connect footer while the board is disconnected", () => {
   render(
     <BoardTab
       canConnect
       onOpenCode={vi.fn()}
       onShowSelector={() => false}
-      publicKey="fb_pub_test"
-      refresh={vi.fn()}
-      route={{
-        kind: "ready",
-        status: {
-          board: { canConnect: true, kind: "disconnected" },
-          editor: "vscode",
-          marker: "reflet-devtools",
-        },
-      }}
+      route={DISCONNECTED}
     />
   );
-  fireEvent.click(screen.getByRole("button", { name: "Connect to Reflet" }));
-  await screen.findByRole("link", { name: "Open Reflet again" });
-  fireEvent.click(screen.getByRole("button", { name: "Start again" }));
-  await waitFor(() => expect(startBoardConnect).toHaveBeenCalledTimes(2));
+
+  expect(
+    screen.getByText(
+      "Connect to Reflet below to see this page's feedback and add notes to your board."
+    )
+  ).toBeTruthy();
+  expect(screen.queryByRole("button")).toBeNull();
+});
+
+it("explains the missing secret key when this app cannot connect", () => {
+  render(
+    <BoardTab
+      canConnect={false}
+      onOpenCode={vi.fn()}
+      onShowSelector={() => false}
+      route={DISCONNECTED}
+    />
+  );
+
+  expect(screen.getByText(MISSING_SECRET_KEY_HINT)).toBeTruthy();
 });

@@ -28,38 +28,55 @@ function routeWithBoard(board: DevtoolsStatus["board"]): DevRouteState {
 function renderTab(
   route: DevRouteState,
   state: DevtoolsSessions["state"],
-  connectKey: string | null = "fb_pub_test"
+  canConnect = true
 ) {
   const actions = { onStarted: vi.fn() };
   render(
     <SessionsTab
       actions={actions}
-      connectKey={connectKey}
+      canConnect={canConnect}
       route={route}
-      sessions={{ navigation: { onOpen: vi.fn(), open: null }, state }}
+      sessions={{ navigation: { go: vi.fn(), place: { view: "home" } }, state }}
     />
   );
   return actions;
 }
 
-it("offers to connect right here before recording", () => {
+it("points to the connect footer before recording", () => {
   renderTab(routeWithBoard({ canConnect: true, kind: "disconnected" }), {
     kind: "idle",
   });
 
   expect(
-    screen.getByText("Sessions are recorded under your Reflet account.")
+    screen.getByText(
+      "Sessions are recorded under your Reflet account. Connect to Reflet below to start one."
+    )
   ).toBeTruthy();
+  expect(screen.queryByRole("button")).toBeNull();
+});
+
+it("explains that connecting needs localhost and a public key", () => {
+  renderTab(
+    routeWithBoard({ canConnect: false, kind: "disconnected" }),
+    { kind: "idle" },
+    false
+  );
+
   expect(
-    screen.getByRole("button", { name: "Connect to Reflet" })
+    screen.getByText(
+      "Sessions are recorded under your Reflet account. Connecting to Reflet needs a public key and a local address (localhost, *.localhost or *.test)."
+    )
   ).toBeTruthy();
-  expect(screen.queryByText(/Board tab/)).toBeNull();
 });
 
 it("explains that the secret key cannot record sessions", () => {
   renderTab(routeWithBoard({ kind: "secretKey" }), { kind: "idle" });
 
-  expect(screen.getByText(/rather than REFLET_SECRET_KEY/)).toBeTruthy();
+  expect(
+    screen.getByText(
+      "Sessions are recorded under your Reflet account. REFLET_SECRET_KEY can't stand for you: remove it from the dev server environment, then connect to Reflet."
+    )
+  ).toBeTruthy();
 });
 
 it("offers to retry when the workspace did not open", () => {

@@ -1,3 +1,5 @@
+import { TargetIcon } from "../../../feedback/ui/icons";
+import { countLabel } from "../../../sessions/ui/session-format";
 import type { CodeTarget } from "../code/code-panel";
 import { CopyButton } from "../copy-button";
 import { reportFailure } from "../notices";
@@ -93,65 +95,115 @@ function SendToBoard({
         onClick={() => sendNotesToBoard(ready)}
         type="button"
       >
-        {ready.length > 0 && `Send ${ready.length} to board`}
+        {ready.length > 0 && `Add ${ready.length} to board`}
         {ready.length === 0 &&
           (unsent.some((note) => activity[note.id] === "locating")
             ? "Locating…"
-            : "Sending…")}
+            : "Adding…")}
       </button>
       {busyCount > 0 && ready.length > 0 && (
-        <span className="dt-status">{busyCount} still locating or sending</span>
+        <span className="dt-status">{busyCount} still locating or adding</span>
       )}
     </>
   );
 }
 
-export function NotesPanel({
-  notes: snapshot,
-  onOpenCode,
-  onShowSelector,
+function NotesEmpty({ onPick }: { onPick: () => void }) {
+  return (
+    <div className="dt-empty">
+      <h2 className="dt-empty-title">No notes yet</h2>
+      <p>
+        Pick an element on the page and write what should change. Shift-click it
+        to open its code instead.
+      </p>
+      <button
+        className="dt-btn"
+        data-variant="primary"
+        onClick={onPick}
+        type="button"
+      >
+        <TargetIcon />
+        Pick an element
+      </button>
+    </div>
+  );
+}
+
+function NotesToolbar({
+  count,
+  onPick,
+}: {
+  count: number;
+  onPick: () => void;
+}) {
+  return (
+    <div className="dt-toolbar">
+      <span className="dt-status">{countLabel(count, "note")}</span>
+      <button
+        aria-label="Pick an element to note"
+        className="icon-btn"
+        onClick={onPick}
+        title="Pick an element to note"
+        type="button"
+      >
+        <TargetIcon />
+      </button>
+    </div>
+  );
+}
+
+function NotesFooter({
+  activity,
+  notes,
   sendBlockedReason,
 }: {
-  notes: NotesSnapshot;
-  onOpenCode: (target: CodeTarget) => void;
-  onShowSelector: (selector: string) => boolean;
+  activity: NotesSnapshot["activity"];
+  notes: DevNote[];
   sendBlockedReason: string | null;
 }) {
-  const { activity, error, notes: allNotes, status } = snapshot;
+  const clearable = notes
+    .filter((note) => activity[note.id] !== "sending")
+    .map((note) => note.id);
+  return (
+    <div className="dt-sheet-foot">
+      <CopyButton
+        label={`Copy ${notes.length} as prompt`}
+        text={notesToPrompt(notes)}
+        variant="primary"
+      />
+      <SendToBoard
+        activity={activity}
+        sendBlockedReason={sendBlockedReason}
+        unsent={notes.filter((note) => !note.sent)}
+      />
+      {clearable.length > 0 && (
+        <button
+          className="dt-btn"
+          onClick={() => archiveNotes(clearable)}
+          type="button"
+        >
+          Clear notes
+        </button>
+      )}
+    </div>
+  );
+}
 
-  if (status === "failed") {
-    return <p className="dt-error">Notes cannot be stored: {error}</p>;
-  }
-  if (status === "loading") {
-    return <p className="dt-status">Loading notes…</p>;
-  }
-
-  const notes = allNotes.filter(isActiveNote);
-  const archived = allNotes.filter((note) => !isActiveNote(note));
-
-  if (notes.length === 0) {
-    return (
-      <>
-        <div className="dt-empty">
-          <p>No notes yet.</p>
-          <p>
-            Use the pick button, then click an element to write one — or
-            Shift+click it to open its code.
-          </p>
-        </div>
-        <ArchivedNotes archived={archived} />
-      </>
-    );
-  }
-
+function NoteGroups({
+  activity,
+  notes,
+  onOpenCode,
+  onShowSelector,
+}: {
+  activity: NotesSnapshot["activity"];
+  notes: DevNote[];
+  onOpenCode: (target: CodeTarget) => void;
+  onShowSelector: (selector: string) => boolean;
+}) {
   const { pathname } = window.location;
   const numbers = pinNumbers(notes, pathname);
   const onThisPage = notes.filter((note) => isNoteOnPage(note, pathname));
   const elsewhere = notes.filter((note) => !isNoteOnPage(note, pathname));
-  const unsent = notes.filter((note) => !note.sent);
-  const clearable = notes
-    .filter((note) => activity[note.id] !== "sending")
-    .map((note) => note.id);
 
   const renderNote = (note: DevNote, isHere: boolean) => (
     <NoteCard
@@ -172,28 +224,59 @@ export function NotesPanel({
       {onThisPage.map((note) => renderNote(note, true))}
       {elsewhere.length > 0 && <h2 className="dt-group">Other pages</h2>}
       {elsewhere.map((note) => renderNote(note, false))}
+    </>
+  );
+}
+
+export function NotesPanel({
+  notes: snapshot,
+  onOpenCode,
+  onPick,
+  onShowSelector,
+  sendBlockedReason,
+}: {
+  notes: NotesSnapshot;
+  onOpenCode: (target: CodeTarget) => void;
+  onPick: () => void;
+  onShowSelector: (selector: string) => boolean;
+  sendBlockedReason: string | null;
+}) {
+  const { activity, error, notes: allNotes, status } = snapshot;
+
+  if (status === "failed") {
+    return <p className="dt-error">Notes cannot be stored: {error}</p>;
+  }
+  if (status === "loading") {
+    return <p className="dt-status">Loading notes…</p>;
+  }
+
+  const notes = allNotes.filter(isActiveNote);
+  const archived = allNotes.filter((note) => !isActiveNote(note));
+
+  if (notes.length === 0) {
+    return (
+      <>
+        <NotesEmpty onPick={onPick} />
+        <ArchivedNotes archived={archived} />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <NotesToolbar count={notes.length} onPick={onPick} />
+      <NoteGroups
+        activity={activity}
+        notes={notes}
+        onOpenCode={onOpenCode}
+        onShowSelector={onShowSelector}
+      />
       <ArchivedNotes archived={archived} />
-      <div className="dt-sheet-foot">
-        <CopyButton
-          label={`Copy ${notes.length} as prompt`}
-          text={notesToPrompt(notes)}
-          variant="primary"
-        />
-        <SendToBoard
-          activity={activity}
-          sendBlockedReason={sendBlockedReason}
-          unsent={unsent}
-        />
-        {clearable.length > 0 && (
-          <button
-            className="dt-btn"
-            onClick={() => archiveNotes(clearable)}
-            type="button"
-          >
-            Clear notes
-          </button>
-        )}
-      </div>
+      <NotesFooter
+        activity={activity}
+        notes={notes}
+        sendBlockedReason={sendBlockedReason}
+      />
     </>
   );
 }

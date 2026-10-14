@@ -2,29 +2,27 @@ import type { ReactNode } from "react";
 import { useFloatingPosition } from "../../feedback/ui/floating/use-floating-position";
 import { GripIcon, TargetIcon } from "../../feedback/ui/icons";
 import { MicIcon } from "../../sessions/ui/session-icons";
-import { InboxIcon, NotesIcon } from "./devtools-icons";
+import { PanelIcon } from "./devtools-icons";
 
 const BAR_POSITION_KEY = "reflet-devtools-bar-position";
 export const PICK_BUTTON_LABEL =
   "Pick an element: note it, copy it, or Shift+click to open its code";
 
-export type SheetTab = "code" | "inbox" | "notes" | "sessions";
+export const SHEET_TABS = ["inbox", "notes", "sessions", "code"] as const;
+export type SheetTab = (typeof SHEET_TABS)[number];
 
 export function BarButton({
   children,
   label,
   onClick,
-  pressed,
 }: {
   children: ReactNode;
   label: string;
   onClick: () => void;
-  pressed: boolean;
 }) {
   return (
     <button
       aria-label={label}
-      aria-pressed={pressed}
       className="icon-btn"
       onClick={onClick}
       title={label}
@@ -77,54 +75,45 @@ export function DevtoolsBar({
   );
 }
 
-export function SessionsBarButton({
-  isOpen,
-  onToggle,
-}: {
-  isOpen: boolean;
-  onToggle: () => void;
-}) {
+export function SessionsBarButton({ onOpen }: { onOpen: () => void }) {
   return (
-    <BarButton label="Sessions" onClick={onToggle} pressed={isOpen}>
+    <BarButton label="Sessions" onClick={onOpen}>
       <MicIcon />
     </BarButton>
   );
 }
 
+function panelLabel(unsentNoteCount: number): string {
+  if (unsentNoteCount === 0) {
+    return "Open the Reflet panel";
+  }
+  const notes = unsentNoteCount === 1 ? "note" : "notes";
+  return `Open the Reflet panel (${unsentNoteCount} ${notes} not on the board)`;
+}
+
 export function DevtoolsBarButtons({
-  noteCount,
+  onOpen,
   onPick,
-  onToggleSheet,
-  openTab,
+  unsentNoteCount,
 }: {
-  noteCount: number;
+  onOpen: (tab: SheetTab | null) => void;
   onPick: () => void;
-  onToggleSheet: (tab: SheetTab) => void;
-  openTab: SheetTab | null;
+  unsentNoteCount: number;
 }) {
   return (
     <>
-      <BarButton label={PICK_BUTTON_LABEL} onClick={onPick} pressed={false}>
+      <BarButton label={PICK_BUTTON_LABEL} onClick={onPick}>
         <TargetIcon />
       </BarButton>
+      <SessionsBarButton onOpen={() => onOpen("sessions")} />
       <BarButton
-        label="Dev notes"
-        onClick={() => onToggleSheet("notes")}
-        pressed={openTab === "notes"}
+        label={panelLabel(unsentNoteCount)}
+        onClick={() => onOpen(null)}
       >
-        <NotesIcon />
-        {noteCount > 0 && <span className="dt-count">{noteCount}</span>}
-      </BarButton>
-      <SessionsBarButton
-        isOpen={openTab === "sessions"}
-        onToggle={() => onToggleSheet("sessions")}
-      />
-      <BarButton
-        label="Board feedback"
-        onClick={() => onToggleSheet("inbox")}
-        pressed={openTab === "inbox"}
-      >
-        <InboxIcon />
+        <PanelIcon />
+        {unsentNoteCount > 0 && (
+          <span className="dt-count">{unsentNoteCount}</span>
+        )}
       </BarButton>
     </>
   );

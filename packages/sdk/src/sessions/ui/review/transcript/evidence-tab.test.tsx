@@ -38,10 +38,14 @@ async function openEvidence(detail: SessionDetail, api = fakeApi()) {
   });
   api.detail = vi.fn(async () => served);
   renderInWorkspace(
-    <SessionReview links={reviewLinks()} sessionId="session_1" />,
+    <SessionReview
+      isBriefOpen={false}
+      links={reviewLinks()}
+      sessionId="session_1"
+    />,
     fakeWorkspace({ api })
   );
-  fireEvent.click(await screen.findByRole("button", { name: /^Evidence/ }));
+  fireEvent.click(await screen.findByRole("tab", { name: /^Evidence/ }));
   return api;
 }
 
@@ -61,7 +65,9 @@ it("removes one sensitive screenshot after confirming, keeping the others", asyn
   fireEvent.click(screen.getByRole("button", { name: REMOVE_LABEL }));
   expect(api.removeEvidence).not.toHaveBeenCalled();
   expect(
-    screen.getByText(/Briefs you already copied or exported can't be recalled/)
+    screen.getByText(
+      "Remove this screenshot? The image is deleted for good. Briefs you already downloaded keep their copy."
+    )
   ).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Remove" }));
 

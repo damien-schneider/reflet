@@ -159,22 +159,23 @@ it("returns focus to the Sessions button when the panel closes", async () => {
   });
   sessionsButton.focus();
   fireEvent.click(sessionsButton);
-  expect(await screen.findByText("Recording as Ada · Acme")).toBeTruthy();
+  expect(
+    await screen.findByRole("heading", { level: 2, name: "Sessions" })
+  ).toBeTruthy();
   fireEvent.click(
     screen.getByRole("button", { name: "Close Reflet team tools panel" })
   );
 
-  expect(document.activeElement).toBe(sessionsButton);
+  await waitFor(() => expect(document.activeElement).toBe(sessionsButton));
 });
 
 it("signs out and removes this device's session data", async () => {
   mocks.readTeamAccess.mockReturnValue(ACCESS);
   renderLayer();
 
-  fireEvent.click(
-    await screen.findByRole("button", { name: "Signed in as Ada · Acme" })
-  );
-  fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Sessions" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Ada, Acme" }));
+  fireEvent.click(screen.getByRole("menuitem", { name: "Sign out" }));
 
   await waitFor(() =>
     expect(mocks.forgetTeamAccess).toHaveBeenCalledWith({

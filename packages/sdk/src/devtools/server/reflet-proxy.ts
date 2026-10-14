@@ -5,7 +5,7 @@ type ProxiedApiPath = (typeof PROXIED_API_PATHS)[number];
 
 const CREATE_FEEDBACK_PATH: ProxiedApiPath = "/api/v1/feedback/create";
 const MISSING_BOARD_ACCESS_ERROR =
-  "Connect to Reflet from the devtools Board tab, or set REFLET_SECRET_KEY in the dev server environment.";
+  "Connect to Reflet from the devtools panel footer, or set REFLET_SECRET_KEY in the dev server environment.";
 const BODYLESS_STATUSES = [204, 205, 304];
 
 export interface RefletProxyTarget {

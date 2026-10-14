@@ -69,7 +69,7 @@ export function ConnectDevtoolsContent({
 
   if (!linkIsComplete) {
     return (
-      <ConnectNotice message="This connect link is invalid. Start again from the devtools Board tab." />
+      <ConnectNotice message="This connect link is invalid. Start again from the devtools panel." />
     );
   }
 
@@ -105,7 +105,7 @@ function ConnectTarget({ request }: { request: ConnectRequest }) {
   }
   if (target.kind === "unknownKey") {
     return (
-      <ConnectNotice message="This widget key isn’t active on Reflet. Copy the key again from your widget settings, then restart the connection from the devtools Board tab." />
+      <ConnectNotice message="This widget key isn’t active on Reflet. Copy the key again from your widget settings, then restart the connection from the devtools panel." />
     );
   }
   if (target.kind === "notMember") {

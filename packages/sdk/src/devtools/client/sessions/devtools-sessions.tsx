@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react";
+import type { ReactNode } from "react";
 import { devtoolsTransport } from "../../../sessions/api/session-transports";
 import {
   SessionWorkspaceProvider,
@@ -8,10 +8,9 @@ import {
 import {
   type SessionNavigation,
   SessionsPanel,
+  useSessionNavigation,
 } from "../../../sessions/ui/sessions-panel";
-import type { SessionTarget } from "../../../sessions/ui/start/session-list";
-import { ConnectPrompt } from "../route/connect-prompt";
-import { MissingRouteHint } from "../route/route-hint";
+import { CONNECT_REQUIREMENT, MissingRouteHint } from "../route/route-hint";
 import type { DevRouteState } from "../route/use-dev-route";
 
 const DEVTOOLS_TRANSPORT = devtoolsTransport();
@@ -34,8 +33,7 @@ export function useDevtoolsSessions(options: {
     surface: "devtools",
     transport: isConnected ? DEVTOOLS_TRANSPORT : null,
   });
-  const [open, setOpen] = useState<SessionTarget | null>(null);
-  return { navigation: { onOpen: setOpen, open }, state };
+  return { navigation: useSessionNavigation(), state };
 }
 
 export function SessionsScope({
@@ -54,22 +52,8 @@ export function SessionsScope({
   );
 }
 
-function SessionsConnect({ connectKey }: { connectKey: string | null }) {
-  if (connectKey === null) {
-    return (
-      <p className="dt-empty">
-        Sessions are recorded under your Reflet account. Connecting needs this
-        app on localhost with a Reflet public key.
-      </p>
-    );
-  }
-  return (
-    <ConnectPrompt
-      publicKey={connectKey}
-      purpose="Sessions are recorded under your Reflet account."
-    />
-  );
-}
+const SESSIONS_NEED_ACCOUNT =
+  "Sessions are recorded under your Reflet account.";
 
 function WorkspaceGate({
   actions,
@@ -108,12 +92,12 @@ export interface SessionsTabActions {
 
 export function SessionsTab({
   actions,
-  connectKey,
+  canConnect,
   route,
   sessions,
 }: {
   actions: SessionsTabActions;
-  connectKey: string | null;
+  canConnect: boolean;
   route: DevRouteState;
   sessions: DevtoolsSessions;
 }) {
@@ -127,13 +111,20 @@ export function SessionsTab({
   }
   const { board } = route.status;
   if (board.kind === "disconnected") {
-    return <SessionsConnect connectKey={connectKey} />;
+    return (
+      <p className="dt-empty">
+        {SESSIONS_NEED_ACCOUNT}{" "}
+        {canConnect
+          ? "Connect to Reflet below to start one."
+          : CONNECT_REQUIREMENT}
+      </p>
+    );
   }
   if (board.kind === "secretKey") {
     return (
       <p className="dt-empty">
-        Sessions are recorded under your own name, so they need Connect in the
-        Board tab rather than REFLET_SECRET_KEY.
+        {SESSIONS_NEED_ACCOUNT} REFLET_SECRET_KEY can't stand for you: remove it
+        from the dev server environment, then connect to Reflet.
       </p>
     );
   }

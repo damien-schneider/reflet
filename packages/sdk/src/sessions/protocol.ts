@@ -70,6 +70,8 @@ export const sessionIdentitySchema = z.object({
   user: z.object({
     email: z.string().nullable(),
     id: z.string(),
+    /** Absent from older Reflet backends. */
+    image: z.string().nullable().optional(),
     name: z.string().nullable(),
   }),
 });

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
+import { AccountFooter } from "../../devtools/client/account/account-footer";
 import {
-  BarButton,
   DevtoolsBar,
   SessionsBarButton,
 } from "../../devtools/client/devtools-bar";
@@ -11,17 +11,19 @@ import type { RefletFeedbackProps } from "../../feedback/types";
 import { teamTransport } from "../api/session-transports";
 import { purgeAccount } from "../local/local-sessions";
 import { RecordingLayer } from "../ui/recording/recording-layer";
-import { PersonIcon } from "../ui/session-icons";
 import {
   failureMessage,
-  type SessionWorkspace,
   SessionWorkspaceProvider,
   useWorkspaceLoader,
   type WorkspaceState,
 } from "../ui/session-workspace";
-import { type SessionNavigation, SessionsPanel } from "../ui/sessions-panel";
+import {
+  type SessionNavigation,
+  SessionsPanel,
+  sessionSheetPlace,
+  useSessionNavigation,
+} from "../ui/sessions-panel";
 import { SESSIONS_STYLES } from "../ui/sessions-styles";
-import type { SessionTarget } from "../ui/start/session-list";
 import {
   finishTeamSignIn,
   forgetTeamAccess,
@@ -38,38 +40,6 @@ const REFUSED_SIGN_IN_COPY =
 interface TeamPlacement {
   edge: "bottom" | "top";
   side: "left" | "right";
-}
-
-function AccountControls({
-  access,
-  onSignOut,
-  workspace,
-}: {
-  access: TeamAccess;
-  onSignOut: () => void;
-  workspace: SessionWorkspace | null;
-}) {
-  const [isOpen, setIsOpen] = useState(false);
-  const user = workspace?.account.userName ?? workspace?.account.userEmail;
-  const label = user
-    ? `Signed in as ${user} · ${access.organizationName}`
-    : `Signed in · ${access.organizationName}`;
-  return (
-    <>
-      <BarButton
-        label={label}
-        onClick={() => setIsOpen(!isOpen)}
-        pressed={isOpen}
-      >
-        <PersonIcon />
-      </BarButton>
-      {isOpen && (
-        <button className="dt-btn" onClick={onSignOut} type="button">
-          Sign out
-        </button>
-      )}
-    </>
-  );
 }
 
 function SessionsBody({
@@ -98,30 +68,42 @@ function SessionsBody({
 }
 
 function TeamSheet({
+  account,
   navigation,
-  onOpenChange,
+  onClose,
   side,
-  state,
 }: {
+  account: { access: TeamAccess; onSignOut: () => void; state: WorkspaceState };
   navigation: SessionNavigation;
-  onOpenChange: (isOpen: boolean) => void;
+  onClose: () => void;
   side: TeamPlacement["side"];
-  state: WorkspaceState;
 }) {
+  const { state } = account;
+  const place = state.kind === "ready" ? sessionSheetPlace(navigation) : null;
   return (
     <DevtoolsSheet
+      footer={
+        place === null && (
+          <AccountFooter
+            actions={[{ label: "Sign out", onSelect: account.onSignOut }]}
+            organizationName={account.access.organizationName}
+            person={
+              state.kind === "ready" ? state.workspace.identity.user : null
+            }
+          />
+        )
+      }
       label={TEAM_TOOLS_LABEL}
-      onClose={() => onOpenChange(false)}
-      onSelectTab={() => onOpenChange(true)}
+      navigation={{
+        onSelectTab: () => undefined,
+        place,
+        tab: "sessions",
+        tabs: ["sessions"],
+      }}
+      onClose={onClose}
       side={side}
-      tab="sessions"
-      tabs={["sessions"]}
     >
-      <SessionsBody
-        navigation={navigation}
-        onStarted={() => onOpenChange(false)}
-        state={state}
-      />
+      <SessionsBody navigation={navigation} onStarted={onClose} state={state} />
     </DevtoolsSheet>
   );
 }
@@ -177,16 +159,16 @@ function TeamTools({
 }) {
   const { signOut, state, workspace } = useTeamWorkspace(team);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const [open, setOpen] = useState<SessionTarget | null>(null);
+  const navigation = useSessionNavigation();
 
   return (
     <SessionWorkspaceProvider workspace={workspace}>
       {isSheetOpen && (
         <TeamSheet
-          navigation={{ onOpen: setOpen, open }}
-          onOpenChange={setIsSheetOpen}
+          account={{ access: team.access, onSignOut: signOut, state }}
+          navigation={navigation}
+          onClose={() => setIsSheetOpen(false)}
           side={placement.side}
-          state={state}
         />
       )}
       <DevtoolsBar
@@ -194,20 +176,12 @@ function TeamTools({
         label={TEAM_TOOLS_LABEL}
         side={placement.side}
       >
-        <SessionsBarButton
-          isOpen={isSheetOpen}
-          onToggle={() => setIsSheetOpen(!isSheetOpen)}
-        />
-        <AccountControls
-          access={team.access}
-          onSignOut={signOut}
-          workspace={workspace}
-        />
+        <SessionsBarButton onOpen={() => setIsSheetOpen(true)} />
       </DevtoolsBar>
       {workspace && (
         <RecordingLayer
           onFinished={(target) => {
-            setOpen(target);
+            navigation.go({ target, view: "review" });
             setIsSheetOpen(true);
           }}
         />

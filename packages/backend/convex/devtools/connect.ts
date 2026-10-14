@@ -57,7 +57,7 @@ export const approve = action({
     }
     if (!BASE64URL_SHA256.test(args.codeChallenge)) {
       throw new Error(
-        "This connect link is malformed. Start again from the devtools Board tab."
+        "This connect link is malformed. Start again from the devtools panel."
       );
     }
 

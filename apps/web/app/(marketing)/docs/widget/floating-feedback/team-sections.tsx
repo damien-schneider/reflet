@@ -23,15 +23,15 @@ export function DevtoolsSection() {
         launcher that you can drag anywhere. Pick an element to write a note on
         it, press ⌘C to copy it with its source, or Shift-click it to open its
         source with the JSX highlighted. Copy your notes as one prompt for a
-        coding agent, or send them to the board as internal feedback that only
+        coding agent, or add them to the board as internal feedback that only
         members see. The Board tab lists the feedback reported on the current
         page, with the element and its code one click away. Production builds
         never ship it.
       </DocsText>
       <DocsText>
         Code view, the board, Connect and sessions go through one dev-only
-        route. To reach the board, click Connect to Reflet in the Board tab and
-        approve your dev server on reflet.app: it keeps a revocable token
+        route. To reach the board, click Connect to Reflet in the panel footer
+        and approve your dev server on reflet.app: it keeps a revocable token
         outside your repository. You can also set{" "}
         <InlineCode>REFLET_SECRET_KEY</InlineCode> on the server instead. Set{" "}
         <InlineCode>REFLET_EDITOR</InlineCode> to{" "}

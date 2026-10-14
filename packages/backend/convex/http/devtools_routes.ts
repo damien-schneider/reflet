@@ -10,7 +10,7 @@ import { errorResponse, jsonResponse } from "./helpers";
 import { readJsonBody } from "./public_api/route";
 
 const INVALID_CONNECT_CODE =
-  "This connect code is invalid or has expired. Start again from the devtools Board tab.";
+  "This connect code is invalid or has expired. Start again from the devtools panel.";
 
 const tokenExchangeSchema = z.object({
   code: z.string().min(1).max(200),

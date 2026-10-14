@@ -10,11 +10,6 @@ import { FormActions, TextField } from "./proposal-editor";
 
 export type IntentionView = "screens" | "cards";
 
-const VIEW_OPTIONS: { label: string; value: IntentionView }[] = [
-  { label: "On screen", value: "screens" },
-  { label: "Details", value: "cards" },
-];
-
 function emptyCopy(detail: SessionDetail): string {
   const { session } = detail;
   if (session.collection !== "ended") {
@@ -107,37 +102,11 @@ function AddProposalForm({
   );
 }
 
-function ViewSwitch({
-  onSelect,
-  view,
-}: {
-  onSelect: (view: IntentionView) => void;
-  view: IntentionView;
-}) {
-  return (
-    <div className="dt-tabs">
-      {VIEW_OPTIONS.map((option) => (
-        <button
-          aria-pressed={option.value === view}
-          className="dt-tab"
-          key={option.value}
-          onClick={() => onSelect(option.value)}
-          type="button"
-        >
-          {option.label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
 export function ProposalsTab({
   context,
-  onSelectView,
   view,
 }: {
   context: ProposalContext;
-  onSelectView: (view: IntentionView) => void;
   view: IntentionView;
 }) {
   const [isAdding, setIsAdding] = useState(false);
@@ -156,7 +125,6 @@ export function ProposalsTab({
       {proposals.length === 0 && !continuation && (
         <p className="dt-empty">{emptyCopy(context.detail)}</p>
       )}
-      {hasScreens && <ViewSwitch onSelect={onSelectView} view={view} />}
       {showsScreens && <ScreenReport context={context} report={report} />}
       {proposals
         .filter((proposal) => !showsScreens || proposal.attachment !== null)

@@ -7,11 +7,24 @@ import {
 import { ElementPicker } from "../../feedback/ui/picker";
 import { SelectionOutline } from "../../feedback/ui/selection-outline";
 import { RecordingLayer } from "../../sessions/ui/recording/recording-layer";
+import { sessionSheetPlace } from "../../sessions/ui/sessions-panel";
 import { SESSIONS_STYLES } from "../../sessions/ui/sessions-styles";
+import { DevtoolsAccount } from "./account/devtools-account";
 import { BoardTab } from "./board/board-tab";
 import { copyToClipboard } from "./clipboard";
-import { CodeTab, titleFor, useCodeLookup } from "./code/code-tab";
-import { DevtoolsBar, DevtoolsBarButtons, type SheetTab } from "./devtools-bar";
+import type { CodeTarget } from "./code/code-panel";
+import {
+  type CodeLookup,
+  CodeTab,
+  titleFor,
+  useCodeLookup,
+} from "./code/code-tab";
+import {
+  DevtoolsBar,
+  DevtoolsBarButtons,
+  SHEET_TABS,
+  type SheetTab,
+} from "./devtools-bar";
 import { DevtoolsSheet } from "./devtools-sheet";
 import { DEVTOOLS_STYLES } from "./devtools-styles";
 import { findOnPage } from "./find-on-page";
@@ -36,10 +49,12 @@ import { NotePins } from "./pins/note-pins";
 import { MISSING_SECRET_KEY_HINT } from "./route/route-hint";
 import { type DevRouteState, useDevRoute } from "./route/use-dev-route";
 import {
+  type DevtoolsSessions,
   SessionsScope,
   SessionsTab,
   useDevtoolsSessions,
 } from "./sessions/devtools-sessions";
+import { FIRST_SHEET_TAB, useSheetTab } from "./use-sheet-tab";
 
 const PICKER_LABELS: FeedbackWidgetLabels = {
   ...DEFAULT_WIDGET_LABELS,
@@ -57,13 +72,13 @@ function sendBlockedReason(
     return "Connecting to the Reflet dev route…";
   }
   if (route.kind === "missing") {
-    return "Add the Reflet dev route to send notes to your board.";
+    return "Add the Reflet dev route to add notes to your board.";
   }
   if (route.status.board.kind !== "disconnected") {
     return null;
   }
   return canConnect
-    ? "Connect to Reflet in the Board tab to send notes."
+    ? "Connect to Reflet below to add notes to your board."
     : MISSING_SECRET_KEY_HINT;
 }
 function canConnectBoard(route: DevRouteState, publicKey: string | null) {
@@ -119,6 +134,68 @@ function useResumeLocating(notes: NotesSnapshot, route: DevRouteState) {
   }, [notes, route.kind]);
 }
 
+function SheetPanel({
+  canConnect,
+  codeLookup,
+  handlers,
+  notes,
+  openTab,
+  route,
+  sessions,
+}: {
+  canConnect: boolean;
+  codeLookup: CodeLookup | null;
+  handlers: {
+    onClose: () => void;
+    onOpenCode: (target: CodeTarget) => void;
+    onPick: () => void;
+    onShowSelector: (selector: string) => boolean;
+  };
+  notes: NotesSnapshot;
+  openTab: SheetTab;
+  route: DevRouteState;
+  sessions: DevtoolsSessions;
+}) {
+  if (openTab === "notes") {
+    return (
+      <NotesPanel
+        notes={notes}
+        onOpenCode={handlers.onOpenCode}
+        onPick={handlers.onPick}
+        onShowSelector={handlers.onShowSelector}
+        sendBlockedReason={sendBlockedReason(route, canConnect)}
+      />
+    );
+  }
+  if (openTab === "inbox") {
+    return (
+      <BoardTab
+        canConnect={canConnect}
+        onOpenCode={handlers.onOpenCode}
+        onShowSelector={handlers.onShowSelector}
+        route={route}
+      />
+    );
+  }
+  if (openTab === "sessions") {
+    return (
+      <SessionsTab
+        actions={{
+          onStarted: handlers.onClose,
+          onWriteNote: () => {
+            handlers.onClose();
+            handlers.onPick();
+          },
+        }}
+        canConnect={canConnect}
+        route={route}
+        sessions={sessions}
+      />
+    );
+  }
+  return codeLookup && <CodeTab lookup={codeLookup} route={route} />;
+}
+
 export function DevtoolsLayer({
   isWidgetOpen,
   position,
@@ -133,9 +210,10 @@ export function DevtoolsLayer({
   useResumeLocating(notes, route);
   const sessions = useDevtoolsSessions({ onUnauthorized: refresh, route });
   const [isPicking, setIsPicking] = useState(false);
-  const [openTab, setOpenTab] = useState<SheetTab | null>(null);
+  const sheet = useSheetTab();
+  const { openTab } = sheet;
   const [highlighted, setHighlighted] = useState<Element | null>(null);
-  const { codeLookup, inspectElement, openCode } = useCodeLookup(setOpenTab);
+  const { codeLookup, inspectElement, openCode } = useCodeLookup(sheet.select);
 
   const edge = position.startsWith("top") ? "top" : "bottom";
   const side = position.endsWith("right") ? "right" : "left";
@@ -143,10 +221,10 @@ export function DevtoolsLayer({
   const canConnect = canConnectBoard(route, publicKey);
   const isRecessed = isWidgetOpen || isPicking;
 
-  const closeSheet = useCallback(() => {
-    setOpenTab(null);
+  const closeSheet = () => {
+    sheet.close();
     setHighlighted(null);
-  }, []);
+  };
 
   const startPick = useCallback(() => setIsPicking(true), []);
   const cancelPick = useCallback(() => setIsPicking(false), []);
@@ -195,13 +273,15 @@ export function DevtoolsLayer({
     [canReadSource]
   );
 
-  const tabs: SheetTab[] = codeLookup
-    ? ["notes", "sessions", "inbox", "code"]
-    : ["notes", "sessions", "inbox"];
-  const writeNoteInstead = () => {
-    closeSheet();
-    startPick();
-  };
+  const tabs = SHEET_TABS.filter((tab) => tab !== "code" || codeLookup);
+  const openPanel = (tab: SheetTab | null) =>
+    sheet.select(
+      tab ?? (tabs.includes(sheet.lastTab) ? sheet.lastTab : FIRST_SHEET_TAB)
+    );
+  const sheetPlace =
+    openTab === "sessions" && sessions.state.kind === "ready"
+      ? sessionSheetPlace(sessions.navigation)
+      : null;
 
   return (
     <SessionsScope sessions={sessions}>
@@ -214,55 +294,46 @@ export function DevtoolsLayer({
         <NotePins isVisible={!isRecessed} notes={notes} onOpenCode={openCode} />
         {openTab && (
           <DevtoolsSheet
+            footer={
+              sheetPlace === null && (
+                <DevtoolsAccount
+                  connectKey={canConnect ? publicKey : null}
+                  refresh={refresh}
+                  route={route}
+                  workspace={sessions.state}
+                />
+              )
+            }
+            navigation={{
+              onSelectTab: sheet.select,
+              place: sheetPlace,
+              tab: openTab,
+              tabs,
+            }}
             onClose={closeSheet}
-            onPick={startPick}
-            onSelectTab={setOpenTab}
             side={side}
-            tab={openTab}
-            tabs={tabs}
           >
-            {openTab === "notes" && (
-              <NotesPanel
-                notes={notes}
-                onOpenCode={openCode}
-                onShowSelector={showSelector}
-                sendBlockedReason={sendBlockedReason(route, canConnect)}
-              />
-            )}
-            {openTab === "inbox" && (
-              <BoardTab
-                canConnect={canConnect}
-                onOpenCode={openCode}
-                onShowSelector={showSelector}
-                publicKey={publicKey}
-                refresh={refresh}
-                route={route}
-              />
-            )}
-            {openTab === "sessions" && (
-              <SessionsTab
-                actions={{
-                  onStarted: closeSheet,
-                  onWriteNote: writeNoteInstead,
-                }}
-                connectKey={canConnect ? publicKey : null}
-                route={route}
-                sessions={sessions}
-              />
-            )}
-            {openTab === "code" && codeLookup && (
-              <CodeTab lookup={codeLookup} route={route} />
-            )}
+            <SheetPanel
+              canConnect={canConnect}
+              codeLookup={codeLookup}
+              handlers={{
+                onClose: closeSheet,
+                onOpenCode: openCode,
+                onPick: startPick,
+                onShowSelector: showSelector,
+              }}
+              notes={notes}
+              openTab={openTab}
+              route={route}
+              sessions={sessions}
+            />
           </DevtoolsSheet>
         )}
         <DevtoolsBar edge={edge} side={side}>
           <DevtoolsBarButtons
-            noteCount={unsentNoteCount(notes)}
+            onOpen={openPanel}
             onPick={startPick}
-            onToggleSheet={(tab) =>
-              setOpenTab((current) => (current === tab ? null : tab))
-            }
-            openTab={openTab}
+            unsentNoteCount={unsentNoteCount(notes)}
           />
         </DevtoolsBar>
         {openTab && <SelectionOutline node={highlighted} />}
@@ -270,8 +341,8 @@ export function DevtoolsLayer({
         {sessions.state.kind === "ready" && (
           <RecordingLayer
             onFinished={(target) => {
-              sessions.navigation.onOpen(target);
-              setOpenTab("sessions");
+              sessions.navigation.go({ target, view: "review" });
+              sheet.select("sessions");
             }}
           />
         )}

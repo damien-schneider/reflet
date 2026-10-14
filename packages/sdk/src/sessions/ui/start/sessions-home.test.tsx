@@ -56,11 +56,6 @@ function renderHome(
   return { onOpenSession };
 }
 
-it("names the account sessions are recorded under", () => {
-  renderHome();
-  expect(screen.getByText("Recording as Ada · Acme")).toBeTruthy();
-});
-
 it("explains what a session records on first use for an account, and not on later visits", () => {
   const workspace = fakeWorkspace();
   renderHome(workspace);
@@ -110,6 +105,9 @@ it("offers to try again or write a note when the microphone is blocked", async (
   const recorder = fakeRecorder();
   const onWriteNote = vi.fn();
   renderHome(fakeWorkspace({ recorder }), { onWriteNote });
+  expect(
+    screen.queryByRole("button", { name: "Write a note instead" })
+  ).toBeNull();
 
   fireEvent.click(screen.getByRole("button", { name: "Start session" }));
   act(() =>
@@ -180,7 +178,9 @@ it("lists my sessions apart from the ones shared with the team", async () => {
   });
   const { onOpenSession } = renderHome(fakeWorkspace({ api }));
 
-  expect(await screen.findByRole("heading", { name: "Mine" })).toBeTruthy();
+  expect(
+    await screen.findByRole("heading", { name: "Your sessions" })
+  ).toBeTruthy();
   expect(
     screen.getByRole("heading", { name: "Shared with the team" })
   ).toBeTruthy();

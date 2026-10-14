@@ -79,7 +79,6 @@ function renderHandoff() {
   renderInWorkspace(
     <HandoffView
       detail={detail}
-      onClose={vi.fn()}
       review={{ patch: vi.fn(), reload: vi.fn() }}
     />,
     fakeWorkspace({ api })
@@ -93,7 +92,7 @@ it("prepares the brief from kept proposals and their evidence", async () => {
   expect(
     screen.queryByRole("checkbox", { name: /Rename the menu/ })
   ).toBeNull();
-  fireEvent.click(screen.getByRole("button", { name: "Prepare brief" }));
+  fireEvent.click(screen.getByRole("button", { name: "Build brief" }));
 
   await waitFor(() =>
     expect(api.createHandoff).toHaveBeenCalledWith({
@@ -107,16 +106,13 @@ it("prepares the brief from kept proposals and their evidence", async () => {
     "value",
     BRIEF
   );
-  expect(
-    screen.getByText("Copied or exported briefs can't be recalled.")
-  ).toBeTruthy();
 });
 
 it("leaves out what I uncheck", async () => {
   const api = renderHandoff();
 
   fireEvent.click(screen.getByRole("checkbox", { name: /Marked moment/ }));
-  fireEvent.click(screen.getByRole("button", { name: "Prepare brief" }));
+  fireEvent.click(screen.getByRole("button", { name: "Build brief" }));
 
   await waitFor(() =>
     expect(api.createHandoff).toHaveBeenCalledWith(
@@ -127,7 +123,7 @@ it("leaves out what I uncheck", async () => {
 
 it("records the copy only once the clipboard took the brief", async () => {
   const api = renderHandoff();
-  fireEvent.click(screen.getByRole("button", { name: "Prepare brief" }));
+  fireEvent.click(screen.getByRole("button", { name: "Build brief" }));
 
   writeClipboard.mockRejectedValueOnce(new Error("Denied"));
   fireEvent.click(await screen.findByRole("button", { name: "Copy brief" }));
@@ -158,10 +154,10 @@ it("exports the brief with its evidence files as a zip", async () => {
     .spyOn(HTMLAnchorElement.prototype, "click")
     .mockImplementation(() => undefined);
 
-  fireEvent.click(screen.getByRole("button", { name: "Prepare brief" }));
-  fireEvent.click(await screen.findByRole("button", { name: "Export .zip" }));
+  fireEvent.click(screen.getByRole("button", { name: "Build brief" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Download .zip" }));
 
-  expect(await screen.findByText("Brief exported")).toBeTruthy();
+  expect(await screen.findByText("Brief downloaded")).toBeTruthy();
   expect(fetchFile).toHaveBeenCalledWith("https://files.test/e1.png");
   expect(createObjectURL.mock.calls[0]?.[0]).toBeInstanceOf(Blob);
   expect(click).toHaveBeenCalled();
@@ -170,26 +166,6 @@ it("exports the brief with its evidence files as a zip", async () => {
     kind: "exported",
   });
   click.mockRestore();
-});
-
-it("creates internal feedback for each selected proposal", async () => {
-  const api = renderHandoff();
-  api.createFeedback = vi
-    .fn()
-    .mockResolvedValue({ created: true, feedbackId: "feedback_1" });
-
-  fireEvent.click(
-    screen.getByRole("button", { name: "Create internal feedback" })
-  );
-
-  await waitFor(() =>
-    expect(api.createFeedback).toHaveBeenCalledWith("proposal_1")
-  );
-  expect(
-    await screen.findByText(
-      "Internal feedback created — agents don't pick it up from the queue; hand off the brief instead."
-    )
-  ).toBeTruthy();
 });
 
 it("summarizes what changed since the last brief and offers evidence added by later sessions", () => {
@@ -217,15 +193,12 @@ it("summarizes what changed since the last brief and offers evidence added by la
   renderInWorkspace(
     <HandoffView
       detail={detail}
-      onClose={vi.fn()}
       review={{ patch: vi.fn(), reload: vi.fn() }}
     />,
     fakeWorkspace()
   );
 
-  expect(
-    screen.getByText(/Changed since the brief of .* \(revision 2 → 4\)/)
-  ).toBeTruthy();
+  expect(screen.getByText(/^Changed since your brief of /)).toBeTruthy();
   expect(
     screen.getByText(
       "Need: Make the Save button visible → Make the Save button visible on small screens"
@@ -241,4 +214,5 @@ it("summarizes what changed since the last brief and offers evidence added by la
     "value",
     BRIEF
   );
+  expect(screen.getByText(/ · Not copied yet$/)).toBeTruthy();
 });

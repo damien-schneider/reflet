@@ -159,7 +159,12 @@ export function fakeWorkspace(
 }
 
 export function reviewLinks(): ReviewLinks {
-  return { onBack: vi.fn(), onOpenSession: vi.fn(), onStarted: vi.fn() };
+  return {
+    onDeleted: vi.fn(),
+    onOpenBrief: vi.fn(),
+    onOpenSession: vi.fn(),
+    onStarted: vi.fn(),
+  };
 }
 
 export function renderInWorkspace(

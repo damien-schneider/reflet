@@ -45,13 +45,18 @@ async function openMoment(detail: SessionDetail, api = fakeApi()) {
   });
   api.detail = vi.fn(async () => served);
   renderInWorkspace(
-    <SessionReview links={reviewLinks()} sessionId="session_1" />,
+    <SessionReview
+      isBriefOpen={false}
+      links={reviewLinks()}
+      sessionId="session_1"
+    />,
     fakeWorkspace({ api })
   );
   await screen.findByRole("heading", { name: detail.session.title });
-  const detailsView = screen.queryByRole("button", { name: "Details" });
-  if (detailsView) {
-    fireEvent.click(detailsView);
+  const viewMenu = screen.queryByRole("button", { name: "Show intentions" });
+  if (viewMenu) {
+    fireEvent.click(viewMenu);
+    fireEvent.click(screen.getByRole("menuitemradio", { name: "Details" }));
   }
   fireEvent.click(screen.getByRole("button", { name: "Show context" }));
   return api;

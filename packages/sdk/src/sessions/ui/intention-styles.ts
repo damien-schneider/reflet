@@ -2,7 +2,7 @@ export const INTENTION_STYLES = `
 .dt-ses-panel { display: contents; }
 .dt-ses-panel[hidden] { display: none; }
 .dt-ses-moment, .dt-ses-moment-section, .dt-ses-block, .dt-ses-change, .dt-ses-history { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-.dt-ses-moment-item { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; border-radius: 10px; background: var(--rf-bg-subtle); }
+.dt-ses-moment-item { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; border-radius: var(--dt-radius-card); background: var(--rf-bg-subtle); }
 .dt-ses-moment-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0; overflow-wrap: anywhere; }
 .dt-ses-moment-quote { display: flex; flex-direction: column; gap: 2px; margin: 0; padding-left: 10px; border-left: 2px solid var(--rf-border); overflow-wrap: anywhere; }
 .dt-ses-moment-notices { color: var(--rf-text-muted); font-size: 12px; }
@@ -17,7 +17,7 @@ export const INTENTION_STYLES = `
 .dt-ses-attached { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; }
 .dt-ses-attached p { margin: 0; }
 .dt-ses-history[data-removed="true"] > .dt-ses-subhead { color: var(--rf-text-muted); text-decoration: line-through; }
-.dt-ses-change { padding: 8px 10px; border-radius: 10px; background: var(--rf-bg-subtle); list-style: none; }
+.dt-ses-change { padding: 8px 10px; border-radius: var(--dt-radius-card); background: var(--rf-bg-subtle); list-style: none; }
 .dt-ses-change[data-decision="rejected"] .dt-ses-diff { color: var(--rf-text-muted); text-decoration: line-through; }
 .dt-ses-diff { display: grid; grid-template-columns: auto 1fr; gap: 2px 8px; margin: 0; overflow-wrap: anywhere; }
 p.dt-ses-diff { display: block; }

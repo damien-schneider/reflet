@@ -50,7 +50,7 @@ async function renderReview(
   api.detail = vi.fn().mockResolvedValue(detail);
   const links = reviewLinks();
   renderInWorkspace(
-    <SessionReview links={links} sessionId="session_1" />,
+    <SessionReview isBriefOpen={false} links={links} sessionId="session_1" />,
     fakeWorkspace({ api, recorder: parts.recorder })
   );
   await screen.findByRole("heading", { name: detail.session.title });

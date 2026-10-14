@@ -4,8 +4,13 @@ import type {
   RecorderStartOptions,
 } from "../../recorder/session-recorder";
 import { useRecorderSnapshot } from "../../recorder/use-recorder-snapshot";
+import { MicIcon } from "../session-icons";
 import { useSessionWorkspace } from "../session-workspace";
-import { markDisclosureSeen, SessionDisclosure } from "./session-disclosure";
+import {
+  hasSeenDisclosure,
+  markDisclosureSeen,
+  SessionDisclosure,
+} from "./session-disclosure";
 
 type StartFailure = NonNullable<RecorderSnapshot["failure"]>;
 
@@ -49,28 +54,28 @@ export function StartProblem({
 function StartActions({
   isBusy,
   onStart,
-  onWriteNote,
 }: {
   isBusy: boolean;
   onStart: () => void;
-  onWriteNote?: () => void;
 }) {
   return (
-    <div className="dt-actions">
-      <button
-        className="dt-btn"
-        data-variant="primary"
-        disabled={isBusy}
-        onClick={onStart}
-        type="button"
-      >
-        Start session
-      </button>
-      {onWriteNote && (
-        <button className="dt-btn" onClick={onWriteNote} type="button">
-          Write a note instead
+    <div className="dt-ses-start">
+      <p className="dt-meta">
+        Talk while you use the app. Reflet turns what you say and show into
+        intentions you can brief an agent with.
+      </p>
+      <div className="dt-actions">
+        <button
+          className="dt-btn"
+          data-variant="primary"
+          disabled={isBusy}
+          onClick={onStart}
+          type="button"
+        >
+          <MicIcon />
+          Start session
         </button>
-      )}
+      </div>
     </div>
   );
 }
@@ -119,12 +124,13 @@ export function StartSession({
 }) {
   const { account } = useSessionWorkspace();
   const { failure, isBusy, isRequesting, start } = useRecorderStart(onStarted);
+  const [isFirstVisit] = useState(() => !hasSeenDisclosure(account.key));
   const startBlank = () => start({});
+  const disclosure = <SessionDisclosure accountKey={account.key} />;
 
   return (
     <>
-      <SessionDisclosure accountKey={account.key} />
-      <MicrophonePrompt isRequesting={isRequesting} />
+      {isFirstVisit && disclosure}
       {failure ? (
         <StartProblem
           failure={failure}
@@ -132,12 +138,10 @@ export function StartSession({
           onWriteNote={onWriteNote}
         />
       ) : (
-        <StartActions
-          isBusy={isBusy}
-          onStart={startBlank}
-          onWriteNote={onWriteNote}
-        />
+        <StartActions isBusy={isBusy} onStart={startBlank} />
       )}
+      <MicrophonePrompt isRequesting={isRequesting} />
+      {!isFirstVisit && disclosure}
     </>
   );
 }

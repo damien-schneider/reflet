@@ -33,20 +33,37 @@ export function PlayIcon() {
   );
 }
 
-export function PersonIcon() {
-  return (
-    <Svg>
-      <circle cx="12" cy="8" r="4" />
-      <path d="M4.5 20a7.5 7.5 0 0 1 15 0" />
-    </Svg>
-  );
-}
-
 export function ClockIcon() {
   return (
     <Svg>
       <circle cx="12" cy="12" r="8.5" />
       <path d="M12 7.5V12l3 2" />
+    </Svg>
+  );
+}
+
+export function IntentionIcon() {
+  return (
+    <Svg>
+      <path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.6.5 1.1 1.3 1.1 2.2h5c0-.9.5-1.7 1.1-2.2A6 6 0 0 0 12 3z" />
+    </Svg>
+  );
+}
+
+export function TranscriptIcon() {
+  return (
+    <Svg>
+      <path d="M4 6h16M4 11h16M4 16h10" />
+    </Svg>
+  );
+}
+
+export function ImageIcon() {
+  return (
+    <Svg>
+      <rect height="16" rx="2.5" width="18" x="3" y="4" />
+      <circle cx="9" cy="10" r="1.6" />
+      <path d="m21 16-5-5-9 9" />
     </Svg>
   );
 }

@@ -21,9 +21,11 @@ const SCREENSHOT_REMOVAL = /^Remove screenshot at/;
 const SHOW_CONTEXT = /^Show context at/;
 const MARK_SCREENSHOT = /^Screenshot · mark screenshot/;
 const SCREENSHOTS_PER_SESSION = 2;
-const CHANGED_SINCE_FIRST_BRIEF =
-  /Changed since the brief of .* \(revision 1 → 2\)/;
-const FIRST_BRIEF_ROW = new RegExp(`“${PROPOSAL_NEED}” revision 1 · copied`);
+const CHANGED_SINCE_FIRST_BRIEF = /^Changed since your brief of /;
+const PREPARE_ONE_BRIEF = /^Prepare brief\s*1$/;
+const BACK_TO_SESSION = "Back to Session";
+const EVIDENCE_TAB = new RegExp(`^Evidence\\s*${SCREENSHOTS_PER_SESSION}$`);
+const ONE_INTENTION_TAB = /^Intentions\s*1$/;
 const NOTHING_SENT = /Nothing is sent to an agent/;
 const SECOND_REVISION_OUTCOME = new RegExp(`${PROPOSAL_NEED} \\(revision 2\\)`);
 const PRECISION_IN_BRIEF = new RegExp(PRECISION.replace("?", "\\?"));
@@ -77,13 +79,11 @@ async function recordMarkedPassage(
     )
     .toBe(SCREENSHOTS_PER_SESSION);
   await activate(page.getByRole("button", { name: "Finish" }));
-  await expect(
-    page.getByRole("button", { name: `Evidence (${SCREENSHOTS_PER_SESSION})` })
-  ).toBeVisible();
+  await expect(page.getByRole("tab", { name: EVIDENCE_TAB })).toBeVisible();
 }
 
 async function correctPassageContext(page: Page, activate: Activate) {
-  await activate(page.getByRole("button", { name: "Transcript" }));
+  await activate(page.getByRole("tab", { exact: true, name: "Transcript" }));
   await expect(page.getByText(SPOKEN_TEXT)).toBeVisible();
   await activate(page.getByRole("button", { name: SHOW_CONTEXT }).first());
   const moment = page.getByRole("region", { name: "Moment" });
@@ -96,19 +96,20 @@ async function correctPassageContext(page: Page, activate: Activate) {
 }
 
 async function confirmAndHandOff(page: Page, activate: Activate) {
-  await activate(page.getByRole("button", { name: "Intentions (1)" }));
+  await activate(page.getByRole("tab", { name: ONE_INTENTION_TAB }));
   await activate(
     page.getByRole("button", { name: `Confirm “${PROPOSAL_CALLOUT}”` })
   );
   await expect(page.getByText(`Confirmed “${PROPOSAL_NEED}”`)).toBeVisible();
-  await activate(page.getByRole("button", { name: "Details" }));
+  await activate(page.getByRole("button", { name: "Show intentions" }));
+  await activate(page.getByRole("menuitemradio", { name: "Details" }));
   await expect(page.getByText("No considered response yet.")).toBeVisible();
-  await activate(page.getByRole("button", { name: "Hand off 1 confirmed" }));
-  await activate(page.getByRole("button", { name: "Prepare brief" }));
+  await activate(page.getByRole("button", { name: PREPARE_ONE_BRIEF }));
+  await activate(page.getByRole("button", { name: "Build brief" }));
   await activate(page.getByRole("button", { name: "Copy brief" }));
   await expect(page.getByText("Brief copied").first()).toBeVisible();
   expect(await copiedText(page)).toContain(`${PROPOSAL_NEED} (revision 1)`);
-  await activate(page.getByRole("button", { name: "← Back to review" }));
+  await activate(page.getByRole("button", { name: BACK_TO_SESSION }));
 }
 
 async function continueIntention(
@@ -151,10 +152,12 @@ async function handOffNewRevision(page: Page, activate: Activate) {
     page.getByRole("button", { exact: true, name: PROPOSAL_CALLOUT })
   );
   await expect(page.getByText(PRECISION).first()).toBeVisible();
-  await activate(page.getByRole("button", { name: "Hand off 1 confirmed" }));
+  await activate(page.getByRole("button", { name: PREPARE_ONE_BRIEF }));
   await expect(page.getByText(CHANGED_SINCE_FIRST_BRIEF)).toBeVisible();
-  await expect(page.getByText(FIRST_BRIEF_ROW)).toBeVisible();
-  await activate(page.getByRole("button", { name: "Prepare brief" }));
+  await expect(
+    page.locator("summary", { hasText: PROPOSAL_NEED })
+  ).toContainText("· Copied");
+  await activate(page.getByRole("button", { name: "Build brief" }));
   const brief = page.getByRole("textbox", { exact: true, name: "Brief" });
   await expect(brief).toHaveValue(SECOND_REVISION_OUTCOME);
   await expect(brief).toHaveValue(PRECISION_IN_BRIEF);
@@ -207,8 +210,8 @@ test.describe("Reflet sessions in the devtools", () => {
     await page.getByRole("button", { name: "Finish" }).click();
 
     await page.getByRole("button", { name: "Confirm" }).click();
-    await page.getByRole("button", { name: "Hand off 1 confirmed" }).click();
-    await page.getByRole("button", { name: "Prepare brief" }).click();
+    await page.getByRole("button", { name: PREPARE_ONE_BRIEF }).click();
+    await page.getByRole("button", { name: "Build brief" }).click();
     await page.getByRole("button", { name: "Copy brief" }).click();
     await expect(page.getByText("Brief copied").first()).toBeVisible();
     expect(await copiedText(page)).toContain(
@@ -244,7 +247,7 @@ test.describe("Reflet sessions in the devtools", () => {
     await expect.poll(() => firstSession(board).evidence.length).toBe(2);
     await page.getByRole("button", { name: "Finish" }).click();
 
-    await page.getByRole("button", { name: "Evidence (2)" }).click();
+    await page.getByRole("tab", { name: EVIDENCE_TAB }).click();
     const removeButtons = page.getByRole("button", {
       name: SCREENSHOT_REMOVAL,
     });

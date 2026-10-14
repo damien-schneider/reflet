@@ -7,82 +7,21 @@ import { MomentView } from "./moment/moment-view";
 import type { ProposalContext, ShowMoment } from "./proposals/proposal-details";
 import { type IntentionView, ProposalsTab } from "./proposals/proposals-tab";
 import { useProposalActions } from "./proposals/use-proposal-actions";
+import { ReviewFooter } from "./review-footer";
 import { ReviewHeader } from "./review-header";
+import {
+  type ReviewTab,
+  ReviewTabs,
+  type ReviewTabsPlace,
+} from "./review-tabs";
 import { StatusStrip } from "./status-strip";
 import { EvidenceTab } from "./transcript/evidence-tab";
 import { TranscriptTab } from "./transcript/transcript-tab";
 import { type ReviewHandle, useSessionDetail } from "./use-session-detail";
 
-type ReviewTab = "evidence" | "proposals" | "transcript";
-
 interface OpenMoment {
   opener: HTMLElement | null;
   segmentId: string;
-}
-
-function HandoffFooter({
-  detail,
-  onHandOff,
-}: {
-  detail: SessionDetail;
-  onHandOff: () => void;
-}) {
-  const confirmed = detail.proposals.filter(
-    (proposal) => proposal.decision === "kept" && proposal.mergedIntoId === null
-  ).length;
-  return (
-    <div className="dt-sheet-foot">
-      <button
-        aria-describedby={confirmed === 0 ? "rf-handoff-hint" : undefined}
-        className="dt-btn"
-        data-variant="primary"
-        disabled={confirmed === 0}
-        onClick={onHandOff}
-        type="button"
-      >
-        {confirmed === 0 ? "Hand off" : `Hand off ${confirmed} confirmed`}
-      </button>
-      {confirmed === 0 && (
-        <span className="dt-status" id="rf-handoff-hint">
-          Confirm an intention to hand it off
-        </span>
-      )}
-    </div>
-  );
-}
-
-function ReviewTabs({
-  detail,
-  onSelect,
-  tab,
-}: {
-  detail: SessionDetail;
-  onSelect: (tab: ReviewTab) => void;
-  tab: ReviewTab;
-}) {
-  const intentionCount = detail.proposals.filter(
-    (proposal) => proposal.mergedIntoId === null && proposal.attachment === null
-  ).length;
-  const options: { label: string; value: ReviewTab }[] = [
-    { label: `Intentions (${intentionCount})`, value: "proposals" },
-    { label: "Transcript", value: "transcript" },
-    { label: `Evidence (${detail.evidence.length})`, value: "evidence" },
-  ];
-  return (
-    <div className="dt-tabs dt-ses-tabs">
-      {options.map((option) => (
-        <button
-          aria-pressed={option.value === tab}
-          className="dt-tab"
-          key={option.value}
-          onClick={() => onSelect(option.value)}
-          type="button"
-        >
-          {option.label}
-        </button>
-      ))}
-    </div>
-  );
 }
 
 function ReviewTabPanel({
@@ -94,13 +33,7 @@ function ReviewTabPanel({
 }) {
   const { detail, navigation, review } = context;
   if (place.tab === "proposals") {
-    return (
-      <ProposalsTab
-        context={context}
-        onSelectView={place.selectIntentionView}
-        view={place.intentionView}
-      />
-    );
+    return <ProposalsTab context={context} view={place.intentionView} />;
   }
   if (place.tab === "transcript") {
     return (
@@ -120,14 +53,11 @@ function ReviewTabPanel({
   );
 }
 
-interface ReviewPlace {
+interface ReviewPlace extends ReviewTabsPlace {
   closeMoment: (shouldReturnFocus: boolean) => void;
   focusIntentionId: string | null;
-  intentionView: IntentionView;
   moment: OpenMoment | null;
   openIntention: (proposalId: string) => void;
-  selectIntentionView: (view: IntentionView) => void;
-  selectTab: (tab: ReviewTab) => void;
   showMoment: ShowMoment;
   tab: ReviewTab;
 }
@@ -177,7 +107,8 @@ function useReviewPlace(): ReviewPlace {
 }
 
 export interface ReviewLinks {
-  onBack: () => void;
+  onDeleted: () => void;
+  onOpenBrief: () => void;
   onOpenSession: (sessionId: string) => void;
   onStarted: () => void;
 }
@@ -192,7 +123,7 @@ function ReviewPanels({
   const { detail, review } = context;
   return (
     <>
-      <ReviewTabs detail={detail} onSelect={place.selectTab} tab={place.tab} />
+      <ReviewTabs detail={detail} place={place} />
       <div className="dt-ses-panel" hidden={place.moment !== null}>
         <ReviewTabPanel context={context} place={place} />
       </div>
@@ -222,7 +153,7 @@ function ReviewTop({
   return (
     <>
       <ReviewHeader
-        onBack={links.onBack}
+        onDeleted={links.onDeleted}
         review={review}
         session={detail.session}
       />
@@ -239,15 +170,16 @@ function ReviewTop({
 
 function ReviewScreen({
   detail,
+  isBriefOpen,
   links,
   review,
 }: {
   detail: SessionDetail;
+  isBriefOpen: boolean;
   links: ReviewLinks;
   review: ReviewHandle;
 }) {
   const place = useReviewPlace();
-  const [isHandingOff, setIsHandingOff] = useState(false);
   const context: ProposalContext = {
     actions: useProposalActions(review),
     canEdit: detail.session.canEdit,
@@ -262,33 +194,26 @@ function ReviewScreen({
     review,
   };
 
-  if (isHandingOff) {
-    return (
-      <HandoffView
-        detail={detail}
-        onClose={() => setIsHandingOff(false)}
-        review={review}
-      />
-    );
+  if (isBriefOpen) {
+    return <HandoffView detail={detail} review={review} />;
   }
   return (
     <>
       <ReviewTop context={context} links={links} />
       <ReviewPanels context={context} place={place} />
       {context.canEdit && (
-        <HandoffFooter
-          detail={detail}
-          onHandOff={() => setIsHandingOff(true)}
-        />
+        <ReviewFooter context={context} onOpenBrief={links.onOpenBrief} />
       )}
     </>
   );
 }
 
 export function SessionReview({
+  isBriefOpen,
   links,
   sessionId,
 }: {
+  isBriefOpen: boolean;
   links: ReviewLinks;
   sessionId: string;
 }) {
@@ -298,25 +223,28 @@ export function SessionReview({
     return <p className="dt-status">Loading the session…</p>;
   }
   if (state.kind === "ready") {
-    return <ReviewScreen detail={state.detail} links={links} review={handle} />;
+    return (
+      <ReviewScreen
+        detail={state.detail}
+        isBriefOpen={isBriefOpen}
+        links={links}
+        review={handle}
+      />
+    );
+  }
+  if (state.kind === "missing") {
+    return (
+      <p className="dt-empty">
+        This session is gone: it was deleted or is no longer shared with you.
+      </p>
+    );
   }
   return (
-    <div className="dt-empty">
-      <p>
-        {state.kind === "missing"
-          ? "This session is gone: it was deleted or is no longer shared with you."
-          : `The session did not load: ${state.message}`}
-      </p>
-      <div className="dt-actions">
-        {state.kind === "failed" && (
-          <button className="dt-btn" onClick={handle.reload} type="button">
-            Try again
-          </button>
-        )}
-        <button className="dt-btn" onClick={links.onBack} type="button">
-          All sessions
-        </button>
-      </div>
+    <div className="dt-empty" role="alert">
+      <p>The session did not load: {state.message}</p>
+      <button className="dt-btn" onClick={handle.reload} type="button">
+        Try again
+      </button>
     </div>
   );
 }

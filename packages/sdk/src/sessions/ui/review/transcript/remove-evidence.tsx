@@ -6,7 +6,7 @@ import { useSessionAction, useSessionWorkspace } from "../../session-workspace";
 import { type ReviewHandle, withEvidence } from "../use-session-detail";
 
 const REMOVE_COPY =
-  "Remove this screenshot? The image is deleted for good. Briefs you already copied or exported can't be recalled.";
+  "Remove this screenshot? The image is deleted for good. Briefs you already downloaded keep their copy.";
 
 export interface EvidenceRemoval {
   canRemove: boolean;

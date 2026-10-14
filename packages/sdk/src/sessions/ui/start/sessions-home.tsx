@@ -78,13 +78,9 @@ export function SessionsHome({
   const { account } = useSessionWorkspace();
   const drafts = useLocalDrafts(account.key);
   const interrupted = drafts.filter((draft) => draft.state === "interrupted");
-  const name = account.userName ?? account.userEmail ?? "you";
 
   return (
     <>
-      <p className="dt-meta">
-        Recording as {name} · {account.organizationName}
-      </p>
       {interrupted.map((draft) => (
         <InterruptedDraft
           draft={draft}

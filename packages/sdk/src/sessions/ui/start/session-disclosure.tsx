@@ -2,7 +2,7 @@ import { useState } from "react";
 
 const SEEN_KEY_PREFIX = "reflet-sessions-disclosure:";
 
-function hasSeenDisclosure(accountKey: string): boolean {
+export function hasSeenDisclosure(accountKey: string): boolean {
   try {
     return localStorage.getItem(`${SEEN_KEY_PREFIX}${accountKey}`) !== null;
   } catch {
