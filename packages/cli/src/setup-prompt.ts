@@ -117,7 +117,9 @@ through \`window.Reflet\`.
 - \`theme\` — "auto" (default), "light", "dark". If this app owns a theme
   toggle, pass its current value rather than leaving it on "auto".
 - \`enabled\` — gate the launcher on an app-owned boolean, for example
-  \`enabled={user.email === "you@example.com"}\` while dogfooding.
+  \`enabled={user.email === "you@example.com"}\` while dogfooding. Gate with
+  this prop, never by leaving the component unrendered: the dev tools below and
+  team tools keep working while the launcher is hidden.
 - \`dismissForDays\` — let a reporter hide the launcher for that many days.
 - \`hotkey\` — e.g. "mod+shift+f"; off by default so nothing is hijacked.
 - \`captureConsole\` — set to false to stop recording console errors.
@@ -132,18 +134,26 @@ coding agent, send them to the board as internal items that stay off the
 public board, and read the board's feedback for the current page. Production
 builds never load it; pass \`devtools={false}\` to turn it off.
 
-Code view and the board need one dev-only route:
+Code view, code search, the board, Connect and sessions go through one
+dev-only route:
 
 - Next.js App Router → \`app/api/reflet-devtools/[...path]/route.ts\`:
-  \`export { GET, POST } from "reflet-sdk/devtools/next";\` — the handlers
-  answer 404 unless \`NODE_ENV\` is \`development\`.
+  \`import { createDevtoolsRoute } from "reflet-sdk/devtools/next";\` then
+  \`export const { GET, POST } = createDevtoolsRoute();\` — the handlers answer
+  404 unless \`NODE_ENV\` is \`development\`. A route handler cannot see who
+  calls it, so bind the dev script to loopback: \`next dev -H 127.0.0.1\`. If
+  the dev script binds another host on purpose (Docker, a devcontainer, phone
+  testing), leave it and tell the developer the route is reachable from their
+  network.
 - Vite → add \`refletDevtools()\` from \`reflet-sdk/devtools/vite\` to
-  \`plugins\`; it only runs in \`vite dev\`.
+  \`plugins\`; it only runs in \`vite dev\` and refuses other machines.
 - Anything else → skip it; notes and prompts still work without it.
 
-The route reads \`REFLET_SECRET_KEY\` (server-only, never a public prefix) to
-reach the board, and \`REFLET_EDITOR\` (vscode, cursor, windsurf, zed,
-webstorm) for "Open in editor" links.
+To reach the board, the developer clicks Connect to Reflet in the Board tab;
+the dev server keeps a revocable token outside the repository. Setting
+\`REFLET_SECRET_KEY\` (server-only, never a public prefix) replaces Connect.
+\`REFLET_EDITOR\` (vscode, cursor, windsurf, zed, webstorm) picks the editor
+for "Open in editor" links.
 
 ## Constraints
 

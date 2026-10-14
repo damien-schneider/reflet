@@ -3,10 +3,15 @@ import { DocsList, DocsSection, DocsText } from "@/components/docs/docs-page";
 import { InlineCode } from "@/components/ui/typography";
 import { SECTIONS } from "./sections";
 
-const DEVTOOLS_ROUTE_SNIPPET = `// app/api/reflet-devtools/[...path]/route.ts
-export { GET, POST } from "reflet-sdk/devtools/next";
+const DEVTOOLS_ROUTE_SNIPPET = `// Next.js: app/api/reflet-devtools/[...path]/route.ts
+import { createDevtoolsRoute } from "reflet-sdk/devtools/next";
+export const { GET, POST } = createDevtoolsRoute();
 
-// vite.config.ts
+// package.json: a route handler cannot see who calls it, so stay on loopback.
+// Binding another host on purpose (Docker, phone testing) exposes the route to that network.
+"dev": "next dev -H 127.0.0.1"
+
+// Vite: vite.config.ts
 import { refletDevtools } from "reflet-sdk/devtools/vite";
 export default defineConfig({ plugins: [react(), refletDevtools()] });`;
 
@@ -24,11 +29,12 @@ export function DevtoolsSection() {
         never ship it.
       </DocsText>
       <DocsText>
-        Code view and the board go through one dev-only route. To reach the
-        board, click Connect to Reflet in the Board tab and approve your dev
-        server on reflet.app: it keeps a revocable token outside your
-        repository. You can also set <InlineCode>REFLET_SECRET_KEY</InlineCode>{" "}
-        on the server instead. Set <InlineCode>REFLET_EDITOR</InlineCode> to{" "}
+        Code view, the board, Connect and sessions go through one dev-only
+        route. To reach the board, click Connect to Reflet in the Board tab and
+        approve your dev server on reflet.app: it keeps a revocable token
+        outside your repository. You can also set{" "}
+        <InlineCode>REFLET_SECRET_KEY</InlineCode> on the server instead. Set{" "}
+        <InlineCode>REFLET_EDITOR</InlineCode> to{" "}
         <InlineCode>cursor</InlineCode>, <InlineCode>zed</InlineCode>,{" "}
         <InlineCode>windsurf</InlineCode> or <InlineCode>webstorm</InlineCode>{" "}
         for the editor links.

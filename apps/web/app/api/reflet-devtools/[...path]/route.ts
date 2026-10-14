@@ -1,2 +1,3 @@
-// biome-ignore lint/performance/noBarrelFile: Next route handlers are exported from the SDK
-export { GET, POST } from "reflet-sdk/devtools/next";
+import { createDevtoolsRoute } from "reflet-sdk/devtools/next";
+
+export const { GET, POST } = createDevtoolsRoute();
