@@ -5,6 +5,28 @@ All notable changes to `reflet-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.4] - 2026-10-15
+
+### Changed
+
+- Devtools: one panel button replaces the separate Board and Notes buttons. It reopens the panel on the tab you used last, even after a reload, and shows how many notes aren't on the board yet. The microphone opens Sessions directly. The bar steps aside while the panel is open, and the panel opens wider (480 px).
+- Devtools: the panel's tabs carry icons, in the order Board, Notes, Sessions, Code. Your Reflet account (avatar, name, organization) sits in the panel's footer, with Connect and Disconnect; the Board tab no longer has a connection bar, and Sessions no longer says "Recording as…".
+- Devtools: secondary choices are menus, not a second row of tabs: This page / Whole board on the Board, On screen / Details on a session's intentions. Every menu and surface follows one radius scale.
+- Devtools: opening a session replaces the tabs with a back button to Sessions; the brief adds one more level back to the session. The links back inside the content, except "All evidence" from one screenshot, are gone. Moving between levels puts keyboard focus on the new view's heading, or on the view itself while it loads, and the session keeps its tab and On screen / Details choice when you come back from the brief.
+- Sessions: on first use, "What a session records" shows above Start session instead of below it. Deleting an intention or a screenshot now says exactly which saved briefs go with it.
+- Devtools: when connecting isn't possible, the panel says what it needs: a public key and a local address (localhost, *.localhost or *.test), or REFLET_SECRET_KEY. Error messages point to the panel's footer instead of the old Board tab.
+- Sessions: "Hand off N confirmed" is now "Prepare brief". Nothing is shared until you copy the brief or download its `.zip`; "Copied or exported briefs can't be recalled" is gone. Earlier briefs list the intention they carried, when, and whether you copied or downloaded them. Dates read "Today, 14:02", "Yesterday, 14:02" or "12 Oct, 14:02".
+- Notes: "Send to board" is now "Add to board". The empty Notes tab has a Pick an element button.
+
+### Added
+
+- Sessions: add an intention to the board from its card, or every confirmed intention not on the board yet from the review's footer. Intentions on the board show "On the board".
+- Devtools: the account footer shows your Reflet avatar. Requires the matching Reflet backend; older backends show initials.
+
+### Removed
+
+- Devtools: the pick button in the panel header (the bar and the Notes tab have it), and the press-shrink on rows and cards.
+
 ## [0.7.3] - 2026-10-14
 
 ### Added
