@@ -59,16 +59,21 @@ interface ConnectedAccount {
   stopped: boolean;
 }
 
-function visibleDraft(stored: StoredDraft, isLive: boolean): LocalDraft {
+function visibleDraft(stored: StoredDraft, isLive: boolean): LocalDraft[] {
+  if (stored.state === "cancelled") {
+    return [];
+  }
   const leftOpen = stored.state === "recording" || stored.state === "paused";
-  return {
-    lastActiveAt: stored.lastActiveAt,
-    sessionId: stored.sessionId,
-    sessionKey: stored.sessionKey,
-    startedAt: stored.startedAt,
-    state: leftOpen && !isLive ? "interrupted" : stored.state,
-    title: stored.title,
-  };
+  return [
+    {
+      lastActiveAt: stored.lastActiveAt,
+      sessionId: stored.sessionId,
+      sessionKey: stored.sessionKey,
+      startedAt: stored.startedAt,
+      state: leftOpen && !isLive ? "interrupted" : stored.state,
+      title: stored.title,
+    },
+  ];
 }
 
 class LocalSessionsRegistry implements LocalSessions {
@@ -125,7 +130,8 @@ class LocalSessionsRegistry implements LocalSessions {
     const stored = (await this.store.readDrafts(accountKey)).find(
       (candidate) => candidate.sessionKey === sessionKey
     );
-    if (!stored || this.live.has(sessionKey) || stored.state === "ended") {
+    const isClosed = stored?.state === "ended" || stored?.state === "cancelled";
+    if (!stored || this.live.has(sessionKey) || isClosed) {
       return;
     }
     const { outbox } = this.ensureOutbox({
@@ -171,7 +177,7 @@ class LocalSessionsRegistry implements LocalSessions {
       .readDrafts(accountKey)
       .then((stored) => {
         const visible = stored
-          .map((item) => visibleDraft(item, this.live.has(item.sessionKey)))
+          .flatMap((item) => visibleDraft(item, this.live.has(item.sessionKey)))
           .sort((a, b) => b.startedAt - a.startedAt);
         this.drafts.set(accountKey, visible);
         this.notify();

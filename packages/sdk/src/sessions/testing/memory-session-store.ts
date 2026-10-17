@@ -17,6 +17,13 @@ class MemorySessionStore implements SessionLocalStore {
     return Promise.resolve(stored);
   };
 
+  cancelDraft = async (deletion: NewOperation): Promise<void> => {
+    await Promise.all([
+      this.patchDraft(deletion.sessionKey, { state: "cancelled" }),
+      this.addOperation(deletion),
+    ]);
+  };
+
   deleteDraft = (sessionKey: string): Promise<void> => {
     this.drafts.delete(sessionKey);
     return Promise.resolve();

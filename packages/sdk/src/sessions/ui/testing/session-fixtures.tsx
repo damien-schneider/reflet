@@ -117,6 +117,7 @@ export function fakeRecorder(initial: RecorderSnapshot = IDLE_SNAPSHOT) {
   const listeners = new Set<() => void>();
   const recorder: FakeRecorder = {
     annotateMark: vi.fn(),
+    cancel: vi.fn().mockResolvedValue(undefined),
     dispose: vi.fn(),
     emit: (patch) => {
       snapshot = { ...snapshot, ...patch };

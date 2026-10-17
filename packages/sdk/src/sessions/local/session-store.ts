@@ -27,10 +27,12 @@ export interface LocalDraft {
   title: string;
 }
 
-export interface StoredDraft extends LocalDraft {
+export interface StoredDraft extends Omit<LocalDraft, "state"> {
   accountKey: string;
   continues?: ContinuedIntentionRef;
   gaps: SessionGap[];
+  /** "cancelled" stays hidden until the outbox has deleted the session on Reflet. */
+  state: LocalDraft["state"] | "cancelled";
   surface: SessionSurface;
 }
 
@@ -71,7 +73,8 @@ export type OutboxPayload =
       } | null;
       kind: "evidence";
     }
-  | { kind: "analyze" };
+  | { kind: "analyze" }
+  | { kind: "delete" };
 
 export interface StoredOperation {
   accountKey: string;
@@ -85,6 +88,8 @@ export type NewOperation = Omit<StoredOperation, "id">;
 
 export interface SessionLocalStore {
   addOperation: (operation: NewOperation) => Promise<StoredOperation>;
+  /** One write, so no drain pass sees the draft cancelled without its delete queued. */
+  cancelDraft: (deletion: NewOperation) => Promise<void>;
   deleteDraft: (sessionKey: string) => Promise<void>;
   deleteOperations: (ids: number[]) => Promise<void>;
   patchDraft: (

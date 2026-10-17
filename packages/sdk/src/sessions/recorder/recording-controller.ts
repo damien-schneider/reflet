@@ -69,6 +69,16 @@ export class RecordingController implements SessionRecorder {
     this.live?.annotate(key, cleanText(note, MAX_NOTE_CHARS));
   }
 
+  async cancel(): Promise<void> {
+    const live = this.live;
+    if (!live) {
+      return;
+    }
+    const cancelling = this.account.outbox.cancelSession(live.sessionKey);
+    this.close(live, IDLE);
+    await cancelling;
+  }
+
   dispose(): void {
     this.interrupt();
     this.stopIssues();
@@ -129,7 +139,9 @@ export class RecordingController implements SessionRecorder {
     );
     const draft = drafts.find(
       (candidate) =>
-        candidate.sessionKey === sessionKey && candidate.state !== "ended"
+        candidate.sessionKey === sessionKey &&
+        candidate.state !== "ended" &&
+        candidate.state !== "cancelled"
     );
     if (!draft || this.isBusy()) {
       return;

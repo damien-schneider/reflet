@@ -90,6 +90,8 @@ function respond(path: SessionApiPath, body: unknown): unknown {
       return { evidence: EVIDENCE };
     case "/api/v1/sessions/analyze":
       return { analysis: SESSION_SUMMARY.analysis };
+    case "/api/v1/sessions/delete":
+      return { deleted: true };
     default:
       return null;
   }

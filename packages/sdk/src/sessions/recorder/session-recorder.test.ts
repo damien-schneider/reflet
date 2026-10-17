@@ -245,6 +245,49 @@ describe("createSessionRecorder", () => {
     expect(await store.readDrafts(accountKey)).toEqual([]);
   });
 
+  it("deletes a cancelled session on Reflet without ending or analyzing it", async () => {
+    const { accountKey, recorder, server } = setup();
+    await recorder.start({});
+    await vi.advanceTimersByTimeAsync(0);
+    const { sessionKey } = recorder.getSnapshot();
+    audio.emitFrame(speech(1500));
+    const cancelling = recorder.cancel();
+    expect(recorder.getSnapshot()).toMatchObject({
+      phase: "idle",
+      sessionKey: null,
+    });
+    await expect(recorder.finish()).rejects.toThrow();
+    await cancelling;
+    await vi.advanceTimersByTimeAsync(0);
+    expect(server.callsTo("/api/v1/sessions/delete")).toEqual([
+      { sessionId: `id-${sessionKey}` },
+    ]);
+    expect(server.callsTo("/api/v1/sessions/collection")).toEqual([]);
+    expect(server.callsTo("/api/v1/sessions/analyze")).toEqual([]);
+    expect(server.callsTo("/api/v1/sessions/segments")).toEqual([]);
+    expect(await store.readDrafts(accountKey)).toEqual([]);
+  });
+
+  it("never creates a session cancelled before it reached Reflet", async () => {
+    const { accountKey, recorder, server } = setup();
+    for (const attempt of [1, 2, 3]) {
+      server.failNext(
+        "/api/v1/sessions/start",
+        new Error(`Offline ${attempt}`)
+      );
+    }
+    await recorder.start({});
+    await vi.advanceTimersByTimeAsync(0);
+    const startsBeforeCancel = server.callsTo("/api/v1/sessions/start").length;
+    await recorder.cancel();
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(server.callsTo("/api/v1/sessions/start")).toHaveLength(
+      startsBeforeCancel
+    );
+    expect(server.callsTo("/api/v1/sessions/delete")).toEqual([]);
+    expect(await store.readDrafts(accountKey)).toEqual([]);
+  });
+
   it("sends a mark once with the note written for it", async () => {
     const { recorder, server } = setup();
     await recorder.start({});

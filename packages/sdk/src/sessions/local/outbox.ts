@@ -25,6 +25,7 @@ export type OutboxIssue =
   | { kind: "sessionGone"; sessionKey: string };
 
 export interface Outbox {
+  cancelSession: (sessionKey: string) => Promise<void>;
   drain: () => void;
   enqueue: (sessionKey: string, payload: OutboxPayload) => Promise<void>;
   getSnapshot: () => SyncSnapshot;
@@ -113,6 +114,18 @@ class SessionOutbox implements Outbox {
       });
   };
 
+  async cancelSession(sessionKey: string): Promise<void> {
+    const payload: OutboxPayload = { kind: "delete" };
+    await this.options.store.cancelDraft({
+      accountKey: this.options.accountKey,
+      bytes: operationBytes(payload),
+      payload,
+      sessionKey,
+    });
+    this.options.onDraftsChanged();
+    this.drain();
+  }
+
   async enqueue(sessionKey: string, payload: OutboxPayload): Promise<void> {
     const bytes = operationBytes(payload);
     if (this.snapshot.pendingBytes + bytes > this.options.maxLocalBufferBytes) {
@@ -184,11 +197,12 @@ class SessionOutbox implements Outbox {
 
   private async drainPass(): Promise<void> {
     const { accountKey, store } = this.options;
+    const drafts = await store.readDrafts(accountKey);
     const pass: DrainPass = {
       outcomes: new Map(),
-      sessionIds: sessionIdsOf(await store.readDrafts(accountKey)),
+      sessionIds: sessionIdsOf(drafts),
     };
-    for (const operation of await store.readOperations(accountKey)) {
+    for (const operation of await this.dropAbandonedUploads(drafts)) {
       if (this.isHalted()) {
         return;
       }
@@ -203,6 +217,31 @@ class SessionOutbox implements Outbox {
     });
     await this.forgetFinishedDrafts(remaining);
     this.afterPass(pass);
+  }
+
+  private async dropAbandonedUploads(
+    drafts: StoredDraft[]
+  ): Promise<StoredOperation[]> {
+    const { accountKey, store } = this.options;
+    const cancelledSessionKeys = new Set(
+      drafts
+        .filter((draft) => draft.state === "cancelled")
+        .map((draft) => draft.sessionKey)
+    );
+    const abandonedIds: number[] = [];
+    const toSend: StoredOperation[] = [];
+    for (const operation of await store.readOperations(accountKey)) {
+      const isAbandoned =
+        cancelledSessionKeys.has(operation.sessionKey) &&
+        operation.payload.kind !== "delete";
+      if (isAbandoned) {
+        abandonedIds.push(operation.id);
+      } else {
+        toSend.push(operation);
+      }
+    }
+    await store.deleteOperations(abandonedIds);
+    return toSend;
   }
 
   private afterPass(pass: DrainPass): void {
@@ -296,7 +335,9 @@ class SessionOutbox implements Outbox {
       operations.map((operation) => operation.sessionKey)
     );
     const finished = (await store.readDrafts(accountKey)).filter(
-      (draft) => draft.state === "ended" && !waiting.has(draft.sessionKey)
+      (draft) =>
+        (draft.state === "ended" || draft.state === "cancelled") &&
+        !waiting.has(draft.sessionKey)
     );
     await Promise.all(
       finished.map((draft) => store.deleteDraft(draft.sessionKey))

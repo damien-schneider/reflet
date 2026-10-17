@@ -14,20 +14,23 @@ import {
 } from "../testing/session-fixtures";
 import { RecordingLayer } from "./recording-layer";
 
+const syncStatus = vi.hoisted(() => ({
+  blockedBy: null,
+  isOnline: true,
+  lastError: null,
+  pendingBytes: 0,
+  pendingOperations: 2,
+}));
+
 vi.mock("../../local/local-sessions", () => ({
   purgeAccount: vi.fn(),
-  useSyncStatus: () => ({
-    blockedBy: null,
-    isOnline: true,
-    lastError: null,
-    pendingBytes: 0,
-    pendingOperations: 2,
-  }),
+  useSyncStatus: () => syncStatus,
 }));
 
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
+  syncStatus.isOnline = true;
 });
 
 function renderLayer(recorder = fakeRecorder(RECORDING_SNAPSHOT)) {
@@ -46,7 +49,7 @@ it("shows no recording bar while the microphone is still being asked for", () =>
   ).toBeNull();
 });
 
-it("shows elapsed time and upload state while recording", () => {
+it("shows elapsed time while recording", () => {
   renderLayer();
   expect(
     screen.getByRole("toolbar", { name: "Session recording" })
@@ -54,7 +57,12 @@ it("shows elapsed time and upload state while recording", () => {
   expect(
     screen.getByLabelText("Recording, 2 minutes 14 seconds").textContent
   ).toBe("02:14");
-  expect(screen.getByText("2 waiting to upload")).toBeTruthy();
+});
+
+it("says the recording is kept on the device while offline", () => {
+  syncStatus.isOnline = false;
+  renderLayer();
+  expect(screen.getByText("Offline — kept on this device")).toBeTruthy();
 });
 
 it("offers a note for a marked moment and saves it on Enter", () => {
@@ -94,15 +102,32 @@ it("marks a moment with Alt+Shift+M", () => {
   expect(recorder.mark).toHaveBeenCalledTimes(1);
 });
 
-it("says nothing is recorded while paused, and resumes on demand", () => {
+it("pauses and resumes on demand", () => {
   const { recorder } = renderLayer();
   fireEvent.click(screen.getByRole("button", { name: "Pause" }));
   expect(recorder.pause).toHaveBeenCalledWith("paused");
 
   act(() => recorder.emit({ pauseReason: "paused", phase: "paused" }));
-  expect(screen.getByText("Paused · nothing is recorded")).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Resume" }));
   expect(recorder.resume).toHaveBeenCalledTimes(1);
+});
+
+it("cancels the recording only once the user confirms", async () => {
+  const { onFinished, recorder } = renderLayer();
+  fireEvent.click(screen.getByRole("button", { name: "Cancel recording" }));
+  const keep = screen.getByRole("button", { name: "Keep recording" });
+  expect(document.activeElement).toBe(keep);
+  fireEvent.keyDown(keep, { key: "Escape" });
+  expect(screen.queryByRole("alertdialog")).toBeNull();
+  expect(document.activeElement).toBe(
+    screen.getByRole("button", { name: "Cancel recording" })
+  );
+
+  fireEvent.click(screen.getByRole("button", { name: "Cancel recording" }));
+  fireEvent.click(screen.getByRole("button", { name: "Discard" }));
+  await waitFor(() => expect(recorder.cancel).toHaveBeenCalledTimes(1));
+  expect(recorder.finish).not.toHaveBeenCalled();
+  expect(onFinished).not.toHaveBeenCalled();
 });
 
 it("explains a pause caused by hiding the tab", () => {

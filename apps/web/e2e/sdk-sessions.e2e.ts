@@ -200,9 +200,9 @@ test.describe("Reflet sessions in the devtools", () => {
     await startRecording(page);
 
     await page.getByRole("button", { name: "Pause" }).click();
-    await expect(page.locator(RECORDING_BAR)).toContainText(
-      "Paused · nothing is recorded"
-    );
+    await expect(
+      page.locator(RECORDING_BAR).getByRole("button", { name: "Resume" })
+    ).toBeVisible();
     await page.getByRole("heading", { name: "Plans & billing" }).click();
     await page.mouse.wheel(0, 400);
     await page.getByRole("button", { name: "Resume" }).click();

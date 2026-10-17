@@ -5,6 +5,16 @@ All notable changes to `reflet-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Sessions: an × on the recording bar cancels the recording after you confirm. Nothing of it is kept: what was not uploaded yet is dropped, and a session already created on Reflet is deleted, even if you were offline when you cancelled.
+
+### Changed
+
+- Sessions: the recording bar's Mark moment, Point at element, Pause and Resume are icon buttons with tooltips. It no longer says "Saved" or how many uploads are waiting, nor "Paused · nothing is recorded"; it only speaks up when you are offline or nothing can be saved on this device. Pausing and resuming no longer change its width.
+
 ## [0.7.7] - 2026-10-17
 
 ### Added

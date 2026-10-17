@@ -1,34 +1,44 @@
-import { type RefObject, useEffect, useRef, useState } from "react";
+import {
+  type RefObject,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import { CloseIcon, TargetIcon } from "../../../feedback/ui/icons";
 import { matchesHotkey } from "../../../feedback/ui/keyboard";
 import { listenToKeydown } from "../../../feedback/ui/widget-events";
 import { useSyncStatus } from "../../local/local-sessions";
+import type { SyncSnapshot } from "../../local/session-store";
 import type {
   RecorderSnapshot,
   SessionRecorder,
 } from "../../recorder/session-recorder";
+import { useFocusWhen } from "../review/transcript/remove-evidence";
 import { formatClock, minutesLeft, spokenDuration } from "../session-format";
 import { MarkIcon, PauseIcon, PlayIcon } from "../session-icons";
 import { useSessionWorkspace } from "../session-workspace";
+import { CancelConfirmation } from "./cancel-confirmation";
 import { LevelMeter } from "./level-meter";
 import { MarkNote } from "./mark-note";
 
 const MARK_HOTKEY = "alt+shift+m";
 
-function SyncChip() {
-  const { account } = useSessionWorkspace();
-  const sync = useSyncStatus(account.key);
-  let label = "Saved";
+function syncProblem(sync: SyncSnapshot): string | null {
   if (sync.blockedBy === "storage") {
-    label = "Not saved on this device";
-  } else if (!sync.isOnline) {
-    label = "Offline — kept on this device";
-  } else if (sync.pendingOperations > 0) {
-    label = `${sync.pendingOperations} waiting to upload`;
+    return "Not saved on this device";
   }
-  return <span className="dt-chip">{label}</span>;
+  if (!sync.isOnline) {
+    return "Offline — kept on this device";
+  }
+  return null;
 }
 
-function statusText(snapshot: RecorderSnapshot, maxDurationMs: number) {
+function statusText(
+  snapshot: RecorderSnapshot,
+  sync: SyncSnapshot,
+  maxDurationMs: number
+) {
   if (snapshot.phase === "failed") {
     return snapshot.failure?.message ?? "Recording stopped.";
   }
@@ -41,11 +51,12 @@ function statusText(snapshot: RecorderSnapshot, maxDurationMs: number) {
   if (snapshot.pauseReason === "hidden") {
     return "Paused because the tab was hidden";
   }
-  if (snapshot.phase === "paused") {
-    return "Paused · nothing is recorded";
-  }
   if (snapshot.limitsReached.length > 0) {
     return `Limit reached for ${snapshot.limitsReached.join(", ")}`;
+  }
+  const problem = syncProblem(sync);
+  if (problem) {
+    return problem;
   }
   return snapshot.nearLimit
     ? `${minutesLeft(maxDurationMs - snapshot.activeMs)} min left`
@@ -112,22 +123,26 @@ function CaptureButtons({
     <>
       <button
         aria-keyshortcuts="Alt+Shift+M"
+        aria-label="Mark moment"
         className="dt-btn"
+        data-icon-only
         disabled={!canCapture}
         onClick={onMark}
         title="Mark moment (Alt+Shift+M)"
         type="button"
       >
         <MarkIcon />
-        Mark moment
       </button>
       <button
+        aria-label="Point at element"
         className="dt-btn"
+        data-icon-only
         disabled={!canCapture}
         onClick={onPointAt}
+        title="Point at element"
         type="button"
       >
-        Point at element
+        <TargetIcon />
       </button>
     </>
   );
@@ -138,36 +153,67 @@ function PauseToggle({ snapshot }: { snapshot: RecorderSnapshot }) {
   if (snapshot.phase === "recording") {
     return (
       <button
+        aria-label="Pause"
         className="dt-btn"
+        data-icon-only
         onClick={() => recorder.pause("paused")}
+        title="Pause"
         type="button"
       >
         <PauseIcon />
-        Pause
       </button>
     );
   }
   if (snapshot.phase === "paused" && snapshot.pauseReason !== "limit") {
     return (
       <button
+        aria-label="Resume"
         className="dt-btn"
+        data-icon-only
         onClick={() => recorder.resume()}
+        title="Resume"
         type="button"
       >
         <PlayIcon />
-        Resume
       </button>
     );
   }
   return null;
 }
 
+function CancelButton({
+  hasKeptRecording,
+  onAskToCancel,
+}: {
+  hasKeptRecording: boolean;
+  onAskToCancel: () => void;
+}) {
+  const buttonRef = useFocusWhen<HTMLButtonElement>(hasKeptRecording);
+  return (
+    <button
+      aria-label="Cancel recording"
+      className="dt-btn"
+      data-icon-only
+      onClick={onAskToCancel}
+      ref={buttonRef}
+      title="Cancel recording"
+      type="button"
+    >
+      <CloseIcon />
+    </button>
+  );
+}
+
 function RecordingControls({
+  hasKeptRecording,
+  onAskToCancel,
   onFinish,
   onMark,
   onPointAt,
   snapshot,
 }: {
+  hasKeptRecording: boolean;
+  onAskToCancel: () => void;
   onFinish: () => void;
   onMark: () => void;
   onPointAt: () => void;
@@ -194,6 +240,12 @@ function RecordingControls({
       >
         Finish
       </button>
+      {isActive && (
+        <CancelButton
+          hasKeptRecording={hasKeptRecording}
+          onAskToCancel={onAskToCancel}
+        />
+      )}
     </>
   );
 }
@@ -212,17 +264,26 @@ function RecordingClock({ activeMs }: { activeMs: number }) {
 }
 
 export function RecordingBar({
+  onCancel,
   onFinish,
   onPointAt,
   snapshot,
 }: {
+  onCancel: () => void;
   onFinish: () => void;
   onPointAt: () => void;
   snapshot: RecorderSnapshot;
 }) {
-  const { identity, recorder } = useSessionWorkspace();
+  const { account, identity, recorder } = useSessionWorkspace();
+  const sync = useSyncStatus(account.key);
   const barRef = useRef<HTMLDivElement>(null);
   const { markWithNote, openMark } = useMarkMoment(snapshot, barRef);
+  const [cancelStep, setCancelStep] = useState<"idle" | "confirming" | "kept">(
+    "idle"
+  );
+  const keepRecording = useCallback(() => setCancelStep("kept"), []);
+  const showsMeter =
+    snapshot.phase === "recording" || snapshot.phase === "paused";
 
   return (
     <div
@@ -233,23 +294,30 @@ export function RecordingBar({
       role="toolbar"
     >
       <span aria-hidden="true" className="dt-rec-dot" />
-      {snapshot.phase === "recording" && <LevelMeter recorder={recorder} />}
+      {showsMeter && <LevelMeter recorder={recorder} />}
       <RecordingClock activeMs={snapshot.activeMs} />
       <span aria-live="polite" className="dt-rec-status">
-        {statusText(snapshot, identity.limits.maxDurationMs)}
+        {statusText(snapshot, sync, identity.limits.maxDurationMs)}
       </span>
       <RecordingControls
+        hasKeptRecording={cancelStep === "kept"}
+        onAskToCancel={() => setCancelStep("confirming")}
         onFinish={onFinish}
         onMark={markWithNote}
         onPointAt={onPointAt}
         snapshot={snapshot}
       />
-      <SyncChip />
       {openMark && (
         <MarkNote
           focusOnOpen={openMark.focus}
           key={openMark.key}
           onClose={openMark.closeNote}
+        />
+      )}
+      {cancelStep === "confirming" && (
+        <CancelConfirmation
+          onCancelRecording={onCancel}
+          onKeepRecording={keepRecording}
         />
       )}
     </div>

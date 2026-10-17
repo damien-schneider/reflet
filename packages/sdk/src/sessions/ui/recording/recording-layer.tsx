@@ -54,10 +54,19 @@ export function RecordingLayer({
       reportFailure("The session did not finish", error, finish);
     }
   };
+  const cancel = async () => {
+    setIsPointing(false);
+    try {
+      await recorder.cancel();
+    } catch (error) {
+      reportFailure("The recording was not deleted", error);
+    }
+  };
 
   return (
     <>
       <RecordingBar
+        onCancel={cancel}
         onFinish={finish}
         onPointAt={() => setIsPointing(true)}
         snapshot={snapshot}

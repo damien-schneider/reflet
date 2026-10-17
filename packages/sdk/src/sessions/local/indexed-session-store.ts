@@ -125,6 +125,20 @@ function operationMethods(database: SessionDatabase) {
       }
       return { ...operation, id: request.result };
     },
+    cancelDraft: async (deletion: Omit<StoredOperation, "id">) => {
+      const row = await packOperation(deletion);
+      await database.write([DRAFTS, OPERATIONS], (transaction) => {
+        const drafts = transaction.objectStore(DRAFTS);
+        const request = drafts.get(deletion.sessionKey);
+        request.onsuccess = () => {
+          const current: StoredDraft | undefined = request.result;
+          if (current) {
+            drafts.put({ ...current, state: "cancelled" });
+          }
+        };
+        transaction.objectStore(OPERATIONS).add(row);
+      });
+    },
     deleteOperations: (ids: number[]) =>
       database.write([OPERATIONS], (transaction) => {
         for (const id of ids) {

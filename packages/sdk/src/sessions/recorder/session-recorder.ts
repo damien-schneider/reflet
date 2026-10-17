@@ -43,6 +43,8 @@ export interface RecorderStartOptions {
 
 export interface SessionRecorder {
   annotateMark: (key: string, note: string) => void;
+  /** Stops and deletes the session everywhere: nothing of it is kept. */
+  cancel: () => Promise<void>;
   /** Stops collecting without ending the server session; the draft shows as interrupted. */
   dispose: () => void;
   finish: () => Promise<{ sessionKey: string }>;

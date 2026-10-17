@@ -140,7 +140,7 @@ async function sendEvidence(
 
 async function sendSessionOperation(
   context: OperationContext,
-  payload: Exclude<OutboxPayload, { kind: "start" }>
+  payload: Exclude<OutboxPayload, { kind: "start" | "delete" }>
 ): Promise<OperationOutcome> {
   const { api, sessionId } = context;
   switch (payload.kind) {
@@ -181,6 +181,12 @@ export async function sendOperation(
   if (payload.kind === "start") {
     const session = await context.api.start(payload.body);
     return { kind: "started", sessionId: session.id };
+  }
+  if (payload.kind === "delete") {
+    if (context.sessionId !== null) {
+      await context.api.deleteSession(context.sessionId);
+    }
+    return { kind: "done" };
   }
   if (context.sessionId === null) {
     return {
