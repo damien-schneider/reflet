@@ -1,10 +1,7 @@
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { AI_ACCESS_DENIED } from "@reflet/backend/convex/ai/constants";
-import {
-  TEXT_MODEL,
-  TEXT_MODEL_SETTINGS,
-} from "@reflet/backend/convex/ai/models";
+import { REASONING_OFF, TEXT_MODEL } from "@reflet/backend/convex/ai/models";
 import { buildReleaseNotesPrompt } from "@reflet/backend/convex/changelog/ai/prompts";
 import {
   MAX_SOURCE_COMMITS,
@@ -96,7 +93,7 @@ async function openReleaseNotesStream(
   const reader = toTextStream({
     stream: streamText({
       maxOutputTokens: MAX_OUTPUT_TOKENS,
-      model: openrouter(TEXT_MODEL, TEXT_MODEL_SETTINGS),
+      model: openrouter(TEXT_MODEL, REASONING_OFF),
       prompt,
     }).stream,
   }).getReader();

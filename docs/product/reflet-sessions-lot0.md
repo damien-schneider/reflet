@@ -29,7 +29,7 @@ Le découpage de la parole se fait dans le navigateur : les horodatages ne dépe
 
 ## Analyse
 
-Modèle : `deepseek/deepseek-v4.1-flash` via OpenRouter, raisonnement désactivé, routage ZDR. Défini une seule fois dans `convex/ai/openrouter.ts` (`sessionAnalysisModel`).
+Modèle : `sessionAnalysisModel` dans `convex/ai/openrouter.ts` (routage ZDR).
 
 ## Limites
 
