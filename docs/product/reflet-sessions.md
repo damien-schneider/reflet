@@ -69,15 +69,16 @@ L'accès équipe en production existe déjà ; une expérience mobile complète 
 
 ### Revoir
 
-- Ouvrir une session remplace les onglets du panneau par un retour « Sessions » en haut ; le brief ajoute un niveau avec un retour « Session ». Le focus clavier passe au titre de la nouvelle vue. Seul le détail d'une preuve garde son retour « All evidence » dans le corps.
-- Montrer les propositions courtes d'abord ; le transcript et les preuves s'ouvrent à la demande. Les onglets Intentions, Transcript et Evidence portent une icône et un compte ; « On screen / Details » est un menu de vue à côté, pas une deuxième rangée d'onglets.
+- Ouvrir une session remplace les onglets du panneau par un retour « Sessions » en haut ; le brief ajoute un niveau avec un retour « Session ». Le focus clavier passe au titre de la nouvelle vue. L'en-tête tient sur une ligne : titre, date, durée et visibilité en icônes.
+- Montrer les propositions courtes d'abord ; le transcript et les captures s'ouvrent à la demande. Les onglets Intentions, Transcript et Screenshots portent une icône et un compte ; « On screen / Details » est un menu de vue à côté, pas une deuxième rangée d'onglets. Tant qu'il n'y a aucune intention, les étapes de traitement occupent le centre de l'onglet Intentions, avec une barre de progression par étape en cours.
+- Une ligne du transcript, une capture ou le passage cité par une intention s'ouvre d'un clic sur toute la ligne pour montrer le moment. Les actions secondaires (modifier un passage, supprimer une capture) sont des icônes qui apparaissent au survol.
 - Chaque proposition contient : besoin, situation observée, réponse envisagée si exprimée, inconnues, passages sources et captures disponibles.
-- Actions : « Garder », « Modifier », « Plus tard », « Écarter ». Prévoir annulation pour une décision de revue.
+- Actions : « Confirm », « Later », « Dismiss », « Edit » ; « Confirm all » confirme d'un coup les intentions encore indécises. Recliquer une décision active ramène l'intention à indécise. Prévoir annulation pour une décision de revue.
 - Une précision textuelle fait évoluer la proposition concernée. La continuation vocale et le rapprochement entre plusieurs sessions restent à construire (P4).
 - L'IA suggère une fusion ; elle ne fusionne pas silencieusement des propositions déjà revues.
 - Une correction du transcript marque les propositions qui en dépendent comme à réexaminer. Une analyse plus ancienne ne remplace jamais une correction humaine plus récente.
-- « Garder » conserve une décision dans la session ; cela ne publie pas un feedback et ne permet pas à un agent de le prendre.
-- S'il n'y a aucune proposition utile, montrer le transcript et permettre d'en créer une manuellement. Un échec d'analyse n'est pas un résultat vide.
+- « Confirm » conserve une décision dans la session ; cela ne publie pas un feedback et ne permet pas à un agent de le prendre.
+- S'il n'y a aucune proposition utile, le dire et montrer le transcript ; on n'ajoute pas d'intention à la main dans une session, une demande manuelle passe par une note. Un échec d'analyse n'est pas un résultat vide.
 
 ### Confier
 

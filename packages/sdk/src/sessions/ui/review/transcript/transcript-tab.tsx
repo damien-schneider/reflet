@@ -6,7 +6,7 @@ import { formatClock } from "../../session-format";
 import { useSessionAction, useSessionWorkspace } from "../../session-workspace";
 import type { ShowMoment } from "../proposals/proposal-details";
 import { type ReviewHandle, withSegment } from "../use-session-detail";
-import { SegmentRow } from "./segment-row";
+import { MomentTime, SegmentRow } from "./segment-row";
 import { buildTimeline } from "./timeline";
 import { transcriptForAgent } from "./transcript-export";
 
@@ -19,22 +19,11 @@ function TimelineNote({
   children: ReactNode;
   onShowMoment: ((opener: HTMLElement) => void) | null;
 }) {
-  const time = formatClock(atMs);
   return (
-    <li className="dt-ses-seg" data-kind="note">
-      <span className="dt-ses-time">{time}</span>
+    <li className="dt-ses-seg dt-ses-openable" data-kind="note">
+      <MomentTime onShowMoment={onShowMoment} time={formatClock(atMs)} />
       <div className="dt-ses-seg-body">
         <p className="dt-meta">{children}</p>
-        {onShowMoment && (
-          <button
-            aria-label={`Show the moment at ${time}`}
-            className="dt-ses-link"
-            onClick={(event) => onShowMoment(event.currentTarget)}
-            type="button"
-          >
-            Show moment
-          </button>
-        )}
       </div>
     </li>
   );

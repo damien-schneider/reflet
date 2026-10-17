@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { PencilIcon } from "../../../../feedback/ui/icons";
 import type { SessionSegment } from "../../../protocol";
 import { formatClock } from "../../session-format";
 import { useSessionAction, useSessionWorkspace } from "../../session-workspace";
@@ -150,36 +151,25 @@ function ContextChips({ segment }: { segment: SessionSegment }) {
   );
 }
 
-function SegmentLinks({
-  onEdit,
+export function MomentTime({
   onShowMoment,
   time,
 }: {
-  onEdit: (() => void) | null;
-  onShowMoment: (opener: HTMLElement) => void;
+  onShowMoment: ((opener: HTMLElement) => void) | null;
   time: string;
 }) {
+  if (!onShowMoment) {
+    return <span className="dt-ses-time">{time}</span>;
+  }
   return (
-    <div className="dt-actions">
-      <button
-        aria-label={`Show context at ${time}`}
-        className="dt-ses-link"
-        onClick={(event) => onShowMoment(event.currentTarget)}
-        type="button"
-      >
-        Show context
-      </button>
-      {onEdit && (
-        <button
-          aria-label={`Edit passage at ${time}`}
-          className="dt-ses-link"
-          onClick={onEdit}
-          type="button"
-        >
-          Edit
-        </button>
-      )}
-    </div>
+    <button
+      aria-label={`Show the moment at ${time}`}
+      className="dt-ses-time dt-ses-open"
+      onClick={(event) => onShowMoment(event.currentTarget)}
+      type="button"
+    >
+      {time}
+    </button>
   );
 }
 
@@ -204,8 +194,8 @@ export function SegmentRow({
   const canStartEditing = canEdit && isSettled && !isEditing;
 
   return (
-    <li className="dt-ses-seg">
-      <span className="dt-ses-time">{time}</span>
+    <li className="dt-ses-seg dt-ses-openable">
+      <MomentTime onShowMoment={isEditing ? null : onShowMoment} time={time} />
       <div className="dt-ses-seg-body">
         {isEditing ? (
           <SegmentEditor
@@ -221,12 +211,18 @@ export function SegmentRow({
           />
         )}
         <ContextChips segment={segment} />
-        <SegmentLinks
-          onEdit={canStartEditing ? () => setIsEditing(true) : null}
-          onShowMoment={onShowMoment}
-          time={time}
-        />
       </div>
+      {canStartEditing && (
+        <button
+          aria-label={`Edit passage at ${time}`}
+          className="icon-btn glass dt-ses-hover-action"
+          onClick={() => setIsEditing(true)}
+          title="Edit"
+          type="button"
+        >
+          <PencilIcon />
+        </button>
+      )}
     </li>
   );
 }

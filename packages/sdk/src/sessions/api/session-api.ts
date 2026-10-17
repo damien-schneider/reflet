@@ -131,15 +131,6 @@ export interface AddEvidenceBody {
   visibleElements?: ElementRef[];
 }
 
-export interface CreateProposalBody {
-  clientKey: string;
-  evidenceIds?: string[];
-  need: string;
-  observed?: string;
-  segmentIds?: string[];
-  sessionId: string;
-}
-
 export interface EditProposalBody {
   expectedRevision: number;
   need?: string;
@@ -197,7 +188,6 @@ export interface SessionApi {
   createHandoff: (
     body: CreateHandoffBody
   ) => Promise<{ files: HandoffFile[]; handoff: SessionHandoff }>;
-  createProposal: (body: CreateProposalBody) => Promise<SessionProposal>;
   decideProposal: (body: {
     decision: ProposalDecision;
     proposalId: string;

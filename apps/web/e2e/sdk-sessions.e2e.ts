@@ -18,13 +18,15 @@ import {
 const RECORDING_BAR = "[aria-label='Session recording']";
 const STOPPED_BY_RELOAD = /stopped when the page reloaded/;
 const SCREENSHOT_REMOVAL = /^Remove screenshot at/;
-const SHOW_CONTEXT = /^Show context at/;
+const SHOW_MOMENT = /^Show the moment at/;
 const MARK_SCREENSHOT = /^Screenshot · mark screenshot/;
 const SCREENSHOTS_PER_SESSION = 2;
 const CHANGED_SINCE_FIRST_BRIEF = /^Changed since your brief of /;
 const PREPARE_ONE_BRIEF = /^Prepare brief\s*1$/;
 const BACK_TO_SESSION = "Back to Session";
-const EVIDENCE_TAB = new RegExp(`^Evidence\\s*${SCREENSHOTS_PER_SESSION}$`);
+const SCREENSHOTS_TAB = new RegExp(
+  `^Screenshots\\s*${SCREENSHOTS_PER_SESSION}$`
+);
 const ONE_INTENTION_TAB = /^Intentions\s*1$/;
 const NOTHING_SENT = /Nothing is sent to an agent/;
 const SECOND_REVISION_OUTCOME = new RegExp(`${PROPOSAL_NEED} \\(revision 2\\)`);
@@ -79,13 +81,13 @@ async function recordMarkedPassage(
     )
     .toBe(SCREENSHOTS_PER_SESSION);
   await activate(page.getByRole("button", { name: "Finish" }));
-  await expect(page.getByRole("tab", { name: EVIDENCE_TAB })).toBeVisible();
+  await expect(page.getByRole("tab", { name: SCREENSHOTS_TAB })).toBeVisible();
 }
 
 async function correctPassageContext(page: Page, activate: Activate) {
   await activate(page.getByRole("tab", { exact: true, name: "Transcript" }));
   await expect(page.getByText(SPOKEN_TEXT)).toBeVisible();
-  await activate(page.getByRole("button", { name: SHOW_CONTEXT }).first());
+  await activate(page.getByRole("button", { name: SHOW_MOMENT }).first());
   const moment = page.getByRole("region", { name: "Moment" });
   await expect(moment.getByText("Linked automatically")).toBeVisible();
   await activate(moment.getByRole("button", { name: "Change context" }));
@@ -209,7 +211,9 @@ test.describe("Reflet sessions in the devtools", () => {
     await page.getByRole("button", { name: "Mark moment" }).click();
     await page.getByRole("button", { name: "Finish" }).click();
 
-    await page.getByRole("button", { name: "Confirm" }).click();
+    await page
+      .getByRole("button", { name: `Confirm “${PROPOSAL_CALLOUT}”` })
+      .click();
     await page.getByRole("button", { name: PREPARE_ONE_BRIEF }).click();
     await page.getByRole("button", { name: "Copy brief" }).click();
     await expect(page.getByText("Brief copied").first()).toBeVisible();
@@ -246,7 +250,7 @@ test.describe("Reflet sessions in the devtools", () => {
     await expect.poll(() => firstSession(board).evidence.length).toBe(2);
     await page.getByRole("button", { name: "Finish" }).click();
 
-    await page.getByRole("tab", { name: EVIDENCE_TAB }).click();
+    await page.getByRole("tab", { name: SCREENSHOTS_TAB }).click();
     const removeButtons = page.getByRole("button", {
       name: SCREENSHOT_REMOVAL,
     });

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { announce } from "../../../../devtools/client/notices";
+import { TrashIcon } from "../../../../feedback/ui/icons";
 import type { SessionEvidence } from "../../../protocol";
 import { formatClock } from "../../session-format";
 import { useSessionAction, useSessionWorkspace } from "../../session-workspace";
@@ -96,18 +97,20 @@ export function RemoveEvidence({
       />
     );
   }
+  const label = `Remove screenshot at ${formatClock(evidence.atMs)}`;
   return (
     <button
-      aria-label={`Remove screenshot at ${formatClock(evidence.atMs)}`}
-      className="dt-ses-link"
+      aria-label={label}
+      className="icon-btn glass dt-ses-hover-action"
       onClick={() => {
         setIsConfirming(true);
         setHasCancelled(false);
       }}
       ref={triggerRef}
+      title={label}
       type="button"
     >
-      Remove
+      <TrashIcon />
     </button>
   );
 }

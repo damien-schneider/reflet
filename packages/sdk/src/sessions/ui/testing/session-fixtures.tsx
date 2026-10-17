@@ -58,7 +58,6 @@ export function fakeApi(overrides: Partial<SessionApi> = {}): SessionApi {
     correctSegment: vi.fn(),
     createFeedback: vi.fn(),
     createHandoff: vi.fn(),
-    createProposal: vi.fn(),
     decideProposal: vi.fn(),
     deleteProposal: vi.fn(),
     deleteSession: vi.fn(),

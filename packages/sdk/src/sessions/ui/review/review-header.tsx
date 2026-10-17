@@ -4,6 +4,7 @@ import { announce } from "../../../devtools/client/notices";
 import { MoreIcon } from "../../../feedback/ui/icons";
 import type { SessionDetail, SessionSummary } from "../../protocol";
 import { formatDate, shortDuration } from "../session-format";
+import { ClockIcon, LockIcon, TeamIcon } from "../session-icons";
 import { useSessionAction, useSessionWorkspace } from "../session-workspace";
 import { useOptimisticChange } from "./optimistic-change";
 import type { ReviewHandle } from "./use-session-detail";
@@ -135,6 +136,24 @@ function DeleteConfirmation({
   );
 }
 
+function SessionFacts({ session }: { session: ReviewSession }) {
+  const isShared = session.visibility === "team";
+  const sharing = isShared ? "Shared with team" : "Private";
+  return (
+    <p className="dt-ses-facts">
+      <span>{formatDate(session.startedAt)}</span>
+      <span>
+        <ClockIcon />
+        {shortDuration(session.durationMs)}
+      </span>
+      <span aria-label={sharing} role="img" title={sharing}>
+        {isShared ? <TeamIcon /> : <LockIcon />}
+      </span>
+      {!session.isMine && <span>{session.authorName ?? "A teammate"}</span>}
+    </p>
+  );
+}
+
 export function ReviewHeader({
   onDeleted,
   review,
@@ -173,9 +192,10 @@ export function ReviewHeader({
         />
       ) : (
         <div className="dt-card-head">
-          <h2 className="dt-ses-title" tabIndex={-1}>
+          <h2 className="dt-ses-title" tabIndex={-1} title={session.title}>
             {session.title}
           </h2>
+          <SessionFacts session={session} />
           {session.canEdit && (
             <Menu
               items={menuItems}
@@ -188,11 +208,6 @@ export function ReviewHeader({
           )}
         </div>
       )}
-      <p className="dt-meta">
-        {formatDate(session.startedAt)} · {shortDuration(session.durationMs)} ·{" "}
-        {isShared ? "Shared with team" : "Private"}
-        {session.isMine ? "" : ` · ${session.authorName ?? "A teammate"}`}
-      </p>
       {isConfirmingDelete && session.canEdit && (
         <DeleteConfirmation
           onCancel={() => setIsConfirmingDelete(false)}

@@ -1,21 +1,23 @@
 import type { SessionDetail } from "../../protocol";
 import { countLabel, isAnalysisOutdated } from "../session-format";
 
+export interface StepProgress {
+  done: number;
+  total: number;
+  valueText: string;
+}
+
 export interface ProcessingStep {
   analyzeLabel: string | null;
   key: "upload" | "transcription" | "intentions";
   label: string;
+  progress?: StepProgress;
   state: "done" | "active" | "waiting" | "failed";
 }
 
 function uploadStep(pendingUploads: number): ProcessingStep {
   return pendingUploads > 0
-    ? {
-        analyzeLabel: null,
-        key: "upload",
-        label: `Uploading · ${pendingUploads} waiting`,
-        state: "active",
-      }
+    ? { analyzeLabel: null, key: "upload", label: "Uploading", state: "active" }
     : { analyzeLabel: null, key: "upload", label: "Uploaded", state: "done" };
 }
 
@@ -33,7 +35,12 @@ function transcriptionStep(
     const transcribed = voice.length - transcribing;
     return {
       ...step,
-      label: `Transcribing your voice · ${transcribed} of ${voice.length}`,
+      label: "Transcribing your voice",
+      progress: {
+        done: transcribed,
+        total: voice.length,
+        valueText: `${transcribed} of ${countLabel(voice.length, "passage")}`,
+      },
       state: "active",
     };
   }

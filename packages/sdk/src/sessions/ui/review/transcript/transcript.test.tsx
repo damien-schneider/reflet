@@ -132,7 +132,7 @@ it("lands on the same moment from an intention's quote and from the transcript",
     fakeWorkspace({ api })
   );
   const showContext = await screen.findByRole("button", {
-    name: "Show context",
+    description: "Show the moment",
   });
   fireEvent.click(showContext);
 
@@ -143,7 +143,7 @@ it("lands on the same moment from an intention's quote and from the transcript",
 
   fireEvent.click(screen.getByRole("tab", { name: "Transcript" }));
   fireEvent.click(
-    screen.getByRole("button", { name: "Show context at 00:02" })
+    screen.getByRole("button", { name: "Show the moment at 00:02" })
   );
   expect(
     screen.getByRole("heading", { name: "Moment 00:02–00:09" })

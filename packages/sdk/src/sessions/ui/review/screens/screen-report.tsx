@@ -2,6 +2,7 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { formatClock } from "../../session-format";
 import { pagePath } from "../moment/moment-labels";
 import type { ProposalContext } from "../proposals/proposal-details";
+import { ShotCaption } from "../transcript/evidence-thumb";
 import { type BoxSize, layoutCallouts } from "./callout-layout";
 import { CalloutPill } from "./callout-pill";
 import type { Callout, CalloutReport, CalloutScreen } from "./callout-report";
@@ -53,13 +54,6 @@ function useMeasuredPills(measureKey: string) {
   return { canvasRef, measured, pillRef };
 }
 
-function screenCaption(screen: CalloutScreen): string {
-  const { evidence } = screen;
-  const time = formatClock(evidence.capturedAtMs ?? evidence.atMs);
-  const page = pagePath(evidence.frame?.url ?? null);
-  return page ? `${time} · ${page}` : time;
-}
-
 function CalloutMark({
   callout,
   imageSize,
@@ -90,11 +84,14 @@ function CalloutMark({
 
 function ScreenFigure({
   context,
+  newPage,
   screen,
 }: {
   context: ProposalContext;
+  newPage: string | null;
   screen: CalloutScreen;
 }) {
+  const atMs = screen.evidence.capturedAtMs ?? screen.evidence.atMs;
   const { callouts, image } = screen;
   const { canvasRef, measured, pillRef } = useMeasuredPills(
     callouts.map(({ label, proposal }) => `${proposal.id}:${label}`).join("|")
@@ -116,6 +113,9 @@ function ScreenFigure({
 
   return (
     <figure className="dt-ses-report">
+      <figcaption>
+        <ShotCaption atMs={atMs}>{newPage}</ShotCaption>
+      </figcaption>
       <div
         className="dt-ses-report-canvas"
         data-measured={layout !== null}
@@ -123,7 +123,7 @@ function ScreenFigure({
         style={{ paddingBottom: belowImage, paddingTop: imageTop }}
       >
         <img
-          alt={`Screenshot at ${screenCaption(screen)}`}
+          alt={`Screenshot at ${formatClock(atMs)}`}
           height={image.height}
           src={image.url}
           width={image.width}
@@ -177,7 +177,6 @@ function ScreenFigure({
           })}
         </ol>
       </div>
-      <figcaption className="dt-meta">{screenCaption(screen)}</figcaption>
     </figure>
   );
 }
@@ -189,12 +188,17 @@ export function ScreenReport({
   context: ProposalContext;
   report: CalloutReport;
 }) {
+  const figures = report.screens.map((screen) => ({
+    page: pagePath(screen.evidence.frame?.url ?? null),
+    screen,
+  }));
   return (
     <>
-      {report.screens.map((screen) => (
+      {figures.map(({ page, screen }, index) => (
         <ScreenFigure
           context={context}
           key={screen.evidence.id}
+          newPage={figures[index - 1]?.page === page ? null : page}
           screen={screen}
         />
       ))}

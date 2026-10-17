@@ -91,13 +91,13 @@ it("opens on the intentions", async () => {
 it("shows what finished uploading after the analysis without a reload", async () => {
   uploads.set(1);
   const api = await renderReview(aDetail({ evidence: [] }));
-  expect(screen.getByText("Uploading · 1 waiting")).toBeTruthy();
+  expect(screen.getByText("Uploading")).toBeTruthy();
   api.detail = vi.fn().mockResolvedValue(aDetail({ evidence: [anEvidence()] }));
 
   act(() => uploads.set(0));
 
   expect(
-    await screen.findByRole("tab", { name: /^Evidence\s*1$/ })
+    await screen.findByRole("tab", { name: /^Screenshots\s*1$/ })
   ).toBeTruthy();
   expect(screen.queryByRole("list", { name: "Processing" })).toBeNull();
 });
@@ -129,9 +129,14 @@ it("shows which step the session is at while the AI waits for the transcript", a
 
   expect(processingRows()).toEqual([
     ["Uploaded", "done"],
-    ["Transcribing your voice · 1 of 2", "active"],
+    ["Transcribing your voice", "active"],
     ["Find intentions with AI", "waiting"],
   ]);
+  expect(
+    screen
+      .getByRole("progressbar", { name: "Transcribing your voice" })
+      .getAttribute("aria-valuetext")
+  ).toBe("1 of 2 passages");
 });
 
 it("does not offer to analyze a finished session whose analysis is still queued for upload", async () => {
@@ -148,7 +153,7 @@ it("does not offer to analyze a finished session whose analysis is still queued 
   );
 
   expect(processingRows()).toEqual([
-    ["Uploading · 2 waiting", "active"],
+    ["Uploading", "active"],
     ["Transcribe your voice", "waiting"],
     ["Find intentions with AI", "waiting"],
   ]);
@@ -330,29 +335,54 @@ it("offers to retry a failed analysis instead of claiming there were no intentio
   await waitFor(() => expect(api.analyze).toHaveBeenCalledWith("session_1"));
 });
 
-it("explains an analysis that found nothing and lets me write the intention", async () => {
-  const api = fakeApi({
-    createProposal: vi.fn().mockResolvedValue(aProposal({ origin: "human" })),
-  });
-  await renderReview(aDetail({ proposals: [] }), api);
+it("says the analysis found nothing once every step is done", async () => {
+  await renderReview(aDetail({ proposals: [] }));
 
   expect(
-    screen.getByText(
-      "No request stood out in this session. Read the transcript or write the intention yourself."
-    )
+    screen.getByText("No request stood out in this session.")
   ).toBeTruthy();
-  fireEvent.click(screen.getByRole("button", { name: "Add an intention" }));
-  fireEvent.change(screen.getByRole("textbox", { name: "Need" }), {
-    target: { value: "Explain the pricing tiers" },
+  expect(screen.queryByRole("list", { name: "Processing" })).toBeNull();
+});
+
+it("confirms every undecided intention at once and undoes them together", async () => {
+  const api = fakeApi({
+    decideProposal: vi.fn(
+      ({ decision, proposalId }: { decision: string; proposalId: string }) =>
+        Promise.resolve(
+          aProposal({
+            decision: decision === "kept" ? "kept" : "pending",
+            id: proposalId,
+          })
+        )
+    ),
   });
-  fireEvent.click(screen.getByRole("button", { name: "Add intention" }));
-  await waitFor(() =>
-    expect(api.createProposal).toHaveBeenCalledWith(
-      expect.objectContaining({
-        need: "Explain the pricing tiers",
-        sessionId: "session_1",
-      })
-    )
+  await renderReview(
+    aDetail({
+      proposals: [
+        aProposal(),
+        aProposal({ id: "proposal_2", need: "Rename menu" }),
+        aProposal({ decision: "dismissed", id: "proposal_3", need: "Noise" }),
+      ],
+    }),
+    api
+  );
+
+  fireEvent.click(screen.getByRole("button", { name: /^Confirm all\s*2$/ }));
+
+  const notice = await screen.findByText("Confirmed 2 intentions");
+  expect(api.decideProposal).toHaveBeenCalledTimes(2);
+  expect(api.decideProposal).not.toHaveBeenCalledWith(
+    expect.objectContaining({ proposalId: "proposal_3" })
+  );
+  expect(screen.queryByRole("button", { name: /^Confirm all/ })).toBeNull();
+  fireEvent.click(
+    within(notice.parentElement ?? document.body).getByRole("button", {
+      name: "Undo",
+    })
+  );
+  await waitFor(() => expect(api.decideProposal).toHaveBeenCalledTimes(4));
+  expect(api.decideProposal).toHaveBeenLastCalledWith(
+    expect.objectContaining({ decision: "pending" })
   );
 });
 
@@ -419,7 +449,7 @@ it("adds the confirmed intentions that are not on the board yet", async () => {
     api
   );
 
-  fireEvent.click(screen.getByRole("button", { name: "Add 2 to board" }));
+  fireEvent.click(screen.getByRole("button", { name: /^Add to board\s*2$/ }));
 
   expect(
     await screen.findByText("Added 2 intentions to the board")
@@ -427,9 +457,12 @@ it("adds the confirmed intentions that are not on the board yet", async () => {
   expect(api.createFeedback).toHaveBeenCalledTimes(2);
   expect(api.createFeedback).toHaveBeenCalledWith("proposal_1");
   expect(api.createFeedback).toHaveBeenCalledWith("proposal_2");
-  expect(
-    screen.queryByRole("button", { name: /^Add \d+ to board$/ })
-  ).toBeNull();
+  await waitFor(() =>
+    expect(footerButton("Add to board")).toHaveProperty(
+      "title",
+      "Every confirmed intention is on the board"
+    )
+  );
 });
 
 it("opens the brief from the confirmed intentions", async () => {
@@ -453,21 +486,21 @@ it("opens the brief from the confirmed intentions", async () => {
   expect(links.onOpenBrief).toHaveBeenCalled();
 });
 
-it("asks for a confirmed intention before briefing", async () => {
+function footerButton(name: string) {
+  const footer = screen.getByRole("button", { name: /^Prepare brief/ });
+  return within(footer.parentElement ?? document.body).getByRole("button", {
+    name,
+  });
+}
+
+it("explains why briefing waits for a confirmed intention", async () => {
   await renderReview();
 
-  expect(screen.getByRole("button", { name: "Prepare brief" })).toHaveProperty(
-    "disabled",
-    true
-  );
-  expect(
-    screen.getByText(
-      "Confirm an intention to brief your agent or add it to the board"
-    )
-  ).toBeTruthy();
-  expect(
-    screen.queryByRole("button", { name: /^Add \d+ to board$/ })
-  ).toBeNull();
+  for (const name of ["Prepare brief", "Add to board"]) {
+    const button = footerButton(name);
+    expect(button).toHaveProperty("disabled", true);
+    expect(button).toHaveProperty("title", "Confirm an intention first");
+  }
 });
 
 it("shows the finished analysis even when each refresh takes longer than the poll interval", async () => {

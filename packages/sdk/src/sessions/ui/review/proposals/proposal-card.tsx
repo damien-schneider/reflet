@@ -20,7 +20,7 @@ import {
   ProposalDetails,
 } from "./proposal-details";
 import { ProposalEditor, ResponseEditor } from "./proposal-editor";
-import { quotedNeed } from "./use-proposal-actions";
+import { decisionToggle, quotedNeed } from "./use-proposal-actions";
 import { Verification } from "./verification";
 
 const DECISION_CHIPS: Partial<Record<ProposalDecision, string>> = {
@@ -132,20 +132,16 @@ function DecisionButtons({
   onEdit: () => void;
   proposal: SessionProposal;
 }) {
-  const decide = (decision: ProposalDecision) => () => {
-    if (proposal.decision !== decision) {
-      context.actions.decide(proposal, decision);
-    }
-  };
+  const toggle = (decision: ProposalDecision) =>
+    decisionToggle(context.actions, proposal, decision);
   const isKept = proposal.decision === "kept";
   return (
     <div className="dt-actions">
       <button
-        aria-disabled={isKept}
         aria-pressed={isKept}
         className="dt-btn"
         data-variant="primary"
-        onClick={decide("kept")}
+        onClick={toggle("kept")}
         type="button"
       >
         <CheckIcon size={14} />
@@ -153,13 +149,12 @@ function DecisionButtons({
       </button>
       {ICON_DECISIONS.map(({ decision, icon, label }) => (
         <button
-          aria-disabled={proposal.decision === decision}
           aria-label={label}
           aria-pressed={proposal.decision === decision}
           className="dt-btn"
           data-icon-only
           key={decision}
-          onClick={decide(decision)}
+          onClick={toggle(decision)}
           title={label}
           type="button"
         >

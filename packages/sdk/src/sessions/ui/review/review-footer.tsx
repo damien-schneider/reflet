@@ -1,6 +1,8 @@
 import { keptProposals } from "../handoff/handoff-selection";
 import type { ProposalContext } from "./proposals/proposal-details";
 
+const NOTHING_CONFIRMED = "Confirm an intention first";
+
 export function ReviewFooter({
   context,
   onOpenBrief,
@@ -10,35 +12,37 @@ export function ReviewFooter({
 }) {
   const confirmed = keptProposals(context.detail);
   const offBoard = confirmed.filter((proposal) => proposal.feedbackId === null);
+  const hasConfirmed = confirmed.length > 0;
+  const boardBlocker = hasConfirmed
+    ? "Every confirmed intention is on the board"
+    : NOTHING_CONFIRMED;
   return (
-    <div className="dt-sheet-foot">
+    <div className="dt-sheet-foot dt-ses-foot">
       <button
-        aria-describedby={confirmed.length === 0 ? "rf-brief-hint" : undefined}
         className="dt-btn"
         data-variant="primary"
-        disabled={confirmed.length === 0}
+        disabled={!hasConfirmed}
         onClick={onOpenBrief}
+        title={hasConfirmed ? undefined : NOTHING_CONFIRMED}
         type="button"
       >
         Prepare brief
-        {confirmed.length > 0 && (
+        {hasConfirmed && (
           <span className="dt-btn-count">{confirmed.length}</span>
         )}
       </button>
-      {offBoard.length > 0 && (
-        <button
-          className="dt-btn"
-          onClick={() => context.actions.addToBoard(offBoard)}
-          type="button"
-        >
-          Add {offBoard.length} to board
-        </button>
-      )}
-      {confirmed.length === 0 && (
-        <span className="dt-status" id="rf-brief-hint">
-          Confirm an intention to brief your agent or add it to the board
-        </span>
-      )}
+      <button
+        className="dt-btn"
+        disabled={offBoard.length === 0}
+        onClick={() => context.actions.addToBoard(offBoard)}
+        title={offBoard.length === 0 ? boardBlocker : undefined}
+        type="button"
+      >
+        Add to board
+        {offBoard.length > 0 && (
+          <span className="dt-btn-count">{offBoard.length}</span>
+        )}
+      </button>
     </div>
   );
 }

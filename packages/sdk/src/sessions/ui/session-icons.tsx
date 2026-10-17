@@ -42,6 +42,24 @@ export function ClockIcon() {
   );
 }
 
+export function LockIcon() {
+  return (
+    <Svg>
+      <rect height="10" rx="2.5" width="15" x="4.5" y="10.5" />
+      <path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" />
+    </Svg>
+  );
+}
+
+export function TeamIcon() {
+  return (
+    <Svg>
+      <circle cx="9" cy="8.5" r="3.5" />
+      <path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 5.2a3.5 3.5 0 0 1 0 6.6M18.5 14.4a6.5 6.5 0 0 1 3 5.6" />
+    </Svg>
+  );
+}
+
 export function IntentionIcon() {
   return (
     <Svg>

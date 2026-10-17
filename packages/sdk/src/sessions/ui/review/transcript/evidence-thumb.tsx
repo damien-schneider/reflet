@@ -1,4 +1,7 @@
+import type { ReactNode } from "react";
 import type { ElementRef, Frame, SessionEvidence } from "../../../protocol";
+import { formatClock } from "../../session-format";
+import { ClockIcon } from "../../session-icons";
 
 const TRIGGER_LABELS: Record<SessionEvidence["trigger"], string> = {
   hover: "Long hover",
@@ -12,6 +15,24 @@ const TRIGGER_LABELS: Record<SessionEvidence["trigger"], string> = {
 export function evidenceCaption(evidence: SessionEvidence): string {
   const element = evidence.element ? ` · ${evidence.element.label}` : "";
   return `${TRIGGER_LABELS[evidence.trigger]}${element}`;
+}
+
+export function ShotCaption({
+  atMs,
+  children,
+}: {
+  atMs: number;
+  children: ReactNode;
+}) {
+  return (
+    <span className="dt-ses-caption">
+      <span className="dt-ses-caption-time">
+        <ClockIcon />
+        {formatClock(atMs)}
+      </span>
+      {children}
+    </span>
+  );
 }
 
 const hasViewport = (frame: Frame): boolean =>

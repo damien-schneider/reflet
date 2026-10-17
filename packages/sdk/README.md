@@ -218,7 +218,8 @@ users. Pass `devtools={false}` to turn it off.
   mark and on each page change. Finish, and Reflet uploads and transcribes the
   session, then its AI proposes the intentions behind what you said; the review
   shows which of these steps is running. Confirm, edit or dismiss each
-  one. Like notes, confirmed intentions have two ways out: **Prepare brief**
+  one, or confirm all undecided ones at once. Like notes, confirmed intentions
+  have two ways out: **Prepare brief**
   shows the brief right away, ready to copy into a coding agent or download as
   a `.zip` with its screenshots (nothing is shared until you copy or download
   it), and **Add to board** turns them into internal feedback, one by one or

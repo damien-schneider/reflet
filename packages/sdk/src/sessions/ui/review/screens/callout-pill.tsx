@@ -2,6 +2,7 @@ import type { CSSProperties, ReactNode, Ref } from "react";
 import { CheckIcon, CloseIcon } from "../../../../feedback/ui/icons";
 import type { ProposalDecision } from "../../../protocol";
 import type { ProposalContext } from "../proposals/proposal-details";
+import { decisionToggle } from "../proposals/use-proposal-actions";
 import type { Callout } from "./callout-report";
 
 const TOGGLES: {
@@ -42,28 +43,20 @@ export function CalloutPill({
         {label}
       </button>
       {context.canEdit &&
-        TOGGLES.map(({ decision, icon, verb }) => {
-          const isOn = proposal.decision === decision;
-          return (
-            <button
-              aria-disabled={isOn}
-              aria-label={`${verb} “${label}”`}
-              aria-pressed={isOn}
-              className="dt-ses-callout-btn"
-              data-decision={decision}
-              key={decision}
-              onClick={() => {
-                if (!isOn) {
-                  context.actions.decide(proposal, decision);
-                }
-              }}
-              title={verb}
-              type="button"
-            >
-              {icon}
-            </button>
-          );
-        })}
+        TOGGLES.map(({ decision, icon, verb }) => (
+          <button
+            aria-label={`${verb} “${label}”`}
+            aria-pressed={proposal.decision === decision}
+            className="dt-ses-callout-btn"
+            data-decision={decision}
+            key={decision}
+            onClick={decisionToggle(context.actions, proposal, decision)}
+            title={verb}
+            type="button"
+          >
+            {icon}
+          </button>
+        ))}
     </li>
   );
 }

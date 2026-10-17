@@ -21,20 +21,20 @@ export function IntentionSource({
   const [firstContext] = segment.context;
   const range = `${formatClock(segment.startMs)}–${formatClock(segment.endMs)}`;
   return (
-    <section className="dt-ses-block">
-      <p className="dt-ses-source">
+    <button
+      className="dt-ses-source-btn"
+      onClick={(event) =>
+        context.navigation.onShowMoment(segment.id, event.currentTarget)
+      }
+      title="Show the moment"
+      type="button"
+    >
+      <span className="dt-ses-source">
         <span className="dt-ses-time">{range}</span> “{segment.text}”
-      </p>
-      {firstContext && <p className="dt-meta">{contextLine(firstContext)}</p>}
-      <button
-        className="dt-ses-link"
-        onClick={(event) =>
-          context.navigation.onShowMoment(segment.id, event.currentTarget)
-        }
-        type="button"
-      >
-        Show context
-      </button>
-    </section>
+      </span>
+      {firstContext && (
+        <span className="dt-meta">{contextLine(firstContext)}</span>
+      )}
+    </button>
   );
 }

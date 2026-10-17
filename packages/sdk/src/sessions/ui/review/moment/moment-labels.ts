@@ -30,7 +30,7 @@ export function contextKindLabel(item: SegmentContext): string {
 }
 
 export function pagePath(url: string | null): string | null {
-  if (!url) {
+  if (!url || url.startsWith("file:")) {
     return null;
   }
   return URL_PATH.exec(url)?.[1] || "/";

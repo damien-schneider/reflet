@@ -58,7 +58,9 @@ async function openMoment(detail: SessionDetail, api = fakeApi()) {
     fireEvent.click(viewMenu);
     fireEvent.click(screen.getByRole("menuitemradio", { name: "Details" }));
   }
-  fireEvent.click(screen.getByRole("button", { name: "Show context" }));
+  fireEvent.click(
+    screen.getByRole("button", { description: "Show the moment" })
+  );
   return api;
 }
 

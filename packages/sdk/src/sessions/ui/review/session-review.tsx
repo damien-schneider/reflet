@@ -14,7 +14,6 @@ import {
   ReviewTabs,
   type ReviewTabsPlace,
 } from "./review-tabs";
-import { StatusStrip } from "./status-strip";
 import { EvidenceTab } from "./transcript/evidence-tab";
 import { TranscriptTab } from "./transcript/transcript-tab";
 import { type ReviewHandle, useSessionDetail } from "./use-session-detail";
@@ -157,7 +156,6 @@ function ReviewTop({
         review={review}
         session={detail.session}
       />
-      <StatusStrip detail={detail} review={review} />
       {detail.continuation && (
         <ContinuationHeader
           continuation={detail.continuation}

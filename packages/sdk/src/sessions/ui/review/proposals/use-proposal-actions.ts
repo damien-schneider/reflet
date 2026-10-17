@@ -1,3 +1,4 @@
+import type { MouseEvent } from "react";
 import { announce } from "../../../../devtools/client/notices";
 import type { SessionApi } from "../../../api/session-api";
 import type {
@@ -22,7 +23,7 @@ const DECISION_NOTICE: Record<ProposalDecision, string> = {
 export interface ProposalActions {
   addToBoard: (proposals: SessionProposal[]) => Promise<void>;
   clarify: (proposal: SessionProposal, text: string) => Promise<unknown>;
-  decide: (proposal: SessionProposal, decision: ProposalDecision) => void;
+  decide: (proposals: SessionProposal[], decision: ProposalDecision) => void;
   merge: (targetId: string, sourceIds: string[]) => void;
   save: (
     failureLabel: string,
@@ -43,6 +44,23 @@ export function quotedNeed(need: string): string {
   return `“${short}”`;
 }
 
+export function decisionToggle(
+  actions: ProposalActions,
+  proposal: SessionProposal,
+  decision: ProposalDecision
+): (event: MouseEvent) => void {
+  return (event) => {
+    const isSecondClickOfDoubleClick = event.detail > 1;
+    if (isSecondClickOfDoubleClick) {
+      return;
+    }
+    actions.decide(
+      [proposal],
+      proposal.decision === decision ? "pending" : decision
+    );
+  };
+}
+
 function useProposalSave(review: ReviewHandle): ProposalActions["save"] {
   const { api } = useSessionWorkspace();
   const run = useSessionAction();
@@ -55,60 +73,78 @@ function useProposalSave(review: ReviewHandle): ProposalActions["save"] {
   };
 }
 
-function withDecision(
-  proposalId: string,
-  decision: ProposalDecision
+function withDecisions(
+  decisions: ReadonlyMap<string, ProposalDecision>
 ): (detail: SessionDetail) => SessionDetail {
   return (detail) => ({
     ...detail,
-    proposals: detail.proposals.map((item) =>
-      item.id === proposalId ? { ...item, decision } : item
-    ),
+    proposals: detail.proposals.map((item) => {
+      const decision = decisions.get(item.id);
+      return decision ? { ...item, decision } : item;
+    }),
   });
+}
+
+function decisionNotice(
+  proposals: SessionProposal[],
+  decision: ProposalDecision
+): string {
+  const [only] = proposals;
+  const subject =
+    proposals.length === 1 && only
+      ? quotedNeed(only.need)
+      : countLabel(proposals.length, "intention");
+  return `${DECISION_NOTICE[decision]} ${subject}`;
 }
 
 function useDecide(review: ReviewHandle): ProposalActions["decide"] {
   const { api } = useSessionWorkspace();
   const applyChange = useOptimisticChange(review);
 
-  const changeDecision = (options: {
-    failureLabel: string;
-    from: ProposalDecision;
-    proposalId: string;
-    to: ProposalDecision;
-  }) =>
-    applyChange({
-      failureLabel: options.failureLabel,
+  const changeDecisions = async (
+    failureLabel: string,
+    from: ReadonlyMap<string, ProposalDecision>,
+    to: ReadonlyMap<string, ProposalDecision>
+  ) => {
+    const saved = await applyChange({
+      failureLabel,
       request: () =>
-        api.decideProposal({
-          decision: options.to,
-          proposalId: options.proposalId,
-        }),
-      rollback: withDecision(options.proposalId, options.from),
-      settle: withProposal,
-      show: withDecision(options.proposalId, options.to),
+        Promise.all(
+          [...to].map(([proposalId, decision]) =>
+            api.decideProposal({ decision, proposalId })
+          )
+        ),
+      rollback: withDecisions(from),
+      settle: (detail, proposals) => proposals.reduce(withProposal, detail),
+      show: withDecisions(to),
     });
+    if (!saved && to.size > 1) {
+      review.reload();
+    }
+    return saved;
+  };
 
-  return async (proposal, decision) => {
-    const previous = proposal.decision;
-    const updated = await changeDecision({
-      failureLabel: "The decision was not saved",
-      from: previous,
-      proposalId: proposal.id,
-      to: decision,
-    });
+  return async (proposals, decision) => {
+    const previous = new Map(
+      proposals.map((proposal) => [proposal.id, proposal.decision])
+    );
+    const next = new Map(proposals.map((proposal) => [proposal.id, decision]));
+    const updated = await changeDecisions(
+      "The decision was not saved",
+      previous,
+      next
+    );
     if (!updated) {
       return;
     }
-    announce(`${DECISION_NOTICE[decision]} ${quotedNeed(proposal.need)}`, {
+    announce(decisionNotice(proposals, decision), {
       label: "Undo",
       run: async () => {
-        const restored = await changeDecision({
-          failureLabel: "The decision was not undone",
-          from: decision,
-          proposalId: proposal.id,
-          to: previous,
-        });
+        const restored = await changeDecisions(
+          "The decision was not undone",
+          next,
+          previous
+        );
         if (restored) {
           announce("Decision undone");
         }

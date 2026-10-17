@@ -64,7 +64,7 @@ function tabOptions(detail: SessionDetail): TabOption[] {
     {
       count: detail.evidence.length,
       icon: <ImageIcon />,
-      label: "Evidence",
+      label: "Screenshots",
       value: "evidence",
     },
   ];

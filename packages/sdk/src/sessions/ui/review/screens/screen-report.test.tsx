@@ -87,7 +87,7 @@ it("pins each intention on the screenshot of the passage the AI chose, with its 
   expect(screen.queryByRole("button", { name: "Show details" })).toBeNull();
 });
 
-it("confirms once from the screenshot even when pressed twice, and undoes from the notice", async () => {
+it("confirms once from the screenshot even when double-clicked, and undoes from the notice", async () => {
   const api = fakeApi({
     decideProposal: vi
       .fn()
@@ -99,8 +99,8 @@ it("confirms once from the screenshot even when pressed twice, and undoes from t
   const confirm = screen.getByRole("button", {
     name: `Confirm “${FRAME_LABEL}”`,
   });
-  fireEvent.click(confirm);
-  fireEvent.click(confirm);
+  fireEvent.click(confirm, { detail: 1 });
+  fireEvent.click(confirm, { detail: 2 });
   await waitFor(() =>
     expect(confirm.getAttribute("aria-pressed")).toBe("true")
   );

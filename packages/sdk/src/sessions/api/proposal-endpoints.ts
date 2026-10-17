@@ -24,7 +24,6 @@ type ProposalEndpoints = Pick<
   | "clarifyProposal"
   | "createFeedback"
   | "createHandoff"
-  | "createProposal"
   | "decideProposal"
   | "editProposal"
   | "markHandoffDelivered"
@@ -73,8 +72,6 @@ export function createProposalEndpoints(
           handoff: sessionHandoffSchema,
         })
       ),
-    createProposal: (body) =>
-      postProposal("/api/v1/sessions/proposals/create", body),
     decideProposal: (body) =>
       postProposal("/api/v1/sessions/proposals/decide", body),
     editProposal: (body) =>

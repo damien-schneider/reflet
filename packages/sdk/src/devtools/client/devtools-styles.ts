@@ -119,6 +119,7 @@ export const DEVTOOLS_STYLES = `
   position: sticky; bottom: -10px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
   margin: auto -10px -10px; padding: 10px; border-top: 1px solid var(--rf-border); background: var(--rf-bg);
 }
+.dt-sheet-body:has(.dt-empty) > .dt-sheet-foot { margin-top: 0; }
 .dt-archived { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 10px; border: 1px dashed var(--rf-border); border-radius: var(--dt-radius-card); }
 .dt-archived .dt-meta { flex: 1 1 100%; }
 .dt-group { margin: 6px 2px 0; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--rf-text-muted); }

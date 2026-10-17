@@ -45,7 +45,7 @@ async function openEvidence(detail: SessionDetail, api = fakeApi()) {
     />,
     fakeWorkspace({ api })
   );
-  fireEvent.click(await screen.findByRole("tab", { name: /^Evidence/ }));
+  fireEvent.click(await screen.findByRole("tab", { name: /^Screenshots/ }));
   return api;
 }
 
@@ -94,21 +94,14 @@ it("keeps the screenshot when the removal is cancelled", async () => {
   );
 });
 
-it("offers removal from the enlarged view", async () => {
-  const api = fakeApi({
-    removeEvidence: vi
-      .fn()
-      .mockResolvedValue(anEvidence({ image: null, status: "missing" })),
-  });
-  await openEvidence(aDetail({ evidence: [anEvidence()] }), api);
+it("opens the moment a screenshot belongs to from its card", async () => {
+  await openEvidence(aDetail({ evidence: [anEvidence()] }));
 
-  fireEvent.click(screen.getByRole("button", { name: /^Enlarge/ }));
-  fireEvent.click(screen.getByRole("button", { name: REMOVE_LABEL }));
-  fireEvent.click(screen.getByRole("button", { name: "Remove" }));
+  fireEvent.click(
+    screen.getByRole("button", { name: /^Show the moment at 02:14/ })
+  );
 
-  const removedCard = await screen.findByText(/^Screenshot missing/);
-  expect(document.activeElement).toBe(removedCard.closest("li"));
-  expect(screen.queryByRole("button", { name: /^Enlarge/ })).toBeNull();
+  expect(screen.getByRole("heading", { name: /^Moment / })).toBeTruthy();
 });
 
 it("does not offer removal to a teammate reading the session", async () => {
@@ -124,6 +117,8 @@ it("does not offer removal to a teammate reading the session", async () => {
     })
   );
 
-  expect(screen.getByRole("button", { name: /^Enlarge/ })).toBeTruthy();
+  expect(
+    screen.getByRole("button", { name: /^Show the moment at 02:14/ })
+  ).toBeTruthy();
   expect(screen.queryByRole("button", { name: REMOVE_LABEL })).toBeNull();
 });
