@@ -23,11 +23,18 @@ export function useAIDraftReply({
   const initiateDraftReply = useMutation(
     api.feedback.draft_reply.initiateDraftReply
   );
-  const [isGeneratingDraft, setIsGeneratingDraft] = useState(false);
+  const [pendingRequest, setPendingRequest] = useState<{
+    previousGeneratedAt: number | undefined;
+  } | null>(null);
 
   const readyDraft = draftReplyStatus?.aiDraftReply;
-  if (readyDraft && isGeneratingDraft) {
-    setIsGeneratingDraft(false);
+  const readyGeneratedAt = draftReplyStatus?.aiDraftReplyGeneratedAt;
+  if (
+    pendingRequest &&
+    readyDraft &&
+    readyGeneratedAt !== pendingRequest.previousGeneratedAt
+  ) {
+    setPendingRequest(null);
     setNewComment(readyDraft);
   }
 
@@ -35,16 +42,16 @@ export function useAIDraftReply({
     if (!feedbackId) {
       return;
     }
-    setIsGeneratingDraft(true);
+    setPendingRequest({ previousGeneratedAt: readyGeneratedAt });
     try {
       await initiateDraftReply({ feedbackId });
     } catch {
-      setIsGeneratingDraft(false);
+      setPendingRequest(null);
     }
   };
 
   return {
     handleGenerateDraftReply,
-    isGeneratingDraft,
+    isGeneratingDraft: pendingRequest !== null,
   } as const;
 }

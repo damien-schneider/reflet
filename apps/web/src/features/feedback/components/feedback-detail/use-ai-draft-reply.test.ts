@@ -10,7 +10,6 @@ vi.mock("convex/react", () => ({
   useQuery: (...args: unknown[]) => mockUseQuery(...args),
 }));
 
-// Must import after mock
 import { useAIDraftReply } from "./use-ai-draft-reply";
 
 describe("useAIDraftReply", () => {
@@ -108,19 +107,28 @@ describe("useAIDraftReply", () => {
   });
 
   describe("draft reply population", () => {
-    it("should call setNewComment when draft reply becomes available", () => {
-      mockUseQuery.mockReturnValue({ aiDraftReply: "Draft response text" });
+    it("inserts only the draft generated after the click, not the stale one", () => {
+      mockUseQuery.mockReturnValue({
+        aiDraftReply: "Stale draft",
+        aiDraftReplyGeneratedAt: 1,
+      });
+      const { result, rerender } = renderUseAIDraftReply();
 
-      const { result } = renderUseAIDraftReply();
-
-      // Trigger generation first
       act(() => {
         result.current.handleGenerateDraftReply();
       });
+      expect(setNewComment).not.toHaveBeenCalled();
+      expect(result.current.isGeneratingDraft).toBe(true);
 
-      // Re-render with the draft data after generation starts
-      // The effect should pick up the draft
-      // Since we mocked useQuery to always return the draft, the effect processes it
+      mockUseQuery.mockReturnValue({
+        aiDraftReply: "Fresh draft",
+        aiDraftReplyGeneratedAt: 2,
+      });
+      rerender();
+
+      expect(setNewComment).toHaveBeenCalledWith("Fresh draft");
+      expect(setNewComment).toHaveBeenCalledTimes(1);
+      expect(result.current.isGeneratingDraft).toBe(false);
     });
 
     it("should skip query when feedbackId is null", () => {
