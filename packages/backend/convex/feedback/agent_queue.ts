@@ -9,13 +9,12 @@ import {
 import { agentActorId } from "../shared/actors";
 import { feedbackStatus } from "../shared/validators";
 import { shapeFeedbackDetail } from "./api_public_list";
-import { resolvePropertyValue } from "./property_values";
 import { changeFeedbackStatus } from "./status_change";
 
 export const CLAIM_TTL_MS = 2 * 60 * 60 * 1000;
 const DEFAULT_QUEUE_LIMIT = 10;
 const PRIORITY_RANK: Record<
-  NonNullable<Doc<"feedback">["aiPriority"]>,
+  NonNullable<Doc<"feedback">["priority"]>,
   number
 > = {
   critical: 4,
@@ -60,9 +59,7 @@ export function isAgentQueueEligible(feedback: Doc<"feedback">): boolean {
 }
 
 function priorityRank(feedback: Doc<"feedback">): number {
-  return PRIORITY_RANK[
-    resolvePropertyValue(feedback.priority, feedback.aiPriority).value ?? "none"
-  ];
+  return PRIORITY_RANK[feedback.priority ?? "none"];
 }
 
 function compareQueueOrder(a: Doc<"feedback">, b: Doc<"feedback">): number {

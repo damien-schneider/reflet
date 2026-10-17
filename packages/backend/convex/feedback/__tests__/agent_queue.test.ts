@@ -33,16 +33,16 @@ describe("agent queue", () => {
         priority: "high",
         title: "high expired",
       });
-      const aiHigh = await seedFeedback(ctx, organizationId, {
-        aiPriority: "high",
-        title: "ai high",
+      const humanHigh = await seedFeedback(ctx, organizationId, {
+        priority: "high",
+        title: "human high",
         voteCount: 3,
       });
       await seedFeedback(ctx, organizationId, {
         status: "completed",
         title: "done",
       });
-      return { aiHigh, highClaimed, highExpired, low, organizationId };
+      return { highClaimed, highExpired, humanHigh, low, organizationId };
     });
 
     const next = await t.query(internal.feedback.agent_queue.nextFeedback, {
@@ -50,7 +50,7 @@ describe("agent queue", () => {
     });
 
     expect(next.map((item) => item.title)).toEqual([
-      "ai high",
+      "human high",
       "high expired",
       "low",
     ]);
@@ -176,27 +176,4 @@ describe("agent queue", () => {
       ).rejects.toThrow("Feedback not found");
     }
   });
-});
-
-test("an explicit human priority removal prevents the AI proposal from ranking the queue", async () => {
-  const t = convexTest(schema, modules);
-  const { organizationId, manuallyPrioritizedId } = await t.run(async (ctx) => {
-    const organizationId = await seedOrganization(ctx);
-    await seedFeedback(ctx, organizationId, {
-      aiPriority: "critical",
-      priority: null,
-      title: "AI critical, manually cleared",
-      voteCount: 1,
-    });
-    const manuallyPrioritizedId = await seedFeedback(ctx, organizationId, {
-      priority: "high",
-      title: "Human high",
-      voteCount: 0,
-    });
-    return { manuallyPrioritizedId, organizationId };
-  });
-  const next = await t.query(internal.feedback.agent_queue.nextFeedback, {
-    organizationId,
-  });
-  expect(next[0].id).toBe(manuallyPrioritizedId);
 });

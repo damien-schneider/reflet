@@ -20,7 +20,6 @@ const feedback: FeedbackDetail = {
   _creationTime: now,
   _id: toId("feedback", "feedback-id"),
   aiNeedsReview: 0.9,
-  aiPriority: "critical",
   assignee: null,
   author: null,
   commentCount: 0,

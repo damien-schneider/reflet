@@ -22,8 +22,11 @@ import type * as admin_api_survey_lifecycle from "../admin_api/survey_lifecycle.
 import type * as admin_api_survey_results from "../admin_api/survey_results.js";
 import type * as admin_api_tableFields from "../admin_api/tableFields.js";
 import type * as admin_api_tags from "../admin_api/tags.js";
-import type * as ai_agent from "../ai/agent.js";
 import type * as ai_constants from "../ai/constants.js";
+import type * as ai_evaluation from "../ai/evaluation.js";
+import type * as ai_feedback_writer_prompt from "../ai/feedback_writer_prompt.js";
+import type * as ai_models from "../ai/models.js";
+import type * as ai_openrouter from "../ai/openrouter.js";
 import type * as ai_structured_output from "../ai/structured_output.js";
 import type * as ai_usage_gate from "../ai/usage_gate.js";
 import type * as auth_auth from "../auth/auth.js";
@@ -39,7 +42,6 @@ import type * as billing_stripe from "../billing/stripe.js";
 import type * as billing_stripe_timestamp from "../billing/stripe_timestamp.js";
 import type * as billing_tableFields from "../billing/tableFields.js";
 import type * as changelog_actions from "../changelog/actions.js";
-import type * as changelog_ai_models from "../changelog/ai/models.js";
 import type * as changelog_ai_prompts from "../changelog/ai/prompts.js";
 import type * as changelog_ai_actions from "../changelog/ai_actions.js";
 import type * as changelog_ai_matching_helpers from "../changelog/ai_matching_helpers.js";
@@ -200,6 +202,7 @@ import type * as integrations_github_webhook_actions from "../integrations/githu
 import type * as integrations_github_webhook_events from "../integrations/github/webhook_events.js";
 import type * as integrations_website_reference_scrape from "../integrations/website_reference_scrape.js";
 import type * as integrations_website_references from "../integrations/website_references.js";
+import type * as migrations_unset_legacy_ai_priority from "../migrations/unset_legacy_ai_priority.js";
 import type * as notifications_preferences from "../notifications/preferences.js";
 import type * as notifications_push from "../notifications/push.js";
 import type * as notifications_push_queries from "../notifications/push_queries.js";
@@ -414,8 +417,11 @@ declare const fullApi: ApiFromModules<{
   "admin_api/survey_results": typeof admin_api_survey_results;
   "admin_api/tableFields": typeof admin_api_tableFields;
   "admin_api/tags": typeof admin_api_tags;
-  "ai/agent": typeof ai_agent;
   "ai/constants": typeof ai_constants;
+  "ai/evaluation": typeof ai_evaluation;
+  "ai/feedback_writer_prompt": typeof ai_feedback_writer_prompt;
+  "ai/models": typeof ai_models;
+  "ai/openrouter": typeof ai_openrouter;
   "ai/structured_output": typeof ai_structured_output;
   "ai/usage_gate": typeof ai_usage_gate;
   "auth/auth": typeof auth_auth;
@@ -431,7 +437,6 @@ declare const fullApi: ApiFromModules<{
   "billing/stripe_timestamp": typeof billing_stripe_timestamp;
   "billing/tableFields": typeof billing_tableFields;
   "changelog/actions": typeof changelog_actions;
-  "changelog/ai/models": typeof changelog_ai_models;
   "changelog/ai/prompts": typeof changelog_ai_prompts;
   "changelog/ai_actions": typeof changelog_ai_actions;
   "changelog/ai_matching_helpers": typeof changelog_ai_matching_helpers;
@@ -592,6 +597,7 @@ declare const fullApi: ApiFromModules<{
   "integrations/github/webhook_events": typeof integrations_github_webhook_events;
   "integrations/website_reference_scrape": typeof integrations_website_reference_scrape;
   "integrations/website_references": typeof integrations_website_references;
+  "migrations/unset_legacy_ai_priority": typeof migrations_unset_legacy_ai_priority;
   "notifications/preferences": typeof notifications_preferences;
   "notifications/push": typeof notifications_push;
   "notifications/push_queries": typeof notifications_push_queries;
@@ -814,7 +820,6 @@ export declare const internal: FilterApi<
 
 export declare const components: {
   betterAuth: import("@convex-dev/better-auth/_generated/component.js").ComponentApi<"betterAuth">;
-  agent: import("@convex-dev/agent/_generated/component.js").ComponentApi<"agent">;
   stripe: import("@convex-dev/stripe/_generated/component.js").ComponentApi<"stripe">;
   rateLimiter: import("@convex-dev/rate-limiter/_generated/component.js").ComponentApi<"rateLimiter">;
   resend: import("@convex-dev/resend/_generated/component.js").ComponentApi<"resend">;

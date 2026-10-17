@@ -14,8 +14,6 @@ import { TriageAnalysis } from "@/features/feedback/components/properties/triage
 export type AiAnalysisDisplayProps = Pick<
   Doc<"feedback">,
   | "aiJunk"
-  | "aiPriority"
-  | "aiPriorityReasoning"
   | "aiNeedsReview"
   | "priority"
   | "complexity"
@@ -44,10 +42,8 @@ export function AiAnalysisDisplay(props: AiAnalysisDisplayProps) {
           feedbackId={props.feedbackId}
           name="priority"
           values={{
-            ai: props.aiPriority,
             editable: props.isAdmin,
             human: props.priority,
-            reasoning: props.aiPriorityReasoning,
           }}
         />
       </PropertyRow>

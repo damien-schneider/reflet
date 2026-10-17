@@ -35,41 +35,6 @@ test("a human-only value is labelled human and does not show an AI icon", () => 
   expect(trigger.querySelector("svg")).toBeNull();
 });
 
-test("a human confirmation of the same AI proposal remains human-owned", () => {
-  render(
-    <AiAnalysisDisplay
-      aiPriority="high"
-      feedbackId={feedbackId}
-      isAdmin
-      priority="high"
-    />
-  );
-  expect(
-    screen
-      .getByRole("button", { name: "Priority: High. Human decision" })
-      .querySelector("svg")
-  ).toBeNull();
-});
-
-test("clearing retains a human decision, while using the proposal explicitly resets it", async () => {
-  render(
-    <AiAnalysisDisplay
-      aiPriority="critical"
-      feedbackId={feedbackId}
-      isAdmin
-      priority={null}
-    />
-  );
-  fireEvent.click(
-    screen.getByRole("button", { name: "Priority: Not set. Human decision" })
-  );
-  expect(await screen.findByText("AI proposal: Critical")).toBeInTheDocument();
-  fireEvent.click(screen.getByRole("button", { name: "Use AI proposal" }));
-  await waitFor(() =>
-    expect(update).toHaveBeenCalledWith({ feedbackId, resetPriority: true })
-  );
-});
-
 test("members can inspect effective values without edit actions", async () => {
   render(
     <AiAnalysisDisplay

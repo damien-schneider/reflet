@@ -55,7 +55,6 @@ describe("feedback triage action", () => {
     expect(feedback?.aiUsefulness).toBe(0.94);
     expect(feedback?.aiNeedsReview).toBe(0.83);
     expect(feedback?.aiJunk).toBe(0.04);
-    expect(feedback?.aiPriority).toBeUndefined();
     const runs = await t.run((ctx) =>
       ctx.db.query("feedbackTriageRuns").collect()
     );

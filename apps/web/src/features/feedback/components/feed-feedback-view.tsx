@@ -36,7 +36,6 @@ export interface FeedbackItem {
   _id: Id<"feedback">;
   aiJunk?: number;
   aiNeedsReview?: number;
-  aiPriority?: Doc<"feedback">["aiPriority"];
   assignee?: { name?: string | null } | null;
   assigneeId?: string;
   commentCount: number;

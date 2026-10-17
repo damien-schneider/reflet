@@ -329,7 +329,7 @@ describe("Triage scope selection", () => {
 });
 
 describe("Jev triage persistence", () => {
-  test("saves triage scores without replacing historical priority", async () => {
+  test("saves triage scores", async () => {
     const t = convexTest(schema, modules);
     const feedbackId = await t.run(async (ctx) => {
       const organizationId = await ctx.db.insert("organizations", {
@@ -341,7 +341,6 @@ describe("Jev triage persistence", () => {
         subscriptionTier: "free",
       });
       return await ctx.db.insert("feedback", {
-        aiPriority: "high",
         commentCount: 0,
         createdAt: Date.now(),
         description: "Checkout fails on mobile",
@@ -367,7 +366,6 @@ describe("Jev triage persistence", () => {
     expect(feedback?.aiNeedsReview).toBe(0.12);
     expect(feedback?.aiUsefulness).toBe(0.97);
     expect(feedback?.aiUsefulnessGeneratedAt).toBeTypeOf("number");
-    expect(feedback?.aiPriority).toBe("high");
   });
 });
 
