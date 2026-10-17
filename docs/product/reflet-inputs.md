@@ -91,7 +91,7 @@ Limites : 2 000 événements par import ; 40 preuves (déjà `MAX_PROMPT_EVIDENC
 
 ### 3.4 Analyse sans voix
 
-Nouvelle fonction `prepareBehaviorPrompt` dans `sessions/ai/analysis_prompt.ts`, même schéma de sortie (`analysisOutputSchema`), même modèle (`SESSION_ANALYSIS_MODEL`), `zdr: true`.
+Nouvelle fonction `prepareBehaviorPrompt` dans `sessions/ai/analysis_prompt.ts`, même schéma de sortie (`analysisOutputSchema`), même modèle (`sessionAnalysisModel` dans `ai/openrouter.ts`, routage ZDR).
 
 Règles du prompt :
 

@@ -1,9 +1,5 @@
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import {
-  SESSION_ANALYSIS_MODEL,
-  TEXT_MODEL,
-  TEXT_MODEL_SETTINGS,
-} from "./models";
+import { TEXT_MODEL, TEXT_MODEL_SETTINGS } from "./models";
 
 const openrouter = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY,
@@ -11,6 +7,7 @@ const openrouter = createOpenRouter({
 
 export const textModel = openrouter(TEXT_MODEL, TEXT_MODEL_SETTINGS);
 
-export const sessionAnalysisModel = openrouter(SESSION_ANALYSIS_MODEL, {
+export const sessionAnalysisModel = openrouter(TEXT_MODEL, {
+  ...TEXT_MODEL_SETTINGS,
   provider: { zdr: true },
 });

@@ -29,7 +29,7 @@ Le découpage de la parole se fait dans le navigateur : les horodatages ne dépe
 
 ## Analyse
 
-Modèle : `anthropic/claude-sonnet-4.5` via OpenRouter, routage ZDR (servi par Amazon Bedrock). `claude-haiku-4.5` et `gemini-2.5-flash` sont aussi disponibles en ZDR si le coût devient un sujet.
+Modèle : `deepseek/deepseek-v4.1-flash` via OpenRouter, raisonnement désactivé, routage ZDR. Défini une seule fois dans `convex/ai/openrouter.ts` (`sessionAnalysisModel`).
 
 ## Limites
 
