@@ -2,6 +2,7 @@
 
 import { cn } from "@ctrl-ui/react/lib/cn";
 import {
+  Binoculars,
   Chat,
   ChatsCircle,
   Envelope,
@@ -23,6 +24,7 @@ const notificationIcons: Record<
   feedback_shipped: Package,
   incident_detected: ShieldWarning,
   incident_resolved: ShieldWarning,
+  intelligence_insight: Binoculars,
   invitation: UserPlus,
   new_comment: Chat,
   new_support_message: Envelope,
@@ -35,6 +37,7 @@ const notificationColors: Record<NotificationType, string> = {
   feedback_shipped: "text-success-text",
   incident_detected: "text-destructive-text",
   incident_resolved: "text-success-text",
+  intelligence_insight: "text-chart-2-text",
   invitation: "text-brand-text",
   new_comment: "text-chart-1-text",
   new_support_message: "text-chart-4-text",

@@ -51,6 +51,7 @@ export const notificationType = v.union(
   v.literal("new_support_message"),
   v.literal("invitation"),
   v.literal("feedback_shipped"),
+  v.literal("intelligence_insight"),
   v.literal("incident_detected"),
   v.literal("incident_resolved"),
   v.literal("support_inbox_message")
