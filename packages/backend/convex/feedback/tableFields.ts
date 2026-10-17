@@ -119,31 +119,10 @@ export const feedbackTables = {
   feedback: defineTable({
     aiClarification: v.optional(v.string()),
     aiClarificationGeneratedAt: v.optional(v.number()),
-    aiDifficultyGeneratedAt: v.optional(v.number()),
-    aiDifficultyReasoning: v.optional(v.string()),
-    aiDifficultyScore: v.optional(
-      v.union(
-        v.literal("trivial"),
-        v.literal("easy"),
-        v.literal("medium"),
-        v.literal("hard"),
-        v.literal("complex")
-      )
-    ),
     aiDraftReply: v.optional(v.string()),
     aiDraftReplyGeneratedAt: v.optional(v.number()),
     aiJunk: v.optional(v.number()),
     aiNeedsReview: v.optional(v.number()),
-    aiPriority: v.optional(
-      v.union(
-        v.literal("critical"),
-        v.literal("high"),
-        v.literal("medium"),
-        v.literal("low"),
-        v.literal("none")
-      )
-    ),
-    aiPriorityReasoning: v.optional(v.string()),
     aiTagExclusions: v.optional(v.array(v.id("tags"))),
     aiUsefulness: v.optional(v.number()),
     aiUsefulnessGeneratedAt: v.optional(v.number()),
