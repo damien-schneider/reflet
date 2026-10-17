@@ -94,11 +94,11 @@ function EvidenceItem({
     );
   }
   return (
-    <li className="dt-card dt-ses-openable">
+    <li className="dt-card dt-openable">
       {onShowMoment ? (
         <button
           aria-label={`Show the moment at ${caption}`}
-          className="dt-ses-open dt-ses-shot-face"
+          className="dt-open dt-ses-shot-face"
           onClick={(event) => onShowMoment(event.currentTarget)}
           type="button"
         >

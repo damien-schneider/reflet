@@ -50,10 +50,17 @@ function SelectionRow({
       : null;
 
   return (
-    <>
+    <div className="dt-selection dt-openable">
       <p className="dt-meta">
-        <strong>{selection.label}</strong>
-        {selection.region && ` · ${selection.region}`}
+        <button
+          className="dt-open"
+          onClick={() => setIsOffPage(!onShowSelector(selection.selector))}
+          title="Show on page"
+          type="button"
+        >
+          <strong>{selection.label}</strong>
+          {selection.region && ` · ${selection.region}`}
+        </button>
       </p>
       {selection.comment && <p className="dt-note-text">{selection.comment}</p>}
       {selection.sourceLocation && openSource && (
@@ -64,15 +71,8 @@ function SelectionRow({
       {selection.sourceLocation && !onOpenCode && (
         <p className="dt-meta">{selection.sourceLocation}</p>
       )}
-      <div className="dt-actions">
-        <button
-          className="dt-btn"
-          onClick={() => setIsOffPage(!onShowSelector(selection.selector))}
-          type="button"
-        >
-          Show on page
-        </button>
-        {onOpenCode && !(request || isSearching) && (
+      {onOpenCode && !(request || isSearching) && (
+        <div className="dt-actions">
           <button
             className="dt-btn"
             onClick={() => setIsSearching(true)}
@@ -80,8 +80,8 @@ function SelectionRow({
           >
             Find in code
           </button>
-        )}
-      </div>
+        </div>
+      )}
       {isOffPage && (
         <p className="dt-meta">
           This element is not on the page right now. Open the state the reporter
@@ -103,7 +103,7 @@ function SelectionRow({
           }
         />
       )}
-    </>
+    </div>
   );
 }
 

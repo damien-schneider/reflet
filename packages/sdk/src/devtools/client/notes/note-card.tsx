@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { PencilIcon, TrashIcon } from "../../../feedback/ui/icons";
 import { isSubmitEnter } from "../../../feedback/ui/keyboard";
 import type { CodeTarget } from "../code/code-panel";
 import { reportFailure } from "../notices";
@@ -112,18 +113,54 @@ function NoteEditor({
   );
 }
 
+function NoteTitle({
+  note,
+  onShowOnPage,
+  pageLink,
+}: {
+  note: DevNote;
+  onShowOnPage?: () => void;
+  pageLink?: boolean;
+}) {
+  const { selection } = note;
+  const owner = selection.componentStack[0];
+  const title = owner ? `<${owner}> ${selection.label}` : selection.label;
+
+  if (onShowOnPage) {
+    return (
+      <button
+        className="dt-open"
+        onClick={onShowOnPage}
+        title="Show on page"
+        type="button"
+      >
+        {title}
+      </button>
+    );
+  }
+  if (pageLink) {
+    return (
+      <a className="dt-open" href={note.capturedContext.url} title="Open page">
+        {title}
+      </a>
+    );
+  }
+  return title;
+}
+
 function NoteCardHead({
   isSending,
   note,
+  onShowOnPage,
+  pageLink,
   pinNumber,
 }: {
   isSending: boolean;
   note: DevNote;
+  onShowOnPage?: () => void;
+  pageLink?: boolean;
   pinNumber?: number;
 }) {
-  const { selection } = note;
-  const owner = selection.componentStack[0];
-
   return (
     <div className="dt-card-head">
       {pinNumber !== undefined && (
@@ -132,7 +169,11 @@ function NoteCardHead({
         </span>
       )}
       <h3 className="dt-card-title">
-        {owner ? `<${owner}> ${selection.label}` : selection.label}
+        <NoteTitle
+          note={note}
+          onShowOnPage={onShowOnPage}
+          pageLink={pageLink}
+        />
       </h3>
       {isSending && <span className="dt-chip">Sending…</span>}
       {note.sent && !isSending && <span className="dt-chip">On the board</span>}
@@ -173,44 +214,37 @@ function NoteSourceLine({
   return <p className="dt-meta">{selection.region ?? selection.selector}</p>;
 }
 
-function NoteActions({
+function NoteHoverActions({
   isSending,
   note,
   onEdit,
-  onShowSelector,
-  pageLink,
 }: {
   isSending: boolean;
   note: DevNote;
   onEdit: () => void;
-  onShowSelector?: () => void;
-  pageLink?: boolean;
 }) {
   return (
-    <div className="dt-actions">
-      {onShowSelector && (
-        <button className="dt-btn" onClick={onShowSelector} type="button">
-          Show on page
-        </button>
-      )}
-      {pageLink && (
-        <a className="dt-btn" href={note.capturedContext.url}>
-          Open page
-        </a>
-      )}
+    <div className="dt-hover-actions">
       {!(note.sent || isSending) && (
-        <button className="dt-btn" onClick={onEdit} type="button">
-          Edit
+        <button
+          aria-label="Edit note"
+          className="icon-btn glass"
+          onClick={onEdit}
+          title="Edit note"
+          type="button"
+        >
+          <PencilIcon />
         </button>
       )}
       <button
-        className="dt-btn"
-        data-variant="danger"
+        aria-label="Delete note"
+        className="icon-btn glass"
         disabled={isSending}
         onClick={() => deleteNote(note)}
+        title="Delete note"
         type="button"
       >
-        Delete
+        <TrashIcon />
       </button>
     </div>
   );
@@ -242,7 +276,7 @@ export function NoteCard({
     : undefined;
 
   return (
-    <article className="dt-card" data-sent={Boolean(note.sent)}>
+    <article className="dt-card dt-openable" data-sent={Boolean(note.sent)}>
       {closeUp && (
         <img
           alt=""
@@ -252,7 +286,13 @@ export function NoteCard({
           width={closeUp.width}
         />
       )}
-      <NoteCardHead isSending={isSending} note={note} pinNumber={pinNumber} />
+      <NoteCardHead
+        isSending={isSending}
+        note={note}
+        onShowOnPage={showOnPage}
+        pageLink={pageLink}
+        pinNumber={pinNumber}
+      />
       <NoteSourceLine
         isLocating={isLocating}
         note={note}
@@ -271,12 +311,10 @@ export function NoteCard({
         <p className="dt-meta">The element is not on the page right now.</p>
       )}
       {!isEditing && (
-        <NoteActions
+        <NoteHoverActions
           isSending={isSending}
           note={note}
           onEdit={() => setIsEditing(true)}
-          onShowSelector={showOnPage}
-          pageLink={pageLink}
         />
       )}
     </article>

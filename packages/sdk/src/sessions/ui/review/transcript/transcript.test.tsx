@@ -149,3 +149,17 @@ it("lands on the same moment from an intention's quote and from the transcript",
     screen.getByRole("heading", { name: "Moment 00:02–00:09" })
   ).toBeTruthy();
 });
+
+it("opens the moment from anywhere on a passage, except after dragging across its text", async () => {
+  const PASSAGE = "The total looks wrong";
+  await openTranscript(aDetail({ segments: [aSegment({ text: PASSAGE })] }));
+  const passage = screen.getByText(PASSAGE);
+
+  fireEvent.mouseDown(passage, { clientX: 10, clientY: 10 });
+  fireEvent.click(passage, { clientX: 90, clientY: 10 });
+  expect(screen.queryByRole("heading", { name: /^Moment / })).toBeNull();
+
+  fireEvent.mouseDown(passage, { clientX: 10, clientY: 10 });
+  fireEvent.click(passage, { clientX: 10, clientY: 10 });
+  expect(screen.getByRole("heading", { name: /^Moment / })).toBeTruthy();
+});

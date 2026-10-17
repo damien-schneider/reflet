@@ -61,23 +61,9 @@ const LIST_STYLES = `
   .dt-ses-steps li::before { animation: none; }
   .dt-ses-bar > span[data-indeterminate="true"] { width: 100%; opacity: .4; animation: none; }
 }
-.dt-ses-openable { position: relative; transition: background-color 120ms var(--rf-ease); }
-.dt-ses-openable:has(> .dt-ses-open):hover { background: var(--rf-bg-hover); }
-.dt-ses-open { padding: 0; text-align: left; }
-.dt-ses-open::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
-.dt-ses-open:focus-visible { outline: none; }
-.dt-ses-open:focus-visible::after { outline: 2px solid var(--rf-accent); outline-offset: -2px; }
-.dt-ses-openable :is(a, button, input, select, textarea):not(.dt-ses-open, .dt-ses-hover-action) { position: relative; z-index: 1; }
-.dt-ses-openable > .dt-ses-hover-action {
-  position: absolute; top: 6px; right: 6px; z-index: 2; width: 28px; height: 28px; opacity: 0;
-  transition: opacity 120ms var(--rf-ease), background 160ms var(--rf-ease), color 160ms var(--rf-ease);
-}
-.dt-ses-hover-action svg { width: 14px; height: 14px; }
-.dt-ses-openable:hover > .dt-ses-hover-action, .dt-ses-openable > .dt-ses-hover-action:focus-visible { opacity: 1; }
-@media (hover: none) {
-  .dt-ses-openable > .dt-ses-hover-action { opacity: 1; }
-  .dt-ses-seg:has(> .dt-ses-hover-action) { padding-right: 40px; }
-}
+.dt-ses-seg:has(> .dt-open) { cursor: pointer; }
+.dt-ses-seg:has(> .dt-open) > .dt-ses-seg-body { position: relative; z-index: 1; }
+@media (hover: none) { .dt-ses-seg:has(> .dt-hover-actions) { padding-right: 40px; } }
 .dt-ses-rows { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 0; list-style: none; }
 .dt-ses-row {
   display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%;

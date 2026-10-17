@@ -98,8 +98,24 @@ function HistoryEntry({
     evidenceIds.has(item.id)
   );
   return (
-    <li className="dt-ses-history" data-removed={entry.detachedAt !== null}>
-      <p className="dt-ses-subhead">{entryTitle(entry)}</p>
+    <li
+      className="dt-ses-history dt-openable"
+      data-removed={entry.detachedAt !== null}
+    >
+      <p className="dt-ses-subhead">
+        {entry.session.canOpen ? (
+          <button
+            className="dt-open"
+            onClick={() => context.navigation.onOpenSession(entry.session.id)}
+            title="Open session"
+            type="button"
+          >
+            {entryTitle(entry)}
+          </button>
+        ) : (
+          entryTitle(entry)
+        )}
+      </p>
       {entry.detachedAt !== null && (
         <p className="dt-meta">
           Removed on {formatDate(entry.detachedAt)}: what it added was taken
@@ -111,15 +127,6 @@ function HistoryEntry({
         <p className="dt-meta">Extracts are private to the author</p>
       ) : (
         <HistoryExtracts evidence={evidence} quotes={entry.quotes} />
-      )}
-      {entry.session.canOpen && (
-        <button
-          className="dt-ses-link"
-          onClick={() => context.navigation.onOpenSession(entry.session.id)}
-          type="button"
-        >
-          Open session
-        </button>
       )}
     </li>
   );

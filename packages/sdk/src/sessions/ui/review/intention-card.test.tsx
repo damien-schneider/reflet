@@ -73,10 +73,10 @@ it("keeps another author's extracts private in the history", async () => {
   expect(screen.getByText(/Continued in “Grace's check”/)).toBeTruthy();
   expect(screen.getByText("Extracts are private to the author")).toBeTruthy();
   expect(screen.getByText(/Only on my phone it hides/)).toBeTruthy();
-  expect(screen.getAllByRole("button", { name: "Open session" })).toHaveLength(
-    1
-  );
-  fireEvent.click(screen.getByRole("button", { name: "Open session" }));
+  expect(
+    screen.getAllByRole("button", { description: "Open session" })
+  ).toHaveLength(1);
+  fireEvent.click(screen.getByRole("button", { description: "Open session" }));
   expect(links.onOpenSession).toHaveBeenCalledWith("session_2");
 });
 

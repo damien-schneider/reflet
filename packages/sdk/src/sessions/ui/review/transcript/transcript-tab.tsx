@@ -6,7 +6,7 @@ import { formatClock } from "../../session-format";
 import { useSessionAction, useSessionWorkspace } from "../../session-workspace";
 import type { ShowMoment } from "../proposals/proposal-details";
 import { type ReviewHandle, withSegment } from "../use-session-detail";
-import { MomentTime, SegmentRow } from "./segment-row";
+import { MomentTime, SegmentRow, useOpenMomentOnRowClick } from "./segment-row";
 import { buildTimeline } from "./timeline";
 import { transcriptForAgent } from "./transcript-export";
 
@@ -19,8 +19,16 @@ function TimelineNote({
   children: ReactNode;
   onShowMoment: ((opener: HTMLElement) => void) | null;
 }) {
+  const rowClick = useOpenMomentOnRowClick();
   return (
-    <li className="dt-ses-seg dt-ses-openable" data-kind="note">
+    // biome-ignore lint/a11y/noNoninteractiveElementInteractions: pointer shortcut; the time button is the keyboard path
+    // biome-ignore lint/a11y/useKeyWithClickEvents: pointer shortcut; the time button is the keyboard path
+    <li
+      className="dt-ses-seg dt-openable"
+      data-kind="note"
+      onClick={rowClick.onClick}
+      onMouseDown={rowClick.onMouseDown}
+    >
       <MomentTime onShowMoment={onShowMoment} time={formatClock(atMs)} />
       <div className="dt-ses-seg-body">
         <p className="dt-meta">{children}</p>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { type MouseEvent, useRef, useState } from "react";
 import { PencilIcon } from "../../../../feedback/ui/icons";
 import type { SessionSegment } from "../../../protocol";
 import { formatClock } from "../../session-format";
@@ -164,13 +164,40 @@ export function MomentTime({
   return (
     <button
       aria-label={`Show the moment at ${time}`}
-      className="dt-ses-time dt-ses-open"
+      className="dt-ses-time dt-open"
       onClick={(event) => onShowMoment(event.currentTarget)}
       type="button"
     >
       {time}
     </button>
   );
+}
+
+const TEXT_DRAG_THRESHOLD_PX = 4;
+
+export function useOpenMomentOnRowClick() {
+  const pressedAt = useRef<{ x: number; y: number } | null>(null);
+  return {
+    onClick(event: MouseEvent<HTMLElement>) {
+      const start = pressedAt.current;
+      const isTextDrag =
+        start !== null &&
+        Math.hypot(event.clientX - start.x, event.clientY - start.y) >
+          TEXT_DRAG_THRESHOLD_PX;
+      const isOnControl =
+        event.target instanceof Element &&
+        event.target.closest("a, button, input, select, textarea") !== null;
+      if (isTextDrag || isOnControl) {
+        return;
+      }
+      event.currentTarget
+        .querySelector<HTMLButtonElement>(":scope > .dt-open")
+        ?.click();
+    },
+    onMouseDown(event: MouseEvent<HTMLElement>) {
+      pressedAt.current = { x: event.clientX, y: event.clientY };
+    },
+  };
 }
 
 export interface SegmentEditing {
@@ -192,9 +219,16 @@ export function SegmentRow({
   const time = formatClock(segment.startMs);
   const isSettled = ["done", "empty"].includes(segment.transcription.state);
   const canStartEditing = canEdit && isSettled && !isEditing;
+  const rowClick = useOpenMomentOnRowClick();
 
   return (
-    <li className="dt-ses-seg dt-ses-openable">
+    // biome-ignore lint/a11y/noNoninteractiveElementInteractions: pointer shortcut; the time button is the keyboard path
+    // biome-ignore lint/a11y/useKeyWithClickEvents: pointer shortcut; the time button is the keyboard path
+    <li
+      className="dt-ses-seg dt-openable"
+      onClick={rowClick.onClick}
+      onMouseDown={rowClick.onMouseDown}
+    >
       <MomentTime onShowMoment={isEditing ? null : onShowMoment} time={time} />
       <div className="dt-ses-seg-body">
         {isEditing ? (
@@ -213,15 +247,17 @@ export function SegmentRow({
         <ContextChips segment={segment} />
       </div>
       {canStartEditing && (
-        <button
-          aria-label={`Edit passage at ${time}`}
-          className="icon-btn glass dt-ses-hover-action"
-          onClick={() => setIsEditing(true)}
-          title="Edit"
-          type="button"
-        >
-          <PencilIcon />
-        </button>
+        <div className="dt-hover-actions">
+          <button
+            aria-label={`Edit passage at ${time}`}
+            className="icon-btn glass"
+            onClick={() => setIsEditing(true)}
+            title="Edit"
+            type="button"
+          >
+            <PencilIcon />
+          </button>
+        </div>
       )}
     </li>
   );

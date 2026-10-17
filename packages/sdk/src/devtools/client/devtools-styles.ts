@@ -135,6 +135,25 @@ export const DEVTOOLS_STYLES = `
 .dt-source:hover { text-decoration: underline; }
 .dt-thumb { display: block; align-self: flex-start; max-width: 100%; height: auto; max-height: 132px; object-fit: contain; border-radius: var(--dt-radius-field); box-shadow: var(--rf-shadow-inset); }
 .dt-actions { display: flex; flex-wrap: wrap; gap: 4px; }
+.dt-openable { position: relative; transition: background-color 120ms var(--rf-ease); }
+.dt-openable:has(.dt-open):hover { background: var(--rf-bg-hover); }
+.dt-open { padding: 0; text-align: left; }
+a.dt-open { color: inherit; text-decoration: none; }
+.dt-open::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+.dt-open:focus-visible { outline: none; }
+.dt-open:focus-visible::after { outline: 2px solid var(--rf-accent); outline-offset: -2px; }
+.dt-card-title > .dt-open { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dt-selection { display: flex; flex-direction: column; gap: 4px; margin-inline: -6px; padding: 6px; border-radius: var(--dt-radius-field); }
+.dt-openable :is(a, button, input, select, textarea):not(.dt-open) { position: relative; z-index: 1; }
+.dt-hover-actions {
+  position: absolute; top: 6px; right: 6px; z-index: 2; display: flex; gap: 4px; opacity: 0;
+  transition: opacity 120ms var(--rf-ease);
+}
+.dt-hover-actions > .icon-btn { width: 28px; height: 28px; }
+.dt-hover-actions svg { width: 14px; height: 14px; }
+.dt-openable:hover > .dt-hover-actions, .dt-hover-actions:focus-within { opacity: 1; }
+.dt-card:has(> .dt-hover-actions):not(:has(> .dt-thumb)) > .dt-card-head { padding-right: 66px; }
+@media (hover: none) { .dt-hover-actions { opacity: 1; } }
 .dt-btn {
   display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px;
   border-radius: var(--rf-pill); background: var(--rf-bg-hover); color: var(--rf-text);

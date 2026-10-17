@@ -5,6 +5,15 @@ All notable changes to `reflet-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Devtools notes: clicking a note card shows its element on the page, or opens its page when the note was taken elsewhere. Edit and Delete are a pencil and a trash icon that appear on hover.
+- Devtools board: clicking an element row in a feedback card shows the element on the page, instead of a Show on page button.
+- Sessions: an intention's history entry opens its session when clicked, instead of an Open session link.
+- Sessions: a transcript passage's text can be selected and copied again. A plain click anywhere on the row still shows the moment.
+
 ## [0.7.8] - 2026-10-17
 
 ### Added

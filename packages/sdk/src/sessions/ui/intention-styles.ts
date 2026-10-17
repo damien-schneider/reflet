@@ -17,6 +17,7 @@ export const INTENTION_STYLES = `
 .dt-ses-attached { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; }
 .dt-ses-attached p { margin: 0; }
 .dt-ses-history[data-removed="true"] > .dt-ses-subhead { color: var(--rf-text-muted); text-decoration: line-through; }
+.dt-ses-history:has(.dt-open) { margin-inline: -8px; padding: 6px 8px; border-radius: var(--dt-radius-field); }
 .dt-ses-change { padding: 8px 10px; border-radius: var(--dt-radius-card); background: var(--rf-bg-subtle); list-style: none; }
 .dt-ses-change[data-decision="rejected"] .dt-ses-diff { color: var(--rf-text-muted); text-decoration: line-through; }
 .dt-ses-diff { display: grid; grid-template-columns: auto 1fr; gap: 2px 8px; margin: 0; overflow-wrap: anywhere; }

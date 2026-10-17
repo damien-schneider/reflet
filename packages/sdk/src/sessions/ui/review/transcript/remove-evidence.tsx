@@ -99,18 +99,20 @@ export function RemoveEvidence({
   }
   const label = `Remove screenshot at ${formatClock(evidence.atMs)}`;
   return (
-    <button
-      aria-label={label}
-      className="icon-btn glass dt-ses-hover-action"
-      onClick={() => {
-        setIsConfirming(true);
-        setHasCancelled(false);
-      }}
-      ref={triggerRef}
-      title={label}
-      type="button"
-    >
-      <TrashIcon />
-    </button>
+    <div className="dt-hover-actions">
+      <button
+        aria-label={label}
+        className="icon-btn glass"
+        onClick={() => {
+          setIsConfirming(true);
+          setHasCancelled(false);
+        }}
+        ref={triggerRef}
+        title={label}
+        type="button"
+      >
+        <TrashIcon />
+      </button>
+    </div>
   );
 }
