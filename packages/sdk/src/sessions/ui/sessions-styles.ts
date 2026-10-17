@@ -41,6 +41,17 @@ const LIST_STYLES = `
 .dt-ses-banner { padding: 8px 10px; border-radius: var(--dt-radius-card); background: color-mix(in srgb, var(--rf-accent) 10%, transparent); }
 .dt-ses-banner p { margin: 0; overflow-wrap: anywhere; }
 .dt-ses-strip:empty { display: none; }
+.dt-ses-steps { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; color: var(--rf-text-muted); font-size: 12px; }
+.dt-ses-steps li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.dt-ses-steps li > span { flex: 1 1 0; min-width: 0; overflow-wrap: anywhere; }
+.dt-ses-steps li::before { content: ""; flex: none; box-sizing: border-box; width: 10px; height: 10px; border: 1.5px solid currentColor; border-radius: 50%; }
+.dt-ses-steps li[data-state="done"]::before { border-color: var(--rf-accent); background: var(--rf-accent); }
+.dt-ses-steps li[data-state="active"] { color: var(--rf-text); }
+.dt-ses-steps li[data-state="active"]::before { border-color: var(--rf-accent); border-right-color: transparent; animation: dt-step-spin 800ms linear infinite; }
+.dt-ses-steps li[data-state="failed"] { color: var(--rf-danger); }
+.dt-ses-steps li[data-state="failed"]::before { background: currentColor; }
+@keyframes dt-step-spin { to { rotate: 360deg; } }
+@media (prefers-reduced-motion: reduce) { .dt-ses-steps li::before { animation: none; } }
 .dt-ses-rows { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 0; list-style: none; }
 .dt-ses-row {
   display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%;

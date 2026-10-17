@@ -64,6 +64,7 @@ function renderHandoff() {
       handoff: HANDOFF,
     }),
     markHandoffDelivered: vi.fn().mockResolvedValue(HANDOFF),
+    previewBrief: vi.fn().mockResolvedValue(BRIEF),
   });
   const detail = aDetail({
     evidence: [anEvidence()],
@@ -86,47 +87,67 @@ function renderHandoff() {
   return api;
 }
 
-it("prepares the brief from kept proposals and their evidence", async () => {
+it("shows the brief of kept proposals and their evidence without recording it", async () => {
   const api = renderHandoff();
 
   expect(
     screen.queryByRole("checkbox", { name: /Rename the menu/ })
   ).toBeNull();
-  fireEvent.click(screen.getByRole("button", { name: "Build brief" }));
-
-  await waitFor(() =>
-    expect(api.createHandoff).toHaveBeenCalledWith({
-      clientKey: expect.any(String),
-      evidenceIds: ["evidence_1"],
-      proposalIds: ["proposal_1"],
-      sessionId: "session_1",
-    })
-  );
   expect(await screen.findByRole("textbox", { name: "Brief" })).toHaveProperty(
     "value",
     BRIEF
   );
+  expect(api.previewBrief).toHaveBeenCalledWith({
+    evidenceIds: ["evidence_1"],
+    proposalIds: ["proposal_1"],
+    sessionId: "session_1",
+  });
+  expect(api.createHandoff).not.toHaveBeenCalled();
 });
 
 it("leaves out what I uncheck", async () => {
   const api = renderHandoff();
 
   fireEvent.click(screen.getByRole("checkbox", { name: /Marked moment/ }));
-  fireEvent.click(screen.getByRole("button", { name: "Build brief" }));
-
   await waitFor(() =>
-    expect(api.createHandoff).toHaveBeenCalledWith(
+    expect(api.previewBrief).toHaveBeenLastCalledWith(
       expect.objectContaining({ evidenceIds: [] })
     )
+  );
+  writeClipboard.mockResolvedValueOnce(undefined);
+  fireEvent.click(screen.getByRole("button", { name: "Copy brief" }));
+
+  await waitFor(() =>
+    expect(api.createHandoff).toHaveBeenCalledWith({
+      clientKey: expect.any(String),
+      evidenceIds: [],
+      proposalIds: ["proposal_1"],
+      sessionId: "session_1",
+    })
+  );
+});
+
+it("can't copy a brief without an intention", () => {
+  renderHandoff();
+
+  fireEvent.click(
+    screen.getByRole("checkbox", { name: /Make the Save button visible/ })
+  );
+
+  expect(
+    screen.getByText("Tick an intention to brief your agent.")
+  ).toBeTruthy();
+  expect(screen.getByRole("button", { name: "Copy brief" })).toHaveProperty(
+    "disabled",
+    true
   );
 });
 
 it("records the copy only once the clipboard took the brief", async () => {
   const api = renderHandoff();
-  fireEvent.click(screen.getByRole("button", { name: "Build brief" }));
 
   writeClipboard.mockRejectedValueOnce(new Error("Denied"));
-  fireEvent.click(await screen.findByRole("button", { name: "Copy brief" }));
+  fireEvent.click(screen.getByRole("button", { name: "Copy brief" }));
   expect(await screen.findByText(/The brief was not copied/)).toBeTruthy();
   expect(api.markHandoffDelivered).not.toHaveBeenCalled();
 
@@ -154,8 +175,7 @@ it("exports the brief with its evidence files as a zip", async () => {
     .spyOn(HTMLAnchorElement.prototype, "click")
     .mockImplementation(() => undefined);
 
-  fireEvent.click(screen.getByRole("button", { name: "Build brief" }));
-  fireEvent.click(await screen.findByRole("button", { name: "Download .zip" }));
+  fireEvent.click(screen.getByRole("button", { name: "Download .zip" }));
 
   expect(await screen.findByText("Brief downloaded")).toBeTruthy();
   expect(fetchFile).toHaveBeenCalledWith("https://files.test/e1.png");

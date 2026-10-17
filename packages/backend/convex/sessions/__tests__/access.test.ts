@@ -79,6 +79,14 @@ function writesOn(ids: SeededSession) {
         sessionId: ids.sessionId,
       },
     ],
+    [
+      "/api/v1/sessions/handoffs/preview",
+      {
+        evidenceIds: [],
+        proposalIds: [ids.proposalId],
+        sessionId: ids.sessionId,
+      },
+    ],
     ["/api/v1/sessions/delete", { sessionId: ids.sessionId }],
   ] as const;
 }

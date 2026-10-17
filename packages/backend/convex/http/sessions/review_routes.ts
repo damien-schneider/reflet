@@ -6,6 +6,7 @@ import {
   sessionPost,
 } from "./route";
 import {
+  briefSelectionBody,
   clarifyProposalBody,
   createProposalBody,
   decideProposalBody,
@@ -109,6 +110,16 @@ const REVIEW_ENDPOINTS: SessionEndpoint[] = [
     ),
     method: "POST",
     path: "/api/v1/sessions/handoffs",
+  },
+  {
+    handler: sessionPost(briefSelectionBody, (ctx, actor, body) =>
+      ctx.runQuery(internal.sessions.review.handoffs.preview, {
+        actor,
+        ...body,
+      })
+    ),
+    method: "POST",
+    path: "/api/v1/sessions/handoffs/preview",
   },
   {
     handler: sessionPost(deliveredBody, (ctx, actor, body) =>

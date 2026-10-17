@@ -29,6 +29,7 @@ type ProposalEndpoints = Pick<
   | "editProposal"
   | "markHandoffDelivered"
   | "mergeProposals"
+  | "previewBrief"
   | "separateProposal"
   | "verifyProposal"
 >;
@@ -88,6 +89,14 @@ export function createProposalEndpoints(
       ).handoff,
     mergeProposals: (body) =>
       postProposal("/api/v1/sessions/proposals/merge", body),
+    previewBrief: async (body) =>
+      (
+        await post(
+          "/api/v1/sessions/handoffs/preview",
+          body,
+          z.object({ brief: z.string() })
+        )
+      ).brief,
     separateProposal: (proposalId) =>
       postProposal("/api/v1/sessions/proposals/separate", { proposalId }),
     verifyProposal: (body) =>

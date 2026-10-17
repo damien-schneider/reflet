@@ -199,6 +199,19 @@ describe("session review", () => {
     await keep(a, proposal.id);
     expect((await handoff("h-0", [foreignEvidence.id])).status).toBe(404);
 
+    const preview = await a.post("/api/v1/sessions/handoffs/preview", {
+      evidenceIds: [evidence.id],
+      proposalIds: [proposal.id],
+      sessionId,
+    });
+    expect(z.object({ brief: z.string() }).parse(preview.body).brief).toContain(
+      "Keep the cart"
+    );
+    const beforeCopy = sessionDetailSchema.parse(
+      (await a.get(`/api/v1/sessions/detail?sessionId=${sessionId}`)).body
+    );
+    expect(beforeCopy.handoffs).toEqual([]);
+
     const first = handoffResponse.parse(
       (await handoff("h-1", [evidence.id])).body
     );

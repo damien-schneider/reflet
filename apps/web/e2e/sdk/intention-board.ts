@@ -184,11 +184,27 @@ function briefOutcome(intention: BoardIntention, index: number): string {
   ].join("\n");
 }
 
-function createHandoff(state: BoardState, body: Record<string, unknown>) {
+function chosenIntentions(state: BoardState, body: Record<string, unknown>) {
   const ids = Array.isArray(body.proposalIds) ? body.proposalIds : [];
-  const intentions = state.intentions.filter(({ id }) => ids.includes(id));
+  return state.intentions.filter(({ id }) => ids.includes(id));
+}
+
+function briefOf(intentions: BoardIntention[]): string {
+  return `# Session brief: Plans & billing\n\n## Outcome wanted\n\n${intentions.map(briefOutcome).join("\n\n")}\n`;
+}
+
+function createHandoff(state: BoardState, body: Record<string, unknown>) {
+  const clientKey = String(body.clientKey);
+  const replayed = state.handoffs.find(
+    (handoff) => handoff.clientKey === clientKey
+  );
+  if (replayed) {
+    return { files: [], handoff: replayed };
+  }
+  const intentions = chosenIntentions(state, body);
   const handoff: BoardHandoff = {
-    brief: `# Session brief: Plans & billing\n\n## Outcome wanted\n\n${intentions.map(briefOutcome).join("\n\n")}\n`,
+    brief: briefOf(intentions),
+    clientKey,
     createdAt: Date.now(),
     deliveries: [],
     evidenceIds: [],
@@ -242,6 +258,9 @@ export function intentionResponders(
   return {
     handoffs: ({ body }) => createHandoff(state, body),
     "handoffs/delivered": ({ body }) => markDelivered(state, body),
+    "handoffs/preview": ({ body }) => ({
+      brief: briefOf(chosenIntentions(state, body)),
+    }),
     "intentions/accept": ({ body }) => acceptChanges(state, body),
     "intentions/change": ({ body }) => decideChange(state, body),
     "proposals/decide": ({ body }) => {

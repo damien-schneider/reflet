@@ -236,12 +236,13 @@ export const verifyProposalBody = z.object({
   status: z.enum(["works", "needs_work"]),
 });
 
-export const handoffBody = z.object({
-  clientKey,
+export const briefSelectionBody = z.object({
   evidenceIds: z.array(id).max(MAX_IDS),
   proposalIds: z.array(id).min(1).max(MAX_IDS),
   sessionId: id,
 });
+
+export const handoffBody = briefSelectionBody.extend({ clientKey });
 
 export const deliveredBody = z.object({
   handoffId: id,

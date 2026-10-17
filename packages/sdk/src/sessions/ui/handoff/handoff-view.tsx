@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { copyToClipboard } from "../../../devtools/client/clipboard";
-import { announce, reportFailure } from "../../../devtools/client/notices";
-import type {
-  HandoffFile,
-  SessionDetail,
-  SessionHandoff,
-} from "../../protocol";
+import { announce } from "../../../devtools/client/notices";
+import type { SessionDetail, SessionHandoff } from "../../protocol";
 import type { ReviewHandle } from "../review/use-session-detail";
-import { useSessionAction, useSessionWorkspace } from "../session-workspace";
+import {
+  failureMessage,
+  isUnauthorized,
+  useSessionAction,
+  useSessionWorkspace,
+} from "../session-workspace";
 import { buildBriefZip, saveBlob, zipFileName } from "./brief-export";
 import { ChangedSinceBriefs, EarlierBriefs } from "./handoff-changes";
 import {
@@ -16,165 +17,113 @@ import {
   initialSelection,
 } from "./handoff-selection";
 
-interface PreparedHandoff {
-  files: HandoffFile[];
-  handoff: SessionHandoff;
+interface BriefRequest {
+  clientKey: string;
+  selection: HandoffSelection;
+  sessionId: string;
 }
 
-function useDelivery(options: { prepared: PreparedHandoff; title: string }) {
+type PreviewState =
+  | { kind: "loading" }
+  | { kind: "failed"; message: string }
+  | { brief: string; kind: "ready" };
+
+function useBriefPreview({ selection, sessionId }: BriefRequest): PreviewState {
+  const { api, onUnauthorized } = useSessionWorkspace();
+  const [state, setState] = useState<PreviewState>({ kind: "loading" });
+
+  useEffect(() => {
+    if (selection.proposalIds.length === 0) {
+      return;
+    }
+    let isCurrent = true;
+    api.previewBrief({ sessionId, ...selection }).then(
+      (brief) => isCurrent && setState({ brief, kind: "ready" }),
+      (error: unknown) => {
+        if (isUnauthorized(error)) {
+          onUnauthorized();
+        } else if (isCurrent) {
+          setState({ kind: "failed", message: failureMessage(error) });
+        }
+      }
+    );
+    return () => {
+      isCurrent = false;
+    };
+  }, [api, onUnauthorized, selection, sessionId]);
+
+  return state;
+}
+
+function useDelivery(options: {
+  request: BriefRequest;
+  review: ReviewHandle;
+  title: string;
+}) {
   const { api } = useSessionWorkspace();
   const run = useSessionAction();
-  const { files, handoff } = options.prepared;
+  const { clientKey, selection, sessionId } = options.request;
+  const recordHandoff = () =>
+    api.createHandoff({ clientKey, sessionId, ...selection });
 
   const deliver = async (
     kind: "copied" | "exported",
-    send: () => Promise<void>
+    send: () => Promise<SessionHandoff>
   ) => {
-    try {
-      await send();
-    } catch (error) {
-      reportFailure(`The brief was not ${kind}`, error);
+    const handoff = await run(`The brief was not ${kind}`, send);
+    if (!handoff) {
       return;
     }
     announce(kind === "copied" ? "Brief copied" : "Brief downloaded");
     await run("The delivery was not recorded", () =>
       api.markHandoffDelivered({ handoffId: handoff.id, kind })
     );
+    options.review.reload();
   };
 
   return {
     copy: () =>
-      deliver("copied", () => copyToClipboard(Promise.resolve(handoff.brief))),
+      deliver("copied", async () => {
+        const recorded = recordHandoff();
+        await copyToClipboard(recorded.then(({ handoff }) => handoff.brief));
+        return (await recorded).handoff;
+      }),
     exportZip: () =>
       deliver("exported", async () => {
+        const { files, handoff } = await recordHandoff();
         const blob = await buildBriefZip({ brief: handoff.brief, files });
         saveBlob({ blob, fileName: zipFileName(options.title) });
+        return handoff;
       }),
   };
 }
 
-function PreparedBrief({
-  onChangeSelection,
-  prepared,
-  title,
+function BriefPreview({
+  hasIntention,
+  preview,
 }: {
-  onChangeSelection: () => void;
-  prepared: PreparedHandoff;
-  title: string;
+  hasIntention: boolean;
+  preview: PreviewState;
 }) {
-  const { copy, exportZip } = useDelivery({ prepared, title });
-  return (
-    <>
-      <textarea
-        aria-label="Brief"
-        className="dt-field dt-ses-brief"
-        readOnly
-        rows={12}
-        value={prepared.handoff.brief}
-      />
-      <div className="dt-actions">
-        <button
-          className="dt-btn"
-          data-variant="primary"
-          onClick={copy}
-          type="button"
-        >
-          Copy brief
-        </button>
-        <button className="dt-btn" onClick={exportZip} type="button">
-          Download .zip
-        </button>
-        <button className="dt-btn" onClick={onChangeSelection} type="button">
-          Edit selection
-        </button>
-      </div>
-    </>
-  );
-}
-
-interface PrepareHandoff {
-  clear: () => void;
-  isPreparing: boolean;
-  prepare: () => Promise<void>;
-  prepared: PreparedHandoff | null;
-  select: (selection: HandoffSelection) => void;
-  selection: HandoffSelection;
-}
-
-function usePrepareHandoff(options: {
-  detail: SessionDetail;
-  review: ReviewHandle;
-}): PrepareHandoff {
-  const { api } = useSessionWorkspace();
-  const run = useSessionAction();
-  const [request, setRequest] = useState(() => ({
-    clientKey: crypto.randomUUID(),
-    selection: initialSelection(options.detail),
-  }));
-  const [prepared, setPrepared] = useState<PreparedHandoff | null>(null);
-  const [isPreparing, setIsPreparing] = useState(false);
-
-  const prepare = async () => {
-    setIsPreparing(true);
-    const result = await run("The brief was not prepared", () =>
-      api.createHandoff({
-        clientKey: request.clientKey,
-        sessionId: options.detail.session.id,
-        ...request.selection,
-      })
-    );
-    setIsPreparing(false);
-    if (result) {
-      setPrepared(result);
-      options.review.reload();
-    }
-  };
-  return {
-    clear: () => setPrepared(null),
-    isPreparing,
-    prepare,
-    prepared,
-    select: (selection: HandoffSelection) =>
-      setRequest({ clientKey: crypto.randomUUID(), selection }),
-    selection: request.selection,
-  };
-}
-
-function SelectionStep({
-  detail,
-  handoff,
-}: {
-  detail: SessionDetail;
-  handoff: PrepareHandoff;
-}) {
-  const count = handoff.selection.proposalIds.length;
-  return (
-    <>
-      <p className="dt-hint">
-        Tick what your agent should get. Nothing leaves Reflet until you copy or
-        download the brief.
+  if (!hasIntention) {
+    return <p className="dt-hint">Tick an intention to brief your agent.</p>;
+  }
+  if (preview.kind === "failed") {
+    return (
+      <p className="dt-error">
+        The brief could not be shown: {preview.message}
       </p>
-      <HandoffChoices
-        detail={detail}
-        onChange={handoff.select}
-        selection={handoff.selection}
-      />
-      <ChangedSinceBriefs
-        detail={detail}
-        proposalIds={handoff.selection.proposalIds}
-      />
-      <div className="dt-actions">
-        <button
-          className="dt-btn"
-          data-variant="primary"
-          disabled={count === 0 || handoff.isPreparing}
-          onClick={handoff.prepare}
-          type="button"
-        >
-          Build brief
-        </button>
-      </div>
-    </>
+    );
+  }
+  return (
+    <textarea
+      aria-busy={preview.kind === "loading"}
+      aria-label="Brief"
+      className="dt-field dt-ses-brief"
+      readOnly
+      rows={12}
+      value={preview.kind === "ready" ? preview.brief : ""}
+    />
   );
 }
 
@@ -185,21 +134,58 @@ export function HandoffView({
   detail: SessionDetail;
   review: ReviewHandle;
 }) {
-  const handoff = usePrepareHandoff({ detail, review });
+  const [request, setRequest] = useState<BriefRequest>(() => ({
+    clientKey: crypto.randomUUID(),
+    selection: initialSelection(detail),
+    sessionId: detail.session.id,
+  }));
+  const preview = useBriefPreview(request);
+  const { copy, exportZip } = useDelivery({
+    request,
+    review,
+    title: detail.session.title,
+  });
+  const hasIntention = request.selection.proposalIds.length > 0;
+  const select = (selection: HandoffSelection) =>
+    setRequest({ ...request, clientKey: crypto.randomUUID(), selection });
+
   return (
     <section aria-labelledby="rf-handoff-title" className="dt-ses-handoff">
       <h2 className="dt-ses-title" id="rf-handoff-title" tabIndex={-1}>
         Brief for your agent
       </h2>
-      {handoff.prepared ? (
-        <PreparedBrief
-          onChangeSelection={handoff.clear}
-          prepared={handoff.prepared}
-          title={detail.session.title}
-        />
-      ) : (
-        <SelectionStep detail={detail} handoff={handoff} />
-      )}
+      <BriefPreview hasIntention={hasIntention} preview={preview} />
+      <div className="dt-actions">
+        <button
+          className="dt-btn"
+          data-variant="primary"
+          disabled={!hasIntention}
+          onClick={copy}
+          type="button"
+        >
+          Copy brief
+        </button>
+        <button
+          className="dt-btn"
+          disabled={!hasIntention}
+          onClick={exportZip}
+          type="button"
+        >
+          Download .zip
+        </button>
+      </div>
+      <p className="dt-hint">
+        Nothing leaves Reflet until you copy or download the brief.
+      </p>
+      <HandoffChoices
+        detail={detail}
+        onChange={select}
+        selection={request.selection}
+      />
+      <ChangedSinceBriefs
+        detail={detail}
+        proposalIds={request.selection.proposalIds}
+      />
       <EarlierBriefs handoffs={detail.handoffs} />
     </section>
   );

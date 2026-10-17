@@ -65,6 +65,7 @@ L'accès équipe en production existe déjà ; une expérience mobile complète 
 - La pause interrompt la collecte du microphone et du contexte. Elle n'est pas un simple changement d'icône. La reprise est explicite et la lacune reste identifiable.
 - Le traitement peut avancer en arrière-plan, mais l'IA n'interrompt pas la session dans cette version.
 - « Terminer » coupe les pistes et les écouteurs avant de lancer la revue. L'utilisateur peut consulter ce qui est disponible pendant la fin du traitement.
+- Tant que le traitement n'est pas fini, la revue affiche ses étapes dans l'ordre : envoi, transcription de la voix, recherche des intentions par l'IA (ou comparaison avec la révision de départ). Chaque étape est faite, en cours, en attente de la précédente ou en échec avec sa raison ; une analyse encore en file d'envoi ne propose pas « Analyze ».
 
 ### Revoir
 
@@ -81,7 +82,7 @@ L'accès équipe en production existe déjà ; une expérience mobile complète 
 ### Confier
 
 - Notes et sessions restent deux entrées distinctes, sans fusion de données. Elles partagent les mêmes sorties : copier pour un agent, et « Add to board ».
-- « Prepare brief » ouvre la sélection ; rien n'est partagé avant « Copy brief » ou « Download .zip ». Les briefs passés sont listés sous « Earlier briefs » avec leur date et leur état (copié, téléchargé, pas encore copié).
+- « Prepare brief » montre directement le brief des intentions confirmées et de leurs preuves, avec « Copy brief » et « Download .zip » ; cocher ou décocher une intention ou une preuve le met à jour sur place. Le brief est construit sans IA. Rien n'est partagé ni enregistré avant « Copy brief » ou « Download .zip ». Les briefs passés sont listés sous « Earlier briefs » avec leur date et leur état (copié, téléchargé, pas encore copié).
 - Le brief inclut le résultat voulu, les observations, les incertitudes, les propositions retenues avec leur révision et uniquement les preuves choisies.
 - « Copy brief » ou « Download .zip » est le premier passage vers un agent. Afficher « Brief copied » ou « Brief downloaded », jamais « Agent lancé » sans accusé de réception réel.
 - Le brief doit être compréhensible sans accès au chat de conception ni à une URL locale. Une preuve locale nécessaire est jointe à l'export ; un lien privé externe indique son prérequis d'accès.

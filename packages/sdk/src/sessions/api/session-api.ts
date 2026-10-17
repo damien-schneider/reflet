@@ -150,11 +150,14 @@ export interface EditProposalBody {
   unknowns?: string[];
 }
 
-export interface CreateHandoffBody {
-  clientKey: string;
+export interface BriefSelectionBody {
   evidenceIds: string[];
   proposalIds: string[];
   sessionId: string;
+}
+
+export interface CreateHandoffBody extends BriefSelectionBody {
+  clientKey: string;
 }
 
 export interface SessionApi {
@@ -216,6 +219,7 @@ export interface SessionApi {
     sourceIds: string[];
     targetId: string;
   }) => Promise<SessionProposal>;
+  previewBrief: (body: BriefSelectionBody) => Promise<string>;
   removeEvidence: (evidenceId: string) => Promise<SessionEvidence>;
   reopenOrRejectChange: (body: {
     changeId: string;

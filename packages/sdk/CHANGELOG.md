@@ -5,6 +5,13 @@ All notable changes to `reflet-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Sessions: Prepare brief shows the brief right away, with Copy brief and Download .zip. Ticking or unticking an intention or a screenshot updates it in place; Build brief and Edit selection are gone. The brief is only saved under Earlier briefs once you copy or download it. Requires the matching Reflet backend.
+- Sessions: until a finished session is processed, the review lists its steps in order (upload, voice transcription, finding intentions with AI, or the comparison with the revision it continues), each marked done, running, waiting for the one before, or failed with its reason. A session whose analysis is still waiting to upload no longer offers Analyze. The session list says "Finding intentions" instead of "Reading".
+
 ## [0.7.6] - 2026-10-17
 
 ### Changed

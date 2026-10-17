@@ -215,12 +215,14 @@ users. Pass `devtools={false}` to turn it off.
   source location, and a code search for the element's text.
 - **Sessions** — talk through the app while you use it: Reflet records your
   voice, what you point at and mark, and a screenshot at the start, at each
-  mark and on each page change. Finish, and Reflet transcribes the session and
-  proposes the intentions behind what you said. Confirm, edit or dismiss each
+  mark and on each page change. Finish, and Reflet uploads and transcribes the
+  session, then its AI proposes the intentions behind what you said; the review
+  shows which of these steps is running. Confirm, edit or dismiss each
   one. Like notes, confirmed intentions have two ways out: **Prepare brief**
-  builds a brief you copy into a coding agent or download as a `.zip` with its
-  screenshots (nothing is shared until you copy or download it), and **Add to
-  board** turns them into internal feedback, one by one or all at once.
+  shows the brief right away, ready to copy into a coding agent or download as
+  a `.zip` with its screenshots (nothing is shared until you copy or download
+  it), and **Add to board** turns them into internal feedback, one by one or
+  all at once.
   Sessions are recorded under your own name, so they need Connect rather than
   `REFLET_SECRET_KEY`.
 

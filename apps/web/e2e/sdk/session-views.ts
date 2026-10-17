@@ -53,6 +53,7 @@ export interface BoardApplied {
 
 export interface BoardHandoff {
   brief: string;
+  clientKey: string;
   createdAt: number;
   deliveries: { at: number; kind: "copied" | "exported" }[];
   evidenceIds: string[];

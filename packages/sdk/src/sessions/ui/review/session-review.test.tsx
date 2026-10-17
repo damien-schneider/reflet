@@ -14,6 +14,7 @@ import {
   aDetail,
   anEvidence,
   aProposal,
+  aSegment,
   aSummary,
   fakeApi,
   fakeWorkspace,
@@ -90,7 +91,7 @@ it("opens on the intentions", async () => {
 it("shows what finished uploading after the analysis without a reload", async () => {
   uploads.set(1);
   const api = await renderReview(aDetail({ evidence: [] }));
-  expect(screen.getByText("1 waiting to upload")).toBeTruthy();
+  expect(screen.getByText("Uploading · 1 waiting")).toBeTruthy();
   api.detail = vi.fn().mockResolvedValue(aDetail({ evidence: [anEvidence()] }));
 
   act(() => uploads.set(0));
@@ -98,7 +99,60 @@ it("shows what finished uploading after the analysis without a reload", async ()
   expect(
     await screen.findByRole("tab", { name: /^Evidence\s*1$/ })
   ).toBeTruthy();
-  expect(screen.queryByText("1 waiting to upload")).toBeNull();
+  expect(screen.queryByRole("list", { name: "Processing" })).toBeNull();
+});
+
+function processingRows() {
+  const steps = screen.getByRole("list", { name: "Processing" });
+  return within(steps)
+    .getAllByRole("listitem")
+    .map((row) => [row.textContent, row.dataset.state]);
+}
+
+it("shows which step the session is at while the AI waits for the transcript", async () => {
+  const session = aSummary({
+    analysis: { ...aSummary().analysis, state: "waiting" },
+  });
+  await renderReview(
+    aDetail({
+      proposals: [],
+      segments: [
+        aSegment(),
+        aSegment({
+          id: "segment_2",
+          transcription: { attempts: 1, error: null, state: "running" },
+        }),
+      ],
+      session: { ...session, canEdit: true, gaps: [], startUrl: null },
+    })
+  );
+
+  expect(processingRows()).toEqual([
+    ["Uploaded", "done"],
+    ["Transcribing your voice · 1 of 2", "active"],
+    ["Find intentions with AI", "waiting"],
+  ]);
+});
+
+it("does not offer to analyze a finished session whose analysis is still queued for upload", async () => {
+  uploads.set(2);
+  const session = aSummary({
+    analysis: { ...aSummary().analysis, analyzedRevision: null, state: "idle" },
+  });
+  await renderReview(
+    aDetail({
+      proposals: [],
+      segments: [],
+      session: { ...session, canEdit: true, gaps: [], startUrl: null },
+    })
+  );
+
+  expect(processingRows()).toEqual([
+    ["Uploading · 2 waiting", "active"],
+    ["Transcribe your voice", "waiting"],
+    ["Find intentions with AI", "waiting"],
+  ]);
+  expect(screen.queryByRole("button", { name: "Analyze" })).toBeNull();
 });
 
 it("confirms an intention and undoes it back to its previous decision", async () => {

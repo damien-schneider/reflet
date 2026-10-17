@@ -105,7 +105,6 @@ async function confirmAndHandOff(page: Page, activate: Activate) {
   await activate(page.getByRole("menuitemradio", { name: "Details" }));
   await expect(page.getByText("No considered response yet.")).toBeVisible();
   await activate(page.getByRole("button", { name: PREPARE_ONE_BRIEF }));
-  await activate(page.getByRole("button", { name: "Build brief" }));
   await activate(page.getByRole("button", { name: "Copy brief" }));
   await expect(page.getByText("Brief copied").first()).toBeVisible();
   expect(await copiedText(page)).toContain(`${PROPOSAL_NEED} (revision 1)`);
@@ -157,11 +156,12 @@ async function handOffNewRevision(page: Page, activate: Activate) {
   await expect(
     page.locator("summary", { hasText: PROPOSAL_NEED })
   ).toContainText("· Copied");
-  await activate(page.getByRole("button", { name: "Build brief" }));
   const brief = page.getByRole("textbox", { exact: true, name: "Brief" });
   await expect(brief).toHaveValue(SECOND_REVISION_OUTCOME);
   await expect(brief).toHaveValue(PRECISION_IN_BRIEF);
   await expect(brief).not.toHaveValue(SOLUTION_IN_BRIEF);
+  await activate(page.getByRole("button", { name: "Copy brief" }));
+  await expect(page.getByText("Brief copied").first()).toBeVisible();
 }
 
 async function walkIntentionJourney(page: Page, activate: Activate) {
@@ -211,7 +211,6 @@ test.describe("Reflet sessions in the devtools", () => {
 
     await page.getByRole("button", { name: "Confirm" }).click();
     await page.getByRole("button", { name: PREPARE_ONE_BRIEF }).click();
-    await page.getByRole("button", { name: "Build brief" }).click();
     await page.getByRole("button", { name: "Copy brief" }).click();
     await expect(page.getByText("Brief copied").first()).toBeVisible();
     expect(await copiedText(page)).toContain(

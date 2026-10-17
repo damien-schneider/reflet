@@ -88,7 +88,7 @@ export function sessionStatusLine(summary: SessionSummary): string {
     return "Transcribing";
   }
   if (isAnalysisBusy(summary)) {
-    return "Reading";
+    return "Finding intentions";
   }
   if (analysis.state === "failed") {
     return "Analysis failed";
