@@ -33,8 +33,6 @@ export interface SourceRequest {
 
 type ProxiedApiPath = (typeof PROXIED_API_PATHS)[number];
 
-const INBOX_PAGE_SIZE = 50;
-
 export class DevRouteError extends Error {
   readonly body: unknown;
   readonly status: number;
@@ -167,15 +165,4 @@ export function callReflet<T>(
   });
 }
 
-export function fetchBoardFeedback(
-  pagePath: string | null
-): Promise<BoardFeedbackPage> {
-  const query: Record<string, string> = {
-    limit: String(INBOX_PAGE_SIZE),
-    sortBy: "newest",
-  };
-  if (pagePath !== null) {
-    query.pagePath = pagePath;
-  }
-  return callReflet<BoardFeedbackPage>("/api/v1/feedback/list", { query });
-}
+export type BoardCall = typeof callReflet;

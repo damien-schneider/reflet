@@ -1,4 +1,5 @@
 import {
+  type BoardCall,
   callReflet,
   DevRouteError,
 } from "../../devtools/client/route/dev-route";
@@ -24,11 +25,11 @@ function toSessionApiError(body: unknown, status: number): SessionApiError {
   });
 }
 
-export function devtoolsTransport(): SessionTransport {
+function transportOver(boardCall: BoardCall): SessionTransport {
   return {
     async request<T>({ body, method, path, query, schema }: SessionRequest<T>) {
       try {
-        const response = await callReflet<unknown>(path, {
+        const response = await boardCall<unknown>(path, {
           body: method === "POST" ? (body ?? {}) : undefined,
           query,
         });
@@ -41,6 +42,10 @@ export function devtoolsTransport(): SessionTransport {
       }
     },
   };
+}
+
+export function devtoolsTransport(): SessionTransport {
+  return transportOver(callReflet);
 }
 
 export function teamTransport(options: {
@@ -77,23 +82,25 @@ function parseReplyBody(body: string): unknown {
 }
 
 /** Calls go through the desktop app's privileged process, which holds the credential. Absent keys stay absent: IPC keeps an `undefined` value. */
-export function bridgeTransport(bridge: TeamToolsBridge): SessionTransport {
-  return {
-    async request<T>({ body, method, path, query, schema }: SessionRequest<T>) {
-      const reply = await bridge.request({
-        method,
-        path,
-        ...(method === "POST" && { body: JSON.stringify(body ?? {}) }),
-        ...(query && { query }),
-      });
-      const payload = parseReplyBody(reply.body);
-      const isSuccess = reply.status >= 200 && reply.status < 300;
-      if (!isSuccess) {
-        throw toSessionApiError(payload, reply.status);
-      }
-      return schema.parse(payload);
-    },
+export function bridgeBoardCall(bridge: TeamToolsBridge): BoardCall {
+  return async (apiPath, init = {}) => {
+    const reply = await bridge.request({
+      method: init.body === undefined ? "GET" : "POST",
+      path: apiPath,
+      ...(init.body !== undefined && { body: JSON.stringify(init.body) }),
+      ...(init.query && { query: init.query }),
+    });
+    const isSuccess = reply.status >= 200 && reply.status < 300;
+    if (!isSuccess) {
+      throw toSessionApiError(parseReplyBody(reply.body), reply.status);
+    }
+    // Shapes owned by protocol.ts and the Reflet public API, same trust as the dev route.
+    return JSON.parse(reply.body);
   };
+}
+
+export function bridgeTransport(bridge: TeamToolsBridge): SessionTransport {
+  return transportOver(bridgeBoardCall(bridge));
 }
 
 export function uploadSessionBlob(

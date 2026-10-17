@@ -147,12 +147,12 @@ function NoteSourceLine({
 }: {
   isLocating: boolean;
   note: DevNote;
-  onOpenCode: (target: CodeTarget) => void;
+  onOpenCode?: (target: CodeTarget) => void;
 }) {
   const { selection, source } = note;
 
   if (source && selection.sourceLocation) {
-    return (
+    return onOpenCode ? (
       <button
         className="dt-source"
         onClick={() => onOpenCode({ request: source, title: selection.label })}
@@ -160,6 +160,8 @@ function NoteSourceLine({
       >
         {selection.sourceLocation}
       </button>
+    ) : (
+      <p className="dt-meta">{selection.sourceLocation}</p>
     );
   }
   if (source) {
@@ -226,7 +228,7 @@ export function NoteCard({
   isLocating: boolean;
   isSending?: boolean;
   note: DevNote;
-  onOpenCode: (target: CodeTarget) => void;
+  onOpenCode?: (target: CodeTarget) => void;
   /** Absent where the element is already pointed at, like inside its own pin. */
   onShowSelector?: (selector: string) => boolean;
   pageLink?: boolean;

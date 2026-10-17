@@ -35,7 +35,7 @@ function SelectionRow({
   onShowSelector,
   selection,
 }: {
-  onOpenCode: (target: CodeTarget) => void;
+  onOpenCode?: (target: CodeTarget) => void;
   onShowSelector: (selector: string) => boolean;
   selection: ElementSelection;
 }) {
@@ -44,6 +44,10 @@ function SelectionRow({
   const request = selection.sourceLocation
     ? sourceRequestFrom(selection.sourceLocation)
     : null;
+  const openSource =
+    request && onOpenCode
+      ? () => onOpenCode({ request, title: selection.label })
+      : null;
 
   return (
     <>
@@ -52,14 +56,13 @@ function SelectionRow({
         {selection.region && ` · ${selection.region}`}
       </p>
       {selection.comment && <p className="dt-note-text">{selection.comment}</p>}
-      {request && selection.sourceLocation && (
-        <button
-          className="dt-source"
-          onClick={() => onOpenCode({ request, title: selection.label })}
-          type="button"
-        >
+      {selection.sourceLocation && openSource && (
+        <button className="dt-source" onClick={openSource} type="button">
           {selection.sourceLocation}
         </button>
+      )}
+      {selection.sourceLocation && !onOpenCode && (
+        <p className="dt-meta">{selection.sourceLocation}</p>
       )}
       <div className="dt-actions">
         <button
@@ -69,7 +72,7 @@ function SelectionRow({
         >
           Show on page
         </button>
-        {!(request || isSearching) && (
+        {onOpenCode && !(request || isSearching) && (
           <button
             className="dt-btn"
             onClick={() => setIsSearching(true)}
@@ -85,7 +88,7 @@ function SelectionRow({
           was in, then try again.
         </p>
       )}
-      {isSearching && (
+      {isSearching && onOpenCode && (
         <CodeSearch
           initialQuery={suggestedSearch(selection)}
           onOpenMatch={(match) =>
@@ -110,7 +113,7 @@ export function FeedbackCard({
   onShowSelector,
 }: {
   item: BoardFeedback;
-  onOpenCode: (target: CodeTarget) => void;
+  onOpenCode?: (target: CodeTarget) => void;
   onShowSelector: (selector: string) => boolean;
 }) {
   const selections = item.context?.selections ?? [];

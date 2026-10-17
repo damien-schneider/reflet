@@ -42,7 +42,7 @@ function NotePopover({
   anchor: PinAnchor;
   notes: NotesSnapshot;
   onClose: () => void;
-  onOpenCode: (target: CodeTarget) => void;
+  onOpenCode?: (target: CodeTarget) => void;
 }) {
   const popoverRef = useRef<HTMLDialogElement>(null);
   const [top, setTop] = useState<number | null>(null);
@@ -108,10 +108,13 @@ function NotePopover({
       <NoteCard
         isLocating={notes.activity[anchor.note.id] === "locating"}
         note={anchor.note}
-        onOpenCode={(target) => {
-          onClose();
-          onOpenCode(target);
-        }}
+        onOpenCode={
+          onOpenCode &&
+          ((target) => {
+            onClose();
+            onOpenCode(target);
+          })
+        }
         pinNumber={anchor.number}
       />
     </dialog>
@@ -126,7 +129,7 @@ export function NotePins({
 }: {
   isVisible: boolean;
   notes: NotesSnapshot;
-  onOpenCode: (target: CodeTarget) => void;
+  onOpenCode?: (target: CodeTarget) => void;
 }) {
   const anchors = usePinAnchors(notes.notes, isVisible);
   const [openNoteId, setOpenNoteId] = useState<string | null>(null);

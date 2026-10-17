@@ -1,24 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  DEFAULT_WIDGET_LABELS,
-  type FeedbackWidgetLabels,
-  type RefletFeedbackProps,
-} from "../../feedback/types";
-import { ElementPicker } from "../../feedback/ui/picker";
+import type { RefletFeedbackProps } from "../../feedback/types";
 import { SelectionOutline } from "../../feedback/ui/selection-outline";
 import { RecordingLayer } from "../../sessions/ui/recording/recording-layer";
 import { sessionSheetPlace } from "../../sessions/ui/sessions-panel";
 import { SESSIONS_STYLES } from "../../sessions/ui/sessions-styles";
 import { DevtoolsAccount } from "./account/devtools-account";
 import { BoardTab } from "./board/board-tab";
-import { copyToClipboard } from "./clipboard";
 import type { CodeTarget } from "./code/code-panel";
-import {
-  type CodeLookup,
-  CodeTab,
-  titleFor,
-  useCodeLookup,
-} from "./code/code-tab";
+import { type CodeLookup, CodeTab, useCodeLookup } from "./code/code-tab";
 import {
   DevtoolsBar,
   DevtoolsBarButtons,
@@ -27,25 +16,20 @@ import {
 } from "./devtools-bar";
 import { DevtoolsSheet } from "./devtools-sheet";
 import { DEVTOOLS_STYLES } from "./devtools-styles";
-import { findOnPage } from "./find-on-page";
-import { noteAsContext } from "./notes/agent-prompt";
+import { findOnPage, usePageHighlight } from "./find-on-page";
+import { enrichNote, hasTriedToLocate } from "./notes/capture-note";
+import { NotePicker } from "./notes/note-picker";
 import {
-  draftLocatedNote,
-  draftNote,
-  enrichNote,
-  hasTriedToLocate,
-} from "./notes/capture-note";
-import {
-  type DevNote,
   isActiveNote,
   isNoteOnPage,
   type NotesSnapshot,
-  noteStore,
+  unsentNoteCount,
   useNotes,
 } from "./notes/note-store";
 import { NotesPanel } from "./notes/notes-panel";
-import { announce, Notices, reportFailure } from "./notices";
+import { Notices } from "./notices";
 import { NotePins } from "./pins/note-pins";
+import { callReflet } from "./route/dev-route";
 import { MISSING_SECRET_KEY_HINT } from "./route/route-hint";
 import { type DevRouteState, useDevRoute } from "./route/use-dev-route";
 import {
@@ -55,14 +39,6 @@ import {
   useDevtoolsSessions,
 } from "./sessions/devtools-sessions";
 import { FIRST_SHEET_TAB, useSheetTab } from "./use-sheet-tab";
-
-const PICKER_LABELS: FeedbackWidgetLabels = {
-  ...DEFAULT_WIDGET_LABELS,
-  attachElement: "Save note",
-  elementNote: "Dev note",
-  elementNotePlaceholder: "What should change here?",
-  pickElementHint: "Pick an element to note or copy it",
-};
 
 function sendBlockedReason(
   route: DevRouteState,
@@ -88,29 +64,6 @@ function canConnectBoard(route: DevRouteState, publicKey: string | null) {
     route.status.board.canConnect &&
     publicKey !== null
   );
-}
-
-function unsentNoteCount(notes: NotesSnapshot): number {
-  return notes.notes.filter((note) => isActiveNote(note) && !note.sent).length;
-}
-
-/** Shown the moment it is added; source and close-up follow, best effort. */
-async function saveNote(
-  note: DevNote,
-  element: Element,
-  canReadSource: boolean
-): Promise<void> {
-  noteStore.setActivity(note.id, "locating");
-  try {
-    await noteStore.add(note);
-  } catch (error) {
-    noteStore.setActivity(note.id, null);
-    reportFailure("The note was not saved", error, () => {
-      saveNote(note, element, canReadSource);
-    });
-    return;
-  }
-  await enrichNote(note.id, element, canReadSource).catch(() => null);
 }
 
 /** A reload in the middle of locating left these without a source; finish the job once. */
@@ -159,6 +112,7 @@ function SheetPanel({
   if (openTab === "notes") {
     return (
       <NotesPanel
+        boardCall={callReflet}
         notes={notes}
         onOpenCode={handlers.onOpenCode}
         onPick={handlers.onPick}
@@ -212,7 +166,7 @@ export function DevtoolsLayer({
   const [isPicking, setIsPicking] = useState(false);
   const sheet = useSheetTab();
   const { openTab } = sheet;
-  const [highlighted, setHighlighted] = useState<Element | null>(null);
+  const { clearHighlight, highlighted, showSelector } = usePageHighlight();
   const { codeLookup, inspectElement, openCode } = useCodeLookup(sheet.select);
 
   const edge = position.startsWith("top") ? "top" : "bottom";
@@ -223,18 +177,11 @@ export function DevtoolsLayer({
 
   const closeSheet = () => {
     sheet.close();
-    setHighlighted(null);
+    clearHighlight();
   };
 
   const startPick = useCallback(() => setIsPicking(true), []);
   const cancelPick = useCallback(() => setIsPicking(false), []);
-
-  const showSelector = useCallback((selector: string) => {
-    const element = findOnPage(selector);
-    setHighlighted(element);
-    element?.scrollIntoView({ behavior: "smooth", block: "center" });
-    return element !== null;
-  }, []);
 
   const inspect = useMemo(
     () => ({
@@ -245,32 +192,6 @@ export function DevtoolsLayer({
       },
     }),
     [inspectElement]
-  );
-
-  const writeNote = useCallback(
-    (element: Element, text: string) => {
-      setIsPicking(false);
-      saveNote(draftNote(element, text), element, canReadSource);
-    },
-    [canReadSource]
-  );
-
-  const copy = useMemo(
-    () => ({
-      label: "Copy",
-      onCopy: (element: Element, text: string) => {
-        setIsPicking(false);
-        const title = titleFor(element);
-        copyToClipboard(
-          draftLocatedNote(element, text, canReadSource).then(noteAsContext)
-        )
-          .then(() => announce(`Copied ${title}`))
-          .catch((error: unknown) =>
-            reportFailure(`${title} was not copied`, error)
-          );
-      },
-    }),
-    [canReadSource]
   );
 
   const tabs = SHEET_TABS.filter((tab) => tab !== "code" || codeLookup);
@@ -331,6 +252,7 @@ export function DevtoolsLayer({
         )}
         <DevtoolsBar edge={edge} side={side}>
           <DevtoolsBarButtons
+            canOpenCode
             onOpen={openPanel}
             onPick={startPick}
             unsentNoteCount={unsentNoteCount(notes)}
@@ -347,12 +269,10 @@ export function DevtoolsLayer({
           />
         )}
         {isPicking && (
-          <ElementPicker
-            copy={copy}
+          <NotePicker
+            canReadSource={canReadSource}
             inspect={inspect}
-            labels={PICKER_LABELS}
-            onCancel={cancelPick}
-            onPick={writeNote}
+            onDone={cancelPick}
           />
         )}
       </div>

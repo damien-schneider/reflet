@@ -1,29 +1,21 @@
-import { type ReactNode, useEffect, useMemo, useState } from "react";
-import { AccountFooter } from "../../devtools/client/account/account-footer";
 import {
-  DevtoolsBar,
-  SessionsBarButton,
-} from "../../devtools/client/devtools-bar";
-import { DevtoolsSheet } from "../../devtools/client/devtools-sheet";
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { DEVTOOLS_STYLES } from "../../devtools/client/devtools-styles";
 import { Notices, reportFailure } from "../../devtools/client/notices";
+import type { BoardCall } from "../../devtools/client/route/dev-route";
 import type { RefletFeedbackProps } from "../../feedback/types";
-import type { SessionTransport } from "../api/session-api";
-import { bridgeTransport, teamTransport } from "../api/session-transports";
-import { purgeAccount } from "../local/local-sessions";
-import { RecordingLayer } from "../ui/recording/recording-layer";
+import { SessionApiError } from "../api/session-api";
 import {
-  failureMessage,
-  SessionWorkspaceProvider,
-  useWorkspaceLoader,
-  type WorkspaceState,
-} from "../ui/session-workspace";
-import {
-  type SessionNavigation,
-  SessionsPanel,
-  sessionSheetPlace,
-  useSessionNavigation,
-} from "../ui/sessions-panel";
+  bridgeBoardCall,
+  bridgeTransport,
+  teamTransport,
+} from "../api/session-transports";
+import { failureMessage } from "../ui/session-workspace";
 import { SESSIONS_STYLES } from "../ui/sessions-styles";
 import {
   finishTeamSignIn,
@@ -33,157 +25,12 @@ import {
   readTeamAccess,
 } from "./team-auth";
 import { type TeamConnection, TeamSignInCard } from "./team-sign-in-card";
+import {
+  REFUSED_SIGN_IN_COPY,
+  type TeamPlacement,
+  TeamTools,
+} from "./team-tools";
 import type { TeamToolsAccount, TeamToolsBridge } from "./team-tools-bridge";
-
-const TEAM_TOOLS_LABEL = "Reflet team tools";
-const REFUSED_SIGN_IN_COPY =
-  "Reflet no longer accepts this sign-in. Sign in again to record.";
-
-interface TeamPlacement {
-  edge: "bottom" | "top";
-  side: "left" | "right";
-}
-
-interface SignedInTeam {
-  onSignOut: (reason: string | null) => void;
-  organizationName: string;
-  transport: SessionTransport;
-}
-
-function SessionsBody({
-  navigation,
-  onStarted,
-  state,
-}: {
-  navigation: SessionNavigation;
-  onStarted: () => void;
-  state: WorkspaceState;
-}) {
-  if (state.kind === "ready") {
-    return <SessionsPanel navigation={navigation} onStarted={onStarted} />;
-  }
-  if (state.kind === "failed") {
-    return (
-      <div className="dt-empty" role="alert">
-        <p>Sessions did not open: {state.message}</p>
-        <button className="dt-btn" onClick={state.retry} type="button">
-          Try again
-        </button>
-      </div>
-    );
-  }
-  return <p className="dt-status">Opening your sessions…</p>;
-}
-
-function TeamSheet({
-  account,
-  navigation,
-  onClose,
-  side,
-}: {
-  account: {
-    onSignOut: () => void;
-    organizationName: string;
-    state: WorkspaceState;
-  };
-  navigation: SessionNavigation;
-  onClose: () => void;
-  side: TeamPlacement["side"];
-}) {
-  const { state } = account;
-  const place = state.kind === "ready" ? sessionSheetPlace(navigation) : null;
-  return (
-    <DevtoolsSheet
-      footer={
-        place === null && (
-          <AccountFooter
-            actions={[{ label: "Sign out", onSelect: account.onSignOut }]}
-            organizationName={account.organizationName}
-            person={
-              state.kind === "ready" ? state.workspace.identity.user : null
-            }
-          />
-        )
-      }
-      label={TEAM_TOOLS_LABEL}
-      navigation={{
-        onSelectTab: () => undefined,
-        place,
-        tab: "sessions",
-        tabs: ["sessions"],
-      }}
-      onClose={onClose}
-      side={side}
-    >
-      <SessionsBody navigation={navigation} onStarted={onClose} state={state} />
-    </DevtoolsSheet>
-  );
-}
-
-function useTeamWorkspace(team: SignedInTeam) {
-  const { onSignOut } = team;
-  const state = useWorkspaceLoader({
-    onUnauthorized: () => onSignOut(REFUSED_SIGN_IN_COPY),
-    surface: "app",
-    transport: team.transport,
-  });
-  const workspace = state.kind === "ready" ? state.workspace : null;
-
-  const signOut = async () => {
-    if (workspace) {
-      await purgeAccount(workspace.account.key).catch((error: unknown) =>
-        reportFailure("This device's session data was not removed", error)
-      );
-    }
-    onSignOut(null);
-  };
-
-  return { signOut, state, workspace };
-}
-
-function TeamTools({
-  team,
-  placement,
-}: {
-  placement: TeamPlacement;
-  team: SignedInTeam;
-}) {
-  const { signOut, state, workspace } = useTeamWorkspace(team);
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const navigation = useSessionNavigation();
-
-  return (
-    <SessionWorkspaceProvider workspace={workspace}>
-      {isSheetOpen && (
-        <TeamSheet
-          account={{
-            onSignOut: signOut,
-            organizationName: team.organizationName,
-            state,
-          }}
-          navigation={navigation}
-          onClose={() => setIsSheetOpen(false)}
-          side={placement.side}
-        />
-      )}
-      <DevtoolsBar
-        edge={placement.edge}
-        label={TEAM_TOOLS_LABEL}
-        side={placement.side}
-      >
-        <SessionsBarButton onOpen={() => setIsSheetOpen(true)} />
-      </DevtoolsBar>
-      {workspace && (
-        <RecordingLayer
-          onFinished={(target) => {
-            navigation.go({ target, view: "review" });
-            setIsSheetOpen(true);
-          }}
-        />
-      )}
-    </SessionWorkspaceProvider>
-  );
-}
 
 function SignedOutAnchor({
   children,
@@ -243,6 +90,7 @@ function BrowserTeamAccount({
       <TeamTools
         placement={placement}
         team={{
+          boardCall: null,
           onSignOut: signOut,
           organizationName: access.organizationName,
           transport,
@@ -262,6 +110,23 @@ function BrowserTeamAccount({
       />
     </SignedOutAnchor>
   );
+}
+
+/** The host already dropped a token Reflet refuses, so later calls would only fail. */
+function signsOutWhenRefused(
+  boardCall: BoardCall,
+  onRefused: () => void
+): BoardCall {
+  return async (apiPath, init) => {
+    try {
+      return await boardCall(apiPath, init);
+    } catch (error) {
+      if (error instanceof SessionApiError && error.status === 401) {
+        onRefused();
+      }
+      throw error;
+    }
+  };
 }
 
 type BridgeAccountState =
@@ -301,15 +166,25 @@ function BridgeTeamAccount({
     setAccountState({ account, kind: "loaded" });
     setNotice(null);
   };
-  const signOut = (reason: string | null) => {
-    setAccountState({ account: null, kind: "loaded" });
-    setNotice(reason);
-    bridge
-      .signOut()
-      .catch((error: unknown) =>
-        reportFailure("Signing out of Reflet did not finish", error)
-      );
-  };
+  const signOut = useCallback(
+    (reason: string | null) => {
+      setAccountState({ account: null, kind: "loaded" });
+      setNotice(reason);
+      bridge
+        .signOut()
+        .catch((error: unknown) =>
+          reportFailure("Signing out of Reflet did not finish", error)
+        );
+    },
+    [bridge]
+  );
+  const boardCall = useMemo(
+    () =>
+      signsOutWhenRefused(bridgeBoardCall(bridge), () =>
+        signOut(REFUSED_SIGN_IN_COPY)
+      ),
+    [bridge, signOut]
+  );
 
   if (accountState.kind === "loading") {
     return null;
@@ -319,6 +194,7 @@ function BridgeTeamAccount({
       <TeamTools
         placement={placement}
         team={{
+          boardCall,
           onSignOut: signOut,
           organizationName: accountState.account.organizationName,
           transport,

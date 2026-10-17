@@ -1,5 +1,6 @@
 import type { CodeTarget } from "../code/code-panel";
 import { InboxPanel } from "../inbox/inbox-panel";
+import { callReflet } from "../route/dev-route";
 import { MISSING_SECRET_KEY_HINT, MissingRouteHint } from "../route/route-hint";
 import type { DevRouteState } from "../route/use-dev-route";
 
@@ -31,5 +32,11 @@ export function BoardTab({
       </p>
     );
   }
-  return <InboxPanel onOpenCode={onOpenCode} onShowSelector={onShowSelector} />;
+  return (
+    <InboxPanel
+      boardCall={callReflet}
+      onOpenCode={onOpenCode}
+      onShowSelector={onShowSelector}
+    />
+  );
 }

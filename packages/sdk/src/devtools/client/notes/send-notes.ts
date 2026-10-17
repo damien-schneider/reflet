@@ -5,7 +5,7 @@ import type {
   SaveScreenshotParams,
 } from "../../../types";
 import { reportFailure } from "../notices";
-import { callReflet } from "../route/dev-route";
+import type { BoardCall } from "../route/dev-route";
 import { type DevNote, noteStore, type StoredImage } from "./note-store";
 
 const DEVTOOLS_SOURCE = "reflet-devtools";
@@ -19,16 +19,17 @@ function reportContext(note: DevNote): FeedbackContext {
 }
 
 async function attachCloseUp(
+  boardCall: BoardCall,
   note: DevNote,
   feedbackId: string,
   closeUp: StoredImage
 ) {
-  const { uploadUrl } = await callReflet<{ uploadUrl: string }>(
+  const { uploadUrl } = await boardCall<{ uploadUrl: string }>(
     "/api/v1/feedback/screenshot/upload-url",
     { body: {} }
   );
   const storageId = await uploadBlob(uploadUrl, closeUp);
-  await callReflet("/api/v1/feedback/screenshot/save", {
+  await boardCall("/api/v1/feedback/screenshot/save", {
     body: {
       captureSource: "element",
       feedbackId,
@@ -43,15 +44,23 @@ async function attachCloseUp(
   });
 }
 
-function uploadCloseUp(note: DevNote, feedbackId: string, title: string) {
+function uploadCloseUp(
+  boardCall: BoardCall,
+  note: DevNote,
+  feedbackId: string,
+  title: string
+) {
   noteStore
     .readCloseUp(note.id)
-    .then((closeUp) => closeUp && attachCloseUp(note, feedbackId, closeUp))
+    .then(
+      (closeUp) =>
+        closeUp && attachCloseUp(boardCall, note, feedbackId, closeUp)
+    )
     .catch((error: unknown) =>
       reportFailure(
         `"${title}" is on the board, but its close-up did not upload`,
         error,
-        () => uploadCloseUp(note, feedbackId, title)
+        () => uploadCloseUp(boardCall, note, feedbackId, title)
       )
     );
 }
@@ -75,7 +84,7 @@ function markSent(noteId: string, feedbackId: string, title: string) {
  * Files the latest version of the note exactly once: a failure after the
  * board has it only ever retries the local step, never the filing.
  */
-async function sendNote(noteId: string): Promise<void> {
+async function sendNote(boardCall: BoardCall, noteId: string): Promise<void> {
   const note = noteStore
     .getSnapshot()
     .notes.find((stored) => stored.id === noteId);
@@ -87,7 +96,7 @@ async function sendNote(noteId: string): Promise<void> {
   noteStore.setActivity(noteId, "sending");
   let feedbackId: string;
   try {
-    const created = await callReflet<Partial<CreateFeedbackResponse>>(
+    const created = await boardCall<Partial<CreateFeedbackResponse>>(
       "/api/v1/feedback/create",
       {
         body: {
@@ -104,22 +113,25 @@ async function sendNote(noteId: string): Promise<void> {
   } catch (error) {
     noteStore.setActivity(noteId, null);
     reportFailure(`"${title}" was not sent`, error, () => {
-      sendNote(noteId);
+      sendNote(boardCall, noteId);
     });
     return;
   }
   markSent(noteId, feedbackId, title);
   noteStore.setActivity(noteId, null);
-  uploadCloseUp(note, feedbackId, title);
+  uploadCloseUp(boardCall, note, feedbackId, title);
 }
 
 /** One by one, oldest first, so the board keeps the order the notes were taken in. */
-export async function sendNotesToBoard(notes: DevNote[]): Promise<void> {
+export async function sendNotesToBoard(
+  notes: DevNote[],
+  boardCall: BoardCall
+): Promise<void> {
   const oldestFirst = [...notes].sort((a, b) => a.createdAt - b.createdAt);
   for (const note of oldestFirst) {
     noteStore.setActivity(note.id, "sending");
   }
   for (const note of oldestFirst) {
-    await sendNote(note.id);
+    await sendNote(boardCall, note.id);
   }
 }

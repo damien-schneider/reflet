@@ -3,6 +3,7 @@ import { countLabel } from "../../../sessions/ui/session-format";
 import type { CodeTarget } from "../code/code-panel";
 import { CopyButton } from "../copy-button";
 import { reportFailure } from "../notices";
+import type { BoardCall } from "../route/dev-route";
 import { notesToPrompt } from "./agent-prompt";
 import { NoteCard } from "./note-card";
 import {
@@ -74,10 +75,12 @@ function ArchivedNotes({ archived }: { archived: DevNote[] }) {
 
 function SendToBoard({
   activity,
+  boardCall,
   sendBlockedReason,
   unsent,
 }: {
   activity: NotesSnapshot["activity"];
+  boardCall: BoardCall;
   sendBlockedReason: string | null;
   unsent: DevNote[];
 }) {
@@ -92,7 +95,7 @@ function SendToBoard({
       <button
         className="dt-btn"
         disabled={sendBlockedReason !== null || ready.length === 0}
-        onClick={() => sendNotesToBoard(ready)}
+        onClick={() => sendNotesToBoard(ready, boardCall)}
         type="button"
       >
         {ready.length > 0 && `Add ${ready.length} to board`}
@@ -108,13 +111,19 @@ function SendToBoard({
   );
 }
 
-function NotesEmpty({ onPick }: { onPick: () => void }) {
+function NotesEmpty({
+  canOpenCode,
+  onPick,
+}: {
+  canOpenCode: boolean;
+  onPick: () => void;
+}) {
   return (
     <div className="dt-empty">
       <h2 className="dt-empty-title">No notes yet</h2>
       <p>
-        Pick an element on the page and write what should change. Shift-click it
-        to open its code instead.
+        Pick an element on the page and write what should change.
+        {canOpenCode && " Shift-click it to open its code instead."}
       </p>
       <button
         className="dt-btn"
@@ -154,10 +163,12 @@ function NotesToolbar({
 
 function NotesFooter({
   activity,
+  boardCall,
   notes,
   sendBlockedReason,
 }: {
   activity: NotesSnapshot["activity"];
+  boardCall: BoardCall;
   notes: DevNote[];
   sendBlockedReason: string | null;
 }) {
@@ -173,6 +184,7 @@ function NotesFooter({
       />
       <SendToBoard
         activity={activity}
+        boardCall={boardCall}
         sendBlockedReason={sendBlockedReason}
         unsent={notes.filter((note) => !note.sent)}
       />
@@ -197,7 +209,7 @@ function NoteGroups({
 }: {
   activity: NotesSnapshot["activity"];
   notes: DevNote[];
-  onOpenCode: (target: CodeTarget) => void;
+  onOpenCode?: (target: CodeTarget) => void;
   onShowSelector: (selector: string) => boolean;
 }) {
   const { pathname } = window.location;
@@ -229,14 +241,16 @@ function NoteGroups({
 }
 
 export function NotesPanel({
+  boardCall,
   notes: snapshot,
   onOpenCode,
   onPick,
   onShowSelector,
   sendBlockedReason,
 }: {
+  boardCall: BoardCall;
   notes: NotesSnapshot;
-  onOpenCode: (target: CodeTarget) => void;
+  onOpenCode?: (target: CodeTarget) => void;
   onPick: () => void;
   onShowSelector: (selector: string) => boolean;
   sendBlockedReason: string | null;
@@ -256,7 +270,7 @@ export function NotesPanel({
   if (notes.length === 0) {
     return (
       <>
-        <NotesEmpty onPick={onPick} />
+        <NotesEmpty canOpenCode={onOpenCode !== undefined} onPick={onPick} />
         <ArchivedNotes archived={archived} />
       </>
     );
@@ -274,6 +288,7 @@ export function NotesPanel({
       <ArchivedNotes archived={archived} />
       <NotesFooter
         activity={activity}
+        boardCall={boardCall}
         notes={notes}
         sendBlockedReason={sendBlockedReason}
       />

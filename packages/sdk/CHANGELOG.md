@@ -7,8 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Team tools in desktop apps: the bar now opens the full panel, with Board, Notes and Sessions. Members pick an element, note it and add it to the board, or read the board's feedback, all through the bridge. There is no Code tab and no source lookup, since a production build has no dev server. Team tools in a browser stay Sessions only.
+
 ### Changed
 
+- Team tools: the bar's grip tooltip names the organization you are signed in to.
+- Desktop sign-in: the reflet.app page says "Sign in to a desktop app" and "Go back to the app" instead of asking to connect a dev server.
 - Sessions: Prepare brief shows the brief right away, with Copy brief and Download .zip. Ticking or unticking an intention or a screenshot updates it in place; Build brief and Edit selection are gone. The brief is only saved under Earlier briefs once you copy or download it. Requires the matching Reflet backend.
 - Sessions: until a finished session is processed, the review lists its steps in order (upload, voice transcription, finding intentions with AI, or the comparison with the revision it continues), each marked done, running, waiting for the one before, or failed with its reason. A session whose analysis is still waiting to upload no longer offers Analyze. The session list says "Finding intentions" instead of "Reading".
 

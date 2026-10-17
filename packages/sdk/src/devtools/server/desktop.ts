@@ -85,7 +85,7 @@ function awaitConnectCallback(
         redirectUri: pending.redirectUri,
         state: pending.state,
       });
-      await sendPage(response, connectOutcomePage(outcome));
+      await sendPage(response, connectOutcomePage(outcome, "desktopApp"));
       if (!outcome.ok) {
         throw new Error(outcome.message);
       }
@@ -119,6 +119,7 @@ async function startBrowserSignIn(
   const port = await listenOnLoopback(server);
   const redirectUri = connectCallbackUriFor(`http://${LOOPBACK_HOST}:${port}`);
   const { authorizeUrl, state } = connectAuthorizeUrl(settings, {
+    client: "desktopApp",
     publicKey,
     redirectUri,
   });

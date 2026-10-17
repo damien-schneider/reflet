@@ -106,6 +106,7 @@ it("signs in through the system browser back to a loopback callback", async () =
     `${APP_URL}/auth/devtools`
   );
   expect(authorizeUrl.searchParams.get("public_key")).toBe(PUBLIC_KEY);
+  expect(authorizeUrl.searchParams.get("client")).toBe("desktop");
   expect(new URL(redirectUri).hostname).toBe("127.0.0.1");
 
   const callback = await loopbackFetch(

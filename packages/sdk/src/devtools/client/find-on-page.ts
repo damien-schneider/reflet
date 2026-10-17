@@ -1,3 +1,4 @@
+import { useCallback, useState } from "react";
 import { isWidgetOwned } from "../../feedback/ui/floating/element-walk";
 
 /** `display: contents` wrappers (common in component libraries) have no box of their own. */
@@ -20,4 +21,19 @@ export function findOnPage(selector: string): Element | null {
   } catch {
     return null;
   }
+}
+
+export function usePageHighlight() {
+  const [highlighted, setHighlighted] = useState<Element | null>(null);
+  const showSelector = useCallback((selector: string) => {
+    const element = findOnPage(selector);
+    setHighlighted(element);
+    element?.scrollIntoView({ behavior: "smooth", block: "center" });
+    return element !== null;
+  }, []);
+  return {
+    clearHighlight: () => setHighlighted(null),
+    highlighted,
+    showSelector,
+  };
 }

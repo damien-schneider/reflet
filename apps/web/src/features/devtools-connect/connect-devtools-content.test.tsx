@@ -17,6 +17,7 @@ afterEach(() => {
 it("rejects a remote redirect before asking the member to sign in or approve", () => {
   render(
     <ConnectDevtoolsContent
+      client={null}
       codeChallenge={"c".repeat(43)}
       publicKey="fb_pub_test"
       redirectUri="https://evil.example/api/reflet-devtools/connect/callback"

@@ -70,6 +70,10 @@ export function isActiveNote(note: DevNote): boolean {
   return note.archivedAt === undefined;
 }
 
+export function unsentNoteCount(notes: NotesSnapshot): number {
+  return notes.notes.filter((note) => isActiveNote(note) && !note.sent).length;
+}
+
 export function isNoteOnPage(note: DevNote, pathname: string): boolean {
   const { url } = note.capturedContext;
   return url !== undefined && new URL(url).pathname === pathname;

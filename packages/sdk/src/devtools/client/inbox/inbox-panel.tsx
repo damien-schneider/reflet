@@ -2,10 +2,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { CodeTarget } from "../code/code-panel";
 import { RefreshIcon, ViewOptionsIcon } from "../devtools-icons";
 import { Menu } from "../menu";
-import { type BoardFeedbackPage, fetchBoardFeedback } from "../route/dev-route";
+import type { BoardCall, BoardFeedbackPage } from "../route/dev-route";
 import { FeedbackCard } from "./feedback-card";
 
 type InboxScope = "board" | "page";
+
+const INBOX_PAGE_SIZE = 50;
 
 const INBOX_SCOPES: readonly InboxScope[] = ["page", "board"];
 
@@ -29,7 +31,7 @@ type InboxState =
   | { kind: "loading" }
   | { kind: "ready"; page: BoardFeedbackPage };
 
-function useBoardFeedback(scope: InboxScope) {
+function useBoardFeedback(boardCall: BoardCall, scope: InboxScope) {
   const [state, setState] = useState<InboxState>({ kind: "loading" });
   const latestRequest = useRef(0);
 
@@ -37,10 +39,17 @@ function useBoardFeedback(scope: InboxScope) {
     latestRequest.current += 1;
     const request = latestRequest.current;
     setState({ kind: "loading" });
+    const query: Record<string, string> = {
+      limit: String(INBOX_PAGE_SIZE),
+      sortBy: "newest",
+    };
+    if (scope === "page") {
+      query.pagePath = window.location.pathname;
+    }
     try {
-      const page = await fetchBoardFeedback(
-        scope === "page" ? window.location.pathname : null
-      );
+      const page = await boardCall<BoardFeedbackPage>("/api/v1/feedback/list", {
+        query,
+      });
       if (request === latestRequest.current) {
         setState({ kind: "ready", page });
       }
@@ -55,7 +64,7 @@ function useBoardFeedback(scope: InboxScope) {
         });
       }
     }
-  }, [scope]);
+  }, [boardCall, scope]);
 
   useEffect(() => {
     load();
@@ -109,17 +118,19 @@ function InboxToolbar({
 }
 
 function BoardFeedbackList({
+  boardCall,
   onOpenCode,
   onSelectScope,
   onShowSelector,
   scope,
 }: {
-  onOpenCode: (target: CodeTarget) => void;
+  boardCall: BoardCall;
+  onOpenCode?: (target: CodeTarget) => void;
   onSelectScope: (scope: InboxScope) => void;
   onShowSelector: (selector: string) => boolean;
   scope: InboxScope;
 }) {
-  const { load, state } = useBoardFeedback(scope);
+  const { load, state } = useBoardFeedback(boardCall, scope);
 
   return (
     <>
@@ -163,15 +174,18 @@ function BoardFeedbackList({
 }
 
 export function InboxPanel({
+  boardCall,
   onOpenCode,
   onShowSelector,
 }: {
-  onOpenCode: (target: CodeTarget) => void;
+  boardCall: BoardCall;
+  onOpenCode?: (target: CodeTarget) => void;
   onShowSelector: (selector: string) => boolean;
 }) {
   const [scope, setScope] = useState<InboxScope>("page");
   return (
     <BoardFeedbackList
+      boardCall={boardCall}
       onOpenCode={onOpenCode}
       onSelectScope={setScope}
       onShowSelector={onShowSelector}

@@ -5,8 +5,9 @@ import { MicIcon } from "../../sessions/ui/session-icons";
 import { PanelIcon } from "./devtools-icons";
 
 const BAR_POSITION_KEY = "reflet-devtools-bar-position";
-export const PICK_BUTTON_LABEL =
+const PICK_WITH_CODE_LABEL =
   "Pick an element: note it, copy it, or Shift+click to open its code";
+const PICK_LABEL = "Pick an element: note it or copy it";
 
 export const SHEET_TABS = ["inbox", "notes", "sessions", "code"] as const;
 export type SheetTab = (typeof SHEET_TABS)[number];
@@ -64,7 +65,7 @@ export function DevtoolsBar({
         aria-label={`Move ${label} (double-click to reset)`}
         className="icon-btn drag-handle dt-grip"
         onDoubleClick={floating.resetPosition}
-        title="Drag to move · double-click to reset"
+        title={`${label} · drag to move, double-click to reset`}
         type="button"
         {...floating.handleProps}
       >
@@ -92,17 +93,22 @@ function panelLabel(unsentNoteCount: number): string {
 }
 
 export function DevtoolsBarButtons({
+  canOpenCode,
   onOpen,
   onPick,
   unsentNoteCount,
 }: {
+  canOpenCode: boolean;
   onOpen: (tab: SheetTab | null) => void;
   onPick: () => void;
   unsentNoteCount: number;
 }) {
   return (
     <>
-      <BarButton label={PICK_BUTTON_LABEL} onClick={onPick}>
+      <BarButton
+        label={canOpenCode ? PICK_WITH_CODE_LABEL : PICK_LABEL}
+        onClick={onPick}
+      >
         <TargetIcon />
       </BarButton>
       <SessionsBarButton onOpen={() => onOpen("sessions")} />

@@ -25,6 +25,10 @@ export type ConnectOutcome =
   | { ok: true; organizationName: string }
   | { message: string; ok: false; status: number; title: string };
 
+export type ConnectClient = "desktopApp" | "devServer";
+
+const DESKTOP_APP_CLIENT_PARAM = "desktop";
+
 export const connectCallbackUriFor = (origin: string): string =>
   `${origin}${DEVTOOLS_ROUTE_BASE}${DEVTOOLS_ENDPOINTS.connectCallback}`;
 
@@ -49,7 +53,7 @@ async function readJson(response: Response): Promise<unknown> {
 /** Starts a pending connect: Reflet sends the member back to `redirectUri` with a code only this process can redeem. */
 export function connectAuthorizeUrl(
   settings: ResolvedDevtoolsOptions,
-  target: { publicKey: string; redirectUri: string }
+  target: { client: ConnectClient; publicKey: string; redirectUri: string }
 ): { authorizeUrl: string; state: string } {
   const { codeChallenge, state } = beginConnect({
     apiUrl: settings.apiUrl,
@@ -61,6 +65,9 @@ export function connectAuthorizeUrl(
   authorizeUrl.searchParams.set("redirect_uri", target.redirectUri);
   authorizeUrl.searchParams.set("state", state);
   authorizeUrl.searchParams.set("code_challenge", codeChallenge);
+  if (target.client === "desktopApp") {
+    authorizeUrl.searchParams.set("client", DESKTOP_APP_CLIENT_PARAM);
+  }
   return { authorizeUrl: authorizeUrl.toString(), state };
 }
 
@@ -88,6 +95,7 @@ export async function startConnect(
     );
   }
   const { authorizeUrl } = connectAuthorizeUrl(settings, {
+    client: "devServer",
     publicKey,
     redirectUri: redirectUriFor(request),
   });
@@ -111,7 +119,7 @@ export async function redeemConnectCode(
   if (!(code && pending)) {
     return {
       message:
-        "This connect link expired or was already used. Start again from the Reflet devtools.",
+        "This sign-in link expired or was already used. Start again from your app.",
       ok: false,
       status: 400,
       title: "Link expired",
@@ -168,13 +176,21 @@ export async function redeemConnectCode(
   return { ok: true, organizationName: exchange.data.organizationName };
 }
 
-export function connectOutcomePage(outcome: ConnectOutcome): Response {
+const READY_MESSAGES: Record<ConnectClient, string> = {
+  desktopApp: "Go back to the app: you can record sessions now.",
+  devServer: "Go back to your app: the Reflet devtools are ready.",
+};
+
+export function connectOutcomePage(
+  outcome: ConnectOutcome,
+  client: ConnectClient
+): Response {
   if (!outcome.ok) {
     return htmlPage(outcome.title, outcome.message, outcome.status);
   }
   return htmlPage(
     "Connected",
-    `Connected to ${outcome.organizationName}. Go back to your app: the Reflet devtools are ready.`,
+    `Connected to ${outcome.organizationName}. ${READY_MESSAGES[client]}`,
     200
   );
 }
@@ -189,7 +205,7 @@ export async function finishConnect(
     redirectUri: redirectUriFor(request),
     state: searchParams.get("state"),
   });
-  return connectOutcomePage(outcome);
+  return connectOutcomePage(outcome, "devServer");
 }
 
 async function revokeUpstream(apiUrl: string, token: string): Promise<boolean> {

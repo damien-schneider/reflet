@@ -21,6 +21,7 @@ export default function DevtoolsConnectPage({
 
   return (
     <ConnectDevtoolsContent
+      client={firstValue(params.client)}
       codeChallenge={firstValue(params.code_challenge)}
       publicKey={firstValue(params.public_key)}
       redirectUri={firstValue(params.redirect_uri)}

@@ -6,12 +6,12 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
+import type { BoardCall } from "../route/dev-route";
 import { InboxPanel } from "./inbox-panel";
 
-const { fetchBoardFeedback } = vi.hoisted(() => ({
-  fetchBoardFeedback: vi.fn(),
-}));
-vi.mock("../route/dev-route", () => ({ fetchBoardFeedback }));
+const fetchBoardFeedback = vi.fn();
+const boardCall: BoardCall = (_apiPath, init) =>
+  fetchBoardFeedback(init?.query?.pagePath ?? null);
 
 afterEach(() => {
   cleanup();
@@ -41,7 +41,7 @@ it("reaches the whole board when nothing points at the current page", async () =
         : { hasMore: false, items: [], total: 0 }
     )
   );
-  render(<InboxPanel onOpenCode={vi.fn()} onShowSelector={() => false} />);
+  render(<InboxPanel boardCall={boardCall} onShowSelector={() => false} />);
 
   await screen.findByText("Nothing on the board points at this page yet.");
   fireEvent.click(screen.getByRole("button", { name: "Show the whole board" }));
@@ -63,7 +63,7 @@ it("switches back to this page from the scope menu and refreshes it", async () =
     items: [boardItem],
     total: 1,
   });
-  render(<InboxPanel onOpenCode={vi.fn()} onShowSelector={() => false} />);
+  render(<InboxPanel boardCall={boardCall} onShowSelector={() => false} />);
 
   await screen.findByText("1 on this page");
   fireEvent.click(screen.getByRole("button", { name: "Show feedback from" }));

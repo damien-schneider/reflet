@@ -257,3 +257,71 @@ it("opens a signed-in desktop app's team tools at once and signs out through its
     await screen.findByRole("button", { name: "Sign in with Reflet" })
   ).toBeTruthy();
 });
+
+it("gives a desktop app the board through its bridge, and a browser only sessions", async () => {
+  const bridge = fakeBridge({ organizationName: "Acme" });
+  bridge.request.mockResolvedValue({
+    body: JSON.stringify({
+      hasMore: false,
+      items: [
+        {
+          commentCount: 0,
+          createdAt: 0,
+          description: "",
+          hasVoted: false,
+          id: "feedback_1",
+          isPinned: false,
+          organizationStatus: null,
+          status: "open",
+          tags: [],
+          title: "Export button is hidden",
+          updatedAt: 0,
+          voteCount: 0,
+        },
+      ],
+      total: 1,
+    }),
+    status: 200,
+  });
+  const desktop = render(<TeamLayer bridge={bridge} position="bottom-right" />);
+
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Open the Reflet panel" })
+  );
+  fireEvent.click(await screen.findByRole("tab", { name: "Board" }));
+
+  expect(await screen.findByText("Export button is hidden")).toBeTruthy();
+  expect(bridge.request).toHaveBeenCalledWith(
+    expect.objectContaining({ method: "GET", path: "/api/v1/feedback/list" })
+  );
+  desktop.unmount();
+
+  mocks.readTeamAccess.mockReturnValue(ACCESS);
+  renderLayer();
+  expect(await screen.findByRole("button", { name: "Sessions" })).toBeTruthy();
+  expect(
+    screen.queryByRole("button", { name: "Open the Reflet panel" })
+  ).toBeNull();
+});
+
+it("signs a desktop app out when Reflet refuses its board access", async () => {
+  const bridge = fakeBridge({ organizationName: "Acme" });
+  bridge.request.mockResolvedValue({
+    body: JSON.stringify({ error: "Invalid API key" }),
+    status: 401,
+  });
+  render(<TeamLayer bridge={bridge} position="bottom-right" />);
+
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Open the Reflet panel" })
+  );
+  fireEvent.click(await screen.findByRole("tab", { name: "Board" }));
+
+  expect(
+    await screen.findByText(
+      "Reflet no longer accepts this sign-in. Sign in again to record."
+    )
+  ).toBeTruthy();
+  expect(signInButton()).toBeTruthy();
+  expect(bridge.signOut).toHaveBeenCalled();
+});

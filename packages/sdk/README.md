@@ -332,6 +332,12 @@ Expose the four calls from the preload script, then pass them as the bridge:
 at once, so only pass the bridge in builds meant for your team. `request` only
 forwards the session and feedback endpoints the devtools use.
 
+A desktop app gets more than sessions: the bar opens the devtools panel with
+Board, Notes and Sessions, so members can pick an element, note it, add it to
+the board, and read the board's feedback. Everything that needs your source
+code (the Code tab, source locations you can open) stays in development. The
+browser flow above records sessions only.
+
 ### 5. In-App Surveys
 
 Create surveys in the Reflet dashboard (NPS, ratings, choices, text, statements,
