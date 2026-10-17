@@ -1,5 +1,15 @@
-export const TEXT_MODEL = "deepseek/deepseek-v4.1-flash";
-export const SESSION_ANALYSIS_MODEL = "deepseek/deepseek-v4-pro-0813";
-export const REASONING_OFF = { reasoning: { effort: "none" } } as const;
+import type { OpenRouterChatSettings } from "@openrouter/ai-sdk-provider";
+
+export const TEXT_MODEL = "deepseek/deepseek-v4.1-flash-1017";
 export const EVALUATION_MODEL = "jev-1.13";
 export const TRANSCRIPTION_MODEL = "openai/whisper-large-v3";
+
+export const FAST_FULL_PRECISION_ROUTING = {
+  quantizations: ["fp8", "bf16", "fp16", "unknown"],
+  sort: "throughput",
+} satisfies OpenRouterChatSettings["provider"];
+
+export const TEXT_MODEL_SETTINGS = {
+  provider: FAST_FULL_PRECISION_ROUTING,
+  reasoning: { effort: "none" },
+} satisfies OpenRouterChatSettings;

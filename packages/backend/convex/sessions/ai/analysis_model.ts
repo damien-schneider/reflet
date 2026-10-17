@@ -4,7 +4,7 @@ import { generateStructured } from "../../ai/structured_output";
 import { SESSION_TEXT_LIMITS } from "../constants";
 import { singleLine, truncateText } from "../formatters";
 
-export const MAX_OUTPUT_TOKENS = 8000;
+export const MAX_OUTPUT_TOKENS = 16_000;
 const MAX_PROPOSALS_PER_ANALYSIS = 12;
 const MAX_UNKNOWNS = 3;
 const MIN_MERGE_GROUP_SIZE = 2;

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { sessionAnalysisModel } from "../../../ai/openrouter";
+import { sessionLocateModel } from "../../../ai/openrouter";
 import { generateStructured } from "../../../ai/structured_output";
 import {
   elementSummary,
@@ -94,7 +94,7 @@ export const locatePrompt = (requests: LocateRequest[]): string =>
 export const generateLocations = (prompt: string): Promise<LocateOutput> =>
   generateStructured({
     maxOutputTokens: MAX_OUTPUT_TOKENS,
-    model: sessionAnalysisModel,
+    model: sessionLocateModel,
     prompt,
     schema: locateOutputSchema,
     system: LOCATE_SYSTEM_PROMPT,
