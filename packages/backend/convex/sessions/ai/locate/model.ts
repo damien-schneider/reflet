@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { sessionAnalysisModel } from "../../../ai/openrouter";
 import { generateStructured } from "../../../ai/structured_output";
 import {
   elementSummary,
@@ -7,7 +8,7 @@ import {
   wrapUntrusted,
 } from "../../formatters";
 import type { ElementRefValue } from "../../linking";
-import { SESSION_ANALYSIS_MODEL, withJsonFormat } from "../analysis_model";
+import { withJsonFormat } from "../analysis_model";
 import type { LocateCandidate, LocateQuestion } from "./candidates";
 
 const MAX_OUTPUT_TOKENS = 1000;
@@ -93,11 +94,10 @@ export const locatePrompt = (requests: LocateRequest[]): string =>
 export const generateLocations = (prompt: string): Promise<LocateOutput> =>
   generateStructured({
     maxOutputTokens: MAX_OUTPUT_TOKENS,
-    model: SESSION_ANALYSIS_MODEL,
+    model: sessionAnalysisModel,
     prompt,
     schema: locateOutputSchema,
     system: LOCATE_SYSTEM_PROMPT,
-    zdr: true,
   });
 
 const aliasPosition = (

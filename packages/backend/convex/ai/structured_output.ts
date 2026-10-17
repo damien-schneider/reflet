@@ -1,27 +1,19 @@
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import { generateText } from "ai";
+import { generateText, type LanguageModel } from "ai";
 import type { z } from "zod";
 
 const JSON_CODE_BLOCK_REGEX = /```(?:json)?\s*([\s\S]*?)```/;
 
-const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY,
-});
-
 // OpenRouter JSON/tool mode is unreliable: ask for raw JSON, validate with Zod.
 export const generateStructured = async <T>(options: {
   maxOutputTokens?: number;
-  model: string;
+  model: LanguageModel;
   schema: z.ZodType<T>;
   system: string;
   prompt: string;
-  zdr?: boolean;
 }): Promise<T> => {
   const response = await generateText({
     maxOutputTokens: options.maxOutputTokens,
-    model: options.zdr
-      ? openrouter(options.model, { provider: { zdr: true } })
-      : openrouter(options.model),
+    model: options.model,
     prompt: options.prompt,
     system: options.system,
   });

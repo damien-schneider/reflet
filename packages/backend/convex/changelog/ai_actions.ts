@@ -1,29 +1,23 @@
 "use node";
 
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import { generateText } from "ai";
+import { experimental_evaluate as evaluate, generateText } from "ai";
 import { v } from "convex/values";
-import { z } from "zod";
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import type { ActionCtx } from "../_generated/server";
 import { action } from "../_generated/server";
+import { jev } from "../ai/evaluation";
+import { textModel } from "../ai/openrouter";
 import { requireAuthUser } from "../shared/access";
 import { MAX_DESCRIPTION_LENGTH } from "../shared/constants";
 import { validateInputLength } from "../shared/validators";
-import { RELEASE_ASSISTANT_MODEL } from "./ai/models";
-import {
-  buildFeedbackMatchPrompt,
-  buildReleaseTitlePrompt,
-} from "./ai/prompts";
-
-const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY,
-});
+import { buildReleaseTitlePrompt, formatCommitLine } from "./ai/prompts";
 
 const MAX_TITLE_OUTPUT_TOKENS = 100;
-const MAX_MATCH_OUTPUT_TOKENS = 4000;
-const JSON_OBJECT_REGEX = /\{[\s\S]*\}/;
+const MAX_FEEDBACK_DESCRIPTION_LENGTH = 200;
+const HIGH_CONFIDENCE_PROBABILITY = 0.85;
+const MEDIUM_CONFIDENCE_PROBABILITY = 0.65;
+const LOW_CONFIDENCE_PROBABILITY = 0.5;
 
 const confidenceValidator = v.union(
   v.literal("high"),
@@ -31,17 +25,10 @@ const confidenceValidator = v.union(
   v.literal("low")
 );
 
-const matchResponseSchema = z.object({
-  matches: z.array(
-    z.object({
-      confidence: z.enum(["high", "medium", "low"]),
-      feedbackId: z.string(),
-      reason: z.string(),
-    })
-  ),
-});
-
-type FeedbackMatches = z.infer<typeof matchResponseSchema>;
+interface FeedbackMatch {
+  confidence: "high" | "medium" | "low";
+  feedbackId: Id<"feedback">;
+}
 
 async function consumeReleaseAiGeneration(
   ctx: ActionCtx,
@@ -79,7 +66,7 @@ export const generateReleaseTitle = action({
     await consumeReleaseAiGeneration(ctx, args.releaseId);
     const result = await generateText({
       maxOutputTokens: MAX_TITLE_OUTPUT_TOKENS,
-      model: openrouter(RELEASE_ASSISTANT_MODEL),
+      model: textModel,
       prompt: buildReleaseTitlePrompt(args),
     });
     return result.text.trim();
@@ -92,7 +79,7 @@ export const matchReleaseFeedback = action({
     description: v.string(),
     releaseId: v.id("releases"),
   },
-  handler: async (ctx, args): Promise<FeedbackMatches> => {
+  handler: async (ctx, args): Promise<{ matches: FeedbackMatch[] }> => {
     validateInputLength(
       args.description,
       MAX_DESCRIPTION_LENGTH,
@@ -107,45 +94,54 @@ export const matchReleaseFeedback = action({
       return { matches: [] };
     }
 
-    const result = await generateText({
-      maxOutputTokens: MAX_MATCH_OUTPUT_TOKENS,
-      model: openrouter(RELEASE_ASSISTANT_MODEL),
-      prompt: buildFeedbackMatchPrompt({
-        commits: candidates.commits,
+    const { answers } = await evaluate({
+      model: jev,
+      questions: Object.fromEntries(
+        candidates.feedbackItems.map((feedback) => [
+          feedback._id,
+          {
+            instructions: `Does this release ship what this feedback asks for? Feedback title: "${feedback.title}". Feedback description: "${feedback.description.slice(0, MAX_FEEDBACK_DESCRIPTION_LENGTH)}"`,
+            type: "boolean" as const,
+          },
+        ])
+      ),
+      state: JSON.stringify({
+        commits: candidates.commits.map(formatCommitLine),
         description: args.description,
-        feedbackItems: candidates.feedbackItems.map((feedback) => ({
-          description: feedback.description,
-          id: feedback._id,
-          status: feedback.status,
-          title: feedback.title,
-        })),
+        title: candidates.title,
       }),
     });
 
-    const jsonMatch = result.text.match(JSON_OBJECT_REGEX);
-    if (!jsonMatch) {
-      throw new Error("AI returned non-JSON response");
-    }
-    const parsed = matchResponseSchema.safeParse(JSON.parse(jsonMatch[0]));
-    if (!parsed.success) {
-      throw new Error("AI returned invalid match format");
-    }
+    const scoredFeedback = candidates.feedbackItems.map((feedback) => {
+      const answer = answers[feedback._id];
+      if (answer?.type !== "boolean") {
+        throw new Error(
+          `Release matching returned no verdict for feedback ${feedback._id}`
+        );
+      }
+      return { feedbackId: feedback._id, probability: answer.probability };
+    });
 
-    const candidateIds = new Set<string>(
-      candidates.feedbackItems.map((feedback) => feedback._id)
-    );
     return {
-      matches: parsed.data.matches.filter((match) =>
-        candidateIds.has(match.feedbackId)
-      ),
+      matches: scoredFeedback
+        .filter(({ probability }) => probability >= LOW_CONFIDENCE_PROBABILITY)
+        .sort((a, b) => b.probability - a.probability)
+        .map(({ feedbackId, probability }): FeedbackMatch => {
+          if (probability >= HIGH_CONFIDENCE_PROBABILITY) {
+            return { confidence: "high", feedbackId };
+          }
+          if (probability >= MEDIUM_CONFIDENCE_PROBABILITY) {
+            return { confidence: "medium", feedbackId };
+          }
+          return { confidence: "low", feedbackId };
+        }),
     };
   },
   returns: v.object({
     matches: v.array(
       v.object({
         confidence: confidenceValidator,
-        feedbackId: v.string(),
-        reason: v.string(),
+        feedbackId: v.id("feedback"),
       })
     ),
   }),

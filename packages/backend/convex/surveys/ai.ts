@@ -2,6 +2,7 @@ import { ConvexError, v } from "convex/values";
 import { z } from "zod";
 import { internal } from "../_generated/api";
 import { action } from "../_generated/server";
+import { textModel } from "../ai/openrouter";
 import { generateStructured } from "../ai/structured_output";
 import { requireAuthUser } from "../shared/access";
 import { normalizeGeneratedDraft } from "./lib/ai_draft_normalize";
@@ -13,7 +14,6 @@ import {
   surveyDraftValidator,
 } from "./lib/ai_draft_schema";
 
-const SURVEY_DRAFT_MODEL = "anthropic/claude-sonnet-4";
 const MAX_PROMPT_CHARS = 2000;
 const MAX_DRAFT_OUTPUT_TOKENS = 4000;
 
@@ -28,7 +28,7 @@ const generateSurveyObject = async (
   try {
     return await generateStructured({
       maxOutputTokens: MAX_DRAFT_OUTPUT_TOKENS,
-      model: SURVEY_DRAFT_MODEL,
+      model: textModel,
       prompt: `Draft a survey for this request:\n"""\n${request}\n"""`,
       schema: generatedDraftSchema,
       system: SURVEY_DRAFT_SYSTEM_PROMPT_WITH_FORMAT,

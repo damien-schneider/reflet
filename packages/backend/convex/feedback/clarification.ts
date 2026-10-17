@@ -1,3 +1,4 @@
+import { generateText } from "ai";
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import {
@@ -7,7 +8,8 @@ import {
   mutation,
   query,
 } from "../_generated/server";
-import { feedbackClarificationAgent } from "../ai/agent";
+import { FEEDBACK_WRITER_SYSTEM_PROMPT } from "../ai/feedback_writer_prompt";
+import { textModel } from "../ai/openrouter";
 import { requireAuthUser, requireOrgMember } from "../shared/access";
 
 export const getClarificationStatus = query({
@@ -142,11 +144,9 @@ export const generateClarification = internalAction({
         ? `\n\nContext about the product:\n${contextParts.join("\n\n")}`
         : "";
 
-    const result = await feedbackClarificationAgent.generateText(
-      ctx,
-      { userId: "system" },
-      {
-        prompt: `Please clarify and enhance the following user feedback for a software product:
+    const result = await generateText({
+      model: textModel,
+      prompt: `Please clarify and enhance the following user feedback for a software product:
 
 Title: ${feedback.title}
 
@@ -160,8 +160,8 @@ Provide a clear, detailed clarification that:
 4. Maintains the user's original intent
 
 Format your response as a well-structured clarification, ready to be shown to the development team.`,
-      }
-    );
+      system: FEEDBACK_WRITER_SYSTEM_PROMPT,
+    });
 
     const clarification = result.text || "Unable to generate clarification";
 

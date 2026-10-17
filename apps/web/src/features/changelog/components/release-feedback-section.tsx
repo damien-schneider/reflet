@@ -143,7 +143,7 @@ export function ReleaseFeedbackSection({
       const results = await Promise.allSettled(
         toLink.map((feedbackId) =>
           linkFeedback({
-            feedbackId: feedbackId as Id<"feedback">,
+            feedbackId,
             newStatus: statusToSet,
             releaseId,
           })

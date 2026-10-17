@@ -7,6 +7,7 @@ import {
   internalAction,
   type MutationCtx,
 } from "../../_generated/server";
+import { TRANSCRIPTION_MODEL } from "../../ai/models";
 import { rateLimiter } from "../../shared/rate_limits";
 import { SESSION_TEXT_LIMITS } from "../constants";
 import { truncateText } from "../formatters";
@@ -17,7 +18,6 @@ import {
 } from "./configuration";
 
 const TRANSCRIPTION_URL = "https://openrouter.ai/api/v1/audio/transcriptions";
-const TRANSCRIPTION_MODEL = "openai/whisper-large-v3";
 const TRANSCRIPTION_TIMEOUT_MS = 55_000;
 const NO_SPEECH_THRESHOLD = 0.6;
 const BASE64_CHUNK_BYTES = 0x80_00;

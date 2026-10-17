@@ -5,7 +5,6 @@ import type {
 } from "../tableFields";
 
 const MAX_COMMIT_BODY_LENGTH = 500;
-const MAX_FEEDBACK_DESCRIPTION_LENGTH = 200;
 
 export interface ReleaseNotesPromptInput {
   commits: ReleaseCommit[];
@@ -15,13 +14,6 @@ export interface ReleaseNotesPromptInput {
   repositoryName?: string;
   totalCommits?: number;
   version?: string;
-}
-
-export interface FeedbackCandidate {
-  description?: string;
-  id: string;
-  status: string;
-  title: string;
 }
 
 export const formatCommitLine = (commit: ReleaseCommit): string => {
@@ -110,46 +102,3 @@ Instructions:
 - Make it descriptive of the main theme of the release
 - Keep it concise and engaging
 - Do not use quotes around the title`;
-
-export const buildFeedbackMatchPrompt = ({
-  commits,
-  description,
-  feedbackItems,
-}: {
-  commits: ReleaseCommit[];
-  description: string;
-  feedbackItems: FeedbackCandidate[];
-}): string => {
-  const commitSummary = commits.map(formatCommitLine).join("\n");
-  const feedbackSummary = feedbackItems
-    .map(
-      (feedback) =>
-        `[${feedback.id}] "${feedback.title}"${feedback.description ? ` — ${feedback.description.slice(0, MAX_FEEDBACK_DESCRIPTION_LENGTH)}` : ""} (status: ${feedback.status})`
-    )
-    .join("\n");
-
-  return `You are analyzing a software release to find which user feedback items were addressed by this release.
-
-## Release Notes
-${description}
-
-## Commits in this Release
-${commitSummary || "No commit data available — match based on release notes only."}
-
-## Candidate Feedback Items
-${feedbackSummary}
-
-## Task
-Identify which feedback items are likely addressed, fixed, or resolved by the changes in this release.
-Match based on semantic similarity between:
-- The feedback title/description and the release notes content
-- The feedback title/description and the commit messages
-
-Be generous with matching — include items that are even partially related or tangentially addressed.
-Use "high" confidence for clearly addressed items, "medium" for likely related, and "low" for possibly related.
-
-For each match, respond ONLY with a valid JSON object (no markdown, no code fences) in this exact format:
-{"matches": [{"feedbackId": "<exact ID from brackets>", "confidence": "high|medium|low", "reason": "<max 15 words>"}]}
-
-Sort results by confidence (high first, then medium, then low).`;
-};

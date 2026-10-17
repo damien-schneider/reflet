@@ -1,43 +1,24 @@
 "use node";
 
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import { generateObject } from "ai";
+import { experimental_evaluate as evaluate } from "ai";
 import { v } from "convex/values";
-import { z } from "zod";
 import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
+import { jev } from "../ai/evaluation";
 
 const SIMILARITY_THRESHOLD = 0.7;
 const MAX_CANDIDATES = 10;
-
-const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY,
-});
-
-const DUPLICATE_CHECK_MODELS = [
-  "arcee-ai/trinity-large-preview:free",
-  "upstage/solar-pro-3:free",
-] as const;
-
-const duplicateCheckSchema = z.object({
-  duplicates: z.array(
-    z.object({
-      feedbackId: z.string(),
-      reasoning: z.string().describe("Brief explanation of the similarity"),
-      similarityScore: z
-        .number()
-        .min(0)
-        .max(1)
-        .describe("How similar this is to the new feedback (0-1)"),
-    })
-  ),
-});
+const MAX_CANDIDATE_DESCRIPTION_LENGTH = 200;
 
 export const findSimilarFeedback = internalAction({
   args: {
     feedbackId: v.id("feedback"),
   },
   handler: async (ctx, args) => {
+    if (!process.env.OPENROUTER_API_KEY) {
+      return;
+    }
+
     const feedback = await ctx.runQuery(
       internal.duplicates.queries.getFeedbackForComparison,
       { feedbackId: args.feedbackId }
@@ -61,51 +42,46 @@ export const findSimilarFeedback = internalAction({
       return;
     }
 
-    const candidateDescriptions = candidates
-      .map(
-        (c, i) =>
-          `[${i}] ID: ${c._id}\nTitle: ${c.title}\nDescription: ${c.description.slice(0, 200)}`
-      )
-      .join("\n\n");
+    const { answers } = await evaluate({
+      model: jev,
+      questions: Object.fromEntries(
+        candidates.map((_candidate, index) => [
+          `candidate_${index}`,
+          {
+            instructions: `Is existing feedback ${index} asking for the same requested change as the new feedback, not merely a related topic?`,
+            type: "boolean" as const,
+          },
+        ])
+      ),
+      state: JSON.stringify({
+        candidates: candidates.map((candidate, index) => ({
+          description: candidate.description.slice(
+            0,
+            MAX_CANDIDATE_DESCRIPTION_LENGTH
+          ),
+          index,
+          title: candidate.title,
+        })),
+        newFeedback: {
+          description: feedback.description,
+          title: feedback.title,
+        },
+      }),
+    });
 
-    let result: z.infer<typeof duplicateCheckSchema> | undefined;
-
-    for (const model of DUPLICATE_CHECK_MODELS) {
-      try {
-        const response = await generateObject({
-          model: openrouter(model),
-          prompt: `Compare this new feedback with the existing items below. Return items that are genuine duplicates or very similar (score > ${SIMILARITY_THRESHOLD}).
-
-NEW FEEDBACK:
-Title: ${feedback.title}
-Description: ${feedback.description.slice(0, 300)}
-
-EXISTING ITEMS:
-${candidateDescriptions}
-
-Only include items that discuss the same problem or feature request. Score 0.9+ for exact duplicates, 0.7-0.9 for very similar.`,
-          schema: duplicateCheckSchema,
-        });
-        result = response.object;
-        break;
-      } catch {
-        // Retry with next model on transient AI generation failures
+    for (const [index, candidate] of candidates.entries()) {
+      const answer = answers[`candidate_${index}`];
+      if (answer?.type !== "boolean") {
+        throw new Error(
+          `Duplicate evaluation returned no verdict for candidate ${index}`
+        );
       }
-    }
-
-    if (!result) {
-      return;
-    }
-
-    const candidatesById = new Map(candidates.map((c) => [String(c._id), c]));
-    for (const dup of result.duplicates) {
-      const candidate = candidatesById.get(dup.feedbackId);
-      if (candidate && dup.similarityScore >= SIMILARITY_THRESHOLD) {
+      if (answer.probability >= SIMILARITY_THRESHOLD) {
         await ctx.runMutation(internal.duplicates.queries.createDuplicatePair, {
           feedbackIdA: args.feedbackId,
           feedbackIdB: candidate._id,
           organizationId: feedback.organizationId,
-          similarityScore: dup.similarityScore,
+          similarityScore: answer.probability,
         });
       }
     }

@@ -1,6 +1,5 @@
 import type { Id } from "../_generated/dataModel";
 
-export const TRIAGE_MODEL = "jev-1.13";
 export const TRIAGE_CRITERIA_VERSION = "product-triage/1";
 export const TRIAGE_INPUT_VERSION = "title-description/1";
 

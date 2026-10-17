@@ -6,12 +6,10 @@ const feedbackId = (id: string) => id as Id<"feedback">;
 
 const makeMatch = (
   fId: string,
-  confidence: "high" | "medium" | "low" = "high",
-  reason = "test reason"
+  confidence: "high" | "medium" | "low" = "high"
 ) => ({
   confidence,
-  feedbackId: fId,
-  reason,
+  feedbackId: feedbackId(fId),
 });
 
 describe("getMatchesToAutoLink", () => {

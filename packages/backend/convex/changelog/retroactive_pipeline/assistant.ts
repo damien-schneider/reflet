@@ -1,22 +1,17 @@
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateText } from "ai";
-import { RELEASE_ASSISTANT_MODEL } from "../ai/models";
+import { textModel } from "../../ai/openrouter";
 import {
   buildReleaseNotesPrompt,
   buildReleaseTitlePrompt,
   type ReleaseNotesPromptInput,
 } from "../ai/prompts";
 
-const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY,
-});
-
 export async function generateWithAssistant(prompt: string): Promise<string> {
   if (!process.env.OPENROUTER_API_KEY) {
     throw new Error("AI service not configured");
   }
   const result = await generateText({
-    model: openrouter(RELEASE_ASSISTANT_MODEL),
+    model: textModel,
     prompt,
   });
   return result.text.trim();

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { sessionAnalysisModel } from "../../../ai/openrouter";
 import { generateStructured } from "../../../ai/structured_output";
 import { SESSION_TEXT_LIMITS } from "../../constants";
 import { isOperationAllowed } from "../../intentions/changes";
@@ -11,7 +12,6 @@ import {
   type ResolvedProposal,
   resolveAliases,
   resolveProposals,
-  SESSION_ANALYSIS_MODEL,
   type ShownIds,
   WRITING_RULES,
   withJsonFormat,
@@ -106,11 +106,10 @@ export const generateContinuationAnalysis = (
 ): Promise<ContinuationOutput> =>
   generateStructured({
     maxOutputTokens: MAX_OUTPUT_TOKENS,
-    model: SESSION_ANALYSIS_MODEL,
+    model: sessionAnalysisModel,
     prompt,
     schema: continuationOutputSchema,
     system: CONTINUATION_SYSTEM_PROMPT,
-    zdr: true,
   });
 
 export interface ResolvedChange<

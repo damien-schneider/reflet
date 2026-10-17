@@ -5,6 +5,7 @@ import {
   type MutationCtx,
   query,
 } from "../_generated/server";
+import { EVALUATION_MODEL } from "../ai/models";
 import { requireOrgMember } from "../shared/access";
 import { afterApproval } from "./after_create";
 import {
@@ -29,7 +30,6 @@ import {
   MIN_TAG_PROBABILITY,
   TRIAGE_CRITERIA_VERSION,
   TRIAGE_INPUT_VERSION,
-  TRIAGE_MODEL,
   WITHHOLD_JUNK_THRESHOLD,
 } from "./triage_questions";
 
@@ -51,7 +51,7 @@ export const start = internalMutation({
         feedback.publicationReviewedAt === undefined,
       criteriaVersion: TRIAGE_CRITERIA_VERSION,
       inputVersion: TRIAGE_INPUT_VERSION,
-      model: TRIAGE_MODEL,
+      model: EVALUATION_MODEL,
       organizationId: feedback.organizationId,
       questions: Object.entries(buildQuestions(args.tags)).map(
         ([id, question]) => ({

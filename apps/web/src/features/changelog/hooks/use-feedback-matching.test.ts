@@ -23,8 +23,7 @@ import { useFeedbackMatching } from "./use-feedback-matching";
 const releaseId = toId("releases", "rel_1");
 const match = {
   confidence: "high" as const,
-  feedbackId: "feedback_1",
-  reason: "Ships the requested search",
+  feedbackId: toId("feedback", "feedback_1"),
 };
 
 describe("useFeedbackMatching", () => {

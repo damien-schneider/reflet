@@ -1,9 +1,9 @@
 import { z } from "zod";
+import { sessionAnalysisModel } from "../../ai/openrouter";
 import { generateStructured } from "../../ai/structured_output";
 import { SESSION_TEXT_LIMITS } from "../constants";
 import { singleLine, truncateText } from "../formatters";
 
-export const SESSION_ANALYSIS_MODEL = "anthropic/claude-sonnet-4.5";
 export const MAX_OUTPUT_TOKENS = 8000;
 const MAX_PROPOSALS_PER_ANALYSIS = 12;
 const MAX_UNKNOWNS = 3;
@@ -117,11 +117,10 @@ export const generateSessionAnalysis = (
 ): Promise<AnalysisOutput> =>
   generateStructured({
     maxOutputTokens: MAX_OUTPUT_TOKENS,
-    model: SESSION_ANALYSIS_MODEL,
+    model: sessionAnalysisModel,
     prompt,
     schema: analysisOutputSchema,
     system: ANALYSIS_SYSTEM_PROMPT,
-    zdr: true,
   });
 
 export const generateProposalRefinement = (
@@ -129,11 +128,10 @@ export const generateProposalRefinement = (
 ): Promise<ProposalOutput> =>
   generateStructured({
     maxOutputTokens: MAX_OUTPUT_TOKENS,
-    model: SESSION_ANALYSIS_MODEL,
+    model: sessionAnalysisModel,
     prompt,
     schema: proposalOutputSchema,
     system: REFINEMENT_SYSTEM_PROMPT,
-    zdr: true,
   });
 
 export const resolveAliases = <Id extends string>(

@@ -2,6 +2,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { internal } from "../../../_generated/api";
 import type { Id } from "../../../_generated/dataModel";
+import { TRANSCRIPTION_MODEL } from "../../../ai/models";
 import { rateLimiter } from "../../../shared/rate_limits";
 import { setupTest, type TestContext } from "../../../test.helpers";
 import { TRANSCRIPTION_NOT_CONFIGURED } from "../configuration";
@@ -117,7 +118,7 @@ describe("segment transcription", () => {
         data: btoa(String.fromCharCode(...WAV_BYTES)),
         format: "wav",
       },
-      model: "openai/whisper-large-v3",
+      model: TRANSCRIPTION_MODEL,
       provider: { zdr: true },
       response_format: "verbose_json",
     });

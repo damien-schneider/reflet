@@ -56,7 +56,11 @@ export const getReleaseAndFeedback = internalQuery({
       .withIndex("by_release", (q) => q.eq("releaseId", args.releaseId))
       .first();
 
-    return { commits: snapshot?.commits ?? [], feedbackItems };
+    return {
+      commits: snapshot?.commits ?? [],
+      feedbackItems,
+      title: release.title,
+    };
   },
   returns: v.union(
     v.null(),
@@ -71,6 +75,7 @@ export const getReleaseAndFeedback = internalQuery({
           voteCount: v.number(),
         })
       ),
+      title: v.string(),
     })
   ),
 });

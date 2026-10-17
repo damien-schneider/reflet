@@ -1,3 +1,4 @@
+import { generateText } from "ai";
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import {
@@ -7,7 +8,8 @@ import {
   mutation,
   query,
 } from "../_generated/server";
-import { feedbackClarificationAgent } from "../ai/agent";
+import { FEEDBACK_WRITER_SYSTEM_PROMPT } from "../ai/feedback_writer_prompt";
+import { textModel } from "../ai/openrouter";
 import { requireAuthUser, requireOrgMember } from "../shared/access";
 
 export const getDraftReplyStatus = query({
@@ -36,7 +38,6 @@ export const getFeedbackForDraftReply = internalQuery({
       return null;
     }
 
-    // Get organization context
     const org = await ctx.db.get(feedback.organizationId);
 
     return {
@@ -56,7 +57,6 @@ export const initiateDraftReply = mutation({
       throw new Error("Feedback not found");
     }
 
-    // Check admin permission
     const membership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>
@@ -68,7 +68,6 @@ export const initiateDraftReply = mutation({
       throw new Error("Only admins can generate AI draft replies");
     }
 
-    // Schedule the action to generate draft reply
     await ctx.scheduler.runAfter(
       0,
       internal.feedback.draft_reply.generateDraftReplyAction,
@@ -98,7 +97,6 @@ export const saveDraftReply = internalMutation({
 export const generateDraftReplyAction = internalAction({
   args: { feedbackId: v.id("feedback") },
   handler: async (ctx, args) => {
-    // Get feedback and context
     const data = await ctx.runQuery(
       internal.feedback.draft_reply.getFeedbackForDraftReply,
       { feedbackId: args.feedbackId }
@@ -110,7 +108,6 @@ export const generateDraftReplyAction = internalAction({
 
     const { feedback, organizationName } = data;
 
-    // Build context for the reply
     const contextParts: string[] = [];
 
     if (organizationName) {
@@ -126,12 +123,9 @@ export const generateDraftReplyAction = internalAction({
     const contextString =
       contextParts.length > 0 ? `\n\n${contextParts.join("\n\n")}` : "";
 
-    // Generate draft reply using the agent
-    const result = await feedbackClarificationAgent.generateText(
-      ctx,
-      { userId: "system" },
-      {
-        prompt: `You are a helpful product team member responding to user feedback. Write a professional, friendly, and helpful reply to the following feedback:
+    const result = await generateText({
+      model: textModel,
+      prompt: `You are a helpful product team member responding to user feedback. Write a professional, friendly, and helpful reply to the following feedback:
 
 Title: ${feedback.title}
 
@@ -146,12 +140,11 @@ Write a reply that:
 5. Is concise but thorough
 
 Write only the reply text, no additional commentary.`,
-      }
-    );
+      system: FEEDBACK_WRITER_SYSTEM_PROMPT,
+    });
 
     const draftReply = result.text || "Unable to generate draft reply";
 
-    // Save the draft reply
     await ctx.runMutation(internal.feedback.draft_reply.saveDraftReply, {
       draftReply:
         typeof draftReply === "string"

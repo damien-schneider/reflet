@@ -1,17 +1,9 @@
-import { createTypeSafeAi } from "@ai-sdk/typesafe-ai";
 import {
   type Experimental_EvaluationModel as EvaluationModel,
   experimental_evaluate as evaluate,
 } from "ai";
 import type { Id } from "../_generated/dataModel";
-
-const typeSafeAi = createTypeSafeAi({
-  apiKey: process.env.OPENROUTER_API_KEY,
-  baseURL: "https://openrouter.ai/api/v1",
-});
-
-export const jev: EvaluationModel = typeSafeAi.evaluationModel(TRIAGE_MODEL);
-
+import { jev } from "../ai/evaluation";
 import {
   buildQuestions,
   JUNK_QUESTION_ID,
@@ -19,7 +11,6 @@ import {
   MIN_TAG_PROBABILITY,
   NEEDS_REVIEW_QUESTION_ID,
   TAG_QUESTION_PREFIX,
-  TRIAGE_MODEL,
   type TriageTag,
   USEFULNESS_QUESTION_ID,
   WITHHOLD_JUNK_THRESHOLD,

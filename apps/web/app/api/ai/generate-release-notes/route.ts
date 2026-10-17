@@ -1,7 +1,10 @@
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { api } from "@reflet/backend/convex/_generated/api";
 import { AI_ACCESS_DENIED } from "@reflet/backend/convex/ai/constants";
-import { RELEASE_NOTES_MODEL_CHAIN } from "@reflet/backend/convex/changelog/ai/models";
+import {
+  TEXT_MODEL,
+  TEXT_MODEL_SETTINGS,
+} from "@reflet/backend/convex/ai/models";
 import { buildReleaseNotesPrompt } from "@reflet/backend/convex/changelog/ai/prompts";
 import {
   MAX_SOURCE_COMMITS,
@@ -87,61 +90,6 @@ function convexErrorKind(error: unknown): unknown {
     : undefined;
 }
 
-/**
- * A model only fails once the stream is pulled, so the first chunk has to be
- * read here — otherwise the fallback chain can never advance past model one.
- */
-async function openStreamForModel(
-  modelId: string,
-  prompt: string
-): Promise<ReadableStream<string> | null> {
-  const reader = toTextStream({
-    stream: streamText({
-      maxOutputTokens: MAX_OUTPUT_TOKENS,
-      model: openrouter(modelId),
-      prompt,
-    }).stream,
-  }).getReader();
-
-  let first: ReadableStreamReadResult<string>;
-  try {
-    first = await reader.read();
-  } catch {
-    reader.cancel().catch(() => {
-      // stream already errored
-    });
-    console.warn(`[ai] Model ${modelId} failed, trying next fallback...`);
-    return null;
-  }
-
-  let buffered = first.value;
-  let exhausted = first.done;
-
-  return new ReadableStream<string>({
-    cancel: (reason) => reader.cancel(reason),
-    async pull(controller) {
-      if (buffered !== undefined) {
-        controller.enqueue(buffered);
-        buffered = undefined;
-        return;
-      }
-      if (exhausted) {
-        controller.close();
-        return;
-      }
-      const { done, value } = await reader.read();
-      if (done) {
-        exhausted = true;
-        controller.close();
-        return;
-      }
-      if (value !== undefined) {
-        controller.enqueue(value);
-      }
-    },
-  });
-}
-
 export async function POST(request: Request): Promise<Response> {
   try {
     if (!(await getToken())) {
@@ -182,14 +130,15 @@ export async function POST(request: Request): Promise<Response> {
       version,
     });
 
-    for (const modelId of RELEASE_NOTES_MODEL_CHAIN) {
-      const stream = await openStreamForModel(modelId, prompt);
-      if (stream) {
-        return createTextStreamResponse({ stream });
-      }
-    }
-
-    return Response.json({ error: "All AI models failed" }, { status: 503 });
+    return createTextStreamResponse({
+      stream: toTextStream({
+        stream: streamText({
+          maxOutputTokens: MAX_OUTPUT_TOKENS,
+          model: openrouter(TEXT_MODEL, TEXT_MODEL_SETTINGS),
+          prompt,
+        }).stream,
+      }),
+    });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return Response.json(
