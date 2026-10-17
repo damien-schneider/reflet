@@ -33,35 +33,43 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     },
     "./react": {
       "types": "./dist/react.d.ts",
-      "import": "./dist/react.js"
+      "import": "./dist/react.js",
+      "default": "./dist/react.js"
     },
     "./feedback": {
       "types": "./dist/feedback.d.ts",
-      "import": "./dist/feedback.js"
+      "import": "./dist/feedback.js",
+      "default": "./dist/feedback.js"
     },
     "./server": {
       "types": "./dist/server.d.ts",
-      "import": "./dist/server.js"
+      "import": "./dist/server.js",
+      "default": "./dist/server.js"
     },
     "./surveys": {
       "types": "./dist/surveys.d.ts",
-      "import": "./dist/surveys.js"
+      "import": "./dist/surveys.js",
+      "default": "./dist/surveys.js"
     },
     "./devtools/next": {
       "types": "./dist/devtools-next.d.ts",
-      "import": "./dist/devtools-next.js"
+      "import": "./dist/devtools-next.js",
+      "default": "./dist/devtools-next.js"
     },
     "./devtools/vite": {
       "types": "./dist/devtools-vite.d.ts",
-      "import": "./dist/devtools-vite.js"
+      "import": "./dist/devtools-vite.js",
+      "default": "./dist/devtools-vite.js"
     },
     "./desktop": {
       "types": "./dist/desktop.d.ts",
-      "import": "./dist/desktop.js"
+      "import": "./dist/desktop.js",
+      "default": "./dist/desktop.js"
     }
   },
   "main": "./dist/index.js",

@@ -141,10 +141,6 @@ export const organizationTables = {
     logo: v.optional(v.string()),
     name: v.string(),
     primaryColor: v.optional(v.string()),
-    setupCompleted: v.optional(v.boolean()),
-    setupMethod: v.optional(
-      v.union(v.literal("github"), v.literal("manual"), v.literal("skipped"))
-    ),
     slug: v.string(),
     staleFeedbackSettings: v.optional(
       v.object({
