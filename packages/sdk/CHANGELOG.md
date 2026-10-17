@@ -5,15 +5,26 @@ All notable changes to `reflet-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.7.8] - 2026-10-17
 
 ### Added
 
+- Sessions: when several intentions are undecided, Confirm all confirms them in one go, with a single Undo.
 - Sessions: an × on the recording bar cancels the recording after you confirm. Nothing of it is kept: what was not uploaded yet is dropped, and a session already created on Reflet is deleted, even if you were offline when you cancelled.
 
 ### Changed
 
+- Sessions: the review header fits on one line: a smaller title, then the date, a clock with the duration, and a lock or team icon for who can see it.
+- Sessions: while a session has no intention yet, its processing steps sit in the middle of the Intentions tab. Uploading and finding intentions show a moving bar; transcription shows a bar that fills as passages are transcribed.
+- Sessions: the Evidence tab is now Screenshots. Its screenshots keep their proportions at full width, each with a clock icon and its time above it. Clicking the card shows the moment; the trash icon to remove it appears on hover. Enlarge is gone.
+- Sessions: a transcript row or an intention's quoted passage shows the moment when clicked, instead of a Show context link. Edit is a pencil that appears on hover.
+- Sessions: Prepare brief and Add to board are always shown, side by side at full width. When they cannot act yet, they are disabled and say why on hover, instead of a sentence under them.
+- Sessions: clicking a pressed Confirm, Later or Dismiss puts the intention back to undecided. Labels on screenshots wrap onto several lines without breaking their rounded shape. A screenshot's page is only named when it changes, and a desktop app's `file:` path is no longer shown as the page.
 - Sessions: the recording bar's Mark moment, Point at element, Pause and Resume are icon buttons with tooltips. It no longer says "Saved" or how many uploads are waiting, nor "Paused · nothing is recorded"; it only speaks up when you are offline or nothing can be saved on this device. Pausing and resuming no longer change its width.
+
+### Removed
+
+- Sessions: Add an intention. Intentions come from the session itself; anything else goes in a note.
 
 ## [0.7.7] - 2026-10-17
 
