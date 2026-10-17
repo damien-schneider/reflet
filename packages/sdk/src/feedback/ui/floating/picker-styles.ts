@@ -127,7 +127,8 @@ export const PICKER_STYLES = `
 .picker-note textarea:focus { outline: none; }
 .picker-note textarea::placeholder { color: var(--rf-text-muted); }
 .picker-note-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
-.picker-note .picker-cancel { padding: 0 10px; }
+.picker-note .picker-cancel { gap: 6px; padding: 0 10px; }
+.picker-note .picker-icon-only { justify-content: center; aspect-ratio: 1; padding: 0; }
 .picker-note .submit { margin-left: auto; }
 @media (pointer: coarse) {
   .picker-hint { padding: 6px 8px 6px 14px; }

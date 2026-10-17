@@ -26,14 +26,6 @@ export function PanelIcon() {
   );
 }
 
-export function CodeIcon() {
-  return (
-    <Svg>
-      <path d="m8 7-5 5 5 5M16 7l5 5-5 5" />
-    </Svg>
-  );
-}
-
 export function RefreshIcon() {
   return (
     <Svg>

@@ -7,7 +7,7 @@ import {
 import { getFiberFromNode, resolveComponentStack } from "../core/react-source";
 import type { FeedbackWidgetLabels } from "../types";
 import { AIM_KEYS, isWidgetOwned, stepAim } from "./floating/element-walk";
-import { ArrowIcon } from "./icons";
+import { ArrowIcon, CodeIcon, CopyIcon, TargetIcon } from "./icons";
 import { isApplePlatform, isSubmitEnter, matchesHotkey } from "./keyboard";
 import {
   onViewportChange,
@@ -394,14 +394,16 @@ export function ElementPicker({
           />
           <div className="picker-note-actions">
             <button
-              className="picker-cancel"
+              aria-label={labels.pickAnother}
+              className="picker-cancel picker-icon-only"
               onClick={() => {
                 setPinned(null);
                 setNote("");
               }}
+              title={labels.pickAnother}
               type="button"
             >
-              {labels.pickAnother}
+              <TargetIcon />
             </button>
             {inspect && (
               <button
@@ -409,16 +411,19 @@ export function ElementPicker({
                 onClick={() => inspect.onInspect(pinned.element)}
                 type="button"
               >
+                <CodeIcon />
                 {inspect.label}
               </button>
             )}
             {copy && (
               <button
-                className="picker-cancel"
+                aria-label={copy.label}
+                className="picker-cancel picker-icon-only"
                 onClick={() => copy.onCopy(pinned.element, note.trim())}
+                title={copy.label}
                 type="button"
               >
-                {copy.label}
+                <CopyIcon />
               </button>
             )}
             <button

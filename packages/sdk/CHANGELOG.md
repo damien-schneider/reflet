@@ -5,6 +5,14 @@ All notable changes to `reflet-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Pick: the note card's actions are smaller. Pick another and Copy are icon buttons (their names show on hover), and View code is now Code with an icon.
+- Devtools: an empty Board says "This page" or "Whole board" above its message instead of "0 on this page" or "0 on the board".
+- Devtools: the panel has no divider lines under its tabs or above the account footer.
+
 ## [0.7.5] - 2026-10-17
 
 ### Added

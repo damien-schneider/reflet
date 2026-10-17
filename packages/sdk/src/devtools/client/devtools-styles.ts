@@ -92,7 +92,7 @@ export const DEVTOOLS_STYLES = `
 .dt-resize[data-axis="width"]::after { top: 50%; left: 3px; width: 4px; height: 36px; translate: 0 -50%; }
 .dt-resize[data-axis="height"]::after { left: 50%; top: 3px; width: 36px; height: 4px; translate: -50% 0; }
 .dt-resize:hover::after, .dt-resize:focus-visible::after, .dt-resize:active::after { opacity: .5; }
-.dt-sheet-head { position: relative; display: flex; align-items: center; gap: 4px; padding: 8px 8px 8px 6px; border-bottom: 1px solid var(--rf-border); }
+.dt-sheet-head { position: relative; display: flex; align-items: center; gap: 4px; padding: 8px 8px 8px 6px; }
 .dt-sheet-head > :not(.dt-sheet-drag) { position: relative; z-index: 1; }
 .dt-sheet-head .icon-btn { width: 32px; height: 32px; }
 .dt-sheet .dt-sheet-drag { position: absolute; inset: 0; z-index: 0; padding: 0; border-radius: 0; cursor: grab; touch-action: none; }
@@ -184,7 +184,7 @@ export const DEVTOOLS_STYLES = `
 .dt-menu-item:hover, .dt-menu-item:focus-visible { background: var(--rf-bg-hover); outline: none; }
 .dt-menu-item[data-variant="danger"] { color: var(--rf-danger); }
 .dt-menu-check { display: inline-flex; width: 14px; color: var(--rf-accent); }
-.dt-sheet-account { display: flex; flex: none; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px; border-top: 1px solid var(--rf-border); }
+.dt-sheet-account { display: flex; flex: none; flex-wrap: wrap; align-items: center; gap: 8px; padding: 0 8px 8px; }
 .dt-sheet-account > .dt-meta { flex: 1 1 160px; padding-inline: 4px; }
 .dt-sheet-account > .dt-menu { flex: 1; min-width: 0; }
 .dt-sheet-account .dt-menu-list { left: 0; }

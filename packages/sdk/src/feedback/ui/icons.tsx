@@ -93,6 +93,23 @@ export function UndoIcon() {
   );
 }
 
+export function CodeIcon() {
+  return (
+    <Svg>
+      <path d="m8 7-5 5 5 5M16 7l5 5-5 5" />
+    </Svg>
+  );
+}
+
+export function CopyIcon() {
+  return (
+    <Svg>
+      <rect height="12" rx="2" width="12" x="9" y="9" />
+      <path d="M15 9V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h4" />
+    </Svg>
+  );
+}
+
 export function CheckIcon({ size = 28 }: { size?: number }) {
   return (
     <svg

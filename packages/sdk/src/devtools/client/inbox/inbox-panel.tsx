@@ -78,7 +78,7 @@ function InboxToolbar({
   return (
     <div className="dt-toolbar">
       <span className="dt-status">
-        {state.kind === "ready"
+        {state.kind === "ready" && state.page.total > 0
           ? `${state.page.total} ${SCOPE_PLACES[scope]}`
           : SCOPE_LABELS[scope]}
       </span>

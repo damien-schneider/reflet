@@ -45,7 +45,7 @@ test.describe("Reflet devtools under next dev", () => {
     await page.goto("/sdk-demo");
     await page.getByRole("button", { name: PICK_BUTTON }).click();
     await page.getByRole("heading", { name: "Plans & billing" }).click();
-    await page.getByRole("button", { name: "View code" }).click();
+    await page.getByRole("button", { exact: true, name: "Code" }).click();
 
     await expect(page.locator(".dt-code-path")).toContainText(DEMO_SOURCE);
     await expect(page.locator(".dt-count")).toHaveCount(0);

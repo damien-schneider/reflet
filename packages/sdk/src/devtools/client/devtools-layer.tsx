@@ -238,7 +238,7 @@ export function DevtoolsLayer({
 
   const inspect = useMemo(
     () => ({
-      label: "View code",
+      label: "Code",
       onInspect: (element: Element) => {
         setIsPicking(false);
         inspectElement(element);

@@ -6,16 +6,11 @@ import {
   useRef,
 } from "react";
 import { useFloatingPosition } from "../../feedback/ui/floating/use-floating-position";
-import { CloseIcon } from "../../feedback/ui/icons";
+import { CloseIcon, CodeIcon } from "../../feedback/ui/icons";
 import { listenToKeydown } from "../../feedback/ui/widget-events";
 import { MicIcon } from "../../sessions/ui/session-icons";
 import type { SheetTab } from "./devtools-bar";
-import {
-  ChevronLeftIcon,
-  CodeIcon,
-  InboxIcon,
-  NotesIcon,
-} from "./devtools-icons";
+import { ChevronLeftIcon, InboxIcon, NotesIcon } from "./devtools-icons";
 import { focusedElementAround } from "./focused-element";
 import { useSheetSize } from "./use-sheet-size";
 
