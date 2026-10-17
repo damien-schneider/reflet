@@ -68,6 +68,10 @@ export const initiateDraftReply = mutation({
       throw new Error("Only admins can generate AI draft replies");
     }
 
+    await ctx.db.patch(args.feedbackId, {
+      aiDraftReply: undefined,
+      aiDraftReplyGeneratedAt: undefined,
+    });
     await ctx.scheduler.runAfter(
       0,
       internal.feedback.draft_reply.generateDraftReplyAction,

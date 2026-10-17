@@ -100,15 +100,25 @@ export const matchReleaseFeedback = action({
         candidates.feedbackItems.map((feedback) => [
           feedback._id,
           {
-            instructions: `Does this release ship what this feedback asks for? Feedback title: "${feedback.title}". Feedback description: "${feedback.description.slice(0, MAX_FEEDBACK_DESCRIPTION_LENGTH)}"`,
+            instructions: `Does this release ship what feedback "${feedback._id}" in the state asks for?`,
             type: "boolean" as const,
           },
         ])
       ),
       state: JSON.stringify({
-        commits: candidates.commits.map(formatCommitLine),
-        description: args.description,
-        title: candidates.title,
+        feedback: candidates.feedbackItems.map((feedback) => ({
+          description: feedback.description.slice(
+            0,
+            MAX_FEEDBACK_DESCRIPTION_LENGTH
+          ),
+          id: feedback._id,
+          title: feedback.title,
+        })),
+        release: {
+          commits: candidates.commits.map(formatCommitLine),
+          description: args.description,
+          title: candidates.title,
+        },
       }),
     });
 

@@ -90,6 +90,47 @@ function convexErrorKind(error: unknown): unknown {
     : undefined;
 }
 
+async function openReleaseNotesStream(
+  prompt: string
+): Promise<ReadableStream<string> | null> {
+  const reader = toTextStream({
+    stream: streamText({
+      maxOutputTokens: MAX_OUTPUT_TOKENS,
+      model: openrouter(TEXT_MODEL, TEXT_MODEL_SETTINGS),
+      prompt,
+    }).stream,
+  }).getReader();
+
+  let first: ReadableStreamReadResult<string>;
+  try {
+    first = await reader.read();
+  } catch (error) {
+    console.error("[ai] Release notes model failed:", error);
+    return null;
+  }
+  if (first.done) {
+    return null;
+  }
+
+  let buffered: string | undefined = first.value;
+  return new ReadableStream<string>({
+    cancel: (reason) => reader.cancel(reason),
+    async pull(controller) {
+      if (buffered !== undefined) {
+        controller.enqueue(buffered);
+        buffered = undefined;
+        return;
+      }
+      const { done, value } = await reader.read();
+      if (done) {
+        controller.close();
+        return;
+      }
+      controller.enqueue(value);
+    },
+  });
+}
+
 export async function POST(request: Request): Promise<Response> {
   try {
     if (!(await getToken())) {
@@ -130,15 +171,14 @@ export async function POST(request: Request): Promise<Response> {
       version,
     });
 
-    return createTextStreamResponse({
-      stream: toTextStream({
-        stream: streamText({
-          maxOutputTokens: MAX_OUTPUT_TOKENS,
-          model: openrouter(TEXT_MODEL, TEXT_MODEL_SETTINGS),
-          prompt,
-        }).stream,
-      }),
-    });
+    const stream = await openReleaseNotesStream(prompt);
+    if (!stream) {
+      return Response.json(
+        { error: "AI model unavailable, try again later" },
+        { status: 503 }
+      );
+    }
+    return createTextStreamResponse({ stream });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return Response.json(

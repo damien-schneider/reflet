@@ -58,11 +58,6 @@ export async function scheduleAfterCreate(
       internal.feedback.clarification.generateClarification,
       { feedbackId }
     );
-    await ctx.scheduler.runAfter(
-      0,
-      internal.feedback.draft_reply.generateDraftReplyAction,
-      { feedbackId }
-    );
   }
 
   if (options.autoTagging) {
