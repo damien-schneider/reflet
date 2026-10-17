@@ -8,9 +8,6 @@ export type SetupData = NonNullable<
 >;
 
 export type ChangelogConfig = NonNullable<SetupData["changelogConfig"]>;
-export type SuggestedKeyword = NonNullable<
-  SetupData["suggestedKeywords"]
->[number];
 export type SuggestedMonitor = NonNullable<
   SetupData["suggestedMonitors"]
 >[number];

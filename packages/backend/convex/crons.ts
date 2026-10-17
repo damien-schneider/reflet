@@ -39,18 +39,6 @@ crons.daily(
   internal.surveys.responses.abandonStaleResponses
 );
 
-crons.daily(
-  "run intelligence scans",
-  { hourUTC: 6, minuteUTC: 0 },
-  internal.intelligence.crons.runScheduledScans
-);
-
-crons.weekly(
-  "send intelligence digest",
-  { dayOfWeek: "monday", hourUTC: 10, minuteUTC: 0 },
-  internal.intelligence.notifications.sendAllIntelligenceDigests
-);
-
 crons.interval(
   "status health checks",
   { minutes: 1 },

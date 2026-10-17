@@ -6,7 +6,6 @@ import { Sparkle } from "@phosphor-icons/react";
 import { Muted } from "@/components/ui/typography";
 import type {
   ChangelogConfig,
-  SuggestedKeyword,
   SuggestedMonitor,
   SuggestedTag,
 } from "./setup-types";
@@ -23,7 +22,6 @@ export function LaunchBar({
   error,
   isApplying,
   monitors,
-  keywords,
   tags,
   onLaunch,
 }: {
@@ -31,13 +29,11 @@ export function LaunchBar({
   error: string | null;
   isApplying: boolean;
   monitors: SuggestedMonitor[];
-  keywords: SuggestedKeyword[];
   tags: SuggestedTag[];
   onLaunch: () => void;
 }) {
   const parts = [
     countLabel(monitors.filter((m) => m.accepted).length, "monitor"),
-    countLabel(keywords.filter((k) => k.accepted).length, "keyword"),
     countLabel(tags.filter((t) => t.accepted).length, "tag"),
     changelogConfig ? "changelog settings" : null,
   ].filter((part) => part !== null);

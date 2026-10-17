@@ -7,7 +7,7 @@ import {
 } from "../../../../sdk/src/sessions/protocol";
 import { internal } from "../../_generated/api";
 import type { Id } from "../../_generated/dataModel";
-import { generateStructured } from "../../intelligence/structured_output";
+import { generateStructured } from "../../ai/structured_output";
 import type { TestContext } from "../../test.helpers";
 import { proposalOutput } from "../ai/__tests__/ostal_session";
 import {
@@ -17,7 +17,7 @@ import {
   testFrame,
 } from "./session.fixtures";
 
-vi.mock("../../intelligence/structured_output", () => ({
+vi.mock("../../ai/structured_output", () => ({
   generateStructured: vi.fn(),
 }));
 

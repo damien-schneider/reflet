@@ -2,7 +2,7 @@ import { ConvexError, v } from "convex/values";
 import { z } from "zod";
 import { internal } from "../_generated/api";
 import { action } from "../_generated/server";
-import { generateStructured } from "../intelligence/structured_output";
+import { generateStructured } from "../ai/structured_output";
 import { requireAuthUser } from "../shared/access";
 import { normalizeGeneratedDraft } from "./lib/ai_draft_normalize";
 import { SURVEY_DRAFT_SYSTEM_PROMPT } from "./lib/ai_draft_prompt";

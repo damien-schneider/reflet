@@ -6,7 +6,6 @@ import {
   type MutationCtx,
   type QueryCtx,
 } from "../_generated/server";
-import { PRIORITY_RANK } from "../intelligence/feedback_integration";
 import { agentActorId } from "../shared/actors";
 import { feedbackStatus } from "../shared/validators";
 import { shapeFeedbackDetail } from "./api_public_list";
@@ -15,6 +14,16 @@ import { changeFeedbackStatus } from "./status_change";
 
 export const CLAIM_TTL_MS = 2 * 60 * 60 * 1000;
 const DEFAULT_QUEUE_LIMIT = 10;
+const PRIORITY_RANK: Record<
+  NonNullable<Doc<"feedback">["aiPriority"]>,
+  number
+> = {
+  critical: 4,
+  high: 3,
+  low: 1,
+  medium: 2,
+  none: 0,
+};
 const DEFAULT_QUEUE_STATUSES: Doc<"feedback">["status"][] = [
   "open",
   "under_review",
@@ -51,12 +60,9 @@ export function isAgentQueueEligible(feedback: Doc<"feedback">): boolean {
 }
 
 function priorityRank(feedback: Doc<"feedback">): number {
-  return (
-    PRIORITY_RANK[
-      resolvePropertyValue(feedback.priority, feedback.aiPriority).value ??
-        "none"
-    ] ?? 0
-  );
+  return PRIORITY_RANK[
+    resolvePropertyValue(feedback.priority, feedback.aiPriority).value ?? "none"
+  ];
 }
 
 function compareQueueOrder(a: Doc<"feedback">, b: Doc<"feedback">): number {

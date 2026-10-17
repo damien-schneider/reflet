@@ -74,12 +74,6 @@ export const rateLimiter = new RateLimiter(components.rateLimiter, {
     period: HOUR,
     rate: 60,
   },
-  intelligenceScanPerOrg: {
-    capacity: 3,
-    kind: "token bucket",
-    period: DAY,
-    rate: 5,
-  },
   invitationEmailPerOrg: {
     capacity: 20,
     kind: "token bucket",

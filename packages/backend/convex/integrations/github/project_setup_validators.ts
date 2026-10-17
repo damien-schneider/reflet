@@ -4,7 +4,6 @@ import { tagColorValidator } from "../../feedback/tag_colors";
 export const SETUP_STEPS = [
   { key: "analyze_codebase", label: "Analyzing codebase" },
   { key: "discover_services", label: "Discovering services" },
-  { key: "extract_keywords", label: "Extracting market keywords" },
   { key: "configure_changelog", label: "Configuring changelog" },
   { key: "suggest_tags", label: "Suggesting tags" },
   { key: "generate_prompts", label: "Generating AI context" },
@@ -39,14 +38,6 @@ export const changelogConfigValidator = v.object({
 });
 
 export type ChangelogConfig = Infer<typeof changelogConfigValidator>;
-
-export const suggestedKeywordsValidator = v.array(
-  v.object({
-    accepted: v.boolean(),
-    category: v.string(),
-    keyword: v.string(),
-  })
-);
 
 export const suggestedMonitorsValidator = v.array(
   v.object({
@@ -92,7 +83,6 @@ export const projectSetupResultValidator = v.object({
       summary: v.optional(v.string()),
     })
   ),
-  suggestedKeywords: v.optional(suggestedKeywordsValidator),
   suggestedMonitors: v.optional(suggestedMonitorsValidator),
   suggestedPrompts: v.optional(suggestedPromptsValidator),
   suggestedTags: v.optional(suggestedTagsValidator),

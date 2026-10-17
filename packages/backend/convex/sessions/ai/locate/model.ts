@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { generateStructured } from "../../../intelligence/structured_output";
+import { generateStructured } from "../../../ai/structured_output";
 import {
   elementSummary,
   singleLine,

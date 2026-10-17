@@ -5,12 +5,6 @@ import { consumeAiGenerationFor } from "../../ai/usage_gate";
 import { versionIncrementValidator } from "../../changelog/semver";
 import { tagColorValidator } from "../../feedback/tag_colors";
 import {
-  insertKeyword,
-  isSameKeyword,
-  type KeywordIdentity,
-} from "../../intelligence/keywords";
-import { keywordSource } from "../../intelligence/tableFields";
-import {
   isOrgMemberViewer,
   requireOrgAdmin,
   requireOrgMember,
@@ -139,9 +133,6 @@ export const startProjectSetup = mutation({
 
 export const applySetupResults = mutation({
   args: {
-    acceptedKeywords: v.array(
-      v.object({ keyword: v.string(), source: keywordSource })
-    ),
     acceptedMonitors: v.array(
       v.object({
         name: v.string(),
@@ -183,24 +174,6 @@ export const applySetupResults = mutation({
       });
     }
 
-    const trackedKeywords: KeywordIdentity[] = await ctx.db
-      .query("intelligenceKeywords")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", args.organizationId)
-      )
-      .collect();
-    for (const proposal of args.acceptedKeywords) {
-      const candidate = { ...proposal, keyword: proposal.keyword.trim() };
-      if (trackedKeywords.some((k) => isSameKeyword(k, candidate))) {
-        continue;
-      }
-      await insertKeyword(ctx, {
-        ...proposal,
-        organizationId: args.organizationId,
-      });
-      trackedKeywords.push(candidate);
-    }
-
     const existingTags = await ctx.db
       .query("tags")
       .withIndex("by_organization", (q) =>
@@ -234,27 +207,6 @@ export const applySetupResults = mutation({
           ...args.changelogSettings,
         },
       });
-    }
-
-    if (args.acceptedKeywords.length > 0) {
-      const existingConfig = await ctx.db
-        .query("intelligenceConfig")
-        .withIndex("by_organization", (q) =>
-          q.eq("organizationId", args.organizationId)
-        )
-        .unique();
-
-      if (!existingConfig) {
-        await ctx.db.insert("intelligenceConfig", {
-          competitorTrackingEnabled: false,
-          createdAt: now,
-          organizationId: args.organizationId,
-          redditEnabled: true,
-          scanFrequency: "weekly",
-          updatedAt: now,
-          webSearchEnabled: true,
-        });
-      }
     }
 
     await ctx.db.patch(args.organizationId, {

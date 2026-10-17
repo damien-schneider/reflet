@@ -13,7 +13,6 @@ import type { ChangelogConfig } from "./project_setup_validators";
 const SEMVER_TAG_REGEX = /^v?\d+\.\d+/;
 
 const MONITOR_SCHEMA = z.object({ name: z.string(), url: z.string() });
-const KEYWORD_SCHEMA = z.object({ category: z.string(), keyword: z.string() });
 const TAG_SCHEMA = z.object({
   color: z
     .string()
@@ -41,7 +40,6 @@ export const runProjectSetup = internalAction({
 
       const { repositoryFullName, defaultBranch } = connection;
 
-      // Step 1: Analyze codebase
       await ctx.runMutation(
         internal.integrations.github.project_setup_internal.updateStepStatus,
         {
@@ -77,13 +75,11 @@ Provide a concise project overview (2-3 sentences describing what this project d
 
       const projectOverview = analysisResult.text.trim();
 
-      // Also create repo analysis record if none exists
       const existingAnalysis = await ctx.runQuery(
         internal.integrations.github.repo_analysis.getConnectionForAnalysis,
         { organizationId: args.organizationId }
       );
       if (existingAnalysis) {
-        // Schedule a full repo analysis in background
         const analysisId = await ctx.runMutation(
           internal.integrations.github.project_setup_internal
             .createRepoAnalysisRecord,
@@ -116,7 +112,6 @@ Provide a concise project overview (2-3 sentences describing what this project d
         { projectOverview, setupId: args.setupId }
       );
 
-      // Step 2: Discover services
       await ctx.runMutation(
         internal.integrations.github.project_setup_internal.updateStepStatus,
         {
@@ -173,61 +168,6 @@ Return ONLY the JSON array, no markdown.`,
         { setupId: args.setupId, suggestedMonitors: monitors }
       );
 
-      // Step 3: Extract keywords
-      await ctx.runMutation(
-        internal.integrations.github.project_setup_internal.updateStepStatus,
-        {
-          setupId: args.setupId,
-          status: "running",
-          stepKey: "extract_keywords",
-        }
-      );
-
-      const keywordsResult = await repoAnalysisAgent.generateText(
-        ctx,
-        { userId: "system" },
-        {
-          prompt: `Extract market intelligence keywords from this repository (${repositoryFullName}).
-
-## README
-${repoData.readme ?? "No README found"}
-
-## package.json
-${repoData.packageJson ?? "No package.json found"}
-
-Suggest keywords for monitoring mentions across Reddit, Hacker News, and the web. Include:
-- Product name and variations
-- Tech stack terms (e.g., "next.js saas", "convex backend")
-- Product category terms (e.g., "feedback tool", "changelog software")
-- Competitor names mentioned in README
-
-Return a JSON array. Each keyword should have: keyword, category (one of: "product_name", "tech_stack", "product_category", "competitor").
-
-Format: [{"keyword": "...", "category": "..."}]
-Return ONLY the JSON array, no markdown.`,
-        }
-      );
-
-      const keywords = parseJsonArray(keywordsResult.text, KEYWORD_SCHEMA).map(
-        (k) => ({ ...k, accepted: true })
-      );
-
-      await ctx.runMutation(
-        internal.integrations.github.project_setup_internal.updateStepStatus,
-        {
-          setupId: args.setupId,
-          status: "done",
-          stepKey: "extract_keywords",
-          summary: `Found ${keywords.length} keywords`,
-        }
-      );
-
-      await ctx.runMutation(
-        internal.integrations.github.project_setup_internal.updateSetupResults,
-        { setupId: args.setupId, suggestedKeywords: keywords }
-      );
-
-      // Step 4: Configure changelog
       await ctx.runMutation(
         internal.integrations.github.project_setup_internal.updateStepStatus,
         {
@@ -272,7 +212,6 @@ Return ONLY the JSON array, no markdown.`,
         { changelogConfig, setupId: args.setupId }
       );
 
-      // Step 5: Suggest tags
       await ctx.runMutation(
         internal.integrations.github.project_setup_internal.updateStepStatus,
         { setupId: args.setupId, status: "running", stepKey: "suggest_tags" }
@@ -319,7 +258,6 @@ Return ONLY the JSON array, no markdown.`,
         { setupId: args.setupId, suggestedTags: tags }
       );
 
-      // Step 6: Generate prompts
       await ctx.runMutation(
         internal.integrations.github.project_setup_internal.updateStepStatus,
         {

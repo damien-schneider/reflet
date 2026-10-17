@@ -8,7 +8,6 @@ import { emailTables } from "./email/tableFields";
 import { feedbackTables } from "./feedback/tableFields";
 import { triageTables } from "./feedback/triage_contract";
 import { githubTables } from "./integrations/github/tableFields";
-import { intelligenceTables } from "./intelligence/tableFields";
 import { notificationTables } from "./notifications/tableFields";
 import { organizationTables } from "./organizations/tableFields";
 import { sessionsTables } from "./sessions/tableFields";
@@ -36,7 +35,6 @@ export default defineSchema({
   ...devtoolsTables,
   ...duplicateTables,
   ...surveyTables,
-  ...intelligenceTables,
   ...statusTables,
   ...webhookTables,
   ...teamAccessTables,

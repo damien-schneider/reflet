@@ -1,5 +1,4 @@
 import {
-  Binoculars,
   Chat,
   ChatCircle,
   ClipboardText,
@@ -13,7 +12,6 @@ import {
 import type { CommandItem } from "./types";
 
 export const commandItems: CommandItem[] = [
-  // Navigation
   {
     description: "View and manage feedback",
     group: "navigation",
@@ -79,17 +77,6 @@ export const commandItems: CommandItem[] = [
     requiresOrg: true,
   },
   {
-    description: "Competitor and market insights",
-    group: "navigation",
-    href: "/dashboard/$orgSlug/intelligence",
-    icon: Binoculars,
-    id: "intelligence",
-    keywords: ["intelligence", "competitors", "market", "insights", "ai"],
-    label: "Intelligence",
-    requiresAdmin: true,
-    requiresOrg: true,
-  },
-  {
     description: "Restore or permanently delete feedback",
     group: "navigation",
     href: "/dashboard/$orgSlug/trash",
@@ -115,7 +102,6 @@ export const commandItems: CommandItem[] = [
       "members",
       "billing",
       "ai",
-      "intelligence",
       "changelog",
       "releases",
       "agents",
@@ -124,8 +110,6 @@ export const commandItems: CommandItem[] = [
     label: "Project",
     requiresOrg: true,
   },
-
-  // Actions
   {
     description: "Your personal account",
     group: "actions",

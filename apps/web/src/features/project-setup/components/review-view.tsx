@@ -20,16 +20,10 @@ import { useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Muted, Text } from "@/components/ui/typography";
-import { KeywordsSection } from "./keywords-section";
 import { LaunchBar } from "./launch-bar";
 import { MonitorsSection } from "./monitors-section";
 import { ChangelogCard, PromptsCard, TagsCard } from "./review-sections";
-import type {
-  SetupData,
-  SuggestedKeyword,
-  SuggestedMonitor,
-  SuggestedTag,
-} from "./setup-types";
+import type { SetupData, SuggestedMonitor, SuggestedTag } from "./setup-types";
 
 interface ReviewViewProps {
   organizationId: Id<"organizations">;
@@ -62,9 +56,6 @@ export function ReviewView({
   const [monitors, setMonitors] = useState<SuggestedMonitor[]>(
     setup.suggestedMonitors ?? []
   );
-  const [keywords, setKeywords] = useState<SuggestedKeyword[]>(
-    setup.suggestedKeywords ?? []
-  );
   const [tags, setTags] = useState<SuggestedTag[]>(setup.suggestedTags ?? []);
 
   const applySetupResults = useMutation(
@@ -79,9 +70,6 @@ export function ReviewView({
     setLaunchError(null);
     try {
       await applySetupResults({
-        acceptedKeywords: keywords
-          .filter((k) => k.accepted)
-          .map(({ keyword }) => ({ keyword, source: "both" as const })),
         acceptedMonitors: monitors
           .filter((m) => m.accepted)
           .map(({ url, name }) => ({ name, url })),
@@ -143,14 +131,6 @@ export function ReviewView({
           }
         />
 
-        <KeywordsSection
-          keywords={keywords}
-          onToggle={(index) => setKeywords((prev) => toggleAt(prev, index))}
-          onToggleAll={(accepted) =>
-            setKeywords((prev) => setAllAccepted(prev, accepted))
-          }
-        />
-
         {setup.changelogConfig && (
           <ChangelogCard config={setup.changelogConfig} />
         )}
@@ -189,7 +169,6 @@ export function ReviewView({
           changelogConfig={setup.changelogConfig}
           error={launchError}
           isApplying={isApplying}
-          keywords={keywords}
           monitors={monitors}
           onLaunch={handleLaunch}
           tags={tags}

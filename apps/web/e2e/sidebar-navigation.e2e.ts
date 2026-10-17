@@ -10,14 +10,7 @@ const ACCOUNT_BUTTON_NAME = /^Account:/;
 
 const GROUPS = [
   {
-    links: [
-      "Feedback",
-      "Changelog",
-      "Inbox",
-      "Surveys",
-      "Intelligence",
-      "Status",
-    ],
+    links: ["Feedback", "Changelog", "Inbox", "Surveys", "Status"],
     name: "Workspace",
   },
   {

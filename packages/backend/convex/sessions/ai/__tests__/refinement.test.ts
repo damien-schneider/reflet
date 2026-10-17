@@ -2,13 +2,13 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { internal } from "../../../_generated/api";
 import type { Doc } from "../../../_generated/dataModel";
-import { generateStructured } from "../../../intelligence/structured_output";
+import { generateStructured } from "../../../ai/structured_output";
 import { setupTest, type TestContext } from "../../../test.helpers";
 import { requestRefinement } from "../analysis_request";
 import { proposalOutput, SAVED_NEED, seedOstalSession } from "./ostal_session";
 import { seedProposal } from "./session_fixtures";
 
-vi.mock("../../../intelligence/structured_output", () => ({
+vi.mock("../../../ai/structured_output", () => ({
   generateStructured: vi.fn(),
 }));
 

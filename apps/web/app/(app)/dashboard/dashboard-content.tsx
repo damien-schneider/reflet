@@ -45,7 +45,6 @@ const routeLabels: Record<string, string> = {
   github: "GitHub",
   "in-app": "In-app",
   inbox: "Inbox",
-  intelligence: "Intelligence",
   members: "Members",
   milestones: "Milestones",
   project: "Project",

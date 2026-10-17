@@ -17,7 +17,6 @@ const DASHBOARD_ROUTES = [
   "/status",
   "/in-app",
   "/surveys",
-  "/intelligence",
   "/trash",
 ];
 

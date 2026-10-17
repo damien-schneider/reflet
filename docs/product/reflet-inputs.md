@@ -124,7 +124,7 @@ Action `sessions/imports/screenshot.importScreenshot({ storageId, annotatedStora
 
 ### 4.3 Vision
 
-`intelligence/structured_output.ts` n'accepte qu'un `prompt` texte. Il faut l'étendre pour accepter des messages avec des parties image (`{ type: "image", image: Uint8Array, mediaType }` du SDK `ai`), sans changer les appelants existants.
+`ai/structured_output.ts` n'accepte qu'un `prompt` texte. Il faut l'étendre pour accepter des messages avec des parties image (`{ type: "image", image: Uint8Array, mediaType }` du SDK `ai`), sans changer les appelants existants.
 
 Prompt `prepareScreenshotPrompt` :
 

@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { internal } from "../../../_generated/api";
 import type { Id } from "../../../_generated/dataModel";
-import { generateStructured } from "../../../intelligence/structured_output";
+import { generateStructured } from "../../../ai/structured_output";
 import { setupTest, type TestContext } from "../../../test.helpers";
 import { requestAnalysis } from "../analysis_request";
 import { ANALYSIS_NOT_CONFIGURED } from "../configuration";
@@ -14,7 +14,7 @@ import {
 } from "./ostal_session";
 import { captureLogs, seedProposal, seedSegment } from "./session_fixtures";
 
-vi.mock("../../../intelligence/structured_output", () => ({
+vi.mock("../../../ai/structured_output", () => ({
   generateStructured: vi.fn(),
 }));
 

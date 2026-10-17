@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { internal } from "../../../_generated/api";
 import type { Id } from "../../../_generated/dataModel";
-import { generateStructured } from "../../../intelligence/structured_output";
+import { generateStructured } from "../../../ai/structured_output";
 import { proposalOutput } from "../../ai/__tests__/ostal_session";
 import {
   findContribution,
@@ -14,7 +14,7 @@ import {
   startContinuation,
 } from "./intention.fixtures";
 
-vi.mock("../../../intelligence/structured_output", () => ({
+vi.mock("../../../ai/structured_output", () => ({
   generateStructured: vi.fn(),
 }));
 

@@ -161,15 +161,6 @@ export const githubTables = {
         summary: v.optional(v.string()),
       })
     ),
-    suggestedKeywords: v.optional(
-      v.array(
-        v.object({
-          accepted: v.boolean(),
-          category: v.string(),
-          keyword: v.string(),
-        })
-      )
-    ),
     suggestedMonitors: v.optional(
       v.array(
         v.object({

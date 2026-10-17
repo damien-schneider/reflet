@@ -1,5 +1,4 @@
 import {
-  Binoculars,
   ChartBar,
   Chat,
   ChatCircle,
@@ -12,11 +11,9 @@ import {
   Gear,
   GithubLogo,
   Globe,
-  Hash,
   Heartbeat,
   type Icon,
   Key,
-  Lightbulb,
   NotePencil,
   PauseCircle,
   PlayCircle,
@@ -91,20 +88,6 @@ function surveyItems(base: string): NavItem[] {
   ];
 }
 
-function intelligenceItems(base: string): NavItem[] {
-  const intelligence = `${base}/intelligence`;
-  return [
-    { href: intelligence, icon: Lightbulb, label: "Insights" },
-    { href: `${intelligence}?tab=community`, icon: Hash, label: "Community" },
-    {
-      href: `${intelligence}?tab=competitors`,
-      icon: Users,
-      label: "Competitors",
-    },
-    { href: `${intelligence}?tab=settings`, icon: Gear, label: "Settings" },
-  ];
-}
-
 function workspaceSections(base: string, unread?: number): NavSection[] {
   return [
     {
@@ -123,10 +106,6 @@ function workspaceSections(base: string, unread?: number): NavSection[] {
     },
     {
       ...sectionOf("Surveys", ClipboardText, surveyItems(base)),
-      adminOnly: true,
-    },
-    {
-      ...sectionOf("Intelligence", Binoculars, intelligenceItems(base)),
       adminOnly: true,
     },
     {

@@ -43,7 +43,6 @@ const setup = async () => {
 };
 
 const NOTHING_ACCEPTED = {
-  acceptedKeywords: [],
   acceptedMonitors: [],
   acceptedTags: [],
 };
@@ -79,27 +78,23 @@ describe("applySetupResults", () => {
     ).rejects.toThrow("Setup not found");
   });
 
-  test("stores accepted monitors and keywords with the defaults of manual creation", async () => {
+  test("stores accepted monitors with the defaults of manual creation", async () => {
     const { admin, organizationId, setupId, t } = await setup();
 
     await admin.mutation(
       api.integrations.github.project_setup.applySetupResults,
       {
         ...NOTHING_ACCEPTED,
-        acceptedKeywords: [{ keyword: "  acme app ", source: "both" }],
         acceptedMonitors: [{ name: "API", url: "https://api.acme.dev/" }],
         organizationId,
         setupId,
       }
     );
 
-    const { keywords, monitors } = await t.run(async (ctx) => ({
-      keywords: await ctx.db.query("intelligenceKeywords").collect(),
-      monitors: await ctx.db.query("statusMonitors").collect(),
-    }));
-    expect(monitors).toMatchObject([
+    expect(
+      await t.run((ctx) => ctx.db.query("statusMonitors").collect())
+    ).toMatchObject([
       { alertThreshold: 3, checkIntervalMinutes: 5, isPublic: true },
     ]);
-    expect(keywords.map(({ keyword }) => keyword)).toEqual(["acme app"]);
   });
 });

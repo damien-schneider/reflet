@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { generateStructured } from "../../../intelligence/structured_output";
+import { generateStructured } from "../../../ai/structured_output";
 import { SESSION_TEXT_LIMITS } from "../../constants";
 import { isOperationAllowed } from "../../intentions/changes";
 import {

@@ -25,7 +25,6 @@ import { ReviewView } from "./review-view";
 const SETUP_BENEFITS = [
   "Analyze your tech stack and architecture",
   "Discover services to monitor",
-  "Extract keywords for market intelligence",
   "Configure your changelog from releases",
   "Suggest tags from your codebase",
   "Generate AI prompts for your project",
