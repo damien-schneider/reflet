@@ -212,7 +212,6 @@ import type * as integrations_github_webhook_actions from "../integrations/githu
 import type * as integrations_github_webhook_events from "../integrations/github/webhook_events.js";
 import type * as integrations_website_reference_scrape from "../integrations/website_reference_scrape.js";
 import type * as integrations_website_references from "../integrations/website_references.js";
-import type * as migrations_delete_intelligence_notifications from "../migrations/delete_intelligence_notifications.js";
 import type * as notifications_preferences from "../notifications/preferences.js";
 import type * as notifications_push from "../notifications/push.js";
 import type * as notifications_push_queries from "../notifications/push_queries.js";
@@ -617,7 +616,6 @@ declare const fullApi: ApiFromModules<{
   "integrations/github/webhook_events": typeof integrations_github_webhook_events;
   "integrations/website_reference_scrape": typeof integrations_website_reference_scrape;
   "integrations/website_references": typeof integrations_website_references;
-  "migrations/delete_intelligence_notifications": typeof migrations_delete_intelligence_notifications;
   "notifications/preferences": typeof notifications_preferences;
   "notifications/push": typeof notifications_push;
   "notifications/push_queries": typeof notifications_push_queries;
