@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { failureMessage } from "../ui/session-workspace";
-import { prepareTeamSignIn } from "./team-auth";
 
 export interface TeamConnection {
   apiUrl: string;
@@ -8,30 +7,30 @@ export interface TeamConnection {
   publicKey: string;
 }
 
-function useTeamSignIn(connection: TeamConnection) {
-  const [isLeaving, setIsLeaving] = useState(false);
+function useTeamSignIn(onSignIn: () => Promise<void>) {
+  const [isSigningIn, setIsSigningIn] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
 
   const signIn = async () => {
-    setIsLeaving(true);
+    setIsSigningIn(true);
     setFailure(null);
     try {
-      window.location.assign(await prepareTeamSignIn(connection));
+      await onSignIn();
     } catch (error) {
       setFailure(failureMessage(error));
-      setIsLeaving(false);
+      setIsSigningIn(false);
     }
   };
 
-  return { failure, isLeaving, signIn };
+  return { failure, isSigningIn, signIn };
 }
 
 function SignInActions({
-  isSigningIn,
+  canSignIn,
   onHide,
   onSignIn,
 }: {
-  isSigningIn: boolean;
+  canSignIn: boolean;
   onHide: () => void;
   onSignIn: () => void;
 }) {
@@ -40,7 +39,7 @@ function SignInActions({
       <button
         className="dt-btn"
         data-variant="primary"
-        disabled={isSigningIn}
+        disabled={!canSignIn}
         onClick={onSignIn}
         type="button"
       >
@@ -54,16 +53,20 @@ function SignInActions({
 }
 
 export function TeamSignInCard({
-  connection,
   isFinishing,
   notice,
+  onSignIn,
+  continuesInBrowser,
 }: {
-  connection: TeamConnection;
   isFinishing: boolean;
   notice: string | null;
+  onSignIn: () => Promise<void>;
+  continuesInBrowser: boolean;
 }) {
   const [isHidden, setIsHidden] = useState(false);
-  const { failure, isLeaving, signIn } = useTeamSignIn(connection);
+  const { failure, isSigningIn, signIn } = useTeamSignIn(onSignIn);
+  const isWaitingForBrowser = continuesInBrowser && isSigningIn;
+  const isLeavingPage = isSigningIn && !continuesInBrowser;
 
   if (isHidden) {
     return null;
@@ -84,6 +87,11 @@ export function TeamSignInCard({
           Finishing sign-in…
         </p>
       )}
+      {isWaitingForBrowser && (
+        <p className="dt-meta" role="status">
+          Finish signing in in your browser.
+        </p>
+      )}
       {notice && (
         <p className="dt-meta" role="status">
           {notice}
@@ -95,7 +103,7 @@ export function TeamSignInCard({
         </p>
       )}
       <SignInActions
-        isSigningIn={isLeaving || isFinishing}
+        canSignIn={!(isLeavingPage || isFinishing)}
         onHide={() => setIsHidden(true)}
         onSignIn={signIn}
       />

@@ -44,26 +44,23 @@ const DEFAULT_APP_URL = "https://www.reflet.app";
 const ignoreChanges = () => () => undefined;
 
 /** Activation reads the URL and storage, which only exist in the browser: the server renders without team tools. */
-function useTeamToolsKey(options: {
+function useShowsTeamTools(options: {
   hasWidget: boolean;
   props: RefletFeedbackProps;
   publicKey: string | null;
-}): string | null {
+}): boolean {
   const { props, publicKey } = options;
   const hasDevtoolsOnPage = useHasDevtoolsOnPage();
   const isActivated = useSyncExternalStore(
     ignoreChanges,
     () =>
-      props.teamTools !== false &&
-      publicKey !== null &&
-      hasTeamActivation(publicKey),
+      typeof props.teamTools === "object" ||
+      (props.teamTools !== false &&
+        publicKey !== null &&
+        hasTeamActivation(publicKey)),
     () => false
   );
-  const ownsTeamTools = useOwnsTeamTools(
-    isActivated && !hasDevtoolsOnPage,
-    options.hasWidget
-  );
-  return ownsTeamTools ? publicKey : null;
+  return useOwnsTeamTools(isActivated && !hasDevtoolsOnPage, options.hasWidget);
 }
 
 export function RefletFeedback(props: RefletFeedbackProps) {
@@ -75,12 +72,12 @@ export function RefletFeedback(props: RefletFeedbackProps) {
     showsWidget
   );
   const showsDevtools = ownsDevtools && DevtoolsLayer !== null;
-  const teamToolsKey = useTeamToolsKey({
+  const showsTeamTools = useShowsTeamTools({
     hasWidget: showsWidget,
     props,
     publicKey: state.publicKey,
   });
-  if (!(showsWidget || showsDevtools || teamToolsKey)) {
+  if (!(showsWidget || showsDevtools || showsTeamTools)) {
     return null;
   }
   return (
@@ -103,7 +100,9 @@ export function RefletFeedback(props: RefletFeedbackProps) {
             />
           </Suspense>
         )}
-        {teamToolsKey && <TeamTools props={props} publicKey={teamToolsKey} />}
+        {showsTeamTools && (
+          <TeamTools props={props} publicKey={state.publicKey} />
+        )}
       </ShadowPortal>
     </>
   );
@@ -114,9 +113,20 @@ function TeamTools({
   publicKey,
 }: {
   props: RefletFeedbackProps;
-  publicKey: string;
+  publicKey: string | null;
 }) {
   const context = useContext(RefletContext);
+  const position = props.position ?? "bottom-right";
+  if (typeof props.teamTools === "object") {
+    return (
+      <Suspense fallback={null}>
+        <TeamLayer bridge={props.teamTools} position={position} />
+      </Suspense>
+    );
+  }
+  if (publicKey === null) {
+    return null;
+  }
   return (
     <Suspense fallback={null}>
       <TeamLayer
@@ -125,7 +135,7 @@ function TeamTools({
           appUrl: props.appUrl ?? DEFAULT_APP_URL,
           publicKey,
         }}
-        position={props.position ?? "bottom-right"}
+        position={position}
       />
     </Suspense>
   );

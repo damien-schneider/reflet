@@ -1,7 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
+import type { TeamToolsBridge } from "../team/team-tools-bridge";
 import { SessionApiError } from "./session-api";
-import { devtoolsTransport, teamTransport } from "./session-transports";
+import {
+  bridgeTransport,
+  devtoolsTransport,
+  teamTransport,
+} from "./session-transports";
 
 const okSchema = z.object({ ok: z.boolean() });
 
@@ -98,6 +103,54 @@ describe("devtoolsTransport", () => {
       limit: "events",
       message: "Too many events",
       status: 413,
+    });
+  });
+});
+
+describe("bridgeTransport", () => {
+  it("sends JSON through the desktop bridge and keeps the status and limit of an error", async () => {
+    const request = vi
+      .fn<TeamToolsBridge["request"]>()
+      .mockResolvedValueOnce({ body: '{"ok":true}', status: 200 })
+      .mockResolvedValueOnce({
+        body: JSON.stringify({ error: "Too long", limit: "duration" }),
+        status: 413,
+      });
+    const transport = bridgeTransport({
+      account: vi.fn(),
+      request,
+      signIn: vi.fn(),
+      signOut: vi.fn(),
+    });
+
+    const result = await transport.request({
+      body: { sessionId: "s1" },
+      method: "POST",
+      path: "/api/v1/sessions/analyze",
+      schema: okSchema,
+    });
+    const refused = transport.request({
+      method: "GET",
+      path: "/api/v1/sessions/detail",
+      query: { sessionId: "s1" },
+      schema: okSchema,
+    });
+
+    expect(result).toEqual({ ok: true });
+    expect(request.mock.calls[0]?.[0]).toStrictEqual({
+      body: JSON.stringify({ sessionId: "s1" }),
+      method: "POST",
+      path: "/api/v1/sessions/analyze",
+    });
+    await expect(refused).rejects.toMatchObject({
+      limit: "duration",
+      message: "Too long",
+      status: 413,
+    });
+    expect(request.mock.calls[1]?.[0]).toStrictEqual({
+      method: "GET",
+      path: "/api/v1/sessions/detail",
+      query: { sessionId: "s1" },
     });
   });
 });

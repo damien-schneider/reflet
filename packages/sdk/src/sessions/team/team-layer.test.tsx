@@ -9,6 +9,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { SessionApiError } from "../api/session-api";
 import { fakeApi, fakeRecorder } from "../ui/testing/session-fixtures";
 import { TeamLayer } from "./team-layer";
+import type { TeamToolsAccount, TeamToolsBridge } from "./team-tools-bridge";
 
 const mocks = vi.hoisted(() => ({
   createSessionApi: vi.fn(),
@@ -208,4 +209,51 @@ it("signs out when Reflet refuses the stored sign-in", async () => {
     )
   ).toBeTruthy();
   expect(mocks.forgetTeamAccess).toHaveBeenCalled();
+});
+
+function fakeBridge(account: TeamToolsAccount | null) {
+  return {
+    account: vi.fn<TeamToolsBridge["account"]>().mockResolvedValue(account),
+    request: vi.fn<TeamToolsBridge["request"]>(),
+    signIn: vi.fn<TeamToolsBridge["signIn"]>(),
+    signOut: vi.fn<TeamToolsBridge["signOut"]>().mockResolvedValue(undefined),
+  };
+}
+
+it("signs a desktop app in through the system browser while the page stays", async () => {
+  const bridge = fakeBridge(null);
+  let approve: (account: TeamToolsAccount) => void = () => undefined;
+  bridge.signIn.mockReturnValue(
+    new Promise((resolve) => {
+      approve = resolve;
+    })
+  );
+  render(<TeamLayer bridge={bridge} position="bottom-right" />);
+
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Sign in with Reflet" })
+  );
+
+  expect(
+    await screen.findByText("Finish signing in in your browser.")
+  ).toBeTruthy();
+  expect(signInButton().disabled).toBe(false);
+  expect(mocks.prepareTeamSignIn).not.toHaveBeenCalled();
+  approve({ organizationName: "Acme" });
+  expect(await screen.findByRole("button", { name: "Sessions" })).toBeTruthy();
+});
+
+it("opens a signed-in desktop app's team tools at once and signs out through its bridge", async () => {
+  const bridge = fakeBridge({ organizationName: "Acme" });
+  render(<TeamLayer bridge={bridge} position="bottom-right" />);
+
+  fireEvent.click(await screen.findByRole("button", { name: "Sessions" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Ada, Acme" }));
+  fireEvent.click(screen.getByRole("menuitem", { name: "Sign out" }));
+
+  await waitFor(() => expect(bridge.signOut).toHaveBeenCalled());
+  expect(mocks.forgetTeamAccess).not.toHaveBeenCalled();
+  expect(
+    await screen.findByRole("button", { name: "Sign in with Reflet" })
+  ).toBeTruthy();
 });

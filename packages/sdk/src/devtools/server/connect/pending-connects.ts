@@ -12,7 +12,7 @@ interface PendingConnect {
   startedAt: number;
 }
 
-const PENDING_CONNECT_TTL_MS = 10 * 60_000;
+export const PENDING_CONNECT_TTL_MS = 10 * 60_000;
 const MAX_PENDING_CONNECTS = 10;
 declare global {
   // Preserve pending connects across dev server module reloads.

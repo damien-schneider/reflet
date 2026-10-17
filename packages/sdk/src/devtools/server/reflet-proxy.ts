@@ -1,5 +1,8 @@
 import { PROXIED_API_PATHS } from "../protocol";
+import { boardCredential } from "./connect/board-credential";
+import { removeConnection } from "./connect/connection-store";
 import { errorResponse, JSON_RESPONSE_HEADERS } from "./json-response";
+import type { ResolvedDevtoolsOptions } from "./options";
 
 type ProxiedApiPath = (typeof PROXIED_API_PATHS)[number];
 
@@ -92,4 +95,21 @@ export async function proxyToReflet(
     BODYLESS_STATUSES.includes(upstream.status) ? null : upstream.body,
     { headers: JSON_RESPONSE_HEADERS, status: upstream.status }
   );
+}
+
+/** A stored token Reflet refuses is dropped, so the next status shows Connect again. */
+export async function proxyWithBoardCredential(
+  request: Request,
+  apiPath: string,
+  settings: ResolvedDevtoolsOptions
+): Promise<Response> {
+  const credential = await boardCredential(settings);
+  const response = await proxyToReflet(request, apiPath, {
+    apiUrl: settings.apiUrl,
+    token: credential?.token ?? null,
+  });
+  if (credential?.isStored && response.status === 401) {
+    await removeConnection(settings.root, settings.apiUrl, credential.token);
+  }
+  return response;
 }

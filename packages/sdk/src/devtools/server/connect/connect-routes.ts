@@ -21,8 +21,15 @@ const tokenExchangeSchema = z.object({
 });
 const upstreamErrorSchema = z.object({ error: z.string() });
 
+export type ConnectOutcome =
+  | { ok: true; organizationName: string }
+  | { message: string; ok: false; status: number; title: string };
+
+export const connectCallbackUriFor = (origin: string): string =>
+  `${origin}${DEVTOOLS_ROUTE_BASE}${DEVTOOLS_ENDPOINTS.connectCallback}`;
+
 const redirectUriFor = (request: Request): string =>
-  `${new URL(request.url).origin}${DEVTOOLS_ROUTE_BASE}${DEVTOOLS_ENDPOINTS.connectCallback}`;
+  connectCallbackUriFor(new URL(request.url).origin);
 
 async function readPublicKey(request: Request): Promise<string | null> {
   const parsed = publicKeySchema.safeParse(
@@ -37,6 +44,24 @@ async function readJson(response: Response): Promise<unknown> {
   } catch {
     return null;
   }
+}
+
+/** Starts a pending connect: Reflet sends the member back to `redirectUri` with a code only this process can redeem. */
+export function connectAuthorizeUrl(
+  settings: ResolvedDevtoolsOptions,
+  target: { publicKey: string; redirectUri: string }
+): { authorizeUrl: string; state: string } {
+  const { codeChallenge, state } = beginConnect({
+    apiUrl: settings.apiUrl,
+    redirectUri: target.redirectUri,
+    root: settings.root,
+  });
+  const authorizeUrl = new URL("/auth/devtools", settings.appUrl);
+  authorizeUrl.searchParams.set("public_key", target.publicKey);
+  authorizeUrl.searchParams.set("redirect_uri", target.redirectUri);
+  authorizeUrl.searchParams.set("state", state);
+  authorizeUrl.searchParams.set("code_challenge", codeChallenge);
+  return { authorizeUrl: authorizeUrl.toString(), state };
 }
 
 export async function startConnect(
@@ -62,52 +87,43 @@ export async function startConnect(
       403
     );
   }
-
-  const { codeChallenge, state } = beginConnect({
-    apiUrl: settings.apiUrl,
+  const { authorizeUrl } = connectAuthorizeUrl(settings, {
+    publicKey,
     redirectUri: redirectUriFor(request),
-    root: settings.root,
   });
-  const authorizeUrl = new URL("/auth/devtools", settings.appUrl);
-  authorizeUrl.searchParams.set("public_key", publicKey);
-  authorizeUrl.searchParams.set("redirect_uri", redirectUriFor(request));
-  authorizeUrl.searchParams.set("state", state);
-  authorizeUrl.searchParams.set("code_challenge", codeChallenge);
-  return jsonResponse({
-    authorizeUrl: authorizeUrl.toString(),
-  } satisfies ConnectStartResponse);
+  return jsonResponse({ authorizeUrl } satisfies ConnectStartResponse);
 }
 
-export async function finishConnect(
-  request: Request,
-  settings: ResolvedDevtoolsOptions
-): Promise<Response> {
-  const { searchParams } = new URL(request.url);
-  const code = searchParams.get("code");
-  const state = searchParams.get("state");
+/** Trades the code Reflet sent back for a token, kept outside the repository. */
+export async function redeemConnectCode(
+  settings: ResolvedDevtoolsOptions,
+  callback: { code: string | null; redirectUri: string; state: string | null }
+): Promise<ConnectOutcome> {
+  const { code, redirectUri, state } = callback;
   const pending =
     code && state
       ? takeConnect(state, {
           apiUrl: settings.apiUrl,
-          redirectUri: redirectUriFor(request),
+          redirectUri,
           root: settings.root,
         })
       : null;
   if (!(code && pending)) {
-    return htmlPage(
-      "Link expired",
-      "This connect link expired or was already used. Start again from the Reflet devtools.",
-      400
-    );
+    return {
+      message:
+        "This connect link expired or was already used. Start again from the Reflet devtools.",
+      ok: false,
+      status: 400,
+      title: "Link expired",
+    };
   }
-
   let upstream: Response;
   try {
     upstream = await fetch(`${settings.apiUrl}/api/v1/devtools/token`, {
       body: JSON.stringify({
         code,
         codeVerifier: pending.codeVerifier,
-        redirectUri: redirectUriFor(request),
+        redirectUri,
       }),
       headers: {
         Accept: "application/json",
@@ -117,41 +133,63 @@ export async function finishConnect(
       signal: AbortSignal.timeout(10_000),
     });
   } catch {
-    return htmlPage(
-      "Connection failed",
-      `Could not reach Reflet at ${settings.apiUrl}.`,
-      502
-    );
+    return {
+      message: `Could not reach Reflet at ${settings.apiUrl}.`,
+      ok: false,
+      status: 502,
+      title: "Connection failed",
+    };
   }
-
   const payload = await readJson(upstream);
   if (!upstream.ok) {
-    return htmlPage(
-      "Connection refused",
-      upstreamErrorSchema.safeParse(payload).data?.error ??
+    return {
+      message:
+        upstreamErrorSchema.safeParse(payload).data?.error ??
         "Reflet refused this connect code.",
-      400
-    );
+      ok: false,
+      status: 400,
+      title: "Connection refused",
+    };
   }
   const exchange = tokenExchangeSchema.safeParse(payload);
   if (!exchange.success) {
-    return htmlPage(
-      "Connection failed",
-      "Reflet answered with an unexpected response.",
-      502
-    );
+    return {
+      message: "Reflet answered with an unexpected response.",
+      ok: false,
+      status: 502,
+      title: "Connection failed",
+    };
   }
-
   await saveConnection(settings.root, {
     apiUrl: settings.apiUrl,
     organizationName: exchange.data.organizationName,
     token: exchange.data.token,
   });
+  return { ok: true, organizationName: exchange.data.organizationName };
+}
+
+export function connectOutcomePage(outcome: ConnectOutcome): Response {
+  if (!outcome.ok) {
+    return htmlPage(outcome.title, outcome.message, outcome.status);
+  }
   return htmlPage(
     "Connected",
-    `Connected to ${exchange.data.organizationName}. Go back to your app: the Reflet devtools are ready.`,
+    `Connected to ${outcome.organizationName}. Go back to your app: the Reflet devtools are ready.`,
     200
   );
+}
+
+export async function finishConnect(
+  request: Request,
+  settings: ResolvedDevtoolsOptions
+): Promise<Response> {
+  const { searchParams } = new URL(request.url);
+  const outcome = await redeemConnectCode(settings, {
+    code: searchParams.get("code"),
+    redirectUri: redirectUriFor(request),
+    state: searchParams.get("state"),
+  });
+  return connectOutcomePage(outcome);
 }
 
 async function revokeUpstream(apiUrl: string, token: string): Promise<boolean> {
@@ -167,12 +205,17 @@ async function revokeUpstream(apiUrl: string, token: string): Promise<boolean> {
   }
 }
 
+/** Removes the stored token and revokes it on Reflet; false when nothing was revoked. */
+export async function forgetConnection(
+  settings: ResolvedDevtoolsOptions
+): Promise<boolean> {
+  const removed = await removeConnection(settings.root, settings.apiUrl);
+  return removed ? await revokeUpstream(removed.apiUrl, removed.token) : false;
+}
+
 export async function disconnect(
   settings: ResolvedDevtoolsOptions
 ): Promise<Response> {
-  const removed = await removeConnection(settings.root, settings.apiUrl);
-  const revoked = removed
-    ? await revokeUpstream(removed.apiUrl, removed.token)
-    : false;
+  const revoked = await forgetConnection(settings);
   return jsonResponse({ revoked } satisfies DisconnectResponse);
 }

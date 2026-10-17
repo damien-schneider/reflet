@@ -4,6 +4,7 @@ import {
 } from "../../devtools/client/route/dev-route";
 import { uploadBlob } from "../../feedback/core/submit";
 import { sessionApiErrorSchema } from "../protocol";
+import type { TeamToolsBridge } from "../team/team-tools-bridge";
 import {
   SessionApiError,
   type SessionRequest,
@@ -63,6 +64,34 @@ export function teamTransport(options: {
         throw toSessionApiError(failure, response.status);
       }
       return schema.parse(await response.json().catch(() => null));
+    },
+  };
+}
+
+function parseReplyBody(body: string): unknown {
+  try {
+    return JSON.parse(body);
+  } catch {
+    return null;
+  }
+}
+
+/** Calls go through the desktop app's privileged process, which holds the credential. Absent keys stay absent: IPC keeps an `undefined` value. */
+export function bridgeTransport(bridge: TeamToolsBridge): SessionTransport {
+  return {
+    async request<T>({ body, method, path, query, schema }: SessionRequest<T>) {
+      const reply = await bridge.request({
+        method,
+        path,
+        ...(method === "POST" && { body: JSON.stringify(body ?? {}) }),
+        ...(query && { query }),
+      });
+      const payload = parseReplyBody(reply.body);
+      const isSuccess = reply.status >= 200 && reply.status < 300;
+      if (!isSuccess) {
+        throw toSessionApiError(payload, reply.status);
+      }
+      return schema.parse(payload);
     },
   };
 }

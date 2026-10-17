@@ -4,13 +4,12 @@ import {
   DEVTOOLS_STATUS_MARKER,
   type DevtoolsStatus,
 } from "../protocol";
-import { boardAccess, boardCredential } from "./connect/board-credential";
+import { boardAccess } from "./connect/board-credential";
 import {
   disconnect,
   finishConnect,
   startConnect,
 } from "./connect/connect-routes";
-import { removeConnection } from "./connect/connection-store";
 import {
   type DevtoolsOutcome,
   errorResponse,
@@ -22,7 +21,7 @@ import {
   type ResolvedDevtoolsOptions,
   resolveDevtoolsOptions,
 } from "./options";
-import { proxyToReflet } from "./reflet-proxy";
+import { proxyWithBoardCredential } from "./reflet-proxy";
 import { rejectUntrustedCaller, rejectUntrustedHost } from "./request-guard";
 import { searchCode } from "./source/code-search";
 import { type ProjectRoots, resolveProjectRoots } from "./source/project-roots";
@@ -63,22 +62,6 @@ function readInteger(value: string | null, minimum: number): number | null {
   }
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed >= minimum ? parsed : null;
-}
-
-async function proxyWithBoardCredential(
-  request: Request,
-  apiPath: string,
-  settings: ResolvedDevtoolsOptions
-): Promise<Response> {
-  const credential = await boardCredential(settings);
-  const response = await proxyToReflet(request, apiPath, {
-    apiUrl: settings.apiUrl,
-    token: credential?.token ?? null,
-  });
-  if (credential?.isStored && response.status === 401) {
-    await removeConnection(settings.root, settings.apiUrl, credential.token);
-  }
-  return response;
 }
 
 async function routeRequest(

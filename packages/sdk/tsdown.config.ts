@@ -20,6 +20,7 @@ export default defineConfig({
     tsconfig: "../tsconfig.sdk-dts.json",
   },
   entry: {
+    desktop: "src/devtools/server/desktop.ts",
     "devtools-next": "src/devtools/server/next.ts",
     "devtools-vite": "src/devtools/server/vite.ts",
     feedback: "src/feedback/entry.ts",

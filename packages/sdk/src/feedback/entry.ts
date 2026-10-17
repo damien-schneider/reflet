@@ -18,6 +18,12 @@
  * ```
  */
 
+export type {
+  TeamToolsAccount,
+  TeamToolsBridge,
+  TeamToolsCall,
+  TeamToolsReply,
+} from "../sessions/team/team-tools-bridge";
 // biome-ignore lint/performance/noBarrelFile: published entry point for `reflet-sdk/feedback`
 export { captureViewport, releaseCapture } from "./core/capture";
 export { buildElementSelection } from "./core/element-selector";

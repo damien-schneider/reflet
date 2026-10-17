@@ -167,7 +167,7 @@ builds do; production builds strip React's debug data).
 | `categories` | `("bug" \| "idea" \| "question")[]` | all three | Category chips to show. |
 | `labels` | `Partial<FeedbackWidgetLabels>` | — | Override any string for i18n. |
 | `devtools` | `boolean` | `true` | Dev-only team tools; see below. Never loaded outside `NODE_ENV=development`. |
-| `teamTools` | `boolean` | `true` | Lets signed-in members of your Reflet organization record sessions in production; see below. |
+| `teamTools` | `boolean \| TeamToolsBridge` | `true` | Lets signed-in members of your Reflet organization record sessions in production; see below. Desktop apps pass a bridge. |
 | `appUrl` | `string` | `"https://www.reflet.app"` | Reflet web app origin team tools sign in on. |
 | `onSubmit` | `(result: { feedbackId: string }) => void` | — | Fires after a successful send. |
 
@@ -298,6 +298,37 @@ OpenRouter with zero data retention, and the audio is deleted once its
 transcript is saved, within 24 hours at most. Pausing stops all collection;
 keystrokes are never recorded, form fields appear empty in screenshots, and
 password fields and elements marked `data-reflet-redact` are hidden from them.
+
+##### Desktop apps (Electron)
+
+A page loaded from `file://` has no origin Reflet can bind a sign-in to, so the
+browser flow above can't work there. Run team tools from the app's main
+process instead: sign-in opens the system browser and comes back to a one-shot
+listener on `127.0.0.1`, like the devtools' Connect, and the token stays on disk
+in `~/.reflet/devtools/`, never in the page. Members approve it on reflet.app as
+a local connection; revoke it from Account → Devtools. The key needs no allowed
+domain for this.
+
+```ts
+// main process
+import { app, ipcMain, shell } from 'electron';
+import { createTeamToolsHost } from 'reflet-sdk/desktop';
+
+const teamTools = createTeamToolsHost({
+  appDataDirectory: app.getPath('userData'),
+  openExternal: (url) => shell.openExternal(url),
+  publicKey: 'fb_pub_xxx',
+});
+ipcMain.handle('reflet-team-tools:account', () => teamTools.account());
+ipcMain.handle('reflet-team-tools:request', (_event, call) => teamTools.request(call));
+ipcMain.handle('reflet-team-tools:sign-in', () => teamTools.signIn());
+ipcMain.handle('reflet-team-tools:sign-out', () => teamTools.signOut());
+```
+
+Expose the four calls from the preload script, then pass them as the bridge:
+`<RefletFeedback publicKey="fb_pub_xxx" teamTools={bridge} />`. Team tools show
+at once, so only pass the bridge in builds meant for your team. `request` only
+forwards the session and feedback endpoints the devtools use.
 
 ### 5. In-App Surveys
 

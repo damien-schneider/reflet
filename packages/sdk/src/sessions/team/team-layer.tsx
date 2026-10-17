@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { AccountFooter } from "../../devtools/client/account/account-footer";
 import {
   DevtoolsBar,
@@ -8,7 +8,8 @@ import { DevtoolsSheet } from "../../devtools/client/devtools-sheet";
 import { DEVTOOLS_STYLES } from "../../devtools/client/devtools-styles";
 import { Notices, reportFailure } from "../../devtools/client/notices";
 import type { RefletFeedbackProps } from "../../feedback/types";
-import { teamTransport } from "../api/session-transports";
+import type { SessionTransport } from "../api/session-api";
+import { bridgeTransport, teamTransport } from "../api/session-transports";
 import { purgeAccount } from "../local/local-sessions";
 import { RecordingLayer } from "../ui/recording/recording-layer";
 import {
@@ -28,10 +29,11 @@ import {
   finishTeamSignIn,
   forgetTeamAccess,
   hasTeamSignInReturn,
+  prepareTeamSignIn,
   readTeamAccess,
-  type TeamAccess,
 } from "./team-auth";
 import { type TeamConnection, TeamSignInCard } from "./team-sign-in-card";
+import type { TeamToolsAccount, TeamToolsBridge } from "./team-tools-bridge";
 
 const TEAM_TOOLS_LABEL = "Reflet team tools";
 const REFUSED_SIGN_IN_COPY =
@@ -40,6 +42,12 @@ const REFUSED_SIGN_IN_COPY =
 interface TeamPlacement {
   edge: "bottom" | "top";
   side: "left" | "right";
+}
+
+interface SignedInTeam {
+  onSignOut: (reason: string | null) => void;
+  organizationName: string;
+  transport: SessionTransport;
 }
 
 function SessionsBody({
@@ -73,7 +81,11 @@ function TeamSheet({
   onClose,
   side,
 }: {
-  account: { access: TeamAccess; onSignOut: () => void; state: WorkspaceState };
+  account: {
+    onSignOut: () => void;
+    organizationName: string;
+    state: WorkspaceState;
+  };
   navigation: SessionNavigation;
   onClose: () => void;
   side: TeamPlacement["side"];
@@ -86,7 +98,7 @@ function TeamSheet({
         place === null && (
           <AccountFooter
             actions={[{ label: "Sign out", onSelect: account.onSignOut }]}
-            organizationName={account.access.organizationName}
+            organizationName={account.organizationName}
             person={
               state.kind === "ready" ? state.workspace.identity.user : null
             }
@@ -108,33 +120,12 @@ function TeamSheet({
   );
 }
 
-interface TeamSession {
-  access: TeamAccess;
-  apiUrl: string;
-  onSignOut: (reason: string | null) => void;
-}
-
-function useTeamTransport(team: TeamSession) {
-  const createTransport = () => ({
-    apiUrl: team.apiUrl,
-    transport: teamTransport({ apiUrl: team.apiUrl, token: team.access.token }),
-  });
-  const [current, setCurrent] = useState(createTransport);
-  if (current.apiUrl !== team.apiUrl) {
-    const next = createTransport();
-    setCurrent(next);
-    return next.transport;
-  }
-  return current.transport;
-}
-
-function useTeamWorkspace(team: TeamSession) {
+function useTeamWorkspace(team: SignedInTeam) {
   const { onSignOut } = team;
-  const transport = useTeamTransport(team);
   const state = useWorkspaceLoader({
     onUnauthorized: () => onSignOut(REFUSED_SIGN_IN_COPY),
     surface: "app",
-    transport,
+    transport: team.transport,
   });
   const workspace = state.kind === "ready" ? state.workspace : null;
 
@@ -155,7 +146,7 @@ function TeamTools({
   placement,
 }: {
   placement: TeamPlacement;
-  team: TeamSession;
+  team: SignedInTeam;
 }) {
   const { signOut, state, workspace } = useTeamWorkspace(team);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -165,7 +156,11 @@ function TeamTools({
     <SessionWorkspaceProvider workspace={workspace}>
       {isSheetOpen && (
         <TeamSheet
-          account={{ access: team.access, onSignOut: signOut, state }}
+          account={{
+            onSignOut: signOut,
+            organizationName: team.organizationName,
+            state,
+          }}
           navigation={navigation}
           onClose={() => setIsSheetOpen(false)}
           side={placement.side}
@@ -190,26 +185,40 @@ function TeamTools({
   );
 }
 
-function placementFor(
-  position: NonNullable<RefletFeedbackProps["position"]>
-): TeamPlacement {
-  return {
-    edge: position.startsWith("top") ? "top" : "bottom",
-    side: position.endsWith("right") ? "right" : "left",
-  };
+function SignedOutAnchor({
+  children,
+  placement,
+}: {
+  children: ReactNode;
+  placement: TeamPlacement;
+}) {
+  return (
+    <div
+      className="dt-team-anchor"
+      data-edge={placement.edge}
+      data-side={placement.side}
+    >
+      {children}
+    </div>
+  );
 }
 
-export function TeamLayer({
+/** A web page signs in by leaving for reflet.app and coming back with a token for its own origin. */
+function BrowserTeamAccount({
   connection,
-  position,
+  placement,
 }: {
   connection: TeamConnection;
-  position: NonNullable<RefletFeedbackProps["position"]>;
+  placement: TeamPlacement;
 }) {
   const { apiUrl, publicKey } = connection;
   const [access, setAccess] = useState(() => readTeamAccess(publicKey));
   const [notice, setNotice] = useState<string | null>(null);
   const [isFinishing, setIsFinishing] = useState(hasTeamSignInReturn);
+  const transport = useMemo(
+    () => access && teamTransport({ apiUrl, token: access.token }),
+    [access, apiUrl]
+  );
   useEffect(() => {
     finishTeamSignIn({ apiUrl, publicKey })
       ?.then(
@@ -228,28 +237,133 @@ export function TeamLayer({
       reportFailure("Signing out of Reflet did not finish", error)
     );
   };
-  const placement = placementFor(position);
 
+  if (access && transport) {
+    return (
+      <TeamTools
+        placement={placement}
+        team={{
+          onSignOut: signOut,
+          organizationName: access.organizationName,
+          transport,
+        }}
+      />
+    );
+  }
+  return (
+    <SignedOutAnchor placement={placement}>
+      <TeamSignInCard
+        continuesInBrowser={false}
+        isFinishing={isFinishing}
+        notice={notice}
+        onSignIn={async () =>
+          window.location.assign(await prepareTeamSignIn(connection))
+        }
+      />
+    </SignedOutAnchor>
+  );
+}
+
+type BridgeAccountState =
+  | { kind: "loading" }
+  | { account: TeamToolsAccount | null; kind: "loaded" };
+
+/** A desktop app signs in through the system browser; its privileged process keeps the credential. */
+function BridgeTeamAccount({
+  bridge,
+  placement,
+}: {
+  bridge: TeamToolsBridge;
+  placement: TeamPlacement;
+}) {
+  const [accountState, setAccountState] = useState<BridgeAccountState>({
+    kind: "loading",
+  });
+  const [notice, setNotice] = useState<string | null>(null);
+  const transport = useMemo(() => bridgeTransport(bridge), [bridge]);
+  useEffect(() => {
+    let isCurrent = true;
+    bridge.account().then(
+      (account) => isCurrent && setAccountState({ account, kind: "loaded" }),
+      (error: unknown) => {
+        if (isCurrent) {
+          setAccountState({ account: null, kind: "loaded" });
+          setNotice(failureMessage(error));
+        }
+      }
+    );
+    return () => {
+      isCurrent = false;
+    };
+  }, [bridge]);
+  const signIn = async () => {
+    const account = await bridge.signIn();
+    setAccountState({ account, kind: "loaded" });
+    setNotice(null);
+  };
+  const signOut = (reason: string | null) => {
+    setAccountState({ account: null, kind: "loaded" });
+    setNotice(reason);
+    bridge
+      .signOut()
+      .catch((error: unknown) =>
+        reportFailure("Signing out of Reflet did not finish", error)
+      );
+  };
+
+  if (accountState.kind === "loading") {
+    return null;
+  }
+  if (accountState.account) {
+    return (
+      <TeamTools
+        placement={placement}
+        team={{
+          onSignOut: signOut,
+          organizationName: accountState.account.organizationName,
+          transport,
+        }}
+      />
+    );
+  }
+  return (
+    <SignedOutAnchor placement={placement}>
+      <TeamSignInCard
+        continuesInBrowser
+        isFinishing={false}
+        notice={notice}
+        onSignIn={signIn}
+      />
+    </SignedOutAnchor>
+  );
+}
+
+function placementFor(
+  position: NonNullable<RefletFeedbackProps["position"]>
+): TeamPlacement {
+  return {
+    edge: position.startsWith("top") ? "top" : "bottom",
+    side: position.endsWith("right") ? "right" : "left",
+  };
+}
+
+export function TeamLayer(
+  props: { position: NonNullable<RefletFeedbackProps["position"]> } & (
+    | { bridge: TeamToolsBridge }
+    | { connection: TeamConnection }
+  )
+) {
+  const placement = placementFor(props.position);
   return (
     <div className="dt">
       <style>{`${DEVTOOLS_STYLES}${SESSIONS_STYLES}`}</style>
-      {access ? (
-        <TeamTools
-          placement={placement}
-          team={{ access, apiUrl, onSignOut: signOut }}
-        />
+      {"bridge" in props ? (
+        <BridgeTeamAccount bridge={props.bridge} placement={placement} />
       ) : (
-        <div
-          className="dt-team-anchor"
-          data-edge={placement.edge}
-          data-side={placement.side}
-        >
-          <TeamSignInCard
-            connection={connection}
-            isFinishing={isFinishing}
-            notice={notice}
-          />
-        </div>
+        <BrowserTeamAccount
+          connection={props.connection}
+          placement={placement}
+        />
       )}
       <Notices />
     </div>

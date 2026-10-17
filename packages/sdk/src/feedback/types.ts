@@ -1,7 +1,8 @@
 import type { ReactNode, RefObject } from "react";
+import type { TeamToolsBridge } from "../sessions/team/team-tools-bridge";
 import type { ElementSelection, FeedbackContext, RefletUser } from "../types";
 
-export const SDK_VERSION = "0.7.4";
+export const SDK_VERSION = "0.7.5";
 export const DEFAULT_WIDGET_OFFSET = 20;
 
 const ANNOTATION_TOOLS = [
@@ -168,8 +169,11 @@ export interface RefletFeedbackProps {
   primaryColor?: string;
   publicKey?: string;
   renderTrigger?: (props: FeedbackTriggerProps) => ReactNode;
-  /** Shown once activated by the `reflet-team` URL parameter or a stored sign-in. Defaults to true. */
-  teamTools?: boolean;
+  /**
+   * Shown once activated by the `reflet-team` URL parameter or a stored sign-in. Defaults to true.
+   * A desktop app passes a bridge from `createTeamToolsHost` instead: team tools then show at once and sign in through the system browser.
+   */
+  teamTools?: boolean | TeamToolsBridge;
   theme?: "auto" | "dark" | "light";
   user?: RefletUser;
   userToken?: string;
