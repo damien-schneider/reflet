@@ -1,6 +1,6 @@
 {
   "name": "reflet-sdk",
-  "version": "0.7.4",
+  "version": "0.7.5",
   "description": "Official Reflet SDK - Collect user feedback, feature requests, and bug reports from your app",
   "keywords": [
     "feedback",
@@ -58,6 +58,10 @@
     "./devtools/vite": {
       "types": "./dist/devtools-vite.d.ts",
       "import": "./dist/devtools-vite.js"
+    },
+    "./desktop": {
+      "types": "./dist/desktop.d.ts",
+      "import": "./dist/desktop.js"
     }
   },
   "main": "./dist/index.js",

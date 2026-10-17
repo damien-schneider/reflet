@@ -5,6 +5,12 @@ All notable changes to `reflet-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.5] - 2026-10-17
+
+### Added
+
+- Team tools in desktop apps: `createTeamToolsHost` from `reflet-sdk/desktop` runs them in an Electron main process, and `<RefletFeedback teamTools={bridge} />` takes the bridge it returns. Pages loaded from `file://` can now record sessions: sign-in opens the system browser and returns to a loopback listener, and the token stays in `~/.reflet/devtools/`, out of the page.
+
 ## [0.7.4] - 2026-10-15
 
 ### Changed
