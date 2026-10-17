@@ -6,7 +6,6 @@ import { Skeleton } from "@ctrl-ui/react/ui/skeleton";
 import type { Id } from "@reflet/backend/convex/_generated/dataModel";
 import { ScreenshotGallery } from "../screenshot-gallery";
 import { CommentsSection } from "./comments-section";
-import { FeatureCheck } from "./feature-check";
 import { FeedbackContent } from "./feedback-content";
 import { FeedbackDetailDrawerHeader } from "./feedback-detail-drawer-header";
 import type {
@@ -138,15 +137,6 @@ function FeedbackDetailBody({
         {isAdmin && (
           <div className="px-6 pb-4">
             <InlineClarification feedbackId={feedbackId} />
-          </div>
-        )}
-
-        {isAdmin && (
-          <div className="px-6 pb-4">
-            <FeatureCheck
-              feedbackId={feedbackId}
-              organizationId={feedback.organizationId}
-            />
           </div>
         )}
 

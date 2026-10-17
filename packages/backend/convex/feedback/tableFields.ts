@@ -132,34 +132,6 @@ export const feedbackTables = {
     ),
     aiDraftReply: v.optional(v.string()),
     aiDraftReplyGeneratedAt: v.optional(v.number()),
-    aiFeatureCheckError: v.optional(v.string()),
-    aiFeatureCheckEvidence: v.optional(
-      v.array(
-        v.object({
-          filePath: v.string(),
-          relevance: v.string(),
-          snippet: v.optional(v.string()),
-        })
-      )
-    ),
-    aiFeatureCheckGeneratedAt: v.optional(v.number()),
-    aiFeatureCheckResult: v.optional(
-      v.union(
-        v.literal("implemented"),
-        v.literal("partially_implemented"),
-        v.literal("not_implemented"),
-        v.literal("inconclusive")
-      )
-    ),
-    aiFeatureCheckStatus: v.optional(
-      v.union(
-        v.literal("pending"),
-        v.literal("checking"),
-        v.literal("completed"),
-        v.literal("error")
-      )
-    ),
-    aiFeatureCheckSummary: v.optional(v.string()),
     aiJunk: v.optional(v.number()),
     aiNeedsReview: v.optional(v.number()),
     aiPriority: v.optional(

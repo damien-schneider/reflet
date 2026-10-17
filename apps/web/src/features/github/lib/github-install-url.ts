@@ -10,7 +10,6 @@ export function buildGitHubInstallUrl(params: {
   userId: string | undefined;
   organizationId?: Id<"organizations">;
   orgSlug?: string;
-  returnTo?: string;
   account?: "new";
 }): string | undefined {
   if (!params.userId) {
@@ -22,9 +21,6 @@ export function buildGitHubInstallUrl(params: {
   }
   if (params.orgSlug) {
     search.set("orgSlug", params.orgSlug);
-  }
-  if (params.returnTo) {
-    search.set("returnTo", params.returnTo);
   }
   if (params.account) {
     search.set("account", params.account);

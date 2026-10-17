@@ -1,11 +1,9 @@
 import { defineTable } from "convex/server";
 import { v } from "convex/values";
-import { tagColorValidator } from "../../feedback/tag_colors";
 import {
   feedbackStatus,
   githubConnectionStatus,
   githubSyncStatus,
-  repoAnalysisStatus,
   websiteReferenceStatus,
 } from "../../shared/validators";
 
@@ -119,92 +117,6 @@ export const githubTables = {
     .index("by_connection", ["githubConnectionId"])
     .index("by_github_release_id", ["githubConnectionId", "githubReleaseId"]),
 
-  projectSetupResults: defineTable({
-    changelogConfig: v.optional(
-      v.object({
-        hasSemverTags: v.optional(v.boolean()),
-        importExisting: v.boolean(),
-        releaseCount: v.optional(v.number()),
-        targetBranch: v.string(),
-        versionPrefix: v.string(),
-        workflow: v.union(
-          v.literal("ai_powered"),
-          v.literal("automated"),
-          v.literal("manual")
-        ),
-      })
-    ),
-    completedAt: v.optional(v.number()),
-    createdAt: v.number(),
-    error: v.optional(v.string()),
-    githubConnectionId: v.id("githubConnections"),
-    organizationId: v.id("organizations"),
-    projectOverview: v.optional(v.string()),
-    status: v.union(
-      v.literal("idle"),
-      v.literal("analyzing"),
-      v.literal("review"),
-      v.literal("completed"),
-      v.literal("error")
-    ),
-    steps: v.array(
-      v.object({
-        error: v.optional(v.string()),
-        key: v.string(),
-        label: v.string(),
-        status: v.union(
-          v.literal("pending"),
-          v.literal("running"),
-          v.literal("done"),
-          v.literal("error")
-        ),
-        summary: v.optional(v.string()),
-      })
-    ),
-    suggestedMonitors: v.optional(
-      v.array(
-        v.object({
-          accepted: v.boolean(),
-          method: v.optional(v.string()),
-          name: v.string(),
-          url: v.string(),
-        })
-      )
-    ),
-    suggestedPrompts: v.optional(
-      v.array(
-        v.object({
-          prompt: v.string(),
-          title: v.string(),
-        })
-      )
-    ),
-    suggestedTags: v.optional(
-      v.array(
-        v.object({
-          accepted: v.boolean(),
-          color: tagColorValidator,
-          name: v.string(),
-        })
-      )
-    ),
-    updatedAt: v.number(),
-  }).index("by_organization", ["organizationId"]),
-
-  repoAnalysis: defineTable({
-    architecture: v.optional(v.string()),
-    completedAt: v.optional(v.number()),
-    createdAt: v.number(),
-    error: v.optional(v.string()),
-    features: v.optional(v.string()),
-    githubConnectionId: v.id("githubConnections"),
-    organizationId: v.id("organizations"),
-    repoStructure: v.optional(v.string()),
-    status: repoAnalysisStatus,
-    summary: v.optional(v.string()),
-    techStack: v.optional(v.string()),
-    updatedAt: v.number(),
-  }).index("by_organization", ["organizationId"]),
   userGithubConnections: defineTable({
     accountAvatarUrl: v.optional(v.string()),
     accountLogin: v.string(),

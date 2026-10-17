@@ -22,7 +22,6 @@ export async function GET(request: Request): Promise<NextResponse> {
     installationId: null,
     organizationId: searchParams.get("organizationId"),
     orgSlug: searchParams.get("orgSlug"),
-    returnTo: searchParams.get("returnTo"),
     setupAction: null,
   };
 

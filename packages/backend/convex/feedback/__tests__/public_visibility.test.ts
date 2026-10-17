@@ -33,9 +33,6 @@ const seed = async (
     });
     const feedbackId = await ctx.db.insert("feedback", {
       aiDraftReply: "internal draft",
-      aiFeatureCheckEvidence: [
-        { filePath: "src/secret.ts", relevance: "high", snippet: "API_KEY" },
-      ],
       assigneeId: MEMBER._id,
       authorId: MEMBER._id,
       commentCount: 1,
@@ -61,13 +58,7 @@ const seed = async (
     return { feedbackId, organizationId };
   });
 
-const PRIVATE_KEYS = [
-  "aiDraftReply",
-  "aiFeatureCheckEvidence",
-  "assigneeId",
-  "authorId",
-  "context",
-];
+const PRIVATE_KEYS = ["aiDraftReply", "assigneeId", "authorId", "context"];
 
 test("an anonymous caller gets nothing from a private org's roadmap", async () => {
   const t = setupTest({ authUsers: [MEMBER] });

@@ -32,7 +32,6 @@ import { AlertChannels } from "@/features/status/components/alert-channels";
 import { IncidentComposer } from "@/features/status/components/incident-composer";
 import { MaintenanceComposer } from "@/features/status/components/maintenance-composer";
 import { ScheduledMaintenances } from "@/features/status/components/scheduled-maintenances";
-import { GitHubConnectHint } from "@/shared/components/github-connect-hint";
 import {
   ActiveIncidents,
   MonitorGroups,
@@ -116,13 +115,7 @@ function StatusDashboard({
   };
 
   if (monitors.length === 0) {
-    return (
-      <NoMonitorsState
-        onAddMonitor={handleAddMonitor}
-        organizationId={organizationId}
-        orgSlug={orgSlug}
-      />
-    );
+    return <NoMonitorsState onAddMonitor={handleAddMonitor} />;
   }
 
   return (
@@ -136,12 +129,8 @@ function StatusDashboard({
 
 function NoMonitorsState({
   onAddMonitor,
-  organizationId,
-  orgSlug,
 }: {
   onAddMonitor: (monitor: NewMonitor) => Promise<void>;
-  organizationId: Id<"organizations">;
-  orgSlug: string;
 }) {
   return (
     <PageLayout width="content">
@@ -162,11 +151,6 @@ function NoMonitorsState({
           </EmptyHeader>
           <EmptyContent className="w-full max-w-md space-y-4">
             <AddMonitorInput onAdd={onAddMonitor} />
-            <GitHubConnectHint
-              description="Reflet suggests endpoints to monitor from your codebase."
-              organizationId={organizationId}
-              orgSlug={orgSlug}
-            />
           </EmptyContent>
         </Empty>
       </PageBody>

@@ -17,7 +17,6 @@ import { SyncedReleasesSection } from "@/features/github/components/synced-relea
 import { useGitHubSettings } from "@/features/github/hooks/use-github-settings";
 import { useGitHubSettingsMutations } from "@/features/github/hooks/use-github-settings-mutations";
 import { useGitHubSettingsQueries } from "@/features/github/hooks/use-github-settings-queries";
-import { RepoAnalysisPanel } from "./repo-analysis-panel";
 import { SettingsPage, SettingsSection } from "./settings-page";
 
 const PAGE_DESCRIPTION =
@@ -145,10 +144,6 @@ export function GitHubSection({
             settings={settings}
           />
         </SettingsSection>
-      ) : null}
-
-      {hasRepository ? (
-        <RepoAnalysisPanel isAdmin={isAdmin} organizationId={organizationId} />
       ) : null}
 
       <SettingsSection

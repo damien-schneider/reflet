@@ -16,13 +16,10 @@ import {
 function buildRedirectUrl(
   requestUrl: string,
   orgSlug: string | null,
-  returnTo: string | null,
   setupAction: string | null
 ): URL {
   let redirectPath: string;
-  if (orgSlug && returnTo === "setup") {
-    redirectPath = `/dashboard/${orgSlug}/setup`;
-  } else if (orgSlug) {
+  if (orgSlug) {
     redirectPath = `/dashboard/${orgSlug}/project/github`;
   } else {
     redirectPath = "/dashboard";
@@ -120,12 +117,7 @@ export async function GET(request: Request): Promise<NextResponse> {
 
     await clearConnectContext();
     return NextResponse.redirect(
-      buildRedirectUrl(
-        request.url,
-        context.orgSlug,
-        context.returnTo,
-        context.setupAction
-      )
+      buildRedirectUrl(request.url, context.orgSlug, context.setupAction)
     );
   } catch (error) {
     console.error("GitHub callback error:", error);

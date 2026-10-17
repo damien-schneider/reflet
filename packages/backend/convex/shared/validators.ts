@@ -87,13 +87,6 @@ export const githubSyncStatus = v.union(
   v.literal("error")
 );
 
-export const repoAnalysisStatus = v.union(
-  v.literal("pending"),
-  v.literal("in_progress"),
-  v.literal("completed"),
-  v.literal("error")
-);
-
 export const websiteReferenceStatus = v.union(
   v.literal("pending"),
   v.literal("fetching"),

@@ -11,7 +11,6 @@ const connectContextSchema = z.object({
   nonce: z.string(),
   organizationId: z.string().nullable(),
   orgSlug: z.string().nullable(),
-  returnTo: z.string().nullable(),
   setupAction: z.string().nullable(),
 });
 

@@ -3,7 +3,6 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 
 import { components } from "../_generated/api";
 
-// Use OpenRouter for LLM access
 const openrouter = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY,
 });
@@ -25,21 +24,3 @@ When clarifying feedback:
   languageModel: openrouter("z-ai/glm-4.5-air:free"),
   name: "Feedback Clarification Agent",
 });
-
-export const repoAnalysisAgent = new Agent(components.agent, {
-  instructions: `You are an expert software architect analyzing codebases.
-Your job is to analyze a GitHub repository and provide:
-
-1. **Summary**: A brief overview of what the project does
-2. **Tech Stack**: The main technologies, frameworks, and libraries used
-3. **Architecture**: The overall structure and design patterns
-4. **Features**: Key features and capabilities of the project
-5. **Repository Structure**: The organization of the codebase
-
-Be thorough but concise. Focus on actionable insights that would help someone understand the project quickly.`,
-  languageModel: openrouter("anthropic/claude-sonnet-4"),
-  name: "Repository Analysis Agent",
-});
-
-// Note: Auto-tagging now uses AI SDK directly with structured output (generateObject)
-// See feedback_auto_tagging.ts for the implementation

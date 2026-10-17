@@ -36,19 +36,8 @@ export const getFeedbackForClarification = internalQuery({
       return null;
     }
 
-    // Get organization context
     const org = await ctx.db.get(feedback.organizationId);
 
-    // Get repo analysis if available
-    const repoAnalysis = await ctx.db
-      .query("repoAnalysis")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", feedback.organizationId)
-      )
-      .order("desc")
-      .first();
-
-    // Get website references
     const websiteRefs = await ctx.db
       .query("websiteReferences")
       .withIndex("by_organization", (q) =>
@@ -60,7 +49,6 @@ export const getFeedbackForClarification = internalQuery({
     return {
       feedback,
       organizationName: org?.name,
-      repoAnalysis: repoAnalysis?.status === "completed" ? repoAnalysis : null,
       websiteRefs,
     };
   },
@@ -76,7 +64,6 @@ export const initiateClarification = mutation({
       throw new Error("Feedback not found");
     }
 
-    // Check admin permission
     const membership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>
@@ -88,7 +75,6 @@ export const initiateClarification = mutation({
       throw new Error("Only admins can generate AI clarifications");
     }
 
-    // Schedule the action to generate clarification
     await ctx.scheduler.runAfter(
       0,
       internal.feedback.clarification.generateClarification,
@@ -118,7 +104,6 @@ export const saveClarification = internalMutation({
 export const generateClarification = internalAction({
   args: { feedbackId: v.id("feedback") },
   handler: async (ctx, args) => {
-    // Get feedback and context
     const data = await ctx.runQuery(
       internal.feedback.clarification.getFeedbackForClarification,
       { feedbackId: args.feedbackId }
@@ -128,22 +113,12 @@ export const generateClarification = internalAction({
       throw new Error("Feedback not found");
     }
 
-    const { feedback, organizationName, repoAnalysis, websiteRefs } = data;
+    const { feedback, organizationName, websiteRefs } = data;
 
-    // Build context prompt
     const contextParts: string[] = [];
 
     if (organizationName) {
       contextParts.push(`Organization: ${organizationName}`);
-    }
-
-    if (repoAnalysis) {
-      contextParts.push(`
-Project Context:
-- Summary: ${repoAnalysis.summary || "N/A"}
-- Tech Stack: ${repoAnalysis.techStack || "N/A"}
-- Architecture: ${repoAnalysis.architecture || "N/A"}
-`);
     }
 
     if (websiteRefs.length > 0) {
@@ -167,7 +142,6 @@ Project Context:
         ? `\n\nContext about the product:\n${contextParts.join("\n\n")}`
         : "";
 
-    // Generate clarification using the agent
     const result = await feedbackClarificationAgent.generateText(
       ctx,
       { userId: "system" },
@@ -191,7 +165,6 @@ Format your response as a well-structured clarification, ready to be shown to th
 
     const clarification = result.text || "Unable to generate clarification";
 
-    // Save the clarification
     await ctx.runMutation(internal.feedback.clarification.saveClarification, {
       clarification:
         typeof clarification === "string"
@@ -216,7 +189,6 @@ export const generateCodingPrompt = query({
 
     await requireOrgMember(ctx, feedback.organizationId);
 
-    // Verify membership
     const membership = await ctx.db
       .query("organizationMembers")
       .withIndex("by_org_user", (q) =>
@@ -228,17 +200,6 @@ export const generateCodingPrompt = query({
       return null;
     }
 
-    // Get repo analysis for context
-    const repoAnalysis = await ctx.db
-      .query("repoAnalysis")
-      .withIndex("by_organization", (q) =>
-        q.eq("organizationId", feedback.organizationId)
-      )
-      .filter((q) => q.eq(q.field("status"), "completed"))
-      .order("desc")
-      .first();
-
-    // Get GitHub connection for repo name
     const githubConnection = await ctx.db
       .query("githubConnections")
       .withIndex("by_organization", (q) =>
@@ -246,53 +207,33 @@ export const generateCodingPrompt = query({
       )
       .first();
 
-    // Build the prompt
     const promptParts: string[] = [];
 
-    // Header
     const feedbackType = feedback.title.toLowerCase().includes("bug")
       ? "Fix"
       : "Implement";
     promptParts.push(`## ${feedbackType}: ${feedback.title}\n`);
 
-    // Description
     if (feedback.description) {
       promptParts.push(`### User Request\n${feedback.description}\n`);
     }
 
-    // AI Clarification (if available)
     if (feedback.aiClarification) {
       promptParts.push(
         `### Clarified Requirements\n${feedback.aiClarification}\n`
       );
     }
 
-    // Codebase context
-    if (repoAnalysis || githubConnection?.repositoryFullName) {
+    if (githubConnection?.repositoryFullName) {
       promptParts.push("### Codebase Context");
 
-      if (githubConnection?.repositoryFullName) {
-        promptParts.push(
-          `**Repository:** ${githubConnection.repositoryFullName}`
-        );
-      }
-
-      if (repoAnalysis?.summary) {
-        promptParts.push(`**Project:** ${repoAnalysis.summary}`);
-      }
-
-      if (repoAnalysis?.techStack) {
-        promptParts.push(`**Tech Stack:** ${repoAnalysis.techStack}`);
-      }
-
-      if (repoAnalysis?.architecture) {
-        promptParts.push(`**Architecture:** ${repoAnalysis.architecture}`);
-      }
+      promptParts.push(
+        `**Repository:** ${githubConnection.repositoryFullName}`
+      );
 
       promptParts.push("");
     }
 
-    // Instructions
     promptParts.push(`### Instructions
 1. Analyze the codebase to understand the current implementation
 2. Identify the relevant files that need to be modified
@@ -302,7 +243,6 @@ export const generateCodingPrompt = query({
 
     return {
       feedbackTitle: feedback.title,
-      hasRepoContext: Boolean(repoAnalysis),
       prompt: promptParts.join("\n"),
     };
   },

@@ -8,7 +8,6 @@ import {
 interface AgentPromptInput {
   attachments?: string[];
   description: string | null;
-  projectContext: string | null;
   reportContext?: ReportContextValue;
   tags: FeedbackTag[];
   title: string;
@@ -97,32 +96,7 @@ export function buildAgentPrompt(input: AgentPromptInput): string {
     "A user submitted the following feedback. Please analyze and implement the necessary changes.\n",
     ...feedbackSection(input),
     ...reportContextSection(input.reportContext),
-    ...(input.projectContext
-      ? ["## Project Context\n", `${input.projectContext}\n`]
-      : []),
     ...attachmentsSection(input),
     PROMPT_INSTRUCTIONS,
   ].join("\n");
-}
-
-interface RepoAnalysisSummary {
-  architecture?: string | null;
-  summary?: string | null;
-  techStack?: string | null;
-}
-
-export function buildProjectContext(
-  repoAnalysis: RepoAnalysisSummary | null | undefined
-): string | null {
-  if (!repoAnalysis?.summary) {
-    return null;
-  }
-  const contextParts = [`**Project:** ${repoAnalysis.summary}`];
-  if (repoAnalysis.techStack) {
-    contextParts.push(`**Tech Stack:** ${repoAnalysis.techStack}`);
-  }
-  if (repoAnalysis.architecture) {
-    contextParts.push(`**Architecture:** ${repoAnalysis.architecture}`);
-  }
-  return contextParts.join("\n");
 }

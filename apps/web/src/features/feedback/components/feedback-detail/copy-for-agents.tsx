@@ -12,7 +12,7 @@ import { useQuery } from "convex/react";
 import { useState } from "react";
 import type { AgentTarget } from "./agent-config";
 import { AGENTS, openCloudAgent, openDeepLink } from "./agent-config";
-import { buildAgentPrompt, buildProjectContext } from "./agent-prompt";
+import { buildAgentPrompt } from "./agent-prompt";
 import {
   AgentsMenuTrigger,
   CodingPromptSection,
@@ -118,10 +118,6 @@ function useAgentPromptSources({
     { feedbackId }
   );
   const feedback = useQuery(api.feedback.queries.get, { id: feedbackId });
-  const repoAnalysis = useQuery(
-    api.integrations.github.repo_analysis.getLatestAnalysis,
-    { organizationId }
-  );
   const githubConnection = useQuery(
     api.integrations.github.queries.getConnectionStatus,
     { organizationId }
@@ -131,7 +127,6 @@ function useAgentPromptSources({
     buildAgentPrompt({
       attachments,
       description,
-      projectContext: buildProjectContext(repoAnalysis),
       reportContext: feedback?.context,
       tags: (tags ?? []).filter((t): t is FeedbackTag => t !== null),
       title,
