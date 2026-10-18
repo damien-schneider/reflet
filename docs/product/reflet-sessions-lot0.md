@@ -4,26 +4,27 @@ Ce document fige les choix techniques pris avant de construire les sessions, ave
 
 ## Transcription
 
-Fournisseur retenu : **OpenRouter, modèle `openai/whisper-large-v3`, routage `provider.zdr: true`** (zero data retention).
+Fournisseur retenu : **ElevenLabs Scribe v2 via OpenRouter, routage `provider.zdr: true`** (zero data retention). Modèle : `TRANSCRIPTION_MODEL` dans `convex/ai/models.ts`.
 
 Pourquoi :
 
-- La clé `OPENROUTER_API_KEY` existe déjà sur les déploiements Reflet : aucun nouveau contrat ni sous-traitant à ajouter.
+- La clé `OPENROUTER_API_KEY` existe déjà sur les déploiements Reflet : aucun nouveau contrat à ajouter.
 - Le routage ZDR garantit que le fournisseur n'entraîne rien sur l'audio et ne le conserve pas.
-- Facturation à la seconde, environ 0,00045 $ par minute d'audio.
+- Facturation à la seconde, sans minimum par morceau : environ 0,0018 $ par minute d'audio.
+- Les termes anglais dits en français (« border radius », « save bar », « preview ») sont ceux sur lesquels les autres modèles se trompent.
 
-Mesures (appels réels, WAV 16 kHz mono 16 bits) :
+Mesures du 17/10/2026 (appels réels, WAV 16 kHz mono, voix de synthèse française ; 6 termes tech à reconnaître) :
 
-| Échantillon | Latence | Durée facturée | Résultat |
+| Modèle (ZDR) | Termes justes | Latence | Prix / heure |
 |---|---|---|---|
-| Français, 5 s | 1,29 s | 5,07 s | « Il faudrait un historique. En fait, je veux surtout savoir si c'est enregistré. » |
-| Anglais, 5 s | 1,43 s | 5 s | exact |
-| Bruit seul, 3 s | < 1 s | 3 s | texte vide |
+| ElevenLabs Scribe v2 | 5/6 | 0,5–0,8 s | 0,11 $ |
+| Deepgram Nova-3 (`language: multi`) | 4/6 | 0,8–1,4 s | 0,31 $ |
+| Whisper large v3 | 1/6 (« bord des radios », « Refinade ») | 0,6–4,9 s | 0,027 $ |
+| Whisper large v3 turbo, Qwen3 ASR 1.7B, Parakeet v3 | 1/6 | 0,3–1,6 s | 0,012–0,09 $ |
 
-Écartés :
+Sans ZDR sur OpenRouter, donc écartés : `gpt-4o-transcribe`, `gpt-4o-mini-transcribe`, `gemini-3.5-transcribe`, Voxtral, Grok STT.
 
-- `whisper-large-v3-turbo` : plus rapide (0,45 s) mais facture 10 s minimum par morceau, soit plus du double pour des phrases courtes.
-- `gpt-4o-mini-transcribe` : aucun point d'accès ZDR disponible.
+Scribe ne renvoie pas de probabilité de silence et marque les événements sonores entre crochets (« [pause] ») : ces étiquettes sont retirées, et un passage qui n'en contient que devient vide.
 
 Le découpage de la parole se fait dans le navigateur : les horodatages ne dépendent donc pas du fournisseur, et on peut en changer sans toucher au reste.
 

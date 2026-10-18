@@ -19,7 +19,7 @@ import {
 
 const TRANSCRIPTION_URL = "https://openrouter.ai/api/v1/audio/transcriptions";
 const TRANSCRIPTION_TIMEOUT_MS = 55_000;
-const NO_SPEECH_THRESHOLD = 0.6;
+const AUDIO_EVENT_TAG = /\[[^\]]*\]/g;
 const BASE64_CHUNK_BYTES = 0x80_00;
 const HTTP_REQUEST_TIMEOUT = 408;
 const HTTP_TOO_MANY_REQUESTS = 429;
@@ -36,11 +36,6 @@ const ORGANIZATION_QUOTA_REACHED =
 
 const transcriptionResponseSchema = z.object({
   language: z.string().optional(),
-  segments: z
-    .array(
-      z.object({ no_speech_prob: z.number().optional(), text: z.string() })
-    )
-    .optional(),
   text: z.string(),
 });
 
@@ -97,22 +92,17 @@ const toBase64 = (bytes: Uint8Array): string => {
 
 const spokenText = (
   response: z.infer<typeof transcriptionResponseSchema>
-): TranscriptionOutcome => {
-  const spoken = response.segments
-    ? response.segments
-        .filter((part) => (part.no_speech_prob ?? 0) <= NO_SPEECH_THRESHOLD)
-        .map((part) => part.text)
-        .join(" ")
-    : response.text;
-  return {
-    kind: "text",
-    language: response.language ?? null,
-    text: truncateText(
-      spoken.replace(WHITESPACE_RUN, " ").trim(),
-      SESSION_TEXT_LIMITS.segmentText
-    ),
-  };
-};
+): TranscriptionOutcome => ({
+  kind: "text",
+  language: response.language ?? null,
+  text: truncateText(
+    response.text
+      .replace(AUDIO_EVENT_TAG, " ")
+      .replace(WHITESPACE_RUN, " ")
+      .trim(),
+    SESSION_TEXT_LIMITS.segmentText
+  ),
+});
 
 const describeHttpFailure = (status: number): TranscriptionOutcome => ({
   error: `The transcription service answered with HTTP ${status}.`,

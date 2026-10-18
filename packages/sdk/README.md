@@ -296,11 +296,12 @@ Two things on your side:
 - The page must allow the microphone. A `Permissions-Policy` header with
   `microphone=()` blocks it; use `microphone=(self)`.
 
-Pass `teamTools={false}` to turn it off. Voice is transcribed by Whisper through
-OpenRouter with zero data retention, and the audio is deleted once its
-transcript is saved, within 24 hours at most. Pausing stops all collection;
-keystrokes are never recorded, form fields appear empty in screenshots, and
-password fields and elements marked `data-reflet-redact` are hidden from them.
+Pass `teamTools={false}` to turn it off. Voice is transcribed by ElevenLabs
+Scribe through OpenRouter with zero data retention, and the audio is deleted
+once its transcript is saved, within 24 hours at most. Pausing stops all
+collection; keystrokes are never recorded, form fields appear empty in
+screenshots, and password fields and elements marked `data-reflet-redact` are
+hidden from them.
 
 ##### Desktop apps (Electron)
 

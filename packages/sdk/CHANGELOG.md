@@ -5,6 +5,12 @@ All notable changes to `reflet-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Session voice is transcribed by ElevenLabs Scribe instead of Whisper, still through OpenRouter with zero data retention. It keeps English tech terms said in French ("border radius", "save bar", "preview") and answers faster; the disclosure shown before a session names the new provider.
+
 ## [0.7.10] - 2026-10-17
 
 ### Fixed

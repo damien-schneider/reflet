@@ -13,19 +13,8 @@ const SPOKEN = "Il faudrait un historique.";
 const WAV_BYTES = new Uint8Array([82, 73, 70, 70, 1, 2, 3, 250]);
 const STT_URL = "https://openrouter.ai/api/v1/audio/transcriptions";
 
-const verboseJson = (
-  parts: { text: string; no_speech_prob: number }[]
-): Response =>
-  Response.json({
-    language: "french",
-    segments: parts.map((part, id) => ({
-      end: id + 1,
-      id,
-      start: id,
-      ...part,
-    })),
-    text: parts.map(({ text }) => text).join(" "),
-  });
+const transcriptionJson = (text: string): Response =>
+  Response.json({ language: "fra", language_confidence: 0.99, text });
 
 const stubTranscriptionService = (answer: () => Promise<Response>) => {
   const fetchMock = vi.fn(async (_input: URL | string, _init?: RequestInit) =>
@@ -97,10 +86,7 @@ describe("segment transcription", () => {
     const t = setupTest();
     const ids = await seedVoiceSegment(t);
     const fetchMock = stubTranscriptionService(async () =>
-      verboseJson([
-        { no_speech_prob: 0.02, text: SPOKEN },
-        { no_speech_prob: 0.93, text: "Merci d'avoir regardé." },
-      ])
+      transcriptionJson(`[pause] ${SPOKEN} [laughter]`)
     );
     const logs = captureLogs();
 
@@ -124,7 +110,7 @@ describe("segment transcription", () => {
     });
     const state = await readState(t, ids);
     expect(state.segment).toMatchObject({
-      language: "french",
+      language: "fra",
       text: SPOKEN,
       textOrigin: "transcription",
       transcription: { attempts: 1, state: "done" },
@@ -145,7 +131,7 @@ describe("segment transcription", () => {
           textOrigin: "human",
         })
       );
-      return verboseJson([{ no_speech_prob: 0.01, text: SPOKEN }]);
+      return transcriptionJson(SPOKEN);
     });
 
     await transcribe(t, ids.segmentId);
@@ -169,7 +155,7 @@ describe("segment transcription", () => {
         await ctx.storage.delete(ids.storageId);
         await ctx.db.patch(ids.sessionId, { deletedAt: Date.now(), title: "" });
       });
-      return verboseJson([{ no_speech_prob: 0.01, text: SPOKEN }]);
+      return transcriptionJson(SPOKEN);
     });
 
     await transcribe(t, ids.segmentId);
@@ -183,14 +169,7 @@ describe("segment transcription", () => {
   test("marks silence as empty without touching the transcript revision", async () => {
     const t = setupTest();
     const ids = await seedVoiceSegment(t);
-    stubTranscriptionService(async () =>
-      verboseJson([
-        {
-          no_speech_prob: 0.97,
-          text: "Sous-titres réalisés par la communauté",
-        },
-      ])
-    );
+    stubTranscriptionService(async () => transcriptionJson("[pause]"));
 
     await transcribe(t, ids.segmentId);
 
@@ -238,7 +217,7 @@ describe("segment transcription", () => {
     const t = setupTest();
     const ids = await seedVoiceSegment(t);
     const fetchMock = stubTranscriptionService(async () =>
-      verboseJson([{ no_speech_prob: 0.01, text: SPOKEN }])
+      transcriptionJson(SPOKEN)
     );
 
     await transcribe(t, ids.segmentId);
@@ -255,7 +234,7 @@ describe("segment transcription", () => {
     const t = setupTest();
     const ids = await seedVoiceSegment(t, { analysisState: "waiting" });
     const fetchMock = stubTranscriptionService(async () =>
-      verboseJson([{ no_speech_prob: 0.01, text: SPOKEN }])
+      transcriptionJson(SPOKEN)
     );
 
     await t.run(async (ctx) => {
@@ -286,9 +265,7 @@ describe("segment transcription", () => {
   test("starts the waiting analysis once the last passage is transcribed", async () => {
     const t = setupTest();
     const ids = await seedVoiceSegment(t, { analysisState: "waiting" });
-    stubTranscriptionService(async () =>
-      verboseJson([{ no_speech_prob: 0.01, text: SPOKEN }])
-    );
+    stubTranscriptionService(async () => transcriptionJson(SPOKEN));
 
     await transcribe(t, ids.segmentId);
 

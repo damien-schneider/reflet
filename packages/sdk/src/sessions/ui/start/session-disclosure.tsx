@@ -27,8 +27,9 @@ function DisclosureList() {
       <ul className="dt-ses-list">
         <li>
           Your voice while recording. It is sent to Reflet and transcribed by
-          Whisper through OpenRouter with zero data retention. The audio is
-          deleted as soon as its transcript is saved, within 24 hours at most.
+          ElevenLabs Scribe through OpenRouter with zero data retention. The
+          audio is deleted as soon as its transcript is saved, within 24 hours
+          at most.
         </li>
         <li>
           The page: its address without sensitive parameters, its title, the
