@@ -13,7 +13,7 @@ Pourquoi :
 - Facturation à la seconde, sans minimum par morceau : environ 0,0018 $ par minute d'audio.
 - Les termes anglais dits en français (« border radius », « save bar », « preview ») sont ceux sur lesquels les autres modèles se trompent.
 
-Mesures du 17/10/2026 (appels réels, WAV 16 kHz mono, voix de synthèse française ; 6 termes tech à reconnaître) :
+Mesures du 18/10/2026 (appels réels, WAV 16 kHz mono, voix de synthèse française ; 6 termes tech à reconnaître) :
 
 | Modèle (ZDR) | Termes justes | Latence | Prix / heure |
 |---|---|---|---|
