@@ -5,11 +5,12 @@ import { z } from "zod";
 import {
   sessionDetailSchema,
   sessionIdentitySchema,
-  sessionProposalSchema,
   sessionSegmentSchema,
   sessionSummarySchema,
 } from "../../../../sdk/src/sessions/protocol";
+import type { TestContext } from "../../test.helpers";
 import {
+  addProposal,
   errorBody,
   type SessionClient,
   sessionClient,
@@ -26,7 +27,10 @@ interface SeededSession {
   sessionId: string;
 }
 
-async function seedPrivateSession(a: SessionClient): Promise<SeededSession> {
+async function seedPrivateSession(
+  a: SessionClient,
+  t: TestContext
+): Promise<SeededSession> {
   const sessionId = await startSession(a);
   const segment = await a.post("/api/v1/sessions/segments", {
     clientKey: "typed-1",
@@ -35,15 +39,12 @@ async function seedPrivateSession(a: SessionClient): Promise<SeededSession> {
     startMs: 1000,
     text: "The cart empties when I reload",
   });
-  const proposal = await a.post("/api/v1/sessions/proposals/create", {
-    clientKey: "proposal-1",
+  const proposal = await addProposal(t, {
     need: "Keep my cart after a reload",
     sessionId,
   });
   return {
-    proposalId: z
-      .object({ proposal: sessionProposalSchema })
-      .parse(proposal.body).proposal.id,
+    proposalId: proposal._id,
     segmentId: z.object({ segment: sessionSegmentSchema }).parse(segment.body)
       .segment.id,
     sessionId,
@@ -93,14 +94,14 @@ function writesOn(ids: SeededSession) {
 
 describe("session access over HTTP", () => {
   test("a member reads their identity and their own session", async () => {
-    const { a } = await setupSessionWorld();
+    const { a, t } = await setupSessionWorld();
     const identity = await a.get("/api/v1/sessions/identity");
     expect(sessionIdentitySchema.parse(identity.body)).toMatchObject({
       organizationName: "Acme",
       user: { email: "ada@acme.test", id: "user-a", name: "Ada" },
     });
 
-    const { sessionId } = await seedPrivateSession(a);
+    const { sessionId } = await seedPrivateSession(a, t);
     const detail = await a.get(
       `/api/v1/sessions/detail?sessionId=${sessionId}`
     );
@@ -113,8 +114,8 @@ describe("session access over HTTP", () => {
   });
 
   test("another member of the organization cannot see or touch a private session", async () => {
-    const { a, b } = await setupSessionWorld();
-    const ids = await seedPrivateSession(a);
+    const { a, b, t } = await setupSessionWorld();
+    const ids = await seedPrivateSession(a, t);
 
     const detail = await b.get(
       `/api/v1/sessions/detail?sessionId=${ids.sessionId}`
@@ -131,8 +132,8 @@ describe("session access over HTTP", () => {
   });
 
   test("a shared session is readable by the team but only the author changes it", async () => {
-    const { a, b } = await setupSessionWorld();
-    const ids = await seedPrivateSession(a);
+    const { a, b, t } = await setupSessionWorld();
+    const ids = await seedPrivateSession(a, t);
     await a.post("/api/v1/sessions/update", {
       sessionId: ids.sessionId,
       visibility: "team",
@@ -156,8 +157,8 @@ describe("session access over HTTP", () => {
   });
 
   test("another organization's member gets not found", async () => {
-    const { a, outsider } = await setupSessionWorld();
-    const ids = await seedPrivateSession(a);
+    const { a, outsider, t } = await setupSessionWorld();
+    const ids = await seedPrivateSession(a, t);
     await a.post("/api/v1/sessions/update", {
       sessionId: ids.sessionId,
       visibility: "team",

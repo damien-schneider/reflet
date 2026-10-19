@@ -192,15 +192,6 @@ export const evidenceBody = z.object({
 
 export const evidenceIdBody = z.object({ evidenceId: id });
 
-export const createProposalBody = z.object({
-  clientKey,
-  evidenceIds: z.array(id).max(MAX_IDS).optional(),
-  need: requiredText(CAPS.need),
-  observed: text(CAPS.observed).optional(),
-  segmentIds: z.array(id).max(MAX_IDS).optional(),
-  sessionId: id,
-});
-
 export const decideProposalBody = z.object({
   decision: z.enum(["pending", "kept", "later", "dismissed"]),
   proposalId: id,

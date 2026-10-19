@@ -201,3 +201,29 @@ export async function seedProposal(
     ...overrides,
   });
 }
+
+export async function addProposal(
+  t: TestContext,
+  options: { need: string; segmentIds?: string[]; sessionId: string }
+): Promise<Doc<"sessionProposals">> {
+  return await t.run(async (ctx) => {
+    const sessionId = ctx.db.normalizeId("sessions", options.sessionId);
+    const session = sessionId ? await ctx.db.get(sessionId) : null;
+    if (!session) {
+      throw new Error("Session missing");
+    }
+    const segmentIds = (options.segmentIds ?? []).flatMap((id) => {
+      const segmentId = ctx.db.normalizeId("sessionSegments", id);
+      return segmentId ? [segmentId] : [];
+    });
+    const proposalId = await seedProposal(ctx, session, {
+      need: options.need,
+      segmentIds,
+    });
+    const proposal = await ctx.db.get(proposalId);
+    if (!proposal) {
+      throw new Error("Proposal missing");
+    }
+    return proposal;
+  });
+}

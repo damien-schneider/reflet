@@ -13,6 +13,7 @@ import { internal } from "../../_generated/api";
 import type { Id } from "../../_generated/dataModel";
 import { seedSegment } from "../ai/__tests__/session_fixtures";
 import {
+  addProposal,
   pngBlob,
   type SessionClient,
   setupSessionWorld,
@@ -27,17 +28,6 @@ const handoffResponse = z.object({
   handoff: sessionHandoffSchema,
 });
 
-async function createProposal(
-  client: SessionClient,
-  options: { clientKey: string; need: string; sessionId: string }
-) {
-  const response = await client.post(
-    "/api/v1/sessions/proposals/create",
-    options
-  );
-  return proposalResponse.parse(response.body).proposal;
-}
-
 async function keep(client: SessionClient, proposalId: string) {
   const response = await client.post("/api/v1/sessions/proposals/decide", {
     decision: "kept",
@@ -47,15 +37,13 @@ async function keep(client: SessionClient, proposalId: string) {
 }
 
 describe("session review", () => {
-  test("creating a proposal replays, deciding is idempotent and keeping creates no feedback", async () => {
+  test("deciding is idempotent and keeping creates no feedback", async () => {
     const { a, t } = await setupSessionWorld();
     const sessionId = await startSession(a);
-    const options = { clientKey: "p-1", need: "Keep the cart", sessionId };
-    const created = await createProposal(a, options);
-    expect((await createProposal(a, options)).id).toBe(created.id);
+    const created = await addProposal(t, { need: "Keep the cart", sessionId });
 
-    const kept = await keep(a, created.id);
-    const keptAgain = await keep(a, created.id);
+    const kept = await keep(a, created._id);
+    const keptAgain = await keep(a, created._id);
     expect(kept.decision).toBe("kept");
     expect(keptAgain.updatedAt).toBe(kept.updatedAt);
     const rows = await t.run(async (ctx) => ({
@@ -69,20 +57,8 @@ describe("session review", () => {
   test("editing needs the current revision", async () => {
     const { a, t } = await setupSessionWorld();
     const sessionId = await startSession(a);
-    const created = await createProposal(a, {
-      clientKey: "p-1",
-      need: "Keep the cart",
-      sessionId,
-    });
-    const replay = await a.post("/api/v1/sessions/proposals/create", {
-      clientKey: "p-1",
-      need: "Keep the cart",
-      sessionId,
-    });
-    expect(replay.body).toMatchObject({
-      proposal: { callout: null, calloutSegmentId: null },
-    });
-    const proposalId = created.id as Id<"sessionProposals">;
+    const created = await addProposal(t, { need: "Keep the cart", sessionId });
+    const proposalId = created._id;
     const segmentId = await t.run(async (ctx) => {
       const session = await ctx.db.get(sessionId as Id<"sessions">);
       if (!session) {
@@ -99,7 +75,7 @@ describe("session review", () => {
       a.post("/api/v1/sessions/proposals/edit", {
         expectedRevision,
         need: "Keep the cart across devices",
-        proposalId: created.id,
+        proposalId,
         response: null,
         unknowns: ["Which devices?"],
       });
@@ -119,24 +95,16 @@ describe("session review", () => {
   });
 
   test("merging folds the sources into the target", async () => {
-    const { a } = await setupSessionWorld();
+    const { a, t } = await setupSessionWorld();
     const sessionId = await startSession(a);
-    const target = await createProposal(a, {
-      clientKey: "p-1",
-      need: "Keep the cart",
-      sessionId,
-    });
-    const source = await createProposal(a, {
-      clientKey: "p-2",
-      need: "Save cart",
-      sessionId,
-    });
+    const target = await addProposal(t, { need: "Keep the cart", sessionId });
+    const source = await addProposal(t, { need: "Save cart", sessionId });
 
     const merged = proposalResponse.parse(
       (
         await a.post("/api/v1/sessions/proposals/merge", {
-          sourceIds: [source.id],
-          targetId: target.id,
+          sourceIds: [source._id],
+          targetId: target._id,
         })
       ).body
     ).proposal;
@@ -145,9 +113,9 @@ describe("session review", () => {
       (await a.get(`/api/v1/sessions/detail?sessionId=${sessionId}`)).body
     );
     expect(
-      detail.proposals.find((proposal) => proposal.id === source.id)
+      detail.proposals.find((proposal) => proposal.id === source._id)
         ?.mergedIntoId
-    ).toBe(target.id);
+    ).toBe(target._id);
     expect(detail.session.counts.proposals).toBe(1);
   });
 
@@ -155,11 +123,7 @@ describe("session review", () => {
     const { a, t } = await setupSessionWorld();
     const sessionId = await startSession(a);
     const otherSessionId = await startSession(a, "session-2");
-    const proposal = await createProposal(a, {
-      clientKey: "p-1",
-      need: "Keep the cart",
-      sessionId,
-    });
+    const proposal = await addProposal(t, { need: "Keep the cart", sessionId });
     const evidence = z.object({ evidence: sessionEvidenceSchema }).parse(
       (
         await a.post("/api/v1/sessions/evidence", {
@@ -191,17 +155,17 @@ describe("session review", () => {
       a.post("/api/v1/sessions/handoffs", {
         clientKey,
         evidenceIds,
-        proposalIds: [proposal.id],
+        proposalIds: [proposal._id],
         sessionId,
       });
 
     expect((await handoff("h-0", [evidence.id])).status).toBe(409);
-    await keep(a, proposal.id);
+    await keep(a, proposal._id);
     expect((await handoff("h-0", [foreignEvidence.id])).status).toBe(404);
 
     const preview = await a.post("/api/v1/sessions/handoffs/preview", {
       evidenceIds: [evidence.id],
-      proposalIds: [proposal.id],
+      proposalIds: [proposal._id],
       sessionId,
     });
     expect(z.object({ brief: z.string() }).parse(preview.body).brief).toContain(
@@ -220,7 +184,7 @@ describe("session review", () => {
     );
     expect(replay.handoff.id).toBe(first.handoff.id);
     expect(first.handoff.proposals).toEqual([
-      { id: proposal.id, need: "Keep the cart", revision: proposal.revision },
+      { id: proposal._id, need: "Keep the cart", revision: proposal.revision },
     ]);
     expect(first.files.map((file) => file.evidenceId)).toEqual([evidence.id]);
     expect(first.handoff.brief).toContain("Keep the cart");
@@ -242,17 +206,13 @@ describe("session review", () => {
   test("internal feedback from a proposal is created once and agents never take it", async () => {
     const { a, organizationId, t } = await setupSessionWorld();
     const sessionId = await startSession(a);
-    const proposal = await createProposal(a, {
-      clientKey: "p-1",
-      need: "Keep the cart",
-      sessionId,
-    });
-    await keep(a, proposal.id);
+    const proposal = await addProposal(t, { need: "Keep the cart", sessionId });
+    await keep(a, proposal._id);
     const materialize = async () =>
       z.object({ created: z.boolean(), feedbackId: z.string() }).parse(
         (
           await a.post("/api/v1/sessions/proposals/feedback", {
-            proposalId: proposal.id,
+            proposalId: proposal._id,
           })
         ).body
       );
@@ -267,7 +227,7 @@ describe("session review", () => {
     expect(feedback[0]).toMatchObject({
       authorId: "user-a",
       isInternal: true,
-      sessionProposalId: proposal.id,
+      sessionProposalId: proposal._id,
       title: "Keep the cart",
     });
     const queue = await t.query(internal.feedback.agent_queue.nextFeedback, {

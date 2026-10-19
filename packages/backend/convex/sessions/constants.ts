@@ -18,7 +18,6 @@ export const SESSION_API_PATHS = [
   "/api/v1/sessions/intentions/keep-separate",
   "/api/v1/sessions/list",
   "/api/v1/sessions/proposals/clarify",
-  "/api/v1/sessions/proposals/create",
   "/api/v1/sessions/proposals/decide",
   "/api/v1/sessions/proposals/delete",
   "/api/v1/sessions/proposals/edit",

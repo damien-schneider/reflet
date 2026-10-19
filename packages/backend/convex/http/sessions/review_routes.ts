@@ -8,7 +8,6 @@ import {
 import {
   briefSelectionBody,
   clarifyProposalBody,
-  createProposalBody,
   decideProposalBody,
   deliveredBody,
   editProposalBody,
@@ -31,13 +30,6 @@ const REVIEW_ENDPOINTS: SessionEndpoint[] = [
     ),
     method: "POST",
     path: "/api/v1/sessions/analyze",
-  },
-  {
-    handler: sessionPost(createProposalBody, (ctx, actor, body) =>
-      ctx.runMutation(proposals.create, { actor, ...body })
-    ),
-    method: "POST",
-    path: "/api/v1/sessions/proposals/create",
   },
   {
     handler: sessionPost(decideProposalBody, (ctx, actor, body) =>

@@ -99,7 +99,6 @@ export const sessionsTables = {
     calloutTarget: v.optional(calloutTargetValidator),
     certainty: v.union(v.literal("clear"), v.literal("uncertain")),
     clarifications: v.array(v.object({ at: v.number(), text: v.string() })),
-    clientKey: v.optional(v.string()),
     createdAt: v.number(),
     decision: proposalDecisionValidator,
     evidenceIds: v.array(v.id("sessionEvidence")),
@@ -155,7 +154,6 @@ export const sessionsTables = {
     ),
   })
     .index("by_session", ["sessionId"])
-    .index("by_session_client_key", ["sessionId", "clientKey"])
     .index("by_attached_to", ["attachedToId"])
     .index("by_intention_suggestion", ["intentionSuggestion.intentionId"]),
 

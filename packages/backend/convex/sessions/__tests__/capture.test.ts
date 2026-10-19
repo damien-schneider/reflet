@@ -11,6 +11,7 @@ import type { Id } from "../../_generated/dataModel";
 import type { TestContext } from "../../test.helpers";
 import { SESSION_LIMITS } from "../constants";
 import {
+  addProposal,
   errorBody,
   pngBlob,
   setupSessionWorld,
@@ -298,8 +299,7 @@ describe("session capture", () => {
         })
       ).body
     );
-    await a.post("/api/v1/sessions/proposals/create", {
-      clientKey: "p-1",
+    await addProposal(t, {
       need: "Keep the cart",
       segmentIds: [created.segment.id],
       sessionId,

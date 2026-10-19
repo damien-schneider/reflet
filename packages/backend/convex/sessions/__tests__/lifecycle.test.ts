@@ -13,6 +13,7 @@ import {
   SESSION_TOMBSTONE_RETENTION_MS,
 } from "../constants";
 import {
+  addProposal,
   MEMBER_A,
   pngBlob,
   seedSession,
@@ -77,11 +78,7 @@ describe("session lifecycle", () => {
       events: [{ atMs: 10, frame: testFrame, kind: "navigation" }],
       sessionId,
     });
-    await a.post("/api/v1/sessions/proposals/create", {
-      clientKey: "p-1",
-      need: "Keep the cart",
-      sessionId,
-    });
+    await addProposal(t, { need: "Keep the cart", sessionId });
 
     const deleted = await a.post("/api/v1/sessions/delete", { sessionId });
     expect(deleted).toEqual({ body: { deleted: true }, status: 200 });
