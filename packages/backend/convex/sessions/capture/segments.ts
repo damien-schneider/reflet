@@ -213,6 +213,7 @@ export const correct = internalMutation({
             updatedAt: now,
           },
       updatedAt: now,
+      words: undefined,
     });
     await ctx.db.patch(session._id, {
       transcriptRevision: session.transcriptRevision + 1,

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { type ReactNode, useId, useState } from "react";
 import type {
   RecorderSnapshot,
   RecorderStartOptions,
@@ -51,10 +51,41 @@ export function StartProblem({
   );
 }
 
+function SpeakersChoice({
+  detectSpeakers,
+  isBusy,
+  onChange,
+}: {
+  detectSpeakers: boolean;
+  isBusy: boolean;
+  onChange: (detectSpeakers: boolean) => void;
+}) {
+  const hintId = useId();
+  return (
+    <div>
+      <label className="dt-ses-check">
+        <input
+          aria-describedby={hintId}
+          checked={detectSpeakers}
+          disabled={isBusy}
+          onChange={(event) => onChange(event.target.checked)}
+          type="checkbox"
+        />
+        <span>Several people are talking</span>
+      </label>
+      <p className="dt-meta" id={hintId}>
+        Mistral tells the voices apart so each passage shows who spoke.
+      </p>
+    </div>
+  );
+}
+
 function StartActions({
+  children,
   isBusy,
   onStart,
 }: {
+  children: ReactNode;
   isBusy: boolean;
   onStart: () => void;
 }) {
@@ -64,6 +95,7 @@ function StartActions({
         Talk while you use the app. Reflet turns what you say and show into
         intentions you can brief an agent with.
       </p>
+      {children}
       <div className="dt-actions">
         <button
           className="dt-btn"
@@ -122,10 +154,11 @@ export function StartSession({
   onStarted: () => void;
   onWriteNote?: () => void;
 }) {
-  const { account } = useSessionWorkspace();
+  const { account, identity } = useSessionWorkspace();
   const { failure, isBusy, isRequesting, start } = useRecorderStart(onStarted);
   const [isFirstVisit] = useState(() => !hasSeenDisclosure(account.key));
-  const startBlank = () => start({});
+  const [detectSpeakers, setDetectSpeakers] = useState(false);
+  const startSession = () => start({ detectSpeakers });
   const disclosure = <SessionDisclosure accountKey={account.key} />;
 
   return (
@@ -134,11 +167,19 @@ export function StartSession({
       {failure ? (
         <StartProblem
           failure={failure}
-          onRetry={startBlank}
+          onRetry={startSession}
           onWriteNote={onWriteNote}
         />
       ) : (
-        <StartActions isBusy={isBusy} onStart={startBlank} />
+        <StartActions isBusy={isBusy} onStart={startSession}>
+          {identity.speakersConfigured && (
+            <SpeakersChoice
+              detectSpeakers={detectSpeakers}
+              isBusy={isBusy}
+              onChange={setDetectSpeakers}
+            />
+          )}
+        </StartActions>
       )}
       <MicrophonePrompt isRequesting={isRequesting} />
       {!isFirstVisit && disclosure}

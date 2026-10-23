@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from "react";
 import type { SessionApi } from "../api/session-api";
 import { createIndexedSessionStore } from "./indexed-session-store";
-import { createOutbox, type Outbox } from "./outbox";
+import { createOutbox, type Outbox, type OutboxLimits } from "./outbox";
 import type {
   LocalDraft,
   SessionLocalStore,
@@ -20,6 +20,10 @@ const IDLE_SYNC: SyncSnapshot = {
   pendingBytes: 0,
   pendingOperations: 0,
 };
+const UNBOUNDED_LIMITS: OutboxLimits = {
+  audioRetentionMs: Number.POSITIVE_INFINITY,
+  maxLocalBufferBytes: Number.POSITIVE_INFINITY,
+};
 
 export interface LiveRecording {
   halt: (failure: { kind: "auth"; message: string }) => void;
@@ -37,7 +41,7 @@ export interface LocalSessions {
   connect: (options: {
     accountKey: string;
     api: SessionApi;
-    maxLocalBufferBytes: number | null;
+    limits: OutboxLimits | null;
   }) => AccountSessions;
   discardDraft: (options: {
     accountKey: string;
@@ -54,7 +58,7 @@ export interface LocalSessions {
 
 interface ConnectedAccount {
   api: SessionApi;
-  maxLocalBufferBytes: number;
+  limits: OutboxLimits;
   outbox: Outbox;
   stopped: boolean;
 }
@@ -102,7 +106,7 @@ class LocalSessionsRegistry implements LocalSessions {
   connect(options: {
     accountKey: string;
     api: SessionApi;
-    maxLocalBufferBytes: number | null;
+    limits: OutboxLimits | null;
   }): AccountSessions {
     const { accountKey } = options;
     const connected = this.ensureOutbox(options);
@@ -134,10 +138,7 @@ class LocalSessionsRegistry implements LocalSessions {
     if (!stored || this.live.has(sessionKey) || isClosed) {
       return;
     }
-    const { outbox } = this.ensureOutbox({
-      ...options,
-      maxLocalBufferBytes: null,
-    });
+    const { outbox } = this.ensureOutbox({ ...options, limits: null });
     const atMs = Math.max(0, stored.lastActiveAt - stored.startedAt);
     await outbox.enqueue(sessionKey, {
       action: "end",
@@ -210,7 +211,7 @@ class LocalSessionsRegistry implements LocalSessions {
   private ensureOutbox(options: {
     accountKey: string;
     api: SessionApi;
-    maxLocalBufferBytes: number | null;
+    limits: OutboxLimits | null;
   }): ConnectedAccount {
     const { accountKey, api } = options;
     const existing = this.accounts.get(accountKey);
@@ -223,14 +224,11 @@ class LocalSessionsRegistry implements LocalSessions {
       return existing;
     }
     existing?.outbox.stop();
-    const maxLocalBufferBytes =
-      options.maxLocalBufferBytes ??
-      existing?.maxLocalBufferBytes ??
-      Number.POSITIVE_INFINITY;
+    const limits = options.limits ?? existing?.limits ?? UNBOUNDED_LIMITS;
     const outbox = createOutbox({
       accountKey,
       api,
-      maxLocalBufferBytes,
+      limits,
       onDraftsChanged: () => this.draftsChanged(accountKey),
       store: this.store,
     });
@@ -240,7 +238,7 @@ class LocalSessionsRegistry implements LocalSessions {
         this.purgeAccount(accountKey).catch(() => undefined);
       }
     });
-    const connected = { api, maxLocalBufferBytes, outbox, stopped: false };
+    const connected = { api, limits, outbox, stopped: false };
     this.accounts.set(accountKey, connected);
     outbox.drain();
     return connected;

@@ -5,7 +5,7 @@ import type {
   IntentionChangeKind,
   SessionContinuation,
 } from "../../../intention-protocol";
-import { formatClock } from "../../session-format";
+import { attributedText, formatClock } from "../../session-format";
 import {
   type SaveProblem,
   SaveProblemMessage,
@@ -82,7 +82,7 @@ function ChangeSources({
           type="button"
         >
           <span className="dt-ses-time">{formatClock(segment.startMs)}</span>
-          {` “${segment.text}”`}
+          {` “${attributedText(segment)}”`}
         </button>
       ))}
       {evidence.length > 0 && (

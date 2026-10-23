@@ -2,12 +2,14 @@ import { z } from "zod";
 import {
   SESSION_TEXT_LIMITS as CAPS,
   SESSION_LIMITS,
+  SPEAKER_TURN_LIMITS,
 } from "../../sessions/constants";
 
 const MAX_CLIENT_KEY_LENGTH = 200;
 const MAX_ID_LENGTH = 100;
 const MAX_IDS = 100;
 const MAX_OFFSET_MS = 7 * 24 * 60 * 60_000;
+const SPEAKER_LABEL = /^S(?:[1-9]|10)$/;
 
 const id = z.string().min(1).max(MAX_ID_LENGTH);
 const clientKey = z.string().min(1).max(MAX_CLIENT_KEY_LENGTH);
@@ -97,6 +99,7 @@ export const startBody = z.object({
   continues: z
     .object({ intentionId: id, revision: z.number().int().min(0) })
     .optional(),
+  detectSpeakers: z.boolean().optional(),
   page: z.object({ title: text(CAPS.pageTitle), url: text(CAPS.url) }),
   startedAt: finite,
   surface: z.enum(["devtools", "app"]),
@@ -120,6 +123,22 @@ export const eventsBody = z.object({
   clientKey,
   events: z.array(sessionEvent).max(SESSION_LIMITS.maxEventsPerBatch),
   sessionId: id,
+});
+
+export const speakerTokenBody = z.object({});
+
+const speakerTurn = z
+  .object({
+    endMs: offsetMs,
+    speaker: z.string().regex(SPEAKER_LABEL),
+    startMs: offsetMs,
+  })
+  .refine((turn) => turn.endMs >= turn.startMs);
+
+export const speakerTurnsBody = z.object({
+  clientKey,
+  sessionId: id,
+  turns: z.array(speakerTurn).max(SPEAKER_TURN_LIMITS.maxPerBatch),
 });
 
 export const uploadUrlBody = z.object({

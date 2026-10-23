@@ -1,6 +1,8 @@
 import type { Doc } from "../../../_generated/dataModel";
 import type { QueryCtx } from "../../../_generated/server";
 import { findContinuation } from "../../intentions/contributions";
+import { segmentSpeech } from "../../speakers/attribution";
+import { loadSpeakerTurns } from "../../speakers/turns";
 import type { ContinuedIntentionSource } from "./prompt";
 
 export interface ContinuationTarget {
@@ -21,11 +23,16 @@ export async function loadContinuationTarget(
   if (!(intention && earlier) || earlier.deletedAt !== undefined) {
     return null;
   }
-  const earlierQuotes: Doc<"sessionSegments">[] = [];
+  const earlierTurns = await loadSpeakerTurns(ctx, earlier._id);
+  const earlierQuotes: ContinuedIntentionSource["earlierQuotes"] = [];
   for (const segmentId of intention.segmentIds) {
     const segment = await ctx.db.get(segmentId);
     if (segment) {
-      earlierQuotes.push(segment);
+      earlierQuotes.push({
+        speech: segmentSpeech(segment, earlierTurns),
+        startMs: segment.startMs,
+        text: segment.text,
+      });
     }
   }
   return {

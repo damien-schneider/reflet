@@ -1,12 +1,14 @@
 import type { Doc, Id } from "../../_generated/dataModel";
 import type { QueryCtx } from "../../_generated/server";
 import { canReadSession, type SessionActor } from "../access";
-import { contextDescriptions } from "../formatters";
+import { contextDescriptions, labelledText } from "../formatters";
 import {
   contributionsToIntention,
   findContinuation,
 } from "../intentions/contributions";
 import { resolveStoredSegment, toLinkableEvidence } from "../linking";
+import { segmentSpeech } from "../speakers/attribution";
+import { loadSpeakerTurns } from "../speakers/turns";
 import {
   loadSessionEvents,
   loadSessionEvidence,
@@ -80,7 +82,7 @@ async function loadQuotes(
   ctx: QueryCtx,
   contribution: Doc<"sessionContributions">
 ) {
-  const [events, evidence, segments] = await Promise.all([
+  const [events, evidence, segments, turns] = await Promise.all([
     loadSessionEvents(ctx, contribution.sessionId),
     loadSessionEvidence(ctx, contribution.sessionId),
     ctx.db
@@ -89,6 +91,7 @@ async function loadQuotes(
         q.eq("sessionId", contribution.sessionId)
       )
       .collect(),
+    loadSpeakerTurns(ctx, contribution.sessionId),
   ]);
   const linkable = evidence.map((item) => toLinkableEvidence(item, null));
   return segments
@@ -103,7 +106,10 @@ async function loadQuotes(
         context: [...items, ...notes],
         segmentId: segment._id,
         startMs: segment.startMs,
-        text: segment.text,
+        text: labelledText({
+          speech: segmentSpeech(segment, turns),
+          text: segment.text,
+        }),
       };
     });
 }

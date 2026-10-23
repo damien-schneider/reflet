@@ -150,7 +150,7 @@ Point ouvert majeur (section 8, question 1) : la revue existe seulement dans le 
 
 - PostHog : on ne stocke ni email ni propriétés de personne, seulement un hash du `distinct_id`. `$el_text` vient de l'autocapture, qui n'enregistre pas les valeurs de champs ; il est tronqué à 80 caractères.
 - Les sessions importées suivent la suppression existante (`deletedAt`, `by_deleted_at`) ; supprimer la connexion PostHog ne supprime pas les sessions déjà importées, mais rend leurs liens de replay inaccessibles sans accès PostHog.
-- Tous les appels modèle passent par OpenRouter avec `zdr: true`, comme l'analyse et la transcription.
+- Tous les appels modèle passent par OpenRouter avec `zdr: true`, comme l'analyse et la transcription des sessions. Seule la détection des voix d'une session à plusieurs passe par Mistral, hors OpenRouter et sans ZDR (voir `reflet-sessions-lot0.md`).
 
 ## 7. Critères d'acceptation
 

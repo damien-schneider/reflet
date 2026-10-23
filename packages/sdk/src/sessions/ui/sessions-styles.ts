@@ -107,6 +107,7 @@ const REVIEW_STYLES = `
 .dt-ses-seg:focus { outline: 2px solid var(--rf-accent); outline-offset: -2px; }
 .dt-ses-seg[data-kind="note"] { padding-block: 2px; }
 .dt-ses-seg-body { display: flex; flex: 1; flex-direction: column; gap: 4px; min-width: 0; }
+.dt-ses-speaker { color: var(--rf-text-muted); font-size: 11.5px; font-weight: 600; }
 `;
 
 const EVIDENCE_STYLES = `

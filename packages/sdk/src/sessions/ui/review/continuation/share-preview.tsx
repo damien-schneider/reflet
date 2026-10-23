@@ -1,5 +1,5 @@
 import type { SessionDetail } from "../../../protocol";
-import { formatClock } from "../../session-format";
+import { attributedText, formatClock } from "../../session-format";
 import { EvidenceThumb } from "../transcript/evidence-thumb";
 
 export interface SharedExtracts {
@@ -46,7 +46,7 @@ function ExtractList({
         {quotes.map((segment) => (
           <li key={segment.id}>
             <span className="dt-ses-time">{formatClock(segment.startMs)}</span>
-            {` “${segment.text}”`}
+            {` “${attributedText(segment)}”`}
           </li>
         ))}
       </ul>

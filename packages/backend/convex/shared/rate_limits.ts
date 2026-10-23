@@ -128,6 +128,12 @@ export const rateLimiter = new RateLimiter(components.rateLimiter, {
     period: HOUR,
     rate: 20,
   },
+  sessionSpeakerTokenPerMember: {
+    capacity: 30,
+    kind: "token bucket",
+    period: HOUR,
+    rate: 60,
+  },
   sessionTranscriptionPerOrg: {
     capacity: 1200,
     kind: "token bucket",

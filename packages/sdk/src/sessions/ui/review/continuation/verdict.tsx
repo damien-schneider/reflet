@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { SessionContribution } from "../../../intention-protocol";
-import { formatClock, formatDate } from "../../session-format";
+import { attributedText, formatClock, formatDate } from "../../session-format";
 import type { ProposalContext } from "../proposals/proposal-details";
 import type { ChangeScope } from "./intention-change";
 
@@ -84,7 +84,7 @@ function VerdictQuotes({
         type="button"
       >
         <span className="dt-ses-time">{formatClock(segment.startMs)}</span>
-        {` “${segment.text}”`}
+        {` “${attributedText(segment)}”`}
       </button>
     ));
 }

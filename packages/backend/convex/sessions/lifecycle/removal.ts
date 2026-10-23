@@ -15,28 +15,33 @@ async function deleteSessionChildren(
   ctx: MutationCtx,
   sessionId: Id<"sessions">
 ): Promise<void> {
-  const [segments, batches, evidence, proposals, handoffs] = await Promise.all([
-    ctx.db
-      .query("sessionSegments")
-      .withIndex("by_session_start", (q) => q.eq("sessionId", sessionId))
-      .collect(),
-    ctx.db
-      .query("sessionEventBatches")
-      .withIndex("by_session_start", (q) => q.eq("sessionId", sessionId))
-      .collect(),
-    ctx.db
-      .query("sessionEvidence")
-      .withIndex("by_session_at", (q) => q.eq("sessionId", sessionId))
-      .collect(),
-    ctx.db
-      .query("sessionProposals")
-      .withIndex("by_session", (q) => q.eq("sessionId", sessionId))
-      .collect(),
-    ctx.db
-      .query("sessionHandoffs")
-      .withIndex("by_session", (q) => q.eq("sessionId", sessionId))
-      .collect(),
-  ]);
+  const [segments, batches, speakerTurns, evidence, proposals, handoffs] =
+    await Promise.all([
+      ctx.db
+        .query("sessionSegments")
+        .withIndex("by_session_start", (q) => q.eq("sessionId", sessionId))
+        .collect(),
+      ctx.db
+        .query("sessionEventBatches")
+        .withIndex("by_session_start", (q) => q.eq("sessionId", sessionId))
+        .collect(),
+      ctx.db
+        .query("sessionSpeakerTurns")
+        .withIndex("by_session_start", (q) => q.eq("sessionId", sessionId))
+        .collect(),
+      ctx.db
+        .query("sessionEvidence")
+        .withIndex("by_session_at", (q) => q.eq("sessionId", sessionId))
+        .collect(),
+      ctx.db
+        .query("sessionProposals")
+        .withIndex("by_session", (q) => q.eq("sessionId", sessionId))
+        .collect(),
+      ctx.db
+        .query("sessionHandoffs")
+        .withIndex("by_session", (q) => q.eq("sessionId", sessionId))
+        .collect(),
+    ]);
   const storageIds = [
     ...segments.flatMap((segment) =>
       segment.audio ? [segment.audio.storageId] : []
@@ -49,6 +54,7 @@ async function deleteSessionChildren(
   for (const row of [
     ...segments,
     ...batches,
+    ...speakerTurns,
     ...evidence,
     ...proposals,
     ...handoffs,

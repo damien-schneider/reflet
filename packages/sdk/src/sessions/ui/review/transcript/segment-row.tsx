@@ -1,7 +1,7 @@
 import { type MouseEvent, useRef, useState } from "react";
 import { PencilIcon } from "../../../../feedback/ui/icons";
-import type { SessionSegment } from "../../../protocol";
-import { formatClock } from "../../session-format";
+import type { SessionSegment, SpokenRun } from "../../../protocol";
+import { formatClock, speakerLabel } from "../../session-format";
 import { useSessionAction, useSessionWorkspace } from "../../session-workspace";
 import { SaveProblemMessage, useGuardedSave } from "../guarded-save";
 import { type ReviewHandle, withSegment } from "../use-session-detail";
@@ -127,7 +127,35 @@ function SegmentBody({
   if (state === "empty" && segment.text === "") {
     return <p className="dt-meta">No speech was heard here.</p>;
   }
+  if (segment.speech) {
+    return <SpokenRuns speech={segment.speech} />;
+  }
   return <p className="dt-note-text">{segment.text}</p>;
+}
+
+function SpokenRuns({ speech }: { speech: SpokenRun[] }) {
+  let startsAt = 0;
+  const lines = speech.map((run) => {
+    const line = { ...run, startsAt };
+    startsAt += run.text.length;
+    return line;
+  });
+  return (
+    <>
+      {lines.map((line) => (
+        <p className="dt-note-text" key={line.startsAt}>
+          {line.speaker && (
+            <>
+              <span className="dt-ses-speaker">
+                {speakerLabel(line.speaker)}
+              </span>{" "}
+            </>
+          )}
+          {line.text}
+        </p>
+      ))}
+    </>
+  );
 }
 
 function ContextChips({ segment }: { segment: SessionSegment }) {

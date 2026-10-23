@@ -7,11 +7,14 @@ import { encodeWav } from "../../capture/audio/wav";
 import { captureFrame } from "../../capture/element-ref";
 import type { CapturedEvidence } from "../../capture/page/evidence-scheduler";
 import type { OutboxPayload, StoredDraft } from "../../local/session-store";
-import type { SessionGap, SessionSurface } from "../../protocol";
+import type { SessionGap, SessionSurface, SpeakerTurn } from "../../protocol";
+
+const MAX_TURNS_PER_UPLOAD = 200;
 
 export function newSessionDraft(options: {
   accountKey: string;
   continues?: ContinuedIntentionRef;
+  detectSpeakers?: boolean;
   surface: SessionSurface;
   title: string;
 }): StoredDraft {
@@ -46,6 +49,7 @@ export function startPayload(draft: StoredDraft): OutboxPayload {
       surface: draft.surface,
       ...(draft.title ? { title: draft.title } : {}),
       ...(draft.continues ? { continues: draft.continues } : {}),
+      ...(draft.detectSpeakers ? { detectSpeakers: true } : {}),
     },
     kind: "start",
   };
@@ -81,4 +85,16 @@ export function voicePayload(chunk: SpeechChunk): OutboxPayload {
     startMs: chunk.startMs,
     storageId: null,
   };
+}
+
+export function speakerPayloads(turns: SpeakerTurn[]): OutboxPayload[] {
+  const payloads: OutboxPayload[] = [];
+  for (let from = 0; from < turns.length; from += MAX_TURNS_PER_UPLOAD) {
+    payloads.push({
+      clientKey: crypto.randomUUID(),
+      kind: "speakers",
+      turns: turns.slice(from, from + MAX_TURNS_PER_UPLOAD),
+    });
+  }
+  return payloads;
 }

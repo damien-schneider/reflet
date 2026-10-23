@@ -12,6 +12,7 @@ import {
   newSessionDraft,
   startPayload,
 } from "./live/session-payloads";
+import { requestSpeakerToken } from "./live/speaker-token";
 import type {
   RecorderFailure,
   RecorderSnapshot,
@@ -35,6 +36,7 @@ const IDLE: RecorderSnapshot = {
   phase: "idle",
   sessionId: null,
   sessionKey: null,
+  speakers: "off",
   startedAt: null,
 };
 
@@ -59,7 +61,7 @@ export class RecordingController implements SessionRecorder {
     this.account = localSessions.connect({
       accountKey: options.account.key,
       api: options.api,
-      maxLocalBufferBytes: options.limits.maxLocalBufferBytes,
+      limits: options.limits,
     });
     this.stopIssues = this.account.outbox.subscribeIssues(this.handleIssue);
     this.stopSessionIds = localSessions.subscribe(this.syncSessionId);
@@ -175,6 +177,7 @@ export class RecordingController implements SessionRecorder {
     const draft = newSessionDraft({
       accountKey: this.options.account.key,
       continues: options.continues,
+      detectSpeakers: options.detectSpeakers,
       surface: this.options.surface,
       title: cleanText(options.title, MAX_TITLE_CHARS) ?? "",
     });
@@ -218,6 +221,11 @@ export class RecordingController implements SessionRecorder {
         onHidden: () => this.pauseFor("hidden"),
         onLevel: (level) => this.emitLevel(level),
         onPageHide: () => this.interrupt(),
+        onSpeakers: (speakers) => {
+          if (this.live === live) {
+            this.publish({ speakers });
+          }
+        },
         onStorageFailure: (error) => this.failStorage(live, error),
         onTick: () => this.onTick(live),
         reachLimit: (limit) => this.reachLimit(live, limit),
@@ -225,6 +233,13 @@ export class RecordingController implements SessionRecorder {
       includeSource: this.options.surface === "devtools",
       limits: this.options.limits,
       sessionKey,
+      speakers: draft.detectSpeakers
+        ? {
+            labelCount: draft.speakerLabelCount ?? 0,
+            references: draft.speakerReferences ?? {},
+            requestToken: requestSpeakerToken(this.options.api),
+          }
+        : null,
     });
     this.live = live;
     this.releaseClaim = this.account.claim({

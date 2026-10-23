@@ -5,16 +5,17 @@ import { SESSION_TEXT_LIMITS } from "../../constants";
 import { isOperationAllowed } from "../../intentions/changes";
 import {
   cleanText,
+  type GenerationMaterial,
   MAX_OUTPUT_TOKENS,
   mergeSuggestionsSchema,
   proposalOutputSchema,
-  READING_RULES,
   type ResolvedProposal,
+  readingRules,
   resolveAliases,
   resolveProposals,
   type ShownIds,
+  systemPromptsFor,
   WRITING_RULES,
-  withJsonFormat,
 } from "../analysis_model";
 
 const MAX_CHANGES = 8;
@@ -35,9 +36,11 @@ const FIELD_LIMITS: Record<(typeof INTENTION_FIELDS)[number], number> = {
   unknowns: SESSION_TEXT_LIMITS.listItem,
 };
 
-const CONTINUATION_RULES = `You compare a new recorded walkthrough of a web app with an intention its author confirmed in an earlier session, and propose precise changes to that intention for the author to accept or reject.
+const continuationRules = (
+  speakersLabelled: boolean
+): string => `You compare a new recorded walkthrough of a web app with an intention its author confirmed in an earlier session, and propose precise changes to that intention for the author to accept or reject.
 
-${READING_RULES}
+${readingRules(speakersLabelled)}
 
 How to update the intention:
 1. The intention is what the author already confirmed. Never rewrite it wholesale: propose one change per distinct thing the new session adds. Zero changes is the right answer when the new session adds nothing to it.
@@ -96,20 +99,20 @@ const continuationOutputSchema = z.object({
 export type ContinuationOutput = z.infer<typeof continuationOutputSchema>;
 type ChangeOutput = z.infer<typeof changeOutputSchema>;
 
-const CONTINUATION_SYSTEM_PROMPT = withJsonFormat(
-  CONTINUATION_RULES,
+const continuationSystemPrompt = systemPromptsFor(
+  continuationRules,
   continuationOutputSchema
 );
 
 export const generateContinuationAnalysis = (
-  prompt: string
+  material: GenerationMaterial
 ): Promise<ContinuationOutput> =>
   generateStructured({
     maxOutputTokens: MAX_OUTPUT_TOKENS,
     model: sessionAnalysisModel,
-    prompt,
+    prompt: material.prompt,
     schema: continuationOutputSchema,
-    system: CONTINUATION_SYSTEM_PROMPT,
+    system: continuationSystemPrompt(material.speakersLabelled),
   });
 
 export interface ResolvedChange<

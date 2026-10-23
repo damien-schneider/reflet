@@ -4,7 +4,7 @@ import type {
   SessionDetail,
   SessionSegment,
 } from "../../../protocol";
-import { formatClock } from "../../session-format";
+import { attributedText, formatClock } from "../../session-format";
 import { useFocusWhen } from "../transcript/remove-evidence";
 import { gapLabel } from "../transcript/timeline";
 import type { ReviewHandle } from "../use-session-detail";
@@ -253,7 +253,7 @@ export function MomentView({
       {segment ? (
         <>
           <blockquote className="dt-ses-moment-quote">
-            {segment.text || "No speech was heard here."}
+            {attributedText(segment) || "No speech was heard here."}
           </blockquote>
           <MomentContext detail={detail} segment={segment} />
           <MomentNotices detail={detail} segment={segment} />

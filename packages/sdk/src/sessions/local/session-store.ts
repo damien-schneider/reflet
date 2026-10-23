@@ -8,6 +8,7 @@ import type {
   SessionGap,
   SessionGapReason,
   SessionSurface,
+  SpeakerTurn,
 } from "../protocol";
 
 export interface SessionAccount {
@@ -30,7 +31,10 @@ export interface LocalDraft {
 export interface StoredDraft extends Omit<LocalDraft, "state"> {
   accountKey: string;
   continues?: ContinuedIntentionRef;
+  detectSpeakers?: boolean;
   gaps: SessionGap[];
+  speakerLabelCount?: number;
+  speakerReferences?: Record<string, string>;
   /** "cancelled" stays hidden until the outbox has deleted the session on Reflet. */
   state: LocalDraft["state"] | "cancelled";
   surface: SessionSurface;
@@ -55,6 +59,7 @@ export type OutboxPayload =
       reason?: SessionGapReason;
     }
   | { clientKey: string; events: SessionEvent[]; kind: "events" }
+  | { clientKey: string; kind: "speakers"; turns: SpeakerTurn[] }
   | {
       audio: Blob | null;
       clientKey: string;

@@ -49,12 +49,30 @@ const THIRD_PARTY_SERVICES = [
     purpose: "AI features",
     service: "Anthropic",
   },
+  {
+    dataShared:
+      "Feedback content, session audio and transcripts for AI processing. Session audio and transcripts only go to providers that keep nothing (zero data retention).",
+    purpose: "Routing AI requests to model providers",
+    service: "OpenRouter",
+  },
+  {
+    dataShared: "Session voice audio, under zero data retention",
+    purpose: "Transcribing sessions, through OpenRouter",
+    service: "ElevenLabs",
+  },
+  {
+    dataShared:
+      "Session voice audio, streamed live. Kept for up to 30 days, never used for training.",
+    purpose:
+      "Telling voices apart, only when “Several people are talking” is ticked",
+    service: "Mistral AI",
+  },
 ];
 
 export default function PrivacyPolicy() {
   return (
     <LegalDocument
-      effectiveDate="February 20, 2026"
+      effectiveDate="October 23, 2026"
       path="/privacy"
       title="Privacy policy"
     >
@@ -104,6 +122,19 @@ export default function PrivacyPolicy() {
         <p>
           If you use our support chat feature, we collect conversation messages,
           status information, and message reactions.
+        </p>
+
+        <h3>Sessions</h3>
+        <p>
+          When you record a session, we collect your voice, the address and
+          title of the page, screenshots of the tab, and what you click, point
+          at or mark. We transcribe the voice and keep the transcript; the audio
+          itself is deleted once transcribed, within 24 hours at most. When
+          several people talk and the person recording ticks “Several people are
+          talking”, the voice is also streamed live to Mistral AI to tell voices
+          apart. A few seconds of each voice stay in the recording browser so a
+          paused session keeps the same labels; they are deleted with the
+          finished session, or after 24 hours without activity.
         </p>
 
         <h3>Usage and technical data</h3>
@@ -176,12 +207,13 @@ export default function PrivacyPolicy() {
           needed to provide the Service:
         </p>
         <ul>
-          <li>Session data: 30 days</li>
+          <li>Login session data: 30 days</li>
           <li>Account data: Until you delete your account</li>
           <li>
             Feedback and organization data: For the lifetime of the organization
           </li>
           <li>API logs: 90 days</li>
+          <li>Session voice audio: until transcribed, 24 hours at most</li>
         </ul>
       </section>
 

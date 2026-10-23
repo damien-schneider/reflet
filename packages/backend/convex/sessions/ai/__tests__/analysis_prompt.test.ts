@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import type { SessionEventValue } from "../../linking";
+import type { SpokenRun } from "../../speakers/attribution";
 import { resolveProposals } from "../analysis_model";
 import {
   type AnalysisSource,
@@ -14,9 +15,15 @@ const SEGMENT_ALIAS = /^S\d+ \[/gm;
 const EVIDENCE_ALIAS = /^E\d+ \[/gm;
 const CONTEXT_LINE = /^ {2}- /gm;
 
-const segment = (id: string, startMs: number, text: string) => ({
+const segment = (
+  id: string,
+  startMs: number,
+  text: string,
+  speech: SpokenRun[] | null = null
+) => ({
   _id: id,
   endMs: startMs + 3000,
+  speech,
   startMs,
   text,
 });
@@ -181,6 +188,34 @@ describe("prepareAnalysisPrompt", () => {
 
     expect(prompt).toContain("Already handled by the author");
     expect(prompt).toContain("- Voir la date de dernière modification (kept)");
+  });
+
+  test("labels who says what when several people talk", () => {
+    const source = ostalSource();
+    source.segments = [
+      segment(
+        "seg-debate",
+        1000,
+        "Bon, on fait le point. Moi je trouve que c'est long.",
+        [
+          { speaker: "S1", text: "Bon, on fait le point." },
+          { speaker: "S2", text: "Moi je trouve que c'est long." },
+        ]
+      ),
+      segment("seg-solo", 6000, "Il faudrait un historique."),
+    ];
+
+    const labelled = prepareAnalysisPrompt(source);
+    const solo = prepareAnalysisPrompt(ostalSource());
+
+    expect(labelled.prompt).toContain(
+      "S1 [00:01–00:04] Speaker 1: Bon, on fait le point. Speaker 2: Moi je trouve que c'est long."
+    );
+    expect(labelled.prompt).toContain(
+      "S2 [00:06–00:09] Il faudrait un historique."
+    );
+    expect(labelled.speakersLabelled).toBe(true);
+    expect(solo.speakersLabelled).toBe(false);
   });
 });
 

@@ -5,6 +5,13 @@ All notable changes to `reflet-sdk` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Devtools: the dev server route forwards the live session feed, so `reflet session watch` from `reflet-cli` can hand what you say while recording a session to a coding agent on your machine (`/reflet-live`), which fixes it before you finish. Only your own devtools sessions, under your Connect sign-in.
+- Sessions: speaker detection for sessions with several people. Tick "Several people are talking" before you start and each passage shows who spoke (Speaker 1, Speaker 2…, the same number for the same person all session) in the review, the copied transcript, the brief and the live feed for `/reflet-live`. The voice is then also streamed to Mistral (Voxtral), which keeps API inputs up to 30 days and does not train on them; the "What a session records" list says so.
+
 ## [0.7.11] - 2026-10-18
 
 ### Changed

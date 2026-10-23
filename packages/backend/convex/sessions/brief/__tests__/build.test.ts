@@ -109,6 +109,7 @@ async function seedOstalHandoff(options: {
           evidence: [kept, unselected],
           segments: [wish, correction],
           session,
+          turns: [],
         },
         organizationName: "Ostal",
         previousHandoffs: [],

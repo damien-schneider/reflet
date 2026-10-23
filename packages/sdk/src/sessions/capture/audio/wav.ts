@@ -11,6 +11,28 @@ function writeText(view: DataView, offset: number, text: string): void {
   }
 }
 
+function writePcm16(
+  view: DataView,
+  offset: number,
+  samples: Float32Array
+): void {
+  samples.forEach((sample, index) => {
+    const clamped = Math.max(-1, Math.min(1, sample));
+    const scale = clamped < 0 ? MAX_NEGATIVE_SAMPLE : MAX_POSITIVE_SAMPLE;
+    view.setInt16(
+      offset + index * BYTES_PER_SAMPLE,
+      Math.round(clamped * scale),
+      true
+    );
+  });
+}
+
+export function encodePcm16(samples: Float32Array): ArrayBuffer {
+  const buffer = new ArrayBuffer(samples.length * BYTES_PER_SAMPLE);
+  writePcm16(new DataView(buffer), 0, samples);
+  return buffer;
+}
+
 /** 16-bit mono PCM WAV, the format the transcription endpoint expects. */
 export function encodeWav(
   samples: Float32Array,
@@ -31,15 +53,7 @@ export function encodeWav(
   view.setUint16(34, 16, true);
   writeText(view, 36, "data");
   view.setUint32(40, dataBytes, true);
-  samples.forEach((sample, index) => {
-    const clamped = Math.max(-1, Math.min(1, sample));
-    const scale = clamped < 0 ? MAX_NEGATIVE_SAMPLE : MAX_POSITIVE_SAMPLE;
-    view.setInt16(
-      WAV_HEADER_BYTES + index * BYTES_PER_SAMPLE,
-      Math.round(clamped * scale),
-      true
-    );
-  });
+  writePcm16(view, WAV_HEADER_BYTES, samples);
   return buffer;
 }
 

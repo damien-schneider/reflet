@@ -3,6 +3,7 @@ import { internal } from "../../_generated/api";
 import type { Doc, Id } from "../../_generated/dataModel";
 import { internalMutation, type MutationCtx } from "../../_generated/server";
 import { SESSION_CRON_BATCH_SIZE } from "../constants";
+import { spokenWordValidator } from "../validators";
 import { startWaitingAnalysis } from "./analysis_request";
 
 const RETRY_DELAYS_MS = [30_000, 120_000] as const;
@@ -86,11 +87,22 @@ export const claimTranscription = internalMutation({
         updatedAt: Date.now(),
       },
     });
-    return { attempt, storageId: segment.audio.storageId };
+    const session = await ctx.db.get(segment.sessionId);
+    return {
+      attempt,
+      storageId: segment.audio.storageId,
+      wordTimings: session?.detectSpeakers
+        ? { segmentStartMs: segment.startMs }
+        : null,
+    };
   },
   returns: v.union(
     v.null(),
-    v.object({ attempt: v.number(), storageId: v.id("_storage") })
+    v.object({
+      attempt: v.number(),
+      storageId: v.id("_storage"),
+      wordTimings: v.union(v.null(), v.object({ segmentStartMs: v.number() })),
+    })
   ),
 });
 
@@ -101,6 +113,7 @@ export const saveTranscription = internalMutation({
     segmentId: v.id("sessionSegments"),
     storageId: v.id("_storage"),
     text: v.string(),
+    words: v.array(spokenWordValidator),
   },
   handler: async (ctx, args) => {
     const segment = await loadLiveSegment(ctx, args.segmentId);
@@ -122,6 +135,7 @@ export const saveTranscription = internalMutation({
       language: args.language ?? undefined,
       revision: segment.revision + 1,
       text: args.text,
+      words: args.words.length > 0 ? args.words : undefined,
     });
     const session = await ctx.db.get(segment.sessionId);
     if (session) {

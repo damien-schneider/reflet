@@ -6,6 +6,7 @@ import { createOutbox, type OutboxIssue } from "./outbox";
 import type { SessionLocalStore, StoredDraft } from "./session-store";
 
 const ACCOUNT = "org:user";
+const DAY_MS = 86_400_000;
 
 function draft(sessionKey: string): StoredDraft {
   return {
@@ -52,7 +53,10 @@ async function setup(
   const outbox = createOutbox({
     accountKey: ACCOUNT,
     api: server.api,
-    maxLocalBufferBytes: options.maxLocalBufferBytes ?? 1_000_000,
+    limits: {
+      audioRetentionMs: DAY_MS,
+      maxLocalBufferBytes: options.maxLocalBufferBytes ?? 1_000_000,
+    },
     onDraftsChanged: vi.fn(),
     store,
   });
@@ -206,5 +210,30 @@ describe("createOutbox", () => {
       blockedBy: "storage",
       pendingOperations: 2,
     });
+  });
+
+  it("forgets the voice samples of a draft idle longer than the audio is kept, not of a recent one", async () => {
+    const { outbox, store } = await setup();
+    const voices = { S1: "UklGRg==" };
+    await store.writeDraft({
+      ...draft("idle"),
+      lastActiveAt: Date.now() - DAY_MS - 1,
+      speakerReferences: voices,
+    });
+    await store.writeDraft({
+      ...draft("recent"),
+      lastActiveAt: Date.now() - 60_000,
+      speakerReferences: voices,
+    });
+    outbox.drain();
+    await vi.runAllTimersAsync();
+    const kept = Object.fromEntries(
+      (await store.readDrafts(ACCOUNT)).map((item) => [
+        item.sessionKey,
+        item.speakerReferences,
+      ])
+    );
+    expect(kept.idle).toEqual({});
+    expect(kept.recent).toEqual(voices);
   });
 });

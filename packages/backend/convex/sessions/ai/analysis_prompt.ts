@@ -5,6 +5,7 @@ import {
   formatClock,
   onPage,
   singleLine,
+  spokenLine,
   wrapUntrusted,
 } from "../formatters";
 import {
@@ -13,6 +14,7 @@ import {
   resolveSegmentContext,
   type SessionEventValue,
 } from "../linking";
+import type { SpokenRun } from "../speakers/attribution";
 
 const MAX_PROMPT_SEGMENTS = 300;
 const MAX_TRANSCRIPT_CHARS = 40_000;
@@ -42,7 +44,11 @@ const TRIGGER_DESCRIPTIONS: Record<EvidenceTrigger, string> = {
 type PromptSegment<SegmentId extends string> = Pick<
   Doc<"sessionSegments">,
   "endMs" | "startMs" | "text"
-> & { _id: SegmentId; contextCorrection?: { choice: ContextPin } };
+> & {
+  _id: SegmentId;
+  contextCorrection?: { choice: ContextPin };
+  speech: SpokenRun[] | null;
+};
 
 type PromptEvidence<EvidenceId extends string> = Pick<
   Doc<"sessionEvidence">,
@@ -99,6 +105,7 @@ export interface PreparedPrompt<
   evidenceIds: EvidenceId[];
   prompt: string;
   segmentIds: SegmentId[];
+  speakersLabelled: boolean;
 }
 
 const selectSegments = <SegmentId extends string>(
@@ -151,7 +158,7 @@ const transcriptBlock = <SegmentId extends string>(options: {
       },
     });
     return [
-      `S${index + 1} [${formatClock(segment.startMs)}–${formatClock(segment.endMs)}] ${singleLine(segment.text)}`,
+      `S${index + 1} [${formatClock(segment.startMs)}–${formatClock(segment.endMs)}] ${spokenLine(segment)}`,
       ...contextLines(resolved, { withLocators: false }),
     ];
   });
@@ -245,6 +252,9 @@ export const prepareMaterial = <
     evidenceIds: evidence.map(({ _id }) => _id),
     prompt: `${transcript}\n\n${dataBlock(source.title, evidence, source.handledProposals)}`,
     segmentIds: included.map(({ _id }) => _id),
+    speakersLabelled: included.some(({ speech }) =>
+      speech?.some(({ speaker }) => speaker !== null)
+    ),
   };
 };
 

@@ -137,6 +137,17 @@ export const transcriptionStateValidator = v.union(
   v.literal("expired")
 );
 
+export const spokenWordValidator = v.object({
+  endMs: v.number(),
+  textOffset: v.number(),
+});
+
+export const speakerTurnValidator = v.object({
+  endMs: v.number(),
+  speaker: v.string(),
+  startMs: v.number(),
+});
+
 export const proposalDecisionValidator = v.union(
   v.literal("pending"),
   v.literal("kept"),

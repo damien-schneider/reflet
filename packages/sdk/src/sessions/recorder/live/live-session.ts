@@ -7,6 +7,10 @@ import {
   type EvidenceScheduler,
 } from "../../capture/page/evidence-scheduler";
 import type { SessionClock } from "../../capture/session-clock";
+import {
+  SpeakerDetection,
+  type SpeakerDetectionState,
+} from "../../capture/speakers/speaker-detection";
 import type { AccountSessions } from "../../local/local-sessions";
 import type { OutboxPayload, StoredDraft } from "../../local/session-store";
 import type {
@@ -14,6 +18,8 @@ import type {
   SessionGapReason,
   SessionLimitKind,
   SessionLimits,
+  SpeakerToken,
+  SpeakerTurn,
 } from "../../protocol";
 import {
   type CollectionRun,
@@ -21,20 +27,32 @@ import {
   type VoiceCapture,
 } from "./collection-run";
 import { createEventBatcher, type EventBatcher } from "./event-batcher";
-import { evidencePayload, voicePayload } from "./session-payloads";
+import {
+  evidencePayload,
+  speakerPayloads,
+  voicePayload,
+} from "./session-payloads";
 import { SessionQuota } from "./session-quota";
 
 const LARGEST_EVENT_BATCH = 100;
 const TICK_MS = 1000;
 const DRAFT_SAVE_INTERVAL_MS = 5000;
+const SPEAKER_SETTLE_MS = 2500;
 
 export interface LiveSessionHooks {
   onHidden: () => void;
   onLevel: (level: number) => void;
   onPageHide: () => void;
+  onSpeakers: (state: Exclude<SpeakerDetectionState, "off">) => void;
   onStorageFailure: (error: unknown) => void;
   onTick: () => void;
   reachLimit: (limit: SessionLimitKind) => void;
+}
+
+export interface SpeakerDetectionSetup {
+  labelCount: number;
+  references: Record<string, string>;
+  requestToken: () => Promise<SpeakerToken | null>;
 }
 
 export interface LiveSessionOptions {
@@ -44,6 +62,7 @@ export interface LiveSessionOptions {
   includeSource: boolean;
   limits: SessionLimits;
   sessionKey: string;
+  speakers: SpeakerDetectionSetup | null;
 }
 
 export class LiveSession {
@@ -56,6 +75,8 @@ export class LiveSession {
   private readonly options: LiveSessionOptions;
   private readonly quota: SessionQuota;
   private run: CollectionRun | null = null;
+  private readonly speakers: SpeakerDetection | null;
+  private speakersSettling: number | undefined;
   private stopListening: AbortController | null = null;
   private tick: number | undefined;
 
@@ -78,6 +99,7 @@ export class LiveSession {
       limits: options.limits,
       onEvidence: (captured) => this.persist(evidencePayload(captured)),
     });
+    this.speakers = options.speakers && this.detectSpeakers(options.speakers);
   }
 
   annotate(key: string, note: string | null): void {
@@ -101,9 +123,11 @@ export class LiveSession {
   }
 
   async end(): Promise<void> {
+    this.stopRun();
+    const atMs = this.clock.atMs();
+    await this.finishSpeakers();
     this.stop();
     const { outbox, store } = this.options.account;
-    const atMs = this.clock.atMs();
     await outbox.enqueue(this.sessionKey, {
       action: "end",
       atMs,
@@ -132,7 +156,12 @@ export class LiveSession {
   }
 
   pause(reason: SessionGapReason): void {
-    this.stopCollecting();
+    this.stopRun();
+    if (reason === "interrupted") {
+      this.persistTurns(this.speakers?.closeRun() ?? []);
+    } else {
+      this.finishSpeakers().catch(this.hooks.onStorageFailure);
+    }
     if (!this.clock.isPaused()) {
       const atMs = this.clock.pause(reason);
       this.persist({ action: "pause", atMs, kind: "collection", reason });
@@ -176,6 +205,9 @@ export class LiveSession {
     if (!hasVoiceRoom) {
       voice.stop();
     }
+    const startMs = this.clock.atMs();
+    const speakers = hasVoiceRoom ? this.speakers : null;
+    speakers?.startRun(startMs);
     this.run = startCollectionRun({
       atMs: this.clock.atMs,
       collectEvents: !this.quota.stopped.has("events"),
@@ -200,6 +232,8 @@ export class LiveSession {
         this.events.add({ atMs: this.clock.atMs(), frame, kind: "navigation" });
         this.evidence.navigated();
       },
+      onSamples: speakers?.pushSamples,
+      startMs,
       voice: hasVoiceRoom ? voice : null,
     });
     this.listen();
@@ -212,19 +246,15 @@ export class LiveSession {
   }
 
   stopCollecting(): void {
-    this.run?.stop();
-    this.run = null;
-    this.stopListening?.abort();
-    this.stopListening = null;
-    this.evidence.cancelPending();
-    window.clearInterval(this.tick);
-    this.events.flushAll();
+    this.stopRun();
+    this.speakers?.closeRun();
   }
 
   stopKind(limit: SessionLimitKind): void {
     this.quota.stopped.add(limit);
     if (limit === "segments") {
       this.run?.stopVoice();
+      this.finishSpeakers().catch(this.hooks.onStorageFailure);
     }
     if (limit === "events") {
       this.run?.stopEvents();
@@ -238,6 +268,31 @@ export class LiveSession {
       gaps: this.clock.gaps(),
       lastActiveAt: this.lastSavedAt,
     };
+  }
+
+  private detectSpeakers(setup: SpeakerDetectionSetup): SpeakerDetection {
+    const { store } = this.options.account;
+    return new SpeakerDetection({
+      labelCount: setup.labelCount,
+      onLabelCount: (speakerLabelCount) =>
+        store
+          .patchDraft(this.sessionKey, { speakerLabelCount })
+          .catch(this.hooks.onStorageFailure),
+      onReferences: (speakerReferences) =>
+        store
+          .patchDraft(this.sessionKey, { speakerReferences })
+          .catch(this.hooks.onStorageFailure),
+      onState: this.hooks.onSpeakers,
+      references: setup.references,
+      requestToken: setup.requestToken,
+    });
+  }
+
+  private async finishSpeakers(): Promise<void> {
+    const turns = (await this.speakers?.finishRun()) ?? [];
+    for (const payload of speakerPayloads(turns)) {
+      await this.options.account.outbox.enqueue(this.sessionKey, payload);
+    }
   }
 
   private listen(): void {
@@ -256,11 +311,31 @@ export class LiveSession {
     if (!this.quota.acceptSegment()) {
       return;
     }
+    this.persistTurns(this.speakers?.drainTurns() ?? []);
     this.persist(voicePayload(chunk));
+    this.speakers?.keepReferences(chunk);
+    this.settleSpeakers();
     if (this.quota.segmentsFull()) {
       this.hooks.reachLimit("segments");
     }
   };
+
+  private persistTurns(turns: SpeakerTurn[]): void {
+    for (const payload of speakerPayloads(turns)) {
+      this.persist(payload);
+    }
+  }
+
+  private settleSpeakers(): void {
+    if (!this.speakers) {
+      return;
+    }
+    window.clearTimeout(this.speakersSettling);
+    this.speakersSettling = window.setTimeout(() => {
+      this.persistTurns(this.speakers?.drainTurns() ?? []);
+      this.speakers?.settleReferences();
+    }, SPEAKER_SETTLE_MS);
+  }
 
   private saveDraft(state?: StoredDraft["state"]): void {
     this.options.account.store
@@ -278,4 +353,15 @@ export class LiveSession {
       this.hooks.reachLimit("events");
     }
   };
+
+  private stopRun(): void {
+    this.run?.stop();
+    this.run = null;
+    this.stopListening?.abort();
+    this.stopListening = null;
+    this.evidence.cancelPending();
+    window.clearInterval(this.tick);
+    window.clearTimeout(this.speakersSettling);
+    this.events.flushAll();
+  }
 }

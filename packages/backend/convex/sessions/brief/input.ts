@@ -2,6 +2,7 @@ import type { Doc, Id } from "../../_generated/dataModel";
 import type { QueryCtx } from "../../_generated/server";
 import { sessionNotFound } from "../access";
 import { contributionsToIntention } from "../intentions/contributions";
+import { loadSpeakerTurns } from "../speakers/turns";
 import { loadSessionEvents, loadSessionEvidence } from "../views/detail";
 import { authorNameOf } from "../views/summary";
 import type { BriefSessionMaterial, SessionBriefInput } from "./build";
@@ -35,19 +36,21 @@ async function loadMaterial(
   }
 ): Promise<BriefSessionMaterial> {
   const { session } = options;
-  const [events, evidence, segments] = await Promise.all([
+  const [events, evidence, segments, turns] = await Promise.all([
     loadSessionEvents(ctx, session._id),
     loadSessionEvidence(ctx, session._id),
     ctx.db
       .query("sessionSegments")
       .withIndex("by_session_start", (q) => q.eq("sessionId", session._id))
       .collect(),
+    loadSpeakerTurns(ctx, session._id),
   ]);
   return {
     events,
     evidence,
     segments: segments.filter(({ _id }) => options.citedSegmentIds.has(_id)),
     session,
+    turns,
   };
 }
 

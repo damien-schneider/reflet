@@ -1,15 +1,11 @@
 import type { Doc, Id } from "../../_generated/dataModel";
-import {
-  contextLines,
-  formatClock,
-  singleLine,
-  wrapUntrusted,
-} from "../formatters";
+import { quotedPassage, singleLine, wrapUntrusted } from "../formatters";
 import {
   type LinkableEvidence,
   resolveStoredSegment,
   type SessionEventValue,
 } from "../linking";
+import { type SpeakerTurn, segmentSpeech } from "../speakers/attribution";
 import { describeEvidence, type NamedEvidence } from "./evidence_names";
 
 export interface BriefSource {
@@ -18,6 +14,7 @@ export interface BriefSource {
   linkable: LinkableEvidence<string>[];
   segments: Doc<"sessionSegments">[];
   session: Doc<"sessions">;
+  turns: SpeakerTurn[];
 }
 
 type IntentionField =
@@ -39,20 +36,6 @@ const bulletList = (title: string, items: string[]): string[] =>
     ? []
     : [`${title}:`, ...items.map((item) => `- ${singleLine(item)}`), ""];
 
-const quoteWithContext = (
-  segment: Doc<"sessionSegments">,
-  source: BriefSource
-): string[] => [
-  `[${formatClock(segment.startMs)}] ${singleLine(segment.text)}`,
-  ...contextLines(
-    resolveStoredSegment(segment, {
-      events: source.events,
-      evidence: source.linkable,
-    }),
-    { withLocators: true }
-  ),
-];
-
 const quotesFrom = (
   source: BriefSource,
   segmentIds: Id<"sessionSegments">[]
@@ -63,7 +46,19 @@ const quotesFrom = (
         segmentIds.includes(segment._id) && segment.text.trim() !== ""
     )
     .sort((a, b) => a.startMs - b.startMs)
-    .flatMap((segment) => quoteWithContext(segment, source));
+    .flatMap((segment) =>
+      quotedPassage(
+        {
+          speech: segmentSpeech(segment, source.turns),
+          startMs: segment.startMs,
+          text: segment.text,
+        },
+        resolveStoredSegment(segment, {
+          events: source.events,
+          evidence: source.linkable,
+        })
+      )
+    );
 
 const homeQuotes = (
   proposal: Doc<"sessionProposals">,

@@ -21,6 +21,7 @@ async function insertSession(
     actor: SessionActor;
     input: {
       clientKey: string;
+      detectSpeakers?: boolean;
       page: { title: string; url: string };
       startedAt: number;
       surface: Doc<"sessions">["surface"];
@@ -36,6 +37,7 @@ async function insertSession(
     clientKey: input.clientKey,
     collection: "recording",
     createdAt: now,
+    detectSpeakers: input.detectSpeakers === true,
     gaps: [],
     organizationId: actor.organizationId,
     startedAt: clampStartedAt(input.startedAt, now),
@@ -67,6 +69,7 @@ export const start = internalMutation({
     continues: v.optional(
       v.object({ intentionId: v.string(), revision: v.number() })
     ),
+    detectSpeakers: v.optional(v.boolean()),
     page: v.object({ title: v.string(), url: v.string() }),
     startedAt: v.number(),
     surface: v.union(v.literal("devtools"), v.literal("app")),

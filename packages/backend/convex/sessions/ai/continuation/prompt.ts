@@ -1,5 +1,11 @@
 import type { Doc } from "../../../_generated/dataModel";
-import { formatClock, singleLine, wrapUntrusted } from "../../formatters";
+import {
+  formatClock,
+  singleLine,
+  spokenLine,
+  wrapUntrusted,
+} from "../../formatters";
+import type { SpokenRun } from "../../speakers/attribution";
 import {
   type AnalysisSource,
   type PreparedPrompt,
@@ -10,7 +16,9 @@ const MAX_EARLIER_QUOTES = 12;
 
 export interface ContinuedIntentionSource {
   answers: { text: string }[];
-  earlierQuotes: Pick<Doc<"sessionSegments">, "startMs" | "text">[];
+  earlierQuotes: (Pick<Doc<"sessionSegments">, "startMs" | "text"> & {
+    speech: SpokenRun[] | null;
+  })[];
   earlierTitle: string;
   intention: Pick<
     Doc<"sessionProposals">,
@@ -33,9 +41,7 @@ const intentionBlock = (target: ContinuedIntentionSource): string => {
   const quotes = target.earlierQuotes
     .filter(({ text }) => text.trim() !== "")
     .slice(0, MAX_EARLIER_QUOTES)
-    .map(
-      ({ startMs, text }) => `  [${formatClock(startMs)}] ${singleLine(text)}`
-    );
+    .map((quote) => `  [${formatClock(quote.startMs)}] ${spokenLine(quote)}`);
   return wrapUntrusted("session_data", [
     `Earlier session: ${singleLine(target.earlierTitle)}`,
     `Revision: ${intention.revision}`,

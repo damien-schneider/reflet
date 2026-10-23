@@ -58,8 +58,11 @@ function statusText(
   if (problem) {
     return problem;
   }
-  return snapshot.nearLimit
-    ? `${minutesLeft(maxDurationMs - snapshot.activeMs)} min left`
+  if (snapshot.nearLimit) {
+    return `${minutesLeft(maxDurationMs - snapshot.activeMs)} min left`;
+  }
+  return snapshot.speakers === "unavailable"
+    ? "Speakers aren't being detected"
     : "";
 }
 

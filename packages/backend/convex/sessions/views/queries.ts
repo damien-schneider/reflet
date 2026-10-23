@@ -5,6 +5,7 @@ import { authComponent } from "../../auth/auth";
 import { loadSession, sessionActorValidator } from "../access";
 import {
   isAnalysisConfigured,
+  isSpeakerDetectionConfigured,
   isTranscriptionConfigured,
 } from "../ai/configuration";
 import { SESSION_LIMITS, SESSION_LIST_LIMIT } from "../constants";
@@ -36,6 +37,7 @@ export const identity = internalQuery({
       limits: SESSION_LIMITS,
       organizationId: organization._id,
       organizationName: organization.name,
+      speakersConfigured: isSpeakerDetectionConfigured(),
       transcriptionConfigured: isTranscriptionConfigured(),
       user: {
         email: user?.email || null,

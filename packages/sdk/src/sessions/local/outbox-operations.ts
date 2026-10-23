@@ -39,6 +39,8 @@ export function operationBytes(payload: OutboxPayload): number {
       );
     case "events":
       return JSON.stringify(payload.events).length;
+    case "speakers":
+      return JSON.stringify(payload.turns).length;
     default:
       return SMALL_OPERATION_BYTES;
   }
@@ -162,6 +164,13 @@ async function sendSessionOperation(
         ? { kind: "limit", limit: "events" }
         : { kind: "done" };
     }
+    case "speakers":
+      await api.addSpeakerTurns({
+        clientKey: payload.clientKey,
+        sessionId,
+        turns: payload.turns,
+      });
+      return { kind: "done" };
     case "voice":
       await sendVoice(context, payload);
       return { kind: "done" };

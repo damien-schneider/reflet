@@ -7,6 +7,7 @@ import {
   internalQuery,
   type QueryCtx,
 } from "../../_generated/server";
+import { segmentSpeech } from "../speakers/attribution";
 import { loadSessionCapture } from "../views/detail";
 import {
   isCurrentRun,
@@ -44,6 +45,7 @@ const preparedPromptFields = {
   evidenceIds: v.array(v.id("sessionEvidence")),
   prompt: v.string(),
   segmentIds: v.array(v.id("sessionSegments")),
+  speakersLabelled: v.boolean(),
 };
 const analysisMaterialValidator = v.object({
   ...preparedPromptFields,
@@ -81,7 +83,10 @@ const loadAnalysisSource = async (
         proposal.mergedIntoId === undefined &&
         !isReplaceableByAnalysis(proposal, handedOffIds)
     ),
-    segments: capture.segments,
+    segments: capture.segments.map((segment) => ({
+      ...segment,
+      speech: segmentSpeech(segment, capture.turns),
+    })),
     title: session.title,
   };
 };
@@ -148,7 +153,7 @@ const generateAnalysis = async (
   const { continuation } = material;
   if (!continuation) {
     const output = await attemptGeneration(
-      () => generateSessionAnalysis(material.prompt),
+      () => generateSessionAnalysis(material),
       label
     );
     if (!output) {
@@ -158,7 +163,7 @@ const generateAnalysis = async (
     return { mergeGroups, proposals };
   }
   const output = await attemptGeneration(
-    () => generateContinuationAnalysis(material.prompt),
+    () => generateContinuationAnalysis(material),
     label
   );
   if (!output) {
@@ -233,7 +238,7 @@ export const runRefinement = internalAction({
     }
     const output = isAnalysisConfigured()
       ? await attemptGeneration(
-          () => generateProposalRefinement(material.prompt),
+          () => generateProposalRefinement(material),
           `refinement ${args.runId} of proposal ${args.proposalId}`
         )
       : null;

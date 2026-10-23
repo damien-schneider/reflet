@@ -13,8 +13,11 @@ const SPOKEN = "Il faudrait un historique.";
 const WAV_BYTES = new Uint8Array([82, 73, 70, 70, 1, 2, 3, 250]);
 const STT_URL = "https://openrouter.ai/api/v1/audio/transcriptions";
 
-const transcriptionJson = (text: string): Response =>
-  Response.json({ language: "fra", language_confidence: 0.99, text });
+const transcriptionJson = (
+  text: string,
+  words?: { end: number; start: number; word: string }[]
+): Response =>
+  Response.json({ language: "fra", language_confidence: 0.99, text, words });
 
 const stubTranscriptionService = (answer: () => Promise<Response>) => {
   const fetchMock = vi.fn(async (_input: URL | string, _init?: RequestInit) =>
@@ -26,11 +29,16 @@ const stubTranscriptionService = (answer: () => Promise<Response>) => {
 
 async function seedVoiceSegment(
   t: TestContext,
-  options: { analysisState?: "idle" | "waiting"; expiresAt?: number } = {}
+  options: {
+    analysisState?: "idle" | "waiting";
+    detectSpeakers?: boolean;
+    expiresAt?: number;
+  } = {}
 ) {
   return await t.run(async (ctx) => {
     const session = await seedSession(ctx, {
       analysis: { state: options.analysisState ?? "idle" },
+      detectSpeakers: options.detectSpeakers === true,
     });
     const storageId = await ctx.storage.store(
       new Blob([WAV_BYTES], { type: "audio/wav" })
@@ -116,8 +124,38 @@ describe("segment transcription", () => {
       transcription: { attempts: 1, state: "done" },
     });
     expect(state.segment?.audio).toBeUndefined();
+    expect(state.segment?.words).toBeUndefined();
     expect(state.audioFile).toBeNull();
     expect(state.session?.transcriptRevision).toBe(2);
+  });
+
+  test("for a session with several speakers, keeps when each spoken word ends", async () => {
+    const t = setupTest();
+    const ids = await seedVoiceSegment(t, { detectSpeakers: true });
+    const fetchMock = stubTranscriptionService(async () =>
+      transcriptionJson("Ça marche ? [rires] Oui.", [
+        { end: 0.3, start: 0.02, word: "Ça" },
+        { end: 0.7, start: 0.32, word: "marche" },
+        { end: 0.75, start: 0.7, word: "?" },
+        { end: 1.4, start: 0.9, word: "[rires]" },
+        { end: 2.1, start: 1.8, word: "Oui." },
+      ])
+    );
+
+    await transcribe(t, ids.segmentId);
+
+    const [, init] = fetchMock.mock.calls[0] ?? [];
+    expect(JSON.parse(String(init?.body))).toMatchObject({
+      timestamp_granularities: ["word"],
+    });
+    const state = await readState(t, ids);
+    expect(state.segment?.text).toBe("Ça marche ? Oui.");
+    expect(state.segment?.words).toEqual([
+      { endMs: 1300, textOffset: 0 },
+      { endMs: 1700, textOffset: 3 },
+      { endMs: 1750, textOffset: 10 },
+      { endMs: 3100, textOffset: 12 },
+    ]);
   });
 
   test("keeps the author's correction typed while the audio was being transcribed", async () => {

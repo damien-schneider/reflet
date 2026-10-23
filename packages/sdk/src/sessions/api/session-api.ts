@@ -25,6 +25,8 @@ import type {
   SessionSegment,
   SessionSummary,
   SessionSurface,
+  SpeakerToken,
+  SpeakerTurn,
 } from "../protocol";
 import {
   createIntentionEndpoints,
@@ -67,6 +69,7 @@ export class SessionApiError extends Error {
 export interface StartSessionBody {
   clientKey: string;
   continues?: ContinuedIntentionRef;
+  detectSpeakers?: boolean;
   page: { title: string; url: string };
   startedAt: number;
   surface: SessionSurface;
@@ -107,6 +110,12 @@ export interface EventsResult {
   accepted: number;
   dropped: number;
   limitReached: boolean;
+}
+
+export interface SpeakerTurnsBody {
+  clientKey: string;
+  sessionId: string;
+  turns: SpeakerTurn[];
 }
 
 export interface SegmentTiming {
@@ -154,6 +163,9 @@ export interface CreateHandoffBody extends BriefSelectionBody {
 export interface SessionApi {
   acceptIntentionChanges: (body: AcceptChangesBody) => Promise<IntentionUpdate>;
   addEvidence: (body: AddEvidenceBody) => Promise<SessionEvidence>;
+  addSpeakerTurns: (
+    body: SpeakerTurnsBody
+  ) => Promise<{ accepted: number; dropped: number }>;
   addTypedSegment: (
     body: SegmentTiming & { text: string }
   ) => Promise<SessionSegment>;
@@ -223,6 +235,7 @@ export interface SessionApi {
     expectedRevision: number;
     segmentId: string;
   }) => Promise<SessionSegment>;
+  speakerToken: () => Promise<SpeakerToken>;
   start: (body: StartSessionBody) => Promise<SessionSummary>;
   update: (body: {
     sessionId: string;

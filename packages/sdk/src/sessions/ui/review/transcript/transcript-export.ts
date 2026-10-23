@@ -5,7 +5,12 @@ import type {
   SessionEvidence,
   SessionSegment,
 } from "../../../protocol";
-import { formatClock, formatDate, shortDuration } from "../../session-format";
+import {
+  attributedText,
+  formatClock,
+  formatDate,
+  shortDuration,
+} from "../../session-format";
 import { contextKindLabel, pagePath } from "../moment/moment-labels";
 import { evidenceCaption } from "./evidence-thumb";
 import { buildTimeline, type TimelineItem } from "./timeline";
@@ -62,8 +67,9 @@ function contextLine(item: SegmentContext, detail: SessionDetail): string {
 }
 
 function spokenText(segment: SessionSegment): string {
-  if (segment.text) {
-    return segment.text.replace(WHITESPACE_RUN, " ");
+  const text = attributedText(segment);
+  if (text) {
+    return text.replace(WHITESPACE_RUN, " ");
   }
   return segment.transcription.state === "empty"
     ? "(no speech heard)"

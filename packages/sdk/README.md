@@ -224,8 +224,17 @@ users. Pass `devtools={false}` to turn it off.
   a `.zip` with its screenshots (nothing is shared until you copy or download
   it), and **Add to board** turns them into internal feedback, one by one or
   all at once.
+  With several people around the same screen, tick "Several people are
+  talking" before you start: Mistral tells the voices apart, so each passage
+  shows who spoke (Speaker 1, Speaker 2…), with the same number for the same
+  person through the whole session. If the page sends a
+  `Content-Security-Policy`, add `wss://api.mistral.ai` to `connect-src` for
+  this; without it the session records without telling voices apart.
   Sessions are recorded under your own name, so they need Connect rather than
-  `REFLET_SECRET_KEY`.
+  `REFLET_SECRET_KEY`. While you record, `reflet session watch` from
+  `reflet-cli` hands each passage to a coding agent on your machine, with what
+  you pointed at, its source location and, with several people, who spoke, so
+  the agent (`/reflet-live`) can fix it before you finish.
 
 Code view and the board go through one dev-only route that reads files from
 your repository and holds the board credential server-side.
@@ -272,12 +281,13 @@ export default defineConfig({ plugins: [react(), refletDevtools()] });
 
 The route only answers on `localhost`, `*.localhost`, loopback IPs and the
 hostnames you allow — so a rebound DNS name pointing at your machine gets a 403
-— and only to same-origin browser requests (`Sec-Fetch-Site`) carrying the
-devtools header. These checks stop other sites in your browser, not other
-machines: that is what the loopback binding is for. It only serves
-source files (`.ts`, `.tsx`, `.js`, `.jsx`, `.vue`, `.svelte`, `.astro`,
-`.mdx`…) inside the repository and never under `node_modules`, and only
-forwards the feedback and session endpoints the devtools use.
+— and only to same-origin browser requests or tools run on this machine, like
+`reflet session watch` (`Sec-Fetch-Site`), carrying the devtools header. These
+checks stop other sites in your browser, not other machines: that is what the
+loopback binding is for. It only serves source files (`.ts`, `.tsx`, `.js`,
+`.jsx`, `.vue`, `.svelte`, `.astro`, `.mdx`…) inside the repository and never
+under `node_modules`, and only forwards the feedback and session endpoints the
+devtools and the session watcher use.
 
 #### Sessions in production (team tools)
 
@@ -297,8 +307,11 @@ Two things on your side:
   `microphone=()` blocks it; use `microphone=(self)`.
 
 Pass `teamTools={false}` to turn it off. Voice is transcribed by ElevenLabs
-Scribe through OpenRouter with zero data retention, and the audio is deleted
-once its transcript is saved, within 24 hours at most. Pausing stops all
+Scribe through OpenRouter with zero data retention. When "Several people are
+talking" is ticked, the voice is also streamed live to Mistral (Voxtral) to
+tell the speakers apart; Mistral keeps API inputs up to 30 days and does not
+train on them. Reflet deletes the audio once its transcript is saved, within
+24 hours at most. Pausing stops all
 collection; keystrokes are never recorded, form fields appear empty in
 screenshots, and password fields and elements marked `data-reflet-redact` are
 hidden from them.

@@ -25,6 +25,7 @@ export interface VoiceCapture {
     maxSegmentMs: number;
     onChunk: (chunk: SpeechChunk) => void;
     onLevel: (level: number) => void;
+    onSamples?: (samples: Float32Array) => void;
     startMs: number;
   }) => void;
   stop: () => void;
@@ -51,6 +52,7 @@ async function openVoiceCapture(): Promise<VoiceCapture> {
         const samples = downsample(frame);
         options.onLevel(meterLevel(samples));
         speech.push(samples);
+        options.onSamples?.(samples);
       };
     },
     stop: () => {
@@ -97,6 +99,8 @@ export interface CollectionRunOptions {
   onLevel: (level: number) => void;
   onLongHover: (element: Element) => string | null;
   onNavigate: (frame: Frame) => void;
+  onSamples?: (samples: Float32Array) => void;
+  startMs: number;
   voice: VoiceCapture | null;
 }
 
@@ -108,7 +112,8 @@ export function startCollectionRun(
     maxSegmentMs: options.maxSegmentMs,
     onChunk: options.onChunk,
     onLevel: options.onLevel,
-    startMs: options.atMs(),
+    onSamples: options.onSamples,
+    startMs: options.startMs,
   });
   let interactions: InteractionRecorder | null = options.collectEvents
     ? startInteractionRecorder(options)

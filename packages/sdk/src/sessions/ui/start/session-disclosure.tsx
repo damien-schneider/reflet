@@ -32,6 +32,11 @@ function DisclosureList() {
           at most.
         </li>
         <li>
+          If you tick “Several people are talking”, your voice is also streamed
+          live to Mistral (Voxtral) to tell the voices apart. Mistral keeps it
+          up to 30 days and does not train on it.
+        </li>
+        <li>
           The page: its address without sensitive parameters, its title, the
           scroll position and the window size.
         </li>

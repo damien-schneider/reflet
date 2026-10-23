@@ -22,11 +22,34 @@ Mesures du 18/10/2026 (appels réels, WAV 16 kHz mono, voix de synthèse frança
 | Whisper large v3 | 1/6 (« bord des radios », « Refinade ») | 0,6–4,9 s | 0,027 $ |
 | Whisper large v3 turbo, Qwen3 ASR 1.7B, Parakeet v3 | 1/6 | 0,3–1,6 s | 0,012–0,09 $ |
 
-Sans ZDR sur OpenRouter, donc écartés : `gpt-4o-transcribe`, `gpt-4o-mini-transcribe`, `gemini-3.5-transcribe`, Voxtral, Grok STT.
+Sans ZDR sur OpenRouter au 18/10, donc écartés : `gpt-4o-transcribe`, `gpt-4o-mini-transcribe`, `gemini-3.5-transcribe`, Grok STT. Voxtral figurait dans cette liste ; Voxtral 3 est depuis disponible en ZDR sur OpenRouter, mais sans diarisation ni liste de termes (voir « Détection des voix »).
 
 Scribe ne renvoie pas de probabilité de silence et marque les événements sonores entre crochets (« [pause] ») : ces étiquettes sont retirées, et un passage qui n'en contient que devient vide.
 
 Le découpage de la parole se fait dans le navigateur : les horodatages ne dépendent donc pas du fournisseur, et on peut en changer sans toucher au reste.
+
+## Détection des voix
+
+Décision du 23/10/2026 : **le texte reste sur Scribe ; qui parle quand vient de Mistral, `voxtral-mini-transcribe-realtime-3` avec `diarize`, en direct depuis le navigateur**, seulement quand la personne qui démarre la session coche « Several people are talking ».
+
+Voxtral 3 évalué avant ce choix :
+
+- Mini et Small en lot : sans liste de termes, Scribe est plus juste ; avec la liste, le texte est parfait. Sur OpenRouter, Voxtral 3 a le ZDR mais ni diarisation ni liste de termes.
+- Temps réel (`voxtral-mini-transcribe-realtime-3`) : libellés stables, 10 tours sur 10 attribués à la bonne voix sur un extrait à 3 voix de synthèse. Des noms sont possibles en fournissant des extraits de référence de chaque voix. Le texte est moins bon que Scribe (20 % d'erreurs sur le même extrait) : il n'est pas utilisé.
+
+Fonctionnement :
+
+- Une connexion WebSocket par tranche de collecte (entre deux pauses), qui reçoit le même audio 16 kHz que le découpage de la parole. Les événements de Mistral, sans horodatage, sont convertis en tours de parole sur l'horloge de session et envoyés à Reflet.
+- Le navigateur se connecte avec un jeton `rt_…` de 120 s émis par Convex avec la clé serveur. Le jeton n'a besoin d'être valide qu'à la connexion : une connexion de 17 min lui a survécu.
+- Les locuteurs sont attribués à la lecture, mot par mot, à partir des instants de mots renvoyés par Scribe ; un même libellé reste la même personne pendant toute la session.
+- Après une pause, la nouvelle connexion reçoit 3 à 6 s de chaque voix déjà entendue (`speaker_references`) pour reprendre les mêmes libellés. Les extraits sont pris dans la partie de chaque tour qui tombe dans un passage, et plusieurs tours d'une même voix sont joints : dans une vraie réunion, un tour long déborde souvent sur plusieurs passages. Un passage n'est découpé qu'une fois que Mistral a entendu 1 s au-delà de sa fin (ou à la pause, après ses derniers mots), pour que les derniers mots de chaque tour comptent. Ces extraits sont gardés dans le brouillon local (IndexedDB) : effacés avec lui une fois la session synchronisée, et retirés d'un brouillon inactif depuis plus longtemps que la conservation de l'audio (24 h) au passage de synchronisation suivant. Après un rechargement de la page, la reprise du brouillon garde aussi les libellés.
+- Vérifié dans le navigateur : sur une discussion produit à 3 voix de synthèse, 18 tours sur 18 gardent leur libellé à travers une pause ; sur un extrait de vraie réunion (AMI ES2002a), la personne qui parlait le plus garde son libellé à travers une pause puis un rechargement. Une voix entendue moins de 3 s au total avant la pause (le minimum de Mistral pour un extrait) revient sous un nouveau libellé.
+- Les tours sont envoyés avant chaque passage, puis 2,5 s après, le temps que Mistral ait rendu les derniers mots du passage : le suivi en direct reçoit ainsi le bon locuteur jusqu'à la fin du passage.
+- Précision : l'horloge des tours est juste à ±0,25 s (jusqu'à 0,4 s au premier changement de voix après une connexion, le temps que le retard d'envoi se résorbe). Un ou deux mots à la frontière entre deux voix peuvent donc être attribués à la mauvaise.
+
+Coût : 0,008 $ par minute, seulement quand la case est cochée, soit environ 0,70 $ par heure de session au total contre 0,22 $ sans.
+
+Rétention : Mistral conserve les entrées de l'API jusqu'à 30 jours et ne s'en sert pas pour entraîner. Le ZDR n'a pas été demandé : choix produit, annoncé dans la liste « What a session records » et la documentation. L'audio reste supprimé par Reflet dès la transcription, 24 h au plus.
 
 ## Analyse
 

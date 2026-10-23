@@ -1,6 +1,6 @@
 import { describeStorageFailure } from "../../storage/indexed-db";
 import type { SessionApi } from "../api/session-api";
-import type { SessionLimitKind } from "../protocol";
+import type { SessionLimitKind, SessionLimits } from "../protocol";
 import {
   classifyFailure,
   type OperationOutcome,
@@ -34,10 +34,15 @@ export interface Outbox {
   subscribeIssues: (listener: (issue: OutboxIssue) => void) => () => void;
 }
 
+export type OutboxLimits = Pick<
+  SessionLimits,
+  "audioRetentionMs" | "maxLocalBufferBytes"
+>;
+
 export interface OutboxOptions {
   accountKey: string;
   api: SessionApi;
-  maxLocalBufferBytes: number;
+  limits: OutboxLimits;
   onDraftsChanged: () => void;
   store: SessionLocalStore;
 }
@@ -128,7 +133,10 @@ class SessionOutbox implements Outbox {
 
   async enqueue(sessionKey: string, payload: OutboxPayload): Promise<void> {
     const bytes = operationBytes(payload);
-    if (this.snapshot.pendingBytes + bytes > this.options.maxLocalBufferBytes) {
+    if (
+      this.snapshot.pendingBytes + bytes >
+      this.options.limits.maxLocalBufferBytes
+    ) {
       this.failStorage(BUFFER_FULL);
     }
     try {
@@ -216,6 +224,7 @@ class SessionOutbox implements Outbox {
       pendingOperations: remaining.length,
     });
     await this.forgetFinishedDrafts(remaining);
+    await this.forgetOldVoices();
     this.afterPass(pass);
   }
 
@@ -345,6 +354,21 @@ class SessionOutbox implements Outbox {
     if (finished.length > 0) {
       this.options.onDraftsChanged();
     }
+  }
+
+  private async forgetOldVoices(): Promise<void> {
+    const { accountKey, limits, store } = this.options;
+    const keptSince = Date.now() - limits.audioRetentionMs;
+    const expired = (await store.readDrafts(accountKey)).filter(
+      (draft) =>
+        draft.lastActiveAt < keptSince &&
+        Object.keys(draft.speakerReferences ?? {}).length > 0
+    );
+    await Promise.all(
+      expired.map((draft) =>
+        store.patchDraft(draft.sessionKey, { speakerReferences: {} })
+      )
+    );
   }
 }
 

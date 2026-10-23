@@ -39,6 +39,7 @@ export const IDENTITY: SessionIdentity = {
   },
   organizationId: "org_1",
   organizationName: "Acme",
+  speakersConfigured: false,
   transcriptionConfigured: true,
   user: { email: "ada@acme.test", id: "user_1", name: "Ada" },
 };
@@ -47,6 +48,7 @@ export function fakeApi(overrides: Partial<SessionApi> = {}): SessionApi {
   return {
     acceptIntentionChanges: vi.fn(),
     addEvidence: vi.fn(),
+    addSpeakerTurns: vi.fn(),
     addTypedSegment: vi.fn(),
     addVoiceSegment: vi.fn(),
     analyze: vi.fn(),
@@ -76,6 +78,7 @@ export function fakeApi(overrides: Partial<SessionApi> = {}): SessionApi {
     retrySegment: vi.fn(),
     separateProposal: vi.fn(),
     setSegmentContext: vi.fn(),
+    speakerToken: vi.fn(),
     start: vi.fn(),
     update: vi.fn(),
     uploadUrl: vi.fn(),
@@ -95,6 +98,7 @@ export const IDLE_SNAPSHOT: RecorderSnapshot = {
   phase: "idle",
   sessionId: null,
   sessionKey: null,
+  speakers: "off",
   startedAt: null,
 };
 
@@ -269,6 +273,7 @@ export function aSegment(
     language: "en",
     revision: 2,
     source: "voice",
+    speech: null,
     startMs: 2000,
     text: "I can never find the save button here.",
     textOrigin: "transcription",

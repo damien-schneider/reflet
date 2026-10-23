@@ -168,6 +168,36 @@ describe("continuing an intention in a later session", () => {
     ]);
   });
 
+  test("says who spoke in the later session's quotes when it detected speakers", async () => {
+    const world = await continueWithProposedChanges();
+    await world.t.run(async (ctx) => {
+      const session = await ctx.db.get(world.contributionSessionId);
+      if (!session) {
+        throw new Error("Session missing");
+      }
+      await ctx.db.insert("sessionSpeakerTurns", {
+        clientKey: "turns-1",
+        createdAt: Date.now(),
+        endMs: 8000,
+        organizationId: session.organizationId,
+        sessionId: session._id,
+        startMs: 5000,
+        turns: [{ endMs: 8000, speaker: "S2", startMs: 5000 }],
+      });
+    });
+    await world.a.post(ACCEPT, {
+      changes: [{ changeId: precision.id }],
+      contributionId: world.contributionId,
+      expectedRevision: 2,
+    });
+
+    const detail = await loadDetail(world.a, world.sessionId);
+
+    expect(detail.history[0]?.quotes.map(({ text }) => text)).toEqual([
+      "Speaker 2: Est-ce que le serveur confirme vraiment ? Un toast suffirait.",
+    ]);
+  });
+
   test("accepting the same change twice does not apply it twice", async () => {
     const world = await continueWithProposedChanges();
     const body = {

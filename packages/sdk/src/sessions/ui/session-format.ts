@@ -1,4 +1,4 @@
-import type { SessionDetail, SessionSummary } from "../protocol";
+import type { SessionDetail, SessionSummary, SpokenRun } from "../protocol";
 
 const SECOND_MS = 1000;
 const MINUTE_MS = 60 * SECOND_MS;
@@ -12,6 +12,26 @@ export function formatClock(ms: number): string {
 
 export function countLabel(count: number, noun: string): string {
   return `${count} ${noun}${count === 1 ? "" : "s"}`;
+}
+
+const SPEAKER_LABEL_PREFIX = /^S/;
+
+export function speakerLabel(speaker: string): string {
+  return speaker.replace(SPEAKER_LABEL_PREFIX, "Speaker ");
+}
+
+export function attributedText(said: {
+  speech: SpokenRun[] | null;
+  text: string;
+}): string {
+  if (!said.speech) {
+    return said.text;
+  }
+  return said.speech
+    .map((run) =>
+      run.speaker ? `${speakerLabel(run.speaker)}: ${run.text}` : run.text
+    )
+    .join(" ");
 }
 
 export function spokenDuration(ms: number): string {

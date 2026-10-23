@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { SessionDetail, SessionProposal } from "../../../protocol";
-import { formatClock } from "../../session-format";
+import { attributedText, formatClock } from "../../session-format";
 import { IntentionHistory } from "../continuation/intention-history";
 import { EvidenceThumb } from "../transcript/evidence-thumb";
 import type { ReviewHandle } from "../use-session-detail";
@@ -160,7 +160,7 @@ function Sources({
           type="button"
         >
           <span className="dt-ses-time">{formatClock(segment.startMs)}</span>
-          {` “${segment.text}”`}
+          {` “${attributedText(segment)}”`}
         </button>
       ))}
       <div className="dt-ses-thumbs">

@@ -4,10 +4,12 @@ import type {
   ResolvedContext,
   SegmentContextValue,
 } from "./linking";
+import type { SpokenRun } from "./speakers/attribution";
 
 const SESSION_TAG = /<\s*\/?\s*session_(?:transcript|data)[^>]*>/gi;
 const REMOVED_TAG = "[tag removed]";
 const WHITESPACE_RUN = /\s+/g;
+const SPEAKER_LABEL_PREFIX = /^S/;
 const SECONDS_PER_MINUTE = 60;
 
 export const formatClock = (ms: number): string => {
@@ -27,6 +29,22 @@ export const pagePath = (url: string): string | null => {
 
 export const singleLine = (text: string): string =>
   text.replace(SESSION_TAG, REMOVED_TAG).replace(WHITESPACE_RUN, " ").trim();
+
+const labelledRun = ({ speaker, text }: SpokenRun): string =>
+  speaker === null
+    ? text
+    : `${speaker.replace(SPEAKER_LABEL_PREFIX, "Speaker ")}: ${text}`;
+
+export const labelledText = (said: {
+  speech: SpokenRun[] | null;
+  text: string;
+}): string =>
+  said.speech ? said.speech.map(labelledRun).join(" ") : said.text;
+
+export const spokenLine = (said: {
+  speech: SpokenRun[] | null;
+  text: string;
+}): string => singleLine(labelledText(said));
 
 export const truncateText = (text: string, maxChars: number): string =>
   text.length > maxChars ? `${text.slice(0, maxChars - 1)}…` : text;
@@ -126,3 +144,11 @@ export const contextLines = (
     ...notes.map((note) => `  ${note}`),
   ];
 };
+
+export const quotedPassage = (
+  segment: { speech: SpokenRun[] | null; startMs: number; text: string },
+  resolved: ResolvedContext<string>
+): string[] => [
+  `[${formatClock(segment.startMs)}] ${spokenLine(segment)}`,
+  ...contextLines(resolved, { withLocators: true }),
+];

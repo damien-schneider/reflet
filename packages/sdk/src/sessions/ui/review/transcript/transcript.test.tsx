@@ -91,6 +91,38 @@ it("retries a failed transcription while its audio is kept", async () => {
   expect(await screen.findByText("Transcribing…")).toBeTruthy();
 });
 
+it("shows who said each part of a passage and still edits it as one text", async () => {
+  await openTranscript(
+    aDetail({
+      segments: [
+        aSegment({
+          speech: [
+            { speaker: "S1", text: "Bon, on fait le point." },
+            { speaker: "S2", text: "Moi je trouve que c'est long." },
+          ],
+          text: "Bon, on fait le point. Moi je trouve que c'est long.",
+        }),
+      ],
+    })
+  );
+
+  expect(screen.getByText("Bon, on fait le point.").textContent).toBe(
+    "Speaker 1 Bon, on fait le point."
+  );
+  expect(screen.getByText("Moi je trouve que c'est long.").textContent).toBe(
+    "Speaker 2 Moi je trouve que c'est long."
+  );
+  fireEvent.click(
+    screen.getByRole("button", { name: "Edit passage at 00:02" })
+  );
+  expect(
+    screen.getByRole("textbox", { name: "Passage at 00:02" })
+  ).toHaveProperty(
+    "value",
+    "Bon, on fait le point. Moi je trouve que c'est long."
+  );
+});
+
 it("lets me type what a failed passage said", async () => {
   const failed = aSegment({
     text: "",

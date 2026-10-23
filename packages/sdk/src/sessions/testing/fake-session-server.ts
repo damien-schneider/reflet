@@ -32,6 +32,12 @@ export const SESSION_SUMMARY = {
   visibility: "private",
 };
 
+export const SPEAKER_TOKEN = {
+  expiresAt: 1_700_000_120_000,
+  token: "rt_test",
+  url: "wss://speakers.test/v1/audio/transcriptions/realtime",
+};
+
 const SEGMENT = {
   audioExpiresAt: null,
   context: [],
@@ -82,6 +88,10 @@ function respond(path: SessionApiPath, body: unknown): unknown {
       };
     case "/api/v1/sessions/events":
       return { accepted: 1, dropped: 0, limitReached: false };
+    case "/api/v1/sessions/speakers":
+      return { accepted: 1, dropped: 0 };
+    case "/api/v1/sessions/speakers/token":
+      return SPEAKER_TOKEN;
     case "/api/v1/sessions/upload-url":
       return { uploadUrl: "https://upload.test/blob" };
     case "/api/v1/sessions/segments":

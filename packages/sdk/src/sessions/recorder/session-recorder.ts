@@ -1,5 +1,6 @@
 import type { ContinuedIntentionRef, SessionApi } from "../api/session-api";
 import type { MicrophoneFailureKind } from "../capture/audio/microphone";
+import type { SpeakerDetectionState } from "../capture/speakers/speaker-detection";
 import type { SessionAccount } from "../local/session-store";
 import type {
   SessionLimitKind,
@@ -32,12 +33,14 @@ export interface RecorderSnapshot {
   phase: RecorderPhase;
   sessionId: string | null;
   sessionKey: string | null;
+  speakers: SpeakerDetectionState;
   /** Epoch ms the session clock counts from. */
   startedAt: number | null;
 }
 
 export interface RecorderStartOptions {
   continues?: ContinuedIntentionRef;
+  detectSpeakers?: boolean;
   title?: string;
 }
 

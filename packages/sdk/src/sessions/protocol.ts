@@ -66,6 +66,7 @@ export const sessionIdentitySchema = z.object({
   limits: sessionLimitsSchema,
   organizationId: z.string(),
   organizationName: z.string(),
+  speakersConfigured: z.boolean().default(false),
   transcriptionConfigured: z.boolean(),
   user: z.object({
     email: z.string().nullable(),
@@ -246,6 +247,26 @@ export const contextOptionSchema = z.object({
 });
 export type ContextOption = z.infer<typeof contextOptionSchema>;
 
+export const spokenRunSchema = z.object({
+  speaker: z.string().nullable(),
+  text: z.string(),
+});
+export type SpokenRun = z.infer<typeof spokenRunSchema>;
+
+export const speakerTurnSchema = z.object({
+  endMs: z.number(),
+  speaker: z.string(),
+  startMs: z.number(),
+});
+export type SpeakerTurn = z.infer<typeof speakerTurnSchema>;
+
+export const speakerTokenSchema = z.object({
+  expiresAt: z.number(),
+  token: z.string(),
+  url: z.string(),
+});
+export type SpeakerToken = z.infer<typeof speakerTokenSchema>;
+
 export const sessionSegmentSchema = z.object({
   audioExpiresAt: z.number().nullable(),
   context: z.array(segmentContextSchema),
@@ -258,6 +279,7 @@ export const sessionSegmentSchema = z.object({
   language: z.string().nullable(),
   revision: z.number(),
   source: z.enum(["voice", "typed"]),
+  speech: z.array(spokenRunSchema).nullable().default(null),
   startMs: z.number(),
   text: z.string(),
   textOrigin: z.enum(["transcription", "human"]),

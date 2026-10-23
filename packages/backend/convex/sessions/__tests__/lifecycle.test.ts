@@ -78,6 +78,12 @@ describe("session lifecycle", () => {
       events: [{ atMs: 10, frame: testFrame, kind: "navigation" }],
       sessionId,
     });
+    const turns = await a.post("/api/v1/sessions/speakers", {
+      clientKey: "turns-1",
+      sessionId,
+      turns: [{ endMs: 1800, speaker: "S1", startMs: 1200 }],
+    });
+    expect(turns.body).toEqual({ accepted: 1, dropped: 0 });
     await addProposal(t, { need: "Keep the cart", sessionId });
 
     const deleted = await a.post("/api/v1/sessions/delete", { sessionId });
@@ -96,6 +102,7 @@ describe("session lifecycle", () => {
       proposals: await ctx.db.query("sessionProposals").collect(),
       segments: await ctx.db.query("sessionSegments").collect(),
       sessions: await ctx.db.query("sessions").collect(),
+      speakerTurns: await ctx.db.query("sessionSpeakerTurns").collect(),
     }));
     expect(remaining).toMatchObject({
       audio: null,
@@ -104,6 +111,7 @@ describe("session lifecycle", () => {
       image: null,
       proposals: [],
       segments: [],
+      speakerTurns: [],
     });
     expect(remaining.sessions[0]).toMatchObject({ title: "" });
     expect(remaining.sessions[0]?.deletedAt).toEqual(expect.any(Number));

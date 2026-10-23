@@ -1,5 +1,6 @@
 import type { HttpRouter } from "convex/server";
 import { internal } from "../../_generated/api";
+import { mintSpeakerToken } from "../../sessions/speakers/token";
 import {
   registerSessionEndpoint,
   type SessionEndpoint,
@@ -15,6 +16,8 @@ import {
   segmentBody,
   segmentIdBody,
   sessionIdBody,
+  speakerTokenBody,
+  speakerTurnsBody,
   startBody,
   updateBody,
   uploadUrlBody,
@@ -44,6 +47,13 @@ const CAPTURE_ENDPOINTS: SessionEndpoint[] = [
     ),
     method: "GET",
     path: "/api/v1/sessions/detail",
+  },
+  {
+    handler: sessionGet((ctx, actor) =>
+      ctx.runQuery(internal.sessions.views.live.feed, { actor })
+    ),
+    method: "GET",
+    path: "/api/v1/sessions/live",
   },
   {
     handler: sessionPost(startBody, (ctx, actor, body) =>
@@ -94,6 +104,23 @@ const CAPTURE_ENDPOINTS: SessionEndpoint[] = [
     ),
     method: "POST",
     path: "/api/v1/sessions/events",
+  },
+  {
+    handler: sessionPost(speakerTokenBody, (ctx, actor) =>
+      mintSpeakerToken(ctx, actor)
+    ),
+    method: "POST",
+    path: "/api/v1/sessions/speakers/token",
+  },
+  {
+    handler: sessionPost(speakerTurnsBody, (ctx, actor, body) =>
+      ctx.runMutation(internal.sessions.speakers.turns.record, {
+        actor,
+        ...body,
+      })
+    ),
+    method: "POST",
+    path: "/api/v1/sessions/speakers",
   },
   {
     handler: sessionPost(uploadUrlBody, (ctx, actor, body) =>

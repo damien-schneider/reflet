@@ -15,6 +15,8 @@ import {
   proposalDecisionValidator,
   sessionEventValidator,
   sessionGapValidator,
+  speakerTurnValidator,
+  spokenWordValidator,
   transcriptionStateValidator,
 } from "./validators";
 
@@ -192,11 +194,24 @@ export const sessionsTables = {
       updatedAt: v.number(),
     }),
     updatedAt: v.number(),
+    words: v.optional(v.array(spokenWordValidator)),
   })
     .index("by_session_start", ["sessionId", "startMs"])
     .index("by_session_client_key", ["sessionId", "clientKey"])
     .index("by_audio_expiry", ["audio.expiresAt"])
     .index("by_audio_storage", ["audio.storageId"]),
+
+  sessionSpeakerTurns: defineTable({
+    clientKey: v.string(),
+    createdAt: v.number(),
+    endMs: v.number(),
+    organizationId: v.id("organizations"),
+    sessionId: v.id("sessions"),
+    startMs: v.number(),
+    turns: v.array(speakerTurnValidator),
+  })
+    .index("by_session_start", ["sessionId", "startMs"])
+    .index("by_session_client_key", ["sessionId", "clientKey"]),
 
   sessions: defineTable({
     analysis: v.object({
@@ -222,6 +237,7 @@ export const sessionsTables = {
     ),
     createdAt: v.number(),
     deletedAt: v.optional(v.number()),
+    detectSpeakers: v.optional(v.boolean()),
     endedAt: v.optional(v.number()),
     gaps: v.array(sessionGapValidator),
     organizationId: v.id("organizations"),
@@ -236,6 +252,7 @@ export const sessionsTables = {
       eventCount: v.number(),
       evidenceCount: v.number(),
       segmentCount: v.number(),
+      speakerTurnCount: v.optional(v.number()),
     }),
     visibility: v.union(v.literal("private"), v.literal("team")),
   })

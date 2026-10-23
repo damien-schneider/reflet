@@ -6,6 +6,7 @@ import {
   type SessionEventValue,
   toLinkableEvidence,
 } from "../linking";
+import type { SpeakerTurn } from "../speakers/attribution";
 import {
   aliasOf,
   describeEvidence,
@@ -23,6 +24,7 @@ export interface BriefSessionMaterial {
   evidence: Doc<"sessionEvidence">[];
   segments: Doc<"sessionSegments">[];
   session: Doc<"sessions">;
+  turns: SpeakerTurn[];
 }
 
 export interface SessionBriefInput {

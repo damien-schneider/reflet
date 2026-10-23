@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SESSION_SUMMARY } from "../testing/fake-session-server";
+import { SESSION_SUMMARY, SPEAKER_TOKEN } from "../testing/fake-session-server";
 import { createSessionApi, type SessionRequest } from "./session-api";
 
 function fakeTransport(response: unknown) {
@@ -45,6 +45,34 @@ describe("createSessionApi", () => {
       method: "GET",
       path: "/api/v1/sessions/detail",
       query: { sessionId: "s1" },
+    });
+  });
+
+  it("asks a speaker token with an empty body", async () => {
+    const { requests, transport } = fakeTransport(SPEAKER_TOKEN);
+    await expect(createSessionApi(transport).speakerToken()).resolves.toEqual(
+      SPEAKER_TOKEN
+    );
+    expect(requests[0]).toMatchObject({
+      body: {},
+      method: "POST",
+      path: "/api/v1/sessions/speakers/token",
+    });
+  });
+
+  it("posts speaker turns and reads how many were kept", async () => {
+    const { requests, transport } = fakeTransport({ accepted: 1, dropped: 0 });
+    const body = {
+      clientKey: "turns-1",
+      sessionId: "s1",
+      turns: [{ endMs: 2000, speaker: "S1", startMs: 1000 }],
+    };
+    await expect(
+      createSessionApi(transport).addSpeakerTurns(body)
+    ).resolves.toEqual({ accepted: 1, dropped: 0 });
+    expect(requests[0]).toMatchObject({
+      body,
+      path: "/api/v1/sessions/speakers",
     });
   });
 });

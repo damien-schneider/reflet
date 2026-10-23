@@ -55,7 +55,7 @@ describe("createLocalSessions", () => {
     const account = local.connect({
       accountKey: "org:ada",
       api: server.api,
-      maxLocalBufferBytes: 1_000_000,
+      limits: { audioRetentionMs: 86_400_000, maxLocalBufferBytes: 1_000_000 },
     });
     account.claim({ halt: vi.fn(), sessionKey: "s2" });
     const drafts = await loadedDrafts(local, "org:ada");
@@ -94,7 +94,7 @@ describe("createLocalSessions", () => {
     const account = local.connect({
       accountKey: "org:ada",
       api: server.api,
-      maxLocalBufferBytes: 1_000_000,
+      limits: { audioRetentionMs: 86_400_000, maxLocalBufferBytes: 1_000_000 },
     });
     const halt = vi.fn();
     account.claim({ halt, sessionKey: "s1" });
@@ -118,7 +118,7 @@ describe("createLocalSessions", () => {
     const account = local.connect({
       accountKey: "org:ada",
       api: server.api,
-      maxLocalBufferBytes: 1_000_000,
+      limits: { audioRetentionMs: 86_400_000, maxLocalBufferBytes: 1_000_000 },
     });
     const halt = vi.fn();
     account.claim({ halt, sessionKey: "s1" });

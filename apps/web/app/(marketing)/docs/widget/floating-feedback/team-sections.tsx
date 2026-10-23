@@ -74,13 +74,23 @@ export function SessionsSection() {
           <InlineCode>microphone=(self)</InlineCode>.
         </li>
         <li>
+          With a <InlineCode>Content-Security-Policy</InlineCode>, “Several
+          people are talking” needs{" "}
+          <InlineCode>wss://api.mistral.ai</InlineCode> in{" "}
+          <InlineCode>connect-src</InlineCode>. Without it, the session still
+          records, without telling voices apart.
+        </li>
+        <li>
           Pause stops all collection. Keystrokes are never recorded, form fields
           appear empty in screenshots, and password fields and{" "}
           <InlineCode>data-reflet-redact</InlineCode> elements are left out.
         </li>
         <li>
-          Voice is transcribed with zero data retention, and the audio is
-          deleted once transcribed, within 24 hours at most.
+          Voice is transcribed by ElevenLabs Scribe through OpenRouter with zero
+          data retention. When “Several people are talking” is ticked, it is
+          also streamed live to Mistral (Voxtral) to tell the voices apart;
+          Mistral keeps API inputs up to 30 days and does not train on them.
+          Reflet deletes the audio once transcribed, within 24 hours at most.
         </li>
       </DocsList>
     </DocsSection>

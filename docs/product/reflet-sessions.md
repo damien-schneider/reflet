@@ -28,7 +28,7 @@ Deux tickets indépendants créés automatiquement dans cet exemple constituent 
 | --- | --- |
 | Enregistrer dans les devtools | Démarrage, microphone, pause, reprise, fin, marque et sélection explicite d'un élément |
 | Enregistrer sur une application déployée | Outils d'équipe via `?reflet-team`, connexion Reflet par redirection (aller-retour sur reflet.app, compatible avec toute `Cross-Origin-Opener-Policy`), origine autorisée et clé du widget ; aucun compte utilisateur hôte requis |
-| Transcription | Voix découpée et transcrite dans le cloud, segments avec début/fin, correction et reprise sur échec ; audio temporaire |
+| Transcription | Voix découpée et transcrite dans le cloud, segments avec début/fin, correction et reprise sur échec ; audio temporaire. Détection des voix facultative (case « Several people are talking » au démarrage) : chaque passage indique qui parle (« Speaker 1 », « Speaker 2 »…), même numéro pour la même personne pendant toute la session |
 | Contexte | Horloge commune, clics, survols prolongés, navigation, scroll, viewport, éléments et captures ciblées ; pas de trajectoire continue du curseur |
 | Association parole/contexte | Classement temporel des marques, sélections, clics et survols ; plusieurs candidats et ambiguïté signalée |
 | Extraction et revue | Besoin, observation, réponse envisagée, inconnues et sources ; garder, modifier, préciser, différer, écarter, fusionner et annuler une décision |
@@ -43,6 +43,7 @@ Deux tickets indépendants créés automatiquement dans cet exemple constituent 
 | Moments et associations (0.7.0) | Vue « Show context » d'un passage, contour élément/pointeur seulement si l'instant correspond, correction humaine ou « contexte inconnu » conservée après nouvelle analyse et utilisée par l'analyse et le brief |
 | Intentions (0.7.0) | Onglet Intentions, « Confirm » distinct de la réponse envisagée, origine IA/humaine de la formulation, rattachement proposé à une intention existante, suppression d'une intention |
 | Continuation (0.7.0) | « Continue this intention », comparaison IA sourcée à la révision de départ, acceptation/refus par changement, question ciblée, lecture de vérification confirmée par une personne, historique des contributions, changements depuis le dernier brief |
+| Suivi en direct par un agent | `reflet session watch` (`reflet-cli`) et la compétence `reflet-live` : pendant une session devtools, l'agent de développement lancé par l'auteur reçoit chaque passage transcrit avec son contexte, ses sources et ses captures, et modifie le code avant la fin ; uniquement la dernière session devtools de l'auteur, via son serveur de développement et sa connexion. Dans une session à plusieurs voix, chaque passage porte ses locuteurs (`[mm:ss] Speaker 1: … Speaker 2: …`) et l'agent ne prend pas la remarque d'une personne pour le changement d'avis d'une autre |
 
 L'accès équipe en production existe déjà ; une expérience mobile complète de gestion des retours n'est pas pour autant validée. La capture reste limitée à la page web équipée du SDK. Aucun accès obligatoire au dépôt, aucune vidéo systématique et aucun moteur de développement dans Reflet.
 
@@ -55,6 +56,7 @@ L'accès équipe en production existe déjà ; une expérience mobile complète 
 - Au premier usage, expliquer les données réellement collectées et le traitement cloud de la voix. Ne pas demander une permission de partage d'écran pour la capture DOM.
 - Demander le microphone sur action explicite. Tant qu'il n'est pas accordé, aucune session ne doit sembler enregistrer.
 - Si le microphone est refusé ou indisponible, proposer de réessayer ou d'écrire une note par le parcours existant. Hors échec, le démarrage n'offre qu'une action : « Start session ».
+- Détection des voix, facultative : la case « Several people are talking » (« Mistral tells the voices apart so each passage shows who spoke. ») n'apparaît que si Reflet a la détection configurée. Elle ne sert qu'à plusieurs : la détection a un coût, et une session où elle n'est pas cochée reste transcrite par Scribe seul.
 - Aucun onboarding fournisseur, API key ni accès au dépôt exigé de l'utilisateur pour commencer une session configurée par Reflet.
 
 ### Pendant la session
@@ -64,6 +66,8 @@ L'accès équipe en production existe déjà ; une expérience mobile complète 
 - « Marquer ce moment » rattache explicitement une capture et le contexte courant à cet instant. La sélection explicite d'un élément reste disponible pour lever une ambiguïté.
 - La pause interrompt la collecte du microphone et du contexte. Elle n'est pas un simple changement d'icône. La reprise est explicite et la lacune reste identifiable.
 - Le traitement peut avancer en arrière-plan, mais l'IA n'interrompt pas la session dans cette version.
+- Suivi en direct, facultatif : si l'auteur a lancé `/reflet-live` dans son agent, chaque passage lui est transmis après une pause de quelques secondes, une fois transcrit, avec ses locuteurs quand la détection des voix est active ; l'agent modifie le code pendant que la session continue, sans rien afficher dans la barre. Une session déjà terminée quand l'agent commence n'est jamais transmise. Un rechargement complet de la page par le serveur de développement interrompt l'enregistrement ; la reprise reste manuelle.
+- Si le flux de détection des voix échoue, l'enregistrement continue et la barre indique que les voix ne sont plus distinguées : tout de suite quand Reflet refuse le jeton (détection non configurée, limite atteinte), après trois nouvelles tentatives (1, 2 puis 4 s) quand Mistral ou le réseau a un raté passager.
 - « Terminer » coupe les pistes et les écouteurs avant de lancer la revue. L'utilisateur peut consulter ce qui est disponible pendant la fin du traitement.
 - Tant que le traitement n'est pas fini, la revue affiche ses étapes dans l'ordre : envoi, transcription de la voix, recherche des intentions par l'IA (ou comparaison avec la révision de départ). Chaque étape est faite, en cours, en attente de la précédente ou en échec avec sa raison ; une analyse encore en file d'envoi ne propose pas « Analyze ».
 
@@ -97,7 +101,7 @@ La preuve minimale est une trace horodatée, pas une vidéo intégrale ni une in
 
 | Source | Données utiles | Limite à montrer |
 | --- | --- | --- |
-| Parole | Segments de transcript, début/fin, corrections | Pas de lecteur audio après suppression |
+| Parole | Segments de transcript, début/fin, corrections ; tours de parole (locuteur, début/fin) quand la détection des voix est active | Pas de lecteur audio après suppression ; locuteur approximatif à un changement de tour |
 | Page | URL nettoyée, titre, dimensions du viewport, scroll, échelle | Changement de page ou interruption de collecte |
 | Pointeur | Coordonnées dans le viewport, instant, élément ciblé | Survol = indice, pas preuve d'intention |
 | Élément | Rôle, libellé nettoyé, sélecteur, rectangle | Sélecteur non garanti stable entre versions |
@@ -107,6 +111,8 @@ La preuve minimale est une trace horodatée, pas une vidéo intégrale ni une in
 Tous les événements et les segments utilisent une origine temporelle de session commune. Le traitement différé ne doit pas changer les instants. Chaque contexte contient son système de coordonnées : des x/y seuls ne suffisent pas après un scroll ou un redimensionnement.
 
 L'association d'une phrase à un élément tient compte des secondes précédentes et suivantes dans la session active. En cas de doute, conserver plusieurs candidats ou demander une précision pendant la revue. Ne jamais remplacer un contexte manquant par l'écran courant.
+
+Détection des voix : le texte vient toujours de Scribe. Pendant la collecte, le navigateur envoie aussi le micro en direct à Mistral (`voxtral-mini-transcribe-realtime-3`, `diarize`), dont on ne garde que qui parle quand : il en tire des tours de parole sur l'horloge de session et les envoie à Reflet, qui les stocke bruts. Pour ces sessions, Scribe renvoie l'instant de chaque mot. L'attribution se fait à la lecture : un tour commence là où finit son premier groupe de mots, donc chaque mot prend le locuteur du premier tour qui n'est pas encore fini quand le mot se termine (à 0,25 s près, la marge d'erreur de l'horloge), à condition que ce tour commence moins de 1,5 s après le mot ; sinon, le mot prend le locuteur du tour précédent s'il a fini moins de 1,5 s avant. Les mots consécutifs d'un même locuteur forment un passage attribué, une ponctuation isolée reste avec les mots qui la précèdent, et un mot sans tour proche reste sans locuteur. Un passage corrigé à la main perd ses instants par mot et prend le locuteur qui a parlé le plus longtemps sur son intervalle. Un même libellé désigne la même personne pendant toute la session : couper une personne en deux libellés est acceptable, réunir deux personnes sous un seul ne l'est pas. Après une pause, la nouvelle connexion reçoit pour chaque voix déjà entendue 3 à 6 s de sa voix (prises dans plusieurs tours si besoin) pour que Mistral reprenne les mêmes libellés.
 
 Règles de collecte à préserver et limites actuelles :
 
@@ -126,6 +132,7 @@ Les limites numériques ont été fixées au lot 0 et sont centralisées côté 
 - Partager avec l'équipe est une action explicite. L'appartenance à l'organisation seule ne rend pas tous les brouillons lisibles à tous ses membres.
 - Masquer les zones sensibles configurées avant toute capture ou transmission. Le produit ne promet pas de reconnaître automatiquement toutes les données personnelles.
 - Le prestataire de transcription et ses règles de rétention doivent correspondre à la promesse affichée. Le choix est documenté au lot 0 ; revalider ces conditions avant de changer de fournisseur ou de routage.
+- Détection des voix : seulement quand « Several people are talking » est coché. La voix est alors aussi envoyée en direct à Mistral (Voxtral realtime), qui conserve les entrées de l'API jusqu'à 30 jours par défaut et ne s'en sert pas pour entraîner ses modèles (rétention zéro non demandée, choix produit documenté au lot 0). La liste « What a session records » et la documentation le disent. Le navigateur se connecte avec un jeton Mistral de 120 s émis par Reflet ; la clé serveur ne quitte pas le backend. Scribe via OpenRouter reste sans rétention pour le texte.
 - Supprimer l'audio brut après sauvegarde durable du transcript correspondant. Une simple réponse du prestataire sans sauvegarde n'est pas suffisante.
 - Le plafond de récupération audio retenu est de 24 heures à partir de la capture, retries inclus ; l'audio est supprimé plus tôt après sauvegarde du transcript. Préserver le nettoyage côté client et serveur lors des prochains développements.
 - Les captures, transcripts et propositions restent corrigeables et supprimables. Les extraits dérivés concernés doivent être effacés ou régénérés sans le contenu supprimé.
@@ -140,7 +147,7 @@ Responsabilités déjà matérialisées dans le domaine `sessions` ; les nouvell
 | Objet | Responsabilité |
 | --- | --- |
 | Session | Auteur, organisation, visibilité, état de collecte, limites et origine temporelle |
-| Segment | Contribution transcrite ou saisie, instants, révision, état de traitement |
+| Segment | Contribution transcrite ou saisie, instants, révision, état de traitement ; passages attribués à un locuteur (`speech`), calculés à la lecture à partir des tours de parole de la session |
 | Preuve | Contexte ou capture, provenance, instant, disponibilité et droits |
 | Proposition | Besoin, observations, hypothèses, sources, révision et décision humaine |
 | Transmission | Sélection et révisions exactes, brief, destination, état réel de remise |
@@ -150,7 +157,7 @@ Séparer collecte, traitement, revue et remise : une session terminée peut enco
 Invariants à tester avant les interfaces :
 
 1. Toutes les lectures, écritures et pièces jointes appliquent l'organisation et les droits de la session, y compris par identifiant direct.
-2. Les brouillons de session sont inaccessibles aux listes publiques et aux outils d'agents. Ne pas les encoder comme des feedbacks internes déjà éligibles.
+2. Les brouillons de session sont inaccessibles aux listes publiques et aux outils d'agents. Seule exception : le suivi en direct que l'auteur lance lui-même, limité à ses propres sessions devtools et lu avec sa connexion devtools, qui voit déjà ces sessions. Ne pas les encoder comme des feedbacks internes déjà éligibles.
 3. Upload, transcription, analyse, création de feedback et transmission sont idempotents sur leur opération et révision. Un retry ne crée aucun doublon.
 4. Un résultat IA portant sur une ancienne révision ne remplace pas une correction récente. Garder l'état humain comme autorité.
 5. Une interruption conserve les données acquittées ; ce qui n'est pas sauvegardé apparaît comme tel. Une erreur n'est jamais affichée comme « Enregistré ».
@@ -190,6 +197,8 @@ Inspection du 13 octobre 2026. Chemins relatifs à la racine du dépôt ; commen
 | Captures bornées | `packages/sdk/src/sessions/capture/page/evidence-scheduler.ts` |
 | Marques et sélection | `packages/sdk/src/sessions/ui/recording/recording-layer.tsx` et `recording-bar.tsx` |
 | Association transcript/contexte | `packages/backend/convex/sessions/linking.ts` |
+| Flux de détection des voix (WebSocket Mistral, tours de parole) | `packages/sdk/src/sessions/capture/speakers/` |
+| Jeton Mistral, tours de parole et attribution des locuteurs à la lecture | `packages/backend/convex/sessions/speakers/` (`token.ts`, `turns.ts`, `attribution.ts`) ; libellés dans le texte via `spokenLine` de `sessions/formatters.ts`, et dans les citations de la revue via `attributedText` de `packages/sdk/src/sessions/ui/session-format.ts` |
 | Transcript, captures et sources des propositions | `packages/sdk/src/sessions/ui/review/transcript/` et `proposals/` |
 | Source maps dans les devtools | `packages/sdk/src/devtools/client/element-source.ts` |
 | Indices React actuellement utilisés par Sessions | `packages/sdk/src/feedback/core/react-source.ts` |
@@ -198,7 +207,7 @@ Inspection du 13 octobre 2026. Chemins relatifs à la racine du dépôt ; commen
 | Accès équipe en production | `packages/sdk/src/sessions/team/` et `packages/backend/convex/team_access/` |
 | Barrière vers les agents | `packages/backend/convex/feedback/agent_queue.ts` exclut les feedbacks liés à une proposition de session |
 
-Le transcript est horodaté par segment, pas mot par mot. L'association existante utilise une fenêtre de 6 secondes avant et 2 secondes après le segment, pondère davantage marques/sélections que survols, et signale les candidats proches en score. Ces valeurs décrivent l'implémentation ; les dériver du code, ne pas les recopier en constantes dans une nouvelle vue.
+Le transcript est horodaté par segment, pas mot par mot ; seules les sessions avec détection des voix gardent l'instant de fin de chaque mot, et seulement pour attribuer les locuteurs. L'association existante utilise une fenêtre de 6 secondes avant et 2 secondes après le segment, pondère davantage marques/sélections que survols, et signale les candidats proches en score. Ces valeurs décrivent l'implémentation ; les dériver du code, ne pas les recopier en constantes dans une nouvelle vue.
 
 ## 9. Prochains développements, dans l'ordre
 

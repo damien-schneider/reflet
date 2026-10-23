@@ -65,6 +65,16 @@ it("says the recording is kept on the device while offline", () => {
   expect(screen.getByText("Offline — kept on this device")).toBeTruthy();
 });
 
+it("says when speakers stop being detected, after sync problems", () => {
+  renderLayer(fakeRecorder({ ...RECORDING_SNAPSHOT, speakers: "unavailable" }));
+  expect(screen.getByText("Speakers aren't being detected")).toBeTruthy();
+  cleanup();
+
+  syncStatus.isOnline = false;
+  renderLayer(fakeRecorder({ ...RECORDING_SNAPSHOT, speakers: "unavailable" }));
+  expect(screen.getByText("Offline — kept on this device")).toBeTruthy();
+});
+
 it("offers a note for a marked moment and saves it on Enter", () => {
   const { recorder } = renderLayer();
   fireEvent.click(screen.getByRole("button", { name: /Mark moment/ }));

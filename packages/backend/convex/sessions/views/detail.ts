@@ -9,12 +9,18 @@ import {
   type SessionEventValue,
   toLinkableEvidence,
 } from "../linking";
+import { type SpeakerTurn, segmentSpeech } from "../speakers/attribution";
+import { loadSpeakerTurns } from "../speakers/turns";
 import { loadProposalLinks, type ProposalLinks } from "./intentions";
 
 export function shapeSegment(
   segment: Doc<"sessionSegments">,
-  resolved: ResolvedContext<Id<"sessionEvidence">>
+  related: {
+    resolved: ResolvedContext<Id<"sessionEvidence">>;
+    turns: SpeakerTurn[];
+  }
 ) {
+  const { resolved } = related;
   return {
     audioExpiresAt: segment.audio?.expiresAt ?? null,
     context: resolved.context,
@@ -27,6 +33,7 @@ export function shapeSegment(
     language: segment.language ?? null,
     revision: segment.revision,
     source: segment.source,
+    speech: segmentSpeech(segment, related.turns),
     startMs: segment.startMs,
     text: segment.text,
     textOrigin: segment.textOrigin,
@@ -65,21 +72,23 @@ export interface SessionCapture {
   events: SessionEventValue[];
   evidence: Doc<"sessionEvidence">[];
   segments: Doc<"sessionSegments">[];
+  turns: SpeakerTurn[];
 }
 
 export async function loadSessionCapture(
   ctx: QueryCtx,
   sessionId: Id<"sessions">
 ): Promise<SessionCapture> {
-  const [events, evidence, segments] = await Promise.all([
+  const [events, evidence, segments, turns] = await Promise.all([
     loadSessionEvents(ctx, sessionId),
     loadSessionEvidence(ctx, sessionId),
     ctx.db
       .query("sessionSegments")
       .withIndex("by_session_start", (q) => q.eq("sessionId", sessionId))
       .collect(),
+    loadSpeakerTurns(ctx, sessionId),
   ]);
-  return { events, evidence, segments };
+  return { events, evidence, segments, turns };
 }
 
 export function shapeSegments(input: SessionCapture) {
@@ -87,10 +96,13 @@ export function shapeSegments(input: SessionCapture) {
     toLinkableEvidence(item, item._id)
   );
   return input.segments.map((segment) =>
-    shapeSegment(
-      segment,
-      resolveStoredSegment(segment, { events: input.events, evidence })
-    )
+    shapeSegment(segment, {
+      resolved: resolveStoredSegment(segment, {
+        events: input.events,
+        evidence,
+      }),
+      turns: input.turns,
+    })
   );
 }
 
@@ -98,11 +110,17 @@ export async function loadSegmentView(
   ctx: QueryCtx,
   segment: Doc<"sessionSegments">
 ) {
-  const [events, evidence] = await Promise.all([
+  const [events, evidence, turns] = await Promise.all([
     loadSessionEvents(ctx, segment.sessionId),
     loadSessionEvidence(ctx, segment.sessionId),
+    loadSpeakerTurns(ctx, segment.sessionId),
   ]);
-  const [view] = shapeSegments({ events, evidence, segments: [segment] });
+  const [view] = shapeSegments({
+    events,
+    evidence,
+    segments: [segment],
+    turns,
+  });
   if (!view) {
     throw new Error("Segment view missing");
   }
