@@ -14,6 +14,12 @@ const MIME_EXTENSIONS: Record<string, string> = {
   "image/webp": "webp",
 };
 
+export const imageExtensionOf = (mimeType: string): string =>
+  MIME_EXTENSIONS[mimeType] ?? "png";
+
+export const safeFileStem = (name: string): string =>
+  name.replace(UNSAFE_CHARACTERS, "-").replace(LEADING_PUNCTUATION, "");
+
 export interface BinaryWriter {
   write: (path: string, bytes: Uint8Array) => void;
 }
@@ -54,12 +60,11 @@ function fileNameOf(
   const reportedExtension = extname(reportedName).slice(1).toLowerCase();
   const extension = IMAGE_EXTENSIONS.has(reportedExtension)
     ? reportedExtension
-    : (MIME_EXTENSIONS[screenshot.mimeType] ?? "png");
+    : imageExtensionOf(screenshot.mimeType);
   const stem =
-    reportedName
-      .slice(0, reportedName.length - extname(reportedName).length)
-      .replace(UNSAFE_CHARACTERS, "-")
-      .replace(LEADING_PUNCTUATION, "") || "screenshot";
+    safeFileStem(
+      reportedName.slice(0, reportedName.length - extname(reportedName).length)
+    ) || "screenshot";
   return `${String(index + 1).padStart(2, "0")}-${stem}.${extension}`;
 }
 

@@ -9,6 +9,8 @@ import { runAgentInstall } from "./commands/agent-install";
 import { runDoctor } from "./commands/doctor";
 import { type InitReport, runInit, SDK_PACKAGE } from "./commands/init";
 import { runLogin } from "./commands/login";
+import { LIVE_AGENT_PROMPT } from "./live/live-prompt";
+import { runSessionWatch } from "./live/session-watch";
 import { nodeFileSystem, type PackageManager } from "./project";
 import { heading, indent, SYMBOL, style, terminalSafe } from "./render";
 import { SETUP_PROMPT } from "./setup-prompt";
@@ -45,8 +47,10 @@ ${style.bold("Widget setup")}
   reflet prompt             print the setup prompt for a coding agent
 
 ${style.bold("Coding agents")}
-  reflet agent install      write the feedback loop as a skill for coding agents
+  reflet agent install      write the feedback and live session loops as skills
   reflet prompt agent       print the fix-a-feedback loop for a coding agent
+  reflet prompt live        print the follow-my-recording loop for a coding agent
+  reflet session watch      wait for what you say in the devtools session you record
 
 ${style.bold("Admin API")} ${style.dim("(REFLET_API_KEY or reflet login)")}
   reflet login              store a secret key in ~/.reflet/config.json
@@ -211,7 +215,7 @@ function commandAgentInstall(argv: string[]): number {
     );
   }
   process.stdout.write(
-    `\n${indent(`Run ${style.cyan("/reflet")} in Claude Code, ${style.cyan("$reflet")} in Codex, or ask any agent to work the Reflet queue.`)}\n\n`
+    `\n${indent(`Run ${style.cyan("/reflet")} in Claude Code, ${style.cyan("$reflet")} in Codex, or ask any agent to work the Reflet queue.\nRun ${style.cyan("/reflet-live")} or ${style.cyan("$reflet-live")} while you record a devtools session to get fixes as you talk.`)}\n\n`
   );
   return 0;
 }
@@ -227,6 +231,13 @@ export async function run(argv: string[]): Promise<number> {
   if (command === "prompt" && subcommand === "agent") {
     process.stdout.write(`${AGENT_PROMPT}\n`);
     return 0;
+  }
+  if (command === "prompt" && subcommand === "live") {
+    process.stdout.write(`${LIVE_AGENT_PROMPT}\n`);
+    return 0;
+  }
+  if (command === "session") {
+    return await runSessionWatch(argv.slice(1));
   }
   if (command === "agent" && subcommand === "install") {
     return commandAgentInstall(argv.slice(2));

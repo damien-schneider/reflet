@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { SKILL_DESCRIPTION } from "../agent-prompt";
 import { runAgentInstall } from "../commands/agent-install";
+import { LIVE_SKILL_DESCRIPTION } from "../live/live-prompt";
 import type { FileSystemPort } from "../project";
 
 function workspace(initial: Record<string, string> = {}) {
@@ -15,33 +16,43 @@ function workspace(initial: Record<string, string> = {}) {
   return { files, store };
 }
 
-const SKILL_PATHS = [
-  "/app/.agents/skills/reflet/SKILL.md",
-  "/app/.claude/skills/reflet/SKILL.md",
+const SKILLS = [
+  {
+    command: "feedback claim-next",
+    description: SKILL_DESCRIPTION,
+    name: "reflet",
+  },
+  {
+    command: "session watch",
+    description: LIVE_SKILL_DESCRIPTION,
+    name: "reflet-live",
+  },
 ];
 
 describe("agent install", () => {
-  it("writes a loadable skill where every harness looks for it", () => {
-    const { files, store } = workspace();
+  it.each(SKILLS)(
+    "writes a loadable $name skill where every harness looks for it",
+    ({ command, description, name }) => {
+      const { files, store } = workspace();
 
-    runAgentInstall({ cwd: "/app", dryRun: false, files });
+      runAgentInstall({ cwd: "/app", dryRun: false, files });
 
-    for (const path of SKILL_PATHS) {
-      const document = store.get(path) ?? "";
-      const [, frontmatter = ""] = document.split("---\n");
-      const description = frontmatter
-        .split("\n")
-        .find((line) => line.startsWith("description: "))
-        ?.slice("description: ".length);
-      expect(frontmatter).toContain("name: reflet\n");
-      expect(JSON.parse(description ?? "")).toBe(SKILL_DESCRIPTION);
-      expect(document).toContain("feedback claim-next");
-      expect(document).toContain("feedback claim <id>");
+      for (const root of [".agents/skills", ".claude/skills"]) {
+        const document = store.get(`/app/${root}/${name}/SKILL.md`) ?? "";
+        const [, frontmatter = ""] = document.split("---\n");
+        const declared = frontmatter
+          .split("\n")
+          .find((line) => line.startsWith("description: "))
+          ?.slice("description: ".length);
+        expect(frontmatter).toContain(`name: ${name}\n`);
+        expect(JSON.parse(declared ?? "")).toBe(description);
+        expect(document).toContain(command);
+      }
+      expect(store.get(`/app/.claude/commands/${name}.md`)).toContain(
+        "$ARGUMENTS"
+      );
     }
-    expect(store.get("/app/.claude/commands/reflet.md")).toContain(
-      "$ARGUMENTS"
-    );
-  });
+  );
 
   it("reports unchanged on a second run", () => {
     const { files } = workspace();

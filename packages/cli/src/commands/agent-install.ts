@@ -1,11 +1,16 @@
 import { AGENT_PROMPT, SKILL_DESCRIPTION, SKILL_NAME } from "../agent-prompt";
+import {
+  LIVE_AGENT_PROMPT,
+  LIVE_SKILL_DESCRIPTION,
+  LIVE_SKILL_NAME,
+} from "../live/live-prompt";
 import type { FileSystemPort } from "../project";
 import type { InitChange } from "./init";
 import { SCREENSHOT_DIRECTORY } from "./screenshot-download";
 
 /** Every harness reads `SKILL.md`; only the directory it scans differs. */
 const SKILL_DIRECTORIES = [".agents/skills", ".claude/skills"];
-const SLASH_COMMAND_FILE = ".claude/commands/reflet.md";
+const SLASH_COMMAND_DIRECTORY = ".claude/commands";
 const IGNORE_FILE = ".gitignore";
 const IGNORE_ENTRY = `${SCREENSHOT_DIRECTORY.split("/")[0]}/`;
 
@@ -15,24 +20,54 @@ export interface AgentInstallInput {
   files: FileSystemPort;
 }
 
-const SKILL_DOCUMENT = `---
-name: ${SKILL_NAME}
-description: ${JSON.stringify(SKILL_DESCRIPTION)}
+interface AgentWorkflow {
+  argumentsLine: string;
+  commandDescription: string;
+  name: string;
+  prompt: string;
+  skillDescription: string;
+  title: string;
+}
+
+const WORKFLOWS: AgentWorkflow[] = [
+  {
+    argumentsLine:
+      "Scope for this run — a feedback id works only that item, empty works the whole\nqueue: $ARGUMENTS",
+    commandDescription: "Work the Reflet feedback queue end to end.",
+    name: SKILL_NAME,
+    prompt: AGENT_PROMPT,
+    skillDescription: SKILL_DESCRIPTION,
+    title: "Reflet feedback queue",
+  },
+  {
+    argumentsLine:
+      "Dev server for this run — its address, empty for the default above:\n$ARGUMENTS",
+    commandDescription:
+      "Follow the Reflet session I am recording and fix what I point out.",
+    name: LIVE_SKILL_NAME,
+    prompt: LIVE_AGENT_PROMPT,
+    skillDescription: LIVE_SKILL_DESCRIPTION,
+    title: "Reflet live session",
+  },
+];
+
+const skillDocument = (workflow: AgentWorkflow): string => `---
+name: ${workflow.name}
+description: ${JSON.stringify(workflow.skillDescription)}
 ---
 
-# Reflet feedback queue
+# ${workflow.title}
 
-${AGENT_PROMPT}
+${workflow.prompt}
 `;
 
-const SLASH_COMMAND_DOCUMENT = `---
-description: Work the Reflet feedback queue end to end.
+const slashCommandDocument = (workflow: AgentWorkflow): string => `---
+description: ${workflow.commandDescription}
 ---
 
-${AGENT_PROMPT}
+${workflow.prompt}
 
-Scope for this run — a feedback id works only that item, empty works the whole
-queue: $ARGUMENTS
+${workflow.argumentsLine}
 `;
 
 function writeDocument(
@@ -79,20 +114,26 @@ function ignoreScreenshots(input: AgentInstallInput): InitChange {
 }
 
 /**
- * Drops the feedback workflow where agents look for skills — `.agents/skills`
- * for Codex and omp, `.claude/skills` for Claude Code — so the loop runs
- * without the user copying a prompt around.
+ * Drops the workflows where agents look for skills — `.agents/skills` for
+ * Codex and omp, `.claude/skills` for Claude Code — so they run without the
+ * user copying a prompt around.
  */
 export function runAgentInstall(input: AgentInstallInput): InitChange[] {
   return [
-    ...SKILL_DIRECTORIES.map((directory) =>
+    ...WORKFLOWS.flatMap((workflow) => [
+      ...SKILL_DIRECTORIES.map((directory) =>
+        writeDocument(
+          input,
+          `${directory}/${workflow.name}/SKILL.md`,
+          skillDocument(workflow)
+        )
+      ),
       writeDocument(
         input,
-        `${directory}/${SKILL_NAME}/SKILL.md`,
-        SKILL_DOCUMENT
-      )
-    ),
-    writeDocument(input, SLASH_COMMAND_FILE, SLASH_COMMAND_DOCUMENT),
+        `${SLASH_COMMAND_DIRECTORY}/${workflow.name}.md`,
+        slashCommandDocument(workflow)
+      ),
+    ]),
     ignoreScreenshots(input),
   ];
 }

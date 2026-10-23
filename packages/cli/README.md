@@ -55,23 +55,54 @@ npx reflet-cli prompt | pbcopy
 
 ### `reflet agent install`
 
-Writes the Reflet feedback workflow where coding agents look for it, so any of
-them can work the queue end to end without being told how:
+Writes the Reflet workflows where coding agents look for them, so any of them
+can run them without being told how:
 
 | File | Read by |
 | --- | --- |
 | `.agents/skills/reflet/SKILL.md` | Codex (`$reflet`), omp, and anything else following the agent-skills layout |
 | `.claude/skills/reflet/SKILL.md` | Claude Code |
 | `.claude/commands/reflet.md` | Claude Code, as the `/reflet` slash command |
+| `.agents/skills/reflet-live/SKILL.md` | Codex (`$reflet-live`), omp, and the rest of the agent-skills layout |
+| `.claude/skills/reflet-live/SKILL.md` | Claude Code |
+| `.claude/commands/reflet-live.md` | Claude Code, as the `/reflet-live` slash command |
 
 It also adds `.reflet/` to `.gitignore`, where downloaded screenshots land.
 Running it twice changes nothing. `--dry-run` and `--cwd <dir>` behave as in
-`init`. `reflet prompt agent` prints the same workflow to stdout.
+`init`. `reflet prompt agent` and `reflet prompt live` print the same
+workflows to stdout.
 
-The workflow claims one item, reads its screenshots, element source locations
-and console errors, fixes it, opens the pull request, comments and moves the
+`reflet` claims one item, reads its screenshots, element source locations and
+console errors, fixes it, opens the pull request, comments and moves the
 status — then repeats until the queue is empty. Pass a feedback id (`/reflet
 fb_…`) to work just that one.
+
+`reflet-live` follows the session you are recording in your app's devtools:
+you talk through what is wrong, the agent changes the code while you keep
+recording, and it summarises what it did when you end the session. Pass the
+dev server (`/reflet-live http://localhost:5173`) when it is not on port 3000.
+
+### `reflet session watch`
+
+Waits for what you say in the devtools session you are recording, then prints
+each new passage with the elements you clicked or pointed at, their selector
+and source location, and the screenshots around it, saved under
+`.reflet/sessions/<session>/`. It returns once you pause, when the session
+ends, or after `--timeout` seconds (default 90) with nothing new, and never
+prints the same passage twice. `reflet-live` runs it in a loop. When the
+session was started with "Several people are talking", each passage says who
+spoke (`[00:10] Speaker 1: … Speaker 2: …`), and `reflet-live` tells the agent
+not to take one speaker's remark as another's change of mind.
+
+```bash
+npx reflet-cli session watch --url http://localhost:3000
+```
+
+It reads through the app's dev server, so it needs the `reflet-sdk` devtools
+route and Connect done from the devtools panel footer: only your own sessions,
+and only in development. A session already ended when it first looks is left
+alone. Delete `.reflet/sessions/watch.json` to read the current session from
+the start again.
 
 ### Admin API
 
